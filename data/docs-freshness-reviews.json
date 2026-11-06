@@ -1031,11 +1031,29 @@
 			"by": "agent",
 			"note": "read against code drift; fixed where it differed"
 		},
-		"docs/coin-control.md": {
-			"commit": "9c9d80bcc",
+		"docs/cli.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Server table, flags and sign-in text still match; the api-keys commit only adds audit and expiry validation and the mcp commit adds an endpoint, neither contradicts the doc."
+		},
+		"docs/clip-director.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Leaderboard commit only excludes self-follows from follower counts; settled_min usage and follower-count grounding are unchanged."
+		},
+		"docs/coin-control.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Drift is a CSS-only token and hover change; routes, rules and file list still match."
+		},
+		"docs/coin-launches.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Replaced six em-dashes; launcher-tick cron, launch-receipt cache headers, variant=receipt and MARK_ENFORCE verified, the Origin fix is internal."
 		},
 		"docs/coin-pages.md": {
 			"commit": "9c9d80bcc",
@@ -1044,10 +1062,10 @@
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
 		"docs/coin-wars.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "noteWarResult, onResult hook and 60 char jumbotron cap match commit 72202b0f2 exactly; play.html change is the lite handoff, not named in prose."
 		},
 		"docs/coinmarketcap-article-2026-10-copy-trading.md": {
 			"commit": "4cf6b20f3",
@@ -1095,17 +1113,59 @@
 			"by": "agent",
 			"note": "Copy of a published, dated CoinMarketCap article, a record rather than current behavior."
 		},
+		"docs/competitions.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Retry-button CSP fix does not change behavior described; empty competitions.json, fields, API and migration path verified."
+		},
+		"docs/compose.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Forge POST shape, model_category handling, explore and forge-gallery params and attachment limits verified against current source."
+		},
+		"docs/concierge.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Removed false claim that the route is pre-moderated (code has no content filter) and documented empty-stream provider fallback; limits and rate numbers verified."
+		},
 		"docs/configuration.md": {
 			"commit": "53f2a200f",
 			"kind": "verified",
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
-		"docs/copy-trading.md": {
-			"commit": "9c9d80bcc",
+		"docs/contributing.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Fixed 'about 80' mirror directories to well over 100 (131 entries), replaced 27 dash characters; npm scripts, engines, flags and paths verified."
+		},
+		"docs/cookbook/asset-quality-gate.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The drift only refactored api/3d/inspect.js into buildReport, and the GET and raw POST behavior and asset_gate.py defaults still match."
+		},
+		"docs/cookbook/mcp-3d-tool.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Recipe files and referenced docs exist and the api/mcp.js drift does not touch what the recipe describes."
+		},
+		"docs/cookbook/text-to-3d-cli.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "api/3d/generate.js still returns pending with retryAfter on NVIDIA TRELLIS and the poll constants and /api/ar route are unchanged."
+		},
+		"docs/copy-trading.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Cron cadences 2 min, 20 and 8 minute windows, 120/15 caps, leaderboard cache header, settled_min and self-follow rules all match current source."
 		},
 		"docs/crawl.md": {
 			"commit": "1396077cf",
@@ -1113,17 +1173,29 @@
 			"by": "agent",
 			"note": "read against code drift; fixed where it differed"
 		},
-		"docs/creator-portfolio.md": {
-			"commit": "9c9d80bcc",
+		"docs/create-agent.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Template count 26, tag cap 8, CLI flags, files and tests verified; analytics event registration does not change prose."
+		},
+		"docs/creator-payouts.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Constants (48h, 0.01 SOL, 5 min), crons, routes, 50/50 claim policy and CREATOR_PAYOUTS_LIVE verified; drift is a nav link and an unrelated signer guard."
+		},
+		"docs/creator-portfolio.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The subdomain.js change gates minting only; the GET availability lookup the doc cites is unchanged."
 		},
 		"docs/crews.md": {
-			"commit": "53f2a200f",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "Budget 6, 20s presence poll, reserved tags, endpoints and files verified; drift is i18n, an export and an unrelated conversion hook."
 		},
 		"docs/crypto-api.md": {
 			"commit": "9e63a890b",
@@ -1131,29 +1203,71 @@
 			"by": "agent",
 			"note": "Bonding outage path corrected: last-known-good copy (x-pump-stale) then a direct on-chain curve read before 503 (1e1607397, 0aea53297, f286c1626); security outage serves the previous verdict as stale (x-security-stale) with a 60s per-mint cache (7a39eee75)."
 		},
-		"docs/daily-forge.md": {
-			"commit": "53f2a200f",
+		"docs/custody.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "Replaced 20 dash characters; limits, 6 hourly attestation, mainnet anchor default, 48h timelock, 14 day TTL, 10 guardians and 7 to 365 day range verified."
+		},
+		"docs/daily-forge.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "src/daily.js backend, poll timing, 429 and 503 handling, theme count and milestones match, and the forge.js drift does not affect the daily flow."
+		},
+		"docs/daily-match.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "daily-match.js is unchanged so weights, cache headers and limits still match, and the unified.js change is only a sibling reference."
+		},
+		"docs/dance-off.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Timings, contestant cap, dance floor position, env knobs, aura id and tests match, and the dance-off.js commit only changed error message handling."
 		},
 		"docs/demo-routes.md": {
-			"commit": "a3524e6f6",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "Every public demo page has a row and the vercel.json rules for /demo, /demos, /coin and /lipsync still exist."
+		},
+		"docs/deployment.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Corrected the /agents/:id rewrite target, the deploy:gcp:full description, the chat provider requirement (free lanes, paid backstops, 503 chat_unavailable) and the Sentry reporting line."
+		},
+		"docs/desktop-local-runtime.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added that token names and symbols are sanitized and capped at 16 characters before reaching the approval dialog."
 		},
 		"docs/desktop-widgets.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Widget data sources and storage keys match src/desktop/widgets and the drift (QA account filtering, opt-in suggestReplies) does not contradict the doc."
 		},
 		"docs/desktop.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "The drift was an accessibility landmark fix and unrelated changes, and referenced files, scripts, tests and constants still match."
+		},
+		"docs/destination-whitelist.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The wallet drift was a fetch timeout and the agents.js changes do not touch the whitelist, whose cooldowns, cron, migration and MCP tools still exist."
+		},
+		"docs/developer-platform.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Webhook event types, forge.failed payload in forge-notify.js, GET /api/forge?job poll, scripts and linked docs match, and the package.json and forge.js drift does not affect the described APIs."
 		},
 		"docs/devto-mcp-fleet-post.md": {
 			"commit": "4cf6b20f3",
@@ -1161,29 +1275,47 @@
 			"by": "agent",
 			"note": "Keyless tool count corrected from fourteen to sixteen and the npm package count is now dated to its 2026-08-25 audit."
 		},
-		"docs/diorama.md": {
-			"commit": "53f2a200f",
+		"docs/dextools.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "Embed params, from=embed-boost, postMessage source and linked files match; drift commit only swapped in a shared shortAddress import."
+		},
+		"docs/diorama.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The api/forge.js drift only added GET /api/forge?territory; diorama pipeline claims unchanged."
 		},
 		"docs/discord-activity.md": {
-			"commit": "0a10f48c2",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "4h session TTL, wrong_audience, vote handlers, patchUrlMappings and referenced files all exist; the forge cooldown only affects in-world submits."
 		},
 		"docs/doc-freshness.md": {
-			"commit": "302d0ae31",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "re-read against the exclusion change"
+			"note": "Five statuses, docs:review flags, gate inclusion, build:gcp step, maxStale budget and badge file all match current scripts."
+		},
+		"docs/docs-world.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Only an i18n commit touched the page; src/docs-world files, avatar param, camera key, reduced-motion handling, test rule and route exist."
 		},
 		"docs/domains.md": {
 			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/draft-agent-mint.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Step 1 now describes storeGlbOrKeepProviderUrl (provider URL kept when storage refuses) and the Solana leg now mentions 8004 registry enrolment and its mainnet flag."
 		},
 		"docs/drops.md": {
 			"commit": "0a10f48c2",
@@ -1192,10 +1324,10 @@
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/economy-heartbeat.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Cron count updated from 154 to 165 to match vercel.json; dispatcher targets and sniper self-heal checked."
 		},
 		"docs/economy-master.md": {
 			"commit": "9c9d80bcc",
@@ -1209,17 +1341,47 @@
 			"by": "agent",
 			"note": "read against code drift; fixed where it differed"
 		},
+		"docs/embedding.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Embed policy section wrongly listed an open mode; code allows only allowlist and denylist, with no policy meaning open; rewrote with the real shape."
+		},
 		"docs/embody.md": {
 			"commit": "1396077cf",
 			"kind": "verified",
 			"by": "agent",
 			"note": "read against code drift; fixed where it differed"
 		},
-		"docs/erc8004/validation-attestation.md": {
-			"commit": "0a10f48c2",
+		"docs/engine-bridges.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "Forge API contract and x-forge-client unchanged; territory only affects explicit Tencent-lane backends via 403 region_restricted."
+		},
+		"docs/engine-qa.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Thresholds, LOD budgets, 32MB cap, rate limits and UI labels match source; viewer commit only hides badges when no model is loaded."
+		},
+		"docs/engine-store-publishing.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Script flags, tagline and description limits, Apache-2.0 check, listings dir and npm script all match."
+		},
+		"docs/erc8004.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "ssrf-guard change only added optional hopHeaders; the 2 MB cap, 400 blocked_uri, 413 too_large and 502 invalid_json in api/erc8004 still match the doc."
+		},
+		"docs/erc8004/validation-attestation.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "ssrf-guard change only added an optional hopHeaders hook; fetchSafePublicUrlPinned, error codes, evmFallbackProvider, scripts and file table all still match, agent-detail still mounts the badge."
 		},
 		"docs/event-markets-staking.md": {
 			"commit": "9c9d80bcc",
@@ -1227,17 +1389,35 @@
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
+		"docs/event-markets.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added intro pointer to the off-by-default staked variant; cron schedules, points and feed config verified against source."
+		},
 		"docs/event-readiness/01-play-first-impression.md": {
 			"commit": "53f2a200f",
 			"kind": "verified",
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/event-readiness/02-play-mobile.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Harness env vars, npm run audit:mobile-touch, 44px target and ambient-crowd references all match current scripts and source."
+		},
 		"docs/event-readiness/03-play-performance.md": {
 			"commit": "9c9d80bcc",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+		},
+		"docs/event-readiness/04-play-multiplayer-net.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added moderator removal as a terminal state, the report and moderation tooling plus chat scrollback, and the private-world 404 state in persistence; other claims checked."
 		},
 		"docs/event-readiness/05-play-economy-loops.md": {
 			"commit": "9c9d80bcc",
@@ -1246,10 +1426,46 @@
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
 		"docs/event-readiness/07-platform-smoke-sweep.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Every npm script exists, audit-console env defaults (5, 3000, 240000, 20000) and empty baseline match, play.html still uses /api/page-og."
+		},
+		"docs/event-readiness/08-api-production-health.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "All named npm scripts, cron and wallet audit scripts, changelog-push cron, api/version and the ops docs exist and match the checklist."
+		},
+		"docs/event-readiness/09-accessibility-i18n.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Corrected the i18n runtime path (src/i18n.js served as /i18n.js, HUD strings via src/game/i18n-play.js); other references checked."
+		},
+		"docs/event-readiness/10-event-day-runbook.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Scripts, event:override flags, LIVE-OPS anchor and ops docs exist; mobile repro script is still the named escalation tool."
+		},
+		"docs/event-readiness/11-event-live-ops.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Noted that the lite client runs the meetup agenda and banners without the three.js fireworks; announce caps, secret fallback, event-config reads and tests verified."
+		},
+		"docs/event-readiness/12-photo-mode-share.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The brief said only build mode had screenshots; rewrote it to record the shipped photo-mode.js (P key, offscreen card, download and clipboard) against the original spec."
+		},
+		"docs/event-readiness/13-event-quests-leaderboard.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Feature has shipped; rewrote the brief to record the four event jobs, scoring bridge, /api/play/event-leaderboard, Event tab, souvenir grant and manual prize settlement."
 		},
 		"docs/event-readiness/14-welcome-concierge.md": {
 			"commit": "5c826cca9",
@@ -1257,10 +1473,10 @@
 			"by": "agent"
 		},
 		"docs/event-readiness/15-live-hype-feed.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Added that finished coin wars now reach the ticker through noteWarResult via the portal onResult hook, with a jumbotron flash on a win."
 		},
 		"docs/event-readiness/16-invite-flow.md": {
 			"commit": "5c826cca9",
@@ -1273,28 +1489,46 @@
 			"by": "agent"
 		},
 		"docs/event-readiness/18-coin-wars-portal.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Results echo item said the jumbotron and ticker row were still open; noteWarResult and the portal onResult hook now ship them, so item 4 is marked shipped."
 		},
 		"docs/event-readiness/19-forge-props-live.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Checked prop-budget tiers, forge-prop poll, wait and 8 MB caps, forge-world-limits, the rig action and durable handling against current source; the drift commits (territory report, funnel, world-persist retry) do not touch the described behavior."
+		},
+		"docs/event-readiness/20-world-chat-scrollback.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Brief read as unbuilt; added a status paragraph for the shipped scrollback (200 lines, 3 day TTL, 60 line join tail, chat-log-view, read-only Board tab, no write-back decision) linking docs/play-chat.md."
 		},
 		"docs/event-readiness/21-party-system.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "The not-shipped note said no invite sheet exists; the invite sheet now exists but has no party awareness, so the note now says that."
+		},
+		"docs/event-readiness/22-venue-projector-mode.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Brief said there is no spectator join option and described the director as unbuilt; added a shipped status linking docs/play-director-mode.md and corrected the WalkRoom spectator bullet."
 		},
 		"docs/event-readiness/23-signature-wall.md": {
 			"commit": "9c9d80bcc",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+		},
+		"docs/event-readiness/24-dance-off.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Brief described the round machine as missing; added a shipped status with the real files, timings and links to docs/dance-off.md."
 		},
 		"docs/event-readiness/LIVE-OPS.md": {
 			"commit": "0a10f48c2",
@@ -1308,23 +1542,71 @@
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
-		"docs/fact-check.md": {
-			"commit": "0a10f48c2",
+		"docs/event-souvenirs.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "Between-events paragraph wrongly said none scheduled; now names Community Meetup #3 from public/event.json and notes seasonal event-tier items."
+		},
+		"docs/everything.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Changed under a dozen tool pages to about a dozen, since the STEPS table has 13 entries."
+		},
+		"docs/examples.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Index counts updated to 51 examples and 27 package, and added the packages/agents-sdk/examples row to match data/examples.json."
+		},
+		"docs/exit-lab.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added that retained moon bags are now trailed by a separate live sweep the replay does not model; params, defaults, API limits and decideLadderedExit claims checked and correct."
+		},
+		"docs/experiments.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked data/experiments.json, scripts/lib/experiments-index.mjs sections and required fields, nav.json and pages.json entries, and the two write-ups all still match the described process."
+		},
+		"docs/fact-check.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Free limit 3 per day, 100000 atomics price, cron 41 4 * * 1, maxDuration 300, benchmark env defaults, bypass routes and file paths all match current source and vercel.json."
+		},
+		"docs/fade-radar.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Scoring weights 0.6 and 0.4, RI_MIN_JUDGED 5, avoid share 0.25, 12 hour calibration cache and API params match api/_lib/fade-radar.js and api/pump/fade.js; src/fade-radar.js drift was an import refactor."
 		},
 		"docs/farcaster-memory-seeding.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Content verified against routes, limits and hub list in source; only replaced a stray em-dash in the flow diagram."
+		},
+		"docs/fee-bridge.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Still held (no page route or vite input), env defaults and bounds match config.js, cron runs every 10 minutes, signer registered with holdsUserFunds; token config drift concerns other lanes."
 		},
 		"docs/feedback.md": {
-			"commit": "1396077cf",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "read against code drift; fixed where it differed"
+			"note": "The companion commit only moved stylesheet injection to mount; cron every 5 minutes, window.__walkFeedback.open and feedback:repro script still exist as described."
+		},
+		"docs/field.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Polling intervals, ring caps, NEAR_K, tws-os iframe handling and /?world=1 and /classic links match source; drift in desktop.html and nav.js was tokens and campaign attribution only."
 		},
 		"docs/financial-controls.md": {
 			"commit": "53f2a200f",
@@ -1333,16 +1615,22 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/first-contribution.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Ran the canonicalize probe and its output matches the doc, linked files exist, Rigify spine is still open, and setup and both git hooks still exist."
 		},
 		"docs/forge-background-generation.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Finalizer grace, TTL, batch, concurrency, cron schedules, resume window and health thresholds match source; gcp.js and forge.js drift added unrelated lanes and tracing."
+		},
+		"docs/forge-off.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Vote rate limit 120 per 10 minutes, crown cron schedules, event config, endpoint and migration still match; the forge-store drift only added a share source column."
 		},
 		"docs/forge-pipeline.md": {
 			"commit": "9c9d80bcc",
@@ -1351,10 +1639,22 @@
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
 		"docs/forge-workflows.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Limits (1000 chars, 12 photos, 50 prompts, 200 nodes, 600 links), templates, storage key and 760px breakpoint match source; the api/forge.js drift (territory, funnel, attribution) does not change the described node behavior."
+		},
+		"docs/forged.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added the payer_kind field (agent or fresh) that api/forged.js returns but the doc's response sample and prose omitted; price, params, timeout and cadence re-checked and correct."
+		},
+		"docs/fork-trade.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Read against src/fork-trade.js exports and the coin-buy.js commits, which only changed play network-error copy, share sheet modal routing and render tier, so the documented API, 10 SOL clamp and amount option still hold."
 		},
 		"docs/free-crypto-apis.md": {
 			"commit": "53f2a200f",
@@ -1362,17 +1662,83 @@
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/generation-watch.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "corner-stack.js commits only hide widgets behind the open nav drawer; polling clamp 4 to 10 s, 6 s retry, 40 minute stop and the free retry label match public/watch.html."
+		},
+		"docs/genesis.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added that a VRoid Hub license travels with a remix fork and can leave the fork private with no agent (forkLicensePlan in api/avatars/fork.js); poll constants and the llm.js provider order re-checked and correct."
+		},
+		"docs/genome.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "MUTATION_MAX 0.12, record threshold 0.04 and the 6 hour BREED_COOLDOWN_MS match source; the eleven.js change only added an optional withTimestamps mode and the agents.js commits do not touch breeding."
+		},
+		"docs/ghost-copy.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The claim that the replay includes every copy-engine refusal was too broad: the replay passes no coin context, so the new leader_linked_to_creator guard and the honeypot and mcap checks are live-only; the doc now says so."
+		},
 		"docs/github-growth.md": {
 			"commit": "9c9d80bcc",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
-		"docs/globe.md": {
-			"commit": "9c9d80bcc",
+		"docs/github-memory-seeding.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Scope allowlist in github-token.js, the 1 per 6 hour single-use limiter with refund, memory scope checks, disconnect accepting POST and DELETE and the settings connected-accounts tab all match current source."
+		},
+		"docs/github-trending-patterns.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Dated research snapshot of GitHub trending repos taken 2026-11-03, a record of that moment and not a description of current code."
+		},
+		"docs/glance.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Card params, sizes, cache headers, token and template endpoints and the service worker event table match api/glance/* and public/glance-sw.js; drift was test and comment only."
+		},
+		"docs/glasses.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Lane 3 omitted the already shipped web half, src/irl/glasses/native-bridge.js and the ThreeWsWearables iOS plugin; added it. BLE timings, presence TTL and file table re-checked and correct."
+		},
+		"docs/glasses/meta-ray-ban-display.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Phase 7 checklist still showed the /glass pages.json entry, changelog entry and STRUCTURE.md row as open although all three exist, so they are now ticked."
+		},
+		"docs/glasses/research.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked the 'what we already own' table: every linked file exists (src/irl/glasses, pin-talk, src/ar, api/ar.js, api/render/avatar-clip.js, api/irl, packages/irl, ios) and the src/irl.js and api/ar.js commits are import moves and share-funnel counters that do not change the described behavior."
+		},
+		"docs/globe.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "vercel.json drift is unrelated routes; the /globe route, the 15 minute globe-ingest cron, 12 file read, 32 day retention and keyboard shortcuts match source."
+		},
+		"docs/google-adk.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The free studio now lists sixteen tools including search_docs (as in docs/mcp-studio.md); corrected the count and the discovered tool list."
 		},
 		"docs/google-cloud-community-post.md": {
 			"commit": "4cf6b20f3",
@@ -1381,22 +1747,28 @@
 			"note": "Scheduled job count corrected from 125 to 165 to match the crons array in vercel.json; other claims (keep-warm cron every 10 minutes, build and submit gates) match package.json."
 		},
 		"docs/grok-bot.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "The probe sample output was stale; set key lane to tools=56 prompts=6 to match the 40 allowlisted account tools plus 16 studio tools and the market-brief prompt. Tool list, prompts and rate limits match source."
 		},
 		"docs/grok.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Studio tool count fifteen became sixteen, added the served list_my_agents tool and removed list_skill_candidates, which is not on the GROK_ACCOUNT_TOOLS allowlist."
 		},
 		"docs/growth-programs.md": {
 			"commit": "9c9d80bcc",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+		},
+		"docs/guardian.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "recovery-inbox response shape (data.items, actionable) and the recovery request verbs and inheritance arm route match api/agents/recovery-inbox.js and recovery.js; agents.js drift is unrelated."
 		},
 		"docs/guards.md": {
 			"commit": "0a10f48c2",
@@ -1410,11 +1782,17 @@
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
-		"docs/hold-to-access.md": {
-			"commit": "0a10f48c2",
+		"docs/herald.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "The only drift is a CSS minmax grid fix and i18n passes on pages/herald.html; every file path in the map resolves and the rail, CLI and MCP descriptions match."
+		},
+		"docs/hold-to-access.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The api/forge.js commits add a ?territory report and campaign conversion recording; freeLaneMultiplier, requireFeatureAccess and the forge.high gate the doc cites are unchanged and all linked files exist."
 		},
 		"docs/home-households.md": {
 			"commit": "9c9d80bcc",
@@ -1422,29 +1800,71 @@
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
-		"docs/home-privacy.md": {
-			"commit": "53f2a200f",
+		"docs/home-plans.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "HOME_ALLOW_LOCAL_INSTANCE is still read once at module level in home-url-guard.js, secret_box_key_mismatch still exists in secret-box.js (the re-seal commit only adds exports), and homeToolsOffered and turn-gate wiring in chat.js are intact."
+		},
+		"docs/home-privacy.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "db-retention still runs home action-log retention as section E, exempt from the storage-pressure valve, on the vercel.json schedule; the new archiving and MCP session steps do not touch home data."
+		},
+		"docs/home-relay-threat-model.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Session ids are nine random bytes (12 base64url characters), not a 12-byte id, so the wording is corrected; the scope-check commits do not affect relay claims."
 		},
 		"docs/home-relay.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Checked config vars and isRelayConfigured 32-char rule, relay routes in server.js, cloudbuild flags and every linked file; the vercel.json drift is unrelated route additions."
+		},
+		"docs/home-scene.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The scene-render commit only adds a studio environment look and moves the pixel ratio cap; model constants (4.6 m floors, 6/10/6 caps, Everything room), e2e lane variables and file paths still match source."
 		},
 		"docs/home-security.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Scoped-member rule said any area or device target is refused, but the MCP and chat path now allows a granted area_id or resolvable device_id after scope-checking entities (floor_id always refused), so the table row and the unnumbered-suite note now describe both paths."
+		},
+		"docs/home-voice.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Only homeToolsOffered withholding and the tools.js/chat.js relationship are cited, both still true; suggestReplies and selector scoping do not change the voice flow, and all referenced files exist."
+		},
+		"docs/how-it-works.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Brain router still lists claude-fable-5, opus-5, sonnet-5, haiku-4-5, gpt-5.6 and qwen-plus with OpenRouter failover (qwen now via DashScope OpenAI-compatible endpoint, still native), /api/llm/anthropic?agent= and /api/agent-actions exist, and the ten widget types match widget-types.js."
 		},
 		"docs/huggingface-3d-ai-agent-platform.md": {
 			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
 			"note": "Motion library section now says 219 CC0 clips (the endpoint drops Mixamo and unlicensed clips) and drops Mixamo thumbnails; guard section notes the opt-in owner-signed delegation layer; stage prices, run rounds and MCP protocol checked against source."
+		},
+		"docs/huggingface.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Living index: all linked docs, drafts, data/rss/items.json, blog press grid, build:news script and source files exist; drift commits are audit script, rules script and animation-retarget fixes that do not alter its claims."
+		},
+		"docs/i18n.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "writeManifest now delegates to buildManifest in i18n-shared.mjs using missingKeys and a completeness threshold (default 1, --manifest-threshold override); doc still described untranslatedCount."
 		},
 		"docs/ibm-community-any-skeleton-animation-post.md": {
 			"commit": "4cf6b20f3",
@@ -1522,11 +1942,41 @@
 			"by": "agent",
 			"note": "Dated research note (researched and verified 2026-09-09) with time-gated findings; timeline.json additions since then do not make it wrong as a record."
 		},
-		"docs/ibm.md": {
-			"commit": "9c9d80bcc",
+		"docs/ibm-x402-mcp.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "The api/ibm-mcp.js change only adds client analytics tracking; tool list, prices in api/_mcpibm/pricing.js, transports and dual-mode access are unchanged."
+		},
+		"docs/ibm.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked healthz granite_guardian subsystem, brain/chat watsonx provider, chat.js, /ibm routes in vercel.json and referenced scripts against the drift commits; none change documented behavior."
+		},
+		"docs/image-to-3d.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added the GET /api/forge?territory preflight and 403 region_restricted behavior; verified lane order, MAX_VIEWS 6, 8 MB upload cap and 30 minute resume against source."
+		},
+		"docs/in-game-economy.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added the socket-drop resend behavior for boutique and paid-spin settles; sell prices, wheel cooldown, cost, level gate, split and slot constants all match source."
+		},
+		"docs/inference-billing.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Deposit wallet fallback is X402_PAY_TO_SOLANA then the treasury wallet, not treasury directly; other claims (bonus bps, USDC rate, free tier, paid_fallback surfaces) match source."
+		},
+		"docs/inference-node-operator.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The server/index.mjs drift is a share-funnel view counter; node endpoints, e2e description and the /nodes roster page are unchanged."
 		},
 		"docs/internal/MAINNET-TEST-2026-07-03.md": {
 			"commit": "53f2a200f",
@@ -1534,17 +1984,47 @@
 			"by": "agent",
 			"note": "dated record, kept as written"
 		},
+		"docs/internal/README.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "PRIVATE_DOCS set in vite.config.js and scripts/combine-docs.mjs still excludes internal, ops and security; both listed docs exist."
+		},
 		"docs/internal/fable-playbook.md": {
 			"commit": "5c826cca9",
 			"kind": "verified",
 			"by": "agent",
 			"note": "read against the drifted commits on 2026-11-06; every claim, script and path still matches the code"
 		},
-		"docs/irl/THREAT-MODEL.md": {
-			"commit": "53f2a200f",
+		"docs/introduction.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "Drift in api/mcp.js only added analytics and an mcp-tools endpoint; /api/mcp, x402.json route, CDN version 1.5.2 and the @three-ws/mcp-server package still match."
+		},
+		"docs/ios-app.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "apnsConfigured also requires APPLE_TEAM_ID alongside APNS_KEY_ID and APNS_AUTH_KEY; AASA exclusions, handoff 60s TTL, nativePush config and bridge plugin match source."
+		},
+		"docs/irl.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked 40/60 m radius, 50 pin cap, 7 day anon expiry, */5 settlement-verify cron, irl_events 90 day reap and AR route; the drift commits (cron time budget, share counter, redaction) change no documented behavior."
+		},
+		"docs/irl/THREAT-MODEL.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Radii 60/80/600 m, 250 m fix tolerance, irlNearbyIp 60/min, irlFixIp 30/min, PUBLIC_COORD_DP 5, drop coarsening, limitFailClosedRead and redactUrl all still match source."
+		},
+		"docs/irl/street-demo.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked 60 m cap, /irl/sign and dashboard routes, null-wallet response from solana-wallet.js and AR launcher; agents.js and ar.js drift commits do not alter the runbook."
 		},
 		"docs/issue-resolution-2026-09-15.md": {
 			"commit": "4cf6b20f3",
@@ -1552,17 +2032,41 @@
 			"by": "agent",
 			"note": "Dated resolution record of the 2026-09-15 issue tracker audit."
 		},
-		"docs/labor-market.md": {
-			"commit": "0a10f48c2",
+		"docs/js-api.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "Added the opt-in WebGPU renderer path (?renderer=webgpu, Viewer.create/prepareRenderer, viewer.backend) and dropped the WebGL-only wording for the renderer; replaced an em-dash."
+		},
+		"docs/labor-market.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Only data/pages.json drifted; the /labor-market entry exists, and the referenced escrow, settle, sweep files and tests all resolve with no labor API changes since the last review."
+		},
+		"docs/launch-intents.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The cc519689e change only records a platform fee event inside the launch stage flip; stages, error codes, 15 minute quote TTL, routes and creator fee env defaults all match current source."
 		},
 		"docs/launch-usecases.md": {
-			"commit": "53f2a200f",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "recipe handoff re-checked against the rebuilt /launch page"
+			"note": "Registry still has 50 recipes in 6 categories with the stated counts, launch-page.js still routes ?reward= to the recipe panel and keeps Create and My-coins tabs, and reward forms github/x/wallet match public/launch/launch.js."
+		},
+		"docs/layers.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Viewer layer bullet now notes the opt-in WebGPU backend with WebGL2 fallback; widget count, tool iteration cap, build scripts and module names checked and still correct."
+		},
+		"docs/likeness-eval.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Cron still runs Mondays 03:47 UTC with a 280 second budget (300s maxDuration minus 20s reserve) and wrapCron only adds a timeout wrapper; scripts flags and linked docs resolve."
 		},
 		"docs/lipsync.md": {
 			"commit": "1396077cf",
@@ -1570,23 +2074,89 @@
 			"by": "agent",
 			"note": "read against code drift; fixed where it differed"
 		},
-		"docs/mcp-3d-studio.md": {
-			"commit": "9c9d80bcc",
+		"docs/liquid-glass.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Corrected the stated three.js version from r184 to r187 (package.json and REVISION); all cited tokens still exist in public/tokens.css."
+		},
+		"docs/live-docs.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The coin markets sample used limit=3 which that endpoint ignores, so it now uses per_page=10; also replaced em-dashes in Related. Avatars, safety path list, sandbox and keyboard behavior match source."
+		},
+		"docs/live-steps.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Registered step table, paths, exports, renders pick paths, redaction key list, LiveSteps.mount call and 640px breakpoint all match public/live-steps.js and pages/tutorial.html."
+		},
+		"docs/market-anomalies.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Only the shared vercel.json route table changed; the doc's anomaly route and behavior match current source."
+		},
+		"docs/mcp-3d-studio.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Drift was the Oracle publish script, forge tier and region detection changes; tool names, pricing and tiers in api/_mcp3d still match the doc."
+		},
+		"docs/mcp-agent.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added a More tool groups section naming the human task, order and DCA, lending, event market, agent screen, integration, account and X posting tools the server now exposes."
+		},
+		"docs/mcp-integrations.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked routes, tiers, 12,000 character cap, 25 connection limit and secret-box storage against the connections code; the later commits changed tests and unrelated paths only."
+		},
+		"docs/mcp-registry-sentinel.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "server.json and vercel.json changes added the unified endpoint and prompt listing; the sentinel behavior the doc describes is unchanged."
 		},
 		"docs/mcp-safety.md": {
-			"commit": "53f2a200f",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "Replaced the stale 'nine tool names published by two servers' claim with the current many-names-on-more-than-one-server wording."
 		},
 		"docs/mcp-studio.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Studio door now lists sixteen tools including search_docs, so counts and the ChatGPT omission list were corrected."
+		},
+		"docs/mcp-x402-bazaar.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "api/mcp-bazaar.js only gained client recording and api/mcp.js the mcp-tools endpoint; the bazaar tools and pricing in the doc are unchanged."
+		},
+		"docs/mcp.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Ecosystem counts updated to nine hosted and forty-six npm servers, added the Oracle hosted row and the hq-mcp and knock-mcp packages."
+		},
+		"docs/memetic-launcher.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Out of range launcher values are rejected with a 400 rather than silently clamped, so the safety bullet was corrected; base cost 0.022 SOL, breaker of five and error codes verified."
+		},
+		"docs/memory.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added the temporal fact fields validFrom, sourceRef and supersedes for remote mode and a link to the as_of recall doc."
 		},
 		"docs/microsoft-marketplace-offer-plan.md": {
 			"commit": "4cf6b20f3",
@@ -1600,23 +2170,77 @@
 			"by": "agent",
 			"note": "Cron 7 * * * *, 23 hour lookback, batch size 25, error codes, statuses and tables all match the code."
 		},
+		"docs/mint-mark.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Env getter, enforcement code, feed branded flag, unbranded_mint and mint_mark_stamped all match current source."
+		},
+		"docs/mobile-launch/README.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "iOS widget and APNs push are now described as built in the repo but not yet in a store release."
+		},
+		"docs/mobile-launch/aws-builder-center-article.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Replaced the false claim that the APNs path is absent with the shipped device registration and APNs fan-out."
+		},
+		"docs/mocap-studio.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The csrf-token.js drift commit was comment-only and CSRF behavior in api/mocap/clips.js matches the doc."
+		},
+		"docs/modly.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Linked files exist, forge.js Your GPU lane is intact, six manifest nodes confirmed, pages/modly.html change is minor."
+		},
 		"docs/money-feed.md": {
 			"commit": "9c9d80bcc",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
-		"docs/money-map.md": {
-			"commit": "0a10f48c2",
+		"docs/money-flow-map.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "Pulse view=graph, 60s TTL and 400 max edges are unchanged in api/pulse.js."
+		},
+		"docs/money-map.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Paid route count corrected from 88 to 97 priced routes per the ring catalog."
+		},
+		"docs/monitor.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Fleet row now says QA and e2e test accounts are excluded from the ranked public agents."
+		},
+		"docs/motion-swap.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Documented the hourly sweeper that deletes oversized uploads after the fact."
 		},
 		"docs/native-launchpad.md": {
 			"commit": "9c9d80bcc",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+		},
+		"docs/native-widgets.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "npm scripts, gate membership, live base flag, glance mine params and manifest widget files all confirmed."
 		},
 		"docs/news-rights.md": {
 			"commit": "53f2a200f",
@@ -1625,10 +2249,10 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/notifications.md": {
-			"commit": "53f2a200f",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "No notification code changed since baseline and the settings panel id exists."
 		},
 		"docs/nvidia-forum-browser-digital-human.md": {
 			"commit": "4cf6b20f3",
@@ -1655,34 +2279,46 @@
 			"note": "poster script commits since the edit are chart layout only; rebuild commands still match package.json"
 		},
 		"docs/nvidia-models.md": {
-			"commit": "53f2a200f",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "Brain model garden table re-pinned to the served ids, roster models explained, and the audit cron's new-model catalog diff added."
+		},
+		"docs/nvidia-nemotron-spotlight.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Published NVIDIA Developer Forums article with a fixed URL and date."
 		},
 		"docs/object-library.md": {
-			"commit": "1396077cf",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "read against code drift; fixed where it differed"
+			"note": "Added the Kenney Graveyard Kit source (catalog, CC0 license, attribution courtesy credit, ingest script) that build-object-library.mjs now reads; doc said Poly Haven only."
 		},
 		"docs/onboarding-tier.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "nav.js change only adds lazy campaign attribution and desktop.html change is a11y; tws:tier key, tws-lite class, twsTier API and 20 tests still match."
 		},
 		"docs/onchain-agents.md": {
-			"commit": "53f2a200f",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "api/agents.js commits add a campaign conversion hook and a VRoid license gate on avatar_id; the mint and registry flow, env flag and back-fill scripts in the doc still match source."
 		},
 		"docs/open-source-credits.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Pipeline files, REPO_OVERRIDES (only @upstash/ratelimit), prebuild wiring, 91 Kenney models, Poly Haven inline viewer credit and in-surface credits all match current source; dep churn is regenerated data."
+		},
+		"docs/open-source-ecosystem.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Dated 100-stars announcement post with figures pulled 2026-08-25 and image placeholders, a record of that moment."
 		},
 		"docs/open-source-friday-plan.md": {
 			"commit": "4cf6b20f3",
@@ -1702,34 +2338,118 @@
 			"by": "agent",
 			"note": "Tool count changed to fifteen with a get_job row, and the high tier no longer claimed to run on Hunyuan3D."
 		},
-		"docs/ops/ISSUES.md": {
-			"commit": "9c9d80bcc",
+		"docs/openai-listing-channels.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "MCP package count corrected from 37 to 45 (packages/*-mcp) and the OpenAI-in-production claim reworded to match the free-first provider chain where OpenAI is the paid backstop."
+		},
+		"docs/ops/ISSUES.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Drift commits (Pollinations label, funnel counters, healthz alerts) leave the open items true; fixed two dangling item cross-references in the closed list to point at the real entries."
+		},
+		"docs/ops/README.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "All linked runbooks and scripts resolve and the alert-channel section matches alert-channels.js; added share-link conversion to the forge-funnel row since the funnel report now has a Shares section."
+		},
+		"docs/ops/agent-index.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked sweep constants, breaker, cursor recovery, 30 minute TLS lane park and index-lag exports against current source; connection.js read-coalescing commits do not change any stated behavior."
+		},
+		"docs/ops/avatar-asset-orphans.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "deleteAvatar still reference-counts via unreferencedKeys and keeps objects on check failure; repair script flags and thumbnail backfill MAX_ATTEMPTS behavior match the doc."
+		},
+		"docs/ops/avatar-reconstruction-capacity.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added that RECONSTRUCT_DENSE_URL now routes plain face reconstructions to an optional GPU dense-fit service and that the measured numbers describe only the CPU service."
 		},
 		"docs/ops/cron-auth.md": {
-			"commit": "53f2a200f",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "cronEdgeAuth is still mounted in server/index.mjs, create-gcp-scheduler flags (--oidc, --only, --missing-only), npm scripts, test files and anon upload ceilings and 26h lookback all match; drift commits were unrelated routes."
+		},
+		"docs/ops/economy-wallet-rotation.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Registry migration, economy-wallets script commands, 4 character vanity cap, alias sets and signer roles in solana-signers.js match; sponsor-runway changes only touched alert wording."
+		},
+		"docs/ops/evolve.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Defaults, DENY_RULES, lanes, scout band 400-499, blocked band 900, 6h busy window, package-lock restage and prep:worktree staging of .env files all match scripts/evolve.mjs and prepare-deploy-worktree.mjs."
+		},
+		"docs/ops/examples-repo-export.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Export manifest (2 agents, 9 embeds, 3 tutorials, held-out examples), npm script, forge-embed-snippets vendoring, site.examples in pages.json and the LICENSE copy still match; model-viewer bumps do not affect the doc."
+		},
+		"docs/ops/forge-desktop-release.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Every linked file exists; cloudbuild _PUBLISH flow, staging prefix, release-mac.sh secrets, feed URL and updater patch versus minor behavior and macOS-off match source; drift was package.json only."
 		},
 		"docs/ops/forge-error-triage.md": {
-			"commit": "53f2a200f",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "Trellis orphan reaper now heartbeats and fails tasks after 180s with a different message (instance_health.py); the 30 minute _PENDING_TTL_SECS reaper only remains in hunyuan3d and triposg."
+		},
+		"docs/ops/forge-funnel.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added the new share panel (share_funnel_daily counters, from_share, share_to_forge) to the response envelope and panel list."
+		},
+		"docs/ops/forge-multiview-migration-handoff.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Point-in-time A3 hand-off for the June 2026 forge multi-view migrations, already labelled historical."
 		},
 		"docs/ops/gcp-credits.md": {
 			"commit": "5c826cca9",
 			"kind": "snapshot",
 			"by": "agent"
 		},
-		"docs/ops/gcp-model-workers.md": {
-			"commit": "9c9d80bcc",
+		"docs/ops/gcp-logs.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Checked npm scripts, log flags, nine deep probes, exit codes, KNOWN_SIGNATURES and linked files against scripts/gcp-logs.mjs and gcp-triage.mjs; drift commits only added classifiers."
+		},
+		"docs/ops/gcp-model-workers.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Hunyuan3d cloudbuild default is now min 0 max 1; added the trellis liveness probe change (120s/90s/5) and the GET /api/forge?territory endpoint."
+		},
+		"docs/ops/gcp-production.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Updated route count, build:gcp chain (docs:freshness), submit gates, npm pin dry-run in audit:deploy, prep:worktree vanished-file tolerance, x402 tick budget, and the dropped @vercel/og dependency."
+		},
+		"docs/ops/growth-satellite-export.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Noted that destination repos now come from data/standalone-mirrors.json; the rest matches the exporter."
 		},
 		"docs/ops/guard-wiring.md": {
 			"commit": "0a10f48c2",
@@ -1738,16 +2458,28 @@
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ops/home-operations.md": {
-			"commit": "53f2a200f",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "Floors, cron schedule, linked files, memory clamp constants and 8Gi/600 cap claims match home-health.js, runtime.js and server/cloudbuild.yaml; status.js and healthz drift did not touch the home subsystem."
+		},
+		"docs/ops/hosting-and-credentials.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "vercel.json flags, forge-upload response shape and 503 code, read-service-env flags and check-secrets behavior match source; the 2026-09-15 incident record is a dated section."
 		},
 		"docs/ops/ibm-hosted-page-audit.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "VERBATIM_DIST_DIRS, atlas.js import.meta.url origin, CORS grants, audit script env vars and assertions match current source; the atlas chip commit was cosmetic."
+		},
+		"docs/ops/image-selfie-3d-review-2026-10-09.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Dated review whose figures were measured from production on 2026-10-09, so it must not track later forge code."
 		},
 		"docs/ops/livepeer-federation.md": {
 			"commit": "9c9d80bcc",
@@ -1756,28 +2488,76 @@
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
 		"docs/ops/llm-lanes.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "api/_lib/llm.js rung models and keys are unchanged since the doc was reviewed; the drifted brain/chat.js change only swapped the Qwen native route to an OpenAI-compatible DashScope client, which the doc does not describe."
+		},
+		"docs/ops/materialize-fulfillment.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Drift is unrelated vercel.json route additions; the print-orders-sync cron (every 15 minutes), the /materialize/ops route and the sync-crons script all still match."
+		},
+		"docs/ops/mcp-clients.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The tracked surfaces list omitted mcp-all, mcp-oracle and ibm-mcp, which now call trackMcp; added them."
+		},
+		"docs/ops/mcp-registry-namespace.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "publish-mcp-servers.mjs still has --dry-run, --only, --deprecate, --apply and the two-entry DEPRECATIONS list; the drift commits only added new server.json entries and an Oracle server, leaving the dated registry measurement and decision table intact."
 		},
 		"docs/ops/page-audit.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Checked flags, 1440x900 and iPhone 13 viewports, 25s and 60s budgets, reverify cap 60, AUTHED_ROUTES derivation, npm scripts and linked files against page-audit.mjs and audit-routes.mjs; pages.json and vercel.json drift is unrelated."
+		},
+		"docs/ops/payment-outcomes.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked panels, authedReadIp 300/5m, runway defaults 3 and 7 days, 6h stranded cache and 207 semantics against code; money-health now also returns an audit_ledger dead-letter panel, so the related-board sentence was updated."
 		},
 		"docs/ops/play-store-developer-page.md": {
-			"commit": "53f2a200f",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "Asset script, npm script, output paths, 0.82 icon inset and site.tagline opening still match; the 120 character promo text count is right and pages.json drift is unrelated."
+		},
+		"docs/ops/production-log-triage.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Edited 2026-11-06; the only drift is a /play/lite route in vercel.json, and the doc's /cdn/(.+) to api/cdn-object catch-all claim still matches the route table."
+		},
+		"docs/ops/production-sweep-2026-09-15.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Dated internal operations record of the 2026-09-15 production sweep and credential validation."
+		},
+		"docs/ops/prompts-audit-2026-11-04.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Dated 2026-11-04 audit of the work orders at a named HEAD, a point-in-time record."
+		},
+		"docs/ops/repo-audit-2026-07.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Dated 2026-07-29 audit of private GitHub repos, a point-in-time record."
 		},
 		"docs/ops/search-indexing.md": {
-			"commit": "0a10f48c2",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "Checked pages.json drift commits against audit:pages duplicate and noindex rules, desktop.html root route, sitemap sub-sitemaps, crawler-page, seo-meta and markNoindex wiring; all still true."
 		},
 		"docs/ops/security-exceptions.md": {
 			"commit": "9c9d80bcc",
@@ -1785,17 +2565,35 @@
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
+		"docs/ops/seo-keyword-plan.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Indexable page count was 331 from July; now 987 from data/pages.json with the 2026-07-17 figure kept for context, page-og carbon variant still correct."
+		},
+		"docs/ops/site-health-audit-2026-09-15.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Dated 2026-09-15 production audit record with findings and resolutions at that moment."
+		},
 		"docs/ops/solana-rpc-lanes.md": {
 			"commit": "9c9d80bcc",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
+		"docs/ops/swarm-100-audit.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Dated 2026-09-01 ledger audit pinned to commit 94ae967ca."
+		},
 		"docs/ops/trading-bot-report.md": {
-			"commit": "670dd81c7",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "Re-verified SIM_FAILED, resolveEntrySize, the nine-source SOL price chain and the kill switch split; added a dated section for the strategy fee ledger row (5bce46a92), the exit-hook ordering fix (bd2a43161), the onSigned presend hook (229a55725) and RPC spend counting for getAssetsByOwner (7a39eee75)."
+			"note": "Added the 2026-11-05 submitProtected late-landing change to the since-last-review list; SIM_FAILED and other claims still match source."
 		},
 		"docs/ops/wallet-key-migration.md": {
 			"commit": "53f2a200f",
@@ -1803,23 +2601,65 @@
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/ops/wallet-rescue.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Late-landed retry fix in execution-engine does not touch the rescue flow; script flags, Jito tip cache of ten minutes, env var, linked files and tests all match current source."
+		},
+		"docs/ops/worker-and-avatar-rules.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Vendored module list gained tracing.py and test_tracing.py, check:vendored also verifies the naming-mcp tool-sdk copy, and HumanIK namespaced bones are now named in the canonicalizer list."
+		},
+		"docs/ops/x-mention-go-live.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "prepare-deploy-worktree change was a mid-copy robustness fix; prep:worktree --apply, deploy:gcp:full, X_MENTION_BOT_LIVE and PAUSED env vars, status route and sample script all exist."
+		},
 		"docs/ops/x-story-findings-2026-09-30.md": {
 			"commit": "0a10f48c2",
 			"kind": "snapshot",
 			"by": "agent",
 			"note": "dated record, kept as written"
 		},
-		"docs/oracle-trading-mcp-plan.md": {
-			"commit": "9c9d80bcc",
+		"docs/ops/x402-discovery-listings.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Ring catalog now holds 108 entries not 84 and the self-facilitator is now a thin adapter over @three-ws/x402-server/facilitator; sendAuthChallenge behavior, openapi catalogPaidPaths, PRIVATE_DOCS and 4,419 datapoints verified."
+		},
+		"docs/ops/x402-loop-failure-baseline-2026-11-04.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Dated 2026-11-04 measurement of failure classes over a fixed 48h window."
+		},
+		"docs/oracle-model.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Refit gate thresholds, shrink prior 200, 6-hour cron, view params, open CORS and cache headers all match api/cron/oracle-refit.js, fit.js and api/oracle/model.js; new holder_gini and seeded_share features do not contradict the doc."
+		},
+		"docs/oracle-trading-mcp-plan.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Named files (api/mcp-oracle.js, api/_mcporacle, server-oracle.json, packages/oracle-mcp, agent-trader-mcp, api/mcp/all.js) exist; drift is only audit-docs and pages.json registration, status text still accurate."
 		},
 		"docs/oracle.md": {
 			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/orphaned-avatar-campaign.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Unpublished draft kept as living; added Maya HumanIK to the supported rig list after the namespace-strip fix, other claims (fallback rig, noindex import page, tests) still true."
 		},
 		"docs/oss-adoption-2026-09.md": {
 			"commit": "9c9d80bcc",
@@ -1833,6 +2673,12 @@
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/package-extraction.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Refreshed the roster table to current npm and local versions (only x402-server is ahead, vscode-x402 now has a scoped npm copy) and fixed the five-ahead claim."
+		},
 		"docs/page-performance.md": {
 			"commit": "0a10f48c2",
 			"kind": "verified",
@@ -1840,10 +2686,22 @@
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/paired-coins.md": {
-			"commit": "0a10f48c2",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "api/mcp.js and api/agents.js drift commits do not touch paired code; checked the seven MCP tool names, tiers and scopes, route table, launchpad default address, error codes and every referenced file exist."
+		},
+		"docs/papertrade.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The drift commit only changed tool description wording; four tools, perps group, read tier, view names, error codes and file paths all match current source."
+		},
+		"docs/partner-benefits.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Route /partners/benefits, Vite input partner-benefits, pages.json row and the nine partner cards match, and all linked docs exist."
 		},
 		"docs/partner-shoutout-playbook.md": {
 			"commit": "4cf6b20f3",
@@ -1875,11 +2733,41 @@
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
-		"docs/play-activity-ticker.md": {
-			"commit": "9c9d80bcc",
+		"docs/pay-skills-listing.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Endpoint prices match priceFor defaults and handler headers; drift commits were SSRF pinning and auth-hint discovery changes that leave the listing true; also replaced em and en dashes with hyphens."
+		},
+		"docs/payment-sessions.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "A post-sign 402 now keeps the budget reserved (payment_rejected), not rolled back; fixed step 6, the error table and the kept-reserved count, and added rpc_unavailable and missing_pay_to and invalid_amount."
+		},
+		"docs/perps.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added the new 409 platform_signing_disabled error code that perps now returns for non-platform signing modes."
+		},
+		"docs/persona-hub.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Key script only had wording changes; env vars, default kid, 24h TTL, alg selection, error codes, origin validation and widget state nonce all match api/auth/persona/[action].js and the widget."
+		},
+		"docs/pill-mascot.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The retargeter coverage floor is now max of all-track and body-track coverage via canonical-clip-gate.js, so fingerless complete bodies no longer lose the clip library."
+		},
+		"docs/play-activity-ticker.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added the coin war result rows from noteWarResult (win, draw, loss, jumbotron flash) to the sources table."
 		},
 		"docs/play-hardening.md": {
 			"commit": "9c9d80bcc",
