@@ -62,6 +62,7 @@ import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { assertSafePublicUrl } from '../_lib/ssrf-guard.js';
 import { textToImage } from '../_mcp3d/text-to-image.js';
 import { createRegenProvider } from '../_providers/replicate.js';
+import { createRegenProvider as createGcpProvider } from '../_providers/gcp.js';
 import { createNvidiaProvider } from '../_providers/nvidia.js';
 import { encodeJobToken } from '../_lib/forge-job-token.js';
 import {
@@ -73,7 +74,10 @@ import {
 	estimateEtaSeconds,
 	preferFreeReconstruct,
 	buildCatalog,
+	backendIsConfigured,
+	selfhostQualityForTier,
 } from '../_lib/forge-tiers.js';
+import { laneHealthSnapshot, markLaneUnhealthy } from '../_lib/forge-lane-health.js';
 import {
 	FORGE_SERVICE_NAME,
 	FORGE_TAGS,
@@ -104,6 +108,8 @@ const MAX_VIEWS = FORGE_MAX_VIEWS;
 // The reconstruct lane: serves image→3D (NVIDIA's hosted preview can't take user
 // photos) and the text→3D fallback when the free NVIDIA NIM lane is unavailable.
 const BACKEND = 'trellis';
+// Our own TRELLIS worker on Cloud Run GPU, the lane the regular Forge leads with.
+const SELF_HOST_BACKEND = 'trellis_selfhost';
 
 // ── Content-generation health probe (mode:"health_check") ───────────────────────
 // A full text→3D job is slow ($0.05, tens of seconds) — too heavy to canary on a
@@ -182,6 +188,10 @@ export async function submitGeneration({ prompt, imageUrls, isImageMode, aspect,
 		// NIM unconfigured / unreachable / over capacity — fall through to the
 		// reconstruct lanes so the paid call still produces a model.
 	}
+	// Our own GPU next: it answers with a job in seconds, where the HuggingFace lane
+	// below holds the buyer's connection for 60 to 90s and often ends in nothing.
+	const viaSelfHost = await submitViaSelfHost({ prompt, imageUrls, isImageMode, aspect, tier });
+	if (viaSelfHost) return viaSelfHost;
 	// Free-first: prefer the free HuggingFace Spaces reconstruct lane BEFORE the
 	// paid Replicate default, so a paid call never spends on — or dead-ends against
 	// — the paid account while a free lane can serve it. Reversible via
@@ -192,6 +202,69 @@ export async function submitGeneration({ prompt, imageUrls, isImageMode, aspect,
 		if (viaHf) return viaHf;
 	}
 	return submitViaReconstruct({ prompt, imageUrls, isImageMode, aspect, tier });
+}
+
+// Self-hosted TRELLIS lane. Text→3D synthesizes a reference view first; image→3D
+// sends the caller's views. The job is async, so the buyer polls the same
+// /api/forge?job= route the regular Forge uses, through a gcp job token. Returns
+// null when the lane is unconfigured, down, or refuses the job, so submitGeneration
+// moves on. Never throws: one lane's hiccup must not fail a call another can serve.
+async function submitViaSelfHost({ prompt, imageUrls, isImageMode, aspect, tier }) {
+	if (!backendIsConfigured(SELF_HOST_BACKEND)) return null;
+	try {
+		const snapshot = await laneHealthSnapshot([SELF_HOST_BACKEND]);
+		if (snapshot.byId[SELF_HOST_BACKEND]?.status === 'down') return null;
+	} catch (err) {
+		// The probe is advisory. An unreadable snapshot is no evidence the lane is down.
+		console.warn(`[x402/forge] self-host lane health unreadable: ${err?.message || err}`);
+	}
+
+	let views;
+	try {
+		if (isImageMode) {
+			// The worker fetches these URLs, so SSRF-guard them before forwarding.
+			for (const u of imageUrls) await assertSafePublicUrl(u);
+			views = imageUrls;
+		} else {
+			const synthesized = await textToImage(prompt, { aspectRatio: aspect });
+			views = [synthesized.imageUrl];
+		}
+	} catch (err) {
+		console.warn(`[x402/forge] self-host lane has no reference view: ${err?.message || err}`);
+		return null;
+	}
+
+	const resolvedTier = resolveTier(tier);
+	let job;
+	try {
+		job = await createGcpProvider().submit({
+			mode: 'trellis',
+			sourceUrl: views[0],
+			params: {
+				images: views,
+				quality: selfhostQualityForTier(resolvedTier.id),
+				// Same rule as api/forge.js: a plain backdrop fuses into the geometry
+				// unless it is cut out first. Draft stays fast and skips the matte.
+				matte: resolvedTier.id !== 'draft',
+			},
+		});
+	} catch (err) {
+		console.warn(`[x402/forge] self-host lane refused the job: ${err?.message || err}`);
+		await markLaneUnhealthy(SELF_HOST_BACKEND);
+		return null;
+	}
+
+	const token = encodeJobToken({ provider: 'gcp', kind: null, taskId: job.extJobId });
+	return {
+		job_id: token,
+		status: 'queued',
+		poll_url: `/api/forge?job=${encodeURIComponent(token)}`,
+		mode: isImageMode ? 'image_to_3d' : 'text_to_3d',
+		tier: resolvedTier.id,
+		backend: SELF_HOST_BACKEND,
+		eta_seconds: estimateEtaSeconds({ backendId: SELF_HOST_BACKEND, tier }),
+		price_usdc: priceUsdcForTier(tier),
+	};
 }
 
 // Free HuggingFace Spaces reconstruct lane — the free-first alternative to the
