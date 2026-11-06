@@ -102,7 +102,7 @@ RightUpperLeg → RightLowerLeg → RightFoot
 This means:
 
 - **Mixamo animations work**: the fork retargets Mixamo FBX clips onto the VRM rig (`loadMixamoAnimation.js`, `VRMRigMapMixamo.js`)
-- **The three.ws animation library is fully compatible**: the platform's bone-name canonicalizer (`src/glb-canonicalize.js`) maps VRM rigs (and every other humanoid convention it knows, MikuMikuDance's Japanese bone names included) to the canonical set, so all built-in clips (idle, wave, walk, and the rest) work out of the box
+- **The three.ws animation library is fully compatible**: the platform's bone-name canonicalizer (`src/glb-canonicalize.js`) maps VRM rigs (and every other humanoid convention it knows, MikuMikuDance's Japanese bone names and HumanIK `Character1Hips`-style names included) to the canonical set, so all built-in clips (idle, wave, walk, and the rest) work out of the box. A clip needs enough of its body tracks to find a bone: the floor counts body tracks alone, so a complete body without finger bones still plays every clip
 - **Retargeting** is handled automatically by the animation manager (`src/animation-retarget.js`)
 
 ---

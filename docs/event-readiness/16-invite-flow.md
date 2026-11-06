@@ -1,5 +1,7 @@
 # Feature 16: invite flow (deep link, QR, OG card) for the event
 
+> Status: shipped. The sheet is `src/game/invite-sheet.js` (lazy-loaded on the first press of the HUD Invite button or a lobby card's Invite action) over the pure helpers in `src/game/invite-link.js`; the unfurl is `server/play-head.mjs` plus `api/play-og.js`. Behavior and tests are documented in [docs/play-live-events.md](../play-live-events.md). The text below is the original brief.
+
 Everyone at the event arrives through one link, and everyone who has fun should be able to pull one more person in. Make inviting effortless from inside the world, and make the link unfurl beautifully everywhere it is pasted.
 
 ## Where the code lives

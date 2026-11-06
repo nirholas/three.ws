@@ -1,5 +1,7 @@
 # Feature 14: welcome concierge NPC for first-time event visitors
 
+> Status: shipped. `src/game/npc/concierge.js` (logic in `concierge-logic.js`) is mounted by `coincommunities.js`. Its greeting, free-model chat, four-stop tour, event line and idle cost are documented in the "The welcome concierge" section of [docs/play-live-events.md](../play-live-events.md); the text below is the original brief.
+
 Most event visitors will be first-timers landing from one shared link. The onboarding overlay explains controls, but nobody in the world greets them, answers questions, or shows them where things are. Build a concierge NPC that does.
 
 ## Where the code lives

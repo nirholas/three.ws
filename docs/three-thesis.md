@@ -5,7 +5,7 @@
 **Contract address:** `FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`
 **Platform:** [three.ws](https://three.ws), open source (Apache-2.0), [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws)
 **Live token page:** [/three-token](https://three.ws/three-token)
-**Last revised:** 2026-08-25
+**Last revised:** 2026-11-06 (holder perk status, section 5.2); other figures as of 2026-08-25
 
 > This document is a research thesis, not investment advice. Every claim below is sourced to a file in the three.ws repository or to a public listing. Where the repository is silent (supply schedule, team allocation, governance) this document says so instead of guessing. Section 14 lists every risk the platform's own documentation admits to. Read it before you read anything else.
 
@@ -148,13 +148,13 @@ How it works under the hood:
 |---|---|---|---|
 | `forge.high` (200k poly + PBR generation) | Bronze | **Live** | yes |
 | `forge.gameready` (Unity/Unreal export) | Bronze | **Live** | yes |
-| `worlds.private` | Silver | Planned (spec written, migration drafted) | no |
+| `worlds.private` | Silver | **Live** (private, invite-only worlds; strangers get a 404) | no |
 | `mcp.priority` | Silver | Planned | no |
 | `worlds.branded` | Gold | Planned | no |
-| `drops.early` | Gold | Planned (drop endpoints exist) | no |
-| `names.first_dibs` (rare `*.threews.sol`) | Genesis | Planned (SNS exists) | `name.auction` |
+| `drops.early` | Gold | **Live** (time-boxed early reveal window) | no |
+| `names.first_dibs` (rare `*.threews.sol`) | Genesis | **Live** while `THREEWS_RARE_NAMES_PUBLIC_AT` is in the future | `name.auction` |
 
-Activation order per `docs/hold-to-access.md`: `worlds.private` first, then `names.first_dibs`, then `drops.early`, with `mcp.priority` and `worlds.branded` deferred until a backend exists. Every one of these is a future catalyst for standing demand at a specific tier.
+Activation followed the order in `docs/hold-to-access.md`: `worlds.private`, then `names.first_dibs`, then `drops.early`. `mcp.priority` and `worlds.branded` stay deferred until a backend exists. The two early windows are time-boxed and end by themselves, so a perk never becomes a permanent paywall on scarce supply.
 
 ### 5.3 Pay-in-$THREE discounts on plans and passes
 
@@ -196,7 +196,7 @@ The fee rides inside the same transaction that creates the asset, so a failed de
 
 ### 5.9 Token-gated 3D embeds
 
-`docs/token-gated-3d-embeds.md`. `POST /api/embed/gate-create` (or the MCP tool `create_gated_embed`) with `{ minAmount, chain: 'solana' }`; **omitting `mint` defaults to $THREE**. Proof is server-side only: a SIWS-signed single-use expiring nonce plus a live `getTokenAccountsByOwner` balance read; an HMAC access token scoped to gate, asset, and wallet with a 10-minute TTL; `gate-verify` rate-limited per IP and per wallet. Below the bar, the viewer sees a designed locked teaser: "Hold {min_amount} {symbol} to unlock." Raising the requirement invalidates every prior token immediately. Any creator on the internet can now make their 3D content a $THREE holder perk.
+`docs/token-gated-3d-embeds.md`. `POST /api/embed/gate-create` (or the MCP tool `create_gated_embed`) with `{ minAmount, chain: 'solana' }`; **omitting `mint` defaults to $THREE**. Proof is server-side only: a SIWS-signed single-use expiring nonce plus a live `getTokenAccountsByOwner` balance read; an HMAC access token scoped to gate, asset, and wallet with a 10-minute TTL; `gate-verify` rate-limited per IP and per wallet. Below the bar, the viewer sees a designed locked teaser: "Hold {min_amount} {symbol} to unlock." Raising the requirement invalidates every prior token immediately. The owner can read an asset's active gate with `GET /api/embed/gate-create?assetId=` and remove it with `DELETE` on the same URL; Widget Studio's "Holders only" panel drives both. Any creator on the internet can now make their 3D content a $THREE holder perk.
 
 ### 5.10 Holder worlds and coin communities
 
@@ -254,6 +254,7 @@ The wallets fail closed in production. If `THREE_TREASURY_WALLET` or `THREE_REWA
 - **Published commitment: 50% of platform revenue** (`THREE_BUYBACK_COMMIT_BPS` default 5,000).
 - Per-run maximum $250 (`THREE_BUYBACK_MAX_USD`), dust floor $10, slippage 3%.
 - Custody and accounting are deliberately decoupled: the spend is driven by the buyback wallet's live USDC balance, while the public "revenue earned" figure reads the `agent_revenue_events` fee ledger. This keeps the earned-versus-deployed ratio honest and auditable.
+- Both buy lanes refuse to run (`rewards_wallet_is_signer`) when the signer is `THREE_REWARDS_WALLET`, because the lane sweeps its signer's $THREE into the treasury and would drain the holder-rewards pool. `npm run token:preflight` validates candidate receivers read-only.
 - Execution is gated by `THREE_BUYBACK_ENABLED`. Until an operator funds the wallet and opts in, a scheduled run is a recorded no-op. (See risk 4 in section 14.)
 
 ### 7.2 The micro-buy loop (`docs/three-microbuy.md`)
@@ -449,7 +450,7 @@ From the README roadmap:
 Token-specific catalysts, in rough order of proximity:
 
 1. **Buyback and micro-buy activation.** Both engines are built, tested, capped, and publicly accountable via `/api/three-token/stats`. Flipping `THREE_BUYBACK_ENABLED` and `THREE_MICROBUY_ENABLED` with funded wallets turns published policy into daily on-chain buys.
-2. **Perk activation.** `worlds.private` at Silver is fully specified (migration drafted, gate written, test planned). `names.first_dibs` at Genesis and `drops.early` at Gold follow. Each activation gives a specific tier a specific reason to exist.
+2. **Remaining perk activation.** `worlds.private` (Silver), `drops.early` (Gold) and `names.first_dibs` (Genesis) are enforced in code. `mcp.priority` and `worlds.branded` still need a backend. Each activation gives a specific tier a specific reason to exist.
 3. **CoinGecko MEXC market addition** (request filed 2026-08-16).
 4. **Listing follow-through**: AWS Marketplace product creation, OKX.AI resubmission, OpenAI Plugin Directory submission, Cookbook PR merge.
 5. **Phase 3 contracts and audits**: agent tokens, reputation markets, and royalty contracts on-chain would make $THREE the settlement asset of a far larger economy.
@@ -464,7 +465,7 @@ Phase targets stated in the README: 10k avatars per day at launch; 1,000 test us
 
 A thesis that hides the risks is a pitch. These are the risks the three.ws documentation states about itself, plus the structural ones any holder should weigh.
 
-1. **Most holder perks are Planned, not Live.** Only two of seven registered gated features (`forge.high`, `forge.gameready`) are enforced today. The compute discount and quota multiplier are live. The `enforced` flag exists precisely so the platform never promises an unwired perk, but a holder buying for `worlds.private` or `names.first_dibs` is buying a roadmap. Until 2026-09-20 the flag only governed the feature rows: the prose perk lines on the same tier cards still listed "Private worlds", "Priority MCP routing" and "Branded worlds" flatly, and `GET /api/pricing` served them the same way. `TIERS` now separates `perks` (delivered today) from `planned`, every surface renders the planned lines with the Planned flag, and `tests/three-tier-honesty.test.js` fails if an unenforced feature's label reappears in a `perks` list.
+1. **Some holder perks are still Planned, not Live.** Five of seven registered gated features (`forge.high`, `forge.gameready`, `worlds.private`, `drops.early`, `names.first_dibs`) are enforced today; `mcp.priority` and `worlds.branded` are not. The compute discount and quota multiplier are live. The `enforced` flag exists precisely so the platform never promises an unwired perk, but a holder buying for `mcp.priority` or `worlds.branded` is buying a roadmap. The `names.first_dibs` window also ends when `THREEWS_RARE_NAMES_PUBLIC_AT` passes. Until 2026-09-20 the flag only governed the feature rows: the prose perk lines on the same tier cards still listed "Private worlds", "Priority MCP routing" and "Branded worlds" flatly, and `GET /api/pricing` served them the same way. `TIERS` now separates `perks` (delivered today) from `planned`, every surface renders the planned lines with the Planned flag, and `tests/three-tier-honesty.test.js` fails if an unenforced feature's label reappears in a `perks` list.
 
 2. **The burn policy was internally inconsistent, and is now reconciled.** `api/_lib/token/config.js` states "NO PLATFORM BURNS, supply is never destroyed," while until 2026-09-16 `api/three-token/[action].js` shipped an `AGENT_DEPLOY_BURN = 1000` constant, and `/api/three-token/burns`, `/three-live`, and `/dashboard/three-token` reported a "burned" total computed as agent count times 1,000 with no on-chain burn behind it. That derived figure is gone: the burns endpoint now answers `policy: "no_platform_burns"` with an empty ledger. Blog posts from May and June 2026 still describe a "planned buyback-and-burn"; the code policy (buyback, no platform burn) is authoritative.
 

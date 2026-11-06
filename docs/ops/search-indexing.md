@@ -37,10 +37,10 @@ Every public URL falls into one of these, and the failure modes are different:
    `/m/:id` is the exception that no longer starts empty:
    `server/creation-head.mjs` rewrites the shell's head per creation for every
    User-Agent (title, description, canonical, a `summary_large_image` card whose
-   image is the PNG render of the model, and `3DModel` JSON-LD), so a reader that
+   image is the PNG render of the model for any GLB up to 25 MB, and `3DModel` JSON-LD), so a reader that
    never runs the page script still gets the creation's own head. Any lookup miss
    or timeout serves the untouched shell, and `src/model-page.js` fills it in as
-   before. [seo.md](../seo.md) covers that render path in full.
+   before. Each creation head served is also counted as an aggregate share-funnel page load (no identifier stored). [seo.md](../seo.md) covers that render path in full.
 
 `/avatars/:id` and `/agents/:id` are the interesting case: a browser gets the
 SPA shell, and a crawler UA is rewritten by `vercel.json` to a server-rendered

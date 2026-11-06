@@ -35,7 +35,7 @@ own skeleton, with its own bone naming and its own rest pose, is rebound onto
 whatever humanoid is loaded. That works because the platform already
 normalises arbitrary rigs to a canonical bone set
 ([`src/glb-canonicalize.js`](../src/glb-canonicalize.js)) — the same machinery
-that lets any humanoid drive the animation clip library.
+that lets any humanoid drive the animation clip library. That includes HumanIK-named rigs (`Character1Hips`): the canonicaliser resolves them after three.js strips the namespace colon, so they bind instead of staying in bind pose.
 
 Concretely, `attachGarment()`:
 
@@ -65,6 +65,17 @@ Concretely, `attachGarment()`:
 
 A garment with no skin at all (hat, glasses) is parented to a single joint
 (`rig.attachBone`) instead of deformed.
+
+On the Parametric base, skinned garments and hair also follow the body's
+identity morphs and free-sculpt deltas (jaw, chest, hips, limbs), which skin
+weights alone do not carry. [`src/garment-conform.js`](../src/garment-conform.js)
+binds each garment vertex once to its nearest body triangle in the rest pose
+and moves it with the morphed body, keeping its standoff and fading by the
+manifest's `fit.looseness`. The editor (`conformGarments()` in
+`src/avatar-garment.js`) and the server bake (`api/_lib/bake-garments.js`,
+which snapshots the unmorphed body before the morph fold; pass `conform: false`
+to skip) share the one algorithm, so the baked GLB matches what the editor
+shows. Rigid pieces (hats, glasses) are never conformed.
 
 ## The pieces
 
@@ -160,7 +171,7 @@ can never resolve would otherwise leave the generator disabled forever:
 }
 ```
 
-One garment per slot, max 8, enforced by the zod schema. Existence against the
+One garment per slot, max 8, enforced by the zod schema. The same record also carries `base`, `proportions`, texture `layers` and the avatar's `animation` identity; the baker ignores `animation`, and `appearance.garments` is what the Surprise-me composer on the Parametric body fills (with seeded shape, proportions and accessories) so the result is replayable from its seed. Existence against the
 live catalog is deliberately NOT checked at save time — a garment retired from
 the catalog later degrades to "not worn" on the next load/bake instead of
 bricking the avatar.

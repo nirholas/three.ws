@@ -143,9 +143,12 @@ ops alert when the 30-day projection crosses a threshold:
 - **> 450,000 (90%)** → critical: "forge + x402 outage imminent …".
 
 It goes through `sendOpsAlert` (`api/_lib/alerts.js`), so it always lands in the
-`ops_alerts` table and additionally pushes to Telegram when `TELEGRAM_BOT_TOKEN`
-+ `TELEGRAM_ALERTS_CHAT_ID` are set (shared with the rest of the ops alerting).
-The alert is advisory and never fails the smoke run.
+`ops_alerts` table and additionally pushes to the configured channels (shared
+with the rest of the ops alerting; `api/_lib/alert-channels.js` reports which are
+wired). A critical alert pushes to Telegram (`TELEGRAM_BOT_TOKEN` +
+`TELEGRAM_ALERTS_CHAT_ID`) and to email (`OPS_ALERT_EMAILS` + `RESEND_API_KEY`)
+every time. The warning is pushed to Telegram once per hour and reaches email
+through the hourly digest. The alert is advisory and never fails the smoke run.
 
 ### Config
 
@@ -200,7 +203,7 @@ to `local` (no Redis command) or must stay Redis-backed.
 | `api/_lib/x402-spending-ledger.js` | critical / cross-instance-required | atomic INCRBY spend caps per hour/day/address |
 | `api/_lib/a2a/spend-ledger.js` | critical / cross-instance-required | agent-to-agent daily payout caps; in production with no Redis, reads and reservations are refused (fail closed) because a per-instance ledger would multiply every mandate budget by the instance count |
 | `api/_lib/x402/idempotency-cache.js` | critical / cross-instance-required | payment replay dedup (GET/SET); proofs are hashed over the payment's canonical identity so re-encoding a header cannot dodge the check |
-| `api/_lib/idempotency.js` | cross-instance-required | shared `Idempotency-Key` store (24h): atomic claim via `cacheSetIfAbsent`, used by the v1 agents API, the free 3D studio and `runOnce` callers |
+| `api/_lib/idempotency.js` | cross-instance-required | shared `Idempotency-Key` store (24h): atomic claim via `cacheSetIfAbsent`, used by the v1 agents API and the free 3D studio. `runOnce` (lock + store in one call, with a same-instance in-flight set because the lock is always granted when Redis is down) backs the paid agent skill route and the avaturn seed cron |
 | `api/_lib/builds-store.js` | cross-instance-required | build metadata + per-mint index cache |
 | `api/_lib/alerts.js` | cross-instance-required | ops-alert dedup + hourly ceiling |
 | `api/x402-pay.js`, `api/feed-stream.js`, `api/_lib/channel-feed-sources.js`, `api/_lib/pumpfun-mcp.js` | cross-instance-required | paid-call feed (`x402:pay:feed`) + feed reads |

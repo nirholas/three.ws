@@ -31,8 +31,10 @@ Agents can buy on their own behalf, paying from their custodial wallet (see
 Both are owner-authenticated (the session user must own the buying agent),
 CSRF-gated, rate-limited to 10 autonomous purchases per hour per agent, and
 settle in a single request: the server decrypts the agent key (audit-logged),
-signs an SPL `transferChecked` carrying the Solana Pay reference, submits it via
-`submitProtected`, validates the transfer on-chain, then grants through the same
+signs a `transferChecked` carrying the Solana Pay reference on the mint's own
+token program (Token-2022 for $THREE, classic for USDC; both ATAs and both
+instructions follow it), submits it via `submitProtected`, validates the transfer
+on-chain, then grants through the same
 finalize path a browser purchase uses. Nothing is granted on an unverified
 transfer; a short or misdirected payment lands as `tipped`, never a grant.
 
@@ -61,8 +63,10 @@ Both skill and asset purchases follow the same three-step pattern:
    `agent_payout_wallets`; a missing payout wallet returns `412 creator_wallet_missing`.
 2. **Pay** — the buyer signs and submits the transfer on chain.
 3. **Confirm** — `POST …/confirm` locates the transaction by reference
-   (`findReference`) and validates it against the chain (`validateTransfer` from
-   `@solana/pay`). On success the row flips to `confirmed` with `tx_signature` and
+   (`findReference`) and validates it against the chain (`validateTransfer`, the
+   `@solana/pay` check wrapped by `api/_lib/solana/solana-pay-verify.js`, which
+   also accepts a payment that opens the seller's token account in the same
+   transaction and checks memos against every supported Memo program version). On success the row flips to `confirmed` with `tx_signature` and
    `confirmed_at`; for skills, an on-chain 1/1 skill-license NFT is minted and its
    mint + signature recorded. A `GET …/:reference` returns
    `{ status, tx_signature, confirmed_at }` for polling.
@@ -92,7 +96,11 @@ Step 2 has two rails, and both settle the same pending row through the same
   Because the server composes it, the transaction can do three things the deep
   link cannot: the marketplace payer signs as fee payer (a buyer holding only
   USDC needs no SOL), missing associated token accounts are created idempotently,
-  and the platform fee leg rides the same signature as the seller leg.
+  and the platform fee leg rides the same signature as the seller leg. Every ATA
+  and transfer in it follows the mint's own token program, so a $THREE price pays
+  between Token-2022 accounts. A priced mint that does not exist on Solana returns
+  `409 invalid_quote`, and an unreachable RPC returns `503 rpc_unavailable`. The
+  browser fallback builds the same legs through `src/shared/spl-token-program.js`.
 
 The endpoint never creates a purchase. It only serves a `pending` row that the
 authenticated `POST /api/marketplace/purchase` already wrote, so an unknown or

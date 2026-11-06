@@ -356,7 +356,10 @@ then kept in a verified, watched, auto-fundable state:
 ## Components
 
 - **Self-hosted facilitator** — [api/x402-facilitator/[action].js](../api/x402-facilitator/[action].js),
-  core in [api/_lib/x402/self-facilitator.js](../api/_lib/x402/self-facilitator.js).
+  core in [api/_lib/x402/self-facilitator.js](../api/_lib/x402/self-facilitator.js),
+  now a thin adapter over the published `@three-ws/x402-server/facilitator`
+  (`createFacilitator()`, see [packages/x402-server](../packages/x402-server/) and
+  its [operator guide](../packages/x402-server/docs/operating-a-facilitator.md)).
   Drop-in `/verify` + `/settle` matching the x402 v2 facilitator contract.
   Validates the buyer-signed USDC transfer, co-signs with the sponsor key,
   broadcasts over our RPC, logs the exact SOL fee. Point
@@ -468,12 +471,12 @@ then kept in a verified, watched, auto-fundable state:
   ops alert; USDC's decimals resolve locally and cost no RPC call at all.
 - **Endpoint catalog** —
   [api/_lib/x402/ring-catalog.js](../api/_lib/x402/ring-catalog.js) is the single
-  source of truth for **every** paid x402 endpoint on the platform (84 entries as
-  of July 2026: tips, services, intel, health checks, settlement). Each entry
+  source of truth for **every** paid x402 endpoint on the platform (108 entries as
+  of November 2026: tips, services, intel, health checks, settlement). Each entry
   declares the exact `method`, `query`/`body()` request contract, and default
   price the handler actually validates (derived by reading the handler), so a
   ring call never spends money on a request the endpoint would reject. **45 are
-  `autobuy`** (safe to purchase on the loop); the **39 `autobuy:false`** entries
+  `autobuy`** (safe to purchase on the loop); the **63 `autobuy:false`** entries
   (real coin mints, real LLM spend, dynamic third-party payouts) are covered by
   one-time verification, not the loop, each with a justification in the source. Adding a new paid endpoint
   without cataloging it fails `tests/x402-ring-catalog.test.js` (it greps every

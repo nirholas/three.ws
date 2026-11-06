@@ -12,13 +12,13 @@ The world must load fast on event wifi and hold 60fps on a mid-range laptop. Mea
 ## What to measure (before touching anything)
 
 1. **Network.** With devtools on the canonical $THREE URL (see `docs/event-readiness/README.md`): total transferred bytes to interactive, largest individual assets, any asset fetched more than once. `scripts/play-mobile-repro.mjs` (chromium engine) prints transfer totals and attributes duplicate GLB/clip fetches to their call stacks. `npm run audit:event-client` (see the README) wraps it with committed ceilings and is the repeatable form of this step; the avatar GLB and `/animations/manifest.json` are now fetched once per load, so a new duplicate is a regression.
-2. **Frame rate.** Performance panel recording of 30s of walking through the busiest area. Note long tasks, GC spikes, and the main-loop cost breakdown.
+2. **Frame rate.** Performance panel recording of 30s of walking through the busiest area. Note long tasks, GC spikes, and the main-loop cost breakdown. The render-tier watchdog (`createFrameWatchdog` in `src/club-perf.js`) is fed the real frame interval through `watchdogFrameSec` (capped at 0.5 s), not the clamped physics dt, so a slow phone steps down a tier in seconds. Once it has hit the lowest tier and frames still average under 10 fps, `coincommunities.js` offers the lite client once per page (`createStruggleDetector` in `src/game/play-lite-core.js`, `src/game/lite-offer.js`); devices with no WebGL skip three.js entirely via the `pages/play.html` head script (`docs/play-lite.md`).
 3. **Memory.** Heap snapshot after 5 minutes idle in the world. Growth means a leak (event listeners, geometries/materials not disposed on despawn, chat log unbounded).
 
 ## Fix priorities (biggest wins first)
 
 1. **Duplicate fetches.** Same GLB or animation clip loaded twice is pure waste; cache at the loader.
-2. **Eager imports that should be lazy.** Wheel UI, cosmetics shop, voice chat, intel kiosk: anything not needed for first paint should be a dynamic `import()` triggered on approach or click.
+2. **Eager imports that should be lazy.** Wheel UI, cosmetics shop, voice chat, intel kiosk: anything not needed for first paint should be a dynamic `import()` triggered on approach or click. The plaza stage already follows this: `plaza-stage.js` is a cheap landmark and `plaza-stage-show.js` is imported only on approach.
 3. **Draw calls.** Instance repeated props (trees, rocks, crowd members). Merge static geometry per zone.
 4. **Texture budget.** Downsize anything over 1024px that never fills the screen; KTX2/basis if the pipeline supports it, otherwise plain resizing is fine.
 5. **Per-frame allocation.** No `new Vector3()` in the render loop; reuse scratch objects.

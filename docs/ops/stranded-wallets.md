@@ -63,7 +63,7 @@ Production was bound on 2026-09-16 with
 proves it signs for the stored address, and re-encrypts it under the production key
 with a compare-and-swap on the old ciphertext. The address never changes, so the
 owner's balance simply becomes withdrawable. Candidate keys go in on stdin, one per
-line, and are never printed.
+line, and are never printed. Each line is tried as given and trimmed, and short values are kept (the `JWT_SECRET` fallback that sealed some wallets had no minimum length).
 
 ```bash
 export DATABASE_URL="$(node scripts/read-service-env.mjs '^DATABASE_URL$' --raw)"
@@ -102,6 +102,8 @@ nothing about production. The same measurement is served continuously at
 `GET /api/ops/payment-outcomes` under `stranded_custody` (see
 [payment-outcomes.md](payment-outcomes.md)), so an operator without the key can
 still read the current count from the running service.
+
+The audit also checks key separation. `--keys-only` runs just that check with no database, and a normal run prints a `key separation` line. Both exit 4 when `WALLET_ENCRYPTION_KEY` and `JWT_SECRET` are the same secret (only 8-hex fingerprints are shown), because a session-secret leak would then open every custodial wallet. The re-seal that clears it is in [wallet-key-migration.md](wallet-key-migration.md).
 
 ### Platform wallets (measured 2026-09-02, live)
 

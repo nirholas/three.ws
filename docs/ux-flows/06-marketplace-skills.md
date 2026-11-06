@@ -23,9 +23,9 @@ Routing facts confirmed in `vercel.json` (line numbers shift too often to pin; g
 - **Steps (N):**
   1. User opens `/marketplace`; SPA shell loads, skeleton cards render (`skeletonHTML(8)`).
   2. System fetches categories, agents, public avatars, onchain agents, weekly theme, current user, and the user's owned skills in parallel.
-  3. Hero renders a 3D lobby (`marketplace-lobby.js` `mountLobby()`, max 5 featured avatars on a podium) auto-rotating every 8s; pauses on hover/focus.
+  3. Hero renders a 3D lobby (`marketplace-lobby.js` `mountLobby()`, max 5 featured avatars on a podium) auto-rotating every 8s; pauses on hover/focus. The carousel hero picks at most 3 avatars within one shared GLB byte budget (`pickHeroSet`, 2.5 MB total, sized from `sizeBytes` on `/api/explore`), so a heavy model is skipped rather than blocking the page.
   4. Weekly theme strip renders a horizontally-scrollable set of featured 3D picks.
-  5. Main grid renders agent cards + avatar cards + onchain cards with section headers and counts.
+  5. Main grid renders agent cards + avatar cards + onchain cards with section headers and counts. Each agent card paints its stored thumbnail as a real image (sized through `/api/img`) under a lazy 3D viewer that only loads on hover, then fades the thumbnail out (`src/shared/marketplace-card-preview.js`).
   6. (optional) User clicks a category in the sidebar or a top-bar chip → `state.category` set → `loadList(true)` refetches `/api/marketplace/agents?category=…`.
   7. (optional) User types in the search box → debounced 250ms → `state.q` set → `loadList(true)` refetches with `?q=…` (also applied to `/api/explore` avatar/onchain calls).
   8. (optional) User changes the sort dropdown (recommended / newest / popular / trending) → `loadList(true)` with `?sort=…`.
@@ -72,7 +72,7 @@ Routing facts confirmed in `vercel.json` (line numbers shift too often to pin; g
   3. User clicks "Confirm Purchase" → client POSTs `/api/marketplace/purchase` `{ agent_id, skill, [duration_hours], [buyer_public_key], [recipient (gift)] }`.
   4. Server (`MonetizationService.preparePurchaseTransaction`) resolves price, creator payout wallet, fee split, idempotent pending row, referrer attribution; returns a quote `{ reference, recipient, currency_mint, amount, creator_amount, mint_decimals, fee, chain }`. If `buyer_public_key` is supplied and chain is Solana, it also pre-builds a **gasless** fee-payer-sponsored `VersionedTransaction` (`buildGaslessPurchaseTx`).
   5. **Branch — already owned:** if `already_owned: true`, modal shows "✓ Already purchased — access granted." and resolves success without payment.
-  6. Client builds the SPL transfer (`buildSplTransferWithReference`): from-ATA → creator-ATA for `creator_amount`, optional platform-fee leg to treasury, and pushes the `reference` pubkey as a read-only key so the server can find the tx on-chain. (Gasless path uses the server-prepared tx instead.)
+  6. Client builds the SPL transfer (`buildSplTransferWithReference`): from-ATA → creator-ATA for `creator_amount`, optional platform-fee leg to treasury, and pushes the `reference` pubkey as a read-only key on the final instruction so the server can find the tx on-chain. Both legs run on the mint's own token program (Token-2022 for `$THREE`, classic for USDC), resolved by `src/shared/spl-token-program.js`; the builder itself is `buildReferencedSplTransfer`. (Gasless path uses the server-prepared tx instead.)
   7. **Pre-flight balance check:** client reads the buyer's token ATA; if balance < required, it shows "Not enough USDC" + an "Add funds →" button (`showAddFunds`) and stops before prompting the wallet (insufficient-funds branch).
   8. Client sets recent blockhash, fee payer = buyer; calls `wallet.sendTransaction()` (desktop) or `signAndSendTransaction()` (mobile) → user approves in the wallet.
   9. Client waits for on-chain confirmation (`connection.confirmTransaction(txid, 'confirmed')`).

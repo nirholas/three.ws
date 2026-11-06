@@ -122,7 +122,7 @@ listed in `/.well-known/x402.json`.
 
 ## Related
 
-- Daily automated version of the same bar: [api/cron/forge-smoke.js](../../api/cron/forge-smoke.js), 09:30 UTC, alerts to ops Telegram.
+- Daily automated version of the same bar: [api/cron/forge-smoke.js](../../api/cron/forge-smoke.js), 09:30 UTC, alerts through the ops alert channels (the dashboard always, Telegram and email when configured; `api/_lib/alert-channels.js`). Critical alerts push at once, warnings arrive as an hourly digest, and `/api/healthz` flags production degraded when no push channel is wired.
 - Which failure classes recur, from the outcome ledger: [forge-error-triage.md](./forge-error-triage.md).
 - The credential's own health signal: [api/_lib/ops/object-storage-health.js](../../api/_lib/ops/object-storage-health.js). It retries the signed list once after a 300 ms backoff before classifying the bucket down (`metrics.retried`), so a one-off network blip does not page, while two consecutive failures still do.
 - Worker URLs and env: [gcp-model-workers.md](./gcp-model-workers.md).

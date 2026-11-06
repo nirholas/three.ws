@@ -30,6 +30,7 @@ Without `confirm: true`, deposit and withdraw send nothing. They return the prev
 - The simulation must show the wallet gives up no more than the confirmed amount plus a fixed fee and rent allowance. Otherwise the check fails and nothing is sent.
 - Deposits count against the wallet per-transaction limit and daily spend limit, and a frozen wallet refuses everything.
 - A withdraw that would leave debt under a 1.25 health factor is refused.
+- Confirmed deposits and withdraws require the owner to have signed the current real-funds agreements (Terms of Service, Risk Disclosure, Agent Wallet Agreement). Otherwise the call fails with `risk_ack_required` (403) and nothing is sent; if the signature lookup itself fails it fails closed with `agreement_check_unavailable` (503). Previews are not gated.
 - An earn rule can only be written from an owner session. An API key or an agent cannot grant itself permission to lend.
 
 ## Earn rule

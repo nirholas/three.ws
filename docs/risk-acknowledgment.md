@@ -103,6 +103,13 @@ its own context slug: strategies and DCA (`strategy`, `dca-create`,
 registration, and the Uniswap, Robinhood Chain (Pons) and paired-quote launches.
 Pausing an order, like every other way of turning spending off, is not gated.
 
+Lending from an agent wallet is gated in the service, not the route: the
+confirmed `lend_deposit` and `lend_withdraw` MCP tools call `currentSignatureFor`
+through `api/_lib/lending/service.js` and answer `403 risk_ack_required` with the
+signing requirement before anything is built or sent. A failed lookup fails closed
+with `503 agreement_check_unavailable`. `lend_preview` simulates only, moves
+nothing, and is not gated.
+
 Custody operations that expose or move a whole wallet are gated too: exporting
 an agent wallet's key (`key_export`) and confirming a rotate-and-sweep
 (`key_rotate`) in `api/agents/wallet-custody.js`. The export check runs before

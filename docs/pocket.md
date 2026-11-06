@@ -42,6 +42,12 @@ The shelf under the device does the same job with a mouse. Both read
 `GET /api/agents/public`, so every cartridge is an agent somebody actually
 built and published.
 
+QA and e2e test accounts never appear on the shelf (the endpoint filters out
+agents owned by `users.is_test` accounts). If an agent's body fails to load or
+cannot walk, the screen keeps running with the default body standing in and the
+console shows a short notice. A wave or jump is only announced when the body
+actually performed it; otherwise you get "This body can't wave." instead.
+
 ## Sharing one
 
 The URL carries the console's state, so a link is the device exactly as you left

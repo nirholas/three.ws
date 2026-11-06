@@ -40,6 +40,11 @@ Each tick:
 5. For `oracle` / `sniper` pipeline entries, extracts signal data and upserts it
    into `oracle_intel_signals` for the sniper oracle gate to consume.
 6. Enforces a **daily USDC spend cap** across all calls in the loop.
+7. Stops **starting** new calls 60 seconds before the 120 second cron budget
+   (`api/_lib/x402/tick-budget.js`): one paid call is a probe, a pay and an
+   optional challenge-refresh reprobe, each capped at 20 seconds, so a call begun
+   later could carry the tick into `503 cron_timeout`. Entries not reached stay
+   ready for the next tick, since cooldowns are only set after a call.
 
 Payments are real on chain — no mocks, no simulations.
 

@@ -323,6 +323,8 @@ is a config-only `--update-env-vars` with no rebuild:
 | `SOLANA_CONFIRM_POLL_BACKOFF` | `1.5` | multiplier per poll after that (clamped to >= 1) |
 | `SOLANA_CONFIRM_POLL_MAX_INTERVAL_MS` | `6000` | ceiling (clamped to >= the base) |
 
+Expiry is decided against the ledger, not the node's recent-status cache. Once the block height passes `lastValidBlockHeight` with no status seen, `pollConfirmation()` asks `getSignatureStatuses` with `searchTransactionHistory`. A transaction found there resolves (or surfaces its revert), an RPC error on that lookup retries on the next poll, and only a ledger miss throws `tx_expired`. A caller can therefore trust `tx_expired` as "never landed" before it rebroadcasts.
+
 **GCP credits cannot help here.** Blockchain Node Engine is Ethereum-only and the
 BigQuery `blockchain-analytics-*` datasets are EVM chains plus analytics, so the standing
 "prefer GCP, credits are pre-approved" rule has nothing to offer this lane. Do not spend

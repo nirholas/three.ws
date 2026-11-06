@@ -88,7 +88,7 @@ its `Content-Type` is already correct, and `/forge`'s own gallery has always
 rendered it. Adoption costs zero bytes and zero render time.
 
 This happens automatically at insert time in
-[`api/cron/forge-seed-cron.js`](../api/cron/forge-seed-cron.js), and retroactively
+[`api/_lib/seed-publish.js`](../api/_lib/seed-publish.js) (the publish path both seed crons share), and retroactively
 via `adoptForgePreviews()` in the backfill.
 
 ### 2. Client capture (`POST /api/avatars/thumbnail`)
@@ -136,8 +136,8 @@ and x402 regeneration crons, forge previews, and `/api/render/glb`.
 
 How it poses, in order:
 
-1. **Not a humanoid** (no skin, or fewer canonical bones than
-   `AnimationManager.supportsCanonicalClips()` accepts): left as authored. Props,
+1. **Not a humanoid** (`AnimationManager.clipGate()` reports `no-skin` or
+   `too-few-bones`): left as authored. Props,
    vehicles and creatures render exactly as before.
 2. **Arms already hanging** in the bind pose (`armsAlreadyHanging()`): left as
    authored. Reposing a stylized rig that already stands naturally only risks
@@ -147,9 +147,11 @@ How it poses, in order:
    `AnimationManager`, the same retargeting path the live viewer animates with:
    canonical bone names from `src/glb-canonicalize.js`, rest-frame correction from
    `src/animation-retarget.js`, and the fallen-pose guard. Only joint rotations
-   are applied; the avatar keeps its own hip height.
-4. **The clip cannot drive the rig** (too few bones map, for example a rig with
-   no finger bones), **or it drove the arms somewhere wrong**: the rig goes back
+   are applied; the avatar keeps its own hip height. The coverage floor passes
+   on all tracks or on the body tracks alone, whichever is higher, so a complete
+   body with no finger bones still takes the clip.
+4. **The clip cannot drive the rig** (the gate fails because too few bones map,
+   or it drove the arms somewhere wrong): the rig goes back
    to its bind pose and the arms are swung down geometrically by
    `relaxUndrivenArms()`.
 5. **Every posed result is checked** (`armsPointBelow()`): both upper arms must
@@ -165,7 +167,8 @@ of them to render the skeleton exactly as authored.
 
 A skeleton convention the canonicalizer does not recognise renders as authored.
 Add its bone names to `src/glb-canonicalize.js` (with a case in
-`tests/glb-canonicalize.test.js`) and every renderer picks it up; never add a
+`tests/glb-canonicalize.test.js`; HumanIK names such as `Character1Hips` resolve
+after three.js strips the namespace colon) and every renderer picks it up; never add a
 bone table to a renderer.
 
 ## Regenerating thumbnails after a pose change

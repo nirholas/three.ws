@@ -149,7 +149,7 @@ the return.
 ## Agent-wallet reclaim: the other half of the fleet's SOL
 
 Sweepback and `reclaimIdleSol` both walk the **`SOLANA_SIGNERS` registry**, the
-sixteen engine wallets. That is not where most of the platform's SOL lives.
+eighteen engine signers. That is not where most of the platform's SOL lives.
 `fundAgentForLaunch` ([`api/_lib/launcher-funding.js`](../api/_lib/launcher-funding.js))
 moves SOL master → **agent custody wallet** one way, and nothing ever moved it
 back: snipes recycle ~97 % of their capital, but the proceeds settle into the
@@ -161,6 +161,12 @@ A full fleet audit on 2026-07-28 measured the result: **7.2 of the fleet's
 `fee_wallet_below_floor`. Nothing had leaked — fee burn over the whole week was
 0.141 SOL and lifetime sniper P&L was −0.15 SOL. The capital was simply somewhere
 the return path could not reach.
+
+Since 2026-11-05 the `agent-sniper` service no longer shares that master with the
+x402 ring payer: it loads `LAUNCHER_MASTER_SECRET_KEY_B64` from its own secret
+(`wallet-sniper-funder-b64`) with `LAUNCHER_MASTER_RESERVE_SOL=0.005`, so arm
+top-ups and ring settle fees stop draining one balance. The API service keeps
+the shared keypair and the `0.05` SOL default reserve.
 
 `reclaimIdleAgentSol()` closes that loop. It runs inside
 [`/api/cron/treasury-topup`](../api/cron/treasury-topup.js) as self-healing step
@@ -375,7 +381,9 @@ destination lock:
 
 The swap confirms through the platform's HTTP-polling confirmer
 ([`api/_lib/solana/confirm.js`](../api/_lib/solana/confirm.js)) bound to the
-transaction's own blockhash, and a landed-but-reverted swap throws rather than
+transaction's own blockhash, and, before it calls a send expired, the confirmer asks the ledger itself
+(`getSignatureStatuses` with history search) so a transaction that landed is never
+reported dropped, and a landed-but-reverted swap throws rather than
 being booked. A per-swap cooldown (`ECONOMY_FUEL_COOLDOWN_S`) plus the on-chain
 daily-cap read together stop two overlapping topup ticks from double-swapping.
 
@@ -518,6 +526,11 @@ tip**, just a data-driven priority fee floored at 1000 µLamports/CU (see
 [`api/_lib/execution-engine.js`](../api/_lib/execution-engine.js)). A single
 top-up costs roughly 0.000005–0.00001 SOL. The fee escalates only on retry under
 congestion, clamped to a hard ceiling.
+
+A retry re-signs with a fresh blockhash while the earlier attempt stays valid, so
+`submitProtected` checks the chain for an earlier attempt that landed before every
+retry and before every terminal error, and returns that landing
+(`landedBy: 'late_confirm'`) instead of failing or sending twice.
 
 ## Configuration
 
@@ -667,7 +680,7 @@ a third-party-verifiable timestamp of the books.
 The 2026-07-02 wiring gaps this section used to track are closed. Current state
 of the tree the master feeds:
 
-- **The registry defines the master plus sixteen engine signers** (relayers,
+- **The registry defines the master plus eighteen engine signers** (relayers,
   launcher master, treasuries, marketplace payer, gasless launch sponsor, a2a
   payer, ring sponsor/payer, circulation treasury, NFT collection authority). An engine whose secret env is
   unset simply never resolves and is skipped by the sweep; set each engine's

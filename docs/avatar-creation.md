@@ -145,7 +145,7 @@ three.ws follows the **ARKit-52** facial blendshape standard ([Apple ARKit refer
 | `cheekPuff` | Celebration |
 | `noseSneerLeft` / `noseSneerRight` | Concern |
 
-Visemes (`viseme_aa`, `viseme_E`, `viseme_O`, `viseme_PP` …) drive lip-sync — see [src/runtime/lipsync.js](../src/runtime/lipsync.js).
+Visemes (`viseme_aa`, `viseme_E`, `viseme_O`, `viseme_PP` …) drive lip-sync, see [src/runtime/lipsync.js](../src/runtime/lipsync.js). With ElevenLabs speech the sequence is built from the provider's character-level timestamps (`alignmentToSequence()`), so timing is real in any language; a letter with no specific mapping (CJK, Cyrillic, Arabic and so on) opens the mouth with a generic `viseme_aa` instead of going silent.
 
 **Alias resolution.** The runtime accepts these common alternatives and maps them to the canonical name automatically — no need to rename morphs in your DCC:
 
@@ -263,6 +263,8 @@ On success, you receive:
 - A **share link** to the agent's public page
 - An **iframe snippet** to embed in any website
 - A **web component snippet** for use in supported frameworks
+
+If the export had to approximate something (for example an edit matched to a material by name only), the result panel lists those warnings under the links.
 
 ### 3. Register on-chain (optional)
 

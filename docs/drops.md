@@ -45,6 +45,10 @@ collection**. You supply:
   what you want fed to the generator: the value `Bomber jacket` can generate
   from `wearing a worn leather bomber jacket`. A drop takes at most 12 layers
   and 64 options per layer.
+- **Holder early window (optional).** `early_minutes`, 0 to 10080, default 15
+  (`DROPS_EARLY_DEFAULT_MINUTES` changes the default). It is how long after
+  publishing only Gold or higher $THREE holders can reveal items. Pass `0` for
+  no window.
 
 Submitting rolls the supply and lands you on the collection page. The drop
 starts as a **draft**: its seed is withheld, so the provenance hash it publishes
@@ -115,6 +119,14 @@ collection page (a draft must be published first, otherwise `409 not_published`)
 composes the item's prompt (the base style, then each rolled trait's prompt
 fragment in layer order, then the hints that keep the output riggable) and
 submits it to [the Forge](forge.md). The page then polls until the GLB lands.
+
+Publishing stamps `public_opens_at` as now plus `early_minutes`. Until that
+instant a reveal from anyone but the creator answers `402 three_hold_required`
+unless the caller holds Gold or higher (the `drops.early` perk, see
+[hold to access](hold-to-access.md)). The collection page shows a live
+"Gold holders reveal first" countdown and, on a 402, tells the visitor it opens
+to everyone when the countdown ends. Drops published before the window existed
+have no `public_opens_at` and stay open to all.
 
 Ordering the fragments by layer is what holds a collection together visually: a
 given trait always occupies the same position in the prompt, so the generator's
@@ -228,9 +240,9 @@ writes need a session cookie or a bearer token with `avatars:write`.
 | `GET` | `/api/drops/get?slug=` | One collection with its stats, trait distribution, and first page of items. |
 | `GET` | `/api/drops/items?slug=&limit=&offset=&tier=&status=&sort=` | Paginated items. `sort` is `rank` (default) or `index`. |
 | `GET` | `/api/drops/verify?slug=&index=` | Recompute the provenance hash, and optionally one item's traits. |
-| `POST` | `/api/drops/create` | Roll a new collection. Body as shown above. |
+| `POST` | `/api/drops/create` | Roll a new collection. Body as shown above, plus optional `early_minutes`. |
 | `POST` | `/api/drops/publish` | Freeze a draft and publish its seed. Body `{slug}`. |
-| `POST` | `/api/drops/reveal` | Start one item's generation. Body `{slug, index}`. |
+| `POST` | `/api/drops/reveal` | Start one item's generation. Body `{slug, index}`. `402 three_hold_required` inside the holder early window. |
 | `POST` | `/api/drops/mint-collection` | Create the drop's Core collection. Body `{slug, network?, confirm_mainnet?}`. Creator only. |
 | `POST` | `/api/drops/mint` | Mint one item `{slug, index, owner_wallet?, network?, confirm_mainnet?}` or a batch `{slug, all: true, ...}`. Creator only. |
 | `GET` | `/api/drops/mint?slug=&index=` | Collection address and counts, or one item's state (`sealed`, `revealed`, `minting`, `minted`, `failed`). |

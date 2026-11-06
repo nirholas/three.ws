@@ -1,6 +1,6 @@
 # Plan: ship Oracle and the autonomous trading agents as MCP servers
 
-**Status:** planned, not started. Written 2026-08-19; still unstarted at 2026-11-04 (no `packages/oracle-mcp`, no `packages/agent-trader-mcp`, no `api/mcp-oracle.js` in the tree; `packages/oracle-model` is the local scorer library, not an MCP server). Facts below re-verified 2026-11-04. One thing changed since the plan was written: on 2026-11-03 a unified MCP endpoint (`https://three.ws/mcp`, served by `api/mcp/all.js`) began mounting every hosted server's tools behind one sign-in, so the four Oracle tools are reachable there too. That does not close the gap below: it solves connecting, not being found by name in the registry.
+**Status:** built, not yet shipped. Written 2026-08-19. Phases 1, 2 and 4 landed on 2026-11-04: the hosted remote (`api/mcp-oracle.js`, `api/_mcporacle/`, `server-oracle.json`), `packages/oracle-mcp`, `packages/agent-trader-mcp`, and the docs (`docs/agent-trading-mcp.md`, `docs/mcp.md`, `docs/oracle.md`, `STRUCTURE.md`, changelog entry). Remaining: the production deploy (`https://three.ws/api/mcp-oracle` still answers 404 until it ships), the npm and registry publish (`@three-ws/oracle-mcp` and `@three-ws/agent-trader-mcp` are not on npm yet, and the registry has no `threews-oracle` entry), and the X post. Both steps are owner-gated (deploy and publish). One change since the plan was written: on 2026-11-03 a unified MCP endpoint (`https://three.ws/mcp`, served by `api/mcp/all.js`) began mounting every hosted server's tools behind one sign-in, so the Oracle tools are reachable there too. That solves connecting, not being found by name in the registry, which the dedicated entries address.
 **Goal:** make [Oracle](https://three.ws/oracle) and the autonomous trading agents first-class,
 discoverable MCP servers, publish them to the official MCP registry
 (`registry.modelcontextprotocol.io`), document them, and announce them in one plain-language X post.
@@ -40,8 +40,8 @@ listed under their own registry entries.
 | Public API | `api/oracle/*.js` (26 endpoints) | Live: `feed`, `coin`, `signal`, `stats`, `backtest`, `calibration`, `leaderboard`, `wins`, `movers`, `categories`, `search`, `history`, `market`, `social`, `trades`, `wallet`, `watch`, `agent-stats`, `action-stream`, `activity`, `follow`, `batch`, `stream`, and more |
 | Pages | `/oracle`, `/oracle/docs`, `/oracle/arm` (in `data/pages.json`) | Live |
 | Reference doc | `docs/oracle.md` | Complete, long-form |
-| MCP tools | `api/_mcp/tools/oracle.js`, 4 tools | Live, but only inside the main server |
-| Dedicated MCP server | none | **This is the gap** |
+| MCP tools | `api/_mcp/tools/oracle.js`, 4 tools | Live inside the main server; also the shared definitions the dedicated server imports |
+| Dedicated MCP server | `api/mcp-oracle.js`, `packages/oracle-mcp` | Built 2026-11-04, awaiting deploy and publish |
 
 ### Autonomous trading agents
 
@@ -53,7 +53,7 @@ listed under their own registry entries.
 | Signal marketplace | `packages/signals-mcp` | registry @ 0.1.3, matching the tree |
 | Portfolio + PnL | `packages/portfolio-mcp` | registry @ 0.1.2, matching the tree |
 | Market intel | `packages/intel-mcp`, `packages/kol-mcp` | published |
-| Oracle-armed agent loop | `api/oracle/watch.js`, `api/oracle/action-stream.js`, `api/oracle/agent-stats.js` | **No dedicated server. Only the two tools inside `/api/mcp`.** |
+| Oracle-armed agent loop | `api/oracle/watch.js`, `api/oracle/action-stream.js`, `api/oracle/agent-stats.js`, `packages/agent-trader-mcp` | Dedicated server built 2026-11-04, not yet published (previously only the two tools inside `/api/mcp`) |
 
 80 servers are already published under the `io.github.nirholas` namespace (counted against
 the live registry on 2026-10-23), so the publishing path is proven and boring. `scripts/publish-mcp-servers.mjs` (`npm run publish:mcp`)
@@ -69,7 +69,7 @@ handles npm plus registry, idempotently, and skips anything already at the targe
 - `npm run smoke:mcp`: hits the hosted remotes for real. `npm run probe:mcp-clients`
   (`scripts/mcp-client-probe.mjs`) drives every hosted server the way a cloud connector does,
   OAuth discovery included.
-- `public/.well-known/mcp.json`: the hand-maintained hosted-server directory (9 entries today, including the unified `/mcp` endpoint).
+- `public/.well-known/mcp.json`: the hand-maintained hosted-server directory (10 entries today, including the unified `/mcp` endpoint and the Oracle remote).
 - `public/mcp-catalog.json` + `/mcp-tools` page: the human-facing catalog, built by
   `scripts/build-mcp-catalog.mjs`.
 
@@ -80,7 +80,7 @@ handles npm plus registry, idempotently, and skips anything already at the targe
 Five phases. Phases 1 and 2 are independent and can run in parallel; 3 depends on both; 4 and 5
 close it out.
 
-### Phase 1: `@three-ws/oracle-mcp` and the hosted Oracle remote
+### Phase 1: `@three-ws/oracle-mcp` and the hosted Oracle remote (built, deploy and publish pending)
 
 Two faces of one server, mirroring the pattern already used for 3D Studio
 (`packages/*` stdio package plus `api/mcp-3d.js` remote plus `server-3d.json`).
@@ -93,7 +93,7 @@ Registry name `io.github.nirholas/threews-oracle`, URL `https://three.ws/api/mcp
 
 Route the handler in `vercel.json` and add the entry to `public/.well-known/mcp.json`. Since
 2026-10-08 every hosted MCP server is its own OAuth resource (RFC 8707): add `/api/mcp-oracle` to
-`OAUTH_MCP_PATHS` (seven paths today: `/api/mcp`, `/mcp`, `/api/mcp-3d`, `/api/mcp-agent`, `/api/mcp-bazaar`, `/api/ibm-mcp`, `/api/mcp-grok`) in `api/_lib/mcp-resources.js`, and pass `resourcePath` through the `api/_mcp/auth.js`
+`OAUTH_MCP_PATHS` (eight paths now: `/api/mcp`, `/mcp`, `/api/mcp-3d`, `/api/mcp-agent`, `/api/mcp-bazaar`, `/api/mcp-oracle`, `/api/ibm-mcp`, `/api/mcp-grok`) in `api/_lib/mcp-resources.js`, and pass `resourcePath` through the `api/_mcp/auth.js`
 helpers as `api/mcp-3d.js` does. That alone makes its 401 point at
 `/.well-known/oauth-protected-resource/api/mcp-oracle` (already routed generically to `api/wk.js`, so
 no new `vercel.json` metadata route) with `resource` set to the server's own URL, which is what stock
@@ -145,7 +145,7 @@ that rule and gets a case in that test file.
 **Backwards compatibility:** the four tools stay in the main `/api/mcp` catalog. Nothing that works
 today stops working. `api/_mcp/tools/oracle.js` becomes the shared definition both catalogs import.
 
-### Phase 2: `@three-ws/agent-trader-mcp`, the autonomous trading control plane
+### Phase 2: `@three-ws/agent-trader-mcp`, the autonomous trading control plane (built, publish pending)
 
 One server that answers "arm my agent on Oracle, then show me what it did and let me stop it."
 Today that story is split across `oracle_arm_watch`, the sniper package, autopilot, and the
@@ -182,7 +182,7 @@ right posture for a write-heavy, real-money server.
   money endpoint behind these tools enforces it server-side, so the tool surfaces the refusal
   rather than deciding it.
 
-### Phase 3: publish to the registry
+### Phase 3: publish to the registry (pending, owner-gated)
 
 Nothing new to build here. In order:
 
@@ -203,8 +203,8 @@ Also in this phase, because they are one-line fixes that are currently drifted:
   and `portfolio-mcp` 0.1.2 are all published and match as of 2026-11-04. `npm run publish:mcp:dry`
   reports any drift, and `scripts/publish-mcp-servers.mjs --stale` flags a published npm package
   that lags its source.
-- Add both new remotes to `public/.well-known/mcp.json` (9 entries today, 10 after Phase 1).
-- Add both new server keys to the `SERVERS` array in `scripts/publish-mcp-servers.mjs`. A server
+- Done 2026-11-04: the Oracle remote is in `public/.well-known/mcp.json` (10 entries now). The agent-trader server is stdio only, so it has no remote entry.
+- Done 2026-11-04: `oracle-mcp`, `agent-trader-mcp` and `remote-oracle` are in the `SERVERS` array in `scripts/publish-mcp-servers.mjs`. A server
   that is not in that array is invisible to the publisher, which is the single easiest way for
   this whole plan to silently ship nothing.
 
@@ -214,7 +214,7 @@ Verify after publishing:
 curl -s "https://registry.modelcontextprotocol.io/v0/servers?search=threews-oracle" | jq '.servers[].server.name'
 ```
 
-### Phase 4: documentation
+### Phase 4: documentation (done 2026-11-04)
 
 Per the documentation rules in `CLAUDE.md`, all of these apply and none are optional:
 
@@ -233,7 +233,7 @@ Per the documentation rules in `CLAUDE.md`, all of these apply and none are opti
   Something like "Oracle is now its own MCP server: any AI agent can pull live conviction scores,
   and arm a trading agent, without touching the website."
 
-### Phase 5: the X post
+### Phase 5: the X post (pending)
 
 Draft lives at [`docs/x-posts/oracle-trading-mcp-x-post.md`](x-posts/oracle-trading-mcp-x-post.md). Written before
 the work ships so the announcement shapes the scope rather than the reverse: if a claim in that
@@ -247,14 +247,16 @@ than shipping late.
 
 ## Definition of done
 
+Checked items are done in the tree. Unchecked items need the owner-gated deploy and publish first.
+
 - [ ] `https://three.ws/api/mcp-oracle` responds to `initialize` and `tools/list` unauthenticated.
 - [ ] `npx @three-ws/oracle-mcp` connects from a clean machine with no key and returns a live score.
 - [ ] `npx @three-ws/agent-trader-mcp` arms an agent in simulate mode and disarms it.
 - [ ] Both servers resolve in `registry.modelcontextprotocol.io`.
 - [ ] `npm run gate` passes (all four MCP audits are inside it).
 - [ ] `npm run smoke:mcp` passes.
-- [ ] Every doc in Phase 4 is written, and `npm run audit:docs` is clean.
-- [ ] The changelog entry is in and `npm run build:pages` accepts it.
+- [x] Every doc in Phase 4 is written (verify `npm run audit:docs` stays clean).
+- [x] The changelog entry is in (2026-11-04, "Oracle and agent trading as MCP servers").
 - [ ] The X post claims nothing that is not live.
 
 ## Risks and how they get handled

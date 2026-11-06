@@ -61,6 +61,10 @@ Grotesk display face).
     through its published `/widget-chart/` route only; its normal `/app/` pages
     refuse framing and are used just for the "Open in DEXTools" link.
 
+  The chart section ships in the page HTML as a skeleton at its final height (440 px,
+  520 px from 768 px wide, the same as the embedded provider chart), so the swap to
+  the loaded chart no longer shifts the page below it.
+
   The picked source is remembered across coins and visits (localStorage
   `tws_coin_chart_source`), and the embeds follow the site's light/dark theme.
   Every embed URL shape lives once in
@@ -405,8 +409,8 @@ key-free data" rule:
   excluded), category-filterable. New `/api/defi/protocols` (DeFiLlama).
 - **`/chains`**: every chain ranked by TVL with a dominance share bar and a
   sortable **Turnover** column (24h DEX volume divided by TVL: high means capital
-  is trading, low means it is parked; `n/a` when a chain reports no TVL or no DEX
-  volume). New `/api/defi/chains` (DeFiLlama; the volume side is summed per chain
+  is trading, low means it is parked; a tiny non-zero value prints `<0.001x`
+  rather than `0.000x`, and `n/a` when a chain reports no TVL or no DEX volume). New `/api/defi/chains` (DeFiLlama; the volume side is summed per chain
   from the same `/overview/dexs` feed `/dex-volumes` uses).
 - **`/stablecoins`** — stablecoins by circulating market cap with live peg
   health and backing mechanism. New `/api/defi/stablecoins` (DeFiLlama).

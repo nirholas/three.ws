@@ -6,7 +6,7 @@ A screen on a wall, or an OBS browser source, that watches the world without bei
 /play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&name=three.ws&symbol=three&director=1
 ```
 
-`?coin=` is optional for a director: with no (or a malformed) coin it falls back to the $THREE home town. `tier=holders` is ignored, a projector always watches the general room.
+`?coin=` is optional for a director: with no (or a malformed) coin it falls back to the $THREE home town. `tier=holders` is ignored, a projector always watches the general room. `?director=1` is never handed to the lite client, even on a device that would otherwise get it, so the projector always renders the 3D world.
 
 ## What it does
 
@@ -32,6 +32,7 @@ A screen on a wall, or an OBS browser source, that watches the world without bei
 ## Known limits
 
 - **Play-pass gate.** If the platform pins `PLAY_GATE_MINT`, spectators are subject to the same wallet gate as players (no exemption). The screen then waits on the sign-in card, which is hidden on a director page, and reloads after 60 seconds. Run the screen from a signed-in profile, or keep the gate off for the event.
+- **Bans apply to spectators.** `onAuth` checks the moderation ban list before it assigns a spectator seat, so a screen whose identity an operator has banned is refused like any player.
 - The overlay's online count reads the client's roster, so it is the number of players in the world, not in other rooms of the same coin.
 - A one-hour soak has not been run against this build.
 

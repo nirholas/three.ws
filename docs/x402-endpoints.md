@@ -232,6 +232,15 @@ datapoints at **$0.0005** USDC each by default, overridable per family with
 | `/api/x402/agents/:id`              | per agent | One turn with a whole agent its owner sells as an API: `POST { message, history? }` returns `{ reply, model, usage }`. The owner sets the price; `GET /api/x402/agents` lists every agent on sale. See [Sell your agent as an API](x402.md#sell-your-agent-as-an-api). |
 | `/api/x402/pump-agent-audit`        | $0.02     | Audit of a pump agent's behavior/holdings. |
 
+`agent-reputation` and `agent-bouncer` also accept a free path in place of payment:
+a Bearer token with scope `read:agent-reputation`, or a SIGN-IN-WITH-X proof.
+The bypass is declared per route in `api/_lib/x402/route-auth-hints.js` and
+published as `x-auth-methods` in `GET /openapi.json` and `authMethods` in
+`/.well-known/x402.json`. The 402 challenge itself carries only payable accepts:
+`X402_AUTH_HINT_ACCEPTS` defaults to `false`, and setting it to `true` re-adds the
+legacy zero-amount entries plus the auth-hints extension. The bypass works
+whichever way the flag is set.
+
 ## Generation & 3D endpoints
 
 | Endpoint                                                    | Default   | Returns                                                                                      |

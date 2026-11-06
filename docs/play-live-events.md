@@ -28,6 +28,7 @@ the exact curl and the rules are in
 [event-readiness/LIVE-OPS.md](event-readiness/LIVE-OPS.md#change-the-event-window-live-no-deploy).
 
 - **Surface:** `/play`, in the `$THREE` home town only (`isHomeTown()`).
+- **Lite client:** the same view mounts in `/play/lite` ([play-lite.md](play-lite.md)). `boot()` waits for `window.__CC__` and imports `fireworks.js` (which pulls in three.js) only when that app has a 3D scene, so lite runs the countdown, agenda, banners and group-photo pose with no fireworks.
 - **Modules:** [`src/game/meetup-event.js`](../src/game/meetup-event.js) (the view),
   [`src/game/meetup-schedule.js`](../src/game/meetup-schedule.js) (pure schedule
   math), [`src/game/fireworks.js`](../src/game/fireworks.js) (the particle show),
