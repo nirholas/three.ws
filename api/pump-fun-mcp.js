@@ -40,6 +40,7 @@ import {
 import { reservePaymentProof } from './_lib/x402/payment-identifier-server.js';
 import { getPumpSdk, getConnection, solanaPubkey, getAmmPoolState } from './_lib/pump.js';
 import { solPriceUsd } from './_lib/sol-price.js';
+import { cacheGet, cacheSet } from './_lib/cache.js';
 import { pumpfunMcp, pumpfunBotEnabled } from './_lib/pumpfun-mcp.js';
 import { getTrendingSlim, getNewSlim } from './_lib/pump-trending.js';
 import { TOOLS, resolveToolName, rpcError, rpcEnvelope } from '../src/pump/mcp-tools.js';
@@ -412,39 +413,63 @@ const PUMP_CLAIM_PROGRAMS = new Set([
 	'pfeeUxB6jkeY1Hxd7CsFCAjcbHA9rWtchMGdZ6VojVZ',
 ]);
 
+// What one confirmed transaction says about one creator: a claim
+// ({ mint, lamports }) or not a claim (null). Confirmed history never changes,
+// so the verdict is kept fleet-wide for a day. Before this, one MCP client
+// polling claims re-read the same transactions on every call (21,286
+// getTransaction calls an hour on 2026-11-06, the second largest Solana RPC
+// caller, with both paid lanes exhausted). A transaction the RPC has not
+// returned yet, or a failed read, is never remembered.
+const CLAIM_VERDICT_TTL_S = 24 * 60 * 60;
+const claimVerdictKey = (network, creator, signature) => `pumpclaim:v1:${network}:${creator}:${signature}`;
+
+function claimFromTx(tx, creator) {
+	const allIxs = [
+		...(tx.transaction.message.instructions ?? []),
+		...(tx.meta?.innerInstructions?.flatMap((i) => i.instructions) ?? []),
+	];
+	if (!allIxs.some((ix) => PUMP_CLAIM_PROGRAMS.has(ix.programId?.toString?.()))) return null;
+	const accounts = tx.transaction.message.accountKeys;
+	const idx = accounts.findIndex((a) => a.pubkey.toString() === creator);
+	if (idx === -1) return null;
+	const lamports = (tx.meta.postBalances[idx] ?? 0) - (tx.meta.preBalances[idx] ?? 0);
+	if (lamports <= 0) return null;
+	return { mint: tx.meta.postTokenBalances?.[0]?.mint ?? null, lamports };
+}
+
 async function _fetchClaimsFromChain({ creator, limit = 20, network = 'mainnet', sinceTs = 0 }) {
 	const pk = solanaPubkey(creator);
 	if (!pk) throw rpcError(-32602, 'invalid creator wallet');
 	const conn = getConnection({ network });
 	const sigInfos = await conn.getSignaturesForAddress(pk, { limit: Math.min(100, limit * 4) });
+	const remembered = await Promise.all(
+		sigInfos.map(({ signature }) => cacheGet(claimVerdictKey(network, creator, signature)).catch(() => null)),
+	);
 	const results = [];
-	for (const { signature, blockTime } of sigInfos) {
+	for (let i = 0; i < sigInfos.length; i++) {
+		const { signature, blockTime } = sigInfos[i];
 		if (results.length >= limit) break;
 		if (sinceTs && (blockTime ?? 0) <= sinceTs) break;
-		let tx;
-		try {
-			tx = await conn.getParsedTransaction(signature, {
-				maxSupportedTransactionVersion: 1,
-				commitment: 'confirmed',
-			});
-		} catch {
-			continue;
+		let verdict = remembered[i];
+		if (!verdict || typeof verdict !== 'object' || !('claim' in verdict)) {
+			let tx;
+			try {
+				tx = await conn.getParsedTransaction(signature, {
+					maxSupportedTransactionVersion: 1,
+					commitment: 'confirmed',
+				});
+			} catch {
+				continue;
+			}
+			if (!tx) continue;
+			verdict = { claim: claimFromTx(tx, creator) };
+			cacheSet(claimVerdictKey(network, creator, signature), verdict, CLAIM_VERDICT_TTL_S).catch(() => {});
 		}
-		if (!tx) continue;
-		const allIxs = [
-			...(tx.transaction.message.instructions ?? []),
-			...(tx.meta?.innerInstructions?.flatMap((i) => i.instructions) ?? []),
-		];
-		if (!allIxs.some((ix) => PUMP_CLAIM_PROGRAMS.has(ix.programId?.toString?.()))) continue;
-		const accounts = tx.transaction.message.accountKeys;
-		const idx = accounts.findIndex((a) => a.pubkey.toString() === creator);
-		if (idx === -1) continue;
-		const lamports = (tx.meta.postBalances[idx] ?? 0) - (tx.meta.preBalances[idx] ?? 0);
-		if (lamports <= 0) continue;
+		if (!verdict.claim) continue;
 		results.push({
 			signature,
-			mint: tx.meta.postTokenBalances?.[0]?.mint ?? null,
-			lamports,
+			mint: verdict.claim.mint,
+			lamports: verdict.claim.lamports,
 			ts: blockTime ?? Math.floor(Date.now() / 1000),
 		});
 	}
