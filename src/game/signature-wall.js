@@ -23,12 +23,13 @@ import { netErrorMessage } from './net-error.js';
 import {
 	SignatureWallData, WallClientError, rememberSigned, recallSigned,
 } from './signature-wall-data.js';
-import { assignSlots, diffSlots, pageCount, pageOrder, dwellMs, NEWEST_SHOWN } from './signature-wall-layout.js';
+import { assignSlots, diffSlots, pageCount, pageOrder, dwellMs, NEWEST_SHOWN, SIGNATURE_WALL } from './signature-wall-layout.js';
 import './signature-wall.css';
 
-// Near spawn (0,0), west of the totem path, clear of the plaza rod (12,12), the
-// ponds, the wheel (0,22) and the totem (0,-12). The face looks east, toward spawn.
-export const SIGNATURE_WALL = { x: -14, z: -2, width: 10, height: 5, faceYaw: Math.PI / 2 };
+// The wall's placement lives in the three-free layout module so the 2D lite view
+// (play-lite-core.js) can map it without pulling in three. Re-exported for the
+// existing importers (concierge-logic.js, the concierge tests).
+export { SIGNATURE_WALL };
 const SIGN_REACH = 8;          // metres from the wall centre to show the F prompt
 const READ_RANGE = 46;         // metres: inside this the wall fetches and animates
 const POLL_MS = 20_000;        // safety poll while awake (the room ping is the fast path)

@@ -3,6 +3,11 @@
 
 import { tierFor, pageSize, rng, hashString } from './signature-wall-style.js';
 
+// Where the wall stands: near spawn (0,0), west of the totem path, clear of the
+// plaza rod (12,12), the ponds, the wheel (0,22) and the totem (0,-12). The face
+// looks east, toward spawn. World metres in the XZ plane.
+export const SIGNATURE_WALL = Object.freeze({ x: -14, z: -2, width: 10, height: 5, faceYaw: Math.PI / 2 });
+
 export const CANVAS_W = 2048;
 export const CANVAS_H = 1024;
 export const HEADER_H = 118;

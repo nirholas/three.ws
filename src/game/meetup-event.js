@@ -573,18 +573,20 @@ export async function boot() {
 	if (!cfg) return null;
 	if (eventState(cfg, Date.now()).phase === PHASE.ENDED) return null;
 
-	const { Fireworks } = await import('./fireworks.js');
-
-	// Wait for the app the same way ambient-crowd.js does.
-	return new Promise((resolve) => {
+	// Wait for the app the same way ambient-crowd.js does. The fireworks module
+	// pulls in three.js, so it is fetched only for an app that has a 3D scene: the
+	// 2D lite client (/play/lite, cc.lite) runs the agenda and banners without it.
+	const cc = await new Promise((resolve) => {
 		let tries = 0;
 		(function wait() {
-			const cc = window.__CC__;
-			if (cc) resolve(new MeetupEvent({ event: cfg, cc, Fireworks }));
+			if (window.__CC__) resolve(window.__CC__);
 			else if (++tries < 300) setTimeout(wait, 300);
 			else resolve(null);
 		})();
 	});
+	if (!cc) return null;
+	const Fireworks = cc.lite ? null : (await import('./fireworks.js')).Fireworks;
+	return new MeetupEvent({ event: cfg, cc, Fireworks });
 }
 
 boot();
