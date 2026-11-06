@@ -189,9 +189,18 @@ export default wrapCron(async (req, res) => {
 
 	// ── Step 1: probe dance-tip for live payment requirements ─────────────────
 	const probeUrl = `${origin}/api/x402/dance-tip?dancer=1&dance=hiphop`;
-	const probe = await fetchWithTimeout(probeUrl, {
-		headers: { 'user-agent': 'threews-x402-seed/1.0' },
-	});
+	// A probe that aborts or cannot connect has spent nothing and left nothing to
+	// seed, so it reports the skip like the gates around it. Left unguarded, the
+	// abort escaped as an HTTP 500 and an ops alert on a slow self-call.
+	let probe;
+	try {
+		probe = await fetchWithTimeout(probeUrl, {
+			headers: { 'user-agent': 'threews-x402-seed/1.0' },
+		});
+	} catch (err) {
+		log.warn('probe_failed_skip', { message: err?.message });
+		return json(res, 200, { ok: false, skipped: true, reason: `dance-tip probe failed: ${err?.message}` });
+	}
 	if (probe.status !== 402 || !probe.body) {
 		return json(res, 200, {
 			ok: false,
