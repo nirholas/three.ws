@@ -218,6 +218,7 @@ export class CommunityUI {
 		this.h = h;
 		this.coins = [];
 		this.featured = null;      // pinned official town (e.g. the $THREE flagship)
+		this._coinsRetry = null;   // retry handler while the trending feed is down
 		this.searchResults = [];   // live pump.fun search hits beyond the trending grid
 		this.searching = false;
 		this._searchSeq = 0;       // guards against out-of-order async search responses
@@ -1113,6 +1114,7 @@ export class CommunityUI {
 	getAvatar() { return this.customInput.value.trim() || this.avatar; }
 
 	setCoinsLoading() {
+		this._coinsRetry = null;
 		this.grid.textContent = '';
 		// Keep the pinned official town visible while the live grid loads, so the
 		// flagship never blinks out behind the skeletons.
@@ -1126,6 +1128,7 @@ export class CommunityUI {
 	}
 
 	setCoins(list) {
+		this._coinsRetry = null;
 		this.coins = list || [];
 		this._renderGrid();
 		this._enrichCoins();
@@ -1134,13 +1137,21 @@ export class CommunityUI {
 	/** Pin an official town (e.g. the $THREE flagship) to the top of the lobby. */
 	setFeatured(coin) { this.featured = coin && coin.mint ? coin : null; this._renderGrid(); }
 
+	// The trending feed failed. Recorded as grid state rather than painted over
+	// the grid, so the pinned official town stays on screen above the notice and
+	// a pin refresh that lands after the failure cannot erase the Retry button.
 	setCoinsError(retry) {
-		this.grid.textContent = '';
-		this.grid.appendChild(el('div', { class: 'cc-state' }, [
+		this._coinsRetry = retry;
+		this.coins = [];
+		this._renderGrid();
+	}
+
+	_coinsErrorState() {
+		return el('div', { class: 'cc-state' }, [
 			el('span', { class: 'cc-state-ico', text: '📡' }),
 			el('div', { text: 'Could not load live coins right now.' }),
-			el('button', { text: 'Retry', onclick: retry }),
-		]));
+			el('button', { text: 'Retry', onclick: this._coinsRetry }),
+		]);
 	}
 
 	// Debounced live search: filter the loaded trending grid instantly for
@@ -1244,6 +1255,7 @@ export class CommunityUI {
 				]));
 				return;
 			}
+			if (this._coinsRetry && !q) { this.grid.appendChild(this._coinsErrorState()); return; }
 			this.grid.appendChild(el('div', { class: 'cc-state' }, [
 				el('span', { class: 'cc-state-ico', text: '🪙' }),
 				el('div', { text: q ? 'No coins match, try a different name, symbol, or mint.' : 'No communities yet, be the first in!' }),
@@ -1252,6 +1264,7 @@ export class CommunityUI {
 		}
 		if (featured) this.grid.appendChild(this._coinCard(featured, true));
 		for (const c of this._sortCoins(list)) this.grid.appendChild(this._coinCard(c, false));
+		if (this._coinsRetry && !q && !list.length) this.grid.appendChild(this._coinsErrorState());
 		// Entrance: cards fade up in reading order, capped so a 50-card grid does
 		// not crawl in. The delay is a custom property the stylesheet reads, and
 		// the whole animation is off under prefers-reduced-motion.
