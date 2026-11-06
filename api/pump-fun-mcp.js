@@ -712,6 +712,15 @@ async function handleWatchWhales({ mint, minUsd = 5000, durationMs = 5000 }) {
 // bonding-curve program (`TradeEvent`); graduated tokens trade on the pump AMM
 // pool (`BuyEvent`/`SellEvent`). We pull recent signatures for whichever account
 // is live, fetch those transactions, and decode the on-chain events.
+// What one confirmed transaction says about one coin: a trade, or not a trade
+// (null). Same reasoning as the claim verdicts above: confirmed history never
+// changes, and repeat polls of one coin were re-reading it at 12,600
+// getTransaction calls an hour on 2026-11-06. usdValue is left out because it
+// follows the current SOL price. A transaction the RPC has not returned yet, or
+// logs the parser rejected, is never remembered.
+const TRADE_VERDICT_TTL_S = 24 * 60 * 60;
+const tradeVerdictKey = (network, venue, mint, signature) => `pumptrade:v1:${network}:${venue}:${mint}:${signature}`;
+
 async function readTradesFromChain({ mint, limit, network }) {
 	const pk = solanaPubkey(mint);
 	if (!pk) throw rpcError(-32602, 'invalid mint');
@@ -772,7 +781,7 @@ async function readTradesFromChain({ mint, limit, network }) {
 		try {
 			parsed = [...parser.parseLogs(logs)];
 		} catch {
-			return null;
+			return undefined;
 		}
 		for (const event of parsed) {
 			if (isAmm && (event.name === 'BuyEvent' || event.name === 'SellEvent')) {
@@ -792,7 +801,6 @@ async function readTradesFromChain({ mint, limit, network }) {
 					isBuy,
 					solAmount: sol,
 					tokenAmount: tokens?.toString() ?? '0',
-					usdValue: sol * solPrice,
 					wallet: d.user?.toString() ?? null,
 					timestamp: ts ? Number(ts.toString()) : Math.floor(blockTime / 1000),
 				};
@@ -810,7 +818,6 @@ async function readTradesFromChain({ mint, limit, network }) {
 			isBuy: trade.isBuy,
 			solAmount: sol,
 			tokenAmount: trade.tokenAmount.toString(),
-			usdValue: sol * solPrice,
 			wallet: trade.user || null,
 			timestamp: ts ? Number(ts.toString()) : Math.floor(blockTime / 1000),
 		};
@@ -820,15 +827,32 @@ async function readTradesFromChain({ mint, limit, network }) {
 	// signatures touching the curve/pool account ARE trades, so we rarely need
 	// the full window — chunking also keeps batch sizes friendly to public RPCs.
 	const CHUNK = 8;
+	const venue = isAmm ? 'amm' : 'curve';
 	for (let off = 0; off < signatures.length && trades.length < want; off += CHUNK) {
 		const slice = signatures.slice(off, off + CHUNK);
-		const txs = await connection.getTransactions(slice, {
-			maxSupportedTransactionVersion: 1,
-			commitment: 'confirmed',
+		const verdicts = new Map();
+		await Promise.all(slice.map(async (signature) => {
+			const hit = await cacheGet(tradeVerdictKey(network, venue, mintStr, signature)).catch(() => null);
+			if (hit && typeof hit === 'object' && 'trade' in hit) verdicts.set(signature, hit);
+		}));
+		const unread = slice.filter((signature) => !verdicts.has(signature));
+		const txs = unread.length
+			? await connection.getTransactions(unread, {
+					maxSupportedTransactionVersion: 1,
+					commitment: 'confirmed',
+				})
+			: [];
+		unread.forEach((signature, i) => {
+			if (!txs[i]) return;
+			const trade = decodeTx(txs[i], signature);
+			if (trade === undefined) return;
+			const verdict = { trade };
+			verdicts.set(signature, verdict);
+			cacheSet(tradeVerdictKey(network, venue, mintStr, signature), verdict, TRADE_VERDICT_TTL_S).catch(() => {});
 		});
-		for (let i = 0; i < txs.length && trades.length < want; i++) {
-			const trade = decodeTx(txs[i], slice[i]);
-			if (trade) trades.push(trade);
+		for (const signature of slice) {
+			const trade = verdicts.get(signature)?.trade;
+			if (trade && trades.length < want) trades.push({ ...trade, usdValue: trade.solAmount * solPrice });
 		}
 	}
 
