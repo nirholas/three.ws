@@ -108,6 +108,17 @@ function gachaFailLine(err, fallback) {
 	return netErrorMessage(err, fallback);
 }
 
+/**
+ * The confirm sheet's network fee row. Collector Crypt pays the fee for a wallet
+ * with no SOL and has a wallet holding SOL pay its own, so this reads the decoded
+ * transaction rather than assuming either.
+ */
+export function networkFeeLabel(payment) {
+	if (payment?.networkFeePaidBy !== 'player') return 'Paid by Collector Crypt';
+	const sol = (Number(payment.networkFeeLamports) / 1e9).toFixed(9).replace(/0+$/, '');
+	return `${sol} SOL from your wallet`;
+}
+
 // Collector Crypt builds legacy transactions for some flows and v0 for others.
 // A v0 message sets the high bit of the byte right after the signature block;
 // a legacy message never does.
@@ -551,7 +562,7 @@ class GachaUI {
 			el('span', {}, [el('strong', {}, 'Turbo mode'), el('span', { class: 'ga-dim ga-block' }, `Commons are sold back instantly at ${m.instantBuyback || 85}% and paid to you in USDC.`)]),
 		]) : null;
 		const facts = el('ul', { class: 'ga-facts' }, [
-			el('li', {}, `Paid in USDC on Solana${this.net === 'devnet' ? ' devnet' : ''}. Collector Crypt covers the network fee.`),
+			el('li', {}, `Paid in USDC on Solana${this.net === 'devnet' ? ' devnet' : ''}. The next step shows who pays the network fee: Collector Crypt, or your wallet if it holds SOL.`),
 			el('li', {}, 'The card NFT is sent straight to your wallet. The physical slab stays insured in the vault and can be redeemed.'),
 			m.instantBuyback ? el('li', {}, `Instant buyback at ${m.instantBuyback}% of the card's insured value for 72 hours.`) : null,
 			el('li', {}, 'Every pull is provably fair: each reveal links its on-chain randomness proof.'),
@@ -766,7 +777,7 @@ class GachaUI {
 			['Chain', netLabel],
 			['Recipient', ['Collector Crypt gacha treasury ', acct(p.destination)]],
 			['From', acct(player)],
-			['Network fee', 'Paid by Collector Crypt'],
+			['Network fee', networkFeeLabel(p)],
 			prep.turbo ? ['Turbo', 'On: a common is sold back to you in USDC'] : null,
 		].filter(Boolean);
 		const table = el('table', { class: 'ga-table ga-confirm-table' }, el('tbody', {}, rows.map(([k, v]) => el('tr', {}, [el('th', { scope: 'row' }, k), el('td', {}, v)]))));

@@ -17,7 +17,7 @@ import {
 	GACHA_NETWORKS, GachaTxRejected, normalizeNetwork, isSolanaAddress, isPackCode, isMemo, isBase64Tx,
 	formatUsdc, usdToAtomic, describePackError, normalizeMachines, normalizeCard, normalizeWinner,
 	normalizeOpenResult, normalizePackStatus, decodeTransaction, inspectPackTransaction,
-	inspectBuybackTransaction, transactionId,
+	inspectBuybackTransaction, transactionId, describeBroadcastError,
 } from '../api/_lib/collectorcrypt-gacha.js';
 import { GACHA, GACHA_REACH, gachaInRange, nearestGacha } from '../multiplayer/src/world-features.js';
 
@@ -53,12 +53,22 @@ function tokenIx(op, keys, amount) {
 	return new TransactionInstruction({ programId: TOKEN, keys, data });
 }
 
-/** A pack transaction shaped like Collector Crypt's generatePack output. */
+/**
+ * A pack transaction shaped like Collector Crypt's generatePack output. A wallet
+ * with no SOL gets the gacha wallet as fee payer. A wallet that holds SOL pays
+ * its own fee, and the gacha wallet stays a pre-signed co-signer through the memo.
+ */
 function packTx({ player, amount = 25_000_000, overrides = {}, extra = [], presign = true }) {
+	const gacha = new PublicKey(NET.gachaWallet);
 	const feePayer = new PublicKey(overrides.feePayer || NET.gachaWallet);
+	const playerPays = feePayer.equals(player);
 	const tx = new Transaction({ feePayer, recentBlockhash: BLOCKHASH });
 	tx.add(new TransactionInstruction({ programId: COMPUTE, keys: [], data: Buffer.from([2, 0x40, 0x0d, 0x03, 0x00]) }));
-	tx.add(new TransactionInstruction({ programId: MEMO_PROGRAM, keys: [], data: Buffer.from('cc-pokemon_25-test') }));
+	tx.add(new TransactionInstruction({
+		programId: MEMO_PROGRAM,
+		keys: playerPays ? [{ pubkey: gacha, isSigner: true, isWritable: false }] : [],
+		data: Buffer.from('cc-pokemon_25-test'),
+	}));
 	tx.add(transferChecked({
 		source: Keypair.generate().publicKey,
 		mint: new PublicKey(overrides.mint || NET.usdcMint),
@@ -69,8 +79,16 @@ function packTx({ player, amount = 25_000_000, overrides = {}, extra = [], presi
 	}));
 	for (const ix of extra) tx.add(ix);
 	tx.compileMessage();
-	if (presign) tx.addSignature(feePayer, fakeSig());
+	if (presign) tx.addSignature(playerPays ? gacha : feePayer, fakeSig());
 	return tx.serialize({ requireAllSignatures: false, verifySignatures: false }).toString('base64');
+}
+
+function budgetIx(op, value) {
+	const data = Buffer.alloc(op === 2 ? 5 : 9);
+	data[0] = op;
+	if (op === 2) data.writeUInt32LE(value, 1);
+	else data.writeBigUInt64LE(BigInt(value), 1);
+	return new TransactionInstruction({ programId: COMPUTE, keys: [], data });
 }
 
 function inspectPack(b64, player, expectedAtomic = 25_000_000n) {
@@ -247,8 +265,36 @@ describe('inspectPackTransaction', () => {
 		const mint = Keypair.generate().publicKey.toBase58();
 		expect(() => inspectPack(packTx({ player, overrides: { mint } }), player)).toThrow(/not in USDC/);
 	});
-	it('rejects when the player would pay the network fee', () => {
-		expect(() => inspectPack(packTx({ player, overrides: { feePayer: player.toBase58() } }), player)).toThrow(/fee payer/);
+	it('reports that Collector Crypt pays the fee when its gacha wallet is the fee payer', () => {
+		expect(inspectPack(packTx({ player }), player)).toMatchObject({ networkFeePaidBy: 'collector_crypt', networkFeeLamports: 0 });
+	});
+	it('accepts a wallet that pays its own fee, as Collector Crypt builds for any wallet holding SOL', () => {
+		const out = inspectPack(packTx({ player, overrides: { feePayer: player.toBase58() } }), player);
+		expect(out).toMatchObject({ amountAtomic: '25000000', destination: NET.laneTreasury, feePayer: player.toBase58(), networkFeePaidBy: 'player' });
+	});
+	it('reports the exact fee a paying wallet is charged', () => {
+		// Live generatePack values: 80,000 CU at 10,000 micro-lamports, two signatures.
+		const b64 = packTx({ player, overrides: { feePayer: player.toBase58() }, extra: [budgetIx(2, 80_000), budgetIx(3, 10_000)] });
+		expect(inspectPack(b64, player).networkFeeLamports).toBe(10_800);
+	});
+	it('rejects a fee payer that is neither the gacha wallet nor the player', () => {
+		const stranger = Keypair.generate().publicKey.toBase58();
+		expect(() => inspectPack(packTx({ player, overrides: { feePayer: stranger } }), player)).toThrow(/fee payer/);
+	});
+	it('rejects a player-paid transaction the gacha wallet did not pre-sign', () => {
+		expect(() => inspectPack(packTx({ player, overrides: { feePayer: player.toBase58() }, presign: false }), player)).toThrow(/pre-signed/);
+	});
+	it('rejects a priority fee that would drain a wallet paying its own fee', () => {
+		const b64 = packTx({ player, overrides: { feePayer: player.toBase58() }, extra: [budgetIx(2, 1_400_000), budgetIx(3, 500_000_000)] });
+		expect(() => inspectPack(b64, player)).toThrow(/priority fee/);
+	});
+	it('leaves the priority fee alone when Collector Crypt pays it', () => {
+		const b64 = packTx({ player, extra: [budgetIx(2, 1_400_000), budgetIx(3, 500_000_000)] });
+		expect(inspectPack(b64, player).networkFeePaidBy).toBe('collector_crypt');
+	});
+	it('still refuses a SOL transfer when the player is the fee payer', () => {
+		const drain = SystemProgram.transfer({ fromPubkey: player, toPubkey: Keypair.generate().publicKey, lamports: 1_000_000 });
+		expect(() => inspectPack(packTx({ player, overrides: { feePayer: player.toBase58() }, extra: [drain] }), player)).toThrow(/unexpected program/);
 	});
 	it('rejects a transaction the gacha wallet did not pre-sign', () => {
 		expect(() => inspectPack(packTx({ player, presign: false }), player)).toThrow(/pre-signed/);
@@ -402,6 +448,25 @@ describe('inspectBuybackTransaction', () => {
 	it('rejects a priority fee that would drain a player who pays the network fee', () => {
 		const b64 = playerPaysV0([computeLimit(1_400_000), computePrice(500_000_000), coreTransfer(nft), authorizeAndPay()]);
 		expect(() => inspect(b64)).toThrow(/priority fee/);
+	});
+});
+
+describe('describeBroadcastError', () => {
+	const noFee = { message: 'Transaction simulation failed: Insufficient funds for fee' };
+	const unfunded = { message: 'Transaction simulation failed: Attempt to debit an account but found no record of a prior credit.' };
+	it('asks for SOL, not USDC, when a wallet paying its own fee cannot cover it', () => {
+		expect(describeBroadcastError(noFee, { playerPaysFee: true }).code).toBe('insufficient_sol');
+		expect(describeBroadcastError(unfunded, { playerPaysFee: true }).code).toBe('insufficient_sol');
+	});
+	it('still reports a USDC shortfall on the token transfer', () => {
+		const short = { message: 'Transaction simulation failed: Error processing Instruction 2: custom program error: 0x1' };
+		expect(describeBroadcastError(short, { playerPaysFee: true }).code).toBe('insufficient_usdc');
+	});
+	it('never blames the player for a fee Collector Crypt was paying', () => {
+		expect(describeBroadcastError(noFee).code).not.toBe('insufficient_sol');
+	});
+	it('treats an already landed transaction as no error', () => {
+		expect(describeBroadcastError({ message: 'This transaction has already been processed' })).toBeNull();
 	});
 });
 

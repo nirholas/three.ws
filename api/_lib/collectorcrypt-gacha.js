@@ -16,7 +16,10 @@
 //   3. Before a player is asked to sign anything, we decode the transaction and
 //      prove it does exactly what the confirm sheet says: one USDC payment of the
 //      machine's price, from the player, to Collector Crypt's documented lane
-//      treasury, with Collector Crypt's gacha wallet paying the network fee. A
+//      treasury, pre-signed by Collector Crypt's gacha wallet. The upstream picks
+//      the fee payer per wallet: its gacha wallet for a wallet with no SOL, the
+//      player for one that holds SOL (both shapes are live on mainnet), so a
+//      player-paid fee is allowed but capped and shown on the confirm sheet. A
 //      buyback may move the card out and nothing else of the player's. Anything
 //      else is refused here, so a compromised or buggy upstream can never turn the
 //      machine into a wallet drain.
@@ -76,9 +79,10 @@ export const CC_CARD_COLLECTION = 'CCryptUfeFSZ3Fgc9FLeKrhLVAP67FSqi1GuVoj9CRac'
 // pull more SOL than one account's rent out of the player.
 const MAX_RENT_LAMPORTS = 2_100_000n;
 const ATA_RENT_LAMPORTS = 2_039_280n;
-// When the player pays the network fee (the documented plain-wallet buyback has
-// one signature, the seller's), the priority fee is capped at 0.005 SOL.
+// When the player pays the network fee (a pack for a wallet holding SOL, or the
+// documented plain-wallet buyback), the priority fee is capped at 0.005 SOL.
 const MAX_PRIORITY_FEE_LAMPORTS = 5_000_000n;
+const LAMPORTS_PER_SIGNATURE = 5_000n;
 
 // Every program a Collector Crypt sale is documented to touch. A program the
 // player signs for can spend the player's authority by CPI, so anything outside
@@ -224,6 +228,29 @@ export function describePackError(status, body) {
 	if (/off/i.test(details)) return { code: 'machine_off', message: 'This machine is switched off right now. Pick another machine.' };
 	if (status === 400) return { code: 'bad_request', message: details || 'Collector Crypt rejected the request.' };
 	return { code: 'upstream_error', message: 'Collector Crypt could not build a pack right now. Try again shortly.' };
+}
+
+/**
+ * Turn a preflight failure into a sentence a player can act on, or null when the
+ * transaction already landed. `playerPaysFee` says the failing fee is the
+ * player's own to cover; when Collector Crypt pays it, a shortfall is not theirs.
+ */
+export function describeBroadcastError(rpcError, { playerPaysFee = false } = {}) {
+	const text = JSON.stringify(rpcError || {});
+	if (playerPaysFee && /insufficient funds for fee|InsufficientFundsForFee|attempt to debit an account/i.test(text)) {
+		return { code: 'insufficient_sol', message: 'Your wallet needs a little SOL to cover the network fee. Add some and pull again. Nothing was charged.' };
+	}
+	if (/insufficient (funds|lamports)|0x1\b|custom program error: 0x1"/i.test(text)) {
+		return { code: 'insufficient_usdc', message: 'Your wallet does not have enough USDC for this pull.' };
+	}
+	if (/blockhash not found|block height exceeded|expired/i.test(text)) {
+		return { code: 'expired', message: 'The pack expired before it was signed. Pull again for a fresh one.' };
+	}
+	if (/already been processed/i.test(text)) return null;
+	if (/AccountNotFound|could not find account|invalid account data/i.test(text)) {
+		return { code: 'no_usdc_account', message: 'This wallet has no USDC account on Solana yet. Add USDC to it first.' };
+	}
+	return { code: 'broadcast_failed', message: 'The network rejected the transaction. Nothing was charged; try again.' };
 }
 
 // ── normalizers ─────────────────────────────────────────────────────────────
@@ -466,16 +493,44 @@ function readU64(data, offset) {
 const isTokenProgram = (id) => id === PROGRAM.token || id === PROGRAM.token2022;
 
 /**
+ * The priority fee a transaction charges its fee payer, from its compute budget
+ * instructions. With no explicit limit the runtime allows 200,000 CU per
+ * non-budget instruction, up to 1,400,000.
+ */
+function priorityFeeLamports(instructions) {
+	let cuLimit = null;
+	let cuPrice = 0n;
+	let nonBudgetIxs = 0;
+	for (const ix of instructions) {
+		if (ix.programId !== PROGRAM.computeBudget) {
+			nonBudgetIxs++;
+		} else if (ix.data[0] === 2 && ix.data.length >= 5) {
+			cuLimit = BigInt(ix.data.readUInt32LE(1));
+		} else if (ix.data[0] === 3) {
+			cuPrice = readU64(ix.data, 1) ?? 0n;
+		}
+	}
+	const limit = cuLimit ?? BigInt(Math.min(1_400_000, 200_000 * Math.max(1, nonBudgetIxs)));
+	return (cuPrice * limit + 999_999n) / 1_000_000n;
+}
+
+/**
  * Prove a generatePack transaction is the payment the confirm sheet describes.
- * @returns {{ amountAtomic: string, amountUsdc: string, mint: string, destination: string, feePayer: string }}
+ * The fee payer is the gacha wallet or the player, and the gacha wallet must have
+ * pre-signed either way. A player-paid fee is capped, since a compute budget
+ * instruction is the one way this transaction could take SOL from the player.
+ * @returns {{ amountAtomic: string, amountUsdc: string, mint: string, destination: string, feePayer: string, networkFeePaidBy: 'player'|'collector_crypt', networkFeeLamports: number }}
  */
 export function inspectPackTransaction(decoded, { player, net, expectedAtomic }) {
 	const cfg = GACHA_NETWORKS[normalizeNetwork(net)];
-	if (decoded.feePayer !== cfg.gachaWallet) throw new GachaTxRejected('fee payer is not the Collector Crypt gacha wallet');
+	const playerPaysFee = decoded.feePayer === player;
+	if (!playerPaysFee && decoded.feePayer !== cfg.gachaWallet) throw new GachaTxRejected('fee payer is neither the Collector Crypt gacha wallet nor the player');
 	if (!decoded.signers.includes(player)) throw new GachaTxRejected('transaction does not ask the player to sign');
 	if (decoded.signers.length !== 2) throw new GachaTxRejected('unexpected signer set');
 	const gachaSig = decoded.signatures.find((s) => s.pubkey === cfg.gachaWallet);
 	if (!gachaSig?.signed) throw new GachaTxRejected('transaction is not pre-signed by the gacha wallet');
+	const priorityFee = priorityFeeLamports(decoded.instructions);
+	if (playerPaysFee && priorityFee > MAX_PRIORITY_FEE_LAMPORTS) throw new GachaTxRejected('pack priority fee is too high');
 
 	let payment = null;
 	for (const ix of decoded.instructions) {
@@ -494,7 +549,12 @@ export function inspectPackTransaction(decoded, { player, net, expectedAtomic })
 		payment = { amountAtomic: amount.toString(), amountUsdc: formatUsdc(amount), mint, destination, source };
 	}
 	if (!payment) throw new GachaTxRejected('pack transaction carries no payment');
-	return { ...payment, feePayer: decoded.feePayer };
+	return {
+		...payment,
+		feePayer: decoded.feePayer,
+		networkFeePaidBy: playerPaysFee ? 'player' : 'collector_crypt',
+		networkFeeLamports: playerPaysFee ? Number(BigInt(decoded.signers.length) * LAMPORTS_PER_SIGNATURE + priorityFee) : 0,
+	};
 }
 
 /**
@@ -527,21 +587,13 @@ export function inspectBuybackTransaction(decoded, { player, net, nftAddress }) 
 		solOut += lamports;
 		if (solOut > MAX_RENT_LAMPORTS) throw new GachaTxRejected('buyback moves SOL out of the player wallet');
 	};
-	let cuLimit = null;
-	let cuPrice = 0n;
-	let nonBudgetIxs = 0;
 
 	for (const ix of decoded.instructions) {
 		if (!BUYBACK_PROGRAMS.has(ix.programId)) throw new GachaTxRejected(`unexpected program ${ix.programId}`);
 		const keyed = (i) => ix.keys[i]?.pubkey ?? null;
 		const playerSigns = ix.keys.some((k) => k.pubkey === player && k.isSigner);
-		if (ix.programId !== PROGRAM.computeBudget) nonBudgetIxs++;
 
-		if (ix.programId === PROGRAM.computeBudget) {
-			if (ix.data[0] === 2 && ix.data.length >= 5) cuLimit = BigInt(ix.data.readUInt32LE(1));
-			else if (ix.data[0] === 3) cuPrice = readU64(ix.data, 1) ?? 0n;
-			continue;
-		}
+		if (ix.programId === PROGRAM.computeBudget) continue;
 		if (ix.programId === PROGRAM.system) {
 			const kind = ix.data.length >= 4 ? ix.data.readUInt32LE(0) : -1;
 			if (kind === 2 && keyed(0) === player) {
@@ -610,9 +662,8 @@ export function inspectBuybackTransaction(decoded, { player, net, nftAddress }) 
 		// Memo and the Ed25519 precompile carry no authority.
 	}
 
-	if (decoded.feePayer === player && cuPrice > 0n) {
-		const limit = cuLimit ?? BigInt(Math.min(1_400_000, 200_000 * Math.max(1, nonBudgetIxs)));
-		if ((cuPrice * limit) / 1_000_000n > MAX_PRIORITY_FEE_LAMPORTS) throw new GachaTxRejected('buyback priority fee is too high');
+	if (decoded.feePayer === player && priorityFeeLamports(decoded.instructions) > MAX_PRIORITY_FEE_LAMPORTS) {
+		throw new GachaTxRejected('buyback priority fee is too high');
 	}
 	return { feePayer: decoded.feePayer, version: decoded.version };
 }

@@ -36,6 +36,7 @@ import {
 	usdToAtomic,
 	gachaFetch,
 	describePackError,
+	describeBroadcastError,
 	normalizeMachines,
 	normalizeWinner,
 	normalizeCard,
@@ -125,22 +126,6 @@ async function broadcast(net, signedB64) {
 	} finally {
 		clearTimeout(timer);
 	}
-}
-
-// Turn a preflight failure into a sentence a player can act on.
-function describeBroadcastError(rpcError) {
-	const text = JSON.stringify(rpcError || {});
-	if (/insufficient (funds|lamports)|0x1\b|custom program error: 0x1"/i.test(text)) {
-		return { code: 'insufficient_usdc', message: 'Your wallet does not have enough USDC for this pull.' };
-	}
-	if (/blockhash not found|block height exceeded|expired/i.test(text)) {
-		return { code: 'expired', message: 'The pack expired before it was signed. Pull again for a fresh one.' };
-	}
-	if (/already been processed/i.test(text)) return null;
-	if (/AccountNotFound|could not find account|invalid account data/i.test(text)) {
-		return { code: 'no_usdc_account', message: 'This wallet has no USDC account on Solana yet. Add USDC to it first.' };
-	}
-	return { code: 'broadcast_failed', message: 'The network rejected the transaction. Nothing was charged; try again.' };
 }
 
 function rejectedTx(res, err, context) {
@@ -386,7 +371,8 @@ async function pull(req, res, net, body) {
 			mint: payment.mint,
 			destination: payment.destination,
 			feePayer: payment.feePayer,
-			networkFeePaidBy: 'collector_crypt',
+			networkFeePaidBy: payment.networkFeePaidBy,
+			networkFeeLamports: payment.networkFeeLamports,
 		},
 		expiresInHours: 2,
 	});
@@ -425,7 +411,7 @@ async function submit(req, res, net, body) {
 	const signature = transactionId(signed);
 	const ccOk = cc.status === 200 && cc.body?.success !== false;
 	if (!rpc.ok && !rpc.unreachable) {
-		const d = describeBroadcastError(rpc.rpcError);
+		const d = describeBroadcastError(rpc.rpcError, { playerPaysFee: decoded.feePayer === player });
 		if (d && !ccOk) return error(res, 400, d.code, d.message);
 	}
 	if (!ccOk && !rpc.ok) {

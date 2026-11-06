@@ -7,7 +7,7 @@
 // the payment never went out; anything ambiguous keeps the pack resumable.
 
 import { describe, it, expect } from 'vitest';
-import { submitMayHaveSent } from '../src/game/gacha-ui.js';
+import { submitMayHaveSent, networkFeeLabel } from '../src/game/gacha-ui.js';
 import { GachaApiError } from '../src/game/gacha-client.js';
 
 describe('submitMayHaveSent', () => {
@@ -23,5 +23,15 @@ describe('submitMayHaveSent', () => {
 	it('drops the pack only on a clear refusal', () => {
 		expect(submitMayHaveSent(new GachaApiError(400, 'bad_tx', 'The signed transaction did not match.'))).toBe(false);
 		expect(submitMayHaveSent(new GachaApiError(429, 'rate', 'Too many requests.'))).toBe(false);
+	});
+});
+
+describe('networkFeeLabel', () => {
+	it('names Collector Crypt only when it really pays the fee', () => {
+		expect(networkFeeLabel({ networkFeePaidBy: 'collector_crypt', networkFeeLamports: 0 })).toBe('Paid by Collector Crypt');
+	});
+
+	it('shows the exact SOL a wallet paying its own fee is charged', () => {
+		expect(networkFeeLabel({ networkFeePaidBy: 'player', networkFeeLamports: 10_800 })).toBe('0.0000108 SOL from your wallet');
 	});
 });

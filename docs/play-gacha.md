@@ -13,7 +13,7 @@ The platform never holds or moves player funds. Collector Crypt builds each tran
    - the chain (Solana);
    - the recipient (Collector Crypt's treasury for that machine);
    - the paying wallet;
-   - who pays the network fee (Collector Crypt does).
+   - who pays the network fee. Collector Crypt pays it for a wallet with no SOL. A wallet that holds SOL pays its own, and the table shows the exact amount (about 0.00001 SOL).
 
    Nothing is signed until you press **Sign and pull**.
 4. **Watch it vend.** The machine shakes and drops a capsule while the payment confirms. The screen then polls until the card is assigned to you. That usually takes a few seconds and can take up to a minute.
@@ -32,7 +32,8 @@ Collector Crypt's API returns a ready-made transaction for the player to sign. t
 
 A **pack payment** is only accepted when all of these hold:
 
-- Collector Crypt's gacha wallet is the fee payer, and it has already signed.
+- The fee payer is Collector Crypt's gacha wallet or the player, and the gacha wallet has already signed either way. Collector Crypt chooses per wallet, so both shapes are normal.
+- When the player pays the fee, the priority fee is capped at 0.005 SOL.
 - There are exactly two signers: the gacha wallet and the player.
 - There is exactly one token movement: a `TransferChecked` of USDC (the real mint for that network) from the player to that machine's treasury.
 - The amount is exactly the machine's current price in atomic units.
