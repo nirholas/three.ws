@@ -34,6 +34,7 @@ import {
 import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { getRedis } from '../_lib/redis.js';
+import { tickBudgetSpent } from '../_lib/x402/tick-budget.js';
 import { sql } from '../_lib/db.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { logger } from '../_lib/usage.js';
@@ -263,6 +264,7 @@ async function runStoreValue(entry, ctx) {
 // ── Main handler ──────────────────────────────────────────────────────────────
 
 export default wrapCron(async (req, res) => {
+	const tickStartedAt = Date.now();
 	if (!method(req, res, ['GET'])) return;
 	if (!requireCron(req, res)) return;
 
@@ -426,6 +428,10 @@ export default wrapCron(async (req, res) => {
 
 	for (const entry of ready) {
 		if (remainingCap <= 0) break;
+		if (tickBudgetSpent(tickStartedAt)) {
+			log.warn('autonomous_tick_budget_spent', { run_id: runId, elapsed_ms: Date.now() - tickStartedAt, done: results.length, ready: ready.length });
+			break;
+		}
 
 		let endpointUrl = entry.url || `${origin}${entry.path}`;
 		let targetUrl = null;
