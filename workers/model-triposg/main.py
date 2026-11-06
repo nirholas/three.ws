@@ -256,6 +256,13 @@ async def lifespan(app: FastAPI):
     asyncio.create_task(_load_models_bg())
     log.info("Service starting, models loading in background (max_concurrent=%d)", MAX_CONCURRENT)
     yield
+    # uvicorn has stopped accepting work by the time this runs. Interpreter
+    # teardown after it runs CUDA/diso/trimesh native destructors over a heap
+    # that glibc reports as corrupt ("malloc_consolidate(): unaligned fastbin
+    # chunk detected"), and Cloud Run records every scale-in as "Container
+    # terminated on signal 11". Exit now, cleanly, and skip the teardown.
+    logging.shutdown()
+    os._exit(0)
 
 
 app = FastAPI(title="model-triposg", lifespan=lifespan)

@@ -88,6 +88,9 @@ def _install_stub_modules() -> None:
         def get(self, *_args, **_kwargs):
             return lambda fn: fn
 
+        def add_middleware(self, *_args, **_kwargs):
+            pass
+
     class _HTTPException(Exception):
         def __init__(self, status_code=500, detail=None):
             super().__init__(detail)
