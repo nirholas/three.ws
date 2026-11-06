@@ -55,6 +55,14 @@
 			<description>Agent cards on /marketplace were showing only a letter where the avatar should be, because the stored picture was tied to the 3D viewer, which stays hidden until you hover a card. Every card now shows its avatar picture straight away, and hovering still swaps in the live, turning 3D model.</description>
 		</item>
 		<item>
+			<title>New gallery avatars stop getting white hands and the wrong face</title>
+			<link>https://three.ws/marketplace</link>
+			<guid isPermaLink="false">2026-11-05:New gallery avatars stop getting white hands and the wrong face</guid>
+			<pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Avatars added to the public gallery each minute could come out with flat white hands that did not match the face, a man's card with a woman's face and long hair, or novelty reindeer antlers worn as glasses. Hands and neck now take the same skin tone as the face, hair and clothes always match the avatar's gender, and the antler piece is no longer offered as eyewear.</description>
+		</item>
+		<item>
 			<title>Sell everything an agent bought, or trade any coin by hand</title>
 			<link>https://three.ws/docs/agent-wallets.md</link>
 			<guid isPermaLink="false">2026-11-05:Sell everything an agent bought, or trade any coin by hand</guid>

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-05T02:09:02.800Z",
+	"generated_at": "2026-11-05T04:38:56.266Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4451,
+	"total": 4452,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -65,6 +65,16 @@
 			"type": "update",
 			"title": "Marketplace agent cards show their avatars again",
 			"summary": "Agent cards on /marketplace were showing only a letter where the avatar should be, because the stored picture was tied to the 3D viewer, which stays hidden until you hover a card. Every card now shows its avatar picture straight away, and hovering still swaps in the live, turning 3D model.",
+			"link": "/marketplace",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-05",
+			"type": "update",
+			"title": "New gallery avatars stop getting white hands and the wrong face",
+			"summary": "Avatars added to the public gallery each minute could come out with flat white hands that did not match the face, a man's card with a woman's face and long hair, or novelty reindeer antlers worn as glasses. Hands and neck now take the same skin tone as the face, hair and clothes always match the avatar's gender, and the antler piece is no longer offered as eyewear.",
 			"link": "/marketplace",
 			"tags": [
 				"fix"
@@ -1532,16 +1542,6 @@
 			"title": "Custody Integrity",
 			"summary": "The platform-wide proof of custody: how many six-hourly Merkle roots over every agent wallet are anchored on Solana, and the newest one re-verified against the chain in your browser, no account needed.",
 			"link": "/integrity",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "launch",
-			"title": "Docs · Agent memory and learning",
-			"summary": "What your agents remember, the about-you profile and skills they draft from experience, the owner controls to edit, delete or turn learning off, the privacy guarantees on sale, and the /api/memory routes.",
-			"link": "/docs/agent-memory",
 			"tags": [
 				"launch"
 			]

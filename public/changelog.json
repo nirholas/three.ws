@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-05T02:09:02.760Z",
+	"generated_at": "2026-11-05T04:38:56.223Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -62,6 +62,16 @@
 			"type": "update",
 			"title": "Marketplace agent cards show their avatars again",
 			"summary": "Agent cards on /marketplace were showing only a letter where the avatar should be, because the stored picture was tied to the 3D viewer, which stays hidden until you hover a card. Every card now shows its avatar picture straight away, and hovering still swaps in the live, turning 3D model.",
+			"link": "/marketplace",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-05",
+			"type": "update",
+			"title": "New gallery avatars stop getting white hands and the wrong face",
+			"summary": "Avatars added to the public gallery each minute could come out with flat white hands that did not match the face, a man's card with a woman's face and long hair, or novelty reindeer antlers worn as glasses. Hands and neck now take the same skin tone as the face, hair and clothes always match the avatar's gender, and the antler piece is no longer offered as eyewear.",
 			"link": "/marketplace",
 			"tags": [
 				"fix"
