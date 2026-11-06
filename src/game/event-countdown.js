@@ -109,6 +109,15 @@ body.is-zen .cc-event-pill { opacity: 0; pointer-events: none; }
 }
 `;
 
+// Storage throws in Safari private mode and under hardened-privacy settings. A
+// reminder that cannot remember its dismissal is still a working reminder.
+function readDismissed(key) {
+	try { return !!localStorage.getItem(key); } catch { return false; }
+}
+function writeDismissed(key) {
+	try { localStorage.setItem(key, '1'); } catch { /* dismissal lasts until reload */ }
+}
+
 class EventCountdown {
 	constructor(cfg) {
 		this.cfg = cfg;
@@ -146,7 +155,7 @@ class EventCountdown {
 	}
 
 	_mountPill() {
-		if (localStorage.getItem(this.dismissKey)) return;
+		if (readDismissed(this.dismissKey)) return;
 		this.pillText = el('span', { role: 'timer' });
 		this.pillLink = this.cfg.link && !alreadyAtEvent(this.cfg)
 			? el('a', { href: this.cfg.link, text: this.cfg.linkLabel })
@@ -158,7 +167,7 @@ class EventCountdown {
 			el('button', {
 				type: 'button', class: 'cc-event-pill-x', 'aria-label': 'Dismiss event reminder', title: 'Dismiss',
 				onclick: () => {
-					localStorage.setItem(this.dismissKey, '1');
+					writeDismissed(this.dismissKey);
 					this.pill.remove();
 					this.pill = null;
 				},
