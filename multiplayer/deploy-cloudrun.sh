@@ -38,6 +38,12 @@ CONCURRENCY="${CONCURRENCY:-1000}"
 CPU="${CPU:-4}"
 MEMORY="${MEMORY:-8Gi}"
 MIN_INSTANCES="${MIN_INSTANCES:-1}"
+# Players per walk_world room before the matchmaker opens a second room for the
+# same coin. The server's own default is 100, which split a 300-player $THREE
+# crowd into three worlds that could not see each other. Measured 2026-11-06 on
+# this service (4 vCPU, single instance): 250 clients in one room joined 250/250
+# with p95 455 ms, no drops, under 7 percent CPU. The server clamps it to 2-500.
+WALK_ROOM_MAX_CLIENTS="${WALK_ROOM_MAX_CLIENTS:-250}"
 
 # Horizontal scaling: a Colyseus fleet only works when the room registry +
 # presence are shared via Redis (REDIS_URI, e.g. a Memorystore instance). Until
@@ -84,7 +90,7 @@ UPSTASH_REDIS_REST_TOKEN="${UPSTASH_REDIS_REST_TOKEN:-}"
 # (NOT --set-env-vars): a redeploy from a shell without HOLDER_PASS_SECRET or
 # the Upstash creds must merge into the service's existing env, never replace
 # it - --set-env-vars silently wipes every var not named here.
-ENV_VARS="NODE_ENV=production@ALLOWED_ORIGINS=${ALLOWED_ORIGINS}"
+ENV_VARS="NODE_ENV=production@ALLOWED_ORIGINS=${ALLOWED_ORIGINS}@WALK_ROOM_MAX_CLIENTS=${WALK_ROOM_MAX_CLIENTS}"
 [[ -n "${REDIS_URI}" ]] && ENV_VARS="${ENV_VARS}@REDIS_URI=${REDIS_URI}"
 [[ -n "${UPSTASH_REDIS_REST_URL}" ]] && ENV_VARS="${ENV_VARS}@UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL}"
 [[ -n "${UPSTASH_REDIS_REST_TOKEN}" ]] && ENV_VARS="${ENV_VARS}@UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN}"
