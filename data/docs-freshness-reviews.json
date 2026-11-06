@@ -3,10 +3,10 @@
 	"$comment": "Review baselines for `npm run docs:freshness`. Without this file the only clock a doc has is its own last commit, so a page someone read end to end and found correct still measures as drifting, and the only way to clear it is a cosmetic edit that lies about what happened. A stamp here says a human or an agent checked this doc against the repo at that commit. Freshness is then measured from whichever is newer, the doc's last edit or its last review. Write stamps with `npm run docs:review -- <doc> [more docs] --note \"...\"`, never by hand: the tool resolves the commit, refuses a doc that does not exist, and keeps the ordering stable. kind `verified` means the prose was checked against the code and matched. kind `snapshot` means the doc is a dated record (an audit, an incident writeup, a finished work order) that documents a moment and must not be rewritten to match today's code, so it is never counted as drift.",
 	"reviews": {
 		"CLAUDE.md": {
-			"commit": "4cf6b20f3",
+			"commit": "03b956211",
 			"kind": "verified",
 			"by": "agent",
-			"note": "npm run check:claude passes; cron count 165 matches vercel.json, remotes, skills, agents and workflows named all exist, and the drifted commits (play lite route, audit script, package.json scripts) touch nothing it states."
+			"note": "Rechecked against a1706ec7f, which makes the evolve queue archive a finished order with git mv instead of deleting it; the doc defers retirement mechanics to prompts/README.md, which states the archive rule."
 		},
 		"README.md": {
 			"commit": "4cf6b20f3",
@@ -15,10 +15,10 @@
 			"note": "Added the /play/lite lite client row to the Coin Communities surface table (shipped 2026-11-06 with WebGL-less handoff); prep:worktree, build/deploy chain and npm run names checked against package.json and still correct."
 		},
 		"STRUCTURE.md": {
-			"commit": "4cf6b20f3",
+			"commit": "03b956211",
 			"kind": "verified",
 			"by": "agent",
-			"note": "Play lite row already present with real paths, all relative links resolve (after URL decoding), and the pages.json and package.json commits do not contradict any row."
+			"note": "Rechecked against de28cbd41 and cec72ccb1, which change coin name resolution and keep the pinned lobby card visible on a feed error; the doc cites these files only as locations and describes neither behavior."
 		},
 		"docs/3d-api.md": {
 			"commit": "4cf6b20f3",
@@ -984,10 +984,10 @@
 			"note": "Only a sticky search bar style change and model-viewer pin bumps since baseline; deep links, card behavior, API params and manifest fields match src/character-library.js and the shared view module."
 		},
 		"docs/character-studio.md": {
-			"commit": "0a10f48c2",
+			"commit": "03b956211",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "Rechecked against de28cbd41 and cec72ccb1, which change coin name resolution and keep the pinned lobby card visible on a feed error; the doc cites these files only as locations and describes neither behavior."
 		},
 		"docs/chart-companion.md": {
 			"commit": "4cf6b20f3",
@@ -1396,10 +1396,10 @@
 			"note": "Added intro pointer to the off-by-default staked variant; cron schedules, points and feed config verified against source."
 		},
 		"docs/event-readiness/01-play-first-impression.md": {
-			"commit": "53f2a200f",
+			"commit": "03b956211",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "Rechecked against de28cbd41 and cec72ccb1, which change coin name resolution and keep the pinned lobby card visible on a feed error; the doc cites these files only as locations and describes neither behavior."
 		},
 		"docs/event-readiness/02-play-mobile.md": {
 			"commit": "4cf6b20f3",
@@ -1408,10 +1408,10 @@
 			"note": "Harness env vars, npm run audit:mobile-touch, 44px target and ambient-crowd references all match current scripts and source."
 		},
 		"docs/event-readiness/03-play-performance.md": {
-			"commit": "9c9d80bcc",
+			"commit": "03b956211",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Rechecked against de28cbd41 and cec72ccb1, which change coin name resolution and keep the pinned lobby card visible on a feed error; the doc cites these files only as locations and describes neither behavior."
 		},
 		"docs/event-readiness/04-play-multiplayer-net.md": {
 			"commit": "4cf6b20f3",
@@ -1424,6 +1424,12 @@
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+		},
+		"docs/event-readiness/06-play-auth-errors.md": {
+			"commit": "03b956211",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Rechecked against de28cbd41 and cec72ccb1, which change coin name resolution and keep the pinned lobby card visible on a feed error; the doc cites these files only as locations and describes neither behavior."
 		},
 		"docs/event-readiness/07-platform-smoke-sweep.md": {
 			"commit": "4cf6b20f3",
@@ -1495,22 +1501,22 @@
 			"note": "Results echo item said the jumbotron and ticker row were still open; noteWarResult and the portal onResult hook now ship them, so item 4 is marked shipped."
 		},
 		"docs/event-readiness/19-forge-props-live.md": {
-			"commit": "4cf6b20f3",
+			"commit": "03b956211",
 			"kind": "verified",
 			"by": "agent",
-			"note": "Checked prop-budget tiers, forge-prop poll, wait and 8 MB caps, forge-world-limits, the rig action and durable handling against current source; the drift commits (territory report, funnel, world-persist retry) do not touch the described behavior."
+			"note": "Rechecked against de28cbd41 and cec72ccb1, which change coin name resolution and keep the pinned lobby card visible on a feed error; the doc cites these files only as locations and describes neither behavior."
 		},
 		"docs/event-readiness/20-world-chat-scrollback.md": {
-			"commit": "4cf6b20f3",
+			"commit": "03b956211",
 			"kind": "verified",
 			"by": "agent",
-			"note": "Brief read as unbuilt; added a status paragraph for the shipped scrollback (200 lines, 3 day TTL, 60 line join tail, chat-log-view, read-only Board tab, no write-back decision) linking docs/play-chat.md."
+			"note": "Rechecked against de28cbd41 and cec72ccb1, which change coin name resolution and keep the pinned lobby card visible on a feed error; the doc cites these files only as locations and describes neither behavior."
 		},
 		"docs/event-readiness/21-party-system.md": {
-			"commit": "4cf6b20f3",
+			"commit": "03b956211",
 			"kind": "verified",
 			"by": "agent",
-			"note": "The not-shipped note said no invite sheet exists; the invite sheet now exists but has no party awareness, so the note now says that."
+			"note": "Rechecked against de28cbd41 and cec72ccb1, which change coin name resolution and keep the pinned lobby card visible on a feed error; the doc cites these files only as locations and describes neither behavior."
 		},
 		"docs/event-readiness/22-venue-projector-mode.md": {
 			"commit": "4cf6b20f3",
@@ -1519,16 +1525,16 @@
 			"note": "Brief said there is no spectator join option and described the director as unbuilt; added a shipped status linking docs/play-director-mode.md and corrected the WalkRoom spectator bullet."
 		},
 		"docs/event-readiness/23-signature-wall.md": {
-			"commit": "9c9d80bcc",
+			"commit": "03b956211",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Rechecked against de28cbd41 and cec72ccb1, which change coin name resolution and keep the pinned lobby card visible on a feed error; the doc cites these files only as locations and describes neither behavior."
 		},
 		"docs/event-readiness/24-dance-off.md": {
-			"commit": "4cf6b20f3",
+			"commit": "03b956211",
 			"kind": "verified",
 			"by": "agent",
-			"note": "Brief described the round machine as missing; added a shipped status with the real files, timings and links to docs/dance-off.md."
+			"note": "Rechecked against de28cbd41 and cec72ccb1, which change coin name resolution and keep the pinned lobby card visible on a feed error; the doc cites these files only as locations and describes neither behavior."
 		},
 		"docs/event-readiness/LIVE-OPS.md": {
 			"commit": "0a10f48c2",
@@ -1991,10 +1997,10 @@
 			"note": "PRIVATE_DOCS set in vite.config.js and scripts/combine-docs.mjs still excludes internal, ops and security; both listed docs exist."
 		},
 		"docs/internal/fable-playbook.md": {
-			"commit": "5c826cca9",
+			"commit": "03b956211",
 			"kind": "verified",
 			"by": "agent",
-			"note": "read against the drifted commits on 2026-11-06; every claim, script and path still matches the code"
+			"note": "Rechecked against a1706ec7f, which makes the evolve queue archive a finished order with git mv instead of deleting it; the doc defers retirement mechanics to prompts/README.md, which states the archive rule."
 		},
 		"docs/introduction.md": {
 			"commit": "4cf6b20f3",
@@ -2387,10 +2393,10 @@
 			"note": "Registry migration, economy-wallets script commands, 4 character vanity cap, alias sets and signer roles in solana-signers.js match; sponsor-runway changes only touched alert wording."
 		},
 		"docs/ops/evolve.md": {
-			"commit": "4cf6b20f3",
+			"commit": "03b956211",
 			"kind": "verified",
 			"by": "agent",
-			"note": "Defaults, DENY_RULES, lanes, scout band 400-499, blocked band 900, 6h busy window, package-lock restage and prep:worktree staging of .env files all match scripts/evolve.mjs and prepare-deploy-worktree.mjs."
+			"note": "Rechecked against a1706ec7f, which makes the evolve queue archive a finished order with git mv instead of deleting it; the doc defers retirement mechanics to prompts/README.md, which states the archive rule."
 		},
 		"docs/ops/examples-repo-export.md": {
 			"commit": "4cf6b20f3",
@@ -2824,10 +2830,10 @@
 			"note": "Added that muted identities' chat is dropped before relay and scrollback, with the report and operator mute paths; scrollback constants unchanged."
 		},
 		"docs/play-forge-in-world.md": {
-			"commit": "4cf6b20f3",
+			"commit": "03b956211",
 			"kind": "verified",
 			"by": "agent",
-			"note": "Checked cooldown 20 s, 4 slots per 90 s, 429 scope in api/forge.js and rate-limit.js, tier budgets in prop-budget.js, 200/30 object caps, and the durable:true remesh rule; drift commits do not change these."
+			"note": "Rechecked against de28cbd41 and cec72ccb1, which change coin name resolution and keep the pinned lobby card visible on a feed error; the doc cites these files only as locations and describes neither behavior."
 		},
 		"docs/play-gacha.md": {
 			"commit": "4cf6b20f3",
@@ -2848,10 +2854,10 @@
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
 		"docs/play-plaza-stage.md": {
-			"commit": "4cf6b20f3",
+			"commit": "03b956211",
 			"kind": "verified",
 			"by": "agent",
-			"note": "Written in the same commit as the show client; later coincommunities.js commits (lite offer, war result, moderation, private worlds) do not touch the plaza stage wiring; TIP_PRESETS and refresh interval match."
+			"note": "Rechecked against de28cbd41 and cec72ccb1, which change coin name resolution and keep the pinned lobby card visible on a feed error; the doc cites these files only as locations and describes neither behavior."
 		},
 		"docs/play-ufo.md": {
 			"commit": "4cf6b20f3",
@@ -4089,10 +4095,10 @@
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
 		"docs/ux-flows/12-home-and-content.md": {
-			"commit": "4cf6b20f3",
+			"commit": "03b956211",
 			"kind": "verified",
 			"by": "agent",
-			"note": "Only pages.json drift from registering other docs; routes cited still resolve per audit-ux-flows."
+			"note": "Rechecked against the b508418f5 changelog feed regeneration: public/changelog-recent.json still carries the newest 150 entries the New on three.ws strip reads, so the flow is unchanged."
 		},
 		"docs/ux-flows/13-additional-routes.md": {
 			"commit": "4cf6b20f3",
