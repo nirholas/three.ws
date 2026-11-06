@@ -39,6 +39,14 @@
 			<description>Models over 32 MB (several mixamo avatars and forge props are 38 to 42 MB) failed with an empty server error on a full download whenever the CDN edge did not already hold them, because Cloud Run rejects a buffered response that large. Those downloads now stream, so an avatar or prop in /play no longer depends on the cache being warm.</description>
 		</item>
 		<item>
+			<title>Queued 3D and avatar jobs are no longer failed while they wait their turn</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-06:Queued 3D and avatar jobs are no longer failed while they wait their turn</guid>
+			<pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>On the self-hosted text-to-3D worker, a job waiting behind another could be marked as orphaned a few minutes after submit even though its runner was still alive, which sent the request to a slower fallback or failed it. A worker now trusts its own live record over a lagging storage read, so queued jobs wait and then run.</description>
+		</item>
+		<item>
 			<title>The meetup group photo is stamped with the event name every time</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-11-06:The meetup group photo is stamped with the event name every time</guid>
@@ -61,6 +69,14 @@
 			<pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>When GeckoTerminal throttled the candle refresh behind the Granite Oracle, the first visitor after the cache lapsed waited about 16 seconds. Candle reads now hand back the previous candles after 2.5 seconds and finish the refresh in the background, so the ribbon loads promptly and the next visitor sees fresh data.</description>
+		</item>
+		<item>
+			<title>The Play world holds up on phones, blocked storage and blocked scripts</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-11-06:The Play world holds up on phones, blocked storage and blocked scripts</guid>
+			<pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every Play button on a touch screen now meets the 44 px target size, the meetup countdown chip sits under the top bar instead of covering Shop, Buy and Friends, the event countdown keeps running when the browser blocks local storage, a blocked locale script no longer stops the world from loading, and the agent exchange no longer downloads the animation list a second time.</description>
 		</item>
 		<item>
 			<title>Auto-rigged legs no longer drag cloth between them</title>

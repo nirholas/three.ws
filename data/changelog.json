@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-06",
+			"title": "The Play world holds up on phones, blocked storage and blocked scripts",
+			"summary": "Every Play button on a touch screen now meets the 44 px target size, the meetup countdown chip sits under the top bar instead of covering Shop, Buy and Friends, the event countdown keeps running when the browser blocks local storage, a blocked locale script no longer stops the world from loading, and the agent exchange no longer downloads the animation list a second time.",
+			"tags": ["fix"],
+			"link": "/play"
+		},
+		{
+			"date": "2026-11-06",
 			"title": "Queued 3D and avatar jobs are no longer failed while they wait their turn",
 			"summary": "On the self-hosted text-to-3D worker, a job waiting behind another could be marked as orphaned a few minutes after submit even though its runner was still alive, which sent the request to a slower fallback or failed it. A worker now trusts its own live record over a lagging storage read, so queued jobs wait and then run.",
 			"tags": [

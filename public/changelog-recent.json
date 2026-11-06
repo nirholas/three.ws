@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-06T04:02:00.724Z",
+	"generated_at": "2026-11-06T04:07:06.195Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4459,
+	"total": 4461,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -52,6 +52,16 @@
 		{
 			"date": "2026-11-06",
 			"type": "update",
+			"title": "Queued 3D and avatar jobs are no longer failed while they wait their turn",
+			"summary": "On the self-hosted text-to-3D worker, a job waiting behind another could be marked as orphaned a few minutes after submit even though its runner was still alive, which sent the request to a slower fallback or failed it. A worker now trusts its own live record over a lagging storage read, so queued jobs wait and then run.",
+			"link": "/forge",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-06",
+			"type": "update",
 			"title": "The meetup group photo is stamped with the event name every time",
 			"summary": "The photo screen loaded only when the shutter fired, so on a slow connection the card could open without the event name or arrive late. It now loads during the minute before the shutter, so the group photo is ready the instant it fires.",
 			"link": "/play",
@@ -74,6 +84,16 @@
 			"type": "update",
 			"title": "The oracle ribbon in /play no longer stalls when its price feed is throttled",
 			"summary": "When GeckoTerminal throttled the candle refresh behind the Granite Oracle, the first visitor after the cache lapsed waited about 16 seconds. Candle reads now hand back the previous candles after 2.5 seconds and finish the refresh in the background, so the ribbon loads promptly and the next visitor sees fresh data.",
+			"link": "/play",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-06",
+			"type": "update",
+			"title": "The Play world holds up on phones, blocked storage and blocked scripts",
+			"summary": "Every Play button on a touch screen now meets the 44 px target size, the meetup countdown chip sits under the top bar instead of covering Shop, Buy and Friends, the event countdown keeps running when the browser blocks local storage, a blocked locale script no longer stops the world from loading, and the agent exchange no longer downloads the animation list a second time.",
 			"link": "/play",
 			"tags": [
 				"fix"
@@ -1521,28 +1541,6 @@
 			"link": "/docs/token-due-diligence",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Token holder and security checks now share their Solana reads, cutting RPC calls by about 43%",
-			"summary": "The holders and security panels read the same mint account and largest-holder list for a token, and a page that shows both used to pay for those reads twice, once per server instance it landed on. Those public reads are now shared across the whole fleet for 30 seconds, and the security verdict for a token is reused for 60 seconds, so a burst of lookups costs a fraction of the calls. If every data source is down, the security check now serves the last good verdict for up to 6 hours, clearly marked as stale, instead of failing. Operators also get a per-route RPC spend board at /api/ops/rpc-spend, a terminal report, and an optional daily budget per RPC lane that keeps the remaining quota for payments and settlements.",
-			"link": "/docs/crypto-api",
-			"tags": [
-				"improvement",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Tool gateway: web search, fetch, documents, speech and images on one balance",
-			"summary": "Agents and developers can now call six metered tools without collecting vendor keys: web_search, web_fetch, parse_document (PDF, DOCX, XLSX, CSV), tts, transcribe and image_generate. They are on REST at /api/v1/tools/{tool} and on the main MCP server, charged to the same account credits as model calls, settled to what the tool actually produced and refunded in full if it fails. Prices are listed live on the pricing page.",
-			"link": "/pricing",
-			"tags": [
-				"feature",
-				"sdk"
 			]
 		}
 	]
