@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<script>/* WebSocket signature: colyseus.js first calls new WebSocket(url, {headers, protocols}), the Node ws form, and catches the refusal; Safari also logs that refusal as a console error on every connect. Browsers cannot send headers, so pass just the protocols. */(function(){var W=window.WebSocket;if(!W||W.__twsSig)return;var P=new Proxy(W,{construct:function(T,a,nt){var p=a[1];if(p&&typeof p==='object'&&!Array.isArray(p))a=p.protocols==null?[a[0]]:[a[0],p.protocols];return Reflect.construct(T,a,nt);}});W.__twsSig=1;window.WebSocket=P;})();</script>
+		<meta charset="utf-8" />
+		<title>Play lite · Coin Communities, three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="description" content="Join a live three.ws /play world from any device. The same plaza, people, chat, dance-off and signature wall as the 3D world, drawn as a live map that runs without a graphics card." />
+		<meta name="theme-color" content="#060607" />
+
+		<!-- Same Colyseus host as /play (pages/play.html). Local dev uses ws://localhost:2567. -->
+		<meta name="game-server" content="wss://three-ws-multiplayer-93741856042.us-central1.run.app" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="canonical" href="https://three.ws/play/lite" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Play lite · Coin Communities" />
+		<meta property="og:description" content="The live /play world on any device: walk the plaza, chat, react, vote in the dance-off and sign the wall." />
+		<meta property="og:url" content="https://three.ws/play/lite" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Play+lite&amp;d=Join+the+live+world+from+any+device.&amp;p=%2Fplay%2Flite" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+
+		<link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/tokens.css" />
+	</head>
+	<body class="pl-body">
+		<a class="pl-skip" href="#pl-chat-input">Skip to chat</a>
+		<div class="pl-app">
+			<header class="pl-top">
+				<a class="pl-brand" href="/" aria-label="three.ws home">three.ws</a>
+				<div class="pl-world">
+					<span class="pl-world-name" id="pl-world-name">three.ws</span>
+					<span class="pl-world-sub">Play lite</span>
+				</div>
+				<div class="pl-top-actions">
+					<span class="pl-pill pl-status" id="pl-status" role="status" data-tone="wait"><i aria-hidden="true"></i><span class="pl-status-label">Joining</span></span>
+					<button type="button" class="pl-btn pl-btn-sm" id="pl-retry" hidden>Retry</button>
+					<span class="pl-pill" id="pl-count" aria-label="People in this world">0 here</span>
+					<button type="button" class="pl-btn pl-btn-sm" id="pl-open-3d">Open in 3D</button>
+				</div>
+			</header>
+
+			<div class="pl-notice" id="pl-notice" role="note" hidden>
+				<span class="pl-notice-text"></span>
+				<button type="button" class="pl-btn pl-btn-sm">Got it</button>
+			</div>
+
+			<main class="pl-main">
+				<section class="pl-stage" aria-label="World map">
+					<div class="pl-map-wrap">
+						<canvas id="pl-map" class="pl-map" tabindex="0" aria-label="Live map of the plaza. Tap or click anywhere to walk there. With the map focused, arrow keys or W A S D walk."></canvas>
+						<div class="pl-map-state" id="pl-map-state" role="status"></div>
+						<div class="pl-zoom" role="group" aria-label="Map zoom">
+							<button type="button" class="pl-icon-btn" id="pl-zoom-in" aria-label="Zoom in">+</button>
+							<button type="button" class="pl-icon-btn" id="pl-zoom-out" aria-label="Zoom out">&minus;</button>
+						</div>
+						<p class="pl-where" id="pl-where" aria-live="polite">Joining the plaza</p>
+					</div>
+
+					<div class="pl-quick">
+						<div class="pl-row" id="pl-reactions" role="group" aria-label="React"></div>
+						<div class="pl-row" id="pl-emotes" role="group" aria-label="Emote"></div>
+					</div>
+
+					<section class="pl-dance" id="pl-dance" aria-labelledby="pl-dance-title" hidden>
+						<div class="pl-dance-head">
+							<span class="pl-dance-badge" aria-hidden="true">💃</span>
+							<div>
+								<h2 class="pl-dance-title" id="pl-dance-title">Dance-off</h2>
+								<p class="pl-dance-detail" id="pl-dance-detail"></p>
+							</div>
+						</div>
+						<ol class="pl-dance-list" id="pl-dance-list" hidden></ol>
+						<div class="pl-dance-actions" id="pl-dance-actions"></div>
+					</section>
+				</section>
+
+				<section class="pl-side" aria-label="World panels">
+					<div class="pl-tabs" id="pl-tabs" role="tablist" aria-label="Panels">
+						<button type="button" class="pl-tab" role="tab" id="pl-tab-chat" data-tab="chat" aria-controls="pl-panel-chat">Chat <span class="pl-badge" id="pl-unread" hidden>0</span></button>
+						<button type="button" class="pl-tab" role="tab" id="pl-tab-places" data-tab="places" aria-controls="pl-panel-places">Go to</button>
+						<button type="button" class="pl-tab" role="tab" id="pl-tab-people" data-tab="people" aria-controls="pl-panel-people">People <span class="pl-badge pl-badge-dim" id="pl-people-count">0</span></button>
+						<button type="button" class="pl-tab" role="tab" id="pl-tab-wall" data-tab="wall" aria-controls="pl-panel-wall">Wall</button>
+					</div>
+
+					<div class="pl-panel pl-panel-chat" id="pl-panel-chat" role="tabpanel" aria-labelledby="pl-tab-chat">
+						<div class="pl-chat-log" id="pl-chat-log" role="log" aria-label="World chat"></div>
+						<div class="pl-empty" id="pl-chat-empty">
+							<strong>No messages yet.</strong>
+							<p>Everyone in the world, in 3D or lite, sees this chat.</p>
+							<button type="button" class="pl-btn" id="pl-chat-empty-say">Say hi</button>
+						</div>
+						<form class="pl-chat-form" id="pl-chat-form" autocomplete="off">
+							<label class="pl-sr" for="pl-chat-input">Message</label>
+							<input class="pl-input" id="pl-chat-input" type="text" maxlength="200" placeholder="Say something to the world" enterkeyhint="send" />
+							<button type="submit" class="pl-btn pl-btn-primary" id="pl-chat-send" data-needs-net>Send</button>
+						</form>
+					</div>
+
+					<div class="pl-panel" id="pl-panel-places" role="tabpanel" aria-labelledby="pl-tab-places" hidden>
+						<p class="pl-panel-lede">Pick a spot and your avatar walks there. Everyone in 3D sees you arrive.</p>
+						<ul class="pl-places" id="pl-places"></ul>
+						<div class="pl-extras">
+							<button type="button" class="pl-btn" id="pl-photo-open">📸 Take a world photo</button>
+						</div>
+					</div>
+
+					<div class="pl-panel" id="pl-panel-people" role="tabpanel" aria-labelledby="pl-tab-people" hidden>
+						<form class="pl-rename" id="pl-rename" autocomplete="off">
+							<label class="pl-label" for="pl-rename-input">Your name</label>
+							<div class="pl-inline">
+								<input class="pl-input" id="pl-rename-input" type="text" maxlength="24" autocomplete="nickname" placeholder="guest" />
+								<button type="submit" class="pl-btn" data-needs-net>Save</button>
+							</div>
+						</form>
+						<ul class="pl-roster" id="pl-roster" aria-label="People in this world"></ul>
+						<div class="pl-empty" id="pl-roster-empty" hidden>
+							<strong>Just you so far.</strong>
+							<p>Send the link to a friend: they can join from any phone or laptop.</p>
+							<button type="button" class="pl-btn" id="pl-copy-link">Copy link</button>
+						</div>
+					</div>
+
+					<div class="pl-panel" id="pl-panel-wall" role="tabpanel" aria-labelledby="pl-tab-wall" hidden>
+						<p class="pl-panel-lede" id="pl-wall-total">Loading signatures</p>
+						<form class="pl-wall-form" id="pl-wall-form" autocomplete="off">
+							<label class="pl-label" for="pl-wall-name">Name on the wall</label>
+							<input class="pl-input" id="pl-wall-name" type="text" maxlength="24" required />
+							<label class="pl-label" for="pl-wall-line">A line, optional</label>
+							<textarea class="pl-input pl-textarea" id="pl-wall-line" maxlength="80" rows="2" placeholder="Hello from lite"></textarea>
+							<button type="submit" class="pl-btn pl-btn-primary" id="pl-wall-submit">Sign the wall</button>
+							<p class="pl-form-msg" id="pl-wall-msg" role="alert"></p>
+						</form>
+						<p class="pl-wall-mine" id="pl-wall-mine" hidden></p>
+						<ol class="pl-wall-recent" id="pl-wall-recent" aria-label="Newest signatures"></ol>
+					</div>
+				</section>
+			</main>
+
+			<footer class="pl-foot">
+				<label class="pl-check"><input type="checkbox" id="pl-pref" /> Always open the lite world on this device</label>
+				<a class="pl-link" href="/play">Explore other worlds</a>
+			</footer>
+		</div>
+
+		<div class="pl-modal" id="pl-join" hidden>
+			<form class="pl-modal-card" id="pl-join-form" autocomplete="off" aria-labelledby="pl-join-title">
+				<h1 class="pl-modal-title" id="pl-join-title">Join the world</h1>
+				<p class="pl-modal-body">Pick the name people will see over your avatar. You can change it later.</p>
+				<label class="pl-sr" for="pl-join-name">Your name</label>
+				<input class="pl-input" id="pl-join-name" type="text" maxlength="24" autocomplete="nickname" placeholder="Your name" />
+				<button type="submit" class="pl-btn pl-btn-primary pl-btn-block">Join</button>
+			</form>
+		</div>
+
+		<div class="pl-modal" id="pl-photo" role="dialog" aria-modal="true" aria-label="World photo" hidden>
+			<div class="pl-modal-card pl-photo-card">
+				<img class="pl-photo-img" id="pl-photo-img" alt="A snapshot of the world map with everyone in it" />
+				<div class="pl-inline">
+					<a class="pl-btn pl-btn-primary" id="pl-photo-download" download="three-ws-play.png" href="#">Download</a>
+					<button type="button" class="pl-btn" id="pl-photo-share" hidden>Share</button>
+					<button type="button" class="pl-btn" id="pl-photo-close">Close</button>
+				</div>
+			</div>
+		</div>
+
+		<div class="pl-toasts" id="pl-toasts" aria-live="polite"></div>
+		<div class="pl-sr" id="pl-live" aria-live="polite"></div>
+
+		<script type="module" src="/src/game/play-lite.js"></script>
+		<script type="module" src="/src/game/meetup-event.js"></script>
+		<script type="module" src="/src/game/world-pa.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

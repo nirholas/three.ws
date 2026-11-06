@@ -2463,6 +2463,14 @@
 					"added": "2026-07-19"
 				},
 				{
+					"path": "/play/lite",
+					"title": "Play lite: join the live world from any device",
+					"description": "The same live /play world, people, chat, dance-off and signature wall as the 3D plaza, drawn as a live map that runs on any phone or laptop, no graphics card needed.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-11-06"
+				},
+				{
 					"path": "/play/ufo",
 					"title": "Flappin UFO: thread the asteroids, climb the leaderboard",
 					"description": "A hold-to-climb arcade game with levels that get longer and tighter. Every run is replayed and verified on the server, scores land on a real leaderboard, and you race the ghost of the top run.",

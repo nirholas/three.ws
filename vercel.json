@@ -2067,6 +2067,10 @@
 			"dest": "/play/solver.html"
 		},
 		{
+			"src": "/play/lite/?",
+			"dest": "/play/lite.html"
+		},
+		{
 			"src": "/sniper/experiments/?",
 			"dest": "/sniper-experiments.html"
 		},
