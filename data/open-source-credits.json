@@ -2791,7 +2791,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/gkjohnson/three-gpu-pathtracer",
 			"funding": null,
-			"version": "0.0.27",
+			"version": "0.0.28",
 			"powers": "The physically based path-traced render mode in the Forge viewer and cinematic captures."
 		},
 		{

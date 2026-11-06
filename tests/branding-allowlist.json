@@ -648,5 +648,30 @@
 		"pattern": "Ready Player Me / Avaturn GLBs",
 		"file": "docs/research/oss-landscape-2026-10-notes/avatars-voice.md",
 		"reason": "Cited research note quoting the third-party project's asset terms; internal research, not product copy."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "docs/ops/worker-and-avatar-rules.md",
+		"reason": "Internal ops runbook naming a real integration for maintainers, not user-facing copy."
+	},
+	{
+		"pattern": "avaturn",
+		"file": "docs/ops/redis.md",
+		"reason": "Internal ops runbook naming a real integration for maintainers, not user-facing copy."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "docs/ops/redis.md",
+		"reason": "Internal ops runbook naming a real integration for maintainers, not user-facing copy."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "docs/partners/motion-programs.md",
+		"reason": "Partner-outreach research that must name the vendor to be usable. Not published on the site, and it never presents the vendor as a three.ws surface."
+	},
+	{
+		"pattern": "Ready Player Me",
+		"file": "docs/partners/motion-programs.md",
+		"reason": "Partner-outreach research that must name the vendor to be usable. Not published on the site, and it never presents the vendor as a three.ws surface."
 	}
 ]
