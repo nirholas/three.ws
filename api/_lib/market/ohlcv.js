@@ -35,6 +35,9 @@ const TTL_MS = 20_000;
 // in-memory one; the stale window is how long an outage can be ridden out.
 const LKG_FRESH_S = 20;
 const LKG_STALE_S = 24 * 3600;
+// A refresh that outlives this serves the previous candles instead of holding the
+// caller through GeckoTerminal's retries (the /play oracle ribbon waited 16 s).
+const REFRESH_BUDGET_MS = 2500;
 const POOL_FRESH_S = 300;
 const TRENDING_FRESH_S = 60;
 
@@ -451,6 +454,7 @@ export async function fetchOhlcv({
 	const key = `ohlcv:candles:v1:${network}:${pool}:${timeframe}:${aggregate}:${limit}${beforeTimestamp ? `:b${Math.floor(beforeTimestamp)}` : ''}`;
 	const out = await cacheWrapLastGood(key, LKG_FRESH_S, () => fetchOhlcvLive(args), {
 		staleTtlSeconds: LKG_STALE_S,
+		refreshBudgetMs: REFRESH_BUDGET_MS,
 	});
 	return {
 		...out,

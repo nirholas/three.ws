@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-06",
+			"title": "The oracle ribbon in /play no longer stalls when its price feed is throttled",
+			"summary": "When GeckoTerminal throttled the candle refresh behind the Granite Oracle, the first visitor after the cache lapsed waited about 16 seconds. Candle reads now hand back the previous candles after 2.5 seconds and finish the refresh in the background, so the ribbon loads promptly and the next visitor sees fresh data.",
+			"tags": [
+				"fix"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-11-06",
 			"title": "The official three.ws town on /play shows its name and art again",
 			"summary": "When pump.fun's coin API was unreachable, the pinned OFFICIAL card at the top of the /play lobby lost its identity and read \"Unnamed coin\" with a blank letter tile. The card now keeps three.ws and its artwork whatever the live refresh returns, and the coin lookup behind it names any Solana coin from its on-chain token metadata while pump.fun is down.",
 			"tags": [

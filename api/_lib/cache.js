@@ -602,25 +602,60 @@ export async function cacheWrap(key, ttlSeconds, fn) {
  * @param {string} key
  * @param {number} ttlSeconds
  * @param {() => Promise<T>} fn
- * @param {{ staleTtlSeconds?: number, withMeta?: boolean }} [opts]
+ * @param {{ staleTtlSeconds?: number, withMeta?: boolean, refreshBudgetMs?: number }} [opts]
+ *   `refreshBudgetMs`: once a last-good copy exists, a live refresh slower than
+ *   this stops holding the caller. The mirror is served (stale) and the refresh
+ *   keeps running in the background, still writing both tiers when it lands. A
+ *   miss with no mirror always waits for the live fetch.
  * @returns {Promise<T | { value: T, stale: boolean }>}
  */
 export async function cacheWrapLastGood(key, ttlSeconds, fn, opts = {}) {
-	const { staleTtlSeconds = 24 * 3600, withMeta = false } = opts;
+	const { staleTtlSeconds = 24 * 3600, withMeta = false, refreshBudgetMs = 0 } = opts;
 	const lkgKey = `${key}:lkg`;
 	const hit = await cacheGet(key);
 	if (hit !== null && hit !== undefined) return withMeta ? { value: hit, stale: false } : hit;
-	try {
+	const refresh = (async () => {
 		const value = await fn();
 		if (value !== null && value !== undefined) {
 			cacheSet(key, value, ttlSeconds).catch(() => {});
 			cacheSet(lkgKey, value, staleTtlSeconds).catch(() => {});
 		}
+		return value;
+	})();
+	const serveLkg = async (err) => {
+		const lkg = await cacheGet(lkgKey);
+		if (lkg === null || lkg === undefined) return null;
+		console.warn(`[cache] "${key}" refresh ${err ? `failed (${err?.message || err})` : 'over budget'}; serving last-good`);
+		return withMeta ? { value: lkg, stale: true } : lkg;
+	};
+	try {
+		let value;
+		if (refreshBudgetMs > 0) {
+			// Look for the mirror before racing: with none, there is nothing to serve
+			// early and the caller waits for the live fetch like any other miss.
+			const mirror = await cacheGet(lkgKey);
+			if (mirror === null || mirror === undefined) {
+				value = await refresh;
+			} else {
+				const OVER = Symbol('over-budget');
+				let timer;
+				const raced = await Promise.race([
+					refresh,
+					new Promise((resolve) => { timer = setTimeout(() => resolve(OVER), refreshBudgetMs); }),
+				]).finally(() => clearTimeout(timer));
+				if (raced === OVER) {
+					refresh.catch(() => {});
+					return withMeta ? { value: mirror, stale: true } : mirror;
+				}
+				value = raced;
+			}
+		} else {
+			value = await refresh;
+		}
 		return withMeta ? { value, stale: false } : value;
 	} catch (err) {
-		const lkg = await cacheGet(lkgKey);
-		if (lkg === null || lkg === undefined) throw err;
-		console.warn(`[cache] "${key}" refresh failed (${err?.message || err}); serving last-good`);
-		return withMeta ? { value: lkg, stale: true } : lkg;
+		const served = await serveLkg(err);
+		if (served === null) throw err;
+		return served;
 	}
 }
