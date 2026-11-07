@@ -7846,6 +7846,15 @@
 					"added": "2026-05-17"
 				},
 				{
+					"path": "/blog/ibm-user-group-meetup-3-recap",
+					"title": "Meetup #3 Recap: The Three.ws User Group Back in the World",
+					"description": "How the Three.ws User Group's third meetup went, sponsored by IBM Community and held inside three.ws/play: the first project-owned user group on IBM Community, the first signatures on the signature wall, what shipped since August, the partner roster, and what comes next.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"lastmod": "2026-11-07",
+					"added": "2026-11-07"
+				},
+				{
 					"path": "/blog/three-ws-nvidia-inception-gtc-2027",
 					"title": "three.ws and NVIDIA: Inception, the GPU Fleet, and Our GTC 2027 Poster",
 					"description": "What three.ws runs on NVIDIA today: an NVIDIA Inception member since July 2026, a self-hosted fleet of L4 and Blackwell GPUs, NIM-hosted Nemotron, Riva and Audio2Face-3D, and the research poster we are submitting to the NVIDIA GTC 2027 call for posters.",

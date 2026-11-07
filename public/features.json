@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-06T18:23:26.521Z",
+	"generated_at": "2026-11-07T21:48:11.193Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -12015,6 +12015,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.7,
+					"job": null
+				},
+				{
+					"path": "/blog/ibm-user-group-meetup-3-recap",
+					"title": "Meetup #3 Recap: The Three.ws User Group Back in the World",
+					"description": "How the Three.ws User Group's third meetup went, sponsored by IBM Community and held inside three.ws/play: the first project-owned user group on IBM Community, the first signatures on the signature wall, what shipped since August, the partner roster, and what comes next.",
+					"added": "2026-11-07",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
 					"job": null
 				},
 				{

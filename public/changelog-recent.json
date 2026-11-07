@@ -1,14 +1,34 @@
 {
-	"generated_at": "2026-11-06T18:23:26.571Z",
+	"generated_at": "2026-11-07T21:48:11.244Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4467,
+	"total": 4469,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-07",
+			"type": "launch",
+			"title": "Meetup #3 Recap: The Three.ws User Group Back in the World",
+			"summary": "How the Three.ws User Group's third meetup went, sponsored by IBM Community and held inside three.ws/play: the first project-owned user group on IBM Community, the first signatures on the signature wall, what shipped since August, the partner roster, and what comes next.",
+			"link": "/blog/ibm-user-group-meetup-3-recap",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-07",
+			"type": "update",
+			"title": "The Community Meetup #3 recap is up: a wrap on our IBM Community user group's second meetup inside the world",
+			"summary": "How the Three.ws User Group's third meetup went, sponsored by IBM Community and held inside /play on November 6. three.ws is the first project with its own user group on IBM Community, the new signature wall got its first names, and people kept coming back after the program ended. The post also covers everything shipped since August, the full partner roster, and the next session being planned for late November.",
+			"link": "/blog/ibm-user-group-meetup-3-recap",
+			"tags": [
+				"docs"
+			]
+		},
 		{
 			"date": "2026-11-06",
 			"type": "launch",
@@ -1521,26 +1541,6 @@
 			"link": null,
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "The Plaza Stage goes live in /play",
-			"summary": "Walk up to the stage in the plaza of any coin world and the hosted show plays around you: spatial voice with lip-sync, live captions, a seat in the ring, questions to the host from the chat bar, and $THREE tips behind an explicit confirm step that shows the recipient, amount and token before anything signs. The show only connects when you are close and shuts down when you walk away.",
-			"link": null,
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "The predictions scanner reads the markets nearest par and names each one in full",
-			"summary": "The no-arbitrage scanner on Agent Predictions now spends its order-book reads on the open markets whose YES plus NO price sits closest to par, skips markets whose close time has passed, and honours its market cap even when one event holds hundreds of brackets. Each row now shows the event and the outcome together, and the note under the scanner says how many books were read and how many had both sides quoted.",
-			"link": "/agent-predictions",
-			"tags": [
-				"fix"
 			]
 		}
 	]

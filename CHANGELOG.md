@@ -4,6 +4,11 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-11-07
+
+- **Meetup #3 Recap: The Three.ws User Group Back in the World** (`/blog/ibm-user-group-meetup-3-recap`): How the Three.ws User Group's third meetup went, sponsored by IBM Community and held inside three.ws/play: the first project-owned user group on IBM Community, the first signatures on the signature wall, what shipped since August, the partner roster, and what comes next.
+- **The Community Meetup #3 recap is up: a wrap on our IBM Community user group's second meetup inside the world**: How the Three.ws User Group's third meetup went, sponsored by IBM Community and held inside /play on November 6. three.ws is the first project with its own user group on IBM Community, the new signature wall got its first names, and people kept coming back after the program ended. The post also covers everything shipped since August, the full partner roster, and the next session being planned for late November. (`/blog/ibm-user-group-meetup-3-recap`) `[docs]`
+
 ## 2026-11-06
 
 - **Docs · Play lite: the /play world on any device** (`/docs/play-lite`): How /play/lite joins the same live room as the 3D plaza without WebGL: what a lite player can do, when /play hands off automatically, the slow-device offer, and how to verify it locally.
