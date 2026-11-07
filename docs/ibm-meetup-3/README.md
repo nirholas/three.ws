@@ -24,6 +24,9 @@ The Three.ws User Group on IBM Community meets inside the `$THREE` home town at 
 | [../media/meetup-3-ibm-community-banner.png](../media/meetup-3-ibm-community-banner.png) | IBM Community event listing and Jessica's post (featured image) | 2400x1200, the August listing banner with the new title and date. The IBM logo, cube and lockup are the August pixels, not a redraw |
 | [../media/meetup-3-ibm-listing-banner.png](../media/meetup-3-ibm-listing-banner.png) | IBM Community, if IBM prefers no logo | 2400x1200, same design as the X banner, no IBM logo |
 | [/blog/ibm-user-group-meetup-3](../../blog/ibm-user-group-meetup-3.html) | three.ws website | The announcement post with Event structured data, its OG card [public/meetup-3-og.png](../../public/meetup-3-og.png), the blog index card, the RSS item and the changelog entry |
+| [/blog/ibm-user-group-meetup-3-recap](../../blog/ibm-user-group-meetup-3-recap.html) | three.ws website | The team's recap post, the blog index card, the RSS item, the pages entry and the changelog entry |
+| [recap-thread-reply.md](./recap-thread-reply.md) | Jessica or the team account | The short recap reply for the official meetup thread, posted after Jessica's blog is live |
+| [recap-x-posts.md](./recap-x-posts.md) | Owner, @trythreews | The T+1 recap thread (`utm_content=t1-recap`), every post dry-run through `scripts/post-tweet.mjs` |
 
 ## Owner steps, in order
 
@@ -33,7 +36,8 @@ The Three.ws User Group on IBM Community meets inside the `$THREE` home town at 
 4. **Send Jessica** the article and the thread (the `.html` twins paste cleanly). Both already link the live event listing.
 5. **Post on X** from [x-posts.md](./x-posts.md): the T-7 post today with the banner, reply 3 (the listing is live, so it can go with the others), the T-1 post on Thursday, the live post at doors.
 6. **Agenda beat at 8:27 (an agent pays for a tool).** It settles a real micropayment on Solana. Approve the number of rounds before the session; nothing on stream spends without that.
-7. **After the event** (Nov 7): `npm run event:schedule -- --clear --apply`, then deploy, so `/event` returns to its no-event state before the Nov 24 session (`MKT-2026-11-IBM-WORLD-2`, [three-world-session.md](../../marketing/growth/events/three-world-session.md)) is staged. Write the recap from captured numbers only.
+7. **Done locally, November 7: event cleared.** `npm run event:schedule -- --clear --apply` reset [public/event.json](../../public/event.json) to the no-event state; it reaches `/event` with the next deploy (owner-gated), which also ships the recap post.
+8. **Recap.** Done, November 7: Jessica published [Back in the World](https://community.ibm.com/community/user/blogs/jessica-swanson/2026/11/07/back-in-the-world-the-three-ws), and it is in the [IBM Community catalog](../ibm-community.md). Still to do: post [recap-thread-reply.md](./recap-thread-reply.md) in the official thread (her URL is filled in), then the [recap-x-posts.md](./recap-x-posts.md) thread on X. The recap pieces share no attendance or souvenir counts, by owner decision.
 
 ## Big screen and stream capture
 

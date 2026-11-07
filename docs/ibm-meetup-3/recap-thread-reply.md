@@ -4,12 +4,11 @@ Post this as a reply in the official meetup thread ([three.ws Community Meetup #
 
 ---
 
-**Thank you for coming on Friday.** Here is how the hour went, from the server's own numbers:
+**Thank you for coming on Friday.** That's a wrap on our second meetup inside the world, and the first one IBM Community sponsored.
 
-- **45 people** kept the Meetup Orbit Crown. It was granted once per person, only between 8:00 and 9:00 AM PT, and it will never be granted again.
-- **13 people** stood in the plaza at the same time at the peak, around 8:30. Everyone fit in one room.
-- **The signature wall** near spawn got its first three signatures. kunturi was first, and Falcolina wrote "falcolina was here".
-- The program ended at 9:00, and some of you were still in the world after 10:00.
+- **The Orbit Crown** went to everyone in the world during the hour. It will never be granted again.
+- **The signature wall** near spawn got its first names. kunturi was first, and Falcolina wrote "falcolina was here".
+- The program ended at 9:00, and some of you kept coming back long after.
 
 If you took photo-mode shots (press P in the world), please post them in this thread. If you missed it, the plaza and the wall are still open at [three.ws/play](https://three.ws/play).
 

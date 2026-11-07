@@ -123,7 +123,7 @@ The quarter's long technical write-up. Argues that once agents can act on a hous
 - **Published:** 2026-11-07
 - **URL:** [community.ibm.com/.../back-in-the-world-the-three-ws](https://community.ibm.com/community/user/blogs/jessica-swanson/2026/11/07/back-in-the-world-the-three-ws)
 
-Jessica's recap of Community Meetup #3 (Friday, November 6, 8 to 9 AM Pacific, the first meetup IBM Community sponsored), written in her voice as the follow-up to her August recap. It covers the run of show, the first signatures on the signature wall, what shipped since August, the platform map, the IBM MCP servers and IBM Bob, the full partner roster, and the next session being planned for late November. Every figure is sourced in [ibm-meetup-3/recap-numbers.md](./ibm-meetup-3/recap-numbers.md).
+Jessica's recap of Community Meetup #3 (Friday, November 6, 8 to 9 AM Pacific, the first meetup IBM Community sponsored), written in her voice as the follow-up to her August recap. It covers the run of show, the first signatures on the signature wall, what shipped since August, the platform map, the IBM MCP servers and IBM Bob, the full partner roster, and the next session being planned for late November.
 
 ## Discussion threads
 
