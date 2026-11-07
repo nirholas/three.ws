@@ -33,7 +33,15 @@ three.ws is the first project with its own user group on IBM Community. Not a ta
 ## 4. The partnership
 
 ```
-It sits on a real partnership. three.ws is an IBM Business Partner, and we build for IBM's stack: watsonx.ai and Granite over MCP, and IBM Bob support at three.ws/connect.
+And this is not a logo swap. three.ws is an IBM Business Partner, and the partnership is built into the product.
+
+We ship two open-source MCP servers made for IBM builders. One puts watsonx.ai chat, generation, embeddings and forecasting inside Claude, Cursor or any MCP client, running on your own IBM Cloud account and your own credentials. The other brings IBM Granite tools to agents with pay-per-call billing, so an agent can pay for exactly the call it makes and nothing else. You can watch it work in a browser at three.ws/ibm/x402-demo.
+
+IBM Bob is a first-class client on three.ws/connect. Pick the IBM Bob tab and it writes the config for you, and our free 3D server needs no account and no key, so it runs even in a locked-down enterprise install.
+
+The partnership was covered by Business Insider and Yahoo Finance. IBM Community sponsored this meetup. And the people inside IBM who believed in this early are the reason a 3D agent platform has its own home on IBM's own community platform.
+
+Every other project gets a forum thread. We got a user group, a sponsor, and a seat at the table.
 ```
 
 ## 5. The signature wall
@@ -44,8 +52,16 @@ The new signature wall got its first names. kunturi signed first, and Falcolina 
 
 ## 6. What is next
 
- Keep the format itself unannounced until the listing is live.
+Do not name the format or a date until the listing is live.
 
 ```
-We are already planning the next one, and it will not be another meetup. A format nobody has seen run live before, built for the world itself. The IBM group hears first.
+We are already building the next one, and it is not going to be another meetup.
+
+Every online event you have ever been to works the same way. Someone shares a screen, everyone else watches, and when it ends nothing is left behind. We have spent three meetups proving that a world can do better than that: it ran its own agenda, it gave people things they keep, and it wrote their names on a wall that stays.
+
+The next one goes further than any of that. It is a format nobody has run live before, and it can only exist inside a world like ours. Not a stage. Not a stream. Not a webinar with avatars painted on. Something you take part in instead of watching, where what happens in the room is real and anyone in it can check it for themselves.
+
+We are not saying more yet. The Three.ws User Group on IBM Community hears it first, before it shows up anywhere else, including here. If you want to be in the room when it happens, join the group now:
+
+https://community.ibm.com/community/user/usergroup?CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016
 ```
