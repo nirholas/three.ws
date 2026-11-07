@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { parseLiveOps, compareLiveOps, SHEET_PATH, EVENT_PATH } from '../scripts/check-live-ops-fresh.mjs';
+import { parseLiveOps, compareLiveOps, SHEET_PATH } from '../scripts/check-live-ops-fresh.mjs';
 import { NO_EVENT_DOC } from '../scripts/check-event-window.mjs';
 
 const SCRIPT = fileURLToPath(new URL('../scripts/check-live-ops-fresh.mjs', import.meta.url));
@@ -91,24 +91,36 @@ describe('compareLiveOps', () => {
 });
 
 describe('check-live-ops-fresh CLI', () => {
-	const sheet = readFileSync(SHEET_PATH, 'utf8');
-	const event = JSON.parse(readFileSync(EVENT_PATH, 'utf8'));
-	const liveSha = parseLiveOps(sheet).sha;
+	// Fixture files, not the committed config: public/event.json rests in the
+	// no-event state between events, and these cases must hold either way.
+	function fixtures(sheetText = SHEET) {
+		const dir = mkdtempSync(path.join(tmpdir(), 'live-ops-'));
+		const sheet = path.join(dir, 'LIVE-OPS.md');
+		const event = path.join(dir, 'event.json');
+		writeFileSync(sheet, sheetText);
+		writeFileSync(event, JSON.stringify(EVENT));
+		return { sheet, event };
+	}
 
-	it('exits 0 on the committed sheet against the committed event config', () => {
-		const r = run(['--version-sha', liveSha]);
+	it('exits 0 when the sheet matches the configured event', () => {
+		const f = fixtures();
+		const r = run(['--sheet', f.sheet, '--event', f.event, '--version-sha', LIVE]);
 		expect(r.stderr).toBe('');
 		expect(r.status).toBe(0);
-		expect(r.stdout).toContain(`matches event "${event.id}"`);
+		expect(r.stdout).toContain(`matches event "${EVENT.id}"`);
 	});
 
-	it('exits non-zero when the committed sheet carries an altered event id', () => {
-		const dir = mkdtempSync(path.join(tmpdir(), 'live-ops-'));
-		const altered = path.join(dir, 'LIVE-OPS.md');
-		writeFileSync(altered, sheet.replace(`\`${event.id}\``, '`three-community-meetup-99`'));
-		const r = run(['--sheet', altered, '--version-sha', liveSha]);
+	it('exits non-zero when the sheet carries an altered event id', () => {
+		const f = fixtures(SHEET.replace(`\`${EVENT.id}\``, '`three-community-meetup-99`'));
+		const r = run(['--sheet', f.sheet, '--event', f.event, '--version-sha', LIVE]);
 		expect(r.status).toBe(1);
 		expect(r.stderr).toContain('names event id "three-community-meetup-99"');
+	});
+
+	it('exits 0 on the committed sheet against the committed config', () => {
+		const r = run(['--version-sha', parseLiveOps(readFileSync(SHEET_PATH, 'utf8')).sha]);
+		expect(r.stderr).toBe('');
+		expect(r.status).toBe(0);
 	});
 
 	it('exits 0 with a note between events', () => {
