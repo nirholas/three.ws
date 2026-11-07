@@ -10,7 +10,7 @@ Dates marked "approx." are derived from the site's relative timestamps ("17 days
 | ------ | ----- |
 | Members | 18 |
 | Discussion threads | 8 catalogued below; the group header tallies 11 |
-| Blog posts | 7 (posts 5 and 6, both by Jessica Swanson on 2026-08-22 and 2026-09-11, are not yet catalogued in full) |
+| Blog posts | 8 (posts 5 and 6, both by Jessica Swanson on 2026-08-22 and 2026-09-11, are not yet catalogued in full) |
 | Library entries | 2 (the attachments on the BOWYER and SperaxOS threads) |
 | Upcoming events | 0 |
 | Past events | 2 (the in-world meetup, and "Live build: text prompt to embedded 3D agent in 30 minutes") |
@@ -116,6 +116,14 @@ anything that reads as an IBM partnership deliverable.
 - **URL:** [community.ibm.com/.../when-an-agent-can-open-your-front-door-governance](https://community.ibm.com/community/user/blogs/10058/2026/09/18/when-an-agent-can-open-your-front-door-governance)
 
 The quarter's long technical write-up. Argues that once agents can act on a house through Home Assistant, ride in a car, and order a manufactured object, a system prompt is not a control, and shows the policy layer that is: Granite Guardian (`ibm/granite-guardian-3-8b` on watsonx.ai) as an allow / review / block veto on proposed actions, a per-period spend cap behind the same gate, a SHA-256 hash-chained verdict ledger anyone can re-verify, and a `503` instead of a fabricated verdict when watsonx is unconfigured. Then the Home Assistant gate that refuses physical actions outright over stdio MCP, the five-role household model enforced server-side, the full watsonx.ai endpoint map with runnable `curl`s, a five-step build-it-yourself walkthrough, the quarter's other ships, a note on metering Granite for callers with no IBM Cloud account, and an invitation to shape the group's second event. The draft lives in [ibm-community-governed-agents-post.md](./ibm-community-governed-agents-post.md); its companion discussion thread is drafted in [ibm-community-governed-agents-thread.md](./ibm-community-governed-agents-thread.md).
+
+### 8. Back in the World: How the Three.ws User Group's Third Meetup Went on the $THREE server
+
+- **Author:** Jessica Swanson
+- **Published:** 2026-11-07
+- **URL:** [community.ibm.com/.../back-in-the-world-the-three-ws](https://community.ibm.com/community/user/blogs/jessica-swanson/2026/11/07/back-in-the-world-the-three-ws)
+
+Jessica's recap of Community Meetup #3 (Friday, November 6, 8 to 9 AM Pacific, the first meetup IBM Community sponsored), written in her voice as the follow-up to her August recap. It covers the run of show, the first signatures on the signature wall, what shipped since August, the platform map, the IBM MCP servers and IBM Bob, the full partner roster, and the next session being planned for late November. Every figure is sourced in [ibm-meetup-3/recap-numbers.md](./ibm-meetup-3/recap-numbers.md).
 
 ## Discussion threads
 
