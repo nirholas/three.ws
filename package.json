@@ -859,7 +859,7 @@
 		"@axe-core/playwright": "^4.13.0",
 		"@electric-sql/pglite": "^0.5.14",
 		"@joplin/turndown-plugin-gfm": "^1.0.68",
-		"@playwright/test": "^1.63.0",
+		"@playwright/test": "^1.65.0",
 		"@x402/fetch": "^2.29.0",
 		"adaptive-expressions": "^4.23.3",
 		"adaptivecards-templating": "^2.3.1",
