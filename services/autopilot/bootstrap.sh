@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # VM startup script for three-ws-autopilot. provision.sh installs it as the
 # instance's `startup-script` metadata, so it runs as root on every boot. It is
-# idempotent: the first boot installs everything, later boots only refresh
-# Claude Code and the systemd units.
+# idempotent: the first boot installs everything, later boots refresh Claude
+# Code, sync the clone to threews/main and reinstall the systemd units from it.
 
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
@@ -45,24 +45,28 @@ as_user "gcloud config set project $PROJECT --quiet && gcloud config set run/reg
 if [ ! -d "$REPO/.git" ]; then
 	as_user "git clone --origin threews https://github.com/nirholas/three.ws.git $REPO"
 fi
+# run.sh resets the clone on every tick, but a tick that cannot start (a broken
+# unit) would leave it stale forever. Sync here too so a reboot always recovers.
+as_user "cd $REPO && git fetch -q threews main && git checkout -f -B main threews/main -q && git clean -fdq"
 if [ ! -d "$REPO/node_modules" ]; then
 	as_user "cd $REPO && npm ci --no-audit --no-fund"
 fi
 (cd "$REPO" && npx --yes playwright install-deps chromium)
 as_user "cd $REPO && npx playwright install chromium"
 
-# Unit files: provision.sh ships the current ones as instance metadata so a VM
-# can come up before they reach threews/main; otherwise use the clone's copies.
+# Unit files: the clone (just synced to threews/main) is the source of truth.
+# The copies provision.sh ships as instance metadata are only a fallback for a
+# branch where the units have not reached main yet, so a stale metadata copy can
+# never override a fix that has.
 META=http://metadata.google.internal/computeMetadata/v1/instance/attributes
 meta_get() { curl -fsS -H 'Metadata-Flavor: Google' "$META/$1" 2>/dev/null || true; }
 for unit in autopilot.service autopilot.timer; do
 	key="autopilot-unit-${unit#autopilot.}"
 	tmp=$(mktemp)
-	meta_get "$key" >"$tmp"
-	if [ -s "$tmp" ]; then
-		install -m 0644 "$tmp" "/etc/systemd/system/$unit"
-	elif [ -f "$REPO/services/autopilot/$unit" ]; then
+	if [ -f "$REPO/services/autopilot/$unit" ]; then
 		install -m 0644 "$REPO/services/autopilot/$unit" "/etc/systemd/system/$unit"
+	elif meta_get "$key" >"$tmp" && [ -s "$tmp" ]; then
+		install -m 0644 "$tmp" "/etc/systemd/system/$unit"
 	else
 		rm -f "$tmp"
 		echo "[bootstrap] FATAL: $unit is in neither instance metadata ($key) nor the clone at $REPO/services/autopilot/. Re-run provision.sh, or push the unit files." >&2
