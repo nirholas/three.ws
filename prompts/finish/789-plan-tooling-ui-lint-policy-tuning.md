@@ -1,5 +1,7 @@
 # Tune the lintapple UI policy to the real design tokens and lint the core pages in one command
 
+**Status (2026-11-10):** Tasks 1 to 5 are built and committed (ui-policy.json tuned, scripts/lint-ui-pages.mjs, npm run lint:ui:core, tests/ui-lint-pages.test.js passing 12/12, docs/ui-lint.md). Not verified: a full `npm run lint:ui:core` exit 0. On 2026-11-10 the shared machine ran at load average 70 to 98, so `/` errored after 135s and `/gallery` did not finish in over 10 minutes. Remaining: rerun `npm run lint:ui:core` on a quiet machine, fix or add reasoned exceptions for any findings, then delete this order. Owner: next session with an idle machine.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/789-plan-tooling-ui-lint-policy-tuning.md`.
 
 **Priority:** P3, polish, developer experience, or exploratory (score 18 of 100 inside the tier). **Area:** tooling. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.

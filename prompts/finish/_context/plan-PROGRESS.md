@@ -155,3 +155,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-10 784 (update 2): agent detail and alpha-drip verified in a real browser; only the other sessions' states/tokens gate failures and unstaged generated changelog files remain.
 2026-11-10 | 722-plan-payments-accounting-export-and-durable-ledgers.md (kept open) | c7eb4290e + this commit | Postgres bounty ledger, export script and admin route shipped and verified; live backfill and admin-200 check remain with the owner.
 2026-11-10 720-plan-avatar-parametric-garment-morph-conform.md closed: browser pass verified on /avatar-studio (chestPectorals=1, jawWider=1, hipsCircNarrower=1; top vertices track, return exactly at 0, no console errors); code in 83a2723bf.
+2026-11-10 | 789-plan-tooling-ui-lint-policy-tuning.md (kept open) | this commit | Built and unit-tested; full lint:ui:core exit 0 unverified because machine load (70-98) made lintapple time out; rerun on idle machine.
