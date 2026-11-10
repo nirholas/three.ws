@@ -144,6 +144,11 @@ const REQUIRED = [
 	},
 	{ path: 'public', kind: 'dir', why: 'static assets served by the container' },
 	{
+		path: 'evals/suites',
+		kind: 'dir',
+		why: 'api/_lib/evals/suites.js reads the JSON suites from disk; without it GET /api/v1/evals/catalog 500s ENOENT and the Evaluate tab cannot load',
+	},
+	{
 		path: 'services/home-relay/src/token.js',
 		kind: 'file',
 		why: 'api/_lib/home/relay.js imports it; without it /api/healthz 500s ERR_MODULE_NOT_FOUND',

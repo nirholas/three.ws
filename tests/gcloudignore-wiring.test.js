@@ -48,4 +48,12 @@ describe('gcloudignore build-context guard', () => {
 			expect(guard).toContain(rel);
 		}
 	});
+
+	it('requires the eval suites directory the Evaluate tab reads at runtime', () => {
+		const guard = readFileSync(path.join(ROOT, 'scripts/check-gcloudignore.mjs'), 'utf8');
+		expect(existsSync(path.join(ROOT, 'evals/suites/smoke.json'))).toBe(true);
+		expect(guard).toContain("path: 'evals/suites'");
+		const ignore = readFileSync(path.join(ROOT, '.gcloudignore'), 'utf8');
+		expect(ignore).toMatch(/^!\/evals\/$/m);
+	});
 });

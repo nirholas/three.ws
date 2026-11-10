@@ -51,6 +51,11 @@
 !/walk-sdk/
 !/tour-sdk/
 !/agents/
+# evals/suites/*.json are read from disk at request time by api/_lib/evals/suites.js.
+# Missing from the image, GET /api/v1/evals/catalog answered 500 ENOENT scandir
+# '/app/evals/suites/' and the Evaluate tab showed its error state for everyone.
+!/evals/
+/evals/reports/
 # services/ (644K, no node_modules) holds the long-running side services, and two
 # api/** handlers import straight out of it: api/_lib/home/relay.js pulls
 # services/home-relay/src/token.js and api/home/satellite.js pulls
