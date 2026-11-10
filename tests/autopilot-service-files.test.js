@@ -120,6 +120,10 @@ describe('autopilot scripts', () => {
 		expect(clone).toBeLessThan(meta);
 	});
 
+	it('provision.sh lets the VM write logs, so startup-script and tick output reach Cloud Logging', () => {
+		expect(read('provision.sh')).toMatch(/^grant roles\/logging\.logWriter$/m);
+	});
+
 	it('bootstrap.sh installs git-lfs, because the repo pre-push hook refuses to run without it', () => {
 		expect(read('bootstrap.sh')).toMatch(/apt-get install[^\n]*\bgit-lfs\b/);
 	});

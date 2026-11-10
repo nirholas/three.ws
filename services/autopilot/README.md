@@ -32,6 +32,13 @@ bootstrap sync the clone and install the clone's units first. If ticks stop,
 `sudo journalctl -u autopilot.service -n 20` on the VM is the first place to
 look.
 
+The first timer-driven tick (2026-11-10, `runs/20261110T140410Z`) ran sync,
+install, triage and the gating decision cleanly, then Claude exited 1: Vertex AI
+returned 403 "issues with your billing account, please resolve / pay your
+outstanding balance" for the project. The loop recorded `claude_exit: 1` and
+shipped nothing. Ticks start doing real work once the billing account is
+settled.
+
 - VM `three-ws-autopilot` (e2-standard-8, 200 GB pd-balanced, Debian 12, us-central1-a) running as `three-ws-autopilot@aerial-vehicle-466722-p5.iam.gserviceaccount.com`.
 - Report bucket `gs://three-ws-autopilot`, 90 day lifecycle on `runs/`.
 - The two systemd units are committed in this directory. bootstrap installs them from the clone (synced to `threews/main` on every boot); the copies `provision.sh` ships as instance metadata are only a fallback for a branch where they have not reached `main`.
@@ -241,7 +248,7 @@ can set `AUTOPILOT_NO_SHIP=1` or `AUTOPILOT_MODEL=...` without editing a unit.
 `autopilot-no-ship` metadata attribute.
 
 `provision.sh` is the scripted half: runtime service account and roles (run
-admin, scheduler admin, Vertex user, logging viewer, Cloud Build editor, act-as on
+admin, scheduler admin, Vertex user, logging viewer and writer, Cloud Build editor, act-as on
 `three-ws-build@` and `three-ws@`, a one-permission custom role for CDN
 invalidation, secret access on `telegram-bot-token`, `DATABASE_URL` and
 `autopilot-github-token` only, object admin on the bucket only), the bucket and

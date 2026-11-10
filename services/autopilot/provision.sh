@@ -74,6 +74,7 @@ grant roles/run.admin
 grant roles/cloudscheduler.admin
 grant roles/aiplatform.user
 grant roles/logging.viewer
+grant roles/logging.logWriter
 grant roles/cloudbuild.builds.editor
 
 say "allowing it to act as the pinned build account"
