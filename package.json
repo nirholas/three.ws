@@ -872,6 +872,7 @@
 		"i18n-iso-countries": "^7.14.0",
 		"jsdom": "30.1.3",
 		"json5": "^2.2.3",
+		"jsqr": "1.4.0",
 		"lintapple": "^0.1.24",
 		"openapi-to-postmanv2": "^6.4.2",
 		"playwright": "^1.63.0",
