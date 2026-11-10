@@ -14,7 +14,7 @@ API key, no wallet on the generation side.
 ## How and where it runs
 
 It is a **CLI, not a service.** Nothing schedules it, there is no Dockerfile or
-`cloudbuild.yaml`, and it is not deployed to Cloud Run. An operator runs it on
+`cloudbuild.yaml`, and it is not a Cloud Run service (see [workers-fleet](../../docs/ops/workers-fleet.md)). An operator runs it on
 demand from anywhere with network access to three.ws (a laptop, this workspace, a
 one-off Cloud Shell). It forges each prompt in sequence, then exits.
 

@@ -322,7 +322,7 @@ def venv_checks(app_module) -> None:
             last = proc.stderr.strip().splitlines()[-1] if proc.stderr.strip() else ""
             print(f"skip  {ext} venv import (no GPU on this host): {last}")
         else:
-            check(f"{ext} venv imports its model package", False, proc.stderr.strip()[-600:])
+            check(f"{ext} venv imports its model package", False, proc.stderr.strip()[-2500:])
 
 
 def main() -> int:

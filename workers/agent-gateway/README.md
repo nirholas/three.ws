@@ -254,7 +254,7 @@ group-start updates; Discord commands, buttons and mentions).
 
 ## Deploy
 
-**Status (2026-11-04): ship-ready, not deployed.** Deploys are owner-gated
+**Status (2026-11-04): ship-ready, not live ([workers-fleet](../../docs/ops/workers-fleet.md)).** Deploys are owner-gated
 (CLAUDE.md); everything up to the deploy is done and proven.
 
 - **Image verified without shipping it.** Cloud Build `e6aa9918-8aae-4b9d-95bd-e5d683ab791f`

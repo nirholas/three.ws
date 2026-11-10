@@ -100,3 +100,10 @@ describe('rendering', () => {
 		expect(shipCommand(rows[1])).toContain('--project aerial-vehicle-466722-p5');
 	});
 });
+
+describe('npm wiring', () => {
+	it('keeps the workers:fleet script registered in package.json', () => {
+		const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+		expect(pkg.scripts['workers:fleet']).toBe('node scripts/workers-fleet-status.mjs');
+	});
+});

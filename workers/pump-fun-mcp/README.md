@@ -9,7 +9,7 @@ Point any MCP client at the worker URL. No API key, no account, no auth header.
 
 ## Where it runs
 
-This worker is **not deployed today**: there is no Cloudflare account wired up in
+This worker is **not live today** ([workers-fleet](../../docs/ops/workers-fleet.md)): there is no Cloudflare account wired up in
 this repo, and no `pump-fun-mcp` service exists on the project's Cloud Run fleet
 (the canonical server there is the three.ws API route, not this file). The
 production endpoint agents should use is `https://three.ws/api/pump-fun-mcp`.

@@ -234,7 +234,7 @@ const logs = await hood.public.getLogs({
 
 ## Deploying
 
-**Not deployed today.** No `robinhood-feed` service exists on Cloud Run and
+**Not live today** (state: [workers-fleet](../../docs/ops/workers-fleet.md)). No `robinhood-feed` service exists on Cloud Run and
 `ROBINHOOD_FEED_URL` is unset on `three-ws-api`, so
 `api/robinhood/coin-trades.js` and `api/robinhood/play-worlds.js` serve their
 designed empty state. Everything needed to change that is in this directory; the

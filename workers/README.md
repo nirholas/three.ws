@@ -5,7 +5,7 @@ Out-of-process compute for three.ws — the heavy and edge work that does not be
 - **Cloud Run services** — Python FastAPI apps (GPU or CPU) with a `Dockerfile` + `cloudbuild.yaml`, deployed to Google Cloud Run. These run the avatar reconstruction / rigging models and the talking-avatar video model.
 - **Cloudflare Worker** — one JavaScript worker (`wrangler.toml`) deployed with `wrangler deploy`: the remote MCP server.
 
-**Which workers are live?** Run `npm run workers:fleet` (table), `npm run workers:fleet -- --check` (fails when a README status line disagrees with Cloud Run) or read the generated [docs/ops/workers-fleet.md](../docs/ops/workers-fleet.md). The "not deployed" notes below are descriptions; that command is the source of truth.
+**Which workers are live?** Run `npm run workers:fleet` (table), `npm run workers:fleet -- --check` (fails when a README status line disagrees with Cloud Run) or read the generated [docs/ops/workers-fleet.md](../docs/ops/workers-fleet.md). The "not live" notes below are descriptions; that command is the source of truth.
 
 ## Avatar pipeline (Cloud Run)
 
@@ -34,7 +34,7 @@ Standalone face-to-avatar service running InstantMesh: accepts 1–6 face photos
 
 ## Talking-avatar video (Compute Engine GPU)
 
-### `longcat/` (GPU, 80 GB class; built and tested, not deployed)
+### `longcat/` (GPU, 80 GB class; built and tested, not live; see [workers-fleet](../docs/ops/workers-fleet.md))
 FastAPI service running LongCat-Video-Avatar-1.5 (MIT). Takes a reference image + audio URL and renders a lip-synced talking-avatar MP4 to Cloud Storage. API: `POST /generate` -> `202 { job_id }`, `GET /jobs/:id`, `GET /health`; bearer-auth on every request. Sizes its segment count from the real audio duration, so a clip longer than 3.72 s is not truncated.
 
 This is the one worker here that is **not** a Cloud Run service. Upstream puts the DiT, the UMT5 text encoder, the whisper audio encoder and the VAE on a single device with no CPU offload, which is ~45 GB resident even with `--use_int8`. Cloud Run's L4 has 24 GB, and its 96 GB RTX PRO 6000 is sm_120, for which the pinned `torch 2.6.0+cu124` / `flash-attn 2.7.4.post1` wheels ship no kernels. So `longcat/cloudbuild.yaml` builds and publishes the image but does not deploy; it runs on an `a2-ultragpu-1g` or `a3-highgpu-1g`. Weights (44.81 GB, staged by `longcat/stage-weights.sh` into `three-ws-model-weights/longcat/`), the arithmetic, and the run command are in `longcat/README.md`.
@@ -52,7 +52,7 @@ Splits a 3D model into meaningful, separable parts with clean boundaries (head/t
 ## Text-guided texturing (Cloud Run, GPU L4)
 
 ### `texture/`
-Two capabilities on one model server. **Full retexture** (`POST /texture`): takes an untextured or poorly-textured GLB plus a text prompt, renders depth maps from 8 canonical viewpoints (pyrender), generates coherent texture views with SDXL + ControlNet-Depth, rasterizes the mesh into UV space and back-projects each view through the camera it was rendered with (numpy, in `texture_projection.py`), blends overlaps by how squarely each view sees a texel and refuses the ones the depth buffer says are occluded, and bakes a final textured GLB. **Magic-brush region retexture** (`POST /retexture_region`): SDXL inpainting of only a UV-space masked region of an existing atlas, feathering the seam so untouched texels stay bit-identical across repeated passes. API: `POST /texture` (`{ mesh, prompt, negative_prompt?, num_views?, texture_size? }`) and `POST /retexture_region` (`{ mesh, prompt, mask_b64?|mask?, color?, strength?, feather?, seed? }`) -> `202 { task_id }`, `GET /tasks/:id`, `GET /health`; bearer-auth via `API_KEY`. Env: `API_KEY`, `GCS_BUCKET` (required), `SDXL_MODEL`, `CONTROLNET_MODEL`, `SDXL_INPAINT_MODEL`, `WEIGHT_VARIANT`, `WEIGHTS_GCS_URI`. Not deployed today (no `texture-service`, no `GCP_TEXTURE_URL`), so both modes take their designed missing-lane path; `workers/texture/README.md` has the three commands that bring it up. Routed via `api/_providers/gcp.js` (`retex` / `retex_region` modes, `GCP_TEXTURE_URL`); exposed to the web at `/api/studio/retexture-region`, to agents over MCP as the studio retexture tool, and x402-priced in `api/_lib/pump-pricing.js`.
+Two capabilities on one model server. **Full retexture** (`POST /texture`): takes an untextured or poorly-textured GLB plus a text prompt, renders depth maps from 8 canonical viewpoints (pyrender), generates coherent texture views with SDXL + ControlNet-Depth, rasterizes the mesh into UV space and back-projects each view through the camera it was rendered with (numpy, in `texture_projection.py`), blends overlaps by how squarely each view sees a texel and refuses the ones the depth buffer says are occluded, and bakes a final textured GLB. **Magic-brush region retexture** (`POST /retexture_region`): SDXL inpainting of only a UV-space masked region of an existing atlas, feathering the seam so untouched texels stay bit-identical across repeated passes. API: `POST /texture` (`{ mesh, prompt, negative_prompt?, num_views?, texture_size? }`) and `POST /retexture_region` (`{ mesh, prompt, mask_b64?|mask?, color?, strength?, feather?, seed? }`) -> `202 { task_id }`, `GET /tasks/:id`, `GET /health`; bearer-auth via `API_KEY`. Env: `API_KEY`, `GCS_BUCKET` (required), `SDXL_MODEL`, `CONTROLNET_MODEL`, `SDXL_INPAINT_MODEL`, `WEIGHT_VARIANT`, `WEIGHTS_GCS_URI`. Not live today (see [workers-fleet](../docs/ops/workers-fleet.md); no `texture-service`, no `GCP_TEXTURE_URL`), so both modes take their designed missing-lane path; `workers/texture/README.md` has the three commands that bring it up. Routed via `api/_providers/gcp.js` (`retex` / `retex_region` modes, `GCP_TEXTURE_URL`); exposed to the web at `/api/studio/retexture-region`, to agents over MCP as the studio retexture tool, and x402-priced in `api/_lib/pump-pricing.js`.
 
 ## Mesh processing (Cloud Run, CPU)
 
@@ -67,7 +67,7 @@ Background removal — strips backgrounds from images using BRIA RMBG-2.0 (Apach
 ## Cloudflare Worker
 
 ### `pump-fun-mcp/`
-Remote Model Context Protocol server (a mirror of `/api/pump-fun-mcp`) built as a Cloudflare Worker: `worker.js` + `wrangler.toml`, named `pump-fun-mcp`, with `nodejs_compat`. Exposes the free, read-only pump.fun token tools to MCP clients; configurable via `npx wrangler@4 secret put` (`SOLANA_RPC_URL`, `SOLANA_RPC_FALLBACKS`, `PUMPFUN_BOT_URL`, `PUMPFUN_BOT_TOKEN`, ...), all optional. Not deployed to any Cloudflare account from this repo: production traffic uses `https://three.ws/api/pump-fun-mcp`, and this worker is here to be run locally or on your own account. See its README for the verified run, build, and deploy commands.
+Remote Model Context Protocol server (a mirror of `/api/pump-fun-mcp`) built as a Cloudflare Worker: `worker.js` + `wrangler.toml`, named `pump-fun-mcp`, with `nodejs_compat`. Exposes the free, read-only pump.fun token tools to MCP clients; configurable via `npx wrangler@4 secret put` (`SOLANA_RPC_URL`, `SOLANA_RPC_FALLBACKS`, `PUMPFUN_BOT_URL`, `PUMPFUN_BOT_TOKEN`, ...), all optional. Not live on any Cloudflare ([workers-fleet](../docs/ops/workers-fleet.md)): production traffic uses `https://three.ws/api/pump-fun-mcp`, and this worker is here to be run locally or on your own account. See its README for the verified run, build, and deploy commands.
 
 ## Always-on Node workers
 
@@ -94,7 +94,7 @@ plus their Uniswap v3 pools, normalizes every launch/trade/graduation into the
 shape three.ws's pump.fun consumers already read, and serves it over `/healthz`,
 `/recent`, SSE `/events` and WebSocket `/ws`. Feeds
 `api/robinhood/coin-trades.js` and `api/robinhood/play-worlds.js` through
-`ROBINHOOD_FEED_URL`. Not deployed yet. Builds from the repo root
+`ROBINHOOD_FEED_URL`. Not live yet ([workers-fleet](../docs/ops/workers-fleet.md)). Builds from the repo root
 (`docker build -f workers/robinhood-feed/Dockerfile .`) because it depends on
 the local `hoodchain` SDK, and must run `--min-instances=1 --max-instances=1`
 (one logical stream, one replay buffer). `npm test` is offline;

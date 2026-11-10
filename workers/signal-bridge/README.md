@@ -111,7 +111,7 @@ in `json-rpc` mode; that is the socket a gateway Signal adapter consumes.
 
 ## Deploy
 
-**Status (2026-11-04): verified, not deployed.** Cloud Build
+**Status (2026-11-04): verified, not live ([workers-fleet](../../docs/ops/workers-fleet.md)).** Cloud Build
 `51832336-4a96-4c5a-8488-9055661cb8d1` built the image with
 `cloudbuild.verify.yaml` and the smoke test passed against it unregistered:
 `/v1/health` 204, `json-rpc` mode, no accounts. That run also caught a defect the

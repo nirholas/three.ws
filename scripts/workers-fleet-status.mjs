@@ -143,7 +143,12 @@ export function shipCommand(r) {
 	return `gcloud builds submit . --config workers/${r.worker}/cloudbuild.yaml --region us-central1 --project ${PROJECT}`;
 }
 
-export function renderMarkdown(rows, generatedAt) {
+export function renderMarkdown(rows, generatedAt, verifyRuns = {}) {
+	const proof = (r) => {
+		const v = verifyRuns[r.worker];
+		if (!v) return r.verify ? 'config only, no run recorded' : 'no verify config';
+		return v.buildId ? `${v.status} \`${v.buildId}\` (${v.date})` : v.status;
+	};
 	const live = rows.filter((r) => r.state === 'live');
 	const built = rows.filter((r) => r.state === 'built-only');
 	const lines = [
@@ -163,9 +168,9 @@ export function renderMarkdown(rows, generatedAt) {
 		'',
 		'Each has a build-only proof where a `cloudbuild.verify.yaml` exists (see the verify column). Deploys are owner-gated.',
 		'',
-		'| worker | verify | tests | ship command |',
-		'|---|---|---|---|',
-		...built.map((r) => `| ${r.worker} | ${yn(r.verify)} | ${yn(r.tests)} | \`${shipCommand(r)}\` |`),
+		'| worker | Cloud Build verify | tests | needs | ship command |',
+		'|---|---|---|---|---|',
+		...built.map((r) => `| ${r.worker} | ${proof(r)} | ${yn(r.tests)} | ${verifyRuns[r.worker]?.needs || '-'} | \`${shipCommand(r)}\` |`),
 		'',
 		'## Not Cloud Run services',
 		'',
@@ -199,6 +204,12 @@ export function scanWorkers(root = ROOT) {
 		});
 }
 
+/** Recorded Cloud Build verify runs, kept in docs/ops/workers-verify-runs.json. */
+function loadVerifyRuns() {
+	const p = join(ROOT, 'docs/ops/workers-verify-runs.json');
+	return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : {};
+}
+
 function loadServices(args) {
 	const i = args.indexOf('--services-file');
 	const text = i >= 0
@@ -218,7 +229,7 @@ async function main() {
 	}
 	const rows = buildRows(scanWorkers(), indexServices(raw));
 	if (args.includes('--json')) console.log(JSON.stringify(rows, null, 2));
-	else if (args.includes('--markdown')) console.log(renderMarkdown(rows, new Date().toISOString().slice(0, 10)));
+	else if (args.includes('--markdown')) console.log(renderMarkdown(rows, new Date().toISOString().slice(0, 10), loadVerifyRuns()));
 	else console.log(renderTable(rows));
 	if (args.includes('--check')) {
 		for (const r of rows.filter((x) => x.problem)) console.error(`MISMATCH ${r.worker}: ${r.problem}`);

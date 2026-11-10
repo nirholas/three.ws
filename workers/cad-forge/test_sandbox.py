@@ -155,10 +155,10 @@ class SandboxBuildTests(unittest.TestCase):
         self.assertTrue(out["ok"], out.get("error"))
         self.assertAlmostEqual(out["metrics"]["size_mm"][0], 44, places=0)
 
-    def test_module_object_import_is_refused_at_runtime(self):
+    def test_exporters_module_import_is_refused_by_policy(self):
         out = build("from build123d import exporters\n")
         self.assertFalse(out["ok"])
-        self.assertIn("module", out["error"]["message"])
+        self.assertIn("'exporters' is not allowed", out["error"]["message"])
 
     def test_pool_recovers_after_failures(self):
         out = build(BRACKET)

@@ -30,7 +30,7 @@ backend per job (`MODEL_WEIGHTS`), POSTs the input images to `/infer`, then poll
 worker itself is a single FastAPI process (`main.py`) that loads TripoSR onto the
 GPU at startup and serves the task API below.
 
-**Today that controller is not deployed**: there is no `avatar-pipeline-controller`
+**Today that controller is not live** ([workers-fleet](../../docs/ops/workers-fleet.md)): there is no `avatar-pipeline-controller`
 Cloud Run service, and the platform's `GCP_RECONSTRUCTION_URL` points at the
 [avatar-reconstruction](../avatar-reconstruction/) worker instead. So nothing on
 three.ws routes user jobs here right now; this service is reached directly at its
@@ -245,7 +245,7 @@ the platform via `GCP_RECONSTRUCTION_URL` in
 platform-side bearer secret `GCP_RECONSTRUCTION_KEY`, which must equal its `API_KEY`.
 
 That is the wiring, not the current state: as noted under
-[Role in the pipeline](#role-in-the-pipeline), the controller is not deployed and
+[Role in the pipeline](#role-in-the-pipeline), the controller is not live ([workers-fleet](../../docs/ops/workers-fleet.md)) and
 `GCP_RECONSTRUCTION_URL` currently resolves to the `avatar-reconstruction`
 service, so no platform request reaches this worker today. Anything calling it
 now does so directly with the same bearer key.

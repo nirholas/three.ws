@@ -21,8 +21,15 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DEBIAN_FRONTEND=noninteractive \
     PYOPENGL_PLATFORM=egl
 
+# Ubuntu 22.04 ships python3.11 as a 3.11.0 release candidate, which lacks
+# sys.get_int_max_str_digits and makes torch 2.13 fail at import. The deadsnakes
+# PPA carries the current 3.11 patch release.
+RUN apt-get update && apt-get install -y --no-install-recommends software-properties-common \
+    && add-apt-repository -y ppa:deadsnakes/ppa \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        python3.11 python3.11-dev python3-pip \
+        python3.11 python3.11-dev python3.11-venv python3-pip \
         libgl1-mesa-glx libgl1 libglib2.0-0 libgomp1 \
         libegl1-mesa libgles2-mesa \
     && rm -rf /var/lib/apt/lists/* \

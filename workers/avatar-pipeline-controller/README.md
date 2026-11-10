@@ -14,7 +14,7 @@ keeps the same external contract the `avatar-reconstruction` service exposes, so
 the backend provider ([`api/_providers/gcp.js`](../../api/_providers/gcp.js),
 env `GCP_RECONSTRUCTION_URL`) needs no changes to swap between them.
 
-> **Not deployed today.** No `avatar-pipeline-controller` Cloud Run service
+> **Not live today** (state: [workers-fleet](../../docs/ops/workers-fleet.md)). No `avatar-pipeline-controller` Cloud Run service
 > exists in `us-central1`, and `GCP_RECONSTRUCTION_URL` on `three-ws-api` points
 > at the single-service [`avatar-reconstruction`](../avatar-reconstruction/)
 > worker (`face_texture_transfer_v2`), which serves `/scan` today. This
