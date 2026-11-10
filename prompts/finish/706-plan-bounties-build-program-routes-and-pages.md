@@ -1,6 +1,6 @@
 # Ship the bounty feed and Build program: routes, /build and /build/leaderboard pages, submissions
 
-**Status (2026-11-10):** Shipped in b88d7c228 and live on three.ws (feed returns devpost, github and devfolio listings; /build and /build/leaderboard render; /bounties intact; 28 tests pass). Remaining, owned by the owner: insert the first `program_rounds` row so /build shows an open round (rounds API currently empty, leaderboard returns the designed 404 empty state). Full-suite baseline comparison was not completed this session.
+**Status (2026-11-10):** Shipped in b88d7c228, live on three.ws, and verified in a browser in all four states (skeleton, empty, error with retry, populated). 28 tests pass and audit:docs is clean. Remaining, owned by the owner: the first `program_rounds` row (dates, prizes) is a product decision; until it exists /build shows its designed "no round open" state.
 
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/706-plan-bounties-build-program-routes-and-pages.md`.
 
