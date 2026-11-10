@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-10",
+			"title": "Forge composer no longer jumps while it loads",
+			"description": "The engine picker, the cost caption and the Enhance button now hold their space from the first frame, so the page stops shifting under your cursor on a first visit. Measured layout shift on the Forge page fell from 0.11 to 0.41 down to 0.05 to 0.28 across phone and desktop widths.",
+			"tag": "improvement",
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-10",
 			"title": "Every demo surface now opens on the house avatar",
 			"summary": "The home page, viewer, pricing, features, game NPCs, Pose Studio, Arena, Create Agent and the avatar templates no longer default to a real person's likeness. They start on the house avatar or another house body, and avatars you bring yourself work exactly as before.",
 			"tags": ["improvement"],

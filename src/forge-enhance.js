@@ -46,6 +46,10 @@ if (prompt && tools) {
 	note.setAttribute('role', 'status');
 	note.setAttribute('aria-live', 'polite');
 
+	// The page ships a hidden stand-in of the same size so the toolbar does not
+	// re-wrap when this button lands.
+	document.getElementById('enhance-skel')?.remove();
+
 	// Order: Surprise me → Enhance → Undo, then the rest of the toolbar.
 	if (anchor && anchor.parentNode === tools) {
 		anchor.after(btn, undo);

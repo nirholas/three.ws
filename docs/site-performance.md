@@ -551,6 +551,23 @@ Built in the repo, awaiting a deploy before the Lighthouse numbers can be re-tak
 - **`/forge` engine pill, repeat visits.** The catalog is environment dependent (which lanes are configured), so it is not baked into the HTML. [src/forge-catalog-cache.js](../src/forge-catalog-cache.js) keeps the last-seen catalog in `localStorage` for a week and `loadCatalog()` paints the lanes from it on the first frame, then rebuilds only if the live catalog differs. First-ever visits still grow when the catalog answers; that residual is the open item.
 - **Mobile budget gate.** `npm run perf:mobile -- --budget` ([scripts/mobile-perf.mjs](../scripts/mobile-perf.mjs), limits in [scripts/lib/mobile-perf-budget.mjs](../scripts/lib/mobile-perf-budget.mjs)) measures home, `/play`, `/marketplace`, `/forge` and the $THREE coin page on the Pixel 5 slow-4G profile and exits 1 when any page is at or over LCP 4000 ms, CLS 0.1 or tbtProxy 600 ms, or could not be measured. Without `--budget` the harness only measures and exits 0. The coin page also reserves its chart height up front so the chart no longer shifts the layout.
 
+### Updated 2026-11-10: `/forge` first-visit composer shifts
+
+Measured on a local production build (`vite build` to a scratch outDir, `vite preview`), cold context, catalog answered after 600 ms from the real `/api/forge?catalog=1`, PerformanceObserver `layout-shift` total over 7 s:
+
+| Width | Before | After |
+|---|---|---|
+| 320 | 0.157 | 0.101 |
+| 390 | 0.411 | 0.281 |
+| 480 | 0.262 | 0.121 |
+| 768 | 0.202 | 0.109 |
+| 900 | 0.153 | 0.121 |
+| 1024 | 0.143 | 0.102 |
+| 1200 | 0.114 | 0.045 |
+| 1440 | 0.134 | 0.061 |
+
+What closed it: hidden skeleton lanes in the engine pill (same labels and pills as `buildEngineButtons()`, kept in step by [tests/forge-engine-skeleton.test.js](../tests/forge-engine-skeleton.test.js)), a hidden ghost caption in the same grid cell as `#estimate` so the caption row holds its longest variant, and a hidden stand-in for the Enhance button that `src/forge-enhance.js` replaces. Composer-attributed shifts are now at most 0.035 per width. The remainder is site chrome and is not composer work: the skip link grows 26 to 36 px and the nav 65 to 73 px when their styles land, moving `<main>` (0.25 of the 390 px figure), plus the example chips swapping to their randomized prompts (0.02 to 0.035 at 768 to 1440). Lane-health flips (the BYOK key row appearing) were intermittent in these runs and still reserve nothing.
+
 ## Known costs that are not bugs
 
 Two things in the numbers above are real and are not being fixed by tuning:

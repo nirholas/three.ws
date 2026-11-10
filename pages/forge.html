@@ -594,14 +594,14 @@
 				row-gap: 2px;
 				justify-content: flex-start;
 			}
-			/* The engine buttons arrive with the catalog. An empty pill is 6px tall
-			   and a filled one is 54px, so the row it sits in used to grow half a
-			   second into the load and push the example chips down with it. Reserve
-			   the filled height while it is empty; `:empty` stops matching the
-			   moment buildEngineButtons() writes, so a taller set is free to be
-			   taller. Keep in step with `.aspect button` padding + font size. */
-			.engine-pill:empty {
-				min-height: 50px;
+			/* The engine buttons arrive with the catalog. The pill ships with hidden
+			   skeleton lanes (same labels and pills as the live ones) so it wraps to
+			   its settled height at every width in the first frame, then
+			   buildEngineButtons() replaces them. Skeletons are the only buttons
+			   without data-engine. */
+			.engine-pill > button:not([data-engine]) {
+				visibility: hidden;
+				pointer-events: none;
 			}
 			/* Shown by buildEngineButtons() when no lane can serve the active tab —
 			   keeps the pill from collapsing to an empty box. */
@@ -879,6 +879,20 @@
 				font-size: var(--text-xs);
 				color: var(--ink-dim);
 				min-height: 1.1em;
+			}
+			/* The caption is rewritten when the catalog and lane health land (the
+			   engine can change twice in 70ms), and each variant wraps to a different
+			   number of lines. The ghost holds the longest variant's height in the
+			   same grid cell, so the row never resizes under the content below it. */
+			.fq-estimate-wrap {
+				display: grid;
+			}
+			.fq-estimate-wrap > .fq-estimate {
+				grid-area: 1 / 1;
+			}
+			.fq-estimate-ghost {
+				visibility: hidden;
+				pointer-events: none;
 			}
 			.fq-estimate strong {
 				color: var(--ink);
@@ -3863,6 +3877,11 @@
 							</svg>
 							Surprise me
 						</button>
+						<!-- Hidden stand-in for the Enhance button forge-enhance.js injects after load; it holds the toolbar's wrapped height in the first frame and is removed when the real button lands. -->
+						<button type="button" class="ptool ptool--ai" id="enhance-skel" disabled tabindex="-1" aria-hidden="true" style="visibility: hidden">
+							<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 2.5l1.9 5 5 1.9-5 1.9-1.9 5-1.9-5-5-1.9 5-1.9 1.9-5z" /></svg>
+							<span>Enhance</span>
+						</button>
 						<!-- Ships the exact message grade('') writes for an empty prompt, so
 						     .prompt-tools is its settled height in the first frame. It used
 						     to ship empty at min-height:1.2em and grow when updateCoach()
@@ -4048,7 +4067,19 @@
 							role="group"
 							aria-labelledby="engine-label"
 							id="engine"
-						></div>
+						>
+							<!-- Skeleton lanes: hidden, same labels and pills as buildEngineButtons() writes for the live catalog, so the pill wraps to its settled height in the first frame. The live catalog replaces them. tests/forge-engine-skeleton.test.js keeps the labels in step with ENGINE_LABELS. -->
+							<button type="button" tabindex="-1" disabled><span class="eng-label">NVIDIA</span> <span class="eng-free" aria-hidden="true">FREE</span></button>
+							<button type="button" tabindex="-1" disabled><span class="eng-label">Hunyuan3D</span> <span class="eng-free" aria-hidden="true">FREE</span></button>
+							<button type="button" tabindex="-1" disabled><span class="eng-label">Meshy</span> <svg class="eng-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3 21 2"/><path d="m15 7 3 3"/><path d="m18 4 3 3"/></svg></button>
+							<button type="button" tabindex="-1" disabled><span class="eng-label">Tripo</span> <svg class="eng-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3 21 2"/><path d="m15 7 3 3"/><path d="m18 4 3 3"/></svg></button>
+							<button type="button" tabindex="-1" disabled><span class="eng-label">Rodin</span> <svg class="eng-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3 21 2"/><path d="m15 7 3 3"/><path d="m18 4 3 3"/></svg></button>
+							<button type="button" tabindex="-1" disabled><span class="eng-label">Hunyuan3D</span> <span class="eng-free" aria-hidden="true">FREE</span></button>
+							<button type="button" tabindex="-1" disabled><span class="eng-label">TRELLIS</span> <span class="eng-free" aria-hidden="true">FREE</span></button>
+							<button type="button" tabindex="-1" disabled><span class="eng-label">Match my photo</span> <span class="eng-free" aria-hidden="true">FREE</span></button>
+							<button type="button" tabindex="-1" disabled><span class="eng-label">Stability</span> <svg class="eng-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3 21 2"/><path d="m15 7 3 3"/><path d="m18 4 3 3"/></svg></button>
+							<button type="button" tabindex="-1" disabled><span class="eng-label">Replicate</span> <svg class="eng-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3 21 2"/><path d="m15 7 3 3"/><path d="m18 4 3 3"/></svg></button>
+						</div>
 					</div>
 					<p class="engine-legend" id="engine-legend" data-i18n-html="forge.free_no_api_key_your_own_key">
 						<span class="el-item"><span class="el-free">FREE</span> no API key</span>
@@ -4073,7 +4104,10 @@
 						/>
 						<span class="byok-hint" id="byok-hint"></span>
 					</div>
-					<p class="fq-estimate" id="estimate" aria-live="polite"></p>
+					<div class="fq-estimate-wrap">
+						<p class="fq-estimate fq-estimate-ghost" aria-hidden="true"><strong>Standard</strong> · billed to your own key · usually ~75s · ~20 credits · up to 30,000 polygons · shapes geometry straight from the prompt</p>
+						<p class="fq-estimate" id="estimate" aria-live="polite"></p>
+					</div>
 					<p class="fq-estimate fq-quote" id="forge-quote" aria-live="polite" hidden></p>
 				</div>
 
