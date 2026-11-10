@@ -95,6 +95,13 @@ describe('autopilot scripts', () => {
 		expect(r.stdout).toContain('autopilot-github-token');
 	});
 
+	it('provision.sh without --no-ship clears the flag in metadata, so a reboot cannot drop the VM back into no-ship', () => {
+		const r = spawnSync('bash', [join(dir, 'provision.sh'), '--dry-run'], { encoding: 'utf8', env: { ...process.env, PATH: '/usr/bin:/bin' } });
+		expect(r.status).toBe(0);
+		expect(r.stdout).toContain('autopilot-no-ship=0');
+		expect(read('bootstrap.sh')).toMatch(/autopilot-no-ship\)" = "0" \]; then\s+sed -i '\/\^AUTOPILOT_NO_SHIP=\/d' \/etc\/autopilot\/env/);
+	});
+
 	it('bootstrap.sh installs both units, reloads systemd and fails loudly when a unit is missing', () => {
 		const src = read('bootstrap.sh');
 		expect(src).toContain('systemctl daemon-reload');

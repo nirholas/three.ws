@@ -76,11 +76,14 @@ for unit in autopilot.service autopilot.timer; do
 done
 
 # /etc/autopilot/env is read by autopilot.service. provision.sh --no-ship sets
-# the autopilot-no-ship metadata attribute, which writes AUTOPILOT_NO_SHIP=1.
+# the autopilot-no-ship metadata attribute to 1, which writes AUTOPILOT_NO_SHIP=1;
+# a run without it sets 0, which removes the line.
 install -d -m 0755 /etc/autopilot
 [ -f /etc/autopilot/env ] || : >/etc/autopilot/env
 if [ "$(meta_get autopilot-no-ship)" = "1" ]; then
 	grep -q '^AUTOPILOT_NO_SHIP=' /etc/autopilot/env || echo 'AUTOPILOT_NO_SHIP=1' >>/etc/autopilot/env
+elif [ "$(meta_get autopilot-no-ship)" = "0" ]; then
+	sed -i '/^AUTOPILOT_NO_SHIP=/d' /etc/autopilot/env
 fi
 chmod 0644 /etc/autopilot/env
 

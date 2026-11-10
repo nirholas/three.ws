@@ -19,10 +19,10 @@ ship its own fixes.
 
 ## Status
 
-**Provisioned in no-ship mode, 2026-11-04; timer ticks running since
-2026-11-10.** `provision.sh --no-ship` created the pieces below. The loop tests
-Claude on real findings but never tests, pushes or deploys until the owner adds
-the push credential.
+**Live in ship mode since 2026-11-10, blocked on GCP billing.** The timer runs
+a tick every two hours, the push credential exists, and `AUTOPILOT_NO_SHIP` is
+off. Claude cannot start until the project's billing balance is settled (see
+below), so no tick fixes or ships anything yet.
 
 From 2026-11-04 to 2026-11-10 every timer tick failed with `203/EXEC
 Permission denied`: the unit in instance metadata exec'd `run.sh` directly, the
@@ -37,22 +37,23 @@ install, triage and the gating decision cleanly, then Claude exited 1: Vertex AI
 returned 403 "issues with your billing account, please resolve / pay your
 outstanding balance" for the project. The loop recorded `claude_exit: 1` and
 shipped nothing. Ticks start doing real work once the billing account is
-settled.
+settled in the Cloud console; nothing else needs to change.
+
+The 16:05 tick that day failed `npm ci` (a lockfile briefly out of sync on
+`main`), and the next tick skipped the install and ran on a broken
+`node_modules`. `run.sh` now records each successful install and retries any
+that did not finish.
 
 - VM `three-ws-autopilot` (e2-standard-8, 200 GB pd-balanced, Debian 12, us-central1-a) running as `three-ws-autopilot@aerial-vehicle-466722-p5.iam.gserviceaccount.com`.
 - Report bucket `gs://three-ws-autopilot`, 90 day lifecycle on `runs/`.
 - The two systemd units are committed in this directory. bootstrap installs them from the clone (synced to `threews/main` on every boot); the copies `provision.sh` ships as instance metadata are only a fallback for a branch where they have not reached `main`.
-- The push credential secret `autopilot-github-token` does **not** exist, on purpose. `run.sh` records `push: skipped` without it.
-- `three-ws-api` carries no `TELEGRAM_ALERTS_CHAT_ID`. Set the VM metadata attribute `autopilot-telegram-chat-id` to the private ops chat, else the report is only written to `message.txt` in the run directory.
+- The push credential secret `autopilot-github-token` exists (version 1, the owner's `gh` CLI OAuth token, created 2026-11-10), readable only by the autopilot service account. Replace it with a fine-grained token scoped to `nirholas/three.ws` contents when convenient: `gcloud secrets versions add autopilot-github-token --data-file=-`.
+- No private ops chat id is configured anywhere (`three-ws-api` has only the public channel ids), so each report is written to `message.txt` in its run directory in the bucket. To get Telegram reports: `AUTOPILOT_TELEGRAM_CHAT_ID=<private chat id> services/autopilot/provision.sh`.
 
-### Going live (owner)
+### Switching modes
 
-1. Add the push credential (a GitHub token that can push to `nirholas/three.ws`):
-   `gcloud secrets create autopilot-github-token --project aerial-vehicle-466722-p5 --replication-policy automatic --data-file=-` then
-   `gcloud secrets add-iam-policy-binding autopilot-github-token --project aerial-vehicle-466722-p5 --member serviceAccount:three-ws-autopilot@aerial-vehicle-466722-p5.iam.gserviceaccount.com --role roles/secretmanager.secretAccessor`
-2. Push this directory's latest fixes so the VM's clone and its next boot use them: `git push threews main`.
-3. Leave no-ship mode: `gcloud compute ssh three-ws-autopilot --zone us-central1-a --command 'sudo sed -i /AUTOPILOT_NO_SHIP/d /etc/autopilot/env && sudo systemctl restart autopilot.timer'`.
-4. Optional: `AUTOPILOT_TELEGRAM_CHAT_ID=<private chat id> services/autopilot/provision.sh` to set the report destination.
+- Back to no-ship: `services/autopilot/provision.sh --no-ship`, then `echo AUTOPILOT_NO_SHIP=1 | sudo tee -a /etc/autopilot/env` on the VM (or reboot it).
+- Ship again: `services/autopilot/provision.sh` (sets `autopilot-no-ship=0`, which bootstrap honors on boot), then `sudo sed -i /AUTOPILOT_NO_SHIP/d /etc/autopilot/env` on the VM.
 
 ## Files
 
@@ -78,9 +79,11 @@ settled.
    forced checkout of `main` at `threews/main` and `git clean -fdq`. The clone is
    the runner's own; nobody edits it.
 3. **Install.** `npm ci` (plus the Playwright Chromium) only when
-   `package-lock.json` changed since the last tick, otherwise just `postinstall`.
-   Always `deps:chat`. Rebuilds the avatar studio when `character-studio/`
-   changed or its build is missing.
+   `package-lock.json` differs from the one last installed successfully
+   (`.installed/root`), otherwise just `postinstall`. Always `deps:chat`.
+   Rebuilds the avatar studio when `character-studio/` differs from the last
+   successful build (`.installed/studio`) or the build is missing. Markers are
+   written only after success, so a failed install is retried next tick.
 4. **Env.** Writes `.env.local` holding only `DATABASE_URL`, read fresh from the
    live `three-ws-api` service with `scripts/read-service-env.mjs` so a rotated
    credential never goes stale, and truncates `.env`.
@@ -168,6 +171,7 @@ State kept in `$AUTOPILOT_HOME` between ticks:
 | `history.jsonl` | One line per tick (dry runs and ticks that failed before triage excepted): its `status.json` plus Claude's `result.json`. The last eight, newest first, are handed to the next session. |
 | `deferred.json` | Signature to the time Claude first deferred it. |
 | `.owner-signatures` | The owner-class signatures last reported, so an unchanged list is not re-sent. |
+| `.installed/root`, `.installed/studio` | The lockfile blob and `character-studio/` tree last installed or built successfully. |
 
 ## Notifications
 
@@ -245,7 +249,8 @@ What `bootstrap.sh` does, on every boot, as root:
 `/etc/autopilot/env` is read by the service (`EnvironmentFile=-`), so the owner
 can set `AUTOPILOT_NO_SHIP=1` or `AUTOPILOT_MODEL=...` without editing a unit.
 `provision.sh --no-ship` writes `AUTOPILOT_NO_SHIP=1` there through the
-`autopilot-no-ship` metadata attribute.
+`autopilot-no-ship` metadata attribute; a run without `--no-ship` sets that
+attribute to `0`, and the next boot removes the line.
 
 `provision.sh` is the scripted half: runtime service account and roles (run
 admin, scheduler admin, Vertex user, logging viewer and writer, Cloud Build editor, act-as on

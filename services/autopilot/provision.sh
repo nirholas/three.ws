@@ -123,7 +123,8 @@ run gcloud storage buckets add-iam-policy-binding "gs://$BUCKET" --member "servi
 # VM
 META_FILES="startup-script=$HERE/bootstrap.sh,autopilot-unit-service=$HERE/autopilot.service,autopilot-unit-timer=$HERE/autopilot.timer"
 META_KV=""
-[ "$NO_SHIP" = 1 ] && META_KV="autopilot-no-ship=1"
+# Always written, so a run without --no-ship clears the flag a --no-ship run set.
+[ "$NO_SHIP" = 1 ] && META_KV="autopilot-no-ship=1" || META_KV="autopilot-no-ship=0"
 if [ -n "${AUTOPILOT_TELEGRAM_CHAT_ID:-}" ]; then
 	META_KV="${META_KV:+$META_KV,}autopilot-telegram-chat-id=$AUTOPILOT_TELEGRAM_CHAT_ID"
 fi
