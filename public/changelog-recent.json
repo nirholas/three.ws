@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-10T14:45:39.322Z",
+	"generated_at": "2026-11-10T15:17:06.828Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4475,
+	"total": 4476,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -68,6 +68,17 @@
 			"tags": [
 				"improvement",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-10",
+			"type": "update",
+			"title": "The TRELLIS image-to-3D container now runs on A100 and L4 GPUs with no critical vulnerabilities",
+			"summary": "The container behind our image-to-3D lane, prepared for NVIDIA's NGC Catalog, is now a two-stage build on CUDA 12.6 and Python 3.12. It is 32% smaller (8.4GB instead of 12.3GB), and its security scan went from 70 critical and 1437 high findings to 0 critical and 2 high, both waiting on upstream releases. A real job ran end to end on an NVIDIA A100 and an NVIDIA L4, each producing a textured 3D model, with the code also compiled for Hopper GPUs.",
+			"link": null,
+			"tags": [
+				"infra",
+				"security"
 			]
 		},
 		{
@@ -1531,16 +1542,6 @@
 			"link": null,
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Talking-avatar video gets a scripted GPU host",
-			"summary": "The LongCat video worker now has an on-demand 80 GB GPU host with TLS, idle self-shutdown, a daily GPU-hour cap and a quota request script. When no host is up, video requests answer a clear capacity error and keep the free trial.",
-			"link": null,
-			"tags": [
-				"infra"
 			]
 		}
 	]

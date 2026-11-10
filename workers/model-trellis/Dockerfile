@@ -20,8 +20,10 @@
 #     source for 30+ min and routinely OOMs the builder; xformers is an upstream-
 #     supported backend. Set via ATTN_BACKEND.
 #   * TORCH_CUDA_ARCH_LIST defaults to 8.9 for the production L4 image. The NGC
-#     build (cloudbuild.ngc.yaml) passes the portable matrix validated on real
-#     GPUs in NGC-VALIDATION.md.
+#     build (cloudbuild.ngc.yaml) passes "8.0;8.6;8.9;9.0+PTX", pinned on
+#     2026-11-10 after real inference passed on an A100 (8.0) and an L4 (8.9);
+#     9.0 ships native sm_90 plus PTX but was not run (H100 quota denied).
+#     Evidence: NGC-VALIDATION.md.
 FROM nvidia/cuda:12.6.3-devel-ubuntu24.04 AS builder
 
 ARG TORCH_CUDA_ARCH_LIST="8.9"

@@ -45,8 +45,8 @@ NVIDIA's four published prerequisites, each against the code:
 
 | NVIDIA prerequisite | Status | Evidence |
 |---|---|---|
-| Containerized using the CUDA 9 or later base container | **Met** | `FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04` in [workers/model-trellis/Dockerfile](../workers/model-trellis/Dockerfile). Eight GPU workers in the tree are built on `nvidia/cuda` 12.1 to 12.8. |
-| GPU accelerated, automatically multi-GPU capable, runs on Pascal or newer | **Partly met** | GPU acceleration is implemented with TRELLIS, nvdiffrast, diffoctreerast, diff-gaussian-rasterization, and NVIDIA Kaolin. The architecture list is now configurable, but the server remains single-GPU by design. See [gate 2](#gate-2-the-kernels-are-compiled-for-one-gpu-generation) and [gate 3](#gate-3-multi-gpu-requirement-needs-nvidia-guidance). |
+| Containerized using the CUDA 9 or later base container | **Met** | Two-stage build in [workers/model-trellis/Dockerfile](../workers/model-trellis/Dockerfile): `nvidia/cuda:12.6.3-devel-ubuntu24.04` compiles the CUDA extensions and the shipped image is `nvidia/cuda:12.6.3-runtime-ubuntu24.04`. Eight GPU workers in the tree are built on `nvidia/cuda` 12.1 to 12.8. |
+| GPU accelerated, automatically multi-GPU capable, runs on Pascal or newer | **Partly met** | GPU acceleration is implemented with TRELLIS, nvdiffrast, diffoctreerast, diff-gaussian-rasterization, and NVIDIA Kaolin. The NGC image is compiled for `8.0;8.6;8.9;9.0+PTX` and ran real inference on an A100 and an L4, but the server remains single-GPU by design. See [gate 2](#gate-2-the-kernels-are-compiled-for-one-gpu-generation) and [gate 3](#gate-3-multi-gpu-requirement-needs-nvidia-guidance). |
 | An end-user license agreement for the application | **Met by this change** | [NVIDIA NGC Container EULA](https://three.ws/legal/nvidia-ngc-eula), source at [public/legal/nvidia-ngc-eula.html](../public/legal/nvidia-ngc-eula.html). It covers the Apache-2.0 code, the third-party components, and the fact that the image ships no weights. |
 | Container does not collect personal data or violate GDPR | **Met** | The worker has no analytics, telemetry, or reporting of any kind: a search of [workers/model-trellis](../workers/model-trellis) for `posthog`, `analytics`, `telemetry`, `mixpanel`, and `sentry` returns nothing. The only outbound calls it makes are the ones the caller asks for, and those go through the SSRF guard in [worker_security.py](../workers/model-trellis/worker_security.py). |
 
@@ -84,35 +84,39 @@ from a laptop. Budget one Cloud Build run for it.
 
 ### Gate 2: the kernels are compiled for one GPU generation
 
-**Status: configurable, validation pending.**
+**Status: validated on Ampere and Ada (2026-11-10).**
 
-The Dockerfile sets `TORCH_CUDA_ARCH_LIST="8.9"`, deliberately, to keep our own
-builds fast on the L4 fleet. An image compiled for `sm_89` alone does not run on
-the Ampere, Hopper, or Blackwell hardware an NGC user is most likely to have,
-and NVIDIA's prerequisite reads "Pascal or newer".
+The production Dockerfile sets `TORCH_CUDA_ARCH_LIST="8.9"`, deliberately, to
+keep our own builds fast on the L4 fleet. An image compiled for `sm_89` alone
+does not run on the Ampere, Hopper, or Blackwell hardware an NGC user is most
+likely to have, and NVIDIA's prerequisite reads "Pascal or newer". The list is
+a build argument, so the NGC build passes a portable matrix without changing
+the production image.
 
-The Dockerfile now exposes `TORCH_CUDA_ARCH_LIST` as a build argument and keeps
-`8.9` as the production default. The first NGC candidate build should use
-`8.0;8.6;8.9;9.0+PTX`, then run on at least one Ampere or Hopper GPU plus the
-existing L4 validation. Pin the final matrix only after those compiled
-extensions pass the real build and inference checks.
+**Pinned NGC matrix: `8.0;8.6;8.9;9.0+PTX`.** Image
+`us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/model-trellis/server@sha256:f6634a81fa68a85de82179a96d67f8585ad09402ee0e2f3b3dc421a7acd3c5d2`
+(Cloud Build `0d26c01f`, two-stage, CUDA 12.6, Python 3.12, torch 2.6):
+
+| GPU | Result |
+|---|---|
+| A100-SXM4-40GB (Ampere, `sm_80`) | `POST /infer` reached `done` in 63.5 s; the downloaded GLB loads with one textured mesh, 55,943 triangles |
+| L4 (Ada, `sm_89`) | `done` in 118.4 s; the GLB loads with one textured mesh, 57,289 triangles |
+| H100 (Hopper, `sm_90`) | Not run. The project's H100 quota is 0 and the increase request was denied on 2026-11-10. The image carries native `sm_90` code plus PTX for newer GPUs. |
+
+Both runs used the standalone mode an NGC user gets: mounted weights, local
+`OUTPUT_DIR`, no cloud credentials, authenticated `GET /results/{task_id}.glb`
+download. The same image passed its in-image test gate (65 pytest cases and the
+29-assertion served contract) and a Trivy scan with 0 CRITICAL and 2 upstream-only
+HIGH findings, down from 70 CRITICAL and 1437 HIGH in the single-stage image. It
+is 8.39 GB compressed in 22 layers, against 12.30 GB in 31. Every number, digest
+and GLB checksum is in
+[NGC-VALIDATION.md](../workers/model-trellis/NGC-VALIDATION.md).
 
 The build-only Cloud Build configuration is
 [cloudbuild.ngc.yaml](../workers/model-trellis/cloudbuild.ngc.yaml). It builds
 and pushes the `ngc-candidate` tag without deploying or changing the production
-Cloud Run service.
-
-**Current candidate (rebuilt 2026-10-08).** The first candidate (2026-09-14) predated
-the system-library fix in commit `35d798585`, the one behind the 2026-09-19 to 09-25
-TRELLIS outage, so it was rebuilt from commit `85372d38d` as Cloud Build
-`e336574a-7141-46bf-9514-b15c492d79c8`: `TORCH_CUDA_ARCH_LIST=8.0;8.6;8.9;9.0+PTX`,
-image `us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/model-trellis/server:ngc-candidate`,
-digest `sha256:8c9d543dbc563bfd1bf80133ae9865e407bad9666d8724259872419d0fa45629`.
-The build-time gate passed inside that exact image: 25 request-policy and
-storage-backend tests, and the full served-contract test including the TRELLIS
-import chain, auth boundary, and dead-pipeline 503 behaviour. What is still not
-done is the GPU half of gate 2: an inference run on an Ampere or Hopper GPU, which
-Cloud Run does not offer, so it needs a short-lived GCE A100 or H100 VM.
+Cloud Run service, and [scripts/ngc-validate-trellis.sh](../scripts/ngc-validate-trellis.sh)
+reruns the GPU check on a short-lived spot VM that it deletes afterwards.
 
 ```bash
 gcloud builds submit workers/model-trellis \
@@ -173,11 +177,13 @@ Registry nor NGC, and exits 2.
 3. Pass container security scanning and quality-assurance testing.
 4. Complete final sign-off, after which the image goes live in the catalog.
 
-Step 3 is the one to prepare for. A `devel` CUDA base ships a compiler and a
-large package surface, so expect the scan to flag CVEs in build tooling we do
-not need at run time. If it does, the answer is a two-stage build that compiles
-the CUDA extensions in the `devel` image and copies them into a `runtime` base,
-which also cuts the published image size.
+Step 3 is prepared for. The image is a two-stage build: the CUDA extensions
+compile in a `devel` builder and only the built virtualenv ships on a `runtime`
+base, so no compiler or toolkit headers reach the scanner. Our own Trivy scan of
+the staged digest shows 0 CRITICAL and 2 HIGH, both upstream-only (torch 2.6,
+whose fix needs a torch release the TRELLIS CUDA dependencies do not support yet,
+and the setuptools copy pip vendors). Details in
+[NGC-VALIDATION.md](../workers/model-trellis/NGC-VALIDATION.md#vulnerability-scan).
 
 ## Listing content, paste-ready
 
@@ -201,7 +207,7 @@ which also cuts the published image size.
 
 **Tags:** 3D, generative AI, mesh generation, inference server, digital humans, TRELLIS, computer vision
 
-**Labels:** framework PyTorch, task Image to 3D, precision FP16, architecture Ada and newer (final list set by the build in gate 2)
+**Labels:** framework PyTorch, task Image to 3D, precision FP16, architecture Ampere, Ada, Hopper (`sm_80`, `sm_86`, `sm_89`, `sm_90` plus PTX)
 
 **Links**
 
@@ -236,10 +242,11 @@ location selections must match the account holder's legal information.
 
 **List NVIDIA GPUs supported by your Product:**
 
-> NVIDIA L4 is the verified production target. RTX PRO 6000 Blackwell has been
-> validated for the heavy image-to-3D lane. The portable NGC architecture
-> matrix for Ampere, Ada, and Hopper will be finalized during NVIDIA staging
-> and validation.
+> The NGC image is compiled for Ampere, Ada, and Hopper (sm_80, sm_86, sm_89,
+> sm_90, plus PTX for newer GPUs). Inference is validated end to end on NVIDIA
+> A100 and NVIDIA L4; L4 is also our production target. Hopper (H100) is
+> covered by native sm_90 code and has not yet been run. RTX PRO 6000 Blackwell
+> has been validated for the heavy image-to-3D lane of our hosted service.
 
 **Question for the NVIDIA contact after submission:**
 
@@ -249,7 +256,7 @@ location selections must match the account holder's legal information.
 > orchestration, or should the staging image implement process-per-GPU model
 > replication inside one container?
 
-**Quick start (goes in the listing body, once gate 1 lands)**
+**Quick start (goes in the listing body)**
 
 ```bash
 docker run --gpus all -p 8080:8080 \
@@ -282,8 +289,8 @@ and none of them are an agent's call:
 
 1. Submit **Become an NGC Software Partner** at [nvidia.com/en-us/gpu-cloud/ngc-software-partners](https://www.nvidia.com/en-us/gpu-cloud/ngc-software-partners/). Mention the Inception membership in the form; it is the same company record.
 2. Sign the NGC Partner Legal Agreement when it comes back.
-3. Confirm the multi-GPU interpretation with NVIDIA, then run the portable image
-   build and GPU validation.
+3. Confirm the multi-GPU interpretation with NVIDIA (gate 3), then stage the
+   validated digest with `scripts/ngc-stage-trellis.sh --yes-push` (gate 4).
 
 ## Verification log
 
@@ -295,7 +302,9 @@ and none of them are an agent's call:
 | The container collects nothing | `grep -rniE "posthog|analytics|telemetry|mixpanel|sentry" workers/model-trellis` | No matches |
 | Weights are not baked into the image | [workers/model-trellis/README.md](../workers/model-trellis/README.md) and the Dockerfile | Weights mount at `/weights`; no `COPY` of any checkpoint |
 | Standalone storage | [main.py](../workers/model-trellis/main.py), [storage_backend.py](../workers/model-trellis/storage_backend.py) | Local mounted-volume mode implemented; GCS remains the production path |
-| CUDA architecture configuration | [Dockerfile](../workers/model-trellis/Dockerfile) | Production defaults to `8.9`; catalog builds can pass a wider list |
+| CUDA architecture configuration | [Dockerfile](../workers/model-trellis/Dockerfile) | Production defaults to `8.9`; the NGC build pins `8.0;8.6;8.9;9.0+PTX` |
+| Two-stage image is smaller and scan-clean of CRITICAL | Cloud Build `0d26c01f`, Trivy scan build `1d5a5e6c`, 2026-11-10 | 22 layers and 8.39 GB (was 31 and 12.30 GB); 0 CRITICAL, 2 upstream-only HIGH (was 70 and 1437) |
+| Real inference on Ampere and Ada | `scripts/ngc-validate-trellis.sh` on GCE A100 and L4 VMs, 2026-11-10 | Both tasks `done`, both GLBs load with a textured mesh; VMs deleted. H100 quota denied |
 | Upstream licenses | Worker READMEs | TRELLIS MIT, MDM MIT, Hunyuan3D non-commercial |
 
 ## Related

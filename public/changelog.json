@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-10T14:45:39.275Z",
+	"generated_at": "2026-11-10T15:17:06.784Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -65,6 +65,17 @@
 			"tags": [
 				"improvement",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-10",
+			"type": "update",
+			"title": "The TRELLIS image-to-3D container now runs on A100 and L4 GPUs with no critical vulnerabilities",
+			"summary": "The container behind our image-to-3D lane, prepared for NVIDIA's NGC Catalog, is now a two-stage build on CUDA 12.6 and Python 3.12. It is 32% smaller (8.4GB instead of 12.3GB), and its security scan went from 70 critical and 1437 high findings to 0 critical and 2 high, both waiting on upstream releases. A real job ran end to end on an NVIDIA A100 and an NVIDIA L4, each producing a textured 3D model, with the code also compiled for Hopper GPUs.",
+			"link": null,
+			"tags": [
+				"infra",
+				"security"
 			]
 		},
 		{

@@ -256,9 +256,12 @@ gsutil -m cp -r /tmp/trellis-large gs://three-ws-model-weights/trellis-large/
 
 ## Standalone and NGC build
 
-The production image compiles CUDA extensions for L4 (`sm_89`) by default. A
-portable catalog build can supply a wider architecture list without changing
-the Dockerfile:
+The image is a two-stage build: CUDA 12.6 `devel` compiles the extensions,
+and only the built virtualenv ships on the CUDA 12.6 `runtime` base (Ubuntu
+24.04, Python 3.12, torch 2.6). It compiles for L4 (`sm_89`) by default. The
+NGC catalog build passes `8.0;8.6;8.9;9.0+PTX`, the matrix that ran real
+inference on an A100 and an L4; sizes, scan results and GPU evidence are in
+[NGC-VALIDATION.md](./NGC-VALIDATION.md):
 
 ```bash
 docker build \

@@ -1,6 +1,6 @@
 # The TRELLIS NGC container passes real Ampere and Hopper inference and a CVE-clean two-stage build
 
-Status (2026-11-04): hardened two-stage image, scan and staging scripts and tests are committed. Candidate build c4fb8f6d was still running at close; the Trivy comparison and A100 smoke are not yet recorded (commands in workers/model-trellis/NGC-VALIDATION.md). Owner: NGC Partner Legal Agreement, intake form, `scripts/ngc-stage-trellis.sh --yes-push`.
+Status (2026-11-10): agent work complete. Two-stage image sha256:f6634a81 (CUDA 12.6, Python 3.12, torch 2.6) is 22 layers and 8.39 GB (was 31 and 12.30 GB), Trivy 0 CRITICAL and 2 upstream-only HIGH (was 70 and 1437), and real POST /infer runs on an A100 (63.5 s) and an L4 (118.4 s) produced loadable textured GLBs; H100 quota was denied, so Hopper relies on the compiled sm_90 code plus PTX. Evidence: workers/model-trellis/NGC-VALIDATION.md. Owner: NGC Partner Legal Agreement, intake form, then `scripts/ngc-stage-trellis.sh --org <org> --version 1.0.0 --digest sha256:f6634a81fa68a85de82179a96d67f8585ad09402ee0e2f3b3dc421a7acd3c5d2 --yes-push`.
 
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/981-plan-nvidia-ngc-trellis-image-validation.md`.
 
