@@ -48,7 +48,7 @@ export function renderAccountStatus(resp, onRetry) {
 		attachRetry(body, onRetry);
 		return panel;
 	}
-	const s = resp.data;
+	const s = resp.data?.data ?? resp.data;
 	const reset = s.remaining.api_calls_reset_at ? `resets ${relTime(s.remaining.api_calls_reset_at)}` : '';
 	body.innerHTML = `
 		<div style="display:flex;gap:20px;flex-wrap:wrap;padding:6px 0 12px">

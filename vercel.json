@@ -900,7 +900,7 @@
 			"dest": "/api/v1/rest"
 		},
 		{
-			"src": "/api/v1/me(/(usage|budget|transactions|integrations|link-code)(/.*)?)?/?",
+			"src": "/api/v1/me(/(usage|budget|transactions|integrations|link-code|status)(/.*)?)?/?",
 			"dest": "/api/v1/rest"
 		},
 		{
