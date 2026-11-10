@@ -2,6 +2,8 @@
 
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now, no gate.
 
+**Status 2026-11-10:** built and browser-verified at 375, 768, 1280 with a real coin, reduced motion and no-WebGL fallbacks, zero console errors; the missing mount call was restored. Remaining: the 500-node 60fps reading on a real GPU (this box has software GL only; CPU sim tick measured 8 ms avg for 512 nodes, one draw call). Owner: anyone with a laptop GPU.
+
 ## Operating clause (binding)
 
 - Read CLAUDE.md first, then [_context/integrate-00-CONTEXT.md](_context/integrate-00-CONTEXT.md). CLAUDE.md overrides everything, including this file.

@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { buildGraph, clusterColor } from '../src/funder-graph.js';
 import { ForceSimulation } from '../src/vendor/swarming/ForceSimulation.js';
 
@@ -52,5 +53,16 @@ describe('ForceSimulation layout', () => {
 		const reach = Math.max(...sim.nodes.map((n) => Math.hypot(n.x, n.y, n.z)));
 		expect(Number.isFinite(reach)).toBe(true);
 		expect(reach).toBeLessThan(200);
+	});
+});
+
+describe('coin intel page wiring', () => {
+	it('upgrades the drawer bubble map to the 3D graph after drawing the 2D fallback', () => {
+		const html = readFileSync(new URL('../pages/coin-intel.html', import.meta.url), 'utf8');
+		const draw = html.indexOf('drawBubbleMap(svg, data.wallets');
+		expect(draw).toBeGreaterThan(-1);
+		const call = html.indexOf('mountFunder3d(mint, data.wallets', draw);
+		expect(call).toBeGreaterThan(draw);
+		expect(call - draw).toBeLessThan(200);
 	});
 });

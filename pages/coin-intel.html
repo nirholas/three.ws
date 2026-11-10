@@ -913,6 +913,7 @@
 				if (!data.found) { drawerBody.innerHTML = `<div class="ci-empty" style="border:none"><div class="icon">🔎</div><h3>Not observed yet</h3><p>This coin isn't in the intelligence index.</p></div>`; return; }
 				drawerBody.innerHTML = renderDetail(data);
 				const svg = $('#bm-svg'); if (svg) drawBubbleMap(svg, data.wallets || [], data.clusters || []);
+				mountFunder3d(mint, data.wallets || [], data.clusters || []);
 
 				// Sentiment Scout read for this coin: sourced evidence, injected when ready.
 				scoutDrawerSection(mint).then((sec) => {
