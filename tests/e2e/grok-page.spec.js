@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { PROMPTS } from '../../api/_mcp/prompts.js';
 
 // /grok, the landing page for Grok Bot users.
 //
@@ -25,7 +26,15 @@ test.describe('/grok', () => {
 		await expect(card.locator('#gc-say')).toHaveText(await page.locator('#gk-say-text').innerText());
 		await expect(page.locator('#gk-tools .gk-tool').first()).toBeVisible({ timeout: 60_000 });
 		await expect(page.locator('#gk-skill-list li:not(.gk-skel)').first()).toBeVisible();
-		await expect(page.locator('.gk-recipe')).toHaveCount(3);
+		// Every schedulable recipe card links to one registered guided prompt, and
+		// the section heading names the count, so neither drifts from the registry.
+		const linked = await page.locator('.gk-recipe-link[data-prompt]').evaluateAll((els) => els.map((el) => el.dataset.prompt));
+		const registered = new Set(PROMPTS.map((pr) => pr.name));
+		expect(linked.length).toBeGreaterThan(0);
+		for (const name of linked) expect(registered.has(name), `prompt ${name}`).toBe(true);
+		await expect(page.locator('.gk-recipe')).toHaveCount(linked.length);
+		const words = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight'];
+		await expect(page.locator('#gk-schedule-h')).toHaveText(`${words[linked.length]} recipes to schedule`);
 
 		const gallery = await page.request.get('/api/forge-gallery?limit=6').then((r) => r.json());
 		if (gallery.enabled && gallery.creations.length) {
