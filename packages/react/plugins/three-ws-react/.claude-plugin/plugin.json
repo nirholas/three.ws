@@ -1,0 +1,18 @@
+{
+  "name": "three-ws-react",
+  "version": "1.0.3",
+  "description": "Embed live three.ws 3D AI agents in a React app with the Agent3D component and its imperative ref handle.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/three-ws-react",
+  "homepage": "https://nirholas.github.io/three-ws-react/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "react",
+    "embed",
+    "avatar",
+    "3d",
+    "three-ws"
+  ]
+}

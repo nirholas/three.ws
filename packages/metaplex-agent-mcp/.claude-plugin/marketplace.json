@@ -1,0 +1,22 @@
+{
+  "name": "metaplex-agent-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Mint and register AI agents in the Metaplex Agent Registry on Solana through an MCP server.",
+  "plugins": [
+    {
+      "name": "metaplex-agent",
+      "source": "./plugins/metaplex-agent",
+      "description": "Mint and register AI agents in the Metaplex Agent Registry on Solana through an MCP server.",
+      "category": "development",
+      "tags": [
+        "agent-registry",
+        "solana",
+        "mcp",
+        "eip-8004",
+        "mpl-core"
+      ]
+    }
+  ]
+}

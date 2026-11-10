@@ -1,0 +1,19 @@
+{
+  "name": "motion-clip-compiler",
+  "version": "0.1.0",
+  "description": "Compile a prompt or a Motion Score into a full-body humanoid three.js AnimationClip using the @three-ws/motion CLI.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/three-ws-motion",
+  "homepage": "https://nirholas.github.io/three-ws-motion/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "3d",
+    "animation",
+    "three-js",
+    "inverse-kinematics",
+    "humanoid",
+    "motion-score"
+  ]
+}

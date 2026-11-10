@@ -7,8 +7,9 @@
   "plugins": [
     {
       "name": "create-agent",
-      "source": "./",
+      "source": "./plugins/create-agent",
       "description": "Turn a one-sentence prompt into a rigged, animated 3D agent with a ready-to-open embed page.",
+      "category": "development",
       "tags": [
         "text-to-3d",
         "avatar",

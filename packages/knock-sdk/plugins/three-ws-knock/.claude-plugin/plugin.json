@@ -1,0 +1,17 @@
+{
+  "name": "three-ws-knock",
+  "version": "0.1.0",
+  "description": "Reach a real person through their priced three.ws door from the CLI or JS, with an explicit confirmation before any spend.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/three-ws-knock",
+  "homepage": "https://nirholas.github.io/three-ws-knock/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "knock",
+    "x402",
+    "agent-to-human",
+    "three-ws"
+  ]
+}

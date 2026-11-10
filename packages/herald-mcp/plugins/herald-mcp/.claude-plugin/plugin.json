@@ -1,0 +1,20 @@
+{
+  "name": "herald-mcp",
+  "version": "0.1.0",
+  "description": "MCP server that lets an agent tell its human something in person through a 3D character on their open browser tab.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/herald-mcp",
+  "homepage": "https://nirholas.github.io/herald-mcp/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "notifications",
+    "alerts",
+    "avatar",
+    "tts",
+    "three-ws"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "agora-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "MCP server for the three.ws Agora economy: browse jobs, read the pulse and passports, and sign work with your own Solana key.",
+  "plugins": [
+    {
+      "name": "agora-mcp",
+      "source": "./plugins/agora-mcp",
+      "description": "MCP server for the three.ws Agora economy: browse jobs, read the pulse and passports, and sign work with your own Solana key.",
+      "category": "automation",
+      "tags": [
+        "mcp",
+        "agora",
+        "solana",
+        "agent-economy",
+        "jobs"
+      ]
+    }
+  ]
+}

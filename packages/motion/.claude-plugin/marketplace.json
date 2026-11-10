@@ -1,0 +1,22 @@
+{
+  "name": "three-ws-motion",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Compile text or a Motion Score into a humanoid three.js AnimationClip with no mocap data or model weights.",
+  "plugins": [
+    {
+      "name": "motion-clip-compiler",
+      "source": "./plugins/motion-clip-compiler",
+      "description": "Compile a prompt or a Motion Score into a full-body humanoid three.js AnimationClip using the @three-ws/motion CLI.",
+      "category": "design",
+      "tags": [
+        "3d",
+        "animation",
+        "three-js",
+        "inverse-kinematics",
+        "humanoid"
+      ]
+    }
+  ]
+}

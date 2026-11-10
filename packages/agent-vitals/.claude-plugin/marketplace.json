@@ -7,8 +7,9 @@
   "plugins": [
     {
       "name": "agent-vitals",
-      "source": "./",
+      "source": "./plugins/agent-vitals",
       "description": "Capability attestation for autonomous agents: model preconditions as a causal graph and get the root blocker and fix.",
+      "category": "development",
       "tags": [
         "agent-health",
         "attestation",

@@ -1,13 +1,22 @@
 {
-  "name": "assistant-widget",
-  "owner": {"name": "nirholas"},
+  "name": "assistant-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
   "description": "Generate an embeddable 3D avatar chatbot widget.",
   "plugins": [
     {
       "name": "assistant-widget",
-      "source": "./",
+      "source": "./plugins/assistant-widget",
       "description": "MCP server that generates a paste-ready three.ws 3D avatar chatbot widget embed for any website. Offline and keyless.",
-      "tags": ["mcp", "avatar", "chatbot", "embed", "widget"]
+      "category": "development",
+      "tags": [
+        "mcp",
+        "avatar",
+        "chatbot",
+        "embed",
+        "widget"
+      ]
     }
   ]
 }

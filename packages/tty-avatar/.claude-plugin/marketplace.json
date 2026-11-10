@@ -1,0 +1,22 @@
+{
+  "name": "tty-avatar",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "A software-rasterized 3D avatar for the terminal that reacts to coding-agent events.",
+  "plugins": [
+    {
+      "name": "tty-avatar",
+      "source": "./plugins/tty-avatar",
+      "description": "Show any GLB or three.ws avatar in the terminal, snapshot frames, and wire Claude Code hooks to its mood.",
+      "category": "development",
+      "tags": [
+        "terminal",
+        "avatar",
+        "glb",
+        "claude-code",
+        "cli"
+      ]
+    }
+  ]
+}

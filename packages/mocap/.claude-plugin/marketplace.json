@@ -7,8 +7,9 @@
   "plugins": [
     {
       "name": "three-ws-mocap",
-      "source": "./",
+      "source": "./plugins/three-ws-mocap",
       "description": "Save, fetch and replay face, pose and hand motion capture clips on three.ws avatars with the @three-ws/mocap SDK.",
+      "category": "development",
       "tags": [
         "motion-capture",
         "mocap",

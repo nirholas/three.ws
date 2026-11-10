@@ -1,0 +1,19 @@
+{
+  "name": "three-ws-assistant",
+  "version": "1.0.1",
+  "description": "Embed the three.ws 3D avatar assistant widget with chat and speak modes on any website.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/three-ws-assistant",
+  "homepage": "https://nirholas.github.io/three-ws-assistant/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "3d",
+    "avatar",
+    "assistant",
+    "widget",
+    "embed",
+    "chatbot"
+  ]
+}

@@ -1,13 +1,21 @@
 {
-  "name": "blender-3d",
-  "owner": {"name": "nirholas"},
+  "name": "blender-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
   "description": "Headless Blender tools for AI agents: inspect, convert, optimize, render and script 3D files.",
   "plugins": [
     {
       "name": "blender-3d",
-      "source": "./",
+      "source": "./plugins/blender-3d",
       "description": "Drive a local Blender headlessly: scene info, format conversion, web optimization, inline renders, bpy scripts and text-to-3D import.",
-      "tags": ["blender", "3d", "mcp", "glb"]
+      "category": "development",
+      "tags": [
+        "blender",
+        "3d",
+        "mcp",
+        "glb"
+      ]
     }
   ]
 }

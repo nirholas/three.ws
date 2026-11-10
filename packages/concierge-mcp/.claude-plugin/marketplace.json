@@ -1,13 +1,21 @@
 {
-  "name": "website-concierge",
-  "owner": {"name": "nirholas"},
+  "name": "concierge-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
   "description": "Grounded page Q&A and embed-code generation for the three.ws Concierge widget.",
   "plugins": [
     {
       "name": "website-concierge",
-      "source": "./",
+      "source": "./plugins/website-concierge",
       "description": "Ask grounded questions about a page and generate the one-tag install for a Concierge chat widget with a 3D avatar.",
-      "tags": ["concierge", "chat-widget", "mcp", "avatar"]
+      "category": "development",
+      "tags": [
+        "concierge",
+        "chat-widget",
+        "mcp",
+        "avatar"
+      ]
     }
   ]
 }

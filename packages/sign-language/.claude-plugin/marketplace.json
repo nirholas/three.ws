@@ -1,13 +1,21 @@
 {
-  "name": "sign-language-avatar",
-  "owner": {"name": "nirholas"},
+  "name": "sign-language",
+  "owner": {
+    "name": "nirholas"
+  },
   "description": "ASL clip compiler for 3D avatars.",
   "plugins": [
     {
       "name": "sign-language-avatar",
-      "source": "./",
+      "source": "./plugins/sign-language-avatar",
       "description": "Compile text into one continuous signed animation clip (ASL lexicon plus fingerspelling) with @three-ws/sign-language.",
-      "tags": ["asl", "accessibility", "avatar", "animation"]
+      "category": "development",
+      "tags": [
+        "asl",
+        "accessibility",
+        "avatar",
+        "animation"
+      ]
     }
   ]
 }

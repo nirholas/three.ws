@@ -1,0 +1,20 @@
+{
+  "name": "tty-avatar",
+  "version": "0.1.0",
+  "description": "Render a live 3D avatar in the terminal and drive its mood and caption from Claude Code hooks.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/tty-avatar",
+  "homepage": "https://nirholas.github.io/tty-avatar/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "terminal",
+    "avatar",
+    "glb",
+    "braille",
+    "ansi",
+    "claude-code",
+    "cli"
+  ]
+}

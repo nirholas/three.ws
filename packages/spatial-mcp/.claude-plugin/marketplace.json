@@ -1,13 +1,21 @@
 {
   "name": "spatial-mcp",
-  "owner": {"name": "nirholas"},
+  "owner": {
+    "name": "nirholas"
+  },
   "description": "Spatial MCP builder, validator and conformance fixtures for returning 3D scenes from MCP tools.",
   "plugins": [
     {
       "name": "spatial-mcp",
-      "source": "./",
+      "source": "./plugins/spatial-mcp",
       "description": "Skill for emitting and validating Spatial MCP artifacts with @three-ws/spatial-mcp.",
-      "tags": ["mcp", "3d", "glb", "validator"]
+      "category": "development",
+      "tags": [
+        "mcp",
+        "3d",
+        "glb",
+        "validator"
+      ]
     }
   ]
 }

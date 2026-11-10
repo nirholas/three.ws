@@ -1,9 +1,0 @@
-{
-  "name": "shipfeed",
-  "version": "0.1.0",
-  "description": "Turn commit history into a readable release feed and link changelog entries to the commits behind them.",
-  "author": {"name": "nirholas"},
-  "repository": "https://github.com/nirholas/three-ws-shipfeed",
-  "license": "Apache-2.0",
-  "keywords": ["changelog","conventional-commits","release-notes","git"]
-}

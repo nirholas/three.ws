@@ -1,0 +1,19 @@
+{
+  "name": "see-3d",
+  "version": "0.1.0",
+  "description": "Let Claude look at a 3D model: render a GLB from several angles and read the geometry facts.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/three-ws-see",
+  "homepage": "https://nirholas.github.io/three-ws-see/",
+  "license": "Apache-2.0",
+  "privacyPolicyUrl": "https://three.ws/legal/privacy",
+  "keywords": [
+    "3d",
+    "glb",
+    "vision",
+    "mcp",
+    "three-ws"
+  ]
+}

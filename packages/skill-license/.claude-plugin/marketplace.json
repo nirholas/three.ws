@@ -1,13 +1,21 @@
 {
   "name": "skill-license",
-  "owner": {"name": "nirholas"},
+  "owner": {
+    "name": "nirholas"
+  },
   "description": "On-chain skill license checks for agents.",
   "plugins": [
     {
       "name": "skill-license",
-      "source": "./",
+      "source": "./plugins/skill-license",
       "description": "Check whether a Solana wallet owns an active license for an agent skill, and read the full license record.",
-      "tags": ["solana", "license", "access-control", "agents"]
+      "category": "development",
+      "tags": [
+        "solana",
+        "license",
+        "access-control",
+        "agents"
+      ]
     }
   ]
 }

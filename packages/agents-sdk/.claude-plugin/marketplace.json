@@ -7,8 +7,9 @@
   "plugins": [
     {
       "name": "three-ws-agents",
-      "source": "./",
+      "source": "./plugins/three-ws-agents",
       "description": "Drive the three.ws v1 Agents API from TypeScript: agents, chat, runs, skills, automations and confirm-gated wallet actions.",
+      "category": "development",
       "tags": [
         "agents",
         "typescript",

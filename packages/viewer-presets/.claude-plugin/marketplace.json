@@ -1,13 +1,21 @@
 {
   "name": "viewer-presets",
-  "owner": {"name": "nirholas"},
+  "owner": {
+    "name": "nirholas"
+  },
   "description": "Visual presets library for three.js avatar viewers.",
   "plugins": [
     {
       "name": "viewer-presets",
-      "source": "./",
+      "source": "./plugins/viewer-presets",
       "description": "Apply light rigs, bloom, floor reflection and PBR material presets (chrome, gold, glass and more) to a three.js scene.",
-      "tags": ["three-js", "pbr", "lighting", "material"]
+      "category": "development",
+      "tags": [
+        "three-js",
+        "pbr",
+        "lighting",
+        "material"
+      ]
     }
   ]
 }

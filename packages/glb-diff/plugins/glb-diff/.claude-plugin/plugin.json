@@ -1,0 +1,20 @@
+{
+  "name": "glb-diff",
+  "version": "0.1.0",
+  "description": "Structural diff for glTF and GLB models with rename detection, severity levels and a CI-ready CLI.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/glb-diff",
+  "homepage": "https://nirholas.github.io/glb-diff/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "gltf",
+    "glb",
+    "diff",
+    "3d",
+    "regression",
+    "ci",
+    "three-ws"
+  ]
+}

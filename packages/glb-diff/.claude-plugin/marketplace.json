@@ -1,0 +1,24 @@
+{
+  "name": "glb-diff",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Structural diff for glTF and GLB models with rename detection, severity levels and a CI-ready CLI.",
+  "plugins": [
+    {
+      "name": "glb-diff",
+      "source": "./plugins/glb-diff",
+      "description": "Structural diff for glTF and GLB models with rename detection, severity levels and a CI-ready CLI.",
+      "category": "development",
+      "tags": [
+        "gltf",
+        "glb",
+        "diff",
+        "3d",
+        "regression",
+        "ci",
+        "three-ws"
+      ]
+    }
+  ]
+}

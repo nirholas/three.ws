@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "assistant": {
-      "command": "npx",
-      "args": ["-y", "@three-ws/assistant-mcp"]
-    }
-  }
-}

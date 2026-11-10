@@ -1,0 +1,19 @@
+{
+  "name": "agent-memory",
+  "version": "0.1.2",
+  "description": "Persistent, embeddings-backed memory for agents: remember facts, recall them semantically, walk the entity graph.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/agent-memory",
+  "homepage": "https://nirholas.github.io/agent-memory/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "agent-memory",
+    "embeddings",
+    "semantic-search",
+    "knowledge-graph",
+    "rag",
+    "three-ws"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "three-ws-knock",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Reach a real person through their priced three.ws door from the CLI or JS, with an explicit confirmation before any spend.",
+  "plugins": [
+    {
+      "name": "three-ws-knock",
+      "source": "./plugins/three-ws-knock",
+      "description": "Reach a real person through their priced three.ws door from the CLI or JS, with an explicit confirmation before any spend.",
+      "category": "development",
+      "tags": [
+        "knock",
+        "x402",
+        "agent-to-human"
+      ]
+    }
+  ]
+}

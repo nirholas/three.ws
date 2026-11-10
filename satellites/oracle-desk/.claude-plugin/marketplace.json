@@ -7,8 +7,9 @@
   "plugins": [
     {
       "name": "oracle-desk",
-      "source": "./",
+      "source": "./plugins/oracle-desk",
       "description": "Run and operate a self-custody autonomous Solana launch trading desk (paper by default) from Claude Code.",
+      "category": "development",
       "tags": [
         "solana",
         "trading-desk",

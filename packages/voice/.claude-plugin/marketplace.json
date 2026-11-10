@@ -7,8 +7,9 @@
   "plugins": [
     {
       "name": "three-ws-voice",
-      "source": "./",
+      "source": "./plugins/three-ws-voice",
       "description": "Speech for 3D avatars: speech to text, text to speech and Audio2Face-3D lipsync visemes through the @three-ws/voice SDK.",
+      "category": "development",
       "tags": [
         "asr",
         "tts",

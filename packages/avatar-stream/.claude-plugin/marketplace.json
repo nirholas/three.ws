@@ -7,8 +7,9 @@
   "plugins": [
     {
       "name": "avatar-stream",
-      "source": "./",
+      "source": "./plugins/avatar-stream",
       "description": "Pack a GLB into a layered A3S stream that renders a skinned avatar from its first 50 KB, then refines over byte-range requests.",
+      "category": "development",
       "tags": [
         "glb",
         "gltf",

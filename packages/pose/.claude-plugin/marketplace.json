@@ -7,8 +7,9 @@
   "plugins": [
     {
       "name": "three-ws-pose",
-      "source": "./",
+      "source": "./plugins/three-ws-pose",
       "description": "Map a text prompt to a deterministic named pose seed and Euler joint rotations for rigged 3D avatars.",
+      "category": "development",
       "tags": [
         "pose",
         "avatar",

@@ -1,6 +1,22 @@
 {
   "name": "tty-3d",
-  "owner": {"name": "nirholas"},
+  "owner": {
+    "name": "nirholas"
+  },
   "description": "Render a rigged, animated GLB as ANSI frames in a terminal with a software rasterizer, no GPU needed.",
-  "plugins": [{"name": "tty-3d", "source": "./", "description": "Render a rigged, animated GLB as ANSI frames in a terminal with a software rasterizer, no GPU needed.", "tags": ["3d","terminal","ansi","glb","cli"]}]
+  "plugins": [
+    {
+      "name": "tty-3d",
+      "source": "./plugins/tty-3d",
+      "description": "Render a rigged, animated GLB as ANSI frames in a terminal with a software rasterizer, no GPU needed.",
+      "category": "development",
+      "tags": [
+        "3d",
+        "terminal",
+        "ansi",
+        "glb",
+        "cli"
+      ]
+    }
+  ]
 }

@@ -1,0 +1,22 @@
+{
+  "name": "agentcore-payments-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "MCP server for budgeted agent payment sessions: quote and pay x402 endpoints under spend limits and URL allowlists.",
+  "plugins": [
+    {
+      "name": "agentcore-payments",
+      "source": "./plugins/agentcore-payments",
+      "description": "MCP server for budgeted agent payment sessions: quote and pay x402 endpoints under spend limits and URL allowlists.",
+      "category": "development",
+      "tags": [
+        "mcp",
+        "x402",
+        "payments",
+        "spend-governor",
+        "agent-payments"
+      ]
+    }
+  ]
+}

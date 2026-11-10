@@ -1,0 +1,21 @@
+{
+  "name": "x402-preflight",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Check whether an x402 seller can actually settle before signing a payment, using a signed payability attestation.",
+  "plugins": [
+    {
+      "name": "x402-preflight",
+      "source": "./plugins/x402-preflight",
+      "description": "Check whether an x402 seller can actually settle before signing a payment, using a signed payability attestation.",
+      "category": "development",
+      "tags": [
+        "x402",
+        "agent-payments",
+        "attestation",
+        "preflight"
+      ]
+    }
+  ]
+}

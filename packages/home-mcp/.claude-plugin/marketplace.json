@@ -7,8 +7,9 @@
   "plugins": [
     {
       "name": "home-mcp",
-      "source": "./",
+      "source": "./plugins/home-mcp",
       "description": "MCP server that gives an assistant safe control of a Home Assistant house, with a gate that refuses anything that opens it.",
+      "category": "development",
       "tags": [
         "mcp",
         "home-assistant",

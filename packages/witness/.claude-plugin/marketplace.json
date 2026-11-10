@@ -1,6 +1,21 @@
 {
-  "name": "witness",
-  "owner": {"name": "nirholas"},
+  "name": "three-ws-witness",
+  "owner": {
+    "name": "nirholas"
+  },
   "description": "Compile a recorded user session into a Playwright spec that stays red until the bug is fixed.",
-  "plugins": [{"name": "witness", "source": "./", "description": "Compile a recorded user session into a Playwright spec that stays red until the bug is fixed.", "tags": ["playwright","bug-report","repro","testing"]}]
+  "plugins": [
+    {
+      "name": "witness",
+      "source": "./plugins/witness",
+      "description": "Compile a recorded user session into a Playwright spec that stays red until the bug is fixed.",
+      "category": "development",
+      "tags": [
+        "playwright",
+        "bug-report",
+        "repro",
+        "testing"
+      ]
+    }
+  ]
 }

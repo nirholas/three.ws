@@ -7,8 +7,9 @@
   "plugins": [
     {
       "name": "three-ws-assets",
-      "source": "./",
+      "source": "./plugins/three-ws-assets",
       "description": "Search the free three.ws CC0 catalog of 3D props, rigged characters and motion clips and add them to a project.",
+      "category": "development",
       "tags": [
         "3d",
         "assets",

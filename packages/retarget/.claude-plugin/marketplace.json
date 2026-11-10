@@ -7,8 +7,9 @@
   "plugins": [
     {
       "name": "three-ws-retarget",
-      "source": "./",
+      "source": "./plugins/three-ws-retarget",
       "description": "Retarget animation clips onto any humanoid GLB, canonicalizing bone names so no rig freezes in a T-pose.",
+      "category": "development",
       "tags": [
         "animation",
         "retargeting",

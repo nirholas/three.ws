@@ -1,0 +1,23 @@
+{
+  "name": "home-bridge",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Connect an agent to a real Home Assistant instance: live state, gated service calls, a room graph and scene intents.",
+  "plugins": [
+    {
+      "name": "home-bridge",
+      "source": "./plugins/home-bridge",
+      "description": "Connect an agent to a real Home Assistant instance: live state, gated service calls, a room graph and scene intents.",
+      "category": "development",
+      "tags": [
+        "home-assistant",
+        "smart-home",
+        "iot",
+        "mcp",
+        "agents",
+        "three-ws"
+      ]
+    }
+  ]
+}

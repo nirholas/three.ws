@@ -1,0 +1,24 @@
+{
+  "name": "herald-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "MCP server that lets an agent tell its human something in person through a 3D character on their open browser tab.",
+  "plugins": [
+    {
+      "name": "herald-mcp",
+      "source": "./plugins/herald-mcp",
+      "description": "MCP server that lets an agent tell its human something in person through a 3D character on their open browser tab.",
+      "category": "development",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "notifications",
+        "alerts",
+        "avatar",
+        "tts",
+        "three-ws"
+      ]
+    }
+  ]
+}

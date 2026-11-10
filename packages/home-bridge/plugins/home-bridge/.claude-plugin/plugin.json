@@ -1,0 +1,19 @@
+{
+  "name": "home-bridge",
+  "version": "0.1.0",
+  "description": "Connect an agent to a real Home Assistant instance: live state, gated service calls, a room graph and scene intents.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/home-bridge",
+  "homepage": "https://nirholas.github.io/home-bridge/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "home-assistant",
+    "smart-home",
+    "iot",
+    "mcp",
+    "agents",
+    "three-ws"
+  ]
+}

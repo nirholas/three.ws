@@ -1,13 +1,22 @@
 {
   "name": "agent-glance",
-  "owner": {"name": "nirholas"},
+  "owner": {
+    "name": "nirholas"
+  },
   "description": "CLI and library that put a three.ws agent on any surface with a slot.",
   "plugins": [
     {
       "name": "agent-glance",
-      "source": "./",
+      "source": "./plugins/agent-glance",
       "description": "Print an agent card, or generate README badge, SVG and web component snippets for a three.ws agent.",
-      "tags": ["agent", "badge", "svg", "web-component", "cli"]
+      "category": "development",
+      "tags": [
+        "agent",
+        "badge",
+        "svg",
+        "web-component",
+        "cli"
+      ]
     }
   ]
 }

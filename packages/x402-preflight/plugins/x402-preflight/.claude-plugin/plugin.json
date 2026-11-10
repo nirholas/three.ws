@@ -1,0 +1,17 @@
+{
+  "name": "x402-preflight",
+  "version": "0.1.0",
+  "description": "Check whether an x402 seller can actually settle before signing a payment, using a signed payability attestation.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/x402-preflight",
+  "homepage": "https://nirholas.github.io/x402-preflight/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "x402",
+    "agent-payments",
+    "attestation",
+    "preflight"
+  ]
+}

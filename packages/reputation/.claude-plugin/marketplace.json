@@ -7,8 +7,9 @@
   "plugins": [
     {
       "name": "three-ws-reputation",
-      "source": "./",
+      "source": "./plugins/three-ws-reputation",
       "description": "Read ERC-8004 and Solana agent trust scores, leaderboards and validations with the @three-ws/reputation SDK.",
+      "category": "development",
       "tags": [
         "erc-8004",
         "reputation",

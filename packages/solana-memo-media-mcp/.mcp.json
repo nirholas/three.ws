@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "solana-memo-media": {
-      "command": "npx",
-      "args": ["-y", "@three-ws/solana-memo-media-mcp"]
-    }
-  }
-}

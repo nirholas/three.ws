@@ -7,8 +7,9 @@
   "plugins": [
     {
       "name": "three-ws-react",
-      "source": "./",
+      "source": "./plugins/three-ws-react",
       "description": "Embed live three.ws 3D AI agents in a React app with the Agent3D component and its imperative ref handle.",
+      "category": "development",
       "tags": [
         "react",
         "embed",

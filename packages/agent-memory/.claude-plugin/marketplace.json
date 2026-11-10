@@ -7,8 +7,9 @@
   "plugins": [
     {
       "name": "agent-memory",
-      "source": "./",
+      "source": "./plugins/agent-memory",
       "description": "Persistent, embeddings-backed memory for agents: remember facts, recall them semantically, walk the entity graph.",
+      "category": "development",
       "tags": [
         "agent-memory",
         "embeddings",

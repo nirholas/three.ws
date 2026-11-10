@@ -1,6 +1,22 @@
 {
-  "name": "see-3d",
-  "owner": {"name": "nirholas"},
+  "name": "three-ws-see",
+  "owner": {
+    "name": "nirholas"
+  },
   "description": "Let Claude look at a 3D model: render a GLB from several angles and read the geometry facts.",
-  "plugins": [{"name": "see-3d", "source": "./", "description": "Let Claude look at a 3D model: render a GLB from several angles and read the geometry facts.", "tags": ["3d","glb","vision","mcp","three-ws"]}]
+  "plugins": [
+    {
+      "name": "see-3d",
+      "source": "./plugins/see-3d",
+      "description": "Let Claude look at a 3D model: render a GLB from several angles and read the geometry facts.",
+      "category": "development",
+      "tags": [
+        "3d",
+        "glb",
+        "vision",
+        "mcp",
+        "three-ws"
+      ]
+    }
+  ]
 }

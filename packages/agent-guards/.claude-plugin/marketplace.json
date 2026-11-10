@@ -1,13 +1,21 @@
 {
   "name": "agent-guards",
-  "owner": {"name": "nirholas"},
+  "owner": {
+    "name": "nirholas"
+  },
   "description": "Spend and trade guardrails for autonomous agents.",
   "plugins": [
     {
       "name": "agent-guards",
-      "source": "./",
+      "source": "./plugins/agent-guards",
       "description": "Spend policies and trade guards for autonomous agents: pre-check a Solana trade or spend against owner-set caps before signing.",
-      "tags": ["guardrails", "spend-policy", "solana", "kill-switch"]
+      "category": "development",
+      "tags": [
+        "guardrails",
+        "spend-policy",
+        "solana",
+        "kill-switch"
+      ]
     }
   ]
 }
