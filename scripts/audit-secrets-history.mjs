@@ -121,7 +121,12 @@ export function scanHistory({ binary, repo = ROOT, config = join(ROOT, '.gitleak
 			throw new Error(`gitleaks exited ${run.status}:\n${tail}`);
 		}
 		const findings = existsSync(reportPath) ? JSON.parse(readFileSync(reportPath, 'utf8') || '[]') : [];
-		const commits = Number(/scanned ~?[\d,]+ bytes|(\d[\d,]*) commits scanned/.exec(run.stderr || '')?.[1]?.replace(/,/g, '')) || null;
+		let commits = null;
+		try {
+			commits = Number(execFileSync('git', ['-C', repo, 'rev-list', '--all', '--count'], { encoding: 'utf8' }).trim()) || null;
+		} catch {
+			commits = null;
+		}
 		return { findings: summarizeFindings(findings), commits };
 	} finally {
 		rmSync(work, { recursive: true, force: true });

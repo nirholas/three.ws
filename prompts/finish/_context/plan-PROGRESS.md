@@ -150,3 +150,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-10 784-plan-ui-button-pill-migration-long-tail.md (partial): migrated br/fm/as/ad/bento button families to canonical .btn, audit:buttons --strict is green; states/tokens gates and screenshots remain.
 2026-11-10 720-plan-avatar-parametric-garment-morph-conform.md (kept, browser slider pass outstanding) built in 83a2723bf: garment morph conform shared by editor and bake.
 2026-11-10 784 (update): audit:buttons --strict is in gate and guard-registered (1491d6eff); remaining: states/tokens gates blocked by other sessions' files, agent-detail browser check, generated changelog files.
+2026-11-10 | 782-plan-platform-dead-code-and-secret-history-scans.md | e0fc84e59 637ed2c73 + this commit | kept: scans wired and run (1,079 gitleaks findings triaged, one owner GCP key check); dead-code deletions and allowlist tuning remain.
