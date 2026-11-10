@@ -40,12 +40,17 @@ RUN npm ci --ignore-scripts || npm install --ignore-scripts
 # api/_lib/execution-engine.js (the Jito bundle tip list every sniper buy and
 # sell submits through). It has no imports of its own, so only that file is
 # copied; without it the worker dies with ERR_MODULE_NOT_FOUND at boot.
+# packages/x402-server/src/facilitator is imported by api/_lib/x402/self-facilitator.js
+# (the self-hosted Solana x402 rail the paid-intel arm pays through). Its only
+# npm imports (@solana/web3.js, @solana/spl-token, bs58, @noble/curves) are root
+# dependencies, so only that directory is copied.
 COPY agent-payments-sdk ./agent-payments-sdk
 COPY api ./api
 COPY data/plans.json ./data/plans.json
 COPY src ./src
 COPY packages/agent-sniper/src ./packages/agent-sniper/src
 COPY packages/avatar-agent-mcp/src/lib/jito-tip-accounts.js ./packages/avatar-agent-mcp/src/lib/jito-tip-accounts.js
+COPY packages/x402-server/src/facilitator ./packages/x402-server/src/facilitator
 COPY workers/agent-sniper ./workers/agent-sniper
 RUN npm run build --prefix agent-payments-sdk
 
