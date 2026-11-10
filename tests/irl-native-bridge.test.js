@@ -3,6 +3,10 @@
 // marker-pose module; only the native plugin, JPEG decode and QR decode are faked.
 
 import { describe, it, expect, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import sharp from 'sharp';
+import jsQR from 'jsqr';
 import {
 	getWearablesPlugin,
 	nativeWearablesAvailable,
@@ -213,5 +217,85 @@ describe('wearables lane', () => {
 
 	it('requires a plugin', () => {
 		expect(() => createWearablesLane({ plugin: null })).toThrow(/plugin missing/);
+	});
+});
+
+// Camera frames on disk (rendered by scripts/glasses/render-relocalize-fixtures.mjs
+// from the ground truth in manifest.json), decoded with a real JPEG decoder and a
+// real QR detector, so the pose math is exercised on pixels rather than on corners
+// the test wrote itself.
+const FIX_DIR = join(import.meta.dirname, 'fixtures', 'glasses-relocalize');
+const MANIFEST = JSON.parse(readFileSync(join(FIX_DIR, 'manifest.json'), 'utf8'));
+const PIN_ROOM = markerRoomId(MANIFEST.pinPayload);
+
+async function decodeJpeg(input) {
+	const { data, info } = await sharp(input).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+	return { bitmap: { data: new Uint8ClampedArray(data), w: info.width, h: info.height }, w: info.width, h: info.height };
+}
+
+function detectWithJsQr(bitmap) {
+	const code = jsQR(bitmap.data, bitmap.w, bitmap.h);
+	if (!code) return [];
+	const l = code.location;
+	return [{ rawValue: code.data, cornerPoints: [l.topLeftCorner, l.topRightCorner, l.bottomRightCorner, l.bottomLeftCorner] }];
+}
+
+describe('relocalization on recorded frames', () => {
+	for (const f of MANIFEST.frames.filter((x) => x.payload === MANIFEST.pinPayload)) {
+		it(`recovers ${f.distanceM} m at (${f.cx}, ${f.cy}) from ${f.file}`, async () => {
+			const decoded = await decodeJpeg(readFileSync(join(FIX_DIR, f.file)));
+			const detections = detectWithJsQr(decoded.bitmap);
+			expect(detections).toHaveLength(1);
+			const r = relocalizeFromDetections({
+				detections, frame: MANIFEST.frame, vfovDeg: MANIFEST.vfovDeg, anchorRoomId: PIN_ROOM,
+			});
+			expect(r.ok).toBe(true);
+			expect(Math.abs(r.distanceM - f.distanceM) / f.distanceM).toBeLessThan(0.05);
+			const fpx = focalLengthPx(MANIFEST.vfovDeg, MANIFEST.frame.h);
+			const trueX = ((f.cx - MANIFEST.frame.w / 2) / fpx) * f.distanceM;
+			const trueY = -((f.cy - MANIFEST.frame.h / 2) / fpx) * f.distanceM;
+			expect(r.center.x).toBeCloseTo(trueX, 1);
+			expect(r.center.y).toBeCloseTo(trueY, 1);
+			expect(r.center.z).toBeLessThan(0);
+		});
+	}
+
+	it('reports a different marker as wrong_marker', async () => {
+		const decoded = await decodeJpeg(readFileSync(join(FIX_DIR, 'other-marker-1m.jpg')));
+		const r = relocalizeFromDetections({
+			detections: detectWithJsQr(decoded.bitmap), frame: MANIFEST.frame, vfovDeg: MANIFEST.vfovDeg, anchorRoomId: PIN_ROOM,
+		});
+		expect(r).toEqual({ ok: false, reason: 'wrong_marker' });
+	});
+
+	it('reports a bare wall as no_marker', async () => {
+		const decoded = await decodeJpeg(readFileSync(join(FIX_DIR, 'empty-wall.jpg')));
+		const r = relocalizeFromDetections({
+			detections: detectWithJsQr(decoded.bitmap), frame: MANIFEST.frame, vfovDeg: MANIFEST.vfovDeg, anchorRoomId: PIN_ROOM,
+		});
+		expect(r).toEqual({ ok: false, reason: 'no_marker' });
+	});
+
+	it('runs a captured frame end to end through the lane without touching the network', async () => {
+		const jpg = readFileSync(join(FIX_DIR, 'pin-1p2m-centre.jpg'));
+		const fetchSpy = vi.fn();
+		const prev = globalThis.fetch;
+		globalThis.fetch = fetchSpy;
+		try {
+			const lane = createWearablesLane({
+				plugin: {
+					getSession: async () => ({ state: 'connected' }),
+					capturePhoto: async () => ({ base64: jpg.toString('base64'), mime: 'image/jpeg', vfovDeg: MANIFEST.vfovDeg }),
+				},
+				decode: async (blob) => decodeJpeg(Buffer.from(await blob.arrayBuffer())),
+				detectQr: async (bitmap) => detectWithJsQr(bitmap),
+			});
+			const r = await lane.relocalize({ anchorRoomId: PIN_ROOM });
+			expect(r.ok).toBe(true);
+			expect(r.distanceM).toBeCloseTo(1.2, 1);
+			expect(fetchSpy).not.toHaveBeenCalled();
+		} finally {
+			globalThis.fetch = prev;
+		}
 	});
 });

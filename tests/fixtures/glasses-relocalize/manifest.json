@@ -1,0 +1,43 @@
+{
+	"frame": {
+		"w": 1280,
+		"h": 960
+	},
+	"vfovDeg": 60,
+	"markerSizeM": 0.16,
+	"pinPayload": "https://three.ws/irl?m=lobby-door",
+	"frames": [
+		{
+			"file": "pin-1p2m-centre.jpg",
+			"payload": "https://three.ws/irl?m=lobby-door",
+			"distanceM": 1.2,
+			"cx": 640,
+			"cy": 480
+		},
+		{
+			"file": "pin-0p8m-right.jpg",
+			"payload": "https://three.ws/irl?m=lobby-door",
+			"distanceM": 0.8,
+			"cx": 900,
+			"cy": 430
+		},
+		{
+			"file": "pin-1p6m-left.jpg",
+			"payload": "https://three.ws/irl?m=lobby-door",
+			"distanceM": 1.6,
+			"cx": 420,
+			"cy": 540
+		},
+		{
+			"file": "other-marker-1m.jpg",
+			"payload": "https://three.ws/irl?m=loading-dock",
+			"distanceM": 1,
+			"cx": 640,
+			"cy": 480
+		},
+		{
+			"file": "empty-wall.jpg",
+			"payload": null
+		}
+	]
+}
