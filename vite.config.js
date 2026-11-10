@@ -3121,8 +3121,10 @@ const appConfig = {
 					// early loses at most a 2s window rather than an unbounded one.
 					// Waiting for the `load` event instead would have meant a 12s delay
 					// on the heaviest page, which is the wrong trade.
+					// Automated browsers (navigator.webdriver) never load the library: it
+					// would only drop their events as bot traffic and warn in the console.
 					const whenIdle = (body) =>
-						`!function(){var f=function(){${body}};'requestIdleCallback'in window?requestIdleCallback(f,{timeout:2000}):setTimeout(f,1200)}();`;
+						`!function(){var f=function(){if(navigator.webdriver)return;${body}};'requestIdleCallback'in window?requestIdleCallback(f,{timeout:2000}):setTimeout(f,1200)}();`;
 					const SNIPPET = `!function(t,e){var o,n,p,r;e.__SV||(window.posthog&&window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){window.__posthog_blocked=!0},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias set_config reset opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_distinct_id get_session_id get_session_replay_url register register_once unregister on onFeatureFlags reloadFeatureFlags getFeatureFlag getFeatureFlagPayload isFeatureEnabled addExceptionStep captureException".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);${whenIdle(
 						`posthog.init('phc_kvi8nrXqrNkLNy2NhaiwkbGyj77XpSJo54P5k2ZHYo9n',{api_host:'/ingest',ui_host:'https://us.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only'})`,
 					)}`;
