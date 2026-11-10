@@ -356,6 +356,7 @@
 		"audit:motion-tokens": "node scripts/audit-motion-drift.mjs",
 		"audit:guards": "node scripts/audit-guards.mjs",
 		"audit:tour-atlas": "node scripts/build-tour-atlas.mjs --check",
+		"audit:ux-flows": "node scripts/audit-ux-flows.mjs",
 		"audit:tour-global": "node scripts/sync-tour-global.mjs --check",
 		"audit:console": "node scripts/audit-console.mjs",
 		"audit:seo": "node scripts/audit-seo.mjs",
