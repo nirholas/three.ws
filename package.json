@@ -316,6 +316,8 @@
 		"programs:promo": "node scripts/partner-programs.mjs --promo",
 		"docs:launch-lanes": "node --env-file=.env.local scripts/gen-launch-lanes-doc.mjs",
 		"audit:deps": "node scripts/check-deps.mjs",
+		"audit:dead-code": "node scripts/audit-dead-code.mjs",
+		"audit:secrets-history": "node scripts/audit-secrets-history.mjs",
 		"audit:upstreams": "node scripts/audit-upstreams.mjs",
 		"audit:upstreams:map": "node scripts/audit-upstreams.mjs --map",
 		"docs:freshness": "node scripts/doc-freshness.mjs",
