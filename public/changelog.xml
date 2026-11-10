@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Places search keeps answering when the public map servers stall</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-10:Places search keeps answering when the public map servers stall</guid>
+			<pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The paid and free places search returned an error for every caller when the public OpenStreetMap servers it reads were overloaded at the same time. It now asks several map servers in parallel and takes the first answer, remembers recent results so repeat searches return instantly, and if every server is down it serves the last real answer it saw, clearly marked as stale with the time it was fetched.</description>
+		</item>
+		<item>
 			<title>Meetup #3 Recap: The Three.ws User Group Back in the World</title>
 			<link>https://three.ws/blog/ibm-user-group-meetup-3-recap</link>
 			<guid isPermaLink="false">2026-11-07:Meetup #3 Recap: The Three.ws User Group Back in the World</guid>

@@ -2,6 +2,12 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-11-10",
+			"title": "Places search keeps answering when the public map servers stall",
+			"summary": "The paid and free places search returned an error for every caller when the public OpenStreetMap servers it reads were overloaded at the same time. It now asks several map servers in parallel and takes the first answer, remembers recent results so repeat searches return instantly, and if every server is down it serves the last real answer it saw, clearly marked as stale with the time it was fetched.",
+			"tags": ["fix"]
+		},
+		{
 			"date": "2026-11-07",
 			"title": "The Community Meetup #3 recap is up: a wrap on our IBM Community user group's second meetup inside the world",
 			"summary": "How the Three.ws User Group's third meetup went, sponsored by IBM Community and held inside /play on November 6. three.ws is the first project with its own user group on IBM Community, the new signature wall got its first names, and people kept coming back after the program ended. The post also covers everything shipped since August, the full partner roster, and the next session being planned for late November.",

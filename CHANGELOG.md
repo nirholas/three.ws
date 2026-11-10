@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-11-10
+
+- **Places search keeps answering when the public map servers stall**: The paid and free places search returned an error for every caller when the public OpenStreetMap servers it reads were overloaded at the same time. It now asks several map servers in parallel and takes the first answer, remembers recent results so repeat searches return instantly, and if every server is down it serves the last real answer it saw, clearly marked as stale with the time it was fetched. `[fix]`
+
 ## 2026-11-07
 
 - **Meetup #3 Recap: The Three.ws User Group Back in the World** (`/blog/ibm-user-group-meetup-3-recap`): How the Three.ws User Group's third meetup went, sponsored by IBM Community and held inside three.ws/play: the first project-owned user group on IBM Community, the first signatures on the signature wall, what shipped since August, the partner roster, and what comes next.

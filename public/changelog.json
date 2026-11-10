@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-11-07T21:48:11.214Z",
+	"generated_at": "2026-11-10T14:05:28.996Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-10",
+			"type": "update",
+			"title": "Places search keeps answering when the public map servers stall",
+			"summary": "The paid and free places search returned an error for every caller when the public OpenStreetMap servers it reads were overloaded at the same time. It now asks several map servers in parallel and takes the first answer, remembers recent results so repeat searches return instantly, and if every server is down it serves the last real answer it saw, clearly marked as stale with the time it was fetched.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-11-07",
 			"type": "launch",

@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-07T21:48:11.244Z",
+	"generated_at": "2026-11-10T14:05:29.177Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4469,
+	"total": 4470,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-10",
+			"type": "update",
+			"title": "Places search keeps answering when the public map servers stall",
+			"summary": "The paid and free places search returned an error for every caller when the public OpenStreetMap servers it reads were overloaded at the same time. It now asks several map servers in parallel and takes the first answer, remembers recent results so repeat searches return instantly, and if every server is down it serves the last real answer it saw, clearly marked as stale with the time it was fetched.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-11-07",
 			"type": "launch",
@@ -1531,16 +1541,6 @@
 			"link": "https://github.com/nirholas/three.ws/tree/main/docs/nvidia-gtc-2027",
 			"tags": [
 				"docs"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "The inference node network now has buyers, a roster and an earnings ledger",
-			"summary": "Anyone can pay USDC to run a job on a live community node through /api/x402/node-inference and is only billed when the node signed receipt verifies. Node operators can read their accrued earnings, and the new /nodes page lists the network.",
-			"link": null,
-			"tags": [
-				"feature"
 			]
 		}
 	]
