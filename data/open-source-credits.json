@@ -473,7 +473,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/vercel/ai",
 			"funding": null,
-			"version": "4.0.96",
+			"version": "4.0.97",
 			"powers": null
 		},
 		{
@@ -506,7 +506,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1162.0",
+			"version": "3.1163.0",
 			"powers": null
 		},
 		{
@@ -528,7 +528,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1162.0",
+			"version": "3.1163.0",
 			"powers": null
 		},
 		{
@@ -1001,7 +1001,7 @@
 			"license": "Apache-2.0",
 			"repo": null,
 			"funding": null,
-			"version": "0.79.3",
+			"version": "0.79.4",
 			"powers": null
 		},
 		{
@@ -1804,7 +1804,7 @@
 			"license": "BlueOak-1.0.0",
 			"repo": "https://github.com/isaacs/node-glob",
 			"funding": "https://github.com/sponsors/isaacs",
-			"version": "14.0.3",
+			"version": "14.0.4",
 			"powers": null
 		},
 		{
@@ -2343,7 +2343,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/vitejs/vite",
 			"funding": "https://github.com/vitejs/vite?sponsor=1",
-			"version": "8.3.5",
+			"version": "8.3.6",
 			"powers": null
 		},
 		{
