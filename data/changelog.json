@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-10",
+			"title": "Agent run replays show the code your agent ran",
+			"summary": "On an agent's Runs tab, each execute_code, terminal and file step now shows the program, what it printed, its exit code and duration, and download links for the files it wrote, right in the step instead of behind a Details fold. The sandbox settings page empty state now tells you to ask your agent to run code.",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-10",
 			"title": "The TRELLIS image-to-3D container now runs on A100 and L4 GPUs with no critical vulnerabilities",
 			"summary": "The container behind our image-to-3D lane, prepared for NVIDIA's NGC Catalog, is now a two-stage build on CUDA 12.6 and Python 3.12. It is 32% smaller (8.4GB instead of 12.3GB), and its security scan went from 70 critical and 1437 high findings to 0 critical and 2 high, both waiting on upstream releases. A real job ran end to end on an NVIDIA A100 and an NVIDIA L4, each producing a textured 3D model, with the code also compiled for Hopper GPUs.",
 			"tags": [

@@ -48,6 +48,7 @@
 		.sb-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 10px; }
 		.sb-run { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; justify-content: space-between; width: 100%; text-align: left; padding: 11px 12px; margin-top: 8px; border-radius: 10px; border: 1px solid var(--stroke); background: var(--surface-2); cursor: pointer; transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); }
 		.sb-run:hover, .sb-run[aria-expanded="true"] { border-color: var(--accent); background: var(--surface-3); }
+		.sb-run:active { transform: translateY(1px); }
 		.sb-run small { color: var(--ink-dim); }
 		.sb-pill { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 0.75rem; border: 1px solid var(--stroke-strong, var(--stroke)); }
 		.sb-pill.ok { color: var(--ok, #2fb170); } .sb-pill.bad { color: var(--sb-danger); } .sb-pill.warn { color: var(--warn, #d9a22b); }
@@ -67,6 +68,24 @@
 		#toast.show { opacity: 1; }
 		@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 	</style>
+
+	<meta property="og:type" content="website">
+	<meta property="og:site_name" content="three.ws">
+	<meta property="og:locale" content="en_US">
+	<meta property="og:title" content="Agent Sandbox Settings · three.ws">
+	<meta property="og:description" content="See every program your agents ran in their sandbox, read its output, download the files it wrote, stop a runaway workspace and choose which hosts sandboxed code may call.">
+	<meta property="og:url" content="https://three.ws/settings/sandbox">
+	<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Agent+Sandbox+Settings&amp;d=See+every+program+your+agents+ran+in+their+sandbox%2C+read+its+output%2C+download+the+files+it+wrote%2C+stop+a+runaway+workspace+and+choose+which+hosts+sandboxed&amp;p=%2Fsettings%2Fsandbox">
+	<meta property="og:image:width" content="1200">
+	<meta property="og:image:height" content="630">
+	<meta property="og:image:type" content="image/png">
+	<meta property="og:image:alt" content="Agent Sandbox Settings - three.ws">
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:site" content="@trythreews">
+	<meta name="twitter:title" content="Agent Sandbox Settings · three.ws">
+	<meta name="twitter:description" content="See every program your agents ran in their sandbox, read its output, download the files it wrote, stop a runaway workspace and choose which hosts sandboxed code may call.">
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Agent+Sandbox+Settings&amp;d=See+every+program+your+agents+ran+in+their+sandbox%2C+read+its+output%2C+download+the+files+it+wrote%2C+stop+a+runaway+workspace+and+choose+which+hosts+sandboxed&amp;p=%2Fsettings%2Fsandbox">
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Agent Sandbox Settings","description":"See every program your agents ran in their sandbox, read its output, download the files it wrote, stop a runaway workspace and choose which hosts sandboxed code may call.","url":"https://three.ws/settings/sandbox","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=learn&t=Agent+Sandbox+Settings&d=See+every+program+your+agents+ran+in+their+sandbox%2C+read+its+output%2C+download+the+files+it+wrote%2C+stop+a+runaway+workspace+and+choose+which+hosts+sandboxed&p=%2Fsettings%2Fsandbox"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Settings","item":"https://three.ws/settings"},{"@type":"ListItem","position":3,"name":"Sandbox","item":"https://three.ws/settings/sandbox"}]}]}</script>
 </head>
 <body>
 	<header class="site-header"><div id="nav-container"></div></header>

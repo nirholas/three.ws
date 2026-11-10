@@ -13,6 +13,7 @@
 
 import { apiFetch } from './api.js';
 import { buildRunReport } from '../packages/three-ws-cli/src/report/run-report.js';
+import { sandboxStepHTML } from './shared/sandbox-step-view.js';
 import { emptyStateHTML, errorStateHTML, skeletonHTML } from './shared/state-kit.js';
 
 const POLL_MS = 2500;
@@ -147,6 +148,15 @@ function injectStyles() {
 .rr-step pre{margin:6px 0 0;padding:8px 10px;background:var(--bg,#0a0a0a);border:1px solid var(--border,#1f1f1f);border-radius:8px;font-size:11.5px;line-height:1.5;overflow:auto;max-height:280px;white-space:pre-wrap;word-break:break-word}
 .rr-receipt{background:transparent;border:0;padding:0;font:inherit;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--text-3,#71717a);cursor:pointer}
 .rr-receipt:hover{color:var(--text,#fafafa)}
+.rr-sb{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.rr-sb-label{margin:0;font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--text-2,#a1a1aa)}
+.rr-sb-ok{color:#4ade80}.rr-sb-bad{color:#f87171}
+.rr-sb-stream strong,.rr-sb-files strong{font-size:11px;color:var(--text-3,#71717a);text-transform:uppercase;letter-spacing:.04em}
+.rr-sb-files ul{margin:4px 0 0;padding-left:18px;font-size:12.5px}
+.rr-sb-file{color:var(--text,#fafafa);text-decoration:underline;text-underline-offset:2px}
+a.rr-sb-file:hover{color:#60a5fa}
+a.rr-sb-file:focus-visible{outline:2px solid var(--text,#fafafa);outline-offset:2px;border-radius:2px}
+a.rr-sb-file:active{opacity:.7}
 .rr-note{font-size:12px;color:var(--text-3,#71717a);margin:10px 0 0}
 `;
 	const style = document.createElement('style');
@@ -240,6 +250,7 @@ function stepItem(step) {
 			<span class="rr-step-meta">${meta.map((m) => `<span>${m}</span>`).join('')}${receipt}</span>
 		</div>
 		<p class="rr-step-line">${esc(stepLine(step))}</p>
+		${sandboxStepHTML(step, esc)}
 		${body.length ? `<details><summary>Details</summary>${body.join('')}</details>` : ''}
 	</li>`;
 }

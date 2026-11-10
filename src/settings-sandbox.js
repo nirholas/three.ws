@@ -161,7 +161,7 @@ async function stopRun(run) {
 function renderRuns(o) {
 	const host = $('runs-body');
 	if (!o.runs.length) {
-		host.replaceChildren(el('div', { class: 'sb-empty' }, 'Nothing has run yet. When one of your agents runs code or a terminal command, its workspace appears here. Ask an agent to run a script to try it.'));
+		host.replaceChildren(el('div', { class: 'sb-empty' }, 'No executions yet. Ask your agent to run code, and its workspace appears here.'));
 		return;
 	}
 	host.replaceChildren(

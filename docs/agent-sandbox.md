@@ -26,6 +26,10 @@ Configuration variables are listed at the top of `api/_lib/sandbox/config.js`.
 
 `/settings/sandbox` lists every workspace with each program's source, output, exit code, duration and cost, offers file downloads, stops a workspace, shows plan limits and edits the host allowlist (`example.com` or `*.example.com`).
 
+## Run replay
+
+On an agent's Runs tab, each sandbox step shows inline what ran: the program (or terminal command), stdout and stderr, exit status, duration, cost and download links for the files it wrote. Output is escaped as untrusted text and file links are accepted only when they point at `/api/sandbox/file`. Source: [src/shared/sandbox-step-view.js](../src/shared/sandbox-step-view.js).
+
 ## API (session auth, CSRF on mutations)
 
 | Route | Purpose |
@@ -39,4 +43,4 @@ Configuration variables are listed at the top of `api/_lib/sandbox/config.js`.
 
 A run that belongs to another account answers 404.
 
-Tests: `tests/sandbox-*.test.js`, `tests/api/sandbox-owner-routes.test.js`.
+Tests: `tests/sandbox-*.test.js` (including `sandbox-step-view`), `tests/api/sandbox-owner-routes.test.js`.
