@@ -162,6 +162,7 @@ async function main() {
 	const fleetStats = new URLSearchParams(location.search).has('fleetStats')
 		? (window.__agoraFleet = { frames: 0, mixers: 0, peakMixers: 0, peakFull: 0, citizens: 0, maxAnimated: MAX_ANIMATED })
 		: null;
+	const unbudgeted = Boolean(fleetStats) && new URLSearchParams(location.search).get('fleetBudget') === 'off';
 	const passport = new PassportPanel();
 
 	// Honor a mid-session toggle of the OS "reduce motion" setting: the world reads
@@ -557,7 +558,9 @@ async function main() {
 			}
 			cityCamera.update(focus, 1.7);
 		}
-		population.update(dt, camera);
+		// ?fleetBudget=off (with ?fleetStats) is the unbudgeted baseline for the fps
+		// measurement: without a camera every citizen animates and none is culled.
+		population.update(dt, unbudgeted ? undefined : camera);
 		if (fleetStats) {
 			fleetStats.frames++;
 			fleetStats.mixers = population.mixersAdvanced;
