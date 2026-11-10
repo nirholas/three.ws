@@ -102,6 +102,13 @@ if (APPLY) {
 		);
 		agentId = created.id;
 	}
+	// The wallet module reads process.env, not this script's pool. Give it the
+	// production database and the production at-rest key, and run it under
+	// NODE_ENV=production so secret-box fails closed instead of encrypting the
+	// new key under the JWT_SECRET fallback, which production could not decrypt.
+	process.env.DATABASE_URL = dbUrl;
+	process.env.WALLET_ENCRYPTION_KEY = process.env.WALLET_ENCRYPTION_KEY || requireServiceEnvValue('WALLET_ENCRYPTION_KEY');
+	process.env.NODE_ENV = 'production';
 	const { ensureAgentWallet } = await import('../api/_lib/agent-wallet.js');
 	const wallet = await ensureAgentWallet(agentId, OWNER_USER, { reason: 'sniper_paid_intel_arm' });
 	walletAddress = wallet.address;
