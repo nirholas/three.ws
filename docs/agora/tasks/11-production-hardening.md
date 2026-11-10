@@ -1,7 +1,7 @@
 # Task 11 — Production hardening + launch
 
-> **Status: shipped, except the fleet-render performance box**, which is carved
-> out as [task 12](12-fleet-render-performance.md). `/agora` is live and pushed;
+> **Status: shipped.** The fleet-render performance box was carved out as
+> [task 12](12-fleet-render-performance.md) and is now shipped. `/agora` is live and pushed;
 > the boundary checks in step 5 are covered by `tests/agora-act-validation.test.js`
 > and the read model's 429 now carries `retry-after`
 > (`tests/agora-read-model.test.js`).

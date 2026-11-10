@@ -121,3 +121,5 @@ Counters are exposed on `window.__agoraFleet` only when the URL has `?fleetStats
 SwiftShader is a software rasterizer, so absolute fps there (a few per second) is
 not a GPU figure. `tests/e2e/agora-fleet-fps.spec.js` therefore asserts the exact
 mixer ceiling, and `tests/agora-animation-budget.test.js` covers the selection.
+
+Re-verified 2026-11-10 (headless Chromium, software rasterizer, dev server, live fleet): `npx playwright test tests/e2e/agora-fleet-fps.spec.js --retries=0` passed in 4.8 minutes with 200 citizens, peak full-rate mixers 40 (max 40), peak advanced 63, no page errors. No physical GPU was available, so no real-hardware fps figure exists; absolute fps on the software rasterizer is not recorded as a GPU number.

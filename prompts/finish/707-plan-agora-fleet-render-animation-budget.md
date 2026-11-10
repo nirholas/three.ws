@@ -1,5 +1,7 @@
 # Hold 60fps on /agora with the full 200-citizen fleet by budgeting which avatars animate
 
+**Status (2026-11-10):** the budget, unit tests, e2e spec, docs and changelog are shipped and re-verified (spec passes, peak 40 full-rate mixers of 200). Remaining, owner or a GPU session: a real-GPU fps table and a 390x844 browser console check.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/707-plan-agora-fleet-render-animation-budget.md`.
 
 **Priority:** P2, new capability with clear value (score 61 of 100 inside the tier). **Area:** agora. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
