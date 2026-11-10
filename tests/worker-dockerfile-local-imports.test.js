@@ -100,6 +100,58 @@ function missingModules(workerDir) {
 	return missing;
 }
 
+/**
+ * Modules a build-time gate needs but the Dockerfile only copies after it.
+ *
+ * A `RUN python3 ...` gate (pytest, test_app_contract.py importing main.py)
+ * executes against the files copied so far, so a COPY placed below the gate is
+ * invisible to it. On 2026-11-10 model-pixal3d build 64ae684f failed this way:
+ * test_app_contract.py imports main.py, main.py imports tracing, and
+ * `COPY tracing.py` sat after the gate. Starting from the .py files each gate
+ * names, every sibling module reachable through imports must already be copied.
+ */
+function modulesCopiedAfterGate(workerDir) {
+	const dockerfile = join(workerDir, 'Dockerfile');
+	if (copiedSources(dockerfile, workerDir) === null) return [];
+	const copiedSoFar = new Set();
+	const problems = new Set();
+	for (const line of instructions(dockerfile)) {
+		const copy = /^(COPY|ADD)\s+(.*)$/i.exec(line);
+		if (copy) {
+			const args = copy[2].split(/\s+/).filter((a) => !a.startsWith('--chown') && !a.startsWith('--chmod'));
+			if (args.some((a) => a.startsWith('--from'))) continue;
+			for (const src of args.slice(0, -1)) copiedSoFar.add(basename(src.replace(/^\.\//, '')));
+			continue;
+		}
+		if (!/^RUN\s/i.test(line)) continue;
+		const queue = [...line.matchAll(/([\w./-]+\.py)\b/g)]
+			.map((m) => basename(m[1]))
+			.filter((f) => existsSync(join(workerDir, f)));
+		const seen = new Set();
+		while (queue.length) {
+			const file = queue.shift();
+			if (seen.has(file)) continue;
+			seen.add(file);
+			if (!copiedSoFar.has(file)) {
+				problems.add(`the build gate needs ${file}, but it is copied after the gate runs`);
+				continue;
+			}
+			for (const mod of importedModules(join(workerDir, file))) {
+				if (existsSync(join(workerDir, `${mod}.py`))) queue.push(`${mod}.py`);
+			}
+		}
+	}
+	return [...problems];
+}
+
+describe('python worker build gates see every sibling module the copied code imports', () => {
+	for (const dir of pythonWorkers()) {
+		it(`workers/${basename(dir)}`, () => {
+			expect(modulesCopiedAfterGate(dir)).toEqual([]);
+		});
+	}
+});
+
 describe('python worker images carry every sibling module they import', () => {
 	const workers = pythonWorkers();
 

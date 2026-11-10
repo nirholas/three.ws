@@ -106,6 +106,7 @@ RUN pip install \
 WORKDIR /app
 COPY worker_security.py request_policy.py storage_backend.py instance_health.py \
      pipeline_config.py glb_pack.py main.py /app/
+COPY tracing.py test_tracing.py /app/
 COPY test_request_policy.py test_storage_backend.py test_instance_health.py \
      test_pipeline_config.py test_glb_pack.py test_gpu_driver_absence.py \
      test_app_contract.py /app/
@@ -119,7 +120,6 @@ RUN python3 -m pytest /app/test_request_policy.py /app/test_storage_backend.py \
 
 EXPOSE 8080
 
-COPY tracing.py test_tracing.py /app/
 CMD ["uvicorn", "main:app", \
      "--host", "0.0.0.0", \
      "--port", "8080", \

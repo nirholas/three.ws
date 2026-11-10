@@ -35,6 +35,7 @@ COPY worker_security.py /app/worker_security.py
 COPY gltf_meshopt.py /app/gltf_meshopt.py
 COPY segment_core.py /app/segment_core.py
 COPY main.py /app/main.py
+COPY tracing.py test_tracing.py /app/
 
 # Build gate: the geometry engine is pure CPU and needs no credentials, so its
 # tests run here. A merge pass that regresses to the pre-2026-08-11 cost, a
@@ -46,5 +47,4 @@ COPY test_segment_input.py /app/test_segment_input.py
 RUN python3 test_segment_core.py && python3 test_gltf_meshopt.py && python3 test_segment_input.py
 
 EXPOSE 8080
-COPY tracing.py test_tracing.py /app/
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]

@@ -21,6 +21,7 @@ RUN python -c "import rembg; rembg.new_session('u2net')" && \
 
 WORKDIR /app
 COPY worker_security.py rembg_policy.py main.py /app/
+COPY tracing.py test_tracing.py /app/
 COPY test_rembg_policy.py test_rembg_smoke.py /app/
 
 # Build gate: the image does not ship unless the request policy holds and a real
@@ -30,5 +31,4 @@ RUN python test_rembg_policy.py && \
     API_KEY=build-gate GCS_BUCKET=build-gate python test_rembg_smoke.py
 
 EXPOSE 8080
-COPY tracing.py test_tracing.py /app/
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]
