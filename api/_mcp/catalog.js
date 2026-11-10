@@ -32,6 +32,7 @@ import { toolDefs as mailDefs } from './tools/mail.js';
 import { toolDefs as whitelistDefs } from './tools/whitelist.js';
 import { toolDefs as domainDefs } from './tools/domains.js';
 import { toolDefs as robinhoodDefs } from './tools/robinhood.js';
+import { toolDefs as robinhoodCryptoDefs } from './tools/robinhood-crypto.js';
 import { toolDefs as tokenDueDiligenceDefs } from './tools/token-due-diligence.js';
 import { toolDefs as docsDefs } from './tools/docs.js';
 import { toolDefs as expandDefs } from './tools/expand.js';
@@ -67,6 +68,7 @@ const baseDefs = [
 	...whitelistDefs,
 	...domainDefs,
 	...robinhoodDefs,
+	...robinhoodCryptoDefs,
 	...tokenDueDiligenceDefs,
 	...docsDefs,
 	...expandDefs,

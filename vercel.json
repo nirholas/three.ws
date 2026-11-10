@@ -872,6 +872,10 @@
 			"dest": "/api/v1/agent-cards?id=$1"
 		},
 		{
+			"src": "/api/v1/robinhood/crypto(/.*)?",
+			"dest": "/api/v1/robinhood/crypto"
+		},
+		{
 			"src": "/api/v1/agents/([^/]+)/mail(/.*)?",
 			"dest": "/api/v1/agent-mail?id=$1"
 		},
@@ -5944,6 +5948,10 @@
 		{
 			"src": "/settings/mcp-tools/?",
 			"dest": "/settings/mcp-tools/index.html"
+		},
+		{
+			"src": "/settings/robinhood/?",
+			"dest": "/settings/robinhood/index.html"
 		},
 		{
 			"src": "/settings/memory/?",

@@ -194,6 +194,13 @@ export const POLICY = {
 		robinhood_token_prices: r('intelligence'),
 		robinhood_recent_launches: r('intelligence'),
 		robinhood_wallet_holdings: r('intelligence'),
+		// Robinhood Crypto connector: the owner's own brokerage account through the
+		// API key pasted at /settings/robinhood. place_order verifies its own
+		// ledger-backed preview_id and reserves spend against the owner's caps.
+		robinhood_holdings: r('trading'),
+		robinhood_quote: r('trading'),
+		robinhood_preview_order: w('trading'),
+		robinhood_place_order: own('trading', 'confirm_order', 'robinhood_preview_order'),
 		launch_status: r('launch'),
 		uniswap_launch_quote: w('launch'),
 		uniswap_launch: f('launch', 'confirm_launch', 'uniswap_launch_quote', [
