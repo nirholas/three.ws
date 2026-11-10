@@ -25,14 +25,19 @@ GPU_JSON="$(nvidia-smi --query-gpu=name,driver_version,compute_cap,memory.total 
 
 # The Deep Learning VM image ships the NVIDIA driver but not Docker, so install
 # Docker and the NVIDIA container toolkit (NVIDIA's apt repository) when absent.
-if ! command -v docker >/dev/null || ! command -v nvidia-ctk >/dev/null; then
+# The image holds an older nvidia-container-toolkit-base, so the whole toolkit
+# family is installed together and the hold is allowed to move with it.
+if ! command -v docker >/dev/null || ! command -v nvidia-container-runtime-hook >/dev/null; then
 	export DEBIAN_FRONTEND=noninteractive
 	curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey \
 		| gpg --dearmor --yes -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
 	curl -fsSL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list \
 		| sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
 		> /etc/apt/sources.list.d/nvidia-container-toolkit.list
-	apt-get update -q && apt-get install -y -q docker.io nvidia-container-toolkit || { echo "docker install failed"; exit 1; }
+	apt-get update -q && apt-get install -y -q --allow-change-held-packages docker.io \
+		nvidia-container-toolkit nvidia-container-toolkit-base \
+		libnvidia-container-tools libnvidia-container1 \
+		|| { echo "docker install failed"; exit 1; }
 	nvidia-ctk runtime configure --runtime=docker && systemctl restart docker
 fi
 gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
@@ -85,7 +90,8 @@ echo "task: $S"
 curl -fsS -o /tmp/out.glb "localhost:8080/results/$TASK.glb" -H "Authorization: Bearer $KEY" || echo "download failed"
 ls -l /tmp/out.glb
 docker cp /tmp/out.glb trellis:/tmp/out.glb
-GLB_STATS="$(docker exec trellis python3 - <<'PY'
+# -i attaches stdin; without it `python3 -` reads an empty program and prints nothing.
+GLB_STATS="$(docker exec -i trellis python3 - <<'PY'
 import json, trimesh
 scene = trimesh.load('/tmp/out.glb')
 geoms = list(scene.geometry.values()) if hasattr(scene, 'geometry') else [scene]
@@ -108,7 +114,7 @@ print(json.dumps({
   'tier': """$TIER""",
   'status': """$STATUS""",
   'seconds': {'weights_copy': t($T0, $T_WEIGHTS), 'pull': t($T_WEIGHTS, $T_PULL), 'pipeline_ready': t($T_PULL, $T_READY), 'infer': t($T_SUBMIT, $T_DONE)},
-  'glb': json.loads("""$GLB_STATS"""),
+  'glb': json.loads("""$GLB_STATS""") if """$GLB_STATS""".strip() else None,
 }, indent=2))
 PY
 cat /tmp/evidence.json
