@@ -152,6 +152,7 @@ body.cc-meetup-ui .pl-app { padding-top: calc(56px + env(safe-area-inset-top, 0p
 .pl-check { display: inline-flex; align-items: center; gap: 10px; min-height: var(--pl-touch); cursor: pointer; color: var(--cc-dim); }
 .pl-check:hover { color: var(--cc-text); }
 .pl-check input { width: 20px; height: 20px; accent-color: var(--cc-text); cursor: pointer; }
+.pl-check input:hover { filter: brightness(1.15); }
 
 /* ── Layout ─────────────────────────────────────────────────────────────── */
 

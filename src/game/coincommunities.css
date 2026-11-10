@@ -4174,5 +4174,6 @@ select.npc-svc-input:hover {
 .cc-lite-offer-go:active, .cc-lite-offer-keep:active { transform: translateY(0); opacity: 0.9; }
 .cc-lite-offer-go:focus-visible, .cc-lite-offer-keep:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 2px; }
 .cc-lite-offer-remember { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--cc-dim); cursor: pointer; }
+.cc-lite-offer-remember:hover { color: var(--cc-text); }
 .cc-lite-offer-remember input:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .cc-lite-offer { animation: none; } }

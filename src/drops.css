@@ -686,6 +686,7 @@
 }
 
 .dr-chain-confirm { flex-direction: row; align-items: flex-start; gap: 8px; cursor: pointer; }
+.dr-chain-confirm:hover { color: var(--text-1, #fff); }
 .dr-chain-confirm input { margin-top: 3px; }
 .dr-chain-confirm input:focus-visible { outline: 2px solid var(--focus-ring-color, var(--accent)); outline-offset: 2px; }
 
