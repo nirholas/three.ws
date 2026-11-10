@@ -1,5 +1,8 @@
 # Move Redis-only money ledgers to Postgres and ship an accounting export
 
+**Status (2026-11-10):** built and committed in c7eb4290e (Postgres bounty store, migration 20261105120000 applied, backfill script, export script and admin route, docs, changelog); 50 related tests pass. Remaining, owner-owned: (1) run `node scripts/backfill-vanity-bounties.mjs` without dry-run in the Cloud Run job context to import any live Redis bounties (production Postgres currently holds 0 bounties and 0 withdrawals, so the export prints only its header row for every range); (2) a live 200 from the admin route needs an admin account, and production has no user with is_admin and the QA login has no wallet (a real session gets 401 anonymous and 403 non-admin; the 200 path is covered by tests/accounting-export.test.js). Not deployed.
+
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/722-plan-payments-accounting-export-and-durable-ledgers.md`.
 
 **Priority:** P2, new capability with clear value (score 55 of 100 inside the tier). **Area:** payments. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
