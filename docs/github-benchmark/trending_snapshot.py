@@ -9,6 +9,7 @@ Usage: GH_TOKEN=... python3 -I trending_snapshot.py OUT_DIR [--owner nirholas] [
 Writes OUT_DIR/lists.json (who trended where), OUT_DIR/repos.jsonl (signals per repo).
 """
 import argparse, html, json, os, re, sys, time, urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -57,36 +58,34 @@ def first_screen(text, lines=40):
     return "\n".join(out[:lines])
 
 
-def fetch(names):
+def fetch_chunk(chunk):
+    """Signals for a few repos in one GraphQL call (README blobs make bigger calls time out)."""
+    parts = []
+    for j, full in enumerate(chunk):
+        o, n = full.split("/", 1)
+        parts.append(f"r{j}:repository(owner:{json.dumps(o)},name:{json.dumps(n)}){{{FIELDS} {EXTRA}}}")
+    d = gql("query($since:GitTimestamp!){" + " ".join(parts) + "}", {"since": (NOW - timedelta(days=30)).isoformat()})
+    data = d.get("data") or {}
     rows = []
-    for i in range(0, len(names), 8):
-        chunk = names[i:i + 8]
-        parts = []
-        for j, full in enumerate(chunk):
-            o, n = full.split("/", 1)
-            parts.append(f"r{j}:repository(owner:{json.dumps(o)},name:{json.dumps(n)}){{{FIELDS} {EXTRA}}}")
-        d = gql("query($since:GitTimestamp!){" + " ".join(parts) + "}", {"since": (NOW - timedelta(days=30)).isoformat()})
-        data = d.get("data") or {}
-        for j, full in enumerate(chunk):
-            r = data.get(f"r{j}")
-            if not r:
-                print(f"  missing {full}", file=sys.stderr)
-                continue
-            row = flatten(r)
-            blob = next((r[k] for k in ("r1", "r2", "r3", "r4", "r5") if r.get(k) and r[k].get("text")), None)
-            row.update({
-                "description_text": r.get("description") or "",
-                "homepage_url": r.get("homepageUrl") or "",
-                "custom_social_preview": r.get("usesCustomOpenGraphImage"),
-                "topic_names": [n["topic"]["name"] for n in r["topicNames"]["nodes"]],
-                "release_dates": [n["publishedAt"] for n in r["recentReleases"]["nodes"] if n.get("publishedAt")],
-                "watchers": r["watchers"]["totalCount"],
-                "root_entries": sorted(e["name"] for e in ((r.get("root") or {}).get("entries") or [])),
-                "readme_first_screen": first_screen(blob["text"] if blob else ""),
-                "readme_lines": len((blob["text"] if blob else "").splitlines()),
-            })
-            rows.append(row)
-        print(f"  fetched {min(i + 8, len(names))}/{len(names)}", file=sys.stderr)
+    for j, full in enumerate(chunk):
+        r = data.get(f"r{j}")
+        if not r:
+            print(f"  missing {full}", file=sys.stderr, flush=True)
+            continue
+        row = flatten(r)
+        blob = next((r[k] for k in ("r1", "r2", "r3", "r4", "r5") if r.get(k) and r[k].get("text")), None)
+        row.update({
+            "description_text": r.get("description") or "",
+            "homepage_url": r.get("homepageUrl") or "",
+            "custom_social_preview": r.get("usesCustomOpenGraphImage"),
+            "topic_names": [n["topic"]["name"] for n in r["topicNames"]["nodes"]],
+            "release_dates": [n["publishedAt"] for n in r["recentReleases"]["nodes"] if n.get("publishedAt")],
+            "watchers": r["watchers"]["totalCount"],
+            "root_entries": sorted(e["name"] for e in ((r.get("root") or {}).get("entries") or [])),
+            "readme_first_screen": first_screen(blob["text"] if blob else ""),
+            "readme_lines": len((blob["text"] if blob else "").splitlines()),
+        })
+        rows.append(row)
     return rows
 
 
@@ -115,19 +114,24 @@ def main():
             print(f"  trending {lang or 'overall'} done", file=sys.stderr)
         lists["own_top"] = [r["nameWithOwner"] for r in search(f"user:{a.owner} fork:false sort:stars", a.own_top)]
         json.dump(lists, open(lpath, "w"), indent=1)
+    # Headline set and the owner's repos first, so a slow long tail never holds them up.
     names = []
-    for rows in list(lists["overall"].values()) + list(lists["by_language"].values()):
-        for row in rows:
+    for group in (*lists["overall"].values(), [{"repo": n} for n in lists["own_top"]], *lists["by_language"].values()):
+        for row in group:
             if row["repo"] not in names:
                 names.append(row["repo"])
-    names += [n for n in lists["own_top"] if n not in names]
     rpath = os.path.join(a.out, "repos.jsonl")
     done = {json.loads(l)["repo"].lower() for l in open(rpath)} if os.path.exists(rpath) else set()
     todo = [n for n in names if n.lower() not in done]
     print(f"repos {len(names)}, to fetch {len(todo)}", file=sys.stderr)
-    with open(rpath, "a") as f:
-        for row in fetch(todo):
-            f.write(json.dumps(row) + "\n")
+    chunks = [todo[i:i + 4] for i in range(0, len(todo), 4)]
+    with open(rpath, "a") as f, ThreadPoolExecutor(3) as ex:
+        for i, rows in enumerate(ex.map(fetch_chunk, chunks), 1):
+            for row in rows:
+                f.write(json.dumps(row) + "\n")
+            f.flush()
+            if i % 10 == 0 or i == len(chunks):
+                print(f"  fetched {min(i * 4, len(todo))}/{len(todo)}", file=sys.stderr, flush=True)
 
 
 if __name__ == "__main__":
