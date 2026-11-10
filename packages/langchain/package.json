@@ -46,7 +46,7 @@
 		"zod": "^3.25.76 || ^4"
 	},
 	"devDependencies": {
-		"@langchain/core": "^1.3.2"
+		"@langchain/core": "^1.3.5"
 	},
 	"engines": {
 		"node": ">=20"
