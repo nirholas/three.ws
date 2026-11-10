@@ -1,0 +1,10 @@
+{
+  "name": "mcp-policy",
+  "version": "0.1.0",
+  "description": "Gate an MCP server's tools by tier and group: read-only by default, financial tools behind a confirm flag and a fresh preview id.",
+  "author": {"name": "nirholas"},
+  "repository": "https://github.com/nirholas/mcp-policy",
+  "license": "Apache-2.0",
+  "keywords": ["mcp", "model-context-protocol", "tool-policy", "agent-safety", "solana"],
+  "homepage": "https://nirholas.github.io/mcp-policy/"
+}

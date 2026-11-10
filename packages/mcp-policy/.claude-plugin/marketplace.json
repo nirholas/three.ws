@@ -1,0 +1,13 @@
+{
+  "name": "mcp-policy",
+  "owner": {"name": "nirholas"},
+  "description": "Tool policy for MCP servers: tiers, groups, confirm flags and preview ids.",
+  "plugins": [
+    {
+      "name": "mcp-policy",
+      "source": "./",
+      "description": "Gate an MCP server's tools by tier and group, with confirm flags and preview ids for irreversible calls.",
+      "tags": ["mcp", "tool-policy", "agent-safety"]
+    }
+  ]
+}

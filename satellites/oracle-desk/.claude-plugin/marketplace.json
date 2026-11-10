@@ -1,0 +1,20 @@
+{
+  "name": "oracle-desk",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Run and operate a self-custody autonomous Solana launch trading desk (paper by default) from Claude Code.",
+  "plugins": [
+    {
+      "name": "oracle-desk",
+      "source": "./",
+      "description": "Run and operate a self-custody autonomous Solana launch trading desk (paper by default) from Claude Code.",
+      "tags": [
+        "solana",
+        "trading-desk",
+        "paper-trading",
+        "agents"
+      ]
+    }
+  ]
+}

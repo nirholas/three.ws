@@ -1,0 +1,18 @@
+{
+  "name": "oracle-desk",
+  "version": "1.0.0",
+  "description": "Run and operate a self-custody autonomous Solana launch trading desk (paper by default) from Claude Code.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/oracle-desk",
+  "license": "Apache-2.0",
+  "keywords": [
+    "solana",
+    "trading-desk",
+    "autonomous-agents",
+    "paper-trading",
+    "oracle"
+  ],
+  "homepage": "https://three.ws/oracle"
+}
