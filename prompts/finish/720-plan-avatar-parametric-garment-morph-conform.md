@@ -1,5 +1,8 @@
 # Worn hair and garments follow the body's identity morphs on the Parametric base, in the editor and in the bake
 
+**Status (2026-11-10):** built and committed in 83a2723bf (src/garment-conform.js, editor and bake wiring, 55 passing tests across the four named suites, docs and changelog fixed). Remaining: the real-browser pass at /avatar-studio (wear a top and hair, drag chest, jaw and hip sliders, confirm no clipping). The page loads with no console errors, but the slider drag was not exercised because swiftshader cannot render the world reliably here. Owner: anyone with a GPU browser.
+
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/720-plan-avatar-parametric-garment-morph-conform.md`.
 
 **Priority:** P2, new capability with clear value (score 55 of 100 inside the tier). **Area:** avatar. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
