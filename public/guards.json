@@ -368,6 +368,27 @@
 			}
 		},
 		{
+			"id": "audit-ux-flows",
+			"script": "scripts/audit-ux-flows.mjs",
+			"npm": "audit:ux-flows",
+			"title": "UX Flow Atlas drift",
+			"protects": "Every route cited in a UX Flow Atlas heading resolves, every cited source file exists in the strict clusters, and page coverage can only grow.",
+			"why": "The atlas in docs/ux-flows is how agents and new engineers learn which file serves which route. A renamed page or a deleted module silently turned its citations into dead ends, and the script that caught it once dropped out of package.json unnoticed. It is green, repo-only, deterministic and runs in under two seconds, so it gates.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "An atlas cluster that cites a route nothing serves.",
+				"violation": {
+					"write": {
+						"docs/ux-flows/99-guard-proof.md": "# Guard proof\n\n### Proof route: `/guard-proof-no-such-route`\n- **Source:** `pages/home.html`\n"
+					}
+				},
+				"expect": "Stale routes"
+			}
+		},
+		{
 			"id": "audit-links",
 			"script": "scripts/audit-links.mjs",
 			"npm": "audit:links",
@@ -2157,10 +2178,6 @@
 		{
 			"pattern": "scripts/audit-secrets-history.mjs",
 			"reason": "A full-history gitleaks walk that downloads a pinned scanner binary on first use. Leaked keys are remedied by rotation, not by blocking a build, and check-secrets already guards what each push adds, so this is run by hand when auditing history rather than inside a repository guard stage."
-		},
-		{
-			"pattern": "scripts/audit-ux-flows.mjs",
-			"reason": "A drift report for the UX Flow Atlas docs (docs/ux-flows) with a coverage ratchet in audit-ux-flows.baseline.json. It is run by hand when those docs are edited and is not wired into a repository guard stage."
 		},
 		{
 			"pattern": "scripts/check-integrations.mjs",

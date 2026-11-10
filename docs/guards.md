@@ -123,6 +123,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Design-token ratchet | `npm run audit:tokens` | Hardcoded colour hexes cannot creep back past a committed baseline. |
 | Interactive-state ratchet | `npm run audit:states` | A selector that declares cursor:pointer cannot ship without a hover rule behind it. |
 | Legacy button family ratchet | `npm run audit:buttons` | A per-page button class family that was migrated onto the canonical .btn system cannot reappear. |
+| UX Flow Atlas drift | `npm run audit:ux-flows` | Every route cited in a UX Flow Atlas heading resolves, every cited source file exists in the strict clusters, and page coverage can only grow. |
 | Motion ratchet | `npm run audit:motion-tokens` | A transition cannot spell its duration or easing as a literal past a committed baseline. |
 | Credential material | `npm run check:secrets` | No dotenv file, private key, keystore, or downloaded cloud credential becomes a tracked file, and no added line carries a provider-issued key. |
 | Python worker dependencies | `npm run audit:deps` | No pinned Python dependency in `workers/`, `services/` or `packages/` carries a known vulnerability in the OSV database. Needs network, so it runs on demand rather than in the gate. |
