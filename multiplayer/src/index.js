@@ -35,6 +35,7 @@ import { verifyNotifySignature, verifyStageSignature, verifyAnnounceSignature } 
 import { liveWalkRooms } from './walk-registry.js';
 import { handleModerate, runLocal } from './moderate-route.js';
 import { createFanout } from './fanout.js';
+import { installTunnel } from './tunnel.js';
 
 const PORT = Number(process.env.PORT || 2567);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -437,6 +438,11 @@ const gameServer = new Server({
 	// direct instance URLs) set PUBLIC_ADDRESS to this instance's own host:port.
 	...(process.env.PUBLIC_ADDRESS && { publicAddress: process.env.PUBLIC_ADDRESS }),
 });
+// Cloud Run cannot route a socket to the instance that owns its room, so with
+// the Redis presence any instance relays sockets for rooms it does not host.
+if (presence) {
+	installTunnel({ httpServer, presence, processId: matchMaker.processId, instanceId: INSTANCE_ID, port: PORT });
+}
 // Each coin is its own world, split by access tier: filterBy(['coin','tier'])
 // makes joinOrCreate match only rooms sharing the same community coin (mint) AND
 // the same tier, so a coin's open General world and its gated Holders world are

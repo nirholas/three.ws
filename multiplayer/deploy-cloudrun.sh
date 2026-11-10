@@ -128,8 +128,14 @@ BUILD_SA="${BUILD_SA:-projects/${PROJECT}/serviceAccounts/three-ws-build@${PROJE
 # cannot coexist on a service, so switching to the secret clears the old env var
 # in the same deploy. Without either, nothing about REDIS_URI is touched.
 REDIS_FLAGS=()
+# Memorystore is reachable only on the VPC. The live service already has the
+# connector; a NEW service (a test fleet, a second region) needs it at create
+# time or the boot-time Redis check fails the revision. VPC_CONNECTOR=three-ws-vpc.
+if [[ -n "${VPC_CONNECTOR:-}" ]]; then
+	REDIS_FLAGS+=(--vpc-connector "${VPC_CONNECTOR}" --vpc-egress private-ranges-only)
+fi
 if [[ -n "${REDIS_SECRET}" ]]; then
-	REDIS_FLAGS=(--update-secrets "REDIS_URI=${REDIS_SECRET}:latest" --remove-env-vars REDIS_URI)
+	REDIS_FLAGS+=(--update-secrets "REDIS_URI=${REDIS_SECRET}:latest" --remove-env-vars REDIS_URI)
 fi
 
 gcloud run deploy "${SERVICE}" \

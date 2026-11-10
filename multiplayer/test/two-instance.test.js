@@ -13,7 +13,7 @@ import { startRedis, startServer, freePort } from './helpers.js';
 const SECRET = 'multiplayer-test-secret';
 const COIN = 'Z'.repeat(40);
 
-let redis, a, b;
+let redis, redis2, a, b, c, d;
 const clients = [];
 
 const sha = (o) => crypto.createHash('sha256').update(JSON.stringify(o ?? {})).digest('base64url');
@@ -37,13 +37,22 @@ before(async () => {
 	const portB = await freePort();
 	a = await startServer({ env: { REDIS_URI: redis.uri, PORT: String(portA), PUBLIC_ADDRESS: `127.0.0.1:${portA}` } });
 	b = await startServer({ env: { REDIS_URI: redis.uri, PORT: String(portB), PUBLIC_ADDRESS: `127.0.0.1:${portB}` } });
+	// The Cloud Run shape: no per-instance address, so a client can be handed a
+	// room owned by a peer while its socket lands on whichever instance it dialed.
+	// Its own Redis so the announce test above still counts exactly two instances.
+	redis2 = await startRedis();
+	c = await startServer({ env: { REDIS_URI: redis2.uri, PORT: String(await freePort()) } });
+	d = await startServer({ env: { REDIS_URI: redis2.uri, PORT: String(await freePort()) } });
 });
 
 after(async () => {
 	for (const c of clients) { try { await c.leave(false); } catch { /* already gone */ } }
 	await a?.stop();
 	await b?.stop();
+	await c?.stop();
+	await d?.stop();
 	await redis?.stop();
+	await redis2?.stop();
 });
 
 test('both instances report redis presence', { skip: false }, async (t) => {
@@ -77,4 +86,23 @@ test('announce sent to either instance counts rooms hosted on the other', async 
 	assert.equal(out.ok, true);
 	assert.ok(out.players >= 2, `expected both players counted, got ${out.players}`);
 	assert.equal(out.instances, 2);
+});
+
+test('behind one shared address, a socket landing on a peer instance still reaches its room and chat flows both ways', async (t) => {
+	if (!redis) return t.skip('no redis-server or docker available');
+	const coin = 'Y'.repeat(40);
+	const rooms = [];
+	// Alternate the dialed instance: whichever one owns the room, one of the two
+	// players is guaranteed to hold a socket on a non-owner (tunnelled) instance.
+	for (const [server, name] of [[c, 'carol'], [d, 'dave'], [c, 'erin'], [d, 'frank']]) {
+		const client = new Client(`ws://127.0.0.1:${server.port}`);
+		const room = await client.joinOrCreate('walk_world', { coin, name });
+		clients.push(room);
+		rooms.push(room);
+	}
+	assert.equal(new Set(rooms.map((r) => r.roomId)).size, 1, 'one room for the coin across both instances');
+	const heard = rooms.map((r, i) => new Promise((resolve) => r.onMessage('chat', (m) => { if (m.text === 'hello fleet') resolve(i); })));
+	rooms[0].send('chat', { text: 'hello fleet' });
+	const got = await Promise.race([Promise.all(heard), new Promise((_, rej) => setTimeout(() => rej(new Error('chat did not reach every player')), 5000))]);
+	assert.equal(got.length, 4);
 });
