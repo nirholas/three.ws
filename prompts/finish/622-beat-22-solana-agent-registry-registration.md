@@ -2,6 +2,8 @@
 
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now; gated steps, if any, are named below.
 
+Status 2026-11-10: built and committed in b7362d5ce (15 unit tests pass, audit:docs clean). One Definition of done line remains: the round trip is proven on a local validator that cloned the devnet registry programs, but not on public devnet because the faucet is closed (410) and no keyed devnet RPC exists on this machine. Owner: fund a devnet keypair via https://faucet.solana.com, then run `node scripts/prove-8004-registry.mjs` (set FUND_REVIEWER_FROM_AUTHORITY=1 and fund the authority path as needed) and delete this order. Mainnet back-fill is gate 1 (SOLANA_8004_REGISTER_MAINNET=1 and --confirm).
+
 ## Operating clause (binding)
 
 - Read CLAUDE.md first, then [_context/beat-00-CONTEXT.md](_context/beat-00-CONTEXT.md). CLAUDE.md overrides everything, including this file.
