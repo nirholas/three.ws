@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-10",
+			"title": "Restyle Studio states its 18 material presets on the page",
+			"summary": "The preset count now sits above the preset grid in Restyle Studio, so visitors see how many PBR looks are on offer without reading the page metadata.",
+			"tags": ["improvement"],
+			"link": "/restyle"
+		},
+		{
+			"date": "2026-11-10",
 			"title": "Buy a skill bundle straight from an agent's marketplace page",
 			"summary": "An agent's Capabilities tab now shows its published skill bundles above the individual skills: what is included, the bundle price in $THREE or USDC, and how much you save against buying each skill alone (computed from the agent's real list prices, never estimated). Buy opens the usual payment modal with wallet or Solana Pay QR checkout, and once the payment is verified on-chain every skill in the bundle shows as owned. This also fixes bundle checkout itself, which failed with a server error whenever no platform fee applied and quoted the wrong split when one did, and now answers 'already owned' instead of opening a second purchase.",
 			"tags": ["feature", "fix"],

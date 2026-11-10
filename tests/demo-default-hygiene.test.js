@@ -22,4 +22,9 @@ describe('demo surfaces keep house defaults', () => {
 		expect(src).not.toMatch(/setAttribute\('title', el\.getAttribute\('data-tip'\)\)/);
 		expect(src).toContain('aria-description');
 	});
+
+	it('restyle states its preset count in the page body, not only the meta description', () => {
+		expect(read('pages/restyle.html')).toContain('id="preset-count"');
+		expect(read('src/restyle.js')).toContain('MATERIAL_PRESET_NAMES.length} PBR material presets');
+	});
 });

@@ -1141,6 +1141,8 @@ async function exportModel() {
 // ── UI wiring ───────────────────────────────────────────────────────────────────
 function buildPresetButtons() {
 	el.presets.innerHTML = '';
+	const count = document.getElementById('preset-count');
+	if (count) count.textContent = `${MATERIAL_PRESET_NAMES.length} PBR material presets. Each one applies to the whole model or the selected part.`;
 	for (const name of MATERIAL_PRESET_NAMES) {
 		const preset = MATERIAL_PRESETS[name];
 		const b = document.createElement('button');
