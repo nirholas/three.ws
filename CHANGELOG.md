@@ -7,6 +7,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 ## 2026-11-10
 
 - **Places search keeps answering when the public map servers stall**: The paid and free places search returned an error for every caller when the public OpenStreetMap servers it reads were overloaded at the same time. It now asks several map servers in parallel and takes the first answer, remembers recent results so repeat searches return instantly, and if every server is down it serves the last real answer it saw, clearly marked as stale with the time it was fetched. `[fix]`
+- **Pump.fun claim lookups stop draining the shared Solana RPC budget**: The pump.fun MCP tools that list a creator's fee claims were the largest single consumer of the platform's Solana RPC quota, because a busy poller rescanned every transaction on every call and retried each one when the providers were throttling. A claims scan now skips transactions that failed on-chain, stops at the first throttled read, reads a bounded number of new transactions per call, and shares a fresh answer between rapid repeat polls. Results cut short say so with an incomplete flag and fill in on the next call, so payments and balance reads keep their RPC headroom. `[fix]`
 
 ## 2026-11-07
 

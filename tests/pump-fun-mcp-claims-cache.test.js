@@ -20,7 +20,7 @@ vi.mock('../api/_lib/pump.js', async (orig) => {
 	return { ...real, getConnection: () => conn.current };
 });
 
-const { callPumpFunTool } = await import('../api/pump-fun-mcp.js');
+const { callPumpFunTool, CLAIM_TX_FETCH_BUDGET } = await import('../api/pump-fun-mcp.js');
 
 const PUMP_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
 
@@ -48,9 +48,15 @@ function otherTx(creator) {
 	};
 }
 
-function connectionFor(creator, sigs, txs) {
+function connectionFor(creator, sigs, txs, failedOnChain = new Set()) {
 	return {
-		getSignaturesForAddress: vi.fn(async () => sigs.map((signature, i) => ({ signature, blockTime: 1_790_000_000 - i }))),
+		getSignaturesForAddress: vi.fn(async () =>
+			sigs.map((signature, i) => ({
+				signature,
+				blockTime: 1_790_000_000 - i,
+				err: failedOnChain.has(signature) ? { InstructionError: [0, 'Custom'] } : null,
+			})),
+		),
 		getParsedTransaction: vi.fn(async (sig) => (typeof txs[sig] === 'function' ? txs[sig]() : txs[sig])),
 	};
 }
@@ -119,5 +125,74 @@ describe('pump.fun claims scan remembers what each confirmed transaction was', (
 		const forOther = await callPumpFunTool('pumpfun_list_claims', { creator: other, limit: 20 });
 		expect(conn.current.getParsedTransaction).toHaveBeenCalledTimes(1);
 		expect(JSON.stringify(forOther)).not.toContain(s);
+	});
+});
+
+// Measured 2026-11-10, with the verdict cache above already live: /api/pump-fun-mcp
+// still made 425,579 getTransaction calls in 24h against 23,129
+// getSignaturesForAddress calls (26% of all Solana RPC spend, about 18 reads per
+// poll), with both paid lanes exhausted for six hours. A failed read is not
+// remembered (correctly), so each poll walked every remaining signature and
+// failed on each one, and a client polling twice a second rescanned every time.
+describe('pump.fun claims scan stays bounded when the RPC is struggling', () => {
+	let creator;
+	beforeEach(() => {
+		creator = Keypair.generate().publicKey.toBase58();
+	});
+
+	const sigList = (prefix, count) => Array.from({ length: count }, () => uniq(prefix));
+
+	it('stops reading transactions after the first failed read and says the answer is incomplete', async () => {
+		const sigs = sigList('sigDown', 10);
+		const txs = Object.fromEntries(sigs.map((s) => [s, () => { throw new Error('429 Too Many Requests'); }]));
+		conn.current = connectionFor(creator, sigs, txs);
+		const out = await callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 });
+		expect(conn.current.getParsedTransaction).toHaveBeenCalledTimes(1);
+		expect(out.incomplete).toBe(true);
+		expect(out.claims).toEqual([]);
+	});
+
+	it('never reads a transaction that already failed on-chain, since it cannot be a claim', async () => {
+		const [ok, failed] = [uniq('sigOk'), uniq('sigFailed')];
+		conn.current = connectionFor(creator, [ok, failed], { [ok]: claimTx(creator, 5000), [failed]: claimTx(creator, 5000) }, new Set([failed]));
+		const out = await callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 });
+		expect(conn.current.getParsedTransaction).toHaveBeenCalledTimes(1);
+		expect(conn.current.getParsedTransaction.mock.calls[0][0]).toBe(ok);
+		expect(out.claims.map((c) => c.signature)).toEqual([ok]);
+		expect(out.incomplete).toBeUndefined();
+	});
+
+	it('reads at most a fixed number of new transactions per poll and finishes the scan over later polls', async () => {
+		const sigs = sigList('sigMany', 60);
+		conn.current = connectionFor(creator, sigs, Object.fromEntries(sigs.map((s) => [s, otherTx(creator)])));
+		const first = await callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 });
+		expect(conn.current.getParsedTransaction).toHaveBeenCalledTimes(CLAIM_TX_FETCH_BUDGET);
+		expect(first.incomplete).toBe(true);
+		const second = await callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 });
+		expect(conn.current.getParsedTransaction).toHaveBeenCalledTimes(60);
+		expect(second.incomplete).toBeUndefined();
+	});
+
+	it('serves a complete answer to a rapid repeat poll without asking the RPC again', async () => {
+		const s = uniq('sigMemo');
+		conn.current = connectionFor(creator, [s], { [s]: claimTx(creator, 4000) });
+		const first = await callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 });
+		const second = await callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 });
+		expect(conn.current.getSignaturesForAddress).toHaveBeenCalledTimes(1);
+		expect(second).toEqual(first);
+	});
+
+	it('concurrent identical polls share one scan', async () => {
+		const s = uniq('sigConcurrent');
+		conn.current = connectionFor(creator, [s], { [s]: claimTx(creator, 4000) });
+		const [a, b, c] = await Promise.all([
+			callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 }),
+			callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 }),
+			callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 }),
+		]);
+		expect(conn.current.getSignaturesForAddress).toHaveBeenCalledTimes(1);
+		expect(conn.current.getParsedTransaction).toHaveBeenCalledTimes(1);
+		expect(b).toEqual(a);
+		expect(c).toEqual(a);
 	});
 });

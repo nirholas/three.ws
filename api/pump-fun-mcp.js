@@ -437,21 +437,48 @@ function claimFromTx(tx, creator) {
 	return { mint: tx.meta.postTokenBalances?.[0]?.mint ?? null, lamports };
 }
 
-async function _fetchClaimsFromChain({ creator, limit = 20, network = 'mainnet', sinceTs = 0 }) {
-	const pk = solanaPubkey(creator);
-	if (!pk) throw rpcError(-32602, 'invalid creator wallet');
+// Bounds on one scan, measured 2026-11-10 with the verdict cache already live:
+// /api/pump-fun-mcp still made 425,579 getTransaction calls in 24h (26% of all
+// Solana RPC spend, about 18 reads per poll) with both paid lanes exhausted.
+// A failed read is not remembered, so each poll walked every remaining
+// signature and failed on each one, and a client polling twice a second
+// rescanned every time. Now:
+//   - a signature that failed on-chain is skipped (it moved no claim lamports);
+//   - the first failed read ends the scan, since the next read would hit the
+//     same struggling lanes;
+//   - one poll reads at most CLAIM_TX_FETCH_BUDGET new transactions and later
+//     polls pick up where it stopped, because every verdict it read is cached;
+//   - a complete answer is reused for CLAIM_SCAN_MEMO_TTL_S, and identical
+//     polls in flight share one scan.
+// Any answer cut short carries `incomplete: true` and is never memoized, so
+// the next poll keeps filling it in.
+export const CLAIM_TX_FETCH_BUDGET = 40;
+const CLAIM_SCAN_MEMO_TTL_S = 10;
+const CLAIM_SINCE_BUCKET_S = 10;
+const claimScanKey = (network, creator, limit, sinceTs) => `pumpclaim:scan:v1:${network}:${creator}:${limit}:${sinceTs}`;
+const _claimScansInFlight = new Map();
+
+async function _scanClaims({ pk, creator, limit, network, sinceTs }) {
 	const conn = getConnection({ network });
 	const sigInfos = await conn.getSignaturesForAddress(pk, { limit: Math.min(100, limit * 4) });
 	const remembered = await Promise.all(
 		sigInfos.map(({ signature }) => cacheGet(claimVerdictKey(network, creator, signature)).catch(() => null)),
 	);
-	const results = [];
+	const claims = [];
+	let incomplete = false;
+	let reads = 0;
 	for (let i = 0; i < sigInfos.length; i++) {
-		const { signature, blockTime } = sigInfos[i];
-		if (results.length >= limit) break;
+		const { signature, blockTime, err } = sigInfos[i];
+		if (claims.length >= limit) break;
 		if (sinceTs && (blockTime ?? 0) <= sinceTs) break;
+		if (err) continue;
 		let verdict = remembered[i];
 		if (!verdict || typeof verdict !== 'object' || !('claim' in verdict)) {
+			if (reads >= CLAIM_TX_FETCH_BUDGET) {
+				incomplete = true;
+				break;
+			}
+			reads += 1;
 			let tx;
 			try {
 				tx = await conn.getParsedTransaction(signature, {
@@ -459,34 +486,65 @@ async function _fetchClaimsFromChain({ creator, limit = 20, network = 'mainnet',
 					commitment: 'confirmed',
 				});
 			} catch {
+				incomplete = true;
+				break;
+			}
+			if (!tx) {
+				incomplete = true;
 				continue;
 			}
-			if (!tx) continue;
 			verdict = { claim: claimFromTx(tx, creator) };
 			cacheSet(claimVerdictKey(network, creator, signature), verdict, CLAIM_VERDICT_TTL_S).catch(() => {});
 		}
 		if (!verdict.claim) continue;
-		results.push({
+		claims.push({
 			signature,
 			mint: verdict.claim.mint,
 			lamports: verdict.claim.lamports,
 			ts: blockTime ?? Math.floor(Date.now() / 1000),
 		});
 	}
-	return results;
+	return { claims, incomplete };
+}
+
+async function _fetchClaimsFromChain({ creator, limit = 20, network = 'mainnet', sinceTs = 0 }) {
+	const pk = solanaPubkey(creator);
+	if (!pk) throw rpcError(-32602, 'invalid creator wallet');
+	// Watch windows slide every second; scanning from the start of a 10s bucket
+	// lets polls inside one bucket share a scan, and the exact window is applied
+	// to the shared answer below.
+	const scanSince = sinceTs ? Math.floor(sinceTs / CLAIM_SINCE_BUCKET_S) * CLAIM_SINCE_BUCKET_S : 0;
+	const key = claimScanKey(network, creator, limit, scanSince);
+	let scan = await cacheGet(key).catch(() => null);
+	if (!scan || !Array.isArray(scan.claims)) {
+		let pending = _claimScansInFlight.get(key);
+		if (!pending) {
+			pending = _scanClaims({ pk, creator, limit, network, sinceTs: scanSince })
+				.then((result) => {
+					if (!result.incomplete) cacheSet(key, result, CLAIM_SCAN_MEMO_TTL_S).catch(() => {});
+					return result;
+				})
+				.finally(() => _claimScansInFlight.delete(key));
+			_claimScansInFlight.set(key, pending);
+		}
+		scan = await pending;
+	}
+	const claims = sinceTs ? scan.claims.filter((c) => c.ts > sinceTs) : scan.claims;
+	return { claims, incomplete: !!scan.incomplete };
 }
 
 async function handleListClaims({ creator, limit = 20, network = 'mainnet' }) {
 	if (!creator) throw rpcError(-32602, 'creator required');
-	return { creator, network, claims: await _fetchClaimsFromChain({ creator, limit, network }) };
+	const { claims, incomplete } = await _fetchClaimsFromChain({ creator, limit, network });
+	return { creator, network, claims, ...(incomplete ? { incomplete: true } : {}) };
 }
 
 async function handleWatchClaims({ creator, durationMs = 300_000, network = 'mainnet' }) {
 	if (!creator) throw rpcError(-32602, 'creator required');
 	const window = Math.min(1_800_000, Math.max(1, Number(durationMs) || 300_000));
 	const sinceTs = Math.floor((Date.now() - window) / 1000);
-	const claims = await _fetchClaimsFromChain({ creator, limit: 50, network, sinceTs });
-	return { creator, network, windowMs: window, claims };
+	const { claims, incomplete } = await _fetchClaimsFromChain({ creator, limit: 50, network, sinceTs });
+	return { creator, network, windowMs: window, claims, ...(incomplete ? { incomplete: true } : {}) };
 }
 
 async function handleSocialCashtagSentiment({ posts }) {
