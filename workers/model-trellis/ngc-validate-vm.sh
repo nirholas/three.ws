@@ -2,7 +2,8 @@
 # GPU validation of the NGC candidate image. Runs as a GCE startup script on a
 # short-lived GPU VM (see scripts/ngc-validate-trellis.sh, which creates and
 # deletes the VM). Standalone mode only: mounted weights, OUTPUT_DIR, no GCS
-# backend. Evidence is written to gs://$EVIDENCE_PREFIX and the VM powers off.
+# backend. Evidence is written to the `evidence` metadata prefix (a dedicated
+# bucket, see the wrapper) and the VM powers off.
 set -uo pipefail
 
 md() { curl -fsS -H 'Metadata-Flavor: Google' "http://metadata.google.internal/computeMetadata/v1/instance/attributes/$1"; }
@@ -22,7 +23,18 @@ stamp() { date +%s.%N; }
 echo "== host =="; nvidia-smi --query-gpu=name,driver_version,compute_cap,memory.total --format=csv
 GPU_JSON="$(nvidia-smi --query-gpu=name,driver_version,compute_cap,memory.total --format=csv,noheader | head -1)"
 
-command -v docker >/dev/null || { echo "docker missing"; exit 1; }
+# The Deep Learning VM image ships the NVIDIA driver but not Docker, so install
+# Docker and the NVIDIA container toolkit (NVIDIA's apt repository) when absent.
+if ! command -v docker >/dev/null || ! command -v nvidia-ctk >/dev/null; then
+	export DEBIAN_FRONTEND=noninteractive
+	curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey \
+		| gpg --dearmor --yes -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+	curl -fsSL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list \
+		| sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
+		> /etc/apt/sources.list.d/nvidia-container-toolkit.list
+	apt-get update -q && apt-get install -y -q docker.io nvidia-container-toolkit || { echo "docker install failed"; exit 1; }
+	nvidia-ctk runtime configure --runtime=docker && systemctl restart docker
+fi
 gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 mkdir -p /weights /output
 T0=$(stamp)
