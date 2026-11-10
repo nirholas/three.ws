@@ -143,3 +143,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-10 | 781-plan-docs-ux-flows-atlas-route-coverage.md | 92c537829 + this commit | Drift check, tests and cluster 13 were already shipped; restored the lost audit:ux-flows npm script and closed the order.
 2026-11-10 714-plan-security-csp-drop-unsafe-eval.md (kept open) | see commit | eval already scoped to /scene; local soak and header audit re-verified; owner deploy and live header check remain.
 2026-11-10 709-plan-marketplace-bundle-buyer-storefront.md: storefront and checkout fix committed; order kept, real-bundle browser check and deploy remain (owner).
+2026-11-10 713-plan-perf-forge-marketplace-thumbs-cls.md (kept open) f15a3ddb5, 5e224dac4 | thumbnails, hero budget and brand mark shipped in code; owner must push and deploy, then run the backfill cron and Lighthouse; first-visit /forge engine-pill CLS and marketplace weight pass remain.
