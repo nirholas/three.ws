@@ -55,7 +55,7 @@
 		.mx-badges { display: flex; flex-wrap: wrap; gap: 6px; }
 		.mx-badge { font-size: .75rem; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; }
 		.mx-read { color: #15803d; } .mx-write { color: #a16207; } .mx-financial { color: #b91c1c; }
-		:root[data-theme="dark"] .mx-read { color: #4ade80; } :root[data-theme="dark"] .mx-write { color: #facc15; } :root[data-theme="dark"] .mx-financial { color: #f87171; }
+		:root[data-theme="dark"] .mx-read { color: var(--success); } :root[data-theme="dark"] .mx-write { color: #facc15; } :root[data-theme="dark"] .mx-financial { color: var(--danger); }
 		.mx-skel { height: 118px; border-radius: 12px; background: linear-gradient(90deg, color-mix(in srgb, var(--ink) 6%, transparent), color-mix(in srgb, var(--ink) 14%, transparent), color-mix(in srgb, var(--ink) 6%, transparent)); background-size: 200% 100%; animation: mx-shimmer 1.2s infinite linear; }
 		@keyframes mx-shimmer { to { background-position: -200% 0; } }
 		@media (prefers-reduced-motion: reduce) { .mx-skel { animation: none; } }
