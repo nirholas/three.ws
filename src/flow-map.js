@@ -875,7 +875,7 @@ function setOverlay(kind, err) {
 		p.textContent = `${err?.message || 'The request failed'}. The graph is read live from settled on-chain transfers, so there is nothing cached to fall back to.`;
 		const btn = document.createElement('button');
 		btn.type = 'button';
-		btn.className = 'fm-btn';
+		btn.className = 'btn btn--secondary';
 		btn.textContent = 'Try again';
 		btn.addEventListener('click', () => load({ replace: true }));
 		overlay.append(h2, p, btn);
@@ -898,7 +898,7 @@ function setOverlay(kind, err) {
 	if (!filtered && !wider) return;
 	const btn = document.createElement('button');
 	btn.type = 'button';
-	btn.className = 'fm-btn';
+	btn.className = 'btn btn--secondary';
 	btn.textContent = filtered ? 'Clear filters' : `Show ${WINDOW_LABELS[wider]}`;
 	btn.addEventListener('click', () => {
 		if (filtered) resetFilters();

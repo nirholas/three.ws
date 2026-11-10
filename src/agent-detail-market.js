@@ -398,8 +398,8 @@ function renderSalePanel(baseAgent, agent) {
 				<input type="text" id="ad-sale-payout" placeholder="Your Solana address" />
 			</label>
 			<div class="ad-sale-actions">
-				<button class="ad-btn ad-btn-primary" type="button" id="ad-sale-save">${price ? 'Update price' : 'List for sale'}</button>
-				${price ? '<button class="ad-btn" type="button" id="ad-sale-clear">Make free</button>' : ''}
+				<button class="btn btn--primary btn--sm" type="button" id="ad-sale-save">${price ? 'Update price' : 'List for sale'}</button>
+				${price ? '<button class="btn btn--secondary btn--sm" type="button" id="ad-sale-clear">Make free</button>' : ''}
 			</div>
 			<p class="ad-sale-status" id="ad-sale-status"></p>
 			<p class="ad-sale-hint">Per-skill prices are set below — this is a single one-time price to fork the whole agent.</p>`;
@@ -426,7 +426,7 @@ function renderSalePanel(baseAgent, agent) {
 		panel.innerHTML = `
 			<div class="ad-sale-eyebrow">For sale</div>
 			<div class="ad-sale-price">${escapeHtml(formatAssetPrice(price))}</div>
-			<button class="ad-btn ad-btn-primary" type="button" id="ad-sale-buy">Buy agent with USDC</button>
+			<button class="btn btn--primary btn--sm" type="button" id="ad-sale-buy">Buy agent with USDC</button>
 			<p class="ad-sale-status" id="ad-sale-status"></p>
 			<p class="ad-sale-hint">One-time purchase grants ownership to fork the whole agent. Per-skill prices below are separate.</p>`;
 		$('ad-sale-buy')?.addEventListener('click', () => openAssetPurchaseFlow({

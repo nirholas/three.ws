@@ -214,30 +214,8 @@ body {
 	background: var(--fm-panel-2);
 }
 
-.fm-btn {
-	appearance: none;
-	padding: 8px 13px;
-	background: var(--fm-panel);
-	border: 1px solid var(--fm-line);
-	border-radius: 11px;
-	color: var(--fm-text);
-	font: inherit;
-	font-size: 13px;
-	font-weight: 600;
-	cursor: pointer;
-	transition: border-color var(--duration-fast) var(--fm-ease), background var(--duration-fast) var(--fm-ease), transform var(--duration-fast) var(--fm-ease);
-}
-
-.fm-btn:hover {
-	border-color: var(--fm-line-2);
-	background: var(--fm-panel-2);
-}
-
-.fm-btn:active {
-	transform: translateY(1px);
-}
-
-.fm-btn[aria-pressed='true'] {
+/* Controls use the canonical .btn from /buttons.css; only the pressed state is page-specific. */
+.btn[aria-pressed='true'] {
 	border-color: var(--fm-accent);
 	color: var(--fm-accent);
 }

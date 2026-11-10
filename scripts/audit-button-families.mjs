@@ -16,6 +16,11 @@ const MIGRATED = [
 	'erc8004-brand-badge',
 	'deploy-svc-pill',
 	'market-empty-cta-btn.primary',
+	'ad-btn',
+	'as-btn',
+	'br-btn',
+	'fm-btn',
+	'bento-action-btn',
 ];
 
 const KEPT = {
@@ -24,12 +29,12 @@ const KEPT = {
 	'nav-pill-sm': 'nav badge with live/new tones and mono 8.5px type owned by nav.css',
 	'price-badge': 'marketplace price tag with per-card positioning',
 	'market-empty-cta-btn': 'now rides on .btn; kept only as a thin sizing hook for the empty-state row',
+	'ar-btn': 'viewer toolbar AR toggle with BEM label and an active state toggled from viewer.js; the other hits are element ids',
+	'pay-btn': 'brand-gradient (Solana purple / orange) and theme-inverting checkout CTA with its own .spin/.busy payment state',
 	'back-btn': 'per-flow wizard back link whose JS selectors depend on it',
 };
 
-const OPEN = [
-	'ad-btn', 'as-btn', 'br-btn', 'ar-btn', 'fm-btn', 'bento-action-btn', 'pay-btn',
-];
+const OPEN = [];
 
 function walk(dir, out = []) {
 	for (const name of readdirSync(dir)) {

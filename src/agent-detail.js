@@ -817,7 +817,7 @@ async function renderLineage(agent) {
 		wrap.appendChild(nodeRow('Parent B', parents[1]));
 		// Verify control — re-derives and confirms the genome.
 		const verifyBtn = el('button', {
-			class: 'ad-btn ad-btn-ghost ad-lineage-verify',
+			class: 'btn btn--ghost btn--sm ad-lineage-verify',
 			type: 'button',
 			text: '✓ Verify lineage',
 		});
@@ -852,7 +852,7 @@ async function renderLineage(agent) {
 
 	// CTA into the breeding studio, pre-seeded with this agent.
 	wrap.appendChild(
-		el('a', { class: 'ad-btn ad-btn-primary ad-lineage-breed', href: `/genome?a=${encodeURIComponent(agent.id)}`, text: '🧬 Breed this agent' }),
+		el('a', { class: 'btn btn--primary btn--sm ad-lineage-breed', href: `/genome?a=${encodeURIComponent(agent.id)}`, text: '🧬 Breed this agent' }),
 	);
 
 	body.classList.remove('ad-muted');
@@ -2819,7 +2819,7 @@ function mountOwnerBar(agent) {
 
 	// Edit Agent
 	const editLink = el('a', {
-		class: 'ad-btn',
+		class: 'btn btn--secondary btn--sm',
 		href: `/agent-edit?id=${encodeURIComponent(agent.id)}`,
 	});
 	editLink.textContent = '✏ Edit Agent';
@@ -2827,7 +2827,7 @@ function mountOwnerBar(agent) {
 
 	// Dashboard link
 	const dashLink = el('a', {
-		class: 'ad-btn',
+		class: 'btn btn--secondary btn--sm',
 		href: '/dashboard-next/agents',
 	});
 	dashLink.textContent = 'Manage Agents';
@@ -2835,7 +2835,7 @@ function mountOwnerBar(agent) {
 
 	// The agent's email inbox, rules and sending limits (owner only).
 	const mailLink = el('a', {
-		class: 'ad-btn',
+		class: 'btn btn--secondary btn--sm',
 		href: `/agents/${encodeURIComponent(agent.id)}/mail`,
 	});
 	mailLink.textContent = '✉ Mail';
@@ -2848,7 +2848,7 @@ function mountOwnerBar(agent) {
 	const alreadyDeployed = !!(adOnchain?.tx_hash || adOnchain?.txHash);
 	if (!alreadyDeployed) {
 		const deployBtn = el('button', {
-			class: 'ad-btn ad-btn-deploy',
+			class: 'btn btn--secondary btn--sm ad-deploy-btn',
 			type: 'button',
 		});
 		deployBtn.textContent = '⬡ Deploy on-chain';
@@ -2890,7 +2890,7 @@ async function mountDeploySlot(agent) {
 			const oc = deployAgentObj.onchain;
 			if ((oc?.tx_hash || oc?.txHash) && slot.querySelector('.deploy-chip--success')) {
 				observer.disconnect();
-				const heroDeployBtn = document.querySelector('#ad-owner-bar .ad-btn-deploy');
+				const heroDeployBtn = document.querySelector('#ad-owner-bar .ad-deploy-btn');
 				if (heroDeployBtn) heroDeployBtn.remove();
 				// Refresh the status badge to show the on-chain badge.
 				import('./shared/onchain-badge.js').then(({ onchainBadgeEl }) => {
@@ -3012,19 +3012,19 @@ function bindWalletActions(agent) {
 	// into the wallet hub. One wallet surface, reachable from the profile.
 	actions.innerHTML = '';
 	const manage = document.createElement('a');
-	manage.className = 'ad-btn ad-btn-primary';
+	manage.className = 'btn btn--primary btn--sm';
 	manage.href = `/agents/${encodeURIComponent(agentId)}/wallet`;
 	manage.textContent = 'Manage wallet';
 	manage.setAttribute('aria-label', 'Open this agent’s wallet hub');
 	const deposit = document.createElement('a');
-	deposit.className = 'ad-btn';
+	deposit.className = 'btn btn--secondary btn--sm';
 	deposit.href = `/agents/${encodeURIComponent(agentId)}/wallet#deposit`;
 	deposit.textContent = 'Deposit';
 	// Opt-in vanity: grind a custom address for this agent's custodial wallet.
 	const meta = agent?.rawMetadata?.meta || {};
 	const isVanity = !!(meta.solana_vanity_prefix || meta.solana_vanity_suffix);
 	const vanity = document.createElement('a');
-	vanity.className = 'ad-btn';
+	vanity.className = 'btn btn--secondary btn--sm';
 	vanity.href = `/agents/${encodeURIComponent(agentId)}/wallet#vanity`;
 	vanity.textContent = isVanity ? '✦ Vanity address' : '✦ Make it vanity';
 	vanity.setAttribute('aria-label', 'Grind a custom vanity address for this agent wallet');

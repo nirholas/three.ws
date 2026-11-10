@@ -54,49 +54,49 @@ Linked pills: use `<a class="pill pill--onchain">` - gets hover/focus states aut
 | Marketplace (`pages/marketplace.html`, `src/marketplace.js`, `public/marketplace.css`) | `btn-primary`, `btn-secondary`, `market-empty-cta-btn.primary` | `btn btn--primary/--secondary`; scoped overrides rewritten as `.btn.btn--primary/--secondary` |
 | Dead families removed from `public/style.css` | `explore-btn*`, `explore-chain-badge*`, `erc8004-brand-badge` | none (no markup used them); `deploy-svc-pill` became `.pill` in `register-ui.js` |
 | On-chain badge (onchain-badge.js) | `tws-ocb`, `tws-ocb--md`, `tws-ocb--devnet` | Added `pill pill--onchain/--devnet pill--md` |
+| Forge, Explore and Marketplace pages | `explore-btn*`, `explore-chain-badge*`, `deploy-svc-pill`, `erc8004-brand-badge`, forge inline `.btn`/`.btn-ghost`, `market-empty-cta-btn.primary` | Canonical `btn`/`pill`; legacy rule blocks deleted |
+| Brain (`/brain`) | Flow map and First Meet | `fm-btn`, `fm-btn-share`, `fm-btn-continue` | `btn btn--secondary` (flow map), `btn btn--primary/--secondary btn--lg` (First Meet); only `.btn[aria-pressed]` kept in `src/flow-map.css` |
+| Home bento actions | Avatar Studio (+ rig and walk panels, studio demo) | Agent detail (v2, classic), agent-detail JS, sale panel, alpha-drip panel 
+### Kept deliberately (guarded by `npm run audit:buttons`)
+
+| Class | Why it stays |
+|---|---|
+| `anim-btn` | Bespoke animation tile layout (key hint, icon, label), not a plain button |
+| `ltm-toggle-btn` | Segmented mainnet/devnet toggle; the group border is the affordance |
+| `nav-pill-sm` | Nav badge with live/new tones and mono type owned by `nav.css` |
+| `price-badge` | Marketplace price tag with per-card positioning |
+| `market-empty-cta-btn` | Rides on `.btn`; thin sizing hook for the empty-state row |
+| `ar-btn` | Viewer toolbar AR toggle with BEM label and an active state toggled from `viewer.js` (other hits are element ids) |
+| `pay-btn` | Brand-gradient (Solana purple / orange) and theme-inverting checkout CTA with its own `.spin`/`.busy` payment state |
+| `back-btn` | Per-flow wizard back link whose JS selectors depend on it |
 
 ---
 
 ## Remaining long tail - classes → canonical equivalent
 
-These classes are defined across the codebase. Follow-up agents should replace them with canonical classes (keep old class as needed for scoped CSS overrides). Re-verified 2026-11-06 with `npm run audit:buttons`: the `explore-*`, `explore-chain-badge*`, `erc8004-brand-badge` and `deploy-svc-pill` rows below are already gone (zero files) and are kept only as the mapping that was applied. The families still open are `ad-btn`, `as-btn`, `br-btn`, `ar-btn`, `fm-btn`, `bento-action-btn` and `pay-btn`; the kept-on-purpose list is in the next section.
+These classes are defined across the codebase. Follow-up agents should replace them with canonical classes (keep old class as needed for scoped CSS overrides). Re-verified 2026-11-10 with `npm run audit:buttons`: every family that was open is now either migrated (zero files) or in the kept list above. The rows below are the mapping that was applied, plus classes outside the audit's scope.
 
 ### Button class names → canonical
 
 | Old class(es) | Canonical equivalent |
 |---|---|
-| `explore-btn` | `.btn.btn--secondary` |
-| `explore-btn--primary` | `.btn.btn--primary` |
-| `explore-btn--ghost` | `.btn.btn--ghost` |
-| `explore-btn--sm` | `.btn.btn--sm` |
 | `erc8004-quickstart-btn` | `.btn.btn--primary` |
 | `deploy-wallet-btn` | `.btn.btn--secondary` (already has `btn` class) |
 | `ch-btn-primary` | `.btn.btn--primary` |
-| `ad-btn`, `ad-btn-primary` | `.btn` / `.btn.btn--primary` |
-| `as-btn`, `as-btn-primary`, `as-btn-ghost`, `as-btn-sm` | `.btn` + modifiers |
-| `br-btn`, `br-btn-primary`, `br-btn-ghost`, `br-btn-secondary`, `br-btn-sm`, `br-btn-danger` | `.btn` + modifiers |
 | `ae-btn`, `ame-btn`, `ame-console-btn` | `.btn.btn--secondary` |
-| `ar-btn`, `ar-btn--active`, `ar-launch-btn`, `ar-share-btn` | `.btn` + modifiers |
-| `fm-btn` | `.btn.btn--secondary` |
-| `bento-action-btn`, `bento-pill-btn` | `.btn.btn--ghost` / `.pill` |
 | `market-empty-cta-btn`, `market-empty-cta-btn.primary` | `.btn` / `.btn.btn--primary` |
 | `btn-primary`, `btn-secondary` | `.btn.btn--primary` / `.btn.btn--secondary` |
 | `anim-btn`, `anim-btn--active`, `anim-btn--loading` | `.btn` + `[aria-busy]` for loading |
 | `ltm-toggle-btn` | `.btn.btn--ghost` |
 | `back-btn` | `.btn.btn--secondary` |
 | `abort-btn`, `add-btn`, `assign-btn` | `.btn.btn--secondary` / `.btn.btn--danger` |
-| `pay-btn` | `.btn.btn--primary` |
 | `d-model-btn` (marketplace detail), `anim-upload-btn`, `anim-repin-btn`, `anim-stop-btn` | `.btn.btn--ghost` |
 
 ### Pill/badge class names → canonical
 
 | Old class(es) | Canonical equivalent |
 |---|---|
-| `explore-chain-badge` | `.pill` |
-| `explore-chain-badge--testnet` | `.pill.pill--devnet` |
 | `explore-card-3dpill` | `.pill` (with custom color overrides) |
-| `deploy-svc-pill` | `.pill` |
-| `erc8004-brand-badge` | `.pill.pill--onchain` |
 | `tws-ocb` (onchain-badge) | `.pill.pill--onchain` (already generalized in B04) |
 | `.price-badge` | `.pill` |
 | `nav-pill-sm` | `.pill.pill--new` (the default pill size is already small; no `--sm` modifier exists) |
@@ -105,7 +105,7 @@ These classes are defined across the codebase. Follow-up agents should replace t
 
 ## Audit and keep-list
 
-`npm run audit:buttons` (`scripts/audit-button-families.mjs`; add `-- --strict` to fail while any open family remains) prints every family with file counts and exits 1 if a migrated family reappears. Kept on purpose: `anim-btn` (bespoke animation tile), `ltm-toggle-btn` (segmented toggle), `nav-pill-sm` (nav badge tones), `price-badge`, `back-btn` (JS selectors), `market-empty-cta-btn` (sizing hook). Still open: `ad-btn`, `as-btn`, `br-btn`, `ar-btn`, `fm-btn`, `bento-action-btn`, `pay-btn`.
+`npm run audit:buttons` (`scripts/audit-button-families.mjs`; add `-- --strict` to fail while any open family remains) prints every family with file counts and exits 1 if a migrated family reappears. Kept on purpose: see the table above. No family is open, so `--strict` exits 0 and `audit:buttons` can join `gate`.
 
 ## Forge page note (done)
 

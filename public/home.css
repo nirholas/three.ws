@@ -2384,14 +2384,7 @@
 		}
 		/* ── INTERACTIVE BENTO DEMOS ─────────────────────────────── */
 		.bento-interact{margin-top:10px;position:relative}
-		.bento-action-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:7px;font-family:var(--font-mono);font-size:11.5px;letter-spacing:0.06em;color:var(--text);background:var(--surface-2);border:1px solid var(--hairline-strong);cursor:pointer;transition:border-color var(--duration-fast),background var(--duration-fast),transform var(--duration-fast)}
-		.bento-action-btn:hover{border-color:var(--text-3);background:rgba(255,255,255,.06);transform:translateY(-1px)}
-		.bento-action-btn:active{transform:translateY(0)}
-		.bento-action-btn:focus-visible{outline:2px solid rgba(255,255,255,.5);outline-offset:2px}
-		.bento-action-btn.sm{padding:5px 11px;font-size:10.5px}
-		.bento-action-btn.primary{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:600}
-		.bento-action-btn.primary:hover{background:var(--ink-bright);border-color:var(--ink-bright)}
-		.bento-action-btn.ghost{background:transparent;color:var(--text-2)}
+		/* Bento actions use the canonical .btn from /buttons.css. */
 		.studio-zone{display:flex;gap:8px;align-items:stretch}
 		.studio-drop{flex:1;width:100%;background:transparent;border:1px dashed var(--hairline-strong);border-radius:8px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:border-color var(--duration-base),background var(--duration-base);font-family:var(--font-mono);font-size:11px;color:var(--text-3);text-align:center;min-height:80px}
 		.studio-drop:hover,.studio-drop.drag-over{border-color:var(--text-2);background:rgba(255,255,255,.03)}
@@ -2405,7 +2398,7 @@
 		.studio-ready-title{font-family:var(--font-display);font-size:14px;font-weight:600;color:var(--text)}
 		.studio-ready-sub{font-family:var(--font-mono);font-size:11px;line-height:1.5;color:var(--text-3)}
 		.studio-ready-actions{display:flex;gap:8px;flex-wrap:wrap}
-		.studio-ready-actions .bento-action-btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+		.studio-ready-actions .btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
 		.studio-error{display:none;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--hairline-strong);border-radius:8px;font-family:var(--font-mono);font-size:11px;color:var(--text-2)}
 		.studio-error.show{display:flex}
 		.mocap-demo{display:flex;flex-direction:column;gap:8px}

@@ -366,7 +366,7 @@ function showAuthGate() {
 			<span class="br-auth-gate-icon">&#128274;</span>
 			<strong>Sign in to build your persona</strong>
 			<p>Your answers stay in your browser. Sign in so we can generate the persona on the server.</p>
-			<a href="/login?redirect=/brain" class="br-btn br-btn-primary">Sign in</a>
+			<a href="/login?redirect=/brain" class="btn btn--primary">Sign in</a>
 		</div>
 	`;
 	const hero = document.querySelector('.br-persona-hero');
@@ -663,7 +663,7 @@ function renderPlayControls() {
 		label.textContent = 'Models';
 		ctrl.innerHTML = `<div class="br-play-status br-play-status-error" role="alert">
 			<span>Model list unavailable: ${escHtml(state.providerError)}</span>
-			<button type="button" class="br-btn br-btn-secondary br-btn-sm" data-retry-providers>Retry</button>
+			<button type="button" class="btn btn--secondary btn--sm" data-retry-providers>Retry</button>
 		</div>`;
 		return;
 	}
@@ -870,7 +870,7 @@ function renderRosterState() {
 			<div class="br-canvas-state br-canvas-state-error" role="alert">
 				<h3>Model list unavailable</h3>
 				<p>The playground could not reach the model service (${escHtml(state.providerError)}), so no prompt can be sent yet. Your sessions and persona are safe in this browser.</p>
-				<button type="button" class="br-btn br-btn-primary br-btn-sm" data-retry-providers>Try again</button>
+				<button type="button" class="btn btn--primary btn--sm" data-retry-providers>Try again</button>
 			</div>`;
 		return true;
 	}

@@ -24,6 +24,13 @@ export async function playFirstMeet({ viewer, agent, onShare, onContinue }) {
 		link.dataset.fmCss = '1';
 		document.head.appendChild(link);
 	}
+	if (!document.querySelector('link[data-btn-css]')) {
+		const link = document.createElement('link');
+		link.rel = 'stylesheet';
+		link.href = '/buttons.css';
+		link.dataset.btnCss = '1';
+		document.head.appendChild(link);
+	}
 	if (!document.querySelector('link[data-uj-css]')) {
 		const link = document.createElement('link');
 		link.rel = 'stylesheet';
@@ -57,11 +64,11 @@ export async function playFirstMeet({ viewer, agent, onShare, onContinue }) {
 	actions.className = 'fm-actions';
 
 	const btnShare = document.createElement('button');
-	btnShare.className = 'fm-btn fm-btn-share';
+	btnShare.className = 'btn btn--primary btn--lg';
 	btnShare.textContent = 'Share';
 
 	const btnContinue = document.createElement('button');
-	btnContinue.className = 'fm-btn fm-btn-continue';
+	btnContinue.className = 'btn btn--secondary btn--lg';
 	btnContinue.textContent = 'Continue';
 
 	actions.appendChild(btnShare);

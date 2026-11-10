@@ -1,5 +1,7 @@
 # Retire the legacy button and pill class families in favour of .btn and .pill
 
+**Status (2026-11-10):** Code, audit script, docs and changelog are done: `npm run audit:buttons -- --strict` exits 0 (ad-btn, as-btn, br-btn, fm-btn, bento-action-btn migrated; ar-btn and pay-btn kept with reasons). Not closed: (1) `npm run audit:states` and `audit:tokens` currently fail on other sessions' uncommitted files (src/drops.css, src/game/*, pages/mcp.html), owner: whoever lands those files; (2) hover, focus and disabled were observed in a real browser on /brain, /flow, /home and /avatar-studio, but loading (aria-busy) and the before/after screenshots of every page were not captured; (3) `audit:buttons` is not yet added to `gate` (package.json is dirty with other sessions' edits).
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/784-plan-ui-button-pill-migration-long-tail.md`.
 
 **Priority:** P3, polish, developer experience, or exploratory (score 24 of 100 inside the tier). **Area:** ui. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.

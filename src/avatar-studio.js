@@ -845,7 +845,8 @@ function getWalkPanel() {
 		getScene: () => scene,
 		getStageEl: () => $('as-stage'),
 		getAppearance: () => workingAppearance,
-		buttonClass: 'as-btn',
+		buttonClass: 'btn btn--secondary',
+		primaryButtonClass: 'btn btn--primary',
 		emptyClass: 'as-empty',
 		pauseAmbient: () => {
 			if (idleDispose) {
@@ -1272,7 +1273,8 @@ function renderActivePanel() {
 		renderRigPanel({
 			container: panel,
 			avatar: editAvatar,
-			buttonClass: 'as-btn',
+			buttonClass: 'btn btn--secondary',
+			primaryButtonClass: 'btn btn--primary',
 			onRigged: (newAvatar) => {
 				if (!newAvatar?.id) return;
 				location.href = `/avatar-studio?edit=${encodeURIComponent(newAvatar.id)}`;

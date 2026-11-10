@@ -462,30 +462,7 @@ body {
 	flex-wrap: wrap;
 }
 
-/* Buttons */
-.br-btn {
-	border: none;
-	border-radius: 10px;
-	padding: 12px 20px;
-	font: inherit;
-	font-size: 14px;
-	font-weight: 600;
-	cursor: pointer;
-	transition: all var(--duration-fast);
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-}
-.br-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-.br-btn-primary { background: #ffffff; color: #000000; }
-.br-btn-primary:hover:not(:disabled) { background: #5dccff; }
-.br-btn-secondary { background: #161616; color: #b0b0b0; border: 1px solid #222222; }
-.br-btn-secondary:hover:not(:disabled) { background: #1d1d1d; }
-.br-btn-ghost { background: transparent; color: #6b70a0; }
-.br-btn-ghost:hover:not(:disabled) { color: #b0b0b0; }
-.br-btn-danger { background: rgba(255,100,100,0.1); color: #ff8a8a; border: 1px solid rgba(255,100,100,0.2); }
-.br-btn-danger:hover:not(:disabled) { background: rgba(255,100,100,0.18); }
-.br-btn-sm { padding: 7px 12px; font-size: 12px; border-radius: 7px; }
+/* Buttons: canonical .btn from /buttons.css (via /style.css). */
 
 /* ── Persona card ────────────────────────────────────────────────────────── */
 .br-persona-card {
@@ -1186,7 +1163,6 @@ body {
 .br-pill:focus-visible,
 .br-focus-sel:focus-visible,
 .br-col-copy:focus-visible,
-.br-btn:focus-visible,
 .br-send:focus-visible,
 .br-persona-mini-clear:focus-visible,
 .br-persona-banner-dismiss:focus-visible,

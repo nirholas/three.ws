@@ -67,9 +67,11 @@ async function isRiggingAvailable() {
  * @param {(newAvatar: Object) => void} options.onRigged - called with the new rigged avatar
  * @param {string} [options.buttonClass] - host page's button class, so the
  *   action button inherits the surrounding editor's chrome. Defaults to the
- *   avatar editor's `ae-btn`; Avatar Studio passes `as-btn`.
+ *   avatar editor's `ae-btn`; Avatar Studio passes the canonical `btn btn--secondary`.
+ * @param {string} [options.primaryButtonClass] - class for the primary state of that
+ *   button. Defaults to `<buttonClass> primary`; Avatar Studio passes `btn btn--primary`.
  */
-export function renderRigPanel({ container, avatar, onRigged, buttonClass = 'ae-btn' }) {
+export function renderRigPanel({ container, avatar, onRigged, buttonClass = 'ae-btn', primaryButtonClass = `${buttonClass} primary` }) {
 	injectRigCss();
 	const status = getRigStatus(avatar);
 	const state = { phase: 'idle', message: null, progress: 0, jobId: null };
@@ -242,7 +244,7 @@ export function renderRigPanel({ container, avatar, onRigged, buttonClass = 'ae-
 		}
 
 		const btn = document.createElement('button');
-		btn.className = `${buttonClass} ${status.rigged ? '' : 'primary'}`.trim();
+		btn.className = status.rigged ? buttonClass : primaryButtonClass;
 		btn.textContent = status.rigged ? 'Re-rig anyway' : 'Rig this model';
 		el.appendChild(btn);
 

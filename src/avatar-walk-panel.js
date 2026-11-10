@@ -38,6 +38,7 @@ function esc(s) {
  * @param {() => void} options.resumeAmbient - restart it on exit.
  * @param {() => object|null} [options.getAppearance] - the working appearance, whose `animation` picks the walk and idle clips.
  * @param {string} [options.buttonClass] - host page's button class for the handoff CTA.
+ * @param {string} [options.primaryButtonClass] - class for the handoff CTA itself.
  * @param {string} [options.emptyClass] - host page's "waiting for the avatar" class.
  * @param {() => Promise<string>} [options.openWalkUrl] - resolve the /walk URL to
  *   open, given the currently selected environment. Omit it (or return null) and
@@ -51,6 +52,7 @@ export function createWalkPanel({
 	resumeAmbient,
 	getAppearance = () => null,
 	buttonClass = 'ae-btn',
+	primaryButtonClass = `${buttonClass} primary`,
 	emptyClass = 'ae-empty',
 	openWalkUrl = null,
 	saveHint = '',
@@ -104,7 +106,7 @@ export function createWalkPanel({
 
 		const kbd = KEYS.map((k) => `<kbd>${k}</kbd>`).join('');
 		const cta = openWalkUrl
-			? `<button class="${esc(buttonClass)} primary ae-walk-open" type="button">Open in Walk page &rarr;</button>`
+			? `<button class="${esc(primaryButtonClass)} ae-walk-open" type="button">Open in Walk page &rarr;</button>`
 			: `<p class="ae-walk-note ae-walk-savehint">${esc(saveHint)}</p>`;
 
 		panel.innerHTML = `

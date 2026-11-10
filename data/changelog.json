@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-10",
+			"title": "One button style across Brain, Flow, Home, Avatar Studio and agent pages",
+			"summary": "Buttons on the Brain, Flow map, First Meet, Home studio cards, Avatar Studio and agent detail pages now use the shared button component, so hover, pressed, keyboard focus and disabled states look and behave the same everywhere.",
+			"tags": ["improvement"],
+			"link": "/brain"
+		},
+		{
+			"date": "2026-11-10",
 			"title": "Restyle Studio states its 18 material presets on the page",
 			"summary": "The preset count now sits above the preset grid in Restyle Studio, so visitors see how many PBR looks are on offer without reading the page metadata.",
 			"tags": ["improvement"],

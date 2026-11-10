@@ -61,49 +61,7 @@ html, body {
 	gap: 8px;
 }
 
-/* ── Buttons ──────────────────────────────────────────────────────────────── */
-
-.as-btn {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	padding: 7px 16px;
-	border-radius: var(--as-radius-sm);
-	font-size: 13px;
-	font-weight: 500;
-	cursor: pointer;
-	transition: all var(--as-transition);
-	border: 1px solid transparent;
-	line-height: 1.4;
-}
-.as-btn:disabled {
-	opacity: 0.4;
-	pointer-events: none;
-}
-
-.as-btn-ghost {
-	background: transparent;
-	border-color: var(--as-border-2);
-	color: var(--as-text-2);
-}
-.as-btn-ghost:hover {
-	border-color: var(--as-text-3);
-	color: var(--as-text);
-}
-
-.as-btn-primary {
-	background: var(--as-accent);
-	color: var(--bg-0);
-	font-weight: 600;
-}
-.as-btn-primary:hover {
-	background: var(--as-accent-hover);
-}
-
-.as-btn-sm {
-	padding: 4px 10px;
-	font-size: 12px;
-}
+/* ── Buttons: canonical .btn from /buttons.css ─────────────────────────────── */
 
 /* ── Main layout ──────────────────────────────────────────────────────────── */
 

@@ -196,35 +196,7 @@ a {
 	margin-top: 12px;
 }
 
-.ad-btn {
-	background: var(--ad-bg-2);
-	color: var(--ad-text);
-	border: 1px solid var(--ad-line);
-	border-radius: 8px;
-	padding: 7px 14px;
-	font-family: inherit;
-	font-size: 13px;
-	cursor: pointer;
-	display: inline-flex;
-	align-items: center;
-	transition: border-color var(--duration-fast), transform var(--duration-instant);
-}
-.ad-btn:hover {
-	border-color: var(--ad-line-2);
-}
-.ad-btn:active {
-	border-color: var(--ad-line-2);
-	transform: translateY(1px);
-}
-.ad-btn:focus-visible {
-	outline: 2px solid var(--ad-cyan);
-	outline-offset: 2px;
-}
-.ad-btn-primary {
-	background: #fff;
-	color: #000;
-	border-color: #fff;
-}
+/* Buttons use the canonical .btn from /buttons.css. */
 
 .ad-back-row {
 	display: flex;
@@ -1307,17 +1279,17 @@ div.ad-hero-avatar canvas {
 	border: 1px solid rgba(139, 92, 246, 0.18);
 	border-radius: 10px;
 }
-.ad-owner-bar .ad-btn {
+.ad-owner-bar .btn {
 	font-size: 12.5px;
 	padding: 6px 13px;
 	text-decoration: none;
 }
-.ad-btn-deploy {
+.ad-deploy-btn {
 	background: rgba(139, 92, 246, 0.15) !important;
 	border-color: rgba(139, 92, 246, 0.4) !important;
 	color: var(--accent-violet) !important;
 }
-.ad-btn-deploy:hover {
+.ad-deploy-btn:hover {
 	background: rgba(139, 92, 246, 0.25) !important;
 }
 

@@ -33,6 +33,7 @@
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/buttons.css" />
 		<link rel="stylesheet" href="/src/ui-juice.css" />
 		<link rel="stylesheet" href="/src/agent-detail.css" />
 		<link rel="stylesheet" href="/src/agent-detail-v2.css" />
@@ -147,7 +148,7 @@
 					<div class="ad-hero-actions">
 						<a
 							id="ad-walk-link"
-							class="ad-btn ad-btn-primary"
+							class="btn btn--primary btn--sm"
 							href="/walk/app"
 							aria-label="Walk with this agent — drive its avatar around in real time"
 						 data-i18n-attr="aria-label:agent_detail.walk_with_this_agent_drive_i_arialabel">
@@ -161,7 +162,7 @@
 						</a>
 						<a
 							id="ad-see-3d"
-							class="ad-btn"
+							class="btn btn--secondary btn--sm"
 							href="/play"
 							aria-label="See this agent's 3D avatar in the three.ws world"
 						 data-i18n-attr="aria-label:agent_detail.see_this_agent_s_3d_avatar_i_arialabel">
@@ -186,23 +187,23 @@
 							See in 3D
 						</a>
 						<span class="ad-market-actions" id="ad-market-actions" hidden>
-							<button type="button" id="ad-fork" class="ad-btn ad-btn-primary" data-i18n="agent_detail.fork_chat">
+							<button type="button" id="ad-fork" class="btn btn--primary btn--sm" data-i18n="agent_detail.fork_chat">
 								⑂ Fork &amp; Chat
 							</button>
 							<button
 								type="button"
 								id="ad-bookmark"
-								class="ad-btn"
+								class="btn btn--secondary btn--sm"
 								aria-pressed="false"
 							 data-i18n="agent_detail.save">
 								☆ Save
 							</button>
-							<button type="button" id="ad-export-json" class="ad-btn" data-i18n="agent_detail.export_json">
+							<button type="button" id="ad-export-json" class="btn btn--secondary btn--sm" data-i18n="agent_detail.export_json">
 								↓ Export JSON
 							</button>
 						</span>
 						<details class="adv2-more">
-							<summary class="ad-btn" aria-label="More ways to view this agent" data-i18n-attr="aria-label:agent_detail.more_ways_to_view_this_agent_arialabel">
+							<summary class="btn btn--secondary btn--sm" aria-label="More ways to view this agent" data-i18n-attr="aria-label:agent_detail.more_ways_to_view_this_agent_arialabel">
 								More
 								<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-left:6px"><polyline points="6 9 12 15 18 9"/></svg>
 							</summary>
@@ -345,7 +346,7 @@
 								maxlength="2000"
 								required
 							/>
-							<button type="submit" class="ad-btn ad-btn-primary" id="d-preview-send" data-i18n="agent_detail.send">
+							<button type="submit" class="btn btn--primary btn--sm" id="d-preview-send" data-i18n="agent_detail.send">
 								Send
 							</button>
 						</form>
@@ -375,7 +376,7 @@
 								></iframe>
 								<div class="ad-walk-error" id="ad-walk-error" hidden>
 									<span class="ad-walk-error-msg" data-i18n="agent_detail.couldn_t_load_the_walking_preview">Couldn’t load the walking preview.</span>
-									<button type="button" class="ad-btn" id="ad-walk-retry" data-i18n="agent_detail.retry">Retry</button>
+									<button type="button" class="btn btn--secondary btn--sm" id="ad-walk-retry" data-i18n="agent_detail.retry">Retry</button>
 								</div>
 							</div>
 							<div class="ad-walk-info">
@@ -395,7 +396,7 @@
 									</li>
 								</ul>
 								<a
-									class="ad-btn ad-btn-primary ad-walk-expand"
+									class="btn btn--primary btn--sm ad-walk-expand"
 									id="ad-walk-expand"
 									href="/walk/app"
 									aria-label="Open the full walk experience with this agent"

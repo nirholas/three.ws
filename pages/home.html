@@ -2703,7 +2703,7 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 							<span>Drop a selfie or click to upload</span>
 						</button>
 						<input type="file" accept="image/*" id="studio-file" style="display:none" aria-label="Selfie image file" />
-						<button class="bento-action-btn studio-webcam-btn" id="studio-webcam-btn" type="button" data-i18n="home.webcam">Webcam</button>
+						<button class="btn btn--secondary studio-webcam-btn" id="studio-webcam-btn" type="button" data-i18n="home.webcam">Webcam</button>
 					</div>
 					<div class="studio-ready" id="studio-ready">
 						<img class="studio-preview-img" id="studio-preview-img" alt="The photo you just captured" width="44" height="44" />
@@ -2712,8 +2712,8 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 							<span class="studio-ready-sub" data-i18n="home.finish_in_avatar_studio_we_ll_build">Finish in Avatar Studio — we'll build a rigged 3D avatar from it. Add side angles, a personality, and a voice.</span>
 						</div>
 						<div class="studio-ready-actions">
-							<a class="bento-action-btn primary" id="studio-continue" href="/create/selfie" data-i18n="home.continue_in_avatar_studio">Continue in Avatar Studio →</a>
-							<button class="bento-action-btn ghost" id="studio-reset" type="button" data-i18n="home.use_a_different_photo">Use a different photo</button>
+							<a class="btn btn--primary" id="studio-continue" href="/create/selfie" data-i18n="home.continue_in_avatar_studio">Continue in Avatar Studio →</a>
+							<button class="btn btn--ghost" id="studio-reset" type="button" data-i18n="home.use_a_different_photo">Use a different photo</button>
 						</div>
 					</div>
 					<div class="studio-error" id="studio-error" role="alert" hidden></div>
@@ -2775,7 +2775,7 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 				<p class="bento-desc" data-i18n="home.elevenlabs_voice_cloning_with_livekit_stream">ElevenLabs voice cloning with LiveKit streaming. Webcam face mocap drives your avatar's expressions and lip sync in real-time — no hardware required.</p>
 				<div class="bento-interact mocap-demo" id="mocap-demo">
 					<div class="mocap-bar">
-						<button class="bento-action-btn" id="mocap-mic-btn" data-i18n="home.microphone">Microphone</button>
+						<button class="btn btn--secondary" id="mocap-mic-btn" data-i18n="home.microphone">Microphone</button>
 						<span class="mocap-status" id="mocap-status" data-i18n="home.click_to_capture">click to capture</span>
 					</div>
 					<canvas class="mocap-waveform" id="mocap-waveform" height="48"></canvas>
@@ -2826,7 +2826,7 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 						<span class="x402-code err" id="x402-code" data-i18n="home.http_402_payment_required">HTTP 402 — Payment Required</span>
 						<div class="x402-spinner" id="x402-spinner"></div>
 						<span class="x402-amount" id="x402-amount">+$0.05</span>
-						<button class="bento-action-btn sm" id="x402-pay-btn" data-i18n="home.pay_0_05">Pay $0.05</button>
+						<button class="btn btn--secondary btn--sm" id="x402-pay-btn" data-i18n="home.pay_0_05">Pay $0.05</button>
 					</div>
 				</div>
 				<div class="bento-pills">
@@ -2856,7 +2856,7 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 							<div class="mint-progress" id="mint-progress">
 								<svg viewBox="0 0 28 28"><circle cx="14" cy="14" r="12.5"/></svg>
 							</div>
-							<button class="bento-action-btn sm" id="mint-btn" data-i18n="home.deploy">Deploy</button>
+							<button class="btn btn--secondary btn--sm" id="mint-btn" data-i18n="home.deploy">Deploy</button>
 						</div>
 						<p class="mint-status" id="mint-status" role="status" aria-live="polite" hidden></p>
 					</div>
@@ -2899,9 +2899,9 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 				<div class="bento-interact memory-demo" id="memory-demo">
 					<div class="memory-input-row">
 						<input class="memory-input" id="memory-input" placeholder="Tell the agent something..." maxlength="120" aria-label="Tell the agent something to remember" />
-						<button class="bento-action-btn sm" id="memory-store-btn" data-i18n="home.store">Store</button>
+						<button class="btn btn--secondary btn--sm" id="memory-store-btn" data-i18n="home.store">Store</button>
 					</div>
-					<button class="bento-action-btn sm" id="memory-recall-btn" style="align-self:flex-start" data-i18n="home.recall">Recall</button>
+					<button class="btn btn--secondary btn--sm" id="memory-recall-btn" style="align-self:flex-start" data-i18n="home.recall">Recall</button>
 					<div class="memory-log" id="memory-log" aria-live="polite"></div>
 				</div>
 			</div>
@@ -2923,7 +2923,7 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 						</div>
 					</div>
 					<div class="ar-info">
-						<button class="bento-action-btn sm" id="ar-launch-btn" data-i18n="home.launch_ar">Launch AR</button>
+						<button class="btn btn--secondary btn--sm" id="ar-launch-btn" data-i18n="home.launch_ar">Launch AR</button>
 						<span class="ar-status" id="ar-status" data-i18n="home.tap_to_place_agent">tap to place agent</span>
 					</div>
 				</div>

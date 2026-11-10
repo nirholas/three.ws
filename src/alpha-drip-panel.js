@@ -47,11 +47,6 @@ const STYLE = `
 .ad-err { font-size: 12px; color: var(--nxt-danger, #f87171); margin: 8px 0 0; }
 .ad-ok { font-size: 12px; color: var(--nxt-success, #4ade80); margin: 8px 0 0; }
 .ad-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-.ad-btn { font-size: 12px; padding: 6px 14px; border-radius: 7px; border: 1px solid var(--nxt-stroke, #23262e); background: var(--nxt-bg-2, #14161b); color: var(--nxt-ink, #e7e9ee); cursor: pointer; transition: border-color .14s ease, transform .14s ease, opacity .14s ease; }
-.ad-btn:hover:not(:disabled) { border-color: var(--nxt-stroke-strong, #3a3f4b); transform: translateY(-1px); }
-.ad-btn:focus-visible { outline: 2px solid var(--nxt-accent, #63e6be); outline-offset: 2px; }
-.ad-btn:disabled { opacity: .55; cursor: progress; }
-.ad-btn.primary { background: var(--nxt-accent, #63e6be); color: #061018; border-color: transparent; }
 .ad-sk { height: 74px; border-radius: 10px; background: var(--nxt-bg-2, #14161b); animation: ad-pulse 1.4s ease infinite; }
 @keyframes ad-pulse { 0%, 100% { opacity: .55 } 50% { opacity: 1 } }
 .ad-fold { transition: opacity .16s ease; }
@@ -61,12 +56,19 @@ const STYLE = `
 	.ad-row .ad-tier { grid-column: 1 / -1; }
 }
 @media (prefers-reduced-motion: reduce) {
-	.ad-btn, .ad-mode, .ad-lead input, .ad-lead textarea, .ad-fold { transition: none; }
+	.ad-mode, .ad-lead input, .ad-lead textarea, .ad-fold { transition: none; }
 	.ad-sk { animation: none; }
 }`;
 
 function ensureStyles() {
 	if (document.getElementById(STYLE_ID)) return;
+	if (!document.querySelector('link[data-btn-css]')) {
+		const link = document.createElement('link');
+		link.rel = 'stylesheet';
+		link.href = '/buttons.css';
+		link.dataset.btnCss = '1';
+		document.head.appendChild(link);
+	}
 	const tag = document.createElement('style');
 	tag.id = STYLE_ID;
 	tag.textContent = STYLE;
@@ -150,7 +152,7 @@ function renderError(el, message, retry) {
 	el.innerHTML = `
 		<div class="ad-lead">
 			<p class="ad-err">${escapeHtml(message)}</p>
-			<div class="ad-actions"><button type="button" class="ad-btn" data-ad-retry>Try again</button></div>
+			<div class="ad-actions"><button type="button" class="btn btn--secondary btn--sm" data-ad-retry>Try again</button></div>
 		</div>`;
 	$('[data-ad-retry]', el)?.addEventListener('click', retry);
 }
@@ -222,9 +224,9 @@ function leaderCard(leader) {
 			</div>
 
 			<div class="ad-actions">
-				<button type="button" class="ad-btn primary" data-ad-save>Save release</button>
-				<button type="button" class="ad-btn" data-ad-suggest>Suggest a ladder</button>
-				<a class="ad-btn" href="/docs/alpha-drip">How this works</a>
+				<button type="button" class="btn btn--primary btn--sm" data-ad-save>Save release</button>
+				<button type="button" class="btn btn--secondary btn--sm" data-ad-suggest>Suggest a ladder</button>
+				<a class="btn btn--secondary btn--sm" href="/docs/alpha-drip">How this works</a>
 			</div>
 			<p class="ad-warn" data-ad-warn hidden></p>
 			<p class="ad-err" data-ad-err hidden></p>
