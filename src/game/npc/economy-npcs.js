@@ -16,7 +16,7 @@ import { spawnsOfType } from '../world-zones.js';
 import { openStorePanel, openBankPanel } from '../economy-ui.js';
 
 const AVATAR_CLERK = '/avatars/default.glb';
-const AVATAR_TELLER = '/avatars/cz.glb';
+const AVATAR_TELLER = '/avatars/studio.glb';
 
 export function economyNpcsFor() {
 	const list = [];

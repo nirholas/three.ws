@@ -26,11 +26,11 @@ import { HERO_GLB_BUDGET_BYTES } from './shared/hero-glb-budget.js';
 	// animation-only (0 meshes) and render as an empty box — never use them as a body.
 	var POOL_FALLBACKS = [
 		'/avatars/default.glb',
-		'/avatars/cz.glb',
+		'/avatars/realistic-male.glb',
 		'/animations/robotexpressive.glb',
 		'/animations/soldier.glb',
 		'/avatars/default.glb',
-		'/avatars/cz.glb',
+		'/avatars/realistic-male.glb',
 		'/animations/robotexpressive.glb',
 		'/animations/soldier.glb',
 	];
@@ -655,7 +655,7 @@ import { HERO_GLB_BUDGET_BYTES } from './shared/hero-glb-budget.js';
 		function loadAvatars() {
 			var O = location.origin;
 			var defaults = [
-				{ id: 'avatar_demo_disk_cz', name: 'CZ', glb: O + '/avatars/cz.glb' },
+				{ id: 'avatar_demo_disk_max', name: 'Max', glb: O + '/avatars/realistic-male.glb' },
 				{ id: 'avatar_demo_disk_ansem', name: 'Ansem', glb: O + '/avatars/default.glb' },
 				{ id: 'avatar_demo_disk_boss_vernington', name: 'Boss Vernington', glb: O + '/animations/soldier.glb' },
 				{ id: 'avatar_demo_disk_goblin', name: 'Goblin', glb: O + '/animations/robotexpressive.glb' },
@@ -1251,10 +1251,10 @@ import { HERO_GLB_BUDGET_BYTES } from './shared/hero-glb-budget.js';
 		// rest. T-pose-authored rigs (michelle, xbot — arms stretched horizontally)
 		// blow up the box width, push the camera far back, and leave a tiny figure
 		// stranded at the bottom of the card. Use rest-arms-down bodies here:
-		// default.glb and cz.glb (both in the curated portrait-safe POOL_FALLBACKS).
+		// default.glb and realistic-male.glb (both in the curated portrait-safe POOL_FALLBACKS).
 		var LIVE_SPOTS = [
 			{ id: 'door-create',  clip: 'wave',  framing: 'portrait', glb: O + '/avatars/default.glb' },
-			{ id: 'door-embed',   clip: 'rumba', framing: 'portrait', glb: O + '/avatars/cz.glb' },
+			{ id: 'door-embed',   clip: 'rumba', framing: 'portrait', glb: O + '/avatars/realistic-male.glb' },
 			{ id: 'bento-studio', clip: 'idle',  framing: 'portrait', glb: null },
 			{ id: 'bento-anim',   clip: 'idle',  framing: 'full',     glb: null }
 		];

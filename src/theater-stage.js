@@ -85,7 +85,6 @@ const ALL_REACTION_CLIPS = [...new Set(Object.values(REACTIONS).flat())];
 // never detonate. Ordered lightest first so the most-visible front desks paint
 // fast. cesium-man's odd 22-bone rig (the earlier "blob") is deliberately out.
 const FALLBACK_RIGS = [
-	'/avatars/cz.glb',                // ~0.6 MB, Avaturn
 	'/avatars/default.glb',           // ~0.7 MB, Avaturn (platform default)
 	'/avatars/xbot.glb',              // ~2.9 MB, Mixamo
 	'/avatars/michelle.glb',          // ~3.2 MB, Mixamo

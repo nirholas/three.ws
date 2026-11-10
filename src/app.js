@@ -68,6 +68,7 @@ import { Runtime } from './runtime/index.js';
 import { Memory } from './memory/index.js';
 import { SkillRegistry } from './skills/index.js';
 import { log } from './shared/log.js';
+import { DEFAULT_STAGE_RIG_URL } from './default-stage-avatar.js';
 
 window.THREE = THREE;
 window.VIEWER = {};
@@ -329,7 +330,7 @@ class App {
 			// Only honor a query-param model URL from a trusted asset source; an
 			// arbitrary attacker URL falls through to the default avatar.
 			const qpModel = isSafeQueryModelUrl(rawQpModel) ? rawQpModel : '';
-			const model = options.model || qpModel || '/avatars/cz.glb';
+			const model = options.model || qpModel || DEFAULT_STAGE_RIG_URL;
 			this.view(resolveModelUrl(model), '', new Map())
 				.catch(() => {})
 				.finally(() => this._showDeployPage());
@@ -472,9 +473,9 @@ class App {
 			}
 		}
 
-		const model = options.model || '/avatars/cz.glb';
+		const model = options.model || DEFAULT_STAGE_RIG_URL;
 		const resolvedModel = resolveModelUrl(model);
-		const isDefaultCz = !options.model;
+		const isDefaultModel = !options.model;
 		const loadModel = () => this.view(resolvedModel, '', new Map());
 		// Always terminate the load promise. The widget/kiosk path passes a remote
 		// model URL (e.g. an R2 draft GLB) that can 404 or fail the network fetch —
@@ -483,7 +484,7 @@ class App {
 		// frame. Show the same designed error/retry state the agent paths use.
 		Promise.resolve(loadModel())
 			.then(() => {
-				if (isDefaultCz) this._playDefaultLandingClip('taunt');
+				if (isDefaultModel) this._playDefaultLandingClip('taunt');
 			})
 			.catch((err) => {
 				log.warn('[3d-agent] model load failed', err);
@@ -1072,7 +1073,7 @@ class App {
 		this.identity = new AgentIdentity({ agentId, autoLoad: false });
 		await this.identity.load();
 
-		let glbUrl = '/avatars/cz.glb';
+		let glbUrl = DEFAULT_STAGE_RIG_URL;
 		this._currentUsdzUrl = null;
 		this._currentHalfbodyUrl = null;
 		if (this.identity.avatarId) {
@@ -1331,7 +1332,7 @@ class App {
 		}
 
 		const cfg = { ...(widget.config || {}) };
-		const modelUrl = widget.avatar?.model_url || '/avatars/cz.glb';
+		const modelUrl = widget.avatar?.model_url || DEFAULT_STAGE_RIG_URL;
 
 		// Apply per-embed URL overrides (set by Studio embed modal checkboxes).
 		if (this.options.noAnimations) cfg.showClipPicker = false;

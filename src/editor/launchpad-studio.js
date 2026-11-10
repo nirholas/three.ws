@@ -67,7 +67,6 @@ let activeBeforeUnload = null;
 // never empty even before the public-avatars API responds. { src, name, thumb }.
 const STARTER_AVATARS = [
 	{ name: 'Default', src: '/avatars/default.glb', thumb: '/avatars/thumbs/default.png' },
-	{ name: 'CZ', src: '/avatars/cz.glb', thumb: '/avatars/thumbs/cz.png' },
 	{ name: 'Robot', src: '/animations/robotexpressive.glb', thumb: '/avatars/thumbs/robotexpressive.png' },
 	{ name: 'Soldier', src: '/animations/soldier.glb', thumb: '/avatars/thumbs/soldier.png' },
 	{ name: 'Michelle', src: '/avatars/michelle.glb', thumb: '' },

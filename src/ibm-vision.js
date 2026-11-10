@@ -26,7 +26,7 @@ const $ = (id) => document.getElementById(id);
 // subjects API is reachable. Same-origin, so their frames capture cleanly.
 const BUILTINS = [
 	{ id: 'builtin-default', name: 'Default', model_url: '/avatars/default.glb', builtin: true },
-	{ id: 'builtin-cz', name: 'CZ', model_url: '/avatars/cz.glb', builtin: true },
+	{ id: 'builtin-realistic-male', name: 'Max', model_url: '/avatars/realistic-male.glb', builtin: true },
 ];
 
 // Loading steps — shown sequentially so the wait feels transparent, not opaque.

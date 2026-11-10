@@ -16,7 +16,7 @@
 const AVATAR_DOCKMASTER = '/avatars/realistic-male.glb';
 const AVATAR_WARDEN = '/avatars/realistic-female.glb';
 const AVATAR_COOK = '/avatars/selfie-girl.glb';
-const AVATAR_FOREMAN = '/avatars/cz.glb';
+const AVATAR_FOREMAN = '/avatars/default.glb';
 const AVATAR_FIXER = '/avatars/xbot.glb';
 
 // Bind an NPC to the shared Jobs Board, optionally scrolling straight to the

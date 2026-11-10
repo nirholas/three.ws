@@ -349,7 +349,7 @@ const _isStableUrl = (url) => {
 		u.startsWith('ar://') ||
 		u.startsWith('https://') ||
 		u.startsWith('http://') ||
-		u.startsWith('/') // same-origin public asset (e.g. /avatars/cz.glb)
+		u.startsWith('/') // same-origin public asset (e.g. /avatars/default.glb)
 	);
 };
 

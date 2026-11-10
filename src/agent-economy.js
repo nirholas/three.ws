@@ -159,7 +159,7 @@ const colSeller   = $('col-seller');
 
 const BUYER_GLB  = '/avatars/default.glb';
 // Use a slightly different tint for the seller so they look distinct.
-const SELLER_GLB = '/avatars/cz.glb';
+const SELLER_GLB = '/avatars/realistic-male.glb';
 
 // Track readiness: iframes fire v1.avatar.ready when the 3D scene is live.
 let buyerReady  = false;

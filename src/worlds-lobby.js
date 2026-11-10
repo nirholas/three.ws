@@ -60,7 +60,6 @@ const QUICK_AVATARS = [
 	{ id: 'avatar_demo_disk_saga', name: 'Saga', tag: 'robot' },
 	{ id: 'avatar_demo_disk_agent', name: 'Agent', tag: 'soldier' },
 	{ id: 'avatar_demo_disk_boss', name: 'Boss', tag: 'soldier' },
-	{ id: 'avatar_demo_disk_cz', name: 'CZ', tag: 'humanoid' },
 ];
 
 const state = {

@@ -27,4 +27,16 @@ describe('demo surfaces keep house defaults', () => {
 		expect(read('pages/restyle.html')).toContain('id="preset-count"');
 		expect(read('src/restyle.js')).toContain('MATERIAL_PRESET_NAMES.length} PBR material presets');
 	});
+
+	it('no page or source module defaults to the real-person likeness avatar', async () => {
+		const { execFileSync } = await import('node:child_process');
+		const root = new URL('../', import.meta.url).pathname;
+		let out = '';
+		try {
+			out = execFileSync('grep', ['-rln', 'cz\\.glb', 'src', 'pages'], { cwd: root, encoding: 'utf8' });
+		} catch (err) {
+			if (err.status !== 1) throw err;
+		}
+		expect(out.trim()).toBe('');
+	});
 });

@@ -2112,7 +2112,7 @@ function boot() {
 // (verified 52/52 canonical bones). Used when a visitor deep-links straight to
 // an animation without picking an avatar — the clip needs a body to play on.
 const DEEP_LINK_AVATARS = [
-	{ url: '/avatars/cz.glb', name: 'CZ' },
+	{ url: '/avatars/default.glb', name: 'Default' },
 	{ url: '/avatars/michelle.glb', name: 'Michelle' },
 	{ url: '/avatars/realistic-female.glb', name: 'Ada' },
 	{ url: '/avatars/realistic-male.glb', name: 'Max' },

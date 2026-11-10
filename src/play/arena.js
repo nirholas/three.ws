@@ -33,7 +33,6 @@ const ROSTER = [
 	{ url: '/avatars/michelle.glb',     name: 'Michelle' },
 	{ url: '/avatars/xbot.glb',         name: 'X-Bot' },
 	{ url: '/avatars/studio.glb', name: 'Studio' },
-	{ url: '/avatars/cz.glb',           name: 'CZ' },
 ];
 const MAX_AGENTS = 9;
 const PLAYER_KEY = 'arena:avatar:v1';
@@ -1056,7 +1055,6 @@ async function renderPicker() {
 	const saved = localStorage.getItem(PLAYER_KEY) || '/avatars/default.glb';
 	const localThumbs = {
 		'/avatars/default.glb': '/avatars/thumbs/default.png',
-		'/avatars/cz.glb': '/avatars/thumbs/cz.png',
 	};
 	const local = ROSTER.map((r) => ({ name: r.name, url: r.url, thumb: localThumbs[r.url] || '', starter: true }));
 	grid.innerHTML = local.map(tile(saved)).join('') + `<div class="pick-loading" id="pickLoading">Loading community avatars…</div>`;

@@ -199,7 +199,7 @@ export class AgentCommerce {
 		const left = EXCHANGE_CENTER.clone().setX(EXCHANGE_CENTER.x - AGENT_GAP / 2);
 		const right = EXCHANGE_CENTER.clone().setX(EXCHANGE_CENTER.x + AGENT_GAP / 2);
 		this.seller = new Agent(scene, { name: 'ORACLE', role: 'seller', avatar: '/avatars/default.glb', pos: left, yaw: Math.PI / 2 });
-		this.buyer  = new Agent(scene, { name: 'NOVA',   role: 'buyer',  avatar: '/avatars/cz.glb',      pos: right, yaw: -Math.PI / 2 });
+		this.buyer  = new Agent(scene, { name: 'NOVA',   role: 'buyer',  avatar: '/avatars/realistic-male.glb', pos: right, yaw: -Math.PI / 2 });
 
 		this._buildMarker();
 		this._buildPromptAndPanel();

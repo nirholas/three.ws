@@ -59,7 +59,7 @@ const CATEGORIES = [
 // commits a real avatar record) — never a placeholder reference.
 const STARTERS = [
 	{ id: 'default', name: 'Vern', url: '/avatars/default.glb' },
-	{ id: 'cz', name: 'CZ', url: '/avatars/cz.glb' },
+	{ id: 'max', name: 'Max', url: '/avatars/realistic-male.glb' },
 	{ id: 'robot', name: 'Saga', url: '/animations/robotexpressive.glb' },
 	{ id: 'soldier', name: 'Boss', url: '/animations/soldier.glb' },
 ];

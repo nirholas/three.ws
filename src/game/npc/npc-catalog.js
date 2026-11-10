@@ -20,7 +20,7 @@ import { openZauthScanner, zauthScannerRetired } from './npc-zauth.js';
 import { spawnsOfType } from '../world-zones.js';
 
 const AVATAR_A = '/avatars/default.glb';
-const AVATAR_B = '/avatars/cz.glb';
+const AVATAR_B = '/avatars/realistic-male.glb';
 const AVATAR_AIXBT = '/avatars/michelle.glb';
 const AVATAR_ZAUTH = '/avatars/xbot.glb';
 

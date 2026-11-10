@@ -7,7 +7,7 @@
  * Public API (mounted on window):
  *   const v = new Act2Viewer(canvas);
  *   v.onClipsReady = (defs) => { /* build chips */ /* };
- *   await v.loadModel('/avatars/cz.glb');
+ *   await v.loadModel('/avatars/default.glb');
  *   v.playClip('dance');
  */
 import {

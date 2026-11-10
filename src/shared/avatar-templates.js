@@ -26,11 +26,11 @@ export const AVATAR_TEMPLATES = [
 		tags: ['Humanoid', 'Rigged'],
 	},
 	{
-		id: 'cz',
-		name: 'CZ',
-		tagline: 'A stylized humanoid with a sharper, distinctive look.',
-		url: '/avatars/cz.glb',
-		tags: ['Humanoid', 'Stylized'],
+		id: 'max',
+		name: 'Max',
+		tagline: 'A realistic humanoid with a sharper, distinctive look.',
+		url: '/avatars/realistic-male.glb',
+		tags: ['Humanoid', 'Realistic'],
 	},
 	{
 		id: 'saga',

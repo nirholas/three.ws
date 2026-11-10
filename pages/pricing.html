@@ -1093,12 +1093,12 @@
 
 			const CLIPS = ['idle', 'walk', 'wave', 'av-celebrating', 'av-brag-claps'];
 
-			// cz.glb ships with EXT_meshopt_compression — the decoder must be wired
+			// default.glb ships with EXT_meshopt_compression - the decoder must be wired
 			// before the loader can parse a single bufferView, otherwise GLTFLoader
 			// throws "setMeshoptDecoder must be called before loading compressed files".
 			const gltfLoader = new GLTFLoader();
 			gltfLoader.setMeshoptDecoder(MeshoptDecoder);
-			gltfLoader.load('/avatars/cz.glb', (gltf) => {
+			gltfLoader.load('/avatars/default.glb', (gltf) => {
 				avatar = gltf.scene;
 				avatar.traverse((n) => {
 					if (!rootBone && /^(Hips|Root|mixamorig:?Hips)$/i.test(n.name)) rootBone = n;

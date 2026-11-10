@@ -18,7 +18,7 @@ const PREFS_KEY = 'threews:sign-prefs';
 // (raised brows, furrowed brows, a headshake's set jaw) are actually visible.
 // See docs/sign-language.md.
 export const BUILT_IN_RIGS = [
-	{ id: 'classic', label: 'Classic', url: '/avatars/cz.glb' },
+	{ id: 'classic', label: 'Classic', url: '/avatars/xbot.glb' },
 	{ id: 'expressive', label: 'Expressive face', url: '/avatars/default.glb' },
 ];
 

@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-10",
+			"title": "Every demo surface now opens on the house avatar",
+			"summary": "The home page, viewer, pricing, features, game NPCs, Pose Studio, Arena, Create Agent and the avatar templates no longer default to a real person's likeness. They start on the house avatar or another house body, and avatars you bring yourself work exactly as before.",
+			"tags": ["improvement"],
+			"link": "/"
+		},
+		{
+			"date": "2026-11-10",
 			"title": "One button style across Brain, Flow, Home, Avatar Studio and agent pages",
 			"summary": "Buttons on the Brain, Flow map, First Meet, Home studio cards, Avatar Studio and agent detail pages now use the shared button component, so hover, pressed, keyboard focus and disabled states look and behave the same everywhere.",
 			"tags": ["improvement"],

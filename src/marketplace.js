@@ -43,6 +43,7 @@ import {
 	renderBundleSkeletons,
 } from './marketplace-bundles.js';
 import { wireModelViewerFallback } from './shared/model-viewer-fallback.js';
+import { DEFAULT_STAGE_RIG_URL } from './default-stage-avatar.js';
 
 ensureStateKitStyles();
 
@@ -4050,7 +4051,7 @@ function triggerDownload(url, filename) {
 // The preview body the clip is retargeted onto. Must be a real avatar with
 // meshes — the same one the /animations gallery preview uses — not a bare
 // animation-carrier rig (idle_female_jan25.glb is meshless: skeleton only).
-const PREVIEW_AVATAR_GLB = '/avatars/cz.glb';
+const PREVIEW_AVATAR_GLB = DEFAULT_STAGE_RIG_URL;
 
 // The <agent-3d> loader ships a full Three.js bundle, and this modal stage is
 // the only place on the marketplace that renders the element. Loading it here,

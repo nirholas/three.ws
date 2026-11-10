@@ -803,7 +803,7 @@ function wireShare() {
 			params.set('agent', agentId);
 		} else {
 			const currentModelUrl = window.VIEWER?.app?._currentModelUrl;
-			if (currentModelUrl && !currentModelUrl.includes('/avatars/cz.glb')) {
+			if (currentModelUrl && !isDefaultStageAvatar(currentModelUrl)) {
 				params.set('model', currentModelUrl);
 			}
 		}
