@@ -6,7 +6,7 @@
 // Nothing is duplicated in git: every repo is generated into .data/ (gitignored)
 // from .agents/skills/ on demand, which is the only way the copies cannot drift
 // from the originals. Each output directory is a complete Claude Code plugin
-// marketplace of one plugin: .claude-plugin/{marketplace,plugin}.json, skills/,
+// marketplace of one plugin: .claude-plugin/{marketplace,plugin}.json and icon.png, skills/,
 // README.md, LICENSE, .gitignore.
 //
 // Usage:
@@ -144,6 +144,8 @@ function main() {
 			}
 			write(path.join(dest, '.claude-plugin', 'marketplace.json'), marketplaceJson(spec, OWNER));
 			write(path.join(dest, '.claude-plugin', 'plugin.json'), pluginJson(spec, OWNER));
+			// The listing icon the plugin directory looks for: a square PNG of 512 to 2048 px.
+			fs.copyFileSync(path.join(ROOT, 'public', 'pwa-512x512.png'), path.join(dest, '.claude-plugin', 'icon.png'));
 			write(path.join(dest, 'README.md'), readme(spec, skills, OWNER));
 			fs.copyFileSync(path.join(ROOT, 'LICENSE'), path.join(dest, 'LICENSE'));
 			write(path.join(dest, '.gitignore'), 'node_modules/\n.DS_Store\n');
