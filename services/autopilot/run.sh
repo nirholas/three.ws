@@ -55,23 +55,30 @@ sync_repo() {
 	note head "$(git rev-parse HEAD)"
 }
 
-changed_since_prev() {
-	[ "$PREV_HEAD" != "$(git rev-parse HEAD)" ] && ! git diff --quiet "$PREV_HEAD" HEAD -- "$@"
-}
+# What each install step last completed against, recorded only on success, so a
+# failed install is retried by the next tick instead of being skipped because
+# nothing changed since the HEAD the failed tick left behind.
+installed_matches() { [ "$(cat "$BASE_DIR/.installed/$1" 2>/dev/null)" = "$2" ]; }
+mark_installed() { mkdir -p "$BASE_DIR/.installed" && printf '%s' "$2" >"$BASE_DIR/.installed/$1"; }
 
 install_deps() {
-	if [ ! -d node_modules ] || changed_since_prev package-lock.json; then
-		log "lockfile changed: npm ci"
+	local lock studio
+	lock="$(git hash-object package-lock.json)"
+	studio="$(git rev-parse HEAD:character-studio)"
+	if [ ! -d node_modules ] || ! installed_matches root "$lock"; then
+		log "lockfile changed or last install incomplete: npm ci"
 		npm ci --no-audit --no-fund || return 1
 		npx playwright install chromium || return 1
+		mark_installed root "$lock"
 	else
 		npm run --silent postinstall || return 1
 	fi
 	npm run --silent deps:chat || return 1
-	if [ ! -f character-studio/build/index.html ] || changed_since_prev character-studio; then
-		log "character-studio changed: rebuilding avatar studio"
+	if [ ! -f character-studio/build/index.html ] || ! installed_matches studio "$studio"; then
+		log "character-studio changed or last build incomplete: rebuilding avatar studio"
 		npm ci --prefix character-studio --legacy-peer-deps --no-audit --no-fund || return 1
 		npm run build:avatar-studio || return 1
+		mark_installed studio "$studio"
 	fi
 }
 
