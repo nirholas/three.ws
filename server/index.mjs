@@ -49,6 +49,7 @@ import { cronEdgeAuth } from './cron-edge-auth.mjs';
 import { setBounded, touchBounded } from './bounded-cache.mjs';
 import { runWithRequestContext } from '../api/_lib/request-context.js';
 import { tracingMiddleware, flushSpans } from '../api/_lib/tracing.js';
+import { rpcCallerTag } from './rpc-caller-tag.mjs';
 // Route resolution lives in its own module so the audit scripts
 // (scripts/audit-cron-liveness.mjs) exercise the SAME resolver production runs,
 // instead of a copy that can silently drift from it.
@@ -174,15 +175,6 @@ const ROUTE_CACHE_MAX = 5000;
 /** @type {Map<string, Promise<any>>} */
 const moduleCache = new Map();
 
-// The RPC accounting tag for a dispatch: the route TEMPLATE ("/api/agents/[id]"),
-// never the raw path, so ids cannot multiply the key space. Crons are the
-// exception: they share one dynamic file, and their name is exactly what an
-// operator needs, from a bounded set.
-function rpcCallerTag(file, apiPath) {
-	const template = '/api/' + path.relative(API_ROOT, file).split(path.sep).join('/').replace(/\.m?js$/, '').replace(/\/index$/, '');
-	return template.startsWith('/api/cron/[') ? apiPath : template;
-}
-
 async function dispatchApi(req, res, pathname, extraQuery) {
 	// Route-table dests may target the file directly ("/api/x402/service.js").
 	const apiPath = pathname.endsWith('.js') ? pathname.slice(0, -3) : pathname;
@@ -249,7 +241,7 @@ async function dispatchApi(req, res, pathname, extraQuery) {
 		// enforced inside authenticateBearer, whatever route called it.
 		// rpcCaller attributes every Solana RPC call under this handler to its
 		// route (api/_lib/solana/rpc-spend.js), so a quota event names who spent it.
-		await runWithRequestContext({ req, rpcCaller: rpcCallerTag(route.file, apiPath) }, () => handler(req, res));
+		await runWithRequestContext({ req, rpcCaller: rpcCallerTag(API_ROOT, route.file, apiPath, query) }, () => handler(req, res));
 	} catch (err) {
 		console.error(`[api] ${req.method} ${pathname} failed:`, err);
 		if (!res.headersSent) {
