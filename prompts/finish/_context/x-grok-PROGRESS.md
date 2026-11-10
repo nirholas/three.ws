@@ -648,3 +648,8 @@ No xAI key exists in `process.env`, `.env`, `.env.local` or the `three-ws-api` s
 ## 2026-11-10: order 024 (cloud agent rate limits) re-verified, npm test line still open
 - In scope green: `tests/mcp-studio*.test.js`, `mcp-schema`, `api-rate-limit-wiring` 141/141. Local probe against `server/index.mjs` (needs `JWT_SECRET` or `MCP_INSTALL_SECRET` set to mint): token A 4 admitted, 5th refused `generation_burst` keyed on `install` with `reset_at`, `retry_after` 58 and the OAuth remedy; token B same IP admitted. PASS.
 - `E2E_PORT=3107 npm test` exits 1 (52 of 3062 files). 46 were a concurrent `npm ci` replacing node_modules mid-run and pass on rerun. Remaining reds, none in scope: `route-build-inputs` (`e32e47e1e`, order 975 routes `/settings/robinhood/` before its page exists), `deploy-artifacts` (shared node_modules behind the lockfile), `agent-screen-caster` and `x-content-page-reader` (sandbox Chromium), `avatar-composer-parametric` (600 s timeout). Owner: order 975 and a clean `npm ci`; then rerun `npm test` and delete the order file.
+
+## 2026-11-10: order 024 (x-grok 02, cloud agent rate limits) retired
+- Full `E2E_PORT=3107 npm test` at HEAD: 3050 files passed, 14 skipped, 1 failed: `deploy-artifacts` "lockfile the pinned npm accepts" with `spawnSync npx ETIMEDOUT` (fetching npm 11.19.1 under full-suite load, not a lockfile problem). Rerun alone: 22/22 pass.
+- Every earlier red (order 975 route, node_modules drift, sandbox Chromium, parametric bake timeout) passes at HEAD.
+- Shipped in `0e9635b52`, `e92209633`, `efdcaf7ae`; local two-token probe PASS (see the earlier 2026-11-10 entry); recheck logged in `ef07e28e3`.
