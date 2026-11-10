@@ -4,6 +4,9 @@
 /*
 !/workers/
 !/robinhood/
+/robinhood/*
+!/robinhood/robinhood-chain-sdk/
+node_modules/
 !/package.json
 !/package-lock.json
 !/.npmrc
