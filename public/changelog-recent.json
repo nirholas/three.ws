@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-10T19:13:53.948Z",
+	"generated_at": "2026-11-10T19:35:36.533Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4481,
+	"total": 4483,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -73,6 +73,16 @@
 		{
 			"date": "2026-11-10",
 			"type": "update",
+			"title": "Forge composer no longer jumps while it loads",
+			"summary": "The engine picker, the cost caption and the Enhance button now hold their space from the first frame, so the page stops shifting under your cursor on a first visit. Measured layout shift on the Forge page fell from 0.11 to 0.41 down to 0.05 to 0.28 across phone and desktop widths.",
+			"link": "/forge",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-10",
+			"type": "update",
 			"title": "One button style across Brain, Flow, Home, Avatar Studio and agent pages",
 			"summary": "Buttons on the Brain, Flow map, First Meet, Home studio cards, Avatar Studio and agent detail pages now use the shared button component, so hover, pressed, keyboard focus and disabled states look and behave the same everywhere.",
 			"link": "/brain",
@@ -119,6 +129,16 @@
 			"tags": [
 				"improvement",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-10",
+			"type": "update",
+			"title": "The site header no longer pushes pages down as it loads",
+			"summary": "The skip link and the shared header now hold their final space from the first paint on every page, and the Forge example prompts sit in fixed cells, so content stops jumping under your cursor while a page loads.",
+			"link": null,
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -1519,27 +1539,6 @@
 			"title": "Score, replay and export any agent run",
 			"summary": "Owners can run a task suite against an agent from a new Evaluate tab, the REST API or `three-ws evals run`, watch per-task progress live, replay a finished run with its receipt chain verified, re-run it on another model as a preview, and export the trajectory as JSONL. Runs are limited to free and Vertex lanes with a cost cap.",
 			"link": "/docs/agent-evals",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Seeded catalog assets can now be judged on how they look, not just their structure",
-			"summary": "Platform-seeded models in /characters and /objects were gated on mesh structure only, because rendering and judging an asset did not fit inside the seed cron's time limit. A new per-minute vision cron now takes assets that pass the mesh check, renders each one and asks the vision judge whether it is realistic, on-prompt and complete, then publishes it or sets it aside with the full verdict for tuning. A judge that is down is retried and never blocks a sound asset for more than 30 minutes. The judge also now falls back across every vision provider instead of depending on one. It switches on with SEED_VISION_PHASE=1 after deploy.",
-			"link": "/docs/seed-quality",
-			"tags": [
-				"feature",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Shared creations now say who wants to make their own",
-			"summary": "Every creation page has a Make your own button that carries you into the Forge, and the Forge funnel report now counts AR opens, unfurls, shared-link page loads and how many shares turn into a new generation. Counts are aggregate only: no IP, account or creation id is stored.",
-			"link": "/creations",
 			"tags": [
 				"feature"
 			]

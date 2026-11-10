@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-10T19:13:53.881Z",
+	"generated_at": "2026-11-10T19:35:36.390Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -70,6 +70,16 @@
 		{
 			"date": "2026-11-10",
 			"type": "update",
+			"title": "Forge composer no longer jumps while it loads",
+			"summary": "The engine picker, the cost caption and the Enhance button now hold their space from the first frame, so the page stops shifting under your cursor on a first visit. Measured layout shift on the Forge page fell from 0.11 to 0.41 down to 0.05 to 0.28 across phone and desktop widths.",
+			"link": "/forge",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-10",
+			"type": "update",
 			"title": "One button style across Brain, Flow, Home, Avatar Studio and agent pages",
 			"summary": "Buttons on the Brain, Flow map, First Meet, Home studio cards, Avatar Studio and agent detail pages now use the shared button component, so hover, pressed, keyboard focus and disabled states look and behave the same everywhere.",
 			"link": "/brain",
@@ -116,6 +126,16 @@
 			"tags": [
 				"improvement",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-10",
+			"type": "update",
+			"title": "The site header no longer pushes pages down as it loads",
+			"summary": "The skip link and the shared header now hold their final space from the first paint on every page, and the Forge example prompts sit in fixed cells, so content stops jumping under your cursor while a page loads.",
+			"link": null,
+			"tags": [
+				"improvement"
 			]
 		},
 		{
