@@ -1,0 +1,23 @@
+{
+  "name": "avatar-stream",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Pack a GLB into a layered A3S stream that renders a skinned avatar from its first 50 KB, then refines over byte-range requests.",
+  "plugins": [
+    {
+      "name": "avatar-stream",
+      "source": "./",
+      "description": "Pack a GLB into a layered A3S stream that renders a skinned avatar from its first 50 KB, then refines over byte-range requests.",
+      "tags": [
+        "glb",
+        "gltf",
+        "progressive-loading",
+        "lod",
+        "avatar",
+        "threejs",
+        "three-ws"
+      ]
+    }
+  ]
+}

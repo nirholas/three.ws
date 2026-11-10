@@ -1,0 +1,22 @@
+{
+  "name": "three-ws-assets",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Search the free three.ws CC0 catalog of 3D props, rigged characters and motion clips and add them to a project.",
+  "plugins": [
+    {
+      "name": "three-ws-assets",
+      "source": "./",
+      "description": "Search the free three.ws CC0 catalog of 3D props, rigged characters and motion clips and add them to a project.",
+      "tags": [
+        "3d",
+        "assets",
+        "glb",
+        "cc0",
+        "threejs",
+        "cli"
+      ]
+    }
+  ]
+}

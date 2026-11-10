@@ -1,0 +1,19 @@
+{
+  "name": "create-agent",
+  "version": "0.1.0",
+  "description": "Turn a one-sentence prompt into a rigged, animated 3D agent with a ready-to-open embed page.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/create-agent",
+  "license": "Apache-2.0",
+  "homepage": "https://nirholas.github.io/create-agent/",
+  "keywords": [
+    "text-to-3d",
+    "avatar",
+    "rigging",
+    "glb",
+    "scaffold",
+    "three-ws"
+  ]
+}

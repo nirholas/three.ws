@@ -1,0 +1,20 @@
+{
+  "name": "avatar-stream",
+  "version": "0.1.0",
+  "description": "Pack a GLB into a layered A3S stream that renders a skinned avatar from its first 50 KB, then refines over byte-range requests.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/avatar-stream",
+  "license": "Apache-2.0",
+  "homepage": "https://nirholas.github.io/avatar-stream/",
+  "keywords": [
+    "glb",
+    "gltf",
+    "progressive-loading",
+    "lod",
+    "avatar",
+    "threejs",
+    "three-ws"
+  ]
+}

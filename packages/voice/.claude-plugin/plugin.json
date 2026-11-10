@@ -1,0 +1,18 @@
+{
+  "name": "three-ws-voice",
+  "version": "0.1.2",
+  "description": "Speech for 3D avatars: speech to text, text to speech and Audio2Face-3D lipsync visemes through the @three-ws/voice SDK.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/three-ws-voice",
+  "license": "Apache-2.0",
+  "keywords": [
+    "asr",
+    "tts",
+    "lipsync",
+    "visemes",
+    "three-ws"
+  ],
+  "homepage": "https://nirholas.github.io/three-ws-voice/"
+}

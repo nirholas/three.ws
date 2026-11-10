@@ -1,0 +1,18 @@
+{
+  "name": "three-ws-reputation",
+  "version": "0.1.2",
+  "description": "Read ERC-8004 and Solana agent trust scores, leaderboards and validations with the @three-ws/reputation SDK.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/three-ws-reputation",
+  "license": "Apache-2.0",
+  "keywords": [
+    "erc-8004",
+    "reputation",
+    "trust-score",
+    "attestation",
+    "three-ws"
+  ],
+  "homepage": "https://nirholas.github.io/three-ws-reputation/"
+}

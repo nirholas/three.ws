@@ -1,0 +1,21 @@
+{
+  "name": "three-ws-agents",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Drive the three.ws v1 Agents API from TypeScript: agents, chat, runs, skills, automations and confirm-gated wallet actions.",
+  "plugins": [
+    {
+      "name": "three-ws-agents",
+      "source": "./",
+      "description": "Drive the three.ws v1 Agents API from TypeScript: agents, chat, runs, skills, automations and confirm-gated wallet actions.",
+      "tags": [
+        "agents",
+        "typescript",
+        "sdk",
+        "solana",
+        "three-ws"
+      ]
+    }
+  ]
+}

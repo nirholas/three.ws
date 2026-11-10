@@ -1,0 +1,21 @@
+{
+  "name": "three-ws-voice",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Speech for 3D avatars: speech to text, text to speech and Audio2Face-3D lipsync visemes through the @three-ws/voice SDK.",
+  "plugins": [
+    {
+      "name": "three-ws-voice",
+      "source": "./",
+      "description": "Speech for 3D avatars: speech to text, text to speech and Audio2Face-3D lipsync visemes through the @three-ws/voice SDK.",
+      "tags": [
+        "asr",
+        "tts",
+        "lipsync",
+        "visemes",
+        "three-ws"
+      ]
+    }
+  ]
+}

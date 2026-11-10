@@ -1,0 +1,21 @@
+{
+  "name": "three-ws-reputation",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Read ERC-8004 and Solana agent trust scores, leaderboards and validations with the @three-ws/reputation SDK.",
+  "plugins": [
+    {
+      "name": "three-ws-reputation",
+      "source": "./",
+      "description": "Read ERC-8004 and Solana agent trust scores, leaderboards and validations with the @three-ws/reputation SDK.",
+      "tags": [
+        "erc-8004",
+        "reputation",
+        "trust-score",
+        "attestation",
+        "three-ws"
+      ]
+    }
+  ]
+}

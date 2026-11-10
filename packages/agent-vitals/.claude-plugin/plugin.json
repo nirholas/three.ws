@@ -1,0 +1,19 @@
+{
+  "name": "agent-vitals",
+  "version": "0.1.0",
+  "description": "Capability attestation for autonomous agents: model preconditions as a causal graph and get the root blocker and fix.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/agent-vitals",
+  "license": "Apache-2.0",
+  "homepage": "https://nirholas.github.io/agent-vitals/",
+  "keywords": [
+    "agent-health",
+    "attestation",
+    "root-cause",
+    "observability",
+    "capability",
+    "three-ws"
+  ]
+}

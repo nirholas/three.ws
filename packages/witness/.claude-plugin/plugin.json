@@ -1,0 +1,9 @@
+{
+  "name": "witness",
+  "version": "0.1.0",
+  "description": "Compile a recorded user session into a Playwright spec that stays red until the bug is fixed.",
+  "author": {"name": "nirholas"},
+  "repository": "https://github.com/nirholas/three-ws-witness",
+  "license": "Apache-2.0",
+  "keywords": ["playwright","bug-report","repro","testing"]
+}

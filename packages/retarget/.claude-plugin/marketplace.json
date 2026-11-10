@@ -1,0 +1,21 @@
+{
+  "name": "three-ws-retarget",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Retarget animation clips onto any humanoid GLB, canonicalizing bone names so no rig freezes in a T-pose.",
+  "plugins": [
+    {
+      "name": "three-ws-retarget",
+      "source": "./",
+      "description": "Retarget animation clips onto any humanoid GLB, canonicalizing bone names so no rig freezes in a T-pose.",
+      "tags": [
+        "animation",
+        "retargeting",
+        "humanoid",
+        "gltf",
+        "three-js"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "agent-vitals",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Capability attestation for autonomous agents: model preconditions as a causal graph and get the root blocker and fix.",
+  "plugins": [
+    {
+      "name": "agent-vitals",
+      "source": "./",
+      "description": "Capability attestation for autonomous agents: model preconditions as a causal graph and get the root blocker and fix.",
+      "tags": [
+        "agent-health",
+        "attestation",
+        "root-cause",
+        "observability",
+        "capability",
+        "three-ws"
+      ]
+    }
+  ]
+}
