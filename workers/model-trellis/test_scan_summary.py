@@ -1,4 +1,4 @@
-from scan_summary import summarise
+from scan_summary import by_package, summarise
 
 
 def _report():
@@ -29,3 +29,24 @@ def test_counts_only_high_and_critical():
 def test_empty_report():
     rows, totals, _, criticals = summarise({})
     assert rows == [] and not totals and criticals == []
+
+
+def test_by_package_groups_high_and_critical_with_fix_versions():
+    report = {
+        "Results": [
+            {
+                "Target": "Python",
+                "Class": "lang-pkgs",
+                "Vulnerabilities": [
+                    {"Severity": "CRITICAL", "FixedVersion": "13.0.0", "VulnerabilityID": "CVE-A", "PkgName": "pillow", "InstalledVersion": "12.3.0"},
+                    {"Severity": "HIGH", "FixedVersion": "12.4.0, 13.0.0", "VulnerabilityID": "CVE-B", "PkgName": "pillow", "InstalledVersion": "12.3.0"},
+                    {"Severity": "HIGH", "FixedVersion": "", "VulnerabilityID": "CVE-C", "PkgName": "torch", "InstalledVersion": "2.6.0"},
+                    {"Severity": "MEDIUM", "FixedVersion": "9", "VulnerabilityID": "CVE-D", "PkgName": "torch", "InstalledVersion": "2.6.0"},
+                ],
+            }
+        ]
+    }
+    assert by_package(report) == [
+        ("lang-pkgs", "pillow", "12.3.0", 1, 1, "12.4.0, 13.0.0"),
+        ("lang-pkgs", "torch", "2.6.0", 0, 1, "no-fix"),
+    ]

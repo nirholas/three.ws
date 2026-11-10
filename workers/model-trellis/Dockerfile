@@ -1,20 +1,28 @@
-# TRELLIS (Microsoft, MIT) — single-image → textured 3D mesh on an L4 (24 GB).
+# TRELLIS (Microsoft, MIT): single image to textured 3D mesh on one NVIDIA GPU.
 #
 # This image translates the upstream conda `setup.sh` into a reproducible pip
-# build. Reliability choices that matter for Cloud Build + Cloud Run L4:
-#   • TWO STAGES. The CUDA 12.1 *devel* base (nvcc) is needed only to compile
+# build. Reliability choices that matter for Cloud Build, Cloud Run L4 and the
+# NGC Catalog build (docs/nvidia-ngc-listing.md):
+#   * TWO STAGES. The CUDA *devel* base (nvcc) is needed only to compile
 #     diffoctreerast / nvdiffrast / diff-gaussian-rasterization, so it is the
-#     `builder` stage. The shipped image is the CUDA 12.1 *runtime* base plus the
-#     built Python environment, TRELLIS source and baked dinov2 copied across:
-#     no compiler, no CUDA headers, far fewer packages for a CVE scanner to flag
+#     `builder` stage. The shipped image is the CUDA *runtime* base plus the
+#     built virtualenv, TRELLIS source and baked dinov2 copied across: no
+#     compiler, no CUDA headers, far fewer packages for a CVE scanner to flag
 #     (NVIDIA's NGC step 3 scan reads the shipped image, not the build stage).
-#   • torch 2.4.0 + cu121, the matrix every TRELLIS extension has wheels/【builds】for.
-#   • Attention backend = xformers, NOT flash-attn. flash-attn compiles from
+#   * CUDA 12.6 on Ubuntu 24.04 (Python 3.12), torch 2.6.0 + cu126. Moved from
+#     CUDA 12.1 / Python 3.10 / torch 2.4 on 2026-11-10 because the old matrix
+#     could not clear its CRITICAL CVEs: torch < 2.6 carries CVE-2025-32434 and
+#     the pillow release that fixes its 2026 CRITICALs (13.0.0) needs Python
+#     3.11+. Every TRELLIS dependency publishes cp312 wheels for this matrix
+#     (xformers 0.0.29.post3, spconv-cu126 2.3.8, kaolin 0.18.0 torch-2.6.0_cu126).
+#     torch's pip wheels carry their own cuDNN, so neither base needs a cudnn tag.
+#   * Attention backend = xformers, NOT flash-attn. flash-attn compiles from
 #     source for 30+ min and routinely OOMs the builder; xformers is an upstream-
-#     supported backend and an L4 (sm_89) runs it well. Set via ATTN_BACKEND.
-#   • TORCH_CUDA_ARCH_LIST defaults to 8.9 for the production L4 image. NGC
-#     builds can pass a wider list without editing this file.
-FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04 AS builder
+#     supported backend. Set via ATTN_BACKEND.
+#   * TORCH_CUDA_ARCH_LIST defaults to 8.9 for the production L4 image. The NGC
+#     build (cloudbuild.ngc.yaml) passes the portable matrix validated on real
+#     GPUs in NGC-VALIDATION.md.
+FROM nvidia/cuda:12.6.3-devel-ubuntu24.04 AS builder
 
 ARG TORCH_CUDA_ARCH_LIST="8.9"
 
@@ -27,6 +35,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     # TRELLIS runtime backends (read at import time in main.py).
     ATTN_BACKEND=xformers \
     SPCONV_ALGO=native \
+    # One virtualenv holds every Python package (Ubuntu 24.04 marks the system
+    # interpreter externally managed, PEP 668); the runtime stage copies it whole.
+    VIRTUAL_ENV=/opt/venv \
+    PATH=/opt/venv/bin:$PATH \
     # TRELLIS repo lives here and is imported off PYTHONPATH (not a pip package).
     PYTHONPATH=/app/TRELLIS \
     # Cap glibc at two malloc arenas. Every job runs on executor threads, and by
@@ -39,53 +51,54 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # dlopens both at import time. Without them the model load dies with
 # "libusb-1.0.so.0: cannot open shared object file" and the revision never serves.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        python3.10 python3.10-dev python3-pip \
-        git curl wget build-essential ninja-build \
-        libgl1 libglib2.0-0 libgomp1 \
+        python3.12 python3.12-dev python3.12-venv \
+        git curl build-essential ninja-build \
+        libgl1 libglib2.0-0t64 libgomp1 \
         libusb-1.0-0 libegl1 \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -sf /usr/bin/python3.10 /usr/bin/python3 \
-    && ln -sf /usr/bin/python3.10 /usr/bin/python \
+    && python3.12 -m venv /opt/venv \
     && pip install --upgrade pip setuptools wheel
 
-# ── 1. Torch first (own layer; every extension below links against it) ────────
-RUN pip install torch==2.4.0 torchvision==0.19.0 --index-url https://download.pytorch.org/whl/cu121
+# -- 1. Torch first (own layer; every extension below links against it) --------
+RUN pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu126
 
-# ── 2. setup.sh --basic + utils3d ─────────────────────────────────────────────
-# transformers MUST stay pinned to a torch-2.4-compatible release. Unpinned, the
-# 2026-07-16 rebuild resolved a version whose CLIP modeling imports DTensor from
-# torch.distributed.tensor (public only since torch 2.5), so the pipeline failed
-# to load at boot and every inference on the revision failed. 4.46.3 is the
-# TRELLIS-era release verified against torch 2.4.0/cu121. open3d is pinned for
-# the same reason: an unpinned resolve on 2026-09-18 pulled a wheel with new
-# system-library needs (see the apt layer above) and the load failed at boot.
+# -- 2. setup.sh --basic + utils3d ---------------------------------------------
+# transformers stays pinned: unpinned, the 2026-07-16 rebuild resolved a release
+# whose CLIP modeling needed a newer torch than the image had, so the pipeline
+# failed to load at boot and every inference on the revision failed. open3d is
+# pinned for the same reason: an unpinned resolve on 2026-09-18 pulled a wheel
+# with new system-library needs (see the apt layer above) and the load failed at
+# boot. pillow is floored at 13.0.0, the release that fixes its 2026 CRITICALs.
 RUN pip install \
-        pillow imageio imageio-ffmpeg tqdm easydict opencv-python-headless \
+        "pillow>=13.0.0" imageio imageio-ffmpeg tqdm easydict opencv-python-headless \
         scipy ninja rembg onnxruntime trimesh xatlas pyvista pymeshfix \
         igraph "transformers==4.46.3" "open3d==0.20.0" \
     && pip install git+https://github.com/EasternJournalist/utils3d.git@9a4eb15e4021b67b12c460c7057d642626897ec8
 
-# ── 3. setup.sh --xformers / --spconv / --kaolin (prebuilt wheels) ────────────
-RUN pip install xformers==0.0.27.post2 --index-url https://download.pytorch.org/whl/cu121
-RUN pip install spconv-cu120
-RUN pip install kaolin -f https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.4.0_cu121.html
+# -- 3. setup.sh --xformers / --spconv / --kaolin (prebuilt wheels) ------------
+RUN pip install xformers==0.0.29.post3 --index-url https://download.pytorch.org/whl/cu126
+RUN pip install spconv-cu126==2.3.8
+RUN pip install kaolin==0.18.0 -f https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.6.0_cu126.html
 
-# ── 4. setup.sh --nvdiffrast / --diffoctreerast / --mipgaussian (compiled) ────
-# These build CUDA kernels with nvcc; TORCH_CUDA_ARCH_LIST=8.9 scopes them to L4.
+# -- 4. setup.sh --nvdiffrast / --diffoctreerast / --mipgaussian (compiled) ----
+# These build CUDA kernels with nvcc for every arch in TORCH_CUDA_ARCH_LIST.
 # --no-build-isolation is REQUIRED: each extension's setup.py `import torch` at
-# build time, but PEP517 isolation hides the torch installed in step 1 — nvdiffrast
-# aborts with "Cannot compile nvdiffrast CUDA extension … run pip install with
+# build time, but PEP517 isolation hides the torch installed in step 1, so nvdiffrast
+# aborts with "Cannot compile nvdiffrast CUDA extension ... run pip install with
 # --no-build-isolation". The flag makes the build reuse the image's torch. setuptools/
 # wheel are already present (installed in the apt layer), so no build deps are missing.
 RUN git clone https://github.com/NVlabs/nvdiffrast.git /tmp/ext/nvdiffrast \
     && pip install --no-build-isolation /tmp/ext/nvdiffrast
 RUN git clone --recurse-submodules https://github.com/JeffreyXiang/diffoctreerast.git /tmp/ext/diffoctreerast \
     && pip install --no-build-isolation /tmp/ext/diffoctreerast
+# diff-gaussian-rasterization uses uint32_t/uintptr_t without <cstdint>, which
+# GCC 13 (Ubuntu 24.04) no longer pulls in transitively, so the include is added.
 RUN git clone https://github.com/autonomousvision/mip-splatting.git /tmp/ext/mip-splatting \
+    && sed -i '1i #include <cstdint>' /tmp/ext/mip-splatting/submodules/diff-gaussian-rasterization/cuda_rasterizer/rasterizer_impl.h \
     && pip install --no-build-isolation /tmp/ext/mip-splatting/submodules/diff-gaussian-rasterization/ \
     && rm -rf /tmp/ext
 
-# ── 5. Server deps ────────────────────────────────────────────────────────────
+# -- 5. Server deps ------------------------------------------------------------
 # pytest is here for the build-time gate at the bottom of this file, the same
 # pattern workers/garment-forge uses: the request policy is unit tested during
 # `docker build`, so a broken tier table or clamp can never reach a revision.
@@ -94,7 +107,7 @@ RUN pip install \
         "httpx>=0.27.0" "google-cloud-storage==2.18.0" "safetensors>=0.4.0" \
         "pytest>=8.0.0"
 
-# ── 6. TRELLIS source (imported via PYTHONPATH, pinned for reproducibility) ───
+# -- 6. TRELLIS source (imported via PYTHONPATH, pinned for reproducibility) ---
 # --recurse-submodules is REQUIRED: TRELLIS vendors FlexiCubes (its mesh
 # extractor) as a git submodule at trellis/representations/mesh/flexicubes. A
 # plain clone leaves that dir a bare gitlink, so `from .flexicubes.flexicubes
@@ -107,7 +120,7 @@ RUN git clone --recurse-submodules https://github.com/microsoft/TRELLIS.git /app
     && git -C /app/TRELLIS checkout 442aa1e1afb9014e80681d3bf604e8d728a86ee7 \
     && git -C /app/TRELLIS submodule update --init --recursive
 
-# ── 7. dinov2 image conditioner, baked so the model load never calls out ──────
+# -- 7. dinov2 image conditioner, baked so the model load never calls out ------
 # pipeline.json sets image_cond_model=dinov2_vitl14_reg, and TRELLIS resolves it
 # with torch.hub.load("facebookresearch/dinov2", ...) with no branch pinned. That
 # call hits github.com on every load just to discover the default branch, and
@@ -130,11 +143,11 @@ RUN git clone https://github.com/facebookresearch/dinov2.git /opt/dinov2 \
     && python3 -c "import os; p='/opt/torch/hub/checkpoints/dinov2_vitl14_reg4_pretrain.pth'; s=os.path.getsize(p); assert s > 1_000_000_000, f'dinov2 checkpoint truncated: {s} bytes'"
 
 
-# ══ Runtime stage ═══════════════════════════════════════════════════════════
+# == Runtime stage ===========================================================
 # Same env contract as the builder (and as the single-stage image this replaces):
 # the entrypoint, ports, ATTN_BACKEND, PYTHONPATH, TORCH_HOME and DINOV2_LOCAL_DIR
 # are unchanged, so the production Cloud Run revision behaves identically.
-FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
+FROM nvidia/cuda:12.6.3-runtime-ubuntu24.04
 
 ARG TORCH_CUDA_ARCH_LIST="8.9"
 
@@ -146,6 +159,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     SPCONV_ALGO=native \
     PYTHONPATH=/app/TRELLIS \
     MALLOC_ARENA_MAX=2 \
+    VIRTUAL_ENV=/opt/venv \
+    PATH=/opt/venv/bin:$PATH \
     TORCH_HOME=/opt/torch \
     DINOV2_LOCAL_DIR=/opt/dinov2
 
@@ -153,16 +168,15 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # here). `apt-get upgrade` pulls the Ubuntu security patches published since the
 # CUDA base image was cut.
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
-        python3.10 \
-        libgl1 libglib2.0-0 libgomp1 \
+        python3.12 \
+        libgl1 libglib2.0-0t64 libgomp1 \
         libusb-1.0-0 libegl1 \
-    && rm -rf /var/lib/apt/lists/* \
-    && ln -sf /usr/bin/python3.10 /usr/bin/python3 \
-    && ln -sf /usr/bin/python3.10 /usr/bin/python
+    && rm -rf /var/lib/apt/lists/*
 
-# pip installs land in /usr/local on Ubuntu's Python, so one COPY carries every
-# package, the compiled CUDA extensions and the console scripts (uvicorn).
-COPY --from=builder /usr/local /usr/local
+# The virtualenv links to /usr/bin/python3.12 (installed above), so one COPY
+# carries every package, the compiled CUDA extensions and the console scripts
+# (uvicorn), and `python3` / `python` resolve to it through PATH.
+COPY --from=builder /opt/venv /opt/venv
 COPY --from=builder /app/TRELLIS /app/TRELLIS
 COPY --from=builder /opt/dinov2 /opt/dinov2
 COPY --from=builder /opt/torch /opt/torch
