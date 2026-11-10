@@ -20,6 +20,12 @@
 // were baked into the bundle even though every loader in src/ points at the
 // hosted copies under /three/. That pushed agent-3d.js to 6.4MB.
 //
+// 2026-11-10: the LiveKit voice session (livekit-client, about 1MB unminified)
+// and the speech detector (@ricky0123/vad-web plus onnxruntime-web, about
+// 0.5MB) were inlined the same way, so production served a 5.8MB agent-3d.js.
+// The lib build now defines import.meta.env.AGENT3D_LIB and those two load from
+// pinned CDN URLs at first use (pins checked by tests/lib-cdn-pins.test.js).
+//
 // Skips when dist-lib/ has not been built locally (npm run build:lib:full),
 // same convention as tests/helpers/dist-built.js.
 

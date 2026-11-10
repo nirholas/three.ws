@@ -4341,6 +4341,11 @@ function hostedThreeDecoders() {
 // imports in a later pass.
 const libConfig = {
 	plugins: [hostedThreeDecoders(), minifyLibWhitespace()],
+	// Read by src/runtime/livekit-voice.js and src/voice/vad.js: in this
+	// build their heavy optional dependencies load from the CDN at first use
+	// instead of being inlined (inlineDynamicImports below bakes in every
+	// bundler-visible import, which took agent-3d.js past 5.8MB).
+	define: { 'import.meta.env.AGENT3D_LIB': 'true' },
 	resolve: {
 		dedupe: ['three'],
 	},

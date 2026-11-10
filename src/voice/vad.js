@@ -29,6 +29,7 @@
  */
 
 import { log } from '../shared/log.js';
+import { loadModule } from '../shared/load-module.js';
 
 /** Where copy-voice-models.mjs stages the VAD model and its worklet. */
 export const VAD_ASSET_PATH = '/models/voice/runtime/';
@@ -74,9 +75,20 @@ const NEGATIVE_SPEECH_THRESHOLD = 0.25;
 
 let vadModulePromise = null;
 
+// The single-file CDN embed (vite.config.js libConfig) inlines every
+// bundler-visible import, so a bundled vad-web and its onnxruntime-web added
+// about 0.5MB to agent-3d.js. That build defines import.meta.env.AGENT3D_LIB and
+// loads vad-web from esm.sh instead. The onnxruntime wasm is served from
+// VAD_ASSET_PATH, so the JS must be exactly the installed onnxruntime-web: the
+// ?deps pin does that, and it is passed as the only URL because the other
+// mirrors would resolve vad-web's open ^1.17.0 range to whatever is newest.
+const VAD_CDN_URL = 'https://esm.sh/@ricky0123/vad-web@0.0.31?deps=onnxruntime-web@1.31.1';
+
 /** Load @ricky0123/vad-web once, on demand. */
 function loadVadModule() {
-	if (!vadModulePromise) vadModulePromise = import('@ricky0123/vad-web');
+	if (!vadModulePromise) {
+		vadModulePromise = import.meta.env?.AGENT3D_LIB ? loadModule([VAD_CDN_URL]) : import('@ricky0123/vad-web');
+	}
 	return vadModulePromise;
 }
 

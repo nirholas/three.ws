@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-10T14:30:07.381Z",
+	"generated_at": "2026-11-10T14:45:39.322Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4474,
+	"total": 4475,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -57,6 +57,17 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-10",
+			"type": "update",
+			"title": "The agent-3d embed script is 18% smaller",
+			"summary": "The single-file <agent-3d> embed had grown to 5.8MB because the LiveKit voice session and the on-device speech detector were baked into it, even on pages that never start a voice call. Both now load from the CDN the first time a visitor starts voice, so the script every embedding page downloads is down to 4.8MB. Voice behaves the same once it starts.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"sdk"
 			]
 		},
 		{
@@ -1530,17 +1541,6 @@
 			"link": null,
 			"tags": [
 				"infra"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "The /play lobby points newcomers somewhere, and its welcome card fits at any zoom",
-			"summary": "The lobby header now links to the product tour (What is three.ws?) and to the coin launchpad, and Launch a coin is listed in the Build menu, so a first-time visitor who is not ready to drop into a world still has a next step. The first-visit welcome card used to be pushed off the top of the screen at 200% browser zoom, on a phone held sideways, or with longer German text, which hid its Skip button; it now scrolls inside its overlay so every button stays reachable. The card machine, the dance-off tip prompt and the signature wall no longer show raw browser errors such as Failed to fetch or a bare server status: a dropped connection and a struggling server each get one plain line that says what to do, and real explanations from the server are kept.",
-			"link": "/play",
-			"tags": [
-				"improvement",
-				"fix"
 			]
 		}
 	]

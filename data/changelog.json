@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-10",
+			"title": "The agent-3d embed script is 18% smaller",
+			"summary": "The single-file <agent-3d> embed had grown to 5.8MB because the LiveKit voice session and the on-device speech detector were baked into it, even on pages that never start a voice call. Both now load from the CDN the first time a visitor starts voice, so the script every embedding page downloads is down to 4.8MB. Voice behaves the same once it starts.",
+			"tags": ["improvement", "sdk"]
+		},
+		{
+			"date": "2026-11-10",
 			"title": "Connect your Robinhood Crypto account and let agents trade inside your caps",
 			"summary": "You can now connect your own Robinhood Crypto account to three.ws with a Crypto Trading API key, generating the key pair right in your browser. Set a per-order and a daily spend cap, and your agents can read holdings, quote pairs and preview orders. An order is only placed after you approve its confirm table, every buy is checked against your caps on the server before it reaches Robinhood, and you can pause trading or disconnect at any time. Crypto pairs only.",
 			"tags": ["feature"],

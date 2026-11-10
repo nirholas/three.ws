@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-10T14:30:07.306Z",
+	"generated_at": "2026-11-10T14:45:39.275Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -54,6 +54,17 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-10",
+			"type": "update",
+			"title": "The agent-3d embed script is 18% smaller",
+			"summary": "The single-file <agent-3d> embed had grown to 5.8MB because the LiveKit voice session and the on-device speech detector were baked into it, even on pages that never start a voice call. Both now load from the CDN the first time a visitor starts voice, so the script every embedding page downloads is down to 4.8MB. Voice behaves the same once it starts.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"sdk"
 			]
 		},
 		{

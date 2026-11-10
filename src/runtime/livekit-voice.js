@@ -2,8 +2,19 @@
 // The agent server joins the same room, handles VAD/STT/TTS, and sends
 // data-channel messages with transcript payloads.
 
-import { Room, RoomEvent, Track } from 'livekit-client';
 import { ACTION_TYPES } from '../agent-protocol.js';
+import { loadModule } from '../shared/load-module.js';
+
+// The single-file CDN embed (vite.config.js libConfig) inlines every
+// bundler-visible import, so a bundled livekit-client added about 1MB to
+// agent-3d.js for a feature most embeds never start. That build defines
+// import.meta.env.AGENT3D_LIB, which folds this to the pinned CDN load; the app
+// build keeps livekit-client as its own lazily fetched chunk.
+const LIVEKIT_CDN_URL = 'https://esm.sh/livekit-client@2.23.0';
+
+function loadLivekitClient() {
+	return import.meta.env?.AGENT3D_LIB ? loadModule(LIVEKIT_CDN_URL) : import('livekit-client');
+}
 
 export class LiveKitVoice {
 	/**
@@ -24,6 +35,7 @@ export class LiveKitVoice {
 	}
 
 	async connect() {
+		const { Room, RoomEvent, Track } = await loadLivekitClient();
 		const room = new Room();
 		this._room = room;
 
