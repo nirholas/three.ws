@@ -4,14 +4,14 @@
 // moving down-forward": a LOCATION and an ORIENTATION, never a list of joint
 // angles. Authoring it as raw quaternions per bone is how the first pass of this
 // feature ended up with the signing arm pointing behind the avatar: it assumed
-// the reference rig aimed its bones down local +X from a T-pose, when cz.glb
+// the reference rig aimed its bones down local +X from a T-pose, when the reference rig
 // (like every Mixamo/Avaturn/VRM humanoid) aims them down local +Y through a
 // shoulder whose own rest rotation is ~120° off identity.
 //
 // So this module reads the reference skeleton instead of assuming it. Everything
 // below is derived at load time from the generated bind-pose data
 // (src/animation-canonical-rest.js: rotations, positions, and parent chain of
-// public/avatars/cz.glb):
+// the reference skeleton):
 //
 //   • each bone's axis (the local direction that points at its child),
 //   • each hand's palm normal and radial (thumb-side) direction,

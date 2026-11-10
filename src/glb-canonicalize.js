@@ -68,7 +68,7 @@ const ORIENT_EPS = 1e-5;
 const ORIENT_WORLD_EPS = 1e-4;
 
 // Canonical humanoid bone set. Mirrors the rig used by scripts/build-animations.mjs
-// (cz.glb / Avaturn reference rig) — every animation clip in /public/animations/clips
+// (the Avaturn reference rig) - every animation clip in /public/animations/clips
 // addresses tracks by these exact names.
 export const CANONICAL_BONES = Object.freeze([
 	'Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head',

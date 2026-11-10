@@ -38,12 +38,12 @@ import {
 export { MIN_COVERAGE };
 
 // Rest (bind-pose) local rotation of each canonical bone *on the authoring rig*
-// the clips were baked against (the Avaturn-rigged public/avatars/cz.glb). The
+// the clips were baked against (the Avaturn-rigged reference skeleton). The
 // library stores absolute local rotations, so a clip only looks right when the
 // target bone's rest matches the authoring rest — otherwise we must replay the
 // motion in the target's own rest frame (see `bindCorrections`).
 //
-// The full skeleton is covered (generated from cz.glb into
+// The full skeleton is covered (generated from the reference skeleton into
 // animation-canonical-rest.js), not just Hips. Hips carries the up-axis
 // convention — Mixamo/FBX bake a +90°X on the armature and a −90°X on Hips, and
 // copying the clip's Hips rotation verbatim wipes that out and tips the body onto
