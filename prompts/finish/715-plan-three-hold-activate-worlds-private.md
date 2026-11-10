@@ -672,6 +672,6 @@ Record the 24-hour and seven-day rows in the format in [measurement.md](../growt
 ~~~~
 
 
-## Status (2026-11-04)
+## Status (2026-11-10)
 
-DONE-PENDING-OWNER (apply migration `20261105040000_world_private_visibility.sql` after `npm run db:status`, then deploy). Server gate, `canReadWorld` (404 for strangers), invite/uninvite/visibility actions, Visibility dialog, `worlds.private` enforced, tests and docs are complete and verified in a real browser (holder and Member flows, empty and error states). Room-level (Colyseus) join gating is not enforced because the room reads with a service token.
+Migration `20261105040000_world_private_visibility.sql` is applied (`npm run db:status`: nothing pending). Gate tests (4 files, 99 tests), the honesty tripwire and `verify:three-gate` (private-world 402 checks) pass. Remaining, owner: `git push threews main` then `npm run deploy:gcp:full` so production serves the gate; then re-run `npm run verify:three-gate` against https://three.ws. Not re-observed this session: curl owner-200 vs anonymous-404 (local server has no database), and a full-suite baseline diff. Room-level (Colyseus) join gating is not enforced because the room reads with a service token.
