@@ -1,0 +1,10 @@
+{
+  "name": "agent-runtime",
+  "version": "0.1.1",
+  "description": "Agent decision loop with human-approval gates, a seven-layer GuardChain preflight and a hash-chained action ledger.",
+  "author": {"name": "nirholas"},
+  "repository": "https://github.com/nirholas/agent-runtime",
+  "license": "Apache-2.0",
+  "homepage": "https://nirholas.github.io/agent-runtime/",
+  "keywords": ["agent-runtime", "guardchain", "action-ledger", "human-in-the-loop", "spend-limit", "tool-calling"]
+}

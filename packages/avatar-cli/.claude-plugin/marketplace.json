@@ -1,0 +1,13 @@
+{
+  "name": "avatar-cli",
+  "owner": {"name": "nirholas"},
+  "description": "CLI workflow for on-chain avatar manifests.",
+  "plugins": [
+    {
+      "name": "avatar-cli",
+      "source": "./",
+      "description": "Scaffold, validate, hash and preview three.ws on-chain avatar manifests from the shell with the three-ws-avatar CLI.",
+      "tags": ["avatar", "cli", "manifest", "on-chain"]
+    }
+  ]
+}

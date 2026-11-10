@@ -1,0 +1,10 @@
+{
+  "name": "avatar-cli",
+  "version": "0.2.2",
+  "description": "Scaffold, validate, hash and preview three.ws on-chain avatar manifests from the shell with the three-ws-avatar CLI.",
+  "author": {"name": "nirholas"},
+  "repository": "https://github.com/nirholas/avatar-cli",
+  "license": "Apache-2.0",
+  "homepage": "https://nirholas.github.io/avatar-cli/",
+  "keywords": ["avatar", "cli", "manifest", "on-chain", "three-ws", "caip"]
+}

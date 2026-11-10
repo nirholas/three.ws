@@ -1,0 +1,10 @@
+{
+  "name": "assistant-widget",
+  "version": "0.1.2",
+  "description": "MCP server that generates a paste-ready three.ws 3D avatar chatbot widget embed for any website. Offline and keyless.",
+  "author": {"name": "nirholas"},
+  "repository": "https://github.com/nirholas/assistant-mcp",
+  "license": "Apache-2.0",
+  "homepage": "https://nirholas.github.io/assistant-mcp/",
+  "keywords": ["mcp", "assistant", "avatar", "chatbot", "embed", "widget", "3d"]
+}

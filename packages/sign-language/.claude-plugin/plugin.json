@@ -1,0 +1,10 @@
+{
+  "name": "sign-language-avatar",
+  "version": "0.1.1",
+  "description": "Compile English text into a continuous American Sign Language animation clip for 3D avatars, with fingerspelling fallback.",
+  "author": {"name": "nirholas"},
+  "repository": "https://github.com/nirholas/sign-language",
+  "license": "Apache-2.0",
+  "keywords": ["asl", "sign-language", "accessibility", "avatar", "animation", "fingerspelling"],
+  "homepage": "https://nirholas.github.io/sign-language/"
+}

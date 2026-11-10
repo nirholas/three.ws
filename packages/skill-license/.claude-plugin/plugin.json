@@ -1,0 +1,10 @@
+{
+  "name": "skill-license",
+  "version": "0.1.2",
+  "description": "Verify and read on-chain agent skill licenses (1/1 SPL NFT plus SkillLicense PDA) on Solana with @three-ws/skill-license.",
+  "author": {"name": "nirholas"},
+  "repository": "https://github.com/nirholas/skill-license",
+  "license": "Apache-2.0",
+  "keywords": ["solana", "license", "nft", "pda", "agent-skills", "access-control"],
+  "homepage": "https://nirholas.github.io/skill-license/"
+}

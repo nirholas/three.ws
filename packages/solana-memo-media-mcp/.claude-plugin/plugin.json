@@ -1,0 +1,10 @@
+{
+  "name": "solana-memo-media",
+  "version": "0.1.0",
+  "description": "Read-only MCP server that extracts and displays validated image data URIs embedded in Solana SPL Memo instructions.",
+  "author": {"name": "nirholas"},
+  "repository": "https://github.com/nirholas/solana-memo-media-mcp",
+  "license": "Apache-2.0",
+  "keywords": ["mcp", "solana", "spl-memo", "data-uri", "onchain-media"],
+  "homepage": "https://nirholas.github.io/solana-memo-media-mcp/"
+}

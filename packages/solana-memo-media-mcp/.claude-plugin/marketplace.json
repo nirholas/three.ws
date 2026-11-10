@@ -1,0 +1,13 @@
+{
+  "name": "solana-memo-media",
+  "owner": {"name": "nirholas"},
+  "description": "Solana SPL Memo image viewer for MCP clients.",
+  "plugins": [
+    {
+      "name": "solana-memo-media",
+      "source": "./",
+      "description": "Extract, validate and show image data URIs from Solana SPL Memos. Read-only, no key required.",
+      "tags": ["mcp", "solana", "spl-memo", "images"]
+    }
+  ]
+}

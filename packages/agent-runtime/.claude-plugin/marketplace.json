@@ -1,0 +1,13 @@
+{
+  "name": "agent-runtime",
+  "owner": {"name": "nirholas"},
+  "description": "Agent engine with guarded tool calls and a tamper-evident ledger.",
+  "plugins": [
+    {
+      "name": "agent-runtime",
+      "source": "./",
+      "description": "Agent decision loop with human-approval gates, a seven-layer GuardChain preflight and a hash-chained action ledger.",
+      "tags": ["agent-runtime", "guardrails", "action-ledger", "human-in-the-loop"]
+    }
+  ]
+}

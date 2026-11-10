@@ -1,0 +1,10 @@
+{
+  "name": "agent-guards",
+  "version": "0.1.2",
+  "description": "Spend policies and trade guards for autonomous agents: pre-check a Solana trade or spend against owner-set caps before signing.",
+  "author": {"name": "nirholas"},
+  "repository": "https://github.com/nirholas/agent-guards",
+  "license": "Apache-2.0",
+  "homepage": "https://nirholas.github.io/agent-guards/",
+  "keywords": ["agent-guards", "spend-policy", "trade-guard", "kill-switch", "solana", "guardrails"]
+}
