@@ -627,6 +627,29 @@ HTTP 502 GET /api/pump/coin?mint=<mint>&miss=empty
 
 ---
 
+## 🟢 HTTP 502 on `/api/pump-bounties`, `/api/pump-bounties/<id>`: `pump-bounties-upstream-challenge-502` (§pump-bounties-upstream-challenge)
+
+```
+HTTP 502 GET /api/pump-bounties/<uuid>   {"error":"pump_go_upstream","error_description":"pump.fun GO upstream 403"}
+```
+
+- **Source:** [api/pump-bounties.js](../../api/pump-bounties.js) and
+  [api/pump-bounties/[id].js](../../api/pump-bounties/[id].js) proxy
+  `livestream-api.pump.fun` through `cacheWrapLastGood` (30s fresh, 24h
+  last-good). A 502 only fires when the live fetch is refused AND no last-good
+  copy exists for that cache key.
+- **What it means:** confirmed 2026-11-10: every pump.fun API host
+  (`livestream-api`, `frontend-api-v3`) answered a Cloudflare managed challenge
+  (`cf-mitigated: challenge`, HTML 403) to datacenter IPs, from Cloud Run and
+  from the operator machine alike, browser user-agent included. There is no
+  server-side way past a managed challenge, and we do not try to defeat it.
+- **Check:** `curl -sI "https://livestream-api.pump.fun/bounties/tasks?limit=5" | grep cf-mitigated`.
+  The board recovers on the first fetch Cloudflare lets through.
+- **Monitor signature:** `pump-bounties-upstream-challenge-502` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `self-healing`.
+
+---
+
 ## 🟡 `429 Client Error … huggingface.co` → `LocalEntryNotFoundError` on a model worker — `hf-hub-rate-limited`
 
 ```

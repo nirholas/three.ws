@@ -345,6 +345,19 @@ const KNOWN_HTTP_SIGNATURES = [
 		action: `pump.fun's own Cloudflare anti-bot challenge rejected the /coins/<mint> lookup (confirmed via app logs: a "Just a moment..." 403 challenge page, not a pump.fun-side 404/500) and no last-good cached copy existed for that specific mint to fall back to. Nothing in our code is broken: api/pump/[action].js's handleCoin() already retries and falls back to the cache when one exists. Investigate only if the same mint 502s across multiple sweeps after pump.fun's public site itself loads cleanly in a browser. ${RUNBOOK} §pump-coin-lookup-upstream.`,
 	},
 	{
+		id: 'pump-bounties-upstream-challenge-502',
+		// api/pump-bounties.js and api/pump-bounties/[id].js proxy
+		// livestream-api.pump.fun through cacheWrapLastGood (30s fresh, 24h
+		// last-good). A 502 pump_go_upstream means the live fetch was refused and
+		// no last-good copy existed. Confirmed 2026-11-10: every pump.fun API host
+		// answered a Cloudflare managed challenge (cf-mitigated: challenge) to
+		// datacenter IPs, browser user-agent included.
+		test: (g) => g.service === 'three-ws-api' && g.status === 502
+			&& (g.path === '/api/pump-bounties' || g.path === '/api/pump-bounties/<uuid>'),
+		class: 'self-healing',
+		action: `pump.fun's Cloudflare managed challenge refused the GO bounty fetch (app log: "[pump-bounties] ... pump.fun GO upstream 403") and the 24h last-good copy had expired or never existed for that key. Nothing in our code is broken and there is no server-side way past a managed challenge. Confirm with: curl -sI https://livestream-api.pump.fun/bounties/tasks?limit=5 | grep cf-mitigated. The board recovers on the first fetch Cloudflare lets through. ${RUNBOOK} §pump-bounties-upstream-challenge.`,
+	},
+	{
 		id: 'cc-unconfigured-503',
 		// Every /api/community/* and /api/clash route wraps the same client and
 		// answers the same designed 503 when CC_API_KEY is absent — match the

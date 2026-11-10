@@ -154,6 +154,20 @@ describe('gcp-triage HTTP classification', () => {
 		expect(finding.class).toBe('self-healing');
 	});
 
+	// 2026-11-10 sweep: /api/pump-bounties/<id> and the list 502'd with
+	// pump_go_upstream. livestream-api.pump.fun answered a Cloudflare managed
+	// challenge (cf-mitigated: challenge) to every datacenter IP, so the 24h
+	// last-good copy in cacheWrapLastGood was the only thing that could answer.
+	it('classifies a pump.fun GO bounty upstream challenge as self-healing', () => {
+		for (const path of ['/api/pump-bounties', '/api/pump-bounties/11e1d97d-f3b7-450d-b09b-368c9268d615']) {
+			const [finding] = buildFindings([request({ status: 502, path })]);
+			expect(finding.signature).toBe('pump-bounties-upstream-challenge-502');
+			expect(finding.class).toBe('self-healing');
+		}
+		const [stats] = buildFindings([request({ status: 500, path: '/api/pump-bounties/stats' })]);
+		expect(stats.signature).not.toBe('pump-bounties-upstream-challenge-502');
+	});
+
 	// 2026-10-15 deep sweep: /api/v1/ai/text-to-3d 502'd ("lane_error") pinning
 	// the NVIDIA NVCF TRELLIS backend, the same free-tier capacity flakiness
 	// already tracked for /api/vision and /api/tts/synthesize under
