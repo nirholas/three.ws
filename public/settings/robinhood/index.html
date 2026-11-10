@@ -225,6 +225,7 @@
 			const API = '/api/v1/robinhood/crypto';
 			const app = document.getElementById('app');
 			let state = { connection: null, caps: null };
+			let live = {};
 
 			const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 			const usd = (n) => (n == null ? 'n/a' : '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
@@ -299,9 +300,16 @@
 			}
 
 			function render() {
-				if (!state.connection?.connected) return renderConnect(false);
+				if (!state.connection?.connected) {
+					live = {};
+					return renderConnect(false);
+				}
 				app.innerHTML = '';
-				app.append(connectionCard(), capsCard(), holdingsCard(), ordersCard(), dangerCard());
+				// Holdings and orders keep their element across re-renders, so a cap
+				// or pause change does not re-fetch them from Robinhood.
+				live.holdings ||= holdingsCard();
+				live.orders ||= ordersCard();
+				app.append(connectionCard(), capsCard(), live.holdings, live.orders, dangerCard());
 			}
 
 			// ── Not connected: paste a key ──────────────────────────────────
@@ -402,6 +410,7 @@
 							},
 						});
 						state = { connection: data.connection, caps: data.caps };
+						live = {};
 						render();
 					} catch (e) {
 						setStatus(status, 'err', e.message);
