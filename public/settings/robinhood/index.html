@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Robinhood Crypto · three.ws</title>
+		<meta name="description" content="Connect your own Robinhood Crypto Trading API key, set hard per-order and daily spend caps, and let your agents quote, preview and place crypto orders." />
+		<meta name="robots" content="noindex" />
+		<link rel="icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<style>
+			:root {
+				color-scheme: dark;
+				--bg: #000;
+				--panel: #141414;
+				--panel-2: #0c0c0c;
+				--border: #222;
+				--border-strong: #333;
+				--text: #eee;
+				--muted: #888;
+				--accent: #fff;
+				--ok: #6fcf97;
+				--warn: #f2c94c;
+				--err: #ff7b7b;
+			}
+			* { box-sizing: border-box; }
+			body {
+				font: 15px/1.55 -apple-system, system-ui, Segoe UI, Roboto, sans-serif;
+				color: var(--text);
+				background: var(--bg);
+				margin: 0;
+				min-height: 100vh;
+			}
+			a { color: #ccc; }
+			a:hover { color: #fff; }
+			a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+			header {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				padding: 0 24px;
+				height: 60px;
+				border-bottom: 1px solid var(--border);
+			}
+			header img { height: 1.55rem; width: auto; display: block; }
+			header .back { margin-left: auto; font-size: 13px; }
+			main { max-width: 760px; margin: 0 auto; padding: 32px 16px 96px; }
+			h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: -0.01em; }
+			h2 { font-size: 15px; margin: 0 0 4px; }
+			.sub { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+			.card {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 16px 18px;
+				margin-bottom: 14px;
+				animation: rise 0.18s ease-out;
+			}
+			@keyframes rise { from { opacity: 0; transform: translateY(4px); } }
+			.card .hint { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+			.card-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+			.card-head > div { flex: 1; min-width: 0; }
+			.pill {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				font-size: 12px;
+				font-weight: 600;
+				padding: 3px 10px;
+				border-radius: 999px;
+				border: 1px solid var(--border-strong);
+				white-space: nowrap;
+			}
+			.pill::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+			.pill.ok { color: var(--ok); }
+			.pill.warn { color: var(--warn); }
+			dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; font-size: 13.5px; }
+			dl.facts dt { color: var(--muted); }
+			dl.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+			code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+			ol.steps { margin: 0 0 14px; padding-left: 20px; font-size: 13.5px; color: #ccc; }
+			ol.steps li { margin-bottom: 6px; }
+			label { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 5px; }
+			label .opt { color: var(--muted); font-weight: 400; }
+			input, textarea {
+				width: 100%;
+				background: var(--panel-2);
+				color: var(--text);
+				border: 1px solid var(--border-strong);
+				border-radius: 8px;
+				padding: 9px 11px;
+				font: inherit;
+				font-size: 13.5px;
+				transition: border-color 0.12s;
+			}
+			input:hover, textarea:hover { border-color: #555; }
+			input[aria-invalid='true'] { border-color: var(--err); }
+			textarea { resize: vertical; min-height: 64px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+			.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+			.money { position: relative; }
+			.money::before { content: '$'; position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13.5px; pointer-events: none; }
+			.money input { padding-left: 22px; }
+			.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
+			.btn {
+				padding: 9px 18px;
+				border-radius: 9px;
+				border: 0;
+				font: inherit;
+				font-size: 13px;
+				font-weight: 600;
+				cursor: pointer;
+				background: var(--accent);
+				color: #000;
+				transition: filter 0.12s, transform 0.05s, background 0.12s;
+			}
+			.btn:hover { filter: brightness(0.88); }
+			.btn:active { transform: translateY(1px); }
+			.btn:disabled { opacity: 0.45; cursor: not-allowed; filter: none; transform: none; }
+			.btn.sec { background: #222; color: #ddd; }
+			.btn.sec:hover { background: #2c2c2c; filter: none; }
+			.btn.danger { background: #3a1414; color: #ffb3b3; }
+			.btn.danger:hover { background: #4a1a1a; filter: none; }
+			.btn.small { padding: 6px 12px; font-size: 12.5px; }
+			.copy {
+				background: none;
+				border: 1px solid var(--border-strong);
+				color: #ccc;
+				border-radius: 6px;
+				font: inherit;
+				font-size: 12px;
+				padding: 2px 8px;
+				margin-left: 6px;
+				cursor: pointer;
+				transition: border-color 0.12s, color 0.12s;
+			}
+			.copy:hover { border-color: #666; color: #fff; }
+			.copy:active { transform: translateY(1px); }
+			.status { font-size: 13px; min-height: 1em; }
+			.status.ok { color: var(--ok); }
+			.status.err { color: var(--err); }
+			.generated {
+				background: var(--panel-2);
+				border: 1px solid var(--border-strong);
+				border-radius: 8px;
+				padding: 10px 12px;
+				font-size: 13px;
+				margin-top: 10px;
+			}
+			.generated p { margin: 0 0 6px; }
+			.generated .mono { overflow-wrap: anywhere; }
+			.meter { height: 8px; background: #1c1c1c; border-radius: 99px; overflow: hidden; margin: 8px 0 6px; }
+			.meter > span { display: block; height: 100%; background: var(--ok); border-radius: 99px; transition: width 0.3s ease; }
+			.meter.high > span { background: var(--warn); }
+			.meter.full > span { background: var(--err); }
+			.meter-text { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+			.meter-text strong { color: var(--text); font-weight: 600; }
+			table { width: 100%; border-collapse: collapse; font-size: 13px; }
+			th { text-align: left; color: var(--muted); font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+			td { padding: 8px; border-bottom: 1px solid #1a1a1a; vertical-align: top; }
+			tr:last-child td { border-bottom: 0; }
+			tbody tr { transition: background 0.12s; }
+			tbody tr:hover { background: #191919; }
+			td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+			.table-wrap { overflow-x: auto; }
+			.side-buy { color: var(--ok); }
+			.side-sell { color: var(--warn); }
+			.st { font-size: 12px; padding: 1px 8px; border-radius: 99px; background: #1f1f1f; color: #ccc; white-space: nowrap; }
+			.st.placed { color: var(--ok); }
+			.st.failed, .st.unknown { color: var(--err); }
+			.st.previewed, .st.submitting { color: var(--warn); }
+			.st.expired { color: var(--muted); }
+			.empty { color: var(--muted); font-size: 13.5px; padding: 6px 0; }
+			.empty strong { color: var(--text); }
+			.error-box { color: var(--err); font-size: 13.5px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+			.skeleton {
+				border-radius: 10px;
+				background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%);
+				background-size: 200% 100%;
+				animation: shimmer 1.2s infinite linear;
+				margin-bottom: 14px;
+			}
+			.skeleton.line { height: 14px; border-radius: 6px; margin-bottom: 8px; }
+			@keyframes shimmer { to { background-position: -200% 0; } }
+			@media (prefers-reduced-motion: reduce) { .skeleton, .card { animation: none; } }
+			.confirm {
+				margin-top: 12px;
+				border: 1px solid #4a1a1a;
+				background: #1a0b0b;
+				border-radius: 8px;
+				padding: 12px;
+				font-size: 13.5px;
+			}
+			.confirm p { margin: 0 0 10px; }
+			details.how summary { cursor: pointer; font-size: 13px; color: #ccc; }
+			details.how summary:hover { color: #fff; }
+			details.how pre { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; overflow-x: auto; font-size: 12px; }
+			@media (max-width: 560px) {
+				header { padding: 0 16px; }
+				.row { grid-template-columns: 1fr; }
+				.card-head { flex-direction: column; }
+				dl.facts { grid-template-columns: 1fr; gap: 2px; }
+				dl.facts dd { margin-bottom: 6px; }
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<a href="/"><img src="/three.svg" alt="three.ws" /></a>
+			<a class="back" href="/settings">Back to settings</a>
+		</header>
+		<main>
+			<h1>Robinhood Crypto</h1>
+			<p class="sub">Connect your own Robinhood Crypto account with its Crypto Trading API key. Your agents can then read your holdings, quote pairs and, within the spend caps you set here, preview and place crypto orders. <a href="/docs/robinhood-crypto">How it works</a></p>
+
+			<div id="app" aria-live="polite" aria-busy="true">
+				<div class="skeleton" style="height: 150px"></div>
+				<div class="skeleton" style="height: 120px"></div>
+				<div class="skeleton" style="height: 90px"></div>
+			</div>
+		</main>
+
+		<script type="module">
+			import { apiFetch } from '/src/api.js';
+
+			const API = '/api/v1/robinhood/crypto';
+			const app = document.getElementById('app');
+			let state = { connection: null, caps: null };
+
+			const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+			const usd = (n) => (n == null ? 'n/a' : '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+			const when = (iso) => (iso ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'n/a');
+
+			class ApiError extends Error {
+				constructor(status, code, message) {
+					super(message);
+					this.status = status;
+					this.code = code;
+				}
+			}
+
+			async function call(path, init = {}) {
+				const opts = { ...init };
+				if (opts.body !== undefined) {
+					opts.headers = { 'content-type': 'application/json', ...(opts.headers || {}) };
+					opts.body = JSON.stringify(opts.body);
+				}
+				let res;
+				try {
+					res = await apiFetch(API + path, opts);
+				} catch {
+					throw new ApiError(0, 'network', 'Could not reach three.ws. Check your connection and try again.');
+				}
+				if (res.status === 401) {
+					location.href = '/login?next=' + encodeURIComponent(location.pathname);
+					throw new ApiError(401, 'unauthorized', 'Sign in to continue.');
+				}
+				const json = await res.json().catch(() => null);
+				if (!res.ok) throw new ApiError(res.status, json?.error?.code || 'error', json?.error?.message || `Request failed (${res.status}).`);
+				return json.data;
+			}
+
+			function setStatus(el, type, text) {
+				el.className = 'status ' + type;
+				el.textContent = text;
+			}
+
+			function wireCopy(root) {
+				for (const btn of root.querySelectorAll('[data-copy]')) {
+					btn.addEventListener('click', async () => {
+						try {
+							await navigator.clipboard.writeText(btn.dataset.copy);
+							btn.textContent = 'Copied';
+						} catch {
+							btn.textContent = 'Select and copy';
+						}
+						setTimeout(() => (btn.textContent = 'Copy'), 1500);
+					});
+				}
+			}
+
+			// ── Load ────────────────────────────────────────────────────────
+
+			async function load() {
+				app.setAttribute('aria-busy', 'true');
+				try {
+					const data = await call('');
+					state = { connection: data.connection, caps: data.caps };
+					render();
+				} catch (e) {
+					if (e.status === 401) return;
+					app.innerHTML = `<div class="card"><div class="error-box"><span>${esc(e.message)}</span><button class="btn sec small" id="retry">Try again</button></div></div>`;
+					document.getElementById('retry').addEventListener('click', () => {
+						app.innerHTML = '<div class="skeleton" style="height:150px"></div><div class="skeleton" style="height:120px"></div>';
+						load();
+					});
+				} finally {
+					app.setAttribute('aria-busy', 'false');
+				}
+			}
+
+			function render() {
+				if (!state.connection?.connected) return renderConnect(false);
+				app.innerHTML = '';
+				app.append(connectionCard(), capsCard(), holdingsCard(), ordersCard(), dangerCard());
+			}
+
+			// ── Not connected: paste a key ──────────────────────────────────
+
+			const canGenerate = async () => {
+				try {
+					await crypto.subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
+					return true;
+				} catch {
+					return false;
+				}
+			};
+
+			const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
+
+			async function generatePair() {
+				const pair = await crypto.subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
+				const pkcs8 = new Uint8Array(await crypto.subtle.exportKey('pkcs8', pair.privateKey));
+				const raw = await crypto.subtle.exportKey('raw', pair.publicKey);
+				return { privateKey: b64(pkcs8.slice(-32)), publicKey: b64(raw) };
+			}
+
+			function renderConnect(replacing) {
+				const caps = state.connection?.connected ? state.connection : { per_order_cap_usd: 25, daily_cap_usd: 100 };
+				const card = document.createElement('div');
+				card.className = 'card';
+				card.innerHTML = `
+					<div class="card-head"><div>
+						<h2>${replacing ? 'Replace your key' : 'Connect your Robinhood Crypto account'}</h2>
+						<p class="hint">${replacing ? 'The new key is checked live with Robinhood before it replaces the old one.' : 'Nothing is connected yet. You need a Crypto Trading API key from Robinhood and the Ed25519 private key that goes with it.'}</p>
+					</div></div>
+					<ol class="steps">
+						<li>Create an Ed25519 key pair. <span id="gen-wrap"></span></li>
+						<li>On Robinhood, open <strong>Account, Settings, Crypto, API Trading</strong> (desktop web), add a key, paste your <strong>public</strong> key and give it the trading permissions you want agents to have.</li>
+						<li>Copy the API key Robinhood shows you and paste it below with your <strong>private</strong> key.</li>
+					</ol>
+					<div id="gen-out"></div>
+					<form id="connect-form" novalidate>
+						<label for="api-key">API key</label>
+						<input id="api-key" name="api_key" autocomplete="off" spellcheck="false" placeholder="rh-api-..." required />
+						<label for="private-key">Private key <span class="opt">(base64 Ed25519, 32 bytes)</span></label>
+						<textarea id="private-key" name="private_key" autocomplete="off" spellcheck="false" required></textarea>
+						<div class="row">
+							<div><label for="c-per">Per-order cap</label><div class="money"><input id="c-per" type="number" min="0.01" max="10000" step="0.01" value="${esc(caps.per_order_cap_usd)}" required /></div></div>
+							<div><label for="c-day">Daily cap</label><div class="money"><input id="c-day" type="number" min="0.01" max="50000" step="0.01" value="${esc(caps.daily_cap_usd)}" required /></div></div>
+						</div>
+						<p class="hint" style="margin-top:8px">Caps limit what agents can buy. A buy above the per-order cap, or one that would take today's buys past the daily cap, is refused before anything reaches Robinhood. Sells are not capped.</p>
+						<div class="actions">
+							<button class="btn" type="submit" id="connect-btn">Verify and connect</button>
+							${replacing ? '<button class="btn sec" type="button" id="cancel-replace">Cancel</button>' : ''}
+							<span class="status" id="connect-status" role="status"></span>
+						</div>
+					</form>
+					<p class="hint" style="margin:12px 0 0">Both keys are encrypted at rest and never shown again, returned by the API, or written to a log. Only you, signed in here, can change them.</p>`;
+				app.innerHTML = '';
+				app.append(card);
+
+				canGenerate().then((ok) => {
+					const wrap = card.querySelector('#gen-wrap');
+					if (ok) {
+						wrap.innerHTML = '<button class="btn sec small" type="button" id="gen-btn">Generate in this browser</button>';
+						wrap.querySelector('#gen-btn').addEventListener('click', async () => {
+							const { privateKey, publicKey } = await generatePair();
+							card.querySelector('#private-key').value = privateKey;
+							const out = card.querySelector('#gen-out');
+							out.innerHTML = `<div class="generated">
+								<p><strong>Public key</strong> (paste this at Robinhood) <button class="copy" type="button" data-copy="${esc(publicKey)}">Copy</button></p>
+								<p class="mono">${esc(publicKey)}</p>
+								<p style="color:var(--muted);margin:6px 0 0">The private key is filled in below. It was made on this device and is sent only when you press Verify and connect. Keep a copy somewhere safe if you want to reuse it.</p>
+							</div>`;
+							wireCopy(out);
+						});
+					} else {
+						wrap.innerHTML = `<details class="how"><summary>Show a command that makes one</summary><pre>node -e "const c=require('crypto');const k=c.generateKeyPairSync('ed25519');console.log('private',k.privateKey.export({format:'der',type:'pkcs8'}).subarray(-32).toString('base64'));console.log('public',k.publicKey.export({format:'der',type:'spki'}).subarray(-32).toString('base64'))"</pre></details>`;
+					}
+				});
+
+				card.querySelector('#cancel-replace')?.addEventListener('click', render);
+				card.querySelector('#connect-form').addEventListener('submit', async (ev) => {
+					ev.preventDefault();
+					const status = card.querySelector('#connect-status');
+					const btn = card.querySelector('#connect-btn');
+					const apiKey = card.querySelector('#api-key');
+					const privateKey = card.querySelector('#private-key');
+					apiKey.setAttribute('aria-invalid', String(!apiKey.value.trim()));
+					privateKey.setAttribute('aria-invalid', String(!privateKey.value.trim()));
+					if (!apiKey.value.trim() || !privateKey.value.trim()) return setStatus(status, 'err', 'Paste both the API key and the private key.');
+					btn.disabled = true;
+					setStatus(status, '', 'Checking the key with Robinhood…');
+					try {
+						const data = await call('/credentials', {
+							method: 'PUT',
+							body: {
+								api_key: apiKey.value.trim(),
+								private_key: privateKey.value.trim(),
+								per_order_cap_usd: Number(card.querySelector('#c-per').value),
+								daily_cap_usd: Number(card.querySelector('#c-day').value),
+							},
+						});
+						state = { connection: data.connection, caps: data.caps };
+						render();
+					} catch (e) {
+						const hint = e.code === 'credentials_rejected' ? ' Check that the public key you registered at Robinhood matches this private key.' : '';
+						setStatus(status, 'err', e.message + hint);
+						btn.disabled = false;
+					}
+				});
+			}
+
+			// ── Connected ───────────────────────────────────────────────────
+
+			function connectionCard() {
+				const c = state.connection;
+				const card = document.createElement('div');
+				card.className = 'card';
+				card.innerHTML = `
+					<div class="card-head">
+						<div><h2>Connected</h2><p class="hint" style="margin:0">Verified with Robinhood ${esc(when(c.last_verified_at))}.</p></div>
+						<span class="pill ${c.trading_enabled ? 'ok' : 'warn'}">${c.trading_enabled ? 'Trading on' : 'Trading paused'}</span>
+					</div>
+					<dl class="facts">
+						<dt>Account</dt><dd class="mono">${esc(c.account_number || 'n/a')}</dd>
+						<dt>API key</dt><dd class="mono">${esc(c.api_key_hint)}</dd>
+						<dt>Public key</dt><dd><span class="mono">${esc(c.public_key)}</span><button class="copy" type="button" data-copy="${esc(c.public_key)}">Copy</button></dd>
+					</dl>
+					<div class="actions">
+						<button class="btn sec" type="button" id="toggle-trading">${c.trading_enabled ? 'Pause trading' : 'Resume trading'}</button>
+						<button class="btn sec" type="button" id="replace-key">Replace key</button>
+						<span class="status" id="toggle-status" role="status"></span>
+					</div>
+					<p class="hint" style="margin:12px 0 0">${c.trading_enabled ? 'Pausing refuses every new preview and order at once. Reads keep working.' : 'Agents can read holdings and quotes but cannot preview or place orders until you resume.'}</p>`;
+				wireCopy(card);
+				card.querySelector('#replace-key').addEventListener('click', () => renderConnect(true));
+				card.querySelector('#toggle-trading').addEventListener('click', async (ev) => {
+					const status = card.querySelector('#toggle-status');
+					ev.currentTarget.disabled = true;
+					try {
+						const data = await call('/settings', { method: 'PATCH', body: { trading_enabled: !c.trading_enabled } });
+						state = { connection: data.connection, caps: data.caps };
+						render();
+					} catch (e) {
+						setStatus(status, 'err', e.message);
+						ev.currentTarget.disabled = false;
+					}
+				});
+				return card;
+			}
+
+			function capsCard() {
+				const c = state.connection;
+				const caps = state.caps;
+				const pct = caps.daily_cap_usd ? Math.min(100, (caps.spent_today_usd / caps.daily_cap_usd) * 100) : 0;
+				const card = document.createElement('div');
+				card.className = 'card';
+				card.innerHTML = `
+					<h2>Spend caps</h2>
+					<p class="hint">Enforced on the server for every buy, from this account, the API or an agent. Sells are not capped.</p>
+					<div class="meter ${pct >= 100 ? 'full' : pct >= 75 ? 'high' : ''}" role="progressbar" aria-label="Spent today" aria-valuemin="0" aria-valuemax="${esc(caps.daily_cap_usd)}" aria-valuenow="${esc(caps.spent_today_usd)}"><span style="width:${pct}%"></span></div>
+					<div class="meter-text"><span><strong>${usd(caps.spent_today_usd)}</strong> bought today of ${usd(caps.daily_cap_usd)}</span><span>${usd(caps.remaining_today_usd)} left, resets ${esc(when(caps.resets_at))}</span></div>
+					<form id="caps-form" novalidate>
+						<div class="row">
+							<div><label for="per">Per-order cap</label><div class="money"><input id="per" type="number" min="0.01" max="10000" step="0.01" value="${esc(c.per_order_cap_usd)}" /></div></div>
+							<div><label for="day">Daily cap</label><div class="money"><input id="day" type="number" min="0.01" max="50000" step="0.01" value="${esc(c.daily_cap_usd)}" /></div></div>
+						</div>
+						<div class="actions">
+							<button class="btn" type="submit" id="caps-save" disabled>Save caps</button>
+							<span class="status" id="caps-status" role="status"></span>
+						</div>
+					</form>`;
+				const per = card.querySelector('#per');
+				const day = card.querySelector('#day');
+				const save = card.querySelector('#caps-save');
+				const status = card.querySelector('#caps-status');
+				const dirty = () => {
+					save.disabled = Number(per.value) === c.per_order_cap_usd && Number(day.value) === c.daily_cap_usd;
+					const bad = Number(per.value) > Number(day.value);
+					per.setAttribute('aria-invalid', String(bad));
+					setStatus(status, bad ? 'err' : '', bad ? 'The per-order cap cannot be higher than the daily cap.' : '');
+					if (bad) save.disabled = true;
+				};
+				per.addEventListener('input', dirty);
+				day.addEventListener('input', dirty);
+				card.querySelector('#caps-form').addEventListener('submit', async (ev) => {
+					ev.preventDefault();
+					save.disabled = true;
+					setStatus(status, '', 'Saving…');
+					try {
+						const data = await call('/settings', { method: 'PATCH', body: { per_order_cap_usd: Number(per.value), daily_cap_usd: Number(day.value) } });
+						state = { connection: data.connection, caps: data.caps };
+						render();
+					} catch (e) {
+						setStatus(status, 'err', e.message);
+						save.disabled = false;
+					}
+				});
+				return card;
+			}
+
+			function asyncCard(title, hint, loader) {
+				const card = document.createElement('div');
+				card.className = 'card';
+				card.innerHTML = `<div class="card-head"><div><h2>${title}</h2><p class="hint" style="margin:0">${hint}</p></div><button class="btn sec small" type="button" data-refresh>Refresh</button></div><div data-body></div>`;
+				const body = card.querySelector('[data-body]');
+				const run = async () => {
+					body.innerHTML = '<div class="skeleton line"></div><div class="skeleton line" style="width:80%"></div><div class="skeleton line" style="width:60%"></div>';
+					try {
+						body.innerHTML = await loader();
+					} catch (e) {
+						const fix = e.code === 'credentials_rejected' ? ' Robinhood no longer accepts this key: replace it above.' : e.code === 'rate_limited' ? ' Wait a few seconds and refresh.' : '';
+						body.innerHTML = `<div class="error-box"><span>${esc(e.message)}${fix}</span><button class="btn sec small" type="button" data-retry>Try again</button></div>`;
+						body.querySelector('[data-retry]').addEventListener('click', run);
+					}
+				};
+				card.querySelector('[data-refresh]').addEventListener('click', run);
+				run();
+				return card;
+			}
+
+			function holdingsCard() {
+				return asyncCard('Holdings', 'Live from Robinhood, valued at the current bid (what selling would fetch).', async () => {
+					const h = await call('/holdings');
+					if (!h.positions.length) {
+						return '<p class="empty"><strong>No crypto in this account yet.</strong> Fund your Robinhood Crypto account, or ask an agent to preview a buy within your caps.</p>';
+					}
+					const rows = h.positions.map((p) => `<tr><td><strong>${esc(p.asset)}</strong></td><td class="num mono">${esc(p.quantity)}</td><td class="num">${p.bid_usd == null ? 'n/a' : usd(p.bid_usd)}</td><td class="num">${usd(p.value_usd)}</td></tr>`).join('');
+					return `<div class="table-wrap"><table><thead><tr><th>Asset</th><th class="num">Quantity</th><th class="num">Bid</th><th class="num">Value</th></tr></thead><tbody>${rows}</tbody></table></div>
+						<div class="meter-text" style="margin-top:10px"><span>Total <strong>${usd(h.total_value_usd)}</strong>${h.unpriced_count ? `, ${h.unpriced_count} without a price` : ''}</span><span>as of ${esc(when(h.as_of))}</span></div>`;
+				});
+			}
+
+			function ordersCard() {
+				return asyncCard('Recent orders', 'Every preview and order, from this page, the API or an agent. Kept after you revoke.', async () => {
+					const { orders } = await call('/orders?limit=25');
+					if (!orders.length) {
+						return '<p class="empty"><strong>No orders yet.</strong> An agent calls <code>robinhood_preview_order</code>, shows you the confirm table, and places it with <code>robinhood_place_order</code> only after you say yes. Turn on the Trading group under <a href="/settings/mcp-tools">Tool access</a> to allow placing.</p>';
+					}
+					const rows = orders.map((o) => `<tr>
+						<td>${esc(when(o.created_at))}</td>
+						<td><span class="side-${esc(o.side)}">${esc(o.side)}</span> <strong>${esc(o.symbol)}</strong><br><span class="mono" style="color:var(--muted)">${esc(o.quantity)} ${esc(o.type)}${o.limit_price ? ' at ' + usd(o.limit_price) : ''}</span></td>
+						<td class="num">${usd(o.notional_usd)}</td>
+						<td><span class="st ${esc(o.status)}" title="${esc(o.error?.message || o.robinhood_state || '')}">${esc(o.status)}</span><br><span style="color:var(--muted);font-size:12px">${esc(o.source)}</span></td>
+					</tr>`).join('');
+					return `<div class="table-wrap"><table><thead><tr><th>When</th><th>Order</th><th class="num">Value</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+				});
+			}
+
+			function dangerCard() {
+				const card = document.createElement('div');
+				card.className = 'card';
+				card.innerHTML = `
+					<h2>Disconnect</h2>
+					<p class="hint">Deletes both keys from three.ws and voids any open previews. Your order history stays. To fully cut access, also delete the key on Robinhood.</p>
+					<button class="btn danger" type="button" id="revoke">Disconnect Robinhood</button>
+					<div id="revoke-confirm"></div>`;
+				card.querySelector('#revoke').addEventListener('click', (ev) => {
+					ev.currentTarget.hidden = true;
+					const box = card.querySelector('#revoke-confirm');
+					box.innerHTML = `<div class="confirm"><p>Disconnect this Robinhood Crypto account? Agents lose access immediately.</p>
+						<div class="actions" style="margin:0"><button class="btn danger" type="button" id="revoke-yes">Yes, disconnect</button><button class="btn sec" type="button" id="revoke-no">Keep it</button><span class="status" id="revoke-status" role="status"></span></div></div>`;
+					box.querySelector('#revoke-yes').focus();
+					box.querySelector('#revoke-no').addEventListener('click', () => {
+						box.innerHTML = '';
+						card.querySelector('#revoke').hidden = false;
+					});
+					box.querySelector('#revoke-yes').addEventListener('click', async (e2) => {
+						e2.currentTarget.disabled = true;
+						try {
+							const data = await call('/credentials', { method: 'DELETE' });
+							state = { connection: data.connection, caps: null };
+							render();
+						} catch (e) {
+							setStatus(box.querySelector('#revoke-status'), 'err', e.message);
+							e2.currentTarget.disabled = false;
+						}
+					});
+				});
+				return card;
+			}
+
+			load();
+		</script>
+	</body>
+</html>
