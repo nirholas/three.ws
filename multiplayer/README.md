@@ -166,28 +166,28 @@ Clients find the server through meta tags baked into the pages (use the `wss://`
 - Across instances: horizontal scaling is wired in [`src/index.js`](src/index.js). Set `REDIS_URI` and the server boots with `@colyseus/redis-driver` + `@colyseus/redis-presence`, making matchmaking cluster-aware; `deploy-cloudrun.sh` then allows multiple instances. Without it the server logs `single-instance mode` and must stay at one instance. A set-but-dead `REDIS_URI` is a boot failure on purpose: the old "stay single-instance" fallback silently split every coin community across instances.
 - Per-process state audit (what makes a second instance safe): game, play-pass, guest and presence tokens are stateless HMACs from env secrets, so they verify on any instance. The settlement replay guard, player profiles, cosmetics and social presence live in Upstash, not in memory. The event-score and feed caches are per-instance read caches that only cost a refetch. The stage registry and walk registry are per-process by nature, so the three `/internal/*` webhooks use [`src/fanout.js`](src/fanout.js): the receiving instance handles the event locally, publishes it on the Redis presence channel `three-ws:fanout`, and every peer handles it against its own sockets and rooms and acks on a per-request channel (bounded 300 ms wait).
 - Fresh revisions hand over once: about a minute after a new revision starts, Cloud Run replaces its deploy-time instance with the warm min-instance, and for that minute or two two instances serve at once (max-instances is a soft cap). Single-instance mode cannot share a room across them, so joins in that window can fail with `seat reservation expired` or land in a second copy of a coin world. The same overlap happens at routine instance replacement (four times in the week before 2026-11-06). Never deploy the world server inside an event window, and run the load test only after a new revision has settled.
-- Cloud Run caveat: with a shared load balancer a client that is told a room lives on a peer connects back to the balancer, which may land on a third instance. `--session-affinity` (already set) pins repeat connections but cannot choose the room's host. Measure it with the load test below before trusting a high `--max-instances`.
+- Cloud Run routing: Colyseus tells a client to dial `/<processId>/<roomId>` and expects the balancer to route to that process. Cloud Run cannot, so a socket landing on a non-owner instance used to fail with `seat reservation expired` (measured 2026-11-10: 200 of 200 joins failed on a two-instance Memorystore fleet). [`src/tunnel.js`](src/tunnel.js) fixes it: the instance that received the upgrade asks the room's host over Redis to open a loopback WebSocket to its own server (so onAuth and onJoin run exactly as for a direct client) and relays frames both ways as binary pub/sub messages, with a 10 s keepalive and a 45 s reaper for gateways that died. Cost: a tunnelled player's traffic crosses Redis, so keep `--max-instances` modest and prefer fewer, larger instances.
 
-### Provision Memorystore (owner step, one time)
+### Provision Memorystore (done 2026-11-10; the instance and secret exist)
 
 ```bash
 PROJECT=aerial-vehicle-466722-p5; REGION=us-central1
 gcloud services enable redis.googleapis.com vpcaccess.googleapis.com --project $PROJECT
-gcloud redis instances create three-ws-multiplayer --size=1 --tier=basic --region=$REGION --redis-version=redis_7_0 --project $PROJECT
+gcloud redis instances create three-ws-multiplayer --size=1 --tier=basic --region=$REGION --redis-version=redis_7_0 --network=default --project $PROJECT
 HOST=$(gcloud redis instances describe three-ws-multiplayer --region=$REGION --project $PROJECT --format='value(host)')
 PORT=$(gcloud redis instances describe three-ws-multiplayer --region=$REGION --project $PROJECT --format='value(port)')
 printf 'redis://%s:%s' "$HOST" "$PORT" | gcloud secrets create MULTIPLAYER_REDIS_URI --data-file=- --project $PROJECT
 gcloud secrets add-iam-policy-binding MULTIPLAYER_REDIS_URI --member=serviceAccount:three-ws-build@$PROJECT.iam.gserviceaccount.com --role=roles/secretmanager.secretAccessor --project $PROJECT
-# Cloud Run reaches the instance's private IP over Direct VPC egress:
+# The live service already reaches the VPC through the three-ws-vpc connector, so a redeploy keeps it.
+# A NEW service (e.g. a test fleet) passes VPC_CONNECTOR=three-ws-vpc so its first revision can reach Redis.
 USE_REDIS_SECRET=1 ./deploy-cloudrun.sh   # binds REDIS_URI from the secret, max-instances 10
-gcloud run services update three-ws-multiplayer --region $REGION --network default --subnet default --vpc-egress private-ranges-only
 ```
 
 Then confirm `curl <service>/health` shows `"presence":"redis"`.
 
 ### Tests
 
-`npm test` in this directory runs `node --test`: `test/boot.test.js` (local presence, and a dead `REDIS_URI` exits non-zero) and `test/two-instance.test.js` (two real server processes plus a real Redis from `redis-server` or `docker run redis:7-alpine`: same-coin players on different instances share a room, and `/internal/announce` counts both). Without `REDIS_URI` the two instances host disjoint rooms, which is what the shared-room assertion catches.
+`npm test` in this directory runs `node --test`: `test/boot.test.js` (local presence, and a dead `REDIS_URI` exits non-zero) and `test/two-instance.test.js` (real server processes plus a real Redis from `redis-server` or `docker run redis:7-alpine`: same-coin players on different instances share a room, `/internal/announce` counts both, and with no per-instance address a socket landing on the non-owner instance is tunnelled so chat reaches all four players). Without `REDIS_URI` the two instances host disjoint rooms, which is what the shared-room assertion catches.
 
 ### Load test
 
@@ -197,7 +197,18 @@ node scripts/multiplayer-load-test.mjs --url wss://<service-host> --clients 200 
 
 Real colyseus.js clients across N coin worlds move and chat for the duration. It reports join latency p50/p95, dropped sockets, distinct instances seen on `/health`, rooms per coin (must be 1) and chat delivery percent (must be 100); exit code 1 otherwise. Repeat `--url` to dial several entry points.
 
-Local two-instance reference run (60 clients, 3 coins, 15 s, two processes sharing one Redis): 100 percent chat delivery (4800 of 4800), one room per coin. The production-fleet figures are recorded here once the service is redeployed with Memorystore (owner step above); until then they are not claimed.
+Local two-instance reference run (60 clients, 3 coins, 15 s, two processes sharing one Redis): 100 percent chat delivery (4800 of 4800), one room per coin. The production-shaped figures follow.
+
+Production-shaped run, 2026-11-10: a separate Cloud Run service (`three-ws-multiplayer-redis-test`, min 2 / max 3 instances, `REDIS_URI` bound from Secret Manager `MULTIPLAYER_REDIS_URI`, Memorystore `three-ws-multiplayer`, 1 GB basic, us-central1), 200 clients, 4 coins, 60 s, one entry URL, 2 instances answering `/health`:
+
+| Metric | Result |
+|---|---|
+| Joined / failed joins / dropped sockets | 200 / 0 / 0 |
+| Join latency p50 / p95 / max | 679 ms / 1555 ms / 1902 ms |
+| Rooms per coin | 1 each (4 coins, 4 rooms) |
+| Chat delivery | 186000 of 186000 (100 percent) |
+
+The same fleet before the tunnel: 0 of 200 joined. Two Chromium contexts running the real `CommunityNet` on that fleet both saw `[alice, bob]` in one room, with the two upgrade requests logged on different Cloud Run instances. The test service was deleted afterwards; Memorystore and the secret remain, so promoting the live `three-ws-multiplayer` is one `USE_REDIS_SECRET=1 ./deploy-cloudrun.sh` (owner-gated production deploy, do not run inside an event window).
 
 ## What the schema looks like on the wire
 
