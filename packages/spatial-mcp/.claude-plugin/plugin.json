@@ -1,0 +1,10 @@
+{
+  "name": "spatial-mcp",
+  "version": "0.1.0",
+  "description": "Build, validate and lint Spatial MCP artifacts: the open shape for returning an interactive 3D scene as an MCP tool result.",
+  "author": {"name": "nirholas"},
+  "repository": "https://github.com/nirholas/spatial-mcp",
+  "homepage": "https://nirholas.github.io/spatial-mcp/",
+  "license": "CC0-1.0",
+  "keywords": ["mcp", "model-context-protocol", "3d", "glb", "spatial", "validator", "tool-result"]
+}
