@@ -22,6 +22,13 @@ WORKDIR /app
 #   (tsup) is a devDependency — omitting dev here would break `npm run build` below.
 COPY .npmrc package.json package-lock.json* ./
 COPY agent-payments-sdk/package.json ./agent-payments-sdk/
+# The root lockfile links bigint-buffer, deepmerge and elliptic to patched copies
+# vendored in multiplayer/vendor (CVE fixes with no upstream release). Without these
+# folders node_modules/bigint-buffer is a dangling link and @solana/spl-token's
+# buffer-layout-utils fails to load, so the worker cannot boot.
+COPY multiplayer/vendor/bigint-buffer ./multiplayer/vendor/bigint-buffer
+COPY multiplayer/vendor/deepmerge ./multiplayer/vendor/deepmerge
+COPY multiplayer/vendor/elliptic ./multiplayer/vendor/elliptic
 RUN npm ci --ignore-scripts || npm install --ignore-scripts
 
 # Bring in source needed at runtime, then build the SDK's dist/ explicitly
