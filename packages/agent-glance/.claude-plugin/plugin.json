@@ -1,0 +1,10 @@
+{
+  "name": "agent-glance",
+  "version": "0.1.0",
+  "description": "Render a three.ws agent card in the terminal or as README badge, SVG and embed snippets with the agent-glance CLI.",
+  "author": {"name": "nirholas"},
+  "repository": "https://github.com/nirholas/agent-glance",
+  "license": "Apache-2.0",
+  "homepage": "https://nirholas.github.io/agent-glance/",
+  "keywords": ["agent", "widget", "badge", "svg", "adaptive-card", "web-component", "three-ws"]
+}

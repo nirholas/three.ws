@@ -1,0 +1,18 @@
+{
+  "name": "three-ws-pose",
+  "version": "0.2.1",
+  "description": "Map a text prompt to a deterministic named pose seed and Euler joint rotations for rigged 3D avatars.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/three-ws-pose",
+  "license": "Apache-2.0",
+  "keywords": [
+    "pose",
+    "avatar",
+    "humanoid",
+    "deterministic",
+    "three-ws"
+  ],
+  "homepage": "https://nirholas.github.io/three-ws-pose/"
+}

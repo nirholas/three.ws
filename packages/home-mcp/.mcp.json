@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "home": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@three-ws/home-mcp"
+      ],
+      "env": {
+        "HOME_ASSISTANT_URL": "${HOME_ASSISTANT_URL}",
+        "HOME_ASSISTANT_TOKEN": "${HOME_ASSISTANT_TOKEN}",
+        "HOME_ALLOWED_ENTITIES": "${HOME_ALLOWED_ENTITIES}"
+      }
+    }
+  }
+}

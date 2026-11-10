@@ -1,0 +1,19 @@
+{
+  "name": "home-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "MCP server that gives an assistant safe control of a Home Assistant house, with a gate that refuses anything that opens it.",
+  "plugins": [
+    {
+      "name": "home-mcp",
+      "source": "./",
+      "description": "MCP server that gives an assistant safe control of a Home Assistant house, with a gate that refuses anything that opens it.",
+      "tags": [
+        "mcp",
+        "home-assistant",
+        "smart-home"
+      ]
+    }
+  ]
+}

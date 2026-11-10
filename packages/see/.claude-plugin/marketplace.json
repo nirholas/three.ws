@@ -1,0 +1,6 @@
+{
+  "name": "see-3d",
+  "owner": {"name": "nirholas"},
+  "description": "Let Claude look at a 3D model: render a GLB from several angles and read the geometry facts.",
+  "plugins": [{"name": "see-3d", "source": "./", "description": "Let Claude look at a 3D model: render a GLB from several angles and read the geometry facts.", "tags": ["3d","glb","vision","mcp","three-ws"]}]
+}

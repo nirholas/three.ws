@@ -1,0 +1,21 @@
+{
+  "name": "three-ws-pose",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Map a text prompt to a deterministic named pose seed and Euler joint rotations for rigged 3D avatars.",
+  "plugins": [
+    {
+      "name": "three-ws-pose",
+      "source": "./",
+      "description": "Map a text prompt to a deterministic named pose seed and Euler joint rotations for rigged 3D avatars.",
+      "tags": [
+        "pose",
+        "avatar",
+        "humanoid",
+        "deterministic",
+        "three-ws"
+      ]
+    }
+  ]
+}

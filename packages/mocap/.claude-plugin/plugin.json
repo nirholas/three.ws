@@ -1,0 +1,18 @@
+{
+  "name": "three-ws-mocap",
+  "version": "0.1.3",
+  "description": "Save, fetch and replay face, pose and hand motion capture clips on three.ws avatars with the @three-ws/mocap SDK.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/three-ws-mocap",
+  "license": "Apache-2.0",
+  "keywords": [
+    "motion-capture",
+    "mocap",
+    "avatar",
+    "three-ws",
+    "blendshapes"
+  ],
+  "homepage": "https://nirholas.github.io/three-ws-mocap/"
+}

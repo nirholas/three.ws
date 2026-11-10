@@ -1,0 +1,21 @@
+{
+  "name": "three-ws-mocap",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Save, fetch and replay face, pose and hand motion capture clips on three.ws avatars with the @three-ws/mocap SDK.",
+  "plugins": [
+    {
+      "name": "three-ws-mocap",
+      "source": "./",
+      "description": "Save, fetch and replay face, pose and hand motion capture clips on three.ws avatars with the @three-ws/mocap SDK.",
+      "tags": [
+        "motion-capture",
+        "mocap",
+        "avatar",
+        "three-ws",
+        "blendshapes"
+      ]
+    }
+  ]
+}

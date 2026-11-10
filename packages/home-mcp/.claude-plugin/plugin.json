@@ -1,0 +1,17 @@
+{
+  "name": "home-mcp",
+  "version": "0.1.0",
+  "description": "MCP server that gives an assistant safe control of a Home Assistant house, with a gate that refuses anything that opens it.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/home-mcp",
+  "license": "Apache-2.0",
+  "homepage": "https://nirholas.github.io/home-mcp/",
+  "keywords": [
+    "mcp",
+    "home-assistant",
+    "smart-home",
+    "iot"
+  ]
+}

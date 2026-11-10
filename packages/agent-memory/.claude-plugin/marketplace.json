@@ -1,0 +1,22 @@
+{
+  "name": "agent-memory",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Persistent, embeddings-backed memory for agents: remember facts, recall them semantically, walk the entity graph.",
+  "plugins": [
+    {
+      "name": "agent-memory",
+      "source": "./",
+      "description": "Persistent, embeddings-backed memory for agents: remember facts, recall them semantically, walk the entity graph.",
+      "tags": [
+        "agent-memory",
+        "embeddings",
+        "semantic-search",
+        "knowledge-graph",
+        "rag",
+        "three-ws"
+      ]
+    }
+  ]
+}

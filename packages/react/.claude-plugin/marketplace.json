@@ -1,0 +1,21 @@
+{
+  "name": "three-ws-react",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Embed live three.ws 3D AI agents in a React app with the Agent3D component and its imperative ref handle.",
+  "plugins": [
+    {
+      "name": "three-ws-react",
+      "source": "./",
+      "description": "Embed live three.ws 3D AI agents in a React app with the Agent3D component and its imperative ref handle.",
+      "tags": [
+        "react",
+        "embed",
+        "avatar",
+        "3d",
+        "three-ws"
+      ]
+    }
+  ]
+}

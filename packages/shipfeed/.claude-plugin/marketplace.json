@@ -1,0 +1,6 @@
+{
+  "name": "shipfeed",
+  "owner": {"name": "nirholas"},
+  "description": "Turn commit history into a readable release feed and link changelog entries to the commits behind them.",
+  "plugins": [{"name": "shipfeed", "source": "./", "description": "Turn commit history into a readable release feed and link changelog entries to the commits behind them.", "tags": ["changelog","conventional-commits","release-notes","git"]}]
+}
