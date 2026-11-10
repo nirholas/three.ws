@@ -506,7 +506,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1163.0",
+			"version": "3.1164.0",
 			"powers": null
 		},
 		{
@@ -990,7 +990,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/microsoft/playwright",
 			"funding": null,
-			"version": "1.64.1",
+			"version": "1.65.0",
 			"powers": null
 		},
 		{
@@ -1650,7 +1650,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/harrisiirak/cron-parser",
 			"funding": null,
-			"version": "5.10.3",
+			"version": "5.10.4",
 			"powers": null
 		},
 		{
@@ -2123,7 +2123,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/microsoft/playwright",
 			"funding": null,
-			"version": "1.64.1",
+			"version": "1.65.0",
 			"powers": null
 		},
 		{
@@ -2332,7 +2332,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/wevm/viem",
 			"funding": "https://github.com/sponsors/wevm",
-			"version": "2.57.15",
+			"version": "2.57.16",
 			"powers": "Typed EVM client used alongside ethers for EVM-chain integrations."
 		},
 		{
@@ -2857,7 +2857,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/elevenlabs/elevenlabs-js",
 			"funding": null,
-			"version": "2.76.0",
+			"version": "2.77.0",
 			"powers": "The agent's text-to-speech voice in chat, calls, and the home voice loop."
 		},
 		{

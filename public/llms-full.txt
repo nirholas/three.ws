@@ -6062,7 +6062,7 @@ Editorial index of three.ws launches and long-form posts.
 
 URL: https://three.ws/blog/ibm-user-group-meetup-3-recap
 
-How the Three.ws User Group's third meetup went, sponsored by IBM Community and held inside three.ws/play: the first project-owned user group on IBM Community, the first signatures on the signature wall, what shipped since August, the partner roster, and what comes next.
+How the Three.ws User Group's third meetup went, sponsored by IBM Community and held inside the $THREE home town at three.ws/play: the first project-owned user group on IBM Community, the first names on the signature wall, what shipped since August, and what comes next.
 
 ### three.ws and NVIDIA: Inception, the GPU Fleet, and Our GTC 2027 Poster
 
@@ -6513,6 +6513,12 @@ SKILL-MD 1.0: every paid HTTP route on three.ws with its price, parameters, and 
 ## News
 
 Product launches, integrations, and announcements from three.ws.
+
+### Meetup #3 Recap: The Three.ws User Group Back in the World
+
+URL: https://three.ws/news/ibm-user-group-meetup-3-recap
+
+How the Three.ws User Group's third meetup went, sponsored by IBM Community and held inside the $THREE home town at three.ws/play: the first project-owned user group on IBM Community, the first names on the signature wall, what shipped since August, and what comes next.
 
 ### The Three.ws User Group Meets Inside the World Again on November 6
 

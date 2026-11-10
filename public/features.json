@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-10T15:17:06.756Z",
+	"generated_at": "2026-11-10T19:37:25.753Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -12044,7 +12044,7 @@
 				{
 					"path": "/blog/ibm-user-group-meetup-3-recap",
 					"title": "Meetup #3 Recap: The Three.ws User Group Back in the World",
-					"description": "How the Three.ws User Group's third meetup went, sponsored by IBM Community and held inside three.ws/play: the first project-owned user group on IBM Community, the first signatures on the signature wall, what shipped since August, the partner roster, and what comes next.",
+					"description": "How the Three.ws User Group's third meetup went, sponsored by IBM Community and held inside the $THREE home town at three.ws/play: the first project-owned user group on IBM Community, the first names on the signature wall, what shipped since August, and what comes next.",
 					"added": "2026-11-07",
 					"auth": null,
 					"indexable": true,
@@ -12914,6 +12914,18 @@
 			"title": "News",
 			"description": "Product launches, integrations, and announcements from three.ws.",
 			"pages": [
+				{
+					"path": "/news/ibm-user-group-meetup-3-recap",
+					"title": "Meetup #3 Recap: The Three.ws User Group Back in the World",
+					"description": "How the Three.ws User Group's third meetup went, sponsored by IBM Community and held inside the $THREE home town at three.ws/play: the first project-owned user group on IBM Community, the first names on the signature wall, what shipped since August, and what comes next.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
 				{
 					"path": "/news/ibm-user-group-meetup-3",
 					"title": "The Three.ws User Group Meets Inside the World Again on November 6",
