@@ -6,7 +6,7 @@
 // Robinhood, so we size and validate before we ever show a preview.
 //
 // Quantities and prices arrive as decimal strings. Arithmetic runs on BigInt
-// fixed point (18 decimals) so "$10 of BTC" floors to the exact step instead of
+// fixed point (18 decimals) so "spend $10" floors to the exact step instead of
 // drifting on float rounding.
 
 const SCALE = 18;

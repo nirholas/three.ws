@@ -1,6 +1,6 @@
 // Robinhood Crypto connector MCP tools: the signed-in owner's own Robinhood
 // Crypto account, through the API key they pasted at three.ws/settings/robinhood.
-// Crypto pairs only (BTC-USD and the like).
+// Crypto pairs only (ASSET-USD symbols).
 //
 // Every tool calls api/_lib/robinhood/service.js, the same service behind
 // /api/v1/robinhood/crypto/*, so the spend caps, the order ledger and the
@@ -21,7 +21,7 @@ const READ = { readOnlyHint: true, destructiveHint: false, idempotentHint: true,
 const WRITE = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true };
 const MONEY = { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true };
 
-const PAIR = { type: 'string', pattern: '^[A-Za-z0-9]{2,10}-USD$', description: 'A Robinhood Crypto pair, such as BTC-USD.' };
+const PAIR = { type: 'string', pattern: '^[A-Za-z0-9]{2,10}-USD$', description: 'A Robinhood Crypto pair in the form ASSET-USD (the asset code, a hyphen, USD).' };
 
 function ok(structured) {
 	return { content: [{ type: 'text', text: JSON.stringify(structured, null, 2) }], structuredContent: structured };
@@ -126,7 +126,7 @@ export const toolDefs = [
 			scope: 'wallet:trade',
 			annotations: MONEY,
 			description:
-				"Place the Robinhood Crypto order a preview describes, in the owner's own account, signed with their key. Needs the preview_id from robinhood_preview_order (under five minutes old, single use) and confirm_order: true, which you may only send after the owner explicitly approved that preview's confirm table. A market buy whose price moved more than 2% since the preview is refused with price_moved; preview again. Spend is reserved against the daily cap before the order is sent. Returns the ledger entry with Robinhood's order id and state. Use this only after the owner approved the exact preview.",
+				"Place the Robinhood Crypto order a preview describes, in the owner's own account, signed with their key. Needs the preview_id from robinhood_preview_order (under five minutes old, single use) and confirm_order: true, which you may only send after the owner explicitly approved that preview's confirm table. A market buy whose price moved more than 2% since the preview is refused with price_moved; preview again. Spend is reserved against the daily cap before the order is sent. Returns the ledger entry with Robinhood's order id and state. Use this when the owner has approved the exact preview and wants it placed.",
 			inputSchema: {
 				type: 'object',
 				properties: {

@@ -1260,6 +1260,23 @@
 				"removed": 0,
 				"total": 794
 			}
+		},
+		{
+			"date": "2026-11-10",
+			"added": {
+				"mcp": [
+					"robinhood_holdings",
+					"robinhood_place_order",
+					"robinhood_preview_order",
+					"robinhood_quote"
+				]
+			},
+			"removed": {},
+			"counts": {
+				"added": 4,
+				"removed": 0,
+				"total": 798
+			}
 		}
 	]
 }

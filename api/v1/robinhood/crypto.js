@@ -10,7 +10,7 @@
  *   DELETE /api/v1/robinhood/crypto/credentials      revoke (the order ledger is kept)
  *   PATCH  /api/v1/robinhood/crypto/settings         { per_order_cap_usd?, daily_cap_usd?, trading_enabled? }
  *   GET    /api/v1/robinhood/crypto/holdings         positions priced at the live bid
- *   GET    /api/v1/robinhood/crypto/quote            ?symbol=BTC-USD&symbol=ETH-USD
+ *   GET    /api/v1/robinhood/crypto/quote            ?symbol=ASSET-USD (repeat or comma-separate for several)
  *   GET    /api/v1/robinhood/crypto/orders           ?limit (the ledger, newest first)
  *   POST   /api/v1/robinhood/crypto/orders/preview   { symbol, side, type?, quantity | amount_usd, limit_price? }
  *   POST   /api/v1/robinhood/crypto/orders           { preview_id, confirm_order: true }

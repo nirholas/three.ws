@@ -248,9 +248,9 @@ export async function holdings({ userId }) {
 export async function quote({ userId, symbols }) {
 	return guard(async () => {
 		const list = (Array.isArray(symbols) ? symbols : [symbols]).map((s) => String(s || '').trim().toUpperCase()).filter(Boolean);
-		if (!list.length) throw new ConnectorError(400, 'bad_request', 'Name at least one pair, such as BTC-USD.');
+		if (!list.length) throw new ConnectorError(400, 'bad_request', 'Name at least one pair, in the form ASSET-USD.');
 		const bad = list.find((s) => !isCryptoSymbol(s));
-		if (bad) throw new ConnectorError(400, 'bad_request', `${bad} is not a crypto pair. Use the form BTC-USD.`);
+		if (bad) throw new ConnectorError(400, 'bad_request', `${bad} is not a crypto pair. Use the form ASSET-USD.`);
 		const client = await clientFor(await requireConnection(userId));
 		const rows = await client.bestBidAskMany(list);
 		return {
@@ -289,7 +289,7 @@ async function priceFor(client, symbol, side, quantity) {
 export async function previewOrder({ userId, source, symbol, side, type = 'market', quantity, amountUsd, limitPrice }) {
 	return guard(async () => {
 		const pair = String(symbol || '').trim().toUpperCase();
-		if (!isCryptoSymbol(pair)) throw new ConnectorError(400, 'bad_request', 'symbol must be a crypto pair such as BTC-USD.');
+		if (!isCryptoSymbol(pair)) throw new ConnectorError(400, 'bad_request', 'symbol must be a crypto pair in the form ASSET-USD.');
 		if (side !== 'buy' && side !== 'sell') throw new ConnectorError(400, 'bad_request', 'side must be buy or sell.');
 		if (type !== 'market' && type !== 'limit') throw new ConnectorError(400, 'bad_request', 'type must be market or limit.');
 		if (type === 'limit' && !(Number(limitPrice) > 0)) throw new ConnectorError(400, 'bad_request', 'A limit order needs a positive limit_price.');
