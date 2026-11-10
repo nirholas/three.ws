@@ -12,7 +12,7 @@ Snapshot: 2026-11-03. **6,880 repos scanned** with the GitHub GraphQL API:
 | nirholas, all public | 433 | Every public source repo (155 private repos excluded) |
 | nirholas, top 40 | 40 | The 40 public repos with the most stars |
 
-About 70 signals were collected per repo: CI status of the last 10 default-branch commits, releases, commit and PR activity, file tree, README structure and community files. The full tables are in [Appendix: full tables](#appendix-full-tables). Per-repo fixes for all 433 public repos, ordered least to most stars, are in [own-repos.md](own-repos.md).
+About 70 signals were collected per repo: CI status of the last 10 default-branch commits, releases, commit and PR activity, file tree, README structure and community files. The full tables are in [Appendix: full tables](#appendix-full-tables). Per-repo fixes for all 433 public repos, ordered least to most stars, are in [own-repos.md](own-repos.md). A one-week follow-up on what github.com/trending shows, with first-screen README patterns, is in [trending-2026-11-10.md](trending-2026-11-10.md).
 
 ## The answer in five lines
 
