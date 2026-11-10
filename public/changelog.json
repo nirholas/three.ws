@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-10T19:37:25.908Z",
+	"generated_at": "2026-11-10T19:53:49.390Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -75,6 +75,16 @@
 			"link": "/forge",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-10",
+			"type": "update",
+			"title": "Multiplayer worlds hold together across several servers",
+			"summary": "Players who land on a different server than the one hosting their world are now bridged to it, so a crowd can be spread over several servers without anyone being cut off. Measured on a two-server test fleet backed by a dedicated shared Redis: 200 players across 4 coin worlds joined with no failures or dropped connections, and every one of 186000 chat deliveries arrived. The live world server is unchanged until its next deploy.",
+			"link": null,
+			"tags": [
+				"infra"
 			]
 		},
 		{

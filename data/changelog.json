@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-10",
+			"title": "Multiplayer worlds hold together across several servers",
+			"summary": "Players who land on a different server than the one hosting their world are now bridged to it, so a crowd can be spread over several servers without anyone being cut off. Measured on a two-server test fleet backed by a dedicated shared Redis: 200 players across 4 coin worlds joined with no failures or dropped connections, and every one of 186000 chat deliveries arrived. The live world server is unchanged until its next deploy.",
+			"tags": ["infra"]
+		},
+		{
+			"date": "2026-11-10",
 			"title": "The site header no longer pushes pages down as it loads",
 			"summary": "The skip link and the shared header now hold their final space from the first paint on every page, and the Forge example prompts sit in fixed cells, so content stops jumping under your cursor while a page loads.",
 			"tags": ["improvement"]
