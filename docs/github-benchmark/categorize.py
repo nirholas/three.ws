@@ -4,10 +4,6 @@ Usage: GH_TOKEN=... python3 -I categorize.py OUT_DIR
 """
 import json, os, re, sys, urllib.request
 
-TOK = os.environ["GH_TOKEN"]
-D = sys.argv[1]
-targets = json.load(open(os.path.join(D, "targets.json")))
-
 BUCKETS = [
     ("Coding-agent skills, plugins, rules", r"\bskills?\b|claude code|claude-code|\bplugins? for\b|cursor rules|agents\.md|codex|subagent|slash command|opencode|vibe.?cod"),
     ("MCP servers and tooling", r"\bmcp\b|model context protocol"),
@@ -27,6 +23,7 @@ BUCKETS = [
 
 
 def gql(q):
+    TOK = os.environ["GH_TOKEN"]
     req = urllib.request.Request("https://api.github.com/graphql", data=json.dumps({"query": q}).encode(),
                                  headers={"Authorization": f"Bearer {TOK}", "User-Agent": "bench"})
     return json.loads(urllib.request.urlopen(req, timeout=60).read())

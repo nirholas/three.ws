@@ -246,4 +246,5 @@ def main():
                 print(f"  batch {i}/{len(batches)} gql remaining {remaining}", file=sys.stderr)
 
 
-main()
+if __name__ == "__main__":
+    main()
