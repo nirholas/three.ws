@@ -42,7 +42,9 @@ settled in the Cloud console; nothing else needs to change.
 The 16:05 tick that day failed `npm ci` (a lockfile briefly out of sync on
 `main`), and the next tick skipped the install and ran on a broken
 `node_modules`. `run.sh` now records each successful install and retries any
-that did not finish.
+that did not finish, and builds the avatar studio from the root workspace
+install (its own `character-studio/package-lock.json` is stale, so a separate
+`npm ci` there always failed). Tick `20261110T190653Z` verified both.
 
 - VM `three-ws-autopilot` (e2-standard-8, 200 GB pd-balanced, Debian 12, us-central1-a) running as `three-ws-autopilot@aerial-vehicle-466722-p5.iam.gserviceaccount.com`.
 - Report bucket `gs://three-ws-autopilot`, 90 day lifecycle on `runs/`.
