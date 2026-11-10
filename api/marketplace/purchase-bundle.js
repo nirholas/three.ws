@@ -88,11 +88,32 @@ async function handleCreate(req, res) {
 	`;
 	if (!agentRow?.address) return error(res, 422, 'no_payout_wallet', 'creator has no payout wallet');
 
-	const feeResult = await resolveMarketplaceFee({
-		priceAmount: bundle.price_amount,
-		currencyMint: bundle.currency_mint,
-		chain: bundle.chain,
-	}).catch(() => ({ feeAmount: 0, treasuryWallet: null }));
+	// A buyer who already holds every priced skill has nothing left to buy. Say so
+	// instead of opening a second pending row they could pay for and gain nothing.
+	const priced = await sql`
+		SELECT skill FROM agent_skill_prices
+		WHERE agent_id = ${bundle.agent_id} AND is_active = true AND skill = ANY(${bundle.skills})
+	`;
+	if (priced.length > 0) {
+		const held = await sql`
+			SELECT DISTINCT skill FROM skill_purchases
+			WHERE user_id = ${auth.userId} AND agent_id = ${bundle.agent_id}
+			  AND status = 'confirmed' AND skill = ANY(${bundle.skills})
+			  AND (valid_until IS NULL OR valid_until > now())
+		`;
+		const heldSet = new Set(held.map((r) => r.skill));
+		if (priced.every((r) => heldSet.has(r.skill)))
+			return json(res, 200, { data: { already_owned: true, bundle_id: bundle.id, skills: bundle.skills } });
+	}
+
+	// The platform fee is a Solana leg of the same transfer. EVM bundles pay the
+	// seller the full price (see the revenue note in handleConfirm).
+	const fee = bundle.chain === 'solana'
+		? await resolveMarketplaceFee({ grossAtomics: BigInt(bundle.price_amount) }).catch(() => null)
+		: null;
+	const feeAmount = fee ? fee.feeAtomics : 0n;
+	const treasury = fee ? fee.recipient.toBase58() : null;
+	const creatorAmount = BigInt(bundle.price_amount) - feeAmount;
 
 	const reference = Keypair.generate().publicKey.toString();
 
@@ -102,8 +123,8 @@ async function handleCreate(req, res) {
 			 platform_fee_amount, reference, platform_fee_wallet)
 		VALUES
 			(${bundle.id}, ${auth.userId}, ${bundle.agent_id}, ${bundle.price_amount},
-			 ${bundle.currency_mint}, ${bundle.chain}, ${feeResult.feeAmount ?? 0},
-			 ${reference}, ${feeResult.treasuryWallet ?? null})
+			 ${bundle.currency_mint}, ${bundle.chain}, ${feeAmount.toString()},
+			 ${reference}, ${treasury})
 		RETURNING id, price_amount, currency_mint, chain
 	`;
 
@@ -116,8 +137,10 @@ async function handleCreate(req, res) {
 			chain:         bundle.chain,
 			recipient:     agentRow.address,
 			reference,
-			fee_amount:    feeResult.feeAmount ?? 0,
-			treasury:      feeResult.treasuryWallet ?? null,
+			fee_amount:    Number(feeAmount),
+			treasury,
+			fee:           fee ? { recipient: treasury, amount: feeAmount.toString(), bps: fee.bps } : null,
+			creator_amount: creatorAmount.toString(),
 			skills:        bundle.skills,
 		},
 	});
