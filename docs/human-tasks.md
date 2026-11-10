@@ -89,4 +89,4 @@ The database tables ship in `api/_lib/migrations/*_human_tasks*.sql`. Apply them
 ## Verification
 
 - Unit and service tests: `npx vitest run tests/human-tasks-state.test.js tests/human-tasks-money.test.js tests/human-tasks-service.test.js`.
-- Devnet proof of the escrow legs: `node scripts/qa-human-task-devnet.mjs`. It needs devnet SOL and devnet USDC in the funding wallet and prints the exact shortfall if it is short.
+- Devnet proof of the escrow legs: `node scripts/qa-human-task-devnet.mjs`. It needs devnet SOL and devnet USDC in the funding wallet and prints the exact shortfall if it is short. When the devnet faucets are out of reach (the RPC airdrop is closed and both faucet sites are captcha-gated), run the same script against a local `solana-test-validator` seeded with the devnet USDC mint account, its mint authority swapped to a throwaway key, by setting `SOLANA_RPC_URL_DEVNET=http://127.0.0.1:8899`. The closing line states whether the proof ran on devnet or on a local validator.

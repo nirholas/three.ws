@@ -9,6 +9,11 @@
 // generated per run, so the production escrow secret is never loaded. The
 // network is hard-coded to devnet; nothing here can touch mainnet.
 //
+// While the devnet faucets are out of reach, the same code can be proven on a
+// local solana-test-validator seeded with the devnet USDC mint account (mint
+// authority swapped to a throwaway key so test USDC can be minted): point
+// SOLANA_RPC_URL_DEVNET at it. The closing line names which chain was used.
+//
 // Exit codes: 0 proven, 2 funding wallet short of devnet SOL or USDC (the single
 // owner step is printed), 1 any failure.
 
@@ -90,4 +95,6 @@ console.log(`refund ${refund.signature}`);
 must((await bal(funder.publicKey.toBase58())) === before, 'funder got the full bounty plus fee back');
 must((await chain.escrowBalance(b)) === 0n, 'refund escrow is empty');
 
-console.log('\nHuman-task escrow release and refund proven on devnet.');
+const where = new URL(RPC).hostname;
+const local = where === '127.0.0.1' || where === 'localhost';
+console.log(`\nHuman-task escrow release and refund proven ${local ? `on a local validator (${RPC}), not on devnet` : `on devnet (${where})`}.`);
