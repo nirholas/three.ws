@@ -36,11 +36,16 @@ RUN npm ci --ignore-scripts || npm install --ignore-scripts
 # it the worker dies with ENOENT before it opens the health port, so Cloud Run
 # refuses the revision. `npm run deploy:sniper` boots this exact COPY set before
 # it builds (verifyImageBoots), so a new runtime read outside it fails there.
+# packages/avatar-agent-mcp/src/lib/jito-tip-accounts.js is imported by
+# api/_lib/execution-engine.js (the Jito bundle tip list every sniper buy and
+# sell submits through). It has no imports of its own, so only that file is
+# copied; without it the worker dies with ERR_MODULE_NOT_FOUND at boot.
 COPY agent-payments-sdk ./agent-payments-sdk
 COPY api ./api
 COPY data/plans.json ./data/plans.json
 COPY src ./src
 COPY packages/agent-sniper/src ./packages/agent-sniper/src
+COPY packages/avatar-agent-mcp/src/lib/jito-tip-accounts.js ./packages/avatar-agent-mcp/src/lib/jito-tip-accounts.js
 COPY workers/agent-sniper ./workers/agent-sniper
 RUN npm run build --prefix agent-payments-sdk
 
