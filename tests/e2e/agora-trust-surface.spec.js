@@ -185,7 +185,9 @@ test.describe('Agora trust surface (Task 07)', () => {
 		test.skip(!picked, 'no reachable forge GLB in the live gallery to verify against');
 
 		// Independent digest: computed here in Node, never by the code under test.
-		const dl = await request.get(picked.url);
+		// identity encoding: the digest must cover the stored bytes, not whatever
+		// transfer encoding the CDN picked for this client.
+		const dl = await request.get(picked.url, { headers: { 'accept-encoding': 'identity' } });
 		expect(dl.ok(), `deliverable should download: ${picked.url}`).toBeTruthy();
 		const bytes = await dl.body();
 		const { createHash } = await import('node:crypto');
