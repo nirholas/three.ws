@@ -68,11 +68,15 @@ RUN pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.py
 # failed to load at boot and every inference on the revision failed. open3d is
 # pinned for the same reason: an unpinned resolve on 2026-09-18 pulled a wheel
 # with new system-library needs (see the apt layer above) and the load failed at
-# boot. pillow is floored at 13.0.0, the release that fixes its 2026 CRITICALs.
+# boot. The 2026-11-10 CVE pass moved transformers to 5.21.0 and rembg to
+# 2.0.86 (both clear HIGHs in the old pins; rembg past 2.0.69 needs Python
+# 3.11+) and floored pillow at 13.0.0, the release that fixes its 2026
+# CRITICALs. The image pipeline never loads a transformers model: TRELLIS only
+# imports CLIPTextModel for its text pipeline, which the build gate exercises.
 RUN pip install \
         "pillow>=13.0.0" imageio imageio-ffmpeg tqdm easydict opencv-python-headless \
-        scipy ninja rembg onnxruntime trimesh xatlas pyvista pymeshfix \
-        igraph "transformers==4.46.3" "open3d==0.20.0" \
+        scipy ninja "rembg==2.0.86" onnxruntime trimesh xatlas pyvista pymeshfix \
+        igraph "transformers==5.21.0" "open3d==0.20.0" \
     && pip install git+https://github.com/EasternJournalist/utils3d.git@9a4eb15e4021b67b12c460c7057d642626897ec8
 
 # -- 3. setup.sh --xformers / --spconv / --kaolin (prebuilt wheels) ------------
@@ -102,10 +106,13 @@ RUN git clone https://github.com/autonomousvision/mip-splatting.git /tmp/ext/mip
 # pytest is here for the build-time gate at the bottom of this file, the same
 # pattern workers/garment-forge uses: the request policy is unit tested during
 # `docker build`, so a broken tier table or clamp can never reach a revision.
+# fastapi 0.115 capped starlette below the releases that fix its HIGHs, hence
+# the 0.162 / 1.10 pair. filelock and setuptools are pinned to their patched
+# releases here, after the CUDA extensions above have finished building.
 RUN pip install \
-        "fastapi==0.115.0" "uvicorn[standard]==0.32.0" "pydantic>=2.0.0" \
+        "fastapi==0.162.0" "starlette==1.10.0" "uvicorn[standard]==0.32.0" "pydantic>=2.0.0" \
         "httpx>=0.27.0" "google-cloud-storage==2.18.0" "safetensors>=0.4.0" \
-        "pytest>=8.0.0"
+        "pytest>=8.0.0" "filelock==4.2.4" "setuptools==84.2.1"
 
 # -- 6. TRELLIS source (imported via PYTHONPATH, pinned for reproducibility) ---
 # --recurse-submodules is REQUIRED: TRELLIS vendors FlexiCubes (its mesh

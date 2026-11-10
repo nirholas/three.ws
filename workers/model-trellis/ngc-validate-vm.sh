@@ -39,10 +39,13 @@ docker run -d --name trellis --gpus all -p 8080:8080 \
 	-v /weights/trellis-large:/weights/trellis-large:ro -v /output:/output "$IMAGE" || { echo "run failed"; exit 1; }
 
 READY=0
+# /health answers 503 once the load budget is spent, so read the body whatever
+# the status code and stop early on a load error instead of waiting out the loop.
+health_field() { python3 -c 'import json,sys; d=json.loads(sys.stdin.read() or "{}"); v=d.get(sys.argv[1]); print("" if v in (None, False) else v)' "$1" 2>/dev/null; }
 for i in $(seq 1 240); do
-	H="$(curl -fsS localhost:8080/health 2>/dev/null || true)"
-	if echo "$H" | grep -q '"ready":true'; then READY=1; break; fi
-	if echo "$H" | grep -q '"load_error":"'; then break; fi
+	H="$(curl -sS localhost:8080/health 2>/dev/null || true)"
+	if [ "$(echo "$H" | health_field ready)" = True ]; then READY=1; break; fi
+	if [ -n "$(echo "$H" | health_field load_error)" ]; then break; fi
 	sleep 5
 done
 T_READY=$(stamp)
