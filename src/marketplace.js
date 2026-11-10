@@ -34,6 +34,14 @@ import { leaveAppForPayment } from './shared/native-handoff.js';
 import { buildReferencedSplTransfer } from './shared/spl-token-program.js';
 import { withPayoutStepUp } from './payout-step-up.js';
 import { shortAddress as shortWalletAddress } from './shared/address.js';
+import {
+	atomicToHuman,
+	buildBundleView,
+	renderBundleCard,
+	renderBundleError,
+	renderBundleOwnerEmpty,
+	renderBundleSkeletons,
+} from './marketplace-bundles.js';
 import { wireModelViewerFallback } from './shared/model-viewer-fallback.js';
 
 ensureStateKitStyles();
@@ -4985,6 +4993,7 @@ async function loadDetail(id) {
 		}
 		detailState = { agent, bookmarked: !!agent.bookmarked };
 		renderDetail(agent, !!agent.bookmarked);
+		loadBundles(agent);
 		loadReviews(id);
 		loadReputation(id);
 
@@ -6177,6 +6186,15 @@ function bindEvents() {
 			}
 			return;
 		}
+		const bundleBuy = e.target.closest?.('.bundle-buy-btn[data-bundle-id]');
+		if (bundleBuy) {
+			openBundlePurchaseFlow(bundleBuy.dataset.agentId, bundleBuy.dataset.bundleId).catch((err) => log.error('[marketplace] bundle flow', err));
+			return;
+		}
+		if (e.target.closest?.('.bundle-retry-btn') && detailState?.agent) {
+			loadBundles(detailState.agent);
+			return;
+		}
 		if (e.target.matches('.purchase-btn')) {
 			const skillName = e.target.dataset.skillName;
 			const agentId = e.target.dataset.agentId;
@@ -7313,6 +7331,7 @@ function closePaymentModal() {
 	setPaymentBadge('');
 	setStatus('');
 	pendingAssetPurchase = null;
+	pendingBundlePurchase = null;
 }
 
 function shortMintLabel(mint) {
@@ -7663,6 +7682,9 @@ async function handlePurchase() {
 	if (confirmBtn?.dataset.mode === 'asset') {
 		return handleAssetPurchase();
 	}
+	if (confirmBtn?.dataset.mode === 'bundle') {
+		return handleBundlePurchase();
+	}
 	if (!connectedWallet) { setStatus('Connect a wallet first.', 'err'); return; }
 	if (!detailState?.agent) return;
 
@@ -7769,6 +7791,7 @@ async function handlePurchase() {
 
 // Mobile-wallet path: render a Solana Pay QR. Buyer scans + signs on phone.
 async function startQrPurchase() {
+	if ($('payment-confirm-btn')?.dataset.mode === 'bundle') return startBundleQrPurchase();
 	if (!detailState?.agent) return;
 	const agentId = detailState.agent.id;
 	const skill = $('payment-skill-name').textContent;
@@ -7838,6 +7861,285 @@ async function startQrPurchase() {
 			},
 		});
 	}
+}
+
+// ── Skill bundles (buyer storefront) ──────────────────────────────────────
+//
+// A bundle unlocks several of one agent's skills for a single payment. Cards are
+// rendered from the real public GET /api/agents/:id/bundles; checkout reuses the
+// payment modal and the same transfer builder as single-skill purchases, with
+// POST /api/marketplace/purchase-bundle as the quote and its /:id/confirm as the
+// on-chain proof. Pure view-model and markup live in ./marketplace-bundles.js.
+
+let pendingBundlePurchase = null; // { agentId, view }
+
+const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+
+function bundleMintLabel(mint) {
+	return mint === THREE_MINT ? '$THREE' : shortMintLabel(mint || '');
+}
+
+async function loadBundles(agent) {
+	const section = $('d-bundles-section');
+	const host = $('d-bundles');
+	if (!section || !host || !agent?.id) return;
+	const agentId = agent.id;
+	const isOwner = !!(agent.is_mine || agent.is_owner || (currentUserId && agent.author_id && currentUserId === agent.author_id));
+
+	// Agents known to sell skills (and their owner) get skeleton cards while the
+	// list loads; any other agent is probed silently so no empty section flashes.
+	const showLoading = !!(agent.has_paid_skills || isOwner);
+	section.hidden = !showLoading;
+	host.setAttribute('aria-busy', 'true');
+	host.innerHTML = showLoading ? renderBundleSkeletons(2) : '';
+
+	let bundles;
+	try {
+		const r = await fetch(`${API}/agents/${encodeURIComponent(agentId)}/bundles`, { credentials: 'include' });
+		if (!r.ok) throw new Error(`Bundles request failed (${r.status})`);
+		bundles = (await r.json())?.data?.bundles || [];
+	} catch (err) {
+		log.error('[marketplace] bundles', err);
+		if (detailState?.agent?.id !== agentId) return;
+		host.removeAttribute('aria-busy');
+		if (!showLoading) { section.hidden = true; return; }
+		section.hidden = false;
+		host.innerHTML = renderBundleError('Skill bundles could not be loaded. Check your connection and try again.');
+		return;
+	}
+	if (detailState?.agent?.id !== agentId) return;
+	host.removeAttribute('aria-busy');
+
+	if (bundles.length === 0) {
+		if (isOwner) host.innerHTML = renderBundleOwnerEmpty();
+		else { host.innerHTML = ''; section.hidden = true; }
+		return;
+	}
+	const ctx = {
+		agentId,
+		skillPrices: detailState.agent.skill_prices || agent.skill_prices || {},
+		owned: purchasedSkills,
+		mintLabel: bundleMintLabel,
+	};
+	host.innerHTML = bundles.map((b) => renderBundleCard(buildBundleView(b, ctx), agentId)).join('');
+	section.hidden = false;
+}
+
+async function openBundlePurchaseFlow(agentId, bundleId) {
+	if (leaveAppForPayment()) return;
+	if (!detailState?.agent || detailState.agent.id !== agentId) {
+		alert('Agent not loaded; refresh and try again.');
+		return;
+	}
+	let bundle;
+	try {
+		const r = await fetch(`${API}/agents/${encodeURIComponent(agentId)}/bundles`, { credentials: 'include' });
+		const list = r.ok ? (await r.json())?.data?.bundles || [] : [];
+		bundle = list.find((b) => b.id === bundleId);
+	} catch (err) {
+		log.error('[marketplace] bundle lookup', err);
+	}
+	if (!bundle) {
+		alert('This bundle is no longer available.');
+		loadBundles(detailState.agent);
+		return;
+	}
+	const view = buildBundleView(bundle, {
+		agentId,
+		skillPrices: detailState.agent.skill_prices || {},
+		owned: purchasedSkills,
+		mintLabel: bundleMintLabel,
+	});
+	pendingBundlePurchase = { agentId, view };
+
+	const confirmBtn = $('payment-confirm-btn');
+	confirmBtn.dataset.mode = 'bundle';
+	confirmBtn.hidden = false;
+	confirmBtn.textContent = 'Confirm Purchase';
+	setPaymentTitle('Unlock bundle');
+	setPaymentLede(`You are purchasing permanent access to all ${view.skills.length} skills in this bundle:`);
+	setPaymentFromLabel('on agent');
+	setPaymentBadge(view.savingsText ? `Saves ${escapeHtml(view.savingsText)} vs buying separately` : '', 'info');
+	$('payment-skill-name').textContent = `${view.name} (${view.skills.join(', ')})`;
+	$('payment-agent-name').textContent = detailState.agent.name;
+	$('payment-price-display').textContent = view.priceText;
+	const qr = $('payment-qr'); if (qr) qr.innerHTML = '';
+	setStatus('');
+	clearFeeDisclosure();
+	$('payment-modal-overlay').hidden = false;
+	updateWalletUI();
+}
+
+async function createPendingBundlePurchase(bundleId) {
+	const r = await apiPostWithCsrf('/api/marketplace/purchase-bundle', { bundle_id: bundleId });
+	const j = await r.json().catch(() => ({}));
+	if (!r.ok) throw new Error(j.error_description || j.error || 'Failed to create bundle purchase');
+	return j.data;
+}
+
+async function pollBundleConfirm(purchaseId, windowMs = 60_000) {
+	const deadline = Date.now() + windowMs;
+	while (Date.now() < deadline) {
+		const r = await apiPostWithCsrf(`/api/marketplace/purchase-bundle/${purchaseId}/confirm`, null);
+		const j = await r.json().catch(() => ({}));
+		if (r.ok && j.data?.ok) return true;
+		if (r.status === 409 && j.error === 'already_processed') return true;
+		if (r.status === 402) throw new Error(j.error_description || 'Payment could not be verified on-chain.');
+		if (r.status === 404) throw new Error('This purchase is no longer pending. Refresh to see your library.');
+		if (r.status >= 400 && r.status !== 429 && r.status < 500) throw new Error(j.error_description || 'Bundle payment could not be confirmed.');
+		await new Promise((res) => setTimeout(res, 2500));
+	}
+	return false;
+}
+
+async function onBundleUnlocked(agentId, view) {
+	await fetchUserPurchases();
+	if (detailState?.agent?.id === agentId) {
+		for (const skill of view.skills) purchasedSkills.add(`${agentId}:${skill}`);
+		loadDetail(agentId);
+	}
+	renderPaymentSuccess({
+		title: 'Bundle unlocked',
+		message: `${view.name} is now part of your library: ${view.skills.length} skills unlocked.`,
+		primaryHref: null,
+		secondaryLabel: 'Done',
+	});
+}
+
+function bundleAlreadyOwned(agentId, view) {
+	return onBundleUnlocked(agentId, view).then(() => {
+		renderPaymentSuccess({
+			title: 'Already unlocked',
+			message: `You already have access to every skill in ${view.name}.`,
+			primaryHref: null,
+			secondaryLabel: 'Continue',
+		});
+	});
+}
+
+async function handleBundlePurchase() {
+	const pending = pendingBundlePurchase;
+	const confirmBtn = $('payment-confirm-btn');
+	if (!pending) return;
+	if (!connectedWallet) { setStatus('Connect a wallet first.', 'err'); return; }
+	const { agentId, view } = pending;
+
+	confirmBtn.disabled = true;
+	setStatus('Creating purchase…');
+	let purchase;
+	try {
+		purchase = await createPendingBundlePurchase(view.id);
+		if (purchase.already_owned) return bundleAlreadyOwned(agentId, view);
+		renderFeeDisclosure({ ...purchase, amount: purchase.price_amount, mint_decimals: view.decimals });
+	} catch (e) {
+		setStatus(e.message, 'err');
+		confirmBtn.disabled = false;
+		return;
+	}
+	if (purchase.chain !== 'solana') {
+		setStatus('This bundle is priced on another chain and cannot be paid from a Solana wallet here.', 'err');
+		confirmBtn.disabled = false;
+		return;
+	}
+
+	const verifyAgain = (txid, message) => renderPaymentVerifyAgain({
+		txid,
+		message,
+		retryFn: async () => {
+			const ok2 = await pollBundleConfirm(purchase.purchase_id, 60_000);
+			if (!ok2) throw new Error('Still not confirmed. Wait a few seconds and try again.');
+			await onBundleUnlocked(agentId, view);
+		},
+	});
+
+	let txid;
+	try {
+		setStatus('Building transfer…');
+		const tx = await buildSplTransferWithReference({
+			payer: connectedWallet.publicKey,
+			recipient: purchase.recipient,
+			mint: purchase.currency_mint,
+			amount: BigInt(purchase.creator_amount ?? purchase.price_amount),
+			reference: purchase.reference,
+			fee: purchase.fee ? { recipient: purchase.fee.recipient, amount: BigInt(purchase.fee.amount) } : null,
+		});
+
+		setStatus('Approve in wallet…');
+		if (typeof connectedWallet.provider.signAndSendTransaction === 'function') {
+			const result = await connectedWallet.provider.signAndSendTransaction(tx);
+			txid = result?.signature ?? result;
+		} else {
+			txid = await connectedWallet.provider.sendTransaction(tx, await getSolanaConnection());
+		}
+
+		setStatus('Waiting for on-chain confirmation…');
+		await (await getSolanaConnection()).confirmTransaction(txid, 'confirmed');
+
+		setStatus('Verifying with server…');
+		const ok = await pollBundleConfirm(purchase.purchase_id, 60_000);
+		if (!ok) {
+			verifyAgain(txid, "Payment is on-chain but the server hasn't seen it yet. Re-verify below.");
+			return;
+		}
+		await onBundleUnlocked(agentId, view);
+	} catch (e) {
+		log.error('[marketplace] bundle purchase failed', e);
+		if (txid) {
+			verifyAgain(txid, e.message || 'Payment sent but verification failed. Re-verify below.');
+			return;
+		}
+		setStatus(e.message || 'Purchase failed', 'err');
+		confirmBtn.disabled = false;
+	}
+}
+
+// Mobile-wallet path: Solana Pay QR for a bundle.
+async function startBundleQrPurchase() {
+	const pending = pendingBundlePurchase;
+	if (!pending) return;
+	const { agentId, view } = pending;
+
+	setStatus('Creating purchase…');
+	let purchase;
+	try {
+		purchase = await createPendingBundlePurchase(view.id);
+		if (purchase.already_owned) return bundleAlreadyOwned(agentId, view);
+	} catch (e) { setStatus(e.message, 'err'); return; }
+	if (purchase.chain !== 'solana') {
+		setStatus('This bundle is priced on another chain and cannot be paid with Solana Pay.', 'err');
+		return;
+	}
+
+	const url = new URL(`solana:${purchase.recipient}`);
+	url.searchParams.set('amount', atomicToHuman(purchase.price_amount, view.decimals, view.decimals));
+	url.searchParams.set('spl-token', purchase.currency_mint);
+	url.searchParams.set('reference', purchase.reference);
+	url.searchParams.set('label', `Bundle: ${view.name}`);
+	url.searchParams.set('message', `Unlock ${view.skills.length} skills`);
+
+	const qrEl = $('payment-qr');
+	if (qrEl) {
+		qrEl.innerHTML = `<canvas id="payment-qr-canvas" width="240" height="240"></canvas>
+			<p class="muted small">Scan with a Solana Pay wallet (Phantom mobile, Solflare mobile, etc.)</p>
+			<p class="muted small payment-reference">Reference: <code>${escapeHtml(purchase.reference)}</code></p>`;
+		const QRCode = await import('qrcode');
+		await (QRCode.default ?? QRCode).toCanvas(document.getElementById('payment-qr-canvas'), url.toString(), { width: 240 });
+	}
+
+	setStatus('Waiting for payment on your phone…');
+	let ok = false;
+	try { ok = await pollBundleConfirm(purchase.purchase_id, 300_000); }
+	catch (e) { setStatus(e.message, 'err'); return; }
+	if (ok) { await onBundleUnlocked(agentId, view); return; }
+	renderPaymentVerifyAgain({
+		txid: null,
+		message: 'No confirmation in 5 minutes. If you paid, re-verify below; otherwise the pending purchase will expire automatically.',
+		retryFn: async () => {
+			const ok2 = await pollBundleConfirm(purchase.purchase_id, 60_000);
+			if (!ok2) throw new Error('Still no confirmation. Give it another minute.');
+			await onBundleUnlocked(agentId, view);
+		},
+	});
 }
 
 // Build the purchase transfer. `amount` is the seller's leg (the full price when

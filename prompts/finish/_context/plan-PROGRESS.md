@@ -142,3 +142,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-10 | 715-plan-three-hold-activate-worlds-private.md | 8c99983e0 | Code shipped and migration applied; awaiting push and deploy (owner).
 2026-11-10 | 781-plan-docs-ux-flows-atlas-route-coverage.md | 92c537829 + this commit | Drift check, tests and cluster 13 were already shipped; restored the lost audit:ux-flows npm script and closed the order.
 2026-11-10 714-plan-security-csp-drop-unsafe-eval.md (kept open) | see commit | eval already scoped to /scene; local soak and header audit re-verified; owner deploy and live header check remain.
+2026-11-10 709-plan-marketplace-bundle-buyer-storefront.md: storefront and checkout fix committed; order kept, real-bundle browser check and deploy remain (owner).

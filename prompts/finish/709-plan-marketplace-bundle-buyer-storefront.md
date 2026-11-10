@@ -1,5 +1,8 @@
 # Buyers can see and purchase published skill bundles from the marketplace and agent profile
 
+**Status (2026-11-10):** built and committed: storefront cards, bundle-mode payment modal (wallet and Solana Pay QR), tests, docs, changelog, and a fix for bundle checkout (purchase-bundle create crashed without a platform fee). Remaining, owner-run: (1) browser check against a real published bundle and a signed-in Solana Pay reference. No bundle exists on production and the dev server proxies /api to production, so the browser run used route interception for the bundles list and skill prices only; (2) full `npx vitest run` baseline comparison was not run (targeted marketplace, bundle and purchase suites pass); (3) deploy so the storefront and the checkout fix reach production.
+
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/709-plan-marketplace-bundle-buyer-storefront.md`.
 
 **Priority:** P2, new capability with clear value (score 60 of 100 inside the tier). **Area:** marketplace. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.

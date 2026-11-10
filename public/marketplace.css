@@ -1826,6 +1826,219 @@ body.market-page > header {
 	color: var(--ink-dim);
 }
 
+/* Skill bundles (buyer storefront): src/marketplace-bundles.js */
+.bundle-section {
+	margin-bottom: var(--space-lg, 24px);
+}
+
+.bundle-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+	gap: 12px;
+}
+
+.bundle-card {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 16px;
+	border-radius: 12px;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+}
+
+.bundle-card:hover {
+	border-color: color-mix(in srgb, var(--accent, #00d9ff) 55%, transparent);
+	background: rgba(255, 255, 255, 0.06);
+}
+
+.bundle-card.is-owned {
+	border-color: rgba(52, 211, 153, 0.4);
+}
+
+.bundle-card-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+
+.bundle-name {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+	color: rgba(255, 255, 255, 0.95);
+}
+
+.bundle-price {
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--accent, #00d9ff);
+	white-space: nowrap;
+}
+
+.bundle-desc,
+.bundle-partial {
+	margin: 0;
+	font-size: 13px;
+	color: rgba(255, 255, 255, 0.7);
+}
+
+.bundle-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.bundle-chip {
+	padding: 3px 10px;
+	border-radius: 999px;
+	font-size: 12px;
+	background: rgba(255, 255, 255, 0.08);
+	color: rgba(255, 255, 255, 0.85);
+}
+
+.bundle-savings {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	font-size: 12px;
+}
+
+.bundle-save-badge {
+	padding: 2px 8px;
+	border-radius: 6px;
+	font-weight: 600;
+	color: #34d399;
+	background: rgba(52, 211, 153, 0.12);
+}
+
+.bundle-list-price {
+	color: rgba(255, 255, 255, 0.55);
+	text-decoration: line-through;
+}
+
+.bundle-card-foot {
+	margin-top: auto;
+}
+
+.bundle-buy-btn,
+.bundle-retry-btn,
+.bundle-create-link {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 44px;
+	padding: 0 18px;
+	border-radius: 8px;
+	border: 1px solid transparent;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: none;
+	cursor: pointer;
+	color: #04121a;
+	background: var(--accent, #00d9ff);
+	transition: filter 0.15s ease, transform 0.1s ease;
+}
+
+.bundle-buy-btn {
+	width: 100%;
+}
+
+.bundle-buy-btn:hover:not(:disabled),
+.bundle-retry-btn:hover,
+.bundle-create-link:hover {
+	filter: brightness(1.12);
+}
+
+.bundle-buy-btn:active:not(:disabled),
+.bundle-retry-btn:active,
+.bundle-create-link:active {
+	transform: translateY(1px);
+}
+
+.bundle-buy-btn:focus-visible,
+.bundle-retry-btn:focus-visible,
+.bundle-create-link:focus-visible {
+	outline: 2px solid #fff;
+	outline-offset: 2px;
+}
+
+.bundle-buy-btn:disabled,
+.bundle-buy-btn.is-owned {
+	cursor: default;
+	color: #34d399;
+	background: rgba(52, 211, 153, 0.12);
+	border-color: rgba(52, 211, 153, 0.4);
+}
+
+.bundle-error,
+.bundle-empty {
+	grid-column: 1 / -1;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 16px;
+	border-radius: 12px;
+	border: 1px dashed rgba(255, 255, 255, 0.2);
+	font-size: 13px;
+	color: rgba(255, 255, 255, 0.8);
+}
+
+.bundle-error {
+	border-color: rgba(248, 113, 113, 0.5);
+}
+
+.bundle-error p,
+.bundle-empty p {
+	margin: 0;
+}
+
+.bundle-skeleton {
+	min-height: 150px;
+}
+
+.bundle-skeleton .sk {
+	display: block;
+	height: 14px;
+	border-radius: 6px;
+	background: linear-gradient(90deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06));
+	background-size: 200% 100%;
+	animation: bundle-shimmer 1.4s ease-in-out infinite;
+}
+
+.bundle-skeleton .sk-title {
+	width: 55%;
+	height: 18px;
+}
+
+.bundle-skeleton .sk-line {
+	width: 90%;
+}
+
+.bundle-skeleton .sk-line.short {
+	width: 60%;
+}
+
+@keyframes bundle-shimmer {
+	from { background-position: 200% 0; }
+	to { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.bundle-skeleton .sk { animation: none; }
+	.bundle-card, .bundle-buy-btn { transition: none; }
+}
+
 .skill-row {
 	display: flex;
 	align-items: center;

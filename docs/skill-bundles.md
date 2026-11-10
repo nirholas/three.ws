@@ -174,11 +174,22 @@ platform fee. That event is marked `settled_to_wallet`: the buyer paid the
 creator's payout wallet directly, so the sale counts as income already held and
 never as a balance withdrawable from the platform treasury.
 
-**Reach today:** the builder, the two public `GET`s, and this checkout are live.
-The buyer-facing *browser* surface is not: no marketplace or agent-profile view
-renders a published bundle yet, so a human buyer reaches one through the API
-above, while the seller-side builder is fully wired. Rendering bundles on the
-agent's marketplace listing is the next step.
+**Reach today:** the whole path is live for a human buyer. An agent's
+marketplace page (Capabilities tab) lists its active bundles from the public
+`GET /api/agents/:id/bundles`, each card showing the included skills, the price,
+and the saving against the sum of the skills' list prices (shown only when every
+skill is priced in the bundle's mint, so a saving is never invented). **Buy
+bundle** opens the same payment modal as a single skill, in bundle mode: a wallet
+transfer or a Solana Pay QR with the reference, then `confirm` is polled until the
+payment is proven on-chain and the included skills flip to **Owned**. A bundle
+whose priced skills are all owned shows a disabled **Owned** button, and `create`
+answers `200 { already_owned: true }` instead of opening a second purchase. The
+view-model and markup live in [`src/marketplace-bundles.js`](../src/marketplace-bundles.js),
+the wiring in [`src/marketplace.js`](../src/marketplace.js).
+
+`create` also returns `creator_amount` and a `fee` object (`recipient`, `amount`,
+`bps`, or `null`) so the buyer's single transaction pays the seller and the
+platform fee exactly as `confirm` will verify.
 
 ---
 
