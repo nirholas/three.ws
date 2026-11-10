@@ -6,7 +6,7 @@ title = "three.ws full-history secret scan"
 [extend]
 useDefault = true
 
-[allowlist]
+[[allowlists]]
 description = "Synthetic and public values that look like credentials"
 regexes = [
   # Hardhat / Anvil well-known development account keys (published in their docs).
@@ -15,8 +15,170 @@ regexes = [
   '''0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a''',
   '''0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6''',
   # Obviously synthetic Stripe-shaped fixtures in tests.
-  '''sk_live_(abc|guard|hermes|revoke|second)[A-Za-z0-9_]*''',
+  '''sk_live_(abc|guard|hermes|revoke|second|THREE|yourk)[A-Za-z0-9_]*''',
 ]
 stopwords = [
   "YOUR_TOKEN", "YOUR_API_KEY", "your-api-key", "xxxxxxxx", "example", "placeholder", "changeme",
+]
+
+# Allowlists below were each reviewed on 2026-11-10 against the first full-history run
+# (docs/ops/secrets-history-audit.md). Every entry is scoped to a rule AND a path. No rule is disabled.
+# Unresolved on purpose (the scan must keep failing on it): the EVM key that scripts/x402-test.mjs and
+# scripts/x402-all.mjs once hardcoded. See the audit doc.
+
+[[allowlists]]
+description = "Public-data entropy hits (Solana mints, EVM contract addresses, hashes, storage keys, locale strings, vendored libraries) in reviewed directories. No 64-hex private-key shape in these paths other than the zero-balance test keys covered below."
+targetRules = ["generic-api-key"]
+paths = [
+  '''^tests/''',
+  '''^public/''',
+  '''^contracts/lib/''',
+  '''^docs/''',
+  '''^prompts/''',
+  '''^robinhood/''',
+  '''^.agents/''',
+  '''^blog/''',
+  '''^marketing/''',
+  '''^specs/''',
+  '''^docs-tasks/''',
+  '''^third_party/''',
+  '''^xactions/''',
+  '''^xspace-agent/''',
+  '''^dist-lib/''',
+  '''^agent-voice-chat/''',
+  '''^data/''',
+  '''^scripts/shots/''',
+]
+
+[[allowlists]]
+description = "Public-data entropy hits in reviewed source files: THREE mint and other public addresses, public Edge TTS client token and IndexNow key, public VRF key, localStorage key names, env var names, discord/test fixtures with fake tokens, zero-balance test keys."
+targetRules = ["generic-api-key"]
+paths = [
+  '''^\.env\.example$''',
+  '''^\.github/ISSUE_TEMPLATE/config\.yml$''',
+  '''^api/_lib/bnb/chains\.js$''',
+  '''^api/_lib/circulation\.js$''',
+  '''^api/_lib/coin/randomness\.js$''',
+  '''^api/_lib/coin/treasury\.js$''',
+  '''^api/_lib/env\.js$''',
+  '''^api/_lib/event-markets/staking/config\.js$''',
+  '''^api/_lib/evm-leg/[a-z-]+-config\.js$''',
+  '''^api/_lib/indexnow\.js$''',
+  '''^api/_lib/platform-analytics\.js$''',
+  '''^api/_lib/robinhood\.js$''',
+  '''^api/_lib/tts-edge\.js$''',
+  '''^api/_lib/x402-offer-receipt\.js$''',
+  '''^api/agent-vanity-grind\.js$''',
+  '''^api/agent-wallet-bridge\.js$''',
+  '''^api/agents/a2a-call\.js$''',
+  '''^api/pulse\.js$''',
+  '''^api/tts/edge\.js$''',
+  '''^api/v1/evm/swap-quote\.js$''',
+  '''^api/wk\.js$''',
+  '''^api/x402/print-order\.js$''',
+  '''^api/x402/solana-vanity-grind\.js$''',
+  '''^api/x402/vanity\.js$''',
+  '''^mcp-server/src/tools/pump-snapshot\.js$''',
+  '''^mcp-server/src/tools/sentiment-pulse\.js$''',
+  '''^packages/avatar-agent-mcp/src/lib/atomic-launch\.js$''',
+  '''^packages/[a-z]+-agent-mcp/docs/app\.js$''',
+  '''^packages/node-operator/README\.md$''',
+  '''^packages/pumpfun-mcp/examples/README\.md$''',
+  '''^packages/three-ws-cli/tests/grok-bot\.test\.js$''',
+  '''^packages/vscode-x402/src/wallet\.js$''',
+  '''^pages/community\.html$''',
+  '''^publish/src/agent-avatar\.js$''',
+  '''^scripts/_dn-library-shot\.mjs$''',
+  '''^scripts/agent-screen-pool-proof\.mjs$''',
+  '''^scripts/devnet-smoke-trade\.mjs$''',
+  '''^scripts/preflight-three-token-rail\.mjs$''',
+  '''^scripts/test-toolkit\.js$''',
+  '''^scripts/verify-token2022-purchase\.mjs$''',
+  '''^solana-agent-sdk/src/vanity/verify\.ts$''',
+  '''^src/agent-avatar\.js$''',
+  '''^src/agent-wallet-hub/tabs/snipe\.js$''',
+  '''^src/brain\.js$''',
+  '''^src/city/city-map\.js$''',
+  '''^src/daily/creator-streak\.js$''',
+  '''^src/dashboard-next/pages/brain\.js$''',
+  '''^src/irl\.js$''',
+  '''^src/pumpkin/page\.js$''',
+  '''^workers/agent-gateway/tests/fixtures/discord-interaction-button\.json$''',
+  '''^workers/agent-gateway/tests/fixtures/discord-interaction-command\.json$''',
+  '''^workers/rig-nonhuman/Dockerfile$''',
+  '''^workers/robinhood-feed/tests/fixtures/launch-swap-logs\.json$''',
+  '''^workers/robinhood-feed/tests/fixtures/traded-logs\.json$''',
+]
+
+[[allowlists]]
+description = "x402 payment-challenge tokens (signed offers with amount, payTo and validUntil, no session authority) captured as negative-test evidence, and a claim-less HS256 test token."
+targetRules = ["jwt"]
+paths = [
+  '''^packages/witness/test/redact\.test\.js$''',
+  '''^prompts/okx-ai/e2e-evidence/10-402-identity-studio\.json$''',
+  '''^prompts/okx-ai/e2e-evidence/51-case5b-cross-service\.json$''',
+  '''^prompts/okx-ai/e2e-evidence/52-case5c-expired\.json$''',
+  '''^prompts/okx-ai/e2e-evidence/53-case5d-garbage\.json$''',
+  '''^prompts/x-grok/_generated/connector-probe\.json$''',
+]
+
+[[allowlists]]
+description = "curl examples in docs, READMEs and the developer page that show a placeholder credential."
+targetRules = ["curl-auth-header", "curl-auth-user"]
+paths = [
+  '''^api/herald/announce\.js$''',
+  '''^docs/ALL\.md$''',
+  '''^docs/EVERYTHING\.md$''',
+  '''^docs/inference-billing\.md$''',
+  '''^docs/mcp\.md$''',
+  '''^docs/nvidia-ngc-listing\.md$''',
+  '''^docs/payment-sessions\.md$''',
+  '''^docs/tutorials/character-library-to-embed\.md$''',
+  '''^prompts/finish/734-plan-workers-fleet-status-and-ship-readiness\.md$''',
+  '''^prompts/finish/981-plan-nvidia-ngc-trellis-image-validation\.md$''',
+  '''^public/docs/mcp\.md$''',
+  '''^src/dashboard-next/pages/developers\.js$''',
+  '''^tests/docs-live-core\.test\.js$''',
+  '''^three-ws-mcp-registry-listing\.md$''',
+  '''^workers/model-pixal3d/README\.md$''',
+  '''^workers/model-trellis2/README\.md$''',
+  '''^workers/model-video2motion/README\.md$''',
+  '''^workers/modly/README\.md$''',
+  '''^xactions/docs/articles/x-api-oauth2-crypto-apps\.md$''',
+  '''^xactions/docs/x-developer-api-crypto-guide-2026\.md$''',
+  '''^xactions/python/docs/api/server\.md$''',
+]
+
+[[allowlists]]
+description = "DISCORD_CHANNEL_ID=123456789012345678 placeholder in .env.example files."
+targetRules = ["discord-client-id"]
+paths = [
+  '''^xactions/xspace-agents/examples/discord-bridge/\.env\.example$''',
+  '''^xspace-agent/examples/discord-bridge/\.env\.example$''',
+  '''^xspace-agent/xspace-agent/examples/discord-bridge/\.env\.example$''',
+]
+
+[[allowlists]]
+description = "Vendored third-party bundle: the match is a git commit hash in a sourceCommit field, not a token."
+targetRules = ["sourcegraph-access-token"]
+paths = [
+  '''^third_party/threeui/public/source-code\.json$''',
+]
+
+[[allowlists]]
+description = "Private-key hits: the PERSONA_JWKS_PRIVATE_KEY_PEM docs example, and character-studio/key.pem, the key of a self-signed local.webaverse.com dev certificate that expired 2023-01-08."
+targetRules = ["private-key"]
+paths = [
+  '''^character-studio/key\.pem$''',
+  '''^docs/ALL\.md$''',
+  '''^docs/EVERYTHING\.md$''',
+  '''^docs/persona-hub\.md$''',
+]
+
+[[allowlists]]
+description = "Firebase web apiKey values inside the removed rider/ game bundle. Firebase web keys are public client identifiers by design; project aerial-vehicle-466722-p5 has no API keys at all."
+targetRules = ["gcp-api-key", "generic-api-key"]
+paths = [
+  '''^rider/build/build\.js$''',
+  '''^rider/src/scene\.html$''',
 ]
