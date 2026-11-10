@@ -347,6 +347,27 @@
 			}
 		},
 		{
+			"id": "audit-button-families",
+			"script": "scripts/audit-button-families.mjs",
+			"npm": "audit:buttons",
+			"title": "Legacy button family ratchet",
+			"protects": "A per-page button class family that was migrated onto the canonical .btn system cannot reappear.",
+			"why": "Each page-private button family (explore-btn, ad-btn, br-btn and the rest) reimplemented hover, focus and disabled states and drifted from the shared look. The migration is finished, so the audit now runs strict in the gate: a migrated class showing up again, or an unclassified family left open, fails the build instead of quietly regrowing.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A page that uses a migrated legacy button class.",
+				"violation": {
+					"write": {
+						"pages/guard-proof-legacy-button.html": "<!doctype html>\n<html lang=\"en\">\n<head><meta charset=\"utf-8\"><title>Proof</title></head>\n<body><button class=\"explore-btn\">Proof</button></body>\n</html>\n"
+					}
+				},
+				"expect": "REAPPEARED"
+			}
+		},
+		{
 			"id": "audit-links",
 			"script": "scripts/audit-links.mjs",
 			"npm": "audit:links",
