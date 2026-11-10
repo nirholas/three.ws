@@ -128,6 +128,14 @@ export function createCryptoClient({ apiKey, privateKey, fetchImpl = globalThis.
 			const r = await request('GET', `/api/v1/crypto/marketdata/best_bid_ask/?symbol=${encodeURIComponent(sym(symbol))}`);
 			return (r.results || [])[0] || null;
 		},
+		/** Best bid and ask for several pairs in one signed request (the endpoint takes a repeated symbol parameter). */
+		async bestBidAskMany(symbols) {
+			const list = [...new Set(symbols)].map(sym);
+			if (!list.length) return [];
+			if (list.length > 50) throw new RobinhoodApiError('bad_request', 'Ask for at most 50 pairs at once.');
+			const r = await request('GET', `/api/v1/crypto/marketdata/best_bid_ask/?${list.map((s) => `symbol=${encodeURIComponent(s)}`).join('&')}`);
+			return r.results || [];
+		},
 		async estimatedPrice(symbol, side, quantity) {
 			if (side !== 'bid' && side !== 'ask') throw new RobinhoodApiError('bad_request', 'side must be bid or ask.');
 			const r = await request('GET', `/api/v1/crypto/marketdata/estimated_price/?symbol=${encodeURIComponent(sym(symbol))}&side=${side}&quantity=${decimal(quantity, 'quantity')}`);
