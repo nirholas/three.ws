@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "concierge": {
+      "command": "npx",
+      "args": ["-y", "@three-ws/concierge-mcp"]
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "blender-3d",
+  "version": "0.5.0",
+  "description": "Drive a local Blender headlessly from Claude Code: inspect, convert, optimize, render and script 3D files, or generate a model from text.",
+  "author": {"name": "nirholas"},
+  "repository": "https://github.com/nirholas/blender-mcp",
+  "homepage": "https://nirholas.github.io/blender-mcp/",
+  "license": "Apache-2.0",
+  "keywords": ["blender", "3d", "glb", "gltf", "mcp", "bpy", "meshopt", "draco"]
+}

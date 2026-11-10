@@ -27,6 +27,7 @@ character-studio/public/loot-assets
 .mcp.json
 # Plugin manifests that ship an MCP server entry are product files, not local config.
 !integrations/grok/three-ws/.mcp.json
+!packages/*/.mcp.json
 .claude/worktrees/
 # Auto-created symlinks → .agents/skills/* by scripts/setup-claude-skills.mjs
 .claude/skills/*
