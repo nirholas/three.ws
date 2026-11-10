@@ -1270,6 +1270,38 @@
 			}
 		},
 		{
+			"id": "audit-dead-code",
+			"script": "scripts/audit-dead-code.mjs",
+			"npm": "audit:dead-code",
+			"title": "Dead code report",
+			"protects": "Surfaces unused files, exports and dependencies across the monorepo so deletions are driven by a measured list.",
+			"why": "Delete aggressively is a stated rule and nothing enforced it across 60-plus top-level directories. The report is advisory by design: page strings, import() templates, vercel.json routes and worker entry points are invisible to knip, so every candidate is grep-verified before removal (docs/ops/dead-code.md).",
+			"stages": [
+				"manual"
+			],
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "Runs a pinned knip through npx, which needs the npm registry on first use, and it always exits 0 in report mode, so there is no pass/fail to mutate. The count summary it prints is covered by tests/audit-secrets-history.test.js."
+			}
+		},
+		{
+			"id": "audit-secrets-history",
+			"script": "scripts/audit-secrets-history.mjs",
+			"npm": "audit:secrets-history",
+			"title": "Secrets in git history",
+			"protects": "No credential matched by the gitleaks ruleset exists in any commit, outside the allowlist of public and synthetic values in .gitleaks.toml.",
+			"why": "check-secrets only judges lines added in a push range. A key committed long ago and deleted later is still live in history, and on a repo where a leaked key is a wallet that matters. The fix for a hit is rotation at the provider, never a history rewrite.",
+			"stages": [
+				"manual"
+			],
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "Downloads a checksum-pinned gitleaks release on first use and scans the whole history, which takes minutes. The checksum gate, redaction and allowlist are covered by tests/audit-secrets-history.test.js against a temp repo."
+			}
+		},
+		{
 			"id": "check-dist",
 			"script": "scripts/check-dist.mjs",
 			"npm": "check:dist",
