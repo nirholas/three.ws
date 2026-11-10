@@ -113,3 +113,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-06 | 735 | cb9c71287 | verified complete in the md audit (actions-hire tests pass, actions.json, route, sweep cron, share button, docs, changelog); archived to prompts/archive/
 2026-11-06 | 749 | 015de971b | verified complete in the md audit (x:content check exits 0, check:announce passes, no new approvals, intel-globe paused); archived to prompts/archive/
 2026-11-06 | 779 | 3eeee3faf | verified complete in the md audit (agent-name-claims tests pass, spec updated); archived to prompts/archive/
+2026-11-10 | 251-plan-play-meetup3-event-day-runbook.md | 6583b63cf, f9458b1d7 | closed as moot: Meetup #3 ran 2026-11-06 on the deployed event build (prod 1d47bc51d, three-ws-api-00529-gdk), no next event is scheduled in public/event.json, and check:live-ops and check:event both pass in the no-event state.
