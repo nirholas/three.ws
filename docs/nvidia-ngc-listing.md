@@ -122,19 +122,49 @@ gcloud builds submit workers/model-trellis \
 
 ### Gate 3: multi-GPU requirement needs NVIDIA guidance
 
-**Status: open.**
+**Status: open, waiting on NVIDIA's answer. Nothing speculative is built.**
 
 The current server serializes inference on one GPU because a TRELLIS job fills
 most of an L4. Horizontal replicas provide production concurrency, but the NGC
-FAQ specifically says "automatically multi-GPU capable." Ask NVIDIA whether
-one service replica per GPU is acceptable for this inference workload. If it
-is not, build and validate process-per-GPU model replication before pushing the
-staging image.
+FAQ specifically says "automatically multi-GPU capable." Process-per-GPU model
+replication inside one container is built and validated only if NVIDIA says
+service-per-GPU orchestration is not acceptable for this workload.
 
-### Gate 4: the NGC partner legal agreement
+Ready to send to the NVIDIA partner contact as soon as the intake form is
+acknowledged:
+
+> Hello, we are submitting three.ws TRELLIS Mesh Server (image to textured GLB,
+> Microsoft TRELLIS, MIT) for the NGC Catalog. The container runs one model
+> replica on one GPU and serializes jobs on it, because a single TRELLIS job
+> uses most of a 24 GB GPU. On a multi-GPU host we scale by running one
+> container per GPU (`--gpus device=N`), which is how our production fleet
+> scales. Does the "automatically multi-GPU capable" prerequisite accept this
+> service-per-GPU model, or should the staging image detect every visible GPU
+> and run one model process per GPU inside a single container? We will build
+> whichever you require before pushing to staging.
+
+### Gate 4: the NGC partner legal agreement and the staging push
 
 Owner action. It is step 1 of NVIDIA's published process and nothing technical
-depends on it, so it can be signed while gates 1 and 2 are being built.
+depends on it. The staging push is prepared as one command that refuses to run
+without an explicit flag.
+
+1. Submit the **Become an NGC Software Partner** form (answers below) and sign
+   the NGC Partner Legal Agreement when NVIDIA sends it.
+2. In the NGC web console, note the organization name NVIDIA assigns and create
+   the private staging repository `nvcr.io/<org>/trellis-mesh-server`.
+3. Generate an NGC API key (NGC console, Setup, API Key) and export it in the
+   shell only: `export NGC_API_KEY=...`. Never pass it on the command line.
+4. Push the validated digest recorded in
+   [NGC-VALIDATION.md](../workers/model-trellis/NGC-VALIDATION.md):
+
+```bash
+scripts/ngc-stage-trellis.sh --org <org> --version 1.0.0 \
+  --digest sha256:<validated digest> --yes-push
+```
+
+Without `--yes-push` the script prints the plan, contacts neither Artifact
+Registry nor NGC, and exits 2.
 
 ## The publishing process, as NVIDIA documents it
 
