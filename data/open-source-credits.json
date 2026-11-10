@@ -1896,6 +1896,17 @@
 			"powers": null
 		},
 		{
+			"id": "npm:jsqr",
+			"kind": "npm",
+			"name": "jsqr",
+			"area": "infrastructure",
+			"license": "Apache-2.0",
+			"repo": "https://github.com/cozmo/jsQR",
+			"funding": null,
+			"version": "1.4.0",
+			"powers": null
+		},
+		{
 			"id": "npm:lightweight-charts",
 			"kind": "npm",
 			"name": "lightweight-charts",
@@ -2200,7 +2211,7 @@
 			"license": "MPL-2.0",
 			"repo": "https://github.com/vercel/satori",
 			"funding": null,
-			"version": "0.33.5",
+			"version": "0.63.2",
 			"powers": null
 		},
 		{
@@ -2321,7 +2332,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/wevm/viem",
 			"funding": "https://github.com/sponsors/wevm",
-			"version": "2.57.14",
+			"version": "2.57.15",
 			"powers": "Typed EVM client used alongside ethers for EVM-chain integrations."
 		},
 		{
@@ -2802,7 +2813,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/gkjohnson/three-mesh-bvh",
 			"funding": null,
-			"version": "0.9.17",
+			"version": "0.9.18",
 			"powers": "Accelerated raycasting and collision queries for the viewer and AR placement."
 		},
 		{
