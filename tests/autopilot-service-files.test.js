@@ -103,6 +103,23 @@ describe('autopilot scripts', () => {
 		expect(src.indexOf('daemon-reload')).toBeLessThan(src.indexOf('enable --now autopilot.timer'));
 	});
 
+	it('run.sh is committed executable, so a unit that execs it directly cannot fail with 203/EXEC', () => {
+		const r = spawnSync('git', ['ls-files', '-s', '--', join(dir, 'run.sh')], { encoding: 'utf8' });
+		expect(r.status).toBe(0);
+		expect(r.stdout.split(/\s+/)[0]).toBe('100755');
+	});
+
+	it('bootstrap.sh syncs the clone to threews/main and installs the clone units ahead of metadata copies', () => {
+		const src = read('bootstrap.sh');
+		const sync = src.indexOf('checkout -f -B main threews/main');
+		expect(sync).toBeGreaterThan(-1);
+		const clone = src.indexOf('"$REPO/services/autopilot/$unit"');
+		const meta = src.indexOf('meta_get "$key"');
+		expect(sync).toBeLessThan(clone);
+		expect(clone).toBeGreaterThan(-1);
+		expect(clone).toBeLessThan(meta);
+	});
+
 	it('bootstrap.sh installs git-lfs, because the repo pre-push hook refuses to run without it', () => {
 		expect(read('bootstrap.sh')).toMatch(/apt-get install[^\n]*\bgit-lfs\b/);
 	});
