@@ -149,6 +149,26 @@ const KNOWN_SIGNATURES = [
 		action: `cryptocurrency.cv's /api/news/stream is a Server-Sent Events feed that stays open until Cloud Run's 300 s request timeout closes it; Cloud Run then logs the cut body. Every sampled line on 2026-10-08 (12 of 12) traced to that route at 300.99-301.00 s, and EventSource clients reconnect on their own. Investigate only if a trace lands on a non-streaming route: gcloud logging read 'trace="<trace>" httpRequest:*' --freshness=24h. ${RUNBOOK} §ccv-sse-stream-timeout.`,
 	},
 	{
+		// pumpfun-creator-rewards (its own repository) answers /api/fees from the
+		// Solana cluster and DexScreener when pump.fun's Cloudflare bot challenge
+		// blocks its APIs, and logs this one line each time it does.
+		id: 'creator-rewards-onchain-fallback',
+		match: /\[fees\] pump\.fun unavailable \(.*\); answering from the cluster/i,
+		services: ['pumpfun-creator-rewards'],
+		class: 'self-healing',
+		action: `pump.fun's Cloudflare bot challenge (403 "Just a moment...") blocked its APIs, so pumpfun-creator-rewards answered from the cluster: unclaimed fees come from the creator vault, metadata from DexScreener, and claimed/total-earned show as unavailable. Same upstream family as pump-coin-lookup-upstream-502. Investigate only if /api/fees itself starts answering 5xx for mint queries. ${RUNBOOK} §creator-rewards-onchain-fallback.`,
+	},
+	{
+		// crypto-data-aggregator (its own repository) fetches every RSS feed
+		// through src/lib/rss-fetch.ts, which logs one line per failed feed and
+		// serves that feed's last good items for up to six hours.
+		id: 'cda-news-feed-unavailable',
+		match: /\[news\] .+ unavailable: /i,
+		services: ['crypto-data-aggregator'],
+		class: 'self-healing',
+		action: `One RSS feed failed or timed out and crypto-data-aggregator served its last good items instead. Investigate only if the same feed name repeats across sweeps for more than a day: the publisher may have retired the feed, and the fix is replacing its URL in src/lib/crypto-news.ts or src/lib/international-sources.ts. ${RUNBOOK} §cda-news-feed-unavailable.`,
+	},
+	{
 		// clink-fun's source lives in its own repository (image
 		// us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/clink/web), not this
 		// one; this entry only documents what the fleet-wide log sweep already

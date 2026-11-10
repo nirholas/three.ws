@@ -59,6 +59,22 @@ describe('gcp-triage classify', () => {
 		expect(classify(line, [])).toBeNull();
 	});
 
+	it('classifies the creator-rewards on-chain fallback as self-healing only on pumpfun-creator-rewards', () => {
+		const line = '[fees] pump.fun unavailable (pump.fun returned a Cloudflare bot challenge (403)); answering from the cluster';
+		const hit = classify(line, ['pumpfun-creator-rewards']);
+		expect(hit?.id).toBe('creator-rewards-onchain-fallback');
+		expect(hit?.class).toBe('self-healing');
+		expect(classify(line, ['three-ws-api'])).toBeNull();
+	});
+
+	it('classifies a dead news feed as self-healing only on crypto-data-aggregator', () => {
+		const line = '[news] PANews unavailable: timeout after 8000ms (serving 20 last-good items)';
+		const hit = classify(line, ['crypto-data-aggregator']);
+		expect(hit?.id).toBe('cda-news-feed-unavailable');
+		expect(hit?.class).toBe('self-healing');
+		expect(classify(line, ['three-ws-api'])).toBeNull();
+	});
+
 	it('classifies a bare SIGKILL as the trellis OOM only on model-trellis', () => {
 		const line = 'Container terminated on signal 9.';
 		const onTrellis = classify(line, ['model-trellis']);

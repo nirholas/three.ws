@@ -1292,6 +1292,50 @@ ERROR  502 POST /api/pump/launch-agent
 
 ---
 
+## 🟢 `[fees] pump.fun unavailable (...); answering from the cluster` (pumpfun-creator-rewards ONLY): `creator-rewards-onchain-fallback` (§creator-rewards-onchain-fallback)
+
+```
+[fees] pump.fun unavailable (pump.fun returned a Cloudflare bot challenge (403)); answering from the cluster
+```
+
+- **Source:** `lib/pump.js` in the separate `nirholas/pumpfun-creator-rewards`
+  repository (commit d95d680). pump.fun's Cloudflare bot challenge answers
+  every pump.fun API host with a 403 "Just a moment..." page, from Cloud Run
+  and from developer machines alike.
+- **What it means:** `/api/fees` answered from the Solana cluster instead:
+  the creator comes from the bonding curve account, unclaimed fees from the
+  creator vault balance above rent plus the PumpSwap WSOL vault, and name,
+  symbol, image and market cap from DexScreener. Claimed and total-earned show
+  as unavailable. Same upstream family as `pump-coin-lookup-upstream-502`.
+- **Investigate only if:** `/api/fees` itself answers 5xx for a mint or wallet
+  query. A username query has no on-chain fallback and answers a one-line 503
+  with `Retry-After: 30`, which is expected.
+- **Added:** 2026-11-10, replacing a 502 that copied the challenge HTML into
+  the error body.
+
+---
+
+## 🟢 `[news] <feed> unavailable: ...` (crypto-data-aggregator ONLY): `cda-news-feed-unavailable` (§cda-news-feed-unavailable)
+
+```
+[news] PANews unavailable: timeout after 8000ms (serving 20 last-good items)
+```
+
+- **Source:** `src/lib/rss-fetch.ts` in the separate crypto-data-aggregator
+  repository (commit 81ca589), used by `crypto-news.ts` and
+  `international-sources.ts`. Every feed fetch has a deadline; a failure logs
+  this one line and serves that feed's last good items for up to six hours.
+- **What it means:** one publisher's feed was slow or down. Before the fix the
+  edge sandbox logged a full `TypeError: fetch failed` stack per failed feed
+  per request, and six feeds (8btc, jinse, odaily, coindeskjapan, and the jp and
+  es cointelegraph feeds) were permanently gone.
+- **Investigate only if:** the same feed name repeats across sweeps for more
+  than a day. The publisher has probably retired it; replace its URL in
+  `src/lib/crypto-news.ts` or `src/lib/international-sources.ts`.
+- **Added:** 2026-11-10.
+
+---
+
 ## 🟢 `Truncated response body. Usually implies that the request timed out...` (clink-fun ONLY): `clink-mcp-stream-timeout`
 
 - **Source:** Cloud Run itself (`run.googleapis.com/varlog/system`), on the
