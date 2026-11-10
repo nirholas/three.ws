@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-10",
+			"title": "Connect your Robinhood Crypto account and let agents trade inside your caps",
+			"summary": "You can now connect your own Robinhood Crypto account to three.ws with a Crypto Trading API key, generating the key pair right in your browser. Set a per-order and a daily spend cap, and your agents can read holdings, quote pairs and preview orders. An order is only placed after you approve its confirm table, every buy is checked against your caps on the server before it reaches Robinhood, and you can pause trading or disconnect at any time. Crypto pairs only.",
+			"tags": ["feature"],
+			"link": "/settings/robinhood"
+		},
+		{
+			"date": "2026-11-10",
 			"title": "Pump.fun claim lookups stop draining the shared Solana RPC budget",
 			"summary": "The pump.fun MCP tools that list a creator's fee claims were the largest single consumer of the platform's Solana RPC quota, because a busy poller rescanned every transaction on every call and retried each one when the providers were throttling. A claims scan now skips transactions that failed on-chain, stops at the first throttled read, reads a bounded number of new transactions per call, and shares a fresh answer between rapid repeat polls. Results cut short say so with an incomplete flag and fill in on the next call, so payments and balance reads keep their RPC headroom.",
 			"tags": ["fix"]

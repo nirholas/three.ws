@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-10T14:15:32.870Z",
+	"generated_at": "2026-11-10T14:30:07.272Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2260,6 +2260,18 @@
 					"title": "Docs · Robinhood Portfolios",
 					"description": "How Robinhood Portfolios works: the manifest that makes a generated basket binding, in-kind issuance that needs no price oracle, the descending-price rebalance auction nobody can front-run, what happens when a tokenized equity is halted, and the lineage fee budget that leaves sybils nothing to farm.",
 					"added": "2026-09-07",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": "dev"
+				},
+				{
+					"path": "/docs/robinhood-crypto",
+					"title": "Docs · Robinhood Crypto connector",
+					"description": "Connect your own Robinhood Crypto Trading API key to three.ws, set hard per-order and daily spend caps, and let agents quote, preview and place crypto orders through REST or MCP: the two-step confirm flow, cap reservation, error codes and security model.",
+					"added": "2026-11-10",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -10863,6 +10875,18 @@
 					"title": "MCP Tool Access Settings",
 					"description": "Choose which three.ws MCP tool groups your agents, connectors and AI clients can call. Turn a group on to unlock its financial tools such as swaps, transfers and launches, or off to hide it everywhere. Every disabled-tool refusal links here.",
 					"added": "2026-11-04",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.3,
+					"job": null
+				},
+				{
+					"path": "/settings/robinhood",
+					"title": "Robinhood Crypto Connector Settings",
+					"description": "Connect your own Robinhood Crypto account with its Crypto Trading API key, generate the Ed25519 key pair in your browser, set hard per-order and daily spend caps for agent orders, pause trading, see holdings and the order ledger, and disconnect.",
+					"added": "2026-11-10",
 					"auth": null,
 					"indexable": false,
 					"tags": [],

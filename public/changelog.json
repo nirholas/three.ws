@@ -1,11 +1,41 @@
 {
-	"generated_at": "2026-11-10T14:15:32.938Z",
+	"generated_at": "2026-11-10T14:30:07.306Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-10",
+			"type": "launch",
+			"title": "Docs · Robinhood Crypto connector",
+			"summary": "Connect your own Robinhood Crypto Trading API key to three.ws, set hard per-order and daily spend caps, and let agents quote, preview and place crypto orders through REST or MCP: the two-step confirm flow, cap reservation, error codes and security model.",
+			"link": "/docs/robinhood-crypto",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-10",
+			"type": "launch",
+			"title": "Robinhood Crypto Connector Settings",
+			"summary": "Connect your own Robinhood Crypto account with its Crypto Trading API key, generate the Ed25519 key pair in your browser, set hard per-order and daily spend caps for agent orders, pause trading, see holdings and the order ledger, and disconnect.",
+			"link": "/settings/robinhood",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-10",
+			"type": "update",
+			"title": "Connect your Robinhood Crypto account and let agents trade inside your caps",
+			"summary": "You can now connect your own Robinhood Crypto account to three.ws with a Crypto Trading API key, generating the key pair right in your browser. Set a per-order and a daily spend cap, and your agents can read holdings, quote pairs and preview orders. An order is only placed after you approve its confirm table, every buy is checked against your caps on the server before it reaches Robinhood, and you can pause trading or disconnect at any time. Crypto pairs only.",
+			"link": "/settings/robinhood",
+			"tags": [
+				"feature"
+			]
+		},
 		{
 			"date": "2026-11-10",
 			"type": "update",

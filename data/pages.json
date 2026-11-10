@@ -1594,6 +1594,14 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-09-07"
+				},
+				{
+					"path": "/docs/robinhood-crypto",
+					"title": "Docs · Robinhood Crypto connector",
+					"description": "Connect your own Robinhood Crypto Trading API key to three.ws, set hard per-order and daily spend caps, and let agents quote, preview and place crypto orders through REST or MCP: the two-step confirm flow, cap reservation, error codes and security model.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-11-10"
 				}
 			]
 		},
@@ -7075,6 +7083,15 @@
 					"priority": 0.3,
 					"changefreq": "monthly",
 					"added": "2026-11-04",
+					"indexable": false
+				},
+				{
+					"path": "/settings/robinhood",
+					"title": "Robinhood Crypto Connector Settings",
+					"description": "Connect your own Robinhood Crypto account with its Crypto Trading API key, generate the Ed25519 key pair in your browser, set hard per-order and daily spend caps for agent orders, pause trading, see holdings and the order ledger, and disconnect.",
+					"priority": 0.3,
+					"changefreq": "monthly",
+					"added": "2026-11-10",
 					"indexable": false
 				},
 				{

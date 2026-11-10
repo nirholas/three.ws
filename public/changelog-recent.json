@@ -1,14 +1,44 @@
 {
-	"generated_at": "2026-11-10T14:15:33.042Z",
+	"generated_at": "2026-11-10T14:30:07.381Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4471,
+	"total": 4474,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-10",
+			"type": "launch",
+			"title": "Docs · Robinhood Crypto connector",
+			"summary": "Connect your own Robinhood Crypto Trading API key to three.ws, set hard per-order and daily spend caps, and let agents quote, preview and place crypto orders through REST or MCP: the two-step confirm flow, cap reservation, error codes and security model.",
+			"link": "/docs/robinhood-crypto",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-10",
+			"type": "launch",
+			"title": "Robinhood Crypto Connector Settings",
+			"summary": "Connect your own Robinhood Crypto account with its Crypto Trading API key, generate the Ed25519 key pair in your browser, set hard per-order and daily spend caps for agent orders, pause trading, see holdings and the order ledger, and disconnect.",
+			"link": "/settings/robinhood",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-10",
+			"type": "update",
+			"title": "Connect your Robinhood Crypto account and let agents trade inside your caps",
+			"summary": "You can now connect your own Robinhood Crypto account to three.ws with a Crypto Trading API key, generating the key pair right in your browser. Set a per-order and a daily spend cap, and your agents can read holdings, quote pairs and preview orders. An order is only placed after you approve its confirm table, every buy is checked against your caps on the server before it reaches Robinhood, and you can pause trading or disconnect at any time. Crypto pairs only.",
+			"link": "/settings/robinhood",
+			"tags": [
+				"feature"
+			]
+		},
 		{
 			"date": "2026-11-10",
 			"type": "update",
@@ -1511,36 +1541,6 @@
 			"tags": [
 				"improvement",
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "The /play share sheet and network errors behave on keyboards and bad connections",
-			"summary": "The build share sheet now uses the shared modal stack, so Escape closes only the sheet, Tab stays inside it and focus returns to where you were. Friends, NPC purchases and coin-buy sign-in show a plain network message instead of raw browser text when a connection drops. A new test pins the HUD text colors at WCAG AA contrast over bright and dark scenes.",
-			"link": "/play",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "The $THREE Posts chart now runs to today and keeps every post it has ever measured",
-			"summary": "The Posts view on the $THREE coin page now plots @trythreews posts through November, with all 197 posts measured at +1h, +4h and +24h against the any-time baseline. The price source only serves the last 180 days, so every 15-minute bar read is now archived and merged on each refresh, and the oldest posts keep the returns measured for them earlier instead of going blank.",
-			"link": "/oracle/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "The Agora Commons keeps its frame rate with the whole crowd",
-			"summary": "/agora used to advance every citizen animation every frame and slowed to about one frame per second once the full fleet loaded. Now only the nearest, on-screen and busy citizens animate at full rate, the rest tick at a reduced rate, and off-screen citizens are hidden.",
-			"link": "/agora",
-			"tags": [
-				"improvement"
 			]
 		}
 	]

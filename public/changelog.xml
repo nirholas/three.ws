@@ -7,6 +7,30 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Robinhood Crypto connector</title>
+			<link>https://three.ws/docs/robinhood-crypto</link>
+			<guid isPermaLink="false">2026-11-10:Docs · Robinhood Crypto connector</guid>
+			<pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Connect your own Robinhood Crypto Trading API key to three.ws, set hard per-order and daily spend caps, and let agents quote, preview and place crypto orders through REST or MCP: the two-step confirm flow, cap reservation, error codes and security model.</description>
+		</item>
+		<item>
+			<title>Robinhood Crypto Connector Settings</title>
+			<link>https://three.ws/settings/robinhood</link>
+			<guid isPermaLink="false">2026-11-10:Robinhood Crypto Connector Settings</guid>
+			<pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Connect your own Robinhood Crypto account with its Crypto Trading API key, generate the Ed25519 key pair in your browser, set hard per-order and daily spend caps for agent orders, pause trading, see holdings and the order ledger, and disconnect.</description>
+		</item>
+		<item>
+			<title>Connect your Robinhood Crypto account and let agents trade inside your caps</title>
+			<link>https://three.ws/settings/robinhood</link>
+			<guid isPermaLink="false">2026-11-10:Connect your Robinhood Crypto account and let agents trade inside your caps</guid>
+			<pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>You can now connect your own Robinhood Crypto account to three.ws with a Crypto Trading API key, generating the key pair right in your browser. Set a per-order and a daily spend cap, and your agents can read holdings, quote pairs and preview orders. An order is only placed after you approve its confirm table, every buy is checked against your caps on the server before it reaches Robinhood, and you can pause trading or disconnect at any time. Crypto pairs only.</description>
+		</item>
+		<item>
 			<title>Places search keeps answering when the public map servers stall</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-10:Places search keeps answering when the public map servers stall</guid>
