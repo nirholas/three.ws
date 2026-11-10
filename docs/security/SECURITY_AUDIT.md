@@ -314,12 +314,20 @@ Eval users found and how each was handled:
 | cwise / ndarray-ops codegen | via `ndarray-pixels` in glTF-Transform texture resize | `ndarray-ops` aliased to `src/shims/ndarray-ops-static.js` (plain loops), checked against the real package. |
 | msgpackr JIT | `colyseus.js` | Degrades gracefully when eval is blocked; covered by `tests/eval-blocked-degradation.test.js`. |
 | zod JIT | zod | Feature-tests eval and falls back; covered by the same test. |
-| pdf.js | pdf.js | Gates on `isEvalSupported`; not separately tested. |
+| pdf.js | not a dependency | No pdf.js is bundled or loaded by any page in this repo, so there is nothing to degrade. |
 | Scene Studio | `public/scene-studio/app/app.js`, `libs/acorn` | Vendored; keeps `'unsafe-eval'` on `/scene` only. |
 
-Not done in this pass: a full-site real-browser sweep with `npm run audit:csp`
-against the rebuilt bundle, and a Report-Only rollout. Run the audit after the
-next deploy. **Status: `'unsafe-inline'` fixed (per-response hashes); CDN trim +
+Soak (2026-11-10): `npm run build` leaves no `new Function` or `eval(` in
+`dist/assets/*.js`. Against `node server/index.mjs` on a local production build,
+`audit-csp.mjs` over the default 25 pages reports zero violations and zero
+header mismatches, and `--headers-only --all` matches the route table on all
+1061 catalogued paths except `/mcp` and `/api/mcp`, which correctly answer 402
+(payment required). A real-browser load of `/scene` (keeps eval), `/` and
+`/viewer` logs no page errors and no `securitypolicyviolation`. Not done: a
+Report-Only stage. The policy already enforces in the route table, and
+`report-uri /api/client-errors` collects any violation after deploy. After the
+owner deploys, run `node scripts/audit-csp.mjs --headers-only --base https://three.ws`.
+**Status: `'unsafe-inline'` fixed (per-response hashes); CDN trim +
 dedupe done; `'unsafe-eval'` scoped to `/scene`.**
 
 ### H13 — Wildcard CORS on ~25 authenticated handlers

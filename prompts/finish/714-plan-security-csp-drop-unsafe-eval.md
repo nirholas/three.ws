@@ -1,5 +1,7 @@
 # Remove 'unsafe-eval' from the site-wide CSP and keep it only on the scene-studio route
 
+**Status (2026-11-10):** Code, route table (`'unsafe-eval'` only on `/scene`), tests, docs and changelog shipped earlier (a22d25dc7). This pass re-verified locally: no eval in `dist/assets`, `audit-csp` clean on 25 pages, `--headers-only --all` matches (only `/mcp` and `/api/mcp` answer 402), `/scene`, `/` and `/viewer` clean in a real browser. Remains: owner deploy then `node scripts/audit-csp.mjs --headers-only --base https://three.ws` (owner); an opened-Draco-GLB browser pass and a dedicated Playwright no-eval spec (not written, `audit-csp` covers the routes); Report-Only stage skipped (enforced directly, `report-uri` collects hits).
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/714-plan-security-csp-drop-unsafe-eval.md`.
 
 **Priority:** P2, new capability with clear value (score 58 of 100 inside the tier). **Area:** security. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
