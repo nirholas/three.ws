@@ -404,8 +404,7 @@
 						state = { connection: data.connection, caps: data.caps };
 						render();
 					} catch (e) {
-						const hint = e.code === 'credentials_rejected' ? ' Check that the public key you registered at Robinhood matches this private key.' : '';
-						setStatus(status, 'err', e.message + hint);
+						setStatus(status, 'err', e.message);
 						btn.disabled = false;
 					}
 				});
@@ -510,7 +509,7 @@
 					try {
 						body.innerHTML = await loader();
 					} catch (e) {
-						const fix = e.code === 'credentials_rejected' ? ' Robinhood no longer accepts this key: replace it above.' : e.code === 'rate_limited' ? ' Wait a few seconds and refresh.' : '';
+						const fix = e.code === 'credentials_rejected' ? ' Robinhood no longer accepts this key: replace it above.' : e.code === 'credentials_unreadable' ? ' Use Replace key above.' : e.code === 'rate_limited' ? ' Wait a few seconds and refresh.' : '';
 						body.innerHTML = `<div class="error-box"><span>${esc(e.message)}${fix}</span><button class="btn sec small" type="button" data-retry>Try again</button></div>`;
 						body.querySelector('[data-retry]').addEventListener('click', run);
 					}

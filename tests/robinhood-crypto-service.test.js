@@ -157,6 +157,12 @@ describe('reads', () => {
 		await expect(svc.quote({ userId: USER, symbols: [PAIR] })).rejects.toMatchObject({ code: 'not_connected' });
 	});
 
+	it('asks the owner to re-paste a stored key that can no longer be decrypted', async () => {
+		await connect();
+		await dbState.pg.query(`update robinhood_crypto_connections set api_key_enc = 'v2:' || encode('not a sealed secret at all', 'base64')`);
+		await expect(svc.holdings({ userId: USER })).rejects.toMatchObject({ code: 'credentials_unreadable', status: 424 });
+	});
+
 	it('refuses a symbol that is not a crypto pair before any request', async () => {
 		await connect();
 		await expect(svc.quote({ userId: USER, symbols: ['THREE'] })).rejects.toMatchObject({ code: 'bad_request' });

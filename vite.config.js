@@ -1934,6 +1934,8 @@ const appConfig = {
 					'/settings/memory/': resolve(root, 'pages/settings-memory.html'),
 					'/settings/sandbox': resolve(root, 'pages/settings-sandbox.html'),
 					'/settings/sandbox/': resolve(root, 'pages/settings-sandbox.html'),
+					'/settings/robinhood': resolve(root, 'public/settings/robinhood/index.html'),
+					'/settings/robinhood/': resolve(root, 'public/settings/robinhood/index.html'),
 					'/activity': resolve(root, 'pages/activity.html'),
 					'/activity/': resolve(root, 'pages/activity.html'),
 					'/tty': resolve(root, 'pages/tty.html'),

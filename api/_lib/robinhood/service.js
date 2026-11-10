@@ -119,7 +119,15 @@ async function requireConnection(userId) {
 }
 
 async function clientFor(row) {
-	const [apiKey, privateKey] = await Promise.all([decryptSecret(row.api_key_enc), decryptSecret(row.private_key_enc)]);
+	let apiKey;
+	let privateKey;
+	try {
+		[apiKey, privateKey] = await Promise.all([decryptSecret(row.api_key_enc), decryptSecret(row.private_key_enc)]);
+	} catch {
+		// A rotated vault key or a damaged row: the owner can fix it by pasting
+		// the key again, so say that instead of failing with a 500.
+		throw new ConnectorError(424, 'credentials_unreadable', 'Your saved Robinhood key can no longer be read. Paste it again on three.ws/settings/robinhood.', { settings_url: 'https://three.ws/settings/robinhood' });
+	}
 	return clientFactory({ apiKey, privateKey });
 }
 
