@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-10T15:17:06.828Z",
+	"generated_at": "2026-11-10T19:13:53.948Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4476,
+	"total": 4481,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -32,11 +32,52 @@
 		{
 			"date": "2026-11-10",
 			"type": "update",
+			"title": "Agent run replays show the code your agent ran",
+			"summary": "On an agent's Runs tab, each execute_code, terminal and file step now shows the program, what it printed, its exit code and duration, and download links for the files it wrote, right in the step instead of behind a Details fold. The sandbox settings page empty state now tells you to ask your agent to run code.",
+			"link": null,
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-10",
+			"type": "update",
+			"title": "Buy a skill bundle straight from an agent's marketplace page",
+			"summary": "An agent's Capabilities tab now shows its published skill bundles above the individual skills: what is included, the bundle price in $THREE or USDC, and how much you save against buying each skill alone (computed from the agent's real list prices, never estimated). Buy opens the usual payment modal with wallet or Solana Pay QR checkout, and once the payment is verified on-chain every skill in the bundle shows as owned. This also fixes bundle checkout itself, which failed with a server error whenever no platform fee applied and quoted the wrong split when one did, and now answers 'already owned' instead of opening a second purchase.",
+			"link": "/marketplace",
+			"tags": [
+				"feature",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-10",
+			"type": "update",
 			"title": "Connect your Robinhood Crypto account and let agents trade inside your caps",
 			"summary": "You can now connect your own Robinhood Crypto account to three.ws with a Crypto Trading API key, generating the key pair right in your browser. Set a per-order and a daily spend cap, and your agents can read holdings, quote pairs and preview orders. An order is only placed after you approve its confirm table, every buy is checked against your caps on the server before it reaches Robinhood, and you can pause trading or disconnect at any time. Crypto pairs only.",
 			"link": "/settings/robinhood",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-10",
+			"type": "update",
+			"title": "Every demo surface now opens on the house avatar",
+			"summary": "The home page, viewer, pricing, features, game NPCs, Pose Studio, Arena, Create Agent and the avatar templates no longer default to a real person's likeness. They start on the house avatar or another house body, and avatars you bring yourself work exactly as before.",
+			"link": "/",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-10",
+			"type": "update",
+			"title": "One button style across Brain, Flow, Home, Avatar Studio and agent pages",
+			"summary": "Buttons on the Brain, Flow map, First Meet, Home studio cards, Avatar Studio and agent detail pages now use the shared button component, so hover, pressed, keyboard focus and disabled states look and behave the same everywhere.",
+			"link": "/brain",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -57,6 +98,16 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-10",
+			"type": "update",
+			"title": "Restyle Studio states its 18 material presets on the page",
+			"summary": "The preset count now sits above the preset grid in Restyle Studio, so visitors see how many PBR looks are on offer without reading the page metadata.",
+			"link": "/restyle",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -85,7 +136,7 @@
 			"date": "2026-11-07",
 			"type": "launch",
 			"title": "Meetup #3 Recap: The Three.ws User Group Back in the World",
-			"summary": "How the Three.ws User Group's third meetup went, sponsored by IBM Community and held inside three.ws/play: the first project-owned user group on IBM Community, the first signatures on the signature wall, what shipped since August, the partner roster, and what comes next.",
+			"summary": "How the Three.ws User Group's third meetup went, sponsored by IBM Community and held inside the $THREE home town at three.ws/play: the first project-owned user group on IBM Community, the first names on the signature wall, what shipped since August, and what comes next.",
 			"link": "/blog/ibm-user-group-meetup-3-recap",
 			"tags": [
 				"launch"
@@ -1489,57 +1540,6 @@
 			"title": "Shared creations now say who wants to make their own",
 			"summary": "Every creation page has a Make your own button that carries you into the Forge, and the Forge funnel report now counts AR opens, unfurls, shared-link page loads and how many shares turn into a new generation. Counts are aggregate only: no IP, account or creation id is stored.",
 			"link": "/creations",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Slow phones and laptops now drop to lighter graphics in /play within seconds",
-			"summary": "/play, the club and the trade room lower their graphics settings when a device can't keep up, but they were measuring frame time in a way that made a device drawing 2 frames a second look like one drawing 20. A struggling phone or older laptop could spend half a minute or more on the heaviest settings before anything changed, and a device below 1 frame a second could stay there for minutes. They now measure the real time between frames, so a device that can't keep up steps down to lighter settings within a couple of seconds, while a healthy device coming back from a hidden tab is left alone.",
-			"link": "/play",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Smaller Forge thumbnails and a lighter marketplace hero",
-			"summary": "Forge previews are now 512 px WebP instead of 768 px PNG, the marketplace hero shares one model-size budget across its slides, the brand mark is less than half its old size, and /forge paints its engine lanes on the first frame for repeat visitors.",
-			"link": "/forge",
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Sniper manages the free moon bags it keeps and records entry latency",
-			"summary": "Retained moon bags are now re-quoted every minute, sold whole on a 40 percent trailing stop from their own peak, and written off when dead instead of sitting unwatched. Per-second price ticks and per-stage entry latency are recorded for backtests, with a p50 and p90 report script.",
-			"link": null,
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Status page shows the retired world as retired, not down",
-			"summary": "The deleted world.three.ws service now carries an explicit, reversible retired state: the health rollup, alerts and status page no longer report a permanent false outage, so a red status always means something real.",
-			"link": "/status",
-			"tags": [
-				"fix",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Surprise me builds real bodies",
-			"summary": "The one-click Surprise me avatar now draws a full look on the Parametric body: face and body shape sliders, height and limb proportions, skin tone, clothes and hair from the live catalog, and up to two accessories. Every result shows its seed so you can reload, share or recreate it, and a body style picker keeps the classic lane one click away.",
-			"link": null,
 			"tags": [
 				"feature"
 			]

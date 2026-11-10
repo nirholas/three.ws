@@ -23,12 +23,44 @@
 			<description>Connect your own Robinhood Crypto account with its Crypto Trading API key, generate the Ed25519 key pair in your browser, set hard per-order and daily spend caps for agent orders, pause trading, see holdings and the order ledger, and disconnect.</description>
 		</item>
 		<item>
+			<title>Agent run replays show the code your agent ran</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-10:Agent run replays show the code your agent ran</guid>
+			<pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>On an agent's Runs tab, each execute_code, terminal and file step now shows the program, what it printed, its exit code and duration, and download links for the files it wrote, right in the step instead of behind a Details fold. The sandbox settings page empty state now tells you to ask your agent to run code.</description>
+		</item>
+		<item>
+			<title>Buy a skill bundle straight from an agent's marketplace page</title>
+			<link>https://three.ws/marketplace</link>
+			<guid isPermaLink="false">2026-11-10:Buy a skill bundle straight from an agent's marketplace page</guid>
+			<pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>An agent's Capabilities tab now shows its published skill bundles above the individual skills: what is included, the bundle price in $THREE or USDC, and how much you save against buying each skill alone (computed from the agent's real list prices, never estimated). Buy opens the usual payment modal with wallet or Solana Pay QR checkout, and once the payment is verified on-chain every skill in the bundle shows as owned. This also fixes bundle checkout itself, which failed with a server error whenever no platform fee applied and quoted the wrong split when one did, and now answers 'already owned' instead of opening a second purchase.</description>
+		</item>
+		<item>
 			<title>Connect your Robinhood Crypto account and let agents trade inside your caps</title>
 			<link>https://three.ws/settings/robinhood</link>
 			<guid isPermaLink="false">2026-11-10:Connect your Robinhood Crypto account and let agents trade inside your caps</guid>
 			<pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>You can now connect your own Robinhood Crypto account to three.ws with a Crypto Trading API key, generating the key pair right in your browser. Set a per-order and a daily spend cap, and your agents can read holdings, quote pairs and preview orders. An order is only placed after you approve its confirm table, every buy is checked against your caps on the server before it reaches Robinhood, and you can pause trading or disconnect at any time. Crypto pairs only.</description>
+		</item>
+		<item>
+			<title>Every demo surface now opens on the house avatar</title>
+			<link>https://three.ws/</link>
+			<guid isPermaLink="false">2026-11-10:Every demo surface now opens on the house avatar</guid>
+			<pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The home page, viewer, pricing, features, game NPCs, Pose Studio, Arena, Create Agent and the avatar templates no longer default to a real person's likeness. They start on the house avatar or another house body, and avatars you bring yourself work exactly as before.</description>
+		</item>
+		<item>
+			<title>One button style across Brain, Flow, Home, Avatar Studio and agent pages</title>
+			<link>https://three.ws/brain</link>
+			<guid isPermaLink="false">2026-11-10:One button style across Brain, Flow, Home, Avatar Studio and agent pages</guid>
+			<pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Buttons on the Brain, Flow map, First Meet, Home studio cards, Avatar Studio and agent detail pages now use the shared button component, so hover, pressed, keyboard focus and disabled states look and behave the same everywhere.</description>
 		</item>
 		<item>
 			<title>Places search keeps answering when the public map servers stall</title>
@@ -45,6 +77,14 @@
 			<pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The pump.fun MCP tools that list a creator's fee claims were the largest single consumer of the platform's Solana RPC quota, because a busy poller rescanned every transaction on every call and retried each one when the providers were throttling. A claims scan now skips transactions that failed on-chain, stops at the first throttled read, reads a bounded number of new transactions per call, and shares a fresh answer between rapid repeat polls. Results cut short say so with an incomplete flag and fill in on the next call, so payments and balance reads keep their RPC headroom.</description>
+		</item>
+		<item>
+			<title>Restyle Studio states its 18 material presets on the page</title>
+			<link>https://three.ws/restyle</link>
+			<guid isPermaLink="false">2026-11-10:Restyle Studio states its 18 material presets on the page</guid>
+			<pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The preset count now sits above the preset grid in Restyle Studio, so visitors see how many PBR looks are on offer without reading the page metadata.</description>
 		</item>
 		<item>
 			<title>The agent-3d embed script is 18% smaller</title>
@@ -68,7 +108,7 @@
 			<guid isPermaLink="false">2026-11-07:Meetup #3 Recap: The Three.ws User Group Back in the World</guid>
 			<pubDate>Sat, 07 Nov 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>How the Three.ws User Group's third meetup went, sponsored by IBM Community and held inside three.ws/play: the first project-owned user group on IBM Community, the first signatures on the signature wall, what shipped since August, the partner roster, and what comes next.</description>
+			<description>How the Three.ws User Group's third meetup went, sponsored by IBM Community and held inside the $THREE home town at three.ws/play: the first project-owned user group on IBM Community, the first names on the signature wall, what shipped since August, and what comes next.</description>
 		</item>
 		<item>
 			<title>The Community Meetup #3 recap is up: a wrap on our IBM Community user group's second meetup inside the world</title>
