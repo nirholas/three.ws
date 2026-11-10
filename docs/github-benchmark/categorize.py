@@ -50,11 +50,18 @@ def bucket(text):
     return "Other"
 
 
-for label, names in (("Trending (all langs)", list(targets["trending"])), ("Rising, made last 30d", targets["rising_1mo"]), ("Rising, made last 6mo", targets["rising_6mo"])):
-    m = meta(names)
-    counts = {}
-    for text in m.values():
-        b = bucket(text)
-        counts[b] = counts.get(b, 0) + 1
-    tot = sum(counts.values())
-    print(f"\n{label} (n={tot}): " + "; ".join(f"{k} {round(100 * v / tot)}%" for k, v in sorted(counts.items(), key=lambda x: -x[1])))
+def main():
+    D = sys.argv[1]
+    targets = json.load(open(os.path.join(D, "targets.json")))
+    for label, names in (("Trending (all langs)", list(targets["trending"])), ("Rising, made last 30d", targets["rising_1mo"]), ("Rising, made last 6mo", targets["rising_6mo"])):
+        m = meta(names)
+        counts = {}
+        for text in m.values():
+            b = bucket(text)
+            counts[b] = counts.get(b, 0) + 1
+        tot = sum(counts.values())
+        print(f"\n{label} (n={tot}): " + "; ".join(f"{k} {round(100 * v / tot)}%" for k, v in sorted(counts.items(), key=lambda x: -x[1])))
+
+
+if __name__ == "__main__":
+    main()
