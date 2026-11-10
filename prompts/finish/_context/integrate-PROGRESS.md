@@ -272,3 +272,4 @@ Step 0: script, Posts view, +24h price lift, docs and changelog already shipped;
 ## 2026-11-10: order 545 (integrate 46), wiring restored, GPU fps check still open
 
 The drawer never called `mountFunder3d` (the call was lost in an earlier sweep), so the 3D graph never rendered. Pinned by a test in `tests/funder-graph.test.js` and restored in `pages/coin-intel.html`. Chromium with a real coin (21 wallets) shows the canvas at 1280, 768 (reduced motion) and 375 with zero console errors; no-WebGL keeps the SVG. Remaining, owner: 500-node 60fps on a real GPU (software GL here; sim tick 8 ms avg for 512 nodes). Order file kept.
+2026-11-10 | 545-integrate-46-funder-graph-3d.md | see commit | Measured 500 synthetic nodes on a real NVIDIA L4 (ANGLE Vulkan, headless Chromium): 60.0 fps, p95 16.7 ms with vsync, 1204 fps and 1.0 ms p95 unlocked, no page errors; order closed.

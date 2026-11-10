@@ -1,6 +1,6 @@
 # Hold 60fps on /agora with the full 200-citizen fleet by budgeting which avatars animate
 
-**Status (2026-11-10):** the budget, unit tests, e2e spec, docs and changelog are shipped and re-verified (spec passes, peak 40 full-rate mixers of 200). Remaining, owner or a GPU session: a real-GPU fps table and a 390x844 browser console check.
+**Status (2026-11-10):** shipped and measured on a real L4 GPU (12.6 to 31.2 fps with 200 citizens, see task 12 doc), states and 390x844 verified. Remaining: the full-fleet scene still renders at about 31 fps, not 60, on that setup because the leftover cost is skinned draw calls and bone uploads, not mixers. Follow-up owner: whoever takes instancing or a far-crowd lower rig.
 
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/707-plan-agora-fleet-render-animation-budget.md`.
 

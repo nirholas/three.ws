@@ -123,3 +123,14 @@ not a GPU figure. `tests/e2e/agora-fleet-fps.spec.js` therefore asserts the exac
 mixer ceiling, and `tests/agora-animation-budget.test.js` covers the selection.
 
 Re-verified 2026-11-10 (headless Chromium, software rasterizer, dev server, live fleet): `npx playwright test tests/e2e/agora-fleet-fps.spec.js --retries=0` passed in 4.8 minutes with 200 citizens, peak full-rate mixers 40 (max 40), peak advanced 63, no page errors. No physical GPU was available, so no real-hardware fps figure exists; absolute fps on the software rasterizer is not recorded as a GPU number.
+
+### Real-GPU measurement (2026-11-10)
+
+Hardware: GCE g2-standard-8 (europe-west4-b, us-central1 L4 zones were stocked out), NVIDIA L4, Chromium via ANGLE Vulkan (`ANGLE (NVIDIA, Vulkan 1.4.312 (NVIDIA L4))`), headless, 1280x800, a scratch production build, the live 200-citizen fleet. "Before" is `?fleetStats=1&fleetBudget=off` (every mixer every frame, no culling, a test-only flag); "after" is the shipped budget. Three 10 s buckets each, medians shown, vsync on.
+
+| Run | Citizens | Mixers advanced per frame | avg fps | frame ms (avg / p95) |
+| --- | --- | --- | --- | --- |
+| Before (unbudgeted) | 200 | 199 | 12.6 | 79 / 83 |
+| After (budget) | 200 | 60 (peak 63, full-rate peak 40) | 31.2 | 32 / 33 |
+
+The budget is a 2.5x gain on a real GPU, but the Commons does not reach 60 fps in this setup: the remaining ~32 ms per frame is not mixer cost (an unlocked run, vsync off, sits at the same ~31 fps). The next lever is draw-call and bone-texture cost for the on-screen skinned meshes (instancing or a lower rig for the far crowd), tracked as follow-up work. Mobile 390x844 and desktop state checks (empty, error, passport via keyboard, retry focus) were exercised in Chromium with route interception: all passed, no horizontal overflow, console output limited to upstream Overpass 502/504 warnings, an anonymous `/api/me` 401, and the PostHog bot filter.
