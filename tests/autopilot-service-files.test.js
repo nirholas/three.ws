@@ -135,10 +135,9 @@ describe('autopilot scripts', () => {
 		expect(read('bootstrap.sh')).toMatch(/apt-get install[^\n]*\bgit-lfs\b/);
 	});
 
-	it('run.sh jq filters avoid reserved words and null signatures, and the studio install tolerates peer ranges', () => {
+	it('run.sh jq filters avoid reserved words and null signatures', () => {
 		const src = read('run.sh');
 		expect(src).not.toMatch(/as \$def\b/);
 		expect(src).toContain('.signature | select(. != null)');
-		expect(src).toContain('npm ci --prefix character-studio --legacy-peer-deps');
 	});
 });

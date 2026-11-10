@@ -75,8 +75,10 @@ install_deps() {
 	fi
 	npm run --silent deps:chat || return 1
 	if [ ! -f character-studio/build/index.html ] || ! installed_matches studio "$studio"; then
+		# character-studio is a root workspace: the root npm ci installs its
+		# dependencies, as in the production build. Its own lockfile is a stale
+		# leftover that dependency bumps do not update, so never npm ci it.
 		log "character-studio changed or last build incomplete: rebuilding avatar studio"
-		npm ci --prefix character-studio --legacy-peer-deps --no-audit --no-fund || return 1
 		npm run build:avatar-studio || return 1
 		mark_installed studio "$studio"
 	fi

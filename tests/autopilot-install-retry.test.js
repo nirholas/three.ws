@@ -63,7 +63,9 @@ beforeEach(() => {
 	calls = join(root, 'calls.log');
 	mkdirSync(join(root, 'bin'));
 	// npm and npx stubs: record every call; `npm ci` at the root fails when FAIL_CI is set.
-	writeFileSync(join(root, 'bin', 'npm'), '#!/bin/bash\necho "npm $*" >>"$CALLS"\nif [ "$1" = ci ] && [ -n "$FAIL_CI" ] && [ "$2" != --prefix ]; then exit 1; fi\nexit 0\n');
+	// `npm ci --prefix character-studio` always fails, as it does in production:
+	// the studio is a root workspace and its own lockfile is a stale leftover.
+	writeFileSync(join(root, 'bin', 'npm'), '#!/bin/bash\necho "npm $*" >>"$CALLS"\nif [ "$1" = ci ] && [ "$2" = --prefix ]; then exit 1; fi\nif [ "$1" = ci ] && [ -n "$FAIL_CI" ]; then exit 1; fi\nexit 0\n');
 	writeFileSync(join(root, 'bin', 'npx'), '#!/bin/bash\necho "npx $*" >>"$CALLS"\nexit 0\n');
 	chmodSync(join(root, 'bin', 'npm'), 0o755);
 	chmodSync(join(root, 'bin', 'npx'), 0o755);
@@ -92,6 +94,16 @@ describe('autopilot install_deps', () => {
 		// The 18:10 tick: the clone already sits at `second`, so nothing changed since its HEAD.
 		expect(tick(second).status).toBe(0);
 		expect(ciRuns()).toBe(before + 1);
+	});
+
+	it('rebuilds the avatar studio from the root workspace install, never a separate npm ci against its stale lockfile', () => {
+		commitLock(1);
+		rmSync(join(repo, 'character-studio', 'build'), { recursive: true });
+		const r = tick('0000000000000000000000000000000000000000');
+		expect(r.status).toBe(0);
+		const log = readFileSync(calls, 'utf8');
+		expect(log).toContain('npm run build:avatar-studio');
+		expect(log).not.toContain('--prefix character-studio');
 	});
 
 	it('skips npm ci when the lockfile it last installed successfully is unchanged', () => {
