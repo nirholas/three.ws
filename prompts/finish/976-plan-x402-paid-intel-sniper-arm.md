@@ -2,6 +2,8 @@
 
 **Status 2026-11-04:** Built and verified in the repo (arm module, migration, wiring, tests, docs, provisioning script). Remaining, owner: apply migration `20261105021000_sniper_paid_intel.sql`, run `node scripts/sniper-paid-intel-arm.mjs --apply --intel-cap-usdc 2`, give an explicit yes to fund the arm wallet (SOL and USDC), then `--enable`; deploy the agent-sniper worker. Add the changelog entry when the arm goes live.
 
+**Status 2026-11-10:** Migration `20261105021000_sniper_paid_intel.sql` is applied in production. Provisioned (no funds moved): agent `621073d8-d383-4eed-8803-32cf928f2152`, arm wallet `FsTbcQevoR5o5d4ynFwRjw5odd8UmPUsgzZifsQotN5D` (secret verified to decrypt under the production key), strategy `4f7136b8-239c-4435-9256-bf1a786ed9a1` disabled at 0.01 SOL/day, 0.002 SOL per position, concurrency 1, 2 USDC/day signal cap. Remaining, owner: explicit yes to fund the wallet (SOL and USDC on Solana mainnet), then `node scripts/sniper-paid-intel-arm.mjs --enable`, deploy the agent-sniper worker, and add the changelog entry when it trades.
+
 
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/976-plan-x402-paid-intel-sniper-arm.md`.
 

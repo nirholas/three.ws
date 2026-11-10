@@ -12,7 +12,8 @@ no hardware run yet**. Meta's toolkit is in developer preview.
 | Web bridge | [src/irl/glasses/native-bridge.js](../../src/irl/glasses/native-bridge.js) | Feature-detects `Capacitor.Plugins.ThreeWsWearables`; absent on the plain web build, so nothing changes there. Session state, voice route, and one-frame re-localization. |
 | Capacitor plugin | [ThreeWsWearablesPlugin.swift](../native/App/App/ThreeWsWearablesPlugin.swift) | `getSession`, `sessionChanged`, `startAudioRoute`, `stopAudioRoute`, `capturePhoto`. Registered in `MainViewController`. Compiles with or without the toolkit linked (`#if canImport(WearablesKit)`); without it, it reports `unavailable`. |
 | Swift package | [ios/native/WearablesKit/](../native/WearablesKit) | `GlassesService` over `MWDATCore` and `MWDATCamera`, pinned to toolkit `1.0.1` (released 2026-10-09). Builds and tests on its own; the `MWDATMockDevice` test target runs on the simulator with no glasses. |
-| JS tests | [tests/irl-native-bridge.test.js](../../tests/irl-native-bridge.test.js) | Fake plugin boundary; real marker pose math. |
+| JS tests | [tests/irl-native-bridge.test.js](../../tests/irl-native-bridge.test.js) | Fake plugin boundary; real marker pose math, plus JPEG camera frames in [tests/fixtures/glasses-relocalize/](../../tests/fixtures/glasses-relocalize) decoded with `sharp` and `jsqr` and checked against the ground truth in `manifest.json` (distance within 5%, lateral offset within 5 cm). |
+| Frame renderer | [scripts/glasses/render-relocalize-fixtures.mjs](../../scripts/glasses/render-relocalize-fixtures.mjs) | Deterministically renders those frames: a real QR symbol projected through the lane's pinhole model at a known pose, with sensor noise, lens blur and JPEG encoding. Frames recorded on Ray-Ban Display hardware join this directory after the hardware demo. |
 
 ## Spoken conversation
 
