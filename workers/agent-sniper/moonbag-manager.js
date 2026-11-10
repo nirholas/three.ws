@@ -63,7 +63,7 @@ export async function runMoonbagSweep(cfg, deps = defaultDeps(cfg)) {
 	return out;
 }
 
-function defaultDeps(cfg) {
+export function defaultDeps(cfg) {
 	return {
 		store: {
 			async listBags(network, limit) {
