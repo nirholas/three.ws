@@ -1,5 +1,7 @@
 # Add account status and dashboard URL tools, GET /me/status, and per-agent X posting tools
 
+**Status (2026-11-10):** Built and committed in 61276fb39 (GET /me/status, get_account_status, get_dashboard_urls, four X tools, policy table, settings panels, docs, changelog). Google linking already exists (api/auth/google, linked-accounts). Verified: tests/mcp-account-status.test.js, agents-v1-me-routes and mcp-agent-catalog pass (37 tests), audit:mcp-catalog and check:mcp-catalog pass, audit:docs clean. Remaining, owner: a live `tools/call get_account_status` against a dev account and a real-browser pass of the Settings account-status and X panels, both need DATABASE_URL and a QA login that this sandbox lacks.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/719-plan-mcp-account-status-dashboard-url-tools.md`.
 
 **Priority:** P2, new capability with clear value (score 56 of 100 inside the tier). **Area:** mcp. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
