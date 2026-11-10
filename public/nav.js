@@ -248,6 +248,18 @@ function ensureSkipLink() {
 	// component-scoped (.nav-*, .notif-*, .dr-*, #nav-container), so loading it
 	// on a nav-less page styles this link and nothing else.
 	ensureNavStylesheet();
+	// nav.css arrives after this link is in the DOM. Until it does the link is an
+	// in-flow anchor with a 26px line box, and pushes <main> down by that much
+	// before snapping back out of flow (a layout shift on every page). Carry the
+	// off-screen half of the rule inline so the link never takes layout; nav.css
+	// has the same values plus the :focus reveal.
+	if (!document.getElementById('nav-skip-critical')) {
+		const critical = document.createElement('style');
+		critical.id = 'nav-skip-critical';
+		critical.textContent =
+			'.nav-skip{position:fixed;top:10px;left:10px;z-index:10000;transform:translateY(calc(-100% - 14px))}';
+		document.head.appendChild(critical);
+	}
 	if (!document.getElementById('main-content')) {
 		const landmark = document.querySelector('main, [role="main"]');
 		if (landmark && !landmark.id) landmark.id = 'main-content';

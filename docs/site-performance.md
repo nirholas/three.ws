@@ -568,6 +568,15 @@ Measured on a local production build (`vite build` to a scratch outDir, `vite pr
 
 What closed it: hidden skeleton lanes in the engine pill (same labels and pills as `buildEngineButtons()`, kept in step by [tests/forge-engine-skeleton.test.js](../tests/forge-engine-skeleton.test.js)), a hidden ghost caption in the same grid cell as `#estimate` so the caption row holds its longest variant, and a hidden stand-in for the Enhance button that `src/forge-enhance.js` replaces. Composer-attributed shifts are now at most 0.035 per width. The remainder is site chrome and is not composer work: the skip link grows 26 to 36 px and the nav 65 to 73 px when their styles land, moving `<main>` (0.25 of the 390 px figure), plus the example chips swapping to their randomized prompts (0.02 to 0.035 at 768 to 1440). Lane-health flips (the BYOK key row appearing) were intermittent in these runs and still reserve nothing.
 
+### Updated 2026-11-10 (second pass): header, chips and fonts
+
+Same method (local production build, cold context, catalog delayed 600 ms, layout-shift total over 7 s). `/forge` totals after the header, chip and font fixes: 320 px 0.015, 390 px 0.100, 480 px 0.026, 768 px 0.016, 900 px 0.004, 1024 px 0.003, 1200 px 0.003, 1440 px 0.024 (first pass: 0.101, 0.281, 0.121, 0.109, 0.121, 0.102, 0.045, 0.061).
+
+- **Header.** The skip link was an in-flow 26 px anchor until `nav.css` loaded, so every page dropped `<main>` by 26 px and snapped back. `ensureSkipLink()` in [public/nav.js](../public/nav.js) now writes the off-screen half of the rule inline. The reservation in [public/tokens.css](../public/tokens.css) was also short: the real header measures 73 px up to 880 px wide, 94.3 px from 881 to 1169 px (the menu wraps), and 71.6 px from 1170 px, against a reserved 65 and 69. It now reserves 73, 95 and 72. Guarded by [tests/nav-layout-reserve.test.js](../tests/nav-layout-reserve.test.js).
+- **Example chips.** A wrapping flex row moved every chip after a label whose width changed when the random prompts replaced the static ones. The row is now a grid of fixed cells (one column with a two-line reserve on phones), so a chip's position depends only on the container width.
+- **Fonts.** `jetbrains-mono-latin.woff2` is preloaded on `/forge`.
+- **Residual.** At 390 px a 0.100 shift remains when JetBrains Mono replaces its fallback; the headless Chromium used here has no Courier New or Liberation Mono for the metric-matched fallback, so this figure is likely worse than on a desktop or phone with those fonts. `/` fell from 0.010 and 0.021 (390 and 1024 px) to 0.000. `/marketplace` could not be compared: the static server has no API, so its shifts are dominated by error states.
+
 ## Known costs that are not bugs
 
 Two things in the numbers above are real and are not being fixed by tuning:

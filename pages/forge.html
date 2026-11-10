@@ -39,6 +39,7 @@
 		     preload the fonts are discovered late and every swap reflows the page. -->
 		<link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
 		<link rel="preload" href="/fonts/space-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
+		<link rel="preload" href="/fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="preconnect" href="https://cdn.jsdelivr.net" />
 		<!-- The meshopt decoder shim has to register before any model-viewer
@@ -1317,13 +1318,23 @@
 			}
 
 			/* Example chips ------------------------------------------------ */
+			/* A grid, not a wrapping flex row: every chip owns a cell whose position
+			   depends only on the container width. The labels are replaced by random
+			   generated prompts after load, and in a flex row any difference in label
+			   width moved the chips after it (a layout shift at every width). */
 			.chips {
-				display: flex;
-				flex-wrap: wrap;
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(min(100%, 26rem), 1fr));
+				justify-items: start;
 				gap: var(--space-xs);
 				margin-top: var(--space-sm);
 			}
 			.chip {
+				max-width: 100%;
+				text-align: left;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
 				background: var(--surface-1);
 				border: 1px solid var(--stroke);
 				border-radius: 999px;
@@ -1336,6 +1347,18 @@
 					border-color var(--duration-fast),
 					background var(--duration-fast),
 					opacity var(--duration-fast) var(--ease-standard);
+			}
+			/* One column on a phone: let the prompt take two lines and reserve both,
+			   so a short generated prompt cannot change the row height. */
+			@media (max-width: 560px) {
+				.chip {
+					white-space: normal;
+					display: -webkit-box;
+					-webkit-line-clamp: 2;
+					-webkit-box-orient: vertical;
+					min-height: calc(2lh + 0.8rem + 2px);
+					border-radius: 18px;
+				}
 			}
 			.chip:hover {
 				color: var(--ink);
