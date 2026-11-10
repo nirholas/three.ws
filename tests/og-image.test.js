@@ -38,7 +38,9 @@ describe('og-image renderer', () => {
 	});
 
 	it('ImageResponse surfaces a render failure as a stream error instead of hanging', async () => {
-		const res = new ImageResponse({ type: 'div', props: { style: { display: 'block' }, children: [{ type: 'span', props: { children: 'a' } }, { type: 'span', props: { children: 'b' } }] } });
+		// satori refuses a relative image source at render time. (A multi-child
+		// display:block div was the trigger until satori 0.63 learned to lay it out.)
+		const res = new ImageResponse({ type: 'img', props: { src: 'not-a-url', width: 10, height: 10 } });
 		await expect(res.arrayBuffer()).rejects.toThrow();
 	});
 });
