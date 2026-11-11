@@ -7,11 +7,11 @@
 // stay with the caller.
 
 import { sql } from './db.js';
-import { env } from './env.js';
 import { generateAgentWallet, generateSolanaAgentWallet, getOrCreateAgentSolanaWallet } from './agent-wallet.js';
 import { ensureDraftPlan } from './agent-token-plan.js';
 import { checkIdentityIntegrity } from './identity-integrity.js';
-import { pingIndexNow } from './indexnow.js';
+import { announceIndexNow } from './indexnow-queue.js';
+import { isIndexableAgent } from './indexable-entity.js';
 import { publishFeedEvent } from './feed.js';
 
 export const DEFAULT_AGENT_SKILLS = Object.freeze(['greet', 'present-model', 'validate-model', 'remember', 'think']);
@@ -136,9 +136,15 @@ export async function createAgentIdentity({
 	}
 	await ensureDraftPlan({ agent });
 
-	// Push the new agent's URL to IndexNow so Bing / Yandex discover it within
-	// minutes instead of waiting for the next crawl. Fire-and-forget.
-	pingIndexNow(`${env.APP_ORIGIN}/agents/${agent.id}`).catch(() => {});
+	// Queue the new agent's URL for IndexNow so Bing and Copilot discover it
+	// within minutes instead of at the next crawl. Only a public agent with its
+	// own name or description is announced, the same rule as agents.xml; an
+	// untouched onboarding agent is announced later, when its owner edits it.
+	announceIndexNow('agent', agent.id, {
+		indexable: agent.is_public !== false && isIndexableAgent(agent),
+		reason: 'create',
+		source: 'agent',
+	});
 
 	// Announce the new agent on the site-wide live activity ticker. Fire-and-forget.
 	publishFeedEvent({

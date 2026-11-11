@@ -152,6 +152,27 @@ export function notifyIndexNow(type, key, reason = 'update', source = 'app') {
 	enqueueIndexNow([{ type, key, reason }], { source }).catch(() => {});
 }
 
+/**
+ * The one call a write path makes after it changes a resource. Fire-and-forget.
+ *
+ *   indexable  the resource is public and indexable now: announce it
+ *              ('create' or 'update').
+ *   wasPublic  it is not indexable now but was public before this change
+ *              (deleted or made private): announce the URL so the engine drops it.
+ *   neither    announce only if this pipeline announced the URL before, so a
+ *              URL that was never public is never sent anywhere.
+ *
+ * @param {'page'|'agent'|'avatar'|'creation'|'widget'|'profile'} type
+ * @param {string} key
+ * @param {{indexable:boolean, wasPublic?:boolean, reason?:'create'|'update'|'delete', source?:string}} state
+ */
+export function announceIndexNow(type, key, { indexable, wasPublic = false, reason, source = 'app' }) {
+	const job = indexable
+		? enqueueIndexNow([{ type, key, reason: reason === 'create' ? 'create' : 'update' }], { source })
+		: enqueueIndexNow([{ type, key, reason: 'delete' }], { source, onlyAnnounced: !wasPublic });
+	job.catch(() => {});
+}
+
 async function recentRateLimit() {
 	const rows = await sql`
 		select submitted_at from indexnow_submissions
@@ -433,7 +454,7 @@ export function changedManifestPages(manifest, since) {
 	return out;
 }
 
-async function reconcileType(type, { since, dryRun, source }) {
+async function reconcileType(type, { since, dryRun, source, pageSize }) {
 	const cursor = await readCursor(type, since);
 	const summary = { type, from: cursor.ts.toISOString(), scanned: 0, live: 0, gone: 0, hidden: 0, enqueued: 0 };
 
@@ -451,7 +472,7 @@ async function reconcileType(type, { since, dryRun, source }) {
 	let { ts, id } = cursor;
 	const sample = [];
 	for (let page = 0; page < RECONCILE_MAX_PAGES; page++) {
-		const rows = await SCANNERS[type].scan(ts.toISOString(), id, RECONCILE_PAGE);
+		const rows = await SCANNERS[type].scan(ts.toISOString(), id, pageSize);
 		if (!rows.length) break;
 		summary.scanned += rows.length;
 		const { live, gone, hidden } = classifyRows(type, rows, cursor.ts);
@@ -467,7 +488,7 @@ async function reconcileType(type, { since, dryRun, source }) {
 			summary.enqueued += await enqueueIndexNow(hidden, { source, onlyAnnounced: true });
 			await writeCursor(type, ts, id);
 		}
-		if (rows.length < RECONCILE_PAGE) break;
+		if (rows.length < pageSize) break;
 	}
 	summary.to = ts.toISOString();
 	summary.urls = sample;
@@ -478,14 +499,22 @@ async function reconcileType(type, { since, dryRun, source }) {
  * Enqueue every public change since each type's cursor, then (unless
  * `drain` is false or this is a dry run) submit the outbox.
  *
- * @param {{since?:Date, types?:string[], dryRun?:boolean, drain?:boolean, source?:string, send?:Function}} [opts]
+ * @param {{since?:Date, types?:string[], dryRun?:boolean, drain?:boolean, source?:string, send?:Function, pageSize?:number}} [opts]
  */
-export async function reconcileIndexNow({ since = null, types = RECONCILE_TYPES, dryRun = false, drain = true, source = 'reconcile', send } = {}) {
+export async function reconcileIndexNow({
+	since = null,
+	types = RECONCILE_TYPES,
+	dryRun = false,
+	drain = true,
+	source = 'reconcile',
+	send,
+	pageSize = RECONCILE_PAGE,
+} = {}) {
 	const results = [];
 	for (const type of types) {
 		if (!RECONCILE_TYPES.includes(type)) throw new Error(`unknown resource type: ${type}`);
 		try {
-			results.push(await reconcileType(type, { since, dryRun, source }));
+			results.push(await reconcileType(type, { since, dryRun, source, pageSize }));
 		} catch (err) {
 			results.push({ type, error: err?.message || String(err) });
 		}

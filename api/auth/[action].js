@@ -24,6 +24,7 @@ import { tosAcceptanceFromBody, recordTosAcceptance } from '../_lib/legal.js';
 import { revokeAllMemberships } from '../_lib/home/members.js';
 import { z } from 'zod';
 import { recordConversion } from '../_lib/campaign-ledger.js';
+import { announceIndexNow } from '../_lib/indexnow-queue.js';
 
 const APP_ORIGIN = process.env.APP_ORIGIN || 'https://three.ws';
 
@@ -304,6 +305,12 @@ async function handleDeleteAccount(req, res) {
 	// row so support can restore it on an appeal. Email is deliberately kept: the
 	// wallet/SAML paths key their `account_deleted` answer off finding this row.
 	await sql`update users set deleted_at = now(), username = null, updated_at = now() where id = ${user.id} and deleted_at is null`;
+	// Nulling the handle hides this row from the IndexNow profile scan, so the
+	// /u/<name> removal is announced here. Avatars, agents and widgets above
+	// bump updated_at and reach IndexNow through the reconcile cron.
+	if (current.username) {
+		announceIndexNow('profile', current.username, { indexable: false, wasPublic: true, reason: 'delete', source: 'account' });
+	}
 	await sql`update sessions set revoked_at = now() where user_id = ${user.id} and revoked_at is null`;
 	// Access tokens already in flight are stateless JWTs, refresh tokens outlive a
 	// session, and API keys are bearer credentials: cut all of them off and evict

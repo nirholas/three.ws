@@ -22,6 +22,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { decorate } from './index.js';
 import { isDemoWidgetId, getDemoWidget } from './_demo-fixtures.js';
 import { WIDGET_TYPES } from '../_lib/widget-types.js';
+import { announceIndexNow } from '../_lib/indexnow-queue.js';
 
 const patchSchema = z.object({
 	name: z.string().trim().min(1).max(120).optional(),
@@ -120,6 +121,7 @@ export default wrap(async (req, res) => {
 			returning id, user_id, avatar_id, type, name, config, is_public, view_count, created_at, updated_at
 		`;
 		if (!row) return error(res, 404, 'not_found', 'widget not found or not yours');
+		announceIndexNow('widget', row.id, { indexable: row.is_public === true, source: 'widget' });
 		return json(res, 200, { widget: decorate(row) });
 	}
 
@@ -127,9 +129,15 @@ export default wrap(async (req, res) => {
 	const rows = await sql`
 		update widgets set deleted_at = now()
 		where id = ${id} and user_id = ${auth.userId} and deleted_at is null
-		returning id
+		returning id, is_public
 	`;
 	if (!rows[0]) return error(res, 404, 'not_found', 'widget not found or not yours');
+	announceIndexNow('widget', rows[0].id, {
+		indexable: false,
+		wasPublic: rows[0].is_public === true,
+		reason: 'delete',
+		source: 'widget',
+	});
 	return json(res, 200, { ok: true });
 });
 

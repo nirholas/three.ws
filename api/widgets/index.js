@@ -18,6 +18,7 @@ import { parse } from '../_lib/validate.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { publicUrl, thumbnailUrl } from '../_lib/r2.js';
 import { WIDGET_TYPES } from '../_lib/widget-types.js';
+import { announceIndexNow } from '../_lib/indexnow-queue.js';
 
 const createBody = z.object({
 	type: z.enum(WIDGET_TYPES),
@@ -77,6 +78,7 @@ export default wrap(async (req, res) => {
 		        ${JSON.stringify(body.config)}::jsonb, ${body.is_public})
 		returning id, user_id, avatar_id, type, name, config, is_public, view_count, created_at, updated_at
 	`;
+	announceIndexNow('widget', row.id, { indexable: row.is_public === true, reason: 'create', source: 'widget' });
 	return json(res, 201, { widget: decorate(row) });
 });
 

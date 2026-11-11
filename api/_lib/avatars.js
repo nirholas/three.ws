@@ -8,6 +8,8 @@ import { cdnUrl, thumbnailUrl, presignGet, deleteObject } from './r2.js';
 import { defaultStorageMode } from './storage-mode.js';
 import { isUuid } from './validate.js';
 import { attributionFor, describeVroidLicense } from './vroid/license-gate.js';
+import { announceIndexNow } from './indexnow-queue.js';
+import { isIndexableAvatar } from './indexable-entity.js';
 
 // Absolute, so the URL is equally usable from the dashboard, an SDK on another
 // origin, and a server rendering it into a page.
@@ -201,7 +203,19 @@ export async function createAvatar({ userId, input, storageKey }) {
 			${input.appearance ? JSON.stringify(input.appearance) : null}::jsonb
 		) returning *
 	`;
+	announceAvatar(row, 'create');
 	return decorate(row);
+}
+
+// Tell IndexNow about an avatar whose public page just changed (or stopped
+// being public). Same indexability rule as /sitemap/avatars.xml.
+function announceAvatar(row, reason) {
+	if (!row?.id) return;
+	announceIndexNow('avatar', row.id, {
+		indexable: !row.deleted_at && row.visibility === 'public' && isIndexableAvatar(row),
+		reason,
+		source: 'avatar',
+	});
 }
 
 export async function updateAvatar({ id, userId, patch }) {
@@ -275,6 +289,7 @@ export async function updateAvatar({ id, userId, patch }) {
 		where id = ${id} and owner_id = ${userId} and deleted_at is null
 		returning *
 	`;
+	if (row) announceAvatar(row, 'update');
 	return row ? decorate(row) : null;
 }
 
@@ -303,10 +318,11 @@ export async function deleteAvatar({ id, userId }) {
 	const rows = await sql`
 		update avatars set deleted_at = now()
 		where id = ${id} and owner_id = ${userId} and deleted_at is null
-		returning storage_key, thumbnail_key
+		returning storage_key, thumbnail_key, visibility
 	`;
 	const row = rows[0];
 	if (!row) return false;
+	announceIndexNow('avatar', id, { indexable: false, wasPublic: row.visibility === 'public', reason: 'delete', source: 'avatar' });
 	// Fire-and-forget object delete — DB row is source of truth.
 	queueMicrotask(async () => {
 		let keys;

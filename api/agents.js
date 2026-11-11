@@ -35,6 +35,8 @@ import {
 	resumeAfterBudgetChange,
 } from './_lib/inference-billing.js';
 import { trackConnectorCall } from './_lib/microsoft-surface-events.js';
+import { announceIndexNow } from './_lib/indexnow-queue.js';
+import { isIndexableAgent } from './_lib/indexable-entity.js';
 
 const animationEntrySchema = z.object({
 	name: z.string().trim().min(1).max(60),
@@ -562,6 +564,12 @@ export async function handleUpdate(req, res, id, auth) {
 		RETURNING *
 	`;
 	if (budgetChanged) await resumeAfterBudgetChange(id, existing.meta);
+	if (updated) {
+		announceIndexNow('agent', id, {
+			indexable: updated.is_public !== false && isIndexableAgent(updated),
+			source: 'agent',
+		});
+	}
 	return json(res, 200, { agent: decorate(updated) });
 }
 
@@ -577,7 +585,7 @@ async function handleDelete(req, res, id, auth) {
 	const scopeErr = requireScopeForMutation(auth, res, 'avatars:delete');
 	if (scopeErr) return scopeErr;
 	const [existing] = await sql`
-		SELECT id, user_id FROM agent_identities WHERE id = ${id} AND deleted_at IS NULL
+		SELECT id, user_id, is_public FROM agent_identities WHERE id = ${id} AND deleted_at IS NULL
 	`;
 	if (!existing) return error(res, 404, 'not_found', 'agent not found');
 	if (existing.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');
@@ -590,6 +598,7 @@ async function handleDelete(req, res, id, auth) {
 		sql`DELETE FROM agent_actions  WHERE agent_id = ${id}`,
 		sql`DELETE FROM agent_memories WHERE agent_id = ${id}`,
 	]);
+	announceIndexNow('agent', id, { indexable: false, wasPublic: existing.is_public !== false, reason: 'delete', source: 'agent' });
 	return json(res, 200, { ok: true });
 }
 
