@@ -103,6 +103,26 @@ describe('devApiPagesMiddleware', () => {
 		expect(Buffer.from(res.body).toString()).toBe('<html>agent</html>');
 	});
 
+	it('forwards the session cookie and returns the upstream cookies, so a signed-in OAuth authorize reaches consent', async () => {
+		// /oauth/authorize is a vercel.json page route to api/oauth/[action]. Without
+		// the cookie the upstream saw no session and bounced a signed-in user to
+		// /login on every attempt (the PowerPoint add-in sign-in loop in dev).
+		const fetchImpl = vi.fn(async () => {
+			const headers = new Headers({ 'content-type': 'text/html' });
+			headers.append('set-cookie', '__Host-csrf=a; Path=/; Secure; HttpOnly');
+			headers.append('set-cookie', 'tws_seen=1; Path=/');
+			return new Response('<form>consent</form>', { status: 200, headers });
+		});
+		const mw = devApiPagesMiddleware({ root, upstream: 'http://localhost:3147', table: () => table, load: vi.fn(), hasDatabase: () => false, fetchImpl });
+		const res = fakeRes();
+		await mw({ method: 'GET', url: '/oauth/authorize?response_type=code&client_id=c1', headers: { host: 'localhost:3102', cookie: '__Host-sid=s1; theme=dark', 'user-agent': BROWSER } }, res, vi.fn());
+		const [url, init] = fetchImpl.mock.calls[0];
+		expect(url).toBe('http://localhost:3147/oauth/authorize?response_type=code&client_id=c1');
+		expect(init.headers.cookie).toBe('__Host-sid=s1; theme=dark');
+		expect(res.headers['set-cookie']).toEqual(['__Host-csrf=a; Path=/; Secure; HttpOnly', 'tws_seen=1; Path=/']);
+		expect(Buffer.from(res.body).toString()).toBe('<form>consent</form>');
+	});
+
 	it('passes everything else, and non-GET methods, to the next middleware', async () => {
 		const mw = devApiPagesMiddleware({ root, upstream: 'https://up.example', table: () => table, load: vi.fn(), hasDatabase: () => true });
 		const next = vi.fn();

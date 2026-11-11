@@ -173,9 +173,12 @@ export function devApiPagesMiddleware({
 				return;
 			}
 			const r = await fetchImpl(`${upstream}${req.url}`, {
+				// The cookie rides along so session-gated page routes (/oauth/authorize,
+				// /oauth/consent) see the signed-in user, as they do in production.
 				headers: {
 					accept: req.headers.accept || '*/*',
 					'user-agent': req.headers['user-agent'] || 'three.ws-dev',
+					...(req.headers.cookie ? { cookie: req.headers.cookie } : {}),
 				},
 				redirect: 'manual',
 				signal: AbortSignal.timeout(60_000),
@@ -185,6 +188,8 @@ export function devApiPagesMiddleware({
 				const v = r.headers.get(h);
 				if (v) res.setHeader(h, v);
 			}
+			const cookies = r.headers.getSetCookie?.() || [];
+			if (cookies.length) res.setHeader('set-cookie', cookies);
 			res.end(req.method === 'HEAD' ? undefined : Buffer.from(await r.arrayBuffer()));
 		} catch (err) {
 			if (res.headersSent) return res.end();
