@@ -1,5 +1,7 @@
 # microsoft 14: three.ws plugins for Semantic Kernel and Microsoft Agent Framework, plus a Foundry quickstart
 
+Status 2026-11-11: built and verified (commits cea955c6f, 43ea7ff1d, 8b2d8c99d, 077428ee9, 4371a4b63, d4e057fa4, 2e4e2a1a8, 0a670d97a, 58a0e08be, 42060ab63, cb56fdcb9, 3b37f68c6; STRUCTURE row swept into 9b08be2e2). Both SK suites pass live, both Agent Framework samples returned real GLBs, wheel and nupkg install clean. Waits on the owner: PyPI and NuGet publish, push, deploy (carries the two mcp-studio fixes), run the Foundry quickstart.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3114.
 
 ## Operating clause (binding)
