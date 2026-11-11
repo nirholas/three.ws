@@ -1,5 +1,9 @@
 // Forge — text / image / multi-view → 3D generator (browser client).
 import { readCachedCatalog, writeCachedCatalog } from './forge-catalog-cache.js';
+// The slot markup below always carries the on-device check overlay, and its
+// hide-until-preparing rule lives here, so the stylesheet loads with the page
+// rather than with the lazily imported review dialog.
+import './forge-photo-prep/review.css';
 import { ensureModelViewerOrFallback } from './shared/model-viewer-loader.js';
 import { resizedImageUrl } from './shared/image-url.js';
 import { skeletonHTML, errorStateHTML, ensureStateKitStyles } from './shared/state-kit.js';

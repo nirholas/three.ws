@@ -7881,6 +7881,10 @@
 			"schedule": "*/5 * * * *"
 		},
 		{
+			"path": "/api/cron/creation-describe",
+			"schedule": "*/10 * * * *"
+		},
+		{
 			"path": "/api/cron/agent-avatar-backfill",
 			"schedule": "*/10 * * * *"
 		},

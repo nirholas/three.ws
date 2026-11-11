@@ -5906,14 +5906,6 @@
 					"changefreq": "monthly"
 				},
 				{
-					"path": "/docs/minecraft-export",
-					"title": "Docs: Minecraft: Bedrock export",
-					"description": "Turn any Forge model into blocks and download a Bedrock structure pack: height, block palettes, solid or hollow, texture-sampled colors, loading it with a structure block or /function, limits, the API and the CLI. Not an official Minecraft product.",
-					"added": "2026-11-11",
-					"priority": 0.6,
-					"changefreq": "monthly"
-				},
-				{
 					"path": "/docs/alpha-drip",
 					"title": "Docs: Alpha-drip",
 					"description": "Alpha-drip lets a copy-trading leader price the latency of their own signal: $THREE holders in higher tiers see the copy intent first, everyone else after a delay the leader sets. It delays the reveal, never the record.",

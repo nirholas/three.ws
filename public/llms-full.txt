@@ -4500,12 +4500,6 @@ URL: https://three.ws/docs/user-wallet
 
 Every user account can own one custodial wallet: the master wallet, the financial hub for the person rather than the bot. Provision it, read balances, send SOL or any SPL token, fund an agent, and read its on-chain history, with the spend safeguards on each route.
 
-### Docs: Minecraft: Bedrock export
-
-URL: https://three.ws/docs/minecraft-export
-
-Turn any Forge model into blocks and download a Bedrock structure pack: height, block palettes, solid or hollow, texture-sampled colors, loading it with a structure block or /function, limits, the API and the CLI. Not an official Minecraft product.
-
 ### Docs: Alpha-drip
 
 URL: https://three.ws/docs/alpha-drip

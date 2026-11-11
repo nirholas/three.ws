@@ -165,3 +165,15 @@ test('the embed canvas names the agent and orbits from the keyboard', async ({ p
 	});
 	expect(handled).toBe(true);
 });
+
+test('empty Forge photo slots do not show the on-device check overlay', async ({ page }) => {
+	// The overlay's hide rule lived only in the lazily imported review.css, so
+	// before the first photo every empty slot painted "Checking photo…" and
+	// axe read it into the slot's name (label-content-name-mismatch).
+	await page.goto('/image-to-3d', { waitUntil: 'domcontentloaded', timeout: 180_000 });
+	const slot = page.locator('.view-slot[data-index="0"]');
+	await expect(slot).toHaveAttribute('data-state', 'empty', { timeout: 60_000 });
+	await expect(slot.locator('.vs-preparing')).toBeHidden();
+	const results = await new AxeBuilder({ page }).include('.view-slot').withRules(['label-content-name-mismatch']).analyze();
+	expect(results.violations).toEqual([]);
+});

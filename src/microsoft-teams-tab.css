@@ -84,6 +84,8 @@
 .tt-item-text { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .tt-item-name { color: var(--ink-bright); font-size: var(--text-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tt-item-desc { color: var(--ink-dim); font-size: var(--text-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The selected row sits on an accent tint, where --ink-dim drops to 4.1:1; step up one ink level (WCAG 1.4.3). */
+.tt-item[aria-current="true"] .tt-item-desc { color: var(--ink); }
 
 .tt-empty { padding: var(--space-md); color: var(--ink-dim); font-size: var(--text-sm); line-height: 1.5; background: var(--surface-1); border: 1px dashed var(--stroke-strong); border-radius: var(--radius-card, 14px); }
 .tt-empty p { margin: 0 0 var(--space-sm); }
