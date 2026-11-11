@@ -73,15 +73,18 @@ export default wrap(async (req, res) => {
 	if (!isUuid(agentId)) return error(res, 404, 'agent_not_found', 'agent not found');
 
 	const [agent] = await sql`
-		SELECT id, name, description, embed_policy, meta, skills
+		SELECT id, user_id, name, description, embed_policy, meta, skills
 		FROM agent_identities
 		WHERE id = ${agentId} AND deleted_at IS NULL
 			AND (is_published = true OR user_id = ${userId})
 	`;
 	if (!agent) return error(res, 404, 'agent_not_found', 'agent not found');
 
+	// The opt-out keeps OTHER apps from driving an agent; it never locks out the
+	// owner, who reaches their own agent through connectors like Power Automate.
+	const isOwner = userId != null && agent.user_id === userId;
 	const policy = normalizeLegacyPolicy(agent.embed_policy);
-	if (policy?.surfaces?.mcp === false) {
+	if (!isOwner && policy?.surfaces?.mcp === false) {
 		return error(res, 403, 'mcp_disabled', 'this agent has opted out of MCP delegation');
 	}
 

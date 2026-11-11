@@ -125,3 +125,27 @@ describe('agents/talk rate limit', () => {
 		expect(limits.agentDelegate).toHaveBeenCalledWith(`user:${OTHER}`);
 	});
 });
+
+describe('agents/talk owner opt-out', () => {
+	// surfaces.mcp is off by default (defaultEmbedPolicy) and exists so an owner
+	// can keep OTHER apps from driving their agent. It must not lock the owner
+	// out: the Power Platform connector's Send a message action lists the
+	// caller's own agents, and every one of them answered 403 mcp_disabled.
+	it('lets the owner talk to their own agent when other apps are opted out', async () => {
+		agentRow.embed_policy = null;
+		session = null;
+		authenticateBearer.mockResolvedValueOnce({ userId: OWNER, scope: 'agents:read', source: 'oauth' });
+		const res = await call();
+		expect(res.status).toBe(200);
+		expect(runAgentTurn).toHaveBeenCalledOnce();
+	});
+
+	it('still refuses a non-owner when the owner opted out', async () => {
+		agentRow.is_published = true;
+		agentRow.embed_policy = { version: 1, surfaces: { mcp: false } };
+		const res = await call();
+		expect(res.status).toBe(403);
+		expect(res.code).toBe('mcp_disabled');
+		expect(runAgentTurn).not.toHaveBeenCalled();
+	});
+});
