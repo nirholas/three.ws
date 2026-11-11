@@ -57,6 +57,22 @@
 			}
 		},
 		{
+			"id": "audit-a11y",
+			"script": "scripts/audit-a11y.mjs",
+			"npm": "audit:a11y",
+			"title": "WCAG 2.2 AA axe audit",
+			"protects": "The 18 page types in the Accessibility Conformance Report, plus /accessibility itself, stay free of serious and critical axe-core violations under every WCAG 2.0, 2.1 and 2.2 A and AA rule, in dark and light themes at 1366px and 400px.",
+			"why": "The public statement at /accessibility and docs/accessibility/acr.md claim zero serious or critical findings. This regenerates docs/accessibility/reports/axe-latest.{json,md}, the evidence both link to, and exits non-zero the moment that claim stops being true.",
+			"stages": [
+				"manual"
+			],
+			"needs": "browser",
+			"proof": {
+				"kind": "live",
+				"reason": "Runs axe in real Chromium against a running dev server whose API is live, so pages render real agents and data. Contrast, landmarks and accessible names depend on the rendered DOM in each theme, which a static fixture cannot reproduce."
+			}
+		},
+		{
 			"id": "audit-console",
 			"script": "scripts/audit-console.mjs",
 			"npm": "audit:console",
