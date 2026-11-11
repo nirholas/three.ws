@@ -1,0 +1,117 @@
+/* Agent knowledge documents panel (src/agent-knowledge-docs.js), mounted in
+   the Knowledge tab of /agents/:id/edit. Dark surface, matches the editor. */
+
+.kd { display: flex; flex-direction: column; gap: 0.875rem; margin: 0 0 1.75rem; padding: 0 0 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.07); }
+.kd-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.kd-title { font-size: 0.875rem; font-weight: 600; color: rgba(255, 255, 255, 0.92); margin: 0 0 0.25rem; }
+.kd-sub { margin: 0; max-width: 60ch; }
+.kd-count { font-size: 0.7rem; color: rgba(255, 255, 255, 0.55); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 999px; padding: 0.2rem 0.6rem; white-space: nowrap; }
+
+.kd-drop {
+	display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.35rem;
+	padding: 1.5rem 1rem; border: 1.5px dashed rgba(255, 255, 255, 0.16); border-radius: 12px;
+	background: rgba(255, 255, 255, 0.02); color: rgba(255, 255, 255, 0.7); text-align: center; cursor: pointer;
+	transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+.kd-drop:hover { border-color: rgba(122, 162, 255, 0.5); background: rgba(122, 162, 255, 0.05); }
+.kd-drop:focus-visible { outline: 2px solid #7aa2ff; outline-offset: 2px; }
+.kd-drop:active { transform: scale(0.995); }
+.kd-drop.over { border-color: #7aa2ff; background: rgba(122, 162, 255, 0.1); transform: scale(1.01); }
+.kd-drop-icon { color: #7aa2ff; }
+.kd-drop-main { font-size: 0.875rem; font-weight: 500; color: rgba(255, 255, 255, 0.9); }
+.kd-link { color: #9ad0ff; text-decoration: underline; text-underline-offset: 2px; }
+.kd-drop-help { font-size: 0.72rem; color: rgba(255, 255, 255, 0.45); max-width: 52ch; }
+
+.kd-uploads { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.kd-uploads:empty { display: none; }
+.kd-up { padding: 0.6rem 0.75rem; border-radius: 8px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.07); animation: kd-in 0.2s ease-out; }
+.kd-up-top { display: flex; align-items: center; gap: 0.75rem; font-size: 0.78rem; margin-bottom: 0.45rem; }
+.kd-up-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgba(255, 255, 255, 0.9); }
+.kd-up-status { color: rgba(255, 255, 255, 0.55); font-variant-numeric: tabular-nums; text-align: right; }
+.kd-up[data-status='done'] .kd-up-status { color: #86efac; }
+.kd-up[data-status='error'] .kd-up-status { color: #fca5a5; }
+.kd-up-x { background: none; border: 0; color: rgba(255, 255, 255, 0.5); font-size: 1rem; line-height: 1; cursor: pointer; padding: 0 0.15rem; border-radius: 4px; }
+.kd-up-x:hover { color: #fff; }
+.kd-up-x:focus-visible { outline: 2px solid #7aa2ff; }
+.kd-bar { height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; position: relative; }
+.kd-bar > span { display: block; height: 100%; background: linear-gradient(90deg, #3b82f6, #7aa2ff); border-radius: inherit; transition: width 0.2s ease; }
+.kd-up[data-status='done'] .kd-bar > span { background: #22c55e; }
+.kd-up[data-status='error'] .kd-bar > span { background: rgba(252, 165, 165, 0.55); }
+.kd-bar.indeterminate > span { width: 35% !important; position: absolute; animation: kd-slide 1.2s ease-in-out infinite; }
+
+.kd-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.kd-doc {
+	display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.75rem; border-radius: 8px;
+	background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.07);
+	transition: border-color 0.15s ease, background 0.15s ease; animation: kd-in 0.2s ease-out;
+}
+.kd-doc:hover { border-color: rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.045); }
+.kd-doc-body { flex: 1; min-width: 0; }
+.kd-doc-name { font-size: 0.82rem; color: rgba(255, 255, 255, 0.92); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kd-doc-meta { font-size: 0.7rem; color: rgba(255, 255, 255, 0.45); margin-top: 0.15rem; }
+.kd-doc-err { font-size: 0.72rem; color: #fca5a5; margin-top: 0.3rem; }
+.kd-del:focus-visible { outline: 2px solid #fca5a5; outline-offset: 1px; }
+.kd-del:active { transform: scale(0.97); }
+.kd-del.armed { background: rgba(220, 38, 38, 0.18); color: #fecaca; border-color: rgba(252, 165, 165, 0.6); }
+.kd-del:disabled { opacity: 0.6; cursor: default; }
+
+.kd-badge {
+	flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; min-width: 2.6rem;
+	padding: 0.22rem 0.4rem; border-radius: 6px; font: 600 0.62rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+	text-transform: uppercase; letter-spacing: 0.03em; background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.8);
+}
+.kd-docx { background: rgba(59, 130, 246, 0.18); color: #93c5fd; }
+.kd-pptx { background: rgba(249, 115, 22, 0.18); color: #fdba74; }
+.kd-xlsx { background: rgba(34, 197, 94, 0.16); color: #86efac; }
+.kd-pdf { background: rgba(239, 68, 68, 0.16); color: #fca5a5; }
+.kd-msg { background: rgba(14, 165, 233, 0.16); color: #7dd3fc; }
+
+.kd-empty { padding: 1.1rem 1rem; border-radius: 10px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); }
+.kd-empty-title { font-size: 0.85rem; font-weight: 600; color: rgba(255, 255, 255, 0.88); margin-bottom: 0.3rem; }
+.kd-empty p { margin: 0 0 0.75rem; font-size: 0.76rem; line-height: 1.55; color: rgba(255, 255, 255, 0.55); max-width: 62ch; }
+.kd-empty-sm { font-size: 0.76rem; color: rgba(255, 255, 255, 0.55); }
+.kd-formats { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; }
+.kd-formats li { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.74rem; color: rgba(255, 255, 255, 0.7); }
+
+.kd-error { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; padding: 0.75rem 0.875rem; border-radius: 8px; background: rgba(220, 38, 38, 0.08); border: 1px solid rgba(252, 165, 165, 0.25); font-size: 0.76rem; color: #fecaca; }
+
+.kd-skel { height: 3rem; border-radius: 8px; background: linear-gradient(90deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03)); background-size: 200% 100%; animation: kd-shimmer 1.3s linear infinite; }
+.kd-skel.short { width: 60%; height: 2rem; margin-top: 0.5rem; }
+
+.kd-test { display: flex; flex-direction: column; gap: 0.35rem; padding-top: 0.25rem; }
+.kd-test .hint { margin: 0 0 0.25rem; }
+.kd-test-row { display: flex; gap: 0.5rem; }
+.kd-test-row .form-input { flex: 1; min-width: 0; }
+.kd-test-row .btn-primary:focus-visible { outline: 2px solid #9ad0ff; outline-offset: 2px; }
+.kd-test-row .btn-primary:active:not(:disabled) { transform: scale(0.97); }
+.kd-test-out { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
+.kd-test-out:empty { display: none; }
+.kd-out-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255, 255, 255, 0.4); margin-top: 0.25rem; }
+.kd-matches { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; counter-reset: kd; }
+.kd-match { padding: 0.55rem 0.7rem; border-radius: 8px; background: rgba(122, 162, 255, 0.05); border: 1px solid rgba(122, 162, 255, 0.14); animation: kd-in 0.2s ease-out; }
+.kd-match-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; font-size: 0.74rem; margin-bottom: 0.25rem; }
+.kd-match-src { color: #c7d7ff; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kd-match-h { color: rgba(255, 255, 255, 0.5); font-weight: 400; }
+.kd-score { font-variant-numeric: tabular-nums; color: rgba(255, 255, 255, 0.5); font-size: 0.7rem; }
+.kd-match-text { font-size: 0.74rem; line-height: 1.5; color: rgba(255, 255, 255, 0.7); white-space: pre-wrap; word-break: break-word; }
+.kd-answer { padding: 0.7rem 0.8rem; border-radius: 8px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.8rem; line-height: 1.55; color: rgba(255, 255, 255, 0.9); white-space: pre-wrap; }
+.kd-cited { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; font-size: 0.7rem; color: rgba(255, 255, 255, 0.45); }
+.kd-cited span { padding: 0.12rem 0.45rem; border-radius: 999px; background: rgba(34, 197, 94, 0.12); color: #86efac; }
+.kd-typing { display: inline-flex; gap: 4px; }
+.kd-typing i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, 0.45); animation: kd-dot 1s ease-in-out infinite; }
+.kd-typing i:nth-child(2) { animation-delay: 0.15s; }
+.kd-typing i:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes kd-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+@keyframes kd-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@keyframes kd-slide { 0% { left: -35%; } 100% { left: 100%; } }
+@keyframes kd-dot { 0%, 100% { opacity: 0.3; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-2px); } }
+
+@media (max-width: 520px) {
+	.kd-test-row { flex-direction: column; }
+	.kd-doc { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.kd-drop, .kd-doc, .kd-up, .kd-match, .kd-bar > span { transition: none; animation: none; }
+	.kd-skel, .kd-typing i, .kd-bar.indeterminate > span { animation: none; }
+}

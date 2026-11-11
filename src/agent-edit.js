@@ -1878,6 +1878,14 @@ let knowledgeTabMounted = false;
 async function ensureKnowledgeTab() {
   if (knowledgeTabMounted) return;
   knowledgeTabMounted = true;
+  const docsHost = $('knowledge-docs-host');
+  if (docsHost) {
+    import('./agent-knowledge-docs.js')
+      .then(({ mountKnowledgeDocs }) => mountKnowledgeDocs(docsHost, { agentId }))
+      .catch((err) => {
+        docsHost.innerHTML = `<div class="muted">Could not load the documents panel: ${escapeHtml(err.message)}</div>`;
+      });
+  }
   await loadMemories();
 }
 
