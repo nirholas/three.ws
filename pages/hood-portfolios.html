@@ -75,35 +75,6 @@
 						"description": "Describe a portfolio in a sentence and get a real basket of Robinhood Chain assets: tokenized equities, crypto majors and chain-native tokens, with the weights committed on-chain as a signed manifest and rebalanced on a published schedule.",
 						"offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
 						"isPartOf": { "@type": "WebSite", "name": "three.ws", "url": "https://three.ws" }
-					},
-					{
-						"@type": "FAQPage",
-						"mainEntity": [
-							{
-								"@type": "Question",
-								"name": "What can a Robinhood Portfolio hold?",
-								"acceptedAnswer": {
-									"@type": "Answer",
-									"text": "Anything on Robinhood Chain with real on-chain liquidity: tokenized equities and ETFs such as NVDA, SPY and GLD, crypto majors, and chain-native tokens including memecoins. A single portfolio can span all three at once."
-								}
-							},
-							{
-								"@type": "Question",
-								"name": "How does rebalancing work?",
-								"acceptedAnswer": {
-									"@type": "Answer",
-									"text": "The manifest publishes a schedule and target weights. When a rebalance comes due it is proposed, waits out a timelock, then opens as a descending-price offer any address can fill: deliver what the vault is short, receive what it is long. Nobody can trade the fund's assets at a price of their choosing."
-								}
-							},
-							{
-								"@type": "Question",
-								"name": "What happens when a tokenized equity is halted?",
-								"acceptedAnswer": {
-									"@type": "Answer",
-									"text": "Every tokenized equity on Robinhood Chain can be paused by its issuer, and while it is, transfers revert. Issuance, redemption and rebalancing all stop until it resumes, exactly as creation and redemption of a physical ETF stop when its underlying stops."
-								}
-							}
-						]
 					}
 				]
 			}

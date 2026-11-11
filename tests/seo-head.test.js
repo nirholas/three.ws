@@ -33,9 +33,15 @@ describe('rewriteHead', () => {
 		expect(out.slice(out.indexOf('</head>'))).toBe(docsShell.slice(docsShell.indexOf('</head>')));
 	});
 
-	it('leaves the shell route itself alone (canonical already matches)', () => {
-		expect(rewriteHead('/docs', docsShell)).toBeNull();
-		expect(rewriteHead('/docs/', docsShell)).toBeNull();
+	it('leaves the meta of the shell route alone and only appends missing structured data', () => {
+		for (const route of ['/docs', '/docs/']) {
+			const out = rewriteHead(route, docsShell);
+			if (out === null) continue;
+			const before = headOf(docsShell).replace(/<\/head>$/i, '');
+			expect(headOf(out).startsWith(before)).toBe(true);
+			expect(headOf(out).slice(before.length)).toMatch(/^\s*<script type="application\/ld\+json">[\s\S]*<\/script>\s*<\/head>$/);
+			expect(out.slice(out.indexOf('</head>'))).toBe(docsShell.slice(docsShell.indexOf('</head>')));
+		}
 	});
 
 	it('normalizes trailing slashes before lookup', () => {

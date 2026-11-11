@@ -28,6 +28,7 @@
 import { scriptJson, truncateChars } from '../api/_lib/safe-text.js';
 import { creationJsonLd, renderPosterUrl, renderableGlb, POSTER_WIDTH, POSTER_HEIGHT } from '../api/_lib/creation-jsonld.js';
 import { isIndexableCreation } from '../api/_lib/seo-resources.js';
+import { breadcrumbListNode } from '../api/_lib/structured-data.js';
 // The page's own pure helpers, so the server head and the hydrated page agree
 // on which paths are creations and what a creation is called.
 import { modelIdFromPath, titleFromPrompt, creationAltText, describedMetaDescription } from '../src/model-lib.js';
@@ -103,7 +104,16 @@ export function creationMeta(creation, origin = ORIGIN) {
 			...(Array.isArray(creation.described?.tags) ? creation.described.tags : []),
 		],
 	});
-	return { pageUrl, title: `${name} · 3D Model · three.ws`, name, description, imageAlt, image, imageIsPoster: Boolean(poster), jsonLd };
+	// Home > Creations > this model: the same trail the page's back link walks.
+	const breadcrumb = breadcrumbListNode(
+		[
+			{ name: 'Home', path: '/' },
+			{ name: 'Creations', path: '/creations' },
+			{ name, path: `/m/${id}` },
+		],
+		origin,
+	);
+	return { pageUrl, title: `${name} · 3D Model · three.ws`, name, description, imageAlt, image, imageIsPoster: Boolean(poster), jsonLd, breadcrumb };
 }
 
 // Replace a whole tag matched by `re`, or queue it for insertion before
@@ -170,7 +180,7 @@ export function rewriteCreationHead(html, creation, origin = ORIGIN) {
 	// step adds for the shell route so the page never describes two things.
 	head = head.replace(/<script[^>]*application\/ld\+json[^>]*>[\s\S]*?<\/script>\s*/gi, '');
 	missing.push(
-		`<script type="application/ld+json">${scriptJson({ '@context': 'https://schema.org', '@graph': [m.jsonLd] })}</script>`,
+		`<script type="application/ld+json">${scriptJson({ '@context': 'https://schema.org', '@graph': [m.jsonLd, m.breadcrumb] })}</script>`,
 	);
 	head = head.replace(/<\/head>/i, () => `\t${missing.join('\n\t')}\n</head>`);
 
