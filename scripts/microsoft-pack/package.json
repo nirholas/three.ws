@@ -1,0 +1,16 @@
+{
+  "name": "three-ws-microsoft-pack",
+  "private": true,
+  "description": "Build tools for the Microsoft co-marketing and programs pack (docs/partners/microsoft). Kept out of the root package so the deck library does not ship with the app.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "scripts": {
+    "screenshots": "node capture-screenshots.mjs",
+    "one-pager": "node build-one-pager.mjs",
+    "deck": "node build-deck.mjs",
+    "check": "node check-wording.mjs"
+  },
+  "dependencies": {
+    "pptxgenjs": "4.0.1"
+  }
+}

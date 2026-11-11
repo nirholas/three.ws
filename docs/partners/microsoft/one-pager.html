@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>three.ws for Microsoft: one-pager</title>
+<!--
+	Source for one-pager.pdf. Rebuild with:
+	  npm --prefix scripts/microsoft-pack run one-pager
+	Every number is measured and sourced in sources.md (section "one-pager").
+	Re-measure and update both files together.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+	@page { size: Letter; margin: 0; }
+	:root {
+		--bg: #08090d;
+		--ink: #f2f3f5;
+		--ink-dim: #8d93a1;
+		--paper: #ffffff;
+		--paper-ink: #0d0f14;
+		--paper-dim: #545b69;
+		--rule: #e3e5ea;
+		--green: #16a34a;
+		--amber: #b45309;
+		--display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+		--body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+		--mono: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+	}
+	* { box-sizing: border-box; }
+	html, body { margin: 0; background: #d9dbe0; }
+	body { font-family: var(--body); color: var(--paper-ink); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+	.page { width: 8.5in; height: 11in; margin: 0 auto; background: var(--paper); display: flex; flex-direction: column; overflow: hidden; }
+	@media screen { .page { margin: 24px auto; box-shadow: 0 8px 40px rgba(0,0,0,.18); } }
+
+	header { background: var(--bg); color: var(--ink); padding: 0.42in 0.5in 0.36in; display: grid; grid-template-columns: 1fr 2.55in; gap: 0.3in; align-items: center; }
+	header .lockup { height: 30px; display: block; margin-bottom: 16px; }
+	header h1 { font-family: var(--display); font-weight: 700; font-size: 25px; line-height: 1.12; letter-spacing: -0.01em; margin: 0 0 9px; }
+	header p { margin: 0; font-size: 11.2px; line-height: 1.5; color: #c7cbd4; }
+	header .claim { margin-top: 10px; font-size: 10.2px; color: var(--ink-dim); }
+	header figure { margin: 0; border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.12); aspect-ratio: 4 / 3; background: #0b0c11; }
+	header figure img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 45%; display: block; }
+
+	.numbers { display: grid; grid-template-columns: repeat(6, 1fr); border-bottom: 1px solid var(--rule); }
+	.numbers div { padding: 13px 0 11px 0.18in; border-right: 1px solid var(--rule); }
+	.numbers div:first-child { padding-left: 0.5in; }
+	.numbers div:last-child { border-right: 0; }
+	.numbers b { display: block; font-family: var(--display); font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
+	.numbers span { display: block; font-size: 8.6px; line-height: 1.3; color: var(--paper-dim); margin-top: 2px; }
+
+	main { padding: 0.24in 0.5in 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.3in; flex: 1; }
+	h2 { font-family: var(--display); font-size: 12.5px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; margin: 0 0 3px; }
+	.lede { font-size: 9.6px; color: var(--paper-dim); margin: 0 0 9px; line-height: 1.4; }
+	ul { list-style: none; margin: 0; padding: 0; }
+	li { padding: 7px 0 7px 14px; border-top: 1px solid var(--rule); font-size: 9.8px; line-height: 1.42; position: relative; }
+	li::before { content: ''; position: absolute; left: 0; top: 12px; width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+	.built li::before { background: transparent; border: 1.5px solid var(--amber); width: 5px; height: 5px; }
+	li strong { font-weight: 600; }
+	li a { color: inherit; text-decoration: none; border-bottom: 1px solid #b9bec9; }
+	.status { font-family: var(--mono); font-size: 8px; letter-spacing: 0.04em; text-transform: uppercase; padding: 1px 5px; border-radius: 3px; margin-left: 4px; white-space: nowrap; }
+	.live { color: var(--green); background: #e9f8ef; }
+	.pending { color: var(--amber); background: #fdf3e6; }
+	.shot { margin-top: 12px; display: grid; grid-template-columns: 0.95fr 1.6fr; gap: 10px; align-items: start; }
+	.shot img { width: 100%; border-radius: 6px; border: 1px solid var(--rule); display: block; }
+	.shot figcaption { font-size: 8.4px; color: var(--paper-dim); margin-top: 3px; }
+
+	footer { padding: 0.18in 0.5in 0.32in; display: grid; grid-template-columns: 1.15fr 1fr; gap: 0.3in; align-items: end; }
+	.contact { background: var(--bg); color: var(--ink); border-radius: 10px; padding: 13px 16px; }
+	.contact h2 { color: var(--ink); margin-bottom: 6px; }
+	.contact p { margin: 0; font-size: 10px; line-height: 1.6; color: #c7cbd4; }
+	.contact a { color: var(--ink); text-decoration: none; }
+	.contact .mono { font-family: var(--mono); font-size: 9.4px; }
+	.fine { font-size: 7.8px; line-height: 1.45; color: var(--paper-dim); margin: 0; }
+</style>
+</head>
+<body>
+<div class="page">
+	<header>
+		<div>
+			<img class="lockup" src="../../../public/brand/three-ws-lockup-on-dark.png" alt="three.ws">
+			<h1>A sentence or a photo in. A rigged 3D agent that speaks, out.</h1>
+			<p>three.ws is an open-source (Apache-2.0) platform that generates textured 3D models and avatars, rigs them for animation, gives them a voice and a persona, and ships them to any web page, intranet or app with one HTML tag: <span style="font-family:var(--mono);color:var(--ink)">&lt;agent-3d&gt;</span>.</p>
+			<p class="claim">three.ws and Microsoft have announced a partnership, and three.ws is live on Microsoft Marketplace.</p>
+		</div>
+		<figure><img src="screenshots/model-view.png" alt="A wooden violin generated from one sentence, shown in the three.ws 3D viewer"></figure>
+	</header>
+
+	<section class="numbers" aria-label="Measured 11 November 2026">
+		<div><b>53,878</b><span>3D models generated on three.ws</span></div>
+		<div><b>29,147</b><span>models finished by TRELLIS on our GPUs since July 2026</span></div>
+		<div><b>4,904</b><span>agents created</span></div>
+		<div><b>654</b><span>live embeds on other sites</span></div>
+		<div><b>16</b><span>tools on the free MCP server</span></div>
+		<div><b>274</b><span>GitHub stars, Apache-2.0</span></div>
+	</section>
+
+	<main>
+		<section>
+			<h2>Microsoft technology in production</h2>
+			<p class="lede">Running for real users today, under each project's own license.</p>
+			<ul>
+				<li><strong>Microsoft Marketplace</strong> <span class="status live">live</span><br>Publisher listing at <a href="https://marketplace.microsoft.com/en-us/partners/d11c4453-6e12-499d-8dfe-48fcbaa22e2f/overview">marketplace.microsoft.com</a>. Same platform as three.ws; nothing forks for the channel.</li>
+				<li><strong>TRELLIS, Microsoft Research (MIT)</strong> <span class="status live">live</span><br>Self-hosted image-to-3D on NVIDIA L4 GPUs in Google Cloud. 35,148 jobs since 8 July 2026; 30-day median 250 s at standard quality. TRELLIS.2 worker deployed, not yet serving.</li>
+				<li><strong>ONNX Runtime Web</strong> <span class="status live">live</span><br>Wake word, voice activity detection and transcription run in the visitor's browser, so listening never streams a room to a server.</li>
+				<li><strong>Adaptive Cards 1.6</strong> <span class="status live">live</span><br>One agent card layout for chat hosts and the Windows widgets board.</li>
+			</ul>
+			<div class="shot">
+				<figure style="margin:0"><img src="screenshots/teams-tab.png" alt="The three.ws agent tab: a live 3D agent with chat input"><figcaption>Agent tab, built for Teams</figcaption></figure>
+				<figure style="margin:0"><img src="screenshots/docs-mcp-studio.png" alt="Connection details for the free three.ws MCP server"><figcaption>Free MCP server: no account, no key</figcaption></figure>
+			</div>
+		</section>
+		<section class="built">
+			<h2>Built for Microsoft surfaces</h2>
+			<p class="lede">In the open-source repo, validated by automated checks, each awaiting its publication step.</p>
+			<ul>
+				<li><strong>App package for Teams and Microsoft 365</strong> <span class="status pending">ready</span><br>Two personal tabs, a search message extension with Adaptive Card results, and an agent connector to the 16-tool MCP server. Manifest schema v1.30; package checks pass.</li>
+				<li><strong>MCP server for Copilot Studio and Foundry</strong> <span class="status pending">ready</span><br>Streamable HTTP endpoint any MCP client can add today; certification package drafted.</li>
+				<li><strong>Power Platform connector</strong> <span class="status pending">ready</span><br>Five actions for Power Automate, Power Apps, Logic Apps and Copilot Studio, OAuth with PKCE, four flow templates.</li>
+				<li><strong>Microsoft 365 Copilot connector</strong> <span class="status pending">ready</span><br>Indexes an account's agents, models and avatars into the customer's tenant through Microsoft Graph, with per-audience ACLs.</li>
+				<li><strong>Marketplace SaaS offer</strong> <span class="status pending">ready</span><br>Microsoft Entra sign-in, SaaS Fulfillment v2 and hourly metered billing, so a Marketplace purchase grants the same plan as a card.</li>
+				<li><strong>Microsoft Store and Edge Add-ons</strong> <span class="status pending">ready</span><br>The installable web app packaged as MSIX, and the browser extension.</li>
+			</ul>
+		</section>
+	</main>
+
+	<footer>
+		<div class="contact">
+			<h2>Talk to us</h2>
+			<p><a href="mailto:partnerships@three.ws">partnerships@three.ws</a><br>
+			<span class="mono"><a href="https://three.ws/docs/microsoft">three.ws/docs/microsoft</a> &middot; <a href="https://github.com/nirholas/three.ws">github.com/nirholas/three.ws</a></span></p>
+		</div>
+		<p class="fine">Numbers measured 11 November 2026 from production data and public APIs; every figure is sourced in docs/partners/microsoft/sources.md in the repository. three.ws runs on Google Cloud. Microsoft, Microsoft Marketplace, Microsoft 365, Microsoft Teams, Microsoft Entra, Copilot Studio, Power Platform, Power Automate, Power Apps, Windows, Edge, TRELLIS, ONNX Runtime and Adaptive Cards are trademarks of the Microsoft group of companies. NVIDIA and Google Cloud are trademarks of their owners.</p>
+	</footer>
+</div>
+</body>
+</html>

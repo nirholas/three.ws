@@ -1,0 +1,92 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>ONNX Runtime Web speech benchmark</title>
+<!--
+	Driven by scripts/microsoft-pack/onnx-speech-bench.mjs. Times the wake-word
+	chain from src/voice/wake-word.js and the two transcription pipelines from
+	src/runtime/whisper-stt.js, with the same runtime options, on one thread.
+-->
+<script type="module">
+const R = {};
+window.__done = false;
+
+async function pcm16k() {
+	const buf = await (await fetch('/jfk.wav')).arrayBuffer();
+	const decoded = await new OfflineAudioContext(1, 1, 44100).decodeAudioData(buf);
+	const off = new OfflineAudioContext(1, Math.ceil(decoded.duration * 16000), 16000);
+	const src = off.createBufferSource();
+	src.buffer = decoded;
+	src.connect(off.destination);
+	src.start();
+	return (await off.startRendering()).getChannelData(0);
+}
+
+function shiftIn(ring, values) {
+	ring.copyWithin(0, values.length);
+	ring.set(values, ring.length - values.length);
+}
+
+try {
+	const audio = await pcm16k();
+	R.audioSeconds = audio.length / 16000;
+	R.crossOriginIsolated = self.crossOriginIsolated;
+	R.userAgent = navigator.userAgent;
+
+	// Wake word: melspectrogram -> (mel / 10) + 2 -> 76-frame embedding window
+	// -> 16-embedding classifier window, the chain wake-word.js runs per 80 ms.
+	const ort = await import('/ort/ort.wasm.min.mjs');
+	ort.env.wasm.wasmPaths = '/ort/';
+	ort.env.wasm.numThreads = 1;
+	ort.env.logLevel = 'error';
+	const opts = { executionProviders: ['wasm'] };
+	const [mel, emb, kw] = await Promise.all([
+		ort.InferenceSession.create('/ww/melspectrogram.onnx', opts),
+		ort.InferenceSession.create('/ww/embedding_model.onnx', opts),
+		ort.InferenceSession.create('/ww/hey_jarvis_v0.1.onnx', opts),
+	]);
+	const melIn = new Float32Array(1760);
+	const melWin = new Float32Array(76 * 32);
+	const feat = new Float32Array(16 * 96);
+	const times = [];
+	for (let i = 0; i + 1760 <= audio.length; i += 1280) {
+		for (let j = 0; j < 1760; j++) melIn[j] = audio[i + j] * 32767;
+		const t0 = performance.now();
+		const m = await mel.run({ [mel.inputNames[0]]: new ort.Tensor('float32', melIn, [1, 1760]) });
+		shiftIn(melWin, Float32Array.from(m[mel.outputNames[0]].data, (v) => v / 10 + 2));
+		const e = await emb.run({ [emb.inputNames[0]]: new ort.Tensor('float32', melWin, [1, 76, 32, 1]) });
+		shiftIn(feat, e[emb.outputNames[0]].data);
+		await kw.run({ [kw.inputNames[0]]: new ort.Tensor('float32', feat, [1, 16, 96]) });
+		times.push(performance.now() - t0);
+	}
+	times.sort((a, b) => a - b);
+	const pct = (p) => times[Math.min(times.length - 1, Math.floor(p * times.length))];
+	R.wakeChunks = times.length;
+	R.wakeChunkP50Ms = pct(0.5);
+	R.wakeChunkP95Ms = pct(0.95);
+
+	// Transcription: the Transformers.js build and options whisper-stt.js uses.
+	const tf = await import('https://esm.sh/@huggingface/transformers@4.3.1');
+	tf.env.allowLocalModels = false;
+	const lanes = [
+		['moonshine', 'onnx-community/moonshine-base-ONNX', {}],
+		['whisper', 'onnx-community/whisper-base', { language: 'en', task: 'transcribe' }],
+	];
+	for (const [key, model, options] of lanes) {
+		const asr = await tf.pipeline('automatic-speech-recognition', model, { dtype: 'q8', device: 'wasm' });
+		await asr(audio, options);
+		const runs = [];
+		let text = '';
+		for (let k = 0; k < 4; k++) {
+			const t1 = performance.now();
+			text = (await asr(audio, options)).text;
+			runs.push(Math.round(performance.now() - t1));
+		}
+		R[`${key}WarmRunsMs`] = runs;
+		R[`${key}Text`] = text.trim();
+	}
+} catch (err) {
+	R.error = String((err && err.stack) || err);
+}
+window.__result = R;
+window.__done = true;
+</script>
