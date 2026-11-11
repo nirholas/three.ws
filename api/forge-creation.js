@@ -23,6 +23,15 @@
  *
  *   DELETE /api/forge-creation?id=<uuid>  → { deleted: true }
  *
+ *   PATCH /api/forge-creation?id=<uuid>  { tags: string[] } → { tags, generatedTags }
+ *
+ * Owner tag edit (work order 819). Florence-2 tags every creation's poster;
+ * the owner (the forging browser's x-forge-client, or the signed-in account
+ * the model was forged under) can replace or clear them. Tags go through the
+ * same normalization and blocklist as generated ones, and a later re-describe
+ * never overwrites an edit. GET answers `can_edit_tags` so the page knows
+ * whether to show the editor.
+ *
  * Deletion is scoped to the owning browser (the x-forge-client header that
  * scopes the gallery): only the client that forged a creation can delete it.
  * It permanently removes the stored GLB, the stored preview, every recorded
@@ -31,17 +40,20 @@
  * community showcase, and the share/embed pages alike.
  */
 
-import { embedReadCors, json, method, wrap, rateLimited } from './_lib/http.js';
+import { embedReadCors, json, method, wrap, rateLimited, readJson } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
-import { getPublicCreation, listRelated, recordCreationView, deleteCreation, hashClient, forgeStoreEnabled } from './_lib/forge-store.js';
+import { getPublicCreation, listRelated, recordCreationView, deleteCreation, hashClient, forgeStoreEnabled, isCreationOwner } from './_lib/forge-store.js';
+import { setOwnerTags } from './_lib/creation-descriptions.js';
+import { MAX_TAGS } from './_lib/creation-tags.js';
+import { getSessionUser } from './_lib/auth.js';
 import { isUuid } from './_lib/validate.js';
 
 export default wrap(async (req, res) => {
 	// The anonymous read is public and is made from other origins (embeds, the Power
 	// BI visual's sandboxed iframe), so it is open to any origin. DELETE keeps the
 	// strict allowlist with credentials.
-	if (embedReadCors(req, res, { methods: 'GET,OPTIONS', authedMethods: 'GET,DELETE,OPTIONS' })) return;
-	if (!method(req, res, ['GET', 'DELETE'])) return;
+	if (embedReadCors(req, res, { methods: 'GET,OPTIONS', authedMethods: 'GET,PATCH,DELETE,OPTIONS' })) return;
+	if (!method(req, res, ['GET', 'PATCH', 'DELETE'])) return;
 
 	const rl = await limits.mcp3dStatus(clientIp(req));
 	if (!rl.success) {
@@ -56,6 +68,23 @@ export default wrap(async (req, res) => {
 	const id = url.searchParams.get('id');
 	if (!id || !isUuid(id)) {
 		return json(res, 400, { enabled: true, creation: null, error: 'invalid id' });
+	}
+
+	if (req.method === 'PATCH') {
+		const rawClient = req.headers['x-forge-client'];
+		const clientHeader = Array.isArray(rawClient) ? rawClient[0] : rawClient;
+		const user = await getSessionUser(req, res).catch(() => null);
+		const owner = await isCreationOwner({ id, clientKey: clientHeader ? hashClient(clientHeader) : null, userId: user?.id ?? null });
+		if (!owner) {
+			// Same answer for "missing" and "not yours", so ids cannot be probed.
+			return json(res, 404, { error: 'not_found', message: 'Only the creator of this model can edit its tags.' });
+		}
+		const body = await readJson(req, 16_000).catch(() => null);
+		if (!body || !Array.isArray(body.tags) || body.tags.length > 50 || body.tags.some((t) => typeof t !== 'string')) {
+			return json(res, 400, { error: 'invalid_tags', message: `Send { "tags": [...] } with up to ${MAX_TAGS} short words or phrases.` });
+		}
+		const saved = await setOwnerTags({ creationId: id, tags: body.tags });
+		return json(res, 200, saved);
 	}
 
 	if (req.method === 'DELETE') {
@@ -88,6 +117,11 @@ export default wrap(async (req, res) => {
 	if (!creation) {
 		return json(res, 404, { enabled: true, creation: null });
 	}
+
+	// Whether to show the owner's tag editor. Only resolved when the caller
+	// carries an identity at all, so the anonymous public read stays one query.
+	const user = clientHeader || req.headers.cookie ? await getSessionUser(req, res).catch(() => null) : null;
+	creation.can_edit_tags = await isCreationOwner({ id, clientKey: voterKey, userId: user?.id ?? null });
 
 	if (url.searchParams.get('view') === '1') {
 		// Deliberately not awaited past the increment failing soft: an uncounted

@@ -30,7 +30,7 @@ import { creationJsonLd, renderPosterUrl, renderableGlb, POSTER_WIDTH, POSTER_HE
 import { isIndexableCreation } from '../api/_lib/seo-resources.js';
 // The page's own pure helpers, so the server head and the hydrated page agree
 // on which paths are creations and what a creation is called.
-import { modelIdFromPath, titleFromPrompt, creationDescribedText, creationAltText, excerptText } from '../src/model-lib.js';
+import { modelIdFromPath, titleFromPrompt, creationAltText, describedMetaDescription } from '../src/model-lib.js';
 
 const ORIGIN = 'https://three.ws';
 const LOOKUP_TIMEOUT_MS = 2500;
@@ -72,10 +72,10 @@ export function creationMeta(creation, origin = ORIGIN) {
 	const by = creation.creatorUsername ? ` by @${creation.creatorUsername}` : '';
 	// What the poster shows (Florence-2's detailed caption, else its caption)
 	// leads when the creation was described; the prompt sentence otherwise.
-	const described = creationDescribedText(creation);
-	const description = described
-		? `${excerptText(described, 160)} A 3D model${by} on three.ws: view it in 3D and AR, download the GLB, or remix it.`
-		: `3D model${by} on three.ws, generated from the prompt "${promptExcerpt(creation.prompt)}". View it in 3D and AR, download the GLB, or remix it.`;
+	const described = describedMetaDescription(creation);
+	const description =
+		described ||
+		`3D model${by} on three.ws, generated from the prompt "${promptExcerpt(creation.prompt)}". View it in 3D and AR, download the GLB, or remix it.`;
 	const imageAlt = described ? creationAltText(creation) : `${name}, a 3D model on three.ws`;
 	// The renderer gets the light delivery variant when it exists, the original
 	// otherwise, and neither when both are past its size cap.

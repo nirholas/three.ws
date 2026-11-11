@@ -387,6 +387,87 @@ a.mp-creator-name:hover, a.mp-creator-name:focus-visible { text-decoration: unde
 a.mp-chip:hover, a.mp-chip:focus-visible { border-color: var(--stroke-strong); color: var(--ink-bright); }
 .mp-liked-line { color: var(--ink-dim); font-size: var(--text-sm); margin-bottom: var(--space-lg); }
 
+/* ── Described: Florence-2 caption, tag chips, owner tag editor ───────────── */
+
+.mp-described {
+	margin: 0 0 var(--space-md);
+	padding: 12px 14px;
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-md);
+	background: var(--surface-1);
+}
+.mp-described-text { margin: 0 0 10px; color: var(--ink); font-size: var(--text-sm); line-height: 1.6; overflow-wrap: anywhere; }
+.mp-described-empty { margin: 0 0 10px; color: var(--ink-dim); font-size: var(--text-sm); }
+.mp-described .mp-tags { margin-bottom: 10px; }
+.mp-chip--tag { color: var(--ink); }
+.mp-chip--tag:active { transform: translateY(1px); }
+.mp-chip--tag:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mp-described-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.mp-described-source { color: var(--ink-faint); font-size: var(--text-xs); }
+.mp-action--sm { padding: 5px 10px; font-size: var(--text-xs); }
+.mp-action--primary { background: var(--accent); border-color: var(--accent); color: var(--bg-0); }
+.mp-action--primary:hover, .mp-action--primary:focus-visible { color: var(--bg-0); filter: brightness(1.08); }
+.mp-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.mp-tag-editor-label { display: block; margin-bottom: 8px; color: var(--ink-bright); font-size: var(--text-sm); font-weight: 600; }
+.mp-tag-editor-label span { margin-left: 6px; color: var(--ink-faint); font-weight: 400; font-size: var(--text-xs); }
+.mp-tag-field {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	align-items: center;
+	padding: 6px;
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-md);
+	background: var(--bg-0);
+	transition: border-color var(--duration-fast) var(--ease-standard);
+}
+.mp-tag-field:hover { border-color: var(--stroke-strong); }
+.mp-tag-field:focus-within { border-color: var(--accent); }
+.mp-tag-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	padding: 3px 4px 3px 10px;
+	border: 1px solid var(--stroke);
+	border-radius: 999px;
+	background: var(--surface-1);
+	color: var(--ink);
+	font-size: var(--text-xs);
+}
+.mp-tag-remove {
+	appearance: none;
+	display: inline-grid;
+	place-items: center;
+	width: 20px;
+	height: 20px;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	color: var(--ink-dim);
+	font-size: 14px;
+	line-height: 1;
+	cursor: pointer;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+.mp-tag-remove:hover { background: var(--surface-2); color: var(--ink-bright); }
+.mp-tag-remove:active { transform: scale(0.92); }
+.mp-tag-remove:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.mp-tag-input {
+	flex: 1 1 140px;
+	min-width: 0;
+	padding: 5px 6px;
+	border: 0;
+	background: transparent;
+	color: var(--ink-bright);
+	font-family: var(--font-body);
+	font-size: var(--text-sm);
+}
+.mp-tag-input:focus { outline: none; }
+.mp-tag-input:disabled { cursor: not-allowed; opacity: 0.6; }
+.mp-tag-error { margin: 8px 0 0; color: var(--danger); font-size: var(--text-sm); }
+.mp-tag-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
 /* ── Comments ────────────────────────────────────────────────────────────── */
 
 .mp-comments { margin-top: var(--space-lg); }

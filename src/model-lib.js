@@ -54,6 +54,22 @@ export function creationAltText(creation, max = 250) {
 	return `${titleFromPrompt(creation?.prompt)}, a 3D model`;
 }
 
+// The meta description when the creation was described: what the poster
+// shows, then one line about the page. '' when it was not, so the caller
+// falls back to its prompt sentence. Shared by the server head and the
+// client-side meta patch so both write the same string.
+export function describedMetaDescription(creation, max = 160) {
+	const described = creationDescribedText(creation);
+	if (!described) return '';
+	const by = creation?.creatorUsername ? ` by @${creation.creatorUsername}` : '';
+	return `${excerptText(described, max)} A 3D model${by} on three.ws: view it in 3D and AR, download the GLB, or remix it.`;
+}
+
+// Search link for one tag: the cross-search page, scoped to models.
+export function tagSearchHref(tag) {
+	return `/search?q=${encodeURIComponent(tag)}&type=model`;
+}
+
 // A card label, not a heading. Prompts that came out of a refiner or an
 // image-to-3D pass are structured specs hundreds of characters long ("1.
 // Geometry and pose: Torso: volumetric, teardrop shaped, …"), so a grid of them

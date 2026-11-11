@@ -36,6 +36,9 @@ import { autoCredentialForBytes } from './auto-provenance.js';
 import { tripoModelVersion } from '../_providers/tripo.js';
 import { validForgeDestination } from '../../src/shared/forge-destinations.js';
 import { tagQueryVariants } from './creation-tags.js';
+import { enqueueCreationDescription, describedBlock } from './creation-descriptions.js';
+import { announceIndexNow } from './indexnow-queue.js';
+import { isIndexableCreation } from './seo-resources.js';
 
 // Stable, non-secret salt so a leaked DB row can't be trivially reversed to the
 // raw browser-local id. The id is anonymous to begin with; this is hygiene, not
@@ -320,7 +323,7 @@ export async function findByJob({ replicateJobId, clientKey }) {
 		const rows = await sql`
 			select id, status, glb_url, glb_key, prompt, preview_image_url,
 				views_requested, views_used, multiview, backend, tier, path, model_category,
-				user_id, created_at, destination, internal
+				user_id, created_at, destination, internal, visibility, outcome
 			from forge_creations
 			where replicate_job_id = ${replicateJobId} and client_key = ${clientKey}
 			limit 1
@@ -875,6 +878,17 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 			model: existing.backend || null,
 			provider: existing.path || null,
 		}).catch(() => {});
+		// …and its /m/:id page goes to IndexNow when it is public, so Bing and
+		// Copilot can cite it within minutes (queued; the reconcile cron sends).
+		announceIndexNow('creation', existing.id, {
+			indexable: isIndexableCreation(existing),
+			reason: 'create',
+			source: 'forge',
+		});
+		// …and a caption, tags and alt text from its poster (work order 819). Only
+		// a queue insert here; the describe itself runs on the GPU worker from
+		// the creation-describe cron, so it can never delay or fail delivery.
+		enqueueCreationDescription(existing.id).catch(() => {});
 		// …and a phone-sized delivery variant. See buildWebVariant for why this is
 		// a second object and why it runs after the row is already 'done'.
 		buildWebVariant({ buffer: glb.buffer, creationId: existing.id, keyPrefix });
@@ -1042,7 +1056,8 @@ export async function deleteCreation({ id, clientKey }) {
 	if (!forgeStoreEnabled() || !id || !clientKey) return 'unavailable';
 	try {
 		const rows = await sql`
-			select id, glb_key, glb_url, preview_key, preview_image_url, source_image_keys
+			select id, glb_key, glb_url, preview_key, preview_image_url, source_image_keys,
+				status, visibility, outcome
 			from forge_creations
 			where id = ${id} and client_key = ${clientKey}
 			limit 1
@@ -1069,6 +1084,14 @@ export async function deleteCreation({ id, clientKey }) {
 		await Promise.all([...keys].map((key) => deleteObject(key)));
 
 		await sql`delete from forge_creations where id = ${id} and client_key = ${clientKey}`;
+		// The row is gone, so the reconcile scan can never see this delete: tell
+		// IndexNow here, but only about a page that was public to begin with.
+		announceIndexNow('creation', row.id, {
+			indexable: false,
+			wasPublic: row.status === 'done' && Boolean(row.glb_url) && isIndexableCreation(row),
+			reason: 'delete',
+			source: 'forge',
+		});
 		return 'deleted';
 	} catch (err) {
 		if (isDbUnavailableError(err)) {
@@ -1135,6 +1158,26 @@ export async function setForgeCategory({ id, clientKey, modelCategory }) {
 	}
 }
 
+// Whether the caller owns a creation: the browser that forged it (hashed
+// x-forge-client) or the signed-in account it was forged under. Powers owner
+// edits on the public model page (tag edits, work order 819).
+export async function isCreationOwner({ id, clientKey = null, userId = null }) {
+	if (!forgeStoreEnabled() || !id || (!clientKey && !userId)) return false;
+	try {
+		const rows = await sql`
+			select 1 from forge_creations
+			where id = ${id} and status = 'done'
+				and ((${clientKey}::text is not null and client_key = ${clientKey})
+					or (${userId}::uuid is not null and user_id = ${userId}::uuid))
+			limit 1
+		`;
+		return rows.length > 0;
+	} catch (err) {
+		console.error('[forge-store] isCreationOwner failed:', err?.message);
+		return false;
+	}
+}
+
 // Fetch a single durable creation by id, NOT scoped to any client. Powers the
 // share flow: a recipient who didn't forge the model still gets to view it.
 // Only returns finished, durably-stored rows — an in-flight or failed creation
@@ -1158,9 +1201,16 @@ export async function getPublicCreation({ id, voterKey = null }) {
 				u.display_name as creator_display_name,
 				u.avatar_url as creator_avatar_url,
 				g.report as sim_readiness,
-				g.graded_at as sim_readiness_graded_at
+				g.graded_at as sim_readiness_graded_at,
+				d.status as d_status, d.caption as d_caption, d.detailed as d_detailed,
+				d.tags as d_tags, d.generated_tags as d_generated_tags, d.model as d_model,
+				d.model_version as d_model_version, d.described_at as d_described_at,
+				d.tags_edited_at as d_tags_edited_at
 			from forge_creations fc
 			left join users u on u.id = fc.user_id and u.deleted_at is null
+			-- Florence-2 caption, detailed caption and tags of the poster (work
+			-- order 819): meta description, alt text and tag chips on /m/:id.
+			left join forge_creation_descriptions d on d.creation_id = fc.id
 			-- The physics grade for this creation's own bytes, written when the
 			-- generation was materialized. Joined here so the model page renders
 			-- the verdict without a second round trip and, more importantly,
@@ -1219,6 +1269,8 @@ export async function getPublicCreation({ id, voterKey = null }) {
 			creatorAvatarUrl: r.creator_avatar_url || null,
 			simReadiness: r.sim_readiness ?? null,
 			simReadinessGradedAt: r.sim_readiness_graded_at ? new Date(r.sim_readiness_graded_at).toISOString() : null,
+			// null until the poster has been described or the owner set tags.
+			described: describedBlock(r),
 			...x402Provenance(r),
 		};
 	} catch (err) {
