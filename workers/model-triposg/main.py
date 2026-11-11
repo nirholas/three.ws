@@ -393,7 +393,13 @@ def _simplify(mesh: trimesh.Trimesh, target_faces: int | None) -> trimesh.Trimes
 
 
 def _task_blob(task_id: str):
-    return _bucket.blob(f"tasks/{task_id}.json")
+    # The bucket is public and GCS gives a public object with no Cache-Control
+    # "public, max-age=3600", letting Google's edge cache answer a poll on another
+    # instance with an old copy. A task record changes on every transition, so it
+    # is written uncacheable.
+    blob = _bucket.blob(f"tasks/{task_id}.json")
+    blob.cache_control = "no-store"
+    return blob
 
 
 async def _update_task(task_id: str, **fields) -> dict:

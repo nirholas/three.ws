@@ -63,12 +63,15 @@ class RecordingBlob:
     """Stands in for a storage.Blob so the durable-record round trip can be
     exercised without a GCS project. Only the two methods app21 calls exist."""
 
-    def __init__(self, store: dict, name: str):
+    def __init__(self, store: dict, name: str, cache_controls: dict | None = None):
         self._store = store
         self._name = name
+        self._cache_controls = cache_controls if cache_controls is not None else {}
+        self.cache_control = None
 
     def upload_from_string(self, data, content_type=None):
         self._store[self._name] = data
+        self._cache_controls[self._name] = self.cache_control
 
     def download_as_bytes(self):
         from google.api_core.exceptions import NotFound
@@ -81,9 +84,10 @@ class RecordingBlob:
 class RecordingBucket:
     def __init__(self):
         self.objects: dict[str, str] = {}
+        self.cache_controls: dict[str, str | None] = {}
 
     def blob(self, name: str) -> RecordingBlob:
-        return RecordingBlob(self.objects, name)
+        return RecordingBlob(self.objects, name, self.cache_controls)
 
 
 def _png_data_uri(color=(200, 40, 40)) -> str:
@@ -325,6 +329,24 @@ def test_inference_records_an_image_source_failure_verbatim():
         app21._bucket = None
         app21._sem = None
         app21._ready = None
+        app21._tasks.clear()
+
+
+def test_task_records_are_written_uncacheable():
+    # Production, 2026-11-11 (seen on TRELLIS, same pattern here): the task
+    # bucket is public, and GCS gives a public object with no Cache-Control
+    # "public, max-age=3600", so Google's edge cache answered a poll on a
+    # non-owner instance with a record minutes old. Here that reads as "running"
+    # for up to an hour after the job finished. Every write must be no-store.
+    bucket = RecordingBucket()
+    app21._bucket = bucket
+    app21._tasks.clear()
+    try:
+        asyncio.run(app21._update_task("task-c", status="queued"))
+        asyncio.run(app21._update_task("task-c", status="done"))
+        assert bucket.cache_controls["tasks/task-c.json"] == "no-store"
+    finally:
+        app21._bucket = None
         app21._tasks.clear()
 
 
