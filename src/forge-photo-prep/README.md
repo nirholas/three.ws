@@ -53,7 +53,7 @@ photo is over 40 MB, or when the model fails to load or run.
 ## Checks
 
 ```bash
-node --test tests/forge-photo-prep.test.js
+npx vitest run tests/forge-photo-prep.test.js
 node scripts/forge-photo-prep-verify.mjs --base=http://localhost:3109   # real browser, network log
 node scripts/forge-photo-prep-bench.mjs --skip-generate                 # metrics on the bench photos
 ```
