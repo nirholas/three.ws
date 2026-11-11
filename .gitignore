@@ -704,3 +704,6 @@ ui-lint-report/
 
 # Local deploy keypairs and authority files, mode 600, never committed.
 /.deploy/
+
+# X Space conversation captures written by local test runs
+.xspace-conversations/
