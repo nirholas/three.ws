@@ -171,10 +171,29 @@ function withoutWidgetMeta(catalog) {
 	});
 }
 
+// MCP 2025-06-18 _meta key format: an optional dotted prefix ending in one
+// slash, then a name that starts and ends alphanumeric. The Apps SDK status
+// keys (openai/toolInvocation/invoking and /invoked) put a second slash in the
+// name, and strict clients such as Microsoft Agent Framework refuse to load a
+// server that advertises them. ChatGPT reads them, so only /api/mcp-chatgpt
+// keeps them; the full surface drops them and keeps every conformant key,
+// openai/outputTemplate included, so other Apps SDK hosts still render widgets.
+const MCP_META_KEY =
+	/^(?:[A-Za-z](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*\/)?[A-Za-z0-9](?:[A-Za-z0-9_.-]*[A-Za-z0-9])?$/;
+
+function withConformantMeta(catalog) {
+	return catalog.map((tool) => {
+		if (!tool._meta) return tool;
+		const meta = Object.fromEntries(Object.entries(tool._meta).filter(([key]) => MCP_META_KEY.test(key)));
+		const { _meta: _dropped, ...rest } = tool;
+		return Object.keys(meta).length ? { ...rest, _meta: meta } : rest;
+	});
+}
+
 const SURFACES = {
 	full: {
 		server: 'mcp-studio',
-		catalog: [...TOOL_CATALOG, ...JOB_TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG],
+		catalog: withConformantMeta([...TOOL_CATALOG, ...JOB_TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG]),
 		tools: { ...TOOLS, ...JOB_TOOLS, ...CATALOG_TOOLS, ...PERSONA_TOOLS },
 		widgets: true,
 		personas: true,

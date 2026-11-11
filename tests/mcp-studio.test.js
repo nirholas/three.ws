@@ -636,6 +636,30 @@ describe('mcp-studio asset catalog tools', () => {
 	});
 });
 
+// MCP 2025-06-18 _meta key format: an optional dotted prefix ending in one
+// slash, then a name that starts and ends alphanumeric with only letters,
+// digits, hyphens, underscores and dots between. Strict clients (Microsoft
+// Agent Framework 1.25+) refuse to load a server whose tools break it.
+const MCP_META_KEY = /^(?:[A-Za-z](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*\/)?[A-Za-z0-9](?:[A-Za-z0-9_.-]*[A-Za-z0-9])?$/;
+
+describe('mcp-studio tool _meta keys', () => {
+	it('the full surface advertises only spec-conformant _meta keys', async () => {
+		const r = await dispatch({ jsonrpc: '2.0', id: 1, method: 'tools/list' }, auth, mkReq());
+		const keys = r.result.tools.flatMap((t) => Object.keys(t._meta ?? {}));
+		expect(keys.length).toBeGreaterThan(0);
+		expect(keys.filter((k) => !MCP_META_KEY.test(k))).toEqual([]);
+		const forge = r.result.tools.find((t) => t.name === 'forge_free');
+		expect(forge._meta['openai/outputTemplate']).toBe(COMPONENT_URI);
+	});
+
+	it('the ChatGPT surface keeps the Apps SDK status text ChatGPT shows while a tool runs', async () => {
+		const r = await dispatch({ jsonrpc: '2.0', id: 2, method: 'tools/list' }, auth, mkReq(), { surface: 'chatgpt' });
+		const forge = r.result.tools.find((t) => t.name === 'forge_free');
+		expect(forge._meta['openai/toolInvocation/invoking']).toBeTruthy();
+		expect(forge._meta['openai/toolInvocation/invoked']).toBeTruthy();
+	});
+});
+
 describe('mcp-studio chatgpt surface', () => {
 	const opts = { surface: 'chatgpt' };
 
