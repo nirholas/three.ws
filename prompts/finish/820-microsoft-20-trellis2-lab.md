@@ -1,5 +1,7 @@
 # microsoft 20: the TRELLIS.2 lab, a public page that shows Microsoft Research's 3D model at full depth on our GPUs
 
+Status 2026-11-11: built and verified on port 3120 with real runs; waiting on owner steps (promote fix11111641 on model-trellis2, MODEL_TRELLIS2_URL, push, deploy). 1024/1536 host-RAM kill is an open worker fix. See microsoft-PROGRESS.md.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3120.
 
 ## Operating clause (binding)
