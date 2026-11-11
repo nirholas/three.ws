@@ -23,6 +23,7 @@ All program pages were read on **2026-10-23**. Where a page or its form could no
 | 13 | Avaturn | [avaturn-partner.md](./avaturn-partner.md) | None; contact form | Not verified |
 | 14 | Uthana | [uthana-partner.md](./uthana-partner.md) | None; email only | Home page read; no form |
 | 15 | Rokoko | [rokoko-partner.md](./rokoko-partner.md) | None; contact form | Contact form read; no partner form found |
+| 16 | Microsoft Power Platform certified connector | [microsoft-power-platform-certification.md](./microsoft-power-platform-certification.md) | Rolling; ready to submit (owner steps listed in the file) | Repository PR template and validation schemas read 2026-11-11; Partner Center form behind sign-in: not verified |
 
 Files 9 to 11 add only the application layer; the build record, setup and verification packets stay in [`../discord-activity.md`](../discord-activity.md), [`../vroid-hub-app.md`](../vroid-hub-app.md) and [`../shopify-app.md`](../shopify-app.md). The LiveKit plugin pull request is [`../livekit-avatar-plugin.md`](../livekit-avatar-plugin.md).
 
