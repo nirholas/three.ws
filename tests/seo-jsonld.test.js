@@ -251,7 +251,121 @@ describe('agents: SoftwareApplication', () => {
 		});
 		expect(crumbs(res.body)?.map((c) => c[1])).toEqual(['Home', 'Agents', 'Atlas']);
 	});
+
+	it('names the owner in the head title and description so same-named agents stay distinct', async () => {
+		// 4.6k public agents share about 2k names; owner plus name separates 94%.
+		// Most owners have no username yet, so their display name stands in.
+		const { default: handler } = await import('../api/agent-detail-og.js');
+		const headOf = async (r) => {
+			sqlMock.mockResolvedValueOnce([r]);
+			const res = crawlerRes();
+			await handler({ method: 'GET', url: `/api/agent-detail-og?id=${r.id}`, headers: { 'user-agent': BINGBOT } }, res);
+			return {
+				title: res.body.match(/<title>([^<]*)<\/title>/)[1],
+				desc: res.body.match(/<meta name="description" content="([^"]*)"/)[1],
+				h1: res.body.match(/<h1>([^<]*)<\/h1>/)[1],
+			};
+		};
+		const base = { name: 'Zhu Su', description: null, skills: [], created_at: '2026-06-16T00:00:00Z' };
+		const a = await headOf({ ...base, id: '11111111-2222-4333-8444-555555555561', owner_username: null, owner_display_name: 'EYHE…PcTr' });
+		const b = await headOf({ ...base, id: '11111111-2222-4333-8444-555555555562', owner_username: 'kai', owner_display_name: 'Kai' });
+		expect(a.title).toBe('Zhu Su by EYHE…PcTr · three.ws');
+		expect(b.title).toBe('Zhu Su by @kai · three.ws');
+		expect(a.h1).toBe('Zhu Su');
+		expect(a.desc).toBe('Zhu Su is an AI agent on three.ws, with a body, a place, and an identity. By EYHE…PcTr.');
+		expect(a.desc).not.toBe(b.desc);
+	});
+
+	it('leads a shared template description with the agent name so two agents never share one', async () => {
+		const row = (id, name) => ({
+			id,
+			name,
+			description: 'Vets a token: mint authority, venue, holder structure.',
+			skills: [],
+			created_at: '2026-10-01T00:00:00Z',
+			updated_at: '2026-11-01T00:00:00Z',
+		});
+		const { default: handler } = await import('../api/agent-detail-og.js');
+		const descOf = async (r) => {
+			sqlMock.mockResolvedValueOnce([r]);
+			const res = crawlerRes();
+			await handler({ method: 'GET', url: `/api/agent-detail-og?id=${r.id}`, headers: { 'user-agent': BINGBOT } }, res);
+			return res.body.match(/<meta name="description" content="([^"]*)"/)[1];
+		};
+		const a = await descOf(row('11111111-2222-4333-8444-555555555551', 'Scout'));
+		const b = await descOf(row('11111111-2222-4333-8444-555555555552', 'Ranger'));
+		expect(a).toBe('Scout: Vets a token: mint authority, venue, holder structure.');
+		expect(a).not.toBe(b);
+	});
 });
+
+describe('profiles: ProfilePage with a Person', () => {
+	beforeEach(() => sqlMock.mockReset());
+
+	const user = {
+		id: 'u1',
+		username: 'kai',
+		display_name: 'Kai Rivers',
+		bio: 'I build low-poly ships.',
+		website: 'https://kai.example',
+		location: 'Lisbon',
+		avatar_url: null,
+		created_at: '2026-03-02T00:00:00Z',
+		updated_at: '2026-11-01T00:00:00Z',
+		service_account: false,
+	};
+
+	async function render(username, rows) {
+		for (const r of rows) sqlMock.mockResolvedValueOnce(r);
+		const { default: handler } = await import('../api/profile-detail-og.js');
+		const res = crawlerRes();
+		await handler({ method: 'GET', url: `/u/${username}?username=${username}`, headers: { 'user-agent': BINGBOT } }, res);
+		return res;
+	}
+
+	it('renders a canonical, a unique title and description, a Person and a trail', async () => {
+		const res = await render('kai', [
+			[user],
+			[{ avatars: 3, agents: 1, widgets: 0 }],
+			[{ id: '11111111-2222-4333-8444-555555555555', name: 'Atlas' }],
+			[{ id: 'aaaaaaaa-2222-4333-8444-555555555555', name: 'Skiff' }],
+		]);
+		expect(res.statusCode).toBe(200);
+		expect(res.body).toContain('<link rel="canonical" href="https://three.ws/u/kai">');
+		expect(res.body).toContain('<title>Kai Rivers (@kai) · three.ws</title>');
+		expect(res.body).toContain('<meta name="description" content="I build low-poly ships. Kai Rivers (@kai) on three.ws: 3 avatars, 1 agent. Joined Mar 2026.">');
+		const [page] = jsonLdNodes(res.body, 'ProfilePage');
+		expect(page.mainEntity).toMatchObject({ '@type': 'Person', name: 'Kai Rivers', alternateName: '@kai', sameAs: ['https://kai.example'] });
+		expect(crumbs(res.body)?.map((c) => c[1])).toEqual(['Home', 'Kai Rivers']);
+		expect(res.body).toContain('href="/agents/11111111-2222-4333-8444-555555555555"');
+		expect(res.body).toContain('href="/avatars/aaaaaaaa-2222-4333-8444-555555555555"');
+	});
+
+	it('answers 404 for a username nobody holds, and keeps a service account out of the index', async () => {
+		expect((await render('nobody', [[]])).statusCode).toBe(404);
+		const bot = await render('kai', [[{ ...user, service_account: true }], [{ avatars: 0, agents: 0, widgets: 0 }], [], []]);
+		expect(bot.body).toContain('noindex');
+	});
+});
+
+const BINGBOT = 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)';
+
+function crawlerRes() {
+	return {
+		statusCode: 0,
+		headers: {},
+		body: '',
+		setHeader(k, v) {
+			this.headers[k.toLowerCase()] = v;
+		},
+		getHeader(k) {
+			return this.headers[k.toLowerCase()];
+		},
+		end(b) {
+			this.body = b || '';
+		},
+	};
+}
 
 describe('FAQPage only where a FAQ is shown', () => {
 	it('marks up every visible pricing question', () => {

@@ -86,13 +86,26 @@ export default wrap(async (req, res) => {
 	}
 
 	const title = agent.name || 'Agent';
-	const baseDesc =
-		agent.description || 'An AI agent on three.ws, with a body, a place, and an identity.';
+	// Agents made from one template share its description word for word; led by
+	// the agent's own name, no two indexed agent pages carry the same one.
+	const ownDesc = String(agent.description || '').trim();
+	const baseDesc = !ownDesc
+		? `${title} is an AI agent on three.ws, with a body, a place, and an identity.`
+		: ownDesc.toLowerCase().includes(title.toLowerCase())
+			? ownDesc
+			: `${title}: ${ownDesc}`;
 	const skills = Array.isArray(agent.skills) ? agent.skills : [];
 	const skillSuffix = skills.length
 		? ` Skills: ${skills.slice(0, 4).join(', ')}${skills.length > 4 ? '…' : ''}.`
 		: '';
-	const desc = baseDesc + skillSuffix;
+	// Public agents share about 2k names between them; the owner (their handle,
+	// else the display name most owners still go by) tells them apart.
+	const owner = agent.owner_username
+		? `@${agent.owner_username}`
+		: String(agent.owner_display_name || '').trim();
+	const headTitle = owner && !title.toLowerCase().includes(owner.toLowerCase()) ? `${title} by ${owner}` : title;
+	const byline = owner ? ` By ${owner}.` : '';
+	const desc = baseDesc + byline + skillSuffix;
 
 	// Unfurl with the dynamic wallet TRADING CARD (api/og/agent.js) - the same
 	// living card shown on the page (avatar, vanity address, live net worth, P&L,
@@ -127,6 +140,7 @@ export default wrap(async (req, res) => {
 	res.end(
 		renderCrawlerPage({
 			title,
+			headTitle,
 			desc,
 			pageUrl,
 			ogImage,

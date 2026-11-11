@@ -5291,6 +5291,17 @@
 			"dest": "/api/agent-oembed"
 		},
 		{
+			"src": "/u/([^/.]+)",
+			"has": [
+				{
+					"type": "header",
+					"key": "user-agent",
+					"value": "(?i).*(Twitterbot|facebookexternalhit|Slackbot|LinkedInBot|Discordbot|TelegramBot|WhatsApp|Googlebot|bingbot|Applebot|Pinterestbot|redditbot|Embedly|Quora|outbrain|vkShare|Iframely).*"
+				}
+			],
+			"dest": "/api/profile-detail-og?username=$1"
+		},
+		{
 			"src": "/u/([^/]+)",
 			"dest": "/profile.html"
 		},
