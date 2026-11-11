@@ -265,14 +265,14 @@ dialog.tm-dialog[open] { animation: tm-in var(--tm-base) ease both; }
 .tm-copy { display: flex; gap: 8px; align-items: center; }
 .tm-copy .tm-input { flex: 1; min-width: 0; }
 .tm-ent-secret { display: grid; gap: 10px; }
-.tm-table-wrap { overflow-x: auto; }
+.tm-table-wrap { position: relative; overflow-x: auto; }
 .tm-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .tm-table th { text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--tm-faint); padding: 0 10px 8px; border-bottom: 1px solid var(--tm-line); }
 .tm-table td { padding: 10px; border-bottom: 1px solid var(--tm-line); vertical-align: top; line-height: 1.45; }
 .tm-table tr:last-child td { border-bottom: 0; }
 .tm-table tbody tr:hover { background: var(--tm-panel-2); }
 .tm-cell-act { text-align: right; white-space: nowrap; }
-.tm-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.tm-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .tm-ent-events { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .tm-ent-events li { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; font-size: 13.5px; }
 .tm-join { max-width: 640px; margin: 24px auto 0; }
