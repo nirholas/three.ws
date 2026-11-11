@@ -22,7 +22,7 @@ vi.mock('../api/_lib/db.js', () => ({ sql: (...args) => sqlMock(...args) }));
 
 import { rewriteHead, isProductPage } from '../server/seo-head.mjs';
 import { rewriteCreationHead } from '../server/creation-head.mjs';
-import { jsonLdNodes, jsonLdTypes, pathTrail, breadcrumbListNode } from '../api/_lib/structured-data.js';
+import { jsonLdNodes, jsonLdTypes, pathTrail, breadcrumbListNode, faqVisibility } from '../api/_lib/structured-data.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(path.join(ROOT, rel), 'utf8');
@@ -238,34 +238,30 @@ describe('agents: SoftwareApplication', () => {
 });
 
 describe('FAQPage only where a FAQ is shown', () => {
-	const visibleText = (html) =>
-		html
-			.replace(/<head[\s\S]*?<\/head>/i, '')
-			.replace(/<script[\s\S]*?<\/script>/gi, '')
-			.replace(/<style[\s\S]*?<\/style>/gi, '')
-			.replace(/<[^>]+>/g, ' ')
-			.replace(/&#39;|&apos;/g, "'")
-			.replace(/&amp;/g, '&')
-			.replace(/\s+/g, ' ');
-
 	it('marks up every visible pricing question', () => {
-		const html = read('pages/pricing.html');
-		const [faq] = jsonLdNodes(html, 'FAQPage');
-		expect(faq?.mainEntity).toHaveLength(7);
-		const text = visibleText(html);
-		for (const q of faq.mainEntity) expect(text).toContain(q.name);
+		const { questions, hidden } = faqVisibility(read('pages/pricing.html'));
+		expect(questions).toHaveLength(7);
+		expect(hidden).toEqual([]);
 	});
 
 	it('no static page declares a FAQPage without showing at least one of its questions', () => {
 		const offenders = [];
 		for (const f of readdirSync(path.join(ROOT, 'pages')).filter((n) => n.endsWith('.html'))) {
-			const html = read(`pages/${f}`);
-			const faqs = jsonLdNodes(html, 'FAQPage');
-			if (!faqs.length) continue;
-			const text = visibleText(html);
-			const questions = faqs.flatMap((n) => n.mainEntity || []).map((q) => q.name);
-			if (!questions.some((q) => text.includes(q))) offenders.push(f);
+			const { questions, visible } = faqVisibility(read(`pages/${f}`));
+			if (questions.length && !visible.length) offenders.push(f);
 		}
 		expect(offenders).toEqual([]);
+	});
+
+	it('tells a shown question from a markup-only one', () => {
+		const html = `<html><head><script type="application/ld+json">${JSON.stringify({
+			'@context': 'https://schema.org',
+			'@type': 'FAQPage',
+			mainEntity: [
+				{ '@type': 'Question', name: "What's free?", acceptedAnswer: { '@type': 'Answer', text: 'All of it.' } },
+				{ '@type': 'Question', name: 'Hidden one?', acceptedAnswer: { '@type': 'Answer', text: 'Never shown.' } },
+			],
+		})}</script></head><body><details><summary>What&#39;s free?</summary>All of it.</details></body></html>`;
+		expect(faqVisibility(html)).toEqual({ questions: ["What's free?", 'Hidden one?'], visible: ["What's free?"], hidden: ['Hidden one?'] });
 	});
 });

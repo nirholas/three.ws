@@ -19,6 +19,7 @@ import { keepEntryExports } from './scripts/vite/keep-entry-exports.mjs';
 import { createCreationHeadRenderer, creationIdFromPath, apiCreationLoader } from './server/creation-head.mjs';
 import { isPlayPath, rewritePlayHead } from './server/play-head.mjs';
 import { presentDevRequestsAsSameSite } from './server/dev-proxy-origin.mjs';
+import { devSitemapMiddleware, nativeModuleLoader } from './server/dev-sitemap.mjs';
 
 // Dev parity for production's per-request <head> rewrite (server/seo-head.mjs).
 // Shared-shell routes serve one template file for hundreds of paths (/docs/* and
@@ -1312,6 +1313,17 @@ const appConfig = {
 		},
 	},
 	plugins: [
+		// /sitemap.xml and /sitemap/<type>.xml in dev (server/dev-sitemap.mjs):
+		// local handlers when DATABASE_URL is set, the upstream otherwise.
+		{
+			name: 'dev-sitemaps',
+			apply: 'serve',
+			configureServer(server) {
+				server.middlewares.use(
+					devSitemapMiddleware({ load: nativeModuleLoader(__dirname), upstream: DEV_API_PROXY }),
+				);
+			},
+		},
 		// /herald.js is imported by third-party pages and by /herald's own playground:
 		// `import { createHerald, pollSource } from 'https://three.ws/herald.js'`.
 		keepEntryExports({ herald: resolve(__dirname, 'src/herald-embed.js') }),

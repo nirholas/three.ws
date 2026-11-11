@@ -17,21 +17,35 @@
  *     result with it. That is how the news archive lost its listing on
  *     2026-09-06 (see api/_lib/safe-text.js).
  *
- * It reads the live site rather than the local build on purpose: only the
- * served response proves what a crawler receives after routing, the shell
- * rewrite and the CDN. Point it at a preview origin with --base to check a
- * change before it ships.
+ *   - FAQ markup for questions the page does not show is treated by Bing
+ *     and Google as misleading structured data.
+ *
+ * It reads a served origin rather than the local build on purpose: only the
+ * response proves what a crawler receives after routing, the shell rewrite
+ * and the CDN. The default run reads the sitemap index, counts every URL it
+ * declares, and crawls a sample spread across every type (core pages, agents,
+ * avatars, creations, widgets, profiles, news), so a defect in any one
+ * renderer shows up. Point --base at the dev server or a preview to check a
+ * change before it ships; sitemap URLs are fetched from that origin while
+ * canonicals are still compared against the production URL.
+ *
+ * Exits 1 on any error (missing or duplicate title, description or canonical,
+ * a dead or noindex sitemap entry, broken structured data).
  *
  * Usage:
- *   node scripts/audit-seo.mjs                          # live site, core pages
- *   node scripts/audit-seo.mjs --limit 40               # quick pass
- *   node scripts/audit-seo.mjs --sitemap agents         # another URL set
- *   node scripts/audit-seo.mjs --base http://localhost:3000
- *   node scripts/audit-seo.mjs --strict                 # exit 1 on any error
- *   node scripts/audit-seo.mjs --json report.json       # machine-readable
+ *   npm run audit:seo                                   # live site, index sample
+ *   npm run audit:seo -- --sample 50                    # a bigger sample per type
+ *   npm run audit:seo -- --sitemap core                 # every URL in one child file
+ *   npm run audit:seo -- --sitemap agents --limit 40
+ *   npm run audit:seo -- --base http://localhost:3123   # the dev server
+ *   npm run audit:seo -- --report-only                  # never exit 1
+ *   npm run audit:seo -- --json report.json             # machine-readable
+ *
+ * Runbook: docs/ops/bing-and-indexnow.md.
  */
 import { writeFileSync } from 'node:fs';
 import { parse } from 'node-html-parser';
+import { faqVisibility } from '../api/_lib/structured-data.js';
 
 const args = process.argv.slice(2);
 const flag = (name, fallback = null) => {
@@ -40,10 +54,11 @@ const flag = (name, fallback = null) => {
 };
 
 const base = (flag('--base', 'https://three.ws') || '').replace(/\/+$/, '');
-const sitemapName = flag('--sitemap', 'core');
+const sitemapName = flag('--sitemap', null);
 const limit = Number(flag('--limit', '0')) || 0;
+const samplePerType = Math.max(1, Number(flag('--sample', '20')) || 20);
 const concurrency = Math.max(1, Number(flag('--concurrency', '8')) || 8);
-const strict = args.includes('--strict');
+const reportOnly = args.includes('--report-only');
 const jsonOut = flag('--json');
 
 // Googlebot, because the site routes crawler UAs to server-rendered handlers.
@@ -76,7 +91,22 @@ function hasLoneSurrogate(s) {
 	return false;
 }
 
+// A dev server restarts whenever its config changes, which refuses connections
+// for a few seconds. Retry connection-level failures so a restart is waited
+// out instead of reported as a dead page; an HTTP status is never retried.
 async function fetchText(url, timeoutMs = 25_000) {
+	for (let attempt = 1; ; attempt++) {
+		try {
+			return await fetchOnce(url, timeoutMs);
+		} catch (e) {
+			const code = e?.cause?.code || '';
+			if (attempt >= 6 || !/ECONNREFUSED|ECONNRESET|EPIPE|UND_ERR_SOCKET/.test(code)) throw e;
+			await new Promise((r) => setTimeout(r, attempt * 2_000));
+		}
+	}
+}
+
+async function fetchOnce(url, timeoutMs) {
 	const ctl = new AbortController();
 	const timer = setTimeout(() => ctl.abort(), timeoutMs);
 	try {
@@ -88,12 +118,50 @@ async function fetchText(url, timeoutMs = 25_000) {
 	}
 }
 
+// Sitemaps name production URLs. Fetch them from --base, keep the production
+// URL as the identity a canonical is compared against.
+const fetchUrlFor = (loc) => {
+	try {
+		const u = new URL(loc);
+		return `${base}${u.pathname}${u.search}`;
+	} catch {
+		return loc;
+	}
+};
+
+async function readSitemap(loc) {
+	const { status, body } = await fetchText(fetchUrlFor(loc), 120_000);
+	if (status !== 200) throw new Error(`${loc} answered ${status}`);
+	return [...body.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].trim().replace(/&amp;/g, '&'));
+}
+
+// Every nth URL, so a sample covers a file end to end instead of its oldest rows.
+function spread(list, n) {
+	if (list.length <= n) return list;
+	const step = list.length / n;
+	return Array.from({ length: n }, (_, i) => list[Math.floor(i * step)]);
+}
+
+const typeOf = (loc) => (loc.match(/\/sitemap\/([a-z]+)(?:-\d+)?\.xml$/) || [])[1] || 'other';
+
+/** { urls to crawl, per-type URL counts declared by the sitemaps } */
 async function loadSitemapUrls() {
-	const { status, body } = await fetchText(`${base}/sitemap/${sitemapName}.xml`);
-	if (status !== 200) throw new Error(`sitemap/${sitemapName}.xml answered ${status}`);
-	const urls = [...body.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].trim());
-	if (!urls.length) throw new Error(`sitemap/${sitemapName}.xml declared no URLs`);
-	return limit ? urls.slice(0, limit) : urls;
+	if (sitemapName) {
+		const urls = await readSitemap(`https://three.ws/sitemap/${sitemapName}.xml`);
+		if (!urls.length) throw new Error(`sitemap/${sitemapName}.xml declared no URLs`);
+		return { urls: limit ? urls.slice(0, limit) : urls, counts: { [sitemapName]: urls.length }, source: `sitemap/${sitemapName}.xml` };
+	}
+	const children = await readSitemap('https://three.ws/sitemap.xml');
+	if (!children.length) throw new Error('sitemap.xml declared no child sitemaps');
+	const byType = new Map();
+	for (const child of children) {
+		const urls = await readSitemap(child);
+		const t = typeOf(child);
+		byType.set(t, [...(byType.get(t) || []), ...urls]);
+	}
+	const counts = Object.fromEntries([...byType].map(([t, list]) => [t, list.length]));
+	const urls = [...byType.values()].flatMap((list) => spread(list, samplePerType));
+	return { urls: limit ? urls.slice(0, limit) : urls, counts, source: `sitemap.xml (${children.length} child file(s), ${samplePerType} per type)` };
 }
 
 const attr = (root, selector, name) => root.querySelector(selector)?.getAttribute(name)?.trim() || '';
@@ -163,6 +231,13 @@ function auditPage(url, status, location, html) {
 	}
 	if (!ldTypes.length) warn(url, 'ld-missing', 'no structured data');
 
+	const faq = faqVisibility(html);
+	if (faq.questions.length && !faq.visible.length) {
+		err(url, 'faq-not-shown', `FAQPage declares ${faq.questions.length} question(s), none visible on the page`);
+	} else {
+		for (const q of faq.hidden) warn(url, 'faq-question-hidden', `FAQPage question not shown on the page: ${q}`);
+	}
+
 	return { url, title, desc, canonical, ldTypes };
 }
 
@@ -180,13 +255,16 @@ async function mapPool(items, worker) {
 	return out;
 }
 
-const urls = await loadSitemapUrls();
-console.log(`[audit-seo] ${urls.length} URL(s) from ${base}/sitemap/${sitemapName}.xml, concurrency ${concurrency}`);
+const { urls, counts, source } = await loadSitemapUrls();
+const declared = Object.values(counts).reduce((a, b) => a + b, 0);
+console.log(`[audit-seo] ${base}: ${source} declares ${declared} URL(s)`);
+for (const [t, n] of Object.entries(counts)) console.log(`    ${t.padEnd(10)} ${String(n).padStart(7)}`);
+console.log(`[audit-seo] crawling ${urls.length} URL(s), concurrency ${concurrency}`);
 
 const pages = (
 	await mapPool(urls, async (url) => {
 		try {
-			const { status, location, body } = await fetchText(url);
+			const { status, location, body } = await fetchText(fetchUrlFor(url));
 			return auditPage(url, status, location, body);
 		} catch (e) {
 			err(url, 'fetch-failed', e.message);
@@ -209,6 +287,11 @@ for (const [title, list] of byTitle) {
 for (const [, list] of byDesc) {
 	if (list.length > 1) err(list[0], 'description-duplicate', `${list.length} pages share one description: ${list.slice(0, 4).join(', ')}${list.length > 4 ? ' …' : ''}`);
 }
+const byCanonical = new Map();
+for (const p of pages) if (p.canonical) byCanonical.set(p.canonical, [...(byCanonical.get(p.canonical) || []), p.url]);
+for (const [canonical, list] of byCanonical) {
+	if (list.length > 1) err(list[0], 'canonical-duplicate', `${list.length} sitemap URLs claim the canonical ${canonical}: ${list.slice(0, 4).join(', ')}`);
+}
 
 const group = (rows) => {
 	const m = new Map();
@@ -228,10 +311,10 @@ for (const [label, rows] of [['ERROR', errors], ['WARN', warnings]]) {
 }
 
 if (jsonOut) {
-	writeFileSync(jsonOut, JSON.stringify({ base, sitemap: sitemapName, checked: pages.length, errors, warnings }, null, 2) + '\n');
+	writeFileSync(jsonOut, JSON.stringify({ base, source, declared: counts, checked: pages.length, errors, warnings }, null, 2) + '\n');
 	console.log(`\n[audit-seo] wrote ${jsonOut}`);
 }
 
 if (!errors.length && !warnings.length) console.log('\n✓ audit-seo: no on-page SEO defects found');
 else console.log(`\n[audit-seo] ${errors.length} error(s), ${warnings.length} warning(s)`);
-process.exit(strict && errors.length ? 1 : 0);
+process.exit(!reportOnly && errors.length ? 1 : 0);

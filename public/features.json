@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T17:25:24.181Z",
+	"generated_at": "2026-11-11T17:23:19.727Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -8342,18 +8342,6 @@
 					"path": "/docs/microsoft-teams-forge",
 					"title": "Docs · Create a 3D model from a Teams or Copilot chat",
 					"description": "The Teams app's Create a 3D model action and forge bot command: a real free-lane generation on an Adaptive Card that refreshes for the requester and updates for the whole chat when the model is ready, with Open in 3D, Download GLB and Make a variation.",
-					"added": "2026-11-11",
-					"auth": null,
-					"indexable": true,
-					"tags": [],
-					"showcase": false,
-					"priority": 0.5,
-					"job": null
-				},
-				{
-					"path": "/docs/teams-live-share",
-					"title": "Docs · Review a 3D model together in a meeting (Live Share)",
-					"description": "The three.ws review stage for Teams meetings: follow the presenter's camera, presence, laser pointers, synced comment pins with markdown export and animation sync over Live Share, plus the sideload path, privacy and bundle size.",
 					"added": "2026-11-11",
 					"auth": null,
 					"indexable": true,

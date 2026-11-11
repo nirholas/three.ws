@@ -125,3 +125,36 @@ export function jsonLdNodes(html, type) {
 export function jsonLdScript(value) {
 	return `<script type="application/ld+json">${JSON.stringify(value).replace(/</g, '\\u003c')}</script>`;
 }
+
+/** The text a reader sees in a page body: no head, scripts, styles or tags. */
+export function visibleText(html) {
+	return String(html || '')
+		.replace(/<head[\s\S]*?<\/head>/i, '')
+		.replace(/<script[\s\S]*?<\/script>/gi, '')
+		.replace(/<style[\s\S]*?<\/style>/gi, '')
+		.replace(/<template[\s\S]*?<\/template>/gi, '')
+		.replace(/<[^>]+>/g, ' ')
+		.replace(/&#39;|&apos;|&#x27;/g, "'")
+		.replace(/&quot;/g, '"')
+		.replace(/&nbsp;/g, ' ')
+		.replace(/&amp;/g, '&')
+		.replace(/\s+/g, ' ');
+}
+
+/**
+ * FAQPage questions declared in an HTML page, split by whether the page body
+ * shows them. Bing and Google treat FAQ markup for questions a reader cannot
+ * see as misleading, so a FAQPage needs at least one visible question.
+ *
+ * @param {string} html
+ * @returns {{ questions: string[], visible: string[], hidden: string[] }}
+ */
+export function faqVisibility(html) {
+	const questions = jsonLdNodes(html, 'FAQPage')
+		.flatMap((n) => (Array.isArray(n.mainEntity) ? n.mainEntity : n.mainEntity ? [n.mainEntity] : []))
+		.map((q) => String(q?.name || '').trim())
+		.filter(Boolean);
+	const text = visibleText(html);
+	const visible = questions.filter((q) => text.includes(q));
+	return { questions, visible, hidden: questions.filter((q) => !text.includes(q)) };
+}
