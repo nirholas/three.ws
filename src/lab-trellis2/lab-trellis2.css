@@ -281,6 +281,8 @@
 .lt-preset-sum { grid-column: 1 / -1; color: var(--ink-dim); font-size: var(--text-sm); }
 .lt-preset-speed { grid-row: 1; grid-column: 2; font-family: var(--font-mono); font-size: var(--text-xs); color: var(--success); }
 .lt-preset-speed.is-unmeasured { color: var(--ink-faint); }
+.lt-preset-speed.is-failing { color: var(--warn); }
+.lt-preset-note { grid-column: 1 / -1; color: var(--warn); font-size: var(--text-xs); }
 .lt-preset:hover { border-color: var(--ink-faint); background: var(--surface-2); }
 .lt-preset:active { transform: translateY(1px); }
 .lt-preset[aria-checked='true'] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface-1)); }

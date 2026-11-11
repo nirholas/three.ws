@@ -76,6 +76,20 @@ describe('buildReport', () => {
 		expect(r.presets.maximum_detail.gpu_seconds.p50).toBe(120);
 		expect(r.presets.balanced).toMatchObject({ resolution: 1024, rows: 0, e2e_seconds: 'not measured' });
 	});
+	it('charges failed runs with no reported resolution to every preset on their tier', () => {
+		// A worker killed mid-job never reports voxel_resolution, so those
+		// failures cannot be keyed to one preset. They must still show on the
+		// presets of the tier the request ran on instead of vanishing.
+		const rows = [
+			{ backend: 'trellis2', tier: 'draft', status: 'done', e2e_s: 56, voxel_resolution: 512 },
+			{ backend: 'trellis2', tier: 'standard', status: 'failed', voxel_resolution: null },
+			{ backend: 'trellis2', tier: 'standard', status: 'failed', voxel_resolution: null },
+		];
+		const r = buildReport(rows, WINDOW);
+		expect(r.presets.fast_draft).toMatchObject({ tier: 'draft', tier_rows: 1, tier_failed: 0 });
+		expect(r.presets.balanced).toMatchObject({ tier: 'standard', rows: 0, tier_rows: 2, tier_failed: 2 });
+		expect(r.presets.maximum_detail).toMatchObject({ tier: 'standard', tier_rows: 2, tier_failed: 2 });
+	});
 	it('says not measured for every preset when the lane has no rows', () => {
 		const r = buildReport([], WINDOW);
 		expect(r.trellis2_rows).toBe(0);

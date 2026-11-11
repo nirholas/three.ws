@@ -221,7 +221,8 @@ function renderPresets() {
 				},
 				el('strong', { text: p.label }),
 				el('span', { class: 'lt-preset-sum', text: p.summary }),
-				el('span', { class: `lt-preset-speed${speed.measured ? '' : ' is-unmeasured'}`, title: speed.detail, text: speed.label }),
+				el('span', { class: `lt-preset-speed${speed.measured ? '' : ' is-unmeasured'}${speed.failing ? ' is-failing' : ''}`, title: speed.detail, text: speed.label }),
+				speed.failing ? el('span', { class: 'lt-preset-note', text: speed.detail }) : null,
 			);
 		}),
 	);

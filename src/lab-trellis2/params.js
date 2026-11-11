@@ -184,13 +184,28 @@ export function parseCompareQuery(search) {
 export function presetSpeed(benchmark, presetId) {
 	const p = benchmark?.presets?.[presetId];
 	const e2e = p?.e2e_seconds;
-	if (!p || typeof e2e !== 'object' || !e2e) return { measured: false, label: 'Not measured yet', detail: 'No production run at this resolution in the benchmark window.' };
+	// Failed runs on this preset's tier. A job killed mid-run never reports its
+	// resolution, so the benchmark can only charge it to the tier.
+	const failed = p?.tier_failed > 0 ? p.tier_failed : 0;
+	const tierNote = failed
+		? `${failed} of ${p.tier_rows} ${p.tier}-tier runs${p.tier === 'standard' ? ' (1024 and 1536)' : ''} failed in the benchmark window`
+		: '';
+	if (!p || typeof e2e !== 'object' || !e2e) {
+		if (failed) return { measured: false, failing: true, label: 'Failing on production', detail: `${tierNote} and none finished at ${p.resolution}.` };
+		return { measured: false, label: 'Not measured yet', detail: 'No production run at this resolution in the benchmark window.' };
+	}
 	const gpu = typeof p.gpu_seconds === 'object' && p.gpu_seconds ? `, GPU p50 ${formatSeconds(p.gpu_seconds.p50)}` : '';
 	return {
 		measured: true,
 		label: `p50 ${formatSeconds(e2e.p50)}`,
-		detail: `End to end over ${e2e.n} production run${e2e.n === 1 ? '' : 's'} (p90 ${formatSeconds(e2e.p90)}${gpu}).`,
+		detail: `End to end over ${e2e.n} production run${e2e.n === 1 ? '' : 's'} (p90 ${formatSeconds(e2e.p90)}${gpu}).${tierNote ? ` ${tierNote}.` : ''}`,
 	};
+}
+
+/** The message for a run the engine reported as failed, punctuated once. */
+export function runFailedMessage(reason) {
+	const why = String(reason || '').trim() || 'the engine gave up';
+	return `The run failed: ${why}${/[.!?]$/.test(why) ? '' : '.'}`;
 }
 
 export function formatSeconds(s) {

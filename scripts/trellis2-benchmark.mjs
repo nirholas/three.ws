@@ -38,6 +38,10 @@ const NOT_MEASURED = 'not measured';
 // worker reports back and the store records per creation (voxel_resolution).
 export const PRESET_RESOLUTIONS = { fast_draft: 512, balanced: 1024, maximum_detail: 1536 };
 
+// The forge tier each resolution is requested on (512 drafts, the rest run
+// standard). Mirrors tierFor in src/lab-trellis2/params.js.
+const presetTier = (resolution) => (resolution === 512 ? 'draft' : 'standard');
+
 function loadEnv() {
 	for (const envFile of ['.env.local', '.env']) {
 		let raw;
@@ -156,6 +160,8 @@ export function buildReport(rows, { from, to, days }) {
 	const presets = Object.fromEntries(
 		Object.entries(PRESET_RESOLUTIONS).map(([preset, resolution]) => {
 			const r = trellis2?.resolutions?.[String(resolution)];
+			const tier = presetTier(resolution);
+			const t = trellis2?.tiers?.[tier];
 			return [preset, {
 				resolution,
 				rows: r ? r.rows : 0,
@@ -163,6 +169,9 @@ export function buildReport(rows, { from, to, days }) {
 				e2e_seconds: r ? r.e2e_seconds : NOT_MEASURED,
 				gpu_seconds: r ? r.gpu_seconds : NOT_MEASURED,
 				queue_seconds: r ? r.queue_seconds : NOT_MEASURED,
+				tier,
+				tier_rows: t ? t.rows : 0,
+				tier_failed: t ? t.failed : 0,
 			}];
 		}),
 	);
@@ -176,7 +185,7 @@ export function buildReport(rows, { from, to, days }) {
 			failure_rate: 'failed / (done + failed); generating rows excluded',
 			output_bytes: 'size_bytes on done rows; nearest-rank percentiles',
 			queue_and_gpu: 'queue_ms and gpu_ms as reported by the serving worker (TRELLIS.2); groups with none recorded say not measured',
-			presets: 'trellis2 lane rows grouped by the voxel_resolution the worker reported',
+			presets: 'trellis2 lane rows grouped by the voxel_resolution the worker reported; tier_rows and tier_failed count the whole tier the preset runs on, because a job killed mid-run never reports its resolution',
 		},
 		row_count: rows.length,
 		lane_count: lanes.length,

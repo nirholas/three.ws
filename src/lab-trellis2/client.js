@@ -13,6 +13,7 @@
 
 import { CLIENT_HEADERS, errorFromResponse, uploadImage } from '../forge-workflows/executors.js';
 import { attachTierPass } from '../three-access.js';
+import { runFailedMessage } from './params.js';
 
 export { uploadImage };
 
@@ -140,7 +141,7 @@ export async function runJob(body, { signal, onProgress }) {
 		const d = poll.data;
 		if (d.status === 'done' && d.glb_url) return finish({ ...d, job_id: jobId }, data, wall());
 		if (d.status === 'failed') {
-			throw new LabError(`The run failed: ${d.error || d.message || 'the engine gave up'}.`, { code: 'job_failed' });
+			throw new LabError(runFailedMessage(d.error || d.message), { code: 'job_failed' });
 		}
 		onProgress({
 			phase: d.status === 'queued' ? 'queued' : 'running',

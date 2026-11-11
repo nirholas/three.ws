@@ -11,6 +11,7 @@ import {
 	matchPreset,
 	parseCompareQuery,
 	presetSpeed,
+	runFailedMessage,
 	samplerOverrides,
 	tierFor,
 } from '../src/lab-trellis2/params.js';
@@ -93,6 +94,20 @@ describe('presets', () => {
 		expect(presetSpeed({}, 'balanced')).toMatchObject({ measured: false });
 	});
 
+	it('says a preset is failing when its tier only has failed runs', () => {
+		const bench = { presets: { balanced: { resolution: 1024, tier: 'standard', rows: 0, e2e_seconds: 'not measured', tier_rows: 2, tier_failed: 2 } } };
+		const s = presetSpeed(bench, 'balanced');
+		expect(s).toMatchObject({ measured: false, failing: true, label: 'Failing on production' });
+		expect(s.detail).toBe('2 of 2 standard-tier runs (1024 and 1536) failed in the benchmark window and none finished at 1024.');
+	});
+
+	it('keeps a measured label when some runs finished despite tier failures', () => {
+		const bench = { presets: { fast_draft: { e2e_seconds: { n: 2, p50: 56, p90: 56 }, gpu_seconds: 'not measured', tier: 'draft', tier_rows: 3, tier_failed: 1 } } };
+		const s = presetSpeed(bench, 'fast_draft');
+		expect(s).toMatchObject({ measured: true, label: 'p50 56 s' });
+		expect(s.detail).toContain('1 of 3 draft-tier runs failed');
+	});
+
 	it('labels a measured preset from its real percentiles', () => {
 		const bench = { presets: { balanced: { e2e_seconds: { n: 3, p50: 74.2, p90: 120, p99: 130 }, gpu_seconds: { n: 3, p50: 41 } } } };
 		const s = presetSpeed(bench, 'balanced');
@@ -129,5 +144,16 @@ describe('formatting', () => {
 		expect(formatBytes(512)).toBe('512 B');
 		expect(formatBytes(2048)).toBe('2.0 KB');
 		expect(formatBytes(5 * 1024 * 1024)).toBe('5.0 MB');
+	});
+});
+
+describe('runFailedMessage', () => {
+	it('does not double the period when the engine reason already ends a sentence', () => {
+		expect(runFailedMessage('The engine ran out of resources. Try again with a simpler request.'))
+			.toBe('The run failed: The engine ran out of resources. Try again with a simpler request.');
+	});
+	it('ends a bare reason with a period and covers a missing one', () => {
+		expect(runFailedMessage('timeout')).toBe('The run failed: timeout.');
+		expect(runFailedMessage('')).toBe('The run failed: the engine gave up.');
 	});
 });
