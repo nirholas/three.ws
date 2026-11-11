@@ -20,7 +20,7 @@ vi.mock('../api/_mcp-studio/gpt-forge-client.js', async (importOriginal) => {
 });
 
 import { generate } from '../api/_mcp-studio/gpt-forge-client.js';
-import { dispatch, CHATGPT_CALL_BUDGET_MS } from '../api/_mcp-studio/dispatch.js';
+import { dispatch, CHATGPT_CALL_BUDGET_MS, STUDIO_UNSTREAMED_CALL_BUDGET_MS } from '../api/_mcp-studio/dispatch.js';
 import { chatgptSubject } from '../api/_mcp-studio/handler.js';
 import { COMPONENT_HTML } from '../api/_mcp-studio/component.js';
 
@@ -51,9 +51,31 @@ describe('ChatGPT call budget', () => {
 		expect(opts.deadline).toBeLessThanOrEqual(Date.now() + CHATGPT_CALL_BUDGET_MS);
 	});
 
-	it('leaves the full MCP surface unbounded, where hosts wait minutes', async () => {
+	// The MCP TypeScript SDK drops a request at 60 s unless the host overrides it,
+	// and production showed /api/mcp-studio holding plain JSON calls open for
+	// 190 to 226 s (Cursor, Copilot-style hosts, scripts), so a call that streams
+	// no progress gets the same bounded answer the plugin surfaces give.
+	it('bounds a full-surface call that streams no progress, so a 60 s client default never loses the model', async () => {
 		vi.mocked(generate).mockResolvedValue({ status: 'done', glb_url: 'https://three.ws/cdn/a.glb' });
+		const before = Date.now();
 		await dispatch(callMsg('forge_free', { prompt: 'a brass telescope' }), auth, req, { surface: 'full' });
+		const opts = vi.mocked(generate).mock.calls[0][2];
+		expect(opts.deadline).toBeGreaterThan(before);
+		expect(opts.deadline).toBeLessThanOrEqual(Date.now() + STUDIO_UNSTREAMED_CALL_BUDGET_MS);
+		expect(STUDIO_UNSTREAMED_CALL_BUDGET_MS).toBeLessThanOrEqual(45_000);
+	});
+
+	it('hands back a pending job on the full surface when an unstreamed render outlives the budget', async () => {
+		vi.mocked(generate).mockResolvedValue({ _timedOut: true, job_id: 'job-full-1', status: 'running' });
+		const r = await dispatch(callMsg('forge_free', { prompt: 'a brass telescope' }), auth, req, { surface: 'full' });
+		const sc = r.result.structuredContent;
+		expect(sc.status).toBe('pending');
+		expect(sc.jobId).toBe('job-full-1');
+	});
+
+	it('leaves a full-surface call that streams progress unbounded, since the host sees every frame', async () => {
+		vi.mocked(generate).mockResolvedValue({ status: 'done', glb_url: 'https://three.ws/cdn/a.glb' });
+		await dispatch(callMsg('forge_free', { prompt: 'a brass telescope' }), auth, req, { surface: 'full', onProgress: () => {} });
 		expect(vi.mocked(generate).mock.calls[0][2].deadline).toBeUndefined();
 	});
 

@@ -79,6 +79,14 @@ const GROK_INSTRUCTIONS = [
 // timeout is lost work, while a pending handle costs one check_job round trip.
 export const GROK_CALL_BUDGET_MS = 40_000;
 
+// /api/mcp-studio serves every other MCP host: Claude, Cursor, VS Code, Copilot
+// Studio and Microsoft 365 Copilot, scripts. A call that asked for progress
+// streams a frame per job stage (./handler.js streamToolCall), so it may wait
+// the whole render. A plain JSON call sees nothing until the result, and the MCP
+// TypeScript SDK every common host builds on drops a request at 60 s by default,
+// so that call answers inside this budget with the model or a pending job.
+export const STUDIO_UNSTREAMED_CALL_BUDGET_MS = 40_000;
+
 // /api/mcp-grok also serves the account's agent tools (./account-tools.js) to a
 // caller that signs in. Which half of the sentence the model reads depends on
 // whether this request carried a valid credential.
@@ -173,6 +181,7 @@ const SURFACES = {
 		prompts: true,
 		jobTool: 'get_job',
 		instructions: [...BASE_INSTRUCTIONS, ...JOB_INSTRUCTIONS, ...CATALOG_INSTRUCTIONS, ...PERSONA_INSTRUCTIONS].join(' '),
+		unstreamedCallBudgetMs: STUDIO_UNSTREAMED_CALL_BUDGET_MS,
 	},
 	chatgpt: {
 		server: 'mcp-chatgpt',
@@ -318,8 +327,9 @@ async function onToolCall(params, auth, started, req, surface, opts = {}) {
 		throw rpcError(-32602, `invalid params for ${name}: ${detail}`);
 	}
 	try {
+		const budgetMs = surface.callBudgetMs || (opts.onProgress ? 0 : surface.unstreamedCallBudgetMs || 0);
 		const ctx = {
-			...(surface.callBudgetMs ? { deadline: started + surface.callBudgetMs } : {}),
+			...(budgetMs ? { deadline: started + budgetMs } : {}),
 			jobTool: surface.jobTool || 'check_job',
 			...(opts.caller ? { caller: opts.caller } : {}),
 			...(opts.onProgress ? { onProgress: opts.onProgress } : {}),

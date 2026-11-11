@@ -339,6 +339,16 @@ A detailed model can take longer than a single tool call should block for. When
 that happens the generating tool does **not** fail: it returns a success result
 carrying a pollable handle, and the job keeps running server-side.
 
+How long a call blocks depends on whether the client asked for progress. A
+`tools/call` that sends `_meta.progressToken` (and accepts `text/event-stream`)
+gets one `notifications/progress` frame per job stage and may wait the whole
+render. A plain JSON call sees nothing until the result, and the MCP TypeScript
+SDK most hosts build on drops a request at 60 s by default, so on
+`/api/mcp-studio` it answers within 40 s (`STUDIO_UNSTREAMED_CALL_BUDGET_MS` in
+[`api/_mcp-studio/dispatch.js`](../api/_mcp-studio/dispatch.js)) with either the
+model or the pending handle below. `/api/mcp-chatgpt` and `/api/mcp-grok` bound
+every call that way, streamed or not.
+
 ```json
 {
   "status": "pending",
