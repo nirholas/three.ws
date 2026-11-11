@@ -45,6 +45,7 @@ const only = flags.only ? new Set(String(flags.only).split(',')) : null;
 const workerUrl = process.env.TRELLIS2_URL;
 const workerKey = process.env.TRELLIS2_KEY;
 const POLL_MS = 5000;
+const POLL_RETRIES = 36;
 const JOB_DEADLINE_MS = 20 * 60 * 1000;
 
 if (!flags['skip-generate'] && (!workerUrl || !workerKey)) {
@@ -139,9 +140,20 @@ async function generate(name, key) {
 	const t0 = Date.now();
 	const { task_id } = await api('/infer', { method: 'POST', body: JSON.stringify({ images: [dataUri], resolution: 1024, seed: 42 }) });
 	let task;
+	let pollErrors = 0;
 	for (;;) {
 		await new Promise((r) => setTimeout(r, POLL_MS));
-		task = await api(`/tasks/${task_id}`);
+		try {
+			task = await api(`/tasks/${task_id}`);
+			pollErrors = 0;
+		} catch (err) {
+			// The job keeps running on the worker while the network blips (a dropped
+			// tunnel, a cold connection); keep polling the same task instead of
+			// discarding minutes of GPU work. A real outage still ends the job.
+			if (++pollErrors > POLL_RETRIES) throw err;
+			console.error(`  ${name}/${key}: poll ${pollErrors} of ${POLL_RETRIES} failed (${err.message}), retrying`);
+			continue;
+		}
 		if (task.status === 'done' || task.status === 'succeeded' || task.status === 'failed' || task.status === 'error') break;
 		if (Date.now() - t0 > JOB_DEADLINE_MS) throw new Error(`task ${task_id} still ${task.status} after 20 min`);
 	}
