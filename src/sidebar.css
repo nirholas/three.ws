@@ -1,0 +1,321 @@
+/* /sidebar: the narrow layout pinned in the Edge side panel (320 to 400px).
+   Token-driven so it follows [data-theme='light'] like the rest of the site. */
+
+.sb-body {
+	margin: 0;
+	background: var(--bg, #050505);
+	color: var(--text, #f6f6f6);
+	font-family: var(--font-body, Inter, system-ui, sans-serif);
+	font-size: var(--text-md, 13px);
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+}
+
+.sb-wrap {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 12px;
+	max-width: 480px;
+	margin: 0 auto;
+	box-sizing: border-box;
+}
+
+.sb-sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+.sb-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 2px 2px 4px;
+}
+
+.sb-brand {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--text, #f6f6f6);
+	text-decoration: none;
+	font-family: var(--font-display, 'Space Grotesk', Inter, sans-serif);
+	font-weight: 600;
+	letter-spacing: -0.02em;
+	font-size: var(--text-ui, 14px);
+	border-radius: 6px;
+}
+
+.sb-card {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 12px;
+	border: 1px solid var(--hairline-strong, rgba(255, 255, 255, 0.09));
+	border-radius: 12px;
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+}
+
+.sb-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.sb-title {
+	margin: 0;
+	font-family: var(--font-display, 'Space Grotesk', Inter, sans-serif);
+	font-size: var(--text-ui, 14px);
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.sb-link {
+	color: var(--text-2, #a8a8a8);
+	text-decoration: none;
+	font-size: var(--text-sm, 12px);
+	border-radius: 4px;
+	transition: color 0.15s ease;
+}
+.sb-link:hover { color: var(--text, #f6f6f6); text-decoration: underline; }
+
+.sb-agent {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+}
+.sb-agent-meta {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+	flex: 1;
+}
+
+.sb-avatar {
+	width: 44px;
+	height: 44px;
+	border-radius: 10px;
+	object-fit: cover;
+	flex-shrink: 0;
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+}
+.sb-avatar-empty {
+	display: grid;
+	place-items: center;
+	font-weight: 600;
+	color: var(--text-2, #a8a8a8);
+}
+
+.sb-log {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	max-height: 42vh;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+}
+.sb-msg {
+	padding: 8px 10px;
+	border-radius: 10px;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	animation: sb-in 0.18s ease both;
+}
+.sb-msg-user {
+	align-self: flex-end;
+	max-width: 85%;
+	background: var(--accent-soft, rgba(255, 255, 255, 0.1));
+}
+.sb-msg-assistant {
+	align-self: flex-start;
+	max-width: 92%;
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+}
+.sb-msg.is-pending { color: var(--text-3, #6a6a6a); }
+.sb-msg.is-pending::after { content: ''; display: inline-block; width: 1ch; animation: sb-dots 1.2s steps(4, end) infinite; overflow: hidden; vertical-align: bottom; }
+.sb-msg.is-error { color: var(--danger, #f87171); }
+
+.sb-chat,
+.sb-forge {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.sb-chat textarea,
+.sb-forge textarea {
+	width: 100%;
+	box-sizing: border-box;
+	resize: vertical;
+	min-height: 56px;
+	padding: 8px 10px;
+	border-radius: 8px;
+	border: 1px solid var(--hairline-strong, rgba(255, 255, 255, 0.09));
+	background: var(--bg, #050505);
+	color: var(--text, #f6f6f6);
+	font: inherit;
+	transition: border-color 0.15s ease;
+}
+.sb-chat textarea:hover,
+.sb-forge textarea:hover { border-color: var(--text-3, #6a6a6a); }
+.sb-chat textarea:focus-visible,
+.sb-forge textarea:focus-visible {
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #fff);
+	outline-offset: 1px;
+	border-color: transparent;
+}
+
+.sb-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	align-self: flex-start;
+	gap: 6px;
+	min-height: 32px;
+	padding: 6px 14px;
+	border-radius: 8px;
+	border: 1px solid var(--hairline-strong, rgba(255, 255, 255, 0.09));
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	color: var(--text, #f6f6f6);
+	font: inherit;
+	font-weight: 500;
+	text-decoration: none;
+	cursor: pointer;
+	transition: background 0.15s ease, transform 0.08s ease, opacity 0.15s ease;
+}
+.sb-btn:hover { background: var(--accent-soft, rgba(255, 255, 255, 0.1)); }
+.sb-btn:active { transform: scale(0.97); }
+.sb-btn:disabled { opacity: 0.55; cursor: progress; transform: none; }
+.sb-btn-primary {
+	align-self: flex-end;
+	background: var(--accent, #fff);
+	color: var(--bg, #050505);
+	border-color: transparent;
+}
+.sb-btn-primary:hover { background: var(--accent, #fff); opacity: 0.88; }
+
+.sb-brand:focus-visible,
+.sb-link:focus-visible,
+.sb-btn:focus-visible,
+.sb-recent-item:focus-visible {
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #fff);
+	outline-offset: var(--focus-ring-offset, 2px);
+}
+
+.sb-job {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+.sb-job-text { margin: 0; color: var(--text-2, #a8a8a8); }
+.sb-progress {
+	height: 3px;
+	border-radius: 2px;
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	overflow: hidden;
+	visibility: hidden;
+}
+.sb-job.is-busy .sb-progress { visibility: visible; }
+.sb-progress span {
+	display: block;
+	width: 35%;
+	height: 100%;
+	background: var(--accent, #fff);
+	animation: sb-indeterminate 1.4s ease-in-out infinite;
+}
+
+.sb-recent {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+.sb-recent-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 6px;
+	border-radius: 8px;
+	color: inherit;
+	text-decoration: none;
+	transition: background 0.15s ease;
+}
+.sb-recent-item:hover { background: var(--surface-2, rgba(255, 255, 255, 0.05)); }
+.sb-recent-item:active { background: var(--accent-soft, rgba(255, 255, 255, 0.1)); }
+.sb-thumb {
+	width: 40px;
+	height: 40px;
+	border-radius: 8px;
+	object-fit: cover;
+	flex-shrink: 0;
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+}
+.sb-recent-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+.sb-recent-title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.sb-recent-sub { color: var(--text-3, #6a6a6a); font-size: var(--text-sm, 12px); }
+
+.sb-state {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+.sb-state-title { margin: 0; font-weight: 600; }
+.sb-state-body { margin: 0; color: var(--text-2, #a8a8a8); }
+
+.sb-skel {
+	background: linear-gradient(90deg, var(--surface-1, rgba(255, 255, 255, 0.03)), var(--surface-2, rgba(255, 255, 255, 0.07)), var(--surface-1, rgba(255, 255, 255, 0.03)));
+	background-size: 200% 100%;
+	animation: sb-shimmer 1.3s ease-in-out infinite;
+	border-radius: 8px;
+}
+.sb-skel-avatar { width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0; }
+.sb-skel.is-line { height: 12px; width: 60%; }
+.sb-skel.is-row { height: 52px; }
+
+@keyframes sb-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes sb-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@keyframes sb-indeterminate { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+@keyframes sb-dots { from { width: 0; } to { width: 3ch; } }
+.sb-msg.is-pending::after { content: '...'; }
+
+@media (prefers-reduced-motion: reduce) {
+	.sb-msg, .sb-skel, .sb-progress span, .sb-msg.is-pending::after { animation: none; }
+	.sb-btn { transition: none; }
+}
+
+/* The installed app with Window Controls Overlay: keep the header clear of the
+   caption buttons and let it drag the window. */
+@media (display-mode: window-controls-overlay) {
+	.sb-head {
+		-webkit-app-region: drag;
+		app-region: drag;
+		min-height: env(titlebar-area-height, 0px);
+		padding-left: max(2px, env(titlebar-area-x, 0px));
+		padding-right: max(2px, calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw)));
+	}
+	.sb-head a { -webkit-app-region: no-drag; app-region: no-drag; }
+}
