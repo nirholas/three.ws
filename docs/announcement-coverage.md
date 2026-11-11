@@ -121,7 +121,7 @@ Partnership and distribution posts (not feature announcements): Google Cloud, Al
 | `/feed` | Feed | 2026-06-21 | No |  |
 | `/partners` | Partner Ecosystem | 2026-06-27 | Passing | [2026-05-06](https://x.com/trythreews/status/2052167399399735476) |
 | `/openai` | three.ws is an OpenAI Select Partner | 2026-07-25 | Yes | [2026-07-15](https://x.com/trythreews/status/2077196551018213486) |
-| `/nvidia` | three.ws on NVIDIA | 2026-07-30 | No |  |
+| `/nvidia` | three.ws on NVIDIA | 2026-07-30 | Yes | 2026-07-20, Inception membership post (28K views by 2026-11-11; status URL not yet captured) |
 | `/press` | Press kit | 2026-07-29 | No |  |
 | `/pricing` | Pricing |  | No |  |
 | `/showcase` | Showcase |  | No |  |

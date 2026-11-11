@@ -28,10 +28,16 @@ two questions worth sending back.
 
 Before any new outreach, two things about our existing position:
 
-**1. The Inception membership was never announced on X.** [announcement-coverage.md](./announcement-coverage.md)
-tracks an "announced on X" column per surface. `/nvidia` (added 2026-07-30) has
-that column empty, while `/openai` has a real post behind it. The single biggest
-NVIDIA credential we hold has had no social push on our own channels. Everything
+**1. The Inception announcement performed, so run it back with a new milestone.**
+Correction recorded 2026-11-11: @trythreews did announce the membership on X, dated
+Jul 20 on the post ("We're thrilled to announce that three.ws is now a member of the
+NVIDIA Inception Program", tagging @NVIDIA, with a video card carrying the official
+Inception lockup). On 2026-11-11 the owner's screenshot showed 28K views, 358 likes,
+117 reposts and 63 replies. The status URL was not captured, which is why the
+2026-09-16 archive check missed it; add it to `data/timeline.json`
+(`2026-07-18-nvidia-inception-public`, `source_url`) when the owner shares it. The
+post proved the NVIDIA logo moves our audience, so the follow-up is a second post
+built on a new, verifiable NVIDIA milestone, not a repost of the first. Everything
 in the [Social](#social-surfaces-ours-to-drive) section is blocked on nothing and
 costs nothing.
 
@@ -250,7 +256,9 @@ plus the two Discords (NVIDIA Developer, NVIDIA Omniverse).
 
 **The content we already have and have never posted:**
 
-- The membership itself, with the official badge. Never posted.
+- The membership itself was posted on X (Jul 20, 28K views by 2026-11-11). Not yet
+  posted to LinkedIn for NVIDIA for Startups to reshare, and not yet re-posted with
+  the restored official co-brand kit.
 - The browser Audio2Face demo at `/demos/audio2face`. A 15-second screen capture
   of a face lip-syncing in a browser tab with no install is the most
   screenshot-friendly asset on the platform, and it maps exactly to what the ACE

@@ -19,13 +19,11 @@ imply endorsement ([badge usage](../../marketing/openai-select-partner/badge-usa
 The organization ID and ChatGPT workspace ID are in the provisioning email from OpenAI Partner
 Network and in the invitations. They are deliberately not copied into this public repository.
 
-## Pending owner action
+## Owner actions
 
-OpenAI sends two separate invitations to the portal administrator's inbox: one to the API
-organization, one to the ChatGPT workspace. Check spam or junk if neither has arrived. Accepting
-them is the only step left; nothing in the repo can do it.
+The owner accepted the OPN invitations on or before 2026-11-11. What remains:
 
-Once the API organization exists, create a project key scoped to partner work and store it as a
+Now that the API organization exists, create a project key scoped to partner work and store it as a
 distinct secret (for example `OPENAI_PARTNER_API_KEY`), never in place of the production
 `OPENAI_API_KEY`. Keeping the two apart is what makes the usage rule below auditable.
 
