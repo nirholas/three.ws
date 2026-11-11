@@ -1501,6 +1501,39 @@ export async function listCreationsByUser({ userId, limit = 24, before } = {}) {
 	}
 }
 
+// The signed-in owner's own finished models, every visibility included, for
+// surfaces that act on the owner's behalf (the PowerPoint add-in's model list,
+// /api/forge/mine). Unlike listCreationsByUser this is never public: the caller
+// must have authenticated as `userId`. Rows carry visibility so the surface can
+// say which ones can be shared or exported. Cursor-paged by created_at.
+export async function listOwnCreations({ userId, limit = 24, before } = {}) {
+	if (!forgeStoreEnabled() || !userId) return [];
+	const capped = Math.min(Math.max(Number(limit) || 24, 1), 48);
+	try {
+		const rows = before
+			? await sql`
+				select id, prompt, preview_image_url, visibility, created_at
+				from forge_creations
+				where user_id = ${userId} and status = 'done' and glb_url is not null
+					and created_at < ${before}
+				order by created_at desc
+				limit ${capped}
+			`
+			: await sql`
+				select id, prompt, preview_image_url, visibility, created_at
+				from forge_creations
+				where user_id = ${userId} and status = 'done' and glb_url is not null
+				order by created_at desc
+				limit ${capped}
+			`;
+		return rows.map((r) => ({ ...r, preview_image_url: normalizeStoredUrl(r.preview_image_url) }));
+	} catch (err) {
+		if (isDbUnavailableError(err)) console.warn('[forge-store] listOwnCreations skipped (db unavailable):', err?.message);
+		else console.error('[forge-store] listOwnCreations failed:', err?.message);
+		throw err;
+	}
+}
+
 // Count of a signed-in creator's finished, stored models — cheap stat-strip
 // number, separate from the paginated list above.
 export async function countCreationsByUser({ userId } = {}) {
