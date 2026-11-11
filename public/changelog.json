@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T17:08:36.800Z",
+	"generated_at": "2026-11-11T17:13:43.448Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -165,6 +165,16 @@
 			"link": "/docs/dotnet-sdk",
 			"tags": [
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "Detailed 3D models no longer fall back to a plain mesh mid-generation",
+			"summary": "Some requests for a textured model finished as an untextured one. The job was still running on one server, but another server checking on it read an outdated status, decided the job was dead, and handed it to a faster lane without textures. Job status is now always read fresh, so the textured model you asked for is the one you get. The fix covers TRELLIS, TRELLIS.2, Modly, Hunyuan3D and TripoSG.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{

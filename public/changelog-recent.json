@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-11T17:08:36.830Z",
+	"generated_at": "2026-11-11T17:13:43.523Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4508,
+	"total": 4509,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -168,6 +168,16 @@
 			"link": "/docs/dotnet-sdk",
 			"tags": [
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "Detailed 3D models no longer fall back to a plain mesh mid-generation",
+			"summary": "Some requests for a textured model finished as an untextured one. The job was still running on one server, but another server checking on it read an outdated status, decided the job was dead, and handed it to a faster lane without textures. Job status is now always read fresh, so the textured model you asked for is the one you get. The fix covers TRELLIS, TRELLIS.2, Modly, Hunyuan3D and TripoSG.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1525,16 +1535,6 @@
 			"tags": [
 				"feature",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Jumping to a section of the doc you are reading no longer loads a missing page",
-			"summary": "Editing the address bar from one section of a docs page to another, or following a hand-written section link, used to read the section name as a doc, fetch a page that does not exist, and replace the doc you were reading with a not-found panel, live request blocks included. The docs reader now scrolls to that section of the open doc and rewrites the address so a reload or a shared link lands in the same place. A section that shares its name with a listed doc still opens that doc.",
-			"link": "/docs/mcp-studio",
-			"tags": [
-				"fix"
 			]
 		}
 	]

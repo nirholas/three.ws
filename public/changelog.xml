@@ -135,6 +135,14 @@
 			<description>C# developers can now use three.ws from one typed library, ThreeWs.Sdk. It generates 3D models from text or images on every Forge lane and downloads the GLB. It also searches the free asset catalog, rigs meshes, streams agent chat and lists MCP tools. It runs on .NET 8 and .NET Standard 2.1, so it works in ASP.NET Core services and in Unity games, and a Unity sample spawns a generated model with glTFast. Every call can be cancelled. Failed requests retry safely, and errors carry the API's error code. The NuGet release is pending.</description>
 		</item>
 		<item>
+			<title>Detailed 3D models no longer fall back to a plain mesh mid-generation</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-11:Detailed 3D models no longer fall back to a plain mesh mid-generation</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Some requests for a textured model finished as an untextured one. The job was still running on one server, but another server checking on it read an outdated status, decided the job was dead, and handed it to a faster lane without textures. Job status is now always read fresh, so the textured model you asked for is the one you get. The fix covers TRELLIS, TRELLIS.2, Modly, Hunyuan3D and TripoSG.</description>
+		</item>
+		<item>
 			<title>Export any Forge model as a Minecraft: Bedrock structure pack</title>
 			<link>https://three.ws/docs/minecraft-export</link>
 			<guid isPermaLink="false">2026-11-11:Export any Forge model as a Minecraft: Bedrock structure pack</guid>
