@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-11",
+			"title": "Put an interactive 3D model on a PowerPoint slide in one click",
+			"summary": "Choose PowerPoint in the Forge export menu, in Forge Studio or on any model page and you get a ready slide: the prompt as the title and the model as a real PowerPoint 3D object you can drag to rotate in a slideshow, animate with Morph and resize like a picture. Every model is prepared for Office first: compressed geometry is decoded, textures become PNG or JPEG at up to 2048 px, rigs and animation are kept, and a rendered poster shows in viewers without 3D. The new three.ws 3D Models add-in for PowerPoint does the same from inside your presentation: sign in with your three.ws account to insert one of your models, or describe one and generate it free. The add-in can be sideloaded today and its AppSource listing is pending review.",
+			"tags": ["feature"],
+			"link": "/docs/powerpoint"
+		},
+		{
+			"date": "2026-11-11",
 			"title": "Find 3D models by what is in them",
 			"summary": "Every finished 3D creation is now described from its poster by Florence-2 on our own GPU: a short caption, a detailed caption and tags. Model search matches those captions and tags, so a model forged from a photo with no written prompt still turns up when you search for what it shows, like \"bicycle wheel\". Model pages use the detailed caption as their description and as alt text for the 3D viewer and share images, and list the tags as chips that open a search for similar models. Creators can add, remove or clear the tags on their own models.",
 			"tags": ["feature"],

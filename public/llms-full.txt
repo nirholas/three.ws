@@ -262,6 +262,13 @@ Indexable: no (excluded from sitemap)
 
 A shared Forge room that runs embedded inside a Discord voice channel: everyone in the call prompts, watches the same 3D model generate, and votes together.
 
+### three.ws 3D Models (PowerPoint add-in)
+
+URL: https://three.ws/office/powerpoint
+Indexable: no (excluded from sitemap)
+
+The three.ws task pane inside PowerPoint: sign in to insert one of your 3D models as an interactive slide, or describe a model and generate it free, then rotate it in your presentation.
+
 ### three.ws agents (Microsoft Teams tab)
 
 URL: https://three.ws/microsoft/teams-tab
@@ -4218,6 +4225,12 @@ The Teams app's Create a 3D model action and forge bot command: a real free-lane
 URL: https://three.ws/docs/teams-live-share
 
 The three.ws review stage for Teams meetings: follow the presenter's camera, presence, laser pointers, synced comment pins with markdown export and animation sync over Live Share, plus the sideload path, privacy and bundle size.
+
+### Docs · three.ws in PowerPoint
+
+URL: https://three.ws/docs/powerpoint
+
+Export any three.ws model as a PowerPoint slide with an interactive 3D object, and the three.ws 3D Models add-in: the Office-safe GLB pass, the am3d:model3d slide, the limits PowerPoint imposes and how to sideload the add-in.
 
 ### Docs · Microsoft distribution and offer plan
 

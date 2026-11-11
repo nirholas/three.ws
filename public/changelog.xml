@@ -71,6 +71,14 @@
 			<description>The three.ws review stage for Teams meetings: follow the presenter's camera, presence, laser pointers, synced comment pins with markdown export and animation sync over Live Share, plus the sideload path, privacy and bundle size.</description>
 		</item>
 		<item>
+			<title>Docs · three.ws in PowerPoint</title>
+			<link>https://three.ws/docs/powerpoint</link>
+			<guid isPermaLink="false">2026-11-11:Docs · three.ws in PowerPoint</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Export any three.ws model as a PowerPoint slide with an interactive 3D object, and the three.ws 3D Models add-in: the Office-safe GLB pass, the am3d:model3d slide, the limits PowerPoint imposes and how to sideload the add-in.</description>
+		</item>
+		<item>
 			<title>Docs · three.ws on the Microsoft agent stack</title>
 			<link>https://three.ws/docs/microsoft-agent-stack</link>
 			<guid isPermaLink="false">2026-11-11:Docs · three.ws on the Microsoft agent stack</guid>
@@ -133,6 +141,14 @@
 			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Every third party that processes data for three.ws: purpose, data categories, region and the file that calls it.</description>
+		</item>
+		<item>
+			<title>three.ws 3D Models (PowerPoint add-in)</title>
+			<link>https://three.ws/office/powerpoint</link>
+			<guid isPermaLink="false">2026-11-11:three.ws 3D Models (PowerPoint add-in)</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The three.ws task pane inside PowerPoint: sign in to insert one of your 3D models as an interactive slide, or describe a model and generate it free, then rotate it in your presentation.</description>
 		</item>
 		<item>
 			<title>three.ws and Microsoft</title>
@@ -253,6 +269,14 @@
 			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The installed three.ws app now opens .glb, .gltf and .vrm files you double-click in Windows File Explorer, reading them on your PC with nothing uploaded unless you press Save to account. web+threews: links from Teams, Outlook or a document open the right agent, model or text to 3D prompt, and a link that is broken or unsafe is explained instead of followed. A second launch reuses the window you already have open, the site header doubles as the title bar when the title bar is hidden, and a new narrow layout at /sidebar puts agent chat, quick text to 3D and your recent models in the Microsoft Edge sidebar.</description>
+		</item>
+		<item>
+			<title>Put an interactive 3D model on a PowerPoint slide in one click</title>
+			<link>https://three.ws/docs/powerpoint</link>
+			<guid isPermaLink="false">2026-11-11:Put an interactive 3D model on a PowerPoint slide in one click</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Choose PowerPoint in the Forge export menu, in Forge Studio or on any model page and you get a ready slide: the prompt as the title and the model as a real PowerPoint 3D object you can drag to rotate in a slideshow, animate with Morph and resize like a picture. Every model is prepared for Office first: compressed geometry is decoded, textures become PNG or JPEG at up to 2048 px, rigs and animation are kept, and a rendered poster shows in viewers without 3D. The new three.ws 3D Models add-in for PowerPoint does the same from inside your presentation: sign in with your three.ws account to insert one of your models, or describe one and generate it free. The add-in can be sideloaded today and its AppSource listing is pending review.</description>
 		</item>
 		<item>
 			<title>Put interactive 3D models in a Power BI report</title>

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-11T17:47:35.508Z",
+	"generated_at": "2026-11-11T18:09:58.910Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4524,
+	"total": 4527,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -92,6 +92,16 @@
 		{
 			"date": "2026-11-11",
 			"type": "launch",
+			"title": "Docs · three.ws in PowerPoint",
+			"summary": "Export any three.ws model as a PowerPoint slide with an interactive 3D object, and the three.ws 3D Models add-in: the Office-safe GLB pass, the am3d:model3d slide, the limits PowerPoint imposes and how to sideload the add-in.",
+			"link": "/docs/powerpoint",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
 			"title": "Docs · three.ws on the Microsoft agent stack",
 			"summary": "Give a Semantic Kernel, Microsoft Agent Framework or Foundry agent free text-to-3D generation, a catalog of ready-made CC0 assets and three.ws agent messaging: the Python and .NET plugins, the MCP studio server, auth, timing and live tests.",
 			"link": "/docs/microsoft-agent-stack",
@@ -165,6 +175,16 @@
 			"title": "Subprocessors",
 			"summary": "Every third party that processes data for three.ws: purpose, data categories, region and the file that calls it.",
 			"link": "/trust/subprocessors",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "three.ws 3D Models (PowerPoint add-in)",
+			"summary": "The three.ws task pane inside PowerPoint: sign in to insert one of your 3D models as an interactive slide, or describe a model and generate it free, then rotate it in your presentation.",
+			"link": "/office/powerpoint",
 			"tags": [
 				"launch"
 			]
@@ -320,6 +340,16 @@
 			"tags": [
 				"feature",
 				"desktop"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "Put an interactive 3D model on a PowerPoint slide in one click",
+			"summary": "Choose PowerPoint in the Forge export menu, in Forge Studio or on any model page and you get a ready slide: the prompt as the title and the model as a real PowerPoint 3D object you can drag to rotate in a slideshow, animate with Morph and resize like a picture. Every model is prepared for Office first: compressed geometry is decoded, textures become PNG or JPEG at up to 2048 px, rigs and animation are kept, and a rendered poster shows in viewers without 3D. The new three.ws 3D Models add-in for PowerPoint does the same from inside your presentation: sign in with your three.ws account to insert one of your models, or describe one and generate it free. The add-in can be sideloaded today and its AppSource listing is pending review.",
+			"link": "/docs/powerpoint",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1503,36 +1533,6 @@
 			"link": "/docs",
 			"tags": [
 				"docs"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Every platform fee now has its own ledger, and bundle and subscription earnings are booked correctly",
-			"summary": "Each fee three.ws takes (pump.fun trades and launches, agent trades, skill sales, bundles, subscriptions and the x402 skill split) is now recorded once in an append-only fee ledger, in the same database write as the purchase or trade it belongs to, and replays never record it twice. A daily reconciler checks every recorded fee against what the fee wallet actually received on Solana. Bundle and subscription confirmations also stopped booking a platform fee when the buyer paid the full price straight to the creator, so creators now see their full earnings for those sales.",
-			"link": "/docs/financial-controls",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Fact-check evidence is now ranked by source reliability",
-			"summary": "The fact checker now puts government, peer-reviewed and encyclopedia sources ahead of blogs and social posts, keeps one passage per domain, and rewards agreement across independent domains. The benchmark score also reports macro-F1 and the abstain rate.",
-			"link": null,
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Forge and Marketplace buttons now share the platform button system",
-			"summary": "The Forge page and the Marketplace now use the same button component as the rest of the site, so hover, pressed, keyboard-focus, disabled and loading states look and behave the same on both. Forge no longer carries its own copy of the button styles, and four unused button and badge style families were deleted. A new audit, npm run audit:buttons, lists the remaining legacy button families and fails if a finished one comes back.",
-			"link": null,
-			"tags": [
-				"improvement"
 			]
 		}
 	]
