@@ -1,0 +1,79 @@
+{
+	"$comment": "Where three.ws runs inside Microsoft products, rendered by /microsoft (src/microsoft-hub.js). status is one of: live, pending review, built, awaiting publish. Change a status only with evidence (a public listing URL for live, a submission receipt for pending review). tests/microsoft-surfaces.test.js validates the shape.",
+	"updated": "2026-11-11",
+	"surfaces": [
+		{
+			"id": "marketplace",
+			"name": "Microsoft Marketplace",
+			"kind": "SaaS offer",
+			"status": "live",
+			"today": "Find three.ws on Microsoft Marketplace through the publisher profile. Buying a plan inside Marketplace with your Microsoft account switches on when the transactable SaaS offer is published; until then plans are bought on three.ws.",
+			"built": "Purchase landing page, Entra sign-in, the fulfilment webhook and hourly metered billing. A Microsoft subscription grants the same plan as a card purchase.",
+			"probe": "marketplace",
+			"action": { "label": "Open the listing", "url": "https://marketplace.microsoft.com/en-us/partners/d11c4453-6e12-499d-8dfe-48fcbaa22e2f/overview" },
+			"evidence": { "label": "SaaS offer docs", "url": "/docs/microsoft-marketplace-saas" }
+		},
+		{
+			"id": "teams",
+			"name": "Teams and Microsoft 365 Copilot",
+			"kind": "App",
+			"status": "built, awaiting publish",
+			"today": "Open the Teams tab in any browser to search every public agent and meet one in live 3D. The app itself is not in the Teams store yet.",
+			"built": "A declarative Copilot agent wired to the three.ws MCP server, a Teams bot for chats and channels, and the Teams tab.",
+			"action": { "label": "Open the Teams tab", "url": "/microsoft/teams-tab" },
+			"evidence": { "label": "App source", "url": "https://github.com/nirholas/three.ws/tree/main/integrations/microsoft/copilot-teams" }
+		},
+		{
+			"id": "power-platform",
+			"name": "Power Platform",
+			"kind": "Connector",
+			"status": "built, awaiting publish",
+			"today": "Not in the connector gallery yet. Makers can import the OpenAPI definition from the repository as a custom connector in Power Automate or Power Apps.",
+			"built": "Five actions for Power Automate, Power Apps, Logic Apps and Copilot Studio, with OAuth and PKCE.",
+			"action": { "label": "Get the definition", "url": "https://github.com/nirholas/three.ws/blob/main/integrations/microsoft/power-platform-connector/apiDefinition.swagger.json" },
+			"evidence": { "label": "Connector source", "url": "https://github.com/nirholas/three.ws/tree/main/integrations/microsoft/power-platform-connector" }
+		},
+		{
+			"id": "store",
+			"name": "Microsoft Store",
+			"kind": "Windows app",
+			"status": "built, awaiting publish",
+			"today": "Not in the Microsoft Store yet. three.ws is an installable web app, so Edge can install it on Windows today from the address bar's app install button.",
+			"built": "The installable web app packaged as MSIX through PWABuilder, with the Store listing copy drafted.",
+			"action": { "label": "Open three.ws", "url": "/" },
+			"evidence": { "label": "Packaging script", "url": "https://github.com/nirholas/three.ws/blob/main/scripts/package-microsoft-store-pwa.mjs" }
+		},
+		{
+			"id": "edge",
+			"name": "Edge Add-ons",
+			"kind": "Browser extensions",
+			"status": "built, awaiting publish",
+			"today": "Not on Edge Add-ons yet. Developers can build Walk Avatar and Checkout Companion from the repository and load them unpacked in Edge.",
+			"built": "Two Manifest V3 extensions reviewed against Edge's package rules, zipped by one command.",
+			"action": { "label": "Build instructions", "url": "https://github.com/nirholas/three.ws/blob/main/extensions/EDGE.md" },
+			"evidence": { "label": "Extension source", "url": "https://github.com/nirholas/three.ws/tree/main/extensions" }
+		},
+		{
+			"id": "vscode",
+			"name": "Visual Studio Code",
+			"kind": "Extensions",
+			"status": "live",
+			"today": "Install three.ws x402 from the Visual Studio Marketplace. The 3D extension with the @threews chat participant is built and tested, and not published yet.",
+			"built": "threews.vscode-x402 is published. vscode-3d passes its test suite and packages cleanly.",
+			"action": { "label": "Install from the Marketplace", "url": "https://marketplace.visualstudio.com/items?itemName=threews.vscode-x402" },
+			"evidence": { "label": "VS Code docs", "url": "/docs/vscode" }
+		},
+		{
+			"id": "mcp",
+			"name": "Copilot Studio and Foundry",
+			"kind": "MCP server",
+			"status": "built, awaiting publish",
+			"today": "Add the server URL below as a custom MCP server in Copilot Studio or Azure AI Foundry today. No key needed. The certified Microsoft listing is not submitted yet.",
+			"built": "A keyless streamable HTTP MCP server for 3D generation, rigging, the asset catalog and agent personas.",
+			"probe": "mcp",
+			"copy": "https://three.ws/api/mcp-studio",
+			"action": { "label": "MCP tools docs", "url": "/docs/mcp-tools" },
+			"evidence": { "label": "Certification plan", "url": "https://github.com/nirholas/three.ws/blob/main/marketing/growth/submissions/programs/microsoft-copilot-mcp-certification.md" }
+		}
+	]
+}

@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>three.ws and Microsoft: partnership, Marketplace listing and live demos</title>
+	<meta name="description" content="three.ws and Microsoft have announced a partnership, and three.ws is live on Microsoft Marketplace. See Microsoft open source running live in three.ws: TRELLIS image-to-3D, ONNX Runtime Web speech recognition and Adaptive Cards." />
+	<link rel="canonical" href="https://three.ws/microsoft" />
+
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="three.ws and Microsoft" />
+	<meta property="og:description" content="three.ws and Microsoft have announced a partnership, and three.ws is live on Microsoft Marketplace. Microsoft open source, running live: TRELLIS, ONNX Runtime Web and Adaptive Cards." />
+	<meta property="og:url" content="https://three.ws/microsoft" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=three.ws+and+Microsoft&amp;d=three.ws+and+Microsoft+have+announced+a+partnership%2C+and+three.ws+is+live+on+Microsoft+Marketplace.+Microsoft+open+source%2C+running+live+in+three.ws.&amp;p=%2Fmicrosoft" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta property="og:image:alt" content="three.ws and Microsoft: partnership, Marketplace listing and live demos." />
+
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="three.ws and Microsoft" />
+	<meta name="twitter:description" content="three.ws is live on Microsoft Marketplace. Try TRELLIS image-to-3D, on-device speech on ONNX Runtime Web and live Adaptive Cards, all running in three.ws." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=three.ws+and+Microsoft&amp;d=three.ws+and+Microsoft+have+announced+a+partnership%2C+and+three.ws+is+live+on+Microsoft+Marketplace.+Microsoft+open+source%2C+running+live+in+three.ws.&amp;p=%2Fmicrosoft" />
+	<meta name="twitter:site" content="@trythreews" />
+
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:locale" content="en_US" />
+
+	<link rel="icon" href="/favicon.ico" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/footer.css" />
+	<script src="/nav.js" defer></script>
+
+	<script type="application/ld+json">
+	{
+		"@context": "https://schema.org",
+		"@graph": [
+			{
+				"@type": "WebPage",
+				"@id": "https://three.ws/microsoft",
+				"url": "https://three.ws/microsoft",
+				"name": "three.ws and Microsoft",
+				"description": "three.ws and Microsoft have announced a partnership, and three.ws is live on Microsoft Marketplace. Live demos of Microsoft open source running in three.ws.",
+				"isPartOf": { "@type": "WebSite", "name": "three.ws", "url": "https://three.ws" },
+				"about": { "@type": "Organization", "name": "Microsoft", "url": "https://www.microsoft.com" }
+			},
+			{
+				"@type": "BreadcrumbList",
+				"itemListElement": [
+					{ "@type": "ListItem", "position": 1, "name": "Home", "item": "https://three.ws/" },
+					{ "@type": "ListItem", "position": 2, "name": "Partners", "item": "https://three.ws/partners" },
+					{ "@type": "ListItem", "position": 3, "name": "Microsoft", "item": "https://three.ws/microsoft" }
+				]
+			}
+		]
+	}
+	</script>
+
+	<style>
+		:root {
+			--ms: #7cb4ff;
+			--ms-soft: rgba(124, 180, 255, 0.10);
+			--ms-line: rgba(124, 180, 255, 0.30);
+			--card: var(--bg-1, #141414);
+			--page: var(--bg-0, #0a0a0a);
+		}
+		:root[data-theme="light"] {
+			--ms: #1d5fd1;
+			--ms-soft: rgba(37, 99, 235, 0.08);
+			--ms-line: rgba(37, 99, 235, 0.28);
+			--card: #ffffff;
+			--page: #f6f7f9;
+		}
+		* { box-sizing: border-box; }
+		body { margin: 0; font: 16px/1.6 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: var(--page); min-height: 100vh; overflow-x: hidden; }
+		a { color: inherit; }
+		:focus-visible { outline: 2px solid var(--ms); outline-offset: 3px; border-radius: 6px; }
+
+		main { max-width: 1040px; margin: 0 auto; padding: 64px 20px 112px; }
+		h1, h2, h3 { color: var(--ink-bright); margin: 0; }
+
+		/* Hero */
+		.crumbs { font-size: 13px; color: var(--ink-dim); margin-bottom: 28px; }
+		.crumbs a { text-decoration: none; }
+		.crumbs a:hover { color: var(--ink-bright); text-decoration: underline; text-underline-offset: 2px; }
+		.eyebrow { display: inline-flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--stroke-strong); border-radius: 99px; padding: 6px 14px 6px 12px; font-size: 13px; color: var(--ink-dim); margin-bottom: 26px; }
+		.eyebrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ms); box-shadow: 0 0 10px var(--ms); }
+		h1 { font-size: clamp(32px, 5.6vw, 54px); letter-spacing: -0.03em; line-height: 1.07; font-weight: 650; max-width: 860px; margin-bottom: 18px; }
+		.claim2 { font-size: clamp(20px, 2.6vw, 26px); letter-spacing: -0.015em; line-height: 1.3; color: var(--ms); font-weight: 600; margin: 0 0 18px; }
+		.lede { font-size: clamp(16px, 2vw, 18px); color: var(--ink-dim); max-width: 700px; margin: 0 0 30px; }
+		.cta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 26px; }
+		.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 20px; border-radius: 11px; border: 1px solid transparent; font: inherit; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; transition: filter var(--duration-fast), background var(--duration-fast), transform var(--duration-fast), border-color var(--duration-fast); }
+		.btn svg { width: 16px; height: 16px; flex: none; }
+		.btn-primary { background: var(--ms); color: #06142b; }
+		:root[data-theme="light"] .btn-primary { color: #ffffff; }
+		.btn-primary:hover { filter: brightness(1.1); }
+		.btn-primary:active, .btn-sec:active { transform: translateY(1px); }
+		.btn-sec { background: var(--card); border-color: var(--stroke-strong); color: var(--ink-bright); }
+		.btn-sec:hover { border-color: var(--ms-line); background: var(--ms-soft); }
+		.btn-sm { padding: 9px 14px; font-size: 13px; }
+		.btn[disabled] { opacity: .5; cursor: not-allowed; }
+		.coverage { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: baseline; font-size: 14px; color: var(--ink-dim); margin: 0 0 80px; padding: 0; list-style: none; }
+		.coverage li:first-child { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+		.textlink { color: var(--ms); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; font-size: 14px; }
+		.textlink:hover { text-decoration-thickness: 2px; }
+		.textlink:active { opacity: .75; }
+
+		section { margin-bottom: 88px; scroll-margin-top: 80px; }
+		section > h2 { font-size: clamp(25px, 3.6vw, 34px); letter-spacing: -0.02em; line-height: 1.15; font-weight: 650; margin-bottom: 12px; }
+		.sub { color: var(--ink-dim); margin: 0 0 30px; max-width: 700px; }
+
+		/* Demo panels */
+		.demo { background: var(--card); border: 1px solid var(--stroke-strong); border-radius: 18px; padding: 24px; margin-bottom: 20px; }
+		.demo-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 16px; }
+		.demo-head h3 { font-size: 20px; letter-spacing: -0.015em; font-weight: 650; margin-bottom: 4px; }
+		.demo-head p { margin: 0; color: var(--ink-dim); font-size: 14.5px; max-width: 620px; }
+		.tag { display: inline-block; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ms); border: 1px solid var(--ms-line); background: var(--ms-soft); border-radius: 99px; padding: 3px 10px; margin-bottom: 10px; }
+
+		/* Pills */
+		.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; border-radius: 99px; padding: 3px 10px; border: 1px solid var(--stroke-strong); color: var(--ink-dim); white-space: nowrap; }
+		.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+		.pill-live { color: var(--success); border-color: color-mix(in srgb, var(--success) 40%, transparent); }
+		.pill-review { color: var(--ms); border-color: var(--ms-line); }
+		.pill-pending { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); }
+		.pill-unknown { color: var(--ink-dim); }
+		.lane-status { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+
+		/* Chips */
+		.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; min-height: 34px; }
+		.chip { display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 99px; border: 1px solid var(--stroke-strong); background: transparent; color: var(--ink-dim); cursor: pointer; transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast); }
+		.chip:hover { color: var(--ink-bright); border-color: var(--ms-line); }
+		.chip:active { transform: translateY(1px); }
+		.chip[aria-pressed="true"] { background: var(--ms-soft); color: var(--ink-bright); border-color: var(--ms); }
+		.chip-count { font-size: 11px; color: var(--ink-dim); background: var(--surface-2); border-radius: 99px; padding: 0 7px; }
+
+		/* Creation strip */
+		.mstrip { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(170px, 200px); gap: 12px; overflow-x: auto; padding-bottom: 10px; scroll-snap-type: x proximity; overscroll-behavior-x: contain; scrollbar-width: thin; }
+		.mstrip > .state { grid-column: 1 / -1; min-width: min(100%, 560px); }
+		.mcard { position: relative; display: flex; flex-direction: column; gap: 6px; text-decoration: none; scroll-snap-align: start; border-radius: 14px; padding: 8px 8px 10px; border: 1px solid var(--stroke); background: var(--surface-1); transition: transform var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast); }
+		.mcard:hover { transform: translateY(-2px); border-color: var(--ms-line); background: var(--ms-soft); }
+		.mcard:active { transform: translateY(0); }
+		.mcard-img { display: block; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: var(--surface-2); }
+		.mcard-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+		.lane-badge { position: absolute; top: 14px; left: 14px; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; padding: 2px 8px; border-radius: 99px; background: rgba(6, 20, 43, .82); color: #cfe3ff; }
+		.lane-trellis2 { background: #1d5fd1; color: #ffffff; }
+		.mcard-prompt { font-size: 13px; color: var(--ink-bright); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.7em; }
+		.mcard-meta { font-size: 12px; color: var(--ink-dim); }
+		.demo-foot { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-top: 14px; font-size: 13.5px; color: var(--ink-dim); }
+
+		/* Skeletons */
+		.skel { display: block; border-radius: 12px; background: linear-gradient(90deg, var(--surface-1) 0%, var(--surface-3) 50%, var(--surface-1) 100%); background-size: 200% 100%; animation: shimmer 1.3s ease-in-out infinite; }
+		.skel-card { height: 262px; }
+		.skel-chip { width: 120px; height: 32px; border-radius: 99px; }
+		.skel-ac { height: 230px; }
+		.skel-line { height: 16px; width: 70%; border-radius: 6px; margin: 4px 0; }
+		@keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+		@media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
+
+		/* State boxes */
+		.state { border: 1px dashed var(--stroke-strong); border-radius: 14px; padding: 22px; display: grid; gap: 8px; justify-items: start; background: var(--surface-1); }
+		.state strong { color: var(--ink-bright); font-size: 15px; }
+		.state p { margin: 0; color: var(--ink-dim); font-size: 14px; max-width: 520px; }
+		.state-error { border-style: solid; border-color: color-mix(in srgb, var(--danger) 45%, transparent); }
+
+		/* Two-up demos */
+		.demo-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 20px; }
+		.demo-pair .demo { margin-bottom: 0; display: flex; flex-direction: column; }
+
+		/* STT */
+		.stt-btn { display: inline-flex; align-items: center; gap: 12px; font: inherit; font-size: 15px; font-weight: 650; padding: 14px 22px 14px 16px; border-radius: 99px; border: 1px solid var(--ms-line); background: var(--ms-soft); color: var(--ink-bright); cursor: pointer; transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast); }
+		.stt-btn:hover { border-color: var(--ms); }
+		.stt-btn:active { transform: scale(.98); }
+		.stt-btn .mic { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--ms); color: #06142b; flex: none; }
+		:root[data-theme="light"] .stt-btn .mic { color: #fff; }
+		.stt-btn .mic svg { width: 18px; height: 18px; }
+		.stt-btn[aria-pressed="true"] .mic { background: var(--danger); animation: pulse 1.4s ease-in-out infinite; }
+		@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger) 55%, transparent); } 50% { box-shadow: 0 0 0 10px transparent; } }
+		@media (prefers-reduced-motion: reduce) { .stt-btn[aria-pressed="true"] .mic { animation: none; } }
+		.stt-status { min-height: 1.6em; font-size: 14px; color: var(--ink-dim); margin: 14px 0 8px; }
+		.stt-status[data-tone="error"] { color: var(--danger); }
+		.stt-status[data-tone="ok"] { color: var(--success); }
+		.stt-status[data-tone="live"] { color: var(--ms); }
+		progress { width: 100%; height: 6px; appearance: none; border: 0; border-radius: 99px; background: var(--surface-2); overflow: hidden; margin-bottom: 10px; }
+		progress::-webkit-progress-bar { background: var(--surface-2); }
+		progress::-webkit-progress-value { background: var(--ms); border-radius: 99px; }
+		progress::-moz-progress-bar { background: var(--ms); }
+		.transcript { min-height: 92px; border-radius: 12px; border: 1px solid var(--stroke-strong); background: var(--page); padding: 14px 16px; font-size: 16px; color: var(--ink-bright); white-space: pre-wrap; overflow-wrap: anywhere; }
+		.transcript.is-empty { color: var(--ink-dim); font-style: italic; }
+		.privacy { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0 0; font-size: 13.5px; color: var(--ink-dim); }
+		.privacy svg { width: 18px; height: 18px; flex: none; color: var(--success); margin-top: 2px; }
+		.privacy strong { color: var(--ink-bright); }
+		.meta-line { font-size: 13px; color: var(--ink-dim); margin: 10px 0 0; }
+		.meta-line b { color: var(--ink); font-weight: 600; }
+
+		/* Adaptive card */
+		.ac-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+		.ac-controls label { font-size: 13px; color: var(--ink-dim); font-weight: 600; }
+		select { font: inherit; font-size: 14px; color: var(--ink-bright); background: var(--page); border: 1px solid var(--stroke-strong); border-radius: 10px; padding: 9px 12px; max-width: 100%; min-width: 0; flex: 1 1 180px; cursor: pointer; transition: border-color var(--duration-fast); }
+		select:hover { border-color: var(--ms-line); }
+		select:disabled { opacity: .55; cursor: not-allowed; }
+		.ac-render { border-radius: 14px; overflow: hidden; border: 1px solid var(--stroke-strong); min-height: 120px; }
+		.ac-render > .state { border: 0; border-radius: 0; }
+		.ac-render .ac-adaptiveCard { border-radius: 14px; }
+		.ac-render .ac-pushButton { font: inherit; font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 9px; border: 1px solid var(--stroke-strong); background: var(--surface-2); color: var(--ink-bright); cursor: pointer; transition: border-color var(--duration-fast), background var(--duration-fast); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.ac-render .ac-pushButton:hover { border-color: var(--ms); background: var(--ms-soft); }
+		.ac-render .ac-pushButton:active { transform: translateY(1px); }
+		.ac-render .ac-pushButton:focus-visible { outline: 2px solid var(--ms); outline-offset: 2px; }
+		.ac-caption { font-size: 13px; color: var(--ink-dim); margin: 10px 0 0; min-height: 1.5em; }
+		details.json { margin-top: 12px; border: 1px solid var(--stroke); border-radius: 12px; }
+		details.json summary { cursor: pointer; padding: 10px 14px; font-size: 13.5px; font-weight: 600; color: var(--ink-bright); border-radius: 12px; }
+		details.json summary:hover { background: var(--surface-1); }
+		details.json pre { margin: 0; max-height: 320px; overflow: auto; padding: 0 14px 14px; font: 12px/1.6 var(--font-mono, ui-monospace, monospace); color: var(--ink); }
+		.ac-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+		.is-done { border-color: var(--success) !important; color: var(--success) !important; }
+
+		/* Surfaces */
+		.surfaces { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+		.surface { background: var(--card); border: 1px solid var(--stroke-strong); border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 10px; transition: border-color var(--duration-fast); }
+		.surface:hover { border-color: var(--ms-line); }
+		.surface-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+		.surface-kind { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); }
+		.surface h3 { font-size: 18px; letter-spacing: -0.01em; font-weight: 650; }
+		.surface p { margin: 0; font-size: 14px; color: var(--ink-dim); line-height: 1.55; }
+		.surface-today strong { color: var(--ink-bright); }
+		.surface-built { font-size: 13px !important; }
+		.surface-links { margin-top: auto; padding-top: 6px; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+		.probe { display: flex; gap: 8px; align-items: flex-start; font-size: 13px !important; }
+		.probe-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex: none; background: var(--ink-dim); }
+		.probe-ok .probe-dot { background: var(--success); }
+		.probe-pending .probe-dot { background: var(--warn); }
+		.copy-row { display: flex; gap: 8px; align-items: center; background: var(--page); border: 1px solid var(--stroke-strong); border-radius: 10px; padding: 6px 6px 6px 12px; min-width: 0; }
+		.copy-row code { flex: 1; min-width: 0; font: 12.5px var(--font-mono, ui-monospace, monospace); color: var(--ink-bright); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.btn-copy { font: inherit; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--stroke-strong); background: var(--card); color: var(--ink-bright); cursor: pointer; transition: border-color var(--duration-fast), background var(--duration-fast); }
+		.btn-copy:hover { border-color: var(--ms); background: var(--ms-soft); }
+		.btn-copy:active { transform: translateY(1px); }
+		.surfaces-summary { font-size: 13.5px; color: var(--ink-dim); margin: -14px 0 22px; }
+
+		/* Credits */
+		.table-scroll { overflow-x: auto; border: 1px solid var(--stroke-strong); border-radius: 14px; background: var(--card); }
+		table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 640px; }
+		th, td { text-align: left; padding: 12px 18px; border-bottom: 1px solid var(--stroke); vertical-align: top; }
+		tbody tr:last-child td { border-bottom: none; }
+		th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-dim); font-weight: 600; }
+		td { color: var(--ink-dim); line-height: 1.5; }
+		td:first-child { color: var(--ink-bright); font-weight: 600; white-space: nowrap; }
+		tbody tr:hover td { background: var(--ms-soft); }
+		td code { font: 12.5px var(--font-mono, ui-monospace, monospace); color: var(--ms); }
+		.disclaimer { font-size: 12.5px; color: var(--ink-dim); margin-top: 22px; line-height: 1.65; max-width: 780px; }
+
+		@media (max-width: 560px) {
+			main { padding-top: 40px; }
+			.demo { padding: 18px; }
+			.cta-row .btn { flex: 1 1 100%; }
+		}
+	</style>
+</head>
+<body>
+<header><div id="nav-container"></div></header>
+
+<main id="main">
+	<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> / <a href="/partners">Partners</a> / <span aria-current="page">Microsoft</span></nav>
+
+	<div class="eyebrow"><span class="dot" aria-hidden="true"></span><span>Partner</span></div>
+	<h1>three.ws and Microsoft have announced a partnership</h1>
+	<p class="claim2">three.ws is live on Microsoft Marketplace</p>
+	<p class="lede">
+		Microsoft open source was in the three.ws stack before the partnership, and it runs in the product
+		today. Everything below is live: real creations, a real speech model in your browser, a real agent's
+		card. Then the honest status of every Microsoft surface three.ws ships to.
+	</p>
+	<div class="cta-row">
+		<a class="btn btn-primary" href="https://marketplace.microsoft.com/en-us/partners/d11c4453-6e12-499d-8dfe-48fcbaa22e2f/overview" target="_blank" rel="noopener">
+			View the Marketplace listing
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>
+		</a>
+		<a class="btn btn-sec" href="#live">See it running</a>
+		<a class="btn btn-sec" href="#surfaces-section">Use three.ws inside Microsoft</a>
+	</div>
+	<ul class="coverage" aria-label="Coverage">
+		<li>Coverage</li>
+		<li><a class="textlink" href="https://coinmarketcap.com/community/articles/6ae3dfb3543b1b2fccd5fcf1/" target="_blank" rel="noopener">three.ws and Microsoft Announce Partnership</a></li>
+		<li><a class="textlink" href="https://coinmarketcap.com/community/articles/6ae275a5e7c4846f5d1cca15/" target="_blank" rel="noopener">three.ws Live on Microsoft Marketplace</a></li>
+		<li><a class="textlink" href="/blog/three-ws-microsoft-partnership">The announcement</a></li>
+	</ul>
+
+	<section id="live" aria-labelledby="live-h">
+		<h2 id="live-h">Microsoft tech, running live</h2>
+		<p class="sub">Three Microsoft open-source projects, each doing its real job inside three.ws right now. Nothing here is a recording.</p>
+
+		<div class="demo" id="demo-trellis">
+			<div class="demo-head">
+				<div>
+					<span class="tag">Microsoft Research · MIT</span>
+					<h3>TRELLIS image-to-3D</h3>
+					<p>Photos people turned into 3D models on the three.ws GPU fleet, newest first, from the public community feed. Each card is labelled with the model that made it. Open any one in the viewer.</p>
+				</div>
+				<a class="btn btn-primary" id="trellis-try" href="/forge?mode=image&amp;engine=trellis2"><span class="btn-text">Try TRELLIS.2 in the Forge</span>
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+				</a>
+			</div>
+			<div class="lane-status" id="lane-status" aria-live="polite"><span class="skel skel-chip" aria-hidden="true"></span></div>
+			<div class="chips" id="lane-chips" role="group" aria-label="Filter by model"></div>
+			<div class="mstrip" id="trellis-strip" aria-live="polite" aria-busy="false"></div>
+			<div class="demo-foot">
+				<span>Source: <a class="textlink" href="https://github.com/microsoft/TRELLIS.2" target="_blank" rel="noopener">microsoft/TRELLIS.2</a> and <a class="textlink" href="https://github.com/microsoft/TRELLIS" target="_blank" rel="noopener">microsoft/TRELLIS</a></span>
+				<a class="textlink" href="/forge">Browse the full community gallery</a>
+			</div>
+		</div>
+
+		<div class="demo-pair">
+			<div class="demo" id="demo-stt">
+				<span class="tag">ONNX Runtime Web · MIT</span>
+				<div class="demo-head" style="margin-bottom:12px">
+					<div>
+						<h3>Speech to text on this device</h3>
+						<p>Press, speak a sentence, and a speech model running in ONNX Runtime Web inside this tab writes it down. The same engine lets three.ws agents listen.</p>
+					</div>
+				</div>
+				<div>
+					<button type="button" class="stt-btn" id="stt-btn" aria-pressed="false" aria-describedby="stt-privacy">
+						<span class="mic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>
+						<span class="stt-label">Press and speak</span>
+					</button>
+				</div>
+				<p class="stt-status" id="stt-status" aria-live="polite">The first press downloads the model once. After that it loads from your browser cache.</p>
+				<progress id="stt-progress" max="100" value="0" hidden aria-label="Speech model download"></progress>
+				<div class="transcript is-empty" id="stt-transcript" aria-live="polite" aria-label="Transcript">Your words appear here.</div>
+				<p class="privacy" id="stt-privacy">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v6c0 4.4 3 7.6 7 9 4-1.4 7-4.6 7-9V6l-7-3z"/><path d="m9 12 2 2 4-4"/></svg>
+					<span><strong>Audio never leaves this device.</strong> This demo has no server fallback: the page downloads the model files, then transcribes in the tab and uploads nothing. Open your browser's network tab while you speak to check.</span>
+				</p>
+				<p class="meta-line">Model: <b id="stt-model">Moonshine base (MIT)</b>. Runtime: <a class="textlink" href="https://github.com/microsoft/onnxruntime" target="_blank" rel="noopener">microsoft/onnxruntime</a></p>
+			</div>
+
+			<div class="demo" id="demo-cards">
+				<span class="tag">Adaptive Cards · MIT</span>
+				<div class="demo-head" style="margin-bottom:12px">
+					<div>
+						<h3>A live agent card, in Adaptive Cards</h3>
+						<p>The Glance card three.ws serves to Teams, Outlook and Copilot, for a real public agent, drawn here by Microsoft's open-source renderer.</p>
+					</div>
+				</div>
+				<div class="ac-controls">
+					<label for="ac-agent">Agent</label>
+					<select id="ac-agent" disabled><option>Loading agents</option></select>
+				</div>
+				<div class="ac-render" id="ac-render" aria-live="polite"></div>
+				<p class="ac-caption" id="ac-caption"></p>
+				<div class="ac-actions">
+					<button type="button" class="btn btn-sec btn-sm" id="ac-copy" disabled>Copy card JSON</button>
+					<a class="btn btn-sec btn-sm" id="ac-open" href="/glance" hidden>Open in Glance</a>
+					<a class="textlink" href="https://adaptivecards.microsoft.com/designer" target="_blank" rel="noopener">Paste it into the designer</a>
+				</div>
+				<details class="json">
+					<summary>Card JSON</summary>
+					<pre id="ac-json"></pre>
+				</details>
+			</div>
+		</div>
+	</section>
+
+	<section id="surfaces-section" aria-labelledby="surfaces-h">
+		<h2 id="surfaces-h">Use three.ws inside Microsoft</h2>
+		<p class="sub">Every Microsoft surface three.ws is built for, with what you can actually do there today. A store listing counts as live only once it is public.</p>
+		<p class="surfaces-summary" id="surfaces-summary"></p>
+		<div class="surfaces" id="surfaces"></div>
+	</section>
+
+	<section id="credits" aria-labelledby="credits-h">
+		<h2 id="credits-h">Built on</h2>
+		<p class="sub">Microsoft open source three.ws depends on, used under each project's own license. These are dependencies, not partnership deliverables.</p>
+		<div class="table-scroll">
+			<table>
+				<thead><tr><th scope="col">Project</th><th scope="col">What it does in three.ws</th><th scope="col">License</th><th scope="col">Source</th></tr></thead>
+				<tbody>
+					<tr><td>TRELLIS.2</td><td>Image-to-3D on the self-hosted GPU fleet, the <code>trellis2</code> Forge lane</td><td>MIT</td><td><a class="textlink" href="https://github.com/microsoft/TRELLIS.2" target="_blank" rel="noopener">microsoft/TRELLIS.2</a></td></tr>
+					<tr><td>TRELLIS</td><td>The self-hosted image-to-3D lane and the free text-to-3D lane</td><td>MIT</td><td><a class="textlink" href="https://github.com/microsoft/TRELLIS" target="_blank" rel="noopener">microsoft/TRELLIS</a></td></tr>
+					<tr><td>ONNX Runtime Web</td><td>On-device speech to text and wake-word detection in the visitor's browser</td><td>MIT</td><td><a class="textlink" href="https://github.com/microsoft/onnxruntime" target="_blank" rel="noopener">microsoft/onnxruntime</a></td></tr>
+					<tr><td>Adaptive Cards</td><td>Glance agent cards for chat and home screens, and the renderer on this page</td><td>MIT</td><td><a class="textlink" href="https://github.com/microsoft/AdaptiveCards" target="_blank" rel="noopener">microsoft/AdaptiveCards</a></td></tr>
+					<tr><td>TypeScript</td><td>Types for every published SDK</td><td>Apache-2.0</td><td><a class="textlink" href="https://github.com/microsoft/TypeScript" target="_blank" rel="noopener">microsoft/TypeScript</a></td></tr>
+					<tr><td>Playwright</td><td>Browser tests and page audits</td><td>Apache-2.0</td><td><a class="textlink" href="https://github.com/microsoft/playwright" target="_blank" rel="noopener">microsoft/playwright</a></td></tr>
+				</tbody>
+			</table>
+		</div>
+		<p class="disclaimer">
+			Microsoft, Azure, Microsoft Marketplace, TRELLIS, ONNX Runtime, Adaptive Cards, TypeScript, and Playwright are trademarks of the Microsoft group of companies.
+			More detail for developers: <a class="textlink" href="/docs/microsoft">three.ws and Microsoft</a>. All partners: <a class="textlink" href="/partners">/partners</a>.
+		</p>
+	</section>
+</main>
+
+<div id="footer-container"></div>
+
+<script type="module" src="/src/microsoft-hub.js"></script>
+<script src="/brand.js" defer></script>
+<script src="/footer.js"></script>
+<script type="module" src="/i18n.js"></script>
+</body>
+</html>
