@@ -173,6 +173,7 @@ import {
 import { decideSelfhostMissing } from './_lib/forge-selfhost-recovery.js';
 import { directPrompt } from './_mcp-studio/forge-client.js';
 import { meshDirectorFor, meshSubjectClass, resolveLogoPrompt } from './_lib/forge-director-prompts.js';
+import { assertSafePublicUrl, SsrfBlockedError } from './_lib/ssrf-guard.js';
 
 // Circuit-breaker key + window for the free NVIDIA NIM TRELLIS text→3D lane. The
 // hosted NVCF gateway can degrade so a submit neither completes nor hands back a
@@ -2983,6 +2984,17 @@ async function startRigJob(req, res) {
 		return json(res, 400, {
 			error: 'invalid_glb_url',
 			message: 'glb_url must be an http(s) URL to a GLB mesh, under 2048 characters.',
+		});
+	}
+	// The rig worker fetches this URL from inside our network, so a loopback,
+	// link-local (cloud metadata) or private-range target is refused here.
+	try {
+		await assertSafePublicUrl(glbUrl, { allowHttp: true });
+	} catch (err) {
+		if (!(err instanceof SsrfBlockedError)) throw err;
+		return json(res, 400, {
+			error: 'invalid_glb_url',
+			message: 'glb_url must point at a publicly reachable host.',
 		});
 	}
 

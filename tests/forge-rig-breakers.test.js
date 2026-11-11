@@ -15,6 +15,13 @@ beforeAll(() => {
 	delete process.env.GCP_RECONSTRUCTION_KEY;
 });
 
+// The rig handler DNS-checks glb_url (SSRF guard); answer it deterministically.
+vi.mock('node:dns', async (importActual) => {
+	const actual = await importActual();
+	const lookup = async () => [{ address: '93.184.216.34', family: 4 }];
+	return { ...actual, default: { ...actual, promises: { ...actual.promises, lookup } }, promises: { ...actual.promises, lookup } };
+});
+
 const submit = vi.fn(async () => ({ extJobId: 'abcdef0123456789' }));
 vi.mock('../api/_providers/replicate.js', () => ({
 	createRegenProvider: () => ({ supportsMode: (m) => m === 'rerig', submit }),
