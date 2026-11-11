@@ -82,11 +82,15 @@ const password = process.env.AUDIT_PASSWORD;
 if (!email || !password) {
 	console.log('SKIP  sign-in steps: AUDIT_EMAIL / AUDIT_PASSWORD not set');
 } else {
-	const login = await page.request.post(`${base}/api/auth/login`, { data: { email, password } });
-	check('QA login', login.ok(), String(login.status()));
 	await page.goto(pane, { waitUntil: 'networkidle' });
 	await page.evaluate(() => document.getElementById('op-signin').click());
-	await page.waitForSelector('button.allow', { timeout: 30_000 });
+	// Signed out of three.ws too, so the authorize step sends the user through
+	// the real /login form first and back to the consent screen after.
+	await page.waitForURL(/\/login\?next=/, { timeout: 30_000 });
+	await page.fill('#email', email);
+	await page.fill('#password', password);
+	await page.evaluate(() => document.getElementById('submit').click());
+	await page.waitForSelector('button.allow', { timeout: 60_000 });
 	check('sign-in reaches the three.ws consent screen', /three\.ws for PowerPoint/.test(await page.textContent('h1')));
 	await page.evaluate(() => document.querySelector('button.allow').click());
 	await page.waitForURL(/\/office\/powerpoint\/?$/, { timeout: 30_000 });
