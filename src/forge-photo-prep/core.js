@@ -16,8 +16,9 @@ const IMAGENET_STD = [0.229, 0.224, 0.225];
 
 /**
  * Every threshold in one place, calibrated on the ten-photo bench in
- * docs/forge-photo-prep.md. Measured there: subject sharpness 204 to 12,100 on
- * usable photos and 64 on the soft phone shot of the mug; frame coverage 0.084
+ * docs/forge-photo-prep.md. Measured there: subject sharpness 241 (the lemon) to
+ * 12,122 on usable photos, 95 on the defocused scooter and 64 on the soft phone
+ * shot of the mug; frame coverage 0.084
  * and up for real subjects, 0.041 for the scooter lost in a wide shot; the
  * second view in the two-teapot photo is 0.20 of the first, stray specks stay
  * near 0.
