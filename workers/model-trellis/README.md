@@ -378,10 +378,13 @@ PROJECT_ID=<gcp-project> SERVICES="hunyuan3d trellis triposg rig" \
 Builds the image (CUDA extension compiles push the build past an hour — the
 config sets `timeout: 3600s`) and deploys Cloud Run service **`model-trellis`**
 in `us-central1`: **1× `nvidia-l4` GPU**, 8 vCPU, 32 GiB, 900 s request timeout,
-`min-instances=1` (one instance stays warm because a cold start pays a
-multi-minute weight load), `max-instances=3`. Each instance serializes its own
-GPU at `MAX_CONCURRENT=1`, so the instance count *is* the concurrent-generation
-count. The weights bucket (`three-ws-model-weights`) is mounted at `/weights`
+`min-instances=2`, `max-instances=3`. Each instance serializes its own GPU at
+`MAX_CONCURRENT=1`, so the instance count *is* the concurrent-generation count.
+Cloud Run does not scale this service on load: `/infer` answers 202 at once and
+the job runs in the background, so in-flight requests stay near zero however
+deep the queue gets. The warm floor is therefore the real capacity (one warm
+instance queued jobs for over 10 minutes on 2026-11-11), and a cold start would
+pay a multi-minute weight load anyway. The weights bucket (`three-ws-model-weights`) is mounted at `/weights`
 and `API_KEY` comes from the `avatar-reconstruction-key` secret.
 
 ## Example — submit, poll, fetch
