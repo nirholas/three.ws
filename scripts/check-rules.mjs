@@ -23,6 +23,11 @@
 // `git diff HEAD` shows everyone's in-flight work, not yours. Scope to the
 // files you touched and you get a verdict on YOUR change.
 //
+// Every mode also holds each changed prompts/**/*.md to the 50,000-character
+// prompt limit (whole file, not just added lines): those documents are pasted
+// into or read by fresh agent chats, and 31 work orders plus 11 context logs
+// had silently grown to 53k to 350k before anyone noticed (2026-11-10).
+//
 // In --base mode (the pre-push hook) it ALSO lints the subject line of every
 // commit in base..head. History filled up with "chore: sync working tree"
 // sweeps that say nothing about the diff they carry, which makes the log
@@ -289,6 +294,7 @@ try {
 	process.exit(1);
 }
 const scannable = changedFiles.filter((f) => !skipped(f));
+const sizeCandidates = new Set(changedFiles);
 
 // Where a file MOVED, batch its old path alongside its new one. Git pairs the
 // two into a rename and diffs only the lines that actually changed, but that
@@ -344,6 +350,7 @@ if (!base && !staged) {
 	}
 	const { readFileSync } = await import('node:fs');
 	for (const f of untracked) {
+		sizeCandidates.add(f);
 		if (skipped(f)) continue;
 		let body;
 		try {
@@ -384,6 +391,37 @@ for (const raw of diff.split('\n')) {
 		}
 	}
 	lineNo += 1;
+}
+
+// Prompt documents: judge the whole file as it will exist after this change
+// (the pushed ref, the index, or the working tree). A deleted file has nothing
+// to measure and is skipped.
+const PROMPT_CHAR_LIMIT = 50_000;
+const isPromptDoc = (f) => /^prompts\/.+\.md$/.test(f) && !/\/_generated\//.test(f);
+{
+	const { readFileSync } = await import('node:fs');
+	for (const f of [...sizeCandidates].filter(isPromptDoc).sort()) {
+		let body;
+		try {
+			if (base) body = git(['show', `${head}:${f}`]);
+			else if (staged) body = git(['show', `:${f}`]);
+			else body = readFileSync(path.join(root, f), 'utf8');
+		} catch {
+			continue;
+		}
+		const chars = [...body].length;
+		if (chars <= PROMPT_CHAR_LIMIT) continue;
+		const fix = /PROGRESS\.md$/.test(f)
+			? `run \`node scripts/split-progress-log.mjs ${f}\` to move its oldest entries into archive parts`
+			: 'reference long source material by repo path instead of inlining it, or split the file into linked parts';
+		violations.push({
+			file: f,
+			line: 1,
+			id: 'prompt-size',
+			rule: `prompts/ documents must stay under ${PROMPT_CHAR_LIMIT.toLocaleString('en-US')} characters (the prompt paste limit); ${fix}`,
+			content: `${chars.toLocaleString('en-US')} characters`,
+		});
+	}
 }
 
 if (violations.length) {

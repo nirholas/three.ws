@@ -38,7 +38,8 @@ run. Read the one your order names.
 
 - A campaign's index or shared-facts file carries the facts every one of its orders needs. Each order names its index in its own opening lines; read it first.
 - Orders keep their original numbering (`01-`, `02-`) after the campaign prefix when run order matters.
-- `<campaign>-PROGRESS.md` is the cross-chat handoff log: the only memory between sessions. Agents append to it when they finish.
+- `<campaign>-PROGRESS.md` is the cross-chat handoff log: the only memory between sessions. Agents append to it when they finish. When it nears the size limit below, `node scripts/split-progress-log.mjs <log>` moves its oldest entries verbatim into `<campaign>-PROGRESS-archive-N.md` parts; keep appending to the same path.
+- **Every `prompts/**/*.md` file stays under 50,000 characters**, the prompt paste limit. `npm run check:rules` (and the pre-push hook) fails any changed file over it. A work order references long source docs by repo path instead of inlining them; a big table or log is split into linked parts.
 - **A finished order is archived**: `git mv` it to [archive/](archive/) in its own closing commit, only after every line of its definition of done is verified, and repoint inbound links. `finish/` shrinking is the progress ledger; `archive/` is the record of what shipped. Orders retired before 2026-11-06 were deleted and live only in git history.
 
 ## The work-order standard (every open work order follows it)
