@@ -194,3 +194,13 @@ test('describeStatus speaks in the studio facts and never invents a number', () 
 	assert.equal(describeStatus({ stage: 'rig', etaSeconds: null }), 'rigging the mesh (heavier models take a few minutes)');
 	assert.match(describeStatus({ message: 'The GPU worker for this model is waking up (about 30s of boot left).' }), /waking up/);
 });
+
+test('a single tool call outlasts how long the studio takes to hand back a pending job', async () => {
+	// Measured 2026-11-11: production forge_free took 3 min 11 s to return its
+	// pending envelope, and a 90 s client cap turned that into a failed agent-mode
+	// tool call with no job id. The single call must wait as long as callTool's
+	// first request does, so the job handle always reaches Copilot.
+	const studio = await import('../src/studio.js');
+	assert.equal(typeof studio.SINGLE_CALL_TIMEOUT_MS, 'number');
+	assert.ok(studio.SINGLE_CALL_TIMEOUT_MS >= 5 * 60_000, `single-call timeout is ${studio.SINGLE_CALL_TIMEOUT_MS} ms`);
+});

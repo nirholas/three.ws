@@ -117,13 +117,22 @@ export async function callTool(origin, name, args, opts = {}) {
 }
 
 /**
+ * How long one tools/call may take to answer. The studio aims to reply within
+ * 40 s, but a slow GPU submit has kept production quiet for over three minutes
+ * before it handed back the pending job (2026-11-11), and giving up first loses
+ * the job id. Cancellation still ends the wait at once.
+ */
+export const SINGLE_CALL_TIMEOUT_MS = 6 * 60_000;
+
+/**
  * One tools/call and no polling: the model, or the pending handle as-is.
  *
  * Agent-mode tools use this so a long render hands Copilot a job id to collect
- * with check_job instead of holding the tool call open for minutes.
+ * with check_job instead of polling inside one tool call for minutes.
  */
+
 export async function callToolOnce(origin, name, args, { signal } = {}) {
-	const payload = await rpc(origin, toolCall(name, args), { signal, timeoutMs: 90_000 });
+	const payload = await rpc(origin, toolCall(name, args), { signal, timeoutMs: SINGLE_CALL_TIMEOUT_MS });
 	return readToolResult(payload.result);
 }
 
@@ -171,7 +180,7 @@ export function sleep(ms, signal) {
 }
 
 /** Raw JSON-RPC call with a timeout, an abort hook, and readable errors. */
-export async function rpc(origin, body, { signal, timeoutMs = 6 * 60_000 } = {}) {
+export async function rpc(origin, body, { signal, timeoutMs = SINGLE_CALL_TIMEOUT_MS } = {}) {
 	const url = new URL('/api/mcp-studio', normalizeOrigin(origin)).href;
 	const controller = new AbortController();
 	const onAbort = () => controller.abort();
