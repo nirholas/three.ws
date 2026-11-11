@@ -1,9 +1,9 @@
-// IndexNow client — push fresh URLs to Bing / Yandex / Seznam / Naver the
+// IndexNow client: push fresh URLs to Bing / Yandex / Seznam / Naver the
 // moment they exist so they're indexed in minutes instead of waiting for the
 // next crawl. Free, no auth beyond the key file at /<key>.txt.
 //
 // Google does NOT participate in IndexNow (use Search Console's Indexing API
-// for that — separate workflow), but Bing's share + Yandex coverage is real
+// for that, a separate workflow), but Bing's share + Yandex coverage is real
 // enough that this is worth the ~free API call.
 //
 // This is the transport only. Application code does not call it directly:
