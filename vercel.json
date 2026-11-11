@@ -2412,6 +2412,10 @@
 			"dest": "/microsoft-leads-admin.html"
 		},
 		{
+			"src": "/admin/microsoft/?",
+			"dest": "/microsoft-admin.html"
+		},
+		{
 			"src": "/examples/?",
 			"dest": "/examples.html"
 		},
@@ -4080,6 +4084,30 @@
 		{
 			"src": "/api/auth/x/callback",
 			"dest": "/api/auth/x/[action]?action=callback"
+		},
+		{
+			"src": "/api/auth/microsoft/start",
+			"dest": "/api/auth/microsoft/[action]?action=start"
+		},
+		{
+			"src": "/api/auth/microsoft/callback",
+			"dest": "/api/auth/microsoft/[action]?action=callback"
+		},
+		{
+			"src": "/api/auth/microsoft/confirm",
+			"dest": "/api/auth/microsoft/[action]?action=confirm"
+		},
+		{
+			"src": "/api/auth/microsoft/status",
+			"dest": "/api/auth/microsoft/[action]?action=status"
+		},
+		{
+			"src": "/api/auth/microsoft/unlink",
+			"dest": "/api/auth/microsoft/[action]?action=unlink"
+		},
+		{
+			"src": "/scim/v2(?:/.*)?",
+			"dest": "/api/scim/v2"
 		},
 		{
 			"src": "/api/auth/google/start",
@@ -6378,6 +6406,14 @@
 			"dest": "/api/team-chat"
 		},
 		{
+			"src": "/api/teams/([^/]+)/enterprise(?:/.*)?",
+			"dest": "/api/teams/[id]"
+		},
+		{
+			"src": "/api/teams/([^/]+)/join/?",
+			"dest": "/api/teams/[id]"
+		},
+		{
 			"src": "/api/teams/([^/]+)/members/([^/]+)",
 			"dest": "/api/teams/[id]"
 		},
@@ -7439,6 +7475,14 @@
 		{
 			"path": "/api/cron/microsoft-metering",
 			"schedule": "7 * * * *"
+		},
+		{
+			"path": "/api/cron/microsoft-alerts",
+			"schedule": "*/5 * * * *"
+		},
+		{
+			"path": "/api/cron/microsoft-partner-center",
+			"schedule": "17 6 * * *"
 		},
 		{
 			"path": "/api/cron/m365-connector-sync",
