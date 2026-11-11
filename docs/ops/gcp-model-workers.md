@@ -117,6 +117,7 @@ faked.
 | `GCP_RECONSTRUCTION_KEY`| all of the above       | Shared bearer secret every worker checks (`avatar-reconstruction-key` in Secret Manager; `model-rig`'s `API_KEY` references the same secret). |
 | `GCP_REMESH_URL`        | Game-Ready export      | `model`/`remesh` worker (post-gen). |
 | `MODEL_LATO2_URL`       | Game-Ready "Artist mesh" | Cloud Run URL of `model-lato2` (LATO.2, MIT). Optional: unset means the Artist mesh topology quietly delivers QuadriFlow output. Deploy: run `workers/model-lato2/stage_weights.sh`, then `gcloud builds submit --config workers/model-lato2/cloudbuild.yaml`. |
+| `MODEL_FLORENCE2_URL`   | creation descriptions (post-gen) | Cloud Run URL of `model-florence2` (Florence-2, MIT): captions, tags and alt text from each creation's poster, run by `/api/cron/creation-describe`. Not a generation lane. Unset means the cron reports `worker_unconfigured` and creations stay queued. See `docs/creation-descriptions.md`. |
 | `FORGE_PREFER_FREE`     | routing (optional)     | Defaults on. Set `false` only to restore the paid-default ordering once the paid account is funded. |
 
 The URL each worker registers on the `three-ws-api` Cloud Run service env is
