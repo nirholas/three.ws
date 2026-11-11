@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-11",
+			"title": "three.ws in GitHub Copilot Chat for VS Code",
+			"summary": "Version 0.3.0 of the three.ws 3D extension for VS Code works inside GitHub Copilot Chat. Type @threews /forge and a description to generate a free 3D model, with the studio's real progress streamed into the chat. It ends with buttons to open the model in the viewer or save the GLB to your workspace. /find searches the free asset catalog, /rig rigs a GLB, and /embed inserts a pinned <agent-3d> snippet into the open file. In agent mode, Copilot can call five three.ws tools by itself: generate a model, check a job, find an asset, and inspect or optimize a local GLB. It asks first before using GPU time or writing a file. The free three.ws Studio MCP server is registered automatically, and one command connects your account server. Needs VS Code 1.101 or newer.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/docs/vscode"
+		},
+		{
+			"date": "2026-11-11",
 			"title": "An official .NET SDK for three.ws, ready for Unity",
 			"summary": "C# developers can now use three.ws from one typed library, ThreeWs.Sdk. It generates 3D models from text or images on every Forge lane and downloads the GLB. It also searches the free asset catalog, rigs meshes, streams agent chat and lists MCP tools. It runs on .NET 8 and .NET Standard 2.1, so it works in ASP.NET Core services and in Unity games, and a Unity sample spawns a generated model with glTFast. Every call can be cancelled. Failed requests retry safely, and errors carry the API's error code. The NuGet release is pending.",
 			"tags": [
