@@ -77,6 +77,8 @@ Measured on 2026-11-11 over the 300 newest real posters on one L4:
 - 300 described, 0 failed;
 - about **$0.57 per 1,000 images**, so the full backlog of about 54,000 finished creations costs about $31 on GCP credits.
 
+The first backfill wave (the same day, four 1,600-row batch executions) held those numbers: p50 1,457 to 1,590 ms per image, 24 to 26 s model load. One execution was killed at start for hitting its memory limit and succeeded on a plain retry. One ran into the 3,600 s task timeout after 1,400 rows, because its rows were mostly creations without a stored preview, whose posters come from the slower `/api/render`; the rest return to the queue when their lease expires. Its 51 failures were 44 × HTTP 429 from `/api/render` (now waited out by `workers/model-florence2/fetch.py`), 6 inline `data:` previews (now described from the GLB render instead) and one third-party host that refused the fetch. Failed rows go back to the queue and are retried up to three times.
+
 ## Env
 
 | Var | Where | Notes |
