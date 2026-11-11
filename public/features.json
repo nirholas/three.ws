@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T17:15:32.250Z",
+	"generated_at": "2026-11-11T17:25:24.181Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -585,6 +585,18 @@
 					"title": "three.ws agents (Microsoft Teams tab)",
 					"description": "The three.ws tab inside Microsoft Teams and Microsoft 365: pick one of your agents and talk to it, or generate a 3D model from a prompt, without leaving the meeting or chat.",
 					"added": "2026-11-04",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.2,
+					"job": "explore"
+				},
+				{
+					"path": "/microsoft/teams-stage",
+					"title": "Review stage (Microsoft Teams meetings)",
+					"description": "Review a 3D model together in a Microsoft Teams meeting: follow the presenter's camera, point with live lasers, pin comments on the mesh, export them as markdown and keep animation in sync.",
+					"added": "2026-11-11",
 					"auth": null,
 					"indexable": false,
 					"tags": [],
@@ -8339,6 +8351,18 @@
 					"job": null
 				},
 				{
+					"path": "/docs/teams-live-share",
+					"title": "Docs · Review a 3D model together in a meeting (Live Share)",
+					"description": "The three.ws review stage for Teams meetings: follow the presenter's camera, presence, laser pointers, synced comment pins with markdown export and animation sync over Live Share, plus the sideload path, privacy and bundle size.",
+					"added": "2026-11-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
 					"path": "/docs/microsoft-marketplace-offer-plan",
 					"title": "Docs · Microsoft distribution and offer plan",
 					"description": "How three.ws turns its live Microsoft Marketplace publisher profile into offers: a transactable SaaS listing, Copilot MCP certification, professional services, a Power Platform connector, a Teams app, and the VS Code and Edge stores.",
@@ -8355,6 +8379,18 @@
 					"title": "Docs · Microsoft Marketplace SaaS offer",
 					"description": "How a Microsoft Marketplace purchase becomes a three.ws plan: the landing page, Entra sign-in, the fulfilment webhook, hourly metered billing and its retry rules, the env vars, and how to test against a preview offer.",
 					"added": "2026-11-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/enterprise-sso",
+					"title": "Docs · Enterprise sign-in and SCIM (Microsoft Entra ID)",
+					"description": "Sign in with Microsoft for work, school and personal accounts, claiming your organisation's Entra tenant so colleagues join your team, and step-by-step SCIM provisioning from Microsoft Entra ID with the supported filters, PATCH shapes and limits.",
+					"added": "2026-11-11",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

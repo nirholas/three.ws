@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T17:15:32.307Z",
+	"generated_at": "2026-11-11T17:25:24.251Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -29,6 +29,16 @@
 		{
 			"date": "2026-11-11",
 			"type": "launch",
+			"title": "Docs · Enterprise sign-in and SCIM (Microsoft Entra ID)",
+			"summary": "Sign in with Microsoft for work, school and personal accounts, claiming your organisation's Entra tenant so colleagues join your team, and step-by-step SCIM provisioning from Microsoft Entra ID with the supported filters, PATCH shapes and limits.",
+			"link": "/docs/enterprise-sso",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
 			"title": "Docs · Incident response",
 			"summary": "How three.ws detects, triages, contains and discloses a security incident, with severity levels and customer notification steps.",
 			"link": "/docs/incident-response",
@@ -42,6 +52,16 @@
 			"title": "Docs · Microsoft 365 Copilot connector",
 			"summary": "Admin guide for the three.ws Graph connector: consent and its two permissions, who can see indexed agents, models and avatars, what is indexed, sync and throttling, disconnect, errors and their fixes, data handling, the API and the schema.",
 			"link": "/docs/microsoft-365-copilot-connector",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Docs · Review a 3D model together in a meeting (Live Share)",
+			"summary": "The three.ws review stage for Teams meetings: follow the presenter's camera, presence, laser pointers, synced comment pins with markdown export and animation sync over Live Share, plus the sideload path, privacy and bundle size.",
+			"link": "/docs/teams-live-share",
 			"tags": [
 				"launch"
 			]
@@ -92,6 +112,16 @@
 			"title": "Open a web+threews link",
 			"summary": "Where web+threews: links from Windows, Teams, Outlook and documents land: a valid agent, model or forge link opens straight away, and anything else is explained.",
 			"link": "/open",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Review stage (Microsoft Teams meetings)",
+			"summary": "Review a 3D model together in a Microsoft Teams meeting: follow the presenter's camera, point with live lasers, pin comments on the mesh, export them as markdown and keep animation in sync.",
+			"link": "/microsoft/teams-stage",
 			"tags": [
 				"launch"
 			]
@@ -251,11 +281,32 @@
 		{
 			"date": "2026-11-11",
 			"type": "update",
+			"title": "Review a 3D model together in a Microsoft Teams meeting",
+			"summary": "Add three.ws to a Teams meeting and share a model to the meeting stage, and everyone in the call looks at the same mesh. Press Present and your camera drives everyone's view; anyone who orbits away gets a one-click jump back to the presenter. Each person's initials show who is watching, and their pointer appears on everyone else's screen as a coloured laser on the exact spot of the model. Click the mesh to pin a comment, and the pin appears for the whole meeting; export every pin as markdown when you are done. Clip, play state and playhead stay in sync, so everyone sees the same frame. Pick from your own models, the featured library or a pasted link. Opened outside a meeting, the stage works for one person and explains how to review together. three.ws keeps no meeting content unless you export the pins.",
+			"link": "/microsoft/teams-stage",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
 			"title": "See Microsoft technology running live on three.ws/microsoft",
 			"summary": "The new Microsoft page shows Microsoft open source at work inside three.ws: 3D models people made with TRELLIS, speech to text that runs entirely in your browser so the audio never leaves your device, and a real agent's card drawn with Adaptive Cards that you can copy into the designer. It also lists every Microsoft surface three.ws is built for, from Marketplace and Teams to Power Platform, Edge and VS Code, with an honest status for each and what you can do there today.",
 			"link": "/microsoft",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "Sign in with Microsoft, and let Microsoft Entra ID manage your team",
+			"summary": "Anyone can now sign in with a work, school or personal Microsoft account, and link it to an existing account from Settings. Team owners can claim their organisation's Microsoft Entra tenant with an admin sign-in, so colleagues are offered the team (or join automatically) the first time they sign in. Entra ID can provision people and groups over SCIM: when someone leaves or is unassigned, their team access ends and their sessions from that organisation are signed out. Setup takes a few minutes and every change is logged on the team page.",
+			"link": "/docs/enterprise-sso",
+			"tags": [
+				"feature",
+				"security"
 			]
 		},
 		{

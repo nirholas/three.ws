@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-11T17:15:32.391Z",
+	"generated_at": "2026-11-11T17:25:24.291Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4511,
+	"total": 4516,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -32,6 +32,16 @@
 		{
 			"date": "2026-11-11",
 			"type": "launch",
+			"title": "Docs · Enterprise sign-in and SCIM (Microsoft Entra ID)",
+			"summary": "Sign in with Microsoft for work, school and personal accounts, claiming your organisation's Entra tenant so colleagues join your team, and step-by-step SCIM provisioning from Microsoft Entra ID with the supported filters, PATCH shapes and limits.",
+			"link": "/docs/enterprise-sso",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
 			"title": "Docs · Incident response",
 			"summary": "How three.ws detects, triages, contains and discloses a security incident, with severity levels and customer notification steps.",
 			"link": "/docs/incident-response",
@@ -45,6 +55,16 @@
 			"title": "Docs · Microsoft 365 Copilot connector",
 			"summary": "Admin guide for the three.ws Graph connector: consent and its two permissions, who can see indexed agents, models and avatars, what is indexed, sync and throttling, disconnect, errors and their fixes, data handling, the API and the schema.",
 			"link": "/docs/microsoft-365-copilot-connector",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Docs · Review a 3D model together in a meeting (Live Share)",
+			"summary": "The three.ws review stage for Teams meetings: follow the presenter's camera, presence, laser pointers, synced comment pins with markdown export and animation sync over Live Share, plus the sideload path, privacy and bundle size.",
+			"link": "/docs/teams-live-share",
 			"tags": [
 				"launch"
 			]
@@ -95,6 +115,16 @@
 			"title": "Open a web+threews link",
 			"summary": "Where web+threews: links from Windows, Teams, Outlook and documents land: a valid agent, model or forge link opens straight away, and anything else is explained.",
 			"link": "/open",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Review stage (Microsoft Teams meetings)",
+			"summary": "Review a 3D model together in a Microsoft Teams meeting: follow the presenter's camera, point with live lasers, pin comments on the mesh, export them as markdown and keep animation in sync.",
+			"link": "/microsoft/teams-stage",
 			"tags": [
 				"launch"
 			]
@@ -254,11 +284,32 @@
 		{
 			"date": "2026-11-11",
 			"type": "update",
+			"title": "Review a 3D model together in a Microsoft Teams meeting",
+			"summary": "Add three.ws to a Teams meeting and share a model to the meeting stage, and everyone in the call looks at the same mesh. Press Present and your camera drives everyone's view; anyone who orbits away gets a one-click jump back to the presenter. Each person's initials show who is watching, and their pointer appears on everyone else's screen as a coloured laser on the exact spot of the model. Click the mesh to pin a comment, and the pin appears for the whole meeting; export every pin as markdown when you are done. Clip, play state and playhead stay in sync, so everyone sees the same frame. Pick from your own models, the featured library or a pasted link. Opened outside a meeting, the stage works for one person and explains how to review together. three.ws keeps no meeting content unless you export the pins.",
+			"link": "/microsoft/teams-stage",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
 			"title": "See Microsoft technology running live on three.ws/microsoft",
 			"summary": "The new Microsoft page shows Microsoft open source at work inside three.ws: 3D models people made with TRELLIS, speech to text that runs entirely in your browser so the audio never leaves your device, and a real agent's card drawn with Adaptive Cards that you can copy into the designer. It also lists every Microsoft surface three.ws is built for, from Marketplace and Teams to Power Platform, Edge and VS Code, with an honest status for each and what you can do there today.",
 			"link": "/microsoft",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "Sign in with Microsoft, and let Microsoft Entra ID manage your team",
+			"summary": "Anyone can now sign in with a work, school or personal Microsoft account, and link it to an existing account from Settings. Team owners can claim their organisation's Microsoft Entra tenant with an admin sign-in, so colleagues are offered the team (or join automatically) the first time they sign in. Entra ID can provision people and groups over SCIM: when someone leaves or is unassigned, their team access ends and their sessions from that organisation are signed out. Setup takes a few minutes and every change is logged on the team page.",
+			"link": "/docs/enterprise-sso",
+			"tags": [
+				"feature",
+				"security"
 			]
 		},
 		{
@@ -1480,57 +1531,6 @@
 			"title": "Hire a person for a real-world job with escrowed USDC",
 			"summary": "Agents can now post a task, such as photographing a storefront, with a USDC bounty locked in escrow on Solana. People accept it, submit proof, and are paid when the poster approves. Disputes freeze the payout and an unfinished task refunds in full. Browse and post at /tasks, or use the human_task tools over MCP.",
 			"link": "/docs/human-tasks.md",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Hire an agent from a Solana Blink",
-			"summary": "Any agent that sells a Solana offer can now be hired from a link in a feed: the Blink shows the offer, the buyer signs one USDC payment, and the result comes back in the card. The agent page has a Share hire link button.",
-			"link": "/docs/solana-actions.md",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Hover tips no longer swallow the click on the button underneath",
-			"summary": "A hover tip that opened over a neighbouring control used to catch the click meant for it, and stayed open while the pointer sat on it. On /render-lab the Contact sheet tip covered the Poses button, so clicking Poses did nothing. Plain hover tips now let clicks pass straight through and close the moment you press their control. Glossary term tips keep their Full glossary link reachable while they are showing.",
-			"link": "/render-lab",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "HQ talks to your agent: data bridge, alert hand-off and MCP tools",
-			"summary": "HQ now answers host-page data queries, scores portfolio risk, turns opted-in compound alerts into reversible Autopilot proposals, and exposes its DeFi tools through a new hq-mcp server. The bridge no longer trusts every vercel.app origin.",
-			"link": null,
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "HumanIK avatars and complete bodies without finger joints now animate",
-			"summary": "Two kinds of avatar used to pass every check and then stand still in their bind pose. HumanIK and MotionBuilder rigs name their joints Character1:Hips, which three.js turns into Character1Hips when it loads the model, and that spelling mapped to nothing. Both spellings now resolve, and so does Character1_LeftArm. A complete body with no finger joints, such as a Meshy biped or a handless Mixamo export, fell under the clip coverage floor because 30 of a clip's 53 tracks are fingers; clips now bind when half of either all tracks or the 23 body tracks map, so fingers are optional and the shipped half-body avatar keeps animating. The live viewer, Rig Doctor, avatar thumbnails and the avatar capabilities API now all ask one gate, so a rig cannot be called animatable on one surface and fail on another. Across uploaded avatars in production, 333 of 350 skinned rigs now animate, up from 306.",
-			"link": "/rig-doctor",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Install three.ws for Home Assistant through HACS",
-			"summary": "The three.ws Home Assistant integration now has its own public repository, github.com/nirholas/three-ws-home-assistant, with a 1.0.2 release. In HACS, add it under Custom repositories (category Integration), install three.ws, restart, and paste the pairing code from three.ws/smart-home. Your house opens one outgoing connection, nothing on your network is exposed, and no Home Assistant token ever leaves the house. It passes the real HACS and hassfest validation checks, ships its own brand icon, and is listed under AI and voice assistants. A HACS default-store listing, which removes the custom repository step, is prepared.",
-			"link": "/docs/home-relay",
 			"tags": [
 				"feature"
 			]
