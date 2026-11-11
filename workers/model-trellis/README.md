@@ -13,7 +13,11 @@ TRELLIS mesh backend for the `/forge` image→3D lane.
 Work is asynchronous: `POST /infer` returns `202` with a `task_id`, and the
 caller polls `GET /tasks/{id}` until the mesh is ready. With `GCS_BUCKET` set,
 the finished GLB lands at `gs://$GCS_BUCKET/raw-meshes/trellis/{task_id}.glb`
-and is served back as a `storage.googleapis.com` URL. Without `GCS_BUCKET`, the
+and is served back as a `storage.googleapis.com` URL. Task records live at
+`gs://$GCS_BUCKET/tasks/{task_id}.json` and are written `Cache-Control: no-store`:
+the bucket is public, so without it Google's edge cache can hand a poll on a
+non-owner instance a record that is minutes old, and the orphan rule would then
+fail a job that is still running. Without `GCS_BUCKET`, the
 standalone container writes tasks and results atomically under `OUTPUT_DIR` and
 serves the mesh from `GET /results/{task_id}.glb`.
 
