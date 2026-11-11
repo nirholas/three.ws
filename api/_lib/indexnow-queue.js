@@ -108,11 +108,12 @@ export async function enqueueIndexNow(items, { source = 'app', onlyAnnounced = f
 		if (onlyAnnounced) {
 			const out = await sql`
 				update indexnow_urls n
-				set reason = v.reason, source = ${source}, enqueued_at = v.changed_at, attempts = 0
+				set reason = v.reason, source = ${source}, attempts = 0,
+				    enqueued_at = greatest(v.changed_at, n.submitted_at + interval '1 millisecond')
 				from unnest(${urls}::text[], ${reasons}::text[], ${changed}::timestamptz[]) as v(url, reason, changed_at)
 				where n.url = v.url
 				  and n.submitted_at is not null
-				  and n.submitted_at < v.changed_at
+				  and n.submitted_at <= v.changed_at
 				returning n.url
 			`;
 			return out.length;
@@ -126,10 +127,14 @@ export async function enqueueIndexNow(items, { source = 'app', onlyAnnounced = f
 			set resource_type = excluded.resource_type,
 			    reason = excluded.reason,
 			    source = excluded.source,
-			    enqueued_at = greatest(indexnow_urls.enqueued_at, excluded.enqueued_at),
+			    enqueued_at = greatest(
+			        indexnow_urls.enqueued_at,
+			        excluded.enqueued_at,
+			        indexnow_urls.submitted_at + interval '1 millisecond'
+			    ),
 			    attempts = 0
 			where indexnow_urls.submitted_at is null
-			   or indexnow_urls.submitted_at < excluded.enqueued_at
+			   or indexnow_urls.submitted_at <= excluded.enqueued_at
 			returning url
 		`;
 		return out.length;
@@ -242,13 +247,19 @@ export async function drainIndexNow({
 			const t = toDate(r.enqueued_at, null);
 			return t && (!m || t > m) ? t : m;
 		}, null);
+		// submitted_at is when the engine was asked, not when it answered: a
+		// change made during the request happened after the engine's fetch. It
+		// is a JS millisecond, the precision change times arrive in, so a change
+		// stamped in that same millisecond still counts as newer (enqueue
+		// compares with <=) instead of losing to sub-millisecond database time.
+		const sentAt = new Date();
 		const result = await send(urls);
 		await logSubmission({ source, urls, result });
 		batches.push({ urls: urls.length, ok: Boolean(result.ok), status: result.status ?? null, error: result.ok ? undefined : result.error });
 		if (result.ok) {
 			await sql`
 				update indexnow_urls
-				set submitted_at = now(), last_status = ${result.status ?? null}, attempts = 0
+				set submitted_at = ${sentAt.toISOString()}::timestamptz, last_status = ${result.status ?? null}, attempts = 0
 				where url = any(${urls}::text[])
 				  and enqueued_at <= ${cutoff ? cutoff.toISOString() : new Date().toISOString()}::timestamptz
 			`;

@@ -179,6 +179,36 @@ describe('drain', () => {
 		expect(next.calls).toEqual([[AGENT(1)]]);
 	});
 
+	it('announces a change made while a batch was in flight when it is found after the drain', async () => {
+		// The reconcile cron reads updated_at after the drain finished, so the
+		// change arrives later than the request but is stamped with the moment it
+		// happened: during the request. The engine fetched the page before that,
+		// so the change still has to go out.
+		await q.enqueueIndexNow([{ type: 'agent', key: uuid(1), changedAt: new Date(Date.now() - 60_000) }]);
+		let changedAt = null;
+		await q.drainIndexNow({
+			send: async () => {
+				changedAt = new Date();
+				return { ok: true, status: 200 };
+			},
+		});
+		expect(await q.enqueueIndexNow([{ type: 'agent', key: uuid(1), reason: 'delete', changedAt }])).toBe(1);
+		const next = sender();
+		await q.drainIndexNow({ send: next.send });
+		expect(next.calls).toEqual([[AGENT(1)]]);
+	});
+
+	it('announces a resource that went private in the same millisecond as its last submission', async () => {
+		await q.enqueueIndexNow([{ type: 'agent', key: uuid(1), changedAt: new Date(Date.now() - 60_000) }]);
+		await q.drainIndexNow({ send: sender().send });
+		const [{ submitted_at }] = await outbox();
+		const sameMs = new Date(new Date(submitted_at).getTime());
+		expect(await q.enqueueIndexNow([{ type: 'agent', key: uuid(1), reason: 'delete', changedAt: sameMs }], { onlyAnnounced: true })).toBe(1);
+		const next = sender();
+		await q.drainIndexNow({ send: next.send });
+		expect(next.calls).toEqual([[AGENT(1)]]);
+	});
+
 	it('stops on a 429, logs it, and sits out the cooldown', async () => {
 		await q.enqueueIndexNow(Array.from({ length: 3 }, (_, i) => ({ type: 'agent', key: uuid(i + 1) })));
 		const { send, calls } = sender([{ ok: false, status: 429, error: 'HTTP 429' }]);
