@@ -20,6 +20,7 @@ import {
 	POSTER_WIDTH,
 	slideTitle,
 	slug,
+	storageKeyFromSrc,
 } from '../api/forge/export-pptx.js';
 import { FetchModelError } from '../api/_lib/fetch-model.js';
 import { PPTX_MIME } from '../api/_lib/pptx-writer.js';
@@ -50,6 +51,29 @@ async function tetraGlb() {
 	await doc.transform(normals());
 	return new NodeIO().writeBinary(doc);
 }
+
+describe('storageKeyFromSrc', () => {
+	const pub = 'https://pub-abc.r2.dev';
+
+	it('reads the key from a first-party /cdn/ URL on any three.ws origin', () => {
+		expect(storageKeyFromSrc('https://three.ws/cdn/forge/abc/model.glb', pub)).toBe('forge/abc/model.glb');
+		expect(storageKeyFromSrc('http://localhost:3102/cdn/forge/abc/model.glb', pub)).toBe('forge/abc/model.glb');
+	});
+
+	it('reads the key from the public bucket domain', () => {
+		expect(storageKeyFromSrc(`${pub}/forge/abc/model.glb`, pub)).toBe('forge/abc/model.glb');
+	});
+
+	it('refuses foreign hosts, non-GLB keys and path tricks', () => {
+		expect(storageKeyFromSrc('https://evil.example/forge/abc/model.glb', pub)).toBeNull();
+		expect(storageKeyFromSrc('https://evil.example/cdn/forge/abc/model.glb', pub)).toBeNull();
+		expect(storageKeyFromSrc('https://three.ws/cdn/forge/abc/notes.txt', pub)).toBeNull();
+		expect(storageKeyFromSrc('https://three.ws/cdn/forge/../secrets/model.glb', pub)).toBeNull();
+		expect(storageKeyFromSrc('https://three.ws/cdn/forge/%2e%2e/x/model.glb', pub)).toBeNull();
+		expect(storageKeyFromSrc('javascript:alert(1)', pub)).toBeNull();
+		expect(storageKeyFromSrc('', pub)).toBeNull();
+	});
+});
 
 describe('export-pptx helpers', () => {
 	it('titles a slide from the prompt, not from a pipeline label', () => {
@@ -83,10 +107,17 @@ describe('GET /api/forge/export-pptx', () => {
 	let server;
 	let base;
 	let loads = 0;
+	const storedKeys = [];
 
 	beforeAll(async () => {
 		const glb = await tetraGlb();
 		const handler = createExportPptxHandler({
+			publicDomain: 'https://pub-abc.r2.dev',
+			loadStored: async (key) => {
+				storedKeys.push(key);
+				if (key === 'forge/gone/model.glb') return null;
+				return glb;
+			},
 			loadSource: async (id) => {
 				loads += 1;
 				if (id === TOO_BIG)
@@ -201,6 +232,34 @@ describe('GET /api/forge/export-pptx', () => {
 		const res = await fetch(`${base}/api/forge/export-pptx?id=${BROKEN}`);
 		expect(res.status).toBe(422);
 		expect((await res.json()).error).toBe('invalid_model');
+	});
+
+	it('builds a deck from a just-generated free-lane model by its first-party URL', async () => {
+		const src = encodeURIComponent('https://three.ws/cdn/forge/new/model.glb');
+		const res = await fetch(`${base}/api/forge/export-pptx?src=${src}&title=${encodeURIComponent('a brass lantern')}`);
+		expect(res.status).toBe(200);
+		expect(res.headers.get('content-type')).toBe(PPTX_MIME);
+		expect(res.headers.get('content-disposition')).toBe('attachment; filename="a-brass-lantern.pptx"');
+		expect(storedKeys).toContain('forge/new/model.glb');
+		const parts = unzipSync(new Uint8Array(await res.arrayBuffer()));
+		expect(parts['ppt/media/model3d1.glb']).toBeTruthy();
+		const slide = strFromU8(parts['ppt/slides/slide1.xml']);
+		expect(slide).toContain('A brass lantern');
+		expect(slide).not.toContain('/m/');
+	});
+
+	it('refuses a src that is not first-party storage', async () => {
+		const src = encodeURIComponent('https://evil.example/model.glb');
+		const res = await fetch(`${base}/api/forge/export-pptx?src=${src}`);
+		expect(res.status).toBe(400);
+		expect((await res.json()).error).toBe('validation_error');
+	});
+
+	it('404s a src whose object is not in storage', async () => {
+		const src = encodeURIComponent('https://three.ws/cdn/forge/gone/model.glb');
+		const res = await fetch(`${base}/api/forge/export-pptx?src=${src}`);
+		expect(res.status).toBe(404);
+		expect((await res.json()).error).toBe('model_not_found');
 	});
 
 	it('refuses anything but GET', async () => {

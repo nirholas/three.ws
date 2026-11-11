@@ -1,4 +1,5 @@
 // GET /api/forge/export-pptx?id=<creation id>
+// GET /api/forge/export-pptx?src=<first-party GLB URL>&title=<slide title>
 //
 // A finished three.ws creation as a one-slide PowerPoint deck: the creation's
 // prompt as the title and the model itself as an interactive 3D object you can
@@ -14,7 +15,12 @@
 // thumbnail, then to a titled card, so a render outage never costs the user the deck.
 //
 // Same visibility contract as /api/forge-creation and the slicer handoff:
-// public and unlisted creations are served, private ones are a 404. The deck
+// public and unlisted creations are served, private ones are a 404. The `src`
+// form exists for the free lane (forge_free on /api/mcp-studio), whose result
+// is deliberately identifier-free: it names the model by its GLB URL, so the
+// add-in can put a model on a slide the moment it is generated. Only a key in
+// our own public bucket is accepted, and the bytes are always read from that
+// bucket, whatever host the URL was spelled with. The deck
 // for a creation is immutable, so it carries a long CDN lifetime and a strong
 // ETag, and a small in-process cache absorbs repeat clicks.
 
@@ -198,11 +204,67 @@ export async function loadCreationForPptx(id) {
 	return { creation, glb: bytes };
 }
 
-function readId(req) {
+const FIRST_PARTY_HOST = /^(?:(?:[a-z0-9-]+\.)*three\.ws|localhost|127\.0\.0\.1)$/;
+const STORAGE_KEY = /^[A-Za-z0-9._~-]+(?:\/[A-Za-z0-9._~-]+)*\.glb$/i;
+
+/**
+ * The object key behind a first-party GLB URL: `<three.ws origin>/cdn/<key>`
+ * (what the free lane hands out) or `<public bucket domain>/<key>`. Null for
+ * anything else, so the export never fetches a host it does not own.
+ */
+export function storageKeyFromSrc(src, publicDomain = process.env.S3_PUBLIC_DOMAIN) {
+	// The URL parser would quietly resolve dot segments; a URL that needs them is refused outright.
+	const dotSegment = /\/\.{1,2}(?:\/|$)/;
+	try {
+		if (dotSegment.test(decodeURIComponent(String(src || '')))) return null;
+	} catch {
+		return null;
+	}
+	let url;
+	try {
+		url = new URL(String(src || ''));
+	} catch {
+		return null;
+	}
+	if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+	let raw = null;
+	const pub = publicDomain ? publicDomain.replace(/\/+$/, '') : '';
+	if (pub && `${url.origin}/` === `${new URL(pub).origin}/` && url.protocol === 'https:') {
+		raw = url.pathname.slice(1);
+	} else if (FIRST_PARTY_HOST.test(url.hostname) && url.pathname.startsWith('/cdn/')) {
+		raw = url.pathname.slice('/cdn/'.length);
+	}
+	if (!raw) return null;
+	let key;
+	try {
+		key = decodeURIComponent(raw);
+	} catch {
+		return null;
+	}
+	if (!STORAGE_KEY.test(key) || key.split('/').some((seg) => seg === '.' || seg === '..')) return null;
+	return key;
+}
+
+/** The production reader for `src` exports: the object's bytes, or null when the bucket has no such key. */
+export async function loadStoredGlb(key) {
+	const pub = (process.env.S3_PUBLIC_DOMAIN || '').replace(/\/+$/, '');
+	if (!pub) throw new FetchModelError('public storage domain is not configured', 'upstream_error');
+	try {
+		const { bytes } = await fetchModel(`${pub}/${key.split('/').map(encodeURIComponent).join('/')}`, {
+			maxBytes: MAX_GLB_BYTES,
+			timeoutMs: 60_000,
+		});
+		return bytes;
+	} catch (err) {
+		if (err instanceof FetchModelError && /returned (404|403)\b/.test(err.message)) return null;
+		throw err;
+	}
+}
+
+function readParams(req) {
 	const url = new URL(req.url, 'http://localhost');
-	return String(req.query?.id ?? url.searchParams.get('id') ?? '')
-		.trim()
-		.toLowerCase();
+	const get = (name) => String(req.query?.[name] ?? url.searchParams.get(name) ?? '').trim();
+	return { id: get('id').toLowerCase(), src: get('src'), title: get('title').slice(0, 200) };
 }
 
 /**
@@ -211,7 +273,11 @@ function readId(req) {
  * loadCreationForPptx; the test suite hands in a GLB it builds itself, because
  * the production fetcher refuses loopback hosts.
  */
-export function createExportPptxHandler({ loadSource = loadCreationForPptx } = {}) {
+export function createExportPptxHandler({
+	loadSource = loadCreationForPptx,
+	loadStored = loadStoredGlb,
+	publicDomain,
+} = {}) {
 	const cache = new Map();
 	let cachedBytes = 0;
 
@@ -225,10 +291,17 @@ export function createExportPptxHandler({ loadSource = loadCreationForPptx } = {
 		}
 	}
 
-	async function build(id) {
-		const source = await loadSource(id);
+	async function build(request) {
+		let source;
+		if (request.key) {
+			const glb = await loadStored(request.key);
+			source = glb ? { creation: { prompt: request.title, glb_url: null }, glb } : null;
+		} else {
+			source = await loadSource(request.id);
+		}
 		if (!source) return null;
 		const { creation, glb: input } = source;
+		const id = request.id;
 		const title = slideTitle(creation.prompt);
 		const { glb, bounds, report } = await makeOfficeSafeGlb(input);
 		const poster = await makePoster(creation, title, glb);
@@ -239,7 +312,9 @@ export function createExportPptxHandler({ loadSource = loadCreationForPptx } = {
 			slides: [
 				{
 					title,
-					caption: `Made with three.ws${by}. Drag the model to rotate it. ${SITE}/m/${id}`,
+					caption: id
+						? `Made with three.ws${by}. Drag the model to rotate it. ${SITE}/m/${id}`
+						: `Made with three.ws. Drag the model to rotate it. ${SITE}/forge`,
 					model: {
 						glb,
 						bounds,
@@ -264,16 +339,26 @@ export function createExportPptxHandler({ loadSource = loadCreationForPptx } = {
 		if (cors(req, res, { origins: '*', methods: 'GET,HEAD,OPTIONS', payments: false })) return;
 		if (!method(req, res, ['GET'])) return; // HEAD is folded into GET and its body stripped
 
-		const id = readId(req);
-		if (!isUuid(id))
+		const params = readParams(req);
+		let request;
+		if (params.src) {
+			const key = storageKeyFromSrc(params.src, publicDomain ?? process.env.S3_PUBLIC_DOMAIN);
+			if (!key)
+				return error(res, 400, 'validation_error', 'src must be a three.ws model URL (a .glb under /cdn/).');
+			request = { key, title: params.title };
+		} else if (isUuid(params.id)) {
+			request = { id: params.id };
+		} else {
 			return error(res, 400, 'validation_error', 'id must be a creation id (a UUID).');
+		}
+		const cacheKey = request.key ? `src:${request.key}\n${request.title}` : request.id;
 
-		let entry = cache.get(id);
+		let entry = cache.get(cacheKey);
 		if (!entry) {
 			const rate = await limits.pptxExportIp(clientIp(req));
 			if (!rate.success) return rateLimited(res, rate, 'too many PowerPoint exports');
 			try {
-				entry = await build(id);
+				entry = await build(request);
 			} catch (err) {
 				if (err instanceof OfficeGlbError) {
 					return error(res, OFFICE_ERROR_STATUS[err.code] ?? 422, err.code, err.message);
@@ -296,6 +381,8 @@ export function createExportPptxHandler({ loadSource = loadCreationForPptx } = {
 				}
 				throw err;
 			}
+			if (!entry && request.key)
+				return error(res, 404, 'model_not_found', 'That model is no longer in storage. Generate it again.');
 			if (!entry)
 				return error(
 					res,
@@ -303,7 +390,7 @@ export function createExportPptxHandler({ loadSource = loadCreationForPptx } = {
 					'creation_not_found',
 					'No finished public creation with that id.',
 				);
-			remember(id, entry);
+			remember(cacheKey, entry);
 		}
 
 		res.setHeader('cache-control', CACHE_CONTROL);
