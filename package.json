@@ -576,6 +576,7 @@
 		"forge:errors": "node scripts/forge-error-report.mjs",
 		"forge:funnel": "node scripts/forge-funnel-report.mjs",
 		"forge:tripo": "node scripts/tripo-lane-report.mjs",
+		"trellis2:benchmark": "node scripts/trellis2-benchmark.mjs",
 		"partners:proof": "node scripts/partner-proof-brief.mjs",
 		"worker:oracle": "node --env-file-if-exists=.env workers/oracle/index.js",
 		"worker:sniper": "node workers/agent-sniper/index.js",
