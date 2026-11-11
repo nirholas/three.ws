@@ -85,7 +85,20 @@
 	color: #a1a1aa;
 	font-weight: 500;
 }
-.twg-pill.is-complete .twg-pill-count { color: var(--success); }
+/* Fixed light green, not var(--success): the pill stays dark in both themes and
+   the light theme maps --success to a deep green for white canvases. */
+.twg-pill.is-complete .twg-pill-count { color: #4ade80; }
+.twg-sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
 .twg-pill.is-complete {
 	border-color: rgba(74, 222, 128, 0.25);
 	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(74, 222, 128, 0.08);

@@ -2,6 +2,7 @@
 // See specs/EMBED_SPEC.md
 
 import { Box3, Color, Vector3 } from 'three';
+import { describe3dCanvas } from './shared/viewer-description.js';
 import { Viewer } from './viewer.js';
 import { pagePreference } from './renderer-factory.js';
 import { createVariantController } from './khr-variants.js';
@@ -1946,6 +1947,9 @@ class Agent3DElement extends HTMLElement {
 				kiosk: !this._isChatMode(),
 				framing: this.getAttribute('framing') === 'portrait' ? 'portrait' : 'full',
 				rendererPreference: pagePreference(this),
+				// Canvas text alternative: the embedder's `alt` wins, otherwise the
+				// agent's own name and first sentence of its description.
+				alt: describe3dCanvas({ alt: this.getAttribute('alt'), name: manifest.name, description: manifest.description }),
 			});
 			this._viewer = viewer;
 			viewer._afterAnimateHooks = viewer._afterAnimateHooks || [];

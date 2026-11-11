@@ -170,3 +170,77 @@
 		true
 	);
 })();
+
+// Reduced motion (WCAG 2.3.3, 2.2.2): when the visitor asks the OS for less
+// motion, no <model-viewer> turntable spins. Covers every current and future
+// element, including ones a page re-arms with auto-rotate later. Stripped
+// elements are marked so the turntable comes back if the preference flips to
+// no-preference while the page is open (an element the user has already
+// orbited keeps the angle they chose).
+(function () {
+	if (typeof document === 'undefined' || !window.matchMedia || window.__mvReducedMotionInstalled) return;
+	window.__mvReducedMotionInstalled = true;
+	var query = window.matchMedia('(prefers-reduced-motion: reduce)');
+	var MARK = 'data-mv-rotate-held';
+
+	function still(mv) {
+		if (!mv.hasAttribute('auto-rotate')) return;
+		mv.setAttribute(MARK, '');
+		mv.removeAttribute('auto-rotate');
+	}
+
+	function stillAll(root) {
+		if (root.tagName === 'MODEL-VIEWER') still(root);
+		if (root.querySelectorAll) {
+			var list = root.querySelectorAll('model-viewer[auto-rotate]');
+			for (var i = 0; i < list.length; i++) still(list[i]);
+		}
+	}
+
+	var observer = window.MutationObserver
+		? new MutationObserver(function (records) {
+				for (var i = 0; i < records.length; i++) {
+					var r = records[i];
+					if (r.type === 'attributes') {
+						if (r.target.tagName === 'MODEL-VIEWER') still(r.target);
+					} else {
+						for (var j = 0; j < r.addedNodes.length; j++) {
+							if (r.addedNodes[j].nodeType === 1) stillAll(r.addedNodes[j]);
+						}
+					}
+				}
+			})
+		: null;
+
+	function engage() {
+		stillAll(document);
+		if (observer) {
+			observer.observe(document.documentElement, {
+				childList: true,
+				subtree: true,
+				attributes: true,
+				attributeFilter: ['auto-rotate'],
+			});
+		}
+	}
+
+	function release() {
+		if (observer) observer.disconnect();
+		var held = document.querySelectorAll('model-viewer[' + MARK + ']');
+		for (var i = 0; i < held.length; i++) {
+			held[i].removeAttribute(MARK);
+			if (!held[i].__orbitHeld) held[i].setAttribute('auto-rotate', '');
+		}
+	}
+
+	if (query.matches) {
+		if (document.documentElement) engage();
+		else document.addEventListener('DOMContentLoaded', engage);
+	}
+	var onChange = function (e) {
+		if (e.matches) engage();
+		else release();
+	};
+	if (query.addEventListener) query.addEventListener('change', onChange);
+	else if (query.addListener) query.addListener(onChange);
+})();

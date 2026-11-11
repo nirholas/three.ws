@@ -116,6 +116,7 @@
 			 */
 
 			import { Viewer } from '/src/viewer.js';
+			import { describe3dCanvas } from '/src/shared/viewer-description.js';
 			import { AgentIdentity } from '/src/agent-identity.js';
 			import { AgentAvatar } from '/src/agent-avatar.js';
 			import { protocol } from '/src/agent-protocol.js';
@@ -406,7 +407,10 @@
 				if (!glbUrl) throw new Error('no avatar url');
 
 				const stage = document.getElementById('stage');
-				const viewer = new Viewer(stage, { kiosk: true });
+				const viewer = new Viewer(stage, {
+					kiosk: true,
+					alt: describe3dCanvas({ name: identity.name, description: identity.description }),
+				});
 				if (bg === 'transparent') {
 					viewer.renderer?.setClearAlpha(0);
 					if (viewer.scene) viewer.scene.background = null;

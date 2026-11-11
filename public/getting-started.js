@@ -161,7 +161,7 @@
 	}
 
 	// ── State ─────────────────────────────────────────────────────────────────────
-	var root, pill, pillRing, pillCount, panel, list, barFill, panelSub;
+	var root, pill, pillRing, pillCount, pillStatus, panel, list, barFill, panelSub;
 	var open = lsGet(OPEN_KEY) === '1';
 	var hidden = lsGet(HIDDEN_KEY) === '1';
 
@@ -207,8 +207,16 @@
 		pillRing.appendChild(glyph);
 		pill.appendChild(pillRing);
 		pill.appendChild(elT('span', 'twg-pill-label', 'Getting started'));
+		// The name comes from the content, not an aria-label: a label that
+		// restated the visible text with different spacing failed WCAG 2.5.3
+		// (Label in Name) for speech-input users saying "click Getting started".
+		// The space keeps label and count separate words in the computed name;
+		// a flex container ignores it for layout.
+		pill.appendChild(document.createTextNode(' '));
 		pillCount = el('span', 'twg-pill-count');
 		pill.appendChild(pillCount);
+		pillStatus = el('span', 'twg-sr-only');
+		pill.appendChild(pillStatus);
 		pill.addEventListener('click', expand);
 		return pill;
 	}
@@ -222,12 +230,9 @@
 		var complete = done >= total;
 		pill.classList.toggle('is-complete', complete);
 		pillCount.textContent = complete ? '✓ Done' : done + '/' + total;
-		pill.setAttribute(
-			'aria-label',
-			complete
-				? 'Getting started ✓ Done: all core steps complete. Open checklist.'
-				: 'Getting started ' + done + '/' + total + ': ' + done + ' of ' + total + ' steps done. Open checklist.'
-		);
+		pillStatus.textContent = complete
+			? ', all core steps done. Open checklist.'
+			: ', ' + done + ' of ' + total + ' steps done. Open checklist.';
 	}
 
 	// ── Panel ────────────────────────────────────────────────────────────────────────

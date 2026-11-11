@@ -171,6 +171,8 @@
 .ac-tab[aria-selected="true"] { color: var(--ink-bright); border-bottom-color: var(--accent); }
 .ac-count { font-size: var(--text-2xs, 11px); font-weight: var(--weight-semibold); padding: 1px 7px; border-radius: 999px; background: var(--surface-3); color: var(--ink-dim); font-variant-numeric: tabular-nums; }
 .ac-count.is-hot { background: var(--warn); color: #111; }
+/* Light theme: --warn is a deep amber there (public/tokens.css status inks), so the count takes white ink. */
+:root[data-theme='light'] .ac-count.is-hot { color: #ffffff; }
 
 /* Stats */
 .ac-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-sm); margin-bottom: var(--space-md); }

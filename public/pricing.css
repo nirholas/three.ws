@@ -1450,6 +1450,9 @@
 	letter-spacing: 0.03em;
 }
 
+/* Light theme: --success is a deep green there (public/tokens.css status inks), so the badge takes white ink. */
+:root[data-theme='light'] .pc-asset-badge { color: #ffffff; }
+
 .pc-continue { width: 100%; text-align: center; }
 
 .pc-fineprint {

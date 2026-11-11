@@ -1617,6 +1617,9 @@ body.market-page > header {
 	text-transform: uppercase;
 	white-space: nowrap;
 }
+
+/* Light theme: --success is a deep green there (public/tokens.css status inks), so the badge takes white ink. */
+:root[data-theme='light'] .tier-badge { color: #ffffff; }
 .tier-name {
 	font-size: 16px;
 	font-weight: 600;
@@ -4279,6 +4282,14 @@ body.market-page > header {
 .model-cat-pill.model-cat-creature  { background: rgba(251, 146, 60, 0.18); color: #fdba74; }
 .model-cat-pill.model-cat-vehicle   { background: rgba(56, 189, 248, 0.18); color: #7dd3fc; }
 .model-cat-pill.model-cat-other     { background: rgba(255, 255, 255, 0.08); color: #a1a1aa; }
+/* Light theme: the pastel inks above sit near 1.5:1 on a white page; these deep hues clear 4.5:1 on their tint (WCAG 1.4.3). */
+:root[data-theme='light'] .model-cat-pill.model-cat-avatar { color: #3730a3; }
+:root[data-theme='light'] .model-cat-pill.model-cat-accessory { color: #9d174d; }
+:root[data-theme='light'] .model-cat-pill.model-cat-item { color: #92400e; }
+:root[data-theme='light'] .model-cat-pill.model-cat-scene { color: #065f46; }
+:root[data-theme='light'] .model-cat-pill.model-cat-creature { color: #9a3412; }
+:root[data-theme='light'] .model-cat-pill.model-cat-vehicle { color: #075985; }
+:root[data-theme='light'] .model-cat-pill.model-cat-other { color: #3f3f46; }
 
 /* Model-category sub-filter chips row — visible when avatars are shown */
 .market-model-category-chips {

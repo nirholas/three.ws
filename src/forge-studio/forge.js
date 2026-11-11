@@ -814,7 +814,8 @@ function applyHighAffordances(access) {
 		btn.dataset.access = state;
 		btn.setAttribute(
 			'aria-label',
-			eligible ? 'High quality — unlocked, you hold $THREE' : 'High quality — $THREE holder feature',
+			// Starts with the visible text ("High $THREE") so speech input can target it (WCAG 2.5.3).
+			eligible ? 'High $THREE, unlocked because you hold $THREE' : 'High $THREE, a holder feature',
 		);
 		const pill = btn.querySelector('.tier-lock');
 		if (pill) {

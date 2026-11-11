@@ -110,6 +110,8 @@
 .lc-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 22%, transparent); }
 .lc-btn[disabled] { opacity: 0.55; cursor: not-allowed; }
 .lc-btn--primary { background: var(--success); color: #04130a; border-color: transparent; }
+/* Light theme: --success is a deep green there (public/tokens.css status inks), so the button takes white ink. */
+:root[data-theme='light'] .lc-btn--primary, :root[data-theme='light'] .lc-btn--primary[aria-busy='true']::after { color: #ffffff; }
 .lc-btn--ghost { background: transparent; }
 .lc-btn--danger { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); border-color: color-mix(in srgb, var(--danger) 35%, transparent); }
 .lc-btn[aria-busy='true'] { color: transparent; pointer-events: none; }

@@ -544,6 +544,17 @@
 	--accent-violet:        #6d28d9;
 	--accent-violet-strong: #5b21b6;
 
+	/* Status inks. The dark palette's 400-rung greens, reds and ambers were never
+	   remapped, so every "Free" tag, win/loss verdict and caution note on a light
+	   page drew at 1.5:1 to 2.6:1 against its own tint (WCAG 1.4.3 needs 4.5:1).
+	   The 800/700 rungs keep each hue's meaning and measure 6.2:1 or better on
+	   the pale tints these tokens are mixed into, and over 6:1 on white. The few
+	   surfaces that FILL with a status colour under dark ink flip to white ink
+	   in the light theme alongside this (see the rules that cite this block). */
+	--success: #166534;
+	--danger:  #b91c1c;
+	--warn:    #92400e;
+
 	/* Skeleton on light. A white-tint shimmer is invisible on a white canvas, so
 	   the ramp inverts to a dark tint at the same two alphas. */
 	--skeleton-base:   rgba(15, 18, 28, 0.06);

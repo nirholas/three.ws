@@ -160,7 +160,7 @@
 				font-size: 12px;
 				font-weight: 500;
 				letter-spacing: 0.02em;
-				color: #666;
+				color: #8a8a8a;
 				margin: 16px 0 6px;
 				text-transform: uppercase;
 				transition: color var(--duration-instant) var(--ease-standard);
@@ -179,7 +179,7 @@
 				transition: border-color var(--duration-instant) var(--ease-standard), box-shadow var(--duration-instant) var(--ease-standard), background var(--duration-instant) var(--ease-standard);
 			}
 			input::placeholder {
-				color: #333;
+				color: #7d7d7d;
 			}
 			input:focus {
 				outline: none;
@@ -244,17 +244,18 @@
 				margin-top: 22px;
 				text-align: center;
 				font-size: 13px;
-				color: #666;
+				color: #8a8a8a;
 			}
 			.signin-legal {
 				margin-top: 10px;
 				text-align: center;
 				font-size: 11px;
 				line-height: 1.55;
-				color: #555;
+				color: #808080;
 			}
-			.signin-legal a { color: #888; }
-			.signin-legal a:hover { color: #ccc; }
+			/* Underlined and brighter than the surrounding text so the links are told apart without colour alone (WCAG 1.4.1). */
+			.signin-legal a { color: #c4c4c4; text-decoration: underline; text-underline-offset: 2px; }
+			.signin-legal a:hover { color: #fff; }
 			.brand {
 				margin: 0 0 18px;
 				text-decoration: none;
@@ -272,7 +273,7 @@
 			}
 			.forgot {
 				font-size: 12px;
-				color: #444;
+				color: #808080;
 				margin: 6px 0 0;
 				text-align: right;
 			}
@@ -282,7 +283,7 @@
 				align-items: center;
 				gap: 10px;
 				margin: 18px 0;
-				color: #333;
+				color: #808080;
 				font-size: 12px;
 				letter-spacing: 0.04em;
 			}
@@ -324,7 +325,7 @@
 			#privy-section { margin: 0 0 2px; }
 			.privy-code-hint {
 				font-size: 13px;
-				color: #666;
+				color: #8a8a8a;
 				margin: 0 0 10px;
 			}
 			.privy-row { display: flex; gap: 8px; align-items: flex-start; }
@@ -342,11 +343,11 @@
 			#privy-captcha-slot:not(:empty) { margin-top: 10px; display: flex; justify-content: center; }
 			.privy-back-link {
 				display: inline-block; margin-top: 8px; font-size: 12px;
-				color: #444; cursor: pointer; background: none; border: none;
+				color: #808080; cursor: pointer; background: none; border: none;
 				padding: 0; text-decoration: underline; text-underline-offset: 2px; width: auto;
 			}
-			.privy-back-link:hover { color: #888; }
-			.privy-wallet-divider { margin: 10px 0 8px; text-align: center; font-size: 11px; color: #555; letter-spacing: 0.04em; }
+			.privy-back-link:hover { color: #c4c4c4; }
+			.privy-wallet-divider { margin: 10px 0 8px; text-align: center; font-size: 11px; color: #808080; letter-spacing: 0.04em; }
 			.privy-chain-btns { display: flex; gap: 8px; }
 			.privy-chain-btn {
 				flex: 1; margin: 0; padding: 10px 12px;
@@ -425,7 +426,7 @@
 			}
 			.onchain-toggle-label {
 				font-size: 12px;
-				color: #444;
+				color: #808080;
 				letter-spacing: 0.02em;
 				user-select: none;
 			}
@@ -436,7 +437,7 @@
 				background: transparent;
 				border: 1px solid rgba(255, 255, 255, 0.1);
 				border-radius: 6px;
-				color: #555;
+				color: #8a8a8a;
 				font-size: 12px;
 				font-weight: 500;
 				cursor: pointer;
@@ -482,7 +483,7 @@
 				border: 1px solid transparent;
 				border-radius: 7px;
 				background: transparent;
-				color: #444;
+				color: #808080;
 				font-size: 13px;
 				font-weight: 500;
 				cursor: pointer;
@@ -497,7 +498,7 @@
 				border-color: rgba(255, 255, 255, 0.08);
 			}
 			.chain-tab:hover:not(.active) {
-				color: #888;
+				color: #c4c4c4;
 			}
 			.chain-tab:active {
 				transform: scale(0.93);
@@ -508,7 +509,7 @@
 			.wallet-step-hint {
 				margin: 10px 0 0;
 				font-size: 11px;
-				color: #555;
+				color: #808080;
 				text-align: center;
 				cursor: help;
 			}
@@ -572,7 +573,7 @@
 				--altcha-color-border: rgba(255,255,255,0.10);
 				--altcha-color-border-focus: rgba(255,255,255,0.30);
 				--altcha-color-text: #bbb;
-				--altcha-color-subtext: #555;
+				--altcha-color-subtext: #808080;
 				--altcha-color-footer-bg: #0a0a0a;
 				--altcha-color-error-text: #ff9a9a;
 				--altcha-max-width: 100%;
@@ -582,7 +583,7 @@
 			.captcha-hint {
 				margin: 8px 0 0;
 				font-size: 12px;
-				color: #555;
+				color: #808080;
 				text-align: center;
 			}
 		</style>
@@ -705,7 +706,7 @@
 				<div class="or-divider" id="privy-or-divider">or</div>
 
 				<label for="email" data-i18n="login.email_or_username">Email or username</label>
-				<input id="email" name="username" type="text" inputmode="email" autocapitalize="none" autocomplete="username email" required aria-describedby="email-err" />
+				<input id="email" name="username" type="text" inputmode="email" autocapitalize="none" autocomplete="username" required aria-describedby="email-err" />
 				<p class="field-err" id="email-err" role="alert"></p>
 
 				<label for="password" data-i18n="login.password">Password</label>
@@ -752,7 +753,7 @@
 					</button>
 				</div>
 
-				<div class="onchain-section" id="onchain-section" aria-hidden="true">
+				<div class="onchain-section" id="onchain-section" inert>
 					<div class="chain-tabs" role="tablist" aria-label="Wallet chain">
 						<button type="button" class="chain-tab active" data-chain="solana" role="tab" aria-selected="true" aria-controls="solana-panel" data-i18n="login.solana">Solana</button>
 						<button type="button" class="chain-tab" data-chain="evm" role="tab" aria-selected="false" aria-controls="evm-panel" data-i18n="login.evm">EVM</button>
@@ -781,14 +782,13 @@
 			<div class="h-footer-floor" aria-hidden="true"></div>
 			<div class="h-footer-haze" aria-hidden="true"></div>
 			<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
-			<div class="h-footer-avatar" aria-hidden="true">
+			<div class="h-footer-avatar" aria-hidden="true" inert>
 				<model-viewer
 					src="/animations/robotexpressive.glb"
 					auto-rotate
 					auto-rotate-delay="0"
 					rotation-per-second="20deg"
 					interaction-prompt="none"
-					camera-controls="false"
 					disable-zoom
 					shadow-intensity="0"
 					exposure="0.7"
@@ -1038,7 +1038,8 @@
 				function setOnchainOpen(open) {
 					onchainOpen = open;
 					onchainSection.classList.toggle('open', open);
-					onchainSection.setAttribute('aria-hidden', open ? 'false' : 'true');
+					// inert (not aria-hidden) so the collapsed wallet buttons leave the tab order too.
+					onchainSection.inert = !open;
 					onchainToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
 					onchainToggle.classList.toggle('active', open);
 					onchainToggle.textContent = open ? 'Hide wallet' : 'Connect wallet';

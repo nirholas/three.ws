@@ -81,6 +81,14 @@ function ensureShowcaseVoteStyles() {
 		.showcase-cat-badge.model-cat-creature  { background: rgba(251,146,60,.18);  color: #fdba74; }
 		.showcase-cat-badge.model-cat-vehicle   { background: rgba(56,189,248,.18);  color: #7dd3fc; }
 		.showcase-cat-badge.model-cat-other     { background: rgba(255,255,255,.08); color: #a1a1aa; }
+		/* Light theme: the pastel inks above sit near 1.5:1 on a white page; these deep hues clear 4.5:1 on their tint (WCAG 1.4.3). */
+		:root[data-theme='light'] .showcase-cat-badge.model-cat-avatar { color: #3730a3; }
+		:root[data-theme='light'] .showcase-cat-badge.model-cat-accessory { color: #9d174d; }
+		:root[data-theme='light'] .showcase-cat-badge.model-cat-item { color: #92400e; }
+		:root[data-theme='light'] .showcase-cat-badge.model-cat-scene { color: #065f46; }
+		:root[data-theme='light'] .showcase-cat-badge.model-cat-creature { color: #9a3412; }
+		:root[data-theme='light'] .showcase-cat-badge.model-cat-vehicle { color: #075985; }
+		:root[data-theme='light'] .showcase-cat-badge.model-cat-other { color: #3f3f46; }
 		.showcase-x402-badge { background: rgba(20,241,149,.14); color: #5eead4; text-decoration: none; transition: background .15s ease; z-index: 2; position: relative; }
 		.showcase-x402-badge:hover, .showcase-x402-badge:focus-visible { background: rgba(20,241,149,.28); outline: none; }
 	`;

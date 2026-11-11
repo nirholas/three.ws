@@ -29,6 +29,7 @@ import {
 	NeutralToneMapping,
 } from 'three';
 import Stats from 'three/addons/libs/stats.module.js';
+import { describe3dCanvas } from './shared/viewer-description.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
@@ -477,7 +478,7 @@ export class Viewer {
 		canvasEl.classList.add('tws-viewer-canvas');
 		canvasEl.tabIndex = 0;
 		canvasEl.setAttribute('role', 'img');
-		canvasEl.setAttribute('aria-label', options.alt || options.title || '3D model viewer. Focus and use arrow keys to orbit, +/- to zoom.');
+		canvasEl.setAttribute('aria-label', describe3dCanvas({ alt: options.alt || options.title }));
 		this._onCanvasKeyDown = (e) => this._handleOrbitKeydown(e);
 		canvasEl.addEventListener('keydown', this._onCanvasKeyDown);
 
