@@ -76,7 +76,7 @@ async function liveAgentId(base) {
 	return withBody.id;
 }
 
-async function auditedSet(base) {
+export async function auditedSet(base) {
 	const pagesData = JSON.parse(readFileSync(join(ROOT, 'data', 'pages.json'), 'utf8'));
 	const top = topPriorityPaths(pagesData, TOP_N, ['/forge']);
 	const agentId = await liveAgentId(base);

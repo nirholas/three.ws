@@ -542,6 +542,10 @@ const LIST_CONTROLS_CSS = `
   outline-offset: var(--focus-ring-offset, 2px);
 }
 .tws-lc-select select option { background: var(--bg-1, #1a1a1a); color: var(--ink, #e6e6e6); }
+/* Light theme: a solid fill, because the translucent surface token let a dark
+   card thumbnail scrolling under the sticky toolbar drop the text below AA. */
+:root[data-theme='light'] .tws-lc-select select { background: #fff; }
+:root[data-theme='light'] .tws-lc-select select:hover { background: #f3f4f6; }
 .tws-lc-select-caret {
   position: absolute;
   right: 10px;
