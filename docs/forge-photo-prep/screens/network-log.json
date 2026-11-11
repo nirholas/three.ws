@@ -1,0 +1,485 @@
+[
+	{
+		"ms": 274,
+		"method": "GET",
+		"url": "http://localhost:3109/src/forge-photo-prep/review.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 395,
+		"method": "GET",
+		"url": "http://localhost:3109/src/forge-photo-prep/client.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 435,
+		"method": "GET",
+		"url": "http://localhost:3109/src/forge-photo-prep/core.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 481,
+		"method": "GET",
+		"url": "blob:http://localhost:3109/ee4e9c7a-1355-41b0-944a-9ec554f3581a",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 788,
+		"method": "GET",
+		"url": "http://localhost:3109/src/forge-photo-prep/worker.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 1000,
+		"method": "GET",
+		"url": "http://localhost:3109/node_modules/vite/dist/client/env.mjs",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 1000,
+		"method": "GET",
+		"url": "http://localhost:3109/src/forge-photo-prep/core.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 1105,
+		"method": "GET",
+		"url": "http://localhost:3109/node_modules/.vite/deps/onnxruntime-web_wasm.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 1620,
+		"method": "GET",
+		"url": "http://localhost:3109/atlas-index.json",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 2579,
+		"method": "GET",
+		"url": "http://localhost:3109/@vite/client",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 2579,
+		"method": "GET",
+		"url": "http://localhost:3109/node_modules/.vite/deps/vite-plugin-node-polyfills_shims_buffer.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 2579,
+		"method": "GET",
+		"url": "http://localhost:3109/node_modules/vite-plugin-node-polyfills/shims/global/dist/index.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 2579,
+		"method": "GET",
+		"url": "http://localhost:3109/node_modules/.vite/deps/vite-plugin-node-polyfills_shims_process.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 2579,
+		"method": "GET",
+		"url": "http://localhost:3109/node_modules/.vite/deps/rolldown-runtime-CKQnkWwv.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 3077,
+		"method": "GET",
+		"url": "http://localhost:3109/models/photo-prep/u2netp.309c8469.onnx",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 3833,
+		"method": "GET",
+		"url": "http://localhost:3109/models/voice/runtime/ort-wasm-simd-threaded.mjs",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 3902,
+		"method": "GET",
+		"url": "http://localhost:3109/models/voice/runtime/ort-wasm-simd-threaded.wasm",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 4661,
+		"method": "GET",
+		"url": "http://localhost:3109/walk-companion.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 4784,
+		"method": "GET",
+		"url": "http://localhost:3109/walk-sdk/src/companion.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 4784,
+		"method": "GET",
+		"url": "http://localhost:3109/walk-sdk/src/config.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 4784,
+		"method": "GET",
+		"url": "http://localhost:3109/src/walk-companion-transitions.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 4784,
+		"method": "GET",
+		"url": "http://localhost:3109/src/walk-trails.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 4784,
+		"method": "GET",
+		"url": "http://localhost:3109/src/walk-companion-click-to-walk.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 4784,
+		"method": "GET",
+		"url": "http://localhost:3109/src/walk-companion-narrator.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 4784,
+		"method": "GET",
+		"url": "http://localhost:3109/src/feedback-companion.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 4784,
+		"method": "GET",
+		"url": "http://localhost:3109/src/walk-companion-identity.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 4784,
+		"method": "GET",
+		"url": "http://localhost:3109/src/walk-companion-tools-menu.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 4784,
+		"method": "GET",
+		"url": "http://localhost:3109/src/agents/mood-embodiment.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 4957,
+		"method": "GET",
+		"url": "http://localhost:3109/node_modules/.vite/deps/three_addons_geometries_DecalGeometry__js.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5027,
+		"method": "GET",
+		"url": "http://localhost:3109/walk-sdk/src/internal/storage.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5091,
+		"method": "GET",
+		"url": "http://localhost:3109/walk-sdk/src/internal/budget.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5091,
+		"method": "GET",
+		"url": "http://localhost:3109/walk-sdk/src/internal/log.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5091,
+		"method": "GET",
+		"url": "http://localhost:3109/walk-sdk/src/internal/load-avatar.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5091,
+		"method": "GET",
+		"url": "http://localhost:3109/walk-sdk/src/internal/runtime.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5091,
+		"method": "GET",
+		"url": "http://localhost:3109/walk-sdk/src/picker.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5091,
+		"method": "GET",
+		"url": "http://localhost:3109/walk-sdk/src/roster.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5125,
+		"method": "GET",
+		"url": "http://localhost:3109/packages/witness/src/index.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5125,
+		"method": "GET",
+		"url": "http://localhost:3109/packages/witness/src/compile.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5126,
+		"method": "GET",
+		"url": "http://localhost:3109/src/agents/guest-agent.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5127,
+		"method": "GET",
+		"url": "http://localhost:3109/src/agents/mood-engine.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5127,
+		"method": "GET",
+		"url": "http://localhost:3109/src/agents/agent-bus.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5742,
+		"method": "GET",
+		"url": "http://localhost:3109/packages/witness/src/recorder.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5742,
+		"method": "GET",
+		"url": "http://localhost:3109/packages/witness/src/selector.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5742,
+		"method": "GET",
+		"url": "http://localhost:3109/packages/witness/src/redact.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5757,
+		"method": "GET",
+		"url": "http://localhost:3109/src/shared/agent-names.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5837,
+		"method": "GET",
+		"url": "http://localhost:3109/walk-sdk/src/internal/meshopt.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5837,
+		"method": "GET",
+		"url": "http://localhost:3109/walk-sdk/src/internal/manifest.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5840,
+		"method": "GET",
+		"url": "http://localhost:3109/src/animation-manager.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5840,
+		"method": "GET",
+		"url": "http://localhost:3109/src/procedural/look-at.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5882,
+		"method": "GET",
+		"url": "http://localhost:3109/src/agents/active-agent.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5882,
+		"method": "GET",
+		"url": "http://localhost:3109/src/api.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5882,
+		"method": "GET",
+		"url": "http://localhost:3109/src/social/sentiment.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 5882,
+		"method": "GET",
+		"url": "http://localhost:3109/src/agents/mood-model.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 6312,
+		"method": "GET",
+		"url": "http://localhost:3109/src/canonical-clip-gate.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 6312,
+		"method": "GET",
+		"url": "http://localhost:3109/src/animation-retarget.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 6312,
+		"method": "GET",
+		"url": "http://localhost:3109/src/animation-arm-relax.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 6341,
+		"method": "GET",
+		"url": "http://localhost:3109/src/procedural/canonical-bones.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 6341,
+		"method": "GET",
+		"url": "http://localhost:3109/src/procedural/pose-baseline.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 6401,
+		"method": "GET",
+		"url": "http://localhost:3109/src/guest-avatar.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 6436,
+		"method": "GET",
+		"url": "http://localhost:3109/src/social/lexicon.json",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 6617,
+		"method": "GET",
+		"url": "http://localhost:3109/src/glb-canonicalize.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 6645,
+		"method": "GET",
+		"url": "http://localhost:3109/src/animation-canonical-rest.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 6862,
+		"method": "GET",
+		"url": "http://localhost:3109/walk-sdk/src/playground.js",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 7077,
+		"method": "GET",
+		"url": "http://localhost:3109/animations/robotexpressive.glb",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 40454,
+		"method": "GET",
+		"url": "blob:http://localhost:3109/ce50e6be-b612-4af7-bece-b796be535b10",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 40454,
+		"method": "GET",
+		"url": "blob:http://localhost:3109/d45ea847-9267-48c7-aa36-11f750d1518b",
+		"bytes": 0,
+		"phase": "before-confirm"
+	},
+	{
+		"ms": 50331,
+		"method": "POST",
+		"url": "http://localhost:3109/api/forge-upload",
+		"bytes": 49,
+		"phase": "after-confirm"
+	},
+	{
+		"ms": 50331,
+		"method": "GET",
+		"url": "blob:http://localhost:3109/fd70589c-aed1-4dd0-8e40-2d0da4aa0808",
+		"bytes": 0,
+		"phase": "after-confirm"
+	},
+	{
+		"ms": 50734,
+		"method": "PUT",
+		"url": "https://chatty-storage.9b69258d55b0dc7ed0c31c067dd944d8.r2.cloudflarestorage.com/forge/uploads/3c2ace02b9df/5fbb41d1-d4f4-4116-94cc-003c9a518d54.jpg",
+		"bytes": 0,
+		"phase": "after-confirm"
+	}
+]
