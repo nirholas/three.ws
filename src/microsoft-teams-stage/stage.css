@@ -288,8 +288,8 @@ kbd { font: var(--text-xs) / 1 var(--font-mono, monospace); padding: 2px 5px; bo
 .rs-note { padding: var(--space-md); color: var(--ink-dim); font-size: var(--text-sm); line-height: 1.55; border: 1px dashed var(--stroke-strong); border-radius: var(--radius-control, 8px); }
 .rs-note p { margin: 0 0 8px; }
 .rs-note strong { color: var(--ink-bright); }
-.rs-note a { color: var(--accent); }
-.rs-note a:hover { text-decoration: underline; }
+.rs-note a:not(.rs-btn) { color: var(--accent); }
+.rs-note a:not(.rs-btn):hover { text-decoration: underline; }
 .rs-note.is-error { border-style: solid; border-color: color-mix(in srgb, var(--danger) 45%, var(--stroke)); }
 .rs-note .rs-row { margin-top: 4px; }
 
@@ -314,8 +314,8 @@ kbd { font: var(--text-xs) / 1 var(--font-mono, monospace); padding: 2px 5px; bo
 .rs-selected { font-size: var(--text-sm); color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rs-selected strong { color: var(--ink-bright); }
 .rs-panel-status { margin: 0; font-size: var(--text-xs); color: var(--ink-dim); line-height: 1.5; }
-.rs-panel-status a { color: var(--accent); }
-.rs-panel-status a:hover { text-decoration: underline; }
+.rs-panel-status a:not(.rs-btn) { color: var(--accent); }
+.rs-panel-status a:not(.rs-btn):hover { text-decoration: underline; }
 
 .rs-config { max-width: 560px; margin: 0 auto; padding: var(--space-lg) var(--space-md); line-height: 1.6; }
 .rs-config h1 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--ink-bright); margin: var(--space-sm) 0; }
