@@ -162,18 +162,31 @@ export function hasSessionCookie(req) {
  * @param {{ currentSid: string, userId: string, userAgent: string|null, ip: string|null }} opts
  */
 export async function rotateSession({ currentSid, userId, userAgent, ip }) {
-	const newSecret = await createSession({ userId, userAgent, ip });
+	// The replacement keeps the Entra tenant the session signed in through, so a
+	// rotated session is still revoked when SCIM deprovisions its person.
+	const [cur] = await sql`select entra_tenant_id from sessions where id = ${currentSid} limit 1`;
+	const newSecret = await createSession({ userId, userAgent, ip, entraTenantId: cur?.entra_tenant_id || null });
 	await sql`update sessions set revoked_at = now() where id = ${currentSid}`;
 	return newSecret;
 }
 
-export async function createSession({ userId, userAgent, ip, recordActivity = true }) {
+export async function createSession({ userId, userAgent, ip, recordActivity = true, entraTenantId = null }) {
 	const secret = randomToken(32);
 	const hash = await sha256(secret);
-	await sql`
-		insert into sessions (user_id, token_hash, user_agent, ip, expires_at)
-		values (${userId}, ${hash}, ${userAgent ?? null}, ${ip ?? null}, now() + ${`${SESSION_TTL_SEC} seconds`}::interval)
-	`;
+	// entraTenantId: the Entra tenant of the Microsoft identity this session
+	// signed in with, so SCIM deprovisioning from a team that claimed that
+	// tenant revokes exactly these sessions (api/_lib/team-enterprise.js).
+	if (entraTenantId) {
+		await sql`
+			insert into sessions (user_id, token_hash, user_agent, ip, expires_at, entra_tenant_id)
+			values (${userId}, ${hash}, ${userAgent ?? null}, ${ip ?? null}, now() + ${`${SESSION_TTL_SEC} seconds`}::interval, ${entraTenantId})
+		`;
+	} else {
+		await sql`
+			insert into sessions (user_id, token_hash, user_agent, ip, expires_at)
+			values (${userId}, ${hash}, ${userAgent ?? null}, ${ip ?? null}, now() + ${`${SESSION_TTL_SEC} seconds`}::interval)
+		`;
+	}
 	// A login (or the once-a-day silent session rotation in getSessionUser)
 	// is a qualifying activity for the cross-surface streak. Fire-and-forget —
 	// a streak-tracking hiccup must never block sign-in.

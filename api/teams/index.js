@@ -1,6 +1,7 @@
 // /api/teams: the caller's specialist teams.
 //
-// GET  /api/teams                         teams the caller owns (not archived)
+// GET  /api/teams                         teams the caller owns (not archived), plus member_of:
+//                                         teams a claimed Microsoft tenant or SCIM admitted them to
 // POST /api/teams { name, description?, network?, policy?, is_public? }
 //      creates a team and provisions its four role agents (Researcher, Entry,
 //      Trader, Launcher), each a full three.ws agent with a 3D body, wallet and
@@ -16,6 +17,7 @@ import { requireCsrf } from '../_lib/csrf.js';
 import { limits } from '../_lib/rate-limit.js';
 import { TeamError } from '../_lib/teams/roles.js';
 import { createTeam, listTeamsForUser, loadTeamFor, getTeamView } from '../_lib/teams/runtime.js';
+import { listMemberTeams } from '../_lib/team-enterprise.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
@@ -25,8 +27,8 @@ export default wrap(async (req, res) => {
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 
 	if (req.method === 'GET') {
-		const data = await listTeamsForUser(auth.userId);
-		return json(res, 200, { data }, { 'cache-control': 'no-store' });
+		const [data, memberOf] = await Promise.all([listTeamsForUser(auth.userId), listMemberTeams(auth.userId)]);
+		return json(res, 200, { data, member_of: memberOf }, { 'cache-control': 'no-store' });
 	}
 
 	const body = await readJson(req);

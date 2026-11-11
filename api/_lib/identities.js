@@ -1,6 +1,6 @@
 // Sign-in identities linked to an account beyond its original method.
 //
-// Today that is Google (OpenID Connect). An account keeps signing in the way it
+// Google and Microsoft (OpenID Connect), plus X and Telegram. An account keeps signing in the way it
 // always did (password, wallet, email code) and can ALSO sign in with a linked
 // Google account. The table is user_identities (migration
 // 20260922190000_account_social_sso.sql); this module is its only writer.
@@ -43,6 +43,7 @@ export const INTENTS = Object.freeze(['login', 'link', 'reauth']);
 /** The identity providers an account can link. Same shape for every future one. */
 export const PROVIDERS = Object.freeze([
 	{ id: 'google', label: 'Google', start: '/api/auth/google/start' },
+	{ id: 'microsoft', label: 'Microsoft', start: '/api/auth/microsoft/start' },
 	{ id: 'x', label: 'X', start: '/api/auth/x/login' },
 ]);
 
@@ -233,6 +234,55 @@ export async function findUserByIdentity(provider, subject) {
 		limit 1
 	`;
 	return row || null;
+}
+
+/**
+ * The one rule every OpenID provider's login intent follows when an identity
+ * signs in (Google, Microsoft). Kept in one place so the providers cannot
+ * drift: an email reaches an existing account only when the provider vouches
+ * for it AND the account verified the same address itself, and even then the
+ * person confirms the link on a page of their own.
+ *
+ * Returns one of:
+ *   { kind: 'signin', userId, identityId }   already linked
+ *   { kind: 'confirm', userId }              verified email match; ask first
+ *   { kind: 'create', emailVerified, email } no account; create one
+ *   { kind: 'error', code }                  account_deleted, email_unverified,
+ *                                            unverified_account
+ *
+ * `allowUnverifiedSignup`: a provider whose email may be unverified (Microsoft
+ * without xms_edov) may still create a NEW account, born with a placeholder
+ * address (email: null here), never with the unproven one. Google passes false
+ * and keeps refusing, as it always has.
+ */
+export async function decideIdentityLogin({ provider, claims, allowUnverifiedSignup = false }) {
+	const linked = await findUserByIdentity(provider, claims.subject);
+	if (linked) {
+		if (linked.deleted_at) return { kind: 'error', code: 'account_deleted' };
+		return { kind: 'signin', userId: linked.id, identityId: linked.identity_id };
+	}
+	const vouched = Boolean(claims.email && claims.email_verified);
+	if (!vouched) {
+		if (!allowUnverifiedSignup) return { kind: 'error', code: 'email_unverified' };
+		if (claims.email) {
+			// The address is unproven, so it may never reach an account holding it.
+			const [holder] = await sql`select id from users where email = ${claims.email} limit 1`;
+			if (holder) return { kind: 'error', code: 'email_unverified' };
+		}
+		return { kind: 'create', emailVerified: false, email: null };
+	}
+	const [existing] = await sql`
+		select id, deleted_at, email_verified from users where email = ${claims.email} limit 1
+	`;
+	if (existing?.deleted_at) return { kind: 'error', code: 'account_deleted' };
+	if (existing) {
+		// An account this platform never verified may belong to someone who
+		// registered the address ahead of its owner; linking it would hand the
+		// real owner the squatter's account.
+		if (!existing.email_verified) return { kind: 'error', code: 'unverified_account' };
+		return { kind: 'confirm', userId: existing.id };
+	}
+	return { kind: 'create', emailVerified: true, email: claims.email };
 }
 
 export async function touchIdentity(identityId) {

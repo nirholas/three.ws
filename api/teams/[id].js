@@ -10,6 +10,18 @@
 // POST   /api/teams/:id/members                 { agent_id, permissions? } add a custom specialist
 // PATCH  /api/teams/:id/members/:memberId       { permissions } narrow or restore a grant
 // DELETE /api/teams/:id/members/:memberId       remove a custom specialist
+// GET    /api/teams/:id/enterprise              tenant claim, SCIM status, people, recent events (owner)
+// PATCH  /api/teams/:id/enterprise              { join_mode: 'offer'|'auto' }
+// DELETE /api/teams/:id/enterprise              unclaim the Microsoft tenant (revokes the SCIM token)
+// POST   /api/teams/:id/enterprise/scim-token   generate or rotate; the plaintext is in this answer only
+// DELETE /api/teams/:id/enterprise/scim-token   revoke
+// PATCH  /api/teams/:id/enterprise/people/:pid  { status: 'active'|'deactivated' }
+// GET    /api/teams/:id/join                    the join offer for a member of the claimed tenant
+// POST   /api/teams/:id/join                    { decision: 'join'|'decline' }
+//
+// The tenant claim itself is made by a Microsoft sign-in from a directory admin
+// (/api/auth/microsoft/start?intent=tenant_claim&team=:id); SCIM lives at
+// /scim/v2 (api/scim/v2.js). Data layer: api/_lib/team-enterprise.js.
 //
 // Routed here by the /api/teams/... rows in vercel.json; the server keeps the
 // original pathname on req.url, so the handler splits sub-resources itself.
@@ -33,6 +45,11 @@ import {
 	loadTeamFor, getTeamView, updateTeam, archiveTeam, provisionMissingRoles, runAction,
 	addCustomMember, setMemberPermissions, removeCustomMember, listFindings,
 } from '../_lib/teams/runtime.js';
+import {
+	EnterpriseError, enterpriseView, setJoinMode, unclaimTenant, issueScimToken, revokeScimToken, setPersonStatus,
+	joinOffer, decideJoin,
+} from '../_lib/team-enterprise.js';
+import { env } from '../_lib/env.js';
 
 const isUuid = (s) => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
 
@@ -42,6 +59,7 @@ const streamSlots = createStreamSlots({ perKey: 4, total: 200 });
 const MAX_DURATION_MS = 280_000; // end before the request timeout; EventSource reconnects
 
 function teamError(res, e) {
+	if (e instanceof EnterpriseError) return error(res, e.status, e.code, e.message);
 	if (e instanceof TeamError) return error(res, e.status, e.code, e.message, e.detail ? { detail: e.detail } : {});
 	throw e;
 }
@@ -65,6 +83,8 @@ export default wrap(async (req, res) => {
 		if (sub === 'run' && subId === null) return await run(req, res, id);
 		if (sub === 'repair' && subId === null) return await repair(req, res, id);
 		if (sub === 'members') return await members(req, res, id, subId);
+		if (sub === 'enterprise') return await enterprise(req, res, id, parts.slice(4));
+		if (sub === 'join' && subId === null) return await join(req, res, id);
 		return error(res, 404, 'not_found', 'not found');
 	} catch (e) {
 		return teamError(res, e);
@@ -272,4 +292,68 @@ async function members(req, res, id, memberId) {
 	}
 	await removeCustomMember(ctx.team, memberId);
 	return json(res, 200, { data: { member_id: memberId, status: 'removed' } });
+}
+
+async function enterpriseState(teamId) {
+	return { ...(await enterpriseView(teamId)), scim_base_url: `${env.APP_ORIGIN}/scim/v2` };
+}
+
+async function enterprise(req, res, id, rest) {
+	const [kind, personId, extra] = rest;
+	if (extra !== undefined) return error(res, 404, 'not_found', 'not found');
+	if (req.method === 'GET') {
+		if (kind !== undefined) return error(res, 405, 'method_not_allowed', 'GET /enterprise only');
+		const auth = await resolveAccount(req, res);
+		if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+		await loadTeamFor(id, auth.userId, { write: true });
+		return json(res, 200, { data: await enterpriseState(id) }, { 'cache-control': 'no-store' });
+	}
+
+	const readBody = req.method === 'PATCH';
+	const ctx = await ownerWrite(req, res, id, { limiter: 'teamEnterprise', readBody });
+	if (!ctx || !(await gate(req, res, ctx))) return;
+	const who = { teamId: id, userId: ctx.auth.userId, req };
+
+	if (kind === undefined) {
+		if (req.method === 'PATCH') {
+			await setJoinMode({ ...who, mode: ctx.body.join_mode });
+			return json(res, 200, { data: await enterpriseState(id) });
+		}
+		if (req.method === 'DELETE') {
+			await unclaimTenant(who);
+			return json(res, 200, { data: await enterpriseState(id) });
+		}
+		return error(res, 405, 'method_not_allowed', 'PATCH or DELETE /enterprise');
+	}
+	if (kind === 'scim-token' && personId === undefined) {
+		if (req.method === 'POST') {
+			const issued = await issueScimToken(who);
+			return json(res, 201, { data: { ...issued, state: await enterpriseState(id) } }, { 'cache-control': 'no-store' });
+		}
+		if (req.method === 'DELETE') {
+			await revokeScimToken(who);
+			return json(res, 200, { data: await enterpriseState(id) });
+		}
+		return error(res, 405, 'method_not_allowed', 'POST or DELETE /enterprise/scim-token');
+	}
+	if (kind === 'people' && personId !== undefined) {
+		if (req.method !== 'PATCH') return error(res, 405, 'method_not_allowed', 'PATCH a person');
+		const result = await setPersonStatus({ ...who, personId, status: ctx.body.status });
+		return json(res, 200, { data: { ...result, state: await enterpriseState(id) } });
+	}
+	return error(res, 404, 'not_found', 'not found');
+}
+
+async function join(req, res, id) {
+	if (!['GET', 'POST'].includes(req.method)) return error(res, 405, 'method_not_allowed', 'GET or POST /join');
+	const auth = await resolveAccount(req, res);
+	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+	if (req.method === 'GET') {
+		return json(res, 200, { data: await joinOffer({ teamId: id, userId: auth.userId }) }, { 'cache-control': 'no-store' });
+	}
+	const body = (await readJson(req)) || {};
+	if (!(await requireCsrf(req, res, auth.userId))) return;
+	const rl = await limits.teamEnterprise(auth.userId);
+	if (!rl.success) return rateLimited(res, rl, 'too many team actions: slow down');
+	return json(res, 200, { data: await decideJoin({ teamId: id, userId: auth.userId, decision: body.decision }) });
 }

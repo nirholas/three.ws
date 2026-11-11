@@ -28,6 +28,7 @@ import {
 	insertFinding, findLiveResearch, listFindings,
 } from './findings.js';
 import { researchMint, loadIntelRow } from './research.js';
+import { isActivePerson } from '../team-enterprise.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const MAX_TEAMS_PER_USER = 12;
@@ -113,10 +114,13 @@ export async function getTeamRow(teamId) {
 export async function loadTeamFor(teamId, userId, { write = false } = {}) {
 	const team = await getTeamRow(teamId);
 	const isOwner = Boolean(team && userId && team.owner_user_id === userId);
-	if (!team || (!isOwner && (write || !team.is_public || team.status === 'archived'))) {
+	// A person the team admitted (tenant join or SCIM, team_people) reads a
+	// private team; writes stay with the owner. Deactivating the person ends it.
+	const isMember = Boolean(team && !isOwner && !write && userId && team.status !== 'archived' && (await isActivePerson(team.id, userId)));
+	if (!team || (!isOwner && !isMember && (write || !team.is_public || team.status === 'archived'))) {
 		throw new TeamError(404, 'not_found', 'team not found');
 	}
-	return { team: { ...team, policy: normalizeTeamPolicy({}, team.policy || {}) }, isOwner };
+	return { team: { ...team, policy: normalizeTeamPolicy({}, team.policy || {}) }, isOwner, isMember };
 }
 
 export async function listMembers(teamId) {
