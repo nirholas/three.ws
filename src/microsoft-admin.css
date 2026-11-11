@@ -241,7 +241,7 @@ code {
 
 .msa-kpis {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
 	gap: var(--space-3, 12px);
 	margin-top: var(--space-6, 24px);
 }
