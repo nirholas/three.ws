@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>TRELLIS.2 Lab · three.ws</title>
+		<meta
+			name="description"
+			content="Run Microsoft Research's TRELLIS.2 image-to-3D model with every parameter exposed: voxel resolution, seed, texture size, face budget and per-stage sampler steps and guidance. Inspect the GLB in texture, wireframe and normal views, and compare it side by side with another engine on the same photo."
+		/>
+		<link rel="canonical" href="https://three.ws/lab/trellis2" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/lab/trellis2" />
+		<meta property="og:title" content="TRELLIS.2 Lab · three.ws" />
+		<meta property="og:description" content="Every TRELLIS.2 parameter, real GPU runs, measured speeds, and a side-by-side compare against another 3D engine." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=TRELLIS.2+Lab&amp;d=Run+Microsoft+Research%27s+TRELLIS.2+image-to-3D+with+every+parameter+exposed%2C+inspect+the+mesh+in+wireframe+and+normal+views%2C+and+compare+engines+side+by+side.&amp;p=%2Flab%2Ftrellis2" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="TRELLIS.2 Lab · three.ws" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="TRELLIS.2 Lab · three.ws" />
+		<meta name="twitter:description" content="Every TRELLIS.2 parameter, real GPU runs, measured speeds, and a side-by-side compare against another 3D engine." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=TRELLIS.2+Lab&amp;d=Run+Microsoft+Research%27s+TRELLIS.2+image-to-3D+with+every+parameter+exposed%2C+inspect+the+mesh+in+wireframe+and+normal+views%2C+and+compare+engines+side+by+side.&amp;p=%2Flab%2Ftrellis2" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/lab-trellis2/lab-trellis2.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"TRELLIS.2 Lab","description":"Run Microsoft Research's TRELLIS.2 image-to-3D model with every parameter exposed, inspect the GLB in texture, wireframe and normal views, and compare it side by side with another engine on the same photo.","url":"https://three.ws/lab/trellis2","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Forge","item":"https://three.ws/forge"},{"@type":"ListItem","position":3,"name":"TRELLIS.2 Lab","item":"https://three.ws/lab/trellis2"}]}]}</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="lt" id="lt">
+			<nav class="lt-crumbs" aria-label="Breadcrumb">
+				<a href="/forge">Forge</a><span aria-hidden="true">/</span><span aria-current="page">TRELLIS.2 Lab</span>
+			</nav>
+
+			<header class="lt-hero">
+				<div>
+					<h1>TRELLIS.2 Lab</h1>
+					<p class="lt-lede">
+						Microsoft Research's open TRELLIS.2 model, with every parameter we run it with in your hands. Pick a photo, choose a preset or tune the sampler stage by stage, and inspect the mesh it produces. Compare it against another engine on the same photo.
+					</p>
+				</div>
+				<div class="lt-lane" id="lt-lane" role="status" aria-live="polite">
+					<span class="lt-dot" aria-hidden="true"></span>
+					<span class="lt-lane-text">Checking the TRELLIS.2 worker</span>
+				</div>
+			</header>
+
+			<div class="lt-banner" id="lt-banner" role="alert" hidden></div>
+
+			<div class="lt-grid">
+				<section class="lt-panel lt-controls" aria-labelledby="lt-input-h">
+					<h2 id="lt-input-h">1. Photo</h2>
+					<div class="lt-drop" id="lt-drop" tabindex="0" role="button" aria-describedby="lt-drop-hint">
+						<input type="file" id="lt-file" accept="image/png,image/jpeg,image/webp" class="lt-sr-only" />
+						<img id="lt-photo" alt="" hidden />
+						<div class="lt-drop-empty" id="lt-drop-empty">
+							<strong>Drop a photo or click to upload</strong>
+							<span id="lt-drop-hint">One object, plain background, PNG, JPEG or WebP up to 8 MB.</span>
+						</div>
+						<div class="lt-drop-busy" id="lt-drop-busy" hidden><span class="lt-spinner" aria-hidden="true"></span>Uploading</div>
+					</div>
+					<p class="lt-sub">Or start from a recent community photo:</p>
+					<div class="lt-picks" id="lt-picks" aria-label="Community photos" role="list">
+						<span class="lt-skel"></span><span class="lt-skel"></span><span class="lt-skel"></span><span class="lt-skel"></span>
+					</div>
+
+					<h2>2. Preset</h2>
+					<div class="lt-presets" id="lt-presets" role="radiogroup" aria-label="Preset"></div>
+
+					<h2>3. Parameters</h2>
+					<form class="lt-params" id="lt-params" novalidate>
+						<fieldset>
+							<legend>Generation</legend>
+							<div class="lt-field">
+								<label for="lt-resolution">Voxel resolution</label>
+								<div class="lt-seg" id="lt-resolution" role="radiogroup" aria-label="Voxel resolution"></div>
+								<p class="lt-help" data-help="resolution"></p>
+							</div>
+							<div class="lt-field">
+								<label for="lt-seed">Seed</label>
+								<div class="lt-row">
+									<input type="number" id="lt-seed" min="0" max="4294967295" step="1" inputmode="numeric" />
+									<button type="button" class="lt-btn lt-btn-ghost" id="lt-seed-random">Randomize</button>
+								</div>
+								<p class="lt-help" data-help="seed"></p>
+							</div>
+						</fieldset>
+						<fieldset>
+							<legend>Output</legend>
+							<div class="lt-field">
+								<label for="lt-texture">Texture size</label>
+								<select id="lt-texture"></select>
+								<p class="lt-help" data-help="texture_size"></p>
+							</div>
+							<div class="lt-field">
+								<label for="lt-faces">Face budget</label>
+								<div class="lt-row">
+									<select id="lt-faces-mode" aria-label="Face budget mode">
+										<option value="default">Resolution default</option>
+										<option value="custom">Custom</option>
+									</select>
+									<input type="number" id="lt-faces" min="50000" max="500000" step="10000" inputmode="numeric" aria-label="Face budget" hidden />
+								</div>
+								<p class="lt-help" data-help="faces"></p>
+							</div>
+						</fieldset>
+						<fieldset id="lt-stages">
+							<legend>Sampler, per stage</legend>
+							<p class="lt-help">TRELLIS.2 generates in three flow-matching stages. Defaults are the upstream <code>pipeline.json</code> values. <button type="button" class="lt-link" id="lt-reset">Reset all to defaults</button></p>
+						</fieldset>
+					</form>
+
+					<div class="lt-run">
+						<div class="lt-field">
+							<label for="lt-compare">Compare against</label>
+							<select id="lt-compare"><option value="">No comparison</option></select>
+							<p class="lt-help">Runs the same photo on a second engine with its own defaults, side by side.</p>
+						</div>
+						<button type="button" class="lt-btn lt-btn-primary" id="lt-go" disabled>Generate</button>
+						<p class="lt-help" id="lt-go-hint">Upload or pick a photo first.</p>
+					</div>
+				</section>
+
+				<section class="lt-results" aria-labelledby="lt-results-h">
+					<h2 id="lt-results-h" class="lt-sr-only">Results</h2>
+					<div class="lt-toolbar">
+						<div class="lt-seg" id="lt-modes" role="radiogroup" aria-label="View mode">
+							<button type="button" role="radio" aria-checked="true" data-mode="texture">Texture</button>
+							<button type="button" role="radio" aria-checked="false" data-mode="wireframe">Wireframe</button>
+							<button type="button" role="radio" aria-checked="false" data-mode="normal">Normals</button>
+						</div>
+						<button type="button" class="lt-btn lt-btn-ghost" id="lt-share" hidden>Copy share link</button>
+					</div>
+					<div class="lt-panes" id="lt-panes">
+						<article class="lt-pane" data-pane="a">
+							<header class="lt-pane-head"><h3>TRELLIS.2</h3><span class="lt-served"></span></header>
+							<div class="lt-stage">
+								<div class="lt-stage-empty">
+									<strong>No model yet</strong>
+									<span>Choose a photo and a preset, then press Generate. The mesh opens here with its real stats.</span>
+								</div>
+								<div class="lt-stage-progress" hidden></div>
+								<div class="lt-stage-error" hidden></div>
+							</div>
+							<dl class="lt-stats" hidden></dl>
+							<div class="lt-pane-actions" hidden>
+								<a class="lt-btn lt-btn-ghost lt-download" download="trellis2.glb">Download GLB</a>
+								<a class="lt-btn lt-btn-ghost lt-open" target="_blank" rel="noopener">Model page</a>
+							</div>
+						</article>
+						<article class="lt-pane" data-pane="b" hidden>
+							<header class="lt-pane-head"><h3>Comparison</h3><span class="lt-served"></span></header>
+							<div class="lt-stage">
+								<div class="lt-stage-empty"><strong>Waiting</strong><span>Starts with the TRELLIS.2 run.</span></div>
+								<div class="lt-stage-progress" hidden></div>
+								<div class="lt-stage-error" hidden></div>
+							</div>
+							<dl class="lt-stats" hidden></dl>
+							<div class="lt-pane-actions" hidden>
+								<a class="lt-btn lt-btn-ghost lt-download" download="comparison.glb">Download GLB</a>
+								<a class="lt-btn lt-btn-ghost lt-open" target="_blank" rel="noopener">Model page</a>
+							</div>
+						</article>
+					</div>
+				</section>
+			</div>
+
+			<section class="lt-panel lt-bench" aria-labelledby="lt-bench-h">
+				<h2 id="lt-bench-h">Measured on production</h2>
+				<p class="lt-help" id="lt-bench-meta"></p>
+				<div class="lt-table-wrap">
+					<table class="lt-table" id="lt-bench-table">
+						<thead><tr><th scope="col">Lane</th><th scope="col">Runs</th><th scope="col">Failure rate</th><th scope="col">End to end p50 / p90 / p99</th><th scope="col">GPU p50</th><th scope="col">Output p50</th></tr></thead>
+						<tbody></tbody>
+					</table>
+				</div>
+				<p class="lt-help">From <code>scripts/trellis2-benchmark.mjs</code> over real <code>forge_creations</code> rows. Queue and GPU time appear only where the worker measured them; everything else says "not measured" rather than an estimate.</p>
+			</section>
+
+			<section class="lt-panel lt-credit" id="credit" aria-labelledby="lt-credit-h">
+				<h2 id="lt-credit-h">Credit: Microsoft Research</h2>
+				<p>
+					TRELLIS.2 is built and released by Microsoft Research under the MIT license: a 4-billion-parameter flow transformer over O-Voxel structured latents that turns one image into a textured, PBR-ready 3D asset. This lab runs the released weights unmodified.
+				</p>
+				<ul class="lt-credit-links">
+					<li>Repository: <a href="https://github.com/microsoft/TRELLIS.2" target="_blank" rel="noopener">github.com/microsoft/TRELLIS.2</a> (pinned at commit <code>75fbf01</code>)</li>
+					<li>Weights: <a href="https://huggingface.co/microsoft/TRELLIS.2-4B" target="_blank" rel="noopener">huggingface.co/microsoft/TRELLIS.2-4B</a></li>
+					<li>License: <a href="https://github.com/microsoft/TRELLIS.2/blob/main/LICENSE" target="_blank" rel="noopener">MIT</a></li>
+				</ul>
+				<h3>Citation</h3>
+				<div class="lt-cite">
+					<pre id="lt-bibtex">@article{
+    xiang2025trellis2,
+    title={Native and Compact Structured Latents for 3D Generation},
+    author={Xiang, Jianfeng and Chen, Xiaoxue and Xu, Sicheng and Wang, Ruicheng and Lv, Zelong and Deng, Yu and Zhu, Hongyuan and Dong, Yue and Zhao, Hao and Yuan, Nicholas Jing and Yang, Jiaolong},
+    journal={Tech report},
+    year={2025}
+}</pre>
+					<button type="button" class="lt-btn lt-btn-ghost" id="lt-cite-copy">Copy BibTeX</button>
+				</div>
+				<h3>How we run it</h3>
+				<dl class="lt-runinfo">
+					<dt>GPU</dt><dd>NVIDIA L4 (24 GB), one per instance</dd>
+					<dt>Platform</dt><dd>Google Cloud Run with GPU, region us-central1, scales 0 to 2 instances</dd>
+					<dt>Container</dt><dd>CUDA 12.4 on Ubuntu 22.04, Python 3.10, PyTorch with the O-Voxel and FlexGEMM extensions compiled in the image (<code>workers/model-trellis2</code>)</dd>
+					<dt>Pipeline</dt><dd><code>Trellis2ImageTo3DPipeline</code>, 512 / 1024 / 1536 cascades, background removal, GLB export with baked PBR textures</dd>
+				</dl>
+				<p class="lt-fine">Microsoft and TRELLIS are trademarks of the Microsoft group of companies. three.ws and Microsoft have announced a partnership; this lab is operated by three.ws.</p>
+			</section>
+		</main>
+
+		<script type="module" src="/src/lab-trellis2/main.js"></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>
