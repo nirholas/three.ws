@@ -1,7 +1,7 @@
 # CUDA 12.4 torch wheels carry their own CUDA runtime; Cloud Run's L4 hosts
 # provide the driver. The same image runs on CPU when no GPU is attached.
 --extra-index-url https://download.pytorch.org/whl/cu124
-torch==2.6.0
+torch==2.13.0
 torchvision==0.21.0
 # 4.57 is the first release with the native Florence2ForConditionalGeneration,
 # so the weights load without trust_remote_code.
