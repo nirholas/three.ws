@@ -1,0 +1,10 @@
+Four months in NVIDIA Inception. Here is what runs on NVIDIA at three.ws today:
+
+13 GPU deployments in production, 12 L4 and one RTX PRO 6000 Blackwell
+19,270 3D meshes generated on our own GPUs in 31 days
+3.8 seconds median from a sentence to a talking, lip-synced 3D face, in a browser tab
+98.1% of user rigs driven by a single Audio2Face-3D track
+
+We wrote it all up, including our GTC 2027 poster. @NVIDIAAIDev #NVIDIAInception
+
+three.ws/blog/three-ws-nvidia-inception-gtc-2027
