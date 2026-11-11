@@ -18,7 +18,9 @@
 //             where the GPU verification job (cloudbuild.verify.yaml) reads it
 //   baseline  answer every task with the current default chain: its first
 //             rung (Groq qwen3.8-27b) or, with --baseline groq#120b, the rung
-//             production serves while the first one's daily quota is spent
+//             production serves while the first one's daily quota is spent,
+//             or --baseline nvidia, the rung that answers when both Groq
+//             quotas are spent and the OpenRouter free upstream throttles
 //   judge     blind reference labels for the classifiers and 1-5 rubric scores
 //             for the summaries, by Nemotron Ultra (a third, larger model)
 //   report    score both candidates, print the table and the routing verdict
@@ -45,6 +47,15 @@ const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const BASELINES = {
 	groq: { name: 'groq', model: 'qwen/qwen3.8-27b', url: GROQ_URL, secret: 'groq-api-key', extra: { reasoning_effort: 'none' } },
 	'groq#120b': { name: 'groq#120b', model: 'openai/gpt-oss-120b', url: GROQ_URL, secret: 'groq-api-key', extra: {} },
+	// The NIM rung both chains reach once the Groq daily quotas are spent and
+	// the OpenRouter free upstream throttles: what production serves on such a day.
+	nvidia: {
+		name: 'nvidia',
+		model: 'nvidia/nemotron-3.5-lightning-30b-a3b',
+		url: 'https://integrate.api.nvidia.com/v1/chat/completions',
+		secret: 'nvidia-api-key',
+		extra: { chat_template_kwargs: { enable_thinking: false } },
+	},
 };
 const JUDGE = {
 	name: 'nvidia',
@@ -542,7 +553,7 @@ async function report() {
 
 const steps = { build, baseline, judge, report };
 if (!steps[step]) {
-	console.error('usage: phi-brain-eval.mjs build|baseline|judge|report [--phi <run-id>] [--dir <scratch dir>] [--baseline groq|groq#120b]');
+	console.error('usage: phi-brain-eval.mjs build|baseline|judge|report [--phi <run-id>] [--dir <scratch dir>] [--baseline groq|groq#120b|nvidia]');
 	process.exit(2);
 }
 await steps[step]();
