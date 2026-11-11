@@ -5,7 +5,7 @@ torch==2.6.0
 torchvision==0.21.0
 # 4.57 is the first release with the native Florence2ForConditionalGeneration,
 # so the weights load without trust_remote_code.
-transformers==4.57.6
+transformers==5.10.1
 timm==1.0.15
 einops==0.8.1
 # Noun extraction for caption-derived tags (MIT, model MIT).
