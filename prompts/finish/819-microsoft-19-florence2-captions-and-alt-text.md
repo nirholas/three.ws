@@ -1,5 +1,7 @@
 # microsoft 19: Florence-2 captions, tags and alt text for every 3D creation
 
+Status 2026-11-11: built and verified locally; 6,441 of 54,177 finished creations described on GCP (p50 about 1.5 s, about $0.57 per 1,000). See the 819 entry in [microsoft-PROGRESS.md](_context/microsoft-PROGRESS.md). Waits on the owner: push, deploy the model-florence2 service, set MODEL_FLORENCE2_URL on three-ws-api, deploy the API and sync crons.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3119.
 
 ## Operating clause (binding)
