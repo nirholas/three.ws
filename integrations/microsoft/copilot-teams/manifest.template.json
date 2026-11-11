@@ -15,13 +15,33 @@
   },
   "description": {
     "short": "Generate, rig and view 3D models and avatars from text or a photo.",
-    "full": "three.ws 3D Studio gives Microsoft 365 Copilot and Copilot Studio agents tools that turn a plain-language request or a photo into a textured, downloadable GLB 3D model, auto-rig it for animation, find ready-made CC0 assets, and open the result in an interactive viewer. The free tools need no account. Generation takes 30 to 300 seconds, so the generate tool returns a job id and a second tool checks the job. Two personal tabs open the three.ws 3D viewer and a live directory of three.ws agents inside Microsoft 365,, the Agents search command shares any agent as a live card in a chat, and the Create a 3D model action (or the forge bot command) generates a model in the conversation on a card that updates itself when the model is ready."
+    "full": "three.ws 3D Studio gives Microsoft 365 Copilot and Copilot Studio agents tools that turn a plain-language request or a photo into a textured, downloadable GLB 3D model, auto-rig it for animation, find ready-made CC0 assets, and open the result in an interactive viewer. The free tools need no account. Generation takes 30 to 300 seconds, so the generate tool returns a job id and a second tool checks the job. Two personal tabs open the three.ws 3D viewer and a live directory of three.ws agents inside Microsoft 365, the Agents search command shares any agent as a live card in a chat, and the Create a 3D model action (or the forge bot command) generates a model in the conversation on a card that updates itself when the model is ready. Added to a meeting, the review stage puts one 3D model on the shared meeting stage for everyone: follow the presenter's camera or look around freely, point with a live laser, pin comments to the mesh and export them as markdown, and keep animation playback in sync."
   },
   "icons": {
     "outline": "outline.png",
     "color": "color.png"
   },
   "accentColor": "#080814",
+  "configurableTabs": [
+    {
+      "id": "threews-review-stage",
+      "configurationUrl": "https://three.ws/microsoft/teams-stage?view=config&theme={theme}",
+      "canUpdateConfiguration": true,
+      "scopes": [
+        "groupChat",
+        "team"
+      ],
+      "context": [
+        "meetingSidePanel",
+        "meetingStage",
+        "meetingChatTab"
+      ],
+      "meetingSurfaces": [
+        "sidePanel",
+        "stage"
+      ]
+    }
+  ],
   "staticTabs": [
     {
       "entityId": "threews-viewer",
@@ -64,6 +84,28 @@
   "validDomains": [
     "three.ws"
   ],
+  "authorization": {
+    "permissions": {
+      "resourceSpecific": [
+        {
+          "name": "MeetingStage.Write.Chat",
+          "type": "Delegated"
+        },
+        {
+          "name": "ChannelMeetingStage.Write.Group",
+          "type": "Delegated"
+        },
+        {
+          "name": "LiveShareSession.ReadWrite.Chat",
+          "type": "Delegated"
+        },
+        {
+          "name": "LiveShareSession.ReadWrite.Group",
+          "type": "Delegated"
+        }
+      ]
+    }
+  },
   "bots": [
     {
       "botId": "${MS_TEAMS_BOT_APP_ID}",

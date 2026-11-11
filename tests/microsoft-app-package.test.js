@@ -3,7 +3,10 @@ import { unzipSync } from 'fflate';
 import {
 	assemble,
 	buildManifest,
+	checkMeetingStage,
 	checkTools,
+	STAGE_RSC,
+	STAGE_TAB_ID,
 	main,
 	parseRpcReply,
 	resolveOwnerValues,
@@ -51,6 +54,36 @@ describe('microsoft app package', () => {
 		expect(server.authorization).toEqual({ type: 'AzureKeyVault', referenceId: OWNER.MS_KEYVAULT_URL });
 		expect(manifest.staticTabs[0].contentUrl).toBe('https://three.ws/viewer');
 		expect(manifest.composeExtensions[0].botId).toBe(OWNER.MS_TEAMS_BOT_APP_ID);
+	});
+
+	it('carries the review stage meeting tab and the Live Share RSC permissions', () => {
+		const { manifest } = buildManifest(OWNER);
+		const tab = manifest.configurableTabs.find((t) => t.id === STAGE_TAB_ID);
+		expect(tab.configurationUrl).toBe('https://three.ws/microsoft/teams-stage?view=config&theme={theme}');
+		expect(tab.context).toEqual(expect.arrayContaining(['meetingSidePanel', 'meetingStage']));
+		expect(tab.meetingSurfaces).toEqual(['sidePanel', 'stage']);
+		expect(manifest.authorization.permissions.resourceSpecific.map((p) => p.name)).toEqual(STAGE_RSC);
+		expect(checkMeetingStage(manifest)).toEqual([]);
+	});
+
+	it('names each missing meeting stage entry', () => {
+		const { manifest } = buildManifest(OWNER);
+		expect(checkMeetingStage({ ...manifest, configurableTabs: [] })).toEqual([`configurableTabs needs the "${STAGE_TAB_ID}" meeting tab`]);
+		const tab = manifest.configurableTabs[0];
+		const broken = {
+			...manifest,
+			validDomains: ['example.com'],
+			configurableTabs: [{ ...tab, configurationUrl: 'https://three.ws/viewer', context: ['meetingChatTab'], meetingSurfaces: ['sidePanel'], scopes: ['team'] }],
+			authorization: { permissions: { resourceSpecific: [{ name: 'MeetingStage.Write.Chat', type: 'Application' }] } },
+		};
+		const text = checkMeetingStage(broken).join('\n');
+		expect(text).toContain('configurationUrl must be https://<domain>/microsoft/teams-stage?view=config');
+		expect(text).toContain('host three.ws is not in validDomains');
+		expect(text).toContain('context needs meetingSidePanel');
+		expect(text).toContain('context needs meetingStage');
+		expect(text).toContain('meetingSurfaces needs stage');
+		expect(text).toContain('scopes need groupChat');
+		for (const name of STAGE_RSC) expect(text).toContain(`needs ${name} (Delegated)`);
 	});
 
 	it('rejects a bad GUID, an over-long developer name and a non-vault URL', () => {

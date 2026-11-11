@@ -111,9 +111,47 @@ export function buildManifest(values) {
 	if (!validate(manifest)) {
 		for (const e of validate.errors) problems.push(`manifest schema: ${e.instancePath || '/'} ${e.message}`);
 	}
+	problems.push(...checkMeetingStage(manifest));
 	const bad = nonAscii(JSON.stringify(manifest));
 	if (bad) problems.push(`manifest.json contains a non-ASCII character (${bad})`);
 	return { manifest, problems };
+}
+
+// The Live Share review stage needs a meeting tab on both meeting surfaces and the
+// four RSC permissions Live Share and shareAppContentToStage ask for.
+// https://learn.microsoft.com/en-us/microsoftteams/platform/apps-in-teams-meetings/teams-live-share-overview
+// https://learn.microsoft.com/en-us/microsoftteams/platform/apps-in-teams-meetings/build-apps-for-teams-meeting-stage
+export const STAGE_TAB_ID = 'threews-review-stage';
+export const STAGE_RSC = ['MeetingStage.Write.Chat', 'ChannelMeetingStage.Write.Group', 'LiveShareSession.ReadWrite.Chat', 'LiveShareSession.ReadWrite.Group'];
+
+export function checkMeetingStage(manifest) {
+	const problems = [];
+	const tab = (manifest.configurableTabs || []).find((t) => t.id === STAGE_TAB_ID);
+	if (!tab) return [`configurableTabs needs the "${STAGE_TAB_ID}" meeting tab`];
+	let url = null;
+	try {
+		url = new URL(tab.configurationUrl.replace('{theme}', 'default'));
+	} catch {
+		problems.push(`${STAGE_TAB_ID} configurationUrl is not a URL`);
+	}
+	if (url) {
+		if (url.protocol !== 'https:' || url.pathname !== '/microsoft/teams-stage' || url.searchParams.get('view') !== 'config') {
+			problems.push(`${STAGE_TAB_ID} configurationUrl must be https://<domain>/microsoft/teams-stage?view=config`);
+		}
+		if (!(manifest.validDomains || []).includes(url.hostname)) problems.push(`${STAGE_TAB_ID} configurationUrl host ${url.hostname} is not in validDomains`);
+	}
+	for (const ctx of ['meetingSidePanel', 'meetingStage']) {
+		if (!tab.context?.includes(ctx)) problems.push(`${STAGE_TAB_ID} context needs ${ctx}`);
+	}
+	for (const surface of ['sidePanel', 'stage']) {
+		if (!tab.meetingSurfaces?.includes(surface)) problems.push(`${STAGE_TAB_ID} meetingSurfaces needs ${surface}`);
+	}
+	if (!tab.scopes?.includes('groupChat')) problems.push(`${STAGE_TAB_ID} scopes need groupChat (meetings are group chats)`);
+	const rsc = manifest.authorization?.permissions?.resourceSpecific || [];
+	for (const name of STAGE_RSC) {
+		if (!rsc.some((p) => p.name === name && p.type === 'Delegated')) problems.push(`authorization.permissions.resourceSpecific needs ${name} (Delegated)`);
+	}
+	return problems;
 }
 
 export function checkTools(text) {
@@ -271,7 +309,7 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
 		return 1;
 	}
 	if (check) {
-		console.log(`OK: manifest, schema v1.30, ${JSON.parse(files['mcptools.json']).tools.length} tools, icons and ASCII checks pass (owner values not checked).`);
+		console.log(`OK: manifest, schema v1.30, ${JSON.parse(files['mcptools.json']).tools.length} tools, meeting stage tab and RSC, icons and ASCII checks pass (owner values not checked).`);
 		return 0;
 	}
 	mkdirSync(dirname(outFile), { recursive: true });
