@@ -717,8 +717,16 @@ async function verifyPublic(ffprobeBin, url, expectedSha) {
 	const buf = Buffer.from(await res.arrayBuffer());
 	if (type !== 'video/mp4') problems.push(`${url} is served as ${type}, not video/mp4`);
 	if (sha256(buf) !== expectedSha) problems.push(`${url} does not match the local file's sha256`);
-	const probe = ffprobe(ffprobeBin, url);
-	if (!probe.streams.some((s) => s.codec_type === 'video' && s.codec_name === 'h264')) problems.push(`${url} has no H.264 stream`);
+	// Probe the downloaded bytes, not the URL: a static ffprobe cannot resolve
+	// hostnames (no NSS in a static glibc build) and crashes on https input.
+	const copy = join(WORK, `public-${expectedSha.slice(0, 12)}.mp4`);
+	await writeFile(copy, buf);
+	try {
+		const probe = ffprobe(ffprobeBin, copy);
+		if (!probe.streams.some((s) => s.codec_type === 'video' && s.codec_name === 'h264')) problems.push(`${url} has no H.264 stream`);
+	} finally {
+		await rm(copy, { force: true });
+	}
 	log(`verified ${url}: ${type}, ${sizeLabel(buf.length)}, sha256 matches`);
 }
 
