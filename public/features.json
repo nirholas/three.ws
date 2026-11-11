@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T16:32:12.426Z",
+	"generated_at": "2026-11-11T16:45:13.843Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -8924,6 +8924,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.7,
+					"job": null
+				},
+				{
+					"path": "/docs/minecraft-export",
+					"title": "Docs: Minecraft: Bedrock export",
+					"description": "Turn any Forge model into blocks and download a Bedrock structure pack: height, block palettes, solid or hollow, texture-sampled colors, loading it with a structure block or /function, limits, the API and the CLI. Not an official Minecraft product.",
+					"added": "2026-11-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
 					"job": null
 				},
 				{

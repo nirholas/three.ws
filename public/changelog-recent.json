@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-11T16:34:26.343Z",
+	"generated_at": "2026-11-11T16:45:14.217Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4497,
+	"total": 4500,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -25,6 +25,16 @@
 			"title": "Docs · Microsoft 365 Copilot connector",
 			"summary": "Admin guide for the three.ws Graph connector: consent and its two permissions, who can see indexed agents, models and avatars, what is indexed, sync and throttling, disconnect, errors and their fixes, data handling, the API and the schema.",
 			"link": "/docs/microsoft-365-copilot-connector",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Docs: Minecraft: Bedrock export",
+			"summary": "Turn any Forge model into blocks and download a Bedrock structure pack: height, block palettes, solid or hollow, texture-sampled colors, loading it with a structure block or /function, limits, the API and the CLI. Not an official Minecraft product.",
+			"link": "/docs/minecraft-export",
 			"tags": [
 				"launch"
 			]
@@ -133,12 +143,32 @@
 		{
 			"date": "2026-11-11",
 			"type": "update",
+			"title": "Microsoft Marketplace leads land in three.ws with a reply ready to send",
+			"summary": "When someone asks for a demo, starts a trial or installs three.ws from Microsoft Marketplace, the lead now arrives in three.ws within seconds. It is stored once even if Microsoft retries, the team is notified once, and a reply is drafted from the offer and the person's own message. Nothing is sent automatically: the team reviews the draft, sends it themselves and marks the lead contacted. Do-not-contact requests get no reply, and personal details are deleted on a fixed schedule.",
+			"link": null,
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
 			"title": "Open 3D files from File Explorer and keep your agent in the Edge sidebar",
 			"summary": "The installed three.ws app now opens .glb, .gltf and .vrm files you double-click in Windows File Explorer, reading them on your PC with nothing uploaded unless you press Save to account. web+threews: links from Teams, Outlook or a document open the right agent, model or text to 3D prompt, and a link that is broken or unsafe is explained instead of followed. A second launch reuses the window you already have open, the site header doubles as the title bar when the title bar is hidden, and a new narrow layout at /sidebar puts agent chat, quick text to 3D and your recent models in the Microsoft Edge sidebar.",
 			"link": "/sidebar",
 			"tags": [
 				"feature",
 				"desktop"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "Ready-made Power Automate flows for the three.ws connector",
+			"summary": "The three.ws Power Platform connector now comes with four flow templates: turn a new SharePoint list item into a 3D model and post it to Teams, email a model to whoever fills in a Microsoft Forms request, send a daily digest of your agents and the newest public ones, and let a Teams channel ask your three.ws agent questions. A Copilot Studio agent sample uses the same five actions. Every action now declares the exact response it returns, checked against the live service, and the connector is packaged for Microsoft certification (pending review).",
+			"link": null,
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1505,36 +1535,6 @@
 			"title": "Multiplayer worlds can run on more than one server",
 			"summary": "The multiplayer server now reports whether it shares state with its peers on /health, refuses to boot single-instance when its Redis is configured but unreachable, and forwards friend messages, stage tips and event announcements to whichever instance holds the target. A two-process test and a real-socket load test back it. Turning it on in production needs the Memorystore steps in multiplayer/README.md.",
 			"link": null,
-			"tags": [
-				"infra"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Native launchpad coins get their own page and a one-click buy from SOL",
-			"summary": "Every coin launched on the $THREE curve now opens at /launches/<mint> with its curve progress, price, market cap, recent trades read from chain, the fee schedule and the agent behind it. Holders of only SOL can buy in one transaction: the page swaps SOL to $THREE through Jupiter and buys on the curve, showing the exact total first.",
-			"link": "/three-launchpad",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "NVIDIA Inception startups can apply for free generation credit, and earn more for a shoutout",
-			"summary": "If your startup is in NVIDIA Inception, the NVIDIA page now has a short application for $25 of prepaid credit, usable on the high-quality, game-ready, rigging and motion lanes. Once approved you can post about what you made on X or LinkedIn, paste the link, and earn $10 more after we confirm the post is public. The free text-to-3D lane is unchanged and still needs no account. NVIDIA has no way to verify membership, so a person checks each application and each post. Goes live with the next owner-approved deploy, after its database migration is applied.",
-			"link": "/nvidia",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "One command shows which workers are live",
-			"summary": "npm run workers:fleet lists every worker as live or built-only with instances, GPU, last deploy and test coverage, fails when a README disagrees with Cloud Run, and 11 undeployed workers gained build-only verify configs. Includes a MoMask benchmark script.",
-			"link": "/docs/ops/workers-fleet.md",
 			"tags": [
 				"infra"
 			]

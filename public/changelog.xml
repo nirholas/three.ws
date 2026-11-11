@@ -23,6 +23,14 @@
 			<description>Admin guide for the three.ws Graph connector: consent and its two permissions, who can see indexed agents, models and avatars, what is indexed, sync and throttling, disconnect, errors and their fixes, data handling, the API and the schema.</description>
 		</item>
 		<item>
+			<title>Docs: Minecraft: Bedrock export</title>
+			<link>https://three.ws/docs/minecraft-export</link>
+			<guid isPermaLink="false">2026-11-11:Docs: Minecraft: Bedrock export</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Turn any Forge model into blocks and download a Bedrock structure pack: height, block palettes, solid or hollow, texture-sampled colors, loading it with a structure block or /function, limits, the API and the CLI. Not an official Minecraft product.</description>
+		</item>
+		<item>
 			<title>Microsoft 365 Copilot Connector Settings</title>
 			<link>https://three.ws/settings/microsoft-365</link>
 			<guid isPermaLink="false">2026-11-11:Microsoft 365 Copilot Connector Settings</guid>
@@ -103,12 +111,28 @@
 			<description>The three.ws Teams app can now make 3D models inside a conversation. Choose Create a 3D model from the compose box or a message's menu, or message the bot forge followed by a description. A card shows your prompt, who asked and where the job really is (GPU waking up, queued, rendering), and it turns into the finished model when it is ready: a rendered preview, Open in 3D in the three.ws viewer, Download GLB, and Make a variation for a new take on the same prompt. If a job fails, the card says what went wrong and offers Try again. It runs on the same free text-to-3D lane as the three.ws MCP tools.</description>
 		</item>
 		<item>
+			<title>Microsoft Marketplace leads land in three.ws with a reply ready to send</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-11:Microsoft Marketplace leads land in three.ws with a reply ready to send</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>When someone asks for a demo, starts a trial or installs three.ws from Microsoft Marketplace, the lead now arrives in three.ws within seconds. It is stored once even if Microsoft retries, the team is notified once, and a reply is drafted from the offer and the person's own message. Nothing is sent automatically: the team reviews the draft, sends it themselves and marks the lead contacted. Do-not-contact requests get no reply, and personal details are deleted on a fixed schedule.</description>
+		</item>
+		<item>
 			<title>Open 3D files from File Explorer and keep your agent in the Edge sidebar</title>
 			<link>https://three.ws/sidebar</link>
 			<guid isPermaLink="false">2026-11-11:Open 3D files from File Explorer and keep your agent in the Edge sidebar</guid>
 			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The installed three.ws app now opens .glb, .gltf and .vrm files you double-click in Windows File Explorer, reading them on your PC with nothing uploaded unless you press Save to account. web+threews: links from Teams, Outlook or a document open the right agent, model or text to 3D prompt, and a link that is broken or unsafe is explained instead of followed. A second launch reuses the window you already have open, the site header doubles as the title bar when the title bar is hidden, and a new narrow layout at /sidebar puts agent chat, quick text to 3D and your recent models in the Microsoft Edge sidebar.</description>
+		</item>
+		<item>
+			<title>Ready-made Power Automate flows for the three.ws connector</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-11:Ready-made Power Automate flows for the three.ws connector</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The three.ws Power Platform connector now comes with four flow templates: turn a new SharePoint list item into a 3D model and post it to Teams, email a model to whoever fills in a Microsoft Forms request, send a daily digest of your agents and the newest public ones, and let a Teams channel ask your three.ws agent questions. A Copilot Studio agent sample uses the same five actions. Every action now declares the exact response it returns, checked against the live service, and the connector is packaged for Microsoft certification (pending review).</description>
 		</item>
 		<item>
 			<title>Docs · Robinhood Crypto connector</title>
