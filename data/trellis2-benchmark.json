@@ -1,0 +1,557 @@
+{
+	"generated_at": "2026-11-11T16:13:36.946Z",
+	"source": "forge_creations (production database), read-only",
+	"window": {
+		"from": "2026-10-12T16:13:36.268Z",
+		"to": "2026-11-11T16:13:36.268Z",
+		"days": 30
+	},
+	"method": {
+		"e2e": "completed_at minus created_at on done rows; nearest-rank percentiles",
+		"failure_rate": "failed / (done + failed); generating rows excluded",
+		"output_bytes": "size_bytes on done rows; nearest-rank percentiles",
+		"queue_and_gpu": "queue_ms and gpu_ms as reported by the serving worker (TRELLIS.2); groups with none recorded say not measured",
+		"presets": "trellis2 lane rows grouped by the voxel_resolution the worker reported"
+	},
+	"row_count": 8433,
+	"lane_count": 8,
+	"trellis2_rows": 0,
+	"presets": {
+		"fast_draft": {
+			"resolution": 512,
+			"rows": 0,
+			"done": 0,
+			"e2e_seconds": "not measured",
+			"gpu_seconds": "not measured",
+			"queue_seconds": "not measured"
+		},
+		"balanced": {
+			"resolution": 1024,
+			"rows": 0,
+			"done": 0,
+			"e2e_seconds": "not measured",
+			"gpu_seconds": "not measured",
+			"queue_seconds": "not measured"
+		},
+		"maximum_detail": {
+			"resolution": 1536,
+			"rows": 0,
+			"done": 0,
+			"e2e_seconds": "not measured",
+			"gpu_seconds": "not measured",
+			"queue_seconds": "not measured"
+		}
+	},
+	"lanes": [
+		{
+			"lane": "trellis_selfhost",
+			"rows": 5790,
+			"done": 3344,
+			"failed": 2442,
+			"in_flight": 4,
+			"failure_rate": 0.4221,
+			"e2e_seconds": {
+				"n": 3344,
+				"p50": 199.2,
+				"p90": 1202.1,
+				"p99": 2735.8
+			},
+			"e2e_missing": 0,
+			"queue_seconds": "not measured",
+			"gpu_seconds": "not measured",
+			"output_bytes": {
+				"n": 3344,
+				"p50": 5149040,
+				"p90": 10317152,
+				"p99": 21602792
+			},
+			"tiers": {
+				"standard": {
+					"rows": 2877,
+					"done": 1833,
+					"failed": 1043,
+					"in_flight": 1,
+					"failure_rate": 0.3627,
+					"e2e_seconds": {
+						"n": 1833,
+						"p50": 250.2,
+						"p90": 1318.6,
+						"p99": 2746.3
+					},
+					"e2e_missing": 0,
+					"queue_seconds": "not measured",
+					"gpu_seconds": "not measured",
+					"output_bytes": {
+						"n": 1833,
+						"p50": 6350092,
+						"p90": 9106496,
+						"p99": 13801384
+					}
+				},
+				"draft": {
+					"rows": 2433,
+					"done": 1253,
+					"failed": 1177,
+					"in_flight": 3,
+					"failure_rate": 0.4844,
+					"e2e_seconds": {
+						"n": 1253,
+						"p50": 136,
+						"p90": 765.7,
+						"p99": 2548.1
+					},
+					"e2e_missing": 0,
+					"queue_seconds": "not measured",
+					"gpu_seconds": "not measured",
+					"output_bytes": {
+						"n": 1253,
+						"p50": 1592120,
+						"p90": 1979044,
+						"p99": 2807504
+					}
+				},
+				"high": {
+					"rows": 480,
+					"done": 258,
+					"failed": 222,
+					"in_flight": 0,
+					"failure_rate": 0.4625,
+					"e2e_seconds": {
+						"n": 258,
+						"p50": 607.6,
+						"p90": 1627.6,
+						"p99": 9955.2
+					},
+					"e2e_missing": 0,
+					"queue_seconds": "not measured",
+					"gpu_seconds": "not measured",
+					"output_bytes": {
+						"n": 258,
+						"p50": 17984712,
+						"p90": 22176916,
+						"p99": 27297004
+					}
+				}
+			},
+			"resolutions": {}
+		},
+		{
+			"lane": "unrecorded",
+			"rows": 1279,
+			"done": 517,
+			"failed": 762,
+			"in_flight": 0,
+			"failure_rate": 0.5958,
+			"e2e_seconds": {
+				"n": 517,
+				"p50": 61.8,
+				"p90": 123.5,
+				"p99": 928.1
+			},
+			"e2e_missing": 0,
+			"queue_seconds": "not measured",
+			"gpu_seconds": "not measured",
+			"output_bytes": {
+				"n": 517,
+				"p50": 5291584,
+				"p90": 23514440,
+				"p99": 43154420
+			},
+			"tiers": {
+				"unrecorded": {
+					"rows": 1279,
+					"done": 517,
+					"failed": 762,
+					"in_flight": 0,
+					"failure_rate": 0.5958,
+					"e2e_seconds": {
+						"n": 517,
+						"p50": 61.8,
+						"p90": 123.5,
+						"p99": 928.1
+					},
+					"e2e_missing": 0,
+					"queue_seconds": "not measured",
+					"gpu_seconds": "not measured",
+					"output_bytes": {
+						"n": 517,
+						"p50": 5291584,
+						"p90": 23514440,
+						"p99": 43154420
+					}
+				}
+			},
+			"resolutions": {}
+		},
+		{
+			"lane": "nvidia",
+			"rows": 758,
+			"done": 378,
+			"failed": 379,
+			"in_flight": 1,
+			"failure_rate": 0.5007,
+			"e2e_seconds": {
+				"n": 378,
+				"p50": 2.4,
+				"p90": 3.9,
+				"p99": 45.2
+			},
+			"e2e_missing": 0,
+			"queue_seconds": "not measured",
+			"gpu_seconds": "not measured",
+			"output_bytes": {
+				"n": 378,
+				"p50": 1994776,
+				"p90": 2738976,
+				"p99": 3423296
+			},
+			"tiers": {
+				"standard": {
+					"rows": 435,
+					"done": 208,
+					"failed": 226,
+					"in_flight": 1,
+					"failure_rate": 0.5207,
+					"e2e_seconds": {
+						"n": 208,
+						"p50": 2.5,
+						"p90": 5.4,
+						"p99": 21.7
+					},
+					"e2e_missing": 0,
+					"queue_seconds": "not measured",
+					"gpu_seconds": "not measured",
+					"output_bytes": {
+						"n": 208,
+						"p50": 2126384,
+						"p90": 2819200,
+						"p99": 3423296
+					}
+				},
+				"draft": {
+					"rows": 285,
+					"done": 150,
+					"failed": 135,
+					"in_flight": 0,
+					"failure_rate": 0.4737,
+					"e2e_seconds": {
+						"n": 150,
+						"p50": 2.2,
+						"p90": 3.3,
+						"p99": 190.6
+					},
+					"e2e_missing": 0,
+					"queue_seconds": "not measured",
+					"gpu_seconds": "not measured",
+					"output_bytes": {
+						"n": 150,
+						"p50": 1922264,
+						"p90": 2499512,
+						"p99": 3052904
+					}
+				},
+				"high": {
+					"rows": 38,
+					"done": 20,
+					"failed": 18,
+					"in_flight": 0,
+					"failure_rate": 0.4737,
+					"e2e_seconds": {
+						"n": 20,
+						"p50": 2,
+						"p90": 3,
+						"p99": 3.9
+					},
+					"e2e_missing": 0,
+					"queue_seconds": "not measured",
+					"gpu_seconds": "not measured",
+					"output_bytes": {
+						"n": 20,
+						"p50": 1866596,
+						"p90": 2123668,
+						"p99": 2802820
+					}
+				}
+			},
+			"resolutions": {}
+		},
+		{
+			"lane": "triposg",
+			"rows": 436,
+			"done": 339,
+			"failed": 95,
+			"in_flight": 2,
+			"failure_rate": 0.2189,
+			"e2e_seconds": {
+				"n": 339,
+				"p50": 126.9,
+				"p90": 290.8,
+				"p99": 597.6
+			},
+			"e2e_missing": 0,
+			"queue_seconds": "not measured",
+			"gpu_seconds": "not measured",
+			"output_bytes": {
+				"n": 339,
+				"p50": 406092,
+				"p90": 3601228,
+				"p99": 3604652
+			},
+			"tiers": {
+				"standard": {
+					"rows": 290,
+					"done": 237,
+					"failed": 52,
+					"in_flight": 1,
+					"failure_rate": 0.1799,
+					"e2e_seconds": {
+						"n": 237,
+						"p50": 112.9,
+						"p90": 301.8,
+						"p99": 601.3
+					},
+					"e2e_missing": 0,
+					"queue_seconds": "not measured",
+					"gpu_seconds": "not measured",
+					"output_bytes": {
+						"n": 237,
+						"p50": 406092,
+						"p90": 408972,
+						"p99": 497576
+					}
+				},
+				"high": {
+					"rows": 84,
+					"done": 53,
+					"failed": 31,
+					"in_flight": 0,
+					"failure_rate": 0.369,
+					"e2e_seconds": {
+						"n": 53,
+						"p50": 139.7,
+						"p90": 250.3,
+						"p99": 304.1
+					},
+					"e2e_missing": 0,
+					"queue_seconds": "not measured",
+					"gpu_seconds": "not measured",
+					"output_bytes": {
+						"n": 53,
+						"p50": 3601316,
+						"p90": 3602800,
+						"p99": 3617764
+					}
+				},
+				"draft": {
+					"rows": 62,
+					"done": 49,
+					"failed": 12,
+					"in_flight": 1,
+					"failure_rate": 0.1967,
+					"e2e_seconds": {
+						"n": 49,
+						"p50": 178.2,
+						"p90": 307.3,
+						"p99": 597.6
+					},
+					"e2e_missing": 0,
+					"queue_seconds": "not measured",
+					"gpu_seconds": "not measured",
+					"output_bytes": {
+						"n": 49,
+						"p50": 217064,
+						"p90": 217352,
+						"p99": 221172
+					}
+				}
+			},
+			"resolutions": {}
+		},
+		{
+			"lane": "gcp",
+			"rows": 102,
+			"done": 102,
+			"failed": 0,
+			"in_flight": 0,
+			"failure_rate": 0,
+			"e2e_seconds": "not measured",
+			"e2e_missing": 102,
+			"queue_seconds": "not measured",
+			"gpu_seconds": "not measured",
+			"output_bytes": {
+				"n": 102,
+				"p50": 2930248,
+				"p90": 21650644,
+				"p99": 23445128
+			},
+			"tiers": {
+				"unrecorded": {
+					"rows": 102,
+					"done": 102,
+					"failed": 0,
+					"in_flight": 0,
+					"failure_rate": 0,
+					"e2e_seconds": "not measured",
+					"e2e_missing": 102,
+					"queue_seconds": "not measured",
+					"gpu_seconds": "not measured",
+					"output_bytes": {
+						"n": 102,
+						"p50": 2930248,
+						"p90": 21650644,
+						"p99": 23445128
+					}
+				}
+			},
+			"resolutions": {}
+		},
+		{
+			"lane": "pixal3d",
+			"rows": 59,
+			"done": 0,
+			"failed": 59,
+			"in_flight": 0,
+			"failure_rate": 1,
+			"e2e_seconds": "not measured",
+			"e2e_missing": 0,
+			"queue_seconds": "not measured",
+			"gpu_seconds": "not measured",
+			"output_bytes": "not measured",
+			"tiers": {
+				"standard": {
+					"rows": 56,
+					"done": 0,
+					"failed": 56,
+					"in_flight": 0,
+					"failure_rate": 1,
+					"e2e_seconds": "not measured",
+					"e2e_missing": 0,
+					"queue_seconds": "not measured",
+					"gpu_seconds": "not measured",
+					"output_bytes": "not measured"
+				},
+				"draft": {
+					"rows": 2,
+					"done": 0,
+					"failed": 2,
+					"in_flight": 0,
+					"failure_rate": 1,
+					"e2e_seconds": "not measured",
+					"e2e_missing": 0,
+					"queue_seconds": "not measured",
+					"gpu_seconds": "not measured",
+					"output_bytes": "not measured"
+				},
+				"high": {
+					"rows": 1,
+					"done": 0,
+					"failed": 1,
+					"in_flight": 0,
+					"failure_rate": 1,
+					"e2e_seconds": "not measured",
+					"e2e_missing": 0,
+					"queue_seconds": "not measured",
+					"gpu_seconds": "not measured",
+					"output_bytes": "not measured"
+				}
+			},
+			"resolutions": {}
+		},
+		{
+			"lane": "hunyuan3d",
+			"rows": 8,
+			"done": 8,
+			"failed": 0,
+			"in_flight": 0,
+			"failure_rate": 0,
+			"e2e_seconds": {
+				"n": 8,
+				"p50": 57.6,
+				"p90": 140.8,
+				"p99": 140.8
+			},
+			"e2e_missing": 0,
+			"queue_seconds": "not measured",
+			"gpu_seconds": "not measured",
+			"output_bytes": {
+				"n": 8,
+				"p50": 5352060,
+				"p90": 5735444,
+				"p99": 5735444
+			},
+			"tiers": {
+				"standard": {
+					"rows": 8,
+					"done": 8,
+					"failed": 0,
+					"in_flight": 0,
+					"failure_rate": 0,
+					"e2e_seconds": {
+						"n": 8,
+						"p50": 57.6,
+						"p90": 140.8,
+						"p99": 140.8
+					},
+					"e2e_missing": 0,
+					"queue_seconds": "not measured",
+					"gpu_seconds": "not measured",
+					"output_bytes": {
+						"n": 8,
+						"p50": 5352060,
+						"p90": 5735444,
+						"p99": 5735444
+					}
+				}
+			},
+			"resolutions": {}
+		},
+		{
+			"lane": "stability",
+			"rows": 1,
+			"done": 1,
+			"failed": 0,
+			"in_flight": 0,
+			"failure_rate": 0,
+			"e2e_seconds": {
+				"n": 1,
+				"p50": 1.5,
+				"p90": 1.5,
+				"p99": 1.5
+			},
+			"e2e_missing": 0,
+			"queue_seconds": "not measured",
+			"gpu_seconds": "not measured",
+			"output_bytes": {
+				"n": 1,
+				"p50": 557708,
+				"p90": 557708,
+				"p99": 557708
+			},
+			"tiers": {
+				"standard": {
+					"rows": 1,
+					"done": 1,
+					"failed": 0,
+					"in_flight": 0,
+					"failure_rate": 0,
+					"e2e_seconds": {
+						"n": 1,
+						"p50": 1.5,
+						"p90": 1.5,
+						"p99": 1.5
+					},
+					"e2e_missing": 0,
+					"queue_seconds": "not measured",
+					"gpu_seconds": "not measured",
+					"output_bytes": {
+						"n": 1,
+						"p50": 557708,
+						"p90": 557708,
+						"p99": 557708
+					}
+				}
+			},
+			"resolutions": {}
+		}
+	]
+}

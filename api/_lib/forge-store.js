@@ -745,7 +745,39 @@ export function buildLodVariant({ buffer, creationId, keyPrefix }) {
 //              Off by default: it is real decimation work, worth its own opt-in
 //              exactly like forge-options.js documents. Fire-and-forget, same
 //              as the web-delivery variant it sits beside.
-export async function materializeCreation({ replicateJobId, clientKey, glbUrl, quality = false, compress = null, cleanup = true, derivePbr = true, bbox = null, lods = false }) {
+// Persist the serving worker's own measurements (TRELLIS.2 reports them): the
+// voxel resolution that actually ran, time spent queued behind other tasks,
+// and GPU time. Only finite numbers the worker sent are written, so a lane
+// that reports nothing leaves the columns null ("not measured") instead of
+// zero. Telemetry never blocks delivery: a failed write is logged and dropped.
+export function workerStatsColumns(stats) {
+	if (!stats || typeof stats !== 'object') return null;
+	const int = (v, max) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= max ? Math.round(v) : null);
+	const cols = {
+		voxel_resolution: int(stats.resolution_served ?? stats.resolution, 4096),
+		queue_ms: int(stats.queue_ms, 2_147_483_647),
+		gpu_ms: int(stats.gpu_ms, 2_147_483_647),
+	};
+	return Object.values(cols).some((v) => v !== null) ? cols : null;
+}
+
+async function recordWorkerStats(id, stats) {
+	const cols = workerStatsColumns(stats);
+	if (!cols) return;
+	try {
+		await sql`
+			update forge_creations
+			set voxel_resolution = ${cols.voxel_resolution},
+				queue_ms = ${cols.queue_ms},
+				gpu_ms = ${cols.gpu_ms}
+			where id = ${id}
+		`;
+	} catch (err) {
+		console.error('[forge-store] worker stats write failed:', err?.message);
+	}
+}
+
+export async function materializeCreation({ replicateJobId, clientKey, glbUrl, quality = false, compress = null, cleanup = true, derivePbr = true, bbox = null, lods = false, workerStats = null }) {
 	if (!forgeStoreEnabled() || !replicateJobId || !glbUrl) return null;
 	const existing = await findByJob({ replicateJobId, clientKey });
 	if (!existing) return null;
@@ -814,6 +846,7 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 				updated_at = now()
 			where id = ${existing.id} and client_key = ${clientKey}
 		`;
+		await recordWorkerStats(existing.id, workerStats);
 		// Terminal success — the one universal completion writer every lane (free
 		// HF, async Replicate poll, BYOK) flows through, so it's where the rolling
 		// success/latency counters are recorded. Latency is wall-clock from the row's
@@ -1110,7 +1143,7 @@ export async function getPublicCreation({ id, voterKey = null }) {
 	try {
 		const rows = await sql`
 			select fc.id, fc.prompt, fc.aspect, fc.glb_url, fc.web_glb_url, fc.web_size_bytes,
-				fc.preview_image_url, fc.outcome,
+				fc.preview_image_url, fc.outcome, fc.visibility,
 				fc.views_used, fc.multiview, fc.backend, fc.tier, fc.path, fc.model_category, fc.created_at,
 				fc.x402_payer, fc.x402_tx_sig, fc.x402_price_atomic,
 				fc.vote_count, fc.size_bytes, fc.remixable, fc.remix_royalty_bps,
@@ -1151,6 +1184,9 @@ export async function getPublicCreation({ id, voterKey = null }) {
 			web_size_bytes: r.web_size_bytes ?? null,
 			preview_image_url: normalizeStoredUrl(r.preview_image_url),
 			outcome: r.outcome,
+			// 'public' or 'unlisted' (private rows never reach here). A null is a
+			// legacy row from before the column, which the gallery treats as public.
+			visibility: r.visibility ?? 'public',
 			views_used: r.views_used ?? null,
 			multiview: r.multiview ?? null,
 			backend: r.backend ?? null,

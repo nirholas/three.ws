@@ -3355,6 +3355,7 @@ async function pollJob(req, res, jobId) {
 			derivePbr: boundOpts?.derivePbr !== false,
 			bbox: boundOpts?.bbox ?? null,
 			lods: boundOpts?.lods === true,
+			workerStats: result.workerStats ?? null,
 		});
 		// Populate the result cache this job was bound to at submit time (text→3D,
 		// non-high-tier, platform-keyed lanes only: see forgeResultCacheKey). A
