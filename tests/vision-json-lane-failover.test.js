@@ -129,8 +129,10 @@ describe('reasoning lanes are told not to think', () => {
 
 		// The parameter is host-specific: on NVIDIA's own lane it is a no-op, so
 		// it must not be sent there and imply a protection that is not real.
-		const nim = bodies.find((b) => String(b.model).includes('llama-3.2') && !String(b.model).startsWith('@cf/'));
+		// NIM's lane switches thinking off through its own chat template instead.
+		const nim = bodies.find((b) => b.model === 'nvidia/nemotron-3.5-super-vl-120b-a12b');
 		expect(nim).toBeDefined();
 		expect(nim.reasoning).toBeUndefined();
+		expect(nim.chat_template_kwargs).toEqual({ enable_thinking: false });
 	});
 });

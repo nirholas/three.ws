@@ -228,16 +228,16 @@ describe('compose-photo input guards', () => {
 	});
 
 	it('only treats https URLs on our own public storage as ours', () => {
-		expect(isOwnStorageUrl('https://cdn.three.ws/forge/uploads/a.jpg', 'https://cdn.three.ws')).toBe(true);
-		expect(isOwnStorageUrl('https://cdn.three.ws/a.jpg', 'cdn.three.ws')).toBe(true);
-		expect(isOwnStorageUrl('https://evil.example/a.jpg', 'https://cdn.three.ws')).toBe(false);
-		expect(isOwnStorageUrl('http://cdn.three.ws/a.jpg', 'https://cdn.three.ws')).toBe(false);
-		expect(isOwnStorageUrl('https://cdn.three.ws/a.jpg', '')).toBe(false);
+		expect(isOwnStorageUrl('https://media.example.org/forge/uploads/a.jpg', 'https://media.example.org')).toBe(true);
+		expect(isOwnStorageUrl('https://media.example.org/a.jpg', 'media.example.org')).toBe(true);
+		expect(isOwnStorageUrl('https://evil.example/a.jpg', 'https://media.example.org')).toBe(false);
+		expect(isOwnStorageUrl('http://media.example.org/a.jpg', 'https://media.example.org')).toBe(false);
+		expect(isOwnStorageUrl('https://media.example.org/a.jpg', '')).toBe(false);
 	});
 
 	it('keeps only own-storage photo links on a world being saved', () => {
-		const own = 'https://cdn.three.ws/forge/uploads/room.jpg';
-		const crop = 'https://cdn.three.ws/forge/uploads/lamp.jpg';
+		const own = 'https://media.example.org/forge/uploads/room.jpg';
+		const crop = 'https://media.example.org/forge/uploads/lamp.jpg';
 		const world = {
 			title: 'Desk',
 			sourceImage: 'https://evil.example/tracker.jpg',
@@ -247,15 +247,15 @@ describe('compose-photo input guards', () => {
 				{ id: 'c', prompt: 'a mug' },
 			],
 		};
-		const out = stripForeignPhotos(world, 'https://cdn.three.ws');
+		const out = stripForeignPhotos(world, 'https://media.example.org');
 		expect(out).not.toHaveProperty('sourceImage');
 		expect(out.objects[0].refImage).toBe(crop);
 		expect(out.objects[1]).not.toHaveProperty('refImage');
 		expect(out.objects[2]).toEqual({ id: 'c', prompt: 'a mug' });
 		expect(world.sourceImage).toBe('https://evil.example/tracker.jpg');
-		expect(stripForeignPhotos({ ...world, sourceImage: own }, 'https://cdn.three.ws').sourceImage).toBe(own);
+		expect(stripForeignPhotos({ ...world, sourceImage: own }, 'https://media.example.org').sourceImage).toBe(own);
 		expect(stripForeignPhotos({ ...world, sourceImage: own }, '')).not.toHaveProperty('sourceImage');
-		expect(stripForeignPhotos(null, 'https://cdn.three.ws')).toBe(null);
+		expect(stripForeignPhotos(null, 'https://media.example.org')).toBe(null);
 	});
 });
 
