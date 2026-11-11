@@ -715,3 +715,5 @@ sdk-dotnet/**/bin/
 sdk-dotnet/**/obj/
 integrations/microsoft/semantic-kernel-python/**/*.egg-info/
 integrations/microsoft/semantic-kernel-python/dist/
+integrations/microsoft/agent-framework/dotnet/bin/
+integrations/microsoft/agent-framework/dotnet/obj/
