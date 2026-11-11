@@ -1,5 +1,7 @@
 # microsoft 06: export any Forge model as a Minecraft: Bedrock Edition structure pack
 
+Status 2026-11-11: built and verified (commits bfaa8f6f7, 3f1094c01, 331aab947, 9c9c66912, cc0b01f64). Waits on the owner: import the three sample packs in Bedrock, then push and deploy.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3106.
 
 ## Operating clause (binding)
