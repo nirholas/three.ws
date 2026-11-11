@@ -171,6 +171,8 @@ export async function startForge(base, { prompt, imageUrls, aspect, backend, pat
 
 	let res;
 	let data;
+	// The tier the latest attempt actually ran at, so a degraded submit never degrades twice.
+	let ran = tier;
 	try {
 		({ res, data } = await attempt(tier, !!internal));
 	} catch (err) {
@@ -188,12 +190,24 @@ export async function startForge(base, { prompt, imageUrls, aspect, backend, pat
 		// async standard router; other tiers retry as submitted.
 		if (tier === 'high' && strictTier)
 			throw failure('tier_unavailable', 'the high-detail lane did not accept the job in time; try again shortly', { retryAfter: 30 });
-		if (tier === 'high') ({ res, data } = await attempt('standard', false));
-		else ({ res, data } = await attempt(tier, !!internal));
+		if (tier === 'high') {
+			ran = 'standard';
+			({ res, data } = await attempt('standard', false));
+		} else ({ res, data } = await attempt(tier, !!internal));
 	}
-	if (res.status === 402 && tier === 'high' && strictTier)
+	if (res.status === 402 && ran === 'high' && strictTier)
 		throw failure('tier_unavailable', 'the high-detail lane is not accepting operator-funded jobs right now; try again shortly', { retryAfter: 60 });
-	if (res.status === 402 && tier === 'high') ({ res, data } = await attempt('standard', false));
+	if (res.status === 402 && ran === 'high') {
+		ran = 'standard';
+		({ res, data } = await attempt('standard', false));
+	}
+	// No lane could serve high (502 "no reconstruct lane configured", or another
+	// upstream 5xx other than the deployment-wide 503): the standard router has its
+	// own lanes, so a free caller still gets a model and a paid one keeps its money.
+	const highLaneDown = ran === 'high' && res.status >= 500 && res.status !== 503;
+	if (highLaneDown && strictTier)
+		throw failure('tier_unavailable', 'the high-detail lane is unavailable right now; try again shortly', { retryAfter: 60 });
+	if (highLaneDown) ({ res, data } = await attempt('standard', false));
 	if (res.status === 503) throw failure('not_configured', data?.message || '3D generation is not configured on this deployment');
 	if (res.status === 429) throw failure('busy', data?.message || 'the 3D generator is busy; try again shortly', { retryAfter: data?.retry_after });
 	const completedSync = data?.status === 'done' && data?.glb_url;
