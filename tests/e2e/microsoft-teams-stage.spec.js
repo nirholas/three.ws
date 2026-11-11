@@ -215,7 +215,7 @@ test('two participants share camera follow, presence, pins and animation both wa
 	const boxA = await a.getByTestId('stage-canvas').boundingBox();
 	await a.mouse.move(boxA.x + boxA.width / 2, boxA.y + boxA.height / 2 - 20);
 	await a.mouse.move(boxA.x + boxA.width / 2 + 4, boxA.y + boxA.height / 2 - 10);
-	await expect(b.locator('[data-testid="laser"][data-name="Ada Lovelace"]')).toBeVisible({ timeout: 20_000 });
+	await expect(b.locator('[data-testid="laser"][data-name="Ada Lovelace"] .rs-laser-dot')).toBeVisible({ timeout: 20_000 });
 
 	// Camera follow, Bo takes control: Ada follows Bo.
 	await b.getByTestId('follow-primary').click();
@@ -228,7 +228,7 @@ test('two participants share camera follow, presence, pins and animation both wa
 	const boxB = await b.getByTestId('stage-canvas').boundingBox();
 	await b.mouse.move(boxB.x + boxB.width / 2, boxB.y + boxB.height / 2);
 	await b.mouse.move(boxB.x + boxB.width / 2 + 4, boxB.y + boxB.height / 2 + 6);
-	await expect(a.locator('[data-testid="laser"][data-name="Bo Chen"]')).toBeVisible({ timeout: 20_000 });
+	await expect(a.locator('[data-testid="laser"][data-name="Bo Chen"] .rs-laser-dot')).toBeVisible({ timeout: 20_000 });
 
 	// Export: the markdown carries both pins with their authors.
 	await a.getByTestId('pins-toggle').click();
