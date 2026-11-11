@@ -257,6 +257,7 @@ describe('summarizeForgeOptions', () => {
 			lods: false,
 			bbox: null,
 			pose: null,
+			sampler: null,
 		});
 	});
 

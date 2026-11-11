@@ -285,6 +285,9 @@ function buildWorkerRequest(request) {
 		// The worker clamps both (512 to 4096 px, 50k to 2M faces).
 		if (Number.isFinite(Number(params?.texture_size))) body.texture_size = Math.round(Number(params.texture_size));
 		if (Number.isFinite(Number(params?.decimation_target))) body.decimation_target = Math.round(Number(params.decimation_target));
+		// Per-stage sampler overrides, validated in forge-options.js and clamped
+		// again by the worker. Absent keeps the upstream pipeline.json defaults.
+		if (params?.sampler && typeof params.sampler === 'object') body.sampler = params.sampler;
 		return {
 			path: '/infer',
 			resultKey: 'result_gcs_url',
@@ -959,6 +962,16 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 					result.rigged = true;
 					if (typeof data.joint_count === 'number') result.jointCount = data.joint_count;
 				}
+				// Measured per-task telemetry (TRELLIS.2 reports it): real queue and
+				// GPU time plus the parameters that actually ran. Only numbers the
+				// worker sent are copied, so an older revision yields no stats
+				// rather than zeros that look measured.
+				const stats = {};
+				for (const k of ['queue_ms', 'gpu_ms', 'elapsed_ms', 'bytes', 'resolution', 'resolution_served']) {
+					if (typeof data[k] === 'number' && Number.isFinite(data[k])) stats[k] = data[k];
+				}
+				if (data.params && typeof data.params === 'object' && !Array.isArray(data.params)) stats.params = data.params;
+				if (Object.keys(stats).length) result.workerStats = stats;
 				// Surface remesh telemetry so callers can show topology stats.
 				if (mode === 'remesh') {
 					if (typeof data.face_count === 'number') result.faceCount = data.face_count;

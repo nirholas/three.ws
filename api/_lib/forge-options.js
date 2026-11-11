@@ -56,6 +56,53 @@ const BBOX_MIN = 0.01; // meters - below this a "fit" is numerically meaningless
 const BBOX_MAX = 50; // meters - above this a caller almost certainly meant cm/mm
 export const POSE_VALUES = Object.freeze(['t', 'a', 'none']);
 
+// TRELLIS.2 per-stage flow sampler overrides (workers/model-trellis2
+// request_policy.py SAMPLER_*). The worker clamps too; validating here turns a
+// typo into a field-level 422 instead of a silently different generation.
+export const SAMPLER_STAGES = Object.freeze(['sparse_structure', 'shape_slat', 'tex_slat']);
+export const SAMPLER_STEPS_RANGE = Object.freeze([1, 50]);
+export const SAMPLER_GUIDANCE_RANGE = Object.freeze([0, 15]);
+
+function normalizeSampler(raw, errors) {
+	if (raw === undefined || raw === null) return null;
+	const fail = (message) => {
+		errors.push({ field: 'sampler', message });
+		return null;
+	};
+	if (typeof raw !== 'object' || Array.isArray(raw)) {
+		return fail(`sampler must be an object keyed by stage (${SAMPLER_STAGES.join(', ')}).`);
+	}
+	const out = {};
+	for (const [stage, block] of Object.entries(raw)) {
+		if (!SAMPLER_STAGES.includes(stage)) {
+			return fail(`Unknown sampler stage "${stage}". Use one of: ${SAMPLER_STAGES.join(', ')}.`);
+		}
+		if (!block || typeof block !== 'object' || Array.isArray(block)) {
+			return fail(`sampler.${stage} must be an object with steps and/or guidance_strength.`);
+		}
+		const clean = {};
+		for (const [key, value] of Object.entries(block)) {
+			if (key === 'steps') {
+				const [lo, hi] = SAMPLER_STEPS_RANGE;
+				if (!Number.isInteger(value) || value < lo || value > hi) {
+					return fail(`sampler.${stage}.steps must be an integer between ${lo} and ${hi}.`);
+				}
+				clean.steps = value;
+			} else if (key === 'guidance_strength') {
+				const [lo, hi] = SAMPLER_GUIDANCE_RANGE;
+				if (typeof value !== 'number' || !Number.isFinite(value) || value < lo || value > hi) {
+					return fail(`sampler.${stage}.guidance_strength must be a number between ${lo} and ${hi}.`);
+				}
+				clean.guidance_strength = value;
+			} else {
+				return fail(`sampler.${stage}.${key} is not adjustable. Use steps or guidance_strength.`);
+			}
+		}
+		if (Object.keys(clean).length) out[stage] = clean;
+	}
+	return Object.keys(out).length ? out : null;
+}
+
 function compressionFor(format) {
 	if (format === 'glb-draco') return 'draco';
 	if (format === 'glb-meshopt') return 'meshopt';
@@ -80,6 +127,7 @@ function compressionFor(format) {
  *   lods: boolean,               // build and store a real MSFT_lod chain, opt-in
  *   bbox: [number, number, number] | null,  // [x, y, z] meters, post-gen fit
  *   pose: 't' | 'a' | null,      // requested rest pose, text-conditioned lanes only
+ *   sampler: object | null,      // TRELLIS.2 per-stage {steps, guidance_strength}
  *   hasOptions: boolean,         // true iff any non-default option was supplied
  *   errors: Array<{ field: string, message: string }>,
  * }}
@@ -271,7 +319,11 @@ export function normalizeForgeOptions(body) {
 		else errors.push({ field: 'pose', message: `pose must be one of: ${POSE_VALUES.join(', ')}.` });
 	}
 
+	// sampler: TRELLIS.2 per-stage flow sampler overrides (the lab's controls).
+	const sampler = normalizeSampler(b.sampler, errors);
+
 	const hasOptions =
+		sampler !== null ||
 		seed !== null ||
 		outputFormat !== 'glb' ||
 		textureSize !== null ||
@@ -299,6 +351,7 @@ export function normalizeForgeOptions(body) {
 		lods,
 		bbox,
 		pose,
+		sampler,
 		hasOptions,
 		errors,
 	};
@@ -352,6 +405,7 @@ export function summarizeForgeOptions(opts, { poseApplied = null } = {}) {
 		lods: Boolean(opts.lods),
 		bbox: opts.bbox ?? null,
 		pose: opts.pose ?? null,
+		sampler: opts.sampler ?? null,
 		...(opts.pose !== null ? { pose_applied: Boolean(poseApplied) } : {}),
 	};
 }

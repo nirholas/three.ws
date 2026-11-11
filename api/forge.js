@@ -2303,6 +2303,8 @@ async function startJobWithBody(req, res, body) {
 							// (512: 2048 px and 300k faces, 1024 and 1536: 4096 px).
 							texture_size: opts.textureSize ?? undefined,
 							decimation_target: opts.targetPolycount ?? undefined,
+							// Per-stage sampler steps and guidance (the TRELLIS.2 lab).
+							sampler: opts.sampler ?? undefined,
 						},
 					} : backendId === 'pixal3d' ? {
 						mode: 'pixal3d',
@@ -3403,6 +3405,9 @@ async function pollJob(req, res, jobId) {
 			parts: result.parts ?? undefined,
 			part_count: result.partCount ?? undefined,
 			parts_manifest_url: result.manifestUrl ?? undefined,
+			// Worker-measured queue/GPU time and the parameters that actually ran
+			// (TRELLIS.2). Absent when the serving worker does not report them.
+			worker_stats: result.workerStats ?? undefined,
 			...metaFields,
 		});
 	}
