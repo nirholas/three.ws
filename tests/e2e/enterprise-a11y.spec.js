@@ -199,3 +199,58 @@ test('Tab skips the links of a collapsed nav menu and reaches them once it is op
 	});
 	expect(focusedInOpenMenu, 'Enter moves focus to the first link of the open menu').toBe(true);
 });
+
+test('sign-in fields have a visible boundary (1.4.11) and a focus ring that survives forced colors', async ({ browser }) => {
+	// The email and password inputs drew a 7% white border on a near-black
+	// card (1.1:1), and focus cleared the outline, so High Contrast showed no
+	// focus at all on the two fields every sign-in starts with.
+	const plain = await browser.newPage();
+	await plain.goto('/login', { waitUntil: 'domcontentloaded', timeout: 180_000 });
+	await expect(plain.locator('#email')).toBeVisible({ timeout: 60_000 });
+	const ratios = await plain.evaluate(() => {
+		const rgba = (s) => {
+			const m = s.match(/[\d.]+/g).map(Number);
+			return { r: m[0], g: m[1], b: m[2], a: m[3] ?? 1 };
+		};
+		const over = (fg, bg) => ({ r: fg.r * fg.a + bg.r * (1 - fg.a), g: fg.g * fg.a + bg.g * (1 - fg.a), b: fg.b * fg.a + bg.b * (1 - fg.a), a: 1 });
+		const lum = ({ r, g, b }) => {
+			const f = (v) => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+			return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+		};
+		const ratio = (a, b) => {
+			const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m);
+			return (x + 0.05) / (y + 0.05);
+		};
+		const behind = (el) => {
+			const layers = [];
+			for (let e = el.parentElement; e; e = e.parentElement) {
+				const c = rgba(getComputedStyle(e).backgroundColor);
+				if (c.a > 0) layers.push(c);
+				if (c.a === 1) break;
+			}
+			let base = layers.length && layers[layers.length - 1].a === 1 ? layers.pop() : { r: 0, g: 0, b: 0, a: 1 };
+			for (const c of layers.reverse()) base = over(c, base);
+			return base;
+		};
+		return ['#email', '#password'].map((sel) => {
+			const el = document.querySelector(sel);
+			const cs = getComputedStyle(el);
+			const bg = behind(el);
+			return ratio(over(rgba(cs.borderTopColor), over(rgba(cs.backgroundColor), bg)), bg);
+		});
+	});
+	for (const r of ratios) expect(r, 'field border against the card').toBeGreaterThanOrEqual(3);
+	await plain.close();
+
+	const hc = await browser.newContext({ forcedColors: 'active' });
+	const hcPage = await hc.newPage();
+	await hcPage.goto('/login', { waitUntil: 'domcontentloaded', timeout: 180_000 });
+	await hcPage.locator('#email').focus();
+	const outline = await hcPage.locator('#email').evaluate((el) => {
+		const cs = getComputedStyle(el);
+		return { style: cs.outlineStyle, width: parseFloat(cs.outlineWidth) };
+	});
+	expect(outline.style, 'focused field keeps an outline under forced colors').not.toBe('none');
+	expect(outline.width).toBeGreaterThanOrEqual(2);
+	await hc.close();
+});
