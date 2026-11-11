@@ -156,8 +156,12 @@
 	padding: 0 14px;
 	transition: border-color var(--duration-fast) var(--ease-standard);
 }
+/* The faint accent stroke alone was hard to see; a solid accent ring marks
+   the focused search field in both themes and under forced colors. */
 .pl-search:focus-within {
-	border-color: var(--pl-accent-stroke);
+	border-color: var(--pl-accent);
+	outline: 2px solid var(--pl-accent);
+	outline-offset: 2px;
 }
 .pl-search input {
 	flex: 1;

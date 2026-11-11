@@ -227,9 +227,16 @@ select.gx-input {
 textarea.gx-input {
 	min-height: 96px;
 }
+/* Gold border alone measured 1.4:1 on the light canvas; the outline adds a
+   2px ring at 3:1 or better in both themes and survives forced colors. */
 .gx-input:focus {
-	outline: none;
+	outline: 2px solid rgb(var(--gold-rgb));
+	outline-offset: 2px;
 	border-color: rgb(var(--gold-rgb));
+}
+:root[data-theme='light'] .gx-input:focus {
+	outline-color: #854d0e;
+	border-color: #854d0e;
 }
 .gx-input::placeholder {
 	color: var(--ink-faint, rgba(255, 255, 255, 0.4));
