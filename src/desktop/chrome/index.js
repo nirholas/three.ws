@@ -234,7 +234,8 @@ export function createChrome(sh) {
 		const unread = notes.length;
 		clockBtn.innerHTML = `<span class="ck-t"><b>${esc(time)}</b><small>${esc(date)}</small></span>${unread && !p.dnd ? `<span class="ck-n" aria-hidden="true">${unread > 9 ? '9+' : unread}</span>` : p.dnd ? `<span class="ck-dnd" aria-hidden="true">${icon('sleep', 14)}</span>` : ''}`;
 		clockBtn.title = d.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-		clockBtn.setAttribute('aria-label', `${d.toLocaleString()}. ${unread} notifications. Open notifications and calendar`);
+		// Lead with the visible time and date so speech users can say what they see (2.5.3).
+		clockBtn.setAttribute('aria-label', `${time} ${date}. ${unread} notifications. Open notifications and calendar`);
 	}
 	// Align ticks to the minute boundary so the time flips exactly when the minute does.
 	let clockT = 0;

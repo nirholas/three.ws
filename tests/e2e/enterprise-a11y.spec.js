@@ -345,3 +345,18 @@ test('the agent embed exposes a main landmark (1.3.1, 2.4.1)', async ({ page }) 
 	await page.goto(`/agent/${items[0].id}/embed`, { waitUntil: 'domcontentloaded', timeout: 180_000 });
 	await expect(page.getByRole('main')).toHaveCount(1, { timeout: 30_000 });
 });
+
+test('the desktop clock button starts its accessible name with the time it shows (2.5.3)', async ({ page }) => {
+	// The name was toLocaleString(), so "6:53 PM" on screen was announced as
+	// "11/11/2026, 6:53:12 PM" and speech users could not say what they saw.
+	await page.setViewportSize({ width: 400, height: 860 });
+	await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 180_000 });
+	const clock = page.locator('.os-clock').first();
+	await expect(clock).toBeAttached({ timeout: 90_000 });
+	const { label, time } = await clock.evaluate((el) => ({
+		label: el.getAttribute('aria-label') || '',
+		time: el.querySelector('.ck-t b')?.textContent.trim() || '',
+	}));
+	expect(time).not.toBe('');
+	expect(label.startsWith(time)).toBe(true);
+});
