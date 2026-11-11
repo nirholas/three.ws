@@ -7,8 +7,9 @@ The custom connector, and later the certified connector, that lets Power Automat
 | `apiDefinition.swagger.json` | OpenAPI 2.0 definition of the five actions, with the connector extensions (`x-ms-summary`, `x-ms-visibility`, `x-ms-dynamic-values`, `x-ms-connector-metadata`) |
 | `apiProperties.template.json` | Connection settings: three.ws OAuth 2.0 authorization code with S256 PKCE (`oauth2generic`), brand color, publisher. `${PP_OAUTH_CLIENT_ID}` is filled in at build time |
 | `icon.png` | 230 x 230 icon on the brand color `#080814`, glyph inside 70% (regenerate with `--regen-icon`) |
-| `intro.md` | The connector documentation certification asks for: operations, credentials, getting started, known issues |
-| `schema/swagger-2.0.schema.json` | The official Swagger 2.0 JSON schema (OAI/OpenAPI-Specification `_archive_/schemas/v2.0/schema.json`), vendored so validation runs offline |
+| `intro.md` | The connector documentation in the PowerPlatformConnectors readme template layout (publisher, prerequisites, operations, credentials, getting started, known issues, FAQ, deployment). It ships as `intro.md` in the package and as `readme.md` in the certified folder |
+| `schema/` | The Swagger 2.0 schema plus the two schemas microsoft/PowerPlatformConnectors validates certified connectors against, vendored so validation runs offline ([provenance and changes](schema/README.md)) |
+| `templates/` | Four Power Automate flow templates and a Copilot Studio agent sample, checked against the definition on every build ([templates README](templates/README.md)) |
 
 ## Actions
 
@@ -31,16 +32,24 @@ npm run package:power-platform-connector -- --check     # schema + certification
 PP_OAUTH_CLIENT_ID=mcp_xxx npm run package:power-platform-connector
 ```
 
-The build writes `dist/microsoft/three-ws-power-platform-connector/` (the four files `paconn` and `pac connector` take) and a zip of the same files. `--check` runs these checks:
+The build writes:
 
-- **Swagger schema.** The definition is validated against the official Swagger 2.0 schema, with its draft-04 references inlined for Ajv 8.
+- `dist/microsoft/three-ws-power-platform-connector/`, the four files `paconn` and `pac connector` take, and a zip of the same files;
+- `dist/microsoft/certified-connectors/three.ws 3D Studio/`, the folder the certification pull request adds (`apiDefinition.swagger.json`, `apiProperties.json`, `icon.png`, `readme.md`).
+
+`--check` runs these checks:
+
+- **Schemas.** The definition is validated against the official Swagger 2.0 schema and the PowerPlatformConnectors `apiDefinition.swagger.schema.json`. The filled properties are validated against `paconn-apiProperties.schema.json`. Draft-04 references are inlined for Ajv 8.
 - **Certification text rules:**
   - The title is 30 characters or fewer, contains no "API", "Connector" or product names, and ends alphanumeric.
   - The description is 31 to 499 characters and names no product.
   - Every operation and parameter summary is 80 characters or fewer and alphanumeric.
   - Every description is a full sentence.
 - **Certification structure rules:**
-  - There are no `default` responses, and each 2xx response has an exact schema.
+  - There are no `default` responses, and each 2xx response has an exact schema. Only the 2xx response carries a schema, and every response property has a summary and a description.
+  - Every operation, parameter and body property has `x-ms-visibility`. A required internal input has a default.
+  - The swagger validator rules certification runs: no siblings next to `$ref`, no empty `required` arrays, no body on a GET, and `consumes` wherever there is a body. `x-ms-dynamic-values` carries `parameters`.
+  - The category is one of the certified categories.
   - Every `$ref` resolves.
   - `x-ms-dynamic-values` targets an existing operation.
   - Contact and connector metadata are present.
@@ -50,9 +59,16 @@ The build writes `dist/microsoft/three-ws-power-platform-connector/` (the four f
   - The PKCE `{CodeChallenge}` and `{CodeVerifier}` templates.
   - The scopes match the definition and include `offline_access`.
 - **Icon:** square, 100 to 230 px, opaque, the background equals `iconBrandColor`, and the glyph stays within 70%.
-- **intro.md:** documents every action and has the Prerequisites, Obtaining credentials and Known issues sections.
+- **intro.md:** starts with the connector title, documents every action, and has every readme template section in order.
+- **Templates:** every three.ws action and input in `templates/` exists on the definition. Every response field a template reads is one the action returns. Every expression reference resolves. The Copilot Studio tools map to real actions.
 
-The suite is [tests/microsoft-power-platform-connector.test.js](../../../tests/microsoft-power-platform-connector.test.js).
+The live contract test calls every action against production the way the connector builds the request, and checks each response against the declared schema. It is opt-in because it spends generation capacity:
+
+```bash
+PP_LIVE=1 PP_LIVE_BEARER=<three.ws API key> npx vitest run tests/microsoft-power-platform-connector-live.test.js
+```
+
+The unit suite is [tests/microsoft-power-platform-connector.test.js](../../../tests/microsoft-power-platform-connector.test.js). The certification submission (pull request text, checklist with evidence, reviewer account) is [marketing/growth/submissions/programs/microsoft-power-platform-certification.md](../../../marketing/growth/submissions/programs/microsoft-power-platform-certification.md).
 
 ## Owner steps to publish
 
@@ -84,5 +100,5 @@ The suite is [tests/microsoft-power-platform-connector.test.js](../../../tests/m
    pac connector update --connector-id <id> --api-properties-file dist/microsoft/three-ws-power-platform-connector/apiProperties.json
    ```
 
-   Then create a connection and run each action at least 10 times, as certification requires.
-5. **Certify.** Run the Solution Checker on the connector solution. Export the connector and test flow solutions, then package them with `intro.md` as the certification guide describes. Submit as a verified publisher in Partner Center, and open the pull request to `microsoft/PowerPlatformConnectors` under `certified-connectors/three.ws 3D Studio/`.
+   Then create a connection and run each action at least 10 times, as certification requires. Import the flow templates with `node scripts/import-power-platform-templates.mjs` ([how](templates/README.md#import-into-an-environment)) and run each one once.
+5. **Certify.** Run the Solution Checker on the connector solution. Export the connector and test flow solutions, then package them with `intro.md` as the certification guide describes. Submit as a verified publisher in Partner Center, and open the pull request to `microsoft/PowerPlatformConnectors` (`dev` branch) with the built `dist/microsoft/certified-connectors/three.ws 3D Studio/` folder. Give the client id in Partner Center. It is a public PKCE client, so there is no secret to hand over.
