@@ -21,6 +21,39 @@ export function titleFromPrompt(prompt) {
 	return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
+// The machine description of a creation's poster (Florence-2, work order 819):
+// the detailed caption, else the short caption, else ''. `described` is the
+// block getPublicCreation attaches; older and not-yet-described creations
+// carry null, and every caller then falls back to the prompt.
+export function creationDescribedText(creation) {
+	const d = creation?.described;
+	if (!d) return '';
+	const detailed = String(d.detailed || '').trim();
+	if (detailed) return detailed;
+	return String(d.caption || '').trim();
+}
+
+// Cut text to `max` code points, preferring the last full sentence that fits,
+// then the last word boundary, so an alt or meta never ends mid-word.
+export function excerptText(text, max) {
+	const t = String(text || '').trim().replace(/\s+/g, ' ');
+	const chars = Array.from(t);
+	if (chars.length <= max) return t;
+	const cut = chars.slice(0, max).join('');
+	const sentence = cut.match(/^[\s\S]*[.!?](?=\s|$)/);
+	if (sentence && sentence[0].length >= max * 0.4) return sentence[0];
+	const space = cut.lastIndexOf(' ');
+	return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,;:.]+$/, '')}.`;
+}
+
+// Alt text for the model's viewer and poster: what the poster actually shows
+// when it was described, otherwise the prompt's title.
+export function creationAltText(creation, max = 250) {
+	const described = creationDescribedText(creation);
+	if (described) return excerptText(described, max);
+	return `${titleFromPrompt(creation?.prompt)}, a 3D model`;
+}
+
 // A card label, not a heading. Prompts that came out of a refiner or an
 // image-to-3D pass are structured specs hundreds of characters long ("1.
 // Geometry and pose: Torso: volumetric, teardrop shaped, …"), so a grid of them
