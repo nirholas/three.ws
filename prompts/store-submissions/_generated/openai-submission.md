@@ -508,7 +508,7 @@ re-verified live; nothing stands between this package and a submission.
 | **MCP server URL** | `https://three.ws/api/mcp-chatgpt` (the full surface, with the persona tools, stays at `https://three.ws/api/mcp-studio`) |
 | **Transport** | Streamable HTTP / JSON-RPC 2.0 over `POST` (synchronous responses; no server-initiated stream). `GET` → `405`. |
 | **Protocol version** | `2025-06-18` (echoed on `initialize` and the `mcp-protocol-version` response header). |
-| **serverInfo** | `{ "name": "three-ws-3d-studio-free", "version": "1.0.0" }` |
+| **serverInfo** | `{ "name": "three-ws-3d-studio-free", "version": "1.0.1" }` |
 | **Capabilities** | `tools`, `resources`, `logging`. |
 | **Auth mode** | **None** (anonymous, unauthenticated). No OAuth, no API key, no test credentials required. |
 | **Widget resource** | `ui://widget/three-studio-model.html` (`resources/list` / `resources/read`), MIME `text/html+skybridge`. |
@@ -626,7 +626,7 @@ then **With MCP** (not "Skills only": the submission is the remote MCP connector
 | Directory icon | `_generated/assets/icon-512x512.png` (needs 256 x 256 or larger) |
 | ChatGPT composer icon | the same file (needs 48 x 48 or larger) |
 | Name | `three.ws 3D Studio` |
-| Version | `1.0.0` |
+| Version | `1.0.1` |
 | Subtitle (30 char max) | `Create 3D models from text` (26 characters) |
 | Description | the fitted paragraph below |
 | Category | Creativity & Design |
@@ -795,6 +795,10 @@ The form wants a video of the plugin working, recorded in ChatGPT Developer Mode
 recordings are acceptable and OpenAI states it is not shared externally; it is used to validate
 the test cases, so it must show every one of them behaving as the Testing tab says.
 
+0. Run `node scripts/openai-app-preflight.mjs` first. It drives the five positive cases against
+   the live connector the way ChatGPT and the widget do (check_job polling, rig_mesh, the refine
+   envelope), times every call against the 60-second limit, and downloads every final GLB. Record
+   only on a run that prints "All cases pass".
 1. Enable Developer Mode in ChatGPT (Settings, Apps, Advanced).
 2. Add **`https://three.ws/api/mcp-chatgpt`** as a custom connector, no authentication. Not
    `/api/mcp-studio`: that surface waits up to three minutes inline, which ChatGPT cuts off at
