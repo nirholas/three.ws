@@ -1,5 +1,7 @@
 # microsoft 03: a shared 3D review stage inside Teams meetings (Live Share)
 
+Status 2026-11-11: built and verified locally (two-browser Live Share e2e passes, package --check passes); waits on the owner for a real two-person meeting sideload, push and deploy. See docs/teams-live-share.md.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3103.
 
 ## Operating clause (binding)
