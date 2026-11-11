@@ -62,6 +62,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'marketing/microsoft/media');
 const WORK = join(ROOT, 'dist/microsoft-media');
 const MASTERS = join(WORK, 'masters');
+const FORGE_RECORD = join(MASTERS, 'forge.json');
 const FRAMES = join(WORK, 'frames');
 const MANIFEST = join(OUT, 'manifest.json');
 const BUCKET = 'three-ws-desktop-releases';
@@ -387,6 +388,8 @@ async function captureMasters(browser, agent, card, hostConfig, logo) {
 		await adaptiveCardSlide(page, agent, card, hostConfig, logo);
 		await shot(page, 'adaptive-card');
 	});
+	// The generation belongs to these masters, so --reuse reads it from here.
+	await writeFile(FORGE_RECORD, JSON.stringify({ prompt: PROMPT, ...forge }, null, 2));
 	return forge;
 }
 
@@ -806,9 +809,9 @@ async function main() {
 	const browser = await chromium.launch({ args: BROWSER_ARGS });
 	try {
 		let forge;
-		if (REUSE && previous?.forge && existsSync(join(MASTERS, 'forge-result.png'))) {
-			forge = previous.forge;
-			log('reusing masters from the last run');
+		if (REUSE && existsSync(FORGE_RECORD) && existsSync(join(MASTERS, 'forge-result.png'))) {
+			forge = JSON.parse(await readFile(FORGE_RECORD, 'utf8'));
+			log(`reusing masters from the last run (forge ${forge.seconds} s: ${forge.glb})`);
 		} else {
 			forge = await captureMasters(browser, agent, card, hostConfig, logo);
 		}
@@ -835,7 +838,7 @@ async function main() {
 			requirementsRead: REQUIREMENTS_READ,
 			generator: 'scripts/capture-microsoft-listing-media.mjs',
 			showcaseAgent: { id: agent.id, name: agent.name, page: `${BASE}/agents/${agent.id}` },
-			forge: { prompt: PROMPT, lane: 'nvidia (free)', seconds: forge.seconds, glb: forge.glb },
+			forge: { prompt: forge.prompt ?? PROMPT, lane: 'nvidia (free)', seconds: forge.seconds, glb: forge.glb },
 			stores: Object.fromEntries(Object.entries(STORES).map(([k, s]) => [k, { title: s.title, source: s.source, verified: s.verified, rules: s.rules }])),
 			assets,
 			referenced,
