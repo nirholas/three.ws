@@ -15,7 +15,7 @@
   },
   "description": {
     "short": "Generate, rig and view 3D models and avatars from text or a photo.",
-    "full": "three.ws 3D Studio gives Microsoft 365 Copilot and Copilot Studio agents tools that turn a plain-language request or a photo into a textured, downloadable GLB 3D model, auto-rig it for animation, find ready-made CC0 assets, and open the result in an interactive viewer. The free tools need no account. Generation takes 30 to 300 seconds, so the generate tool returns a job id and a second tool checks the job. Two personal tabs open the three.ws 3D viewer and a live directory of three.ws agents inside Microsoft 365, and the Agents search command shares any agent as a live card in a chat."
+    "full": "three.ws 3D Studio gives Microsoft 365 Copilot and Copilot Studio agents tools that turn a plain-language request or a photo into a textured, downloadable GLB 3D model, auto-rig it for animation, find ready-made CC0 assets, and open the result in an interactive viewer. The free tools need no account. Generation takes 30 to 300 seconds, so the generate tool returns a job id and a second tool checks the job. Two personal tabs open the three.ws 3D viewer and a live directory of three.ws agents inside Microsoft 365,, the Agents search command shares any agent as a live card in a chat, and the Create a 3D model action (or the forge bot command) generates a model in the conversation on a card that updates itself when the model is ready."
   },
   "icons": {
     "outline": "outline.png",
@@ -64,6 +64,33 @@
   "validDomains": [
     "three.ws"
   ],
+  "bots": [
+    {
+      "botId": "${MS_TEAMS_BOT_APP_ID}",
+      "scopes": [
+        "personal",
+        "team",
+        "groupChat"
+      ],
+      "isNotificationOnly": false,
+      "supportsFiles": false,
+      "commandLists": [
+        {
+          "scopes": [
+            "personal",
+            "team",
+            "groupChat"
+          ],
+          "commands": [
+            {
+              "title": "forge",
+              "description": "forge <prompt>: generate a 3D model and post it as a live card"
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "composeExtensions": [
     {
       "botId": "${MS_TEAMS_BOT_APP_ID}",
@@ -85,6 +112,18 @@
               "description": "Name or description of a three.ws agent",
               "inputType": "text"
             }
+          ]
+        },
+        {
+          "id": "createModel",
+          "type": "action",
+          "title": "Create a 3D model",
+          "description": "Generate a 3D model from a prompt and share it in the chat",
+          "fetchTask": true,
+          "context": [
+            "compose",
+            "commandBox",
+            "message"
           ]
         }
       ],
