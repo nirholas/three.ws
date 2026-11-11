@@ -5495,6 +5495,14 @@
 					"added": "2026-10-30"
 				},
 				{
+					"path": "/docs/microsoft-365-copilot-connector",
+					"title": "Docs · Microsoft 365 Copilot connector",
+					"description": "Admin guide for the three.ws Graph connector: consent and its two permissions, who can see indexed agents, models and avatars, what is indexed, sync and throttling, disconnect, errors and their fixes, data handling, the API and the schema.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-11"
+				},
+				{
 					"path": "/docs/microsoft-marketplace-offer-plan",
 					"title": "Docs · Microsoft distribution and offer plan",
 					"description": "How three.ws turns its live Microsoft Marketplace publisher profile into offers: a transactable SaaS listing, Copilot MCP certification, professional services, a Power Platform connector, a Teams app, and the VS Code and Edge stores.",
@@ -7110,6 +7118,15 @@
 					"priority": 0.3,
 					"changefreq": "monthly",
 					"added": "2026-11-10",
+					"indexable": false
+				},
+				{
+					"path": "/settings/microsoft-365",
+					"title": "Microsoft 365 Copilot Connector Settings",
+					"description": "Connect a three.ws account to your organization's Microsoft 365 tenant with admin consent, index your agents, Forge models and avatars for Microsoft Search and Copilot, choose who can see them, watch sync status, run a full re-sync, and disconnect.",
+					"priority": 0.3,
+					"changefreq": "monthly",
+					"added": "2026-11-11",
 					"indexable": false
 				},
 				{

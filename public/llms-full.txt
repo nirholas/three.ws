@@ -4170,6 +4170,12 @@ URL: https://three.ws/docs/microsoft
 
 The three.ws and Microsoft partnership and the Microsoft Marketplace listing: what buyers get, the Microsoft open source already in the stack (TRELLIS.2, ONNX Runtime Web, Adaptive Cards), and what is in flight.
 
+### Docs · Microsoft 365 Copilot connector
+
+URL: https://three.ws/docs/microsoft-365-copilot-connector
+
+Admin guide for the three.ws Graph connector: consent and its two permissions, who can see indexed agents, models and avatars, what is indexed, sync and throttling, disconnect, errors and their fixes, data handling, the API and the schema.
+
 ### Docs · Microsoft distribution and offer plan
 
 URL: https://three.ws/docs/microsoft-marketplace-offer-plan
@@ -5497,6 +5503,13 @@ URL: https://three.ws/settings/robinhood
 Indexable: no (excluded from sitemap)
 
 Connect your own Robinhood Crypto account with its Crypto Trading API key, generate the Ed25519 key pair in your browser, set hard per-order and daily spend caps for agent orders, pause trading, see holdings and the order ledger, and disconnect.
+
+### Microsoft 365 Copilot Connector Settings
+
+URL: https://three.ws/settings/microsoft-365
+Indexable: no (excluded from sitemap)
+
+Connect a three.ws account to your organization's Microsoft 365 tenant with admin consent, index your agents, Forge models and avatars for Microsoft Search and Copilot, choose who can see them, watch sync status, run a full re-sync, and disconnect.
 
 ### MCP Integrations
 

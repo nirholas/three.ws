@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T16:22:19.850Z",
+	"generated_at": "2026-11-11T16:26:47.255Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -8267,6 +8267,18 @@
 					"job": null
 				},
 				{
+					"path": "/docs/microsoft-365-copilot-connector",
+					"title": "Docs · Microsoft 365 Copilot connector",
+					"description": "Admin guide for the three.ws Graph connector: consent and its two permissions, who can see indexed agents, models and avatars, what is indexed, sync and throttling, disconnect, errors and their fixes, data handling, the API and the schema.",
+					"added": "2026-11-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
 					"path": "/docs/microsoft-marketplace-offer-plan",
 					"title": "Docs · Microsoft distribution and offer plan",
 					"description": "How three.ws turns its live Microsoft Marketplace publisher profile into offers: a transactable SaaS listing, Copilot MCP certification, professional services, a Power Platform connector, a Teams app, and the VS Code and Edge stores.",
@@ -10911,6 +10923,18 @@
 					"title": "Robinhood Crypto Connector Settings",
 					"description": "Connect your own Robinhood Crypto account with its Crypto Trading API key, generate the Ed25519 key pair in your browser, set hard per-order and daily spend caps for agent orders, pause trading, see holdings and the order ledger, and disconnect.",
 					"added": "2026-11-10",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.3,
+					"job": null
+				},
+				{
+					"path": "/settings/microsoft-365",
+					"title": "Microsoft 365 Copilot Connector Settings",
+					"description": "Connect a three.ws account to your organization's Microsoft 365 tenant with admin consent, index your agents, Forge models and avatars for Microsoft Search and Copilot, choose who can see them, watch sync status, run a full re-sync, and disconnect.",
+					"added": "2026-11-11",
 					"auth": null,
 					"indexable": false,
 					"tags": [],
