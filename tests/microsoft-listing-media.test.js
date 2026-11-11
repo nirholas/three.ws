@@ -9,6 +9,7 @@ import {
 	bannedTextIn,
 	cuesFor,
 	dimensionProblems,
+	findBinary,
 	listingSafeAgent,
 	pickShowcaseAgent,
 	submissionBlock,
@@ -163,5 +164,17 @@ describe('submission blocks', () => {
 		const block = `${BLOCK_START}\nnew\n${BLOCK_END}`;
 		expect(upsertBlock(`# T\n\n${BLOCK_START}\nold\n${BLOCK_END}\n\nTail\n`, block)).toBe(`# T\n\n${block}\n\nTail\n`);
 		expect(upsertBlock('# T\n', block)).toBe(`# T\n\n${block}\n`);
+	});
+});
+
+describe('findBinary', () => {
+	it('probes each tool with the version flag it accepts', () => {
+		// node, like gcloud, rejects the single-dash `-version` that ffmpeg uses.
+		expect(findBinary('node', { probe: ['--version'] })).toMatch(/node$/);
+	});
+
+	it('names the missing tool and how to get it', () => {
+		expect(() => findBinary('gcloud-missing-xyz', { probe: ['--version'], hint: 'Install the Google Cloud CLI.' }))
+			.toThrow(/gcloud-missing-xyz not found\. Install the Google Cloud CLI\./);
 	});
 });

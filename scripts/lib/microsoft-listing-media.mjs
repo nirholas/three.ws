@@ -10,6 +10,8 @@
  * and every submission file follow on the next `npm run media:microsoft`.
  */
 
+import { spawnSync } from 'node:child_process';
+
 /** The day the requirement pages below were last read. */
 export const REQUIREMENTS_READ = '2026-11-11';
 
@@ -342,4 +344,18 @@ export function upsertBlock(text, block) {
 		return text.slice(0, start) + block + text.slice(end + BLOCK_END.length);
 	}
 	return `${text.replace(/\s*$/, '')}\n\n${block}\n`;
+}
+
+/**
+ * The first runnable candidate for a tool: its env override, extra paths, then
+ * PATH. `probe` is the argument the tool answers with exit 0 (ffmpeg takes
+ * `-version`, gcloud only `--version`).
+ */
+export function findBinary(name, { extra = [], probe = ['--version'], hint = '' } = {}) {
+	const env = name.toUpperCase().replace(/[^A-Z0-9]/g, '_');
+	for (const candidate of [process.env[env], ...extra, name].filter(Boolean)) {
+		const r = spawnSync(candidate, probe, { stdio: 'ignore' });
+		if (r.status === 0) return candidate;
+	}
+	throw new Error(`${name} not found. ${hint ? `${hint} ` : ''}Or set ${env} to its path.`);
 }

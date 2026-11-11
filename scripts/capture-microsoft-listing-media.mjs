@@ -37,6 +37,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import sharp from 'sharp';
 import {
+	findBinary,
 	ASSETS,
 	MASTER,
 	REFERENCED,
@@ -88,13 +89,7 @@ const log = (...a) => console.log('[media:microsoft]', ...a);
 
 // ── Tools ────────────────────────────────────────────────────────────────────
 
-function findBinary(name, extra = []) {
-	for (const candidate of [process.env[name.toUpperCase()], ...extra, name].filter(Boolean)) {
-		const r = spawnSync(candidate, ['-version'], { stdio: 'ignore' });
-		if (r.status === 0) return candidate;
-	}
-	throw new Error(`${name} not found. Install a static build (https://johnvansickle.com/ffmpeg/) into ~/.local/bin or set ${name.toUpperCase()}.`);
-}
+const FFMPEG_HINT = 'Install a static build (https://johnvansickle.com/ffmpeg/) into ~/.local/bin.';
 
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
 const rel = (p) => relative(ROOT, p).split('\\').join('/');
@@ -706,7 +701,7 @@ async function encodeVideo(ffmpegBin, timeline, files) {
 }
 
 function upload(file, object) {
-	const gcloud = findBinary('gcloud');
+	const gcloud = findBinary('gcloud', { hint: 'Install the Google Cloud CLI (https://cloud.google.com/sdk/docs/install).' });
 	execFileSync(gcloud, ['storage', 'cp', file, `gs://${BUCKET}/${object}`, '--content-type=video/mp4', '--cache-control=public, max-age=31536000, immutable'], { stdio: 'inherit' });
 	return `https://storage.googleapis.com/${BUCKET}/${object}`;
 }
@@ -725,8 +720,8 @@ async function verifyPublic(ffprobeBin, url, expectedSha) {
 }
 
 async function makeVideo(browser, ctx, previous) {
-	const ffmpegBin = findBinary('ffmpeg', [join(homedir(), '.local/bin/ffmpeg')]);
-	const ffprobeBin = findBinary('ffprobe', [join(homedir(), '.local/bin/ffprobe')]);
+	const ffmpegBin = findBinary('ffmpeg', { extra: [join(homedir(), '.local/bin/ffmpeg')], probe: ['-version'], hint: FFMPEG_HINT });
+	const ffprobeBin = findBinary('ffprobe', { extra: [join(homedir(), '.local/bin/ffprobe')], probe: ['-version'], hint: FFMPEG_HINT });
 	const videoDir = join(OUT, 'video');
 	await mkdir(videoDir, { recursive: true });
 	const timeline = REUSE && existsSync(join(WORK, 'timeline.json'))
