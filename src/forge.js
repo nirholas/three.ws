@@ -943,7 +943,7 @@ function buildEngineButtons() {
 //     applied — which is what routes draft prompts onto the free lane.
 function updateEngineAvailability() {
 	if (!els.engine || !catalog) return;
-	const hasPhotos = slots.some((s) => s.state === 'uploaded' || s.state === 'uploading');
+	const hasPhotos = slots.some((s) => s.state === 'uploaded' || s.state === 'uploading' || s.state === 'preparing');
 	let bounceTo = null;
 	for (const btn of els.engine.querySelectorAll('button')) {
 		const textOnly = btn.dataset.userimages === 'false';
@@ -1211,7 +1211,8 @@ function applyHighAffordances(access) {
 		btn.dataset.access = state;
 		btn.setAttribute(
 			'aria-label',
-			eligible ? 'High quality — unlocked, you hold $THREE' : 'High quality — $THREE holder feature',
+			// Starts with the visible text ("High $THREE") so speech input can target it (WCAG 2.5.3).
+			eligible ? 'High $THREE, unlocked because you hold $THREE' : 'High $THREE, a holder feature',
 		);
 		const pill = btn.querySelector('.tier-lock');
 		if (pill) {
@@ -1377,6 +1378,10 @@ function buildSlots() {
 				<span>Uploading…</span>
 			</div>
 			<img loading="lazy" decoding="async" class="vs-thumb" alt="" />
+			<div class="vs-preparing" aria-hidden="true">
+				<span class="vs-preparing-text">Checking photo…</span>
+				<span class="vs-preparing-bar" data-indeterminate="true"><i></i></span>
+			</div>
 			<span class="vs-badge">${VIEW_LABELS[i]}</span>
 			<button type="button" class="vs-remove" aria-label="Remove ${VIEW_LABELS[i]} view">×</button>
 			<div class="vs-error">
@@ -1503,11 +1508,18 @@ function renderSlot(i) {
 		img.alt = '';
 	}
 	el.querySelector('.vs-error-msg').textContent = s.errorMsg || 'Upload failed';
+	if (s.state === 'preparing') {
+		el.querySelector('.vs-preparing-text').textContent = s.progressText || 'Checking photo…';
+		const bar = el.querySelector('.vs-preparing-bar');
+		bar.dataset.indeterminate = String(s.progress == null);
+		bar.style.setProperty('--pp-progress', `${Math.round((s.progress || 0) * 100)}%`);
+	}
 
 	const labels = {
 		empty: enabled
 			? `${VIEW_LABELS[i]} view, empty, add a photo`
 			: `${VIEW_LABELS[i]} view, not used by ${ENGINE_LABELS.pixal3d}`,
+		preparing: `${VIEW_LABELS[i]} view, ${s.progressText || 'checking the photo on this device'}`,
 		uploading: `${VIEW_LABELS[i]} view, uploading`,
 		uploaded: `${VIEW_LABELS[i]} view, uploaded — drag to reorder`,
 		error: `${VIEW_LABELS[i]} view, upload failed`,
@@ -1544,6 +1556,8 @@ function clearSlot(i) {
 
 function swapSlots(a, b) {
 	if (a === b) return;
+	// A slot mid-check is bound to its index until the visitor answers the review.
+	if (slots[a].state === 'preparing' || slots[b].state === 'preparing') return;
 	const tmp = slots[a];
 	slots[a] = slots[b];
 	slots[b] = tmp;
@@ -1576,7 +1590,8 @@ function handleFiles(startIndex, fileList) {
 	const files = Array.from(fileList).filter((f) => f && f.type && f.type.startsWith('image/'));
 	if (!files.length) return;
 	const cap = activeMaxImages();
-	let idx = startIndex == null || startIndex >= cap ? firstFreeSlot() : startIndex;
+	const busy = startIndex != null && (slots[startIndex]?.state === 'preparing' || slots[startIndex]?.state === 'uploading');
+	let idx = startIndex == null || startIndex >= cap || busy ? firstFreeSlot() : startIndex;
 	for (const file of files) {
 		if (idx < 0 || idx >= cap) idx = firstFreeSlot();
 		if (idx < 0) break; // all slots taken
@@ -1638,9 +1653,62 @@ async function presignAndPut(file) {
 	}
 }
 
-// Upload one file into a slot: presign → PUT to object storage → record the
-// public URL. The slot moves empty/error → uploading → uploaded|error, each a
-// real, designed state. The local blob preview shows immediately.
+// Progress copy for the on-device check, from the worker's real events.
+function photoPrepProgress(p) {
+	if (p.stage === 'model' && p.total) {
+		return { text: p.cached ? 'Photo check ready' : `Loading photo check ${Math.round((p.loaded / p.total) * 100)}%`, progress: p.loaded / p.total };
+	}
+	if (p.stage === 'runtime') return { text: 'Loading photo check…', progress: null };
+	if (p.stage === 'inference') return { text: 'Finding the subject…', progress: null };
+	if (p.stage === 'encode') return { text: 'Preparing image…', progress: null };
+	if (p.stage === 'review') return { text: 'Waiting for your review', progress: 1 };
+	return { text: 'Checking photo…', progress: null };
+}
+
+function setPhotoPrepNote(text) {
+	if (!els.photoPrepNote && els.viewsCounter) {
+		els.photoPrepNote = document.createElement('p');
+		els.photoPrepNote.className = 'photo-prep-note';
+		els.photoPrepNote.setAttribute('role', 'status');
+		els.viewsCounter.after(els.photoPrepNote);
+	}
+	if (els.photoPrepNote) els.photoPrepNote.textContent = text;
+}
+
+// The on-device check (src/forge-photo-prep/): background removal, square crop
+// and quality warnings, reviewed by the visitor before any byte is uploaded.
+// Resolves with the file to upload, or null when the visitor took it back.
+async function photoPrepGate(index, file, objectUrl) {
+	slots[index] = { state: 'preparing', url: null, objectUrl, errorMsg: '', progressText: 'Waiting to check…', progress: null };
+	renderSlot(index);
+	const onProgress = (p) => {
+		if (slots[index].objectUrl !== objectUrl) return;
+		const { text, progress } = photoPrepProgress(p);
+		slots[index] = { ...slots[index], progressText: text, progress };
+		renderSlot(index);
+	};
+	let outcome;
+	try {
+		const { reviewPhoto } = await import('./forge-photo-prep/review.js');
+		outcome = await reviewPhoto(file, { viewLabel: VIEW_LABELS[index], onProgress });
+	} catch (err) {
+		console.warn('[forge] photo check unavailable:', err);
+		outcome = { action: 'fallback', file, note: 'The photo check could not load, so your photo uploads as before.' };
+	}
+	if (slots[index].objectUrl !== objectUrl) return null; // removed while checking
+	if (outcome.action === 'retake' || outcome.action === 'cancel') {
+		clearSlot(index);
+		if (outcome.action === 'retake') openPicker(index);
+		return null;
+	}
+	setPhotoPrepNote(outcome.action === 'fallback' ? outcome.note : '');
+	return outcome.file;
+}
+
+// Upload one file into a slot: on-device check and review, then presign → PUT
+// to object storage → record the public URL. The slot moves empty/error →
+// preparing → uploading → uploaded|error, each a real, designed state. The
+// local blob preview shows immediately.
 async function uploadToSlot(index, file) {
 	if (!ACCEPTED_TYPES.has(file.type)) {
 		setSlotError(index, 'Use PNG, JPG, or WebP.');
@@ -1650,14 +1718,23 @@ async function uploadToSlot(index, file) {
 		setSlotError(index, 'File is empty.');
 		return;
 	}
-	if (file.size > MAX_UPLOAD_BYTES) {
-		setSlotError(index, 'Too large (max 8 MB).');
-		return;
-	}
 
 	const prev = slots[index];
 	if (prev.objectUrl) URL.revokeObjectURL(prev.objectUrl);
-	const objectUrl = URL.createObjectURL(file);
+	let objectUrl = URL.createObjectURL(file);
+	const picked = await photoPrepGate(index, file, objectUrl);
+	if (!picked) return;
+	if (picked !== file) {
+		URL.revokeObjectURL(objectUrl);
+		objectUrl = URL.createObjectURL(picked);
+		file = picked;
+	}
+	// Checked after the review: a large original often becomes a small prepared image.
+	if (file.size > MAX_UPLOAD_BYTES) {
+		slots[index] = { ...slots[index], objectUrl };
+		setSlotError(index, 'Too large (max 8 MB).');
+		return;
+	}
 	slots[index] = { state: 'uploading', url: null, objectUrl, errorMsg: '' };
 	renderSlot(index);
 
@@ -3416,7 +3493,7 @@ function paintModlyProgress(elapsedS) {
 // single image, so extra views are named as unused rather than silently dropped.
 function modlySourceSlot() {
 	const index = slots.findIndex(
-		(s) => (s.state === 'uploaded' || s.state === 'uploading') && s.objectUrl,
+		(s) => (s.state === 'uploaded' || s.state === 'uploading' || s.state === 'preparing') && s.objectUrl,
 	);
 	return index < 0 ? null : { index, slot: slots[index] };
 }
@@ -3507,7 +3584,7 @@ async function runModly(modelId) {
 		usesReference: false,
 		local: true,
 	});
-	const views = slots.filter((s) => s.state === 'uploaded' || s.state === 'uploading').length;
+	const views = slots.filter((s) => s.state === 'uploaded' || s.state === 'uploading' || s.state === 'preparing').length;
 	setLaneNote(
 		views > 1
 			? `Modly builds from a single photo, so only your ${VIEW_LABELS[source.index]} view is used.`
@@ -3810,7 +3887,7 @@ function collectComposerCfg() {
 	}
 
 	// Image / multi-view mode.
-	if (slots.some((s) => s.state === 'uploading')) {
+	if (slots.some((s) => s.state === 'uploading' || s.state === 'preparing')) {
 		els.generateLabel.textContent = 'Waiting for uploads…';
 		setTimeout(() => {
 			if (!els.generate.disabled) els.generateLabel.textContent = 'Generate';

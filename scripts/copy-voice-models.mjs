@@ -12,6 +12,9 @@
 //   vad.worklet.bundle.min.js    @ricky0123/vad-web  (its AudioWorklet)
 //   ort-wasm-simd-threaded.mjs   onnxruntime-web     (the wasm loader)
 //   ort-wasm-simd-threaded.wasm  onnxruntime-web     (the runtime itself)
+//   ort-wasm-simd-threaded.asyncify.{mjs,wasm}        (the WebGPU-capable build,
+//                                 loaded only by the Forge photo check in
+//                                 src/forge-photo-prep/ when an adapter exists)
 //
 // NOT staged here: the openWakeWord models under /public/models/voice/wake-word.
 // Those are Apache-2.0 release artifacts from dscripka/openWakeWord v0.5.1 that
@@ -35,6 +38,8 @@ const files = [
 	['node_modules/@ricky0123/vad-web/dist/vad.worklet.bundle.min.js', 'vad.worklet.bundle.min.js'],
 	['node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs', 'ort-wasm-simd-threaded.mjs'],
 	['node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm', 'ort-wasm-simd-threaded.wasm'],
+	['node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.asyncify.mjs', 'ort-wasm-simd-threaded.asyncify.mjs'],
+	['node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.asyncify.wasm', 'ort-wasm-simd-threaded.asyncify.wasm'],
 ];
 
 const missing = files.filter(([from]) => !existsSync(join(repo, from)));
