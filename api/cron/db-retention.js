@@ -82,6 +82,7 @@ import { sendOpsAlert } from '../_lib/alerts.js';
 import { requireCron } from '../_lib/cron-auth.js';
 import { purgeExpiredActionLog } from '../_lib/home/privacy.js';
 import { purgeExpiredMcpSessions } from '../_lib/mcp-clients.js';
+import { purgePrivacyRetention } from '../_lib/privacy-retention.js';
 import { getGcpAccessToken } from '../_lib/gcp-auth.js';
 import { cacheSet } from '../_lib/cache.js';
 import { LAST_RUN_CACHE_KEY } from '../_lib/ops/database-storage-health.js';
@@ -681,6 +682,11 @@ export default wrapCron(async (req, res) => {
 		}
 	}
 
+	// H. Privacy-policy windows no other step enforces: expired sessions (sign-in
+	// IP and user agent), auth nonces, and widget views past 12 months. Deleted,
+	// never archived (api/_lib/privacy-retention.js).
+	const privacy = await purgePrivacyRetention({ sql, tableExists });
+
 	const archive = await archiveColdTables(started, { store, runId });
 	const archiveSkips = archive.tables.filter((t) => t.skipped && t.skipped !== 'time_budget');
 	if (archiveSkips.length) {
@@ -701,6 +707,7 @@ export default wrapCron(async (req, res) => {
 	if (regen.deleted > 0 || regen.stripped > 0) touched.push('avatar_regen_jobs');
 	if (homeActionLog.deleted > 0) touched.push('home_action_log');
 	if (mcpSessions.deleted > 0) touched.push('mcp_client_sessions');
+	for (const t of Object.keys(privacy.deleted)) if (!touched.includes(t)) touched.push(t);
 	for (const t of archive.tables) if (t.deleted > 0 && !touched.includes(t.table)) touched.push(t.table);
 	await vacuumTables(touched);
 
@@ -777,6 +784,7 @@ export default wrapCron(async (req, res) => {
 		regen,
 		home_action_log: homeActionLog,
 		mcp_client_sessions: mcpSessions,
+		privacy_retention: privacy,
 		archive,
 		vacuumed: touched,
 		compaction,
