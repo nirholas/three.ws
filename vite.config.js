@@ -966,6 +966,7 @@ const appConfig = {
 				trust: resolve(__dirname, 'pages/trust.html'),
 				'trust-subprocessors': resolve(__dirname, 'pages/trust-subprocessors.html'),
 				'microsoft-teams-tab': resolve(__dirname, 'pages/microsoft-teams-tab.html'),
+				'microsoft-teams-stage': resolve(__dirname, 'pages/microsoft-teams-stage.html'),
 				sidebar: resolve(__dirname, 'pages/sidebar.html'),
 				open: resolve(__dirname, 'pages/open.html'),
 				spend: resolve(__dirname, 'pages/spend.html'),
@@ -1000,6 +1001,7 @@ const appConfig = {
 				'forge-off': resolve(__dirname, 'pages/forge-off.html'),
 				'mcp-clients': resolve(__dirname, 'pages/mcp-clients.html'),
 				'event-markets-admin': resolve(__dirname, 'pages/event-markets-admin.html'),
+				'microsoft-leads-admin': resolve(__dirname, 'pages/microsoft-leads-admin.html'),
 				search: resolve(__dirname, 'pages/search.html'),
 				rankings: resolve(__dirname, 'pages/rankings.html'),
 				'daily-match': resolve(__dirname, 'pages/daily-match.html'),
@@ -1287,6 +1289,7 @@ const appConfig = {
 				aws: resolve(__dirname, 'pages/aws/index.html'),
 				openai: resolve(__dirname, 'pages/openai/index.html'),
 				nvidia: resolve(__dirname, 'pages/nvidia/index.html'),
+				microsoft: resolve(__dirname, 'pages/microsoft/index.html'),
 				press: resolve(__dirname, 'pages/press/index.html'),
 				'agent-trade': resolve(__dirname, 'pages/agent-trade.html'),
 				'autopilot-activity': resolve(__dirname, 'pages/autopilot-activity.html'),
@@ -1940,6 +1943,8 @@ const appConfig = {
 					'/settings/sandbox/': resolve(root, 'pages/settings-sandbox.html'),
 					'/settings/robinhood': resolve(root, 'public/settings/robinhood/index.html'),
 					'/settings/robinhood/': resolve(root, 'public/settings/robinhood/index.html'),
+					'/settings/microsoft-365': resolve(root, 'public/settings/microsoft-365/index.html'),
+					'/settings/microsoft-365/': resolve(root, 'public/settings/microsoft-365/index.html'),
 					'/activity': resolve(root, 'pages/activity.html'),
 					'/activity/': resolve(root, 'pages/activity.html'),
 					'/tty': resolve(root, 'pages/tty.html'),
@@ -2156,6 +2161,8 @@ const appConfig = {
 					'/openai/': resolve(root, 'pages/openai/index.html'),
 					'/nvidia': resolve(root, 'pages/nvidia/index.html'),
 					'/nvidia/': resolve(root, 'pages/nvidia/index.html'),
+					'/microsoft': resolve(root, 'pages/microsoft/index.html'),
+					'/microsoft/': resolve(root, 'pages/microsoft/index.html'),
 					'/press': resolve(root, 'pages/press/index.html'),
 					'/press/': resolve(root, 'pages/press/index.html'),
 					'/support': resolve(root, 'pages/support.html'),
@@ -2271,6 +2278,8 @@ const appConfig = {
 					'/mcp-clients/': resolve(root, 'pages/mcp-clients.html'),
 					'/admin/event-markets': resolve(root, 'pages/event-markets-admin.html'),
 					'/admin/event-markets/': resolve(root, 'pages/event-markets-admin.html'),
+					'/admin/microsoft/leads': resolve(root, 'pages/microsoft-leads-admin.html'),
+					'/admin/microsoft/leads/': resolve(root, 'pages/microsoft-leads-admin.html'),
 					'/materialize': resolve(root, 'pages/materialize.html'),
 					'/materialize/': resolve(root, 'pages/materialize.html'),
 					'/inspect': resolve(root, 'pages/inspect.html'),
@@ -2595,6 +2604,9 @@ const appConfig = {
 					// /microsoft/teams-tab → the Agents tab of the three.ws Teams app.
 					else if (!filePath && /^\/microsoft\/teams-tab\/?$/.test(path))
 						filePath = resolve(root, 'pages/microsoft-teams-tab.html');
+					// /microsoft/teams-stage → the Live Share review stage (meeting stage, side panel, config).
+					else if (!filePath && /^\/microsoft\/teams-stage\/?$/.test(path))
+						filePath = resolve(root, 'pages/microsoft-teams-stage.html');
 					// /sidebar → the Edge side panel layout; /open → web+threews links.
 					else if (!filePath && /^\/sidebar\/?$/.test(path))
 						filePath = resolve(root, 'pages/sidebar.html');
@@ -3191,6 +3203,7 @@ const appConfig = {
 						'agent-embed.html',
 						'a-embed.html',
 						'agent-token-page.html',
+						'microsoft-teams-stage.html',
 						'nav.html',
 						'footer.html',
 						'desktop.html',

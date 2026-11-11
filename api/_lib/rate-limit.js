@@ -612,6 +612,14 @@ export const FORGE_WORLD_PLAYER_BUCKET = ['forge:world:player', { limit: 1, wind
 export const FORGE_WORLD_SLOTS_BUCKET = ['forge:world:slots', { limit: FORGE_WORLD_SLOTS, window: `${FORGE_WORLD_SLOT_WINDOW_S} s` }];
 
 export const limits = {
+	// Microsoft Marketplace lead destination (/api/microsoft-marketplace/leads).
+	// Partner Center posts one request per lead plus a test lead on Validate, so
+	// real traffic is a handful an hour; 60 per 10 min per IP leaves room for a
+	// launch-day burst from Microsoft's shared egress while stopping a script
+	// from guessing tokens or flooding the table. Distributed (not local) so the
+	// ceiling holds across Cloud Run instances.
+	msMarketplaceLeadIp: (ip) =>
+		getLimiter('ms-marketplace:lead:ip', { limit: 60, window: '10 m' }).limit(ip),
 	// First-party campaign touch (/api/growth/touch). A real visitor records one
 	// touch per browser; 20 per 10 min per IP leaves shared NAT (an office, a
 	// conference hall) headroom while stopping a script from flooding the ledger.
@@ -1802,6 +1810,15 @@ export const limits = {
 	// role run fans out to RPC, the intel store and the trade engine (run).
 	teamWrite: (userId) => getLimiter('team:write', { limit: 20, window: '1 h' }).limit(userId),
 	teamRun: (userId) => getLimiter('team:run', { limit: 60, window: '10 m' }).limit(userId),
+	// SCIM provisioning (api/scim/v2.js). Entra's provisioning service runs a
+	// cycle every 40 minutes and an initial cycle can push thousands of users,
+	// a few requests each, so the per-team ceiling is generous; it exists to stop
+	// a leaked token from hammering the database. Failed bearer checks get their
+	// own strict per-IP bucket so token guessing stalls fast.
+	scimTeam: (teamId) => getLimiter('scim:team', { limit: 1200, window: '1 m' }).limit(teamId),
+	scimAuthFail: (ip) => getLimiter('scim:auth-fail', { limit: 20, window: '10 m' }).limit(ip),
+	// Team enterprise settings and tenant join (claim, token rotation, join).
+	teamEnterprise: (userId) => getLimiter('team:enterprise', { limit: 60, window: '10 m' }).limit(userId),
 	// local: embedded-widget read fetch — flood protection only, no side effects.
 	// Widgets on third-party pages poll continuously, so a Redis command per read
 	// at 600/min is pure burn; a per-instance cap bounds throughput just as well.
@@ -2381,6 +2398,12 @@ export const limits = {
 	// them, and downloading the fallback file, not for bulk conversion.
 	slicerFileIp: (ip) =>
 		getLimiter('slicer:file:ip', { limit: 30, window: '5 m', local: true }).limit(ip),
+	// PowerPoint export (api/forge/export-pptx.js). A miss downloads the GLB,
+	// re-encodes its textures for Office and renders a poster, so it is the
+	// heaviest per-call export; repeats are served from the deck cache and the
+	// CDN. Sized for someone building a deck from a handful of models.
+	pptxExportIp: (ip) =>
+		getLimiter('pptx:export:ip', { limit: 20, window: '5 m', local: true }).limit(ip),
 	// Bedrock structure export (api/minecraft-export.js). Each call voxelizes a
 	// GLB (the parsed mesh is cached per URL, so slider moves skip the download),
 	// sized for someone dragging the height slider and downloading a few packs.

@@ -924,6 +924,18 @@
 			"dest": "/api/agents/[id]/custom-skills?id=$1"
 		},
 		{
+			"src": "/api/agents/([^/]+)/knowledge/search",
+			"dest": "/api/agents/[id]/knowledge?id=$1&action=search"
+		},
+		{
+			"src": "/api/agents/([^/]+)/knowledge/([^/]+)",
+			"dest": "/api/agents/[id]/knowledge?id=$1&doc_id=$2"
+		},
+		{
+			"src": "/api/agents/([^/]+)/knowledge",
+			"dest": "/api/agents/[id]/knowledge?id=$1"
+		},
+		{
 			"src": "/api/skill-imports/(.+)",
 			"dest": "/api/skill-imports?route=$1"
 		},
@@ -2396,6 +2408,10 @@
 			"dest": "/event-markets-admin.html"
 		},
 		{
+			"src": "/admin/microsoft/leads/?",
+			"dest": "/microsoft-leads-admin.html"
+		},
+		{
 			"src": "/examples/?",
 			"dest": "/examples.html"
 		},
@@ -2776,6 +2792,10 @@
 		{
 			"src": "/pricing/?",
 			"dest": "/pricing.html"
+		},
+		{
+			"src": "/microsoft/?",
+			"dest": "/microsoft/index.html"
 		},
 		{
 			"src": "/microsoft/activate/?",
@@ -6094,6 +6114,10 @@
 			"dest": "/api/microsoft-teams/messages.js"
 		},
 		{
+			"src": "/api/microsoft-marketplace/leads/([A-Za-z0-9_-]{32,})/?",
+			"dest": "/api/microsoft-marketplace/leads?token=$1"
+		},
+		{
 			"src": "/api/microsoft-marketplace/sso/start/?",
 			"dest": "/api/microsoft-marketplace/[action]?action=sso-start"
 		},
@@ -7408,6 +7432,10 @@
 		}
 	],
 	"crons": [
+		{
+			"path": "/api/cron/microsoft-leads",
+			"schedule": "*/10 * * * *"
+		},
 		{
 			"path": "/api/cron/microsoft-metering",
 			"schedule": "7 * * * *"
