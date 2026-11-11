@@ -115,6 +115,6 @@ The visual is submitted as an **uncertified** AppSource visual. Certification fo
 
 ## Licenses
 
-The visual's source is part of the three.ws repository. Bundled third-party code: three.js (MIT), the Power BI visuals API and utility packages (MIT), the Draco decoder shipped with three.js (Apache 2.0), meshoptimizer's decoder shipped with three.js (MIT). License texts are collected into `visual.js.LICENSE.txt` in the package build.
+The visual's source is part of the three.ws repository. Bundled third-party code: three.js (MIT), the Power BI visuals API and utility packages (MIT), the Draco decoder shipped with three.js (Apache 2.0), meshoptimizer's decoder shipped with three.js (MIT). The license texts live in each package under `node_modules/` after `npm ci`.
 
 Microsoft and Power BI are trademarks of the Microsoft group of companies. three.ws and Microsoft have announced a partnership; this visual is not certified by Microsoft.
