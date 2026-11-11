@@ -20,7 +20,7 @@
 
 import { sql } from './db.js';
 import { publicUrlOrNull, thumbnailUrl } from './r2.js';
-import { listRemixable } from './forge-store.js';
+import { searchPublicCreations } from './forge-store.js';
 import { listDioramas } from './diorama-store.js';
 import { listDesigns } from './cad/store.js';
 import { searchAgentLaunches } from './pump-agent-launches.js';
@@ -139,27 +139,31 @@ export async function searchAgents({ q, limit = 12 } = {}) {
 // ── 3D models (remix bazaar) ─────────────────────────────────────────────────
 
 export async function searchModels({ q, limit = 12 } = {}) {
-	const rows = await listRemixable({ limit, q, sort: 'recent' });
+	// Every public finished creation, matched on its prompt, its Florence-2
+	// caption and its tags (work order 819). The remix action is offered only
+	// where the creator published the model as remixable.
+	const rows = await searchPublicCreations({ q, limit });
 	return rows.map((r) => ({
 		type: 'model',
 		id: r.id,
-		title: r.prompt ? (r.prompt.length > 90 ? `${r.prompt.slice(0, 87)}…` : r.prompt) : 'A remixable 3D model',
-		description: r.prompt || '',
+		title: r.prompt ? (r.prompt.length > 90 ? `${r.prompt.slice(0, 87)}…` : r.prompt) : r.caption || 'A 3D model',
+		description: r.caption || r.prompt || '',
 		image: r.preview_image_url || null,
 		glbUrl: r.glb_url,
-		assetUrl: `https://three.ws/viewer?src=${encodeURIComponent(r.glb_url)}`,
-		creator: r.ownerUsername
-			? { label: `@${r.ownerUsername}`, url: `/u/${r.ownerUsername}` }
-			: { label: 'Lineage', url: `/creations#lineage=${r.id}` },
-		remix: {
-			endpoint: '/api/x402/remix-asset',
-			sourceCreationId: r.id,
-			priceUsd: 0.25,
-			royaltyPercent: Math.round(((r.royaltyBps ?? 0) / 100) * 10) / 10,
-			royaltyPayable: r.royaltyPayable,
-		},
+		assetUrl: `/m/${r.id}`,
+		creator: r.ownerUsername ? { label: `@${r.ownerUsername}`, url: `/u/${r.ownerUsername}` } : null,
+		tags: r.tags || [],
+		remix: r.remixable
+			? {
+					endpoint: '/api/x402/remix-asset',
+					sourceCreationId: r.id,
+					priceUsd: 0.25,
+					royaltyPercent: Math.round(((r.royaltyBps ?? 0) / 100) * 10) / 10,
+					royaltyPayable: r.royaltyPayable,
+				}
+			: null,
 		createdAt: r.created_at,
-		signals: { remixCount: r.remixCount || 0 },
+		signals: { tagMatch: r.tagHit === true },
 	}));
 }
 

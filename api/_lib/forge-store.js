@@ -35,6 +35,7 @@ import { dispatchWebhooks } from './webhook-dispatch.js';
 import { autoCredentialForBytes } from './auto-provenance.js';
 import { tripoModelVersion } from '../_providers/tripo.js';
 import { validForgeDestination } from '../../src/shared/forge-destinations.js';
+import { tagQueryVariants } from './creation-tags.js';
 
 // Stable, non-secret salt so a leaked DB row can't be trivially reversed to the
 // raw browser-local id. The id is anonymous to begin with; this is hygiene, not
@@ -1858,6 +1859,62 @@ export async function listRemixable({ limit = 24, before, category, q, sort } = 
 	} catch (err) {
 		if (isDbUnavailableError(err)) console.warn('[forge-store] listRemixable skipped (db unavailable):', err?.message);
 		else console.error('[forge-store] listRemixable failed:', err?.message);
+		return [];
+	}
+}
+
+// Model search for /api/search (work order 819). Every public finished
+// creation is a candidate, not only the remixable ones: a row matches when its
+// prompt, its Florence-2 caption or detailed caption contains the query, or
+// when one of its tags equals the query as a tag (singular or plural). A tag
+// hit ranks first, then newest. Unlisted, private and grader-rejected rows
+// never appear. Without a query it browses the newest public creations.
+export async function searchPublicCreations({ q, limit = 12 } = {}) {
+	if (!forgeStoreEnabled()) return [];
+	const search = typeof q === 'string' ? q.trim().slice(0, 120) : '';
+	const capped = Math.min(Math.max(Number(limit) || 12, 1), 48);
+	// Escape LIKE wildcards so a query of "100%" matches that text literally.
+	const like = search ? `%${search.replace(/[\\%_]/g, (c) => `\\${c}`)}%` : null;
+	const variants = search ? tagQueryVariants(search) : [];
+	const match = search
+		? `and (fc.prompt ilike $1 or d.caption ilike $1 or d.detailed ilike $1 or d.tags && $2::text[])`
+		: `and $1::text is null and cardinality($2::text[]) = 0`;
+	const order = search ? `(d.tags && $2::text[]) desc nulls last, fc.created_at desc` : `fc.created_at desc`;
+	try {
+		const rows = await sql(
+			`select fc.id, fc.prompt, fc.glb_url, fc.preview_image_url, fc.created_at,
+				fc.remixable, fc.remix_royalty_bps, fc.creator_wallet_solana,
+				u.username as creator_username,
+				d.caption, d.tags,
+				coalesce(d.tags && $2::text[], false) as tag_hit
+			 from forge_creations fc
+			 left join forge_creation_descriptions d on d.creation_id = fc.id and d.status = 'done'
+			 left join users u on u.id = fc.user_id and u.deleted_at is null
+			 where fc.status = 'done' and fc.glb_url is not null
+				and (fc.visibility is null or fc.visibility = 'public')
+				and fc.outcome is distinct from 'rejected'
+				${match}
+			 order by ${order}
+			 limit $3`,
+			[like, variants, capped],
+		);
+		return rows.map((r) => ({
+			id: r.id,
+			prompt: r.prompt,
+			glb_url: normalizeStoredUrl(r.glb_url),
+			preview_image_url: normalizeStoredUrl(r.preview_image_url),
+			created_at: r.created_at,
+			remixable: r.remixable === true,
+			royaltyBps: r.remix_royalty_bps ?? 0,
+			royaltyPayable: Boolean(r.creator_wallet_solana),
+			ownerUsername: r.creator_username || null,
+			caption: r.caption || null,
+			tags: Array.isArray(r.tags) ? r.tags : [],
+			tagHit: r.tag_hit === true,
+		}));
+	} catch (err) {
+		if (isDbUnavailableError(err)) console.warn('[forge-store] searchPublicCreations skipped (db unavailable):', err?.message);
+		else console.error('[forge-store] searchPublicCreations failed:', err?.message);
 		return [];
 	}
 }
