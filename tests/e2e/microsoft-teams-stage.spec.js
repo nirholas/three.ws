@@ -55,7 +55,9 @@ test.beforeAll(async () => {
 	}
 });
 
-test.afterAll(() => {
+const extraBrowsers = [];
+test.afterAll(async () => {
+	await Promise.all(extraBrowsers.map((br) => br.close()));
 	fluid?.kill();
 });
 
@@ -110,6 +112,11 @@ async function placePin(page, text, offsetY) {
 	await expect(page.getByTestId('pin-composer')).toBeHidden();
 }
 
+// A clip long enough to scrub around in, other than the one playing now.
+function pickLongClip(sel) {
+	return [...sel.options].find((o) => o.value && o.value !== sel.value && Number(o.dataset.duration) >= 2)?.value;
+}
+
 async function scrubTo(page, seconds) {
 	await page.getByTestId('anim-scrub').evaluate((el, v) => {
 		el.value = String(v);
@@ -124,6 +131,7 @@ test('two participants share camera follow, presence, pins and animation both wa
 	// headless browser share a single software GL process, and one stage
 	// rendering continuously starves the other's synchronous WebGL calls.
 	const [browserA, browserB] = await Promise.all([playwright.chromium.launch({ args: GL_ARGS }), playwright.chromium.launch({ args: GL_ARGS })]);
+	extraBrowsers.push(browserA, browserB);
 	const ctxA = await browserA.newContext({ baseURL, viewport: VIEWPORT });
 	const ctxB = await browserB.newContext({ baseURL, viewport: VIEWPORT });
 	const a = await ctxA.newPage();
@@ -166,7 +174,7 @@ test('two participants share camera follow, presence, pins and animation both wa
 	await expect(b.getByTestId('pin-marker')).toHaveCount(2);
 
 	// Animation sync, Ada to Bo: pick another clip, pause, scrub to 1.0s.
-	const clipA = await a.getByTestId('anim-clip').evaluate((sel) => [...sel.options].map((o) => o.value).find((v) => v && v !== sel.value));
+	const clipA = await a.getByTestId('anim-clip').evaluate(pickLongClip);
 	await a.getByTestId('anim-clip').selectOption(clipA);
 	await expect(b.getByTestId('anim-clip')).toHaveValue(clipA, { timeout: 20_000 });
 	await a.getByTestId('anim-play').click();
@@ -177,7 +185,7 @@ test('two participants share camera follow, presence, pins and animation both wa
 	await expect(b.getByTestId('anim-time')).toHaveText('1.0s');
 
 	// Animation sync, Bo to Ada: another clip, scrub to 0.5s, then play.
-	const clipB = await b.getByTestId('anim-clip').evaluate((sel) => [...sel.options].map((o) => o.value).find((v) => v && v !== sel.value));
+	const clipB = await b.getByTestId('anim-clip').evaluate(pickLongClip);
 	await b.getByTestId('anim-clip').selectOption(clipB);
 	await expect(a.getByTestId('anim-clip')).toHaveValue(clipB, { timeout: 20_000 });
 	await b.getByTestId('anim-play').click();
@@ -234,7 +242,6 @@ test('two participants share camera follow, presence, pins and animation both wa
 	expect(md).toContain('Bo Chen');
 
 	expect(errors).toEqual([]);
-	await Promise.all([browserA.close(), browserB.close()]);
 });
 
 test('outside Teams the stage runs single-user and says why', async ({ page }) => {

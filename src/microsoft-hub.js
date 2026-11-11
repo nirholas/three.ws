@@ -217,12 +217,15 @@ function onSttStatus(status) {
 	const download = status.progress ?? status.modelProgress;
 	sttProgress(download ?? null);
 	const pct = download !== undefined && download !== null && download < 1 ? ` (model ${Math.round(download * 100)}%)` : '';
+	if (pct) stt.downloaded = true;
 	if (status.phase === 'listening') {
 		btn.setAttribute('aria-pressed', 'true');
 		btn.querySelector('.stt-label').textContent = 'Listening. Press to stop';
 		sttStatus(`Listening. Speak now${pct}.`, 'live');
 	} else if (status.phase === 'loading-model' || (status.phase === 'idle' && stt.busy && pct)) {
 		sttStatus(`Downloading the speech model once, then it stays cached${pct}.`, 'busy');
+	} else if (status.phase === 'idle' && stt.busy && stt.downloaded) {
+		sttStatus('Model downloaded. Starting it up in this tab.', 'busy');
 	} else if (status.phase === 'transcribing') {
 		sttStatus('Transcribing on this device.', 'busy');
 	} else {

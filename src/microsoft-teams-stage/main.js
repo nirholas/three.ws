@@ -665,11 +665,16 @@ function updateOverlay() {
 		el.dataset.visible = String(!!s);
 		void id;
 	}
-	if (!state.scrubbing && sv.current) {
-		const t = sv.currentTime();
-		$('rs-scrub').value = String(t);
-		$('rs-time').textContent = `${t.toFixed(1)}s`;
-	}
+	syncPlayhead();
+}
+
+/** Scrubber and time label follow the playhead (per frame, and on every change while paused). */
+function syncPlayhead() {
+	const sv = state.sv;
+	if (state.scrubbing || !sv?.current) return;
+	const t = sv.currentTime();
+	$('rs-scrub').value = String(t);
+	$('rs-time').textContent = `${t.toFixed(1)}s`;
 }
 
 function sendPointer(clientX, clientY) {
@@ -869,7 +874,7 @@ function renderClips() {
 	const clips = state.sv.clipList;
 	const own = clips.filter((c) => c.clip);
 	const lib = clips.filter((c) => c.lib);
-	const opt = (c) => `<option value="${esc(c.id)}">${esc(c.label)}</option>`;
+	const opt = (c) => `<option value="${esc(c.id)}" data-duration="${Number(c.duration) || 0}">${esc(c.label)}</option>`;
 	sel.innerHTML =
 		'<option value="">No animation</option>' +
 		(own.length ? `<optgroup label="In this model">${own.map(opt).join('')}</optgroup>` : '') +
@@ -890,6 +895,7 @@ function renderAnimBar() {
 	$('rs-play').classList.toggle('is-playing', playing);
 	$('rs-play').setAttribute('aria-label', playing ? 'Pause' : 'Play');
 	$('rs-scrub').max = String(sv.duration() || 1);
+	syncPlayhead();
 	const note = $('rs-anim-note');
 	note.hidden = !locked;
 	note.textContent = locked ? `${locked} controls playback` : '';
