@@ -453,7 +453,8 @@ const LIST_CONTROLS_CSS = `
 .tws-lc-search input:hover { border-color: var(--stroke-strong, rgba(255,255,255,0.14)); }
 .tws-lc-search input:focus-visible,
 .tws-lc-search input:focus {
-  outline: none;
+  outline: 2px solid var(--accent, #fff);
+  outline-offset: 2px;
   border-color: var(--accent, #fff);
   background: var(--surface-2, rgba(255,255,255,0.05));
 }

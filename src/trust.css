@@ -70,6 +70,8 @@
 .tr-section ul { margin: 0 0 var(--space-sm); padding-left: 1.2em; }
 .tr-section li { margin-bottom: 4px; }
 .tr-section code { font-size: .9em; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+.tr-section kbd { font: inherit; font-size: .85em; background: var(--surface-2); border: 1px solid var(--stroke-strong); border-bottom-width: 2px; padding: 0 5px; border-radius: 4px; }
+.tr-caption { caption-side: top; text-align: left; padding: 0 0 6px; color: var(--ink-dim); font-size: var(--text-sm); }
 .tr-section blockquote {
 	margin: 0 0 var(--space-sm);
 	padding: 6px 0 6px 14px;
@@ -100,7 +102,7 @@
 
 .tr-badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: var(--text-xs); border: 1px solid currentColor; white-space: nowrap; }
 .tr-badge.is-good { color: var(--success, #22c55e); }
-.tr-badge.is-warn { color: var(--warning, #f59e0b); }
+.tr-badge.is-warn { color: var(--warn, #f59e0b); }
 .tr-badge.is-off { color: var(--ink-dim); }
 
 .tr-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: var(--space-md); }
