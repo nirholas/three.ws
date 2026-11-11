@@ -56,6 +56,7 @@ These are in the repo and validated. Each one goes live when the owner completes
 | Edge Add-ons | The browser extension package | `npm run package:edge` |
 | .NET SDK on NuGet | `ThreeWs.Sdk` for C#, ASP.NET Core and Unity (net8.0 and netstandard2.1): Forge on every lane, catalog, rigging, streaming agent chat and MCP tools. Source in [`sdk-dotnet/`](../sdk-dotnet), guide in [.NET SDK](./dotnet-sdk.md). Goes live when the owner pushes the package to nuget.org | `cd sdk-dotnet && dotnet test tests/ThreeWs.Sdk.Tests -c Release` |
 | Semantic Kernel plugins and Agent Framework samples | `threews-semantic-kernel` (PyPI) and `ThreeWs.SemanticKernel` (NuGet): six native functions (generate a 3D model, poll a job, search ready-made assets, list your agents, search public agents, message an agent) plus a one-line attach for the MCP studio server, and Python and .NET Agent Framework agents that design a prop and return a real model URL. Sources in [`integrations/microsoft/`](../integrations/microsoft), guide in [three.ws on the Microsoft agent stack](./microsoft-agent-stack.md). Goes live when the owner publishes both packages | `cd integrations/microsoft/semantic-kernel-python && pytest`, `cd integrations/microsoft/semantic-kernel-dotnet && dotnet test tests/ThreeWs.SemanticKernel.Tests` |
+| Power BI custom visual | `three.ws 3D Models`: a report visual that renders three.ws models bound to report data (GLB URL or model id), one model or a grid or turntable gallery, coloured and sized by measures, with cross-filtering, highlights, tooltips, keyboard and high contrast. Listed on AppSource as an uncertified visual because it downloads models from three.ws. See [`integrations/microsoft/power-bi-visual/`](../integrations/microsoft/power-bi-visual/README.md) and the [AppSource notes](../marketing/growth/submissions/programs/microsoft-power-bi-visual.md) | `cd integrations/microsoft/power-bi-visual && npm test && npm run package && npm run verify:live` |
 
 ## In flight
 
@@ -87,7 +88,7 @@ These are in the repo and validated. Each one goes live when the owner completes
 - Write it as "three.ws and Microsoft have announced a partnership" and "three.ws is live on Microsoft Marketplace". Both are true and sourced above.
 - Do not attach a named Microsoft partner tier or programme (for example a Solutions Partner designation or a co-sell status) unless the owner confirms it. The `/partners` chip reads "Marketplace" because that is the verifiable part.
 - Do not imply Microsoft endorses a specific feature, coin, or trading surface. Microsoft is a distribution and technology partner; [$THREE](https://three.ws/three) and the Solana agent economy are three.ws's own.
-- Microsoft, Azure, Microsoft Marketplace, Microsoft Teams, Live Share, TRELLIS, Florence, ONNX Runtime, Adaptive Cards, TypeScript, and Playwright are trademarks of the Microsoft group of companies.
+- Microsoft, Azure, Microsoft Marketplace, Microsoft AppSource, Power BI, Microsoft Teams, Live Share, TRELLIS, Florence, ONNX Runtime, Adaptive Cards, TypeScript, and Playwright are trademarks of the Microsoft group of companies.
 
 ## Related
 
