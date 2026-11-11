@@ -38,7 +38,7 @@ const serviceUrl = 'https://smba.trafficmanager.net/amer/';
 const schema = JSON.parse(readFileSync(new URL('../tests/fixtures/adaptive-card-1.5.schema.json', import.meta.url), 'utf8'));
 schema.$id = schema.id;
 delete schema.id;
-const ajv = new Ajv({ strict: false, allErrors: true });
+const ajv = new Ajv({ strict: false, allErrors: true, validateFormats: false });
 ajv.addMetaSchema(draft06);
 const validate = ajv.compile(schema);
 

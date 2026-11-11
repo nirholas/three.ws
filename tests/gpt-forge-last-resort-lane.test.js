@@ -109,17 +109,33 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-describe('POST /api/gpt-forge with no lane left but a probe-"down" self-host worker', () => {
+// Both forge handlers carry the same submit-time fallback chain.
+describe.each([
+	['/api/gpt-forge', '../api/gpt-forge.js'],
+	['/api/forge', '../api/forge.js'],
+])('POST %s with no lane left but a probe-"down" self-host worker', (route, modPath) => {
 	it('submits to TRELLIS self-host instead of failing with "no reconstruct lane configured"', async () => {
-		const forge = (await import('../api/gpt-forge.js')).default;
+		const forge = (await import(modPath)).default;
 		const res = mockRes();
-		await forge(mockReq({ prompt: 'a friendly round robot mascot, glossy white plastic', director: false }), res);
-		console.log('RESULT', res.statusCode, JSON.stringify(res.json).slice(0,400), gcpSubmit.mock.calls.map(c=>c[0].mode));
+		const req = mockReq({ prompt: 'a friendly round robot mascot, glossy white plastic', director: false });
+		req.url = route;
+		await forge(req, res);
 		expect(res.json?.message || '').not.toMatch(/no reconstruct lane configured/);
 		expect(res.statusCode).toBe(200);
 		expect(res.json.backend).toBe('trellis_selfhost');
 		expect(typeof res.json.job_id).toBe('string');
 		expect(gcpSubmit).toHaveBeenCalled();
 		expect(gcpSubmit.mock.calls.at(-1)[0].mode).toBe('trellis');
+	});
+
+	it('still fails cleanly when the last configured lane refuses the job too', async () => {
+		gcpSubmit.mockRejectedValue(Object.assign(new Error('worker unreachable'), { code: 'provider_unreachable', status: 502 }));
+		const forge = (await import(modPath)).default;
+		const res = mockRes();
+		const req = mockReq({ prompt: 'a friendly round robot mascot, glossy white plastic', director: false });
+		req.url = route;
+		await forge(req, res);
+		expect(res.statusCode).toBeGreaterThanOrEqual(400);
+		expect(res.json?.job_id).toBeUndefined();
 	});
 });
