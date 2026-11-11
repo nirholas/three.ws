@@ -79,9 +79,12 @@ describe('searchPublicCreations', () => {
 		expect(text).toMatch(/fc\.prompt ilike/);
 	});
 
-	it('returns nothing without a query and never hits the database', async () => {
-		expect(await searchPublicCreations({ q: '  ' })).toEqual([]);
-		expect(sqlMock).not.toHaveBeenCalled();
+	it('browses the newest public creations without a query', async () => {
+		await searchPublicCreations({ q: '  ', limit: 4 });
+		const { text, params } = lastQuery();
+		expect(text).toMatch(/order by fc\.created_at desc/);
+		expect(text).not.toMatch(/ilike/);
+		expect(params).toEqual([null, [], 4]);
 	});
 
 	it('maps rows with their caption and tags', async () => {
