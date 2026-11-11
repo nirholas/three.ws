@@ -39,6 +39,32 @@ describe('normalizeTag', () => {
 		expect(normalizeTag(SLUR)).toBe('');
 		expect(normalizeTags(['lamp', `${SLUR} lamp`])).toEqual(['lamp']);
 	});
+
+	// Seen in the first 300 real Florence-2 results: the lemmatizer cuts
+	// plural-only nouns ("sunglasses" -> "sunglass"), bare colours and body parts
+	// show up on nearly every poster, and a watermark gets read as a tag.
+	it('restores plural-only nouns the lemmatizer cut, on the last word', () => {
+		expect(normalizeTag('sunglass')).toBe('sunglasses');
+		expect(normalizeTag('goggle')).toBe('goggles');
+		expect(normalizeTag('trouser')).toBe('trousers');
+		expect(normalizeTag('black sunglass')).toBe('black sunglasses');
+		expect(normalizeTag('leave')).toBe('leaf');
+	});
+
+	it('rejects bare colours, body parts and watermark text', () => {
+		for (const t of ['red', 'purple', 'eye', 'hair', 'hand', 'human face', 'human head', 'finger', 'watermark', 'pollination ai', 'logo', 'line', 'opening']) {
+			expect(normalizeTag(t), t).toBe('');
+		}
+		expect(normalizeTag('red car')).toBe('red car');
+		expect(normalizeTag('human hand')).toBe('human hand');
+	});
+
+	it('rejects a phrase whose head noun is a generic picture word', () => {
+		for (const t of ['violet color', '3d rendering', 'plastic object', 'silver top', 'gray background']) {
+			expect(normalizeTag(t), t).toBe('');
+		}
+		expect(normalizeTag('desk lamp')).toBe('desk lamp');
+	});
 });
 
 describe('normalizeTags', () => {

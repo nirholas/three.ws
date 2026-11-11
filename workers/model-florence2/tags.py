@@ -43,9 +43,64 @@ GENERIC_NOUNS = frozenset(
     thing things part parts piece pieces model models 3d figure figurine
     texture pattern appearance look lighting light shadow shadows reflection
     white black grey gray area space frame angle perspective position
-    the this that these those some
+    the this that these those some line lines opening
     """.split()
 )
+
+# Bare colours describe a part of the picture, not what it is ("red car" stays,
+# "red" alone does not).
+COLOUR_WORDS = frozenset(
+    """
+    red orange yellow green blue purple violet pink brown gold golden silver
+    beige cyan magenta teal turquoise navy maroon tan cream ivory bronze copper
+    indigo lavender
+    """.split()
+)
+
+# Body parts Florence-2 names on nearly every character poster. Alone they say
+# nothing about which model this is. A prominent part still comes through as a
+# detection label ("human hand").
+BODY_PARTS = frozenset(
+    """
+    eye eyes hair hand hands arm arms head face nose mouth ear ears leg legs foot
+    feet finger fingers thumb waist shoulder shoulders neck skin nail nails chest
+    body lip lips eyebrow eyebrows tooth teeth knee knees elbow wrist
+    """.split()
+) | frozenset(["human face", "human head", "human body", "human nose", "human eye",
+               "human mouth", "human ear", "human leg", "human arm", "human hair"])
+
+# A phrase whose head (last) word is one of these describes the picture: "violet
+# color", "3d rendering", "silver top", "gray background".
+GENERIC_HEADS = frozenset(
+    """
+    image picture photo photograph render rendering illustration drawing view
+    background foreground backdrop scene shot color colour shade shape style
+    design detail details object objects item thing things part parts piece
+    pieces texture pattern appearance look lighting shadow reflection area space
+    frame angle perspective position top bottom side front back surface
+    """.split()
+)
+
+# Text burned into a poster (a generator's watermark) is never a tag.
+TEXT_WORDS = frozenset("watermark logo ai text caption signature copyright".split())
+
+# Nouns that only exist in the plural: the lemmatizer cuts them ("sunglasses"
+# -> "sunglass"), so the last word is put back.
+PLURAL_ONLY = {
+    "sunglass": "sunglasses",
+    "eyeglass": "eyeglasses",
+    "glasse": "glasses",
+    "goggle": "goggles",
+    "trouser": "trousers",
+    "jean": "jeans",
+    "pant": "pants",
+    "scissor": "scissors",
+    "plier": "pliers",
+    "binocular": "binoculars",
+    "headphone": "headphones",
+    "earphone": "earphones",
+    "leave": "leaf",
+}
 
 _WS = re.compile(r"\s+")
 _DISALLOWED = re.compile(r"[^a-z0-9 \-]")
@@ -57,8 +112,10 @@ def normalize_tag(raw: object) -> str:
 
     Lowercase, accents folded to ASCII, punctuation other than inner hyphens
     dropped, whitespace collapsed, a leading article removed, at most
-    ``MAX_TAG_WORDS`` words and ``MAX_TAG_CHARS`` characters, and never a
-    purely numeric string or a generic picture noun.
+    ``MAX_TAG_WORDS`` words and ``MAX_TAG_CHARS`` characters, a plural-only
+    noun restored, and never a purely numeric string, a generic picture noun, a
+    bare colour or body part, a phrase headed by a picture word, or watermark
+    text.
     """
     if not isinstance(raw, str):
         return ""
@@ -72,12 +129,17 @@ def normalize_tag(raw: object) -> str:
     words = [w.strip("-") for w in text.split(" ") if w.strip("-")]
     if not words or len(words) > MAX_TAG_WORDS:
         return ""
+    words[-1] = PLURAL_ONLY.get(words[-1], words[-1])
+    if len(words) > 1 and words[-1] in GENERIC_HEADS:
+        return ""
+    if any(w in TEXT_WORDS for w in words):
+        return ""
     tag = " ".join(words)
     if len(tag) > MAX_TAG_CHARS or len(tag) < 2:
         return ""
     if tag.replace(" ", "").replace("-", "").isdigit():
         return ""
-    if tag in GENERIC_NOUNS:
+    if tag in GENERIC_NOUNS or tag in COLOUR_WORDS or tag in BODY_PARTS:
         return ""
     return tag
 

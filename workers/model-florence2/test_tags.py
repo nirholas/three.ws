@@ -24,6 +24,23 @@ def test_normalize_rejects_generic_numeric_long_and_non_strings():
     assert normalize_tag(42) == ""
 
 
+def test_normalize_restores_plural_only_nouns():
+    assert normalize_tag("sunglass") == "sunglasses"
+    assert normalize_tag("goggle") == "goggles"
+    assert normalize_tag("black sunglass") == "black sunglasses"
+    assert normalize_tag("leave") == "leaf"
+
+
+def test_normalize_rejects_colours_body_parts_watermarks_and_generic_heads():
+    for t in ["red", "purple", "eye", "hair", "hand", "human face", "human head", "finger",
+              "watermark", "pollination ai", "logo", "line", "opening",
+              "violet color", "3d rendering", "plastic object", "silver top", "gray background"]:
+        assert normalize_tag(t) == "", t
+    assert normalize_tag("red car") == "red car"
+    assert normalize_tag("human hand") == "human hand"
+    assert normalize_tag("desk lamp") == "desk lamp"
+
+
 def test_dedupe_merges_plural_and_caps():
     assert dedupe(["Sword", "swords", "SWORD", "shield"]) == ["sword", "shield"]
     assert dedupe([f"tag{i}x" for i in range(30)], limit=5) == ["tag0x", "tag1x", "tag2x", "tag3x", "tag4x"]
