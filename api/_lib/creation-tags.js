@@ -24,7 +24,8 @@ const GENERIC_NOUNS = new Set(
 	thing things part parts piece pieces model models 3d figure figurine
 	texture pattern appearance look lighting light shadow shadows reflection
 	white black grey gray area space frame angle perspective position
-	the this that these those some line lines opening`.split(/\s+/),
+	the this that these those some line lines opening
+	one two three four five six seven eight nine ten dozen`.split(/\s+/),
 );
 
 // Bare colours describe part of the picture, not what it is ("red car" stays,

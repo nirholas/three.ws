@@ -44,6 +44,7 @@ GENERIC_NOUNS = frozenset(
     texture pattern appearance look lighting light shadow shadows reflection
     white black grey gray area space frame angle perspective position
     the this that these those some line lines opening
+    one two three four five six seven eight nine ten dozen
     """.split()
 )
 

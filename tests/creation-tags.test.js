@@ -52,7 +52,7 @@ describe('normalizeTag', () => {
 	});
 
 	it('rejects bare colours, body parts and watermark text', () => {
-		for (const t of ['red', 'purple', 'eye', 'hair', 'hand', 'human face', 'human head', 'finger', 'watermark', 'pollination ai', 'logo', 'line', 'opening']) {
+		for (const t of ['red', 'purple', 'eye', 'hair', 'hand', 'human face', 'human head', 'finger', 'watermark', 'pollination ai', 'logo', 'line', 'opening', 'four', 'two']) {
 			expect(normalizeTag(t), t).toBe('');
 		}
 		expect(normalizeTag('red car')).toBe('red car');

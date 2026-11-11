@@ -19,6 +19,11 @@
 //       Lease the next n creations (newest first) and write [{id, image_url}]
 //       for the GPU batch job (workers/model-florence2/batch.py).
 //
+//   --renormalize [--dry-run]
+//       Re-apply the current tag rules (api/_lib/creation-tags.js) to every
+//       stored description after a rule change. No GPU time; owner-edited tag
+//       lists are left as the owner saved them.
+//
 //   --import gs://bucket/path/out.json
 //       Store every result the batch job wrote; failed items go back to the
 //       queue (and to 'failed' after three attempts).
@@ -127,6 +132,12 @@ async function importBatch() {
 	printStats('coverage', await lib.describeStats());
 }
 
+async function renormalize() {
+	const dry = Boolean(arg('dry-run'));
+	const r = await lib.renormalizeStoredTags({ dryRun: dry });
+	console.log(`${dry ? 'would change' : 'changed'} ${r.changed} of ${r.scanned} stored descriptions`);
+}
+
 async function viaWorker() {
 	const url = String(arg('worker')).replace(/\/+$/, '');
 	const limit = Number(arg('limit', 500));
@@ -153,12 +164,13 @@ async function viaWorker() {
 }
 
 try {
-	if (arg('dry-run')) await dryRun();
+	if (arg('renormalize')) await renormalize();
+	else if (arg('dry-run')) await dryRun();
 	else if (arg('export')) await exportBatch();
 	else if (arg('import')) await importBatch();
 	else if (arg('worker')) await viaWorker();
 	else {
-		console.log('usage: --dry-run | --worker <url> | --export <n> --out gs://... | --import gs://...');
+		console.log('usage: --dry-run | --renormalize [--dry-run] | --worker <url> | --export <n> --out gs://... | --import gs://...');
 		process.exitCode = 2;
 	}
 } catch (err) {

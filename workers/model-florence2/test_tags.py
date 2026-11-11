@@ -33,7 +33,7 @@ def test_normalize_restores_plural_only_nouns():
 
 def test_normalize_rejects_colours_body_parts_watermarks_and_generic_heads():
     for t in ["red", "purple", "eye", "hair", "hand", "human face", "human head", "finger",
-              "watermark", "pollination ai", "logo", "line", "opening",
+              "watermark", "pollination ai", "logo", "line", "opening", "four", "two",
               "violet color", "3d rendering", "plastic object", "silver top", "gray background"]:
         assert normalize_tag(t) == "", t
     assert normalize_tag("red car") == "red car"

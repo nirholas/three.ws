@@ -307,6 +307,47 @@ export async function setOwnerTags({ creationId, tags }) {
 	return { tags: rows[0]?.tags ?? clean, generatedTags: rows[0]?.generated_tags ?? [] };
 }
 
+/**
+ * Re-apply the current tag rules (creation-tags.js) to every stored
+ * description, so a rule change reaches existing rows without spending GPU
+ * time on a re-describe. generated_tags is re-normalized; tags follows it
+ * unless the owner edited them (an owner's list is theirs). Walks the table
+ * in creation_id order, `pageSize` rows at a time. Returns counts.
+ */
+export async function renormalizeStoredTags({ pageSize = 500, dryRun = false } = {}) {
+	let after = '00000000-0000-0000-0000-000000000000';
+	let scanned = 0;
+	let changed = 0;
+	for (;;) {
+		const rows = await sql`
+			select creation_id, generated_tags, tags, tags_edited_at
+			from forge_creation_descriptions
+			where status = 'done' and creation_id > ${after}::uuid
+			order by creation_id
+			limit ${pageSize}
+		`;
+		if (!rows.length) break;
+		for (const r of rows) {
+			scanned += 1;
+			const generated = normalizeTags(r.generated_tags || []);
+			const same = (a, b) => a.length === b.length && a.every((t, i) => t === b[i]);
+			const tagsFollow = !r.tags_edited_at;
+			if (same(generated, r.generated_tags || []) && (!tagsFollow || same(generated, r.tags || []))) continue;
+			changed += 1;
+			if (dryRun) continue;
+			await sql`
+				update forge_creation_descriptions set
+					generated_tags = ${generated},
+					tags = case when tags_edited_at is null then ${generated}::text[] else tags end,
+					updated_at = now()
+				where creation_id = ${r.creation_id}
+			`;
+		}
+		after = rows[rows.length - 1].creation_id;
+	}
+	return { scanned, changed };
+}
+
 /** Coverage numbers for the cron's dry run and the backfill script's progress. */
 export async function describeStats() {
 	const [row] = await sql`
