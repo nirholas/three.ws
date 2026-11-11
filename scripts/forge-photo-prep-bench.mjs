@@ -20,7 +20,10 @@
  * Usage (dev server on 3109, GCP spend pre-approved for this lane):
  *   TRELLIS2_URL=https://model-trellis2-…run.app \
  *   TRELLIS2_KEY="$(gcloud secrets versions access latest --secret avatar-reconstruction-key)" \
- *   node scripts/forge-photo-prep-bench.mjs --photos=docs/forge-photo-prep/photos --out=<dir> [--base=http://localhost:3109] [--only=name,name] [--skip-generate]
+ *   node scripts/forge-photo-prep-bench.mjs --photos=docs/forge-photo-prep/photos --out=<dir> [--base=http://localhost:3109] [--only=name,name] [--skip-generate] [--skip-prep]
+ *
+ * --skip-prep reuses the prepared variants already in <out>/results.json, so the
+ * generation half can run without a dev server.
  */
 import { chromium } from 'playwright';
 import { execFileSync } from 'node:child_process';
@@ -179,7 +182,15 @@ async function generate(name, key) {
 	save();
 }
 
-await prepareAll();
+if (flags['skip-prep']) {
+	const missing = photos.map((f) => basename(f, extname(f))).filter((n) => !results.photos[n]?.variants);
+	if (missing.length) {
+		console.error(`--skip-prep: no prepared variants in ${resultsPath} for ${missing.join(', ')}; run once without it.`);
+		process.exit(2);
+	}
+} else {
+	await prepareAll();
+}
 if (!flags['skip-generate']) {
 	for (const f of photos) {
 		const name = basename(f, extname(f));
