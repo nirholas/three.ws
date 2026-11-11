@@ -494,7 +494,28 @@ export function createDioramaRenderer(container, opts = {}) {
 	// --- camera framing ---
 	const _box = new THREE.Box3();
 	const _sphere = new THREE.Sphere();
+	// What the camera frames: 'world' is the whole island (a sentence world
+	// spreads across it), 'objects' is only the forged pieces (a photo world is
+	// one tight cluster, a desk and what stands on it, that would read tiny
+	// framed against the full island). setDiorama resets it to 'world'.
+	let frameFocus = 'world';
+	const OBJECT_FOCUS_MIN_RADIUS = 1.1;
+	function computeObjectSphere() {
+		_box.makeEmpty();
+		for (const { group } of placed.values()) {
+			group.updateWorldMatrix(true, true);
+			_box.expandByObject(group);
+		}
+		if (_box.isEmpty()) return null;
+		_box.getBoundingSphere(_sphere);
+		_sphere.radius = Math.max(_sphere.radius, OBJECT_FOCUS_MIN_RADIUS);
+		return _sphere;
+	}
 	function computeContentSphere() {
+		if (frameFocus === 'objects') {
+			const objects = computeObjectSphere();
+			if (objects) return objects;
+		}
 		_box.makeEmpty();
 		let any = false;
 		worldGroup.traverse((n) => {
@@ -664,6 +685,7 @@ export function createDioramaRenderer(container, opts = {}) {
 	function setDiorama(diorama) {
 		const d = diorama && diorama.objects ? diorama : { ...normalizedFallback() };
 		current = d;
+		frameFocus = 'world';
 		const palette = d.palette || defaultPalette(d.mood);
 		const moodKey = MOOD_LIGHT[d.mood] ? d.mood : 'day';
 		const ml = MOOD_LIGHT[moodKey];
@@ -1313,7 +1335,14 @@ export function createDioramaRenderer(container, opts = {}) {
 		return Array.from(placed.values()).map((p) => p.glbUrl).filter(Boolean);
 	}
 
-	function frame() {
+	/**
+	 * Re-frame the camera on the world. `focus: 'objects'` frames only the forged
+	 * pieces (and keeps the auto-orbit centred on them); the default frames the
+	 * whole island.
+	 * @param {{ focus?: 'world'|'objects' }} [opts]
+	 */
+	function frame({ focus } = {}) {
+		if (focus === 'world' || focus === 'objects') frameFocus = focus;
 		frameCamera(true);
 		needsRender = true;
 		return api;

@@ -974,15 +974,17 @@
 .dio-object.is-hot {
 	border-color: var(--dio-glow);
 }
+/* A small picture glyph: this piece was forged from its crop of the photo. */
 .dio-object[data-from='photo'] .dio-object__label::after {
 	content: '';
 	display: inline-block;
-	width: 0.42rem;
-	height: 0.42rem;
+	width: 0.8rem;
+	height: 0.8rem;
 	margin-left: 0.4rem;
-	border-radius: 2px;
-	border: 1px solid var(--dio-dim);
-	vertical-align: 0.1em;
+	vertical-align: -0.12em;
+	background-color: var(--dio-dim);
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.4' stroke-linejoin='round'%3E%3Crect x='1.7' y='2.7' width='12.6' height='10.6' rx='1.8'/%3E%3Ccircle cx='5.6' cy='6.3' r='1.2'/%3E%3Cpath d='M2.4 12.2 6.6 8.6l2.6 2.2 2-1.6 3 2.6'/%3E%3C/svg%3E") center / contain no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.4' stroke-linejoin='round'%3E%3Crect x='1.7' y='2.7' width='12.6' height='10.6' rx='1.8'/%3E%3Ccircle cx='5.6' cy='6.3' r='1.2'/%3E%3Cpath d='M2.4 12.2 6.6 8.6l2.6 2.2 2-1.6 3 2.6'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 @keyframes dio-march {
 	to {

@@ -177,6 +177,7 @@ function init() {
 		li.setAttribute('role', 'listitem');
 		if (obj.forgeFrom) li.dataset.from = obj.forgeFrom;
 		li.setAttribute('aria-label', chipLabel(obj, obj.status));
+		setChipTitle(li, obj);
 		if (obj.box) {
 			// Photo objects light up their box on the source photo.
 			li.tabIndex = 0;
@@ -195,6 +196,13 @@ function init() {
 		return `${obj?.label || obj?.prompt || 'object'}: ${statusWord(status)}${from}`;
 	}
 
+	// Hover hint saying where a photo object's mesh came from.
+	function setChipTitle(chip, obj) {
+		if (obj?.forgeFrom === 'photo') chip.title = 'Forged from its crop of your photo';
+		else if (obj?.forgeFrom === 'text') chip.title = 'Forged from its description (its crop could not be used)';
+		else chip.removeAttribute('title');
+	}
+
 	function chipFor(id) {
 		return el.worldObjects?.querySelector(`.dio-object[data-id="${cssEscape(id)}"]`) || null;
 	}
@@ -206,6 +214,7 @@ function init() {
 		const obj = state.diorama?.objects.find((o) => o.id === id);
 		if (obj?.forgeFrom) chip.dataset.from = obj.forgeFrom;
 		chip.setAttribute('aria-label', chipLabel(obj, status));
+		setChipTitle(chip, obj);
 		setBoxStatus(id, status);
 		// Failed objects get an in-place retry affordance; clear it otherwise.
 		const existing = chip.querySelector('.dio-object__retry');
@@ -298,7 +307,7 @@ function init() {
 			if (settled < total) {
 				el.statusLabel.textContent = 'Forging your world…';
 			} else if (ready === 0) {
-				el.statusLabel.textContent = 'Hmm — nothing would forge. Try remixing.';
+				el.statusLabel.textContent = 'Nothing would forge this time. Try remixing.';
 			} else if (ready < total) {
 				el.statusLabel.textContent = `Your world is ready (${ready} of ${total} pieces).`;
 			} else {
@@ -502,6 +511,11 @@ function init() {
 	}
 
 	// Settle the world: final progress, reveal actions, start the auto-orbit.
+	/** A world rebuilt from a photo: its objects carry their box in the photo. */
+	function isPhotoWorld(d) {
+		return Boolean(d?.sourceImage) || Boolean(d?.objects?.some((o) => Array.isArray(o.box)));
+	}
+
 	function finishWorld() {
 		const d = state.diorama;
 		if (!d) return;
@@ -512,6 +526,8 @@ function init() {
 
 		if (anyReady) {
 			show(el.worldActions);
+			// A photo world is one tight cluster; frame its pieces, not the island.
+			if (isPhotoWorld(d)) renderer.frame({ focus: 'objects' });
 			renderer.startAutoOrbit(true);
 			wireWorldActions();
 			syncPlayButton();
@@ -742,8 +758,13 @@ function init() {
 				}
 			}
 			updateProgress();
-			if (el.statusLabel) el.statusLabel.textContent = `“${diorama.title}” — spoken into being`;
+			if (el.statusLabel) {
+				el.statusLabel.textContent = isPhotoWorld(diorama)
+					? `“${diorama.title}”, rebuilt from a photo`
+					: `“${diorama.title}”, spoken into being`;
+			}
 
+			if (isPhotoWorld(diorama)) renderer.frame({ focus: 'objects' });
 			renderer.startAutoOrbit(true);
 			showRemixAffordance(diorama);
 			syncPlayButton();
