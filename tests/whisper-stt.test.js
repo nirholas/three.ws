@@ -88,6 +88,10 @@ describe('WhisperSTT', () => {
 		expect(new WhisperSTT().engines().map((e) => e.id)).toEqual(['on-device', 'server']);
 	});
 
+	it('drops the /api/asr lane when onDeviceOnly is set, so a page can promise audio stays local', () => {
+		expect(new WhisperSTT({ onDeviceOnly: true }).engines().map((e) => e.id)).toEqual(['on-device']);
+	});
+
 	it('normalizes the API origin so the fallback URL never doubles a slash', () => {
 		expect(new WhisperSTT({ apiOrigin: 'https://three.ws/' }).apiOrigin).toBe('https://three.ws');
 	});

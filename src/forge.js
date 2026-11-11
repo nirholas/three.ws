@@ -32,6 +32,7 @@ import { openedFromShare } from './shared/share-beacon.js';
 import { generateWithModly, defaultModlyParams } from './modly-local.js';
 import { createModlyPanel, promoteModlyGlb, saveModlyResultToLibrary } from './forge-modly.js';
 import { regionRestrictedError, fetchRestrictedEngines } from './forge-region.js';
+import { engineFromQuery } from './forge-engine-link.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -814,9 +815,21 @@ async function loadCatalog() {
 	}
 	if (!cached || cachedJson !== JSON.stringify(catalog)) buildEngineButtons();
 	selectTier(selectedTier);
+	applyEngineDeepLink();
 	revealSketchMode();
 	loadHealth();
 	loadTerritory();
+}
+
+// ?engine=<lane id> picks that engine once the live catalog has built the
+// buttons (see src/forge-engine-link.js). A lane this deployment does not offer
+// leaves the tier default in place rather than selecting a dead engine.
+let engineDeepLinkApplied = false;
+function applyEngineDeepLink() {
+	if (engineDeepLinkApplied) return;
+	engineDeepLinkApplied = true;
+	const wanted = engineFromQuery(location.search);
+	if (wanted) selectEngineByBackend(wanted);
 }
 
 // Ask which engines this visitor's region excludes, so the picker disables them

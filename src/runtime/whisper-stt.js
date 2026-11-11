@@ -189,6 +189,9 @@ export class WhisperSTT {
 	 * @param {string} [opts.apiOrigin]  three.ws origin for the server fallback and
 	 *        the VAD assets. Empty means same-origin; an embed passes its API origin.
 	 * @param {number} [opts.endSilenceMs] Trailing silence that ends an utterance.
+	 * @param {boolean} [opts.onDeviceOnly] Never send audio to the /api/asr
+	 *        fallback. For pages that promise the audio stays on the device: a
+	 *        failed on-device run then rejects instead of uploading the clip.
 	 * @param {(status: SttStatus) => void} [opts.onStatus]
 	 *
 	 * @typedef {object} SttStatus
@@ -203,12 +206,14 @@ export class WhisperSTT {
 		continuous = false,
 		apiOrigin = '',
 		endSilenceMs = END_OF_SPEECH_SILENCE_MS,
+		onDeviceOnly = false,
 		onStatus = null,
 	} = {}) {
 		this.language = language;
 		this.continuous = continuous;
 		this.apiOrigin = String(apiOrigin || '').replace(/\/+$/, '');
 		this.endSilenceMs = endSilenceMs;
+		this.onDeviceOnly = Boolean(onDeviceOnly);
 		this.onStatus = onStatus;
 		this._session = null;
 		this._phase = 'idle';
@@ -223,7 +228,7 @@ export class WhisperSTT {
 	/** The recognizers tried for each utterance, best first. */
 	engines() {
 		const { model, options } = onDeviceModelFor(this.language);
-		return [
+		const engines = [
 			{
 				id: 'on-device',
 				transcribe: async (audio) => {
@@ -252,6 +257,7 @@ export class WhisperSTT {
 				},
 			},
 		];
+		return this.onDeviceOnly ? engines.slice(0, 1) : engines;
 	}
 
 	/** Start the model download without listening, e.g. ahead of a first turn. */
