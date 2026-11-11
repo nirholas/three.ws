@@ -17,6 +17,7 @@ def test_normalize_rejects_generic_numeric_long_and_non_strings():
     assert normalize_tag("Image") == ""
     assert normalize_tag("1234") == ""
     assert normalize_tag("x") == ""
+    assert normalize_tag("the") == ""
     assert normalize_tag("one two three four") == ""
     assert normalize_tag("a" * 40) == ""
     assert normalize_tag(None) == ""

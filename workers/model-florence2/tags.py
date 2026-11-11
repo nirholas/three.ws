@@ -43,6 +43,7 @@ GENERIC_NOUNS = frozenset(
     thing things part parts piece pieces model models 3d figure figurine
     texture pattern appearance look lighting light shadow shadows reflection
     white black grey gray area space frame angle perspective position
+    the this that these those some
     """.split()
 )
 

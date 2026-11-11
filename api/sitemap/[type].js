@@ -35,6 +35,7 @@ import {
 	resourceUrl,
 	sitemapDate,
 	SITEMAP_TYPES,
+	isIndexableManifestPage,
 } from '../_lib/seo-resources.js';
 
 const ORIGIN = env.APP_ORIGIN;
@@ -147,12 +148,10 @@ async function coreSitemap() {
 	}
 	const out = [];
 	for (const section of manifest.sections) {
-		// Skip news (it has its own long-tail) and any non-indexable section.
-		if (section.id === 'news') continue;
+		// News has its own long-tail file; the rest of the rule is shared with
+		// the IndexNow reconciler so both announce the same pages.
 		for (const p of section.pages || []) {
-			if (p.indexable === false) continue;
-			if (p.auth === 'required') continue;
-			if (!p.path || p.path.startsWith('http')) continue;
+			if (!isIndexableManifestPage(section, p)) continue;
 			out.push({
 				loc: `${ORIGIN}${p.path === '/' ? '/' : p.path}`,
 				// The manifest records when a page was last changed (lastmod) or

@@ -27,9 +27,10 @@
 
 import { scriptJson, truncateChars } from '../api/_lib/safe-text.js';
 import { creationJsonLd, renderPosterUrl, renderableGlb, POSTER_WIDTH, POSTER_HEIGHT } from '../api/_lib/creation-jsonld.js';
+import { isIndexableCreation } from '../api/_lib/seo-resources.js';
 // The page's own pure helpers, so the server head and the hydrated page agree
 // on which paths are creations and what a creation is called.
-import { modelIdFromPath, titleFromPrompt } from '../src/model-lib.js';
+import { modelIdFromPath, titleFromPrompt, creationDescribedText, creationAltText, excerptText } from '../src/model-lib.js';
 
 const ORIGIN = 'https://three.ws';
 const LOOKUP_TIMEOUT_MS = 2500;
@@ -61,16 +62,6 @@ function promptExcerpt(prompt, max = 160) {
 }
 
 /**
- * True when a creation belongs in a search index: public (a missing visibility
- * is a legacy public row) and not rejected by the quality grader. The same
- * rule as /sitemap/creations.xml (api/sitemap/[type].js).
- */
-export function isIndexableCreation(creation) {
-	const vis = creation?.visibility ?? 'public';
-	return vis === 'public' && creation?.outcome !== 'rejected';
-}
-
-/**
  * Everything the head needs, derived from one public creation record (the
  * shape both getPublicCreation and GET /api/forge-creation return).
  */
@@ -79,7 +70,13 @@ export function creationMeta(creation, origin = ORIGIN) {
 	const pageUrl = `${origin}/m/${id}`;
 	const name = titleFromPrompt(creation.prompt);
 	const by = creation.creatorUsername ? ` by @${creation.creatorUsername}` : '';
-	const description = `3D model${by} on three.ws, generated from the prompt "${promptExcerpt(creation.prompt)}". View it in 3D and AR, download the GLB, or remix it.`;
+	// What the poster shows (Florence-2's detailed caption, else its caption)
+	// leads when the creation was described; the prompt sentence otherwise.
+	const described = creationDescribedText(creation);
+	const description = described
+		? `${excerptText(described, 160)} A 3D model${by} on three.ws: view it in 3D and AR, download the GLB, or remix it.`
+		: `3D model${by} on three.ws, generated from the prompt "${promptExcerpt(creation.prompt)}". View it in 3D and AR, download the GLB, or remix it.`;
+	const imageAlt = described ? creationAltText(creation) : `${name}, a 3D model on three.ws`;
 	// The renderer gets the light delivery variant when it exists, the original
 	// otherwise, and neither when both are past its size cap.
 	const posterGlb = renderableGlb([
@@ -101,9 +98,12 @@ export function creationMeta(creation, origin = ORIGIN) {
 			? { username: creation.creatorUsername, displayName: creation.creatorDisplayName }
 			: null,
 		dateCreated: creation.created_at,
-		keywords: creation.model_category && creation.model_category !== 'other' ? [creation.model_category] : [],
+		keywords: [
+			...(creation.model_category && creation.model_category !== 'other' ? [creation.model_category] : []),
+			...(Array.isArray(creation.described?.tags) ? creation.described.tags : []),
+		],
 	});
-	return { pageUrl, title: `${name} · 3D Model · three.ws`, name, description, image, imageIsPoster: Boolean(poster), jsonLd };
+	return { pageUrl, title: `${name} · 3D Model · three.ws`, name, description, imageAlt, image, imageIsPoster: Boolean(poster), jsonLd };
 }
 
 // Replace a whole tag matched by `re`, or queue it for insertion before
@@ -132,7 +132,7 @@ export function rewriteCreationHead(html, creation, origin = ORIGIN) {
 	const t = htmlEscape(m.title);
 	const d = htmlEscape(m.description);
 	const img = htmlEscape(m.image);
-	const alt = htmlEscape(`${m.name}, a 3D model on three.ws`);
+	const alt = htmlEscape(m.imageAlt);
 	const missing = [];
 	let head = headMatch[0];
 

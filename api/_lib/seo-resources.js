@@ -93,6 +93,30 @@ export function resourceUrl(origin, type, key) {
 	}
 }
 
+/**
+ * True when a forge creation belongs in a search index: public (a missing
+ * visibility is a legacy public row) and not rejected by the quality grader.
+ * /sitemap/creations.xml filters on the same rule in SQL, the /m/:id head
+ * serves noindex when it fails (server/creation-head.mjs), and IndexNow only
+ * announces creations that pass it.
+ */
+export function isIndexableCreation(creation) {
+	const vis = creation?.visibility ?? 'public';
+	return vis === 'public' && creation?.outcome !== 'rejected';
+}
+
+/**
+ * True when a data/pages.json entry is a public page core.xml lists: not in
+ * the news section (news.xml covers it), not marked unindexable, not behind
+ * sign-in, and a concrete on-site path (no :params, no external link).
+ */
+export function isIndexableManifestPage(section, page) {
+	if (section?.id === 'news') return false;
+	if (!page || page.indexable === false || page.auth === 'required') return false;
+	const p = page.path;
+	return typeof p === 'string' && p.startsWith('/') && !p.includes(':');
+}
+
 /** YYYY-MM-DD of a timestamp, or null when there is no real timestamp. */
 export function sitemapDate(v) {
 	if (!v) return null;
