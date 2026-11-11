@@ -35,6 +35,7 @@ export function filenameFromDisposition(header) {
 /** What to tell the user for a failed export, by status and server message. */
 export function pptxErrorMessage(status, body = {}) {
 	const server = body.error_description || body.message;
+	if (status === 404 && body.error === 'model_not_found' && server) return server;
 	if (status === 404)
 		return 'This model is private or no longer available. Only public and unlisted models export to PowerPoint: make it unlisted, then try again.';
 	if (status === 429)

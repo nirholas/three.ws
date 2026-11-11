@@ -37,6 +37,12 @@ describe('pptxErrorMessage', () => {
 		expect(pptxErrorMessage(404, { error: 'creation_not_found' })).toMatch(/make it unlisted/);
 	});
 
+	it('passes the server sentence through when a just-generated model left storage', () => {
+		expect(pptxErrorMessage(404, { error: 'model_not_found', error_description: 'That model is no longer in storage. Generate it again.' })).toBe(
+			'That model is no longer in storage. Generate it again.',
+		);
+	});
+
 	it('asks the user to wait when rate limited', () => {
 		expect(pptxErrorMessage(429)).toMatch(/Wait a moment/);
 	});
