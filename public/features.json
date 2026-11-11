@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-10T19:53:49.324Z",
+	"generated_at": "2026-11-11T16:17:13.937Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -590,6 +590,30 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.2,
+					"job": "explore"
+				},
+				{
+					"path": "/sidebar",
+					"title": "three.ws in the Edge sidebar",
+					"description": "A narrow layout for the browser sidebar: chat with your default agent, turn a prompt into a 3D model, and reopen your recent models next to any page.",
+					"added": "2026-11-11",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.2,
+					"job": "explore"
+				},
+				{
+					"path": "/open",
+					"title": "Open a web+threews link",
+					"description": "Where web+threews: links from Windows, Teams, Outlook and documents land: a valid agent, model or forge link opens straight away, and anything else is explained.",
+					"added": "2026-11-11",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.1,
 					"job": "explore"
 				},
 				{

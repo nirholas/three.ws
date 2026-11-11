@@ -4,6 +4,12 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-11-11
+
+- **Open a web+threews link** (`/open`): Where web+threews: links from Windows, Teams, Outlook and documents land: a valid agent, model or forge link opens straight away, and anything else is explained.
+- **three.ws in the Edge sidebar** (`/sidebar`): A narrow layout for the browser sidebar: chat with your default agent, turn a prompt into a 3D model, and reopen your recent models next to any page.
+- **Open 3D files from File Explorer and keep your agent in the Edge sidebar**: The installed three.ws app now opens .glb, .gltf and .vrm files you double-click in Windows File Explorer, reading them on your PC with nothing uploaded unless you press Save to account. web+threews: links from Teams, Outlook or a document open the right agent, model or text to 3D prompt, and a link that is broken or unsafe is explained instead of followed. A second launch reuses the window you already have open, the site header doubles as the title bar when the title bar is hidden, and a new narrow layout at /sidebar puts agent chat, quick text to 3D and your recent models in the Microsoft Edge sidebar. (`/sidebar`) `[feature, desktop]`
+
 ## 2026-11-10
 
 - **Docs · Robinhood Crypto connector** (`/docs/robinhood-crypto`): Connect your own Robinhood Crypto Trading API key to three.ws, set hard per-order and daily spend caps, and let agents quote, preview and place crypto orders through REST or MCP: the two-step confirm flow, cap reservation, error codes and security model.

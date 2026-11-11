@@ -2,6 +2,13 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-11-11",
+			"title": "Open 3D files from File Explorer and keep your agent in the Edge sidebar",
+			"summary": "The installed three.ws app now opens .glb, .gltf and .vrm files you double-click in Windows File Explorer, reading them on your PC with nothing uploaded unless you press Save to account. web+threews: links from Teams, Outlook or a document open the right agent, model or text to 3D prompt, and a link that is broken or unsafe is explained instead of followed. A second launch reuses the window you already have open, the site header doubles as the title bar when the title bar is hidden, and a new narrow layout at /sidebar puts agent chat, quick text to 3D and your recent models in the Microsoft Edge sidebar.",
+			"tags": ["feature", "desktop"],
+			"link": "/sidebar"
+		},
+		{
 			"date": "2026-11-10",
 			"title": "Multiplayer worlds hold together across several servers",
 			"summary": "Players who land on a different server than the one hosting their world are now bridged to it, so a crowd can be spread over several servers without anyone being cut off. Measured on a two-server test fleet backed by a dedicated shared Redis: 200 players across 4 coin worlds joined with no failures or dropped connections, and every one of 186000 chat deliveries arrived. The live world server is unchanged until its next deploy.",

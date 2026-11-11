@@ -1,14 +1,45 @@
 {
-	"generated_at": "2026-11-10T19:53:49.462Z",
+	"generated_at": "2026-11-11T16:17:14.048Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4484,
+	"total": 4487,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Open a web+threews link",
+			"summary": "Where web+threews: links from Windows, Teams, Outlook and documents land: a valid agent, model or forge link opens straight away, and anything else is explained.",
+			"link": "/open",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "three.ws in the Edge sidebar",
+			"summary": "A narrow layout for the browser sidebar: chat with your default agent, turn a prompt into a 3D model, and reopen your recent models next to any page.",
+			"link": "/sidebar",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "Open 3D files from File Explorer and keep your agent in the Edge sidebar",
+			"summary": "The installed three.ws app now opens .glb, .gltf and .vrm files you double-click in Windows File Explorer, reading them on your PC with nothing uploaded unless you press Save to account. web+threews: links from Teams, Outlook or a document open the right agent, model or text to 3D prompt, and a link that is broken or unsafe is explained instead of followed. A second launch reuses the window you already have open, the site header doubles as the title bar when the title bar is hidden, and a new narrow layout at /sidebar puts agent chat, quick text to 3D and your recent models in the Microsoft Edge sidebar.",
+			"link": "/sidebar",
+			"tags": [
+				"feature",
+				"desktop"
+			]
+		},
 		{
 			"date": "2026-11-10",
 			"type": "launch",
@@ -1510,37 +1541,6 @@
 			"link": "/pricing",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Private, invite-only worlds for Silver holders",
-			"summary": "Holding $THREE at Silver now unlocks private worlds. Open a world's Visibility menu in the builder to make it public, unlisted or private and invite up to 50 people by username. Anyone else, including people with the link, sees the world as not found. Going back to public is always free.",
-			"link": "/three",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Report and moderate players in /play",
-			"summary": "Players can report someone from their player card, and three distinct reports in five minutes mute that player for ten. Operators can list, mute, kick and ban players from a signed command, and a muted player sees how long is left above the chat box.",
-			"link": null,
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Run your own x402 facilitator, and attack it before you trust it",
-			"summary": "@three-ws/x402-server 0.2.0 ships the Solana facilitator three.ws runs in production as a package: verify, settle, the anti-drain transaction gate, sponsor SOL floor and fee budget, and settlement that survives a lost confirmation. A new command, npx @three-ws/x402-server attack, fires 27 hostile transactions at any devnet or local facilitator. The facilitator index now reports the package version and a public metrics endpoint splits our own canary traffic from external payers.",
-			"link": "/docs/x402-server-facilitator-release",
-			"tags": [
-				"feature",
-				"sdk"
 			]
 		}
 	]

@@ -269,6 +269,20 @@ Indexable: no (excluded from sitemap)
 
 The three.ws tab inside Microsoft Teams and Microsoft 365: pick one of your agents and talk to it, or generate a 3D model from a prompt, without leaving the meeting or chat.
 
+### three.ws in the Edge sidebar
+
+URL: https://three.ws/sidebar
+Indexable: no (excluded from sitemap)
+
+A narrow layout for the browser sidebar: chat with your default agent, turn a prompt into a 3D model, and reopen your recent models next to any page.
+
+### Open a web+threews link
+
+URL: https://three.ws/open
+Indexable: no (excluded from sitemap)
+
+Where web+threews: links from Windows, Teams, Outlook and documents land: a valid agent, model or forge link opens straight away, and anything else is explained.
+
 ### Activate a Microsoft Marketplace purchase
 
 URL: https://three.ws/microsoft/activate

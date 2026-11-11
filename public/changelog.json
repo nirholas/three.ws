@@ -1,11 +1,42 @@
 {
-	"generated_at": "2026-11-10T19:53:49.390Z",
+	"generated_at": "2026-11-11T16:17:13.981Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Open a web+threews link",
+			"summary": "Where web+threews: links from Windows, Teams, Outlook and documents land: a valid agent, model or forge link opens straight away, and anything else is explained.",
+			"link": "/open",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "three.ws in the Edge sidebar",
+			"summary": "A narrow layout for the browser sidebar: chat with your default agent, turn a prompt into a 3D model, and reopen your recent models next to any page.",
+			"link": "/sidebar",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "Open 3D files from File Explorer and keep your agent in the Edge sidebar",
+			"summary": "The installed three.ws app now opens .glb, .gltf and .vrm files you double-click in Windows File Explorer, reading them on your PC with nothing uploaded unless you press Save to account. web+threews: links from Teams, Outlook or a document open the right agent, model or text to 3D prompt, and a link that is broken or unsafe is explained instead of followed. A second launch reuses the window you already have open, the site header doubles as the title bar when the title bar is hidden, and a new narrow layout at /sidebar puts agent chat, quick text to 3D and your recent models in the Microsoft Edge sidebar.",
+			"link": "/sidebar",
+			"tags": [
+				"feature",
+				"desktop"
+			]
+		},
 		{
 			"date": "2026-11-10",
 			"type": "launch",

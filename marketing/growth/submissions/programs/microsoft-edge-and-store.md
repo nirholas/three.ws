@@ -112,7 +112,10 @@ What the manifest already gives the Windows app, all served from `vite.config.js
 - Three jump-list shortcuts: Create Avatar, Marketplace, My Agents.
 - A share target, so photos and GLB files shared from Windows land in the create flow.
 - The **Agent glance** widget for the Windows 11 widgets board (`/api/glance/template` and `public/glance-sw.js`).
-- A stable `id` (`/?source=pwa`) and the `window-controls-overlay` display mode.
+- A stable `id` (`/?source=pwa`) and the `window-controls-overlay` display mode, with the site nav acting as the title bar.
+- File handlers for `.glb`, `.gltf` and `.vrm`, so File Explorer opens 3D files in the viewer. The file is read locally and never uploaded unless the person saves it.
+- A `web+threews:` protocol handler for agent, model and forge links, and a launch handler that reuses the open window.
+- An Edge sidebar layout at `/sidebar` (`edge_side_panel`, 400px). Microsoft marked this feature as being deprecated in July 2026; see `docs/desktop.md`, "Windows and Edge".
 
 ### Steps
 
@@ -160,6 +163,9 @@ What you can do:
 - Embed any agent on your own site with one web component.
 
 Made for Windows:
+- Double-click a .glb, .gltf or .vrm file in File Explorer to open it in the 3D viewer. Your file stays on your PC until you choose to save it.
+- Open web+threews: links from Teams, Outlook or a document straight to an agent, a model or a text to 3D prompt.
+- Keep your agent in the Microsoft Edge sidebar next to any page.
 - Jump straight to Create, Marketplace or My Agents from the Start menu or taskbar.
 - Share photos or GLB files to three.ws from any Windows app.
 - Pin the Agent glance widget to the Windows 11 widgets board to see what your agent did today.
@@ -183,6 +189,9 @@ Browse agents, skills and avatars in the marketplace
 Embed an agent on any website with one web component
 Agent glance widget for the Windows 11 widgets board
 Share photos and GLB files to three.ws from any app
+Open GLB, glTF and VRM files from File Explorer, read locally with no upload
+Open web+threews: agent, model and forge links from any Windows app
+Chat with your agent and make 3D models from the Microsoft Edge sidebar
 ```
 
 **Search terms** (7)
@@ -200,8 +209,10 @@ avatar creator
 **What's new in this version**
 
 ```
-First release of three.ws for Windows.
+Open .glb, .gltf and .vrm files from File Explorer, open web+threews: links from any app, and keep your agent in the Microsoft Edge sidebar. A second launch now reuses the open window.
 ```
+
+If this package is the first Store release, use "First release of three.ws for Windows." instead.
 
 **Assets:**
 
@@ -210,4 +221,4 @@ First release of three.ws for Windows.
 
 **Wording:** the same rules as the Edge listings above. There is no partner tier or co-sell claim. $THREE and the Solana agent economy stay out of the copy, because the Store's crypto content policy reviews them separately, and the app's core use does not depend on them.
 
-Grounding: `vite.config.js` (VitePWA `manifest`), `data/pages.json` (`/create`, `/forge`, `/marketplace`, `/my-agents`), `public/glance-sw.js`, `api/glance/template.js`, `scripts/package-microsoft-store-pwa.mjs`.
+Grounding: `vite.config.js` (VitePWA `manifest`), `docs/desktop.md` (Windows and Edge), `data/pages.json` (`/create`, `/forge`, `/marketplace`, `/my-agents`), `public/glance-sw.js`, `api/glance/template.js`, `scripts/package-microsoft-store-pwa.mjs`.

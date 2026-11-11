@@ -275,6 +275,78 @@ themselves and fill their cards, notification cards, the taskbar at 360, 390 and
 tests/world-places.test.js tests/world-cast.test.js tests/world-ticker.test.js
 tests/desktop-layout.test.js tests/desktop-page.test.js`.
 
+## Windows and Edge
+
+The installed app (from Edge's install button or the Microsoft Store MSIX)
+registers itself with Windows through the web app manifest, which lives in the
+VitePWA `manifest` block of `vite.config.js` and is served at
+`/manifest.webmanifest`. A Store install runs on the same Edge runtime, so
+every member below behaves the same way in both.
+
+| Member | What the person gets | Where it is handled |
+| --- | --- | --- |
+| `file_handlers` | Double-click a `.glb`, `.gltf` or `.vrm` in File Explorer (or use Open with) and it opens in the viewer. The file is read locally and never uploaded; **Save to account** uploads it only when pressed. FBX and OBJ are not claimed because `/app` does not load them. | `/app?source=file-handler`, [`src/pwa/launch-files.js`](../src/pwa/launch-files.js), wired in `App._wireLaunchQueue` in `src/app.js` |
+| `protocol_handlers` | `web+threews://agent/<id>`, `web+threews://model/<uuid>` and `web+threews://forge?prompt=...` links from Teams, Outlook, Word, the Run box or any browser open the app on that agent, model or forge prompt. | `/open?link=%s`, [`src/pwa/protocol-link.js`](../src/pwa/protocol-link.js) (parser), [`src/open-link.js`](../src/open-link.js) (page) |
+| `launch_handler` | `client_mode: ['navigate-existing', 'auto']`. A second launch (a file, a link, a shortcut) reuses the open window instead of stacking a new one, and the launch params reach the page again. `focus-existing` was not used because it would leave a page with no launch consumer showing. | Browser |
+| `edge_side_panel` | Pin three.ws to the Edge sidebar at a 400px preferred width: chat with your default agent, a quick text to 3D prompt with live progress, and your six most recent models. Sign in from the panel's header; the login page returns to `/sidebar`. | [`pages/sidebar.html`](../pages/sidebar.html), [`src/sidebar.js`](../src/sidebar.js) |
+| `display_override: window-controls-overlay` | With the title bar hidden, the site nav becomes the title bar: it drags the window, its controls stay clickable, and it pads itself clear of the caption buttons with `env(titlebar-area-*)`. | `public/nav.css`, `src/sidebar.css` |
+
+**web+threews links.** The parser accepts only the three routes above. It
+rejects any other scheme (`javascript:`, `data:`, `https:`), protocol-relative
+and backslash escapes, path traversal in raw or percent-encoded form, model ids
+that are not UUIDs, agent ids outside `[A-Za-z0-9_-]{1,128}`, control
+characters, broken percent-encoding, prompts over 1000 characters and links over
+2048. A rejected link stays on `/open` with a sentence saying what was wrong and
+links to Browse agents, the forge and the file viewer. Agent links open
+`/agents/<id>`, model links `/m/<uuid>`, forge links `/forge?prompt=...`.
+
+**The side panel opens `start_url`.** Edge loads the manifest's `start_url` in
+the panel, not a dedicated URL, so `pages/desktop.html` forwards any client
+carrying the `Edge Side Panel` User-Agent Client Hint brand (or the same token
+in the User-Agent string) to `/sidebar`. Microsoft marked the sidebar PWA
+feature as being deprecated in July 2026
+([Build a PWA for the sidebar in Microsoft Edge](https://learn.microsoft.com/en-us/microsoft-edge/progressive-web-apps/how-to/sidebar)).
+The member stays in the manifest while Edge still honours it, and `/sidebar`
+also works when added to the sidebar as a plain site.
+
+**Store packaging.** `npm run package:microsoft-store -- --check` validates
+these members before PWABuilder packages the MSIX. It requires all three model
+extensions, a `web+` lowercase scheme (or a safelisted one) with a `%s` URL in
+scope, known `client_mode` values and a numeric side panel width. It also fetches
+`/sidebar`, the file handler action and a sample protocol target. It reads the
+live manifest by default; to check a local build before deploying, serve it and
+pass `--manifest-url http://localhost:<port>/manifest.webmanifest` (loopback
+http counts as a secure context):
+
+```bash
+npx vite build
+THREE_WS_DIST_ROOT=dist PORT=3106 node server/index.mjs &
+npm run package:microsoft-store -- --check --manifest-url http://localhost:3106/manifest.webmanifest
+```
+
+**Tests.** `npx vitest run tests/pwa-protocol-link.test.js
+tests/pwa-launch-files.test.js tests/microsoft-store-pwa.test.js` covers the
+parser (including hostile links), the launch queue reader and the packaging
+checks. `E2E_PORT=3105 npx playwright test tests/e2e/pwa-file-handler.spec.js
+--retries=0` delivers a real GLB from `public/accessories/` through the launch
+queue, asserts that it renders in the viewer, and asserts that no request
+carries it.
+
+**Checking on Windows.** Install from Edge or the Store, then:
+1. Double-click a `.glb` in File Explorer and allow the one-time prompt.
+2. Press Win+R, enter `web+threews://forge?prompt=a%20brass%20owl` and check the
+   forge opens with the prompt filled in.
+3. Open a second file and check the existing window takes it.
+4. Add three.ws to the Edge sidebar and check `/sidebar` loads at 400px.
+5. Toggle the title bar (the chevron in the app's title bar) and check the nav
+   drags the window.
+
+References: [Handle files in a PWA](https://learn.microsoft.com/en-us/microsoft-edge/progressive-web-apps/how-to/handle-files),
+[MDN file_handlers](https://developer.mozilla.org/docs/Web/Manifest/file_handlers),
+[MDN protocol_handlers](https://developer.mozilla.org/docs/Web/Manifest/protocol_handlers),
+[MDN launch_handler](https://developer.mozilla.org/docs/Web/Manifest/launch_handler),
+[Window Controls Overlay](https://learn.microsoft.com/en-us/microsoft-edge/progressive-web-apps/how-to/window-controls-overlay).
+
 ## Provenance
 
 The visual design language and token values are ported from CTRL

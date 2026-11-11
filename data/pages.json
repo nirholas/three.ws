@@ -452,6 +452,24 @@
 					"indexable": false
 				},
 				{
+					"path": "/sidebar",
+					"title": "three.ws in the Edge sidebar",
+					"description": "A narrow layout for the browser sidebar: chat with your default agent, turn a prompt into a 3D model, and reopen your recent models next to any page.",
+					"priority": 0.2,
+					"changefreq": "monthly",
+					"added": "2026-11-11",
+					"indexable": false
+				},
+				{
+					"path": "/open",
+					"title": "Open a web+threews link",
+					"description": "Where web+threews: links from Windows, Teams, Outlook and documents land: a valid agent, model or forge link opens straight away, and anything else is explained.",
+					"priority": 0.1,
+					"changefreq": "yearly",
+					"added": "2026-11-11",
+					"indexable": false
+				},
+				{
 					"path": "/microsoft/activate",
 					"title": "Activate a Microsoft Marketplace purchase",
 					"description": "Where a Microsoft Marketplace buyer lands after purchasing a three.ws plan: sign in with Microsoft Entra ID to link the subscription to a three.ws account and switch the plan on.",
