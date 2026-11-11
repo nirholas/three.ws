@@ -7,16 +7,14 @@
 **Before posting, check these, because they change:**
 
 1. The Teams app package is built and validated but not yet registered or submitted. If the owner has since completed the Azure Bot registration and the store submission, update the "Where it stands" section; until then keep the wording exactly as it is, because the app is not available in Teams.
-2. Rerun `npm run package:microsoft-app -- --check` and the three test suites, and update the counts if they moved.
+2. Rerun `npm run package:microsoft-app -- --check` and the test suites named in "Tests", and update the counts if they moved.
 3. Run `node scripts/microsoft-pack/check-wording.mjs docs/partners/microsoft/tech-community-teams-adaptive-cards.md`.
 
 ---
 
-## One Adaptive Card, two Microsoft hosts: building a Teams message extension and tabs for live 3D agents
+## A 3D model from one sentence, inside a Teams chat: a bot, a message extension and tabs on Adaptive Cards
 
-three.ws turns a prompt or a photo into a 3D AI agent with a body, a voice and a public page. Each agent also has a small status card: its name, a one-line headline about what it is doing, a headline metric and three stats. We first built that card for the Windows 11 widgets board, which renders Adaptive Cards. When we built a Teams app package, the obvious question was whether the same card could carry over to Teams unchanged.
-
-It could. This post walks through what we built, with the real code: a message extension that searches agents and unfurls agent links into live cards, two personal tabs, an MCP tool connector for Microsoft 365 Copilot agents, and the packaging script that validates all of it against the published manifest schema.
+three.ws turns a prompt or a photo into a textured 3D model, and a model into an AI agent with a body, a voice and a public page. We built an app package for Teams with three jobs: share a live agent card into a conversation, generate a 3D model without leaving the chat, and keep a 3D viewer and an agent gallery one click away. Every message surface is an Adaptive Card. This post walks through the real code.
 
 ### Where it stands
 
@@ -24,51 +22,26 @@ The package is built and passes validation. The Bot Framework endpoint is deploy
 
 ### What is in the package
 
-The manifest (schema v1.30) declares three kinds of capability. Two personal tabs:
+The manifest (schema v1.30) declares four capabilities:
 
-```json
-"staticTabs": [
-  { "entityId": "threews-viewer", "name": "3D Viewer",
-    "contentUrl": "https://three.ws/viewer", "scopes": ["personal"] },
-  { "entityId": "threews-agents", "name": "Agents",
-    "contentUrl": "https://three.ws/microsoft/teams-tab?theme={theme}", "scopes": ["personal"] }
-]
-```
+- **Two personal tabs:** a 3D viewer and an Agents tab.
+- **A message extension** with a search command (`searchAgents`), an action command (`createModel`, "Create a 3D model", reachable from the compose box, the command box and a message's `...` menu), and a link unfurler for our own domain.
+- **A bot** in personal, group chat and team scopes with one command, `forge <prompt>`.
+- **An agent connector** that points Microsoft 365 Copilot and Copilot Studio agents at our remote MCP server, with the 16 tool descriptions shipped in the package as `mcptools.json`.
 
-A message extension with one search command and a link unfurler for our own domain:
+### Verify the token before reading the activity
 
-```json
-"composeExtensions": [{
-  "botId": "${MS_TEAMS_BOT_APP_ID}",
-  "commands": [{
-    "id": "searchAgents", "type": "query", "title": "Agents",
-    "initialRun": true, "context": ["compose", "commandBox"],
-    "parameters": [{ "name": "searchQuery", "title": "Agent name", "inputType": "text" }]
-  }],
-  "messageHandlers": [{
-    "type": "link",
-    "value": { "domains": ["three.ws", "www.three.ws"], "supportsAnonymizedPayloads": true }
-  }]
-}]
-```
-
-And an agent connector that points Microsoft 365 Copilot and Copilot Studio agents at our remote MCP server, with the tool descriptions shipped in the package as `mcptools.json` (16 tools: text to 3D, photo to 3D, auto-rigging, an avatar from a prompt, a CC0 catalog search, model inspection and agent personas).
-
-One honest scoping note: there is no `bots` entry. The Bot Framework endpoint exists only to serve the message extension. It does not join chats or answer messages, and the handler returns an empty `200` for any activity that is not an invoke.
-
-### A messaging endpoint that never holds a client secret
-
-The endpoint is a single serverless handler, `POST /api/microsoft-teams/messages`. Message extension invokes are answered synchronously in the HTTP response, so the bot never calls back through the Bot Connector, and so it never needs a client secret. What it does need is to refuse anything not sent by the Bot Framework:
+Everything arrives at one serverless handler, `POST /api/microsoft-teams/messages`. Before a single field of the activity is trusted, the Bot Framework JWT is checked:
 
 ```js
-export async function verifyBotToken(authorization, { serviceUrl }) {
+export async function verifyBotToken(authorization, { serviceUrl, keys = botFrameworkJwks() }) {
   const appId = teamsBotAppId();
   if (!appId) throw new TeamsBotError('not_configured', 'the Teams bot is not configured', 503);
   const match = /^Bearer\s+(.+)$/i.exec(authorization || '');
   if (!match) throw new TeamsBotError('missing_token', 'a Bot Framework bearer token is required');
   let payload;
   try {
-    ({ payload } = await jwtVerify(match[1], botFrameworkJwks(), {
+    ({ payload } = await jwtVerify(match[1], keys, {
       issuer: BOTFRAMEWORK_ISSUER, audience: appId, clockTolerance: 300 }));
   } catch (err) {
     throw new TeamsBotError('invalid_token', `the Bot Framework token did not verify: ${err?.code || err?.message}`);
@@ -78,73 +51,23 @@ export async function verifyBotToken(authorization, { serviceUrl }) {
 }
 ```
 
-The keys come from `https://login.botframework.com/v1/.well-known/keys` through `jose`'s remote key set, which caches them and refetches when a new key id appears. The claim check is a separate pure function so it can be tested without a signed token: the issuer must be `https://api.botframework.com`, the audience must include this bot's app id, and when the token names a `serviceurl` the activity must not point anywhere else. That last rule matters, because the activity body is attacker-controlled until the token has been checked against it.
+The keys come from `https://login.botframework.com/v1/.well-known/keys` through `jose`'s remote key set, which caches them and refetches when a new key id appears. The claim check is a pure function, testable without a signed token. Its most important rule: when the token names a `serviceurl`, the activity must not point anywhere else, because the body is attacker-controlled until the token has been checked against it.
 
-The route itself is short: method check, rate limit, parse, `verifyBotToken`, then `handleActivity` on the verified activity.
+Search, unfurling and card refreshes answer in the HTTP response of the invoke, so they need no credential at all. Only posting a card into a chat uses the Bot Connector and the bot's client secret. Without that secret, "Create a 3D model" inserts the card into the compose box instead, and the requester's own refreshes keep it current. The app degrades instead of failing.
 
-### Search and unfurl in one switch
+### Search and unfurl: design the empty states
 
-All the message extension behaviour is one function over the invoke name:
+Search and link unfurling are one `switch` over the invoke name. Three details we would recommend to anyone building a search-based extension:
 
-```js
-switch (activity.name) {
-  case 'composeExtension/query': {
-    if (activity.value?.commandId && activity.value.commandId !== SEARCH_COMMAND_ID) {
-      return messageResponse('That command is not available in this version of the app.');
-    }
-    const text = searchTextOf(activity.value);
-    const cards = await searchAgents(text);
-    if (!cards.length) {
-      return messageResponse(text
-        ? `No three.ws agents match "${text}". Try a shorter name, or create one at https://three.ws/create`
-        : 'No agents were active this week. Type a name to search every three.ws agent.');
-    }
-    return resultResponse(cards.map(attachmentFor));
-  }
-  case 'composeExtension/queryLink':
-  case 'composeExtension/anonymousQueryLink': {
-    const id = agentIdFromUrl(activity.value?.url);
-    const card = id ? await loadGlanceCard(id) : null;
-    if (!card) return messageResponse('This three.ws link is not an agent page.');
-    return resultResponse([attachmentFor(card)]);
-  }
-  default:
-    return {};
-}
-```
-
-Three details we would recommend to anyone building a search-based extension:
-
-- **Design the initial run.** With `initialRun: true`, Teams sends the query before the user types anything. `searchTextOf` returns an empty string for that case, and an empty search returns the agents with the most actions in the last seven days instead of nothing. An empty result is answered with a message that tells the user what to do next, not a blank list.
-- **Handle the anonymous unfurl.** With `supportsAnonymizedPayloads`, Teams can ask for a link preview without user identity. Because every agent card is public data, both invoke names share one code path.
-- **Cap the work.** Search text is trimmed and capped at 100 characters, and results are capped at 10: names and descriptions both match, names that start with the search text rank first, then the newest agents.
-
-Each result is two cards: the full Adaptive Card that lands in the conversation, and a thumbnail card Teams uses in the result list.
-
-```js
-export function attachmentFor(card) {
-  return {
-    contentType: 'application/vnd.microsoft.card.adaptive',
-    content: adaptiveCardFor(card),
-    preview: {
-      contentType: 'application/vnd.microsoft.card.thumbnail',
-      content: {
-        title: card.name,
-        text: card.description || card.headline,
-        ...(card.image ? { images: [{ url: card.image, alt: card.name }] } : {}),
-        tap: { type: 'openUrl', value: card.url },
-      },
-    },
-  };
-}
-```
+- **Design the initial run.** With `initialRun: true`, Teams sends the query before the user types anything. An empty search returns the agents with the most actions in the last seven days instead of nothing, and an empty result says what to do next: "No three.ws agents match ... Try a shorter name, or create one at https://three.ws/create".
+- **Handle the anonymous unfurl.** With `supportsAnonymizedPayloads`, Teams can ask for a link preview without user identity. Agent cards are public data, so `queryLink` and `anonymousQueryLink` share one code path.
+- **Cap the work.** Search text is capped at 100 characters and results at 10, names that start with the search text first.
 
 ### One layout function, a template and a bound card
 
-This is the part we are happiest with. The Windows widgets board wants an **unbound template** plus data, and binds them itself. Teams wants a card that is **already bound**. Two hand-maintained JSON files would drift within a week, so both come from one layout function that takes a `field()` callback:
+The agent card started life on the Windows 11 widgets board, which wants an **unbound template** plus data and binds them itself. Teams wants a card that is **already bound**. Two hand-maintained JSON files would drift within a week, so both come from one layout function that takes a `field()` callback:
 
 ```js
-/** The unbound template the Windows widgets board fetches once. */
 export function adaptiveTemplate() {
   return layout((path, fallback) => {
     const expr = binding(path);
@@ -152,7 +75,6 @@ export function adaptiveTemplate() {
   });
 }
 
-/** The same card with this agent's values already in it. */
 export function adaptiveCardFor(card) {
   return layout((path, fallback) => {
     const value = path.split('.').reduce((acc, key) => (acc == null ? acc : acc[key]), card);
@@ -162,42 +84,60 @@ export function adaptiveCardFor(card) {
 }
 ```
 
-The layout (Adaptive Cards 1.6) is a `ColumnSet` with the agent image and name, a large metric, a `FactSet` of three stats and two `Action.OpenUrl` buttons. In the layout, paths are written the way JavaScript reads them, `stats.0.label`. That hides a trap worth knowing: Adaptive Expression Language indexes arrays with brackets, and a dot before a number is a parse error. The templating engine then throws on the whole card rather than skipping one binding, so one dotted index empties the widget slot. A one-line `binding()` rewrites `.0` to `[0]` for the template path only.
+The layout (Adaptive Cards 1.6) is a `ColumnSet` with the agent image and name, a large metric, a `FactSet` of three stats and two `Action.OpenUrl` buttons. Paths in the layout read the way JavaScript reads them, `stats.0.label`. That hides a trap: Adaptive Expression Language indexes arrays with brackets, a dot before a number is a parse error, and the templating engine then throws on the whole card. One dotted index empties the widget slot. A one-line `binding()` rewrites `.0` to `[0]` for the template path only.
 
-The payloads stay small. Measured against a real agent's card data from our production card endpoint, the bound card is 1,321 bytes, the template 1,350 bytes, one attachment with its thumbnail preview 1,779 bytes, and a full 10-result response 17,880 bytes.
+The payloads stay small. Measured against a real agent's card data, the bound card is 1,321 bytes, the template 1,350 bytes, and a full 10-result search response 17,880 bytes.
+
+### A card that updates itself: Universal Actions
+
+Generating a model takes from a few seconds to several minutes, and Teams gives a message extension submit 5 seconds before it retries. So the submit never waits on the generator. It validates the prompt (3 to 1,000 characters, the same safety check the free MCP tools use, and per-user rate limits), records the job, dispatches it and answers at once with a progress card.
+
+The job key is derived from the activity, `teams-` plus a SHA-256 of the conversation and activity ids, so a retried submit lands on the job already started. One submit never produces two generations.
+
+The progress card is Adaptive Cards 1.5, the version Teams documents for Universal Actions, and it carries a `refresh` block:
+
+```js
+export function refreshFor(record) {
+  const userIds = record?.by?.id ? [record.by.id].slice(0, REFRESH_USER_LIMIT) : [];
+  return {
+    action: { type: 'Action.Execute', title: 'Check progress', verb: VERB_REFRESH, data: { key: record.key } },
+    userIds,
+  };
+}
+```
+
+Teams sends that `Action.Execute` back as an `adaptiveCard/action` invoke when the card is displayed to a listed user, and replaces the card with whatever the bot returns. Listing the requester in `userIds` (Teams accepts at most 60) makes the card refresh automatically for them in any conversation; everyone else gets a manual refresh. Every `Action.Execute` also carries an `Action.Submit` fallback for hosts older than 1.4.
+
+The status line is built only from what the generator reports: starting, submitted, GPU waking up (with the boot time left when the lane reports it), queued, or rendering with elapsed seconds and the lane's own estimate. There is no invented percentage. When the job finishes, the card becomes a poster of the model with Open in 3D (a Teams stage view of our viewer), Download GLB, Make a variation and Model page.
+
+One production detail: Cloud Run throttles the CPU of work left running after a response is sent. So the messaging endpoint dispatches each job to an internal route, `/api/microsoft-teams/forge-run`, which sends its `202` at once and holds its own request open while the job runs, within the 900-second request limit. If the job outlives that budget, the next card refresh collects it.
 
 ### A tab that needs no session
 
-The Agents tab is a normal page on our site, loaded in an iframe. Third-party cookies are unreliable in Microsoft 365 hosts, so the tab is built to need no session at all: the agent list, the live 3D stage (the same `<agent-3d>` web component any site embeds) and the stats card are all public reads.
-
-Teams passes its theme in the tab URL through the `{theme}` placeholder in `contentUrl`. A tiny inline script in the page head maps `default` to the light theme and `dark` or `contrast` to the dark one before first paint, so the tab never flashes the wrong theme. Outside Teams the same page falls back to the visitor's saved site theme.
-
-It remembers the last agent picked in `localStorage`; where a Teams webview blocks storage, it opens on the most popular agent instead.
+The Agents tab is a normal page on our site in an iframe. Third-party cookies are unreliable in Microsoft 365 hosts, so the tab needs no session: the agent list, the live 3D stage (the same `<agent-3d>` web component any site embeds) and the stats card are all public reads. Teams passes its theme through the `{theme}` placeholder in `contentUrl`, and an inline script in the page head applies it before first paint, so the tab never flashes the wrong theme.
 
 ### Validating the package before anyone uploads it
 
-Partner Center rejects a package late and with little detail, so we validate early. `scripts/build-microsoft-app-package.mjs` fills the manifest template, validates it with Ajv against the published v1.30 schema (vendored in the repo), checks that every tool in `mcptools.json` has a name, description and input schema with no duplicates, checks that the icons are a 192x192 color PNG and a 32x32 white-on-transparent outline, and refuses any non-ASCII character in the manifest, tool file or intro text. A `--refresh-tools` flag rewrites the tool file from the live MCP server's `tools/list`, mapping typographic punctuation to ASCII on the way.
-
-Owner-only values (the app id, legal entity name, Key Vault URL and bot app id) come from the environment and are never defaulted. A `--check` mode substitutes clearly marked check-only values so everything else can be validated in development:
+`scripts/build-microsoft-app-package.mjs` fills the manifest template, validates it with Ajv against the published v1.30 schema (vendored in the repo), checks every tool in `mcptools.json` for a name, description and input schema with no duplicates, checks both icons, and refuses any non-ASCII character. Owner-only values (the app id, legal entity name, Key Vault URL and bot app id) come from the environment and are never defaulted; a `--check` mode validates everything else in development:
 
 ```
 $ npm run package:microsoft-app -- --check
 OK: manifest, schema v1.30, 16 tools, icons and ASCII checks pass (owner values not checked).
 ```
 
-The resulting zip is 63,338 bytes, five files, with fixed timestamps so the same sources always produce the same bytes.
+The zip is 63,578 bytes, five files, with fixed timestamps so the same sources always produce the same bytes.
 
 ### Tests
 
-The message extension, the card and the packager have 43 tests across three Vitest suites: 13 for the bot (claim checks, search parsing, link parsing, envelopes, unknown commands and invokes), 21 for the card and 9 for the package builder.
+95 Vitest tests cover this work: 13 for the bot's token, search and unfurl logic, 31 for the 3D generation flow and its cards (every card validated against the published Adaptive Cards 1.5 schema), 21 for the agent card, 21 for the stage view and 9 for the package builder.
 
 ### What we would tell another team
 
-- If you already render Adaptive Cards anywhere, start your Teams work from that card. Generate template and bound forms from one source.
-- Answer message extension invokes synchronously and you can skip the client secret entirely.
+- If you already render Adaptive Cards anywhere, start your Teams work from that card, and generate the template and bound forms from one source.
 - Verify the Bot Framework token before you trust a single field of the activity, including `serviceUrl`.
-- Make the empty search and the empty result helpful; they are the first thing a user sees.
+- Derive job keys from the activity id, and Teams' retries stop being a problem.
+- Use `refresh` with `userIds` for long jobs, and report only real state.
 
-The code is open source at [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws): start at `integrations/microsoft/copilot-teams/` and `api/_lib/teams-bot.js`. Questions and corrections are welcome in the comments.
+The code is open source at [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws): start at `integrations/microsoft/copilot-teams/`, `api/_lib/teams-bot.js` and `api/_lib/teams-forge-cards.js`. Questions and corrections are welcome in the comments.
 
 *Microsoft, Microsoft Teams, Microsoft 365, Copilot, Copilot Studio, Adaptive Cards, Windows and Azure are trademarks of the Microsoft group of companies.*
