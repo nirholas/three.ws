@@ -613,6 +613,29 @@
 				border-color: rgba(255, 190, 110, 0.28);
 				background: rgba(255, 190, 110, 0.08);
 			}
+			/* Light theme: the chip inks above are pale tints for a black canvas and
+			   measured 1.4:1 on the light cards. These are the 800 rungs of the
+			   same hues, and the accent fill (#2563eb in light) needs white ink. */
+			:root[data-theme='light'] {
+				--accent-ink: #ffffff;
+			}
+			:root[data-theme='light'] .chip-ok {
+				color: #166534;
+				border-color: rgba(22, 101, 52, 0.28);
+			}
+			:root[data-theme='light'] .chip-auth {
+				color: #4338ca;
+				border-color: rgba(67, 56, 202, 0.28);
+			}
+			:root[data-theme='light'] .chip-soon {
+				color: #92400e;
+				border-color: rgba(146, 64, 14, 0.28);
+			}
+			/* The "beta" tag ships with an inline opacity of 0.5 inside every locale
+			   string, which drops it to 3.2:1; 0.75 keeps it secondary and legible. */
+			[data-i18n-html='create.avatar_studio_beta'] > span {
+				opacity: 0.75 !important;
+			}
 			.chip-live-dot {
 				display: inline-block;
 				width: 5px;

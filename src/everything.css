@@ -43,7 +43,8 @@ body { margin: 0; background: var(--ev-bg); color: var(--ev-ink); font-family: v
 .ev-chip:hover { background: var(--ev-surface-hover); }
 .ev-chip:active { transform: scale(0.97); }
 .ev-chip[aria-pressed='true'] { color: var(--ev-accent-ink); background: var(--ev-accent); border-color: var(--ev-accent); }
-.ev-chip-n { font-size: 11px; opacity: 0.7; font-variant-numeric: tabular-nums; }
+/* 0.85, not 0.7: on the active chip fill 0.7 measured 3.97:1. */
+.ev-chip-n { font-size: 11px; opacity: 0.85; font-variant-numeric: tabular-nums; }
 
 .ev-status { margin: 8px 2px 18px; min-height: 18px; font-size: 13px; color: var(--ev-dim); }
 
