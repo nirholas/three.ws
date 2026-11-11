@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Microsoft 365 Copilot connector · three.ws</title>
+		<meta name="description" content="Index your three.ws agents, 3D models and avatars into your Microsoft 365 tenant so Microsoft Search and Microsoft 365 Copilot can find them, with your tenant's permissions." />
+		<meta name="robots" content="noindex" />
+		<link rel="icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<style>
+			:root {
+				color-scheme: dark;
+				--bg: #000;
+				--panel: #141414;
+				--panel-2: #0c0c0c;
+				--border: #222;
+				--border-strong: #333;
+				--text: #eee;
+				--muted: #888;
+				--accent: #fff;
+				--ok: #6fcf97;
+				--warn: #f2c94c;
+				--err: #ff7b7b;
+			}
+			* { box-sizing: border-box; }
+			body { font: 15px/1.55 -apple-system, system-ui, Segoe UI, Roboto, sans-serif; color: var(--text); background: var(--bg); margin: 0; min-height: 100vh; }
+			a { color: #ccc; }
+			a:hover { color: #fff; }
+			a:focus-visible, button:focus-visible, input:focus-visible, label.choice:focus-within { outline: 2px solid #fff; outline-offset: 2px; }
+			header { display: flex; align-items: center; gap: 12px; padding: 0 24px; height: 60px; border-bottom: 1px solid var(--border); }
+			header img { height: 1.55rem; width: auto; display: block; }
+			header .back { margin-left: auto; font-size: 13px; }
+			main { max-width: 760px; margin: 0 auto; padding: 32px 16px 96px; }
+			h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: -0.01em; }
+			h2 { font-size: 15px; margin: 0 0 4px; }
+			.sub { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+			.card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-bottom: 14px; animation: rise 0.18s ease-out; }
+			@keyframes rise { from { opacity: 0; transform: translateY(4px); } }
+			.card .hint { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+			.card-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+			.card-head > div { flex: 1; min-width: 0; }
+			.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border-strong); white-space: nowrap; }
+			.pill::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+			.pill.ok { color: var(--ok); }
+			.pill.warn { color: var(--warn); }
+			.pill.err { color: var(--err); }
+			.pill.idle { color: var(--muted); }
+			dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; font-size: 13.5px; }
+			dl.facts dt { color: var(--muted); }
+			dl.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+			code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+			ol.steps { margin: 0 0 14px; padding-left: 20px; font-size: 13.5px; color: #ccc; }
+			ol.steps li { margin-bottom: 6px; }
+			.counts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 4px 0 14px; }
+			.count { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+			.count strong { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+			.count span { color: var(--muted); font-size: 12px; }
+			fieldset { border: 0; margin: 0; padding: 0; }
+			legend { font-size: 13px; font-weight: 600; margin-bottom: 8px; padding: 0; }
+			label.choice { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.12s, background 0.12s; }
+			label.choice:hover { border-color: #555; background: #181818; }
+			label.choice:has(input:checked) { border-color: #888; background: #1a1a1a; }
+			label.choice:has(input:disabled) { opacity: 0.5; cursor: not-allowed; }
+			label.choice input { margin-top: 3px; accent-color: #fff; }
+			label.choice b { display: block; font-size: 13.5px; }
+			label.choice small { color: var(--muted); font-size: 12.5px; }
+			label.field { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 5px; }
+			input[type='text'] { width: 100%; background: var(--panel-2); color: var(--text); border: 1px solid var(--border-strong); border-radius: 8px; padding: 9px 11px; font: inherit; font-size: 13.5px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; transition: border-color 0.12s; }
+			input[type='text']:hover { border-color: #555; }
+			input[aria-invalid='true'] { border-color: var(--err); }
+			.check { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; font-size: 13.5px; cursor: pointer; }
+			.check input { margin-top: 4px; accent-color: #fff; }
+			.check small { display: block; color: var(--muted); font-size: 12.5px; }
+			.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
+			.btn { display: inline-block; text-decoration: none; padding: 9px 18px; border-radius: 9px; border: 0; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; background: var(--accent); color: #000; transition: filter 0.12s, transform 0.05s, background 0.12s; }
+			.btn:hover { filter: brightness(0.88); color: #000; }
+			.btn:active { transform: translateY(1px); }
+			.btn:disabled, .btn[aria-disabled='true'] { opacity: 0.45; cursor: not-allowed; filter: none; transform: none; pointer-events: none; }
+			.btn.sec { background: #222; color: #ddd; }
+			.btn.sec:hover { background: #2c2c2c; filter: none; color: #fff; }
+			.btn.danger { background: #3a1414; color: #ffb3b3; }
+			.btn.danger:hover { background: #4a1a1a; filter: none; color: #ffb3b3; }
+			.status { font-size: 13px; min-height: 1em; }
+			.status.ok { color: var(--ok); }
+			.status.err { color: var(--err); }
+			.banner { border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; font-size: 13.5px; border: 1px solid; display: flex; gap: 12px; align-items: flex-start; }
+			.banner.ok { border-color: #1f4a32; background: #0b1a12; color: #c9f0d8; }
+			.banner.err { border-color: #4a1a1a; background: #1a0b0b; color: #ffd0d0; }
+			.banner p { margin: 0; flex: 1; }
+			.banner button { background: none; border: 0; color: inherit; cursor: pointer; font-size: 16px; line-height: 1; padding: 0 2px; opacity: 0.7; }
+			.banner button:hover { opacity: 1; }
+			.fix { margin-top: 12px; border: 1px solid #4a1a1a; background: #1a0b0b; border-radius: 8px; padding: 12px; font-size: 13.5px; }
+			.fix strong { color: var(--err); }
+			.fix p { margin: 4px 0 0; color: #f0caca; }
+			.confirm { margin-top: 12px; border: 1px solid #4a1a1a; background: #1a0b0b; border-radius: 8px; padding: 12px; font-size: 13.5px; }
+			.confirm p { margin: 0 0 10px; }
+			.empty { color: var(--muted); font-size: 13.5px; }
+			.error-box { color: var(--err); font-size: 13.5px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+			.skeleton { border-radius: 10px; background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite linear; margin-bottom: 14px; }
+			@keyframes shimmer { to { background-position: -200% 0; } }
+			@media (prefers-reduced-motion: reduce) { .skeleton, .card { animation: none; } }
+			@media (max-width: 560px) {
+				header { padding: 0 16px; }
+				.counts { grid-template-columns: repeat(2, 1fr); }
+				.card-head { flex-direction: column; }
+				dl.facts { grid-template-columns: 1fr; gap: 2px; }
+				dl.facts dd { margin-bottom: 6px; }
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<a href="/"><img src="/three.svg" alt="three.ws" /></a>
+			<a class="back" href="/settings">Back to settings</a>
+		</header>
+		<main>
+			<h1>Microsoft 365 Copilot connector</h1>
+			<p class="sub">Index your three.ws agents, 3D models and avatars into your organization's Microsoft 365 tenant. People in your organization can then find them in Microsoft Search and ask Microsoft 365 Copilot about them, and only the people you choose can see them. <a href="/docs/microsoft-365-copilot-connector">How it works</a></p>
+
+			<div id="banner"></div>
+			<div id="app" aria-live="polite" aria-busy="true">
+				<div class="skeleton" style="height: 170px"></div>
+				<div class="skeleton" style="height: 210px"></div>
+				<div class="skeleton" style="height: 90px"></div>
+			</div>
+		</main>
+
+		<script type="module">
+			import { apiFetch } from '/src/api.js';
+
+			const API = '/api/microsoft-365';
+			const app = document.getElementById('app');
+			const bannerEl = document.getElementById('banner');
+			let state = null;
+			let pollTimer = null;
+
+			const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+			const when = (iso) => (iso ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'Never');
+			const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+			// What each failure means, and what the admin does about it.
+			const ERRORS = {
+				not_configured: 'This three.ws deployment has no Microsoft Entra app configured yet, so it cannot ask your tenant for consent. Nothing on your side is wrong; try again later.',
+				state_mismatch: 'The consent round trip expired or was opened in another browser. Start again with Connect Microsoft 365.',
+				session_changed: 'You signed in as a different three.ws account during consent. Sign in to the account you want to connect and start again.',
+				consent_declined: 'Consent was cancelled in Microsoft, so nothing was connected. Start again and choose Accept.',
+				admin_required: 'Only a Microsoft 365 administrator (Global Administrator, Application Administrator or Search Administrator) can grant this consent. Ask one to sign in here, or send them this page.',
+				consent_failed: 'Microsoft did not confirm consent for your tenant. Start again; if it keeps failing, check the app is not blocked in Entra ID > Enterprise applications.',
+				consent_missing: 'Your tenant no longer has consent for the three.ws app. Reconnect to grant it again.',
+				unauthorized: 'Microsoft rejected the three.ws app in your tenant. Reconnect so an admin can grant consent again.',
+				forbidden: 'Microsoft refused the request. Reconnect and make sure the admin accepts both ExternalConnection.ReadWrite.OwnedBy and ExternalItem.ReadWrite.OwnedBy.',
+				throttled: 'Microsoft Graph asked three.ws to slow down. Sync resumes automatically at the time shown below.',
+				limit_exceeded: 'Your tenant hit a Microsoft Graph connector limit. Remove unused connections in the Microsoft 365 admin center, then run a full re-sync.',
+				schema_failed: 'Microsoft could not apply the three.ws schema. Run a full re-sync to register it again.',
+				group_required: 'Enter the object id of the Entra group that should see these items.',
+				owner_identity_required: 'Owner-only access needs your three.ws account linked to a Microsoft work account in this tenant. Sign in with Microsoft once, then try again.',
+				internal_error: 'Sync failed inside three.ws. It retries on the next run, or you can run a full re-sync now.',
+			};
+			const RECONNECT = new Set(['consent_missing', 'unauthorized', 'forbidden', 'state_mismatch', 'consent_failed']);
+
+			class ApiError extends Error {
+				constructor(status, code, message) {
+					super(message);
+					this.status = status;
+					this.code = code;
+				}
+			}
+
+			async function call(path, init = {}) {
+				const opts = { ...init };
+				if (opts.body !== undefined) {
+					opts.headers = { 'content-type': 'application/json', ...(opts.headers || {}) };
+					opts.body = JSON.stringify(opts.body);
+				}
+				let res;
+				try {
+					res = await apiFetch(API + path, opts);
+				} catch {
+					throw new ApiError(0, 'network', 'Could not reach three.ws. Check your connection and try again.');
+				}
+				if (res.status === 401) {
+					location.href = '/login?next=' + encodeURIComponent(location.pathname);
+					throw new ApiError(401, 'unauthorized', 'Sign in to continue.');
+				}
+				const json = await res.json().catch(() => null);
+				if (!res.ok) throw new ApiError(res.status, json?.error || 'error', ERRORS[json?.error] || json?.error_description || `Request failed (${res.status}).`);
+				return json;
+			}
+
+			function banner(kind, message) {
+				bannerEl.innerHTML = message ? `<div class="banner ${kind}" role="${kind === 'err' ? 'alert' : 'status'}"><p>${esc(message)}</p><button type="button" aria-label="Dismiss">&times;</button></div>` : '';
+				bannerEl.querySelector('button')?.addEventListener('click', () => banner(null, ''));
+			}
+
+			function readRedirectParams() {
+				const q = new URLSearchParams(location.search);
+				if (q.get('connected') === '1') banner('ok', 'Connected. three.ws created the connection in your tenant and is registering its schema with Microsoft. That takes 5 to 15 minutes; the first sync runs as soon as it finishes.');
+				else if (q.get('error')) banner('err', ERRORS[q.get('error')] || `Connecting failed (${q.get('error')}). Start again with Connect Microsoft 365.`);
+				if (q.has('connected') || q.has('error')) history.replaceState(null, '', location.pathname);
+			}
+
+			const STATUS = {
+				ready: ['ok', 'Syncing'],
+				schema_pending: ['warn', 'Registering schema'],
+				provisioning: ['warn', 'Creating connection'],
+				consented: ['warn', 'Consent granted'],
+				error: ['err', 'Needs attention'],
+			};
+
+			function connectButton(label = 'Connect Microsoft 365', cls = '') {
+				const disabled = state && !state.configured;
+				return `<a class="btn ${cls}" href="${API}/connect/start"${disabled ? ' aria-disabled="true" tabindex="-1"' : ''}>${esc(label)}</a>`;
+			}
+
+			function renderDisconnected() {
+				return `
+					<section class="card">
+						<div class="card-head">
+							<div>
+								<h2>Not connected</h2>
+								<p class="hint">Nothing from this account is in Microsoft 365 yet.</p>
+							</div>
+							<span class="pill idle">Off</span>
+						</div>
+						<ol class="steps">
+							<li>A Microsoft 365 administrator in your organization clicks <b>Connect Microsoft 365</b> and accepts the two permissions three.ws asks for: create its own search connection, and write items into it. three.ws cannot read anything else in your tenant.</li>
+							<li>three.ws creates a connection named <i>three.ws agents and 3D models</i> and registers its schema. Microsoft takes 5 to 15 minutes to apply it.</li>
+							<li>Your public agents, Forge models and avatars are indexed, then kept in step every 15 minutes. Choose who can see them below once connected.</li>
+						</ol>
+						${state.configured ? '' : `<div class="fix"><strong>Not available on this deployment yet.</strong><p>The three.ws Microsoft Entra app is not configured here (${esc(state.missing.join(', '))}). Nothing on your side is wrong.</p></div>`}
+						<div class="actions">${connectButton()}<a class="btn sec" href="/docs/microsoft-365-copilot-connector">Read the admin guide</a></div>
+					</section>`;
+			}
+
+			function renderStatus() {
+				const [tone, label] = STATUS[state.status] || ['idle', state.status];
+				const c = state.counts || { agents: 0, models: 0, avatars: 0 };
+				const err = state.lastError;
+				const pendingNote =
+					state.status === 'schema_pending'
+						? '<p class="hint">Microsoft is applying the three.ws schema to your tenant (5 to 15 minutes). This page refreshes on its own; the first sync starts when it is done.</p>'
+						: '';
+				const emptyNote =
+					state.status === 'ready' && state.itemsIndexed === 0 && !err
+						? `<p class="empty">Nothing is indexed yet. Only ${state.includePrivate ? '' : 'public '}agents, finished Forge models and avatars are sent. <a href="/create">Create an agent</a> or <a href="/forge">make a model</a>, or include private items below.</p>`
+						: '';
+				const fix = err
+					? `<div class="fix" role="alert"><strong>Last error, ${esc(when(err.at))}</strong><p>${esc(err.message)}</p>${RECONNECT.has(err.code) ? `<div class="actions">${connectButton('Reconnect')}</div>` : ''}</div>`
+					: '';
+				return `
+					<section class="card">
+						<div class="card-head">
+							<div>
+								<h2>Connection</h2>
+								<p class="hint">Search results and Copilot answers link back to three.ws.</p>
+							</div>
+							<span class="pill ${tone}">${esc(label)}</span>
+						</div>
+						${pendingNote}
+						<div class="counts" aria-label="Items indexed">
+							<div class="count"><strong>${state.itemsIndexed}</strong><span>Items indexed</span></div>
+							<div class="count"><strong>${c.agents}</strong><span>Agents</span></div>
+							<div class="count"><strong>${c.models}</strong><span>3D models</span></div>
+							<div class="count"><strong>${c.avatars}</strong><span>Avatars</span></div>
+						</div>
+						${emptyNote}
+						<dl class="facts">
+							<dt>Tenant</dt><dd class="mono">${esc(state.tenantId)}</dd>
+							<dt>Connection id</dt><dd class="mono">${esc(state.connectionId)}</dd>
+							<dt>Last sync</dt><dd>${esc(when(state.lastSyncAt))}</dd>
+							<dt>Last full sync</dt><dd>${esc(when(state.lastFullSyncAt))}</dd>
+							${state.nextAttemptAt ? `<dt>Next attempt</dt><dd>${esc(when(state.nextAttemptAt))}</dd>` : ''}
+							<dt>Connected</dt><dd>${esc(when(state.connectedAt))}</dd>
+						</dl>
+						${fix}
+						<div class="actions">
+							<button class="btn sec" type="button" id="resync">Full re-sync</button>
+							<button class="btn danger" type="button" id="disconnect">Disconnect</button>
+							<span class="status" id="action-status" role="status"></span>
+						</div>
+						<div id="confirm-slot"></div>
+					</section>`;
+			}
+
+			function renderAccess() {
+				const ownerOk = state.ownerInTenant;
+				const choice = (value, title, detail, disabled = false) => `
+					<label class="choice"><input type="radio" name="audience" value="${value}"${state.audience === value ? ' checked' : ''}${disabled ? ' disabled' : ''} />
+						<span><b>${title}</b><small>${detail}</small></span></label>`;
+				return `
+					<section class="card">
+						<h2>Who can see these items</h2>
+						<p class="hint">Microsoft Search and Copilot only show an item to people this list allows. You always see your own items when your three.ws account is linked to a Microsoft work account in this tenant${ownerOk ? ' (it is)' : ' (it is not yet)'}.</p>
+						<form id="access">
+							<fieldset>
+								<legend>Audience</legend>
+								${choice('organization', 'Everyone in the organization', 'All members of your tenant, not guests.')}
+								${choice('group', 'One Entra group', 'Members of a security or Microsoft 365 group. Use this for teammates who have no Microsoft sign-in on three.ws.')}
+								${choice('owner', 'Only me', ownerOk ? 'Only your own Microsoft work account.' : 'Needs your three.ws account linked to a Microsoft work account in this tenant.', !ownerOk)}
+							</fieldset>
+							<div id="group-field"${state.audience === 'group' ? '' : ' hidden'}>
+								<label class="field" for="group-id">Entra group object id</label>
+								<input type="text" id="group-id" placeholder="00000000-0000-0000-0000-000000000000" value="${esc(state.groupId || '')}" autocomplete="off" spellcheck="false" />
+							</div>
+							<label class="check"><input type="checkbox" id="include-private"${state.includePrivate ? ' checked' : ''} />
+								<span>Include private items<small>Index agents, models and avatars you have not made public on three.ws. They are still only visible to the audience above.</small></span></label>
+							<div class="actions">
+								<button class="btn" type="submit">Save access</button>
+								<span class="status" id="access-status" role="status"></span>
+							</div>
+						</form>
+					</section>`;
+			}
+
+			function render() {
+				app.setAttribute('aria-busy', 'false');
+				app.innerHTML = state.connected ? renderStatus() + renderAccess() : renderDisconnected();
+				if (state.connected) wireConnected();
+				clearTimeout(pollTimer);
+				if (state.connected && ['schema_pending', 'provisioning', 'consented'].includes(state.status)) pollTimer = setTimeout(refresh, 30_000);
+			}
+
+			function renderLoadError(err) {
+				app.setAttribute('aria-busy', 'false');
+				app.innerHTML = `<section class="card"><div class="error-box"><span>${esc(err.message)}</span><button class="btn sec" type="button" id="retry">Try again</button></div></section>`;
+				document.getElementById('retry').addEventListener('click', load);
+			}
+
+			function setStatus(id, kind, message) {
+				const el = document.getElementById(id);
+				if (!el) return;
+				el.className = `status ${kind || ''}`;
+				el.textContent = message;
+			}
+
+			function wireConnected() {
+				const form = document.getElementById('access');
+				const groupField = document.getElementById('group-field');
+				const groupInput = document.getElementById('group-id');
+				form.addEventListener('change', (e) => {
+					if (e.target.name === 'audience') groupField.hidden = e.target.value !== 'group';
+				});
+				form.addEventListener('submit', async (e) => {
+					e.preventDefault();
+					const audience = form.querySelector('input[name=audience]:checked')?.value;
+					const groupId = groupInput.value.trim();
+					groupInput.removeAttribute('aria-invalid');
+					if (audience === 'group' && !GUID.test(groupId)) {
+						groupInput.setAttribute('aria-invalid', 'true');
+						groupInput.focus();
+						return setStatus('access-status', 'err', 'Enter the group object id from Entra ID > Groups > Overview.');
+					}
+					const btn = form.querySelector('button[type=submit]');
+					btn.disabled = true;
+					setStatus('access-status', '', 'Saving...');
+					try {
+						state = await call('/settings', { method: 'PATCH', body: { audience, group_id: audience === 'group' ? groupId : null, include_private: document.getElementById('include-private').checked } });
+						render();
+						setStatus('access-status', 'ok', 'Saved. Every item is re-sent with the new access on the next sync.');
+					} catch (err) {
+						btn.disabled = false;
+						setStatus('access-status', 'err', err.message);
+					}
+				});
+
+				document.getElementById('resync').addEventListener('click', async (e) => {
+					const btn = e.currentTarget;
+					btn.disabled = true;
+					setStatus('action-status', '', 'Re-syncing everything...');
+					try {
+						const out = await call('/resync', { method: 'POST' });
+						state = out.status;
+						render();
+						const r = out.run || {};
+						const msg = r.error
+							? r.error.message
+							: r.upserted != null
+								? `Sent ${r.upserted} item${r.upserted === 1 ? '' : 's'}${r.deleted ? `, removed ${r.deleted}` : ''}.${r.complete ? '' : ' The rest follows on the next scheduled sync.'}`
+								: state.status === 'schema_pending'
+									? 'Schema registration is still running at Microsoft. The sync starts when it finishes.'
+									: 'Re-sync queued.';
+						setStatus('action-status', r.error ? 'err' : 'ok', msg);
+					} catch (err) {
+						btn.disabled = false;
+						setStatus('action-status', 'err', err.message);
+					}
+				});
+
+				document.getElementById('disconnect').addEventListener('click', () => {
+					const slot = document.getElementById('confirm-slot');
+					slot.innerHTML = `<div class="confirm" role="alertdialog" aria-labelledby="confirm-text">
+						<p id="confirm-text">Disconnect removes the three.ws connection and every indexed item from your Microsoft 365 tenant. Microsoft Search and Copilot stop showing them within minutes. Your agents and models on three.ws are not touched.</p>
+						<div class="actions" style="margin-top:0"><button class="btn danger" type="button" id="confirm-yes">Disconnect and remove items</button><button class="btn sec" type="button" id="confirm-no">Keep connected</button></div></div>`;
+					document.getElementById('confirm-no').addEventListener('click', () => (slot.innerHTML = ''));
+					const yes = document.getElementById('confirm-yes');
+					yes.focus();
+					yes.addEventListener('click', async () => {
+						yes.disabled = true;
+						yes.textContent = 'Disconnecting...';
+						try {
+							const r = await call('/disconnect', { method: 'POST' });
+							if (r.remoteDeleted) banner('ok', 'Disconnected. The connection and its items were deleted from your tenant.');
+							else banner('err', `Disconnected from three.ws, but Microsoft refused to delete the connection (${r.remoteError?.message || 'no access'}). Remove the connection ${r.connectionId} in the Microsoft 365 admin center under Settings > Search & intelligence > Data sources.`);
+							await load();
+						} catch (err) {
+							yes.disabled = false;
+							yes.textContent = 'Disconnect and remove items';
+							setStatus('action-status', 'err', err.message);
+						}
+					});
+				});
+			}
+
+			async function refresh() {
+				try {
+					state = await call('/status');
+					render();
+				} catch {
+					pollTimer = setTimeout(refresh, 60_000);
+				}
+			}
+
+			async function load() {
+				try {
+					state = await call('/status');
+					render();
+				} catch (err) {
+					renderLoadError(err);
+				}
+			}
+
+			readRedirectParams();
+			load();
+		</script>
+	</body>
+</html>
