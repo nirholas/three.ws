@@ -691,7 +691,7 @@
 		"@dimforge/rapier3d-compat": "^0.21.0",
 		"@discord/embedded-app-sdk": "^2.5.0",
 		"@elevenlabs/elevenlabs-js": "^2.77.0",
-		"@ellipsis-labs/rise": "^0.7.4",
+		"@ellipsis-labs/rise": "^0.7.9",
 		"@ethereum-attestation-service/eas-sdk": "^2.10.0",
 		"@ffmpeg/ffmpeg": "^0.12.15",
 		"@ffmpeg/util": "^0.12.2",
