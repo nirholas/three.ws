@@ -14,16 +14,29 @@
 // shape all mirror scripts/inject-seo-meta.mjs, so a crawler cannot tell
 // whether a page was stamped at build time or rewritten here.
 //
+// Pages that own their meta (canonical already matches the request path) keep
+// every tag they ship, but still gain the structured data they lack: a
+// BreadcrumbList on every page below the root, and a WebApplication node on
+// the tool pages of the build and labs sections. Bing and Copilot read both.
+//
 // Safety rules this module holds itself to:
 //   - Never fail a page: any error falls back to the untouched shell.
-//   - A page whose canonical already matches the request path owns its meta
-//     and is never touched (that is every statically stamped page).
+//   - A page whose canonical already matches the request path owns its meta:
+//     only missing JSON-LD is appended, nothing it ships is changed.
 //   - Results are cached per path; dist/ is immutable for a deploy's lifetime.
 
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { truncateChars } from '../api/_lib/safe-text.js';
+import {
+	ORGANIZATION_ID,
+	SOFTWARE_APPLICATION_TYPES,
+	breadcrumbListNode,
+	jsonLdScript,
+	jsonLdTypes,
+	pathTrail,
+} from '../api/_lib/structured-data.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // The single origin this site declares. Every canonical URL, Open Graph URL and
@@ -61,6 +74,15 @@ function pageOgUrl(page, sectionId) {
 	if (page.description) q.set('d', truncateAtWord(page.description, 160));
 	q.set('p', page.path || '/');
 	return `${ORIGIN}/api/page-og?${q.toString()}`;
+}
+
+// Catalog sections whose pages are tools a visitor uses in the browser, so they
+// are described as a WebApplication. Docs pages filed there are not apps.
+const PRODUCT_SECTIONS = new Set(['build', 'labs']);
+
+/** True when a catalogued page is a product (an in-browser tool), not an article. */
+export function isProductPage(sectionId, page) {
+	return PRODUCT_SECTIONS.has(sectionId) && !String(page?.path || '').startsWith('/docs');
 }
 
 // path -> { page, sectionId } for every public, indexable catalogued page.
@@ -125,7 +147,31 @@ function setTag(head, re, replacement, missing) {
 	return head;
 }
 
-function buildJsonLd(page, url, ogImage) {
+function titleFor(p) {
+	return getCatalog().get(p)?.page.title || null;
+}
+
+function breadcrumbFor(page) {
+	const trail = pathTrail(page.path, page.title, titleFor);
+	return trail.length ? breadcrumbListNode(trail, ORIGIN) : null;
+}
+
+function productNode(page, url, sectionId) {
+	return {
+		'@type': 'WebApplication',
+		'@id': `${url}#app`,
+		name: page.title,
+		description: page.description || undefined,
+		url,
+		applicationCategory: sectionId === 'labs' ? 'MultimediaApplication' : 'DeveloperApplication',
+		operatingSystem: 'Any',
+		browserRequirements: 'Requires JavaScript',
+		isPartOf: { '@type': 'WebSite', name: 'three.ws', url: ORIGIN },
+		publisher: { '@type': 'Organization', '@id': ORGANIZATION_ID, name: 'three.ws', url: ORIGIN },
+	};
+}
+
+function buildJsonLd(page, url, ogImage, sectionId) {
 	const graph = [
 		{
 			'@type': 'WebPage',
@@ -136,29 +182,28 @@ function buildJsonLd(page, url, ogImage) {
 			primaryImageOfPage: ogImage,
 		},
 	];
-	const segs = page.path.split('/').filter(Boolean);
-	if (segs.length > 1) {
-		const items = [{ name: 'Home', url: `${ORIGIN}/` }];
-		let acc = '';
-		for (const s of segs) {
-			acc += `/${s}`;
-			items.push({
-				name: s.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
-				url: `${ORIGIN}${acc}`,
-			});
-		}
-		graph.push({
-			'@type': 'BreadcrumbList',
-			itemListElement: items.map((it, i) => ({
-				'@type': 'ListItem',
-				position: i + 1,
-				name: it.name,
-				item: it.url,
-			})),
-		});
+	const crumbs = breadcrumbFor(page);
+	if (crumbs) graph.push(crumbs);
+	if (isProductPage(sectionId, page)) graph.push(productNode(page, url, sectionId));
+	return jsonLdScript({ '@context': 'https://schema.org', '@graph': graph });
+}
+
+/**
+ * The JSON-LD a page that owns its meta still lacks: a BreadcrumbList when it
+ * has none, and a WebApplication when it is a product page with no
+ * SoftwareApplication-family node. Null when it already carries both.
+ */
+function missingStructuredData(head, page, url, sectionId) {
+	const types = jsonLdTypes(head);
+	const graph = [];
+	if (!types.has('BreadcrumbList')) {
+		const crumbs = breadcrumbFor(page);
+		if (crumbs) graph.push(crumbs);
 	}
-	const ld = { '@context': 'https://schema.org', '@graph': graph };
-	return `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>`;
+	if (isProductPage(sectionId, page) && !SOFTWARE_APPLICATION_TYPES.some((t) => types.has(t))) {
+		graph.push(productNode(page, url, sectionId));
+	}
+	return graph.length ? jsonLdScript({ '@context': 'https://schema.org', '@graph': graph }) : null;
 }
 
 /**
@@ -182,7 +227,13 @@ export function rewriteHead(pathname, html) {
 	const shellCanonical = canonicalOf(headMatch[0]);
 	// The canonical already names this page: it owns its meta. This is every
 	// statically stamped page, and the shell's own route (/docs on docs shell).
-	if (shellCanonical === url) return null;
+	// Only the structured data it lacks is appended.
+	if (shellCanonical === url) {
+		const extra = missingStructuredData(headMatch[0], page, url, sectionId);
+		if (!extra) return null;
+		const head = headMatch[0].replace(/<\/head>/i, () => `\t${extra}\n</head>`);
+		return html.slice(0, headMatch.index) + head + html.slice(headMatch.index + headMatch[0].length);
+	}
 
 	let head = headMatch[0];
 	const fullTitle = `${page.title} · three.ws`;
@@ -212,7 +263,7 @@ export function rewriteHead(pathname, html) {
 			m.includes(shellCanonical) ? '' : m,
 		);
 	}
-	missing.push(buildJsonLd(page, url, ogImage));
+	missing.push(buildJsonLd(page, url, ogImage, sectionId));
 
 	if (missing.length) {
 		head = head.replace(/<\/head>/i, () => `${missing.map((t) => `\t${t}`).join('\n')}\n</head>`);
@@ -244,4 +295,4 @@ export function renderSeoHead(pathname, file) {
 	return out;
 }
 
-export const __test = { rewriteHead, hasSeoRoute, normalizePath, pageOgUrl, buildJsonLd };
+export const __test = { rewriteHead, hasSeoRoute, normalizePath, pageOgUrl, buildJsonLd, missingStructuredData };

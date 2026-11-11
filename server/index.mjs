@@ -667,12 +667,20 @@ app.use(async (req, res) => {
 			// for the page actually requested so each route presents its own
 			// canonical, title, social card and JSON-LD. Uses the ORIGINAL request
 			// path: currentPath is already the dest rewrite (/docs/index.html).
+			// A page that owns its meta only gains the JSON-LD it lacks (a
+			// BreadcrumbList, and a WebApplication on tool pages).
 			if (req.method === 'GET' && file.endsWith('.html') && hasSeoRoute(url.pathname)) {
 				const head = renderSeoHead(url.pathname, file);
 				// /tutorials/* and /walkthroughs/* fetch their content client-side,
 				// so the shell alone carries no text for a crawler to read. Render
 				// the body too; the player replaces it on load.
-				const html = renderCrawlerBody(url.pathname, head) || head;
+				let html = renderCrawlerBody(url.pathname, head) || head;
+				// Every catalogued page now passes through here (owned pages gain
+				// their missing structured data), so a ?lang= request still gets
+				// its translated head declared on top of the rewrite.
+				if (html && url.searchParams.has('lang')) {
+					html = rewriteLocaleHead(html, url.pathname, url.searchParams.get('lang')) || html;
+				}
 				if (html) {
 					// The rewritten head swaps in this route's own JSON-LD block, so
 					// the policy has to describe the rewritten bytes.
