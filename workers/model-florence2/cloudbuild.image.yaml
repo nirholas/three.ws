@@ -1,0 +1,30 @@
+# Build and push the Florence-2 image only (no deploy). Used to verify the worker
+# as a Cloud Run job before the service exists:
+#   gcloud builds submit --config workers/model-florence2/cloudbuild.image.yaml \
+#     --substitutions SHORT_SHA=$(git rev-parse --short HEAD) workers/model-florence2
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+substitutions:
+  _REGION: us-central1
+  _REPO: model-florence2
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+      - .
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+
+timeout: 3600s
+options:
+  machineType: E2_HIGHCPU_8
+  diskSizeGb: 100
+  logging: CLOUD_LOGGING_ONLY
