@@ -335,3 +335,13 @@ test('the hidden animation bar on an avatar profile keeps its Pause button out o
 	test.skip(shown === '1', 'animation bar already visible');
 	await expect(page.getByRole('button', { name: 'Pause animation' })).toHaveCount(0);
 });
+
+test('the agent embed exposes a main landmark (1.3.1, 2.4.1)', async ({ page }) => {
+	// The embed has no site header to skip, so the main landmark is the
+	// bypass route. It rendered as bare divs with no landmark at all.
+	const res = await page.request.get('/api/marketplace/agents?limit=10');
+	const items = (await res.json().catch(() => ({})))?.data?.items || [];
+	test.skip(!items[0], 'marketplace returned no agents');
+	await page.goto(`/agent/${items[0].id}/embed`, { waitUntil: 'domcontentloaded', timeout: 180_000 });
+	await expect(page.getByRole('main')).toHaveCount(1, { timeout: 30_000 });
+});
