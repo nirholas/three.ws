@@ -93,6 +93,7 @@ These are in the repo and validated. Each one goes live when the owner completes
 - [Partner benefits](./partner-benefits.md)
 - [Microsoft distribution and offer plan](./microsoft-marketplace-offer-plan.md)
 - [Microsoft Marketplace SaaS offer](./microsoft-marketplace-saas.md)
+- [Enterprise sign-in and SCIM](./enterprise-sso.md): Sign in with Microsoft for everyone, tenant-based team join, and SCIM provisioning from Microsoft Entra ID
 - [Listings and distribution](./listings.md)
 - [Press kit](./press-kit.md)
 - [Trust center](./trust.md): security, privacy and subprocessor answers for IT review, linked from `/microsoft/activate` and the Teams tab
