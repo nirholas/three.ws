@@ -66,7 +66,7 @@ function httpErr(status, body = 'err') {
 
 // Every lane key describeImage can cool, so a test never inherits another's bench.
 const VISION_LANE_KEYS = [
-	'vision:nvidia:meta/llama-3.2-11b-vision-instruct',
+	'vision:nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b',
 	'vision:vertex-gemini:gemini-2.5-flash',
 	'vision:openai:gpt-5.4-nano',
 ];
@@ -116,7 +116,7 @@ describe('vision helper — provider chain', () => {
 		const r = await describeImage({ prompt: 'color?', imageUrl: 'https://cdn/x.jpg' });
 		expect(r.text).toBe('Gray');
 		expect(r.provider).toBe('nvidia');
-		expect(r.model).toBe('meta/llama-3.2-11b-vision-instruct');
+		expect(r.model).toBe('nvidia/nemotron-3.5-super-vl-120b-a12b');
 		// One call, to the OpenAI-compatible chat host, multimodal user content.
 		expect(calls).toHaveLength(1);
 		const userMsg = calls[0].body.messages.at(-1);
@@ -165,7 +165,7 @@ describe('vision helper — provider chain', () => {
 		]);
 		const r = await describeImage({ prompt: 'p', imageUrl: 'https://cdn/x.jpg' });
 		expect(calls).toHaveLength(2);
-		expect(calls[0].body.model).toBe('meta/llama-3.2-11b-vision-instruct');
+		expect(calls[0].body.model).toBe('nvidia/nemotron-3.5-super-vl-120b-a12b');
 		expect(calls[1].url).toContain('openai.com');
 		expect(r.text).toBe('ok');
 	});

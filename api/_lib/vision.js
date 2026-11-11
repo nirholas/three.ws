@@ -45,18 +45,25 @@ import {
 	vertexGeminiHeaders,
 } from './vertex-gemini.js';
 
-// Free NIM vision lanes, in order.
+// Free NIM vision lanes, in order. Each entry is { model, extraBody? }.
 //
 // `nvidia/nemotron-nano-12b-v2-vl` used to lead here for its small image token
-// footprint. NVIDIA retired it: the host answers every request for it with a
-// hard 410 ("has reached its end of life on 2026-08-26T09:00:00Z"), verified
-// against production on 2026-09-08. A 410 never recovers, so leaving it in the
-// list only spent the first, largest slice of every vision request's deadline
-// on a model that cannot answer. Adding a replacement free NIM VLM needs a live
-// NVIDIA_API_KEY to probe the catalog against, which is why this is a removal
-// rather than a swap.
+// footprint; NVIDIA retired it with a hard 410 on 2026-08-26. Its successor
+// `meta/llama-3.2-11b-vision-instruct` went the same way on 2026-11-05 ("has
+// reached its end of life ... and is no longer available"), as did every other
+// NIM VLM probed on 2026-11-11 (llama-4-maverick, phi-4-multimodal,
+// llama-3.1-nemotron-nano-vl-8b: 410; llama-4-scout: 404; llama-3.2-90b-vision:
+// no reply inside 45s). The one NIM vision model that answered a real image was
+// nemotron-3.5-super-vl, in about 26s.
+//
+// It is a reasoning model. NVIDIA's host switches thinking off with
+// chat_template_kwargs.enable_thinking (OpenRouter's reasoning.effort is a no-op
+// here); left on, the thinking eats the lane's slice and message.content comes
+// back empty. It is slow even so, and a timeout cools it for the next 45s, so a
+// request that cannot wait for it falls straight through to the OpenRouter
+// routes below.
 const NVIDIA_VISION_MODELS = [
-	'meta/llama-3.2-11b-vision-instruct',
+	{ model: 'nvidia/nemotron-3.5-super-vl-120b-a12b', extraBody: { chat_template_kwargs: { enable_thinking: false } } },
 ];
 // Free OpenRouter vision lanes, in order.
 //
@@ -105,31 +112,25 @@ const NVIDIA_VISION_MODELS = [
 // general VLM and is deliberately excluded; asking it to score a render is not
 // what it does.
 //
-// ORDER IS A HEURISTIC, not a measurement, and it is ranked by how likely a
-// route is to emit clean JSON rather than narrate:
-//   1. Routes whose model record says reasoning default_enabled:false lead.
-//      They have nothing to switch off and nothing to narrate.
-//   2. Then the dedicated vision (VL) route.
-//   3. Then general routes with no declared reasoning default.
-//   4. Reasoning-by-default routes go last, each carrying reasoning.effort:none
-//      (see the note above about the host-specific parameter). nemotron-omni
-//      sits at the back of that group because it is the one caught returning an
-//      empty message.content in production.
-// Replace this ordering with measured latency and JSON-success rates by running
-// `node scripts/probe-vision-lanes.mjs`, which sends the real rubric payload to
-// every route and ranks them.
+// ORDER IS MEASURED with `node scripts/probe-vision-lanes.mjs`, which sends the
+// real rubric payload to every route and ranks them. On 2026-11-11 nemotron-omni
+// passed in 1.6s with clean JSON (reasoning.effort:none has held since the
+// empty-content incident above), dots-3-note passed in 13.8s, and both Gemma
+// routes answered 429 from their upstream shared pool. The Gemmas stay as spare
+// capacity behind the two that answer: a pool 429 falls through in under a
+// second and recovers on its own. Re-run the probe and re-rank when a lane
+// starts failing.
 //
 // Pruned 2026-09-30 against a live image probe: ling-3.0-flash-vl and both
 // nex-agi routes lost their free tier (404 "unavailable for free") and both
 // inkling routes are now restricted to OpenRouter's agentic surfaces (403), so
-// every vision request was paying five dead round trips. qwen3.8-27b:free
-// joined: the catalog lists it with image input.
+// every vision request was paying five dead round trips. qwen3.8-27b:free was
+// pruned on 2026-11-11 for the same reason (404 "unavailable for free").
 const OPENROUTER_VISION_MODELS = [
+	{ model: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', extraBody: { reasoning: { effort: 'none' } } },
+	{ model: 'dots-studio/dots-3-note-preview:free' },
 	{ model: 'google/gemma-4-31b-it:free' },
 	{ model: 'google/gemma-4-26b-a4b-it:free' },
-	{ model: 'qwen/qwen3.8-27b:free' },
-	{ model: 'dots-studio/dots-3-note-preview:free' },
-	{ model: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', extraBody: { reasoning: { effort: 'none' } } },
 ];
 // Cloudflare Workers AI's vision route. Llama 4 Scout, not the 11B Llama 3.2
 // vision model the NIM lane uses: on Workers AI that one sits behind a Meta
@@ -178,6 +179,23 @@ const MAX_RESERVED_LANES = 2;
 // 20s timeout against a 24s deadline it left 4s for every provider combined.
 const INLINE_BUDGET_SHARE = 0.25;
 const INLINE_MAX_MS = 8_000;
+
+/**
+ * True when a 429 is about the HOST and the account behind it, false when it is
+ * one model's upstream pool running dry. OpenRouter fronts many providers: a
+ * free route's 429 normally carries metadata.limit_source
+ * "upstream_provider_shared_pool" ("... is temporarily rate-limited upstream"),
+ * which says nothing about the sibling routes on the same host. Treating it as
+ * host-wide skipped every route behind the first saturated Gemma, including the
+ * one that was answering (production, 2026-11-11). An account-level cap
+ * ("free-models-per-day") and every NIM 429 still bench the whole host.
+ */
+export function isHostWideThrottle(body) {
+	const text = String(body || '');
+	if (/limit_source"\s*:\s*"upstream/i.test(text)) return false;
+	if (/rate-limited upstream/i.test(text)) return false;
+	return true;
+}
 
 /** Cooldown key for one lane. Model-scoped: two lanes on one host are distinct rungs. */
 function laneKey(p) {
@@ -315,12 +333,13 @@ export function visionChain() {
 	// One lane per nvapi key: each free key carries its own rate limit.
 	const nvidiaKeys = [...new Set([env.NVIDIA_API_KEY, ...env.NVIDIA_FALLBACK_KEYS].filter(Boolean))];
 	nvidiaKeys.forEach((key, i) => {
-		for (const model of NVIDIA_VISION_MODELS) {
+		for (const spec of NVIDIA_VISION_MODELS) {
 			chain.push(openaiCompatVisionProvider({
 				name: i === 0 ? 'nvidia' : `nvidia#${i + 1}`,
 				key,
 				url: 'https://integrate.api.nvidia.com/v1/chat/completions',
-				model,
+				model: spec.model,
+				extraBody: spec.extraBody || null,
 			}));
 		}
 	});
@@ -344,9 +363,9 @@ export function visionChain() {
 			}));
 		});
 	}
-	// Cloudflare Workers AI: the SAME llama-3.2-11b-vision weights the free NIM
-	// lane already answers with, served on a different host behind a different
-	// quota. That is the point of it. Until now one NVIDIA model carried the
+	// Cloudflare Workers AI: a different host behind a different quota (it once
+	// served the same llama-3.2-11b-vision weights as the NIM lane; see the
+	// model note above for why it now runs Llama 4 Scout). That is the point of it. Until now one NVIDIA model carried the
 	// entire chain (the list lost nemotron-nano-12b-v2-vl to a hard 410 on
 	// 2026-08-26), so a single throttle took vision down platform-wide. This rung
 	// is a proven model, not a new bet. The vendor is already wired for text in
@@ -645,19 +664,20 @@ export async function describeImage({
 			// long window instead of being re-probed (and re-charged a slice of the
 			// deadline) on every request until someone notices.
 			const authFault = st === 401 || st === 403 || st === 402 || st === 410;
-			// A 429 is the one verdict that is unambiguously about the HOST and the
-			// account behind it: every model served there is throttled by the same
-			// quota, so both the bench and the in-request skip cover every sibling
-			// rung. Everything else stays lane-scoped, because NIM answers a
-			// per-model fault with a 403 (model not enabled for this account) or a
+			const hostThrottled = st === 429 && isHostWideThrottle(body);
+			// A 429 is normally about the HOST and the account behind it: every model
+			// served there is throttled by the same quota, so both the bench and the
+			// in-request skip cover every sibling rung. The exception is a 429 a
+			// gateway relays from ONE model's upstream pool (isHostWideThrottle).
+			// Everything else stays lane-scoped, because NIM answers a per-model fault with a 403 (model not enabled for this account) or a
 			// 500 just as readily as a host-level one, and benching a working twin
 			// on that guess would cost the chain its redundancy.
 			coolLane(order, p, {
 				seconds: authFault ? AUTH_COOLDOWN_SECONDS : VISION_LANE_COOLDOWN_SECONDS,
 				reason: authFault ? 'auth' : 'health',
-				hostWide: st === 429,
+				hostWide: hostThrottled,
 			});
-			if (st === 429) sickHosts.add(laneHost(p));
+			if (hostThrottled) sickHosts.add(laneHost(p));
 			attempts.push({ provider: p.name, model: p.model || null, status: st, detail: body.slice(0, 160) });
 			lastErr = Object.assign(
 				new Error(`${p.name} vision ${upstream.status}: ${body.slice(0, 200)}`),

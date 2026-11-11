@@ -19,7 +19,7 @@ const VERDICT = {
 const describeImageJson = vi.fn(async () => ({
 	json: VERDICT,
 	provider: 'nvidia',
-	model: 'meta/llama-3.2-11b-vision-instruct',
+	model: 'nvidia/nemotron-3.5-super-vl-120b-a12b',
 }));
 
 vi.mock('../api/_lib/vision.js', () => ({

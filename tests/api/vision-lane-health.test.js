@@ -16,7 +16,7 @@ const ENV_KEYS = ['NVIDIA_API_KEY', 'OPENAI_API_KEY', 'GOOGLE_CLOUD_PROJECT'];
 const ORIGINAL_ENV = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]));
 
 const LANE_KEYS = [
-	'vision:nvidia:meta/llama-3.2-11b-vision-instruct',
+	'vision:nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b',
 	'vision:openai:gpt-5.4-nano',
 ];
 
@@ -238,5 +238,85 @@ describe('vision lane cooldowns', () => {
 		const r = await describeImage({ prompt: 'p', imageBase64: 'AAAA', mimeType: 'image/png' });
 		expect(r.text).toBeTruthy();
 		expect(retry.length).toBeGreaterThan(0);
+	});
+});
+
+describe('OpenRouter free-route throttles', () => {
+	// Every OpenRouter lane the chain can build, so no cooldown leaks between tests.
+	const OPENROUTER_LANES = [
+		'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+		'dots-studio/dots-3-note-preview:free',
+		'google/gemma-4-31b-it:free',
+		'google/gemma-4-26b-a4b-it:free',
+		'qwen/qwen3.8-27b:free',
+	].map((m) => `vision:openrouter:${m}`);
+	const clearAll = () => Promise.all([...LANE_KEYS, ...OPENROUTER_LANES].map((k) => clearProviderCooldown(k)));
+
+	beforeEach(async () => {
+		await clearAll();
+		delete process.env.NVIDIA_API_KEY;
+		delete process.env.OPENAI_API_KEY;
+		process.env.OPENROUTER_API_KEY = 'sk-or-test';
+	});
+	afterEach(async () => {
+		await clearAll();
+		delete process.env.OPENROUTER_API_KEY;
+	});
+
+	// The exact body OpenRouter returned for a saturated free route on 2026-11-11.
+	const upstreamPool429 = (model) =>
+		httpErr(429, JSON.stringify({
+			error: {
+				message: 'Provider returned error',
+				code: 429,
+				metadata: {
+					raw: `${model} is temporarily rate-limited upstream. Please retry shortly.`,
+					provider_name: 'Google AI Studio',
+					limit_source: 'upstream_provider_shared_pool',
+				},
+			},
+		}));
+
+	it('keeps trying sibling routes when one route is throttled by its upstream pool', async () => {
+		// A free route's 429 is usually ONE upstream provider's shared pool running
+		// dry, which says nothing about the other models on the host. Treating it as
+		// host-wide is what kept the only answering route from ever being reached.
+		let first = null;
+		const calls = stubFetch([
+			['openrouter.ai', (call) => {
+				first ??= call.body.model;
+				return call.body.model === first ? upstreamPool429(call.body.model) : chatOk('{"ok":true}');
+			}],
+		]);
+		const r = await describeImage({ prompt: 'p', imageBase64: 'AAAA', mimeType: 'image/png' });
+		expect(r.provider).toBe('openrouter');
+		expect(r.model).not.toBe(first);
+		expect(calls.filter((c) => c.url.includes('openrouter.ai')).length).toBe(2);
+	});
+
+	it('still skips the whole host when the account itself is out of free requests', async () => {
+		const calls = stubFetch([
+			['openrouter.ai', () => httpErr(429, JSON.stringify({ error: { message: 'Rate limit exceeded: free-models-per-day.', code: 429 } }))],
+		]);
+		await expect(describeImage({ prompt: 'p', imageBase64: 'AAAA', mimeType: 'image/png' })).rejects.toThrow();
+		expect(calls.filter((c) => c.url.includes('openrouter.ai')).length).toBe(1);
+	});
+
+	it('leads with the route measured to answer, and never asks a route that lost its free tier', async () => {
+		const calls = stubFetch([['openrouter.ai', () => chatOk('{"ok":true}')]]);
+		const r = await describeImage({ prompt: 'p', imageBase64: 'AAAA', mimeType: 'image/png' });
+		expect(r.model).toBe('nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free');
+		expect(calls[0].body.reasoning).toEqual({ effort: 'none' });
+	});
+});
+
+describe('free NIM vision lane', () => {
+	it('asks a live NIM model with thinking switched off, not the retired 11B one', async () => {
+		delete process.env.OPENAI_API_KEY;
+		await clearProviderCooldown('vision:nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b');
+		const calls = stubFetch([['integrate.api.nvidia.com', () => chatOk('a lamp')]]);
+		const r = await describeImage({ prompt: 'p', imageBase64: 'AAAA', mimeType: 'image/png' });
+		expect(r.model).toBe('nvidia/nemotron-3.5-super-vl-120b-a12b');
+		expect(calls[0].body.chat_template_kwargs).toEqual({ enable_thinking: false });
 	});
 });
