@@ -37,12 +37,14 @@ const browser = await chromium.launch();
 const context = await browser.newContext({ acceptDownloads: true, viewport: { width: 380, height: 820 } });
 const page = await context.newPage();
 const problems = [];
-// Office.js itself warns that it is running outside an Office client; only
-// messages from three.ws code count.
+// Office.js itself warns that it is running outside an Office client, and the
+// headless GPU driver reports ReadPixels stalls from the /login page's WebGL
+// background; only messages from three.ws code count.
 const OFFICE_JS = /appsforoffice\.microsoft\.com|firstpartyapps\.oaspapps\.com/;
+const NOT_OURS = /^Unable to notify the host about Office\.js runtime information|^\[\.WebGL-[0-9a-fx]+\]GL Driver Message/;
 page.on('console', (m) => {
 	if (m.type() !== 'error' && m.type() !== 'warning') return;
-	if (OFFICE_JS.test(m.location()?.url || '')) return;
+	if (OFFICE_JS.test(m.location()?.url || '') || NOT_OURS.test(m.text())) return;
 	problems.push(`${m.type()}: ${m.text()}`);
 });
 page.on('pageerror', (e) => problems.push(`pageerror: ${e.message}`));

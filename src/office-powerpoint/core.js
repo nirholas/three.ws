@@ -75,6 +75,22 @@ export function readAuthCallback(href, expectedState) {
 	return { code };
 }
 
+/**
+ * Drop the sign-in code and state from the address bar, so a refresh never
+ * replays a spent code. Office.js, loaded outside an Office client, sets
+ * `history.replaceState` to null on the instance; the prototype method is
+ * untouched, so that is the one called.
+ */
+export function clearAuthQuery(win) {
+	const history = win.history;
+	if (!history) return;
+	const replace =
+		typeof history.replaceState === 'function'
+			? history.replaceState
+			: Object.getPrototypeOf(history)?.replaceState;
+	if (typeof replace === 'function') replace.call(history, null, '', win.location.pathname);
+}
+
 export function needsRefresh(auth, now = Date.now()) {
 	return !auth?.expires_at || auth.expires_at - now < REFRESH_MARGIN_MS;
 }

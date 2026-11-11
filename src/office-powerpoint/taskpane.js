@@ -13,6 +13,7 @@ import {
 	SCOPE,
 	authorizeUrl,
 	bytesToBase64,
+	clearAuthQuery,
 	createPkce,
 	endpointOn,
 	exportUrl,
@@ -773,7 +774,7 @@ async function boot() {
 	const params = new URLSearchParams(location.search);
 	if (params.has('state') && (params.has('code') || params.has('error'))) {
 		const href = location.href;
-		if (typeof history.replaceState === 'function') history.replaceState(null, '', location.pathname);
+		clearAuthQuery(window);
 		await finishSignIn(href);
 		return;
 	}

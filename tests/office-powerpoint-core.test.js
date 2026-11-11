@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	authorizeUrl,
 	base64url,
+	clearAuthQuery,
 	bytesToBase64,
 	createPkce,
 	endpointOn,
@@ -143,5 +144,35 @@ describe('exportUrl', () => {
 		expect(exportUrl('https://three.ws', { src: 'https://three.ws/cdn/a b.glb', title: 'A & B' })).toBe(
 			'https://three.ws/api/forge/export-pptx?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fa+b.glb&title=A+%26+B',
 		);
+	});
+});
+
+describe('clearAuthQuery', () => {
+	// Office.js, loaded outside an Office client, sets history.replaceState and
+	// pushState to null on the instance. The prototype method still works.
+	class FakeHistory {
+		constructor() {
+			this.calls = [];
+		}
+		replaceState(state, title, url) {
+			this.calls.push(url);
+		}
+	}
+
+	it('strips the code and state even after Office.js nulled history.replaceState', () => {
+		const history = new FakeHistory();
+		history.replaceState = null;
+		clearAuthQuery({ history, location: { pathname: '/office/powerpoint' } });
+		expect(history.calls).toEqual(['/office/powerpoint']);
+	});
+
+	it('uses the normal method when it is intact', () => {
+		const history = new FakeHistory();
+		clearAuthQuery({ history, location: { pathname: '/office/powerpoint/' } });
+		expect(history.calls).toEqual(['/office/powerpoint/']);
+	});
+
+	it('does nothing without a History API', () => {
+		expect(() => clearAuthQuery({ location: { pathname: '/office/powerpoint' } })).not.toThrow();
 	});
 });
