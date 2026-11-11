@@ -367,6 +367,8 @@ const UNPUBLISHED_DOCS = new Map([
 	['ibm-community-recap-nichxbt', 'internal: source draft of an IBM Community post'],
 	['ibm-community-blog-meetup-jessica', 'internal: source draft of an IBM Community post'],
 	['ibm-community-thread', 'internal: source draft of an IBM Community post'],
+	['microsoft-co-marketing', 'internal: Microsoft co-marketing strategy, proof points and owner-gated outreach drafts'],
+	['microsoft-channel-drafts', 'owner-gated: unposted Tech Community, GitHub and X drafts for Microsoft channels'],
 	['ibm-community-doc-freshness-post', 'internal: source draft of an IBM Community post'],
 	['ibm-community-long-running-mcp-tools-post', 'internal: source draft of an IBM Community post'],
 	['ibm-community-any-skeleton-animation-post', 'internal: source draft of an IBM Community post'],
