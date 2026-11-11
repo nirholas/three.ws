@@ -61,6 +61,16 @@ function promptExcerpt(prompt, max = 160) {
 }
 
 /**
+ * True when a creation belongs in a search index: public (a missing visibility
+ * is a legacy public row) and not rejected by the quality grader. The same
+ * rule as /sitemap/creations.xml (api/sitemap/[type].js).
+ */
+export function isIndexableCreation(creation) {
+	const vis = creation?.visibility ?? 'public';
+	return vis === 'public' && creation?.outcome !== 'rejected';
+}
+
+/**
  * Everything the head needs, derived from one public creation record (the
  * shape both getPublicCreation and GET /api/forge-creation return).
  */
@@ -148,6 +158,13 @@ export function rewriteCreationHead(html, creation, origin = ORIGIN) {
 	head = setTag(head, metaRe('name', 'twitter:description'), `<meta name="twitter:description" content="${d}" />`, missing);
 	head = setTag(head, metaRe('name', 'twitter:image'), `<meta name="twitter:image" content="${img}" />`, missing);
 	head = setTag(head, metaRe('name', 'twitter:image:alt'), `<meta name="twitter:image:alt" content="${alt}" />`, missing);
+	// Unlisted models resolve for anyone with the link and rejected ones stay
+	// reachable for their maker, but neither is in the gallery or the creations
+	// sitemap, so neither should be indexed from a stray link. Public models
+	// keep whatever the shell says (it says nothing, which means index).
+	if (!isIndexableCreation(creation)) {
+		head = setTag(head, metaRe('name', 'robots'), '<meta name="robots" content="noindex, follow" />', missing);
+	}
 
 	// The shell carries no JSON-LD of its own today; drop any that a build
 	// step adds for the shell route so the page never describes two things.

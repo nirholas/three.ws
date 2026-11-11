@@ -6510,7 +6510,7 @@
 			"dest": "/api/sitemap"
 		},
 		{
-			"src": "/sitemap/(core|agents|avatars|widgets|profiles|news)\\.xml",
+			"src": "/sitemap/((?:core|agents|avatars|creations|widgets|profiles|news)(?:-[0-9]+)?)\\.xml",
 			"dest": "/api/sitemap/[type]?type=$1"
 		},
 		{

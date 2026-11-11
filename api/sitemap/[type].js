@@ -1,13 +1,23 @@
-// Sub-sitemap by entity type: agents, avatars, widgets, profiles, core, news.
+// Child sitemaps: /sitemap/<type>.xml and, for the entity types, the later
+// pages /sitemap/<type>-<n>.xml.
 //
-// Each request streams up to 45k URLs (capped under the sitemaps.org 50k
-// ceiling). Beyond that we'd shard into agents-1.xml, agents-2.xml, etc.
-// Only news currently reaches the cap, and it drains newest month first so
-// the truncation always falls on the oldest, least crawled stories.
+// Entity types (agents, avatars, creations, widgets, profiles) are paged at the
+// sitemaps.org limit of 50,000 URLs per file. A page is read by id cursor: the
+// first id of page n is found at row offset (n - 1) * 50,000 of the id-ordered
+// public set, and the page is the next 50,000 rows from there, so no request
+// ever holds more than one page of rows. Ordering by id (not recency) keeps a
+// URL in the same file from crawl to crawl. The index (api/sitemap.js) lists
+// one file per page from the same predicates, so the two always agree.
 //
-// Cached at the edge for 10 min: long enough to absorb crawl bursts,
-// short enough that newly minted agents are discoverable within minutes
-// (and IndexNow gives them an instant push too).
+// core (data/pages.json) and news (the three newest archive months) fit in one
+// file each.
+//
+// Every <lastmod> comes from a real timestamp on the row or the manifest entry.
+// An entry with none carries no <lastmod> rather than an invented one.
+//
+// Cached at the edge for 10 min: long enough to absorb crawl bursts, short
+// enough that new pages are discoverable quickly (IndexNow pushes them sooner,
+// see api/_lib/indexnow.js).
 
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -18,15 +28,16 @@ import { getMonths, loadMonth } from '../_lib/news-archive-store.js';
 import { storyPath } from '../../src/shared/news-links.js';
 import { isSuppressed } from '../_lib/news-rights.js';
 import { isIndexableAgent, isIndexableAvatar } from '../_lib/indexable-entity.js';
+import {
+	SITEMAP_PAGE_SIZE,
+	parseSitemapName,
+	sitemapPageOffset,
+	resourceUrl,
+	sitemapDate,
+	SITEMAP_TYPES,
+} from '../_lib/seo-resources.js';
 
 const ORIGIN = env.APP_ORIGIN;
-const MAX_URLS = 45_000;
-
-function fmtDate(d) {
-	const t = d instanceof Date ? d : new Date(d || Date.now());
-	if (Number.isNaN(t.getTime())) return new Date().toISOString().slice(0, 10);
-	return t.toISOString().slice(0, 10);
-}
 
 function xmlEscape(s) {
 	return String(s || '')
@@ -129,11 +140,10 @@ async function loadPagesManifest() {
 }
 
 async function coreSitemap() {
-	const today = fmtDate(new Date());
 	const [manifest, i18n] = await Promise.all([loadPagesManifest(), loadI18n()]);
 	if (!manifest?.sections) {
 		// Fallback to the home page only, so we never 500 the crawler.
-		return [{ loc: `${ORIGIN}/`, lastmod: today, changefreq: 'daily', priority: '1.0' }];
+		return [{ loc: `${ORIGIN}/`, changefreq: 'daily', priority: '1.0' }];
 	}
 	const out = [];
 	for (const section of manifest.sections) {
@@ -145,98 +155,147 @@ async function coreSitemap() {
 			if (!p.path || p.path.startsWith('http')) continue;
 			out.push({
 				loc: `${ORIGIN}${p.path === '/' ? '/' : p.path}`,
-				lastmod: p.lastmod || today,
+				// The manifest records when a page was last changed (lastmod) or
+				// first shipped (added). With neither, say nothing: a lastmod of
+				// "today" on every crawl teaches a crawler to ignore the field.
+				lastmod: sitemapDate(p.lastmod || p.added),
 				changefreq: p.changefreq || 'weekly',
 				priority: typeof p.priority === 'number' ? p.priority.toFixed(1) : '0.6',
 				alternates: i18n.paths.has(p.path) ? alternatesFor(p.path, i18n) : undefined,
 			});
 		}
 	}
-	return out.length ? out : [{ loc: `${ORIGIN}/`, lastmod: today, changefreq: 'daily', priority: '1.0' }];
+	return out.length ? out : [{ loc: `${ORIGIN}/`, changefreq: 'daily', priority: '1.0' }];
 }
 
-async function agentsSitemap() {
-	// Drop the untouched onboarding rows: 1,359 of the 3,397 public agents still
-	// carried the starter name and description on 2026-09-07, and they are
-	// duplicates of each other by construction (api/_lib/indexable-entity.js).
-	// The filter runs in JS rather than SQL so one definition of "indexable"
-	// serves both this file and the crawler page, which must agree. The
-	// predicate only tests whether the prose is empty and whether it opens with
-	// the starter copy, so a prefix is all it needs and the row stays small.
+// Each paged reader returns one page of rows in id order. The inner select
+// finds the first id of the page at its row offset (an index-only walk of the
+// public set), and the outer select reads at most one page from that id on. A
+// page past the end finds no first id, so `id >= null` matches nothing.
+
+async function agentsPage(offset) {
+	// Untouched onboarding rows are dropped after the read (1,359 of the 3,397
+	// public agents still carried the starter name and description on
+	// 2026-09-07, duplicates of each other by construction). The filter runs in
+	// JS so one definition of "indexable" serves both this file and the crawler
+	// page (api/_lib/indexable-entity.js). It only tests whether the prose is
+	// empty or opens with the starter copy, so a prefix keeps the row small.
 	const rows = await sql`
 		select id, name, left(description, 64) as description, updated_at, created_at
 		from agent_identities
 		where deleted_at is null and is_public = true
-		order by coalesce(updated_at, created_at) desc
-		limit ${MAX_URLS}
+		  and id >= (
+			select id from agent_identities
+			where deleted_at is null and is_public = true
+			order by id offset ${offset} limit 1
+		  )
+		order by id
+		limit ${SITEMAP_PAGE_SIZE}
 	`;
-	return rows
-		.filter(isIndexableAgent)
-		.map((r) => ({
-			loc: `${ORIGIN}/agents/${r.id}`,
-			lastmod: fmtDate(r.updated_at || r.created_at),
+	return {
+		rows: rows.length,
+		entries: rows.filter(isIndexableAgent).map((r) => ({
+			loc: resourceUrl(ORIGIN, 'agent', r.id),
+			lastmod: sitemapDate(r.updated_at || r.created_at),
 			changefreq: 'weekly',
 			priority: '0.7',
-		}));
+		})),
+	};
 }
 
-async function avatarsSitemap() {
-	// Same filter as agentsSitemap: an avatar still carrying its default name with
+async function avatarsPage(offset) {
+	// Same filter as agents: an avatar still carrying its default name with
 	// nothing written about it cannot be told apart from the next one. It removes
 	// far less here (170 of 67,164 on 2026-09-07) because a generated avatar
-	// still gets its own description and tags. Filtering after the cap rather
-	// than widening the fetch is deliberate: the public set is already half again
-	// larger than the 45k ceiling, so the file is truncated either way and
-	// pulling 90k rows into memory to reclaim 0.25% of the slots is not a trade.
+	// gets its own description and tags.
 	const rows = await sql`
 		select id, name, left(description, 64) as description, left(alt_text, 64) as alt_text,
 		       updated_at, created_at
 		from avatars
 		where deleted_at is null and visibility = 'public'
-		order by coalesce(updated_at, created_at) desc
-		limit ${MAX_URLS}
+		  and id >= (
+			select id from avatars
+			where deleted_at is null and visibility = 'public'
+			order by id offset ${offset} limit 1
+		  )
+		order by id
+		limit ${SITEMAP_PAGE_SIZE}
 	`;
-	return rows
-		.filter(isIndexableAvatar)
-		.map((r) => ({
-			loc: `${ORIGIN}/avatars/${r.id}`,
-			lastmod: fmtDate(r.updated_at || r.created_at),
+	return {
+		rows: rows.length,
+		entries: rows.filter(isIndexableAvatar).map((r) => ({
+			loc: resourceUrl(ORIGIN, 'avatar', r.id),
+			lastmod: sitemapDate(r.updated_at || r.created_at),
 			changefreq: 'weekly',
 			priority: '0.6',
-		}));
+		})),
+	};
 }
 
-async function widgetsSitemap() {
+async function creationsPage(offset) {
+	// Forge models at /m/:id. The predicate is the public gallery's
+	// (listRecentCreations in api/_lib/forge-store.js): finished, a GLB on file,
+	// not rejected by the quality grader, and public. Unlisted models resolve
+	// by link but are served noindex (server/creation-head.mjs), so they stay
+	// out of here too.
+	const rows = await sql`
+		select id, updated_at, completed_at, created_at
+		from forge_creations
+		where status = 'done' and glb_url is not null
+		  and (outcome is null or outcome != 'rejected')
+		  and (visibility is null or visibility = 'public')
+		  and id >= (
+			select id from forge_creations
+			where status = 'done' and glb_url is not null
+			  and (outcome is null or outcome != 'rejected')
+			  and (visibility is null or visibility = 'public')
+			order by id offset ${offset} limit 1
+		  )
+		order by id
+		limit ${SITEMAP_PAGE_SIZE}
+	`;
+	return {
+		rows: rows.length,
+		entries: rows.map((r) => ({
+			loc: resourceUrl(ORIGIN, 'creation', r.id),
+			lastmod: sitemapDate(r.updated_at || r.completed_at || r.created_at),
+			changefreq: 'monthly',
+			priority: '0.6',
+		})),
+	};
+}
+
+async function widgetsPage(offset) {
 	// Only widgets surfaced on a public profile/showcase are worth indexing; the
-	// raw embed endpoint isn't human content. Filtering on is_public matches the
-	// front-end's listing behavior.
+	// raw embed endpoint isn't human content.
 	const rows = await sql`
 		select id, updated_at, created_at
 		from widgets
 		where deleted_at is null and is_public = true
-		order by coalesce(updated_at, created_at) desc
-		limit ${MAX_URLS}
+		  and id >= (
+			select id from widgets
+			where deleted_at is null and is_public = true
+			order by id offset ${offset} limit 1
+		  )
+		order by id
+		limit ${SITEMAP_PAGE_SIZE}
 	`;
-	return rows.map((r) => ({
-		loc: `${ORIGIN}/w/${r.id}`,
-		lastmod: fmtDate(r.updated_at || r.created_at),
-		changefreq: 'monthly',
-		priority: '0.5',
-	}));
+	return {
+		rows: rows.length,
+		entries: rows.map((r) => ({
+			loc: resourceUrl(ORIGIN, 'widget', r.id),
+			lastmod: sitemapDate(r.updated_at || r.created_at),
+			changefreq: 'monthly',
+			priority: '0.5',
+		})),
+	};
 }
 
-async function profilesSitemap() {
-	// Public user profiles. We index /u/<username>, the canonical profile URL
-	// the app itself links to (stored casing, matching every `/u/${username}`
-	// link in src/), and skip raw user IDs.
-	//
-	// service_account rows are excluded. Those are the machine accounts the
-	// avaturn/forge/circulation seed crons mint (see the 2026-07-25 migration
-	// that added the flag) at a rate of roughly one per minute, and on
-	// 2026-08-16 they were 29,600 of the 29,642 profile rows. Submitting 30k
-	// auto-generated `calm144`-style profile wrappers buries the 42 real human
-	// profiles and spends crawl budget on pages whose actual content (the
-	// avatars and agents those accounts own) is already listed in
+async function profilesPage(offset) {
+	// Public user profiles at /u/<username>, the canonical profile URL the app
+	// links to. service_account rows are excluded: the seed crons mint one
+	// roughly every minute (29,600 of 29,642 profile rows on 2026-08-16), and
+	// their real content (the avatars and agents they own) is already listed in
 	// avatars.xml and agents.xml. Same predicate the metrics queries use.
 	const rows = await sql`
 		select u.username, u.updated_at, u.created_at
@@ -244,15 +303,23 @@ async function profilesSitemap() {
 		where u.deleted_at is null
 		  and u.username is not null
 		  and u.service_account = false
-		order by coalesce(u.updated_at, u.created_at) desc
-		limit ${MAX_URLS}
+		  and u.id >= (
+			select id from users
+			where deleted_at is null and username is not null and service_account = false
+			order by id offset ${offset} limit 1
+		  )
+		order by u.id
+		limit ${SITEMAP_PAGE_SIZE}
 	`;
-	return rows.map((r) => ({
-		loc: `${ORIGIN}/u/${r.username}`,
-		lastmod: fmtDate(r.updated_at || r.created_at),
-		changefreq: 'weekly',
-		priority: '0.6',
-	}));
+	return {
+		rows: rows.length,
+		entries: rows.map((r) => ({
+			loc: resourceUrl(ORIGIN, 'profile', r.username),
+			lastmod: sitemapDate(r.updated_at || r.created_at),
+			changefreq: 'weekly',
+			priority: '0.6',
+		})),
+	};
 }
 
 // Story pages (/markets/news/<YYYY-MM>/<id>-<slug>) for the newest archive
@@ -275,42 +342,59 @@ async function newsSitemap() {
 			if (!loc) continue; // undated/id-less corpus rows have no story page
 			out.push({
 				loc: `${ORIGIN}${loc}`,
-				lastmod: fmtDate(a.pub_date),
+				lastmod: sitemapDate(a.pub_date),
 				changefreq: 'monthly',
 				priority: '0.6',
 			});
-			if (out.length >= MAX_URLS) return out;
+			if (out.length >= SITEMAP_PAGE_SIZE) return out;
 		}
 	}
 	return out;
 }
 
-// A Map, not an object literal: `BUILDERS.constructor` on a literal resolves to
+// Maps, not object literals: `BUILDERS.constructor` on a literal resolves to
 // Object via the prototype chain, so /api/sitemap/constructor (and toString,
 // valueOf, hasOwnProperty) passed the lookup guard, called a non-builder, and
 // answered a scanner with a 500 plus a bogus sitemap_failed error report. A Map
-// only ever returns what was put in it.
-const BUILDERS = new Map([
+// only ever returns what was put in it (and parseSitemapName checks the name
+// against the known types before either map is consulted).
+const SINGLE = new Map([
 	['core', coreSitemap],
-	['agents', agentsSitemap],
-	['avatars', avatarsSitemap],
-	['widgets', widgetsSitemap],
-	['profiles', profilesSitemap],
 	['news', newsSitemap],
 ]);
 
+const PAGED = new Map([
+	['agents', agentsPage],
+	['avatars', avatarsPage],
+	['creations', creationsPage],
+	['widgets', widgetsPage],
+	['profiles', profilesPage],
+]);
+
+function notFound(res, message) {
+	res.statusCode = 404;
+	res.setHeader('content-type', 'text/plain; charset=utf-8');
+	res.setHeader('cache-control', 'no-store');
+	res.end(message);
+}
+
 export default async function handler(req, res) {
-	const raw = String(req.query?.type || req.query?.id || '').replace(/\.xml$/i, '');
-	const builder = BUILDERS.get(raw);
-	if (!builder) {
-		res.statusCode = 404;
-		res.setHeader('content-type', 'text/plain; charset=utf-8');
-		res.setHeader('cache-control', 'no-store');
-		res.end(`unknown sitemap. known types: ${[...BUILDERS.keys()].join(', ')}\n`);
-		return;
+	const raw = String(req.query?.type || req.query?.id || '');
+	const parsed = parseSitemapName(raw);
+	if (!parsed) {
+		return notFound(res, `unknown sitemap. known types: ${SITEMAP_TYPES.join(', ')}\n`);
 	}
 	try {
-		const entries = await builder();
+		if (SINGLE.has(parsed.type)) {
+			return send(res, urlsetXml(await SINGLE.get(parsed.type)()));
+		}
+		const { rows, entries } = await PAGED.get(parsed.type)(sitemapPageOffset(parsed.page));
+		// Page 1 is always listed in the index, so it answers even when empty (a
+		// valid empty <urlset> lets a crawler retry later). A later page with no
+		// rows means the set shrank: 404 so the stale file leaves the index.
+		if (parsed.page > 1 && rows === 0) {
+			return notFound(res, `sitemap ${raw} is past the last page\n`);
+		}
 		return send(res, urlsetXml(entries));
 	} catch (err) {
 		const ref = reportServerError(err, { code: 'sitemap_failed', context: { url: redactUrl(req.url), type: raw } });

@@ -1,17 +1,32 @@
-// Dynamic sitemap index. Returns the top-level sitemap.xml that Google /
-// Bing crawl first; each entry points at a chunked sub-sitemap (core
-// landing pages, agents, avatars, widgets, public profiles).
+// Dynamic sitemap index: the top-level /sitemap.xml that Google and Bing crawl
+// first (robots.txt names it). Each entry points at one child file served by
+// api/sitemap/[type].js.
 //
 // Why an index instead of one giant file:
-//   - 50k URL / 50MB per-file cap from sitemaps.org spec
-//   - lets each entity type set its own lastmod / changefreq
-//   - per-file caches in Vercel's CDN — re-render only the type that changed
+//   - sitemaps.org caps a file at 50,000 URLs / 50 MB, and the public avatar
+//     set alone is past 130k
+//   - each type and each page carries its own lastmod, so a crawler re-reads
+//     only the files that changed
 //
-// Wired via vercel.json rewrite: /sitemap.xml → /api/sitemap
+// The entity types are paged at 50,000 rows in id order. One query per type
+// numbers the public rows, groups them into pages, and returns each page's
+// newest timestamp, so the index lists exactly the files the child handler
+// will serve, each stamped with when its content last changed. The query
+// returns one row per page, never the rows themselves.
+//
+// The lookups are plain tagged queries. They used to go through
+// `sql.unsafe(text)`, which on the neon driver builds an interpolation
+// fragment and runs nothing, so every lookup came back empty and every
+// lastmod here was the day of the crawl (tests/sitemap-paging.test.js).
+//
+// Wired via vercel.json rewrite: /sitemap.xml -> /api/sitemap
 
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { sql } from './_lib/db.js';
 import { env } from './_lib/env.js';
 import { method } from './_lib/http.js';
+import { SITEMAP_PAGE_SIZE, sitemapFileName, sitemapDate } from './_lib/seo-resources.js';
 
 const ORIGIN = env.APP_ORIGIN;
 
@@ -22,36 +37,114 @@ function xml(res, body) {
 	res.end(body);
 }
 
-function fmtDate(d) {
-	const t = d instanceof Date ? d : new Date(d);
-	if (Number.isNaN(t.getTime())) return new Date().toISOString().slice(0, 10);
-	return t.toISOString().slice(0, 10);
+// Each returns [{ page (0-based), n, lastmod }], one row per 50,000-row page.
+// The predicates must match the readers in api/sitemap/[type].js exactly.
+const PAGE_STATS = new Map([
+	[
+		'agents',
+		() => sql`
+			select ((rn - 1) / ${SITEMAP_PAGE_SIZE})::int as page, count(*)::int as n, max(ts) as lastmod
+			from (
+				select row_number() over (order by id) as rn, coalesce(updated_at, created_at) as ts
+				from agent_identities
+				where deleted_at is null and is_public = true
+			) s
+			group by 1 order by 1
+		`,
+	],
+	[
+		'avatars',
+		() => sql`
+			select ((rn - 1) / ${SITEMAP_PAGE_SIZE})::int as page, count(*)::int as n, max(ts) as lastmod
+			from (
+				select row_number() over (order by id) as rn, coalesce(updated_at, created_at) as ts
+				from avatars
+				where deleted_at is null and visibility = 'public'
+			) s
+			group by 1 order by 1
+		`,
+	],
+	[
+		'creations',
+		() => sql`
+			select ((rn - 1) / ${SITEMAP_PAGE_SIZE})::int as page, count(*)::int as n, max(ts) as lastmod
+			from (
+				select row_number() over (order by id) as rn,
+				       coalesce(updated_at, completed_at, created_at) as ts
+				from forge_creations
+				where status = 'done' and glb_url is not null
+				  and (outcome is null or outcome != 'rejected')
+				  and (visibility is null or visibility = 'public')
+			) s
+			group by 1 order by 1
+		`,
+	],
+	[
+		'widgets',
+		() => sql`
+			select ((rn - 1) / ${SITEMAP_PAGE_SIZE})::int as page, count(*)::int as n, max(ts) as lastmod
+			from (
+				select row_number() over (order by id) as rn, coalesce(updated_at, created_at) as ts
+				from widgets
+				where deleted_at is null and is_public = true
+			) s
+			group by 1 order by 1
+		`,
+	],
+	[
+		'profiles',
+		// service_account matters here too: the seed crons mint a machine account
+		// about once a minute, and without the flag the index would report
+		// "profiles changed" on every crawl of a file that lists only humans.
+		() => sql`
+			select ((rn - 1) / ${SITEMAP_PAGE_SIZE})::int as page, count(*)::int as n, max(ts) as lastmod
+			from (
+				select row_number() over (order by u.id) as rn, coalesce(u.updated_at, u.created_at) as ts
+				from users u
+				where u.deleted_at is null and u.username is not null and u.service_account = false
+			) s
+			group by 1 order by 1
+		`,
+	],
+]);
+
+async function pagedEntries(type) {
+	let pages = null;
+	try {
+		pages = await PAGE_STATS.get(type)();
+	} catch {
+		pages = null;
+	}
+	// A failed or empty lookup still lists page 1: the child file decides what
+	// it holds, and an empty <urlset> lets a crawler retry later. With no real
+	// timestamp it carries no lastmod.
+	if (!pages?.length) return [{ loc: `${ORIGIN}/sitemap/${sitemapFileName(type, 1)}`, lastmod: null }];
+	return pages.map((p) => ({
+		loc: `${ORIGIN}/sitemap/${sitemapFileName(type, Number(p.page) + 1)}`,
+		lastmod: sitemapDate(p.lastmod),
+	}));
 }
 
-// Coalesce on created_at because most rows in this DB never get an explicit
-// updated_at write — many writes happen via INSERT rather than UPDATE, so
-// `max(updated_at)` returns NULL even when there's plenty of content.
-async function newestTimestamp(table, where = '') {
-	try {
-		const rows = await sql.unsafe(
-			`select max(coalesce(updated_at, created_at)) as ts from ${table} ${where ? 'where ' + where : ''}`,
-		);
-		return rows?.[0]?.ts || null;
-	} catch {
-		return null;
+// The newest lastmod/added date in data/pages.json: core.xml changes exactly
+// when the manifest does.
+async function coreLastmod() {
+	const candidates = [path.join(process.cwd(), 'data', 'pages.json'), path.join(process.cwd(), 'public', 'features.json')];
+	for (const file of candidates) {
+		try {
+			const manifest = JSON.parse(await readFile(file, 'utf8'));
+			let newest = '';
+			for (const section of manifest.sections || []) {
+				for (const p of section.pages || []) {
+					const d = sitemapDate(p.lastmod || p.added);
+					if (d && d > newest) newest = d;
+				}
+			}
+			return newest || null;
+		} catch {
+			// try next
+		}
 	}
-}
-
-// agent_identities has no updated_at on every row — use created_at directly.
-async function newestCreated(table, where = '') {
-	try {
-		const rows = await sql.unsafe(
-			`select max(created_at) as ts from ${table} ${where ? 'where ' + where : ''}`,
-		);
-		return rows?.[0]?.ts || null;
-	} catch {
-		return null;
-	}
+	return null;
 }
 
 export default async function handler(req, res) {
@@ -59,31 +152,15 @@ export default async function handler(req, res) {
 	// got the sitemap back with a 200, which is a lie about what the route does.
 	if (!method(req, res, ['GET'])) return;
 
-	const [agentsTs, avatarsTs, widgetsTs, usersTs, subdomainsTs] = await Promise.all([
-		newestCreated('agent_identities', 'deleted_at is null and is_public = true'),
-		newestTimestamp('avatars', "visibility = 'public' and deleted_at is null"),
-		newestTimestamp('widgets', 'is_public = true and deleted_at is null'),
-		// Must match profilesSitemap()'s predicate in api/sitemap/[type].js. The
-		// seed crons mint a service_account row about once a minute, so without
-		// the flag this reported "profiles.xml changed" on every crawl of a feed
-		// that only lists human profiles.
-		newestTimestamp('users', 'deleted_at is null and username is not null and service_account = false'),
-		newestCreated('user_subdomains'),
-	]);
+	const [core, ...paged] = await Promise.all([coreLastmod(), ...[...PAGE_STATS.keys()].map(pagedEntries)]);
 
-	// Always emit every sub-sitemap entry — the sub-sitemap itself decides if
-	// it has zero rows. An empty <urlset> is valid and lets Google retry later
-	// without us having to remember to "turn it on" once content appears.
-	const today = fmtDate(new Date());
 	const entries = [
-		{ loc: `${ORIGIN}/sitemap/core.xml`, lastmod: today },
-		{ loc: `${ORIGIN}/sitemap/agents.xml`, lastmod: fmtDate(agentsTs || today) },
-		{ loc: `${ORIGIN}/sitemap/avatars.xml`, lastmod: fmtDate(avatarsTs || today) },
-		{ loc: `${ORIGIN}/sitemap/widgets.xml`, lastmod: fmtDate(widgetsTs || today) },
-		{ loc: `${ORIGIN}/sitemap/profiles.xml`, lastmod: fmtDate(usersTs || subdomainsTs || today) },
-		// Story pages for recent news — the archive appender refreshes hourly,
-		// so the newest articles are always crawlable within the hour.
-		{ loc: `${ORIGIN}/sitemap/news.xml`, lastmod: today },
+		{ loc: `${ORIGIN}/sitemap/core.xml`, lastmod: core },
+		...paged.flat(),
+		// Story pages for the newest archive months. The archive appends hourly
+		// and the month files carry no cheap "newest" stamp, so this entry states
+		// no lastmod rather than guessing one.
+		{ loc: `${ORIGIN}/sitemap/news.xml`, lastmod: null },
 	];
 
 	const body =
@@ -91,7 +168,10 @@ export default async function handler(req, res) {
 		`<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
 		entries
 			.map(
-				(e) => `\t<sitemap>\n\t\t<loc>${e.loc}</loc>\n\t\t<lastmod>${e.lastmod}</lastmod>\n\t</sitemap>`,
+				(e) =>
+					`\t<sitemap>\n\t\t<loc>${e.loc}</loc>\n` +
+					(e.lastmod ? `\t\t<lastmod>${e.lastmod}</lastmod>\n` : '') +
+					`\t</sitemap>`,
 			)
 			.join('\n') +
 		`\n</sitemapindex>\n`;
