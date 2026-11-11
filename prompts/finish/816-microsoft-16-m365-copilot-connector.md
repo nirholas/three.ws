@@ -1,5 +1,7 @@
 # microsoft 16: a Microsoft 365 Copilot connector that puts a team's three.ws agents and models into Microsoft Search and Copilot
 
+> Status 2026-11-11: built and committed (a866d6bc5, 658760381, 0108c1ce9, 2f079eb5a, 3db76d90f; routes in 6276bcb84, changelog and STRUCTURE row in 9c9c66912). Waits on the owner: Graph application permissions and redirect URIs on the Entra app, MS_ENTRA_SSO_CLIENT_ID/SECRET on Cloud Run, a developer-tenant check, push and deploy.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3116.
 
 ## Operating clause (binding)
