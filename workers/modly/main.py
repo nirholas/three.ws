@@ -97,7 +97,7 @@ from request_policy import (
     resolve_model,
     workspace_relative,
 )
-from storage_backend import LocalStorage
+from storage_backend import LocalStorage, upload_task_record
 from worker_security import (
     UnsafeUrlError,
     fetch_remote_bytes,
@@ -604,7 +604,7 @@ async def _update_task(task_id: str, **fields) -> dict:
             payload = json.dumps(snapshot)
             await loop.run_in_executor(
                 None,
-                lambda: _task_blob(task_id).upload_from_string(payload, content_type="application/json"),
+                lambda: upload_task_record(_task_blob(task_id), payload),
             )
         else:
             await loop.run_in_executor(None, _get_local_storage().write_task, snapshot)

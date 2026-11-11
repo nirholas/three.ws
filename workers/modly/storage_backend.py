@@ -61,3 +61,17 @@ class LocalStorage:
         path = self.result_path(task_id)
         self._atomic_write(path, glb_bytes)
         return path
+
+
+# The task bucket is publicly readable (result GLBs are served from it), and GCS
+# gives a public object with no Cache-Control "public, max-age=3600", which lets
+# Google's edge cache answer a read with an old generation. A task record changes
+# on every heartbeat and drives the orphan rule on whichever instance a poll
+# lands on, so it must always be read live.
+TASK_RECORD_CACHE_CONTROL = "no-store"
+
+
+def upload_task_record(blob, payload: str) -> None:
+    """Persist one task record to its GCS blob, uncacheable."""
+    blob.cache_control = TASK_RECORD_CACHE_CONTROL
+    blob.upload_from_string(payload, content_type="application/json")
