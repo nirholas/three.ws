@@ -58,6 +58,32 @@ export async function isAdminUser(user) {
 	return false;
 }
 
+/**
+ * Every live platform admin account: is_admin users plus accounts whose
+ * primary or linked wallet is an admin address (EVM compared without case,
+ * Solana exactly). Used to reach the platform owner with operator events such
+ * as Microsoft Marketplace leads.
+ * @returns {Promise<string[]>}
+ */
+export async function listAdminUserIds() {
+	const list = adminAddressList();
+	const exact = list.filter((a) => !EVM_ADDRESS_RE.test(a));
+	const evm = list.filter((a) => EVM_ADDRESS_RE.test(a)).map((a) => a.toLowerCase());
+	const rows = await sql`
+		select u.id from users u
+		where u.deleted_at is null and (
+			u.is_admin = true
+			or u.wallet_address = any(${exact})
+			or lower(u.wallet_address) = any(${evm})
+			or exists (
+				select 1 from user_wallets w
+				where w.user_id = u.id and (w.address = any(${exact}) or lower(w.address) = any(${evm}))
+			)
+		)
+	`;
+	return rows.map((r) => r.id);
+}
+
 /** True when the request is from a signed-in admin. Never writes a response. */
 export async function isAdminRequest(req) {
 	return isAdminUser(await getSessionUser(req));

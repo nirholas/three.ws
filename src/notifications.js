@@ -105,6 +105,7 @@ export const TYPE_ICON = {
 	commerce_order_delivered: '📦',
 	order_update:             '📊',
 	knock_received:           '🚪',
+	marketplace_lead:         '🤝',
 	mail_received:            '✉️',
 	event_market_entrant:     '🎟️',
 };
@@ -222,6 +223,8 @@ export function notifLabel(n) {
 				: p.sol
 					? `${p.actor || 'A fork of your avatar'} paid you ${Number(p.sol).toFixed(4)} SOL in royalties`
 					: `${p.actor || 'A fork of your avatar'} paid you a royalty`;
+		case 'marketplace_lead':
+			return p.summary ? `${p.title || 'Microsoft Marketplace lead'}: ${p.summary}` : p.title || 'New Microsoft Marketplace lead';
 		case 'knock_received':
 			// The sender already composed the title (api/_lib/knock/policy.js titleFor).
 			return p.title || `${p.sender || 'Someone'} knocked on your door`;
