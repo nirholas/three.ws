@@ -74,26 +74,42 @@
 						"mainEntity": [
 							{
 								"@type": "Question",
-								"name": "Does Scan work on any phone?",
+								"name": "Does Scan work on any phone or browser?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "Scan works in any modern browser with camera access — Chrome, Safari, or Firefox on Android or iPhone. No app download needed."
+									"text": "Yes. Chrome, Safari, or Firefox on Android or iPhone. The scanner uses the standard WebRTC camera API. No app download required."
 								}
 							},
 							{
 								"@type": "Question",
-								"name": "Is my photo stored?",
+								"name": "What lighting conditions give the best result?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "Your photo is processed server-side to generate the mesh, then stored only as part of your three.ws avatar. You can delete it from your account at any time."
+									"text": "Soft, even front lighting works best, like facing a window on an overcast day. Avoid harsh shadows across your face or bright backlighting."
 								}
 							},
 							{
 								"@type": "Question",
-								"name": "Can I use the avatar for VRChat or other platforms?",
+								"name": "Is my photo stored on three.ws servers?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "The output is a standard GLB file compatible with any platform that accepts glTF 2.0 models, including VRChat, Meta Horizon, Spatial, and custom WebXR experiences."
+									"text": "Your photo is processed server-side and retained as the avatar texture in your account. You can delete your avatar and its source texture from your account settings at any time."
+								}
+							},
+							{
+								"@type": "Question",
+								"name": "Can I use the avatar in VRChat, Spatial, or other platforms?",
+								"acceptedAnswer": {
+									"@type": "Answer",
+									"text": "The output is a standard glTF 2.0 GLB, compatible with any platform that accepts that format: VRChat, Meta Horizon Worlds, Spatial, Unity, Unreal Engine, or custom WebXR apps."
+								}
+							},
+							{
+								"@type": "Question",
+								"name": "How is this different from Forge?",
+								"acceptedAnswer": {
+									"@type": "Answer",
+									"text": "Forge generates any object from a text description. Scan reconstructs a real 3D avatar from a photo of your actual face. The two tools are complementary."
 								}
 							}
 						]
@@ -249,7 +265,7 @@
 							</svg>
 						</button>
 						<div class="fl-faq-a" id="scan-faq-1" role="region">
-							Yes — Chrome, Safari, or Firefox on Android or iPhone. The scanner uses
+							Yes. Chrome, Safari, or Firefox on Android or iPhone. The scanner uses
 							the standard WebRTC camera API. No app download required.
 						</div>
 					</div>
@@ -271,7 +287,7 @@
 							</svg>
 						</button>
 						<div class="fl-faq-a" id="scan-faq-2" role="region">
-							Soft, even front lighting works best — like facing a window on an
+							Soft, even front lighting works best, like facing a window on an
 							overcast day. Avoid harsh shadows across your face or bright
 							backlighting.
 						</div>
@@ -318,7 +334,7 @@
 						</button>
 						<div class="fl-faq-a" id="scan-faq-4" role="region">
 							The output is a standard glTF 2.0 GLB, compatible with any platform that
-							accepts that format — VRChat, Meta Horizon Worlds, Spatial, Unity,
+							accepts that format: VRChat, Meta Horizon Worlds, Spatial, Unity,
 							Unreal Engine, or custom WebXR apps.
 						</div>
 					</div>
@@ -342,7 +358,7 @@
 						<div class="fl-faq-a" id="scan-faq-5" role="region">
 							<a href="/features/forge" style="color: var(--ink)" data-i18n="features_scan.forge">Forge</a> generates
 							any object from a text description. Scan reconstructs a real 3D avatar
-							from a photo of your actual face — the two tools are complementary.
+							from a photo of your actual face. The two tools are complementary.
 						</div>
 					</div>
 				</div>

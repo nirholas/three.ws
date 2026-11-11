@@ -71,15 +71,31 @@
 								"name": "Does AR mode work on all phones?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "AR passthrough requires WebXR support — available on most recent Android devices with Chrome, and on iPhone with iOS 17+ and Safari. The 3D walk mode works on all browsers."
+									"text": "AR passthrough requires WebXR, supported on most Android devices running Chrome (v81+), and on iPhone with iOS 17+ and Safari. Walk mode without AR works on all modern browsers."
 								}
 							},
 							{
 								"@type": "Question",
-								"name": "Can I walk any avatar or just my own?",
+								"name": "Can I walk any avatar, or just one I created?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "You can walk any avatar on three.ws — pick from the gallery or paste a GLB URL. Pass ?avatar=<id> in the URL to deep-link directly to a specific avatar in walk mode."
+									"text": "You can walk any avatar on three.ws: yours, the gallery's, or any GLB URL. Pass ?avatar=<id> in the URL to open a specific one directly."
+								}
+							},
+							{
+								"@type": "Question",
+								"name": "Can I embed Walk on my own website?",
+								"acceptedAnswer": {
+									"@type": "Answer",
+									"text": "Yes. Use the /walk-embed route as a fullscreen iframe. Pass ?avatar= to pre-load your avatar. For a fully hosted widget with AI chat attached, see Studio."
+								}
+							},
+							{
+								"@type": "Question",
+								"name": "Does it work on desktop too?",
+								"acceptedAnswer": {
+									"@type": "Answer",
+									"text": "Yes. On desktop use WASD or arrow keys to move and mouse to rotate the camera. AR is mobile-only since it requires a physical camera feed."
 								}
 							}
 						]
@@ -238,7 +254,7 @@
 							</svg>
 						</button>
 						<div class="fl-faq-a" id="walk-faq-1" role="region">
-							AR passthrough requires WebXR — supported on most Android devices
+							AR passthrough requires WebXR, supported on most Android devices
 							running Chrome (v81+), and on iPhone with iOS 17+ and Safari. Walk mode
 							without AR works on all modern browsers.
 						</div>
@@ -261,8 +277,8 @@
 							</svg>
 						</button>
 						<div class="fl-faq-a" id="walk-faq-2" role="region">
-							Any avatar on three.ws — yours, the gallery's, or any GLB URL — can be
-							walked. Pass ?avatar=&lt;id&gt; in the URL to open a specific one
+							You can walk any avatar on three.ws: yours, the gallery's, or any GLB
+							URL. Pass ?avatar=&lt;id&gt; in the URL to open a specific one
 							directly.
 						</div>
 					</div>

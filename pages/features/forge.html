@@ -68,26 +68,42 @@
 						"mainEntity": [
 							{
 								"@type": "Question",
-								"name": "How long does Forge take to generate a model?",
+								"name": "How long does generation take?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "Most models generate in 30–90 seconds. Flux creates the texture image first, then TRELLIS reconstructs the 3D mesh from it."
+									"text": "Most models complete in 30 to 90 seconds. Flux renders the texture image first, then TRELLIS reconstructs the mesh; the progress bar shows both stages."
 								}
 							},
 							{
 								"@type": "Question",
-								"name": "What file format does Forge output?",
+								"name": "What file format does Forge export?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "Forge outputs a GLB (binary glTF) file — the industry-standard 3D format readable by Blender, Unity, Unreal, and every major 3D viewer."
+									"text": "GLB (binary glTF 2.0), the industry-standard format supported by Blender, Unity, Unreal Engine, and every major 3D viewer including Apple Quick Look."
 								}
 							},
 							{
 								"@type": "Question",
-								"name": "Can I use the model commercially?",
+								"name": "Can I use generated models commercially?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "Yes. Models you generate with Forge are yours to use, modify, and ship in any project including commercial work."
+									"text": "Yes. Models you generate are yours to use, modify, and ship in any project, including commercial products."
+								}
+							},
+							{
+								"@type": "Question",
+								"name": "What prompts work best?",
+								"acceptedAnswer": {
+									"@type": "Answer",
+									"text": "Isolated objects with clear material descriptions generate the cleanest meshes. \"A ceramic mug with blue glaze\" outperforms \"a mug.\" Avoid scenes with multiple objects or complex backgrounds; those compress poorly into a single mesh."
+								}
+							},
+							{
+								"@type": "Question",
+								"name": "Is this different from the selfie scanner?",
+								"acceptedAnswer": {
+									"@type": "Answer",
+									"text": "Yes. Scan reconstructs a 3D avatar from a real photo of your face. Forge generates any object from a text description. They serve different use cases."
 								}
 							}
 						]
@@ -244,8 +260,8 @@
 							</svg>
 						</button>
 						<div class="fl-faq-a" id="forge-faq-1" role="region">
-							Most models complete in 30–90 seconds. Flux renders the texture image
-							first, then TRELLIS reconstructs the mesh — the progress bar shows both
+							Most models complete in 30 to 90 seconds. Flux renders the texture image
+							first, then TRELLIS reconstructs the mesh; the progress bar shows both
 							stages.
 						</div>
 					</div>
@@ -267,7 +283,7 @@
 							</svg>
 						</button>
 						<div class="fl-faq-a" id="forge-faq-2" role="region">
-							GLB (binary glTF 2.0) — the industry-standard format supported by
+							GLB (binary glTF 2.0), the industry-standard format supported by
 							Blender, Unity, Unreal Engine, and every major 3D viewer including Apple
 							Quick Look.
 						</div>
@@ -314,7 +330,7 @@
 						<div class="fl-faq-a" id="forge-faq-4" role="region">
 							Isolated objects with clear material descriptions generate the cleanest
 							meshes. "A ceramic mug with blue glaze" outperforms "a mug." Avoid
-							scenes with multiple objects or complex backgrounds — those compress
+							scenes with multiple objects or complex backgrounds; those compress
 							poorly into a single mesh.
 						</div>
 					</div>
@@ -339,7 +355,7 @@
 							Yes.
 							<a href="/features/scan" style="color: var(--ink)" data-i18n="features_forge.scan">Scan</a> reconstructs
 							a 3D avatar from a real photo of your face. Forge generates any object
-							from a text description — they serve different use cases.
+							from a text description. They serve different use cases.
 						</div>
 					</div>
 				</div>

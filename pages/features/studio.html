@@ -86,18 +86,35 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "Do I need a back-end to embed the widget?",
-            "acceptedAnswer": { "@type": "Answer", "text": "No. The embed script is self-contained and calls three.ws infrastructure directly. You copy one script tag into your HTML and it works on any static site, CMS, or Webflow page." }
+            "name": "Do I need a back-end server to host the widget?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. The embed script calls three.ws infrastructure directly. Paste the script tag into any static HTML file, Webflow, Squarespace, or WordPress page and it works immediately."
+            }
           },
           {
             "@type": "Question",
-            "name": "Can the widget answer questions about my product?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes. Upload documents, paste URLs, or connect a knowledge base in Studio. The agent retrieves context from your content before answering." }
+            "name": "Can the widget answer questions about my product docs?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Upload PDFs, paste URLs, or link a sitemap in the Knowledge panel. The agent retrieves relevant context before answering, like a support bot that actually knows your product."
+            }
           },
           {
             "@type": "Question",
-            "name": "What voices are available?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Studio includes ElevenLabs-quality voice synthesis with dozens of voices. You can also clone a custom voice in Voice Lab and assign it to the widget." }
+            "name": "What AI models does the widget use?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "The default brain uses Claude (Anthropic). You can configure the model and temperature per agent in the Studio settings panel."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does the widget work inside iframes?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "The embed script works on the host page. For iframe deployment, use the /agent-embed route with ?id=your-agent-id to load the widget as a self-contained iframe."
+            }
           }
         ]
       }
@@ -219,7 +236,7 @@
             Can the widget answer questions about my product docs?
             <svg class="fl-faq-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
           </button>
-          <div class="fl-faq-a" id="studio-faq-2" role="region">Yes. Upload PDFs, paste URLs, or link a sitemap in the Knowledge panel. The agent retrieves relevant context before answering — like a support bot that actually knows your product.</div>
+          <div class="fl-faq-a" id="studio-faq-2" role="region">Yes. Upload PDFs, paste URLs, or link a sitemap in the Knowledge panel. The agent retrieves relevant context before answering, like a support bot that actually knows your product.</div>
         </div>
         <div class="fl-faq-item">
           <button class="fl-faq-q" aria-expanded="false" aria-controls="studio-faq-3">

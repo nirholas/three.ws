@@ -62,42 +62,42 @@
 						"mainEntity": [
 							{
 								"@type": "Question",
-								"name": "Do I need to install an app to use AR?",
+								"name": "Do I need to install an app?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "No. On iPhone it uses iOS Quick Look, which is built into Safari. On Android it uses WebXR or Google Scene Viewer via Chrome. No app download required."
+									"text": "No. iPhone uses iOS Quick Look, which is built into Safari, so there is nothing to download. Android uses WebXR or Google Scene Viewer via Chrome. ARCore is the only dependency, and Chrome prompts you to install it if it's missing."
 								}
 							},
 							{
 								"@type": "Question",
-								"name": "Which browsers support AR on three.ws?",
+								"name": "Which browser do I need?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "iPhone: Safari only. Android: Chrome (or any Chromium-based browser with ARCore). Desktop browsers do not support immersive AR."
+									"text": "iPhone: Safari only. Chrome on iOS uses WebKit but lacks the Quick Look integration that triggers AR. Android: Chrome (or any Chromium-based browser with ARCore support). Desktop browsers don't support immersive-ar; use the QR code instead."
 								}
 							},
 							{
 								"@type": "Question",
-								"name": "Can I see my AI agent's animations in AR?",
+								"name": "Can I talk to my agent in AR?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "Yes, when using WebXR (Android Chrome). iOS Quick Look shows a static pose. WebXR is the only AR method that keeps the agent's full runtime live — animations, conversation, and tools all work."
+									"text": "Yes, when using WebXR. It's the only AR method that keeps the agent's full runtime live. Animations play, the microphone works, skills and tools run, and the agent tracks your head position using the XR camera. iOS Quick Look and Scene Viewer open native viewers outside the browser, so conversation isn't available there."
 								}
 							},
 							{
 								"@type": "Question",
-								"name": "How do I add AR to my embedded agent?",
+								"name": "What's the maximum model size?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "Add the `ar` attribute to your <agent-3d> tag: <agent-3d id=\"YOUR_ID\" ar></agent-3d>. For iframe embeds, add allow=\"xr-spatial-tracking\" to the <iframe> tag."
+									"text": "iOS Quick Look handles models reliably up to about 15 MB. Scene Viewer handles up to about 20 MB. WebXR has no hard limit, but models over 50 MB will be slow to download on mobile networks. three.ws Forge models are optimized at generation time and typically fall under 10 MB."
 								}
 							},
 							{
 								"@type": "Question",
-								"name": "What is the maximum model size for AR?",
+								"name": "How do I add AR to my own website?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "iOS Quick Look handles models up to about 15 MB reliably. Android Scene Viewer handles up to about 20 MB. WebXR has no hard limit, but models over 50 MB will be slow to download on mobile networks."
+									"text": "Add the ar attribute to your <agent-3d> tag. The AR button appears automatically on mobile. For iframe embeds, add allow=\"xr-spatial-tracking\" to the <iframe>. See the AR documentation at https://three.ws/docs/ar for the full programmatic API."
 								}
 							}
 						]
@@ -389,7 +389,7 @@
 							</svg>
 						</button>
 						<div class="fl-faq-a" id="ar-faq-1" role="region">
-							No. iPhone uses iOS Quick Look, which is built into Safari — no download.
+							No. iPhone uses iOS Quick Look, which is built into Safari, so there is nothing to download.
 							Android uses WebXR or Google Scene Viewer via Chrome. ARCore is the only
 							dependency, and Chrome prompts you to install it if it's missing.
 						</div>
@@ -405,7 +405,7 @@
 							iPhone: Safari only. Chrome on iOS uses WebKit but lacks the Quick Look
 							integration that triggers AR. Android: Chrome (or any Chromium-based
 							browser with ARCore support). Desktop browsers don't support
-							<code>immersive-ar</code> — use the QR code instead.
+							<code>immersive-ar</code>; use the QR code instead.
 						</div>
 					</div>
 					<div class="fl-faq-item">
@@ -416,7 +416,7 @@
 							</svg>
 						</button>
 						<div class="fl-faq-a" id="ar-faq-3" role="region">
-							Yes — when using WebXR. It's the only AR method that keeps the agent's
+							Yes, when using WebXR. It's the only AR method that keeps the agent's
 							full runtime live. Animations play, the microphone works, skills and tools
 							run, and the agent tracks your head position using the XR camera. iOS
 							Quick Look and Scene Viewer open native viewers outside the browser, so

@@ -120,8 +120,11 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "What does forking an agent do?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Forking copies the agent's configuration — system prompt, tools, and knowledge base — into your account. You then own and can modify that copy independently." }
+            "name": "What does forking an agent actually copy?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A fork copies the agent's system prompt, tool configuration, knowledge base references, and avatar. You own the copy and can modify every field independently; it's not a live sync of the original."
+            }
           },
           {
             "@type": "Question",
@@ -260,7 +263,7 @@
             What does forking an agent actually copy?
             <svg class="fl-faq-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
           </button>
-          <div class="fl-faq-a" id="market-faq-1" role="region">A fork copies the agent's system prompt, tool configuration, knowledge base references, and avatar. You own the copy and can modify every field independently — it's not a live sync of the original.</div>
+          <div class="fl-faq-a" id="market-faq-1" role="region">A fork copies the agent's system prompt, tool configuration, knowledge base references, and avatar. You own the copy and can modify every field independently; it's not a live sync of the original.</div>
         </div>
         <div class="fl-faq-item">
           <button class="fl-faq-q" aria-expanded="false" aria-controls="market-faq-2">
