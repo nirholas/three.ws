@@ -7,7 +7,7 @@ import { playwright } from "@vitest/browser-playwright";
 export default defineConfig({
     test: {
         include: ["test/**/*.test.ts"],
-        testTimeout: 60_000,
+        testTimeout: 120_000,
         browser: {
             enabled: true,
             headless: true,

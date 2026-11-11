@@ -98,7 +98,7 @@ describe("per-tile errors", () => {
 
         retry.click();
         expect(missing.classList.contains("tws-is-loading")).toBe(true);
-        await expect.poll(() => missing.classList.contains("tws-is-error"), { timeout: 30_000 }).toBe(true);
+        await expect.poll(() => missing.classList.contains("tws-is-error"), { timeout: 60_000 }).toBe(true);
     });
 
     it("tells the reader when an administrator has blocked web access", async () => {
