@@ -149,6 +149,7 @@
 							<tr><td>Widget view events</td><td>12 months</td><td><a href="https://github.com/nirholas/three.ws/blob/main/api/_lib/privacy-retention.js">privacy-retention</a>, every 15 minutes</td></tr>
 							<tr><td>Raw MCP client sessions</td><td>30 days; only daily totals remain after that</td><td><a href="https://github.com/nirholas/three.ws/blob/main/api/cron/db-retention.js">db-retention</a>, every 15 minutes</td></tr>
 							<tr><td>Connected-home action log</td><td>90 days by default; the owner can shorten it to 1 day</td><td><a href="https://github.com/nirholas/three.ws/blob/main/docs/home-privacy.md">home privacy</a>, every 15 minutes</td></tr>
+							<tr><td>Microsoft 365 Copilot connector index (tenant id, sync state, a hash per indexed item; no Microsoft tokens)</td><td>Until the account disconnects. Disconnect deletes the connection and its items from the customer's tenant, then every stored row. Items that leave three.ws are deleted from the tenant on the next sync.</td><td><a href="https://github.com/nirholas/three.ws/blob/main/docs/microsoft-365-copilot-connector.md">Microsoft 365 connector</a>, sync every 15 minutes</td></tr>
 							<tr><td>CSRF tokens</td><td>Until expiry</td><td>cleanup-csrf-tokens, hourly</td></tr>
 						</tbody>
 					</table>
