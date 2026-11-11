@@ -160,6 +160,22 @@ describe('avatar-detail-og', () => {
 		expect(html).toContain(`location.replace("/avatars/${AVATAR_ID}")`);
 	});
 
+	it('names the owner in the document title so same-named avatars stay distinct', async () => {
+		// 130k public avatars share about 3.6k names; owner plus name is unique
+		// for 99.9% of them, so the head title carries the owner.
+		sqlState.rows = [{ ...AVATAR_ROW, name: 'Marsh', owner_username: 'marsh594' }];
+		const { html } = await invokeHtml({ url: `/api/avatar-detail-og?id=${AVATAR_ID}` });
+		expect(html).toContain('<title>Marsh by @marsh594 · three.ws</title>');
+		expect(html).toContain('<meta property="og:title" content="Marsh by @marsh594 · three.ws">');
+		expect(html).toContain('<h1>Marsh</h1>');
+	});
+
+	it('keeps the bare name as the title when there is no owner', async () => {
+		sqlState.rows = [{ ...AVATAR_ROW, name: 'Marsh', owner_username: null }];
+		const { html } = await invokeHtml({ url: `/api/avatar-detail-og?id=${AVATAR_ID}` });
+		expect(html).toContain('<title>Marsh · three.ws</title>');
+	});
+
 	it('escapes the avatar name everywhere it lands in the document', async () => {
 		sqlState.rows = [{ ...AVATAR_ROW, name: '"><script>alert(1)</script>' }];
 		const { html } = await invokeHtml({ url: `/api/avatar-detail-og?id=${AVATAR_ID}` });

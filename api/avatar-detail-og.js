@@ -87,6 +87,10 @@ export default wrap(async (req, res) => {
 	}
 
 	const title = avatar.name || 'Avatar';
+	// Public avatars share a few thousand names between them; the owner's
+	// handle makes the document title unique for nearly all of them.
+	const owner = avatar.owner_username ? `@${avatar.owner_username}` : '';
+	const headTitle = owner && !title.toLowerCase().includes(owner.toLowerCase()) ? `${title} by ${owner}` : title;
 	const baseDesc =
 		avatar.description ||
 		avatar.alt_text ||
@@ -128,6 +132,7 @@ export default wrap(async (req, res) => {
 	res.end(
 		renderCrawlerPage({
 			title,
+			headTitle,
 			desc,
 			pageUrl,
 			ogImage,

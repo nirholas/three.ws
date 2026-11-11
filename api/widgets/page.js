@@ -87,13 +87,19 @@ export function widgetPageMeta(widget) {
 	const has = (part) => part && name.toLowerCase().includes(String(part).toLowerCase());
 	const owner = String(widget.owner_name || '').trim();
 	const subject = String(widget.avatar_name || '').trim();
-	const title = owner && !has(owner) ? `${name} by ${owner}` : name;
 	const featuring = subject && !has(subject) ? ` featuring ${subject}` : '';
 	const by = owner ? ` by ${owner}` : '';
 	const t = widget.created_at ? new Date(widget.created_at) : null;
-	const made = t && !Number.isNaN(t.getTime())
-		? `, made ${t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}`
+	const day = t && !Number.isNaN(t.getTime())
+		? t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
 		: '';
+	const made = day ? `, made ${day}` : '';
+	// A widget nobody renamed is called "<Type> Widget" (api/widgets), so one
+	// owner's widgets of a type share it; the day they were made tells them apart.
+	const type = String(widget.type || '');
+	const isDefaultName = type && name.toLowerCase() === `${type} widget`.toLowerCase();
+	const ownerTitle = owner && !has(owner) ? `${name} by ${owner}` : name;
+	const title = isDefaultName && owner && day ? `${ownerTitle}, ${day}` : ownerTitle;
 	const desc = `${typeLbl} widget${featuring}${by}${made}. Embeddable 3D, no code. Powered by three.ws.`;
 	return { title, desc };
 }

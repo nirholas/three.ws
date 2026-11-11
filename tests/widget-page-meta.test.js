@@ -11,7 +11,7 @@ const base = { id: 'wdgt_2R4TTLhdjEJ4frRf', name: 'Talking-agent Widget', type: 
 describe('widgetPageMeta', () => {
 	it('names the owner in the title and the subject, owner and date in the description', () => {
 		const m = widgetPageMeta({ ...base, owner_name: 'Cristian', avatar_name: 'Nova' });
-		expect(m.title).toBe('Talking-agent Widget by Cristian');
+		expect(m.title).toBe('Talking-agent Widget by Cristian, Feb 15, 2026');
 		expect(m.desc).toBe('Talking Agent widget featuring Nova by Cristian, made Feb 15, 2026. Embeddable 3D, no code. Powered by three.ws.');
 	});
 
@@ -20,6 +20,18 @@ describe('widgetPageMeta', () => {
 		const b = widgetPageMeta({ ...base, id: 'wdgt_kJBu2IWFZRIyxA5m', owner_name: '0x4409…2d36', created_at: '2026-03-30T10:25:00Z' });
 		expect(a.title).not.toBe(b.title);
 		expect(a.desc).not.toBe(b.desc);
+	});
+
+	it('keeps a renamed widget title free of the date', () => {
+		const m = widgetPageMeta({ ...base, name: 'Desk Concierge', owner_name: 'Cristian' });
+		expect(m.title).toBe('Desk Concierge by Cristian');
+	});
+
+	it('separates one owner\'s two default-named widgets of one type by date', () => {
+		const a = widgetPageMeta({ ...base, name: 'Kol-trades Widget', type: 'kol-trades', owner_name: 'aiawad', created_at: '2026-02-24T10:25:27Z' });
+		const b = widgetPageMeta({ ...base, name: 'Kol-trades Widget', type: 'kol-trades', owner_name: 'aiawad', created_at: '2026-03-12T10:25:27Z' });
+		expect(a.title).toBe('Kol-trades Widget by aiawad, Feb 24, 2026');
+		expect(a.title).not.toBe(b.title);
 	});
 
 	it('does not repeat a subject the widget name already carries', () => {

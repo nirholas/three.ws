@@ -119,6 +119,7 @@ function breadcrumb(trail, origin) {
  *
  * @param {object} o
  * @param {string} o.title           entity name, unescaped
+ * @param {string} [o.headTitle]     document and share title when it should say more than the heading
  * @param {string} o.desc            one-paragraph summary, unescaped
  * @param {string} o.pageUrl         absolute canonical URL
  * @param {string} o.ogImage         absolute URL of the 1200x630 card
@@ -151,8 +152,12 @@ export function renderCrawlerPage({
 	jsonLd = null,
 	redirect = false,
 	noindex = false,
+	headTitle = '',
 }) {
 	const t = esc(title);
+	// The document and share titles may say more than the heading (an owner,
+	// a date) so that entities sharing a name still get distinct titles.
+	const ht = esc(headTitle || title);
 	const d = esc(desc);
 	const crumbs = breadcrumb(trail, origin);
 	const path = new URL(pageUrl).pathname;
@@ -180,7 +185,7 @@ export function renderCrawlerPage({
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>${t} · three.ws</title>
+	<title>${ht} · three.ws</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 	<meta name="description" content="${d}">
 	<meta name="theme-color" content="#06070a">
@@ -188,7 +193,7 @@ export function renderCrawlerPage({
 
 	<meta property="og:type" content="${esc(ogType)}">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="${t} · three.ws">
+	<meta property="og:title" content="${ht} · three.ws">
 	<meta property="og:description" content="${d}">
 	<meta property="og:url" content="${esc(pageUrl)}">
 	<meta property="og:image" content="${esc(ogImage)}">
@@ -197,7 +202,7 @@ export function renderCrawlerPage({
 	<meta property="og:image:alt" content="${t} on three.ws">
 
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="${t} · three.ws">
+	<meta name="twitter:title" content="${ht} · three.ws">
 	<meta name="twitter:description" content="${d}">
 	<meta name="twitter:image" content="${esc(ogImage)}">
 	<meta name="twitter:creator" content="@trythreews">
