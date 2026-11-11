@@ -33,6 +33,27 @@ public sealed class ThreeWsPlugin
         _generationWait = generationWait ?? TimeSpan.FromMinutes(4);
     }
 
+    /// <summary>
+    /// The plugin's functions as tools for a Microsoft Agent Framework agent or any
+    /// <see cref="Microsoft.Extensions.AI.IChatClient"/> with function invocation.
+    /// </summary>
+    /// <remarks>
+    /// Each function is bound to its own <see cref="Kernel"/>. An unbound
+    /// <see cref="KernelFunction"/> builds a kernel from the caller's service
+    /// provider when it runs, and Agent Framework's provider does not resolve
+    /// Semantic Kernel types, so the call fails. Use these instead of passing
+    /// plugin functions to an agent directly.
+    /// </remarks>
+    /// <param name="client">The client to call; defaults to <see cref="ThreeWsClient.FromEnvironment"/>.</param>
+    /// <param name="generationWait">How long <c>generate_3d_model</c> waits before handing back a job id (default 4 minutes).</param>
+    /// <param name="pluginName">The plugin name the functions are grouped under.</param>
+    public static IReadOnlyList<KernelFunction> CreateAITools(ThreeWsClient? client = null, TimeSpan? generationWait = null, string pluginName = "threews")
+    {
+        var kernel = new Kernel();
+        var plugin = kernel.Plugins.AddFromObject(new ThreeWsPlugin(client, generationWait), pluginName);
+        return plugin.Select(f => f.WithKernel(kernel, pluginName)).ToList();
+    }
+
     /// <summary>Generates a GLB from text and returns its URLs, or a job id when it is still running.</summary>
     [KernelFunction("generate_3d_model")]
     [Description("Generate a textured, downloadable 3D model (GLB) from a text description of one object, character or creature. Free. Waits for the model and returns glb_url and viewer_url; if it is still running, returns a job_id to pass to get_3d_job_status.")]

@@ -152,6 +152,29 @@ public sealed class LiveTests : IDisposable
         Assert.Equal("glTF", System.Text.Encoding.ASCII.GetString(bytes, 0, 4));
     }
 
+    // Agent Framework calls a tool as an AIFunction with no Kernel in the
+    // arguments and its own minimal service provider (one that resolves
+    // nothing, not even IEnumerable<KernelPlugin>); the tools must still run
+    // there, exactly as the prop designer sample hands them to an agent.
+    [Fact]
+    public async Task PluginFunctionsRunAsAgentFrameworkTools()
+    {
+        var tools = ThreeWsPlugin.CreateAITools(_client);
+        Assert.Equal(6, tools.Count);
+        Microsoft.Extensions.AI.AIFunction find = tools.Single(f => f.Name == "find_3d_asset");
+        var arguments = new Microsoft.Extensions.AI.AIFunctionArguments
+        {
+            ["query"] = "lantern",
+            ["kind"] = "object",
+            ["limit"] = 2,
+        };
+        arguments.Services = new NothingServiceProvider();
+        var result = await find.InvokeAsync(arguments);
+        var output = JsonDocument.Parse(result!.ToString()!).RootElement;
+        Assert.True(output.GetProperty("ok").GetBoolean(), output.ToString());
+        Assert.NotEmpty(output.GetProperty("items").EnumerateArray());
+    }
+
     [Fact]
     public async Task McpStudioToolsJoinTheKernelAndRun()
     {
@@ -163,5 +186,10 @@ public sealed class LiveTests : IDisposable
         var text = result.ToString();
         Assert.Contains("chair", text, StringComparison.OrdinalIgnoreCase);
         Assert.Contains(".glb", text);
+    }
+
+    private sealed class NothingServiceProvider : IServiceProvider
+    {
+        public object? GetService(Type serviceType) => null;
     }
 }

@@ -70,20 +70,24 @@ with Azure OpenAI use `AddAzureOpenAIChatCompletion` instead.
 
 ## Example: Microsoft Agent Framework
 
-A `KernelFunction` is an `AIFunction`, so Agent Framework takes the plugin's
-functions as they are, next to the MCP studio tools:
+`ThreeWsPlugin.CreateAITools()` returns the six functions as tools an Agent
+Framework agent can call, next to the MCP studio tools:
 
 ```csharp
 using var threeWs = ThreeWsClient.FromEnvironment();
-var plugin = KernelPluginFactory.CreateFromObject(new ThreeWsPlugin(threeWs), "threews");
 await using var studio = await ThreeWsMcp.ConnectAsync();
 
 var tools = new List<AITool>();
-tools.AddRange(plugin);                                    // native functions
+tools.AddRange(ThreeWsPlugin.CreateAITools(threeWs));      // native functions
 tools.AddRange(await studio.ListToolsAsync());             // 16 MCP studio tools
 
 AIAgent agent = chatClient.AsAIAgent(instructions: "...", tools: tools);
 ```
+
+Use `CreateAITools` rather than handing plugin functions to the agent yourself.
+It binds each function to a `Kernel`. An unbound `KernelFunction` tries to build
+a kernel from Agent Framework's service provider when the model calls it, and
+fails with "No service for type IEnumerable<KernelPlugin>".
 
 The full runnable sample is in
 [`../agent-framework/dotnet`](../agent-framework/dotnet).

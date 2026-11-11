@@ -2,8 +2,9 @@
 //
 // Tools come from two places, the two ways a .NET team will wire three.ws:
 //   * the ThreeWs.SemanticKernel plugin's native functions (generation that waits
-//     for the model and retries a transient GPU failure); a KernelFunction is an
-//     AIFunction, so Agent Framework takes them as they are;
+//     for the model and retries a transient GPU failure), from
+//     ThreeWsPlugin.CreateAITools, which binds each one to a Kernel so it runs
+//     inside Agent Framework's function invocation;
 //   * the free three.ws 3D Studio MCP server, whose MCP tools are AIFunctions already.
 //
 // Run:
@@ -15,7 +16,6 @@ using System.ClientModel;
 using System.Diagnostics;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
-using Microsoft.SemanticKernel;
 using OpenAI;
 using ThreeWs.SemanticKernel;
 
@@ -41,7 +41,7 @@ var options = new OpenAIClientOptions { NetworkTimeout = TimeSpan.FromMinutes(5)
 if (Environment.GetEnvironmentVariable("OPENAI_BASE_URL") is { Length: > 0 } baseUrl) options.Endpoint = new Uri(baseUrl);
 
 using var threeWs = ThreeWsClient.FromEnvironment();
-var plugin = KernelPluginFactory.CreateFromObject(new ThreeWsPlugin(threeWs), "threews");
+var plugin = ThreeWsPlugin.CreateAITools(threeWs);
 await using var studio = await ThreeWsMcp.ConnectAsync(threeWs.BaseUrl);
 var studioTools = await studio.ListToolsAsync();
 

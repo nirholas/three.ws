@@ -17,9 +17,9 @@ chat model that supports tool calling.
 | Python | the three.ws 3D Studio MCP server only (`search_catalog`, `forge_free`, `check_job`) | [`python/design_prop.py`](python/design_prop.py) |
 | .NET | MCP `search_catalog` plus the [ThreeWs.SemanticKernel](../semantic-kernel-dotnet/) plugin's `generate_3d_model` and `get_3d_job_status` | [`dotnet/Program.cs`](dotnet/Program.cs) |
 
-The .NET sample shows that a Semantic Kernel `KernelFunction` is already an
-`AIFunction`, so a team that has SK plugins can hand them to an Agent Framework
-agent unchanged.
+The .NET sample takes the plugin's functions from
+`ThreeWsPlugin.CreateAITools()`, which binds each Semantic Kernel function to a
+`Kernel` so it runs inside Agent Framework's function invocation.
 
 ## Python
 
