@@ -308,6 +308,7 @@
 		"listings:build": "node scripts/listings.mjs --build",
 		"listings:check": "node scripts/listings.mjs --check",
 		"listings:verify": "node scripts/listings.mjs --verify",
+		"media:microsoft": "node scripts/capture-microsoft-listing-media.mjs",
 		"programs": "node scripts/partner-programs.mjs",
 		"programs:build": "node scripts/partner-programs.mjs --build",
 		"programs:check": "node scripts/partner-programs.mjs --check",
