@@ -195,6 +195,8 @@ prompts/roadmap/_generated/**/*.log
 reports/
 # machine-written sweep reports are committed evidence (data/reports/README.md)
 !/data/reports/
+# axe and manual-probe evidence linked from /accessibility and the ACR
+!/docs/accessibility/reports/
 .auth/
 .env*
 docs/internal/COINMARKETCAP_ARTICLE.md

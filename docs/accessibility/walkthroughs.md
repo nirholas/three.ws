@@ -43,6 +43,7 @@ Every page was walked with Tab and Shift+Tab for up to 60 stops.
 | The avatar profile's Pause button and the Teams tab's not-yet-ready agent stage took focus while invisible | 2.4.7 | `7c0fa395c`, with an e2e test for the Pause button |
 | The sign-language spell field showed focus only as a faint glow | 2.4.7 | `77bc5f09d` |
 | The shared list search (`/discover` and other list pages) and the `/everything` search showed focus only as a 1px border change | 2.4.7 | `9443373b5` |
+| The home desktop clock's accessible name was a full locale date string, not the time on screen, so a voice user could not say it (found by the axe run at 400px) | 2.5.3 | `00cd2491c`, with an e2e test |
 
 ## Screen reader pass (Orca 46.1, Chromium 145)
 

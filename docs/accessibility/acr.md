@@ -84,7 +84,7 @@ The wallet pages (`/wallet`, `/agent-wallet`, `/claim-wallet`, `/vaults`) are he
 | 2.4.4 Link Purpose (In Context) (Level A) | Supports | Link text, or link text with its surrounding sentence or list item, describes the destination. Icon-only links have accessible names. |
 | 2.5.1 Pointer Gestures (Level A) | Partially Supports | All controls work with a single pointer without a path. Exception: on touch screens, zooming a 3D viewer uses a two-finger pinch with no on-screen zoom buttons. A keyboard (plus and minus) and a mouse wheel can zoom, and the model is fully visible at the default zoom. |
 | 2.5.2 Pointer Cancellation (Level A) | Supports | Actions fire on pointer up (native `click`). No action completes on pointer down. |
-| 2.5.3 Label in Name (Level A) | Supports | Accessible names contain the visible label text. axe reports no `label-content-name-mismatch` violations. |
+| 2.5.3 Label in Name (Level A) | Supports | Accessible names contain the visible label text. axe reports no `label-content-name-mismatch` violations. The home desktop clock was announced as a full locale date string instead of the time it shows; its name now starts with the visible time (`00cd2491c`, with an e2e test). |
 | 2.5.4 Motion Actuation (Level A) | Supports | No function is triggered by device motion. |
 | 3.1.1 Language of Page (Level A) | Supports | Every page declares `<html lang>`, and the language switcher updates it when the interface language changes ([src/i18n.js](../../src/i18n.js)). |
 | 3.2.1 On Focus (Level A) | Supports | Receiving focus never changes context. |

@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-11",
+			"title": "An accessibility statement, a full WCAG 2.2 AA conformance report, and fixes for every serious barrier found",
+			"summary": "three.ws now publishes an accessibility statement at /accessibility. It sets out our commitment, rates the site against WCAG 2.2 Level AA, lists the known gaps with a workaround for each, and tells you how to report a barrier. Behind it is a conformance report in the VPAT 2.x format covering all 56 Level A and AA criteria. Every core page was checked with axe in both themes at desktop and phone width, walked with the keyboard alone, read with the Orca screen reader, zoomed to 400% and viewed in forced colours. All 104 serious or critical issues found are fixed. Among them: 3D views now have names and keyboard orbit, collapsed menus no longer swallow focus, every search field and sign-in field shows a clear focus ring, the home desktop and agent embeds have a main landmark, and invisible controls no longer take focus.",
+			"tags": ["feature", "improvement"],
+			"link": "/accessibility"
+		},
+		{
+			"date": "2026-11-11",
 			"title": "TRELLIS.2 Lab presets now show when a setting is failing on production",
 			"summary": "The preset cards in the TRELLIS.2 Lab now read the first real TRELLIS.2 production runs. Fast draft shows its measured time, about a minute end to end. Balanced and Maximum detail now say \"Failing on production\" and give the number of failed runs, instead of a vague \"Not measured yet\", so you know to start with Fast draft. When a run fails, its error panel no longer shows a stray \"null\" beside Retry or a doubled full stop.",
 			"tags": ["fix"],

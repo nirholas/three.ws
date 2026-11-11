@@ -1,0 +1,780 @@
+{
+	"generatedAt": "2026-11-11T19:02:55.536Z",
+	"base": "http://localhost:3112",
+	"axeVersion": "4.14.0",
+	"tags": [
+		"wcag2a",
+		"wcag2aa",
+		"wcag21a",
+		"wcag21aa",
+		"wcag22aa"
+	],
+	"summary": {
+		"runs": 76,
+		"failing": 0,
+		"other": 0,
+		"errors": 0
+	},
+	"results": [
+		{
+			"path": "/",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "desktop",
+			"ms": 2206,
+			"passes": 19,
+			"incomplete": 0,
+			"violations": []
+		},
+		{
+			"path": "/",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "mobile",
+			"ms": 2201,
+			"passes": 19,
+			"incomplete": 0,
+			"violations": []
+		},
+		{
+			"path": "/",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "desktop",
+			"ms": 2024,
+			"passes": 19,
+			"incomplete": 0,
+			"violations": []
+		},
+		{
+			"path": "/",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "mobile",
+			"ms": 2396,
+			"passes": 24,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/start",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "desktop",
+			"ms": 2585,
+			"passes": 26,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/start",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "mobile",
+			"ms": 2958,
+			"passes": 27,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/start",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "desktop",
+			"ms": 4099,
+			"passes": 26,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/start",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "mobile",
+			"ms": 3879,
+			"passes": 27,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/agi",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "desktop",
+			"ms": 9020,
+			"passes": 32,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/agi",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "mobile",
+			"ms": 17497,
+			"passes": 31,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/agi",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "desktop",
+			"ms": 17188,
+			"passes": 32,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/agi",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "mobile",
+			"ms": 9672,
+			"passes": 31,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/discover",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "desktop",
+			"ms": 24888,
+			"passes": 34,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/discover",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "mobile",
+			"ms": 9761,
+			"passes": 32,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/discover",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "desktop",
+			"ms": 21060,
+			"passes": 34,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/discover",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "mobile",
+			"ms": 12877,
+			"passes": 32,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/sign-language",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "desktop",
+			"ms": 27951,
+			"passes": 35,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/sign-language",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "mobile",
+			"ms": 27240,
+			"passes": 34,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/sign-language",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "desktop",
+			"ms": 35185,
+			"passes": 35,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/sign-language",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "mobile",
+			"ms": 17181,
+			"passes": 34,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/everything",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "desktop",
+			"ms": 7850,
+			"passes": 32,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/everything",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "mobile",
+			"ms": 8985,
+			"passes": 31,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/everything",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "desktop",
+			"ms": 8967,
+			"passes": 32,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/everything",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "mobile",
+			"ms": 9217,
+			"passes": 31,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/prompts",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "desktop",
+			"ms": 8046,
+			"passes": 32,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/prompts",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "mobile",
+			"ms": 8057,
+			"passes": 31,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/prompts",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "desktop",
+			"ms": 7694,
+			"passes": 32,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/prompts",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "mobile",
+			"ms": 7680,
+			"passes": 31,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/create",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "desktop",
+			"ms": 6578,
+			"passes": 32,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/create",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "mobile",
+			"ms": 4913,
+			"passes": 31,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/create",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "desktop",
+			"ms": 4919,
+			"passes": 32,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/create",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "mobile",
+			"ms": 4889,
+			"passes": 31,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/genesis",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "desktop",
+			"ms": 3840,
+			"passes": 31,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/genesis",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "mobile",
+			"ms": 3338,
+			"passes": 30,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/genesis",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "desktop",
+			"ms": 3869,
+			"passes": 31,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/genesis",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "mobile",
+			"ms": 3106,
+			"passes": 30,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/create-agent",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "desktop",
+			"ms": 4648,
+			"passes": 31,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/create-agent",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "mobile",
+			"ms": 4638,
+			"passes": 30,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/create-agent",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "desktop",
+			"ms": 4649,
+			"passes": 31,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/create-agent",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "mobile",
+			"ms": 4119,
+			"passes": 30,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/create/prompt",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "desktop",
+			"ms": 4097,
+			"passes": 31,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/create/prompt",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "mobile",
+			"ms": 3486,
+			"passes": 30,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/create/prompt",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "desktop",
+			"ms": 3970,
+			"passes": 31,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/create/prompt",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "mobile",
+			"ms": 3966,
+			"passes": 30,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/image-to-3d",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "desktop",
+			"ms": 7440,
+			"passes": 35,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/image-to-3d",
+			"group": "top-priority",
+			"theme": "dark",
+			"viewport": "mobile",
+			"ms": 6860,
+			"passes": 35,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/image-to-3d",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "desktop",
+			"ms": 6843,
+			"passes": 35,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/image-to-3d",
+			"group": "top-priority",
+			"theme": "light",
+			"viewport": "mobile",
+			"ms": 5935,
+			"passes": 35,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/login",
+			"group": "enterprise",
+			"theme": "dark",
+			"viewport": "desktop",
+			"ms": 10096,
+			"passes": 29,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/login",
+			"group": "enterprise",
+			"theme": "dark",
+			"viewport": "mobile",
+			"ms": 9036,
+			"passes": 29,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/login",
+			"group": "enterprise",
+			"theme": "light",
+			"viewport": "desktop",
+			"ms": 10450,
+			"passes": 29,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/login",
+			"group": "enterprise",
+			"theme": "light",
+			"viewport": "mobile",
+			"ms": 9926,
+			"passes": 29,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/microsoft/activate",
+			"group": "enterprise",
+			"theme": "dark",
+			"viewport": "desktop",
+			"ms": 6691,
+			"passes": 31,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/microsoft/activate",
+			"group": "enterprise",
+			"theme": "dark",
+			"viewport": "mobile",
+			"ms": 3130,
+			"passes": 30,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/microsoft/activate",
+			"group": "enterprise",
+			"theme": "light",
+			"viewport": "desktop",
+			"ms": 6377,
+			"passes": 31,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/microsoft/activate",
+			"group": "enterprise",
+			"theme": "light",
+			"viewport": "mobile",
+			"ms": 3135,
+			"passes": 30,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/microsoft/teams-tab",
+			"group": "enterprise",
+			"theme": "dark",
+			"viewport": "desktop",
+			"ms": 4445,
+			"passes": 30,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/microsoft/teams-tab",
+			"group": "enterprise",
+			"theme": "dark",
+			"viewport": "mobile",
+			"ms": 4892,
+			"passes": 29,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/microsoft/teams-tab",
+			"group": "enterprise",
+			"theme": "light",
+			"viewport": "desktop",
+			"ms": 3180,
+			"passes": 30,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/microsoft/teams-tab",
+			"group": "enterprise",
+			"theme": "light",
+			"viewport": "mobile",
+			"ms": 5545,
+			"passes": 29,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/forge",
+			"group": "forge",
+			"theme": "dark",
+			"viewport": "desktop",
+			"ms": 6493,
+			"passes": 33,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/forge",
+			"group": "forge",
+			"theme": "dark",
+			"viewport": "mobile",
+			"ms": 6405,
+			"passes": 33,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/forge",
+			"group": "forge",
+			"theme": "light",
+			"viewport": "desktop",
+			"ms": 6270,
+			"passes": 33,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/forge",
+			"group": "forge",
+			"theme": "light",
+			"viewport": "mobile",
+			"ms": 5910,
+			"passes": 33,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/agents/d94d2a50-86fa-4d2e-b87b-580f7517aa4c",
+			"group": "agent",
+			"theme": "dark",
+			"viewport": "desktop",
+			"ms": 7932,
+			"passes": 31,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/agents/d94d2a50-86fa-4d2e-b87b-580f7517aa4c",
+			"group": "agent",
+			"theme": "dark",
+			"viewport": "mobile",
+			"ms": 7515,
+			"passes": 32,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/agents/d94d2a50-86fa-4d2e-b87b-580f7517aa4c",
+			"group": "agent",
+			"theme": "light",
+			"viewport": "desktop",
+			"ms": 7486,
+			"passes": 31,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/agents/d94d2a50-86fa-4d2e-b87b-580f7517aa4c",
+			"group": "agent",
+			"theme": "light",
+			"viewport": "mobile",
+			"ms": 7401,
+			"passes": 32,
+			"incomplete": 2,
+			"violations": []
+		},
+		{
+			"path": "/agent/d94d2a50-86fa-4d2e-b87b-580f7517aa4c/embed",
+			"group": "embed",
+			"theme": "dark",
+			"viewport": "desktop",
+			"ms": 10506,
+			"passes": 16,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/agent/d94d2a50-86fa-4d2e-b87b-580f7517aa4c/embed",
+			"group": "embed",
+			"theme": "dark",
+			"viewport": "mobile",
+			"ms": 10061,
+			"passes": 16,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/agent/d94d2a50-86fa-4d2e-b87b-580f7517aa4c/embed",
+			"group": "embed",
+			"theme": "light",
+			"viewport": "desktop",
+			"ms": 2240,
+			"passes": 5,
+			"incomplete": 0,
+			"violations": []
+		},
+		{
+			"path": "/agent/d94d2a50-86fa-4d2e-b87b-580f7517aa4c/embed",
+			"group": "embed",
+			"theme": "light",
+			"viewport": "mobile",
+			"ms": 7155,
+			"passes": 16,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/accessibility",
+			"group": "statement",
+			"theme": "dark",
+			"viewport": "desktop",
+			"ms": 3742,
+			"passes": 33,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/accessibility",
+			"group": "statement",
+			"theme": "dark",
+			"viewport": "mobile",
+			"ms": 3463,
+			"passes": 32,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/accessibility",
+			"group": "statement",
+			"theme": "light",
+			"viewport": "desktop",
+			"ms": 3367,
+			"passes": 33,
+			"incomplete": 1,
+			"violations": []
+		},
+		{
+			"path": "/accessibility",
+			"group": "statement",
+			"theme": "light",
+			"viewport": "mobile",
+			"ms": 3808,
+			"passes": 32,
+			"incomplete": 1,
+			"violations": []
+		}
+	]
+}

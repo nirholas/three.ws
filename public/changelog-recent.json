@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-11T18:23:46.178Z",
+	"generated_at": "2026-11-11T19:00:20.771Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4528,
+	"total": 4531,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Accessibility statement",
+			"summary": "How accessible three.ws is: WCAG 2.2 AA conformance, how it is tested with axe, keyboard, the Orca screen reader, zoom and forced colours, the known limitations with workarounds, and how to report a barrier.",
+			"link": "/accessibility",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-11-11",
 			"type": "launch",
@@ -253,6 +263,17 @@
 		{
 			"date": "2026-11-11",
 			"type": "update",
+			"title": "An accessibility statement, a full WCAG 2.2 AA conformance report, and fixes for every serious barrier found",
+			"summary": "three.ws now publishes an accessibility statement at /accessibility. It sets out our commitment, rates the site against WCAG 2.2 Level AA, lists the known gaps with a workaround for each, and tells you how to report a barrier. Behind it is a conformance report in the VPAT 2.x format covering all 56 Level A and AA criteria. Every core page was checked with axe in both themes at desktop and phone width, walked with the keyboard alone, read with the Orca screen reader, zoomed to 400% and viewed in forced colours. All 104 serious or critical issues found are fixed. Among them: 3D views now have names and keyboard orbit, collapsed menus no longer swallow focus, every search field and sign-in field shows a clear focus ring, the home desktop and agent embeds have a main landmark, and invisible controls no longer take focus.",
+			"link": "/accessibility",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
 			"title": "An official .NET SDK for three.ws, ready for Unity",
 			"summary": "C# developers can now use three.ws from one typed library, ThreeWs.Sdk. It generates 3D models from text or images on every Forge lane and downloads the GLB. It also searches the free asset catalog, rigs meshes, streams agent chat and lists MCP tools. It runs on .NET 8 and .NET Standard 2.1, so it works in ASP.NET Core services and in Unity games, and a Unity sample spawns a generated model with glTFast. Every call can be cancelled. Failed requests retry safely, and errors carry the API's error code. The NuGet release is pending.",
 			"link": "/docs/dotnet-sdk",
@@ -432,6 +453,16 @@
 			"link": "/features/forge",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "TRELLIS.2 Lab presets now show when a setting is failing on production",
+			"summary": "The preset cards in the TRELLIS.2 Lab now read the first real TRELLIS.2 production runs. Fast draft shows its measured time, about a minute end to end. Balanced and Maximum detail now say \"Failing on production\" and give the number of failed runs, instead of a vague \"Not measured yet\", so you know to start with Fast draft. When a run fails, its error panel no longer shows a stray \"null\" beside Retry or a doubled full stop.",
+			"link": "/lab/trellis2",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1499,38 +1530,6 @@
 			"title": "Drive builds for Android Automotive OS",
 			"summary": "The Android overlay now has an automotive product flavor that puts the same four-control Drive templates on a car's own screen through CarAppActivity. It compiles alongside the unchanged phone build; running it on a head unit is the remaining check.",
 			"link": null,
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Embeds can allowlist the skill authors and hosts they trust",
-			"summary": "The agent-3d element's whitelist skill policy now works: list the authors you trust with skill-trusted-authors and the hosts with skill-trusted-origins (or set el.skillTrust from script), and only skills from those authors or hosts install. Before this, whitelist mode had no way to receive the lists and refused every skill. A refused skill now fires a skill:error event so the page can tell the visitor, and a misspelled skill-trust value falls back to the safe owner-only default instead of installing everything unchecked.",
-			"link": "/docs/web-component",
-			"tags": [
-				"security",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Eval removed from the site-wide CSP",
-			"summary": "Pages no longer allow string-to-code evaluation. The Draco loader and texture resize no longer need it, and only the Scene Studio shell keeps it.",
-			"link": null,
-			"tags": [
-				"security",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Every new agent now starts with a drafted coin",
-			"summary": "A new agent gets a private coin plan drafted from its own name and persona, and its Solana wallet is set up at creation if that step had failed. Owners see a Next step card on the agent page with the drafted name and ticker, whether the launch wallet can cover launch costs, and one Review and launch button that opens the confirmation screen, where nothing is signed or spent until you approve it. Each step from plan viewed to launch succeeded is now recorded so the launch drop-off can be measured.",
-			"link": "/docs/experiments-agent-launch-funnel",
 			"tags": [
 				"feature"
 			]

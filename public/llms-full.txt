@@ -6457,6 +6457,12 @@ URL: https://three.ws/trust/subprocessors
 
 Every third party that processes data for three.ws: purpose, data categories, region and the file that calls it.
 
+### Accessibility statement
+
+URL: https://three.ws/accessibility
+
+How accessible three.ws is: WCAG 2.2 AA conformance, how it is tested with axe, keyboard, the Orca screen reader, zoom and forced colours, the known limitations with workarounds, and how to report a barrier.
+
 ### Privacy Policy
 
 URL: https://three.ws/legal/privacy

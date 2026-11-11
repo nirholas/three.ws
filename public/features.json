@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T18:23:46.114Z",
+	"generated_at": "2026-11-11T19:00:20.512Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -12820,6 +12820,18 @@
 					"path": "/trust/subprocessors",
 					"title": "Subprocessors",
 					"description": "Every third party that processes data for three.ws: purpose, data categories, region and the file that calls it.",
+					"added": "2026-11-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.4,
+					"job": null
+				},
+				{
+					"path": "/accessibility",
+					"title": "Accessibility statement",
+					"description": "How accessible three.ws is: WCAG 2.2 AA conformance, how it is tested with axe, keyboard, the Orca screen reader, zoom and forced colours, the known limitations with workarounds, and how to report a barrier.",
 					"added": "2026-11-11",
 					"auth": null,
 					"indexable": true,

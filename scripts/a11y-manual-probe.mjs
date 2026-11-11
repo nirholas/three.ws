@@ -22,6 +22,11 @@
 // Usage:
 //   node scripts/a11y-manual-probe.mjs                 # against http://localhost:3112
 //   node scripts/a11y-manual-probe.mjs --only /login --shots /path/to/dir
+//   node scripts/a11y-manual-probe.mjs --order        # also record every stop's label
+//
+// The full Tab order is left out of the committed report by default: stop labels
+// are live page text (feed items, user names, token tickers), which does not
+// belong in the repository. The flagged lists keep the labels they need.
 //
 // Writes docs/accessibility/reports/manual-probe.json. Exits 0; the findings are
 // read by a person, not gated.
@@ -37,13 +42,14 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'docs', 'accessibility', 'reports', 'manual-probe.json');
 
 function parseArgs(argv) {
-	const args = { base: process.env.A11Y_BASE || 'http://localhost:3112', only: null, tabs: 60, shots: null, concurrency: 3 };
+	const args = { base: process.env.A11Y_BASE || 'http://localhost:3112', only: null, tabs: 60, shots: null, concurrency: 3, order: false };
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i];
 		if (a === '--base') args.base = argv[++i];
 		else if (a === '--only') args.only = argv[++i].split(',').map((s) => s.trim()).filter(Boolean);
 		else if (a === '--tabs') args.tabs = Math.max(1, Number(argv[++i]) || 60);
 		else if (a === '--shots') args.shots = argv[++i];
+		else if (a === '--order') args.order = true;
 		else if (a === '--concurrency') args.concurrency = Math.max(1, Number(argv[++i]) || 1);
 	}
 	args.base = args.base.replace(/\/$/, '');
@@ -336,6 +342,7 @@ async function main() {
 		}),
 	);
 	await browser.close();
+	if (!args.order) for (const r of results) if (r.keyboard) delete r.keyboard.order;
 	mkdirSync(dirname(OUT), { recursive: true });
 	writeFileSync(OUT, JSON.stringify({ generated: new Date().toISOString(), base: args.base, results }, null, '\t') + '\n');
 	console.log('wrote docs/accessibility/reports/manual-probe.json');

@@ -1,0 +1,787 @@
+{
+	"generated": "2026-11-11T18:42:49.055Z",
+	"base": "http://localhost:3112",
+	"results": [
+		{
+			"path": "/",
+			"group": "top-priority",
+			"keyboard": {
+				"count": 17,
+				"wrapped": true,
+				"trap": null,
+				"initialFocus": null,
+				"firstStop": "a \"Create\"",
+				"skipLink": false,
+				"skip": null,
+				"noIndicator": [],
+				"hidden": [],
+				"invisible": [],
+				"shadowOnly": []
+			},
+			"reflow": {
+				"200%": {
+					"viewport": 640,
+					"scrollWidth": 640,
+					"pageScroll": false,
+					"offenders": []
+				},
+				"400%": {
+					"viewport": 320,
+					"scrollWidth": 320,
+					"pageScroll": false,
+					"offenders": []
+				}
+			},
+			"spacing": {
+				"clipped": []
+			},
+			"forcedColors": {
+				"stops": 10,
+				"noIndicator": [],
+				"shadowOnly": []
+			}
+		},
+		{
+			"path": "/start",
+			"group": "top-priority",
+			"keyboard": {
+				"count": 12,
+				"wrapped": true,
+				"trap": null,
+				"initialFocus": null,
+				"firstStop": "a.wz-logo \"three.ws home\"",
+				"skipLink": false,
+				"skip": null,
+				"noIndicator": [],
+				"hidden": [],
+				"invisible": [],
+				"shadowOnly": []
+			},
+			"reflow": {
+				"200%": {
+					"viewport": 640,
+					"scrollWidth": 640,
+					"pageScroll": false,
+					"offenders": []
+				},
+				"400%": {
+					"viewport": 320,
+					"scrollWidth": 320,
+					"pageScroll": false,
+					"offenders": []
+				}
+			},
+			"spacing": {
+				"clipped": []
+			},
+			"forcedColors": {
+				"stops": 12,
+				"noIndicator": [],
+				"shadowOnly": []
+			}
+		},
+		{
+			"path": "/agi",
+			"group": "top-priority",
+			"keyboard": {
+				"count": 60,
+				"wrapped": false,
+				"trap": null,
+				"initialFocus": null,
+				"firstStop": "a.nav-skip \"Skip to content\"",
+				"skipLink": true,
+				"skip": {
+					"text": "Skip to content",
+					"target": "agi-root",
+					"targetExists": true
+				},
+				"noIndicator": [],
+				"hidden": [],
+				"invisible": [],
+				"shadowOnly": []
+			},
+			"reflow": {
+				"200%": {
+					"viewport": 640,
+					"scrollWidth": 640,
+					"pageScroll": false,
+					"offenders": []
+				},
+				"400%": {
+					"viewport": 320,
+					"scrollWidth": 320,
+					"pageScroll": false,
+					"offenders": []
+				}
+			},
+			"spacing": {
+				"clipped": []
+			},
+			"forcedColors": {
+				"stops": 25,
+				"noIndicator": [],
+				"shadowOnly": []
+			}
+		},
+		{
+			"path": "/discover",
+			"group": "top-priority",
+			"keyboard": {
+				"count": 60,
+				"wrapped": false,
+				"trap": null,
+				"initialFocus": null,
+				"firstStop": "a.nav-skip \"Skip to content\"",
+				"skipLink": true,
+				"skip": {
+					"text": "Skip to content",
+					"target": "main-content",
+					"targetExists": true
+				},
+				"noIndicator": [
+					"input \"Search agents\""
+				],
+				"hidden": [
+					"div.userInput.show \"Zenith. Use mouse, touch or arrow keys to move.\"",
+					"div.userInput.show \"Iron. Use mouse, touch or arrow keys to move.\"",
+					"div.userInput.show \"Delta. Use mouse, touch or arrow keys to move.\"",
+					"div.userInput.show \"Storm. Use mouse, touch or arrow keys to move.\""
+				],
+				"invisible": [],
+				"shadowOnly": []
+			},
+			"reflow": {
+				"200%": {
+					"viewport": 640,
+					"scrollWidth": 640,
+					"pageScroll": false,
+					"offenders": []
+				},
+				"400%": {
+					"viewport": 320,
+					"scrollWidth": 320,
+					"pageScroll": false,
+					"offenders": []
+				}
+			},
+			"spacing": {
+				"clipped": []
+			},
+			"forcedColors": {
+				"stops": 25,
+				"noIndicator": [],
+				"shadowOnly": []
+			}
+		},
+		{
+			"path": "/sign-language",
+			"group": "top-priority",
+			"keyboard": {
+				"count": 60,
+				"wrapped": false,
+				"trap": null,
+				"initialFocus": null,
+				"firstStop": "a.nav-skip \"Skip to content\"",
+				"skipLink": true,
+				"skip": {
+					"text": "Skip to content",
+					"target": "main-content",
+					"targetExists": true
+				},
+				"noIndicator": [],
+				"hidden": [
+					"button.sl-opt \"Right-handed\"",
+					"button.sl-opt \"Left-handed\""
+				],
+				"invisible": [],
+				"shadowOnly": []
+			},
+			"reflow": {
+				"200%": {
+					"viewport": 640,
+					"scrollWidth": 640,
+					"pageScroll": false,
+					"offenders": []
+				},
+				"400%": {
+					"viewport": 320,
+					"scrollWidth": 320,
+					"pageScroll": false,
+					"offenders": []
+				}
+			},
+			"spacing": {
+				"clipped": []
+			},
+			"forcedColors": {
+				"stops": 25,
+				"noIndicator": [],
+				"shadowOnly": []
+			}
+		},
+		{
+			"path": "/everything",
+			"group": "top-priority",
+			"keyboard": {
+				"count": 60,
+				"wrapped": false,
+				"trap": null,
+				"initialFocus": null,
+				"firstStop": "a.nav-skip \"Skip to content\"",
+				"skipLink": true,
+				"skip": {
+					"text": "Skip to content",
+					"target": "main-content",
+					"targetExists": true
+				},
+				"noIndicator": [
+					"input#ev-q \"Search every feature\""
+				],
+				"hidden": [
+					"a.ev-go \"Start here→\"",
+					"button.ev-pin \"Pin Animation Gallery\""
+				],
+				"invisible": [],
+				"shadowOnly": []
+			},
+			"reflow": {
+				"200%": {
+					"viewport": 640,
+					"scrollWidth": 640,
+					"pageScroll": false,
+					"offenders": []
+				},
+				"400%": {
+					"viewport": 320,
+					"scrollWidth": 320,
+					"pageScroll": false,
+					"offenders": []
+				}
+			},
+			"spacing": {
+				"clipped": []
+			},
+			"forcedColors": {
+				"stops": 25,
+				"noIndicator": [],
+				"shadowOnly": []
+			}
+		},
+		{
+			"path": "/prompts",
+			"group": "top-priority",
+			"keyboard": {
+				"count": 60,
+				"wrapped": false,
+				"trap": null,
+				"initialFocus": null,
+				"firstStop": "a.nav-skip \"Skip to content\"",
+				"skipLink": true,
+				"skip": {
+					"text": "Skip to content",
+					"target": "main-content",
+					"targetExists": true
+				},
+				"noIndicator": [
+					"input#pl-search-input \"\""
+				],
+				"hidden": [],
+				"invisible": [],
+				"shadowOnly": []
+			},
+			"reflow": {
+				"200%": {
+					"viewport": 640,
+					"scrollWidth": 640,
+					"pageScroll": false,
+					"offenders": []
+				},
+				"400%": {
+					"viewport": 320,
+					"scrollWidth": 320,
+					"pageScroll": false,
+					"offenders": []
+				}
+			},
+			"spacing": {
+				"clipped": []
+			},
+			"forcedColors": {
+				"stops": 25,
+				"noIndicator": [],
+				"shadowOnly": []
+			}
+		},
+		{
+			"path": "/create",
+			"group": "top-priority",
+			"keyboard": {
+				"count": 60,
+				"wrapped": false,
+				"trap": null,
+				"initialFocus": null,
+				"firstStop": "a.skip-link \"Skip to main content\"",
+				"skipLink": true,
+				"skip": {
+					"text": "Skip to main content",
+					"target": "main-content",
+					"targetExists": true
+				},
+				"noIndicator": [],
+				"hidden": [],
+				"invisible": [],
+				"shadowOnly": []
+			},
+			"reflow": {
+				"200%": {
+					"viewport": 640,
+					"scrollWidth": 640,
+					"pageScroll": false,
+					"offenders": []
+				},
+				"400%": {
+					"viewport": 320,
+					"scrollWidth": 320,
+					"pageScroll": false,
+					"offenders": []
+				}
+			},
+			"spacing": {
+				"clipped": []
+			},
+			"forcedColors": {
+				"stops": 25,
+				"noIndicator": [],
+				"shadowOnly": []
+			}
+		},
+		{
+			"path": "/genesis",
+			"group": "top-priority",
+			"keyboard": {
+				"count": 34,
+				"wrapped": true,
+				"trap": null,
+				"initialFocus": null,
+				"firstStop": "a.h-skip-link \"Skip to genesis\"",
+				"skipLink": true,
+				"skip": {
+					"text": "Skip to genesis",
+					"target": "genesis-main",
+					"targetExists": true
+				},
+				"noIndicator": [],
+				"hidden": [],
+				"invisible": [],
+				"shadowOnly": []
+			},
+			"reflow": {
+				"200%": {
+					"viewport": 640,
+					"scrollWidth": 640,
+					"pageScroll": false,
+					"offenders": []
+				},
+				"400%": {
+					"viewport": 320,
+					"scrollWidth": 320,
+					"pageScroll": false,
+					"offenders": []
+				}
+			},
+			"spacing": {
+				"clipped": []
+			},
+			"forcedColors": {
+				"stops": 25,
+				"noIndicator": [],
+				"shadowOnly": []
+			}
+		},
+		{
+			"path": "/create-agent",
+			"group": "top-priority",
+			"keyboard": {
+				"count": 60,
+				"wrapped": false,
+				"trap": null,
+				"initialFocus": "textarea#magic-input.magic-input \"Describe your agent\"",
+				"firstStop": "button#magic-go.magic-go \"Generate\"",
+				"skipLink": true,
+				"skip": {
+					"text": "Skip to main content",
+					"target": "main-content",
+					"targetExists": true
+				},
+				"noIndicator": [
+					"input#f-tags-input \"\""
+				],
+				"hidden": [],
+				"invisible": [],
+				"shadowOnly": []
+			},
+			"reflow": {
+				"200%": {
+					"viewport": 640,
+					"scrollWidth": 640,
+					"pageScroll": false,
+					"offenders": []
+				},
+				"400%": {
+					"viewport": 320,
+					"scrollWidth": 320,
+					"pageScroll": false,
+					"offenders": []
+				}
+			},
+			"spacing": {
+				"clipped": []
+			},
+			"forcedColors": {
+				"stops": 25,
+				"noIndicator": [],
+				"shadowOnly": []
+			}
+		},
+		{
+			"path": "/create/prompt",
+			"group": "top-priority",
+			"keyboard": {
+				"count": 60,
+				"wrapped": false,
+				"trap": null,
+				"initialFocus": "textarea#prompt \"Describe the avatar you want to generate\"",
+				"firstStop": "button.pd-mic \"Dictate this prompt by speaking\"",
+				"skipLink": true,
+				"skip": {
+					"text": "Skip to the prompt box",
+					"target": "prompt",
+					"targetExists": true
+				},
+				"noIndicator": [],
+				"hidden": [],
+				"invisible": [],
+				"shadowOnly": []
+			},
+			"reflow": {
+				"200%": {
+					"viewport": 640,
+					"scrollWidth": 640,
+					"pageScroll": false,
+					"offenders": []
+				},
+				"400%": {
+					"viewport": 320,
+					"scrollWidth": 320,
+					"pageScroll": false,
+					"offenders": []
+				}
+			},
+			"spacing": {
+				"clipped": []
+			},
+			"forcedColors": {
+				"stops": 25,
+				"noIndicator": [],
+				"shadowOnly": []
+			}
+		},
+		{
+			"path": "/image-to-3d",
+			"group": "top-priority",
+			"keyboard": {
+				"count": 60,
+				"wrapped": false,
+				"trap": null,
+				"initialFocus": null,
+				"firstStop": "a.nav-skip \"Skip to content\"",
+				"skipLink": true,
+				"skip": {
+					"text": "Skip to content",
+					"target": "main-content",
+					"targetExists": true
+				},
+				"noIndicator": [],
+				"hidden": [
+					"button#roll-forge.btn.btn--primary \"Roll & Forge: forge a random model, no prompt needed\""
+				],
+				"invisible": [],
+				"shadowOnly": []
+			},
+			"reflow": {
+				"200%": {
+					"viewport": 640,
+					"scrollWidth": 640,
+					"pageScroll": false,
+					"offenders": []
+				},
+				"400%": {
+					"viewport": 320,
+					"scrollWidth": 320,
+					"pageScroll": false,
+					"offenders": []
+				}
+			},
+			"spacing": {
+				"clipped": []
+			},
+			"forcedColors": {
+				"stops": 25,
+				"noIndicator": [],
+				"shadowOnly": []
+			}
+		},
+		{
+			"path": "/login",
+			"group": "enterprise",
+			"keyboard": {
+				"count": 34,
+				"wrapped": true,
+				"trap": null,
+				"initialFocus": "input#privy-email-input \"\"",
+				"firstStop": "button#privy-send-btn.privy-row-btn \"Send code\"",
+				"skipLink": true,
+				"skip": {
+					"text": "Skip to main content",
+					"target": "main-content",
+					"targetExists": true
+				},
+				"noIndicator": [],
+				"hidden": [
+					"a \"Terms of Use\""
+				],
+				"invisible": [],
+				"shadowOnly": []
+			},
+			"reflow": {
+				"200%": {
+					"viewport": 640,
+					"scrollWidth": 640,
+					"pageScroll": false,
+					"offenders": []
+				},
+				"400%": {
+					"viewport": 320,
+					"scrollWidth": 320,
+					"pageScroll": false,
+					"offenders": []
+				}
+			},
+			"spacing": {
+				"clipped": []
+			},
+			"forcedColors": {
+				"stops": 25,
+				"noIndicator": [],
+				"shadowOnly": []
+			}
+		},
+		{
+			"path": "/microsoft/activate",
+			"group": "enterprise",
+			"keyboard": {
+				"count": 60,
+				"wrapped": false,
+				"trap": null,
+				"initialFocus": "a.ma-btn.ma-btn-primary \"Find three.ws on Microsoft Marketplace\"",
+				"firstStop": "a.ma-btn \"Compare plans\"",
+				"skipLink": true,
+				"skip": {
+					"text": "Skip to content",
+					"target": "main-content",
+					"targetExists": true
+				},
+				"noIndicator": [],
+				"hidden": [],
+				"invisible": [],
+				"shadowOnly": []
+			},
+			"reflow": {
+				"200%": {
+					"viewport": 640,
+					"scrollWidth": 640,
+					"pageScroll": false,
+					"offenders": []
+				},
+				"400%": {
+					"viewport": 320,
+					"scrollWidth": 320,
+					"pageScroll": false,
+					"offenders": []
+				}
+			},
+			"spacing": {
+				"clipped": []
+			},
+			"forcedColors": {
+				"stops": 25,
+				"noIndicator": [],
+				"shadowOnly": []
+			}
+		},
+		{
+			"path": "/microsoft/teams-tab",
+			"group": "enterprise",
+			"keyboard": {
+				"count": 29,
+				"wrapped": true,
+				"trap": null,
+				"initialFocus": null,
+				"firstStop": "a.tt-brand \"three.ws\"",
+				"skipLink": false,
+				"skip": null,
+				"noIndicator": [],
+				"hidden": [],
+				"invisible": [],
+				"shadowOnly": []
+			},
+			"reflow": {
+				"200%": {
+					"viewport": 640,
+					"scrollWidth": 640,
+					"pageScroll": false,
+					"offenders": []
+				},
+				"400%": {
+					"viewport": 320,
+					"scrollWidth": 320,
+					"pageScroll": false,
+					"offenders": []
+				}
+			},
+			"spacing": {
+				"clipped": []
+			},
+			"forcedColors": {
+				"stops": 25,
+				"noIndicator": [],
+				"shadowOnly": []
+			}
+		},
+		{
+			"path": "/forge",
+			"group": "forge",
+			"keyboard": {
+				"count": 60,
+				"wrapped": false,
+				"trap": null,
+				"initialFocus": null,
+				"firstStop": "a.nav-skip \"Skip to content\"",
+				"skipLink": true,
+				"skip": {
+					"text": "Skip to content",
+					"target": "main-content",
+					"targetExists": true
+				},
+				"noIndicator": [],
+				"hidden": [],
+				"invisible": [],
+				"shadowOnly": []
+			},
+			"reflow": {
+				"200%": {
+					"viewport": 640,
+					"scrollWidth": 640,
+					"pageScroll": false,
+					"offenders": []
+				},
+				"400%": {
+					"viewport": 320,
+					"scrollWidth": 320,
+					"pageScroll": false,
+					"offenders": []
+				}
+			},
+			"spacing": {
+				"clipped": []
+			},
+			"forcedColors": {
+				"stops": 25,
+				"noIndicator": [],
+				"shadowOnly": []
+			}
+		},
+		{
+			"path": "/agents/d94d2a50-86fa-4d2e-b87b-580f7517aa4c",
+			"group": "agent",
+			"keyboard": {
+				"count": 24,
+				"wrapped": true,
+				"trap": null,
+				"initialFocus": null,
+				"firstStop": "a.nav-skip \"Skip to content\"",
+				"skipLink": true,
+				"skip": {
+					"text": "Skip to content",
+					"target": "av-shell",
+					"targetExists": true
+				},
+				"noIndicator": [],
+				"hidden": [],
+				"invisible": [],
+				"shadowOnly": []
+			},
+			"reflow": {
+				"200%": {
+					"viewport": 640,
+					"scrollWidth": 640,
+					"pageScroll": false,
+					"offenders": []
+				},
+				"400%": {
+					"viewport": 320,
+					"scrollWidth": 320,
+					"pageScroll": false,
+					"offenders": []
+				}
+			},
+			"spacing": {
+				"clipped": []
+			},
+			"forcedColors": {
+				"stops": 25,
+				"noIndicator": [],
+				"shadowOnly": []
+			}
+		},
+		{
+			"path": "/agent/d94d2a50-86fa-4d2e-b87b-580f7517aa4c/embed",
+			"group": "embed",
+			"keyboard": {
+				"count": 1,
+				"wrapped": true,
+				"trap": null,
+				"initialFocus": null,
+				"firstStop": "canvas.tws-viewer-canvas \"Risk Auditor 9, 3D avatar. Tracks grant programs and surface\"",
+				"skipLink": false,
+				"skip": null,
+				"noIndicator": [],
+				"hidden": [],
+				"invisible": [],
+				"shadowOnly": []
+			},
+			"reflow": {
+				"200%": {
+					"viewport": 640,
+					"scrollWidth": 640,
+					"pageScroll": false,
+					"offenders": []
+				},
+				"400%": {
+					"viewport": 320,
+					"scrollWidth": 320,
+					"pageScroll": false,
+					"offenders": []
+				}
+			},
+			"spacing": {
+				"clipped": []
+			},
+			"forcedColors": {
+				"stops": 1,
+				"noIndicator": [],
+				"shadowOnly": []
+			}
+		}
+	]
+}
