@@ -1,6 +1,6 @@
 {
   "name": "three-ws-developer",
-  "description": "Developer tools for three.ws — scaffold agents, configure MCP servers, and get runnable code examples for paid MCP tools.",
+  "description": "Developer tools for three.ws: scaffold agents, configure MCP servers, and get runnable code examples for paid MCP tools.",
   "version": "1.0.0",
   "author": {
     "name": "nirholas"
@@ -15,7 +15,7 @@
         "@three-ws/mcp-server"
       ],
       "env": {
-        "MCP_SVM_PAYMENT_ADDRESS": "${MCP_SVM_PAYMENT_ADDRESS}"
+        "MCP_SVM_PAYMENT_ADDRESS": "${MCP_SVM_PAYMENT_ADDRESS:-}"
       }
     }
   },

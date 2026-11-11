@@ -10,6 +10,7 @@
   "homepage": "https://three.ws/forge",
   "license": "Apache-2.0",
   "repository": "https://github.com/nirholas/three.ws",
+  "privacyPolicyUrl": "https://three.ws/legal/privacy",
   "keywords": [
     "3d",
     "forge",
@@ -33,7 +34,7 @@
         "@three-ws/mcp-server"
       ],
       "env": {
-        "MCP_SVM_PAYMENT_ADDRESS": "${MCP_SVM_PAYMENT_ADDRESS}"
+        "MCP_SVM_PAYMENT_ADDRESS": "${MCP_SVM_PAYMENT_ADDRESS:-}"
       }
     },
     "scene": {
