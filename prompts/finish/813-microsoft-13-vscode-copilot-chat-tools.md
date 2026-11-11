@@ -1,5 +1,7 @@
 # microsoft 13: three.ws inside GitHub Copilot in VS Code (chat participant, language model tools, MCP registration)
 
+Status 2026-11-11: built and packaged (vscode-3d 0.3.0, 107/107 package tests incl. live, test:vscode green on 1.146.0 and 1.101.0). Open: the signed-in `@threews /forge` and agent-mode screenshots (need a Copilot sign-in), Marketplace/Open VSX publish, push. All three are owner steps listed in the 813 PROGRESS entry.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3113.
 
 ## Operating clause (binding)
