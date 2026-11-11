@@ -20,6 +20,7 @@ const deleteCreation = vi.fn(async () => 'deleted');
 const setForgeCategory = vi.fn(async () => true);
 const recordFeedback = vi.fn(async () => true);
 const hashClient = vi.fn((raw) => `hashed:${raw ?? 'anon'}`);
+const isCreationOwner = vi.fn(async () => false);
 
 vi.mock('../../api/_lib/forge-store.js', () => ({
 	MODEL_CATEGORIES: ['avatar', 'accessory', 'item', 'scene', 'creature', 'vehicle', 'other'],
@@ -31,6 +32,7 @@ vi.mock('../../api/_lib/forge-store.js', () => ({
 	setForgeCategory: (...a) => setForgeCategory(...a),
 	recordFeedback: (...a) => recordFeedback(...a),
 	hashClient: (...a) => hashClient(...a),
+	isCreationOwner: (...a) => isCreationOwner(...a),
 }));
 
 vi.mock('../../api/_lib/rate-limit.js', () => ({
@@ -106,12 +108,22 @@ describe('GET /api/forge-creation', () => {
 		expect(parsed(res).creation.id).toBe('c1');
 		// A share-link recipient forged nothing, so the read must not be voter-scoped.
 		expect(getPublicCreation).toHaveBeenCalledWith({ id: UUID, voterKey: null });
+		// No identity at all, so the tag editor stays hidden.
+		expect(parsed(res).creation.can_edit_tags).toBe(false);
 	});
 
 	it('resolves the caller voted-state when a forge id is sent', async () => {
 		const res = mkRes();
 		await creationHandler(mkReq({ url: `/api/forge-creation?id=${UUID}`, headers: { 'x-forge-client': 'cid-1' } }), res);
 		expect(getPublicCreation).toHaveBeenCalledWith({ id: UUID, voterKey: 'hashed:cid-1' });
+	});
+
+	it('offers the tag editor only to the browser that forged the model', async () => {
+		isCreationOwner.mockResolvedValueOnce(true);
+		const res = mkRes();
+		await creationHandler(mkReq({ url: `/api/forge-creation?id=${UUID}`, headers: { 'x-forge-client': 'cid-1' } }), res);
+		expect(isCreationOwner).toHaveBeenCalledWith({ id: UUID, clientKey: 'hashed:cid-1', userId: null });
+		expect(parsed(res).creation.can_edit_tags).toBe(true);
 	});
 
 	it('400s on a non-uuid id without touching the store', async () => {
