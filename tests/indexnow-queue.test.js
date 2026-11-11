@@ -314,6 +314,31 @@ describe('reconcile', () => {
 });
 
 describe('manifest pages', () => {
+	it('skips catalog pages production does not serve yet and keeps the page cursor for them', async () => {
+		// A manual run from a checkout ahead of production reads a pages.json
+		// that lists pages not deployed yet. IndexNow fetches what it is sent,
+		// so those must wait, and the cursor must not move past them.
+		const today = new Date().toISOString().slice(0, 10);
+		const manifest = { sections: [{ id: 'make', pages: [{ path: '/forge', added: today }, { path: '/unreleased', added: today }] }] };
+		const checked = [];
+		const isLive = async (url) => {
+			checked.push(url);
+			return !url.endsWith('/unreleased');
+		};
+		const { send, calls } = sender();
+		const out = await q.reconcileIndexNow({ types: ['page'], manifest, isLive, send });
+		expect(checked.sort()).toEqual(['https://three.ws/forge', 'https://three.ws/unreleased']);
+		expect(out.types[0]).toMatchObject({ scanned: 2, live: 1, notLive: 1, enqueued: 1 });
+		expect(out.types[0].skipped).toEqual(['https://three.ws/unreleased']);
+		expect(calls).toEqual([['https://three.ws/forge']]);
+		expect(await holder.db.query(`select * from indexnow_cursors where resource_type = 'page'`)).toEqual([]);
+
+		const after = await q.reconcileIndexNow({ types: ['page'], manifest, isLive: async () => true, send });
+		expect(after.types[0]).toMatchObject({ live: 2, notLive: 0 });
+		expect(calls.at(-1)).toEqual(['https://three.ws/unreleased']);
+		expect(await holder.db.query(`select resource_type from indexnow_cursors where resource_type = 'page'`)).toHaveLength(1);
+	});
+
 	it('picks public pages changed on or after the cursor day, by the same rule as core.xml', () => {
 		const manifest = {
 			sections: [

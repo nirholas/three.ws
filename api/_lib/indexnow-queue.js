@@ -454,16 +454,31 @@ export function changedManifestPages(manifest, since) {
 	return out;
 }
 
-async function reconcileType(type, { since, dryRun, source, pageSize }) {
+async function reconcileType(type, { since, dryRun, source, pageSize, manifest, isLive }) {
 	const cursor = await readCursor(type, since);
 	const summary = { type, from: cursor.ts.toISOString(), scanned: 0, live: 0, gone: 0, hidden: 0, enqueued: 0 };
 
 	if (type === 'page') {
-		const items = changedManifestPages(await loadManifest(), cursor.ts);
-		summary.scanned = summary.live = items.length;
+		const changed = changedManifestPages(manifest ?? (await loadManifest()), cursor.ts);
+		summary.scanned = changed.length;
+		// The cron runs inside the deployed container, so every page in its
+		// manifest is live. A manual run from a checkout ahead of production
+		// passes `isLive`, and a page production does not serve yet waits.
+		const items = [];
+		const skipped = [];
+		for (const item of changed) {
+			const url = resourceUrl(INDEXNOW_ORIGIN, 'page', item.key);
+			if (!isLive || (await isLive(url))) items.push(item);
+			else skipped.push(url);
+		}
+		summary.live = items.length;
+		summary.notLive = skipped.length;
+		summary.skipped = skipped;
 		if (!dryRun) {
 			summary.enqueued = await enqueueIndexNow(items, { source });
-			await writeCursor('page', new Date(), '');
+			// Hold the cursor while any page is waiting on a deploy, so the
+			// next run (or the deployed cron) still sees it.
+			if (!skipped.length) await writeCursor('page', new Date(), '');
 		}
 		summary.urls = items.map((i) => resourceUrl(INDEXNOW_ORIGIN, 'page', i.key));
 		return summary;
@@ -499,7 +514,10 @@ async function reconcileType(type, { since, dryRun, source, pageSize }) {
  * Enqueue every public change since each type's cursor, then (unless
  * `drain` is false or this is a dry run) submit the outbox.
  *
- * @param {{since?:Date, types?:string[], dryRun?:boolean, drain?:boolean, source?:string, send?:Function, pageSize?:number}} [opts]
+ * `manifest` overrides data/pages.json for the page type, and `isLive(url)`
+ * gates each catalog page on production actually serving it.
+ *
+ * @param {{since?:Date, types?:string[], dryRun?:boolean, drain?:boolean, source?:string, send?:Function, pageSize?:number, manifest?:object, isLive?:(url:string)=>Promise<boolean>}} [opts]
  */
 export async function reconcileIndexNow({
 	since = null,
@@ -509,12 +527,14 @@ export async function reconcileIndexNow({
 	source = 'reconcile',
 	send,
 	pageSize = RECONCILE_PAGE,
+	manifest = null,
+	isLive = null,
 } = {}) {
 	const results = [];
 	for (const type of types) {
 		if (!RECONCILE_TYPES.includes(type)) throw new Error(`unknown resource type: ${type}`);
 		try {
-			results.push(await reconcileType(type, { since, dryRun, source, pageSize }));
+			results.push(await reconcileType(type, { since, dryRun, source, pageSize, manifest, isLive }));
 		} catch (err) {
 			results.push({ type, error: err?.message || String(err) });
 		}
