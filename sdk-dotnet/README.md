@@ -10,7 +10,7 @@ The official .NET SDK for [three.ws](https://three.ws). It turns text and images
 - Every create call sends an `Idempotency-Key`, so a retry never starts a second generation.
 - Failures throw typed exceptions that carry the API's error code.
 
-Full guide: [three.ws/docs/dotnet-sdk](https://three.ws/docs/dotnet-sdk). Unity sample: [samples/unity](samples/unity/README.md).
+Full guide: [three.ws/docs/dotnet-sdk](https://three.ws/docs/dotnet-sdk). Unity sample: [samples/unity](https://github.com/nirholas/three.ws/blob/main/sdk-dotnet/samples/unity/README.md).
 
 ## Install
 
@@ -34,7 +34,7 @@ Console.WriteLine($"{bytes:N0} bytes from {model.GlbUrl}");
 Console.WriteLine($"View it: {model.ViewerUrl}");
 ```
 
-A runnable version that also shows the catalog, MCP and agent chat is in [samples/Quickstart](samples/Quickstart/Program.cs):
+A runnable version that also shows the catalog, MCP and agent chat is in [samples/Quickstart](https://github.com/nirholas/three.ws/blob/main/sdk-dotnet/samples/Quickstart/Program.cs):
 
 ```bash
 dotnet run --project samples/Quickstart -- "a brass desk lamp" lamp.glb
@@ -196,7 +196,7 @@ await foreach (var ev in client.Agents.MessageStreamAsync(agentId, "What can you
 
 ## Unity
 
-The `netstandard2.1` build runs in Unity 2021.2 and later, including IL2CPP players. [samples/unity](samples/unity/README.md) has a MonoBehaviour that generates a model from a prompt and spawns it with glTFast, the DLL export script, and the `link.xml` for managed code stripping.
+The `netstandard2.1` build runs in Unity 2021.2 and later, including IL2CPP players. [samples/unity](https://github.com/nirholas/three.ws/blob/main/sdk-dotnet/samples/unity/README.md) has a MonoBehaviour that generates a model from a prompt and spawns it with glTFast, the DLL export script, and the `link.xml` for managed code stripping.
 
 ## Building from source
 
@@ -212,4 +212,4 @@ The tests call the real production API. They generate one model per lane, so a f
 
 ## License
 
-Apache-2.0. See [CHANGELOG.md](CHANGELOG.md) for release notes.
+Apache-2.0. See [CHANGELOG.md](https://github.com/nirholas/three.ws/blob/main/sdk-dotnet/CHANGELOG.md) for release notes.

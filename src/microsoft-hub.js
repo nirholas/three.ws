@@ -221,7 +221,7 @@ function onSttStatus(status) {
 		btn.setAttribute('aria-pressed', 'true');
 		btn.querySelector('.stt-label').textContent = 'Listening. Press to stop';
 		sttStatus(`Listening. Speak now${pct}.`, 'live');
-	} else if (status.phase === 'loading-model') {
+	} else if (status.phase === 'loading-model' || (status.phase === 'idle' && stt.busy && pct)) {
 		sttStatus(`Downloading the speech model once, then it stays cached${pct}.`, 'busy');
 	} else if (status.phase === 'transcribing') {
 		sttStatus('Transcribing on this device.', 'busy');
