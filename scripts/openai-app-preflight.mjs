@@ -37,13 +37,21 @@ const CASE_DEADLINE_MS = 10 * 60_000;
 const MAX_POLL_FAILURES = 6;
 const ARMCHAIR = 'https://three.ws/cdn/objects/polyhaven/glb/ArmChair_01.glb';
 
+// ChatGPT stamps every tool call with an opaque per-user `openai/subject`, and
+// the connector keys its generation rate limits on it (api/_mcp-studio/handler.js)
+// rather than on the caller's IP. One synthetic subject per run makes this
+// script one reviewer, as ChatGPT would present it. Without it every case shares
+// this machine's IP bucket and the parallel run trips the per-IP burst cap,
+// which no reviewer ever sees.
+const SUBJECT = `preflight-${crypto.randomUUID()}`;
+
 let rpcId = 0;
 async function callTool(name, toolArgs) {
 	const started = Date.now();
 	const res = await fetch(ENDPOINT, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
-		body: JSON.stringify({ jsonrpc: '2.0', id: ++rpcId, method: 'tools/call', params: { name, arguments: toolArgs } }),
+		body: JSON.stringify({ jsonrpc: '2.0', id: ++rpcId, method: 'tools/call', params: { name, arguments: toolArgs, _meta: { 'openai/subject': SUBJECT } } }),
 		signal: AbortSignal.timeout(CHATGPT_LIMIT_MS + 30_000),
 	});
 	const raw = await res.text();
