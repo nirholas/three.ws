@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<title>Trust center · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="description" content="How three.ws hosts, secures, retains and deletes your data: hosting regions, encryption, authentication, retention jobs, wallet custody, AI providers, incident response and an honest compliance status. Every answer links to the code." />
+		<link rel="canonical" href="https://three.ws/trust" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Trust center · three.ws" />
+		<meta property="og:description" content="Security, privacy and compliance answers for IT reviewers, each linked to the code that proves it." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Trust+center&amp;d=Security+and+privacy%2C+sourced+from+the+code.&amp;p=%2Ftrust" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/src/trust.css" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Trust center","description":"Security, privacy and compliance answers for three.ws, each linked to the code that proves it.","url":"https://three.ws/trust","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	</head>
+	<body>
+		<div id="nav-container"></div>
+
+		<main class="tr-wrap">
+			<p class="tr-crumb"><a href="/">Home</a> / Trust center</p>
+			<p class="tr-eyebrow">Trust center</p>
+			<h1 class="tr-h1">Security and privacy, sourced from the code</h1>
+			<p class="tr-lede">Answers for IT and security reviewers. three.ws is open source under Apache 2.0, so every answer below links to the file that does what it says. Where a control does not exist yet, we say so.</p>
+			<p class="tr-meta">Last reviewed 11 November 2026 · Contact <a href="mailto:security@three.ws">security@three.ws</a> · Privacy <a href="mailto:privacy@three.ws">privacy@three.ws</a></p>
+
+			<ul class="tr-glance" aria-label="At a glance">
+				<li><b>Google Cloud, us-central1</b><span>Application runs on Cloud Run. Database on Neon (AWS us-west-2).</span></li>
+				<li><b>TLS everywhere</b><span>HSTS with preload. Keys and tokens stored only as hashes.</span></li>
+				<li><b>Deletion is a job, not a promise</b><span>Scheduled purges enforce every retention window.</span></li>
+				<li><b>No SOC 2 or ISO yet</b><span>Microsoft 365 Publisher Attestation in preparation.</span></li>
+			</ul>
+
+			<nav aria-label="Sections">
+				<ul class="tr-toc">
+					<li><a href="#hosting">Hosting</a></li>
+					<li><a href="#encryption">Encryption</a></li>
+					<li><a href="#authentication">Authentication</a></li>
+					<li><a href="#access">Access control</a></li>
+					<li><a href="#logging">Logging</a></li>
+					<li><a href="#retention">Retention</a></li>
+					<li><a href="#backups">Backups</a></li>
+					<li><a href="#custody">Wallet custody</a></li>
+					<li><a href="#ai">AI data use</a></li>
+					<li><a href="#incidents">Incidents</a></li>
+					<li><a href="#disclosure">Disclosure</a></li>
+					<li><a href="#compliance">Compliance</a></li>
+					<li><a href="/trust/subprocessors">Subprocessors</a></li>
+				</ul>
+			</nav>
+
+			<section class="tr-section" id="hosting" aria-labelledby="h-hosting">
+				<h2 id="h-hosting">Hosting and regions</h2>
+				<p>The API and website run as one container on Google Cloud Run (service <code>three-ws-api</code>, region <code>us-central1</code>, Iowa, United States), deployed by Cloud Build under dedicated build and runtime service accounts. Scheduled jobs run on Cloud Scheduler. Cache and rate-limit state live in Memorystore for Redis on a private network that is not reachable from the internet.</p>
+				<p>The database is Neon managed PostgreSQL in AWS <code>us-west-2</code> (Oregon). User files are stored in Cloudflare R2. All customer data is processed in the United States. We do not offer data residency in other regions today.</p>
+				<p class="tr-evidence"><span>Evidence</span>
+					<a href="https://github.com/nirholas/three.ws/blob/main/server/cloudbuild.yaml">server/cloudbuild.yaml</a>
+					<a href="https://github.com/nirholas/three.ws/blob/main/docs/ops/gcp-production.md">docs/ops/gcp-production.md</a>
+					<a href="/trust/subprocessors">Subprocessor list</a>
+				</p>
+			</section>
+
+			<section class="tr-section" id="encryption" aria-labelledby="h-encryption">
+				<h2 id="h-encryption">Encryption</h2>
+				<h3>In transit</h3>
+				<p>HTTPS only, with <code>Strict-Transport-Security: max-age=63072000; includeSubDomains; preload</code> on every response. Calls to the database, object storage and model providers use TLS. The Redis link runs over Google's private network.</p>
+				<h3>At rest</h3>
+				<p>Each storage provider encrypts data at rest by default: <a href="https://cloud.google.com/docs/security/encryption/default-encryption">Google Cloud</a>, <a href="https://neon.com/docs/security/security-overview">Neon</a> and <a href="https://developers.cloudflare.com/r2/reference/data-security/">Cloudflare R2</a>. On top of that, the application encrypts its most sensitive values itself:</p>
+				<ul>
+					<li>Custodial wallet keys and per-agent provider keys: AES-256-GCM with HKDF-derived keys and a random nonce per record, under a key separate from the session secret.</li>
+					<li>Sessions, OAuth refresh tokens and API keys: stored only as SHA-256 hashes. The raw value is shown once and never stored.</li>
+					<li>Passwords: bcrypt.</li>
+				</ul>
+				<p class="tr-evidence"><span>Evidence</span>
+					<a href="https://github.com/nirholas/three.ws/blob/main/api/_lib/agent-wallet.js">api/_lib/agent-wallet.js</a>
+					<a href="https://github.com/nirholas/three.ws/blob/main/api/_lib/auth.js">api/_lib/auth.js</a>
+					<a href="https://github.com/nirholas/three.ws/blob/main/docs/security.md">docs/security.md</a>
+				</p>
+			</section>
+
+			<section class="tr-section" id="authentication" aria-labelledby="h-authentication">
+				<h2 id="h-authentication">Authentication</h2>
+				<ul>
+					<li><b>People:</b> email and password, Sign-In With Solana, EVM wallet sign-in (EIP-4361, single-use nonces), Google, GitHub and X, or Privy social sign-in. Browser sessions are opaque 32-byte random tokens in a <code>__Host-</code> cookie (HttpOnly, Secure, SameSite=Lax) with a 30-day lifetime.</li>
+					<li><b>Apps and MCP clients:</b> OAuth 2.1 with PKCE, where only <code>S256</code> is accepted, and audience-bound access tokens that expire after one hour. Refresh tokens rotate, and if an old one is reused the whole token chain is revoked. Scoped API keys can be revoked at any time.</li>
+					<li><b>Microsoft Marketplace buyers</b> sign in with their Microsoft Entra ID work account to activate a purchase.</li>
+					<li><b>Enterprise SSO:</b> SAML 2.0 service-provider support is built and can be enabled for a deployment with that organisation's identity provider. It is not enabled on three.ws today.</li>
+					<li><b>Multi-factor:</b> three.ws has no built-in second factor today. Wallet sign-in is passwordless, and SSO sign-in inherits the identity provider's MFA policy. Passkeys are not supported yet.</li>
+				</ul>
+				<p class="tr-evidence"><span>Evidence</span>
+					<a href="https://github.com/nirholas/three.ws/blob/main/api/oauth/%5Baction%5D.js">api/oauth/[action].js</a>
+					<a href="https://github.com/nirholas/three.ws/blob/main/api/_lib/saml.js">api/_lib/saml.js</a>
+					<a href="https://github.com/nirholas/three.ws/blob/main/api/_lib/microsoft-marketplace.js">api/_lib/microsoft-marketplace.js</a>
+					<a href="https://github.com/nirholas/three.ws/blob/main/docs/authentication.md">docs/authentication.md</a>
+				</p>
+			</section>
+
+			<section class="tr-section" id="access" aria-labelledby="h-access">
+				<h2 id="h-access">Access control and admin access</h2>
+				<p>Every API request is checked against the caller's scopes. Records belong to the user or agent that owns them, and generated files stay private to their owner until the owner publishes them. Agent skills declare the permissions they need, and the user grants them.</p>
+				<p>Admin endpoints require a signed-in session whose wallet is on a short allowlist or whose account is flagged as an admin in the database. Production infrastructure is reached through Google Cloud IAM, and secrets are held in Google Secret Manager rather than in the repository.</p>
+				<p class="tr-evidence"><span>Evidence</span>
+					<a href="https://github.com/nirholas/three.ws/blob/main/api/_lib/admin.js">api/_lib/admin.js</a>
+					<a href="https://github.com/nirholas/three.ws/blob/main/scripts/read-service-env.mjs">scripts/read-service-env.mjs</a>
+					<a href="https://github.com/nirholas/three.ws/blob/main/docs/security.md">docs/security.md</a>
+				</p>
+			</section>
+
+			<section class="tr-section" id="logging" aria-labelledby="h-logging">
+				<h2 id="h-logging">Logging and monitoring</h2>
+				<p>Request and error logs go to Google Cloud Logging. Every server fault and every reported browser error becomes an alert, deduplicated by signature. Critical alerts reach the operator by private Telegram chat and email immediately; warnings arrive in an hourly digest. A probe checks the platform, API and payment surfaces every 5 minutes and publishes the results on the <a href="/status">status page</a>. Signer keys are scanned for leaks every 15 minutes.</p>
+				<p>Chat message content is not logged. Security audit logs are kept for 365 days.</p>
+				<p class="tr-evidence"><span>Evidence</span>
+					<a href="https://github.com/nirholas/three.ws/blob/main/api/_lib/alerts.js">api/_lib/alerts.js</a>
+					<a href="https://github.com/nirholas/three.ws/blob/main/api/status.js">api/status.js</a>
+					<a href="https://github.com/nirholas/three.ws/blob/main/docs/ops/production-log-triage.md">docs/ops/production-log-triage.md</a>
+				</p>
+			</section>
+
+			<section class="tr-section" id="retention" aria-labelledby="h-retention">
+				<h2 id="h-retention">Data retention and deletion</h2>
+				<p>Every retention window below is enforced by a scheduled job. The schedules are in UTC.</p>
+				<div class="tr-table-scroll">
+					<table class="tr-table">
+						<thead><tr><th scope="col">Data</th><th scope="col">Kept for</th><th scope="col">Enforced by</th></tr></thead>
+						<tbody>
+							<tr><td>Deleted accounts</td><td>30 days soft-deleted, then purged: files first, then rows. Financial records are kept but stripped of anything that identifies you.</td><td><a href="https://github.com/nirholas/three.ws/blob/main/api/cron/purge-deleted-accounts.js">purge-deleted-accounts</a>, daily 04:17</td></tr>
+							<tr><td>Sessions (with sign-in IP and user agent)</td><td>30-day lifetime; the record is deleted 30 days after it expires or is revoked</td><td><a href="https://github.com/nirholas/three.ws/blob/main/api/_lib/privacy-retention.js">privacy-retention</a>, every 15 minutes</td></tr>
+							<tr><td>Sign-in nonces</td><td>Expire after 5 minutes; deleted within 24 hours</td><td><a href="https://github.com/nirholas/three.ws/blob/main/api/_lib/privacy-retention.js">privacy-retention</a>, every 15 minutes</td></tr>
+							<tr><td>Usage events</td><td>60 days in the live database, then moved to a private cold-storage archive in us-central1. Metered billing rows stay for invoicing.</td><td><a href="https://github.com/nirholas/three.ws/blob/main/api/_lib/db-archive-tables.js">db-archive-tables</a>, every 15 minutes</td></tr>
+							<tr><td>Security audit logs</td><td>365 days in the database, archived before pruning. Legal-acceptance records are kept for the life of the account.</td><td><a href="https://github.com/nirholas/three.ws/blob/main/api/_lib/audit-archive.js">audit-archive</a>, daily 04:00</td></tr>
+							<tr><td>Widget view events</td><td>12 months</td><td><a href="https://github.com/nirholas/three.ws/blob/main/api/_lib/privacy-retention.js">privacy-retention</a>, every 15 minutes</td></tr>
+							<tr><td>Raw MCP client sessions</td><td>30 days; only daily totals remain after that</td><td><a href="https://github.com/nirholas/three.ws/blob/main/api/cron/db-retention.js">db-retention</a>, every 15 minutes</td></tr>
+							<tr><td>Connected-home action log</td><td>90 days by default; the owner can shorten it to 1 day</td><td><a href="https://github.com/nirholas/three.ws/blob/main/docs/home-privacy.md">home privacy</a>, every 15 minutes</td></tr>
+							<tr><td>CSRF tokens</td><td>Until expiry</td><td>cleanup-csrf-tokens, hourly</td></tr>
+						</tbody>
+					</table>
+				</div>
+				<p>To access, export or delete your data, email <a href="mailto:privacy@three.ws">privacy@three.ws</a> from your account address or sign a request with your wallet. We answer within 30 days. Data written to a public blockchain cannot be deleted by anyone.</p>
+				<p class="tr-evidence"><span>Evidence</span>
+					<a href="/legal/privacy">Privacy policy, section 5</a>
+					<a href="https://github.com/nirholas/three.ws/blob/main/vercel.json">vercel.json (cron schedules)</a>
+					<a href="https://github.com/nirholas/three.ws/blob/main/tests/privacy-retention.test.js">tests/privacy-retention.test.js</a>
+				</p>
+			</section>
+
+			<section class="tr-section" id="backups" aria-labelledby="h-backups">
+				<h2 id="h-backups">Backups and recovery</h2>
+				<p>The database runs on Neon, which keeps a history of changes so it can be restored to an earlier point in time within the plan's restore window. Audit records, older usage records and pruned market-feed data are archived to Google Cloud Storage and checked against the source before any row is deleted. Every deploy is an immutable Cloud Run revision, so a bad release can be rolled back in one command.</p>
+				<p>We do not yet run scheduled database dumps to storage outside Neon. The last full dump was taken by hand on 8 July 2026, and automating it is in progress.</p>
+				<p class="tr-evidence"><span>Evidence</span>
+					<a href="https://github.com/nirholas/three.ws/blob/main/api/_lib/db-archive.js">api/_lib/db-archive.js</a>
+					<a href="https://github.com/nirholas/three.ws/blob/main/docs/ops/gcp-production.md">docs/ops/gcp-production.md</a>
+					<a href="https://neon.com/docs/introduction/branch-restore">Neon point-in-time restore</a>
+				</p>
+			</section>
+
+			<section class="tr-section" id="custody" aria-labelledby="h-custody">
+				<h2 id="h-custody">Wallet custody</h2>
+				<p>Every agent gets a <b>custodial</b> Solana wallet: three.ws holds the key, encrypted as described above, so the agent can act without a person approving each transaction. That means we hold signing power, and we say so plainly. The controls on it:</p>
+				<ul>
+					<li>Owner-set spend limits (daily and per transaction) and a destination allowlist, enforced on the server before anything is signed.</li>
+					<li>A one-tap freeze that stops all autonomous spending but never blocks the owner's own withdrawal.</li>
+					<li>A custody event trail of every withdrawal, spend, limit change and freeze, with balances committed to a Merkle attestation that anyone can re-verify in the browser.</li>
+					<li>Social recovery and inheritance that transfer ownership of a wallet without exposing its key.</li>
+				</ul>
+				<p>Wallets people connect themselves from their own browser or mobile wallet app are never custodial. Their keys never reach three.ws.</p>
+				<p class="tr-evidence"><span>Evidence</span>
+					<a href="https://github.com/nirholas/three.ws/blob/main/docs/custody.md">docs/custody.md</a>
+					<a href="https://github.com/nirholas/three.ws/blob/main/api/_lib/agent-wallet.js">api/_lib/agent-wallet.js</a>
+				</p>
+			</section>
+
+			<section class="tr-section" id="ai" aria-labelledby="h-ai">
+				<h2 id="h-ai">AI data use</h2>
+				<p>three.ws does not train models on your prompts, files or photos. Most 3D generation runs on our own GPU workers in Google Cloud, so that content does not go to a third party. Chat goes to hosted model providers in a failover order. Free lanes come first, which means a prompt can reach any provider in the order below. The terms each provider publishes for its API:</p>
+				<div class="tr-table-scroll">
+					<table class="tr-table">
+						<thead><tr><th scope="col">Provider</th><th scope="col">Used for</th><th scope="col">What the provider publishes</th></tr></thead>
+						<tbody>
+							<tr><td>Groq</td><td>Default chat lane</td><td>"By default, Groq does not retain customer data for inference requests." Inputs and outputs may be logged for up to 30 days for reliability and abuse investigation. <a href="https://console.groq.com/docs/your-data">Source</a></td></tr>
+							<tr><td>OpenRouter</td><td>Chat failover, free models</td><td>"Wherever possible, OpenRouter works with providers to ensure that prompts will not be trained on, but there are exceptions." Some downstream providers "may train on it if marked." <a href="https://openrouter.ai/docs/features/privacy-and-logging">Source</a></td></tr>
+							<tr><td>NVIDIA</td><td>Chat failover, speech recognition, text-to-3D</td><td>NVIDIA's API catalog documentation makes no statement about training on or retaining submitted inputs. We treat it as a provider that may retain them. <a href="https://www.nvidia.com/en-us/about-nvidia/privacy-policy/">Privacy policy</a></td></tr>
+							<tr><td>OpenAI</td><td>Paid chat backstop, embeddings</td><td>"Data sent to the OpenAI API is not used to train or improve OpenAI models." Abuse-monitoring logs are "retained for up to 30 days." <a href="https://developers.openai.com/api/docs/guides/your-data">Source</a></td></tr>
+							<tr><td>Google Vertex AI</td><td>Gemini chat anchor, Imagen images</td><td>"Google won't use your data to train or fine-tune any AI/ML models without your prior permission or instruction." Cached data is "deleted no later than 24 hours after it's written." <a href="https://docs.cloud.google.com/vertex-ai/generative-ai/docs/data-governance">Source</a></td></tr>
+							<tr><td>Cloudflare Workers AI</td><td>Image understanding</td><td>"Cloudflare does not use Customer Content processed by Workers AI to train AI models." <a href="https://developers.cloudflare.com/workers-ai/platform/data-usage/">Source</a></td></tr>
+						</tbody>
+					</table>
+				</div>
+				<p>Because free lanes lead the order, do not put confidential or personal data in prompts. Selfie photos for avatars go to our own reconstruction service. We never use them for training and never derive a face template from them.</p>
+				<p class="tr-evidence"><span>Evidence</span>
+					<a href="https://github.com/nirholas/three.ws/blob/main/api/chat.js">api/chat.js (routing order)</a>
+					<a href="https://github.com/nirholas/three.ws/blob/main/api/_lib/chat-models.js">api/_lib/chat-models.js</a>
+					<a href="/legal/privacy">Privacy policy, sections 3 and 10</a>
+				</p>
+			</section>
+
+			<section class="tr-section" id="incidents" aria-labelledby="h-incidents">
+				<h2 id="h-incidents">Incident response and status</h2>
+				<p>Incidents are detected automatically, as described under logging. Responders can contain one by rotating a secret, freezing wallets, revoking sessions, rolling back to an earlier revision, or turning off a feature with its kill switch. If a breach affects personal data, we notify affected users, and regulators where the law requires, without undue delay and within the legal deadline, for example 72 hours under GDPR. Live availability is on the <a href="/status">status page</a>.</p>
+				<p class="tr-evidence"><span>Evidence</span>
+					<a href="https://github.com/nirholas/three.ws/blob/main/docs/incident-response.md">docs/incident-response.md</a>
+					<a href="/status">three.ws/status</a>
+					<a href="/legal/privacy">Privacy policy, section 9a</a>
+				</p>
+			</section>
+
+			<section class="tr-section" id="disclosure" aria-labelledby="h-disclosure">
+				<h2 id="h-disclosure">Vulnerability disclosure</h2>
+				<p>Report vulnerabilities privately to <a href="mailto:security@three.ws">security@three.ws</a>. We aim to acknowledge reports within 48 hours and to ship fixes for critical issues within 7 days. Please give us a reasonable window to fix an issue before disclosing it publicly. Do not access other people's data, disrupt the service, or move funds you do not own while testing.</p>
+				<p class="tr-evidence"><span>Evidence</span>
+					<a href="/.well-known/security.txt">/.well-known/security.txt</a>
+					<a href="https://github.com/nirholas/three.ws/blob/main/docs/security.md">docs/security.md</a>
+				</p>
+			</section>
+
+			<section class="tr-section" id="compliance" aria-labelledby="h-compliance">
+				<h2 id="h-compliance">Compliance status</h2>
+				<p>Where things stand today. We do not claim a certification until we hold it.</p>
+				<div class="tr-table-scroll">
+					<table class="tr-table">
+						<thead><tr><th scope="col">Item</th><th scope="col">Status</th><th scope="col">Detail</th></tr></thead>
+						<tbody>
+							<tr><td>Open-source code</td><td><span class="tr-badge is-good">In place</span></td><td>Apache 2.0; every control on this page can be read in the source.</td></tr>
+							<tr><td>Encryption in transit and hashed credentials</td><td><span class="tr-badge is-good">In place</span></td><td>TLS with HSTS preload; sessions, refresh tokens and API keys stored as hashes.</td></tr>
+							<tr><td>Enforced retention and deletion</td><td><span class="tr-badge is-good">In place</span></td><td>Scheduled jobs for every database window above, each covered by tests.</td></tr>
+							<tr><td>Vulnerability disclosure</td><td><span class="tr-badge is-good">In place</span></td><td>RFC 9116 <code>security.txt</code> and a monitored security contact.</td></tr>
+							<tr><td>Public status page</td><td><span class="tr-badge is-good">In place</span></td><td>Probes every 5 minutes, with 90 days of history.</td></tr>
+							<tr><td>Dependency advisory triage</td><td><span class="tr-badge is-good">In place</span></td><td>Advisories reviewed for reachability and recorded in <a href="https://github.com/nirholas/three.ws/blob/main/docs/security.md">docs/security.md</a>.</td></tr>
+							<tr><td>Microsoft 365 App Compliance: Publisher Attestation</td><td><span class="tr-badge is-warn">In progress</span></td><td>In preparation. Answers are drafted from the code and have not been submitted.</td></tr>
+							<tr><td>Written incident response plan</td><td><span class="tr-badge is-warn">In progress</span></td><td>Drafted from the running system and awaiting owner sign-off.</td></tr>
+							<tr><td>Automated off-provider database backups</td><td><span class="tr-badge is-warn">In progress</span></td><td>Neon point-in-time restore today; scheduled external dumps not yet automated.</td></tr>
+							<tr><td>Archived usage records expiry</td><td><span class="tr-badge is-warn">In progress</span></td><td>Archived usage events do not yet expire. Adding an expiry rule that matches the privacy policy's 90-day window.</td></tr>
+							<tr><td>Built-in multi-factor sign-in</td><td><span class="tr-badge is-off">Not pursued</span></td><td>Use wallet or SSO sign-in, which inherit the wallet's or identity provider's protections.</td></tr>
+							<tr><td>SOC 2 Type II, ISO/IEC 27001</td><td><span class="tr-badge is-off">Not pursued</span></td><td>Not held, and no audit is under way.</td></tr>
+							<tr><td>Third-party penetration test</td><td><span class="tr-badge is-off">Not pursued</span></td><td>Not yet commissioned. An internal source-level security review was completed in October 2026.</td></tr>
+							<tr><td>Data residency outside the US</td><td><span class="tr-badge is-off">Not pursued</span></td><td>All customer data is processed in the United States.</td></tr>
+						</tbody>
+					</table>
+				</div>
+			</section>
+
+			<section class="tr-section" aria-labelledby="h-more">
+				<h2 id="h-more">Documents</h2>
+				<div class="tr-actions">
+					<a class="tr-btn tr-btn-primary" href="/trust/subprocessors">Subprocessors</a>
+					<a class="tr-btn" href="/legal/privacy">Privacy policy</a>
+					<a class="tr-btn" href="/legal/tos">Terms of use</a>
+					<a class="tr-btn" href="/legal">All policies</a>
+					<a class="tr-btn" href="/status">Status</a>
+				</div>
+			</section>
+
+			<p class="tr-meta">Microsoft, Microsoft Entra ID, Microsoft 365 and Microsoft Marketplace are trademarks of the Microsoft group of companies. Other names are trademarks of their respective owners. Naming a provider does not imply that it endorses three.ws.</p>
+		</main>
+
+		<script src="/nav.js" defer></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

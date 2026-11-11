@@ -1,0 +1,173 @@
+{
+	"$comment": "Source for /trust/subprocessors. Every row names the repo files that call the provider (evidence) and the provider's own published terms (terms). tests/trust-page.test.js fails if an evidence path stops existing. Re-review when a provider key is added to or removed from the three-ws-api Cloud Run service, then bump lastReviewed.",
+	"lastReviewed": "2026-11-11",
+	"method": "Built from the environment variable names on the production Cloud Run service three-ws-api (names only, never values) and the code that reads each one. A key that is set but not called from a production request path is not listed.",
+	"groups": [
+		{
+			"id": "infrastructure",
+			"title": "Infrastructure",
+			"intro": "Where the service runs and where account data and content are stored."
+		},
+		{
+			"id": "ai",
+			"title": "AI model providers",
+			"intro": "Receive prompts, images or audio only when a user runs a feature that calls them. Self-hosted models on our own Google Cloud GPU workers are not third parties and are not listed."
+		},
+		{
+			"id": "blockchain",
+			"title": "Blockchain access",
+			"intro": "Read and submit public chain data. Wallet addresses and transactions are public by nature."
+		},
+		{
+			"id": "communications",
+			"title": "Communications",
+			"intro": "Email to users and private alerts to the operator."
+		}
+	],
+	"subprocessors": [
+		{
+			"name": "Google Cloud",
+			"group": "infrastructure",
+			"purpose": "Application hosting (Cloud Run), scheduled jobs (Cloud Scheduler), request and error logs (Cloud Logging), cache and rate-limit store (Memorystore for Redis, private network only), secrets (Secret Manager), cold-storage archive and avatar reconstructions (Cloud Storage), self-hosted 3D and vision GPU workers.",
+			"data": ["All data the API processes in memory", "Request logs (URL, status, client IP)", "Archived audit and usage records", "Uploaded reconstruction photos"],
+			"region": "United States (us-central1, Iowa)",
+			"evidence": ["server/cloudbuild.yaml", "docs/ops/gcp-production.md", "api/_lib/db-archive.js"],
+			"terms": "https://cloud.google.com/terms/data-processing-addendum"
+		},
+		{
+			"name": "Neon",
+			"group": "infrastructure",
+			"purpose": "Managed PostgreSQL, the primary database for accounts, agents, sessions, usage and payments records.",
+			"data": ["Account data (email, wallet addresses, password hashes)", "Agent and avatar records", "Session records", "Usage and payment records"],
+			"region": "United States (AWS us-west-2, Oregon)",
+			"evidence": ["api/_lib/db.js", "api/_lib/schema.sql"],
+			"terms": "https://neon.com/dpa"
+		},
+		{
+			"name": "Cloudflare",
+			"group": "infrastructure",
+			"purpose": "Object storage and public delivery for user files (R2): avatars, generated 3D models, uploads.",
+			"data": ["Files users upload or generate", "Files users choose to publish"],
+			"region": "Provider-managed R2 location",
+			"evidence": ["api/_lib/r2.js"],
+			"terms": "https://www.cloudflare.com/cloudflare-customer-dpa/"
+		},
+		{
+			"name": "Privy",
+			"group": "infrastructure",
+			"purpose": "Optional social and email sign-in with embedded wallets. Used only when a user picks a Privy sign-in method.",
+			"data": ["Email or social account identifier", "Embedded wallet address"],
+			"region": "Provider-managed",
+			"evidence": ["api/_lib/privy.js", "docs/authentication.md"],
+			"terms": "https://www.privy.io/privacy-policy"
+		},
+		{
+			"name": "Groq",
+			"group": "ai",
+			"purpose": "Default chat inference lane (first in the failover order).",
+			"data": ["Chat prompts and responses"],
+			"region": "Provider-managed",
+			"evidence": ["api/chat.js", "api/_lib/chat-models.js"],
+			"terms": "https://console.groq.com/docs/your-data"
+		},
+		{
+			"name": "OpenRouter",
+			"group": "ai",
+			"purpose": "Chat inference failover lane, routed to free-tier models.",
+			"data": ["Chat prompts and responses"],
+			"region": "Provider-managed; the downstream model host varies per request",
+			"evidence": ["api/chat.js", "api/_lib/chat-models.js"],
+			"terms": "https://openrouter.ai/docs/features/privacy-and-logging"
+		},
+		{
+			"name": "NVIDIA",
+			"group": "ai",
+			"purpose": "Chat inference failover lane, speech recognition, Audio2Face lip-sync, and the hosted Microsoft TRELLIS text-to-3D lane (NVIDIA API catalog and NVCF).",
+			"data": ["Chat prompts", "Voice audio sent for transcription", "Text-to-3D prompts"],
+			"region": "Provider-managed",
+			"evidence": ["api/chat.js", "api/asr.js", "api/_lib/forge-tiers.js"],
+			"terms": "https://www.nvidia.com/en-us/about-nvidia/privacy-policy/"
+		},
+		{
+			"name": "OpenAI",
+			"group": "ai",
+			"purpose": "Paid chat backstop when every free lane is unavailable, and text embeddings for search and memory.",
+			"data": ["Chat prompts and responses", "Text sent for embedding"],
+			"region": "Provider-managed",
+			"evidence": ["api/_lib/llm.js", "api/_lib/embeddings.js"],
+			"terms": "https://developers.openai.com/api/docs/guides/your-data"
+		},
+		{
+			"name": "Google Vertex AI",
+			"group": "ai",
+			"purpose": "Gemini chat anchor at the end of the failover order and Imagen image generation, billed to our own Google Cloud project.",
+			"data": ["Chat prompts and responses", "Image prompts"],
+			"region": "us-central1 (Gemini chat); global endpoint (Imagen)",
+			"evidence": ["api/chat.js", "api/_lib/llm.js", "api/_lib/ai-image-lanes.js"],
+			"terms": "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/data-governance"
+		},
+		{
+			"name": "Cloudflare Workers AI",
+			"group": "ai",
+			"purpose": "Image understanding and a text inference lane.",
+			"data": ["Images sent for description", "Prompts"],
+			"region": "Provider-managed",
+			"evidence": ["api/_lib/vision.js", "api/_lib/llm.js"],
+			"terms": "https://developers.cloudflare.com/workers-ai/platform/data-usage/"
+		},
+		{
+			"name": "Hugging Face",
+			"group": "ai",
+			"purpose": "Image generation failover lane.",
+			"data": ["Image prompts"],
+			"region": "Provider-managed",
+			"evidence": ["api/_lib/ai-image-lanes.js"],
+			"terms": "https://huggingface.co/privacy"
+		},
+		{
+			"name": "Helius",
+			"group": "blockchain",
+			"purpose": "Solana RPC: balances, transaction submission and chain indexing.",
+			"data": ["Public wallet addresses", "Signed transactions"],
+			"region": "Provider-managed",
+			"evidence": ["api/v1/_providers.js", "api/x402-checkout.js"],
+			"terms": "https://www.helius.dev/privacy-policy"
+		},
+		{
+			"name": "Alchemy",
+			"group": "blockchain",
+			"purpose": "EVM RPC: balances and transaction reads on secondary EVM chains.",
+			"data": ["Public wallet addresses"],
+			"region": "Provider-managed",
+			"evidence": ["api/_lib/balances.js"],
+			"terms": "https://www.alchemy.com/policies/privacy-policy"
+		},
+		{
+			"name": "Pinata",
+			"group": "blockchain",
+			"purpose": "IPFS pinning for metadata a user chooses to register on-chain. Pinned content is public by design.",
+			"data": ["Agent registration metadata the user publishes"],
+			"region": "Provider-managed",
+			"evidence": ["api/_lib/ipfs-pin.js"],
+			"terms": "https://pinata.cloud/privacy"
+		},
+		{
+			"name": "Resend",
+			"group": "communications",
+			"purpose": "Transactional email (sign-in links, receipts, notices) and operator alert email.",
+			"data": ["Recipient email address", "Message content"],
+			"region": "Provider-managed",
+			"evidence": ["api/_lib/email.js", "api/_lib/mail/resend.js"],
+			"terms": "https://resend.com/legal/dpa"
+		},
+		{
+			"name": "Telegram",
+			"group": "communications",
+			"purpose": "Private operator alert channel for production faults. Alerts can carry request URLs and client IP addresses; it is never a public channel.",
+			"data": ["Error details, request URLs, client IP addresses"],
+			"region": "Provider-managed",
+			"evidence": ["api/_lib/alerts.js"],
+			"terms": "https://telegram.org/privacy"
+		}
+	]
+}

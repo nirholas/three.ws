@@ -1,7 +1,8 @@
-# Security policy for three.ws
-# https://securitytxt.org/
+# Security policy for three.ws (RFC 9116)
+# Public trust center: https://three.ws/trust
 
 Contact: mailto:security@three.ws
+Expires: 2027-04-14T00:00:00.000Z
+Policy: https://three.ws/trust#disclosure
 Preferred-Languages: en
 Canonical: https://three.ws/.well-known/security.txt
-Expires: 2027-04-14T00:00:00.000Z

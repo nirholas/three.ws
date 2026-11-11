@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<title>Subprocessors · three.ws trust center</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="description" content="Every third party that processes data for three.ws: what it does, which data it sees, where it runs, and the file in the open-source code that calls it." />
+		<link rel="canonical" href="https://three.ws/trust/subprocessors" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Subprocessors · three.ws" />
+		<meta property="og:description" content="Every third party that processes data for three.ws, with the code that calls it." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Subprocessors&amp;d=Every+third+party%2C+with+the+code+that+calls+it.&amp;p=%2Ftrust%2Fsubprocessors" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+	</head>
+	<body>
+		<div id="nav-container"></div>
+
+		<main class="tr-wrap">
+			<p class="tr-crumb"><a href="/">Home</a> / <a href="/trust">Trust center</a> / Subprocessors</p>
+			<p class="tr-eyebrow">Trust center</p>
+			<h1 class="tr-h1">Subprocessors</h1>
+			<p class="tr-lede">Every third party that processes data on behalf of three.ws: what it does, which data it sees, where it runs, and the file in our open-source code that calls it.</p>
+			<p class="tr-meta" id="tr-sp-meta">Loading the list</p>
+
+			<div class="tr-filter">
+				<label class="tr-sr" for="tr-sp-q">Filter subprocessors</label>
+				<input id="tr-sp-q" type="search" autocomplete="off" spellcheck="false" placeholder="Filter by name, purpose, data or region" />
+				<span class="tr-count" id="tr-sp-count" aria-live="polite"></span>
+			</div>
+
+			<div id="tr-sp-root" aria-busy="true"></div>
+
+			<section class="tr-section" aria-labelledby="h-sp-changes">
+				<h2 id="h-sp-changes">Changes and questions</h2>
+				<p>This list is generated from <a href="https://github.com/nirholas/three.ws/blob/main/data/subprocessors.json">data/subprocessors.json</a>, so every change to it is visible in the repository history. A test fails if a listed evidence file stops existing. Questions or a request for a data processing agreement: <a href="mailto:privacy@three.ws">privacy@three.ws</a>.</p>
+				<div class="tr-actions">
+					<a class="tr-btn tr-btn-primary" href="/trust">Back to the trust center</a>
+					<a class="tr-btn" href="/legal/privacy">Privacy policy</a>
+				</div>
+			</section>
+		</main>
+
+		<script type="module" src="/src/trust-subprocessors.js"></script>
+		<script src="/nav.js" defer></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

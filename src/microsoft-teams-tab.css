@@ -10,6 +10,11 @@
 .tt-brand { font-family: var(--font-display); font-weight: var(--weight-semibold); font-size: var(--text-md); color: var(--ink-bright); text-decoration: none; white-space: nowrap; }
 .tt-brand:hover { color: var(--accent); }
 
+.tt-foot { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: var(--space-lg); padding-top: var(--space-sm); border-top: 1px solid var(--stroke); font-size: var(--text-xs); }
+.tt-foot a { color: var(--ink-dim); text-decoration: none; border-radius: 4px; }
+.tt-foot a:hover { color: var(--ink-bright); text-decoration: underline; }
+.tt-foot a:focus-visible { outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #3b82f6); outline-offset: 2px; }
+
 .tt-search { position: relative; flex: 1; max-width: 460px; margin-left: auto; }
 .tt-search svg { position: absolute; left: 12px; top: 50%; width: 16px; height: 16px; transform: translateY(-50%); color: var(--ink-dim); pointer-events: none; }
 .tt-search input {

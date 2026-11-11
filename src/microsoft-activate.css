@@ -66,6 +66,7 @@
 	outline-offset: var(--focus-ring-offset, 2px);
 }
 .ma-wrap a:not(.ma-btn) { color: var(--ink-bright); }
+.ma-trust { margin: var(--space-lg) 0 0; font-size: var(--text-sm); color: var(--ink-dim); }
 .ma-wrap a:not(.ma-btn):hover { color: var(--accent); }
 
 .ma-hint { color: var(--ink-dim); font-size: var(--text-xs); line-height: 1.5; margin-top: var(--space-sm); }
