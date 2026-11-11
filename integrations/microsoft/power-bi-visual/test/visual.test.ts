@@ -268,6 +268,25 @@ describe("layout, events and accessibility", () => {
     });
 });
 
+describe("hidden parts stay hidden", () => {
+    it("never paints an element the visual has hidden, whatever display its styles give it", async () => {
+        const v = open();
+        v.update(dataView({
+            category: { name: "Product", values: ["Live", "Blocked"] },
+            model: { name: "Model", values: [LIVE_GLB, blocked(1)] },
+        }));
+        expect(await v.rendered()).toBe("finished");
+        const hidden = Array.from(v.element.querySelectorAll<HTMLElement>("[hidden]"));
+        const [live, failed] = tiles(v.element);
+        expect(hidden).toContain(live.querySelector(".tws-skeleton"));
+        expect(hidden).toContain(live.querySelector(".tws-error"));
+        expect(hidden).toContain(failed.querySelector(".tws-error .tws-button"));
+        for (const element of hidden) {
+            expect(getComputedStyle(element).display, element.className).toBe("none");
+        }
+    });
+});
+
 describe("real three.ws models", () => {
     it("downloads, decodes and draws a production GLB, then reports the render finished", async () => {
         const v = open();
