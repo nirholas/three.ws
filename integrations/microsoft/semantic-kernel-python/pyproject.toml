@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "threews-semantic-kernel"
+version = "0.1.0"
+description = "three.ws plugin for Microsoft Semantic Kernel: free text-to-3D generation, a 3D asset catalog and three.ws agent messaging"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+authors = [{ name = "three.ws", email = "hello@three.ws" }]
+keywords = ["semantic-kernel", "agents", "ai", "3d", "glb", "mcp", "threews"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Multimedia :: Graphics :: 3D Modeling",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3 :: Only",
+    "Framework :: AsyncIO",
+]
+dependencies = [
+    "semantic-kernel>=1.30.0",
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+mcp = ["mcp>=1.8"]
+test = ["pytest>=8", "pytest-asyncio>=0.23", "mcp>=1.8"]
+
+[project.urls]
+Documentation = "https://three.ws/docs/microsoft-agent-stack"
+Website = "https://three.ws/"
+Source = "https://github.com/nirholas/three.ws/tree/main/integrations/microsoft/semantic-kernel-python"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+threews_semantic_kernel = ["py.typed"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = ["slow: runs a real GPU generation on three.ws (a few minutes)"]
