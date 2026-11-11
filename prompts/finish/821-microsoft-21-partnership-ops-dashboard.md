@@ -1,5 +1,7 @@
 # microsoft 21: an internal Microsoft partnership dashboard (SaaS subscriptions, metering, Teams, connector, alerts)
 
+Status 2026-11-11: built and verified against production data; paused on owner steps (alert channel env, Marketplace credentials, Partner Center Entra app with Manager role, Cloud Scheduler sync, push and deploy). Not deleted until those land.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3121.
 
 ## Operating clause (binding)
