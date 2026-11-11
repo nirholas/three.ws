@@ -1,7 +1,7 @@
 "use strict";
 
 import powerbi from "powerbi-visuals-api";
-import { format as formatValue } from "powerbi-visuals-utils-formattingutils/lib/valueFormatter";
+import { format as formatValue } from "powerbi-visuals-utils-formattingutils/lib/src/valueFormatter";
 import { ModelRef, parseModelRef } from "./modelRef";
 
 import DataView = powerbi.DataView;
