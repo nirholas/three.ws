@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T17:40:40.605Z",
+	"generated_at": "2026-11-11T17:41:33.586Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -328,6 +328,16 @@
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "Teach your agent from Word, PowerPoint, Excel, PDF and Outlook files",
+			"summary": "Open the Knowledge tab on an agent's edit page and drop in a handbook, a pitch deck, a price list, a policy PDF or an email. Each file shows its own upload progress, then is read with Microsoft MarkItDown on our own hardened converter, split into sections, one per slide, sheet or email, and indexed for search. From the next message the agent answers from those files and names the one it used. A test box shows exactly which passages it would draw on and streams a real answer beside them. Delete a file and everything derived from it goes with it; the original file is never stored. Up to 50 files of 25 MB each per agent.",
+			"link": "/docs/agent-knowledge",
+			"tags": [
+				"feature"
 			]
 		},
 		{

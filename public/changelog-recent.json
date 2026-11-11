@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-11T17:40:40.939Z",
+	"generated_at": "2026-11-11T17:41:34.022Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4519,
+	"total": 4520,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -331,6 +331,16 @@
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "Teach your agent from Word, PowerPoint, Excel, PDF and Outlook files",
+			"summary": "Open the Knowledge tab on an agent's edit page and drop in a handbook, a pitch deck, a price list, a policy PDF or an email. Each file shows its own upload progress, then is read with Microsoft MarkItDown on our own hardened converter, split into sections, one per slide, sheet or email, and indexed for search. From the next message the agent answers from those files and names the one it used. A test box shows exactly which passages it would draw on and streams a real answer beside them. Delete a file and everything derived from it goes with it; the original file is never stored. Up to 50 files of 25 MB each per agent.",
+			"link": "/docs/agent-knowledge",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1522,16 +1532,6 @@
 			"title": "Gold holders get early access to drops, Genesis gets first dibs on rare names",
 			"summary": "Generative drops now open with a holder-only window set by the creator (15 minutes by default, 0 to skip): during it, revealing an item needs Gold or higher in $THREE, and the drop page shows a live countdown to public opening. Rare *.threews.sol names can be put behind a Genesis-only window. Both windows end on their own.",
 			"link": "/three",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Grok Bot gets the Solana market, and three.ws events can wake it",
-			"summary": "The three.ws connector for Grok Bot now covers more than 3D. Signed in, Grok can read live pump.fun graduations and token intel, Oracle conviction plays, the Sentiment Scout, token due diligence, the trader leaderboard and Solana agent passports, and a new market-brief prompt turns them into a scheduled daily brief. None of these tools can trade or spend. Developer webhooks can now carry a bearer token, so a three.ws event such as a finished generation or agent run can start a Grok Bot routine. The token is stored encrypted and never shown again. The /grok page and docs also cover Grok Build, xAI's coding CLI, which picks up the three.ws MCP config and plugin marketplace with no extra setup.",
-			"link": "/grok",
 			"tags": [
 				"feature"
 			]

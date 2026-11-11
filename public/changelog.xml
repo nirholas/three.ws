@@ -263,6 +263,14 @@
 			<description>Anyone can now sign in with a work, school or personal Microsoft account, and link it to an existing account from Settings. Team owners can claim their organisation's Microsoft Entra tenant with an admin sign-in, so colleagues are offered the team (or join automatically) the first time they sign in. Entra ID can provision people and groups over SCIM: when someone leaves or is unassigned, their team access ends and their sessions from that organisation are signed out. Setup takes a few minutes and every change is logged on the team page.</description>
 		</item>
 		<item>
+			<title>Teach your agent from Word, PowerPoint, Excel, PDF and Outlook files</title>
+			<link>https://three.ws/docs/agent-knowledge</link>
+			<guid isPermaLink="false">2026-11-11:Teach your agent from Word, PowerPoint, Excel, PDF and Outlook files</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Open the Knowledge tab on an agent's edit page and drop in a handbook, a pitch deck, a price list, a policy PDF or an email. Each file shows its own upload progress, then is read with Microsoft MarkItDown on our own hardened converter, split into sections, one per slide, sheet or email, and indexed for search. From the next message the agent answers from those files and names the one it used. A test box shows exactly which passages it would draw on and streams a real answer beside them. Delete a file and everything derived from it goes with it; the original file is never stored. Up to 50 files of 25 MB each per agent.</description>
+		</item>
+		<item>
 			<title>three.ws in GitHub Copilot Chat for VS Code</title>
 			<link>https://three.ws/docs/vscode</link>
 			<guid isPermaLink="false">2026-11-11:three.ws in GitHub Copilot Chat for VS Code</guid>

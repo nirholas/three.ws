@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-11",
+			"title": "Teach your agent from Word, PowerPoint, Excel, PDF and Outlook files",
+			"summary": "Open the Knowledge tab on an agent's edit page and drop in a handbook, a pitch deck, a price list, a policy PDF or an email. Each file shows its own upload progress, then is read with Microsoft MarkItDown on our own hardened converter, split into sections, one per slide, sheet or email, and indexed for search. From the next message the agent answers from those files and names the one it used. A test box shows exactly which passages it would draw on and streams a real answer beside them. Delete a file and everything derived from it goes with it; the original file is never stored. Up to 50 files of 25 MB each per agent.",
+			"tags": ["feature"],
+			"link": "/docs/agent-knowledge"
+		},
+		{
+			"date": "2026-11-11",
 			"title": "Give a Semantic Kernel or Microsoft Agent Framework agent 3D generation",
 			"summary": "Two new plugins, threews-semantic-kernel for Python and ThreeWs.SemanticKernel for .NET, give an agent six functions on three.ws: generate a textured 3D model from text and wait for it, check a generation, search thousands of free ready-made props, characters and motion clips, list your agents, search the public agent directory and message an agent. Each also attaches the free MCP 3D studio in one line. Python and .NET Agent Framework samples pick the prop a scene needs, check the catalog and return a real downloadable model, and a quickstart attaches the studio to a Foundry agent. No account or key is needed except to list your own agents. Both packages ship with live tests against the real API and go up on PyPI and NuGet with the owner's publish.",
 			"tags": ["sdk", "feature"],
