@@ -32,7 +32,7 @@ import {
 
 export const PROTOCOL_VERSION = '2025-06-18';
 
-const SERVER_INFO = { name: 'three-ws-3d-studio-free', version: '1.0.0' };
+const SERVER_INFO = { name: 'three-ws-3d-studio-free', version: '1.0.1' };
 
 const BASE_INSTRUCTIONS = [
 	'three.ws 3D Studio turns a text prompt or an image into an interactive, downloadable 3D model (GLB), free.',
