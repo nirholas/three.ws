@@ -13,6 +13,7 @@ import { THREE_WS_ORIGIN } from "./modelRef";
 import { ModelLoadError, ModelResolver } from "./resolver";
 import { disposeObject, SceneRenderer, TileDraw, WebGLUnavailableError } from "./sceneRenderer";
 import { toViewSettings, ViewSettings, VisualFormattingSettingsModel } from "./settings";
+import { localizer, setLocalizationManager, t } from "./strings";
 import { Tile, TileHandlers } from "./tileView";
 
 import IVisual = powerbi.extensibility.visual.IVisual;
@@ -23,6 +24,7 @@ import ISelectionId = powerbi.visuals.ISelectionId;
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 import PrivilegeStatus = powerbi.PrivilegeStatus;
+import ISandboxExtendedColorPalette = powerbi.extensibility.ISandboxExtendedColorPalette;
 
 const GAP = 8;
 const STRIP_HEIGHT = 48;
@@ -35,7 +37,7 @@ export class Visual implements IVisual {
     private readonly host: IVisualHost;
     private readonly events: IVisualEventService;
     private readonly selectionManager: ISelectionManager;
-    private readonly formattingService = new FormattingSettingsService();
+    private readonly formattingService = new FormattingSettingsService(localizer);
     private formattingSettings = new VisualFormattingSettingsModel();
     private settings: ViewSettings = toViewSettings(this.formattingSettings);
 
@@ -73,14 +75,15 @@ export class Visual implements IVisual {
     constructor(options?: VisualConstructorOptions) {
         if (!options) throw new TypeError("The three.ws visual needs constructor options from the Power BI host.");
         this.host = options.host;
+        setLocalizationManager(this.host.createLocalizationManager?.());
         this.events = this.host.eventService;
         this.selectionManager = this.host.createSelectionManager();
         this.root = options.element;
         this.root.classList.add("tws-root");
 
         this.stage = el("div", "tws-stage");
-        this.tileLayer = el("div", "tws-tiles", { role: "listbox", "aria-label": "3D models", "aria-multiselectable": "true" });
-        this.strip = el("div", "tws-strip", { role: "toolbar", "aria-label": "Gallery models" });
+        this.tileLayer = el("div", "tws-tiles", { role: "listbox", "aria-label": t("Ui_Models"), "aria-multiselectable": "true" });
+        this.strip = el("div", "tws-strip", { role: "toolbar", "aria-label": t("Ui_GalleryModels") });
         this.landingHost = el("div", "tws-landing-host");
         this.message = el("div", "tws-message", { role: "alert" });
         this.note = el("div", "tws-note");
@@ -137,11 +140,11 @@ export class Visual implements IVisual {
         try {
             const dataView = options.dataViews?.[0];
             this.formattingSettings = this.formattingService.populateFormattingSettingsModel(VisualFormattingSettingsModel, dataView);
-            this.settings = toViewSettings(this.formattingSettings);
+            this.settings = this.applyContrast(toViewSettings(this.formattingSettings));
             this.viewport = { width: Math.max(0, options.viewport.width), height: Math.max(0, options.viewport.height) };
 
             if (!this.renderer) {
-                this.showMessage("WebGL is not available in this browser, so 3D models cannot be drawn. Open the report in a current version of Edge, Chrome, Firefox or Safari.");
+                this.showMessage(t("Err_NoWebGL"));
                 this.fail(options, "WebGL unavailable");
                 return;
             }
@@ -177,6 +180,30 @@ export class Visual implements IVisual {
         this.cache.dispose(disposeObject);
         clear(this.root);
         this.root.classList.remove("tws-root");
+    }
+
+    /**
+     * High-contrast mode replaces every colour the visual draws (scene
+     * background, labels, borders, focus rings, buttons) with the host's
+     * high-contrast palette. Model materials keep their own shading so the
+     * shapes stay legible, and measure tints are switched off because the
+     * palette has no ramp colours.
+     */
+    private applyContrast(settings: ViewSettings): ViewSettings {
+        const palette = this.host.colorPalette as ISandboxExtendedColorPalette | undefined;
+        const highContrast = Boolean(palette?.isHighContrast);
+        this.root.classList.toggle("tws-hc", highContrast);
+        if (!palette || !highContrast) {
+            for (const name of ["--tws-hc-fg", "--tws-hc-bg", "--tws-hc-select"]) this.root.style.removeProperty(name);
+            return settings;
+        }
+        const foreground = palette.foreground.value;
+        const background = palette.background.value;
+        const selected = palette.foregroundSelected.value;
+        this.root.style.setProperty("--tws-hc-fg", foreground);
+        this.root.style.setProperty("--tws-hc-bg", background);
+        this.root.style.setProperty("--tws-hc-select", selected);
+        return { ...settings, background, labelColor: foreground, colorMode: "original" };
     }
 
     private fail(options: VisualUpdateOptions, reason: string): void {
@@ -308,7 +335,7 @@ export class Visual implements IVisual {
 
         this.draws = draws;
         this.note.hidden = !data.truncated;
-        this.note.textContent = data.truncated ? `Showing the first ${data.rows.length} rows` : "";
+        this.note.textContent = data.truncated ? t("Ui_Truncated", data.rows.length) : "";
         this.showBlocked();
         this.applySelection();
     }
@@ -322,8 +349,8 @@ export class Visual implements IVisual {
             this.layout();
             this.order[this.galleryIndex].element.focus({ preventScroll: true });
         };
-        const prev = el("button", "tws-nav", { type: "button", "aria-label": "Previous model" }, icon("prev"));
-        const next = el("button", "tws-nav", { type: "button", "aria-label": "Next model" }, icon("next"));
+        const prev = el("button", "tws-nav", { type: "button", "aria-label": t("Ui_Previous") }, icon("prev"));
+        const next = el("button", "tws-nav", { type: "button", "aria-label": t("Ui_Next") }, icon("next"));
         prev.addEventListener("click", (event) => { event.stopPropagation(); go(this.galleryIndex - 1); });
         next.addEventListener("click", (event) => { event.stopPropagation(); go(this.galleryIndex + 1); });
         const chips = el("div", "tws-chips");
@@ -350,9 +377,9 @@ export class Visual implements IVisual {
             this.webAccess = service
                 ? Promise.resolve(service.webAccessStatus(THREE_WS_ORIGIN)).then((status) => {
                     if (status === DISABLED_BY_ADMIN) {
-                        this.blockedMessage = "Your Power BI administrator has turned off web access for custom visuals, so models from three.ws cannot load. Ask them to allow web access for certified and uncertified visuals, or for this visual.";
+                        this.blockedMessage = t("Err_AdminBlocked");
                     } else if (status === NOT_SUPPORTED) {
-                        this.blockedMessage = "This Power BI host does not allow custom visuals to download files, so models from three.ws cannot load here. Open the report in Power BI Service or Power BI Desktop.";
+                        this.blockedMessage = t("Err_HostBlocked");
                     }
                     if (this.blockedMessage) {
                         this.showBlocked();
@@ -456,7 +483,7 @@ export class Visual implements IVisual {
             return;
         }
         const box = this.root.getBoundingClientRect();
-        const items = tile.row.tooltipItems.length > 0 ? tile.row.tooltipItems : [{ displayName: "Model", value: tile.title }];
+        const items = tile.row.tooltipItems.length > 0 ? tile.row.tooltipItems : [{ displayName: t("Role_Model"), value: tile.title }];
         const args = {
             coordinates: [event.clientX - box.left, event.clientY - box.top],
             isTouchEvent: event.pointerType === "touch",

@@ -7,6 +7,7 @@ import type { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { BundledDracoDecoder, DracoUnavailableError } from "./draco";
 import { ModelLoadError } from "./resolver";
+import { t } from "./strings";
 
 /**
  * GLB loading with every decoder production three.ws files need, bundled.
@@ -35,17 +36,17 @@ function statusOf(error: unknown): number | null {
 export function describeLoadError(error: unknown): string {
     if (error instanceof ModelLoadError || error instanceof DracoUnavailableError) return error.message;
     const status = statusOf(error);
-    if (status === 404) return "The model file was not found (404). Check the URL in this row.";
-    if (status === 403 || status === 401) return `The model file is not public (HTTP ${status}).`;
-    if (status !== null) return `The model file could not be downloaded (HTTP ${status}).`;
+    if (status === 404) return t("Err_FileNotFound");
+    if (status === 403 || status === 401) return t("Err_FileNotPublic", status);
+    if (status !== null) return t("Err_FileHttp", status);
     const message = error instanceof Error ? error.message : String(error);
     if (error instanceof TypeError || /fetch|network|cors/i.test(message)) {
-        return "Could not download the model file. Check that web access is allowed for this visual.";
+        return t("Err_Download");
     }
     if (/magic|json|unexpected|parse|glTF/i.test(message)) {
-        return "The file is not a valid GLB or glTF model.";
+        return t("Err_InvalidFile");
     }
-    return `The model could not be displayed: ${message}`;
+    return t("Err_Display", message);
 }
 
 /**

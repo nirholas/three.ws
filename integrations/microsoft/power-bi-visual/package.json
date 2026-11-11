@@ -10,14 +10,15 @@
   },
   "scripts": {
     "pbiviz": "pbiviz",
-    "prepare:decoders": "node scripts/embed-decoders.mjs",
-    "start": "npm run prepare:decoders && pbiviz start",
-    "package": "npm run prepare:decoders && pbiviz package",
-    "audit:certification": "npm run prepare:decoders && pbiviz package --certification-audit",
+    "prepare:generated": "node scripts/embed-decoders.mjs && node --no-warnings scripts/build-strings.mjs",
+    "strings": "node --no-warnings scripts/build-strings.mjs",
+    "start": "npm run prepare:generated && pbiviz start",
+    "package": "npm run prepare:generated && pbiviz package",
+    "audit:certification": "npm run prepare:generated && pbiviz package --certification-audit",
     "lint": "npx eslint .",
     "eslint": "npx eslint . --ext .js,.jsx,.ts,.tsx",
-    "typecheck": "npm run prepare:decoders && tsc --noEmit -p tsconfig.json",
-    "test": "npm run prepare:decoders && vitest run",
+    "typecheck": "npm run prepare:generated && tsc --noEmit -p tsconfig.json",
+    "test": "npm run prepare:generated && vitest run",
     "verify:live": "node test/live/verify-live.mjs"
   },
   "dependencies": {

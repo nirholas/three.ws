@@ -18,36 +18,43 @@ export type LightingPreset = "studio" | "soft" | "dramatic" | "flat";
 export type LayoutMode = "auto" | "grid" | "gallery";
 export type ColorMode = "original" | "measure" | "single";
 
-const lightingItems: IEnumMember[] = [
-    { value: "studio", displayName: "Studio" },
-    { value: "soft", displayName: "Soft daylight" },
-    { value: "dramatic", displayName: "Dramatic" },
-    { value: "flat", displayName: "Flat" },
+// displayNameKey is read by the formatting service's localizer; the API's
+// IEnumMember type does not declare it.
+type LocalizedEnumMember = IEnumMember & { displayNameKey: string };
+
+const lightingItems: LocalizedEnumMember[] = [
+    { value: "studio", displayName: "Studio", displayNameKey: "Prop_Lighting_Studio" },
+    { value: "soft", displayName: "Soft daylight", displayNameKey: "Prop_Lighting_Soft" },
+    { value: "dramatic", displayName: "Dramatic", displayNameKey: "Prop_Lighting_Dramatic" },
+    { value: "flat", displayName: "Flat", displayNameKey: "Prop_Lighting_Flat" },
 ];
 
-const layoutItems: IEnumMember[] = [
-    { value: "auto", displayName: "Auto" },
-    { value: "grid", displayName: "Grid" },
-    { value: "gallery", displayName: "Turntable gallery" },
+const layoutItems: LocalizedEnumMember[] = [
+    { value: "auto", displayName: "Auto", displayNameKey: "Prop_Layout_Auto" },
+    { value: "grid", displayName: "Grid", displayNameKey: "Prop_Layout_Grid" },
+    { value: "gallery", displayName: "Turntable gallery", displayNameKey: "Prop_Layout_Gallery" },
 ];
 
-const colorModeItems: IEnumMember[] = [
-    { value: "original", displayName: "Original materials" },
-    { value: "measure", displayName: "Colour by measure" },
-    { value: "single", displayName: "Single tint" },
+const colorModeItems: LocalizedEnumMember[] = [
+    { value: "original", displayName: "Original materials", displayNameKey: "Prop_ColorMode_Original" },
+    { value: "measure", displayName: "Colour by measure", displayNameKey: "Prop_ColorMode_Measure" },
+    { value: "single", displayName: "Single tint", displayNameKey: "Prop_ColorMode_Single" },
 ];
 
 class SceneCard extends formattingSettings.SimpleCard {
     background = new formattingSettings.ColorPicker({
         name: "background",
         displayName: "Background",
+        displayNameKey: "Prop_Background",
         description: "Leave empty for a transparent background that shows the report page.",
+        descriptionKey: "Prop_Background_Desc",
         value: { value: "" },
     });
 
     lighting = new formattingSettings.ItemDropdown({
         name: "lighting",
         displayName: "Lighting",
+        displayNameKey: "Prop_Lighting",
         items: lightingItems,
         value: lightingItems[0],
     });
@@ -55,7 +62,9 @@ class SceneCard extends formattingSettings.SimpleCard {
     layout = new formattingSettings.ItemDropdown({
         name: "layout",
         displayName: "Layout",
+        displayNameKey: "Prop_Layout",
         description: "Auto shows a grid for up to 24 models and a turntable gallery above that.",
+        descriptionKey: "Prop_Layout_Desc",
         items: layoutItems,
         value: layoutItems[0],
     });
@@ -63,12 +72,14 @@ class SceneCard extends formattingSettings.SimpleCard {
     autoRotate = new formattingSettings.ToggleSwitch({
         name: "autoRotate",
         displayName: "Auto-rotate",
+        displayNameKey: "Prop_AutoRotate",
         value: true,
     });
 
     rotationSpeed = new formattingSettings.NumUpDown({
         name: "rotationSpeed",
         displayName: "Rotation speed (degrees per second)",
+        displayNameKey: "Prop_RotationSpeed",
         value: 20,
         options: {
             minValue: { type: MIN, value: 1 },
@@ -78,6 +89,7 @@ class SceneCard extends formattingSettings.SimpleCard {
 
     name = "scene";
     displayName = "Scene";
+    displayNameKey = "Obj_Scene";
     slices = [this.background, this.lighting, this.layout, this.autoRotate, this.rotationSpeed];
 }
 
@@ -85,6 +97,7 @@ class ColorsCard extends formattingSettings.SimpleCard {
     mode = new formattingSettings.ItemDropdown({
         name: "mode",
         displayName: "Colour mode",
+        displayNameKey: "Prop_ColorMode",
         items: colorModeItems,
         value: colorModeItems[0],
     });
@@ -92,23 +105,27 @@ class ColorsCard extends formattingSettings.SimpleCard {
     lowColor = new formattingSettings.ColorPicker({
         name: "lowColor",
         displayName: "Low value colour",
+        displayNameKey: "Prop_LowColor",
         value: { value: "#2B6CB0" },
     });
 
     highColor = new formattingSettings.ColorPicker({
         name: "highColor",
         displayName: "High value colour",
+        displayNameKey: "Prop_HighColor",
         value: { value: "#E53E3E" },
     });
 
     tintColor = new formattingSettings.ColorPicker({
         name: "tintColor",
         displayName: "Tint colour",
+        displayNameKey: "Prop_TintColor",
         value: { value: "#118DFF" },
     });
 
     name = "colors";
     displayName = "Colours";
+    displayNameKey = "Obj_Colors";
     slices = [this.mode, this.lowColor, this.highColor, this.tintColor];
 }
 
@@ -116,6 +133,7 @@ class LabelsCard extends formattingSettings.SimpleCard {
     show = new formattingSettings.ToggleSwitch({
         name: "show",
         displayName: "Show labels",
+        displayNameKey: "Prop_ShowLabels",
         value: true,
     });
 
@@ -124,6 +142,7 @@ class LabelsCard extends formattingSettings.SimpleCard {
     fontSize = new formattingSettings.NumUpDown({
         name: "fontSize",
         displayName: "Text size",
+        displayNameKey: "Prop_FontSize",
         value: 12,
         options: {
             minValue: { type: MIN, value: 8 },
@@ -134,11 +153,13 @@ class LabelsCard extends formattingSettings.SimpleCard {
     color = new formattingSettings.ColorPicker({
         name: "color",
         displayName: "Text colour",
+        displayNameKey: "Prop_LabelColor",
         value: { value: "#252423" },
     });
 
     name = "labels";
     displayName = "Labels";
+    displayNameKey = "Obj_Labels";
     slices = [this.fontSize, this.color];
 }
 

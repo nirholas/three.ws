@@ -4,6 +4,7 @@ import { el, icon } from "./dom";
 import { Rect } from "./encoding";
 import { ModelRow } from "./dataModel";
 import { fallbackTitle, viewerUrlFor } from "./modelRef";
+import { t } from "./strings";
 
 /**
  * The DOM half of one model tile. The model itself is drawn on the shared
@@ -53,7 +54,7 @@ export class Tile {
         this.label = el("div", "tws-label", { "aria-hidden": "true" });
         this.skeleton = el("div", "tws-skeleton", { "aria-hidden": "true" }, el("span", "tws-skeleton-shape"));
         this.errorText = el("p", "tws-error-text");
-        this.retryButton = el("button", "tws-button", { type: "button" }, icon("retry"), el("span", null, null, "Retry"));
+        this.retryButton = el("button", "tws-button", { type: "button" }, icon("retry"), el("span", null, null, t("Ui_Retry")));
         this.errorBox = el(
             "div",
             "tws-error",
@@ -62,7 +63,7 @@ export class Tile {
             this.errorText,
             this.retryButton,
         );
-        this.openButton = el("button", "tws-open", { type: "button", title: "Open in three.ws", "aria-label": "Open this model in three.ws" }, icon("open"));
+        this.openButton = el("button", "tws-open", { type: "button", title: t("Ui_Open"), "aria-label": t("Ui_OpenLabel") }, icon("open"));
         this.element = el("div", "tws-tile", { role: "option", tabindex: 0 }, this.skeleton, this.errorBox, this.label, this.openButton);
         this.errorBox.hidden = true;
 
@@ -192,11 +193,11 @@ export class Tile {
     refreshText(): void {
         const title = this.title;
         this.label.textContent = title;
-        const state = this.status === "loading"
-            ? "loading"
+        const label = this.status === "loading"
+            ? t("Ui_TileLoading", title)
             : this.status === "error"
-                ? `could not load: ${this.errorMessage ?? "unknown error"}`
-                : "3D model";
-        this.element.setAttribute("aria-label", `${title}, ${state}`);
+                ? t("Ui_TileError", title, this.errorMessage ?? t("Ui_UnknownError"))
+                : t("Ui_TileReady", title);
+        this.element.setAttribute("aria-label", label);
     }
 }

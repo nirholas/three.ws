@@ -459,3 +459,100 @@
         color: @text;
     }
 }
+
+// High-contrast mode. visual.ts sets these three custom properties from the
+// host palette and the rules below swap every chrome colour for them: text and
+// borders use the foreground, surfaces use the background, and hover, focus and
+// selection use the selected-foreground colour. Shadows and translucency are
+// dropped because they disappear against high-contrast themes.
+.tws-hc {
+    @fg: var(--tws-hc-fg);
+    @bg: var(--tws-hc-bg);
+    @sel: var(--tws-hc-select);
+
+    color: @fg;
+    background: @bg;
+
+    .tws-tile {
+        &:hover,
+        &:active {
+            border-color: @fg;
+            background-color: transparent;
+        }
+
+        &:focus-visible {
+            border: 2px solid @sel;
+            box-shadow: none;
+        }
+
+        &.tws-selected {
+            border: 2px solid @sel;
+            box-shadow: none;
+        }
+
+        &.tws-dimmed .tws-label {
+            opacity: 0.6;
+        }
+    }
+
+    .tws-open,
+    .tws-button,
+    .tws-chip,
+    .tws-nav,
+    .tws-note {
+        border-color: @fg;
+        background: @bg;
+        color: @fg;
+
+        &:hover,
+        &:active {
+            border-color: @sel;
+            background: @bg;
+            color: @sel;
+        }
+
+        &:focus-visible {
+            outline-color: @sel;
+        }
+    }
+
+    .tws-chip {
+        &[aria-current="true"] {
+            border-width: 2px;
+        }
+
+        &.tws-chip-selected,
+        &.tws-chip-error {
+            border-color: @sel;
+            color: @sel;
+        }
+    }
+
+    .tws-skeleton-shape {
+        background: none;
+        border: 1px dashed @fg;
+        animation: none;
+    }
+
+    .tws-error,
+    .tws-error-icon,
+    .tws-message,
+    .tws-landing-lead,
+    .tws-step,
+    .tws-landing-example,
+    .tws-landing-example code,
+    .tws-step-well,
+    .tws-landing-mark {
+        color: @fg;
+    }
+
+    .tws-step-well {
+        border-color: @fg;
+    }
+
+    .tws-step-next .tws-step-well {
+        border-color: @sel;
+        color: @sel;
+        background: transparent;
+    }
+}

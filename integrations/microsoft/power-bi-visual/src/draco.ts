@@ -2,6 +2,7 @@
 
 import { BufferAttribute, BufferGeometry, InterleavedBuffer, InterleavedBufferAttribute } from "three";
 import { DRACO_DECODER_WASM_BASE64, DRACO_WASM_WRAPPER_JS } from "./generated/dracoDecoder";
+import { t } from "./strings";
 
 /**
  * KHR_draco_mesh_compression decoding for GLTFLoader, served entirely from the
@@ -159,7 +160,7 @@ function base64ToArrayBuffer(base64: string): ArrayBuffer {
 
 export class DracoUnavailableError extends Error {
     constructor(reason: string) {
-        super(`This model uses Draco compression, and the decoder could not start here (${reason}).`);
+        super(t("Err_Draco", reason));
         this.name = "DracoUnavailableError";
     }
 }

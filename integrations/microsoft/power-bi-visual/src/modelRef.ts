@@ -1,5 +1,7 @@
 "use strict";
 
+import { t } from "./strings";
+
 /**
  * Parses one cell of the Model data role into something the visual can load.
  *
@@ -27,11 +29,11 @@ export type ModelRef =
 
 export function parseModelRef(raw: unknown): ModelRef {
     if (raw === null || raw === undefined) {
-        return { kind: "invalid", reason: "This row has no model value." };
+        return { kind: "invalid", reason: t("Err_NoValue") };
     }
     const text = String(raw).trim();
     if (text === "") {
-        return { kind: "invalid", reason: "This row has no model value." };
+        return { kind: "invalid", reason: t("Err_NoValue") };
     }
     if (UUID.test(text)) {
         return { kind: "id", id: text.toLowerCase() };
@@ -41,15 +43,15 @@ export function parseModelRef(raw: unknown): ModelRef {
     try {
         url = new URL(text);
     } catch {
-        return { kind: "invalid", reason: "Not a GLB URL or a three.ws model id." };
+        return { kind: "invalid", reason: t("Err_NotModel") };
     }
     if (url.protocol !== "https:") {
-        return { kind: "invalid", reason: "Model URLs must use https://." };
+        return { kind: "invalid", reason: t("Err_NotHttps") };
     }
     if (!ALLOWED_HOSTS.has(url.hostname.toLowerCase())) {
         return {
             kind: "invalid",
-            reason: `Power BI only lets this visual load models from ${THREE_WS_ORIGIN}. ${url.hostname} is blocked.`,
+            reason: t("Err_HostNotAllowed", THREE_WS_ORIGIN, url.hostname),
         };
     }
 
@@ -69,10 +71,10 @@ export function viewerUrlFor(ref: ModelRef): string | null {
 
 /** A short readable name for a model when no Category is bound. */
 export function fallbackTitle(ref: ModelRef): string {
-    if (ref.kind === "id") return `Model ${ref.id.slice(0, 8)}`;
+    if (ref.kind === "id") return t("Ui_ModelIdTitle", ref.id.slice(0, 8));
     if (ref.kind === "url") {
-        const file = ref.url.split("?")[0].split("/").pop() || "Model";
+        const file = ref.url.split("?")[0].split("/").pop() || t("Ui_ModelFallback");
         return decodeURIComponent(file).replace(/\.(web\.)?(glb|gltf)$/i, "");
     }
-    return "Model";
+    return t("Ui_ModelFallback");
 }

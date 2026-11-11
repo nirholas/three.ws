@@ -1,6 +1,7 @@
 "use strict";
 
 import { ModelRef, THREE_WS_ORIGIN } from "./modelRef";
+import { t } from "./strings";
 
 /**
  * Turns a parsed model reference into the GLB URLs to try, in order.
@@ -73,7 +74,7 @@ export class ModelResolver {
                 headers: { accept: "application/json" },
             });
         } catch {
-            throw new ModelLoadError("Could not reach three.ws to look up this model id. Check that web access is allowed for this visual.");
+            throw new ModelLoadError(t("Err_LookupUnreachable"));
         }
 
         if (response.status === 429 && attempt === 0) {
@@ -82,10 +83,10 @@ export class ModelResolver {
             return this.lookup(id, attempt + 1);
         }
         if (response.status === 404) {
-            throw new ModelLoadError(`No public three.ws model has the id ${id}.`);
+            throw new ModelLoadError(t("Err_LookupNotFound", id));
         }
         if (!response.ok) {
-            throw new ModelLoadError(`three.ws could not look up this model (HTTP ${response.status}). Try again shortly.`);
+            throw new ModelLoadError(t("Err_LookupFailed", response.status));
         }
 
         const body = (await response.json()) as CreationResponse;
@@ -94,11 +95,11 @@ export class ModelResolver {
             (u, i, all): u is string => typeof u === "string" && u !== "" && all.indexOf(u) === i,
         );
         if (!creation || candidates.length === 0) {
-            throw new ModelLoadError(`Model ${id} has no downloadable GLB yet.`);
+            throw new ModelLoadError(t("Err_NoGlb", id));
         }
         const urls = candidates.filter((u) => u.startsWith(`${this.origin}/`));
         if (urls.length === 0) {
-            throw new ModelLoadError(`Model ${id} is stored outside ${this.origin}, which Power BI blocks for this visual.`);
+            throw new ModelLoadError(t("Err_StoredElsewhere", id, this.origin));
         }
         return { urls, title: shortTitle(creation.prompt) };
     }

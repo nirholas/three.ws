@@ -9,6 +9,8 @@
     "dataRoles": [
         {
             "displayName": "Category",
+            "displayNameKey": "Role_Category",
+            "descriptionKey": "Role_Category_Desc",
             "name": "category",
             "kind": "Grouping",
             "description": "Label for each model, for example a product name or a site. Optional: without it the model's own name is used.",
@@ -17,6 +19,8 @@
         },
         {
             "displayName": "Model",
+            "displayNameKey": "Role_Model",
+            "descriptionKey": "Role_Model_Desc",
             "name": "model",
             "kind": "Grouping",
             "description": "A GLB URL on https://three.ws, a three.ws model link (three.ws/m/<id>) or a bare three.ws model id.",
@@ -25,6 +29,8 @@
         },
         {
             "displayName": "Colour by",
+            "displayNameKey": "Role_ColorBy",
+            "descriptionKey": "Role_ColorBy_Desc",
             "name": "colorBy",
             "kind": "Measure",
             "description": "Numeric measure mapped onto the low to high colour ramp in the Colours card.",
@@ -32,6 +38,8 @@
         },
         {
             "displayName": "Scale by",
+            "displayNameKey": "Role_ScaleBy",
+            "descriptionKey": "Role_ScaleBy_Desc",
             "name": "scaleBy",
             "kind": "Measure",
             "description": "Numeric measure that sizes each model relative to the largest value.",
@@ -39,6 +47,8 @@
         },
         {
             "displayName": "Tooltips",
+            "displayNameKey": "Role_Tooltips",
+            "descriptionKey": "Role_Tooltips_Desc",
             "name": "tooltips",
             "kind": "Measure",
             "description": "Extra fields shown when hovering a model."
