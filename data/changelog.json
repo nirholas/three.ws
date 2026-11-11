@@ -10,6 +10,12 @@
 		},
 		{
 			"date": "2026-11-11",
+			"title": "3D generation no longer fails while our own GPU worker is busy",
+			"summary": "Text and photo to 3D in Forge, the GPT forge and the ChatGPT app could fail with Could not generate the model right now even though the three.ws TRELLIS GPU worker had room for the job. A busy worker answers its health check slowly, the router read that as down, and when the outside lanes were also unavailable nothing was left to try. Forge now gives every remaining engine a chance before it gives up, including a worker that only looked down because it was busy, so the job is queued instead of refused.",
+			"tags": ["fix"]
+		},
+		{
+			"date": "2026-11-11",
 			"title": "Export any Forge model as a Minecraft: Bedrock structure pack",
 			"summary": "The Forge download menu has a new Minecraft: Bedrock option. It turns your model into blocks, shows a live 3D block preview, and downloads a .mcpack you open in Bedrock and place with a structure block or one /function command. Pick the height (16 to 128 blocks), which blocks to use (all, concrete, wool, terracotta, builder or colorful), solid or hollow, and optional dithering. Colors come from the model's texture at every block, and dark textures are brightened automatically so a steel knight does not come out as coal. Builds wider than one structure block are split into tiles that the function places together. Not an official Minecraft product; not approved by or associated with Mojang or Microsoft.",
 			"tags": ["feature"],
