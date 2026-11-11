@@ -62,11 +62,11 @@ function el(tag, props = {}, children = []) {
 }
 
 function renderState(container, { title, body, action }) {
-	container.replaceChildren(
-		el('p', { class: 'sb-state-title', text: title }),
-		el('p', { class: 'sb-state-body', text: body }),
-		action ? el('a', { class: 'sb-btn', href: action.href, target: action.external ? '_blank' : null, rel: action.external ? 'noopener' : null, text: action.label }) : null,
-	);
+	const nodes = [el('p', { class: 'sb-state-title', text: title }), el('p', { class: 'sb-state-body', text: body })];
+	if (action) {
+		nodes.push(el('a', { class: 'sb-btn', href: action.href, target: action.external ? '_blank' : null, rel: action.external ? 'noopener' : null, text: action.label }));
+	}
+	container.replaceChildren(...nodes);
 	container.hidden = false;
 }
 
@@ -101,6 +101,7 @@ async function loadAgent() {
 	stateEl.hidden = true;
 	if (!state.me) {
 		box.hidden = true;
+		box.setAttribute('aria-busy', 'false');
 		renderState(stateEl, {
 			title: 'Chat with your agent here',
 			body: 'Sign in and your default agent rides along in the sidebar, next to any page you read.',
