@@ -1,5 +1,7 @@
 # microsoft 22: receive Microsoft Marketplace leads, store them, notify the owner and draft replies
 
+Status 2026-11-11: built and verified locally, paused on owner steps (set MS_MARKETPLACE_LEADS_TOKEN on three-ws-api, push, deploy, sync Cloud Scheduler, point Partner Center at the endpoint and Validate). See the 822 entry in the progress log.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3122.
 
 ## Operating clause (binding)
