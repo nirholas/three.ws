@@ -47,6 +47,22 @@
 			<description>Admin guide for the three.ws Graph connector: consent and its two permissions, who can see indexed agents, models and avatars, what is indexed, sync and throttling, disconnect, errors and their fixes, data handling, the API and the schema.</description>
 		</item>
 		<item>
+			<title>Docs · Review a 3D model together in a meeting (Live Share)</title>
+			<link>https://three.ws/docs/teams-live-share</link>
+			<guid isPermaLink="false">2026-11-11:Docs · Review a 3D model together in a meeting (Live Share)</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The three.ws review stage for Teams meetings: follow the presenter's camera, presence, laser pointers, synced comment pins with markdown export and animation sync over Live Share, plus the sideload path, privacy and bundle size.</description>
+		</item>
+		<item>
+			<title>Docs · three.ws on the Microsoft agent stack</title>
+			<link>https://three.ws/docs/microsoft-agent-stack</link>
+			<guid isPermaLink="false">2026-11-11:Docs · three.ws on the Microsoft agent stack</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Give a Semantic Kernel, Microsoft Agent Framework or Foundry agent free text-to-3D generation, a catalog of ready-made CC0 assets and three.ws agent messaging: the Python and .NET plugins, the MCP studio server, auth, timing and live tests.</description>
+		</item>
+		<item>
 			<title>Docs · TRELLIS.2 Lab</title>
 			<link>https://three.ws/docs/trellis2-lab</link>
 			<guid isPermaLink="false">2026-11-11:Docs · TRELLIS.2 Lab</guid>
@@ -189,6 +205,14 @@
 			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The three.ws Teams app can now make 3D models inside a conversation. Choose Create a 3D model from the compose box or a message's menu, or message the bot forge followed by a description. A card shows your prompt, who asked and where the job really is (GPU waking up, queued, rendering), and it turns into the finished model when it is ready: a rendered preview, Open in 3D in the three.ws viewer, Download GLB, and Make a variation for a new take on the same prompt. If a job fails, the card says what went wrong and offers Try again. It runs on the same free text-to-3D lane as the three.ws MCP tools.</description>
+		</item>
+		<item>
+			<title>Give a Semantic Kernel or Microsoft Agent Framework agent 3D generation</title>
+			<link>https://three.ws/docs/microsoft-agent-stack</link>
+			<guid isPermaLink="false">2026-11-11:Give a Semantic Kernel or Microsoft Agent Framework agent 3D generation</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>sdk</category>
+			<description>Two new plugins, threews-semantic-kernel for Python and ThreeWs.SemanticKernel for .NET, give an agent six functions on three.ws: generate a textured 3D model from text and wait for it, check a generation, search thousands of free ready-made props, characters and motion clips, list your agents, search the public agent directory and message an agent. Each also attaches the free MCP 3D studio in one line. Python and .NET Agent Framework samples pick the prop a scene needs, check the catalog and return a real downloadable model, and a quickstart attaches the studio to a Foundry agent. No account or key is needed except to list your own agents. Both packages ship with live tests against the real API and go up on PyPI and NuGet with the owner's publish.</description>
 		</item>
 		<item>
 			<title>Microsoft Marketplace leads land in three.ws with a reply ready to send</title>

@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-11",
+			"title": "Give a Semantic Kernel or Microsoft Agent Framework agent 3D generation",
+			"summary": "Two new plugins, threews-semantic-kernel for Python and ThreeWs.SemanticKernel for .NET, give an agent six functions on three.ws: generate a textured 3D model from text and wait for it, check a generation, search thousands of free ready-made props, characters and motion clips, list your agents, search the public agent directory and message an agent. Each also attaches the free MCP 3D studio in one line. Python and .NET Agent Framework samples pick the prop a scene needs, check the catalog and return a real downloadable model, and a quickstart attaches the studio to a Foundry agent. No account or key is needed except to list your own agents. Both packages ship with live tests against the real API and go up on PyPI and NuGet with the owner's publish.",
+			"tags": ["sdk", "feature"],
+			"link": "/docs/microsoft-agent-stack"
+		},
+		{
+			"date": "2026-11-11",
 			"title": "Review a 3D model together in a Microsoft Teams meeting",
 			"summary": "Add three.ws to a Teams meeting and share a model to the meeting stage, and everyone in the call looks at the same mesh. Press Present and your camera drives everyone's view; anyone who orbits away gets a one-click jump back to the presenter. Each person's initials show who is watching, and their pointer appears on everyone else's screen as a coloured laser on the exact spot of the model. Click the mesh to pin a comment, and the pin appears for the whole meeting; export every pin as markdown when you are done. Clip, play state and playhead stay in sync, so everyone sees the same frame. Pick from your own models, the featured library or a pasted link. Opened outside a meeting, the stage works for one person and explains how to review together. three.ws keeps no meeting content unless you export the pins.",
 			"tags": ["feature"],

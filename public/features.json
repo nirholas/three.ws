@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T17:23:19.727Z",
+	"generated_at": "2026-11-11T17:40:40.410Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -8351,6 +8351,18 @@
 					"job": null
 				},
 				{
+					"path": "/docs/teams-live-share",
+					"title": "Docs · Review a 3D model together in a meeting (Live Share)",
+					"description": "The three.ws review stage for Teams meetings: follow the presenter's camera, presence, laser pointers, synced comment pins with markdown export and animation sync over Live Share, plus the sideload path, privacy and bundle size.",
+					"added": "2026-11-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
 					"path": "/docs/microsoft-marketplace-offer-plan",
 					"title": "Docs · Microsoft distribution and offer plan",
 					"description": "How three.ws turns its live Microsoft Marketplace publisher profile into offers: a transactable SaaS listing, Copilot MCP certification, professional services, a Power Platform connector, a Teams app, and the VS Code and Edge stores.",
@@ -8367,6 +8379,18 @@
 					"title": "Docs · Microsoft Marketplace SaaS offer",
 					"description": "How a Microsoft Marketplace purchase becomes a three.ws plan: the landing page, Entra sign-in, the fulfilment webhook, hourly metered billing and its retry rules, the env vars, and how to test against a preview offer.",
 					"added": "2026-11-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/microsoft-agent-stack",
+					"title": "Docs · three.ws on the Microsoft agent stack",
+					"description": "Give a Semantic Kernel, Microsoft Agent Framework or Foundry agent free text-to-3D generation, a catalog of ready-made CC0 assets and three.ws agent messaging: the Python and .NET plugins, the MCP studio server, auth, timing and live tests.",
+					"added": "2026-11-11",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

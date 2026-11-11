@@ -5574,6 +5574,14 @@
 					"added": "2026-11-04"
 				},
 				{
+					"path": "/docs/microsoft-agent-stack",
+					"title": "Docs · three.ws on the Microsoft agent stack",
+					"description": "Give a Semantic Kernel, Microsoft Agent Framework or Foundry agent free text-to-3D generation, a catalog of ready-made CC0 assets and three.ws agent messaging: the Python and .NET plugins, the MCP studio server, auth, timing and live tests.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-11"
+				},
+				{
 					"path": "/docs/enterprise-sso",
 					"title": "Docs · Enterprise sign-in and SCIM (Microsoft Entra ID)",
 					"description": "Sign in with Microsoft for work, school and personal accounts, claiming your organisation's Entra tenant so colleagues join your team, and step-by-step SCIM provisioning from Microsoft Entra ID with the supported filters, PATCH shapes and limits.",

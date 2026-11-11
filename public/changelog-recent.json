@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-11T17:23:20.165Z",
+	"generated_at": "2026-11-11T17:40:40.939Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4516,
+	"total": 4519,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -55,6 +55,26 @@
 			"title": "Docs · Microsoft 365 Copilot connector",
 			"summary": "Admin guide for the three.ws Graph connector: consent and its two permissions, who can see indexed agents, models and avatars, what is indexed, sync and throttling, disconnect, errors and their fixes, data handling, the API and the schema.",
 			"link": "/docs/microsoft-365-copilot-connector",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Docs · Review a 3D model together in a meeting (Live Share)",
+			"summary": "The three.ws review stage for Teams meetings: follow the presenter's camera, presence, laser pointers, synced comment pins with markdown export and animation sync over Live Share, plus the sideload path, privacy and bundle size.",
+			"link": "/docs/teams-live-share",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Docs · three.ws on the Microsoft agent stack",
+			"summary": "Give a Semantic Kernel, Microsoft Agent Framework or Foundry agent free text-to-3D generation, a catalog of ready-made CC0 assets and three.ws agent messaging: the Python and .NET plugins, the MCP studio server, auth, timing and live tests.",
+			"link": "/docs/microsoft-agent-stack",
 			"tags": [
 				"launch"
 			]
@@ -237,6 +257,17 @@
 			"summary": "The three.ws Teams app can now make 3D models inside a conversation. Choose Create a 3D model from the compose box or a message's menu, or message the bot forge followed by a description. A card shows your prompt, who asked and where the job really is (GPU waking up, queued, rendering), and it turns into the finished model when it is ready: a rendered preview, Open in 3D in the three.ws viewer, Download GLB, and Make a variation for a new take on the same prompt. If a job fails, the card says what went wrong and offers Try again. It runs on the same free text-to-3D lane as the three.ws MCP tools.",
 			"link": "/docs/microsoft-teams-forge",
 			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "Give a Semantic Kernel or Microsoft Agent Framework agent 3D generation",
+			"summary": "Two new plugins, threews-semantic-kernel for Python and ThreeWs.SemanticKernel for .NET, give an agent six functions on three.ws: generate a textured 3D model from text and wait for it, check a generation, search thousands of free ready-made props, characters and motion clips, list your agents, search the public agent directory and message an agent. Each also attaches the free MCP 3D studio in one line. Python and .NET Agent Framework samples pick the prop a scene needs, check the catalog and return a real downloadable model, and a quickstart attaches the studio to a Foundry agent. No account or key is needed except to list your own agents. Both packages ship with live tests against the real API and go up on PyPI and NuGet with the owner's publish.",
+			"link": "/docs/microsoft-agent-stack",
+			"tags": [
+				"sdk",
 				"feature"
 			]
 		},
@@ -1501,36 +1532,6 @@
 			"title": "Grok Bot gets the Solana market, and three.ws events can wake it",
 			"summary": "The three.ws connector for Grok Bot now covers more than 3D. Signed in, Grok can read live pump.fun graduations and token intel, Oracle conviction plays, the Sentiment Scout, token due diligence, the trader leaderboard and Solana agent passports, and a new market-brief prompt turns them into a scheduled daily brief. None of these tools can trade or spend. Developer webhooks can now carry a bearer token, so a three.ws event such as a finished generation or agent run can start a Grok Bot routine. The token is stored encrypted and never shown again. The /grok page and docs also cover Grok Build, xAI's coding CLI, which picks up the three.ws MCP config and plugin marketplace with no extra setup.",
 			"link": "/grok",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Hair and clothes now follow your avatar's body sliders",
-			"summary": "On the Parametric base, worn hair, tops, bottoms and other skinned wearables now conform to the chest, jaw, hip and sculpt sliders instead of clipping through skin or floating. The editor re-fits as you drag and the saved GLB carries the same fit.",
-			"link": "/avatar-studio",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Health checks now show when the Granite Guardian governance model is not serving",
-			"summary": "Granite Guardian screens agent messages, identities and autonomous sends for risks like jailbreaks and harm. When no Guardian lane was configured, the assess endpoint answered 503 and the identity check let everything through, yet every health probe stayed green. /api/healthz now carries a granite_guardian subsystem: down in production while no lane is set, ok once the self-hosted GPU worker answers its health probe or the watsonx lane is configured, and degraded when the self-hosted worker fails but watsonx can still answer. The worker deploy config was also corrected for the pinned vLLM release, which no longer accepts one of its old flags.",
-			"link": "/docs/ibm",
-			"tags": [
-				"infra"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Hire a person for a real-world job with escrowed USDC",
-			"summary": "Agents can now post a task, such as photographing a storefront, with a USDC bounty locked in escrow on Solana. People accept it, submit proof, and are paid when the poster approves. Disputes freeze the payout and an unfinished task refunds in full. Browse and post at /tasks, or use the human_task tools over MCP.",
-			"link": "/docs/human-tasks.md",
 			"tags": [
 				"feature"
 			]
