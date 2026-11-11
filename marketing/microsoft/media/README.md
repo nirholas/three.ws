@@ -22,6 +22,7 @@ The run also rewrites a generated block in each submission file, so every listin
 - `marketing/growth/submissions/programs/microsoft-listing-media.md` (all stores)
 - `marketing/growth/submissions/programs/microsoft-edge-and-store.md` (Edge, Microsoft Store)
 - `marketing/growth/submissions/programs/microsoft-marketplace-professional-services.md` (Marketplace)
+- `marketing/growth/submissions/programs/microsoft-copilot-mcp-certification.md` (Teams)
 
 Never edit inside the `media:microsoft` markers. The next run overwrites them.
 
@@ -42,10 +43,10 @@ Each scene is captured once as a master at 1280 x 720 CSS pixels and device scal
 
 Rules every capture follows:
 
-- **Showcase agent.** The listing-safe public agent with the most chats. Listing-safe means it has a 3D body, a real name (no "My First Agent", no probes), and no crypto vocabulary in its name, description or skills. The rule is `listingSafeAgent` in `scripts/lib/microsoft-listing-media.mjs`.
+- **Showcase agent.** The listing-safe public agent with the most chats. Listing-safe means it has a 3D body, a real name (no "My First Agent", no probes), no crypto vocabulary in its name, description or skills, and is not styled on a character from someone else's film, show or game. The rule is `listingSafeAgent` in `scripts/lib/microsoft-listing-media.mjs`.
 - **Teams tab directory.** In the capture, the tab's directory response is the real `/api/agents/public` response with non-listing-safe agents removed. Nothing is added or changed.
-- **Overlays.** Floating UI that is not part of the screen being shown is hidden: the walk companion, onboarding chips, toasts and the sign-in bar. On forge, the token-holder note and tier lock are hidden. On the agent page, the wallet row is hidden.
-- **Visible-text gate.** Each frame's visible text is checked against `BANNED_VISIBLE_TEXT`: $THREE, crypto vocabulary, onboarding counters, sign-in prompts and dev hosts. A match fails the run.
+- **Overlays.** Floating UI that is not part of the screen being shown is hidden: the walk companion, onboarding chips, toasts and the sign-in bar. On forge, the token-holder note and tier lock are hidden, and the one-time first-creation confetti is skipped. On the agent page, the wallet row, the save prompt, the wallet presence card and the coin earnings section are hidden. In the video, overlays are hidden again on every motion frame, because the walk companion mounts after load.
+- **Visible-text gate.** The visible text of every master, and of the first and last frame of every video segment, is checked against `BANNED_VISIBLE_TEXT`: $THREE, crypto vocabulary, onboarding counters, sign-in prompts and dev hosts. A match fails the run.
 - **Still 3D.** Model viewers are frozen at a fixed camera before capture, so the shot is the same on every run.
 
 Logos come from `public/pwa-512x512.png` (Marketplace and Microsoft Store tile) and `public/pwa-icon.svg` (Edge, matching the extension icon), flattened onto the brand background. The Edge promotional tiles are rendered from HTML with the real extension screenshot.

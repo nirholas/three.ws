@@ -91,6 +91,8 @@ describe('listing-safe agents', () => {
 		expect(listingSafeAgent({ ...base, name: 'Agent' })).toBe(false);
 		expect(listingSafeAgent({ id: 'b', name: 'Ghost', skills: [] })).toBe(false);
 		expect(listingSafeAgent({ ...base, name: 'Bridge Monitor 5', description: '' })).toBe(false);
+		expect(listingSafeAgent({ ...base, name: 'Chappie-the-robot-from-the-movie-Chappie', description: 'An agent voiced by the "Chappie-the-robot-from-the-movie-Chappie" voice.' })).toBe(false);
+		expect(listingSafeAgent({ ...base, name: 'Harbor', description: 'Sounds like the captain from the film.' })).toBe(false);
 	});
 
 	it('picks the safe agent with the most chats', () => {
@@ -109,6 +111,8 @@ describe('bannedTextIn', () => {
 		expect(bannedTextIn('High $THREE')).toEqual(['$THREE']);
 		expect(bannedTextIn('Getting started 0/3')).toHaveLength(1);
 		expect(bannedTextIn('Connect your Solana wallet')).toHaveLength(2);
+		expect(bannedTextIn('Launch a coin')).toEqual(['coin']);
+		expect(bannedTextIn('No coins launched yet')).toEqual(['coins']);
 	});
 
 	it('leaves ordinary product copy alone', () => {

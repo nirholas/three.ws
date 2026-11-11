@@ -119,10 +119,15 @@ async function dataUri(file, mime) {
  * bars (the site nav) and full-viewport background layers. `extra` hides
  * scene-specific elements by selector.
  */
-async function hideOverlays(page, extra = []) {
-	await page.evaluate((selectors) => {
+/**
+ * Hide floating UI that is not part of the screen being shown. `extra` entries
+ * are hidden in place; `remove` entries are taken out of the layout.
+ */
+async function hideOverlays(page, extra = [], remove = []) {
+	await page.evaluate(([selectors, removed]) => {
 		const hide = (el) => el.style.setProperty('visibility', 'hidden', 'important');
 		for (const sel of selectors) for (const el of document.querySelectorAll(sel)) hide(el);
+		for (const sel of removed) for (const el of document.querySelectorAll(sel)) el.style.setProperty('display', 'none', 'important');
 		for (const el of document.querySelectorAll('body *')) {
 			if (getComputedStyle(el).position !== 'fixed') continue;
 			const r = el.getBoundingClientRect();
@@ -131,7 +136,7 @@ async function hideOverlays(page, extra = []) {
 			const backdrop = r.width >= innerWidth * 0.9 && r.height >= innerHeight * 0.9;
 			if (!topBar && !backdrop) hide(el);
 		}
-	}, extra);
+	}, [extra, remove]);
 }
 
 /** The text a viewer can actually see in the viewport, including form values. */
@@ -222,6 +227,8 @@ async function newPage(browser, { width, height, scale }) {
 
 const FORGE_HIDE = ['#fq-holder-note', '#tier .tier-lock'];
 const AGENT_HIDE = ['#av-wallet-row', 'avatar-actions'];
+// Below the fold at 1080p: the agent's wallet presence card and coin earnings.
+const AGENT_REMOVE = ['#av-panel-overview .nwp', '#av-earned'];
 
 async function openForge(page) {
 	// A returning visitor: the one-time first-creation confetti and card
@@ -341,8 +348,8 @@ async function withRetry(browser, viewport, label, run, attempts = 3) {
 
 async function captureMasters(browser, agent, card, hostConfig, logo) {
 	await mkdir(MASTERS, { recursive: true });
-	const shot = async (page, name, hide = []) => {
-		await hideOverlays(page, hide);
+	const shot = async (page, name, hide = [], remove = []) => {
+		await hideOverlays(page, hide, remove);
 		await gateText(page, `scene ${name}`);
 		await page.screenshot({ path: join(MASTERS, `${name}.png`), ...SHOT });
 		log(`captured ${name}`);
@@ -376,7 +383,7 @@ async function captureMasters(browser, agent, card, hostConfig, logo) {
 	await scene('agent', async (page) => {
 		await page.goto(`${BASE}/agents/${agent.id}`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
 		await settleModelViewer(page, '#av-viewer', '0deg 82deg auto');
-		await shot(page, 'agent', AGENT_HIDE);
+		await shot(page, 'agent', AGENT_HIDE, AGENT_REMOVE);
 	});
 
 	await scene('teams-tab', async (page) => {
@@ -577,6 +584,8 @@ async function buildFrames(browser, ctx) {
 			}
 			t.begin(id, lines);
 			await frames(page);
+			// Content can load while a segment records; the last frame must pass too.
+			await gateText(page, `video ${id} (last frame)`);
 		} catch (err) {
 			Object.assign(t, snapshot);
 			throw err;
@@ -642,6 +651,7 @@ async function buildFrames(browser, ctx) {
 	}, async (page) => {
 		for (let f = 0; f < 7 * FPS; f++) {
 			await orbitTo(page, '#mv', -40 + (f / (7 * FPS)) * 80, 70 - (f / (7 * FPS)) * 8, viewerRadius);
+			await hideOverlays(page);
 			await t.frame(page);
 		}
 	});
@@ -650,11 +660,13 @@ async function buildFrames(browser, ctx) {
 	await segment('agent', ['Give an avatar a persona and skills, and it becomes an agent.', 'Every agent has a public page anyone can visit and chat with.'], async (page) => {
 		await page.goto(`${BASE}/agents/${ctx.agent.id}`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
 		agentRadius = await settleModelViewer(page, '#av-viewer', '-12deg 82deg auto');
-		await hideOverlays(page, AGENT_HIDE);
+		await hideOverlays(page, AGENT_HIDE, AGENT_REMOVE);
 		await gateText(page, 'video agent');
 	}, async (page) => {
 		for (let f = 0; f < 9 * FPS; f++) {
 			await orbitTo(page, '#av-viewer', -12 + (f / (9 * FPS)) * 24, 82, agentRadius, f / FPS);
+			// The walk companion and late panels mount after load; keep them out of every frame.
+			await hideOverlays(page, AGENT_HIDE, AGENT_REMOVE);
 			await t.frame(page);
 		}
 	});

@@ -178,6 +178,7 @@ export const BANNED_VISIBLE_TEXT = [
 	/\bsolana\b/i,
 	/\bwallet\b/i,
 	/\btokens?\b/i,
+	/\bcoins?\b/i,
 	/\bpump[\s.-]?fun\b/i,
 	/\bmemecoin/i,
 	/\bon-chain\b/i,
@@ -203,6 +204,8 @@ export function bannedTextIn(text) {
 /** Placeholder names and probes that make a store screenshot look unfinished. */
 const UNFINISHED_NAME = /^(agent|my first agent|unnamed\b.*|test\b.*|.*probe[0-9a-f]*)$/i;
 const CRYPTO_SKILL = /pump|swap|coin|defi|nft|token|wallet|trade|sniper|bridge|solana/i;
+// Agents styled on someone else's film, show or game character: not ours to put in a store listing.
+const BORROWED_CHARACTER = /\bfrom[\s-]+the[\s-]+(?:movie|film|show|series|game|anime|cartoon)\b/i;
 
 /**
  * Whether an agent from /api/agents/public can appear in a Microsoft listing
@@ -216,7 +219,9 @@ export function listingSafeAgent(agent) {
 	if (!agent.avatar_thumbnail && !agent.avatar_model_url) return false;
 	const skills = Array.isArray(agent.skills) ? agent.skills : [];
 	if (CRYPTO_SKILL.test(name) || skills.some((s) => CRYPTO_SKILL.test(String(s)))) return false;
-	return bannedTextIn(`${name} ${agent.description || ''}`).length === 0;
+	const text = `${name} ${agent.description || ''}`;
+	if (BORROWED_CHARACTER.test(text)) return false;
+	return bannedTextIn(text).length === 0;
 }
 
 /** The listing-safe agent with the most chats: the one the agent scenes show. */
