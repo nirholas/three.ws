@@ -1,14 +1,34 @@
 {
-	"generated_at": "2026-11-11T16:22:20.108Z",
+	"generated_at": "2026-11-11T16:26:47.473Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4490,
+	"total": 4494,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Docs · Microsoft 365 Copilot connector",
+			"summary": "Admin guide for the three.ws Graph connector: consent and its two permissions, who can see indexed agents, models and avatars, what is indexed, sync and throttling, disconnect, errors and their fixes, data handling, the API and the schema.",
+			"link": "/docs/microsoft-365-copilot-connector",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Microsoft 365 Copilot Connector Settings",
+			"summary": "Connect a three.ws account to your organization's Microsoft 365 tenant with admin consent, index your agents, Forge models and avatars for Microsoft Search and Copilot, choose who can see them, watch sync status, run a full re-sync, and disconnect.",
+			"link": "/settings/microsoft-365",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-11-11",
 			"type": "launch",
@@ -57,6 +77,26 @@
 			"link": "/trust",
 			"tags": [
 				"security",
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "Export any Forge model as a Minecraft: Bedrock structure pack",
+			"summary": "The Forge download menu has a new Minecraft: Bedrock option. It turns your model into blocks, shows a live 3D block preview, and downloads a .mcpack you open in Bedrock and place with a structure block or one /function command. Pick the height (16 to 128 blocks), which blocks to use (all, concrete, wool, terracotta, builder or colorful), solid or hollow, and optional dithering. Colors come from the model's texture at every block, and dark textures are brightened automatically so a steel knight does not come out as coal. Builds wider than one structure block are split into tiles that the function places together. Not an official Minecraft product; not approved by or associated with Mojang or Microsoft.",
+			"link": "/docs/minecraft-export",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "Find your three.ws agents and 3D models in Microsoft 365 Copilot",
+			"summary": "A Microsoft 365 administrator can now connect a three.ws account to their organization from Settings > Microsoft 365. Your public agents, Forge models and avatars are indexed into the tenant, so people in the organization find them in Microsoft Search and can ask Microsoft 365 Copilot about them, with links back to three.ws. You choose who sees them: everyone in the organization except guests, one Entra group, or only you. Changes reach Microsoft every 15 minutes, items you delete or make private are removed, Microsoft's throttling is respected, and a Full re-sync button resends everything at once. Disconnecting deletes the index from the tenant. It goes live once the three.ws Microsoft app is approved for the two Graph permissions it needs.",
+			"link": "/settings/microsoft-365",
+			"tags": [
 				"feature"
 			]
 		},
@@ -1499,48 +1539,6 @@
 			"tags": [
 				"security",
 				"infra"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Ops alerts can now reach an inbox, not only the dashboard",
-			"summary": "Operator alerts gain an email channel next to the private Telegram chat. Critical alerts (a leak, a halted payer, a compromised signer) are emailed and pushed every time they fire; warnings reach Telegram once an hour per signature and arrive by email as one hourly digest with counts and the oldest unresolved item, so an inbox is never flooded. Each channel has its own hourly ceiling, so a storm on one never silences the other. The health check now lists which alert channels are wired and flags production as degraded when no one would be told, and a self-test script proves real delivery on every configured channel.",
-			"link": null,
-			"tags": [
-				"infra"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Optional one-wallet-per-call payer for the x402 ring",
-			"summary": "With X402_RING_FRESH_PAYER=true, every paid ring call is signed by a brand-new wallet that is funded for that call and swept to zero afterwards, so each settlement shows up as its own buyer on x402scan and in our accounting.",
-			"link": null,
-			"tags": [
-				"improvement",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Oracle and agent trading as MCP servers",
-			"summary": "The Oracle now has its own free MCP server at /api/mcp-oracle (14 read tools, no account), plus @three-ws/oracle-mcp and @three-ws/agent-trader-mcp for stdio. Agent trading arms in simulate mode by default, needs a signed real-funds agreement to go live, and has a one-argument kill switch. A wallet-profile database outage now answers 503 instead of an empty leaderboard.",
-			"link": "/oracle",
-			"tags": [
-				"feature",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Paid endpoint 402 challenges validate on external x402 directories",
-			"summary": "The agent-reputation and agent-bouncer challenges no longer carry amount-0 placeholder entries that directory validators rejected. The free Bearer and Sign-In-With-X path still works and is now listed per route in the OpenAPI document and the x402 discovery document.",
-			"link": "/docs/x402-distribution",
-			"tags": [
-				"fix"
 			]
 		}
 	]

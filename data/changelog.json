@@ -3,6 +3,20 @@
 	"entries": [
 		{
 			"date": "2026-11-11",
+			"title": "Export any Forge model as a Minecraft: Bedrock structure pack",
+			"summary": "The Forge download menu has a new Minecraft: Bedrock option. It turns your model into blocks, shows a live 3D block preview, and downloads a .mcpack you open in Bedrock and place with a structure block or one /function command. Pick the height (16 to 128 blocks), which blocks to use (all, concrete, wool, terracotta, builder or colorful), solid or hollow, and optional dithering. Colors come from the model's texture at every block, and dark textures are brightened automatically so a steel knight does not come out as coal. Builds wider than one structure block are split into tiles that the function places together. Not an official Minecraft product; not approved by or associated with Mojang or Microsoft.",
+			"tags": ["feature"],
+			"link": "/docs/minecraft-export"
+		},
+		{
+			"date": "2026-11-11",
+			"title": "Find your three.ws agents and 3D models in Microsoft 365 Copilot",
+			"summary": "A Microsoft 365 administrator can now connect a three.ws account to their organization from Settings > Microsoft 365. Your public agents, Forge models and avatars are indexed into the tenant, so people in the organization find them in Microsoft Search and can ask Microsoft 365 Copilot about them, with links back to three.ws. You choose who sees them: everyone in the organization except guests, one Entra group, or only you. Changes reach Microsoft every 15 minutes, items you delete or make private are removed, Microsoft's throttling is respected, and a Full re-sync button resends everything at once. Disconnecting deletes the index from the tenant. It goes live once the three.ws Microsoft app is approved for the two Graph permissions it needs.",
+			"tags": ["feature"],
+			"link": "/settings/microsoft-365"
+		},
+		{
+			"date": "2026-11-11",
 			"title": "A trust center with security answers that link to the code",
 			"summary": "three.ws/trust explains where three.ws runs, how data is encrypted, how people and apps sign in, who has admin access, what is logged, how long each kind of data is kept and the job that deletes it, how agent wallet custody works, which AI providers can see prompts (with each provider's own published terms quoted), and how incidents and vulnerability reports are handled. Every answer links to the file in the open-source code that proves it, and the compliance table says plainly what is in place, in progress and not pursued. three.ws/trust/subprocessors lists every third party that processes data, with a filter. Expired sessions, old sign-in nonces and year-old widget views are now actually deleted, as the privacy policy says.",
 			"tags": ["security", "feature"],
