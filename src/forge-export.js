@@ -29,6 +29,7 @@ import { copyReadme3d, describeResult } from './readme-3d-copy.js';
 import { createLogger } from './shared/log.js';
 import { creationIdFromGlbUrl, mountSlicerMenuItems } from './slicer-handoff.js';
 import { mountCraftcloudMenuItem } from './craftcloud-print.js';
+import { mountMinecraftMenuItem } from './forge-minecraft.js';
 
 const log = createLogger('forge-export');
 
@@ -225,6 +226,12 @@ if (download && resultPanel) {
 	// Craftcloud directly. Shown once a model is ready, same gating as the
 	// slicer rows above.
 	const craftcloudItem = mountCraftcloudMenuItem(menu);
+
+	// Minecraft: Bedrock structure pack with a live block preview. Same gating
+	// as the print rows: needs a stored model the server can voxelize.
+	const minecraftItem = mountMinecraftMenuItem(menu, {
+		isLocalEdit: () => (download.getAttribute('href') || '').startsWith('blob:'),
+	});
 
 	// How this file was made: the mesh pipeline behind every export, credited
 	// right where a technical visitor would look for it.
@@ -506,6 +513,7 @@ if (download && resultPanel) {
 		sceneCache = { url: null, scene: null };
 		slicerItems.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl));
 		craftcloudItem.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl), e.detail?.glbUrl || null);
+		minecraftItem.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl), e.detail?.glbUrl || null);
 		// Retire any conversion still polling for the previous model.
 		convertEpoch += 1;
 		for (const status of itemStatus.values()) {

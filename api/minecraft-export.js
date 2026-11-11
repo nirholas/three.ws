@@ -84,9 +84,14 @@ export default wrap(async (req, res) => {
 	let title = typeof body.name === 'string' ? body.name.trim().slice(0, 48) : '';
 	if (typeof body.creationId === 'string' && body.creationId.trim()) {
 		const creation = await getPublicCreation({ id: body.creationId.trim() });
-		if (!creation?.glb_url) return error(res, 404, 'creation_not_found', 'No finished public creation with that id.');
-		sourceUrl = creation.glb_url;
-		if (!title) title = String(creation.prompt || '').slice(0, 48);
+		if (creation?.glb_url) {
+			sourceUrl = creation.glb_url;
+			if (!title) title = String(creation.prompt || '').slice(0, 48);
+		} else if (!sourceUrl) {
+			// A private or unsaved creation is still exportable by its GLB URL,
+			// which the Forge page always knows; only a bare unknown id fails.
+			return error(res, 404, 'creation_not_found', 'No finished public creation with that id.');
+		}
 	}
 	if (!sourceUrl) return error(res, 400, 'validation_error', 'Pass a creationId or a glbUrl to export.');
 
@@ -100,7 +105,11 @@ export default wrap(async (req, res) => {
 	}
 	const fill = body.fill === 'shell' ? 'shell' : 'solid';
 	const format = body.format === 'mcpack' ? 'mcpack' : 'preview';
-	const name = structureName(body.name || title || 'build');
+	// Every pack's structures share the threews: namespace in a world, so an
+	// unnamed export gets a distinct id from the model file rather than a
+	// generic one that a second import would overwrite.
+	const fileStem = (sourceUrl.split('?')[0].split('/').pop() || '').replace(/\.glb$/i, '').replace(/[^a-z0-9]/gi, '').slice(0, 8);
+	const name = structureName(body.name || title || (fileStem ? `forge_${fileStem}` : 'build'));
 
 	const deadline = Date.now() + DEADLINE_MS;
 	let built;
