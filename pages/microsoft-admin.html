@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot - no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Microsoft partnership operations · three.ws</title>
+		<meta name="description" content="Internal board for the three.ws Microsoft surfaces: Marketplace SaaS subscriptions and metering, Teams bot, Power Platform connector, Partner Center analytics and alerts." />
+		<meta name="robots" content="noindex, nofollow" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/microsoft-admin.css" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="msa-shell" id="msa-app" aria-busy="true">
+			<div class="msa-head">
+				<div>
+					<p class="msa-kicker">Internal · Microsoft partnership</p>
+					<h1 class="msa-title">Partnership operations</h1>
+				</div>
+				<div class="msa-head-meta">
+					<span id="msa-updated" aria-live="polite">Loading live data</span>
+					<button type="button" class="msa-btn" id="msa-refresh">Refresh</button>
+				</div>
+			</div>
+
+			<section class="msa-section" aria-labelledby="msa-attention-title">
+				<h2 class="msa-h2" id="msa-attention-title">What needs attention</h2>
+				<div id="msa-attention">
+					<div class="msa-skel msa-skel-line"></div>
+					<div class="msa-skel msa-skel-line"></div>
+				</div>
+			</section>
+
+			<section class="msa-kpis" id="msa-kpis" aria-label="Key numbers">
+				<div class="msa-skel msa-skel-kpi"></div><div class="msa-skel msa-skel-kpi"></div><div class="msa-skel msa-skel-kpi"></div>
+				<div class="msa-skel msa-skel-kpi"></div><div class="msa-skel msa-skel-kpi"></div><div class="msa-skel msa-skel-kpi"></div>
+			</section>
+
+			<div class="msa-grid" id="msa-panels">
+				<div class="msa-panel msa-skel msa-skel-panel"></div>
+				<div class="msa-panel msa-skel msa-skel-panel"></div>
+				<div class="msa-panel msa-skel msa-skel-panel"></div>
+				<div class="msa-panel msa-skel msa-skel-panel"></div>
+			</div>
+
+			<p class="msa-foot">Microsoft, Microsoft Teams, Power Platform, Power Automate, Microsoft Edge and Partner Center are trademarks of the Microsoft group of companies.</p>
+		</main>
+
+		<div class="msa-tooltip" id="msa-tooltip" role="status" hidden></div>
+
+		<script type="module" src="/src/microsoft-admin.js"></script>
+	</body>
+</html>

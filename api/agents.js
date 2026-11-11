@@ -34,6 +34,7 @@ import {
 	applyInferenceBudget,
 	resumeAfterBudgetChange,
 } from './_lib/inference-billing.js';
+import { trackConnectorCall } from './_lib/microsoft-surface-events.js';
 
 const animationEntrySchema = z.object({
 	name: z.string().trim().min(1).max(60),
@@ -134,6 +135,7 @@ function validateStudioMeta(meta) {
 }
 
 export default wrap(async (req, res) => {
+	trackConnectorCall(req, res);
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
 

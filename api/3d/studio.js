@@ -54,6 +54,7 @@ import { startForge, originFromReq } from '../_mcp-studio/gpt-forge-client.js';
 import { shapeSubmit, shapePoll } from '../_mcp-studio/studio-shape.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
 import { resolveLogoPrompt } from '../_lib/forge-director-prompts.js';
+import { trackConnectorCall } from '../_lib/microsoft-surface-events.js';
 
 export { shapeSubmit, shapePoll };
 
@@ -247,6 +248,7 @@ async function poll(req, res, jobId, title) {
 }
 
 export default wrap(async (req, res) => {
+	trackConnectorCall(req, res);
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', payments: false })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
 

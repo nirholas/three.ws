@@ -23,6 +23,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { normalizeLegacyPolicy } from '../_lib/embed-policy.js';
 import { isUuid } from '../_lib/validate.js';
 import { runAgentTurn, AgentTurnError } from '../_lib/agent-turn.js';
+import { trackConnectorCall } from '../_lib/microsoft-surface-events.js';
 
 const bodySchema = z.object({
 	agentId: z.string().min(1).max(120),
@@ -31,6 +32,7 @@ const bodySchema = z.object({
 });
 
 export default wrap(async (req, res) => {
+	trackConnectorCall(req, res);
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: false })) return;
 	if (!method(req, res, ['POST'])) return;
 

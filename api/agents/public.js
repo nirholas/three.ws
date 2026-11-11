@@ -48,6 +48,7 @@ import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { publicUrlOrNull, thumbnailUrl } from '../_lib/r2.js';
+import { trackConnectorCall } from '../_lib/microsoft-surface-events.js';
 
 const SORTS = new Set(['newest', 'popular', 'name', 'live']);
 
@@ -98,6 +99,7 @@ function mapAgent(r) {
 }
 
 export default wrap(async (req, res) => {
+	trackConnectorCall(req, res);
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
