@@ -46,13 +46,18 @@ function basisDirectory() {
 	const candidates = [];
 	try {
 		const threeMain = createRequire(import.meta.url).resolve('three');
-		candidates.push(path.join(path.dirname(path.dirname(threeMain)), 'examples/jsm/libs/basis'));
+		candidates.push(
+			path.join(path.dirname(path.dirname(threeMain)), 'examples/jsm/libs/basis'),
+		);
 	} catch {
 		// three not resolvable from here; the public copy below is the fallback.
 	}
 	candidates.push(fileURLToPath(new URL('../../public/three/basis', import.meta.url)));
 	const hit = candidates.find((dir) => existsSync(path.join(dir, 'basis_transcoder.wasm')));
-	if (!hit) throw new Ktx2DecodeError('the Basis transcoder is not installed (three/examples/jsm/libs/basis)');
+	if (!hit)
+		throw new Ktx2DecodeError(
+			'the Basis transcoder is not installed (three/examples/jsm/libs/basis)',
+		);
 	return hit;
 }
 
@@ -64,13 +69,19 @@ function loadBasis() {
 			const dir = basisDirectory();
 			const source = readFileSync(path.join(dir, 'basis_transcoder.js'), 'utf8');
 			const mod = { exports: {} };
-			const factory = vm.runInThisContext(`(function (module, exports, require, __dirname) {${source}\n})`, {
-				filename: path.join(dir, 'basis_transcoder.js'),
-			});
+			const factory = vm.runInThisContext(
+				`(function (module, exports, require, __dirname) {${source}\n})`,
+				{
+					filename: path.join(dir, 'basis_transcoder.js'),
+				},
+			);
 			factory(mod, mod.exports, createRequire(path.join(dir, 'basis_transcoder.js')), dir);
 			const BASIS = mod.exports;
-			if (typeof BASIS !== 'function') throw new Ktx2DecodeError('the Basis transcoder did not load');
-			const basis = await BASIS({ wasmBinary: readFileSync(path.join(dir, 'basis_transcoder.wasm')) });
+			if (typeof BASIS !== 'function')
+				throw new Ktx2DecodeError('the Basis transcoder did not load');
+			const basis = await BASIS({
+				wasmBinary: readFileSync(path.join(dir, 'basis_transcoder.wasm')),
+			});
 			basis.initializeBasis();
 			return basis;
 		})().catch((err) => {
@@ -85,7 +96,11 @@ async function decodeUncompressed(bytes) {
 	const { read } = await import('ktx-parse');
 	const container = read(bytes);
 	if (container.supercompressionScheme !== 0) return null;
-	if (container.vkFormat !== VK_FORMAT_R8G8B8A8_UNORM && container.vkFormat !== VK_FORMAT_R8G8B8A8_SRGB) return null;
+	if (
+		container.vkFormat !== VK_FORMAT_R8G8B8A8_UNORM &&
+		container.vkFormat !== VK_FORMAT_R8G8B8A8_SRGB
+	)
+		return null;
 	const width = container.pixelWidth;
 	const height = Math.max(1, container.pixelHeight);
 	const level = container.levels[0]?.levelData;
@@ -107,7 +122,8 @@ export async function decodeKtx2(bytes) {
 		if (file.isValid() && (file.isETC1S() || file.isUASTC())) {
 			const width = file.getWidth();
 			const height = file.getHeight();
-			if (!file.startTranscoding()) throw new Ktx2DecodeError('the Basis transcoder rejected this KTX2 file');
+			if (!file.startTranscoding())
+				throw new Ktx2DecodeError('the Basis transcoder rejected this KTX2 file');
 			const size = file.getImageTranscodedSizeInBytes(0, 0, 0, BASIS_FORMAT_RGBA32);
 			const data = new Uint8Array(size);
 			if (!file.transcodeImage(data, 0, 0, 0, BASIS_FORMAT_RGBA32, 0, -1, -1)) {
@@ -121,5 +137,7 @@ export async function decodeKtx2(bytes) {
 	}
 	const raw = await decodeUncompressed(bytes);
 	if (raw) return raw;
-	throw new Ktx2DecodeError('unsupported KTX2 encoding (only Basis ETC1S, UASTC and uncompressed RGBA8 decode)');
+	throw new Ktx2DecodeError(
+		'unsupported KTX2 encoding (only Basis ETC1S, UASTC and uncompressed RGBA8 decode)',
+	);
 }

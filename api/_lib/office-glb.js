@@ -63,16 +63,19 @@ let ioPromise = null;
 async function getIO() {
 	if (!ioPromise) {
 		ioPromise = (async () => {
-			const { NodeIO } = await import('@gltf-transform/core');
+			const { NodeIO, Logger } = await import('@gltf-transform/core');
 			const { ALL_EXTENSIONS } = await import('@gltf-transform/extensions');
 			const draco = await import('draco3dgltf');
 			const create = draco.default ?? draco;
 			const { MeshoptDecoder } = await import('meshoptimizer');
 			await MeshoptDecoder.ready;
-			return new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({
-				'draco3d.decoder': await create.createDecoderModule(),
-				'meshopt.decoder': MeshoptDecoder,
-			});
+			return new NodeIO()
+				.setLogger(new Logger(Logger.Verbosity.WARN))
+				.registerExtensions(ALL_EXTENSIONS)
+				.registerDependencies({
+					'draco3d.decoder': await create.createDecoderModule(),
+					'meshopt.decoder': MeshoptDecoder,
+				});
 		})().catch((err) => {
 			ioPromise = null;
 			throw err;
@@ -92,7 +95,9 @@ async function openImage(sharp, texture) {
 	const image = texture.getImage();
 	if (mime === 'image/ktx2') {
 		const raw = await decodeKtx2(image);
-		return sharp(Buffer.from(raw.data), { raw: { width: raw.width, height: raw.height, channels: 4 } });
+		return sharp(Buffer.from(raw.data), {
+			raw: { width: raw.width, height: raw.height, channels: 4 },
+		});
 	}
 	return sharp(Buffer.from(image));
 }
@@ -117,7 +122,12 @@ async function officeTexture(sharp, texture, maxPx) {
 	const width = meta.width ?? size?.[0] ?? 0;
 	const height = meta.height ?? size?.[1] ?? 0;
 	if (Math.max(width, height) > maxPx) {
-		pipeline = pipeline.resize({ width: maxPx, height: maxPx, fit: 'inside', withoutEnlargement: true });
+		pipeline = pipeline.resize({
+			width: maxPx,
+			height: maxPx,
+			fit: 'inside',
+			withoutEnlargement: true,
+		});
 	}
 	// A PNG or JPEG that only needed resizing keeps its format, so a lossless
 	// source never picks up JPEG artifacts. Converted containers pick by alpha.
@@ -128,7 +138,9 @@ async function officeTexture(sharp, texture, maxPx) {
 	}
 	const out =
 		outMime === 'image/jpeg'
-			? await pipeline.jpeg({ quality: 90, mozjpeg: true }).toBuffer({ resolveWithObject: true })
+			? await pipeline
+					.jpeg({ quality: 90, mozjpeg: true })
+					.toBuffer({ resolveWithObject: true })
 			: await pipeline.png({ compressionLevel: 9 }).toBuffer({ resolveWithObject: true });
 	texture.setImage(new Uint8Array(out.data)).setMimeType(outMime);
 	const uri = texture.getURI();
@@ -180,7 +192,8 @@ function limitInfluences(doc) {
 				for (let k = 0; k < 4; k++) {
 					const p = top[k];
 					outJoints[v * 4 + k] = p ? p[0] : 0;
-					outWeights[v * 4 + k] = p && sum > 0 ? p[1] / sum : k === 0 && sum === 0 ? 1 : 0;
+					outWeights[v * 4 + k] =
+						p && sum > 0 ? p[1] / sum : k === 0 && sum === 0 ? 1 : 0;
 				}
 			}
 			prim.setAttribute(
@@ -227,9 +240,16 @@ function stepToLinear(doc, sampler) {
 	}
 	const buffer = doc.getRoot().listBuffers()[0];
 	sampler
-		.setInput(doc.createAccessor().setType('SCALAR').setArray(new Float32Array(outTimes)).setBuffer(buffer))
+		.setInput(
+			doc
+				.createAccessor()
+				.setType('SCALAR')
+				.setArray(new Float32Array(outTimes))
+				.setBuffer(buffer),
+		)
 		.setOutput(
-			doc.createAccessor()
+			doc
+				.createAccessor()
 				.setType(output.getType())
 				.setArray(new Float32Array(outValues))
 				.setBuffer(buffer),
@@ -254,7 +274,8 @@ function officeAnimations(doc, warnings) {
 				stepSamplers++;
 			}
 		}
-		for (const channel of anim.listChannels()) if (channel.getTargetPath() === 'weights') morphChannels++;
+		for (const channel of anim.listChannels())
+			if (channel.getTargetPath() === 'weights') morphChannels++;
 	}
 	if (morphChannels) {
 		warnings.push(
@@ -275,17 +296,23 @@ async function recentre(doc) {
 	const { getBounds } = await import('@gltf-transform/functions');
 	const root = doc.getRoot();
 	const scene = root.getDefaultScene() || root.listScenes()[0];
-	if (!scene) throw new OfficeGlbError('no_geometry', 'The model has no scene to place on a slide.');
+	if (!scene)
+		throw new OfficeGlbError('no_geometry', 'The model has no scene to place on a slide.');
 	if (!root.getDefaultScene()) root.setDefaultScene(scene);
 	const { min, max } = getBounds(scene);
 	if (![...min, ...max].every(Number.isFinite)) {
-		throw new OfficeGlbError('no_geometry', 'The model has no visible geometry to place on a slide.');
+		throw new OfficeGlbError(
+			'no_geometry',
+			'The model has no visible geometry to place on a slide.',
+		);
 	}
 	const center = [0, 1, 2].map((i) => (min[i] + max[i]) / 2);
 	const extent = Math.max(...[0, 1, 2].map((i) => max[i] - min[i]));
 	if (!(extent > 0)) throw new OfficeGlbError('no_geometry', 'The model has zero size.');
 	if (center.some((c) => Math.abs(c) > extent * 1e-6)) {
-		const wrapper = doc.createNode('three.ws office centre').setTranslation(center.map((c) => -c));
+		const wrapper = doc
+			.createNode('three.ws office centre')
+			.setTranslation(center.map((c) => -c));
 		for (const child of scene.listChildren()) {
 			scene.removeChild(child);
 			wrapper.addChild(child);
@@ -307,17 +334,25 @@ async function recentre(doc) {
  * @param {{ maxTextureSize?: number, targetBytes?: number }} [opts]
  * @returns {Promise<{ glb: Uint8Array, bounds: { min: number[], max: number[] }, report: object }>}
  */
-export async function makeOfficeSafeGlb(input, { maxTextureSize = OFFICE_TEXTURE_MAX_PX, targetBytes = OFFICE_TARGET_BYTES } = {}) {
-	if (!input || input.byteLength < 20) throw new OfficeGlbError('invalid_model', 'The model file is empty.');
+export async function makeOfficeSafeGlb(
+	input,
+	{ maxTextureSize = OFFICE_TEXTURE_MAX_PX, targetBytes = OFFICE_TARGET_BYTES } = {},
+) {
+	if (!input || input.byteLength < 20)
+		throw new OfficeGlbError('invalid_model', 'The model file is empty.');
 	const io = await getIO();
-	const { dequantize, uninstance, unpartition, prune } = await import('@gltf-transform/functions');
+	const { dequantize, uninstance, unpartition, prune } =
+		await import('@gltf-transform/functions');
 	const { PropertyType } = await import('@gltf-transform/core');
 
 	let doc;
 	try {
 		doc = await io.readBinary(new Uint8Array(input.buffer, input.byteOffset, input.byteLength));
 	} catch (err) {
-		throw new OfficeGlbError('invalid_model', `The model is not a readable GLB: ${err.message}`);
+		throw new OfficeGlbError(
+			'invalid_model',
+			`The model is not a readable GLB: ${err.message}`,
+		);
 	}
 	const root = doc.getRoot();
 	const extensionsBefore = root.listExtensionsUsed().map((e) => e.extensionName);
@@ -340,9 +375,16 @@ export async function makeOfficeSafeGlb(input, { maxTextureSize = OFFICE_TEXTURE
 		}
 	}
 	if (optional.length) {
-		warnings.push(`Marked ${optional.join(', ')} optional; Office ignores extensions it does not read.`);
+		warnings.push(
+			`Marked ${optional.join(', ')} optional; Office ignores extensions it does not read.`,
+		);
 	}
-	await doc.transform(prune({ propertyTypes: [PropertyType.ACCESSOR, PropertyType.TEXTURE, PropertyType.MATERIAL], keepAttributes: true }));
+	await doc.transform(
+		prune({
+			propertyTypes: [PropertyType.ACCESSOR, PropertyType.TEXTURE, PropertyType.MATERIAL],
+			keepAttributes: true,
+		}),
+	);
 
 	const sharp = await loadSharp();
 	const textures = [];
@@ -354,7 +396,10 @@ export async function makeOfficeSafeGlb(input, { maxTextureSize = OFFICE_TEXTURE
 			try {
 				row = await officeTexture(sharp, texture, maxPx);
 			} catch (err) {
-				throw new OfficeGlbError('texture_unreadable', `Could not convert texture "${texture.getName() || texture.getURI()}": ${err.message}`);
+				throw new OfficeGlbError(
+					'texture_unreadable',
+					`Could not convert texture "${texture.getName() || texture.getURI()}": ${err.message}`,
+				);
 			}
 			if (row) {
 				const prior = textures.find((t) => t.texture === texture);
@@ -363,11 +408,18 @@ export async function makeOfficeSafeGlb(input, { maxTextureSize = OFFICE_TEXTURE
 			}
 		}
 		glb = await io.writeBinary(doc);
-		if (glb.byteLength <= targetBytes || maxPx <= OFFICE_TEXTURE_MIN_PX || root.listTextures().length === 0) break;
+		if (
+			glb.byteLength <= targetBytes ||
+			maxPx <= OFFICE_TEXTURE_MIN_PX ||
+			root.listTextures().length === 0
+		)
+			break;
 		maxPx = Math.max(OFFICE_TEXTURE_MIN_PX, Math.floor(maxPx / 2));
 	}
 	if (glb.byteLength > targetBytes) {
-		warnings.push(`The Office copy is ${(glb.byteLength / 1048576).toFixed(1)} MB; it will insert, but the deck is large.`);
+		warnings.push(
+			`The Office copy is ${(glb.byteLength / 1048576).toFixed(1)} MB; it will insert, but the deck is large.`,
+		);
 	}
 
 	return {
