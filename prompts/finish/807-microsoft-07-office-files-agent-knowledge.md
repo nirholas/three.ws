@@ -1,5 +1,7 @@
 # microsoft 07: agents learn from Word, PowerPoint, Excel and Outlook files (MarkItDown)
 
+Status 2026-11-11: built and verified locally (worker, ingestion API, chat retrieval with citations, Knowledge panel, docs). Waiting on the owner to deploy workers/markitdown, set GCP_MARKITDOWN_URL on three-ws-api, push and deploy. See the 807 entry in _context/microsoft-PROGRESS.md.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3107.
 
 ## Operating clause (binding)
