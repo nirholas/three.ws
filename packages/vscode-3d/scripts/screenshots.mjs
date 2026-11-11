@@ -110,9 +110,8 @@ try {
 	await win.keyboard.press('Enter');
 	await win.waitForTimeout(2000);
 	await palette('MCP: List Servers');
-	await win.keyboard.press('ArrowDown');
-	await win.keyboard.press('Enter');
-	await win.waitForTimeout(2000);
+	await win.keyboard.type('three.ws');
+	await win.waitForTimeout(1500);
 	await shot('copilot-mcp-servers.png');
 	await win.keyboard.press('Escape');
 

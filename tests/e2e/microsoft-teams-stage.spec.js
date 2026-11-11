@@ -17,10 +17,9 @@ const require = createRequire(import.meta.url);
 // public library serves with CORS, so both browsers can load it.
 const MODEL_ID = '13f259c7-7024-4d68-b1f0-dbbf52c06209';
 
-test.use({
-	viewport: { width: 1200, height: 760 },
-	launchOptions: { args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] },
-});
+const GL_ARGS = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
+const VIEWPORT = { width: 1200, height: 760 };
+test.use({ viewport: VIEWPORT, launchOptions: { args: GL_ARGS } });
 test.describe.configure({ mode: 'serial', timeout: 300_000 });
 
 let fluid;
@@ -119,10 +118,14 @@ async function scrubTo(page, seconds) {
 	}, seconds);
 }
 
-test('two participants share camera follow, presence, pins and animation both ways', async ({ browser }) => {
+test('two participants share camera follow, presence, pins and animation both ways', async ({ playwright, baseURL }) => {
 	const errors = [];
-	const ctxA = await browser.newContext();
-	const ctxB = await browser.newContext();
+	// One browser per participant, as in a real meeting. Two contexts in one
+	// headless browser share a single software GL process, and one stage
+	// rendering continuously starves the other's synchronous WebGL calls.
+	const [browserA, browserB] = await Promise.all([playwright.chromium.launch({ args: GL_ARGS }), playwright.chromium.launch({ args: GL_ARGS })]);
+	const ctxA = await browserA.newContext({ baseURL, viewport: VIEWPORT });
+	const ctxB = await browserB.newContext({ baseURL, viewport: VIEWPORT });
 	const a = await ctxA.newPage();
 	const b = await ctxB.newPage();
 	watchConsole(a, 'Ada', errors);
@@ -231,8 +234,7 @@ test('two participants share camera follow, presence, pins and animation both wa
 	expect(md).toContain('Bo Chen');
 
 	expect(errors).toEqual([]);
-	await ctxA.close();
-	await ctxB.close();
+	await Promise.all([browserA.close(), browserB.close()]);
 });
 
 test('outside Teams the stage runs single-user and says why', async ({ page }) => {
