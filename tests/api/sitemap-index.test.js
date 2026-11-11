@@ -1,5 +1,5 @@
 // The sitemap index at /sitemap.xml (api/sitemap.js), the first file Google and
-// Bing fetch. It points at the six sub-sitemaps that api/sitemap/[type].js builds.
+// Bing fetch. It points at the seven sub-sitemaps that api/sitemap/[type].js builds.
 //
 // Two things are pinned here:
 //
@@ -21,14 +21,13 @@ const db = vi.hoisted(() => ({ queries: [], ts: '2026-08-01T10:00:00.000Z', fail
 
 vi.mock('../../api/_lib/env.js', () => ({ env: { APP_ORIGIN: 'https://three.ws' } }));
 
+// Each per-type lookup is a tagged query returning one row per 50,000-row page.
 vi.mock('../../api/_lib/db.js', () => ({
-	sql: Object.assign(() => Promise.resolve([]), {
-		unsafe: (text) => {
-			db.queries.push(text);
-			if (db.fail) return Promise.reject(new Error('connection terminated'));
-			return Promise.resolve([{ ts: db.ts }]);
-		},
-	}),
+	sql: (strings) => {
+		db.queries.push(strings.join('?'));
+		if (db.fail) return Promise.reject(new Error('connection terminated'));
+		return Promise.resolve([{ page: 0, n: 1, lastmod: db.ts }]);
+	},
 	isDbUnavailableError: () => false,
 }));
 
@@ -58,7 +57,7 @@ describe('/api/sitemap index', () => {
 
 		const body = await r.text();
 		expect(XMLValidator.validate(body)).toBe(true);
-		for (const type of ['core', 'agents', 'avatars', 'widgets', 'profiles', 'news']) {
+		for (const type of ['core', 'agents', 'avatars', 'creations', 'widgets', 'profiles', 'news']) {
 			expect(body).toContain(`<loc>https://three.ws/sitemap/${type}.xml</loc>`);
 		}
 		expect(body).toContain('<lastmod>2026-08-01</lastmod>');
@@ -88,6 +87,7 @@ describe('/api/sitemap index', () => {
 
 		const body = await r.text();
 		expect(XMLValidator.validate(body)).toBe(true);
-		expect(body.match(/<sitemap>/g)).toHaveLength(6);
+		expect(body.match(/<sitemap>/g)).toHaveLength(7);
+		expect(body).not.toContain('<lastmod>2026-08-01</lastmod>');
 	});
 });
