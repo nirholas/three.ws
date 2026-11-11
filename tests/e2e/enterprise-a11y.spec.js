@@ -285,3 +285,21 @@ test('the sticky prompt-library toolbar never covers the link that has focus (2.
 	expect(hidden, 'controls entirely hidden behind the sticky toolbar').toEqual([]);
 	await context.close();
 });
+
+test('the injected skip link points at the main landmark even when <main> has its own id (2.4.1)', async ({ page }) => {
+	// /agi tags its <main> as #agi-root, so the injected link kept
+	// href="#main-content" with nothing behind it: opening it in a new tab or
+	// restoring the fragment on reload went nowhere.
+	await page.goto('/agi', { waitUntil: 'domcontentloaded', timeout: 180_000 });
+	const skip = page.locator('.nav-skip, .skip-link, .h-skip-link').first();
+	await expect(skip).toBeAttached({ timeout: 30_000 });
+	const target = await skip.evaluate((a) => {
+		const id = decodeURIComponent(a.hash.slice(1));
+		const el = id && document.getElementById(id);
+		return el ? (el.matches('main, [role="main"]') ? 'main' : el.tagName) : null;
+	});
+	expect(target).toBe('main');
+	await skip.focus();
+	await page.keyboard.press('Enter');
+	await expect(page.locator('main')).toBeFocused();
+});

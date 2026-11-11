@@ -260,17 +260,21 @@ function ensureSkipLink() {
 			'.nav-skip{position:fixed;top:10px;left:10px;z-index:10000;transform:translateY(calc(-100% - 14px))}';
 		document.head.appendChild(critical);
 	}
-	if (!document.getElementById('main-content')) {
+	// A landmark that already carries its own id (/agi's #agi-root) keeps it,
+	// and the href follows that id rather than pointing at a missing #main-content.
+	let targetId = 'main-content';
+	if (!document.getElementById(targetId)) {
 		const landmark = document.querySelector('main, [role="main"]');
-		if (landmark && !landmark.id) landmark.id = 'main-content';
+		if (landmark && !landmark.id) landmark.id = targetId;
+		else if (landmark) targetId = landmark.id;
 	}
 	const link = document.createElement('a');
 	link.className = 'nav-skip';
-	link.href = '#main-content';
+	link.href = `#${targetId}`;
 	link.textContent = 'Skip to content';
 	link.addEventListener('click', (e) => {
 		const target =
-			document.getElementById('main-content') || document.querySelector('main, [role="main"]');
+			document.getElementById(targetId) || document.querySelector('main, [role="main"]');
 		if (!target) return; // fall back to the native anchor jump
 		e.preventDefault();
 		if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
