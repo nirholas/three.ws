@@ -15,6 +15,10 @@ const root = fileURLToPath(new URL('../..', import.meta.url));
 const workspace = mkdtempSync(join(tmpdir(), 'threews-vscode-'));
 writeFileSync(join(workspace, 'index.html'), '<!doctype html>\n<title>three.ws host test</title>\n');
 
+// Launched from inside VS Code (an integrated terminal or an agent), this is set
+// and would start the downloaded build as plain Node instead of the editor.
+delete process.env.ELECTRON_RUN_AS_NODE;
+
 try {
 	await runTests({
 		version: process.env.VSCODE_TEST_VERSION || 'stable',
