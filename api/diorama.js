@@ -7,6 +7,13 @@
  *       Returns objects with status:'pending' and no meshes — the browser then
  *       forges each one on /api/forge and watches the world assemble.
  *
+ *   POST /api/diorama  { action:'compose-photo', imageUrl | imageBase64 } → a diorama PLAN
+ *       Rebuilds ONE photo as a diorama: the vision chain boxes every separable
+ *       object and estimates its real size, distance, and what it rests on, and
+ *       src/diorama/photo-layout.js places them so the world mirrors the photo.
+ *       Objects carry their photo box (the browser forges each from its crop)
+ *       and a supportId when they rest on another object.
+ *
  *   POST /api/diorama  { action:'save', diorama, clientKey? } → { id, url }
  *       Persists a fully-forged world so it gets a permalink + gallery slot.
  *
@@ -40,6 +47,13 @@ import {
 	composePlanFromPrompt,
 	forgeDioramaObjects,
 } from './_lib/diorama-build.js';
+import {
+	composePlanFromPhoto,
+	photoComposerConfigured,
+	isOwnStorageUrl,
+	parseInlinePhoto,
+	stripForeignPhotos,
+} from './_lib/diorama-photo.js';
 import {
 	normalizeDiorama,
 	MIN_OBJECTS,
@@ -80,18 +94,20 @@ export default wrap(async (req, res) => {
 
 	if (req.method === 'GET') return handleGet(req, res);
 
-	const body = await readJson(req).catch(() => null);
+	// 1.2 MB: room for a compose-photo inline photo (capped at 700 KB decoded).
+	const body = await readJson(req, 1_200_000).catch(() => null);
 	if (!body || typeof body !== 'object') {
 		return json(res, 400, { error: 'invalid_body', message: 'Send a JSON body.' });
 	}
 
 	if (body.action === 'compose') return handleCompose(req, res, body);
+	if (body.action === 'compose-photo') return handleComposePhoto(req, res, body);
 	if (body.action === 'save') return handleSave(req, res, body);
 	if (body.action === 'export') return handleExport(req, res, body);
 	if (body.action === 'build') return handleBuild(req, res, body);
 	return json(res, 400, {
 		error: 'unknown_action',
-		message: 'action must be "compose", "save", "export", or "build".',
+		message: 'action must be "compose", "compose-photo", "save", "export", or "build".',
 	});
 });
 
@@ -188,6 +204,59 @@ async function handleCompose(req, res, body) {
 	return json(res, 200, { diorama });
 }
 
+async function handleComposePhoto(req, res, body) {
+	const imageUrl = typeof body.imageUrl === 'string' ? body.imageUrl.trim() : '';
+	let inline = null;
+	if (imageUrl) {
+		if (!/^https:\/\/[^\s]+$/i.test(imageUrl) || imageUrl.length > 1024) {
+			return json(res, 400, { error: 'invalid_image', message: 'imageUrl must be a public https URL.' });
+		}
+	} else {
+		inline = parseInlinePhoto(body.imageBase64);
+		if (inline.error) {
+			return json(res, 400, { error: 'invalid_image', message: body.imageBase64 ? inline.error : 'Send a photo as imageUrl or imageBase64.' });
+		}
+	}
+	if (!photoComposerConfigured()) {
+		return json(res, 503, {
+			error: 'composer_unavailable',
+			message: 'The scene reader is warming up. Try again in a moment.',
+		});
+	}
+
+	// Reading a photo is a vision completion: same per-IP and global circuit
+	// breakers as the sentence composer, so the two share one inference budget.
+	const ip = clientIp(req);
+	const rl = await limits.dioramaComposeIp(ip);
+	if (!rl.success) {
+		return rateLimited(res, rl, 'World composer limit reached. Try again shortly.');
+	}
+	const globalRl = await limits.dioramaComposeGlobal();
+	if (!globalRl.success) {
+		return rateLimited(res, globalRl, 'The world composer is at capacity. Try again shortly.');
+	}
+
+	try {
+		const { diorama } = await composePlanFromPhoto({
+			imageUrl: imageUrl || null,
+			imageBase64: inline?.base64 ?? null,
+			mimeType: inline?.mimeType,
+			// Only a photo on our own storage is kept on the world (and so shown in
+			// the public gallery); any other URL is read once and not republished.
+			sourceImage: imageUrl && isOwnStorageUrl(imageUrl) ? imageUrl : null,
+		});
+		return json(res, 200, { diorama });
+	} catch (err) {
+		if (err?.code === 'photo_unreadable') {
+			return json(res, 422, { error: 'photo_unreadable', message: err.message });
+		}
+		return json(res, 503, {
+			error: 'composer_unavailable',
+			message: err?.message || 'The scene reader is busy. Try again in a moment.',
+		});
+	}
+}
+
 async function handleSave(req, res, body) {
 	if (!dioramaStoreEnabled()) {
 		return json(res, 503, {
@@ -207,9 +276,10 @@ async function handleSave(req, res, body) {
 	// default the in-scene author credit to their real handle if the client
 	// didn't already set one.
 	const sessionUser = await getSessionUser(req).catch(() => null);
-	const diorama = sessionUser?.username && !body.diorama?.author?.handle
-		? { ...body.diorama, author: { ...(body.diorama?.author || {}), handle: sessionUser.username } }
-		: body.diorama;
+	const submitted = stripForeignPhotos(body.diorama);
+	const diorama = sessionUser?.username && !submitted?.author?.handle
+		? { ...submitted, author: { ...(submitted?.author || {}), handle: sessionUser.username } }
+		: submitted;
 
 	let saved;
 	try {

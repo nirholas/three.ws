@@ -790,3 +790,232 @@
 		animation: none;
 	}
 }
+
+/* ── Photo worlds ──────────────────────────────────────────────────────────
+   "From a photo" in the composer, the drag-and-drop overlay, and the source
+   photo inset on the stage with one box per object that follows its forge. */
+.dio-compose__photo {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	white-space: nowrap;
+	padding-inline: 1rem;
+	transition:
+		color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
+}
+.dio-compose__photo:hover {
+	border-color: var(--dio-glow);
+	color: var(--dio-ink);
+	transform: translateY(-1px);
+}
+.dio-compose__photo:active {
+	transform: translateY(0);
+	background: color-mix(in srgb, var(--dio-glow) 14%, transparent);
+}
+.dio-compose__photo:focus-visible {
+	outline: 2px solid var(--dio-glow);
+	outline-offset: 2px;
+}
+.dio-compose__photo[aria-busy='true'],
+.dio-compose__photo:disabled {
+	pointer-events: none;
+	opacity: 0.6;
+}
+.dio-compose__photo-icon {
+	flex: none;
+}
+.dio-compose__help--photo {
+	margin-top: 0.25rem;
+	max-width: 60ch;
+}
+@media (max-width: 560px) {
+	.dio-compose {
+		flex-wrap: wrap;
+	}
+	.dio-compose__field {
+		flex-basis: 100%;
+	}
+	.dio-compose__go,
+	.dio-compose__photo {
+		flex: 1 1 0;
+		justify-content: center;
+	}
+}
+
+/* Drag a photo anywhere on the page: the stage turns into the drop target. */
+.dio-drop {
+	position: absolute;
+	inset: 0;
+	z-index: 4;
+	display: grid;
+	place-items: center;
+	border: 2px dashed var(--dio-glow);
+	border-radius: inherit;
+	background: color-mix(in srgb, var(--dio-glow) 12%, rgba(0, 0, 0, 0.55));
+	backdrop-filter: blur(3px);
+	pointer-events: none;
+	animation: dio-rise 0.2s ease-out;
+}
+.dio-drop[hidden] {
+	display: none;
+}
+.dio-drop__label {
+	margin: 0;
+	padding: 0.6rem 1rem;
+	border-radius: var(--radius-pill, 999px);
+	background: rgba(0, 0, 0, 0.55);
+	color: #fff;
+	font-weight: 600;
+}
+
+.dio-photo {
+	position: absolute;
+	top: 0.75rem;
+	left: 0.75rem;
+	z-index: 3;
+	margin: 0;
+	width: min(34%, 280px);
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	animation: dio-rise 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.dio-photo[hidden] {
+	display: none;
+}
+.dio-photo__toggle {
+	align-self: flex-start;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.3rem 0.6rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: #fff;
+	background: rgba(0, 0, 0, 0.5);
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	border-radius: var(--radius-pill, 999px);
+	cursor: pointer;
+	backdrop-filter: blur(6px);
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
+}
+.dio-photo__toggle:hover {
+	background: rgba(0, 0, 0, 0.7);
+	border-color: rgba(255, 255, 255, 0.4);
+}
+.dio-photo__toggle:active {
+	background: rgba(0, 0, 0, 0.85);
+}
+.dio-photo__toggle:focus-visible {
+	outline: 2px solid var(--dio-glow);
+	outline-offset: 2px;
+}
+.dio-photo__toggle svg {
+	transition: transform var(--duration-fast) var(--ease-standard);
+}
+.dio-photo__toggle[aria-expanded='false'] svg {
+	transform: rotate(-90deg);
+}
+.dio-photo__frame {
+	position: relative;
+	line-height: 0;
+	border-radius: var(--radius-md, 0.6rem);
+	overflow: hidden;
+	border: 1px solid rgba(255, 255, 255, 0.22);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+.dio-photo__frame[hidden] {
+	display: none;
+}
+.dio-photo__img {
+	display: block;
+	width: 100%;
+	height: auto;
+	max-height: 40vh;
+	object-fit: contain;
+	background: #000;
+}
+.dio-photo__boxes {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+}
+.dio-photo__box {
+	fill: transparent;
+	stroke: rgba(255, 255, 255, 0.7);
+	stroke-width: 1.5;
+	vector-effect: non-scaling-stroke;
+	transition:
+		stroke var(--duration-base) var(--ease-standard),
+		fill var(--duration-base) var(--ease-standard);
+}
+.dio-photo__box[data-status='forging'] {
+	stroke: var(--warn, #fbbf24);
+	stroke-dasharray: 5 4;
+	animation: dio-march 0.9s linear infinite;
+}
+.dio-photo__box[data-status='ready'] {
+	stroke: var(--success, #4ade80);
+}
+.dio-photo__box[data-status='failed'] {
+	stroke: var(--danger, #f87171);
+}
+.dio-photo__box.is-hot {
+	stroke-width: 3;
+	fill: color-mix(in srgb, var(--dio-glow) 22%, transparent);
+}
+.dio-object.is-hot {
+	border-color: var(--dio-glow);
+}
+.dio-object[data-from='photo'] .dio-object__label::after {
+	content: '';
+	display: inline-block;
+	width: 0.42rem;
+	height: 0.42rem;
+	margin-left: 0.4rem;
+	border-radius: 2px;
+	border: 1px solid var(--dio-dim);
+	vertical-align: 0.1em;
+}
+@keyframes dio-march {
+	to {
+		stroke-dashoffset: -18;
+	}
+}
+@media (max-width: 560px) {
+	.dio-photo {
+		width: 40%;
+		top: 0.5rem;
+		left: 0.5rem;
+	}
+	.dio-photo__img {
+		max-height: 28vh;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.dio-photo,
+	.dio-drop {
+		animation: none;
+	}
+	.dio-photo__box[data-status='forging'] {
+		animation: none;
+	}
+}
+.dio-object[tabindex]:hover {
+	border-color: var(--dio-stroke-strong);
+}
+.dio-object[tabindex]:focus-visible {
+	outline: 2px solid var(--dio-glow);
+	outline-offset: 2px;
+}
+/* Play mode owns the whole stage: the photo inset steps aside while it runs. */
+.dio-stage:has(.dio-play:not([hidden])) .dio-photo {
+	display: none;
+}

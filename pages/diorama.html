@@ -74,6 +74,9 @@
 		    #compose-input        the <input> / <textarea>
 		    #compose-submit       the "Build my world" button
 		    #compose-examples     clickable example sentences (data-prompt)
+		    #compose-photo        "From a photo" button (opens #compose-photo-input)
+		    #stage-photo        → source photo + per-object boxes for photo worlds
+		    #stage-drop           drag-and-drop overlay for a photo
 		    #world-status       → live forge progress (text + bar)
 		    #world-progress       the <progress>/bar element
 		    #world-objects      → per-object chips with status (forging/ready/failed)
@@ -118,9 +121,20 @@
 						<button id="compose-submit" type="submit" class="btn primary btn--primary dio-compose__go" data-i18n-html="diorama.build_my_world">
 							<span class="dio-compose__go-label">Build my world</span>
 						</button>
+						<button id="compose-photo" type="button" class="btn dio-compose__photo" aria-describedby="compose-photo-help" title="Rebuild a photo in 3D">
+							<svg class="dio-compose__photo-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+								<path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.4l1.3-1.7A1.5 1.5 0 0 1 10.4 3.7h3.2a1.5 1.5 0 0 1 1.2.6L16.1 6h1.4A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+								<circle cx="12" cy="12.5" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6" />
+							</svg>
+							<span class="dio-compose__photo-label" data-i18n="diorama.from_a_photo">From a photo</span>
+						</button>
+						<input id="compose-photo-input" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/avif" hidden />
 					</form>
 					<p id="compose-help" class="dio-compose__help" data-i18n="diorama.one_concrete_scene_works_best_a_place">
 						One concrete scene works best — a place, a mood, a few things in it.
+					</p>
+					<p id="compose-photo-help" class="dio-compose__help dio-compose__help--photo" data-i18n="diorama.or_rebuild_a_photo">
+						Or rebuild a photo: pick, drop or paste a shot of a desk, a shelf or a tabletop, and every object in it is forged and placed where it stands.
 					</p>
 
 					<ul id="compose-examples" class="dio-examples" aria-label="Example worlds">
@@ -150,6 +164,21 @@
 					<div id="stage-hud" class="dio-hud" hidden>
 						<span class="dio-hud__title"></span>
 						<span class="dio-hud__meta"></span>
+					</div>
+					<!-- Photo worlds: the source photo with a box per object, live status -->
+					<figure id="stage-photo" class="dio-photo" hidden>
+						<button type="button" class="dio-photo__toggle" aria-expanded="true" aria-controls="stage-photo-frame">
+							<span class="dio-photo__toggle-label" data-i18n="diorama.your_photo">Your photo</span>
+							<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+						</button>
+						<div id="stage-photo-frame" class="dio-photo__frame">
+							<img class="dio-photo__img" alt="The photo this world was rebuilt from" decoding="async" />
+							<svg class="dio-photo__boxes" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true"></svg>
+						</div>
+					</figure>
+					<!-- Shown while a photo is dragged over the page -->
+					<div id="stage-drop" class="dio-drop" hidden aria-hidden="true">
+						<p class="dio-drop__label" data-i18n="diorama.drop_to_rebuild">Drop the photo to rebuild it in 3D</p>
 					</div>
 				</div>
 

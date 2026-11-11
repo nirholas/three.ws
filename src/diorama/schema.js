@@ -32,6 +32,17 @@
 // @property {number} rotationY         yaw in radians
 // @property {('pending'|'forging'|'ready'|'failed')} status
 // @property {string|null} glbUrl       durable GLB once forged
+// @property {[number,number,number,number]} [box]  photo worlds only: where the
+//                                      object sits in the source photo, as
+//                                      [x0, y0, x1, y1] fractions of the frame
+// @property {string} [supportId]       photo worlds only: id of the object this
+//                                      one rests on (a laptop on a desk); the
+//                                      renderer seats it on that mesh's real top
+// @property {('photo'|'text')} [forgeFrom]  photo worlds only: 'photo' forges the
+//                                      object from its crop of the source photo
+//                                      (image→3D), 'text' from its description
+// @property {string} [refImage]        durable crop of the source photo the
+//                                      image→3D lane reads (set once uploaded)
 //
 // @typedef {'collect'|'reach'|'survive'} DioramaGoal
 //
@@ -55,6 +66,8 @@
 // @property {IslandShape} island
 // @property {DioramaObject[]} objects
 // @property {DioramaGame|null} game    optional goal; null = exploration only
+// @property {string} [sourceImage]     photo worlds only: the photo the scene was
+//                                      rebuilt from (durable https URL)
 // @property {{handle?:string, wallet?:string}|null} author
 // @property {string} createdAt         ISO 8601
 // @property {number} views
@@ -79,6 +92,11 @@ export const MAX_OBJECTS = 8;
 export const MIN_OBJECTS = 3;
 export const MAX_PROMPT_LEN = 240;
 export const ISLAND_RADIUS = 6.2; // metres; placement must stay inside this
+// Every forged mesh is normalized so its larger horizontal side spans this many
+// metres before the object's `scale` multiplier. The live renderer, the GLB
+// exporter, and the photo layout all size objects against this one number.
+export const OBJECT_FOOTPRINT = 1.4;
+export const FORGE_SOURCES = /** @type {const} */ (['photo', 'text']);
 export const GOALS = /** @type {const} */ (['collect', 'reach', 'survive']);
 export const MIN_TIME_LIMIT_SEC = 10;
 export const MAX_TIME_LIMIT_SEC = 600;
@@ -155,6 +173,9 @@ export function normalizeDiorama(input) {
 
 	const title = String(src.title ?? '').slice(0, 80).trim() || titleFromPrompt(prompt);
 
+	resolveSupports(objects);
+	const sourceImage = httpsUrl(src.sourceImage);
+
 	const { game, warnings } = normalizeGame(src.game, objects);
 
 	const diorama = {
@@ -171,6 +192,7 @@ export function normalizeDiorama(input) {
 		createdAt: typeof src.createdAt === 'string' ? src.createdAt : '',
 		views: isFiniteNum(src.views) ? Math.max(0, Math.floor(src.views)) : 0,
 		featured: Boolean(src.featured),
+		...(sourceImage ? { sourceImage } : {}),
 	};
 
 	return { ok: errors.length === 0, diorama, errors, warnings };
@@ -270,6 +292,8 @@ function normalizeObject(o, i) {
 		: o.glbUrl
 			? 'ready'
 			: 'pending';
+	const box = normalizeBox(o.box);
+	const refImage = httpsUrl(o.refImage);
 	return {
 		id: typeof o.id === 'string' && o.id ? o.id : `obj-${i}`,
 		prompt,
@@ -279,7 +303,52 @@ function normalizeObject(o, i) {
 		rotationY: round3(Number(o.rotationY) || 0),
 		status,
 		glbUrl: typeof o.glbUrl === 'string' && /^https?:\/\//.test(o.glbUrl) ? o.glbUrl : null,
+		// Photo-world fields ride along only when present, so a sentence world
+		// normalizes to exactly the shape it always had.
+		...(box ? { box } : {}),
+		...(typeof o.supportId === 'string' && o.supportId ? { supportId: o.supportId.slice(0, 64) } : {}),
+		...(FORGE_SOURCES.includes(o.forgeFrom) ? { forgeFrom: o.forgeFrom } : {}),
+		...(refImage ? { refImage } : {}),
 	};
+}
+
+/** A photo-frame box `[x0, y0, x1, y1]` in 0..1 with x0 < x1 and y0 < y1, or null. */
+function normalizeBox(b) {
+	if (!Array.isArray(b) || b.length !== 4) return null;
+	const n = b.map(Number);
+	if (!n.every(Number.isFinite)) return null;
+	const [x0, y0, x1, y1] = n.map((v) => clamp(v, 0, 1));
+	if (!(x0 < x1 && y0 < y1)) return null;
+	return [x0, y0, x1, y1].map((v) => Math.round(v * 10000) / 10000);
+}
+
+/** A durable https URL (max 1 KB) or null. */
+function httpsUrl(v) {
+	return typeof v === 'string' && v.length <= 1024 && /^https:\/\/[^\s]+$/i.test(v) ? v : null;
+}
+
+/**
+ * Drop any `supportId` that does not name another object in the world, and
+ * break support cycles (a rests on b rests on a), so the renderer can always
+ * walk a support chain to the ground. Mutates the freshly normalized objects.
+ */
+function resolveSupports(objects) {
+	const byId = new Map(objects.map((o) => [o.id, o]));
+	for (const o of objects) {
+		if (o.supportId && (o.supportId === o.id || !byId.has(o.supportId))) delete o.supportId;
+	}
+	for (const o of objects) {
+		const seen = new Set([o.id]);
+		let cur = o;
+		while (cur.supportId) {
+			if (seen.has(cur.supportId)) {
+				delete cur.supportId;
+				break;
+			}
+			seen.add(cur.supportId);
+			cur = byId.get(cur.supportId);
+		}
+	}
 }
 
 function normalizeAuthor(a) {

@@ -16,7 +16,7 @@
 import { createDioramaRenderer } from './renderer.js';
 import { mountGallery } from './gallery.js';
 import { openShare } from './share.js';
-import { composeWorld, forgeObject, CLIENT_ID } from './compose.js';
+import { composeWorld, composeWorldFromPhoto, forgeObject, CLIENT_ID } from './compose.js';
 import {
 	forgeProgress,
 	isComplete,
@@ -175,8 +175,24 @@ function init() {
 
 		li.append(dot, label);
 		li.setAttribute('role', 'listitem');
-		li.setAttribute('aria-label', `${obj.label || obj.prompt}: ${statusWord(obj.status)}`);
+		if (obj.forgeFrom) li.dataset.from = obj.forgeFrom;
+		li.setAttribute('aria-label', chipLabel(obj, obj.status));
+		if (obj.box) {
+			// Photo objects light up their box on the source photo.
+			li.tabIndex = 0;
+			const on = () => setHot(obj.id, true);
+			const off = () => setHot(obj.id, false);
+			li.addEventListener('pointerenter', on);
+			li.addEventListener('pointerleave', off);
+			li.addEventListener('focus', on);
+			li.addEventListener('blur', off);
+		}
 		return li;
+	}
+
+	function chipLabel(obj, status) {
+		const from = obj?.forgeFrom === 'photo' ? ', from its crop of your photo' : '';
+		return `${obj?.label || obj?.prompt || 'object'}: ${statusWord(status)}${from}`;
 	}
 
 	function chipFor(id) {
@@ -188,7 +204,9 @@ function init() {
 		if (!chip) return;
 		chip.dataset.status = status;
 		const obj = state.diorama?.objects.find((o) => o.id === id);
-		chip.setAttribute('aria-label', `${obj?.label || 'object'}: ${statusWord(status)}`);
+		if (obj?.forgeFrom) chip.dataset.from = obj.forgeFrom;
+		chip.setAttribute('aria-label', chipLabel(obj, status));
+		setBoxStatus(id, status);
 		// Failed objects get an in-place retry affordance; clear it otherwise.
 		const existing = chip.querySelector('.dio-object__retry');
 		if (status === 'failed') {
@@ -206,6 +224,61 @@ function init() {
 		btn.setAttribute('aria-label', 'Retry forging this object');
 		btn.addEventListener('click', () => retryObject(id));
 		return btn;
+	}
+
+	// ── Photo inset: the source photo with a live box per object ──────────────
+
+	const SVG_NS = 'http://www.w3.org/2000/svg';
+	let photoObjectUrl = null;
+
+	function showPhotoInset(src, diorama) {
+		if (!el.photoInset || !el.photoImg || !el.photoBoxes) return;
+		if (photoObjectUrl && photoObjectUrl !== src) URL.revokeObjectURL(photoObjectUrl);
+		photoObjectUrl = src.startsWith('blob:') ? src : null;
+		el.photoImg.src = src;
+		el.photoBoxes.replaceChildren();
+		for (const obj of diorama.objects) {
+			if (!obj.box) continue;
+			const [x0, y0, x1, y1] = obj.box;
+			const rect = document.createElementNS(SVG_NS, 'rect');
+			rect.setAttribute('class', 'dio-photo__box');
+			rect.setAttribute('x', String(x0));
+			rect.setAttribute('y', String(y0));
+			rect.setAttribute('width', String(x1 - x0));
+			rect.setAttribute('height', String(y1 - y0));
+			rect.dataset.id = obj.id;
+			rect.dataset.status = obj.status || 'pending';
+			el.photoBoxes.append(rect);
+		}
+		setPhotoExpanded(true);
+		show(el.photoInset);
+	}
+
+	function hidePhotoInset() {
+		hide(el.photoInset);
+		el.photoBoxes?.replaceChildren();
+		el.photoImg?.removeAttribute('src');
+		if (photoObjectUrl) URL.revokeObjectURL(photoObjectUrl);
+		photoObjectUrl = null;
+	}
+
+	function setPhotoExpanded(open) {
+		el.photoToggle?.setAttribute('aria-expanded', open ? 'true' : 'false');
+		if (el.photoFrame) el.photoFrame.hidden = !open;
+	}
+
+	function boxFor(id) {
+		return el.photoBoxes?.querySelector(`.dio-photo__box[data-id="${cssEscape(id)}"]`) || null;
+	}
+
+	function setBoxStatus(id, status) {
+		const rect = boxFor(id);
+		if (rect) rect.dataset.status = status;
+	}
+
+	function setHot(id, on) {
+		boxFor(id)?.classList.toggle('is-hot', on);
+		chipFor(id)?.classList.toggle('is-hot', on);
 	}
 
 	// Live progress bar + "n / total" count, driven by schema's forgeProgress.
@@ -250,6 +323,8 @@ function init() {
 		state.busy = true;
 		state.readOnly = false;
 		state.lastPrompt = prompt;
+		state.lastPhoto = null;
+		hidePhotoInset();
 
 		setComposeBusy(true);
 		hide(el.errorState);
@@ -294,10 +369,86 @@ function init() {
 		}
 	}
 
+	const PHOTO_STAGE_LABEL = {
+		reading: 'Opening your photo…',
+		uploading: 'Uploading your photo…',
+		analyzing: 'Reading the scene…',
+		forging: 'Forging your world…',
+	};
+
+	// Rebuild a photo (a File, or the stored URL of a saved photo world).
+	async function startPhotoCompose(source) {
+		if (!source) return;
+		state.controller?.abort();
+		const controller = new AbortController();
+		state.controller = controller;
+		state.busy = true;
+		state.readOnly = false;
+		state.lastPhoto = source;
+
+		setComposeBusy(true);
+		hide(el.errorState);
+		hide(el.sharePanel);
+		hide(el.worldActions);
+		clearShareNote();
+		hidePhotoInset();
+		show(el.worldStatus);
+		if (el.statusLabel) el.statusLabel.textContent = PHOTO_STAGE_LABEL.reading;
+		if (el.worldProgress) el.worldProgress.style.width = '0%';
+		if (el.worldCount) el.worldCount.textContent = '';
+		el.worldObjects?.replaceChildren();
+		el.stage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+		try {
+			const diorama = await composeWorldFromPhoto(source, {
+				signal: controller.signal,
+				onStage: (stage) => {
+					if (controller.signal.aborted || !el.statusLabel) return;
+					if (stage !== 'forging') el.statusLabel.textContent = PHOTO_STAGE_LABEL[stage] || '';
+				},
+				onPlan: (plan, photo) => {
+					if (controller.signal.aborted) return;
+					state.diorama = plan;
+					state.lastPrompt = plan.prompt;
+					if (el.input) el.input.value = '';
+					renderer.setDiorama(plan);
+					fadeOutLoader();
+					renderObjectChips(plan);
+					showPhotoInset(photo.src, plan);
+					setHud(plan);
+					updateProgress();
+				},
+				onObject: (id, patch) => {
+					if (controller.signal.aborted) return;
+					handleObjectPatch(id, patch);
+				},
+			});
+			if (controller.signal.aborted) return;
+			state.diorama = diorama;
+			finishWorld();
+		} catch (err) {
+			if (controller.signal.aborted || err?.name === 'AbortError') return;
+			showError(err);
+		} finally {
+			if (state.controller === controller) {
+				state.controller = null;
+				state.busy = false;
+				setComposeBusy(false);
+			}
+		}
+	}
+
 	// Apply a per-object patch from the composer: forging / ready / failed.
 	async function handleObjectPatch(id, patch) {
 		const obj = state.diorama?.objects.find((o) => o.id === id);
 		if (!obj) return;
+
+		// The crop this object will forge from was stored: keep it on the world.
+		if (patch.refImage && !patch.status) {
+			obj.refImage = patch.refImage;
+			return;
+		}
+		if (patch.forgeFrom) obj.forgeFrom = patch.forgeFrom;
 
 		if (patch.status === 'forging') {
 			obj.status = 'forging';
@@ -415,7 +566,15 @@ function init() {
 		else if (act === 'play') openPlay();
 	}
 
+	// A photo world remixes by reading its photo again (a fresh read and fresh
+	// forges); a sentence world, or a photo world whose photo is not stored,
+	// recomposes from its prompt.
 	function remixWorld() {
+		const photo = state.lastPhoto || state.diorama?.sourceImage;
+		if (photo) {
+			startPhotoCompose(photo);
+			return;
+		}
 		const prompt = state.diorama?.prompt || state.lastPrompt || el.input?.value;
 		if (prompt) startCompose(prompt);
 	}
@@ -535,6 +694,8 @@ function init() {
 		hide(el.worldActions);
 		hide(el.sharePanel);
 		clearShareNote();
+		hidePhotoInset();
+		state.lastPhoto = null;
 		show(el.worldStatus);
 		if (el.statusLabel) el.statusLabel.textContent = 'Loading this world…';
 		if (scroll) el.stage.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -561,6 +722,7 @@ function init() {
 			renderer.setDiorama(diorama);
 			fadeOutLoader();
 			renderObjectChips(diorama);
+			if (diorama.sourceImage) showPhotoInset(diorama.sourceImage, diorama);
 			setHud(diorama);
 
 			// Materialize every already-forged object; mark the rest failed.
@@ -622,7 +784,7 @@ function init() {
 		const remix = actBtn('remix');
 		if (remix) {
 			remix.textContent = '↻ Remix this world';
-			if (el.input) el.input.value = diorama.prompt || '';
+			if (el.input) el.input.value = diorama.sourceImage ? '' : diorama.prompt || '';
 			state.lastPrompt = diorama.prompt || '';
 		}
 	}
@@ -658,6 +820,10 @@ function init() {
 				/* non-fatal */
 			}
 			el.input?.focus();
+			return;
+		}
+		if (state.lastPhoto) {
+			startPhotoCompose(state.lastPhoto);
 			return;
 		}
 		const prompt = state.lastPrompt || el.input?.value;
@@ -702,6 +868,10 @@ function init() {
 		el.submit.setAttribute('aria-busy', busy ? 'true' : 'false');
 		el.submit.disabled = busy;
 		if (el.input) el.input.toggleAttribute('aria-busy', busy);
+		if (el.photoBtn) {
+			el.photoBtn.setAttribute('aria-busy', busy ? 'true' : 'false');
+			el.photoBtn.disabled = busy;
+		}
 	}
 
 	el.form?.addEventListener('submit', (ev) => {
@@ -719,6 +889,53 @@ function init() {
 
 	el.worldActions?.addEventListener('click', onActions);
 	el.retryBtn?.addEventListener('click', onRetry);
+
+	// ── Photo input: button, drag and drop, paste ─────────────────────────────
+
+	el.photoBtn?.addEventListener('click', () => el.photoInput?.click());
+	el.photoInput?.addEventListener('change', () => {
+		const file = el.photoInput.files?.[0];
+		el.photoInput.value = '';
+		if (file) startPhotoCompose(file);
+	});
+	el.photoToggle?.addEventListener('click', () => {
+		setPhotoExpanded(el.photoToggle.getAttribute('aria-expanded') !== 'true');
+	});
+
+	const imageFileFrom = (list) => Array.from(list || []).find((f) => f && /^image\//.test(f.type)) || null;
+	const draggingFiles = (ev) => Array.from(ev.dataTransfer?.types || []).includes('Files');
+	let dragDepth = 0;
+	document.addEventListener('dragenter', (ev) => {
+		if (!draggingFiles(ev)) return;
+		dragDepth += 1;
+		show(el.drop);
+	});
+	document.addEventListener('dragleave', (ev) => {
+		if (!draggingFiles(ev)) return;
+		dragDepth = Math.max(0, dragDepth - 1);
+		if (!dragDepth) hide(el.drop);
+	});
+	document.addEventListener('dragover', (ev) => {
+		if (!draggingFiles(ev)) return;
+		ev.preventDefault();
+		ev.dataTransfer.dropEffect = 'copy';
+	});
+	document.addEventListener('drop', (ev) => {
+		if (!draggingFiles(ev)) return;
+		ev.preventDefault();
+		dragDepth = 0;
+		hide(el.drop);
+		const file = imageFileFrom(ev.dataTransfer.files);
+		if (file) startPhotoCompose(file);
+		else showError(Object.assign(new Error('That file is not a photo. Drop a JPEG, PNG or WebP image.'), { code: 'photo_type' }));
+	});
+	// Paste an image (a screenshot, a copied photo) anywhere on the page.
+	document.addEventListener('paste', (ev) => {
+		const file = imageFileFrom(ev.clipboardData?.files);
+		if (!file) return;
+		ev.preventDefault();
+		startPhotoCompose(file);
+	});
 
 	// ── Resize + lifecycle ─────────────────────────────────────────────────────
 
@@ -767,6 +984,14 @@ function collectElements() {
 		input: $('compose-input'),
 		submit: $('compose-submit'),
 		examples: $('compose-examples'),
+		photoBtn: $('compose-photo'),
+		photoInput: $('compose-photo-input'),
+		photoInset: $('stage-photo'),
+		photoToggle: $('stage-photo')?.querySelector('.dio-photo__toggle') || null,
+		photoFrame: $('stage-photo-frame'),
+		photoImg: $('stage-photo')?.querySelector('.dio-photo__img') || null,
+		photoBoxes: $('stage-photo')?.querySelector('.dio-photo__boxes') || null,
+		drop: $('stage-drop'),
 		worldStatus,
 		statusLabel: worldStatus?.querySelector('.dio-status__label') || null,
 		worldProgress: $('world-progress'),

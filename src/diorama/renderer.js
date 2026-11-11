@@ -17,7 +17,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-import { MOOD_LIGHT, ISLAND_RADIUS, defaultPalette } from './schema.js';
+import { MOOD_LIGHT, ISLAND_RADIUS, OBJECT_FOOTPRINT, defaultPalette } from './schema.js';
 
 // Decoder binaries are copied into /public/three/draco/ by the repo's
 // postinstall (scripts/copy-three-decoders.mjs) — the same path every other
@@ -26,7 +26,7 @@ const DRACO_PATH = '/three/draco/';
 
 // Geometry budget. The island is a small disc; objects normalize to ~1.4m so a
 // handful read as a cohesive miniature.
-const TARGET_FOOTPRINT = 1.4; // metres, before object.scale multiplier
+const TARGET_FOOTPRINT = OBJECT_FOOTPRINT; // metres, before object.scale multiplier
 const SURFACE_Y = 0; // the island top sits at y=0
 const MATERIALIZE_MS = 700;
 
@@ -837,8 +837,14 @@ export function createDioramaRenderer(container, opts = {}) {
 						}
 						worldGroup.add(fitted);
 						placed.set(objectId, { group: fitted, glbUrl });
+						fitted.userData.finalScale = fitted.scale.clone();
+						fitted.userData.finalY = fitted.position.y;
+						seatOnSupport(obj);
 
 						playMaterialize(seed, fitted, obj);
+						// Anything already standing on this object was seated on its
+						// estimated height; put it on the real surface now.
+						reseatDependents(objectId, new Set([objectId]));
 						needsRender = true;
 						resolve(fitted);
 					} catch (err) {
@@ -853,6 +859,96 @@ export function createDioramaRenderer(container, opts = {}) {
 				},
 			));
 		});
+	}
+
+	// --- stacking: seat an object on the real top surface of what it rests on ---
+	const _raycaster = new THREE.Raycaster();
+	const _down = new THREE.Vector3(0, -1, 0);
+	const _origin = new THREE.Vector3();
+	const _supportBox = new THREE.Box3();
+
+	// Run fn with a placed group at its final (post-animation) transform, so a
+	// supporter that is still rising is measured where it will end up.
+	function atFinalTransform(group, fn) {
+		const { finalScale, finalY } = group.userData;
+		const scale = group.scale.clone();
+		const y = group.position.y;
+		if (finalScale) group.scale.copy(finalScale);
+		if (Number.isFinite(finalY)) group.position.y = finalY;
+		group.updateMatrixWorld(true);
+		try {
+			return fn();
+		} finally {
+			group.scale.copy(scale);
+			group.position.y = y;
+			group.updateMatrixWorld(true);
+		}
+	}
+
+	/**
+	 * Put a placed object with a `supportId` on its supporter's real surface:
+	 * keep it inside the supporter's footprint, raycast straight down onto the
+	 * supporter's mesh at its centre and footprint corners, and rest it on the
+	 * highest contact. The resolved x, lift and z are written back to
+	 * obj.position so a saved world and its GLB export keep the stack.
+	 * No-op when the object has no supporter or the supporter has no mesh yet.
+	 */
+	function seatOnSupport(obj) {
+		if (!obj?.supportId || !current) return false;
+		const entry = placed.get(obj.id);
+		const support = placed.get(obj.supportId);
+		if (!entry || !support) return false;
+		const group = entry.group;
+		const half = (TARGET_FOOTPRINT * (obj.scale || 1)) / 2;
+
+		const top = atFinalTransform(support.group, () => {
+			_supportBox.setFromObject(support.group);
+			if (_supportBox.isEmpty()) return null;
+			// Stay inside the supporter: an object can overhang a little, never
+			// float beside it.
+			const clampAxis = (v, lo, hi) => {
+				const m = Math.min(half * 0.5, (hi - lo) / 2);
+				return Math.min(hi - m, Math.max(lo + m, v));
+			};
+			const x = clampAxis(obj.position[0], _supportBox.min.x, _supportBox.max.x);
+			const z = clampAxis(obj.position[2], _supportBox.min.z, _supportBox.max.z);
+			const probe = half * 0.35;
+			const points = [[0, 0], [probe, 0], [-probe, 0], [0, probe], [0, -probe]];
+			let best = -Infinity;
+			for (const [dx, dz] of points) {
+				_origin.set(x + dx, _supportBox.max.y + 1, z + dz);
+				_raycaster.set(_origin, _down);
+				const hit = _raycaster.intersectObject(support.group, true)[0];
+				if (hit && hit.point.y > best) best = hit.point.y;
+			}
+			// A mesh with an open top (a basket, a hollow shelf) can miss every
+			// probe: rest on its bounding top instead of sinking to the floor.
+			return { x, z, y: Number.isFinite(best) ? best : _supportBox.max.y };
+		});
+		if (!top) return false;
+
+		const ground = surfaceHeightAt(noise, current.island, top.x, top.z);
+		const round2 = (n) => Math.round(n * 100) / 100;
+		obj.position[0] = round2(top.x);
+		obj.position[1] = round2(Math.max(0, top.y - ground));
+		obj.position[2] = round2(top.z);
+		group.position.x = top.x;
+		group.position.z = top.z;
+		const animating = group.position.y !== group.userData.finalY;
+		group.userData.finalY = top.y;
+		if (!animating) group.position.y = top.y;
+		needsRender = true;
+		return true;
+	}
+
+	// Re-seat everything (transitively) resting on objectId.
+	function reseatDependents(objectId, visited) {
+		if (!current) return;
+		for (const o of current.objects) {
+			if (o.supportId !== objectId || visited.has(o.id)) continue;
+			visited.add(o.id);
+			if (seatOnSupport(o)) reseatDependents(o.id, visited);
+		}
 	}
 
 	function playMaterialize(seed, fitted, obj) {
@@ -912,12 +1008,13 @@ export function createDioramaRenderer(container, opts = {}) {
 		worldGroup.add(sparks);
 
 		// mesh emerges: from below + small + transparent -> in place
+		// finalY is read from userData every tick: a supporter that arrives
+		// mid-animation re-seats this object and moves its destination.
 		const finalScale = fitted.scale.clone();
 		const startScale = finalScale.clone().multiplyScalar(0.25);
-		const finalY = fitted.position.y;
-		const startY = finalY - 0.6;
+		const RISE = 0.6;
 		fitted.scale.copy(startScale);
-		fitted.position.y = startY;
+		fitted.position.y = fitted.userData.finalY - RISE;
 		setMeshOpacity(fitted, 0);
 
 		// seed flare then fade
@@ -934,7 +1031,7 @@ export function createDioramaRenderer(container, opts = {}) {
 
 				// mesh rise + scale + fade
 				fitted.scale.lerpVectors(startScale, finalScale, k);
-				fitted.position.y = startY + (finalY - startY) * k;
+				fitted.position.y = fitted.userData.finalY - RISE * (1 - k);
 				setMeshOpacity(fitted, k);
 
 				// seed flares early then collapses
@@ -966,7 +1063,7 @@ export function createDioramaRenderer(container, opts = {}) {
 					this.done = true;
 					setMeshOpacity(fitted, 1, true); // restore original material opacity
 					fitted.scale.copy(finalScale);
-					fitted.position.y = finalY;
+					fitted.position.y = fitted.userData.finalY;
 					// remove seed + fx
 					if (seed) {
 						worldGroup.remove(seed);

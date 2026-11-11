@@ -22,12 +22,12 @@ import { Document, NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS, KHRLightsPunctual } from '@gltf-transform/extensions';
 import { mergeDocuments, prune, dedup, unpartition } from '@gltf-transform/functions';
 import * as THREE from 'three';
-import { MOOD_LIGHT, ISLAND_RADIUS, normalizeDiorama } from '../../src/diorama/schema.js';
+import { MOOD_LIGHT, ISLAND_RADIUS, OBJECT_FOOTPRINT, normalizeDiorama } from '../../src/diorama/schema.js';
 import { fetchSafePublicUrlPinned } from './ssrf-guard.js';
 
-// Matches TARGET_FOOTPRINT in src/diorama/renderer.js — keeps a forged object's
-// on-screen size in the exported GLB identical to the live diorama stage.
-const TARGET_FOOTPRINT = 1.4;
+// The shared footprint (schema.js) the live renderer also sizes against, so a
+// forged object's size in the exported GLB matches the diorama stage exactly.
+const TARGET_FOOTPRINT = OBJECT_FOOTPRINT;
 const FETCH_TIMEOUT_MS = 30_000;
 const MAX_SOURCE_GLB_BYTES = 64 * 1024 * 1024;
 
