@@ -138,6 +138,17 @@ function modelNameFromUrl(url) {
 	}
 }
 
+/** A model's display name: the avatar's own name from the API, else the file name. */
+async function nameForRef(ref) {
+	if (ref.kind === 'url') return modelNameFromUrl(ref.url);
+	try {
+		const body = await getJson(`/api/avatars/${encodeURIComponent(ref.id)}`);
+		return cleanName(body?.avatar?.name) || 'Avatar';
+	} catch {
+		return 'Avatar';
+	}
+}
+
 function stageUrl(ms) {
 	const u = new URL('/microsoft/teams-stage', ORIGIN);
 	u.searchParams.set('model', encodeModelParam(ms.ref));
@@ -281,7 +292,7 @@ function mountPicker(slot, { onPick }) {
 	}
 
 	const form = panels.link.querySelector('form');
-	form.addEventListener('submit', (e) => {
+	form.addEventListener('submit', async (e) => {
 		e.preventDefault();
 		const input = form.querySelector('input');
 		const errEl = form.querySelector('.rs-form-error');
@@ -290,7 +301,7 @@ function mountPicker(slot, { onPick }) {
 		errEl.textContent = error || '';
 		input.setAttribute('aria-invalid', String(!!error));
 		if (!ref) return;
-		pick({ ref, name: ref.kind === 'url' ? modelNameFromUrl(ref.url) : 'Avatar' });
+		pick({ ref, name: await nameForRef(ref) });
 	});
 
 	select('mine');
@@ -372,6 +383,16 @@ async function startStage() {
 		return;
 	}
 	wireSession();
+	if (state.mode === 'local') {
+		// Local test mode only: a read-only view of the camera and playhead, so
+		// tests/e2e/microsoft-teams-stage.spec.js can compare two browsers exactly.
+		window.threewsReviewStage = Object.freeze({
+			pose: () => state.sv.getPose(),
+			time: () => state.sv.currentTime(),
+			clip: () => state.sv.current?.entry.id || '',
+			loaded: () => !!state.current?.loaded,
+		});
+	}
 	await chooseInitialModel();
 	renderAll();
 }
@@ -399,7 +420,7 @@ async function chooseInitialModel() {
 		const at = Number(params.get('at')) || 0;
 		const differs = !shared || modelKey(shared.ref) !== modelKey(fromUrl);
 		if (differs && (!shared || at > shared.at)) {
-			const name = cleanName(params.get('model_name')) || (fromUrl.kind === 'url' ? modelNameFromUrl(fromUrl.url) : 'Avatar');
+			const name = cleanName(params.get('model_name')) || (await nameForRef(fromUrl));
 			await session.setModel({ ref: fromUrl, name, at: at || session.now() });
 			if (!session.shared) return;
 		}

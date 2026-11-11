@@ -338,6 +338,16 @@ async function loadCard(agentId) {
 	skeletons(box, 1, 'skel-ac');
 	try {
 		const [mod, json] = await Promise.all([card.mod || import('adaptivecards'), getJson(`/api/glance/card?agent=${encodeURIComponent(agentId)}&format=adaptive`)]);
+		if (!card.mod) {
+			// Glance cards carry plain text only; render it escaped instead of
+			// pulling in a markdown library the payload never needs.
+			mod.AdaptiveCard.onProcessMarkdown = (text, result) => {
+				const holder = document.createElement('span');
+				holder.textContent = text;
+				result.outputHtml = holder.innerHTML;
+				result.didProcess = true;
+			};
+		}
 		card.mod = mod;
 		card.json = json;
 		jsonOut.textContent = JSON.stringify(json, null, 2);
