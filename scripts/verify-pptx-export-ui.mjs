@@ -57,17 +57,25 @@ await page.waitForFunction(() => !document.querySelector('.export-item[data-form
 await domClick('.export-caret');
 await row.waitFor({ state: 'visible' });
 await page.screenshot({ path: join(outDir, 'forge-menu.png') });
-const [forgeDl] = await Promise.all([
-	page.waitForEvent('download', { timeout: 180_000 }),
-	domClick('.export-item[data-format="pptx"]'),
-]);
-await page.waitForTimeout(50);
-result.forgeBusyLabel = await row.locator('.status').textContent();
+const downloads = [];
+page.on('download', (d) => downloads.push(d));
+const rowStatus = '.export-item[data-format="pptx"] .status';
+await domClick('.export-item[data-format="pptx"]');
+result.forgeBusyLabel = await page.locator(rowStatus).textContent();
+await page.waitForFunction(
+	(sel) => {
+		const el = document.querySelector(sel);
+		return el.textContent.includes('saved') || el.classList.contains('is-error');
+	},
+	rowStatus,
+	{ timeout: 240_000 },
+);
+const forgeStatus = await page.locator(rowStatus).textContent();
+if (!forgeStatus.includes('saved')) throw new Error(`Forge export failed: ${forgeStatus} (${pptxCalls.join(', ')})`);
+for (let i = 0; i < 50 && !downloads.length; i++) await page.waitForTimeout(100);
+const forgeDl = downloads.shift();
 const forgePath = join(outDir, forgeDl.suggestedFilename());
 await forgeDl.saveAs(forgePath);
-await page.waitForFunction(
-	() => document.querySelector('.export-item[data-format="pptx"] .status').textContent.includes('saved'),
-);
 result.forge = { file: forgePath, status: await row.locator('.status').textContent(), ...describeDeck(forgePath) };
 await page.screenshot({ path: join(outDir, 'forge-saved.png') });
 
@@ -92,10 +100,14 @@ const btn = page.locator('#mp-pptx');
 await btn.waitFor({ state: 'visible', timeout: 90_000 });
 await btn.focus();
 await page.screenshot({ path: join(outDir, 'model-page-focus.png') });
-const [pageDl] = await Promise.all([page.waitForEvent('download', { timeout: 180_000 }), domClick('#mp-pptx')]);
+await domClick('#mp-pptx');
+result.modelPageBusyLabel = await btn.textContent();
+await page.waitForFunction(() => /^(Saved|This|Too|three|Could)/.test(document.getElementById('mp-toast')?.textContent || '') && !document.getElementById('mp-pptx').disabled, null, { timeout: 240_000 });
+for (let i = 0; i < 50 && !downloads.length; i++) await page.waitForTimeout(100);
+const pageDl = downloads.shift();
+if (!pageDl) throw new Error(`Model page export failed: ${await page.locator('#mp-toast').textContent()}`);
 const pagePath = join(outDir, `model-page-${pageDl.suggestedFilename()}`);
 await pageDl.saveAs(pagePath);
-await page.waitForFunction(() => document.getElementById('mp-toast')?.textContent.startsWith('Saved'));
 result.modelPage = {
 	file: pagePath,
 	toast: await page.locator('#mp-toast').textContent(),
