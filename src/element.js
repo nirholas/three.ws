@@ -287,11 +287,15 @@ const BASE_STYLE = `
 		min-height: 28px;
 		pointer-events: none;
 		opacity: 0;
+		/* Idle bubble leaves the accessibility tree, or screen readers announce
+		   "Agent is thinking" before anyone has spoken (WCAG 4.1.2). */
+		visibility: hidden;
 		transform: translateX(-50%) scale(0.85);
 		transform-origin: center bottom;
 		transition:
 			opacity 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
-			transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+			transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+			visibility 0s linear 0.22s;
 		box-shadow: var(--agent-bubble-shadow);
 		display: flex;
 		align-items: center;
@@ -316,7 +320,7 @@ const BASE_STYLE = `
 		border-top: none;
 		border-bottom: 8px solid var(--agent-bubble-bg);
 	}
-	.thought-bubble[data-active="true"] { opacity: 1; transform: translateX(-50%) scale(1); }
+	.thought-bubble[data-active="true"] { opacity: 1; visibility: visible; transform: translateX(-50%) scale(1); transition-delay: 0s; }
 	.thought-bubble .text {
 		font: var(--agent-bubble-font-size)/1.4 var(--agent-chat-font);
 		color: var(--agent-bubble-color);

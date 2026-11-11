@@ -310,3 +310,28 @@ test('the home desktop exposes a main landmark for screen reader navigation (2.4
 	await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 180_000 });
 	await expect(page.getByRole('main', { name: 'three.ws desktop' })).toHaveCount(1);
 });
+
+test('an idle agent does not announce "Agent is thinking" to screen readers (4.1.2)', async ({ page }) => {
+	// The thought bubble only faded to opacity 0 when idle, so it stayed in the
+	// accessibility tree and Orca read "Agent is thinking status" on every
+	// embed and Teams tab before anyone had typed a word.
+	await page.goto('/microsoft/teams-tab', { waitUntil: 'domcontentloaded', timeout: 180_000 });
+	await expect(page.locator('.tt-stage agent-3d').first()).toBeAttached({ timeout: 90_000 });
+	await page.waitForFunction(() => !!document.querySelector('.tt-stage agent-3d')?.shadowRoot?.querySelector('.thought-bubble'), null, { timeout: 90_000 });
+	await page.locator('.tt-stage agent-3d.is-ready').first().waitFor({ timeout: 120_000 });
+	await expect(page.getByRole('status', { name: 'Agent is thinking' })).toHaveCount(0);
+});
+
+test('the hidden animation bar on an avatar profile keeps its Pause button out of the Tab order (2.4.7)', async ({ page }) => {
+	// The bar only faded to opacity 0 until a model with clips loaded, so its
+	// Pause button took keyboard focus while invisible.
+	const res = await page.request.get('/api/avatars/public?limit=1');
+	const body = await res.json().catch(() => ({}));
+	const id = body?.avatars?.[0]?.id;
+	test.skip(!id, 'no public avatar to load');
+	await page.goto(`/avatars/${id}`, { waitUntil: 'domcontentloaded', timeout: 180_000 });
+	await expect(page.locator('#av-anim-toggle')).toBeAttached({ timeout: 60_000 });
+	const shown = await page.locator('#av-anim-bar').getAttribute('data-visible');
+	test.skip(shown === '1', 'animation bar already visible');
+	await expect(page.getByRole('button', { name: 'Pause animation' })).toHaveCount(0);
+});

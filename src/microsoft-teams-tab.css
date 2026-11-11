@@ -33,8 +33,10 @@
 	background: radial-gradient(ellipse at 50% 85%, var(--surface-2), var(--surface-1) 70%);
 	border: 1px solid var(--stroke); border-radius: var(--radius-card, 14px); overflow: hidden;
 }
-.tt-stage agent-3d { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity var(--duration-base); }
-.tt-stage agent-3d.is-ready { opacity: 1; }
+/* Until the agent is ready the stage is invisible, so keep its chat log and
+   controls out of the Tab order and the accessibility tree as well. */
+.tt-stage agent-3d { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; visibility: hidden; transition: opacity var(--duration-base), visibility 0s linear var(--duration-base); }
+.tt-stage agent-3d.is-ready { opacity: 1; visibility: visible; transition-delay: 0s; }
 .tt-stage-skel { position: absolute; inset: 0; border-radius: 0; }
 .tt-stage-note {
 	position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;

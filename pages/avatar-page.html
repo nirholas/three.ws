@@ -316,13 +316,21 @@
 				box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.55);
 				opacity: 0;
 				pointer-events: none;
-				transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
+				/* Hidden bar leaves the Tab order too: an invisible Pause button
+				   took keyboard focus on models with no clips (WCAG 2.4.7). */
+				visibility: hidden;
+				transition:
+					opacity var(--duration-base) var(--ease-standard),
+					transform var(--duration-base) var(--ease-standard),
+					visibility 0s linear var(--duration-base);
 				z-index: 4;
 			}
 			.av-anim-bar[data-visible='1'] {
 				opacity: 1;
 				pointer-events: auto;
+				visibility: visible;
 				transform: translateX(-50%) translateY(0);
+				transition-delay: 0s;
 			}
 			.av-anim-toggle {
 				flex: 0 0 auto;
