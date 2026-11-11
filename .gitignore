@@ -720,3 +720,5 @@ integrations/microsoft/agent-framework/dotnet/obj/
 
 # forge-photo-prep-verify.mjs default output (screenshots + network log), regenerated each run
 docs/forge-photo-prep/verify/
+# forge-photo-prep-bench.mjs GLBs (renders and results.json are kept; the GLBs regenerate from the worker)
+docs/forge-photo-prep/bench/**/*.glb
