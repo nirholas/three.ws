@@ -239,6 +239,14 @@
 			<description>The installed three.ws app now opens .glb, .gltf and .vrm files you double-click in Windows File Explorer, reading them on your PC with nothing uploaded unless you press Save to account. web+threews: links from Teams, Outlook or a document open the right agent, model or text to 3D prompt, and a link that is broken or unsafe is explained instead of followed. A second launch reuses the window you already have open, the site header doubles as the title bar when the title bar is hidden, and a new narrow layout at /sidebar puts agent chat, quick text to 3D and your recent models in the Microsoft Edge sidebar.</description>
 		</item>
 		<item>
+			<title>Put interactive 3D models in a Power BI report</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-11:Put interactive 3D models in a Power BI report</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>three.ws 3D Models is a custom visual for Power BI reports. Bind a column of three.ws model ids or GLB links and it shows one model you can orbit, a grid, or a turntable gallery for larger sets. Measures can colour and size each model, a click cross-filters the rest of the report, selections elsewhere highlight the matching models, and tooltips show any fields you add. The format pane covers background, lighting, layout, auto-rotate, colour mode and labels, and the visual supports the keyboard, high-contrast themes and the context menu. It downloads models only from three.ws. The package is built and tested against real production models, and the AppSource submission is next.</description>
+		</item>
+		<item>
 			<title>Ready-made Power Automate flows for the three.ws connector</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-11:Ready-made Power Automate flows for the three.ws connector</guid>

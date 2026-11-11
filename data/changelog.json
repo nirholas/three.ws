@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-11",
+			"title": "Put interactive 3D models in a Power BI report",
+			"summary": "three.ws 3D Models is a custom visual for Power BI reports. Bind a column of three.ws model ids or GLB links and it shows one model you can orbit, a grid, or a turntable gallery for larger sets. Measures can colour and size each model, a click cross-filters the rest of the report, selections elsewhere highlight the matching models, and tooltips show any fields you add. The format pane covers background, lighting, layout, auto-rotate, colour mode and labels, and the visual supports the keyboard, high-contrast themes and the context menu. It downloads models only from three.ws. The package is built and tested against real production models, and the AppSource submission is next.",
+			"tags": ["feature"]
+		},
+		{
+			"date": "2026-11-11",
 			"title": "Teach your agent from Word, PowerPoint, Excel, PDF and Outlook files",
 			"summary": "Open the Knowledge tab on an agent's edit page and drop in a handbook, a pitch deck, a price list, a policy PDF or an email. Each file shows its own upload progress, then is read with Microsoft MarkItDown on our own hardened converter, split into sections, one per slide, sheet or email, and indexed for search. From the next message the agent answers from those files and names the one it used. A test box shows exactly which passages it would draw on and streams a real answer beside them. Delete a file and everything derived from it goes with it; the original file is never stored. Up to 50 files of 25 MB each per agent.",
 			"tags": ["feature"],
