@@ -1,5 +1,7 @@
 # microsoft 01: the /microsoft partner hub, with live demos of Microsoft tech running in three.ws
 
+Status 2026-11-11: built and verified locally (commits 60bf0fba8, e7d208609, 072f53106, 2deabb964, eea39e580). Waits on the owner: push, deploy, route TRELLIS.2 and set MODEL_TRELLIS2_URL, Marketplace env vars. npm test has 3 failures from sibling work (audit-a11y guard registry, sitemap index after dd2b311d2/e58e6a2b1), none in this order's files.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3101.
 
 ## Operating clause (binding)
