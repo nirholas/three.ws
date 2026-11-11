@@ -124,11 +124,12 @@
 .tws-disc-cta:active { transform: translateY(1px); }
 .tws-disc-cta:focus-visible { outline: 2px solid var(--accent, #fff); outline-offset: 2px; }
 .tws-disc-cta--primary {
-	color: #0c0c0c;
+	color: var(--on-accent, #0c0c0c);
 	background: var(--accent, #fff);
 	border-color: var(--accent, #fff);
 }
 .tws-disc-cta--primary:hover { background: #f0f0f0; border-color: #f0f0f0; }
+:root[data-theme='light'] .tws-disc-cta--primary:hover { background: #1d4ed8; border-color: #1d4ed8; }
 
 @media (max-width: 520px) {
 	.tws-disc-card { right: 12px; left: 12px; bottom: 12px; width: auto; }

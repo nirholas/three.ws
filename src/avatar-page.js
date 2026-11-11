@@ -2872,7 +2872,7 @@ async function loadRelated() {
 		return `
 		<div class="av-related-card">
 			<a class="av-related-main" href="${esc(a.href || `/avatars/${id}`)}">
-				<div class="av-related-thumb" aria-hidden="true">
+				<div class="av-related-thumb" inert>
 					${a.glbUrl
 						? `<model-viewer
 						src="${esc(a.glbUrl)}"

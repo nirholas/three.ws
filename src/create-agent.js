@@ -487,7 +487,9 @@ function renderStepper() {
 		const btn = document.createElement('button');
 		btn.type = 'button';
 		btn.className = 'step-pip-btn';
-		btn.innerHTML = `<span class="num">${i + 1}</span><span class="label">${label}</span>`;
+		// The number is decoration beside the label; the aria-label below spells
+		// the step out, so the visible label stays the start of the name.
+		btn.innerHTML = `<span class="num" aria-hidden="true">${i + 1}</span><span class="label">${label}</span>`;
 		btn.addEventListener('click', () => {
 			if (i < state.step) showStep(i);
 		});

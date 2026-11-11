@@ -81,10 +81,6 @@ function markVideoAvatarUnavailable() {
 	if (!card || card.dataset.unavailable === '1') return;
 	card.dataset.unavailable = '1';
 	card.setAttribute('aria-disabled', 'true');
-	card.setAttribute(
-		'aria-label',
-		'Talking avatar video: coming soon, this lane is not live yet',
-	);
 	card.style.opacity = '0.45';
 	card.style.cursor = 'not-allowed';
 
