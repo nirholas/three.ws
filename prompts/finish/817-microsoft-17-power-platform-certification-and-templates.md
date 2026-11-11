@@ -1,5 +1,7 @@
 # microsoft 17: the Power Platform connector, certification-ready, with flow templates and a Copilot Studio agent
 
+Status 2026-11-11: built, paused on owner steps. --check, the certified folder, 31 connector tests and npm test pass; the live contract test passed 5 of 5 earlier today and 4 of 5 on the final run, where Get generation job hit a production 502 on the free high tier, fixed test-first in de4a5051c and live after deploy. Owner: deploy, Partner Center, the PowerPlatformConnectors PR, paconn validate, template import, 10 calls per action, Solution Checker, package validator. Details: _context/microsoft-PROGRESS.md.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3117.
 
 ## Operating clause (binding)
