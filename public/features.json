@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T16:32:12.426Z",
+	"generated_at": "2026-11-11T16:52:50.153Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1389,6 +1389,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.7,
+					"job": "make"
+				},
+				{
+					"path": "/lab/trellis2",
+					"title": "TRELLIS.2 Lab: Every Parameter of Microsoft Research's Image-to-3D Model",
+					"description": "Run Microsoft Research's open TRELLIS.2 image-to-3D model with every parameter exposed: voxel resolution, seed, texture size, face budget and per-stage sampler steps and guidance. Inspect the GLB in texture, wireframe and normal views with real mesh stats, and compare it side by side with another engine on the same photo through a shareable link.",
+					"added": "2026-11-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
 					"job": "make"
 				},
 				{
@@ -6059,6 +6071,18 @@
 					"job": null
 				},
 				{
+					"path": "/docs/trellis2-lab",
+					"title": "Docs · TRELLIS.2 Lab",
+					"description": "How the TRELLIS.2 Lab works: every parameter and its default, the presets and where their speeds come from, the compare view and share links, the rerunnable production benchmark, how we run Microsoft Research's model on Cloud Run, and the citation.",
+					"added": "2026-11-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
 					"path": "/docs/forge-workflows",
 					"title": "Docs · Forge Workflows",
 					"description": "How Forge Workflows chains Forge tools into one repeatable run: the visual node editor, the four starter templates (photo to 3D, text to rigged character, batch photos to library, photo to game asset), resuming from a failed node, and how it differs from Workbench.",
@@ -8927,6 +8951,18 @@
 					"job": null
 				},
 				{
+					"path": "/docs/minecraft-export",
+					"title": "Docs: Minecraft: Bedrock export",
+					"description": "Turn any Forge model into blocks and download a Bedrock structure pack: height, block palettes, solid or hollow, texture-sampled colors, loading it with a structure block or /function, limits, the API and the CLI. Not an official Minecraft product.",
+					"added": "2026-11-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
 					"path": "/docs/alpha-drip",
 					"title": "Docs: Alpha-drip",
 					"description": "Alpha-drip lets a copy-trading leader price the latency of their own signal: $THREE holders in higher tiers see the copy intent first, everyone else after a delay the leader sets. It delays the reveal, never the record.",
@@ -10112,6 +10148,30 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/trust",
+					"title": "Docs · Trust center",
+					"description": "How the three.ws trust center, subprocessor list and security.txt are sourced from the code, and the rules for keeping every claim cited.",
+					"added": "2026-11-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.4,
+					"job": null
+				},
+				{
+					"path": "/docs/incident-response",
+					"title": "Docs · Incident response",
+					"description": "How three.ws detects, triages, contains and discloses a security incident, with severity levels and customer notification steps.",
+					"added": "2026-11-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.4,
 					"job": null
 				},
 				{

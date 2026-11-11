@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-11T16:45:14.217Z",
+	"generated_at": "2026-11-11T16:52:51.018Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4500,
+	"total": 4505,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -22,9 +22,39 @@
 		{
 			"date": "2026-11-11",
 			"type": "launch",
+			"title": "Docs · Incident response",
+			"summary": "How three.ws detects, triages, contains and discloses a security incident, with severity levels and customer notification steps.",
+			"link": "/docs/incident-response",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
 			"title": "Docs · Microsoft 365 Copilot connector",
 			"summary": "Admin guide for the three.ws Graph connector: consent and its two permissions, who can see indexed agents, models and avatars, what is indexed, sync and throttling, disconnect, errors and their fixes, data handling, the API and the schema.",
 			"link": "/docs/microsoft-365-copilot-connector",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Docs · TRELLIS.2 Lab",
+			"summary": "How the TRELLIS.2 Lab works: every parameter and its default, the presets and where their speeds come from, the compare view and share links, the rerunnable production benchmark, how we run Microsoft Research's model on Cloud Run, and the citation.",
+			"link": "/docs/trellis2-lab",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Docs · Trust center",
+			"summary": "How the three.ws trust center, subprocessor list and security.txt are sourced from the code, and the rules for keeping every claim cited.",
+			"link": "/docs/trust",
 			"tags": [
 				"launch"
 			]
@@ -75,6 +105,16 @@
 			"title": "three.ws in the Edge sidebar",
 			"summary": "A narrow layout for the browser sidebar: chat with your default agent, turn a prompt into a 3D model, and reopen your recent models next to any page.",
 			"link": "/sidebar",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "TRELLIS.2 Lab: Every Parameter of Microsoft Research's Image-to-3D Model",
+			"summary": "Run Microsoft Research's open TRELLIS.2 image-to-3D model with every parameter exposed: voxel resolution, seed, texture size, face budget and per-stage sampler steps and guidance. Inspect the GLB in texture, wireframe and normal views with real mesh stats, and compare it side by side with another engine on the same photo through a shareable link.",
+			"link": "/lab/trellis2",
 			"tags": [
 				"launch"
 			]
@@ -167,6 +207,16 @@
 			"title": "Ready-made Power Automate flows for the three.ws connector",
 			"summary": "The three.ws Power Platform connector now comes with four flow templates: turn a new SharePoint list item into a 3D model and post it to Teams, email a model to whoever fills in a Microsoft Forms request, send a daily digest of your agents and the newest public ones, and let a Teams channel ask your three.ws agent questions. A Copilot Studio agent sample uses the same five actions. Every action now declares the exact response it returns, checked against the live service, and the connector is packaged for Microsoft certification (pending review).",
 			"link": null,
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "TRELLIS.2 Lab: every parameter of Microsoft Research's image-to-3D model",
+			"summary": "A new lab at /lab/trellis2 runs TRELLIS.2 with all of its controls in your hands: voxel resolution, seed, texture size, face budget, and the steps and guidance of each of its three sampler stages. Every control shows its default and a plain-language explanation. Pick Fast draft, Balanced or Maximum detail; their speed labels come from real production runs, not estimates. Inspect the result in texture, wireframe or normal view, with triangle count, texture resolution and file size read from the model itself. Run a second engine on the same photo to compare the two side by side, and share the pair with one link. The page credits Microsoft Research, with the citation, the MIT license and how we run it.",
+			"link": "/lab/trellis2",
 			"tags": [
 				"feature"
 			]
@@ -1486,57 +1536,6 @@
 			"link": "/launch/multichain",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Live agent screens can no longer be steered into internal addresses",
-			"summary": "The browser behind an agent's live screen, the one an owner can take the wheel of, now enforces its address guard on every connection instead of only on the URL typed in. All of its traffic goes through a guard that looks up each hostname, refuses anything that lands on a loopback, private, link-local or cloud metadata address, and connects only to the address it checked. A public page that redirects to an internal host, an image or websocket pointed at one, or a name that resolves to one is now refused, so nothing internal can ever show up on the public wall.",
-			"link": "/agents-live",
-			"tags": [
-				"security",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Make a $THREE holders-only embed from Widget Studio, no code needed",
-			"summary": "Widget Studio has a new Holders only panel. Pick one of your own avatars, flip the switch, set how much $THREE a viewer must hold (or click a holder tier, converted to tokens at the live price), and copy a snippet that only renders the 3D avatar for wallets that clear the bar. Every load checks the real balance on Solana. The panel reads the gate back from the server every time you pick the avatar, so it always shows what the embed enforces. From there you can change the requirement or remove the gate. Another Solana token can be used from the advanced field.",
-			"link": "/studio",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Makeup, tattoos and decals for Parametric avatars",
-			"summary": "The Avatar Studio Skin tab layers complexion washes, makeup, tattoos and decals, or your own image, over the Parametric body. The preview matches the saved avatar.",
-			"link": null,
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Mobile performance budget gate and coin chart layout fix",
-			"summary": "mobile-perf.mjs gains a --budget mode that fails when LCP, CLS or blocking time exceed budget on six key pages, and the coin page reserves its chart height so the page no longer jumps when the chart loads.",
-			"link": "/docs/audit/mobile-perf-2026-11-03.md",
-			"tags": [
-				"infra"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Multiplayer worlds can run on more than one server",
-			"summary": "The multiplayer server now reports whether it shares state with its peers on /health, refuses to boot single-instance when its Redis is configured but unreachable, and forwards friend messages, stage tips and event announcements to whichever instance holds the target. A two-process test and a real-socket load test back it. Turning it on in production needs the Memorystore steps in multiplayer/README.md.",
-			"link": null,
-			"tags": [
-				"infra"
 			]
 		}
 	]

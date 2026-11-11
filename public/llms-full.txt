@@ -688,6 +688,12 @@ URL: https://three.ws/forge/workflows
 
 A visual workflow builder for the Forge. Link a prompt or a photo to any live 3D engine, then remesh, rig, segment, restyle or make it game-ready, preview it inline, export the GLB and save it to your library, all in one run. Batch many prompts with ForEach, re-run from a failed step without redoing the rest, or generate on your own GPU with Modly. Starts from four templates.
 
+### TRELLIS.2 Lab: Every Parameter of Microsoft Research's Image-to-3D Model
+
+URL: https://three.ws/lab/trellis2
+
+Run Microsoft Research's open TRELLIS.2 image-to-3D model with every parameter exposed: voxel resolution, seed, texture size, face budget and per-stage sampler steps and guidance. Inspect the GLB in texture, wireframe and normal views with real mesh stats, and compare it side by side with another engine on the same photo through a shareable link.
+
 ### Image to 3D: Turn a Photo into a 3D Model
 
 URL: https://three.ws/image-to-3d
@@ -3066,6 +3072,12 @@ URL: https://three.ws/docs/forge-desktop
 
 How to install and use three.ws Forge, the desktop 3D studio: run it from source or an installer, generate on your own GPU or the three.ws cloud, build node workflows, import CC0 models, sign in and publish to three.ws, and fix common setup problems.
 
+### Docs · TRELLIS.2 Lab
+
+URL: https://three.ws/docs/trellis2-lab
+
+How the TRELLIS.2 Lab works: every parameter and its default, the presets and where their speeds come from, the compare view and share links, the rerunnable production benchmark, how we run Microsoft Research's model on Cloud Run, and the citation.
+
 ### Docs · Forge Workflows
 
 URL: https://three.ws/docs/forge-workflows
@@ -4500,6 +4512,12 @@ URL: https://three.ws/docs/user-wallet
 
 Every user account can own one custodial wallet: the master wallet, the financial hub for the person rather than the bot. Provision it, read balances, send SOL or any SPL token, fund an agent, and read its on-chain history, with the spend safeguards on each route.
 
+### Docs: Minecraft: Bedrock export
+
+URL: https://three.ws/docs/minecraft-export
+
+Turn any Forge model into blocks and download a Bedrock structure pack: height, block palettes, solid or hollow, texture-sampled colors, loading it with a structure block or /function, limits, the API and the CLI. Not an official Minecraft product.
+
 ### Docs: Alpha-drip
 
 URL: https://three.ws/docs/alpha-drip
@@ -5093,6 +5111,18 @@ Every feature that can move real money sits behind a one-time, versioned acknowl
 URL: https://three.ws/docs/security
 
 How three.ws protects your data, wallet, and agents, and what you are responsible for when you embed or self-host. The threat model, the boundaries enforced in code, and how to report an issue.
+
+### Docs · Trust center
+
+URL: https://three.ws/docs/trust
+
+How the three.ws trust center, subprocessor list and security.txt are sourced from the code, and the rules for keeping every claim cited.
+
+### Docs · Incident response
+
+URL: https://three.ws/docs/incident-response
+
+How three.ws detects, triages, contains and discloses a security incident, with severity levels and customer notification steps.
 
 ### Docs · The catalog quality gate
 

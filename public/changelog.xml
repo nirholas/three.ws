@@ -15,12 +15,36 @@
 			<description>The Teams app's Create a 3D model action and forge bot command: a real free-lane generation on an Adaptive Card that refreshes for the requester and updates for the whole chat when the model is ready, with Open in 3D, Download GLB and Make a variation.</description>
 		</item>
 		<item>
+			<title>Docs · Incident response</title>
+			<link>https://three.ws/docs/incident-response</link>
+			<guid isPermaLink="false">2026-11-11:Docs · Incident response</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How three.ws detects, triages, contains and discloses a security incident, with severity levels and customer notification steps.</description>
+		</item>
+		<item>
 			<title>Docs · Microsoft 365 Copilot connector</title>
 			<link>https://three.ws/docs/microsoft-365-copilot-connector</link>
 			<guid isPermaLink="false">2026-11-11:Docs · Microsoft 365 Copilot connector</guid>
 			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Admin guide for the three.ws Graph connector: consent and its two permissions, who can see indexed agents, models and avatars, what is indexed, sync and throttling, disconnect, errors and their fixes, data handling, the API and the schema.</description>
+		</item>
+		<item>
+			<title>Docs · TRELLIS.2 Lab</title>
+			<link>https://three.ws/docs/trellis2-lab</link>
+			<guid isPermaLink="false">2026-11-11:Docs · TRELLIS.2 Lab</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the TRELLIS.2 Lab works: every parameter and its default, the presets and where their speeds come from, the compare view and share links, the rerunnable production benchmark, how we run Microsoft Research's model on Cloud Run, and the citation.</description>
+		</item>
+		<item>
+			<title>Docs · Trust center</title>
+			<link>https://three.ws/docs/trust</link>
+			<guid isPermaLink="false">2026-11-11:Docs · Trust center</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the three.ws trust center, subprocessor list and security.txt are sourced from the code, and the rules for keeping every claim cited.</description>
 		</item>
 		<item>
 			<title>Docs: Minecraft: Bedrock export</title>
@@ -61,6 +85,14 @@
 			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>A narrow layout for the browser sidebar: chat with your default agent, turn a prompt into a 3D model, and reopen your recent models next to any page.</description>
+		</item>
+		<item>
+			<title>TRELLIS.2 Lab: Every Parameter of Microsoft Research's Image-to-3D Model</title>
+			<link>https://three.ws/lab/trellis2</link>
+			<guid isPermaLink="false">2026-11-11:TRELLIS.2 Lab: Every Parameter of Microsoft Research's Image-to-3D Model</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Run Microsoft Research's open TRELLIS.2 image-to-3D model with every parameter exposed: voxel resolution, seed, texture size, face budget and per-stage sampler steps and guidance. Inspect the GLB in texture, wireframe and normal views with real mesh stats, and compare it side by side with another engine on the same photo through a shareable link.</description>
 		</item>
 		<item>
 			<title>Trust center</title>
@@ -133,6 +165,14 @@
 			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The three.ws Power Platform connector now comes with four flow templates: turn a new SharePoint list item into a 3D model and post it to Teams, email a model to whoever fills in a Microsoft Forms request, send a daily digest of your agents and the newest public ones, and let a Teams channel ask your three.ws agent questions. A Copilot Studio agent sample uses the same five actions. Every action now declares the exact response it returns, checked against the live service, and the connector is packaged for Microsoft certification (pending review).</description>
+		</item>
+		<item>
+			<title>TRELLIS.2 Lab: every parameter of Microsoft Research's image-to-3D model</title>
+			<link>https://three.ws/lab/trellis2</link>
+			<guid isPermaLink="false">2026-11-11:TRELLIS.2 Lab: every parameter of Microsoft Research's image-to-3D model</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new lab at /lab/trellis2 runs TRELLIS.2 with all of its controls in your hands: voxel resolution, seed, texture size, face budget, and the steps and guidance of each of its three sampler stages. Every control shows its default and a plain-language explanation. Pick Fast draft, Balanced or Maximum detail; their speed labels come from real production runs, not estimates. Inspect the result in texture, wireframe or normal view, with triangle count, texture resolution and file size read from the model itself. Run a second engine on the same photo to compare the two side by side, and share the pair with one link. The page credits Microsoft Research, with the citation, the MIT license and how we run it.</description>
 		</item>
 		<item>
 			<title>Docs · Robinhood Crypto connector</title>

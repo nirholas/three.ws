@@ -3,6 +3,29 @@
 	"entries": [
 		{
 			"date": "2026-11-11",
+			"title": "TRELLIS.2 Lab: every parameter of Microsoft Research's image-to-3D model",
+			"summary": "A new lab at /lab/trellis2 runs TRELLIS.2 with all of its controls in your hands: voxel resolution, seed, texture size, face budget, and the steps and guidance of each of its three sampler stages. Every control shows its default and a plain-language explanation. Pick Fast draft, Balanced or Maximum detail; their speed labels come from real production runs, not estimates. Inspect the result in texture, wireframe or normal view, with triangle count, texture resolution and file size read from the model itself. Run a second engine on the same photo to compare the two side by side, and share the pair with one link. The page credits Microsoft Research, with the citation, the MIT license and how we run it.",
+			"tags": [
+				"feature"
+			],
+			"link": "/lab/trellis2"
+		},
+		{
+			"date": "2026-11-11",
+			"title": "Ready-made Power Automate flows for the three.ws connector",
+			"summary": "The three.ws Power Platform connector now comes with four flow templates: turn a new SharePoint list item into a 3D model and post it to Teams, email a model to whoever fills in a Microsoft Forms request, send a daily digest of your agents and the newest public ones, and let a Teams channel ask your three.ws agent questions. A Copilot Studio agent sample uses the same five actions. Every action now declares the exact response it returns, checked against the live service, and the connector is packaged for Microsoft certification (pending review).",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"title": "Microsoft Marketplace leads land in three.ws with a reply ready to send",
+			"summary": "When someone asks for a demo, starts a trial or installs three.ws from Microsoft Marketplace, the lead now arrives in three.ws within seconds. It is stored once even if Microsoft retries, the team is notified once, and a reply is drafted from the offer and the person's own message. Nothing is sent automatically: the team reviews the draft, sends it themselves and marks the lead contacted. Do-not-contact requests get no reply, and personal details are deleted on a fixed schedule.",
+			"tags": ["feature"]
+		},
+		{
+			"date": "2026-11-11",
 			"title": "Generate a 3D model without leaving a Teams chat",
 			"summary": "The three.ws Teams app can now make 3D models inside a conversation. Choose Create a 3D model from the compose box or a message's menu, or message the bot forge followed by a description. A card shows your prompt, who asked and where the job really is (GPU waking up, queued, rendering), and it turns into the finished model when it is ready: a rendered preview, Open in 3D in the three.ws viewer, Download GLB, and Make a variation for a new take on the same prompt. If a job fails, the card says what went wrong and offers Try again. It runs on the same free text-to-3D lane as the three.ws MCP tools.",
 			"tags": ["feature"],
