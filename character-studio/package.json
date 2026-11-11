@@ -111,7 +111,7 @@
     "deepmerge": "$deepmerge",
     "elliptic": "$elliptic",
     "bigint-buffer": "$bigint-buffer",
-    "node-forge": "1.4.2"
+    "node-forge": "^1.4.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
