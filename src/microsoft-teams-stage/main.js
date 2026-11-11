@@ -901,7 +901,15 @@ function renderAnimBar() {
 	note.textContent = locked ? `${locked} controls playback` : '';
 }
 
-async function applyAnim() {
+// Anim events can arrive faster than a library clip loads. Run them one at a
+// time so each run reads the newest shared state and a stale event never wins.
+let animChain = Promise.resolve();
+function applyAnim() {
+	animChain = animChain.then(applyAnimNow, applyAnimNow);
+	return animChain;
+}
+
+async function applyAnimNow() {
 	const sv = state.sv;
 	const cur = state.current;
 	if (!sv || !cur?.loaded) return;
