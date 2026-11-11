@@ -53,6 +53,7 @@ These are in the repo and validated. Each one goes live when the owner completes
 | Microsoft Store (Windows app) | The installable web app packaged as MSIX through PWABuilder: [`scripts/package-microsoft-store-pwa.mjs`](../scripts/package-microsoft-store-pwa.mjs). Listing copy in [`microsoft-edge-and-store.md`](../marketing/growth/submissions/programs/microsoft-edge-and-store.md) | `npm run package:microsoft-store -- --check` |
 | Edge Add-ons | The browser extension package | `npm run package:edge` |
 | .NET SDK on NuGet | `ThreeWs.Sdk` for C#, ASP.NET Core and Unity (net8.0 and netstandard2.1): Forge on every lane, catalog, rigging, streaming agent chat and MCP tools. Source in [`sdk-dotnet/`](../sdk-dotnet), guide in [.NET SDK](./dotnet-sdk.md). Goes live when the owner pushes the package to nuget.org | `cd sdk-dotnet && dotnet test tests/ThreeWs.Sdk.Tests -c Release` |
+| Semantic Kernel plugins and Agent Framework samples | `threews-semantic-kernel` (PyPI) and `ThreeWs.SemanticKernel` (NuGet): six native functions (generate a 3D model, poll a job, search ready-made assets, list your agents, search public agents, message an agent) plus a one-line attach for the MCP studio server, and Python and .NET Agent Framework agents that design a prop and return a real model URL. Sources in [`integrations/microsoft/`](../integrations/microsoft), guide in [three.ws on the Microsoft agent stack](./microsoft-agent-stack.md). Goes live when the owner publishes both packages | `cd integrations/microsoft/semantic-kernel-python && pytest`, `cd integrations/microsoft/semantic-kernel-dotnet && dotnet test tests/ThreeWs.SemanticKernel.Tests` |
 
 ## In flight
 
@@ -89,6 +90,7 @@ These are in the repo and validated. Each one goes live when the owner completes
 ## Related
 
 - [.NET SDK (NuGet, Unity)](./dotnet-sdk.md)
+- [three.ws on the Microsoft agent stack](./microsoft-agent-stack.md): Semantic Kernel, Agent Framework and Foundry
 - [Partner ecosystem](./partners.md)
 - [Partner benefits](./partner-benefits.md)
 - [Microsoft distribution and offer plan](./microsoft-marketplace-offer-plan.md)
