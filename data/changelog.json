@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-11",
+			"title": "TRELLIS.2 Lab presets now show when a setting is failing on production",
+			"summary": "The preset cards in the TRELLIS.2 Lab now read the first real TRELLIS.2 production runs. Fast draft shows its measured time, about a minute end to end. Balanced and Maximum detail now say \"Failing on production\" and give the number of failed runs, instead of a vague \"Not measured yet\", so you know to start with Fast draft. When a run fails, its error panel no longer shows a stray \"null\" beside Retry or a doubled full stop.",
+			"tags": ["fix"],
+			"link": "/lab/trellis2"
+		},
+		{
+			"date": "2026-11-11",
 			"title": "three.ws now tells Bing, and through it Copilot, about every new page within minutes",
 			"summary": "When you publish an agent, an avatar, a creation, a widget or a profile, three.ws now announces it to Bing over IndexNow within minutes instead of waiting for the next crawl, so it can show up in Copilot answers and Windows search the same day. Changes and removals are announced too, and a page that goes private is withdrawn without ever being sent while it was hidden. The sitemaps now list every public agent, avatar, creation, widget and profile from the database with the real date each one last changed, and creations made from the same prompt no longer flood search with near-identical pages. Search engines also read richer pages: public profiles have their own page with your name, bio and work instead of a blank shell, same-named agents and avatars are told apart by their creator, and the FAQ answers search engines see on the feature pages are now exactly the ones you see.",
 			"tags": [

@@ -206,9 +206,14 @@ a commercial grant from NVIDIA for `nvdiffrast`, or replacing the bake rasterise
 with an MIT or Apache implementation. No source or weights are redistributed, only
 generated GLBs.
 
-Known limit: `1536` on a 24 GB L4 is the tightest setting and is unverified until
-the first deployed generation. The worker steps down on out-of-memory and reports
-`resolution_served`, so a caller always sees what it actually received.
+Known limit, measured 2026-11-11 on image `server:fix11111641` (8 vCPU, 32 GiB, L4):
+`512` finishes in about 50 s of GPU time. `1024` and `1536` complete all three
+sampling stages, but the container is then killed with signal 9 in decode and
+`to_glb`, so the failure is in host RAM, not VRAM. The instance holds 16.9 GiB right
+after load (`memory after load` log line), and 32 GiB is the Cloud Run ceiling. The
+worker steps down on CUDA out-of-memory and reports `resolution_served`, but a
+host-RAM kill bypasses that and the API records the job as orphaned. Reducing the
+resident host footprint, or the postprocess peak, is the open fix.
 
 Related: [`../model-trellis`](../model-trellis) (TRELLIS v1, the failover behind
 this lane), [`../../docs/forge-pipeline.md`](../../docs/forge-pipeline.md),

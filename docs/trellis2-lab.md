@@ -53,6 +53,8 @@ It reads `DATABASE_URL` from the environment, then `.env.local`, then `.env`. Pe
 
 The presets map to voxel resolutions (fast draft 512, balanced 1024, maximum detail 1536) and read the `trellis2` lane grouped by `voxel_resolution`. After new lab runs, rerun the script and commit the JSON so the labels track production. Tests: `tests/trellis2-benchmark.test.js`.
 
+A job the worker loses mid-run (an out-of-memory kill) never reports its resolution, so it cannot be keyed to one preset. Each preset also carries `tier`, `tier_rows` and `tier_failed` for the tier it runs on (512 is `draft`, 1024 and 1536 are `standard`). A preset with failures on its tier and no finished run at its resolution reads "Failing on production", with the count on the card.
+
 ## How we run it
 
 | | |
@@ -68,6 +70,18 @@ Wiring the lab into production takes two owner-gated steps:
 2. Set `MODEL_TRELLIS2_URL` on `three-ws-api`.
 
 The worker README has both commands.
+
+### Measured status (2026-11-11)
+
+These runs went from the lab on a local dev server against a scale-to-zero copy of the worker (`model-trellis2-lab`, europe-west1, image `server:fix11111641`). us-central1 had no free L4 for a new revision.
+
+| Preset | Result |
+|---|---|
+| Fast draft (512) | Works. 2 of 2 finished: 56 s end to end, GPU 48 to 50 s, about 290k triangles, 2048 px texture with 5 maps, 3.6 to 3.7 MB. |
+| Balanced (1024) | All three sampling stages finish. The container is then killed with signal 9 during decode and GLB bake: host RAM, the 32 GiB Cloud Run ceiling. The instance holds 16.9 GiB right after load. |
+| Maximum detail (1536) | Failed the same way ("ran out of resources"). |
+
+The worker's step-down only catches CUDA out-of-memory, so a host-RAM kill fails the job outright. The fix belongs in `workers/model-trellis2`: either lower the resident host footprint (the models are held on the CPU between stages under `low_vram`) or bound the postprocess memory. Until then, use Fast draft for real runs.
 
 ## Credit
 
