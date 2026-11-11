@@ -35,7 +35,21 @@
 			"variants": {
 				"original": {
 					"bytes": 1801270,
-					"type": "image/jpeg"
+					"type": "image/jpeg",
+					"endToEndMs": 437214,
+					"task": {
+						"id": "0983e279-fa15-4786-a50f-2c5371a66e2f",
+						"status": "done",
+						"resolution_served": 1024,
+						"alpha_mode": "OPAQUE",
+						"queue_ms": 0,
+						"gpu_ms": 432644,
+						"elapsed_ms": 433125,
+						"error": null
+					},
+					"glb": "original.glb",
+					"glbBytes": 9289488,
+					"render": "original-render.webp"
 				},
 				"prepared": {
 					"bytes": 423066,
