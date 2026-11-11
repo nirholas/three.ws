@@ -174,7 +174,7 @@ export class Visual implements IVisual {
         for (const tile of this.tiles.values()) tile.loadToken++;
         this.tiles.clear();
         this.renderer?.dispose();
-        this.cache.retain(new Set(), disposeObject);
+        this.cache.dispose(disposeObject);
         clear(this.root);
         this.root.classList.remove("tws-root");
     }

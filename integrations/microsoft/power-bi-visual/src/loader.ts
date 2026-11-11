@@ -2,60 +2,26 @@
 
 import { Object3D } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+// Type-only: the DRACOLoader module itself must stay out of the bundle (see draco.ts).
+import type { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
-import { DRACO_DECODER_WASM_BASE64, DRACO_WASM_WRAPPER_JS } from "./generated/dracoDecoder";
+import { BundledDracoDecoder, DracoUnavailableError } from "./draco";
 import { ModelLoadError } from "./resolver";
 
 /**
  * GLB loading with every decoder production three.ws files need, bundled.
  *
  *   - EXT_meshopt_compression: three.js's meshopt decoder (WebAssembly inlined).
- *   - KHR_draco_mesh_compression: the Draco decoder from the same three.js
- *     release, embedded at build time by scripts/embed-decoders.mjs, so
- *     DRACOLoader never fetches it from a CDN.
+ *   - KHR_draco_mesh_compression: the glTF Draco decoder from the same three.js
+ *     release, embedded at build time by scripts/embed-decoders.mjs and run by
+ *     BundledDracoDecoder, so nothing is fetched from a CDN.
  *   - EXT_texture_webp and KHR_mesh_quantization: native in GLTFLoader.
  */
 
-function base64ToArrayBuffer(base64: string): ArrayBuffer {
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    return bytes.buffer;
-}
-
-/** DRACOLoader that serves its decoder from the bundle instead of the network. */
-class BundledDracoLoader extends DRACOLoader {
-    constructor() {
-        super();
-        this.setDecoderConfig({ type: "wasm" });
-        this.setWorkerLimit(2);
-    }
-
-    // DRACOLoader asks for exactly two files in wasm mode. Anything else means
-    // the browser has no WebAssembly and fell back to the JS decoder, which is
-    // not bundled.
-    _loadLibrary(url: string, responseType: string): Promise<string | ArrayBuffer> {
-        if (url.endsWith("draco_wasm_wrapper.js") && responseType === "text") {
-            return Promise.resolve(DRACO_WASM_WRAPPER_JS);
-        }
-        if (url.endsWith("draco_decoder.wasm") && responseType === "arraybuffer") {
-            return Promise.resolve(base64ToArrayBuffer(DRACO_DECODER_WASM_BASE64));
-        }
-        return Promise.reject(new ModelLoadError("This browser cannot decode Draco-compressed models (WebAssembly is unavailable)."));
-    }
-}
-
-declare module "three/examples/jsm/loaders/DRACOLoader.js" {
-    interface DRACOLoader {
-        _loadLibrary(url: string, responseType: string): Promise<string | ArrayBuffer>;
-    }
-}
-
-export function createGltfLoader(): GLTFLoader {
+export function createGltfLoader(draco: BundledDracoDecoder = new BundledDracoDecoder()): GLTFLoader {
     const loader = new GLTFLoader();
     loader.setCrossOrigin("anonymous");
-    loader.setDRACOLoader(new BundledDracoLoader());
+    loader.setDRACOLoader(draco as unknown as DRACOLoader);
     loader.setMeshoptDecoder(MeshoptDecoder);
     return loader;
 }
@@ -67,7 +33,7 @@ function statusOf(error: unknown): number | null {
 
 /** Converts whatever three.js threw into a sentence a report author can act on. */
 export function describeLoadError(error: unknown): string {
-    if (error instanceof ModelLoadError) return error.message;
+    if (error instanceof ModelLoadError || error instanceof DracoUnavailableError) return error.message;
     const status = statusOf(error);
     if (status === 404) return "The model file was not found (404). Check the URL in this row.";
     if (status === 403 || status === 401) return `The model file is not public (HTTP ${status}).`;
@@ -88,7 +54,8 @@ export function describeLoadError(error: unknown): string {
  * one from the first, preferred URL unless every URL failed differently.
  */
 export class ModelCache {
-    private readonly loader = createGltfLoader();
+    private readonly draco = new BundledDracoDecoder();
+    private readonly loader = createGltfLoader(this.draco);
     private readonly scenes = new Map<string, Promise<Object3D>>();
     // A report can bind 100 rows; downloading them all at once starves the
     // first tiles a reader is looking at. Four parallel downloads keep the
@@ -129,6 +96,11 @@ export class ModelCache {
         pending.catch(() => this.scenes.delete(url));
         this.scenes.set(url, pending);
         return pending;
+    }
+
+    dispose(dispose: (scene: Object3D) => void): void {
+        this.retain(new Set(), dispose);
+        this.draco.dispose();
     }
 
     /** Frees GPU-side data for URLs no longer bound to any row. */
