@@ -1,0 +1,349 @@
+{
+	"capturedAt": "2026-11-11T17:57:03.708Z",
+	"base": "https://three.ws",
+	"requirementsRead": "2026-11-11",
+	"generator": "scripts/capture-microsoft-listing-media.mjs",
+	"showcaseAgent": {
+		"id": "ea1a284f-0503-495b-b716-01a72daf1bb2",
+		"name": "Reeza",
+		"page": "https://three.ws/agents/ea1a284f-0503-495b-b716-01a72daf1bb2"
+	},
+	"forge": {
+		"prompt": "a brass ship compass on a walnut stand",
+		"lane": "nvidia (free)",
+		"seconds": 118,
+		"glb": "https://three.ws/cdn/forge/b974910c3d16/b93a33ef-ef73-494a-a092-5f87e587d969.glb"
+	},
+	"stores": {
+		"marketplace": {
+			"title": "Microsoft Marketplace SaaS offer",
+			"source": "https://learn.microsoft.com/en-us/partner-center/marketplace-offers/create-new-saas-offer-listing",
+			"verified": true,
+			"rules": [
+				"Screenshots: 1 to 5, PNG, exactly 1280 x 720.",
+				"Large logo: PNG, square, between 216 x 216 and 350 x 350.",
+				"Videos: up to 4 YouTube or Vimeo links, each with a 1280 x 720 PNG thumbnail."
+			]
+		},
+		"teams": {
+			"title": "Microsoft Teams Store app",
+			"source": "https://learn.microsoft.com/en-us/microsoftteams/platform/concepts/deploy-and-publish/appsource/prepare/submission-checklist",
+			"verified": true,
+			"rules": [
+				"Screenshots: up to 5, PNG, JPEG or GIF, 1366 x 768, 1,024 KB maximum each.",
+				"Video: a YouTube or Vimeo link.",
+				"Icons come from the app package (color 192 x 192, outline 32 x 32), not from this kit."
+			]
+		},
+		"msstore": {
+			"title": "Microsoft Store (Windows app)",
+			"source": "https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/screenshots-and-images",
+			"verified": true,
+			"rules": [
+				"Desktop screenshots: 1 to 10, PNG, 1366 x 768 or larger (up to 3840 x 2160), 50 MB maximum each. Keep key content in the top two thirds.",
+				"1:1 app tile icon: 300 x 300 PNG.",
+				"Trailers: MP4 (H.264, AAC) at 1920 x 1080, under 2 GB, 60 seconds or less recommended, with a 1920 x 1080 PNG thumbnail and optional WebVTT captions."
+			]
+		},
+		"edge": {
+			"title": "Microsoft Edge Add-ons (three.ws Walk Avatar)",
+			"source": "https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension",
+			"verified": true,
+			"rules": [
+				"Extension logo: 1:1, 300 x 300 recommended, 128 x 128 minimum.",
+				"Small promotional tile: 440 x 280. Large promotional tile: 1400 x 560 PNG.",
+				"Screenshots: up to 6, 640 x 480 or 1280 x 800.",
+				"Video: an optional YouTube link."
+			]
+		},
+		"vscode": {
+			"title": "Visual Studio Marketplace (three.ws 3D extension)",
+			"source": "https://code.visualstudio.com/api/working-with-extensions/publishing-extension",
+			"verified": true,
+			"rules": [
+				"Icon: PNG, 128 x 128 or larger, never SVG.",
+				"README images: must resolve to https URLs and may not be SVG."
+			]
+		}
+	},
+	"assets": [
+		{
+			"store": "marketplace",
+			"from": "forge-result",
+			"path": "marketing/microsoft/media/marketplace/screenshot-1-forge-result-1280x720.png",
+			"width": 1280,
+			"height": 720,
+			"bytes": 159274,
+			"sha256": "e1ab15b926b54e8e6577b956653806a723cc2273a0cacca7b7405839230b3aad",
+			"caption": "The finished model from that one prompt, ready to orbit, download as GLB or place in a scene."
+		},
+		{
+			"store": "marketplace",
+			"from": "agent",
+			"path": "marketing/microsoft/media/marketplace/screenshot-2-agent-1280x720.png",
+			"width": 1280,
+			"height": 720,
+			"bytes": 157005,
+			"sha256": "56d827e4a00db7cf0769e366aa2887d60d759e41795629630fbe9b338586ba93",
+			"caption": "Every agent has a public page with its 3D body, its skills and a chat anyone can open."
+		},
+		{
+			"store": "marketplace",
+			"from": "teams-tab",
+			"path": "marketing/microsoft/media/marketplace/screenshot-3-teams-tab-1280x720.png",
+			"width": 1280,
+			"height": 720,
+			"bytes": 73057,
+			"sha256": "5f687d37587d6323105d40233c62d3b668aa9f48c602530c51701773899a82a7",
+			"caption": "The three.ws tab for Microsoft Teams: browse agents and see what each one did today."
+		},
+		{
+			"store": "marketplace",
+			"from": "adaptive-card",
+			"path": "marketing/microsoft/media/marketplace/screenshot-4-adaptive-card-1280x720.png",
+			"width": 1280,
+			"height": 720,
+			"bytes": 95452,
+			"sha256": "70643dd90f2fc766e7df1d0f673eecf6d972475394d5ca98c689a683bd3c46cb",
+			"caption": "The agent card as an Adaptive Card, rendered by the Adaptive Cards SDK with the Microsoft Teams host config."
+		},
+		{
+			"store": "marketplace",
+			"from": "viewer",
+			"path": "marketing/microsoft/media/marketplace/screenshot-5-viewer-1280x720.png",
+			"width": 1280,
+			"height": 720,
+			"bytes": 132187,
+			"sha256": "6e9d9adab1438ce3adc9dc78f5de3ab1e5c5c54da89bb8bc472553c8b4bcf954",
+			"caption": "The three.ws viewer: inspect any GLB or glTF in the browser, with lighting, animation and AR."
+		},
+		{
+			"store": "marketplace",
+			"from": "logo",
+			"path": "marketing/microsoft/media/marketplace/logo-300x300.png",
+			"width": 300,
+			"height": 300,
+			"bytes": 30689,
+			"sha256": "1a9f502f4af502c67775f9f55b5f583ac7339fc33cf485bc62c393fb75e0ddd7"
+		},
+		{
+			"store": "marketplace",
+			"from": "video-thumbnail",
+			"path": "marketing/microsoft/media/marketplace/video-thumbnail-1280x720.png",
+			"width": 1280,
+			"height": 720,
+			"bytes": 118048,
+			"sha256": "2276ff5fdd26ff573d513e42ed42ebbcb576febb0991cd040390833e744db613"
+		},
+		{
+			"store": "teams",
+			"from": "teams-tab",
+			"path": "marketing/microsoft/media/teams/screenshot-1-teams-tab-1366x768.png",
+			"width": 1366,
+			"height": 768,
+			"bytes": 92932,
+			"sha256": "ad1f5b5f9b6cb60f96672549754da970336ed26853db842865b6c0b92043229b",
+			"caption": "The three.ws tab for Microsoft Teams: browse agents and see what each one did today."
+		},
+		{
+			"store": "teams",
+			"from": "adaptive-card",
+			"path": "marketing/microsoft/media/teams/screenshot-2-adaptive-card-1366x768.png",
+			"width": 1366,
+			"height": 768,
+			"bytes": 160486,
+			"sha256": "e0e1521b1662deb9a5616959a56cfaad57daa293aa416d5d81134fbf98cab159",
+			"caption": "The agent card as an Adaptive Card, rendered by the Adaptive Cards SDK with the Microsoft Teams host config."
+		},
+		{
+			"store": "teams",
+			"from": "agent",
+			"path": "marketing/microsoft/media/teams/screenshot-3-agent-1366x768.png",
+			"width": 1366,
+			"height": 768,
+			"bytes": 196469,
+			"sha256": "4f86787cc8acaf4d34d1bda3a27e3e8182222c71f609ca25a38022cb7641c3a6",
+			"caption": "Every agent has a public page with its 3D body, its skills and a chat anyone can open."
+		},
+		{
+			"store": "teams",
+			"from": "forge-result",
+			"path": "marketing/microsoft/media/teams/screenshot-4-forge-result-1366x768.png",
+			"width": 1366,
+			"height": 768,
+			"bytes": 242181,
+			"sha256": "a8a5620c703a840a45430039f77bd9d95d2531a6d233a02cbb240e210f3a7199",
+			"caption": "The finished model from that one prompt, ready to orbit, download as GLB or place in a scene."
+		},
+		{
+			"store": "teams",
+			"from": "viewer",
+			"path": "marketing/microsoft/media/teams/screenshot-5-viewer-1366x768.png",
+			"width": 1366,
+			"height": 768,
+			"bytes": 221574,
+			"sha256": "fc3c395b66660c0f3a09494d88c1171ec08375ebd7d1a69ce0adeda2c8f7ee92",
+			"caption": "The three.ws viewer: inspect any GLB or glTF in the browser, with lighting, animation and AR."
+		},
+		{
+			"store": "msstore",
+			"from": "forge-composer",
+			"path": "marketing/microsoft/media/msstore/screenshot-1-forge-composer-2560x1440.png",
+			"width": 2560,
+			"height": 1440,
+			"bytes": 127662,
+			"sha256": "038f963790a81317e7390ee8158f1736b9b8e43c2832e4e6814f4559f54e5781",
+			"caption": "Describe an object in a sentence. Forge turns it into a textured 3D model on the free lane."
+		},
+		{
+			"store": "msstore",
+			"from": "forge-result",
+			"path": "marketing/microsoft/media/msstore/screenshot-2-forge-result-2560x1440.png",
+			"width": 2560,
+			"height": 1440,
+			"bytes": 323949,
+			"sha256": "1175330045f444aa013e47ca3d79452dfa8a27d96284281b5b88cadbfac71d6a",
+			"caption": "The finished model from that one prompt, ready to orbit, download as GLB or place in a scene."
+		},
+		{
+			"store": "msstore",
+			"from": "viewer",
+			"path": "marketing/microsoft/media/msstore/screenshot-3-viewer-2560x1440.png",
+			"width": 2560,
+			"height": 1440,
+			"bytes": 350034,
+			"sha256": "dbccff37490607e16cea09d93eeeba7abc22a6f7105c5ef59237b75255e8576d",
+			"caption": "The three.ws viewer: inspect any GLB or glTF in the browser, with lighting, animation and AR."
+		},
+		{
+			"store": "msstore",
+			"from": "agent",
+			"path": "marketing/microsoft/media/msstore/screenshot-4-agent-2560x1440.png",
+			"width": 2560,
+			"height": 1440,
+			"bytes": 413346,
+			"sha256": "9e1a55011a4c397816d2b3b730a44b6ae33602e48da58e57edf47bd89706a2f2",
+			"caption": "Every agent has a public page with its 3D body, its skills and a chat anyone can open."
+		},
+		{
+			"store": "msstore",
+			"from": "logo",
+			"path": "marketing/microsoft/media/msstore/tile-icon-300x300.png",
+			"width": 300,
+			"height": 300,
+			"bytes": 30689,
+			"sha256": "1a9f502f4af502c67775f9f55b5f583ac7339fc33cf485bc62c393fb75e0ddd7"
+		},
+		{
+			"store": "msstore",
+			"from": "video-thumbnail",
+			"path": "marketing/microsoft/media/msstore/trailer-thumbnail-1920x1080.png",
+			"width": 1920,
+			"height": 1080,
+			"bytes": 207015,
+			"sha256": "c03a774ff4032ae9c907389aebcfa67bc3cd6ffd02100c021b8a6c9e2e5cb3e0"
+		},
+		{
+			"store": "edge",
+			"from": "edge-logo",
+			"path": "marketing/microsoft/media/edge/logo-300x300.png",
+			"width": 300,
+			"height": 300,
+			"bytes": 9093,
+			"sha256": "3c6c70d6e4831f3ed72cbdca66462f7e5386917ec34ad96381d01f536f5ba985"
+		},
+		{
+			"store": "edge",
+			"from": "tile-small",
+			"path": "marketing/microsoft/media/edge/tile-small-440x280.png",
+			"width": 440,
+			"height": 280,
+			"bytes": 27086,
+			"sha256": "029acf54942ea7d27b1ea66a88da9c05b113b41516553172e81edb3b1cfbe923"
+		},
+		{
+			"store": "edge",
+			"from": "tile-large",
+			"path": "marketing/microsoft/media/edge/tile-large-1400x560.png",
+			"width": 1400,
+			"height": 560,
+			"bytes": 125555,
+			"sha256": "cec4327f635af639c5cc0bae366558a4d1aeea56c0ec5d214dc92cff6bb85264"
+		}
+	],
+	"referenced": [
+		{
+			"store": "edge",
+			"path": "extensions/walk-avatar/store-assets/screenshot-1.png",
+			"width": 1280,
+			"height": 800,
+			"bytes": 348357,
+			"sha256": "214699667919fdf6b21d86cfac19c08aa540fbef04d859966ff117d34b8bf7c8",
+			"origin": "scripts/extension-screenshots.mjs (the real extension on live sites)"
+		},
+		{
+			"store": "edge",
+			"path": "extensions/walk-avatar/store-assets/screenshot-2.png",
+			"width": 1280,
+			"height": 800,
+			"bytes": 166844,
+			"sha256": "6602e348141fd9bc13b2d76d865bee46bcf076b8652db99c1dea8cb35f3cca59",
+			"origin": "scripts/extension-screenshots.mjs (the real extension on live sites)"
+		},
+		{
+			"store": "edge",
+			"path": "extensions/walk-avatar/store-assets/screenshot-3.png",
+			"width": 1280,
+			"height": 800,
+			"bytes": 198663,
+			"sha256": "d1dffd3979145cc6ae32d8ae18c53abe87e977bfe6bf065f258266400c73d233",
+			"origin": "scripts/extension-screenshots.mjs (the real extension on live sites)"
+		},
+		{
+			"store": "edge",
+			"path": "extensions/walk-avatar/store-assets/screenshot-4.png",
+			"width": 1280,
+			"height": 800,
+			"bytes": 191429,
+			"sha256": "751a284816e217216cb6e9bd2ca6c1f1d9c70f5b08745ab4ba357f75662b16fa",
+			"origin": "scripts/extension-screenshots.mjs (the real extension on live sites)"
+		},
+		{
+			"store": "edge",
+			"path": "extensions/walk-avatar/store-assets/screenshot-5.png",
+			"width": 1280,
+			"height": 800,
+			"bytes": 176448,
+			"sha256": "47e9763ab182db80d8fcafe1b846a1d7fa640d9921e5e907318e1410880b23bd",
+			"origin": "scripts/extension-screenshots.mjs (the real extension on live sites)"
+		},
+		{
+			"store": "vscode",
+			"path": "packages/vscode-3d/media/icon.png",
+			"width": 128,
+			"height": 128,
+			"bytes": 6201,
+			"sha256": "980d3c079d16a31b9bb056c622d0d22741b77455e73d5cf7bc2bf43060c7f021",
+			"origin": "the extension icon named in packages/vscode-3d/package.json"
+		},
+		{
+			"store": "vscode",
+			"path": "packages/vscode-3d/images/copilot-chat-commands.png",
+			"width": 1439,
+			"height": 899,
+			"bytes": 72694,
+			"sha256": "324a969feb6d10e7435c0e5e93634c16c93b4b1c811cb995ff1249f92ece18fa",
+			"origin": "packages/vscode-3d/scripts/screenshots.mjs (a real VS Code running the extension)"
+		},
+		{
+			"store": "vscode",
+			"path": "packages/vscode-3d/images/copilot-mcp-servers.png",
+			"width": 1439,
+			"height": 899,
+			"bytes": 133197,
+			"sha256": "7b831a2b4fd8121063cc31f9e22634f84ad2286ef5c8c55e6f530b446f8b7552",
+			"origin": "packages/vscode-3d/scripts/screenshots.mjs (a real VS Code running the extension)"
+		}
+	],
+	"video": null
+}
