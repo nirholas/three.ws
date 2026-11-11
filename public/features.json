@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T17:13:43.385Z",
+	"generated_at": "2026-11-11T17:15:32.250Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1059,6 +1059,18 @@
 					"showcase": false,
 					"priority": 0.8,
 					"job": "dev"
+				},
+				{
+					"path": "/microsoft",
+					"title": "three.ws and Microsoft",
+					"description": "three.ws and Microsoft have announced a partnership, and three.ws is live on Microsoft Marketplace. Watch Microsoft open source run in the product: TRELLIS image-to-3D creations, on-device speech to text through ONNX Runtime Web, and a real agent card drawn with Adaptive Cards, plus the honest status of every Microsoft surface.",
+					"added": "2026-11-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.8,
+					"job": "explore"
 				},
 				{
 					"path": "/press",

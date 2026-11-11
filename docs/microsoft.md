@@ -64,8 +64,9 @@ These are in the repo and validated. Each one goes live when the owner completes
 
 | Surface | What it says |
 |---|---|
-| [`/partners`](https://three.ws/partners) | Microsoft card, chip "Marketplace", linking the announcement |
-| [`/partners/benefits`](https://three.ws/partners/benefits) | What the partnership brings builders |
+| [`/microsoft`](https://three.ws/microsoft) | The partner hub: both approved claims, live demos (TRELLIS strip from the community feed, on-device speech to text through ONNX Runtime Web, a real agent's Glance card drawn by the Adaptive Cards renderer), the status of every Microsoft surface from [`data/microsoft-surfaces.json`](../data/microsoft-surfaces.json), and the built-on credits |
+| [`/partners`](https://three.ws/partners) | Microsoft card, chip "Marketplace", linking the `/microsoft` hub |
+| [`/partners/benefits`](https://three.ws/partners/benefits) | What the partnership brings builders, linking the `/microsoft` hub |
 | [`/blog/three-ws-microsoft-partnership`](https://three.ws/blog/three-ws-microsoft-partnership) | The announcement |
 | [`/news/microsoft-partnership-marketplace`](https://three.ws/news/microsoft-partnership-marketplace) | News permalink and RSS item (syndicates to HackerNoon) |
 | Home page press strip | Microsoft logo linking the news item |

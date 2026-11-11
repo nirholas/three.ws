@@ -778,6 +778,14 @@
 					"added": "2026-07-30"
 				},
 				{
+					"path": "/microsoft",
+					"title": "three.ws and Microsoft",
+					"description": "three.ws and Microsoft have announced a partnership, and three.ws is live on Microsoft Marketplace. Watch Microsoft open source run in the product: TRELLIS image-to-3D creations, on-device speech to text through ONNX Runtime Web, and a real agent card drawn with Adaptive Cards, plus the honest status of every Microsoft surface.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-11-11"
+				},
+				{
 					"path": "/press",
 					"title": "Press kit",
 					"description": "Logos, announcement graphics, boilerplate, and usage rules for three.ws. Every asset is downloadable and current, and editorial use needs no permission.",

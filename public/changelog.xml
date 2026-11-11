@@ -87,6 +87,14 @@
 			<description>Every third party that processes data for three.ws: purpose, data categories, region and the file that calls it.</description>
 		</item>
 		<item>
+			<title>three.ws and Microsoft</title>
+			<link>https://three.ws/microsoft</link>
+			<guid isPermaLink="false">2026-11-11:three.ws and Microsoft</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>three.ws and Microsoft have announced a partnership, and three.ws is live on Microsoft Marketplace. Watch Microsoft open source run in the product: TRELLIS image-to-3D creations, on-device speech to text through ONNX Runtime Web, and a real agent card drawn with Adaptive Cards, plus the honest status of every Microsoft surface.</description>
+		</item>
+		<item>
 			<title>three.ws in the Edge sidebar</title>
 			<link>https://three.ws/sidebar</link>
 			<guid isPermaLink="false">2026-11-11:three.ws in the Edge sidebar</guid>
@@ -189,6 +197,14 @@
 			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The three.ws Power Platform connector now comes with four flow templates: turn a new SharePoint list item into a 3D model and post it to Teams, email a model to whoever fills in a Microsoft Forms request, send a daily digest of your agents and the newest public ones, and let a Teams channel ask your three.ws agent questions. A Copilot Studio agent sample uses the same five actions. Every action now declares the exact response it returns, checked against the live service, and the connector is packaged for Microsoft certification (pending review).</description>
+		</item>
+		<item>
+			<title>See Microsoft technology running live on three.ws/microsoft</title>
+			<link>https://three.ws/microsoft</link>
+			<guid isPermaLink="false">2026-11-11:See Microsoft technology running live on three.ws/microsoft</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The new Microsoft page shows Microsoft open source at work inside three.ws: 3D models people made with TRELLIS, speech to text that runs entirely in your browser so the audio never leaves your device, and a real agent's card drawn with Adaptive Cards that you can copy into the designer. It also lists every Microsoft surface three.ws is built for, from Marketplace and Teams to Power Platform, Edge and VS Code, with an honest status for each and what you can do there today.</description>
 		</item>
 		<item>
 			<title>three.ws in GitHub Copilot Chat for VS Code</title>

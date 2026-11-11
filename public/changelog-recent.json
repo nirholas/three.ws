@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-11T17:13:43.523Z",
+	"generated_at": "2026-11-11T17:15:32.391Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4509,
+	"total": 4511,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -105,6 +105,16 @@
 			"title": "Subprocessors",
 			"summary": "Every third party that processes data for three.ws: purpose, data categories, region and the file that calls it.",
 			"link": "/trust/subprocessors",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "three.ws and Microsoft",
+			"summary": "three.ws and Microsoft have announced a partnership, and three.ws is live on Microsoft Marketplace. Watch Microsoft open source run in the product: TRELLIS image-to-3D creations, on-device speech to text through ONNX Runtime Web, and a real agent card drawn with Adaptive Cards, plus the honest status of every Microsoft surface.",
+			"link": "/microsoft",
 			"tags": [
 				"launch"
 			]
@@ -237,6 +247,16 @@
 			"title": "Ready-made Power Automate flows for the three.ws connector",
 			"summary": "The three.ws Power Platform connector now comes with four flow templates: turn a new SharePoint list item into a 3D model and post it to Teams, email a model to whoever fills in a Microsoft Forms request, send a daily digest of your agents and the newest public ones, and let a Teams channel ask your three.ws agent questions. A Copilot Studio agent sample uses the same five actions. Every action now declares the exact response it returns, checked against the live service, and the connector is packaged for Microsoft certification (pending review).",
 			"link": null,
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "See Microsoft technology running live on three.ws/microsoft",
+			"summary": "The new Microsoft page shows Microsoft open source at work inside three.ws: 3D models people made with TRELLIS, speech to text that runs entirely in your browser so the audio never leaves your device, and a real agent's card drawn with Adaptive Cards that you can copy into the designer. It also lists every Microsoft surface three.ws is built for, from Marketplace and Teams to Power Platform, Edge and VS Code, with an honest status for each and what you can do there today.",
+			"link": "/microsoft",
 			"tags": [
 				"feature"
 			]
@@ -1513,28 +1533,6 @@
 			"link": "/docs/home-relay",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Invite friends to a /play world with a QR code and a link that unfurls as that coin",
-			"summary": "A new Invite button in /play (and on every lobby card) opens a sheet with a live QR code, the world's link with one-click Copy, and Share, falling back to X and Telegram where the browser has no share sheet. During the week before an event and while it is live, the sheet leads with the event name and a countdown. Pasted links now unfurl as the coin's own world: its art, ticker, name and the biome it actually renders in, instead of a generic Play card. The card also used to name the wrong biome for most coins and showed no art for $THREE; both are fixed.",
-			"link": "/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
-			"tags": [
-				"feature",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Join a /play world late and catch up on what was said",
-			"summary": "Walking into a world mid-conversation no longer means an empty chat box. You now see the last 60 lines, stamped with when they were said, above a \"You're caught up\" divider, and new lines carry on below it. Reconnecting or refreshing never repeats a line, screen readers hear one short summary instead of the whole backlog, and an empty world offers a Say hi button. Lines are kept for at most three days and only name, text and time are stored. Worlds can also show the coin's community board in a read-only Board tab next to world chat.",
-			"link": "/play",
-			"tags": [
-				"feature",
-				"improvement"
 			]
 		}
 	]

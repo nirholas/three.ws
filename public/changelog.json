@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T17:13:43.448Z",
+	"generated_at": "2026-11-11T17:15:32.307Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -102,6 +102,16 @@
 			"title": "Subprocessors",
 			"summary": "Every third party that processes data for three.ws: purpose, data categories, region and the file that calls it.",
 			"link": "/trust/subprocessors",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "three.ws and Microsoft",
+			"summary": "three.ws and Microsoft have announced a partnership, and three.ws is live on Microsoft Marketplace. Watch Microsoft open source run in the product: TRELLIS image-to-3D creations, on-device speech to text through ONNX Runtime Web, and a real agent card drawn with Adaptive Cards, plus the honest status of every Microsoft surface.",
+			"link": "/microsoft",
 			"tags": [
 				"launch"
 			]
@@ -234,6 +244,16 @@
 			"title": "Ready-made Power Automate flows for the three.ws connector",
 			"summary": "The three.ws Power Platform connector now comes with four flow templates: turn a new SharePoint list item into a 3D model and post it to Teams, email a model to whoever fills in a Microsoft Forms request, send a daily digest of your agents and the newest public ones, and let a Teams channel ask your three.ws agent questions. A Copilot Studio agent sample uses the same five actions. Every action now declares the exact response it returns, checked against the live service, and the connector is packaged for Microsoft certification (pending review).",
 			"link": null,
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "See Microsoft technology running live on three.ws/microsoft",
+			"summary": "The new Microsoft page shows Microsoft open source at work inside three.ws: 3D models people made with TRELLIS, speech to text that runs entirely in your browser so the audio never leaves your device, and a real agent's card drawn with Adaptive Cards that you can copy into the designer. It also lists every Microsoft surface three.ws is built for, from Marketplace and Teams to Power Platform, Edge and VS Code, with an honest status for each and what you can do there today.",
+			"link": "/microsoft",
 			"tags": [
 				"feature"
 			]
