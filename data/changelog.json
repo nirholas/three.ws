@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-11",
+			"title": "Generate a 3D model without leaving a Teams chat",
+			"summary": "The three.ws Teams app can now make 3D models inside a conversation. Choose Create a 3D model from the compose box or a message's menu, or message the bot forge followed by a description. A card shows your prompt, who asked and where the job really is (GPU waking up, queued, rendering), and it turns into the finished model when it is ready: a rendered preview, Open in 3D in the three.ws viewer, Download GLB, and Make a variation for a new take on the same prompt. If a job fails, the card says what went wrong and offers Try again. It runs on the same free text-to-3D lane as the three.ws MCP tools.",
+			"tags": ["feature"],
+			"link": "/docs/microsoft-teams-forge"
+		},
+		{
+			"date": "2026-11-11",
 			"title": "Export any Forge model as a Minecraft: Bedrock structure pack",
 			"summary": "The Forge download menu has a new Minecraft: Bedrock option. It turns your model into blocks, shows a live 3D block preview, and downloads a .mcpack you open in Bedrock and place with a structure block or one /function command. Pick the height (16 to 128 blocks), which blocks to use (all, concrete, wool, terracotta, builder or colorful), solid or hollow, and optional dithering. Colors come from the model's texture at every block, and dark textures are brightened automatically so a steel knight does not come out as coal. Builds wider than one structure block are split into tiles that the function places together. Not an official Minecraft product; not approved by or associated with Mojang or Microsoft.",
 			"tags": ["feature"],

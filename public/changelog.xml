@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Create a 3D model from a Teams or Copilot chat</title>
+			<link>https://three.ws/docs/microsoft-teams-forge</link>
+			<guid isPermaLink="false">2026-11-11:Docs · Create a 3D model from a Teams or Copilot chat</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The Teams app's Create a 3D model action and forge bot command: a real free-lane generation on an Adaptive Card that refreshes for the requester and updates for the whole chat when the model is ready, with Open in 3D, Download GLB and Make a variation.</description>
+		</item>
+		<item>
 			<title>Docs · Microsoft 365 Copilot connector</title>
 			<link>https://three.ws/docs/microsoft-365-copilot-connector</link>
 			<guid isPermaLink="false">2026-11-11:Docs · Microsoft 365 Copilot connector</guid>
@@ -77,6 +85,14 @@
 			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>A Microsoft 365 administrator can now connect a three.ws account to their organization from Settings &gt; Microsoft 365. Your public agents, Forge models and avatars are indexed into the tenant, so people in the organization find them in Microsoft Search and can ask Microsoft 365 Copilot about them, with links back to three.ws. You choose who sees them: everyone in the organization except guests, one Entra group, or only you. Changes reach Microsoft every 15 minutes, items you delete or make private are removed, Microsoft's throttling is respected, and a Full re-sync button resends everything at once. Disconnecting deletes the index from the tenant. It goes live once the three.ws Microsoft app is approved for the two Graph permissions it needs.</description>
+		</item>
+		<item>
+			<title>Generate a 3D model without leaving a Teams chat</title>
+			<link>https://three.ws/docs/microsoft-teams-forge</link>
+			<guid isPermaLink="false">2026-11-11:Generate a 3D model without leaving a Teams chat</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The three.ws Teams app can now make 3D models inside a conversation. Choose Create a 3D model from the compose box or a message's menu, or message the bot forge followed by a description. A card shows your prompt, who asked and where the job really is (GPU waking up, queued, rendering), and it turns into the finished model when it is ready: a rendered preview, Open in 3D in the three.ws viewer, Download GLB, and Make a variation for a new take on the same prompt. If a job fails, the card says what went wrong and offers Try again. It runs on the same free text-to-3D lane as the three.ws MCP tools.</description>
 		</item>
 		<item>
 			<title>Open 3D files from File Explorer and keep your agent in the Edge sidebar</title>

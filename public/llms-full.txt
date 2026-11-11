@@ -4176,6 +4176,12 @@ URL: https://three.ws/docs/microsoft-365-copilot-connector
 
 Admin guide for the three.ws Graph connector: consent and its two permissions, who can see indexed agents, models and avatars, what is indexed, sync and throttling, disconnect, errors and their fixes, data handling, the API and the schema.
 
+### Docs · Create a 3D model from a Teams or Copilot chat
+
+URL: https://three.ws/docs/microsoft-teams-forge
+
+The Teams app's Create a 3D model action and forge bot command: a real free-lane generation on an Adaptive Card that refreshes for the requester and updates for the whole chat when the model is ready, with Open in 3D, Download GLB and Make a variation.
+
 ### Docs · Microsoft distribution and offer plan
 
 URL: https://three.ws/docs/microsoft-marketplace-offer-plan

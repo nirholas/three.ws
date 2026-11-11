@@ -124,6 +124,10 @@ The board renders an Adaptive Card, and it fetches neither half of it for you: t
 
 Three behaviours are deliberate: signed out renders a sign-in card rather than an error, an offline machine renders the last card it saw, labelled `(offline)`, rather than an empty slot, and a refresh that cannot reach the card template leaves the slot holding its previous render instead of blanking it. The implementation is [public/glance-sw.js](https://github.com/nirholas/three.ws/blob/main/public/glance-sw.js), covered by `tests/glance-sw.test.js`.
 
+## In a Teams chat
+
+The Teams app shares the same Glance card when someone searches for an agent or pastes a three.ws agent link. Its live 3D generation cards (progress, finished and error, all Adaptive Cards 1.5 with Universal Actions) are built beside the Glance builder, in [`api/_lib/teams-forge-cards.js`](../api/_lib/teams-forge-cards.js). See [Create a 3D model from a Teams or Copilot chat](./microsoft-teams-forge.md).
+
 ---
 
 ## The `<agent-glance>` element

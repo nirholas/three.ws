@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-11T16:26:47.473Z",
+	"generated_at": "2026-11-11T16:32:12.630Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4494,
+	"total": 4496,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Docs · Create a 3D model from a Teams or Copilot chat",
+			"summary": "The Teams app's Create a 3D model action and forge bot command: a real free-lane generation on an Adaptive Card that refreshes for the requester and updates for the whole chat when the model is ready, with Open in 3D, Download GLB and Make a variation.",
+			"link": "/docs/microsoft-teams-forge",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-11-11",
 			"type": "launch",
@@ -96,6 +106,16 @@
 			"title": "Find your three.ws agents and 3D models in Microsoft 365 Copilot",
 			"summary": "A Microsoft 365 administrator can now connect a three.ws account to their organization from Settings > Microsoft 365. Your public agents, Forge models and avatars are indexed into the tenant, so people in the organization find them in Microsoft Search and can ask Microsoft 365 Copilot about them, with links back to three.ws. You choose who sees them: everyone in the organization except guests, one Entra group, or only you. Changes reach Microsoft every 15 minutes, items you delete or make private are removed, Microsoft's throttling is respected, and a Full re-sync button resends everything at once. Disconnecting deletes the index from the tenant. It goes live once the three.ws Microsoft app is approved for the two Graph permissions it needs.",
 			"link": "/settings/microsoft-365",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "Generate a 3D model without leaving a Teams chat",
+			"summary": "The three.ws Teams app can now make 3D models inside a conversation. Choose Create a 3D model from the compose box or a message's menu, or message the bot forge followed by a description. A card shows your prompt, who asked and where the job really is (GPU waking up, queued, rendering), and it turns into the finished model when it is ready: a rendered preview, Open in 3D in the three.ws viewer, Download GLB, and Make a variation for a new take on the same prompt. If a job fails, the card says what went wrong and offers Try again. It runs on the same free text-to-3D lane as the three.ws MCP tools.",
+			"link": "/docs/microsoft-teams-forge",
 			"tags": [
 				"feature"
 			]
@@ -1518,27 +1538,6 @@
 			"tags": [
 				"feature",
 				"sdk"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Opening the spin wheel no longer drops everyone in the world",
-			"summary": "Opening the spin wheel in /play could crash the game server and disconnect every player in the world at once. The wheel now opens normally, and when paid spins are unavailable it says so instead of failing. The server also stays up through any single bad message from one player, so one fault costs that player one action rather than costing everyone their session.",
-			"link": "/play",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Operators can pause every payout instantly, and get paged when payouts spike",
-			"summary": "A single switch now stops withdrawals, coin payouts, club payouts and growth payouts the moment it is flipped, with no redeploy. It is set through an admin-only endpoint that requires a reason and writes an audit record, and nothing in the ledger is rewritten, so resuming picks up exactly where it stopped. A new hourly check also alerts operators when the last 24 hours of payouts run above three times the recent daily median, or when more than a fifth of them fail.",
-			"link": "/docs/financial-controls",
-			"tags": [
-				"security",
-				"infra"
 			]
 		}
 	]
