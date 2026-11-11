@@ -1499,6 +1499,7 @@ function wireSettings() {
 	});
 
 	$('#tmArchive').addEventListener('click', async (e) => {
+		const btn = e.currentTarget;
 		const ok = await confirmDialog({
 			title: 'Archive this team?',
 			html: `<p><b>${esc(state.team.name)}</b> stops running and its page goes away. Its agents, their wallets and any funds in them stay in your account.</p>`,
@@ -1506,7 +1507,7 @@ function wireSettings() {
 			tone: 'live',
 		});
 		if (!ok) return;
-		const restore = busy(e.currentTarget, 'Archiving…');
+		const restore = busy(btn, 'Archiving…');
 		const res = await api(`/api/teams/${state.id}`, { method: 'DELETE' });
 		if (!res.ok) {
 			restore();
@@ -1721,6 +1722,7 @@ function wireEnterprise() {
 	});
 
 	$('#tmUnclaim')?.addEventListener('click', async (e) => {
+		const btn = e.currentTarget;
 		const ok = await confirmDialog({
 			title: 'Unclaim this tenant?',
 			html: `<p><b>${esc(ent.data.claim.tenant_name || ent.data.claim.tenant_id)}</b> stops being linked to this team. Nobody new can join through it, and the SCIM token is revoked, so provisioning stops. People already on the team keep their access until you remove them.</p>`,
@@ -1728,7 +1730,7 @@ function wireEnterprise() {
 			tone: 'live',
 		});
 		if (!ok) return;
-		const restore = busy(e.currentTarget, 'Unclaiming…');
+		const restore = busy(btn, 'Unclaiming…');
 		const res = await api(`/api/teams/${state.id}/enterprise`, { method: 'DELETE' });
 		if (!res.ok) {
 			restore();
@@ -1741,6 +1743,7 @@ function wireEnterprise() {
 	});
 
 	$('#tmScimIssue')?.addEventListener('click', async (e) => {
+		const btn = e.currentTarget;
 		const rotating = ent.data.scim.has_token;
 		if (rotating) {
 			const ok = await confirmDialog({
@@ -1751,7 +1754,7 @@ function wireEnterprise() {
 			});
 			if (!ok) return;
 		}
-		const restore = busy(e.currentTarget, rotating ? 'Rotating…' : 'Generating…');
+		const restore = busy(btn, rotating ? 'Rotating…' : 'Generating…');
 		const res = await api(`/api/teams/${state.id}/enterprise/scim-token`, { method: 'POST' });
 		if (!res.ok) {
 			restore();
@@ -1764,6 +1767,7 @@ function wireEnterprise() {
 	});
 
 	$('#tmScimRevoke')?.addEventListener('click', async (e) => {
+		const btn = e.currentTarget;
 		const ok = await confirmDialog({
 			title: 'Revoke the SCIM token?',
 			html: '<p>Microsoft Entra ID can no longer provision or deprovision people until you generate a new token. People already on the team are not changed.</p>',
@@ -1771,7 +1775,7 @@ function wireEnterprise() {
 			tone: 'live',
 		});
 		if (!ok) return;
-		const restore = busy(e.currentTarget, 'Revoking…');
+		const restore = busy(btn, 'Revoking…');
 		const res = await api(`/api/teams/${state.id}/enterprise/scim-token`, { method: 'DELETE' });
 		if (!res.ok) {
 			restore();
