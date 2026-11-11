@@ -963,6 +963,8 @@ const appConfig = {
 				'coin-control': resolve(__dirname, 'pages/coin-control.html'),
 				'agent-invoice': resolve(__dirname, 'pages/agent-invoice.html'),
 				'microsoft-activate': resolve(__dirname, 'pages/microsoft-activate.html'),
+				trust: resolve(__dirname, 'pages/trust.html'),
+				'trust-subprocessors': resolve(__dirname, 'pages/trust-subprocessors.html'),
 				'microsoft-teams-tab': resolve(__dirname, 'pages/microsoft-teams-tab.html'),
 				sidebar: resolve(__dirname, 'pages/sidebar.html'),
 				open: resolve(__dirname, 'pages/open.html'),
@@ -2582,6 +2584,10 @@ const appConfig = {
 						filePath = resolve(root, 'pages/commerce.html');
 					else if (!filePath && /^\/invoices\/[^/.]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-invoice.html');
+					// /trust and /trust/subprocessors → the trust center. Mirrors vercel.json.
+					else if (!filePath && /^\/trust\/?$/.test(path)) filePath = resolve(root, 'pages/trust.html');
+					else if (!filePath && /^\/trust\/subprocessors\/?$/.test(path))
+						filePath = resolve(root, 'pages/trust-subprocessors.html');
 					// /microsoft/activate → the Microsoft Marketplace SaaS landing page.
 					// Mirrors vercel.json.
 					else if (!filePath && /^\/microsoft\/activate\/?$/.test(path))

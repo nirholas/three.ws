@@ -6804,6 +6804,14 @@
 			"dest": "/legal/tos.html"
 		},
 		{
+			"src": "/trust/?",
+			"dest": "/trust.html"
+		},
+		{
+			"src": "/trust/subprocessors/?",
+			"dest": "/trust-subprocessors.html"
+		},
+		{
 			"src": "/legal/content-policy/?",
 			"dest": "/legal/content-policy.html"
 		},
