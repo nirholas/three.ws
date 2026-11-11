@@ -78,6 +78,7 @@ try {
 	// The participant and its slash commands in the chat input.
 	await palette('Chat: Open Chat');
 	const input = win.locator('.interactive-input-editor .monaco-editor').first();
+	await win.locator('a[aria-label="Dismiss Migration Notice for This Workspace"]').click({ timeout: 3000 }).catch(() => {});
 	await input.click();
 	await win.keyboard.type('@threews /');
 	await win.waitForTimeout(1500);
@@ -86,26 +87,47 @@ try {
 	await win.keyboard.press('Control+KeyA');
 	await win.keyboard.press('Backspace');
 
-	await clearToasts();
-	// The three.ws tools and MCP server in agent mode's tool picker.
-	await win.locator('.chat-input-toolbars a[aria-label*="Configure Tools"], .chat-input-toolbars .codicon-tools, .chat-input-toolbars .codicon-settings').first().click();
-	await win.waitForTimeout(1500);
-	await win.keyboard.type('three.ws');
-	await win.waitForTimeout(1500);
-	await shot('copilot-agent-tools.png');
-	await win.keyboard.press('Escape');
-
-	// The MCP servers the provider registered.
+	// The MCP server the provider registered: start it so VS Code connects to the
+	// live endpoint, then show the server list beside the connection log.
 	await palette('MCP: List Servers');
+	await win.keyboard.press('ArrowDown'); // "Show locally configured servers..."
+	await win.keyboard.press('Enter');
+	await win.waitForTimeout(2000);
+	await win.keyboard.type('three.ws Studio');
+	await win.keyboard.press('Enter');
 	await win.waitForTimeout(1500);
+	await win.keyboard.type('Start Server');
+	await win.keyboard.press('Enter');
+	await win.waitForTimeout(10_000);
+	await palette('MCP: List Servers');
+	await win.keyboard.press('ArrowDown');
+	await win.keyboard.press('Enter');
+	await win.waitForTimeout(2000);
+	await win.keyboard.type('three.ws Studio');
+	await win.keyboard.press('Enter');
+	await win.waitForTimeout(1500);
+	await win.keyboard.type('Show Output');
+	await win.keyboard.press('Enter');
+	await win.waitForTimeout(2000);
+	await palette('MCP: List Servers');
+	await win.keyboard.press('ArrowDown');
+	await win.keyboard.press('Enter');
+	await win.waitForTimeout(2000);
 	await shot('copilot-mcp-servers.png');
 	await win.keyboard.press('Escape');
 
 	if (process.env.THREEWS_SIGNED_IN_PROFILE) {
+		// Agent mode's tool picker, filtered to the three.ws tools.
+		await palette('Chat: Configure Tools');
+		await win.keyboard.type('three.ws');
+		await win.waitForTimeout(1500);
+		await shot('copilot-agent-tools.png');
+		await win.keyboard.press('Escape');
+
 		await input.click();
 		await win.keyboard.type('@threews /forge a low-poly brass lantern with amber glass');
 		await win.keyboard.press('Enter');
-		await win.waitForSelector('.chat-response-button, .monaco-button:has-text("Save GLB to workspace")', { timeout: 12 * 60_000 });
+		await win.waitForSelector('.monaco-button:has-text("Save GLB to workspace")', { timeout: 12 * 60_000 });
 		await win.waitForTimeout(1500);
 		await shot('copilot-forge.png');
 	}
