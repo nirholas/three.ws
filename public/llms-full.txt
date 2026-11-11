@@ -5608,6 +5608,12 @@ URL: https://three.ws/docs/agent-knowledge
 
 Teach an agent from Word, PowerPoint, Excel, PDF and Outlook files: supported formats and how each is chunked, limits, how chat cites the source, privacy, deletion, and the upload, search and delete API.
 
+### Docs · Creation descriptions (Florence-2)
+
+URL: https://three.ws/docs/creation-descriptions
+
+How every 3D creation gets a caption, detailed caption and tags from Florence-2: the describe queue, the cron, tag rules, owner tag edits, search, page meta and alt text, the backfill script and measured cost.
+
 ### Connect to every three.ws tool
 
 URL: https://three.ws/mcp

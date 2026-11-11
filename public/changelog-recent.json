@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-11T17:46:26.456Z",
+	"generated_at": "2026-11-11T17:47:35.508Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4523,
+	"total": 4524,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -35,6 +35,16 @@
 			"title": "Docs · Create a 3D model from a Teams or Copilot chat",
 			"summary": "The Teams app's Create a 3D model action and forge bot command: a real free-lane generation on an Adaptive Card that refreshes for the requester and updates for the whole chat when the model is ready, with Open in 3D, Download GLB and Make a variation.",
 			"link": "/docs/microsoft-teams-forge",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Docs · Creation descriptions (Florence-2)",
+			"summary": "How every 3D creation gets a caption, detailed caption and tags from Florence-2: the describe queue, the cron, tag rules, owner tag edits, search, page meta and alt text, the backfill script and measured cost.",
+			"link": "/docs/creation-descriptions",
 			"tags": [
 				"launch"
 			]
@@ -1523,16 +1533,6 @@
 			"link": null,
 			"tags": [
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Forge-Off themed events: a board for every day and a landing page",
-			"summary": "The Forge-Off can now run a themed event with one board per UTC day and an overall winner, all on the same no-login, one-vote-per-browser voting. The new /forge-off page shows the live day's theme with a countdown to its close, a button to make an entry on the right surface, that day's board, the overall standings and past days. Between events it shows the standing weekly board. Events are entries in a config file, so a partner or community contest needs no code. The first event is the proposed five-day Forge-Off Open.",
-			"link": "/forge-off",
-			"tags": [
-				"feature"
 			]
 		}
 	]

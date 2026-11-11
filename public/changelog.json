@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T17:46:26.143Z",
+	"generated_at": "2026-11-11T17:47:35.343Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -32,6 +32,16 @@
 			"title": "Docs · Create a 3D model from a Teams or Copilot chat",
 			"summary": "The Teams app's Create a 3D model action and forge bot command: a real free-lane generation on an Adaptive Card that refreshes for the requester and updates for the whole chat when the model is ready, with Open in 3D, Download GLB and Make a variation.",
 			"link": "/docs/microsoft-teams-forge",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Docs · Creation descriptions (Florence-2)",
+			"summary": "How every 3D creation gets a caption, detailed caption and tags from Florence-2: the describe queue, the cron, tag rules, owner tag edits, search, page meta and alt text, the backfill script and measured cost.",
+			"link": "/docs/creation-descriptions",
 			"tags": [
 				"launch"
 			]

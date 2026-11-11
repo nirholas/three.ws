@@ -7257,6 +7257,14 @@
 					"added": "2026-11-11"
 				},
 				{
+					"path": "/docs/creation-descriptions",
+					"title": "Docs · Creation descriptions (Florence-2)",
+					"description": "How every 3D creation gets a caption, detailed caption and tags from Florence-2: the describe queue, the cron, tag rules, owner tag edits, search, page meta and alt text, the backfill script and measured cost.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-11"
+				},
+				{
 					"path": "/mcp",
 					"title": "Connect to every three.ws tool",
 					"description": "One MCP endpoint and one sign-in for every three.ws tool. Copy-paste config for Claude Code, Claude Desktop and the @three-ws/mcp stdio proxy, with the live tool count and tool groups read from the same registry the endpoint serves.",

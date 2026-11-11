@@ -31,6 +31,14 @@
 			<description>The Teams app's Create a 3D model action and forge bot command: a real free-lane generation on an Adaptive Card that refreshes for the requester and updates for the whole chat when the model is ready, with Open in 3D, Download GLB and Make a variation.</description>
 		</item>
 		<item>
+			<title>Docs · Creation descriptions (Florence-2)</title>
+			<link>https://three.ws/docs/creation-descriptions</link>
+			<guid isPermaLink="false">2026-11-11:Docs · Creation descriptions (Florence-2)</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How every 3D creation gets a caption, detailed caption and tags from Florence-2: the describe queue, the cron, tag rules, owner tag edits, search, page meta and alt text, the backfill script and measured cost.</description>
+		</item>
+		<item>
 			<title>Docs · Enterprise sign-in and SCIM (Microsoft Entra ID)</title>
 			<link>https://three.ws/docs/enterprise-sso</link>
 			<guid isPermaLink="false">2026-11-11:Docs · Enterprise sign-in and SCIM (Microsoft Entra ID)</guid>
