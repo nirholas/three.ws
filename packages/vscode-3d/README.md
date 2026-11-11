@@ -95,18 +95,9 @@ platform's own inspectors, and generation calls the live studio API.
 
 ## Install
 
-Search for **three.ws 3D** in the Extensions view, or install it by ID:
-
-```bash
-code --install-extension threews.vscode-3d
-```
-
-It is listed on the
-[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=threews.vscode-3d)
-and, for VSCodium, Cursor, Windsurf and other Open VSX editors, on
-[Open VSX](https://open-vsx.org/extension/threews/vscode-3d).
-
-To build it from source instead:
+The extension is not on the Visual Studio Marketplace or Open VSX yet (checked
+2026-11-11). Build and install it from source; it works the same in VS Code,
+VSCodium, Cursor, Windsurf and other editors that accept a `.vsix`:
 
 ```bash
 git clone https://github.com/nirholas/three.ws.git

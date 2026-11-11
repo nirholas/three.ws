@@ -54,7 +54,8 @@ These are in the repo and validated. Each one goes live when the owner completes
 ## In flight
 
 - **Microsoft MCP server certification** (Copilot Studio, Microsoft 365 Copilot, Foundry). The submission package, eligibility table, and the one open gap (Microsoft does not support Dynamic Client Registration, so a pre-registered OAuth client is needed) are drafted in [`marketing/growth/submissions/programs/microsoft-copilot-mcp-certification.md`](../marketing/growth/submissions/programs/microsoft-copilot-mcp-certification.md). Submission runs through Partner Center and is an owner step.
-- **VS Code extensions.** [`packages/vscode-3d/`](../packages/vscode-3d) and [`packages/vscode-x402/`](../packages/vscode-x402) are built in-repo and not yet published to the Visual Studio Marketplace. See [VS Code extension](./vscode.md).
+- **VS Code extensions.** [`packages/vscode-x402/`](../packages/vscode-x402) is live on the Visual Studio Marketplace as [`threews.vscode-x402`](https://marketplace.visualstudio.com/items?itemName=threews.vscode-x402) (v0.2.1, 22 installs on 2026-11-11). [`packages/vscode-3d/`](../packages/vscode-3d) is built, passes its 78 tests and packages cleanly, but is not published yet; the owner runs `npm run release` in that directory with `VSCE_PAT` set, as described in its [PUBLISHING.md](../packages/vscode-3d/PUBLISHING.md). See [VS Code extension](./vscode.md).
+- **Co-marketing.** What three.ws offers each Microsoft audience, the verified proof points, and the outreach and post drafts for Microsoft-owned channels: [Microsoft co-marketing kit](./microsoft-co-marketing.md).
 
 ## Where it shows up on three.ws
 
