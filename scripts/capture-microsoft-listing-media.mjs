@@ -225,9 +225,14 @@ async function newPage(browser, { width, height, scale }) {
 // ── Scenes ───────────────────────────────────────────────────────────────────
 
 const FORGE_HIDE = ['#fq-holder-note', '#tier .tier-lock'];
-const AGENT_HIDE = ['#av-wallet-row'];
+const AGENT_HIDE = ['#av-wallet-row', 'avatar-actions'];
 
 async function openForge(page) {
+	// A returning visitor: the one-time first-creation confetti and card
+	// (public/forge-celebrate.js) would otherwise cover the result.
+	await page.addInitScript(() => {
+		try { localStorage.setItem('tws:first-forge-celebrated', '1'); } catch { /* storage blocked */ }
+	});
 	await page.goto(`${BASE}/forge`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
 	await page.waitForSelector('#engine button[data-engine="nvidia"]:not([disabled])', { timeout: 120_000 });
 	await page.click('#engine button[data-engine="nvidia"]');
@@ -299,6 +304,7 @@ async function adaptiveCardSlide(page, agent, card, hostConfig, logo) {
 		p{font-size:19px;line-height:1.5;max-width:30em}
 		.card{background:#292929;border-radius:10px;padding:4px;box-shadow:0 24px 80px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.06)}
 		.label{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#7f8796;margin-bottom:14px}
+		.card .ac-pushButton{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.45);border-radius:4px;padding:5px 14px;font-family:inherit;font-size:14px;font-weight:600;line-height:20px;cursor:pointer}
 	</style></head><body><div class="wrap">
 		<div><div class="brand"><img src="${logo}" alt="">three.ws</div>
 		<h1>Share an agent into any chat.</h1>
@@ -308,7 +314,8 @@ async function adaptiveCardSlide(page, agent, card, hostConfig, logo) {
 	await page.addScriptTag({ url: 'https://unpkg.com/adaptivecards@3.0.4/dist/adaptivecards.min.js' });
 	await page.evaluate(([json, config]) => {
 		const ac = new AdaptiveCards.AdaptiveCard();
-		ac.hostConfig = new AdaptiveCards.HostConfig(config);
+		// Teams renders in Segoe UI, which this machine lacks; Inter is the closest metric match.
+		ac.hostConfig = new AdaptiveCards.HostConfig({ ...config, fontFamily: `"Segoe UI", Inter, system-ui, sans-serif` });
 		ac.parse(json);
 		document.getElementById('card').appendChild(ac.render());
 	}, [card, hostConfig]);
