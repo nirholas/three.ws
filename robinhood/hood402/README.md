@@ -90,6 +90,10 @@ app.get('/premium', paywall({
 })
 ```
 
+Don't want to host one? Any x402 `exact` facilitator that settles USDG on Robinhood Chain works here, for example the
+hosted, keyless [Toll facilitator](https://x402.t0ll.xyz) (`facilitator: 'https://x402.t0ll.xyz'`, no API key, no fee, it pays the gas;
+its [`/supported`](https://x402.t0ll.xyz/supported) lists x402 v1 `exact` on `robinhood`).
+
 No facilitator? Pass `wallet` (a viem `WalletClient` holding a gas key), `account`, and
 `reader` (a viem `PublicClient`) instead — the server verifies and settles locally:
 
