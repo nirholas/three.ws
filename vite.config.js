@@ -964,6 +964,8 @@ const appConfig = {
 				'agent-invoice': resolve(__dirname, 'pages/agent-invoice.html'),
 				'microsoft-activate': resolve(__dirname, 'pages/microsoft-activate.html'),
 				'microsoft-teams-tab': resolve(__dirname, 'pages/microsoft-teams-tab.html'),
+				sidebar: resolve(__dirname, 'pages/sidebar.html'),
+				open: resolve(__dirname, 'pages/open.html'),
 				spend: resolve(__dirname, 'pages/spend.html'),
 				duels: resolve(__dirname, 'pages/duels.html'),
 				duel: resolve(__dirname, 'pages/duel.html'),
@@ -2587,6 +2589,11 @@ const appConfig = {
 					// /microsoft/teams-tab → the Agents tab of the three.ws Teams app.
 					else if (!filePath && /^\/microsoft\/teams-tab\/?$/.test(path))
 						filePath = resolve(root, 'pages/microsoft-teams-tab.html');
+					// /sidebar → the Edge side panel layout; /open → web+threews links.
+					else if (!filePath && /^\/sidebar\/?$/.test(path))
+						filePath = resolve(root, 'pages/sidebar.html');
+					else if (!filePath && /^\/open\/?$/.test(path))
+						filePath = resolve(root, 'pages/open.html');
 					// /earnings → the revenue ledger console; /agents/:id/earnings → the
 					// agent's public earnings page. Mirrors vercel.json.
 					else if (!filePath && /^\/earnings\/?$/.test(path))
@@ -4010,6 +4017,32 @@ const appConfig = {
 						],
 					},
 				},
+				// Double-clicking a model in Windows Explorer (or "Open with") launches
+				// the installed app on /app, which reads the file through launchQueue
+				// locally (src/pwa/launch-files.js). Nothing is uploaded unless the
+				// user presses Save. Only formats the /app viewer loads are claimed.
+				file_handlers: [
+					{
+						action: '/app?source=file-handler',
+						accept: {
+							'model/gltf-binary': ['.glb'],
+							'model/gltf+json': ['.gltf'],
+							'model/vrm': ['.vrm'],
+						},
+						icons: [{ src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' }],
+						launch_type: 'single-client',
+					},
+				],
+				// web+threews://agent/<id>, model/<uuid>, forge?prompt=... links from
+				// Teams, Outlook, documents or the Run box. /open validates them with
+				// src/pwa/protocol-link.js before navigating.
+				protocol_handlers: [{ protocol: 'web+threews', url: '/open?link=%s' }],
+				// A second launch (file, link, shortcut) reuses the open window instead
+				// of stacking new ones; navigate-existing re-delivers launch params.
+				launch_handler: { client_mode: ['navigate-existing', 'auto'] },
+				// Pin to the Edge sidebar. The panel opens start_url; pages/desktop.html
+				// forwards the "Edge Side Panel" client to the narrow /sidebar layout.
+				edge_side_panel: { preferred_width: 400 },
 				// Windows 11 widgets board. The host fetches the Adaptive Card
 				// template once from /api/glance/template and then asks the service
 				// worker (public/glance-sw.js) for data, which comes from

@@ -146,7 +146,7 @@
 	background: var(--surface-2, rgba(255, 255, 255, 0.05));
 }
 .sb-msg.is-pending { color: var(--text-3, #6a6a6a); }
-.sb-msg.is-pending::after { content: ''; display: inline-block; width: 1ch; animation: sb-dots 1.2s steps(4, end) infinite; overflow: hidden; vertical-align: bottom; }
+.sb-msg.is-pending::after { content: '...'; display: inline-block; width: 1ch; animation: sb-dots 1.2s steps(4, end) infinite; overflow: hidden; vertical-align: bottom; }
 .sb-msg.is-error { color: var(--danger, #f87171); }
 
 .sb-chat,
@@ -300,7 +300,6 @@
 @keyframes sb-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 @keyframes sb-indeterminate { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
 @keyframes sb-dots { from { width: 0; } to { width: 3ch; } }
-.sb-msg.is-pending::after { content: '...'; }
 
 @media (prefers-reduced-motion: reduce) {
 	.sb-msg, .sb-skel, .sb-progress span, .sb-msg.is-pending::after { animation: none; }

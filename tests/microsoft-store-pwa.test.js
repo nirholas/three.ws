@@ -57,6 +57,17 @@ function manifest(overrides = {}) {
 				screenshots: [{ src: 'screenshots/glance-widget.png', sizes: '480x200' }],
 			},
 		],
+		file_handlers: [
+			{
+				action: '/app?source=file-handler',
+				accept: { 'model/gltf-binary': ['.glb'], 'model/gltf+json': ['.gltf'], 'model/vrm': ['.vrm'] },
+				icons: [{ src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' }],
+				launch_type: 'single-client',
+			},
+		],
+		protocol_handlers: [{ protocol: 'web+threews', url: '/open?link=%s' }],
+		launch_handler: { client_mode: ['navigate-existing', 'auto'] },
+		edge_side_panel: { preferred_width: 400 },
 		...overrides,
 	};
 }
@@ -112,6 +123,13 @@ describe('checkStoreManifest', () => {
 		expect(errors.join()).toMatch(/outside scope/);
 	});
 
+	// Lets --check validate a local build before deploy; loopback is a secure context.
+	it('accepts a loopback http start_url but no other http origin', () => {
+		expect(checkStoreManifest(manifest(), { manifestUrl: 'http://localhost:3106/manifest.webmanifest' }).errors).toEqual([]);
+		expect(checkStoreManifest(manifest(), { manifestUrl: 'http://127.0.0.1:3106/manifest.webmanifest' }).errors).toEqual([]);
+		expect(checkStoreManifest(manifest(), { manifestUrl: 'http://three.ws/manifest.webmanifest' }).errors).toContain('start_url must be https');
+	});
+
 	it('warns, not fails, when id is missing', () => {
 		const { errors, warnings } = checkStoreManifest(manifest({ id: undefined }));
 		expect(errors).toEqual([]);
@@ -122,6 +140,61 @@ describe('checkStoreManifest', () => {
 		const m = manifest();
 		delete m.widgets[0].ms_ac_template;
 		expect(checkStoreManifest(m).errors.join()).toMatch(/ms_ac_template/);
+	});
+});
+
+describe('Windows and Edge members', () => {
+	const errs = (overrides) => checkStoreManifest(manifest(overrides), { manifestUrl: MANIFEST_URL }).errors;
+
+	it('requires a file handler for every model format the viewer opens', () => {
+		const fh = [{ action: '/app?source=file-handler', accept: { 'model/gltf-binary': ['.glb'] } }];
+		expect(errs({ file_handlers: fh })).toEqual(['file_handlers do not accept .gltf, .vrm; Explorer will not offer three.ws for them']);
+		expect(errs({ file_handlers: undefined })).toContain('file_handlers do not accept .glb, .gltf, .vrm; Explorer will not offer three.ws for them');
+	});
+
+	it('rejects a file handler outside scope, without a dot, or with a bad launch_type', () => {
+		const e = errs({
+			file_handlers: [
+				{ action: 'https://evil.example/app', accept: { 'model/gltf-binary': ['glb', '.gltf', '.vrm'] }, launch_type: 'many' },
+			],
+		});
+		expect(e).toContain('file handler action https://evil.example/app is outside scope https://three.ws/');
+		expect(e).toContain('file handler extension "glb" must start with a period');
+		expect(e).toContain('file handler launch_type "many" must be single-client or multiple-clients');
+	});
+
+	it('requires a valid web+threews protocol handler that substitutes %s inside scope', () => {
+		expect(errs({ protocol_handlers: undefined })).toContain('protocol_handlers has no web+threews entry; web+threews: links will not open the app');
+		const e = errs({
+			protocol_handlers: [
+				{ protocol: 'web+threews', url: '/open' },
+				{ protocol: 'threews', url: '/open?link=%s' },
+				{ protocol: 'web+Three1', url: '/open?link=%s' },
+				{ protocol: 'web+other', url: 'https://evil.example/?l=%s' },
+			],
+		});
+		expect(e).toContain('protocol handler web+threews url /open has no %s placeholder for the link');
+		expect(e).toContain('protocol "threews" is not web+ followed by lowercase letters, nor a safelisted scheme');
+		expect(e).toContain('protocol "web+Three1" is not web+ followed by lowercase letters, nor a safelisted scheme');
+		expect(e).toContain('protocol handler web+other url https://evil.example/?l=%s is outside scope https://three.ws/');
+		expect(errs({ protocol_handlers: [{ protocol: 'web+threews', url: '/open?link=%s' }, { protocol: 'mailto', url: '/open?link=%s' }] })).toEqual([]);
+	});
+
+	it('validates launch_handler client_mode and edge_side_panel width', () => {
+		expect(errs({ launch_handler: { client_mode: ['focus-existing', 'reuse'] } })).toEqual([
+			'launch_handler client_mode "reuse" must be one of auto, focus-existing, navigate-existing, navigate-new',
+		]);
+		expect(errs({ launch_handler: { client_mode: 'navigate-new' } })).toEqual([]);
+		expect(errs({ edge_side_panel: { preferred_width: '400px' } })).toEqual(['edge_side_panel preferred_width must be a positive number of pixels']);
+		expect(errs({ edge_side_panel: {} })).toEqual([]);
+	});
+
+	it('lists the side panel route, file handler action and protocol target as pages to fetch', () => {
+		const pages = manifestAssetUrls(manifest(), MANIFEST_URL).filter((a) => a.expect.page);
+		const byKind = Object.fromEntries(pages.map((a) => [a.kind, a.url]));
+		expect(byKind['edge side panel']).toBe('https://three.ws/sidebar');
+		expect(byKind['file handler action']).toBe('https://three.ws/app?source=file-handler');
+		expect(byKind['protocol handler web+threews']).toBe('https://three.ws/open?link=web%2Bthreews%3A%2F%2Fforge');
 	});
 });
 

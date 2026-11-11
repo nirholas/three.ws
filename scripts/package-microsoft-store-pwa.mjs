@@ -33,6 +33,68 @@ export const DEFAULT_MANIFEST_URL = 'https://three.ws/manifest.webmanifest';
 export const PWABUILDER_WINDOWS_URL =
 	'https://pwabuilder-windows-docker.azurewebsites.net/msix/generatezip';
 const STANDALONE_DISPLAYS = new Set(['standalone', 'fullscreen', 'minimal-ui', 'window-controls-overlay']);
+// Windows and Edge integration (docs/desktop.md, "Windows and Edge").
+export const REQUIRED_FILE_EXTENSIONS = ['.glb', '.gltf', '.vrm'];
+export const PROTOCOL_SCHEME = 'web+threews';
+export const SIDE_PANEL_PATH = '/sidebar';
+const CLIENT_MODES = ['auto', 'focus-existing', 'navigate-existing', 'navigate-new'];
+const LAUNCH_TYPES = ['single-client', 'multiple-clients'];
+// HTML's safelisted schemes, which may be registered without the web+ prefix.
+const SAFELISTED_SCHEMES = new Set([
+	'ftp', 'ftps', 'geo', 'im', 'irc', 'ircs', 'magnet', 'mailto', 'matrix', 'mms', 'news', 'nntp',
+	'openpgp4fpr', 'sftp', 'sip', 'sms', 'smsto', 'ssh', 'tel', 'urn', 'webcal', 'wtai', 'xmpp',
+]);
+
+function inScope(href, manifest, manifestUrl) {
+	const url = new URL(href, manifestUrl);
+	const scope = new URL(manifest.scope || './', manifestUrl);
+	return { url, scope, ok: url.origin === scope.origin && url.pathname.startsWith(scope.pathname) };
+}
+
+function checkWindowsMembers(manifest, manifestUrl, errors) {
+	const accepted = new Set();
+	for (const fh of manifest.file_handlers || []) {
+		const where = inScope(fh.action || '', manifest, manifestUrl);
+		if (!fh.action || !where.ok) errors.push(`file handler action ${where.url.href} is outside scope ${where.scope.href}`);
+		for (const exts of Object.values(fh.accept || {})) {
+			for (const ext of [].concat(exts)) {
+				if (typeof ext !== 'string' || !ext.startsWith('.')) errors.push(`file handler extension "${ext}" must start with a period`);
+				else accepted.add(ext.toLowerCase());
+			}
+		}
+		if (fh.launch_type !== undefined && !LAUNCH_TYPES.includes(fh.launch_type)) {
+			errors.push(`file handler launch_type "${fh.launch_type}" must be single-client or multiple-clients`);
+		}
+	}
+	const missing = REQUIRED_FILE_EXTENSIONS.filter((ext) => !accepted.has(ext));
+	if (missing.length) errors.push(`file_handlers do not accept ${missing.join(', ')}; Explorer will not offer three.ws for them`);
+
+	const handlers = manifest.protocol_handlers || [];
+	if (!handlers.some((h) => h.protocol === PROTOCOL_SCHEME)) {
+		errors.push(`protocol_handlers has no ${PROTOCOL_SCHEME} entry; ${PROTOCOL_SCHEME}: links will not open the app`);
+	}
+	for (const h of handlers) {
+		const scheme = String(h.protocol || '');
+		if (!/^web\+[a-z]+$/.test(scheme) && !SAFELISTED_SCHEMES.has(scheme)) {
+			errors.push(`protocol "${scheme}" is not web+ followed by lowercase letters, nor a safelisted scheme`);
+		}
+		const url = String(h.url || '');
+		if (!url.includes('%s')) errors.push(`protocol handler ${scheme} url ${url} has no %s placeholder for the link`);
+		const where = inScope(url, manifest, manifestUrl);
+		if (!where.ok) errors.push(`protocol handler ${scheme} url ${url} is outside scope ${where.scope.href}`);
+	}
+
+	if (manifest.launch_handler) {
+		for (const mode of [].concat(manifest.launch_handler.client_mode ?? [])) {
+			if (!CLIENT_MODES.includes(mode)) errors.push(`launch_handler client_mode "${mode}" must be one of ${CLIENT_MODES.join(', ')}`);
+		}
+	}
+	const panel = manifest.edge_side_panel;
+	if (panel && panel.preferred_width !== undefined && !(typeof panel.preferred_width === 'number' && panel.preferred_width > 0)) {
+		errors.push('edge_side_panel preferred_width must be a positive number of pixels');
+	}
+}
+
 const OWNER_ENV = {
 	packageId: 'MS_STORE_PACKAGE_ID',
 	publisherCn: 'MS_STORE_PUBLISHER_CN',
@@ -86,7 +148,8 @@ export function checkStoreManifest(manifest, { manifestUrl = DEFAULT_MANIFEST_UR
 		if (start.origin !== scope.origin || !start.pathname.startsWith(scope.pathname)) {
 			errors.push(`start_url ${start.href} is outside scope ${scope.href}`);
 		}
-		if (start.protocol !== 'https:') errors.push('start_url must be https');
+		const loopback = start.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(start.hostname);
+		if (start.protocol !== 'https:' && !loopback) errors.push('start_url must be https');
 	}
 
 	const displays = [manifest.display, ...(manifest.display_override || [])].filter(Boolean);
@@ -109,6 +172,7 @@ export function checkStoreManifest(manifest, { manifestUrl = DEFAULT_MANIFEST_UR
 		if (!w.ms_ac_template) errors.push(`widget "${w.name}" has no ms_ac_template; Windows widgets need an Adaptive Card template`);
 		if (!w.tag) errors.push(`widget "${w.name}" has no tag`);
 	}
+	checkWindowsMembers(manifest, manifestUrl, errors);
 	return { errors, warnings };
 }
 
@@ -129,6 +193,17 @@ export function manifestAssetUrls(manifest, manifestUrl = DEFAULT_MANIFEST_URL) 
 		for (const icon of w.icons || []) add(icon.src, `widget ${w.name} icon`, { image: true, sizes: sizesOf(icon) });
 		for (const shot of w.screenshots || []) add(shot.src, `widget ${w.name} screenshot`, { image: true, sizes: sizesOf(shot) });
 	}
+	for (const fh of manifest.file_handlers || []) {
+		add(fh.action, 'file handler action', { page: true });
+		for (const icon of fh.icons || []) add(icon.src, 'file handler icon', { image: true, sizes: sizesOf(icon) });
+	}
+	for (const h of manifest.protocol_handlers || []) {
+		if (typeof h.url === 'string' && h.url.includes('%s')) {
+			add(h.url.replace('%s', encodeURIComponent(`${h.protocol}://forge`)), `protocol handler ${h.protocol}`, { page: true });
+		}
+	}
+	// Edge opens start_url in the side panel; the home page forwards it here.
+	if (manifest.edge_side_panel) add(SIDE_PANEL_PATH, 'edge side panel', { page: true });
 	if (manifest.start_url) add(manifest.start_url, 'start_url', { page: true });
 	return out;
 }

@@ -4,6 +4,7 @@
 	<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative. See scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 	<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<script>/* View preference: visitors who chose the classic site land there. ?view=desktop overrides and re-selects the desktop. */(function(){try{var q=new URLSearchParams(location.search).get('view');if(q==='desktop'){localStorage.setItem('tws:view','desktop');}else if(localStorage.getItem('tws:view')==='classic'){location.replace('/classic'+location.search+location.hash);}}catch(e){}})();</script>
+	<script>/* Edge side panel: the pinned app opens start_url, so send it to the narrow /sidebar layout. Detection per learn.microsoft.com/microsoft-edge/progressive-web-apps/how-to/sidebar */(function(){try{var d=navigator.userAgentData;var b=d&&d.brands&&d.brands.some(function(x){return x.brand==='Edge Side Panel';});if(b||/Edge Side Panel/.test(navigator.userAgent)){location.replace('/sidebar');}}catch(e){}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 	<title>three.ws: The 3D Agent Layer of the Internet</title>

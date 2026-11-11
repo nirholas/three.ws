@@ -830,3 +830,22 @@ html:not(.tws-lite) .nav-tier-toggle .nav-tier-less { display: inline; }
 button:focus-visible > .ui-tip { opacity: 1; transform: none; }
 .nav-theme-btn, .nav-toggle { position: relative; }
 @media (prefers-reduced-motion: reduce) { .ui-tip { transition: none; } }
+
+/* ── Window Controls Overlay (installed app on Windows, macOS, Linux) ──
+   The manifest's display_override lists window-controls-overlay, so a person
+   can hide the installed app's title bar and let the page fill it. The header
+   then sits under the caption buttons: env(titlebar-area-*) says where the
+   free strip is, so the inner row is padded clear of the buttons on either
+   side, the bar drags the window, and every control in it stays clickable. */
+@media (display-mode: window-controls-overlay) {
+	.nav { -webkit-app-region: drag; app-region: drag; }
+	.nav a, .nav button, .nav input, .nav select, .nav [role="button"], .nav [tabindex] {
+		-webkit-app-region: no-drag; app-region: no-drag;
+	}
+	.nav-inner {
+		max-width: none;
+		min-height: env(titlebar-area-height, 0px);
+		padding-left: max(20px, calc(env(titlebar-area-x, 0px) + 12px));
+		padding-right: max(20px, calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw) + 12px));
+	}
+}

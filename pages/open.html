@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<meta charset="utf-8" />
+		<title>Opening link · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="description" content="Opens web+threews: links from Windows, Microsoft Teams, Outlook and documents on the right agent, model or forge prompt." />
+		<meta name="robots" content="noindex" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<style>
+			.ol-body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg, #050505); color: var(--text, #f6f6f6); font-family: var(--font-body, Inter, system-ui, sans-serif); padding: 16px; box-sizing: border-box; }
+			.ol-card { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 12px; padding: 24px; border: 1px solid var(--hairline-strong, rgba(255,255,255,.09)); border-radius: 14px; background: var(--surface-1, rgba(255,255,255,.03)); box-sizing: border-box; }
+			.ol-card h1 { margin: 0; font-family: var(--font-display, 'Space Grotesk', Inter, sans-serif); font-size: var(--text-lg, 20px); letter-spacing: -0.015em; }
+			.ol-card p { margin: 0; color: var(--text-2, #a8a8a8); line-height: 1.55; }
+			.ol-raw { margin: 0; padding: 8px 10px; border-radius: 8px; background: var(--surface-2, rgba(255,255,255,.05)); font-family: var(--font-mono, ui-monospace, monospace); font-size: var(--text-sm, 12px); overflow-wrap: anywhere; color: var(--text-2, #a8a8a8); }
+			.ol-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+			.ol-actions a { display: inline-flex; align-items: center; min-height: 34px; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--hairline-strong, rgba(255,255,255,.09)); background: var(--surface-2, rgba(255,255,255,.05)); color: var(--text, #f6f6f6); text-decoration: none; font-weight: 500; transition: background .15s ease, transform .08s ease; }
+			.ol-actions a:hover { background: var(--accent-soft, rgba(255,255,255,.1)); }
+			.ol-actions a:active { transform: scale(.97); }
+			.ol-actions a:focus-visible { outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #fff); outline-offset: var(--focus-ring-offset, 2px); }
+			.ol-actions a.is-primary { background: var(--accent, #fff); color: var(--bg, #050505); border-color: transparent; }
+		</style>
+	</head>
+	<body class="ol-body">
+		<main class="ol-card" id="ol-card" aria-live="polite">
+			<h1 id="ol-title">Opening link</h1>
+			<p id="ol-msg">Finding where this link points.</p>
+			<pre class="ol-raw" id="ol-raw" hidden></pre>
+			<nav class="ol-actions" id="ol-actions" aria-label="Where to go instead" hidden>
+				<a class="is-primary" href="/agents">Browse agents</a>
+				<a href="/forge">Open the forge</a>
+				<a href="/app">Open a 3D file</a>
+			</nav>
+		</main>
+		<script type="module" src="/src/open-link.js"></script>
+	</body>
+</html>
