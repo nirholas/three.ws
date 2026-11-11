@@ -1,5 +1,7 @@
 # microsoft 04: generate 3D from inside a Teams or Copilot chat with live-updating Adaptive Cards
 
+Status 2026-11-11: built and verified locally (1f77a2fc4, 9c44cae6b, 2ebaeec32, 59dec037f; e2e script in 854d7cae0). Waiting on the owner: Azure Bot client secret on three-ws-api, sideload plus a live Teams check, push and deploy.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3104.
 
 ## Operating clause (binding)
