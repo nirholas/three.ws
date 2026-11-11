@@ -8916,6 +8916,7 @@ textarea.erc8004-code {
    white ink for the dark canvas, so on the light canvas the hero title, card
    names, descriptions and Embed buttons rendered white on white. These rules
    swap in the light tokens; the 3D thumbnails keep their dark stage on purpose. */
+:root[data-theme='light'] .explore-hero h1,
 :root[data-theme='light'] .explore-hero h2,
 :root[data-theme='light'] .explore-title,
 :root[data-theme='light'] .explore-card-name,

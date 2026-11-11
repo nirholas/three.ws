@@ -487,9 +487,10 @@ function renderStepper() {
 		const btn = document.createElement('button');
 		btn.type = 'button';
 		btn.className = 'step-pip-btn';
-		// The number is decoration beside the label; the aria-label below spells
-		// the step out, so the visible label stays the start of the name.
-		btn.innerHTML = `<span class="num" aria-hidden="true">${i + 1}</span><span class="label">${label}</span>`;
+		// The name is built from content, never an aria-label: the visible label
+		// leads it (WCAG 2.5.3) and the visually hidden .pip-sr adds the position
+		// and state. The number badge is decoration.
+		btn.innerHTML = `<span class="num" aria-hidden="true">${i + 1}</span><span class="label">${label}</span><span class="pip-sr"></span>`;
 		btn.addEventListener('click', () => {
 			if (i < state.step) showStep(i);
 		});
@@ -510,12 +511,9 @@ function updateStepper() {
 		const btn = pip.querySelector('.step-pip-btn');
 		if (btn) {
 			btn.disabled = !done;
-			btn.setAttribute(
-				'aria-label',
-				done
-					? `Go back to step ${i + 1}, ${STEP_LABELS[i]}`
-					: `Step ${i + 1}, ${STEP_LABELS[i]}`,
-			);
+			btn.querySelector('.pip-sr').textContent = done
+				? `(step ${i + 1} of ${STEP_LABELS.length}, done, go back to edit)`
+				: `(step ${i + 1} of ${STEP_LABELS.length})`;
 		}
 		if (current) pip.setAttribute('aria-current', 'step');
 		else pip.removeAttribute('aria-current');

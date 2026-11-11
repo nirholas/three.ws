@@ -86,6 +86,10 @@ function ensureStyles() {
 .wa-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:var(--radius-pill,999px);
 	font:700 10px/1 var(--font-mono,ui-monospace,monospace);letter-spacing:.04em;text-transform:uppercase;
 	color:var(--wa-accent);background:var(--wa-glow);border:1px solid var(--wa-accent);white-space:nowrap;}
+/* Light theme: tier accents are pale glows tuned for a dark canvas (the dormant
+   tier measured 2.1:1). Mixing a third of the accent into the ink keeps the tier
+   hue readable at AA on the light badge fill. */
+:root[data-theme='light'] .wa-badge{color:color-mix(in srgb,var(--wa-accent) 35%,var(--ink,#1d212b));}
 .wa-badge .wa-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--wa-accent);
 	box-shadow:0 0 6px var(--wa-accent);}
 /* ── Embodied-finance dynamics: live modifiers on top of the static tier ────── */

@@ -219,6 +219,17 @@
 			/* The pip's interactive core is a real button so completed steps are
 			   reachable by keyboard, not just by mouse. Reset it to look exactly
 			   like the inline text row it replaced. */
+			.pip-sr {
+				position: absolute;
+				width: 1px;
+				height: 1px;
+				margin: -1px;
+				padding: 0;
+				overflow: hidden;
+				clip: rect(0 0 0 0);
+				white-space: nowrap;
+				border: 0;
+			}
 			.step-pip-btn {
 				display: flex;
 				align-items: center;

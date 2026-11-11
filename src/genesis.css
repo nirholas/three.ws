@@ -66,6 +66,19 @@ body {
 	padding: 5px 12px;
 	border-radius: var(--radius-pill, 999px);
 }
+/* Light theme: brand gold on the cream canvas measured 1.4:1; the gold-800
+   rung keeps the hue and clears AA. */
+:root[data-theme='light'] .gx-eyebrow {
+	color: #854d0e;
+}
+/* The headline's gold to cream sweep is built for black; on the cream canvas
+   its pale middle vanished. Light runs the same sweep through the deep golds,
+   every stop at least 3:1 for this large text. */
+:root[data-theme='light'] .gx-title em {
+	background: linear-gradient(120deg, #a16207, #713f12 60%, #a16207);
+	-webkit-background-clip: text;
+	background-clip: text;
+}
 .gx-eyebrow::before {
 	content: '';
 	width: 6px;

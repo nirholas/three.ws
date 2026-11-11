@@ -46,6 +46,8 @@ function ensureStyles() {
 .nwp-ring b{font:700 13px/1 var(--font-mono,JetBrains Mono,monospace);color:#fff;}
 .nwp-head-main{min-width:0;flex:1;}
 .nwp-tier{font:700 14px/1.2 var(--font-display,Space Grotesk,sans-serif);color:#fff;display:flex;align-items:center;gap:7px;}
+/* Light theme: the tier name and ring figure were white on the light card (1.1:1). */
+:root[data-theme='light'] .nwp-tier,:root[data-theme='light'] .nwp-ring b{color:var(--ink,#1d212b);}
 .nwp-tierdot{width:8px;height:8px;border-radius:50%;background:var(--nw-accent);box-shadow:0 0 8px var(--nw-accent);}
 .nwp-sub{font-size:12px;color:var(--ink-dim,#9a9aa3);margin-top:2px;}
 .nwp-sub a{color:var(--nw-accent);text-decoration:none;}
