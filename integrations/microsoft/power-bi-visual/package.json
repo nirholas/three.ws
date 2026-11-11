@@ -19,7 +19,7 @@
     "eslint": "npx eslint . --ext .js,.jsx,.ts,.tsx",
     "typecheck": "npm run prepare:generated && tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
     "test": "npm run prepare:generated && vitest run",
-    "verify:live": "node test/live/verify-live.mjs"
+    "verify:live": "npm run package && vitest run --config vitest.live.config.mjs"
   },
   "dependencies": {
     "powerbi-visuals-api": "5.11.1",
@@ -32,6 +32,7 @@
     "@vitest/browser-playwright": "5.1.0",
     "eslint": "^9.39.0",
     "eslint-plugin-powerbi-visuals": "1.1.1",
+    "jszip": "3.10.2",
     "playwright": "1.65.0",
     "powerbi-visuals-tools": "7.2.1",
     "powerbi-visuals-utils-testutils": "7.0.1",
