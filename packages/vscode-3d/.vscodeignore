@@ -12,3 +12,4 @@ package-lock.json
 PUBLISHING.md
 *.vsix
 .vscode-test/**
+images/**

@@ -8,10 +8,10 @@ see [x402 for VS Code](./x402-vscode.md) for the second.
 
 | | |
 |---|---|
-| **Extension** | three.ws 3D (`threews.vscode-3d`), version 0.2.0 |
+| **Extension** | three.ws 3D (`threews.vscode-3d`), version 0.3.0 |
 | **Source** | [`packages/vscode-3d`](../packages/vscode-3d) |
-| **Requires** | VS Code 1.85 or newer |
-| **Auth** | None. Generation, refinement, the motion library, and the quality check all run on free lanes. |
+| **Requires** | VS Code 1.101 or newer |
+| **Auth** | None. Generation, refinement, the motion library, and the quality check all run on free lanes. Connecting a three.ws account is optional and only adds the account MCP server to Copilot agent mode. |
 
 ## What it does
 
@@ -168,6 +168,55 @@ sizes; right-click for Animate, Refine, Optimize, Compare) and, below it,
 recent public creations from the forge. Preview any of those in the viewer, and
 import the ones you want with one click.
 
+## In GitHub Copilot Chat
+
+From 0.3.0 the extension plugs into GitHub Copilot Chat through VS Code's
+finalized chat, language model tool, and MCP provider APIs (all stable since
+VS Code 1.101). There are three surfaces.
+
+**`@threews`, a chat participant.**
+
+| Command | Result |
+|---|---|
+| `/forge <description>` | Free text to 3D. Progress is the studio's own status (queue position, stage, ETA, a live-view link once rendering starts), never a timer. Ends with **Open in the viewer** and **Save GLB to workspace** buttons. |
+| `/find <query>` | Catalog search over CC0 props, rigged characters, and motion clips. Say "character" or "animation" to narrow the kind. |
+| `/rig` | Rigs the GLB named by a URL in the message, a `#file` attachment the extension generated or imported, or the model open in the viewer. |
+| `/embed` | Inserts a pinned, SRI-checked `<agent-3d>` snippet for that model into the active editor. |
+
+Each reply comes with follow-up suggestions. Pressing **Stop** aborts the
+underlying request and nothing is saved. Errors are explained in the chat
+response with the next step (rephrase a refused prompt, wait out a busy lane,
+check `threews3d.origin` when the server is unreachable).
+
+**Five language model tools** for agent mode, also referenceable with `#`:
+
+| Tool | Name | Confirmation |
+|---|---|---|
+| Generate a 3D model (`#threewsGenerate`) | `threews_generate_model` | Always: spends free-lane GPU time and may save a GLB. |
+| Check a 3D generation job (`#threewsCheckJob`) | `threews_check_job` | Only when it would save the finished GLB. |
+| Find a 3D asset (`#threewsFind`) | `threews_find_asset` | None: read only. |
+| Inspect a local GLB (`#threewsInspect`) | `threews_inspect_glb` | None: read only, runs locally. |
+| Optimize a local GLB (`#threewsOptimize`) | `threews_optimize_glb` | Always: writes `name.web.glb` beside the original. |
+
+Each declares a JSON schema in `package.json` and returns `key: value` text
+(`status`, `jobId`, `glb_url`, `viewer_url`, `saved_to`, triangle counts,
+suggestions with estimated savings) the model reasons over. A generation that
+outlives one call returns `status: pending` and a `jobId`, and the model is
+told to call `threews_check_job` with it. Paths given to the local tools must
+be `.glb`/`.gltf` files inside an open workspace folder.
+
+**MCP servers.** The extension is an MCP server definition provider
+(`threews3d.mcp`). It always registers **three.ws Studio (free)** at
+`https://three.ws/api/mcp-studio`. **3D: Connect my three.ws Account to Copilot
+Agent Mode (MCP)** also registers **three.ws account** at
+`https://three.ws/api/mcp`, either through VS Code's own OAuth sign-in or with
+an `sk_live_` key from [three.ws/dashboard/api](https://three.ws/dashboard/api)
+that is first checked against the server and then kept in VS Code's secret
+storage. **3D: Disconnect my three.ws Account from Copilot Agent Mode** removes
+the server and the key. Both follow `threews3d.origin`. To configure the same
+servers by hand, or for the GitHub Copilot coding agent, see
+[MCP tools](./mcp-tools.md#github-copilot-in-vs-code-and-the-copilot-coding-agent).
+
 ## Install
 
 The extension is not on the Marketplace yet. Build and install it from the
@@ -177,7 +226,7 @@ repository:
 cd packages/vscode-3d
 npm install
 npm run package
-code --install-extension vscode-3d-0.2.0.vsix
+code --install-extension vscode-3d-0.3.0.vsix
 ```
 
 For development, open `packages/vscode-3d` in VS Code and press <kbd>F5</kbd> to
@@ -204,6 +253,8 @@ launch an Extension Development Host with the extension loaded, or run
 | `3D: Save a PNG Snapshot of the View` | Writes the current view beside the model. |
 | `3D: Save a Turntable GIF of the Model` | Writes a looping orbit beside the model. |
 | `3D: Toggle the Model Report` | Shows or hides the report panel. |
+| `3D: Connect my three.ws Account to Copilot Agent Mode (MCP)` | Registers the account MCP server, by browser sign-in or API key. |
+| `3D: Disconnect my three.ws Account from Copilot Agent Mode` | Removes it and deletes the stored key. |
 
 ## Settings
 
@@ -222,11 +273,13 @@ launch an Extension Development Host with the extension loaded, or run
 
 ## What talks to the network, and what does not
 
-Public, unauthenticated endpoints, and nothing else:
+Public, unauthenticated endpoints, plus the account server only if you connect one:
 
 | Call | Endpoint | When |
 |---|---|---|
-| Generate, rig, refine, collect a slow job | `POST /api/mcp-studio` | Only when you run one of those commands. |
+| Generate, rig, refine, collect a slow job, catalog search | `POST /api/mcp-studio` | Only when you run one of those commands, a `@threews` command, or approve a three.ws tool call. |
+| Account key check | `POST /api/mcp` (`tools/list`) | Once, when you connect with an API key. |
+| MCP servers | `/api/mcp-studio`, and `/api/mcp` once connected | Only when Copilot agent mode starts the server; VS Code makes these connections itself. |
 | Motion library | `GET /api/animations/library`, then the clip's CDN URL | The first time you open the Animate picker; one clip per pick. |
 | Text to motion | `POST /api/forge-motion`, `GET ?job=` | Only when you animate from a prompt. |
 | Quality check | `POST /api/forge-quality-check` | Only when you run the check; carries the render, never the model. |

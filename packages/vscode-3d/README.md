@@ -93,6 +93,53 @@ platform's own inspectors, and generation calls the live studio API.
 - **Forge gallery.** Browse recent public three.ws creations in the sidebar,
   preview any of them in the viewer, and import the ones you want.
 
+### In GitHub Copilot Chat
+
+Everything above is also reachable from GitHub Copilot Chat (VS Code 1.101 or
+newer), in three ways.
+
+**The `@threews` chat participant.** Type `@threews` and a slash command:
+
+| Command | What it does |
+|---|---|
+| `@threews /forge a brass lantern` | Free text to 3D. Streams the studio's real progress (queue position, stage, ETA) and ends with two buttons: **Open in the viewer** and **Save GLB to workspace**. |
+| `@threews /find wooden chair` | Searches the public catalog of CC0 props, rigged characters and motion clips, with view links and buttons for the first match. |
+| `@threews /rig` | Rigs a GLB: the URL in your message, a `#file` you attach, or the model open in the viewer. |
+| `@threews /embed` | Inserts a pinned, SRI-checked `<agent-3d>` snippet for that model into the open file. |
+
+Every reply offers follow-up suggestions, **Stop** cancels the request without
+writing anything, and failures are explained in the chat with what to do next
+(a refusal, a busy GPU lane and an unreachable server each read differently).
+
+![The @threews participant and its slash commands in GitHub Copilot Chat](https://raw.githubusercontent.com/nirholas/three.ws/main/packages/vscode-3d/images/copilot-chat-commands.png)
+
+**Five agent-mode tools.** In agent mode Copilot can call these by itself, or
+you can reference one with `#`:
+
+| Tool | Reference | Writes or spends? |
+|---|---|---|
+| Generate a 3D model | `#threewsGenerate` | Asks first: it uses the free GPU lane and can save a GLB. |
+| Check a 3D generation job | `#threewsCheckJob` | Asks only when it would save the finished GLB. |
+| Find a 3D asset | `#threewsFind` | Read only. |
+| Inspect a local GLB | `#threewsInspect` | Read only; the file never leaves your machine. |
+| Optimize a local GLB | `#threewsOptimize` | Asks first: writes `name.web.glb` beside the original. |
+
+Each tool returns plain `key: value` text (job ids, URLs, triangle counts,
+suggestions with their estimated savings), so the model can reason over the
+result and chain the next call, for example "generate a lantern, then optimize
+it for the web".
+
+**The three.ws MCP servers.** The extension registers the free three.ws Studio
+server (`https://three.ws/api/mcp-studio`: text to 3D, rigging, the catalog,
+docs search) with VS Code automatically; no key and no config file. Run
+**3D: Connect my three.ws Account to Copilot Agent Mode (MCP)** to add the
+account server (`https://three.ws/api/mcp`: your agents, wallets and paid
+tools), signing in either through VS Code's own browser sign-in or with an API
+key from [three.ws/dashboard/api](https://three.ws/dashboard/api), which is
+checked against the server and then kept in VS Code's secret storage.
+
+![VS Code starting the three.ws Studio MCP server and discovering its tools](https://raw.githubusercontent.com/nirholas/three.ws/main/packages/vscode-3d/images/copilot-mcp-servers.png)
+
 ## Install
 
 The extension is not on the Visual Studio Marketplace or Open VSX yet (checked
@@ -104,7 +151,7 @@ git clone https://github.com/nirholas/three.ws.git
 cd three.ws/packages/vscode-3d
 npm install
 npm run package
-code --install-extension vscode-3d-0.2.0.vsix
+code --install-extension vscode-3d-0.3.0.vsix
 ```
 
 For development, open `packages/vscode-3d` in VS Code and press <kbd>F5</kbd> to
@@ -160,6 +207,8 @@ stale after a release), the editor underlines it and the quick fix repairs it.
 | `3D: Save a PNG Snapshot of the View` | Writes the current view beside the model. |
 | `3D: Save a Turntable GIF of the Model` | Writes a looping orbit beside the model. |
 | `3D: Toggle the Model Report` | Shows or hides the report panel. |
+| `3D: Connect my three.ws Account to Copilot Agent Mode (MCP)` | Registers the account MCP server, by browser sign-in or API key. |
+| `3D: Disconnect my three.ws Account from Copilot Agent Mode` | Removes it and deletes the stored key. |
 
 ## Settings
 

@@ -159,6 +159,91 @@ Things to know:
 Microsoft, Azure, and Microsoft Foundry are trademarks of the Microsoft group of
 companies.
 
+### GitHub Copilot in VS Code and the Copilot coding agent
+
+**VS Code, zero config.** Install the [three.ws 3D extension](vscode.md#in-github-copilot-chat)
+(0.3.0 or newer). It registers the free studio server with VS Code as an MCP
+server definition provider, and **3D: Connect my three.ws Account to Copilot
+Agent Mode (MCP)** adds the account server. Agent mode then lists the studio's
+tools beside the extension's own five.
+
+**VS Code, by hand.** Without the extension, add the servers to
+`.vscode/mcp.json` in the workspace (or to your user MCP configuration with
+**MCP: Open User Configuration**):
+
+```json
+{
+  "servers": {
+    "threews-studio": {
+      "type": "http",
+      "url": "https://three.ws/api/mcp-studio"
+    },
+    "threews": {
+      "type": "http",
+      "url": "https://three.ws/api/mcp"
+    }
+  }
+}
+```
+
+The studio needs no credentials. For `threews`, VS Code reads the server's
+authorization metadata and runs the browser sign-in itself the first time the
+server starts. To use an API key from
+[three.ws/dashboard/api](https://three.ws/dashboard/api) instead, prompt for it
+so it never lands in the file:
+
+```json
+{
+  "inputs": [
+    { "type": "promptString", "id": "threews-key", "description": "three.ws API key (sk_live_...)", "password": true }
+  ],
+  "servers": {
+    "threews": {
+      "type": "http",
+      "url": "https://three.ws/api/mcp",
+      "headers": { "Authorization": "Bearer ${input:threews-key}" }
+    }
+  }
+}
+```
+
+**GitHub Copilot coding agent.** In the repository on GitHub, open
+**Settings > Copilot > Coding agent** and paste this into **MCP configuration**:
+
+```json
+{
+  "mcpServers": {
+    "threews-studio": {
+      "type": "http",
+      "url": "https://three.ws/api/mcp-studio",
+      "tools": ["*"]
+    }
+  }
+}
+```
+
+The coding agent runs tools without asking, so list tool names instead of
+`"*"` to keep it to read-only ones (`search_catalog`, `get_catalog_item`, `search_docs`) if you do
+not want it starting GPU jobs. For the account server the coding agent cannot
+run a browser sign-in: add the key as the secret `COPILOT_MCP_THREEWS_API_KEY`
+in the repository's `copilot` environment (**Settings > Environments**) and
+reference it by name:
+
+```json
+{
+  "mcpServers": {
+    "threews": {
+      "type": "http",
+      "url": "https://three.ws/api/mcp",
+      "headers": { "Authorization": "Bearer $COPILOT_MCP_THREEWS_API_KEY" },
+      "tools": ["*"]
+    }
+  }
+}
+```
+
+GitHub and GitHub Copilot are trademarks of GitHub, Inc.
+
 ## Material Studio (hosted, free) — `/api/material-studio`
 
 A free, rate-limited (not x402) REST endpoint backing the [Restyle Studio](/restyle)

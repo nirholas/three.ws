@@ -627,6 +627,7 @@
 		"watch": "node build.mjs --watch",
 		"test": "node build.mjs && node --test \"test/*.test.mjs\"",
 		"test:vscode": "node build.mjs && xvfb-run -a node test/electron/run.mjs",
+		"screenshots": "node build.mjs && node scripts/screenshots.mjs",
 		"release": "node scripts/release.mjs",
 		"package": "npx --yes @vscode/vsce package --no-dependencies",
 		"publish:marketplace": "npx --yes @vscode/vsce publish --no-dependencies",

@@ -17,10 +17,13 @@ This file is excluded from the `.vsix` by `.vscodeignore`.
   extension live under it), so no new publisher has to be created. The
   `threews` namespace also already exists on Open VSX.
 - **The package is ready.** `npm run package` builds a production bundle and
-  writes `vscode-3d-0.2.0.vsix`: 15 files, about 694 KB. It has been installed
-  into a real VS Code 1.138.0 server build with
-  `code-server --install-extension`, and `--list-extensions` reports
-  `threews.vscode-3d@0.2.0`.
+  writes `vscode-3d-0.3.0.vsix`: 15 files, about 725 KB (2026-11-11). Version
+  0.3.0 adds the GitHub Copilot Chat surface (the `@threews` participant, five
+  agent-mode tools, the MCP server provider). `npm run test:vscode` runs it
+  inside real VS Code builds downloaded by `@vscode/test-electron`: it passes
+  on 1.146.0 (stable) and on 1.101.0, the `engines.vscode` floor, where the
+  tools are listed by `vscode.lm.tools` and one is invoked against the live
+  catalog.
 - **Release is one command.** `npm run release` (see below) wraps the preflight,
   both publishes and the post-publish listing check. Re-verified 2026-11-04: 71
   extension tests plus 7 release-preflight tests pass, the packaged file list
@@ -50,7 +53,8 @@ VSCE_PAT=<marketplace token> OVSX_PAT=<open vsx token> npm run release
 ```bash
 cd packages/vscode-3d
 npm ci
-npm test                      # 71 tests, must all pass
+npm test                      # 106 tests (9 of them call three.ws live), must all pass
+npm run test:vscode           # the extension inside a real VS Code under xvfb
 npm run package               # builds and writes vscode-3d-<version>.vsix
 npx --yes @vscode/vsce ls --no-dependencies   # the exact file list that ships
 ```
@@ -122,7 +126,7 @@ OVSX_PAT=<token> npm run publish:openvsx
 
 `publish:openvsx` runs `ovsx publish --no-dependencies`, which builds and
 packages the same way. To upload the exact file already published to the
-Marketplace instead: `npx --yes ovsx publish vscode-3d-0.2.0.vsix -p <token>`.
+Marketplace instead: `npx --yes ovsx publish vscode-3d-0.3.0.vsix -p <token>`.
 
 The namespace is currently unverified on Open VSX, so the listing shows a
 warning badge. To remove it, claim the namespace by opening an issue at
@@ -162,6 +166,30 @@ Then check by hand:
    <https://three.ws>): it renders in the **three.ws 3D Viewer** tab, the
    **three.ws 3D** activity bar icon lists workspace models, and
    **3D: Generate a Model from Text** returns a model.
+4. In Copilot Chat, `@threews /find wooden chair` lists catalog matches, and
+   **MCP: List Servers** shows **three.ws Studio (free)**.
+
+## Screenshots
+
+`npm run screenshots` drives a real VS Code (the build `npm run test:vscode`
+downloaded) with Playwright and rewrites `images/copilot-chat-commands.png` and
+`images/copilot-mcp-servers.png`. The README links them by absolute
+`raw.githubusercontent.com` URLs, so they render on the Marketplace once the
+commit is pushed; `images/` itself is kept out of the `.vsix`.
+
+Two README shots need a model reply, so they need a signed-in GitHub Copilot:
+`@threews /forge` finishing with its buttons, and agent mode calling a three.ws
+tool. Sign in to GitHub Copilot once in a VS Code profile, then point the
+script at that profile:
+
+```bash
+THREEWS_SIGNED_IN_PROFILE=/tmp/vsud-signed-in npm run screenshots
+```
+
+It adds `images/copilot-agent-tools.png` and `images/copilot-forge.png`. For
+the agent-mode shot by hand: switch the chat to **Agent**, ask "generate a low-poly brass
+lantern with three.ws and save it to the workspace", and capture the tool call
+card with its confirmation.
 
 ## 4. After the first publish
 

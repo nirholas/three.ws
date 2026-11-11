@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.3.0
+
+three.ws inside GitHub Copilot Chat. Requires VS Code 1.101 or newer (the
+release where the chat, language model tool and MCP provider APIs are final).
+
+- **`@threews` chat participant.** `/forge` generates a model on the free lane
+  and streams the studio's real status (queue, stage, ETA, a live-view link)
+  until it ends with **Open in the viewer** and **Save GLB to workspace**
+  buttons. `/find` searches the CC0 catalog of props, rigged characters and
+  motions. `/rig` rigs a GLB given as a URL, a `#file`, or the model open in
+  the viewer. `/embed` inserts a pinned, SRI-checked `<agent-3d>` snippet into
+  the open file. Every reply has follow-ups; **Stop** cancels without writing
+  anything; failures say what went wrong and what to do.
+- **Five agent-mode tools**: generate a model, check a generation job, find an
+  asset, inspect a local GLB, optimize a local GLB. Each declares a JSON
+  schema, asks before it spends GPU time or writes a file, and returns plain
+  `key: value` text the model can chain into the next call.
+- **The three.ws MCP servers, registered for you.** The free three.ws Studio
+  server is always available to agent mode. **3D: Connect my three.ws Account
+  to Copilot Agent Mode (MCP)** adds the account server by browser sign-in or
+  by an API key that is validated first and stored in VS Code's secret
+  storage; **Disconnect** removes it.
+- `npm run test:vscode` runs the extension inside real VS Code builds, and
+  `npm run screenshots` captures the README images from a real run.
+
 ## 0.2.0
 
 The extension stops being a viewer with a generate button and becomes a
