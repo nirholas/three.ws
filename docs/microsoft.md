@@ -52,6 +52,7 @@ These are in the repo and validated. Each one goes live when the owner completes
 | Microsoft 365 Copilot connector | A Graph connector that indexes a three.ws account's agents, Forge models and avatars into the customer's tenant for Microsoft Search and Copilot, with admin consent, per-audience ACLs and a 15-minute incremental sync. Settings page `/settings/microsoft-365`. See [Microsoft 365 Copilot connector](./microsoft-365-copilot-connector.md) | `node --test tests/m365-connector.test.js`, `node scripts/m365-connector-probe.mjs` |
 | Microsoft Store (Windows app) | The installable web app packaged as MSIX through PWABuilder: [`scripts/package-microsoft-store-pwa.mjs`](../scripts/package-microsoft-store-pwa.mjs). Listing copy in [`microsoft-edge-and-store.md`](../marketing/growth/submissions/programs/microsoft-edge-and-store.md) | `npm run package:microsoft-store -- --check` |
 | Edge Add-ons | The browser extension package | `npm run package:edge` |
+| .NET SDK on NuGet | `ThreeWs.Sdk` for C#, ASP.NET Core and Unity (net8.0 and netstandard2.1): Forge on every lane, catalog, rigging, streaming agent chat and MCP tools. Source in [`sdk-dotnet/`](../sdk-dotnet), guide in [.NET SDK](./dotnet-sdk.md). Goes live when the owner pushes the package to nuget.org | `cd sdk-dotnet && dotnet test tests/ThreeWs.Sdk.Tests -c Release` |
 
 ## In flight
 
@@ -86,6 +87,7 @@ These are in the repo and validated. Each one goes live when the owner completes
 
 ## Related
 
+- [.NET SDK (NuGet, Unity)](./dotnet-sdk.md)
 - [Partner ecosystem](./partners.md)
 - [Partner benefits](./partner-benefits.md)
 - [Microsoft distribution and offer plan](./microsoft-marketplace-offer-plan.md)

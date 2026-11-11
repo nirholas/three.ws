@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-11T16:54:52.865Z",
+	"generated_at": "2026-11-11T16:57:27.561Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4505,
+	"total": 4507,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Docs · .NET SDK",
+			"summary": "The official .NET SDK for three.ws on NuGet: Forge on every lane, catalog search, rigging, streaming agent chat and MCP tools for C#, ASP.NET Core and Unity.",
+			"link": "/docs/dotnet-sdk",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-11-11",
 			"type": "launch",
@@ -148,6 +158,16 @@
 			"tags": [
 				"security",
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "An official .NET SDK for three.ws, ready for Unity",
+			"summary": "C# developers can now use three.ws from one typed library, ThreeWs.Sdk. It generates 3D models from text or images on every Forge lane and downloads the GLB. It also searches the free asset catalog, rigs meshes, streams agent chat and lists MCP tools. It runs on .NET 8 and .NET Standard 2.1, so it works in ASP.NET Core services and in Unity games, and a Unity sample spawns a generated model with glTFast. Every call can be cancelled. Failed requests retry safely, and errors carry the API's error code. The NuGet release is pending.",
+			"link": "/docs/dotnet-sdk",
+			"tags": [
+				"sdk"
 			]
 		},
 		{
@@ -1515,27 +1535,6 @@
 			"tags": [
 				"fix",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Large 3D generations stop dropping mid-job, and photo cutouts move to a commercially licensed model",
-			"summary": "Very detailed TRELLIS generations could stall the worker long enough for Cloud Run to restart it, so every job on that machine failed with a malformed response. The worker now keeps each bake within a measured face budget, which covers every model that already succeeded. The TripoSG photo lane cuts out your subject with BiRefNet through our own background-removal service instead of a non-commercial model. Image lanes move to Gemini 3.1 Flash Image, falling back to the previous model only where the new one is not served. The scan page now says plainly that generating needs a free account.",
-			"link": "/features/scan",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Launch a coin about an animation, an avatar or an agent, on four chains",
-			"summary": "The new multichain launchpad at /launch/multichain launches a coin about one animation, an avatar, a 3D agent, or all of them together, on Solana through pump.fun, on BNB Chain through four.meme or flap.sh, and on Base and Robinhood Chain through flap.sh. Your agent's wallet or your own wallet signs it after a live fee quote and a confirmation table. Every coin gets a showcase page at /l/:id that plays its avatar and links to the coin on its venue, and Pose Studio has a Launch a coin button that carries the clip you are watching.",
-			"link": "/launch/multichain",
-			"tags": [
-				"feature"
 			]
 		}
 	]

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-11",
+			"title": "An official .NET SDK for three.ws, ready for Unity",
+			"summary": "C# developers can now use three.ws from one typed library, ThreeWs.Sdk. It generates 3D models from text or images on every Forge lane and downloads the GLB. It also searches the free asset catalog, rigs meshes, streams agent chat and lists MCP tools. It runs on .NET 8 and .NET Standard 2.1, so it works in ASP.NET Core services and in Unity games, and a Unity sample spawns a generated model with glTFast. Every call can be cancelled. Failed requests retry safely, and errors carry the API's error code. The NuGet release is pending.",
+			"tags": [
+				"sdk"
+			],
+			"link": "/docs/dotnet-sdk"
+		},
+		{
+			"date": "2026-11-11",
 			"title": "TRELLIS.2 Lab: every parameter of Microsoft Research's image-to-3D model",
 			"summary": "A new lab at /lab/trellis2 runs TRELLIS.2 with all of its controls in your hands: voxel resolution, seed, texture size, face budget, and the steps and guidance of each of its three sampler stages. Every control shows its default and a plain-language explanation. Pick Fast draft, Balanced or Maximum detail; their speed labels come from real production runs, not estimates. Inspect the result in texture, wireframe or normal view, with triangle count, texture resolution and file size read from the model itself. Run a second engine on the same photo to compare the two side by side, and share the pair with one link. The page credits Microsoft Research, with the citation, the MIT license and how we run it.",
 			"tags": [

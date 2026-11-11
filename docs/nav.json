@@ -1044,6 +1044,10 @@
 					"path": "sdk"
 				},
 				{
+					"label": ".NET SDK (NuGet, Unity)",
+					"path": "dotnet-sdk"
+				},
+				{
 					"label": "Avatar CLI",
 					"path": "avatar-cli"
 				},

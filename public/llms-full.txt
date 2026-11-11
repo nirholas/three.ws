@@ -3876,6 +3876,12 @@ URL: https://three.ws/docs/sdk
 
 JavaScript / Node SDK for three.ws.
 
+### Docs · .NET SDK
+
+URL: https://three.ws/docs/dotnet-sdk
+
+The official .NET SDK for three.ws on NuGet: Forge on every lane, catalog search, rigging, streaming agent chat and MCP tools for C#, ASP.NET Core and Unity.
+
 ### Docs · Open-Source Footprint
 
 URL: https://three.ws/docs/open-source-footprint

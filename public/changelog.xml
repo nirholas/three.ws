@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · .NET SDK</title>
+			<link>https://three.ws/docs/dotnet-sdk</link>
+			<guid isPermaLink="false">2026-11-11:Docs · .NET SDK</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The official .NET SDK for three.ws on NuGet: Forge on every lane, catalog search, rigging, streaming agent chat and MCP tools for C#, ASP.NET Core and Unity.</description>
+		</item>
+		<item>
 			<title>Docs · Create a 3D model from a Teams or Copilot chat</title>
 			<link>https://three.ws/docs/microsoft-teams-forge</link>
 			<guid isPermaLink="false">2026-11-11:Docs · Create a 3D model from a Teams or Copilot chat</guid>
@@ -117,6 +125,14 @@
 			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
 			<category>security</category>
 			<description>three.ws/trust explains where three.ws runs, how data is encrypted, how people and apps sign in, who has admin access, what is logged, how long each kind of data is kept and the job that deletes it, how agent wallet custody works, which AI providers can see prompts (with each provider's own published terms quoted), and how incidents and vulnerability reports are handled. Every answer links to the file in the open-source code that proves it, and the compliance table says plainly what is in place, in progress and not pursued. three.ws/trust/subprocessors lists every third party that processes data, with a filter. Expired sessions, old sign-in nonces and year-old widget views are now actually deleted, as the privacy policy says.</description>
+		</item>
+		<item>
+			<title>An official .NET SDK for three.ws, ready for Unity</title>
+			<link>https://three.ws/docs/dotnet-sdk</link>
+			<guid isPermaLink="false">2026-11-11:An official .NET SDK for three.ws, ready for Unity</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>sdk</category>
+			<description>C# developers can now use three.ws from one typed library, ThreeWs.Sdk. It generates 3D models from text or images on every Forge lane and downloads the GLB. It also searches the free asset catalog, rigs meshes, streams agent chat and lists MCP tools. It runs on .NET 8 and .NET Standard 2.1, so it works in ASP.NET Core services and in Unity games, and a Unity sample spawns a generated model with glTFast. Every call can be cancelled. Failed requests retry safely, and errors carry the API's error code. The NuGet release is pending.</description>
 		</item>
 		<item>
 			<title>Export any Forge model as a Minecraft: Bedrock structure pack</title>

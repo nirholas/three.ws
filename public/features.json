@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T16:54:52.524Z",
+	"generated_at": "2026-11-11T16:57:26.775Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -7671,6 +7671,18 @@
 					"title": "Docs · SDK",
 					"description": "JavaScript / Node SDK for three.ws.",
 					"added": "2026-04-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/dotnet-sdk",
+					"title": "Docs · .NET SDK",
+					"description": "The official .NET SDK for three.ws on NuGet: Forge on every lane, catalog search, rigging, streaming agent chat and MCP tools for C#, ASP.NET Core and Unity.",
+					"added": "2026-11-11",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-11-11T16:54:52.641Z",
+	"generated_at": "2026-11-11T16:57:27.085Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Docs · .NET SDK",
+			"summary": "The official .NET SDK for three.ws on NuGet: Forge on every lane, catalog search, rigging, streaming agent chat and MCP tools for C#, ASP.NET Core and Unity.",
+			"link": "/docs/dotnet-sdk",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-11-11",
 			"type": "launch",
@@ -145,6 +155,16 @@
 			"tags": [
 				"security",
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "An official .NET SDK for three.ws, ready for Unity",
+			"summary": "C# developers can now use three.ws from one typed library, ThreeWs.Sdk. It generates 3D models from text or images on every Forge lane and downloads the GLB. It also searches the free asset catalog, rigs meshes, streams agent chat and lists MCP tools. It runs on .NET 8 and .NET Standard 2.1, so it works in ASP.NET Core services and in Unity games, and a Unity sample spawns a generated model with glTFast. Every call can be cancelled. Failed requests retry safely, and errors carry the API's error code. The NuGet release is pending.",
+			"link": "/docs/dotnet-sdk",
+			"tags": [
+				"sdk"
 			]
 		},
 		{

@@ -5146,6 +5146,12 @@
 					"added": "2026-04-27"
 				},
 				{
+					"path": "/docs/dotnet-sdk",
+					"title": "Docs · .NET SDK",
+					"description": "The official .NET SDK for three.ws on NuGet: Forge on every lane, catalog search, rigging, streaming agent chat and MCP tools for C#, ASP.NET Core and Unity.",
+					"added": "2026-11-11"
+				},
+				{
 					"path": "/docs/open-source-footprint",
 					"title": "Docs · Open-Source Footprint",
 					"description": "Every registry, marketplace, community, and directory where three.ws code and listings live, with live links and the number behind each one.",
