@@ -19,7 +19,7 @@ import { keepEntryExports } from './scripts/vite/keep-entry-exports.mjs';
 import { createCreationHeadRenderer, creationIdFromPath, apiCreationLoader } from './server/creation-head.mjs';
 import { isPlayPath, rewritePlayHead } from './server/play-head.mjs';
 import { presentDevRequestsAsSameSite } from './server/dev-proxy-origin.mjs';
-import { devApiPagesMiddleware } from './server/dev-api-pages.mjs';
+import { devApiPagesMiddleware, bumpModuleGeneration } from './server/dev-api-pages.mjs';
 
 // Dev parity for production's per-request <head> rewrite (server/seo-head.mjs).
 // Shared-shell routes serve one template file for hundreds of paths (/docs/* and
@@ -1317,11 +1317,16 @@ const appConfig = {
 	plugins: [
 		// Page URLs production answers with an api/ handler (sitemaps, crawler
 		// agent and avatar pages, widgets, news stories; server/dev-api-pages.mjs):
-		// local handlers when DATABASE_URL is set, the upstream otherwise.
+		// local handlers when DATABASE_URL is set, the upstream otherwise. Any
+		// edited source file starts a new module generation, so the next request
+		// runs the edit even when it is in a module the handler imports.
 		{
 			name: 'dev-api-pages',
 			apply: 'serve',
 			configureServer(server) {
+				server.watcher.on('change', (file) => {
+					if (/\.m?js$/.test(file) && !file.includes(`${sep}node_modules${sep}`)) bumpModuleGeneration();
+				});
 				server.middlewares.use(devApiPagesMiddleware({ root: __dirname, upstream: DEV_API_PROXY }));
 			},
 		},

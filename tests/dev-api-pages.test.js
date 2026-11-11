@@ -4,9 +4,12 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { execFileSync } from 'node:child_process';
 import { loadRouteTable } from '../server/route-resolve.mjs';
-import { devHandlerRoute, devApiPagesMiddleware } from '../server/dev-api-pages.mjs';
+import { devHandlerRoute, devApiPagesMiddleware, devDirectoryIndexUrl } from '../server/dev-api-pages.mjs';
+import { mkdtempSync } from 'node:fs';
+import os from 'node:os';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const apiRoot = path.join(root, 'api');
@@ -76,6 +79,24 @@ function fakeRes() {
 	};
 }
 
+describe('devDirectoryIndexUrl', () => {
+	// Production serves /agents from /agents/index.html with a 200 (a vercel.json
+	// rewrite); Vite's static server answers the slashless path with a 301 to
+	// /agents/, which the SEO audit then reports as a redirect in the sitemap.
+	const dir = (url) => devDirectoryIndexUrl(table, { url, headers: { 'user-agent': BROWSER } });
+
+	it('serves a rewritten directory index in place instead of redirecting', () => {
+		expect(dir('/agents')).toBe('/agents/');
+		expect(dir('/agents?q=scout')).toBe('/agents/?q=scout');
+	});
+
+	it('leaves slashed paths, handler routes and plain pages alone', () => {
+		expect(dir('/agents/')).toBeNull();
+		expect(dir('/sitemap.xml')).toBeNull();
+		expect(dir('/pricing')).toBeNull();
+	});
+});
+
 describe('devApiPagesMiddleware', () => {
 	it('runs the local handler with the rewrite query when a database is configured', async () => {
 		const handler = vi.fn((req, res) => res.status(200).send(`type=${req.query.type}`));
@@ -131,6 +152,15 @@ describe('devApiPagesMiddleware', () => {
 		expect(next).toHaveBeenCalledTimes(2);
 	});
 
+	it('rewrites a directory index path in place and hands it to Vite', async () => {
+		const mw = devApiPagesMiddleware({ root, upstream: 'https://up.example', table: () => table, load: vi.fn(), hasDatabase: () => true });
+		const next = vi.fn();
+		const req = { method: 'GET', url: '/agents', headers: {} };
+		await mw(req, fakeRes(), next);
+		expect(req.url).toBe('/agents/');
+		expect(next).toHaveBeenCalledTimes(1);
+	});
+
 	it('answers 502 with the handler path when the handler throws', async () => {
 		const load = vi.fn(async () => ({ default: () => { throw new Error('db down'); } }));
 		const mw = devApiPagesMiddleware({ root, upstream: 'https://up.example', table: () => table, load, hasDatabase: () => true });
@@ -138,5 +168,29 @@ describe('devApiPagesMiddleware', () => {
 		await mw({ method: 'GET', url: '/sitemap.xml', headers: {} }, res, vi.fn());
 		expect(res.statusCode).toBe(502);
 		expect(res.body).toContain('api/sitemap.js failed in dev: db down');
+	});
+});
+
+describe('importFresh', () => {
+	// A crawler handler renders through shared helpers (api/_lib/crawler-page.js).
+	// Re-importing only the handler kept the old helper, so an edit to the helper
+	// never reached the dev server until it was restarted. Vitest runs its own
+	// module loader, so this drives Node's real one in a child process.
+	it('re-imports the modules a handler imports after a new generation starts', () => {
+		const dir = mkdtempSync(path.join(os.tmpdir(), 'dev-api-pages-'));
+		const script = `
+			import { writeFileSync } from 'node:fs';
+			const { importFresh, bumpModuleGeneration } = await import(${JSON.stringify(pathToFileURL(path.join(root, 'server/dev-api-pages.mjs')).href)});
+			const dir = ${JSON.stringify(dir)};
+			writeFileSync(dir + '/handler.mjs', "export { value } from './helper.mjs';");
+			writeFileSync(dir + '/helper.mjs', "export const value = 'old';");
+			const before = (await importFresh(dir + '/handler.mjs')).value;
+			writeFileSync(dir + '/helper.mjs', "export const value = 'new';");
+			bumpModuleGeneration();
+			const after = (await importFresh(dir + '/handler.mjs')).value;
+			process.stdout.write(before + ' ' + after);
+		`;
+		const out = execFileSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8' });
+		expect(out).toBe('old new');
 	});
 });

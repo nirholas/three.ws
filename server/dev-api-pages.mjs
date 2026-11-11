@@ -23,11 +23,15 @@
 //
 // Handlers are loaded with Node's own import(), not Vite's SSR loader: modules
 // the SSR runner evaluates in this config see an empty process.env, so the
-// database client could never find its connection string there. The file's
-// mtime rides on the import URL so an edit is picked up on the next request.
+// database client could never find its connection string there. A module
+// generation rides on the import URL of the handler and, through a resolve
+// hook, of every local module it imports, so an edit to a shared helper is
+// picked up on the next request too (vite.config.js starts a new generation
+// whenever a source file changes).
 // Runbook: docs/ops/bing-and-indexnow.md.
 
 import { statSync } from 'node:fs';
+import { register } from 'node:module';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { loadRouteTable, resolvePhase1, resolveApiHandler } from './route-resolve.mjs';
@@ -72,6 +76,25 @@ export function devHandlerRoute(table, apiRoot, req) {
 }
 
 /**
+ * The in-place URL for a slashless path production rewrites to its directory
+ * index (vercel.json `/agents` -> `/agents/index.html`), else null. Production
+ * answers that path with a 200; Vite's static server would answer it with a
+ * 301 to the slashed path, so the dev server hands Vite the slashed URL itself.
+ *
+ * @param {{phase1Routes: object[]}} table
+ * @param {{url?: string, headers?: object}} req
+ * @returns {string | null}
+ */
+export function devDirectoryIndexUrl(table, req) {
+	const url = new URL(req.url || '/', 'http://dev.local');
+	const p = url.pathname;
+	if (p.endsWith('/') || p.startsWith('/api/') || VITE_OWNED.test(p) || STATIC_EXT.test(p)) return null;
+	const r = resolvePhase1(table.phase1Routes, req, url);
+	if (r.terminal || !r.matched || r.path !== `${p}/index.html`) return null;
+	return `${p}/${url.search}`;
+}
+
+/**
  * The vercel.json route table, re-read whenever the file changes.
  *
  * @param {string} configPath
@@ -89,14 +112,44 @@ export function liveRouteTable(configPath) {
 	};
 }
 
+// Resolve hook (runs on Node's loader thread): a local file imported by a
+// module that carries ?devgen=N gets the same ?devgen=N, so one generation is
+// one fresh copy of the handler's whole local import graph.
+const GENERATION_HOOK = `
+export async function resolve(specifier, context, next) {
+	const r = await next(specifier, context);
+	const m = context.parentURL && /[?&]devgen=(\\d+)/.exec(context.parentURL);
+	if (!m || !r.url.startsWith('file:') || r.url.includes('/node_modules/')) return r;
+	const u = new URL(r.url);
+	u.searchParams.set('devgen', m[1]);
+	return { ...r, url: u.href };
+}
+`;
+
+// Seeded from the clock: Vite re-evaluates its config (and this module) on a
+// restart, and a counter restarting at 0 would hand back URLs Node already
+// cached from before the restart.
+let generation = Date.now();
+let hookRegistered = false;
+
+/** Start a new module generation: the next importFresh loads every local module anew. */
+export function bumpModuleGeneration() {
+	generation += 1;
+}
+
 /**
- * Import an absolute module path natively, re-importing it after it changes.
+ * Import an absolute module path natively, fresh for the current generation
+ * and for the file's own last edit.
  *
  * @param {string} file
  */
 export function importFresh(file) {
-	const v = Math.floor(statSync(file).mtimeMs);
-	return import(`${pathToFileURL(file).href}?v=${v}`);
+	if (!hookRegistered) {
+		register(`data:text/javascript,${encodeURIComponent(GENERATION_HOOK)}`);
+		hookRegistered = true;
+	}
+	const v = `${generation}${Math.floor(statSync(file).mtimeMs)}`;
+	return import(`${pathToFileURL(file).href}?devgen=${v}`);
 }
 
 // The Vercel/Express response helpers handlers may call, on a bare Node
@@ -158,6 +211,11 @@ export function devApiPagesMiddleware({
 		if (req.method !== 'GET' && req.method !== 'HEAD') return next();
 		let route;
 		try {
+			const dirUrl = devDirectoryIndexUrl(table(), req);
+			if (dirUrl) {
+				req.url = dirUrl;
+				return next();
+			}
 			route = devHandlerRoute(table(), apiRoot, req);
 		} catch (err) {
 			return next(err);

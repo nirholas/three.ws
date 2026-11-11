@@ -7200,6 +7200,7 @@
 				},
 				{
 					"path": "/settings/memory",
+					"indexable": false,
 					"title": "Agent Memory Settings",
 					"description": "See, edit and delete everything your agents have learned about you: the about-you profile, saved memories and skills drafted from experience. One switch turns learning off, and a cadence control sets how often agents review what to keep.",
 					"priority": 0.3,
@@ -7208,6 +7209,7 @@
 				},
 				{
 					"path": "/settings/sandbox",
+					"indexable": false,
 					"title": "Agent Sandbox Settings",
 					"description": "See every program your agents ran in their sandbox, read its output, download the files it wrote, stop a runaway workspace and choose which hosts sandboxed code may call.",
 					"priority": 0.3,
