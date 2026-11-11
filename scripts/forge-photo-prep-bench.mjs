@@ -142,22 +142,40 @@ async function generate(name, key) {
 		if (task.status === 'done' || task.status === 'succeeded' || task.status === 'failed' || task.status === 'error') break;
 		if (Date.now() - t0 > JOB_DEADLINE_MS) throw new Error(`task ${task_id} still ${task.status} after 20 min`);
 	}
-	v.gpuMs = Date.now() - t0;
-	v.task = { id: task_id, status: task.status, resolution_served: task.resolution_served, error: task.error || null };
-	const url = task.result_url || task.result_gcs_url;
-	if (!url || task.error) {
+	// endToEndMs is what the visitor waits for after the upload: submit to done,
+	// polled every POLL_MS. The worker's own clock splits it into queue and GPU.
+	v.endToEndMs = Date.now() - t0;
+	v.task = {
+		id: task_id,
+		status: task.status,
+		resolution_served: task.resolution_served,
+		alpha_mode: task.alpha_mode || null,
+		queue_ms: task.queue_ms ?? null,
+		gpu_ms: task.gpu_ms ?? null,
+		elapsed_ms: task.elapsed_ms ?? null,
+		error: task.error || null,
+	};
+	const url = task.result_gcs_url || task.result_url;
+	if (task.status !== 'done' || !url) {
 		console.log(`  ${name}/${key}: ${task.status} ${task.error || 'no result url'}`);
 		save();
 		return;
 	}
 	const glbPath = join(outDir, name, `${key}.glb`);
 	if (url.startsWith('gs://')) execFileSync('gcloud', ['storage', 'cp', url, glbPath], { stdio: 'ignore' });
-	else writeFileSync(glbPath, Buffer.from(await (await fetch(url)).arrayBuffer()));
+	else {
+		// result_url is served by the worker itself (local storage backend) and needs the key.
+		const absolute = new URL(url, workerUrl);
+		const sameWorker = absolute.origin === new URL(workerUrl).origin;
+		const res = await fetch(absolute, sameWorker ? { headers: { authorization: `Bearer ${workerKey}` } } : {});
+		if (!res.ok) throw new Error(`GLB download HTTP ${res.status} from ${absolute.origin}`);
+		writeFileSync(glbPath, Buffer.from(await res.arrayBuffer()));
+	}
 	v.glb = basename(glbPath);
 	v.glbBytes = readFileSync(glbPath).length;
 	execFileSync('node', [join(here, 'render-glb-poster.mjs'), glbPath, join(outDir, name, `${key}-render.webp`), '--size=512'], { stdio: 'ignore' });
 	v.render = `${key}-render.webp`;
-	console.log(`  ${name}/${key}: ${(v.gpuMs / 1000).toFixed(0)} s, ${v.bytes} B upload`);
+	console.log(`  ${name}/${key}: ${(v.endToEndMs / 1000).toFixed(0)} s end to end, GPU ${v.task.gpu_ms} ms, ${v.bytes} B upload`);
 	save();
 }
 
