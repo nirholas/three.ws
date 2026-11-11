@@ -21,7 +21,8 @@ const UNIT_KEY = { pptx: 'slides', xlsx: 'sheets', pdf: 'pages' };
 function fmtBytes(n) {
 	if (n < 1024) return `${n} B`;
 	if (n < 1024 * 1024) return `${(n / 1024).toFixed(n < 10240 ? 1 : 0)} KB`;
-	return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+	const mb = n / (1024 * 1024);
+	return `${Number.isInteger(mb) ? mb : mb.toFixed(1)} MB`;
 }
 
 function fmtDate(iso) {
@@ -31,6 +32,10 @@ function fmtDate(iso) {
 }
 
 function errorText(body, status) {
+	if (status === 429) {
+		const wait = Number(body?.retry_after);
+		return `Too many requests in a short time. Try again in ${wait > 0 ? `${wait} second${wait === 1 ? '' : 's'}` : 'a moment'}.`;
+	}
 	return body?.error_description || body?.error || `Request failed (HTTP ${status}).`;
 }
 
