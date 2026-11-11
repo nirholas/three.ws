@@ -177,3 +177,25 @@ test('empty Forge photo slots do not show the on-device check overlay', async ({
 	const results = await new AxeBuilder({ page }).include('.view-slot').withRules(['label-content-name-mismatch']).analyze();
 	expect(results.violations).toEqual([]);
 });
+
+test('Tab skips the links of a collapsed nav menu and reaches them once it is open', async ({ page }) => {
+	// A closed .nav-pop was only faded to opacity 0, so Tab from the collapsed
+	// "Build" trigger walked focus through its twenty links with nothing on
+	// screen showing where focus was (2.4.7), and Orca read the hidden panel.
+	await page.goto('/discover', { waitUntil: 'domcontentloaded', timeout: 180_000 });
+	const trigger = page.locator('.nav-main .nav-grp .nav-trigger').first();
+	await expect(trigger).toHaveAttribute('aria-expanded', 'false', { timeout: 60_000 });
+	await trigger.focus();
+	await page.keyboard.press('Tab');
+	const landedInClosedMenu = await page.evaluate(() => !!document.activeElement?.closest('.nav-grp:not(.open) .nav-pop'));
+	expect(landedInClosedMenu, 'focus moved into a collapsed menu').toBe(false);
+
+	await trigger.focus();
+	await page.keyboard.press('Enter');
+	await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+	const focusedInOpenMenu = await page.evaluate(() => {
+		const el = document.activeElement;
+		return !!el?.closest('.nav-grp.open .nav-pop') && getComputedStyle(el).visibility === 'visible';
+	});
+	expect(focusedInOpenMenu, 'Enter moves focus to the first link of the open menu').toBe(true);
+});

@@ -446,7 +446,11 @@
 	overscroll-behavior: contain;
 	opacity: 0; transform: translateY(-6px) scale(0.985);
 	transform-origin: top left; pointer-events: none;
-	transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
+	/* Hidden, not just faded: a closed menu's links must leave the tab order and
+	   the accessibility tree, or Tab walks focus through an invisible panel.
+	   Visibility flips after the fade on close and at once on open. */
+	visibility: hidden;
+	transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), visibility 0s linear var(--duration-fast);
 	z-index: 200;
 }
 .nav-pop::-webkit-scrollbar { width: 4px; }
@@ -458,6 +462,7 @@
 }
 .nav-grp.open .nav-pop {
 	opacity: 1; transform: translateY(0) scale(1); pointer-events: auto;
+	visibility: visible; transition-delay: 0s;
 }
 /* Two-column popover for mid-size menus (Integrations). */
 .nav-pop.wide {
