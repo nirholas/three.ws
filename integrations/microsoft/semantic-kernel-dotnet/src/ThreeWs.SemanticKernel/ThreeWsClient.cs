@@ -76,6 +76,16 @@ public sealed class ThreeWsClient : IDisposable
     private static readonly HashSet<HttpStatusCode> Transient = [HttpStatusCode.BadGateway, HttpStatusCode.ServiceUnavailable, HttpStatusCode.GatewayTimeout];
     private static readonly HashSet<string> TerminalOk = ["done", "succeeded", "completed"];
     private static readonly HashSet<string> TerminalFail = ["failed", "error", "cancelled", "canceled"];
+    private static readonly TimeSpan[] SubmitBackoff = [TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(15)];
+
+    // Forge masks raw provider errors into stable phrases (api/_lib/provider-job-error.js).
+    // These name a capacity or timing failure a fresh attempt can clear; content
+    // safety and bad-input failures are never retried.
+    private static readonly string[] RetryableJobErrors = ["resources", "too long", "busy", "temporarily unavailable", "hit a snag"];
+
+    /// <summary>True when a failed job's message names a capacity or timing failure worth one more attempt.</summary>
+    public static bool IsRetryableJobError(string? message) =>
+        message is not null && RetryableJobErrors.Any(t => message.Contains(t, StringComparison.OrdinalIgnoreCase));
 
     private readonly HttpClient _http;
     private readonly bool _ownsHttp;
@@ -134,7 +144,8 @@ public sealed class ThreeWsClient : IDisposable
             using var res = await SendAsync(req, "Forge", ct).ConfigureAwait(false);
             if (Transient.Contains(res.StatusCode) && attempt < 2)
             {
-                await Task.Delay(TimeSpan.FromSeconds(3 * (attempt + 1)), ct).ConfigureAwait(false);
+                // A 502 here usually means every GPU lane is busy; give one a moment to free up.
+                await Task.Delay(SubmitBackoff[attempt], ct).ConfigureAwait(false);
                 continue;
             }
             if (res.StatusCode == HttpStatusCode.TooManyRequests && !waitedForRateLimit
@@ -183,10 +194,32 @@ public sealed class ThreeWsClient : IDisposable
     /// When the job is still running after the wait, the returned job's status is
     /// queued or running: call <see cref="GetJobAsync"/> with its id later.
     /// </summary>
-    public async Task<ForgeJob> GenerateModelAsync(string prompt, string tier = "standard", TimeSpan? wait = null, TimeSpan? pollInterval = null, IProgress<ForgeJob>? progress = null, CancellationToken ct = default)
+    /// <remarks>
+    /// A job that fails for a capacity or timing reason (the GPU ran out of memory,
+    /// the engine was busy) is resubmitted up to <paramref name="retries"/> times
+    /// while the wait lasts.
+    /// </remarks>
+    public async Task<ForgeJob> GenerateModelAsync(string prompt, string tier = "standard", TimeSpan? wait = null, TimeSpan? pollInterval = null, IProgress<ForgeJob>? progress = null, int retries = 1, CancellationToken ct = default)
     {
         var budget = wait ?? TimeSpan.FromMinutes(4);
         var interval = pollInterval ?? TimeSpan.FromSeconds(5);
+        var started = DateTime.UtcNow;
+        for (var attempt = 1; ; attempt++)
+        {
+            var remaining = budget - (DateTime.UtcNow - started);
+            try
+            {
+                return await GenerateOnceAsync(prompt, tier, remaining < TimeSpan.Zero ? TimeSpan.Zero : remaining, interval, progress, ct).ConfigureAwait(false);
+            }
+            catch (ThreeWsException err) when (err.Code == "failed" && IsRetryableJobError(err.Message) && attempt <= retries && DateTime.UtcNow - started < budget)
+            {
+                // Fall through to the next loop pass, which submits a fresh job.
+            }
+        }
+    }
+
+    private async Task<ForgeJob> GenerateOnceAsync(string prompt, string tier, TimeSpan budget, TimeSpan interval, IProgress<ForgeJob>? progress, CancellationToken ct)
+    {
         var job = await SubmitGenerationAsync(prompt, tier, ct).ConfigureAwait(false);
         if (job.IsDone) return job;
         var jobId = job.JobId ?? throw new ThreeWsException("Forge accepted the prompt but returned no job id", "failed");

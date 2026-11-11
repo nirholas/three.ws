@@ -43,6 +43,16 @@ _TERMINAL_FAIL = {"failed", "error", "cancelled", "canceled"}
 # takes about 15 s and longer under load.
 _SUBMIT_TIMEOUT = 120.0
 _MAX_RATE_LIMIT_WAIT = 30.0
+_SUBMIT_BACKOFF = (5.0, 15.0)
+# Forge masks raw provider errors into stable phrases (api/_lib/provider-job-error.js).
+# These name a capacity or timing failure that a fresh attempt can clear. Content
+# safety and bad-input failures are never retried.
+_RETRYABLE_JOB_ERRORS = ("resources", "too long", "busy", "temporarily unavailable", "hit a snag")
+
+
+def _retryable_job_error(message: str) -> bool:
+    text = (message or "").lower()
+    return any(token in text for token in _RETRYABLE_JOB_ERRORS)
 
 ProgressCallback = Callable[[str, float], Awaitable[None] | None]
 
@@ -207,7 +217,9 @@ class ThreeWsClient:
             except httpx.HTTPError as err:
                 raise ThreeWsError(f"three.ws Forge is unreachable: {_describe(err)}", code="network") from err
             if res.status_code in _TRANSIENT_STATUSES and attempt < 2:
-                await asyncio.sleep(3.0 * (attempt + 1))
+                # A 502 here usually means every GPU lane is busy; give one a
+                # moment to free up instead of hammering it.
+                await asyncio.sleep(_SUBMIT_BACKOFF[attempt])
                 continue
             if res.status_code == 429 and not rate_limit_waited:
                 retry_after = _retry_after_seconds(res)
@@ -258,6 +270,7 @@ class ThreeWsClient:
         wait_seconds: float = 240.0,
         poll_interval: float = 5.0,
         on_progress: ProgressCallback | None = None,
+        retries: int = 1,
     ) -> dict[str, Any]:
         """Generate a textured GLB from text, waiting up to ``wait_seconds``.
 
@@ -267,10 +280,43 @@ class ThreeWsClient:
         with the ``job_id`` later; the job keeps running server-side. Pass
         ``wait_seconds=0`` to return right after submitting.
 
+        A job that fails for a capacity or timing reason (the GPU ran out of
+        memory, the engine was busy) is resubmitted up to ``retries`` times
+        while the wait lasts. The result then carries ``attempts``.
+
         Raises:
             ThreeWsError: the prompt was rejected, Forge was rate limited or
                 unreachable, or the job failed.
         """
+        started = time.monotonic()
+        attempt = 0
+        while True:
+            attempt += 1
+            remaining = max(wait_seconds - (time.monotonic() - started), 0.0)
+            try:
+                job = await self._generate_once(prompt, tier, remaining, poll_interval, on_progress)
+            except ThreeWsError as err:
+                can_retry = (
+                    err.code == "failed"
+                    and _retryable_job_error(err.message)
+                    and attempt <= retries
+                    and time.monotonic() - started < wait_seconds
+                )
+                if not can_retry:
+                    raise
+                continue
+            if attempt > 1:
+                job["attempts"] = attempt
+            return job
+
+    async def _generate_once(
+        self,
+        prompt: str,
+        tier: str,
+        wait_seconds: float,
+        poll_interval: float,
+        on_progress: ProgressCallback | None,
+    ) -> dict[str, Any]:
         submitted = await self.submit_generation(prompt, tier=tier)
         job_id = submitted.get("job_id")
         status = str(submitted.get("status") or "queued")

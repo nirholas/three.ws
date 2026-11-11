@@ -148,6 +148,22 @@ async def test_generate_3d_model_end_to_end(kernel):
     assert res.content[:4] == b"glTF"
 
 
+@pytest.mark.parametrize(
+    ("message", "retryable"),
+    [
+        ("The engine ran out of resources. Try again with a simpler request.", True),
+        ("The engine took too long, please try again.", True),
+        ("The 3D engine is busy right now, wait a moment and try again.", True),
+        ("This was flagged by content safety. Try a different prompt or photo.", False),
+        ("", False),
+    ],
+)
+def test_only_capacity_and_timing_failures_are_retried(message, retryable):
+    from threews_semantic_kernel.client import _retryable_job_error
+
+    assert _retryable_job_error(message) is retryable
+
+
 def test_mcp_url():
     assert three_ws_mcp_url("https://example.test/") == "https://example.test/api/mcp-studio"
 

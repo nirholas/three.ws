@@ -125,6 +125,15 @@ public sealed class LiveTests : IDisposable
         Assert.Equal("validation_error", output.GetProperty("code").GetString());
     }
 
+    [Theory]
+    [InlineData("The engine ran out of resources. Try again with a simpler request.", true)]
+    [InlineData("The engine took too long, please try again.", true)]
+    [InlineData("The 3D engine is busy right now, wait a moment and try again.", true)]
+    [InlineData("This was flagged by content safety. Try a different prompt or photo.", false)]
+    [InlineData(null, false)]
+    public void OnlyCapacityAndTimingFailuresAreRetried(string? message, bool retryable) =>
+        Assert.Equal(retryable, ThreeWsClient.IsRetryableJobError(message));
+
     [Fact]
     [Trait("Category", "Slow")]
     public async Task GenerateModelEndToEnd()
