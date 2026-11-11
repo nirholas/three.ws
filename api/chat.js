@@ -438,7 +438,7 @@ const toOpenAiTool = (t) => ({
 	},
 });
 
-const OPENAI_TOOLS = ACTION_TOOLS.map(toOpenAiTool);
+export const OPENAI_TOOLS = ACTION_TOOLS.map(toOpenAiTool);
 
 // The home tools are a different KIND of tool from everything above.
 //

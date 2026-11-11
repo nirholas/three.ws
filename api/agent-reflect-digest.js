@@ -164,7 +164,7 @@ async function buildAgentIndex(nodes = []) {
 	return idx;
 }
 
-const DIARY_SYSTEM = [
+export const DIARY_SYSTEM = [
 	'You are the reflective inner voice of an autonomous AI agent writing a short',
 	'diary entry at the end of its day. Speak in the FIRST PERSON, past tense,',
 	'warm but concise — like an agent that genuinely remembers its day.',
@@ -182,7 +182,7 @@ const DIARY_SYSTEM = [
 	'no preamble like "Today I" is required but natural. Output only the paragraph.',
 ].join('\n');
 
-function buildDiaryUserPrompt({ agent, highlights, entities, counts }) {
+export function buildDiaryUserPrompt({ agent, highlights, entities, counts }) {
 	const lines = [];
 	lines.push(`AGENT: ${agent?.name || 'Agent'}${agent?.description ? ` — ${agent.description}` : ''}`);
 	lines.push(`COUNTS: learned ${counts.learned}, decided ${counts.decided}, interacted with ${counts.interacted} people/agents.`);

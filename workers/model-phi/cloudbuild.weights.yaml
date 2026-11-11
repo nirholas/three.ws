@@ -1,0 +1,58 @@
+# Stage microsoft/Phi-4-mini-instruct (MIT) into the shared weights bucket,
+# checksummed against the Hugging Face Hub record of the pinned revision.
+#
+#   gcloud builds submit --config workers/model-phi/cloudbuild.weights.yaml \
+#     --project aerial-vehicle-466722-p5 workers/model-phi
+#
+# Re-runs exit early when gs://.../REVISION already names the pinned revision.
+# serve.sh checks MANIFEST.json at every cold start, so a partial sync can never
+# serve traffic.
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+substitutions:
+  _WEIGHTS_BUCKET: three-ws-model-weights
+  _HF_REPO: microsoft/Phi-4-mini-instruct
+  # Pinned: an upstream weight push must not change answers without a deploy.
+  _HF_REVISION: cfbefacb99257ffa30c83adab238a50856ac3083
+  _WEIGHTS_PATH: phi-4-mini-instruct
+
+steps:
+  - id: check-weights
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        if gcloud storage cat "gs://${_WEIGHTS_BUCKET}/${_WEIGHTS_PATH}/REVISION" 2>/dev/null | grep -qx "${_HF_REVISION}"; then
+          echo "weights already staged on ${_HF_REVISION}"
+          touch /workspace/weights-staged
+        fi
+
+  - id: download-and-verify
+    name: python:3.12-slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        [ -f /workspace/weights-staged ] && exit 0
+        python3 stage_weights.py --repo "${_HF_REPO}" --revision "${_HF_REVISION}" --out /workspace/weights
+
+  - id: upload-weights
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        [ -f /workspace/weights-staged ] && exit 0
+        # REVISION goes last: its presence is what marks the tree complete.
+        mv /workspace/weights/REVISION /workspace/REVISION
+        gcloud storage rsync --recursive --delete-unmatched-destination-objects \
+          --exclude='^REVISION$' /workspace/weights "gs://${_WEIGHTS_BUCKET}/${_WEIGHTS_PATH}"
+        gcloud storage cp /workspace/REVISION "gs://${_WEIGHTS_BUCKET}/${_WEIGHTS_PATH}/REVISION"
+
+options:
+  machineType: E2_HIGHCPU_8
+  diskSizeGb: 100
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 3600s

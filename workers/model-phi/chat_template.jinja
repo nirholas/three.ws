@@ -1,0 +1,40 @@
+{#- Phi-4-mini-instruct chat template with native tool calling.
+    Tools go in the system turn as <|tool|>[functions]<|/tool|>, the format the
+    model card documents. The model answers a call as
+    <|tool_call|>[{"name": ..., "arguments": {...}}]<|/tool_call|>, which
+    phi_tool_parser.py turns into OpenAI tool_calls. Earlier assistant calls are
+    replayed in that same form and tool results come back in a <|tool_response|>
+    turn. The stock HF template has no tool-result or assistant-call branch. -#}
+{%- macro tools_json() -%}
+[{%- for t in tools -%}{{ (t.function if t.function is defined else t) | tojson }}{%- if not loop.last -%}, {% endif -%}{%- endfor -%}]
+{%- endmacro -%}
+{%- macro call_args(args) -%}
+{%- if args is string -%}{{ args }}{%- else -%}{{ args | tojson }}{%- endif -%}
+{%- endmacro -%}
+{%- if tools and (messages | length == 0 or messages[0].role != 'system') -%}
+{{- '<|system|>You are a helpful assistant with some tools.<|tool|>' -}}{{- tools_json() -}}{{- '<|/tool|><|end|>' -}}
+{%- endif -%}
+{%- for message in messages -%}
+{%- if message.role == 'system' -%}
+{{- '<|system|>' + (message.content or '') -}}
+{%- if tools and loop.first -%}{{- '<|tool|>' -}}{{- tools_json() -}}{{- '<|/tool|>' -}}{%- endif -%}
+{{- '<|end|>' -}}
+{%- elif message.role == 'assistant' -%}
+{{- '<|assistant|>' + (message.content or '') -}}
+{%- if message.tool_calls -%}
+{{- '<|tool_call|>[' -}}
+{%- for call in message.tool_calls -%}
+{%- set fn = call.function if call.function is defined else call -%}
+{{- '{"name": ' -}}{{- fn.name | tojson -}}{{- ', "arguments": ' -}}{{- call_args(fn.arguments) -}}{{- '}' -}}
+{%- if not loop.last -%}, {% endif -%}
+{%- endfor -%}
+{{- ']<|/tool_call|>' -}}
+{%- endif -%}
+{{- '<|end|>' -}}
+{%- elif message.role == 'tool' -%}
+{{- '<|tool_response|>' + (message.content or '') + '<|end|>' -}}
+{%- else -%}
+{{- '<|' + message.role + '|>' + (message.content or '') + '<|end|>' -}}
+{%- endif -%}
+{%- endfor -%}
+{%- if add_generation_prompt -%}{{- '<|assistant|>' -}}{%- else -%}{{- eos_token -}}{%- endif -%}

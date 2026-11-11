@@ -1,0 +1,95 @@
+# Verify the Phi worker on a real L4 without a long-lived service.
+#
+# Builds the worker image, then runs it as a Cloud Run GPU JOB (bench_job.sh):
+# the job boots the exact server the service would run, measures cold start,
+# chat, streaming, tool calls and throughput, answers the eval task set, and
+# writes report.json to gs://three-ws-avatar-reconstructions/verify/phi/<run>/.
+# The job scales to zero the moment it finishes.
+#
+#   gcloud builds submit --config workers/model-phi/cloudbuild.verify.yaml \
+#     --project aerial-vehicle-466722-p5 --substitutions=_RUN_ID=$(date -u +%Y%m%dT%H%M%SZ) \
+#     workers/model-phi
+#
+# The eval tasks must be uploaded first (scripts/phi-brain-eval.mjs build).
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+substitutions:
+  # us-central1 holds the weights bucket, so the FUSE read stays in-region.
+  _REGION: us-central1
+  _REPO: model-phi
+  _JOB: phi-verify
+  _RUN_ID: manual
+  _RUN_SA: avatar-reconstruction-sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+  _WEIGHTS_BUCKET: three-ws-model-weights
+  _RESULTS_BUCKET: three-ws-avatar-reconstructions
+  _VLLM_TAG: v0.29.0
+
+steps:
+  - id: repo
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        gcloud artifacts repositories describe ${_REPO} --location=${_REGION} >/dev/null 2>&1 \
+          || gcloud artifacts repositories create ${_REPO} --repository-format=docker --location=${_REGION} \
+               --description="Phi-4-mini brain lane (workers/model-phi)"
+
+  - id: tasks-present
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - gcloud storage ls "gs://${_RESULTS_BUCKET}/verify/phi/tasks.json"
+
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --build-arg=VLLM_IMAGE=vllm/vllm-openai:${_VLLM_TAG}
+      - -t=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/model-phi:${_RUN_ID}
+      - .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: [push, "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/model-phi:${_RUN_ID}"]
+
+  - id: job
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - jobs
+      - deploy
+      - ${_JOB}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/model-phi:${_RUN_ID}
+      - --region=${_REGION}
+      - --service-account=${_RUN_SA}
+      - --gpu=1
+      - --gpu-type=nvidia-l4
+      - --no-gpu-zonal-redundancy
+      - --cpu=8
+      - --memory=32Gi
+      - --task-timeout=3600
+      - --max-retries=0
+      - --tasks=1
+      - --labels=lane=phi-gpu,program=gcp-credits
+      - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET},readonly=true
+      - --add-volume-mount=volume=weights,mount-path=/weights
+      - --add-volume=name=results,type=cloud-storage,bucket=${_RESULTS_BUCKET}
+      - --add-volume-mount=volume=results,mount-path=/results
+      - --set-secrets=VLLM_API_KEY=avatar-reconstruction-key:latest
+      - --set-env-vars=RUN_ID=${_RUN_ID}
+      - --command=/app/bench_job.sh
+
+  - id: execute
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args: [run, jobs, execute, "${_JOB}", "--region=${_REGION}", --wait]
+
+options:
+  machineType: E2_HIGHCPU_8
+  diskSizeGb: 200
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 7200s
