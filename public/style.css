@@ -8911,6 +8911,100 @@ textarea.erc8004-code {
 	border-color: rgba(255, 255, 255, 0.3);
 	color: #fff;
 }
+
+/* Light theme for the /discover directory. Every explore rule above hardcodes
+   white ink for the dark canvas, so on the light canvas the hero title, card
+   names, descriptions and Embed buttons rendered white on white. These rules
+   swap in the light tokens; the 3D thumbnails keep their dark stage on purpose. */
+:root[data-theme='light'] .explore-hero h2,
+:root[data-theme='light'] .explore-title,
+:root[data-theme='light'] .explore-card-name,
+:root[data-theme='light'] .explore-card-title,
+:root[data-theme='light'] .explore-featured-head h2,
+:root[data-theme='light'] .explore-summary-title,
+:root[data-theme='light'] .explore-error strong { color: var(--ink); }
+:root[data-theme='light'] .explore-sub,
+:root[data-theme='light'] .explore-subtitle,
+:root[data-theme='light'] .explore-card-desc,
+:root[data-theme='light'] .explore-card-id,
+:root[data-theme='light'] .explore-card-views,
+:root[data-theme='light'] .explore-status,
+:root[data-theme='light'] .explore-muted,
+:root[data-theme='light'] .explore-owner,
+:root[data-theme='light'] .explore-error,
+:root[data-theme='light'] .explore-error p,
+:root[data-theme='light'] .explore-summary-sub,
+:root[data-theme='light'] .explore-summary-stat { color: var(--text-2); }
+:root[data-theme='light'] .explore-owner:hover { color: var(--ink); }
+:root[data-theme='light'] .explore-eyebrow {
+	color: #3730a3;
+	background: rgba(55, 48, 163, 0.06);
+	border-color: rgba(55, 48, 163, 0.2);
+}
+:root[data-theme='light'] .explore-eyebrow .tws-tt { text-decoration-color: rgba(55, 48, 163, 0.45); }
+:root[data-theme='light'] .explore-hero-chip {
+	background: var(--surface-2);
+	border-color: var(--stroke);
+	color: var(--text);
+}
+:root[data-theme='light'] .explore-hero-chip--link {
+	background: transparent;
+	border-color: var(--stroke-strong);
+	color: var(--text-2);
+}
+:root[data-theme='light'] .explore-hero-chip--link:hover,
+:root[data-theme='light'] .explore-hero-chip--link:focus-visible {
+	border-color: rgba(15, 18, 28, 0.32);
+	background: var(--surface-2);
+	color: var(--ink);
+}
+:root[data-theme='light'] .explore-card {
+	background: #ffffff;
+	border-color: var(--stroke);
+}
+:root[data-theme='light'] .explore-card:hover,
+:root[data-theme='light'] .explore-card--3d:hover {
+	background: #ffffff;
+	border-color: var(--stroke-strong);
+	box-shadow: var(--shadow-2);
+}
+:root[data-theme='light'] .explore-card-body { background: #ffffff; }
+:root[data-theme='light'] .explore-badge,
+:root[data-theme='light'] .explore-badge--x402,
+:root[data-theme='light'] .explore-svc,
+:root[data-theme='light'] .explore-tag {
+	background: var(--surface-2);
+	color: var(--text-2);
+	border-color: var(--stroke);
+}
+:root[data-theme='light'] .explore-badge--3d,
+:root[data-theme='light'] .explore-badge--avatar {
+	background: var(--surface-3);
+	color: var(--ink);
+	border-color: var(--stroke-strong);
+}
+:root[data-theme='light'] .explore-badge--solana {
+	background: #f5ecff;
+	color: #6b21a8;
+	border-color: rgba(107, 33, 168, 0.3);
+}
+:root[data-theme='light'] .explore-tag--3d { color: #0e7490; border-color: rgba(14, 116, 144, 0.3); }
+:root[data-theme='light'] .explore-tag--x402 { color: #92400e; border-color: rgba(146, 64, 14, 0.3); }
+:root[data-theme='light'] .explore-card-link { color: var(--text-2); }
+:root[data-theme='light'] .explore-card-link:hover { color: var(--ink); }
+:root[data-theme='light'] .explore-card-link--ghost {
+	border-color: var(--stroke-strong);
+	color: var(--text);
+}
+:root[data-theme='light'] .explore-card-link--ghost:hover {
+	border-color: rgba(15, 18, 28, 0.32);
+	background: var(--surface-2);
+	color: var(--ink);
+}
+:root[data-theme='light'] .tws-tt { text-decoration-color: rgba(15, 18, 28, 0.4); }
+/* The controls bar is sticky; the light --surface-1 tint let dark thumbnails
+   show through under the Sort select as it scrolled past them. */
+:root[data-theme='light'] .explore-controls { background: #f7f8fa; }
 @media (max-width: 560px) {
 	.embed-modal__panel {
 		max-height: calc(100vh - 16px);

@@ -527,7 +527,9 @@
 	--text-2: #5a616f;
 	--text-3: #888f9c;
 	--text-4: #aab0bc;
-	--nv-bar-bg: rgba(255, 255, 255, 0.82);
+	/* 0.92, not 0.82: the sticky bar scrolls over dark 3D thumbnails, and at 0.82
+	   it composited to #d4d4d4 under --text-2 labels (4.2:1). 0.92 holds 5.3:1. */
+	--nv-bar-bg: rgba(255, 255, 255, 0.92);
 
 	/* Violet accent pair, and through the --wallet-* aliases every wallet surface
 	   with it. The dark palette's pale violets (#c4b5fd text, #a78bfa vanity) were

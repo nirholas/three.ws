@@ -195,7 +195,9 @@ import { rankPages, rankIntents, highlight } from './atlas/score.js';
 		'[data-theme="light"] .tws-atlas-skel{background:linear-gradient(90deg,rgba(0,0,0,.04),rgba(0,0,0,.1),rgba(0,0,0,.04));background-size:200% 100%}',
 		/* The chip kept its dark default surface on light pages that define --ink
 		   but no --surface-1, which painted near-black text on a near-black pill. */
-		'[data-theme="light"] .tws-atlas-hint{background:var(--surface-1,#fff);color:var(--ink,#111);',
+		/* Solid white, not --surface-1: the light token is a 3.5% tint, so the fixed
+		   chip turned near-black wherever it floated over a dark 3D thumbnail. */
+		'[data-theme="light"] .tws-atlas-hint{background:#fff;color:var(--ink,#111);',
 		'border-color:var(--stroke-strong,rgba(0,0,0,.16));box-shadow:0 8px 28px rgba(0,0,0,.14)}',
 		'[data-theme="light"] .tws-atlas-hint kbd{border-color:var(--stroke,rgba(0,0,0,.2));',
 		'background:var(--surface-2,rgba(0,0,0,.05))}',
