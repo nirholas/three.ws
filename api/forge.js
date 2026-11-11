@@ -162,6 +162,7 @@ import {
 	retryBackendSuggestions,
 	submitFailoverJob,
 	MAX_FAILOVER_HOPS,
+	submitLastResortLane,
 } from './_lib/forge-failover.js';
 import {
 	laneAllowedInTerritory,
@@ -2567,6 +2568,9 @@ async function startJobWithBody(req, res, body) {
 		}
 
 		let job;
+		// Set when the last-resort rung served the job: its handle already encodes
+		// the lane's provider, so polling routes back to it.
+		let lastResortHandle = null;
 		try {
 			// A self-host failover landed here with no paid provider configured (no
 			// REPLICATE_API_TOKEN) and the free HF lane above didn't serve the request
@@ -2625,6 +2629,8 @@ async function startJobWithBody(req, res, body) {
 			if (!upstreamGone) throw submitErr;
 
 			const mode3d = isImageMode ? 'image→3D' : 'text→3D (via synthesized image)';
+			// Lanes this fallback already spent a submit on, so the last rung skips them.
+			const fallbackAttempted = ['trellis'];
 
 			// Fallback #1: self-hosted TRELLIS Cloud Run worker (workers/model-trellis),
 			// when wired and not cooled. FREE_FALLBACK_FOR_PATH prefers it first among
@@ -2661,6 +2667,7 @@ async function startJobWithBody(req, res, body) {
 						// lane and falls through to the remaining reconstruct fallbacks.
 						if (!isUpstreamUnavailable(selfErr)) throw selfErr;
 						await markLaneUnhealthy('trellis_selfhost');
+						fallbackAttempted.push('trellis_selfhost');
 						console.warn(
 							`[forge] self-host TRELLIS fallback unavailable (${selfErr?.providerStatus || selfErr?.code}); trying the next image lane`,
 						);
@@ -2715,7 +2722,23 @@ async function startJobWithBody(req, res, body) {
 				) {
 					return;
 				}
-				throw submitErr;
+				// Fallback #4: every lane above is gone (the territory rule removes both
+				// Tencent lanes for a request with no geo header). Walk what is left,
+				// including a self-host lane only its health probe called down, before
+				// failing the request.
+				const rescued = await submitLastResortLane({
+					attempted: fallbackAttempted,
+					country,
+					imageUrl: referenceImageUrl,
+					prompt,
+					tierId: tier.id,
+					path,
+				});
+				if (!rescued) throw submitErr;
+				console.warn(`[forge] ${mode3d} served by last-resort lane ${rescued.backend}`);
+				backendId = rescued.backend;
+				job = { extJobId: rescued.extJobId };
+				lastResortHandle = rescued.handle;
 			}
 		}
 
@@ -2734,11 +2757,12 @@ async function startJobWithBody(req, res, body) {
 		// token tag so polling re-resolves the caller's key (not the platform one).
 		// Either way the upstream id is what the store keys on.
 		const jobHandle =
-			backendId === 'hunyuan3d' || isSelfHostImageLane(backendId)
+			lastResortHandle ||
+			(backendId === 'hunyuan3d' || isSelfHostImageLane(backendId)
 				? encodeJobToken({ provider: 'gcp', kind: null, taskId: job.extJobId })
 				: backendId === 'replicate_byok'
 					? encodeJobToken({ provider: 'replicate_byok', kind: null, taskId: job.extJobId })
-					: job.extJobId;
+					: job.extJobId);
 
 		// Record the generation the moment it starts so the prompt + reference
 		// image survive even if the mesh step later fails. Fail-soft: a missing

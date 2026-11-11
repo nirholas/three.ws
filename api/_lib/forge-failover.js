@@ -34,7 +34,7 @@
 
 import { getRedis } from './redis.js';
 import { BACKENDS, backendIsConfigured, resolveTier } from './forge-tiers.js';
-import { laneHealthSnapshot } from './forge-lane-health.js';
+import { laneHealthSnapshot, markLaneUnhealthy } from './forge-lane-health.js';
 import { encodeJobToken } from './forge-job-token.js';
 import { laneAllowedInTerritory } from './forge-territory.js';
 
@@ -154,6 +154,57 @@ export async function pickRedispatchLane({ attempted = [], country = null } = {}
 		// No telemetry → first configured candidate; a bad pick fails over again.
 		return candidates[0];
 	}
+}
+
+// Submits a last-resort rung may spend before the request fails. Each self-host
+// submit is an accept-and-queue call that answers in a second or two, so three
+// stays well inside a caller's request budget.
+export const MAX_LAST_RESORT_SUBMITS = 3;
+
+/**
+ * Last rung of a SUBMIT-time fallback, run after the handler's own chain (the
+ * self-host lanes, Hunyuan3D, HuggingFace) found nothing to take the job.
+ *
+ * Walks every configured async lane the territory rule allows, in the
+ * redispatch order, healthy ones first. Lanes the health snapshot marks down
+ * are tried after them rather than dropped. The snapshot is advisory: a busy
+ * TRELLIS self-host instance answers its probe too slowly to pass, yet accepts
+ * and queues the job. With no geo header (every server-to-server studio call)
+ * the territory rule removes both Tencent lanes, so dropping that one lane
+ * failed every ChatGPT generation while the worker had capacity.
+ *
+ * Returns { backend, extJobId, handle } for the first lane that accepts the
+ * job, or null when none does. A lane that rejects the submit is cooled so the
+ * next request routes around it.
+ */
+export async function submitLastResortLane({ attempted = [], country = null, imageUrl, prompt, tierId, path } = {}) {
+	if (!imageUrl) return null;
+	const candidates = ASYNC_REDISPATCH_ORDER.filter(
+		(id) =>
+			!attempted.includes(id) &&
+			BACKENDS[id] &&
+			backendIsConfigured(id) &&
+			laneAllowedInTerritory(id, country),
+	);
+	if (!candidates.length) return null;
+	let down = new Set();
+	try {
+		const snap = await laneHealthSnapshot(candidates);
+		down = new Set(candidates.filter((id) => snap.byId?.[id]?.status === 'down'));
+	} catch {
+		// No telemetry: walk the configured order as is.
+	}
+	const ordered = [...candidates.filter((id) => !down.has(id)), ...candidates.filter((id) => down.has(id))];
+	for (const backend of ordered.slice(0, MAX_LAST_RESORT_SUBMITS)) {
+		try {
+			const { extJobId, handle } = await submitFailoverJob({ backend, imageUrl, prompt, tierId, path });
+			if (extJobId && handle) return { backend, extJobId, handle };
+		} catch (err) {
+			console.warn(`[forge] last-resort lane ${backend} refused the job: ${err?.message || err}`);
+			await markLaneUnhealthy(backend);
+		}
+	}
+	return null;
 }
 
 /**
