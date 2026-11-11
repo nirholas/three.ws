@@ -5567,12 +5567,14 @@ What your agents remember, the about-you profile and skills they draft from expe
 ### Agent Memory Settings
 
 URL: https://three.ws/settings/memory
+Indexable: no (excluded from sitemap)
 
 See, edit and delete everything your agents have learned about you: the about-you profile, saved memories and skills drafted from experience. One switch turns learning off, and a cadence control sets how often agents review what to keep.
 
 ### Agent Sandbox Settings
 
 URL: https://three.ws/settings/sandbox
+Indexable: no (excluded from sitemap)
 
 See every program your agents ran in their sandbox, read its output, download the files it wrote, stop a runaway workspace and choose which hosts sandboxed code may call.
 

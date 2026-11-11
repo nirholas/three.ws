@@ -335,6 +335,14 @@
 			<description>Version 0.3.0 of the three.ws 3D extension for VS Code works inside GitHub Copilot Chat. Type @threews /forge and a description to generate a free 3D model, with the studio's real progress streamed into the chat. It ends with buttons to open the model in the viewer or save the GLB to your workspace. /find searches the free asset catalog, /rig rigs a GLB, and /embed inserts a pinned &lt;agent-3d&gt; snippet into the open file. In agent mode, Copilot can call five three.ws tools by itself: generate a model, check a job, find an asset, and inspect or optimize a local GLB. It asks first before using GPU time or writing a file. The free three.ws Studio MCP server is registered automatically, and one command connects your account server. Needs VS Code 1.101 or newer.</description>
 		</item>
 		<item>
+			<title>three.ws now tells Bing, and through it Copilot, about every new page within minutes</title>
+			<link>https://three.ws/features/forge</link>
+			<guid isPermaLink="false">2026-11-11:three.ws now tells Bing, and through it Copilot, about every new page within minutes</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>When you publish an agent, an avatar, a creation, a widget or a profile, three.ws now announces it to Bing over IndexNow within minutes instead of waiting for the next crawl, so it can show up in Copilot answers and Windows search the same day. Changes and removals are announced too, and a page that goes private is withdrawn without ever being sent while it was hidden. The sitemaps now list every public agent, avatar, creation, widget and profile from the database with the real date each one last changed, and creations made from the same prompt no longer flood search with near-identical pages. Search engines also read richer pages: public profiles have their own page with your name, bio and work instead of a blank shell, same-named agents and avatars are told apart by their creator, and the FAQ answers search engines see on the feature pages are now exactly the ones you see.</description>
+		</item>
+		<item>
 			<title>TRELLIS.2 Lab: every parameter of Microsoft Research's image-to-3D model</title>
 			<link>https://three.ws/lab/trellis2</link>
 			<guid isPermaLink="false">2026-11-11:TRELLIS.2 Lab: every parameter of Microsoft Research's image-to-3D model</guid>

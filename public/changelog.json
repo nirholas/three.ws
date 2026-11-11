@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T18:09:58.779Z",
+	"generated_at": "2026-11-11T18:23:46.144Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -419,6 +419,16 @@
 			"tags": [
 				"feature",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "three.ws now tells Bing, and through it Copilot, about every new page within minutes",
+			"summary": "When you publish an agent, an avatar, a creation, a widget or a profile, three.ws now announces it to Bing over IndexNow within minutes instead of waiting for the next crawl, so it can show up in Copilot answers and Windows search the same day. Changes and removals are announced too, and a page that goes private is withdrawn without ever being sent while it was hidden. The sitemaps now list every public agent, avatar, creation, widget and profile from the database with the real date each one last changed, and creations made from the same prompt no longer flood search with near-identical pages. Search engines also read richer pages: public profiles have their own page with your name, bio and work instead of a blank shell, same-named agents and avatars are told apart by their creator, and the FAQ answers search engines see on the feature pages are now exactly the ones you see.",
+			"link": "/features/forge",
+			"tags": [
+				"improvement"
 			]
 		},
 		{

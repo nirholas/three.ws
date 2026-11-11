@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-11",
+			"title": "three.ws now tells Bing, and through it Copilot, about every new page within minutes",
+			"summary": "When you publish an agent, an avatar, a creation, a widget or a profile, three.ws now announces it to Bing over IndexNow within minutes instead of waiting for the next crawl, so it can show up in Copilot answers and Windows search the same day. Changes and removals are announced too, and a page that goes private is withdrawn without ever being sent while it was hidden. The sitemaps now list every public agent, avatar, creation, widget and profile from the database with the real date each one last changed, and creations made from the same prompt no longer flood search with near-identical pages. Search engines also read richer pages: public profiles have their own page with your name, bio and work instead of a blank shell, same-named agents and avatars are told apart by their creator, and the FAQ answers search engines see on the feature pages are now exactly the ones you see.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/features/forge"
+		},
+		{
+			"date": "2026-11-11",
 			"title": "Put an interactive 3D model on a PowerPoint slide in one click",
 			"summary": "Choose PowerPoint in the Forge export menu, in Forge Studio or on any model page and you get a ready slide: the prompt as the title and the model as a real PowerPoint 3D object you can drag to rotate in a slideshow, animate with Morph and resize like a picture. Every model is prepared for Office first: compressed geometry is decoded, textures become PNG or JPEG at up to 2048 px, rigs and animation are kept, and a rendered poster shows in viewers without 3D. The new three.ws 3D Models add-in for PowerPoint does the same from inside your presentation: sign in with your three.ws account to insert one of your models, or describe one and generate it free. The add-in can be sideloaded today and its AppSource listing is pending review.",
 			"tags": ["feature"],

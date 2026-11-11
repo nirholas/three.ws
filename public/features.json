@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T18:09:58.715Z",
+	"generated_at": "2026-11-11T18:23:46.114Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -11056,7 +11056,7 @@
 					"description": "See, edit and delete everything your agents have learned about you: the about-you profile, saved memories and skills drafted from experience. One switch turns learning off, and a cadence control sets how often agents review what to keep.",
 					"added": "2026-11-03",
 					"auth": null,
-					"indexable": true,
+					"indexable": false,
 					"tags": [],
 					"showcase": false,
 					"priority": 0.3,
@@ -11068,7 +11068,7 @@
 					"description": "See every program your agents ran in their sandbox, read its output, download the files it wrote, stop a runaway workspace and choose which hosts sandboxed code may call.",
 					"added": "2026-11-04",
 					"auth": null,
-					"indexable": true,
+					"indexable": false,
 					"tags": [],
 					"showcase": false,
 					"priority": 0.3,

@@ -58,16 +58,16 @@ Two consequences worth knowing before you edit a shell:
 ## Auditing
 
 ```bash
-npm run audit:seo                        # the live site, core pages
-npm run audit:seo -- --limit 40          # a quick pass
-npm run audit:seo -- --sitemap agents    # another URL set
-npm run audit:seo -- --base http://localhost:3000
-npm run audit:seo -- --strict            # exit 1 on any error
+npm run audit:seo                                   # the live site, a sample of every sitemap type
+npm run audit:seo -- --sample 60                    # a bigger sample per type
+npm run audit:seo -- --sitemap agents --limit 40    # one URL set
+npm run audit:seo -- --base http://localhost:3123   # the dev server
+npm run audit:seo -- --report-only                  # never exit 1
 ```
 
-[scripts/audit-seo.mjs](../scripts/audit-seo.mjs) reads a sitemap, fetches every URL in it as Googlebot, and reports what a search engine would act on: dead or redirecting sitemap entries, pages answering noindex, missing or non-self-referencing canonicals, duplicate titles and descriptions across the corpus, missing `h1`, absent Open Graph tags, and structured data that fails to parse or carries a truncated character.
+[scripts/audit-seo.mjs](../scripts/audit-seo.mjs) reads a sitemap, fetches every URL in it as Googlebot, and reports what a search engine would act on: dead or redirecting sitemap entries, pages answering noindex, missing or non-self-referencing canonicals, duplicate titles and descriptions across the corpus, missing `h1`, absent Open Graph tags, and structured data that fails to parse or carries a truncated character, and FAQ markup whose questions the page does not show. It exits 1 on any error. Bing, IndexNow and the full flag list: [docs/ops/bing-and-indexnow.md](./ops/bing-and-indexnow.md).
 
-It reads the live origin on purpose. Only the served response proves what a crawler receives after routing, the shell rewrite and the CDN, so point `--base` at a preview origin to check a change before it ships.
+It reads a served origin on purpose. Only the served response proves what a crawler receives after routing, the shell rewrite and the CDN, so point `--base` at the dev server or a preview to check a change before it ships. On the dev server, [server/dev-api-pages.mjs](../server/dev-api-pages.mjs) answers sitemap, crawler and directory-index URLs with the local handlers (when `DATABASE_URL` is set), and any edited source file starts a new module generation, so the crawl sees an edit without a restart even when it lives in a module the handler imports.
 
 Errors are things a search engine acts on immediately; warnings are quality signals. A title over 65 characters or a description over 165 is truncated in results rather than dropped, so those are reported as warnings, not failures.
 
