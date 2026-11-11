@@ -707,3 +707,11 @@ ui-lint-report/
 
 # X Space conversation captures written by local test runs
 .xspace-conversations/
+
+# .NET build output (Semantic Kernel plugin, .NET SDK)
+integrations/microsoft/semantic-kernel-dotnet/**/bin/
+integrations/microsoft/semantic-kernel-dotnet/**/obj/
+sdk-dotnet/**/bin/
+sdk-dotnet/**/obj/
+integrations/microsoft/semantic-kernel-python/**/*.egg-info/
+integrations/microsoft/semantic-kernel-python/dist/
