@@ -5,6 +5,12 @@
 // squad as four 3D agents, runs each specialist through /api/teams/:id/run,
 // streams the shared findings board over SSE, and edits the policy.
 //
+// The owner's settings also hold the organisation section: claim the team's
+// Microsoft Entra tenant (/api/teams/:id/enterprise), choose whether people
+// from it are offered the team or auto-joined, and run SCIM provisioning with
+// a per-team token (docs/enterprise-sso.md). A person from a claimed tenant
+// lands on /teams/:id?join=1 with the offer (/api/teams/:id/join).
+//
 // Every string that came from a token or an agent (names, symbols, summaries,
 // evidence) is untrusted data and goes through esc() before it touches the DOM.
 
@@ -314,7 +320,20 @@ async function loadTeams() {
 		return;
 	}
 	const teams = res.data || [];
+	const memberOf = res.body?.member_of || [];
 	$('#tmCount').textContent = teams.length ? `${teams.length}` : '';
+	const memberHtmlList = memberOf.length
+		? `<h2 class="tm-h2 tm-section" id="tmMemberH">Teams you belong to <small>Joined through your organisation</small></h2>
+			<ul class="tm-cards" aria-labelledby="tmMemberH">${memberOf.map(memberTeamCardHtml).join('')}</ul>`
+		: '';
+	if (!teams.length && memberOf.length) {
+		box.innerHTML = `
+			<div class="tm-state">
+				<h3>You do not own a team yet</h3>
+				<p>You belong to the teams below through your organisation. Assemble your own squad with the form alongside.</p>
+			</div>${memberHtmlList}`;
+		return;
+	}
 	if (!teams.length) {
 		box.innerHTML = `
 			<div class="tm-state">
@@ -329,7 +348,22 @@ async function loadTeams() {
 		});
 		return;
 	}
-	box.innerHTML = `<ul class="tm-cards">${teams.map(teamCardHtml).join('')}</ul>`;
+	box.innerHTML = `<ul class="tm-cards">${teams.map(teamCardHtml).join('')}</ul>${memberHtmlList}`;
+}
+
+function memberTeamCardHtml(t) {
+	return `
+		<li><a class="tm-card" href="/teams/${esc(t.id)}">
+			<span class="tm-roster" aria-hidden="true"><span class="tm-ava">${esc(String(t.name || '?')[0])}</span></span>
+			<span style="min-width:0">
+				<span class="tm-card-name">${esc(t.name)}</span>
+				<span class="tm-card-meta">
+					<span>${esc(label(t.network))}</span>
+					<span>${t.source === 'scim' ? 'Provisioned by your organisation' : 'Joined with Microsoft'} ${esc(ago(t.joined_at))}</span>
+				</span>
+			</span>
+			<span class="tm-chip info">Member</span>
+		</a></li>`;
 }
 
 function wireCreate() {
@@ -394,8 +428,19 @@ const state = {
 
 async function renderDetail(id) {
 	state.id = id;
-	const [user, res] = await Promise.all([currentUser(), api(`/api/teams/${id}`)]);
+	const wantsJoin = new URLSearchParams(location.search).has('join');
+	const [user, res, offer] = await Promise.all([
+		currentUser(),
+		api(`/api/teams/${id}`),
+		wantsJoin ? api(`/api/teams/${id}/join`) : Promise.resolve(null),
+	]);
 	state.user = user;
+	if (offer?.ok && offer.data.status !== 'active') {
+		paintJoinOffer(offer.data);
+		done();
+		return;
+	}
+	if (wantsJoin) dropParams('join');
 	if (!res.ok) {
 		CONTENT.innerHTML = res.status === 404
 			? `<div class="tm-state">
@@ -418,6 +463,7 @@ async function renderDetail(id) {
 	state.team = res.data;
 	paintDetail();
 	done();
+	announceOutcomes();
 	await loadFindings(true);
 	openStream();
 }
@@ -616,6 +662,89 @@ function pulseMember(memberId) {
 	if (!card) return;
 	card.classList.add('pulse');
 	setTimeout(() => card.classList.remove('pulse'), 1800);
+}
+
+// ── organisation join ────────────────────────────────────────────────────────
+
+function dropParams(...names) {
+	const url = new URL(location.href);
+	for (const n of names) url.searchParams.delete(n);
+	history.replaceState(null, '', url.pathname + url.search + url.hash);
+}
+
+// Outcomes of the Microsoft round trips (api/auth/microsoft/[action].js),
+// which land back here as ?tenant=<outcome>#enterprise or ?joined=1.
+const TENANT_OUTCOMES = {
+	claimed: 'Tenant claimed. People who sign in with Microsoft from it can now find this team.',
+	tenant_claimed: 'That Microsoft tenant already belongs to another three.ws team. Its owner has to unclaim it first.',
+	already_claimed: 'This team already holds a different tenant. Unclaim it before claiming another.',
+	not_admin: 'That Microsoft account is not a directory administrator. Sign in as a Global, Privileged Role, Application or Cloud Application Administrator.',
+	personal_account: 'Personal Microsoft accounts have no organisation to claim. Sign in with a work or school account.',
+	not_owner: 'Only the team owner can claim a tenant for it.',
+	session_changed: 'Your three.ws session changed during the Microsoft round trip. Try again.',
+	cancelled: 'Microsoft sign-in was cancelled. Nothing changed.',
+	expired: 'That Microsoft round trip took too long. Try again.',
+	failed: 'Microsoft could not complete that. Try again.',
+	exchange_failed: 'Microsoft did not accept the request. Try again in a moment.',
+	invalid_token: 'Microsoft returned something we could not verify. Try again.',
+	reauth_stale: 'Microsoft did not ask for your password again. Try once more.',
+	admin_consent_required: 'Your organisation has to approve three.ws in Microsoft Entra first.',
+	unavailable: 'Sign in with Microsoft is not configured on this deployment.',
+	rate_limited: 'Too many attempts. Try again in a few minutes.',
+};
+
+function announceOutcomes() {
+	const params = new URLSearchParams(location.search);
+	const tenant = params.get('tenant');
+	if (tenant && TENANT_OUTCOMES[tenant]) toast(TENANT_OUTCOMES[tenant]);
+	if (params.has('joined')) toast(`Welcome to ${state.team.name}. You joined through your organisation.`);
+	if (params.has('tenant') || params.has('joined')) dropParams('tenant', 'joined');
+}
+
+function paintJoinOffer(o) {
+	document.title = `Join ${o.team.name} · Specialist Teams · three.ws`;
+	const who = o.account?.email || o.account?.display_name || 'your Microsoft account';
+	const org = o.tenant_name || 'your organisation';
+	const removed = o.status === 'deactivated';
+	CONTENT.innerHTML = `
+		<a class="tm-back" href="/teams">‹ Specialist teams</a>
+		<section class="tm-state tm-join" aria-labelledby="tmJoinH">
+			<p class="tm-kicker">Through ${esc(org)}</p>
+			<h2 id="tmJoinH">${removed ? `Your access to ${esc(o.team.name)} was removed` : `Join ${esc(o.team.name)}`}</h2>
+			${o.team.description ? `<p>${esc(o.team.description)}</p>` : ''}
+			<p>${removed
+				? 'The team owner or your organisation removed you. Ask them to restore your access.'
+				: `${esc(org)} uses this team on three.ws. You signed in as <b>${esc(who)}</b>, so you can join it.${o.status === 'declined' ? ' You declined earlier; you can still join.' : ''}`}</p>
+			<div id="tmJoinErr"></div>
+			<div class="tm-actions" style="justify-content:center">
+				${removed
+					? '<a class="tm-btn primary" href="/dashboard">Go to your dashboard</a>'
+					: `<button class="tm-btn primary" type="button" data-decision="join">Join team</button>
+						${o.status === 'declined' ? '' : '<button class="tm-btn" type="button" data-decision="decline">Not now</button>'}`}
+			</div>
+		</section>`;
+	for (const btn of $$('[data-decision]', CONTENT)) {
+		btn.addEventListener('click', async () => {
+			const decision = btn.dataset.decision;
+			const restore = busy(btn, decision === 'join' ? 'Joining…' : 'Declining…');
+			const res = await api(`/api/teams/${state.id}/join`, { method: 'POST', body: { decision } });
+			if (!res.ok) {
+				restore();
+				$('#tmJoinErr').innerHTML = errorHtml(res);
+				return;
+			}
+			if (decision === 'decline') {
+				location.assign('/teams');
+				return;
+			}
+			const url = new URL(location.href);
+			url.searchParams.delete('join');
+			url.searchParams.set('joined', '1');
+			history.replaceState(null, '', url.pathname + url.search + url.hash);
+			ROOT.setAttribute('aria-busy', 'true');
+			renderDetail(state.id);
+		});
+	}
 }
 
 // ── owner actions ────────────────────────────────────────────────────────────
@@ -1199,6 +1328,9 @@ function settingsHtml() {
 				<div class="tm-actions"><button class="tm-btn" type="submit">Add to team</button></div>
 			</form>
 
+			<h3 class="tm-h2 tm-section" id="enterprise">Your organisation <small>Microsoft Entra ID sign-in and SCIM provisioning</small></h3>
+			<div id="tmEnterprise" class="tm-stack" aria-live="polite"></div>
+
 			<h3 class="tm-h2 tm-section">Archive</h3>
 			<div class="tm-note bad tm-banner"><span>Archiving stops the team and hides its page. The four agents stay in your account with their wallets.</span>
 				<button class="tm-btn sm danger" type="button" id="tmArchive">Archive team</button></div>
@@ -1298,6 +1430,7 @@ async function fillAddForm() {
 function wireSettings() {
 	paintMembers();
 	fillAddForm();
+	loadEnterprise();
 
 	$('#tmSetForm').addEventListener('submit', async (e) => {
 		e.preventDefault();
@@ -1381,6 +1514,298 @@ function wireSettings() {
 		}
 		location.assign('/teams');
 	});
+}
+
+// ── organisation: tenant claim and SCIM ──────────────────────────────────────
+
+const EVENT_TEXT = {
+	tenant_claimed: 'Tenant claimed',
+	tenant_reverified: 'Tenant re-verified',
+	tenant_unclaimed: 'Tenant unclaimed',
+	join_mode_changed: 'Join mode changed',
+	scim_token_generated: 'SCIM token generated',
+	scim_token_rotated: 'SCIM token rotated',
+	scim_token_revoked: 'SCIM token revoked',
+	member_joined: 'Joined the team',
+	offer_declined: 'Declined the offer',
+	person_bound: 'Signed in and was matched',
+	person_removed: 'Removed by the owner',
+	person_restored: 'Restored by the owner',
+	user_created: 'Provisioned',
+	user_updated: 'Updated',
+	user_deactivated: 'Deactivated',
+	user_reactivated: 'Reactivated',
+	user_deleted: 'Deprovisioned',
+	group_created: 'Group created',
+	group_updated: 'Group updated',
+	group_deleted: 'Group deleted',
+};
+const ACTOR_TEXT = { owner: 'Owner', scim: 'Entra SCIM', member: 'Member', system: 'three.ws' };
+const PERSON_TONE = { active: 'good', declined: '', deactivated: 'bad', deleted: 'bad' };
+
+const ent = { data: null, issued: null };
+
+async function loadEnterprise() {
+	const box = $('#tmEnterprise');
+	if (!box) return;
+	box.innerHTML = '<div class="tm-skel" style="height:120px"></div><div class="tm-skel" style="height:160px"></div>';
+	const res = await api(`/api/teams/${state.id}/enterprise`);
+	if (!res.ok) {
+		box.innerHTML = `
+			<div class="tm-err" role="alert">The organisation settings did not load. ${esc(res.message)}
+				<button class="tm-btn sm" type="button" id="tmEntRetry">Try again</button></div>`;
+		$('#tmEntRetry').addEventListener('click', loadEnterprise);
+		return;
+	}
+	ent.data = res.data;
+	paintEnterprise();
+	if (location.hash === '#enterprise') $('#enterprise')?.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'start' });
+}
+
+function claimHref() {
+	return `/api/auth/microsoft/start?intent=tenant_claim&team=${encodeURIComponent(state.id)}`;
+}
+
+function paintEnterprise() {
+	const box = $('#tmEnterprise');
+	const d = ent.data;
+	if (!d.claim) {
+		box.innerHTML = `
+			<div class="tm-state">
+				<h3>Connect your Microsoft Entra tenant</h3>
+				<p>Sign in once as a directory administrator to claim your organisation. After that, colleagues who sign in with Microsoft are offered this team or join it automatically, and you can provision people from Microsoft Entra ID over SCIM.</p>
+				<div class="tm-actions" style="justify-content:center">
+					<a class="tm-btn primary" href="${esc(claimHref())}">Claim with a Microsoft admin account</a>
+					<a class="tm-btn" href="/docs/enterprise-sso" target="_blank" rel="noopener">How it works</a>
+				</div>
+			</div>
+			${eventsHtml(d.events)}`;
+		return;
+	}
+	const c = d.claim;
+	box.innerHTML = `
+		<div class="tm-fieldset">
+			<div class="tm-ent-row">
+				<div style="min-width:0">
+					<div class="tm-ent-name">${esc(c.tenant_name || 'Microsoft Entra tenant')} <span class="tm-chip good">Claimed</span></div>
+					<div class="tm-hint">Tenant <span class="tm-mono">${esc(c.tenant_id)}</span> · verified by ${esc(c.verified_by || 'an administrator')}${c.verified_role ? ` (${esc(c.verified_role)})` : ''} · ${esc(ago(c.claimed_at))}</div>
+				</div>
+				<div class="tm-actions">
+					<a class="tm-btn sm" href="${esc(claimHref())}">Re-verify</a>
+					<button class="tm-btn sm danger" type="button" id="tmUnclaim">Unclaim</button>
+				</div>
+			</div>
+			<div class="tm-field">
+				<span class="tm-label">When someone from this tenant signs in with Microsoft</span>
+				${seg('Join mode', [['offer', 'Offer the team'], ['auto', 'Join automatically']], c.join_mode)}
+				<p class="tm-hint" id="tmJoinHint">${joinHint(c.join_mode)}</p>
+			</div>
+		</div>
+		${scimHtml(d)}
+		${peopleHtml(d)}
+		${eventsHtml(d.events)}`;
+	wireSeg(box);
+	wireEnterprise();
+}
+
+function joinHint(mode) {
+	return mode === 'auto'
+		? 'They become read-only members the first time they sign in. People you or SCIM removed stay out.'
+		: 'They see an invitation to this team after signing in and choose whether to join.';
+}
+
+function scimHtml(d) {
+	const s = d.scim;
+	const issued = ent.issued;
+	const status = s.has_token
+		? `Token <span class="tm-mono">${esc(s.token_prefix)}…</span> · ${s.rotated_at ? `rotated ${esc(ago(s.rotated_at))}` : `created ${esc(ago(s.created_at))}`} · ${s.last_used_at ? `last used ${esc(ago(s.last_used_at))}` : 'not used yet'}`
+		: 'No token yet. Generate one, then paste it into the Microsoft Entra admin center as the Secret Token.';
+	return `
+		<fieldset class="tm-fieldset">
+			<legend>SCIM provisioning</legend>
+			<div class="tm-field">
+				<span class="tm-label">Tenant URL</span>
+				<div class="tm-copy"><input class="tm-input tm-mono" readonly value="${esc(d.scim_base_url)}" aria-label="SCIM tenant URL" />
+					<button class="tm-btn sm" type="button" data-copy="${esc(d.scim_base_url)}">Copy</button></div>
+			</div>
+			${issued ? `
+				<div class="tm-note warn tm-ent-secret" role="status">
+					<b>Copy this token now. It is shown only once.</b>
+					<div class="tm-copy"><input class="tm-input tm-mono" readonly value="${esc(issued.token)}" aria-label="SCIM secret token" id="tmScimToken" />
+						<button class="tm-btn sm primary" type="button" data-copy="${esc(issued.token)}">Copy token</button></div>
+					<span>Paste it into Microsoft Entra ID as the Secret Token, then select Test Connection.${issued.rotated ? ' The previous token stopped working the moment this one was made.' : ''}</span>
+				</div>` : ''}
+			<p class="tm-hint">${status}</p>
+			<p class="tm-hint">Last sync: ${s.last_sync_at ? `<b>${esc(ago(s.last_sync_at))}</b> (${esc(new Date(s.last_sync_at).toLocaleString())})` : 'Microsoft Entra ID has not provisioned anyone yet. Its first cycle starts when you turn provisioning on, then repeats about every 40 minutes.'}</p>
+			<div class="tm-actions">
+				<button class="tm-btn sm ${s.has_token ? '' : 'primary'}" type="button" id="tmScimIssue">${s.has_token ? 'Rotate token' : 'Generate token'}</button>
+				${s.has_token ? '<button class="tm-btn sm danger" type="button" id="tmScimRevoke">Revoke token</button>' : ''}
+				<a class="tm-btn sm" href="/docs/enterprise-sso#scim-setup" target="_blank" rel="noopener">Entra setup guide</a>
+			</div>
+		</fieldset>`;
+}
+
+function peopleHtml(d) {
+	const c = d.counts;
+	if (!d.people.length) {
+		return `
+			<fieldset class="tm-fieldset">
+				<legend>People</legend>
+				<p class="tm-hint" style="margin:0">Nobody from ${esc(d.claim.tenant_name || 'this tenant')} is on the team yet. Share this page's link with colleagues, switch to automatic join, or assign people to three.ws in Microsoft Entra ID to provision them.</p>
+			</fieldset>`;
+	}
+	return `
+		<fieldset class="tm-fieldset">
+			<legend>People <small class="tm-hint">${c.active} active${c.pending ? `, ${c.pending} not signed in yet` : ''}${c.deactivated ? `, ${c.deactivated} removed` : ''}</small></legend>
+			<div class="tm-table-wrap"><table class="tm-table">
+				<thead><tr><th scope="col">Person</th><th scope="col">Source</th><th scope="col">Status</th><th scope="col"><span class="tm-sr">Actions</span></th></tr></thead>
+				<tbody>${d.people.map((p) => `
+					<tr>
+						<td><b>${esc(p.display_name || p.user_name || p.email || 'Unnamed')}</b><br><span class="tm-hint tm-mono">${esc(p.user_name || p.email || '')}</span></td>
+						<td>${p.source === 'scim' ? 'Entra SCIM' : 'Microsoft sign-in'}${p.bound ? '' : '<br><span class="tm-hint">Not signed in yet</span>'}</td>
+						<td><span class="tm-chip ${PERSON_TONE[p.status] ?? ''}">${esc(label(p.status))}</span></td>
+						<td class="tm-cell-act">${p.status === 'active'
+							? `<button class="tm-btn sm danger" type="button" data-person="${esc(p.id)}" data-status="deactivated">Remove</button>`
+							: p.status === 'deactivated' ? `<button class="tm-btn sm" type="button" data-person="${esc(p.id)}" data-status="active">Restore</button>` : ''}</td>
+					</tr>`).join('')}</tbody>
+			</table></div>
+		</fieldset>`;
+}
+
+function eventsHtml(events) {
+	if (!events?.length) return '';
+	return `
+		<fieldset class="tm-fieldset">
+			<legend>Recent activity</legend>
+			<ol class="tm-ent-events">${events.map((e) => `
+				<li><span class="tm-chip ${e.actor === 'scim' ? 'info' : ''}">${esc(ACTOR_TEXT[e.actor] || label(e.actor))}</span>
+					<span>${esc(EVENT_TEXT[e.action] || label(e.action))}${e.person_name || e.person_user_name ? `: <b>${esc(e.person_name || e.person_user_name)}</b>` : ''}${e.action === 'join_mode_changed' && e.detail?.join_mode ? ` to ${esc(e.detail.join_mode === 'auto' ? 'join automatically' : 'offer the team')}` : ''}</span>
+					<time class="tm-hint" datetime="${esc(e.created_at)}" title="${esc(new Date(e.created_at).toLocaleString())}">${esc(ago(e.created_at))}</time></li>`).join('')}</ol>
+		</fieldset>`;
+}
+
+async function copyText(text) {
+	try {
+		await navigator.clipboard.writeText(text);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+function wireEnterprise() {
+	const box = $('#tmEnterprise');
+	for (const b of $$('[data-copy]', box)) {
+		b.addEventListener('click', async () => {
+			if (await copyText(b.dataset.copy)) {
+				toast('Copied.');
+				return;
+			}
+			b.previousElementSibling?.select();
+			toast('Copying was blocked. The text is selected: copy it with your keyboard.');
+		});
+	}
+
+	$('.tm-seg[data-seg="Join mode"]', box)?.addEventListener('seg-change', async (e) => {
+		const mode = e.detail;
+		$('#tmJoinHint').textContent = joinHint(mode);
+		const res = await api(`/api/teams/${state.id}/enterprise`, { method: 'PATCH', body: { join_mode: mode } });
+		if (!res.ok) {
+			toast(res.message);
+			paintEnterprise();
+			return;
+		}
+		ent.data = res.data;
+		paintEnterprise();
+		toast(mode === 'auto' ? 'People from your tenant now join automatically.' : 'People from your tenant are now offered the team.');
+	});
+
+	$('#tmUnclaim')?.addEventListener('click', async (e) => {
+		const ok = await confirmDialog({
+			title: 'Unclaim this tenant?',
+			html: `<p><b>${esc(ent.data.claim.tenant_name || ent.data.claim.tenant_id)}</b> stops being linked to this team. Nobody new can join through it, and the SCIM token is revoked, so provisioning stops. People already on the team keep their access until you remove them.</p>`,
+			okLabel: 'Unclaim tenant',
+			tone: 'live',
+		});
+		if (!ok) return;
+		const restore = busy(e.currentTarget, 'Unclaiming…');
+		const res = await api(`/api/teams/${state.id}/enterprise`, { method: 'DELETE' });
+		if (!res.ok) {
+			restore();
+			return toast(res.message);
+		}
+		ent.data = res.data;
+		ent.issued = null;
+		paintEnterprise();
+		toast('Tenant unclaimed. SCIM provisioning is off.');
+	});
+
+	$('#tmScimIssue')?.addEventListener('click', async (e) => {
+		const rotating = ent.data.scim.has_token;
+		if (rotating) {
+			const ok = await confirmDialog({
+				title: 'Rotate the SCIM token?',
+				html: '<p>The current token stops working immediately. Provisioning fails until you paste the new token into the Microsoft Entra admin center.</p>',
+				okLabel: 'Rotate token',
+				tone: 'live',
+			});
+			if (!ok) return;
+		}
+		const restore = busy(e.currentTarget, rotating ? 'Rotating…' : 'Generating…');
+		const res = await api(`/api/teams/${state.id}/enterprise/scim-token`, { method: 'POST' });
+		if (!res.ok) {
+			restore();
+			return toast(res.message);
+		}
+		ent.data = res.data.state;
+		ent.issued = { token: res.data.token, rotated: rotating };
+		paintEnterprise();
+		$('#tmScimToken')?.select();
+	});
+
+	$('#tmScimRevoke')?.addEventListener('click', async (e) => {
+		const ok = await confirmDialog({
+			title: 'Revoke the SCIM token?',
+			html: '<p>Microsoft Entra ID can no longer provision or deprovision people until you generate a new token. People already on the team are not changed.</p>',
+			okLabel: 'Revoke token',
+			tone: 'live',
+		});
+		if (!ok) return;
+		const restore = busy(e.currentTarget, 'Revoking…');
+		const res = await api(`/api/teams/${state.id}/enterprise/scim-token`, { method: 'DELETE' });
+		if (!res.ok) {
+			restore();
+			return toast(res.message);
+		}
+		ent.data = res.data;
+		ent.issued = null;
+		paintEnterprise();
+		toast('SCIM token revoked.');
+	});
+
+	for (const b of $$('[data-person]', box)) {
+		b.addEventListener('click', async () => {
+			const status = b.dataset.status;
+			if (status === 'deactivated') {
+				const ok = await confirmDialog({
+					title: 'Remove this person?',
+					html: '<p>They lose access to this team at once, and the sessions they opened through your Microsoft tenant are signed out. You can restore them later.</p>',
+					okLabel: 'Remove',
+					tone: 'live',
+				});
+				if (!ok) return;
+			}
+			const restore = busy(b, status === 'active' ? 'Restoring…' : 'Removing…');
+			const res = await api(`/api/teams/${state.id}/enterprise/people/${b.dataset.person}`, { method: 'PATCH', body: { status } });
+			if (!res.ok) {
+				restore();
+				return toast(res.message);
+			}
+			ent.data = res.data.state;
+			paintEnterprise();
+			toast(status === 'active' ? 'Access restored.' : 'Removed. Their tenant sessions were signed out.');
+		});
+	}
 }
 
 // ── route ────────────────────────────────────────────────────────────────────
