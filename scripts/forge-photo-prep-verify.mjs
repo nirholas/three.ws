@@ -20,6 +20,7 @@ mkdirSync(out, { recursive: true });
 
 const PHOTOS = resolve('docs/forge-photo-prep/photos');
 const failures = [];
+const storageCors = [];
 const check = (ok, msg) => {
 	console.log(`${ok ? 'PASS' : 'FAIL'} ${msg}`);
 	if (!ok) failures.push(msg);
@@ -40,12 +41,33 @@ async function openForge(browser, { disableOffscreen = false } = {}) {
 		log.push({ t: Date.now(), method: req.method(), url: req.url(), bytes: req.postDataBuffer()?.length || 0, phase: page.__phase || 'before-confirm' }),
 	);
 	page.on('console', (m) => {
-		if (m.type() === 'error') errors.push(m.text());
+		if (m.type() !== 'error') return;
+		// The presigned PUT after confirm goes to the storage bucket, whose CORS
+		// allowlist covers :3000 and production only. Off those origins it fails
+		// the same way with or without the photo check, so it is reported, not counted.
+		if (/cloudflarestorage\.com.*blocked by CORS/.test(m.text()) || (m.text() === 'Failed to load resource: net::ERR_FAILED' && storageCors.length)) {
+			storageCors.push(m.text().slice(0, 80));
+			return;
+		}
+		errors.push(m.text());
 	});
 	page.on('pageerror', (e) => errors.push(String(e)));
-	await page.goto(`${base}/forge`, { waitUntil: 'domcontentloaded', timeout: 180_000 });
-	await page.click('#tab-image');
-	await page.waitForSelector('#views-grid .view-slot');
+	// A shared dev server restarts when anyone edits a config dependency, which
+	// can drop the connection or a module mid-load; reload until the page is up.
+	// Errors from a load that did not come up are discarded with it.
+	for (let attempt = 1; ; attempt++) {
+		try {
+			await page.goto(`${base}/forge`, { waitUntil: 'domcontentloaded', timeout: 180_000 });
+			await page.click('#tab-image', { timeout: 60_000 });
+			await page.waitForSelector('#views-grid .view-slot', { timeout: 60_000 });
+			break;
+		} catch (err) {
+			if (attempt >= 10) throw err;
+			console.log(`     dev server not ready (${err.message.split('\n')[0]}), retrying`);
+			errors.length = 0;
+			await new Promise((r) => setTimeout(r, 3000));
+		}
+	}
 	return { context, page, log, errors };
 }
 
@@ -144,5 +166,6 @@ try {
 	await browser.close();
 }
 
+if (storageCors.length) console.log(`INFO ${storageCors.length} storage CORS error(s) after confirm: the bucket allowlists :3000 and production, not ${base}`);
 console.log(failures.length ? `\n${failures.length} check(s) failed` : '\nall checks passed');
 process.exit(failures.length ? 1 : 0);

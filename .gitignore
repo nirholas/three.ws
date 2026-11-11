@@ -717,3 +717,6 @@ integrations/microsoft/semantic-kernel-python/**/*.egg-info/
 integrations/microsoft/semantic-kernel-python/dist/
 integrations/microsoft/agent-framework/dotnet/bin/
 integrations/microsoft/agent-framework/dotnet/obj/
+
+# forge-photo-prep-verify.mjs default output (screenshots + network log), regenerated each run
+docs/forge-photo-prep/verify/
