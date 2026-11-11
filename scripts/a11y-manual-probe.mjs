@@ -96,11 +96,17 @@ function focusSnapshot() {
 			}
 		}
 	}
+	// A faded-out or visibility:hidden ancestor still hit-tests, so check paint too.
+	let opacity = 1;
+	for (let e = target; e && e.nodeType === 1; e = e.parentElement || (e.getRootNode() && e.getRootNode().host)) {
+		opacity *= parseFloat(getComputedStyle(e).opacity) || 0;
+	}
+	const transparent = opacity < 0.05 || cs.visibility !== 'visible';
 	return {
 		key: desc + '|' + name + '|' + Math.round(r.left) + ',' + Math.round(r.top + scrollY),
 		desc,
 		name,
-		zeroSize: r.width < 1 || r.height < 1,
+		zeroSize: r.width < 1 || r.height < 1 || transparent,
 		inView,
 		hidden: inView && !anyVisible,
 		style: {

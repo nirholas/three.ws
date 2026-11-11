@@ -254,3 +254,34 @@ test('sign-in fields have a visible boundary (1.4.11) and a focus ring that surv
 	expect(outline.width).toBeGreaterThanOrEqual(2);
 	await hc.close();
 });
+
+test('the sticky prompt-library toolbar never covers the link that has focus (2.4.11)', async ({ browser }) => {
+	// Tabbing back up the card grid scrolled each focused link to the top edge
+	// of the viewport, straight under the 180px sticky search and filter bar.
+	const context = await browser.newContext({ viewport: { width: 1366, height: 900 }, reducedMotion: 'reduce' });
+	const page = await context.newPage();
+	await page.goto('/prompts', { waitUntil: 'domcontentloaded', timeout: 180_000 });
+	await expect(page.locator('.pl-grid a').first()).toBeVisible({ timeout: 60_000 });
+	// Walk backwards up the grid from the bottom of the page, as a keyboard user
+	// does: the browser scrolls each control just into view at the top edge,
+	// which is exactly where the stuck toolbar sits.
+	await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+	await page.locator('.pl-grid a').last().focus();
+	const hidden = [];
+	for (let i = 0; i < 40; i++) {
+		await page.keyboard.press('Shift+Tab');
+		const verdict = await page.evaluate(() => {
+			const el = document.activeElement;
+			const toolbar = document.querySelector('.pl-toolbar');
+			if (!el || toolbar.contains(el)) return 'toolbar';
+			if (getComputedStyle(toolbar).position !== 'sticky') return null;
+			const r = el.getBoundingClientRect();
+			const t = toolbar.getBoundingClientRect();
+			return r.bottom <= t.bottom && r.top >= t.top ? `${el.tagName}.${el.className} ${Math.round(r.top)}..${Math.round(r.bottom)}` : null;
+		});
+		if (verdict === 'toolbar') break;
+		if (verdict) hidden.push(verdict);
+	}
+	expect(hidden, 'controls entirely hidden behind the sticky toolbar').toEqual([]);
+	await context.close();
+});

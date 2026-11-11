@@ -369,6 +369,24 @@ document.addEventListener('keydown', (event) => {
 	input.select();
 });
 
+// The toolbar is sticky on wide screens. Reserve its live height as scroll
+// padding so the browser scrolls a keyboard-focused card link out from under
+// it (WCAG 2.4.11). Static on narrow screens, where it reserves nothing.
+let toolbarObserver = null;
+function keepFocusClearOfToolbar() {
+	const toolbar = root.querySelector('.pl-toolbar');
+	if (!toolbar || typeof ResizeObserver === 'undefined') return;
+	const html = document.documentElement;
+	const sync = () => {
+		const sticky = getComputedStyle(toolbar).position === 'sticky';
+		html.style.scrollPaddingTop = sticky ? `${Math.ceil(toolbar.getBoundingClientRect().height) + 16}px` : '';
+	};
+	toolbarObserver?.disconnect();
+	toolbarObserver = new ResizeObserver(sync);
+	toolbarObserver.observe(toolbar);
+	sync();
+}
+
 async function load() {
 	renderLoading();
 	try {
@@ -380,6 +398,7 @@ async function load() {
 		}
 		state.library = data;
 		renderShell();
+		keepFocusClearOfToolbar();
 	} catch (err) {
 		renderError(err && err.message ? err.message : 'Something went wrong.');
 	}
