@@ -237,20 +237,25 @@ async function creationsPage(offset) {
 	// not rejected by the quality grader, and public. Unlisted models resolve
 	// by link but are served noindex (server/creation-head.mjs), so they stay
 	// out of here too.
+	//
+	// One entry per distinct prompt, the newest: the same prompt forged again is
+	// a near-duplicate page with the same title (67k public creations share
+	// about 13k prompts). A pipeline creation is named by its id
+	// (creationName in src/model-lib.js), so each one is its own key. The index's
+	// page stats in api/sitemap.js dedupe by the same key.
 	const rows = await sql`
 		select id, updated_at, completed_at, created_at
-		from forge_creations
-		where status = 'done' and glb_url is not null
-		  and (outcome is null or outcome != 'rejected')
-		  and (visibility is null or visibility = 'public')
-		  and id >= (
-			select id from forge_creations
+		from (
+			select distinct on (case when lower(btrim(prompt)) in ('auto-rig', 'image-to-3d') then id::text else lower(btrim(prompt)) end)
+			       id, updated_at, completed_at, created_at
+			from forge_creations
 			where status = 'done' and glb_url is not null
 			  and (outcome is null or outcome != 'rejected')
 			  and (visibility is null or visibility = 'public')
-			order by id offset ${offset} limit 1
-		  )
+			order by case when lower(btrim(prompt)) in ('auto-rig', 'image-to-3d') then id::text else lower(btrim(prompt)) end, created_at desc, id desc
+		) listed
 		order by id
+		offset ${offset}
 		limit ${SITEMAP_PAGE_SIZE}
 	`;
 	return {

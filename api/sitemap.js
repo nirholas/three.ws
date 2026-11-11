@@ -69,12 +69,17 @@ const PAGE_STATS = new Map([
 		() => sql`
 			select ((rn - 1) / ${SITEMAP_PAGE_SIZE})::int as page, count(*)::int as n, max(ts) as lastmod
 			from (
-				select row_number() over (order by id) as rn,
-				       coalesce(updated_at, completed_at, created_at) as ts
-				from forge_creations
-				where status = 'done' and glb_url is not null
-				  and (outcome is null or outcome != 'rejected')
-				  and (visibility is null or visibility = 'public')
+				select row_number() over (order by id) as rn, ts
+				from (
+					-- One per distinct prompt, the same key as /sitemap/creations.xml.
+					select distinct on (case when lower(btrim(prompt)) in ('auto-rig', 'image-to-3d') then id::text else lower(btrim(prompt)) end)
+					       id, coalesce(updated_at, completed_at, created_at) as ts
+					from forge_creations
+					where status = 'done' and glb_url is not null
+					  and (outcome is null or outcome != 'rejected')
+					  and (visibility is null or visibility = 'public')
+					order by case when lower(btrim(prompt)) in ('auto-rig', 'image-to-3d') then id::text else lower(btrim(prompt)) end, created_at desc, id desc
+				) listed
 			) s
 			group by 1 order by 1
 		`,

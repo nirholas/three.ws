@@ -234,6 +234,29 @@ describe('GET /sitemap/creations.xml: forge models', () => {
 	});
 });
 
+describe('creations: one sitemap entry per distinct prompt', () => {
+	// 67k public creations share about 13k prompts: the same prompt forged again
+	// is a near-duplicate page with the same title. The file lists the newest
+	// creation of each prompt; a pipeline creation (prompt 'auto-rig' or
+	// 'image-to-3d') is named by its own id, so each one counts on its own. The
+	// index's page stats dedupe the same way, or its page count would disagree
+	// with the files.
+	const KEY = "distinct on (case when lower(btrim(prompt)) in ('auto-rig', 'image-to-3d') then id::text else lower(btrim(prompt)) end)";
+
+	it('dedupes the creations file by prompt, newest first', async () => {
+		await callType('creations');
+		const q = db.queries.find((x) => x.text.includes('from forge_creations'));
+		expect(q.text).toContain(KEY);
+		expect(q.text).toMatch(/order by case when[\s\S]*end, created_at desc, id desc/);
+	});
+
+	it('dedupes the index page stats by the same key', async () => {
+		await callIndex();
+		const q = db.queries.find((x) => x.text.includes('from forge_creations') && x.text.includes('row_number()'));
+		expect(q.text).toContain(KEY);
+	});
+});
+
 describe('exclusion rules shared by every entity file', () => {
 	it.each([
 		['agents', 'agent_identities', ['deleted_at is null', 'is_public = true']],
