@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-11",
+			"title": "Sign in with Microsoft, and let Microsoft Entra ID manage your team",
+			"summary": "Anyone can now sign in with a work, school or personal Microsoft account, and link it to an existing account from Settings. Team owners can claim their organisation's Microsoft Entra tenant with an admin sign-in, so colleagues are offered the team (or join automatically) the first time they sign in. Entra ID can provision people and groups over SCIM: when someone leaves or is unassigned, their team access ends and their sessions from that organisation are signed out. Setup takes a few minutes and every change is logged on the team page.",
+			"tags": ["feature", "security"],
+			"link": "/docs/enterprise-sso"
+		},
+		{
+			"date": "2026-11-11",
 			"title": "See Microsoft technology running live on three.ws/microsoft",
 			"summary": "The new Microsoft page shows Microsoft open source at work inside three.ws: 3D models people made with TRELLIS, speech to text that runs entirely in your browser so the audio never leaves your device, and a real agent's card drawn with Adaptive Cards that you can copy into the designer. It also lists every Microsoft surface three.ws is built for, from Marketplace and Teams to Power Platform, Edge and VS Code, with an honest status for each and what you can do there today.",
 			"tags": ["feature"],
