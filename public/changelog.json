@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T16:17:13.981Z",
+	"generated_at": "2026-11-11T16:22:19.941Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -19,11 +19,42 @@
 		{
 			"date": "2026-11-11",
 			"type": "launch",
+			"title": "Subprocessors",
+			"summary": "Every third party that processes data for three.ws: purpose, data categories, region and the file that calls it.",
+			"link": "/trust/subprocessors",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
 			"title": "three.ws in the Edge sidebar",
 			"summary": "A narrow layout for the browser sidebar: chat with your default agent, turn a prompt into a 3D model, and reopen your recent models next to any page.",
 			"link": "/sidebar",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Trust center",
+			"summary": "How three.ws hosts, encrypts, retains and deletes data, which AI providers see prompts, and an honest compliance status, each answer linked to the code that proves it.",
+			"link": "/trust",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "A trust center with security answers that link to the code",
+			"summary": "three.ws/trust explains where three.ws runs, how data is encrypted, how people and apps sign in, who has admin access, what is logged, how long each kind of data is kept and the job that deletes it, how agent wallet custody works, which AI providers can see prompts (with each provider's own published terms quoted), and how incidents and vulnerability reports are handled. Every answer links to the file in the open-source code that proves it, and the compliance table says plainly what is in place, in progress and not pursued. three.ws/trust/subprocessors lists every third party that processes data, with a filter. Expired sessions, old sign-in nonces and year-old widget views are now actually deleted, as the privacy policy says.",
+			"link": "/trust",
+			"tags": [
+				"security",
+				"feature"
 			]
 		},
 		{

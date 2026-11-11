@@ -15,12 +15,36 @@
 			<description>Where web+threews: links from Windows, Teams, Outlook and documents land: a valid agent, model or forge link opens straight away, and anything else is explained.</description>
 		</item>
 		<item>
+			<title>Subprocessors</title>
+			<link>https://three.ws/trust/subprocessors</link>
+			<guid isPermaLink="false">2026-11-11:Subprocessors</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every third party that processes data for three.ws: purpose, data categories, region and the file that calls it.</description>
+		</item>
+		<item>
 			<title>three.ws in the Edge sidebar</title>
 			<link>https://three.ws/sidebar</link>
 			<guid isPermaLink="false">2026-11-11:three.ws in the Edge sidebar</guid>
 			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>A narrow layout for the browser sidebar: chat with your default agent, turn a prompt into a 3D model, and reopen your recent models next to any page.</description>
+		</item>
+		<item>
+			<title>Trust center</title>
+			<link>https://three.ws/trust</link>
+			<guid isPermaLink="false">2026-11-11:Trust center</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How three.ws hosts, encrypts, retains and deletes data, which AI providers see prompts, and an honest compliance status, each answer linked to the code that proves it.</description>
+		</item>
+		<item>
+			<title>A trust center with security answers that link to the code</title>
+			<link>https://three.ws/trust</link>
+			<guid isPermaLink="false">2026-11-11:A trust center with security answers that link to the code</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>three.ws/trust explains where three.ws runs, how data is encrypted, how people and apps sign in, who has admin access, what is logged, how long each kind of data is kept and the job that deletes it, how agent wallet custody works, which AI providers can see prompts (with each provider's own published terms quoted), and how incidents and vulnerability reports are handled. Every answer links to the file in the open-source code that proves it, and the compliance table says plainly what is in place, in progress and not pursued. three.ws/trust/subprocessors lists every third party that processes data, with a filter. Expired sessions, old sign-in nonces and year-old widget views are now actually deleted, as the privacy policy says.</description>
 		</item>
 		<item>
 			<title>Open 3D files from File Explorer and keep your agent in the Edge sidebar</title>

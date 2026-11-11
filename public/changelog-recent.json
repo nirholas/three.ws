@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-11T16:17:14.048Z",
+	"generated_at": "2026-11-11T16:22:20.108Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4487,
+	"total": 4490,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -22,11 +22,42 @@
 		{
 			"date": "2026-11-11",
 			"type": "launch",
+			"title": "Subprocessors",
+			"summary": "Every third party that processes data for three.ws: purpose, data categories, region and the file that calls it.",
+			"link": "/trust/subprocessors",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
 			"title": "three.ws in the Edge sidebar",
 			"summary": "A narrow layout for the browser sidebar: chat with your default agent, turn a prompt into a 3D model, and reopen your recent models next to any page.",
 			"link": "/sidebar",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Trust center",
+			"summary": "How three.ws hosts, encrypts, retains and deletes data, which AI providers see prompts, and an honest compliance status, each answer linked to the code that proves it.",
+			"link": "/trust",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "A trust center with security answers that link to the code",
+			"summary": "three.ws/trust explains where three.ws runs, how data is encrypted, how people and apps sign in, who has admin access, what is logged, how long each kind of data is kept and the job that deletes it, how agent wallet custody works, which AI providers can see prompts (with each provider's own published terms quoted), and how incidents and vulnerability reports are handled. Every answer links to the file in the open-source code that proves it, and the compliance table says plainly what is in place, in progress and not pursued. three.ws/trust/subprocessors lists every third party that processes data, with a filter. Expired sessions, old sign-in nonces and year-old widget views are now actually deleted, as the privacy policy says.",
+			"link": "/trust",
+			"tags": [
+				"security",
+				"feature"
 			]
 		},
 		{
@@ -1508,37 +1539,6 @@
 			"title": "Paid endpoint 402 challenges validate on external x402 directories",
 			"summary": "The agent-reputation and agent-bouncer challenges no longer carry amount-0 placeholder entries that directory validators rejected. The free Bearer and Sign-In-With-X path still works and is now listed per route in the OpenAPI document and the x402 discovery document.",
 			"link": "/docs/x402-distribution",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Paying in $THREE from your own wallet works on the marketplace, copy trading and launch funding",
-			"summary": "When the platform cannot cover the network fee, a marketplace or skill purchase falls back to a transaction your wallet signs and pays for. For a $THREE price that transaction was built for the older token program, so your wallet's safety check refused it before you could approve. The same mistake affected settling a copy-trading fee and funding a launch quoted in $THREE. All of them now read the token program and decimals from the coin itself, open the recipient's $THREE account when it is missing, and send a checked transfer. The agent payment tools fix a run of separate faults. Reading vault balances and changing the buyback split always failed. Distributing payments could not build. Paying an invoice called a method that does not exist. Withdrawing $THREE went to the wrong account. Changing the buyback split from the coin dashboard also failed for every owner. All of these work now, with $THREE vaults read and paid on its own token program.",
-			"link": "/marketplace",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Play holds up on a shaky connection",
-			"summary": "When the connection drops in Play, you now get a plain explanation and a way forward instead of a raw error code. Builds that fail to save retry on their own until they land, and a world whose saved builds did not load tries again before telling you. A dropped matchmaking poll keeps your community in the war queue. A message thread that fails to load shows a Retry button, and a chat reply that drops shows why instead of \"They went quiet\". The pay demo only says no funds moved when that is certain. Escape now closes only the top panel, and the loading and error screens, the wheel and the stage prompt follow your language.",
-			"link": "/play",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Pricing and the Forge pay sheet say when a payment option is not switched on yet",
-			"summary": "The pricing page now asks the server which assets checkout can actually take. Any asset that cannot be paid yet is shown disabled with \"Not switched on yet\", the $THREE discount is only claimed while $THREE can be paid, and a refused checkout names the asset instead of failing with a generic error. The Forge pay sheet checks the $THREE rail before it opens: when it is not switched on, it says so plainly, asks for no wallet approval and offers no retry loop. Paid Wheel of Fortune spins say the same and point at your free spin. Nothing is charged in any of these states.",
-			"link": "/pricing",
 			"tags": [
 				"fix"
 			]

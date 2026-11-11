@@ -6332,6 +6332,18 @@ URL: https://three.ws/legal
 
 Every three.ws policy in one place, plus which address to use to report copyright, abuse, or privacy issues.
 
+### Trust center
+
+URL: https://three.ws/trust
+
+How three.ws hosts, encrypts, retains and deletes data, which AI providers see prompts, and an honest compliance status, each answer linked to the code that proves it.
+
+### Subprocessors
+
+URL: https://three.ws/trust/subprocessors
+
+Every third party that processes data for three.ws: purpose, data categories, region and the file that calls it.
+
 ### Privacy Policy
 
 URL: https://three.ws/legal/privacy

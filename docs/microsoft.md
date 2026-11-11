@@ -90,3 +90,4 @@ These are in the repo and validated. Each one goes live when the owner completes
 - [Microsoft Marketplace SaaS offer](./microsoft-marketplace-saas.md)
 - [Listings and distribution](./listings.md)
 - [Press kit](./press-kit.md)
+- [Trust center](./trust.md): security, privacy and subprocessor answers for IT review, linked from `/microsoft/activate` and the Teams tab

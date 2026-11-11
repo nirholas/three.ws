@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T16:17:13.937Z",
+	"generated_at": "2026-11-11T16:22:19.850Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -12581,6 +12581,30 @@
 					"title": "Legal",
 					"description": "Every three.ws policy in one place, plus which address to use to report copyright, abuse, or privacy issues.",
 					"added": "2026-07-20",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.4,
+					"job": null
+				},
+				{
+					"path": "/trust",
+					"title": "Trust center",
+					"description": "How three.ws hosts, encrypts, retains and deletes data, which AI providers see prompts, and an honest compliance status, each answer linked to the code that proves it.",
+					"added": "2026-11-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/trust/subprocessors",
+					"title": "Subprocessors",
+					"description": "Every third party that processes data for three.ws: purpose, data categories, region and the file that calls it.",
+					"added": "2026-11-11",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
