@@ -17,6 +17,7 @@ import { copyReadme3d, describeResult } from '../readme-3d-copy.js';
 import { createLogger } from '../shared/log.js';
 import { creationIdFromGlbUrl, mountSlicerMenuItems } from '../slicer-handoff.js';
 import { mountCraftcloudMenuItem } from '../craftcloud-print.js';
+import { mountPowerPointMenuItem } from '../forge-powerpoint.js';
 
 const log = createLogger('forge-export');
 
@@ -175,6 +176,12 @@ if (download && resultPanel) {
 	// Craftcloud directly. Shown once a model is ready, same gating as the
 	// slicer rows above.
 	const craftcloudItem = mountCraftcloudMenuItem(menu);
+
+	// PowerPoint: the stored model as an interactive 3D slide, built on the
+	// server from the creation (api/forge/export-pptx.js).
+	const powerPointItem = mountPowerPointMenuItem(menu, {
+		isLocalEdit: () => (download.getAttribute('href') || '').startsWith('blob:'),
+	});
 
 	// ---- menu behavior -------------------------------------------------------
 
@@ -335,6 +342,7 @@ if (download && resultPanel) {
 		sceneCache = { url: null, scene: null };
 		slicerItems.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl));
 		craftcloudItem.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl), e.detail?.glbUrl || null);
+		powerPointItem.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl));
 		for (const status of itemStatus.values()) {
 			status.textContent = '';
 			status.classList.remove('is-error');

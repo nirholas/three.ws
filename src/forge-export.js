@@ -30,6 +30,7 @@ import { createLogger } from './shared/log.js';
 import { creationIdFromGlbUrl, mountSlicerMenuItems } from './slicer-handoff.js';
 import { mountCraftcloudMenuItem } from './craftcloud-print.js';
 import { mountMinecraftMenuItem } from './forge-minecraft.js';
+import { mountPowerPointMenuItem } from './forge-powerpoint.js';
 
 const log = createLogger('forge-export');
 
@@ -230,6 +231,12 @@ if (download && resultPanel) {
 	// Minecraft: Bedrock structure pack with a live block preview. Same gating
 	// as the print rows: needs a stored model the server can voxelize.
 	const minecraftItem = mountMinecraftMenuItem(menu, {
+		isLocalEdit: () => (download.getAttribute('href') || '').startsWith('blob:'),
+	});
+
+	// PowerPoint: the stored model as an interactive 3D slide, built on the
+	// server from the creation (api/forge/export-pptx.js).
+	const powerPointItem = mountPowerPointMenuItem(menu, {
 		isLocalEdit: () => (download.getAttribute('href') || '').startsWith('blob:'),
 	});
 
@@ -514,6 +521,7 @@ if (download && resultPanel) {
 		slicerItems.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl));
 		craftcloudItem.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl), e.detail?.glbUrl || null);
 		minecraftItem.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl), e.detail?.glbUrl || null);
+		powerPointItem.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl));
 		// Retire any conversion still polling for the previous model.
 		convertEpoch += 1;
 		for (const status of itemStatus.values()) {
