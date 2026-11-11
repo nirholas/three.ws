@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { planFromPhotoAnalysis, boxFromBox2d, boxFromEdges, MIN_CROP_SIDE } from '../src/diorama/photo-layout.js';
+import { planFromPhotoAnalysis, boxFromBox2d, boxFromEdges, forgeOriginHint, MIN_CROP_SIDE } from '../src/diorama/photo-layout.js';
 import { normalizeDiorama, ISLAND_RADIUS, OBJECT_FOOTPRINT, MAX_OBJECTS } from '../src/diorama/schema.js';
 import { parseInlinePhoto, isOwnStorageUrl, stripForeignPhotos } from '../api/_lib/diorama-photo.js';
 
@@ -256,5 +256,28 @@ describe('compose-photo input guards', () => {
 		expect(stripForeignPhotos({ ...world, sourceImage: own }, 'https://cdn.three.ws').sourceImage).toBe(own);
 		expect(stripForeignPhotos({ ...world, sourceImage: own }, '')).not.toHaveProperty('sourceImage');
 		expect(stripForeignPhotos(null, 'https://cdn.three.ws')).toBe(null);
+	});
+});
+
+describe('forgeOriginHint', () => {
+	it('only claims a piece was forged from the photo once it actually forged', () => {
+		const obj = { label: 'lamp', forgeFrom: 'photo' };
+		expect(forgeOriginHint(obj, 'ready')).toBe('Forged from its crop of your photo');
+		expect(forgeOriginHint(obj, 'forging')).toBe('Being forged from its crop of your photo');
+		expect(forgeOriginHint(obj, 'pending')).toBe('Will be forged from its crop of your photo');
+		expect(forgeOriginHint(obj, 'failed')).not.toMatch(/^Forged/);
+		expect(forgeOriginHint(obj, 'failed')).toMatch(/Retry/);
+	});
+
+	it('describes the description lane in the same tense as its status', () => {
+		const obj = { label: 'glasses', forgeFrom: 'text' };
+		expect(forgeOriginHint(obj, 'ready')).toMatch(/^Forged from its description/);
+		expect(forgeOriginHint(obj, 'forging')).toMatch(/^Being forged from its description/);
+		expect(forgeOriginHint(obj, 'failed')).not.toMatch(/^Forged/);
+	});
+
+	it('says nothing for objects from a sentence-composed world', () => {
+		expect(forgeOriginHint({ label: 'tent' }, 'ready')).toBe('');
+		expect(forgeOriginHint(null, 'ready')).toBe('');
 	});
 });

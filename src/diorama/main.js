@@ -25,6 +25,7 @@ import {
 } from './schema.js';
 import { shortAddress } from '../shared/address.js';
 import { playability } from './game-rules.js';
+import { forgeOriginHint } from './photo-layout.js';
 
 const MOOD_LABEL = { dawn: 'Dawn', day: 'Daytime', dusk: 'Dusk', night: 'Night' };
 
@@ -177,7 +178,7 @@ function init() {
 		li.setAttribute('role', 'listitem');
 		if (obj.forgeFrom) li.dataset.from = obj.forgeFrom;
 		li.setAttribute('aria-label', chipLabel(obj, obj.status));
-		setChipTitle(li, obj);
+		setChipTitle(li, obj, obj.status);
 		if (obj.box) {
 			// Photo objects light up their box on the source photo.
 			li.tabIndex = 0;
@@ -192,14 +193,14 @@ function init() {
 	}
 
 	function chipLabel(obj, status) {
-		const from = obj?.forgeFrom === 'photo' ? ', from its crop of your photo' : '';
-		return `${obj?.label || obj?.prompt || 'object'}: ${statusWord(status)}${from}`;
+		const hint = forgeOriginHint(obj, status);
+		return `${obj?.label || obj?.prompt || 'object'}: ${statusWord(status)}${hint ? `. ${hint}` : ''}`;
 	}
 
-	// Hover hint saying where a photo object's mesh came from.
-	function setChipTitle(chip, obj) {
-		if (obj?.forgeFrom === 'photo') chip.title = 'Forged from its crop of your photo';
-		else if (obj?.forgeFrom === 'text') chip.title = 'Forged from its description (its crop could not be used)';
+	// Hover hint saying where a photo object's mesh came from, in step with its status.
+	function setChipTitle(chip, obj, status) {
+		const hint = forgeOriginHint(obj, status);
+		if (hint) chip.title = hint;
 		else chip.removeAttribute('title');
 	}
 
@@ -214,7 +215,7 @@ function init() {
 		const obj = state.diorama?.objects.find((o) => o.id === id);
 		if (obj?.forgeFrom) chip.dataset.from = obj.forgeFrom;
 		chip.setAttribute('aria-label', chipLabel(obj, status));
-		setChipTitle(chip, obj);
+		setChipTitle(chip, obj, status);
 		setBoxStatus(id, status);
 		// Failed objects get an in-place retry affordance; clear it otherwise.
 		const existing = chip.querySelector('.dio-object__retry');

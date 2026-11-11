@@ -277,3 +277,23 @@ export function planFromPhotoAnalysis(analysis, { maxObjects = MAX_OBJECTS } = {
 	};
 	return { plan, dropped: list.length - planObjects.length };
 }
+
+/**
+ * Plain-language hint for where a photo object's mesh comes from, in the tense
+ * of its forge status, so a chip never claims a piece was "forged from your
+ * photo" before it forged or after it failed. Empty for sentence-composed
+ * objects, which have no `forgeFrom`.
+ *
+ * @param {{forgeFrom?: 'photo'|'text'}|null} obj
+ * @param {'pending'|'forging'|'ready'|'failed'|string} status
+ * @returns {string}
+ */
+export function forgeOriginHint(obj, status) {
+	const source = obj?.forgeFrom === 'photo' ? 'its crop of your photo' : obj?.forgeFrom === 'text' ? 'its description' : '';
+	if (!source) return '';
+	const why = obj.forgeFrom === 'text' ? ' (its crop was too hidden or unclear to use)' : '';
+	if (status === 'ready') return `Forged from ${source}${why}`;
+	if (status === 'forging') return `Being forged from ${source}${why}`;
+	if (status === 'failed') return 'This piece could not be forged this time. Retry to try again.';
+	return `Will be forged from ${source}${why}`;
+}
