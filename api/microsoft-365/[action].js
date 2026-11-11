@@ -116,11 +116,11 @@ export default wrap(async (req, res) => {
 	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	if (action === 'connect/start') {
+	if (action === 'connect-start') {
 		if (!method(req, res, ['GET'])) return;
 		return connectStart(req, res);
 	}
-	if (action === 'connect/callback') {
+	if (action === 'connect-callback') {
 		if (!method(req, res, ['GET'])) return;
 		return connectCallback(req, res);
 	}
