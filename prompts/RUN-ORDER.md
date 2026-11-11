@@ -16,6 +16,7 @@ so you can open one, run it, and open the next without consulting anything. Ever
 | `506` to `549` | The `integrate-` campaign: bringing the owner's other GitHub repositories into three.ws. Runnable; gated steps are named per order. | 13 |
 | `605` to `627` | The `beat-` campaign: closing gaps found in the open-source crypto and agent landscape survey. Runnable; on-chain steps are devnet or simulation only. | 12 |
 | `700` to `790` | The `plan-` campaign's P2 and P3 orders (new capabilities, then polish, developer experience and exploratory work). Runnable. | 91 |
+| `801` to `825` | The `microsoft-` campaign: 25 independent orders building out the Microsoft partnership, safe to run all at once (one dev port each, hot shared files edited last). Runnable; owner steps are batched per order. Context: [finish/_context/microsoft-00-CONTEXT.md](finish/_context/microsoft-00-CONTEXT.md). | 25 |
 | `902` and up | Blocked: the last step is an owner action or an outside party. Read before running. Includes the `plan-` campaign's 20 gated orders at `966` to `985`, and `941` to `949` (moved 2026-11-04 from `039`, `067` to `070`, `087`, `263`, `270` and `276`: each is fully built and its only remaining step is an owner deploy, publish, key or migration, so keeping it below `900` made the evolve loop spend whole sessions re-verifying it). | 63 |
 
 The number is a position, not an identity. When an order retires its file is deleted and a gap
