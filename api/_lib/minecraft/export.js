@@ -16,13 +16,50 @@ export function colorSourceOf(mesh) {
 	return 'material';
 }
 
+// Auto levels. Forge albedo textures are often authored dark (metal and
+// weathered materials average RGB 20-45) because the viewer's PBR lighting and
+// environment map brighten them on screen. Blocks carry no such lighting, so a
+// faithful match turns a knight into coal. When the surface's 90th-percentile
+// lightness sits below TARGET_L, every color is scaled in linear light so that
+// percentile lands on TARGET_L, preserving hue and relative contrast.
+const TARGET_L = 70;
+const MAX_GAIN = 4;
+
+const toLinear = (c) => {
+	const v = c / 255;
+	return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+};
+const toSrgb8 = (v) => {
+	const c = v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - 0.055;
+	return Math.max(0, Math.min(255, Math.round(c * 255)));
+};
+
+/** Returns the linear-light gain applied (1 when the colors were already bright enough). */
+export function autoLevels(slotRgb) {
+	const n = slotRgb.length / 3;
+	if (!n) return 1;
+	const lum = new Float64Array(n);
+	for (let s = 0; s < n; s += 1) {
+		lum[s] = 0.2126 * toLinear(slotRgb[s * 3]) + 0.7152 * toLinear(slotRgb[s * 3 + 1]) + 0.0722 * toLinear(slotRgb[s * 3 + 2]);
+	}
+	const sorted = Float64Array.from(lum).sort();
+	const p90 = sorted[Math.min(n - 1, Math.floor(n * 0.9))];
+	// CIE L* 70 is relative luminance ((70 + 16) / 116)^3.
+	const targetY = ((TARGET_L + 16) / 116) ** 3;
+	if (p90 >= targetY) return 1;
+	const gain = Math.min(MAX_GAIN, targetY / Math.max(p90, 1e-4));
+	for (let i = 0; i < slotRgb.length; i += 1) slotRgb[i] = toSrgb8(toLinear(slotRgb[i]) * gain);
+	return gain;
+}
+
 /**
  * @param {object} mesh from loadMesh(bytes, { surface: true })
- * @param {{height?: number, fill?: 'solid'|'shell', palette?: string|string[], dither?: boolean, deadline?: number}} opts
+ * @param {{height?: number, fill?: 'solid'|'shell', palette?: string|string[], dither?: boolean, levels?: 'auto'|'none', deadline?: number}} opts
  */
 export function buildBedrockGrid(mesh, opts = {}) {
 	const blocksPalette = resolvePalette(opts.palette || 'all');
 	const grid = voxelizeMesh(mesh, { height: opts.height, fill: opts.fill, deadline: opts.deadline });
+	const gain = opts.levels === 'none' ? 1 : autoLevels(grid.slotRgb);
 	const match = createMatcher(blocksPalette, { dither: Boolean(opts.dither) });
 	const blocks = assignBlocks(grid, match);
 	const [nx, ny, nz] = grid.dims;
@@ -51,6 +88,8 @@ export function buildBedrockGrid(mesh, opts = {}) {
 			clamped: grid.clamped,
 			fill: grid.fill,
 			dither: Boolean(opts.dither),
+			levels: opts.levels === 'none' ? 'none' : 'auto',
+			brightness: Math.round(gain * 100) / 100,
 			blockCount: total,
 			surfaceBlocks: grid.surfaceCount,
 			interiorBlocks: grid.interiorCount,

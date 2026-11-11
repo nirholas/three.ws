@@ -2381,6 +2381,11 @@ export const limits = {
 	// them, and downloading the fallback file, not for bulk conversion.
 	slicerFileIp: (ip) =>
 		getLimiter('slicer:file:ip', { limit: 30, window: '5 m', local: true }).limit(ip),
+	// Bedrock structure export (api/minecraft-export.js). Each call voxelizes a
+	// GLB (the parsed mesh is cached per URL, so slider moves skip the download),
+	// sized for someone dragging the height slider and downloading a few packs.
+	minecraftExportIp: (ip) =>
+		getLimiter('minecraft:export:ip', { limit: 60, window: '5 m', local: true }).limit(ip),
 	// "Get it printed" through Craftcloud (api/print/craftcloud-quote.js). A miss
 	// uploads the STL to Craftcloud and polls its pricing engine across the whole
 	// 186-shop network, which is slower and costs more upstream calls than the
