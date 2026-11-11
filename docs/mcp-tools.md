@@ -113,7 +113,7 @@ with AIProjectClient(endpoint=PROJECT_ENDPOINT, credential=DefaultAzureCredentia
         # The studio is free and read-only apart from starting a free generation,
         # so this sample skips approvals. Use "always" to review every call.
         require_approval="never",
-        allowed_tools=["search_catalog", "forge_free", "check_job"],
+        allowed_tools=["search_catalog", "forge_free", "get_job"],
     )
     agent = project.agents.create_version(
         agent_name="prop-designer",
@@ -121,7 +121,7 @@ with AIProjectClient(endpoint=PROJECT_ENDPOINT, credential=DefaultAzureCredentia
             model="gpt-5-mini",  # any chat model deployed in your project
             instructions=(
                 "You design 3D props. Search the three.ws catalog first, then call forge_free "
-                "for a custom model. If forge_free returns a pending job, call check_job with its "
+                "for a custom model. If forge_free returns a pending job, call get_job with its "
                 "job_id until the model is ready. Always return the real GLB and viewer links."
             ),
             tools=[studio],
@@ -139,14 +139,15 @@ with AIProjectClient(endpoint=PROJECT_ENDPOINT, credential=DefaultAzureCredentia
 ```
 
 The same tool definition in REST or another SDK is
-`{"type": "mcp", "server_label": "threews_studio", "server_url": "https://three.ws/api/mcp-studio", "require_approval": "never", "allowed_tools": ["search_catalog", "forge_free", "check_job"]}`.
+`{"type": "mcp", "server_label": "threews_studio", "server_url": "https://three.ws/api/mcp-studio", "require_approval": "never", "allowed_tools": ["search_catalog", "forge_free", "get_job"]}`.
 
 Things to know:
 
 - **Foundry ends a non-streaming MCP tool call after 100 seconds.** A generation
   takes longer, so when a plain (unstreamed) `forge_free` call has no model
   inside 40 seconds, the studio answers with a pending `job_id`. The agent then
-  collects the model with `check_job`. Keep `check_job` in `allowed_tools`.
+  collects the model with `get_job`, the tool the pending reply names. Keep
+  `get_job` in `allowed_tools`.
 - **Name tools explicitly.** An empty `allowed_tools` list (`[]`) allows every
   tool the server lists, not none.
 - **Toolboxes work too.** To share the studio across agents, register it once

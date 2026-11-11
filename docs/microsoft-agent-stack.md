@@ -54,7 +54,7 @@ and `THREE_WS_BASE_URL` from the environment.
 
 A free draft generation usually lands in one to three minutes. The plugins wait
 for it. Over MCP, `forge_free` answers within 40 seconds with either the model or
-a pending `job_id` that `check_job` collects, so clients with a short tool-call
+a pending `job_id` that `get_job` collects, so clients with a short tool-call
 timeout (Foundry's is 100 seconds for a non-streaming MCP call) never lose a
 generation. When the GPU pool is busy the tool says so and the agent can retry.
 

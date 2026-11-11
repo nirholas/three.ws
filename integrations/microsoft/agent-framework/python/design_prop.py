@@ -30,7 +30,7 @@ You are a prop designer for 3D scenes. For the scene the user describes:
 1. Pick the single most important prop the scene needs and say why in one sentence.
 2. Call search_catalog for that prop (kind "object", limit 3) and note the closest ready-made match.
 3. Call forge_free with a vivid single-object prompt for a custom version of the prop, tier "draft".
-4. If forge_free returns a pending job instead of a model, call check_job with its job_id
+4. If forge_free returns a pending job instead of a model, call get_job with its job_id
    until the job is done or failed. If it says the generator is busy, call forge_free
    again with the same prompt, up to 3 attempts in total. Never invent a URL.
 5. Finish with exactly these lines:
@@ -59,7 +59,7 @@ async def main(scene: str) -> int:
         name="threews_studio",
         url=f"{base}/api/mcp-studio",
         description="three.ws free 3D Studio: search ready-made assets and generate 3D models.",
-        allowed_tools=["search_catalog", "forge_free", "check_job"],
+        allowed_tools=["search_catalog", "forge_free", "get_job"],
         # A generation can hold the call open for a few minutes before it answers.
         request_timeout=300,
         load_prompts=False,

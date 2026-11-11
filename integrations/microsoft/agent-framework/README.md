@@ -14,7 +14,7 @@ chat model that supports tool calling.
 
 | Sample | Tool source | Path |
 |---|---|---|
-| Python | the three.ws 3D Studio MCP server only (`search_catalog`, `forge_free`, `check_job`) | [`python/design_prop.py`](python/design_prop.py) |
+| Python | the three.ws 3D Studio MCP server only (`search_catalog`, `forge_free`, `get_job`) | [`python/design_prop.py`](python/design_prop.py) |
 | .NET | MCP `search_catalog` plus the [ThreeWs.SemanticKernel](../semantic-kernel-dotnet/) plugin's `generate_3d_model` and `get_3d_job_status` | [`dotnet/Program.cs`](dotnet/Program.cs) |
 
 The .NET sample takes the plugin's functions from
