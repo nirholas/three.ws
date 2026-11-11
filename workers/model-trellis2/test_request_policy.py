@@ -14,12 +14,16 @@ from request_policy import (
     PIPELINE_TYPES,
     RESOLUTIONS,
     RESOLUTION_PRESETS,
+    SAMPLER_DEFAULTS,
+    SAMPLER_LIMITS,
+    SAMPLER_STAGES,
     bake_params,
     call_with_retry,
     clamp_to_ceiling,
     is_transient_fetch_error,
     resolve_resolution,
     retry_delays,
+    sampler_params,
     step_down,
 )
 
@@ -136,3 +140,43 @@ def test_call_with_retry_spends_the_budget_then_raises():
     with pytest.raises(httpx.ConnectError):
         call_with_retry(down, sleep=lambda s: None)
     assert len(calls) == FETCH_ATTEMPTS
+
+
+# Per-stage sampler overrides (the lab exposes them; the forge never sends them).
+
+
+def test_sampler_defaults_mirror_the_upstream_pipeline_json():
+    # microsoft/TRELLIS.2-4B pipeline.json: 12 steps per stage, guidance 7.5 / 7.5 / 1.0.
+    assert SAMPLER_STAGES == ("sparse_structure", "shape_slat", "tex_slat")
+    assert SAMPLER_DEFAULTS["sparse_structure"] == {"steps": 12, "guidance_strength": 7.5}
+    assert SAMPLER_DEFAULTS["shape_slat"] == {"steps": 12, "guidance_strength": 7.5}
+    assert SAMPLER_DEFAULTS["tex_slat"] == {"steps": 12, "guidance_strength": 1.0}
+
+
+def test_no_sampler_block_means_no_overrides():
+    assert sampler_params(None) == {}
+    assert sampler_params({}) == {}
+    assert sampler_params("garbage") == {}
+
+
+def test_sampler_overrides_pass_through_per_stage():
+    out = sampler_params({"shape_slat": {"steps": 20, "guidance_strength": 9}, "tex_slat": {"steps": 8}})
+    assert out == {"shape_slat": {"steps": 20, "guidance_strength": 9.0}, "tex_slat": {"steps": 8}}
+
+
+def test_sampler_overrides_are_clamped_to_the_documented_envelope():
+    lo_steps, hi_steps = SAMPLER_LIMITS["steps"]
+    lo_g, hi_g = SAMPLER_LIMITS["guidance_strength"]
+    out = sampler_params({"sparse_structure": {"steps": 10_000, "guidance_strength": -3}})
+    assert out == {"sparse_structure": {"steps": hi_steps, "guidance_strength": lo_g}}
+    out = sampler_params({"sparse_structure": {"steps": 0, "guidance_strength": 999}})
+    assert out == {"sparse_structure": {"steps": lo_steps, "guidance_strength": hi_g}}
+
+
+def test_unknown_stages_and_keys_and_garbage_values_are_dropped():
+    out = sampler_params({
+        "bogus_stage": {"steps": 5},
+        "tex_slat": {"steps": "many", "rescale_t": 3, "guidance_strength": float("nan")},
+        "shape_slat": "not-a-dict",
+    })
+    assert out == {}

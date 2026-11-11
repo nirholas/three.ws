@@ -56,6 +56,7 @@ take work.
 | `tier` | `draft` (512), `standard` and `high` (1024), `max` (1536). Used only when `resolution` is absent, so forge tiers and explicit resolutions land on the same presets. |
 | `seed` | Reproducible sampling. |
 | `texture_size`, `decimation_target` | Bake overrides, clamped to 512 to 4096 (power of two) and 50k to 2M faces. |
+| `sampler` | Per-stage flow sampler overrides: `{"sparse_structure"|"shape_slat"|"tex_slat": {"steps", "guidance_strength"}}`. Steps clamp to 1 to 50, guidance to 0 to 15; unknown stages, keys and unparseable values are dropped. Omitted fields keep the upstream `pipeline.json` defaults (12 steps per stage; guidance 7.5, 7.5, 1.0), which `GET /health` publishes as `sampler_defaults`. |
 
 ### `GET /tasks/{id}`
 
@@ -68,9 +69,24 @@ take work.
   "resolution_served": 1024,
   "alpha_mode": "OPAQUE",
   "packed": true,
-  "views_used": 1
+  "views_used": 1,
+  "queue_ms": 1820,
+  "gpu_ms": 61234,
+  "elapsed_ms": 63010,
+  "params": {
+    "seed": 42, "texture_size": 4096, "decimation_target": 1000000,
+    "sampler": {"sparse_structure": {"steps": 12, "guidance_strength": 7.5}, "…": "…"}
+  }
 }
 ```
+
+A finished task reports what ran, not what was asked for: `params` holds the
+seed, the clamped bake values and every stage's effective sampler settings;
+`queue_ms` is acceptance to GPU start (model load on a cold instance plus any job
+ahead), `gpu_ms` is the sampling and bake call, and `elapsed_ms` adds image
+decode and upload. `GET /` and `GET /health` list `features`
+(`seed`, `bake_overrides`, `sampler_params`, `timings`) so the platform can tell
+this build from an older revision that silently ignores those fields.
 
 A request the GPU cannot hold is retried one size down (1536 to 1024 to 512) and
 `resolution_served` reports the step so the platform never pretends a stepped-down
@@ -131,6 +147,7 @@ skips it, so image-to-3D keeps working through the chain behind it.
 | `glb_pack.py` | Alpha-mode decision and meshopt packing through `gltfpack`. |
 | `stage_weights.sh` | One-time mirror of every upstream weight into `gs://three-ws-model-weights/trellis2-4b`. |
 | `worker_security.py`, `instance_health.py`, `storage_backend.py` | Vendored shared modules, kept byte-identical by `npm run check:vendored`. |
+| `test_image_layout.py` | Repo-side guard that `PYTHONPATH` never shadows a compiled extension (O-Voxel) with its source tree. |
 | `Dockerfile`, `cloudbuild.yaml` | CUDA 12.4 image with the compiled extensions, and the Cloud Build deploy. |
 | `test_*.py` | Unit and contract tests. They also run as the build-time gate inside the Dockerfile. |
 

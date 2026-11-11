@@ -116,6 +116,20 @@ def main() -> int:
     check("GET / answers 200 for the keep-warm ping", res.status_code == 200, f"got {res.status_code}")
     check("root names the service", body.get("service") == "model-trellis2", str(body)[:120])
     check("root lists the working endpoints", "POST /infer" in body.get("endpoints", []), str(body)[:160])
+    check("root advertises sampler support", "sampler_params" in body.get("features", []), str(body)[:200])
+    res = client.get("/health")
+    body = res.json()
+    check(
+        "health publishes the upstream sampler defaults",
+        body.get("sampler_defaults", {}).get("tex_slat", {}).get("guidance_strength") == 1.0,
+        str(body.get("sampler_defaults")),
+    )
+    res = client.post(
+        "/infer",
+        headers={"Authorization": f"Bearer {KEY}"},
+        json={"images": [png_data_uri()], "sampler": "not-an-object"},
+    )
+    check("POST /infer rejects a non-object sampler block", res.status_code == 422, f"got {res.status_code}")
 
     # A dead instance must SAY it is dead, on both surfaces. A latched load error
     # that /health ignores and /infer keeps accepting past is how the v1 TRELLIS

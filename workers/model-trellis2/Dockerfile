@@ -34,7 +34,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST}" \
     CUDA_HOME=/usr/local/cuda \
     ATTN_BACKEND=xformers \
-    PYTHONPATH=/app/TRELLIS.2:/app/TRELLIS.2/o-voxel \
+    # Only the TRELLIS.2 tree. Never add /app/TRELLIS.2/o-voxel: its source
+    # `o_voxel` package has no compiled `_C` and would shadow the pip-installed
+    # build, which is what kept the lane from ever loading (test_image_layout.py).
+    PYTHONPATH=/app/TRELLIS.2 \
     PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
     # The weights are staged to the bucket, never fetched from the Hub at serve time.
     HF_HUB_OFFLINE=1 \
@@ -94,6 +97,14 @@ RUN git clone --recursive https://github.com/JeffreyXiang/FlexGEMM.git /tmp/ext/
     && pip install --no-build-isolation /tmp/ext/FlexGEMM
 RUN pip install --no-build-isolation /app/TRELLIS.2/o-voxel \
     && rm -rf /tmp/ext
+# Gate: o_voxel must resolve to the installed build that carries the compiled
+# _C extension. Checked without importing it (the import needs a GPU driver).
+RUN python3 -c "import glob, importlib.util, os, sys; \
+spec = importlib.util.find_spec('o_voxel'); \
+pkg = os.path.dirname(spec.origin); \
+ok = 'packages' in pkg and glob.glob(os.path.join(pkg, '_C*.so')); \
+print('o_voxel resolves to', pkg); \
+sys.exit(0 if ok else 'o_voxel resolves to a tree without its compiled _C: ' + pkg)"
 
 # 5. Server deps. pytest is here for the build-time gate at the bottom of this
 # file: the request policy, config rewrite and GLB packing are unit tested during

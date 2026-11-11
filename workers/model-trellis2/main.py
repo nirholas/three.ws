@@ -87,10 +87,12 @@ from request_policy import (
     FETCH_ATTEMPTS,
     PIPELINE_TYPES,
     RESOLUTIONS,
+    SAMPLER_DEFAULTS,
     bake_params,
     call_with_retry,
     clamp_to_ceiling,
     resolve_resolution,
+    sampler_params,
     step_down,
 )
 from tracing import install_tracing
@@ -198,27 +200,18 @@ def _install_streaming_loader(client: storage.Client, bucket_name: str, prefix: 
     """
     import trellis2.models as t2_models
 
-    original = t2_models.from_pretrained
-    bucket = client.bucket(bucket_name)
-
-    def streaming(path: str, **kwargs):
-        if not path.startswith(CONFIG_DIR + "/"):
-            return original(path, **kwargs)
-        name = path[len(CONFIG_DIR) + 1:]
-        scratch = os.path.join(WEIGHTS_LOCAL_DIR, "stream")
-        local = os.path.join(scratch, name)
-        os.makedirs(os.path.dirname(local), exist_ok=True)
-        try:
-            for ext in (".json", ".safetensors"):
-                blob = bucket.get_blob(f"{prefix}/{name}{ext}")
-                if blob is None:
-                    raise FileNotFoundError(f"gs://{bucket_name}/{prefix}/{name}{ext} is not staged")
-                blob.download_to_filename(local + ext)
-            return original(local, **kwargs)
-        finally:
-            shutil.rmtree(scratch, ignore_errors=True)
-
-    t2_models.from_pretrained = streaming
+    # A retried load calls this again: wrap the pristine loader, never our own wrapper.
+    original = getattr(t2_models, "_three_ws_original_from_pretrained", None)
+    if original is None:
+        original = t2_models._three_ws_original_from_pretrained = t2_models.from_pretrained
+    t2_models.from_pretrained = pipeline_config.make_streaming_loader(
+        original,
+        client.bucket(bucket_name),
+        bucket_name,
+        prefix,
+        config_dir=CONFIG_DIR,
+        scratch_root=WEIGHTS_LOCAL_DIR,
+    )
 
 
 def _prepare_pipeline_path() -> str:
@@ -596,7 +589,11 @@ async def _run_job(
     seed: int | None = None,
     texture_size: int | None = None,
     decimation_target: int | None = None,
+    sampler: dict | None = None,
 ) -> None:
+    # Measured from acceptance, so the record carries the real queue wait
+    # (model load on a cold instance plus jobs ahead) separately from GPU time.
+    accepted_at = time.time()
     # Wait for the background pipeline load before touching the GPU. Warm
     # instances pass instantly; a cold one waits out the load rather than
     # NoneType-crashing. A failed load surfaces as a designed task error.
@@ -613,11 +610,15 @@ async def _run_job(
         return
 
     requested = clamp_to_ceiling(resolve_resolution(resolution, tier), MAX_RESOLUTION)
+    overrides = sampler_params(sampler)
+    used_seed = seed if seed is not None else 42
 
     async with _sem:
-        await _update_task(task_id, status="running", resolution=requested)
-        loop = asyncio.get_event_loop()
         t0 = time.time()
+        await _update_task(
+            task_id, status="running", resolution=requested, queue_ms=int((t0 - accepted_at) * 1000)
+        )
+        loop = asyncio.get_event_loop()
         try:
             # TRELLIS.2 conditions on one image; the first is the subject.
             image = await loop.run_in_executor(None, _decode_image, images[0])
@@ -625,9 +626,11 @@ async def _run_job(
             served = requested
             while True:
                 try:
+                    gpu_t0 = time.time()
                     result = await loop.run_in_executor(
-                        None, _generate, image, served, seed, texture_size, decimation_target
+                        None, _generate, image, served, used_seed, texture_size, decimation_target, overrides
                     )
+                    gpu_ms = int((time.time() - gpu_t0) * 1000)
                     break
                 except torch.cuda.OutOfMemoryError:
                     # The GPU class cannot hold this grid. Hand the memory back
@@ -674,6 +677,18 @@ async def _run_job(
                 packed=packed,
                 bytes=len(glb_bytes),
                 elapsed_ms=int(elapsed * 1000),
+                queue_ms=int((t0 - accepted_at) * 1000),
+                gpu_ms=gpu_ms,
+                # What actually ran, so a caller can show the applied settings
+                # rather than the ones it hoped for.
+                params={
+                    "seed": used_seed,
+                    **bake_params(served, texture_size, decimation_target),
+                    "sampler": {
+                        stage: {**SAMPLER_DEFAULTS[stage], **overrides.get(stage, {})}
+                        for stage in SAMPLER_DEFAULTS
+                    },
+                },
             )
             log.info(
                 "[%s] done in %.1fs (resolution=%d served=%d alpha=%s packed=%s) %d bytes -> %s",
@@ -711,18 +726,25 @@ async def _run_job(
 def _generate(
     image: Image.Image,
     resolution: int,
-    seed: int | None,
+    seed: int,
     texture_size: int | None,
     decimation_target: int | None,
+    sampler: dict | None = None,
 ) -> tuple[bytes, str, bool]:
     """One synchronous generation: sample, bake to a PBR GLB, keep alpha, pack."""
     import o_voxel
 
+    overrides = sampler or {}
     outputs = _pipeline.run(
         image,
-        seed=seed if seed is not None else 42,
+        seed=seed,
         pipeline_type=PIPELINE_TYPES[resolution],
         preprocess_image=True,
+        # Each dict merges over the pipeline.json defaults inside TRELLIS.2, so an
+        # empty one leaves that stage exactly as upstream ships it.
+        sparse_structure_sampler_params=overrides.get("sparse_structure", {}),
+        shape_slat_sampler_params=overrides.get("shape_slat", {}),
+        tex_slat_sampler_params=overrides.get("tex_slat", {}),
     )
     mesh = outputs[0]
     mesh.simplify(16777216)  # nvdiffrast's face limit
@@ -764,6 +786,9 @@ def _release_gpu_memory() -> None:
     trim_heap()
 
 
+WORKER_FEATURES = ["seed", "bake_overrides", "sampler_params", "timings"]
+
+
 class InferRequest(BaseModel):
     images: list[str] = Field(..., min_length=1, max_length=6)
     body_type: str = "neutral"
@@ -777,6 +802,9 @@ class InferRequest(BaseModel):
     # Optional bake overrides, clamped (power-of-two texture, bounded face budget).
     texture_size: int | None = None
     decimation_target: int | None = None
+    # Per-stage flow sampler overrides: {"sparse_structure"|"shape_slat"|"tex_slat":
+    # {"steps": int, "guidance_strength": float}}. Clamped in request_policy.
+    sampler: dict | None = None
 
 
 @app.post("/infer", status_code=202)
@@ -810,6 +838,7 @@ async def infer(
         body.seed,
         body.texture_size,
         body.decimation_target,
+        body.sampler,
     )
     return {"task_id": task_id, "status": "queued"}
 
@@ -848,6 +877,9 @@ async def root() -> dict:
         "service": "model-trellis2",
         "model": "trellis2-4b",
         "ready": bool(_ready and _ready.is_set()),
+        # Request fields this build honours beyond images/resolution/tier, so the
+        # platform can tell an older revision (which ignores them) from this one.
+        "features": WORKER_FEATURES,
         "endpoints": [
             "POST /infer",
             "GET /tasks/{task_id}",
@@ -881,6 +913,8 @@ async def health(response: Response) -> dict:
         "draining": _draining,
         "resolutions": [r for r in RESOLUTIONS if r <= MAX_RESOLUTION],
         "default_resolution": DEFAULT_RESOLUTION,
+        "features": WORKER_FEATURES,
+        "sampler_defaults": SAMPLER_DEFAULTS,
         "output_backend": "gcs" if _using_gcs() else "local",
         "output_dir": None if _using_gcs() else str(_get_local_storage().output_dir),
     }

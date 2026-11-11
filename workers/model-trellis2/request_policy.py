@@ -129,6 +129,66 @@ def bake_params(
     }
 
 
+# Per-stage flow sampler overrides. TRELLIS.2 samples three latents in order:
+# the sparse structure (occupancy), the shape structured latent, then the texture
+# structured latent. Each stage runs a FlowEulerGuidanceIntervalSampler whose
+# defaults live in the upstream pipeline.json (microsoft/TRELLIS.2-4B); the values
+# below mirror it so a caller can see what an omitted field means. Only `steps`
+# and `guidance_strength` are exposed: they are the two knobs that trade time for
+# fidelity, and every other sampler field stays at the upstream value.
+SAMPLER_STAGES = ("sparse_structure", "shape_slat", "tex_slat")
+SAMPLER_DEFAULTS = {
+    "sparse_structure": {"steps": 12, "guidance_strength": 7.5},
+    "shape_slat": {"steps": 12, "guidance_strength": 7.5},
+    "tex_slat": {"steps": 12, "guidance_strength": 1.0},
+}
+# Steps scale GPU time roughly linearly per stage; 50 keeps one job inside the
+# service's 900 s request ceiling at 1536. Guidance above 15 only saturates.
+SAMPLER_LIMITS = {
+    "steps": (1, 50),
+    "guidance_strength": (0.0, 15.0),
+}
+
+
+def sampler_params(raw) -> dict:
+    """The clamped per-stage sampler overrides a caller sent, keyed by stage.
+
+    Absent, malformed or unknown entries are dropped rather than failing the job,
+    so the result only ever names a stage and key the caller really overrode.
+    The keys map straight onto Trellis2ImageTo3DPipeline.run's
+    `<stage>_sampler_params` dicts, which merge over the pipeline.json defaults.
+    """
+    if not isinstance(raw, dict):
+        return {}
+    out: dict = {}
+    for stage in SAMPLER_STAGES:
+        block = raw.get(stage)
+        if not isinstance(block, dict):
+            continue
+        clean: dict = {}
+        steps = block.get("steps")
+        if steps is not None and not isinstance(steps, bool):
+            try:
+                n = int(steps)
+            except (TypeError, ValueError):
+                n = None
+            if n is not None:
+                lo, hi = SAMPLER_LIMITS["steps"]
+                clean["steps"] = max(lo, min(hi, n))
+        guidance = block.get("guidance_strength")
+        if guidance is not None and not isinstance(guidance, bool):
+            try:
+                g = float(guidance)
+            except (TypeError, ValueError):
+                g = None
+            if g is not None and g == g and g not in (float("inf"), float("-inf")):
+                lo, hi = SAMPLER_LIMITS["guidance_strength"]
+                clean["guidance_strength"] = max(lo, min(hi, g))
+        if clean:
+            out[stage] = clean
+    return out
+
+
 # Total attempts (not extra retries) for one caller-supplied image URL, and the
 # first backoff gap. Three attempts at 1s then 2s costs at most a few seconds of
 # an already-asynchronous job, and covers the single-blip read timeouts that
