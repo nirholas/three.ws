@@ -1209,11 +1209,9 @@ function applyHighAffordances(access) {
 	const btn = els.tier?.querySelector('button[data-tier="high"]');
 	if (btn) {
 		btn.dataset.access = state;
-		btn.setAttribute(
-			'aria-label',
-			// Starts with the visible text ("High $THREE") so speech input can target it (WCAG 2.5.3).
-			eligible ? 'High $THREE, unlocked because you hold $THREE' : 'High $THREE, a holder feature',
-		);
+		// Named by its visible text ("High $THREE", WCAG 2.5.3); the locked or
+		// unlocked state is read from the holder note it is described by.
+		btn.removeAttribute('aria-label');
 		const pill = btn.querySelector('.tier-lock');
 		if (pill) {
 			pill.dataset.state = state;
