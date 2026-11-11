@@ -63,6 +63,14 @@
 			<description>How three.ws hosts, encrypts, retains and deletes data, which AI providers see prompts, and an honest compliance status, each answer linked to the code that proves it.</description>
 		</item>
 		<item>
+			<title>3D generation no longer fails while our own GPU worker is busy</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-11:3D generation no longer fails while our own GPU worker is busy</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Text and photo to 3D in Forge, the GPT forge and the ChatGPT app could fail with Could not generate the model right now even though the three.ws TRELLIS GPU worker had room for the job. A busy worker answers its health check slowly, the router read that as down, and when the outside lanes were also unavailable nothing was left to try. Forge now gives every remaining engine a chance before it gives up, including a worker that only looked down because it was busy, so the job is queued instead of refused.</description>
+		</item>
+		<item>
 			<title>A trust center with security answers that link to the code</title>
 			<link>https://three.ws/trust</link>
 			<guid isPermaLink="false">2026-11-11:A trust center with security answers that link to the code</guid>

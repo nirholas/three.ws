@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-11T16:32:12.630Z",
+	"generated_at": "2026-11-11T16:34:26.343Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4496,
+	"total": 4497,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -77,6 +77,16 @@
 			"link": "/trust",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "3D generation no longer fails while our own GPU worker is busy",
+			"summary": "Text and photo to 3D in Forge, the GPT forge and the ChatGPT app could fail with Could not generate the model right now even though the three.ws TRELLIS GPU worker had room for the job. A busy worker answers its health check slowly, the router read that as down, and when the outside lanes were also unavailable nothing was left to try. Forge now gives every remaining engine a chance before it gives up, including a worker that only looked down because it was busy, so the job is queued instead of refused.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1527,17 +1537,6 @@
 			"link": "/docs/ops/workers-fleet.md",
 			"tags": [
 				"infra"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "One MCP server for every three.ws tool: https://three.ws/mcp",
-			"summary": "https://three.ws/mcp (also /api/mcp/all) now mounts every tool from every hosted three.ws MCP server behind one URL and one sign-in, 371 tools in 19 groups, each tool classed as read, write or financial. A key or session sees the read and write tiers by default and turns financial groups on explicitly, and every call keeps the scope checks, rate limits and x402 pricing of the server it came from. The seven older endpoints work unchanged. Open /mcp in a browser for the live tool and group counts and copy-paste install steps for Claude Code, Claude Desktop and any stdio client; the new @three-ws/mcp package is the stdio proxy for clients that cannot speak HTTP. npm run check:mcp-tools now fails the gate if two servers publish the same name or a tool has no group or tier.",
-			"link": "/mcp",
-			"tags": [
-				"feature",
-				"sdk"
 			]
 		}
 	]
