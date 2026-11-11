@@ -51,10 +51,12 @@ export function describeWorkerKey() {
 /**
  * The image to describe for one creation row: its stored poster, else a
  * server render of the GLB (the same renderer the og:image uses), else null.
+ * Only an http(s) preview counts: some older rows stored the preview inline as
+ * a data: URI, which the worker's SSRF guard refuses to fetch.
  */
 export function posterUrlFor(row, origin = ORIGIN) {
 	const preview = normalizeStoredUrl(row?.preview_image_url);
-	if (preview) return preview;
+	if (preview && /^https?:\/\//i.test(preview)) return preview;
 	const glb = renderableGlb([
 		{ url: normalizeStoredUrl(row?.web_glb_url), sizeBytes: row?.web_size_bytes },
 		{ url: normalizeStoredUrl(row?.glb_url), sizeBytes: row?.size_bytes },
