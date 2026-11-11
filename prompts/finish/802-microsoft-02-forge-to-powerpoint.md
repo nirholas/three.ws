@@ -1,5 +1,7 @@
 # microsoft 02: Forge to PowerPoint, an interactive 3D slide in one click, plus a PowerPoint add-in
 
+Status 2026-11-11: built, committed and verified locally (see the 802 entry in [microsoft-PROGRESS.md](_context/microsoft-PROGRESS.md)). Kept open for owner steps: open an exported deck in PowerPoint and rotate the model, sideload the add-in, push, deploy, then the AppSource submission.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3102.
 
 ## Operating clause (binding)
