@@ -24,7 +24,57 @@ const GENERIC_NOUNS = new Set(
 	thing things part parts piece pieces model models 3d figure figurine
 	texture pattern appearance look lighting light shadow shadows reflection
 	white black grey gray area space frame angle perspective position
-	the this that these those some`.split(/\s+/),
+	the this that these those some line lines opening`.split(/\s+/),
+);
+
+// Bare colours describe part of the picture, not what it is ("red car" stays,
+// "red" alone does not). Identical to COLOUR_WORDS in tags.py.
+const COLOUR_WORDS = new Set(
+	`red orange yellow green blue purple violet pink brown gold golden silver
+	beige cyan magenta teal turquoise navy maroon tan cream ivory bronze copper
+	indigo lavender`.split(/\s+/),
+);
+
+// Body parts Florence-2 names on nearly every character poster; a prominent
+// part still comes through as a detection label ("human hand").
+const BODY_PARTS = new Set([
+	...`eye eyes hair hand hands arm arms head face nose mouth ear ears leg legs foot
+	feet finger fingers thumb waist shoulder shoulders neck skin nail nails chest
+	body lip lips eyebrow eyebrows tooth teeth knee knees elbow wrist`.split(/\s+/),
+	...['face', 'head', 'body', 'nose', 'eye', 'mouth', 'ear', 'leg', 'arm', 'hair'].map((p) => `human ${p}`),
+]);
+
+// A phrase headed (last word) by one of these describes the picture:
+// "violet color", "3d rendering", "silver top", "gray background".
+const GENERIC_HEADS = new Set(
+	`image picture photo photograph render rendering illustration drawing view
+	background foreground backdrop scene shot color colour shade shape style
+	design detail details object objects item thing things part parts piece
+	pieces texture pattern appearance look lighting shadow reflection area space
+	frame angle perspective position top bottom side front back surface`.split(/\s+/),
+);
+
+// Text burned into a poster (a generator's watermark) is never a tag.
+const TEXT_WORDS = new Set('watermark logo ai text caption signature copyright'.split(' '));
+
+// Plural-only nouns the lemmatizer cuts ("sunglasses" -> "sunglass"); the last
+// word is put back. Identical to PLURAL_ONLY in tags.py.
+const PLURAL_ONLY = new Map(
+	Object.entries({
+		sunglass: 'sunglasses',
+		eyeglass: 'eyeglasses',
+		glasse: 'glasses',
+		goggle: 'goggles',
+		trouser: 'trousers',
+		jean: 'jeans',
+		pant: 'pants',
+		scissor: 'scissors',
+		plier: 'pliers',
+		binocular: 'binoculars',
+		headphone: 'headphones',
+		earphone: 'earphones',
+		leave: 'leaf',
+	}),
 );
 
 const ARTICLES = /^(a|an|the|this|that|these|those|some)\s+/;
@@ -51,10 +101,13 @@ export function normalizeTag(raw) {
 		.map((w) => w.replace(/^-+|-+$/g, ''))
 		.filter(Boolean);
 	if (!words.length || words.length > MAX_TAG_WORDS) return '';
+	words[words.length - 1] = PLURAL_ONLY.get(words[words.length - 1]) || words[words.length - 1];
+	if (words.length > 1 && GENERIC_HEADS.has(words[words.length - 1])) return '';
+	if (words.some((w) => TEXT_WORDS.has(w))) return '';
 	const tag = words.join(' ');
 	if (tag.length > MAX_TAG_CHARS || tag.length < 2) return '';
 	if (/^[0-9 -]+$/.test(tag)) return '';
-	if (GENERIC_NOUNS.has(tag)) return '';
+	if (GENERIC_NOUNS.has(tag) || COLOUR_WORDS.has(tag) || BODY_PARTS.has(tag)) return '';
 	if (containsHateSlur(tag)) return '';
 	return tag;
 }
