@@ -695,6 +695,8 @@
 		"@ethereum-attestation-service/eas-sdk": "^2.10.0",
 		"@ffmpeg/ffmpeg": "^0.12.15",
 		"@ffmpeg/util": "^0.12.2",
+		"@fluidframework/azure-client": "^1.2.0",
+		"@fluidframework/test-client-utils": "^1.4.0",
 		"@gltf-transform/core": "^4.4.0",
 		"@gltf-transform/extensions": "^4.5.1",
 		"@gltf-transform/functions": "^4.5.0",
@@ -715,6 +717,8 @@
 		"@metaplex-foundation/umi": "^1.6.0",
 		"@metaplex-foundation/umi-bundle-defaults": "^1.6.0",
 		"@meteora-ag/dynamic-bonding-curve-sdk": "^2.0.0",
+		"@microsoft/live-share": "^1.4.2",
+		"@microsoft/teams-js": "^2.59.0",
 		"@modelcontextprotocol/sdk": "^1.29.0",
 		"@neondatabase/serverless": "^1.1.0",
 		"@neynar/nodejs-sdk": "^3.177.0",
@@ -803,6 +807,7 @@
 		"fast-check": "^4.8.0",
 		"fast-xml-parser": "^5.11.2",
 		"fflate": "^0.8.3",
+		"fluid-framework": "^1.4.0",
 		"gltf-validator": "^2.0.0-dev.3.10",
 		"halloween.js": "^1.0.3",
 		"helius-sdk": "^3.4.0",
@@ -862,6 +867,7 @@
 	"devDependencies": {
 		"@axe-core/playwright": "^4.13.0",
 		"@electric-sql/pglite": "^0.5.14",
+		"@fluidframework/azure-local-service": "^1.2.0",
 		"@joplin/turndown-plugin-gfm": "^1.0.68",
 		"@playwright/test": "^1.65.0",
 		"@x402/fetch": "^2.29.0",
@@ -881,6 +887,7 @@
 		"openapi-to-postmanv2": "^6.4.2",
 		"playwright": "^1.63.0",
 		"prettier": "^3.9.8",
+		"prismarine-nbt": "^2.8.0",
 		"puppeteer": "^25.14.0",
 		"topojson-client": "^3.1.0",
 		"turndown": "^7.2.4",
@@ -893,5 +900,10 @@
 		"workbox-window": "^7.4.0",
 		"world-atlas": "^2.0.2",
 		"x402-skill-md": "^0.1.0"
+	},
+	"directories": {
+		"doc": "docs",
+		"example": "examples",
+		"test": "tests"
 	}
 }
