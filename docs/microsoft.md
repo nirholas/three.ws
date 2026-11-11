@@ -34,6 +34,8 @@ Microsoft open source was in the three.ws stack before the partnership. These ar
 | Project | Where it runs in three.ws |
 |---|---|
 | **TRELLIS.2** (Microsoft Research, MIT) | The default image-to-3D lane `trellis2` on the self-hosted GPU fleet: [`workers/model-trellis2/`](../workers/model-trellis2). Every parameter is exposed, benchmarked and credited in the [TRELLIS.2 Lab](./trellis2-lab.md) at [three.ws/lab/trellis2](https://three.ws/lab/trellis2). The original TRELLIS also backs the free text-to-3D lane on NVIDIA NIM. |
+| **Florence-2** (Microsoft, MIT) | Captions, tags and alt text for every finished 3D creation, read from its poster on our own L4 worker [`workers/model-florence2/`](../workers/model-florence2). It powers model search by tag, the model page meta description and alt text, and the tag chips: [Creation descriptions](./creation-descriptions.md). |
+| **MarkItDown** (Microsoft, MIT) | Agent knowledge: owners drop Word, PowerPoint, Excel, PDF and Outlook files on an agent, our hardened worker [`workers/markitdown/`](../workers/markitdown) converts them to Markdown, and the agent answers from them in chat with the file cited. See [Agent knowledge](./agent-knowledge.md). |
 | **ONNX Runtime Web** | On-device speech-to-text ([`src/runtime/whisper-stt.js`](../src/runtime/whisper-stt.js)) and wake-word detection ([`src/voice/wake-word.js`](../src/voice/wake-word.js)) in the visitor's browser, so audio never leaves the machine. |
 | **Adaptive Cards** | The [Glance](./glance.md) agent cards for home screens and chat ([`api/_lib/glance-adaptive.js`](../api/_lib/glance-adaptive.js)). |
 | **TypeScript** | Types for every published SDK (`sdk/`, `solana-agent-sdk/`, `agent-payments-sdk/`). |
@@ -85,7 +87,7 @@ These are in the repo and validated. Each one goes live when the owner completes
 - Write it as "three.ws and Microsoft have announced a partnership" and "three.ws is live on Microsoft Marketplace". Both are true and sourced above.
 - Do not attach a named Microsoft partner tier or programme (for example a Solutions Partner designation or a co-sell status) unless the owner confirms it. The `/partners` chip reads "Marketplace" because that is the verifiable part.
 - Do not imply Microsoft endorses a specific feature, coin, or trading surface. Microsoft is a distribution and technology partner; [$THREE](https://three.ws/three) and the Solana agent economy are three.ws's own.
-- Microsoft, Azure, Microsoft Marketplace, Microsoft Teams, Live Share, TRELLIS, ONNX Runtime, Adaptive Cards, TypeScript, and Playwright are trademarks of the Microsoft group of companies.
+- Microsoft, Azure, Microsoft Marketplace, Microsoft Teams, Live Share, TRELLIS, Florence, ONNX Runtime, Adaptive Cards, TypeScript, and Playwright are trademarks of the Microsoft group of companies.
 
 ## Related
 
