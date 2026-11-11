@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<meta charset="utf-8" />
+		<title>Sidebar · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="description" content="Your three.ws agent in the browser sidebar: chat with your default agent, turn a prompt into a 3D model, and reopen your recent models next to any page." />
+		<meta name="robots" content="noindex" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+	</head>
+	<body class="sb-body">
+		<main class="sb-wrap">
+			<header class="sb-head">
+				<a class="sb-brand" href="/" target="_blank" rel="noopener">
+					<img src="/pwa-icon.svg" alt="" width="20" height="20" />
+					<span>three.ws</span>
+				</a>
+				<a class="sb-link" id="sb-account" href="/login?next=%2Fsidebar">Sign in</a>
+			</header>
+			<div id="sb-live" class="sb-sr" aria-live="polite"></div>
+
+			<section class="sb-card" aria-labelledby="sb-agent-title">
+				<div class="sb-agent" id="sb-agent" aria-busy="true">
+					<div class="sb-skel sb-skel-avatar" aria-hidden="true"></div>
+					<div class="sb-agent-meta">
+						<h2 class="sb-title" id="sb-agent-title">Your agent</h2>
+						<div class="sb-skel is-line" aria-hidden="true"></div>
+					</div>
+				</div>
+				<div class="sb-state" id="sb-agent-state" hidden></div>
+				<ol class="sb-log" id="sb-log" aria-label="Conversation" hidden></ol>
+				<form class="sb-chat" id="sb-chat" hidden>
+					<label class="sb-sr" for="sb-msg">Message your agent</label>
+					<textarea id="sb-msg" rows="2" maxlength="4000" placeholder="Ask your agent anything" required></textarea>
+					<button type="submit" class="sb-btn sb-btn-primary" id="sb-send">Send</button>
+				</form>
+			</section>
+
+			<section class="sb-card" aria-labelledby="sb-forge-title">
+				<h2 class="sb-title" id="sb-forge-title">Text to 3D</h2>
+				<form class="sb-forge" id="sb-forge">
+					<label class="sb-sr" for="sb-prompt">Describe a 3D model</label>
+					<textarea id="sb-prompt" rows="2" maxlength="1000" placeholder="A brass robot owl, studio lighting" required></textarea>
+					<button type="submit" class="sb-btn sb-btn-primary" id="sb-forge-btn">Make it 3D</button>
+				</form>
+				<div class="sb-job" id="sb-job" hidden>
+					<div class="sb-progress" aria-hidden="true"><span></span></div>
+					<p class="sb-job-text" id="sb-job-text"></p>
+				</div>
+			</section>
+
+			<section class="sb-card" aria-labelledby="sb-recent-title">
+				<div class="sb-row">
+					<h2 class="sb-title" id="sb-recent-title">Recent models</h2>
+					<a class="sb-link" href="/mine" target="_blank" rel="noopener">All</a>
+				</div>
+				<ul class="sb-recent" id="sb-recent" aria-busy="true">
+					<li class="sb-skel is-row" aria-hidden="true"></li>
+					<li class="sb-skel is-row" aria-hidden="true"></li>
+					<li class="sb-skel is-row" aria-hidden="true"></li>
+				</ul>
+				<div class="sb-state" id="sb-recent-state" hidden></div>
+			</section>
+		</main>
+
+		<script type="module" src="/src/sidebar.js"></script>
+	</body>
+</html>

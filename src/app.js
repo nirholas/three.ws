@@ -69,6 +69,7 @@ import { Memory } from './memory/index.js';
 import { SkillRegistry } from './skills/index.js';
 import { log } from './shared/log.js';
 import { DEFAULT_STAGE_RIG_URL } from './default-stage-avatar.js';
+import { installLaunchConsumer, isFileLaunch } from './pwa/launch-files.js';
 
 window.THREE = THREE;
 window.VIEWER = {};
@@ -473,6 +474,11 @@ class App {
 			}
 		}
 
+		// Opened from Windows Explorer (or any OS file association) through the
+		// manifest's file_handlers: the launch queue delivers the file, so skip
+		// the default avatar instead of flashing it before the person's model.
+		if (this._wireLaunchQueue() && isFileLaunch(location)) return;
+
 		const model = options.model || DEFAULT_STAGE_RIG_URL;
 		const resolvedModel = resolveModelUrl(model);
 		const isDefaultModel = !options.model;
@@ -490,6 +496,32 @@ class App {
 				log.warn('[3d-agent] model load failed', err);
 				this._showViewerError("Couldn't load this model.", () => loadModel());
 			});
+	}
+
+	/**
+	 * Consume OS file launches (manifest file_handlers). The files are read
+	 * locally and rendered like a drop; nothing uploads until Save to account.
+	 * @returns {boolean} whether this browser delivers file launches
+	 */
+	_wireLaunchQueue() {
+		if (this._launchQueueWired !== undefined) return this._launchQueueWired;
+		this._launchQueueWired = installLaunchConsumer(
+			(files) => {
+				this.showSpinner();
+				Promise.resolve(this.load(files)).catch((err) => {
+					log.warn('[3d-agent] launched file failed to load', err);
+					this._showViewerError("Couldn't open that file.", () => this.load(files));
+				});
+			},
+			(message) => {
+				this.hideSpinner();
+				this._showViewerError(message, () => this.inputEl?.click(), {
+					actionLabel: 'Choose a file',
+					keepOpenUntilLoad: true,
+				});
+			},
+		);
+		return this._launchQueueWired;
 	}
 
 	/**
@@ -1881,7 +1913,7 @@ class App {
 	load(fileMap) {
 		let rootFile, rootPath;
 		Array.from(fileMap).forEach(([path, file]) => {
-			if (file.name.match(/\.(gltf|glb)$/)) {
+			if (file.name.match(/\.(gltf|glb|vrm)$/i)) {
 				rootFile = file;
 				rootPath = path.replace(file.name, '');
 			}
