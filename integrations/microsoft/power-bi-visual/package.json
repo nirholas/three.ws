@@ -17,7 +17,7 @@
     "audit:certification": "npm run prepare:generated && pbiviz package --certification-audit",
     "lint": "npx eslint .",
     "eslint": "npx eslint . --ext .js,.jsx,.ts,.tsx",
-    "typecheck": "npm run prepare:generated && tsc --noEmit -p tsconfig.json",
+    "typecheck": "npm run prepare:generated && tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
     "test": "npm run prepare:generated && vitest run",
     "verify:live": "node test/live/verify-live.mjs"
   },

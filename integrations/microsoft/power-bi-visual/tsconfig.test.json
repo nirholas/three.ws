@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "resolveJsonModule": true,
+    "types": ["vite/client"]
+  },
+  "files": [],
+  "include": ["src/**/*.ts", "test/**/*.ts"]
+}

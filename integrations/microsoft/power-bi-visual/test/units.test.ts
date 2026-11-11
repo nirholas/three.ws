@@ -1,4 +1,4 @@
-import { createLocalizationManager } from "powerbi-visuals-utils-testutils";
+import { MockILocalizationManager } from "powerbi-visuals-utils-testutils";
 import { afterEach, describe, expect, it } from "vitest";
 
 import resjson from "../stringResources/en-US/resources.resjson?raw";
@@ -118,7 +118,7 @@ describe("strings and localization", () => {
     });
 
     it("uses host translations and falls back to English for missing keys", () => {
-        setLocalizationManager(createLocalizationManager({ Ui_Retry: "Wiederholen" }));
+        setLocalizationManager(new MockILocalizationManager({ Ui_Retry: "Wiederholen" }));
         expect(t("Ui_Retry")).toBe("Wiederholen");
         expect(t("Ui_Truncated", 100)).toBe("Showing the first 100 rows");
         setLocalizationManager(null);

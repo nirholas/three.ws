@@ -16,9 +16,9 @@ export const MISSING_GLB = "https://three.ws/cdn/forge/nvidia/00000000-0000-0000
 
 export interface Column {
     name: string;
-    values: PrimitiveValue[];
+    values: Array<PrimitiveValue | null>;
     format?: string;
-    highlights?: PrimitiveValue[];
+    highlights?: Array<PrimitiveValue | null>;
 }
 
 export interface Fields {
@@ -53,7 +53,7 @@ export function dataView(fields: Fields): DataView {
         if (!column) continue;
         const meta = source(column, role, index++, false);
         columns.push(meta);
-        categories.push({ source: meta, values: column.values, identity: [] });
+        categories.push({ source: meta, values: column.values as PrimitiveValue[], identity: [] });
     }
     const measures: Array<[string, Column]> = [];
     if (fields.colorBy) measures.push(["colorBy", fields.colorBy]);
