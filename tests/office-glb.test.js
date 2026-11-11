@@ -243,7 +243,44 @@ describe('decodeKtx2', () => {
 		expect(data.length).toBe(width * height * 4);
 		expect(data.some((b) => b > 0 && b < 255)).toBe(true);
 	});
+
+	it.each([
+		['UNORM', 37],
+		['SRGB', 43],
+	])('reads uncompressed RGBA8 %s pixels straight from level 0', async (_label, vkFormat) => {
+		const pixels = Uint8Array.from([
+			255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 9, 8, 7, 6,
+		]);
+		const ktx2 = uncompressedKtx2(vkFormat, 2, 2, pixels);
+		const { data, width, height } = await decodeKtx2(ktx2);
+		expect([width, height]).toEqual([2, 2]);
+		expect([...data]).toEqual([...pixels]);
+	});
+
+	it('rejects an uncompressed format other than RGBA8', async () => {
+		const ktx2 = uncompressedKtx2(23, 2, 2, new Uint8Array(12));
+		await expect(decodeKtx2(ktx2)).rejects.toBeInstanceOf(Ktx2DecodeError);
+	});
 });
+
+/** A KTX2 file laid out per the Khronos spec: header, one level index entry, then level 0. */
+function uncompressedKtx2(vkFormat, width, height, pixels) {
+	const dataOffset = 80 + 24;
+	const bytes = new Uint8Array(dataOffset + pixels.length);
+	bytes.set([0xab, 0x4b, 0x54, 0x58, 0x20, 0x32, 0x30, 0xbb, 0x0d, 0x0a, 0x1a, 0x0a]);
+	const view = new DataView(bytes.buffer);
+	view.setUint32(12, vkFormat, true);
+	view.setUint32(16, 1, true);
+	view.setUint32(20, width, true);
+	view.setUint32(24, height, true);
+	view.setUint32(36, 1, true);
+	view.setUint32(40, 1, true);
+	view.setBigUint64(80, BigInt(dataOffset), true);
+	view.setBigUint64(88, BigInt(pixels.length), true);
+	view.setBigUint64(96, BigInt(pixels.length), true);
+	bytes.set(pixels, dataOffset);
+	return bytes;
+}
 
 describe('makeOfficeSafeGlb', () => {
 	it('decodes Draco geometry into plain vertex data', async () => {

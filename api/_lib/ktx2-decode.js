@@ -12,8 +12,13 @@
 //     expects CommonJS `require` and `__dirname`, which an ESM package does not
 //     have, so it is evaluated once with those two supplied.
 //   * Uncompressed RGBA8 KTX2 (VK_FORMAT_R8G8B8A8_UNORM / _SRGB, no
-//     supercompression) is read directly with ktx-parse. It is not valid inside
+//     supercompression) is read straight from level 0 using the fixed header
+//     layout in the Khronos KTX 2.0 spec. It is not valid inside
 //     KHR_texture_basisu, but authoring tools emit it and it costs nothing.
+//
+// A Basis payload always declares vkFormat 0 (VK_FORMAT_UNDEFINED), so the
+// header alone decides which path a file takes. The transcoder is never handed
+// a file it cannot decode.
 //
 // The output is the image's stored values (sRGB stays sRGB), level 0 only.
 
@@ -92,20 +97,29 @@ function loadBasis() {
 	return basisPromise;
 }
 
-async function decodeUncompressed(bytes) {
-	const { read } = await import('ktx-parse');
-	const container = read(bytes);
-	if (container.supercompressionScheme !== 0) return null;
+// Header offsets from the KTX 2.0 spec, section 3: vkFormat, pixelWidth,
+// pixelHeight, supercompressionScheme, then the level index (byteOffset and
+// byteLength of level 0, both uint64).
+function decodeUncompressed(bytes) {
+	if (bytes.byteLength < 104) throw new Ktx2DecodeError('truncated KTX2 header');
+	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+	const vkFormat = view.getUint32(12, true);
 	if (
-		container.vkFormat !== VK_FORMAT_R8G8B8A8_UNORM &&
-		container.vkFormat !== VK_FORMAT_R8G8B8A8_SRGB
-	)
-		return null;
-	const width = container.pixelWidth;
-	const height = Math.max(1, container.pixelHeight);
-	const level = container.levels[0]?.levelData;
-	if (!level || level.byteLength < width * height * 4) return null;
-	return { data: new Uint8Array(level.slice(0, width * height * 4)), width, height };
+		view.getUint32(44, true) !== 0 ||
+		(vkFormat !== VK_FORMAT_R8G8B8A8_UNORM && vkFormat !== VK_FORMAT_R8G8B8A8_SRGB)
+	) {
+		throw new Ktx2DecodeError(
+			'unsupported KTX2 encoding (only Basis ETC1S, UASTC and uncompressed RGBA8 decode)',
+		);
+	}
+	const width = view.getUint32(20, true);
+	const height = Math.max(1, view.getUint32(24, true));
+	const offset = Number(view.getBigUint64(80, true));
+	const size = width * height * 4;
+	if (!width || Number(view.getBigUint64(88, true)) < size || offset + size > bytes.byteLength) {
+		throw new Ktx2DecodeError('the KTX2 level 0 data is shorter than its declared size');
+	}
+	return { data: bytes.slice(offset, offset + size), width, height };
 }
 
 /**
@@ -116,6 +130,12 @@ async function decodeUncompressed(bytes) {
  */
 export async function decodeKtx2(bytes) {
 	if (!isKtx2(bytes)) throw new Ktx2DecodeError('not a KTX2 file');
+	if (
+		bytes.byteLength >= 16 &&
+		new DataView(bytes.buffer, bytes.byteOffset).getUint32(12, true) !== 0
+	) {
+		return decodeUncompressed(bytes);
+	}
 	const basis = await loadBasis();
 	const file = new basis.KTX2File(new Uint8Array(bytes));
 	try {
@@ -135,9 +155,7 @@ export async function decodeKtx2(bytes) {
 		file.close();
 		file.delete();
 	}
-	const raw = await decodeUncompressed(bytes);
-	if (raw) return raw;
 	throw new Ktx2DecodeError(
-		'unsupported KTX2 encoding (only Basis ETC1S, UASTC and uncompressed RGBA8 decode)',
+		'unsupported KTX2 encoding (a Basis file that is neither ETC1S nor UASTC)',
 	);
 }
