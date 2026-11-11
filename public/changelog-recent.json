@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T17:25:24.291Z",
+	"generated_at": "2026-11-11T17:23:20.165Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -55,16 +55,6 @@
 			"title": "Docs · Microsoft 365 Copilot connector",
 			"summary": "Admin guide for the three.ws Graph connector: consent and its two permissions, who can see indexed agents, models and avatars, what is indexed, sync and throttling, disconnect, errors and their fixes, data handling, the API and the schema.",
 			"link": "/docs/microsoft-365-copilot-connector",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "launch",
-			"title": "Docs · Review a 3D model together in a meeting (Live Share)",
-			"summary": "The three.ws review stage for Teams meetings: follow the presenter's camera, presence, laser pointers, synced comment pins with markdown export and animation sync over Live Share, plus the sideload path, privacy and bundle size.",
-			"link": "/docs/teams-live-share",
 			"tags": [
 				"launch"
 			]
@@ -329,6 +319,16 @@
 			"title": "TRELLIS.2 Lab: every parameter of Microsoft Research's image-to-3D model",
 			"summary": "A new lab at /lab/trellis2 runs TRELLIS.2 with all of its controls in your hands: voxel resolution, seed, texture size, face budget, and the steps and guidance of each of its three sampler stages. Every control shows its default and a plain-language explanation. Pick Fast draft, Balanced or Maximum detail; their speed labels come from real production runs, not estimates. Inspect the result in texture, wireframe or normal view, with triangle count, texture resolution and file size read from the model itself. Run a second engine on the same photo to compare the two side by side, and share the pair with one link. The page credits Microsoft Research, with the citation, the MIT license and how we run it.",
 			"link": "/lab/trellis2",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "Turn a photo into a 3D diorama",
+			"summary": "Diorama can now rebuild a scene you photographed. Click From a photo, or drop or paste an image onto the page. An AI set designer reads the photo, boxes every separate object, and estimates how far away and how big each one is and what it rests on. Each object is then turned into its own 3D model from its crop of your photo, so it keeps its real shape and colour. Objects that are partly hidden are built from a description instead. The pieces drop into place where they stood in the picture, and a laptop sits on top of the desk it was on, not beside it. A small copy of your photo stays in the corner with a live box for every object, and hovering a piece highlights its box. Pieces built from your photo carry a small picture mark. The camera frames the objects, not the whole island, so the scene reads at the size it had in the photo. Photo worlds save, share, remix and export like any other world. The scene reader also got more reliable: when one free vision route is busy it now tries the next one instead of giving up, and an end-of-life model was replaced with its current successor.",
+			"link": "/diorama",
 			"tags": [
 				"feature"
 			]

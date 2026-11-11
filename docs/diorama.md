@@ -26,6 +26,26 @@ Reads: `GET /api/diorama?id=<uuid>` loads a saved world (a deep link renders it 
 
 There are no mocks: if the LLM chain is unreachable, the compose route returns a clean 503 and the page shows a designed retry state instead of fabricating a world.
 
+## From a photo
+
+Diorama can also rebuild a scene you photographed. Click **From a photo** next to the prompt box, or drop or paste an image onto the page. The pipeline is the same four steps, with a vision reader in place of the sentence composer:
+
+1. **Read the photo.** The browser downscales the photo to 1600 px on its longest side, uploads it to object storage (`/api/forge-upload`), and calls `POST /api/diorama {action:'compose-photo', imageUrl}`. When storage is unavailable it sends the photo inline instead (`imageBase64`, capped at 700 KB decoded). The server (`api/_lib/diorama-photo.js`) asks the vision chain in `api/_lib/vision.js` to read the photo as a set designer would. For each separable object it returns a label, a forge prompt, a tight bounding box, its distance and real size, what it rests on, and whether it is occluded. The free OpenRouter vision routes lead for this caller, then the NIM lane, Vertex Gemini, and the paid backstop. `src/diorama/photo-layout.js` turns that report into a placed plan: horizontal position comes from the box centre and distance, scale from the real size, and stacked objects (a laptop on a desk) keep a `supportId`.
+
+2. **Forge from the crops.** Every fully visible object is forged image to 3D from its own crop of the photo, so the mesh keeps the real thing's shape and colour. Occluded or tiny objects, and any crop the image lane rejects, fall back to the text lane with the object's prompt. Each chip shows a small picture glyph when its mesh came from the photo. The hover hint says whether the piece was forged from its crop or from its description.
+
+3. **Assemble.** A photo inset sits in the corner with a live box per object (dashed while forging, solid when ready, red when failed). Hovering or focusing a chip highlights its box, and the reverse works too. An object resting on another is seated on the supporter's mesh top once both have forged. The camera frames the forged objects rather than the whole island, so the scene reads at the size it had in the photo.
+
+4. **Save and share.** A photo world saves like any other. It keeps a link to its photo (`sourceImage`) and to each crop (`refImage`), but only when they live on this deployment's own storage. Links to third-party images are stripped on save, so a public world never republishes an arbitrary URL. A deep link to a saved photo world shows the photo inset again.
+
+Errors are typed: `400 invalid_image` for a bad URL or payload, `422 photo_unreadable` when no separate objects stand out (the page asks for a clearer shot with a few distinct things in view), and `503 composer_unavailable` when no vision lane answers.
+
+```bash
+curl -s -X POST https://three.ws/api/diorama \
+  -H 'content-type: application/json' \
+  -d '{"action":"compose-photo","imageUrl":"https://example.com/my-desk.jpg"}'
+```
+
 ## Walkthrough
 
 1. Open [/diorama](https://three.ws/diorama).
@@ -111,5 +131,5 @@ The game block is stored inside the saved world document, so no migration is nee
 ## Related
 
 - [Forge](./forge.md) is the single-object generator every diorama object is forged on.
-- [Image to 3D](./image-to-3d.md) for photo-based objects; [AR](./ar.md) for viewing worlds in augmented reality.
+- [Image to 3D](./image-to-3d.md) is the lane each photo crop is forged on; [AR](./ar.md) for viewing worlds in augmented reality.
 - Pages: [/scene](https://three.ws/scene) (Scene Studio, where an exported diorama opens), [/gallery](https://three.ws/gallery), [/create](https://three.ws/create).

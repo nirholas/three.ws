@@ -24,6 +24,15 @@
 		},
 		{
 			"date": "2026-11-11",
+			"title": "Turn a photo into a 3D diorama",
+			"summary": "Diorama can now rebuild a scene you photographed. Click From a photo, or drop or paste an image onto the page. An AI set designer reads the photo, boxes every separate object, and estimates how far away and how big each one is and what it rests on. Each object is then turned into its own 3D model from its crop of your photo, so it keeps its real shape and colour. Objects that are partly hidden are built from a description instead. The pieces drop into place where they stood in the picture, and a laptop sits on top of the desk it was on, not beside it. A small copy of your photo stays in the corner with a live box for every object, and hovering a piece highlights its box. Pieces built from your photo carry a small picture mark. The camera frames the objects, not the whole island, so the scene reads at the size it had in the photo. Photo worlds save, share, remix and export like any other world. The scene reader also got more reliable: when one free vision route is busy it now tries the next one instead of giving up, and an end-of-life model was replaced with its current successor.",
+			"tags": [
+				"feature"
+			],
+			"link": "/diorama"
+		},
+		{
+			"date": "2026-11-11",
 			"title": "Detailed 3D models no longer fall back to a plain mesh mid-generation",
 			"summary": "Some requests for a textured model finished as an untextured one. The job was still running on one server, but another server checking on it read an outdated status, decided the job was dead, and handed it to a faster lane without textures. Job status is now always read fresh, so the textured model you asked for is the one you get. The fix covers TRELLIS, TRELLIS.2, Modly, Hunyuan3D and TripoSG.",
 			"tags": ["fix"]
