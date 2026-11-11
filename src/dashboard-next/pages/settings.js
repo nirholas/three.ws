@@ -19,6 +19,9 @@
 //   GET  /api/auth/google/status            { configured, google, password, wallets, count, reauthenticated }
 //   POST /api/auth/google/unlink            { password? } unlink Google (needs password or a fresh Google reauth)
 //   GET  /api/auth/google/start?intent=     link | reauth, a top-level navigation to Google and back
+//   GET  /api/auth/microsoft/status         { configured, microsoft, password, count, reauthenticated }
+//   POST /api/auth/microsoft/unlink         { password? } unlink Microsoft (password or a fresh Microsoft reauth)
+//   GET  /api/auth/microsoft/start?intent=  link | reauth, a top-level navigation to Microsoft and back
 //   GET  /api/notifications                 { notifications: [...], unread: N }
 //   POST /api/notifications/read-all
 //   GET  /api/billing/summary               { usage: { total_bytes, avatar_count, ... } }
@@ -119,12 +122,13 @@ async function loadContent(host) {
 
 	const retry = () => loadContent(host);
 
-	const [sessionsResp, grantsResp, googleResp, telegramResp, notifResp, notifPrefsResp, avatarsResp, summaryResp, usageResp, prefsResp, versionResp, statusResp, xResp] =
+	const [sessionsResp, grantsResp, googleResp, telegramResp, microsoftResp, notifResp, notifPrefsResp, avatarsResp, summaryResp, usageResp, prefsResp, versionResp, statusResp, xResp] =
 		await Promise.all([
 			safeGet('/api/auth/sessions'),
 			safeGet('/api/oauth/grants'),
 			safeGet('/api/auth/google/status'),
 			safeGet('/api/auth/telegram/status'),
+			safeGet('/api/auth/microsoft/status'),
 			safeGet('/api/notifications?limit=20'),
 			safeGet('/api/notifications/preferences'),
 			safeGet('/api/avatars/mine?limit=24'),
@@ -137,10 +141,18 @@ async function loadContent(host) {
 		]);
 
 	const prefs = prefsResp.data?.prefs || prefsResp.data || {};
-	// Both status routes describe the same account; Telegram rides along on the
-	// Google response so the sign-in panel renders every method from one object.
+	// Every status route describes the same account; Telegram and Microsoft
+	// ride along on the Google response so the sign-in panel renders every
+	// method from one object.
 	const signInResp = googleResp.ok
-		? { ...googleResp, data: { ...googleResp.data, telegram: telegramResp.ok ? telegramResp.data : null } }
+		? {
+			...googleResp,
+			data: {
+				...googleResp.data,
+				telegram: telegramResp.ok ? telegramResp.data : null,
+				microsoft: microsoftResp.ok ? microsoftResp.data : null,
+			},
+		}
 		: googleResp;
 
 	host.innerHTML = '';
@@ -286,7 +298,7 @@ function renderSessions(resp, onRetry) {
 // ── Connected apps ─────────────────────────────────────────────────────────
 
 // ── Sign-in methods ────────────────────────────────────────────────────────
-// Google is the one linkable identity today (api/auth/google/[action].js).
+// Google, Microsoft and Telegram are the linkable identities (api/auth/<provider>/[action].js).
 // Linking and re-authenticating are top-level navigations to Google and back,
 // which land here with ?google=<outcome>; unlinking is a fetch that needs a
 // fresh proof (the password, or having just re-authenticated with Google).
@@ -307,6 +319,28 @@ const GOOGLE_OUTCOMES = {
 	exchange_failed: 'Google did not accept the request. Try again in a moment.',
 	invalid_token: 'Google returned something we could not verify. Try again.',
 	reauth_stale: 'Google did not ask for your password again. Try once more.',
+};
+
+// Microsoft mirrors the Google shape (api/auth/microsoft/[action].js):
+// work, school and personal accounts; the round trip lands with
+// ?microsoft=<outcome>.
+const MICROSOFT_OUTCOMES = {
+	linked: 'Microsoft linked. You can now sign in with it.',
+	reauthenticated: 'Microsoft confirmed. You can unlink it now.',
+	unavailable: 'Sign in with Microsoft is not configured on this deployment.',
+	rate_limited: 'Too many attempts. Try again in a few minutes.',
+	not_linked: 'No Microsoft account is linked yet.',
+	session_changed: 'Your session changed during the Microsoft round trip. Try again.',
+	wrong_account: 'That is not the Microsoft account linked to this three.ws account.',
+	identity_in_use: 'That Microsoft account is already linked to a different three.ws account.',
+	already_linked: 'A different Microsoft account is already linked. Unlink it first.',
+	cancelled: 'Microsoft sign-in was cancelled. Nothing changed.',
+	expired: 'That Microsoft round trip took too long. Try again.',
+	failed: 'Microsoft could not complete that. Try again.',
+	exchange_failed: 'Microsoft did not accept the request. Try again in a moment.',
+	invalid_token: 'Microsoft returned something we could not verify. Try again.',
+	admin_consent_required: 'Your organisation has to approve three.ws first. Ask your Microsoft Entra administrator.',
+	reauth_stale: 'Microsoft did not ask for your password again. Try once more.',
 };
 
 // Telegram mirrors the Google shape (api/auth/telegram/[action].js): the
@@ -406,6 +440,46 @@ async function linkTelegramByMagic(host, onRetry) {
 	timer = setTimeout(poll, 2000);
 }
 
+// Unlinking a provider needs a fresh proof: the password, or a re-sign-in with
+// that provider. The last way into the account is never unlinked.
+function wireUnlink(host, { provider, label, status, onRetry }) {
+	const btn = host.querySelector(`[data-action="unlink-${provider}"]`);
+	if (!btn) return;
+	btn.addEventListener('click', async () => {
+		if (status.count <= 1) {
+			toast(`${label} is the only way into this account. Set a password or link a wallet first.`);
+			return;
+		}
+		let password = null;
+		if (!status.reauthenticated) {
+			if (status.password) {
+				password = prompt(`Enter your password to unlink ${label}.`);
+				if (!password) return;
+			} else if (confirm(`To unlink, sign in with ${label} once more to prove it is you. Continue to ${label}?`)) {
+				location.href = `/api/auth/${provider}/start?intent=reauth`;
+				return;
+			} else {
+				return;
+			}
+		}
+		btn.disabled = true;
+		btn.textContent = 'Unlinking…';
+		try {
+			await post(`/api/auth/${provider}/unlink`, password ? { password } : {});
+			toast(`${label} unlinked`);
+			onRetry();
+		} catch (err) {
+			if (err?.code === 'reauth_required') {
+				toast(`That password did not match. Try again, or re-authenticate with ${label}.`);
+			} else {
+				toast(err?.message || 'Failed to unlink');
+			}
+			btn.disabled = false;
+			btn.textContent = 'Unlink';
+		}
+	});
+}
+
 function renderSignInMethods(resp, onRetry) {
 	const panel = document.createElement('div');
 	panel.className = 'dn-panel';
@@ -415,24 +489,18 @@ function renderSignInMethods(resp, onRetry) {
 		<div class="set-panel-head">
 			<div>
 				<div class="dn-panel-title">Sign-in methods</div>
-				<div class="dn-panel-sub" style="margin:2px 0 0">Every way into this account. Link Google to sign in with one click, including when an app like Claude or ChatGPT asks to connect.</div>
+				<div class="dn-panel-sub" style="margin:2px 0 0">Every way into this account. Link Google or Microsoft to sign in with one click, including when an app like Claude or ChatGPT asks to connect.</div>
 			</div>
 		</div>
 		<div data-slot="methods"></div>
 	`;
 	const host = panel.querySelector('[data-slot="methods"]');
-	const outcome = new URLSearchParams(location.search).get('google');
-	if (outcome && GOOGLE_OUTCOMES[outcome]) {
-		toast(GOOGLE_OUTCOMES[outcome]);
+	for (const [param, messages] of [['google', GOOGLE_OUTCOMES], ['telegram', TELEGRAM_OUTCOMES], ['microsoft', MICROSOFT_OUTCOMES]]) {
+		const outcome = new URLSearchParams(location.search).get(param);
+		if (!outcome || !messages[outcome]) continue;
+		toast(messages[outcome]);
 		const clean = new URL(location.href);
-		clean.searchParams.delete('google');
-		history.replaceState(null, '', clean.pathname + clean.search + clean.hash);
-	}
-	const tgOutcome = new URLSearchParams(location.search).get('telegram');
-	if (tgOutcome && TELEGRAM_OUTCOMES[tgOutcome]) {
-		toast(TELEGRAM_OUTCOMES[tgOutcome]);
-		const clean = new URL(location.href);
-		clean.searchParams.delete('telegram');
+		clean.searchParams.delete(param);
 		history.replaceState(null, '', clean.pathname + clean.search + clean.hash);
 	}
 	if (!resp.ok) {
@@ -467,7 +535,22 @@ function renderSignInMethods(resp, onRetry) {
 			`<a class="dn-btn" href="/api/auth/google/start?intent=link" style="padding:5px 10px;font-size:12px">Link Google</a>`,
 		));
 	}
-	const tg = resp.telegram || {};
+	const ms = d.microsoft || {};
+	if (ms.microsoft) {
+		const used = ms.microsoft.last_used_at ? ` · used ${esc(relTime(ms.microsoft.last_used_at))}` : '';
+		parts.push(row(
+			'Microsoft',
+			`${esc(ms.microsoft.email || ms.microsoft.display_name || 'linked')}${used} · linked ${esc(relTime(ms.microsoft.linked_at))}`,
+			`<button class="dn-btn danger" data-action="unlink-microsoft" style="padding:5px 10px;font-size:12px">Unlink</button>`,
+		));
+	} else if (ms.configured) {
+		parts.push(row(
+			'Microsoft',
+			'Not linked. Link a work, school or personal Microsoft account to sign in with it.',
+			`<a class="dn-btn" href="/api/auth/microsoft/start?intent=link" style="padding:5px 10px;font-size:12px">Link Microsoft</a>`,
+		));
+	}
+	const tg = d.telegram || {};
 	if (tg.telegram) {
 		const used = tg.telegram.last_used_at ? ` · used ${esc(relTime(tg.telegram.last_used_at))}` : '';
 		const who = tg.telegram.username ? `@${esc(tg.telegram.username)}` : esc(tg.telegram.display_name || 'linked');
@@ -494,78 +577,9 @@ function renderSignInMethods(resp, onRetry) {
 			linkTelegramByMagic(host, onRetry).finally(() => { phoneBtn.disabled = false; });
 		});
 	}
-	const unlinkTg = host.querySelector('[data-action="unlink-telegram"]');
-	if (unlinkTg) {
-		unlinkTg.addEventListener('click', async () => {
-			if (tg.count <= 1) {
-				toast('Telegram is the only way into this account. Set a password or link a wallet first.');
-				return;
-			}
-			let password = null;
-			if (!tg.reauthenticated) {
-				if (tg.password) {
-					password = prompt('Enter your password to unlink Telegram.');
-					if (!password) return;
-				} else if (confirm('To unlink, sign in with Telegram once more to prove it is you. Continue to Telegram?')) {
-					location.href = '/api/auth/telegram/start?intent=reauth';
-					return;
-				} else {
-					return;
-				}
-			}
-			unlinkTg.disabled = true;
-			unlinkTg.textContent = 'Unlinking…';
-			try {
-				await post('/api/auth/telegram/unlink', password ? { password } : {});
-				toast('Telegram unlinked');
-				onRetry();
-			} catch (err) {
-				if (err?.code === 'reauth_required') {
-					toast('That password did not match. Try again, or re-authenticate with Telegram.');
-				} else {
-					toast(err?.message || 'Failed to unlink');
-				}
-				unlinkTg.disabled = false;
-				unlinkTg.textContent = 'Unlink';
-			}
-		});
-	}
-	const unlinkBtn = host.querySelector('[data-action="unlink-google"]');
-	if (unlinkBtn) {
-		unlinkBtn.addEventListener('click', async () => {
-			if (d.count <= 1) {
-				toast('Google is the only way into this account. Set a password or link a wallet first.');
-				return;
-			}
-			let password = null;
-			if (!d.reauthenticated) {
-				if (d.password) {
-					password = prompt('Enter your password to unlink Google.');
-					if (!password) return;
-				} else if (confirm('To unlink, sign in with Google once more to prove it is you. Continue to Google?')) {
-					location.href = '/api/auth/google/start?intent=reauth';
-					return;
-				} else {
-					return;
-				}
-			}
-			unlinkBtn.disabled = true;
-			unlinkBtn.textContent = 'Unlinking…';
-			try {
-				await post('/api/auth/google/unlink', password ? { password } : {});
-				toast('Google unlinked');
-				onRetry();
-			} catch (err) {
-				if (err?.code === 'reauth_required') {
-					toast('That password did not match. Try again, or re-authenticate with Google.');
-				} else {
-					toast(err?.message || 'Failed to unlink');
-				}
-				unlinkBtn.disabled = false;
-				unlinkBtn.textContent = 'Unlink';
-			}
-		});
-	}
+	wireUnlink(host, { provider: 'telegram', label: 'Telegram', status: tg, onRetry });
+	wireUnlink(host, { provider: 'google', label: 'Google', status: d, onRetry });
+	wireUnlink(host, { provider: 'microsoft', label: 'Microsoft', status: ms, onRetry });
 	return panel;
 }
 
