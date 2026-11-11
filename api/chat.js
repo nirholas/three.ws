@@ -75,6 +75,7 @@ import {
 import { listMembershipHomes } from './_lib/home/members.js';
 import { loadInstalledSkills, skillsPromptBlock } from './_lib/installed-skills.js';
 import { agentSkillsForPrompt } from './_lib/agent-custom-skills.js';
+import { retrieveForChat, knowledgePromptBlock } from './_lib/agent-knowledge.js';
 import { holdSkillOriginatedSpend } from './_lib/skill-import-gate.js';
 import { suggestionsInstruction, splitSuggestions, createReplyFilter } from './_lib/chat-suggestions.js';
 import {
@@ -695,6 +696,19 @@ export default wrap(async (req, res) => {
 		}
 	}
 
+	// Chunks from the documents the owner uploaded to this agent (Word,
+	// PowerPoint, Excel, PDF, Outlook; api/_lib/agent-knowledge.js), ranked
+	// against this message. Same visibility rule as the persona. Best-effort:
+	// a failed lookup is a turn without document context, never a failed chat.
+	let knowledgeHits = [];
+	if (agentVisible) {
+		try {
+			knowledgeHits = await retrieveForChat(body.agentId, body.message);
+		} catch (err) {
+			captureException(err, { route: 'chat', stage: 'agent-knowledge', agentId: body.agentId });
+		}
+	}
+
 	// Home tools are offered only to an account that has a house connected, so a
 	// model is never handed a tool it cannot use. One indexed read of a tiny
 	// membership table; a failure degrades to a home-less turn, never a failed
@@ -721,6 +735,7 @@ export default wrap(async (req, res) => {
 		recalledMemories,
 		installedSkills,
 		agentSkills.block,
+		knowledgePromptBlock(knowledgeHits),
 	);
 	const suggestCount = body.suggestReplies || 0;
 	const systemPrompt = suggestCount ? `${sys.text}\n\n${suggestionsInstruction(suggestCount)}` : sys.text;
@@ -1249,6 +1264,16 @@ export default wrap(async (req, res) => {
 		skills_applied: installedSkills.map((s) => s.slug),
 		// The agent's own custom skills injected into this reply, install order.
 		agent_skills_applied: agentSkills.applied,
+		// Document chunks from the agent's knowledge that were in this reply's
+		// context, best match first. Empty when none cleared the score floor.
+		knowledge: knowledgeHits.map((h) => ({
+			doc_id: h.doc_id,
+			name: h.name,
+			heading: h.heading,
+			locator: h.locator,
+			score: h.score,
+			excerpt: h.excerpt,
+		})),
 		// Sends held because a gated imported skill was active and the owner did
 		// not ask for them; null on every other turn.
 		skill_gate: skillGate.held && { reason: skillGate.held.reason, skills: skillGate.held.skills, blocked: skillGate.held.blocked },
@@ -2223,9 +2248,9 @@ async function recallForChat(agentId, message, isOwner) {
 // Returns { text, stable, volatile }. `stable` is byte-identical across every
 // turn of an agent's conversations (persona + skills + platform knowledge), so
 // the Anthropic route can put a prompt-cache breakpoint after it; `volatile`
-// (recalled memories + live viewer context) changes per message and stays
+// (recalled memories, retrieved document chunks, live viewer context) changes per message and stays
 // after the breakpoint. `text` is the joined form every other provider uses.
-export function buildSystemPrompt(ctx = {}, personaPrompt = null, recalled = [], installedSkills = [], agentSkillsBlock = '') {
+export function buildSystemPrompt(ctx = {}, personaPrompt = null, recalled = [], installedSkills = [], agentSkillsBlock = '', knowledgeBlock = '') {
 	const loaded = ctx.modelName
 		? `A model named "${ctx.modelName}" is loaded. Stats: ${fmt(ctx.vertices)} vertices, ${fmt(ctx.triangles)} triangles, ${fmt(ctx.materials)} materials, ${ctx.animations ?? 0} animations.`
 		: 'No model is currently loaded in the viewer.';
@@ -2271,6 +2296,9 @@ export function buildSystemPrompt(ctx = {}, personaPrompt = null, recalled = [],
 			'',
 		);
 	}
+	// Retrieved document chunks change with every message, so they live after
+	// the cache breakpoint with the memories.
+	if (knowledgeBlock) volatileLines.push(knowledgeBlock, '');
 	volatileLines.push(loaded, validation, settings);
 
 	const stable = lines.join('\n');
