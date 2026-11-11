@@ -2,7 +2,8 @@
 //
 // Tools come from two places, the two ways a .NET team will wire three.ws:
 //   * the ThreeWs.SemanticKernel plugin's native functions (generation that waits
-//     for the model and retries a transient GPU failure), bridged to AIFunctions;
+//     for the model and retries a transient GPU failure); a KernelFunction is an
+//     AIFunction, so Agent Framework takes them as they are;
 //   * the free three.ws 3D Studio MCP server, whose MCP tools are AIFunctions already.
 //
 // Run:
@@ -46,9 +47,7 @@ var studioTools = await studio.ListToolsAsync();
 
 var tools = new List<AITool>();
 tools.AddRange(studioTools.Where(t => t.Name == "search_catalog"));
-#pragma warning disable SKEXP0001 // KernelFunction to AIFunction bridge.
-tools.AddRange(plugin.Where(f => f.Name is "generate_3d_model" or "get_3d_job_status").Select(f => f.AsAIFunction()));
-#pragma warning restore SKEXP0001
+tools.AddRange(plugin.Where(f => f.Name is "generate_3d_model" or "get_3d_job_status"));
 
 AIAgent agent = new OpenAIClient(new ApiKeyCredential(apiKey), options)
     .GetChatClient(model)

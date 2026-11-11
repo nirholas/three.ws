@@ -146,7 +146,7 @@ export async function listDocuments(agentId) {
 	return {
 		docs: rows.map(presentDoc),
 		limits: { max_docs: MAX_DOCS_PER_AGENT, max_bytes: MAX_UPLOAD_BYTES },
-		formats: FORMATS.map(({ extension, label }) => ({ extension, label })),
+		formats: FORMATS.map(({ extension, label, mime }) => ({ extension, label, mime })),
 	};
 }
 
