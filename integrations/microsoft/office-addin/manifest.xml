@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- three.ws for PowerPoint: a task pane that puts interactive 3D models on slides.
+     The pane, its sign-in callback and every icon are served by https://three.ws.
+     Validate with: npx office-addin-manifest validate manifest.xml -->
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+	xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+	xsi:type="TaskPaneApp">
+	<Id>76cf0c40-ecea-4e1e-9ff7-7f3efd1243d9</Id>
+	<Version>1.0.0.0</Version>
+	<ProviderName>three.ws</ProviderName>
+	<DefaultLocale>en-US</DefaultLocale>
+	<DisplayName DefaultValue="three.ws 3D Models" />
+	<Description DefaultValue="Put interactive 3D models on your slides. Insert any model from your three.ws account, or describe one and generate it free, then rotate it right in PowerPoint." />
+	<IconUrl DefaultValue="https://three.ws/office/powerpoint/icon-32.png" />
+	<HighResolutionIconUrl DefaultValue="https://three.ws/office/powerpoint/icon-64.png" />
+	<SupportUrl DefaultValue="https://three.ws/docs/powerpoint" />
+	<AppDomains>
+		<AppDomain>https://three.ws</AppDomain>
+	</AppDomains>
+	<Hosts>
+		<Host Name="Presentation" />
+	</Hosts>
+	<Requirements>
+		<Sets DefaultMinVersion="1.1">
+			<Set Name="PowerPointApi" MinVersion="1.2" />
+		</Sets>
+	</Requirements>
+	<DefaultSettings>
+		<SourceLocation DefaultValue="https://three.ws/office/powerpoint" />
+	</DefaultSettings>
+	<Permissions>ReadWriteDocument</Permissions>
+	<VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+		<Hosts>
+			<Host xsi:type="Presentation">
+				<DesktopFormFactor>
+					<GetStarted>
+						<Title resid="ThreeWs.GetStarted.Title" />
+						<Description resid="ThreeWs.GetStarted.Description" />
+						<LearnMoreUrl resid="ThreeWs.LearnMoreUrl" />
+					</GetStarted>
+					<ExtensionPoint xsi:type="PrimaryCommandSurface">
+						<OfficeTab id="TabInsert">
+							<Group id="ThreeWs.Group">
+								<Label resid="ThreeWs.Group.Label" />
+								<Icon>
+									<bt:Image size="16" resid="ThreeWs.Icon.16" />
+									<bt:Image size="32" resid="ThreeWs.Icon.32" />
+									<bt:Image size="80" resid="ThreeWs.Icon.80" />
+								</Icon>
+								<Control xsi:type="Button" id="ThreeWs.OpenPane">
+									<Label resid="ThreeWs.OpenPane.Label" />
+									<Supertip>
+										<Title resid="ThreeWs.OpenPane.Label" />
+										<Description resid="ThreeWs.OpenPane.Tooltip" />
+									</Supertip>
+									<Icon>
+										<bt:Image size="16" resid="ThreeWs.Icon.16" />
+										<bt:Image size="32" resid="ThreeWs.Icon.32" />
+										<bt:Image size="80" resid="ThreeWs.Icon.80" />
+									</Icon>
+									<Action xsi:type="ShowTaskpane">
+										<TaskpaneId>ThreeWs.Pane</TaskpaneId>
+										<SourceLocation resid="ThreeWs.Pane.Url" />
+									</Action>
+								</Control>
+							</Group>
+						</OfficeTab>
+					</ExtensionPoint>
+				</DesktopFormFactor>
+			</Host>
+		</Hosts>
+		<Resources>
+			<bt:Images>
+				<bt:Image id="ThreeWs.Icon.16" DefaultValue="https://three.ws/office/powerpoint/icon-16.png" />
+				<bt:Image id="ThreeWs.Icon.32" DefaultValue="https://three.ws/office/powerpoint/icon-32.png" />
+				<bt:Image id="ThreeWs.Icon.80" DefaultValue="https://three.ws/office/powerpoint/icon-80.png" />
+			</bt:Images>
+			<bt:Urls>
+				<bt:Url id="ThreeWs.Pane.Url" DefaultValue="https://three.ws/office/powerpoint" />
+				<bt:Url id="ThreeWs.LearnMoreUrl" DefaultValue="https://three.ws/docs/powerpoint" />
+			</bt:Urls>
+			<bt:ShortStrings>
+				<bt:String id="ThreeWs.GetStarted.Title" DefaultValue="Put a 3D model on a slide" />
+				<bt:String id="ThreeWs.Group.Label" DefaultValue="three.ws" />
+				<bt:String id="ThreeWs.OpenPane.Label" DefaultValue="3D Model" />
+			</bt:ShortStrings>
+			<bt:LongStrings>
+				<bt:String id="ThreeWs.GetStarted.Description" DefaultValue="Open Insert, then 3D Model in the three.ws group. Pick one of your models or describe a new one." />
+				<bt:String id="ThreeWs.OpenPane.Tooltip" DefaultValue="Insert an interactive 3D model from three.ws, or generate a new one from a description." />
+			</bt:LongStrings>
+		</Resources>
+	</VersionOverrides>
+</OfficeApp>
