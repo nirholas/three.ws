@@ -7,6 +7,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 ## 2026-11-11
 
 - **Docs · .NET SDK** (`/docs/dotnet-sdk`): The official .NET SDK for three.ws on NuGet: Forge on every lane, catalog search, rigging, streaming agent chat and MCP tools for C#, ASP.NET Core and Unity.
+- **Docs · Agent knowledge from Office files** (`/docs/agent-knowledge`): Teach an agent from Word, PowerPoint, Excel, PDF and Outlook files: supported formats and how each is chunked, limits, how chat cites the source, privacy, deletion, and the upload, search and delete API.
 - **Docs · Create a 3D model from a Teams or Copilot chat** (`/docs/microsoft-teams-forge`): The Teams app's Create a 3D model action and forge bot command: a real free-lane generation on an Adaptive Card that refreshes for the requester and updates for the whole chat when the model is ready, with Open in 3D, Download GLB and Make a variation.
 - **Docs · Enterprise sign-in and SCIM (Microsoft Entra ID)** (`/docs/enterprise-sso`): Sign in with Microsoft for work, school and personal accounts, claiming your organisation's Entra tenant so colleagues join your team, and step-by-step SCIM provisioning from Microsoft Entra ID with the supported filters, PATCH shapes and limits.
 - **Docs · Incident response** (`/docs/incident-response`): How three.ws detects, triages, contains and discloses a security incident, with severity levels and customer notification steps.

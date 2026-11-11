@@ -15,6 +15,14 @@
 			<description>The official .NET SDK for three.ws on NuGet: Forge on every lane, catalog search, rigging, streaming agent chat and MCP tools for C#, ASP.NET Core and Unity.</description>
 		</item>
 		<item>
+			<title>Docs · Agent knowledge from Office files</title>
+			<link>https://three.ws/docs/agent-knowledge</link>
+			<guid isPermaLink="false">2026-11-11:Docs · Agent knowledge from Office files</guid>
+			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Teach an agent from Word, PowerPoint, Excel, PDF and Outlook files: supported formats and how each is chunked, limits, how chat cites the source, privacy, deletion, and the upload, search and delete API.</description>
+		</item>
+		<item>
 			<title>Docs · Create a 3D model from a Teams or Copilot chat</title>
 			<link>https://three.ws/docs/microsoft-teams-forge</link>
 			<guid isPermaLink="false">2026-11-11:Docs · Create a 3D model from a Teams or Copilot chat</guid>

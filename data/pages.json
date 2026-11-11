@@ -7249,6 +7249,14 @@
 					"added": "2026-11-04"
 				},
 				{
+					"path": "/docs/agent-knowledge",
+					"title": "Docs · Agent knowledge from Office files",
+					"description": "Teach an agent from Word, PowerPoint, Excel, PDF and Outlook files: supported formats and how each is chunked, limits, how chat cites the source, privacy, deletion, and the upload, search and delete API.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-11-11"
+				},
+				{
 					"path": "/mcp",
 					"title": "Connect to every three.ws tool",
 					"description": "One MCP endpoint and one sign-in for every three.ws tool. Copy-paste config for Claude Code, Claude Desktop and the @three-ws/mcp stdio proxy, with the live tool count and tool groups read from the same registry the endpoint serves.",

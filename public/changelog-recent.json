@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-11T17:41:34.022Z",
+	"generated_at": "2026-11-11T17:42:46.836Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4520,
+	"total": 4521,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -15,6 +15,16 @@
 			"title": "Docs · .NET SDK",
 			"summary": "The official .NET SDK for three.ws on NuGet: Forge on every lane, catalog search, rigging, streaming agent chat and MCP tools for C#, ASP.NET Core and Unity.",
 			"link": "/docs/dotnet-sdk",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "launch",
+			"title": "Docs · Agent knowledge from Office files",
+			"summary": "Teach an agent from Word, PowerPoint, Excel, PDF and Outlook files: supported formats and how each is chunked, limits, how chat cites the source, privacy, deletion, and the upload, search and delete API.",
+			"link": "/docs/agent-knowledge",
 			"tags": [
 				"launch"
 			]
@@ -1522,16 +1532,6 @@
 			"title": "Glass: three.ws on Meta Ray-Ban Display",
 			"summary": "A new /glass web app shows the agents standing near you on the lens with a direction arrow, lets you talk to one with a pinch and suggested replies, and hands the agent to your phone with a six-character code at three.ws/g/CODE. It works with only the Neural Band d-pad inputs.",
 			"link": null,
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Gold holders get early access to drops, Genesis gets first dibs on rare names",
-			"summary": "Generative drops now open with a holder-only window set by the creator (15 minutes by default, 0 to skip): during it, revealing an item needs Gold or higher in $THREE, and the drop page shows a live countdown to public opening. Rare *.threews.sol names can be put behind a Genesis-only window. Both windows end on their own.",
-			"link": "/three",
 			"tags": [
 				"feature"
 			]

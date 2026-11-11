@@ -5602,6 +5602,12 @@ URL: https://three.ws/docs/mcp-integrations
 
 How an agent connects third-party MCP servers: the catalog, OAuth and token sign-in, tool tiers and acknowledgements, custom-server review, the HTTP API, the three-ws mcp install CLI, and how to add a server to the catalog.
 
+### Docs · Agent knowledge from Office files
+
+URL: https://three.ws/docs/agent-knowledge
+
+Teach an agent from Word, PowerPoint, Excel, PDF and Outlook files: supported formats and how each is chunked, limits, how chat cites the source, privacy, deletion, and the upload, search and delete API.
+
 ### Connect to every three.ws tool
 
 URL: https://three.ws/mcp
