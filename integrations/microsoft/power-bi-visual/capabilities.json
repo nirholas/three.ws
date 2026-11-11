@@ -1,0 +1,153 @@
+{
+    "privileges": [
+        {
+            "name": "WebAccess",
+            "essential": true,
+            "parameters": ["https://three.ws"]
+        }
+    ],
+    "dataRoles": [
+        {
+            "displayName": "Category",
+            "name": "category",
+            "kind": "Grouping",
+            "description": "Label for each model, for example a product name or a site. Optional: without it the model's own name is used.",
+            "requiredTypes": [{ "text": true }, { "numeric": true }, { "integer": true }],
+            "preferredTypes": [{ "text": true }]
+        },
+        {
+            "displayName": "Model",
+            "name": "model",
+            "kind": "Grouping",
+            "description": "A GLB URL on https://three.ws, a three.ws model link (three.ws/m/<id>) or a bare three.ws model id.",
+            "requiredTypes": [{ "text": true }],
+            "preferredTypes": [{ "text": true }]
+        },
+        {
+            "displayName": "Colour by",
+            "name": "colorBy",
+            "kind": "Measure",
+            "description": "Numeric measure mapped onto the low to high colour ramp in the Colours card.",
+            "requiredTypes": [{ "numeric": true }, { "integer": true }]
+        },
+        {
+            "displayName": "Scale by",
+            "name": "scaleBy",
+            "kind": "Measure",
+            "description": "Numeric measure that sizes each model relative to the largest value.",
+            "requiredTypes": [{ "numeric": true }, { "integer": true }]
+        },
+        {
+            "displayName": "Tooltips",
+            "name": "tooltips",
+            "kind": "Measure",
+            "description": "Extra fields shown when hovering a model."
+        }
+    ],
+    "dataViewMappings": [
+        {
+            "conditions": [
+                { "category": { "max": 1 }, "model": { "max": 1 }, "colorBy": { "max": 1 }, "scaleBy": { "max": 1 } }
+            ],
+            "categorical": {
+                "categories": {
+                    "select": [
+                        { "bind": { "to": "category" } },
+                        { "bind": { "to": "model" } }
+                    ],
+                    "dataReductionAlgorithm": {
+                        "top": { "count": 100 }
+                    }
+                },
+                "values": {
+                    "select": [
+                        { "bind": { "to": "colorBy" } },
+                        { "bind": { "to": "scaleBy" } },
+                        { "for": { "in": "tooltips" } }
+                    ]
+                }
+            }
+        }
+    ],
+    "objects": {
+        "scene": {
+            "properties": {
+                "background": {
+                    "type": { "fill": { "solid": { "color": true } } }
+                },
+                "lighting": {
+                    "type": {
+                        "enumeration": [
+                            { "value": "studio", "displayName": "Studio" },
+                            { "value": "soft", "displayName": "Soft daylight" },
+                            { "value": "dramatic", "displayName": "Dramatic" },
+                            { "value": "flat", "displayName": "Flat" }
+                        ]
+                    }
+                },
+                "layout": {
+                    "type": {
+                        "enumeration": [
+                            { "value": "auto", "displayName": "Auto" },
+                            { "value": "grid", "displayName": "Grid" },
+                            { "value": "gallery", "displayName": "Turntable gallery" }
+                        ]
+                    }
+                },
+                "autoRotate": {
+                    "type": { "bool": true }
+                },
+                "rotationSpeed": {
+                    "type": { "numeric": true }
+                }
+            }
+        },
+        "colors": {
+            "properties": {
+                "mode": {
+                    "type": {
+                        "enumeration": [
+                            { "value": "original", "displayName": "Original materials" },
+                            { "value": "measure", "displayName": "Colour by measure" },
+                            { "value": "single", "displayName": "Single tint" }
+                        ]
+                    }
+                },
+                "lowColor": {
+                    "type": { "fill": { "solid": { "color": true } } }
+                },
+                "highColor": {
+                    "type": { "fill": { "solid": { "color": true } } }
+                },
+                "tintColor": {
+                    "type": { "fill": { "solid": { "color": true } } }
+                }
+            }
+        },
+        "labels": {
+            "properties": {
+                "show": {
+                    "type": { "bool": true }
+                },
+                "fontSize": {
+                    "type": { "formatting": { "fontSize": true } }
+                },
+                "color": {
+                    "type": { "fill": { "solid": { "color": true } } }
+                }
+            }
+        }
+    },
+    "tooltips": {
+        "supportedTypes": {
+            "default": true,
+            "canvas": true
+        },
+        "roles": ["tooltips"]
+    },
+    "supportsHighlight": true,
+    "supportsLandingPage": true,
+    "supportsEmptyDataView": true,
+    "supportsKeyboardFocus": true,
+    "supportsMultiVisualSelection": true
+}

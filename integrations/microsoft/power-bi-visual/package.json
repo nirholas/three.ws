@@ -1,0 +1,46 @@
+{
+  "name": "three-ws-power-bi-visual",
+  "description": "Power BI custom visual that renders three.ws 3D models (GLB) bound to report data, coloured and scaled by measures, cross-filtering with the report.",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nirholas/three.ws"
+  },
+  "scripts": {
+    "pbiviz": "pbiviz",
+    "prepare:decoders": "node scripts/embed-decoders.mjs",
+    "start": "npm run prepare:decoders && pbiviz start",
+    "package": "npm run prepare:decoders && pbiviz package",
+    "audit:certification": "npm run prepare:decoders && pbiviz package --certification-audit",
+    "lint": "npx eslint .",
+    "eslint": "npx eslint . --ext .js,.jsx,.ts,.tsx",
+    "typecheck": "npm run prepare:decoders && tsc --noEmit -p tsconfig.json",
+    "test": "npm run prepare:decoders && vitest run",
+    "verify:live": "node test/live/verify-live.mjs"
+  },
+  "dependencies": {
+    "powerbi-visuals-api": "5.11.1",
+    "powerbi-visuals-utils-formattingmodel": "7.1.0",
+    "powerbi-visuals-utils-formattingutils": "7.0.0",
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "@types/three": "0.187.0",
+    "@vitest/browser-playwright": "5.1.0",
+    "eslint": "^9.39.0",
+    "eslint-plugin-powerbi-visuals": "1.1.1",
+    "playwright": "1.65.0",
+    "powerbi-visuals-tools": "7.2.1",
+    "powerbi-visuals-utils-testutils": "7.0.1",
+    "typescript": "5.9.3",
+    "vitest": "5.1.0"
+  },
+  "overrides": {
+    "uuid": "^11.1.1",
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.8"
+    }
+  }
+}

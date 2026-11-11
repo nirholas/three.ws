@@ -1,0 +1,26 @@
+{
+  "visual": {
+    "name": "threeWsModels",
+    "displayName": "three.ws 3D Models",
+    "guid": "threeWsModels8BB6C69EBE4F4886851A7E3082576E7B",
+    "visualClassName": "Visual",
+    "version": "1.0.0.0",
+    "description": "Turn a column of GLB URLs or three.ws model ids into an interactive 3D view. Colour or scale each model by a measure, click a model to cross-filter the report, and hover for tooltips.",
+    "supportUrl": "https://three.ws/docs/microsoft",
+    "gitHubUrl": "https://github.com/nirholas/three.ws/tree/main/integrations/microsoft/power-bi-visual"
+  },
+  "apiVersion": "5.11.1",
+  "author": {
+    "name": "three.ws",
+    "email": "support@three.ws"
+  },
+  "assets": {
+    "icon": "assets/icon.png"
+  },
+  "externalJS": null,
+  "style": "style/visual.less",
+  "capabilities": "capabilities.json",
+  "dependencies": null,
+  "stringResources": [],
+  "version": "1.0.0.0"
+}
