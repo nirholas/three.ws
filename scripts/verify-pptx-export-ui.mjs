@@ -48,7 +48,7 @@ const result = {};
 const domClick = (selector) => page.evaluate((sel) => document.querySelector(sel).click(), selector);
 
 // 1. Forge: open the stored creation, open the export menu, click PowerPoint.
-await page.goto(`${base}/forge?share=${id}`, { waitUntil: 'domcontentloaded' });
+await page.goto(`${base}/forge?share=${id}`, { waitUntil: 'domcontentloaded', timeout: 180_000 });
 const row = page.locator('.export-item[data-format="pptx"]');
 await row.waitFor({ state: 'attached', timeout: 90_000 });
 await page.waitForFunction(() => !document.querySelector('.export-item[data-format="pptx"]').hidden, null, {
@@ -73,7 +73,7 @@ await page.screenshot({ path: join(outDir, 'forge-saved.png') });
 
 // 2. Forge error state: a creation id the server does not have answers a real 404.
 await page.evaluate(() =>
-	window.dispatchEvent(
+	document.dispatchEvent(
 		new CustomEvent('forge:model-ready', {
 			detail: { glbUrl: '', creationId: '00000000-0000-4000-8000-000000000000' },
 		}),
@@ -87,7 +87,7 @@ result.forgeError = await row.locator('.status').textContent();
 await page.screenshot({ path: join(outDir, 'forge-error.png') });
 
 // 3. Model page: the PowerPoint button next to Download GLB.
-await page.goto(`${base}/m/${id}`, { waitUntil: 'domcontentloaded' });
+await page.goto(`${base}/m/${id}`, { waitUntil: 'domcontentloaded', timeout: 180_000 });
 const btn = page.locator('#mp-pptx');
 await btn.waitFor({ state: 'visible', timeout: 90_000 });
 await btn.focus();

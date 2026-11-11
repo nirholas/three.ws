@@ -3768,15 +3768,14 @@ const appConfig = {
 						// fallback robot in dev. Only text payloads can carry an r2.dev URL,
 						// so rewrite those and pass anything else through byte-for-byte.
 						if (!/^(application\/(json|.*\+json)|text\/)/i.test(type)) {
-							for (const h of [
-								'content-length',
-								'accept-ranges',
-								'content-range',
-								'etag',
-								'cache-control',
-							]) {
-								const v = resp.headers.get(h);
-								if (v) res.setHeader(h, v);
+							// Forward every upstream header (content-disposition names a
+							// download such as /api/forge/export-pptx's deck) except the
+							// ones fetch() already consumed: it decoded the body and
+							// owns the connection.
+							for (const [h, v] of resp.headers) {
+								if (!/^(content-encoding|transfer-encoding|connection|keep-alive)$/i.test(h)) {
+									res.setHeader(h, v);
+								}
 							}
 							res.end(Buffer.from(await resp.arrayBuffer()));
 							return;
