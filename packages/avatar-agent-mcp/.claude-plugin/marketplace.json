@@ -1,0 +1,22 @@
+{
+  "name": "avatar-agent-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "MCP server for 3D avatar sessions and GLB inspection, validation, optimization and rendering.",
+  "plugins": [
+    {
+      "name": "avatar-agent",
+      "source": "./plugins/avatar-agent",
+      "description": "Spawn and dress a 3D avatar, give it a voice, and inspect, validate, optimize or render any GLB model.",
+      "category": "design",
+      "tags": [
+        "avatar",
+        "glb",
+        "3d",
+        "mcp",
+        "tts"
+      ]
+    }
+  ]
+}

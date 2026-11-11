@@ -1,0 +1,22 @@
+{
+  "name": "audio-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "MCP server giving 3D agents a voice, speech recognition, ARKit lipsync tracks and a motion-capture clip library.",
+  "plugins": [
+    {
+      "name": "audio-voice-mcp",
+      "source": "./plugins/audio-voice-mcp",
+      "description": "Text-to-speech, speech-to-text, audio-to-face lipsync and motion-capture clips for 3D agents over the live three.ws API.",
+      "category": "design",
+      "tags": [
+        "audio",
+        "speech",
+        "lipsync",
+        "mcp",
+        "avatar"
+      ]
+    }
+  ]
+}

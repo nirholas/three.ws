@@ -1,0 +1,21 @@
+{
+  "name": "3d-agent-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "MCP server with free text-to-3D generation plus paid 3D, avatar, rigging and agent commerce tools from three.ws.",
+  "plugins": [
+    {
+      "name": "three-ws-mcp-server",
+      "source": "./plugins/three-ws-mcp-server",
+      "description": "MCP server with free text-to-3D generation plus paid 3D, avatar, rigging and agent commerce tools from three.ws.",
+      "category": "design",
+      "tags": [
+        "mcp",
+        "3d",
+        "text-to-3d",
+        "glb"
+      ]
+    }
+  ]
+}

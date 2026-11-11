@@ -1,0 +1,17 @@
+{
+  "name": "avatar-companion",
+  "version": "0.1.2",
+  "description": "Add an animated 3D walking avatar companion and full-page playground to a website with the @three-ws/walk package.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/3d-avatar-companion",
+  "homepage": "https://nirholas.github.io/3d-avatar-companion/",
+  "keywords": [
+    "3d-avatar",
+    "mascot",
+    "threejs",
+    "web-component",
+    "glb"
+  ]
+}

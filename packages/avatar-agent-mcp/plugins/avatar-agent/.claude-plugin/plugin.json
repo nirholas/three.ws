@@ -1,0 +1,20 @@
+{
+  "name": "avatar-agent",
+  "version": "1.2.3",
+  "description": "Spawn and dress a 3D avatar, give it a voice, and inspect, validate, optimize or render any GLB model.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/avatar-agent-mcp",
+  "homepage": "https://github.com/nirholas/avatar-agent-mcp",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "avatar",
+    "glb",
+    "gltf",
+    "3d",
+    "tts",
+    "three-ws"
+  ]
+}

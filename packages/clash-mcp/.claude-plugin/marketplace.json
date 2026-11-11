@@ -1,0 +1,21 @@
+{
+  "name": "clash-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "MCP server for three.ws Coin Clash: read the live faction board and leaderboard, enlist and rally with a Solana wallet.",
+  "plugins": [
+    {
+      "name": "clash-mcp",
+      "source": "./plugins/clash-mcp",
+      "description": "MCP server for three.ws Coin Clash: read the live faction board and leaderboard, enlist and rally with a Solana wallet.",
+      "category": "automation",
+      "tags": [
+        "mcp",
+        "game",
+        "solana",
+        "leaderboard"
+      ]
+    }
+  ]
+}

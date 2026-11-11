@@ -1,0 +1,19 @@
+{
+  "name": "provenance-mcp",
+  "version": "0.1.3",
+  "description": "Append-only, signed agent action log over MCP: record what an agent did and audit and verify any trail.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/provenance-mcp",
+  "homepage": "https://nirholas.github.io/provenance-mcp/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "provenance",
+    "audit",
+    "signing",
+    "ai-agents",
+    "three-ws"
+  ]
+}

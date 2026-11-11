@@ -1,0 +1,21 @@
+{
+  "name": "activity-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Read-only MCP server for three.ws trending agents and coins, the $THREE holder leaderboard and the activity ticker.",
+  "plugins": [
+    {
+      "name": "activity-mcp",
+      "source": "./plugins/activity-mcp",
+      "description": "Read-only MCP server for three.ws trending agents and coins, the $THREE holder leaderboard and the activity ticker.",
+      "category": "data",
+      "tags": [
+        "mcp",
+        "three-ws",
+        "discovery",
+        "leaderboard"
+      ]
+    }
+  ]
+}

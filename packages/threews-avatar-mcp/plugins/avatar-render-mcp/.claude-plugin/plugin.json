@@ -1,0 +1,19 @@
+{
+  "name": "avatar-render-mcp",
+  "version": "0.3.2",
+  "description": "Render a live three.ws 3D avatar inline, get an iframe embed, or fetch avatar metadata from an AI agent.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/threews-avatar-mcp",
+  "homepage": "https://nirholas.github.io/threews-avatar-mcp/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "three-ws",
+    "avatar",
+    "3d-avatar",
+    "glb",
+    "embed"
+  ]
+}

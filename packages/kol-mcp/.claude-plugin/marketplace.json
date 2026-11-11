@@ -1,0 +1,23 @@
+{
+  "name": "kol-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Read-only KOL wallet lookup over MCP: a tracked trader's portfolio P&L and its trades on a given mint.",
+  "plugins": [
+    {
+      "name": "kol-mcp",
+      "source": "./plugins/kol-mcp",
+      "description": "Read-only KOL wallet lookup over MCP: a tracked trader's portfolio P&L and its trades on a given mint.",
+      "category": "finance",
+      "tags": [
+        "mcp",
+        "solana",
+        "kol",
+        "smart-money",
+        "pnl",
+        "three-ws"
+      ]
+    }
+  ]
+}

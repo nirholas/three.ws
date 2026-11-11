@@ -1,0 +1,22 @@
+{
+  "name": "readme-3d",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Convert GLB, glTF, OBJ and STL models into ASCII STL blocks that GitHub renders as interactive 3D in markdown.",
+  "plugins": [
+    {
+      "name": "readme-3d",
+      "source": "./plugins/readme-3d",
+      "description": "Convert GLB, glTF, OBJ and STL models into ASCII STL blocks that GitHub renders as interactive 3D in markdown.",
+      "category": "design",
+      "tags": [
+        "3d",
+        "github-readme",
+        "stl",
+        "glb",
+        "markdown"
+      ]
+    }
+  ]
+}

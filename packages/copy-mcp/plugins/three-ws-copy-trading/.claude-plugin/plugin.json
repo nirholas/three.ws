@@ -1,0 +1,18 @@
+{
+  "name": "three-ws-copy-trading",
+  "version": "0.1.4",
+  "description": "Manage three.ws copy-trade follows, sizing and guard rules, the copy-intent inbox and fees owed from Claude Code.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/copy-mcp",
+  "homepage": "https://nirholas.github.io/copy-mcp/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "copy-trading",
+    "solana",
+    "three-ws",
+    "non-custodial"
+  ]
+}

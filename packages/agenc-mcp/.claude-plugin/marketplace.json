@@ -1,0 +1,21 @@
+{
+  "name": "agenc-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "MCP server for the AgenC task marketplace and agent registry, with three.ws identity linking and x402 service discovery.",
+  "plugins": [
+    {
+      "name": "agenc-mcp",
+      "source": "./plugins/agenc-mcp",
+      "description": "MCP server for the AgenC task marketplace and agent registry, with three.ws identity linking and x402 service discovery.",
+      "category": "data",
+      "tags": [
+        "mcp",
+        "agenc",
+        "marketplace",
+        "registry"
+      ]
+    }
+  ]
+}

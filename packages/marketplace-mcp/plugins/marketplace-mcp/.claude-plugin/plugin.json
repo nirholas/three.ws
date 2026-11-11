@@ -1,0 +1,19 @@
+{
+  "name": "marketplace-mcp",
+  "version": "0.1.3",
+  "description": "Browse the three.ws agent marketplace and skills catalog over MCP: search listings, read agent details and categories.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/nft-marketplace-mcp",
+  "homepage": "https://nirholas.github.io/nft-marketplace-mcp/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "marketplace",
+    "agents",
+    "skills",
+    "discovery",
+    "three-ws"
+  ]
+}

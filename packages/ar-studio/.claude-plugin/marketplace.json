@@ -1,0 +1,23 @@
+{
+  "name": "3d-ar-studio",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Generate or find 3D models, arrange them into a scene and get links that open it in augmented reality on a phone.",
+  "plugins": [
+    {
+      "name": "ar-studio",
+      "source": "./plugins/ar-studio",
+      "description": "Generate or find 3D models, arrange them into a scene and get links that open it in augmented reality on a phone.",
+      "category": "design",
+      "tags": [
+        "mcp",
+        "augmented-reality",
+        "3d",
+        "webxr",
+        "glb",
+        "text-to-3d"
+      ]
+    }
+  ]
+}

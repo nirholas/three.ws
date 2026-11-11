@@ -1,0 +1,19 @@
+{
+  "name": "three-ws-loom",
+  "version": "0.1.3",
+  "description": "Browse, fetch and submit creations in the three.ws Loom community 3D gallery from an agent.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/loom-mcp",
+  "homepage": "https://nirholas.github.io/loom-mcp/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "three-ws",
+    "loom",
+    "3d",
+    "glb",
+    "gallery",
+    "mcp"
+  ]
+}

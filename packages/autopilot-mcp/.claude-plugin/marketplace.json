@@ -1,0 +1,22 @@
+{
+  "name": "autopilot-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "MCP server for the three.ws agent autopilot control plane with server-enforced scopes and spend caps.",
+  "plugins": [
+    {
+      "name": "agent-autopilot-mcp",
+      "source": "./plugins/agent-autopilot-mcp",
+      "description": "Set autopilot scopes and a daily SOL cap for a three.ws agent, then run the propose, dry-run, execute and undo loop.",
+      "category": "automation",
+      "tags": [
+        "autopilot",
+        "agents",
+        "guardrails",
+        "solana",
+        "mcp"
+      ]
+    }
+  ]
+}

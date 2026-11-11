@@ -1,0 +1,19 @@
+{
+  "name": "onchain-agent-wallets",
+  "version": "0.1.1",
+  "description": "Give an AI agent a capped Solana spending allowance enforced on-chain, with guardrails, x402 payments and a kill switch.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/onchain-agent-wallets",
+  "homepage": "https://nirholas.github.io/onchain-agent-wallets/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "solana",
+    "agent-wallet",
+    "allowance",
+    "x402",
+    "guardrails"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "notifications-mcp",
+  "version": "0.1.4",
+  "description": "Manage a three.ws notification inbox over MCP: list and mark events, tune delivery preferences, register Web Push devices.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/push-notifications-mcp",
+  "homepage": "https://nirholas.github.io/push-notifications-mcp/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "notifications",
+    "web-push",
+    "inbox",
+    "alerts",
+    "three-ws"
+  ]
+}

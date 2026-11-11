@@ -1,0 +1,17 @@
+{
+  "name": "scene-mcp",
+  "version": "0.2.2",
+  "description": "Compose a placed 3D diorama from one sentence, build and export it as a single GLB, and browse saved scenes over MCP.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/3d-scene-mcp",
+  "homepage": "https://three.ws/docs/mcp",
+  "keywords": [
+    "mcp",
+    "3d",
+    "diorama",
+    "glb",
+    "generative"
+  ]
+}

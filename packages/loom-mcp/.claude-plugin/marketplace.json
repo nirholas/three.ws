@@ -1,0 +1,23 @@
+{
+  "name": "loom-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Browse, fetch and submit creations in the three.ws Loom community 3D gallery from an agent.",
+  "plugins": [
+    {
+      "name": "three-ws-loom",
+      "source": "./plugins/three-ws-loom",
+      "description": "Browse, fetch and submit creations in the three.ws Loom community 3D gallery from an agent.",
+      "category": "design",
+      "tags": [
+        "three-ws",
+        "loom",
+        "3d",
+        "glb",
+        "gallery",
+        "mcp"
+      ]
+    }
+  ]
+}

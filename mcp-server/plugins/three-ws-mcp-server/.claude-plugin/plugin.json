@@ -1,0 +1,19 @@
+{
+  "name": "three-ws-mcp-server",
+  "version": "1.2.3",
+  "description": "MCP server with free text-to-3D generation plus paid 3D, avatar, rigging and agent commerce tools from three.ws.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/3d-agent-mcp",
+  "homepage": "https://nirholas.github.io/3d-agent-mcp/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "three-ws",
+    "text-to-3d",
+    "glb",
+    "trellis",
+    "3d"
+  ]
+}

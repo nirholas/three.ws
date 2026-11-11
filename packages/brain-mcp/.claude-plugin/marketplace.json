@@ -1,0 +1,21 @@
+{
+  "name": "brain-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "MCP server for the three.ws multi-provider LLM router: list models and run a chat completion on any of them.",
+  "plugins": [
+    {
+      "name": "brain-mcp",
+      "source": "./plugins/brain-mcp",
+      "description": "MCP server for the three.ws multi-provider LLM router: list models and run a chat completion on any of them.",
+      "category": "development",
+      "tags": [
+        "mcp",
+        "llm",
+        "router",
+        "chat"
+      ]
+    }
+  ]
+}

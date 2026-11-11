@@ -1,0 +1,22 @@
+{
+  "name": "intel-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Score coins and wallets, read signal feeds and KOL trades, and browse the Smart Money directory with three.ws market intelligence.",
+  "plugins": [
+    {
+      "name": "three-ws-market-intel",
+      "source": "./plugins/three-ws-market-intel",
+      "description": "Score coins and wallets, read signal feeds and KOL trades, and browse the Smart Money directory with three.ws market intelligence.",
+      "category": "data",
+      "tags": [
+        "mcp",
+        "market-intelligence",
+        "smart-money",
+        "solana",
+        "three-ws"
+      ]
+    }
+  ]
+}

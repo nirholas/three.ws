@@ -1,0 +1,19 @@
+{
+  "name": "clash-mcp",
+  "version": "0.1.3",
+  "description": "MCP server for three.ws Coin Clash: read the live faction board and leaderboard, enlist and rally with a Solana wallet.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/clash-mcp",
+  "homepage": "https://nirholas.github.io/clash-mcp/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "three-ws",
+    "coin-clash",
+    "solana",
+    "faction",
+    "game"
+  ]
+}

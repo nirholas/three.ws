@@ -1,0 +1,20 @@
+{
+  "name": "ibm-watsonx-mcp",
+  "version": "0.2.2",
+  "description": "IBM watsonx.ai over MCP: Granite chat, text generation, embeddings, tokenization, time-series forecasts and model discovery.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/ibm-watsonx-mcp",
+  "homepage": "https://nirholas.github.io/ibm-watsonx-mcp/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "ibm",
+    "watsonx",
+    "granite",
+    "llm",
+    "embeddings",
+    "three-ws"
+  ]
+}

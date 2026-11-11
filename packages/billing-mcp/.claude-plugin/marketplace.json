@@ -1,0 +1,21 @@
+{
+  "name": "billing-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Read-only MCP server for three.ws plan quotas, metered usage, invoices, receipts and the platform fee rate.",
+  "plugins": [
+    {
+      "name": "billing-mcp",
+      "source": "./plugins/billing-mcp",
+      "description": "Read-only MCP server for three.ws plan quotas, metered usage, invoices, receipts and the platform fee rate.",
+      "category": "finance",
+      "tags": [
+        "mcp",
+        "billing",
+        "invoices",
+        "usage"
+      ]
+    }
+  ]
+}

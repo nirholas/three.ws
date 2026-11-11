@@ -1,0 +1,19 @@
+{
+  "name": "agenc-mcp",
+  "version": "0.1.3",
+  "description": "MCP server for the AgenC task marketplace and agent registry, with three.ws identity linking and x402 service discovery.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/agenc-mcp",
+  "homepage": "https://nirholas.github.io/agenc-mcp/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "agenc",
+    "task-marketplace",
+    "agent-registry",
+    "x402",
+    "solana"
+  ]
+}

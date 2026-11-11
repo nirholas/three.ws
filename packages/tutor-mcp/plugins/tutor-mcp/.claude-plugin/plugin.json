@@ -1,0 +1,19 @@
+{
+  "name": "tutor-mcp",
+  "version": "0.1.2",
+  "description": "MCP server that reads a three.ws Pay-As-You-Learn session ledger and closes it for an attested invoice.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/ai-tutor-mcp",
+  "homepage": "https://nirholas.github.io/ai-tutor-mcp/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "three-ws",
+    "tutor",
+    "ledger",
+    "invoice",
+    "billing"
+  ]
+}

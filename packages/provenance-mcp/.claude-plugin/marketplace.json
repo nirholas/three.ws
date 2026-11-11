@@ -1,0 +1,23 @@
+{
+  "name": "provenance-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Append-only, signed agent action log over MCP: record what an agent did and audit and verify any trail.",
+  "plugins": [
+    {
+      "name": "provenance-mcp",
+      "source": "./plugins/provenance-mcp",
+      "description": "Append-only, signed agent action log over MCP: record what an agent did and audit and verify any trail.",
+      "category": "development",
+      "tags": [
+        "mcp",
+        "provenance",
+        "audit",
+        "signing",
+        "ai-agents",
+        "three-ws"
+      ]
+    }
+  ]
+}

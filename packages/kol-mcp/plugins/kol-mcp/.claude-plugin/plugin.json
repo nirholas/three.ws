@@ -1,0 +1,19 @@
+{
+  "name": "kol-mcp",
+  "version": "0.1.2",
+  "description": "Read-only KOL wallet lookup over MCP: a tracked trader's portfolio P&L and its trades on a given mint.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/kol-mcp",
+  "homepage": "https://nirholas.github.io/kol-mcp/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "solana",
+    "kol",
+    "smart-money",
+    "pnl",
+    "three-ws"
+  ]
+}

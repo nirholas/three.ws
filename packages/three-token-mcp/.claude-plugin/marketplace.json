@@ -1,0 +1,21 @@
+{
+  "name": "three-token-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Price, check holdings and burn the $THREE token on Solana from an AI agent, with a USD cap and explicit confirmation.",
+  "plugins": [
+    {
+      "name": "three-token-burn",
+      "source": "./plugins/three-token-burn",
+      "description": "Price, check holdings and burn the $THREE token on Solana from an AI agent, with a USD cap and explicit confirmation.",
+      "category": "finance",
+      "tags": [
+        "mcp",
+        "solana",
+        "three",
+        "burn"
+      ]
+    }
+  ]
+}

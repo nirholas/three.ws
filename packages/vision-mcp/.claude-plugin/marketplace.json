@@ -1,0 +1,22 @@
+{
+  "name": "image-analysis-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Analyze and describe images from Claude Code through the free-first three.ws vision pipeline.",
+  "plugins": [
+    {
+      "name": "image-analysis-mcp",
+      "source": "./plugins/image-analysis-mcp",
+      "description": "Analyze and describe images from Claude Code through the free-first three.ws vision pipeline.",
+      "category": "data",
+      "tags": [
+        "mcp",
+        "vision",
+        "image-analysis",
+        "ocr",
+        "three-ws"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "ibm-watsonx-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "IBM watsonx.ai over MCP: Granite chat, text generation, embeddings, tokenization, time-series forecasts and model discovery.",
+  "plugins": [
+    {
+      "name": "ibm-watsonx-mcp",
+      "source": "./plugins/ibm-watsonx-mcp",
+      "description": "IBM watsonx.ai over MCP: Granite chat, text generation, embeddings, tokenization, time-series forecasts and model discovery.",
+      "category": "development",
+      "tags": [
+        "mcp",
+        "ibm",
+        "watsonx",
+        "granite",
+        "llm",
+        "embeddings",
+        "three-ws"
+      ]
+    }
+  ]
+}

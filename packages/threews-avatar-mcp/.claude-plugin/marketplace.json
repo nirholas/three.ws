@@ -1,0 +1,21 @@
+{
+  "name": "threews-avatar-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Render a live three.ws 3D avatar inline, get an iframe embed, or fetch avatar metadata from an AI agent.",
+  "plugins": [
+    {
+      "name": "avatar-render-mcp",
+      "source": "./plugins/avatar-render-mcp",
+      "description": "Render a live three.ws 3D avatar inline, get an iframe embed, or fetch avatar metadata from an AI agent.",
+      "category": "design",
+      "tags": [
+        "mcp",
+        "avatar",
+        "3d",
+        "embed"
+      ]
+    }
+  ]
+}

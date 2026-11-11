@@ -1,0 +1,19 @@
+{
+  "name": "alibaba-cloud-mcp",
+  "version": "0.1.4",
+  "description": "MCP server for Alibaba Cloud DashScope: Qwen chat, text embeddings and model listing with your own API key.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/alibaba-cloud-mcp",
+  "homepage": "https://nirholas.github.io/alibaba-cloud-mcp/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "alibaba-cloud",
+    "dashscope",
+    "qwen",
+    "embeddings",
+    "llm"
+  ]
+}

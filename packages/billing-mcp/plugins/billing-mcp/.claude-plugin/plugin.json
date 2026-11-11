@@ -1,0 +1,19 @@
+{
+  "name": "billing-mcp",
+  "version": "0.1.3",
+  "description": "Read-only MCP server for three.ws plan quotas, metered usage, invoices, receipts and the platform fee rate.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/billing-mcp",
+  "homepage": "https://nirholas.github.io/billing-mcp/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "three-ws",
+    "billing",
+    "invoices",
+    "receipts",
+    "usage"
+  ]
+}

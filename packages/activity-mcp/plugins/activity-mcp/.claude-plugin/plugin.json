@@ -1,0 +1,19 @@
+{
+  "name": "activity-mcp",
+  "version": "0.1.3",
+  "description": "Read-only MCP server for three.ws trending agents and coins, the $THREE holder leaderboard and the activity ticker.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/activity-mcp",
+  "homepage": "https://nirholas.github.io/activity-mcp/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "three-ws",
+    "trending",
+    "leaderboard",
+    "activity-feed",
+    "solana"
+  ]
+}

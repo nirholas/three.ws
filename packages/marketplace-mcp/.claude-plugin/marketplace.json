@@ -1,0 +1,23 @@
+{
+  "name": "nft-marketplace-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Browse the three.ws agent marketplace and skills catalog over MCP: search listings, read agent details and categories.",
+  "plugins": [
+    {
+      "name": "marketplace-mcp",
+      "source": "./plugins/marketplace-mcp",
+      "description": "Browse the three.ws agent marketplace and skills catalog over MCP: search listings, read agent details and categories.",
+      "category": "productivity",
+      "tags": [
+        "mcp",
+        "marketplace",
+        "agents",
+        "skills",
+        "discovery",
+        "three-ws"
+      ]
+    }
+  ]
+}

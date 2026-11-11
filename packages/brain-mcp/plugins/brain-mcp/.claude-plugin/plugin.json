@@ -1,0 +1,19 @@
+{
+  "name": "brain-mcp",
+  "version": "0.1.4",
+  "description": "MCP server for the three.ws multi-provider LLM router: list models and run a chat completion on any of them.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/brain-mcp",
+  "homepage": "https://nirholas.github.io/brain-mcp/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "three-ws",
+    "llm",
+    "router",
+    "chat-completion",
+    "multi-provider"
+  ]
+}

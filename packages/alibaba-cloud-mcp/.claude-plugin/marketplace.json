@@ -1,0 +1,21 @@
+{
+  "name": "alibaba-cloud-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "MCP server for Alibaba Cloud DashScope: Qwen chat, text embeddings and model listing with your own API key.",
+  "plugins": [
+    {
+      "name": "alibaba-cloud-mcp",
+      "source": "./plugins/alibaba-cloud-mcp",
+      "description": "MCP server for Alibaba Cloud DashScope: Qwen chat, text embeddings and model listing with your own API key.",
+      "category": "development",
+      "tags": [
+        "mcp",
+        "qwen",
+        "dashscope",
+        "embeddings"
+      ]
+    }
+  ]
+}

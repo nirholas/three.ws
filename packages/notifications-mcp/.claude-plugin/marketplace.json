@@ -1,0 +1,23 @@
+{
+  "name": "push-notifications-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Manage a three.ws notification inbox over MCP: list and mark events, tune delivery preferences, register Web Push devices.",
+  "plugins": [
+    {
+      "name": "notifications-mcp",
+      "source": "./plugins/notifications-mcp",
+      "description": "Manage a three.ws notification inbox over MCP: list and mark events, tune delivery preferences, register Web Push devices.",
+      "category": "productivity",
+      "tags": [
+        "mcp",
+        "notifications",
+        "web-push",
+        "inbox",
+        "alerts",
+        "three-ws"
+      ]
+    }
+  ]
+}

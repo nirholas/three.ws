@@ -1,0 +1,18 @@
+{
+  "name": "three-ws-market-intel",
+  "version": "0.1.3",
+  "description": "Score coins and wallets, read signal feeds and KOL trades, and browse the Smart Money directory with three.ws market intelligence.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/intel-mcp",
+  "homepage": "https://nirholas.github.io/intel-mcp/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "market-intelligence",
+    "smart-money",
+    "solana",
+    "three-ws"
+  ]
+}

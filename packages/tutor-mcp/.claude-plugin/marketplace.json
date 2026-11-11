@@ -1,0 +1,21 @@
+{
+  "name": "ai-tutor-mcp",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "MCP server that reads a three.ws Pay-As-You-Learn session ledger and closes it for an attested invoice.",
+  "plugins": [
+    {
+      "name": "tutor-mcp",
+      "source": "./plugins/tutor-mcp",
+      "description": "MCP server that reads a three.ws Pay-As-You-Learn session ledger and closes it for an attested invoice.",
+      "category": "data",
+      "tags": [
+        "mcp",
+        "tutor",
+        "invoice",
+        "ledger"
+      ]
+    }
+  ]
+}

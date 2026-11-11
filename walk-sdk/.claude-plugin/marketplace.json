@@ -1,0 +1,22 @@
+{
+  "name": "3d-avatar-companion",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Add an animated 3D walking avatar companion and full-page playground to a website with the @three-ws/walk package.",
+  "plugins": [
+    {
+      "name": "avatar-companion",
+      "source": "./plugins/avatar-companion",
+      "description": "Add an animated 3D walking avatar companion and full-page playground to a website with the @three-ws/walk package.",
+      "category": "development",
+      "tags": [
+        "3d-avatar",
+        "mascot",
+        "threejs",
+        "web-component",
+        "glb"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "image-analysis-mcp",
+  "version": "0.1.0",
+  "description": "Analyze and describe images from Claude Code through the free-first three.ws vision pipeline.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/image-analysis-mcp",
+  "homepage": "https://three.ws",
+  "keywords": [
+    "mcp",
+    "vision",
+    "image-analysis",
+    "ocr",
+    "three-ws"
+  ]
+}

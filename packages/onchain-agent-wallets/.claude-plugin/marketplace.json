@@ -1,0 +1,23 @@
+{
+  "name": "onchain-agent-wallets",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Give an AI agent a capped Solana spending allowance enforced on-chain, with guardrails, x402 payments and a kill switch.",
+  "plugins": [
+    {
+      "name": "onchain-agent-wallets",
+      "source": "./plugins/onchain-agent-wallets",
+      "description": "Give an AI agent a capped Solana spending allowance enforced on-chain, with guardrails, x402 payments and a kill switch.",
+      "category": "finance",
+      "tags": [
+        "mcp",
+        "solana",
+        "agent-wallet",
+        "allowance",
+        "x402",
+        "guardrails"
+      ]
+    }
+  ]
+}

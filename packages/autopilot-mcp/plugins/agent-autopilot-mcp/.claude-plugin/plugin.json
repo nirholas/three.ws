@@ -1,0 +1,19 @@
+{
+  "name": "agent-autopilot-mcp",
+  "version": "0.2.2",
+  "description": "Set autopilot scopes and a daily SOL cap for a three.ws agent, then run the propose, dry-run, execute and undo loop.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/autopilot-mcp",
+  "homepage": "https://github.com/nirholas/autopilot-mcp",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "autopilot",
+    "agent-guardrails",
+    "autonomous-agents",
+    "solana",
+    "three-ws"
+  ]
+}
