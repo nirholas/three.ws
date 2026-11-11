@@ -29,9 +29,9 @@ import describe as florence
 from worker_security import (
     UnsafeUrlError,
     UnsupportedImageError,
-    fetch_remote_bytes,
     open_caller_image,
 )
+from fetch import fetch_poster
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 log = logging.getLogger("florence2.batch")
@@ -80,7 +80,7 @@ def summarize(items, wall_s: float) -> dict:
 def describe_one(entry: dict) -> dict:
     out = {"id": entry.get("id"), "image_url": entry.get("image_url")}
     try:
-        data = fetch_remote_bytes(entry["image_url"], timeout=30.0, max_bytes=MAX_IMAGE_BYTES)
+        data = fetch_poster(entry["image_url"], timeout=30.0, max_bytes=MAX_IMAGE_BYTES)
         img = open_caller_image(data, "RGB")
         out.update(ok=True, result=florence.describe(img))
     except (UnsafeUrlError, UnsupportedImageError, httpx.HTTPError, ValueError, KeyError) as exc:

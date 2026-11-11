@@ -20,11 +20,11 @@ RUN python -c "from huggingface_hub import snapshot_download; snapshot_download(
 ENV HF_HUB_OFFLINE=1
 
 WORKDIR /app
-COPY worker_security.py tags.py describe.py main.py batch.py test_tags.py smoke_test.py /app/
+COPY worker_security.py tags.py describe.py fetch.py main.py batch.py test_tags.py test_fetch.py smoke_test.py /app/
 
-# Build gate: the tag rules hold, and the baked model describes a real image
+# Build gate: the tag rules and the poster fetch retry hold, and the baked model describes a real image
 # offline on the build machine's CPU.
-RUN python test_tags.py && python smoke_test.py
+RUN python test_tags.py && python test_fetch.py && python smoke_test.py
 
 EXPOSE 8080
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]

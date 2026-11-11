@@ -34,10 +34,10 @@ from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
 import describe as florence
+from fetch import fetch_poster
 from worker_security import (
     UnsafeUrlError,
     UnsupportedImageError,
-    fetch_remote_bytes,
     open_caller_image,
     require_api_key,
     safe_error,
@@ -79,7 +79,7 @@ def image_bytes(req: DescribeRequest) -> bytes:
         data = decode_inline(req.image)
     elif req.image_url:
         try:
-            data = fetch_remote_bytes(req.image_url, timeout=20.0, max_bytes=MAX_IMAGE_BYTES)
+            data = fetch_poster(req.image_url, timeout=20.0, max_bytes=MAX_IMAGE_BYTES)
         except UnsafeUrlError as exc:
             raise HTTPException(400, f"image_url refused: {exc}") from exc
         except (httpx.HTTPError, ValueError) as exc:

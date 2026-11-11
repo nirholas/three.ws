@@ -38,10 +38,12 @@ Three Florence-2 task prompts run per image: `<CAPTION>`, `<MORE_DETAILED_CAPTIO
 |------|---------|
 | `main.py` | FastAPI service (`/describe`, `/health`), background weight load so the startup probe can tell loading from dead. |
 | `describe.py` | Model load and the three task prompts. |
+| `fetch.py` | Poster fetch through the SSRF guard. A 429 from the renderer is waited out (Retry-After, else backoff, capped at 30 s, 4 attempts); every other error fails at once. |
 | `tags.py` | Tag normalization (lowercase, singular, stop words, colours, body parts, picture words, number words). |
 | `batch.py` | Cloud Run **job** entry point: `python batch.py gs://.../in.json gs://.../out.json`. Resumable (checkpoints every 25 items and skips ids already in out.json). It never touches the database; the API side imports the results. |
 | `smoke_test.py` | Build gate: the baked weights describe a drawn scene offline and every output field is populated. |
 | `test_tags.py` | Unit tests for `tags.py` (`python3 test_tags.py`). |
+| `test_fetch.py` | Unit tests for the 429 retry (`python3 test_fetch.py`). Both test files run as a build gate in the Dockerfile. |
 | `worker_security.py` | Vendored, byte-identical across workers (`npm run check:vendored`). |
 | `cloudbuild.yaml` | Build, push and deploy the service. |
 | `cloudbuild.image.yaml` | Build and push the image only (used by the batch job). |
