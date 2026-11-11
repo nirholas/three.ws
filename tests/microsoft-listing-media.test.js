@@ -89,6 +89,7 @@ describe('listing-safe agents', () => {
 		expect(listingSafeAgent({ ...base, name: 'My First Agent' })).toBe(false);
 		expect(listingSafeAgent({ ...base, name: 'Agent' })).toBe(false);
 		expect(listingSafeAgent({ id: 'b', name: 'Ghost', skills: [] })).toBe(false);
+		expect(listingSafeAgent({ ...base, name: 'Bridge Monitor 5', description: '' })).toBe(false);
 	});
 
 	it('picks the safe agent with the most chats', () => {
