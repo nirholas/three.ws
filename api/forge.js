@@ -5,6 +5,7 @@
  *   POST /api/forge   { image_urls[], prompt?, path?, tier?, backend? }  → image→3D
  *   POST /api/forge   { image_urls[sketch], prompt, path: 'sketch' }     → sketch→3D
  *   POST /api/forge?action=rig  { glb_url }                              → auto-rig
+ *   Both POSTs honour an `Idempotency-Key` header (_lib/forge-idempotency.js).
  *   GET  /api/forge?job=<id>                                             → poll a job
  *   GET  /api/forge?catalog                                              → tier/backend/cost matrix
  *   GET  /api/forge?territory                                            → engines this visitor's region excludes
@@ -59,6 +60,7 @@ import { randomUUID } from 'node:crypto';
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { admitWorldForge, parseWorldId } from './_lib/forge-world-limits.js';
+import { withForgeIdempotency } from './_lib/forge-idempotency.js';
 import { textToImage, synthesizeTurnaroundViews } from './_mcp3d/text-to-image.js';
 import { createRegenProvider } from './_providers/replicate.js';
 import { createRegenProvider as createGcpProvider } from './_providers/gcp.js';
@@ -3537,11 +3539,15 @@ export default wrap(async (req, res) => {
 	if (req.method === 'POST') {
 		// ?action=rig auto-rigs an existing GLB; the default POST reconstructs a
 		// mesh from a prompt (text→3D) or a reference image (image→3D).
+		const caller = async () => {
+			const userId = await sessionUserIdFromReq(req);
+			return userId ? `user:${userId}` : `ip:${clientIp(req)}`;
+		};
 		if ((url.searchParams.get('action') || '').trim() === 'rig') {
-			return startRigJob(req, res);
+			return withForgeIdempotency(req, res, { scope: 'rig', caller, run: () => startRigJob(req, res) });
 		}
-		await startJob(req, res);
-		if (res.statusCode === 200) recordConversion(req, 'forge_generation');
+		await withForgeIdempotency(req, res, { scope: 'generate', caller, run: () => startJob(req, res) });
+		if (res.statusCode === 200 && !res.getHeader?.('idempotent-replayed')) recordConversion(req, 'forge_generation');
 		return;
 	}
 

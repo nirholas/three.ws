@@ -120,7 +120,7 @@ Each plan also caps the number of webhook endpoints an account may register (`PO
 
 ### Idempotency
 
-Writes on the versioned agents API accept an `Idempotency-Key` header (up to 200 characters). The first request with a key runs; a retry with the same key and the same body within 24 hours gets the stored response back with `Idempotent-Replayed: true`, and nothing runs twice. Reusing a key with a different body is rejected with `422 idempotency_key_reused`, and a retry that arrives while the first is still running gets `409 idempotency_in_progress`. Other write endpoints are not idempotent unless their section says so, so guard retries on your side. Paid x402 endpoints are idempotent per payment: see [x402](/docs/x402). The free 3D Studio MCP server keeps its `idempotency_key` argument in the same 24-hour store ([MCP studio](./mcp-studio.md#retries-and-idempotency_key)).
+Writes on the versioned agents API accept an `Idempotency-Key` header (up to 200 characters). The first request with a key runs; a retry with the same key and the same body within 24 hours gets the stored response back with `Idempotent-Replayed: true`, and nothing runs twice. Reusing a key with a different body is rejected with `422 idempotency_key_reused`, and a retry that arrives while the first is still running gets `409 idempotency_in_progress`. The forge's create calls honour the same header on the same store: `POST /api/forge` (generate) and `POST /api/forge?action=rig` replay the first call's job for a repeated key (with `Idempotent-Replayed: true`), answer `409 idempotency_in_progress` while it is still starting and `422 idempotency_key_reused` for a different body, and release the key when the first call fails so the retry can run; this works for anonymous callers too, keyed by IP. Other write endpoints are not idempotent unless their section says so, so guard retries on your side. Paid x402 endpoints are idempotent per payment: see [x402](/docs/x402). The free 3D Studio MCP server keeps its `idempotency_key` argument in the same 24-hour store ([MCP studio](./mcp-studio.md#retries-and-idempotency_key)).
 
 ### Paid (x402) errors
 
@@ -471,7 +471,7 @@ The browsable index of public agents. No auth; IP rate limited; 30-second CDN ca
 GET /api/agents/:id
 ```
 
-**Response:** Single agent object. Returns `404 AGENT_NOT_FOUND` if not found.
+**Response:** `{ "agent": { … } }`. Public agents are readable without auth; `is_owner` says whether the caller owns it. An unknown id returns `404 not_found`.
 
 ---
 
@@ -1437,27 +1437,31 @@ daily_spend_cap_exceeded`, `502 upstream_error`, `503 llm_unavailable`.
 POST /api/chat
 ```
 
-Send a message to an agent's LLM runtime. Proxied through the platform for auth and rate limiting. Requires auth.
+Send a message to an agent's LLM runtime and stream the reply. Auth is optional: a signed-in session, API key or OAuth token unlocks every configured provider and the owner's persona tools; an anonymous caller is pinned to the free providers (Groq, OpenRouter free, NVIDIA NIM) and rate-limited per IP. Source: `api/chat.js`.
 
 **Request body**
 
 ```json
 {
-	"agent_id": "abc123",
-	"messages": [{ "role": "user", "content": "What animations do you have?" }],
-	"context": {
-		"model_name": "avatar.glb",
-		"animations": ["wave", "idle", "dance"],
-		"settings": {}
-	}
+	"message": "What animations do you have?",
+	"agentId": "b7a2c1e4-0000-4000-8000-000000000001",
+	"history": [{ "role": "user", "content": "Hi" }, { "role": "assistant", "content": "Hello!" }],
+	"context": { "model_name": "avatar.glb", "animations": ["wave", "idle", "dance"] }
 }
 ```
 
-The `context` object is included in the system prompt so the model knows what's loaded in the viewer.
+| Field | Notes |
+| --- | --- |
+| `message` | Required, 1 to 4000 characters |
+| `agentId` | Optional agent UUID; loads that agent's persona, memory and skills |
+| `history` | Up to 20 prior turns, each `{ role: "user" \| "assistant", content }` |
+| `context` | Optional viewer state included in the system prompt |
+| `provider`, `model` | Optional; anonymous callers may only pick a free provider |
+| `system_prompt` | Optional extra system instructions, up to 2000 characters |
 
 **Available action tools**
 
-The LLM can invoke these viewer actions in its response:
+The LLM can invoke these viewer actions in its response (returned in the `done` event's `actions`):
 
 | Tool                 | Description                   |
 | -------------------- | ----------------------------- |
@@ -1476,12 +1480,12 @@ The LLM can invoke these viewer actions in its response:
 **Response (streaming SSE)**
 
 ```
-data: {"type": "content", "text": "I have three animations..."}
-data: {"type": "tool_call", "name": "play_clip", "args": {"name": "wave"}}
-data: {"type": "done"}
+data: {"type":"chunk","text":"hello"}
+data: {"type":"chunk","text":" from three.ws"}
+data: {"type":"done","reply":"hello from three.ws","actions":[],"model":"…","provider":"nvidia"}
 ```
 
-Usage events (token counts, latency, triggered actions) are recorded after each request.
+A mid-stream failure sends `{"type":"error","code":"stream_error","message":"…"}`. Validation errors answer `400 validation_error` with an `issues` array before the stream opens. Usage events (token counts, latency, triggered actions) are recorded after each request.
 
 ---
 
