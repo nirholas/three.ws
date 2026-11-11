@@ -164,6 +164,27 @@ class TextDocument {
 	}
 }
 
+class LanguageModelTextPart {
+	constructor(value) {
+		this.value = value;
+	}
+}
+
+class LanguageModelToolResult {
+	constructor(content) {
+		this.content = content;
+	}
+}
+
+class McpHttpServerDefinition {
+	constructor(label, uri, headers = {}, version) {
+		this.label = label;
+		this.uri = uri;
+		this.headers = headers;
+		this.version = version;
+	}
+}
+
 function watcher() {
 	return {
 		onDidCreate: () => ({ dispose() {} }),
@@ -190,6 +211,12 @@ const state = {
 	changeDocument: new EventEmitter(),
 	closeDocument: new EventEmitter(),
 	changeConfiguration: new EventEmitter(),
+	participants: new Map(),
+	tools: new Map(),
+	mcpProviders: new Map(),
+	quickPick: null,
+	strictStat: false,
+	inputBox: null,
 };
 
 const vscode = {
@@ -209,6 +236,9 @@ const vscode = {
 	SnippetString,
 	CodeLens,
 	TextDocument,
+	LanguageModelTextPart,
+	LanguageModelToolResult,
+	McpHttpServerDefinition,
 	Disposable: {
 		from: (...items) => ({ dispose: () => items.forEach((d) => d?.dispose?.()) }),
 	},
@@ -278,7 +308,8 @@ const vscode = {
 			state.messages.push(['error', m]);
 			return Promise.resolve(undefined);
 		},
-		showInputBox: () => Promise.resolve(undefined),
+		showInputBox: (options) => Promise.resolve(state.inputBox?.(options)),
+		showQuickPick: (items, options) => Promise.resolve(state.quickPick?.(items, options)),
 		withProgress: (_options, task) =>
 			task({ report() {} }, { isCancellationRequested: false, onCancellationRequested: () => ({ dispose() {} }) }),
 	},
@@ -300,7 +331,11 @@ const vscode = {
 		openTextDocument: ({ language, content }) => Promise.resolve(new TextDocument(Uri.parse(`untitled://doc-${Date.now()}`), language, content)),
 		asRelativePath: (uri) => String(uri.path || uri).replace('/workspace/', ''),
 		fs: {
-			stat: () => Promise.resolve({ size: 1024 }),
+			stat: (uri) => {
+				if (!state.strictStat) return Promise.resolve({ size: 1024 });
+				const bytes = state.fileBytes.get(uri.path);
+				return bytes ? Promise.resolve({ size: bytes.byteLength }) : Promise.reject(new Error(`ENOENT ${uri.path}`));
+			},
 			readFile: (uri) => Promise.resolve(state.fileBytes.get(uri.path) || new Uint8Array()),
 			writeFile: (uri, bytes) => {
 				state.fileBytes.set(uri.path, bytes);
@@ -308,6 +343,23 @@ const vscode = {
 			},
 			readDirectory: () => Promise.resolve([]),
 			createDirectory: () => Promise.resolve(),
+		},
+	},
+	chat: {
+		createChatParticipant(id, handler) {
+			const participant = { id, handler, dispose: () => state.participants.delete(id) };
+			state.participants.set(id, participant);
+			return participant;
+		},
+	},
+	lm: {
+		registerTool(name, tool) {
+			state.tools.set(name, tool);
+			return { dispose: () => state.tools.delete(name) };
+		},
+		registerMcpServerDefinitionProvider(id, provider) {
+			state.mcpProviders.set(id, provider);
+			return { dispose: () => state.mcpProviders.delete(id) };
 		},
 	},
 	commands: {

@@ -4,3 +4,4 @@ media/viewer.js
 media/viewer.js.map
 media/vendor/
 *.vsix
+.vscode-test/

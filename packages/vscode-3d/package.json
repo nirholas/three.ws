@@ -1,8 +1,8 @@
 {
 	"name": "vscode-3d",
 	"displayName": "three.ws 3D",
-	"description": "Preview GLB and glTF models inside VS Code, try 2,800 library animations or a text-described motion on any rig and bake the result, generate and refine models from a prompt on the free three.ws lane, optimize for the web, diff a model against git, AI quality-check a render, and get diagnostics and completions for <agent-3d> embeds. Powered by three.ws.",
-	"version": "0.2.0",
+	"description": "Preview GLB and glTF models inside VS Code, try 2,800 library animations or a text-described motion on any rig and bake the result, generate and refine models from a prompt on the free three.ws lane, optimize for the web, diff a model against git, AI quality-check a render, and get diagnostics and completions for <agent-3d> embeds. In GitHub Copilot Chat: @threews /forge, /find, /rig and /embed, five agent-mode tools, and the three.ws MCP servers. Powered by three.ws.",
+	"version": "0.3.0",
 	"publisher": "threews",
 	"license": "Apache-2.0",
 	"pricing": "Free",
@@ -16,12 +16,14 @@
 		"url": "https://github.com/nirholas/three.ws/issues"
 	},
 	"engines": {
-		"vscode": "^1.85.0"
+		"vscode": "^1.101.0"
 	},
 	"categories": [
 		"Visualization",
 		"Programming Languages",
-		"Other"
+		"Other",
+		"AI",
+		"Chat"
 	],
 	"keywords": [
 		"3d",
@@ -40,7 +42,11 @@
 		"optimize",
 		"meshopt",
 		"diff",
-		"embed"
+		"embed",
+		"copilot",
+		"chat",
+		"mcp",
+		"agent"
 	],
 	"type": "module",
 	"main": "./dist/extension.cjs",
@@ -57,7 +63,14 @@
 		"onLanguage:svelte",
 		"onLanguage:astro",
 		"onLanguage:markdown",
-		"onLanguage:php"
+		"onLanguage:php",
+		"onChatParticipant:threews3d.chat",
+		"onLanguageModelTool:threews_generate_model",
+		"onLanguageModelTool:threews_check_job",
+		"onLanguageModelTool:threews_find_asset",
+		"onLanguageModelTool:threews_inspect_glb",
+		"onLanguageModelTool:threews_optimize_glb",
+		"onMcpCollection:threews3d.mcp"
 	],
 	"contributes": {
 		"customEditors": [
@@ -194,6 +207,15 @@
 				"command": "threews3d.refreshGallery",
 				"title": "3D: Refresh Forge Gallery",
 				"icon": "$(refresh)"
+			},
+			{
+				"command": "threews3d.signIn",
+				"title": "3D: Connect my three.ws Account to Copilot Agent Mode (MCP)",
+				"icon": "$(account)"
+			},
+			{
+				"command": "threews3d.signOut",
+				"title": "3D: Disconnect my three.ws Account from Copilot Agent Mode"
 			}
 		],
 		"menus": {
@@ -380,12 +402,231 @@
 					"description": "Check <agent-3d> tags and library script tags in HTML, JSX, Vue, Svelte, Astro, Markdown and PHP files: missing source or size, unpinned or stale library versions, unknown attributes."
 				}
 			}
-		}
+		},
+		"chatParticipants": [
+			{
+				"id": "threews3d.chat",
+				"name": "threews",
+				"fullName": "three.ws",
+				"description": "Generate, find, rig and embed 3D models",
+				"isSticky": true,
+				"commands": [
+					{
+						"name": "forge",
+						"description": "Generate a textured 3D model from a description, free"
+					},
+					{
+						"name": "find",
+						"description": "Search thousands of ready-made CC0 models, characters and motions"
+					},
+					{
+						"name": "rig",
+						"description": "Add a humanoid skeleton to a GLB so it can be animated"
+					},
+					{
+						"name": "embed",
+						"description": "Insert an <agent-3d> embed for a model into the open file"
+					}
+				]
+			}
+		],
+		"languageModelTools": [
+			{
+				"name": "threews_generate_model",
+				"displayName": "three.ws: Generate 3D Model",
+				"toolReferenceName": "threewsGenerate",
+				"canBeReferencedInPrompt": true,
+				"icon": "$(sparkle)",
+				"userDescription": "Generate a textured 3D model (GLB) from a description on the free three.ws lane.",
+				"modelDescription": "Generate a textured, downloadable 3D model (GLB) from a text description using the free three.ws text to 3D lane (no key, no account). Describe ONE object, character or creature: lead with the subject, then materials and colours. Search for a ready-made asset with threews_find_asset first when a common object would do. Returns the GLB URL, a browser viewer URL and, when saveToWorkspace is true, the workspace path it was saved to. A render that takes longer than about 40 seconds returns status \"pending\" with a jobId: call threews_check_job with it to collect the model.",
+				"tags": [
+					"3d",
+					"glb",
+					"threews"
+				],
+				"inputSchema": {
+					"type": "object",
+					"properties": {
+						"prompt": {
+							"type": "string",
+							"minLength": 3,
+							"maxLength": 1000,
+							"description": "The single subject to model, e.g. \"a low-poly brass lantern with amber glass\"."
+						},
+						"tier": {
+							"type": "string",
+							"enum": [
+								"draft",
+								"standard",
+								"high"
+							],
+							"description": "Detail level: draft (fastest, default), standard, or high (slowest)."
+						},
+						"saveToWorkspace": {
+							"type": "boolean",
+							"description": "Download the finished GLB into the workspace models folder. Default true when a folder is open."
+						}
+					},
+					"required": [
+						"prompt"
+					]
+				}
+			},
+			{
+				"name": "threews_check_job",
+				"displayName": "three.ws: Check Generation Job",
+				"toolReferenceName": "threewsCheckJob",
+				"canBeReferencedInPrompt": true,
+				"icon": "$(sync)",
+				"userDescription": "Collect a three.ws generation that was still rendering.",
+				"modelDescription": "Check on a three.ws 3D generation that returned status \"pending\" and collect the finished model. Pass the jobId the generation returned. While it is still rendering this returns the stage and the live ETA: wait about that long, then call again. Checking does not use generation quota.",
+				"tags": [
+					"3d",
+					"threews"
+				],
+				"inputSchema": {
+					"type": "object",
+					"properties": {
+						"jobId": {
+							"type": "string",
+							"minLength": 8,
+							"maxLength": 4096,
+							"description": "The jobId a pending threews_generate_model result returned."
+						},
+						"prompt": {
+							"type": "string",
+							"maxLength": 1000,
+							"description": "The prompt the job was started with, used to name the saved file."
+						},
+						"saveToWorkspace": {
+							"type": "boolean",
+							"description": "Download the finished GLB into the workspace models folder. Default true when a folder is open."
+						}
+					},
+					"required": [
+						"jobId"
+					]
+				}
+			},
+			{
+				"name": "threews_find_asset",
+				"displayName": "three.ws: Find 3D Asset",
+				"toolReferenceName": "threewsFind",
+				"canBeReferencedInPrompt": true,
+				"icon": "$(search)",
+				"userDescription": "Search the free three.ws catalog of ready-made 3D models, characters and motions.",
+				"modelDescription": "Search every ready-made asset three.ws publishes: CC0 3D props and objects, rigged humanoid characters and retargetable motion clips. Free, read only. Use this before generating a common object. Every word of the query must match, so start broad (\"chair\", not \"comfortable red velvet chair\"). Returns each item with its id, title, license, GLB URL and viewer URL.",
+				"tags": [
+					"3d",
+					"glb",
+					"threews",
+					"search"
+				],
+				"inputSchema": {
+					"type": "object",
+					"properties": {
+						"query": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 200,
+							"description": "Words to match against titles, tags and categories, e.g. \"lantern\" or \"wooden chair\"."
+						},
+						"kind": {
+							"type": "string",
+							"enum": [
+								"object",
+								"character",
+								"animation"
+							],
+							"description": "Narrow to object (props), character (rigged humanoids) or animation (motion clips)."
+						},
+						"limit": {
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 20,
+							"description": "How many items to return (default 8)."
+						}
+					},
+					"required": [
+						"query"
+					]
+				}
+			},
+			{
+				"name": "threews_inspect_glb",
+				"displayName": "three.ws: Inspect GLB",
+				"toolReferenceName": "threewsInspect",
+				"canBeReferencedInPrompt": true,
+				"icon": "$(info)",
+				"userDescription": "Report triangles, materials, textures, animations and web-readiness of a GLB in the workspace.",
+				"modelDescription": "Inspect a .glb or .gltf file in the workspace, entirely locally (the file is never uploaded): file size, triangles, vertices, meshes, materials, textures, animations, skeleton and extensions, plus concrete optimization suggestions. Read only.",
+				"tags": [
+					"3d",
+					"glb",
+					"threews"
+				],
+				"inputSchema": {
+					"type": "object",
+					"properties": {
+						"path": {
+							"type": "string",
+							"minLength": 1,
+							"description": "Workspace-relative (or absolute) path of the .glb or .gltf file, e.g. \"models/lantern.glb\"."
+						}
+					},
+					"required": [
+						"path"
+					]
+				}
+			},
+			{
+				"name": "threews_optimize_glb",
+				"displayName": "three.ws: Optimize GLB for the Web",
+				"toolReferenceName": "threewsOptimize",
+				"canBeReferencedInPrompt": true,
+				"icon": "$(zap)",
+				"userDescription": "Write a web-optimized copy of a GLB next to the original.",
+				"modelDescription": "Optimize a .glb or .gltf in the workspace for the web, locally: dedup, prune, weld, resample animations and meshopt compression (\"balanced\"), plus vertex quantization (\"compact\"). Writes a NEW file next to the original (<name>.web.glb); the original is never modified. Returns the new path and the size and vertex savings.",
+				"tags": [
+					"3d",
+					"glb",
+					"threews"
+				],
+				"inputSchema": {
+					"type": "object",
+					"properties": {
+						"path": {
+							"type": "string",
+							"minLength": 1,
+							"description": "Workspace-relative (or absolute) path of the .glb or .gltf file to optimize."
+						},
+						"preset": {
+							"type": "string",
+							"enum": [
+								"balanced",
+								"compact"
+							],
+							"description": "balanced (default, full precision) or compact (smallest, tiny precision loss)."
+						}
+					},
+					"required": [
+						"path"
+					]
+				}
+			}
+		],
+		"mcpServerDefinitionProviders": [
+			{
+				"id": "threews3d.mcp",
+				"label": "three.ws"
+			}
+		]
 	},
 	"scripts": {
 		"build": "node build.mjs",
 		"watch": "node build.mjs --watch",
 		"test": "node build.mjs && node --test \"test/*.test.mjs\"",
+		"test:vscode": "node build.mjs && xvfb-run -a node test/electron/run.mjs",
 		"release": "node scripts/release.mjs",
 		"package": "npx --yes @vscode/vsce package --no-dependencies",
 		"publish:marketplace": "npx --yes @vscode/vsce publish --no-dependencies",
@@ -401,7 +642,8 @@
 		"three": "^0.187.0"
 	},
 	"devDependencies": {
-		"@types/vscode": "^1.85.0",
+		"@types/vscode": "^1.101.0",
+		"@vscode/test-electron": "^3.1.0",
 		"esbuild": "^0.28.1"
 	}
 }

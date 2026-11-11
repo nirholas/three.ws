@@ -23,6 +23,7 @@ import { committedBytes, compareModels } from './compare.js';
 import { checkQuality, qualityMarkdown } from './quality.js';
 import { createStatusBar } from './status-bar.js';
 import { registerEmbedLanguage } from './embed-language-vscode.js';
+import { registerCopilot } from './copilot.js';
 
 let output;
 let links;
@@ -51,6 +52,7 @@ export function activate(context) {
 		ModelViewerProvider.register(context, links, output),
 		createStatusBar(),
 		registerEmbedLanguage(context, { origin, output }),
+		registerCopilot(context, { origin, links, output }),
 	);
 
 	const reg = (id, fn) => context.subscriptions.push(vscode.commands.registerCommand(id, fn));

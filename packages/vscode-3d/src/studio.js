@@ -116,6 +116,17 @@ export async function callTool(origin, name, args, opts = {}) {
 	return result;
 }
 
+/**
+ * One tools/call and no polling: the model, or the pending handle as-is.
+ *
+ * Agent-mode tools use this so a long render hands Copilot a job id to collect
+ * with check_job instead of holding the tool call open for minutes.
+ */
+export async function callToolOnce(origin, name, args, { signal } = {}) {
+	const payload = await rpc(origin, toolCall(name, args), { signal, timeoutMs: 90_000 });
+	return readToolResult(payload.result);
+}
+
 /** One check_job round trip; a check that failed while the job is fine stays pending. */
 async function checkOnce(origin, pending, { signal, pollMs }) {
 	const payload = await rpc(origin, toolCall(TOOLS.check, { job_id: pending.jobId }), { signal });
