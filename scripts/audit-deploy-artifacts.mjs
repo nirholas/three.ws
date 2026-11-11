@@ -285,8 +285,8 @@ export async function findUndeclaredApiImports({ apiDir = resolve(ROOT, 'api') }
 // one asset swap away from breaking. Assert their presence whenever a dist/
 // exists (i.e. in any post-build / pre-deploy run).
 
-export function findMissingDistAssets() {
-	const dist = resolve(ROOT, 'dist');
+export function findMissingDistAssets({ root = ROOT } = {}) {
+	const dist = resolve(root, 'dist');
 	if (!existsSync(dist)) return { skipped: true, missing: [] };
 	const required = [
 		'three/draco/draco_decoder.wasm',
@@ -296,6 +296,14 @@ export function findMissingDistAssets() {
 		// It shares the single decoder copy rather than carrying its own.
 		'three/draco/draco_encoder.js',
 		'scene-studio/basis/basis_transcoder.wasm',
+		// The wake word and VAD (src/voice/wake-word.js, vad.js) load these from
+		// /models/voice/runtime/. Gitignored and staged from node_modules by
+		// scripts/copy-voice-models.mjs, so the 2026-11-11 deploy shipped the loader
+		// and the model but not the wasm: every .wasm answered the HTML 404 page.
+		'models/voice/runtime/silero_vad_v5.onnx',
+		'models/voice/runtime/vad.worklet.bundle.min.js',
+		'models/voice/runtime/ort-wasm-simd-threaded.mjs',
+		'models/voice/runtime/ort-wasm-simd-threaded.wasm',
 	];
 	return { skipped: false, missing: required.filter((p) => !existsSync(resolve(dist, p))) };
 }

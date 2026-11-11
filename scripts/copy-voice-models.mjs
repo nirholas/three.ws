@@ -48,15 +48,19 @@ if (missing.length === files.length) {
 	process.exit(0);
 }
 
+// A partial install is a failed install. Warning and carrying on staged the loader
+// without the wasm on 2026-11-11 and shipped a site whose .wasm files all 404ed.
+if (missing.length) {
+	for (const [from] of missing) console.error(`[copy-voice-models] ${from} not found`);
+	console.error('[copy-voice-models] refusing a partial stage. Run npm install, then retry.');
+	process.exit(1);
+}
+
 mkdirSync(out, { recursive: true });
 
 let staged = 0;
 for (const [from, name] of files) {
 	const src = join(repo, from);
-	if (!existsSync(src)) {
-		console.warn(`[copy-voice-models] ${from} not found`);
-		continue;
-	}
 	const dest = join(out, name);
 	// Skip an identical restage so a repeated prebuild does not rewrite 11 MB.
 	if (existsSync(dest) && statSync(dest).size === statSync(src).size) {

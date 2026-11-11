@@ -25,6 +25,7 @@ import {
 	findUnsatisfiedPeers,
 	findUndeclaredApiImports,
 	findLockDrift,
+	findMissingDistAssets,
 	findWorkspaceLockMismatch,
 	findImageNpmCiRejection,
 	readDockerNpmVersion,
@@ -264,5 +265,42 @@ describe('findUnsatisfiedPeers logic', () => {
 			},
 		};
 		expect(findUnsatisfiedPeers({ lock })).toEqual([]);
+	});
+});
+
+describe('findMissingDistAssets', () => {
+	const PRESENT = [
+		'three/draco/draco_decoder.wasm',
+		'three/draco/gltf/draco_decoder.wasm',
+		'three/basis/basis_transcoder.wasm',
+		'three/draco/draco_encoder.js',
+		'scene-studio/basis/basis_transcoder.wasm',
+		'models/voice/runtime/silero_vad_v5.onnx',
+		'models/voice/runtime/vad.worklet.bundle.min.js',
+		'models/voice/runtime/ort-wasm-simd-threaded.mjs',
+	];
+
+	function distWith(files) {
+		const root = scratchDir();
+		for (const f of files) {
+			const abs = join(root, 'dist', f);
+			mkdirSync(join(abs, '..'), { recursive: true });
+			writeFileSync(abs, 'x');
+		}
+		return root;
+	}
+
+	// 2026-11-11: production served /models/voice/runtime/ort-wasm-simd-threaded.mjs
+	// with 200 but every .wasm beside it as the HTML 404 page, because the deploy's
+	// dist/ shipped without the runtime wasm and no gate noticed. The wake word and
+	// the VAD both fetch that wasm, so on-device listening failed for every user.
+	it('fails a dist that has the voice runtime loader but not its wasm', () => {
+		const { missing } = findMissingDistAssets({ root: distWith(PRESENT) });
+		expect(missing).toContain('models/voice/runtime/ort-wasm-simd-threaded.wasm');
+	});
+
+	it('passes when the voice runtime wasm ships beside its loader', () => {
+		const files = [...PRESENT, 'models/voice/runtime/ort-wasm-simd-threaded.wasm'];
+		expect(findMissingDistAssets({ root: distWith(files) }).missing).toEqual([]);
 	});
 });
