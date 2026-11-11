@@ -1,0 +1,47 @@
+1
+00:00:00,000 --> 00:00:03,900
+three.ws gives your AI a body: a 3D avatar, a voice and a persona.
+
+2
+00:00:04,000 --> 00:00:08,900
+Describe an object in one sentence.
+
+3
+00:00:09,000 --> 00:00:11,900
+Forge builds it on the free lane. No account needed.
+
+4
+00:00:12,000 --> 00:00:16,900
+A textured 3D model from that one prompt.
+
+5
+00:00:17,000 --> 00:00:21,900
+Orbit it, download it as GLB, or place it in a scene.
+
+6
+00:00:22,000 --> 00:00:28,900
+Open any GLB or glTF in the three.ws viewer, right in the browser.
+
+7
+00:00:29,000 --> 00:00:33,400
+Give an avatar a persona and skills, and it becomes an agent.
+
+8
+00:00:33,500 --> 00:00:37,900
+Every agent has a public page anyone can visit and chat with.
+
+9
+00:00:38,000 --> 00:00:44,900
+In Microsoft Teams, the three.ws tab lists agents and what each one did today.
+
+10
+00:00:45,000 --> 00:00:51,900
+Share an agent into a chat as an Adaptive Card with its live numbers.
+
+11
+00:00:52,000 --> 00:00:57,900
+In Visual Studio Code, ask GitHub Copilot to make and preview 3D models with three.ws.
+
+12
+00:00:58,000 --> 00:01:03,900
+three.ws is live on Microsoft Marketplace. Start free at three.ws.

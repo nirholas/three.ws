@@ -1,0 +1,16 @@
+three.ws demo: narration script (60 to 70 seconds, English)
+
+Read each line when its timestamp comes up. The captions in the video use the same words.
+
+[00:00] three.ws gives your AI a body: a 3D avatar, a voice and a persona.
+[00:04] Describe an object in one sentence.
+[00:09] Forge builds it on the free lane. No account needed.
+[00:12] A textured 3D model from that one prompt.
+[00:17] Orbit it, download it as GLB, or place it in a scene.
+[00:22] Open any GLB or glTF in the three.ws viewer, right in the browser.
+[00:29] Give an avatar a persona and skills, and it becomes an agent.
+[00:33] Every agent has a public page anyone can visit and chat with.
+[00:38] In Microsoft Teams, the three.ws tab lists agents and what each one did today.
+[00:45] Share an agent into a chat as an Adaptive Card with its live numbers.
+[00:52] In Visual Studio Code, ask GitHub Copilot to make and preview 3D models with three.ws.
+[00:58] three.ws is live on Microsoft Marketplace. Start free at three.ws.

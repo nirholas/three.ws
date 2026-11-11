@@ -240,14 +240,16 @@ Regenerate with `npm run media:microsoft`. How it works and when to refresh: [ma
 - [`screenshot-3.png`](../../../../extensions/walk-avatar/store-assets/screenshot-3.png): 1280 x 800, 194 KB
 - [`screenshot-4.png`](../../../../extensions/walk-avatar/store-assets/screenshot-4.png): 1280 x 800, 187 KB
 - [`screenshot-5.png`](../../../../extensions/walk-avatar/store-assets/screenshot-5.png): 1280 x 800, 172 KB
+- Video: the listing takes a YouTube link, not a file. Upload <https://storage.googleapis.com/three-ws-desktop-releases/marketing/microsoft/2026-11-11/three-ws-demo-65b81bfb24c1.mp4> with the captions in [`three-ws-demo.en.srt`](../../../../marketing/microsoft/media/video/three-ws-demo.en.srt), then paste that link.
 
 **Microsoft Store (Windows app)** (requirements read 2026-11-11: <https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/screenshots-and-images>)
 
-- [`screenshot-1-forge-composer-2560x1440.png`](../../../../marketing/microsoft/media/msstore/screenshot-1-forge-composer-2560x1440.png): 2560 x 1440, 125 KB. Caption: "Describe an object in a sentence. Forge turns it into a textured 3D model on the free lane."
-- [`screenshot-2-forge-result-2560x1440.png`](../../../../marketing/microsoft/media/msstore/screenshot-2-forge-result-2560x1440.png): 2560 x 1440, 316 KB. Caption: "The finished model from that one prompt, ready to orbit, download as GLB or place in a scene."
-- [`screenshot-3-viewer-2560x1440.png`](../../../../marketing/microsoft/media/msstore/screenshot-3-viewer-2560x1440.png): 2560 x 1440, 342 KB. Caption: "The three.ws viewer: inspect any GLB or glTF in the browser, with lighting, animation and AR."
-- [`screenshot-4-agent-2560x1440.png`](../../../../marketing/microsoft/media/msstore/screenshot-4-agent-2560x1440.png): 2560 x 1440, 404 KB. Caption: "Every agent has a public page with its 3D body, its skills and a chat anyone can open."
+- [`screenshot-1-forge-composer-2560x1440.png`](../../../../marketing/microsoft/media/msstore/screenshot-1-forge-composer-2560x1440.png): 2560 x 1440, 127 KB. Caption: "Describe an object in a sentence. Forge turns it into a textured 3D model on the free lane."
+- [`screenshot-2-forge-result-2560x1440.png`](../../../../marketing/microsoft/media/msstore/screenshot-2-forge-result-2560x1440.png): 2560 x 1440, 373 KB. Caption: "The finished model from that one prompt, ready to orbit, download as GLB or place in a scene."
+- [`screenshot-3-viewer-2560x1440.png`](../../../../marketing/microsoft/media/msstore/screenshot-3-viewer-2560x1440.png): 2560 x 1440, 417 KB. Caption: "The three.ws viewer: inspect any GLB or glTF in the browser, with lighting, animation and AR."
+- [`screenshot-4-agent-2560x1440.png`](../../../../marketing/microsoft/media/msstore/screenshot-4-agent-2560x1440.png): 2560 x 1440, 401 KB. Caption: "Every agent has a public page with its 3D body, its skills and a chat anyone can open."
 - [`tile-icon-300x300.png`](../../../../marketing/microsoft/media/msstore/tile-icon-300x300.png): 300 x 300, 30 KB
-- [`trailer-thumbnail-1920x1080.png`](../../../../marketing/microsoft/media/msstore/trailer-thumbnail-1920x1080.png): 1920 x 1080, 202 KB
+- [`trailer-thumbnail-1920x1080.png`](../../../../marketing/microsoft/media/msstore/trailer-thumbnail-1920x1080.png): 1920 x 1080, 204 KB
+- Trailer: download <https://storage.googleapis.com/three-ws-desktop-releases/marketing/microsoft/2026-11-11/three-ws-demo-65b81bfb24c1.mp4> (1920 x 1080 H.264 with AAC, 64 s, 8.8 MB, sha256 `65b81bfb24c14db7c5f30ef4f18c6720af47712a75a9fd40dd5d104ea1c4d756`) and upload the file. Captions: [`three-ws-demo.en.vtt`](../../../../marketing/microsoft/media/video/three-ws-demo.en.vtt).
 
 <!-- media:microsoft:end -->

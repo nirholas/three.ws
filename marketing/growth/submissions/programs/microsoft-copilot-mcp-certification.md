@@ -111,10 +111,11 @@ Regenerate with `npm run media:microsoft`. How it works and when to refresh: [ma
 
 **Microsoft Teams Store app** (requirements read 2026-11-11: <https://learn.microsoft.com/en-us/microsoftteams/platform/concepts/deploy-and-publish/appsource/prepare/submission-checklist>)
 
-- [`screenshot-1-teams-tab-1366x768.png`](../../../../marketing/microsoft/media/teams/screenshot-1-teams-tab-1366x768.png): 1366 x 768, 91 KB. Caption: "The three.ws tab for Microsoft Teams: browse agents and see what each one did today."
-- [`screenshot-2-adaptive-card-1366x768.png`](../../../../marketing/microsoft/media/teams/screenshot-2-adaptive-card-1366x768.png): 1366 x 768, 157 KB. Caption: "The agent card as an Adaptive Card, rendered by the Adaptive Cards SDK with the Microsoft Teams host config."
-- [`screenshot-3-agent-1366x768.png`](../../../../marketing/microsoft/media/teams/screenshot-3-agent-1366x768.png): 1366 x 768, 192 KB. Caption: "Every agent has a public page with its 3D body, its skills and a chat anyone can open."
-- [`screenshot-4-forge-result-1366x768.png`](../../../../marketing/microsoft/media/teams/screenshot-4-forge-result-1366x768.png): 1366 x 768, 237 KB. Caption: "The finished model from that one prompt, ready to orbit, download as GLB or place in a scene."
-- [`screenshot-5-viewer-1366x768.png`](../../../../marketing/microsoft/media/teams/screenshot-5-viewer-1366x768.png): 1366 x 768, 216 KB. Caption: "The three.ws viewer: inspect any GLB or glTF in the browser, with lighting, animation and AR."
+- [`screenshot-1-teams-tab-1366x768.png`](../../../../marketing/microsoft/media/teams/screenshot-1-teams-tab-1366x768.png): 1366 x 768, 92 KB. Caption: "The three.ws tab for Microsoft Teams: browse agents and see what each one did today."
+- [`screenshot-2-adaptive-card-1366x768.png`](../../../../marketing/microsoft/media/teams/screenshot-2-adaptive-card-1366x768.png): 1366 x 768, 145 KB. Caption: "The agent card as an Adaptive Card, rendered by the Adaptive Cards SDK with the Microsoft Teams host config."
+- [`screenshot-3-agent-1366x768.png`](../../../../marketing/microsoft/media/teams/screenshot-3-agent-1366x768.png): 1366 x 768, 188 KB. Caption: "Every agent has a public page with its 3D body, its skills and a chat anyone can open."
+- [`screenshot-4-forge-result-1366x768.png`](../../../../marketing/microsoft/media/teams/screenshot-4-forge-result-1366x768.png): 1366 x 768, 258 KB. Caption: "The finished model from that one prompt, ready to orbit, download as GLB or place in a scene."
+- [`screenshot-5-viewer-1366x768.png`](../../../../marketing/microsoft/media/teams/screenshot-5-viewer-1366x768.png): 1366 x 768, 239 KB. Caption: "The three.ws viewer: inspect any GLB or glTF in the browser, with lighting, animation and AR."
+- Video: the listing takes a YouTube or Vimeo link, not a file. Upload <https://storage.googleapis.com/three-ws-desktop-releases/marketing/microsoft/2026-11-11/three-ws-demo-65b81bfb24c1.mp4> with the captions in [`three-ws-demo.en.srt`](../../../../marketing/microsoft/media/video/three-ws-demo.en.srt), then paste that link.
 
 <!-- media:microsoft:end -->
