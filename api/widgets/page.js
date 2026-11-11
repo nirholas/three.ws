@@ -67,15 +67,36 @@ export default wrap(async (req, res) => {
 
 	const embedUrl = `${origin}/widget#widget=${widget.id}&kiosk=true`;
 	const oembedJs = `${origin}/api/widgets/oembed?url=${encodeURIComponent(pageUrl)}&format=json`;
-	const title = widget.name || 'Widget';
-	const typeLbl = TYPE_LABEL[widget.type] || 'Widget';
-	const desc = `${typeLbl} · embeddable 3D, no code. Powered by three.ws.`;
+	const { title, desc } = widgetPageMeta(widget);
 
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/html; charset=utf-8');
 	res.setHeader('cache-control', 'public, max-age=300, s-maxage=900');
 	res.end(renderHtml({ title, desc, pageUrl, embedUrl, ogUrl, oembedJs, widgetId: widget.id }));
 });
+
+/**
+ * Title and description for a widget's page. Most widgets keep their default
+ * name ("Talking-agent Widget"), so the name alone gave hundreds of indexed
+ * pages one title; the owner, the avatar it shows and the day it was made
+ * tell them apart. A part the widget name already carries is not repeated.
+ */
+export function widgetPageMeta(widget) {
+	const name = String(widget.name || '').trim() || 'Widget';
+	const typeLbl = TYPE_LABEL[widget.type] || 'Widget';
+	const has = (part) => part && name.toLowerCase().includes(String(part).toLowerCase());
+	const owner = String(widget.owner_name || '').trim();
+	const subject = String(widget.avatar_name || '').trim();
+	const title = owner && !has(owner) ? `${name} by ${owner}` : name;
+	const featuring = subject && !has(subject) ? ` featuring ${subject}` : '';
+	const by = owner ? ` by ${owner}` : '';
+	const t = widget.created_at ? new Date(widget.created_at) : null;
+	const made = t && !Number.isNaN(t.getTime())
+		? `, made ${t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}`
+		: '';
+	const desc = `${typeLbl} widget${featuring}${by}${made}. Embeddable 3D, no code. Powered by three.ws.`;
+	return { title, desc };
+}
 
 async function loadWidget(id) {
 	if (isDemoWidgetId(id)) {
@@ -92,9 +113,13 @@ async function loadWidget(id) {
 	}
 	try {
 		const [row] = await sql`
-			select id, name, type, avatar_id, agent_id, is_public
-			from widgets
-			where id = ${id} and deleted_at is null
+			select w.id, w.name, w.type, w.avatar_id, w.agent_id, w.is_public, w.created_at,
+			       coalesce(nullif(u.display_name, ''), u.username) as owner_name,
+			       a.name as avatar_name
+			from widgets w
+			left join users u on u.id = w.user_id and u.deleted_at is null
+			left join avatars a on a.id = w.avatar_id and a.deleted_at is null and a.visibility = 'public'
+			where w.id = ${id} and w.deleted_at is null
 			limit 1
 		`;
 		return row || null;
@@ -102,9 +127,13 @@ async function loadWidget(id) {
 		if (/column .* does not exist/i.test(err?.message || '')) {
 			// agent_id column not yet migrated, so fall back to the query without it
 			const [row] = await sql`
-				select id, name, type, avatar_id, is_public
-				from widgets
-				where id = ${id} and deleted_at is null
+				select w.id, w.name, w.type, w.avatar_id, w.is_public, w.created_at,
+				       coalesce(nullif(u.display_name, ''), u.username) as owner_name,
+				       a.name as avatar_name
+				from widgets w
+				left join users u on u.id = w.user_id and u.deleted_at is null
+				left join avatars a on a.id = w.avatar_id and a.deleted_at is null and a.visibility = 'public'
+				where w.id = ${id} and w.deleted_at is null
 				limit 1
 			`;
 			return row || null;
