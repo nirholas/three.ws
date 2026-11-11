@@ -1,0 +1,96 @@
+# Deploy the Phi brain lane: Microsoft Phi-4-mini-instruct (MIT) on vLLM, as a
+# scale-to-zero Cloud Run service on one L4.
+#
+#   gcloud builds submit --config workers/model-phi/cloudbuild.yaml \
+#     --project aerial-vehicle-466722-p5 workers/model-phi
+#
+# Then point the API at it (the lane is dormant until this is set):
+#
+#   gcloud run services update three-ws-api --region us-central1 \
+#     --project aerial-vehicle-466722-p5 \
+#     --update-env-vars PHI_WORKER_URL=$(gcloud run services describe model-phi \
+#       --region us-central1 --project aerial-vehicle-466722-p5 --format='value(status.url)')
+#
+# Prerequisite: the weights are staged (cloudbuild.weights.yaml), which puts the
+# pinned revision and its MANIFEST.json in gs://three-ws-model-weights/phi-4-mini-instruct.
+# Measured numbers, routing table and the verification job: docs/phi-brain-lane.md.
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+substitutions:
+  # us-central1 holds the weights bucket, so the FUSE read at boot stays in-region.
+  _REGION: us-central1
+  _SERVICE: model-phi
+  _REPO: model-phi
+  # Same runtime identity and bearer secret as every other GPU worker, so the
+  # API reaches it with the GCP_RECONSTRUCTION_KEY it already holds.
+  _RUN_SA: avatar-reconstruction-sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+  _WEIGHTS_BUCKET: three-ws-model-weights
+  _VLLM_TAG: v0.29.0
+  # Scale to zero: the lane serves cheap internal tasks with the platform chain
+  # behind it, so a cold start costs a fallback, never a failed request.
+  _MIN_INSTANCES: "0"
+  _MAX_INSTANCES: "2"
+
+steps:
+  - id: weights-staged
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        gcloud storage cat "gs://${_WEIGHTS_BUCKET}/phi-4-mini-instruct/MANIFEST.json" >/dev/null \
+          || { echo "weights are not staged: run cloudbuild.weights.yaml first"; exit 1; }
+
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --build-arg=VLLM_IMAGE=vllm/vllm-openai:${_VLLM_TAG}
+      - -t=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/model-phi:$BUILD_ID
+      - .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: [push, "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/model-phi:$BUILD_ID"]
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/model-phi:$BUILD_ID
+      - --region=${_REGION}
+      - --service-account=${_RUN_SA}
+      - --platform=managed
+      - --port=8080
+      - --gpu=1
+      - --gpu-type=nvidia-l4
+      - --no-gpu-zonal-redundancy
+      - --no-cpu-throttling
+      - --cpu=8
+      - --memory=32Gi
+      # vLLM batches up to MAX_NUM_SEQS=64 sequences; 32 in flight per instance
+      # keeps time to first token low before a second instance starts.
+      - --concurrency=32
+      - --min-instances=${_MIN_INSTANCES}
+      - --max-instances=${_MAX_INSTANCES}
+      - --timeout=300
+      # vLLM's own bearer check (VLLM_API_KEY) gates every /v1 route, the same
+      # model as the other vLLM workers; /health stays open for the probe.
+      - --allow-unauthenticated
+      - --labels=lane=phi-gpu,program=gcp-credits
+      - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET},readonly=true
+      - --add-volume-mount=volume=weights,mount-path=/weights
+      # serve.sh checks the staged tree, then vLLM loads 7.7 GB and captures
+      # CUDA graphs before /health answers: allow up to 10 minutes.
+      - --startup-probe=httpGet.path=/health,httpGet.port=8080,periodSeconds=10,timeoutSeconds=5,failureThreshold=60
+      - --set-secrets=VLLM_API_KEY=avatar-reconstruction-key:latest
+
+options:
+  machineType: E2_HIGHCPU_8
+  diskSizeGb: 200
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 3600s
