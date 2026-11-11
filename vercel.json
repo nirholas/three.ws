@@ -6910,6 +6910,10 @@
 			"dest": "/trust.html"
 		},
 		{
+			"src": "/accessibility/?",
+			"dest": "/accessibility.html"
+		},
+		{
 			"src": "/trust/subprocessors/?",
 			"dest": "/trust-subprocessors.html"
 		},

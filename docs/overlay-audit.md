@@ -174,5 +174,5 @@ only worth calling from a test.
 - [`tests/corner-stack.test.js`](../tests/corner-stack.test.js): the contract, exercised in JSDOM
 - [`tests/e2e/mobile-helper-overlays.spec.js`](../tests/e2e/mobile-helper-overlays.spec.js): the phone-width geometry, measured in a real browser
 - `npm run audit:mobile-touch`: touch-target sizes, the other half of "can I actually hit this"
-- `npm run audit:a11y`: keyboard and screen-reader coverage on the top pages
+- `npm run audit:a11y`: axe WCAG 2.2 AA audit of the core pages in both themes (see [accessibility.md](accessibility.md))
 - `npm run snapshot`: the daily full-page visual record of every public route (`--authed` replays the `audit:web:login` session and widens it to the signed-in pages, writing to `reports/ui-shots/` instead of `data/snapshots/`)

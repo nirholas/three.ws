@@ -974,6 +974,7 @@ const appConfig = {
 				'agent-invoice': resolve(__dirname, 'pages/agent-invoice.html'),
 				'microsoft-activate': resolve(__dirname, 'pages/microsoft-activate.html'),
 				trust: resolve(__dirname, 'pages/trust.html'),
+				accessibility: resolve(__dirname, 'pages/accessibility.html'),
 				'trust-subprocessors': resolve(__dirname, 'pages/trust-subprocessors.html'),
 				'microsoft-teams-tab': resolve(__dirname, 'pages/microsoft-teams-tab.html'),
 				'microsoft-teams-stage': resolve(__dirname, 'pages/microsoft-teams-stage.html'),
@@ -2629,6 +2630,8 @@ const appConfig = {
 					else if (!filePath && /^\/trust\/?$/.test(path)) filePath = resolve(root, 'pages/trust.html');
 					else if (!filePath && /^\/trust\/subprocessors\/?$/.test(path))
 						filePath = resolve(root, 'pages/trust-subprocessors.html');
+					// /accessibility → the accessibility statement. Mirrors vercel.json.
+					else if (!filePath && /^\/accessibility\/?$/.test(path)) filePath = resolve(root, 'pages/accessibility.html');
 					// /microsoft/activate → the Microsoft Marketplace SaaS landing page.
 					// Mirrors vercel.json.
 					else if (!filePath && /^\/microsoft\/activate\/?$/.test(path))

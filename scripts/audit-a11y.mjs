@@ -14,7 +14,9 @@
 //   - /login, /microsoft/activate, /microsoft/teams-tab;
 //   - the Forge main flow (/forge);
 //   - a live agent page (/agents/:id) and its <agent-3d> embed
-//     (/agent/:id/embed), with the id read from the live marketplace.
+//     (/agent/:id/embed), with the id read from the live marketplace;
+//   - the public accessibility statement (/accessibility), which must meet
+//     the standard it describes.
 //
 // Usage:
 //   npm run audit:a11y                       # against http://localhost:3112
@@ -88,6 +90,7 @@ export async function auditedSet(base) {
 		{ path: '/forge', group: 'forge' },
 		{ path: `/agents/${agentId}`, group: 'agent' },
 		{ path: `/agent/${agentId}/embed`, group: 'embed' },
+		{ path: '/accessibility', group: 'statement' },
 	];
 }
 

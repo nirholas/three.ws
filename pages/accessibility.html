@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<title>Accessibility statement · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="description" content="How accessible three.ws is: our commitment, conformance with WCAG 2.2 Level AA, how we test with axe, keyboard, the Orca screen reader, zoom and forced colours, the known limitations, and how to reach us when something gets in your way." />
+		<link rel="canonical" href="https://three.ws/accessibility" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Accessibility statement · three.ws" />
+		<meta property="og:description" content="Our WCAG 2.2 AA conformance, the known limitations, and how to tell us when something gets in your way." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Accessibility&amp;d=WCAG+2.2+AA%2C+tested+by+tools+and+by+hand.&amp;p=%2Faccessibility" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/src/trust.css" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Accessibility statement","description":"three.ws accessibility commitment, WCAG 2.2 AA conformance summary, known limitations and contact route.","url":"https://three.ws/accessibility","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	</head>
+	<body>
+		<div id="nav-container"></div>
+
+		<main class="tr-wrap" id="main-content">
+			<p class="tr-crumb"><a href="/">Home</a> / Accessibility</p>
+			<p class="tr-eyebrow">Accessibility statement</p>
+			<h1 class="tr-h1">Built to be used with a keyboard, a screen reader and a zoomed screen</h1>
+			<p class="tr-lede">three.ws should work for everyone who wants to make or talk to a 3D agent, whatever device, input or assistive technology they use. This page says how close we are, how we know, and where we still fall short.</p>
+			<p class="tr-meta">Last reviewed 11 November 2026 · Product version 1.5.2 · Contact <a href="mailto:support@three.ws">support@three.ws</a></p>
+
+			<ul class="tr-glance" aria-label="At a glance">
+				<li><b>WCAG 2.2 Level AA</b><span>Partially conforms: 5 of 50 applicable criteria have known gaps.</span></li>
+				<li><b>0 serious or critical axe issues</b><span>Across 18 page types, both themes, desktop and phone width.</span></li>
+				<li><b>Tested by hand</b><span>Keyboard only, Orca screen reader, 200% and 400% zoom, forced colours.</span></li>
+				<li><b>Full report published</b><span>A VPAT 2.x conformance report rates every criterion.</span></li>
+			</ul>
+
+			<nav aria-label="Sections">
+				<ul class="tr-toc">
+					<li><a href="#commitment">Commitment</a></li>
+					<li><a href="#conformance">Conformance</a></li>
+					<li><a href="#testing">How we test</a></li>
+					<li><a href="#features">What helps</a></li>
+					<li><a href="#limitations">Known limitations</a></li>
+					<li><a href="#contact">Contact us</a></li>
+				</ul>
+			</nav>
+
+			<section class="tr-section" id="commitment" aria-labelledby="h-commitment">
+				<h2 id="h-commitment">Our commitment</h2>
+				<p>We treat accessibility as part of shipping, not as a later pass. Every page in the core journeys is checked automatically before release, keyboard and focus behaviour is covered by end-to-end tests, and a regression in either fails the build. When we find a barrier we fix it in code and add a test so it cannot come back.</p>
+				<p>We follow the Web Content Accessibility Guidelines (WCAG) 2.2 at Level AA. Wallet and payment surfaces are also held to the Web3 Accessibility Guidelines (W3AG) at Levels A and AA.</p>
+			</section>
+
+			<section class="tr-section" id="conformance" aria-labelledby="h-conformance">
+				<h2 id="h-conformance">Conformance status</h2>
+				<p>three.ws <strong>partially conforms</strong> with WCAG 2.2 Level AA. Partially conforms means that some parts of the content do not fully meet the standard. Of the 56 Level A and AA criteria, 45 are supported, 5 are partially supported and 6 do not apply: the five audio and video criteria, because three.ws has no prerecorded or live media, and 4.1.1 Parsing, which WCAG 2.2 retired.</p>
+				<div class="tr-table-scroll">
+					<table class="tr-table">
+						<caption class="tr-caption">Conformance by area</caption>
+						<thead><tr><th scope="col">Area</th><th scope="col">Status</th><th scope="col">Detail</th></tr></thead>
+						<tbody>
+							<tr><td>Contrast, text resize, reflow, text spacing</td><td><span class="tr-badge is-good">Supports</span></td><td>Both colour themes meet 4.5:1 for text and 3:1 for controls. Pages reflow at 400% zoom with no horizontal scrolling.</td></tr>
+							<tr><td>Keyboard and focus</td><td><span class="tr-badge is-good">Supports</span></td><td>Every control is reachable with Tab, shows a visible focus ring, and is never hidden under a sticky bar. Pages with the site header have a skip link, and every page exposes a main landmark.</td></tr>
+							<tr><td>Names, roles and states</td><td><span class="tr-badge is-good">Supports</span></td><td>Menus announce expanded or collapsed, toggles announce pressed, and status messages are live regions.</td></tr>
+							<tr><td>Forms and errors</td><td><span class="tr-badge is-good">Supports</span></td><td>Fields have visible labels, errors are described in text, and nothing is charged or deleted without a confirmation step.</td></tr>
+							<tr><td>3D content</td><td><span class="tr-badge is-warn">Partially supports</span></td><td>Every 3D view has a text name and description and can be orbited from the keyboard. There is no detailed text description of a model's shape.</td></tr>
+							<tr><td>Motion and gestures</td><td><span class="tr-badge is-warn">Partially supports</span></td><td>Reduced motion stops turntables. Some pages have no on-screen pause, and orbit and pinch zoom on touch screens need a drag or pinch.</td></tr>
+							<tr><td>Single-key shortcuts</td><td><span class="tr-badge is-warn">Partially supports</span></td><td>The <kbd>/</kbd> key focuses search on many pages and cannot be turned off or remapped yet.</td></tr>
+						</tbody>
+					</table>
+				</div>
+				<p class="tr-evidence"><span>Evidence</span>
+					<a href="https://github.com/nirholas/three.ws/blob/main/docs/accessibility/acr.md">Accessibility Conformance Report (VPAT 2.x)</a>
+					<a href="https://github.com/nirholas/three.ws/blob/main/docs/accessibility/reports/axe-latest.md">Latest axe report</a>
+					<a href="https://github.com/nirholas/three.ws/blob/main/docs/accessibility/walkthroughs.md">Manual walkthrough notes</a>
+				</p>
+			</section>
+
+			<section class="tr-section" id="testing" aria-labelledby="h-testing">
+				<h2 id="h-testing">How we test</h2>
+				<ul>
+					<li><strong>Automated.</strong> axe-core runs through Playwright against 18 page types in dark and light themes at desktop and 400px widths, with every WCAG 2.0, 2.1 and 2.2 A and AA rule. The release gate is zero serious or critical findings.</li>
+					<li><strong>Keyboard only.</strong> Each page walked with Tab and Shift+Tab for focus order, visible focus, traps, the skip link and focus hidden under sticky toolbars.</li>
+					<li><strong>Screen reader.</strong> Orca 46.1 on Linux with Chromium 145, navigating by heading, landmark, form field, button and graphic.</li>
+					<li><strong>Zoom, spacing and colour.</strong> Browser zoom at 200% and 400%, the WCAG text-spacing values, and Windows-style forced colours.</li>
+				</ul>
+				<p>Pages outside the core journeys, such as labs, games, the 3D world at <a href="/play">/play</a> and developer tools, have not been evaluated yet and are not covered by this statement.</p>
+			</section>
+
+			<section class="tr-section" id="features" aria-labelledby="h-features">
+				<h2 id="h-features">What helps</h2>
+				<ul>
+					<li>Light and dark themes from the theme button in the top bar. The choice is remembered.</li>
+					<li>Turn on reduced motion in your operating system to stop auto-rotating 3D previews and animated backgrounds.</li>
+					<li>Focus any 3D view and use the arrow keys to orbit, and <kbd>+</kbd> and <kbd>-</kbd> to zoom.</li>
+					<li>Agents can be talked to by typing. Voice input is optional.</li>
+					<li>Wallet addresses are read out in groups of four characters instead of as one long string.</li>
+				</ul>
+			</section>
+
+			<section class="tr-section" id="limitations" aria-labelledby="h-limitations">
+				<h2 id="h-limitations">Known limitations</h2>
+				<p>These are the gaps we know about, and what to do in the meantime.</p>
+				<div class="tr-table-scroll">
+					<table class="tr-table">
+						<caption class="tr-caption">Known limitations and workarounds</caption>
+						<thead><tr><th scope="col">Limitation</th><th scope="col">WCAG</th><th scope="col">Workaround</th></tr></thead>
+						<tbody>
+							<tr><td>No detailed text description of a 3D model's geometry</td><td>1.1.1</td><td>Each model has a name and a prompt or description, which screen readers announce.</td></tr>
+							<tr><td>The <kbd>/</kbd> shortcut cannot be turned off or remapped</td><td>2.1.4</td><td>It is ignored while you type in a text field and only moves focus to search, so an accidental press changes nothing.</td></tr>
+							<tr><td>Some turntables have no on-screen pause</td><td>2.2.2</td><td>Turn on reduced motion in your operating system. Avatar profiles with animation clips have a Pause button.</td></tr>
+							<tr><td>Pinch to zoom inside a 3D view on touch screens</td><td>2.5.1</td><td>Zoom with a mouse wheel or the <kbd>+</kbd> and <kbd>-</kbd> keys. The whole model is visible at the default zoom.</td></tr>
+							<tr><td>Orbiting a 3D view needs a drag</td><td>2.5.7</td><td>Focus the view and use the arrow keys.</td></tr>
+						</tbody>
+					</table>
+				</div>
+			</section>
+
+			<section class="tr-section" id="contact" aria-labelledby="h-contact">
+				<h2 id="h-contact">Tell us when something gets in your way</h2>
+				<p>Email <a href="mailto:support@three.ws">support@three.ws</a> or use the <a href="/support">support page</a>. It helps to include the page address, what you were trying to do, and the browser and assistive technology you use. If you need something on three.ws in another format, ask and we will provide it.</p>
+				<div class="tr-actions">
+					<a class="tr-btn tr-btn-primary" href="mailto:support@three.ws">Email support@three.ws</a>
+					<a class="tr-btn" href="/support">Support page</a>
+					<a class="tr-btn" href="https://github.com/nirholas/three.ws/blob/main/docs/accessibility/acr.md">Read the full report</a>
+					<a class="tr-btn" href="/trust">Trust center</a>
+				</div>
+			</section>
+		</main>
+
+		<script src="/nav.js" defer></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

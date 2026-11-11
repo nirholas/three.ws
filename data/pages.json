@@ -8428,6 +8428,14 @@
 					"added": "2026-11-11"
 				},
 				{
+					"path": "/accessibility",
+					"title": "Accessibility statement",
+					"description": "How accessible three.ws is: WCAG 2.2 AA conformance, how it is tested with axe, keyboard, the Orca screen reader, zoom and forced colours, the known limitations with workarounds, and how to report a barrier.",
+					"priority": 0.4,
+					"changefreq": "monthly",
+					"added": "2026-11-11"
+				},
+				{
 					"path": "/legal/privacy",
 					"title": "Privacy Policy",
 					"description": "What data three.ws collects, why we hold it, who we share it with, how long we keep it, and the controls you have over it.",
