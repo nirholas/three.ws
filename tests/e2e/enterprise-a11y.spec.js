@@ -303,3 +303,10 @@ test('the injected skip link points at the main landmark even when <main> has it
 	await page.keyboard.press('Enter');
 	await expect(page.locator('main')).toBeFocused();
 });
+
+test('the home desktop exposes a main landmark for screen reader navigation (2.4.1)', async ({ page }) => {
+	// The desktop root was a generic region, so the home page had no main
+	// landmark and no skip link: a screen reader's landmark list was empty.
+	await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 180_000 });
+	await expect(page.getByRole('main', { name: 'three.ws desktop' })).toHaveCount(1);
+});
