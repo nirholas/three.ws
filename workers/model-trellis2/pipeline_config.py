@@ -20,7 +20,9 @@ time, and one of them is a licence problem:
 from __future__ import annotations
 
 import json
+import logging
 import os
+import shutil
 from pathlib import Path
 from typing import Iterable
 
@@ -97,3 +99,50 @@ def link_weight_tree(root: str | os.PathLike[str], out_dir: str | os.PathLike[st
         link = target / entry.name
         if not link.exists() and not link.is_symlink():
             link.symlink_to(entry.resolve())
+
+
+log = logging.getLogger("trellis2")
+
+
+class HubFallbackRefused(RuntimeError):
+    """A model name reached the Hub loader instead of the staged tree."""
+
+
+def make_streaming_loader(original, bucket, bucket_name, prefix, *, config_dir, scratch_root):
+    """Wrap trellis2.models.from_pretrained so each checkpoint streams from GCS.
+
+    Pipeline.from_pretrained resolves every model as `<config_dir>/<name>`. The
+    wrapper fetches `<name>.json` and `<name>.safetensors` from the weights
+    prefix, loads them and removes them, so disk and RAM hold one checkpoint.
+
+    Upstream catches ANY exception from that call and retries with the bare
+    `<name>`, which `original` treats as a Hub repo id and which raises the
+    unhelpful "cannot find the requested files in the local cache". The first
+    failure is therefore logged with its traceback, and the bare-name retry is
+    refused with an error naming the model, so the real cause is what surfaces.
+    """
+
+    def streaming(path: str, **kwargs):
+        if not path.startswith(config_dir + "/"):
+            raise HubFallbackRefused(
+                f"model {path!r} is not under the staged tree; refusing to load it from the "
+                "Hugging Face Hub (the earlier error in this log is the real cause)"
+            )
+        name = path[len(config_dir) + 1:]
+        scratch = os.path.join(scratch_root, "stream")
+        local = os.path.join(scratch, name)
+        os.makedirs(os.path.dirname(local), exist_ok=True)
+        try:
+            for ext in (".json", ".safetensors"):
+                blob = bucket.get_blob(f"{prefix}/{name}{ext}")
+                if blob is None:
+                    raise FileNotFoundError(f"gs://{bucket_name}/{prefix}/{name}{ext} is not staged")
+                blob.download_to_filename(local + ext)
+            return original(local, **kwargs)
+        except Exception:
+            log.exception("loading staged model %s failed", name)
+            raise
+        finally:
+            shutil.rmtree(scratch, ignore_errors=True)
+
+    return streaming

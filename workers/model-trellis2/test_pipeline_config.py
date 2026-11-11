@@ -86,3 +86,82 @@ def test_write_local_config_and_link_tree(tmp_path):
     assert not (out_dir / "pipeline.json").is_symlink()
     # Idempotent: a load retry re-links without raising.
     pipeline_config.link_weight_tree(root, out_dir)
+
+
+# --- streaming loader: the Hub fallback must never mask the real failure -----
+#
+# trellis2's Pipeline.from_pretrained wraps `models.from_pretrained(<dir>/<name>)`
+# in try/except and, on ANY exception, retries `models.from_pretrained(<name>)`,
+# which treats the bare name as a Hub repo and raises huggingface_hub's "cannot
+# find the requested files in the local cache". That second error is all the
+# worker used to report, so the real first failure (a missing extension import, a
+# bad checkpoint) was invisible. The streaming loader must log the first failure
+# and must refuse the Hub fallback with an error that names it.
+
+import logging
+
+import pytest
+
+
+class _Blob:
+    def __init__(self, name):
+        self.name = name
+
+    def download_to_filename(self, dest):
+        open(dest, "w").write(self.name)
+
+
+class _Bucket:
+    def __init__(self, present):
+        self.present = present
+
+    def get_blob(self, name):
+        return _Blob(name) if name in self.present else None
+
+
+def _loader(original, tmp_path, present=()):
+    return pipeline_config.make_streaming_loader(
+        original,
+        _Bucket(set(present)),
+        "bkt",
+        "pfx",
+        config_dir=str(tmp_path / "config"),
+        scratch_root=str(tmp_path),
+    )
+
+
+def test_hub_fallback_is_refused_with_an_error_that_names_the_model(tmp_path):
+    def original(path, **kw):
+        raise AssertionError("the Hub path must not be reached")
+
+    streaming = _loader(original, tmp_path)
+    with pytest.raises(pipeline_config.HubFallbackRefused) as err:
+        streaming("ckpts/shape_dec_next_dc_f16c32_fp16")
+    assert "ckpts/shape_dec_next_dc_f16c32_fp16" in str(err.value)
+
+
+def test_first_failure_is_logged_with_the_underlying_exception(tmp_path, caplog):
+    def original(path, **kw):
+        raise ImportError("No module named 'flex_gemm'")
+
+    names = ("pfx/ckpts/m.json", "pfx/ckpts/m.safetensors")
+    streaming = _loader(original, tmp_path, names)
+    with caplog.at_level(logging.ERROR, logger="trellis2"):
+        with pytest.raises(ImportError):
+            streaming(str(tmp_path / "config") + "/ckpts/m")
+    assert "flex_gemm" in caplog.text
+    assert "ckpts/m" in caplog.text
+
+
+def test_staged_model_streams_through_and_cleans_scratch(tmp_path):
+    seen = {}
+
+    def original(path, **kw):
+        seen["json"] = open(path + ".json").read()
+        return "model"
+
+    names = ("pfx/ckpts/m.json", "pfx/ckpts/m.safetensors")
+    streaming = _loader(original, tmp_path, names)
+    assert streaming(str(tmp_path / "config") + "/ckpts/m") == "model"
+    assert seen["json"] == "pfx/ckpts/m.json"
+    assert not (tmp_path / "stream").exists()

@@ -1143,11 +1143,12 @@ export async function getPublicCreation({ id, voterKey = null }) {
 	try {
 		const rows = await sql`
 			select fc.id, fc.prompt, fc.aspect, fc.glb_url, fc.web_glb_url, fc.web_size_bytes,
-				fc.preview_image_url, fc.outcome,
+				fc.preview_image_url, fc.outcome, fc.visibility,
 				fc.views_used, fc.multiview, fc.backend, fc.tier, fc.path, fc.model_category, fc.created_at,
 				fc.x402_payer, fc.x402_tx_sig, fc.x402_price_atomic,
 				fc.vote_count, fc.size_bytes, fc.remixable, fc.remix_royalty_bps,
 				fc.parent_creation_id, fc.refine_instruction,
+				fc.completed_at, fc.voxel_resolution, fc.queue_ms, fc.gpu_ms,
 				coalesce(fc.view_count, 0) as view_count,
 				(select count(*)::int from forge_creations c where c.parent_creation_id = fc.id) as remix_count,
 				exists(select 1 from forge_votes v
@@ -1184,6 +1185,9 @@ export async function getPublicCreation({ id, voterKey = null }) {
 			web_size_bytes: r.web_size_bytes ?? null,
 			preview_image_url: normalizeStoredUrl(r.preview_image_url),
 			outcome: r.outcome,
+			// 'public' or 'unlisted' (private rows never reach here). A null is a
+			// legacy row from before the column, which the gallery treats as public.
+			visibility: r.visibility ?? 'public',
 			views_used: r.views_used ?? null,
 			multiview: r.multiview ?? null,
 			backend: r.backend ?? null,
@@ -1191,6 +1195,13 @@ export async function getPublicCreation({ id, voterKey = null }) {
 			path: r.path ?? null,
 			model_category: r.model_category ?? 'other',
 			created_at: r.created_at,
+			// Measured, never estimated: completed_at is null on lanes that never
+			// stamp it, and the worker figures are null when the serving worker did
+			// not report them. The TRELLIS.2 lab's shared compare view reads these.
+			completed_at: r.completed_at ?? null,
+			voxel_resolution: r.voxel_resolution ?? null,
+			queue_ms: r.queue_ms ?? null,
+			gpu_ms: r.gpu_ms ?? null,
 			vote_count: r.vote_count ?? 0,
 			voted: r.voted === true,
 			view_count: r.view_count ?? 0,
