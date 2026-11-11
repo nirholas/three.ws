@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* Teams passes its theme in the tab URL (?theme={theme}: default, dark or contrast); outside Teams the saved site theme applies. */(function(){try{var t=new URLSearchParams(location.search).get('theme');var l;if(t==='default'||t==='light')l=true;else if(t==='dark'||t==='contrast')l=false;else{var m=localStorage.getItem('twx_theme');l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';}document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<title>Review stage · three.ws for Microsoft Teams meetings</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="description" content="Review a 3D model together in a Microsoft Teams meeting: follow the presenter's camera, point with a laser, pin comments on the mesh and export them as markdown." />
+		<meta name="robots" content="noindex" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+	</head>
+	<body class="rs-body" data-view="loading">
+		<div id="rs-live" class="rs-sr" aria-live="polite"></div>
+
+		<!-- Boot: shown until the host (Teams, local test or plain browser) is known. -->
+		<section class="rs-boot" id="rs-boot" aria-busy="true" aria-label="Starting the review stage">
+			<div class="rs-skel rs-boot-skel" aria-hidden="true"></div>
+			<p class="rs-boot-text" id="rs-boot-text">Starting the review stage</p>
+		</section>
+
+		<!-- Stage: the full-bleed shared viewer. -->
+		<main class="rs-stage" id="rs-stage" hidden>
+			<div class="rs-canvas" id="rs-canvas" data-testid="stage-canvas"></div>
+			<div class="rs-overlay" id="rs-overlay" aria-hidden="true">
+				<div id="rs-lasers"></div>
+				<div id="rs-pins-layer"></div>
+			</div>
+
+			<div class="rs-model-skel" id="rs-model-skel" hidden aria-hidden="true">
+				<div class="rs-skel rs-skel-figure"></div>
+				<p>Loading model</p>
+			</div>
+
+			<div class="rs-center-card" id="rs-empty" hidden data-testid="stage-empty">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 3 7v10l9 5 9-5V7l-9-5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /><path d="m3 7 9 5 9-5M12 12v10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /></svg>
+				<h1>Pick a model to review</h1>
+				<p id="rs-empty-text">Choose one of your three.ws models, a model from the public library, or paste a link to a .glb file. Everyone here sees the same model.</p>
+				<button class="rs-btn" type="button" data-action="open-picker">Choose a model</button>
+			</div>
+
+			<div class="rs-center-card is-error" id="rs-error" hidden role="alert" data-testid="stage-error">
+				<h1 id="rs-error-title">This model did not load</h1>
+				<p id="rs-error-text"></p>
+				<div class="rs-row">
+					<button class="rs-btn" type="button" id="rs-retry">Try again</button>
+					<button class="rs-btn is-ghost" type="button" data-action="open-picker">Choose another model</button>
+				</div>
+			</div>
+
+			<header class="rs-top">
+				<div class="rs-bar rs-title-bar">
+					<a class="rs-brand" href="https://three.ws" target="_blank" rel="noopener">three.ws</a>
+					<span class="rs-sep" aria-hidden="true"></span>
+					<span class="rs-model-name" id="rs-model-name" data-testid="model-name">No model yet</span>
+					<button class="rs-icon-btn" type="button" data-action="open-picker" aria-label="Change model" title="Change model">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h11M4 7l3-3M4 7l3 3M20 17H9m11 0-3-3m3 3-3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+					</button>
+				</div>
+				<div class="rs-bar rs-people-bar">
+					<span class="rs-conn" id="rs-conn" data-state="connecting" data-testid="connection">Connecting</span>
+					<ul class="rs-people" id="rs-people" aria-label="People viewing" data-testid="presence"></ul>
+				</div>
+			</header>
+
+			<div class="rs-solo" id="rs-solo" hidden role="note" data-testid="solo-note">
+				<div>
+					<strong>Single-user mode.</strong>
+					<span id="rs-solo-text">Open this stage from a Microsoft Teams meeting to review together: everyone follows the presenter's camera, sees each other's laser pointers, and places comment pins in real time. Here you can still orbit the model, pin comments and export them.</span>
+				</div>
+				<button class="rs-icon-btn" type="button" id="rs-solo-close" aria-label="Dismiss">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+				</button>
+			</div>
+
+			<footer class="rs-bottom">
+				<div class="rs-bar rs-follow" id="rs-follow" hidden data-testid="follow-bar">
+					<span class="rs-follow-text" id="rs-follow-text" data-testid="follow-status">Everyone is looking around freely</span>
+					<button class="rs-btn is-small" type="button" id="rs-follow-primary" data-testid="follow-primary">Present</button>
+					<button class="rs-btn is-small is-ghost" type="button" id="rs-follow-secondary" hidden data-testid="follow-secondary">Stop</button>
+				</div>
+
+				<div class="rs-bar rs-anim" id="rs-anim" hidden data-testid="anim-bar">
+					<label class="rs-sr" for="rs-clip">Animation</label>
+					<select class="rs-select" id="rs-clip" data-testid="anim-clip"></select>
+					<button class="rs-icon-btn" type="button" id="rs-play" aria-label="Play" data-testid="anim-play">
+						<svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" /></svg>
+						<svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor" /></svg>
+					</button>
+					<label class="rs-sr" for="rs-scrub">Playback position</label>
+					<input class="rs-scrub" id="rs-scrub" type="range" min="0" max="1" step="0.01" value="0" data-testid="anim-scrub" />
+					<span class="rs-time" id="rs-time" data-testid="anim-time">0.0s</span>
+					<span class="rs-anim-note" id="rs-anim-note" hidden></span>
+				</div>
+
+				<div class="rs-bar rs-tools">
+					<button class="rs-tool" type="button" id="rs-pin-mode" aria-pressed="false" data-testid="pin-mode" title="Place a comment pin (P)">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12Z" fill="none" stroke="currentColor" stroke-width="2" /><circle cx="12" cy="10" r="2.5" fill="currentColor" /></svg>
+						<span>Pin</span>
+					</button>
+					<button class="rs-tool" type="button" id="rs-pins-toggle" aria-expanded="false" aria-controls="rs-drawer" data-testid="pins-toggle">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M5 12h14M5 18h9" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+						<span>Comments <b id="rs-pin-count" data-testid="pin-count">0</b></span>
+					</button>
+					<button class="rs-tool" type="button" id="rs-reset-cam" title="Reset the camera">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v4h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+						<span>Reset view</span>
+					</button>
+				</div>
+			</footer>
+
+			<aside class="rs-drawer" id="rs-drawer" hidden aria-labelledby="rs-drawer-title" data-testid="pins-drawer">
+				<div class="rs-drawer-head">
+					<h2 id="rs-drawer-title">Comments</h2>
+					<button class="rs-icon-btn" type="button" id="rs-drawer-close" aria-label="Close comments">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+					</button>
+				</div>
+				<ol class="rs-pin-list" id="rs-pin-list" data-testid="pin-list"></ol>
+				<div class="rs-pin-empty" id="rs-pin-empty">
+					<p><strong>No comments yet.</strong></p>
+					<p>Press <kbd>P</kbd> or the Pin button, then click the model where you want to leave a note. Everyone in the meeting sees it right away.</p>
+				</div>
+				<div class="rs-drawer-foot">
+					<button class="rs-btn is-ghost" type="button" id="rs-copy-md" data-testid="copy-md">Copy as markdown</button>
+					<button class="rs-btn is-ghost" type="button" id="rs-download-md">Download .md</button>
+				</div>
+			</aside>
+
+			<form class="rs-composer" id="rs-composer" hidden data-testid="pin-composer">
+				<label class="rs-sr" for="rs-composer-text">Comment</label>
+				<textarea id="rs-composer-text" rows="3" maxlength="280" placeholder="What should change here?" data-testid="pin-text"></textarea>
+				<div class="rs-row">
+					<span class="rs-hint">Enter to pin, Esc to cancel</span>
+					<button class="rs-btn is-small is-ghost" type="button" id="rs-composer-cancel">Cancel</button>
+					<button class="rs-btn is-small" type="submit" data-testid="pin-save">Pin it</button>
+				</div>
+				<p class="rs-form-error" id="rs-composer-error" hidden></p>
+			</form>
+		</main>
+
+		<!-- Side panel: pick a model, share it to the meeting stage. -->
+		<main class="rs-panel" id="rs-panel" hidden>
+			<header class="rs-panel-head">
+				<a class="rs-brand" href="https://three.ws" target="_blank" rel="noopener">three.ws</a>
+				<h1>Review a model together</h1>
+				<p>Pick a model, then share it to the meeting stage. Everyone can orbit it, follow your camera, point and pin comments.</p>
+			</header>
+			<div class="rs-picker-slot" id="rs-panel-picker"></div>
+			<div class="rs-panel-foot">
+				<div class="rs-selected" id="rs-selected" data-testid="panel-selected">Nothing selected yet</div>
+				<button class="rs-btn is-wide" type="button" id="rs-share" disabled data-testid="share-to-stage">Share to stage</button>
+				<p class="rs-panel-status" id="rs-share-status" role="status"></p>
+			</div>
+		</main>
+
+		<!-- Configurable tab settings page. -->
+		<main class="rs-config" id="rs-config" hidden>
+			<a class="rs-brand" href="https://three.ws" target="_blank" rel="noopener">three.ws</a>
+			<h1>Add the three.ws review stage to this meeting</h1>
+			<p>During the meeting, open the three.ws panel, pick a model and press <strong>Share to stage</strong>. Everyone sees the same model and can follow the presenter's camera, point with a laser and pin comments.</p>
+			<p>three.ws stores nothing from the meeting. Comments live in the meeting session until someone exports them as markdown.</p>
+			<p class="rs-panel-status" id="rs-config-status">Press Save to add the tab.</p>
+		</main>
+
+		<!-- Model picker, shared by the stage dialog and the side panel. -->
+		<template id="rs-picker-tpl">
+			<div class="rs-picker">
+				<div class="rs-tabs" role="tablist" aria-label="Model source">
+					<button class="rs-tab" type="button" role="tab" data-tab="mine" aria-selected="true">Your models</button>
+					<button class="rs-tab" type="button" role="tab" data-tab="library" aria-selected="false">Library</button>
+					<button class="rs-tab" type="button" role="tab" data-tab="link" aria-selected="false">Paste a link</button>
+				</div>
+				<div class="rs-tabpanel" data-panel="mine" role="tabpanel"></div>
+				<div class="rs-tabpanel" data-panel="library" role="tabpanel" hidden></div>
+				<div class="rs-tabpanel" data-panel="link" role="tabpanel" hidden>
+					<form class="rs-link-form">
+						<label for="rs-link-input">Model link</label>
+						<input id="rs-link-input" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://.../model.glb or a three.ws avatar link" data-testid="link-input" />
+						<p class="rs-form-error" hidden></p>
+						<button class="rs-btn" type="submit" data-testid="link-submit">Use this model</button>
+						<p class="rs-hint">Everyone in the meeting loads the file from this link, so it must be public and served over https.</p>
+					</form>
+				</div>
+			</div>
+		</template>
+
+		<dialog class="rs-dialog" id="rs-picker-dialog" aria-labelledby="rs-picker-title">
+			<div class="rs-dialog-head">
+				<h2 id="rs-picker-title">Choose a model</h2>
+				<button class="rs-icon-btn" type="button" id="rs-picker-close" aria-label="Close">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+				</button>
+			</div>
+			<div class="rs-picker-slot" id="rs-dialog-picker"></div>
+		</dialog>
+
+		<script type="module" src="/src/microsoft-teams-stage/main.js"></script>
+	</body>
+</html>

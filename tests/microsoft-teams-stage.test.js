@@ -4,6 +4,7 @@ import {
 	cleanPinText,
 	colorFor,
 	createPin,
+	encodeModelParam,
 	initialsFor,
 	isPin,
 	modelKey,
@@ -50,11 +51,16 @@ describe('model references', () => {
 		expect(modelSourceUrl({ kind: 'avatar', id: 'nope' })).toBeNull();
 		expect(modelSourceUrl(null)).toBeNull();
 	});
+	it('round-trips the model through the shared stage URL', () => {
+		expect(parseModelInput(encodeModelParam({ kind: 'avatar', id: AVATAR })).ref).toEqual({ kind: 'avatar', id: AVATAR });
+		expect(parseModelInput(encodeModelParam({ kind: 'url', url: 'https://x.org/a.glb' })).ref).toEqual({ kind: 'url', url: 'https://x.org/a.glb' });
+	});
 	it('links the export to the public viewer', () => {
 		expect(modelPageUrl({ kind: 'avatar', id: AVATAR })).toBe(`https://three.ws/viewer#model=${encodeURIComponent(`https://three.ws/api/avatars/${AVATAR}/glb`)}`);
 	});
 	it('validates shared model state', () => {
-		expect(normalizeModelState({ ref: { kind: 'avatar', id: AVATAR.toUpperCase() }, name: ' Michelle ' })).toEqual({ ref: { kind: 'avatar', id: AVATAR }, name: 'Michelle' });
+		expect(normalizeModelState({ ref: { kind: 'avatar', id: AVATAR.toUpperCase() }, name: ' Michelle ' })).toEqual({ ref: { kind: 'avatar', id: AVATAR }, name: 'Michelle', at: 0 });
+		expect(normalizeModelState({ ref: { kind: 'avatar', id: AVATAR }, at: 1234 }).at).toBe(1234);
 		expect(normalizeModelState({ ref: { kind: 'url', url: 'javascript:alert(1)' } })).toBeNull();
 		expect(normalizeModelState(undefined)).toBeNull();
 	});
@@ -136,7 +142,9 @@ describe('animation sync', () => {
 		expect(playbackTime({ playing: true, time: 0, rate: 2 }, 0, 1000, 10)).toBeCloseTo(2);
 	});
 	it('validates shared animation state', () => {
-		expect(normalizeAnim({ clip: 2, playing: true, time: 1.5, rate: 1, model: 'avatar:x' })).toEqual({ clip: 2, playing: true, time: 1.5, rate: 1, model: 'avatar:x' });
-		expect(normalizeAnim({ clip: -4, rate: 99 })).toEqual({ clip: -1, playing: false, time: 0, rate: 1, model: '' });
+		expect(normalizeAnim({ clip: 'glb:2', playing: true, time: 1.5, rate: 1, model: 'avatar:x' })).toEqual({ clip: 'glb:2', playing: true, time: 1.5, rate: 1, model: 'avatar:x', sentAt: 0 });
+		expect(normalizeAnim({ clip: 'lib:idle', playing: false }).clip).toBe('lib:idle');
+		expect(normalizeAnim({ clip: 'lib:../../x', rate: 99 })).toEqual({ clip: '', playing: false, time: 0, rate: 1, model: '', sentAt: 0 });
+		expect(normalizeAnim({ clip: 3 }).clip).toBe('');
 	});
 });

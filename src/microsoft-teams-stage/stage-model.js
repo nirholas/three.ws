@@ -208,22 +208,41 @@ export function playbackTime(anim, sentAt, now, duration, { loop = true } = {}) 
 	return Math.min(Math.max(t, 0), duration);
 }
 
-/** The shared animation state with every field validated. */
+const CLIP_ID_RE = /^(glb:\d{1,4}|lib:[a-z0-9][a-z0-9_-]{0,63})$/i;
+
+/**
+ * The shared animation state with every field validated. `clip` is a clip id:
+ * `glb:<index>` for a clip baked into the model file, `lib:<name>` for a clip
+ * from the platform library retargeted onto the rig, or '' for none.
+ */
 export function normalizeAnim(v) {
-	const clip = Number.isInteger(v?.clip) && v.clip >= 0 ? v.clip : -1;
+	const clip = typeof v?.clip === 'string' && CLIP_ID_RE.test(v.clip) ? v.clip : '';
 	return {
 		clip,
-		playing: clip >= 0 && v?.playing !== false,
+		playing: !!clip && v?.playing !== false,
 		time: Number.isFinite(v?.time) && v.time >= 0 ? v.time : 0,
 		rate: Number.isFinite(v?.rate) && v.rate > 0 && v.rate <= 4 ? v.rate : 1,
 		model: typeof v?.model === 'string' ? v.model : '',
+		sentAt: Number.isFinite(v?.sentAt) && v.sentAt > 0 ? v.sentAt : 0,
 	};
 }
 
-/** The shared model state with every field validated. Returns null for an empty stage. */
+/**
+ * The shared model state with every field validated. `at` is the meeting-clock
+ * time it was chosen, so a stage opened from an older share never overrides a
+ * newer pick. Returns null for an empty stage.
+ */
 export function normalizeModelState(v) {
 	const ref = v?.ref;
-	if (ref?.kind === 'avatar' && UUID_RE.test(ref.id || '')) return { ref: { kind: 'avatar', id: ref.id.toLowerCase() }, name: cleanName(v.name) || 'Avatar' };
-	if (ref?.kind === 'url' && typeof ref.url === 'string' && /^https?:\/\//i.test(ref.url)) return { ref: { kind: 'url', url: ref.url }, name: cleanName(v.name) || 'Model' };
+	const at = Number.isFinite(v?.at) && v.at > 0 ? v.at : 0;
+	if (ref?.kind === 'avatar' && UUID_RE.test(ref.id || '')) return { ref: { kind: 'avatar', id: ref.id.toLowerCase() }, name: cleanName(v.name) || 'Avatar', at };
+	if (ref?.kind === 'url' && typeof ref.url === 'string' && /^https?:\/\//i.test(ref.url)) return { ref: { kind: 'url', url: ref.url }, name: cleanName(v.name) || 'Model', at };
 	return null;
+}
+
+/** Encode a model for the stage URL a side panel shares (?model=...). */
+export function encodeModelParam(ref) {
+	if (ref?.kind === 'avatar') return ref.id;
+	if (ref?.kind === 'url') return ref.url;
+	return '';
 }

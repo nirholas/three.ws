@@ -34,6 +34,8 @@ const EXCLUDED = new Set([
 	'agent-embed.html',
 	'a-embed.html',
 	'agent-token-page.html',
+	// The Teams meeting stage: a shared surface inside Teams, not a site page.
+	'microsoft-teams-stage.html',
 	'nav.html',
 	'footer.html',
 ]);
