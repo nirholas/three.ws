@@ -47,6 +47,13 @@ async def main(scene: str) -> int:
         model=os.environ.get("THREE_WS_MODEL", "gpt-5.4-mini"),
         api_key=os.environ["OPENAI_API_KEY"],
         base_url=os.environ.get("OPENAI_BASE_URL") or None,
+        # The studio's tool errors are written for the model ("generator busy, retry",
+        # "job id not found"), so pass their text through instead of a generic failure,
+        # and allow enough consecutive errors for the busy-retry loop in step 4.
+        function_invocation_configuration={
+            "include_detailed_errors": True,
+            "max_consecutive_errors_per_request": 6,
+        },
     )
     studio = MCPStreamableHTTPTool(
         name="threews_studio",
