@@ -684,7 +684,7 @@
 		"@bonfida/spl-name-service": "^4.0.1",
 		"@chenglou/pretext": "^1.0.0",
 		"@coin-communities/sdk": "^2.0.0",
-		"@coinbase/cdp-sdk": "^1.50.0",
+		"@coinbase/cdp-sdk": "^1.61.0",
 		"@coinbase/x402": "^2.1.0",
 		"@colyseus/schema": "3.0.76",
 		"@coral-xyz/anchor": "^0.32.1",
