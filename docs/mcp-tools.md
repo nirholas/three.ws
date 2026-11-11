@@ -61,6 +61,104 @@ A free, non-crypto MCP server for the ChatGPT App Directory and any MCP client. 
 exposes **only** 3D generation/inspection — no account, no payment, no token. See
 [3D Studio MCP](mcp-studio.md).
 
+### Quickstart: attach the studio to a Foundry agent
+
+Foundry Agent Service accepts any public remote MCP server as an agent tool, so
+the studio works there with no account, key, or connection secret. These steps
+follow Microsoft's current guides,
+[Connect agents to MCP server endpoints](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/model-context-protocol)
+and the unauthenticated path in
+[Connect an MCP server to Foundry Agent Service](https://learn.microsoft.com/azure/azure-functions/functions-mcp-foundry-tools)
+(both checked on 2026-11-11).
+
+You need a Foundry project with a deployed chat model and the **Foundry User**
+role on it.
+
+**Portal**
+
+1. Open the [Foundry portal](https://ai.azure.com/nextgen).
+2. Select the **Build** tab and open the agent that should design 3D assets (or
+   create one).
+3. In the **Playground** tab, expand **Tools** and select **Add**.
+4. On the **Custom** tab of **Select a tool**, select **Model Context Protocol
+   (MCP)** > **Create**.
+5. Fill in **Add Model Context Protocol tool**:
+
+   | Field | Value |
+   |---|---|
+   | Name | `threews_studio` |
+   | Remote MCP Server endpoint | `https://three.ws/api/mcp-studio` |
+   | Authentication | `Unauthenticated` |
+
+6. Select **Connect**. `threews_studio` appears under **Tools**. Select **Save**.
+7. In the playground chat, try `Find a ready-made lantern, then generate a
+   weathered bronze ship's lantern and give me the GLB link.` Review each tool
+   call the agent requests and select **Approve**.
+
+**Python SDK** (`pip install azure-ai-projects azure-identity openai`, then
+`az login`)
+
+```python
+from azure.ai.projects import AIProjectClient
+from azure.ai.projects.models import MCPTool, PromptAgentDefinition
+from azure.identity import DefaultAzureCredential
+
+# Overview page of your project: https://<account>.services.ai.azure.com/api/projects/<project>
+PROJECT_ENDPOINT = "https://<account>.services.ai.azure.com/api/projects/<project>"
+
+with AIProjectClient(endpoint=PROJECT_ENDPOINT, credential=DefaultAzureCredential(), allow_preview=True) as project:
+    studio = MCPTool(
+        server_label="threews_studio",
+        server_url="https://three.ws/api/mcp-studio",
+        # The studio is free and read-only apart from starting a free generation,
+        # so this sample skips approvals. Use "always" to review every call.
+        require_approval="never",
+        allowed_tools=["search_catalog", "forge_free", "check_job"],
+    )
+    agent = project.agents.create_version(
+        agent_name="prop-designer",
+        definition=PromptAgentDefinition(
+            model="gpt-5-mini",  # any chat model deployed in your project
+            instructions=(
+                "You design 3D props. Search the three.ws catalog first, then call forge_free "
+                "for a custom model. If forge_free returns a pending job, call check_job with its "
+                "job_id until the model is ready. Always return the real GLB and viewer links."
+            ),
+            tools=[studio],
+        ),
+    )
+    with project.get_openai_client(agent_name=agent.name) as openai:
+        conversation = openai.conversations.create()
+        response = openai.responses.create(
+            conversation=conversation.id,
+            input="Generate a weathered bronze ship's lantern and give me the GLB link.",
+        )
+        print(response.output_text)
+        openai.conversations.delete(conversation_id=conversation.id)
+    project.agents.delete_version(agent_name=agent.name, agent_version=agent.version)
+```
+
+The same tool definition in REST or another SDK is
+`{"type": "mcp", "server_label": "threews_studio", "server_url": "https://three.ws/api/mcp-studio", "require_approval": "never", "allowed_tools": ["search_catalog", "forge_free", "check_job"]}`.
+
+Things to know:
+
+- **Foundry ends a non-streaming MCP tool call after 100 seconds.** A generation
+  takes longer, so when a plain (unstreamed) `forge_free` call has no model
+  inside 40 seconds, the studio answers with a pending `job_id`. The agent then
+  collects the model with `check_job`. Keep `check_job` in `allowed_tools`.
+- **Name tools explicitly.** An empty `allowed_tools` list (`[]`) allows every
+  tool the server lists, not none.
+- **Toolboxes work too.** To share the studio across agents, register it once
+  with `azd ai connection create threews-studio --kind remote-tool --target https://three.ws/api/mcp-studio --auth-type none`
+  and reference that connection from a Foundry toolbox.
+- **Code-first alternatives.** For Semantic Kernel or Microsoft Agent Framework
+  in your own process, use the packages in
+  [three.ws on the Microsoft agent stack](microsoft-agent-stack.md).
+
+Microsoft, Azure, and Microsoft Foundry are trademarks of the Microsoft group of
+companies.
+
 ## Material Studio (hosted, free) — `/api/material-studio`
 
 A free, rate-limited (not x402) REST endpoint backing the [Restyle Studio](/restyle)

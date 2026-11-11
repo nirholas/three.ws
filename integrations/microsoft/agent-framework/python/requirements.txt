@@ -1,3 +1,5 @@
 agent-framework-core>=1.25.0
 agent-framework-openai>=1.18.0
 mcp>=1.20
+# agent-framework imports tenacity for MCP reconnects but does not declare it.
+tenacity>=8.2
