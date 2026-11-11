@@ -1,11 +1,14 @@
 // POST /api/microsoft-teams/messages: the Bot Framework messaging endpoint for
-// the three.ws Teams app's message extension (search agents, unfurl agent
-// links into Glance Adaptive Cards). Registered as the messaging endpoint of
+// the three.ws Teams app: message-extension search, agent link unfurling, and
+// "Create a 3D model" (the action command, the `forge` bot command and its
+// live Adaptive Card actions). Registered as the messaging endpoint of
 // the Azure Bot whose app id is MS_TEAMS_BOT_APP_ID. Logic: api/_lib/teams-bot.js.
 
 import { wrap, method, json, error, readJson } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { verifyBotToken, handleActivity, TeamsBotError } from '../_lib/teams-bot.js';
+import { originFromReq } from '../_mcp-studio/gpt-forge-client.js';
+import { selfOrigin } from '../_lib/self-origin.js';
 
 export default wrap(async (req, res) => {
 	if (!method(req, res, ['POST'])) return;
@@ -19,7 +22,7 @@ export default wrap(async (req, res) => {
 		if (err instanceof TeamsBotError) return error(res, err.status, err.code, err.message);
 		throw err;
 	}
-	const body = await handleActivity(activity);
+	const body = await handleActivity(activity, { origin: originFromReq(req), selfBase: selfOrigin(req) });
 	if (body == null) {
 		res.statusCode = 200;
 		return res.end();

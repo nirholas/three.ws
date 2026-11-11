@@ -1,21 +1,35 @@
-// Microsoft Teams message extension for three.ws (the "Agents" search command
-// and three.ws link unfurling in the Teams app built from
-// integrations/microsoft/copilot-teams/).
+// Microsoft Teams bot for three.ws (the Teams app built from
+// integrations/microsoft/copilot-teams/):
+//
+//   searchAgents  message-extension search over three.ws agents
+//   link unfurl   three.ws agent links become Glance cards
+//   createModel   message-extension action "Create a 3D model", plus the bot
+//                 command `forge <prompt>`: a real free-lane 3D generation with
+//                 a card that updates itself (api/_lib/teams-forge.js)
 //
 // Teams calls POST /api/microsoft-teams/messages with a Bot Framework activity.
-// Every call carries a JWT signed by the Bot Framework token service; it is
-// verified against the published Bot Framework keys, issuer and the bot's own
-// app id before anything is read. The extension answers invokes synchronously
-// in the HTTP response (no outbound Bot Connector call is needed), so the bot
-// never holds a client secret.
+// Every call, whatever its invoke name (composeExtension/*, adaptiveCard/action,
+// a plain message), carries a JWT signed by the Bot Framework token service; it
+// is verified against the published Bot Framework keys, issuer and the bot's own
+// app id before anything is read (verifyBotToken, which never looks at the
+// activity type).
 //
-// Cards are the Glance card (api/_lib/glance-adaptive.js), the same Adaptive
-// Card the Windows 11 widget board renders, bound to real agent data.
+// Search, unfurling and card refreshes answer in the invoke's HTTP response and
+// need no credential. Posting a card into the chat (Send on the preview, the
+// `forge` reply, the finished card replacing the progress card for everyone)
+// uses the Bot Connector with the bot's client secret (api/_lib/teams-connector.js);
+// without MS_TEAMS_BOT_APP_PASSWORD the action inserts the card into the
+// compose box instead and the requester's own refreshes keep it current.
+//
+// Agent cards are the Glance card (api/_lib/glance-adaptive.js), the same
+// Adaptive Card the Windows 11 widget board renders, bound to real agent data.
+// The 3D cards are api/_lib/teams-forge-cards.js.
 
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { sql } from './db.js';
 import { loadGlanceCard } from './glance-card.js';
 import { adaptiveCardFor } from './glance-adaptive.js';
+import { handleForgeActivity, isForgeActivity } from './teams-forge-bot.js';
 
 export const BOTFRAMEWORK_ISSUER = 'https://api.botframework.com';
 export const BOTFRAMEWORK_JWKS_URL = 'https://login.botframework.com/v1/.well-known/keys';
@@ -60,14 +74,16 @@ export function checkBotClaims(payload, { appId, serviceUrl }) {
 	return true;
 }
 
-export async function verifyBotToken(authorization, { serviceUrl }) {
+// `keys` is the key set to verify against: the published Bot Framework keys,
+// or a local set in tests that sign real tokens.
+export async function verifyBotToken(authorization, { serviceUrl, keys = botFrameworkJwks() }) {
 	const appId = teamsBotAppId();
 	if (!appId) throw new TeamsBotError('not_configured', 'the Teams bot is not configured', 503);
 	const match = /^Bearer\s+(.+)$/i.exec(authorization || '');
 	if (!match) throw new TeamsBotError('missing_token', 'a Bot Framework bearer token is required');
 	let payload;
 	try {
-		({ payload } = await jwtVerify(match[1], botFrameworkJwks(), { issuer: BOTFRAMEWORK_ISSUER, audience: appId, clockTolerance: 300 }));
+		({ payload } = await jwtVerify(match[1], keys, { issuer: BOTFRAMEWORK_ISSUER, audience: appId, clockTolerance: 300 }));
 	} catch (err) {
 		throw new TeamsBotError('invalid_token', `the Bot Framework token did not verify: ${err?.code || err?.message}`);
 	}
@@ -136,8 +152,13 @@ export async function searchAgents(text) {
 	return cards.filter(Boolean);
 }
 
-/** Handle one verified activity; returns the invoke response body (or null for 200 with no body). */
-export async function handleActivity(activity) {
+/**
+ * Handle one verified activity; returns the invoke response body (or null for
+ * 200 with no body). `ctx.origin` is the base the forge runs against and the
+ * cards link to; `ctx.selfBase` is this service, where a job run is dispatched.
+ */
+export async function handleActivity(activity, ctx = {}) {
+	if (isForgeActivity(activity)) return handleForgeActivity(activity, ctx);
 	if (activity?.type !== 'invoke') return null;
 	switch (activity.name) {
 		case 'composeExtension/query': {

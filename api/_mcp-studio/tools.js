@@ -538,12 +538,15 @@ async function handleForgeFree(args, _auth, req, ctx = {}) {
 		if (directed) effective = directed;
 		run.add(briefStage({ kind: 'mesh', directed: Boolean(directed), fallback, ms: Date.now() - t0 }));
 	}
+	// ctx.seed is server-side only (the Teams bot's "Make a variation" sets it),
+	// never a tool argument: a new seed is a new generation of the same prompt.
+	const seed = Number.isInteger(ctx.seed) && ctx.seed >= 0 ? { seed: ctx.seed } : {};
 	return finishMesh(run, {
 		base,
 		ctx,
 		submit: markImageUrls
-			? { prompt: effective, imageUrls: markImageUrls, tier, internal: true, director: false }
-			: { prompt: effective, path: 'image', tier, internal: true, director: false },
+			? { prompt: effective, imageUrls: markImageUrls, tier, internal: true, director: false, ...seed }
+			: { prompt: effective, path: 'image', tier, internal: true, director: false, ...seed },
 		jobOptsArgs: jobOpts(ctx, { kind: 'model', what: 'model', prompt }),
 		what: 'model',
 		prompt,

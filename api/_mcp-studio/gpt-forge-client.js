@@ -133,7 +133,7 @@ function internalHeaders() {
 // ticket when it lands, and polling that handle collects it. A caller that
 // needs the handle before the submit leaves (an idempotent call records it
 // first) passes its own `ticket`; a ticketed submit is never sent twice.
-export async function startForge(base, { prompt, imageUrls, aspect, backend, path, tier, internal, director, strictTier = false }, { deadline, ticket: givenTicket } = {}) {
+export async function startForge(base, { prompt, imageUrls, aspect, backend, path, tier, internal, director, seed, strictTier = false }, { deadline, ticket: givenTicket } = {}) {
 	const ticket = givenTicket || (deadline ? newTicket() : null);
 	const attempt = async (tierId, withInternal) => {
 		const payload = {
@@ -144,6 +144,9 @@ export async function startForge(base, { prompt, imageUrls, aspect, backend, pat
 			...(path ? { path } : {}),
 			...(tierId ? { tier: tierId } : {}),
 			...(director === false ? { director: false } : {}),
+			// A caller-chosen seed makes a distinct generation of the same prompt (a
+			// variation) and keys its own result-cache entry (../_lib/forge-cache.js).
+			...(Number.isInteger(seed) && seed >= 0 ? { seed } : {}),
 		};
 		let res;
 		try {
