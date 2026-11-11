@@ -47,9 +47,24 @@
                   "description": "One object or character to model, for example: a small ceramic robot figurine.",
                   "x-ms-summary": "Prompt",
                   "x-ms-visibility": "important"
+                },
+                "tier": {
+                  "type": "string",
+                  "enum": [
+                    "draft",
+                    "standard",
+                    "high"
+                  ],
+                  "default": "standard",
+                  "title": "Quality",
+                  "description": "draft is fastest, standard balances speed and detail, high takes longest and gives the most detail.",
+                  "x-ms-summary": "Quality",
+                  "x-ms-visibility": "advanced"
                 }
               }
-            }
+            },
+            "x-ms-summary": "Request",
+            "description": "The model to generate."
           }
         ],
         "responses": {
@@ -60,28 +75,16 @@
             }
           },
           "400": {
-            "description": "The prompt is missing, outside 3 to 1000 characters, or was refused by the content safety check.",
-            "schema": {
-              "$ref": "#/definitions/StudioError"
-            }
+            "description": "The prompt is missing, outside 3 to 1000 characters, the quality is not draft, standard or high, or the content safety check refused the prompt."
           },
           "429": {
-            "description": "The free generation lane is saturated. Retry after the number of seconds in retry_after.",
-            "schema": {
-              "$ref": "#/definitions/StudioError"
-            }
+            "description": "The free generation lane is saturated. Retry after the number of seconds in retry_after."
           },
           "502": {
-            "description": "The generation lane could not start the job. Retrying is free.",
-            "schema": {
-              "$ref": "#/definitions/StudioError"
-            }
+            "description": "The generation lane could not start the job. Retrying is free."
           },
           "503": {
-            "description": "Generation is not available right now. Retry later.",
-            "schema": {
-              "$ref": "#/definitions/StudioError"
-            }
+            "description": "Generation is not available right now. Retry later."
           }
         }
       },
@@ -97,7 +100,8 @@
             "required": true,
             "type": "string",
             "x-ms-summary": "Job id",
-            "description": "The job value returned by Generate a 3D model from text."
+            "description": "The job value returned by Generate a 3D model from text.",
+            "x-ms-visibility": "important"
           },
           {
             "name": "title",
@@ -117,16 +121,10 @@
             }
           },
           "400": {
-            "description": "The job id is malformed or unknown.",
-            "schema": {
-              "$ref": "#/definitions/StudioError"
-            }
+            "description": "The job id is malformed or unknown."
           },
           "429": {
-            "description": "Polling too often. Retry after the number of seconds in retry_after.",
-            "schema": {
-              "$ref": "#/definitions/StudioError"
-            }
+            "description": "Polling too often. Retry after the number of seconds in retry_after."
           }
         }
       }
@@ -149,16 +147,14 @@
                   "x-ms-summary": "Agents",
                   "items": {
                     "$ref": "#/definitions/Agent"
-                  }
+                  },
+                  "description": "Every agent in the account, oldest first."
                 }
               }
             }
           },
           "401": {
-            "description": "The connection is not signed in. Sign in to the connection again.",
-            "schema": {
-              "$ref": "#/definitions/ApiError"
-            }
+            "description": "The connection is not signed in. Sign in to the connection again."
           }
         }
       }
@@ -176,7 +172,8 @@
             "required": false,
             "type": "string",
             "x-ms-summary": "Search text",
-            "description": "Words to match in the agent's name or description. Leave empty to list agents by popularity."
+            "description": "Words to match in the agent's name or description. Leave empty to list agents by popularity.",
+            "x-ms-visibility": "important"
           },
           {
             "name": "sort",
@@ -218,6 +215,37 @@
             "x-ms-summary": "Only agents with a 3D body",
             "description": "Set to 1 to return only agents whose 3D avatar anyone can load.",
             "x-ms-visibility": "advanced"
+          },
+          {
+            "name": "skill",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "x-ms-summary": "Skill",
+            "description": "Return only agents that have this skill, for example web-search.",
+            "x-ms-visibility": "advanced"
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time",
+            "x-ms-summary": "Page cursor",
+            "description": "The next cursor value from the previous page, to get the next page when sorting by popular, newest or name.",
+            "x-ms-visibility": "advanced"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0,
+            "maximum": 5000,
+            "x-ms-summary": "Page offset",
+            "description": "The next offset value from the previous page, to get the next page when sorting by live.",
+            "x-ms-visibility": "advanced"
           }
         ],
         "responses": {
@@ -231,7 +259,8 @@
                   "x-ms-summary": "Agents",
                   "items": {
                     "$ref": "#/definitions/PublicAgent"
-                  }
+                  },
+                  "description": "The matching agents, in the requested order."
                 },
                 "count": {
                   "type": "integer",
@@ -243,15 +272,31 @@
                   "type": "boolean",
                   "x-ms-summary": "Has more",
                   "description": "True when more agents match than this page holds."
+                },
+                "next_cursor": {
+                  "type": "string",
+                  "x-nullable": true,
+                  "x-ms-summary": "Next cursor",
+                  "description": "Pass as Page cursor to get the next page. Empty on the last page and on the live sort."
+                },
+                "next_offset": {
+                  "type": "integer",
+                  "format": "int32",
+                  "x-nullable": true,
+                  "x-ms-summary": "Next offset",
+                  "description": "Pass as Page offset to get the next page of the live sort. Empty on the last page."
+                },
+                "generated_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "x-ms-summary": "Generated at",
+                  "description": "When three.ws built this page of results."
                 }
               }
             }
           },
           "429": {
-            "description": "Too many searches. Wait a few seconds and retry.",
-            "schema": {
-              "$ref": "#/definitions/ApiError"
-            }
+            "description": "Too many searches. Wait a few seconds and retry."
           }
         }
       }
@@ -282,6 +327,7 @@
                   "x-ms-visibility": "important",
                   "x-ms-dynamic-values": {
                     "operationId": "ListMyAgents",
+                    "parameters": {},
                     "value-collection": "agents",
                     "value-path": "id",
                     "value-title": "name"
@@ -297,7 +343,9 @@
                   "x-ms-visibility": "important"
                 }
               }
-            }
+            },
+            "x-ms-summary": "Request",
+            "description": "The agent and the message."
           }
         ],
         "responses": {
@@ -308,40 +356,22 @@
             }
           },
           "400": {
-            "description": "The message is empty, too long, or the body is not valid.",
-            "schema": {
-              "$ref": "#/definitions/ApiError"
-            }
+            "description": "The message is empty, too long, or the body is not valid."
           },
           "401": {
-            "description": "The connection is not signed in. Sign in to the connection again.",
-            "schema": {
-              "$ref": "#/definitions/ApiError"
-            }
+            "description": "The connection is not signed in. Sign in to the connection again."
           },
           "403": {
-            "description": "The agent's owner has turned off conversations from other apps.",
-            "schema": {
-              "$ref": "#/definitions/ApiError"
-            }
+            "description": "Another account owns the agent and has turned off conversations from other apps."
           },
           "404": {
-            "description": "No published agent, and none of yours, has that id.",
-            "schema": {
-              "$ref": "#/definitions/ApiError"
-            }
+            "description": "No published agent, and none of yours, has that id."
           },
           "429": {
-            "description": "Too many messages. Wait a few seconds and retry.",
-            "schema": {
-              "$ref": "#/definitions/ApiError"
-            }
+            "description": "Too many messages. Wait a few seconds and retry."
           },
           "503": {
-            "description": "The agent's language model is not available right now. Retry later.",
-            "schema": {
-              "$ref": "#/definitions/ApiError"
-            }
+            "description": "The agent's language model is not available right now. Retry later."
           }
         }
       }
@@ -364,7 +394,8 @@
         "job": {
           "type": "string",
           "x-ms-summary": "Job id",
-          "description": "Pass to Get generation job while the status is pending."
+          "description": "Pass to Get generation job while the status is pending.",
+          "x-nullable": true
         },
         "glbUrl": {
           "type": "string",
@@ -399,7 +430,8 @@
         "poll": {
           "type": "string",
           "x-ms-summary": "Poll path",
-          "description": "The path to check this job, relative to https://three.ws."
+          "description": "The path to check this job, relative to https://three.ws.",
+          "x-nullable": true
         },
         "etaSeconds": {
           "type": "integer",
@@ -410,12 +442,20 @@
         "format": {
           "type": "string",
           "x-ms-summary": "Format",
-          "description": "Always glb."
+          "description": "Always glb.",
+          "enum": [
+            "glb"
+          ]
         },
         "tier": {
           "type": "string",
           "x-ms-summary": "Tier",
-          "description": "The quality tier that made the model."
+          "description": "The quality tier that made the model.",
+          "enum": [
+            "draft",
+            "standard",
+            "high"
+          ]
         },
         "error": {
           "type": "string",
@@ -424,51 +464,24 @@
         }
       }
     },
-    "StudioError": {
-      "type": "object",
-      "properties": {
-        "error": {
-          "type": "string",
-          "x-ms-summary": "Error code"
-        },
-        "message": {
-          "type": "string",
-          "x-ms-summary": "Message"
-        },
-        "retry_after": {
-          "type": "integer",
-          "format": "int32",
-          "x-ms-summary": "Retry after seconds"
-        }
-      }
-    },
-    "ApiError": {
-      "type": "object",
-      "properties": {
-        "error": {
-          "type": "string",
-          "x-ms-summary": "Error code"
-        },
-        "error_description": {
-          "type": "string",
-          "x-ms-summary": "Error description"
-        }
-      }
-    },
     "Agent": {
       "type": "object",
       "properties": {
         "id": {
           "type": "string",
-          "x-ms-summary": "Agent id"
+          "x-ms-summary": "Agent id",
+          "description": "The agent's unique id. Use it in Send a message to an agent."
         },
         "name": {
           "type": "string",
-          "x-ms-summary": "Name"
+          "x-ms-summary": "Name",
+          "description": "The agent's display name."
         },
         "description": {
           "type": "string",
-          "x-ms-summary": "Description"
+          "x-ms-summary": "Description",
+          "x-nullable": true,
+          "description": "What the agent does, in its owner's words. Empty when the owner has not written one."
         },
         "home_url": {
           "type": "string",
@@ -477,26 +490,54 @@
         },
         "avatar_model_url": {
           "type": "string",
-          "x-ms-summary": "3D model URL"
+          "x-ms-summary": "3D model URL",
+          "x-nullable": true,
+          "format": "uri",
+          "description": "The agent's 3D body as a GLB file. Empty when the agent has no body or its body is private."
         },
         "avatar_thumbnail_url": {
           "type": "string",
-          "x-ms-summary": "Thumbnail URL"
+          "x-ms-summary": "Thumbnail URL",
+          "x-nullable": true,
+          "format": "uri",
+          "description": "A picture of the agent's 3D body. Empty when there is none or the body is private."
         },
         "solana_address": {
           "type": "string",
           "x-ms-summary": "Solana address",
-          "description": "The agent wallet's public Solana address."
+          "description": "The agent wallet's public Solana address. Empty while the wallet is being set up.",
+          "x-nullable": true
         },
         "chat_count": {
           "type": "integer",
           "format": "int32",
-          "x-ms-summary": "Conversations"
+          "x-ms-summary": "Conversations",
+          "description": "How many conversations the agent has had."
         },
         "created_at": {
           "type": "string",
           "format": "date-time",
-          "x-ms-summary": "Created"
+          "x-ms-summary": "Created",
+          "description": "When the agent was created."
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-ms-summary": "Skills",
+          "description": "The names of the skills the agent can use."
+        },
+        "is_registered": {
+          "type": "boolean",
+          "x-ms-summary": "Registered on chain",
+          "description": "True when the agent has an on-chain identity."
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "x-ms-summary": "Updated",
+          "description": "When the agent was last changed."
         }
       }
     },
@@ -505,15 +546,19 @@
       "properties": {
         "id": {
           "type": "string",
-          "x-ms-summary": "Agent id"
+          "x-ms-summary": "Agent id",
+          "description": "The agent's unique id. Use it in Send a message to an agent."
         },
         "name": {
           "type": "string",
-          "x-ms-summary": "Name"
+          "x-ms-summary": "Name",
+          "description": "The agent's display name."
         },
         "description": {
           "type": "string",
-          "x-ms-summary": "Description"
+          "x-ms-summary": "Description",
+          "x-nullable": true,
+          "description": "What the agent does, in its owner's words. Empty when the owner has not written one."
         },
         "home_url": {
           "type": "string",
@@ -522,25 +567,49 @@
         },
         "avatar_model_url": {
           "type": "string",
-          "x-ms-summary": "3D model URL"
+          "x-ms-summary": "3D model URL",
+          "x-nullable": true,
+          "format": "uri",
+          "description": "The agent's 3D body as a GLB file, when anyone can load it."
         },
         "avatar_thumbnail": {
           "type": "string",
-          "x-ms-summary": "Thumbnail URL"
+          "x-ms-summary": "Thumbnail URL",
+          "x-nullable": true,
+          "format": "uri",
+          "description": "A picture of the agent's 3D body, when there is one."
         },
         "chat_count": {
           "type": "integer",
           "format": "int32",
-          "x-ms-summary": "Conversations"
+          "x-ms-summary": "Conversations",
+          "description": "How many conversations the agent has had."
         },
         "is_registered": {
           "type": "boolean",
-          "x-ms-summary": "Registered on chain"
+          "x-ms-summary": "Registered on chain",
+          "description": "True when the agent has an on-chain identity."
         },
         "created_at": {
           "type": "string",
           "format": "date-time",
-          "x-ms-summary": "Created"
+          "x-ms-summary": "Created",
+          "description": "When the agent was created."
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-ms-summary": "Skills",
+          "description": "The names of the skills the agent can use."
+        },
+        "last_action_at": {
+          "type": "string",
+          "format": "date-time",
+          "x-nullable": true,
+          "x-ms-summary": "Last active",
+          "description": "When the agent last did something. Filled only on the live sort."
         }
       }
     },
@@ -549,15 +618,18 @@
       "properties": {
         "ok": {
           "type": "boolean",
-          "x-ms-summary": "OK"
+          "x-ms-summary": "OK",
+          "description": "True when the agent answered."
         },
         "agentId": {
           "type": "string",
-          "x-ms-summary": "Agent id"
+          "x-ms-summary": "Agent id",
+          "description": "The id of the agent that answered."
         },
         "agentName": {
           "type": "string",
-          "x-ms-summary": "Agent name"
+          "x-ms-summary": "Agent name",
+          "description": "The name of the agent that answered."
         },
         "response": {
           "type": "string",
@@ -572,12 +644,14 @@
         "durationMs": {
           "type": "integer",
           "format": "int32",
-          "x-ms-summary": "Duration in milliseconds"
+          "x-ms-summary": "Duration in milliseconds",
+          "description": "How long the agent took to answer, in milliseconds."
         },
         "fetchedAt": {
           "type": "string",
           "format": "date-time",
-          "x-ms-summary": "Answered at"
+          "x-ms-summary": "Answered at",
+          "description": "When the agent answered."
         }
       }
     }
@@ -604,7 +678,6 @@
       ]
     }
   ],
-  "tags": [],
   "x-ms-connector-metadata": [
     {
       "propertyName": "Website",

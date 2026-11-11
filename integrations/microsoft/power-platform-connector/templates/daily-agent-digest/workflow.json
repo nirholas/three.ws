@@ -1,0 +1,187 @@
+{
+  "schemaVersion": "1.0.0.0",
+  "properties": {
+    "displayName": "three.ws: Daily agent digest by email",
+    "description": "Every morning, email a digest of your three.ws agents with their chat counts, plus the newest public agents with a 3D body.",
+    "connectionReferences": {
+      "shared_threews3dstudio": {
+        "api": {
+          "name": "shared_threews3dstudio"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "threews_threews3dstudio"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_office365": {
+        "api": {
+          "name": "shared_office365"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "threews_office365"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "Digest recipient": {
+          "type": "String",
+          "defaultValue": "",
+          "metadata": {
+            "description": "The email address that receives the digest, usually your own."
+          }
+        },
+        "Time zone": {
+          "type": "String",
+          "defaultValue": "UTC",
+          "metadata": {
+            "description": "The Windows time zone name the digest runs in, for example Pacific Standard Time."
+          }
+        }
+      },
+      "triggers": {
+        "Every_morning": {
+          "type": "Recurrence",
+          "recurrence": {
+            "frequency": "Day",
+            "interval": 1,
+            "schedule": {
+              "hours": [
+                "8"
+              ],
+              "minutes": [
+                0
+              ]
+            },
+            "timeZone": "@parameters('Time zone')"
+          }
+        }
+      },
+      "actions": {
+        "List_my_agents": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_threews3dstudio",
+              "connectionName": "shared_threews3dstudio",
+              "operationId": "ListMyAgents"
+            },
+            "parameters": {},
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {}
+        },
+        "Search_public_agents": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_threews3dstudio",
+              "connectionName": "shared_threews3dstudio",
+              "operationId": "SearchAgents"
+            },
+            "parameters": {
+              "sort": "newest",
+              "limit": 5,
+              "avatar": "1"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {}
+        },
+        "My_agents_table": {
+          "type": "Table",
+          "inputs": {
+            "from": "@body('List_my_agents')?['agents']",
+            "format": "HTML",
+            "columns": [
+              {
+                "header": "Agent",
+                "value": "@item()?['name']"
+              },
+              {
+                "header": "Chats",
+                "value": "@item()?['chat_count']"
+              },
+              {
+                "header": "Updated",
+                "value": "@formatDateTime(item()?['updated_at'], 'yyyy-MM-dd')"
+              },
+              {
+                "header": "Page",
+                "value": "@item()?['home_url']"
+              }
+            ]
+          },
+          "runAfter": {
+            "List_my_agents": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Newest_agents_table": {
+          "type": "Table",
+          "inputs": {
+            "from": "@body('Search_public_agents')?['agents']",
+            "format": "HTML",
+            "columns": [
+              {
+                "header": "Agent",
+                "value": "@item()?['name']"
+              },
+              {
+                "header": "About",
+                "value": "@coalesce(item()?['description'], '')"
+              },
+              {
+                "header": "Page",
+                "value": "@item()?['home_url']"
+              }
+            ]
+          },
+          "runAfter": {
+            "Search_public_agents": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Email_the_digest": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+              "connectionName": "shared_office365",
+              "operationId": "SendEmailV2"
+            },
+            "parameters": {
+              "emailMessage/To": "@parameters('Digest recipient')",
+              "emailMessage/Subject": "@concat('three.ws digest for ', formatDateTime(utcNow(), 'yyyy-MM-dd'))",
+              "emailMessage/Body": "<h2>Your agents (@{length(body('List_my_agents')?['agents'])})</h2>@{if(empty(body('List_my_agents')?['agents']), '<p>You have no agents yet. Create one at https://three.ws/create.</p>', body('My_agents_table'))}<h2>Newest public agents</h2>@{body('Newest_agents_table')}",
+              "emailMessage/Importance": "Normal"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "My_agents_table": [
+              "Succeeded"
+            ],
+            "Newest_agents_table": [
+              "Succeeded"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    }
+  }
+}

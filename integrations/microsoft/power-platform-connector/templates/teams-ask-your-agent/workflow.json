@@ -1,0 +1,185 @@
+{
+  "schemaVersion": "1.0.0.0",
+  "properties": {
+    "displayName": "three.ws: Ask your agent from a Teams channel",
+    "description": "When someone posts a new message in a Teams channel, send it to one of your three.ws agents and reply in the thread with its answer.",
+    "connectionReferences": {
+      "shared_teams": {
+        "api": {
+          "name": "shared_teams"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "threews_teams"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_conversionservice": {
+        "api": {
+          "name": "shared_conversionservice"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "threews_conversionservice"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_threews3dstudio": {
+        "api": {
+          "name": "shared_threews3dstudio"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "threews_threews3dstudio"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "Team id": {
+          "type": "String",
+          "defaultValue": "",
+          "metadata": {
+            "description": "The Microsoft Teams team to listen in."
+          }
+        },
+        "Channel id": {
+          "type": "String",
+          "defaultValue": "",
+          "metadata": {
+            "description": "The channel whose new messages go to the agent. Replies in threads are not sent."
+          }
+        },
+        "Agent id": {
+          "type": "String",
+          "defaultValue": "",
+          "metadata": {
+            "description": "The id of the agent that answers: one of yours (pick it in the Send a message to an agent action) or any published agent."
+          }
+        }
+      },
+      "triggers": {
+        "When_a_new_channel_message_is_added": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams",
+              "connectionName": "shared_teams",
+              "operationId": "OnNewChannelMessage"
+            },
+            "parameters": {
+              "groupId": "@parameters('Team id')",
+              "channelId": "@parameters('Channel id')"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "recurrence": {
+            "interval": 1,
+            "frequency": "Minute"
+          },
+          "splitOn": "@triggerOutputs()?['body/value']",
+          "conditions": [
+            {
+              "expression": "@not(equals(triggerOutputs()?['body/from/user'], null))"
+            }
+          ]
+        }
+      },
+      "actions": {
+        "Html_to_text": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_conversionservice",
+              "connectionName": "shared_conversionservice",
+              "operationId": "HtmlToText"
+            },
+            "parameters": {
+              "Content": "@triggerOutputs()?['body/body/content']"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {}
+        },
+        "Send_a_message_to_an_agent": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_threews3dstudio",
+              "connectionName": "shared_threews3dstudio",
+              "operationId": "SendAgentMessage"
+            },
+            "parameters": {
+              "body/agentId": "@parameters('Agent id')",
+              "body/message": "@take(trim(body('Html_to_text')), 4000)"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "Html_to_text": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Reply_in_the_thread": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams",
+              "connectionName": "shared_teams",
+              "operationId": "ReplyWithMessageToConversation"
+            },
+            "parameters": {
+              "poster": "Flow bot",
+              "location": "Channel",
+              "body/parentMessageId": "@triggerOutputs()?['body/id']",
+              "body/recipient/groupId": "@parameters('Team id')",
+              "body/recipient/channelId": "@parameters('Channel id')",
+              "body/messageBody": "<p><b>@{body('Send_a_message_to_an_agent')?['agentName']}</b>: @{replace(body('Send_a_message_to_an_agent')?['response'], decodeUriComponent('%0A'), '<br>')}</p>"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "Send_a_message_to_an_agent": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Reply_when_the_agent_fails": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams",
+              "connectionName": "shared_teams",
+              "operationId": "ReplyWithMessageToConversation"
+            },
+            "parameters": {
+              "poster": "Flow bot",
+              "location": "Channel",
+              "body/parentMessageId": "@triggerOutputs()?['body/id']",
+              "body/recipient/groupId": "@parameters('Team id')",
+              "body/recipient/channelId": "@parameters('Channel id')",
+              "body/messageBody": "<p>The agent could not answer (HTTP @{outputs('Send_a_message_to_an_agent')?['statusCode']}). Check that the agent id is right and that the connection is still signed in, then post again.</p>"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "Send_a_message_to_an_agent": [
+              "Failed",
+              "TimedOut"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    }
+  }
+}

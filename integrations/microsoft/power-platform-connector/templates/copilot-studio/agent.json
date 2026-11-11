@@ -1,0 +1,66 @@
+{
+  "name": "3D Studio Assistant",
+  "description": "Makes 3D models from a description and puts your three.ws agents to work, right inside Teams and Microsoft 365 Copilot.",
+  "instructionsFile": "instructions.md",
+  "orchestration": "generative",
+  "conversationStarters": [
+    { "title": "Make a 3D model", "message": "Make a 3D model of a brass desk lamp with a green glass shade." },
+    { "title": "My agents", "message": "Which agents do I have on three.ws, and how many chats has each had?" },
+    { "title": "Ask an agent", "message": "Ask my first agent what it can help me with." },
+    { "title": "Discover agents", "message": "Show me the newest public agents that have a 3D body." }
+  ],
+  "tools": [
+    {
+      "name": "Generate a 3D model",
+      "operationId": "GenerateModel",
+      "description": "Generates a textured 3D model (GLB) from a short description of one object or character. Use it whenever the user asks to make, create, generate, design or model something in 3D. Returns a status; when it is done, a viewer link, an AR link and a GLB download link.",
+      "inputs": {
+        "prompt": { "description": "One object or character to model, in a short phrase with its material and style, for example: a small ceramic robot figurine. Rewrite long requests down to the single thing to model." },
+        "tier": { "description": "Use draft when the user wants it fast or is just trying an idea, high when they ask for the most detail, otherwise standard." }
+      }
+    },
+    {
+      "name": "Check a 3D model job",
+      "operationId": "GetGenerationJob",
+      "description": "Checks a 3D model that is still generating. Use it with the job id from Generate a 3D model when that returned status pending, and when the user asks whether their model is ready.",
+      "inputs": {
+        "job": { "description": "The job id that Generate a 3D model returned." },
+        "title": { "description": "The prompt the model was generated from, so the saved model gets a readable name." }
+      }
+    },
+    {
+      "name": "List my agents",
+      "operationId": "ListMyAgents",
+      "description": "Lists every three.ws agent the signed-in user owns, with name, description, chat count, skills and page link. Use it when the user asks about their agents, or to find the id of the agent they mean before sending it a message.",
+      "inputs": {}
+    },
+    {
+      "name": "Search public agents",
+      "operationId": "SearchAgents",
+      "description": "Searches the public three.ws agent directory by keyword or skill and sorts by popular, newest, name or live. Use it when the user wants to discover, find or browse agents that other people made.",
+      "inputs": {
+        "q": { "description": "Words to match against agent names and descriptions. Leave empty to browse." },
+        "sort": { "description": "popular by default; newest when the user asks what is new; live for agents active right now." },
+        "limit": { "description": "How many agents to return. Use 5 unless the user asks for more, up to 20 in chat." },
+        "avatar": { "description": "Set to 1 when the user wants only agents that have a 3D body." },
+        "skill": { "description": "A skill name when the user asks for agents that can do something specific." }
+      }
+    },
+    {
+      "name": "Talk to an agent",
+      "operationId": "SendAgentMessage",
+      "description": "Sends a message to one three.ws agent and returns its reply. Use it when the user asks you to ask, tell or check with one of their agents, or a published agent by id. Find the id with List my agents first when the user names the agent.",
+      "inputs": {
+        "agentId": { "description": "The id of the agent, from List my agents or Search public agents." },
+        "message": { "description": "What to say to the agent, written as the user would say it, up to 4000 characters." }
+      }
+    }
+  ],
+  "testPrompts": [
+    { "prompt": "Make a 3D model of a red vintage scooter", "expectTool": "Generate a 3D model" },
+    { "prompt": "Is my scooter model ready yet?", "expectTool": "Check a 3D model job" },
+    { "prompt": "What agents do I have?", "expectTool": "List my agents" },
+    { "prompt": "Find agents that can help with music", "expectTool": "Search public agents" },
+    { "prompt": "Ask my first agent to introduce itself", "expectTool": "Talk to an agent" }
+  ]
+}

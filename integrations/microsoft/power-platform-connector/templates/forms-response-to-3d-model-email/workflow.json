@@ -1,0 +1,282 @@
+{
+  "schemaVersion": "1.0.0.0",
+  "properties": {
+    "displayName": "three.ws: Forms response to a 3D character, emailed back",
+    "description": "When someone submits a Microsoft Forms response, generate a 3D character from their description and email them the viewer, AR and download links.",
+    "connectionReferences": {
+      "shared_microsoftforms": {
+        "api": {
+          "name": "shared_microsoftforms"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "threews_microsoftforms"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_threews3dstudio": {
+        "api": {
+          "name": "shared_threews3dstudio"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "threews_threews3dstudio"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_office365": {
+        "api": {
+          "name": "shared_office365"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "threews_office365"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "Form id": {
+          "type": "String",
+          "defaultValue": "",
+          "metadata": {
+            "description": "The form that collects character descriptions. Pick it in the trigger to fill this in."
+          }
+        },
+        "Description question id": {
+          "type": "String",
+          "defaultValue": "",
+          "metadata": {
+            "description": "The question id of the long answer question that holds the description, as shown in the Get response details output (it starts with r)."
+          }
+        }
+      },
+      "triggers": {
+        "When_a_new_response_is_submitted": {
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_microsoftforms",
+              "connectionName": "shared_microsoftforms",
+              "operationId": "CreateFormWebhook"
+            },
+            "parameters": {
+              "form_id": "@parameters('Form id')"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "splitOn": "@triggerOutputs()?['body/value']"
+        }
+      },
+      "actions": {
+        "Get_response_details": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_microsoftforms",
+              "connectionName": "shared_microsoftforms",
+              "operationId": "GetFormResponseById"
+            },
+            "parameters": {
+              "form_id": "@parameters('Form id')",
+              "response_id": "@triggerOutputs()?['body/resourceData/responseId']"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {}
+        },
+        "Compose_prompt": {
+          "type": "Compose",
+          "inputs": "@concat('a stylized 3D character: ', trim(string(body('Get_response_details')?[parameters('Description question id')])))",
+          "runAfter": {
+            "Get_response_details": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Generate_a_3D_model_from_text": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_threews3dstudio",
+              "connectionName": "shared_threews3dstudio",
+              "operationId": "GenerateModel"
+            },
+            "parameters": {
+              "body/prompt": "@outputs('Compose_prompt')",
+              "body/tier": "standard"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "Compose_prompt": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Initialize_Model": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "Model",
+                "type": "object",
+                "value": "@body('Generate_a_3D_model_from_text')"
+              }
+            ]
+          },
+          "runAfter": {
+            "Generate_a_3D_model_from_text": [
+              "Succeeded"
+            ]
+          }
+        },
+        "If_the_model_is_still_generating": {
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@variables('Model')?['status']",
+                  "pending"
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Wait_for_the_model": {
+              "type": "Until",
+              "expression": "@not(equals(variables('Model')?['status'], 'pending'))",
+              "limit": {
+                "count": 90,
+                "timeout": "PT45M"
+              },
+              "actions": {
+                "Delay": {
+                  "type": "Wait",
+                  "inputs": {
+                    "interval": {
+                      "count": 20,
+                      "unit": "Second"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Get_generation_job": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_threews3dstudio",
+                      "connectionName": "shared_threews3dstudio",
+                      "operationId": "GetGenerationJob"
+                    },
+                    "parameters": {
+                      "job": "@body('Generate_a_3D_model_from_text')?['job']",
+                      "title": "@outputs('Compose_prompt')"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  },
+                  "runAfter": {
+                    "Delay": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Set_Model": {
+                  "type": "SetVariable",
+                  "inputs": {
+                    "name": "Model",
+                    "value": "@body('Get_generation_job')"
+                  },
+                  "runAfter": {
+                    "Get_generation_job": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {}
+            }
+          },
+          "else": {
+            "actions": {}
+          },
+          "runAfter": {
+            "Initialize_Model": [
+              "Succeeded"
+            ]
+          }
+        },
+        "If_the_model_is_ready": {
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@variables('Model')?['status']",
+                  "done"
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Email_the_character": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                  "connectionName": "shared_office365",
+                  "operationId": "SendEmailV2"
+                },
+                "parameters": {
+                  "emailMessage/To": "@body('Get_response_details')?['responder']",
+                  "emailMessage/Subject": "Your 3D character is ready",
+                  "emailMessage/Body": "<p>Here is the character you described.</p><p><a href=\"@{variables('Model')?['viewerUrl']}\">Open it in the 3D viewer</a></p><p><a href=\"@{variables('Model')?['arUrl']}\">See it in AR on your phone</a></p><p><a href=\"@{variables('Model')?['glbUrl']}\">Download the GLB file</a></p>",
+                  "emailMessage/Importance": "Normal"
+                },
+                "authentication": "@parameters('$authentication')"
+              },
+              "runAfter": {}
+            }
+          },
+          "else": {
+            "actions": {
+              "Email_the_failure": {
+                "type": "OpenApiConnection",
+                "inputs": {
+                  "host": {
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                    "connectionName": "shared_office365",
+                    "operationId": "SendEmailV2"
+                  },
+                  "parameters": {
+                    "emailMessage/To": "@body('Get_response_details')?['responder']",
+                    "emailMessage/Subject": "We could not make your 3D character",
+                    "emailMessage/Body": "<p>The model could not be generated: @{coalesce(variables('Model')?['error'], 'the job did not finish in 45 minutes')}.</p><p>Try again with a shorter description of one character.</p>",
+                    "emailMessage/Importance": "Normal"
+                  },
+                  "authentication": "@parameters('$authentication')"
+                },
+                "runAfter": {}
+              }
+            }
+          },
+          "runAfter": {
+            "If_the_model_is_still_generating": [
+              "Succeeded"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    }
+  }
+}

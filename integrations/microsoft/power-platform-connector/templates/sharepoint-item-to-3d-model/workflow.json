@@ -1,0 +1,315 @@
+{
+  "schemaVersion": "1.0.0.0",
+  "properties": {
+    "displayName": "three.ws: New SharePoint item to 3D model, posted in Teams",
+    "description": "When an item is added to a SharePoint list, generate a 3D model from its title, write the model and viewer links back to the item, and post them in a Teams channel.",
+    "connectionReferences": {
+      "shared_sharepointonline": {
+        "api": {
+          "name": "shared_sharepointonline"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "threews_sharepointonline"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_threews3dstudio": {
+        "api": {
+          "name": "shared_threews3dstudio"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "threews_threews3dstudio"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_teams": {
+        "api": {
+          "name": "shared_teams"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "threews_teams"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "Site address": {
+          "type": "String",
+          "defaultValue": "",
+          "metadata": {
+            "description": "The SharePoint site that holds the list, for example https://contoso.sharepoint.com/sites/design."
+          }
+        },
+        "List name": {
+          "type": "String",
+          "defaultValue": "",
+          "metadata": {
+            "description": "The list whose new items become 3D models. Each item title is the prompt."
+          }
+        },
+        "Model link column": {
+          "type": "String",
+          "defaultValue": "",
+          "metadata": {
+            "description": "The internal name of a single line of text column that receives the viewer link, for example ModelLink."
+          }
+        },
+        "Team id": {
+          "type": "String",
+          "defaultValue": "",
+          "metadata": {
+            "description": "The Microsoft Teams team that gets the post."
+          }
+        },
+        "Channel id": {
+          "type": "String",
+          "defaultValue": "",
+          "metadata": {
+            "description": "The channel in that team that gets the post."
+          }
+        },
+        "Quality": {
+          "type": "String",
+          "defaultValue": "standard",
+          "allowedValues": [
+            "draft",
+            "standard",
+            "high"
+          ],
+          "metadata": {
+            "description": "Generation quality: draft is fastest, high gives the most detail."
+          }
+        }
+      },
+      "triggers": {
+        "When_an_item_is_created": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetOnNewItems"
+            },
+            "parameters": {
+              "dataset": "@parameters('Site address')",
+              "table": "@parameters('List name')"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "recurrence": {
+            "interval": 1,
+            "frequency": "Minute"
+          },
+          "splitOn": "@triggerOutputs()?['body/value']"
+        }
+      },
+      "actions": {
+        "Generate_a_3D_model_from_text": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_threews3dstudio",
+              "connectionName": "shared_threews3dstudio",
+              "operationId": "GenerateModel"
+            },
+            "parameters": {
+              "body/prompt": "@triggerOutputs()?['body/Title']",
+              "body/tier": "@parameters('Quality')"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {}
+        },
+        "Initialize_Model": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "Model",
+                "type": "object",
+                "value": "@body('Generate_a_3D_model_from_text')"
+              }
+            ]
+          },
+          "runAfter": {
+            "Generate_a_3D_model_from_text": [
+              "Succeeded"
+            ]
+          }
+        },
+        "If_the_model_is_still_generating": {
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@variables('Model')?['status']",
+                  "pending"
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Wait_for_the_model": {
+              "type": "Until",
+              "expression": "@not(equals(variables('Model')?['status'], 'pending'))",
+              "limit": {
+                "count": 90,
+                "timeout": "PT45M"
+              },
+              "actions": {
+                "Delay": {
+                  "type": "Wait",
+                  "inputs": {
+                    "interval": {
+                      "count": 20,
+                      "unit": "Second"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Get_generation_job": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_threews3dstudio",
+                      "connectionName": "shared_threews3dstudio",
+                      "operationId": "GetGenerationJob"
+                    },
+                    "parameters": {
+                      "job": "@body('Generate_a_3D_model_from_text')?['job']",
+                      "title": "@triggerOutputs()?['body/Title']"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  },
+                  "runAfter": {
+                    "Delay": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Set_Model": {
+                  "type": "SetVariable",
+                  "inputs": {
+                    "name": "Model",
+                    "value": "@body('Get_generation_job')"
+                  },
+                  "runAfter": {
+                    "Get_generation_job": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {}
+            }
+          },
+          "else": {
+            "actions": {}
+          },
+          "runAfter": {
+            "Initialize_Model": [
+              "Succeeded"
+            ]
+          }
+        },
+        "If_the_model_is_ready": {
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@variables('Model')?['status']",
+                  "done"
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Write_the_link_to_the_item": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PatchItem"
+                },
+                "parameters": {
+                  "dataset": "@parameters('Site address')",
+                  "table": "@parameters('List name')",
+                  "id": "@triggerOutputs()?['body/ID']",
+                  "item": "@json(concat('{\"', parameters('Model link column'), '\":\"', variables('Model')?['viewerUrl'], '\"}'))"
+                },
+                "authentication": "@parameters('$authentication')"
+              },
+              "runAfter": {}
+            },
+            "Post_the_model_in_Teams": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams",
+                  "connectionName": "shared_teams",
+                  "operationId": "PostMessageToConversation"
+                },
+                "parameters": {
+                  "poster": "Flow bot",
+                  "location": "Channel",
+                  "body/recipient/groupId": "@parameters('Team id')",
+                  "body/recipient/channelId": "@parameters('Channel id')",
+                  "body/messageBody": "<p>New 3D model for <b>@{triggerOutputs()?['body/Title']}</b></p><p><a href=\"@{variables('Model')?['viewerUrl']}\">Open in the viewer</a> | <a href=\"@{variables('Model')?['arUrl']}\">View in AR</a> | <a href=\"@{variables('Model')?['glbUrl']}\">Download GLB</a></p>"
+                },
+                "authentication": "@parameters('$authentication')"
+              },
+              "runAfter": {
+                "Write_the_link_to_the_item": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "else": {
+            "actions": {
+              "Post_the_failure_in_Teams": {
+                "type": "OpenApiConnection",
+                "inputs": {
+                  "host": {
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams",
+                    "connectionName": "shared_teams",
+                    "operationId": "PostMessageToConversation"
+                  },
+                  "parameters": {
+                    "poster": "Flow bot",
+                    "location": "Channel",
+                    "body/recipient/groupId": "@parameters('Team id')",
+                    "body/recipient/channelId": "@parameters('Channel id')",
+                    "body/messageBody": "<p>Could not model <b>@{triggerOutputs()?['body/Title']}</b>: @{coalesce(variables('Model')?['error'], 'the job did not finish in 45 minutes')}. Edit the item title to a single object and add it again.</p>"
+                  },
+                  "authentication": "@parameters('$authentication')"
+                },
+                "runAfter": {}
+              }
+            }
+          },
+          "runAfter": {
+            "If_the_model_is_still_generating": [
+              "Succeeded"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    }
+  }
+}

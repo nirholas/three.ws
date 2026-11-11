@@ -51,6 +51,18 @@
         }
       }
     },
+    "policyTemplateInstances": [
+      {
+        "templateId": "setheader",
+        "title": "Identify connector traffic",
+        "parameters": {
+          "x-ms-apimTemplateParameter.name": "X-Threews-Client",
+          "x-ms-apimTemplateParameter.value": "power-platform-connector",
+          "x-ms-apimTemplateParameter.existsAction": "override",
+          "x-ms-apimTemplate-policySection": "Request"
+        }
+      }
+    ],
     "iconBrandColor": "#080814",
     "capabilities": [
       "actions"

@@ -6,6 +6,14 @@
 //   npm run package:power-platform-connector -- --check     validate everything except the owner value, write nothing
 //   npm run package:power-platform-connector -- --regen-icon  rewrite icon.png from public/logo.png
 //
+// Beside the package it writes dist/microsoft/certified-connectors/three.ws 3D Studio/, the
+// folder a pull request to microsoft/PowerPlatformConnectors (dev branch) adds under
+// certified-connectors/: apiDefinition.swagger.json, apiProperties.json, icon.png and a
+// readme.md in Microsoft's template layout. Both files are validated against the schemas
+// that repository publishes (vendored in schema/microsoft-*.json), and the flow templates in
+// templates/ are checked against the definition so a template cannot call an action, or
+// pass an input, the connector does not have.
+//
 // The owner-only value comes from the environment and is never defaulted:
 //   PP_OAUTH_CLIENT_ID  the public PKCE client registered at https://three.ws/oauth/register
 //                       with the connector's per-connector redirect URL
@@ -19,11 +27,15 @@ import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { zipSync } from 'fflate';
 import sharp from 'sharp';
+import { checkTemplates } from './power-platform-templates.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const srcDir = join(root, 'integrations', 'microsoft', 'power-platform-connector');
 const outDir = join(root, 'dist', 'microsoft', 'three-ws-power-platform-connector');
 const outZip = `${outDir}.zip`;
+export const CERTIFIED_NAME = 'three.ws 3D Studio';
+const certifiedDir = join(root, 'dist', 'microsoft', 'certified-connectors', CERTIFIED_NAME);
+const templatesDir = join(srcDir, 'templates');
 const LOGO = join(root, 'public', 'logo.png');
 
 const OWNER_VAR = 'PP_OAUTH_CLIENT_ID';
@@ -37,6 +49,19 @@ const TITLE_BANNED = ['API', 'Connector', ...PRODUCT_NAMES];
 const SUMMARY_RE = /^[A-Za-z0-9 ()]+$/;
 const BANNED_BRAND_COLORS = new Set(['#ffffff', '#007ee5']);
 const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch'];
+// The values the certification swagger validator accepts in Categories (InvalidConnectorCategory).
+export const CONNECTOR_CATEGORIES = [
+	'AI', 'Business Intelligence', 'Business Management', 'Collaboration', 'Commerce', 'Communication',
+	'Content and Files', 'Data', 'Finance', 'Human Resources', 'Internet of Things', 'IT Operations',
+	'Lifestyle and Entertainment', 'Marketing', 'Productivity', 'Sales and CRM', 'Security', 'Social Media', 'Website',
+];
+// The section headings of the repository's readme template, in order.
+export const README_HEADINGS = [
+	'## Publisher: three.ws', '## Prerequisites', '## Supported Operations', '## Obtaining Credentials',
+	'## Getting Started', '## Known Issues and Limitations', '## Frequently Asked Questions', '## Deployment Instructions',
+];
+const CERTIFIED_FILES = ['apiDefinition.swagger.json', 'apiProperties.json', 'icon.png', 'readme.md'];
+const VISIBILITY = new Set(['important', 'advanced', 'internal']);
 
 const readText = (name) => readFileSync(join(srcDir, name), 'utf8');
 
@@ -82,8 +107,8 @@ function inlineDraft04(node) {
 	return Object.fromEntries(Object.entries(node).map(([k, v]) => [k, inlineDraft04(v)]));
 }
 
-export function loadSwaggerSchema() {
-	const schema = JSON.parse(readText('schema/swagger-2.0.schema.json'));
+export function loadSwaggerSchema(file = 'schema/swagger-2.0.schema.json') {
+	const schema = JSON.parse(readText(file));
 	delete schema.$schema;
 	if (schema.id) {
 		schema.$id = schema.id;
@@ -92,14 +117,33 @@ export function loadSwaggerSchema() {
 	return inlineDraft04(schema);
 }
 
-let compiled = null;
-function swaggerValidator() {
-	if (!compiled) {
+/** The apiProperties schema microsoft/PowerPlatformConnectors validates pull requests with. */
+export function loadPropertiesSchema() {
+	const schema = JSON.parse(readText('schema/microsoft-paconn-apiProperties.schema.json'));
+	delete schema.$schema;
+	if (schema.id) {
+		schema.$id = schema.id;
+		delete schema.id;
+	}
+	return schema;
+}
+
+const compiled = new Map();
+function validatorFor(key, load) {
+	if (!compiled.has(key)) {
 		const ajv = new Ajv({ strict: false, allErrors: true });
 		addFormats(ajv);
-		compiled = ajv.compile(loadSwaggerSchema());
+		compiled.set(key, ajv.compile(load()));
 	}
-	return compiled;
+	return compiled.get(key);
+}
+const swaggerValidator = () => validatorFor('swagger', () => loadSwaggerSchema());
+const microsoftSwaggerValidator = () => validatorFor('ms-swagger', () => loadSwaggerSchema('schema/microsoft-apiDefinition.swagger.schema.json'));
+const propertiesValidator = () => validatorFor('ms-properties', loadPropertiesSchema);
+
+function schemaProblems(label, validate, doc) {
+	if (validate(doc)) return [];
+	return validate.errors.map((e) => `${label}: ${e.instancePath || '/'} ${e.message}${e.params?.additionalProperty ? ` (${e.params.additionalProperty})` : ''}`);
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -156,15 +200,35 @@ function checkDescription(label, value, problems) {
 	if (product) problems.push(`${label} names the product ${product}`);
 }
 
+// Every field a maker sees in dynamic content needs a title and a sentence saying what
+// it holds; arrays and objects are walked so nested fields get the same rule.
+function checkResponseSchema(def, label, schema, problems, seen = new Set()) {
+	let node = schema;
+	if (node?.$ref) {
+		if (seen.has(node.$ref)) return;
+		seen.add(node.$ref);
+		node = resolveRef(def, node.$ref);
+	}
+	if (!node || typeof node !== 'object') return;
+	if (node.items) checkResponseSchema(def, `${label}[]`, node.items, problems, seen);
+	for (const [name, prop] of Object.entries(node.properties || {})) {
+		const at = `${label}.${name}`;
+		const target = prop.$ref ? resolveRef(def, prop.$ref) : prop;
+		if (!prop.$ref) {
+			if (typeof prop['x-ms-summary'] !== 'string') problems.push(`${at} needs an x-ms-summary`);
+			if (typeof prop.description !== 'string') problems.push(`${at} needs a description`);
+		}
+		if (target?.properties || target?.items || prop.$ref) checkResponseSchema(def, at, prop, problems, seen);
+	}
+}
+
 // ── Definition checks ────────────────────────────────────────────────────────
 
 /** Schema validation plus the certification rules for the OpenAPI definition. */
 export function checkDefinition(def) {
 	const problems = [];
-	const validate = swaggerValidator();
-	if (!validate(def)) {
-		for (const e of validate.errors) problems.push(`swagger schema: ${e.instancePath || '/'} ${e.message}`);
-	}
+	problems.push(...schemaProblems('swagger schema', swaggerValidator(), def));
+	problems.push(...schemaProblems('PowerPlatformConnectors swagger schema', microsoftSwaggerValidator(), def));
 
 	const title = def.info?.title ?? '';
 	if (!title || title.length > 30) problems.push(`info.title must be 1 to 30 characters, got ${title.length}`);
@@ -188,6 +252,10 @@ export function checkDefinition(def) {
 	for (const key of ['Website', 'Privacy policy']) {
 		if (meta[key] && !/^https:\/\//.test(meta[key])) problems.push(`x-ms-connector-metadata "${key}" must be an https URL`);
 	}
+	for (const category of String(meta.Categories || '').split(';').map((c) => c.trim()).filter(Boolean)) {
+		if (!CONNECTOR_CATEGORIES.includes(category)) problems.push(`x-ms-connector-metadata category "${category}" is not one of: ${CONNECTOR_CATEGORIES.join(', ')}`);
+	}
+	if (Array.isArray(def.tags) && !def.tags.length) problems.push('remove the empty top-level tags array');
 
 	const operationIds = new Map();
 	const securityScopes = new Set();
@@ -205,7 +273,7 @@ export function checkDefinition(def) {
 			else operationIds.set(op.operationId, op.summary);
 			checkSummary(`${where} summary`, op.summary, problems);
 			checkDescription(`${where} description`, op.description, problems);
-			if (!op['x-ms-visibility']) problems.push(`${where} has no x-ms-visibility`);
+			if (!VISIBILITY.has(op['x-ms-visibility'])) problems.push(`${where} needs x-ms-visibility important, advanced or internal`);
 
 			const responses = op.responses || {};
 			if ('default' in responses) problems.push(`${where} must not use a default response`);
@@ -214,9 +282,19 @@ export function checkDefinition(def) {
 			for (const code of ok) {
 				const schema = responses[code].schema;
 				if (!schema || (!schema.$ref && !schema.properties && !schema.items)) problems.push(`${where} ${code} needs an exact response schema`);
+				else checkResponseSchema(def, `${where} ${code} response`, schema, problems);
+			}
+			// OperationHasManyResponsesWithSchema: an error body gets no schema.
+			for (const [code, response] of Object.entries(responses)) {
+				if (!/^2\d\d$/.test(code) && response.schema) problems.push(`${where} ${code} must not declare a schema (only the success response may)`);
+				if (!response.description || !endsWithPunctuation(response.description)) problems.push(`${where} ${code} needs a description that is a full sentence`);
 			}
 
-			for (const param of op.parameters || []) {
+			const params = op.parameters || [];
+			const body = params.find((p) => p.in === 'body');
+			if (body && method === 'get') problems.push(`${where} is a fetch operation and must not take a body (BodyOrFormDataParameterInFetchOperationNotAllowed)`);
+			if (body && !(op.consumes || def.consumes || []).length) problems.push(`${where} takes a body but declares no consumes (ConsumesMissing)`);
+			for (const param of params) {
 				const label = `${where} parameter ${param.name}`;
 				if (param.in === 'body') {
 					const props = param.schema?.properties || {};
@@ -224,10 +302,14 @@ export function checkDefinition(def) {
 					for (const [name, prop] of Object.entries(props)) {
 						checkSummary(`${label}.${name} x-ms-summary`, prop['x-ms-summary'], problems);
 						checkDescription(`${label}.${name} description`, prop.description, problems);
+						if (!VISIBILITY.has(prop['x-ms-visibility'])) problems.push(`${label}.${name} needs x-ms-visibility important, advanced or internal`);
+						if (prop['x-ms-visibility'] === 'internal' && (param.schema.required || []).includes(name) && prop.default === undefined) problems.push(`${label}.${name} is required and internal, so it needs a default`);
 					}
 				} else {
 					checkSummary(`${label} x-ms-summary`, param['x-ms-summary'], problems);
 					checkDescription(`${label} description`, param.description, problems);
+					if (!VISIBILITY.has(param['x-ms-visibility'])) problems.push(`${label} needs x-ms-visibility important, advanced or internal`);
+					if (param['x-ms-visibility'] === 'internal' && param.required && param.default === undefined) problems.push(`${label} is required and internal, so it needs a default`);
 				}
 			}
 		}
@@ -235,8 +317,11 @@ export function checkDefinition(def) {
 
 	walk(def, (node, at) => {
 		if (typeof node.$ref === 'string' && resolveRef(def, node.$ref) === undefined) problems.push(`${at} $ref ${node.$ref} does not resolve`);
+		if (typeof node.$ref === 'string' && Object.keys(node).length > 1) problems.push(`${at} puts ${Object.keys(node).filter((k) => k !== '$ref').join(', ')} beside $ref (AdditionalPropertyNotAllowedAdjacentToRef)`);
+		if (Array.isArray(node.required) && !node.required.length) problems.push(`${at} has an empty required array (RequiredPropertyArrayEmpty)`);
 		const dyn = node['x-ms-dynamic-values'];
 		if (dyn && !operationIds.has(dyn.operationId)) problems.push(`${at} x-ms-dynamic-values names unknown operation ${dyn.operationId}`);
+		if (dyn && (!dyn.parameters || typeof dyn.parameters !== 'object')) problems.push(`${at} x-ms-dynamic-values needs a parameters object (required, even when empty)`);
 		if (typeof node['x-ms-summary'] === 'string') checkSummary(`${at} x-ms-summary`, node['x-ms-summary'], problems);
 		if (typeof node.description === 'string' && !at.startsWith('/paths') && !at.startsWith('/info')) {
 			checkDescription(`${at} description`, node.description, problems);
@@ -299,7 +384,15 @@ export function buildProperties(values, def) {
 	else if (BANNED_BRAND_COLORS.has(color)) problems.push(`iconBrandColor must not be ${color}`);
 	if (!p.publisher || !p.stackOwner) problems.push('publisher and stackOwner are required');
 	if (!Array.isArray(p.capabilities)) problems.push('capabilities must be an array');
+	// /admin/microsoft counts connector calls by this header (api/_lib/microsoft-surface-events.js).
+	const identify = (p.policyTemplateInstances || []).find((x) => x?.templateId === 'setheader'
+		&& x.parameters?.['x-ms-apimTemplateParameter.name'] === 'X-Threews-Client');
+	if (!identify || identify.parameters['x-ms-apimTemplateParameter.value'] !== 'power-platform-connector'
+		|| identify.parameters['x-ms-apimTemplate-policySection'] !== 'Request') {
+		problems.push('policyTemplateInstances must set the request header X-Threews-Client: power-platform-connector (the dashboard counts connector traffic by it)');
+	}
 
+	problems.push(...schemaProblems('PowerPlatformConnectors apiProperties schema', propertiesValidator(), props));
 	const bad = nonAscii(JSON.stringify(props));
 	if (bad) problems.push(`apiProperties.json contains a non-ASCII character (${bad})`);
 	return { properties: props, problems };
@@ -401,9 +494,18 @@ export async function assemble(values) {
 	for (const [id, summary] of defCheck.operationIds) {
 		if (!summary || !intro.includes(summary)) problems.push(`intro.md does not document the ${id} action ("${summary}")`);
 	}
-	for (const heading of ['## Prerequisites', '## Obtaining credentials', '## Known issues and limitations']) {
-		if (!intro.includes(heading)) problems.push(`intro.md is missing the "${heading}" section certification asks for`);
+	if (!intro.startsWith(`# ${def.info?.title}\n`)) problems.push(`intro.md must start with "# ${def.info?.title}", the readme template title`);
+	let at = -1;
+	for (const heading of README_HEADINGS) {
+		const found = intro.search(new RegExp(`^${heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'm'));
+		if (found === -1) problems.push(`intro.md is missing the "${heading}" section of the certified readme template`);
+		else if (found < at) problems.push(`intro.md has "${heading}" out of the readme template order`);
+		else at = found;
 	}
+	if (def.info?.title !== CERTIFIED_NAME) problems.push(`info.title must be "${CERTIFIED_NAME}", the certified-connectors folder name`);
+
+	const templates = checkTemplates(def, templatesDir);
+	problems.push(...templates.problems);
 	const bad = nonAscii(intro);
 	if (bad) problems.push(`intro.md contains a non-ASCII character (${bad})`);
 
@@ -413,7 +515,11 @@ export async function assemble(values) {
 		'icon.png': icon,
 		'intro.md': Buffer.from(intro),
 	};
-	return { problems, files, operations: defCheck.operationIds.size };
+	// The certified folder carries the same definition, properties and icon, with the
+	// documentation under the readme.md name the PowerPlatformConnectors repository uses.
+	const certified = { ...files, 'readme.md': files['intro.md'] };
+	delete certified['intro.md'];
+	return { problems, files, certified, templates: templates.used, operations: defCheck.operationIds.size };
 }
 
 export async function main(argv = process.argv.slice(2), env = process.env) {
@@ -425,13 +531,13 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
 		console.error('public PKCE client at https://three.ws/oauth/register (see the README). Run with --check to validate everything else.');
 		return 2;
 	}
-	const { problems, files, operations } = await assemble(values);
+	const { problems, files, certified, templates, operations } = await assemble(values);
 	if (problems.length) {
 		console.error(`Connector is not valid:\n- ${problems.join('\n- ')}`);
 		return 1;
 	}
 	if (check) {
-		console.log(`OK: Swagger 2.0 schema, ${operations} operations, certification rules, OAuth PKCE settings, icon and intro.md pass (client id not checked).`);
+		console.log(`OK: Swagger 2.0 and PowerPlatformConnectors schemas, ${operations} operations, certification rules, OAuth PKCE settings, icon, readme template and ${templates.size} templates pass (client id not checked).`);
 		return 0;
 	}
 	rmSync(outDir, { recursive: true, force: true });
@@ -439,7 +545,11 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
 	for (const name of PACKAGE_FILES) writeFileSync(join(outDir, name), files[name]);
 	const zip = Buffer.from(zipSync(Object.fromEntries(PACKAGE_FILES.map((n) => [n, new Uint8Array(files[n])]))));
 	writeFileSync(outZip, zip);
+	rmSync(certifiedDir, { recursive: true, force: true });
+	mkdirSync(certifiedDir, { recursive: true });
+	for (const name of CERTIFIED_FILES) writeFileSync(join(certifiedDir, name), certified[name]);
 	console.log(`Wrote ${outDir}/ and ${outZip} (${zip.length} bytes)`);
+	console.log(`Wrote ${certifiedDir}/ (${CERTIFIED_FILES.join(', ')}) for the PowerPlatformConnectors pull request`);
 	return 0;
 }
 
