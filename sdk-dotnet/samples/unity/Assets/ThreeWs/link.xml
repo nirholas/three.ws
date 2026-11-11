@@ -1,0 +1,11 @@
+<!--
+  IL2CPP managed code stripping. The SDK serializes with System.Text.Json source generation, so it needs
+  no reflection, but keeping the SDK whole costs little and guards against High stripping removing a
+  model setter that is only reached through generated metadata.
+-->
+<linker>
+  <assembly fullname="ThreeWs.Sdk" preserve="all" />
+  <assembly fullname="System.Text.Json">
+    <type fullname="System.Text.Json.Serialization.Metadata.JsonMetadataServices" preserve="all" />
+  </assembly>
+</linker>

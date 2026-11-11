@@ -1,0 +1,9 @@
+{
+    "name": "ThreeWs.Samples",
+    "rootNamespace": "ThreeWs.Samples.Unity",
+    "references": ["glTFast"],
+    "overrideReferences": true,
+    "precompiledReferences": ["ThreeWs.Sdk.dll"],
+    "autoReferenced": true,
+    "noEngineReferences": false
+}

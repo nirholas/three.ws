@@ -1,0 +1,8 @@
+bin/
+obj/
+artifacts/
+TestResults/
+*.user
+samples/unity/Assets/Plugins/
+samples/unity/Library/
+samples/unity/Temp/

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- Run with -p:SdkTarget=netstandard2.1 to test the netstandard2.1 build of the SDK instead of net8.0. -->
+    <SdkTarget Condition="'$(SdkTarget)' == ''">net8.0</SdkTarget>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/ThreeWs.Sdk/ThreeWs.Sdk.csproj" SetTargetFramework="TargetFramework=$(SdkTarget)" />
+  </ItemGroup>
+
+</Project>

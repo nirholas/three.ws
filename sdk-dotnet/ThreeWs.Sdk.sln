@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{5765A039-97AE-4986-A39C-F20F396EA7D1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThreeWs.Sdk", "src\ThreeWs.Sdk\ThreeWs.Sdk.csproj", "{33F05A5B-6A47-4FC0-A622-E89D288EE473}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{E5DC6C84-F8FC-4E73-89DB-8D10242C88BD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThreeWs.Sdk.Tests", "tests\ThreeWs.Sdk.Tests\ThreeWs.Sdk.Tests.csproj", "{FC742532-9E64-4C58-ABE7-168A3D6170DF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{33F05A5B-6A47-4FC0-A622-E89D288EE473}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33F05A5B-6A47-4FC0-A622-E89D288EE473}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33F05A5B-6A47-4FC0-A622-E89D288EE473}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33F05A5B-6A47-4FC0-A622-E89D288EE473}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC742532-9E64-4C58-ABE7-168A3D6170DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC742532-9E64-4C58-ABE7-168A3D6170DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC742532-9E64-4C58-ABE7-168A3D6170DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC742532-9E64-4C58-ABE7-168A3D6170DF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{33F05A5B-6A47-4FC0-A622-E89D288EE473} = {5765A039-97AE-4986-A39C-F20F396EA7D1}
+		{FC742532-9E64-4C58-ABE7-168A3D6170DF} = {E5DC6C84-F8FC-4E73-89DB-8D10242C88BD}
+	EndGlobalSection
+EndGlobal

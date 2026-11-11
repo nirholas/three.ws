@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;netstandard2.1</TargetFrameworks>
+    <RootNamespace>ThreeWs.Sdk</RootNamespace>
+    <AssemblyName>ThreeWs.Sdk</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IsTrimmable Condition="'$(TargetFramework)' == 'net8.0'">true</IsTrimmable>
+    <IsAotCompatible Condition="'$(TargetFramework)' == 'net8.0'">true</IsAotCompatible>
+
+    <PackageId>ThreeWs.Sdk</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>three.ws</Authors>
+    <Company>three.ws</Company>
+    <Product>three.ws .NET SDK</Product>
+    <Description>Official .NET client for three.ws: generate 3D models (GLB) on every Forge lane, auto-rig them, search the free 3D asset catalog, stream agent chat, and list MCP tools. Async, typed, cancellable, with retries that honour Retry-After. Targets net8.0 and netstandard2.1 (Unity 2021.2+).</Description>
+    <PackageTags>three.ws;3d;glb;gltf;text-to-3d;unity;ai-agents;mcp;sdk</PackageTags>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://three.ws/docs/dotnet-sdk</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/nirholas/three.ws</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>See https://github.com/nirholas/three.ws/blob/main/sdk-dotnet/CHANGELOG.md</PackageReleaseNotes>
+    <Copyright>Copyright 2026 three.ws</Copyright>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <None Include="../../../public/apple-touch-icon.png" Pack="true" PackagePath="icon.png" Visible="false" />
+    <InternalsVisibleTo Include="ThreeWs.Sdk.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Compiles the engine-free half of the Unity sample against netstandard2.1, the API surface Unity
+    exposes, so it is checked without a Unity install. The MonoBehaviour needs UnityEngine and glTFast
+    and is compiled by Unity itself.
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../Assets/ThreeWs/ThreeWsModelRequest.cs" />
+    <ProjectReference Include="../../../src/ThreeWs.Sdk/ThreeWs.Sdk.csproj" />
+  </ItemGroup>
+
+</Project>
