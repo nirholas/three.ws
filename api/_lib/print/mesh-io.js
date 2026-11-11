@@ -164,6 +164,11 @@ export async function loadMesh(bytes, opts = {}) {
 	const maxBytes = opts.maxBytes ?? MAX_INPUT_BYTES;
 	const maxTriangles = opts.maxTriangles ?? MAX_TRIANGLES;
 	const wantColor = opts.color !== false;
+	// Opt-in surface data for consumers that sample color at arbitrary points on
+	// a triangle rather than at its vertices (the Bedrock voxelizer samples the
+	// texture at each voxel's own surface point). Off by default so the print
+	// pipeline's memory profile is unchanged.
+	const wantSurface = wantColor && opts.surface === true;
 
 	if (!bytes || typeof bytes.byteLength !== 'number' || bytes.byteLength < 20) {
 		throw new MeshIoError('invalid_model', 'input is not a glTF/GLB buffer');
@@ -193,6 +198,15 @@ export async function loadMesh(bytes, opts = {}) {
 	const indices = [];
 	const colors = wantColor ? [] : null;
 	const textureCache = new Map();
+	// Surface data (only when opts.surface): per-vertex UV, per-vertex tint
+	// (sRGB material factor times COLOR_0, i.e. the color without the texture),
+	// per-triangle index into `surfaceTextures` (-1 when untextured).
+	const uvs = wantSurface ? [] : null;
+	const tints = wantSurface ? [] : null;
+	const triTexture = wantSurface ? [] : null;
+	const surfaceTextures = [];
+	const surfaceTextureIndex = new Map();
+	let vertexColoredPrimitives = 0;
 	let skippedPrimitives = 0;
 	let texturedPrimitives = 0;
 	let triangles = 0;
@@ -259,12 +273,34 @@ export async function loadMesh(bytes, opts = {}) {
 			const vertexColor = prim.getAttribute('COLOR_0');
 			const img = texture && uv ? await decodeTexture(texture, textureCache) : null;
 			if (img) texturedPrimitives += 1;
+			if (vertexColor) vertexColoredPrimitives += 1;
+			if (wantSurface) {
+				let texIdx = -1;
+				if (img) {
+					texIdx = surfaceTextureIndex.get(img);
+					if (texIdx === undefined) {
+						texIdx = surfaceTextures.length;
+						surfaceTextures.push(img);
+						surfaceTextureIndex.set(img, texIdx);
+					}
+				}
+				const primTriCount = (indices.length - (triTexture.length * 3)) / 3;
+				for (let t = 0; t < primTriCount; t += 1) triTexture.push(texIdx);
+			}
 			const uvEl = [0, 0];
 			const cEl = [1, 1, 1, 1];
 			for (let i = 0; i < count; i += 1) {
 				let r;
 				let g;
 				let b;
+				if (uvs) {
+					if (uv) uv.getElement(i, uvEl);
+					else {
+						uvEl[0] = 0;
+						uvEl[1] = 0;
+					}
+					uvs.push(uvEl[0], uvEl[1]);
+				}
 				if (img) {
 					uv.getElement(i, uvEl);
 					const [tr, tg, tb] = sampleTexel(img, uvEl[0], uvEl[1]);
@@ -278,11 +314,27 @@ export async function loadMesh(bytes, opts = {}) {
 					g = linearToSrgb(factor[1]);
 					b = linearToSrgb(factor[2]);
 				}
+				let tr = linearToSrgb(factor[0]);
+				let tg = linearToSrgb(factor[1]);
+				let tb = linearToSrgb(factor[2]);
 				if (vertexColor) {
 					vertexColor.getElement(i, cEl);
-					r *= linearToSrgb(clamp01(cEl[0]));
-					g *= linearToSrgb(clamp01(cEl[1]));
-					b *= linearToSrgb(clamp01(cEl[2]));
+					const vr = linearToSrgb(clamp01(cEl[0]));
+					const vg = linearToSrgb(clamp01(cEl[1]));
+					const vb = linearToSrgb(clamp01(cEl[2]));
+					r *= vr;
+					g *= vg;
+					b *= vb;
+					tr *= vr;
+					tg *= vg;
+					tb *= vb;
+				}
+				if (tints) {
+					tints.push(
+						Math.round(clamp01(tr) * 255),
+						Math.round(clamp01(tg) * 255),
+						Math.round(clamp01(tb) * 255),
+					);
 				}
 				colors.push(
 					Math.round(clamp01(r) * 255),
@@ -306,6 +358,15 @@ export async function loadMesh(bytes, opts = {}) {
 		skippedPrimitives,
 		hasTextures: root.listTextures().length > 0,
 		colorSource: texturedPrimitives > 0 ? 'texture' : colors ? 'material' : 'none',
+		vertexColored: vertexColoredPrimitives > 0,
+		surface: wantSurface
+			? {
+					uvs: Float32Array.from(uvs),
+					tints: Uint8Array.from(tints),
+					triTexture: Int32Array.from(triTexture),
+					textures: surfaceTextures,
+				}
+			: null,
 		sizeBytes: input.byteLength,
 		materials: root.listMaterials().length,
 		document: doc,
