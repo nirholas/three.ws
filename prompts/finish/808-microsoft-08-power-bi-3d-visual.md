@@ -1,5 +1,7 @@
 # microsoft 08: a Power BI custom visual that renders 3D models bound to report data
 
+Status 2026-11-11: built and verified. The visual, testutils tests (41/41), `pbiviz package`, the live check of the packaged build against production (3/3), the README certification list, the AppSource notes, docs, STRUCTURE and changelog are all committed. Open: root `npm test` had 7 failures in 6 files, none from this order (other in-flight work: creation tests on cdn.three.ws, audit-a11y not in the guards registry, ktx-parse undeclared, uncommitted sitemap and seo-jsonld edits). Close this order once root `npm test` is green. Owner: deploy 3a90bdcc4 (CORS on /api/forge-creation, needed for model ids inside Power BI), push, build sample.pbix, submit to AppSource as an uncertified visual.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3108.
 
 ## Operating clause (binding)
