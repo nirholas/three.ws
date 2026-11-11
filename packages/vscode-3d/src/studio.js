@@ -57,22 +57,106 @@ export function textOf(result) {
 }
 
 /**
- * Call one studio tool and return its model.
+ * Read a tools/call result that may be a pending job rather than a model.
+ *
+ * Since the studio answers a plain JSON call within 40 s, a render that runs
+ * longer comes back as a success carrying a job handle, not a model. That handle
+ * is collected with check_job; nothing about it is an error.
+ *
+ * @param {any} result
+ * @returns {{ pending: true, jobId: string, stage: string|null, next: string|null, etaSeconds: number|null, watchUrl: string|null, message: string }
+ *   | { pending?: false, glbUrl: string, viewerUrl?: string, format?: string, prompt?: string }}
+ */
+export function readToolResult(result) {
+	const structured = result?.structuredContent;
+	if (structured?.status === 'pending' && (structured.jobId || structured.job_id)) {
+		const eta = Number(structured.etaRemainingSeconds ?? structured.eta_seconds);
+		return {
+			pending: true,
+			jobId: String(structured.jobId || structured.job_id),
+			stage: typeof structured.stage === 'string' ? structured.stage : null,
+			next: typeof structured.next === 'string' ? structured.next : null,
+			etaSeconds: Number.isFinite(eta) && eta > 0 ? Math.round(eta) : null,
+			watchUrl: typeof structured.viewer_url === 'string' ? structured.viewer_url : null,
+			message: textOf(result).split('\n')[0] || 'still rendering',
+		};
+	}
+	return readModelResult(result);
+}
+
+/** How long to wait between check_job calls, and how long a job may run in total. */
+const CHECK_POLL_MS = 8000;
+const JOB_TIMEOUT_MS = 10 * 60_000;
+
+/**
+ * Call one studio tool and return its model, collecting a pending job.
+ *
+ * `onStatus` hears the studio's own words for every pending state (stage, the
+ * live ETA), so a caller can show honest queue status instead of a spinner.
  *
  * @param {string} origin
  * @param {string} name tool name, see TOOLS
  * @param {Record<string, unknown>} args
- * @param {{ signal?: AbortSignal, timeoutMs?: number }} [opts]
+ * @param {{ signal?: AbortSignal, timeoutMs?: number, pollMs?: number,
+ *   onStatus?: (status: { jobId: string, stage: string|null, etaSeconds: number|null, watchUrl: string|null, message: string }) => void }} [opts]
  */
 export async function callTool(origin, name, args, opts = {}) {
-	const body = {
-		jsonrpc: '2.0',
-		id: Date.now(),
-		method: 'tools/call',
-		params: { name, arguments: args },
+	const { signal, timeoutMs, pollMs = CHECK_POLL_MS, onStatus } = opts;
+	const payload = await rpc(origin, toolCall(name, args), { signal, timeoutMs });
+	let result = readToolResult(payload.result);
+	const deadline = Date.now() + JOB_TIMEOUT_MS;
+	while (result.pending) {
+		onStatus?.(statusOf(result));
+		if (Date.now() > deadline) {
+			throw new Error(`the job is still rendering after ten minutes; it keeps running at ${result.watchUrl || 'three.ws'}`);
+		}
+		await sleep(pollMs, signal);
+		result = await checkOnce(origin, result, { signal, pollMs });
+	}
+	return result;
+}
+
+/** One check_job round trip; a check that failed while the job is fine stays pending. */
+async function checkOnce(origin, pending, { signal, pollMs }) {
+	const payload = await rpc(origin, toolCall(TOOLS.check, { job_id: pending.jobId }), { signal });
+	const structured = payload.result?.structuredContent;
+	if (payload.result?.isError && structured?.retryable) {
+		const wait = Number(structured.retry_after) > 0 ? Number(structured.retry_after) * 1000 : pollMs;
+		await sleep(Math.min(wait, 30_000), signal);
+		return { ...pending, message: 'checking on the job again' };
+	}
+	return readToolResult(payload.result);
+}
+
+function statusOf(pending) {
+	return {
+		jobId: pending.jobId,
+		stage: pending.stage,
+		etaSeconds: pending.etaSeconds,
+		watchUrl: pending.watchUrl,
+		message: pending.message,
 	};
-	const payload = await rpc(origin, body, opts);
-	return readModelResult(payload.result);
+}
+
+/** A tools/call request body. */
+export function toolCall(name, args) {
+	return { jsonrpc: '2.0', id: Date.now(), method: 'tools/call', params: { name, arguments: args } };
+}
+
+/** Resolve after `ms`, or reject with "cancelled" when the signal aborts first. */
+export function sleep(ms, signal) {
+	return new Promise((resolve, reject) => {
+		if (signal?.aborted) return reject(new Error('cancelled'));
+		const onAbort = () => {
+			clearTimeout(timer);
+			reject(new Error('cancelled'));
+		};
+		const timer = setTimeout(() => {
+			signal?.removeEventListener('abort', onAbort);
+			resolve();
+		}, ms);
+		signal?.addEventListener('abort', onAbort, { once: true });
+	});
 }
 
 /** Raw JSON-RPC call with a timeout, an abort hook, and readable errors. */
@@ -126,4 +210,13 @@ export function normalizeOrigin(raw) {
 		throw new Error(`threews3d.origin must be an http(s) origin, got "${raw}"`);
 	}
 	return origin;
+}
+
+/** A short, honest progress line for a pending job, from the studio's own facts. */
+export function describeStatus(status) {
+	if (/waking up/i.test(status?.message || '')) {
+		return 'the GPU worker is waking up; rendering starts the moment it answers';
+	}
+	const what = status?.stage === 'rig' ? 'rigging the mesh' : 'rendering the mesh';
+	return status?.etaSeconds ? `${what}, about ${status.etaSeconds}s to go` : `${what} (heavier models take a few minutes)`;
 }

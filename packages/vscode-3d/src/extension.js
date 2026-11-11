@@ -11,7 +11,7 @@ import { GalleryProvider } from './gallery-tree.js';
 import { ModelLinks } from './links.js';
 import { ModelsProvider } from './models-tree.js';
 import { ModelViewerProvider, VIEW_TYPE, openLocalModel, openRemoteModel, playClipIn, request } from './viewer.js';
-import { TOOLS, callTool } from './studio.js';
+import { TOOLS, callTool, describeStatus } from './studio.js';
 import { downloadModel } from './download.js';
 import { buildEmbedSnippet, resolveEmbedRelease, viewerUrl } from './embed.js';
 import { slugFromUrl, uniqueName } from './naming.js';
@@ -147,7 +147,10 @@ async function generate(kind) {
 			token.onCancellationRequested(() => controller.abort());
 			progress.report({ message: 'the free lane is working on it…' });
 			try {
-				const model = await callTool(origin(), tool, args, { signal: controller.signal });
+				const model = await callTool(origin(), tool, args, {
+					signal: controller.signal,
+					onStatus: (status) => progress.report({ message: describeStatus(status) }),
+				});
 				output.appendLine(`${tool}: ${model.glbUrl}`);
 				progress.report({ message: 'saving into the workspace…' });
 				const saved = await downloadModel(model.glbUrl, {
@@ -213,7 +216,7 @@ async function rig(target) {
 					origin(),
 					TOOLS.rig,
 					{ glb_url: url },
-					{ signal: controller.signal },
+					{ signal: controller.signal, onStatus: (status) => progress.report({ message: describeStatus(status) }) },
 				);
 				output.appendLine(`${TOOLS.rig}: ${rigged.glbUrl}`);
 				const saved = await downloadModel(rigged.glbUrl, {

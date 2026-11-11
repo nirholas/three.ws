@@ -4,7 +4,7 @@
 // the new one) and records every version in a lineage the client passes back,
 // so a sequence of refinements in the editor is one history the user can walk.
 
-import { TOOLS, rpc, textOf } from './studio.js';
+import { TOOLS, rpc, sleep, textOf, toolCall } from './studio.js';
 
 /** The studio holds a generation open this long before it answers "pending". */
 const CHECK_POLL_MS = 8000;
@@ -30,7 +30,7 @@ export async function refineModel(origin, { glbUrl, instruction, parentPrompt, l
 	if (parentPrompt) args.parent_prompt = parentPrompt;
 	if (Array.isArray(lineage) && lineage.length) args.parent_lineage = lineage;
 
-	let payload = await rpc(origin, call(TOOLS.refine, args), { signal: opts.signal });
+	let payload = await rpc(origin, toolCall(TOOLS.refine, args), { signal: opts.signal });
 	let result = readRefineResult(payload.result);
 
 	// A slow generation comes back pending; check_job collects it once done.
@@ -39,7 +39,9 @@ export async function refineModel(origin, { glbUrl, instruction, parentPrompt, l
 		if (Date.now() > deadline) throw new Error('the refinement did not finish within six minutes');
 		opts.onStatus?.('still generating the new version…');
 		await sleep(CHECK_POLL_MS, opts.signal);
-		payload = await rpc(origin, call(TOOLS.check, { job_id: result.jobId }), { signal: opts.signal });
+		// The refine object goes back unchanged so the finished model joins the lineage.
+		const check = result.refine ? { job_id: result.jobId, refine: result.refine } : { job_id: result.jobId };
+		payload = await rpc(origin, toolCall(TOOLS.check, check), { signal: opts.signal });
 		result = readRefineResult(payload.result);
 	}
 	return result;
@@ -52,7 +54,7 @@ export async function refineModel(origin, { glbUrl, instruction, parentPrompt, l
 export function readRefineResult(result) {
 	const structured = result?.structuredContent;
 	if (structured?.status === 'pending' && structured.jobId) {
-		return { pending: true, jobId: String(structured.jobId) };
+		return { pending: true, jobId: String(structured.jobId), refine: structured.refine && typeof structured.refine === 'object' ? structured.refine : null };
 	}
 	const glbUrl = structured?.glbUrl || structured?.glb_url;
 	if (typeof glbUrl === 'string' && /^https?:\/\//.test(glbUrl)) {
@@ -75,23 +77,4 @@ export function readRefineResult(result) {
 	}
 	const text = textOf(result);
 	throw new Error(text || (result?.isError ? 'the studio refused the refinement' : 'the studio returned no model'));
-}
-
-function call(name, args) {
-	return { jsonrpc: '2.0', id: Date.now(), method: 'tools/call', params: { name, arguments: args } };
-}
-
-function sleep(ms, signal) {
-	return new Promise((resolve, reject) => {
-		if (signal?.aborted) return reject(new Error('cancelled'));
-		const timer = setTimeout(() => {
-			signal?.removeEventListener('abort', onAbort);
-			resolve();
-		}, ms);
-		const onAbort = () => {
-			clearTimeout(timer);
-			reject(new Error('cancelled'));
-		};
-		signal?.addEventListener('abort', onAbort, { once: true });
-	});
 }

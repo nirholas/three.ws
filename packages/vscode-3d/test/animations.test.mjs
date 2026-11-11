@@ -127,7 +127,8 @@ test('readRefineResult understands finished, pending, and refused answers', () =
 	assert.equal(done.glbUrl, 'https://cdn/v2.glb');
 	assert.equal(done.lineage.length, 2);
 	assert.equal(done.lineage[1].instruction, 'make it metallic');
-	assert.deepEqual(readRefineResult({ structuredContent: { status: 'pending', jobId: 'j' } }), { pending: true, jobId: 'j' });
+	assert.deepEqual(readRefineResult({ structuredContent: { status: 'pending', jobId: 'j' } }), { pending: true, jobId: 'j', refine: null });
+	assert.deepEqual(readRefineResult({ structuredContent: { status: 'pending', jobId: 'j', refine: { lineage: [] } } }).refine, { lineage: [] });
 	assert.throws(() => readRefineResult({ isError: true, content: [{ type: 'text', text: 'That prompt is not allowed.' }] }), /not allowed/);
 });
 
