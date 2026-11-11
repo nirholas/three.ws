@@ -31,13 +31,16 @@
  * community showcase, and the share/embed pages alike.
  */
 
-import { cors, json, method, wrap, rateLimited } from './_lib/http.js';
+import { embedReadCors, json, method, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { getPublicCreation, listRelated, recordCreationView, deleteCreation, hashClient, forgeStoreEnabled } from './_lib/forge-store.js';
 import { isUuid } from './_lib/validate.js';
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,DELETE,OPTIONS' })) return;
+	// The anonymous read is public and is made from other origins (embeds, the Power
+	// BI visual's sandboxed iframe), so it is open to any origin. DELETE keeps the
+	// strict allowlist with credentials.
+	if (embedReadCors(req, res, { methods: 'GET,OPTIONS', authedMethods: 'GET,DELETE,OPTIONS' })) return;
 	if (!method(req, res, ['GET', 'DELETE'])) return;
 
 	const rl = await limits.mcp3dStatus(clientIp(req));
