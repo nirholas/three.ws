@@ -7473,6 +7473,10 @@
 	],
 	"crons": [
 		{
+			"path": "/api/cron/indexnow-reconcile",
+			"schedule": "*/10 * * * *"
+		},
+		{
 			"path": "/api/cron/microsoft-leads",
 			"schedule": "*/10 * * * *"
 		},
