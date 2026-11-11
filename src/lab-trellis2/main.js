@@ -32,20 +32,8 @@ import {
 	presetSpeed,
 } from './params.js';
 import { LabError, loadCommunityPhotos, loadCreation, loadLanes, runJob, uploadImage } from './client.js';
+import { $, el, fill } from './dom.js';
 
-const $ = (sel, root = document) => root.querySelector(sel);
-const el = (tag, attrs = {}, ...children) => {
-	const node = document.createElement(tag);
-	for (const [k, v] of Object.entries(attrs)) {
-		if (v == null || v === false) continue;
-		if (k === 'class') node.className = v;
-		else if (k === 'text') node.textContent = v;
-		else if (k.startsWith('on')) node.addEventListener(k.slice(2), v);
-		else node.setAttribute(k, v === true ? '' : v);
-	}
-	node.append(...children.filter((c) => c != null));
-	return node;
-};
 
 const app = {
 	state: defaultState(),
@@ -115,7 +103,7 @@ async function initLanes() {
 
 function showBanner(message, { retry, action } = {}) {
 	const b = $('#lt-banner');
-	b.replaceChildren(el('span', { text: message }));
+	fill(b, el('span', { text: message }));
 	if (action?.href) b.append(el('a', { class: 'lt-btn lt-btn-ghost', href: action.href }, action.label));
 	if (retry) b.append(el('button', { type: 'button', class: 'lt-btn lt-btn-ghost', onclick: () => { hideBanner(); retry(); } }, 'Retry'));
 	b.hidden = false;
@@ -192,10 +180,10 @@ async function initPicks() {
 	try {
 		const photos = await loadCommunityPhotos({ limit: 8 });
 		if (!photos.length) {
-			box.replaceChildren(el('p', { class: 'lt-help', text: 'No community photos yet. Upload your own above to start.' }));
+			fill(box, el('p', { class: 'lt-help', text: 'No community photos yet. Upload your own above to start.' }));
 			return;
 		}
-		box.replaceChildren(
+		fill(box,
 			...photos.map((p) =>
 				el(
 					'button',
@@ -205,7 +193,7 @@ async function initPicks() {
 			),
 		);
 	} catch (err) {
-		box.replaceChildren(
+		fill(box,
 			el('p', { class: 'lt-help', text: `${err.message} ` }, el('button', { type: 'button', class: 'lt-link', onclick: () => initPicks() }, 'Retry')),
 		);
 	}
@@ -216,7 +204,7 @@ async function initPicks() {
 function renderPresets() {
 	const box = $('#lt-presets');
 	const active = matchPreset(app.state);
-	box.replaceChildren(
+	fill(box,
 		...PRESETS.map((p) => {
 			const speed = presetSpeed(benchmark, p.id);
 			return el(
@@ -241,7 +229,7 @@ function renderPresets() {
 
 function renderResolution() {
 	const box = $('#lt-resolution');
-	box.replaceChildren(
+	fill(box,
 		...RESOLUTIONS.map((r) =>
 			el(
 				'button',
@@ -263,7 +251,7 @@ function renderResolution() {
 function renderTextureOptions() {
 	const sel = $('#lt-texture');
 	const def = RESOLUTION_DEFAULTS[app.state.resolution].texture_size;
-	sel.replaceChildren(
+	fill(sel,
 		el('option', { value: '' }, `Resolution default (${def} px)`),
 		...TEXTURE_SIZES.map((t) => el('option', { value: String(t) }, `${t} px`)),
 	);
@@ -398,7 +386,7 @@ function paneState(paneId, kind, payload = {}) {
 		const { phase, elapsed, eta, backend } = payload;
 		const label = phase === 'submitting' ? 'Submitting' : phase === 'queued' ? 'Queued for a GPU' : phase === 'loading' ? 'Loading the mesh' : 'Generating';
 		const etaText = eta && elapsed < eta ? `, about ${formatSeconds(Math.max(0, eta - elapsed))} left by the engine's estimate` : '';
-		progress.replaceChildren(
+		fill(progress,
 			el('span', { class: 'lt-spinner', 'aria-hidden': 'true' }),
 			el('strong', { text: label }),
 			el('span', { text: phase === 'submitting' || phase === 'loading' ? '' : `${formatSeconds(elapsed || 0)} elapsed${etaText}` }),
@@ -406,7 +394,7 @@ function paneState(paneId, kind, payload = {}) {
 		);
 	} else if (kind === 'error') {
 		const { error: err, retry } = payload;
-		error.replaceChildren(
+		fill(error,
 			el('strong', { text: 'This run did not finish' }),
 			el('span', { text: err.message }),
 			err.action?.href ? el('a', { class: 'lt-btn lt-btn-ghost', href: err.action.href }, err.action.label) : null,
@@ -421,7 +409,7 @@ function laneLabel(id) {
 
 function renderStats(paneId, rows) {
 	const dl = $('.lt-stats', app.panes[paneId].root);
-	dl.replaceChildren(...rows.flatMap(([k, v, title]) => [el('dt', { text: k }), el('dd', { text: v, title })]));
+	fill(dl, ...rows.flatMap(([k, v, title]) => [el('dt', { text: k }), el('dd', { text: v, title })]));
 	dl.hidden = false;
 }
 
@@ -576,10 +564,10 @@ function renderBenchmark() {
 	const tbody = $('#lt-bench-table tbody');
 	const lanes = (benchmark.lanes || []).filter((l) => l.lane !== 'unrecorded');
 	if (!lanes.length) {
-		tbody.replaceChildren(el('tr', {}, el('td', { colspan: 6, text: 'No production runs in the benchmark window yet.' })));
+		fill(tbody, el('tr', {}, el('td', { colspan: 6, text: 'No production runs in the benchmark window yet.' })));
 		return;
 	}
-	tbody.replaceChildren(
+	fill(tbody,
 		...lanes.map((l) =>
 			el(
 				'tr',
