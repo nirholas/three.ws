@@ -327,7 +327,8 @@ def make_cfb(streams: dict[str, bytes], root_clsid: bytes = b"\x00" * 16) -> byt
         right = i + 1 if i < len(names) else _NOSTREAM
         entries.append(_dir_entry(n, 2, right, _NOSTREAM, starts[n], len(streams[n])))
     directory = b"".join(entries)
-    empty_entry = b"\x00" * 64 + struct.pack("<HBB", 0, 0, 0) + struct.pack("<III", _NOSTREAM, _NOSTREAM, _NOSTREAM) + b"\x00" * 52
+    empty_entry = b"\x00" * 64 + struct.pack("<HBB", 0, 0, 0) + struct.pack("<III", _NOSTREAM, _NOSTREAM, _NOSTREAM) + b"\x00" * 48
+    assert len(empty_entry) == 128
     while len(directory) < dir_sectors * _SECTOR:
         directory += empty_entry
 

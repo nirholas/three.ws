@@ -1,0 +1,9 @@
+# MarkItDown (Microsoft, MIT) pinned with only the format extras the worker
+# serves: docx (mammoth, lxml), pptx (python-pptx), xlsx (openpyxl, pandas),
+# pdf (pdfminer.six, pdfplumber), outlook (olefile). No audio, YouTube, Azure
+# or plugin extras: the service never reaches the network.
+markitdown[docx,pptx,xlsx,pdf,outlook]==0.1.9
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+# worker_security.py (vendored byte-identical across workers) imports httpx.
+httpx==0.28.1
