@@ -215,7 +215,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/hyparam/hyparquet",
 			"funding": null,
-			"version": "1.32.0",
+			"version": "1.33.0",
 			"powers": "Reads Parquet files for dataset and analytics tooling."
 		},
 		{
@@ -484,7 +484,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/vercel/ai",
 			"funding": null,
-			"version": "4.0.108",
+			"version": "4.0.110",
 			"powers": null
 		},
 		{
@@ -495,7 +495,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1162.0",
+			"version": "3.1164.0",
 			"powers": null
 		},
 		{
@@ -682,7 +682,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/Ellipsis-Labs/rise-public",
 			"funding": null,
-			"version": "0.7.4",
+			"version": "0.7.9",
 			"powers": null
 		},
 		{
@@ -694,6 +694,39 @@
 			"repo": "https://github.com/ethereum-attestation-service/eas-sdk",
 			"funding": null,
 			"version": "2.10.0",
+			"powers": null
+		},
+		{
+			"id": "npm:@fluidframework/azure-client",
+			"kind": "npm",
+			"name": "@fluidframework/azure-client",
+			"area": "infrastructure",
+			"license": "MIT",
+			"repo": "https://github.com/microsoft/FluidFramework",
+			"funding": null,
+			"version": "1.2.0",
+			"powers": null
+		},
+		{
+			"id": "npm:@fluidframework/azure-local-service",
+			"kind": "npm",
+			"name": "@fluidframework/azure-local-service",
+			"area": "infrastructure",
+			"license": "MIT",
+			"repo": "https://github.com/microsoft/FluidFramework",
+			"funding": null,
+			"version": "1.2.0",
+			"powers": null
+		},
+		{
+			"id": "npm:@fluidframework/test-client-utils",
+			"kind": "npm",
+			"name": "@fluidframework/test-client-utils",
+			"area": "infrastructure",
+			"license": "MIT",
+			"repo": "https://github.com/microsoft/FluidFramework",
+			"funding": null,
+			"version": "1.4.0",
 			"powers": null
 		},
 		{
@@ -881,6 +914,28 @@
 			"repo": "https://github.com/MeteoraAg/dynamic-bonding-curve-sdk",
 			"funding": null,
 			"version": "2.0.0",
+			"powers": null
+		},
+		{
+			"id": "npm:@microsoft/live-share",
+			"kind": "npm",
+			"name": "@microsoft/live-share",
+			"area": "infrastructure",
+			"license": "SEE LICENSE IN LICENSE",
+			"repo": "https://github.com/microsoft/live-share-sdk",
+			"funding": null,
+			"version": "1.4.2",
+			"powers": null
+		},
+		{
+			"id": "npm:@microsoft/teams-js",
+			"kind": "npm",
+			"name": "@microsoft/teams-js",
+			"area": "infrastructure",
+			"license": "MIT",
+			"repo": "https://github.com/OfficeDev/microsoft-teams-library-js",
+			"funding": null,
+			"version": "2.59.0",
 			"powers": null
 		},
 		{
@@ -1456,6 +1511,17 @@
 			"powers": null
 		},
 		{
+			"id": "npm:adaptivecards",
+			"kind": "npm",
+			"name": "adaptivecards",
+			"area": "infrastructure",
+			"license": "MIT",
+			"repo": "https://git@github.com/microsoft/AdaptiveCards",
+			"funding": null,
+			"version": "3.0.6",
+			"powers": null
+		},
+		{
 			"id": "npm:adaptivecards-templating",
 			"kind": "npm",
 			"name": "adaptivecards-templating",
@@ -1786,6 +1852,17 @@
 			"powers": null
 		},
 		{
+			"id": "npm:fluid-framework",
+			"kind": "npm",
+			"name": "fluid-framework",
+			"area": "infrastructure",
+			"license": "MIT",
+			"repo": "https://github.com/microsoft/FluidFramework",
+			"funding": null,
+			"version": "1.4.0",
+			"powers": null
+		},
+		{
 			"id": "vendor:forge-std",
 			"kind": "vendored",
 			"name": "forge-std",
@@ -1859,7 +1936,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/postalsys/imapflow",
 			"funding": null,
-			"version": "2.10.2",
+			"version": "2.11.0",
 			"powers": null
 		},
 		{
@@ -1881,7 +1958,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/jsdom/jsdom",
 			"funding": null,
-			"version": "30.1.3",
+			"version": "31.0.0",
 			"powers": null
 		},
 		{
@@ -2138,6 +2215,17 @@
 			"powers": null
 		},
 		{
+			"id": "npm:prismarine-nbt",
+			"kind": "npm",
+			"name": "prismarine-nbt",
+			"area": "infrastructure",
+			"license": "MIT",
+			"repo": "https://github.com/prismarinejs/prismarine-nbt",
+			"funding": null,
+			"version": "2.8.0",
+			"powers": null
+		},
+		{
 			"id": "npm:puppeteer",
 			"kind": "npm",
 			"name": "puppeteer",
@@ -2223,6 +2311,17 @@
 			"repo": "http://github.com/mscdex/ssh2",
 			"funding": null,
 			"version": "1.17.0",
+			"powers": null
+		},
+		{
+			"id": "npm:swiper",
+			"kind": "npm",
+			"name": "swiper",
+			"area": "infrastructure",
+			"license": "MIT",
+			"repo": "https://github.com/nolimits4web/Swiper",
+			"funding": "https://sponsors.nolimits4web.com",
+			"version": "12.2.0",
 			"powers": null
 		},
 		{
@@ -2387,7 +2486,7 @@
 			"license": "MPL-2.0",
 			"repo": "https://github.com/web-push-libs/web-push",
 			"funding": null,
-			"version": "3.6.7",
+			"version": "4.0.0",
 			"powers": null
 		},
 		{
