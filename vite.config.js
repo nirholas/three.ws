@@ -19,7 +19,7 @@ import { keepEntryExports } from './scripts/vite/keep-entry-exports.mjs';
 import { createCreationHeadRenderer, creationIdFromPath, apiCreationLoader } from './server/creation-head.mjs';
 import { isPlayPath, rewritePlayHead } from './server/play-head.mjs';
 import { presentDevRequestsAsSameSite } from './server/dev-proxy-origin.mjs';
-import { devSitemapMiddleware, nativeModuleLoader } from './server/dev-sitemap.mjs';
+import { devApiPagesMiddleware } from './server/dev-api-pages.mjs';
 
 // Dev parity for production's per-request <head> rewrite (server/seo-head.mjs).
 // Shared-shell routes serve one template file for hundreds of paths (/docs/* and
@@ -977,6 +977,8 @@ const appConfig = {
 				'trust-subprocessors': resolve(__dirname, 'pages/trust-subprocessors.html'),
 				'microsoft-teams-tab': resolve(__dirname, 'pages/microsoft-teams-tab.html'),
 				'microsoft-teams-stage': resolve(__dirname, 'pages/microsoft-teams-stage.html'),
+				'office-powerpoint': resolve(__dirname, 'pages/office-powerpoint.html'),
+				'office-powerpoint-auth': resolve(__dirname, 'pages/office-powerpoint-auth.html'),
 				sidebar: resolve(__dirname, 'pages/sidebar.html'),
 				open: resolve(__dirname, 'pages/open.html'),
 				spend: resolve(__dirname, 'pages/spend.html'),
@@ -1313,15 +1315,14 @@ const appConfig = {
 		},
 	},
 	plugins: [
-		// /sitemap.xml and /sitemap/<type>.xml in dev (server/dev-sitemap.mjs):
+		// Page URLs production answers with an api/ handler (sitemaps, crawler
+		// agent and avatar pages, widgets, news stories; server/dev-api-pages.mjs):
 		// local handlers when DATABASE_URL is set, the upstream otherwise.
 		{
-			name: 'dev-sitemaps',
+			name: 'dev-api-pages',
 			apply: 'serve',
 			configureServer(server) {
-				server.middlewares.use(
-					devSitemapMiddleware({ load: nativeModuleLoader(__dirname), upstream: DEV_API_PROXY }),
-				);
+				server.middlewares.use(devApiPagesMiddleware({ root: __dirname, upstream: DEV_API_PROXY }));
 			},
 		},
 		// /herald.js is imported by third-party pages and by /herald's own playground:
@@ -2627,6 +2628,11 @@ const appConfig = {
 					// Mirrors vercel.json.
 					else if (!filePath && /^\/microsoft\/activate\/?$/.test(path))
 						filePath = resolve(root, 'pages/microsoft-activate.html');
+					// /office/powerpoint → the PowerPoint add-in task pane; /auth is its sign-in callback.
+					else if (!filePath && /^\/office\/powerpoint\/auth\/?$/.test(path))
+						filePath = resolve(root, 'pages/office-powerpoint-auth.html');
+					else if (!filePath && /^\/office\/powerpoint\/?$/.test(path))
+						filePath = resolve(root, 'pages/office-powerpoint.html');
 					// /microsoft/teams-tab → the Agents tab of the three.ws Teams app.
 					else if (!filePath && /^\/microsoft\/teams-tab\/?$/.test(path))
 						filePath = resolve(root, 'pages/microsoft-teams-tab.html');

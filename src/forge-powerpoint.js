@@ -45,7 +45,7 @@ export function pptxErrorMessage(status, body = {}) {
 	return server || `The export failed (${status}). Try again.`;
 }
 
-function saveBlob(blob, filename) {
+export function saveBlob(blob, filename) {
 	const a = document.createElement('a');
 	a.href = URL.createObjectURL(blob);
 	a.download = filename;

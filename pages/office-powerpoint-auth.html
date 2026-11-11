@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<meta charset="utf-8" />
+		<title>Signing in · three.ws for PowerPoint</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="robots" content="noindex" />
+		<meta name="referrer" content="no-referrer" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+	</head>
+	<body class="op-body">
+		<main class="op-wrap op-auth">
+			<p class="op-brand">three.ws</p>
+			<p id="op-auth-msg" role="status">Finishing sign-in…</p>
+		</main>
+		<script type="module" src="/src/office-powerpoint/auth-callback.js"></script>
+	</body>
+</html>

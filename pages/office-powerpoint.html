@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<meta charset="utf-8" />
+		<title>three.ws for PowerPoint</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="description" content="The three.ws PowerPoint add-in: insert an interactive 3D model from your three.ws account on a slide, or describe one and generate it free." />
+		<meta name="robots" content="noindex" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<!-- Office.js must come from Microsoft's CDN (AppSource policy). Outside PowerPoint it resolves with no host and the pane downloads decks instead. -->
+		<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+	</head>
+	<body class="op-body">
+		<main class="op-wrap">
+			<header class="op-head">
+				<a class="op-brand" href="https://three.ws/forge" target="_blank" rel="noopener">three.ws</a>
+				<div class="op-account" id="op-account" aria-busy="true"></div>
+				<button type="button" class="op-btn is-ghost is-small" id="op-signin" hidden>Sign in</button>
+			</header>
+			<p class="op-env" id="op-env" hidden></p>
+			<div id="op-live" class="op-sr" aria-live="polite"></div>
+
+			<section class="op-section" aria-labelledby="op-gen-title">
+				<h2 class="op-title" id="op-gen-title">Describe a model</h2>
+				<form id="op-gen-form" class="op-gen" novalidate>
+					<label class="op-sr" for="op-prompt">What should the model be?</label>
+					<textarea id="op-prompt" rows="2" maxlength="400" placeholder="A low poly brass lantern" spellcheck="true"></textarea>
+					<div class="op-row">
+						<button type="submit" class="op-btn" id="op-generate">Generate free</button>
+						<span class="op-hint">Ctrl+Enter. Takes about a minute.</span>
+					</div>
+					<div class="op-progress" id="op-progress" role="progressbar" aria-label="Generation progress" aria-valuemin="0" aria-valuemax="100" hidden>
+						<div class="op-progress-track"><div class="op-progress-bar" id="op-progress-bar"></div></div>
+						<span class="op-progress-text" id="op-progress-text"></span>
+					</div>
+					<p class="op-error" id="op-gen-error" role="alert" hidden></p>
+				</form>
+				<div class="op-recent" id="op-recent" hidden>
+					<h3 class="op-subtitle">Just generated</h3>
+					<ul class="op-recent-list" id="op-recent-list"></ul>
+				</div>
+			</section>
+
+			<section class="op-section" aria-labelledby="op-mine-title">
+				<h2 class="op-title" id="op-mine-title">Your models</h2>
+				<ul class="op-grid" id="op-mine" aria-busy="true">
+					<li class="op-skel op-card-skel" aria-hidden="true"></li>
+					<li class="op-skel op-card-skel" aria-hidden="true"></li>
+				</ul>
+				<div class="op-state" id="op-mine-state" hidden></div>
+				<button type="button" class="op-btn is-ghost op-more" id="op-more" hidden>Load more</button>
+			</section>
+
+			<footer class="op-foot">
+				<a href="https://three.ws/docs/powerpoint" target="_blank" rel="noopener">Help</a>
+				<a href="https://three.ws/legal/privacy" target="_blank" rel="noopener">Privacy</a>
+				<a href="https://three.ws/trust" target="_blank" rel="noopener">Trust center</a>
+			</footer>
+		</main>
+		<script type="module" src="/src/office-powerpoint/taskpane.js"></script>
+	</body>
+</html>

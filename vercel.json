@@ -2827,6 +2827,24 @@
 			"dest": "/microsoft-teams-tab.html"
 		},
 		{
+			"src": "/office/powerpoint/auth/?",
+			"headers": {
+				"content-security-policy": "frame-ancestors 'self' https://*.officeapps.live.com https://*.office.com https://*.office365.com https://*.microsoft365.com https://*.cloud.microsoft https://*.sharepoint.com https://*.officeapps.microsoft.com; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://appsforoffice.microsoft.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"x-content-type-options": "nosniff",
+				"referrer-policy": "no-referrer"
+			},
+			"dest": "/office-powerpoint-auth.html"
+		},
+		{
+			"src": "/office/powerpoint/?",
+			"headers": {
+				"content-security-policy": "frame-ancestors 'self' https://*.officeapps.live.com https://*.office.com https://*.office365.com https://*.microsoft365.com https://*.cloud.microsoft https://*.sharepoint.com https://*.officeapps.microsoft.com; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://appsforoffice.microsoft.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"x-content-type-options": "nosniff",
+				"referrer-policy": "strict-origin-when-cross-origin"
+			},
+			"dest": "/office-powerpoint.html"
+		},
+		{
 			"src": "/microsoft/teams-stage/?",
 			"headers": {
 				"content-security-policy": "frame-ancestors 'self' https://teams.microsoft.com https://*.teams.microsoft.com https://teams.cloud.microsoft https://*.cloud.microsoft https://*.office.com https://outlook.office.com https://outlook.office365.com https://*.microsoft365.com https://*.officeapps.live.com; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
