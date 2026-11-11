@@ -176,6 +176,22 @@ describe('creations: 3DModel with a GLB encoding', () => {
 		// Exactly one JSON-LD block: the shell's own is replaced, never doubled.
 		expect(html.match(/application\/ld\+json/g)).toHaveLength(1);
 	});
+
+	it('gives pipeline creations with no prompt their own title and description', () => {
+		const head = (c) => {
+			const html = rewriteCreationHead(SHELL, c);
+			return {
+				title: html.match(/<title>([^<]*)<\/title>/)[1],
+				description: html.match(/<meta name="description" content="([^"]*)"/)[1],
+			};
+		};
+		const a = head({ ...creation, prompt: 'auto-rig', creatorUsername: null });
+		const b = head({ ...creation, id: 'bbbbbbbb-0000-4000-8000-000000000003', prompt: 'auto-rig', creatorUsername: null });
+		expect(a.title).toBe('Rigged 3D model aaaaaaaa · 3D Model · three.ws');
+		expect(a.title).not.toBe(b.title);
+		expect(a.description).not.toBe(b.description);
+		expect(a.description).not.toContain('auto-rig');
+	});
 });
 
 describe('agents: SoftwareApplication', () => {

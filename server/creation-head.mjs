@@ -31,7 +31,7 @@ import { isIndexableCreation } from '../api/_lib/seo-resources.js';
 import { breadcrumbListNode } from '../api/_lib/structured-data.js';
 // The page's own pure helpers, so the server head and the hydrated page agree
 // on which paths are creations and what a creation is called.
-import { modelIdFromPath, titleFromPrompt, creationAltText, describedMetaDescription } from '../src/model-lib.js';
+import { modelIdFromPath, creationName, creationPipelineDescription, creationAltText, describedMetaDescription } from '../src/model-lib.js';
 
 const ORIGIN = 'https://three.ws';
 const LOOKUP_TIMEOUT_MS = 2500;
@@ -69,13 +69,14 @@ function promptExcerpt(prompt, max = 160) {
 export function creationMeta(creation, origin = ORIGIN) {
 	const id = String(creation.id).toLowerCase();
 	const pageUrl = `${origin}/m/${id}`;
-	const name = titleFromPrompt(creation.prompt);
+	const name = creationName(creation);
 	const by = creation.creatorUsername ? ` by @${creation.creatorUsername}` : '';
 	// What the poster shows (Florence-2's detailed caption, else its caption)
 	// leads when the creation was described; the prompt sentence otherwise.
 	const described = describedMetaDescription(creation);
 	const description =
 		described ||
+		creationPipelineDescription(creation) ||
 		`3D model${by} on three.ws, generated from the prompt "${promptExcerpt(creation.prompt)}". View it in 3D and AR, download the GLB, or remix it.`;
 	const imageAlt = described ? creationAltText(creation) : `${name}, a 3D model on three.ws`;
 	// The renderer gets the light delivery variant when it exists, the original

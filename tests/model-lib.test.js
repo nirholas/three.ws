@@ -13,6 +13,8 @@ import {
 	timeAgo,
 	embedSnippet,
 	chipsFor,
+	creationName,
+	creationPipelineDescription,
 } from '../src/model-lib.js';
 
 const ID = '0b8f3c2a-1d4e-4f6a-9b7c-2e5d8a1f0c3b';
@@ -150,5 +152,31 @@ describe('chipsFor', () => {
 	it('hides the noise category and empty fields', () => {
 		expect(chipsFor({ model_category: 'other' })).toEqual([]);
 		expect(chipsFor(null)).toEqual([]);
+	});
+});
+
+describe('creationName / creationPipelineDescription', () => {
+	const rig = { id: 'e58edb8a-f0f5-4254-8714-04240a6a094d', prompt: 'auto-rig', created_at: '2026-10-09T05:35:01Z' };
+	const img = { id: '59b74456-1fd0-4460-abe6-048fa7943dcf', prompt: 'image-to-3d', created_at: '2026-11-08T21:06:15Z' };
+
+	it('names a typed prompt by the prompt', () => {
+		expect(creationName({ id: rig.id, prompt: 'a brass astrolabe' })).toBe('A brass astrolabe');
+	});
+
+	it('gives two pipeline creations with no text two different names', () => {
+		expect(creationName(rig)).toBe('Rigged 3D model e58edb8a');
+		expect(creationName(img)).toBe('3D model from an image 59b74456');
+		expect(creationName({ ...rig, id: 'f30e0716-0dfc-409f-a917-c5f20e6df47e' })).not.toBe(creationName(rig));
+	});
+
+	it('names a described pipeline creation by what its poster shows', () => {
+		expect(creationName({ ...img, described: { caption: 'a red armchair.' } })).toBe('A red armchair');
+	});
+
+	it('describes a pipeline creation without quoting its pipeline label as a prompt', () => {
+		const d = creationPipelineDescription({ ...rig, creatorUsername: 'kai' });
+		expect(d).toBe('Rigged 3D model e58edb8a by @kai, made on three.ws on Oct 9, 2026. View it in 3D and AR, download the GLB, or remix it.');
+		expect(d).not.toContain('"auto-rig"');
+		expect(creationPipelineDescription({ id: rig.id, prompt: 'a brass astrolabe' })).toBe('');
 	});
 });

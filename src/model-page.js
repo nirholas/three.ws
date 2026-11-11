@@ -17,7 +17,8 @@ import { ensureX402 } from './shared/x402-loader.js';
 import { createLogger } from './shared/log.js';
 import {
 	modelIdFromPath,
-	titleFromPrompt,
+	creationName,
+	creationPipelineDescription,
 	formatCount,
 	formatBytes,
 	timeAgo,
@@ -133,7 +134,7 @@ async function boot() {
 const SHELL_OG_IMAGE = 'https://three.ws/og-image.png';
 function patchMeta() {
 	const c = state.creation;
-	const title = `${titleFromPrompt(c.prompt)} · 3D Model · three.ws`;
+	const title = `${creationName(c)} · 3D Model · three.ws`;
 	document.title = title;
 	const set = (sel, value) => document.querySelector(sel)?.setAttribute('content', value);
 	set('meta[property="og:title"]', title);
@@ -146,7 +147,7 @@ function patchMeta() {
 	}
 	// What the poster shows (Florence-2), when the creation was described. The
 	// server head writes the same strings; this covers a head that fell back.
-	const description = describedMetaDescription(c);
+	const description = describedMetaDescription(c) || creationPipelineDescription(c);
 	if (description) {
 		set('meta[name="description"]', description);
 		set('meta[property="og:description"]', description);
@@ -183,7 +184,7 @@ function renderViewer() {
 			environment-image="neutral" ar ar-modes="webxr scene-viewer quick-look"></model-viewer>
 		<div class="mp-viewer-actions">
 			<a class="mp-viewer-btn" href="/api/ar?src=${encodeURIComponent(c.glb_url)}" target="_blank" rel="noopener">View in AR</a>
-			<a class="mp-viewer-btn" href="/viewer?src=${encodeURIComponent(c.glb_url)}&title=${encodeURIComponent(titleFromPrompt(c.prompt))}" target="_blank" rel="noopener">Open viewer</a>
+			<a class="mp-viewer-btn" href="/viewer?src=${encodeURIComponent(c.glb_url)}&title=${encodeURIComponent(creationName(c))}" target="_blank" rel="noopener">Open viewer</a>
 			<a class="mp-viewer-btn mp-viewer-btn--cta" id="mp-make-your-own" href="/forge?from=share">Make your own</a>
 			<button class="mp-viewer-btn" id="mp-fullscreen" type="button" aria-label="Fullscreen">⛶ Fullscreen</button>
 		</div>`;
@@ -273,7 +274,7 @@ function renderInfo() {
 	const likeCount = Number(c.vote_count) || 0;
 
 	host.innerHTML = `
-		<h1 class="mp-title">${esc(titleFromPrompt(c.prompt))}</h1>
+		<h1 class="mp-title">${esc(creationName(c))}</h1>
 		<p class="mp-kicker">3D Model</p>
 		${creatorBlock()}
 		<div class="mp-actionbar">
@@ -505,7 +506,7 @@ function wireTools() {
 					if (mv) mv.setAttribute('src', edited ? url : viewerSrc(c));
 				},
 			});
-			tools.setSource(c.glb_url, { label: titleFromPrompt(c.prompt) });
+			tools.setSource(c.glb_url, { label: creationName(c) });
 			tools.activate();
 		} catch (err) {
 			log.error('mesh tools failed to load', err);
@@ -693,7 +694,7 @@ function wireActions() {
 	});
 
 	$('mp-embed')?.addEventListener('click', async () => {
-		const snippet = embedSnippet(c.glb_url, titleFromPrompt(c.prompt));
+		const snippet = embedSnippet(c.glb_url, creationName(c));
 		try {
 			await navigator.clipboard.writeText(snippet);
 			toast('Embed code copied to clipboard');
@@ -739,7 +740,7 @@ function wireActions() {
 
 	$('mp-share')?.addEventListener('click', async () => {
 		const url = `https://three.ws/m/${c.id}`;
-		const title = titleFromPrompt(c.prompt);
+		const title = creationName(c);
 		if (navigator.share) {
 			navigator.share({ title, url }).catch(() => {});
 			return;
@@ -1100,7 +1101,7 @@ function renderSuggested() {
 			<a class="mp-sugg-card" href="/m/${esc(m.id)}">
 				${thumb}
 				<div>
-					<div class="mp-sugg-title">${esc(titleFromPrompt(m.prompt))}</div>
+					<div class="mp-sugg-title">${esc(creationName(m))}</div>
 					<div class="mp-sugg-meta">
 						<span>👁 ${formatCount(m.view_count)}</span>
 						<span>♥ ${formatCount(m.vote_count)}</span>

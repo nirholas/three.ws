@@ -21,6 +21,43 @@ export function titleFromPrompt(prompt) {
 	return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
+// Pipelines that take no text write their own name into the prompt column
+// (api/forge.js: 'image-to-3d' for an image upload, 'auto-rig' for a rig pass).
+// Read as a title, every one of those thousands of pages was called the same
+// thing, so they get a name of their own instead.
+const PIPELINE_LABEL = {
+	'auto-rig': 'Rigged 3D model',
+	'image-to-3d': '3D model from an image',
+};
+
+function pipelineLabel(creation) {
+	return PIPELINE_LABEL[String(creation?.prompt || '').trim().toLowerCase()] || null;
+}
+
+// The creation's display name: the prompt when someone typed one; for a
+// pipeline creation, what its poster shows when it was described, else the
+// pipeline and the first block of its id, which tells two of them apart.
+export function creationName(creation) {
+	const label = pipelineLabel(creation);
+	if (!label) return titleFromPrompt(creation?.prompt);
+	const caption = String(creation?.described?.caption || '').trim().replace(/[.\s]+$/, '');
+	if (caption) return titleFromPrompt(caption);
+	const short = String(creation?.id || '').slice(0, 8);
+	return short ? `${label} ${short}` : label;
+}
+
+// The meta description for a pipeline creation nobody described, which has no
+// prompt to quote. '' for any other creation, so the caller keeps its own.
+export function creationPipelineDescription(creation) {
+	if (!pipelineLabel(creation)) return '';
+	const by = creation?.creatorUsername ? ` by @${creation.creatorUsername}` : '';
+	const t = creation?.created_at ? new Date(creation.created_at) : null;
+	const on = t && !Number.isNaN(t.getTime())
+		? ` on ${t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}`
+		: '';
+	return `${creationName({ id: creation.id, prompt: creation.prompt })}${by}, made on three.ws${on}. View it in 3D and AR, download the GLB, or remix it.`;
+}
+
 // The machine description of a creation's poster (Florence-2, work order 819):
 // the detailed caption, else the short caption, else ''. `described` is the
 // block getPublicCreation attaches; older and not-yet-described creations
@@ -51,7 +88,7 @@ export function excerptText(text, max) {
 export function creationAltText(creation, max = 250) {
 	const described = creationDescribedText(creation);
 	if (described) return excerptText(described, max);
-	return `${titleFromPrompt(creation?.prompt)}, a 3D model`;
+	return `${creationName(creation)}, a 3D model`;
 }
 
 // The meta description when the creation was described: what the poster
