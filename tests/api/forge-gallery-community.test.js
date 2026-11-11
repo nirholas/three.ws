@@ -161,6 +161,29 @@ describe('GET /api/forge-gallery?scope=community', () => {
 		expect(parsed(res)).toEqual({ enabled: false, creations: [] });
 		expect(listShowcaseMock).not.toHaveBeenCalled();
 	});
+
+	it('narrows the feed to one engine lane with ?backend= (the /microsoft TRELLIS.2 strip)', async () => {
+		const res = mkRes();
+		await handler(mkReq('/api/forge-gallery?scope=community&backend=trellis2&limit=8'), res);
+		expect(res.statusCode).toBe(200);
+		expect(listShowcaseMock).toHaveBeenCalledWith(expect.objectContaining({ backend: 'trellis2', limit: 8 }));
+		expect(parsed(res).backend).toBe('trellis2');
+	});
+
+	it('leaves the feed unfiltered when ?backend= is absent', async () => {
+		const res = mkRes();
+		await handler(mkReq('/api/forge-gallery?scope=community'), res);
+		expect(listShowcaseMock.mock.calls[0][0]).not.toHaveProperty('backend');
+		expect(parsed(res)).not.toHaveProperty('backend');
+	});
+
+	it('rejects a malformed ?backend= instead of passing it to the store', async () => {
+		const res = mkRes();
+		await handler(mkReq('/api/forge-gallery?scope=community&backend=TRELLIS%27%3B--'), res);
+		expect(res.statusCode).toBe(400);
+		expect(parsed(res).error).toBe('invalid_backend');
+		expect(listShowcaseMock).not.toHaveBeenCalled();
+	});
 });
 
 describe('GET /api/forge-gallery (personal scope)', () => {

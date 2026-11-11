@@ -1441,7 +1441,7 @@ export async function countCreationsByUser({ userId } = {}) {
 // `voted` flag so the UI can render the caller's own upvotes without a second
 // round-trip. voterKey is the hashed browser id (hashClient); pass null for an
 // anonymous read (voted is then false for every row).
-export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh', window = 'all', from = null, to = null } = {}) {
+export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh', window = 'all', from = null, to = null, backend = null } = {}) {
 	if (!forgeStoreEnabled()) return [];
 	const capped = Math.min(Math.max(Number(limit) || 12, 1), 24);
 	// Empty string never matches a real voter_key (hashClient collapses missing
@@ -1455,6 +1455,8 @@ export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh'
 	const explicitFrom = from instanceof Date ? from.toISOString() : null;
 	const boundFrom = explicitFrom ?? weekStart;
 	const boundTo = to instanceof Date ? to.toISOString() : null;
+	// Optional single-lane filter (e.g. 'trellis2'); null keeps every engine.
+	const lane = typeof backend === 'string' && backend ? backend : null;
 	try {
 		const rows = top
 			? await sql`
@@ -1470,6 +1472,7 @@ export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh'
 					and (fc.visibility is null or fc.visibility = 'public')
 					and (${boundFrom}::timestamptz is null or fc.created_at >= ${boundFrom}::timestamptz)
 					and (${boundTo}::timestamptz is null or fc.created_at < ${boundTo}::timestamptz)
+					and (${lane}::text is null or fc.backend = ${lane}::text)
 				order by fc.vote_count desc, fc.created_at desc
 				limit ${capped}
 			`
@@ -1486,6 +1489,7 @@ export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh'
 					and (fc.visibility is null or fc.visibility = 'public')
 					and (${explicitFrom}::timestamptz is null or fc.created_at >= ${explicitFrom}::timestamptz)
 					and (${boundTo}::timestamptz is null or fc.created_at < ${boundTo}::timestamptz)
+					and (${lane}::text is null or fc.backend = ${lane}::text)
 				order by (fc.preview_image_url is not null) desc, fc.created_at desc
 				limit ${capped}
 			`;

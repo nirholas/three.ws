@@ -3,6 +3,9 @@
  *
  *   GET /api/forge-gallery                    → { creations: [...], enabled }
  *   GET /api/forge-gallery?scope=community    → { creations: [...], enabled }
+ *   GET /api/forge-gallery?scope=community&backend=trellis2
+ *                                             → the same feed narrowed to one engine
+ *                                               lane (the /microsoft TRELLIS.2 strip)
  *
  * Default scope reads the persisted models for the browser identified by the
  * x-forge-client header, newest first — the "Your creations" strip on /forge,
@@ -76,6 +79,13 @@ export default wrap(async (req, res) => {
 		} else if (window === 'day') {
 			bounds = currentDayWindow();
 		}
+		// Optional engine-lane filter. Lane ids are lowercase snake_case
+		// (api/_lib/forge-tiers.js); anything else is a malformed request.
+		const backendParam = (url.searchParams.get('backend') || '').trim();
+		if (backendParam && !/^[a-z0-9_]{1,40}$/.test(backendParam)) {
+			return json(res, 400, { error: 'invalid_backend', message: 'backend must be a forge lane id such as trellis2.' });
+		}
+		const backend = backendParam || null;
 		// Resolve the caller's own voted-state per card when they send their
 		// forge id — the community feed carries no other identifying data, and a
 		// missing header just yields voted=false everywhere (anonymous read).
@@ -85,7 +95,7 @@ export default wrap(async (req, res) => {
 		// `total` is the full community-model count (social proof), independent of
 		// the paginated slice. Cheap enough to run alongside the feed read.
 		const [creations, total] = await Promise.all([
-			listShowcase({ limit, sort, window, voterKey, ...bounds }),
+			listShowcase({ limit, sort, window, voterKey, ...bounds, ...(backend ? { backend } : {}) }),
 			countShowcase(),
 		]);
 		// Per-voter reads can't be shared across browsers, so only the anonymous
@@ -101,7 +111,7 @@ export default wrap(async (req, res) => {
 		const headers = voterKey
 			? { 'cache-control': 'private, no-store' }
 			: { 'cache-control': 'public, s-maxage=60, stale-while-revalidate=300' };
-		return json(res, 200, { enabled: true, creations, total, sort, window }, headers);
+		return json(res, 200, { enabled: true, creations, total, sort, window, ...(backend ? { backend } : {}) }, headers);
 	}
 
 	const rawClient = req.headers['x-forge-client'];
