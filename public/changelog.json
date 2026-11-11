@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-11T17:44:20.588Z",
+	"generated_at": "2026-11-11T17:46:26.143Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -243,6 +243,16 @@
 			"title": "Export any Forge model as a Minecraft: Bedrock structure pack",
 			"summary": "The Forge download menu has a new Minecraft: Bedrock option. It turns your model into blocks, shows a live 3D block preview, and downloads a .mcpack you open in Bedrock and place with a structure block or one /function command. Pick the height (16 to 128 blocks), which blocks to use (all, concrete, wool, terracotta, builder or colorful), solid or hollow, and optional dithering. Colors come from the model's texture at every block, and dark textures are brightened automatically so a steel knight does not come out as coal. Builds wider than one structure block are split into tiles that the function places together. Not an official Minecraft product; not approved by or associated with Mojang or Microsoft.",
 			"link": "/docs/minecraft-export",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-11",
+			"type": "update",
+			"title": "Find 3D models by what is in them",
+			"summary": "Every finished 3D creation is now described from its poster by Florence-2 on our own GPU: a short caption, a detailed caption and tags. Model search matches those captions and tags, so a model forged from a photo with no written prompt still turns up when you search for what it shows, like \"bicycle wheel\". Model pages use the detailed caption as their description and as alt text for the 3D viewer and share images, and list the tags as chips that open a search for similar models. Creators can add, remove or clear the tags on their own models.",
+			"link": "/search?type=model",
 			"tags": [
 				"feature"
 			]

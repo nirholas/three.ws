@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-11",
+			"title": "Find 3D models by what is in them",
+			"summary": "Every finished 3D creation is now described from its poster by Florence-2 on our own GPU: a short caption, a detailed caption and tags. Model search matches those captions and tags, so a model forged from a photo with no written prompt still turns up when you search for what it shows, like \"bicycle wheel\". Model pages use the detailed caption as their description and as alt text for the 3D viewer and share images, and list the tags as chips that open a search for similar models. Creators can add, remove or clear the tags on their own models.",
+			"tags": ["feature"],
+			"link": "/search?type=model"
+		},
+		{
+			"date": "2026-11-11",
 			"title": "Put interactive 3D models in a Power BI report",
 			"summary": "three.ws 3D Models is a custom visual for Power BI reports. Bind a column of three.ws model ids or GLB links and it shows one model you can orbit, a grid, or a turntable gallery for larger sets. Measures can colour and size each model, a click cross-filters the rest of the report, selections elsewhere highlight the matching models, and tooltips show any fields you add. The format pane covers background, lighting, layout, auto-rotate, colour mode and labels, and the visual supports the keyboard, high-contrast themes and the context menu. It downloads models only from three.ws. The package is built and tested against real production models, and the AppSource submission is next.",
 			"tags": ["feature"]
