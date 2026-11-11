@@ -370,6 +370,11 @@ export const MODEL_CATALOG = {
 	'nvidia/nemotron-3.5-lightning-30b-a3b': { provider: 'nvidia', tools: true },
 	'nvidia/nemotron-3-ultra-550b-a55b':     { provider: 'nvidia', tools: true },
 
+	// ── Self-hosted Microsoft Phi (workers/model-phi, Cloud Run L4) ───────────
+	// No per-token bill: it runs on GCP credits and scales to zero. Reachable
+	// only once PHI_WORKER_URL is set (phi-lane.js); docs/phi-brain-lane.md.
+	'microsoft/Phi-4-mini-instruct': { provider: 'phi', tools: true, free: true },
+
 	// ── SambaNova Cloud free tier (no card): Llama 3.3 70B, own quota pool ────
 	'Meta-Llama-3.3-70B-Instruct': { provider: 'sambanova', tools: true },
 

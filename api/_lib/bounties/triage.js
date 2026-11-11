@@ -73,6 +73,8 @@ export async function triageListing(row) {
 			user: listingPrompt(row),
 			maxTokens: 300,
 			timeoutMs: 20_000,
+			// Served by the Phi lane when its evaluation routes this type (phi-lane.js).
+			task: 'bounty_triage',
 		});
 	} catch {
 		return { triage: rules, model: 'rules' };

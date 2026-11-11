@@ -16,7 +16,9 @@
 //   build     read the DB (read-only), anonymize, write tasks.json and upload it
 //             to gs://three-ws-avatar-reconstructions/verify/phi/tasks.json,
 //             where the GPU verification job (cloudbuild.verify.yaml) reads it
-//   baseline  answer every task with the current default (Groq qwen3.8-27b)
+//   baseline  answer every task with the current default chain: its first
+//             rung (Groq qwen3.8-27b) or, with --baseline groq#120b, the rung
+//             production serves while the first one's daily quota is spent
 //   judge     blind reference labels for the classifiers and 1-5 rubric scores
 //             for the summaries, by Nemotron Ultra (a third, larger model)
 //   report    score both candidates, print the table and the routing verdict
@@ -37,7 +39,13 @@ import { parseArgs } from 'node:util';
 
 const BUCKET = 'gs://three-ws-avatar-reconstructions/verify/phi';
 const PROJECT = 'aerial-vehicle-466722-p5';
-const BASELINE = { name: 'groq', model: 'qwen/qwen3.8-27b', url: 'https://api.groq.com/openai/v1/chat/completions', secret: 'groq-api-key', extra: {} };
+// The two Groq rungs that lead llm.js providerChain(), with the body extras
+// the platform sends each one.
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const BASELINES = {
+	groq: { name: 'groq', model: 'qwen/qwen3.8-27b', url: GROQ_URL, secret: 'groq-api-key', extra: { reasoning_effort: 'none' } },
+	'groq#120b': { name: 'groq#120b', model: 'openai/gpt-oss-120b', url: GROQ_URL, secret: 'groq-api-key', extra: {} },
+};
 const JUDGE = {
 	name: 'nvidia',
 	model: 'nvidia/nemotron-3-ultra-550b-a55b',
@@ -56,8 +64,11 @@ const { values: opts, positionals } = parseArgs({
 		phi: { type: 'string' },
 		concurrency: { type: 'string', default: '3' },
 		'no-upload': { type: 'boolean', default: false },
+		baseline: { type: 'string', default: 'groq' },
 	},
 });
+const BASELINE = BASELINES[opts.baseline];
+if (!BASELINE) throw new Error(`--baseline must be one of ${Object.keys(BASELINES).join(', ')}`);
 const step = positionals[0];
 const DIR = opts.dir;
 mkdirSync(DIR, { recursive: true });
@@ -206,7 +217,7 @@ async function build() {
 	// openers (no action asked: any tool other than an emote is wrong) plus
 	// explicit action asks with the tool and arguments the viewer needs.
 	const chat = await import('../api/chat.js');
-	const system = chat.buildSystemPrompt({});
+	const system = chat.buildSystemPrompt({}).text;
 	const openers = await sql`
 		SELECT DISTINCT ON (lower(trim(content))) content FROM widget_chat_messages
 		WHERE role = 'user' AND length(trim(content)) >= 2 ORDER BY lower(trim(content)), created_at DESC LIMIT 12`;
@@ -324,8 +335,7 @@ async function baseline() {
 	const answers = await pool(tasks, Number(opts.concurrency), async (t) => {
 		const body = { messages: t.messages, max_tokens: t.max_tokens, temperature: t.temperature };
 		if (t.tools) body.tools = t.tools;
-		// Same reasoning-off switch llm.js sends Groq's Qwen3 lane.
-		const r = await chatCall({ ...BASELINE, extra: { reasoning_effort: 'none' } }, body);
+		const r = await chatCall(BASELINE, body);
 		process.stdout.write(r.error ? 'x' : '.');
 		return { id: t.id, ...r };
 	});
@@ -506,7 +516,8 @@ async function report() {
 	if (!opts.phi) throw new Error('report needs --phi <run-id>');
 	const { tasks } = readJson('tasks.json');
 	const refs = readJson('judge.json');
-	const base = await scoreAll(tasks, readJson('baseline.json').answers, refs, 'baseline');
+	const baselineRun = readJson('baseline.json');
+	const base = await scoreAll(tasks, baselineRun.answers, refs, 'baseline');
 	const phiReport = phiAnswers(opts.phi);
 	const phi = await scoreAll(tasks, phiReport.eval, refs, 'phi');
 	const verdict = {};
@@ -525,13 +536,13 @@ async function report() {
 		return all.reduce((s, r) => s + r.score * r.scored, 0) / all.reduce((s, r) => s + r.scored, 0);
 	};
 	lines.push(`| all | ${tasks.length} | ${fmt(total(base))} | ${fmt(total(phi))} | ${fmt(total(base) - total(phi))} | | | | |`);
-	writeJson(`verdict-${opts.phi}.json`, { bar: BAR, baseline_model: BASELINE.model, judge_model: JUDGE.model, verdict });
+	writeJson(`verdict-${opts.phi}.json`, { bar: BAR, baseline_model: baselineRun.model, judge_model: JUDGE.model, verdict });
 	console.log(lines.join('\n'));
 }
 
 const steps = { build, baseline, judge, report };
 if (!steps[step]) {
-	console.error('usage: phi-brain-eval.mjs build|baseline|judge|report [--phi <run-id>] [--dir <scratch dir>]');
+	console.error('usage: phi-brain-eval.mjs build|baseline|judge|report [--phi <run-id>] [--dir <scratch dir>] [--baseline groq|groq#120b]');
 	process.exit(2);
 }
 await steps[step]();

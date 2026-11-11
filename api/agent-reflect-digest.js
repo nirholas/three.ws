@@ -215,6 +215,8 @@ async function composeDiary({ agent, highlights, entities, counts, userId, agent
 				user: buildDiaryUserPrompt({ agent, highlights, entities, counts }),
 				maxTokens: 320,
 				timeoutMs: 30_000,
+				// Served by the Phi lane when its evaluation routes this type (phi-lane.js).
+				task: 'memory_summary',
 				track: { userId, agentId, tool: 'diary' },
 			});
 			const text = (completion.text || '').trim();

@@ -243,6 +243,8 @@ export async function triageReport(report) {
 			user: buildUser(report, rules),
 			maxTokens: 400,
 			timeoutMs: 20_000,
+			// Served by the Phi lane when its evaluation routes this type (phi-lane.js).
+			task: 'feedback_triage',
 		});
 	} catch {
 		return rules;

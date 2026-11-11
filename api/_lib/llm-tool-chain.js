@@ -20,6 +20,7 @@ import {
 	vertexGeminiBudget,
 } from './vertex-gemini.js';
 import { rosterTransports } from './model-routes.js';
+import { phiToolRung, normalizePhiRound, offeredToolNames, phiContentGate } from './phi-lane.js';
 
 // ── provider chain (free-first, OpenAI-compatible tool-calling + streaming) ────
 // Mirrors the platform policy in api/_lib/llm.js: free platform keys lead, the
@@ -131,16 +132,30 @@ export async function streamRound(provider, { messages, tools, onContent, temper
 	const headers = provider.getHeaders
 		? { ...(await provider.getHeaders()), ...(provider.extraHeaders || {}) }
 		: { 'content-type': 'application/json', authorization: `Bearer ${provider.key}`, ...(provider.extraHeaders || {}) };
-	const resp = await fetch(provider.url, {
-		method: 'POST',
-		headers,
-		body: JSON.stringify(body),
-		signal: AbortSignal.timeout(45_000),
-	});
+	// A rung that scales to zero (the self-hosted Phi worker) declares how long
+	// it may take to start answering; past that it is booting, and the caller's
+	// next rung serves the round while the instance comes up.
+	const connect = provider.connectTimeoutMs ? new AbortController() : null;
+	const connectTimer = connect ? setTimeout(() => connect.abort(new Error(`no response in ${provider.connectTimeoutMs}ms`)), provider.connectTimeoutMs) : null;
+	const signal = connect ? AbortSignal.any([AbortSignal.timeout(45_000), connect.signal]) : AbortSignal.timeout(45_000);
+	let resp;
+	try {
+		resp = await fetch(provider.url, { method: 'POST', headers, body: JSON.stringify(body), signal });
+	} catch (err) {
+		if (provider.name === 'phi') console.warn(`[phi] worker unreachable (${connect?.signal.aborted ? `no response in ${provider.connectTimeoutMs}ms` : err.message}), falling back`);
+		throw err;
+	} finally {
+		if (connectTimer) clearTimeout(connectTimer);
+	}
 	if (!resp.ok || !resp.body) {
 		const detail = await resp.text().catch(() => '');
+		if (provider.name === 'phi') console.warn(`[phi] worker answered ${resp.status}, falling back`);
 		throw Object.assign(new Error(`${provider.name} ${resp.status}: ${detail.slice(0, 180)}`), { status: 502 });
 	}
+	// Phi rounds hold back text that may be a tool call until it is clear it is not.
+	const toolNames = provider.name === 'phi' ? offeredToolNames(tools) : null;
+	const gate = toolNames?.size ? phiContentGate(onContent) : null;
+	const emit = gate ? gate.push : onContent;
 	const reader = resp.body.getReader();
 	const decoder = new TextDecoder();
 	let buf = '';
@@ -164,7 +179,7 @@ export async function streamRound(provider, { messages, tools, onContent, temper
 			if (u && typeof u === 'object') usage = readUsage(u);
 			const delta = evt.choices?.[0]?.delta;
 			if (!delta) continue;
-			if (delta.content) { content += delta.content; onContent?.(delta.content); }
+			if (delta.content) { content += delta.content; emit?.(delta.content); }
 			if (Array.isArray(delta.tool_calls)) {
 				for (const tc of delta.tool_calls) {
 					const idx = tc.index ?? 0;
@@ -176,12 +191,16 @@ export async function streamRound(provider, { messages, tools, onContent, temper
 			}
 		}
 	}
-	return { content, toolCalls: toolCalls.filter(Boolean), usage };
+	const round = { content, toolCalls: toolCalls.filter(Boolean), usage };
+	if (!toolNames) return round;
+	const normalized = normalizePhiRound(round, toolNames);
+	gate?.end(normalized);
+	return normalized;
 }
 
 // Lanes documented to accept `stream_options.include_usage` on their
 // OpenAI-compatible endpoint.
-const USAGE_OPTION_LANES = new Set(['openai', 'groq', 'openrouter', 'cerebras', 'nvidia', 'gemini', 'grok']);
+const USAGE_OPTION_LANES = new Set(['openai', 'groq', 'openrouter', 'cerebras', 'nvidia', 'gemini', 'grok', 'phi']);
 
 function baseLane(name) {
 	return String(name || '').split('#')[0];
@@ -259,6 +278,8 @@ function singleLaneRung(model, meta) {
 			extraHeaders: OPENROUTER_ATTRIBUTION_HEADERS,
 		};
 	}
+	// The self-hosted worker's URL is deployment config, not a fixed endpoint.
+	if (meta.provider === 'phi') return phiToolRung();
 	const lane = LANE_ENDPOINTS[meta.provider];
 	const key = lane?.key();
 	if (!lane || !key) return null;

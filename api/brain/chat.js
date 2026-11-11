@@ -49,6 +49,7 @@ import { meterFreeModel, FreeTierExhaustedError, freeTierErrorBody, retryAfterSe
 import { assertInferenceAllowed, chargeInference } from '../_lib/inference-billing.js';
 import { randomUUID } from 'node:crypto';
 import { openrouterUsageFetch } from '../_lib/openrouter-usage.js';
+import { PHI_MODEL, phiConfig } from '../_lib/phi-lane.js';
 
 const WATSONX_HEADERS_TIMEOUT_MS = 45_000;
 
@@ -65,6 +66,7 @@ export const ANON_BRAIN_PROVIDERS = new Set([
 	'nvidia-nemotron-120b',
 	'nvidia-nemotron-super-49b',
 	'nvidia-nemotron-nano',
+	PHI_MODEL,
 	...ROSTER.filter((m) => m.free).map((m) => m.id),
 ]);
 
@@ -407,6 +409,22 @@ const PROVIDERS = {
 		description: 'Compact Nemotron with built-in reasoning. Strong quality per token.',
 		reasoningTrace: true,
 		native: () => (env.NVIDIA_API_KEY ? nvidia('nvidia/nemotron-3.5-lightning-30b-a3b') : null),
+	},
+
+	// ── Microsoft Phi, self-hosted (workers/model-phi on a Cloud Run L4) ───────
+	// Listed once PHI_WORKER_URL is set. Runs on GCP credits with no per-token
+	// bill, so it is open to signed-out callers on the daily free allowance.
+	[PHI_MODEL]: {
+		label: 'Phi-4 mini',
+		network: 'Microsoft',
+		tier: 'fast',
+		maxOutput: 4096,
+		context: 32_768,
+		description: 'Microsoft’s 3.8B open model, MIT licensed, served on our own GPU. Fast replies and tool calls.',
+		native: () => {
+			const cfg = phiConfig();
+			return cfg?.key ? createOpenAI({ apiKey: cfg.key, baseURL: `${cfg.base}/v1` }).chat(PHI_MODEL) : null;
+		},
 	},
 };
 

@@ -110,6 +110,9 @@ const FREE_PROVIDERS = new Set([
 	// Inference Providers on each token's monthly included credit: the chain
 	// never buys pre-paid credit, so an exhausted token 402s and fails over.
 	'huggingface',
+	// The self-hosted Phi worker (workers/model-phi): billed per GPU-second on
+	// GCP credits, never per token, so a completion carries no token charge.
+	'phi',
 ]);
 
 // Strip a rung suffix from a provider name: '#n' for multi-key rungs

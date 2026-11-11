@@ -48,6 +48,7 @@ import { recordEvent } from './usage.js';
 import { costMicroUsd } from './llm-pricing.js';
 import { OPENROUTER_ATTRIBUTION_HEADERS } from './openrouter-attribution.js';
 import { sql } from './db.js';
+import { phiConfig, phiProvider, phiRoutesTask, PHI_STALL_COOLDOWN_MS } from './phi-lane.js';
 import {
 	vertexClaudeEnabled,
 	vertexClaudePrimary,
@@ -256,6 +257,13 @@ export function cooldownMsForStatus(status, retryAfter = null) {
 function noteRungFailure(p, status, retryAfter) {
 	const ms = cooldownMsForStatus(status, retryAfter);
 	if (ms > 0) COOLDOWNS.set(rungKey(p), { until: Date.now() + ms, status });
+}
+
+// The self-hosted Phi worker scales to zero: a stall or 5xx is almost always a
+// GPU instance booting, so the lane sits out about one cold start instead of
+// making every call in that window wait out its timeout first.
+function notePhiStall(p, status) {
+	COOLDOWNS.set(rungKey(p), { until: Date.now() + PHI_STALL_COOLDOWN_MS, status });
 }
 
 function rungCooling(p, now = Date.now()) {
@@ -615,7 +623,7 @@ function openrouterClaudeMirror(key) {
 // free provider: the prod paid keys are routinely invalid or out of quota, so
 // platform spend never leads and nothing depends on it — but when a key does
 // work, a request that exhausted the free tier still succeeds.
-export function providerChain({ anthropicKey, anthropicModel, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null } = {}) {
+export function providerChain({ anthropicKey, anthropicModel, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null, task = null, preferPhi = false } = {}) {
 	const chain = [];
 	// Opt-in: lead with the NVIDIA NIM lane on a chosen Nemotron model. Used by
 	// features that want the NVIDIA-native model to actually produce the result
@@ -655,6 +663,11 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 	// the call site's Anthropic intent (anthropicModel), else the utility default.
 	// A model id that cannot sit in a Vertex URL path (a caller-supplied value on
 	// the x402 proxy) skips the Vertex lane rather than failing the whole chain.
+	// The self-hosted Phi lane (phi-lane.js) leads for the internal task types
+	// its evaluation passed, and for a caller that asks for it. It sits behind a
+	// caller's BYOK key (an explicit billing choice) and in front of every
+	// platform rung, which stay behind it as the fallback on error or timeout.
+	if ((preferPhi && phiConfig()) || phiRoutesTask(task)) chain.push(phiProvider());
 	const vertexModelOk = isVertexModelId(anthropicModel || ANTHROPIC_MODEL);
 	if (vertexClaudePrimary() && vertexModelOk) chain.push(vertexAnthropicProvider(anthropicModel));
 	if (env.GROQ_API_KEY) {
@@ -960,8 +973,8 @@ export function llmConfigured(opts = {}) {
 // { userId, agentId, avatarId, clientId, apiKeyId, tool } — are all optional;
 // pass whatever the call site knows. Recording is fire-and-forget (see
 // recordEvent), so it never delays or fails the completion.
-export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey = null, anthropicModel = null, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null, timeoutMs = 30_000, track = null, chain: chainOverride = null }) {
-	const chain = chainOverride?.length ? chainOverride : providerChain({ anthropicKey, anthropicModel, grokKey, grokModel, preferNvidia, nvidiaModel });
+export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey = null, anthropicModel = null, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null, task = null, preferPhi = false, timeoutMs = 30_000, track = null, chain: chainOverride = null }) {
+	const chain = chainOverride?.length ? chainOverride : providerChain({ anthropicKey, anthropicModel, grokKey, grokModel, preferNvidia, nvidiaModel, task, preferPhi });
 	if (!chain.length) throw new LlmUnavailableError();
 
 	// Per-user daily spend cap on platform-paid keys. Only runs when a userId is
@@ -1072,12 +1085,14 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 		} catch (e) {
 			lastErr = Object.assign(new Error(`${p.name} unreachable: ${e.message}`), { status: 502, code: 'upstream_unreachable' });
 			if (isStall(e)) stalledHosts.add(hostOf(p.url));
+			if (p.name === 'phi') notePhiStall(p, 'stall');
 			attempts.push({ provider: p.name, ms: Date.now() - startedAt, error: `unreachable: ${e.message}` });
 			continue;
 		}
 		if (!upstream.ok) {
 			const body = await upstream.text().catch(() => '');
 			noteRungFailure(p, upstream.status, upstream.headers?.get?.('retry-after'));
+			if (p.name === 'phi' && upstream.status >= 500) notePhiStall(p, upstream.status);
 			lastErr = Object.assign(new Error(`${p.name} ${upstream.status}: ${body.slice(0, 200)}`), { status: 502, code: 'upstream_error' });
 			attempts.push({ provider: p.name, ms: Date.now() - startedAt, error: `http ${upstream.status}` });
 			continue;
@@ -1118,6 +1133,8 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 			continue;
 		}
 		COOLDOWNS.delete(rungKey(p));
+		const phiMiss = p.name !== 'phi' && attempts.find((a) => a.provider === 'phi');
+		if (phiMiss) console.warn(`[llm] phi lane fell back to ${p.name}: ${phiMiss.error || phiMiss.skipped}`);
 		recordLlmSpend(p, usage, Date.now() - startedAt, track);
 		return {
 			text,
