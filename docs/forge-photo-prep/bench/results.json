@@ -1,0 +1,483 @@
+{
+	"photos": {
+		"backpack": {
+			"source": "backpack.jpg",
+			"prep": {
+				"provider": "wasm",
+				"width": 1920,
+				"height": 2560,
+				"warnings": [],
+				"metrics": {
+					"coverage": 0.51775390625,
+					"subjectPx": 1920,
+					"components": 1,
+					"touchesEdge": false,
+					"sharpness": 10125.954710399435,
+					"exposure": {
+						"mean": 101.40187489155994,
+						"clippedHigh": 0.016616998000679013,
+						"clippedLow": 0
+					},
+					"secondBlobRatio": 0
+				},
+				"plan": {
+					"sx": -153,
+					"sy": 247,
+					"side": 2227,
+					"outSize": 1024
+				},
+				"timings": {
+					"modelMs": 4663,
+					"inferenceMs": 3839,
+					"totalMs": 9391
+				}
+			},
+			"variants": {
+				"original": {
+					"bytes": 1801270,
+					"type": "image/jpeg"
+				},
+				"prepared": {
+					"bytes": 423066,
+					"type": "image/jpeg"
+				},
+				"cutout": {
+					"bytes": 321588,
+					"type": "image/webp"
+				}
+			}
+		},
+		"chair": {
+			"source": "chair.jpg",
+			"prep": {
+				"provider": "wasm",
+				"width": 960,
+				"height": 1280,
+				"warnings": [
+					"cut_off"
+				],
+				"metrics": {
+					"coverage": 0.460556640625,
+					"subjectPx": 1216,
+					"components": 2,
+					"touchesEdge": true,
+					"sharpness": 7164.23718578979,
+					"exposure": {
+						"mean": 60.3997681558947,
+						"clippedHigh": 0.000212039608998961,
+						"clippedLow": 0.008163524946459999
+					},
+					"secondBlobRatio": 0.00006361592942872896
+				},
+				"plan": {
+					"sx": -225,
+					"sy": -65,
+					"side": 1411,
+					"outSize": 1024
+				},
+				"timings": {
+					"modelMs": 14,
+					"inferenceMs": 3865,
+					"totalMs": 4748
+				}
+			},
+			"variants": {
+				"original": {
+					"bytes": 278291,
+					"type": "image/jpeg"
+				},
+				"prepared": {
+					"bytes": 210502,
+					"type": "image/jpeg"
+				},
+				"cutout": {
+					"bytes": 179352,
+					"type": "image/webp"
+				}
+			}
+		},
+		"defocused-scooter": {
+			"source": "defocused-scooter.jpg",
+			"prep": {
+				"provider": "wasm",
+				"width": 1920,
+				"height": 1280,
+				"warnings": [
+					"subject_small",
+					"blurry"
+				],
+				"metrics": {
+					"coverage": 0.040625,
+					"subjectPx": 408,
+					"components": 2,
+					"touchesEdge": false,
+					"sharpness": 95.46218506520755,
+					"exposure": {
+						"mean": 94.04136995192367,
+						"clippedHigh": 0.0057692307692307696,
+						"clippedLow": 0
+					},
+					"secondBlobRatio": 0.000481000481000481
+				},
+				"plan": {
+					"sx": 712,
+					"sy": 592,
+					"side": 473,
+					"outSize": 473
+				},
+				"timings": {
+					"modelMs": 98,
+					"inferenceMs": 3701,
+					"totalMs": 4218
+				}
+			},
+			"variants": {
+				"original": {
+					"bytes": 589031,
+					"type": "image/jpeg"
+				},
+				"prepared": {
+					"bytes": 63861,
+					"type": "image/jpeg"
+				},
+				"cutout": {
+					"bytes": 71714,
+					"type": "image/webp"
+				}
+			}
+		},
+		"garden-gnome": {
+			"source": "garden-gnome.jpg",
+			"prep": {
+				"provider": "wasm",
+				"width": 1600,
+				"height": 1200,
+				"warnings": [],
+				"metrics": {
+					"coverage": 0.194287109375,
+					"subjectPx": 1065,
+					"components": 1,
+					"touchesEdge": false,
+					"sharpness": 606.0959322916184,
+					"exposure": {
+						"mean": 93.2817630057831,
+						"clippedHigh": 0,
+						"clippedLow": 0.002211610957527017
+					},
+					"secondBlobRatio": 0
+				},
+				"plan": {
+					"sx": 115,
+					"sy": -17,
+					"side": 1235,
+					"outSize": 1024
+				},
+				"timings": {
+					"modelMs": 40,
+					"inferenceMs": 3767,
+					"totalMs": 4439
+				}
+			},
+			"variants": {
+				"original": {
+					"bytes": 486633,
+					"type": "image/jpeg"
+				},
+				"prepared": {
+					"bytes": 291507,
+					"type": "image/jpeg"
+				},
+				"cutout": {
+					"bytes": 114828,
+					"type": "image/webp"
+				}
+			}
+		},
+		"grass-head-toy": {
+			"source": "grass-head-toy.jpg",
+			"prep": {
+				"provider": "wasm",
+				"width": 1920,
+				"height": 2560,
+				"warnings": [],
+				"metrics": {
+					"coverage": 0.273076171875,
+					"subjectPx": 1496,
+					"components": 1,
+					"touchesEdge": false,
+					"sharpness": 4992.969925502,
+					"exposure": {
+						"mean": 132.09190201337358,
+						"clippedHigh": 0.004613238922862354,
+						"clippedLow": 0
+					},
+					"secondBlobRatio": 0
+				},
+				"plan": {
+					"sx": 135,
+					"sy": 545,
+					"side": 1735,
+					"outSize": 1024
+				},
+				"timings": {
+					"modelMs": 95,
+					"inferenceMs": 4302,
+					"totalMs": 5157
+				}
+			},
+			"variants": {
+				"original": {
+					"bytes": 1009932,
+					"type": "image/jpeg"
+				},
+				"prepared": {
+					"bytes": 304280,
+					"type": "image/jpeg"
+				},
+				"cutout": {
+					"bytes": 278416,
+					"type": "image/webp"
+				}
+			}
+		},
+		"lemon": {
+			"source": "lemon.jpg",
+			"prep": {
+				"provider": "wasm",
+				"width": 1848,
+				"height": 2032,
+				"warnings": [],
+				"metrics": {
+					"coverage": 0.102255859375,
+					"subjectPx": 856,
+					"components": 1,
+					"touchesEdge": false,
+					"sharpness": 241.03974175559446,
+					"exposure": {
+						"mean": 195.48440120332253,
+						"clippedHigh": 0.00028650558685894376,
+						"clippedLow": 0
+					},
+					"secondBlobRatio": 0
+				},
+				"plan": {
+					"sx": 422,
+					"sy": 580,
+					"side": 993,
+					"outSize": 993
+				},
+				"timings": {
+					"modelMs": 59,
+					"inferenceMs": 4288,
+					"totalMs": 4812
+				}
+			},
+			"variants": {
+				"original": {
+					"bytes": 741722,
+					"type": "image/jpeg"
+				},
+				"prepared": {
+					"bytes": 160938,
+					"type": "image/jpeg"
+				},
+				"cutout": {
+					"bytes": 87950,
+					"type": "image/webp"
+				}
+			}
+		},
+		"mug": {
+			"source": "mug.jpg",
+			"prep": {
+				"provider": "wasm",
+				"width": 960,
+				"height": 1280,
+				"warnings": [
+					"blurry"
+				],
+				"metrics": {
+					"coverage": 0.144130859375,
+					"subjectPx": 636,
+					"components": 1,
+					"touchesEdge": false,
+					"sharpness": 64.34763777514608,
+					"exposure": {
+						"mean": 147.38269815027678,
+						"clippedHigh": 0,
+						"clippedLow": 0
+					},
+					"secondBlobRatio": 0
+				},
+				"plan": {
+					"sx": 66,
+					"sy": 171,
+					"side": 738,
+					"outSize": 738
+				},
+				"timings": {
+					"modelMs": 62,
+					"inferenceMs": 5136,
+					"totalMs": 5627
+				}
+			},
+			"variants": {
+				"original": {
+					"bytes": 117361,
+					"type": "image/jpeg"
+				},
+				"prepared": {
+					"bytes": 93236,
+					"type": "image/jpeg"
+				},
+				"cutout": {
+					"bytes": 58418,
+					"type": "image/webp"
+				}
+			}
+		},
+		"sneaker": {
+			"source": "sneaker.jpg",
+			"prep": {
+				"provider": "wasm",
+				"width": 960,
+				"height": 960,
+				"warnings": [],
+				"metrics": {
+					"coverage": 0.08373046875,
+					"subjectPx": 486,
+					"components": 1,
+					"touchesEdge": false,
+					"sharpness": 10371.022550000713,
+					"exposure": {
+						"mean": 98.69032260322285,
+						"clippedHigh": 0.01212969442500583,
+						"clippedLow": 0.04210403545602986
+					},
+					"secondBlobRatio": 0
+				},
+				"plan": {
+					"sx": 201,
+					"sy": 158,
+					"side": 564,
+					"outSize": 564
+				},
+				"timings": {
+					"modelMs": 9,
+					"inferenceMs": 3563,
+					"totalMs": 3780
+				}
+			},
+			"variants": {
+				"original": {
+					"bytes": 69577,
+					"type": "image/jpeg"
+				},
+				"prepared": {
+					"bytes": 61293,
+					"type": "image/jpeg"
+				},
+				"cutout": {
+					"bytes": 58876,
+					"type": "image/webp"
+				}
+			}
+		},
+		"teapot": {
+			"source": "teapot.jpg",
+			"prep": {
+				"provider": "wasm",
+				"width": 960,
+				"height": 694,
+				"warnings": [
+					"multiple_subjects"
+				],
+				"metrics": {
+					"coverage": 0.38833984375,
+					"subjectPx": 930,
+					"components": 13,
+					"touchesEdge": false,
+					"sharpness": 2444.0703728457665,
+					"exposure": {
+						"mean": 119.97624488256014,
+						"clippedHigh": 0.00042750088014887087,
+						"clippedLow": 0.0006286777649248101
+					},
+					"secondBlobRatio": 0.2019175513413786
+				},
+				"plan": {
+					"sx": -59,
+					"sy": -192,
+					"side": 1079,
+					"outSize": 1024
+				},
+				"timings": {
+					"modelMs": 8,
+					"inferenceMs": 3168,
+					"totalMs": 3668
+				}
+			},
+			"variants": {
+				"original": {
+					"bytes": 142510,
+					"type": "image/jpeg"
+				},
+				"prepared": {
+					"bytes": 164230,
+					"type": "image/jpeg"
+				},
+				"cutout": {
+					"bytes": 200550,
+					"type": "image/webp"
+				}
+			}
+		},
+		"teddy-bear-museum": {
+			"source": "teddy-bear-museum.jpg",
+			"prep": {
+				"provider": "wasm",
+				"width": 1920,
+				"height": 1080,
+				"warnings": [],
+				"metrics": {
+					"coverage": 0.496123046875,
+					"subjectPx": 1674,
+					"components": 6,
+					"touchesEdge": false,
+					"sharpness": 12121.9318841858,
+					"exposure": {
+						"mean": 122.64939905123839,
+						"clippedHigh": 0.00007873550774560558,
+						"clippedLow": 0.001791232801212527
+					},
+					"secondBlobRatio": 0.00031507226970186285
+				},
+				"plan": {
+					"sx": -11,
+					"sy": -431,
+					"side": 1942,
+					"outSize": 1024
+				},
+				"timings": {
+					"modelMs": 51,
+					"inferenceMs": 3300,
+					"totalMs": 3896
+				}
+			},
+			"variants": {
+				"original": {
+					"bytes": 657100,
+					"type": "image/jpeg"
+				},
+				"prepared": {
+					"bytes": 248851,
+					"type": "image/jpeg"
+				},
+				"cutout": {
+					"bytes": 174094,
+					"type": "image/webp"
+				}
+			}
+		}
+	}
+}
