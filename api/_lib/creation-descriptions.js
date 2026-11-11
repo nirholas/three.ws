@@ -162,10 +162,22 @@ export async function claimDescribeBatch({ limit = 8, backfill = true, origin = 
 	`;
 	const items = [];
 	const skipped = [];
-	for (const row of rows) {
-		const imageUrl = posterUrlFor(row, origin);
-		if (imageUrl) items.push({ id: row.id, imageUrl });
-		else skipped.push(row.id);
+	try {
+		for (const row of rows) {
+			const imageUrl = posterUrlFor(row, origin);
+			if (imageUrl) items.push({ id: row.id, imageUrl });
+			else skipped.push(row.id);
+		}
+	} catch (err) {
+		// URL resolution failing is a process misconfiguration (no object
+		// storage env), not a property of these rows: give the leases and the
+		// spent attempt back so nothing drifts toward 'failed'.
+		await sql`
+			update forge_creation_descriptions
+			set attempts = greatest(attempts - 1, 0), updated_at = now() - make_interval(mins => ${LEASE_MINUTES})
+			where creation_id = any(${ids}::uuid[]) and status = 'queued'
+		`;
+		throw err;
 	}
 	if (skipped.length) {
 		await sql`
