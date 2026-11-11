@@ -1,0 +1,461 @@
+// three.ws 3D Models visual. Colours follow the Power BI report defaults
+// (Segoe UI text, #118DFF accent) so the visual sits naturally on a page.
+
+@accent: #118dff;
+@text: #252423;
+@muted: #605e5c;
+@line: rgba(0, 0, 0, 0.12);
+@danger: #a4262c;
+
+.tws-root {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: "Segoe UI", wf_segoe-ui_normal, helvetica, arial, sans-serif;
+    color: @text;
+    user-select: none;
+}
+
+.tws-stage {
+    position: absolute;
+    inset: 0;
+}
+
+.tws-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.tws-tiles {
+    position: absolute;
+    inset: 0;
+}
+
+.tws-icon {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex: none;
+}
+
+.tws-tile {
+    position: absolute;
+    box-sizing: border-box;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    outline: none;
+    touch-action: none;
+    transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+
+    &:hover {
+        border-color: @line;
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    &:active {
+        background-color: rgba(0, 0, 0, 0.04);
+    }
+
+    &:focus-visible {
+        border-color: @accent;
+        box-shadow: 0 0 0 2px fade(@accent, 35%);
+    }
+
+    &.tws-selected {
+        border-color: @accent;
+        box-shadow: inset 0 0 0 1px @accent;
+    }
+
+    &.tws-dimmed .tws-label {
+        opacity: 0.4;
+    }
+
+    &.tws-dragging {
+        cursor: grabbing;
+    }
+
+    &:hover .tws-open,
+    &:focus-within .tws-open {
+        opacity: 1;
+    }
+}
+
+.tws-single .tws-tile {
+    border-radius: 0;
+
+    &:hover {
+        border-color: transparent;
+        background-color: transparent;
+    }
+}
+
+.tws-label {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 6px;
+    font-size: 12px;
+    line-height: 1.3;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    transition: opacity 120ms ease;
+}
+
+.tws-open {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid @line;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.92);
+    color: @text;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 120ms ease, background-color 120ms ease;
+
+    &:hover {
+        background: #fff;
+        color: @accent;
+    }
+
+    &:active {
+        background: #f3f2f1;
+    }
+
+    &:focus-visible {
+        opacity: 1;
+        outline: 2px solid @accent;
+        outline-offset: 1px;
+    }
+}
+
+.tws-compact .tws-open {
+    display: none;
+}
+
+.tws-skeleton {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.tws-skeleton-shape {
+    width: 44%;
+    max-width: 160px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: linear-gradient(100deg, rgba(0, 0, 0, 0.05) 30%, rgba(0, 0, 0, 0.11) 50%, rgba(0, 0, 0, 0.05) 70%);
+    background-size: 300% 100%;
+    animation: tws-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes tws-shimmer {
+    from { background-position: 100% 0; }
+    to { background-position: 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tws-skeleton-shape {
+        animation: none;
+    }
+}
+
+.tws-error {
+    position: absolute;
+    inset: 8px 8px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+    color: @muted;
+    cursor: default;
+}
+
+.tws-error-icon {
+    color: @danger;
+
+    .tws-icon {
+        width: 22px;
+        height: 22px;
+    }
+}
+
+.tws-error-text {
+    margin: 0;
+    max-width: 260px;
+    font-size: 12px;
+    line-height: 1.35;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+}
+
+.tws-compact .tws-error-text {
+    -webkit-line-clamp: 2;
+    font-size: 11px;
+}
+
+.tws-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid #8a8886;
+    border-radius: 4px;
+    background: #fff;
+    color: @text;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+
+    &:hover {
+        background: #f3f2f1;
+        border-color: @text;
+    }
+
+    &:active {
+        background: #e1dfdd;
+    }
+
+    &:focus-visible {
+        outline: 2px solid @accent;
+        outline-offset: 1px;
+    }
+
+    .tws-icon {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+.tws-strip {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tws-chips {
+    flex: 1;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    padding: 2px;
+}
+
+.tws-chip {
+    flex: none;
+    max-width: 160px;
+    padding: 5px 10px;
+    border: 1px solid @line;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.85);
+    color: @text;
+    font: inherit;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: background-color 120ms ease, border-color 120ms ease;
+
+    &:hover {
+        border-color: #8a8886;
+        background: #fff;
+    }
+
+    &:active {
+        background: #edebe9;
+    }
+
+    &:focus-visible {
+        outline: 2px solid @accent;
+        outline-offset: 1px;
+    }
+
+    &[aria-current="true"] {
+        border-color: @text;
+        font-weight: 600;
+    }
+
+    &.tws-chip-selected {
+        border-color: @accent;
+        color: @accent;
+    }
+
+    &.tws-chip-error {
+        color: @danger;
+    }
+}
+
+.tws-nav {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid @line;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    color: @text;
+    cursor: pointer;
+
+    &:hover {
+        background: #fff;
+        border-color: #8a8886;
+    }
+
+    &:active {
+        background: #edebe9;
+    }
+
+    &:focus-visible {
+        outline: 2px solid @accent;
+        outline-offset: 1px;
+    }
+}
+
+.tws-note {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid @line;
+    color: @muted;
+    font-size: 11px;
+    pointer-events: none;
+}
+
+.tws-message {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
+    text-align: center;
+    color: @muted;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.tws-landing-host {
+    position: absolute;
+    inset: 0;
+    overflow: auto;
+}
+
+.tws-landing {
+    box-sizing: border-box;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 20px 16px;
+    user-select: text;
+}
+
+.tws-landing-mark {
+    color: @accent;
+
+    .tws-icon {
+        width: 32px;
+        height: 32px;
+        stroke-width: 1.5;
+    }
+}
+
+.tws-landing-title {
+    margin: 8px 0 4px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.tws-landing-lead {
+    margin: 0 0 12px;
+    color: @muted;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.tws-steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 8px;
+}
+
+.tws-step {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    font-size: 12px;
+    line-height: 1.4;
+    color: @muted;
+}
+
+.tws-step-well {
+    flex: none;
+    min-width: 72px;
+    padding: 2px 8px;
+    border: 1px solid @line;
+    border-radius: 4px;
+    color: @text;
+    font-weight: 600;
+    text-align: center;
+}
+
+.tws-step-next {
+    color: @text;
+
+    .tws-step-well {
+        border-color: @accent;
+        color: @accent;
+        background: fade(@accent, 8%);
+    }
+}
+
+.tws-landing-example {
+    margin: 14px 0 0;
+    font-size: 11px;
+    color: @muted;
+    line-height: 1.5;
+    word-break: break-all;
+
+    code {
+        font-family: Consolas, "Courier New", monospace;
+        color: @text;
+    }
+}

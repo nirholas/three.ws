@@ -23,7 +23,7 @@
   "dependencies": {
     "powerbi-visuals-api": "5.11.1",
     "powerbi-visuals-utils-formattingmodel": "7.1.0",
-    "powerbi-visuals-utils-formattingutils": "7.0.0",
+    "powerbi-visuals-utils-formattingutils": "6.1.2",
     "three": "0.187.0"
   },
   "devDependencies": {
