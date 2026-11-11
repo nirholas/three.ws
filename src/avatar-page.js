@@ -2871,8 +2871,8 @@ async function loadRelated() {
 		const id = encodeURIComponent(a.avatarId);
 		return `
 		<div class="av-related-card">
-			<a class="av-related-main" href="${esc(a.href || `/avatars/${id}`)}" aria-label="Open ${esc(a.name || 'avatar')}">
-				<div class="av-related-thumb">
+			<a class="av-related-main" href="${esc(a.href || `/avatars/${id}`)}">
+				<div class="av-related-thumb" aria-hidden="true">
 					${a.glbUrl
 						? `<model-viewer
 						src="${esc(a.glbUrl)}"

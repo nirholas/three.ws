@@ -44,7 +44,8 @@
 				--border-2: #2a2a2a;
 				--text: #fafafa;
 				--text-2: #a1a1aa;
-				--text-3: #71717a;
+				/* #8e8e96 clears 4.5:1 on --panel and --panel-2 (#71717a sat at 3.9:1). */
+				--text-3: #8e8e96;
 				--accent: #ffffff;
 				--accent-2: #ffffff;
 				--success: var(--ink);
@@ -1919,6 +1920,28 @@
 				.av-name {
 					font-size: 22px;
 				}
+			}
+			/* Light theme. tokens.css swaps the ink tokens (--text, --text-2, --text-3)
+			   to dark values, so the surfaces this page defines itself must turn light
+			   with them, or dark ink lands on #111 panels (1.2:1). Every pair below
+			   clears WCAG 1.4.3 AA on its surface. */
+			:root[data-theme='light'] {
+				--panel: #ffffff;
+				--panel-2: #f4f5f8;
+				--border: #e3e5ea;
+				--border-2: #d3d6dd;
+				--text-3: #5f6673;
+				--accent-2: #1d212b;
+			}
+			:root[data-theme='light'] .av-actionbar {
+				background: rgba(255, 255, 255, 0.9);
+			}
+			:root[data-theme='light'] .av-cta {
+				color: #ffffff;
+			}
+			:root[data-theme='light'] .av-pump-modal,
+			:root[data-theme='light'] .av-embed-code {
+				background: var(--panel-2);
 			}
 		</style>
 		<script src="/model-viewer-meshopt.js"></script>
