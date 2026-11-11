@@ -958,6 +958,7 @@ export const NAV_LINKS = [
 export const DRAWER_LEGAL = [
 	{ title: 'Privacy Policy', href: '/legal/privacy' },
 	{ title: 'Terms of Use', href: '/legal/tos' },
+	{ title: 'Trust center', href: '/trust' },
 	// The hub: the other four policies (content, risk, the two EULAs) have no
 	// nav home of their own, and it carries the report-something addresses.
 	{ title: 'All policies', href: '/legal' },

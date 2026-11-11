@@ -5962,6 +5962,10 @@
 			"dest": "/settings/robinhood/index.html"
 		},
 		{
+			"src": "/settings/microsoft-365/?",
+			"dest": "/settings/microsoft-365/index.html"
+		},
+		{
 			"src": "/settings/memory/?",
 			"dest": "/settings-memory.html"
 		},
@@ -6100,6 +6104,14 @@
 		{
 			"src": "/api/microsoft-marketplace/(status|resolve|subscriptions|webhook)/?",
 			"dest": "/api/microsoft-marketplace/[action]?action=$1"
+		},
+		{
+			"src": "/api/microsoft-365/connect/(start|callback)/?",
+			"dest": "/api/microsoft-365/[action]?action=connect-$1"
+		},
+		{
+			"src": "/api/microsoft-365/(status|settings|resync|disconnect)/?",
+			"dest": "/api/microsoft-365/[action]?action=$1"
 		},
 		{
 			"src": "/agents",
@@ -7391,6 +7403,10 @@
 		{
 			"path": "/api/cron/microsoft-metering",
 			"schedule": "7 * * * *"
+		},
+		{
+			"path": "/api/cron/m365-connector-sync",
+			"schedule": "*/15 * * * *"
 		},
 		{
 			"path": "/api/cron/hood-portfolio-snapshot",

@@ -1143,7 +1143,7 @@ export async function getPublicCreation({ id, voterKey = null }) {
 	try {
 		const rows = await sql`
 			select fc.id, fc.prompt, fc.aspect, fc.glb_url, fc.web_glb_url, fc.web_size_bytes,
-				fc.preview_image_url, fc.outcome, fc.visibility,
+				fc.preview_image_url, fc.outcome,
 				fc.views_used, fc.multiview, fc.backend, fc.tier, fc.path, fc.model_category, fc.created_at,
 				fc.x402_payer, fc.x402_tx_sig, fc.x402_price_atomic,
 				fc.vote_count, fc.size_bytes, fc.remixable, fc.remix_royalty_bps,
@@ -1184,9 +1184,6 @@ export async function getPublicCreation({ id, voterKey = null }) {
 			web_size_bytes: r.web_size_bytes ?? null,
 			preview_image_url: normalizeStoredUrl(r.preview_image_url),
 			outcome: r.outcome,
-			// 'public' or 'unlisted' (private rows never reach here). A null is a
-			// legacy row from before the column, which the gallery treats as public.
-			visibility: r.visibility ?? 'public',
 			views_used: r.views_used ?? null,
 			multiview: r.multiview ?? null,
 			backend: r.backend ?? null,
