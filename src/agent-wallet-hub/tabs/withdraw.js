@@ -45,7 +45,8 @@ const WD_STYLE = `
 .awh-resolved.warn { color: var(--warn,#fbbf24); }
 .awh-note { font-size: var(--text-sm,.764rem); color: var(--ink-dim,#888); margin-top:6px; }
 .awh-err { background: color-mix(in srgb, var(--danger,#f87171) 12%, transparent); border:1px solid color-mix(in srgb, var(--danger,#f87171) 32%, transparent); color: var(--danger,#f87171); border-radius: var(--radius-md,10px); padding:10px 12px; font-size: var(--text-sm,.764rem); margin-bottom: var(--space-3,12px); }
-.awh-err .why { color: var(--ink-dim,#aaa); font-size: var(--text-2xs,.6875rem); margin-top:4px; text-transform:capitalize; }
+.awh-err .why { color: var(--ink-dim,#aaa); font-size: var(--text-2xs,.6875rem); margin-top:4px; }
+.awh-err .why::first-letter { text-transform:uppercase; }
 .awh-sum { background: var(--surface-2, rgba(255,255,255,.05)); border:1px solid var(--stroke,rgba(255,255,255,.1)); border-radius: var(--radius-md,10px); padding:12px 14px; margin-bottom: var(--space-3,12px); }
 .awh-sum .r { display:flex; justify-content:space-between; gap:12px; padding:4px 0; font-size: var(--text-sm,.764rem); }
 .awh-sum .r > span:first-child { color: var(--ink-dim,#888); flex:none; }

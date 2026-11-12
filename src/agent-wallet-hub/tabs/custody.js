@@ -57,6 +57,7 @@ const STYLE = `
 .awh-cu-chart svg { display:block; width:100%; height:auto; overflow:visible; }
 .awh-cu-chart .ax { stroke:var(--stroke,rgba(255,255,255,.12)); stroke-width:1; }
 .awh-cu-chart .ln { fill:none; stroke:var(--success,#4ade80); stroke-width:2; stroke-linejoin:round; stroke-linecap:round; }
+.awh-cu-chart .gd { stroke:var(--stroke,rgba(255,255,255,.08)); stroke-width:1; stroke-dasharray:2 4; }
 .awh-cu-chart .tx { fill:var(--ink-dim,#888); font-size:10px; }
 .awh-cu-chart .cr { stroke:var(--ink-dim,#888); stroke-dasharray:3 3; }
 .awh-cu-chart .dt { fill:var(--success,#4ade80); stroke:var(--surface-1,#111); stroke-width:2; }
@@ -64,7 +65,7 @@ const STYLE = `
 .awh-cu-empty { text-align:center; padding:var(--space-5,20px) var(--space-3,12px); color:var(--ink-dim,#888); font-size:var(--text-sm,.764rem); }
 .awh-cu-empty strong { display:block; color:var(--ink,#e8e8e8); font-size:var(--text-md,.8125rem); margin-bottom:4px; }
 .awh-cu-modal { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,.6); }
-.awh-cu-dlg { width:min(480px,100%); max-height:calc(100dvh - 32px); overflow:auto; background:var(--surface-1,#141414); border:1px solid var(--stroke,rgba(255,255,255,.12)); border-radius:var(--radius-lg,14px); padding:20px; color:var(--ink,#e8e8e8); }
+.awh-cu-dlg { width:min(480px,100%); max-height:calc(100dvh - 32px); overflow:auto; background:var(--bg-1,#1a1a1a); box-shadow:0 18px 48px rgba(0,0,0,.45); border:1px solid var(--stroke,rgba(255,255,255,.12)); border-radius:var(--radius-lg,14px); padding:20px; color:var(--ink,#e8e8e8); }
 .awh-cu-dlg h3 { margin:0 0 8px; color:var(--ink-bright,#fff); font-size:var(--text-lg,1rem); }
 .awh-cu-dlg label { display:block; font-size:var(--text-sm,.764rem); color:var(--ink-dim,#888); margin:12px 0 5px; }
 .awh-cu-dlg textarea { width:100%; min-height:130px; resize:vertical; font-family:var(--font-mono,ui-monospace,monospace); font-size:11px; box-sizing:border-box; }
@@ -540,20 +541,23 @@ registerWalletTab({
 		}
 
 		function chartSvg(points) {
-			const W = 640, H = 180, L = 8, R = 8, T = 10, B = 22;
+			// T reserves a band above the plot for the max label, F a band between the plot
+			// floor and the axis for the min label, so neither label ever sits under the line.
+			const W = 640, H = 200, L = 8, R = 8, T = 24, B = 22, F = 16;
 			const pts = points.filter((p) => p.usd_total != null).map((p) => ({ t: Date.parse(p.captured_at), v: p.usd_total, p }));
 			if (pts.length < 1) return '';
 			const t0 = pts[0].t, t1 = pts[pts.length - 1].t || t0 + 1;
 			let lo = Math.min(...pts.map((p) => p.v)), hi = Math.max(...pts.map((p) => p.v));
 			if (hi === lo) { hi += 1; lo = Math.max(0, lo - 1); }
 			const x = (t) => L + (t1 === t0 ? (W - L - R) / 2 : ((t - t0) / (t1 - t0)) * (W - L - R));
-			const y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+			const y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B - F);
 			const d = pts.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)} ${y(p.v).toFixed(1)}`).join('');
 			const fmtT = (t) => new Date(t).toLocaleString(undefined, state.range === '24h' ? { hour: 'numeric', minute: '2-digit' } : { month: 'short', day: 'numeric' });
 			return { pts, x, y, svg: `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Wallet value in US dollars over the last ${esc(state.range)}, from ${esc(formatUsd(pts[0].v) || '')} to ${esc(formatUsd(pts[pts.length - 1].v) || '')}" preserveAspectRatio="none">
 				<line class="ax" x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}"/>
 				<text class="tx" x="${L}" y="${H - 6}">${esc(fmtT(t0))}</text><text class="tx" x="${W - R}" y="${H - 6}" text-anchor="end">${esc(fmtT(t1))}</text>
-				<text class="tx" x="${L}" y="${T + 8}">${esc(formatUsd(hi) || '')}</text><text class="tx" x="${L}" y="${H - B - 4}">${esc(formatUsd(lo) || '')}</text>
+				<line class="gd" x1="${L}" x2="${W - R}" y1="${T}" y2="${T}"/><line class="gd" x1="${L}" x2="${W - R}" y1="${H - B - F}" y2="${H - B - F}"/>
+				<text class="tx" x="${L}" y="${T - 6}">${esc(formatUsd(hi) || '')}</text><text class="tx" x="${L}" y="${H - B - 4}">${esc(formatUsd(lo) || '')}</text>
 				<path class="ln" d="${d}"/>
 				<g class="hv" hidden><line class="cr" y1="${T}" y2="${H - B}"/><circle class="dt" r="4"/></g>
 			</svg>` };
