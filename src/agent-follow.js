@@ -69,7 +69,7 @@ export function mountFollowButton({ host, agent, getAvatar = () => null }) {
 
 	const btn = h('button', {
 		type: 'button',
-		class: 'af-btn is-loading',
+		class: 'btn btn--secondary btn--sm af-btn is-loading',
 		'aria-haspopup': 'dialog',
 		'aria-busy': 'true',
 		disabled: true,

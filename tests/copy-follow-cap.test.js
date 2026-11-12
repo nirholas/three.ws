@@ -249,3 +249,20 @@ describe('unfollow stops mirroring immediately', () => {
 		expect(planCopyOrder({ subscription: stopped, position: { ...buy, direction: 'sell' } }).action).toBe('skip');
 	});
 });
+
+describe('narration lines come from the real execution row', () => {
+	it('announces a fired copy with the coin and the follower\'s sized amount', async () => {
+		const { narrationFor } = await import('../src/copy-narrator.js');
+		const n = narrationFor({ status: 'pending', direction: 'buy', symbol: 'three', planned_sol: 0.05, leader_entry_sol: 0.2, network: 'devnet' });
+		expect(n.text).toContain('$THREE');
+		expect(n.text).toContain('0.05 SOL');
+		expect(n.text).toContain('devnet');
+		expect(n.gestures.length).toBeGreaterThan(0);
+	});
+
+	it('explains a cap skip in plain words', async () => {
+		const { narrationFor } = await import('../src/copy-narrator.js');
+		const n = narrationFor({ status: 'skipped', direction: 'buy', symbol: 'THREE', skip_reason: 'spend_cap_exceeded' });
+		expect(n.text).toMatch(/spend cap/);
+	});
+});

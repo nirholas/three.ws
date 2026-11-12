@@ -1,0 +1,141 @@
+/* Follow this agent: hero button, cap dialog, and the narration caption.
+ * Uses the agent page tokens (--ad-*) from src/agent-detail.css with fallbacks
+ * so the module also renders on a page that does not define them. */
+
+.af-btn {
+	position: relative;
+	gap: 6px;
+	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+.af-btn:hover:not(:disabled) { border-color: var(--ad-green, #34d399); }
+.af-btn:active:not(:disabled) { transform: translateY(1px); }
+.af-btn:focus-visible { outline: 2px solid var(--ad-green, #34d399); outline-offset: 2px; }
+.af-btn.is-loading .af-btn-label { visibility: hidden; }
+.af-btn-sk { display: none; }
+.af-btn.is-loading .af-btn-sk {
+	display: block;
+	position: absolute;
+	inset: 8px 12px;
+	border-radius: 6px;
+	background: linear-gradient(90deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.06));
+	background-size: 200% 100%;
+	animation: af-shimmer 1.2s linear infinite;
+}
+.af-btn.is-following {
+	color: var(--ad-green, #34d399);
+	border-color: color-mix(in srgb, var(--ad-green, #34d399) 45%, transparent);
+	background: color-mix(in srgb, var(--ad-green, #34d399) 10%, transparent);
+}
+.af-btn.is-paused { color: var(--ad-amber, #f5a524); border-color: color-mix(in srgb, var(--ad-amber, #f5a524) 45%, transparent); }
+@keyframes af-shimmer { to { background-position: -200% 0; } }
+
+.af-dialog {
+	width: min(440px, calc(100vw - 24px));
+	max-height: calc(100dvh - 24px);
+	padding: 0;
+	border: 1px solid var(--ad-line, rgba(255, 255, 255, 0.1));
+	border-radius: 16px;
+	background: var(--ad-card, #181818);
+	color: var(--ad-text, #e7e9ee);
+	box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+	overflow: auto;
+}
+.af-dialog[open] { animation: af-in 0.18s ease-out; }
+.af-dialog::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(2px); }
+@keyframes af-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
+
+.af-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px 4px; }
+.af-title { margin: 0; font-size: 1.05rem; font-weight: 650; }
+.af-sub { margin: 4px 0 0; font-size: 0.84rem; color: var(--ad-muted, rgba(231, 233, 238, 0.6)); line-height: 1.45; }
+.af-x {
+	flex: none; width: 32px; height: 32px; border-radius: 8px; border: 1px solid transparent;
+	background: transparent; color: var(--ad-muted, #aaa); font-size: 1.3rem; line-height: 1; cursor: pointer;
+}
+.af-x:hover { background: rgba(255, 255, 255, 0.06); color: var(--ad-text, #fff); }
+.af-x:active { background: rgba(255, 255, 255, 0.1); }
+.af-x:focus-visible { outline: 2px solid var(--ad-green, #34d399); outline-offset: 1px; }
+
+.af-body { display: flex; flex-direction: column; gap: 12px; padding: 12px 20px 20px; }
+.af-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 420px) { .af-row { grid-template-columns: 1fr; } }
+.af-field { display: flex; flex-direction: column; gap: 5px; }
+.af-label { font-size: 0.78rem; font-weight: 600; color: var(--ad-muted, #bbb); }
+.af-hint { font-size: 0.74rem; color: var(--ad-dim, rgba(231, 233, 238, 0.4)); }
+.af-input {
+	width: 100%; box-sizing: border-box; padding: 9px 11px; border-radius: 9px;
+	border: 1px solid var(--ad-line, rgba(255, 255, 255, 0.12)); background: rgba(0, 0, 0, 0.25);
+	color: inherit; font: inherit; font-size: 0.92rem;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.af-input:hover { border-color: rgba(255, 255, 255, 0.22); }
+.af-input:focus-visible { outline: none; border-color: var(--ad-green, #34d399); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ad-green, #34d399) 25%, transparent); }
+.af-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; }
+
+.af-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+.af-primary, .af-secondary, .af-danger {
+	display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 0 16px;
+	border-radius: 10px; border: 1px solid transparent; font: inherit; font-size: 0.88rem; font-weight: 600;
+	text-decoration: none; cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+}
+.af-primary { background: var(--ad-green, #34d399); color: #06281c; }
+.af-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--ad-green, #34d399) 85%, #fff); }
+.af-secondary { background: rgba(255, 255, 255, 0.05); border-color: var(--ad-line, rgba(255, 255, 255, 0.12)); color: inherit; }
+.af-secondary:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
+.af-danger { background: transparent; border-color: rgba(255, 122, 138, 0.5); color: #ff8a98; }
+.af-danger:hover:not(:disabled) { background: rgba(255, 122, 138, 0.12); }
+.af-primary:active:not(:disabled), .af-secondary:active:not(:disabled), .af-danger:active:not(:disabled) { transform: translateY(1px); }
+.af-primary:focus-visible, .af-secondary:focus-visible, .af-danger:focus-visible, .af-link:focus-visible, .af-list a:focus-visible, .af-empty a:focus-visible {
+	outline: 2px solid var(--ad-green, #34d399); outline-offset: 2px;
+}
+.af-primary:disabled, .af-secondary:disabled, .af-danger:disabled { opacity: 0.55; cursor: progress; }
+.af-link {
+	align-self: flex-start; margin-top: -6px; padding: 2px 0; border: 0; background: none;
+	color: var(--ad-green, #34d399); font: inherit; font-size: 0.8rem; cursor: pointer; text-decoration: underline; text-underline-offset: 2px;
+}
+.af-link:hover { opacity: 0.85; }
+.af-link:active { opacity: 0.7; }
+
+.af-err {
+	margin: 0; padding: 10px 12px; border-radius: 9px; font-size: 0.84rem; line-height: 1.45;
+	background: rgba(255, 122, 138, 0.1); border: 1px solid rgba(255, 122, 138, 0.35); color: #ffc0c8;
+}
+.af-err p { margin: 0 0 4px; }
+.af-err ul { margin: 4px 0 6px; padding-left: 18px; }
+.af-note { margin: 0; font-size: 0.84rem; line-height: 1.5; color: var(--ad-muted, #bbb); }
+.af-points { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 0.88rem; line-height: 1.45; }
+
+.af-meter { display: grid; gap: 8px; }
+.af-meter-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--ad-muted, #bbb); }
+.af-meter-row b { color: var(--ad-text, #fff); }
+.af-meter-bar { height: 8px; border-radius: 99px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.af-meter-bar span { display: block; height: 100%; border-radius: inherit; background: var(--ad-green, #34d399); transition: width 0.4s ease; }
+.af-facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; font-size: 0.85rem; }
+.af-facts dt { color: var(--ad-muted, #aaa); }
+.af-facts dd { margin: 0; }
+
+.af-list { border-top: 1px solid var(--ad-line, rgba(255, 255, 255, 0.08)); padding-top: 12px; }
+.af-list-h { margin: 0 0 8px; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ad-dim, #888); }
+.af-list-ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.af-list-ul li { display: flex; align-items: center; gap: 8px; font-size: 0.86rem; min-width: 0; }
+.af-list-ul a { color: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+.af-list-ul a:hover { color: var(--ad-green, #34d399); }
+.af-chip { flex: none; padding: 2px 8px; border-radius: 99px; font-size: 0.72rem; background: rgba(255, 255, 255, 0.07); color: var(--ad-muted, #bbb); }
+.af-chip.is-paused { color: var(--ad-amber, #f5a524); }
+.af-empty { margin: 0; font-size: 0.84rem; line-height: 1.5; color: var(--ad-muted, #bbb); }
+.af-empty a { color: var(--ad-green, #34d399); }
+
+/* Narration caption over the hero avatar. */
+.af-caption {
+	position: absolute; left: 50%; bottom: 12px; z-index: 3; transform: translateX(-50%);
+	width: max-content; max-width: calc(100% - 24px); padding: 9px 13px; border-radius: 12px;
+	background: rgba(10, 10, 10, 0.82); border: 1px solid color-mix(in srgb, var(--ad-green, #34d399) 40%, transparent);
+	color: #f4f6f8; font-size: 0.84rem; line-height: 1.4; text-align: center;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); pointer-events: none;
+	animation: af-in 0.2s ease-out; transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.af-caption.is-leaving { opacity: 0; transform: translate(-50%, 6px); }
+
+@media (prefers-reduced-motion: reduce) {
+	.af-dialog[open], .af-caption { animation: none; }
+	.af-btn.is-loading .af-btn-sk { animation: none; }
+}

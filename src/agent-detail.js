@@ -13,6 +13,7 @@ import { walletChipEl } from './shared/agent-wallet-chip.js';
 import { mountMoneyPulse } from './shared/money-pulse.js';
 import { gmgnTokenUrl, dextoolsTokenUrl } from './shared/trading-terminals.js';
 import { mountMirrorPanel } from './shared/agent-mirror-panel.js';
+import { mountFollowButton } from './agent-follow.js';
 import { mountStrategyPanel } from './shared/agent-strategy-panel.js';
 import { mountPatronagePanel } from './shared/agent-patronage.js';
 import { mountValidationBadge } from './shared/validation-badge.js';
@@ -52,6 +53,7 @@ const coinStatusHandles = [];
 // polling interval + observers don't leak.
 let _pulseHandle = null;
 let _mirrorHandle = null;
+let _followHandle = null;
 let _streamHandle = null;
 let _strategyHandle = null;
 let _cardHandle = null;
@@ -314,6 +316,7 @@ if (typeof window !== 'undefined') {
 		try { _watchHandle?.destroy?.(); } catch { /* idempotent */ } _watchHandle = null;
 		try { _achievementsHandle?.destroy?.(); } catch { /* idempotent */ } _achievementsHandle = null;
 		try { _tokenPlanHandle?.destroy?.(); } catch { /* idempotent */ } _tokenPlanHandle = null;
+		try { _followHandle?.destroy?.(); } catch { /* idempotent */ } _followHandle = null;
 		// Release the WebGL contexts so they don't count against the browser's
 		// hard context budget once the user navigates away.
 		try { _heroAvatarHandle?.dispose(); } catch { /* idempotent */ } _heroAvatarHandle = null;
@@ -1489,6 +1492,18 @@ function render(agent) {
 		const wMeta = agent.rawMetadata?.meta || {};
 		if (mirrorPanel && wMeta.solana_address) {
 			_mirrorHandle = mountMirrorPanel({ mount: mirrorPanel, agent, isOwner: !!agent.isOwner });
+		}
+	}
+
+	// Follow this agent: one tap in the hero, a spend cap set at the tap, and the
+	// avatar narrating each copied trade. Solana agents only (the copy engine is
+	// Solana-native), so it mounts only when the agent has a Solana wallet.
+	{
+		if (_followHandle) { try { _followHandle.destroy(); } catch { /* idempotent */ } _followHandle = null; }
+		const wMeta = agent.rawMetadata?.meta || {};
+		const actions = document.querySelector('.ad-hero-actions');
+		if (actions && wMeta.solana_address) {
+			_followHandle = mountFollowButton({ host: actions, agent, getAvatar: () => _heroAvatarHandle });
 		}
 	}
 
