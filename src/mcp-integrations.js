@@ -24,6 +24,7 @@ const STATUS_LABEL = {
 	error: 'Error',
 	disabled: 'Paused',
 };
+const NEEDS_OWNER = new Set(['pending_review', 'pending_auth', 'needs_auth', 'error']);
 const OAUTH_ERRORS = {
 	invalid_state: 'That sign-in link expired or was already used. Start the connection again.',
 	wrong_account: 'You finished sign-in while signed in to a different three.ws account. Sign in to the account that started it and try again.',
@@ -45,6 +46,7 @@ const state = {
 	cat: '',
 	q: '',
 	open: new Set(),
+	collapsed: new Set(),
 	busy: new Set(),
 };
 
@@ -250,8 +252,17 @@ function renderConnections() {
 function renderConn(conn) {
 	const t = conn.tool_counts;
 	const details = el('details', { class: 'mi-conn', 'data-id': conn.id });
-	if (state.open.has(conn.id) || conn.status === 'pending_review') details.open = true;
-	details.addEventListener('toggle', () => (details.open ? state.open.add(conn.id) : state.open.delete(conn.id)));
+	// A connection waiting on its owner opens so the fix (review, reconnect, retry) is in view.
+	if (state.open.has(conn.id) || (NEEDS_OWNER.has(conn.status) && !state.collapsed.has(conn.id))) details.open = true;
+	details.addEventListener('toggle', () => {
+		if (details.open) {
+			state.open.add(conn.id);
+			state.collapsed.delete(conn.id);
+		} else {
+			state.open.delete(conn.id);
+			state.collapsed.add(conn.id);
+		}
+	});
 	const used = conn.last_used_at ? ` · last used ${new Date(conn.last_used_at).toLocaleDateString()}` : '';
 	const summary = el('summary', {},
 		el('span', { class: 'chev', 'aria-hidden': 'true' }, '›'),
