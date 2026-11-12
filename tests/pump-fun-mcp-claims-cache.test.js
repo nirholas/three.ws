@@ -10,7 +10,7 @@
 // must hold: a repeat poll reads no transaction twice, a transaction the RPC
 // did not return yet is never remembered as "not a claim", and the result for
 // one creator is never reused for another.
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Keypair, PublicKey } from '@solana/web3.js';
 
 const conn = vi.hoisted(() => ({ current: null }));
@@ -20,7 +20,23 @@ vi.mock('../api/_lib/pump.js', async (orig) => {
 	return { ...real, getConnection: () => conn.current };
 });
 
-const { callPumpFunTool, CLAIM_TX_FETCH_BUDGET } = await import('../api/pump-fun-mcp.js');
+const { callPumpFunTool, CLAIM_TX_FETCH_BUDGET, CLAIM_SCAN_MEMO_TTL_S, CLAIM_INCOMPLETE_MEMO_TTL_S } = await import(
+	'../api/pump-fun-mcp.js'
+);
+
+// Scan answers are memoized for a few seconds, so a test that wants "the next
+// poll" to scan again moves the clock past that memo instead of sleeping.
+let clock = Date.now();
+const advance = (seconds) => {
+	clock += seconds * 1000 + 1;
+	vi.setSystemTime(clock);
+};
+beforeEach(() => {
+	vi.useFakeTimers({ toFake: ['Date'] });
+	clock = Date.now();
+	vi.setSystemTime(clock);
+});
+afterEach(() => vi.useRealTimers());
 
 const PUMP_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
 
@@ -94,6 +110,7 @@ describe('pump.fun claims scan remembers what each confirmed transaction was', (
 		const first = await callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 });
 		expect(JSON.stringify(first)).not.toContain(s);
 		landed = true;
+		advance(CLAIM_INCOMPLETE_MEMO_TTL_S);
 		const second = await callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 });
 		expect(conn.current.getParsedTransaction).toHaveBeenCalledTimes(2);
 		expect(JSON.stringify(second)).toContain(s);
@@ -110,6 +127,7 @@ describe('pump.fun claims scan remembers what each confirmed transaction was', (
 		});
 		await callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 });
 		fail = false;
+		advance(CLAIM_INCOMPLETE_MEMO_TTL_S);
 		const second = await callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 });
 		expect(conn.current.getParsedTransaction).toHaveBeenCalledTimes(2);
 		expect(JSON.stringify(second)).toContain(s);
@@ -168,9 +186,18 @@ describe('pump.fun claims scan stays bounded when the RPC is struggling', () => 
 		const first = await callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 });
 		expect(conn.current.getParsedTransaction).toHaveBeenCalledTimes(CLAIM_TX_FETCH_BUDGET);
 		expect(first.incomplete).toBe(true);
-		const second = await callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 });
+		let out = first;
+		let polls = 1;
+		while (out.incomplete && polls < 20) {
+			const before = conn.current.getParsedTransaction.mock.calls.length;
+			advance(CLAIM_INCOMPLETE_MEMO_TTL_S);
+			out = await callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 });
+			expect(conn.current.getParsedTransaction.mock.calls.length - before).toBeLessThanOrEqual(CLAIM_TX_FETCH_BUDGET);
+			polls += 1;
+		}
 		expect(conn.current.getParsedTransaction).toHaveBeenCalledTimes(60);
-		expect(second.incomplete).toBeUndefined();
+		expect(polls).toBe(Math.ceil(60 / CLAIM_TX_FETCH_BUDGET));
+		expect(out.incomplete).toBeUndefined();
 	});
 
 	it('serves a complete answer to a rapid repeat poll without asking the RPC again', async () => {
@@ -194,5 +221,62 @@ describe('pump.fun claims scan stays bounded when the RPC is struggling', () => 
 		expect(conn.current.getParsedTransaction).toHaveBeenCalledTimes(1);
 		expect(b).toEqual(a);
 		expect(c).toEqual(a);
+	});
+});
+
+// Measured 2026-11-12 over the 24h after the 2026-11-04 cuts deployed: claims
+// polls still averaged about 15 getTransaction calls each and stayed the top
+// Solana RPC caller. Two holes remained: a transaction the RPC returned as null
+// (not landed on the lane yet) let the scan keep walking and reading, and an
+// incomplete answer was never reused, so a client polling twice a second
+// rescanned at full budget on every poll.
+describe('pump.fun claims scan stays cheap for a client polling a busy wallet', () => {
+	let creator;
+	beforeEach(() => {
+		creator = Keypair.generate().publicKey.toBase58();
+	});
+
+	it('reads no more than a dozen new transactions in one poll', () => {
+		expect(CLAIM_TX_FETCH_BUDGET).toBeLessThanOrEqual(12);
+	});
+
+	it('stops at the first transaction the RPC has not returned yet', async () => {
+		const [late, x, y] = [uniq('sigNull'), uniq('sigX'), uniq('sigY')];
+		conn.current = connectionFor(creator, [late, x, y], { [late]: null, [x]: claimTx(creator, 5000), [y]: otherTx(creator) });
+		const out = await callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 });
+		expect(conn.current.getParsedTransaction).toHaveBeenCalledTimes(1);
+		expect(out.incomplete).toBe(true);
+	});
+
+	it('serves an incomplete answer to a rapid repeat poll, then resumes the scan once it expires', async () => {
+		const sigs = Array.from({ length: 30 }, () => uniq('sigBusy'));
+		conn.current = connectionFor(creator, sigs, Object.fromEntries(sigs.map((s) => [s, otherTx(creator)])));
+		const first = await callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 });
+		expect(first.incomplete).toBe(true);
+		const repeat = await callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 });
+		expect(repeat).toEqual(first);
+		expect(conn.current.getSignaturesForAddress).toHaveBeenCalledTimes(1);
+		expect(conn.current.getParsedTransaction).toHaveBeenCalledTimes(CLAIM_TX_FETCH_BUDGET);
+
+		advance(CLAIM_INCOMPLETE_MEMO_TTL_S);
+		await callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 });
+		expect(conn.current.getSignaturesForAddress).toHaveBeenCalledTimes(2);
+		expect(conn.current.getParsedTransaction).toHaveBeenCalledTimes(Math.min(30, CLAIM_TX_FETCH_BUDGET * 2));
+	});
+
+	it('an incomplete answer is reused for less time than a complete one', () => {
+		expect(CLAIM_INCOMPLETE_MEMO_TTL_S).toBeGreaterThan(0);
+		expect(CLAIM_INCOMPLETE_MEMO_TTL_S).toBeLessThan(CLAIM_SCAN_MEMO_TTL_S);
+	});
+
+	it('reuses a complete answer for half a minute of polling', async () => {
+		const s = uniq('sigSteady');
+		conn.current = connectionFor(creator, [s], { [s]: claimTx(creator, 4000) });
+		const first = await callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 });
+		advance(CLAIM_SCAN_MEMO_TTL_S - 2);
+		const later = await callPumpFunTool('pumpfun_list_claims', { creator, limit: 20 });
+		expect(later).toEqual(first);
+		expect(conn.current.getSignaturesForAddress).toHaveBeenCalledTimes(1);
+		expect(CLAIM_SCAN_MEMO_TTL_S).toBeGreaterThanOrEqual(30);
 	});
 });

@@ -450,10 +450,20 @@ function claimFromTx(tx, creator) {
 //     polls pick up where it stopped, because every verdict it read is cached;
 //   - a complete answer is reused for CLAIM_SCAN_MEMO_TTL_S, and identical
 //     polls in flight share one scan.
-// Any answer cut short carries `incomplete: true` and is never memoized, so
-// the next poll keeps filling it in.
-export const CLAIM_TX_FETCH_BUDGET = 40;
-const CLAIM_SCAN_MEMO_TTL_S = 10;
+// Any answer cut short carries `incomplete: true`, and the next poll keeps
+// filling it in.
+//
+// Measured again 2026-11-12, 24h after those bounds deployed: claims polls
+// still averaged about 15 getTransaction calls each and stayed the top Solana
+// RPC caller. A null read (the transaction has not landed on that lane yet)
+// let the scan keep walking, and an incomplete answer was never reused, so a
+// client polling twice a second rescanned at full budget every time. Now a
+// null read ends the scan like a failed one, the per-poll budget is 12, an
+// incomplete answer is reused for CLAIM_INCOMPLETE_MEMO_TTL_S (one scan step
+// per window per creator, fleet-wide), and a complete one for 30 seconds.
+export const CLAIM_TX_FETCH_BUDGET = 12;
+export const CLAIM_SCAN_MEMO_TTL_S = 30;
+export const CLAIM_INCOMPLETE_MEMO_TTL_S = 5;
 const CLAIM_SINCE_BUCKET_S = 10;
 const claimScanKey = (network, creator, limit, sinceTs) => `pumpclaim:scan:v1:${network}:${creator}:${limit}:${sinceTs}`;
 const _claimScansInFlight = new Map();
@@ -491,7 +501,7 @@ async function _scanClaims({ pk, creator, limit, network, sinceTs }) {
 			}
 			if (!tx) {
 				incomplete = true;
-				continue;
+				break;
 			}
 			verdict = { claim: claimFromTx(tx, creator) };
 			cacheSet(claimVerdictKey(network, creator, signature), verdict, CLAIM_VERDICT_TTL_S).catch(() => {});
@@ -521,7 +531,8 @@ async function _fetchClaimsFromChain({ creator, limit = 20, network = 'mainnet',
 		if (!pending) {
 			pending = _scanClaims({ pk, creator, limit, network, sinceTs: scanSince })
 				.then((result) => {
-					if (!result.incomplete) cacheSet(key, result, CLAIM_SCAN_MEMO_TTL_S).catch(() => {});
+					const ttl = result.incomplete ? CLAIM_INCOMPLETE_MEMO_TTL_S : CLAIM_SCAN_MEMO_TTL_S;
+					cacheSet(key, result, ttl).catch(() => {});
 					return result;
 				})
 				.finally(() => _claimScansInFlight.delete(key));
