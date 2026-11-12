@@ -3,9 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-12",
+			"title": "The Shopify app link and the Build leaderboard open without console errors",
+			"summary": "Opening /apps/shopify outside Shopify admin used to load the embedded app with no store attached, which threw an App Bridge error and left a blank shell. A direct visit now goes to the app's documentation page, while merchants opening it from their Shopify admin get the app exactly as before. Before the first Build round opens, /build/leaderboard now shows its \"No Build round yet\" state from a normal empty response instead of logging a failed request.",
+			"tags": ["fix"],
+			"link": "/docs/shopify-app"
+		},
+		{
+			"date": "2026-11-12",
 			"title": "The language picker stays readable on light pages and inside embeds",
 			"summary": "The floating language picker drew pale grey text over a nearly transparent background, so on a light page or inside an embedded agent it was hard to read and failed the WCAG AA contrast check. On pages that do not set their own theme colours it is now a solid dark chip that stays readable on any background. Themed pages look exactly as before.",
-			"tags": ["fix", "accessibility"]
+			"tags": ["fix"]
 		},
 		{
 			"date": "2026-11-12",

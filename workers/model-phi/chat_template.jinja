@@ -6,18 +6,29 @@
     replayed in that same form and tool results come back in a <|tool_response|>
     turn. The stock HF template has no tool-result or assistant-call branch. -#}
 {%- macro tools_json() -%}
-[{%- for t in tools -%}{{ (t.function if t.function is defined else t) | tojson }}{%- if not loop.last -%}, {% endif -%}{%- endfor -%}]
+{%- set types = {'string': 'str', 'number': 'float', 'integer': 'int', 'boolean': 'bool', 'array': 'list', 'object': 'dict'} -%}
+[{%- for t in tools -%}{%- set f = t.function if t.function is defined else t -%}
+{"name": {{ f.name | tojson }}, "description": {{ (f.description or '') | tojson }}, "parameters": {
+{%- set props = (f.parameters.properties if f.parameters is defined and f.parameters and f.parameters.properties is defined else {}) -%}
+{%- for pname, p in props.items() -%}
+{{ pname | tojson }}: {"description": {{ ([p.description or '', ('One of: ' ~ (p.enum | join(', ')) if p.enum is defined else '')] | select | join(' ')) | tojson }}, "type": {{ types.get(p.type, p.type or 'str') | tojson }}}
+{%- if not loop.last -%}, {% endif -%}
+{%- endfor -%}}}
+{%- if not loop.last -%}, {% endif -%}{%- endfor -%}]
+{%- endmacro -%}
+{%- macro call_hint() -%}
+{{ ' When one of these tools fits the request, call it by replying only with <|tool_call|>[{"name": "<tool name>", "arguments": {<arguments>}}]<|/tool_call|>.' }}
 {%- endmacro -%}
 {%- macro call_args(args) -%}
 {%- if args is string -%}{{ args }}{%- else -%}{{ args | tojson }}{%- endif -%}
 {%- endmacro -%}
 {%- if tools and (messages | length == 0 or messages[0].role != 'system') -%}
-{{- '<|system|>You are a helpful assistant with some tools.<|tool|>' -}}{{- tools_json() -}}{{- '<|/tool|><|end|>' -}}
+{{- '<|system|>You are a helpful assistant with some tools.<|tool|>' -}}{{- tools_json() -}}{{- '<|/tool|>' -}}{{- call_hint() -}}{{- '<|end|>' -}}
 {%- endif -%}
 {%- for message in messages -%}
 {%- if message.role == 'system' -%}
 {{- '<|system|>' + (message.content or '') -}}
-{%- if tools and loop.first -%}{{- '<|tool|>' -}}{{- tools_json() -}}{{- '<|/tool|>' -}}{%- endif -%}
+{%- if tools and loop.first -%}{{- '<|tool|>' -}}{{- tools_json() -}}{{- '<|/tool|>' -}}{{- call_hint() -}}{%- endif -%}
 {{- '<|end|>' -}}
 {%- elif message.role == 'assistant' -%}
 {{- '<|assistant|>' + (message.content or '') -}}

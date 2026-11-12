@@ -95,23 +95,53 @@ const MARKERS = ['<|tool_call|>', 'functools'];
 
 // The first complete JSON array starting at or after `from`, string-aware so a
 // bracket inside an argument value does not end it early.
-function sliceJsonArray(text, from) {
-	const start = text.indexOf('[', from);
-	if (start < 0) return null;
-	let depth = 0;
+/**
+ * Slice the JSON array or object opening at `text[start]`. With `lenient`, a
+ * closer that does not match the open bracket is dropped instead of failing:
+ * inside an otherwise well-formed call, Phi-4-mini's one slip is an extra `}`
+ * before the closing `]`.
+ */
+function sliceJsonValue(text, start, lenient) {
+	const stack = [];
+	let kept = '';
 	let inString = false;
 	for (let i = start; i < text.length; i++) {
 		const ch = text[i];
 		if (inString) {
-			if (ch === '\\') i++;
+			kept += ch;
+			if (ch === '\\') kept += text[++i] ?? '';
 			else if (ch === '"') inString = false;
 			continue;
 		}
 		if (ch === '"') inString = true;
-		else if (ch === '[') depth++;
-		else if (ch === ']' && --depth === 0) return text.slice(start, i + 1);
+		else if (ch === '[') stack.push(']');
+		else if (ch === '{') stack.push('}');
+		else if (ch === ']' || ch === '}') {
+			if (stack.at(-1) !== ch) {
+				if (lenient && stack.length) continue;
+				return null;
+			}
+			stack.pop();
+			if (!stack.length) return kept + ch;
+		}
+		kept += ch;
 	}
 	return null;
+}
+
+/**
+ * Where the call JSON starts after a marker, skipping what Phi-4-mini sometimes
+ * writes first: a repeated marker, or an empty `[]` before the real object.
+ */
+function callStart(text, from) {
+	let i = from;
+	for (;;) {
+		while (/\s/.test(text[i] || '')) i++;
+		const marker = MARKERS.find((m) => text.startsWith(m, i));
+		if (marker) { i += marker.length; continue; }
+		if (text.startsWith('[]', i) && /^\s*[[{]/.test(text.slice(i + 2))) { i += 2; continue; }
+		return i;
+	}
 }
 
 function argsJson(value) {
@@ -140,15 +170,18 @@ export function parsePhiToolCalls(text, toolNames) {
 		const i = source.indexOf(m);
 		if (i >= 0 && (at < 0 || i < at)) { at = i; markerLen = m.length; }
 	}
-	if (at < 0 && source.trimStart().startsWith('[')) at = source.indexOf('[');
+	const marked = at >= 0;
+	if (!marked && source.trimStart().startsWith('[')) at = source.indexOf('[');
 	if (at < 0) return { content: source, calls: [] };
-	const array = sliceJsonArray(source, at + markerLen);
+	const start = marked ? callStart(source, at + markerLen) : at;
+	const block = '[{'.includes(source[start]) ? sliceJsonValue(source, start, marked) : null;
 	let items;
 	try {
-		items = array ? JSON.parse(array) : null;
+		items = block ? JSON.parse(block) : null;
 	} catch {
 		items = null;
 	}
+	if (items && !Array.isArray(items) && typeof items === 'object') items = [items];
 	if (!Array.isArray(items)) return { content: source, calls: [] };
 	const calls = [];
 	for (const item of items) {

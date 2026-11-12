@@ -118,9 +118,22 @@ def test_template_plain_chat():
 def test_template_tools_in_system_turn():
     out = _render([{"role": "user", "content": "Weather?"}], TOOLS)
     fn = json.loads(out.split("<|tool|>")[1].split("<|/tool|>")[0])
-    assert fn == [TOOLS[0]["function"]]
+    assert fn == [{"name": "get_weather", "description": "Weather", "parameters": {}}]
     assert out.startswith("<|system|>You are a helpful assistant with some tools.<|tool|>")
+    assert '<|/tool|> When one of these tools fits the request, call it by replying only with <|tool_call|>' in out
     assert out.endswith("<|user|>Weather?<|end|><|assistant|>")
+
+
+def test_template_flattens_parameters_like_the_model_card():
+    tools = [{"type": "function", "function": {"name": "set_mood", "description": "Mood", "parameters": {
+        "type": "object", "required": ["mood"], "properties": {
+            "mood": {"type": "string", "enum": ["happy", "calm"]},
+            "level": {"type": "number", "description": "0 to 1"}}}}}]
+    out = _render([{"role": "system", "content": "S"}, {"role": "user", "content": "Hi"}], tools)
+    fn = json.loads(out.split("<|tool|>")[1].split("<|/tool|>")[0])
+    assert fn == [{"name": "set_mood", "description": "Mood", "parameters": {
+        "mood": {"description": "One of: happy, calm", "type": "str"},
+        "level": {"description": "0 to 1", "type": "float"}}}]
 
 
 def test_template_replays_calls_and_results():
@@ -149,3 +162,26 @@ def test_template_tools_once_with_several_system_turns():
     assert out.count("<|tool|>") == 1
     assert out.startswith("<|system|>Persona<|tool|>")
     assert "<|system|>Rules<|end|>" in out
+
+
+# Malformed blocks Phi-4-mini really wrote in the 2026-11-11 template probe.
+@pytest.mark.parametrize("text", [
+    '<|tool_call|>[{"name": "get_weather", "arguments": {"city": "Oslo", "unit": "celsius"}}}]',
+    '<|tool_call|>[]{ "name": "get_weather", "arguments": {"city": "Oslo", "unit": "celsius"} }',
+    '<|tool_call|><|tool_call|>[{"name": "get_weather", "arguments": {"city": "Oslo", "unit": "celsius"}}]<|/tool_call|>',
+])
+def test_marked_block_repairs_known_slips(text):
+    assert parse_calls(text, NAMES) == [
+        {"name": "get_weather", "arguments": json.dumps({"city": "Oslo", "unit": "celsius"})}]
+    assert extract(text, NAMES)[1][0]["name"] == "get_weather"
+
+
+def test_bare_array_is_never_repaired():
+    assert parse_calls('[{"name": "get_weather", "arguments": {}}}]', NAMES) == INVALID
+
+
+def test_stream_repairs_extra_brace():
+    s = StreamState(NAMES)
+    text = '<|tool_call|>[{"name": "get_weather", "arguments": {"city": "Oslo"}}}]<|/tool_call|>'
+    calls = [c for i in range(0, len(text), 5) for c in s.feed(text[i:i + 5])[1]] + s.finish()[1]
+    assert [c["name"] for c in calls] == ["get_weather"]

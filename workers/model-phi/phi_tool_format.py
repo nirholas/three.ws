@@ -51,14 +51,19 @@ def _calls_from(value, tool_names: set[str] | None) -> list[dict] | None:
     return calls
 
 
-def _closing_index(s: str) -> int | None:
-    """Index of the bracket that closes the JSON value opening at s[0].
+def _closing_index(s: str, lenient: bool = False) -> tuple[int | None, str]:
+    """Find the bracket that closes the JSON value opening at s[0].
 
-    None while the value is still open (the model is mid-call), -1 for a
-    mismatched bracket. Brackets inside strings do not count.
+    Returns (index, text): index is None while the value is still open (the
+    model is mid-call) and -1 for a mismatched bracket; text is s[: index + 1].
+    Brackets inside strings do not count. With `lenient`, a closer that does
+    not match the open bracket is dropped from text instead of failing: the one
+    slip Phi-4-mini makes inside an otherwise well-formed call is an extra `}`
+    before the closing `]`.
     """
     pairs = {"[": "]", "{": "}"}
     stack: list[str] = []
+    kept: list[str] = []
     in_string = escaped = False
     for i, ch in enumerate(s):
         if in_string:
@@ -73,11 +78,33 @@ def _closing_index(s: str) -> int | None:
         elif ch in pairs:
             stack.append(pairs[ch])
         elif ch in "]}":
-            if not stack or stack.pop() != ch:
-                return -1
             if not stack:
-                return i
-    return None
+                return -1, ""
+            if stack[-1] != ch:
+                if lenient:
+                    continue
+                return -1, ""
+            stack.pop()
+            if not stack:
+                kept.append(ch)
+                return i, "".join(kept)
+        kept.append(ch)
+    return None, ""
+
+
+def _strip_marked_prefix(s: str) -> str:
+    """Drop what Phi-4-mini sometimes writes between the marker and the call:
+    a repeated marker, or an empty `[]` before the real object."""
+    while True:
+        stripped = s
+        for marker in MARKERS:
+            if stripped.startswith(marker):
+                stripped = stripped[len(marker):].lstrip()
+        if stripped.startswith("[]") and stripped[2:].lstrip()[:1] in ("{", "["):
+            stripped = stripped[2:].lstrip()
+        if stripped == s:
+            return s
+        s = stripped
 
 
 def parse_calls(text: str, tool_names: set[str] | None = None):
@@ -96,17 +123,21 @@ def parse_calls(text: str, tool_names: set[str] | None = None):
             s = s[len(marker):].lstrip()
             has_marker = True
             break
+    if has_marker:
+        s = _strip_marked_prefix(s)
+        if any(m.startswith(s) for m in MARKERS) or s == "[]"[: len(s)]:
+            return INCOMPLETE
     if not s:
         return INCOMPLETE
     if s[0] not in "[{":
         return INVALID
-    end = _closing_index(s)
+    end, block = _closing_index(s, lenient=has_marker)
     if end is None:
         return INCOMPLETE
     if end < 0:
         return INVALID
     try:
-        value = json.loads(s[: end + 1])
+        value = json.loads(block)
     except json.JSONDecodeError:
         return INVALID
     calls = _calls_from(value, None if has_marker else tool_names)

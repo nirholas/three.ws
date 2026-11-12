@@ -121,6 +121,19 @@ describe('tool-call parsing', () => {
 		expect(out.calls[0].name).toBe('playAnimation');
 	});
 
+	it.each([
+		'<|tool_call|>[{"name": "playAnimation", "arguments": {"name": "wave"}}}]',
+		'<|tool_call|>[]{ "name": "playAnimation", "arguments": {"name": "wave"} }',
+		'<|tool_call|><|tool_call|>[{"name": "playAnimation", "arguments": {"name": "wave"}}]<|/tool_call|>',
+	])('repairs the slips Phi-4-mini makes inside a marked block: %s', (text) => {
+		expect(lane.parsePhiToolCalls(text, names)).toEqual({ content: '', calls: [{ name: 'playAnimation', args: '{"name":"wave"}' }] });
+	});
+
+	it('never repairs an unmarked array', () => {
+		const answer = '[{"name": "playAnimation", "arguments": {}}}]';
+		expect(lane.parsePhiToolCalls(answer, names)).toEqual({ content: answer, calls: [] });
+	});
+
 	it('leaves a JSON answer alone when it names no offered tool', () => {
 		const answer = '[{"name": "positive", "arguments": {}}]';
 		expect(lane.parsePhiToolCalls(answer, names)).toEqual({ content: answer, calls: [] });
