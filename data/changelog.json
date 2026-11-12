@@ -10,6 +10,13 @@
 		},
 		{
 			"date": "2026-11-12",
+			"title": "News cards show images from publishers that block hotlinking",
+			"summary": "Some news publishers refuse to let their images load on other sites, so those cards on /markets/news briefly showed a broken image and logged a browser error before falling back. Card images now load through three.ws's own image proxy, so they appear on the first try, and a story whose image is truly gone shows its source initials tile without an error. The $THREE chart card also stopped logging a failed request when the Oracle or the coin intel engine has no reading for the coin yet; that slot simply stays hidden.",
+			"tags": ["fix"],
+			"link": "/markets/news"
+		},
+		{
+			"date": "2026-11-12",
 			"title": "The Shopify app link and the Build leaderboard open without console errors",
 			"summary": "Opening /apps/shopify outside Shopify admin used to load the embedded app with no store attached, which threw an App Bridge error and left a blank shell. A direct visit now goes to the app's documentation page, while merchants opening it from their Shopify admin get the app exactly as before. Before the first Build round opens, /build/leaderboard now shows its \"No Build round yet\" state from a normal empty response instead of logging a failed request.",
 			"tags": ["fix"],
