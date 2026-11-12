@@ -22,15 +22,18 @@ const isTooManyLogs = (err) => /exceeds? limit|too many results|response size|qu
  * @param {(start: bigint, end: bigint) => Promise<L[]>} fetchRange
  * @param {bigint|number} from
  * @param {bigint|number} to
- * @param {{ chunk?: bigint, maxRateLimitWaits?: number, baseWaitMs?: number, maxWaitMs?: number, sleep?: (ms: number) => Promise<void> }} [opts]
+ * @param {{ chunk?: bigint, maxRateLimitWaits?: number, baseWaitMs?: number, maxWaitMs?: number, sleep?: (ms: number) => Promise<void>, onProgress?: (p: { scannedBlocks: bigint, totalBlocks: bigint }) => void }} [opts]
  *   `maxRateLimitWaits` caps consecutive waits on ONE range; unhinted 429s back
  *   off from `baseWaitMs` doubling to `maxWaitMs`, a provider reset hint is used as given.
+ *   `onProgress` fires after each chunk that comes back, with the blocks covered so far.
  * @returns {Promise<L[]>}
  */
 export async function scanLogRanges(fetchRange, from, to, {
-	chunk = 4_000n, maxRateLimitWaits = 30, baseWaitMs = 500, maxWaitMs = 10_000, sleep = defaultSleep,
+	chunk = 4_000n, maxRateLimitWaits = 30, baseWaitMs = 500, maxWaitMs = 10_000, sleep = defaultSleep, onProgress,
 } = {}) {
 	const out = [];
+	const totalBlocks = BigInt(to) >= BigInt(from) ? BigInt(to) - BigInt(from) + 1n : 0n;
+	let scannedBlocks = 0n;
 	const queue = [[BigInt(from), BigInt(to)]];
 	let waits = 0; // consecutive waits on the range at the head of the queue
 	while (queue.length) {
@@ -61,7 +64,9 @@ export async function scanLogRanges(fetchRange, from, to, {
 			throw err;
 		}
 		waits = 0;
-		out.push(...logs);
+		for (const log of logs) out.push(log);
+		scannedBlocks += span;
+		onProgress?.({ scannedBlocks, totalBlocks });
 	}
 	return out;
 }

@@ -38,7 +38,14 @@ export function createServer(firehose) {
 			return;
 		}
 		arr.unshift(data);
-		while (arr.length > config.bufferLimit) arr.pop();
+		// Evict by timestamp, not arrival order: backfill sources finish at
+		// different times, and older history arriving late must not push out
+		// newer events that are already buffered.
+		while (arr.length > config.bufferLimit) {
+			let oldest = 0;
+			for (let i = 1; i < arr.length; i++) if ((arr[i].timestamp || 0) < (arr[oldest].timestamp || 0)) oldest = i;
+			arr.splice(oldest, 1);
+		}
 	}
 
 	function recent({ kind = 'all', limit = 20 } = {}) {

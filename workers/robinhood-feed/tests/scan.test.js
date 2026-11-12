@@ -5,7 +5,7 @@
 // roughly every other call, recovering within a second. Two failures followed:
 //  - The Odyssey backfill retried the whole 83-chunk getRecentLaunches scan
 //    with a ~2s backoff, so one 429 anywhere restarted or aborted all of it.
-//  - getMintLogs spent a 20-wait budget for the WHOLE scan at 10s per
+//  - The venue mint scan spent a 20-wait budget for the WHOLE scan at 10s per
 //    unhinted 429, so a ~200-chunk backfill ran out and threw.
 // Both left the replay buffer empty with nothing in the log.
 
@@ -110,4 +110,19 @@ test('the Odyssey backfill resumes at the throttled chunk and maps TokenCreated 
 test('rateLimitWaitMs takes a caller fallback for an unhinted 429', () => {
 	assert.equal(rateLimitWaitMs(throttled(), { fallbackMs: 500 }), 500);
 	assert.equal(rateLimitWaitMs(throttled()), 10_000);
+});
+
+test('scan progress reports blocks covered after each chunk, ending at the full range', async () => {
+	const seen = [];
+	let calls = 0;
+	await scanLogRanges(async () => {
+		calls += 1;
+		if (calls === 2) throw throttled();
+		return [];
+	}, 100n, 2_599n, { chunk: 1_000n, sleep: async () => {}, onProgress: (p) => seen.push(p) });
+	assert.deepEqual(seen, [
+		{ scannedBlocks: 1_000n, totalBlocks: 2_500n },
+		{ scannedBlocks: 2_000n, totalBlocks: 2_500n },
+		{ scannedBlocks: 2_500n, totalBlocks: 2_500n },
+	]);
 });

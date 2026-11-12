@@ -99,6 +99,25 @@ test('/recent serves buffered events newest-first and filters by kind', async (t
 	}
 });
 
+test('a full buffer evicts the oldest event by timestamp, not whichever arrived first', async (t) => {
+	const { config } = await import('../src/config.js');
+	const app = await boot();
+	t.after(() => app.close());
+
+	// Backfill sources finish at different times: a fast source fills the buffer
+	// with recent events, then a slow one delivers older history afterwards.
+	const base = 1_800_000_000_000;
+	for (let i = 0; i < config.bufferLimit; i++) {
+		app.onEvent({ kind: 'trade', data: { ...realTradeEvent(0, base + 600_000 + i * 1000), tx: `0xnew${i}`, tx_signature: `0xnew${i}` } });
+	}
+	app.onEvent({ kind: 'trade', data: { ...realTradeEvent(0, base), tx: '0xold', tx_signature: '0xold' } });
+
+	const body = await fetch(`${app.base}/recent?kind=trade&limit=200`).then((r) => r.json());
+	assert.equal(body.events.length, config.bufferLimit);
+	assert.ok(!body.events.some((e) => e.data.tx === '0xold'), 'the late, older event is the one dropped');
+	assert.ok(body.events.some((e) => e.data.tx === '0xnew0'), 'the oldest of the recent events survives');
+});
+
 test('/recent dedupes a re-emitted event by signature + mint', async (t) => {
 	const app = await boot();
 	t.after(() => app.close());

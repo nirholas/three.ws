@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-import { parseMintLogs, launchFromMint, getMintLogs, launchesFromMints, TRANSFER_TOPIC } from '../src/mints.js';
+import { parseMintLogs, launchFromMint, getFirstMints, launchesFromMints, TRANSFER_TOPIC } from '../src/mints.js';
 import { venueForCall, listVenues, venueLabel } from '../src/venues.js';
 import { devAllocation, devStatus, riskFlags, createReputation, FLAG_RULES } from '../src/reputation.js';
 import { normalizeLaunch } from '../src/normalize.js';
@@ -75,17 +75,23 @@ test('venue catalog: ids are unique and every label resolves', () => {
 	assert.ok(venues.every((v) => venueLabel(v).length > 0 && /^0x[0-9a-f]{40}$/.test(v.address)));
 });
 
-test('getMintLogs bisects a range that trips the RPC log cap instead of dropping it', async () => {
+// A well-formed ERC-20 supply mint log (three topics, amount in data) for token `n`.
+const erc20Mint = (n, blockHex) => ({
+	address: `0x${n.toString(16).padStart(40, '0')}`, blockNumber: blockHex, logIndex: '0x0', transactionHash: `0x${n.toString(16)}`,
+	topics: [TRANSFER_TOPIC, `0x${'0'.repeat(64)}`, `0x${'0'.repeat(63)}1`], data: `0x${'0'.repeat(63)}1`,
+});
+
+test('getFirstMints bisects a range that trips the RPC log cap instead of dropping it', async () => {
 	const calls = [];
 	const request = async ({ params: [f] }) => {
 		const from = BigInt(f.fromBlock);
 		const to = BigInt(f.toBlock);
 		calls.push([from, to]);
 		if (to - from + 1n > 1000n) throw new Error('query returned more than 10000 results');
-		return [{ address: '0x1', blockNumber: f.fromBlock }];
+		return [erc20Mint(Number(from) + 1, f.fromBlock)]; // a distinct token per range
 	};
-	const logs = await getMintLogs(request, 0n, 3999n, { chunk: 4000n });
-	assert.equal(logs.length, 4);
+	const mints = await getFirstMints(request, 0n, 3999n, { chunk: 4000n });
+	assert.equal(mints.length, 4);
 	assert.ok(calls.every(([a, b]) => b - a + 1n <= 1000n || calls.length > 1));
 });
 
@@ -149,7 +155,7 @@ test('createReputation counts prior launches before the block and exits from bal
 	assert.deepEqual(await rep.assess('0x00000000000000000000000000000000000000c2', 50n), { prior_launches: 0, prior_dev_exits: 0, inspected: 0, window_blocks: 5000 });
 });
 
-test('getMintLogs waits out an RPC rate limit and retries the same range instead of aborting the scan', async () => {
+test('getFirstMints waits out an RPC rate limit and retries the same range instead of aborting the scan', async () => {
 	let hits = 0;
 	const waits = [];
 	const request = async ({ params: [f] }) => {
@@ -159,13 +165,38 @@ test('getMintLogs waits out an RPC rate limit and retries the same range instead
 			err.cause = { code: 429, message: 'Rate Limit Hit, limit will reset in 60 seconds' };
 			throw err;
 		}
-		return [{ address: '0x1', blockNumber: f.fromBlock }];
+		return [erc20Mint(1, f.fromBlock)];
 	};
-	const logs = await getMintLogs(request, 0n, 99n, { sleep: async (ms) => { waits.push(ms); } });
-	assert.equal(logs.length, 1);
+	const mints = await getFirstMints(request, 0n, 99n, { sleep: async (ms) => { waits.push(ms); } });
+	assert.equal(mints.length, 1);
 	assert.deepEqual(waits, [60_000, 60_000]);
 });
 
-test('getMintLogs still throws a non-transient error on the first attempt', async () => {
-	await assert.rejects(getMintLogs(async () => { throw new Error('invalid params shape'); }, 0n, 99n, { sleep: async () => {} }), /invalid params/);
+test('getFirstMints still throws a non-transient error on the first attempt', async () => {
+	await assert.rejects(getFirstMints(async () => { throw new Error('invalid params shape'); }, 0n, 99n, { sleep: async () => {} }), /invalid params/);
+});
+
+test('getFirstMints folds each chunk to its earliest mint per token, so a wide backfill never holds every raw log', async () => {
+	const mint = (address, block, idx, topics = 3) => ({
+		address, blockNumber: `0x${block.toString(16)}`, logIndex: `0x${idx.toString(16)}`, transactionHash: `0x${address.slice(-2)}${block}`,
+		topics: [TRANSFER_TOPIC, `0x${'0'.repeat(64)}`, `0x${'0'.repeat(63)}1`, ...(topics === 4 ? [`0x${'0'.repeat(63)}7`] : [])],
+		data: topics === 4 ? '0x' : `0x${'0'.repeat(63)}1`,
+	});
+	const A = '0x00000000000000000000000000000000000000a1';
+	const B = '0x00000000000000000000000000000000000000b2';
+	const N = '0x00000000000000000000000000000000000000f3';
+	const byChunk = {
+		0: [mint(A, 5, 2), mint(A, 5, 1), mint(N, 6, 0, 4)],
+		10: [mint(A, 12, 0), mint(B, 15, 0)],
+		20: [mint(B, 21, 0), mint(A, 29, 3)],
+	};
+	const maxPerChunk = [];
+	const request = async ({ params: [f] }) => {
+		const logs = byChunk[Number(BigInt(f.fromBlock))] || [];
+		maxPerChunk.push(logs.length);
+		return logs;
+	};
+	const firsts = await getFirstMints(request, 0n, 29n, { chunk: 10n, sleep: async () => {} });
+	assert.deepEqual(firsts.map((m) => [m.token, m.blockNumber, m.logIndex]), [[A, 5n, 1], [B, 15n, 0]]);
+	assert.ok(firsts.every((m) => !('topics' in m) && !('data' in m)), 'only compact first-mint records are kept');
 });

@@ -18,7 +18,7 @@ import {
 } from 'hoodchain';
 import { subscribeFeed } from 'hoodchain';
 import { config, CHAIN_ID, redactRpcUrl } from './config.js';
-import { getMintLogs, parseMintLogs, launchesFromMints } from './mints.js';
+import { getFirstMints, launchesFromMints } from './mints.js';
 import { scanLogRanges, odysseyLaunchesBetween } from './scan.js';
 import { createReputation, devAllocation, devStatus, riskFlags, readBalances } from './reputation.js';
 import { hood, resolveMeta, inspectPool, blockTimeMs } from './chain.js';
@@ -228,9 +228,9 @@ export function startFirehose(onEvent) {
 	};
 	let mintCursor = 0n;
 	let mintPolling = false;
-	async function venueLaunchesBetween(from, to) {
-		const logs = await getMintLogs((a) => withRpcRetry(() => hood.public.request(a)), from, to);
-		return launchesFromMints(rpcView, parseMintLogs(logs));
+	async function venueLaunchesBetween(from, to, { onProgress } = {}) {
+		const mints = await getFirstMints((a) => withRpcRetry(() => hood.public.request(a)), from, to, { onProgress });
+		return launchesFromMints(rpcView, mints);
 	}
 	async function pollMints() {
 		if (!active || mintPolling) return;
@@ -285,9 +285,9 @@ export function startFirehose(onEvent) {
 	// public RPC's -32602 shedding (withRpcRetry) and its 429 throttling
 	// (scanLogRanges retries that chunk), so one bad response never restarts
 	// or aborts a scan that is hundreds of chunks wide.
-	const odysseyLaunches = (from, to) => odysseyLaunchesBetween(
+	const odysseyLaunches = (from, to, { onProgress } = {}) => odysseyLaunchesBetween(
 		(range) => withRpcRetry(() => hood.public.getLogs({ address: ODYSSEY_FACTORIES, event: odysseyTokenCreatedEvent, ...range })),
-		from, to,
+		from, to, { onProgress },
 	).then((ls) => ls.map(withOdysseyVenue));
 
 	async function gapCheck() {
@@ -324,34 +324,53 @@ export function startFirehose(onEvent) {
 	// serialize cold start for minutes. Every discovered pool is still tracked
 	// (cheap, synchronous) so live Uniswap swaps on older coins are caught;
 	// only the newest slice gets the full emit (metadata + ETH price + buffer).
+	//
+	// The two sources run very differently on the public RPC: the Odyssey
+	// factory scan is one small log query per chunk and finishes in minutes,
+	// the venue scan reads a transaction per new token and can take far longer
+	// over a day-wide window. Each source is ingested the moment it finishes,
+	// so the feed is useful before the slow one is done, and a failing source
+	// never discards what the other found.
+	function progressReporter(src) {
+		let lastDecile = -1;
+		return ({ scannedBlocks, totalBlocks }) => {
+			if (totalBlocks === 0n) return;
+			const decile = Number((scannedBlocks * 10n) / totalBlocks);
+			if (decile === lastDecile || decile === 10) return;
+			lastDecile = decile;
+			onEvent({ kind: 'status', data: { level: 'info', src: 'backfill', message: `${src} scan ${decile * 10}% of ${totalBlocks} blocks` } });
+		};
+	}
+	async function ingestBackfill(src, launches) {
+		launches.sort((a, b) => (a.blockNumber < b.blockNumber ? -1 : a.blockNumber > b.blockNumber ? 1 : 0));
+		for (const l of launches) {
+			once(`token:${l.token.toLowerCase()}`);
+			if (l.pool) trackPool(l.pool, l.token);
+		}
+		// Index the window oldest-first so a deployer's earlier launches are on
+		// record before their newer ones are graded against them.
+		await mapLimit(launches, 8, (l) => indexLaunch(l));
+		const toEmit = launches.slice(-config.bufferLimit); // oldest-first input, newest last
+		await mapLimit(toEmit, 8, (l) => emitLaunch(l, { indexed: true }));
+		onEvent({ kind: 'status', data: { level: 'info', src: 'backfill', source: src, launches: launches.length, emitted: toEmit.length, deployers: reputation.size() } });
+	}
 	async function backfill() {
+		let head;
 		try {
-			const head = await withRpcPatience(() => hood.public.getBlockNumber());
-			const fromBlock = head > config.backfillBlocks ? head - config.backfillBlocks : 0n;
-			if (mintCursor === 0n) mintCursor = head;
-			// Independent sources: one failing must not discard what the other found.
-			const sources = [['odyssey', odysseyLaunches(fromBlock, head)], ['venues', venueLaunchesBetween(fromBlock, head)]];
-			const settled = await Promise.allSettled(sources.map(([, p]) => p));
-			const found = [];
-			settled.forEach((r, i) => {
-				if (r.status === 'fulfilled') found.push(...r.value);
-				else onEvent({ kind: 'status', data: { level: 'warn', src: `backfill:${sources[i][0]}`, message: r.reason?.message } });
-			});
-			const launches = found
-				.sort((a, b) => (a.blockNumber < b.blockNumber ? -1 : a.blockNumber > b.blockNumber ? 1 : 0));
-			for (const l of launches) {
-				once(`token:${l.token.toLowerCase()}`);
-				if (l.pool) trackPool(l.pool, l.token);
-			}
-			// Index the whole window oldest-first so a deployer's earlier launches
-			// are on record before their newer ones are graded against them.
-			await mapLimit(launches, 8, (l) => indexLaunch(l));
-			const toEmit = launches.slice(-config.bufferLimit); // oldest-first input → newest last
-			await mapLimit(toEmit, 8, (l) => emitLaunch(l, { indexed: true }));
-			onEvent({ kind: 'status', data: { level: 'info', src: 'backfill', launches: launches.length, emitted: toEmit.length, deployers: reputation.size() } });
+			head = await withRpcPatience(() => hood.public.getBlockNumber());
 		} catch (err) {
 			onEvent({ kind: 'status', data: { level: 'warn', src: 'backfill', message: err?.message } });
+			return;
 		}
+		const fromBlock = head > config.backfillBlocks ? head - config.backfillBlocks : 0n;
+		if (mintCursor === 0n) mintCursor = head;
+		const run = (src, scan) => scan({ onProgress: progressReporter(src) })
+			.then((launches) => ingestBackfill(src, launches))
+			.catch((err) => onEvent({ kind: 'status', data: { level: 'warn', src: `backfill:${src}`, message: err?.message } }));
+		await Promise.all([
+			run('odyssey', (o) => odysseyLaunches(fromBlock, head, o)),
+			run('venues', (o) => venueLaunchesBetween(fromBlock, head, o)),
+		]);
 	}
 
 	// ── wire everything up ─────────────────────────────────────────────────────

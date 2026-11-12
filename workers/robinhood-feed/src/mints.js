@@ -54,20 +54,30 @@ export function launchFromMint(mint, tx) {
 }
 
 /**
- * Every Transfer-from-zero log in [from, to], scanned in chunks. Throttling,
- * provider reset hints and the matched-log cap are handled by scanLogRanges
- * (scan.js), so a wide backfill on the public RPC slows down instead of aborting.
+ * The earliest supply mint per token in [from, to], as parseMintLogs records.
+ * Each chunk is folded as it arrives, so memory follows the number of distinct
+ * tokens (tens of thousands over a day) instead of every raw Transfer-from-zero
+ * log (hundreds of thousands over the same day on Robinhood Chain mainnet).
+ * Throttling, provider reset hints and the matched-log cap are handled by
+ * scanLogRanges (scan.js), so a wide backfill slows down instead of aborting.
  *
  * @param {(args: {method: string, params: unknown[]}) => Promise<any>} request viem `client.request`
  * @param {bigint|number} from
  * @param {bigint|number} to
  * @param {Parameters<typeof scanLogRanges>[3]} [opts]
  */
-export async function getMintLogs(request, from, to, opts = {}) {
-	return scanLogRanges((start, end) => request({
+export async function getFirstMints(request, from, to, opts = {}) {
+	const perChunk = await scanLogRanges(async (start, end) => parseMintLogs(await request({
 		method: 'eth_getLogs',
 		params: [{ topics: [TRANSFER_TOPIC, ZERO_TOPIC], fromBlock: toHex(start), toBlock: toHex(end) }],
-	}), from, to, { chunk: 4_000n, ...opts });
+	})), from, to, { chunk: 4_000n, ...opts });
+	// Chunks come back in block order and each is already earliest-first, so the first sighting wins.
+	const first = new Map();
+	for (const m of perChunk) {
+		const key = m.token.toLowerCase();
+		if (!first.has(key)) first.set(key, m);
+	}
+	return [...first.values()];
 }
 
 /** An AMM pair mints LP shares from zero exactly like a coin does; pairs answer token0(). */
