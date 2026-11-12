@@ -18,7 +18,7 @@ Two surfaces share one data layer. The feed aggregates open hackathons, bounties
 | --- | --- |
 | `GET /api/bounties/feed` | Listings plus per-source health. Filters: `source`, `kind`, `status`, `q`, `category`, `minUsd`, `sort` (`reward`, `deadline`, `new`), `limit`, `cursor`. |
 | `GET /api/build/rounds` | Published rounds, open first. `?round=<slug>` adds the public entries. |
-| `GET /api/build/leaderboard` | Ranking for a round (default: the open one) and the scoring formula. |
+| `GET /api/build/leaderboard` | Ranking for a round (default: the open one) and the scoring formula. Before the first round opens it answers 200 with `round: null` and no entries; a named round that does not exist is a 404. |
 | `GET /api/build/payouts` | The prize and buyback ledger. Read only. |
 | `GET/POST /api/build/submissions` | The signed-in user's entries; POST enters an agent. Cookie sessions need the CSRF token. |
 

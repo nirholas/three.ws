@@ -49,19 +49,28 @@ async function loadPayouts(slug) {
 	}
 }
 
+const NO_ROUND = `<div class="bp-state"><strong>No Build round yet.</strong><span>The leaderboard starts when the first round opens. <a href="/build">See the program</a>.</span></div>`;
+
+function clearHead() {
+	$('bp-lb-head').setAttribute('aria-busy', 'false');
+	$('bp-lb-head').innerHTML = '';
+	$('bp-lb').setAttribute('aria-busy', 'false');
+}
+
 async function load() {
 	$('bp-lb').innerHTML = '<div class="bp-skel bp-skel-md"></div>';
 	try {
 		const data = await getJson('/api/build/leaderboard');
+		if (!data.round) {
+			clearHead();
+			$('bp-lb').innerHTML = NO_ROUND;
+			return;
+		}
 		renderBoard(data);
 		loadPayouts(data.round.slug);
 	} catch (err) {
-		$('bp-lb-head').setAttribute('aria-busy', 'false');
-		$('bp-lb-head').innerHTML = '';
-		$('bp-lb').setAttribute('aria-busy', 'false');
-		$('bp-lb').innerHTML = err.status === 404
-			? `<div class="bp-state"><strong>No Build round yet.</strong><span>The leaderboard starts when the first round opens. <a href="/build">See the program</a>.</span></div>`
-			: errorBlock(err.message);
+		clearHead();
+		$('bp-lb').innerHTML = err.status === 404 ? NO_ROUND : errorBlock(err.message);
 		$('bp-retry')?.addEventListener('click', load);
 	}
 }

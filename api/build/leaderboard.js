@@ -11,14 +11,20 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 
 	const p = new URL(req.url, 'http://localhost').searchParams;
+	const formula = 'score = volume in USDC + 5 per paid call served + 25 per coin launched, counted inside the round window';
 	const round = await resolveRound(p.get('round'));
-	if (!round) return error(res, 404, 'round_not_found', p.get('round') ? 'That round does not exist.' : 'There are no Build rounds yet.');
+	if (!round && p.get('round')) return error(res, 404, 'round_not_found', 'That round does not exist.');
+	// Before the first round opens the board is empty, not missing.
+	if (!round) {
+		res.setHeader('cache-control', 'public, max-age=30, stale-while-revalidate=120');
+		return json(res, 200, { round: null, formula, computedAt: null, entries: [] });
+	}
 
 	const entries = await leaderboardFor(round.id, { limit: parseLimit(p, { fallback: 50, max: 200 }) });
 	res.setHeader('cache-control', 'public, max-age=30, stale-while-revalidate=120');
 	json(res, 200, {
 		round: { id: round.id, slug: round.slug, title: round.title, status: round.status, endsAt: round.endsAt },
-		formula: 'score = volume in USDC + 5 per paid call served + 25 per coin launched, counted inside the round window',
+		formula,
 		computedAt: round.statsComputedAt,
 		entries,
 	});
