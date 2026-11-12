@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { diffAgainstBaseline, mergeBaseline } from '../scripts/lib/console-baseline.mjs';
+import { diffAgainstBaseline, mergeBaseline, formatLoadNote } from '../scripts/lib/console-baseline.mjs';
 
 describe('console sweep baseline', () => {
 	const empty = { routes: {} };
@@ -33,5 +33,20 @@ describe('console sweep baseline', () => {
 		);
 		expect(merged).toEqual({ routes: { '/a': { mobile: 1 }, '/m': { desktop: 5 }, '/z': { desktop: 1 } } });
 		expect(Object.keys(merged.routes)).toEqual(['/a', '/m', '/z']);
+	});
+});
+
+describe('console sweep load note', () => {
+	it('marks a reading taken below the core count as quiet-box evidence', () => {
+		expect(formatLoadNote(12.54, 32)).toBe(
+			'**Machine load at start:** 12.5 (1-minute average) on 32 cores. Quiet box: this reading is evidence.',
+		);
+	});
+
+	it('marks a reading at or above the core count as unproven', () => {
+		const note = formatLoadNote(71.45, 32);
+		expect(note).toContain('71.5 (1-minute average) on 32 cores');
+		expect(note).toContain('Not a quiet box');
+		expect(formatLoadNote(32, 32)).toContain('Not a quiet box');
 	});
 });

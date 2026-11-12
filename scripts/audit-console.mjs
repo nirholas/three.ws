@@ -90,7 +90,7 @@ import { get as httpGet } from 'node:http';
 import { get as httpsGet } from 'node:https';
 import { chromium } from 'playwright';
 import { isIgnorableConsole, isDevOnlyAsset } from './lib/console-noise.mjs';
-import { loadBaseline, diffAgainstBaseline, mergeBaseline, saveBaseline } from './lib/console-baseline.mjs';
+import { loadBaseline, diffAgainstBaseline, mergeBaseline, saveBaseline, formatLoadNote } from './lib/console-baseline.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -709,6 +709,8 @@ if (wantReport) {
 			`Each route: \`domcontentloaded\` → scroll → ${SETTLE_MS}ms settle. ` +
 			`Environment noise (Vite HMR-proxy wss handshake, third-party telemetry, auth-gated \`/api\` 4xx, dev-origin CDN CORS) is filtered.`,
 	);
+	lines.push('');
+	lines.push(formatLoadNote(loadAtStart, coreCount));
 	lines.push('');
 	lines.push(`**Result:** ${failing.length === 0 ? '✅ all routes clean' : `❌ ${failing.length} route(s) with errors`}. ${grandErrors} total error(s).`);
 	lines.push('');

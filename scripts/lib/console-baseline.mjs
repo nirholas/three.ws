@@ -57,3 +57,16 @@ export function mergeBaseline(baseline, current) {
 export function saveBaseline(file, baseline) {
 	writeFileSync(file, JSON.stringify(baseline, null, '\t') + '\n');
 }
+
+/**
+ * One report line stating the machine load the sweep started under. A reading
+ * taken at or above the core count is not evidence (docs/audit/README.md), so
+ * the report says which kind of reading it is rather than leaving the reader
+ * to guess from the failure list.
+ */
+export function formatLoadNote(load, cores) {
+	const head = `**Machine load at start:** ${load.toFixed(1)} (1-minute average) on ${cores} cores.`;
+	return load < cores
+		? `${head} Quiet box: this reading is evidence.`
+		: `${head} Not a quiet box: treat every failure below as unproven until it reproduces alone on a quiet box.`;
+}
