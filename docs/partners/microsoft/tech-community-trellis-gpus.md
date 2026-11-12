@@ -1,19 +1,19 @@
 # Tech Community article: running TRELLIS on Cloud Run GPUs
 
-Draft for the Microsoft Tech Community (AI or developer blog space). Written 2026-11-11 from production data; every number has its source in [sources.md](./sources.md). Posting is an owner step.
+Draft for the Microsoft Tech Community (AI or developer blog space). Written 2026-11-11 and re-measured 2026-11-12 from production data; every number has its source in [sources.md](./sources.md). Posting is an owner step.
 
 ## Before posting
 
 1. Re-run the queries in [sources.md](./sources.md) and replace every number in the article with the fresh value. The counts grow daily.
-2. Check whether TRELLIS.2 is taking production traffic: `gcloud run services describe three-ws-api --region us-central1` must list `MODEL_TRELLIS2_URL`, `curl -s https://model-trellis2-lp642k3kpa-uc.a.run.app/health` must report `"ready":true`, and `select count(*) from forge_creations where backend='trellis2'` must be above zero. On 2026-11-11 none of the three held.
+2. Check whether TRELLIS.2 is taking production traffic: `gcloud run services describe three-ws-api --region us-central1` must list `MODEL_TRELLIS2_URL`, `curl -s https://model-trellis2-lp642k3kpa-uc.a.run.app/health` must report `"ready":true`, and `select count(*) from forge_creations where backend='trellis2'` must count production jobs. On 2026-11-12 the API env had no `MODEL_TRELLIS2_URL`, `/health` answered HTTP 429 "Rate exceeded", and the table held 4 `trellis2` rows, all hand-run trials on 2026-11-11 (2 draft jobs done, 2 standard jobs orphaned), so it is not serving traffic yet.
 3. Once all three hold, update these sentences: the second paragraph of the introduction ("TRELLIS.2 is deployed ... not yet taking production traffic"), the opening of "Bringing up TRELLIS.2" ("deployed, not yet serving"), and the "Where it stands" section. Add a TRELLIS.2 row of measured timings from `forge_creations` beside the TRELLIS table, and only then retitle the post around TRELLIS.2.
 4. Run `node scripts/microsoft-pack/check-wording.mjs docs/partners/microsoft/tech-community-trellis-gpus.md`.
 
 ---
 
-# Running Microsoft Research's TRELLIS on Cloud Run GPUs: 29,147 models and the road to TRELLIS.2
+# Running Microsoft Research's TRELLIS on Cloud Run GPUs: 29,443 models and the road to TRELLIS.2
 
-At three.ws, a photo becomes a textured 3D model. The engine behind most of those models is TRELLIS from Microsoft Research, released under the MIT license, which we self-host on NVIDIA L4 GPUs on Google Cloud Run. Since our self-hosted TRELLIS worker went live on 2026-07-08 it has accepted 35,148 jobs and finished 29,147 GLB files, a large share of the 53,878 models our Forge has generated across all its lanes.
+At three.ws, a photo becomes a textured 3D model. The engine behind most of those models is TRELLIS from Microsoft Research, released under the MIT license, which we self-host on NVIDIA L4 GPUs on Google Cloud Run. Since our self-hosted TRELLIS worker went live on 2026-07-08 it has accepted 35,531 jobs and finished 29,443 GLB files, a large share of the 54,356 models our Forge has generated across all its lanes.
 
 Its successor, TRELLIS.2 (a 4-billion-parameter flow transformer over O-Voxel structured latents, also MIT), is deployed on its own L4 service but not yet taking production traffic. This post covers both: what running TRELLIS at volume taught us, and what bringing up TRELLIS.2 required. All the code is open source in [`workers/model-trellis/`](https://github.com/nirholas/three.ws/tree/main/workers/model-trellis) and [`workers/model-trellis2/`](https://github.com/nirholas/three.ws/tree/main/workers/model-trellis2).
 
@@ -27,9 +27,9 @@ Here is what production looks like over the last 30 days for TRELLIS, measured f
 
 | Tier | Completed jobs | Median time | Median GLB size |
 |---|---|---|---|
-| draft | 1,248 | 136 s | 1.52 MB |
-| standard | 1,833 | 250 s | 6.06 MB |
-| high | 257 | 608 s | 17.15 MB |
+| draft | 1,404 | 132 s | 1.51 MB |
+| standard | 1,956 | 234 s | 6.06 MB |
+| high | 275 | 602 s | 17.21 MB |
 
 The tiers are named sampler presets in `request_policy.py`:
 
@@ -137,7 +137,7 @@ The task record reports both `resolution` and `resolution_served`, so the platfo
 
 ## Where it stands
 
-The TRELLIS.2 service is deployed on an L4, but on 2026-11-11 its health endpoint reports the pipeline not loaded, and our API has not been pointed at it. Routing is designed for exactly this: a lane is only eligible once its URL is configured, the router skips a lane that is down or cooling off after a failure, and a failed TRELLIS.2 job is redispatched to the TRELLIS worker, which holds the same reference image. When TRELLIS.2 starts taking traffic we will publish its measured timings beside the TRELLIS numbers above.
+The TRELLIS.2 service is deployed on an L4 and has finished hand-run draft trials (about 56 seconds each, end to end), but our API has not been pointed at it yet, and its standard-tier trials were cut short when the instance restarted mid-job. Routing is designed for exactly this: a lane is only eligible once its URL is configured, the router skips a lane that is down or cooling off after a failure, and a failed TRELLIS.2 job is redispatched to the TRELLIS worker, which holds the same reference image. When TRELLIS.2 starts taking traffic we will publish its measured timings beside the TRELLIS numbers above.
 
 ## Try it
 

@@ -86,7 +86,7 @@ export function adaptiveCardFor(card) {
 
 The layout (Adaptive Cards 1.6) is a `ColumnSet` with the agent image and name, a large metric, a `FactSet` of three stats and two `Action.OpenUrl` buttons. Paths in the layout read the way JavaScript reads them, `stats.0.label`. That hides a trap: Adaptive Expression Language indexes arrays with brackets, a dot before a number is a parse error, and the templating engine then throws on the whole card. One dotted index empties the widget slot. A one-line `binding()` rewrites `.0` to `[0]` for the template path only.
 
-The payloads stay small. Measured against a real agent's card data, the bound card is 1,321 bytes, the template 1,350 bytes, and a full 10-result search response 17,880 bytes.
+The payloads stay small. Measured against a real agent's card data, the bound card is 1,363 bytes, the template 1,350 bytes, and a full 10-result search response 18,586 bytes.
 
 ### A card that updates itself: Universal Actions
 
@@ -122,14 +122,14 @@ The Agents tab is a normal page on our site in an iframe. Third-party cookies ar
 
 ```
 $ npm run package:microsoft-app -- --check
-OK: manifest, schema v1.30, 16 tools, icons and ASCII checks pass (owner values not checked).
+OK: manifest, schema v1.30, 16 tools, meeting stage tab and RSC, icons and ASCII checks pass (owner values not checked).
 ```
 
-The zip is 63,578 bytes, five files, with fixed timestamps so the same sources always produce the same bytes.
+The zip is written with fixed timestamps, so the same sources always produce the same bytes.
 
 ### Tests
 
-95 Vitest tests cover this work: 13 for the bot's token, search and unfurl logic, 31 for the 3D generation flow and its cards (every card validated against the published Adaptive Cards 1.5 schema), 21 for the agent card, 21 for the stage view and 9 for the package builder.
+97 Vitest tests cover this work: 13 for the bot's token, search and unfurl logic, 31 for the 3D generation flow and its cards (every card validated against the published Adaptive Cards 1.5 schema), 21 for the agent card, 21 for the stage view and 11 for the package builder.
 
 ### What we would tell another team
 
