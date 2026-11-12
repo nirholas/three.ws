@@ -426,6 +426,8 @@
 		"build:sign-goldens": "node scripts/build-sign-goldens.mjs",
 		"sign:sheet": "node scripts/sign-contact-sheet.mjs",
 		"sign:cli": "node scripts/sign-cli-scripts.mjs",
+		"sign:validate-pack": "node scripts/validate-sign-pack.mjs",
+		"sign:export-reviews": "node scripts/export-sign-reviews.mjs",
 		"check:cli-scripts": "node scripts/sign-cli-scripts.mjs --check",
 		"extract:animations": "node scripts/extract-glb-animations.mjs && npm run build:animations",
 		"bake:mannequin": "node scripts/bake-mannequin-glb.mjs",
