@@ -138,11 +138,6 @@ async function main() {
 		check('verify accepts the honest payment', verify.isValid === true, verify.invalidReason || `payer ${verify.payer}`);
 
 		const settle = await post(base + '/settle', body);
-		if (process.env.DEBUG_E2E && settle.transaction) {
-			await new Promise((r) => setTimeout(r, 5000));
-			console.log('DEBUG status', JSON.stringify(await conn.getSignatureStatuses([settle.transaction], { searchTransactionHistory: true })));
-			console.log('DEBUG slot', await conn.getSlot(), 'tx', JSON.stringify(await conn.getTransaction(settle.transaction, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 }))?.slice(0, 600));
-		}
 		check('settle succeeds', settle.success === true, settle.errorReason || `tx ${settle.transaction}`);
 
 		const merchantBal = (await getAccount(conn, merchantAta.address, 'confirmed')).amount;
