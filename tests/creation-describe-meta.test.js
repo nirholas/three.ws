@@ -12,7 +12,7 @@ import { creationMeta, rewriteCreationHead } from '../server/creation-head.mjs';
 const base = {
 	id: '0b9c1f3e-58f4-4b5e-9a39-2d7f5a1c0e11',
 	prompt: 'a brass lantern with a glass chimney',
-	glb_url: 'https://cdn.three.ws/forge/x.glb',
+	glb_url: 'https://three.ws/cdn/forge/x.glb',
 	size_bytes: 1000,
 	created_at: '2026-11-01T00:00:00Z',
 };

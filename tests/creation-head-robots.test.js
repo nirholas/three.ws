@@ -20,7 +20,7 @@ const SHELL = `<!doctype html><html lang="en"><head>
 const base = {
 	id: 'aaaaaaaa-0000-4000-8000-000000000001',
 	prompt: 'a brass astrolabe with engraved star charts',
-	glb_url: 'https://cdn.three.ws/forge/a.glb',
+	glb_url: 'https://three.ws/cdn/forge/a.glb',
 	size_bytes: 1_000_000,
 	created_at: '2026-11-01T00:00:00Z',
 	outcome: null,

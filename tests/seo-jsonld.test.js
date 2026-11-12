@@ -151,7 +151,7 @@ describe('creations: 3DModel with a GLB encoding', () => {
 	const creation = {
 		id: 'aaaaaaaa-0000-4000-8000-000000000002',
 		prompt: 'a brass astrolabe with engraved star charts',
-		glb_url: 'https://cdn.three.ws/forge/a.glb',
+		glb_url: 'https://three.ws/cdn/forge/a.glb',
 		size_bytes: 1_000_000,
 		created_at: '2026-11-01T00:00:00Z',
 		visibility: 'public',
@@ -164,7 +164,7 @@ describe('creations: 3DModel with a GLB encoding', () => {
 		expect(model).toBeTruthy();
 		expect(model.encoding[0]).toMatchObject({
 			'@type': 'MediaObject',
-			contentUrl: 'https://cdn.three.ws/forge/a.glb',
+			contentUrl: 'https://three.ws/cdn/forge/a.glb',
 			encodingFormat: 'model/gltf-binary',
 		});
 		expect(model.creator).toMatchObject({ '@type': 'Person' });
@@ -197,7 +197,7 @@ describe('creations: 3DModel with a GLB encoding', () => {
 describe('agents: SoftwareApplication', () => {
 	beforeEach(() => {
 		sqlMock.mockReset();
-		vi.stubEnv('S3_PUBLIC_DOMAIN', 'https://cdn.three.ws');
+		vi.stubEnv('S3_PUBLIC_DOMAIN', 'https://three.ws/cdn');
 	});
 	afterEach(() => vi.unstubAllEnvs());
 
@@ -246,7 +246,7 @@ describe('agents: SoftwareApplication', () => {
 		const [app] = jsonLdNodes(res.body, 'SoftwareApplication');
 		expect(app).toMatchObject({ name: 'Atlas', applicationCategory: 'AI agent' });
 		expect(app.encoding?.[0]).toMatchObject({
-			contentUrl: 'https://cdn.three.ws/u/abc/body.glb',
+			contentUrl: 'https://three.ws/cdn/u/abc/body.glb',
 			encodingFormat: 'model/gltf-binary',
 		});
 		expect(crumbs(res.body)?.map((c) => c[1])).toEqual(['Home', 'Agents', 'Atlas']);

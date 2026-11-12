@@ -12,7 +12,7 @@ Object.assign(process.env, {
 	DATABASE_URL: 'postgres://test:test@localhost:5432/test',
 	S3_ENDPOINT: 'https://s3.example.com',
 	S3_BUCKET: 'test-bucket',
-	S3_PUBLIC_DOMAIN: 'https://cdn.three.ws',
+	S3_PUBLIC_DOMAIN: 'https://three.ws/cdn',
 	S3_ACCESS_KEY_ID: 'test-key',
 	S3_SECRET_ACCESS_KEY: 'test-secret',
 	APP_ORIGIN: 'https://three.ws',
@@ -90,7 +90,7 @@ describe('searchPublicCreations', () => {
 	it('maps rows with their caption and tags', async () => {
 		rows = [
 			{
-				id: 'a1', prompt: 'camper van', glb_url: 'https://cdn.three.ws/a.glb', preview_image_url: null,
+				id: 'a1', prompt: 'camper van', glb_url: 'https://three.ws/cdn/a.glb', preview_image_url: null,
 				created_at: '2026-11-01T00:00:00Z', remixable: false, remix_royalty_bps: null,
 				creator_username: 'maker', caption: 'A white van.', tags: ['van', 'vehicle'], tag_hit: true,
 			},
@@ -103,8 +103,8 @@ describe('searchPublicCreations', () => {
 describe('searchModels', () => {
 	it('links every model to its page and offers remix only when the creation is remixable', async () => {
 		rows = [
-			{ id: 'r1', prompt: 'a sword', glb_url: 'https://cdn.three.ws/r1.glb', created_at: '2026-11-01T00:00:00Z', remixable: true, remix_royalty_bps: 500, caption: 'A sword.', tags: ['sword'] },
-			{ id: 'n1', prompt: 'a shield', glb_url: 'https://cdn.three.ws/n1.glb', created_at: '2026-11-01T00:00:00Z', remixable: false, caption: null, tags: null },
+			{ id: 'r1', prompt: 'a sword', glb_url: 'https://three.ws/cdn/r1.glb', created_at: '2026-11-01T00:00:00Z', remixable: true, remix_royalty_bps: 500, caption: 'A sword.', tags: ['sword'] },
+			{ id: 'n1', prompt: 'a shield', glb_url: 'https://three.ws/cdn/n1.glb', created_at: '2026-11-01T00:00:00Z', remixable: false, caption: null, tags: null },
 		];
 		const out = await searchModels({ q: 'sword' });
 		expect(out[0].assetUrl).toBe('/m/r1');
