@@ -80,6 +80,7 @@ from google.cloud import storage
 from PIL import Image
 from pydantic import BaseModel, Field
 
+import bake_raster
 import glb_pack
 import pipeline_config
 from request_policy import (
@@ -247,6 +248,9 @@ def _prepare_pipeline_path() -> str:
 
 def _load_pipeline():
     global _pipeline, _memory_baseline
+    # Before anything imports nvdiffrast: BAKE_RASTER_BACKEND=torch bakes with the
+    # pure-PyTorch rasteriser and needs no nvdiffrast in the image at all.
+    bake_raster.install()
     from trellis2.pipelines import Trellis2ImageTo3DPipeline
 
     path = _prepare_pipeline_path()
@@ -745,7 +749,7 @@ def _generate(
         tex_slat_sampler_params=overrides.get("tex_slat", {}),
     )
     mesh = outputs[0]
-    mesh.simplify(16777216)  # nvdiffrast's face limit
+    mesh.simplify(16777216)  # largest face id a float32 rast channel holds exactly
     bake = bake_params(resolution, texture_size, decimation_target)
     glb = o_voxel.postprocess.to_glb(
         vertices=mesh.vertices,

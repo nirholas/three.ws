@@ -54,3 +54,33 @@ def test_build_gate_asserts_o_voxel_resolves_to_the_installed_package():
     # again, instead of a revision shipping that can never load.
     text = DOCKERFILE.read_text()
     assert "find_spec(\"o_voxel\")" in text or "find_spec('o_voxel')" in text
+
+
+def _copied_files() -> set[str]:
+    """Every file name a COPY instruction (with its continuation lines) brings in."""
+    names, in_copy = set(), False
+    for line in DOCKERFILE.read_text().splitlines():
+        stripped = line.strip()
+        if stripped.startswith("COPY "):
+            in_copy = not stripped.startswith("COPY --from")
+            stripped = stripped[5:]
+        if in_copy:
+            names.update(tok for tok in stripped.rstrip("\\").split() if tok.endswith(".py"))
+            in_copy = line.rstrip().endswith("\\")
+    return names
+
+
+def test_bake_rasteriser_ships_and_is_gated_at_build_time():
+    # BAKE_RASTER_BACKEND switches the bake between nvdiffrast and the torch
+    # rasteriser; the module must be in the image and its suite in the build gate.
+    copied = _copied_files()
+    assert {"bake_raster.py", "test_bake_raster.py"} <= copied
+    assert "/app/test_bake_raster.py" in DOCKERFILE.read_text()
+
+
+def test_worker_installs_the_bake_backend_before_the_pipeline_import():
+    # o_voxel.postprocess imports nvdiffrast at module load. install() must run
+    # first so the torch backend works on an image without nvdiffrast.
+    source = DOCKERFILE.with_name("main.py").read_text()
+    body = source.split("def _load_pipeline():", 1)[1]
+    assert body.index("bake_raster.install()") < body.index("from trellis2.pipelines import")
