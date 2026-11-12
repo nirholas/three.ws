@@ -7,7 +7,7 @@
  * including any message the visitor left and where the encounter happened.
  *
  * POST /api/irl/interactions
- *   { pinId, type: 'view'|'tap'|'message'|'pay'|'talk', message?, deviceToken?,
+ *   { pinId, type: 'view'|'tap'|'message'|'pay'|'talk'|'arrive', message?, deviceToken?,
  *     amount?, currencyMint?, network?, payload?, replyTo? }
  *   agent_id + owner are taken from the pin, never the caller. Anonymous-friendly:
  *   viewer attribution falls back to the device token. Repeat 'view's from the
@@ -52,7 +52,9 @@ import { agentPayoutWallets } from '../_lib/agent-payout-wallets.js';
 // the owner. pay — an x402 settlement against the agent (see PAY note below).
 // `talk` marks the opening line of a live conversation with the agent (the /irl
 // Talk panel). Only the event is recorded, never the transcript.
-const TYPES = new Set(['view', 'tap', 'message', 'pay', 'talk']);
+// `arrive` marks a wearer coming within a pin's radius on the /glass lens: logged
+// once per arrival, with device_type 'glasses'.
+const TYPES = new Set(['view', 'tap', 'message', 'pay', 'talk', 'arrive']);
 // The surface the encounter happened on, so an owner can tell an IRL phone tap from a
 // smart-glasses (Frame / G1) encounter. Whitelisted — an unknown value collapses to
 // 'phone' rather than storing arbitrary caller text.
