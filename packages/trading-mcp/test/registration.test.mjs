@@ -12,7 +12,7 @@ import { tradeBody } from '../src/lib/args.js';
 
 const byName = Object.fromEntries(TOOLS.map((t) => [t.name, t]));
 const AGENT = '845e4464-1d17-4cac-8990-be3f72bbc38d';
-const MINT = 'Gif5sJNdu1S9ZhnY9Nz8Ma1JqURnXsiYsN2KjUAx7PLY';
+const MINT = 'THREEsynthetic11111111111111111111111111111';
 
 test('exactly the expected tools are registered', () => {
 	assert.deepEqual(TOOLS.map((t) => t.name).sort(), ['execute_trade', 'list_positions', 'quote_trade']);
