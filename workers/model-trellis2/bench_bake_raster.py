@@ -9,7 +9,9 @@ meshes decoded by ``scripts/forge/decode-glb-mesh.mjs``, and reports per mesh:
 - the largest texel-centre reprojection error (interpolating the UVs must land
   on the texel centre, a direct check of the barycentrics),
 - with ``--backend both``: the share of texels both backends assign to the same
-  face and the largest difference in interpolated 3D position.
+  face, the share only one of them covers, and how far apart the interpolated
+  3D surface points are (on the same face, and p99 and max over every texel
+  both cover).
 
 Usage (one JSON line per mesh on stdout, a summary line last):
 
@@ -112,8 +114,14 @@ def run(args) -> int:
             ida, idb = ra[0, ..., 3], rb[0, ..., 3]
             union = (ida > 0) | (idb > 0)
             both = (ida > 0) & (idb > 0)
-            row["same_face_share"] = round(((ida == idb) & union).sum().item() / max(1, union.sum().item()), 6)
-            row["max_position_delta"] = round((pa - pb)[both & (ida == idb)].abs().max().item(), 8) if both.any() else 0.0
+            n_union = max(1, union.sum().item())
+            row["same_face_share"] = round(((ida == idb) & union).sum().item() / n_union, 6)
+            row["coverage_xor_share"] = round((union & ~both).sum().item() / n_union, 6)
+            row["max_position_delta_same_face"] = round((pa - pb)[both & (ida == idb)].abs().max().item(), 8) if both.any() else 0.0
+            # What the bake samples: the surface point per texel, over every texel both cover.
+            delta = (pa - pb).norm(dim=-1)[both].float()
+            row["position_delta_p99"] = round(torch.quantile(delta[:: max(1, delta.numel() // 1_000_000)], 0.99).item(), 8)
+            row["position_delta_max"] = round(delta.max().item(), 6)
             row["time_ratio_torch_over_nvdiffrast"] = round(row["torch"]["seconds"] / row["nvdiffrast"]["seconds"], 4)
         rows.append(row)
         print(json.dumps(row), flush=True)
@@ -124,6 +132,8 @@ def run(args) -> int:
         summary[f"{name}_max_texel_centre_error_texels"] = max(r[name]["max_texel_centre_error_texels"] for r in rows)
     if len(backends) == 2:
         summary["min_same_face_share"] = min(r["same_face_share"] for r in rows)
+        summary["max_coverage_xor_share"] = max(r["coverage_xor_share"] for r in rows)
+        summary["max_position_delta_p99"] = max(r["position_delta_p99"] for r in rows)
         summary["time_ratio_torch_over_nvdiffrast"] = round(
             summary["torch_total_seconds"] / summary["nvdiffrast_total_seconds"], 4)
     print(json.dumps(summary), flush=True)

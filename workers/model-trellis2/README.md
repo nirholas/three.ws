@@ -131,6 +131,8 @@ backend.
 | `IMAGE_FETCH_TIMEOUT_S` | `30` | Per-attempt image fetch timeout. |
 | `MODEL_LOAD_ATTEMPTS` | `4` | Model-load attempts before the error latches and `/health` returns 503. |
 | `MODEL_LOAD_RETRY_BASE_S`, `MODEL_LOAD_RETRY_CAP_S` | see `main.py` | Load-retry backoff bounds. |
+| `BAKE_RASTER_BACKEND` | `nvdiffrast` | Rasteriser the GLB texture bake uses. `torch` selects the pure-PyTorch rasteriser in `bake_raster.py` (no nvdiffrast needed). See Licence notes. |
+| `BAKE_RASTER_CANDIDATE_BUDGET` | `4194304` | Torch backend only: (texel, triangle) pairs tested per pass, which bounds its scratch memory (about 200 MB at the default). |
 
 The platform side reads `MODEL_TRELLIS2_URL` (this service's URL) and
 `GCP_RECONSTRUCTION_KEY` (the bearer secret) from the `three-ws-api` environment.
@@ -145,6 +147,8 @@ skips it, so image-to-3D keeps working through the chain behind it.
 | `request_policy.py` | Resolution presets, tier mapping, bake clamps, fetch-retry policy. Pure logic. |
 | `pipeline_config.py` | Rewrites the upstream `pipeline.json` to the licence-clean model set below. |
 | `glb_pack.py` | Alpha-mode decision and meshopt packing through `gltfpack`. |
+| `bake_raster.py` | One bake-rasteriser interface over nvdiffrast or a pure-PyTorch rasteriser, picked by `BAKE_RASTER_BACKEND`. Vendored byte-identical into `model-trellis`, `model-pixal3d` and `model-lato2` with `test_bake_raster.py`. |
+| `bench_bake_raster.py` | Replays the o_voxel UV bake on real meshes (decoded with `scripts/forge/decode-glb-mesh.mjs`) and compares backends for time, coverage and per-texel agreement. |
 | `stage_weights.sh` | One-time mirror of every upstream weight into `gs://three-ws-model-weights/trellis2-4b`. |
 | `worker_security.py`, `instance_health.py`, `storage_backend.py` | Vendored shared modules, kept byte-identical by `npm run check:vendored`. |
 | `test_image_layout.py` | Repo-side guard that `PYTHONPATH` never shadows a compiled extension (O-Voxel) with its source tree. |
@@ -196,15 +200,19 @@ commercially usable and nothing sits behind a gate we cannot satisfy:
   (`ss_dec`), as the upstream pipeline references it by that name.
 
 `pipeline_config.py` applies the first two swaps by rewriting the pipeline config
-at load time; the upstream file stays untouched in the weights bucket. **Open licence risk, owner decision: `nvdiffrast`.** The texture-bake rasteriser
+at load time; the upstream file stays untouched in the weights bucket. **`nvdiffrast` licence and the replacement.** The texture-bake rasteriser
 that upstream `o-voxel` requires, NVIDIA's `nvdiffrast`, is under the NVIDIA Source
 Code License (1-Way Commercial). Section 3.3 limits use of the Work to
-non-commercial research or evaluation, with commercial use reserved to NVIDIA. The
-v1 lane (`../model-trellis`) already ships the same dependency, so this worker does
-not widen the exposure, but it does not remove it either. The paths to close it are
-a commercial grant from NVIDIA for `nvdiffrast`, or replacing the bake rasteriser
-with an MIT or Apache implementation. No source or weights are redistributed, only
-generated GLBs.
+non-commercial research or evaluation, with commercial use reserved to NVIDIA.
+`bake_raster.py` closes this: `BAKE_RASTER_BACKEND=torch` bakes with a pure-PyTorch
+rasteriser written from the rasterisation maths (no nvdiffrast code), and works on
+an image without nvdiffrast. On 10 real TRELLIS.2 meshes it matches nvdiffrast's
+coverage to within 0.02 points and differs only on edge texels inside nvdiffrast's
+subpixel snapping band. The bake step is 3.4x slower at 2048 (about 63 ms per
+job, roughly 0.1% of a job), so the default stays `nvdiffrast` until the torch
+backend has run in production. Full benchmark and migration path:
+[forge-3d-adoption addendum](../../docs/research/forge-3d-adoption-2026-10-30.md#addendum-2026-11-12-nvdiffrast-licence-and-the-replacement-bake-rasteriser).
+No source or weights are redistributed, only generated GLBs.
 
 Known limit, measured 2026-11-11 on image `server:fix11111641` (8 vCPU, 32 GiB, L4):
 `512` finishes in about 50 s of GPU time. `1024` and `1536` complete all three

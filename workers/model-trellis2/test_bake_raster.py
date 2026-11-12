@@ -357,6 +357,32 @@ def _unit_sphere(n_lat=24, n_lon=48):
     return torch.tensor(verts), torch.tensor(faces, dtype=torch.int32)
 
 
+# nvdiffrast snaps vertices to a fixed-point subpixel grid before it rasterises, so
+# its coverage edges sit up to a few hundredths of a pixel off the exact ones (the
+# real-mesh benchmark measured at most 0.044 px). The torch backend tests against
+# the exact edges. Parity therefore means: every pixel where the two disagree lies
+# within that snapping band of an edge, the torch backend never picks a triangle
+# that misses the pixel centre, and wherever both pick the same triangle they
+# agree to float precision.
+SNAP_BAND_PX = 1 / 16
+
+
+def _edge_distance_px(pos, faces, face_ids, ys, xs, height, width):
+    """Signed distance in pixels from each pixel centre to the nearest edge of its face (> 0 inside)."""
+    v = pos[0, faces[face_ids].long()]
+    sx = (v[..., 0] / v[..., 3] + 1) * width / 2
+    sy = (v[..., 1] / v[..., 3] + 1) * height / 2
+    px, py = xs.double() + 0.5, ys.double() + 0.5
+    sx, sy = sx.double(), sy.double()
+    area = (sx[:, 1] - sx[:, 0]) * (sy[:, 2] - sy[:, 0]) - (sy[:, 1] - sy[:, 0]) * (sx[:, 2] - sx[:, 0])
+    dist = []
+    for a, b in ((0, 1), (1, 2), (2, 0)):
+        ex, ey = sx[:, b] - sx[:, a], sy[:, b] - sy[:, a]
+        cross = ex * (py - sy[:, a]) - ey * (px - sx[:, a])
+        dist.append(cross * torch.sign(area) / torch.sqrt(ex * ex + ey * ey))
+    return torch.stack(dist, -1).min(-1).values
+
+
 @pytest.mark.skipif(not _HAS_NVDR, reason="nvdiffrast and CUDA are both required for the cross-backend check")
 def test_torch_backend_matches_nvdiffrast_on_a_unit_mesh():
     import nvdiffrast.torch as nvdr
@@ -366,10 +392,32 @@ def test_torch_backend_matches_nvdiffrast_on_a_unit_mesh():
     cam = torch.tensor([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, -3.0], [0, 0, 0, 1]], device="cuda")
     proj = torch.tensor([[1.6, 0, 0, 0], [0, 1.6, 0, 0], [0, 0, -1.02, -0.202], [0, 0, -1, 0]], device="cuda")
     pos = (torch.cat([verts, torch.ones_like(verts[:, :1])], -1) @ (proj @ cam).T).unsqueeze(0).contiguous()
-    res = (256, 256)
-    ref, _ = nvdr.rasterize(nvdr.RasterizeCudaContext(), pos, faces, resolution=res)
-    got, _ = TB.rasterize(TB.RasterizeCudaContext(), pos, faces, resolution=res)
-    same = (ref[..., 3] == got[..., 3]) & (ref[..., 3] > 0)
-    either = (ref[..., 3] > 0) | (got[..., 3] > 0)
-    assert same.sum() / either.sum() > 0.995
-    assert (ref[..., :3][same] - got[..., :3][same]).abs().max() < 1e-4
+    height, width = 256, 256
+    ref, _ = nvdr.rasterize(nvdr.RasterizeCudaContext(), pos, faces, resolution=[height, width])
+    got, _ = TB.rasterize(TB.RasterizeCudaContext(), pos, faces, resolution=[height, width])
+    ri, gi = ref[0, ..., 3].long(), got[0, ..., 3].long()
+    either = (ri > 0) | (gi > 0)
+    same = (ri == gi) & (ri > 0)
+    assert same.sum() / either.sum() > 0.99
+
+    # Every pixel the torch backend covers has its centre inside the chosen triangle.
+    ys, xs = torch.nonzero(gi > 0, as_tuple=True)
+    assert _edge_distance_px(pos, faces, gi[ys, xs] - 1, ys, xs, height, width).min() > -1e-4
+
+    # Every disagreement (other triangle, or covered by one backend only) is an edge
+    # pixel inside nvdiffrast's snapping band.
+    for ids, mask in ((ri, either & ~same & (ri > 0)), (gi, either & ~same & (gi > 0))):
+        ys, xs = torch.nonzero(mask, as_tuple=True)
+        dist = _edge_distance_px(pos, faces, ids[ys, xs] - 1, ys, xs, height, width)
+        assert dist.abs().max() < SNAP_BAND_PX
+
+    # Same triangle: barycentrics and depth agree to float precision.
+    assert (ref[0, ..., :2][same] - got[0, ..., :2][same]).abs().max() < 1e-4
+    assert (ref[0, ..., 2][same] - got[0, ..., 2][same]).abs().max() < 1e-5
+
+    # What a bake samples: interpolated surface points over every pixel both cover.
+    both = (ri > 0) & (gi > 0)
+    a = nvdr.interpolate(verts[None].contiguous(), ref, faces)[0][0]
+    b = nvdr.interpolate(verts[None].contiguous(), got, faces)[0][0]
+    err = (a - b).norm(dim=-1)[both]
+    assert torch.quantile(err, 0.999) < 1e-3 and err.max() < 1e-2
