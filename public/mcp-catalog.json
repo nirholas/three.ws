@@ -7629,6 +7629,10 @@
 					"search": {
 						"type": "string",
 						"description": "Optional substring filter over the words and their descriptions."
+					},
+					"lang": {
+						"type": "string",
+						"description": "Optional sign language pack (ISO 639-3), default \"ase\" (American Sign Language). A pack other than ASL performs only signs approved by fluent reviewers; an unavailable pack is an error that lists the available ones."
 					}
 				},
 				"additionalProperties": false
@@ -7686,6 +7690,10 @@
 						"type": "number",
 						"default": 45,
 						"description": "Cap the utterance length; longer text truncates at a word boundary and is flagged."
+					},
+					"lang": {
+						"type": "string",
+						"description": "Optional sign language pack (ISO 639-3), default \"ase\" (American Sign Language). A pack other than ASL performs only signs approved by fluent reviewers; an unavailable pack is an error that lists the available ones."
 					},
 					"include_clip": {
 						"type": "boolean",
