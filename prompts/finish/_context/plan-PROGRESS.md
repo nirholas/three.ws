@@ -149,3 +149,5 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-12 721-plan-forge-ultratex-texture-rung.md RE-VERIFIED (kept, owner-gated): 8 worker contract tests and routing test pass, default tier unchanged; remaining, owner only: BFL commercial license or approve a 4B LoRA training run, then the 20-mesh A/B and the flag.
 2026-11-12 262-plan-i18n-restore-language-picker-manifest.md OWNER-GATED: manifest lists 7 locales, ~78 still up to 1114 keys behind; Vertex probe 403 on unpaid GCP billing and no API key exists; owner pays billing or adds GOOGLE_API_KEY, then runs i18n:translate shards.
 2026-11-12 737-plan-hq-agent-defi-tools-and-context-bridge.md RE-VERIFIED (kept, owner-gated): 37 hq node tests and 7 hq-host tests pass; remaining is the real-browser check, live agent-tools check and HQ deploy
+2026-11-12 750-plan-x402-batch-settlement-durable-vouchers.md no commit: Step 0 only, package API mapped (BatchOperationStore + ChannelState stores); build not started.
+2026-11-12 740-plan-platform-opentelemetry-gcp-traces.md GATED: tracing shipped in 112812796; worker redeploy and live Forge trace remain owner-gated (deploy).

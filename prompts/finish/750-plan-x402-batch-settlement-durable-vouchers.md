@@ -1,5 +1,7 @@
 # x402 batch-settlement on Solana with a Postgres voucher store and a scheduled redemption worker
 
+**Status (2026-11-12, w512-D):** Not started on code. Step 0 re-measured: nothing implements batch settlement yet. `@x402/svm` ships `dist/cjs/batch-settlement/{client,facilitator,server}`; the store surface is `BatchOperationStore` (get, reserve, complete, release) plus a separate channel-state store (`ChannelState`, status open|closing|distributed) and `BatchSvmScheme` config (`operationStore`, `operator`). The next worker should read those .d.ts files first; the work is a multi-session build (migration, Postgres stores for both interfaces, paidEndpoint hooks, redeem cron, local facilitator, devnet proof). Owner of the mainnet/flag-on step: owner.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/750-plan-x402-batch-settlement-durable-vouchers.md`.
 
 **Priority:** P2, new capability with clear value (score 44 of 100 inside the tier). **Area:** x402. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
