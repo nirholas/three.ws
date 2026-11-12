@@ -681,6 +681,7 @@ const NETWORK_METER_PROVIDER = {
 	DeepSeek: 'deepseek',
 	DashScope: 'dashscope',
 	'IBM watsonx.ai': 'watsonx',
+	Microsoft: 'phi',
 };
 
 /** The ledger provider name for a spec's native lane. */
