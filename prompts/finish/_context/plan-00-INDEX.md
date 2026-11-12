@@ -114,7 +114,6 @@ On 2026-11-03 every tracked markdown file in this repository (2969 of them) was 
 | 742 | [The Agent Screen casting pool is deployed, wired to the API secret, and proven end to end](../742-plan-agent-screen-pool-deploy-and-verify.md) | agent-screen | 45 |
 | 743 | [The GLB editor reaches 1.0: <agent-3d editor> works, every edit survives export, and hosts get DOM events](../743-plan-avatar-editor-attribute-and-export-fidelity.md) | avatar | 44 |
 | 744 | [One selfie to a photoreal animatable avatar through a new LHM GPU lane that renders as splats](../744-plan-avatar-lhm-photoreal-selfie-lane.md) | avatar | 44 |
-| 745 | [Parametric avatars carry texture layers (complexion, makeup, tattoos, decals) over the canonical UVs](../745-plan-avatar-parametric-texture-layers.md) | avatar | 44 |
 | 746 | [HQ gets data-driven protocol dashboards (Solana first), an oracle deviation monitor and a DeFi risk heatmap](../746-plan-hq-protocol-dashboards-and-risk-heatmap.md) | hq | 44 |
 | 747 | [Memory file layer gets real semantic recall instead of substring matching](../747-plan-memory-file-layer-semantic-recall.md) | memory | 44 |
 | 748 | [Run the catalog vision gate on its own cron so seeded models are judged on appearance, not just structure](../748-plan-seed-vision-gate-own-cron.md) | forge | 44 |

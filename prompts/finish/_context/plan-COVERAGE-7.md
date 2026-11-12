@@ -103,7 +103,7 @@ Rows `robinhood/robinhood-chain-examples/examples/03-portfolio-valuation/README.
 | `specs/MEMORY_SPEC.md` | no-open-work | shipped spec or reference, no open work found |
 | `specs/okx-agent-payments.md` | covered-by-existing:914-okx-ai-07-final-audit-and-watch.md | OKX seller contract shipped (api/_lib/x402-xlayer-okx.js); closure tracked by OKX orders |
 | `specs/OPEN_INFERENCE_PROTOCOL.md` | no-open-work | v0.1 out-of-scope list is deliberate, no committed work |
-| `specs/PARAMETRIC_AVATAR.md` | order | [720](../720-plan-avatar-parametric-garment-morph-conform.md), [745](../745-plan-avatar-parametric-texture-layers.md), [761](../761-plan-avatar-parametric-identity-morph-fold.md), [775](../775-plan-avatar-animation-identity.md). Reserved table: conform, layers, identity-morph fold, animation identity |
+| `specs/PARAMETRIC_AVATAR.md` | order | [720](../720-plan-avatar-parametric-garment-morph-conform.md), [761](../761-plan-avatar-parametric-identity-morph-fold.md), [775](../775-plan-avatar-animation-identity.md). Reserved table: conform, layers, identity-morph fold, animation identity |
 | `specs/PERMISSIONS_SPEC.md` | no-open-work | shipped spec or reference, no open work found |
 | `specs/PORTAL_WORLD.md` | no-open-work | shipped spec or reference, no open work found |
 | `specs/PRINT_PIPELINE.md` | no-open-work | shipped spec or reference, no open work found |
