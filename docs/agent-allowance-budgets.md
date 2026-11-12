@@ -72,10 +72,20 @@ All under `/api/agents/:id/solana/allowance`, owner only, CSRF protected.
 ## Verifying it yourself (devnet only)
 
 ```bash
-node scripts/allowance-devnet-proof.mjs
+node scripts/allowance-devnet-proof.mjs --funder ~/.config/solana/devnet.json
 ```
 
 The script generates throwaway keys and a throwaway mint, then runs create, pull within the cap, an over-cap pull (refused by our guard and by the program), revoke, and a post-revoke pull (refused by both). It prints every signature and exits non-zero if any assertion fails. It refuses to run against any cluster whose genesis is not devnet. It signs nothing on mainnet.
+
+The public devnet RPC faucet is closed (it answers 410), so `--funder` pays the two throwaway keys (1.5 SOL in total) from any devnet keypair you topped up once at https://faucet.solana.com. Without `--funder` the script falls back to `requestAirdrop` and exits with code 3 and the same instruction when that fails.
+
+For fast iteration, run it against a local validator that clones the real program from devnet. The success line names the local validator, so the output cannot be mistaken for a devnet transcript:
+
+```bash
+solana-test-validator --reset --url https://api.devnet.solana.com \
+  --clone-upgradeable-program De1egAFMkMWZSN5rYXRj9CAdheBamobVNubTsi9avR44
+DEVNET_RPC_URL=http://127.0.0.1:8899 LOCAL_VALIDATOR=1 node scripts/allowance-devnet-proof.mjs
+```
 
 Unit and guard tests: `tests/onchain-allowance.test.js` and the allowance block in `tests/agent-guard-endpoint.test.js`.
 

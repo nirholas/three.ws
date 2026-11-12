@@ -8,8 +8,15 @@
 // Prints every signature. Refuses to run against anything but devnet.
 //
 //   node scripts/allowance-devnet-proof.mjs
+//   node scripts/allowance-devnet-proof.mjs --funder ~/.config/solana/devnet.json
 //   DEVNET_RPC_URL=https://... node scripts/allowance-devnet-proof.mjs
+//
+// The public devnet RPC faucet is closed (410) and provider faucets rate-limit,
+// so --funder pays the two throwaway keys from any devnet keypair you funded
+// once at https://faucet.solana.com (1.6 SOL is enough). Without it the script
+// falls back to requestAirdrop, which works on a local validator.
 
+import { readFileSync } from 'node:fs';
 import { Connection, Keypair, LAMPORTS_PER_SOL, SystemProgram, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import { createMint, getOrCreateAssociatedTokenAccount, mintTo } from '@solana/spl-token';
 import {
@@ -47,15 +54,30 @@ const step = (name, data) => {
 	for (const [k, v] of Object.entries(data)) console.log(`   ${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`);
 };
 
+const funderIdx = process.argv.indexOf('--funder');
+const funderPath = funderIdx > -1 ? process.argv[funderIdx + 1] : null;
+const funder = funderPath
+	? Keypair.fromSecretKey(Uint8Array.from(JSON.parse(readFileSync(funderPath.replace(/^~/, process.env.HOME || ''), 'utf8'))))
+	: null;
+
 async function fund(kp, sol) {
+	const lamports = Math.round(sol * LAMPORTS_PER_SOL);
+	if (funder) {
+		const tx = new Transaction().add(SystemProgram.transfer({ fromPubkey: funder.publicKey, toPubkey: kp.publicKey, lamports }));
+		await sendAndConfirmTransaction(conn, tx, [funder], { commitment: 'confirmed' });
+		return;
+	}
 	for (let attempt = 0; attempt < 4; attempt++) {
 		try {
-			const sig = await conn.requestAirdrop(kp.publicKey, Math.round(sol * LAMPORTS_PER_SOL));
+			const sig = await conn.requestAirdrop(kp.publicKey, lamports);
 			const bh = await conn.getLatestBlockhash();
 			await conn.confirmTransaction({ signature: sig, ...bh }, 'confirmed');
 			return;
 		} catch (e) {
-			if (attempt === 3) throw e;
+			if (attempt === 3) {
+				console.error(`airdrop failed: ${e?.message}\nFund a devnet keypair once at https://faucet.solana.com and rerun with --funder <keypair json>.`);
+				process.exit(3);
+			}
 			await new Promise((r) => setTimeout(r, 2500 * (attempt + 1)));
 		}
 	}
@@ -79,9 +101,9 @@ async function simulateRejection(tx) {
 
 const owner = Keypair.generate();
 const agent = Keypair.generate();
-await fund(owner, 1.5);
-await fund(agent, 0.5);
-step('keys', { owner: owner.publicKey.toBase58(), agent: agent.publicKey.toBase58(), rpc: RPC });
+await fund(owner, 1.2);
+await fund(agent, 0.3);
+step('keys', { owner: owner.publicKey.toBase58(), agent: agent.publicKey.toBase58(), funder: funder ? funder.publicKey.toBase58() : 'airdrop', rpc: RPC });
 
 const mint = await createMint(conn, owner, owner.publicKey, null, DECIMALS);
 const ownerAta = await getOrCreateAssociatedTokenAccount(conn, owner, mint, owner.publicKey);
@@ -134,5 +156,5 @@ if (failures.length) {
 	console.error('\nFAILED:\n - ' + failures.join('\n - '));
 	process.exit(1);
 }
-console.log('\nOK: all five lifecycle assertions held on devnet');
+console.log(`\nOK: all five lifecycle assertions held on ${local ? 'a local validator running the devnet program' : 'devnet'}`);
 console.log(JSON.stringify({ signatures: { create: createSig, pull: pullSig, revoke: revokeSig } }, null, 2));
