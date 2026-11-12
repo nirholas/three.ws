@@ -357,6 +357,7 @@
 .lt-slider label { color: var(--ink); }
 .lt-default { display: block; color: var(--ink-faint); font-size: var(--text-xs); }
 .lt-slider input[type='range'] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+.lt-slider input[type='range']:hover { filter: brightness(1.15); }
 .lt-slider output { font-family: var(--font-mono); color: var(--ink-bright); text-align: right; }
 
 .lt-run { border-top: 1px solid var(--stroke); margin-top: var(--space-sm); padding-top: var(--space-xs); }

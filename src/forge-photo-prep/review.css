@@ -232,6 +232,7 @@
 	cursor: pointer;
 	width: fit-content;
 }
+.pp-toggle:hover { color: var(--ink-bright); }
 .pp-toggle input {
 	accent-color: var(--accent);
 	width: 1rem;

@@ -85,9 +85,11 @@
 	color: #a1a1aa;
 	font-weight: 500;
 }
-/* Fixed light green, not var(--success): the pill stays dark in both themes and
-   the light theme maps --success to a deep green for white canvases. */
-.twg-pill.is-complete .twg-pill-count { color: #4ade80; }
+/* The pill stays dark in both themes, so it pins --success to the dark-theme
+   light green locally; the light theme maps --success to a deep green meant for
+   white canvases, which would vanish on the dark pill. */
+.twg-pill { --success: #4ade80; }
+.twg-pill.is-complete .twg-pill-count { color: var(--success); }
 .twg-sr-only {
 	position: absolute;
 	width: 1px;

@@ -2184,23 +2184,23 @@
 			   accent-tinted "level up" affordance: clearly more inviting than the
 			   ghost buttons, but it yields visual primacy to the solid "Make
 			   another" CTA beside it. Hidden by JS once the result is already High. */
-			.btn-refine {
+			.forge-refine {
 				color: var(--accent);
 				background: var(--accent-soft);
 				border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
 			}
-			.btn-refine:hover {
+			.forge-refine:hover {
 				background: color-mix(in srgb, var(--accent) 18%, transparent);
 				box-shadow: 0 0 0 3px var(--accent-soft);
 			}
-			.btn-refine .refine-arrow {
+			.forge-refine .refine-arrow {
 				transition: transform var(--duration-fast) var(--ease-standard);
 			}
-			.btn-refine:hover .refine-arrow {
+			.forge-refine:hover .refine-arrow {
 				transform: translateY(-2px);
 			}
 			@media (prefers-reduced-motion: reduce) {
-				.btn-refine .refine-arrow {
+				.forge-refine .refine-arrow {
 					transition: none;
 				}
 			}
@@ -4527,7 +4527,7 @@
 								Place IRL
 							</a>
 							<button
-								class="btn btn--primary btn-refine is-hidden"
+								class="btn btn--primary forge-refine is-hidden"
 								type="button"
 								id="refine"
 								title="Re-run this exact prompt at a higher quality tier"
