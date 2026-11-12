@@ -31,6 +31,14 @@ export const STARTER_CAPS = Object.freeze({
 });
 
 /**
+ * The platform ceiling on a Follow's lifetime spend cap (spend_cap_sol). A
+ * follow is non-custodial, but the cap is the one number a follower sets at the
+ * tap, so it is bounded server side: a mistyped extra zero cannot authorize a
+ * relationship larger than this.
+ */
+export const COPY_MAX_SPEND_CAP_SOL = 25;
+
+/**
  * Why a normalized subscription breaks the starter caps, or null. Pure.
  * @param {object} v    normalized value (normalizeSubscriptionInput().value)
  * @param {object} raw  the raw request (for the explicit risk acknowledgement)
@@ -99,6 +107,18 @@ export function normalizeSubscriptionInput(raw = {}) {
 		return { ok: false, error: 'telegram_chat_id must be a numeric Telegram chat ID' };
 	}
 
+	// Lifetime spend cap (null = uncapped). A Follow from an agent page sends
+	// follow: true and must carry one: that is the promise of the button.
+	const capRaw = raw.spend_cap_sol;
+	const hasCap = !(capRaw == null || capRaw === '');
+	const spendCap = hasCap ? Number(capRaw) : null;
+	if (raw.follow === true && !hasCap) return { ok: false, error: 'spend_cap_sol is required to follow an agent' };
+	if (hasCap) {
+		if (!Number.isFinite(spendCap) || spendCap <= 0) return { ok: false, error: 'spend_cap_sol must be greater than 0' };
+		if (spendCap > COPY_MAX_SPEND_CAP_SOL) return { ok: false, error: `spend_cap_sol cannot exceed ${COPY_MAX_SPEND_CAP_SOL} SOL` };
+		if (cap > spendCap) return { ok: false, error: 'per_trade_cap_sol cannot exceed spend_cap_sol' };
+	}
+
 	const value = {
 		sizing_rule: sizing,
 		fixed_sol: fixed,
@@ -116,6 +136,7 @@ export function normalizeSubscriptionInput(raw = {}) {
 		max_drawdown_pct: maxDrawdownPct,
 		perf_fee_bps: perfBps,
 		telegram_chat_id: telegramChatId,
+		spend_cap_sol: spendCap,
 	};
 	if (raw.starter === true) {
 		const violation = starterCapViolation(value, raw);
@@ -145,9 +166,10 @@ export function rawOrderSol(sub, { leaderEntrySol = 0, copierBalanceSol = null }
  * @param {number} [p.copierBalanceSol]  copier's spendable SOL (required only for pct_balance sizing).
  * @param {number} [p.spentTodaySol]     SOL already fanned out for this sub today.
  * @param {number} [p.openCopies]        copier's current pending intents on this sub.
+ * @param {number} [p.spentCapSol]       SOL committed against the sub's spend_cap_sol since it was set.
  * @returns {{ action:'copy'|'skip', direction:'buy'|'sell', order_sol?:number, reason?:string, detail?:string }}
  */
-export function planCopyOrder({ subscription: sub, position, coin = null, copierBalanceSol = null, spentTodaySol = 0, openCopies = 0 }) {
+export function planCopyOrder({ subscription: sub, position, coin = null, copierBalanceSol = null, spentTodaySol = 0, openCopies = 0, spentCapSol = 0 }) {
 	const direction = position.direction === 'sell' ? 'sell' : 'buy';
 
 	if (sub.status !== 'active') return skip('subscription_inactive', 'Subscription is not active.');
@@ -178,6 +200,17 @@ export function planCopyOrder({ subscription: sub, position, coin = null, copier
 	const remainingDaily = sub.daily_budget_sol - n(spentTodaySol);
 	if (remainingDaily <= 0) return skip('daily_budget_spent', 'Daily copy budget is already used up.');
 	order = Math.min(order, remainingDaily);
+
+	// Lifetime spend cap: never size past it. A copy the remaining cap cannot
+	// cover is skipped whole rather than shrunk, so the follower sees exactly
+	// which trade their cap declined instead of a silently smaller fill.
+	if (sub.spend_cap_sol != null) {
+		const remainingCap = round6(n(sub.spend_cap_sol) - n(spentCapSol));
+		if (remainingCap <= 0) return skip('spend_cap_reached', `Your ${n(sub.spend_cap_sol)} SOL follow cap is fully used.`);
+		if (order > remainingCap) {
+			return skip('spend_cap_exceeded', `This ${round6(order)} SOL copy is more than the ${remainingCap} SOL left on your follow cap.`);
+		}
+	}
 
 	if (order < sub.min_order_sol) {
 		return skip('below_min_order', `Sized order ${order.toFixed(4)} SOL is below your ${sub.min_order_sol} SOL minimum.`);

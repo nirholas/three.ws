@@ -9,7 +9,8 @@
 // records the intent — the copier acts from their own wallet.
 //
 //   BUY  fanout: a leader opens/buys → size each subscriber's order, clamp to
-//                their per-trade cap + remaining daily budget, gate on coin safety,
+//                their per-trade cap + remaining daily budget, skip it if their
+//                lifetime follow cap cannot cover it, gate on coin safety,
 //                and insert a pending intent (or a 'skipped' row with reason).
 //   SELL fanout (sniper only): a leader closes → mirror exit ONLY to copiers who
 //                acted on the matching buy. Oracle sells are not modelled (there
@@ -243,6 +244,22 @@ export async function activeSubscriptionsByLeader(leaderIds, network, stats) {
 	return byLeader;
 }
 
+// SOL committed against each capped subscription's lifetime spend cap: the
+// planned size of every pending or acted buy intent created since the cap was
+// set. One query per fanout pass; uncapped subscriptions never appear.
+async function capSpendBySubscription(network) {
+	const rows = await sql`
+		select e.subscription_id, coalesce(sum(e.planned_sol), 0) as spent
+		from copy_executions e
+		join copy_subscriptions s on s.id = e.subscription_id
+		where s.network = ${network} and s.spend_cap_sol is not null
+		  and e.direction = 'buy' and e.status in ('pending', 'acted')
+		  and e.created_at >= coalesce(s.spend_cap_set_at, s.created_at)
+		group by e.subscription_id
+	`;
+	return new Map(rows.map((r) => [r.subscription_id, Number(r.spent) || 0]));
+}
+
 async function fanoutBuys(network, stats) {
 	const positions = await sql`
 		select p.id, p.agent_id, p.mint, p.symbol, p.name, p.entry_quote_lamports, p.buy_sig, p.opened_at
@@ -273,6 +290,7 @@ async function fanoutBuys(network, stats) {
 	`;
 	const spent = new Map(spendRows.map((r) => [r.subscription_id, Number(r.spent) || 0]));
 	const open = new Map(openRows.map((r) => [r.subscription_id, Number(r.open) || 0]));
+	const capSpent = await capSpendBySubscription(network);
 
 	// Active subscriptions for every leader in this batch, fetched once and grouped
 	// by leader_agent_id: replaces a per-position query. Self-copy rows are dropped
@@ -300,6 +318,7 @@ async function fanoutBuys(network, stats) {
 				coin,
 				spentTodaySol: spent.get(sub.id) || 0,
 				openCopies: open.get(sub.id) || 0,
+				spentCapSol: capSpent.get(sub.id) || 0,
 			});
 			// Alpha-drip: price this copier's seat, apply the tier's capacity cap, and
 			// work out when the intent is revealed to them. The row itself is written
@@ -335,6 +354,7 @@ async function fanoutBuys(network, stats) {
 				if (status === 'pending') {
 					spent.set(sub.id, (spent.get(sub.id) || 0) + (planned || 0));
 					open.set(sub.id, (open.get(sub.id) || 0) + 1);
+					capSpent.set(sub.id, (capSpent.get(sub.id) || 0) + (planned || 0));
 					// Telegram notify copier of the new buy intent (best-effort, async).
 					// A dripped seat stays quiet here; releaseDueDrips sends it when
 					// the intent is actually revealed, so the alert cannot leak the
@@ -447,6 +467,7 @@ async function fanoutOracleBuys(network, stats) {
 	`;
 	const spent = new Map(spendRows.map((r) => [r.subscription_id, Number(r.spent) || 0]));
 	const open = new Map(openRows.map((r) => [r.subscription_id, Number(r.open) || 0]));
+	const capSpent = await capSpendBySubscription(network);
 
 	// Active subscriptions for every acting agent in this batch, fetched once and
 	// grouped by leader_agent_id: replaces a per-action query. Same two guards as
@@ -474,6 +495,7 @@ async function fanoutOracleBuys(network, stats) {
 				coin,
 				spentTodaySol: spent.get(sub.id) || 0,
 				openCopies: open.get(sub.id) || 0,
+				spentCapSol: capSpent.get(sub.id) || 0,
 			});
 			// Alpha-drip: same seat pricing and capacity cap as the sniper path.
 			const release = decision.action === 'copy'
@@ -511,6 +533,7 @@ async function fanoutOracleBuys(network, stats) {
 				if (status === 'pending') {
 					spent.set(sub.id, (spent.get(sub.id) || 0) + (planned || 0));
 					open.set(sub.id, (open.get(sub.id) || 0) + 1);
+					capSpent.set(sub.id, (capSpent.get(sub.id) || 0) + (planned || 0));
 					// Telegram notify copier of the new oracle-sourced buy intent (best-effort).
 					// Held back for a dripped seat; releaseDueDrips sends it on reveal.
 					if (sub.telegram_chat_id && release?.notifyNow !== false) {
