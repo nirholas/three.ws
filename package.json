@@ -833,7 +833,7 @@
 		"manifold-3d": "^3.5.4",
 		"marked": "^18.1.2",
 		"meshoptimizer": "^1.2.0",
-		"mppx": "^0.17.0",
+		"mppx": "^0.17.6",
 		"multiformats": "^14.0.5",
 		"n8ao": "^2.0.1",
 		"nanoid": "^6.0.2",
