@@ -1,5 +1,7 @@
 # Move Redis-only money ledgers to Postgres and ship an accounting export
 
+**Status (2026-11-12):** re-verified, nothing left to build. `npx vitest run tests/vanity-bounty-store.test.js tests/accounting-export.test.js` passes (13 tests, covering the 401 and 200 admin paths). Owner steps remaining: (1) `git push threews main`, then `npm run deploy:gcp:full`; (2) after deploy, curl `/api/admin/accounting-export` with an admin session (no production user has is_admin yet) to see the live 200.
+
 **Status (2026-11-10):** built and committed in c7eb4290e (Postgres bounty store, migration 20261105120000 applied, backfill script, export script and admin route, docs, changelog); 50 related tests pass. The Redis backfill was run for real from a one-off Cloud Run job on the live image (VPC connector, job deleted afterwards): 2 Redis records, 2 inserted, and `vanity_bounties` now holds 2 open rows (idempotent, `on conflict do nothing`, no Redis keys deleted). The export prints only its header row for 2026 because production has no withdrawals or revenue events and the 2 bounties have no escrow/payout/refund timestamps in range. Remaining, owner-owned: (1) a live 200 from the admin route needs an admin account (no production user has is_admin, the QA login has no wallet; the 200 path is covered by tests/accounting-export.test.js); (2) deploy (`git push threews main`, then `npm run deploy:gcp:full`).
 
 
