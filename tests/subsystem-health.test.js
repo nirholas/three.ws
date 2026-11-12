@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { gatherSubsystemHealth, classifySniperBeat } from '../api/_lib/ops/subsystem-health.js';
+import { gatherSubsystemHealth, classifySniperBeat, classifyAgoraEconomy } from '../api/_lib/ops/subsystem-health.js';
 import { cacheSet, cacheDel } from '../api/_lib/cache.js';
 import { Keypair } from '@solana/web3.js';
 
@@ -715,5 +715,45 @@ describe('alerts_push subsystem', () => {
 		const health = await gatherSubsystemHealth({ probeDb: false });
 		expect(sub(health, 'alerts_push').status).toBe('unknown');
 		expect(health.degraded).not.toContain('alerts_push');
+	});
+});
+
+describe('agora_economy subsystem', () => {
+	const now = Date.parse('2026-11-12T12:00:00Z');
+	const ago = (ms) => new Date(now - ms).toISOString();
+
+	it('is ok when the newest activity is under 30 minutes old', () => {
+		const r = classifyAgoraEconomy(ago(29 * 60_000), now);
+		expect(r.status).toBe('ok');
+		expect(r.name).toBe('agora_economy');
+	});
+
+	it('is degraded between 30 minutes and 6 hours', () => {
+		expect(classifyAgoraEconomy(ago(31 * 60_000), now).status).toBe('degraded');
+		expect(classifyAgoraEconomy(ago(5.9 * 3_600_000), now).status).toBe('degraded');
+	});
+
+	it('is down beyond 6 hours and names the daemon', () => {
+		const r = classifyAgoraEconomy(ago(7 * 3_600_000), now);
+		expect(r.status).toBe('down');
+		expect(r.hint).toMatch(/agora-citizens/);
+	});
+
+	it('is unknown when nothing was ever recorded', () => {
+		expect(classifyAgoraEconomy(null, now).status).toBe('unknown');
+	});
+
+	it('is advisory: a down economy degrades the roll-up but never takes it down', async () => {
+		dbState.rows = [{ last_at: new Date(Date.now() - 48 * 3_600_000).toISOString() }];
+		try {
+			const health = await gatherSubsystemHealth({ probeDb: true });
+			const agora = sub(health, 'agora_economy');
+			expect(agora.status).toBe('down');
+			expect(agora.advisory).toBe(true);
+			const others = health.subsystems.filter((s) => !s.advisory && s.status === 'down');
+			if (others.length === 0) expect(health.status).toBe('degraded');
+		} finally {
+			dbState.rows = [];
+		}
 	});
 });

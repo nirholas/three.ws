@@ -809,6 +809,59 @@ async function checkGraniteGuardian() {
 	}
 }
 
+// Agora economy liveness. workers/agora-citizens ticks every ~45s and projects each
+// action into agora_activity, so the newest row's age IS the daemon's pulse. A
+// stopped daemon has no reachability signature: /agora keeps answering 200 with
+// an idle city (that is how it sat empty for weeks). The agora economy is
+// devnet-only, so this is ADVISORY: it surfaces on /healthz and /status as
+// `advisory: true`, and the roll-up never lets it turn the platform `down`
+// (the worst it contributes is `degraded`).
+const AGORA_FRESH_MS = 30 * 60 * 1000;
+const AGORA_DOWN_MS = 6 * 60 * 60 * 1000;
+
+/**
+ * Classify the age of the newest agora_activity row. Pure, exported for tests.
+ * @param {string|Date|null|undefined} lastActivityAt
+ * @param {number} [now]
+ */
+export function classifyAgoraEconomy(lastActivityAt, now = Date.now()) {
+	const base = { name: 'agora_economy', label: 'Agora economy (citizens daemon, devnet)', advisory: true };
+	const at = lastActivityAt ? new Date(lastActivityAt).getTime() : NaN;
+	if (!Number.isFinite(at)) {
+		return { ...base, status: 'unknown', detail: 'no agora_activity recorded yet' };
+	}
+	const ageMs = Math.max(0, now - at);
+	const mins = Math.round(ageMs / 60_000);
+	if (ageMs > AGORA_DOWN_MS) {
+		return {
+			...base,
+			status: 'down',
+			detail: `last citizen activity ${Math.round(ageMs / 3_600_000)}h ago: the agora-citizens daemon is not running`,
+			hint: 'Check the agora-citizens Cloud Run service (min and max instances 1) and its logs: gcloud run services describe agora-citizens --region us-central1. Runbook: workers/agora-citizens/README.md.',
+		};
+	}
+	if (ageMs > AGORA_FRESH_MS) {
+		return {
+			...base,
+			status: 'degraded',
+			detail: `last citizen activity ${mins} min ago (the daemon ticks every ~45s)`,
+			hint: 'The daemon may be crash-looping or its devnet RPC is throttled: read the agora-citizens logs.',
+		};
+	}
+	return { ...base, status: 'ok', detail: `last citizen activity ${mins} min ago` };
+}
+
+async function checkAgoraEconomy() {
+	const base = { name: 'agora_economy', label: 'Agora economy (citizens daemon, devnet)', advisory: true };
+	try {
+		const { sql } = await import('../db.js');
+		const rows = await sql`select max(created_at) as last_at from agora_activity`;
+		return classifyAgoraEconomy(rows?.[0]?.last_at);
+	} catch (err) {
+		return { ...base, status: 'unknown', detail: err?.message || 'agora_activity unreadable' };
+	}
+}
+
 /**
  * Gather every subsystem's health and roll it into one verdict.
  * @param {{ probeDb?: boolean }} [opts] set probeDb:false to skip the live DB
@@ -866,6 +919,8 @@ export async function gatherSubsystemHealth({ probeDb = true } = {}) {
 		// X @-mention reply bot. Reads x_mention_events only (webhook + any future
 		// poller both write through it), so it shares the probeDb gate.
 		probeDb ? gatherMentionBotHealth() : Promise.resolve({ name: 'x_mention_bot', label: 'X mention bot', status: 'unknown', detail: 'mention bot read skipped' }),
+		// Advisory: the Agora citizens daemon (devnet toy economy). See checkAgoraEconomy.
+		probeDb ? checkAgoraEconomy() : Promise.resolve({ name: 'agora_economy', label: 'Agora economy (citizens daemon, devnet)', advisory: true, status: 'unknown', detail: 'probe skipped' }),
 	];
 	const subsystems = await Promise.all(checks);
 
@@ -875,7 +930,8 @@ export async function gatherSubsystemHealth({ probeDb = true } = {}) {
 		return acc;
 	}, /** @type {Record<string, number>} */ ({}));
 
-	const status = worstOf(subsystems.map((s) => s.status));
+	// Advisory subsystems can degrade the roll-up but never take it `down`.
+	const status = worstOf(subsystems.map((s) => (s.advisory && s.status === 'down' ? 'degraded' : s.status)));
 	const degraded = subsystems.filter((s) => UNHEALTHY.includes(s.status)).map((s) => s.name);
 
 	return { status, checkedAt: Date.now(), counts, degraded, subsystems };
