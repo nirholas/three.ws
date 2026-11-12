@@ -475,6 +475,80 @@ the 10,479/h baseline (about 251k/day), then record the measured figure here. Ch
 `blockhash_expired` in the settle outcomes stays at or below its baseline of 3, since
 every send and settle path passes `fresh: true` and never touches these caches.
 
+### Measured after deploy, and the second round of cuts (2026-11-12)
+
+The ledger has been live in production since the 2026-11-04 deploy, so this is the first
+measurement from the ledger itself (`node scripts/rpc-spend-report.mjs --base
+https://three.ws --hours 24`, window 2026-11-11 16:00 to 2026-11-12 16:00 UTC, 143
+instances):
+
+| #   | Caller                                | Method                    | Calls/24h | Saved/24h | Share |
+| --- | ------------------------------------- | ------------------------- | --------: | --------: | ----: |
+| 1   | `/api/pump-fun-mcp`                   | `getTransaction`          |   249,658 |         0 | 19.1% |
+| 2   | `/api/cron/solana-attestations-crawl` | `getSignaturesForAddress` |   140,729 |         0 | 10.8% |
+| 3   | `/api/crypto/security`                | `getTokenLargestAccounts` |   102,602 |     2,739 |  7.9% |
+| 4   | `/api/crypto/holders`                 | `getTokenLargestAccounts` |    65,022 |     3,885 |  5.0% |
+| 5   | `/api/crypto/security`                | `getAccountInfo`          |    64,385 |    25,812 |  4.9% |
+| 6   | `/api/crypto/due-diligence`           | `getSignaturesForAddress` |    54,565 |        40 |  4.2% |
+| 7   | `/api/crypto/bonding`                 | `getAccountInfo`          |    45,719 |    16,691 |  3.5% |
+| 8   | `/api/cron/recompute-reputation`      | `getTokenAccountsByOwner` |    44,156 |         0 |  3.4% |
+| 9   | `/api/crypto/holders`                 | `getMultipleAccounts`     |    39,684 |     3,581 |  3.0% |
+| 10  | `/api/cron/run-buyback`               | `getTokenAccountBalance`  |    39,544 |         0 |  3.0% |
+
+Total: 1,304,108 provider calls in 24h (about 54,300/h), with 78,828 reads (5.7%) served
+by the fresh-read cache and coalescing. Lanes: Helius 361,387, Alchemy 359,805,
+mainnet-beta 345,898, publicnode 157,044, the rest under 60k each.
+
+**The 40% target is not met, and the 2026-11-04 baseline cannot be compared one to one.**
+Holders plus security made 295,336 calls in the 24h window (about 12,306/h), against the
+10,479/h baseline. Request volume halved over the same period: the request log for
+2026-11-12 15:00 to 16:00 UTC shows 917 holders and 833 security requests (1,750/h, one
+client IP at 97.9% of `/api/crypto/*`), against 3,900/h on 2026-11-04. That works out to
+about 7 provider calls per request now, against the 2.69 logical reads per request the
+baseline modeled. The gap has two causes. First, the baseline counted logical reads
+from handler code, while the ledger counts every lane attempt (`recordRpcSpend` runs
+per attempt), so a read that fails over across three lanes counts three times. Second,
+both paid lanes spent the window cycling through quota and rate-limit cooldowns. So the
+per-request logical saving from shared reads and the verdict cache is real (security
+`getAccountInfo` saved 25,812), but failover amplification swamps it while the paid lanes
+are exhausted. Settles were unaffected: the self-facilitator's verify reject reasons on
+`/api/healthz` show `blockhash_expired` at 0 (baseline 3), since every send, settle and
+verify path passes `fresh: true`.
+
+The two top offenders are new, so this round cuts them at the source:
+
+1. **`/api/pump-fun-mcp` claims scan** (`getTransaction` 249,658 against 36,759
+   `getSignaturesForAddress`, about 6.8 reads per scan; logically about 15 per poll before
+   amplification). A null `getParsedTransaction` (the transaction has not landed on that
+   lane yet) now ends the scan the way a failed read already did, instead of reading on.
+   The per-poll budget `CLAIM_TX_FETCH_BUDGET` drops from 40 to 12. An incomplete answer is
+   now memoized fleet-wide for `CLAIM_INCOMPLETE_MEMO_TTL_S` (5s), so a creator polled
+   twice a second costs at most one 12-read scan step per 5s instead of a full-budget scan
+   per poll, and a complete answer is reused for `CLAIM_SCAN_MEMO_TTL_S` (30s, up from 10s).
+   Per creator, that caps the read rate during a backfill at 2.4/s, against the roughly
+   30/s that a 2 Hz poller cost before. Tests: `tests/pump-fun-mcp-claims-cache.test.js`.
+2. **Solana agent sweep** (`getSignaturesForAddress` 140,729). The sweep re-read the whole
+   directory every 90 minutes at 240 agents per tick (1,440 logical reads/h), and 1,945 of
+   the roughly 2,026 agents have had no event in the last week. `nextAgentBatch` now only
+   returns agents that are due: active agents (an event within
+   `SOLANA_ACTIVE_WINDOW_DAYS`, 7) every `SOLANA_ACTIVE_RECRAWL_MIN` (20 min), dormant ones
+   every `SOLANA_DORMANT_RECRAWL_MIN` (240 min). That is about 81 x 3 + 1,945 / 4, or about
+   730 logical reads/h, a 49% cut, while active agents are now re-read more often than
+   before. The freshness sensor (`api/_lib/ops/index-lag.js`) scores the minutes the most
+   overdue agent is past its schedule (`SOLANA_OVERDUE_DEGRADED_MIN` 60,
+   `SOLANA_OVERDUE_DOWN_MIN` 240) instead of the median cursor age, which is now multi-hour
+   by design. Tests: `tests/agent-index.test.js`.
+
+Deferred, in order of the table: `/api/crypto/security` and `/holders`
+`getTokenLargestAccounts` (already shared; the remaining cost is amplification), lane
+amplification itself (counting and capping attempts per logical read), `recompute-reputation`
+and `run-buyback` (per-mint balance reads that can batch through `getMultipleAccounts`).
+
+**Verify after deploy:** after 24h live, run the report again and record the
+`/api/pump-fun-mcp` `getTransaction` and `/api/cron/solana-attestations-crawl`
+`getSignaturesForAddress` figures against 249,658 and 140,729, plus the total against
+1,304,108.
+
 ## Knock-on effects to expect
 
 RPC starvation does not stay in the RPC layer:

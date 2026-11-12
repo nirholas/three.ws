@@ -155,6 +155,32 @@ rather than against a live database.
 
 ## Sweep cycle
 
+### Dormancy schedule (since 2026-11-12)
+
+The sweep no longer re-reads the whole directory on a fixed cycle. Measured
+2026-11-12, it was the second largest Solana RPC caller (140,729
+`getSignaturesForAddress` calls in 24h), and 1,945 of the roughly 2,026 agents
+had no event in the last week. `nextAgentBatch()` now only returns agents that
+are due:
+
+| Tier | Rule | Re-crawl every |
+|---|---|---|
+| Active | an event within `SOLANA_ACTIVE_WINDOW_DAYS` (7) | `SOLANA_ACTIVE_RECRAWL_MIN` (20 min) |
+| Dormant | no event in that window, or never | `SOLANA_DORMANT_RECRAWL_MIN` (240 min) |
+| Uncrawled | no cursor yet | at once |
+
+`recrawlIntervalMin()` is the same rule in JS. `SOLANA_SWEEP_BATCH` is now a
+ceiling: it bounds how fast a backlog drains, and most ticks read far fewer
+agents than that. Because a dormant agent's cursor is up to four hours old by
+design, the median cursor age no longer measures health. The sensor instead
+scores `overdueMin`, the minutes the most overdue agent is past its scheduled
+re-crawl (`SOLANA_OVERDUE_DEGRADED_MIN` 60, `SOLANA_OVERDUE_DOWN_MIN` 240, in
+`index-lag.js`). While the sweep runs, the oldest-first queue keeps every agent
+within a tick of its due time. When it stops, the worst overdue climbs a minute
+per minute. `sweepCycleMin()` reports the dormant interval until the directory
+outgrows the batch, and the batch-bound cycle after that. The history below
+describes the fixed cycle that came before.
+
 A queue drained oldest-first sits at half its cycle time, so the median lag is
 `sweepCycleMin(agents) / 2`, and the OLDEST agent waits a whole cycle. Both
 numbers matter: a cycle longer than `SOLANA_LAG_DEGRADED_MIN` means part of the
