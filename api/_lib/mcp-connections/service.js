@@ -169,7 +169,10 @@ export async function createConnection(o) {
 		if (!oauthReady && entry.auth.alt !== 'bearer' && !token) {
 			throw new ConnectionError(409, 'oauth_unavailable', `Sign-in for ${entry.name} is not configured on this deployment.`);
 		}
-		const authType = token ? 'bearer' : entry.auth.type;
+		// A token-optional server (a key only raises rate limits) connected
+		// without one is a no-auth connection; a token can still be added later.
+		const tokenOptional = entry.auth.type === 'bearer' && entry.auth.optional === true;
+		const authType = token ? 'bearer' : tokenOptional ? 'none' : entry.auth.type;
 		spec = { url: entry.url, transport: entry.transport, label: entry.name, name: entry.id.replace(/-mcp$/, ''), authType, catalog: entry, custom: false };
 	} else {
 		let url;

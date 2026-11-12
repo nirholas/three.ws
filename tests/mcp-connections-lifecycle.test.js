@@ -9,11 +9,19 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import { createPgliteSql } from './_helpers/pglite-sql.js';
 import { startStubMcp } from './_helpers/mcp-stub-server.js';
 
-const holder = vi.hoisted(() => ({ db: null }));
+const holder = vi.hoisted(() => ({ db: null, catalogExtra: {} }));
 
 vi.mock('../api/_lib/db.js', async (importActual) => {
 	const actual = await importActual();
 	return { ...actual, sql: (...args) => holder.db.sql(...args) };
+});
+
+// Catalog entries point at real vendor URLs. A test that needs a catalog entry
+// served by the local stub registers it in holder.catalogExtra; every other id
+// resolves from the real data/mcp-catalog.json.
+vi.mock('../api/_lib/mcp-connections/catalog.js', async (importActual) => {
+	const actual = await importActual();
+	return { ...actual, getCatalogEntry: (id) => holder.catalogExtra[id] || actual.getCatalogEntry(id) };
 });
 
 process.env.DATABASE_URL ||= 'postgres://pglite.test/db';
@@ -129,6 +137,44 @@ describe('connect, list and classify a public server', () => {
 		const mounted = await runtime.mountExternalTools(AGENT);
 		expect(mounted.tools.map((t) => t.tier)).toEqual(['read', 'read']);
 		expect(mounted.schemas.map((s) => s.function.name).every((n) => /^ext_[a-z0-9_]+_(get_note|search_notes)$/.test(n))).toBe(true);
+	});
+});
+
+describe('catalog server whose token is optional', () => {
+	const optionalEntry = () => ({
+		id: 'stub-docs',
+		name: 'Stub Docs',
+		url: stub.url,
+		transport: 'streamable-http',
+		auth: { type: 'bearer', optional: true, tokenHelp: 'Optional: a key raises rate limits.' },
+	});
+
+	beforeEach(() => {
+		holder.catalogExtra = { 'stub-docs': optionalEntry() };
+	});
+
+	afterAll(() => {
+		holder.catalogExtra = {};
+	});
+
+	it('connects without a token, lists the tools and turns on the read tools', async () => {
+		allowLoopback();
+		const conn = await service.createConnection({ agentId: AGENT, userId: USER, catalogId: 'stub-docs' });
+		expect(conn.status).toBe('active');
+		expect(conn.auth_type).toBe('none');
+		expect(conn.tools.map((t) => t.name).sort()).toEqual(['create_note', 'delete_note', 'get_note', 'search_notes']);
+		expect(conn.tools.filter((t) => t.enabled).map((t) => t.name).sort()).toEqual(['get_note', 'search_notes']);
+		const mounted = await runtime.mountExternalTools(AGENT);
+		expect(mounted.tools.map((t) => t.tier)).toEqual(['read', 'read']);
+	});
+
+	it('still accepts a token later, and then sends it', async () => {
+		allowLoopback();
+		const conn = await service.createConnection({ agentId: AGENT, userId: USER, catalogId: 'stub-docs' });
+		const row = await store.getOwned(AGENT, conn.id, USER);
+		const updated = await service.setBearerToken(row, 'an-optional-key-12345');
+		expect(updated.auth_type).toBe('bearer');
+		expect(updated.status).toBe('active');
 	});
 });
 
