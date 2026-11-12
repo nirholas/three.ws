@@ -1,7 +1,7 @@
 /**
  * Copy-trading subscriptions — the copier's follow list.
  *
- *   GET    /api/copy/subscriptions                 list mine (+ leader info, counts)
+ *   GET    /api/copy/subscriptions                 list mine (+ leader info, counts, spend-cap usage)
  *   POST   /api/copy/subscriptions                 create/update a subscription
  *   POST   /api/copy/subscriptions  { id, status } pause / resume / stop
  *   DELETE /api/copy/subscriptions?id=<id>         stop (soft — keeps history)
@@ -38,7 +38,14 @@ async function listForUser(userId) {
 	return sql`
 		select s.*, a.name as leader_name, a.avatar_url as leader_avatar, a.profile_image_url as leader_image,
 		       (select count(*) from copy_executions e where e.subscription_id = s.id and e.status = 'pending') as pending_count,
-		       (select count(*) from copy_executions e where e.subscription_id = s.id and e.status = 'acted')   as acted_count
+		       (select count(*) from copy_executions e where e.subscription_id = s.id and e.status = 'acted')   as acted_count,
+		       -- SOL committed against the follow's lifetime spend cap, measured exactly
+		       -- as api/cron/copy-fanout.js measures it, so the meter matches the engine.
+		       case when s.spend_cap_sol is null then null else (
+		         select coalesce(sum(e.planned_sol), 0) from copy_executions e
+		         where e.subscription_id = s.id and e.direction = 'buy' and e.status in ('pending', 'acted')
+		           and e.created_at >= coalesce(s.spend_cap_set_at, s.created_at)
+		       ) end as cap_spent_sol
 		from copy_subscriptions s
 		join agent_identities a on a.id = s.leader_agent_id
 		where s.copier_user_id = ${userId}
