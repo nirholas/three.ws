@@ -1,6 +1,6 @@
 # Chat gateways
 
-Talk to your three.ws agent from a chat app. A paired chat can ask for balances and portfolio, run `/pause` and `/kill`, approve or deny requests your spend policy holds, send voice notes and photos, and receive account notifications. Telegram and Discord are built and tested end to end; the worker that answers them ships on owner approval (see below). Slack, WhatsApp, Signal, SMS and email share the same core.
+Talk to your three.ws agent from a chat app. A paired chat can ask for balances and portfolio, run `/pause` and `/kill`, approve or deny requests your spend policy holds, send voice notes and photos, and receive account notifications. Telegram, Discord, Slack, WhatsApp and voice (in the browser, and by phone when enabled) are built and tested end to end; the worker that answers them ships on owner approval (see below). [Slack, WhatsApp and voice gateways](./gateways.md) covers how those three connect and how an operator turns them on. Signal, SMS and email share the same core.
 
 The API only verifies and queues. The [agent-gateway worker](../workers/agent-gateway/README.md) drains the queue, runs the turn and replies.
 
@@ -27,6 +27,8 @@ One table in [api/_lib/gateway/platforms.js](../api/_lib/gateway/platforms.js) d
 | Discord | yes | yes | yes |
 | Slack | yes | yes | yes |
 | WhatsApp | yes | no | yes |
+| Voice (browser) | yes | no | spoken replies |
+| Voice (phone) | no, previews are cancelled | no | spoken replies |
 | Signal | no, reply with a six-digit code | no | yes |
 | SMS | no, reply with a six-digit code | no | no |
 | Email | no, reply with a six-digit code | no | yes |
@@ -102,5 +104,6 @@ Messages are stored to run the turn and keep thread context. Pairing records hol
 ## Related
 
 - [Account linking](./account-linking.md): Telegram sign-in, link codes, external wallets
+- [Slack, WhatsApp and voice gateways](./gateways.md)
 - [Approvals](./approvals.md)
 - [agent-gateway worker](../workers/agent-gateway/README.md)

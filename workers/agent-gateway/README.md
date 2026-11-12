@@ -20,6 +20,9 @@ answer back through the platform's own API.
 Telegram ──webhook──► api/gateway/telegram.js ─┐
 Discord ──interaction► api/gateway/discord.js ─┤   verify, queue
 Discord DMs + mentions ── gateway socket ──────┤   (held by this worker)
+Slack ──events/commands► api/gateway/slack.js ─┤
+WhatsApp ──webhook──► api/gateway/whatsapp.js ─┤
+Phone call ──Twilio► api/gateway/voice.js ─────┤
 api/_lib/gateway/notify.js (notifications) ────┘
                                                ▼
                                          gateway_inbox
@@ -88,6 +91,9 @@ api/_lib/gateway/notify.js (notifications) ────┘
 | [src/adapters/index.js](src/adapters/index.js) | The adapter registry. A new platform is one entry in `FACTORIES` plus its file; the drain loop never changes. |
 | [src/adapters/telegram.js](src/adapters/telegram.js) | Telegram over grammY: update normalization, the send surface, and optional `getUpdates` polling for local work. |
 | [src/adapters/discord.js](src/adapters/discord.js) | Discord over discord.js: interaction replies through the interaction webhook, bot-token REST for everything else, and the gateway connection for DMs and mentions. |
+| [src/adapters/slack.js](src/adapters/slack.js) | Slack Web API: DMs and mentions answered in thread, `/three` answered ephemerally through the command's `response_url`, Block Kit Approve and Cancel updated in place, file uploads through `files.getUploadURLExternal`. |
+| [src/adapters/whatsapp.js](src/adapters/whatsapp.js) | WhatsApp Cloud API: text, reply buttons, media by id, voice notes uploaded then sent, and the 24-hour window (131047) answered with the notify template. |
+| [src/adapters/voice.js](src/adapters/voice.js) | Phone call turns: downloads the Twilio recording, transcribes it, runs the core with previews cancelled (a call never approves), speaks the reply and stores it for the call's poll leg. |
 | [src/errors.js](src/errors.js) | `PlatformError`, the permanent / retry-after / transient classification, and the backoff curve. |
 | [src/setup.js](src/setup.js) | Operator commands: register Discord slash commands, point the Telegram webhook, read the inbox, requeue a dead letter. |
 | [scripts/deploy-env.mjs](scripts/deploy-env.mjs) | Derives the Cloud Run environment from the live `three-ws-api` service at deploy time. |
@@ -113,6 +119,9 @@ and lists them under `skipped` in `/healthz`.
 | `TELEGRAM_WEBHOOK_SECRET` | Telegram, optional | Pins the webhook secret header. When unset, the secret is derived from the bot token (`api/_lib/gateway/webhooks.js`). |
 | `DISCORD_BOT_TOKEN`, `DISCORD_APP_ID` | Discord | Both are required for the adapter to load. |
 | `DISCORD_PUBLIC_KEY` | Discord receiver | Read by `api/gateway/discord.js` to verify interaction signatures, not by this worker, but the connections API only reports the Discord bot as available when all three Discord variables are set. |
+| `SLACK_BOT_TOKEN`, or `SLACK_CLIENT_ID` and `SLACK_CLIENT_SECRET` | Slack | A single-workspace bot token, or OAuth installs whose per-workspace tokens the worker decrypts from `gateway_slack_installs`. `SLACK_BOT_USER_ID` (optional) strips the bot's own mention. |
+| `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp | Cloud API sending. `WHATSAPP_NOTIFY_TEMPLATE` (optional) is the template sent when a reply falls outside the 24-hour window (error 131047); `WHATSAPP_GRAPH_VERSION` defaults to `v21.0`. |
+| `GATEWAY_VOICE_TELEPHONY=1`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` | Voice (phone) | Downloads each call recording from Twilio and stores the spoken reply for the call's poll leg. The browser voice leg runs in the API and needs no worker. |
 
 The worker also needs everything the agent turn needs: `DATABASE_URL` for the
 inbox, plus the LLM chain, market data, the rate limiter and
@@ -231,14 +240,15 @@ registering, set the interactions endpoint in the Discord developer portal to
 cd workers/agent-gateway && npm test
 ```
 
-Nine suites, 138 tests, about eleven seconds (2026-11-04). They run against a real Postgres:
+Twelve suites, 188 tests, about twelve seconds (2026-11-12). They run against a real Postgres:
 PGlite carrying the gateway tables built from the two shipped migrations
 (`api/_lib/migrations/20260922180000_chat_gateways.sql` and
 `20260922190000_more_chat_gateways.sql`) executed verbatim
 ([tests/_db.js](tests/_db.js)), so the claim, lease and dead-letter SQL is the
 production SQL. Platform traffic is replayed from recorded payloads in
 [tests/fixtures/](tests/fixtures) (Telegram text, voice, photo, callback and
-group-start updates; Discord commands, buttons and mentions).
+group-start updates; Discord commands, buttons and mentions; Slack events,
+interactions and slash commands; WhatsApp Cloud API deliveries; Twilio call legs).
 
 | Suite | Covers |
 |---|---|
@@ -251,6 +261,9 @@ group-start updates; Discord commands, buttons and mentions).
 | `healthz.test.js` | `/healthz` and `/` on a booted worker: `200` with the Telegram adapter and the open backlog read from the inbox; `503` with no adapters, each skipped platform carrying its reason; `GATEWAY_PLATFORMS` exclusions listed; a `null` backlog (not a failed probe) when the database read throws; `404` for any other path or method; importing `src/index.js` does not boot the worker. |
 | `backlog.test.js` | The backlog TTL: defaults, `0` and malformed values; a row one second under the TTL answered normally and one second over it given only the offline reply; four rows in one chat (three stale) producing one apology then the fresh answer, with no pairing code minted; stale group chatter and forwards closed silently; a stale notification left queued; TTL `0` answering everything. |
 | `e2e-drain.test.js` | One production-shaped Telegram update POSTed to the real receiver (`api/gateway/telegram.js`) with the derived secret header, stored in the inbox exactly as production stores it, and answered once by the drain with the lease released; a redelivered `update_id`, before or after the reply, adds no row and no second answer; a wrong secret is refused `401` and queues nothing. |
+| `slack-adapter.test.js` | Slack signatures over the raw body and the five-minute replay refusal, `url_verification` answered, an `app_mention` fixture mapped to the common shape with the bot mention stripped, replies posted into the asking thread, `/three` answered ephemerally, Approve and Cancel blocks updating the card in place, encrypted OAuth installs and revocation on `app_uninstalled`. |
+| `whatsapp-adapter.test.js` | The Meta `GET` verify handshake, `X-Hub-Signature-256` checks and refusal, text, voice and image deliveries mapped to the common shape, receipts dropped, replies inside the 24-hour window as text and reply buttons, and an out-of-window reply sent as the notify template or dropped without one. |
+| `voice-adapter.test.js` | TwiML for every call leg, the spelled pairing code, attestation and withheld-number refusals, a real preview cancelled on a call (`collectingGateway({buttons:false})`), Twilio-signed call, recorded and poll legs (bad signature `401`, dedupe, lost call), a full drain through `createVoiceAdapter`, and a missing or non-Twilio recording refused with the apology clip. |
 
 ## Deploy
 
