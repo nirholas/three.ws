@@ -101,9 +101,10 @@ try {
 		const state = await page.getAttribute('.view-slot[data-index="0"]', 'data-state');
 		console.log(`     slot after confirm: ${state}`);
 		check(errors.length === 0, `no console errors (${errors.join(' | ') || 'none'})`);
+		// Query strings are dropped: the storage PUT carries a presigned signature.
 		writeFileSync(
 			join(out, 'network-clean.json'),
-			JSON.stringify(log.filter((r) => r.t >= t0).map(({ t, ...r }) => ({ ms: t - t0, ...r })), null, '\t') + '\n',
+			JSON.stringify(log.filter((r) => r.t >= t0).map(({ t, url, ...r }) => ({ ms: t - t0, ...r, url: url.split('?')[0] })), null, '\t') + '\n',
 		);
 		await context.close();
 	}
