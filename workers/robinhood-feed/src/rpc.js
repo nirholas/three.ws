@@ -66,12 +66,12 @@ export async function withRpcRetry(fn, { attempts = 4, baseDelayMs = 300, onRetr
  * or null when the error is not a rate limit. A backoff of a couple of seconds
  * cannot outlast that window, so bulk scans wait it out instead of aborting.
  */
-export function rateLimitWaitMs(err) {
+export function rateLimitWaitMs(err, { fallbackMs = 10_000 } = {}) {
 	for (let e = err, depth = 0; e && depth < 4; e = e.cause, depth++) {
 		const text = String(e.message || '');
-		if (e.code !== 429 && e.status !== 429 && !/rate limit/i.test(text)) continue;
+		if (e.code !== 429 && e.status !== 429 && !/rate limit|too many requests/i.test(text)) continue;
 		const secs = Number(/reset in (\d+)\s*s/i.exec(text)?.[1]);
-		return Math.min(Number.isFinite(secs) && secs > 0 ? secs : 10, 65) * 1000;
+		return Number.isFinite(secs) && secs > 0 ? Math.min(secs, 65) * 1000 : fallbackMs;
 	}
 	return null;
 }

@@ -26,6 +26,12 @@ test('the backfill summary is logged so a cold start shows how much history it f
 	assert.deepEqual(lines, [['info', '[robinhood-feed] backfill · launches=42 emitted=30 deployers=17']]);
 });
 
+test('a backfill info event that carries a message logs the message, not an empty line', () => {
+	const { lines, log } = harness();
+	log({ kind: 'status', data: { level: 'info', src: 'backfill', message: 'scanning 830000 blocks' } });
+	assert.deepEqual(lines, [['info', '[robinhood-feed] backfill · scanning 830000 blocks']]);
+});
+
 test('routine info and non-status events stay out of the log', () => {
 	const { lines, log } = harness();
 	log({ kind: 'status', data: { level: 'info', src: 'sse', message: 'connected' } });

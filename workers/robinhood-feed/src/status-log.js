@@ -25,8 +25,9 @@ export function createStatusLogger({
 
 		if (level === 'info') {
 			if (src !== 'backfill') return;
-			const fields = Object.entries(rest).map(([k, v]) => `${k}=${v}`).join(' ');
-			write('info', `[robinhood-feed] backfill · ${fields}`);
+			const fields = Object.entries(rest).map(([k, v]) => `${k}=${v}`);
+			if (message != null) fields.unshift(String(message).split('\n')[0].trim());
+			write('info', `[robinhood-feed] backfill · ${fields.join(' ')}`);
 			return;
 		}
 		if (level !== 'warn') return;

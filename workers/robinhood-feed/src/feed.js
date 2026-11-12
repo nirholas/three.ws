@@ -13,12 +13,13 @@
 //  • Solana `sol_amount` field name is reused for the native ETH magnitude.
 
 import {
-	watchLaunches, watchCurveTrades, watchGraduations, getRecentLaunches,
-	odysseyTradedEvent, ODYSSEY_ADDRESSES,
+	watchLaunches, watchCurveTrades, watchGraduations,
+	odysseyTradedEvent, odysseyTokenCreatedEvent, ODYSSEY_ADDRESSES,
 } from 'hoodchain';
 import { subscribeFeed } from 'hoodchain';
 import { config, CHAIN_ID, redactRpcUrl } from './config.js';
 import { getMintLogs, parseMintLogs, launchesFromMints } from './mints.js';
+import { scanLogRanges, odysseyLaunchesBetween } from './scan.js';
 import { createReputation, devAllocation, devStatus, riskFlags, readBalances } from './reputation.js';
 import { hood, resolveMeta, inspectPool, blockTimeMs } from './chain.js';
 import { withRpcRetry, withRpcPatience } from './rpc.js';
@@ -280,13 +281,14 @@ export function startFirehose(onEvent) {
 		if (b > lastScannedBlock) lastScannedBlock = b;
 	}
 
-	// A bulk log read that survives the public RPC's transient -32602 shedding.
-	const retryLogs = (fn, src) => withRpcRetry(fn, {
-		onRetry: ({ attempt, delayMs, error }) => onEvent({
-			kind: 'status',
-			data: { level: 'info', src, message: `rpc retry ${attempt} in ${delayMs}ms: ${error?.message?.split('\n')[0] || 'transient'}` },
-		}),
-	});
+	// Odyssey launches in [from, to], chunk by chunk. Each chunk rides out the
+	// public RPC's -32602 shedding (withRpcRetry) and its 429 throttling
+	// (scanLogRanges retries that chunk), so one bad response never restarts
+	// or aborts a scan that is hundreds of chunks wide.
+	const odysseyLaunches = (from, to) => odysseyLaunchesBetween(
+		(range) => withRpcRetry(() => hood.public.getLogs({ address: ODYSSEY_FACTORIES, event: odysseyTokenCreatedEvent, ...range })),
+		from, to,
+	).then((ls) => ls.map(withOdysseyVenue));
 
 	async function gapCheck() {
 		if (!active) return;
@@ -298,13 +300,11 @@ export function startFirehose(onEvent) {
 		const from = lastScannedBlock + 1n;
 		onEvent({ kind: 'status', data: { level: 'info', src: 'gap-fill', from: Number(from), to: Number(head) } });
 		try {
-			const launches = await retryLogs(
-				() => getRecentLaunches(hood, { launchpad: 'odyssey', lookbackBlocks: head - from + 1n }), 'gap-fill',
-			);
-			await mapLimit(launches.filter((l) => l.blockNumber >= from), 8, (l) => emitLaunch(withOdysseyVenue(l)));
-			const logs = await retryLogs(() => hood.public.getLogs({
-				address: ODYSSEY_FACTORIES, event: odysseyTradedEvent, fromBlock: from, toBlock: head,
-			}), 'gap-fill');
+			const launches = await odysseyLaunches(from, head);
+			await mapLimit(launches, 8, (l) => emitLaunch(l));
+			const logs = await scanLogRanges((fromBlock, toBlock) => withRpcRetry(() => hood.public.getLogs({
+				address: ODYSSEY_FACTORIES, event: odysseyTradedEvent, fromBlock, toBlock,
+			})), from, head);
 			await mapLimit(logs, 8, (log) => emitCurveTrade({
 				launchpad: 'odyssey', token: log.args.token, trader: log.args.trader,
 				isBuy: log.args.isBuy, tokenAmount: log.args.tokenAmount, quoteAmount: log.args.quoteAmount,
@@ -318,7 +318,7 @@ export function startFirehose(onEvent) {
 
 	// ── cold-start backfill: register existing pools + seed the replay buffer ───
 	//
-	// getRecentLaunches over a wide window can return hundreds of launches; the
+	// A backfill over a wide window can return hundreds of launches; the
 	// replay buffer only ever surfaces the newest `bufferLimit`, so fully
 	// resolving metadata for the rest is wasted RPC work that would otherwise
 	// serialize cold start for minutes. Every discovered pool is still tracked
@@ -326,14 +326,18 @@ export function startFirehose(onEvent) {
 	// only the newest slice gets the full emit (metadata + ETH price + buffer).
 	async function backfill() {
 		try {
-			const head = await retryLogs(() => hood.public.getBlockNumber(), 'backfill');
+			const head = await withRpcPatience(() => hood.public.getBlockNumber());
 			const fromBlock = head > config.backfillBlocks ? head - config.backfillBlocks : 0n;
 			if (mintCursor === 0n) mintCursor = head;
-			const [odyssey, venueLaunches] = await Promise.all([
-				retryLogs(() => getRecentLaunches(hood, { launchpad: 'odyssey', lookbackBlocks: config.backfillBlocks }), 'backfill'),
-				venueLaunchesBetween(fromBlock, head),
-			]);
-			const launches = [...odyssey.map(withOdysseyVenue), ...venueLaunches]
+			// Independent sources: one failing must not discard what the other found.
+			const sources = [['odyssey', odysseyLaunches(fromBlock, head)], ['venues', venueLaunchesBetween(fromBlock, head)]];
+			const settled = await Promise.allSettled(sources.map(([, p]) => p));
+			const found = [];
+			settled.forEach((r, i) => {
+				if (r.status === 'fulfilled') found.push(...r.value);
+				else onEvent({ kind: 'status', data: { level: 'warn', src: `backfill:${sources[i][0]}`, message: r.reason?.message } });
+			});
+			const launches = found
 				.sort((a, b) => (a.blockNumber < b.blockNumber ? -1 : a.blockNumber > b.blockNumber ? 1 : 0));
 			for (const l of launches) {
 				once(`token:${l.token.toLowerCase()}`);

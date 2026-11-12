@@ -5,7 +5,8 @@
 
 import { parseAbi } from 'viem';
 import { venueForCall } from './venues.js';
-import { rateLimitWaitMs, isTransientRpcError } from './rpc.js';
+import { isTransientRpcError } from './rpc.js';
+import { scanLogRanges } from './scan.js';
 
 export const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 const ZERO_TOPIC = `0x${'0'.repeat(64)}`;
@@ -13,7 +14,6 @@ const ZERO_TOPIC = `0x${'0'.repeat(64)}`;
 const poolAbi = parseAbi(['function token0() view returns (address)']);
 
 const toHex = (n) => `0x${BigInt(n).toString(16)}`;
-const isTooManyLogs = (err) => /exceeds? limit|too many|response size|query returned more/i.test(String(err?.details || err?.message || err));
 
 /**
  * Pick the supply mints out of raw Transfer-from-zero logs. ERC-721 shares the
@@ -54,50 +54,20 @@ export function launchFromMint(mint, tx) {
 }
 
 /**
- * Every Transfer-from-zero log in [from, to]. A range that trips the RPC's
- * matched-log cap is split in half rather than skipped, because dropping it
- * would silently under-count exactly the busiest stretches. A rate-limited
- * range waits out the provider's reset window and is retried, so a wide
- * backfill on the public RPC slows down instead of aborting.
+ * Every Transfer-from-zero log in [from, to], scanned in chunks. Throttling,
+ * provider reset hints and the matched-log cap are handled by scanLogRanges
+ * (scan.js), so a wide backfill on the public RPC slows down instead of aborting.
  *
  * @param {(args: {method: string, params: unknown[]}) => Promise<any>} request viem `client.request`
+ * @param {bigint|number} from
+ * @param {bigint|number} to
+ * @param {Parameters<typeof scanLogRanges>[3]} [opts]
  */
-export async function getMintLogs(request, from, to, { chunk = 4_000n, maxRateLimitWaits = 20, sleep = (ms) => new Promise((r) => setTimeout(r, ms)) } = {}) {
-	let waits = 0;
-	const out = [];
-	const queue = [[BigInt(from), BigInt(to)]];
-	while (queue.length) {
-		const [start, end] = queue.shift();
-		const span = end - start + 1n;
-		if (span > chunk) {
-			const mid = start + span / 2n;
-			queue.unshift([start, mid - 1n], [mid, end]);
-			continue;
-		}
-		let logs;
-		try {
-			logs = await request({
-				method: 'eth_getLogs',
-				params: [{ topics: [TRANSFER_TOPIC, ZERO_TOPIC], fromBlock: toHex(start), toBlock: toHex(end) }],
-			});
-		} catch (err) {
-			const waitMs = rateLimitWaitMs(err);
-			if (waitMs !== null && waits < maxRateLimitWaits) {
-				waits += 1;
-				await sleep(waitMs);
-				queue.unshift([start, end]);
-				continue;
-			}
-			if (isTooManyLogs(err) && span > 1n) {
-				const mid = start + span / 2n;
-				queue.unshift([start, mid - 1n], [mid, end]);
-				continue;
-			}
-			throw err;
-		}
-		out.push(...logs);
-	}
-	return out;
+export async function getMintLogs(request, from, to, opts = {}) {
+	return scanLogRanges((start, end) => request({
+		method: 'eth_getLogs',
+		params: [{ topics: [TRANSFER_TOPIC, ZERO_TOPIC], fromBlock: toHex(start), toBlock: toHex(end) }],
+	}), from, to, { chunk: 4_000n, ...opts });
 }
 
 /** An AMM pair mints LP shares from zero exactly like a coin does; pairs answer token0(). */
