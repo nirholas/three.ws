@@ -68,3 +68,10 @@ body {
 .g-row { display: flex; gap: 10px; flex-wrap: wrap; }
 .g-row > .g-btn { flex: 1 1 auto; justify-content: center; }
 @media (prefers-reduced-motion: reduce) { .g-arrow { transition: none; } }
+
+.g-status { display: flex; justify-content: space-between; gap: 12px; color: var(--g-dim); font-size: 20px; }
+.g-ring { color: var(--g-accent); }
+.g-head { display: flex; align-items: center; gap: 16px; }
+.g-portrait { width: 160px; height: 160px; border-radius: 16px; border: 2px solid var(--g-line); object-fit: cover; flex: none; }
+.g-portrait-empty { display: flex; align-items: center; justify-content: center; font-size: 64px; color: var(--g-accent); }
+.g-btn[aria-pressed='true'] { border-color: var(--g-accent); }

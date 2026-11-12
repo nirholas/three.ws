@@ -1,8 +1,18 @@
 import { el, button, skeleton, notice } from './dom.js';
 import { formatDistance, arrowGlyph, clampName } from '../../irl/glasses/protocol.js';
+import { cardinal } from '../compass.js';
+import { fixAgeLabel } from '../presence.js';
 
-export function scanningView() {
-	return el('section', {}, el('h1', { class: 'g-title', text: 'Looking around' }), el('p', { class: 'g-sub', text: 'Finding agents near you' }), skeleton(3));
+// Heading ring, nearby count and last-fix age. `status` is { heading, fixedAt, count }.
+export function statusStrip(status) {
+	const ring = status.heading == null ? 'Compass: calibrating' : (() => { const c = cardinal(status.heading); return `Facing ${c.point} ${c.degrees}\u00b0`; })();
+	return el('div', { class: 'g-status', role: 'status' },
+		el('span', { class: 'g-ring', text: ring }),
+		el('span', { text: `Fix ${fixAgeLabel(status.fixedAt)}` }));
+}
+
+export function scanningView(status) {
+	return el('section', {}, el('h1', { class: 'g-title', text: 'Looking around' }), el('p', { class: 'g-sub', text: 'Finding agents near you' }), statusStrip(status), skeleton(3));
 }
 
 export function startView(onStart) {
@@ -26,14 +36,17 @@ export function errorView(message, onRetry) {
 	return notice('Something went wrong', message, button('Retry', onRetry, { 'data-glass-item': '' }));
 }
 
-export function nearbyView(pins, relBearing, onOpen) {
+export function nearbyView(pins, relBearing, onOpen, status) {
 	if (!pins.length) {
-		return notice('Nobody here yet', 'No agents within 60 m. Walk a little and this updates by itself.');
+		const n = notice('Nobody here yet', 'No agents within 60 m. Walk toward a pin and this updates by itself.');
+		n.append(statusStrip(status));
+		return n;
 	}
 	const nearest = pins[0];
 	const rel = relBearing(nearest);
 	return el('section', {},
 		el('h1', { class: 'g-title', text: `${pins.length} nearby` }),
+		statusStrip(status),
 		rel == null
 			? el('p', { class: 'g-sub g-alert', text: 'Move the glasses in a figure eight to calibrate the compass' })
 			: el('div', { class: 'g-arrow', 'aria-hidden': 'true', text: arrowGlyph(rel) }),
@@ -43,15 +56,21 @@ export function nearbyView(pins, relBearing, onOpen) {
 				el('span', { class: 'g-dist', text: formatDistance(p.distance_m) }))))));
 }
 
-export function cardView(pin, card, handlers) {
+export function cardView(pin, card, handlers, portraitSrc = null) {
 	const agent = (card && card.agent) || {};
 	const rep = card && card.reputation;
 	const services = (card && card.services) || [];
+	const name = clampName(agent.name || pin.avatar_name || 'Agent', 24);
 	return el('section', {},
-		el('h1', { class: 'g-title', text: clampName(agent.name || pin.avatar_name || 'Agent', 24) }),
+		el('div', { class: 'g-head' },
+			portraitSrc
+				? el('img', { class: 'g-portrait', src: portraitSrc, alt: '', width: '160', height: '160' })
+				: el('div', { class: 'g-portrait g-portrait-empty', 'aria-hidden': 'true', text: name.slice(0, 1).toUpperCase() }),
+			el('h1', { class: 'g-title', text: name })),
 		(agent.bio || pin.caption) ? el('p', { class: 'g-sub', text: String(agent.bio || pin.caption).slice(0, 140) }) : null,
 		rep && rep.available ? el('p', { class: 'g-sub', text: `Reputation ${rep.score} (${rep.tier})` }) : null,
 		services.length ? el('p', { class: 'g-sub', text: `${services.length} paid service${services.length === 1 ? '' : 's'}, open on your phone` }) : null,
+		pin.x402_endpoint && !services.length ? el('p', { class: 'g-sub', text: 'Has a paid endpoint, open on your phone' }) : null,
 		el('div', { class: 'g-row' },
 			button('Talk', handlers.onTalk, { 'data-glass-item': '' }),
 			button('Open on phone', handlers.onHandoff, { 'data-glass-item': '' }),
@@ -66,7 +85,10 @@ export function talkView(state, handlers) {
 	if (state.busy && !state.reply) kids.push(skeleton(1));
 	if (state.error) kids.push(el('p', { class: 'g-alert', text: state.error }));
 	const options = state.suggestions && state.suggestions.length ? state.suggestions : (state.reply ? [] : ['Hi', 'What do you do?', 'Tell me more']);
+	if (state.voiceError) kids.push(el('p', { class: 'g-alert', text: state.voiceError }));
 	kids.push(el('div', { class: 'g-row' },
+		handlers.onSpeak ? button(state.listening ? 'Listening' : 'Speak', handlers.onSpeak, { 'data-glass-item': '', disabled: state.busy || state.listening ? true : null }) : null,
+		handlers.onSound ? button(state.sound ? 'Sound on' : 'Sound off', handlers.onSound, { 'data-glass-item': '', 'aria-pressed': state.sound ? 'true' : 'false' }) : null,
 		options.map((s) => button(s, () => handlers.onSend(s), { 'data-glass-item': '', disabled: state.busy ? true : null })),
 		button('Back', handlers.onBack, { 'data-glass-item': '' })));
 	return el('section', {}, kids);
