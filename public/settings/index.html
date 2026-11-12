@@ -174,7 +174,7 @@
 				font-weight: 600;
 				cursor: pointer;
 				background: var(--accent);
-				color: #fff;
+				color: var(--on-accent, #0a0a0a);
 				font-family: inherit;
 				transition: filter 0.12s;
 			}
@@ -185,7 +185,7 @@
 				color: #ddd;
 			}
 			.btn.sec:hover { background: #2a2a2a; filter: none; }
-			.btn.danger { background: #cc4040; }
+			.btn.danger { background: #cc4040; color: #fff; }
 			.divider {
 				border: none;
 				border-top: 1px solid var(--border);
@@ -402,6 +402,46 @@
 			}
 			@keyframes consent-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 			@media (prefers-reduced-motion: reduce) { .consent-skeleton { animation: none; } }
+			/* Connections: one card per chat platform. */
+			.conn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); gap: 12px; }
+			.conn-card {
+				display: flex; flex-direction: column; gap: 10px; min-width: 0;
+				padding: 14px 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+				transition: border-color 0.15s ease;
+			}
+			.conn-card:hover { border-color: #3a3a3a; }
+			.conn-card:focus-within { border-color: #4a4a4a; }
+			.conn-card.skel { min-height: 150px; border-color: transparent; background: linear-gradient(90deg, #161616 25%, #1e1e1e 50%, #161616 75%); background-size: 200% 100%; animation: consent-shimmer 1.3s ease-in-out infinite; }
+			@media (prefers-reduced-motion: reduce) { .conn-card.skel { animation: none; } }
+			.conn-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+			.conn-name { font-size: 14px; font-weight: 600; color: #e6e6e6; }
+			.conn-pill { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); color: #888; white-space: nowrap; }
+			.conn-pill.on { color: #7fd99a; border-color: #2c5a3a; }
+			.conn-pill.paired { color: #8fbaff; border-color: #2c4266; }
+			.conn-meta { font-size: 12px; color: #888; }
+			.conn-steps { margin: 0; padding-left: 18px; font-size: 12.5px; color: #bbb; line-height: 1.55; }
+			.conn-steps li { margin-bottom: 3px; }
+			.conn-steps code { background: #1c1c1c; border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-size: 11.5px; color: #ddd; }
+			.conn-card .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+			.conn-card a.btn { text-decoration: none; display: inline-block; }
+			.conn-card .btn { font-size: 12px; padding: 6px 14px; }
+			.conn-card .btn:active, #conn-talk:active, .voice-choice:active { transform: translateY(1px); filter: brightness(0.95); }
+			.conn-off { font-size: 12.5px; color: #888; line-height: 1.55; margin: 0; }
+			.voice-panel { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; }
+			#conn-talk { display: inline-flex; align-items: center; gap: 8px; }
+			#conn-talk[aria-pressed="true"] { background: #cc4040; color: #fff; }
+			#conn-talk .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+			#conn-talk[aria-pressed="true"] .dot { animation: voice-pulse 1s ease-in-out infinite; }
+			@keyframes voice-pulse { 50% { opacity: 0.3; } }
+			@media (prefers-reduced-motion: reduce) { #conn-talk[aria-pressed="true"] .dot { animation: none; } }
+			.voice-log { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; }
+			.voice-turn { font-size: 13px; line-height: 1.5; color: #ddd; white-space: pre-wrap; overflow-wrap: anywhere; }
+			.voice-turn.you { color: #999; }
+			.voice-turn.you::before { content: 'You: '; color: #666; }
+			.voice-turn.err { color: #e08080; }
+			.voice-choices { display: flex; gap: 8px; flex-wrap: wrap; }
+			.voice-skel { height: 18px; width: 60%; border-radius: 6px; background: linear-gradient(90deg, #161616 25%, #222 50%, #161616 75%); background-size: 200% 100%; animation: consent-shimmer 1.3s ease-in-out infinite; }
+			@media (prefers-reduced-motion: reduce) { .voice-skel { animation: none; } }
 			.seed-facts { margin: 0; padding-left: 18px; color: #ccc; font-size: 13px; }
 			.seed-facts li { margin-bottom: 5px; }
 			@media (max-width: 768px) {
@@ -637,15 +677,23 @@
 				<!-- ── Connections (paired chats) ───────────────────────── -->
 				<div class="page" id="tab-connections">
 					<h2>Connections</h2>
-					<p class="sub">Telegram and Discord chats paired with your agents</p>
+					<p class="sub">Talk to your agents from Telegram, Discord, Slack, WhatsApp, or out loud</p>
 					<span class="inline-msg" id="conn-msg" style="display:none;margin-bottom:12px"></span>
 
 					<div class="section" data-slot="redeem" id="conn-redeem" style="display:none"></div>
 
 					<div class="section">
+						<h3>Platforms</h3>
+						<div id="conn-platforms" class="conn-grid" aria-live="polite" aria-busy="true">
+							<div class="conn-card skel"></div><div class="conn-card skel"></div><div class="conn-card skel"></div>
+						</div>
+						<div id="conn-voice" style="margin-top:12px"></div>
+					</div>
+
+					<div class="section">
 						<h3>Paired chats</h3>
 						<div data-slot="links-list" id="conn-links" aria-live="polite">
-							<p class="muted">Loading connections…</p>
+							<div class="consent-skeleton"></div><div class="consent-skeleton"></div>
 						</div>
 					</div>
 
@@ -653,8 +701,7 @@
 
 					<div class="section" data-slot="issue" id="conn-issue">
 						<h3>Pair a new chat</h3>
-						<p class="muted" style="font-size:13px;margin:0 0 12px">Generate a code here, then send it to the bot as <code>/link CODE</code> from the chat you want to pair. Or start in the chat: the bot prints a code you can paste back here.</p>
-						<div id="conn-bots" class="muted" style="font-size:13px;margin-bottom:12px"></div>
+						<p class="muted" style="font-size:13px;margin:0 0 12px">Generate a code here, then send it from the chat you want to pair: <code>/link CODE</code> in Telegram, Discord or WhatsApp, <code>/three link CODE</code> in Slack. Or start in the chat (or on a call): the bot gives you a code you can paste back here.</p>
 						<div class="row">
 							<button class="btn" id="conn-issue-btn">Generate pairing code</button>
 						</div>
@@ -1716,33 +1763,273 @@
 
 			// ── Connections (paired chats) ────────────────────────────────
 			const JSON_HDR = { 'content-type': 'application/json' };
-			const CONN_PLATFORM = { telegram: 'Telegram', discord: 'Discord' };
+			const CONN_PLATFORM = { telegram: 'Telegram', discord: 'Discord', slack: 'Slack', whatsapp: 'WhatsApp', voice: 'Voice' };
+			const CONN_ORDER = ['telegram', 'discord', 'slack', 'whatsapp', 'voice'];
+			const SLACK_OUTCOMES = {
+				installed: ['ok', 'Slack app added. Message it or mention it in a channel to get a pairing code.'],
+				expired: ['err', 'That Slack install link expired. Press Add to Slack again.'],
+				failed: ['err', 'Slack did not finish the install. Press Add to Slack to try again.'],
+				cancelled: ['err', 'Slack install cancelled.'],
+				not_configured: ['err', 'Slack is not enabled on this deployment.'],
+			};
 			const X_OUTCOMES = {
 				connected: ['ok', 'X account connected successfully.'],
 				denied: ['err', 'X connection cancelled.'],
 				unconfigured: ['err', 'X connections are not enabled on this deployment, so the connect could not start.'],
 				error: ['err', 'X connection failed. Try again.'],
 			};
-			let connState = { agents: [], bots: {} };
+			let connState = { agents: [], bots: {}, links: [] };
 			let connIntroDone = false;
 
 			function connMsg(type, text) {
 				showMsg(document.getElementById('conn-msg'), type, text);
 			}
 
-			function renderConnBots(bots) {
-				const parts = [];
-				if (bots.telegram?.available) parts.push(`<a href="${escHtml(bots.telegram.url)}" target="_blank" rel="noopener">@${escHtml(bots.telegram.username)} on Telegram</a>`);
-				if (bots.discord?.available) parts.push(`<a href="${escHtml(bots.discord.dm_url)}" target="_blank" rel="noopener">Message the Discord bot</a> or <a href="${escHtml(bots.discord.invite_url)}" target="_blank" rel="noopener">add it to a server</a>`);
-				document.getElementById('conn-bots').innerHTML = parts.length
-					? 'Bots: ' + parts.join(' &middot; ')
-					: 'No chat bots are enabled on this deployment yet.';
+			const connRtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+			function connAgo(iso) {
+				const secs = Math.round((new Date(iso).getTime() - Date.now()) / 1000);
+				const steps = [[60, 'second'], [3600, 'minute', 60], [86400, 'hour', 3600], [2592000, 'day', 86400], [Infinity, 'month', 2592000]];
+				for (const [limit, unit, div = 1] of steps) {
+					if (Math.abs(secs) < limit) return connRtf.format(Math.round(secs / div), unit);
+				}
+				return new Date(iso).toLocaleDateString();
+			}
+
+			// What each card says: how to connect, and the button that starts it.
+			function connCardBody(platform, bot) {
+				const link = (href, label, primary) => `<a class="btn${primary ? '' : ' sec'}" href="${escHtml(href)}"${href.startsWith('/') ? '' : ' target="_blank" rel="noopener"'}>${label}</a>`;
+				if (platform === 'telegram') return {
+					steps: [`Open <strong>@${escHtml(bot.username)}</strong> on Telegram.`, 'Send <code>/start</code>. The bot replies with a pairing code.', 'Paste the code below, or send <code>/link CODE</code> with a code from here.'],
+					actions: link(bot.url, 'Open Telegram', true),
+				};
+				if (platform === 'discord') return {
+					steps: ['Message the bot, or add it to a server you manage.', 'Send <code>/link</code>. The bot replies with a pairing code.', 'Paste the code below.'],
+					actions: link(bot.dm_url, 'Message the bot', true) + link(bot.invite_url, 'Add to a server'),
+				};
+				if (platform === 'slack') return {
+					steps: [
+						bot.install_url ? 'Add the three.ws app to your Slack workspace.' : 'Find the three.ws app in your Slack workspace.',
+						'Message it, or mention it in a channel. It replies with a pairing code.',
+						'Paste the code below, or run <code>/three link CODE</code> with a code from here.',
+					],
+					actions: bot.install_url ? link(bot.install_url, 'Add to Slack', true) : '',
+					meta: Number.isFinite(bot.workspaces) && bot.workspaces > 0 ? `In ${bot.workspaces} workspace${bot.workspaces === 1 ? '' : 's'}` : '',
+				};
+				if (platform === 'whatsapp') return {
+					steps: [
+						bot.number ? `Message <strong>${escHtml(bot.number)}</strong> on WhatsApp.` : 'Message the three.ws number on WhatsApp.',
+						'The reply carries a pairing code and a link back to this page.',
+						'Confirm the chat here. Replies come within 24 hours of your last message, as WhatsApp requires.',
+					],
+					actions: bot.url ? link(bot.url, 'Open WhatsApp', true) : '',
+				};
+				return {
+					steps: [
+						'Press <strong>Talk</strong> below, speak, and press it again. Your agent answers out loud.',
+						'Approve or cancel trades with the buttons under its reply.',
+						...(bot.phone_number ? [`Or call <strong>${escHtml(bot.phone_number)}</strong>. Calls need a caller ID your carrier verified, and a call never approves a trade.`] : []),
+					],
+					actions: '<button class="btn" type="button" data-act="voice-focus">Talk to your agent</button>',
+				};
+			}
+
+			const CONN_OFF = {
+				unreachable: 'The Telegram bot did not answer just now.',
+				no_asr: 'Speech recognition is not set up on this deployment yet.',
+				no_tts: 'Spoken replies are not set up on this deployment yet.',
+			};
+
+			function renderConnPlatforms(bots, links) {
+				const grid = document.getElementById('conn-platforms');
+				grid.setAttribute('aria-busy', 'false');
+				grid.innerHTML = CONN_ORDER.map(platform => {
+					const bot = bots[platform] || { available: false };
+					const mine = links.filter(l => l.platform === platform);
+					const last = mine.map(l => l.last_seen_at).filter(Boolean).sort().pop();
+					const pill = mine.length
+						? `<span class="conn-pill paired">${mine.length} paired</span>`
+						: bot.available ? '<span class="conn-pill on">Ready</span>' : '<span class="conn-pill">Not enabled</span>';
+					let body;
+					if (bot.available) {
+						const c = connCardBody(platform, bot);
+						const metaBits = [c.meta, mine.length ? (last ? `Last message ${escHtml(connAgo(last))}` : 'No messages yet') : ''].filter(Boolean);
+						body = `${metaBits.length ? `<div class="conn-meta">${metaBits.join(' &middot; ')}</div>` : ''}
+							<ol class="conn-steps">${c.steps.map(t => `<li>${t}</li>`).join('')}</ol>
+							${c.actions ? `<div class="actions">${c.actions}</div>` : ''}`;
+					} else if (bot.reason === 'unreachable') {
+						body = `<p class="conn-off">${CONN_OFF.unreachable}</p><div class="actions"><button class="btn sec" type="button" data-act="conn-reload">Retry</button></div>`;
+					} else {
+						body = `<p class="conn-off">${CONN_OFF[bot.reason] || 'Not enabled on this deployment yet. The operator setup is in the gateway docs.'}</p>`;
+					}
+					return `<div class="conn-card" data-platform="${platform}">
+						<div class="conn-head"><span class="conn-name">${CONN_PLATFORM[platform]}</span>${pill}</div>
+						${body}
+					</div>`;
+				}).join('');
+				if (bots.voice?.available) mountVoicePanel();
+			}
+
+			document.getElementById('conn-platforms').addEventListener('click', (e) => {
+				const act = e.target.closest('[data-act]')?.dataset.act;
+				if (act === 'conn-reload') loadConnections();
+				if (act === 'voice-focus') {
+					const talk = document.getElementById('conn-talk');
+					talk?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+					talk?.focus({ preventScroll: true });
+				}
+			});
+
+			// ── Voice: push to talk ──────────────────────────────────────
+			const VOICE_TYPES = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/mp4', 'audio/webm'];
+			const VOICE_MAX_MS = 60_000;
+			const voice = { recorder: null, chunks: [], stream: null, started: 0, tick: null, cap: null, busy: false, lastSend: null };
+
+			function mountVoicePanel() {
+				const mount = document.getElementById('conn-voice');
+				if (mount.dataset.ready) return;
+				mount.dataset.ready = '1';
+				const supported = typeof MediaRecorder !== 'undefined' && navigator.mediaDevices?.getUserMedia;
+				mount.innerHTML = `<div class="voice-panel">
+					<div class="row">
+						<button class="btn" type="button" id="conn-talk" aria-pressed="false"${supported ? '' : ' disabled'}><span class="dot" aria-hidden="true"></span><span id="conn-talk-label">Talk</span></button>
+						<span class="conn-meta" id="voice-status" role="status">${supported ? 'Press Talk, speak, then press it again to send.' : 'This browser cannot record audio. Try a current Chrome, Edge, Firefox or Safari.'}</span>
+					</div>
+					<div class="voice-log" id="voice-log" aria-live="polite"><p class="conn-off" id="voice-empty">Your conversation shows here. Try asking “what can you do?” or “what is my balance?”.</p></div>
+				</div>`;
+				if (!supported) return;
+				document.getElementById('conn-talk').addEventListener('click', () => (voice.recorder ? stopVoice() : startVoice()));
+				document.getElementById('voice-log').addEventListener('click', onVoiceLogClick);
+			}
+
+			function voiceStatus(text) { document.getElementById('voice-status').textContent = text; }
+
+			function voiceAppend(cls, text) {
+				document.getElementById('voice-empty')?.remove();
+				const log = document.getElementById('voice-log');
+				const el = document.createElement('div');
+				el.className = 'voice-turn ' + cls;
+				el.textContent = text;
+				log.appendChild(el);
+				log.scrollTop = log.scrollHeight;
+				return el;
+			}
+
+			async function startVoice() {
+				if (voice.busy) return;
+				try {
+					voice.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+				} catch (e) {
+					voiceStatus(e?.name === 'NotAllowedError'
+						? 'Microphone access is blocked. Allow it in your browser site settings, then press Talk again.'
+						: 'No microphone was found. Connect one and press Talk again.');
+					return;
+				}
+				const mimeType = VOICE_TYPES.find(t => MediaRecorder.isTypeSupported(t)) || '';
+				voice.recorder = new MediaRecorder(voice.stream, mimeType ? { mimeType } : undefined);
+				voice.chunks = [];
+				voice.recorder.addEventListener('dataavailable', (ev) => { if (ev.data.size) voice.chunks.push(ev.data); });
+				voice.recorder.addEventListener('stop', onVoiceStopped, { once: true });
+				voice.recorder.start();
+				voice.started = Date.now();
+				const btn = document.getElementById('conn-talk');
+				btn.setAttribute('aria-pressed', 'true');
+				document.getElementById('conn-talk-label').textContent = 'Send';
+				const show = () => voiceStatus(`Listening… ${Math.floor((Date.now() - voice.started) / 1000)}s. Press Send when you are done.`);
+				show();
+				voice.tick = setInterval(show, 1000);
+				voice.cap = setTimeout(stopVoice, VOICE_MAX_MS);
+			}
+
+			function stopVoice() {
+				clearInterval(voice.tick);
+				clearTimeout(voice.cap);
+				if (voice.recorder?.state === 'recording') voice.recorder.stop();
+			}
+
+			function onVoiceStopped() {
+				const type = (voice.recorder.mimeType || 'audio/webm').split(';')[0];
+				const blob = new Blob(voice.chunks, { type });
+				voice.stream.getTracks().forEach(t => t.stop());
+				voice.recorder = null;
+				voice.stream = null;
+				const btn = document.getElementById('conn-talk');
+				btn.setAttribute('aria-pressed', 'false');
+				document.getElementById('conn-talk-label').textContent = 'Talk';
+				if (Date.now() - voice.started < 600 || !blob.size) {
+					voiceStatus('That was too short to hear. Press Talk and speak for a moment.');
+					return;
+				}
+				sendVoice({ body: blob, headers: { 'content-type': type } });
+			}
+
+			async function sendVoice(req) {
+				voice.busy = true;
+				voice.lastSend = req;
+				const btn = document.getElementById('conn-talk');
+				btn.disabled = true;
+				voiceStatus('Your agent is thinking…');
+				document.getElementById('voice-empty')?.remove();
+				const skel = document.createElement('div');
+				skel.className = 'voice-skel';
+				document.getElementById('voice-log').appendChild(skel);
+				try {
+					const r = await apiJson('/api/gateway/voice?leg=web', { method: 'POST', ...req });
+					skel.remove();
+					renderVoiceReply(r);
+					voiceStatus('Press Talk to say something else.');
+					if (!connState.links.some(l => l.platform === 'voice')) loadConnections();
+				} catch (e) {
+					skel.remove();
+					const el = voiceAppend('err', e.data?.error_description || 'Your agent could not be reached.');
+					const retry = document.createElement('button');
+					retry.className = 'btn sec voice-choice';
+					retry.type = 'button';
+					retry.dataset.act = 'voice-retry';
+					retry.textContent = 'Retry';
+					retry.style.cssText = 'font-size:12px;padding:4px 12px;margin-left:8px';
+					el.appendChild(retry);
+					voiceStatus(e.status === 422 ? 'Try speaking a little louder or closer to the microphone.' : 'Press Retry to send that again, or Talk to record a new one.');
+				} finally {
+					voice.busy = false;
+					btn.disabled = false;
+				}
+			}
+
+			function renderVoiceReply(r) {
+				if (r.heard) voiceAppend('you', r.heard);
+				const byMessage = new Map((r.choices || []).map(c => [c.messageId, c.choices]));
+				for (const m of r.messages || []) {
+					const el = voiceAppend('agent', m.text);
+					const opts = byMessage.get(m.id);
+					if (!opts?.length) continue;
+					const row = document.createElement('div');
+					row.className = 'voice-choices';
+					row.innerHTML = opts.map(o => `<button type="button" class="btn${o.style === 'primary' ? '' : ' sec'} voice-choice" data-act="voice-choice" data-choice="${escHtml(o.id)}" style="font-size:12px;padding:5px 14px">${escHtml(o.label)}</button>`).join('');
+					el.after(row);
+				}
+				if (r.audio?.base64) {
+					new Audio(`data:${r.audio.mime};base64,${r.audio.base64}`).play().catch(() => voiceStatus('Your browser blocked playback. The reply is written above.'));
+				} else if ((r.messages || []).length) {
+					voiceStatus('The reply could not be spoken this time. It is written above.');
+				}
+			}
+
+			function onVoiceLogClick(e) {
+				const btn = e.target.closest('[data-act]');
+				if (!btn || voice.busy) return;
+				if (btn.dataset.act === 'voice-retry' && voice.lastSend) {
+					btn.remove();
+					sendVoice(voice.lastSend);
+				} else if (btn.dataset.act === 'voice-choice') {
+					btn.parentElement.querySelectorAll('button').forEach(b => { b.disabled = true; });
+					sendVoice({ headers: JSON_HDR, body: JSON.stringify({ choice: btn.dataset.choice }) });
+				}
 			}
 
 			function renderConnLinks(links) {
 				const el = document.getElementById('conn-links');
 				if (!links.length) {
-					el.innerHTML = '<p class="muted">No chats are paired yet. Generate a code below and send it to the bot with <code>/link CODE</code>.</p>';
+					el.innerHTML = '<p class="muted">No chats are paired yet. Pick a platform above, message its bot, and paste the code it sends you below. For voice, just press Talk.</p>';
 					return;
 				}
 				el.innerHTML = links.map(l => {
@@ -1754,7 +2041,7 @@
 							<div class="provider-info">
 								<div>
 									<div class="provider-name">${escHtml(CONN_PLATFORM[l.platform] || l.platform)}: ${escHtml(title)}</div>
-									<div class="provider-meta">Paired ${escHtml(new Date(l.created_at).toLocaleDateString())}${l.default_agent_name ? ' &middot; ' + escHtml(l.default_agent_name) : ''}</div>
+									<div class="provider-meta">Paired ${escHtml(new Date(l.created_at).toLocaleDateString())} &middot; ${l.last_seen_at ? 'last message ' + escHtml(connAgo(l.last_seen_at)) : 'no messages yet'}${l.default_agent_name ? ' &middot; ' + escHtml(l.default_agent_name) : ''}</div>
 								</div>
 							</div>
 							<div class="actions" style="flex-wrap:wrap">
@@ -1874,22 +2161,28 @@
 				const el = document.getElementById('conn-links');
 				try {
 					const data = await apiJson('/api/gateway/connections');
-					connState = { agents: data.agents || [], bots: data.bots || {} };
-					renderConnBots(connState.bots);
-					renderConnLinks(data.links || []);
+					connState = { agents: data.agents || [], bots: data.bots || {}, links: data.links || [] };
+					renderConnPlatforms(connState.bots, connState.links);
+					renderConnLinks(connState.links);
 				} catch (e) {
+					const grid = document.getElementById('conn-platforms');
+					grid.setAttribute('aria-busy', 'false');
+					grid.innerHTML = '<p class="conn-off">Platform status is unavailable until your connections load.</p>';
 					el.innerHTML = `<p class="muted">${escHtml(e.data?.error_description || 'Could not load your connections.')} <button class="btn sec" id="conn-retry" style="font-size:12px;padding:5px 14px">Retry</button></p>`;
 					document.getElementById('conn-retry').addEventListener('click', loadConnections);
 				}
 				if (connIntroDone) return;
 				connIntroDone = true;
 				// Query params from the flows that land here: ?code= from the bot's
-				// pairing prompt, ?x=&agent= from the X connect return.
+				// pairing prompt, ?slack= from the Slack install return, ?x=&agent= from
+				// the X connect return.
 				const code = _urlP.get('code');
 				if (code) {
 					document.getElementById('conn-code-input').value = code;
 					previewConnCode(code);
 				}
+				const slackOutcome = _urlP.get('slack');
+				if (slackOutcome && SLACK_OUTCOMES[slackOutcome]) connMsg(...SLACK_OUTCOMES[slackOutcome]);
 				const xOutcome = _urlP.get('x');
 				if (xOutcome && X_OUTCOMES[xOutcome]) {
 					const agent = _urlP.get('agent');
