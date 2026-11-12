@@ -178,3 +178,7 @@ Notifications from `api/_lib/notify-prefs.js` gain `telegram` and `discord` chan
 - `npm test` green with adapter unit tests and webhook signature tests.
 ~~~~
 
+
+## Status (2026-11-12)
+
+Built, tested and verified; kept open for owner steps only. Shipped: the Slack, WhatsApp and voice adapters and receivers (ad95ba508, be055e01b, e192880a2, 8a183d011, 4ed2d915c), the voice adapter tests and registry updates (2a2df1d49), the ffmpeg-static fallback fix with its test (0d149133a), the three Connections cards with the browser push-to-talk panel (f0e1a584f), and docs (abf5e1e75). Worker suite 12 files / 188 tests green; a real browser round trip on /settings/?tab=connections transcribed speech, ran the agent and played the spoken reply. Remaining, owner-gated: create the Slack app and the Meta WhatsApp app, buy a Twilio number, set the env listed in docs/gateways.md on three-ws-api and agent-gateway with `--update-env-vars`, then `git push threews main` and `npm run deploy:gcp:full`.
