@@ -110472,7 +110472,7 @@ Runs the same validation as the network tools with no RPC call. Use it to check 
 
 | Program id | Program |
 | --- | --- |
-| `Memo1UhkJRfHyvLMcVLMbLJYfW2tfU8G8H4PqvV6v8` | SPL Memo v1 |
+| `Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo` | SPL Memo v1 |
 | `MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr` | SPL Memo v2 |
 | `Memo4c2pN8afCj432Lb7RMVKi9PbQnnW7ewFFaV3oAH` | The newer memo program carried by version 1 transactions |
 

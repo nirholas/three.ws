@@ -381,7 +381,7 @@ export async function assembleSpl404(manifest, chunkEntries) {
 // ---------------------------------------------------------------------------------------------
 
 const MEMO_PROGRAMS = new Set([
-	'Memo1UhkJRfHyvLMcVLMbLJYfW2tfU8G8H4PqvV6v8',
+	'Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo',
 	'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr',
 	'Memo4c2pN8afCj432Lb7RMVKi9PbQnnW7ewFFaV3oAH',
 ]);

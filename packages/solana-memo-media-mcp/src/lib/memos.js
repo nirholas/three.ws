@@ -1,6 +1,6 @@
 // SPL Memo v1, SPL Memo v2, and the newer memo program that version-1 transactions carry.
 export const MEMO_PROGRAM_IDS = new Set([
-	'Memo1UhkJRfHyvLMcVLMbLJYfW2tfU8G8H4PqvV6v8',
+	'Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo',
 	'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr',
 	'Memo4c2pN8afCj432Lb7RMVKi9PbQnnW7ewFFaV3oAH',
 ]);

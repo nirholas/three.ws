@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { MEMO_PROGRAM_IDS, memoPayloads, signatureMayCarryMedia } from '../src/lib/memos.js';
+import { MEMO_PROGRAM_IDS, memoPayloads, memoTexts, signatureMayCarryMedia } from '../src/lib/memos.js';
 
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/lwV8YQAAAABJRU5ErkJggg==';
 
@@ -37,4 +37,35 @@ test('address scans only fetch signatures whose memo summary holds a data URI', 
 	assert.equal(signatureMayCarryMedia('[11] JPP #379584'), false);
 	assert.equal(signatureMayCarryMedia(null), false);
 	assert.equal(signatureMayCarryMedia(undefined), false);
+});
+
+// The real SPL Memo v1 program, as executable on mainnet (BPFLoader1111...).
+const SPL_MEMO_V1 = 'Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo';
+const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+function base58Length(text) {
+	let value = 0n;
+	for (const char of text) {
+		const digit = BASE58.indexOf(char);
+		if (digit < 0) return -1;
+		value = value * 58n + BigInt(digit);
+	}
+	let bytes = 0;
+	for (; value > 0n; value >>= 8n) bytes++;
+	for (const char of text) {
+		if (char !== '1') break;
+		bytes++;
+	}
+	return bytes;
+}
+
+test('every recognized memo program id is a real 32-byte public key, SPL Memo v1 included', () => {
+	assert.ok(MEMO_PROGRAM_IDS.has(SPL_MEMO_V1));
+	for (const id of MEMO_PROGRAM_IDS) assert.equal(base58Length(id), 32, `${id} is not a 32-byte key`);
+});
+
+test('a v1 memo identified only by its program id is read by both memo readers', () => {
+	const tx = transaction([{ programId: SPL_MEMO_V1, parsed: 'v1 note' }]);
+	assert.deepEqual(memoPayloads(tx), ['v1 note']);
+	assert.deepEqual(memoTexts(tx), ['v1 note']);
 });

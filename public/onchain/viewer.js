@@ -4,7 +4,7 @@ import { envelopesIn, readInscription } from '/onchain/inscriptions.js';
 const RPC_ENDPOINTS = ['/api/solana-rpc', 'https://api.mainnet-beta.solana.com'];
 const RPC_TIMEOUT_MS = 10_000;
 // SPL Memo v1, v2, and the newer program that version-1 transactions use.
-const memoPrograms = new Set(['Memo1UhkJRfHyvLMcVLMbLJYfW2tfU8G8H4PqvV6v8', 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr', 'Memo4c2pN8afCj432Lb7RMVKi9PbQnnW7ewFFaV3oAH']);
+const memoPrograms = new Set(['Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo', 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr', 'Memo4c2pN8afCj432Lb7RMVKi9PbQnnW7ewFFaV3oAH']);
 const $ = (id) => document.getElementById(id);
 const signatureFrom = (value) => {
   const trimmed = value.trim();
