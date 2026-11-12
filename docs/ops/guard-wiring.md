@@ -180,6 +180,12 @@ viewports. They are pre-event, pre-release and incident tools.
 | `audit:garments` | Every wardrobe garment: manifest validation, GLB hash, attach, walk-gait deviation | 1 | 133s | **manual.** Real finding: 1 hard failure and 4 review flags out of 59. Owned by [fix-queue](../../prompts/finish/_context/fix-queue-00-INDEX.md). |
 | `check:glb:payload` | The mobile payload budget for a high-resolution GLB, loaded under WebKit and Android Chrome | 1 | 17.4s | **manual.** Needs `npm run dev` serving `/avatar-embed`, one or more GLB paths as arguments, and Playwright's WebKit and Chromium. It stages derived files under the gitignored `public/_payload-check/` and exits 1 when either engine fails to render the finished GLB. The measured run predates the script being committed and died on `ENOENT` writing that directory. |
 
+### Needs per-package toolchains this box may not hold
+
+| Guard | What it checks | Exit | Runtime | Verdict |
+|---|---|---|---|---|
+| `check:integrations` | Each listing package under `integrations/` (Raycast, n8n, Gradio Space, Poe bot, Zed) is tested and built with its own toolchain: npm, Python with Gradio, and Rust with the `wasm32-wasip2` target; a missing toolchain exits 2 so green means everything ran | 1 | 65.7s (under load) | **manual (pre-submission).** Measured 2026-11-12: raycast, n8n, poe and zed pass; huggingface-space fails because this box's user-site pandas has no built C extension (`ImportError: C extension: None not built`), an environment fault, not a package defect. It needs per-package `npm install`, a working Python stack and `cargo`, and runs over a minute, so it fails the repo-only, fast and deterministic rules for `gate`. Run it before submitting any of those listings. |
+
 ### Deterministic problems, deliberately not gated
 
 | Guard | What it checks | Exit | Runtime | Verdict |
