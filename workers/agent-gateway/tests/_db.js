@@ -1,6 +1,6 @@
 // A real Postgres for the worker tests: PGlite (the in-process Postgres the repo
 // already tests SQL semantics with, tests/_helpers/pglite-sql.js) carrying the
-// gateway tables exactly as production got them, built by running the two
+// gateway tables exactly as production got them, built by running the three
 // shipped migration files verbatim. The tables those migrations reference but do
 // not own (users, user_identities, agent_identities, notification_events, agent_messages) are
 // created first with only the columns the gateway touches.
@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import { createPgliteSql } from '../../../tests/_helpers/pglite-sql.js';
 
 const MIGRATIONS = new URL('../../../api/_lib/migrations/', import.meta.url);
-const GATEWAY_MIGRATIONS = ['20260922180000_chat_gateways.sql', '20260922190000_more_chat_gateways.sql'];
+const GATEWAY_MIGRATIONS = ['20260922180000_chat_gateways.sql', '20260922190000_more_chat_gateways.sql', '20261112170000_gateway_slack_whatsapp_voice.sql'];
 
 const PREREQUISITES = `
 	CREATE TABLE users (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), deleted_at timestamptz);

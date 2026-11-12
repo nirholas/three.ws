@@ -25,10 +25,16 @@
 
 import { createTelegramAdapter, telegramConfigured } from './telegram.js';
 import { createDiscordAdapter, discordConfigured } from './discord.js';
+import { createSlackAdapter, slackConfigured } from './slack.js';
+import { createWhatsAppAdapter, whatsappConfigured } from './whatsapp.js';
+import { createVoiceAdapter, voiceConfigured } from './voice.js';
 
 export const FACTORIES = {
 	telegram: { create: createTelegramAdapter, configured: telegramConfigured },
 	discord: { create: createDiscordAdapter, configured: discordConfigured },
+	slack: { create: createSlackAdapter, configured: slackConfigured },
+	whatsapp: { create: createWhatsAppAdapter, configured: whatsappConfigured },
+	voice: { create: createVoiceAdapter, configured: voiceConfigured },
 };
 
 /**

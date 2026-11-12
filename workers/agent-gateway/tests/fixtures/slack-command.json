@@ -1,0 +1,13 @@
+{
+	"token": "fixture-verification-token",
+	"team_id": "T0FIXTURE1",
+	"team_domain": "fixture-team",
+	"channel_id": "C0FIXDESK1",
+	"channel_name": "agent-desk",
+	"user_id": "U0FIXOWNER",
+	"user_name": "fixture_owner",
+	"command": "/three",
+	"text": "link ABCD-EFGH",
+	"response_url": "https://hooks.slack.com/commands/T0FIXTURE1/1111111111/fixtureResponseSecret",
+	"trigger_id": "1111111111.2222222222.fixturetrigger"
+}

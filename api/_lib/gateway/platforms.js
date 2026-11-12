@@ -25,8 +25,10 @@ export const PLATFORM_INFO = Object.freeze({
 	// so an email chat never doubles it.
 	email: { label: 'Email', buttons: false, canEdit: false, voice: true, notifyChannel: null },
 	// Voice is spoken both ways: the browser panel on /settings/connections and
-	// phone calls. A call cannot show buttons, so previews carry a reply code the
-	// owner says back; voice never carries notifications.
+	// phone calls. The table describes the phone leg: caller ID can be forged, so
+	// a call never shows or accepts an approval and its previews are cancelled
+	// with a spoken note (./voice-calls.js). The signed-in browser panel renders
+	// Approve and Cancel itself. Voice never carries notifications.
 	voice: { label: 'Voice', buttons: false, canEdit: false, voice: true, notifyChannel: null },
 });
 

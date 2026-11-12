@@ -1,0 +1,12 @@
+{
+	"team_id": "T0FIXTURE1",
+	"type": "event_callback",
+	"event_id": "Ev0FIXTURE02",
+	"event": {
+		"type": "app_mention",
+		"channel": "C0FIXDESK1",
+		"user": "U0FIXOWNER",
+		"text": "<@U0FIXBOT01> summarise my agent's day",
+		"ts": "1762960100.000200"
+	}
+}

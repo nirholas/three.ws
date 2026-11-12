@@ -117,13 +117,20 @@ export function createSlackAdapter({ env = process.env, fetch: fetchImpl = globa
 		return t;
 	}
 
-	async function call(teamId, method, payload) {
+	// The file upload methods take form arguments only; the rest take JSON.
+	async function call(teamId, method, payload, { form = false } = {}) {
 		let r;
 		try {
+			const body = form
+				? new URLSearchParams(Object.entries(payload).map(([k, v]) => [k, typeof v === 'object' ? JSON.stringify(v) : String(v)]))
+				: JSON.stringify(payload);
 			r = await fetchImpl(`${API}/${method}`, {
 				method: 'POST',
-				headers: { 'content-type': 'application/json; charset=utf-8', authorization: `Bearer ${await token(teamId)}` },
-				body: JSON.stringify(payload),
+				headers: {
+					'content-type': form ? 'application/x-www-form-urlencoded' : 'application/json; charset=utf-8',
+					authorization: `Bearer ${await token(teamId)}`,
+				},
+				body,
 				signal: AbortSignal.timeout(10_000),
 			});
 		} catch (e) {
@@ -139,7 +146,13 @@ export function createSlackAdapter({ env = process.env, fetch: fetchImpl = globa
 		const url = file.url_private_download || file.url_private;
 		if (!url) throw new PlatformError(PLATFORM, 'file has no download url', { permanent: true });
 		if (file.size > MAX_FILE_BYTES) throw new PlatformError(PLATFORM, 'file too large', { permanent: true });
-		const r = await fetchImpl(url, { headers: { authorization: `Bearer ${await token(teamId)}` }, signal: AbortSignal.timeout(20_000) });
+		const auth = `Bearer ${await token(teamId)}`;
+		let r;
+		try {
+			r = await fetchImpl(url, { headers: { authorization: auth }, signal: AbortSignal.timeout(20_000) });
+		} catch (e) {
+			throw new PlatformError(PLATFORM, `network: ${e.message}`, { cause: e });
+		}
 		if (!r.ok) throw new PlatformError(PLATFORM, `file download ${r.status}`, { status: r.status, permanent: isPermanentStatus(r.status) });
 		return { buffer: Buffer.from(await r.arrayBuffer()), mimeType: file.mimetype || r.headers.get('content-type') || 'application/octet-stream' };
 	}
@@ -283,7 +296,7 @@ export function createSlackAdapter({ env = process.env, fetch: fetchImpl = globa
 			async sendVoice(chatId, clip) {
 				const { teamId, channel } = splitChatId(chatId);
 				const filename = clip.filename || 'reply.ogg';
-				const up = await call(teamId, 'files.getUploadURLExternal', { filename, length: clip.buffer.length });
+				const up = await call(teamId, 'files.getUploadURLExternal', { filename, length: clip.buffer.length }, { form: true });
 				let r;
 				try {
 					r = await fetchImpl(up.upload_url, { method: 'POST', headers: { 'content-type': clip.mimeType || 'audio/ogg' }, body: clip.buffer, signal: AbortSignal.timeout(20_000) });
@@ -295,7 +308,7 @@ export function createSlackAdapter({ env = process.env, fetch: fetchImpl = globa
 					files: [{ id: up.file_id, title: 'Spoken reply' }],
 					channel_id: channel,
 					...(threadTs ? { thread_ts: threadTs } : {}),
-				});
+				}, { form: true });
 				return { chatId: slackChatId(teamId, channel), fileId: up.file_id };
 			},
 			// Slack's Web API has no typing indicator for bots.

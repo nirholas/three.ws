@@ -1,0 +1,23 @@
+{
+	"team_id": "T0FIXTURE1",
+	"type": "event_callback",
+	"event_id": "Ev0FIXTURE03",
+	"event": {
+		"type": "message",
+		"subtype": "file_share",
+		"channel_type": "im",
+		"channel": "D0FIXTURE01",
+		"user": "U0FIXOWNER",
+		"text": "",
+		"ts": "1762960200.000300",
+		"files": [
+			{
+				"id": "F0FIXAUDIO",
+				"subtype": "slack_audio",
+				"mimetype": "audio/webm",
+				"size": 18000,
+				"url_private_download": "https://files.slack.com/files-pri/T0FIXTURE1-F0FIXAUDIO/download/audio_message.webm"
+			}
+		]
+	}
+}

@@ -1,0 +1,24 @@
+{
+	"object": "whatsapp_business_account",
+	"entry": [
+		{
+			"id": "100000000000001",
+			"changes": [
+				{
+					"field": "messages",
+					"value": {
+						"messaging_product": "whatsapp",
+						"metadata": { "display_phone_number": "15550000000", "phone_number_id": "200000000000001" },
+						"contacts": [{ "profile": { "name": "Fixture Owner" }, "wa_id": "15551230000" }],
+						"messages": [
+							{ "from": "15551230000", "id": "wamid.FIXTUREAUDIO01", "timestamp": "1762960200", "type": "audio", "audio": { "id": "300000000000001", "mime_type": "audio/ogg; codecs=opus", "voice": true } }
+						],
+						"statuses": [
+							{ "id": "wamid.FIXTUREOUT0001", "status": "delivered", "timestamp": "1762960201", "recipient_id": "15551230000" }
+						]
+					}
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,17 @@
+{
+	"token": "fixture-verification-token",
+	"team_id": "T0FIXTURE1",
+	"api_app_id": "A0FIXTURE1",
+	"type": "event_callback",
+	"event_id": "Ev0FIXTURE01",
+	"event_time": 1762960000,
+	"event": {
+		"type": "message",
+		"channel_type": "im",
+		"channel": "D0FIXTURE01",
+		"user": "U0FIXOWNER",
+		"text": "what is my balance?",
+		"ts": "1762960000.000100",
+		"client_msg_id": "6a1d1b4e-1111-4222-8333-444455556666"
+	}
+}
