@@ -1167,9 +1167,19 @@
 			}
 			.skip-link:focus { left: 0.5rem; top: 0.5rem; }
 
+			/* Desktop shell: body is a 100svh overflow-hidden column, so the
+			   sitewide footer is unreachable here and, mounted in flow, would
+			   squeeze .unified-layout to zero height. Mobile scrolls and keeps it. */
+			@media (min-width: 801px) {
+				#footer-container { display: none; }
+			}
+
 			/* Mobile */
 			@media (max-width: 800px) {
 				body { overflow: auto; height: auto; }
+				.edit-header { flex-wrap: wrap; gap: 0.5rem 0.75rem; padding: 0.75rem 1rem; }
+				.edit-header-title { flex: 1 1 12rem; min-width: 0; }
+				.edit-header > :last-child:not(.edit-header-title) { max-width: 100%; }
 				.unified-layout {
 					grid-template-columns: 1fr;
 					overflow: visible;
