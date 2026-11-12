@@ -220,7 +220,14 @@
 			},
 			"toolCount": 4,
 			"docs": "https://huggingface.co/settings/mcp",
-			"tiers": { "read": ["hf_whoami", "hub_repo_search", "hub_repo_details", "hf_fs"] },
+			"tiers": {
+				"read": [
+					"hf_whoami",
+					"hub_repo_search",
+					"hub_repo_details",
+					"hf_fs"
+				]
+			},
 			"official": true
 		},
 		{
