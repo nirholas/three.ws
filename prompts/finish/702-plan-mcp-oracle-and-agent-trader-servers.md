@@ -533,3 +533,5 @@ place to be wrong.
 ## Status (2026-11-04)
 
 Built and verified locally: hosted `/api/mcp-oracle`, `@three-ws/oracle-mcp`, `@three-ws/agent-trader-mcp`, registry wiring, docs, changelog. Remaining owner steps (gate 2): deploy, `npm publish` of both packages, `npm run publish:mcp`, the X post, then `npm run smoke:mcp` against production.
+
+Update (2026-11-12): the remote is deployed; `initialize`, `tools/list` and `oracle_stats` answer unauthenticated at https://three.ws/api/mcp-oracle. Its 402 discovery block advertised the main server's `validate_model` GLB example; fixed test-first in c47ab4a4b. Neither npm package is published and neither registry entry exists (`npm run publish:mcp:dry` reports all three ready). Separate blocker for the X post: `oracle_stats` reports a 100 percent win rate because the outcome labeler's pump.fun coin API returns 403 (Cloudflare), leaving 153,859 of 158,419 outcome rows `unknown`; the labeler needs an on-chain curve read before any win rate is quoted. `audit:mcp-golden` and `check:mcp-counts` currently fail only on other sessions' Robinhood, trading-mcp and Microsoft-draft drift.

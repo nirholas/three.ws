@@ -11,6 +11,13 @@ Build plan this announces: [`docs/oracle-trading-mcp-plan.md`](../oracle-trading
 `io.github.nirholas/threews-oracle` and `io.github.nirholas/threews-agent-trader` resolve in the
 registry. Every claim below has to be true at post time.
 
+**Known blocker (2026-11-12):** `/api/oracle/stats` and the `oracle_stats` tool report a 100
+percent win rate and a 100 percent market base rate. That number is wrong, not good: the outcome
+labeler in `workers/agent-sniper/intel/learn.js` reads the pump.fun coin API, which now answers 403
+behind a Cloudflare challenge, so every non-graduated coin stays `unknown` (153,859 of 158,419
+outcome rows) and only graduations count as resolved. Never quote a win rate or base rate from
+`oracle_stats` until the labeler reads curve state another way and the rates come off 100.
+
 ## Rules for this one
 
 1. **Explain it to someone who has never heard of MCP.** The audience is not protocol people. It
