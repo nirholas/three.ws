@@ -149,7 +149,7 @@
 			"data": ["Agent registration metadata the user publishes"],
 			"region": "Provider-managed",
 			"evidence": ["api/_lib/ipfs-pin.js"],
-			"terms": "https://pinata.cloud/privacy"
+			"terms": "https://pinata.cloud/terms#privacy-policy"
 		},
 		{
 			"name": "Resend",
