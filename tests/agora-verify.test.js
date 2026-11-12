@@ -108,3 +108,21 @@ describe('format helpers', () => {
 		expect(formatBytes(1536)).toBe('1.5 KB');
 	});
 });
+
+import { parseDioramaDeliverable } from '../src/agora/verify.js';
+describe('parseDioramaDeliverable', () => {
+	const enc = (o) => new TextEncoder().encode(JSON.stringify(o));
+	const plan = { title: 'Harbor', mood: 'dusk', objects: [{ label: 'boat', prompt: 'a boat', position: [1, 0, 2] }] };
+	const id = '123e4567-e89b-42d3-a456-426614174000';
+	it('reads a map and keeps a well-formed permalink', () => {
+		const m = parseDioramaDeliverable(enc({ kind: 'agora.diorama.v1', prompt: 'p', diorama: plan, permalink: `https://three.ws/diorama?id=${id}` }));
+		expect(m.title).toBe('Harbor');
+		expect(m.permalink).toBe(`https://three.ws/diorama?id=${id}`);
+	});
+	it('drops a hostile permalink and rejects non-map bytes', () => {
+		const m = parseDioramaDeliverable(enc({ kind: 'agora.diorama.v1', diorama: plan, permalink: 'javascript:alert(1)' }));
+		expect(m.permalink).toBeNull();
+		expect(parseDioramaDeliverable(enc({ kind: 'other' }))).toBeNull();
+		expect(parseDioramaDeliverable(new Uint8Array([1, 2, 3]))).toBeNull();
+	});
+});

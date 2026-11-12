@@ -157,6 +157,14 @@ export const TRUST_SURFACE_CSS = `
 .agora-glb-viewer canvas { display: block; width: 100%; height: 100%; cursor: grab; }
 .agora-glb-viewer canvas:active { cursor: grabbing; }
 .agora-glb-caption { font-size: 11px; color: rgba(255, 255, 255, 0.4); margin-top: 6px; text-align: center; }
+.agora-map-card { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 12px; padding: 12px; border-radius: 12px; background: #0b0c10; border: 1px solid rgba(255, 255, 255, 0.08); }
+.agora-map-thumb { width: 120px; height: 120px; flex: none; border-radius: 8px; background: rgba(255, 255, 255, 0.04); }
+.agora-map-thumb circle { fill: #7cf0c4; opacity: 0.9; }
+.agora-map-meta { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: 13px; }
+.agora-map-link { color: #7cf0c4; text-decoration: underline; border-radius: 4px; width: fit-content; }
+.agora-map-link:hover { color: #b5f8de; }
+.agora-map-link:focus-visible { outline: 2px solid #7cf0c4; outline-offset: 2px; }
+.agora-map-link:active { opacity: 0.7; }
 .agora-glb-fail { padding: 16px; font-size: 12px; color: #ff9a8f; }
 
 /* ── states (loading / error / empty) ─────────────────────────────────────── */
@@ -191,6 +199,7 @@ export const TRUST_SURFACE_CSS = `
 .agora-grade.tier-b .agora-grade-letter { color: #8fb5ff; }
 .agora-grade.tier-c .agora-grade-letter { color: #ffd27a; }
 .agora-grade.tier-d .agora-grade-letter { color: #ffb38f; }
+.agora-grade.tier-e .agora-grade-letter { color: #ff9a8f; }
 .agora-grade.tier-new .agora-grade-letter { color: rgba(255,255,255,0.4); }
 .agora-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(86px, 1fr)); gap: 8px; margin: 4px 0 4px; }
 .agora-stat { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 10px; }
@@ -245,6 +254,20 @@ export const TRUST_SURFACE_CSS = `
 .agora-pp-hero-text { flex: 1; min-width: 0; }
 .agora-pp-grade { flex: none; margin-left: auto; }
 .agora-pp-statusline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 2px 0 14px; }
+
+.agora-pp-trust-head { position: relative; display: flex; align-items: center; gap: 8px; }
+.agora-pp-help { width: 18px; height: 18px; padding: 0; border-radius: 50%; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.75); font-size: 11px; font-weight: 700; line-height: 1; cursor: help; transition: background 0.15s, border-color 0.15s; }
+.agora-pp-help:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.45); }
+.agora-pp-help:active { background: rgba(255,255,255,0.2); }
+.agora-pp-help:focus-visible { outline: 2px solid #6da1ff; outline-offset: 2px; }
+.agora-pp-tip { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 3; padding: 10px 12px; border-radius: 10px; background: #14171f; border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 8px 24px rgba(0,0,0,0.45); font-size: 11px; font-weight: 400; line-height: 1.5; text-transform: none; letter-spacing: 0; color: rgba(255,255,255,0.8); visibility: hidden; opacity: 0; transition: opacity 0.12s; pointer-events: none; }
+.agora-pp-help:hover + .agora-pp-tip, .agora-pp-help:focus-visible + .agora-pp-tip { visibility: visible; opacity: 1; }
+.agora-pp-trust { margin: 0 0 6px; display: grid; gap: 4px; }
+.agora-pp-trust > div { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,0.04); }
+.agora-pp-trust dt { color: rgba(255,255,255,0.6); }
+.agora-pp-trust dd { margin: 0; text-align: right; color: #fff; font-variant-numeric: tabular-nums; }
+.agora-pp-trust dd span { display: block; font-size: 10px; color: rgba(255,255,255,0.4); }
+.agora-pp-trust-total { background: rgba(126,224,168,0.08) !important; }
 .agora-pp-stat-sub { font-size: 9px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
 .agora-pp-section-live { display: flex; align-items: center; gap: 8px; }
 .agora-pp-onchain { display: flex; flex-direction: column; gap: 0; padding: 4px 12px; background: rgba(143,181,255,0.05); border: 1px solid rgba(143,181,255,0.16); border-radius: 12px; }

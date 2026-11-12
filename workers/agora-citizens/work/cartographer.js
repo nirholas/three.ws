@@ -53,6 +53,25 @@ function objectIsPlaceable(o) {
 	);
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function saveMap(apiBase, diorama, citizen, timeoutMs, log) {
+	try {
+		const res = await httpJson(apiBase, '/api/diorama', {
+			method: 'POST',
+			body: { action: 'save', diorama, clientKey: `agora:${citizen?.agentIdHex || 'citizen'}` },
+			signal: AbortSignal.timeout(timeoutMs),
+		});
+		if (typeof res?.id !== 'string' || !UUID_RE.test(res.id)) return null;
+		const url = new URL('/diorama', apiBase.replace(/\/+$/, '') + '/');
+		url.searchParams.set('id', res.id);
+		return { id: res.id, url: typeof res.url === 'string' && res.url.startsWith('http') ? res.url : url.toString() };
+	} catch (err) {
+		log?.(`cartographer: map not saved as a permalink (${err?.code || err?.name || 'error'})`);
+		return null;
+	}
+}
+
 export async function runCartographer({ cfg, citizen, job } = {}) {
 	const apiBase = cfg?.apiBase || 'https://three.ws';
 	const log = cfg?.log || (() => {});
@@ -81,7 +100,17 @@ export async function runCartographer({ cfg, citizen, job } = {}) {
 		throw new CartographerError('compose_invalid', 'composer returned an object that cannot be placed');
 	}
 
-	const bytes = canonicalJsonBytes({ kind: 'agora.diorama.v1', prompt, diorama });
+	// Save the map as a shareable diorama permalink. Best effort: sharing may be
+	// unconfigured or rate limited, and the job is still honestly complete with
+	// the plan alone. The permalink is bound into the deliverable (and so the
+	// proof) only when a save really returned one.
+	const saved = await saveMap(apiBase, diorama, citizen, timeoutMs, log);
+	const bytes = canonicalJsonBytes({
+		kind: 'agora.diorama.v1',
+		prompt,
+		diorama,
+		...(saved ? { dioramaId: saved.id, permalink: saved.url } : {}),
+	});
 	const deliverable = await storeDeliverable({
 		profession: 'cartographer',
 		ext: 'json',
@@ -96,7 +125,13 @@ export async function runCartographer({ cfg, citizen, job } = {}) {
 		deliverableUrl: deliverable.url,
 		deliverableBytes: bytes,
 		summary: `Composed "${diorama.title || prompt}" — ${diorama.objects.length} placed objects (${diorama.mood || 'day'})`,
-		meta: { prompt, objects: diorama.objects.length, mood: diorama.mood || null, stored: deliverable.stored },
+		meta: {
+			prompt,
+			objects: diorama.objects.length,
+			mood: diorama.mood || null,
+			stored: deliverable.stored,
+			...(saved ? { dioramaId: saved.id, permalink: saved.url } : {}),
+		},
 	});
 }
 

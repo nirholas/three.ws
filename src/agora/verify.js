@@ -129,6 +129,70 @@ function looksLikeGlb(url, contentType, bytes) {
 	return false;
 }
 
+// A Cartographer deliverable is `agora.diorama.v1` JSON: the composed plan, and
+// (when sharing was available) the saved permalink. Returns null for anything
+// else, so a hostile or unrelated deliverable never reaches the map card.
+export function parseDioramaDeliverable(bytes) {
+	let doc;
+	try {
+		doc = JSON.parse(new TextDecoder().decode(bytes));
+	} catch {
+		return null;
+	}
+	if (!doc || doc.kind !== 'agora.diorama.v1' || !doc.diorama || !Array.isArray(doc.diorama.objects)) return null;
+	const objects = doc.diorama.objects
+		.filter((o) => o && Array.isArray(o.position) && o.position.length === 3 && o.position.every((n) => Number.isFinite(n)))
+		.map((o) => ({ label: String(o.label || o.prompt || '').slice(0, 40), x: o.position[0], z: o.position[2] }));
+	if (!objects.length) return null;
+	let permalink = null;
+	try {
+		const u = new URL(String(doc.permalink || ''));
+		if (/^https?:$/.test(u.protocol) && u.pathname === '/diorama' && /^[0-9a-f-]{36}$/i.test(u.searchParams.get('id') || '')) permalink = u.toString();
+	} catch {
+		permalink = null;
+	}
+	return { title: String(doc.diorama.title || doc.prompt || 'Untitled map').slice(0, 80), mood: doc.diorama.mood || null, prompt: String(doc.prompt || ''), objects, permalink };
+}
+
+// Top-down map thumbnail drawn from the plan's real placed positions.
+function renderMapCard(map) {
+	const NS = 'http://www.w3.org/2000/svg';
+	const size = 240;
+	const pad = 24;
+	const xs = map.objects.map((o) => o.x);
+	const zs = map.objects.map((o) => o.z);
+	const min = Math.min(...xs, ...zs, -1);
+	const max = Math.max(...xs, ...zs, 1);
+	const span = max - min || 1;
+	const at = (v) => pad + ((v - min) / span) * (size - pad * 2);
+	const svg = document.createElementNS(NS, 'svg');
+	svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+	svg.setAttribute('class', 'agora-map-thumb');
+	svg.setAttribute('role', 'img');
+	svg.setAttribute('aria-label', `Top-down map of ${map.title} with ${map.objects.length} placed objects`);
+	for (const o of map.objects) {
+		const dot = document.createElementNS(NS, 'circle');
+		dot.setAttribute('cx', at(o.x).toFixed(1));
+		dot.setAttribute('cy', at(o.z).toFixed(1));
+		dot.setAttribute('r', '5');
+		const title = document.createElementNS(NS, 'title');
+		title.textContent = o.label;
+		dot.appendChild(title);
+		svg.appendChild(dot);
+	}
+	const link = map.permalink
+		? h('a', { class: 'agora-map-link', href: map.permalink, target: '_blank', rel: 'noopener noreferrer' }, ['Open the saved world'])
+		: h('span', { class: 'agora-muted' }, ['This map was not saved as a shareable world.']);
+	return h('div', { class: 'agora-map-card' }, [
+		svg,
+		h('div', { class: 'agora-map-meta' }, [
+			h('strong', {}, [map.title]),
+			h('span', { class: 'agora-muted' }, [`${map.objects.length} placed objects${map.mood ? ` · ${map.mood}` : ''}`]),
+			link,
+		]),
+	]);
+}
+
 // ── DOM: the verifier widget ───────────────────────────────────────────────────
 
 // Mount the verifier into `container`. Renders the Verify button (or an honest
@@ -255,6 +319,12 @@ function renderResult(status, detail, { cmp, result, deliverableUrl, worker = nu
 		]) : null,
 	].filter(Boolean);
 	detail.replaceChildren(h('div', { class: 'agora-verify-hashes' }, rows));
+
+	// A verified Cartographer map shows its thumbnail and saved-world link.
+	if (ok && result.bytes) {
+		const map = parseDioramaDeliverable(result.bytes);
+		if (map) detail.appendChild(renderMapCard(map));
+	}
 
 	// A verified GLB renders inline from the exact bytes we hashed.
 	if (ok && looksLikeGlb(deliverableUrl, result.contentType, result.bytes)) {

@@ -39,6 +39,7 @@ import { isUuid } from '../_lib/validate.js';
 import { redactUrlSecrets as redactSecrets } from '../_lib/scrub-secrets.js';
 import { Bazaar, filterByMaxPrice, filterByNetwork, parseAtomicAmount } from '../_lib/x402/bazaar-client.js';
 import { assembleTaskLive } from '../_lib/agora-task-live.js';
+import { loadTrust } from '../_lib/agora-trust-read.js';
 // The projection stores a citizen's avatar as an `avatars.id`, so the Commons
 // used to resolve every one of them with its own /api/avatars/<id> round trip
 // (measured: 184 requests, ~40s, and they saturated the browser's connection
@@ -540,10 +541,20 @@ async function handlePassport(req, res) {
 		limit 25
 	`;
 
+	// Trust grade from the vouch graph. Best-effort: a read failure drops the
+	// grade (the passport then falls back to its reputation ladder), never a 500.
+	let trust = null;
+	try {
+		trust = await loadTrust(sql, { ...row, reputation: onchain?.reputation ?? row.reputation });
+	} catch (err) {
+		console.warn('[agora] passport trust read failed:', redactSecrets(err?.message));
+	}
+
 	return json(res, 200, {
 		ok: true,
 		citizen,
 		onchain,
+		trust,
 		activity: activity.map((a) => ({
 			id: a.id,
 			kind: a.kind,

@@ -102,3 +102,37 @@ describe('runCartographer', () => {
 		}
 	});
 });
+
+describe('runCartographer permalink', () => {
+	const ID = '123e4567-e89b-42d3-a456-426614174000';
+	it('saves the map and binds the permalink into the deliverable and proof', async () => {
+		const actions = [];
+		const apiBase = await serve((req, res) => {
+			let b = '';
+			req.on('data', (c) => (b += c));
+			req.on('end', () => {
+				const body = JSON.parse(b);
+				actions.push(body.action);
+				if (body.action === 'save') return json(res, 200, { id: ID, url: `https://three.ws/diorama?id=${ID}` });
+				json(res, 200, { diorama: PLAN });
+			});
+		});
+		const r = await runCartographer({ cfg: { apiBase }, citizen, job });
+		expect(actions).toEqual(['compose', 'save']);
+		expect(r.meta.dioramaId).toBe(ID);
+		expect(r.result.permalink).toBe(`https://three.ws/diorama?id=${ID}`);
+		const expected = canonicalJsonBytes({ kind: 'agora.diorama.v1', prompt: job.prompt, diorama: PLAN, dioramaId: ID, permalink: `https://three.ws/diorama?id=${ID}` });
+		expect(r.proofHashHex).toBe(createHash('sha256').update(expected).digest('hex'));
+	});
+
+	it('still completes honestly without a permalink when sharing is unavailable', async () => {
+		const apiBase = await serve((req, res) => {
+			let b = '';
+			req.on('data', (c) => (b += c));
+			req.on('end', () => (JSON.parse(b).action === 'save' ? json(res, 503, { error: 'sharing_unavailable' }) : json(res, 200, { diorama: PLAN })));
+		});
+		const r = await runCartographer({ cfg: { apiBase }, citizen, job });
+		expect(r.meta.dioramaId).toBeUndefined();
+		expect(r.result.permalink).toBeUndefined();
+	});
+});

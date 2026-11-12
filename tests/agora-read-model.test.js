@@ -314,5 +314,9 @@ describe('passport', () => {
 		expect(body.onchain).toBeNull(); // null pda ⇒ no on-chain read attempted
 		expect(body.activity.length).toBe(1);
 		expect(body.activity[0].kind).toBe('registered');
+		// No vouches and no verified work: an honest ungraded trust block, not a made-up grade.
+		expect(body.trust.grade).toBeNull();
+		expect(body.trust.graded).toBe(false);
+		expect(body.trust.inputs.reputation).toBe(3);
 	});
 });

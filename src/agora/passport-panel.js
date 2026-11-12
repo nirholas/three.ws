@@ -63,6 +63,15 @@ export function reputationGrade(rep) {
 	return { grade: '—', tier: 'new', label: 'Unproven' };
 }
 
+// The server-side trust grade (api/_lib/agora-trust.js) wins when the passport
+// carries one: it weighs reputation, verified completions, farm-resistant vouches
+// and slashes. Without it (read failed) the reputation ladder stands in.
+export function trustGradeView(trust, reputation) {
+	if (!trust) return { ...reputationGrade(reputation), source: 'reputation' };
+	if (!trust.graded) return { grade: '\u2014', tier: 'new', label: 'Ungraded', source: 'trust' };
+	return { grade: trust.grade, tier: String(trust.grade).toLowerCase(), label: trust.label, source: 'trust' };
+}
+
 const ACTIVITY_LABEL = {
 	posted_task: 'Posted a task',
 	claimed_task: 'Claimed a task',
@@ -228,7 +237,7 @@ export class PassportPanel {
 		const status = onchain?.status || c.status || 'Idle';
 		const reputation = onchain?.reputation ?? c.reputation ?? 0;
 		const stake = onchain?.stakeAmount ?? c.stakeLamports;
-		const grade = reputationGrade(reputation);
+		const grade = trustGradeView(data.trust, reputation);
 		// Every capability the citizen may claim, but led by the craft it is known
 		// for. The API returns the decoded bitmap in bit order, which always opens
 		// with Fetcher (the baseline bit every citizen carries), so an Appraiser's
@@ -261,7 +270,7 @@ export class PassportPanel {
 					<div class="agora-pp-name">${esc(c.displayName || 'Citizen')}</div>
 					<div class="agora-pp-prof">${esc(professions.join(' · '))}</div>
 				</div>
-				<span class="agora-pp-grade agora-grade tier-${grade.tier}" title="Reputation ${esc(String(reputation))} — ${esc(grade.label)}">
+				<span class="agora-pp-grade agora-grade tier-${grade.tier}" title="${esc(grade.source === 'trust' ? `Trust grade ${grade.grade} (${data.trust?.score ?? 0}/100)` : `Reputation ${reputation}`)} - ${esc(grade.label)}">
 					<span class="agora-grade-letter">${esc(grade.grade)}</span>
 					<span class="agora-grade-label">${esc(grade.label)}</span>
 				</span>
@@ -281,6 +290,8 @@ export class PassportPanel {
 						<div class="agora-pp-stat-sub">${esc(s.sub)}</div>
 					</div>`).join('')}
 			</div>
+
+			${this._renderTrust(data.trust)}
 
 			${onchain ? this._renderOnchain(onchain) : this._renderProjectionNote(c)}
 
@@ -319,6 +330,32 @@ export class PassportPanel {
 			<div class="agora-pp-onchain">
 				${rows.map(([k, v]) => `<div class="agora-kv"><span class="agora-kv-key">${esc(k)}</span><span class="agora-kv-val">${v}</span></div>`).join('')}
 			</div>`;
+	}
+
+	_renderTrust(trust) {
+		if (!trust) return '';
+		const explain = 'Trust grade (A to E) combines on-chain reputation, verified task completions, and vouches. Vouches are weighed, not counted: self and same-owner vouches count for nothing, one voucher counts once, vouches from a hirer count half, and a ring of mutual vouches shares one small pool. Slashes subtract.';
+		const head = `
+			<h3 class="agora-pp-section agora-pp-trust-head">Trust
+				<button type="button" class="agora-pp-help" aria-label="How the trust grade is computed" aria-describedby="agora-pp-trust-tip">?</button>
+				<span id="agora-pp-trust-tip" role="tooltip" class="agora-pp-tip">${esc(explain)}</span>
+			</h3>`;
+		if (!trust.graded) {
+			return `${head}<p class="agora-pp-empty">No vouches yet. Complete a verified task to earn a grade.</p>`;
+		}
+		const i = trust.inputs || {};
+		const c = trust.components || {};
+		const rows = [
+			['Reputation', `${c.reputation ?? 0} pts`, `${i.reputation ?? 0} rep`],
+			['Completions', `${c.completions ?? 0} pts`, `${i.verifiedCompletions ?? 0} of ${i.attemptedTasks ?? 0} verified`],
+			['Vouches', `${c.vouches ?? 0} pts`, `${i.vouchesCounted ?? 0} counted${i.vouchesIgnored ? `, ${i.vouchesIgnored} ignored` : ''}`],
+		];
+		if (i.slashes) rows.push(['Slashes', `${c.slashes} pts`, `${i.slashes} on record`]);
+		return `${head}
+			<dl class="agora-pp-trust" aria-label="Trust grade breakdown, score ${esc(String(trust.score))} of 100">
+				${rows.map(([k, v, sub]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}<span>${esc(sub)}</span></dd></div>`).join('')}
+				<div class="agora-pp-trust-total"><dt>Score</dt><dd>${esc(String(trust.score))} / 100</dd></div>
+			</dl>`;
 	}
 
 	_renderProjectionNote(c) {
