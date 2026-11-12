@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-import { parseMintLogs, launchFromMint, getMintLogs, launchesFromMints, scanSegments, TRANSFER_TOPIC } from '../src/mints.js';
+import { parseMintLogs, launchFromMint, getMintLogs, launchesFromMints, TRANSFER_TOPIC } from '../src/mints.js';
 import { venueForCall, listVenues, venueLabel } from '../src/venues.js';
 import { devAllocation, devStatus, riskFlags, createReputation, FLAG_RULES } from '../src/reputation.js';
 import { normalizeLaunch } from '../src/normalize.js';
@@ -169,4 +169,3 @@ test('getMintLogs waits out an RPC rate limit and retries the same range instead
 test('getMintLogs still throws a non-transient error on the first attempt', async () => {
 	await assert.rejects(getMintLogs(async () => { throw new Error('invalid params shape'); }, 0n, 99n, { sleep: async () => {} }), /invalid params/);
 });
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
