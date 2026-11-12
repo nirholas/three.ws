@@ -321,6 +321,11 @@ const CHAIN = 'solana';
  * grew to 1,604 agents and the cycle stretched to 140 minutes, well past the
  * sensor's 90-minute fresh threshold. 240 puts a 1,600-agent directory on a
  * 70-minute cycle for a 35-minute median, with room to keep growing.
+ *
+ * Since 2026-11-12 the batch is a ceiling, not a quota: nextAgentBatch only
+ * returns agents that are due on the dormancy schedule below, so most ticks
+ * read far fewer than 240 accounts. The batch still bounds how fast a backlog
+ * (a fresh directory, or a sweep that was down) drains.
  */
 export const SOLANA_SWEEP_BATCH = 240;
 export const SOLANA_SWEEP_PERIOD_MIN = 10;
