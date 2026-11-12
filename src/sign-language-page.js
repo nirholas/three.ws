@@ -11,7 +11,8 @@
 import { PoseStage } from './avatar-pose.js';
 import { SignSpeaker, scaledTiming } from './sign-speech.js';
 import { normalizeWord } from './fingerspelling.js';
-import { SIGNS, signGloss, signLookup } from './sign-dictionary.js';
+import { signGloss, signLookup } from './sign-dictionary.js';
+import { DEFAULT_PACK_ID, servablePacks } from './sign-packs/index.js';
 import { initSignApiConsole } from './sign-api-console.js';
 import { buildRigPicker, loadSignPrefs, resolveRig, saveSignPrefs } from './sign-avatars.js';
 import { log } from './shared/log.js';
@@ -73,6 +74,20 @@ async function boot() {
 	// cached per setting).
 	let rate = SPEEDS.some((s) => s.rate === prefs.rate) ? prefs.rate : 1;
 	let dominant = prefs.dominant === 'Left' ? 'Left' : 'Right';
+
+	// Sign language. Only packs whose signs fluent reviewers approved are
+	// offered (servablePacks), so with ASL alone the selector stays hidden and
+	// the page is exactly what it always was. A pack without its own manual
+	// alphabet never fingerspells: words it has no reviewed sign for are named,
+	// not spelled in ASL letters that belong to another language.
+	const packs = servablePacks();
+	const askedLang = new URLSearchParams(location.search).get('lang')?.toLowerCase();
+	let pack = packs.find((p) => p.id === askedLang) ?? packs.find((p) => p.id === DEFAULT_PACK_ID) ?? packs[0];
+	const isDefaultPack = () => pack.id === DEFAULT_PACK_ID;
+	const speakOpts = () => (isDefaultPack() ? {} : { pack, spell: pack.alphabet === 'asl-manual' });
+	// The hero's demo phrases are ASL glosses; in another language the avatar
+	// waits for the visitor instead of looping words it may have no sign for.
+	if (!isDefaultPack()) heroActive = false;
 	/** The last thing signed, so a settings change can show itself immediately. */
 	let lastPhrase = null;
 	const rebuildSpeaker = () => {
@@ -81,14 +96,14 @@ async function boot() {
 		speaker = new SignSpeaker({
 			manager: stage.anim,
 			dominant,
-			signs: signLookup({ dominant, rate }),
+			signs: isDefaultPack() ? signLookup({ dominant, rate }) : signLookup({ dominant, rate, pack }),
 			timing: rate === 1 ? null : scaledTiming(rate),
 		});
 	};
 	const replay = async () => {
 		if (!speaker || !lastPhrase) return;
 		try {
-			const result = await speaker.speak(lastPhrase);
+			const result = await speaker.speak(lastPhrase, speakOpts());
 			if (!result.superseded) setStatus(describeResult(result));
 		} catch {
 			/* a superseded replay is not an error worth surfacing */
@@ -105,10 +120,13 @@ async function boot() {
 
 	// Tell the visitor which words were SIGNED and which were spelled: the
 	// distinction is the whole point of having a dictionary.
-	const describeResult = ({ signed, spelled }) => {
+	const describeResult = ({ signed, spelled, unsupported }) => {
 		const parts = [];
 		if (signed?.length) parts.push(`signed ${signed.map((w) => w.toLowerCase()).join(', ')}`);
 		if (spelled?.length) parts.push(`spelled ${spelled.map((w) => w.toLowerCase()).join(', ')}`);
+		if (unsupported?.length) {
+			parts.push(`no reviewed ${pack.name} sign yet for ${unsupported.map((w) => w.toLowerCase()).join(', ')}`);
+		}
 		return parts.length ? parts.join(' · ') : 'Type anything and watch the avatar sign it.';
 	};
 
@@ -162,7 +180,7 @@ async function boot() {
 		heroIndex++;
 		setStatus(`Signing: “${phrase.toLowerCase()}”`);
 		try {
-			const { clip } = await speaker.speak(phrase);
+			const { clip } = await speaker.speak(phrase, speakOpts());
 			heroTimer = window.setTimeout(heroTick, clip.duration * 1000 + 1400);
 		} catch {
 			heroTimer = window.setTimeout(heroTick, 3000);
@@ -207,7 +225,7 @@ async function boot() {
 		}
 		setStatus(opts.label || `Signing: “${phrase.trim().toLowerCase()}”`);
 		try {
-			const result = await speaker.speak(phrase);
+			const result = await speaker.speak(phrase, speakOpts());
 			if (!result.superseded) setStatus(describeResult(result));
 			opts.onSettled?.();
 			return true;
@@ -257,7 +275,7 @@ async function boot() {
 	// handed to someone else as a link that signs on arrival.
 	const shareBtn = $('#sl-share-btn');
 	const shareUrl = () =>
-		`${location.origin}/sign-language?say=${encodeURIComponent(lastPhrase.trim())}`;
+		`${location.origin}/sign-language?say=${encodeURIComponent(lastPhrase.trim())}${isDefaultPack() ? '' : `&lang=${pack.id}`}`;
 	const syncShare = () => {
 		if (shareBtn) shareBtn.hidden = !lastPhrase || !normalizeWord(lastPhrase);
 	};
@@ -360,8 +378,10 @@ async function boot() {
 
 	// ── Vocabulary: every word with a real sign, playable ─────────────────────
 	const vocabHost = $('#sl-vocab-chips');
-	if (vocabHost) {
-		const words = Object.keys(SIGNS).sort();
+	const renderVocab = () => {
+		if (!vocabHost) return;
+		vocabHost.replaceChildren();
+		const words = Object.keys(pack.signs).sort();
 		let active = null;
 		for (const word of words) {
 			const chip = document.createElement('button');
@@ -372,7 +392,7 @@ async function boot() {
 			// aria-label instead of a faked list.
 			chip.setAttribute('aria-pressed', 'false');
 			chip.textContent = word.toLowerCase();
-			const gloss = signGloss(word);
+			const gloss = signGloss(word, pack);
 			if (gloss) chip.title = gloss;
 			chip.addEventListener('click', () => {
 				stopHero();
@@ -386,6 +406,41 @@ async function boot() {
 			});
 			vocabHost.appendChild(chip);
 		}
+	};
+	renderVocab();
+
+	// ── Language selector ─────────────────────────────────────────────────────
+	const langBox = $('#sl-lang');
+	const langSelect = $('#sl-lang-select');
+	const langCoverage = $('#sl-lang-coverage');
+	const syncLangCoverage = () => {
+		if (!langCoverage) return;
+		langCoverage.textContent = isDefaultPack()
+			? ''
+			: `${pack.review.approved} of ${pack.review.total} signs reviewed by fluent signers`;
+	};
+	if (langBox && langSelect && packs.length > 1) {
+		for (const p of packs) {
+			const option = document.createElement('option');
+			option.value = p.id;
+			option.textContent = p.name;
+			langSelect.appendChild(option);
+		}
+		langSelect.value = pack.id;
+		langBox.hidden = false;
+		syncLangCoverage();
+		langSelect.addEventListener('change', () => {
+			pack = packs.find((p) => p.id === langSelect.value) ?? pack;
+			const url = new URL(location.href);
+			if (isDefaultPack()) url.searchParams.delete('lang');
+			else url.searchParams.set('lang', pack.id);
+			history.replaceState(null, '', url);
+			syncLangCoverage();
+			renderVocab();
+			stopHero();
+			rebuildSpeaker();
+			replay();
+		});
 	}
 
 	// ── Webcam sign-in demo ───────────────────────────────────────────────────

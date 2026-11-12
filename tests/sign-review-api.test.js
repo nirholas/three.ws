@@ -221,6 +221,7 @@ describe('the review flow', () => {
 		const hello = queue.body.items.find((i) => i.key === 'HELLO');
 		expect(hello).toMatchObject({ hash: HELLO_HASH, state: 'unreviewed', approvals: 0, required: 2 });
 		expect(hello.gloss).toBe(FIXTURE.signs.HELLO.gloss);
+		expect(hello.sign).toEqual(FIXTURE.signs.HELLO);
 
 		const first = await call('POST', 'review', { body: { pack: 'qfx', sign: 'hello', hash: HELLO_HASH, verdict: 'approve' } });
 		expect(first.body).toMatchObject({ sign: 'HELLO', state: 'in_review', approvals: 1 });

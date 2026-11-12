@@ -1182,6 +1182,7 @@ const appConfig = {
 				'sign-language': resolve(__dirname, 'pages/sign-language.html'),
 				'asl-alphabet': resolve(__dirname, 'pages/asl-alphabet.html'),
 				'sign-mirror': resolve(__dirname, 'pages/sign-mirror.html'),
+				'sign-review': resolve(__dirname, 'pages/sign-review.html'),
 				objects: resolve(__dirname, 'pages/objects.html'),
 				forged: resolve(__dirname, 'pages/forged.html'),
 				wardrobe: resolve(__dirname, 'pages/wardrobe.html'),

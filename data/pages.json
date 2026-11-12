@@ -220,6 +220,14 @@
 					"showcase": true
 				},
 				{
+					"path": "/sign-review",
+					"title": "Sign Review",
+					"description": "Where fluent signers review each sign of a new sign language on the live avatar, at half speed or full, either hand, and approve, reject or ask for a change. No sign goes live without the required approvals.",
+					"priority": 0.4,
+					"changefreq": "monthly",
+					"added": "2026-11-12"
+				},
+				{
 					"path": "/objects",
 					"title": "Object Library",
 					"description": "Hundreds of free CC0 3D objects and props: furniture, lighting, electronics, decor. Public domain, no attribution required. Preview live, place it in your room with AR, or download the GLB.",

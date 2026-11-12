@@ -279,6 +279,7 @@ curl -s "https://three.ws/api/sign?text=happy+to+meet+you" | jq '.timeline'
 | `speed` | `0.25`-`1.5`, default `1` | Below 1 is a signer taking longer over the same signs, not a clip played back slowly |
 | `max_seconds` | `1`-`60`, default `45` | Cap the utterance. Longer text truncates at a word boundary and comes back with `truncated: true` |
 | `format` | `clip` (default), `timeline` | `timeline` omits the clip: a few hundred bytes instead of tens of kilobytes, when all you need is what would be signed |
+| `lang` | `ase` (default) or another pack id | The sign language pack. A pack other than ASL performs only signs fluent reviewers approved and reports every other word as `unsupported`. An unknown or unreviewed pack is a 400 `unsupported_language` that lists what is `available`. See [Languages and review](#languages-and-review) |
 
 `POST` takes the same fields as a JSON body (`max_seconds` may also be written `maxSeconds`).
 
@@ -293,7 +294,7 @@ curl -s "https://three.ws/api/sign?text=happy+to+meet+you" | jq '.timeline'
 | `truncated` | Whether `max_seconds` cut the utterance short |
 | `viewer` | A `/sign-language?say=…` link that performs the same text on a live avatar |
 
-`GET /api/sign` with no `text` returns the descriptor: every parameter, and the whole vocabulary with each sign's description. That is the call to make first if you want to know what will sign and what will spell.
+`GET /api/sign` with no `text` returns the descriptor: every parameter, the whole vocabulary with each sign's description, and `languages`, every pack you can pass as `lang` with how many of its signs are reviewed. That is the call to make first if you want to know what will sign and what will spell.
 
 ### Playing what comes back
 
@@ -320,6 +321,8 @@ The same compiler is on the [three.ws MCP server](https://three.ws/mcp-tools) as
 |---|---|
 | `list_sign_vocabulary` | Every word with a real sign, and what the sign does. Optional `search` filter |
 | `sign_text` | Compiles text and returns the timeline, a link that plays it, and the clip URL. Pass `include_clip: true` to inline the clip document itself |
+
+Both take an optional `lang`, with the same rules as the HTTP parameter.
 
 `sign_text` withholds the clip by default on purpose: a sentence is tens of thousands of numbers, which is worth fetching over HTTP and worthless inside a chat transcript.
 
@@ -398,6 +401,73 @@ WELCOME: {
 ```
 
 Anchors (`forehead`, `nose`, `chin`, `mouth`, `sternum`, `belly`, `shoulder`, `hip`) are measured off the reference skeleton and follow the body, so a place on the chin stays on the chin when the head turns. Offsets are metres: `out` away from the midline, `in` toward it, `forward` toward the person reading. Directions take the same words. Because a sign is described anatomically, the same entry reads correctly on a tall avatar, a short one, and either hand.
+
+## Languages and review
+
+ASL is the platform's native pack. Every other sign language ships as a pack under review, and the rule is strict: **a sign is served only after enough fluent signers approved its exact content.** A sign nobody has checked is never performed, and a language with no approved sign is not offered at all, so the platform never presents a sign language no fluent signer has vetted.
+
+### The pack format
+
+A pack is one file in [src/sign-packs/](../src/sign-packs/), registered in `PACKS` in `src/sign-packs/index.js`. Start from [`_template.js`](../src/sign-packs/_template.js):
+
+| Field | What it holds |
+|---|---|
+| `id`, `bcp47` | ISO 639-3 code (`rms` for Romanian Sign Language, `bfi` for British Sign Language) and the BCP 47 tag. Either one works as `lang` |
+| `signs` | One entry per sign, in exactly the format of [Adding a sign](#adding-a-sign). The engine (solver, timeline, contact, face) is shared by every language |
+| `aliases` | Everyday words that map onto a sign key. An alias is served only while the sign it points at is approved |
+| `alphabet` | The manual alphabet the pack fingerspells with, or `null`. With `null`, a word that has no approved sign is reported as unsupported. It is never fingerspelled with ASL letters |
+| `status` | `review`. Only ASL is `native` |
+| `requiredApprovals` | Distinct reviewers who must approve each sign. Two is the floor |
+| `reviews` | The committed review ledger, imported from `src/sign-packs/reviews/<id>.js` |
+
+`npm run sign:validate-pack -- <id>` checks the pack (handshapes, anchors, phases, aliases, ledger) and should pass before every commit.
+
+### The approval rule
+
+[src/sign-packs/review.js](../src/sign-packs/review.js) decides every sign's state from its reviews:
+
+- A review counts only for the content it was given on. Each sign has a content hash; editing a sign changes the hash, and the approvals on the old version stop counting.
+- One reviewer counts once. Their latest verdict on the current hash is their verdict.
+- A single `reject` or `needs_change` on the current hash holds the sign back however many approvals it has. A fluent signer saying "this is wrong" outweighs a count.
+- `reject` and `needs_change` require a note saying what is wrong, so the sign can be fixed.
+- Revoking a reviewer keeps their verdicts in the record for the audit trail, but those verdicts stop counting.
+
+The same function runs over the live database and over the committed ledger, so both always agree on what a sign's state is.
+
+### Reviewing on /sign-review
+
+[/sign-review](https://three.ws/sign-review) is the reviewer workspace. A reviewer picks a language, watches each sign on a live avatar (half speed, either hand, replay), reads the description, and gives a verdict: **Approve**, **Needs change** or **Reject** (keys A, C and R; J and K move through the queue; Space replays). The queue holds only signs that are not yet approved and that this reviewer has not judged at the current version. If a sign is edited while someone is looking at it, the verdict is refused and the queue reloads with the new version.
+
+Signed-out visitors and accounts without a grant see what is under review and how to ask for access.
+
+### Becoming a reviewer
+
+Access is granted per language to fluent signers, ideally Deaf native signers or certified interpreters. To ask, write to support@three.ws with the sign language you sign and your background with it. An admin grants access from the form at the bottom of /sign-review (an email or user id, a display name, and a note on the credential), or with `POST /api/sign-review/reviewer`. The same form revokes access.
+
+### From approved to live
+
+Verdicts land in the review workspace (the `sign_reviewers` and `sign_reviews` tables). Serving never reads the database. A maintainer exports the workspace into the pack's ledger:
+
+```bash
+node --env-file=.env.local scripts/export-sign-reviews.mjs rms
+# or: npm run sign:export-reviews -- rms [--check]
+```
+
+The export writes only verdicts on each sign's current content from reviewers whose grant is still active. It lands as an ordinary diff that a maintainer reads before committing, and the next deploy serves whatever the ledger approves. `--check` writes nothing and exits 1 when the ledger is out of date.
+
+### The review API
+
+| Call | Who | What |
+|---|---|---|
+| `GET /api/sign-review/packs` | Anyone | Packs under review with their coverage. Signed in, it adds the packs you are granted on and whether you are an admin |
+| `GET /api/sign-review/status?pack=<id>` | Anyone | Counts per state (`approved`, `in_review`, `needs_change`, `rejected`, `unreviewed`) and the number of active reviewers |
+| `GET /api/sign-review/queue?pack=<id>` | Granted reviewer | The signs waiting for your verdict, each with its content, hash and approval count |
+| `POST /api/sign-review/review` | Granted reviewer | `{ pack, sign, hash, verdict, note }`. A 409 `sign_changed` means the sign was edited since you loaded it |
+| `POST /api/sign-review/reviewer` | Admin | `{ pack, email or user_id, display_name, credential_note, revoke }` |
+
+The two POSTs need the CSRF token every signed-in write on three.ws carries.
+
+On /sign-language, the language selector appears only when more than one pack has approved signs, with how many signs fluent signers have reviewed. A `?lang=` link opens the page in that language.
 
 ## Contact that actually touches
 
@@ -511,7 +581,7 @@ None of this replaces a human interpreter. It makes an avatar legible to signers
 
 1. **Captured signs**: clips from real signers (commissioned, community capture through [Motion Swap](https://three.ws/motion-swap), permissively licensed video) replacing authored entries word by word, through the same dictionary interface.
 2. **Word-level sign recognition**: the current recognizer reads fingerspelling; a 250-sign vocabulary model (MIT architecture retrained on the CC BY 4.0 PopSign corpus) will let common signs be recognized directly.
-3. **Review by Deaf signers**: the vocabulary is authored, not validated. Growing it past a core set should follow review and capture, not more authoring.
+3. **Review by Deaf signers**: the review workspace and approval rule for new languages are live ([Languages and review](#languages-and-review)). The ASL vocabulary is still authored rather than validated, and putting it through the same review is next.
 4. **Standalone package on npm**: the engine is already packaged and installable from a clone ([Install it as a package](#install-it-as-a-package)); publishing `@three-ws/sign-language` to the public registry is what remains.
 
 ## Related

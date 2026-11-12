@@ -119,6 +119,9 @@ export async function reviewQueue(packId, reviewerId) {
 		items.push({
 			key,
 			gloss: sign.gloss,
+			// The exact content the hash covers, so the page performs precisely
+			// what the reviewer's verdict will be recorded against.
+			sign,
 			hash: state.hash,
 			state: state.state,
 			approvals: state.approvals,

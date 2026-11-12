@@ -5682,6 +5682,10 @@
 			"dest": "/sign-mirror.html"
 		},
 		{
+			"src": "/sign-review/?",
+			"dest": "/sign-review.html"
+		},
+		{
 			"src": "/objects/?",
 			"dest": "/objects.html"
 		},

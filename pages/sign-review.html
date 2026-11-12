@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<script>/* three.ws theme boot, no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<title>Sign Review · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta name="description" content="Where fluent signers review every sign in a new sign language before three.ws avatars may perform it. Watch each sign on the avatar, then approve it, reject it, or ask for a change." />
+		<meta name="theme-color" content="#000000" />
+		<link rel="canonical" href="https://three.ws/sign-review" />
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="Sign Review · three.ws" />
+		<meta property="og:description" content="No sign language beyond ASL goes live on three.ws until fluent signers approve it sign by sign. This is where they do." />
+		<meta property="og:url" content="https://three.ws/sign-review" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta name="twitter:card" content="summary" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="robots" content="index, follow" />
+
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+
+		<style>
+			.sr-main { width: 100%; max-width: 1180px; min-width: 0; box-sizing: border-box; margin: 0 auto; padding: clamp(24px, 4vw, 48px) clamp(16px, 4vw, 40px) 96px; }
+			.sr-head h1 { font-size: clamp(28px, 4.4vw, 46px); line-height: 1.05; margin: 14px 0 12px; letter-spacing: -.02em; }
+			.sr-head p { max-width: 70ch; color: var(--ink-dim); font-size: 16px; line-height: 1.6; margin: 0; }
+			.sr-chip { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border: 1px solid var(--stroke); border-radius: 999px; background: var(--surface-1); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-dim); font-family: var(--font-mono); }
+			.sr-rule { margin: 20px 0 0; padding: 14px 16px; border: 1px solid rgba(167,139,250,.45); border-radius: 14px; background: rgba(167,139,250,.08); font-size: 15px; line-height: 1.55; max-width: 76ch; }
+			.sr-rule strong { color: var(--ink); }
+
+			.sr-packbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 28px 0 16px; }
+			.sr-packbar label { font-size: 13px; color: var(--ink-dim); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .05em; }
+			.sr-select, .sr-input, .sr-note { background: var(--surface-1); color: var(--ink); border: 1px solid var(--stroke); border-radius: 10px; font: inherit; font-size: 15px; padding: 9px 12px; box-sizing: border-box; }
+			.sr-select:hover, .sr-input:hover, .sr-note:hover { border-color: rgba(167,139,250,.55); }
+			.sr-select:focus-visible, .sr-input:focus-visible, .sr-note:focus-visible { outline: 2px solid #a78bfa; outline-offset: 2px; }
+			.sr-coverage { font-size: 14px; color: var(--ink-dim); }
+
+			.sr-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(18px, 3vw, 36px); align-items: start; }
+			.sr-stage-wrap { position: relative; border: 1px solid var(--stroke); border-radius: 18px; overflow: hidden; background: radial-gradient(120% 120% at 50% 0%, rgba(167,139,250,.10), transparent 60%), var(--surface-1); aspect-ratio: 4 / 5; min-height: 340px; }
+			#sr-stage { position: absolute; inset: 0; }
+			.sr-stage-skeleton { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; pointer-events: none; }
+			.sr-stage-wrap[data-state='loading'] .sr-stage-skeleton { display: flex; }
+			.sr-sk { display: block; background: rgba(167,139,250,.14); border-radius: 999px; animation: sr-breathe 1.6s ease-in-out infinite; }
+			.sr-sk-head { width: 70px; height: 70px; }
+			.sr-sk-body { width: 116px; height: 160px; border-radius: 58px 58px 26px 26px; animation-delay: .18s; }
+			@keyframes sr-breathe { 0%, 100% { opacity: .35; } 50% { opacity: .85; } }
+			.sr-stage-msg { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px; font-family: var(--font-mono); font-size: 13px; color: #fff; background: linear-gradient(to top, rgba(0,0,0,.55), transparent); min-height: 20px; }
+			.sr-stage-error[hidden] { display: none; }
+			.sr-stage-error { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; }
+
+			.sr-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+			.sr-seg { display: inline-flex; border: 1px solid var(--stroke); border-radius: 10px; overflow: hidden; }
+			.sr-seg button { appearance: none; border: 0; background: var(--surface-1); color: var(--ink-dim); font: inherit; font-size: 13px; padding: 8px 12px; cursor: pointer; }
+			.sr-seg button + button { border-left: 1px solid var(--stroke); }
+			.sr-seg button:hover { color: var(--ink); background: rgba(167,139,250,.12); }
+			.sr-seg button:active { background: rgba(167,139,250,.24); }
+			.sr-seg button:focus-visible { outline: 2px solid #a78bfa; outline-offset: -2px; }
+			.sr-seg button[aria-pressed='true'] { color: var(--ink); background: rgba(167,139,250,.22); }
+
+			.sr-btn { appearance: none; border: 1px solid var(--stroke); background: var(--surface-2); color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; padding: 9px 14px; border-radius: 10px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
+			.sr-btn:hover:not(:disabled) { background: rgba(167,139,250,.16); border-color: rgba(167,139,250,.6); }
+			.sr-btn:active:not(:disabled) { transform: scale(.98); }
+			.sr-btn:focus-visible { outline: 2px solid #a78bfa; outline-offset: 2px; }
+			.sr-btn:disabled { opacity: .55; cursor: default; }
+			.sr-btn kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 6px; border: 1px solid currentColor; border-radius: 5px; opacity: .7; font-weight: 500; }
+			.sr-approve { border-color: rgba(52,211,153,.55); background: rgba(52,211,153,.12); }
+			.sr-approve:hover:not(:disabled) { background: rgba(52,211,153,.24); border-color: rgba(52,211,153,.85); }
+			.sr-reject { border-color: rgba(248,113,113,.55); background: rgba(248,113,113,.10); }
+			.sr-reject:hover:not(:disabled) { background: rgba(248,113,113,.22); border-color: rgba(248,113,113,.85); }
+			.sr-change { border-color: rgba(251,191,36,.55); background: rgba(251,191,36,.10); }
+			.sr-change:hover:not(:disabled) { background: rgba(251,191,36,.22); border-color: rgba(251,191,36,.85); }
+
+			.sr-card { border: 1px solid var(--stroke); border-radius: 18px; background: var(--surface-1); padding: clamp(18px, 3vw, 26px); }
+			.sr-card h2 { margin: 0 0 4px; font-size: clamp(24px, 3vw, 32px); letter-spacing: -.01em; font-family: var(--font-mono); }
+			.sr-meta { color: var(--ink-dim); font-size: 13px; font-family: var(--font-mono); margin: 0 0 14px; }
+			.sr-gloss { font-size: 16px; line-height: 1.6; margin: 0 0 18px; }
+			.sr-note { width: 100%; min-height: 84px; resize: vertical; line-height: 1.5; }
+			.sr-note-label { display: block; font-size: 13px; color: var(--ink-dim); margin: 0 0 6px; }
+			.sr-verdicts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+			.sr-feedback { min-height: 22px; margin: 12px 0 0; font-size: 14px; color: var(--ink-dim); }
+			.sr-feedback[data-tone='error'] { color: #f87171; }
+			.sr-feedback[data-tone='ok'] { color: #34d399; }
+
+			.sr-queue { margin-top: 18px; }
+			.sr-queue h3 { font-size: 13px; color: var(--ink-dim); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .05em; margin: 0 0 8px; font-weight: 500; }
+			.sr-queue ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+			.sr-qitem { appearance: none; border: 1px solid var(--stroke); background: var(--surface-2); color: var(--ink-dim); font: inherit; font-family: var(--font-mono); font-size: 13px; padding: 6px 10px; border-radius: 999px; cursor: pointer; }
+			.sr-qitem:hover { color: var(--ink); border-color: rgba(167,139,250,.6); }
+			.sr-qitem:active { background: rgba(167,139,250,.2); }
+			.sr-qitem:focus-visible { outline: 2px solid #a78bfa; outline-offset: 2px; }
+			.sr-qitem[aria-current='true'] { color: var(--ink); background: rgba(167,139,250,.22); border-color: rgba(167,139,250,.7); }
+			.sr-qitem[data-state='rejected'], .sr-qitem[data-state='needs_change'] { border-style: dashed; }
+
+			.sr-skel-line { display: block; height: 14px; border-radius: 7px; background: rgba(167,139,250,.12); margin: 10px 0; animation: sr-breathe 1.6s ease-in-out infinite; }
+			.sr-panel { border: 1px solid var(--stroke); border-radius: 18px; background: var(--surface-1); padding: clamp(20px, 3vw, 30px); max-width: 76ch; }
+			.sr-panel h2 { margin: 0 0 10px; font-size: 22px; }
+			.sr-panel p { color: var(--ink-dim); line-height: 1.6; margin: 0 0 12px; }
+			.sr-panel a:not(.sr-btn) { color: var(--ink); }
+			.sr-keys { color: var(--ink-dim); font-size: 13px; margin: 14px 0 0; }
+			.sr-keys kbd { font-family: var(--font-mono); font-size: 12px; padding: 1px 6px; border: 1px solid var(--stroke); border-radius: 5px; }
+
+			.sr-admin { margin-top: 36px; }
+			.sr-admin form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; align-items: end; }
+			.sr-admin label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--ink-dim); }
+			.sr-admin .sr-check { flex-direction: row; align-items: center; gap: 8px; }
+
+			[hidden] { display: none !important; }
+			@media (max-width: 860px) { .sr-grid { grid-template-columns: 1fr; } .sr-stage-wrap { aspect-ratio: 1 / 1; } }
+			@media (prefers-reduced-motion: reduce) { .sr-sk, .sr-skel-line { animation: none; opacity: .6; } .sr-btn:active:not(:disabled) { transform: none; } }
+		</style>
+	</head>
+	<body>
+		<header>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
+		<main class="sr-main">
+			<section class="sr-head">
+				<span class="sr-chip">Native-signer review</span>
+				<h1>Sign review</h1>
+				<p>
+					three.ws avatars sign American Sign Language today. Any other sign language is added
+					one sign at a time, and only fluent signers decide whether a sign is right. Watch each
+					sign on the avatar, slow it down, flip the dominant hand, then approve it, reject it,
+					or say what needs to change.
+				</p>
+				<p class="sr-rule" id="sr-rule">
+					<strong>A sign never goes live without the required approvals.</strong>
+					Each sign needs approvals from distinct reviewers on its exact current form. Editing a
+					sign resets it to unreviewed, and a single rejection holds it back.
+				</p>
+			</section>
+
+			<div id="sr-view" aria-live="polite">
+				<div class="sr-panel" id="sr-loading" aria-busy="true">
+					<span class="sr-skel-line" style="width: 40%"></span>
+					<span class="sr-skel-line" style="width: 85%"></span>
+					<span class="sr-skel-line" style="width: 70%"></span>
+					<span class="sr-skel-line" style="width: 55%"></span>
+				</div>
+			</div>
+
+			<section id="sr-workspace" hidden>
+				<div class="sr-packbar">
+					<label for="sr-pack">Language</label>
+					<select id="sr-pack" class="sr-select"></select>
+					<span class="sr-coverage" id="sr-coverage"></span>
+				</div>
+				<div class="sr-grid">
+					<div>
+						<div class="sr-stage-wrap" id="sr-stage-wrap" data-state="loading">
+							<div id="sr-stage"></div>
+							<div class="sr-stage-skeleton" aria-hidden="true"><span class="sr-sk sr-sk-head"></span><span class="sr-sk sr-sk-body"></span></div>
+							<div class="sr-stage-error" id="sr-stage-error" hidden>
+								<p>The avatar could not load. Check your connection and try again.</p>
+								<button class="sr-btn" type="button" id="sr-stage-retry">Load the avatar again</button>
+							</div>
+							<div class="sr-stage-msg" id="sr-stage-msg" role="status"></div>
+						</div>
+						<div class="sr-controls">
+							<div class="sr-seg" role="group" aria-label="Speed">
+								<button type="button" data-rate="0.5" aria-pressed="false">0.5×</button>
+								<button type="button" data-rate="1" aria-pressed="true">1×</button>
+							</div>
+							<div class="sr-seg" role="group" aria-label="Dominant hand">
+								<button type="button" data-hand="Right" aria-pressed="true">Right hand</button>
+								<button type="button" data-hand="Left" aria-pressed="false">Left hand</button>
+							</div>
+							<button class="sr-btn" type="button" id="sr-replay">Play again <kbd>Space</kbd></button>
+						</div>
+					</div>
+
+					<div>
+						<article class="sr-card" id="sr-card">
+							<h2 id="sr-key"></h2>
+							<p class="sr-meta" id="sr-meta"></p>
+							<p class="sr-gloss" id="sr-gloss"></p>
+							<label class="sr-note-label" for="sr-note">Note (required to reject or ask for a change)</label>
+							<textarea class="sr-note" id="sr-note" maxlength="2000" placeholder="What is right or wrong about the handshape, place, movement, palm orientation or face"></textarea>
+							<div class="sr-verdicts">
+								<button class="sr-btn sr-approve" type="button" data-verdict="approve">Approve <kbd>A</kbd></button>
+								<button class="sr-btn sr-change" type="button" data-verdict="needs_change">Needs change <kbd>C</kbd></button>
+								<button class="sr-btn sr-reject" type="button" data-verdict="reject">Reject <kbd>R</kbd></button>
+							</div>
+							<p class="sr-feedback" id="sr-feedback" role="status"></p>
+						</article>
+						<div class="sr-queue">
+							<h3 id="sr-queue-title">Waiting for you</h3>
+							<ol id="sr-queue"></ol>
+						</div>
+						<p class="sr-keys">Keys: <kbd>A</kbd> approve, <kbd>C</kbd> needs change, <kbd>R</kbd> reject, <kbd>Space</kbd> play again, <kbd>J</kbd>/<kbd>K</kbd> next and previous sign. Keys are ignored while you type a note.</p>
+					</div>
+				</div>
+			</section>
+
+			<section class="sr-panel sr-admin" id="sr-admin" hidden aria-labelledby="sr-admin-title">
+				<h2 id="sr-admin-title">Reviewers (admin)</h2>
+				<p>Grant a fluent signer review access to one language, or revoke it. A revoked reviewer's verdicts stop counting.</p>
+				<form id="sr-admin-form">
+					<label>Language<select class="sr-select" name="pack" id="sr-admin-pack" required></select></label>
+					<label>Account email<input class="sr-input" type="email" name="email" required autocomplete="off" /></label>
+					<label>Display name<input class="sr-input" type="text" name="display_name" maxlength="80" /></label>
+					<label>Credential note<input class="sr-input" type="text" name="credential_note" maxlength="500" placeholder="e.g. Deaf native signer, interpreter" /></label>
+					<label class="sr-check"><input type="checkbox" name="revoke" /> Revoke instead of grant</label>
+					<button class="sr-btn" type="submit">Save</button>
+				</form>
+				<p class="sr-feedback" id="sr-admin-feedback" role="status"></p>
+			</section>
+		</main>
+
+		<script src="/footer.js" defer></script>
+		<script type="module" src="/src/sign-review-page.js"></script>
+	</body>
+</html>

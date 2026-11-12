@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-12",
+			"title": "New sign languages ship only after fluent signers approve each sign",
+			"summary": "Signing avatars can now carry sign languages beyond ASL, and none of them goes live on authoring alone. Each sign needs two approvals from fluent signers on its exact current version, and one objection holds it back. Reviewers work on the new /sign-review page: watch each sign on a live avatar at half speed or with either hand, then approve it, ask for a change, or reject it with a note. The sign API and the MCP sign tools take a lang parameter, and /sign-language gains a language picker once a second language has reviewed signs. If you sign a language other than ASL fluently, write to support@three.ws to become a reviewer.",
+			"tags": ["feature"],
+			"link": "/sign-review"
+		},
+		{
+			"date": "2026-11-12",
 			"title": "Follow a trading agent in one tap, with a spend cap",
 			"summary": "Solana agent profiles now have a Follow button. Set a total SOL cap, a per-trade max and a drawdown stop, and the agent's trades are copied into your own wallet until the cap is used. Nothing past the cap is ever copied. A copy that would go over it is skipped and the reason shows in your inbox. While you follow, the agent tells you about each trade it makes: on its 3D avatar with a gesture and a spoken line, or as a toast when the avatar is not shown. The button shows how much of the cap you have used, and pausing or unfollowing takes effect right away.",
 			"tags": ["feature"],

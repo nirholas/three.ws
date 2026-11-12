@@ -156,6 +156,14 @@
 			.sl-opt:active { transform: scale(.96); }
 			.sl-opt[aria-pressed='true'] { color: var(--ink); background: rgba(167,139,250,.2); }
 
+			/* Language: hidden while ASL is the only pack with reviewed signs */
+			.sl-lang { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; }
+			.sl-lang[hidden] { display: none; }
+			.sl-lang-select { background: var(--surface-2); color: var(--ink); border: 1px solid var(--stroke); border-radius: 10px; font: inherit; font-size: 14px; padding: 7px 10px; cursor: pointer; }
+			.sl-lang-select:hover { border-color: rgba(167,139,250,.6); }
+			.sl-lang-select:focus-visible { outline: 2px solid rgba(167,139,250,.9); outline-offset: 1px; }
+			.sl-lang-coverage { font-size: 13px; color: var(--ink-dim); }
+
 			/* Vocabulary */
 			.sl-vocab { margin-top: clamp(48px, 6vw, 76px); }
 			.sl-vocab h2 { font-size: clamp(22px, 2.4vw, 30px); letter-spacing: -.02em; margin: 0 0 10px; }
@@ -313,6 +321,11 @@
 
 					<div class="sl-try">
 						<div class="sl-try-label">Try it: type anything</div>
+						<div class="sl-lang" id="sl-lang" hidden>
+							<label class="sl-setting-label" for="sl-lang-select">Sign language</label>
+							<select id="sl-lang-select" class="sl-lang-select"></select>
+							<span class="sl-lang-coverage" id="sl-lang-coverage"></span>
+						</div>
 						<div class="sl-input-row">
 							<input
 								id="sl-spell-input"

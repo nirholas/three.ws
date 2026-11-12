@@ -61,4 +61,5 @@ Status: exploratory. A contact has offered a local connection to the office of t
 
 - [ ] Send the reply above to the contact.
 - [ ] If interest: schedule the 30-minute call, forward the brief.
-- [ ] Phase 2 groundwork: scope an LSR vocabulary format and a signer review flow on top of [src/sign-dictionary.js](../src/sign-dictionary.js) (do not start authoring signs without native signer review lined up).
+- [x] Phase 2 groundwork: the pack format and the signer review flow are built ([Languages and review](./sign-language.md#languages-and-review)). An LSR pack is `src/sign-packs/rms.js` from the template; LSR-fluent reviewers get access per language on [/sign-review](https://three.ws/sign-review), and no LSR sign is served until two of them approve it.
+- [ ] Phase 2: line up the school's LSR-fluent staff or interpreters as reviewers before authoring the first LSR signs.
