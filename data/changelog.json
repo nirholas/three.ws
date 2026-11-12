@@ -2,6 +2,20 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-11-12",
+			"title": "three-ws/agent output tokens now cost $3 per million",
+			"summary": "The three-ws/agent model on /api/v1/chat/completions now charges $3.00 per million output tokens, up from $2.00. Input stays at $0.50 per million. The old output rate was below what our paid fallback model costs us, so a busy hour could sell those tokens at a loss. The new rate covers it with margin, and a test now fails if a model change would put the price below cost again. API keys, agent wallet funding and pay-per-request over x402 all use the same rate. Live prices are always at GET /api/v1/models.",
+			"tags": ["improvement"],
+			"link": "/docs/metered-router"
+		},
+		{
+			"date": "2026-11-12",
+			"title": "Onchain viewer recognizes the real SPL Memo v1 program",
+			"summary": "The /onchain viewer and the Solana Memo Media MCP listed SPL Memo v1 under an address that is not a valid Solana key, so a v1 memo that an RPC did not tag as spl-memo was skipped. Both now use the real program, Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo, and a test checks that every recognized memo program is a real 32-byte key.",
+			"tags": ["fix"],
+			"link": "/onchain"
+		},
+		{
 			"date": "2026-11-11",
 			"title": "An accessibility statement, a full WCAG 2.2 AA conformance report, and fixes for every serious barrier found",
 			"summary": "three.ws now publishes an accessibility statement at /accessibility. It sets out our commitment, rates the site against WCAG 2.2 Level AA, lists the known gaps with a workaround for each, and tells you how to report a barrier. Behind it is a conformance report in the VPAT 2.x format covering all 56 Level A and AA criteria. Every core page was checked with axe in both themes at desktop and phone width, walked with the keyboard alone, read with the Orca screen reader, zoomed to 400% and viewed in forced colours. All 104 serious or critical issues found are fixed. Among them: 3D views now have names and keyboard orbit, collapsed menus no longer swallow focus, every search field and sign-in field shows a clear focus ring, the home desktop and agent embeds have a main landmark, and invisible controls no longer take focus.",

@@ -18,6 +18,13 @@
 
 import { INFERENCE_USD_PER_MTOK, INFERENCE_MIN_CALL_USD } from './catalog.js';
 
+// The published rate clears the list price of the costliest paid lane the
+// agent chain can land on (api/_lib/llm-tool-chain.js providerChain, priced by
+// api/_lib/llm-pricing.js) by at least this fraction, on input and on output.
+// tests/inference-price-margin.test.js enforces it, so a change to a lane's
+// model or price that would sell tokens at a loss fails the suite.
+export const INFERENCE_MIN_MARGIN = 0.2;
+
 export const INFERENCE_MODEL_ROWS = Object.freeze([
 	Object.freeze({
 		id: 'three-ws/agent',

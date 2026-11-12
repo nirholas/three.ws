@@ -15,7 +15,7 @@ import { INFERENCE_USD_PER_MTOK, INFERENCE_MIN_CALL_USD, CATALOG } from '../api/
 
 describe('inference pricing', () => {
 	it('prices tokens at the published per-million rate, rounded up to the micro-dollar', () => {
-		expect(priceInference({ inputTokens: 962, outputTokens: 5 })).toBe(0.000491);
+		expect(priceInference({ inputTokens: 962, outputTokens: 5 })).toBe(0.000496);
 		expect(priceInference({ inputTokens: 1_000_000, outputTokens: 0 })).toBe(INFERENCE_USD_PER_MTOK.input);
 		expect(priceInference({ inputTokens: 0, outputTokens: 1_000_000 })).toBe(INFERENCE_USD_PER_MTOK.output);
 	});

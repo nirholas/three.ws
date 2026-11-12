@@ -63,7 +63,7 @@ export const TTS_OPENAI_USD_PER_1K = 0.03;
 // Vertex Gemini, so one flat published rate is honest regardless of which lane
 // answered, and a budget in credits means the same thing on every call. A call
 // is never cheaper than INFERENCE_MIN_CALL_USD so a budget always converges.
-export const INFERENCE_USD_PER_MTOK = Object.freeze({ input: 0.5, output: 2 });
+export const INFERENCE_USD_PER_MTOK = Object.freeze({ input: 0.5, output: 3 });
 export const INFERENCE_MIN_CALL_USD = 0.0001;
 // Wallet-funded top-ups convert USDC to credits at this published rate, no fee:
 // 1 USDC buys exactly $1.00 of credits (credits are USD-denominated).

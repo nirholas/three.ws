@@ -26,7 +26,7 @@ The cap is `max_rounds` model rounds, each reading your prompt plus the room a r
 
 ## Prices
 
-`GET /api/v1/models` lists each model with `pricing` (USD per million tokens, input and output, and the minimum call) and a `pay_per_request` block (`enabled`, scheme, network, asset, and the round limits that size the cap). Pay-per-request and keyed credits use the same per-token price.
+`GET /api/v1/models` lists each model with `pricing` (USD per million tokens, input and output, and the minimum call) and a `pay_per_request` block (`enabled`, scheme, network, asset, and the round limits that size the cap). Pay-per-request and keyed credits use the same per-token price. The rate clears the list price of the costliest paid lane the agent chain can land on (today the Vertex Gemini anchor) by at least `INFERENCE_MIN_MARGIN` (20%) on both input and output, so no token is sold below what it costs; [tests/inference-price-margin.test.js](../tests/inference-price-margin.test.js) fails if a lane change would break that.
 
 ## curl
 
@@ -40,7 +40,7 @@ curl -i https://three.ws/api/v1/chat/completions \
 HTTP/2 402
 payment-required: eyJ4NDAyVmVyc2lvbiI6Mi...
 
-{"x402Version":2,"error":"Payment required: ...","accepts":[{"scheme":"upto","network":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","asset":"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v","amount":"50260", ...}]}
+{"x402Version":2,"error":"Payment required: ...","accepts":[{"scheme":"upto","network":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","asset":"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v","amount":"55393", ...}]}
 ```
 
 Signing needs a client library; the curl above shows the challenge. To pay, use the SDK.

@@ -218,10 +218,10 @@ describe('metered settlement', () => {
 		expect(out.usage.prompt_tokens).toBe(1200);
 		expect(out.usage.completion_tokens).toBe(300);
 
-		// 1200 in at 0.5 and 300 out at 2.0 USD per million tokens = 0.0012 USD.
+		// 1200 in at 0.5 and 300 out at 3.0 USD per million tokens = 0.0015 USD.
 		const row = table.inferenceModelRow('three-ws/agent');
 		const expected = BigInt(Math.round(((1200 * row.input_usd_per_mtok + 300 * row.output_usd_per_mtok) / 1e6) * 1e6));
-		expect(expected).toBe(1200n);
+		expect(expected).toBe(1500n);
 		const [deposit, claim] = facilitator.events;
 		expect(deposit.kind).toBe('deposit');
 		expect(deposit.amount).toBe(BigInt(accept.amount));
@@ -230,8 +230,8 @@ describe('metered settlement', () => {
 		console.log('settlement events: ' + JSON.stringify(facilitator.events, (k, v) => (typeof v === 'bigint' ? String(v) : v)));
 
 		const settled = JSON.parse(Buffer.from(res.headers['x-payment-response'], 'base64').toString('utf8'));
-		expect(settled.charged_atomics).toBe('1200');
-		expect(settled.refunded_atomics).toBe(String(BigInt(accept.amount) - 1200n));
+		expect(settled.charged_atomics).toBe('1500');
+		expect(settled.refunded_atomics).toBe(String(BigInt(accept.amount) - 1500n));
 	});
 
 	it('settles on stream close and reports the charge in the usage chunk', async () => {
@@ -244,9 +244,9 @@ describe('metered settlement', () => {
 		expect(res.body).toContain('Hello ');
 		expect(res.body).toContain('data: [DONE]');
 		const claim = facilitator.events.find((e) => e.kind === 'claim');
-		expect(claim.paid).toBe(1200n);
+		expect(claim.paid).toBe(1500n);
 		const usageFrame = res.body.split('\n').filter((l) => l.startsWith('data: {')).map((l) => JSON.parse(l.slice(6))).find((f) => f.usage);
-		expect(usageFrame.billing.charged_atomics).toBe('1200');
+		expect(usageFrame.billing.charged_atomics).toBe('1500');
 		expect(usageFrame.billing.paid_via).toBe('x402-upto');
 	});
 
