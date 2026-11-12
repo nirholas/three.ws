@@ -84,6 +84,7 @@ Program names, eligibility and benefit figures are quoted from Microsoft's publi
 
 - ISV Success: [Partner Center, Build and publish with ISV Success](https://learn.microsoft.com/en-us/partner-center/membership/isv-success), [ISV Success FAQ](https://learn.microsoft.com/en-us/partner-center/membership/faq-isvsuccess), [Benefits by program and offer](https://learn.microsoft.com/en-us/partner-center/benefits/benefits-at-a-glance).
 - Microsoft for Startups (Founders Hub): [Overview of the application process](https://learn.microsoft.com/en-us/startups/microsoft-for-startups/application).
-- Marketplace Rewards: [Marketplace Rewards](https://www.microsoft.com/en-us/software-development-companies/offers-benefits/marketplace-rewards), [Marketplace Rewards on Microsoft Learn](https://learn.microsoft.com/en-us/azure/marketplace/marketplace-rewards).
+- Marketplace Rewards: both of its old pages now redirect to Frontier Accelerate for Marketplace (the microsoft.com page with a 301 to `partner.microsoft.com/en-us/partnership/frontier-accelerate-for-marketplace`, checked 2026-11-12). Facts come from [Frontier Accelerate for Marketplace overview](https://learn.microsoft.com/en-us/partner-center/frontier-accelerate-marketplace/overview) (Premium price $1,549.80 USD/year) and [Frontier Accelerate for Marketplace benefits](https://learn.microsoft.com/en-us/partner-center/frontier-accelerate-marketplace/benefits) (Premium dev/test sponsorship $30,000), both dated 2026-09-16.
+- Starter and maximum sponsorship amounts for Microsoft for Startups ($200, $1,000, up to $150,000, $350,000 lifetime cap) and ISV Success ($5k core, $1,550 renewal fee) are quoted from the pages above.
 
 Any three.ws number in those files is one of the rows above.
