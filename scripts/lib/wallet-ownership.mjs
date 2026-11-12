@@ -60,7 +60,12 @@ export function decodeAddress(address) {
 }
 
 // Wallets show signatures as base58 (Phantom, Solflare) or base64 (some CLI
-// tools). Accept either as long as it decodes to exactly 64 bytes.
+// tools). Accept either as long as it decodes to exactly 64 bytes. The base58
+// alphabet is a subset of base64's, so a string made only of base58 characters
+// is read as base58 and nothing else: otherwise a truncated base58 signature
+// (63 bytes, 86 chars) parses as 64 bytes of base64 about one time in sixteen
+// and is reported as a wrong signature instead of a malformed one. Base64 is
+// still recognised whenever it carries padding or a character base58 lacks.
 export function decodeSignature(signature) {
 	if (typeof signature !== 'string') return null;
 	const trimmed = signature.trim();
@@ -68,7 +73,7 @@ export function decodeSignature(signature) {
 	if (BASE58_RE.test(trimmed)) {
 		try {
 			const bytes = b58.decode(trimmed);
-			if (bytes.length === 64) return bytes;
+			return bytes.length === 64 ? bytes : null;
 		} catch {
 			// Not valid base58 after all: fall through to base64.
 		}

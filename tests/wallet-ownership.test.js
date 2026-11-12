@@ -101,6 +101,25 @@ describe('verifyWalletSignature', () => {
 		);
 	});
 
+	it('reads an all-base58 string as base58 even when it also parses as a 64-byte base64 value', () => {
+		// The base58 alphabet is a subset of base64's. This is a 63-byte value in
+		// base58 (86 chars) whose characters also happen to decode as exactly 64
+		// bytes of base64, which used to slip through the base64 fallback about
+		// one truncation in sixteen and come back as a wrong signature instead of
+		// a malformed one.
+		const ambiguous = 'YhYRQC2pxoHNjWXsSczcFsR6zJt38q4C4LpR1BzVbDLPtYT1bAgmyaNQnzKouWfrxHUbc9U3hHwAdj9pmkU3tQ';
+		expect(b58.decode(ambiguous).length).toBe(63);
+		expect(Buffer.from(ambiguous, 'base64').length).toBe(64);
+		expect(verifyWalletSignature({ message, address, signature: ambiguous }).reason).toBe(
+			'bad_signature_encoding',
+		);
+	});
+
+	it('still accepts a genuine base64 signature', () => {
+		const b64 = Buffer.from(b58.decode(signature)).toString('base64');
+		expect(verifyWalletSignature({ message, address, signature: b64 }).ok).toBe(true);
+	});
+
 	it('rejects garbage that is neither base58 nor base64', () => {
 		expect(verifyWalletSignature({ message, address, signature: '%%%not-a-sig%%%' }).reason).toBe(
 			'bad_signature_encoding',
