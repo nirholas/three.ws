@@ -21,7 +21,11 @@ const MIGRATIONS = [
 	'20260619120000_memory_studio.sql',
 	'20260922153000_agent_custom_skills.sql',
 	'20260922190000_agent_memory_learning.sql',
+	// Rewrites agent_custom_skills_source_check; it must run here so the tests
+	// see the same constraint production does.
+	'20261011013000_skill_imports.sql',
 	'20261105020000_agent_memory_temporal_facts.sql',
+	'20261112180000_custom_skills_source_experience.sql',
 ];
 
 /** Build a fresh database with the learning schema. */
