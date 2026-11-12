@@ -38,8 +38,7 @@ export async function scanLogRanges(fetchRange, from, to, {
 		const span = end - start + 1n;
 		if (span <= 0n) continue;
 		if (span > chunk) {
-			const mid = start + span / 2n;
-			queue.unshift([start, mid - 1n], [mid, end]);
+			queue.unshift([start, start + chunk - 1n], [start + chunk, end]);
 			continue;
 		}
 		let logs;
