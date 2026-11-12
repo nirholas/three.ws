@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-12T16:41:48.620Z",
+	"generated_at": "2026-11-12T18:05:24.497Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -267,6 +267,18 @@
 					"showcase": true,
 					"priority": 0.8,
 					"job": "animate"
+				},
+				{
+					"path": "/sign-review",
+					"title": "Sign Review",
+					"description": "Where fluent signers review each sign of a new sign language on the live avatar, at half speed or full, either hand, and approve, reject or ask for a change. No sign goes live without the required approvals.",
+					"added": "2026-11-12",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.4,
+					"job": "explore"
 				},
 				{
 					"path": "/objects",
@@ -8888,6 +8900,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.7,
+					"job": null
+				},
+				{
+					"path": "/docs/gateways",
+					"title": "Docs: Slack, WhatsApp and voice gateways",
+					"description": "Connect your agent to Slack, WhatsApp, and voice in the browser or on the phone: setup, signatures, the WhatsApp 24-hour window, and the call safety rules.",
+					"added": "2026-11-12",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
 					"job": null
 				},
 				{

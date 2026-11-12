@@ -3,6 +3,20 @@
 	"entries": [
 		{
 			"date": "2026-11-12",
+			"title": "Set a per-trade cap and a position limit for your agent's autopilot, and see the live quote before you confirm a trade",
+			"summary": "The autopilot trade scope now has two owner limits beside the daily SOL budget: a cap on the SOL any single buy may spend, and a maximum number of tokens the agent may hold at once ($THREE is never counted). Both are enforced on the server before anything is quoted. Previewing a trade proposal now shows the real quote it would fill at (venue, expected tokens, minimum received after slippage, price impact and value) together with the wallet guard, SOL balance and rug firewall verdicts, without signing or sending anything and without creating a wallet the agent does not have.",
+			"tags": ["feature"],
+			"link": "/agents"
+		},
+		{
+			"date": "2026-11-12",
+			"title": "The agent editor shows its sections again on desktop",
+			"summary": "On a desktop screen the agent editor rendered as an empty strip under its header: the site footer was mounted inside the editor's full-height layout and pushed the persona, brain, autopilot and wallet sections down to zero height. The editor now keeps its full height on desktop, and on phones the header wraps cleanly so the title and wallet chip both stay readable.",
+			"tags": ["fix"],
+			"link": "/agents"
+		},
+		{
+			"date": "2026-11-12",
 			"title": "A reinvest rule can no longer be confirmed while one of its destinations is missing",
 			"summary": "The confirm screen on /earnings already said when a rule could not be confirmed yet, for example when the platform deposit wallet for model credits was not configured or the agent had no coin on the rule's network, but the confirm button could still turn back on after a preview and the server accepted the click. The server now refuses to activate any rule whose confirmation table marks a destination unavailable, and the confirm button stays disabled until every destination is ready.",
 			"tags": ["fix"],
@@ -34,6 +48,12 @@
 			"summary": "Signing avatars can now carry sign languages beyond ASL, and none of them goes live on authoring alone. Each sign needs two approvals from fluent signers on its exact current version, and one objection holds it back. Reviewers work on the new /sign-review page: watch each sign on a live avatar at half speed or with either hand, then approve it, ask for a change, or reject it with a note. The sign API and the MCP sign tools take a lang parameter, and /sign-language gains a language picker once a second language has reviewed signs. If you sign a language other than ASL fluently, write to support@three.ws to become a reviewer.",
 			"tags": ["feature"],
 			"link": "/sign-review"
+		},
+		{
+			"date": "2026-11-12",
+			"title": "The Robinhood Chain feed shows the last day of launches again on a cold start",
+			"summary": "The Robinhood Chain feed worker came up empty after a restart. The public RPC throttles log queries on about every other call, and the backfill gave up on the first throttled request instead of retrying it. It now retries only the chunk that was throttled and keeps the work already done, so a full day of history (1,703 launches across six venues in a live run) loads in about eleven minutes. Odyssey launches no longer wait for the slower venue scan, older history arriving late no longer pushes newer launches out of the replay buffer, and the worker log now shows backfill progress and every warning instead of failing silently.",
+			"tags": ["fix"]
 		},
 		{
 			"date": "2026-11-12",

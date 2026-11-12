@@ -104,6 +104,12 @@ URL: https://three.ws/sign-mirror
 
 Learn the ASL alphabet by making it: the avatar forms the letter, your camera watches your hand, and the page grades the handshape live, naming the finger that is off. Fully on-device; no video ever uploaded.
 
+### Sign Review
+
+URL: https://three.ws/sign-review
+
+Where fluent signers review each sign of a new sign language on the live avatar, at half speed or full, either hand, and approve, reject or ask for a change. No sign goes live without the required approvals.
+
 ### Object Library
 
 URL: https://three.ws/objects
@@ -4483,6 +4489,12 @@ Sign in with Telegram, link phones, desktop apps, the CLI and chats with one-tim
 URL: https://three.ws/docs/chat-gateways
 
 Talk to your agent from Telegram and other chat platforms: pairing, commands, approval limits, the Telegram webhook, privacy and rate limits.
+
+### Docs: Slack, WhatsApp and voice gateways
+
+URL: https://three.ws/docs/gateways
+
+Connect your agent to Slack, WhatsApp, and voice in the browser or on the phone: setup, signatures, the WhatsApp 24-hour window, and the call safety rules.
 
 ### Docs: Agent Mail
 

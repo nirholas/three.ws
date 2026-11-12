@@ -15,6 +15,22 @@
 			<description>Connect your agent to Slack, WhatsApp, and voice in the browser or on the phone: setup, signatures, the WhatsApp 24-hour window, and the call safety rules.</description>
 		</item>
 		<item>
+			<title>Sign Review</title>
+			<link>https://three.ws/sign-review</link>
+			<guid isPermaLink="false">2026-11-12:Sign Review</guid>
+			<pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Where fluent signers review each sign of a new sign language on the live avatar, at half speed or full, either hand, and approve, reject or ask for a change. No sign goes live without the required approvals.</description>
+		</item>
+		<item>
+			<title>A reinvest rule can no longer be confirmed while one of its destinations is missing</title>
+			<link>https://three.ws/earnings</link>
+			<guid isPermaLink="false">2026-11-12:A reinvest rule can no longer be confirmed while one of its destinations is missing</guid>
+			<pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The confirm screen on /earnings already said when a rule could not be confirmed yet, for example when the platform deposit wallet for model credits was not configured or the agent had no coin on the rule's network, but the confirm button could still turn back on after a preview and the server accepted the click. The server now refuses to activate any rule whose confirmation table marks a destination unavailable, and the confirm button stays disabled until every destination is ready.</description>
+		</item>
+		<item>
 			<title>Agents draft learned skills again, and admit when memory is off</title>
 			<link>https://three.ws/settings/memory</link>
 			<guid isPermaLink="false">2026-11-12:Agents draft learned skills again, and admit when memory is off</guid>
@@ -71,6 +87,22 @@
 			<description>Solana agent profiles now have a Follow button. Set a total SOL cap, a per-trade max and a drawdown stop, and the agent's trades are copied into your own wallet until the cap is used. Nothing past the cap is ever copied. A copy that would go over it is skipped and the reason shows in your inbox. While you follow, the agent tells you about each trade it makes: on its 3D avatar with a gesture and a spoken line, or as a toast when the avatar is not shown. The button shows how much of the cap you have used, and pausing or unfollowing takes effect right away.</description>
 		</item>
 		<item>
+			<title>New sign languages ship only after fluent signers approve each sign</title>
+			<link>https://three.ws/sign-review</link>
+			<guid isPermaLink="false">2026-11-12:New sign languages ship only after fluent signers approve each sign</guid>
+			<pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Signing avatars can now carry sign languages beyond ASL, and none of them goes live on authoring alone. Each sign needs two approvals from fluent signers on its exact current version, and one objection holds it back. Reviewers work on the new /sign-review page: watch each sign on a live avatar at half speed or with either hand, then approve it, ask for a change, or reject it with a note. The sign API and the MCP sign tools take a lang parameter, and /sign-language gains a language picker once a second language has reviewed signs. If you sign a language other than ASL fluently, write to support@three.ws to become a reviewer.</description>
+		</item>
+		<item>
+			<title>News cards show images from publishers that block hotlinking</title>
+			<link>https://three.ws/markets/news</link>
+			<guid isPermaLink="false">2026-11-12:News cards show images from publishers that block hotlinking</guid>
+			<pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Some news publishers refuse to let their images load on other sites, so those cards on /markets/news briefly showed a broken image and logged a browser error before falling back. Card images now load through three.ws's own image proxy, so they appear on the first try, and a story whose image is truly gone shows its source initials tile without an error. The $THREE chart card also stopped logging a failed request when the Oracle or the coin intel engine has no reading for the coin yet; that slot simply stays hidden.</description>
+		</item>
+		<item>
 			<title>Onchain viewer recognizes the real SPL Memo v1 program</title>
 			<link>https://three.ws/onchain</link>
 			<guid isPermaLink="false">2026-11-12:Onchain viewer recognizes the real SPL Memo v1 program</guid>
@@ -85,6 +117,30 @@
 			<pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Connections now has cards for Slack, WhatsApp and voice next to Telegram and Discord. Each card shows whether the platform is on, the steps to connect, how many chats are paired and when the last message arrived. In Slack your agent replies in the thread that asked and answers /three commands privately. On WhatsApp it handles text, voice notes and images, with Approve and Cancel as buttons. The Voice card has a Talk button: speak, and your agent answers in text and in its own voice, right in the browser. Phone calls are supported too, and a call can never approve a trade. Slack, WhatsApp and phone numbers switch on as each app is registered.</description>
+		</item>
+		<item>
+			<title>The language picker stays readable on light pages and inside embeds</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-12:The language picker stays readable on light pages and inside embeds</guid>
+			<pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The floating language picker drew pale grey text over a nearly transparent background, so on a light page or inside an embedded agent it was hard to read and failed the WCAG AA contrast check. On pages that do not set their own theme colours it is now a solid dark chip that stays readable on any background. Themed pages look exactly as before.</description>
+		</item>
+		<item>
+			<title>The Robinhood Chain feed shows the last day of launches again on a cold start</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-12:The Robinhood Chain feed shows the last day of launches again on a cold start</guid>
+			<pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Robinhood Chain feed worker came up empty after a restart. The public RPC throttles log queries on about every other call, and the backfill gave up on the first throttled request instead of retrying it. It now retries only the chunk that was throttled and keeps the work already done, so a full day of history (1,703 launches across six venues in a live run) loads in about eleven minutes. Odyssey launches no longer wait for the slower venue scan, older history arriving late no longer pushes newer launches out of the replay buffer, and the worker log now shows backfill progress and every warning instead of failing silently.</description>
+		</item>
+		<item>
+			<title>The Shopify app link and the Build leaderboard open without console errors</title>
+			<link>https://three.ws/docs/shopify-app</link>
+			<guid isPermaLink="false">2026-11-12:The Shopify app link and the Build leaderboard open without console errors</guid>
+			<pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Opening /apps/shopify outside Shopify admin used to load the embedded app with no store attached, which threw an App Bridge error and left a blank shell. A direct visit now goes to the app's documentation page, while merchants opening it from their Shopify admin get the app exactly as before. Before the first Build round opens, /build/leaderboard now shows its &quot;No Build round yet&quot; state from a normal empty response instead of logging a failed request.</description>
 		</item>
 		<item>
 			<title>three-ws/agent output tokens now cost $3 per million</title>

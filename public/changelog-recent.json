@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-12T17:17:40.494Z",
+	"generated_at": "2026-11-12T18:05:24.587Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4542,
+	"total": 4549,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -17,6 +17,26 @@
 			"link": "/docs/gateways",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-11-12",
+			"type": "launch",
+			"title": "Sign Review",
+			"summary": "Where fluent signers review each sign of a new sign language on the live avatar, at half speed or full, either hand, and approve, reject or ask for a change. No sign goes live without the required approvals.",
+			"link": "/sign-review",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-12",
+			"type": "update",
+			"title": "A reinvest rule can no longer be confirmed while one of its destinations is missing",
+			"summary": "The confirm screen on /earnings already said when a rule could not be confirmed yet, for example when the platform deposit wallet for model credits was not configured or the agent had no coin on the rule's network, but the confirm button could still turn back on after a preview and the server accepted the click. The server now refuses to activate any rule whose confirmation table marks a destination unavailable, and the confirm button stays disabled until every destination is ready.",
+			"link": "/earnings",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -93,6 +113,26 @@
 		{
 			"date": "2026-11-12",
 			"type": "update",
+			"title": "New sign languages ship only after fluent signers approve each sign",
+			"summary": "Signing avatars can now carry sign languages beyond ASL, and none of them goes live on authoring alone. Each sign needs two approvals from fluent signers on its exact current version, and one objection holds it back. Reviewers work on the new /sign-review page: watch each sign on a live avatar at half speed or with either hand, then approve it, ask for a change, or reject it with a note. The sign API and the MCP sign tools take a lang parameter, and /sign-language gains a language picker once a second language has reviewed signs. If you sign a language other than ASL fluently, write to support@three.ws to become a reviewer.",
+			"link": "/sign-review",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-12",
+			"type": "update",
+			"title": "News cards show images from publishers that block hotlinking",
+			"summary": "Some news publishers refuse to let their images load on other sites, so those cards on /markets/news briefly showed a broken image and logged a browser error before falling back. Card images now load through three.ws's own image proxy, so they appear on the first try, and a story whose image is truly gone shows its source initials tile without an error. The $THREE chart card also stopped logging a failed request when the Oracle or the coin intel engine has no reading for the coin yet; that slot simply stays hidden.",
+			"link": "/markets/news",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-12",
+			"type": "update",
 			"title": "Onchain viewer recognizes the real SPL Memo v1 program",
 			"summary": "The /onchain viewer and the Solana Memo Media MCP listed SPL Memo v1 under an address that is not a valid Solana key, so a v1 memo that an RPC did not tag as spl-memo was skipped. Both now use the real program, Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo, and a test checks that every recognized memo program is a real 32-byte key.",
 			"link": "/onchain",
@@ -108,6 +148,36 @@
 			"link": "/settings/connections",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-12",
+			"type": "update",
+			"title": "The language picker stays readable on light pages and inside embeds",
+			"summary": "The floating language picker drew pale grey text over a nearly transparent background, so on a light page or inside an embedded agent it was hard to read and failed the WCAG AA contrast check. On pages that do not set their own theme colours it is now a solid dark chip that stays readable on any background. Themed pages look exactly as before.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-12",
+			"type": "update",
+			"title": "The Robinhood Chain feed shows the last day of launches again on a cold start",
+			"summary": "The Robinhood Chain feed worker came up empty after a restart. The public RPC throttles log queries on about every other call, and the backfill gave up on the first throttled request instead of retrying it. It now retries only the chunk that was throttled and keeps the work already done, so a full day of history (1,703 launches across six venues in a live run) loads in about eleven minutes. Odyssey launches no longer wait for the slower venue scan, older history arriving late no longer pushes newer launches out of the replay buffer, and the worker log now shows backfill progress and every warning instead of failing silently.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-12",
+			"type": "update",
+			"title": "The Shopify app link and the Build leaderboard open without console errors",
+			"summary": "Opening /apps/shopify outside Shopify admin used to load the embedded app with no store attached, which threw an App Bridge error and left a blank shell. A direct visit now goes to the app's documentation page, while merchants opening it from their Shopify admin get the app exactly as before. Before the first Build round opens, /build/leaderboard now shows its \"No Build round yet\" state from a normal empty response instead of logging a failed request.",
+			"link": "/docs/shopify-app",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1457,80 +1527,6 @@
 			"tags": [
 				"feature",
 				"sdk"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Agents sign their web requests",
-			"summary": "Fetches made by three.ws agents through the tool gateway and the screen caster now carry a Web Bot Auth signature, and the matching public key directory is served at /.well-known/http-message-signatures-directory, so sites can verify and rate-limit three.ws agents instead of blocking them.",
-			"link": null,
-			"tags": [
-				"feature",
-				"security"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Agents speak AG-UI to CopilotKit and assistant-ui",
-			"summary": "POST /api/agent/run?protocol=ag-ui now streams the run as AG-UI events (run, text message and tool call lifecycle, plus avatar embodiment cues as CUSTOM events), so CopilotKit, assistant-ui and LangChain front ends can drive a three.ws agent with no adapter. The default OpenAI stream is unchanged.",
-			"link": "/docs/ag-ui",
-			"tags": [
-				"feature",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Announced surfaces defect sweep",
-			"summary": "Fixed a batch of rough edges on recently announced pages: the Herald avatar presenter now holds its full dwell and honors reduced motion, the validation report renders again, Labs sorts unmatched experiments into Other, the /3d live badge is restructured, the inspector measures quantized and meshopt models correctly, the stream demo reports a faster, about the same or slower first frame honestly, and the avatar-stream package declares its dependencies. Docs now say the talking-avatar video worker is not yet deployed.",
-			"link": null,
-			"tags": [
-				"fix",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Any A2A agent can now generate, validate and find 3D models on three.ws",
-			"summary": "three.ws answers the Agent-to-Agent protocol at one endpoint, in both A2A 1.0 and 0.3. Another agent can ask for a 3D model from a text description and follow the task until the GLB is ready. It can also run the Khronos validator on any public glTF or GLB file, or search the public avatar gallery. These skills are free and need no key. Tasks are kept for a day, so a caller can read one back from any server. The Agent Card at /.well-known/agent-card.json now points at that endpoint and lists only skills the endpoint actually serves. It also declares the optional bearer key in the current format and carries the platform's real version. A second card built for Google Cloud Marketplace lists the three free 3D skills and states the default Gemini model. Both cards are checked against the A2A rules on every build, so a broken card cannot ship.",
-			"link": "/docs/a2a-agent",
-			"tags": [
-				"feature",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Autonomous agent runs can use the integrations you connected",
-			"summary": "A run you start from the API or the Runs tab can now call the third-party MCP servers you connected to the agent on /mcp-integrations, the same ext_ tools chat already had. Every call shows on the Runs tab with its arguments, the server's answer and the step's cost. Tools that move money or cannot be undone stay out of autonomous runs, since nobody is there to approve them; the agent says in its report that you need to take that step. A run's toolsAllowed list can now name ext_ tools too.",
-			"link": "/mcp-integrations",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Avatar editor exports what you see, and runs inside <agent-3d editor>",
-			"summary": "Emissive intensity, hidden nodes and duplicate-named materials now survive export (KHR_materials_emissive_strength, KHR_node_visibility, glTF-index matching with warnings), textures can be replaced from the inspector lightbox, and the editor attribute on <agent-3d> docks the editor with data-editor-version and editor:* events.",
-			"link": null,
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Avatar reconstruction: gated synthesised views for the scalp and far side of the head",
-			"summary": "The avatar worker can now ask Vertex AI for extra camera views of a selfie, reject any that do not look like the same person or that break UV seams, and project the rest onto the scalp, far cheek, ears and neck. Texture only, off by default until the held-out quality check passes.",
-			"link": null,
-			"tags": [
-				"improvement"
 			]
 		}
 	]
