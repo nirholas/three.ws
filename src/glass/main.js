@@ -5,14 +5,21 @@
 import { bindDpad } from './dpad.js';
 import { createCompass, relativeBearing } from './compass.js';
 import { createPresence, getPosition, pollInterval, PresenceError } from './presence.js';
+import { createArrival } from './arrival.js';
+import { detectCapabilities, listenOnce, speak } from './caps.js';
 import { scanningView, startView, deniedView, offlineView, errorView, nearbyView, cardView, talkView, handoffView } from './views/views.js';
 
 const root = document.getElementById('glass');
 const presence = createPresence();
 const compass = createCompass({ onHeading: () => { if (screen === 'nearby') renderNearby(); } });
+const arrival = createArrival();
+const caps = detectCapabilities(window);
 
 let screen = 'start';
 let pos = null;
+let fixedAt = null;
+let portraitUrl = null;
+let lastCard = null;
 let pins = [];
 let current = null;
 let timer = null;
@@ -30,6 +37,10 @@ function show(node) {
 	root.replaceChildren(node);
 	dpad.refocus();
 	if (!root.querySelector('[data-glass-item]')) root.focus();
+}
+
+function status() {
+	return { heading: compass.heading, fixedAt, count: pins.length };
 }
 
 function logInteraction(pin, type, extra = {}) {
@@ -50,7 +61,7 @@ function relFor(pin) {
 }
 
 function renderNearby() {
-	show(nearbyView(pins, relFor, openCard));
+	show(nearbyView(pins, relFor, openCard, status()));
 }
 
 async function refresh() {
@@ -58,6 +69,11 @@ async function refresh() {
 	try {
 		pos = await getPosition();
 		pins = await presence.nearby(pos);
+		fixedAt = Date.now();
+		for (const pin of arrival.update(pins)) {
+			logInteraction(pin, 'arrive');
+			if (screen === 'nearby' || screen === 'scanning') { screen = 'card'; return openCard(pin); }
+		}
 		if (screen === 'nearby' || screen === 'scanning') { screen = 'nearby'; renderNearby(); }
 		timer = setTimeout(refresh, pollInterval({ speedMps: pos.speed, hidden: document.hidden, empty: !pins.length }));
 	} catch (err) {
@@ -68,28 +84,46 @@ async function refresh() {
 
 function begin() {
 	screen = 'scanning';
-	show(scanningView());
+	show(scanningView(status()));
 	compass.start();
 	refresh();
+}
+
+async function loadPortrait(pin) {
+	if (!pin.avatar_url) return null;
+	try {
+		const glbUrl = new URL(pin.avatar_url, location.origin).href;
+		const res = await fetch('/api/render/avatar-clip', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ glbUrl, width: 160, height: 160, background: 'transparent' }) });
+		if (!res.ok) return null;
+		return URL.createObjectURL(await res.blob());
+	} catch {
+		return null;
+	}
 }
 
 async function openCard(pin) {
 	current = pin;
 	screen = 'card';
 	clearTimeout(timer);
+	if (portraitUrl) { URL.revokeObjectURL(portraitUrl); portraitUrl = null; }
 	if (!viewed.has(pin.id)) { viewed.add(pin.id); logInteraction(pin, 'view'); }
 	show(cardView(pin, null, handlers));
+	lastCard = null;
+	const portrait = loadPortrait(pin);
 	try {
 		const res = await fetch(`/api/irl/agent-card?pin=${encodeURIComponent(pin.id)}`);
 		const card = res.ok ? (await res.json()).card : null;
+		lastCard = card;
 		if (screen === 'card' && current === pin) show(cardView(pin, card, handlers));
 	} catch {
 		/* the card renders from the pin alone */
 	}
+	const src = await portrait;
+	if (src && screen === 'card' && current === pin) { portraitUrl = src; show(cardView(pin, lastCard, handlers, src)); }
 }
 
 async function sendTalk(text) {
-	talk.busy = true; talk.reply = ''; talk.suggestions = []; talk.error = '';
+	talk.busy = true; talk.reply = ''; talk.suggestions = []; talk.error = ''; talk.voiceError = '';
 	show(talkView(talk, handlers));
 	if (!talked.has(current.id)) { talked.add(current.id); logInteraction(current, 'talk'); }
 	try {
@@ -119,6 +153,7 @@ async function sendTalk(text) {
 		talk.error = 'The agent did not answer. Try again.';
 	}
 	talk.busy = false;
+	if (talk.sound && talk.reply && caps.audioOut) speak(window, talk.reply);
 	if (screen === 'talk') show(talkView(talk, handlers));
 }
 
@@ -137,12 +172,30 @@ async function handoff() {
 }
 
 function back() {
-	if (screen === 'talk' || screen === 'handoff') { screen = 'card'; openCard(current); }
+	if (screen === 'talk' || screen === 'handoff') { if (caps.audioOut) window.speechSynthesis.cancel(); screen = 'card'; openCard(current); }
 	else if (screen === 'card') { screen = 'nearby'; refresh(); renderNearby(); }
 }
 
+async function speakReply() {
+	talk.listening = true; talk.voiceError = '';
+	show(talkView(talk, handlers));
+	let text = null;
+	try { text = await listenOnce(caps.Recognition); } catch (err) { talk.voiceError = err.message; }
+	talk.listening = false;
+	if (text) return sendTalk(text);
+	if (screen === 'talk') show(talkView(talk, handlers));
+}
+
+function toggleSound() {
+	talk.sound = !talk.sound;
+	if (!talk.sound && caps.audioOut) window.speechSynthesis.cancel();
+	show(talkView(talk, handlers));
+}
+
 const handlers = {
-	onTalk: () => { screen = 'talk'; talk = { name: current.avatar_name || 'Agent', reply: '', suggestions: [], busy: false, error: '' }; show(talkView(talk, handlers)); },
+	onTalk: () => { screen = 'talk'; talk = { name: current.avatar_name || 'Agent', reply: '', suggestions: [], busy: false, error: '', listening: false, sound: false, voiceError: '' }; show(talkView(talk, handlers)); },
+	onSpeak: caps.speechInput ? speakReply : null,
+	onSound: caps.audioOut ? toggleSound : null,
 	onSend: sendTalk,
 	onHandoff: handoff,
 	onRetry: handoff,
