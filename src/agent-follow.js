@@ -34,9 +34,10 @@ const api = (path, opts = {}) =>
 		...opts,
 	});
 
-const fmtSol = (v) => {
+export const fmtSol = (v) => {
 	const n = Number(v) || 0;
-	return n >= 1 ? n.toFixed(2) : n.toFixed(n === 0 ? 0 : 3).replace(/0+$/, '').replace(/\.$/, '');
+	if (n === 0) return '0';
+	return n >= 1 ? n.toFixed(2) : n.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
 };
 
 function h(tag, attrs = {}, children = []) {

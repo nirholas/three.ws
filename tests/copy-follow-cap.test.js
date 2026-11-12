@@ -266,3 +266,14 @@ describe('narration lines come from the real execution row', () => {
 		expect(n.text).toMatch(/spend cap/);
 	});
 });
+
+describe('the Following label shows what the cap has used', () => {
+	it('renders a zero spend as 0, not an empty string', async () => {
+		const { fmtSol } = await import('../src/agent-follow.js');
+		expect(fmtSol(0)).toBe('0');
+		expect(fmtSol(null)).toBe('0');
+		expect(fmtSol(0.05)).toBe('0.05');
+		expect(fmtSol(0.5)).toBe('0.5');
+		expect(fmtSol(2)).toBe('2.00');
+	});
+});

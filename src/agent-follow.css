@@ -126,14 +126,15 @@
 
 /* Narration caption over the hero avatar. */
 .af-caption {
-	position: absolute; left: 50%; bottom: 12px; z-index: 3; transform: translateX(-50%);
+	position: absolute; left: 50%; top: 12px; z-index: 4; transform: translateX(-50%);
 	width: max-content; max-width: calc(100% - 24px); padding: 9px 13px; border-radius: 12px;
 	background: rgba(10, 10, 10, 0.82); border: 1px solid color-mix(in srgb, var(--ad-green, #34d399) 40%, transparent);
 	color: #f4f6f8; font-size: 0.84rem; line-height: 1.4; text-align: center;
 	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); pointer-events: none;
-	animation: af-in 0.2s ease-out; transition: opacity 0.35s ease, transform 0.35s ease;
+	animation: af-cap-in 0.2s ease-out; transition: opacity 0.35s ease, transform 0.35s ease;
 }
-.af-caption.is-leaving { opacity: 0; transform: translate(-50%, 6px); }
+.af-caption.is-leaving { opacity: 0; transform: translate(-50%, -6px); }
+@keyframes af-cap-in { from { opacity: 0; transform: translate(-50%, -6px); } }
 
 @media (prefers-reduced-motion: reduce) {
 	.af-dialog[open], .af-caption { animation: none; }

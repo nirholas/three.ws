@@ -261,6 +261,36 @@ curl -s -X POST 'https://three.ws/api/copy/subscriptions' \
 
 Validated by `normalizeSubscriptionInput` in `api/_lib/copy-engine.js`. `per_trade_cap_sol` and `daily_budget_sol` are both mandatory and must be greater than 0, `min_order_sol` cannot exceed the cap, `pct_balance` must be within 0 to 100, `min_oracle_score` within 0 to 100, `max_drawdown_pct` within 0 to 100 (or null), and `perf_fee_bps` within 0 to 3000 (30 percent). `max_open_copies` defaults to 5 and is clamped to 1 to 100. `copy_sells` defaults to true, `require_safety_pass` defaults to false. `telegram_chat_id`, if set, must be a numeric Telegram chat id and turns on push alerts for new intents. We store your wallet address and your rules, never a key.
 
+### Follow from an agent page: one tap, with a spend cap
+
+Every Solana agent's profile (`/agents/<id>/profile`) carries a **Follow** button in its hero actions (`src/agent-follow.js`, styles in `src/agent-follow.css`). It is the shortest path into the subscription above, and it always sets a lifetime spend cap.
+
+The dialog asks for three numbers and your wallet:
+
+| Field | Default | Maps to |
+| --- | --- | --- |
+| Spend cap | 0.5 SOL | `spend_cap_sol` (and `daily_budget_sol`, so one day can use the whole cap) |
+| Per-trade max | 0.05 SOL | `sizing_rule: "fixed"`, `fixed_sol`, `per_trade_cap_sol` |
+| Drawdown stop | 25% | `max_drawdown_pct` (the circuit breaker below). Leave it empty to opt out |
+| Wallet | your last copier wallet, or the connected Phantom wallet | `copier_wallet` |
+| Network | Mainnet | `network`. Devnet is paper trading with no real funds |
+
+The request carries `follow: true`, which makes the cap mandatory: `normalizeSubscriptionInput` rejects a follow without `spend_cap_sol` (`400 invalid_config`, "spend_cap_sol is required to follow an agent"), a cap of 0 or less, a cap above the platform maximum (`COPY_MAX_SPEND_CAP_SOL`, 25 SOL), and a per-trade max larger than the cap. A plain `POST` without `follow` keeps working as before, and a cap is optional there.
+
+**How the cap is enforced.** `spend_cap_sol` and `spend_cap_set_at` live on `copy_subscriptions` (migration `20261112120000_copy_follow_spend_cap.sql`; NULL means uncapped). Each fan-out tick, `api/cron/copy-fanout.js` sums the `planned_sol` of your `pending` and `acted` buy intents on that subscription created since `spend_cap_set_at`, and `planCopyOrder` compares the next order against what is left:
+
+- the cap is fully used: skipped as `spend_cap_reached`;
+- the order is larger than what is left: skipped whole as `spend_cap_exceeded`, with a detail like "This 0.05 SOL copy is more than the 0.02 SOL left on your follow cap." The engine never shrinks an order to squeeze it under the cap;
+- exits still mirror, so a capped follower is never stranded in a position.
+
+Skipped rows land in `copy_executions` like any other skip, so the reason shows in your inbox. Following again from the dialog with a new cap resets `spend_cap_set_at`, which starts a fresh cap. A form that omits the cap keeps the existing one. `GET /api/copy/subscriptions` returns `cap_spent_sol` (same sum; null when uncapped), which drives the "Following · 0.02 / 0.5 SOL" label and the meter in the dialog.
+
+**States.** The button shows a skeleton while your follows load. Signed out, the dialog explains the cap and links to sign in with a return path. On your own agent it explains why self-copy is refused. "You are not following anyone yet" is the empty state, with a link to the leaderboard. A load failure offers Try again. A `409 leader_not_copyable` renders the unmet eligibility checklist. While following, the dialog shows the cap meter, your rules, Pause or Resume, Unfollow (soft stop through `DELETE`), and a link to the copy inbox. The dialog is a native `<dialog>`: it opens from the keyboard, focuses the first field, and closes on Escape.
+
+**Narration.** While you follow the agent and its page is visible, `src/copy-narrator.js` reads `GET /api/copy/executions?status=all` every 20 seconds. It dispatches each new intent for that leader once, as a `three:copy-trade` CustomEvent on `window` (`detail: { leaderAgentId, row }`), so any surface can react to it. The default listener has the agent speak about the trade. With the hero avatar mounted, the avatar plays a fitting gesture, a caption bubble shows the line, and browser speech synthesis reads it aloud. With no avatar (for example when WebGL is unavailable) the line shows as a toast. Lines are built only from the real row: the coin, the side, the SOL your rules sized, and, for a skip, the engine's reason ("your spend cap does not cover it, so I left your SOL alone"). An intent still under the alpha drip is announced as locked, with the minutes until it unlocks.
+
+Tests: `tests/copy-follow-cap.test.js` covers cap validation, the skip-and-log path through the fan-out cron, unfollow stopping the mirror, and the narration lines.
+
 ### Who you are allowed to copy
 
 Two gates run before a subscription is written, both in `api/_lib/copy-eligibility.js` and enforced through the shared `subscribeCopier` in `api/_lib/copy-subscribe.js` (the same path a syndicate join uses). Neither is a taste filter: they exist because a copy-trading board is worthless the moment a track record can be manufactured or a fee can be paid to yourself.
@@ -300,7 +330,7 @@ For every (leader event, subscription) pair it calls `planCopyOrder`, the pure e
 
 - **Safety gate on entries only.** A honeypot flag is fatal. Market cap is checked against your floor and ceiling. A dev holding 30 percent or more of supply is refused as `dev_heavy`. Liquidity under 1000 USD is refused as `low_liquidity`. A leader whose own trading wallet scores as the same controller as the coin's creator (a shared fee payer or first funder, scored by `@three-ws/wallet-linkage` at the "strong" band or above) is refused as `leader_linked_to_creator`, because copying it would only mirror the creator's own buy of their own launch. That check runs once per leader and coin per tick (`checkLeaderCreatorLinkage` in `api/_lib/copy-eligibility.js`) and fails open to "not linked" on any RPC or database error, so an outage never blocks a legitimate copy. A known Oracle conviction score below your `min_oracle_score` is refused. If coin context could not be fetched at all, the result depends on your `require_safety_pass` flag: with it on, the copy is skipped as `safety_unknown`. Coin context is best-effort from the public pump.fun coin endpoint (market cap) merged with the stored Oracle score.
 - **Open-copy cap.** More pending intents than `max_open_copies`, skipped.
-- **Sizing.** `fixed` uses `fixed_sol`, `multiplier` scales the leader's entry, `pct_balance` takes a percentage of your balance. The result is clamped to `per_trade_cap_sol`, then to the remaining `daily_budget_sol` (today's `pending` plus `acted` buy sizes), and rejected if it falls under `min_order_sol`.
+- **Sizing.** `fixed` uses `fixed_sol`, `multiplier` scales the leader's entry, `pct_balance` takes a percentage of your balance. The result is clamped to `per_trade_cap_sol`, then to the remaining `daily_budget_sol` (today's `pending` plus `acted` buy sizes), and rejected if it falls under `min_order_sol`. A follow with a spend cap is then checked against what is left of it (see [Follow from an agent page](#follow-from-an-agent-page-one-tap-with-a-spend-cap)).
 - **Exits.** A sell fans out with `order_sol: 0` and reason `mirror_exit`, and only to copiers who actually acted on the matching buy. Oracle sells are not modelled, because that engine has no explicit exit event.
 
 Either way a row lands in `copy_executions`: `status = 'pending'` for a real intent, or `status = 'skipped'` carrying the machine reason so the dashboard can explain exactly why a copy did not fire. Idempotency comes from partial unique indexes on `(subscription_id, leader_position_id, direction)` and `(subscription_id, leader_oracle_action_id, direction)`, so re-running the cron never duplicates an intent.

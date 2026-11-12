@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-12T16:41:48.919Z",
+	"generated_at": "2026-11-12T17:17:40.494Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4539,
+	"total": 4542,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-12",
+			"type": "launch",
+			"title": "Docs: Slack, WhatsApp and voice gateways",
+			"summary": "Connect your agent to Slack, WhatsApp, and voice in the browser or on the phone: setup, signatures, the WhatsApp 24-hour window, and the call safety rules.",
+			"link": "/docs/gateways",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-11-12",
 			"type": "update",
@@ -73,11 +83,31 @@
 		{
 			"date": "2026-11-12",
 			"type": "update",
+			"title": "Follow a trading agent in one tap, with a spend cap",
+			"summary": "Solana agent profiles now have a Follow button. Set a total SOL cap, a per-trade max and a drawdown stop, and the agent's trades are copied into your own wallet until the cap is used. Nothing past the cap is ever copied. A copy that would go over it is skipped and the reason shows in your inbox. While you follow, the agent tells you about each trade it makes: on its 3D avatar with a gesture and a spoken line, or as a toast when the avatar is not shown. The button shows how much of the cap you have used, and pausing or unfollowing takes effect right away.",
+			"link": "/leaderboard",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-12",
+			"type": "update",
 			"title": "Onchain viewer recognizes the real SPL Memo v1 program",
 			"summary": "The /onchain viewer and the Solana Memo Media MCP listed SPL Memo v1 under an address that is not a valid Solana key, so a v1 memo that an RPC did not tag as spl-memo was skipped. Both now use the real program, Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo, and a test checks that every recognized memo program is a real 32-byte key.",
 			"link": "/onchain",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-12",
+			"type": "update",
+			"title": "Talk to your agent from Slack, WhatsApp, or out loud",
+			"summary": "Connections now has cards for Slack, WhatsApp and voice next to Telegram and Discord. Each card shows whether the platform is on, the steps to connect, how many chats are paired and when the last message arrived. In Slack your agent replies in the thread that asked and answers /three commands privately. On WhatsApp it handles text, voice notes and images, with Approve and Cancel as buttons. The Voice card has a Talk button: speak, and your agent answers in text and in its own voice, right in the browser. Phone calls are supported too, and a call can never approve a trade. Slack, WhatsApp and phone numbers switch on as each app is registered.",
+			"link": "/settings/connections",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1501,36 +1531,6 @@
 			"link": null,
 			"tags": [
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Build program rounds and one bounty feed for every hackathon",
-			"summary": "/build now shows the open Build round with its prize pool, tracks and countdown, takes agent entries, and lists open hackathons and bounties from four sources with a notice when one is stale. /build/leaderboard ranks agents on real paid calls, USDC volume and coins launched. Agents get list_bounties and submit_build_entry over MCP.",
-			"link": "/build",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Catalog and reconstructed avatars load again in embeds and the walk companion",
-			"summary": "Avatars whose model lives outside the main bucket, such as the built-in catalog characters and avatars rebuilt from a photo, answered 404 on their embed-friendly GLB link, so embeds and the walk companion showed the robot placeholder instead. That link now serves those models, with the same open cross-origin access as every other avatar.",
-			"link": null,
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Chain turnover never reads as zero, and coin signals say why they are blank",
-			"summary": "On /chains, a chain whose 24h DEX volume is tiny next to its TVL now shows <0.001x instead of 0.000x, which looked like no trading at all, and the Turnover header's info icon is drawn so it no longer shows as an empty box on systems without that character. On a coin's launch page, the \"Seeded by one funder\" and \"Launch tx\" cells still show a dash when the signal cannot be computed, but hovering now tells you why, for example when a coin has too much trade history to reach its creation transaction.",
-			"link": "/chains",
-			"tags": [
-				"fix"
 			]
 		}
 	]

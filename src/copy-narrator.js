@@ -55,8 +55,26 @@ export function narrationFor(row, leaderName = 'I') {
 	return { text: `I just bought ${coin}${entry}${net}.${yours} Sign it from your copy inbox.`, gestures: ['point', 'celebrate', 'nod'], variant: 'success' };
 }
 
+// The avatar's wrapper, not the WebGL host: the host sits under the wrapper's
+// hover overlay and nameplate, so a bubble inside it is painted over.
 function captionHost() {
-	return document.getElementById('ad-avatar-3d') || null;
+	return document.getElementById('ad-avatar-wrap') || null;
+}
+
+// The wrapper is role="button" (and the host role="img"), whose children are
+// presentational to assistive tech, so the bubble itself is aria-hidden and
+// screen readers hear the line through one visually hidden live region.
+function announce(text) {
+	let live = document.getElementById('af-live');
+	if (!live) {
+		live = document.createElement('div');
+		live.id = 'af-live';
+		live.setAttribute('role', 'status');
+		live.setAttribute('aria-live', 'polite');
+		live.style.cssText = 'position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;padding:0';
+		document.body.append(live);
+	}
+	live.textContent = text;
 }
 
 function showCaption(text) {
@@ -65,10 +83,10 @@ function showCaption(text) {
 	host.querySelector('.af-caption')?.remove();
 	const bubble = document.createElement('div');
 	bubble.className = 'af-caption';
-	bubble.setAttribute('role', 'status');
-	bubble.setAttribute('aria-live', 'polite');
+	bubble.setAttribute('aria-hidden', 'true');
 	bubble.textContent = text;
 	host.append(bubble);
+	announce(text);
 	const ms = Math.min(12_000, 2500 + text.split(' ').length * 320);
 	setTimeout(() => {
 		bubble.classList.add('is-leaving');
