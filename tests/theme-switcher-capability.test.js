@@ -108,18 +108,24 @@ describe('theme switcher light-capability probe', () => {
 		// starts FROM the light palette on every element with a `transition:
 		// color` (the shared nav), and the sheet watch re-arms it on each DOM
 		// mutation, so the nav sat at the light grey over the dark bar (3:1) for
-		// seconds on a cold load. jsdom has no adoptedStyleSheets, so this drives
-		// the <style> fallback: the suspension must be in place at the moment the
-		// body is read, and gone once the probe returns.
+		// seconds on a cold load. The suspension goes through adoptedStyleSheets
+		// where the document has them (jsdom 31 does) and a <style> fallback
+		// otherwise; either way it must be in place at the moment the body is
+		// read, and gone once the probe returns.
+		const suspended = () =>
+			document.querySelector('style[data-twx-theme-probe]') !== null ||
+			(document.adoptedStyleSheets || []).some((sheet) =>
+				Array.from(sheet.cssRules).some((rule) => /transition:\s*none/.test(rule.cssText)),
+			);
 		let suspendedDuringRead = null;
 		bodyBg = () => {
-			suspendedDuringRead = document.querySelector('style[data-twx-theme-probe]') !== null;
+			suspendedDuringRead = suspended();
 			return 'rgb(255, 255, 255)';
 		};
 		boot();
 		expect(window.threeTheme.supportsLight()).toBe(true);
 		expect(suspendedDuringRead).toBe(true);
-		expect(document.querySelector('style[data-twx-theme-probe]')).toBeNull();
+		expect(suspended()).toBe(false);
 		expect(document.documentElement.getAttribute('data-theme')).toBe('light');
 	});
 

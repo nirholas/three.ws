@@ -39,7 +39,7 @@
 		.mm-btn:active { transform: translateY(1px); }
 		.mm-btn:focus-visible, .mm-input:focus-visible, .mm-switch input:focus-visible + .mm-track, .mm-chip:focus-visible, .mm-ico:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 		.mm-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
-		.mm-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #fff); }
+		.mm-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg-0, #0a0a0a); }
 		.mm-btn.danger { color: var(--mm-danger); border-color: color-mix(in srgb, var(--mm-danger) 50%, var(--stroke)); }
 		.mm-btn.danger:hover { background: color-mix(in srgb, var(--mm-danger) 14%, var(--surface-2)); border-color: var(--mm-danger); }
 		.mm-ico { width: 30px; height: 30px; padding: 0; justify-content: center; }
@@ -83,7 +83,7 @@
 		.mm-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 		.mm-chip { padding: 5px 11px; border-radius: 999px; border: 1px solid var(--stroke); background: var(--surface-2); cursor: pointer; font-size: 0.85rem; transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
 		.mm-chip:hover { border-color: var(--accent); }
-		.mm-chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #fff); }
+		.mm-chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg-0, #0a0a0a); }
 		.mm-chip small { opacity: 0.75; margin-left: 4px; }
 		.mm-tag { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.72rem; border: 1px solid var(--stroke-strong, var(--stroke)); color: var(--ink-dim); margin-right: 6px; text-transform: capitalize; }
 		.mm-tag.draft { color: var(--warn, #d9a000); border-color: currentColor; }
