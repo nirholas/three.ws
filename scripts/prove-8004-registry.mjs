@@ -9,7 +9,14 @@
 //
 //   node scripts/prove-8004-registry.mjs
 //   DEVNET_RPC_URL=https://... node scripts/prove-8004-registry.mjs
+//   PROVE_8004_AUTHORITY_KEYPAIR=~/devnet.json node scripts/prove-8004-registry.mjs
+//
+// PROVE_8004_AUTHORITY_KEYPAIR points at a solana-keygen JSON keypair already
+// holding devnet SOL (for example from https://faucet.solana.com). The script
+// then skips the RPC faucet entirely and funds the reviewer from it.
 
+import { readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { Connection, Keypair, LAMPORTS_PER_SOL, SystemProgram, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import { build8004Sdk, read8004Standing, registryProgramIds } from '../api/_lib/solana-8004.js';
 
@@ -41,10 +48,22 @@ const ids = await registryProgramIds('devnet');
 console.log('registry program:', ids.registry);
 console.log('atom engine     :', ids.atomEngine);
 
-const authority = Keypair.generate();
+const keypairPath = process.env.PROVE_8004_AUTHORITY_KEYPAIR?.replace(/^~(?=\/)/, homedir());
+const authority = keypairPath
+	? Keypair.fromSecretKey(Uint8Array.from(JSON.parse(readFileSync(keypairPath, 'utf8'))))
+	: Keypair.generate();
 const reviewer = Keypair.generate();
-await fund(authority, 1);
-if (process.env.FUND_REVIEWER_FROM_AUTHORITY === '1') {
+if (keypairPath) {
+	const balance = await conn.getBalance(authority.publicKey);
+	console.log('authority       :', authority.publicKey.toBase58(), `${balance / LAMPORTS_PER_SOL} SOL`);
+	if (balance < 0.2 * LAMPORTS_PER_SOL) {
+		console.error('the authority keypair needs at least 0.2 devnet SOL; fund it at https://faucet.solana.com');
+		process.exit(1);
+	}
+} else {
+	await fund(authority, 1);
+}
+if (keypairPath || process.env.FUND_REVIEWER_FROM_AUTHORITY === '1') {
 	const tx = new Transaction().add(
 		SystemProgram.transfer({ fromPubkey: authority.publicKey, toPubkey: reviewer.publicKey, lamports: 0.1 * LAMPORTS_PER_SOL }),
 	);

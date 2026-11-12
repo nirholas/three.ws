@@ -51,6 +51,6 @@ It registers minted agents that have no registry asset (sequentially, 750 ms apa
 
 ## Proof and tests
 
-- `node scripts/prove-8004-registry.mjs` registers an agent with throwaway devnet keys, leaves feedback from a second wallet and reads the tier back. It refuses any non-devnet RPC.
+- `node scripts/prove-8004-registry.mjs` registers an agent with throwaway devnet keys, leaves feedback from a second wallet and reads the tier back. It refuses any non-devnet RPC. The RPC faucet is closed on public devnet, so pass `PROVE_8004_AUTHORITY_KEYPAIR=<path to a solana-keygen JSON>` holding at least 0.2 devnet SOL (from https://faucet.solana.com); the script then funds the reviewer from that key instead of airdropping.
 - `tests/solana-8004.test.js` covers blocks, gating, reads, outage handling and idempotent registration with an injected SDK.
 - `RUN_DEVNET_8004=1 npx vitest run tests/solana-8004.devnet.test.js` runs the live devnet round trip.
