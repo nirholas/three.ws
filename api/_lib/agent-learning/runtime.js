@@ -4,8 +4,10 @@
 //   learningContext()   before a turn: the ranked, bounded memory section for
 //                       the system prompt, the learning tools bound to this
 //                       (agent, account), and whether this turn carries the
-//                       memory nudge. Everything is empty when the account
-//                       switched memory off at /settings/memory.
+//                       memory nudge. With memory switched off at
+//                       /settings/memory there are no tools, no stored rows
+//                       and no nudge, only a note telling the model it
+//                       cannot remember anything.
 //   afterRunCompleted() after a run succeeds: drafts a prompt-only skill from
 //                       the run's tool trace when it qualifies (skill-drafts.js).
 //
@@ -20,6 +22,14 @@ import { learnFromRun } from '../skill-candidates.js';
 import { AUTONOMOUS_TOOL_NAMES, LEARNING_TOOL_NAMES, isLearningTool, learningToolHandlers, learningToolSchemas } from './tools.js';
 
 const OFF = Object.freeze({ enabled: false, block: '', memoryIds: [], nudge: null, toolNames: [], schemas: [], handlers: {}, settings: null });
+
+// Said to the model when the owner switched learning off. Without it a model
+// asked to "remember this" promises to, and the owner believes something was
+// saved that never was.
+export const MEMORY_OFF_NOTE =
+	'Memory is switched off for this account. You cannot save, recall or update anything between conversations. ' +
+	'If the user asks you to remember something, say plainly that memory is off and that they can turn it back on at /settings/memory. ' +
+	'Never claim you will remember it.';
 
 /**
  * @param {object} o
@@ -41,7 +51,7 @@ export async function learningContext({ agentId, userId, query = '', source = 't
 		console.warn('[agent-learning] settings read failed', err?.message);
 		return OFF;
 	}
-	if (!settings.enabled) return { ...OFF, settings };
+	if (!settings.enabled) return { ...OFF, settings, block: MEMORY_OFF_NOTE };
 
 	let section = { block: '', memoryIds: [] };
 	try {

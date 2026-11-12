@@ -84,6 +84,18 @@ describe('the off switch', () => {
 		expect(section.enabled).toBe(false);
 	});
 
+	it('learningContext mounts no tools and tells the model it cannot remember, without leaking stored rows', async () => {
+		await state.pg.query(`insert into agent_memories (agent_id, user_id, type, kind, content) values ($1, $2, 'user', 'preference', 'prefers short answers')`, [a.agentId, a.userId]);
+		const { learningContext } = await import('../api/_lib/agent-learning/runtime.js');
+		const ctx = await learningContext({ agentId: a.agentId, userId: a.userId, query: 'remember I like Kelvin', source: 'chat', userTurns: 6 });
+		expect(ctx.enabled).toBe(false);
+		expect(ctx.schemas).toEqual([]);
+		expect(ctx.nudge).toBeNull();
+		expect(ctx.block).not.toContain('prefers short answers');
+		expect(ctx.block).toMatch(/memory is switched off/i);
+		expect(ctx.block).toContain('/settings/memory');
+	});
+
 	it('deleting a memory still works while memory is off', async () => {
 		const row = (await state.pg.query(`insert into agent_memories (agent_id, user_id, type, kind, content) values ($1, $2, 'user', 'preference', 'old note') returning id`, [a.agentId, a.userId])).rows[0];
 		await memory.forgetMemory(a.userId, row.id);
