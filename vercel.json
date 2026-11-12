@@ -34,6 +34,9 @@
 		"api/actions/agent-hire.js": {
 			"maxDuration": 60
 		},
+		"api/gateway/voice.js": {
+			"maxDuration": 90
+		},
 		"api/agents/[id].js": {
 			"maxDuration": 45
 		},
