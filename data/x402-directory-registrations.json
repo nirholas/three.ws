@@ -7,16 +7,16 @@
 			"response": "{\"message\":\"Service registered and live\",\"service\":{\"id\":\"6befeb09-a8f1-491e-b577-451aa4f3c042\",\"name\":\"three.ws model-check\",\"description\":\"Model Check — an agent handed a 3D asset URL verifies it before using or paying for it: $0.001 USDC per call returns structural stats (vertex/triangle counts, "
 		},
 		"https://three.ws/api/x402/agent-reputation": {
-			"ok": false,
-			"status": 422,
-			"at": "2026-07-11T23:27:45.558Z",
-			"response": "{\"error\":\"x402 verification failed\",\"detail\":\"Endpoint returned 402 but no valid x402 challenge was detected.\",\"probe\":{\"httpStatus\":402,\"headersPresent\":{\"WWW-Authenticate\":false,\"PAYMENT-REQUIRED\":false},\"bodySnippet\":null,\"detectedProtocols\":[]}}"
+			"ok": true,
+			"status": 200,
+			"at": "2026-11-12T15:45:32.000Z",
+			"response": "{\"message\": \"Service registered and live (domain verified).\", \"service\": {\"id\": \"e18a99d7-83cf-400c-9782-490008634331\", \"url\": \"https://three.ws/api/x402/agent-reputation\", \"protocol\": \"x402\"}}"
 		},
 		"https://three.ws/api/x402/agent-bouncer": {
-			"ok": false,
-			"status": 422,
-			"at": "2026-07-11T23:27:46.623Z",
-			"response": "{\"error\":\"x402 verification failed\",\"detail\":\"Endpoint returned 402 but no valid x402 challenge was detected.\",\"probe\":{\"httpStatus\":402,\"headersPresent\":{\"WWW-Authenticate\":false,\"PAYMENT-REQUIRED\":false},\"bodySnippet\":null,\"detectedProtocols\":[]}}"
+			"ok": true,
+			"status": 200,
+			"at": "2026-11-12T15:45:32.000Z",
+			"response": "{\"message\": \"Service registered and live (domain verified).\", \"service\": {\"id\": \"c95caad7-4a14-47fb-8a52-f5b09618000a\", \"url\": \"https://three.ws/api/x402/agent-bouncer\", \"protocol\": \"x402\"}}"
 		},
 		"https://three.ws/api/x402/onchain-identity-verify": {
 			"ok": true,
