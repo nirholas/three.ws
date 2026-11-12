@@ -42,7 +42,7 @@ Rows `docs/agent-system.md` to `docs/ops/ibm-hosted-page-audit.md` of the per-fi
 | `docs/announce-voice.md` | not-a-plan | voice contract, ready post or historical coverage audit |
 | `docs/announcement-coverage-telegram.md` | not-a-plan | voice contract, ready post or historical coverage audit |
 | `docs/announcement-coverage.md` | not-a-plan | voice contract, ready post or historical coverage audit |
-| `docs/announcement-factory.md` | order | [749](../../archive/749-plan-x-content-queue-clear-validator-errors.md). 25 validator errors and stale proofs block the queue |
+| `docs/announcement-factory.md` | order | 749 (shipped). 25 validator errors and stale proofs block the queue |
 | `docs/announcements/activity-mcp.md` | excluded | published or archived content |
 | `docs/announcements/assistant.md` | excluded | published or archived content |
 | `docs/announcements/avatar-mcp.md` | excluded | published or archived content |

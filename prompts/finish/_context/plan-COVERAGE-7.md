@@ -94,7 +94,7 @@ Rows `robinhood/robinhood-chain-examples/examples/03-portfolio-valuation/README.
 | `specs/EMBED_HOST_PROTOCOL.md` | no-open-work | shipped spec reference, no open markers |
 | `specs/EMBED_SPEC.md` | order | [743](../743-plan-avatar-editor-attribute-and-export-fidelity.md). editor attribute documented but not wired; rest is shipped reference |
 | `specs/ENGINE_BRIDGE.md` | no-open-work | shipped spec reference, no open markers |
-| `specs/ENS_AGENT_CLAIM.md` | order | [779](../../archive/779-plan-agent-ens-dns-claim-verification.md). resolver does not verify claims; schema lacks claims |
+| `specs/ENS_AGENT_CLAIM.md` | order | 779 (shipped). resolver does not verify claims; schema lacks claims |
 | `specs/GARMENT_MANIFEST.md` | no-open-work | shipped spec reference, no open markers |
 | `specs/GLANCE_CARD.md` | no-open-work | shipped spec reference, no open markers |
 | `specs/inference-nodes.md` | shipped | status live: api/nodes/register.js and packages/node-operator |

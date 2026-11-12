@@ -206,7 +206,7 @@ Rows `docs/ops/image-selfie-3d-review-2026-10-09.md` to `docs/x-partner-series.m
 | `docs/research/oss-landscape-2026-10-notes/irl-home-robotics.md` | no-open-work | research notes; actionable items captured in the oss-landscape orders |
 | `docs/research/oss-landscape-2026-10-notes/worlds-engines.md` | no-open-work | research notes; actionable items captured in the oss-landscape orders |
 | `docs/research/oss-landscape-2026-10.md` | order | [760](../760-plan-agent-ag-ui-event-stream.md), [773](../773-plan-identity-web-bot-auth-signed-requests.md), [759](../759-plan-memory-temporal-facts-benchmark-scores.md), [732](../732-plan-screen-autonomous-browser-agent-owner-lease.md), [766](../766-plan-play-generative-npc-loop.md). gaps 5 8 10 12 14; others covered by existing orders |
-| `docs/research/solana-robinhood-playbook-2026-10.md` | order | [975](../975-plan-robinhood-crypto-connector-spend-capped.md), [710](../710-plan-agent-follow-button-capped-copy-trading.md), [735](../../archive/735-plan-actions-hire-agent-blink-discovery.md). items 4 7 8; others covered by 548 512 627 622 958 |
+| `docs/research/solana-robinhood-playbook-2026-10.md` | order | [975](../975-plan-robinhood-crypto-connector-spend-capped.md), [710](../710-plan-agent-follow-button-capped-copy-trading.md), 735 (shipped). items 4 7 8; others covered by 548 512 627 622 958 |
 | `docs/resilience.md` | no-open-work | shipped reference |
 | `docs/restyle.md` | no-open-work | shipped reference |
 | `docs/revenue-ledger.md` | no-open-work | shipped reference; reinvest work is existing order 965 |
