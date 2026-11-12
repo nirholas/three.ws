@@ -144,7 +144,11 @@ for (const [uf, cf] of [
 // (idle + walk with legs moving) instead of freezing in its bind-pose T-pose.
 const EXTRA_ALIASES = (() => {
 	const m = new Map();
-	const norm = (s) => s.replace(/[-_.\s]+/g, '').toLowerCase();
+	// Source engine rigs prefix a Biped skeleton with `ValveBiped.`; three.js's
+	// PropertyBinding.sanitizeNodeName deletes the dot at runtime, so the fused
+	// `ValveBipedBip01_` spelling must strip too. Both are removed here, before
+	// the separator collapse, so the residual joint name resolves below.
+	const norm = (s) => s.replace(/^valvebiped\.?/i, '').replace(/^bip\d+[\s_]*/i, '').replace(/[-_.\s]+/g, '').toLowerCase();
 	// First spelling wins, so listing-order is the priority.
 	const put = (variant, canonical) => { const k = norm(variant); if (!m.has(k)) m.set(k, canonical); };
 
@@ -184,6 +188,20 @@ const EXTRA_ALIASES = (() => {
 		['上半身', 'Spine'], ['上半身2', 'Spine1'],
 		['首', 'Neck'], ['頭', 'Head'],
 	]) put(v, c);
+	// Source engine (ValveBiped) rigs. The `ValveBiped.` prefix is stripped in
+	// `norm` above; these are the joints Source numbers differently from the
+	// canonical set. `Spine4` is the top of Source's four-joint spine, so it
+	// maps to `Spine2`, the top of the canonical three-joint chain; `Neck1` and
+	// `Head1` are Source's only neck and head joints.
+	for (const [v, c] of [
+		['spine3', 'Spine2'], ['spine4', 'Spine2'], ['neck1', 'Neck'], ['head1', 'Head'],
+	]) put(v, c);
+	for (const [side, long] of [['l', 'Left'], ['r', 'Right']]) {
+		for (const [v, c] of [
+			['clavicle', 'Shoulder'], ['upperarm', 'Arm'], ['forearm', 'ForeArm'], ['hand', 'Hand'],
+			['thigh', 'UpLeg'], ['calf', 'Leg'], ['foot', 'Foot'], ['toe0', 'ToeBase'],
+		]) put(`${side}${v}`, `${long}${c}`);
+	}
 	for (const [jp, side] of [['左', 'Left'], ['右', 'Right']]) {
 		for (const [v, c] of [
 			['肩', 'Shoulder'], ['腕', 'Arm'], ['ひじ', 'ForeArm'], ['手首', 'Hand'],
