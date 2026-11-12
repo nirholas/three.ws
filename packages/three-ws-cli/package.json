@@ -47,7 +47,7 @@
     "test": "vitest run --root ../.. packages/three-ws-cli/tests"
   },
   "dependencies": {
-    "@clack/prompts": "^1.8.0",
+    "@clack/prompts": "^1.9.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@napi-rs/keyring": "^2.1.2",
     "@solana-program/compute-budget": "^0.20.0",
