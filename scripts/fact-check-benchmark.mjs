@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Fact-check accuracy benchmark runner.
 //
-// Runs tests/fixtures/fact-check-benchmark.json through the REAL fact-check chain
+// Runs agents/fact-checker/benchmark/claims.json through the REAL fact-check chain
 // (POST /api/x402/fact-check) and scores accuracy overall, per verdict class, and
 // per difficulty. Writes data/_generated/fact-check-benchmark.json so the public
 // /fact-check accuracy page can render real, checkable numbers.
@@ -60,7 +60,7 @@ import {
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, '..');
-const FIXTURE = join(REPO, 'tests/fixtures/fact-check-benchmark.json');
+const FIXTURE = join(REPO, 'agents/fact-checker/benchmark/claims.json');
 const OUT_DIR = join(REPO, 'data/_generated');
 const OUT_FILE = join(OUT_DIR, 'fact-check-benchmark.json');
 

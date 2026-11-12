@@ -3,7 +3,7 @@
 //
 // The number on /fact-check is a quality claim about a paid product, so it has
 // to carry a recent date. This tick runs the committed 40-claim suite
-// (tests/fixtures/fact-check-benchmark.json) through the REAL chain in-process
+// (agents/fact-checker/benchmark/claims.json) through the REAL chain in-process
 // (api/x402/fact-check.js#_checkClaim: live search, live LLM, no HTTP and no
 // payment layer), scores it, and publishes the run to the DB, which
 // GET /api/fact-check-benchmark reads first. No deploy is involved.

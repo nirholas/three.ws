@@ -138,7 +138,7 @@ const REQUIRED = [
 		why: 'imports copy each SKILL.md into the agent; without it every import 500s',
 	},
 	{
-		path: 'tests/fixtures/fact-check-benchmark.json',
+		path: 'agents/fact-checker/benchmark/claims.json',
 		kind: 'file',
 		why: 'api/fact-check-benchmark.js renders it; api/cron/fact-check-benchmark.js runs it',
 	},

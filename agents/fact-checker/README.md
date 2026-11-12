@@ -60,4 +60,4 @@ Above the free quota the same request returns a 402 quote for $0.10 in USDC on B
 
 ## Benchmark metrics
 
-`scoreResults` (`api/_lib/fact-check-benchmark.js`) reports accuracy, per-class and per-difficulty accuracy, a confusion matrix, macro-F1 over the four verdict classes and the abstain rate (share of checked claims answered `insufficient`). Errored claims count against recall and are never dropped from the denominator. Not yet measured: citation validity (fetching each cited URL to confirm it contains the quoted evidence) and a labelled benchmark under `agents/fact-checker/benchmark/`; the suite lives in `tests/fixtures/fact-check-benchmark.json`.
+`scoreResults` (`api/_lib/fact-check-benchmark.js`) reports accuracy, per-class and per-difficulty accuracy, a confusion matrix, macro-F1 over the four verdict classes and the abstain rate (share of checked claims answered `insufficient`). Errored claims count against recall and are never dropped from the denominator. The labelled suite lives in `benchmark/claims.json` (40 claims, 10 per verdict class). Not yet measured: citation validity (fetching each cited URL to confirm it contains the quoted evidence).

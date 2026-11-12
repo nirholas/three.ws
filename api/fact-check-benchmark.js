@@ -2,7 +2,7 @@
 //
 // Serves the most recently published run (score, per-class table, per-difficulty
 // table, confusion matrix, run date), plus the static claim-count summary from
-// tests/fixtures/fact-check-benchmark.json so the /fact-check page always has
+// agents/fact-checker/benchmark/claims.json so the /fact-check page always has
 // something honest to render.
 //
 // Two sources, in order:
@@ -70,7 +70,7 @@ export default wrap(async (req, res) => {
 				source,
 				report,
 				claims_source:
-					'https://github.com/nirholas/three.ws/blob/main/tests/fixtures/fact-check-benchmark.json',
+					'https://github.com/nirholas/three.ws/blob/main/agents/fact-checker/benchmark/claims.json',
 				runner_source:
 					'https://github.com/nirholas/three.ws/blob/main/scripts/fact-check-benchmark.mjs',
 			},

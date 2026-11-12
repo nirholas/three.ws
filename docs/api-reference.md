@@ -3626,7 +3626,7 @@ curl -s https://three.ws/api/x402/fact-check \
 ### Accuracy benchmark
 
 The claim set behind the published accuracy score lives at
-`tests/fixtures/fact-check-benchmark.json` (40 claims, 10 per verdict class,
+`agents/fact-checker/benchmark/claims.json` (40 claims, 10 per verdict class,
 time-stable and non-partisan) and is scored by `scripts/fact-check-benchmark.mjs`
 against the real chain. [/fact-check](https://three.ws/fact-check) renders the
 latest generated score, the claim set, and a live "try one free check" box.

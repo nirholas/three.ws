@@ -18,7 +18,7 @@ import {
 } from '../../api/_lib/fact-check-benchmark.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const fixture = JSON.parse(readFileSync(join(HERE, '../fixtures/fact-check-benchmark.json'), 'utf8'));
+const fixture = JSON.parse(readFileSync(join(HERE, '../../agents/fact-checker/benchmark/claims.json'), 'utf8'));
 
 const CLASSES = ['supported', 'contradicted', 'mixed', 'insufficient'];
 

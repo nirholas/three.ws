@@ -23,7 +23,7 @@ import { sql } from './db.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = join(HERE, '../..');
-export const FIXTURE_PATH = join(REPO_ROOT, 'tests/fixtures/fact-check-benchmark.json');
+export const FIXTURE_PATH = join(REPO_ROOT, 'agents/fact-checker/benchmark/claims.json');
 export const REPORT_PATH = join(REPO_ROOT, 'data/_generated/fact-check-benchmark.json');
 
 export const VERDICT_CLASSES = ['supported', 'contradicted', 'mixed', 'insufficient'];
