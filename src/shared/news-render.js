@@ -2,13 +2,15 @@
 // /markets/news/article (related rail), and the /markets hub news column.
 // Pure render functions + one event wirer + the saved-stories store.
 //
-// Preview images load through a three-step chain so a card never shows a
-// broken image:
-//   1. The feed image loads directly (referrerpolicy=no-referrer clears most
-//      hotlink-referrer blocks for free).
-//   2. On error, one retry through the same-origin /api/img proxy — the server
-//      fetch is immune to referrer/CORS blocking and mixed-content rules.
-//   3. On a second error, the source-initials tile.
+// Preview images load through the same-origin /api/img proxy, so a card never
+// shows a broken image or logs a console error:
+//   1. The server fetch is immune to referrer, CORS and Cross-Origin-Resource-
+//      Policy blocking and mixed-content rules (several publishers send
+//      `Cross-Origin-Resource-Policy: same-origin`, which the browser refuses
+//      on a direct <img>).
+//   2. `fallback=none` makes a miss a quiet 204, and any load error swaps in
+//      the source-initials tile. There is no direct-URL retry: an image the
+//      proxy cannot fetch is gone, and the browser would only log it again.
 // Articles whose feed ships no image at all render the initials tile
 // immediately and upgrade in place: /api/news/image resolves the publisher
 // page's og:image server-side, fetched from here with fetch() (not an <img>
@@ -111,7 +113,7 @@ const renderedArticles = new Map();
 
 // ── Media ────────────────────────────────────────────────────────────────────
 
-const proxied = (u) => `/api/img?url=${encodeURIComponent(u)}`;
+const proxied = (u) => `/api/img?url=${encodeURIComponent(u)}&fallback=none`;
 
 export function newsMedia(a, { heroic = false } = {}) {
 	const cls = heroic ? 'nw-hero-media' : 'nw-media';
@@ -121,7 +123,7 @@ export function newsMedia(a, { heroic = false } = {}) {
 		// in the background and swaps the tile when one exists.
 		return `<div class="${cls}" style="position:relative" data-resolve="${esc(a.link)}"><div class="nw-fallback">${initials}</div></div>`;
 	}
-	return `<div class="${cls}" style="position:relative"><img src="${esc(a.image)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-fallback="${initials}" data-retry="${esc(proxied(a.image))}" /></div>`;
+	return `<div class="${cls}" style="position:relative"><img src="${esc(proxied(a.image))}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-fallback="${initials}" /></div>`;
 }
 
 // og:image resolution for imageless articles, bounded to a few fetches in
@@ -239,12 +241,6 @@ export function wireNewsContainer(container, { onTicker, onSave } = {}) {
 		(e) => {
 			const img = e.target;
 			if (img?.tagName !== 'IMG' || !img.dataset.fallback) return;
-			if (img.dataset.retry) {
-				const retry = img.dataset.retry;
-				delete img.dataset.retry;
-				img.src = retry;
-				return;
-			}
 			const tile = document.createElement('div');
 			tile.className = 'nw-fallback';
 			tile.textContent = img.dataset.fallback;
