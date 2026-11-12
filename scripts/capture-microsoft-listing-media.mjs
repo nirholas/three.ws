@@ -17,8 +17,10 @@
  * Flags:
  *   --base <url>      site to capture (default https://three.ws)
  *   --prompt <text>   the forge prompt (default below)
+ *   --work <dir>      scratch directory for masters and video frames
+ *                     (default dist/microsoft-media)
  *   --reuse           reuse the masters and video frames from the last run in
- *                     dist/microsoft-media instead of driving the site again
+ *                     the work directory instead of driving the site again
  *   --skip-video      images only; keep the video entry from the current manifest
  *   --skip-upload     build the video but do not upload it (the manifest keeps
  *                     the previous upload)
@@ -60,7 +62,10 @@ import {
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'marketing/microsoft/media');
-const WORK = join(ROOT, 'dist/microsoft-media');
+// --work moves the scratch masters and video frames (several GB for the video)
+// to a disk with room; the committed output always goes to OUT.
+const workFlag = process.argv.indexOf('--work');
+const WORK = workFlag !== -1 && process.argv[workFlag + 1] ? resolve(process.argv[workFlag + 1]) : join(ROOT, 'dist/microsoft-media');
 const MASTERS = join(WORK, 'masters');
 const FORGE_RECORD = join(MASTERS, 'forge.json');
 const FRAMES = join(WORK, 'frames');
@@ -225,7 +230,8 @@ async function newPage(browser, { width, height, scale }) {
 
 // ── Scenes ───────────────────────────────────────────────────────────────────
 
-const FORGE_HIDE = ['#fq-holder-note', '#tier .tier-lock'];
+// The perk row (holder perk and wallet connect) sits in view at 1080p, under the fold at 720p.
+const FORGE_HIDE = ['#fq-holder-note', '#tier .tier-lock', '#forge-perk-row'];
 const AGENT_HIDE = ['#av-wallet-row', 'avatar-actions'];
 // Below the fold at 1080p: the agent's wallet presence card and coin earnings.
 const AGENT_REMOVE = ['#av-panel-overview .nwp', '#av-earned'];

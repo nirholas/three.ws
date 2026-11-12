@@ -104,7 +104,8 @@ The run fails if any image misses its size, format, alpha rule or byte cap, or i
 | --- | --- |
 | `--base <url>` | Capture another deployment (default `https://three.ws`). |
 | `--prompt <text>` | The forge prompt (default "a brass ship compass on a walnut stand"). |
-| `--reuse` | Reuse the masters and video frames in `dist/microsoft-media/` from the last run. Use it to re-cut artwork or captions without driving the site. |
+| `--work <dir>` | Put the masters and video frames (several GB) in `<dir>` instead of `dist/microsoft-media/`, for a machine whose repository disk is short of space. |
+| `--reuse` | Reuse the masters and video frames in the work directory from the last run. Use it to re-cut artwork or captions without driving the site. |
 | `--skip-video` | Images only. The manifest keeps the earlier video. |
 | `--skip-upload` | Build the video but keep the earlier upload. Fails if the new cut differs from it. |
 

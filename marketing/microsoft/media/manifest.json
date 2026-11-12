@@ -1,5 +1,5 @@
 {
-	"capturedAt": "2026-11-11T18:42:42.602Z",
+	"capturedAt": "2026-11-12T17:59:51.677Z",
 	"base": "https://three.ws",
 	"requirementsRead": "2026-11-11",
 	"generator": "scripts/capture-microsoft-listing-media.mjs",
@@ -11,8 +11,8 @@
 	"forge": {
 		"prompt": "a brass ship compass on a walnut stand",
 		"lane": "nvidia (free)",
-		"seconds": 178,
-		"glb": "https://three.ws/cdn/forge/1566d14e3692/da4c870a-c87f-4087-ba0e-ac2e67917709.glb"
+		"seconds": 46,
+		"glb": "https://three.ws/cdn/forge/166c1253acfc/7a7ab3a7-a68c-4452-bddf-dbd19ac651c6.glb"
 	},
 	"stores": {
 		"marketplace": {
@@ -73,8 +73,8 @@
 			"path": "marketing/microsoft/media/marketplace/screenshot-1-forge-result-1280x720.png",
 			"width": 1280,
 			"height": 720,
-			"bytes": 168660,
-			"sha256": "53bf6a5e3fb8e1260f1331478065c35b3a155b06247e2ddf7c3de9153a125188",
+			"bytes": 166414,
+			"sha256": "d031726147df8b9dd9656dfe2896b658c6570e2d7f5056af83f9e05d2fc2aa9a",
 			"caption": "The finished model from that one prompt, ready to orbit, download as GLB or place in a scene."
 		},
 		{
@@ -83,8 +83,8 @@
 			"path": "marketing/microsoft/media/marketplace/screenshot-2-agent-1280x720.png",
 			"width": 1280,
 			"height": 720,
-			"bytes": 155634,
-			"sha256": "65e09801989a18ab4a817d65692f64baf40933bc61f07c184e39eaa378be500e",
+			"bytes": 147906,
+			"sha256": "71324ceaaeaa6ff57b0623e510b16b1ed93557564f2f8648bf7b754e43654196",
 			"caption": "Every agent has a public page with its 3D body, its skills and a chat anyone can open."
 		},
 		{
@@ -93,8 +93,8 @@
 			"path": "marketing/microsoft/media/marketplace/screenshot-3-teams-tab-1280x720.png",
 			"width": 1280,
 			"height": 720,
-			"bytes": 73562,
-			"sha256": "343321bb523905b0a535566fc2239ded246a340268698bce54fd2a71328f36da",
+			"bytes": 72941,
+			"sha256": "f6b08d9de544d2d3a7f337d06d3d375952bfbae934f359f3387009367721ef42",
 			"caption": "The three.ws tab for Microsoft Teams: browse agents and see what each one did today."
 		},
 		{
@@ -113,8 +113,8 @@
 			"path": "marketing/microsoft/media/marketplace/screenshot-5-viewer-1280x720.png",
 			"width": 1280,
 			"height": 720,
-			"bytes": 139856,
-			"sha256": "846790e2b197e48caf138c8f40f46275baae421d68e1ef02d45193b419cf8611",
+			"bytes": 124881,
+			"sha256": "fd1f20dd0c47e7c199885eed87a335f28ee9cf490c56ffcf6db50148376c104e",
 			"caption": "The three.ws viewer: inspect any GLB or glTF in the browser, with lighting, animation and AR."
 		},
 		{
@@ -132,8 +132,8 @@
 			"path": "marketing/microsoft/media/marketplace/video-thumbnail-1280x720.png",
 			"width": 1280,
 			"height": 720,
-			"bytes": 116906,
-			"sha256": "ccef0fb3df08dea7e3fbe5cc7ba147c2cea0bd4b4d30080c581818976ed44d50"
+			"bytes": 124997,
+			"sha256": "d7ba47ce170607e4e0e93272c633e7f1cf8f7137c00c6ad4fe1ff48dd4384c72"
 		},
 		{
 			"store": "teams",
@@ -141,8 +141,8 @@
 			"path": "marketing/microsoft/media/teams/screenshot-1-teams-tab-1366x768.png",
 			"width": 1366,
 			"height": 768,
-			"bytes": 94520,
-			"sha256": "e083696bfcd1b3df79662e72ed29956f3ba64f399bf2f324c395aebe032f91ca",
+			"bytes": 92316,
+			"sha256": "07a5f67ecb439884386781058cacd8378fb015414262fa2b15ff92deba804565",
 			"caption": "The three.ws tab for Microsoft Teams: browse agents and see what each one did today."
 		},
 		{
@@ -161,8 +161,8 @@
 			"path": "marketing/microsoft/media/teams/screenshot-3-agent-1366x768.png",
 			"width": 1366,
 			"height": 768,
-			"bytes": 192423,
-			"sha256": "de89501c6449a876a6a5d62a76c3f61f73ea1989c5a5b8f8a87e67e8234066a6",
+			"bytes": 195700,
+			"sha256": "5db451be3effe048f50b514ca9a780fbd35b2450b9675ee010215150e78b073e",
 			"caption": "Every agent has a public page with its 3D body, its skills and a chat anyone can open."
 		},
 		{
@@ -171,8 +171,8 @@
 			"path": "marketing/microsoft/media/teams/screenshot-4-forge-result-1366x768.png",
 			"width": 1366,
 			"height": 768,
-			"bytes": 264200,
-			"sha256": "82e9ea4f193242090a02eeac224623321cb6d1482513d00e2bbdb030facb46c1",
+			"bytes": 259999,
+			"sha256": "4c5603769c008ed4aecb9177f17683ec2011584f1a309889b4ea0e43c9a7fbed",
 			"caption": "The finished model from that one prompt, ready to orbit, download as GLB or place in a scene."
 		},
 		{
@@ -181,8 +181,8 @@
 			"path": "marketing/microsoft/media/teams/screenshot-5-viewer-1366x768.png",
 			"width": 1366,
 			"height": 768,
-			"bytes": 245181,
-			"sha256": "ab059221385b7eac568ca35d20bbc5d434a59c9103b74c4885f8c9d8e51e1e93",
+			"bytes": 248097,
+			"sha256": "7e34521527c5ab79dcb30660c7289ef7189a90e04954b40d833ed525596d7d50",
 			"caption": "The three.ws viewer: inspect any GLB or glTF in the browser, with lighting, animation and AR."
 		},
 		{
@@ -191,8 +191,8 @@
 			"path": "marketing/microsoft/media/msstore/screenshot-1-forge-composer-2560x1440.png",
 			"width": 2560,
 			"height": 1440,
-			"bytes": 130018,
-			"sha256": "02f6ff84e7f97cdd1c83bd25af9f86cc773a8293e1bb42b49d041724f4dacc1d",
+			"bytes": 130393,
+			"sha256": "006039e49ebbd44e1de6beebd06477a61d96e32b90e518ef814b7776264f5d9b",
 			"caption": "Describe an object in a sentence. Forge turns it into a textured 3D model on the free lane."
 		},
 		{
@@ -201,8 +201,8 @@
 			"path": "marketing/microsoft/media/msstore/screenshot-2-forge-result-2560x1440.png",
 			"width": 2560,
 			"height": 1440,
-			"bytes": 381710,
-			"sha256": "e41aa3563114789a192965bbc9c99c11ef6973a83046a18849085b7aa4b9db81",
+			"bytes": 363593,
+			"sha256": "3b2ba5c683df589894f81b4584ad4b84642932cc1c3b3f0b5a4325f509a2a117",
 			"caption": "The finished model from that one prompt, ready to orbit, download as GLB or place in a scene."
 		},
 		{
@@ -211,8 +211,8 @@
 			"path": "marketing/microsoft/media/msstore/screenshot-3-viewer-2560x1440.png",
 			"width": 2560,
 			"height": 1440,
-			"bytes": 426680,
-			"sha256": "ab03648eb774ae51ef87e3ffe7ef029d816f4676d0246f48da9d6de222394314",
+			"bytes": 326486,
+			"sha256": "3e702babd6851f05725b82ebc5349204e9cd187606359c26d699e20a216ecf25",
 			"caption": "The three.ws viewer: inspect any GLB or glTF in the browser, with lighting, animation and AR."
 		},
 		{
@@ -221,8 +221,8 @@
 			"path": "marketing/microsoft/media/msstore/screenshot-4-agent-2560x1440.png",
 			"width": 2560,
 			"height": 1440,
-			"bytes": 410751,
-			"sha256": "c9c2beef820cee8f3a84e893e1eb720e668a0766c041bedc83a52e817aec75f6",
+			"bytes": 359936,
+			"sha256": "ca68742dc2814f1eaa0a7332e75921cf27def22cf6f433b6903e9cdb747ed77a",
 			"caption": "Every agent has a public page with its 3D body, its skills and a chat anyone can open."
 		},
 		{
@@ -240,8 +240,8 @@
 			"path": "marketing/microsoft/media/msstore/trailer-thumbnail-1920x1080.png",
 			"width": 1920,
 			"height": 1080,
-			"bytes": 209309,
-			"sha256": "7eb6a8a663f2e1cbfeeefad4717c7becb43b849a812e53e9c94c123acade4ee2"
+			"bytes": 215571,
+			"sha256": "36e43524b4d80bf040d5a2fb81dd01863e6ef74dbd5cb42c1208f4bfd1608940"
 		},
 		{
 			"store": "edge",
@@ -258,8 +258,8 @@
 			"path": "marketing/microsoft/media/edge/tile-small-440x280.png",
 			"width": 440,
 			"height": 280,
-			"bytes": 27086,
-			"sha256": "029acf54942ea7d27b1ea66a88da9c05b113b41516553172e81edb3b1cfbe923"
+			"bytes": 27148,
+			"sha256": "07e768a8d04bcfa78bbdc1128ed0278cb0b1bc090da5c5003cb62337b8e402e3"
 		},
 		{
 			"store": "edge",
@@ -346,24 +346,24 @@
 		}
 	],
 	"video": {
-		"url": "https://storage.googleapis.com/three-ws-desktop-releases/marketing/microsoft/2026-11-11/three-ws-demo-65b81bfb24c1.mp4",
-		"bytes": 9180852,
-		"sha256": "65b81bfb24c14db7c5f30ef4f18c6720af47712a75a9fd40dd5d104ea1c4d756",
+		"url": "https://storage.googleapis.com/three-ws-desktop-releases/marketing/microsoft/2026-11-12/three-ws-demo-a9ba45979ad6.mp4",
+		"bytes": 8317399,
+		"sha256": "a9ba45979ad6c53abdddd064bada2b4cc5bcd7463ef808558bf9de81b4ceed71",
 		"width": 1920,
 		"height": 1080,
 		"fps": 30,
 		"durationSeconds": 64,
 		"codecs": "h264 High, aac 48000 Hz",
 		"captioned": {
-			"url": "https://storage.googleapis.com/three-ws-desktop-releases/marketing/microsoft/2026-11-11/three-ws-demo-captioned-fbc6202663f6.mp4",
-			"bytes": 9118162,
-			"sha256": "fbc6202663f6a3c884bc6179fdcfd3c091ef1bc1213279115f5bc888ae6204bc",
+			"url": "https://storage.googleapis.com/three-ws-desktop-releases/marketing/microsoft/2026-11-12/three-ws-demo-captioned-dac237f18622.mp4",
+			"bytes": 8422061,
+			"sha256": "dac237f18622227e8be895c99497903ce5ff60734900fbcbebaa88f4593f2bd3",
 			"note": "Captions burned in, for hosts that ignore caption files."
 		},
 		"srt": "marketing/microsoft/media/video/three-ws-demo.en.srt",
 		"vtt": "marketing/microsoft/media/video/three-ws-demo.en.vtt",
 		"narration": "marketing/microsoft/media/video/narration.txt",
 		"voice": "None recorded. narration.txt is the script, timed to the captions.",
-		"forgeSeconds": 43
+		"forgeSeconds": 190
 	}
 }
