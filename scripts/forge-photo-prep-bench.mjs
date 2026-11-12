@@ -46,7 +46,14 @@ const workerUrl = process.env.TRELLIS2_URL;
 const workerKey = process.env.TRELLIS2_KEY;
 const POLL_MS = 5000;
 const POLL_RETRIES = 36;
-const JOB_DEADLINE_MS = 20 * 60 * 1000;
+// Generous because jobs queue behind each other on a one-GPU lane (about 7 min each at 1024).
+const JOB_DEADLINE_MS = 45 * 60 * 1000;
+// Worker images built before 1e6ece653 store task records without Cache-Control
+// no-store, so a poll can read an edge-cached copy older than the orphan window
+// and fail a live job as "task orphaned". The runner keeps going and overwrites
+// the record with done, so the bench keeps polling that task instead of losing
+// the GPU work and queueing a duplicate behind it.
+const isFalseOrphan = (task) => task?.status === 'failed' && /task orphaned/.test(task?.error || '');
 
 if (!flags['skip-generate'] && (!workerUrl || !workerKey)) {
 	console.error('Set TRELLIS2_URL and TRELLIS2_KEY (see the header), or pass --skip-generate.');
@@ -137,8 +144,20 @@ async function generate(name, key) {
 	const ext = { 'image/jpeg': '.jpg', 'image/webp': '.webp', 'image/png': '.png' }[v.type];
 	const file = join(outDir, name, key + ext);
 	const dataUri = `data:${v.type};base64,${readFileSync(file).toString('base64')}`;
-	const t0 = Date.now();
-	const { task_id } = await api('/infer', { method: 'POST', body: JSON.stringify({ images: [dataUri], resolution: 1024, seed: 42 }) });
+	// Re-attach to a job a previous run submitted but did not see finish (stopped
+	// mid-poll, or gave up on it as orphaned); it may have finished since.
+	const resumed = v.task?.id && (v.task.status === 'queued' || isFalseOrphan(v.task)) ? v.task.id : null;
+	const t0 = resumed ? (v.submittedAt ?? null) : Date.now();
+	let task_id = resumed;
+	if (!resumed) {
+		({ task_id } = await api('/infer', { method: 'POST', body: JSON.stringify({ images: [dataUri], resolution: 1024, seed: 42 }) }));
+		v.submittedAt = t0;
+		v.task = { id: task_id, status: 'queued' };
+		save();
+	} else {
+		console.log(`  ${name}/${key}: re-attaching to task ${task_id}`);
+	}
+	const pollStart = Date.now();
 	let task;
 	let pollErrors = 0;
 	for (;;) {
@@ -154,12 +173,18 @@ async function generate(name, key) {
 			console.error(`  ${name}/${key}: poll ${pollErrors} of ${POLL_RETRIES} failed (${err.message}), retrying`);
 			continue;
 		}
-		if (task.status === 'done' || task.status === 'succeeded' || task.status === 'failed' || task.status === 'error') break;
-		if (Date.now() - t0 > JOB_DEADLINE_MS) throw new Error(`task ${task_id} still ${task.status} after 20 min`);
+		const terminal = task.status === 'done' || task.status === 'succeeded' || task.status === 'failed' || task.status === 'error';
+		if (terminal && !isFalseOrphan(task)) break;
+		if (Date.now() - pollStart > JOB_DEADLINE_MS) {
+			v.task = { id: task_id, status: task.status, error: task.error || null };
+			save();
+			throw new Error(`task ${task_id} still ${task.status} after ${JOB_DEADLINE_MS / 60000} min`);
+		}
 	}
 	// endToEndMs is what the visitor waits for after the upload: submit to done,
 	// polled every POLL_MS. The worker's own clock splits it into queue and GPU.
-	v.endToEndMs = Date.now() - t0;
+	// A job re-attached from a run that predates submittedAt has no submit time.
+	v.endToEndMs = t0 == null ? null : Date.now() - t0;
 	v.task = {
 		id: task_id,
 		status: task.status,
@@ -190,7 +215,7 @@ async function generate(name, key) {
 	v.glbBytes = readFileSync(glbPath).length;
 	execFileSync('node', [join(here, 'render-glb-poster.mjs'), glbPath, join(outDir, name, `${key}-render.webp`), '--size=512'], { stdio: 'ignore' });
 	v.render = `${key}-render.webp`;
-	console.log(`  ${name}/${key}: ${(v.endToEndMs / 1000).toFixed(0)} s end to end, GPU ${v.task.gpu_ms} ms, ${v.bytes} B upload`);
+	console.log(`  ${name}/${key}: ${v.endToEndMs == null ? "n/a" : (v.endToEndMs / 1000).toFixed(0)} s end to end, GPU ${v.task.gpu_ms} ms, ${v.bytes} B upload`);
 	save();
 }
 
