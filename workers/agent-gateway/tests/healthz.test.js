@@ -51,8 +51,15 @@ afterEach(async () => {
 	server = null;
 });
 
+// Slack, WhatsApp and voice each name what they still need.
+const UNCONFIGURED_NEW = [
+	{ platform: 'slack', missing: ['SLACK_BOT_TOKEN (or SLACK_CLIENT_ID and SLACK_CLIENT_SECRET for OAuth installs)'], reason: 'missing SLACK_BOT_TOKEN (or SLACK_CLIENT_ID and SLACK_CLIENT_SECRET for OAuth installs)' },
+	{ platform: 'whatsapp', missing: ['WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID'], reason: 'missing WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID' },
+	{ platform: 'voice', missing: ['GATEWAY_VOICE_TELEPHONY', 'TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN'], reason: 'missing GATEWAY_VOICE_TELEPHONY, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN' },
+];
+
 describe('/healthz', () => {
-	it('answers 200 with the loaded adapter, the open backlog, and why Discord was skipped', async () => {
+	it('answers 200 with the loaded adapter, the open backlog, and why every other platform was skipped', async () => {
 		await boot(telegramEnv);
 		await store.enqueueInbox({ platform: 'telegram', dedupeKey: '1', chatKey: 'telegram:1', payload: { update_id: 1 } });
 		const { status, headers, body } = await get('/healthz');
@@ -63,6 +70,7 @@ describe('/healthz', () => {
 		expect(body.adapters).toEqual({ telegram: { bot: 'threewsbot', mode: 'webhook' } });
 		expect(body.skipped).toEqual([
 			{ platform: 'discord', missing: ['DISCORD_BOT_TOKEN', 'DISCORD_APP_ID'], reason: 'missing DISCORD_BOT_TOKEN, DISCORD_APP_ID' },
+			...UNCONFIGURED_NEW,
 		]);
 		expect(body.backlog).toMatchObject({ open: 1 });
 		expect(typeof body.backlog.oldestSeconds).toBe('number');
@@ -85,13 +93,14 @@ describe('/healthz', () => {
 		expect(body.skipped).toEqual([
 			{ platform: 'telegram', missing: ['TELEGRAM_BOT_TOKEN'], reason: 'missing TELEGRAM_BOT_TOKEN' },
 			{ platform: 'discord', missing: ['DISCORD_BOT_TOKEN', 'DISCORD_APP_ID'], reason: 'missing DISCORD_BOT_TOKEN, DISCORD_APP_ID' },
+			...UNCONFIGURED_NEW,
 		]);
 	});
 
 	it('lists a platform left out by GATEWAY_PLATFORMS with that reason, not silently', async () => {
 		await boot({ ...telegramEnv, GATEWAY_PLATFORMS: 'telegram' });
 		const { body } = await get('/healthz');
-		expect(body.skipped).toEqual([{ platform: 'discord', missing: [], reason: 'excluded by GATEWAY_PLATFORMS' }]);
+		expect(body.skipped).toEqual(['discord', 'slack', 'whatsapp', 'voice'].map((platform) => ({ platform, missing: [], reason: 'excluded by GATEWAY_PLATFORMS' })));
 	});
 
 	it('still answers, with a null backlog, when the inbox cannot be read', async () => {

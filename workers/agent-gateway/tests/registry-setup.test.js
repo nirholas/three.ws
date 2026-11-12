@@ -7,11 +7,18 @@ import { loadConfig } from '../src/config.js';
 import { discordCommandSet, telegramCommandSet } from '../src/setup.js';
 import { COMMAND_HANDLERS } from '../../../api/_lib/gateway/commands.js';
 
+// Slack, WhatsApp and voice each name what they still need.
+const UNCONFIGURED_NEW = [
+	{ platform: 'slack', missing: ['SLACK_BOT_TOKEN (or SLACK_CLIENT_ID and SLACK_CLIENT_SECRET for OAuth installs)'], reason: 'missing SLACK_BOT_TOKEN (or SLACK_CLIENT_ID and SLACK_CLIENT_SECRET for OAuth installs)' },
+	{ platform: 'whatsapp', missing: ['WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID'], reason: 'missing WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID' },
+	{ platform: 'voice', missing: ['GATEWAY_VOICE_TELEPHONY', 'TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN'], reason: 'missing GATEWAY_VOICE_TELEPHONY, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN' },
+];
+
 describe('adapter registry', () => {
 	it('loads only configured adapters and names the missing variables', () => {
 		const { adapters, skipped } = loadAdapters({ env: { TELEGRAM_BOT_TOKEN: '1:fixture' } });
 		expect([...adapters.keys()]).toEqual(['telegram']);
-		expect(skipped).toEqual([{ platform: 'discord', missing: ['DISCORD_BOT_TOKEN', 'DISCORD_APP_ID'], reason: 'missing DISCORD_BOT_TOKEN, DISCORD_APP_ID' }]);
+		expect(skipped).toEqual([{ platform: 'discord', missing: ['DISCORD_BOT_TOKEN', 'DISCORD_APP_ID'], reason: 'missing DISCORD_BOT_TOKEN, DISCORD_APP_ID' }, ...UNCONFIGURED_NEW]);
 	});
 
 	it('honours GATEWAY_PLATFORMS and accepts a new platform without touching the loop', () => {
