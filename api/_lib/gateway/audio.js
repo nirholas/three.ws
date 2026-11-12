@@ -17,6 +17,7 @@
 // voice bubble, WhatsApp as a voice message, and Signal, Slack and Discord play.
 
 import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { sql } from '../db.js';
 import { env } from '../env.js';
@@ -40,7 +41,9 @@ export function ffmpegPath() {
 	if (process.env.FFMPEG_PATH) return process.env.FFMPEG_PATH;
 	try {
 		const p = createRequire(import.meta.url)('ffmpeg-static');
-		if (typeof p === 'string' && p) return p;
+		// The package resolves to its binary's path even when the download in
+		// its install script never ran (npm ci --ignore-scripts).
+		if (typeof p === 'string' && p && existsSync(p)) return p;
 	} catch {
 		// ffmpeg-static is optional here: the PATH binary below serves instead.
 	}
