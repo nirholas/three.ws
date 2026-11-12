@@ -1297,7 +1297,7 @@
 				"idempotentHint": true,
 				"openWorldHint": false
 			},
-			"schemaHash": "bf8afb195b69"
+			"schemaHash": "d3e8d77b91ef"
 		},
 		{
 			"name": "sign_text",
@@ -1310,7 +1310,7 @@
 				"idempotentHint": true,
 				"openWorldHint": false
 			},
-			"schemaHash": "712b88a354d8"
+			"schemaHash": "86c79180747d"
 		}
 	],
 	"api/_mcp/tools/skill-imports.js": [

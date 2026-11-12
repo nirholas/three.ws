@@ -5,9 +5,17 @@
  *     → the descriptor: parameters, limits, and the full lexical vocabulary
  *       with each sign's gloss. Call this to discover what will sign vs spell.
  *
- *   GET  /api/sign?text=happy+to+meet+you[&hand=left][&speed=0.75][&format=timeline]
- *   POST /api/sign  { text, hand, speed, max_seconds, format }
+ *   GET  /api/sign?text=happy+to+meet+you[&hand=left][&speed=0.75][&format=timeline][&lang=ase]
+ *   POST /api/sign  { text, hand, speed, max_seconds, format, lang }
  *     → { text, duration, words, signed, spelled, timeline, clip, viewer }
+ *
+ * `lang` picks a sign language pack (src/sign-packs/). Without it the answer is
+ * exactly the ASL answer it has always been. With it the answer also carries
+ * `lang` and `review: { approved, total }`, and for a pack that is not native
+ * only signs approved by fluent reviewers are performed: any other word comes
+ * back as `signed: false, unsupported: true` and is never fingerspelled in the
+ * ASL alphabet. An unknown pack, or one with no approved sign, answers
+ * 400 unsupported_language with the packs that are available.
  *
  * This is the writing half of the signing stack; /api/asl-recognition is the
  * reading half. The compiler (src/sign-speech.js) is the same one the browser
@@ -28,6 +36,7 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { env } from './_lib/env.js';
 import { compileUtterance, scaledTiming, utteranceWords } from '../src/sign-speech.js';
 import { SIGNS, signLookup } from '../src/sign-dictionary.js';
+import { DEFAULT_PACK_ID, getPack, servablePack, servablePacks } from '../src/sign-packs/index.js';
 
 // Long enough for a paragraph, short enough that one call stays a few tens of
 // milliseconds of CPU. Past this the caller should split the text themselves,
@@ -78,7 +87,31 @@ function readParams(source) {
 		fallback: SECONDS_RANGE.default,
 	});
 	const format = String(source.format ?? 'clip').toLowerCase() === 'timeline' ? 'timeline' : 'clip';
-	return { text, hand, speed, maxSeconds, format };
+	const rawLang = source.lang ?? source.language;
+	const lang = rawLang == null || String(rawLang).trim() === '' ? null : String(rawLang).trim().slice(0, 35);
+	return { text, hand, speed, maxSeconds, format, lang };
+}
+
+/** The packs a caller may ask for: at least one approved sign each. */
+function availableLanguages() {
+	return servablePacks().map((p) => ({
+		lang: p.id,
+		name: p.name,
+		approved: p.review.approved,
+		total: p.review.total,
+	}));
+}
+
+/**
+ * The servable pack for a requested `lang`, or null when that language is
+ * unknown or has nothing approved yet.
+ * @param {string} lang
+ */
+function resolveLanguage(lang) {
+	const pack = getPack(lang);
+	if (!pack) return null;
+	const view = servablePack(pack);
+	return view.review.approved > 0 ? view : null;
 }
 
 function descriptor(origin) {
@@ -102,7 +135,9 @@ function descriptor(origin) {
 			speed: `${SPEED_RANGE.min}-${SPEED_RANGE.max}, default 1. Below 1 is a signer taking longer over the same signs.`,
 			max_seconds: `${SECONDS_RANGE.min}-${SECONDS_RANGE.max}, default ${SECONDS_RANGE.default}. Longer text is truncated at a word boundary and flagged.`,
 			format: 'clip (default) returns the animation clip plus the timeline; timeline returns only the timeline, which is small and free of clip data.',
+			lang: `sign language pack, default ${DEFAULT_PACK_ID} (American Sign Language). See languages for what is available; a pack other than ASL performs only signs approved by fluent reviewers and reports every other word as unsupported.`,
 		},
+		languages: availableLanguages(),
 		clip_format: {
 			description:
 				'A three.js AnimationClip document keyed to the canonical humanoid skeleton, rotation lanes only. Retarget it onto any rigged humanoid, then play it.',
@@ -119,13 +154,24 @@ function descriptor(origin) {
 	};
 }
 
-function compile(params, origin) {
+/**
+ * @param {ReturnType<typeof readParams>} params
+ * @param {string} origin
+ * @param {object|null} [pack]  servable pack when the caller named a language;
+ *   null keeps the historical ASL response shape exactly.
+ */
+function compile(params, origin, packArg = null) {
+	const pack = packArg ? servablePack(packArg) : null;
 	const { text, hand, speed, maxSeconds, format } = params;
+	// Fingerspelling exists only for the ASL manual alphabet. A pack without it
+	// reports unspellable words as unsupported rather than borrowing ASL letters.
+	const spell = !pack || pack.alphabet === 'asl-manual';
 	const result = compileUtterance(text, {
-		signs: signLookup({ dominant: hand, rate: speed }),
+		signs: signLookup({ dominant: hand, rate: speed, ...(pack ? { pack } : {}) }),
 		timing: speed === 1 ? undefined : scaledTiming(speed),
 		maxSeconds,
 		dominant: hand,
+		...(pack ? { pack, spell } : {}),
 	});
 
 	const timeline = result.segments.map((s) => ({
@@ -135,7 +181,9 @@ function compile(params, origin) {
 		start: round(s.start),
 		end: round(s.end),
 		letters: s.letters?.map((l) => ({ letter: l.letter, start: round(l.start), end: round(l.end) })) ?? null,
+		...(s.unsupported ? { unsupported: true } : {}),
 	}));
+	const langQuery = pack && pack.id !== DEFAULT_PACK_ID ? `&lang=${encodeURIComponent(pack.id)}` : '';
 
 	const body = {
 		text,
@@ -147,8 +195,13 @@ function compile(params, origin) {
 		hand: hand.toLowerCase(),
 		speed,
 		timeline,
-		viewer: `${origin}/sign-language?say=${encodeURIComponent(text)}`,
+		viewer: `${origin}/sign-language?say=${encodeURIComponent(text)}${langQuery}`,
 	};
+	if (pack) {
+		body.lang = pack.id;
+		body.review = { approved: pack.review.approved, total: pack.review.total };
+		if (result.unsupported) body.unsupported = result.unsupported;
+	}
 	if (format === 'clip') body.clip = compactClip(result.clip);
 	return body;
 }
@@ -197,10 +250,22 @@ export default wrap(async (req, res) => {
 		});
 	}
 
+	let pack = null;
+	if (params.lang) {
+		pack = resolveLanguage(params.lang);
+		if (!pack) {
+			return json(res, 400, {
+				error: 'unsupported_language',
+				message: `No sign language pack "${params.lang}" with reviewed signs is available. Languages ship only after fluent signers approve them.`,
+				available: availableLanguages(),
+			});
+		}
+	}
+
 	const rl = await limits.signCompileIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl, 'Sign compile limit reached. Try again shortly.');
 
-	return json(res, 200, compile(params, origin), CACHE_HEADERS);
+	return json(res, 200, compile(params, origin, pack), CACHE_HEADERS);
 });
 
-export { descriptor, compile, readParams, MAX_TEXT_CHARS };
+export { descriptor, compile, readParams, resolveLanguage, availableLanguages, MAX_TEXT_CHARS };

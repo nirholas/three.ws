@@ -12,7 +12,8 @@
  *     unmarked handshapes. Two hands sharing one handshape are unrestricted,
  *     which is why NAME (both hands in H, only the dominant one taps) is fine.
  *
- * Encoding them here means a new entry in src/sign-dictionary.js is checked
+ * Encoding them (src/sign-packs/linguistics.js, shared with
+ * scripts/validate-sign-pack.mjs) means a new entry in any pack is checked
  * against the language, not just against whether it renders. That matters more
  * as the vocabulary grows and as signs arrive from people who did not write the
  * solver.
@@ -22,39 +23,8 @@ import { describe, expect, it } from 'vitest';
 
 import { SIGNS } from '../src/sign-dictionary.js';
 import { HANDSHAPES } from '../src/sign-handshapes.js';
-
-// The unmarked handshapes: the ones a passive hand is allowed to take. These are
-// the maximally distinct, easiest-to-produce shapes of the language.
-const UNMARKED = new Set(['A', 'S', 'B', 'FLAT', '5', 'C', 'O', '0', '1', 'BENT_B', 'FLAT_O', 'CLAW']);
-
-/** Resolve each phase into what each hand is doing. */
-function handTrack(sign, side) {
-	return sign.phases.map((phase) => {
-		const own = phase[side];
-		if (own === 'rest') return null;
-		const merged = phase.both ? { ...phase.both, ...(own ?? {}) } : own;
-		if (!merged) return null;
-		return {
-			shape: merged.shape ?? null,
-			// Everything that determines WHERE the hand is. Two phases that differ
-			// in any of these mean the hand moved.
-			place: JSON.stringify([merged.at ?? null, merged.touch ?? null, merged.fingers ?? null, merged.palm ?? null]),
-		};
-	});
-}
-
-function moves(track) {
-	const active = track.filter(Boolean);
-	if (active.length < 2) return false;
-	return active.some((p) => p.place !== active[0].place);
-}
-
-/** The last handshape a hand is given (shapes carry forward between phases). */
-function shapeOf(track) {
-	let shape = null;
-	for (const phase of track) if (phase?.shape) shape = phase.shape;
-	return shape;
-}
+import { UNMARKED, battisonIssues, handTrack, lintPack, moves, shapeOf } from '../src/sign-packs/linguistics.js';
+import ASL from '../src/sign-packs/asl.js';
 
 const ENTRIES = Object.entries(SIGNS).map(([word, sign]) => ({
 	word,
@@ -133,5 +103,50 @@ describe('vocabulary hygiene', () => {
 				expect(same, `${word}: phase ${i} repeats phase ${i - 1}`).toBe(false);
 			}
 		}
+	});
+});
+
+describe('the shared pack lint', () => {
+	it('passes the ASL pack with no issues', () => {
+		expect(lintPack(ASL)).toEqual([]);
+	});
+
+	it('flags both of Battison’s conditions', () => {
+		const symmetric = {
+			gloss: 'both hands move in different shapes',
+			phases: [
+				{ t: 0.3, left: { shape: 'S', at: { anchor: 'sternum', out: 0.1 } }, right: { shape: 'V', at: { anchor: 'sternum', out: 0.1 } } },
+				{ t: 0.3, left: { shape: 'S', at: { anchor: 'sternum', out: 0.2 } }, right: { shape: 'V', at: { anchor: 'sternum', out: 0.2 } } },
+			],
+		};
+		expect(battisonIssues('BAD', symmetric).join()).toMatch(/Symmetry Condition/);
+		const dominance = {
+			gloss: 'a passive hand in a marked shape',
+			phases: [
+				{ t: 0.3, left: { shape: 'V', at: { anchor: 'sternum' } }, right: { shape: 'A', at: { anchor: 'sternum', out: 0.1 } } },
+				{ t: 0.3, left: { shape: 'V', at: { anchor: 'sternum' } }, right: { shape: 'A', at: { anchor: 'sternum', out: 0.2 } } },
+			],
+		};
+		expect(battisonIssues('BAD', dominance).join()).toMatch(/Dominance Condition/);
+	});
+
+	it('flags vocabulary the engine does not know and a pack that claims to be native', () => {
+		const pack = {
+			id: 'qaa',
+			name: 'lint probe',
+			bcp47: 'qaa',
+			status: 'native',
+			alphabet: 'asl-manual',
+			signs: { X: { gloss: 'x', phases: [{ t: 0.3, right: { shape: 'NOPE', at: { anchor: 'elbow' }, fingers: 'sideways' } }] } },
+			aliases: { Y: 'MISSING' },
+			reviews: [],
+		};
+		const issues = lintPack(pack).join('\n');
+		expect(issues).toMatch(/unknown handshape "NOPE"/);
+		expect(issues).toMatch(/unknown anchor "elbow"/);
+		expect(issues).toMatch(/unknown direction "sideways"/);
+		expect(issues).toMatch(/alias Y points at missing sign/);
+		expect(issues).toMatch(/only the ASL pack is native/);
+		expect(issues).toMatch(/only ASL fingerspells/);
 	});
 });

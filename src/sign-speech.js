@@ -122,16 +122,22 @@ function appendSegment(merged, clip, offset) {
  *   timing?: object,
  *   maxSeconds?: number,
  *   name?: string,
+ *   spell?: boolean,
+ *   pack?: import('./sign-packs/index.js').SignPack|string,
  * }} [opts]
  *   `signs` resolves a word to a lexical sign clip document (canonical-bone
  *   tracks, the animation library shape); words it misses are fingerspelled.
+ *   `spell: false` is for a pack with no manual alphabet of its own: a missed
+ *   word is reported as unsupported (zero seconds, no clip) instead of being
+ *   spelled in the ASL alphabet. `pack` is where glosses are looked up.
  * @returns {{
  *   clip: object,
  *   words: string[],
  *   signed: string[],
  *   spelled: string[],
+ *   unsupported?: string[],
  *   segments: { word: string, signed: boolean, gloss: string|null, start: number, end: number,
- *               letters: { letter: string, start: number, end: number }[]|null }[],
+ *               letters: { letter: string, start: number, end: number }[]|null, unsupported?: true }[],
  *   truncated: boolean,
  * }}
  *   `segments` is the performed timeline: one entry per word in clip order, with
@@ -146,6 +152,30 @@ export function compileUtterance(text, opts = {}) {
 
 	const words = utteranceWords(text);
 	if (!words.length) throw new Error('text has no signable characters (A-Z, 0-9)');
+	const spell = opts.spell !== false;
+	// Without an alphabet only words with a sign are performed. The rest keep
+	// their place in the timeline as unsupported, so a caller can say which
+	// words the language could not sign instead of silently dropping them.
+	const performable = spell
+		? words.map((word, index) => ({ word, index }))
+		: words.map((word, index) => ({ word, index })).filter(({ word }) => lookup(word, { first: true, last: true }));
+	if (!performable.length) {
+		return {
+			clip: {
+				name: opts.name ?? `sign-${words.join('-').toLowerCase()}`.slice(0, 60),
+				duration: 0,
+				tracks: [],
+				uuid: undefined,
+				blendMode: NORMAL_BLEND_MODE,
+			},
+			words,
+			signed: [],
+			spelled: [],
+			unsupported: [...words],
+			segments: words.map((word) => ({ word, signed: false, gloss: null, start: 0, end: 0, letters: null, unsupported: true })),
+			truncated: false,
+		};
+	}
 
 	// A signer raises their hands once for a sentence and lowers them once at the
 	// end. Only the first word leads in from rest and only the last settles back
@@ -172,9 +202,9 @@ export function compileUtterance(text, opts = {}) {
 	const chosen = [];
 	let planned = 0;
 	let truncated = false;
-	for (let i = 0; i < words.length; i++) {
+	for (let i = 0; i < performable.length; i++) {
 		const position = { first: i === 0, last: false };
-		const built = build(words[i], position);
+		const built = build(performable[i].word, position);
 		const gap = chosen.length ? WORD_GAP_SECONDS : 0;
 		// Reserve room for the closing settle so the cap still holds once the last
 		// word is rebuilt with it.
@@ -183,7 +213,7 @@ export function compileUtterance(text, opts = {}) {
 			break;
 		}
 		planned += gap + built.segment.duration;
-		chosen.push({ word: words[i], position, ...built });
+		chosen.push({ word: performable[i].word, index: performable[i].index, position, ...built });
 	}
 
 	// Whichever word ended up last (the real last, or the one truncation stopped
@@ -196,8 +226,21 @@ export function compileUtterance(text, opts = {}) {
 	let cursor = 0;
 	const signed = [];
 	const spelled = [];
+	const unsupported = [];
 	const segments = [];
+	// Unsupported words sit between the performed ones, at the instant the word
+	// before them ended. Words past a truncation point are dropped with it.
+	const cutoff = truncated ? (performable[chosen.length]?.index ?? words.length) : words.length;
+	let nextWord = 0;
+	const markUnsupported = (until) => {
+		for (; nextWord < until; nextWord++) {
+			unsupported.push(words[nextWord]);
+			segments.push({ word: words[nextWord], signed: false, gloss: null, start: cursor, end: cursor, letters: null, unsupported: true });
+		}
+	};
 	for (const entry of chosen) {
+		if (!spell) markUnsupported(entry.index);
+		nextWord = entry.index + 1;
 		if (cursor > 0) cursor += WORD_GAP_SECONDS;
 		const start = cursor;
 		cursor = appendSegment(merged, entry.segment, cursor);
@@ -205,7 +248,7 @@ export function compileUtterance(text, opts = {}) {
 		segments.push({
 			word: entry.word,
 			signed: entry.signed,
-			gloss: entry.signed ? (lookupSign(entry.word)?.sign.gloss ?? null) : null,
+			gloss: entry.signed ? (lookupSign(entry.word, opts.pack)?.sign.gloss ?? null) : null,
 			start,
 			end: cursor,
 			letters: entry.letters
@@ -215,6 +258,7 @@ export function compileUtterance(text, opts = {}) {
 				: null,
 		});
 	}
+	if (!spell) markUnsupported(cutoff);
 
 	// Rotation lanes only. A signed utterance is upper-body: it must never write
 	// the root's translation, which on a rig whose hips rest a metre off the
@@ -236,6 +280,7 @@ export function compileUtterance(text, opts = {}) {
 		words,
 		signed,
 		spelled,
+		...(spell ? {} : { unsupported }),
 		segments,
 		truncated,
 	};

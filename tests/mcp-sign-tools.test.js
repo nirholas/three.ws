@@ -109,3 +109,29 @@ describe('sign_text', () => {
 		await expect(call('sign_text', { text: '   ' })).rejects.toThrow(/required/);
 	});
 });
+
+describe('sign language packs', () => {
+	it('answers without lang exactly as before: no lang, review or unsupported fields', async () => {
+		const out = await call('sign_text', { text: 'hello' });
+		expect(out.structuredContent).not.toHaveProperty('lang');
+		expect(out.structuredContent).not.toHaveProperty('unsupported');
+		expect(out.structuredContent.clip_url).not.toContain('lang=');
+	});
+
+	it('takes lang=ase and reports the review coverage', async () => {
+		const out = await call('sign_text', { text: 'hello', lang: 'ase' });
+		expect(out.structuredContent.lang).toBe('ase');
+		expect(out.structuredContent.review.approved).toBe(out.structuredContent.review.total);
+		expect(out.structuredContent.unsupported).toEqual([]);
+		const vocab = await call('list_sign_vocabulary', { lang: 'ase' });
+		expect(vocab.structuredContent.lang).toBe('ase');
+	});
+
+	it('refuses a language with no reviewed signs and names what is available', async () => {
+		await expect(call('sign_text', { text: 'hello', lang: 'rms' })).rejects.toMatchObject({
+			code: -32602,
+			message: expect.stringMatching(/unsupported_language.*ase \(American Sign Language\)/),
+		});
+		await expect(call('list_sign_vocabulary', { lang: 'rms' })).rejects.toThrow(/unsupported_language/);
+	});
+});

@@ -16,14 +16,36 @@
 // a chat transcript, so the default answer is the timeline plus the URL that
 // returns the bytes.
 
-import { compile, descriptor, readParams } from '../../sign.js';
+import { availableLanguages, compile, descriptor, readParams, resolveLanguage } from '../../sign.js';
 import { resolveOrigin } from '../origin.js';
-import { SIGNABLE_WORDS } from '../../../src/sign-dictionary.js';
+import { SIGNABLE_WORDS, signableWords } from '../../../src/sign-dictionary.js';
 
 function rpcError(code, message) {
 	const e = new Error(message);
 	e.code = code;
 	return e;
+}
+
+// Shared by both tools: an optional sign language pack. Without it the tools
+// answer exactly as they always have, in ASL.
+const LANG_PROPERTY = {
+	type: 'string',
+	description:
+		'Optional sign language pack (ISO 639-3), default "ase" (American Sign Language). A pack other than ASL performs only signs approved by fluent reviewers; an unavailable pack is an error that lists the available ones.',
+};
+
+/** The servable pack for `lang`, or an invalid-params error naming what exists. */
+function packFor(lang) {
+	if (lang == null || String(lang).trim() === '') return null;
+	const pack = resolveLanguage(String(lang));
+	if (pack) return pack;
+	const available = availableLanguages()
+		.map((l) => `${l.lang} (${l.name})`)
+		.join(', ');
+	throw rpcError(
+		-32602,
+		`unsupported_language: no sign language pack "${lang}" with reviewed signs is available. Available: ${available}.`,
+	);
 }
 
 /** `HAPPY (1.9s) · T-O spelled (1.3s)`, the utterance as one readable line. */
@@ -32,6 +54,7 @@ function describeTimeline(timeline) {
 		.map((s) => {
 			const secs = `${(s.end - s.start).toFixed(1)}s`;
 			if (s.signed) return `  ${s.word.padEnd(12)} signed   ${secs.padStart(6)}   ${s.gloss}`;
+			if (s.unsupported) return `  ${s.word.padEnd(12)} not signed: no reviewed sign in this language`;
 			const letters = s.letters?.map((l) => l.letter).join('-') ?? s.word;
 			return `  ${s.word.padEnd(12)} spelled  ${secs.padStart(6)}   ${letters}`;
 		})
@@ -58,11 +81,17 @@ export const toolDefs = [
 					type: 'string',
 					description: 'Optional substring filter over the words and their descriptions.',
 				},
+				lang: LANG_PROPERTY,
 			},
 			additionalProperties: false,
 		},
 		async handler(args) {
-			const { vocabulary } = descriptor('https://three.ws');
+			const pack = packFor(args.lang);
+			const vocabulary = pack
+				? Object.entries(pack.signs)
+						.map(([word, sign]) => ({ word, gloss: sign.gloss }))
+						.sort((a, b) => a.word.localeCompare(b.word))
+				: descriptor('https://three.ws').vocabulary;
 			const q = String(args.search ?? '').trim().toLowerCase();
 			const matched = q
 				? vocabulary.filter(
@@ -76,7 +105,8 @@ export const toolDefs = [
 						type: 'text',
 						text:
 							`${matched.length} signed word${matched.length === 1 ? '' : 's'}` +
-							`${q ? ` matching "${q}"` : ''} (everything else fingerspells):\n${lines}`,
+							`${q ? ` matching "${q}"` : ''}` +
+							`${pack && pack.alphabet !== 'asl-manual' ? ` in ${pack.name} (everything else is not signed)` : ' (everything else fingerspells)'}:\n${lines}`,
 					},
 				],
 				structuredContent: {
@@ -84,7 +114,8 @@ export const toolDefs = [
 					vocabulary: matched,
 					// Aliases resolve onto the same signs (THANKS → THANK), so the set a
 					// caller can rely on signing is wider than the sign list itself.
-					recognized_words: SIGNABLE_WORDS,
+					recognized_words: pack ? signableWords(pack) : SIGNABLE_WORDS,
+					...(pack ? { lang: pack.id, review: { approved: pack.review.approved, total: pack.review.total } } : {}),
 				},
 			};
 		},
@@ -124,6 +155,7 @@ export const toolDefs = [
 					default: 45,
 					description: 'Cap the utterance length; longer text truncates at a word boundary and is flagged.',
 				},
+				lang: LANG_PROPERTY,
 				include_clip: {
 					type: 'boolean',
 					default: false,
@@ -144,10 +176,11 @@ export const toolDefs = [
 				format: args.include_clip ? 'clip' : 'timeline',
 			});
 			if (!params.text.trim()) throw rpcError(-32602, 'text is required');
+			const pack = packFor(args.lang);
 
 			let result;
 			try {
-				result = compile(params, origin);
+				result = compile(params, origin, pack);
 			} catch (err) {
 				// The compiler throws only when nothing in the text is performable.
 				throw rpcError(-32602, `${err.message} (fingerspelling covers A-Z and 0-9)`);
@@ -155,11 +188,12 @@ export const toolDefs = [
 
 			const clipUrl = `${origin}/api/sign?text=${encodeURIComponent(params.text)}${
 				params.hand === 'Left' ? '&hand=left' : ''
-			}${params.speed === 1 ? '' : `&speed=${params.speed}`}`;
+			}${params.speed === 1 ? '' : `&speed=${params.speed}`}${pack ? `&lang=${pack.id}` : ''}`;
 
 			const headline =
 				`"${result.text}" signs in ${result.duration.toFixed(1)}s: ` +
 				`${result.signed.length} signed, ${result.spelled.length} fingerspelled` +
+				`${result.unsupported?.length ? `, ${result.unsupported.length} not signed (no reviewed sign)` : ''}` +
 				`${result.truncated ? ' (truncated to fit max_seconds)' : ''}.`;
 
 			return {
@@ -180,6 +214,7 @@ export const toolDefs = [
 					signed: result.signed,
 					spelled: result.spelled,
 					truncated: result.truncated,
+					...(pack ? { lang: result.lang, review: result.review, unsupported: result.unsupported ?? [] } : {}),
 					timeline: result.timeline,
 					viewer_url: result.viewer,
 					clip_url: clipUrl,
