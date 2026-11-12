@@ -197,6 +197,22 @@ const EXTRA_ALIASES = (() => {
 		for (let n = 0; n <= 2; n++) put(`${jp}親指${n}`, `${side}HandThumb${n + 1}`);
 	}
 
+	// 3ds Max Biped fingers and toes. Biped numbers fingers instead of naming
+	// them: the first digit is the finger (0 thumb, 1 index, 2 middle, 3 ring,
+	// 4 pinky) and a second digit is the segment minus one, so `Finger0` is the
+	// thumb's first joint, `Finger01` its second, `Finger02` its third. The
+	// `Bip01`/`Bip001` prefix is already stripped, leaving `L Finger0` /
+	// `L_Finger0` (three.js sanitizes the space to an underscore).
+	for (const [side, long] of [['L', 'Left'], ['R', 'Right']]) {
+		for (let f = 0; f <= 4; f++) {
+			const cf = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky'][f];
+			put(`${side} Finger${f}`, `${long}Hand${cf}1`);
+			put(`${side} Finger${f}1`, `${long}Hand${cf}2`);
+			put(`${side} Finger${f}2`, `${long}Hand${cf}3`);
+		}
+		put(`${side} Toe0`, `${long}ToeBase`);
+	}
+
 	// 3ds Max Biped fingers. Biped numbers fingers instead of naming them: digit
 	// 0-4 is thumb, index, middle, ring, pinky. One digit (`Finger1`) is that
 	// finger's first segment; two digits are the finger, then the segment minus
