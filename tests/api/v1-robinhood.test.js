@@ -83,6 +83,15 @@ vi.mock('../../api/_lib/pons.js', () => ({
 	recentPonsLaunches: async () => [{ launchpad: 'Pons', type: 'bonding-curve', token: '0xp0ns567890123456789012345678901234567890', deployer: '0xcreator', block: 83042365, txHash: '0xponstx', timestamp: '2026-10-08T04:43:11.000Z', symbol: 'PROBE', name: 'Probe Coin', url: 'https://ponsfamily.com/launchpad/0xp0ns567890123456789012345678901234567890' }],
 }));
 
+// The robinhood-feed worker defaults to localhost:8788, so an unstubbed read
+// picks up whatever a local dev worker happens to be serving. Pin it: one feed
+// row that grades the Odyssey token, so the merge overlays reputation onto the
+// richer market row instead of adding a third launch.
+vi.mock('../../api/_lib/robinhood-feed.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	recentFeedLaunches: async () => [{ launchpad: 'The Odyssey', type: 'bonding-curve', venue: { id: 'odyssey', label: 'The Odyssey', kind: 'bonding-curve', address: null }, token: '0xtoken1234567890123456789012345678901234', deployer: '0xdeployer', deployerRecord: { priorLaunches: 3, priorDevExits: 1, inspected: 3, windowBlocks: 50000 }, devSold: true, devSoldPct: 42.5, flags: ['dev_sold', 'prior_dev_exit'], block: 6880646, txHash: null, timestamp: '2026-07-11T10:44:33.000Z', symbol: null, name: null }],
+}));
+
 beforeEach(() => {
 	robinhoodReadOk = true;
 });
@@ -268,6 +277,10 @@ describe('GET /api/v1/robinhood/launches', () => {
 		expect(body.data.launches[0].symbol).toBe('PROBE');
 		expect(body.data.launches[0].links.launchpad).toMatch(/^https:\/\/ponsfamily\.com\/launchpad\//);
 		expect(body.data.launchpads.map((l) => l.name)).toEqual(['Pons', 'The Odyssey', 'Other venues']);
+		// The feed worker saw the Odyssey token too: its grading lands on the market row.
+		expect(body.data.launches[1].devSold).toBe(true);
+		expect(body.data.launches[1].deployerRecord.priorDevExits).toBe(1);
+		expect(body.data.launches[1].flags).toEqual(['dev_sold', 'prior_dev_exit']);
 	});
 });
 
