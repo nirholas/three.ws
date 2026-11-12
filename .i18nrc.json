@@ -188,6 +188,7 @@
 	"topP": 0.9,
 	"concurrency": 2,
 	"splitToken": 1200,
+	"manifestThreshold": 0.99,
 	"saveImmediately": true,
 	"reference": "three.ws is a platform to build, animate, rig, and monetize 3D AI agents on-chain. The audience is crypto-native developers and creators. Keep copy punchy and product-grade — match the energy of Vercel, Linear, and Stripe marketing. Prefer the natural, idiomatic phrasing a native speaker in that market would use over a literal word-for-word rendering. Preserve the marketing voice; do not pad or soften.",
 	"htmlExtract": {

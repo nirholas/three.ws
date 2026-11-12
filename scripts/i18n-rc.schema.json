@@ -62,6 +62,12 @@
 			"minimum": 200,
 			"description": "Approx token budget per chunk before splitting a namespace."
 		},
+		"manifestThreshold": {
+			"type": "number",
+			"minimum": 0,
+			"maximum": 1,
+			"description": "Share of source keys a locale must have translated to be listed in public/locales/manifest.json (the language picker). The runtime falls back to English per missing key, so a value just under 1 keeps every language offered while a day of new pages waits for its translate run. npm run check:i18n fails below it."
+		},
 		"saveImmediately": {
 			"type": "boolean",
 			"description": "Persist each locale as soon as it finishes."

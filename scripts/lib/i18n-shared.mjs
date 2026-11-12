@@ -120,6 +120,68 @@ export function buildManifest({ cfg, source, readCatalog, threshold = 1 }) {
 	return { manifest: { default: cfg.entryLocale, locales }, skipped };
 }
 
+// Locale parity against the source catalog, for `npm run check:i18n`.
+//
+// The language picker went dark for a month (2026-10-12 onward) because new
+// pages kept adding English keys and nothing noticed the 84 catalogs falling
+// behind until the manifest had held every one of them back. This is the check
+// that notices: it fails when any configured locale has fallen far enough
+// behind that the manifest would drop it (below `threshold`, the same number
+// writeManifest uses), when a configured catalog is missing or unreadable, and
+// when the committed manifest no longer matches what the catalogs justify (the
+// translations landed but nobody regenerated the manifest, or vice versa).
+// Pure: `readCatalog(code)` returns the parsed catalog, null when absent, and
+// may throw when unreadable; `committedManifest` is the parsed manifest.json.
+export function parityReport({ cfg, source, readCatalog, threshold = 1, committedManifest }) {
+	const total = Object.keys(flatten(source)).length;
+	const rows = [];
+	const failures = [];
+	const catalogs = new Map();
+	for (const code of cfg.outputLocales) {
+		let catalog;
+		try {
+			catalog = readCatalog(code);
+		} catch {
+			failures.push(`${code}: catalog is unreadable`);
+			continue;
+		}
+		if (catalog == null) {
+			failures.push(`${code}: no catalog at all (configured in .i18nrc.json outputLocales)`);
+			continue;
+		}
+		catalogs.set(code, catalog);
+		const behind = missingKeys(source, catalog).length;
+		const done = total === 0 ? 1 : (total - behind) / total;
+		rows.push({ code, behind, done });
+		if (behind && done < threshold) {
+			failures.push(
+				`${code}: ${behind} keys behind (${(done * 100).toFixed(2)}% translated, picker needs ${(threshold * 100).toFixed(2)}%)`,
+			);
+		}
+	}
+	const { manifest } = buildManifest({
+		cfg,
+		source,
+		readCatalog: (code) => catalogs.get(code) ?? null,
+		threshold,
+	});
+	if (!committedManifest || !Array.isArray(committedManifest.locales)) {
+		failures.push('manifest.json is missing or has no locales array');
+	} else {
+		const want = manifest.locales.map((l) => l.code);
+		const have = new Set(committedManifest.locales.map((l) => l.code));
+		const missing = want.filter((c) => !have.has(c));
+		const extra = [...have].filter((c) => !want.includes(c));
+		if (missing.length || extra.length) {
+			const parts = [];
+			if (missing.length) parts.push(`missing ${missing.join(', ')}`);
+			if (extra.length) parts.push(`lists incomplete ${extra.join(', ')}`);
+			failures.push(`manifest.json is stale: ${parts.join('; ')}`);
+		}
+	}
+	return { total, rows, failures, manifest };
+}
+
 // Keys present in target but no longer in source — stale translations to prune.
 export function staleKeys(source, target) {
 	const src = flatten(source);
