@@ -22,3 +22,42 @@ describe('readOnchainAnchor network', () => {
 		});
 	}
 });
+
+// api.mainnet-beta.solana.com answers 403 to any request carrying a browser
+// Origin, so trying it first put a "Failed to load resource: 403" console error
+// on every /integrity and /proof load before failover reached a working node.
+describe('readOnchainAnchor default endpoints', () => {
+	it('reads mainnet from a browser-reachable endpoint first and never calls the origin-blocked public RPC', async () => {
+		const urls = [];
+		const realFetch = globalThis.fetch;
+		globalThis.fetch = async (url) => {
+			urls.push(String(url));
+			return { ok: true, json: async () => ({ result: memoTx }) };
+		};
+		try {
+			const out = await readOnchainAnchor('sig1', 'mainnet');
+			expect(urls).toEqual(['https://solana-rpc.publicnode.com']);
+			expect(out.endpoint).toBe('https://solana-rpc.publicnode.com');
+		} finally {
+			globalThis.fetch = realFetch;
+		}
+	});
+
+	it('falls back to the same-origin proxy, not the origin-blocked RPC, when publicnode fails', async () => {
+		const urls = [];
+		const realFetch = globalThis.fetch;
+		globalThis.fetch = async (url) => {
+			urls.push(String(url));
+			if (String(url).startsWith('https://solana-rpc.publicnode.com')) return { ok: false, status: 503 };
+			return { ok: true, json: async () => ({ result: memoTx }) };
+		};
+		try {
+			const out = await readOnchainAnchor('sig1', 'mainnet');
+			expect(urls).toEqual(['https://solana-rpc.publicnode.com', '/api/solana-rpc?network=mainnet']);
+			expect(urls).not.toContain('https://api.mainnet-beta.solana.com');
+			expect(out.root).toBe(ROOT);
+		} finally {
+			globalThis.fetch = realFetch;
+		}
+	});
+});

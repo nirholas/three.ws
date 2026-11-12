@@ -51,9 +51,13 @@ const COMMITMENT_RANK = { processed: 0, confirmed: 1, finalized: 2 };
 // never attested with a guessed balance, picked up again next epoch. Budget +
 // TX_TIMEOUT_MS + persistence must stay under the route's maxDuration (120s).
 const SNAPSHOT_BUDGET_MS = 80_000;
-// Read balances in small concurrent batches: enough to cut wall-clock ~5×,
-// small enough not to worsen the very 429s the rotating fetch is dodging.
-const BALANCE_READ_CONCURRENCY = 5;
+// Balances are read with getMultipleAccountsInfo, 100 accounts per call (the RPC
+// maximum). One getBalance per wallet could not cover the fleet inside the
+// budget: epoch 560 (2026-11-12) attested 400 of 1,063 wallets and every wallet
+// past that point in agent-id order had no inclusion proof. Batched, the whole
+// fleet is about a dozen calls; two in flight keeps clear of public-RPC 429s.
+const BALANCE_BATCH_SIZE = 100;
+const BALANCE_BATCH_CONCURRENCY = 2;
 
 // Balances are read on the network the custodial wallets operate on (mainnet),
 // and the root is anchored on mainnet too: the attester signer is only ever
@@ -110,10 +114,37 @@ export async function ledgerHeadFor(agentId, network = SNAPSHOT_NETWORK) {
 	return `${row.id}:${row.signature || ''}`;
 }
 
-/** Live on-chain lamports for an address; null on RPC failure (caller decides). */
-async function readLamports(conn, address) {
+/**
+ * Authorized-state heads for many agents in one query, same encoding as
+ * ledgerHeadFor. Agents with no custody events map to 'genesis'.
+ *
+ * @param {string[]} agentIds
+ * @returns {Promise<Map<string, string>>}
+ */
+export async function ledgerHeadsFor(agentIds, network = SNAPSHOT_NETWORK) {
+	const heads = new Map(agentIds.map((id) => [id, 'genesis']));
+	if (!agentIds.length) return heads;
+	const rows = await sql`
+		SELECT DISTINCT ON (agent_id) agent_id, id, signature
+		FROM agent_custody_events
+		WHERE agent_id = ANY(${agentIds}::uuid[]) AND network = ${network}
+		ORDER BY agent_id, id DESC
+	`;
+	for (const row of rows) heads.set(String(row.agent_id), `${row.id}:${row.signature || ''}`);
+	return heads;
+}
+
+/**
+ * Live on-chain lamports for a batch of addresses, in input order. A wallet whose
+ * account does not exist holds 0 lamports (what getBalance reports for it too),
+ * so that is a real reading, not a guess. A failed RPC call returns null for the
+ * whole batch so the caller skips those wallets rather than attest a zero.
+ */
+async function readLamportsBatch(conn, addresses) {
 	try {
-		return await conn.getBalance(new PublicKey(address), 'confirmed');
+		const infos = await conn.getMultipleAccountsInfo(addresses.map((a) => new PublicKey(a)), 'confirmed');
+		if (!Array.isArray(infos) || infos.length !== addresses.length) return null;
+		return infos.map((info) => (info ? info.lamports : 0));
 	} catch {
 		return null;
 	}
@@ -146,27 +177,31 @@ export async function runAttestationEpoch({ anchor = true } = {}) {
 	const epochNum = Number(epoch);
 
 	// Build leaves in a stable order (wallets are already ordered by agent id).
-	// Reads run in small concurrent batches under a wall-clock budget; results
-	// are assembled in the original wallet order so the tree stays deterministic.
+	// Balances are read in batches under a wall-clock budget; results are
+	// assembled in the original wallet order so the tree stays deterministic.
 	const deadline = startedAt + SNAPSHOT_BUDGET_MS;
 	const leaves = [];
 	let totalLamports = 0n;
 	let rpcFailures = 0;
-	// A bounded pool rather than fixed batches: with batching, one slow RPC read
-	// held its whole batch's slots idle until it drained. `mapPool` keeps every
-	// slot busy and still returns results in wallet order, so the tree stays
-	// deterministic.
-	const results = await mapPool(wallets, BALANCE_READ_CONCURRENCY, async (w) => {
-		// Out of snapshot time — skip the remaining wallets this epoch (same
-		// contract as an RPC failure: never attest a balance we didn't read).
-		if (Date.now() >= deadline) return null;
-		const lamports = await readLamports(conn, w.address);
+	const batches = [];
+	for (let i = 0; i < wallets.length; i += BALANCE_BATCH_SIZE) batches.push(wallets.slice(i, i + BALANCE_BATCH_SIZE));
+	const [balanceBatches, heads] = await Promise.all([
+		mapPool(batches, BALANCE_BATCH_CONCURRENCY, async (batch) => {
+			// Out of snapshot time: skip the remaining wallets this epoch (same
+			// contract as an RPC failure: never attest a balance we didn't read).
+			if (Date.now() >= deadline) return null;
+			return readLamportsBatch(conn, batch.map((w) => w.address));
+		}),
+		ledgerHeadsFor(wallets.map((w) => w.agentId), SNAPSHOT_NETWORK),
+	]);
+	const results = await Promise.all(batches.flatMap((batch, b) => batch.map(async (w, i) => {
 		// An RPC failure must not silently attest a wrong (zero) balance. Skip
 		// the wallet this epoch rather than committing an unverifiable leaf; it
 		// is included again next epoch once RPC recovers.
+		const lamports = balanceBatches[b]?.[i];
 		if (lamports == null) return null;
 		const balanceLamports = String(lamports);
-		const ledgerHead = await ledgerHeadFor(w.agentId, SNAPSHOT_NETWORK);
+		const ledgerHead = heads.get(w.agentId) || 'genesis';
 		const leafHash = await computeLeafHash({
 			agentId: w.agentId,
 			address: w.address,
@@ -181,7 +216,7 @@ export async function runAttestationEpoch({ anchor = true } = {}) {
 			ledgerHead,
 			leafHash,
 		};
-	});
+	})));
 	for (const leaf of results) {
 		if (leaf == null) { rpcFailures++; continue; }
 		leaves.push(leaf);

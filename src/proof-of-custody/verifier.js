@@ -1,5 +1,5 @@
 /**
- * Proof-of-Custody — independent, in-browser verifier.
+ * Proof-of-Custody: independent, in-browser verifier.
  *
  * Given a per-owner inclusion proof (from GET /api/agents/:id/solana/proof) this
  * verifies custody integrity WITHOUT trusting the three.ws server for the
@@ -12,8 +12,8 @@
  *
  * It fails honestly and specifically: each step reports pass/fail with a reason,
  * and a failed anchor fetch is reported as "unverified", never "verified". The
- * leaf hashing + path folding reuse src/proof-of-custody/merkle.js — the exact
- * module the server prover used — so the two sides cannot drift.
+ * leaf hashing + path folding reuse src/proof-of-custody/merkle.js (the exact
+ * module the server prover used), so the two sides cannot drift.
  */
 
 import { computeLeafHash, computeRootFromProof } from './merkle.js';
@@ -22,13 +22,16 @@ import { computeLeafHash, computeRootFromProof } from './merkle.js';
 // deliberately NOT three.ws-operated for the on-chain read, so the verification
 // does not route through our infrastructure. The /api/solana-rpc proxy is a last
 // resort only if every public endpoint is unreachable from the browser.
+// api.mainnet-beta.solana.com is deliberately absent: it answers 403 to any
+// request carrying a browser Origin, so it could never serve this page and only
+// logged a console error before failover.
 const PUBLIC_RPC = {
 	devnet: ['https://api.devnet.solana.com'],
-	mainnet: ['https://api.mainnet-beta.solana.com', 'https://solana-rpc.publicnode.com'],
+	mainnet: ['https://solana-rpc.publicnode.com'],
 };
 
 // Per-endpoint deadline. Generous enough for a cold getTransaction on a free
-// public node, short enough that walking all three endpoints stays inside the
+// public node, short enough that walking every endpoint stays inside the
 // patience of someone watching a verification badge.
 const RPC_ATTEMPT_TIMEOUT_MS = 10_000;
 
@@ -92,7 +95,7 @@ function extractMemo(tx) {
 
 /**
  * Read the committed Merkle root straight off the chain for an anchor signature.
- * Public + dependency-light — the /integrity page uses it to let anyone confirm
+ * Public + dependency-light: the /integrity page uses it to let anyone confirm
  * the platform's latest root on-chain without trusting our API.
  *
  * @returns {Promise<{ epoch: number, root: string, walletCount: number|null, endpoint: string }>}
@@ -131,7 +134,7 @@ export async function verifyInclusionProof(proof, opts = {}) {
 
 	if (!proof || proof.included === false) {
 		add('proof_present', false, proof?.reason === 'no_leaf_yet'
-			? 'This wallet has not been included in an attestation epoch yet — it was likely provisioned after the last snapshot. It will be covered in the next epoch.'
+			? 'This wallet has not been included in an attestation epoch yet. It was likely provisioned after the last snapshot. It will be covered in the next epoch.'
 			: 'No inclusion proof was returned.');
 		return done(false, 'No proof to verify yet.');
 	}
@@ -152,9 +155,9 @@ export async function verifyInclusionProof(proof, opts = {}) {
 	}
 	const leafMatches = computedLeaf === String(proof.leaf.leafHash).toLowerCase();
 	add('leaf_recompute', leafMatches, leafMatches
-		? 'Recomputed the leaf hash from your wallet address, balance, ledger head and epoch — it matches the served leaf.'
+		? 'Recomputed the leaf hash from your wallet address, balance, ledger head and epoch. It matches the served leaf.'
 		: 'The leaf hash recomputed from the public data does NOT match the served leaf hash.');
-	if (!leafMatches) return done(false, 'Leaf hash mismatch — the served leaf does not commit to the stated data.');
+	if (!leafMatches) return done(false, 'Leaf hash mismatch: the served leaf does not commit to the stated data.');
 
 	// 2. Fold the Merkle path to a computed root.
 	let computedRoot;
@@ -166,7 +169,7 @@ export async function verifyInclusionProof(proof, opts = {}) {
 	}
 	const rootMatchesServed = computedRoot === String(proof.merkle_root).toLowerCase();
 	add('merkle_path', rootMatchesServed, rootMatchesServed
-		? `Walked the ${proof.proof?.length || 0}-step Merkle path from your leaf to the root — it matches the epoch root.`
+		? `Walked the ${proof.proof?.length || 0}-step Merkle path from your leaf to the root. It matches the epoch root.`
 		: 'Walking the Merkle path did NOT reproduce the served root.');
 	if (!rootMatchesServed) {
 		return done(false, 'Merkle path does not lead to the stated root.', { computed_root: computedRoot });
@@ -178,7 +181,7 @@ export async function verifyInclusionProof(proof, opts = {}) {
 		add('onchain_anchor', false, anchor.status === 'pending'
 			? 'The Merkle proof is internally valid, but this epoch has not been anchored on-chain yet. Verification is incomplete until the root is committed.'
 			: `This epoch was not anchored on-chain (status: ${anchor.status || 'unknown'}). Treating as UNVERIFIED.`);
-		return done(false, 'Awaiting on-chain anchor — proof is internally consistent but not yet verifiable against the chain.', { computed_root: computedRoot });
+		return done(false, 'Awaiting on-chain anchor: the proof is internally consistent but not yet verifiable against the chain.', { computed_root: computedRoot });
 	}
 
 	let onchainRoot = null;
@@ -198,9 +201,9 @@ export async function verifyInclusionProof(proof, opts = {}) {
 		}
 	} catch (e) {
 		add('onchain_anchor', false, `Could not read the anchor from the chain (${e.message}). Treating as UNVERIFIED rather than trusting the server.`);
-		return done(false, 'Could not independently read the on-chain anchor — unverified.', { computed_root: computedRoot });
+		return done(false, 'Could not independently read the on-chain anchor, so it is unverified.', { computed_root: computedRoot });
 	}
-	add('onchain_anchor', true, `Read the anchor transaction directly from a public Solana RPC (${endpoint}) — it commits epoch ${proof.epoch}.`);
+	add('onchain_anchor', true, `Read the anchor transaction directly from a public Solana RPC (${endpoint}). It commits epoch ${proof.epoch}.`);
 
 	// 4. The decisive comparison: computed root vs on-chain root.
 	const finalMatch = computedRoot === onchainRoot;

@@ -1,10 +1,10 @@
 /**
- * Public /integrity page — the platform-wide face of provable custody.
+ * Public /integrity page: the platform-wide face of provable custody.
  *
  * Fetches the no-auth aggregate (latest epoch, Merkle root, on-chain anchor,
  * wallet count, aggregate SOL) and then VERIFIES the latest root on-chain right
  * here: it reads the anchor transaction straight from a public Solana RPC and
- * confirms the committed root matches what the API reported. Anyone — no account —
+ * confirms the committed root matches what the API reported. Anyone, with no account,
  * gets a green "verified on-chain" or an honest red/pending state. Never shows
  * per-wallet private data.
  */
@@ -17,7 +17,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 
 function short(s, h = 10, t = 10) { return shortAddress(s, h, t); }
 function fmtTime(iso) {
-	if (!iso) return '—';
+	if (!iso) return '-';
 	try { return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); } catch { return String(iso); }
 }
 function fmtSol(lamports) {
@@ -95,7 +95,7 @@ async function main() {
 
 		<div class="intg-card">
 			<h2 class="intg-h2">Own an agent wallet?</h2>
-			<p class="intg-p">Verify your own wallet's inclusion proof — recompute your leaf and confirm it sits under this anchored root.</p>
+			<p class="intg-p">Verify your own wallet's inclusion proof: recompute your leaf and confirm it sits under this anchored root.</p>
 			<a class="intg-btn" href="/proof">Verify my custody →</a>
 		</div>
 	`;
@@ -130,18 +130,18 @@ async function verifyLatest(latest) {
 				`The Merkle root reported here exactly matches the root committed in <a href="${esc(latest.anchor_explorer)}" target="_blank" rel="noopener">the anchor transaction</a> on Solana ${esc(latest.anchor_network || 'mainnet')}. Verified ${esc(fmtTime(new Date().toISOString()))}.`);
 		} else {
 			set('is-failed', '✕', 'Root mismatch',
-				`The root committed on-chain (${esc(short(onchain.root))}) does not match the reported root. This should never happen — do not trust until resolved.`);
+				`The root committed on-chain (${esc(short(onchain.root))}) does not match the reported root. This should never happen. Do not trust it until resolved.`);
 		}
 	} catch (err) {
 		set('is-pending', '◷', 'Could not read the anchor on-chain',
-			`We couldn't independently fetch the anchor transaction right now (${esc(err.message)}). Treating as unverified rather than trusting the server — retry shortly.`);
+			`We couldn't independently fetch the anchor transaction right now (${esc(err.message)}). Treating as unverified rather than trusting the server. Retry shortly.`);
 	}
 }
 
 function explainBlock() {
 	return `<div class="intg-explain">
 		<div class="intg-step"><div class="intg-step-n">01</div><div class="intg-step-t">Snapshot</div><div class="intg-step-d">Every wallet's address, live on-chain balance and authorized-state head are hashed into a leaf.</div></div>
-		<div class="intg-step"><div class="intg-step-n">02</div><div class="intg-step-t">Merkle root</div><div class="intg-step-d">All leaves are folded into one root — a single fingerprint of every wallet's state this epoch.</div></div>
+		<div class="intg-step"><div class="intg-step-n">02</div><div class="intg-step-t">Merkle root</div><div class="intg-step-d">All leaves are folded into one root: a single fingerprint of every wallet's state this epoch.</div></div>
 		<div class="intg-step"><div class="intg-step-n">03</div><div class="intg-step-t">Anchor on Solana</div><div class="intg-step-d">The root is committed in a signed transaction on-chain, where it can't be altered after the fact.</div></div>
 		<div class="intg-step"><div class="intg-step-n">04</div><div class="intg-step-t">Verify</div><div class="intg-step-d">Your browser reads that transaction straight from a public RPC and confirms the root matches.</div></div>
 	</div>`;
@@ -164,11 +164,13 @@ function recentBlock(recent, latestEpoch) {
 	}).join('');
 	return `<div class="intg-card">
 		<h2 class="intg-h2">Attestation history</h2>
-		<p class="intg-p">Epochs are monotonic and append-only, so a rollback or replay is detectable. Each root is independently anchored.</p>
-		<table class="intg-table">
-			<thead><tr><th>Epoch</th><th>Wallets</th><th>Agg. SOL</th><th>Root</th><th>Anchor</th><th>Snapshot</th></tr></thead>
-			<tbody>${rows}</tbody>
-		</table>
+		<p class="intg-p">Epochs are monotonic and append-only, so a rollback or replay is detectable. Each anchored epoch links to the Solana transaction that commits its root.</p>
+		<div class="intg-table-wrap" role="region" aria-label="Attestation history" tabindex="0">
+			<table class="intg-table">
+				<thead><tr><th>Epoch</th><th>Wallets</th><th>Agg. SOL</th><th>Root</th><th>Anchor</th><th>Snapshot</th></tr></thead>
+				<tbody>${rows}</tbody>
+			</table>
+		</div>
 	</div>`;
 }
 

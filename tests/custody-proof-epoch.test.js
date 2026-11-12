@@ -20,6 +20,8 @@ const WALLET_A = 'WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW';
 const WALLET_B = '5YNmS1R9nNSCDzb5a7mMJ1dwK9uBAAF4B2wRqGvvQP7A';
 
 const statements = [];
+// Override the custodial wallet set for one test (null = the two-wallet default).
+let walletRows = null;
 function sqlMock(strings, ...values) {
 	// strings[0] carries the distinguishing table name for every query here.
 	const text = strings.join('?');
@@ -28,7 +30,7 @@ function sqlMock(strings, ...values) {
 		return Promise.resolve([{ max: null }]); // nextEpoch: start at 1
 	}
 	if (text.includes('FROM agent_identities')) {
-		return Promise.resolve([
+		return Promise.resolve(walletRows ?? [
 			{ id: 'agent-a', user_id: 'user-a', address: WALLET_A },
 			{ id: 'agent-b', user_id: 'user-b', address: WALLET_B },
 		]);
@@ -47,12 +49,25 @@ vi.mock('../api/_lib/db.js', () => ({ sql: sqlMock }));
 
 let rpcBalance = 500_000;
 let landedStatus = null;
+// Every RPC balance call the snapshot makes, so a test can assert it batches.
+const rpcCalls = [];
+// Addresses whose account does not exist on-chain (getMultipleAccountsInfo -> null).
+let missingAccounts = new Set();
+// Batch indexes (0-based, in call order) whose multi-account read throws.
+let failingBatches = new Set();
 vi.mock('../api/_lib/solana/connection.js', () => ({
 	solanaConnection: () => ({
 		getSignatureStatuses: async (sigs) => ({ value: sigs.map(() => landedStatus) }),
-		getBalance: async () => {
+		getBalance: async (pk) => {
+			rpcCalls.push({ method: 'getBalance', n: 1, keys: [pk.toBase58()] });
 			if (rpcBalance == null) throw new Error('rpc down');
 			return rpcBalance;
+		},
+		getMultipleAccountsInfo: async (pks) => {
+			const idx = rpcCalls.filter((c) => c.method === 'getMultipleAccountsInfo').length;
+			rpcCalls.push({ method: 'getMultipleAccountsInfo', n: pks.length, keys: pks.map((k) => k.toBase58()) });
+			if (rpcBalance == null || failingBatches.has(idx)) throw new Error('rpc down');
+			return pks.map((k) => (missingAccounts.has(k.toBase58()) ? null : { lamports: rpcBalance }));
 		},
 	}),
 }));
@@ -82,6 +97,10 @@ const { computeLeafHash } = await import('../src/proof-of-custody/merkle.js');
 
 beforeEach(() => {
 	statements.length = 0;
+	rpcCalls.length = 0;
+	walletRows = null;
+	missingAccounts = new Set();
+	failingBatches = new Set();
 	rpcBalance = 500_000;
 	attesterConfigured = false;
 	sendImpl = async () => 'sig-ok';
@@ -132,6 +151,51 @@ describe('runAttestationEpoch', () => {
 		const epochInsert = statements.find((s) => s.text.includes('INSERT INTO custody_attestation_epochs'));
 		expect(epochInsert.text).toContain("'empty'");
 		expect(statements.some((s) => s.text.includes('custody_attestation_leaves'))).toBe(false);
+	});
+
+	// Epoch 560 in production attested 400 of 1063 wallets: one getBalance per
+	// wallet under the 80s snapshot budget never reached the tail of the
+	// agent-id order, so those owners had no inclusion proof that epoch.
+	it('attests every wallet of a large set through batched multi-account reads', async () => {
+		walletRows = Array.from({ length: 1063 }, (_, i) => ({
+			id: `agent-${String(i).padStart(5, '0')}`,
+			user_id: `user-${i}`,
+			address: Keypair.generate().publicKey.toBase58(),
+		}));
+		const result = await runAttestationEpoch({ anchor: false });
+
+		expect(result.wallet_count).toBe(1063);
+		expect(result.rpc_failures).toBe(0);
+		expect(rpcCalls.some((c) => c.method === 'getBalance')).toBe(false);
+		const batches = rpcCalls.filter((c) => c.method === 'getMultipleAccountsInfo');
+		expect(batches).toHaveLength(11);
+		expect(Math.max(...batches.map((b) => b.n))).toBeLessThanOrEqual(100);
+		// Ledger heads for the whole set come from one query, not one per wallet.
+		expect(statements.filter((s) => s.text.includes('FROM agent_custody_events'))).toHaveLength(1);
+		expect(statements.filter((s) => s.text.includes('INSERT INTO custody_attestation_leaves'))).toHaveLength(1063);
+	});
+
+	it('attests a wallet with no on-chain account at 0 lamports, and skips only the wallets of a failed batch', async () => {
+		walletRows = Array.from({ length: 150 }, (_, i) => ({
+			id: `agent-${String(i).padStart(5, '0')}`,
+			user_id: `user-${i}`,
+			address: Keypair.generate().publicKey.toBase58(),
+		}));
+		missingAccounts = new Set([walletRows[3].address]);
+		failingBatches = new Set([1]); // the second batch (wallets 100..149) fails
+		const result = await runAttestationEpoch({ anchor: false });
+
+		expect(result.wallet_count).toBe(100);
+		expect(result.rpc_failures).toBe(50);
+		const leafInserts = statements.filter((s) => s.text.includes('INSERT INTO custody_attestation_leaves'));
+		const unfunded = await computeLeafHash({
+			agentId: walletRows[3].id,
+			address: walletRows[3].address,
+			balanceLamports: '0',
+			ledgerHead: 'genesis',
+			epoch: 1,
+		});
+		expect(leafInserts.some((s) => s.values.includes(unfunded))).toBe(true);
 	});
 
 	it('anchor:false skips the on-chain memo entirely', async () => {
