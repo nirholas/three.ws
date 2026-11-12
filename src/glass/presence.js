@@ -111,3 +111,12 @@ export function createPresence({ fetchImpl = globalThis.fetch && globalThis.fetc
 
 	return { mint, nearby, reset() { token = null; tokenCell = null; tokenExpires = 0; } };
 }
+
+// Human age of the last location fix for the scanning view ("just now", "42 s ago").
+export function fixAgeLabel(fixedAtMs, nowMs = Date.now()) {
+	if (!Number.isFinite(fixedAtMs)) return 'no fix yet';
+	const s = Math.max(0, Math.round((nowMs - fixedAtMs) / 1000));
+	if (s < 5) return 'just now';
+	if (s < 90) return `${s} s ago`;
+	return `${Math.round(s / 60)} min ago`;
+}

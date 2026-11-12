@@ -89,3 +89,11 @@ export function createCompass({ target = globalThis, onHeading, onState } = {}) 
 		},
 	};
 }
+
+const CARDINALS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+
+// Heading ring label: compass point plus whole degrees, e.g. { point: 'NE', degrees: 45 }.
+export function cardinal(headingRad) {
+	const deg = (((headingRad * 180) / Math.PI) % 360 + 360) % 360;
+	return { point: CARDINALS[Math.round(deg / 45) % 8], degrees: Math.round(deg) % 360 };
+}
