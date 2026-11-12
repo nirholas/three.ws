@@ -115,6 +115,7 @@ export function verifySlackSignature({ rawBody, signature, timestamp, signingSec
  * @param {{ contentType:string, rawBody:Buffer|string }} req
  * @returns {{ type:'challenge', challenge:string }
  *   | { type:'enqueue', dedupeKey:string, chatKey:string, payload:object }
+ *   | { type:'uninstall', teamId:string }
  *   | { type:'ignore' }}
  */
 export function classifySlackDelivery({ contentType, rawBody }) {
@@ -124,9 +125,11 @@ export function classifySlackDelivery({ contentType, rawBody }) {
 		try { body = JSON.parse(text); } catch { return { type: 'ignore' }; }
 		if (body?.type === 'url_verification' && typeof body.challenge === 'string') return { type: 'challenge', challenge: body.challenge };
 		if (body?.type !== 'event_callback' || !body.event) return { type: 'ignore' };
+		if (body.event.type === 'app_uninstalled' || body.event.type === 'tokens_revoked') return { type: 'uninstall', teamId: body.team_id };
 		const ev = body.event;
-		// The bot's own posts, edits and joins come back as events too.
-		if (ev.bot_id || ev.subtype) return { type: 'ignore' };
+		// The bot's own posts, edits and joins come back as events too. A
+		// file_share is a person sending a voice clip or image, so it stays.
+		if (ev.bot_id || (ev.subtype && ev.subtype !== 'file_share')) return { type: 'ignore' };
 		const direct = ev.type === 'message' && ev.channel_type === 'im';
 		if (!direct && ev.type !== 'app_mention') return { type: 'ignore' };
 		if (!ev.channel || !ev.user) return { type: 'ignore' };
