@@ -44,7 +44,7 @@ COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 RUN pip install torch==2.7.0 --index-url https://download.pytorch.org/whl/cu128
 RUN FORCE_CUDA=1 TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST}" \
-    pip install "git+https://github.com/facebookresearch/pytorch3d.git@V0.7.8"
+    pip install --no-build-isolation "git+https://github.com/facebookresearch/pytorch3d.git@V0.7.8"
 
 # ── App code ──────────────────────────────────────────────────────────────────
 # Files are copied individually, so ADDING A NEW MODULE MEANS ADDING A LINE HERE.
