@@ -8,7 +8,7 @@
 import { sql } from './db.js';
 import { dispatchWebhooks } from './webhook-dispatch.js';
 
-export const THREAD_CHANNELS = ['web', 'api', 'telegram', 'discord', 'slack', 'whatsapp', 'signal', 'sms', 'email'];
+export const THREAD_CHANNELS = ['web', 'api', 'telegram', 'discord', 'slack', 'whatsapp', 'signal', 'sms', 'email', 'voice'];
 const MAX_CONTENT = 8000;
 
 /**

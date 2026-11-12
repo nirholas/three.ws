@@ -7,11 +7,11 @@ import { env } from '../env.js';
 
 export const PLATFORM_LABEL = {
 	telegram: 'Telegram', discord: 'Discord', slack: 'Slack', whatsapp: 'WhatsApp', signal: 'Signal',
-	sms: 'SMS', email: 'email', web: 'the web', api: 'the API',
+	sms: 'SMS', email: 'email', voice: 'a voice call', web: 'the web', api: 'the API',
 };
 // Per-message ceilings. SMS is split by the carrier past 160 characters, so a
 // reply is kept to a few segments; email has no practical ceiling.
-export const MAX_TEXT = { telegram: 4000, discord: 1900, slack: 3500, whatsapp: 4000, signal: 4000, sms: 600, email: 20000 };
+export const MAX_TEXT = { telegram: 4000, discord: 1900, slack: 3500, whatsapp: 4000, signal: 4000, sms: 600, email: 20000, voice: 2000 };
 
 export function appOrigin() {
 	return env.APP_ORIGIN || 'https://three.ws';

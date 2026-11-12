@@ -29,8 +29,16 @@ export function hasButtons(gw) {
 	return gw.buttons !== false;
 }
 
-function surfaceNote(platform, { buttons = true } = {}) {
+const PHONE_APPROVAL = 'This is a phone call, and caller ID can be forged, so nothing can be approved on it: any propose_* card you surface is discarded. If the owner wants a trade, tell them to ask from a paired chat or the three.ws app. Never claim a trade happened.';
+
+export function surfaceNote(platform, { buttons = true } = {}) {
 	const where = PLATFORM_LABEL[platform] || platform;
+	if (platform === 'voice') {
+		return [
+			`SURFACE: you are talking with your owner by voice${buttons ? ' in the three.ws app' : ' on a phone call'}. Every word is spoken aloud: answer in two or three short sentences, no lists, no links, no addresses.`,
+			buttons ? 'Every propose_* card you surface appears on their screen with Approve and Cancel buttons. Tell them to press Approve to execute it or Cancel to discard it, and that it expires in ten minutes. Never claim a trade happened.' : PHONE_APPROVAL,
+		].join('\n');
+	}
 	const approval = buttons
 		? 'Every propose_* card you surface reaches the owner as a preview message with Approve and Cancel buttons. Tell them to press Approve to execute it or Cancel to discard it, and that it expires in ten minutes. Never claim a trade happened.'
 		: 'Every propose_* card you surface reaches the owner as a preview message ending with a six-digit code. Tell them to reply APPROVE and that code to execute it, or CANCEL and the code to discard it, and that it expires in ten minutes. Never claim a trade happened.';

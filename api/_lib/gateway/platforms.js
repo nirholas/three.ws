@@ -24,6 +24,10 @@ export const PLATFORM_INFO = Object.freeze({
 	// The owner's own inbox already receives the `email` notification channel,
 	// so an email chat never doubles it.
 	email: { label: 'Email', buttons: false, canEdit: false, voice: true, notifyChannel: null },
+	// Voice is spoken both ways: the browser panel on /settings/connections and
+	// phone calls. A call cannot show buttons, so previews carry a reply code the
+	// owner says back; voice never carries notifications.
+	voice: { label: 'Voice', buttons: false, canEdit: false, voice: true, notifyChannel: null },
 });
 
 export const PLATFORMS = Object.freeze(Object.keys(PLATFORM_INFO));
