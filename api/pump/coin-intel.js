@@ -120,6 +120,13 @@ export default wrap(async (req, res) => {
 		}
 		const [row] = await sql`select * from pump_coin_intel where mint = ${mint} limit 1`;
 		if (!row) {
+			// `?miss=empty` is for widgets with their own empty state (the coin3d card):
+			// a 204 instead of a 404 the browser prints to the console on every visit.
+			if (params.get('miss') === 'empty') {
+				res.statusCode = 204;
+				res.setHeader('cache-control', 'public, max-age=30');
+				return res.end();
+			}
 			const hint = 'coin not observed (too old, or launched before the intel engine, or still mid-observation)';
 			return json(res, 404, { error: 'not_found', error_description: hint, mint, hint });
 		}

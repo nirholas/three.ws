@@ -786,10 +786,11 @@ async function fetchOracleConviction(mintAddr, net) {
 	const key = `${net}:${mintAddr}`;
 	if (_c3dOracleCache.has(key)) return _c3dOracleCache.get(key);
 	try {
-		const r = await fetch(`/api/oracle/coin?mint=${encodeURIComponent(mintAddr)}&network=${net}`, {
+		const r = await fetch(`/api/oracle/coin?mint=${encodeURIComponent(mintAddr)}&network=${net}&miss=empty`, {
 			signal: AbortSignal.timeout(8000),
 		});
-		if (!r.ok) return null;
+		// 204 = the data brain has not observed this mint: hide the slot.
+		if (!r.ok || r.status === 204) return null;
 		const d = await r.json();
 		const cv = d?.conviction ? { score: d.conviction.score, tier: d.conviction.tier } : null;
 		_c3dOracleCache.set(key, cv);
@@ -837,10 +838,10 @@ const RISK_LABELS = {
 async function fetchCoinIntel(mintAddr, net) {
 	try {
 		const r = await fetch(
-			`/api/pump/coin-intel?mint=${encodeURIComponent(mintAddr)}&network=${net}`,
+			`/api/pump/coin-intel?mint=${encodeURIComponent(mintAddr)}&network=${net}&miss=empty`,
 			{ signal: AbortSignal.timeout(8000) },
 		);
-		if (!r.ok) return null; // 404 = coin not observed by the intel engine; fine
+		if (!r.ok || r.status === 204) return null; // 204 = coin not observed by the intel engine
 		return await r.json();
 	} catch {
 		return null;

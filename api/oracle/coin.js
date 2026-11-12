@@ -52,8 +52,16 @@ export default wrap(async (req, res) => {
 			// brain has never seen. One such mint produced hundreds of redundant
 			// invocations. The window is short enough that a coin becoming known surfaces
 			// within seconds.
+			const missCache = 'public, max-age=15, s-maxage=30, stale-while-revalidate=60';
+			// `?miss=empty` is for widgets with their own empty state (the coin3d card):
+			// a 204 instead of a 404 the browser prints to the console on every visit.
+			if (url.searchParams.get('miss') === 'empty') {
+				res.statusCode = 204;
+				res.setHeader('cache-control', missCache);
+				return res.end();
+			}
 			return json(res, 404, { error: 'not_found', error_description: 'this mint has not been observed yet', mint, network }, {
-				'cache-control': 'public, max-age=15, s-maxage=30, stale-while-revalidate=60',
+				'cache-control': missCache,
 			});
 		}
 		coin = await safeReadCoin(mint, network);
