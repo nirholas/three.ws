@@ -1,5 +1,8 @@
 # Buyers can see and purchase published skill bundles from the marketplace and agent profile
 
+**Status (2026-11-12):** re-verified, kept, owner-gated. Code, docs and changelog shipped in 7d1fe6dda; `tests/marketplace-bundle-storefront.test.js` passes 10 of 10 and the "Reach today" paragraph describes the live browser path. Remaining, owner-run: (1) browser check against a real published bundle (none exists on production and dev proxies /api to production, so creating one is a production write); (2) full `npx vitest run` baseline comparison (box too loaded); (3) `git push threews main` then `npm run deploy:gcp:full` so the storefront and checkout fix reach production.
+
+
 **Status (2026-11-10):** built and committed: storefront cards, bundle-mode payment modal (wallet and Solana Pay QR), tests, docs, changelog, and a fix for bundle checkout (purchase-bundle create crashed without a platform fee). Remaining, owner-run: (1) browser check against a real published bundle and a signed-in Solana Pay reference. No bundle exists on production and the dev server proxies /api to production, so the browser run used route interception for the bundles list and skill prices only; (2) full `npx vitest run` baseline comparison was not run (targeted marketplace, bundle and purchase suites pass); (3) deploy so the storefront and the checkout fix reach production.
 
 
