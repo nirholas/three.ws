@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-12T15:57:18.803Z",
+	"generated_at": "2026-11-12T16:21:00.441Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4534,
+	"total": 4536,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-12",
+			"type": "update",
+			"title": "Context7, Hugging Face and Exa connect without a key",
+			"summary": "These three integrations only use a key to raise rate limits, and the connect dialog said so, but connecting without one left the server stuck at \"Waiting for sign-in\" with no tools, so the agent got nothing. They now connect straight away with their read tools on, and you can still paste a key later. Hugging Face's four tools (repo search, repo details, the Hub file browser and whoami) were also all treated as able to change data, so none started on; they are read-only and now start on. A connection that needs you (an expired sign-in, a failed refresh, tools to review) now opens on its own with the fix in view, and stays closed once you collapse it. The primary buttons on the page also show a hover in the dark theme.",
+			"link": "/mcp-integrations",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-11-12",
 			"type": "update",
@@ -17,6 +27,17 @@
 			"link": "/docs/custody",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-12",
+			"type": "update",
+			"title": "Fewer Solana RPC calls from the agent index and the creator-claims tools",
+			"summary": "The first full day of per-route RPC accounting showed two callers spending almost a third of our Solana RPC quota. The agent index re-read every agent every 90 minutes even though most have been quiet for weeks; it now re-checks active agents every 20 minutes (more often than before) and quiet ones every four hours, about half the reads. The creator-claims tools on the MCP server now stop at the first transaction a node has not caught up on, read at most 12 new transactions per poll, and share one answer across rapid repeat polls. Fewer wasted calls leaves more quota for payments and the pages people are actually looking at. The status page now judges the agent index by how far it is behind its own schedule.",
+			"link": "/status",
+			"tags": [
+				"improvement",
+				"infra"
 			]
 		},
 		{
@@ -1511,27 +1532,6 @@
 			"tags": [
 				"security",
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Demo pages stop defaulting to a real person's likeness",
-			"summary": "The animation gallery previews now play on the house default avatar instead of a real person's likeness. The avatar-engines filter bar is fully opaque so headings no longer show through it, Render Lab shows one chip per model and no longer stacks two tooltips on its buttons, and Restyle Studio keeps the 3D view beside the presets and Reset while you scroll.",
-			"link": "/animations",
-			"tags": [
-				"improvement",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Dense photometric head fit (opt-in GPU path)",
-			"summary": "Avatar reconstruction can refine the morphed head against the user's own photo with a bounded, deterministic analysis-by-synthesis fit (PyTorch, optional PyTorch3D silhouette). It ships disabled: a GPU image and a RECONSTRUCT_DENSE_URL route exist, and the CPU service is unchanged.",
-			"link": "/docs/avatar-reconstruction",
-			"tags": [
-				"feature"
 			]
 		}
 	]
