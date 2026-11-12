@@ -60,3 +60,18 @@ updates:
       - dependency-name: "@upstash/ratelimit"
         versions:
           - ">=2.1.0"
+      # The Teams meeting stage runs on @microsoft/live-share 1.x, which peers on
+      # the Fluid 1.x client (fluid-framework ^1.2.3, azure-client ^1.0.0). Fluid
+      # 2+ drops packages Live Share loads, and legacy-peer-deps lets the bump
+      # install anyway: the 1.4.0 -> 3.11.0 PR (#617, 2026-11-12) left Live Share
+      # unable to load. Move the Fluid client only together with a Live Share
+      # major that peers on it. tests/teams-stage-fluid-pin.test.js holds the pair.
+      - dependency-name: "fluid-framework"
+        versions:
+          - ">=2.0.0"
+      - dependency-name: "@fluidframework/azure-client"
+        versions:
+          - ">=2.0.0"
+      - dependency-name: "@fluidframework/test-client-utils"
+        versions:
+          - ">=2.0.0"
