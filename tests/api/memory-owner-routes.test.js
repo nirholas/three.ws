@@ -136,6 +136,16 @@ describe('items', () => {
 		expect((await call('GET', '/api/memory/items')).body.memories).toEqual([]);
 		expect((await call('DELETE', '/api/memory/items/not-a-uuid')).status).toBe(400);
 	});
+
+	it("answers 404 when filtering by another account's agent, like the skills route", async () => {
+		await memory.saveMemory({ agentId: a.agentId, userId: a.userId, kind: 'fact', content: 'alice only' });
+		asUser(b);
+		const foreign = await call('GET', `/api/memory/items?agent_id=${a.agentId}`);
+		expect(foreign.status).toBe(404);
+		expect(foreign.body.error).toBe('not_found');
+		expect((await call('GET', '/api/memory/items?agent_id=99999999-9999-4999-8999-999999999999')).status).toBe(404);
+		expect((await call('GET', `/api/memory/items?agent_id=${b.agentId}`)).status).toBe(200);
+	});
 });
 
 describe('user model', () => {

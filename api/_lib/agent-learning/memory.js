@@ -330,7 +330,7 @@ function overlap(a, b) {
 
 /** Newest-first page of one agent's memories for one account. */
 export async function listAgentMemory({ agentId, userId, kind = null, limit = 25, before = null }) {
-	await assertAgentOwner(agentId, userId);
+	if (!agentId) throw new LearningError(400, 'validation_error', 'agent_id must be a uuid');
 	return listMemories({ userId, agentId, kind, limit, before });
 }
 
@@ -342,7 +342,9 @@ export async function listMemories({ userId, agentId = null, kind = null, q = nu
 	if (kind && !ROW_KINDS.includes(kind)) {
 		throw new LearningError(400, 'validation_error', `kind must be one of: ${ROW_KINDS.join(', ')}`);
 	}
-	if (agentId && !isUuid(agentId)) throw new LearningError(400, 'validation_error', 'agent_id must be a uuid');
+	// A filter on someone else's agent (or one that does not exist) is an error,
+	// not an empty page, so this answers exactly like the skills routes.
+	if (agentId) await assertAgentOwner(agentId, userId);
 	const n = Math.min(Math.max(Number(limit) || 25, 1), 100);
 	const cursor = before && !Number.isNaN(Date.parse(before)) ? new Date(before).toISOString() : null;
 	const like = q ? `%${String(q).replace(/[%_\\]/g, (c) => `\\${c}`).slice(0, 200)}%` : null;
