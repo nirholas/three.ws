@@ -814,7 +814,7 @@
 		"fast-check": "^4.8.0",
 		"fast-xml-parser": "^5.11.2",
 		"fflate": "^0.8.3",
-		"fluid-framework": "^1.4.0",
+		"fluid-framework": "^3.11.0",
 		"gltf-validator": "^2.0.0-dev.3.10",
 		"halloween.js": "^1.0.3",
 		"helius-sdk": "^3.4.0",
