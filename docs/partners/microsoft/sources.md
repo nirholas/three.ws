@@ -67,6 +67,17 @@ Read 2026-11-12.
 
 Per-beat timings come from `node scripts/microsoft-pack/rehearse-reactor-demo.mjs`, which calls the same tools in the same order against `https://three.ws/api/mcp-studio`. The run and its date are recorded in [reactor-session.md](./reactor-session.md#measured-rehearsal).
 
+| Number | Value | Source | Read |
+|---|---|---|---|
+| Step times (0.4 s, 302.0 s with first response 220.1 s, 395.7 s with first response 228.4 s, 3.0 s, 0.5 s) | as quoted | the rehearsal script's printed table, run started 16:30 UTC | 2026-11-12 |
+| GLB sizes from that run | 217,140 and 3,601,412 bytes | `curl -s -o /dev/null -w "%{size_download}"` on the two GLB URLs the run returned (`/cdn/forge/anon/9b65e1b2-fbe8-4315-b3b1-ad733f7f2021.glb`, `/cdn/forge/anon/0b658b44-c5c5-4e0e-9a73-f4637a1344ae.glb`) | 2026-11-12 |
+| Copilot Studio click path and Streamable-only transport | as quoted | [Microsoft Learn: Connect your agent to an existing MCP server](https://learn.microsoft.com/en-us/microsoft-copilot-studio/mcp-add-existing-server-to-agent), page dated 2026-10-30 | 2026-11-12 |
+| Lane cooldown 90 s | 90 s | `LANE_COOLDOWN_SECONDS` in `api/_lib/forge-lane-health.js` | 2026-11-12 |
+
+## Deck (deck.pptx)
+
+Every number on a slide comes from the `MEASURED` block at the top of `scripts/microsoft-pack/build-deck.mjs`, and each value there is a row in the headline, TRELLIS or Teams tables above. Rebuild with `npm --prefix scripts/microsoft-pack run deck` after re-measuring.
+
 ## Programs pack (programs/)
 
 Program names, eligibility and benefit figures are quoted from Microsoft's public pages, read 2026-11-12. Each application file names the page beside the answer it supports:
