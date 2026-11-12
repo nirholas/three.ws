@@ -195,3 +195,29 @@ def test_flag_defaults_off(monkeypatch):
     assert not dense_fit.enabled()
     monkeypatch.setenv("DENSE_FIT", "1")
     assert dense_fit.enabled()
+
+
+def test_pipeline_feeds_the_dense_fit_image_space_landmarks():
+    """
+    Regression: face_geometry.landmarks_to_array flips y to +up, and the dense
+    step used those values as pixel rows, so the face mask landed off the photo
+    (all zero) and every real job logged "only 0 usable face vertices".
+    """
+    from types import SimpleNamespace
+
+    import face_geometry
+    import face_pipeline
+
+    width, height = 640, 800
+    rng = np.random.default_rng(3)
+    ang = np.linspace(0, 2 * np.pi, 468, endpoint=False)
+    px = np.stack([320 + 150 * np.cos(ang) * rng.uniform(0.3, 1.0, 468),
+                   420 + 200 * np.sin(ang) * rng.uniform(0.3, 1.0, 468)], axis=1)
+    lms = [SimpleNamespace(x=x / width, y=y / height, z=0.0) for x, y in px]
+    detected = face_geometry.landmarks_to_array(lms, width, height)
+
+    mask, landmarks_px = face_pipeline._dense_image_inputs(detected, width, height)
+
+    assert mask.shape == (height, width)
+    assert mask.sum() > 0.05 * width * height
+    np.testing.assert_allclose(landmarks_px, px, atol=1e-6)

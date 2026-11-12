@@ -583,6 +583,18 @@ def _load_template(body_type: str) -> bytes:
 
 # ── main pipeline ──────────────────────────────────────────────────────────────
 
+def _dense_image_inputs(detected, width, height):
+    """
+    Face mask and pixel landmarks for the dense fit, from the morph's landmarks.
+
+    face_geometry.landmarks_to_array flips y to +up for the canonical frame (the
+    camera solve wants that); the photo and its mask are indexed y-down, so the
+    rows are negated back here.
+    """
+    landmarks_px = np.stack([detected[:, 0], -detected[:, 1]], axis=1).astype(np.float64)
+    return dense_fit.build_face_mask(landmarks_px, width, height), landmarks_px
+
+
 def _refine_dense(job_id, t0, glb, morphed, faces, detected, yaw, best_img, fg_img, uv_map) -> None:
     """
     Optional dense, photometric refinement of the morphed head (DENSE_FIT=1).
@@ -604,11 +616,12 @@ def _refine_dense(job_id, t0, glb, morphed, faces, detected, yaw, best_img, fg_i
     width, height = best_img.size
     n = min(len(detected), len(lm_idx))
     fg_alpha = np.array(fg_img.convert("RGBA"), dtype=np.uint8)[:, :, 3].astype(np.float32) / 255.0
+    face_mask, landmarks_px = _dense_image_inputs(detected, width, height)
     result = dense_fit.fit_dense_head(
         morphed, faces, camera,
         np.array(best_img.convert("RGB"), dtype=np.uint8),
-        dense_fit.build_face_mask(detected[:, :2], width, height),
-        landmarks_px=detected[:n, :2],
+        face_mask,
+        landmarks_px=landmarks_px[:n],
         landmark_vertices=lm_idx[:n],
         foreground=fg_alpha,
     )
