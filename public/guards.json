@@ -2054,6 +2054,27 @@
 			}
 		},
 		{
+			"id": "i18n-parity",
+			"script": "scripts/check-i18n-parity.mjs",
+			"npm": "check:i18n",
+			"title": "Every shipped language stays in the picker",
+			"protects": "Each locale in .i18nrc.json outputLocales has a readable catalog at or above manifestThreshold, and public/locales/manifest.json lists exactly the locales those catalogs justify.",
+			"why": "For a month the production language switcher offered only English: new pages added English keys daily, the translated catalogs fell behind, and the manifest writer quietly held each language back below threshold. Nothing fired, because completeness had no check of its own. This one fails the gate the moment a language is about to vanish, and names the fix (`npm run i18n:translate`).",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A configured locale whose catalog file is gone, so the language silently drops out of the picker.",
+				"violation": {
+					"delete": [
+						"public/locales/es.json"
+					]
+				},
+				"expect": "no catalog at all"
+			}
+		},
+		{
 			"id": "sync-studio-openapi",
 			"script": "scripts/sync-studio-openapi.mjs",
 			"npm": "check:studio-openapi",
