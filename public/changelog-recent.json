@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-12T16:21:00.441Z",
+	"generated_at": "2026-11-12T16:22:45.458Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4536,
+	"total": 4537,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -38,6 +38,16 @@
 			"tags": [
 				"improvement",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-12",
+			"type": "update",
+			"title": "Finished Coin Wars show up in the world ticker and on the chart screen",
+			"summary": "A finished war now adds a row to the activity ticker for everyone in the room, and a win for the community flashes a band on the chart-screen jumbotron. The result is reported once per match even when the portal poll, the return link and the feed all see it, and only this coin's wars are shown.",
+			"link": "/play",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -1521,17 +1531,6 @@
 			"link": "/mcp-integrations",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Deleted accounts are now permanently purged after 30 days",
-			"summary": "The privacy policy promises that a deleted account is kept for 30 days for recovery and then permanently purged. A daily job now does that purge: your uploads are removed from storage and your account data is deleted. Records the law requires us to keep, such as payment history and your acceptance of the Terms, stay but no longer link to you or show your wallet or email. If a marketplace bid or sale involving your agent is still settling, the purge waits until the other person has been paid or refunded. During the 30 days, signing in with the same wallet says the account was deleted; after the purge, that wallet can start a fresh account.",
-			"link": "/docs/account-deletion",
-			"tags": [
-				"security",
-				"fix"
 			]
 		}
 	]

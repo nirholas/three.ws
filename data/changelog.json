@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-12",
+			"title": "Finished Coin Wars show up in the world ticker and on the chart screen",
+			"summary": "A finished war now adds a row to the activity ticker for everyone in the room, and a win for the community flashes a band on the chart-screen jumbotron. The result is reported once per match even when the portal poll, the return link and the feed all see it, and only this coin's wars are shown.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-11-12",
 			"title": "Fewer Solana RPC calls from the agent index and the creator-claims tools",
 			"summary": "The first full day of per-route RPC accounting showed two callers spending almost a third of our Solana RPC quota. The agent index re-read every agent every 90 minutes even though most have been quiet for weeks; it now re-checks active agents every 20 minutes (more often than before) and quiet ones every four hours, about half the reads. The creator-claims tools on the MCP server now stop at the first transaction a node has not caught up on, read at most 12 new transactions per poll, and share one answer across rapid repeat polls. Fewer wasted calls leaves more quota for payments and the pages people are actually looking at. The status page now judges the agent index by how far it is behind its own schedule.",
 			"tags": [
