@@ -5,11 +5,13 @@ import { config, redactRpcUrl } from './src/config.js';
 import { probeRpcUrls } from './src/chain.js';
 import { startFirehose } from './src/feed.js';
 import { createServer } from './src/server.js';
+import { createStatusLogger } from './src/status-log.js';
 
 let onEventRef = () => {};
 const firehose = startFirehose((ev) => onEventRef(ev));
 const { server, onEvent, close } = createServer(firehose);
-onEventRef = onEvent;
+const logStatus = createStatusLogger();
+onEventRef = (ev) => { logStatus(ev); onEvent(ev); };
 
 server.listen(config.port, () => {
 	console.log(`[robinhood-feed] ${config.network} · listening on :${config.port}`);
