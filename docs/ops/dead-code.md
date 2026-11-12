@@ -6,18 +6,18 @@ Knip runs through `npx` at a pinned version, so it is not a root devDependency a
 
 ## Baseline (2026-11-10, knip 6.45.0)
 
-| Category | Count |
-|---|---|
-| Unused files | 86 |
-| Unused exports | 240 |
-| Unused dependencies | 15 |
-| Unused devDependencies | 0 |
+| Category | First report (2026-11-10) | Before the 2026-11-12 pass | After the 2026-11-12 pass |
+|---|---|---|---|
+| Unused files | 86 | 86 | 73 |
+| Unused exports | 240 | 243 | 243 |
+| Unused dependencies | 15 | 14 | 14 |
+| Unused devDependencies | 0 | 0 | 0 |
 
-No deletions were made in this pass, so before and after are identical. The reasons:
+**2026-11-12 file pass.** Every file in the report was traced by its basename across all tracked files (excluding the lockfile, the report, generated changelogs and `docs/ALL.md`), then the zero-hit files were checked for template loaders (``import(`./x.${y}.js`)``), `vercel.json` routes, `server/index.mjs` and the scripts each page actually loads. 31 had zero hits. 18 of those are `src/scene-studio/vendor/js/Sidebar.Geometry.*.js`, which `Sidebar.Geometry.js` loads through a template `import()`, so they stay. The other 13 were deleted: `server/discover-ssr.mjs`, `src/claim-transfer.js`, `src/ibm-identity.js`, `src/ibm-oracle.js`, `src/ibm-suite-nav.js`, `src/ibm-twin.js`, `src/ibm-vision.js`, `src/mirror/face-tracker.js`, `src/pulse-scene.js`, `src/pump/launch-token-boot.js`, `src/pumpfun-client.js`, `src/reputation-page.js`, `src/solana/vanity/launch-with-vanity.js`. The rerun shows no file newly orphaned by the deletions.
 
-- Dependencies: removing one needs a `package-lock.json` regeneration, which the shared worktree forbids (no root `npm install`). Verified by grep across `api src pages workers packages scripts server public tests`: `papaparse`, `ssh2`, `@solana/wallet-standard-features` and one Solana lending SDK have zero source references and are safe candidates for the next person who may run an install. The other 11 have one or more references (some dynamic or inside workers) and must stay until each is traced.
-- Files: the 86 unused files are mostly `src/ibm-*`, `src/scene-studio/vendor/js/Sidebar.Geometry.*`, `src/wallet/*`, `src/solana/vanity/*` and `src/game/hud/*`. Many are loaded by string (vite-served pages, `import()` templates, `vercel.json` routes) that knip cannot see, so none was deleted without a per-file trace.
-- Exports: 240 candidates, same caveat.
+- Dependencies: removing one needs a `package-lock.json` regeneration, which the shared worktree forbids (no root `npm install`; a lockfile-only uninstall is refused too). Re-verified 2026-11-12: `ssh2`, `@solana/wallet-standard-features` (still installed transitively, so only the direct declaration goes) and one Solana lending SDK have zero source references and are safe to drop in a deliberate install. `papaparse` is no longer a candidate: `api/_lib/microsoft-partner-center.js` imports it. The other 11 have one or more references (some dynamic or inside workers) and must stay until each is traced.
+- Files: the remaining 73 each have at least one reference by name (a page script tag, a dynamic `import()`, a doc or a test), which knip cannot follow. Each needs a per-file trace before deletion.
+- Exports: 243 candidates, same caveat.
 
 ## How to triage
 
