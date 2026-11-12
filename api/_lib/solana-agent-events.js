@@ -338,6 +338,40 @@ export const SOLANA_SWEEP_PERIOD_MIN = 10;
 export const SOLANA_SWEEP_CONCURRENCY = 4;
 
 /**
+ * Re-crawl schedule, by the agent's own activity.
+ *
+ * Measured on production 2026-11-12: of 2,026 Solana agent cursors, 1,945 had
+ * never recorded an event and 2 had one in the last 7 days, yet the sweep
+ * re-read every one of them on a fixed ~80-minute cycle. That was 1,440
+ * getSignaturesForAddress calls an hour before lane failover multiplied them,
+ * 11% of all Solana RPC spend, to learn that dormant accounts were still
+ * dormant, while both paid lanes sat exhausted. Now an agent with an event
+ * inside SOLANA_ACTIVE_WINDOW_DAYS is re-read every SOLANA_ACTIVE_RECRAWL_MIN,
+ * a dormant or never-active one every SOLANA_DORMANT_RECRAWL_MIN, and a cursor
+ * that has never been crawled goes first. A dormant agent that wakes up is
+ * indexed within the dormant interval, and from then on it is active.
+ *
+ * index-lag.js scores the leg on minutes past this schedule, so the sensor
+ * still trips within a tick or two of the sweep stopping.
+ */
+export const SOLANA_ACTIVE_WINDOW_DAYS = 7;
+export const SOLANA_ACTIVE_RECRAWL_MIN = 20;
+export const SOLANA_DORMANT_RECRAWL_MIN = 240;
+
+/**
+ * Minutes between crawls for an agent whose newest indexed event is
+ * `lastEventAt` (null when it never had one). Mirrors the SQL in
+ * nextAgentBatch and readIndexLag.
+ * @param {string|Date|null} lastEventAt
+ * @param {number} [now]
+ */
+export function recrawlIntervalMin(lastEventAt, now = Date.now()) {
+	const t = lastEventAt ? new Date(lastEventAt).getTime() : NaN;
+	const active = Number.isFinite(t) && now - t < SOLANA_ACTIVE_WINDOW_DAYS * 86_400_000;
+	return active ? SOLANA_ACTIVE_RECRAWL_MIN : SOLANA_DORMANT_RECRAWL_MIN;
+}
+
+/**
  * Crawl one Solana agent account's recent signatures into the event index.
  * Resumes from agent_event_cursor, so a steady-state run fetches only what
  * landed since the last pass.
@@ -489,7 +523,9 @@ export async function markAgentEventError({ agentRef, network = 'mainnet', error
 /**
  * The next batch of Solana agents to crawl, oldest cursor first, drawn from
  * BOTH the platform's own agents and the external registry directory. The
- * directory half is the coverage that was missing entirely.
+ * directory half is the coverage that was missing entirely. Only agents that
+ * were never crawled or are due on their re-crawl schedule are returned (see
+ * SOLANA_DORMANT_RECRAWL_MIN), so a quiet directory costs a quiet tick.
  * @param {{ limit?: number }} [opts]
  * @returns {Promise<Array<{ agent_ref: string, network: string, source: string }>>}
  */
@@ -516,6 +552,14 @@ export async function nextAgentBatch({ limit = 40 } = {}) {
 		LEFT JOIN agent_event_cursor cur
 			ON cur.chain = ${CHAIN} AND cur.chain_id = 0 AND cur.agent_ref = c.agent_ref
 		WHERE c.agent_ref IS NOT NULL
+		  AND (
+			cur.last_indexed_at IS NULL
+			OR cur.last_indexed_at < now() - make_interval(mins => CASE
+				WHEN cur.last_event_at > now() - make_interval(days => ${SOLANA_ACTIVE_WINDOW_DAYS}::int)
+					THEN ${SOLANA_ACTIVE_RECRAWL_MIN}::int
+				ELSE ${SOLANA_DORMANT_RECRAWL_MIN}::int
+			END)
+		  )
 		ORDER BY cur.last_indexed_at NULLS FIRST
 		LIMIT ${limit}
 	`;

@@ -22,6 +22,11 @@ import {
 	SOLANA_SWEEP_PERIOD_MIN,
 	SOLANA_SWEEP_CONCURRENCY,
 	SOLANA_SWEEP_RPC_BREAKER,
+	SOLANA_ACTIVE_WINDOW_DAYS,
+	SOLANA_ACTIVE_RECRAWL_MIN,
+	SOLANA_DORMANT_RECRAWL_MIN,
+	recrawlIntervalMin,
+	nextAgentBatch,
 	drainWithBudget,
 	rpcBreaker,
 } from '../api/_lib/solana-agent-events.js';
@@ -39,6 +44,8 @@ import {
 	SOLANA_ERROR_RATE_DEGRADED,
 	SOLANA_ERROR_RATE_DOWN,
 	SOLANA_LAG_DEGRADED_MIN,
+	SOLANA_OVERDUE_DEGRADED_MIN,
+	SOLANA_OVERDUE_DOWN_MIN,
 } from '../api/_lib/ops/index-lag.js';
 import {
 	nextChunkSize,
@@ -604,32 +611,62 @@ describe('erc8004CrawlChain: shrink loop has a time bound', () => {
 
 // ─── Sweep capacity ──────────────────────────────────────────────────────────
 
+describe('recrawl schedule', () => {
+	// Measured on production 2026-11-12: of 2,026 Solana agent cursors, 1,945 had
+	// never recorded an event and 2 had one in the last 7 days, yet the sweep
+	// re-read every one of them on a fixed 80-minute cycle: 1,440
+	// getSignaturesForAddress calls an hour (before lane failover multiplied
+	// them), 11% of all Solana RPC spend, to learn nothing. Agents now re-crawl on
+	// a schedule set by their own activity.
+	const now = Date.parse('2026-11-12T12:00:00Z');
+	const daysAgo = (d) => new Date(now - d * 86_400_000).toISOString();
+
+	it('re-crawls an agent active inside the window every couple of ticks', () => {
+		expect(recrawlIntervalMin(daysAgo(1), now)).toBe(SOLANA_ACTIVE_RECRAWL_MIN);
+		expect(recrawlIntervalMin(daysAgo(SOLANA_ACTIVE_WINDOW_DAYS - 0.01), now)).toBe(SOLANA_ACTIVE_RECRAWL_MIN);
+	});
+
+	it('re-crawls a dormant or never-active agent on the long interval', () => {
+		expect(recrawlIntervalMin(daysAgo(SOLANA_ACTIVE_WINDOW_DAYS + 1), now)).toBe(SOLANA_DORMANT_RECRAWL_MIN);
+		expect(recrawlIntervalMin(null, now)).toBe(SOLANA_DORMANT_RECRAWL_MIN);
+	});
+
+	it('keeps the active interval at a whole number of ticks and well inside the dormant one', () => {
+		expect(SOLANA_ACTIVE_RECRAWL_MIN % SOLANA_SWEEP_PERIOD_MIN).toBe(0);
+		expect(SOLANA_DORMANT_RECRAWL_MIN).toBeGreaterThan(SOLANA_ACTIVE_RECRAWL_MIN * 4);
+	});
+
+	it('selects only never-crawled or due agents, using the same intervals', async () => {
+		sqlMock.mockReset();
+		sqlMock.mockResolvedValueOnce([]);
+		await nextAgentBatch({ limit: 7 });
+		const [strings, ...values] = sqlMock.mock.calls[0];
+		const text = strings.join('?');
+		expect(text).toMatch(/cur\.last_indexed_at IS NULL/);
+		expect(text).toMatch(/last_event_at/);
+		expect(values).toContain(SOLANA_ACTIVE_WINDOW_DAYS);
+		expect(values).toContain(SOLANA_ACTIVE_RECRAWL_MIN);
+		expect(values).toContain(SOLANA_DORMANT_RECRAWL_MIN);
+		expect(values).toContain(7);
+	});
+});
+
 describe('sweepCycleMin', () => {
-	it('reports the full-sweep time that sets the median lag floor', () => {
-		// The measured failure: 1,576 agents at 40 per 10-minute tick cycles in
-		// 400 minutes, which is exactly the ~200-minute median the status surface
-		// showed. The batch is the lever, so the cycle has to be visible.
-		expect(sweepCycleMin(1576)).toBe(Math.ceil(1576 / SOLANA_SWEEP_BATCH) * SOLANA_SWEEP_PERIOD_MIN);
+	it('is the dormant interval while the batch keeps up with the agents falling due', () => {
+		// 2,026 agents due every 240 minutes is ~85 per 10-minute tick, far under
+		// the 240-agent batch, so the schedule, not the batch, sets the cycle.
+		expect(sweepCycleMin(2026)).toBe(SOLANA_DORMANT_RECRAWL_MIN);
 	});
 
-	it('keeps the median under the degraded threshold at the shipped batch size', () => {
-		// Median lag is half the cycle; SOLANA_LAG_DEGRADED_MIN is 90.
-		expect(sweepCycleMin(1576) / 2).toBeLessThan(90);
-	});
-
-	it('finishes a full cycle inside the fresh threshold, not just the median', () => {
-		// The median passing is not enough. The oldest agent in the queue waits a
-		// WHOLE cycle, so a cycle longer than the fresh threshold means part of the
-		// directory is always stale by the sensor's own definition. Measured on
-		// 2026-09-02: 1,604 agents at 120 per tick cycled in 140 minutes against a
-		// 90-minute threshold, and the batch, not the cron's budget, was the cap.
-		expect(sweepCycleMin(1604)).toBeLessThanOrEqual(SOLANA_LAG_DEGRADED_MIN);
+	it('falls back to the batch-bound cycle once the directory outgrows the batch', () => {
+		const huge = 100_000;
+		expect(sweepCycleMin(huge)).toBe(Math.ceil(huge / SOLANA_SWEEP_BATCH) * SOLANA_SWEEP_PERIOD_MIN);
 	});
 
 	it('leaves the directory room to grow before the batch has to move again', () => {
 		// Headroom is the point: a batch sized exactly to today's directory goes
 		// stale the week it grows. This is the size at which someone must revisit.
-		expect(sweepCycleMin(2000)).toBeLessThanOrEqual(SOLANA_LAG_DEGRADED_MIN);
+		expect(sweepCycleMin(5000)).toBe(SOLANA_DORMANT_RECRAWL_MIN);
 	});
 
 	it('is null when nothing is queued', () => {
@@ -966,8 +1003,9 @@ describe('rank', () => {
 function lagFixture({ solana = {}, evm = {} } = {}) {
 	return {
 		solana: {
-			medianLagMin: 60,
-			worstLagMin: 130,
+			medianLagMin: 120,
+			worstLagMin: 250,
+			overdueMin: 4,
 			agents: 1604,
 			uncrawled: 0,
 			errored: 0,
@@ -1003,6 +1041,21 @@ describe('indexLagVerdict', () => {
 		expect(indexLagVerdict(lagFixture()).status).toBe('ok');
 	});
 
+	it('scores the Solana leg on minutes past schedule, not on raw cursor age', () => {
+		// Dormant agents are re-read every few hours by design, so a 2-hour median
+		// cursor age is healthy. What is not healthy is an agent past its due time:
+		// that only grows when the sweep stops or cannot keep up.
+		expect(indexLagVerdict(lagFixture({ solana: { medianLagMin: 130, overdueMin: 9 } })).status).toBe('ok');
+		expect(indexLagVerdict(lagFixture({ solana: { overdueMin: SOLANA_OVERDUE_DEGRADED_MIN } })).status).toBe('degraded');
+		expect(indexLagVerdict(lagFixture({ solana: { overdueMin: SOLANA_OVERDUE_DOWN_MIN } })).status).toBe('down');
+		const detail = indexLagVerdict(lagFixture({ solana: { overdueMin: 9 } })).detail;
+		expect(detail).toContain('9m worst overdue');
+	});
+
+	it('still scores an older shape without overdueMin on its median age', () => {
+		expect(indexLagVerdict(lagFixture({ solana: { overdueMin: undefined, medianLagMin: 400 } })).status).toBe('down');
+	});
+
 	it('caps an EVM-only fault at degraded and says why', () => {
 		// The exact production shape: a cursor stalled for months and a backlog
 		// far past the down threshold, with Solana fresh.
@@ -1031,7 +1084,7 @@ describe('indexLagVerdict', () => {
 	});
 
 	it('still reports down when Solana itself is the leg that is behind', () => {
-		const verdict = indexLagVerdict(lagFixture({ solana: { medianLagMin: 400 } }));
+		const verdict = indexLagVerdict(lagFixture({ solana: { overdueMin: 400 } }));
 		expect(verdict.status).toBe('down');
 		// The cap is for EVM-only faults; it must never soften a Solana outage.
 		expect(verdict.detail).not.toContain('the Solana index users read is fresh');

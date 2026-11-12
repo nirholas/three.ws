@@ -19,11 +19,31 @@
 
 import { sql } from '../db.js';
 import { CHAINS } from '../erc8004-chains.js';
-import { SOLANA_SWEEP_BATCH, SOLANA_SWEEP_PERIOD_MIN } from '../solana-agent-events.js';
+import {
+	SOLANA_SWEEP_BATCH,
+	SOLANA_SWEEP_PERIOD_MIN,
+	SOLANA_ACTIVE_WINDOW_DAYS,
+	SOLANA_ACTIVE_RECRAWL_MIN,
+	SOLANA_DORMANT_RECRAWL_MIN,
+} from '../solana-agent-events.js';
 
 /** Solana leg: worst per-agent cursor age tolerated before the index is stale. */
 export const SOLANA_LAG_DEGRADED_MIN = 90;
 export const SOLANA_LAG_DOWN_MIN = 360;
+/**
+ * Solana leg: minutes the most overdue agent is past its re-crawl schedule.
+ *
+ * Since 2026-11-12 the sweep re-reads dormant agents every
+ * SOLANA_DORMANT_RECRAWL_MIN by design (solana-agent-events.js), so a
+ * multi-hour median cursor age is healthy and no longer says anything. What the
+ * sensor exists to catch is the sweep stopping or falling behind, and that is
+ * exactly when an agent goes past its due time: healthy, the oldest-first queue
+ * keeps every agent within a tick of due; stopped, the worst overdue grows one
+ * minute per minute. The median-age thresholds above still score an older
+ * readIndexLag() shape that carries no overdueMin.
+ */
+export const SOLANA_OVERDUE_DEGRADED_MIN = 60;
+export const SOLANA_OVERDUE_DOWN_MIN = 240;
 /** EVM leg: the crawl runs every 15 min across all chains, so it is slower. */
 export const EVM_LAG_DEGRADED_MIN = 120;
 export const EVM_LAG_DOWN_MIN = 480;
@@ -73,7 +93,7 @@ function withTimeout(promise, ms) {
  * Read the freshness of every indexer leg.
  *
  * @returns {Promise<{
- *   solana: { medianLagMin: number|null, worstLagMin: number|null, agents: number,
+ *   solana: { medianLagMin: number|null, worstLagMin: number|null, overdueMin: number|null, agents: number,
  *             uncrawled: number, errored: number, events: number,
  *             sweepCycleMin: number|null, batch: number },
  *   evm: { lagMin: number|null, chains: number, configuredChains: number,
@@ -96,7 +116,14 @@ export async function readIndexLag() {
 					max(extract(epoch FROM now() - cur.last_indexed_at) / 60)::int AS worst_lag_min,
 					percentile_disc(0.5) WITHIN GROUP (
 						ORDER BY extract(epoch FROM now() - cur.last_indexed_at) / 60
-					)::int AS median_lag_min
+					)::int AS median_lag_min,
+					coalesce(max(greatest(0,
+						extract(epoch FROM now() - cur.last_indexed_at) / 60 - CASE
+							WHEN cur.last_event_at > now() - make_interval(days => ${SOLANA_ACTIVE_WINDOW_DAYS}::int)
+								THEN ${SOLANA_ACTIVE_RECRAWL_MIN}::int
+							ELSE ${SOLANA_DORMANT_RECRAWL_MIN}::int
+						END
+					)), 0)::int AS overdue_min
 				FROM agent_event_cursor cur
 				WHERE cur.chain = 'solana'
 			`,
@@ -151,6 +178,7 @@ export async function readIndexLag() {
 		solana: {
 			medianLagMin: s.median_lag_min ?? null,
 			worstLagMin: s.worst_lag_min ?? null,
+			overdueMin: s.overdue_min ?? null,
 			agents: s.agents ?? 0,
 			uncrawled: s.uncrawled ?? 0,
 			errored: s.errored ?? 0,
@@ -193,16 +221,16 @@ export async function readIndexLag() {
 }
 
 /**
- * How long one full pass over the Solana directory takes at the configured
- * sweep rate. This is the number that explains a median lag: a queue drained
- * oldest-first sits at half its cycle time, so a rising directory silently
- * raises the floor until someone measures the cycle.
+ * How long one full pass over the Solana directory takes. While the batch keeps
+ * up with the agents falling due (agents * period / dormant interval <= batch),
+ * the dormant re-crawl interval sets it; once the directory outgrows the batch,
+ * the batch does, and agents start going overdue, which the sensor scores.
  * @param {number} agents
  * @returns {number|null}
  */
 export function sweepCycleMin(agents) {
 	if (!agents) return null;
-	return Math.ceil(agents / SOLANA_SWEEP_BATCH) * SOLANA_SWEEP_PERIOD_MIN;
+	return Math.max(SOLANA_DORMANT_RECRAWL_MIN, Math.ceil(agents / SOLANA_SWEEP_BATCH) * SOLANA_SWEEP_PERIOD_MIN);
 }
 
 /**
@@ -242,8 +270,11 @@ export function indexLagVerdict(lag) {
 	}
 
 	const errorRate = lag.solana.agents > 0 ? lag.solana.errored / lag.solana.agents : 0;
+	const scheduled = typeof lag.solana.overdueMin === 'number';
 	const solStatus = worst(
-		legStatus(lag.solana.medianLagMin, SOLANA_LAG_DEGRADED_MIN, SOLANA_LAG_DOWN_MIN),
+		scheduled
+			? legStatus(lag.solana.overdueMin, SOLANA_OVERDUE_DEGRADED_MIN, SOLANA_OVERDUE_DOWN_MIN)
+			: legStatus(lag.solana.medianLagMin, SOLANA_LAG_DEGRADED_MIN, SOLANA_LAG_DOWN_MIN),
 		worst(
 			// A leg crawling every agent and indexing nothing is broken, not fresh.
 			// That exact shape (1,576 cursors, 0 events) hid a crash in the Solana
@@ -271,8 +302,11 @@ export function indexLagVerdict(lag) {
 	const solPart =
 		lag.solana.agents === 0
 			? 'Solana: no agents queued'
-			: `Solana: ${fmt(lag.solana.medianLagMin)} median lag across ${lag.solana.agents} agents` +
-				(lag.solana.sweepCycleMin ? ` (${fmt(lag.solana.sweepCycleMin)} full sweep at ${lag.solana.batch}/tick)` : '') +
+			: (scheduled
+					? `Solana: ${fmt(lag.solana.overdueMin)} worst overdue across ${lag.solana.agents} agents` +
+						` (active every ${fmt(SOLANA_ACTIVE_RECRAWL_MIN)}, dormant every ${fmt(SOLANA_DORMANT_RECRAWL_MIN)}, ${fmt(lag.solana.medianLagMin)} median cursor age)`
+					: `Solana: ${fmt(lag.solana.medianLagMin)} median lag across ${lag.solana.agents} agents` +
+						(lag.solana.sweepCycleMin ? ` (${fmt(lag.solana.sweepCycleMin)} full sweep at ${lag.solana.batch}/tick)` : '')) +
 				(lag.solana.uncrawled ? `, ${lag.solana.uncrawled} never crawled` : '') +
 				(lag.solana.errored ? `, ${lag.solana.errored} erroring (${pct(errorRate)})` : '') +
 				`, ${lag.solana.events} events`;
