@@ -152,3 +152,5 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-12 750-plan-x402-batch-settlement-durable-vouchers.md no commit: Step 0 only, package API mapped (BatchOperationStore + ChannelState stores); build not started.
 2026-11-12 740-plan-platform-opentelemetry-gcp-traces.md GATED: tracing shipped in 112812796; worker redeploy and live Forge trace remain owner-gated (deploy).
 2026-11-12 718-plan-launchpad-native-coin-page-and-sol-buy.md RE-VERIFIED (kept): feature shipped in 15e43adba, 58 vitest tests pass; remaining is the real-browser devnet proof (needs devnet signer env and a working dev server)
+2026-11-12 743-plan-avatar-editor-attribute-and-export-fidelity.md RE-VERIFIED (kept): shipped in 1fed88375, 17 editor tests pass; remaining are full vitest baseline, build:pages and a /viewer re-open check.
+2026-11-12 732-plan-screen-autonomous-browser-agent-owner-lease.md RE-VERIFIED (kept, owner-gated): shipped in 478f431b2, 13 tests pass, real-model run and lease yield verified with llama-3.3-70b; remaining: default gpt-oss-120b route down (GCP billing, owner) and live-pool Take over browser check.
