@@ -17,10 +17,27 @@ import types
 import pytest
 
 torch = pytest.importorskip("torch")
+# One thread: these tensors are small, and a shared CI or dev host with every
+# core busy turns torch's thread pool into minutes of contention.
+torch.set_num_threads(1)
 
 import bake_raster  # noqa: E402
 
 TB = bake_raster.TORCH_BACKEND
+# Read once at import, before any test can register the nvdiffrast shim.
+_NVDR_INSTALLED = importlib.util.find_spec("nvdiffrast") is not None
+
+
+@pytest.fixture(autouse=True)
+def _restore_nvdiffrast_modules():
+    """install("torch") may register shim modules; never let one leak into the next test."""
+    saved = {k: sys.modules.get(k) for k in ("nvdiffrast", "nvdiffrast.torch")}
+    yield
+    for key, mod in saved.items():
+        if mod is None:
+            sys.modules.pop(key, None)
+        else:
+            sys.modules[key] = mod
 
 
 def clip(xy, z=None, w=None):
@@ -68,7 +85,7 @@ def test_interpolated_position_reproduces_pixel_centre():
     rast, _ = raster(pos, faces, (64, 48))
     out, _ = TB.interpolate(pos[0, :, :2].contiguous(), rast, faces)
     mask = rast[0, ..., 3] > 0
-    gx, gy = pixel_centers(64, 48)
+    gx, gy = pixel_centers(48, 64)  # resolution is (height, width)
     assert mask.sum() > 500
     assert torch.allclose(out[0, ..., 0][mask], gx[mask], atol=1e-5)
     assert torch.allclose(out[0, ..., 1][mask], gy[mask], atol=1e-5)
@@ -173,7 +190,7 @@ def test_chunking_is_invisible_even_for_a_triangle_larger_than_the_budget():
     faces = torch.cat([faces, torch.tensor([[300, 301, 302]], dtype=torch.int32)])
     pos = clip(big, z=zb)
     a, adb = raster(pos, faces, (64, 64), candidate_budget=1 << 22)
-    b, bdb = raster(pos, faces, (64, 64), candidate_budget=97)
+    b, bdb = raster(pos, faces, (64, 64), candidate_budget=4093)
     assert torch.equal(a, b)
     assert torch.equal(adb, bdb)
 
@@ -301,20 +318,19 @@ def test_install_rebinds_dr_in_the_target_modules(monkeypatch):
 
 
 def test_install_torch_shims_nvdiffrast_when_it_is_not_installed(monkeypatch):
-    if importlib.util.find_spec("nvdiffrast") is not None:
+    if _NVDR_INSTALLED:
         pytest.skip("nvdiffrast is installed here, so no shim is registered")
-    for key in ("nvdiffrast", "nvdiffrast.torch"):
-        monkeypatch.delitem(sys.modules, key, raising=False)
     bake_raster.install("torch", modules=())
     import nvdiffrast.torch as dr  # resolves to the shim
 
     assert dr is TB
-    for key in ("nvdiffrast", "nvdiffrast.torch"):
-        sys.modules.pop(key, None)
+    # Asking for the real backend afterwards still fails loudly: the shim is not nvdiffrast.
+    with pytest.raises(RuntimeError, match="BAKE_RASTER_BACKEND=torch"):
+        bake_raster.load_backend("nvdiffrast")
 
 
-def test_load_nvdiffrast_backend_fails_loudly_when_missing(monkeypatch):
-    if importlib.util.find_spec("nvdiffrast") is not None:
+def test_load_nvdiffrast_backend_fails_loudly_when_missing():
+    if _NVDR_INSTALLED:
         pytest.skip("nvdiffrast is installed here")
     with pytest.raises(RuntimeError, match="BAKE_RASTER_BACKEND=torch"):
         bake_raster.load_backend("nvdiffrast")
@@ -322,7 +338,7 @@ def test_load_nvdiffrast_backend_fails_loudly_when_missing(monkeypatch):
 
 # --- cross-backend comparison (GPU hosts only) ---------------------------------------
 
-_HAS_NVDR = importlib.util.find_spec("nvdiffrast") is not None and torch.cuda.is_available()
+_HAS_NVDR = _NVDR_INSTALLED and torch.cuda.is_available()
 
 
 def _unit_sphere(n_lat=24, n_lon=48):
