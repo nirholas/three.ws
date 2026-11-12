@@ -2,7 +2,8 @@
 //
 // GET  ?agentId=  → { config, trust }
 // POST { agentId, ...patch } → { config }   (patch: enabled, scopes, auto_execute,
-//                                            daily_spend_sol, require_confirm)
+//                                            daily_spend_sol, trade_max_sol,
+//                                            max_open_positions, require_confirm)
 //
 // Scope lives on agent_identities.meta.autopilot and is enforced server-side at
 // execution time (api/_lib/autopilot.js). Nothing the agent does is possible
@@ -75,6 +76,8 @@ export default wrap(async (req, res) => {
 	if (body.scopes && typeof body.scopes === 'object') patch.scopes = body.scopes;
 	if (body.auto_execute && typeof body.auto_execute === 'object') patch.auto_execute = body.auto_execute;
 	if ('daily_spend_sol' in body) patch.daily_spend_sol = body.daily_spend_sol;
+	if ('trade_max_sol' in body) patch.trade_max_sol = body.trade_max_sol;
+	if ('max_open_positions' in body) patch.max_open_positions = body.max_open_positions;
 	if ('require_confirm' in body) patch.require_confirm = body.require_confirm === true;
 
 	// A patch that leaves autopilot enabled with the wallet_transfer or trade scope, while

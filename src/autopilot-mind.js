@@ -81,7 +81,14 @@ function injectStyles() {
 	.apm-switch input:checked + .apm-switch-track::after { transform: translateX(16px); background: var(--apm-accent); }
 	.apm-switch input:focus-visible + .apm-switch-track { outline: 2px solid var(--apm-accent); outline-offset: 2px; }
 	.apm-switch input:disabled + .apm-switch-track { opacity: 0.45; cursor: not-allowed; }
-	.apm-num { width: 110px; padding: 0.35rem 0.5rem; border-radius: 8px; border: 1px solid var(--apm-line); background: var(--apm-s2); color: var(--apm-txt); font: inherit; font-size: 0.82rem; }
+	.apm-num { width: 110px; padding: 0.35rem 0.5rem; border-radius: 8px; border: 1px solid var(--apm-line); background: var(--apm-s2); color: var(--apm-txt); font: inherit; font-size: 0.82rem; transition: border-color .12s; }
+	.apm-num:hover:not(:disabled) { border-color: var(--apm-t3); }
+	.apm-num:focus-visible { outline: 2px solid var(--apm-accent); outline-offset: 2px; border-color: var(--apm-accent); }
+	.apm-num:disabled { opacity: 0.5; cursor: not-allowed; }
+	.apm-quote { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.4rem 0.8rem; margin: 0.2rem 0 0.5rem; padding: 0.55rem 0.65rem;
+		border-radius: 9px; background: var(--apm-s2); border: 1px solid var(--apm-line); }
+	.apm-quote dt { font-size: 0.68rem; color: var(--apm-t3); text-transform: uppercase; letter-spacing: 0.04em; }
+	.apm-quote dd { margin: 0.1rem 0 0; color: var(--apm-txt); font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 	.apm-btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.7rem; border-radius: 8px; border: 1px solid var(--apm-line);
 		background: var(--apm-s2); color: var(--apm-txt); font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: border-color .12s, background .12s, transform .06s; }
 	.apm-btn:hover { border-color: var(--apm-t3); }
@@ -259,6 +266,13 @@ export function mountAutopilotMind(container, { agentId }) {
 				extra = `<div class="apm-scope-extra"><label class="apm-prop-conf" for="apm-daily">Daily limit</label>
 					<input class="apm-num" type="number" min="0" step="0.1" id="apm-daily" value="${esc(c.daily_spend_sol)}" ${on ? '' : 'disabled'}>
 					<span class="apm-prop-conf">SOL / day</span></div>`;
+			} else if (s.key === 'trade') {
+				extra = `<div class="apm-scope-extra"><label class="apm-prop-conf" for="apm-trade-max">Per-trade cap</label>
+					<input class="apm-num" type="number" min="0" step="0.05" id="apm-trade-max" value="${esc(c.trade_max_sol || '')}" placeholder="No cap" ${on ? '' : 'disabled'}>
+					<span class="apm-prop-conf">SOL per buy</span></div>
+					<div class="apm-scope-extra"><label class="apm-prop-conf" for="apm-max-pos">Max open positions</label>
+					<input class="apm-num" type="number" min="0" max="50" step="1" id="apm-max-pos" value="${esc(c.max_open_positions || '')}" placeholder="No limit" ${on ? '' : 'disabled'}>
+					<span class="apm-prop-conf">tokens held at once ($THREE not counted)</span></div>`;
 			} else if (s.auto) {
 				extra = `<div class="apm-scope-extra">
 					<label class="apm-switch" title="Auto-run within scope (reversible only)"><input type="checkbox" data-auto="${s.key}" ${autoOn ? 'checked' : ''} ${on ? '' : 'disabled'}><span class="apm-switch-track"></span></label>
@@ -284,6 +298,15 @@ export function mountAutopilotMind(container, { agentId }) {
 			daily.addEventListener('input', () => {
 				clearTimeout(t);
 				t = setTimeout(() => saveConfig({ daily_spend_sol: Number(daily.value) || 0 }), 500);
+			});
+		}
+		for (const [id, key] of [['apm-trade-max', 'trade_max_sol'], ['apm-max-pos', 'max_open_positions']]) {
+			const el = $(id);
+			if (!el) continue;
+			let t;
+			el.addEventListener('input', () => {
+				clearTimeout(t);
+				t = setTimeout(() => saveConfig({ [key]: Number(el.value) || 0 }), 500);
 			});
 		}
 	}
@@ -333,7 +356,10 @@ export function mountAutopilotMind(container, { agentId }) {
 		const wrap = $('apm-props');
 		const pending = state.proposals.filter((p) => p.status === 'pending');
 		if (!pending.length) {
-			wrap.innerHTML = `<div class="apm-empty"><div class="em-ico">🧭</div><p>No proposals yet. Hit <b>Generate</b> — your agent reads its high-salience memories and recent reflections, then suggests real actions you can approve.</p></div>`;
+			const tradeHint = state.config?.scopes?.trade
+				? ' No trade proposals yet: trades are proposed only from intel and signal memories that name a token and a size, and they will appear here for your confirmation.'
+				: '';
+			wrap.innerHTML = `<div class="apm-empty"><div class="em-ico">🧭</div><p>No proposals yet. Hit <b>Generate</b>. Your agent reads its high-salience memories and recent reflections, then suggests real actions you can approve.${esc(tradeHint)}</p></div>`;
 			return;
 		}
 		wrap.innerHTML = pending.map((p) => proposalCard(p)).join('');
@@ -441,7 +467,17 @@ export function mountAutopilotMind(container, { agentId }) {
 	function renderDryRun(preview) {
 		const checks = (preview.checks || []).map((c) =>
 			`<div class="apm-check ${c.ok ? 'ok' : 'no'}"><span class="ck">${c.ok ? '✓' : '✕'}</span><span>${esc(c.label)} — <span class="apm-prop-conf">${esc(c.detail)}</span></span></div>`).join('');
-		return `<div class="apm-willdo">${esc(preview.willDo)}</div>${checks}`;
+		const q = preview.quote;
+		const fmt = (n) => (n == null ? 'n/a' : Number(n).toLocaleString(undefined, { maximumFractionDigits: 6 }));
+		const quote = q ? `<dl class="apm-quote" aria-label="Live quote">
+			<div><dt>Venue</dt><dd>${esc(q.venue)}${q.graduated ? ' (graduated)' : ''}</dd></div>
+			<div><dt>You pay</dt><dd>${esc(fmt(q.in_amount))} ${esc(q.in_asset === 'SOL' ? 'SOL' : 'tokens')}</dd></div>
+			<div><dt>Expected out</dt><dd>${esc(fmt(q.expected_out))} ${esc(q.out_asset === 'SOL' ? 'SOL' : 'tokens')}</dd></div>
+			<div><dt>Minimum received</dt><dd>${esc(fmt(q.min_received))}</dd></div>
+			<div><dt>Price impact</dt><dd>${esc(Number(q.price_impact_pct).toFixed(2))}%</dd></div>
+			${q.usd != null ? `<div><dt>Value</dt><dd>$${esc(Number(q.usd).toFixed(2))}</dd></div>` : ''}
+		</dl>` : '';
+		return `<div class="apm-willdo">${esc(preview.willDo)}</div>${quote}${checks}`;
 	}
 
 	// ── Confirm modal (irreversible SOL transfer) ──────────────────────────

@@ -26,7 +26,7 @@ const {
 } = await import('../api/_lib/autopilot.js');
 
 const OTHER_MINT = 'So11111111111111111111111111111111111111112';
-const MINT = 'Gif5sJNdu1S9ZhnY9Nz8Ma1JqURnXsiYsN2KjUAx7PLY';
+const MINT = 'THREEsynthetic11111111111111111111111111111';
 
 describe('trade proposal kind', () => {
 	it('is a known action kind', () => {

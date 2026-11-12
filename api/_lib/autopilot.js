@@ -35,6 +35,7 @@ export const THREE_DECIMALS = 6;
 // (and, via the trading capability, buying coins). $THREE is never spent here.
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const MAX_DAILY_SOL = 1000; // sane ceiling on the daily autonomous SOL spend cap
+const MAX_OPEN_POSITIONS = 50; // ceiling on the owner's open-position limit
 
 export const AUTOPILOT_ACTION_KINDS = ['create_alert', 'briefing', 'wallet_transfer', 'trade'];
 
@@ -103,6 +104,12 @@ export const AUTOPILOT_DEFAULTS = Object.freeze({
 	// Daily ceiling on autonomous SOL outflow (in SOL). 0 ⇒ no spending. The agent
 	// spends SOL, never $THREE — $THREE is buy-and-hold/burn only.
 	daily_spend_sol: 0,
+	// Autopilot trade bounds on top of the wallet guards. trade_max_sol caps one
+	// buy (SOL); max_open_positions caps how many different tokens the wallet may
+	// hold before a buy of a new one is refused ($THREE is never counted: it is
+	// held for good). 0 leaves either one unset.
+	trade_max_sol: 0,
+	max_open_positions: 0,
 	// Irreversible actions require an explicit confirmation unless the owner
 	// durably pre-authorized that exact scope. Default: always ask.
 	require_confirm: true,
@@ -116,6 +123,8 @@ export function normalizeAutopilotConfig(raw) {
 	// intentionally NOT migrated — the units differ — so autopilot fails closed
 	// until the owner sets a SOL cap. SOL is fractional; we don't round to whole.
 	const spend = Number(r.daily_spend_sol);
+	const tradeMax = Number(r.trade_max_sol);
+	const maxPositions = Math.floor(Number(r.max_open_positions));
 	return {
 		enabled: r.enabled === true,
 		scopes: {
@@ -129,6 +138,8 @@ export function normalizeAutopilotConfig(raw) {
 			briefing: autoIn.briefing === true,
 		},
 		daily_spend_sol: Number.isFinite(spend) && spend > 0 ? Math.min(spend, MAX_DAILY_SOL) : 0,
+		trade_max_sol: Number.isFinite(tradeMax) && tradeMax > 0 ? Math.min(tradeMax, MAX_DAILY_SOL) : 0,
+		max_open_positions: Number.isFinite(maxPositions) && maxPositions > 0 ? Math.min(maxPositions, MAX_OPEN_POSITIONS) : 0,
 		require_confirm: r.require_confirm !== false,
 		updated_at: typeof r.updated_at === 'string' ? r.updated_at : null,
 	};
@@ -148,6 +159,8 @@ export async function setAutopilotConfig(agentId, patch) {
 		scopes: { ...current.scopes, ...(patch.scopes || {}) },
 		auto_execute: { ...current.auto_execute, ...(patch.auto_execute || {}) },
 		daily_spend_sol: 'daily_spend_sol' in patch ? patch.daily_spend_sol : current.daily_spend_sol,
+		trade_max_sol: 'trade_max_sol' in patch ? patch.trade_max_sol : current.trade_max_sol,
+		max_open_positions: 'max_open_positions' in patch ? patch.max_open_positions : current.max_open_positions,
 		require_confirm: 'require_confirm' in patch ? patch.require_confirm : current.require_confirm,
 	});
 	next.updated_at = new Date().toISOString();
@@ -729,6 +742,44 @@ async function agentSolBalance(address) {
 }
 
 /**
+ * Mints the wallet holds a non-zero balance of (SPL Token and Token-2022),
+ * excluding $THREE, which the agent only ever accumulates. Live RPC read.
+ */
+async function agentOpenPositionMints(address) {
+	const { PublicKey } = await import('@solana/web3.js');
+	const { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } = await import('@solana/spl-token');
+	const { solanaConnection } = await import('./solana/connection.js');
+	const conn = solanaConnection({ url: process.env.SOLANA_RPC_URL || null, network: 'mainnet', commitment: 'confirmed' });
+	const owner = new PublicKey(address);
+	const mints = new Set();
+	for (const programId of [TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID]) {
+		const resp = await conn.getParsedTokenAccountsByOwner(owner, { programId });
+		for (const { account } of resp.value) {
+			const info = account.data?.parsed?.info;
+			if (info?.mint && info.mint !== THREE_CA && BigInt(info.tokenAmount?.amount ?? '0') > 0n) mints.add(info.mint);
+		}
+	}
+	return mints;
+}
+
+/**
+ * The autopilot-level buy bounds: per-trade SOL cap and open-position limit.
+ * Returns the first refusal as { code, message } or null. Sells are never
+ * bounded here (they reduce exposure). `held` is the open-position mint set,
+ * read only when a position limit is set.
+ */
+function tradeLimitRefusal(p, config, held) {
+	if (p.side !== 'buy') return null;
+	if (config.trade_max_sol > 0 && p.amount_sol > config.trade_max_sol) {
+		return { code: 'per_trade_cap', message: `This buy of ${p.amount_sol} SOL is over the autopilot per-trade cap of ${config.trade_max_sol} SOL.` };
+	}
+	if (config.max_open_positions > 0 && held && !held.has(p.mint) && held.size >= config.max_open_positions) {
+		return { code: 'max_positions', message: `The wallet already holds ${held.size} open positions, the autopilot limit is ${config.max_open_positions}. Sell one or raise the limit before buying a new token.` };
+	}
+	return null;
+}
+
+/**
  * A non-mutating preview of exactly what executing a proposal would do — the
  * "dry run" that lets a cautious owner see before granting. Returns
  * { kind, willDo, checks: [{label, ok, detail}], blocked }.
@@ -740,6 +791,7 @@ export async function dryRunProposal({ proposal, agent, config }) {
 	checks.push({ label: `Scope "${kind}" granted`, ok: scoped, detail: scoped ? 'granted' : 'not granted — enable it above' });
 
 	let willDo = '';
+	let quote = null;
 	if (kind === 'create_alert') {
 		const v = validateProposal(kind, proposal.params);
 		willDo = v.ok
@@ -761,18 +813,8 @@ export async function dryRunProposal({ proposal, agent, config }) {
 			willDo = t.side === 'buy'
 				? `Buy ${sym} with ${t.amount_sol} SOL from the agent wallet at up to ${t.slippage_bps} bps slippage. IRREVERSIBLE. Always requires explicit confirmation. Every wallet guard still applies.`
 				: `Sell ${t.token_amount_raw} base units of ${sym} from the agent wallet for SOL at up to ${t.slippage_bps} bps slippage. IRREVERSIBLE. Always requires explicit confirmation.`;
-			if (t.side === 'buy') {
-				const cap = config.daily_spend_sol;
-				const spent = await dailySolSpent(proposal.agentId);
-				checks.push({ label: `Within daily SOL cap (${cap})`, ok: config.scopes.trade && cap > 0 && spent + t.amount_sol <= cap, detail: `${spent} spent in 24h + ${t.amount_sol} <= ${cap}` });
-				let bal = null;
-				try {
-					const { ensureAgentWallet } = await import('./agent-wallet.js');
-					const w = await ensureAgentWallet(proposal.agentId, agent.user_id, { reason: 'autopilot.dryrun' });
-					bal = await agentSolBalance(w.address);
-				} catch { /* balance is decoration on the preview */ }
-				checks.push({ label: 'Wallet SOL balance covers the buy', ok: bal == null ? false : bal >= t.amount_sol, detail: bal == null ? 'could not read balance' : `${bal} SOL available` });
-			}
+			const preview = await previewTrade({ proposal, agent, config, t, checks });
+			quote = preview;
 		}
 	} else {
 		const amt = Number(proposal.params.amount_sol) || 0;
@@ -792,7 +834,85 @@ export async function dryRunProposal({ proposal, agent, config }) {
 	}
 
 	const blocked = checks.some((c) => !c.ok);
-	return { kind, willDo, checks, blocked };
+	return kind === 'trade' ? { kind, willDo, checks, blocked, quote } : { kind, willDo, checks, blocked };
+}
+
+/**
+ * The live half of a trade dry run: the autopilot bounds, then a preview-only
+ * runAgentTrade (the exact quote and wallet guards a fill would meet: kill
+ * switch, per-trade cap, daily budget, USD ceiling, price impact, holder
+ * quality, rug firewall, SOL headroom). It never touches the key and never
+ * submits. Pushes its checks and returns the quote summary, or null when no
+ * quote could be had.
+ */
+async function previewTrade({ proposal, agent, config, t, checks }) {
+	if (t.side === 'buy') {
+		const cap = config.daily_spend_sol;
+		const spent = await dailySolSpent(proposal.agentId);
+		checks.push({ label: `Within daily SOL cap (${cap})`, ok: config.scopes.trade && cap > 0 && spent + t.amount_sol <= cap, detail: `${spent} spent in 24h + ${t.amount_sol} <= ${cap}` });
+		if (config.trade_max_sol > 0) {
+			checks.push({ label: `Within per-trade cap (${config.trade_max_sol} SOL)`, ok: t.amount_sol <= config.trade_max_sol, detail: `${t.amount_sol} SOL requested` });
+		}
+	}
+
+	// A preview never provisions a wallet: it reads the address the agent already has.
+	const address = SOLANA_ADDR_RE.test(agent.meta?.solana_address || '') ? agent.meta.solana_address : null;
+	if (!address) {
+		checks.push({ label: 'Live quote', ok: false, detail: 'the agent has no wallet yet; open its Wallet tab to create one, then preview again' });
+		return null;
+	}
+
+	if (t.side === 'buy' && config.max_open_positions > 0) {
+		try {
+			const held = await agentOpenPositionMints(address);
+			const refusal = tradeLimitRefusal(t, { ...config, trade_max_sol: 0 }, held);
+			checks.push({ label: `Open positions (limit ${config.max_open_positions})`, ok: !refusal, detail: held.has(t.mint) ? `${held.size} held, adds to an existing position` : `${held.size} held` });
+		} catch {
+			checks.push({ label: `Open positions (limit ${config.max_open_positions})`, ok: false, detail: 'could not read the wallet positions' });
+		}
+	}
+
+	const { runAgentTrade, parseTradeRequest } = await import('../agents/solana-trade.js');
+	const parsed = parseTradeRequest({
+		side: t.side, mint: t.mint, network: 'mainnet', slippage_bps: t.slippage_bps, preview: true,
+		...(t.side === 'buy' ? { sol_amount: t.amount_sol } : { token_amount_raw: t.token_amount_raw }),
+	});
+	if (!parsed.ok) {
+		checks.push({ label: 'Live quote', ok: false, detail: parsed.message });
+		return null;
+	}
+	let out;
+	try {
+		out = await runAgentTrade({ agentId: proposal.agentId, userId: agent.user_id, meta: agent.meta || {}, address, parsed, ownerInitiated: true });
+	} catch (err) {
+		out = { error: { message: err?.message || 'quote failed' } };
+	}
+	if (out?.error || !out?.data) {
+		checks.push({ label: 'Live quote', ok: false, detail: out?.error?.message || 'could not price this trade right now' });
+		return null;
+	}
+
+	const q = out.data;
+	checks.push({ label: 'Live quote', ok: true, detail: `${q.venue}${q.graduated ? ' (graduated)' : ''}, ${q.out.amount} ${q.out.asset === 'SOL' ? 'SOL' : 'tokens'} expected, price impact ${Number(q.price_impact_pct).toFixed(2)}%` });
+	checks.push({ label: 'Wallet guards', ok: !q.guard, detail: q.guard ? q.guard.message : 'kill switch, caps, budget, price impact and holder checks pass' });
+	if (q.funds) checks.push({ label: 'Wallet SOL balance', ok: false, detail: q.funds.message });
+	else if (q.wallet_balance_sol != null) checks.push({ label: 'Wallet SOL balance', ok: true, detail: `${q.wallet_balance_sol} SOL available` });
+	if (q.firewall) {
+		checks.push({ label: 'Rug firewall', ok: q.firewall.verdict !== 'block', detail: `${q.firewall.verdict}${q.firewall.score != null ? `, score ${q.firewall.score}` : ''}${q.firewall.reasons?.[0] ? `: ${q.firewall.reasons[0]}` : ''}` });
+	}
+	return {
+		venue: q.venue,
+		graduated: q.graduated === true,
+		in_amount: q.in?.amount ?? null,
+		in_asset: q.in?.asset ?? null,
+		expected_out: q.out?.amount ?? null,
+		out_asset: q.out?.asset ?? null,
+		min_received: q.min_received?.amount ?? null,
+		price_impact_pct: q.price_impact_pct,
+		usd: q.usd ?? null,
+		platform_fee_bps: q.platform_fee_bps ?? 0,
+		firewall: q.firewall?.verdict ?? null,
+	};
 }
 
 /**
@@ -895,6 +1015,9 @@ async function executeTrade({ proposal, agent, userId, config }) {
 	if (!v.ok) throw new AutopilotError(`Invalid trade: ${v.reason}`, { code: v.code, status: 400 });
 	const p = v.params;
 
+	const capped = tradeLimitRefusal(p, config, null);
+	if (capped) throw new AutopilotError(capped.message, { code: capped.code, status: 403 });
+
 	if (p.side === 'buy') {
 		const cap = config.daily_spend_sol;
 		if (!(cap > 0)) throw new AutopilotError('No daily SOL spend budget is set.', { code: 'no_budget', status: 403 });
@@ -917,6 +1040,15 @@ async function executeTrade({ proposal, agent, userId, config }) {
 	const encryptedSecret = row?.meta?.encrypted_solana_secret;
 	const address = row?.meta?.solana_address;
 	if (!encryptedSecret || !address) throw new AutopilotError('Agent wallet not provisioned.', { code: 'no_wallet', status: 409 });
+
+	if (p.side === 'buy' && config.max_open_positions > 0) {
+		let held;
+		try { held = await agentOpenPositionMints(address); } catch {
+			throw new AutopilotError('Could not read the wallet positions to check the open-position limit, so nothing was traded. Try again shortly.', { code: 'positions_unavailable', status: 503 });
+		}
+		const refusal = tradeLimitRefusal(p, config, held);
+		if (refusal) throw new AutopilotError(refusal.message, { code: refusal.code, status: 403 });
+	}
 
 	const { runAgentTrade, parseTradeRequest } = await import('../agents/solana-trade.js');
 	const parsed = parseTradeRequest({
