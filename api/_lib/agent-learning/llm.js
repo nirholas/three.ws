@@ -25,6 +25,9 @@ export async function completeText(messages, { temperature = 0.2, chain = provid
 			const out = await streamRound(provider, { messages, tools: [], temperature });
 			const text = stripReasoning(out.content);
 			if (text) return { text, provider: provider.name, model: provider.catalogModel || provider.model };
+			// A reasoning model that spends its whole budget thinking answers 200
+			// with nothing to show; say so, or a dead lane looks like a quiet one.
+			console.warn(`[agent-learning] ${provider.name} completion returned no content`);
 		} catch (err) {
 			console.warn(`[agent-learning] ${provider.name} completion failed`, String(err?.message || err).slice(0, 160));
 		}

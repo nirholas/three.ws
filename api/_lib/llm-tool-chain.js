@@ -60,7 +60,16 @@ export function providerChain() {
 		});
 	});
 	if (env.NVIDIA_API_KEY) {
-		chain.push({ name: 'nvidia', url: 'https://integrate.api.nvidia.com/v1/chat/completions', key: env.NVIDIA_API_KEY, model: 'nvidia/nemotron-3.5-lightning-30b-a3b' });
+		// Nemotron reasons by default and spends the whole max_tokens budget on
+		// hidden reasoning (measured: 1024 tokens in, 0 content chars out), so
+		// the lane asks for thinking off and returns its answer directly.
+		chain.push({
+			name: 'nvidia',
+			url: 'https://integrate.api.nvidia.com/v1/chat/completions',
+			key: env.NVIDIA_API_KEY,
+			model: 'nvidia/nemotron-3.5-lightning-30b-a3b',
+			extraBody: { chat_template_kwargs: { enable_thinking: false } },
+		});
 	}
 	// Three more free lanes, same OpenAI wire format including tools + streamed
 	// tool_calls: SambaNova (Llama 3.3 70B, own quota pool), Mistral (Experiment
@@ -125,6 +134,7 @@ export async function streamRound(provider, { messages, tools, onContent, temper
 		body.max_tokens = budget.max_tokens;
 		body.extra_body = budget.extra_body;
 	}
+	if (provider.extraBody) Object.assign(body, provider.extraBody);
 	if (Array.isArray(tools) && tools.length) { body.tools = tools; body.tool_choice = 'auto'; }
 	// Keyless lanes (the Vertex Gemini credits anchor) mint their auth per request
 	// via getHeaders; a token-exchange failure throws here and fails over to the

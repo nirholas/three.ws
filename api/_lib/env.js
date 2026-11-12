@@ -1001,6 +1001,33 @@ export const env = {
 	get X402_XLAYER_RELAYER_KEY() {
 		return opt('X402_XLAYER_RELAYER_KEY');
 	},
+	// ── Robinhood Chain rail (USDG, eip155:4663 / testnet eip155:46630) ─────
+	// Settled through the published `hood402` package, see
+	// api/_lib/x402-robinhood.js. Fail-closed like every other rail: the accept
+	// is advertised only when the receiver AND a settlement route (a gas key in
+	// library mode, or a hood402 facilitator URL) are configured.
+	get X402_PAY_TO_ROBINHOOD() {
+		return addr(opt('X402_PAY_TO_ROBINHOOD'));
+	},
+	// `robinhood` (mainnet 4663) or `robinhood-testnet` (46630).
+	get ROBINHOOD_CHAIN_NETWORK() {
+		return addr(opt('ROBINHOOD_CHAIN_NETWORK')) || 'robinhood';
+	},
+	// Optional RPC override; unset uses the network's public endpoint.
+	get ROBINHOOD_CHAIN_RPC_URL() {
+		return addr(opt('ROBINHOOD_CHAIN_RPC_URL'));
+	},
+	// Gas wallet that broadcasts transferWithAuthorization in library mode.
+	// Secret. Never holds user funds and must not be the payTo wallet.
+	get ROBINHOOD_FACILITATOR_PRIVATE_KEY() {
+		return addr(opt('ROBINHOOD_FACILITATOR_PRIVATE_KEY'));
+	},
+	// Base URL of a standalone hood402 facilitator. When set it replaces the
+	// in-process gas key for verify and settle.
+	get ROBINHOOD_FACILITATOR_URL() {
+		const v = addr(opt('ROBINHOOD_FACILITATOR_URL'));
+		return v ? v.replace(/\/$/, '') : v;
+	},
 	// Price per /api/mcp call, in the asset's base units (USDC = 6 decimals; "1000" = 0.001 USDC).
 	get X402_MAX_AMOUNT_REQUIRED() {
 		return opt('X402_MAX_AMOUNT_REQUIRED', '1000');
