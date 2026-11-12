@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-12",
+			"title": "The language picker stays readable on light pages and inside embeds",
+			"summary": "The floating language picker drew pale grey text over a nearly transparent background, so on a light page or inside an embedded agent it was hard to read and failed the WCAG AA contrast check. On pages that do not set their own theme colours it is now a solid dark chip that stays readable on any background. Themed pages look exactly as before.",
+			"tags": ["fix", "accessibility"]
+		},
+		{
+			"date": "2026-11-12",
 			"title": "New sign languages ship only after fluent signers approve each sign",
 			"summary": "Signing avatars can now carry sign languages beyond ASL, and none of them goes live on authoring alone. Each sign needs two approvals from fluent signers on its exact current version, and one objection holds it back. Reviewers work on the new /sign-review page: watch each sign on a live avatar at half speed or with either hand, then approve it, ask for a change, or reject it with a note. The sign API and the MCP sign tools take a lang parameter, and /sign-language gains a language picker once a second language has reviewed signs. If you sign a language other than ASL fluently, write to support@three.ws to become a reviewer.",
 			"tags": ["feature"],

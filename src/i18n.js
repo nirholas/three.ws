@@ -504,6 +504,11 @@ function registerLangSwitcher() {
 				:host { display: inline-flex; max-width: 100%; min-width: 0; }
 				.wrap { position: relative; display: inline-flex; align-items: center; max-width: 100%; min-width: 0; }
 				svg { position: absolute; left: 8px; width: 14px; height: 14px; opacity: .6; pointer-events: none; z-index: 1; }
+				/* The colour fallbacks are a self-contained opaque chip, not a
+				   translucent wash: a page with no theme tokens (the transparent
+				   <agent-3d> embed, a light host page) would otherwise show
+				   #cfcfd4 text over whatever sits behind it, which fails contrast
+				   on any light backdrop. Themed pages override all of it. */
 				/* Compact face: the locale CODE instead of its name. "English"
 				   makes a 170px control; on a phone that either ran off the edge
 				   of a HUD ("Englis…") or, as the floating FAB, laid a full-width
@@ -516,7 +521,7 @@ function registerLangSwitcher() {
 					font: inherit; font-size: 13px; font-weight: 600; line-height: 1;
 					letter-spacing: .04em;
 					color: var(--text-2, #cfcfd4);
-					background: var(--surface-2, rgba(255,255,255,.04));
+					background: var(--surface-2, #1c1c21);
 					border: 1px solid var(--border, rgba(255,255,255,.12));
 					border-radius: 8px;
 					padding: 7px 22px 7px 26px;
@@ -535,7 +540,7 @@ function registerLangSwitcher() {
 					appearance: none; -webkit-appearance: none;
 					font: inherit; font-size: 13px; line-height: 1;
 					color: var(--text-2, #cfcfd4);
-					background: var(--surface-2, rgba(255,255,255,.04));
+					background: var(--surface-2, #1c1c21);
 					border: 1px solid var(--border, rgba(255,255,255,.12));
 					border-radius: 8px;
 					padding: 7px 26px 7px 28px;
