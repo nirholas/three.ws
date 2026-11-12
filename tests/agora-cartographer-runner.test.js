@@ -48,7 +48,11 @@ describe('runCartographer', () => {
 			let b = '';
 			req.on('data', (c) => (b += c));
 			req.on('end', () => {
-				seen = { url: req.url, body: JSON.parse(b) };
+				// The runner composes first, then tries a best-effort permalink save;
+				// this test pins the compose request. The save gets no id back, so
+				// the deliverable (and proof) carries the plan alone.
+				const body = JSON.parse(b);
+				if (body.action === 'compose') seen = { url: req.url, body };
 				json(res, 200, { diorama: PLAN });
 			});
 		});
