@@ -118,7 +118,6 @@ Places to search, compare, version and install skills and plugins, from public i
 | [Claude Plugins Official](https://github.com/anthropics/claude-plugins-official) | Official, Anthropic-managed directory of high quality Claude Code plugins. | [repo](https://github.com/anthropics/claude-plugins-official) | active |
 | [claudeskills.info](https://claudeskills.info) | Marketplace to browse, discover and download Claude Code skills and agent skills. | - | active |
 | [ClawHub](https://clawhub.ai) | Skill and plugin registry for OpenClaw with vector search. | [repo](https://github.com/openclaw/clawhub) | active |
-| [HowAI](https://howai.build) | Skills directory for sites, slides, images and LaunchMotion motion: preview, then prompt, ZIP or CLI install for Claude Code, Codex and Cursor, free and Pro. | - | active |
 | [JFrog Skills Registry](https://docs.jfrog.com/ai-ml/docs/skills-registry) | Manage versioned skills in the JFrog AI Catalog using a coding agent or the JFrog CLI. | - | active |
 | [mdskills](https://www.mdskills.ai) | Free skill.md files, plugins and MCP servers for Claude Code, Cursor, Codex and other agents, installable in one command. | - | active |
 | [SkillHub](https://www.skillhub.club) | Search and compare agent skills for Claude Code, Codex, Gemini CLI, OpenCode and OpenClaw, with recommended skill sets. | - | active |

@@ -583,17 +583,6 @@
     "added": "2026-10-10"
   },
   {
-    "id": "howai",
-    "name": "HowAI",
-    "url": "https://howai.build",
-    "repo": null,
-    "category": "registries-and-marketplaces",
-    "chain": "none",
-    "description": "Skills directory for sites, slides, images and LaunchMotion motion: preview, then prompt, ZIP or CLI install for Claude Code, Codex and Cursor, free and Pro.",
-    "status": "active",
-    "added": "2026-11-08"
-  },
-  {
     "id": "jfrog-skills-registry",
     "name": "JFrog Skills Registry",
     "url": "https://docs.jfrog.com/ai-ml/docs/skills-registry",
