@@ -855,7 +855,7 @@
 		"sharp": "^0.35.5",
 		"simple-dropzone": "^0.8.3",
 		"ssh2": "^1.17.0",
-		"swiper": "^12.2.0",
+		"swiper": "^14.4.0",
 		"three": "^0.187.0",
 		"three-bvh-csg": "0.0.18",
 		"three-gpu-pathtracer": "0.0.28",
