@@ -29,6 +29,8 @@ const VENDORED = [
 	'test_gltf_meshopt.py',
 	'tracing.py',
 	'test_tracing.py',
+	'bake_raster.py',
+	'test_bake_raster.py',
 ];
 
 const WORKERS_DIR = 'workers';
