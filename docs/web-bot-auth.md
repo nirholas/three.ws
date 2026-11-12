@@ -33,8 +33,10 @@ The signing module is `api/_lib/web-bot-auth.js` with a byte-identical copy in `
 ## Operating it
 
 1. `node scripts/generate-web-bot-auth-key.mjs > key.pem` (private key on stdout, public JWK on stderr).
-2. Store the PEM in Secret Manager and expose it as `WEB_BOT_AUTH_PRIVATE_KEY` on `three-ws-api` and `agent-screen-pool` (`gcloud run services update ... --update-env-vars`, never `--set-env-vars`).
+2. Store the PEM in Secret Manager and mount it as `WEB_BOT_AUTH_PRIVATE_KEY` with `gcloud run services update <service> --region us-central1 --update-secrets=WEB_BOT_AUTH_PRIVATE_KEY=web-bot-auth-private-key:latest` (never `--set-env-vars` or `--set-secrets`, which replace the whole set). The runtime service account needs `roles/secretmanager.secretAccessor` on the secret.
 3. Verify: `curl -si https://three.ws/.well-known/http-message-signatures-directory`.
+
+**Production (since 2026-11-12):** the key lives in the Secret Manager secret `web-bot-auth-private-key` (version 1), readable by `three-ws@aerial-vehicle-466722-p5.iam.gserviceaccount.com`, and is mounted on `three-ws-api` from revision `three-ws-api-00533-zjh`. The published key id is `kYd4J5VUUD_UysEEQRjeokYQpDNg3SrfuYwEdDDaQu0`. `agent-screen-pool` is not deployed yet; mount the same secret on it with the command above when it is, so both surfaces sign with the one published key. To rotate, add a new secret version and redeploy; the directory and every signature follow the mounted key.
 
 With the variable unset, nothing is signed and the directory answers 404, so an unconfigured deploy never advertises a key it cannot sign with. A bad key value is treated the same as unset. Signing never throws into a fetch: an unsigned request beats a failed one.
 

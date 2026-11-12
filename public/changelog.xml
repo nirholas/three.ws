@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Agents draft learned skills again, and admit when memory is off</title>
+			<link>https://three.ws/settings/memory</link>
+			<guid isPermaLink="false">2026-11-12:Agents draft learned skills again, and admit when memory is off</guid>
+			<pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Skill drafts from multi-tool runs were silently failing: a reasoning model spent its whole budget thinking, and the database rejected learned skills after a later migration. Both are fixed, so drafts reach the review queue on /settings/memory again. With memory switched off, an agent now tells you it cannot remember instead of promising to.</description>
+		</item>
+		<item>
+			<title>Agents now identify themselves to the sites they fetch</title>
+			<link>https://three.ws/docs/web-bot-auth</link>
+			<guid isPermaLink="false">2026-11-12:Agents now identify themselves to the sites they fetch</guid>
+			<pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Pages fetched by agent tools now carry a Web Bot Auth signature, so sites can tell a three.ws agent from an anonymous scraper and let it through. The public key is published at three.ws/.well-known/http-message-signatures-directory, and the directory response is itself signed.</description>
+		</item>
+		<item>
 			<title>Context7, Hugging Face and Exa connect without a key</title>
 			<link>https://three.ws/mcp-integrations</link>
 			<guid isPermaLink="false">2026-11-12:Context7, Hugging Face and Exa connect without a key</guid>

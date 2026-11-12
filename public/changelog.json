@@ -1,11 +1,31 @@
 {
-	"generated_at": "2026-11-12T16:22:45.113Z",
+	"generated_at": "2026-11-12T16:41:48.743Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-12",
+			"type": "update",
+			"title": "Agents draft learned skills again, and admit when memory is off",
+			"summary": "Skill drafts from multi-tool runs were silently failing: a reasoning model spent its whole budget thinking, and the database rejected learned skills after a later migration. Both are fixed, so drafts reach the review queue on /settings/memory again. With memory switched off, an agent now tells you it cannot remember instead of promising to.",
+			"link": "/settings/memory",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-12",
+			"type": "update",
+			"title": "Agents now identify themselves to the sites they fetch",
+			"summary": "Pages fetched by agent tools now carry a Web Bot Auth signature, so sites can tell a three.ws agent from an anonymous scraper and let it through. The public key is published at three.ws/.well-known/http-message-signatures-directory, and the directory response is itself signed.",
+			"link": "/docs/web-bot-auth",
+			"tags": [
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-11-12",
 			"type": "update",

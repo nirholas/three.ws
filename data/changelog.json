@@ -10,6 +10,13 @@
 		},
 		{
 			"date": "2026-11-12",
+			"title": "Agents now identify themselves to the sites they fetch",
+			"summary": "Pages fetched by agent tools now carry a Web Bot Auth signature, so sites can tell a three.ws agent from an anonymous scraper and let it through. The public key is published at three.ws/.well-known/http-message-signatures-directory, and the directory response is itself signed.",
+			"tags": ["improvement"],
+			"link": "/docs/web-bot-auth"
+		},
+		{
+			"date": "2026-11-12",
 			"title": "Finished Coin Wars show up in the world ticker and on the chart screen",
 			"summary": "A finished war now adds a row to the activity ticker for everyone in the room, and a win for the community flashes a band on the chart-screen jumbotron. The result is reported once per match even when the portal poll, the return link and the feed all see it, and only this coin's wars are shown.",
 			"tags": [
