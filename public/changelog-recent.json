@@ -1,14 +1,34 @@
 {
-	"generated_at": "2026-11-11T19:04:29.403Z",
+	"generated_at": "2026-11-12T15:52:23.057Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4531,
+	"total": 4533,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-12",
+			"type": "update",
+			"title": "Onchain viewer recognizes the real SPL Memo v1 program",
+			"summary": "The /onchain viewer and the Solana Memo Media MCP listed SPL Memo v1 under an address that is not a valid Solana key, so a v1 memo that an RPC did not tag as spl-memo was skipped. Both now use the real program, Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo, and a test checks that every recognized memo program is a real 32-byte key.",
+			"link": "/onchain",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-12",
+			"type": "update",
+			"title": "three-ws/agent output tokens now cost $3 per million",
+			"summary": "The three-ws/agent model on /api/v1/chat/completions now charges $3.00 per million output tokens, up from $2.00. Input stays at $0.50 per million. The old output rate was below what our paid fallback model costs us, so a busy hour could sell those tokens at a loss. The new rate covers it with margin, and a test now fails if a model change would put the price below cost again. API keys, agent wallet funding and pay-per-request over x402 all use the same rate. Live prices are always at GET /api/v1/models.",
+			"link": "/docs/metered-router",
+			"tags": [
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-11-11",
 			"type": "launch",
@@ -1512,26 +1532,6 @@
 			"link": null,
 			"tags": [
 				"security"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Diorama worlds can be played as microgames",
-			"summary": "A world prompt can now name a goal (collect, reach, or survive). The world page shows Play this world, you walk your own avatar around the island with keys, a touch pad or taps, and the share sheet copies a play link that opens straight into the game.",
-			"link": "/diorama",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Drive builds for Android Automotive OS",
-			"summary": "The Android overlay now has an automotive product flavor that puts the same four-control Drive templates on a car's own screen through CarAppActivity. It compiles alongside the unchanged phone build; running it on a head unit is the remaining check.",
-			"link": null,
-			"tags": [
-				"feature"
 			]
 		}
 	]

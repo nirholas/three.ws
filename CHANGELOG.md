@@ -4,6 +4,11 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-11-12
+
+- **Onchain viewer recognizes the real SPL Memo v1 program**: The /onchain viewer and the Solana Memo Media MCP listed SPL Memo v1 under an address that is not a valid Solana key, so a v1 memo that an RPC did not tag as spl-memo was skipped. Both now use the real program, Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo, and a test checks that every recognized memo program is a real 32-byte key. (`/onchain`) `[fix]`
+- **three-ws/agent output tokens now cost $3 per million**: The three-ws/agent model on /api/v1/chat/completions now charges $3.00 per million output tokens, up from $2.00. Input stays at $0.50 per million. The old output rate was below what our paid fallback model costs us, so a busy hour could sell those tokens at a loss. The new rate covers it with margin, and a test now fails if a model change would put the price below cost again. API keys, agent wallet funding and pay-per-request over x402 all use the same rate. Live prices are always at GET /api/v1/models. (`/docs/metered-router`) `[improvement]`
+
 ## 2026-11-11
 
 - **Accessibility statement** (`/accessibility`): How accessible three.ws is: WCAG 2.2 AA conformance, how it is tested with axe, keyboard, the Orca screen reader, zoom and forced colours, the known limitations with workarounds, and how to report a barrier.
