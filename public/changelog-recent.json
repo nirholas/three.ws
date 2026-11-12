@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-12T15:52:23.057Z",
+	"generated_at": "2026-11-12T15:53:13.828Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4533,
+	"total": 4534,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-12",
+			"type": "update",
+			"title": "Every agent wallet is in every custody attestation again",
+			"summary": "The six-hourly custody snapshot read wallet balances one at a time and ran out of time partway through the fleet, so some epochs covered as few as 400 of 1,063 wallets and the owners of the rest had no inclusion proof to check on /proof that epoch. Balances are now read 100 accounts per call, which covers the whole fleet in seconds. The public /integrity page also stopped logging a console error on every load, and its attestation history table now scrolls cleanly on phones instead of running the columns together.",
+			"link": "/docs/custody",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-11-12",
 			"type": "update",
@@ -1522,16 +1532,6 @@
 			"link": "/docs/avatar-reconstruction",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Dependency security sweep: patched OG renderer, chat server and vendored fixes",
-			"summary": "Social share cards now render through a patched satori pipeline instead of an outdated bundled renderer. The self-hosted chat server ignores spoofed X-Forwarded-For and X-Real-IP headers. Vulnerable transitive packages (deepmerge, elliptic, bigint-buffer, lodash.set, minimatch, nanoid, helia) are pinned to patched releases or patched vendored copies, and the Qwen Plus brain runs on the maintained OpenAI-compatible route.",
-			"link": null,
-			"tags": [
-				"security"
 			]
 		}
 	]

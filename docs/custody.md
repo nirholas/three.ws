@@ -41,7 +41,7 @@ Every key recovery, withdrawal, spend, limit change, and freeze toggle is writte
 
 Every six hours, an attestation epoch runs:
 
-1. Every custodial wallet's **live mainnet balance** is read.
+1. Every custodial wallet's **live mainnet balance** is read, 100 accounts per RPC call, so the whole fleet (1,063 wallets on 2026-11-12) is covered in seconds. A wallet whose balance read fails is left out of that epoch rather than attested with a guessed balance, and is picked up again next epoch; the epoch's `wallet_count` says how many made it in.
 2. Each wallet becomes a leaf: agent, address, balance, and the current head of its custody event trail, hashed together.
 3. The leaves build a Merkle tree; the epoch and leaves are persisted.
 4. The root is anchored on Solana as a signed SPL-Memo transaction, when an attester key is configured and funded (see **Honest limits** below).
@@ -49,7 +49,7 @@ Every six hours, an attestation epoch runs:
 Two public surfaces:
 
 - **[/integrity](https://three.ws/integrity)** is the aggregate view, no sign-in: how many epochs are anchored of the total, the newest anchored epoch re-verified against the chain in your browser, the Merkle root, wallet count, total SOL and recent epochs. API: `GET /api/custody/integrity` and `GET /api/custody/anchor?epoch=latest`. When the latest epoch is not anchored the page says so in a banner instead of implying it is. The link from `/proof` only appears once at least one epoch is anchored.
-- **[/proof](https://three.ws/proof)** is your wallet's inclusion proof (owner-only, since it reveals a per-wallet balance). The page fetches your proof and then **re-verifies it in your browser** with an independent verifier: it recomputes your leaf hash from the public fields, walks the Merkle path, and checks the result against the epoch's published root. The prover and verifier share one hashing module, so they cannot silently drift. Where the epoch is anchored, that same root is what the on-chain memo commits to.
+- **[/proof](https://three.ws/proof)** is your wallet's inclusion proof (owner-only, since it reveals a per-wallet balance). The page fetches your proof and then **re-verifies it in your browser** with an independent verifier: it recomputes your leaf hash from the public fields, walks the Merkle path, and checks the result against the epoch's published root. The on-chain read goes to a public Solana RPC that accepts browser requests (publicnode), falling back to the same-origin `/api/solana-rpc` proxy; `api.mainnet-beta.solana.com` is not used because it rejects browser origins. The prover and verifier share one hashing module, so they cannot silently drift. Where the epoch is anchored, that same root is what the on-chain memo commits to.
 
 Epochs also run a reconciliation pass: any balance drop since the previous epoch must be explained by authorized withdraw/spend events (plus fee tolerance), or it's flagged. "No unexplained outflows" is a checked property, not a slogan.
 

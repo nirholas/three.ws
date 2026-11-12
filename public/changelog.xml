@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Every agent wallet is in every custody attestation again</title>
+			<link>https://three.ws/docs/custody</link>
+			<guid isPermaLink="false">2026-11-12:Every agent wallet is in every custody attestation again</guid>
+			<pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The six-hourly custody snapshot read wallet balances one at a time and ran out of time partway through the fleet, so some epochs covered as few as 400 of 1,063 wallets and the owners of the rest had no inclusion proof to check on /proof that epoch. Balances are now read 100 accounts per call, which covers the whole fleet in seconds. The public /integrity page also stopped logging a console error on every load, and its attestation history table now scrolls cleanly on phones instead of running the columns together.</description>
+		</item>
+		<item>
 			<title>Onchain viewer recognizes the real SPL Memo v1 program</title>
 			<link>https://three.ws/onchain</link>
 			<guid isPermaLink="false">2026-11-12:Onchain viewer recognizes the real SPL Memo v1 program</guid>
