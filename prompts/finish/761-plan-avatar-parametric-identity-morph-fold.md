@@ -130,6 +130,6 @@ Growing well past 306 sliders therefore needs the identity-morph fold described 
 ~~~~
 
 
-## Status (2026-11-04)
+## Status (2026-11-12, re-verified: fold, parametric-base, avatar-bake and bake-proportions suites pass, 33 tests)
 
 Shipped: `api/_lib/bake-morph-fold.js`, the `fold` option on `bakeAppearance`, `-f1` served-bake keys, `scripts/rebake-avatars.mjs` (dry run verified against the live avatar table), spec updated, test seen failing first and passing (fold sum within 1e-5, normals equal the reference recompute, 306 targets and 68 MB reduced to 0). Remaining and owner-owned: the rendered folded versus unfolded thumbnail pixel-error comparison (needs a GPU browser, swiftshader stalls here) and running `rebake-avatars.mjs --apply` against production storage.
