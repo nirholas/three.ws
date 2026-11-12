@@ -1907,6 +1907,17 @@
 			"powers": null
 		},
 		{
+			"id": "npm:hood402",
+			"kind": "npm",
+			"name": "hood402",
+			"area": "infrastructure",
+			"license": "SEE LICENSE IN LICENSE",
+			"repo": "https://github.com/nirholas/robinhood-chain-x402",
+			"funding": null,
+			"version": "0.1.1",
+			"powers": null
+		},
+		{
 			"id": "npm:i18n-iso-countries",
 			"kind": "npm",
 			"name": "i18n-iso-countries",
