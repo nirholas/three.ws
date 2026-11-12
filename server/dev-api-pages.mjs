@@ -95,6 +95,58 @@ export function devDirectoryIndexUrl(table, req) {
 }
 
 /**
+ * The redirect production answers a page URL with when a vercel.json status
+ * route matches it (`status` 3xx plus a `Location` header and no dest, e.g.
+ * `/embed` -> 301 `/studio`), else null. Vite dev has no route table of its
+ * own, so without this those URLs 404ed or fell through to the SPA shell.
+ *
+ * @param {{phase1Routes: object[]}} table
+ * @param {{url?: string, headers?: object}} req
+ * @returns {{status: number, location: string} | null}
+ */
+export function devRedirect(table, req) {
+	const url = new URL(req.url || '/', 'http://dev.local');
+	const p = url.pathname;
+	if (p.startsWith('/api/') || VITE_OWNED.test(p) || STATIC_EXT.test(p)) return null;
+	const r = resolvePhase1(table.phase1Routes, req, url);
+	if (r.terminal !== 'status' || r.status < 300 || r.status > 399) return null;
+	const key = Object.keys(r.headers).find((k) => k.toLowerCase() === 'location');
+	return key ? { status: r.status, location: r.headers[key] } : null;
+}
+
+/**
+ * The HTML file on disk that production serves for a page URL it rewrites to
+ * an .html dest (vercel.json `/cli/authorize` -> `/cli-authorize.html`), else
+ * null. The build flattens pages/*.html to the site root and copies public/
+ * as is, so a dest is looked for under pages/, then public/, then the root.
+ * Vite's hand-kept route map is consulted first; this is the fallback that
+ * keeps a page added only to vercel.json from 404ing in dev.
+ *
+ * @param {{phase1Routes: object[]}} table
+ * @param {string} root  absolute repo root
+ * @param {{url?: string, headers?: object}} req
+ * @returns {string | null}
+ */
+export function devHtmlPageFile(table, root, req) {
+	const url = new URL(req.url || '/', 'http://dev.local');
+	const p = url.pathname;
+	if (p.startsWith('/api/') || VITE_OWNED.test(p) || STATIC_EXT.test(p)) return null;
+	const r = resolvePhase1(table.phase1Routes, req, url);
+	if (r.terminal || !r.matched || !r.path.endsWith('.html') || r.path.startsWith('/api/')) return null;
+	const rel = r.path.replace(/^\/+/, '');
+	for (const dir of ['pages', 'public', '.']) {
+		const file = path.resolve(root, dir, rel);
+		if (!file.startsWith(root + path.sep)) continue;
+		try {
+			if (statSync(file).isFile()) return file;
+		} catch {
+			// not under this directory; try the next one
+		}
+	}
+	return null;
+}
+
+/**
  * The vercel.json route table, re-read whenever the file changes.
  *
  * @param {string} configPath
@@ -211,6 +263,13 @@ export function devApiPagesMiddleware({
 		if (req.method !== 'GET' && req.method !== 'HEAD') return next();
 		let route;
 		try {
+			const moved = devRedirect(table(), req);
+			if (moved) {
+				res.statusCode = moved.status;
+				res.setHeader('location', moved.location);
+				res.end();
+				return;
+			}
 			const dirUrl = devDirectoryIndexUrl(table(), req);
 			if (dirUrl) {
 				req.url = dirUrl;

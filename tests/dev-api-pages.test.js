@@ -6,9 +6,9 @@ import { describe, it, expect, vi } from 'vitest';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
-import { loadRouteTable } from '../server/route-resolve.mjs';
-import { devHandlerRoute, devApiPagesMiddleware, devDirectoryIndexUrl } from '../server/dev-api-pages.mjs';
-import { mkdtempSync } from 'node:fs';
+import { loadRouteTable, resolvePhase1 } from '../server/route-resolve.mjs';
+import { devHandlerRoute, devApiPagesMiddleware, devDirectoryIndexUrl, devHtmlPageFile, devRedirect } from '../server/dev-api-pages.mjs';
+import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
 import os from 'node:os';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -97,7 +97,86 @@ describe('devDirectoryIndexUrl', () => {
 	});
 });
 
+describe('devHtmlPageFile', () => {
+	// Production rewrites a page URL to an HTML file through vercel.json
+	// (/cli/authorize -> /cli-authorize.html). Vite's hand-kept route map missed
+	// some of them, so the dev server answered 404 for pages users get a 200 on
+	// (console sweep 2026-11-12: /cli/authorize, /apps/shopify, /partners/benefits).
+	const page = (url) => {
+		const f = devHtmlPageFile(table, root, { url, headers: { 'user-agent': BROWSER } });
+		return f && path.relative(root, f);
+	};
+
+	it('resolves a page production rewrites to an HTML file', () => {
+		expect(page('/cli/authorize')).toBe('pages/cli-authorize.html');
+		expect(page('/cli/authorize/')).toBe('pages/cli-authorize.html');
+		expect(page('/apps/shopify?shop=demo.myshopify.com')).toBe('pages/shopify-app.html');
+		expect(page('/apps/shopify/?shop=demo.myshopify.com&host=x')).toBe('pages/shopify-app.html');
+		expect(page('/partners/benefits')).toBe('pages/partner-benefits.html');
+	});
+
+	it('leaves handler routes, /api calls, Vite modules, static files and unrouted paths alone', () => {
+		expect(page('/sitemap.xml')).toBeNull();
+		expect(page('/api/explore')).toBeNull();
+		expect(page('/src/main.js')).toBeNull();
+		expect(page('/logo.png')).toBeNull();
+		expect(page('/no-such-page-anywhere')).toBeNull();
+	});
+
+	it('finds a file on disk for every listed page whose production rewrite targets HTML', () => {
+		const pages = JSON.parse(readFileSync(path.join(root, 'data/pages.json'), 'utf8'));
+		const missing = [];
+		for (const section of pages.sections) {
+			if (section.id === 'machine') continue;
+			for (const { path: p } of section.pages) {
+				if (/\.[a-z0-9]+$/i.test(p) || p.includes(':')) continue;
+				const r = resolvePhase1(table.phase1Routes, { headers: { 'user-agent': BROWSER } }, new URL(p, 'http://dev.local'));
+				if (r.terminal || !r.matched || !r.path.endsWith('.html')) continue;
+				const f = devHtmlPageFile(table, root, { url: p, headers: { 'user-agent': BROWSER } });
+				if (!f || !existsSync(f)) missing.push(`${p} -> ${r.path}`);
+			}
+		}
+		expect(missing).toEqual([]);
+	});
+});
+
+describe('devRedirect', () => {
+	// Production answers vercel.json status routes (`status` + `Location`, no
+	// dest) with that redirect; Vite dev used to ignore them and 404 instead.
+	const redirect = (url) => devRedirect(table, { url, headers: { 'user-agent': BROWSER } });
+
+	it('answers a vercel.json redirect route with its status and Location', () => {
+		expect(redirect('/embed')).toEqual({ status: 301, location: '/studio' });
+	});
+
+	// /apps/shopify is the embedded admin app: Shopify admin always opens it
+	// with ?shop=, and App Bridge throws "missing required configuration
+	// fields: shop" without it. A direct visit goes to the app's public page.
+	it('sends a direct /apps/shopify visit to the app docs and leaves the embedded load alone', () => {
+		expect(redirect('/apps/shopify')).toEqual({ status: 302, location: '/docs/shopify-app' });
+		expect(redirect('/apps/shopify/')).toEqual({ status: 302, location: '/docs/shopify-app' });
+		expect(redirect('/apps/shopify?shop=demo.myshopify.com')).toBeNull();
+	});
+
+	it('leaves rewrites, handler routes, /api calls and static files alone', () => {
+		expect(redirect('/cli/authorize')).toBeNull();
+		expect(redirect('/sitemap.xml')).toBeNull();
+		expect(redirect('/api/explore')).toBeNull();
+		expect(redirect('/logo.png')).toBeNull();
+	});
+});
+
 describe('devApiPagesMiddleware', () => {
+	it('answers a vercel.json redirect route itself', async () => {
+		const mw = devApiPagesMiddleware({ root, upstream: 'https://up.example', table: () => table, load: vi.fn(), hasDatabase: () => true });
+		const next = vi.fn();
+		const res = fakeRes();
+		await mw({ method: 'GET', url: '/apps/shopify', headers: {} }, res, next);
+		expect(next).not.toHaveBeenCalled();
+		expect(res.statusCode).toBe(302);
+		expect(res.headers.location).toBe('/docs/shopify-app');
+	});
+
 	it('runs the local handler with the rewrite query when a database is configured', async () => {
 		const handler = vi.fn((req, res) => res.status(200).send(`type=${req.query.type}`));
 		const load = vi.fn(async () => ({ default: handler }));

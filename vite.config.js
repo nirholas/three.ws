@@ -19,7 +19,16 @@ import { keepEntryExports } from './scripts/vite/keep-entry-exports.mjs';
 import { createCreationHeadRenderer, creationIdFromPath, apiCreationLoader } from './server/creation-head.mjs';
 import { isPlayPath, rewritePlayHead } from './server/play-head.mjs';
 import { presentDevRequestsAsSameSite } from './server/dev-proxy-origin.mjs';
-import { devApiPagesMiddleware, bumpModuleGeneration } from './server/dev-api-pages.mjs';
+import {
+	devApiPagesMiddleware,
+	bumpModuleGeneration,
+	devHtmlPageFile,
+	liveRouteTable,
+} from './server/dev-api-pages.mjs';
+
+// The production route table (vercel.json), re-read when it changes, for the
+// dev middleware's HTML-page fallback.
+const devRouteTable = liveRouteTable(resolve(__dirname, 'vercel.json'));
 
 // Dev parity for production's per-request <head> rewrite (server/seo-head.mjs).
 // Shared-shell routes serve one template file for hundreds of paths (/docs/* and
@@ -434,6 +443,16 @@ const appConfig = {
 				secure: true,
 				// The consent form POST is same-site guarded; see server/dev-proxy-origin.mjs.
 				configure: (proxy) => presentDevRequestsAsSameSite(proxy, DEV_API_PROXY),
+			},
+			// /releases/* (the desktop apps' release.json feeds and installers) is
+			// served by the production load balancer from gs://three-ws-desktop-releases
+			// (docs/ops/forge-desktop-release.md), not by the app or the repo, so it
+			// always goes to the production origin, even when /api points elsewhere.
+			// Without it /forge-desktop and /apps/desktop 404 their feed in dev.
+			'/releases/': {
+				target: 'https://three.ws',
+				changeOrigin: true,
+				secure: true,
 			},
 			// /scim/v2/* is the per-team SCIM 2.0 endpoint Microsoft Entra ID
 			// provisions against; vercel.json rewrites it to api/scim/v2.js. Vite
@@ -3010,6 +3029,11 @@ const appConfig = {
 							}
 						}
 					}
+					// Last resort before giving up: the page production serves for this
+					// URL through a vercel.json rewrite to an .html file. A page added only
+					// to vercel.json used to 404 here while production answered 200
+					// (/cli/authorize, /apps/shopify, /partners/benefits on 2026-11-12).
+					if (!filePath) filePath = devHtmlPageFile(devRouteTable(), root, req);
 					// /footer-bot.js — serve the Vite-processed src/footer-bot.js at a
 					// stable URL in dev so footer.js can load it without knowing the hash.
 					if (path === '/footer-bot.js') {
