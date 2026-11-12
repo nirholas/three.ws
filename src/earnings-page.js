@@ -385,7 +385,11 @@ async function ruleAction(card, act) {
 	if (act === 'edit') return openRuleForm(rule);
 	if (act === 'delete' && !confirm(`Delete "${rule.name}"? Its run history is deleted with it.`)) return;
 	state.busy.add(id);
-	card.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+	// Only the buttons disabled here are re-enabled afterwards: a preview renders
+	// its confirm button disabled when a destination is unavailable, and that
+	// state must survive this action finishing.
+	const held = [...card.querySelectorAll('button:not(:disabled)')];
+	held.forEach((b) => { b.disabled = true; });
 	try {
 		if (act === 'review') {
 			const res = await call(`/rules/${id}/preview`);
@@ -425,7 +429,7 @@ async function ruleAction(card, act) {
 		}
 	} finally {
 		state.busy.delete(id);
-		card.querySelectorAll('button').forEach((b) => { b.disabled = false; });
+		held.forEach((b) => { b.disabled = false; });
 	}
 }
 

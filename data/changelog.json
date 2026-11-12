@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-12",
+			"title": "A reinvest rule can no longer be confirmed while one of its destinations is missing",
+			"summary": "The confirm screen on /earnings already said when a rule could not be confirmed yet, for example when the platform deposit wallet for model credits was not configured or the agent had no coin on the rule's network, but the confirm button could still turn back on after a preview and the server accepted the click. The server now refuses to activate any rule whose confirmation table marks a destination unavailable, and the confirm button stays disabled until every destination is ready.",
+			"tags": ["fix"],
+			"link": "/earnings"
+		},
+		{
+			"date": "2026-11-12",
 			"title": "The Shopify app link and the Build leaderboard open without console errors",
 			"summary": "Opening /apps/shopify outside Shopify admin used to load the embedded app with no store attached, which threw an App Bridge error and left a blank shell. A direct visit now goes to the app's documentation page, while merchants opening it from their Shopify admin get the app exactly as before. Before the first Build round opens, /build/leaderboard now shows its \"No Build round yet\" state from a normal empty response instead of logging a failed request.",
 			"tags": ["fix"],

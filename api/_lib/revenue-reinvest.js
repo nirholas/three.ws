@@ -118,6 +118,8 @@ export async function deleteRule({ ruleId, userId }) {
 /**
  * The owner's explicit yes. `hash` must be the hash of the terms the owner was
  * shown; if the rule changed since, the confirm is refused and nothing activates.
+ * A rule with any destination the confirmation table marks unavailable is
+ * refused too, whatever the client sent.
  * Only periods that end after `active_from` are ever run, so confirming never
  * back-fills income earned before the owner said yes.
  */
@@ -125,6 +127,11 @@ export async function confirmRule({ ruleId, userId, hash }) {
 	const cur = await getRule(ruleId, userId);
 	const now = ruleView(cur);
 	if (!hash || hash !== now.hash) throw fail(409, 'rule_changed', 'The rule changed since you reviewed it. Review the terms again and confirm.');
+	const { confirmation } = await rulePreview({ ruleId, userId });
+	const missing = confirmation.filter((c) => !c.ready);
+	if (missing.length) {
+		throw fail(409, 'destination_unavailable', `This rule cannot be confirmed yet: no destination for ${missing.map((c) => `${c.label} (${c.recipient_label})`).join(', ')}.`);
+	}
 	const [row] = await sql`
 		update revenue_reinvest_rules set confirmed_hash = ${now.hash}, confirmed_at = now(), status = 'active',
 			active_from = coalesce(active_from, now()), paused_reason = null, consecutive_failures = 0, updated_at = now()
