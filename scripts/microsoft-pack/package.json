@@ -11,6 +11,7 @@
     "check": "node check-wording.mjs"
   },
   "dependencies": {
+    "jszip": "3.10.2",
     "pptxgenjs": "4.0.1"
   },
   "overrides": {
