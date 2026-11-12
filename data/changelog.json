@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-12",
+			"title": "Agents draft learned skills again, and admit when memory is off",
+			"summary": "Skill drafts from multi-tool runs were silently failing: a reasoning model spent its whole budget thinking, and the database rejected learned skills after a later migration. Both are fixed, so drafts reach the review queue on /settings/memory again. With memory switched off, an agent now tells you it cannot remember instead of promising to.",
+			"tags": ["fix"],
+			"link": "/settings/memory"
+		},
+		{
+			"date": "2026-11-12",
 			"title": "Finished Coin Wars show up in the world ticker and on the chart screen",
 			"summary": "A finished war now adds a row to the activity ticker for everyone in the room, and a win for the community flashes a band on the chart-screen jumbotron. The result is reported once per match even when the portal poll, the return link and the feed all see it, and only this coin's wars are shown.",
 			"tags": [

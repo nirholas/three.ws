@@ -23,7 +23,7 @@ A memory is true over an interval. Every row carries `valid_from` (when the fact
 
 ## Controls
 
-- **Let my agents learn** is the master switch. Off means no new memories, no profile lines and no skill drafts, and nothing saved is added to prompts. Existing data stays until you delete it, and you can still edit or delete it.
+- **Let my agents learn** is the master switch. Off means no new memories, no profile lines and no skill drafts, and nothing saved is added to prompts. Existing data stays until you delete it, and you can still edit or delete it. While it is off the agent is told that memory is off, so if you ask it to remember something it says so and points you here instead of promising to remember (`MEMORY_OFF_NOTE` in `api/_lib/agent-learning/runtime.js`).
 - **Draft skills from experience** turns skill drafting off on its own.
 - **Review cadence** (2 to 50 turns) sets how often an agent stops to decide what is worth remembering.
 - Deleting a line or memory is permanent after a six second undo window. Clearing the whole profile needs a confirmation.
