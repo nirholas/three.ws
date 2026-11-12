@@ -29,7 +29,7 @@
 		"deepmerge": "file:vendor/deepmerge",
 		"elliptic": "file:vendor/elliptic",
 		"ethers": "^6.16.0",
-		"eventsource": "^5.1.4",
+		"eventsource": "^5.1.5",
 		"express": "^5.2.1",
 		"livepeer": "3.5.0",
 		"nanoid": "file:vendor/nanoid",
