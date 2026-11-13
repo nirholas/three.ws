@@ -215,7 +215,7 @@ const readTools = [
 		title: 'Oracle engine stats',
 		endpoint: 'stats',
 		description:
-			'Read the engine\'s headline numbers: coins scored in 24 hours and all time, prime and strong counts, the win rate of its calls next to the market base rate, and how many agents are armed. Use this first when you need to judge how much to trust the signal today.',
+			'Read the engine\'s headline numbers: coins scored in 24 hours and all time, prime and strong counts, the win rate of its calls next to the market base rate, and how many agents are armed. Use this first when you need to judge how much to trust the signal today. When labels.status is \'degraded\' both rates are null: the outcome labeler could not judge most coins, so treat the track record as unknown for now, never as perfect.',
 		query: () => ({}),
 		subject: () => 'the engine stats',
 	}),

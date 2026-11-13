@@ -1091,10 +1091,16 @@ async function loadGlobalStats() {
 
 		// Call win rate: Lean/Strong/Prime calls only. Null until real calls
 		// resolve — show that honestly instead of substituting the market rate.
+		// When most outcome labels are unknown the API withholds both rates
+		// (labels.status 'degraded'); say so instead of a resolved count that
+		// would read as a perfect record.
+		const labelsDegraded = data.labels?.status === 'degraded';
 		set('#stWin', data.win_rate != null ? data.win_rate + '%' : '—');
-		set('#stWinSub', data.total_resolved
-			? `${(data.total_wins ?? 0).toLocaleString()} / ${data.total_resolved.toLocaleString()} calls resolved`
-			: 'no calls resolved yet');
+		set('#stWinSub', labelsDegraded
+			? 'outcome labels delayed, rate withheld'
+			: data.total_resolved
+				? `${(data.total_wins ?? 0).toLocaleString()} / ${data.total_resolved.toLocaleString()} calls resolved`
+				: 'no calls resolved yet');
 		const winEl = $('#stWin');
 		if (winEl) winEl.classList.toggle('up', data.win_rate != null && data.win_rate >= 50);
 
@@ -1106,9 +1112,11 @@ async function loadGlobalStats() {
 
 		// Market base rate: every scored launch — the baseline the calls must beat.
 		set('#stBase', data.market_base_rate != null ? data.market_base_rate + '%' : '—');
-		set('#stBaseSub', data.market_resolved
-			? `${(data.market_wins ?? 0).toLocaleString()} / ${data.market_resolved.toLocaleString()} launches`
-			: '');
+		set('#stBaseSub', labelsDegraded
+			? 'outcome labels delayed, rate withheld'
+			: data.market_resolved
+				? `${(data.market_wins ?? 0).toLocaleString()} / ${data.market_resolved.toLocaleString()} launches`
+				: '');
 
 		// Telegram signal feed: the button only exists when the deployment has a
 		// public signals channel configured, so it never renders a dead link.

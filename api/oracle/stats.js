@@ -24,6 +24,11 @@
  * A "win" is graduation, or a ≥2× ATH on a coin that did NOT rug — a coin that
  * spiked 2× and collapsed is not a win anyone could bank.
  *
+ *   labels { status, judged, unknown }
+ *       : outcome-label coverage. status 'degraded' means more than
+ *         LABEL_UNKNOWN_MAX_SHARE of scored coins could not be judged, and both
+ *         rates above are null because the judged remainder is a biased sample.
+ *
  *   open_actions   — oracle_watch_actions rows still open (not yet settled)
  *   agents_armed   — distinct agent_ids currently armed (armed = true)
  *   telegram_channel: public t.me URL of the Oracle signals channel, when
@@ -42,6 +47,16 @@ import { sql, isDbUnavailableError } from '../_lib/db.js';
 import { QUOTE_MINT_LIST } from '../_lib/quote-mints.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
+
+/**
+ * Above this share of 'unknown' outcome labels the win rates are withheld.
+ * The labeler can always judge a graduation from our own index, so when its
+ * live coin lookup fails the judged set shrinks to graduations alone and both
+ * rates read 100%. A healthy labeler leaves well under 1% unknown; past a
+ * fifth, the judged sample says more about which lookups succeeded than about
+ * the coins.
+ */
+const LABEL_UNKNOWN_MAX_SHARE = 0.2;
 
 /**
  * Per-query guard for the five independent summaries below. A statement-level
@@ -102,19 +117,23 @@ export default wrap(async (req, res) => {
 		// the tiers the oracle actually tells people to act on. Everything else it
 		// scored is the market baseline. Win = graduated OR (ath ≥ 2 AND not rugged);
 		// keep this definition in sync with backtest.js and wins.js.
+		// labels_unknown counts the coins the labeler could not judge, so the
+		// handler can tell a real sample from a survivorship one (see
+		// LABEL_UNKNOWN_MAX_SHARE).
 		sql`
 			select
-				count(*) filter (where c.tier in ('prime','strong','lean'))                as total_resolved,
+				count(*) filter (where c.tier in ('prime','strong','lean')
+					and (o.graduated or o.rugged or o.ath_multiple is not null))         as total_resolved,
 				count(*) filter (where c.tier in ('prime','strong','lean')
 					and (o.graduated or (o.ath_multiple >= 2 and not coalesce(o.rugged, false)))) as total_wins,
 				round((max(o.ath_multiple) filter (where c.tier in ('prime','strong','lean')))::numeric, 2) as best_ath,
-				count(*)                                                                    as market_resolved,
+				count(*) filter (where o.graduated or o.rugged or o.ath_multiple is not null) as market_resolved,
 				count(*) filter (where o.graduated or (o.ath_multiple >= 2 and not coalesce(o.rugged, false))) as market_wins,
-				round(max(o.ath_multiple)::numeric, 2)                                      as market_best_ath
+				round(max(o.ath_multiple)::numeric, 2)                                      as market_best_ath,
+				count(*) filter (where o.outcome = 'unknown')                               as labels_unknown
 			from oracle_conviction c
 			join pump_coin_outcomes o on o.mint = c.mint
 			where c.network = ${network}
-			  and (o.graduated or o.rugged or o.ath_multiple is not null)
 			  and c.mint <> all(${QUOTE_MINT_LIST}::text[])
 		`.catch(emptyOnStatementFault),
 
@@ -149,10 +168,13 @@ export default wrap(async (req, res) => {
 
 	const totalResolved  = Number(o.total_resolved)  || 0;
 	const totalWins      = Number(o.total_wins)      || 0;
-	const winRate        = totalResolved > 0 ? Math.round((totalWins / totalResolved) * 100) : null;
 	const marketResolved = Number(o.market_resolved) || 0;
 	const marketWins     = Number(o.market_wins)     || 0;
-	const marketBaseRate = marketResolved > 0 ? Math.round((marketWins / marketResolved) * 100) : null;
+	const labelsUnknown  = Number(o.labels_unknown)  || 0;
+	const labelTotal     = marketResolved + labelsUnknown;
+	const labelsDegraded = labelTotal > 0 && labelsUnknown / labelTotal > LABEL_UNKNOWN_MAX_SHARE;
+	const winRate        = !labelsDegraded && totalResolved > 0 ? Math.round((totalWins / totalResolved) * 100) : null;
+	const marketBaseRate = !labelsDegraded && marketResolved > 0 ? Math.round((marketWins / marketResolved) * 100) : null;
 
 	return json(res, 200, {
 		network,
@@ -169,6 +191,11 @@ export default wrap(async (req, res) => {
 		market_wins:      marketWins,
 		market_base_rate: marketBaseRate,
 		market_best_ath:  o.market_best_ath != null ? Number(o.market_best_ath) : null,
+		labels: {
+			status:  labelsDegraded ? 'degraded' : 'ok',
+			judged:  marketResolved,
+			unknown: labelsUnknown,
+		},
 		agents_armed:     Number(ar.agents_armed) || 0,
 		telegram_channel: telegramChannelUrl(),
 	}, {

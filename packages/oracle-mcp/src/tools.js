@@ -207,7 +207,7 @@ export const TOOLS = [
 	readTool({
 		name: 'oracle_stats',
 		title: 'Oracle engine stats',
-		description: 'Read the headline numbers: coins scored, prime and strong counts, the win rate of calls next to the market base rate, and agents armed. Use this first to judge how much to trust the signal today.',
+		description: 'Read the headline numbers: coins scored, prime and strong counts, the win rate of calls next to the market base rate, and agents armed. Use this first to judge how much to trust the signal today. When labels.status is \'degraded\' both rates are null: the outcome labeler could not judge most coins, so treat the track record as unknown for now, never as perfect.',
 		path: '/api/oracle/stats',
 		shape: () => ({}),
 		subject: () => 'the engine stats',

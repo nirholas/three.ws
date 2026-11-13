@@ -29856,7 +29856,7 @@
 		{
 			"name": "oracle_stats",
 			"title": "Oracle engine stats",
-			"description": "Read the engine's headline numbers: coins scored in 24 hours and all time, prime and strong counts, the win rate of its calls next to the market base rate, and how many agents are armed. Use this first when you need to judge how much to trust the signal today.",
+			"description": "Read the engine's headline numbers: coins scored in 24 hours and all time, prime and strong counts, the win rate of its calls next to the market base rate, and how many agents are armed. Use this first when you need to judge how much to trust the signal today. When labels.status is 'degraded' both rates are null: the outcome labeler could not judge most coins, so treat the track record as unknown for now, never as perfect.",
 			"whenToUse": "Use this first when you need to judge how much to trust the signal today.",
 			"server": {
 				"id": "mcp-oracle",
@@ -48738,7 +48738,7 @@
 		{
 			"name": "oracle_stats",
 			"title": "Oracle engine stats",
-			"description": "Read the headline numbers: coins scored, prime and strong counts, the win rate of calls next to the market base rate, and agents armed. Use this first to judge how much to trust the signal today.",
+			"description": "Read the headline numbers: coins scored, prime and strong counts, the win rate of calls next to the market base rate, and agents armed. Use this first to judge how much to trust the signal today. When labels.status is 'degraded' both rates are null: the outcome labeler could not judge most coins, so treat the track record as unknown for now, never as perfect.",
 			"whenToUse": "Use this first to judge how much to trust the signal today.",
 			"server": {
 				"id": "oracle-mcp",

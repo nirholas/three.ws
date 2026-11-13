@@ -13,6 +13,13 @@
 		},
 		{
 			"date": "2026-11-13",
+			"title": "Oracle stops showing a perfect win rate it could not actually measure",
+			"summary": "Oracle's outcome checker lost its main data source, so it could only confirm coins that graduated, and the Oracle page and the oracle_stats tool for AI agents showed a 100% win rate. They now hide the call win rate and the market base rate while most outcomes are unconfirmed, and say why, so nobody reads a gap in the data as a flawless record.",
+			"tags": ["fix"],
+			"link": "/oracle"
+		},
+		{
+			"date": "2026-11-13",
 			"title": "Choose who signs your agent's transactions, export its key encrypted, and see its balance over time",
 			"summary": "The new Custody tab in the agent wallet hub lets an owner pick who signs fund-moving transactions. Platform keeps today's behavior, where the server signs inside your spend policy. My wallet means the platform never signs: build routes called with signer \"external\" return an unsigned, simulated Solana transaction and a tx_id, your own wallet signs it, and POST /api/tx/submit checks the bytes match what was prepared before broadcasting and recording it in the custody ledger. Session key grants a delegate an on-chain USDC cap and an expiry, so the agent can act alone and a transfer over the cap is refused. Export key re-confirms your identity, seals the key so only your browser can open it, encrypts it to a passphrase that never leaves the page, shows it once, logs the export, and offers to rotate to a fresh key and sweep the funds. A balance history chart (24h, 7d, 30d) is filled by a new hourly snapshot job, and GET /api/me/wallet plus the get_private_wallet_balance, get_wallet_summaries and get_balance_history tools put your own linked wallet next to your agents'.",
 			"tags": [
