@@ -106,6 +106,34 @@ individual face that got worse**. A change can improve the mean while wrecking a
 subset of faces; the mean alone hides exactly the regression that matters. Exits
 non-zero when the mean did not improve, so it works as a gate.
 
+## Score the dense fit (GPU worker)
+
+The dense head fit (`dense_fit.py`, `DENSE_FIT=1`) only runs on the RTX image, so
+its acceptance runs against a deployed RTX service with the flag toggled between
+runs. `run_eval` writes `dense_fit`, `dense_fit_silhouette` and per-face `dense`
+outcomes from `/health` and the job, so a report always says which side it is.
+`robustness` and `detection_guard` take the same `--url` / `--key` and build every
+head through the worker (six jobs per face for robustness), so instability and the
+real-face band are measured on the head a job actually ships:
+
+```bash
+URL=https://avatar-reconstruction-rtx-93741856042.europe-west4.run.app
+SVC="avatar-reconstruction-rtx --region europe-west4 --project aerial-vehicle-466722-p5"
+
+gcloud run services update $SVC --update-env-vars DENSE_FIT=0
+python -m eval.run_eval --photos eval/refs --url $URL --out eval/reports/dense-off.json
+python -m eval.robustness --url $URL --out eval/reports/robust-dense-off.json
+python -m eval.detection_guard --url $URL --out eval/reports/guard-dense-off.json
+
+gcloud run services update $SVC --update-env-vars DENSE_FIT=1
+# ...the same three with -on, then:
+python -m eval.run_eval --compare eval/reports/dense-off.json eval/reports/dense-on.json
+```
+
+`--local` runs `run_eval` in-process instead (the dense fit on this machine's
+torch, CPU unless it has CUDA). That is a debugging aid only: the CPU fit takes
+minutes per face and exceeds the 20 s budget, so its numbers are not the worker's.
+
 ## Tune the morph against the score
 
 ```bash

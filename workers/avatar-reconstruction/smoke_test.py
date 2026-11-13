@@ -47,9 +47,9 @@ import numpy as np
 from PIL import Image
 
 import face_pipeline
+import recon_templates
 import glb_ops
 
-HERE = Path(__file__).parent
 
 # One face from the benchmark reference set, mirrored to the worker's own bucket
 # and publicly readable (eval/README.md). Deliberately a URL, not a bundled file:
@@ -80,10 +80,10 @@ def _morph_target_count(glb) -> int:
     return len(prim.targets or [])
 
 
-def _head_texture(glb) -> Image.Image:
-    tex = glb_ops.get_material_texture(glb, "Wolf3D_Skin")
+def _head_texture(glb, skin_material: str) -> Image.Image:
+    tex = glb_ops.get_material_texture(glb, skin_material)
     if tex is None:
-        raise AssertionError("Wolf3D_Skin texture missing from the GLB")
+        raise AssertionError(f"{skin_material} texture missing from the GLB")
     return tex.convert("RGB")
 
 
@@ -91,11 +91,14 @@ def main(argv: list[str]) -> int:
     source = _photo_source(argv)
     print(f"photo: {source[:90]}{'…' if len(source) > 90 else ''}")
 
-    template = glb_ops.load_glb((HERE / "templates" / "default.glb").read_bytes())
+    # The template RECON_TEMPLATE selects, shaped exactly as process() shapes
+    # it for the neutral body, so every comparison below isolates the photo.
+    spec = recon_templates.active()
+    template = recon_templates.load(spec, "neutral")
     tpl_positions, _, _ = glb_ops.get_head_mesh_data(template)
     tpl_targets = _morph_target_count(template)
-    tpl_texture = np.array(_head_texture(template), dtype=np.int16)
-    print(f"template: {len(tpl_positions)} head vertices, {tpl_targets} morph targets")
+    tpl_texture = np.array(_head_texture(template, spec.skin_material), dtype=np.int16)
+    print(f"template {spec.key}: {len(tpl_positions)} head vertices, {tpl_targets} morph targets")
 
     # ── 1. the core path ──────────────────────────────────────────────────────
     glb_bytes = face_pipeline.process("smoke", [source], "neutral")
@@ -130,7 +133,7 @@ def main(argv: list[str]) -> int:
     print(f"ok  rig intact (skinned head, {joint_count} joints)")
 
     # ── 5. the photo landed ───────────────────────────────────────────────────
-    texture = np.array(_head_texture(out), dtype=np.int16)
+    texture = np.array(_head_texture(out, spec.skin_material), dtype=np.int16)
     assert texture.shape == tpl_texture.shape, "skin texture changed size"
     changed = float(np.mean(np.abs(texture - tpl_texture) > 6))
     assert changed > 0.02, (

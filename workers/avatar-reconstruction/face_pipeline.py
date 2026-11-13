@@ -1,16 +1,20 @@
 """
-Selfie → Wolf3D GLB pipeline (Phase 1: face texture transfer).
+Selfie -> reconstruction-template GLB pipeline (face texture transfer and shape).
+
+The template is chosen by RECON_TEMPLATE (see recon_templates.py): the Wolf3D
+avatar or the owned parametric body, whose body_type is baked from sliders.
+Material names, tint strength and eye handling come from the template spec.
 
 Steps:
   1. Decode and select the best frontal photo.
   2. Background removal (rembg).
-  3. MediaPipe FaceLandmarker → 468 normalised (x, y) landmarks.
-  4. Load pre-computed UV map (face_uv_map.json).
-  5. TPS warp: map user's face into Wolf3D_Skin texture UV space.
+  3. MediaPipe FaceLandmarker -> 468 normalised (x, y) landmarks.
+  4. Load the template's pre-computed UV map.
+  5. TPS warp: map user's face into the skin texture's UV space.
   6. Composite warped face onto existing skin texture using face-oval alpha mask.
-  7. Extract dominant skin tone → tint the unmasked skin regions for consistency.
-  8. Extract dominant hair colour → tint Wolf3D_Hair texture.
-  9. Detect eye colour → adjust Wolf3D_Eye baseColorFactor.
+  7. Extract dominant skin tone -> tint the unmasked skin regions for consistency.
+  8. Extract dominant hair colour -> tint the hair texture (templates with hair).
+  9. Detect eye colour -> eye material colour, or the iris of the eye texture.
  10. Return modified GLB bytes.
 """
 
@@ -34,6 +38,7 @@ from scipy.interpolate import RBFInterpolator
 
 import glb_ops
 import face_geometry
+import recon_templates
 import dense_fit
 import face_projection
 import view_synthesis
@@ -69,8 +74,6 @@ class InputError(ValueError):
 # ── paths ──────────────────────────────────────────────────────────────────────
 
 HERE = Path(__file__).parent
-UV_MAP_PATH = HERE / "face_uv_map.json"
-TEMPLATES_DIR = HERE / "templates"
 
 # Phase 2: reshape the head to the person's actual face structure (not just paint
 # the texture). Default on; set GEOMETRY_MORPH=0 to fall back to texture-only.
@@ -95,16 +98,16 @@ MAX_MORPH_YAW_DEG = float(os.environ.get("MAX_MORPH_YAW_DEG", "35"))
 # fall back to warp-only skin, which is what shipped before this landed.
 PROJECTIVE_TEXTURE_ENABLED = os.environ.get("PROJECTIVE_TEXTURE", "1") != "0"
 
-_FACE_MAP: Optional[face_geometry.FaceMap] = None
-_FACE_MAP_LOADED = False
+# Loaded once per UV map file: RECON_TEMPLATE is read at call time, so a
+# process (a test, the eval) can switch templates without stale maps.
+_FACE_MAPS: dict[Path, Optional[face_geometry.FaceMap]] = {}
 
 
 def _get_face_map() -> Optional[face_geometry.FaceMap]:
-    global _FACE_MAP, _FACE_MAP_LOADED
-    if not _FACE_MAP_LOADED:
-        _FACE_MAP = face_geometry.FaceMap.load()
-        _FACE_MAP_LOADED = True
-    return _FACE_MAP
+    path = recon_templates.active().uv_map_path
+    if path not in _FACE_MAPS:
+        _FACE_MAPS[path] = face_geometry.FaceMap.load(path)
+    return _FACE_MAPS[path]
 
 # ── MediaPipe setup ────────────────────────────────────────────────────────────
 
@@ -119,23 +122,24 @@ _FACE_OVAL = [
 
 # ── UV map (loaded once at module import) ──────────────────────────────────────
 
-def _load_uv_map() -> dict:
-    if not UV_MAP_PATH.exists():
+def _load_uv_map(path: Path) -> dict:
+    if not path.exists():
         raise FileNotFoundError(
-            f"face_uv_map.json not found at {UV_MAP_PATH}. "
-            "Run precompute_uv.py during Docker build."
+            f"{path.name} not found at {path}. "
+            "Run precompute_uv.py for this template during the Docker build."
         )
-    return json.loads(UV_MAP_PATH.read_text())
+    return json.loads(path.read_text())
 
 
-_UV_MAP: Optional[dict] = None
+_UV_MAPS: dict[Path, dict] = {}
 
 
 def _get_uv_map() -> dict:
-    global _UV_MAP
-    if _UV_MAP is None:
-        _UV_MAP = _load_uv_map()
-    return _UV_MAP
+    """The active template's UV map (see recon_templates.active)."""
+    path = recon_templates.active().uv_map_path
+    if path not in _UV_MAPS:
+        _UV_MAPS[path] = _load_uv_map(path)
+    return _UV_MAPS[path]
 
 
 # ── image decoding ─────────────────────────────────────────────────────────────
@@ -464,7 +468,7 @@ def _warp_face_to_uv(
     uv_map: dict,
 ) -> tuple[Image.Image, np.ndarray]:
     """
-    Warp the user's face photo into Wolf3D_Skin UV texture space using TPS.
+    Warp the user's face photo into the skin texture's UV space using TPS.
 
     Returns:
         warped_face  — PIL Image (tex_w × tex_h, RGBA) with the face in UV space.
@@ -544,7 +548,7 @@ def _composite_face_onto_skin(
     face_mask_uv: np.ndarray,
 ) -> Image.Image:
     """
-    Alpha-composite the warped face onto the existing Wolf3D_Skin texture
+    Alpha-composite the warped face onto the template's existing skin texture
     using the face-oval mask.  Preserves neck/hand regions completely.
     """
     skin_arr = np.array(skin_tex.convert("RGB"), dtype=np.float32)
@@ -559,26 +563,36 @@ def _composite_face_onto_skin(
 
 def _load_template(body_type: str) -> bytes:
     """
-    Load the appropriate template GLB.
-    body_type: 'male' | 'female' | 'neutral' (default).
-
-    Only `default.glb` ships today, so every body_type resolves to it. A template
-    is not just any avatar: the whole pipeline addresses it by name (a
-    `Wolf3D_Head` mesh with the 52 ARKit blendshapes, and `Wolf3D_Skin` /
-    `Wolf3D_Hair` / `Wolf3D_Eye` materials), and `face_uv_map.json` is
-    precomputed against that exact mesh. A GLB without those, or with a different
-    head topology, cannot be added to this map without regenerating the UV map
-    for it.
+    The active template's GLB shaped for body_type ('male' | 'female' |
+    'neutral'), serialised. On the parametric template the three are one mesh
+    with different slider presets baked in; Wolf3D has a single body.
     """
-    candidates = {
-        "male":    TEMPLATES_DIR / "male.glb",
-        "female":  TEMPLATES_DIR / "female.glb",
-        "neutral": TEMPLATES_DIR / "default.glb",
-    }
-    path = candidates.get(body_type, TEMPLATES_DIR / "default.glb")
-    if not path.exists():
-        path = TEMPLATES_DIR / "default.glb"
-    return path.read_bytes()
+    return glb_ops.save_glb(recon_templates.load(recon_templates.active(), body_type))
+
+
+def _recolour_iris(eye_tex: Image.Image, iris_rgb: np.ndarray, iris: dict) -> Image.Image:
+    """
+    Recolour only the iris disc of a template eye texture toward the detected
+    eye colour, keeping its fibre and limbal-ring luminance and leaving the
+    sclera white (tinting the whole eye material would turn the whites brown).
+    `iris` is the template's layout: centre and radius in UV units.
+    """
+    arr = np.array(eye_tex.convert("RGB"), dtype=np.float32)
+    h, w = arr.shape[:2]
+    cu, cv = iris.get("centerUv", [0.5, 0.5])
+    radius = float(iris["radiusUv"])
+    pupil = float(iris.get("pupilRadiusUv", 0.0))
+    yy, xx = np.mgrid[0:h, 0:w]
+    r = np.hypot((xx + 0.5) / w - cu, (yy + 0.5) / h - cv)
+    edge = 1.5 / w
+    weight = np.clip((radius + edge - r) / (2 * edge), 0.0, 1.0)
+    weight *= np.clip((r - pupil + edge) / (2 * edge), 0.0, 1.0)  # keep the pupil black
+    region = weight > 0.5
+    lum = arr.mean(axis=2)
+    mean_lum = float(lum[region].mean()) if region.any() else 1.0
+    target = np.asarray(iris_rgb, dtype=np.float32)[None, None, :] * (lum / max(mean_lum, 1.0))[..., None]
+    out = arr * (1.0 - weight[..., None]) + np.clip(target, 0, 255) * weight[..., None]
+    return Image.fromarray(np.clip(out, 0, 255).astype(np.uint8))
 
 
 # ── main pipeline ──────────────────────────────────────────────────────────────
@@ -702,21 +716,21 @@ def process(
     fg_img = _remove_background(best_img)
     log.info("[%s] background removed (%.1fs)", job_id, time.time() - t0)
 
-    # 4. Load UV map.
+    # 4. Load the template's UV map.
+    spec = recon_templates.active()
     uv_map = _get_uv_map()
 
     # 5. Warp face into UV space.
     warped_face, face_mask_uv = _warp_face_to_uv(fg_img, landmarks, uv_map)
     log.info("[%s] face warped to UV space (%.1fs)", job_id, time.time() - t0)
 
-    # 6. Load template GLB.
-    glb_bytes = _load_template(body_type)
-    glb = glb_ops.load_glb(glb_bytes)
+    # 6. Load the template, shaped for body_type.
+    glb = recon_templates.load(spec, body_type)
 
     # 7. Get existing skin texture and composite.
-    skin_tex = glb_ops.get_material_texture(glb, "Wolf3D_Skin")
+    skin_tex = glb_ops.get_material_texture(glb, spec.skin_material)
     if skin_tex is None:
-        raise ValueError("Wolf3D_Skin material or texture not found in template GLB")
+        raise ValueError(f"{spec.skin_material} material or texture not found in template GLB")
 
     new_skin = _composite_face_onto_skin(skin_tex, warped_face, face_mask_uv)
     log.info("[%s] face composited onto skin texture (%.1fs)", job_id, time.time() - t0)
@@ -729,23 +743,30 @@ def process(
     # toward an average of themselves can only degrade the one region with true
     # photographic colour.
     skin_tone = _extract_skin_tone(img_arr, landmarks, img_w, img_h)
-    new_skin = _tint_texture(new_skin, skin_tone, strength=0.25, protect_mask=face_mask_uv)
+    new_skin = _tint_texture(new_skin, skin_tone, strength=spec.skin_tint_strength,
+                             protect_mask=face_mask_uv)
 
     # The skin texture is written after the geometry morph (step 10c), because
     # projective texturing needs the head's final shape to know where each texel
     # lands in the photo.
 
     # 9. Hair colour tint.
-    hair_colour = _extract_hair_colour(img_arr, landmarks, img_w, img_h)
-    hair_tex = glb_ops.get_material_texture(glb, "Wolf3D_Hair")
+    hair_tex = glb_ops.get_material_texture(glb, spec.hair_material) if spec.hair_material else None
     if hair_tex:
+        hair_colour = _extract_hair_colour(img_arr, landmarks, img_w, img_h)
         tinted_hair = _tint_texture(hair_tex, hair_colour, strength=0.6)
-        glb_ops.set_material_texture(glb, "Wolf3D_Hair", tinted_hair)
+        glb_ops.set_material_texture(glb, spec.hair_material, tinted_hair)
 
-    # 10. Eye colour — adjust baseColorFactor of Wolf3D_Eye material.
+    # 10. Eye colour: the whole eye material's base colour on Wolf3D, only the
+    # iris of the eye texture on templates that draw a sclera.
     eye_colour = _extract_eye_colour(img_arr, landmarks, img_w, img_h)
-    eye_rgb_norm = (eye_colour / 255.0).tolist()
-    glb_ops.set_material_base_color(glb, "Wolf3D_Eye", eye_rgb_norm + [1.0])
+    iris = glb_ops.template_info(glb).get("eyeIris")
+    eye_tex = glb_ops.get_material_texture(glb, spec.eye_material) if spec.eye_mode == "iris_texture" else None
+    if eye_tex is not None and iris:
+        glb_ops.set_material_texture(glb, spec.eye_material, _recolour_iris(eye_tex, eye_colour, iris))
+    else:
+        eye_rgb_norm = (eye_colour / 255.0).tolist()
+        glb_ops.set_material_base_color(glb, spec.eye_material, eye_rgb_norm + [1.0])
 
     # 10b. Geometry morph — reshape the head to the person's actual face structure
     # (face width, jaw, nose projection, brow), so the avatar reads as the same
@@ -864,7 +885,7 @@ def process(
             log.warning("[%s] projective texturing failed (%s) — keeping warp-only skin",
                         job_id, exc)
 
-    glb_ops.set_material_texture(glb, "Wolf3D_Skin", new_skin)
+    glb_ops.set_material_texture(glb, spec.skin_material, new_skin)
 
     # 11. Serialize.
     result = glb_ops.save_glb(glb)

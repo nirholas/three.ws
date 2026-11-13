@@ -41,6 +41,7 @@ from pydantic import BaseModel, Field
 
 import dense_fit
 import face_pipeline
+import recon_templates
 from worker_security import require_api_key, safe_error
 
 logging.basicConfig(
@@ -71,7 +72,10 @@ async def lifespan(app: FastAPI):
 
     _job_sem = asyncio.Semaphore(MAX_CONCURRENT)
 
-    # Warm up the UV map and template GLBs on startup (loads them into memory).
+    # Resolve RECON_TEMPLATE now so a typo fails the boot, not the first job,
+    # then warm the template's UV map into memory.
+    spec = recon_templates.active()
+    log.info("reconstruction template: %s (%s)", spec.key, spec.glb_path.name)
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(None, face_pipeline._get_uv_map)
     if dense_fit.enabled():
@@ -201,11 +205,13 @@ async def get_job(job_id: str, authorization: str = Header(...)) -> dict:
 
 @app.get("/health")
 async def health() -> dict:
-    uv_ready = (face_pipeline.HERE / "face_uv_map.json").exists()
+    spec = recon_templates.active()
+    uv_ready = spec.uv_map_path.exists() and spec.glb_path.exists()
     geometry_ready = face_pipeline.GEOMETRY_MORPH_ENABLED and face_pipeline._get_face_map() is not None
     return {
         "ok": True,
         "pipeline": "face_texture_transfer_v2" if geometry_ready else "face_texture_transfer_v1",
+        "template": spec.key,
         "model_loaded": uv_ready,
         "uv_map_ready": uv_ready,
         "geometry_morph": bool(geometry_ready),

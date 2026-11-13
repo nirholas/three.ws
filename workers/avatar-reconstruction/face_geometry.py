@@ -40,7 +40,6 @@ import numpy as np
 log = logging.getLogger("face_geometry")
 
 HERE = Path(__file__).parent
-FACE_MAP_PATH = HERE / "face_uv_map.json"
 
 # Landmarks that encode stable identity (bone/cartilage structure) rather than
 # transient expression. We deliberately exclude the eyeballs/irises (468-477),
@@ -76,7 +75,12 @@ class FaceMap:
         )
 
     @classmethod
-    def load(cls, path: Path = FACE_MAP_PATH) -> Optional["FaceMap"]:
+    def load(cls, path: Optional[Path] = None) -> Optional["FaceMap"]:
+        """The UV map of `path`, or of the active reconstruction template."""
+        if path is None:
+            import recon_templates
+
+            path = recon_templates.active().uv_map_path
         if not path.exists():
             return None
         data = json.loads(path.read_text())

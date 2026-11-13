@@ -224,6 +224,11 @@ def precompute(spec=None, glb_path: Path | None = None, out_path: Path | None = 
         if not anchors:
             raise ValueError(f"{glb_path.name} declares no face anchors; rebuild it with "
                              "scripts/build-reconstruction-template.mjs")
+        # The anchor fit already places the canonical face on the head, so the
+        # above-the-chin height cut is unnecessary, and on a head mesh that
+        # carries the neck it is wrong: its 10th-percentile height lands at the
+        # lower lip and the chin landmark snaps onto the mouth. Keep the front half.
+        face_mask = positions[:, 2] > np.median(positions[:, 2])
         # The TPS warp needs every landmark on ONE UV island, or it smears the
         # photo across the atlas. A full-head atlas puts the eyelid linings and
         # the mouth interior on islands of their own, right where the eye and
