@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-13T16:55:56.462Z",
+	"generated_at": "2026-11-13T17:06:54.475Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -58,6 +58,17 @@
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-11-13",
+			"type": "update",
+			"title": "Fewer Solana reads behind buybacks, token due diligence and agent reputation",
+			"summary": "Three background jobs were spending a large share of the platform's Solana read quota on answers that had not changed. The hourly buyback check now reads every coin's vault in a couple of batched calls instead of four reads per coin, token due-diligence reports reuse a token's launch and each holder's first purchase once they are known, and agent reputation scores are refreshed every 12 hours unless the agent is being viewed. Together that is roughly 120,000 fewer chain reads a day, which leaves more headroom for payments and live pages.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"infra"
 			]
 		},
 		{

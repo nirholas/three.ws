@@ -6,6 +6,7 @@
 - MCP tool: `token_due_diligence` (input `{ mint }`)
 - Token page: the "Holder due diligence" panel on `/three` renders the fields and the two-hop funding force graph
 - Cache: one report per mint for 300 seconds. Only successful reports are cached.
+- Shared reads: a mint's resolved launch (7 days), each holder's first receipt of the token (6 hours, keyed by launch slot) and wallet profiles (6 hours) are shared across every instance, so a recompute only reads holders and funders it has not seen. An unresolved, incomplete or empty answer is never shared.
 
 ## Method
 

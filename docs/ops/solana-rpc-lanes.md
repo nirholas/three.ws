@@ -583,6 +583,30 @@ figures above. The attempt cap alone should bring holders and security from abou
 provider calls per request back toward the 2.69 logical reads per request the 2026-11-04
 model counted.
 
+### Third round of source cuts (2026-11-13)
+
+A third pre-cut window (2026-11-12 17:00 to 2026-11-13 17:00 UTC, 93 instances,
+production still on `0d4c38210`) read 1,332,768 provider calls, 83,038 (5.9%) saved.
+The `rpc_lanes` health detail agreed: 1,330,689 calls/24h, top `/api/pump-fun-mcp`. The
+2026-11-12 deferred list was worked through at the source, each cut test-first:
+
+| Caller | Calls/24h before | What changed | Expected after |
+| --- | ---: | --- | ---: |
+| `/api/cron/run-buyback` | 45,290 (37,016 `getTokenAccountBalance` + 8,274 `getAccountInfo`) | Every one of the 2,333 runs that day was `skipped` on an empty vault (92 coins), each coin reading its curve and all three vaults one at a time. The sweep now reads every curve, then every buyback vault, in `getMultipleAccounts` batches of 100 (`api/_lib/pump-buyback-prefetch.js`) and records empty or below-threshold coins from that. A funded vault is still re-read fresh before any swap or burn, and a failed batch falls back to the per-coin read. Tests: `tests/pump-buyback-prefetch.test.js`, `tests/run-buyback-lease.test.js`. | about 2 to 4 logical calls per run, under 300/day |
+| `/api/crypto/due-diligence` | 72,434 `getSignaturesForAddress` | 67 requests in 12h over 16 mints cost about 540 calls each. Profiles were already shared, but every five-minute recompute re-paged the mint's launch and all twenty holders' first receipts. Both are now shared fleet-wide once complete (`cachedLaunch` 7 days, `cachedAcquisition` 6 hours, keyed by launch slot); unresolved, incomplete or empty answers are never shared. Tests: `tests/token-due-diligence.test.js`. | a repeat mint costs only new holders and funders |
+| `/api/cron/recompute-reputation` | 62,427 (43,283 `getTokenAccountsByOwner` + 19,144 `getBalance`) | The cron scored 40 agents every 10 minutes over 1,068 wallet agents, re-scoring each about every 4.4 hours at about 11 calls per score. `listStaleAgents` now skips current-version scores younger than `REPUTATION_RECOMPUTE_MIN_AGE_H` (default 12). A viewed agent still refreshes its durable score on view. Tests: `tests/reputation-recompute-floor.test.js`. | about 89 scores/h instead of 240, about 23k calls/day |
+
+Together these remove roughly 120k calls a day (about 9% of the window) on top of the
+2026-11-12 claims and sweep cuts and the attempt cap, none of which are live yet.
+Still uncut, in order: `/api/crypto/security` and `/holders` `getTokenLargestAccounts`
+(already shared; the residual is amplification the attempt cap addresses),
+`/api/cron/economy-reconcile` `getTransaction` (37,758) and `/api/agents/[id]`
+`getTokenAccountsByOwner` (30,294).
+
+**Verify after deploy:** the same 24h report against 1,332,768 total, with
+`/api/cron/run-buyback`, `/api/crypto/due-diligence` and `/api/cron/recompute-reputation`
+against the figures in this table.
+
 ## Knock-on effects to expect
 
 RPC starvation does not stay in the RPC layer:

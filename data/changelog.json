@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-13",
+			"title": "Fewer Solana reads behind buybacks, token due diligence and agent reputation",
+			"summary": "Three background jobs were spending a large share of the platform's Solana read quota on answers that had not changed. The hourly buyback check now reads every coin's vault in a couple of batched calls instead of four reads per coin, token due-diligence reports reuse a token's launch and each holder's first purchase once they are known, and agent reputation scores are refreshed every 12 hours unless the agent is being viewed. Together that is roughly 120,000 fewer chain reads a day, which leaves more headroom for payments and live pages.",
+			"tags": ["improvement", "infra"]
+		},
+		{
+			"date": "2026-11-13",
 			"title": "Marketplace and Discover cards load small WebP images, and Forge's starter prompts stop jumping",
 			"summary": "Avatar renders, maker posters and social cards were sent at full size into small card boxes. Every first-party image on three.ws now also has a display-sized WebP form, built once per image version and cached, and the Marketplace and Discover grids use it: a typical avatar card image drops from about 160 KB to under 3 KB, while the original file stays available for downloads, prints and exports. The 18,184 older Forge thumbnails that were still full-size PNGs are now 512 px WebP, after a fix to the background job that had been skipping them. On Forge, the starter prompts under the empty viewer no longer slide sideways when they change on load, and each one shows its full prompt on hover.",
 			"tags": ["improvement", "fix"],
