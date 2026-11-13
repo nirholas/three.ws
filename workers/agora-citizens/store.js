@@ -189,15 +189,21 @@ export function makeStore(cfg) {
 				identityLabel: info.identityLabel,
 				home: spec.home,
 			});
-			// Re-key: the citizen's previous on-chain agent is held by a signer this
-			// fleet lost, so the engine registered it at a new identity slot. Move the
-			// existing row onto the new PDA (keeping its id, so every past activity row
-			// stays attached) instead of inserting a second copy of the same citizen.
-			// Skipped when a row for the new PDA already exists (a later restart).
-			if (Array.isArray(info.rekeyFromPdas) && info.rekeyFromPdas.length) {
+			// Re-key: the citizen's previous on-chain agent is unusable, either held by
+			// a signer this fleet lost (the engine moved to a new identity slot) or
+			// living under an AgenC program the SDK no longer targets (a protocol
+			// redeploy moves every PDA even for the same agent id). Move the existing
+			// row onto the new PDA, keeping its id so every past activity row stays
+			// attached, instead of inserting a second copy of the same citizen. Matched
+			// by an orphaned PDA or by one of the citizen's own agent ids (canonical
+			// and earlier slots) on this cluster. Skipped once a row for the new PDA
+			// exists, so a restart is a no-op.
+			const priorPdas = Array.isArray(info.rekeyFromPdas) ? info.rekeyFromPdas : [];
+			const priorIds = Array.isArray(info.rekeyFromAgentIds) ? info.rekeyFromAgentIds : [];
+			if (priorPdas.length || priorIds.length) {
 				const rekeyMeta = JSON.stringify({
 					identitySlot: info.identitySlot ?? null,
-					rekeyedFrom: info.rekeyFromPdas,
+					rekeyedFrom: priorPdas,
 					rekeyedAt: new Date().toISOString(),
 				});
 				await db`
@@ -207,7 +213,13 @@ export function makeStore(cfg) {
 						meta = coalesce(meta, '{}'::jsonb) || ${rekeyMeta}::jsonb
 					where id = (
 						select id from agora_citizens
-						where agenc_agent_pda = any(${info.rekeyFromPdas}::text[])
+						where agenc_agent_pda is not null
+							and agenc_agent_pda <> ${info.agentPda}
+							and agenc_cluster = ${cfg.cluster}
+							and (
+								agenc_agent_pda = any(${priorPdas}::text[])
+								or agenc_agent_id = any(${priorIds}::text[])
+							)
 						order by last_active_at desc nulls last
 						limit 1
 					)
@@ -434,18 +446,38 @@ export function makeStore(cfg) {
 			}
 		},
 
-		/** Liveness heartbeat into the shared bot_heartbeat table. */
-		async heartbeat(meta) {
-			if (!sql) return;
+		/**
+		 * Take or renew the single-owner lease (lease.js) in bot_heartbeat. One
+		 * atomic upsert: it writes only when the row is new, already ours, or its
+		 * holder stopped renewing more than `ttlMs` ago. Doubles as the liveness
+		 * heartbeat. Resolves { held, holder, ageMs }. A failed write reports the
+		 * lease as still held by us (`held: true, error`): one Neon blip must not
+		 * stop a healthy fleet, and the TTL protects a real takeover.
+		 */
+		async acquireLease(key, instanceId, ttlMs, meta) {
+			if (!sql) return { held: true, holder: instanceId };
+			const body = JSON.stringify({ ...(meta || {}), instance: instanceId });
 			try {
-				await sql`
+				const won = await sql`
 					insert into bot_heartbeat (worker, mode, last_beat_at, meta)
-					values ('agora-citizens', ${cfg.cluster}, now(), ${JSON.stringify(meta || {})}::jsonb)
+					values (${key}, ${cfg.cluster}, now(), ${body}::jsonb)
 					on conflict (worker) do update
 					set mode = excluded.mode, last_beat_at = excluded.last_beat_at, meta = excluded.meta
+					where bot_heartbeat.meta->>'instance' = ${instanceId}
+						or bot_heartbeat.meta->>'instance' is null
+						or bot_heartbeat.last_beat_at < now() - make_interval(secs => ${ttlMs / 1000})
+					returning worker
 				`;
+				if (won.length) return { held: true, holder: instanceId };
+				const cur = await sql`
+					select meta->>'instance' as holder,
+						extract(epoch from (now() - last_beat_at)) * 1000 as age_ms
+					from bot_heartbeat where worker = ${key}
+				`;
+				return { held: false, holder: cur[0]?.holder || null, ageMs: Math.round(Number(cur[0]?.age_ms) || 0) };
 			} catch (err) {
-				log.warn('heartbeat write failed', { err: err?.message });
+				log.warn('lease write failed', { err: err?.message });
+				return { held: true, holder: instanceId, error: err?.message };
 			}
 		},
 	};

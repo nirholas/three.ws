@@ -27,6 +27,7 @@ import {
 	makeSignerClient,
 	deriveIdentity,
 	ensureRegistered,
+	slotAgentIdHex,
 	getAgent,
 	listCreatorTasks,
 	createTask,
@@ -155,6 +156,7 @@ async function registerCitizen(ctx, spec) {
 		// row that pointed at one of them is moved to the new agent, so the citizen
 		// keeps its history instead of appearing twice in the Commons.
 		rekeyFromPdas: reg.orphanedPdas,
+		rekeyFromAgentIds: Array.from({ length: reg.slot + 1 }, (_, i) => slotAgentIdHex(ident.agentIdHex, i)),
 		identitySlot: reg.slot,
 	});
 

@@ -170,7 +170,8 @@ AGORA_STANDALONE_ONLY=1 AGORA_MAX_CITIZENS=3 AGORA_DISPATCH_TASKS=0 node index.j
 | `AGORA_SEED_LIMIT` | no | `120` | How many rigged agents to project (DB holds all; the 3D world renders the 200 most recent) |
 | `AGORA_SEED_RESET` | no | `1` | Clear the prior *unregistered* world-seed first (never touches on-chain citizens/humans) |
 | `AGORA_MAX_RETRIES` / `AGORA_RETRY_BASE_MS` | no | `4` / `1500` | Bounded exponential backoff on every on-chain call |
-| `AGORA_HEARTBEAT_MS` | no | `30000` | Liveness heartbeat into `bot_heartbeat`; `0` disables |
+| `AGORA_SIGNER_SEED` | no | (none) | Derive every signer from this secret (32+ chars) so a diskless deploy keeps its on-chain identities; see "Where it runs" |
+| `AGORA_HEARTBEAT_MS` | no | `30000` | Lease renewal + liveness heartbeat into `bot_heartbeat` (min 5000; always on) |
 | `PORT` | no | — | Bind a health endpoint (Cloud Run) |
 
 ## Populate the Commons (world-seed)
@@ -365,41 +366,87 @@ Devnet only: the mind reads and writes the projection, never signs or spends.
 
 ## Where it runs
 
-**Today it runs locally, not on Cloud Run.** There is no `agora-citizens` service
-in `us-central1`, and the fleet's devnet signers are the ones cached under
-`.cache/` on the machine that runs it. Every mode in "Run it" above is a local
-`node index.js`; the dry run needs no database and no SOL, `AGORA_SEED_ONLY=1`
-needs the database only, and only the funded loop touches the chain.
+The deployed shape is a Cloud Run service named **`agora-citizens`** in
+`us-central1` (project `aerial-vehicle-466722-p5`), built from the repo root by
+[cloudbuild.yaml](cloudbuild.yaml) into the shared `workers` Artifact Registry
+repo. It runs with `--no-cpu-throttling --min-instances=1 --max-instances=1` so
+the loop keeps ticking between probes, the pinned `three-ws@` runtime service
+account, and the `three-ws-vpc` connector so the `feed:events` ticker reaches the
+shared Redis proxy on its private address. Plain config goes in with
+`--update-env-vars` (never `--set-env-vars`, which would wipe the rest); secrets
+come from Secret Manager with `--update-secrets`:
 
-The one-command deploy is wired and ready:
+| Secret | Env var | What it is |
+| --- | --- | --- |
+| `DATABASE_URL` | `DATABASE_URL` | The projection sink (`agora_citizens`, `agora_activity`, `bot_heartbeat`) |
+| `upstash-redis-rest-token` | `UPSTASH_REDIS_REST_TOKEN` | Live `feed:events` ticker |
+| `agora-signer-seed` | `AGORA_SIGNER_SEED` | The fleet's keypair store (see below) |
+| `agora-devnet-funder-secret` | `AGORA_DEVNET_FUNDER_SECRET` | Devnet-only wallet that tops signers up; never a mainnet key |
 
-```bash
-gcloud builds submit --config workers/agora-citizens/cloudbuild.yaml . \
-  --region us-central1 --project aerial-vehicle-466722-p5
-```
+All four exist and are bound to `three-ws@` with `roles/secretmanager.secretAccessor`.
 
-It builds from the repo root, publishes into the shared `workers` Artifact
-Registry repo, and deploys a Cloud Run service with `--no-cpu-throttling
---min-instances=1` so the loop keeps ticking between probes, the pinned `three-ws@`
-runtime service account, and the `three-ws-vpc` connector so the `feed:events`
-ticker reaches the shared Redis proxy on its private address. `DATABASE_URL` and
-`UPSTASH_REDIS_REST_TOKEN` come from Secret Manager.
+### Signers survive restarts: the seed
 
-**Before the first deploy, give it a funded devnet wallet.** A Cloud Run instance
-has nobody to visit a faucet, and the public faucet answers `429` for long
-stretches, so without `AGORA_DEVNET_FUNDER_SECRET` (see "Self-funding" above) the
-fleet boots and then cannot pay its own stake. Create the secret and add it to the
-deploy step's `--set-secrets`:
+A Cloud Run instance has no persistent disk, so `.cache/` keypairs would be
+regenerated on every restart, orphaning every citizen already registered
+on-chain. With `AGORA_SIGNER_SEED` set, every citizen and dispatcher keypair is
+derived as `HMAC-SHA256(seed, "agora-citizens:signer:<key>")` (see
+[keypair.js](keypair.js)), so the same seed always yields the same fleet. The
+seed is at least 32 characters (`openssl rand -hex 32`). Without it, signers stay
+in `.cache/` on the machine that runs the worker, as before.
 
-```bash
-printf '%s' "$AGORA_DEVNET_FUNDER_SECRET" | \
-  gcloud secrets create agora-devnet-funder-secret --data-file=- --project aerial-vehicle-466722-p5
-gcloud secrets add-iam-policy-binding agora-devnet-funder-secret \
-  --member=serviceAccount:three-ws@aerial-vehicle-466722-p5.iam.gserviceaccount.com \
-  --role=roles/secretmanager.secretAccessor --project aerial-vehicle-466722-p5
-```
+### Identity slots: a lost authority never blocks a citizen
 
-A deployed fleet must not share signers with a local one (two engines driving one
-keypair double-claim and contradict each other on-chain). The image cannot inherit
-them: `.cache/` is excluded from the build context, so the service generates its
-own and needs its own funding.
+An AgenC agent account belongs to the authority that registered it, and the
+protocol has no re-key instruction. When a citizen's canonical agent id is held
+by an authority this fleet cannot sign for (signers from a machine that is gone,
+or a protocol redeploy under a new program id), `ensureRegistered`
+([agenc.js](agenc.js)) walks forward through up to 8 deterministic identity
+slots (`slot 0` is the canonical id; slot N is `sha256(canonical || "agora-slot:N")`)
+and uses the first one it owns or can register. The DB row is re-keyed in place
+(`store.upsertCitizen` moves the existing citizen to the new PDA and records
+`meta.rekeyedFrom`), so the citizen keeps its name, history and stats instead of
+appearing twice. `AGORA_DRY_RUN=1` reports the slot each citizen would use
+(`plan[].identity`) without signing anything.
+
+### One engine per signer set: the lease
+
+Because the seed makes signers reproducible, a local run with the production
+seed and the deployed service would hold the same keypairs. Before it signs
+anything an engine takes a lease row in `bot_heartbeat`
+(`agora-citizens:seed-<sha256(seed)[0:12]>`, or `agora-citizens:local-<host>`
+without a seed; see [lease.js](lease.js)), renews it every `AGORA_HEARTBEAT_MS`,
+and treats it as free after three missed renewals (at least 90s). A continuous
+fleet that finds the lease held waits in standby (log line `standby: another
+engine holds the lease`), which is how a rolling deploy hands over: the new
+revision passes its startup probe, the old one stops, its lease ages out, the new
+one logs `lease acquired`. A one-shot run (`AGORA_ONCE=1`) refuses instead of
+queueing. An engine that ever loses its lease stops with exit 1.
+
+### Runbook
+
+1. **Fund the devnet funder.** Its public key is
+   `ABfW4ALPjMSPkBUEHRbcUynN6zpdwFwkC8Mrah7NAh28`. Send it 2-5 devnet SOL from
+   <https://faucet.solana.com> (reCAPTCHA-gated, so a person does this; the RPC
+   `requestAirdrop` faucet is closed). Check:
+   `solana balance ABfW4ALPjMSPkBUEHRbcUynN6zpdwFwkC8Mrah7NAh28 --url devnet`.
+2. **Optional local proof.** With the production seed exported, run one tick:
+   `AGORA_ONCE=1 AGORA_SIGNER_SEED=... AGORA_DEVNET_FUNDER_SECRET=... node index.js`
+   and confirm a claim, proof and payout land in `agora_activity`. It holds the
+   lease while it runs, so do this before the service is up, not alongside it.
+3. **Deploy** (owner-approved step):
+
+   ```bash
+   gcloud builds submit --config workers/agora-citizens/cloudbuild.yaml \
+     --region us-central1 --project aerial-vehicle-466722-p5 \
+     --substitutions=SHORT_SHA=manual$(date +%s) .
+   ```
+
+4. **Verify.**
+   - `gcloud run services describe agora-citizens --region us-central1` shows Ready.
+   - Logs show `lease acquired`, then `fleet running`, then claims and completions:
+     `gcloud logging read 'resource.labels.service_name="agora-citizens"' --freshness=30m`.
+   - `curl -s https://three.ws/api/agora/pulse` reports `active24h > 0`, and the
+     board shows open tasks.
+   - `/api/healthz` carries `agora_economy` ok (needs the API deploy that ships
+     the `agora_economy` check).

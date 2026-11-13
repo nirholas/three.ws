@@ -22,6 +22,7 @@ import { reconcileOnce } from './reconcile.js';
 import { MindKeeper } from './mind.js';
 import { llmComplete } from '../../api/_lib/llm.js';
 import { log } from './log.js';
+import { leaseKey, leaseRenewMs, leaseTtlMs, newInstanceId, takeLease } from './lease.js';
 
 // Reconcile cadence — re-read open postings from the chain and drop any that are
 // no longer open (claimed/cancelled/expired) off the board. Independent of ticks.
@@ -109,20 +110,26 @@ async function runForever(ctx) {
 		}
 	}, RECONCILE_MS);
 
-	let heartbeatTimer = null;
-	if (cfg.heartbeatMs) {
-		const beat = () =>
-			ctx.store.heartbeat({
-				cluster: cfg.cluster,
-				bootAt: BOOT_AT,
-				citizens: ctx.citizens.length,
-				dispatcher: !!ctx.dispatcher,
-			});
-		beat();
-		heartbeatTimer = setInterval(() => {
-			if (!draining) beat();
-		}, cfg.heartbeatMs);
-	}
+	// The heartbeat IS the lease renewal (lease.js). Losing the lease means another
+	// engine took these signers over after we stopped renewing (a stalled process,
+	// a partition): stop at once rather than double-drive them. Cloud Run restarts
+	// the instance, and it waits in standby until the lease is free again.
+	const lease = ctx.lease;
+	const beat = async () => {
+		const r = await lease.acquire({
+			cluster: cfg.cluster,
+			bootAt: BOOT_AT,
+			citizens: ctx.citizens.length,
+			dispatcher: !!ctx.dispatcher,
+		});
+		if (!r.held && !draining) {
+			log.error('lease lost: another engine now drives these signers; stopping', { holder: r.holder, key: lease.key });
+			shutdown('lease-lost', 1);
+		}
+	};
+	const heartbeatTimer = setInterval(() => {
+		if (!draining) beat().catch((err) => log.warn('lease renew error', { err: err?.message }));
+	}, leaseRenewMs(cfg));
 
 	// Slow-path mind: observe every projected activity, reflect and plan on its
 	// own timer. A model outage only skips a reflection; the world loop never waits.
@@ -140,7 +147,7 @@ async function runForever(ctx) {
 	for (const citizen of ctx.citizens) schedule(citizen);
 	log.info('fleet running', { citizens: ctx.citizens.length, tickBaseMs: cfg.tickBaseMs, jitterMs: cfg.tickJitterMs });
 
-	const shutdown = (signal) => {
+	function shutdown(signal, code = 0) {
 		if (draining) return;
 		draining = true;
 		log.info('shutdown', { signal });
@@ -148,11 +155,11 @@ async function runForever(ctx) {
 		clearInterval(supplyTimer);
 		clearInterval(reconcileTimer);
 		if (mindTimer) clearInterval(mindTimer);
-		if (heartbeatTimer) clearInterval(heartbeatTimer);
+		clearInterval(heartbeatTimer);
 		// Neon HTTP + Upstash REST are stateless — nothing to close. Give an
 		// in-flight tick a moment to land its projection writes.
-		setTimeout(() => process.exit(0), 2_000);
-	};
+		setTimeout(() => process.exit(code), 2_000);
+	}
 	process.on('SIGINT', () => shutdown('SIGINT'));
 	process.on('SIGTERM', () => shutdown('SIGTERM'));
 	process.on('unhandledRejection', (err) => log.error('unhandledRejection', { err: err?.message }));
@@ -189,11 +196,41 @@ async function main() {
 	}
 
 	startHealthServer();
+
+	// Single owner per signer set (lease.js): hold the lease before signing
+	// anything. The continuous fleet waits in standby while another engine holds
+	// it (a rolling deploy's old revision); a one-shot run refuses instead of
+	// queueing behind a live fleet.
+	const key = leaseKey(cfg);
+	const instanceId = newInstanceId();
+	const ttlMs = leaseTtlMs(cfg);
+	const acquire = (meta = { cluster: cfg.cluster, bootAt: BOOT_AT, phase: 'boot' }) =>
+		store.acquireLease(key, instanceId, ttlMs, meta);
+	let stopped = false;
+	const stopWaiting = () => {
+		stopped = true;
+	};
+	process.once('SIGTERM', stopWaiting);
+	process.once('SIGINT', stopWaiting);
+	const held = await takeLease({ acquire, intervalMs: 15_000, wait: !cfg.once, isStopped: () => stopped, log });
+	process.off('SIGTERM', stopWaiting);
+	process.off('SIGINT', stopWaiting);
+	if (!held) {
+		log.info('stopped while in standby', { key });
+		process.exit(0);
+	}
+	log.info('lease acquired', { key, instanceId, ttlMs });
+
 	const ctx = await bootFleet(cfg, store);
+	ctx.lease = { key, acquire };
 	_live = { citizens: ctx.citizens.length, dispatcher: !!ctx.dispatcher };
 
 	if (cfg.once) {
+		// Keep the lease fresh through a long one-shot tick so a fleet in standby
+		// cannot take these signers mid-run.
+		const renew = setInterval(() => acquire({ cluster: cfg.cluster, bootAt: BOOT_AT, phase: 'once' }), leaseRenewMs(cfg));
 		await runOnce(ctx);
+		clearInterval(renew);
 		setTimeout(() => process.exit(0), 1_000);
 		return;
 	}

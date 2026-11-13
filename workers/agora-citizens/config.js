@@ -173,7 +173,8 @@ export function loadConfig() {
 		maxRetries: Math.max(0, num('AGORA_MAX_RETRIES', 4)),
 		retryBaseMs: Math.max(200, num('AGORA_RETRY_BASE_MS', 1_500)),
 
-		// Liveness heartbeat into bot_heartbeat (shared ops visibility). 0 disables.
-		heartbeatMs: Math.max(0, num('AGORA_HEARTBEAT_MS', 30_000)),
+		// Lease renewal + liveness heartbeat into bot_heartbeat (lease.js). Always
+		// on: the single-owner lease depends on it, so 0 falls back to the default.
+		heartbeatMs: num('AGORA_HEARTBEAT_MS', 30_000) > 0 ? Math.max(5_000, num('AGORA_HEARTBEAT_MS', 30_000)) : 30_000,
 	};
 }
