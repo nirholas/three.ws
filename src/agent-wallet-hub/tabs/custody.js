@@ -555,10 +555,13 @@ registerWalletTab({
 			const fmtT = (t) => new Date(t).toLocaleString(undefined, state.range === '24h' ? { hour: 'numeric', minute: '2-digit' } : { month: 'short', day: 'numeric' });
 			return { pts, x, y, svg: `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Wallet value in US dollars over the last ${esc(state.range)}, from ${esc(formatUsd(pts[0].v) || '')} to ${esc(formatUsd(pts[pts.length - 1].v) || '')}" preserveAspectRatio="none">
 				<line class="ax" x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}"/>
-				<text class="tx" x="${L}" y="${H - 6}">${esc(fmtT(t0))}</text><text class="tx" x="${W - R}" y="${H - 6}" text-anchor="end">${esc(fmtT(t1))}</text>
+				${pts.length === 1
+					? `<text class="tx" x="${W / 2}" y="${H - 6}" text-anchor="middle">${esc(fmtT(t0))}</text>`
+					: `<text class="tx" x="${L}" y="${H - 6}">${esc(fmtT(t0))}</text><text class="tx" x="${W - R}" y="${H - 6}" text-anchor="end">${esc(fmtT(t1))}</text>`}
 				<line class="gd" x1="${L}" x2="${W - R}" y1="${T}" y2="${T}"/><line class="gd" x1="${L}" x2="${W - R}" y1="${H - B - F}" y2="${H - B - F}"/>
 				<text class="tx" x="${L}" y="${T - 6}">${esc(formatUsd(hi) || '')}</text><text class="tx" x="${L}" y="${H - B - 4}">${esc(formatUsd(lo) || '')}</text>
 				<path class="ln" d="${d}"/>
+				${pts.length === 1 ? `<circle class="dt" cx="${x(t0).toFixed(1)}" cy="${y(pts[0].v).toFixed(1)}" r="4"/>` : ''}
 				<g class="hv" hidden><line class="cr" y1="${T}" y2="${H - B}"/><circle class="dt" r="4"/></g>
 			</svg>` };
 		}
@@ -578,7 +581,9 @@ registerWalletTab({
 				const s = h.summary;
 				const sign = s.change_usd > 0 ? '+' : '';
 				body = `<div class="awh-cu-stats"><div><strong>${esc(formatUsd(h.points.filter((p) => p.usd_total != null).pop().usd_total) || 'n/a')}</strong>Latest value</div>
-					<div><strong>${s.change_usd == null ? 'n/a' : `${sign}${esc(formatUsd(s.change_usd) || '')}`}</strong>${s.change_pct == null ? 'Change' : `Change (${sign}${esc(s.change_pct.toFixed(2))}%)`}</div>
+					<div>${s.count < 2
+						? '<strong>n/a</strong>Change, from the next snapshot'
+						: `<strong>${s.change_usd == null ? 'n/a' : `${sign}${esc(formatUsd(s.change_usd) || '')}`}</strong>${s.change_pct == null ? 'Change' : `Change (${sign}${esc(s.change_pct.toFixed(2))}%)`}`}</div>
 					<div><strong>${esc(String(s.count))}</strong>Snapshots (${esc(h.network)})</div></div>
 					<div class="awh-cu-chart" tabindex="0" aria-describedby="awh-cu-read">${chart.svg}</div>
 					<div class="awh-cu-read" id="awh-cu-read" aria-live="polite">Hover or use the arrow keys to read a point.</div>`;
