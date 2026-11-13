@@ -11,10 +11,14 @@ import { dirname, join } from 'node:path';
 import {
 	normalizeLaunch, normalizeCurveTrade, normalizeUniswapSwap, normalizeGraduation,
 } from '../src/normalize.js';
+import { parseMintLogs, launchFromMint } from '../src/mints.js';
+import { devAllocation, devStatus } from '../src/reputation.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const tradedFixture = JSON.parse(readFileSync(join(__dirname, 'fixtures/traded-logs.json'), 'utf8'));
 const launchFixture = JSON.parse(readFileSync(join(__dirname, 'fixtures/launch-swap-logs.json'), 'utf8'));
+// One real launch per observed venue (scripts/capture-venue-fixtures.mjs).
+const venueFixture = JSON.parse(readFileSync(join(__dirname, 'fixtures/venue-launches.json'), 'utf8'));
 
 const bi = (v) => BigInt(v);
 
@@ -160,3 +164,34 @@ test('normalizeUniswapSwap: USDG quote uses 1:1 USD, no ETH price dependency', (
 	assert.equal(out.quote_symbol, 'USDG');
 	assert.ok(out.usd_amount > 0); // resolved without any ETH price
 });
+
+// Every venue observed on chain: the real mint log and transaction become a
+// launch record carrying the venue, the deployer record and the dev-sold flag.
+for (const c of venueFixture.launches) {
+	test(`normalizeLaunch: real ${c.venue} mint log → launch with venue, deployer and dev-sold flag`, () => {
+		const [mint] = parseMintLogs([c.mintLog]);
+		const launch = launchFromMint(mint, { ...c.tx, blockNumber: bi(c.tx.blockNumber) });
+		const allocation = devAllocation(c.transferLogs, launch.token, launch.creator);
+		const dev = devStatus(allocation, 0n);
+		const deployer = { prior_launches: 3, prior_dev_exits: 1, inspected: 3, window_blocks: 850_000 };
+		const out = normalizeLaunch({ launch, venue: launch.venue, dev, deployer, name: 'Venue Coin', symbol: 'VEN', ethUsd: 3000, atMs: 1_800_000_000_000 });
+
+		assert.equal(out.chain_id, 4663);
+		assert.equal(out.launchpad, c.venue);
+		assert.equal(out.venue.id, c.venue);
+		assert.equal(out.venue.address, c.tx.to.toLowerCase());
+		assert.ok(out.venue.label.length > 0);
+		assert.equal(out.mint, c.mintLog.address);
+		assert.equal(out.creator, c.tx.from);
+		assert.equal(out.signature, c.tx.hash);
+		assert.equal(out.block_number, Number(bi(c.mintLog.blockNumber)));
+		// venue launches are found from the mint log, which carries no buy amount
+		assert.equal(out.initial_buy_native, null);
+		assert.equal(out.initial_buy_usd, null);
+		assert.deepEqual(out.deployer, { address: c.tx.from, ...deployer });
+		assert.equal(out.dev_sold, allocation > 0n ? true : null);
+		assert.equal(out.dev_sold_pct, allocation > 0n ? 100 : null);
+		assert.deepEqual(out.flags, allocation > 0n ? ['dev_sold', 'prior_dev_exit'] : ['prior_dev_exit']);
+		assert.equal(out.explorer_tx_url, `https://robinhoodchain.blockscout.com/tx/${c.tx.hash}`);
+	});
+}

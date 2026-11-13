@@ -12,7 +12,6 @@ import { dirname, join } from 'node:path';
 import { parseMintLogs, launchFromMint, getFirstMints, launchesFromMints, TRANSFER_TOPIC } from '../src/mints.js';
 import { venueForCall, listVenues, venueLabel } from '../src/venues.js';
 import { devAllocation, devStatus, riskFlags, createReputation, FLAG_RULES } from '../src/reputation.js';
-import { normalizeLaunch } from '../src/normalize.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const fx = JSON.parse(readFileSync(join(__dirname, 'fixtures/venue-launches.json'), 'utf8'));
@@ -34,22 +33,6 @@ for (const c of fx.launches) {
 		assert.equal(launch.venue.address, c.tx.to.toLowerCase());
 	});
 
-	test(`${c.venue}: normalizeLaunch carries venue, dev status and flags`, () => {
-		const [mint] = parseMintLogs([c.mintLog]);
-		const launch = launchFromMint(mint, txOf(c));
-		const allocation = devAllocation(c.transferLogs, launch.token, launch.creator);
-		const dev = devStatus(allocation, 0n);
-		const out = normalizeLaunch({
-			launch, venue: launch.venue, dev,
-			deployer: { prior_launches: 0, prior_dev_exits: 0, inspected: 0, window_blocks: 1000 },
-		});
-		assert.equal(out.venue.id, c.venue);
-		assert.equal(out.mint, c.mintLog.address);
-		assert.equal(out.signature, c.tx.hash);
-		assert.equal(out.dev_sold, allocation > 0n ? true : null);
-		assert.deepEqual(out.flags, allocation > 0n ? ['dev_sold'] : []);
-		assert.equal(out.deployer.address, c.tx.from);
-	});
 }
 
 test('parseMintLogs drops ERC-721 mints (four topics, no data) and keeps the earliest mint per token', () => {

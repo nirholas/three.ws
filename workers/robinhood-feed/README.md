@@ -194,7 +194,8 @@ npm run smoke:live  # online: the real chain end to end (read-only, ~20s)
 because a launchpad is quiet:
 
 - `tests/normalize.test.js` runs the pure normalizer against real captured logs
-  (below).
+  (below), including one launch per observed venue with its venue, deployer
+  record and dev-sold flag.
 - `tests/rpc.test.js` pins the transient-error classifier, including the
   public RPC's `-32602` load-shed response.
 - `tests/server.test.js` is the core-path smoke test: real fixture logs go
@@ -218,8 +219,16 @@ and committed as fixtures (`tests/fixtures/*.json`) — an Odyssey `Traded` log,
 a historical NOXA `TokenLaunched` log, an Odyssey `TokenCreated` log, a Uniswap v3
 `Swap` log on the resulting pool, and one real launch per discovered venue
 (`tests/fixtures/venue-launches.json`, captured by
-`node scripts/capture-venue-fixtures.mjs`). No mocks: every asserted value traces back to
-a real transaction hash. Captured with:
+`node scripts/capture-venue-fixtures.mjs [blocks] [--fresh]`). No mocks: every asserted value traces back to
+a real transaction hash.
+
+The venue capture keeps every venue already in the fixture file and only adds
+venues it has not seen, so a quiet venue is picked up later by widening the
+window (`node scripts/capture-venue-fixtures.mjs 850000` covers about 24 hours)
+without losing the earlier captures; `--fresh` recaptures all of them.
+`tests/capture-fixtures.test.js` replays the committed captures through the
+capture function so the script cannot silently break again. The remaining
+fixtures were captured with:
 
 ```js
 import { createHoodClient, ODYSSEY_ADDRESSES, NOXA_ADDRESSES,
