@@ -666,14 +666,27 @@ def render_preview(anny, af, shapes, out_dir):
     colors = [(0.85, 0.66, 0.55)] * 1 + [(0.95, 0.95, 0.95)] * 2 + [(0.98, 0.96, 0.9)] * 2 + [(0.8, 0.35, 0.35)]
     parts = [tris] + extra
     centre = apos[af["head"]].mean(0)
-    names = ["neutral", "jawOpen", "eyeBlinkLeft", "mouthSmileLeft", "mouthFunnel", "eyeLookUpLeft", "browInnerUp", "tongueOut", "mouthPucker", "mouthClose"]
+    names = [
+        "neutral",
+        "jawOpen",
+        "eyeBlinkLeft",
+        "mouthSmileLeft+mouthSmileRight",
+        "mouthFunnel",
+        "eyeLookUpLeft+eyeLookUpRight",
+        "browInnerUp",
+        "tongueOut",
+        "mouthPucker",
+        "jawOpen*0.9+mouthClose*0.9+mouthPressLeft*0.4+mouthPressRight*0.4",
+    ]
     size = 360
     tiles = []
     for name in names:
         p = apos.copy()
         if name != "neutral":
-            for v, d in shapes[name].items():
-                p[v] = p[v] + d
+            for term in name.split("+"):
+                shape, _, w = term.partition("*")
+                for v, d in shapes[shape].items():
+                    p[v] = p[v] + d * float(w or 1)
         row = []
         for yaw in (0.0, 35.0):
             c, s_ = np.cos(np.radians(yaw)), np.sin(np.radians(yaw))
@@ -714,7 +727,9 @@ def render_preview(anny, af, shapes, out_dir):
     grid = np.concatenate([np.concatenate(tiles[i:i + 2], 1) for i in range(0, len(tiles), 2)], 0)
     out_dir.mkdir(parents=True, exist_ok=True)
     Image.fromarray((grid * 255).astype(np.uint8)).save(out_dir / "expressions.png")
-    print(f"  preview: {out_dir / 'expressions.png'} ({', '.join(names)})")
+    print(f"  preview: {out_dir / 'expressions.png'}")
+    for k, name in enumerate(names):
+        print(f"    row {k // 2 + 1} {'left' if k % 2 == 0 else 'right'}: {name}")
 
 
 def main() -> int:
