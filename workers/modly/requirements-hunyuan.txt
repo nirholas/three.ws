@@ -1,7 +1,7 @@
 # Hunyuan3D-2mini Turbo extension venv
 # (/opt/modly-extensions/hunyuan3d-mini-turbo/venv). Mirrors the package set of
-# modly-hunyuan3d-mini-turbo-extension's setup.py, pinned. torch 2.6.0 +
-# torchvision 0.21.0 (cu124) install first in the Dockerfile; hy3dgen installs
+# modly-hunyuan3d-mini-turbo-extension's setup.py, pinned. torch 2.7.0 +
+# torchvision 0.22.0 (cu126) install first in the Dockerfile; hy3dgen installs
 # from a pinned Tencent/Hunyuan3D-2 commit with --no-deps (shape pipeline only:
 # the paint pipeline is never invoked, see README.md).
 diffusers==0.38.0

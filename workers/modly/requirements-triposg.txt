@@ -1,6 +1,6 @@
 # TripoSG extension venv (/opt/modly-extensions/triposg/venv). Mirrors the
-# package set of modly-triposg-extension's setup.py, pinned. torch 2.6.0 +
-# torchvision 0.21.0 (cu124) install first in the Dockerfile; diso compiles
+# package set of modly-triposg-extension's setup.py, pinned. torch 2.7.0 +
+# torchvision 0.22.0 (cu126) install first in the Dockerfile; diso compiles
 # from a pinned commit and the `triposg` source package is copied from a pinned
 # TripoSG commit, neither of which comes from this file.
 # diffusers/transformers/accelerate/peft/huggingface_hub are the versions proven

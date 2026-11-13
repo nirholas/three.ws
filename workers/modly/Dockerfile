@@ -6,7 +6,7 @@
 #     moving `main` can never change what a rebuild serves.
 #   * Each extension gets the venv Modly's own installer would build (its
 #     setup.py), translated into pinned pip installs. Both venvs share the one
-#     torch 2.6.0 + cu124 install in the system interpreter (--system-site-packages)
+#     torch 2.7.0 + cu126 install in the system interpreter (--system-site-packages)
 #     instead of carrying two 5 GB copies.
 #   * CUDA 12.4 *devel* base: nvcc compiles diso (TripoSG's DiffDMC decoder) from
 #     a pinned commit. TORCH_CUDA_ARCH_LIST defaults to 8.9 (L4).
@@ -77,7 +77,7 @@ COPY --from=gltfpack /usr/local/bin/gltfpack /usr/local/bin/gltfpack
 
 # 1. Torch, once, in the system interpreter. Both extension venvs see it through
 # --system-site-packages; the host (Modly + the front) never imports it.
-RUN pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124
+RUN pip install torch==2.7.0 torchvision==0.22.0 --index-url https://download.pytorch.org/whl/cu126
 
 # 2. Host: Modly's FastAPI backend and the three.ws front, every line pinned.
 COPY requirements-host.txt /tmp/requirements-host.txt
