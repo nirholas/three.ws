@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-13T15:34:30.546Z",
+	"generated_at": "2026-11-13T15:47:45.068Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4563,
+	"total": 4564,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -72,6 +72,17 @@
 			"tags": [
 				"feature",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-13",
+			"type": "update",
+			"title": "Marketplace and Discover cards load small WebP images, and Forge's starter prompts stop jumping",
+			"summary": "Avatar renders, maker posters and social cards were sent at full size into small card boxes. Every first-party image on three.ws now also has a display-sized WebP form, built once per image version and cached, and the Marketplace and Discover grids use it: a typical avatar card image drops from about 160 KB to under 3 KB, while the original file stays available for downloads, prints and exports. The 18,184 older Forge thumbnails that were still full-size PNGs are now 512 px WebP, after a fix to the background job that had been skipping them. On Forge, the starter prompts under the empty viewer no longer slide sideways when they change on load, and each one shows its full prompt on hover.",
+			"link": "/marketplace",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{
@@ -1517,16 +1528,6 @@
 			"tags": [
 				"security",
 				"infra"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "$THREE purchases and Premium pass payments build correctly for the Token-2022 mint",
-			"summary": "$THREE is a Token-2022 token, and several Solana payment builders were deriving token accounts under the older token program, which produces a transfer the network rejects. Skill purchases, agent purchases, subscriptions and the Premium data pass now read the token program from the mint and create any missing $THREE account in the same transaction. A new script simulates both the gasless purchase and the Premium payment for a real holder on mainnet without signing or sending anything, and both pass.",
-			"link": "/docs/x402",
-			"tags": [
-				"fix"
 			]
 		}
 	]

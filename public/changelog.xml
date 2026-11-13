@@ -55,6 +55,14 @@
 			<description>The governance check that screens agent messages, new agent identities and autonomous sends now runs on real IBM Granite Guardian in production. Until today it answered with a not-configured error and the identity check let every agent through unscreened. We deployed IBM's open-weight Granite Guardian 3.3 model on a dedicated Cloud Run GPU and connected the site to it. In a live check, a friendly greeting came back allowed and a jailbreak that tried to drain an agent's SOL came back blocked with 99.98 percent confidence, each verdict scored from the model's own probabilities and labelled with the model that produced it. The health dashboard now shows the Guardian lane as healthy. Granite embeddings for the agent galaxy still need IBM's hosted watsonx.ai service, which is not connected yet.</description>
 		</item>
 		<item>
+			<title>Marketplace and Discover cards load small WebP images, and Forge's starter prompts stop jumping</title>
+			<link>https://three.ws/marketplace</link>
+			<guid isPermaLink="false">2026-11-13:Marketplace and Discover cards load small WebP images, and Forge's starter prompts stop jumping</guid>
+			<pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Avatar renders, maker posters and social cards were sent at full size into small card boxes. Every first-party image on three.ws now also has a display-sized WebP form, built once per image version and cached, and the Marketplace and Discover grids use it: a typical avatar card image drops from about 160 KB to under 3 KB, while the original file stays available for downloads, prints and exports. The 18,184 older Forge thumbnails that were still full-size PNGs are now 512 px WebP, after a fix to the background job that had been skipping them. On Forge, the starter prompts under the empty viewer no longer slide sideways when they change on load, and each one shows its full prompt on hover.</description>
+		</item>
+		<item>
 			<title>Native $THREE launchpad coins can be quoted, bought and sold again, and the creator's launch buy shows as a buy</title>
 			<link>https://three.ws/docs/native-launchpad</link>
 			<guid isPermaLink="false">2026-11-13:Native $THREE launchpad coins can be quoted, bought and sold again, and the creator's launch buy shows as a buy</guid>

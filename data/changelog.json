@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-13",
+			"title": "Marketplace and Discover cards load small WebP images, and Forge's starter prompts stop jumping",
+			"summary": "Avatar renders, maker posters and social cards were sent at full size into small card boxes. Every first-party image on three.ws now also has a display-sized WebP form, built once per image version and cached, and the Marketplace and Discover grids use it: a typical avatar card image drops from about 160 KB to under 3 KB, while the original file stays available for downloads, prints and exports. The 18,184 older Forge thumbnails that were still full-size PNGs are now 512 px WebP, after a fix to the background job that had been skipping them. On Forge, the starter prompts under the empty viewer no longer slide sideways when they change on load, and each one shows its full prompt on hover.",
+			"tags": ["improvement", "fix"],
+			"link": "/marketplace"
+		},
+		{
+			"date": "2026-11-13",
 			"title": "The GitHub fee-claims feed now finds claims from the last several days, not the last second",
 			"summary": "GitHub fee-claim lookups used to page the whole PumpFees program, which handles about 500 transactions a second, so one page of history covered about a second and the feed came back empty. The listener, its backfill, and the API's RPC fallback now follow the one account that signs every GitHub fee claim and nothing else. That account's key is read from chain, and one page of its history covers days. The table now holds real claims, GET /api/pump/first-claims serves them from it, and the backfill resumes where it stopped instead of re-fetching claims it already stored.",
 			"tags": ["fix"]
