@@ -21,6 +21,7 @@ import {
 import { consumeCsrfToken } from './api.js';
 import { onchainBadgeHTML } from './shared/onchain-badge.js';
 import { safeUrl } from './safe-url.js';
+import { resizedImageUrl } from './shared/image-url.js';
 import { walletChipHTML, walletChipEl, wireWalletChips } from './shared/agent-wallet-chip.js';
 import { seeInWorldHref, hasCustomAvatar } from './shared/agent-3d.js';
 import { coinChipHTML } from './shared/agent-coin.js';
@@ -855,7 +856,7 @@ function renderThemePicks() {
 					<model-viewer
 						data-src="${escapeHtml(a.avatar_glb_url)}"
 						alt="${escapeHtml(a.name || 'Agent')}"
-						${a.thumbnail_url ? `poster="${escapeHtml(a.thumbnail_url)}"` : ''}
+						${a.thumbnail_url ? `poster="${escapeHtml(resizedImageUrl(a.thumbnail_url, 264))}"` : ''}
 						autoplay
 						rotation-per-second="22deg"
 						interaction-prompt="none"
@@ -1001,7 +1002,7 @@ function pulseItemHTML(sale) {
 	const amount = pulseAmountLabel(sale.amountAtomic, sale.currencyMint);
 	const when = liveTime(sale.confirmedAt);
 	const avatar = sale.agentImage
-		? `<img class="market-pulse-av" src="${escapeHtml(sale.agentImage)}" alt="" loading="lazy" decoding="async" data-fallback="hide" />`
+		? `<img class="market-pulse-av" src="${escapeHtml(resizedImageUrl(sale.agentImage, 96))}" alt="" loading="lazy" decoding="async" data-fallback="hide" />`
 		: `<span class="market-pulse-av" aria-hidden="true">${escapeHtml(initial(sale.agentName))}</span>`;
 	const verb = sale.trial ? 'started a trial of' : 'unlocked';
 	const amtClass = sale.trial ? 'market-pulse-amt is-trial' : 'market-pulse-amt';
@@ -3807,7 +3808,7 @@ function renderCreatorListings() {
 		const dur = it.duration ? `${it.duration.toFixed(it.duration % 1 ? 1 : 0)}s` : '';
 		const typeLabel = it.loop !== false ? 'Loop' : 'Action';
 		const thumb = it.thumbnail_url
-			? `<img class="anim-listing-thumb" src="${escapeHtml(it.thumbnail_url)}" alt="" loading="lazy" data-fallback="element" data-fallback-class="card-img-fallback" />`
+			? `<img class="anim-listing-thumb" src="${escapeHtml(resizedImageUrl(it.thumbnail_url, 586))}" alt="" loading="lazy" data-fallback="element" data-fallback-class="card-img-fallback" />`
 			: `<div class="anim-listing-thumb anim-listing-thumb-empty">🎬</div>`;
 		return `<article class="anim-listing-card" data-listing-id="${escapeHtml(it.id)}" tabindex="0" role="button" aria-label="${escapeHtml(it.name)} — ${priceLabel}">
 			<div class="anim-listing-media">
@@ -4850,7 +4851,7 @@ function renderCard(a) {
 	const ratingAvg = Number(a.rating_avg || 0);
 	const ratingCount = Number(a.rating_count || 0);
 	const avatarBlock = a.thumbnail_url
-		? `<div class="avatar avatar-img" style="background-image:url('${escapeHtml(a.thumbnail_url)}')"></div>`
+		? `<div class="avatar avatar-img" style="background-image:url('${escapeHtml(resizedImageUrl(a.thumbnail_url, 72))}')"></div>`
 		: `<div class="avatar">${escapeHtml(initial(a.name))}</div>`;
 	const previewStrip = agentCardPreviewHtml(a);
 	const bmOn = bookmarkedAgents.has(a.id);
@@ -5628,7 +5629,7 @@ function renderSimilar(items) {
 					(a) => `<div class="related-card" data-id="${a.id}">
 						${
 							a.thumbnail_url
-								? `<div class="av av-img" style="background-image:url('${escapeHtml(a.thumbnail_url)}')" role="img" aria-label="${escapeHtml(a.name || 'Agent')}"></div>`
+								? `<div class="av av-img" style="background-image:url('${escapeHtml(resizedImageUrl(a.thumbnail_url, 96))}')" role="img" aria-label="${escapeHtml(a.name || 'Agent')}"></div>`
 								: `<div class="av">${initial(a.name)}</div>`
 						}
 						<div style="min-width:0">
@@ -6390,7 +6391,7 @@ function renderSubmitMine() {
 	list.innerHTML = sorted
 		.map((a) => {
 			const thumb = a.thumbnail_url
-				? `<div class="msm-thumb" style="background-image:url('${escapeHtml(a.thumbnail_url)}')"></div>`
+				? `<div class="msm-thumb" style="background-image:url('${escapeHtml(resizedImageUrl(a.thumbnail_url, 96))}')"></div>`
 				: `<div class="msm-thumb">${escapeHtml(initial(a.name))}</div>`;
 			const status = a.is_published
 				? '<span class="msm-status live">Published</span>'
@@ -9279,7 +9280,7 @@ async function loadTopPerformers() {
 				? (a.realized_pnl_sol >= 0 ? 'pos' : 'neg')
 				: '';
 			const avatarHtml = a.image_url
-				? `<img src="${escapeHtml(a.image_url)}" alt="" class="mkt-top-avatar" loading="lazy" data-fallback="hide">`
+				? `<img src="${escapeHtml(resizedImageUrl(a.image_url, 96))}" alt="" class="mkt-top-avatar" loading="lazy" data-fallback="hide">`
 				: `<span class="mkt-top-avatar-fallback">${escapeHtml((a.name || '?')[0].toUpperCase())}</span>`;
 
 			return `<a class="mkt-top-card" href="/agents/${encodeURIComponent(a.agent_id)}"
