@@ -152,18 +152,18 @@ const SERVERS = [
 // Registry names we no longer stand behind: the source is lost, or the repository
 // they point at is gone. Deprecation keeps the name resolvable (existing installs
 // keep working) while clients and the registry UI warn against new use. Never
-// republish code we cannot see; deprecate it. `npm` is the package to deprecate
-// alongside, when one exists.
+// republish code we cannot see; deprecate it. `npm` lists every npm package the
+// registry entry advertises, each deprecated alongside it.
 const DEPRECATIONS = [
 	{
 		name: 'io.github.nirholas/claude-code-explorer-mcp',
-		npm: 'claude-code-explorer-mcp',
+		npm: ['claude-code-explorer-mcp'],
 		message:
 			'Deprecated: the source repository it points at was taken down. Use the three.ws MCP servers instead: https://three.ws/mcp',
 	},
 	{
 		name: 'io.github.nirholas/data-workbench-mcp',
-		npm: '@three-ws/data-workbench-mcp',
+		npm: ['@three-ws/data-workbench-mcp', 'data-workbench-mcp'],
 		message:
 			'Deprecated: the source repository is no longer available and the server is unmaintained. Use the three.ws MCP servers instead: https://three.ws/mcp',
 	},
@@ -313,12 +313,12 @@ async function runDeprecations(live) {
 				await deprecateInRegistry(d.name, d.message, token);
 				console.log('   registry: deprecated');
 			}
-			if (d.npm) {
-				if (await npmDeprecated(d.npm)) console.log(`   npm: ${d.npm} already deprecated`);
-				else if (!live) console.log(`   npm: would deprecate ${d.npm}`);
+			for (const pkg of d.npm) {
+				if (await npmDeprecated(pkg)) console.log(`   npm: ${pkg} already deprecated`);
+				else if (!live) console.log(`   npm: would deprecate ${pkg}`);
 				else {
-					execFileSync('npm', ['deprecate', d.npm, d.message], { stdio: 'inherit' });
-					console.log(`   npm: ${d.npm} deprecated`);
+					execFileSync('npm', ['deprecate', pkg, d.message], { stdio: 'inherit' });
+					console.log(`   npm: ${pkg} deprecated`);
 				}
 			}
 		} catch (err) {

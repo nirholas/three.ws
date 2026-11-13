@@ -48,3 +48,32 @@ describe('publish-mcp-servers CLI', () => {
 		expect(r.stderr).not.toContain('unknown option');
 	});
 });
+
+// A deprecated registry entry can list more than one npm package (the scoped
+// @three-ws name and an older unscoped one). Deprecating only one leaves the other
+// installable with no warning, so the deprecate plan must cover every npm package
+// the live registry entry advertises. Reads the real registry and npm; no writes.
+describe('publish-mcp-servers --deprecate plan', () => {
+	const REGISTRY = 'https://registry.modelcontextprotocol.io/v0/servers';
+	const DEPRECATED = ['io.github.nirholas/claude-code-explorer-mcp', 'io.github.nirholas/data-workbench-mcp'];
+
+	it('names every npm package each deprecated registry entry lists', async () => {
+		const r = run('--deprecate');
+		expect(r.status).toBe(0);
+		for (const name of DEPRECATED) {
+			const res = await fetch(`${REGISTRY}?search=${encodeURIComponent(name)}&version=latest`);
+			expect(res.ok).toBe(true);
+			const { servers = [] } = await res.json();
+			const entry = servers.find((s) => s.server?.name === name);
+			expect(entry, `${name} missing from the registry`).toBeTruthy();
+			const npmIds = (entry.server.packages || [])
+				.filter((p) => p.registryType === 'npm')
+				.map((p) => p.identifier);
+			for (const id of npmIds) {
+				const covered =
+					r.stdout.includes(`npm: would deprecate ${id}\n`) || r.stdout.includes(`npm: ${id} already deprecated`);
+				expect(covered, `${name}: deprecate plan skips npm package ${id}`).toBe(true);
+			}
+		}
+	}, 60_000);
+});
