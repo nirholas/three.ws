@@ -58,14 +58,19 @@ export default wrapCron(async (req, res) => {
 	}
 
 	const UPGRADE_BATCH = Math.max(0, Number(process.env.FORGE_THUMBNAIL_UPGRADE_BATCH || 25));
-
-	if (RENDER_BATCH === 0 || cov.missing === 0) {
-		const upgrade = UPGRADE_BATCH
-			? await upgradeLegacyBatch({ limit: UPGRADE_BATCH }).catch((err) => {
+	const runUpgrade = () =>
+		UPGRADE_BATCH
+			? upgradeLegacyBatch({ limit: UPGRADE_BATCH }).catch((err) => {
 					log.warn('upgrade_failed', { message: err?.message });
 					return null;
 				})
 			: null;
+
+	// Rows whose render attempts are exhausted stay "missing" forever, so gate on
+	// what is still renderable, not on missing, or the upgrade never runs.
+	const renderable = Math.max(0, cov.missing - (cov.exhausted || 0));
+	if (RENDER_BATCH === 0 || renderable === 0) {
+		const upgrade = await runUpgrade();
 		return json(res, 200, { ok: true, coverage: cov, rendered: 0, upgrade, note: 'nothing to render' });
 	}
 
@@ -83,6 +88,10 @@ export default wrapCron(async (req, res) => {
 	}
 	if (result.aborted) log.warn('batch_aborted', { reason: result.aborted });
 
+	// The exhausted ledger can count rows that have since been covered, so a
+	// render tick may claim nothing. Spend that tick on the upgrade instead.
+	const upgrade = result.claimed === 0 ? await runUpgrade() : null;
+
 	return json(res, 200, {
 		ok: true,
 		coverage: cov,
@@ -90,5 +99,6 @@ export default wrapCron(async (req, res) => {
 		rendered: result.rendered,
 		failed: result.failed,
 		aborted: result.aborted,
+		upgrade,
 	});
 }, { maxDurationMs: maxDuration * 1000 });
