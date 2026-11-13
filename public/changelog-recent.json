@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-13T15:10:01.042Z",
+	"generated_at": "2026-11-13T15:11:32.575Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4558,
+	"total": 4559,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -70,6 +70,16 @@
 			"tags": [
 				"fix",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-13",
+			"type": "update",
+			"title": "Talking to an agent through three.ws Glass gets an answer again",
+			"summary": "On the /glass lens app, picking a reply to start talking to an agent could come back blank: the chat model spent its whole answer thinking to itself and returned nothing to show on the lens, along with no suggested next replies. Lens conversations now ask that model for a direct answer, so the agent replies and offers the next things to say. The lens app is also tested end to end against real agents placed on the map, walking from scanning to the nearby list, the agent card, a conversation and the phone handoff with only the arrow keys, Enter and Escape that the Neural Band produces.",
+			"link": "/glass",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1513,16 +1523,6 @@
 			"title": "Account status, dashboard links and X posting tools for connected assistants",
 			"summary": "GET /api/v1/me/status and the get_account_status tool answer what plan you are on, what is left and what is waiting for approval in one call. get_dashboard_urls returns the canonical page links. Agents can now be connected to X, given a posting policy and asked to post through MCP, with review-before-post queuing instead of publishing. Settings shows account status and each agent's X posting state.",
 			"link": null,
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Add three.ws to your own ChatGPT in about a minute",
-			"summary": "A new /chatgpt page walks you through adding the free three.ws 3D Studio to ChatGPT: turn on developer mode, create an app with the URL https://three.ws/api/mcp-chatgpt and no authentication, then ask for a model. Text and photos become interactive, textured 3D models and rigged avatars that render inline in the conversation, free and with no account. The page checks the server live from your browser, lists the exact tools ChatGPT gets, and has starter prompts and fixes for every setup snag.",
-			"link": "/chatgpt",
 			"tags": [
 				"feature"
 			]

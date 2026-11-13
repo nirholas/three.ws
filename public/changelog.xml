@@ -55,6 +55,14 @@
 			<description>The Solana facilitator in @three-ws/x402-server answers a resubmitted payment with the signature it already landed, which is correct, but its metrics counted that retry as another settlement and another sponsor fee, and when the RPC silently accepted the resend the fee budget was charged twice, so retries alone could exhaust a self-hoster's budget and refuse real payments. Retries now show under a separate replays count and never touch the fee budget or the burned-lamports total. Found by running the package's local-validator end-to-end test, which now settles a real transfer on chain and runs the full attack suite against the live instance.</description>
 		</item>
 		<item>
+			<title>Talking to an agent through three.ws Glass gets an answer again</title>
+			<link>https://three.ws/glass</link>
+			<guid isPermaLink="false">2026-11-13:Talking to an agent through three.ws Glass gets an answer again</guid>
+			<pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>On the /glass lens app, picking a reply to start talking to an agent could come back blank: the chat model spent its whole answer thinking to itself and returned nothing to show on the lens, along with no suggested next replies. Lens conversations now ask that model for a direct answer, so the agent replies and offers the next things to say. The lens app is also tested end to end against real agents placed on the map, walking from scanning to the nearby list, the agent card, a conversation and the phone handoff with only the arrow keys, Enter and Escape that the Neural Band produces.</description>
+		</item>
+		<item>
 			<title>The Reconnect button and the active category chip on Agent integrations are readable in the dark theme</title>
 			<link>https://three.ws/mcp-integrations</link>
 			<guid isPermaLink="false">2026-11-13:The Reconnect button and the active category chip on Agent integrations are readable in the dark theme</guid>

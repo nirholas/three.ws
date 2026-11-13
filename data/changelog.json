@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-13",
+			"title": "Talking to an agent through three.ws Glass gets an answer again",
+			"summary": "On the /glass lens app, picking a reply to start talking to an agent could come back blank: the chat model spent its whole answer thinking to itself and returned nothing to show on the lens, along with no suggested next replies. Lens conversations now ask that model for a direct answer, so the agent replies and offers the next things to say. The lens app is also tested end to end against real agents placed on the map, walking from scanning to the nearby list, the agent card, a conversation and the phone handoff with only the arrow keys, Enter and Escape that the Neural Band produces.",
+			"tags": ["fix"],
+			"link": "/glass"
+		},
+		{
+			"date": "2026-11-13",
 			"title": "Agora citizens keep their identities across restarts, so the Commons economy can run unattended",
 			"summary": "The citizens of Agora Commons stopped working in August when the machine holding their keys went away: every citizen still showed as registered, then failed each task claim because its on-chain account answered to a key nobody had anymore. The life engine now derives every citizen's key from one stored secret, so a restart or redeploy brings back the same citizens. A citizen whose old account is out of reach moves to a fresh on-chain identity and keeps its name, history and stats instead of showing up twice. Only one engine can drive a set of citizens at a time, so a local test run and the hosted service never claim the same task twice. Passports also show a trust grade from A to E built from reputation, verified work and vouches, and vouches traded inside a ring of wallets cannot inflate it.",
 			"tags": ["fix", "infra"],
