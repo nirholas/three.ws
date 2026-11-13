@@ -8,7 +8,7 @@
 // a 2,144 KiB GLB and parsed model-viewer (its second-largest CPU cost) during
 // load, while the stage showed a shimmering initial until the mesh arrived.
 import { describe, it, expect } from 'vitest';
-import { heroSlideHtml, heroPosterUrl, HERO_POSTER_WIDTH } from '../src/shared/marketplace-hero.js';
+import { heroSlideHtml, heroPosterUrl, wireHeroPoster, HERO_POSTER_WIDTH } from '../src/shared/marketplace-hero.js';
 
 const item = {
 	name: 'Michelle',
@@ -76,5 +76,47 @@ describe('heroSlideHtml', () => {
 		expect(html).not.toContain('<b>');
 		expect(html).not.toContain('<script>');
 		expect(parse(html).querySelector('.market-hero-placeholder-name').textContent).toBe('<b>"x"</b>');
+	});
+});
+
+// Found 2026-11-13 in the browser check: the live revision predates the /cdn/_v/
+// handler, so every variant URL answered 404 and the active slide lost its
+// poster outright, leaving only the initial. The poster now retries the
+// untouched original before it gives up.
+describe('wireHeroPoster', () => {
+	function mount(html) {
+		document.body.innerHTML = html;
+		return document.body.querySelector('.market-hero-slide');
+	}
+
+	it('records the untouched original next to the sized variant', () => {
+		const img = parse(heroSlideHtml(item, 0, 0)).querySelector('img.market-hero-poster');
+		expect(img.dataset.original).toBe(item.image);
+	});
+
+	it('swaps to the original when the sized variant fails', () => {
+		const slide = mount(heroSlideHtml(item, 0, 0));
+		wireHeroPoster(slide);
+		const img = slide.querySelector('img.market-hero-poster');
+		img.dispatchEvent(new Event('error'));
+		expect(slide.querySelector('img.market-hero-poster')).toBe(img);
+		expect(img.getAttribute('src')).toBe(item.image);
+	});
+
+	it('drops the poster when the original fails too, so the initial shows', () => {
+		const slide = mount(heroSlideHtml(item, 0, 0));
+		wireHeroPoster(slide);
+		const img = slide.querySelector('img.market-hero-poster');
+		img.dispatchEvent(new Event('error'));
+		img.dispatchEvent(new Event('error'));
+		expect(slide.querySelector('img.market-hero-poster')).toBeNull();
+		expect(slide.classList.contains('hero-poster-ready')).toBe(false);
+	});
+
+	it('marks the slide ready once the poster paints', () => {
+		const slide = mount(heroSlideHtml(item, 0, 0));
+		wireHeroPoster(slide);
+		slide.querySelector('img.market-hero-poster').dispatchEvent(new Event('load'));
+		expect(slide.classList.contains('hero-poster-ready')).toBe(true);
 	});
 });

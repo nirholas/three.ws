@@ -29,7 +29,7 @@ import { skeletonHTML, emptyStateHTML, errorStateHTML, ensureStateKitStyles } fr
 import { debounce, syncStateToUrl } from './shared/list-controls.js';
 import { log } from './shared/log.js';
 import { pickHeroSet } from './shared/hero-glb-budget.js';
-import { heroSlideHtml } from './shared/marketplace-hero.js';
+import { heroSlideHtml, wireHeroPoster } from './shared/marketplace-hero.js';
 import { track, trackError, ANALYTICS_EVENTS } from './analytics.js';
 import { placeholderHtml, cardThumbHtml, agentCardPreviewHtml, CARD_VIEWER_ATTRS } from './shared/marketplace-card-preview.js';
 import { modelSlotHtml, materializeModelSlot, setModelSlotPoster, MODEL_SLOT_READY_EVENT } from './shared/model-slot.js';
@@ -1143,19 +1143,6 @@ function engageHero() {
 	if (state.heroEngaged) return;
 	state.heroEngaged = true;
 	wakeHeroSlide(document.querySelector('#market-hero-stage .market-hero-slide.active'));
-}
-
-// The poster covers the initial placeholder once it has painted; a picture that
-// fails to load is dropped so the placeholder shows instead of a broken image.
-function wireHeroPoster(slide) {
-	const img = slide.querySelector('img.market-hero-poster');
-	if (!img) return;
-	const ready = () => slide.classList.add('hero-poster-ready');
-	if (img.complete && img.naturalWidth > 0) ready();
-	else {
-		img.addEventListener('load', ready, { once: true });
-		img.addEventListener('error', () => img.remove(), { once: true });
-	}
 }
 
 // Turn a slide's <model-slot> into its <model-viewer> and start the model.

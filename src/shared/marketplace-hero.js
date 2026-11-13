@@ -50,8 +50,9 @@ export function heroSlideHtml(item, index, activeIndex) {
 	const active = index === activeIndex;
 	const name = item?.name || 'Avatar';
 	const poster = heroPosterUrl(item);
+	const original = poster && poster !== item.image ? ` data-original="${escapeHtml(item.image)}"` : '';
 	const posterImg = poster
-		? `<img class="market-hero-poster" src="${escapeHtml(poster)}" alt="" decoding="async" ${
+		? `<img class="market-hero-poster" src="${escapeHtml(poster)}"${original} alt="" decoding="async" ${
 				active ? 'fetchpriority="high"' : 'loading="lazy"'
 			} />`
 		: '';
@@ -75,4 +76,33 @@ export function heroSlideHtml(item, index, activeIndex) {
 		${posterImg}
 		${slot}
 	</div>`;
+}
+
+/**
+ * Wire one slide's poster: the slide covers its initial placeholder once the
+ * picture paints. A sized variant that fails retries the untouched original
+ * once (the variant route can lag a deploy or a cache); only when that fails
+ * too is the image dropped, so the placeholder shows instead of a broken icon.
+ * @param {Element} slide
+ */
+export function wireHeroPoster(slide) {
+	const img = slide?.querySelector('img.market-hero-poster');
+	if (!img) return;
+	const ready = () => slide.classList.add('hero-poster-ready');
+	if (img.complete && img.naturalWidth > 0) {
+		ready();
+		return;
+	}
+	img.addEventListener('load', ready);
+	img.addEventListener('error', function onError() {
+		const original = img.dataset.original;
+		if (original) {
+			delete img.dataset.original;
+			img.setAttribute('src', original);
+			return;
+		}
+		img.removeEventListener('error', onError);
+		img.removeEventListener('load', ready);
+		img.remove();
+	});
 }
