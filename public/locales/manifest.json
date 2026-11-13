@@ -52,8 +52,53 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "tr",
+			"name": "Türkçe",
+			"dir": "ltr"
+		},
+		{
+			"code": "id",
+			"name": "Bahasa Indonesia",
+			"dir": "ltr"
+		},
+		{
+			"code": "th",
+			"name": "ไทย",
+			"dir": "ltr"
+		},
+		{
+			"code": "zh-TW",
+			"name": "繁體中文",
+			"dir": "ltr"
+		},
+		{
 			"code": "it",
 			"name": "Italiano",
+			"dir": "ltr"
+		},
+		{
+			"code": "nl",
+			"name": "Nederlands",
+			"dir": "ltr"
+		},
+		{
+			"code": "fa",
+			"name": "فارسی",
+			"dir": "rtl"
+		},
+		{
+			"code": "ur",
+			"name": "اردو",
+			"dir": "rtl"
+		},
+		{
+			"code": "te",
+			"name": "తెలుగు",
+			"dir": "ltr"
+		},
+		{
+			"code": "ms",
+			"name": "Bahasa Melayu",
 			"dir": "ltr"
 		},
 		{
