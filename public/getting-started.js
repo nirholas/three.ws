@@ -152,12 +152,24 @@
 		if (text != null && String(text).trim()) n.setAttribute('data-i18n', navKey(text));
 		return n;
 	}
+	// Resolves once the stylesheet has applied (or failed: the widget still
+	// mounts, unstyled, rather than vanishing). mount() waits on it because a
+	// pill painted before its CSS was a full-width bare button that then snapped
+	// to 171 px: a 0.0127 layout shift on every page (Pixel 5, slow 4G,
+	// measured 2026-11-13).
 	function ensureCss() {
-		if (document.querySelector('link[href="/getting-started.css"]')) return;
-		var link = document.createElement('link');
-		link.rel = 'stylesheet';
-		link.href = '/getting-started.css';
-		document.head.appendChild(link);
+		var link = document.querySelector('link[href="/getting-started.css"]');
+		if (link && link.sheet) return Promise.resolve();
+		if (!link) {
+			link = document.createElement('link');
+			link.rel = 'stylesheet';
+			link.href = '/getting-started.css';
+			document.head.appendChild(link);
+		}
+		return new Promise(function (done) {
+			link.addEventListener('load', function () { done(); }, { once: true });
+			link.addEventListener('error', function () { done(); }, { once: true });
+		});
 	}
 
 	// ── State ─────────────────────────────────────────────────────────────────────
@@ -341,6 +353,8 @@
 	function expand() {
 		open = true;
 		lsSet(OPEN_KEY, '1');
+		// Not attached yet (its stylesheet is still loading): attach() opens it.
+		if (!panel) return;
 		renderSteps();
 		panel.hidden = false;
 		pill.hidden = true;
@@ -348,6 +362,7 @@
 	function collapse() {
 		open = false;
 		lsSet(OPEN_KEY, '0');
+		if (!panel) return;
 		panel.hidden = true;
 		pill.hidden = false;
 		updatePill();
@@ -504,8 +519,12 @@
 
 	// ── Mount ─────────────────────────────────────────────────────────────────────
 	function mount() {
-		ensureCss();
 		ensureCornerStack();
+		ensureCss().then(attach);
+	}
+
+	function attach() {
+		if (root) return;
 		root = el('div', 'twg-root');
 		root.appendChild(buildPanel());
 		root.appendChild(buildPill());
@@ -532,7 +551,7 @@
 	// ── Public surface ─────────────────────────────────────────────────────────────
 	window.__twsGuide = {
 		complete: complete,
-		open: function () { if (hidden) { hidden = false; lsSet(HIDDEN_KEY, '0'); if (root) root.hidden = false; } expand(); },
+		open: function () { if (hidden) { hidden = false; lsSet(HIDDEN_KEY, '0'); if (root) root.hidden = false; } if (!root) mount(); expand(); },
 		close: collapse,
 		progress: function () { return Object.assign({}, progress); },
 		isComplete: allCoreDone,
