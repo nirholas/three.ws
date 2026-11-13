@@ -9,14 +9,10 @@
 # off. Build and gate this one with cloudbuild.rtx.yaml. Licences: no nvdiffrast,
 # FLAME or MICA anywhere in this image.
 # ── Stage: base ───────────────────────────────────────────────────────────────
-# CUDA runtime, kept for the onnxruntime-gpu build that rembg[gpu] pulls in. Note
-# the service DEPLOYS WITHOUT A GPU (see cloudbuild.yaml): measured 2026-07-25,
-# the CUDA provider never actually engaged for background removal, so the L4 was
-# returned to the shared regional pool and every stage now runs on the 8 vCPU
-# allocation. onnxruntime-gpu falls back to its CPU provider cleanly, which is
-# what production has been serving on since. The image is ~2 GB heavier than a
-# plain CPU base for that fallback; swapping the base image is a live change to
-# the inference path, so it needs its own measured run rather than a drive-by.
+# Unlike the CPU image, this one is meant to run with a GPU attached
+# (avatar-reconstruction-rtx and -dense-staging in europe-west4, one RTX PRO 6000
+# each). The dense fit and the PyTorch3D silhouette run on CUDA; the rest of the
+# pipeline (MediaPipe, rembg) is the same CPU code as the default image.
 ARG TORCH_CUDA_ARCH_LIST="12.0"
 FROM nvidia/cuda:12.8.0-cudnn-devel-ubuntu22.04
 ARG TORCH_CUDA_ARCH_LIST
@@ -62,32 +58,35 @@ COPY face_projection.py /app/face_projection.py
 COPY view_synthesis.py /app/view_synthesis.py
 COPY view_texture.py  /app/view_texture.py
 COPY glb_ops.py       /app/glb_ops.py
+COPY recon_templates.py /app/recon_templates.py
 COPY precompute_uv.py /app/precompute_uv.py
 COPY test_face_geometry.py /app/test_face_geometry.py
+COPY test_parametric_template.py /app/test_parametric_template.py
 COPY test_face_projection.py /app/test_face_projection.py
 COPY test_face_pipeline.py /app/test_face_pipeline.py
 COPY test_dense_fit.py /app/test_dense_fit.py
 COPY smoke_test.py    /app/smoke_test.py
 
 # ── Template GLBs ─────────────────────────────────────────────────────────────
-# Baked into the image so cold starts are instant. default.glb is the Wolf3D
-# unisex base and the only template the pipeline can use: face_uv_map.json is
-# precomputed against its exact head topology (see _load_template). Every
-# body_type resolves to it until a male/female variant with that topology exists.
+# Same as the CPU image: both templates ship and RECON_TEMPLATE picks one at
+# runtime (recon_templates.py). default.glb is the Wolf3D avatar, parametric.glb
+# the owned CC0 parametric body.
 RUN mkdir -p /app/templates
 COPY templates/ /app/templates/
 
 # ── UV pre-computation ────────────────────────────────────────────────────────
-# Run once at image build time.  Generates face_uv_map.json from the
-# canonical MediaPipe face model and the Wolf3D_Head mesh in default.glb.
-# Requires network access during build (downloads ~200 KB OBJ from GitHub).
-RUN python /app/precompute_uv.py /app/templates/default.glb
+# One UV map per template, precomputed against that template's exact head
+# topology. Requires network access during build (downloads the ~200 KB
+# canonical MediaPipe face OBJ from GitHub).
+RUN python /app/precompute_uv.py --template wolf3d \
+ && python /app/precompute_uv.py --template parametric
 
 # ── Build-time guards ─────────────────────────────────────────────────────────
 # The geometry morph must preserve the rig + 52 ARKit blendshapes and never blow
 # up the mesh. Fail the image build if the morph math regresses, rather than
 # shipping a broken avatar pipeline.
 RUN python /app/test_face_geometry.py
+RUN python /app/test_parametric_template.py
 RUN python /app/test_face_projection.py
 RUN python /app/test_face_pipeline.py
 RUN pip install pytest==8.3.3 && python -m pytest -q /app/test_dense_fit.py
@@ -100,7 +99,8 @@ RUN pip install pytest==8.3.3 && python -m pytest -q /app/test_dense_fit.py
 # requires for the UV pre-computation above. It also warms rembg's u2net weights
 # into the image, so the first request on a cold instance no longer waits on that
 # download.
-RUN python /app/smoke_test.py
+RUN python /app/smoke_test.py \
+ && RECON_TEMPLATE=parametric python /app/smoke_test.py
 
 ENV DENSE_FIT=1
 
