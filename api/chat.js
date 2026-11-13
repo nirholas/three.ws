@@ -167,6 +167,10 @@ const PROVIDERS = {
 		defaultModel: PROVIDER_MODEL_DEFAULTS.nvidia,
 		url: 'https://integrate.api.nvidia.com/v1/chat/completions',
 		style: 'openai',
+		// Merged into the body on suggestion turns (`direct`). The suggestReplies
+		// instruction tips nemotron into reasoning, which spent the whole token
+		// budget on reasoning_content and streamed an empty reply (2026-11-13).
+		directBody: { chat_template_kwargs: { enable_thinking: false } },
 	},
 	// SambaNova Cloud (cloud.sambanova.ai): free-tier OpenAI-compatible Llama
 	// 3.3 70B on its own quota pool. The fourth independent free lane.
@@ -798,7 +802,7 @@ export default wrap(async (req, res) => {
 					method: 'POST',
 					headers: reqHeaders,
 					body: JSON.stringify(
-						route.buildPayload({ systemPrompt, systemParts: sys, history, maxTokens, includeTools, toolSet }),
+						route.buildPayload({ systemPrompt, systemParts: sys, history, maxTokens, includeTools, toolSet, direct: !!replyFilter }),
 					),
 					signal: ctrl.signal,
 				});
@@ -1184,6 +1188,7 @@ export default wrap(async (req, res) => {
 				// loop mechanically rather than by hoping the model stops asking.
 				toolSet: round === HOME_TOOL_ROUNDS - 1 ? DEFAULT_TOOL_SET : toolSet,
 				sendSSE,
+				direct: !!replyFilter,
 			});
 			if (!followUp) break;
 
@@ -1440,7 +1445,7 @@ function toolResultText(result) {
  * Returns null on any failure. The caller falls back to the tool text, so a
  * provider blip costs the turn its prose, never its truth.
  */
-async function runFollowUpPass({ route, systemPrompt, sys, history, maxTokens, assistantText, toolCalls, homeResults, toolSet, sendSSE }) {
+async function runFollowUpPass({ route, systemPrompt, sys, history, maxTokens, assistantText, toolCalls, homeResults, toolSet, sendSSE, direct = false }) {
 	if (route.style === 'orchestrate') return null;
 
 	const byId = new Map(homeResults.map((entry) => [entry.call.id, entry.result]));
@@ -1508,6 +1513,7 @@ async function runFollowUpPass({ route, systemPrompt, sys, history, maxTokens, a
 						maxTokens,
 						includeTools: true,
 						toolSet: toolSet || DEFAULT_TOOL_SET,
+						direct,
 					}),
 				),
 				signal: ctrl.signal,
@@ -1880,6 +1886,11 @@ export function buildFallbackChain(primary, userKeys = {}, cooldown = new Map(),
 	return chain;
 }
 
+/** The route `name` would take at `model` (its default when omitted). Exposed for payload tests. */
+export function chatRouteFor(name, apiKey, model = PROVIDERS[name].defaultModel) {
+	return makeRoute(name, PROVIDERS[name], apiKey, model);
+}
+
 function makeRoute(name, cfg, apiKey, model) {
 	if (cfg.style === 'vertex-anthropic') {
 		// Vertex-served Claude: same Anthropic Messages wire format (so style is
@@ -2036,11 +2047,12 @@ function makeRoute(name, cfg, apiKey, model) {
 			'Content-Type': 'application/json',
 			...(cfg.extraHeaders || {}),
 		},
-		buildPayload: ({ systemPrompt, history, maxTokens, includeTools = true, toolSet = DEFAULT_TOOL_SET }) => ({
+		buildPayload: ({ systemPrompt, history, maxTokens, includeTools = true, toolSet = DEFAULT_TOOL_SET, direct = false }) => ({
 			model,
 			max_tokens: maxTokens,
 			messages: [{ role: 'system', content: systemPrompt }, ...history],
 			...(includeTools ? { tools: toolSet.openai, tool_choice: 'auto' } : {}),
+			...(direct && cfg.directBody ? cfg.directBody : {}),
 			stream: true,
 		}),
 	};

@@ -5,7 +5,7 @@ import {
 	splitSuggestions,
 	createReplyFilter,
 } from '../api/_lib/chat-suggestions.js';
-import { buildSystemPrompt } from '../api/chat.js';
+import { buildSystemPrompt, chatRouteFor } from '../api/chat.js';
 
 describe('suggestionsInstruction', () => {
 	it('is empty when no suggestions are requested', () => {
@@ -60,5 +60,27 @@ describe('createReplyFilter', () => {
 	});
 	it('drops everything after the marker', () => {
 		expect(run([`a ${SUGGEST_MARKER} b`, ' more'])).toBe('a ');
+	});
+});
+
+// Regression (2026-11-13): with suggestReplies set, production /api/chat on the
+// NVIDIA lane streamed no chunks and a done event with reply "" and no
+// suggestions. The suggestion instruction tipped nemotron-3.5-lightning into
+// reasoning mode, which spent the whole max_tokens budget on reasoning_content
+// and left message.content null. Suggestion turns must ask NVIDIA to answer
+// directly, and every other turn must keep its payload byte-identical.
+describe('chat route payload in suggestion mode', () => {
+	const args = { systemPrompt: 'sys', history: [{ role: 'user', content: 'hi' }], maxTokens: 64, includeTools: false };
+	it('turns NVIDIA thinking off when the turn asks for suggested replies', () => {
+		const route = chatRouteFor('nvidia', 'test-key');
+		expect(route.buildPayload({ ...args, direct: true }).chat_template_kwargs).toEqual({ enable_thinking: false });
+	});
+	it('leaves an ordinary NVIDIA turn untouched', () => {
+		const route = chatRouteFor('nvidia', 'test-key');
+		expect(route.buildPayload(args)).not.toHaveProperty('chat_template_kwargs');
+	});
+	it('adds nothing for a provider with no direct-answer switch', () => {
+		const route = chatRouteFor('sambanova', 'test-key');
+		expect(route.buildPayload({ ...args, direct: true })).not.toHaveProperty('chat_template_kwargs');
 	});
 });
