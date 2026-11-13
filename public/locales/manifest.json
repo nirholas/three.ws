@@ -42,8 +42,33 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "ar",
+			"name": "العربية",
+			"dir": "rtl"
+		},
+		{
+			"code": "hi",
+			"name": "हिन्दी",
+			"dir": "ltr"
+		},
+		{
 			"code": "it",
 			"name": "Italiano",
+			"dir": "ltr"
+		},
+		{
+			"code": "ro",
+			"name": "Română",
+			"dir": "ltr"
+		},
+		{
+			"code": "as",
+			"name": "অসমীয়া",
+			"dir": "ltr"
+		},
+		{
+			"code": "af",
+			"name": "Afrikaans",
 			"dir": "ltr"
 		}
 	]

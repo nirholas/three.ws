@@ -261,8 +261,8 @@ would be a fake perk, exactly what `enforced` guards against.
 
 Priority order by demand value × backend readiness:
 
-1. **`worlds.private` (Silver)** — strongest *standing-hold* lever: a persistent private
-   space you keep only while you hold Silver. Backend closest to ready. **Spec below.**
+1. **`worlds.private` (Silver)**: live since 2026-11-04 (document reads), with the
+   realtime room gated on 2026-11-13. See "How `worlds.private` works" below.
 2. **`names.first_dibs` (Genesis)**: live. See "How the early windows work" below.
 3. **`drops.early` (Gold)**: live. See the same section.
 4. **`mcp.priority`, `worlds.branded`** — deferred: no backend (shared MCP queue / custom
@@ -276,27 +276,43 @@ changes — the access endpoint and `/three` pick it up automatically.
 
 ## How `worlds.private` works (live)
 
-Worlds carry a `visibility` (`public`, `unlisted`, `private`) and an `invitees` list of
-up to 50 user ids, stored on `world_docs` by the unapplied-until-deploy migration
-`api/_lib/migrations/20261105040000_world_private_visibility.sql`. Existing worlds stay
-`public`.
+Worlds carry a `visibility` (`public` or `private`) and an `invitees` list of up to 50
+user ids, stored on `world_docs` by the migration
+`api/_lib/migrations/20261105040000_world_private_visibility.sql` (applied to production).
+Existing worlds stay `public`.
 
 - **Create or flip to private** (`save`, `visibility` action): gated by
   `requireFeatureAccess(..., 'worlds.private')`. Hold-only, Silver or above, 402
   `three_hold_required` otherwise. Going back to public is never gated, so a lapsed
   holder can always reopen their world.
 - **Read** (`canReadWorld`): a private world loads for its owner, its invitees and the
-  service token. Everyone else gets **404, never 403**, so the world's existence does not
-  leak.
+  game server's service token. Everyone else gets **404, never 403**, so the world's
+  existence does not leak.
 - **Invites** (`invite`, `uninvite` actions): by username, resolved by
   `api/_lib/world-invites.js`. Only the owner can change access.
+- **Realtime room** (`multiplayer/src/rooms/WalkRoom.js`): the game server reads every
+  world with its service token (`multiplayer/src/persistence.js`), so a private world's
+  build loads and saves like any other, and it learns the owner and invitee ids from
+  the same read. Player identity on the game server is a wallet, not a three.ws
+  account, so the browser asks the API for a **world-access pass**
+  (`POST /api/world/access-pass`, signed by `api/_lib/world-access-pass.js`, verified
+  by `multiplayer/src/world-access-pass.js`, 10-minute TTL). The API mints one only
+  for the owner or an invitee, under the same `canReadWorld` rule, and answers 404 to
+  everyone else. `onAuth` refuses a private world without a valid pass for that exact
+  world whose account is still the owner or a current invitee (spectators included),
+  with a `world_private` error. A live room re-reads access
+  (`GET /api/world/load?fields=access`, the ids without the document) every two
+  minutes and immediately when the owner's dialog sends `world-access`, and evicts
+  anyone who lost access with close code 4404. The client retries once with a fresh
+  pass (so an invitee who joined while the world was public stays), then shows "This
+  world is private" and returns to the lobby.
 - **UI**: the world builder has a Visibility button that opens
-  `src/game/world-visibility.js` (public/unlisted/private, invitee list, empty and error
+  `src/game/world-visibility.js` (public or private, invitee list, empty and error
   states, Silver upsell for non-holders).
 - **Tests**: `tests/world-private-gate.test.js` (402 for non-holders, owner and invitee
-  read, stranger 404, public unaffected).
-- **Known limit**: the realtime room server reads worlds with a service token, so
-  room-level join gating of private worlds is not enforced yet. Document loads are.
+  read, stranger 404, public unaffected) and `tests/world-room-access.test.js` (pass
+  minting, the access-only read, the game server's token-carrying load and save, the
+  room's join gate, eviction and mid-session pass binding).
 
 ---
 

@@ -15,6 +15,14 @@
 			<description>How Forge checks and prepares a photo in the browser before photo-to-3D: on-device background matting, a square subject crop, and plain-language warnings for photos that would make a bad mesh.</description>
 		</item>
 		<item>
+			<title>Agent profiles open faster on phones</title>
+			<link>https://three.ws/agents</link>
+			<guid isPermaLink="false">2026-11-13:Agent profiles open faster on phones</guid>
+			<pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>An agent's profile page shows its avatar in a lightweight viewer, but it was also downloading the full 3D engine used by Talk, Pose and the GLB/OBJ/USDZ export, even for visitors who never opened them. That engine was the single largest download on the page. It now loads only when you press Talk, open the Pose tab or export a file, and Talk starts fetching it the moment you hover or touch the button, so the button rarely makes you wait. On a slow phone connection the profile finishes rendering sooner and uses noticeably less data.</description>
+		</item>
+		<item>
 			<title>Agents can read the HQ DeFi dashboard and get Solana-correct yield answers</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-13:Agents can read the HQ DeFi dashboard and get Solana-correct yield answers</guid>
@@ -45,6 +53,14 @@
 			<pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The new Custody tab in the agent wallet hub lets an owner pick who signs fund-moving transactions. Platform keeps today's behavior, where the server signs inside your spend policy. My wallet means the platform never signs: build routes called with signer &quot;external&quot; return an unsigned, simulated Solana transaction and a tx_id, your own wallet signs it, and POST /api/tx/submit checks the bytes match what was prepared before broadcasting and recording it in the custody ledger. Session key grants a delegate an on-chain USDC cap and an expiry, so the agent can act alone and a transfer over the cap is refused. Export key re-confirms your identity, seals the key so only your browser can open it, encrypts it to a passphrase that never leaves the page, shows it once, logs the export, and offers to rotate to a fresh key and sweep the funds. A balance history chart (24h, 7d, 30d) is filled by a new hourly snapshot job, and GET /api/me/wallet plus the get_private_wallet_balance, get_wallet_summaries and get_balance_history tools put your own linked wallet next to your agents'.</description>
+		</item>
+		<item>
+			<title>Drops and rare threews.sol names show the holder early window before you try</title>
+			<link>https://three.ws/three</link>
+			<guid isPermaLink="false">2026-11-13:Drops and rare threews.sol names show the holder early window before you try</guid>
+			<pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>During a drop's holder-only window, its page now shows a live countdown to public open and checks your own $THREE tier. Gold-and-up holders see an Early access banner and can reveal right away; everyone else sees which tier opens it now, with a link to the tiers page. Rare names on threews.sol/claim work the same way during a Genesis first-dibs window. If you are below the tier, the page tells you how far short you are and when the name or drop opens to everyone, instead of failing with a bare error.</description>
 		</item>
 		<item>
 			<title>Fewer Solana reads behind buybacks, token due diligence and agent reputation</title>
@@ -85,6 +101,22 @@
 			<pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Oracle's outcome checker lost its main data source, so it could only confirm coins that graduated, and the Oracle page and the oracle_stats tool for AI agents showed a 100% win rate. They now hide the call win rate and the market base rate while most outcomes are unconfirmed, and say why, so nobody reads a gap in the data as a flawless record.</description>
+		</item>
+		<item>
+			<title>Private worlds now keep strangers out of the live world too</title>
+			<link>https://three.ws/three</link>
+			<guid isPermaLink="false">2026-11-13:Private worlds now keep strangers out of the live world too</guid>
+			<pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A Silver holder's private world already hid its saved build from anyone not invited, but the live multiplayer world was still open: anyone could walk in and watch what was being built, and the game server could not read the private build at all, so the world opened empty and new building was lost. The game server now reads private worlds properly, and it seats only the owner and the people they invited. Making a world private or removing an invite takes effect within seconds for anyone already inside, who is told the world is private and sent back to the lobby. An invitee who was there when the world went private stays in.</description>
+		</item>
+		<item>
+			<title>Robinhood Chain launches keep their names and launch times when the chain is busy</title>
+			<link>https://three.ws/markets/robinhood</link>
+			<guid isPermaLink="false">2026-11-13:Robinhood Chain launches keep their names and launch times when the chain is busy</guid>
+			<pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Robinhood Chain coins table reads each new coin's name, symbol and launch time from the public chain RPC. When that RPC was rate-limiting, rows showed up with a blank name and no age, even though the launch watcher had already read the same details on chain. The table now fills those gaps from the watcher, so every row keeps its name, ticker and age alongside its venue, deployer record and dev-sold flag.</description>
 		</item>
 		<item>
 			<title>Self-hosted x402 facilitators no longer count a retried settle as a second payment or a second fee</title>
@@ -1836,7 +1868,7 @@
 			<guid isPermaLink="false">2026-11-04:Private, invite-only worlds for Silver holders</guid>
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
-			<description>Holding $THREE at Silver now unlocks private worlds. Open a world's Visibility menu in the builder to make it public, unlisted or private and invite up to 50 people by username. Anyone else, including people with the link, sees the world as not found. Going back to public is always free.</description>
+			<description>Holding $THREE at Silver now unlocks private worlds. Open a world's Visibility menu in the builder to make it public or private and invite up to 50 people by username. Anyone else, including people with the link, sees the world as not found. Going back to public is always free.</description>
 		</item>
 		<item>
 			<title>Report and moderate players in /play</title>

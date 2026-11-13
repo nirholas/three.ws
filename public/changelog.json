@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-13T17:06:54.475Z",
+	"generated_at": "2026-11-13T17:20:35.850Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,16 @@
 			"link": "/docs/forge-photo-prep",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-11-13",
+			"type": "update",
+			"title": "Agent profiles open faster on phones",
+			"summary": "An agent's profile page shows its avatar in a lightweight viewer, but it was also downloading the full 3D engine used by Talk, Pose and the GLB/OBJ/USDZ export, even for visitors who never opened them. That engine was the single largest download on the page. It now loads only when you press Talk, open the Pose tab or export a file, and Talk starts fetching it the moment you hover or touch the button, so the button rarely makes you wait. On a slow phone connection the profile finishes rendering sooner and uses noticeably less data.",
+			"link": "/agents",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -58,6 +68,16 @@
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-11-13",
+			"type": "update",
+			"title": "Drops and rare threews.sol names show the holder early window before you try",
+			"summary": "During a drop's holder-only window, its page now shows a live countdown to public open and checks your own $THREE tier. Gold-and-up holders see an Early access banner and can reveal right away; everyone else sees which tier opens it now, with a link to the tiers page. Rare names on threews.sol/claim work the same way during a Genesis first-dibs window. If you are below the tier, the page tells you how far short you are and when the name or drop opens to everyone, instead of failing with a bare error.",
+			"link": "/three",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -109,6 +129,26 @@
 			"title": "Oracle stops showing a perfect win rate it could not actually measure",
 			"summary": "Oracle's outcome checker lost its main data source, so it could only confirm coins that graduated, and the Oracle page and the oracle_stats tool for AI agents showed a 100% win rate. They now hide the call win rate and the market base rate while most outcomes are unconfirmed, and say why, so nobody reads a gap in the data as a flawless record.",
 			"link": "/oracle",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-13",
+			"type": "update",
+			"title": "Private worlds now keep strangers out of the live world too",
+			"summary": "A Silver holder's private world already hid its saved build from anyone not invited, but the live multiplayer world was still open: anyone could walk in and watch what was being built, and the game server could not read the private build at all, so the world opened empty and new building was lost. The game server now reads private worlds properly, and it seats only the owner and the people they invited. Making a world private or removing an invite takes effect within seconds for anyone already inside, who is told the world is private and sent back to the lobby. An invitee who was there when the world went private stays in.",
+			"link": "/three",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-13",
+			"type": "update",
+			"title": "Robinhood Chain launches keep their names and launch times when the chain is busy",
+			"summary": "The Robinhood Chain coins table reads each new coin's name, symbol and launch time from the public chain RPC. When that RPC was rate-limiting, rows showed up with a blank name and no age, even though the launch watcher had already read the same details on chain. The table now fills those gaps from the watcher, so every row keeps its name, ticker and age alongside its venue, deployer record and dev-sold flag.",
+			"link": "/markets/robinhood",
 			"tags": [
 				"fix"
 			]
@@ -2338,7 +2378,7 @@
 			"date": "2026-11-04",
 			"type": "update",
 			"title": "Private, invite-only worlds for Silver holders",
-			"summary": "Holding $THREE at Silver now unlocks private worlds. Open a world's Visibility menu in the builder to make it public, unlisted or private and invite up to 50 people by username. Anyone else, including people with the link, sees the world as not found. Going back to public is always free.",
+			"summary": "Holding $THREE at Silver now unlocks private worlds. Open a world's Visibility menu in the builder to make it public or private and invite up to 50 people by username. Anyone else, including people with the link, sees the world as not found. Going back to public is always free.",
 			"link": "/three",
 			"tags": [
 				"feature"

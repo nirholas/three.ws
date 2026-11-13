@@ -12,6 +12,8 @@
 
 ## Verification
 
+**Status update (2026-11-13):** this pack went out on 2026-09-18 and describes the registry as it stood then. Silver's private worlds have been LIVE since 2026-11-04 (the saved build) and 2026-11-13 (the live multiplayer world, gated to the owner and invitees). `GET https://three.ws/api/three/access` on 2026-11-13 reports five of eight perks with `enforced: true`: `forge.high`, `forge.gameready`, `worlds.private`, `drops.early` and `names.first_dibs`. Any repost must say Silver unlocks private worlds and must not call Silver's private worlds Planned.
+
 **Substitute:** None. The copy links `/three` (the tier page) instead of the campaign anchor `/three-token` (the token overview), because the tier check happens on `/three`.
 
 - Route: `vercel.json` maps `/three/?` to `pages/three.html`; the page is driven by `src/three-tier-page.js`.
