@@ -16,6 +16,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { rewriteHead } from './server/seo-head.mjs';
 import { keepEntryExports } from './scripts/vite/keep-entry-exports.mjs';
+import { watchIgnored } from './scripts/vite/watch-ignored.mjs';
 import { createCreationHeadRenderer, creationIdFromPath, apiCreationLoader } from './server/creation-head.mjs';
 import { isPlayPath, rewritePlayHead } from './server/play-head.mjs';
 import { presentDevRequestsAsSameSite } from './server/dev-proxy-origin.mjs';
@@ -312,13 +313,9 @@ const appConfig = {
 		// Bind to 0.0.0.0 so the Codespace port-forwarder can reach the server.
 		host: true,
 		...(HMR === undefined ? {} : { hmr: HMR }),
-		// Agent worktrees are full checkouts nested at .claude/worktrees/ (a
-		// dozen of them is ordinary here, roughly 250,000 files). None of them is
-		// part of this app's module graph, but Vite's default watcher only skips
-		// node_modules and .git, so it tried to watch every one, spent the user's
-		// whole inotify budget, and died at boot with "ENOSPC: System limit for
-		// number of file watchers reached". This list is merged with Vite's own
-		// defaults, not a replacement for them.
+		// Trees that are never part of the module graph (agent worktrees, Python
+		// virtualenvs) are kept out of the watcher; the list and the reasons live
+		// in scripts/vite/watch-ignored.mjs.
 		//
 		// With hot reload off (VITE_NO_HMR, an e2e run) there is no client to tell
 		// about a change, and the whole reason it is off is that a test browser
@@ -326,7 +323,7 @@ const appConfig = {
 		// does not watch at all: the editor's own watcher and a couple of peer dev
 		// servers already sit near the inotify ceiling on this box, and an e2e
 		// stack that needs none of it was the one dying on ENOSPC at boot.
-		watch: HMR === false ? null : { ignored: ['**/.claude/worktrees/**'] },
+		watch: HMR === false ? null : { ignored: watchIgnored(__dirname) },
 		proxy: {
 			'/r2-proxy': {
 				target: 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev',
