@@ -11,12 +11,15 @@ Build plan this announces: [`docs/oracle-trading-mcp-plan.md`](../oracle-trading
 `io.github.nirholas/threews-oracle` and `io.github.nirholas/threews-agent-trader` resolve in the
 registry. Every claim below has to be true at post time.
 
-**Known blocker (2026-11-12):** `/api/oracle/stats` and the `oracle_stats` tool report a 100
-percent win rate and a 100 percent market base rate. That number is wrong, not good: the outcome
-labeler in `workers/agent-sniper/intel/learn.js` reads the pump.fun coin API, which now answers 403
-behind a Cloudflare challenge, so every non-graduated coin stays `unknown` (153,859 of 158,419
-outcome rows) and only graduations count as resolved. Never quote a win rate or base rate from
-`oracle_stats` until the labeler reads curve state another way and the rates come off 100.
+**Known blocker (updated 2026-11-13):** the outcome labeler in
+`workers/agent-sniper/intel/learn.js` reads the pump.fun coin API, which answers 403 behind a
+Cloudflare challenge, so every non-graduated coin stays `unknown` (139,947 unknown against 4,308
+judged graduations across the scored window on 2026-11-13). Until 2026-11-13 that made
+`/api/oracle/stats` and the `oracle_stats` tool report a 100 percent win rate. They now withhold
+both rates (`win_rate: null`, `labels.status: "degraded"`) while most labels are unknown, so the
+"honest track record" lines below are true in the sense that the tool says it cannot judge yet,
+not that it shows a number. Do not quote a win rate or base rate, and do not lean on the track
+record in the post, until the labeler reads curve state another way and `labels.status` is `ok`.
 
 ## Rules for this one
 
