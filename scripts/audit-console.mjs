@@ -88,7 +88,7 @@ import { spawn } from 'node:child_process';
 import { loadavg, cpus } from 'node:os';
 import { get as httpGet } from 'node:http';
 import { get as httpsGet } from 'node:https';
-import { chromium } from 'playwright';
+import { chromium, devices } from 'playwright';
 import { isIgnorableConsole, isDevOnlyAsset } from './lib/console-noise.mjs';
 import { loadBaseline, diffAgainstBaseline, mergeBaseline, saveBaseline, formatLoadNote } from './lib/console-baseline.mjs';
 
@@ -478,7 +478,12 @@ function newContext(browser, vp) {
 		deviceScaleFactor: vp.isMobile ? 3 : 1,
 		userAgent: vp.isMobile
 			? 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
-			: undefined,
+			: // A real desktop Chrome UA, never the default `HeadlessChrome` one. No user
+				// sends HeadlessChrome, and bot shields key on it: on 2026-11-13 DEXTools'
+				// Cloudflare answered the chart widget on /dextools and /chart-companion
+				// with 403 + X-Frame-Options SAMEORIGIN for HeadlessChrome and 200 for this
+				// UA, so the default reported a blank frame no visitor ever sees.
+				devices['Desktop Chrome'].userAgent,
 	});
 }
 
