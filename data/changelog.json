@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-13",
+			"title": "Robinhood Chain launches keep their names and launch times when the chain is busy",
+			"summary": "The Robinhood Chain coins table reads each new coin's name, symbol and launch time from the public chain RPC. When that RPC was rate-limiting, rows showed up with a blank name and no age, even though the launch watcher had already read the same details on chain. The table now fills those gaps from the watcher, so every row keeps its name, ticker and age alongside its venue, deployer record and dev-sold flag.",
+			"tags": ["fix"],
+			"link": "/markets/robinhood"
+		},
+		{
+			"date": "2026-11-13",
 			"title": "Fewer Solana reads behind buybacks, token due diligence and agent reputation",
 			"summary": "Three background jobs were spending a large share of the platform's Solana read quota on answers that had not changed. The hourly buyback check now reads every coin's vault in a couple of batched calls instead of four reads per coin, token due-diligence reports reuse a token's launch and each holder's first purchase once they are known, and agent reputation scores are refreshed every 12 hours unless the agent is being viewed. Together that is roughly 120,000 fewer chain reads a day, which leaves more headroom for payments and live pages.",
 			"tags": ["improvement", "infra"]
