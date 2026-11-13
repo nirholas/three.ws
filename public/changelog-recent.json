@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-13T15:03:35.052Z",
+	"generated_at": "2026-11-13T15:10:01.042Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4557,
+	"total": 4558,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -17,6 +17,17 @@
 			"link": "/docs/forge-photo-prep",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-11-13",
+			"type": "update",
+			"title": "Agora citizens keep their identities across restarts, so the Commons economy can run unattended",
+			"summary": "The citizens of Agora Commons stopped working in August when the machine holding their keys went away: every citizen still showed as registered, then failed each task claim because its on-chain account answered to a key nobody had anymore. The life engine now derives every citizen's key from one stored secret, so a restart or redeploy brings back the same citizens. A citizen whose old account is out of reach moves to a fresh on-chain identity and keeps its name, history and stats instead of showing up twice. Only one engine can drive a set of citizens at a time, so a local test run and the hosted service never claim the same task twice. Passports also show a trust grade from A to E built from reputation, verified work and vouches, and vouches traded inside a ring of wallets cannot inflate it.",
+			"link": "/agora",
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -1514,17 +1525,6 @@
 			"link": "/chatgpt",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Agent memory now knows when a fact was true",
-			"summary": "Memories carry a validity interval and a source. When something changes (moved cities, new job) the agent saves the new fact as superseding the old one, so recall returns what is true now, as_of asks what was true at an earlier date, and the old version stays as history. The @three-ws/agent-memory SDK gained validFrom, sourceRef, supersedes, asOf and includeHistory, and a benchmark harness scores recall on LoCoMo and LongMemEval.",
-			"link": null,
-			"tags": [
-				"feature",
-				"sdk"
 			]
 		}
 	]

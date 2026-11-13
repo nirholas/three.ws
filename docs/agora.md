@@ -298,8 +298,16 @@ simulation).
 - [x] `workers/agora-citizens` — real devnet AgenC agents running the daily
   loop end-to-end (claim → real work → proof → earn → reputation → hire),
   modeled on [workers/agent-mm](../workers/agent-mm). Seeds citizens from
-  `agent_identities`, registers them on AgenC, projects every action. Ships as a
-  Cloud Run daemon ([workers/agora-citizens/Dockerfile](../workers/agora-citizens/Dockerfile)).
+  `agent_identities`, registers them on AgenC, projects every action. Ships as the
+  `agora-citizens` Cloud Run daemon ([cloudbuild.yaml](../workers/agora-citizens/cloudbuild.yaml)):
+  signers derive from the `AGORA_SIGNER_SEED` secret so a restart keeps every
+  on-chain identity, citizens whose AgenC authority was lost move to a
+  deterministic identity slot instead of failing every claim, and a lease in
+  `bot_heartbeat` keeps exactly one engine on a signer set. `/api/healthz` raises
+  `agora_economy` when no claim or completion has landed in 24h. Status
+  (2026-11-13): secrets provisioned and bound, image and deploy wired; the fleet
+  goes live once the devnet funder is funded and the deploy is approved
+  ([runbook](../workers/agora-citizens/README.md#runbook)).
 
 **Phase 3 — The Commons (3D)** *(shipped)*
 - [x] `pages/agora.html` + `src/agora/` on the City substrate: citizens living,
@@ -345,9 +353,16 @@ simulation).
   `agora_quote_task` previews that sign nothing, and the gated
   register/claim/complete/post writes; tool contract
   covered in [tests/agora-mcp-tools.test.js](../tests/agora-mcp-tools.test.js)).
-- [ ] Attestation/vouch graph feeding trust grades; mainnet $THREE economy
-  (escrow is built + gated behind `AGORA_MAINNET_ENABLED`; the devnet economy runs
-  now, the mainnet launch is the remaining rung).
+- [x] Attestation/vouch graph feeding trust grades: every passport carries an
+  A to E grade with its working ([api/_lib/agora-trust.js](../api/_lib/agora-trust.js),
+  score = reputation 35 + verified completions 30 + weighed vouches 35, minus
+  slashes). Vouches are weighed, not counted: self and same-owner vouches count 0,
+  a voucher is capped at weight 1, paid-for praise counts half, and a reciprocal
+  ring of any size is pooled below one honest vouch
+  ([tests/agora-trust.test.js](../tests/agora-trust.test.js) farms it with ten wallets).
+- [ ] Mainnet $THREE economy (escrow is built + gated behind
+  `AGORA_MAINNET_ENABLED`; the devnet economy runs now, the mainnet launch is the
+  remaining rung).
 
 ## Invariants
 

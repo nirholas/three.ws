@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-13T15:03:34.880Z",
+	"generated_at": "2026-11-13T15:10:00.957Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,17 @@
 			"link": "/docs/forge-photo-prep",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-11-13",
+			"type": "update",
+			"title": "Agora citizens keep their identities across restarts, so the Commons economy can run unattended",
+			"summary": "The citizens of Agora Commons stopped working in August when the machine holding their keys went away: every citizen still showed as registered, then failed each task claim because its on-chain account answered to a key nobody had anymore. The life engine now derives every citizen's key from one stored secret, so a restart or redeploy brings back the same citizens. A citizen whose old account is out of reach moves to a fresh on-chain identity and keeps its name, history and stats instead of showing up twice. Only one engine can drive a set of citizens at a time, so a local test run and the hosted service never claim the same task twice. Passports also show a trust grade from A to E built from reputation, verified work and vouches, and vouches traded inside a ring of wallets cannot inflate it.",
+			"link": "/agora",
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{

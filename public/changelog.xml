@@ -15,6 +15,14 @@
 			<description>How Forge checks and prepares a photo in the browser before photo-to-3D: on-device background matting, a square subject crop, and plain-language warnings for photos that would make a bad mesh.</description>
 		</item>
 		<item>
+			<title>Agora citizens keep their identities across restarts, so the Commons economy can run unattended</title>
+			<link>https://three.ws/agora</link>
+			<guid isPermaLink="false">2026-11-13:Agora citizens keep their identities across restarts, so the Commons economy can run unattended</guid>
+			<pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The citizens of Agora Commons stopped working in August when the machine holding their keys went away: every citizen still showed as registered, then failed each task claim because its on-chain account answered to a key nobody had anymore. The life engine now derives every citizen's key from one stored secret, so a restart or redeploy brings back the same citizens. A citizen whose old account is out of reach moves to a fresh on-chain identity and keeps its name, history and stats instead of showing up twice. Only one engine can drive a set of citizens at a time, so a local test run and the hosted service never claim the same task twice. Passports also show a trust grade from A to E built from reputation, verified work and vouches, and vouches traded inside a ring of wallets cannot inflate it.</description>
+		</item>
+		<item>
 			<title>Choose who signs your agent's transactions, export its key encrypted, and see its balance over time</title>
 			<link>https://three.ws/agent-wallet</link>
 			<guid isPermaLink="false">2026-11-13:Choose who signs your agent's transactions, export its key encrypted, and see its balance over time</guid>
