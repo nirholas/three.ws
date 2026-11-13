@@ -124,6 +124,14 @@ The policy lives in [`browse-policy.js`](../workers/agent-screen-pool/tasks/brow
 
 **Take over.** The panel's Take over button uses the same control lease as Take control. The loop checks the lease before every action and again after the model answers, so it stops within one step. The page then stays open for the owner to drive until they release.
 
+**What you watch.** When a worker claims the run it first closes the agent's idle cast (the demo task the screen shows while nobody has given it work), so the live screen, and the browser you get when you take over, is the browse page itself.
+
+**When a model is down.** Each step asks a short chain of free models in turn (`BROWSE_PROVIDERS` on the pool, see its [README](../workers/agent-screen-pool/README.md#config-env)). The model that answered is asked first on the next step, so a dead one costs a single round trip per run. If every model fails, the worker waits a few seconds and walks the chain once more before ending the run with the step "No model could answer right now". Taking over while the model is thinking always ends the run as yours, never as a failure.
+
+**Repeat guard.** Reading the same element twice on the same page is refused without spending a step, and the model is told to answer from what it already read. Three unusable replies end the run.
+
+The panel sits below the control bar and scrolls on its own, so Browse, Start and Take over stay reachable at phone width.
+
 Every step, including each refusal, is recorded on the job (`steps`) and logged by the worker.
 
 ## Limits and what is next

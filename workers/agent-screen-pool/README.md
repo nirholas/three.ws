@@ -102,6 +102,7 @@ the first cast with `Executable doesn't exist at /ms-playwright/chromium-<rev>`.
 | `TOUR_READY_MS` | `30000` | Max wait for a walkable scene to become ready. |
 | `LAUNCH_FEED_URL` | `$BASE_URL/api/pump/launches?limit=8` | Tour commentary source (the platform's own launch records). |
 | `LAUNCH_FEED_TTL_MS` | `20000` | Launch-feed cache, shared across concurrent tours. |
+| `BROWSE_PROVIDERS` | `llama-3.3-70b,mistral-small,deepseek-v4-flash,gpt-oss-120b` | Free `/api/brain/chat` providers a browse run asks in order for each step (comma separated). |
 
 ## Take the wheel (owner control)
 
@@ -210,4 +211,4 @@ pure sequencer and task library are unit-tested in
 
 ## Browse jobs
 
-`browse-runner.js` polls `POST /api/agent-screen-browse {op:'claim'}` every `BROWSE_POLL_MS` (default 4000) and runs up to `BROWSE_MAX` (default 2) goal-driven browsing jobs on their own pages. Each step is chosen by the model from a closed action schema, checked by `tasks/browse-policy.js` (public http(s) only, domain allowlist, no financial pages, no credential entry, step/time/token caps), and reported back. The loop yields within one step when the owner takes the control lease. See [docs/agent-screen-control.md](../../docs/agent-screen-control.md#send-the-agent-browsing-browse_web).
+`browse-runner.js` polls `POST /api/agent-screen-browse {op:'claim'}` every `BROWSE_POLL_MS` (default 4000) and runs up to `BROWSE_MAX` (default 2) goal-driven browsing jobs on their own pages. Each step is chosen by the model from a closed action schema, checked by `tasks/browse-policy.js` (public http(s) only, domain allowlist, no financial pages, no credential entry, step/time/token caps), and reported back. The loop yields within one step when the owner takes the control lease, including while the model is still thinking. Claiming a job first closes any idle cast of the same agent, so the owner's screen shows the browse page. Each step walks `BROWSE_PROVIDERS` until one model answers, keeps the one that answered first in line for the next step, and retries the whole chain once after a short backoff; when no model answers, the run ends with a `model_unavailable` error step instead of a crash. See [docs/agent-screen-control.md](../../docs/agent-screen-control.md#send-the-agent-browsing-browse_web).
