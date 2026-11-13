@@ -110,7 +110,7 @@ Code and config the reviewer cited alongside these docs (read them in the repo; 
 - `multiplayer/README.md`
 - `prompts/finish/_context/production-100-OWNER-ACTIONS.md` (section "Open rows")
 
-## Status 2026-11-12 (re-checked: live /health still reports presence local on revision 00013; only the owner deploy remains). Earlier status 2026-11-10 (verified on a Memorystore-backed test fleet, live promotion remains)
+## Status 2026-11-13 (re-checked: live /health reports presence local on revision 00013, maxScale 1; Memorystore three-ws-multiplayer READY, secret MULTIPLAYER_REDIS_URI present, multiplayer npm test 6 of 6 pass against docker Redis; only the owner deploy remains). Earlier status 2026-11-12 (same result). Earlier status 2026-11-10 (verified on a Memorystore-backed test fleet, live promotion remains)
 
 Done: dedicated Memorystore `three-ws-multiplayer` and Secret Manager `MULTIPLAYER_REDIS_URI` exist; `multiplayer/src/tunnel.js` bridges sockets that land on a non-owner instance (Cloud Run cannot route `/<processId>/<roomId>`; before it, 200 of 200 joins failed with `seat reservation expired`); `multiplayer/test/*` 6 passing against a real Redis; a separate test service (min 2 / max 3, secret-bound `REDIS_URI`, since deleted) ran the load test at 200 clients, 4 coins, 60 s: 0 failed joins, 0 drops, join p50 679 ms / p95 1555 ms, 186000 of 186000 chat deliveries; two Chromium contexts on `CommunityNet` saw each other with upgrades logged on different instances. Numbers are in `multiplayer/README.md`.
 
