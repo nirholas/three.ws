@@ -57,6 +57,24 @@ async function waitFor(fn, { timeoutMs, label }) {
 	throw new Error(`${label} did not become ready in ${timeoutMs}ms${last ? `: ${last.message}` : ''}`);
 }
 
+function runCli(args, timeoutMs) {
+	return new Promise((resolve) => {
+		const child = spawn(process.execPath, args);
+		let stdout = '';
+		let stderr = '';
+		const timer = setTimeout(() => {
+			stderr += `\nattack CLI killed after ${timeoutMs}ms\n`;
+			child.kill('SIGKILL');
+		}, timeoutMs);
+		child.stdout.on('data', (d) => (stdout += d));
+		child.stderr.on('data', (d) => (stderr += d));
+		child.on('close', (status) => {
+			clearTimeout(timer);
+			resolve({ status, stdout, stderr });
+		});
+	});
+}
+
 const steps = [];
 function check(name, ok, detail = '') {
 	steps.push({ name, ok });
@@ -153,14 +171,26 @@ async function main() {
 		check('sponsor spent only the network fee', sponsorBefore - sponsorAfter > 0 && sponsorBefore - sponsorAfter < 100_000, `${sponsorBefore - sponsorAfter} lamports`);
 
 		const replay = await post(base + '/settle', body);
-		check('duplicate settle is refused, not rebroadcast', replay.success === false, replay.errorReason);
+		// Idempotent contract: a resubmitted payload answers with the SAME signature
+		// (the buyer is owed the product) or a refusal, and never lands a second transfer.
+		check(
+			'duplicate settle is idempotent, not a second transfer',
+			replay.success === false || replay.transaction === settle.transaction,
+			replay.success ? `same tx ${replay.transaction}` : replay.errorReason,
+		);
 		const merchantBal2 = (await getAccount(conn, merchantAta.address, 'confirmed')).amount;
 		check('duplicate settle moved nothing', merchantBal2 === AMOUNT);
 
 		const metrics = await (await fetch(base + '/metrics')).json();
-		check('metrics count the settle and burn', JSON.stringify(metrics).includes('settle'), JSON.stringify(metrics).slice(0, 160));
+		check(
+			'metrics count one settlement and one fee for the replayed payment',
+			metrics.settled === 1 && metrics.feeLamports > 0 && metrics.feeLamports < 100_000,
+			`settled ${metrics.settled}, replays ${metrics.replays}, feeLamports ${metrics.feeLamports}, budget used ${metrics.feeBudget?.usedLamports}`,
+		);
 
-		const cli = spawnSync(process.execPath, [path.join(here, '../bin/x402-server.js'), 'attack', '--facilitator', base], { encoding: 'utf8', timeout: 120_000 });
+		// Async on purpose: spawnSync would block this process's event loop, and with
+		// it the in-process facilitator the CLI is attacking, so every request hangs.
+		const cli = await runCli([path.join(here, '../bin/x402-server.js'), 'attack', '--facilitator', base], 180_000);
 		process.stdout.write(cli.stdout.replace(/^/gm, '    '));
 		if (cli.stderr) process.stderr.write(cli.stderr);
 		check('attack CLI: every hostile case refused with its expected reason', cli.status === 0, cli.stdout.trim().split('\n').pop());

@@ -748,7 +748,7 @@ export function createFacilitator(options = {}) {
 
 		// The broadcast committed the sponsor to this fee whether or not the wait
 		// below resolves, so the budget is charged here.
-		if (feeBudget && !selfPay) feeBudget.record(estFeeLamports);
+		if (feeBudget && !selfPay) feeBudget.record(estFeeLamports, signature);
 
 		const conf = await confirmSignature(connection, signature);
 		if (!conf.confirmed) {
@@ -1019,6 +1019,7 @@ export function createFacilitator(options = {}) {
 			ok,
 			reason: ok ? null : (result.invalidReason || result.reason || null),
 			pending: Boolean(result.pending),
+			replayed: Boolean(result.replayed),
 			network: requirement.network || null,
 			payTo: requirement.payTo || null,
 			mint: requirement.asset || null,

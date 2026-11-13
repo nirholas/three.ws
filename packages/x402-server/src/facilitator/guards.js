@@ -21,8 +21,15 @@ export function createFeeBudget({ lamports, windowMs = 24 * 3600_000, clock = Da
 		allows(estLamports) {
 			return used() + Number(estLamports || 0) <= lamports;
 		},
-		record(estLamports) {
-			spent.push({ at: clock(), lamports: Number(estLamports || 0) });
+		/**
+		 * Charge a broadcast. `signature` makes the charge idempotent: Solana dedupes a
+		 * resent transaction by signature, so a replay spends no second fee and must
+		 * not drain the window twice.
+		 */
+		record(estLamports, signature = null) {
+			prune();
+			if (signature && spent.some((e) => e.signature === signature)) return;
+			spent.push({ at: clock(), lamports: Number(estLamports || 0), signature });
 		},
 	};
 }

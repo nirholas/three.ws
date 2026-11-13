@@ -91,7 +91,7 @@ export interface Facilitator {
 	probeSettlementSignature(input: Record<string, unknown>): Promise<unknown>;
 	validateRingTransaction(input: Record<string, unknown>): { ok: boolean; reason?: string; decoded?: Record<string, any> };
 	decisionLog: DecisionLog | null;
-	feeBudget: { lamports: number; windowMs: number; used(): number; allows(n: number): boolean; record(n: number): void } | null;
+	feeBudget: { lamports: number; windowMs: number; used(): number; allows(n: number): boolean; record(n: number, signature?: string | null): void } | null;
 	sponsorAddress(): string | null;
 	payToAllowlist(): Set<string>;
 	settleableMints(): Set<string>;

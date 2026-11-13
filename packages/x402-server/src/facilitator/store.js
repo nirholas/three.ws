@@ -106,13 +106,24 @@ export class MemoryDecisionLog {
 	recent(limit = 100) {
 		return this.entries.slice(-limit).reverse();
 	}
-	/** Refusal reasons are `class:detail`; group on the class. */
+	/**
+	 * Refusal reasons are `class:detail`; group on the class. A successful settle
+	 * whose signature already settled (an idempotent replay, flagged or silently
+	 * deduped by the RPC) counts under `replays`, never as a second settlement or
+	 * a second sponsor fee.
+	 */
 	summary() {
-		const out = { verifies: 0, settles: 0, settled: 0, pending: 0, refusals: {}, feeLamports: 0 };
+		const out = { verifies: 0, settles: 0, settled: 0, replays: 0, pending: 0, refusals: {}, feeLamports: 0 };
+		const landed = new Set();
 		for (const e of this.entries) {
 			if (e.action === 'verify') out.verifies += 1;
 			if (e.action === 'settle') out.settles += 1;
 			if (e.ok && e.action === 'settle') {
+				if (e.replayed || (e.txSig && landed.has(e.txSig))) {
+					out.replays += 1;
+					continue;
+				}
+				if (e.txSig) landed.add(e.txSig);
 				out.settled += 1;
 				out.feeLamports += Number(e.feeLamports) || 0;
 			} else if (e.pending) out.pending += 1;

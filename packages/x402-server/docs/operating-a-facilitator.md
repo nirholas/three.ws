@@ -93,6 +93,10 @@ facilitator never promises a retry it cannot honor.
 
 `GET /healthz` reports `sponsorBelowFloor`. `GET /metrics` returns verifies,
 settles, pending, refusals by reason and lamports burned, plus fee-budget usage.
+`settled` counts distinct on-chain transfers: a resubmitted payload that answers
+with the signature it already landed is counted under `replays`, and neither
+`feeLamports` nor the fee budget is charged for it a second time (Solana dedupes the
+resend by signature, so no second fee is spent).
 Alert on `sponsorBelowFloor`, on fee-budget usage above 80 percent, and on a rising
 `settlement_pending` count.
 

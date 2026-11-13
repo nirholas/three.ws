@@ -11,7 +11,7 @@ import { buildPayment } from '../src/facilitator/attacks.js';
 
 const NETWORK = 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1';
 
-function chain({ balance = 2_000_000_000, confirm = 'confirmed' } = {}) {
+function chain({ balance = 2_000_000_000, confirm = 'confirmed', resend = 'reject' } = {}) {
 	const state = { balance, landed: new Set(), sends: 0, confirm };
 	const sigOf = (raw) => bs58.encode(VersionedTransaction.deserialize(raw).signatures[0]);
 	const conn = {
@@ -27,7 +27,11 @@ function chain({ balance = 2_000_000_000, confirm = 'confirmed' } = {}) {
 		},
 		async sendRawTransaction(raw) {
 			const sig = sigOf(raw);
-			if (state.landed.has(sig)) throw new Error('Transaction has already been processed');
+			if (state.landed.has(sig)) {
+				// Some RPCs reject a resent signature; others accept it and dedupe silently.
+				if (resend === 'silent') return sig;
+				throw new Error('Transaction has already been processed');
+			}
 			state.sends += 1;
 			state.landed.add(sig);
 			return sig;
@@ -202,6 +206,28 @@ test('idempotent settle: submitting the same payment twice lands one transaction
 	assert.equal(a.transaction, b.transaction);
 	assert.equal(conn.state.sends, 1);
 });
+
+for (const resend of ['reject', 'silent']) {
+	test(`idempotent settle (${resend} resend): a replay counts as one settlement and one fee in metrics and the fee budget`, async () => {
+		const conn = chain({ resend });
+		const { facilitator, pay } = setup({ conn, guards: { feeBudget: { lamports: 1_000_000, windowMs: 3_600_000 } } });
+		const p = pay();
+		const a = await facilitator.settleRingPayment(p);
+		const used = facilitator.feeBudget.used();
+		const b = await facilitator.settleRingPayment(p);
+		assert.equal(a.success, true);
+		assert.equal(b.success, true);
+		assert.equal(b.transaction, a.transaction);
+		assert.equal(conn.state.sends, 1);
+		assert.ok(used > 0);
+		assert.equal(facilitator.feeBudget.used(), used, 'a replay must not charge the fee budget again');
+		const m = facilitator.decisionLog.summary();
+		assert.equal(m.settles, 2);
+		assert.equal(m.settled, 1, 'one on-chain transfer is one settlement');
+		assert.equal(m.replays, 1);
+		assert.equal(m.feeLamports, a.feeLamports, 'sponsor burn counts the landed fee once');
+	});
+}
 
 test('decision log: every verify and settle leaves a machine-readable entry', async () => {
 	const { facilitator, pay } = setup();
