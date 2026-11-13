@@ -39,6 +39,8 @@ function describe(step) {
 	if (step.type === 'yield') return 'Paused: you took the wheel';
 	if (step.type === 'denied') return `Blocked: ${REASON_TEXT[step.reason] || step.reason}`;
 	if (step.type === 'stop') return `Stopped: ${step.reason.replace('_', ' ')}`;
+	if (step.type === 'error' && step.reason === 'model_unavailable') return 'No model could answer right now. Start the run again in a minute.';
+	if (step.type === 'error' && step.action === 'run') return `The browser stopped unexpectedly (${step.reason}). Start the run again.`;
 	if (step.type === 'error') return `Could not ${step.action}: ${step.reason}`;
 	if (step.type === 'invalid') return 'The model gave an unusable answer, retrying';
 	if (step.action === 'done') return `Done: ${step.result || step.note || ''}`;

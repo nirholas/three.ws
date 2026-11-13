@@ -108,6 +108,7 @@ export function createBrowseRunner({ baseUrl, browseUrl, secret, newPage, egress
 			return reportChain;
 		};
 		let outcome = { status: 'error', steps: [], result: null };
+		const stepsSoFar = [];
 		try {
 			entry.page = await newPage();
 			const policy = createBrowsePolicy({ allowedDomains: job.allowedDomains, maxSteps: job.maxSteps });
@@ -115,7 +116,6 @@ export function createBrowseRunner({ baseUrl, browseUrl, secret, newPage, egress
 			await pushTaskFrame(entry, { activity: `Goal: ${job.goal}`, type: 'activity', shoot: false });
 			const v = await egress.checkUrl(job.startUrl);
 			if (v.ok) await entry.page.goto(job.startUrl, { waitUntil: 'domcontentloaded', timeout: 20_000 }).catch((e) => log('browse start goto', job.id, e?.message || e));
-			const stepsSoFar = [];
 			outcome = await runBrowseLoop({
 				goal: job.goal, startUrl: job.startUrl, policy,
 				observe: () => observe(entry.page),
@@ -135,7 +135,10 @@ export function createBrowseRunner({ baseUrl, browseUrl, secret, newPage, egress
 			await pushTaskFrame(entry, { activity: outcome.status === 'done' ? `Done: ${outcome.result}` : `Stopped: ${outcome.reason || outcome.status}`, type: 'analysis' });
 		} catch (err) {
 			log('browse run failed', job.id, err?.message || err);
-			outcome = { ...outcome, status: 'error', reason: String(err?.message || err).slice(0, 160) };
+			const reason = String(err?.message || err).slice(0, 160);
+			// Keep the steps already taken so the owner still sees what happened.
+			stepsSoFar.push({ n: stepsSoFar.length + 1, at: Date.now(), type: 'error', action: 'run', reason });
+			outcome = { ...outcome, status: 'error', reason, steps: stepsSoFar };
 		}
 		await report({ status: outcome.status, steps: outcome.steps, result: outcome.result });
 		// After a take-over the page stays live for the owner until they release.

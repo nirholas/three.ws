@@ -124,6 +124,25 @@ describe('browse loop', () => {
 		expect(kinds).toContain('denied:navigate');
 		expect(kinds.at(-1)).toBe('action:done');
 	});
+	it('reports yielded, not a failure, when the model call fails after the owner takes over', async () => {
+		let manual = false;
+		const h = harness({ actions: [] });
+		h.deps.decide = async () => { manual = true; throw new Error('no model could decide (llama-3.3-70b: brain 502)'); };
+		h.deps.isManual = () => manual;
+		const r = await runBrowseLoop(h.deps);
+		expect(r.status).toBe('yielded');
+		expect(h.calls.act).toHaveLength(0);
+		expect(r.steps.at(-1)).toMatchObject({ type: 'yield', reason: 'owner_took_over' });
+	});
+	it('logs a model outage as a step and ends cleanly instead of crashing the run', async () => {
+		const h = harness({ actions: [] });
+		h.deps.decide = async () => { throw new Error('no model could decide (gpt-oss-120b: no working route)'); };
+		const r = await runBrowseLoop(h.deps);
+		expect(r.status).toBe('error');
+		expect(r.reason).toBe('model_unavailable');
+		expect(h.logs.at(-1)).toMatchObject({ type: 'error', action: 'decide', reason: 'model_unavailable' });
+		expect(h.logs.at(-1).detail).toMatch(/no working route/);
+	});
 	it('gives up after repeated unparseable model output', async () => {
 		const h = harness({ actions: ['nope', 'still nope', 'again'] });
 		const r = await runBrowseLoop(h.deps);

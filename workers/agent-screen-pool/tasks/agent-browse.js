@@ -56,7 +56,16 @@ export async function runBrowseLoop({ goal, startUrl, policy, observe, decide, a
 		const elements = new Map((obs.elements || []).map((e) => [e.id, e]));
 		tokens += obs.tokens || 0;
 
-		const reply = await decide({ goal, obs, feedback, stepsTaken: acted, stepsLeft: policy.maxSteps - acted });
+		let reply;
+		try {
+			reply = await decide({ goal, obs, feedback, stepsTaken: acted, stepsLeft: policy.maxSteps - acted });
+		} catch (err) {
+			// A take-over while the model was thinking is the owner's stop, whatever
+			// the model call did. Otherwise the outage is a logged step, not a crash.
+			if (isManual()) { record({ type: 'yield', reason: 'owner_took_over' }); return finish('yielded'); }
+			record({ type: 'error', action: 'decide', reason: 'model_unavailable', detail: String(err?.message || err).slice(0, 300) });
+			return finish('error', { reason: 'model_unavailable' });
+		}
 		tokens += reply.tokens || 0;
 
 		// The owner may have grabbed the wheel while the model was thinking. Check
@@ -114,11 +123,12 @@ export async function runBrowseLoop({ goal, startUrl, policy, observe, decide, a
 	}
 }
 
-// Providers tried in order for each decision. gpt-oss-120b is the free default
-// the narration code uses; llama-3.3-70b runs on a separate route, so one
-// provider losing its route (a billing or quota outage upstream) does not stop
-// every browse run. Override with BROWSE_PROVIDERS on the pool.
-export const DEFAULT_BROWSE_PROVIDERS = Object.freeze(['gpt-oss-120b', 'llama-3.3-70b']);
+// Free-tier providers tried in order for each decision, each on its own routes,
+// so one provider losing its route (a billing or quota outage upstream, as
+// gpt-oss-120b did in November 2026) does not stop every browse run.
+// llama-3.3-70b leads because it has carried every real browse run so far.
+// Override with BROWSE_PROVIDERS (comma separated) on the pool.
+export const DEFAULT_BROWSE_PROVIDERS = Object.freeze(['llama-3.3-70b', 'mistral-small', 'deepseek-v4-flash', 'gpt-oss-120b']);
 
 // Read a /api/brain/chat SSE reply. Text arrives as `data: <json string>` lines;
 // a provider whose routes are all down streams `event: error` with a message and
