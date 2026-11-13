@@ -65,7 +65,7 @@ import { mintAttestation, deriveEventId, loadAttesterKeypair } from '../_lib/att
 import { pumpfunMcp, pumpfunBotEnabled } from '../_lib/pumpfun-mcp.js';
 import { getMints, getWhales, getClaims } from '../_lib/channel-feed-sources.js';
 import { crawlAgentAttestations } from '../_lib/solana-attestations.js';
-import { SOLANA_USDC_MINT, SOLANA_USDC_MINT_DEVNET, EVM_USDC } from '../payments/_config.js';
+import { SOLANA_USDC_MINT, EVM_USDC } from '../payments/_config.js';
 import { chargeSubscription, failPayment } from '../_lib/subscription-billing.js';
 import { sendEmail } from '../_lib/email.js';
 import { fetchSafePublicUrl } from '../_lib/ssrf-guard.js';
@@ -76,6 +76,7 @@ import { requireCron } from '../_lib/cron-auth.js';
 import { RESERVED_WITHDRAWAL_STATUSES } from '../_lib/withdrawal-status.js';
 import { payoutsPaused } from '../_lib/payout-kill-switch.js';
 import { acquireLock } from '../_lib/cache.js';
+import { prefetchBuybackState, quoteFromCurveInfo } from '../_lib/pump-buyback-prefetch.js';
 import { resolveURI } from '../../src/ipfs.js';
 import {
 	OUTCOME,
@@ -2515,26 +2516,38 @@ async function buybackLoadRelayer() {
  * @returns {Promise<{ currencyStr: string, quoteSymbol: 'SOL'|'USDC'|'OTHER', source: 'chain'|'db'|'fallback' }>}
  */
 async function resolveCoinQuoteCurrency({ network, mint, dbQuoteMint = null }) {
-	const { resolveCustodialQuote } = await import('../_lib/pump-trade-args.js');
+	let info = null;
 	try {
-		const { bondingCurvePda, PUMP_SDK } = await import('@pump-fun/pump-sdk');
-		const info = await getConnection({ network }).getAccountInfo(
-			bondingCurvePda(solanaPubkey(mint)),
-		);
-		if (info) {
-			const bc = PUMP_SDK.decodeBondingCurve(info);
-			const q = resolveCustodialQuote(bc.quoteMint, network);
-			return { currencyStr: q.quoteMint, quoteSymbol: q.quoteSymbol, source: 'chain' };
-		}
+		const { bondingCurvePda } = await import('@pump-fun/pump-sdk');
+		info = await getConnection({ network }).getAccountInfo(bondingCurvePda(solanaPubkey(mint)));
 	} catch {
-		// fall through to the DB hint / USDC default below
+		// an unreadable curve falls through to the DB hint / USDC default
 	}
-	if (dbQuoteMint) {
-		const q = resolveCustodialQuote(dbQuoteMint, network);
-		return { currencyStr: q.quoteMint, quoteSymbol: q.quoteSymbol, source: 'db' };
+	return quoteFromCurveInfo(info, { network, dbQuoteMint });
+}
+
+/**
+ * Batched quote and buyback-vault read for one sweep, keyed by coin id. Coins are
+ * grouped by network because each network has its own connection. A network
+ * whose prefetch throws contributes nothing, and those coins are read one by one.
+ */
+async function prefetchSweep(mints) {
+	const byNetwork = new Map();
+	for (const m of mints) {
+		const network = m.network || 'mainnet';
+		if (!byNetwork.has(network)) byNetwork.set(network, []);
+		byNetwork.get(network).push(m);
 	}
-	const usdc = network === 'devnet' ? SOLANA_USDC_MINT_DEVNET : SOLANA_USDC_MINT;
-	return { currencyStr: usdc, quoteSymbol: 'USDC', source: 'fallback' };
+	const merged = new Map();
+	for (const [network, coins] of byNetwork) {
+		try {
+			const state = await prefetchBuybackState({ connection: getConnection({ network }), network, coins });
+			for (const [id, v] of state) merged.set(id, v);
+		} catch (err) {
+			console.warn(`[run-buyback] prefetch failed on ${network}, reading coins one by one: ${err?.message || err}`);
+		}
+	}
+	return merged;
 }
 
 // Same over-invocation disease already fixed for economy-reconcile: this
@@ -2584,6 +2597,7 @@ async function handleRunBuyback(req, res) {
 		limit 200
 	`;
 
+	const prefetched = await prefetchSweep(mints);
 	const results = [];
 	let deferred = 0;
 	for (const m of mints) {
@@ -2597,19 +2611,30 @@ async function handleRunBuyback(req, res) {
 		// curve swaps. USDC coins buy back with USDC, SOL coins with SOL. Anything
 		// the lane can't operate in still records a run row below (never a silent
 		// no-op): empty vaults → 'skipped', build/swap errors → 'failed'.
-		const { currencyStr } = await resolveCoinQuoteCurrency({
-			network: m.network,
-			mint: m.mint,
-			dbQuoteMint: m.quote_mint,
-		});
+		const pre = prefetched.get(m.id);
+		const { currencyStr } =
+			pre?.quote ??
+			(await resolveCoinQuoteCurrency({
+				network: m.network,
+				mint: m.mint,
+				dbQuoteMint: m.quote_mint,
+			}));
 		const currency = solanaPubkey(currencyStr);
 		const fullSwap = m.full_swap === true;
 		const minAtomics = BigInt(m.buyback_min_atomics ?? 0);
 
 		try {
-			const { agent } = await getPumpAgent({ network: m.network, mint: m.mint });
-			const balances = await agent.getBalances(currency);
-			const buyback = BigInt(balances.buybackVault?.balance ?? 0);
+			// The batched read settles the empty and below-threshold vaults, which is
+			// nearly every coin on nearly every run. Anything else is re-read fresh
+			// here, so a swap or burn is always sized from a current balance.
+			const prefetchedBalance = typeof pre?.buyback === 'bigint' ? pre.buyback : null;
+			const settledEmpty = prefetchedBalance !== null && (prefetchedBalance === 0n || prefetchedBalance < minAtomics);
+			let buyback = prefetchedBalance ?? 0n;
+			if (!settledEmpty) {
+				const { agent } = await getPumpAgent({ network: m.network, mint: m.mint });
+				const balances = await agent.getBalances(currency);
+				buyback = BigInt(balances.buybackVault?.balance ?? 0);
+			}
 
 			if (buyback === 0n || buyback < minAtomics) {
 				const [run] = await sql`

@@ -29,9 +29,22 @@ vi.mock('../api/_lib/db.js', () => ({
 	}),
 }));
 const vault = vi.hoisted(() => ({ reads: 0, onRead: () => {} }));
+// With `batched` off the connection has no getMultipleAccountsInfo, which is the
+// prefetch-failed path: the sweep must still read each coin on its own.
+const chain = vi.hoisted(() => ({ batched: false, batchCalls: 0 }));
 vi.mock('../api/_lib/pump.js', async (orig) => ({
 	...(await orig()),
-	getConnection: () => ({ getAccountInfo: async () => null }),
+	getConnection: () => ({
+		getAccountInfo: async () => null,
+		...(chain.batched
+			? {
+					getMultipleAccountsInfo: async (keys) => {
+						chain.batchCalls += 1;
+						return keys.map(() => null);
+					},
+				}
+			: {}),
+	}),
 	getPumpAgent: async () => ({
 		agent: {
 			getBalances: async () => {
@@ -67,6 +80,8 @@ describe('run-buyback handler lease', () => {
 		db.selects.length = 0;
 		vault.reads = 0;
 		vault.onRead = () => {};
+		chain.batched = false;
+		chain.batchCalls = 0;
 	});
 
 	it('skips the per-mint sweep without touching the chain while another run holds the lease', async () => {
@@ -91,6 +106,26 @@ describe('run-buyback handler lease', () => {
 		const body = JSON.parse(res.body);
 		expect(vault.reads).toBe(2);
 		expect(body).toMatchObject({ ok: true, processed: 2, deferred: 1 });
+	});
+
+	// Production 2026-11-13: 2,333 runs in 24h, every one an empty vault, cost
+	// 45,290 RPC calls (one curve read and three vault reads per coin). The batched
+	// prefetch now proves a vault empty without any per-coin read.
+	it('skips empty vaults from the batched prefetch without a per-coin balance read', async () => {
+		const coin = (id) => ({ id, mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump', network: 'mainnet', quote_mint: null });
+		db.mints = [coin(1), coin(2), coin(3)];
+		chain.batched = true;
+		const res = await call();
+		chain.batched = false;
+
+		const body = JSON.parse(res.body);
+		expect(vault.reads).toBe(0);
+		expect(chain.batchCalls).toBe(2);
+		expect(body.results.map((r) => [r.status, r.reason])).toEqual([
+			['skipped', 'empty'],
+			['skipped', 'empty'],
+			['skipped', 'empty'],
+		]);
 	});
 
 	it('starts with the coins that waited longest, so a deferred tail is not starved', async () => {
