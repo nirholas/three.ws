@@ -1567,17 +1567,12 @@ function renderGrid() {
 	observeCardModelViewers();
 }
 
-// ── 3D card performance: pause off-screen model-viewers ──────────────────
+// ── 3D card performance: viewers only for cards someone engages with ─────
 //
-// Each <model-viewer> runs a continuous requestAnimationFrame loop while
-// auto-rotate is set, regardless of whether the card is on screen. With
-// 60+ cards in the grid that adds up to dropped frames on mid-tier devices.
-// Solution: an IntersectionObserver toggles the `auto-rotate` attribute as
-// each card enters/leaves the viewport. When detached, the model-viewer
-// stops rendering entirely (model-viewer halts its raf when no rotate/no
-// camera motion). We don't tear down the WebGL context — it's expensive
-// to re-init — but pausing rotation drops GPU usage to ~0 for off-screen
-// cards.
+// A card ships a <model-slot>; the viewer element, its model and its raf loop
+// all wait for the visitor's first hover, focus or tap. From then on
+// attendRotation turns the model only while it is on screen and attended, so
+// an off-screen or ignored card renders nothing.
 
 // Turn a card's <model-slot> into its real <model-viewer> and load the model.
 // Runs on the visitor's first hover, focus or tap, so the model starts loading
