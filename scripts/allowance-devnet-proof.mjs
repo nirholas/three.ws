@@ -13,8 +13,11 @@
 //
 // The public devnet RPC faucet is closed (410) and provider faucets rate-limit,
 // so --funder pays the two throwaway keys from any devnet keypair you funded
-// once at https://faucet.solana.com (1.6 SOL is enough). Without it the script
-// falls back to requestAirdrop, which works on a local validator.
+// once at https://faucet.solana.com. The lifecycle costs about 0.01 SOL in rent
+// and fees; the keys get 0.07 SOL between them and whatever is left goes back
+// to the funder at the end, so one 0.1 SOL drip covers several runs. Without
+// --funder the script falls back to requestAirdrop, which works on a local
+// validator.
 
 import { readFileSync } from 'node:fs';
 import { Connection, Keypair, LAMPORTS_PER_SOL, SystemProgram, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
@@ -101,8 +104,21 @@ async function simulateRejection(tx) {
 
 const owner = Keypair.generate();
 const agent = Keypair.generate();
-await fund(owner, 1.2);
-await fund(agent, 0.3);
+// Measured cost of one run: mint + owner token account + subscription authority
+// + delegation rent for the owner (the delegation rent comes back on revoke),
+// the agent's token account for the agent, plus a handful of 5000-lamport fees.
+const OWNER_SOL = 0.05;
+const AGENT_SOL = 0.02;
+if (funder) {
+	const have = await conn.getBalance(funder.publicKey);
+	const need = Math.round((OWNER_SOL + AGENT_SOL) * LAMPORTS_PER_SOL) + 10_000;
+	if (have < need) {
+		console.error(`funder ${funder.publicKey.toBase58()} holds ${have / LAMPORTS_PER_SOL} SOL, needs ${need / LAMPORTS_PER_SOL}. Top it up at https://faucet.solana.com and rerun.`);
+		process.exit(3);
+	}
+}
+await fund(owner, OWNER_SOL);
+await fund(agent, AGENT_SOL);
 step('keys', { owner: owner.publicKey.toBase58(), agent: agent.publicKey.toBase58(), funder: funder ? funder.publicKey.toBase58() : 'airdrop', rpc: RPC });
 
 const mint = await createMint(conn, owner, owner.publicKey, null, DECIMALS);
@@ -145,6 +161,23 @@ const postCheck = await checkAllowancePull({ ...common, amount: unit(10) });
 const postTx = await buildSignedPull({ ...common, owner: owner.publicKey.toBase58(), mint: mint.toBase58(), amount: unit(10), agentKeypair: agent });
 const postSim = await simulateRejection(postTx.tx);
 step('pull 10 after revoke', { guardCode: postCheck.code, guardAllow: postCheck.allow, programRejected: postSim.rejected, programError: postSim.message });
+
+// Return what the throwaway keys did not spend, so the funder can rerun.
+async function sweepBack() {
+	if (!funder) return null;
+	let returned = 0;
+	for (const kp of [owner, agent]) {
+		const bal = await conn.getBalance(kp.publicKey);
+		const lamports = bal - 5000;
+		if (lamports <= 0) continue;
+		const tx = new Transaction().add(SystemProgram.transfer({ fromPubkey: kp.publicKey, toPubkey: funder.publicKey, lamports }));
+		await sendAndConfirmTransaction(conn, tx, [kp], { commitment: 'confirmed' });
+		returned += lamports;
+	}
+	return returned / LAMPORTS_PER_SOL;
+}
+const returnedSol = await sweepBack();
+if (returnedSol != null) step('leftover returned to funder', { sol: returnedSol });
 
 const failures = [];
 if (okCheck.allow !== true) failures.push('guard should allow an in-cap pull');

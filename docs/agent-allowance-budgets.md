@@ -77,7 +77,7 @@ node scripts/allowance-devnet-proof.mjs --funder ~/.config/solana/devnet.json
 
 The script generates throwaway keys and a throwaway mint, then runs create, pull within the cap, an over-cap pull (refused by our guard and by the program), revoke, and a post-revoke pull (refused by both). It prints every signature and exits non-zero if any assertion fails. It refuses to run against any cluster whose genesis is not devnet. It signs nothing on mainnet.
 
-The public devnet RPC faucet is closed (it answers 410), so `--funder` pays the two throwaway keys (1.5 SOL in total) from any devnet keypair you topped up once at https://faucet.solana.com. Without `--funder` the script falls back to `requestAirdrop` and exits with code 3 and the same instruction when that fails.
+The public devnet RPC faucet is closed (it answers 410), so `--funder` pays the two throwaway keys (0.07 SOL in total, about 0.01 SOL is actually spent and the rest is returned to the funder at the end) from any devnet keypair you topped up once at https://faucet.solana.com. Without `--funder` the script falls back to `requestAirdrop` and exits with code 3 and the same instruction when that fails.
 
 For fast iteration, run it against a local validator that clones the real program from devnet. The success line names the local validator, so the output cannot be mistaken for a devnet transcript:
 
