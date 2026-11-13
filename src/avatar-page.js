@@ -17,8 +17,6 @@
  * same code path serves both real and seeded avatars.
  */
 
-import { openTalkMode } from './voice/talk-mode.js';
-import { downloadAvatar } from './avatar-export.js';
 import { copyReadme3d, describeResult } from './readme-3d-copy.js';
 import { fbxFromUrl } from './remesh-convert.js';
 import { safeUrl } from './safe-url.js';
@@ -27,7 +25,6 @@ import { log } from './shared/log.js';
 import { toast } from './shared/toast.js';
 import { emptyStateHTML, errorStateHTML } from './shared/state-kit.js';
 import { mountViewSwitcher } from './view-switcher.js';
-import { PoseStage, loadPoseManifest } from './avatar-pose.js';
 import { walletChipHTML, wireWalletChips } from './shared/agent-wallet-chip.js';
 import { mountAgentSolanaWalletCard } from './agent-solana-wallet.js';
 import { mountAgentVanityGrinderCard } from './agent-vanity-grinder.js';
@@ -43,6 +40,23 @@ import { mountEarningsCard } from './shared/agent-earnings-card.js';
 import { renderHomeConfirmation } from './home-confirm-card.js';
 import { GROK_MENU_MODELS, grokMenuModelId } from '../api/_lib/chat-models.js';
 import { wireModelViewerFallback } from './shared/model-viewer-fallback.js';
+
+// Talk, Pose and the client-side GLB/OBJ/USDZ export each build their own
+// three.js scene. The profile itself renders in <model-viewer>, so those three
+// load on demand: a phone that only views the profile never downloads or
+// evaluates the site's three.js chunk (tests/avatar-page-first-load.test.js).
+// A failed load clears the cache so the next click retries.
+function lazyModule(load) {
+	let pending = null;
+	return () =>
+		(pending ||= load().catch((err) => {
+			pending = null;
+			throw err;
+		}));
+}
+const loadTalkMode = lazyModule(() => import('./voice/talk-mode.js'));
+const loadPoseModule = lazyModule(() => import('./avatar-pose.js'));
+const loadExportModule = lazyModule(() => import('./avatar-export.js'));
 
 const ATTACHED_KEY_PREFIX = 'avatar_attached_v1:';
 
@@ -848,7 +862,13 @@ function renderShell(glbUrl) {
 	mountNetWorthAura();
 
 	$('av-use')?.addEventListener('click', startAgentWithAvatar);
-	$('av-talk')?.addEventListener('click', () => enterTalkMode());
+	const talkBtn = $('av-talk');
+	talkBtn?.addEventListener('click', () => enterTalkMode(talkBtn));
+	// Start fetching the Talk chunk as soon as intent shows, so the click itself
+	// rarely waits on the network.
+	for (const ev of ['pointerenter', 'focus', 'touchstart']) {
+		talkBtn?.addEventListener(ev, () => loadTalkMode().catch(() => {}), { once: true, passive: true });
+	}
 	$('av-download')?.addEventListener('click', openDownloadMenu);
 
 	// Per-avatar ownership + wallet surface: owner gets the agent-wallet panel
@@ -1188,6 +1208,7 @@ function openDownloadMenu(ev) {
 				} else {
 					// Build client-side from the GLB.
 					if (!glbUrl) throw new Error('No source GLB to convert.');
+					const { downloadAvatar } = await loadExportModule();
 					const result = await downloadAvatar(glbUrl, {
 						format,
 						filename: fileBase,
@@ -1201,7 +1222,7 @@ function openDownloadMenu(ev) {
 				log.error('[avatar] download failed', err);
 				statusEl.textContent =
 					format === 'vrm' && /humanoid/i.test(err?.message || '')
-						? "VRM needs a humanoid skeleton — try GLB."
+						? "VRM needs a humanoid skeleton. Try GLB instead."
 						: `Couldn't export: ${err?.message || 'unknown error'}`;
 				statusEl.dataset.tone = 'err';
 			} finally {
@@ -1512,22 +1533,28 @@ async function enterPoseMode() {
 			showPoseMessage('No 3D model is available for this avatar.');
 			return;
 		}
-		poseStage = new PoseStage(stageEl, { glbUrl });
-		poseStage.onChange = (name) => reflectPoseState(name);
 		try {
-			const { supported } = await poseStage.mount();
-			if (!poseMode) {
-				// User switched away while the model was still loading.
-				poseStage.stop();
-				return;
+			const { PoseStage } = await loadPoseModule();
+			// A second visit to the tab while the module was downloading already
+			// built the stage; reuse it instead of mounting a second renderer.
+			if (!poseStage) {
+				poseStage = new PoseStage(stageEl, { glbUrl });
+				poseStage.onChange = (name) => reflectPoseState(name);
+				const { supported } = await poseStage.mount();
+				if (!poseMode) {
+					// User switched away while the model was still loading.
+					poseStage.stop();
+					return;
+				}
+				if (!supported) {
+					showPoseMessage(
+						'This avatar’s rig can’t be driven by the motion library: pose playback needs a rigged humanoid skeleton.',
+					);
+				} else {
+					revealPosePanel();
+				}
 			}
-			if (!supported) {
-				showPoseMessage(
-					'This avatar’s rig can’t be driven by the motion library — pose playback needs a rigged humanoid skeleton.',
-				);
-			} else {
-				revealPosePanel();
-			}
+			if (!poseMode) return;
 		} catch (err) {
 			log.warn('[pose] stage failed to mount', err?.message);
 			showPoseMessage('The pose stage could not be loaded. Reload the page to try again.');
@@ -1566,6 +1593,7 @@ function revealPosePanel() {
 async function renderPoseGrid() {
 	const grid = $('av-pose-grid');
 	if (!grid) return;
+	const { loadPoseManifest } = await loadPoseModule();
 	poseDefs = await loadPoseManifest();
 	if (!poseDefs.length) {
 		grid.innerHTML = emptyStateHTML({
@@ -2768,9 +2796,18 @@ function buildSystemContext() {
 // Implementation lives in src/voice/talk-mode.js so this page only needs the
 // click handler and a system-prompt provider.
 
-function enterTalkMode() {
-	if (!avatar) return;
-	openTalkMode({ avatar, systemPromptFn: buildSystemContext });
+async function enterTalkMode(btn) {
+	if (!avatar || btn?.getAttribute('aria-busy') === 'true') return;
+	btn?.setAttribute('aria-busy', 'true');
+	try {
+		const { openTalkMode } = await loadTalkMode();
+		openTalkMode({ avatar, systemPromptFn: buildSystemContext });
+	} catch (err) {
+		log.error('[avatar] talk mode failed to load', err);
+		toast('Talk mode could not load. Check your connection and press Talk again.', { variant: 'error' });
+	} finally {
+		btn?.removeAttribute('aria-busy');
+	}
 }
 
 // ── Agents wearing this avatar ────────────────────────────────────────

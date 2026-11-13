@@ -598,6 +598,18 @@
 				transform: translateY(-1px);
 				box-shadow: 0 10px 32px -8px rgba(255, 255, 255, 0.5);
 			}
+			.av-cta-talk:active {
+				transform: translateY(0) scale(0.99);
+			}
+			.av-cta-talk:focus-visible {
+				outline: 2px solid #ffffff;
+				outline-offset: 3px;
+			}
+			/* Set while the Talk chunk downloads on first press. */
+			.av-cta-talk[aria-busy='true'] {
+				cursor: progress;
+				opacity: 0.75;
+			}
 			.av-cta-talk-dot {
 				display: inline-block;
 				width: 8px;
