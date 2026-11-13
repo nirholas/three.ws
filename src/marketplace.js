@@ -29,6 +29,7 @@ import { skeletonHTML, emptyStateHTML, errorStateHTML, ensureStateKitStyles } fr
 import { debounce, syncStateToUrl } from './shared/list-controls.js';
 import { log } from './shared/log.js';
 import { pickHeroSet } from './shared/hero-glb-budget.js';
+import { heroSlideHtml } from './shared/marketplace-hero.js';
 import { track, trackError, ANALYTICS_EVENTS } from './analytics.js';
 import { placeholderHtml, cardThumbHtml, agentCardPreviewHtml, CARD_VIEWER_ATTRS } from './shared/marketplace-card-preview.js';
 import { modelSlotHtml, materializeModelSlot, setModelSlotPoster, MODEL_SLOT_READY_EVENT } from './shared/model-slot.js';
@@ -180,6 +181,9 @@ const state = {
 	featured: [],
 	heroIndex: 0,
 	heroTimer: null,
+	// Set on the first hover, focus or tap inside the hero; from then on the
+	// visible slide is a live 3D viewer instead of a poster.
+	heroEngaged: false,
 	stats: null,
 	theme: null,
 };
@@ -1071,44 +1075,10 @@ function renderHero() {
 	hero.removeAttribute('aria-busy');
 	const stage = $('market-hero-stage');
 	const dots = $('market-hero-dots');
-	stage.innerHTML = state.featured
-		.map(
-			(a, i) => `
-				<div class="market-hero-slide${i === state.heroIndex ? ' active' : ''}" data-slot="${i}">
-					<div class="market-hero-placeholder" aria-hidden="true">
-						<span class="market-hero-placeholder-initial">${escapeHtml(initial(a.name || 'A'))}</span>
-						<span class="market-hero-placeholder-name">${escapeHtml(a.name || 'Avatar')}</span>
-					</div>
-					<model-viewer
-						${i === state.heroIndex ? 'src' : 'data-src'}="${escapeHtml(a.glbUrl)}"
-						alt="${escapeHtml(a.name || 'Avatar')}"
-						${i === state.heroIndex ? 'auto-rotate' : ''}
-						autoplay
-						rotation-per-second="20deg"
-						camera-controls
-						interaction-prompt="none"
-						exposure="1.05"
-						shadow-intensity="0.8"
-						tone-mapping="aces"
-						loading="${i === state.heroIndex ? 'eager' : 'lazy'}"
-						reveal="auto"
-					></model-viewer>
-				</div>`,
-		)
-		.join('');
-	attachModelViewerBehavior(stage);
-	// If a hero GLB upstream blocks CORS or 404s, model-viewer logs to console
-	// and shows nothing. Listen for that and remove the broken slide so we
-	// don't show empty stages or pollute the console.
-	stage.querySelectorAll('model-viewer').forEach((mv) => {
-		mv.addEventListener('error', () => {
-			const slot = Number(mv.closest('.market-hero-slide')?.dataset?.slot ?? -1);
-			if (slot < 0) return;
-			state.featured.splice(slot, 1);
-			if (state.heroIndex >= state.featured.length) state.heroIndex = 0;
-			if (state.featured.length) renderHero();
-		}, { once: true });
-	});
+	stage.innerHTML = state.featured.map((a, i) => heroSlideHtml(a, i, state.heroIndex)).join('');
+	for (const slide of stage.querySelectorAll('.market-hero-slide')) wireHeroPoster(slide);
+	// Once the visitor has engaged, the hero stays 3D across re-renders.
+	if (state.heroEngaged) wakeHeroSlide(stage.querySelector('.market-hero-slide.active'));
 	dots.innerHTML = state.featured
 		.map(
 			(_, i) =>
@@ -1160,6 +1130,59 @@ function bindHeroInteractions() {
 	hero.addEventListener('focusout', (e) => {
 		if (!hero.contains(e.relatedTarget)) resume();
 	});
+	// The slides ship as posters; the first sign of attention (a pointer
+	// arriving, keyboard focus inside, a tap on the stage) turns the visible one
+	// into a live 3D viewer.
+	const engage = () => engageHero();
+	hero.addEventListener('pointerenter', engage);
+	hero.addEventListener('focusin', engage);
+	$('market-hero-stage')?.addEventListener('pointerdown', engage);
+}
+
+function engageHero() {
+	if (state.heroEngaged) return;
+	state.heroEngaged = true;
+	wakeHeroSlide(document.querySelector('#market-hero-stage .market-hero-slide.active'));
+}
+
+// The poster covers the initial placeholder once it has painted; a picture that
+// fails to load is dropped so the placeholder shows instead of a broken image.
+function wireHeroPoster(slide) {
+	const img = slide.querySelector('img.market-hero-poster');
+	if (!img) return;
+	const ready = () => slide.classList.add('hero-poster-ready');
+	if (img.complete && img.naturalWidth > 0) ready();
+	else {
+		img.addEventListener('load', ready, { once: true });
+		img.addEventListener('error', () => img.remove(), { once: true });
+	}
+}
+
+// Turn a slide's <model-slot> into its <model-viewer> and start the model.
+// A model that fails to load leaves the slide on its poster rather than
+// removing a slide that still has a good picture to show.
+function wakeHeroSlide(slide) {
+	if (!slide) return;
+	const slot = slide.querySelector('model-slot');
+	if (slot) {
+		const mv = materializeModelSlot(slot);
+		if (mv.localName !== 'model-viewer') return;
+		mv.addEventListener('error', () => mv.remove(), { once: true });
+		attachModelViewerBehavior(slide);
+		if (mv.dataset.src && !mv.getAttribute('src')) {
+			mv.setAttribute('src', mv.dataset.src);
+			delete mv.dataset.src;
+		}
+		ensureModelViewerOrFallback(slide);
+	}
+	const mv = slide.querySelector('model-viewer');
+	if (!mv) return;
+	// Only the slide on screen turns, so an off-slide viewer never runs a
+	// raf loop behind the current one.
+	for (const other of slide.parentElement?.querySelectorAll('model-viewer') || []) {
+		if (other !== mv) other.removeAttribute('auto-rotate');
+	}
+	mv.setAttribute('auto-rotate', '');
 }
 
 function updateHeroMeta() {
@@ -1244,33 +1267,13 @@ function startHeroAutoplay() {
 	}, 6500);
 }
 
-// Start the mesh download for a slide the moment it becomes the visible one.
-//
-// Every hero slide occupies the same box and is hidden with opacity, not
-// display, so all of them intersect the viewport at once and model-viewer's own
-// loading="lazy" never held any of them back: opening /marketplace fetched and
-// rendered the whole featured carousel (every GLB, every WebGL context) before
-// the visitor saw the first slide. Only the active slide ships a `src` now; the
-// rest carry `data-src` and are promoted here, the same contract the grid cards
-// use in observeCardModelViewers(). Rotation follows the same rule so an
-// off-slide viewer never runs a raf loop.
+// A slide coming on screen through autoplay shows its poster; it only builds
+// a viewer and downloads its mesh once the visitor has engaged with the hero.
+// Every slide occupies the same box and is hidden with opacity, so all of them
+// intersect the viewport at once and viewport-based lazy loading never held
+// any of them back.
 function promoteHeroSlide(slide) {
-	const mv = slide.querySelector('model-viewer');
-	if (!mv) return;
-	if (mv.dataset.src && !mv.getAttribute('src')) {
-		mv.setAttribute('src', mv.dataset.src);
-		delete mv.dataset.src;
-	}
-	// Only the slide on screen turns. Nothing used to stop the one being
-	// advanced past, so every rotation of the carousel left another loaded
-	// viewer rendering behind the current slide for the life of the tab.
-	const stage = slide.parentElement;
-	if (stage) {
-		for (const other of stage.querySelectorAll('model-viewer')) {
-			if (other !== mv) other.removeAttribute('auto-rotate');
-		}
-	}
-	mv.setAttribute('auto-rotate', '');
+	if (state.heroEngaged) wakeHeroSlide(slide);
 }
 
 function stopHeroAutoplay() {
@@ -1683,6 +1686,7 @@ function openAvatarModal(avatar) {
 	if (avatar.image) mv.setAttribute('poster', avatar.image);
 	mv.style.cssText = 'opacity:0;transition:opacity .3s ease;';
 	stage.appendChild(mv);
+	ensureModelViewerOrFallback(stage);
 
 	const progressEl = Object.assign(document.createElement('div'), { className: 'modal-load-progress' });
 	progressEl.innerHTML = '<div class="modal-load-bar-wrap"><div class="modal-load-bar" id="modal-load-bar"></div></div><span class="modal-load-label">Loading 3D…</span>';
@@ -4347,6 +4351,7 @@ function renderOnchainDetail(a) {
 			mv.setAttribute('tone-mapping', 'aces');
 			if (a.image) mv.setAttribute('poster', a.image);
 			stage.appendChild(mv);
+			ensureModelViewerOrFallback(stage);
 		} else if (a.image) {
 			stage.hidden = false;
 			const img = document.createElement('img');
@@ -5288,6 +5293,7 @@ async function loadAvatarDetail(id) {
 			mv.remove();
 		}, { once: true });
 		stage.appendChild(mv);
+		ensureModelViewerOrFallback(stage);
 		_avatarDetailMv = mv;
 	}
 
