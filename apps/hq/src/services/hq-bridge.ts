@@ -11,6 +11,7 @@ import {
   validateDataCommand,
   sizeCheck,
   callAgentTool,
+  portfolioRiskArgs,
   type DataError,
   type DataCommandType,
   type PanelDataRequest,
@@ -371,7 +372,7 @@ class HQBridge {
                 ? { tool: (req as QueryRequest).tool, args: (req as QueryRequest).args ?? {} }
                 : { question: (req as QueryRequest).question, narrate: true },
             )
-          : await callAgentTool({ tool: 'portfolio_risk', args: { positions: (req as PortfolioRiskRequest).positions } });
+          : await callAgentTool({ tool: 'portfolio_risk', args: portfolioRiskArgs(req as PortfolioRiskRequest) });
       const size = sizeCheck(result, id);
       if (!size.ok) return this.emitError(size.error);
       this.emit('hq:query-result', { id, result });

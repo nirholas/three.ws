@@ -129,6 +129,132 @@ describe('assessPortfolio', () => {
   });
 });
 
+describe('portfolio stablecoin share and protocol exposure', () => {
+  const THREE = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+  const rated = [
+    { name: 'Synthetic Lend', slug: 'synthetic-lend', score: 74, grade: 'B', tvl: 5e9, token: { chain: 'solana', address: THREE } },
+    { name: 'Synthetic Lend Small', slug: 'synthetic-lend-small', score: 30, grade: 'E', tvl: 2e8, token: { chain: 'solana', address: THREE } },
+    { name: 'Synthetic Fork', slug: 'synthetic-fork', score: 40, grade: 'D', tvl: 3e8, token: { chain: 'ethereum', address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' } },
+  ];
+
+  it('reports stablecoin share from the live stablecoin list and maps held protocol tokens to their health grade', () => {
+    const r = assessPortfolio([
+      { symbol: 'SOL', usd: 500, chain: 'Solana', token: { chain: 'solana', address: 'native' } },
+      { symbol: 'SYNUSD', usd: 300, chain: 'Solana' },
+      { symbol: 'THREE', usd: 200, chain: 'Solana', token: { chain: 'solana', address: THREE } },
+    ], { protocols: rated, stablecoins: ['synusd', 'OTHERUSD'] });
+    assert.equal(r.summary.stablecoinPct, 30);
+    assert.equal(r.positions[1].stablecoin, true);
+    assert.deepEqual(r.protocolExposure, [{ protocol: 'Synthetic Lend', slug: 'synthetic-lend', score: 74, grade: 'B', usd: 200, pct: 20, via: ['protocol_token'] }]);
+    assert.equal(r.positions[2].protocol, 'Synthetic Lend');
+    assert.equal(r.positions[2].protocolGrade, 'B');
+    assert.equal(r.summary.protocolExposurePct, 20);
+    assert.ok(r.facts.includes('Stablecoins are 30% of the portfolio.'));
+    assert.ok(r.facts.some((f) => f.startsWith('Protocol exposure 20%: Synthetic Lend 20% (health B, 74/100)')));
+  });
+
+  it('matches EVM protocol tokens case-insensitively and flags weak ones', () => {
+    const r = assessPortfolio([
+      { symbol: 'SYNGOV', usd: 100, token: { chain: 'ethereum', address: '0xABCDEFabcdefABCDEFabcdefABCDEFabcdefABCD' } },
+      { symbol: 'ETH', usd: 100 },
+    ], { protocols: rated });
+    assert.equal(r.protocolExposure[0].protocol, 'Synthetic Fork');
+    assert.ok(r.positions[0].flags.includes('weak_protocol:Synthetic Fork:40'));
+    assert.equal(r.summary.stablecoinPct, null);
+    assert.ok(r.facts.includes('Stablecoin share unknown: the stablecoin list was unavailable.'));
+  });
+
+  it('measures concentration per asset, so native and wrapped holdings of one coin count once', () => {
+    const r = assessPortfolio([
+      { symbol: 'SOL', usd: 300, token: { chain: 'solana', address: 'native' } },
+      { symbol: 'SOL', usd: 300, token: { chain: 'solana', address: 'SYNwrapped111111111111111111111111111111' } },
+      { symbol: 'SYNUSD', usd: 400 },
+    ], { protocols: rated });
+    assert.equal(r.summary.topAsset, 'SOL');
+    assert.equal(r.summary.topPositionPct, 60);
+    assert.equal(r.summary.concentrationIndex, 0.52);
+    assert.ok(r.positions[0].flags.includes('single_position_over_50pct'));
+    assert.ok(r.positions[1].flags.includes('single_position_over_50pct'));
+    assert.ok(r.facts[0].includes('3 positions in 2 assets'));
+  });
+
+  it('prints a tiny exposure as <0.01% instead of 0%', () => {
+    const r = assessPortfolio([
+      { symbol: 'SOL', usd: 100000 },
+      { symbol: 'THREE', usd: 0.5, token: { chain: 'solana', address: THREE } },
+    ], { protocols: rated });
+    assert.ok(r.facts.some((f) => f.startsWith('Protocol exposure <0.01%: Synthetic Lend <0.01%')), r.facts.join(' | '));
+  });
+
+  it('groups caller-tagged positions as exposure, rated or not', () => {
+    const r = assessPortfolio([
+      { symbol: 'SYNUSD', usd: 60, protocol: 'synthetic-lend' },
+      { symbol: 'SYNUSD', usd: 40, protocol: 'unlisted-vault' },
+    ], { protocols: rated, stablecoins: ['SYNUSD'] });
+    assert.deepEqual(r.protocolExposure.map((e) => [e.protocol, e.pct, e.grade]), [['Synthetic Lend', 60, 'B'], ['unlisted-vault', 40, null]]);
+    assert.equal(r.summary.stablecoinPct, 100);
+  });
+});
+
+describe('portfolio_risk by wallet address', () => {
+  const OWNER = 'THREEsynthetic1111111111111111111111111111';
+  const THREE = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+  const hq = {
+    '/api/protocol-health': { protocols: [{ name: 'Synthetic Lend', slug: 'synthetic-lend', score: 74, grade: 'B', tvl: 5e9, token: { chain: 'solana', address: THREE } }] },
+    '/api/funding-rates': funding,
+    '/api/stablecoins-dashboard': { stablecoins: [{ name: 'Synthetic Dollar', symbol: 'SYNUSD' }] },
+  };
+  function upstream({ stablesDown = false } = {}) {
+    return async (url, init) => {
+      const u = new URL(String(url));
+      if (u.origin === ORIGIN) {
+        if (stablesDown && u.pathname === '/api/stablecoins-dashboard') return new Response('{}', { status: 503 });
+        return new Response(JSON.stringify(hq[u.pathname] ?? {}), { status: hq[u.pathname] ? 200 : 404 });
+      }
+      if (u.host === 'coins.llama.fi') {
+        return new Response(JSON.stringify({ coins: {
+          'coingecko:solana': { price: 100, symbol: 'SOL', confidence: 0.99 },
+          [`solana:${THREE}`]: { price: 0.01, symbol: 'THREE', confidence: 0.9 },
+        } }), { status: 200 });
+      }
+      const req = JSON.parse(init.body);
+      if (req.method === 'getBalance') return new Response(JSON.stringify({ result: { value: 3e9 } }), { status: 200 });
+      if (req.params[1].programId !== 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') return new Response(JSON.stringify({ result: { value: [] } }), { status: 200 });
+      return new Response(JSON.stringify({ result: { value: [{ account: { data: { parsed: { info: { mint: THREE, tokenAmount: { uiAmountString: '10000' } } } } } }] } }), { status: 200 });
+    };
+  }
+
+  it('reads the wallet, then scores it with exposure, stablecoin share and wallet coverage', async () => {
+    const r = await runTool('portfolio_risk', { address: OWNER }, { origin: ORIGIN, fetchImpl: upstream() });
+    assert.equal(r.wallet.address, OWNER);
+    assert.equal(r.wallet.kind, 'solana');
+    assert.deepEqual(r.rows.map((x) => [x.symbol, x.usd]), [['SOL', 300], ['THREE', 100]]);
+    assert.equal(r.summary.totalUsd, 400);
+    assert.equal(r.summary.stablecoinPct, 0);
+    assert.equal(r.protocolExposure[0].grade, 'B');
+    assert.equal(r.protocolExposure[0].pct, 25);
+  });
+
+  it('keeps scoring when the stablecoin list is down', async () => {
+    const r = await runTool('portfolio_risk', { address: OWNER }, { origin: ORIGIN, fetchImpl: upstream({ stablesDown: true }) });
+    assert.equal(r.summary.stablecoinPct, null);
+    assert.equal(r.summary.totalUsd, 400);
+  });
+
+  it('needs exactly one of address or positions', async () => {
+    const fetchImpl = upstream();
+    await assert.rejects(runTool('portfolio_risk', {}, { origin: ORIGIN, fetchImpl }), (e) => e.status === 400 && /exactly one/.test(e.message));
+    await assert.rejects(runTool('portfolio_risk', { address: OWNER, positions: [{ symbol: 'SOL', usd: 1 }] }, { origin: ORIGIN, fetchImpl }), (e) => e.status === 400);
+    await assert.rejects(runTool('portfolio_risk', { positions: [{ symbol: 'SOL', usd: 1 }], chain: 'solana' }, { origin: ORIGIN, fetchImpl }), (e) => e.status === 400 && /chain only applies/.test(e.message));
+  });
+
+  it('routes a risk question that carries a wallet address to portfolio_risk', () => {
+    assert.deepEqual(routeQuestion(`What is the risk of wallet ${OWNER}?`), { tool: 'portfolio_risk', args: { address: OWNER } });
+    assert.deepEqual(routeQuestion('portfolio exposure of 0x2222222222222222222222222222222222222222'), { tool: 'portfolio_risk', args: { address: '0x2222222222222222222222222222222222222222' } });
+    assert.equal(routeQuestion('which protocols are risky?').tool, 'protocol_health');
+  });
+});
+
 describe('agent-tools handler', () => {
   const post = (body, headers = {}) => new Request('https://hq.example/api/agent-tools', {
     method: 'POST', headers: { 'Content-Type': 'application/json', 'x-forwarded-for': '203.0.113.9', ...headers }, body: JSON.stringify(body),

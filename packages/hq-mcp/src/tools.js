@@ -59,8 +59,10 @@ export const TOOLS = [
 		name: 'analyze_portfolio_risk',
 		title: 'Portfolio risk score',
 		description:
-			'Score a portfolio 0-100 from positions you supply: concentration, exposure to weakly scored protocols, and crowded-leverage assets, using live HQ protocol health and funding data. Nothing is stored. A heuristic, not financial advice. Use this to check how risky a set of holdings is before rebalancing.',
+			'Score a portfolio 0-100 from a public wallet address (Solana first; EVM addresses read Ethereum, Base, Arbitrum and Optimism) or from positions you supply. Returns concentration, stablecoin share, protocol exposure with the matching protocol-health grades, and crowded-leverage assets, from live HQ data. Pass exactly one of address or positions. Read-only: nothing is signed, sent or stored. A heuristic, not financial advice. Use this to check how risky a wallet or a set of holdings is before rebalancing.',
 		inputSchema: {
+			address: z.string().min(32).max(64).optional().describe('Public wallet address: base58 Solana, or 0x EVM.'),
+			chain: z.enum(['solana', 'evm', 'ethereum', 'base', 'arbitrum', 'optimism']).optional().describe('Narrows an EVM address to one network. Default reads every supported network.'),
 			positions: z
 				.array(
 					z.object({
@@ -71,11 +73,17 @@ export const TOOLS = [
 					}),
 				)
 				.min(1)
-				.max(50),
+				.max(50)
+				.optional(),
 		},
 		annotations: READ_ONLY,
 		async handler(args) {
-			const data = await callHq({ tool: 'portfolio_risk', args: { positions: args.positions } });
+			const { address, chain, positions } = args ?? {};
+			if ((address === undefined) === (positions === undefined)) {
+				throw Object.assign(new Error('Pass exactly one of address or positions.'), { code: 'bad_input' });
+			}
+			const toolArgs = address !== undefined ? { address, ...(chain ? { chain } : {}) } : { positions };
+			const data = await callHq({ tool: 'portfolio_risk', args: toolArgs });
 			return { ok: true, ...data };
 		},
 	},

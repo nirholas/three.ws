@@ -115,8 +115,13 @@ export function createHqHost({ frame, origin, agentId, apiFetch, win = window, t
 		runTool: (tool, args = {}) => request('host:run-query', { tool, args }),
 		/** Ask a natural-language question; HQ routes it to a tool and narrates the result. */
 		ask: (question) => request('host:run-query', { question }),
-		/** Score caller-supplied positions: [{symbol, usd, protocol?, chain?}]. */
-		getPortfolioRisk: (positions) => request('host:get-portfolio-risk', { positions }),
+		/**
+		 * Score a portfolio. Pass a public wallet address (Solana first; EVM reads
+		 * Ethereum, Base, Arbitrum, Optimism), optionally with { chain }, or an
+		 * array of positions [{symbol, usd, protocol?, chain?}]. Read-only.
+		 */
+		getPortfolioRisk: (input, { chain } = {}) =>
+			request('host:get-portfolio-risk', typeof input === 'string' ? { address: input, ...(chain ? { chain } : {}) } : { positions: input }),
 		/** Fire-and-forget HQ commands (apply-template, toggle-panel, show-panel, fly-to-country, request-state). */
 		send(type, payload = {}) {
 			frame.contentWindow?.postMessage({ type, payload }, expected);

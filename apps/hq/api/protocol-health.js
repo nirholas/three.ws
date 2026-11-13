@@ -20,7 +20,7 @@ import { getCorsHeaders, isDisallowedOrigin } from './_cors.js';
  * says so via the `methodology` field.
  */
 
-const CACHE_KEY = 'protocol-health:v1';
+const CACHE_KEY = 'protocol-health:v2';
 const CACHE_TTL = 900; // 15 min
 const UPSTREAM_TIMEOUT_MS = 15000;
 const MIN_TVL = 100e6;
@@ -76,6 +76,25 @@ export function gradeFor(score) {
   return 'E';
 }
 
+/**
+ * DeFiLlama's `address` field names a protocol's own token, either as a bare
+ * EVM address (Ethereum mainnet) or as `chain:address`. Portfolio risk uses it
+ * to match a wallet's holdings to the protocol they expose it to. EVM
+ * addresses compare case-insensitively, so they are lowercased; Solana mints
+ * are case-sensitive and kept as is.
+ */
+export function parseProtocolToken(raw) {
+  if (typeof raw !== 'string') return null;
+  const s = raw.trim();
+  if (!s || s === '-' || s === 'null') return null;
+  const i = s.indexOf(':');
+  const chain = i > 0 ? s.slice(0, i).toLowerCase() : 'ethereum';
+  const address = i > 0 ? s.slice(i + 1) : s;
+  if (/^0x[0-9a-fA-F]{40}$/.test(address)) return { chain, address: address.toLowerCase() };
+  if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)) return { chain, address };
+  return null;
+}
+
 async function buildHealthReport() {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
@@ -108,6 +127,7 @@ async function buildHealthReport() {
           mcap: Number.isFinite(p.mcap) ? Math.round(p.mcap) : null,
           score,
           grade: gradeFor(score),
+          token: parseProtocolToken(p.address),
           url: p.slug ? `https://defillama.com/protocol/${p.slug}` : null,
         };
       })

@@ -60,6 +60,17 @@ test('handlers POST the right tool and args to /api/agent-tools and return its d
 
 		await assert.rejects(TOOLS.find((t) => t.name === 'analyze_portfolio_risk').handler({ positions: [{ symbol: 'ETH', usd: 1 }] }), (e) => e.status === 422);
 		assert.equal(seen[2].body.tool, 'portfolio_risk');
+
+		const owner = 'THREEsynthetic1111111111111111111111111111';
+		await assert.rejects(TOOLS.find((t) => t.name === 'analyze_portfolio_risk').handler({ address: owner }), (e) => e.status === 422);
+		assert.deepEqual(seen[3].body, { tool: 'portfolio_risk', args: { address: owner } });
+		await assert.rejects(TOOLS.find((t) => t.name === 'analyze_portfolio_risk').handler({ address: '0x2222222222222222222222222222222222222222', chain: 'optimism' }), (e) => e.status === 422);
+		assert.deepEqual(seen[4].body.args, { address: '0x2222222222222222222222222222222222222222', chain: 'optimism' });
+
+		const portfolio = TOOLS.find((t) => t.name === 'analyze_portfolio_risk');
+		await assert.rejects(portfolio.handler({}), (e) => e.code === 'bad_input');
+		await assert.rejects(portfolio.handler({ address: owner, positions: [{ symbol: 'SOL', usd: 1 }] }), (e) => e.code === 'bad_input');
+		assert.equal(seen.length, 5);
 	} finally {
 		delete process.env.HQ_BASE;
 		server.close();

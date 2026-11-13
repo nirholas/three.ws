@@ -29,6 +29,23 @@ describe('hq-host requests', () => {
 		await expect(p).resolves.toEqual({ rows: [1] });
 	});
 
+	it('getPortfolioRisk sends a wallet address (with optional chain) or positions', async () => {
+		const { host, sent, deliver } = harness();
+		const owner = 'THREEsynthetic1111111111111111111111111111';
+		const p = host.getPortfolioRisk(owner);
+		expect(sent[0].msg.type).toBe('host:get-portfolio-risk');
+		expect(sent[0].msg.payload).toEqual({ address: owner, id: sent[0].msg.payload.id });
+		deliver({ type: 'hq:query-result', payload: { id: sent[0].msg.payload.id, result: { summary: { score: 88 } } } });
+		await expect(p).resolves.toEqual({ summary: { score: 88 } });
+
+		host.getPortfolioRisk('0x2222222222222222222222222222222222222222', { chain: 'base' }).catch(() => {});
+		expect(sent[1].msg.payload).toMatchObject({ address: '0x2222222222222222222222222222222222222222', chain: 'base' });
+		host.getPortfolioRisk([{ symbol: 'SOL', usd: 10 }]).catch(() => {});
+		expect(sent[2].msg.payload).toMatchObject({ positions: [{ symbol: 'SOL', usd: 10 }] });
+		expect(sent[2].msg.payload.address).toBeUndefined();
+		host.dispose?.();
+	});
+
 	it('rejects with the HQ error code on hq:error', async () => {
 		const { host, sent, deliver } = harness();
 		const p = host.getPanelData('nope');

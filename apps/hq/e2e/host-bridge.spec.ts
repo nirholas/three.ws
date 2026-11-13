@@ -81,6 +81,34 @@ async function apiServed(page: Page, baseURL: string): Promise<boolean> {
   return !!res && res.ok() && (res.headers()['content-type'] ?? '').includes('json');
 }
 
+const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+
+/**
+ * A real public Solana wallet without hardcoding anyone's address: the fee
+ * payer of a recent successful $THREE transaction, read from mainnet RPC.
+ */
+async function recentThreeWallet(page: Page): Promise<string> {
+  // The public RPC rate-limits bursts (HTTP 429), so back off and retry before giving up.
+  const call = async (method: string, params: unknown[]) => {
+    let last = '';
+    for (let attempt = 0; attempt < 4; attempt++) {
+      if (attempt) await new Promise((r) => setTimeout(r, 1500 * attempt));
+      const res = await page.request.post('https://api.mainnet-beta.solana.com', { data: { jsonrpc: '2.0', id: 1, method, params }, headers: { 'User-Agent': 'three.ws-hq-e2e/1.0' } });
+      const body = await res.json().catch(() => null);
+      if (res.ok() && body && 'result' in body) return body.result;
+      last = `HTTP ${res.status()} ${JSON.stringify(body?.error ?? body)}`;
+    }
+    throw new Error(`${method} failed: ${last}`);
+  };
+  const sigs = (await call('getSignaturesForAddress', [THREE_MINT, { limit: 5 }])) as Array<{ signature: string; err: unknown }>;
+  for (const s of sigs.filter((x) => !x.err)) {
+    const tx = await call('getTransaction', [s.signature, { encoding: 'json', maxSupportedTransactionVersion: 1 }]);
+    const payer = tx?.transaction?.message?.accountKeys?.[0];
+    if (typeof payer === 'string') return payer;
+  }
+  throw new Error('no recent $THREE transaction to take a wallet from');
+}
+
 test.describe('HQ host bridge', () => {
   test('announces hq:ready while the data load is still running', async ({ page, baseURL }) => {
     await openHost(page);
@@ -138,6 +166,25 @@ test.describe('HQ host bridge', () => {
       expect(row.chain).toBe('Solana');
       expect(row.symbol.toUpperCase()).toBe('USDC');
     }
+  });
+
+  test('scores a real Solana wallet by address over the bridge', async ({ page, baseURL }) => {
+    test.skip(!(await apiServed(page, baseURL!)), 'api/agent-tools is served by the HQ server (npm run build && node scripts/cloudrun-server.mjs), not Vite dev');
+    const wallet = await recentThreeWallet(page);
+    await openHost(page);
+    await page.waitForFunction(() => window.__hq?.events.some((e) => e.type === 'hq:ready'), null, { timeout: 30000 });
+
+    const r = await page.evaluate((a) => window.__hq.host.getPortfolioRisk(a), wallet);
+    expect(r.tool).toBe('portfolio_risk');
+    expect(r.wallet).toMatchObject({ address: wallet, kind: 'solana' });
+    expect(r.summary.totalUsd).toBeGreaterThan(0);
+    expect(typeof r.summary.score).toBe('number');
+    expect(Array.isArray(r.protocolExposure)).toBe(true);
+    expect(r.facts.some((f: string) => /^Stablecoins are|^Stablecoin share unknown/.test(f))).toBe(true);
+
+    const bad = await page.evaluate(() => window.__hq.host.getPortfolioRisk('not-a-wallet').then(() => null, (err) => ({ code: err.code, message: err.message })));
+    expect(bad).toMatchObject({ code: 'bad_request' });
+    expect(bad!.message).toContain('address');
   });
 
   test('a compound rule built in HQ fires hq:alert-triggered with a reversible proposal', async ({ page, baseURL }) => {

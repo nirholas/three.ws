@@ -4,7 +4,7 @@
  *
  * Host -> HQ:  host:get-panel-data {id, key}
  *              host:run-query {id, tool, args?} | {id, question}
- *              host:get-portfolio-risk {id, positions}
+ *              host:get-portfolio-risk {id, positions} | {id, address, chain?}
  * HQ -> host:  hq:panel-data {id, key, data}
  *              hq:query-result {id, result}
  *              hq:error {id, code, message}
@@ -18,7 +18,10 @@ export type DataCommandType = 'host:get-panel-data' | 'host:run-query' | 'host:g
 export interface PanelDataRequest { id: string; key: string }
 export interface QueryRequest { id: string; tool?: string; args?: Record<string, unknown>; question?: string }
 export interface Position { symbol: string; usd: number; protocol?: string; chain?: string }
-export interface PortfolioRiskRequest { id: string; positions: Position[] }
+export type PortfolioChain = 'solana' | 'evm' | 'ethereum' | 'base' | 'arbitrum' | 'optimism';
+export type PortfolioRiskRequest =
+  | { id: string; positions: Position[] }
+  | { id: string; address: string; chain?: PortfolioChain };
 
 export type DataErrorCode = 'bad_request' | 'unknown_panel' | 'too_large' | 'upstream_failed' | 'timeout';
 
@@ -31,6 +34,15 @@ export const MAX_RESULT_BYTES = 256 * 1024;
 const ID_RE = /^[A-Za-z0-9_.:-]{1,64}$/;
 const KEY_RE = /^[a-z0-9][a-z0-9-]{0,63}$/;
 const TOOL_RE = /^[a-z_]{1,40}$/;
+const SOLANA_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const EVM_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
+export const PORTFOLIO_CHAINS: readonly PortfolioChain[] = ['solana', 'evm', 'ethereum', 'base', 'arbitrum', 'optimism'];
+
+/** The agent-tools args for a validated portfolio request. */
+export function portfolioRiskArgs(req: PortfolioRiskRequest): Record<string, unknown> {
+  if ('address' in req) return req.chain ? { address: req.address, chain: req.chain } : { address: req.address };
+  return { positions: req.positions };
+}
 
 export const DATA_COMMANDS: readonly string[] = ['host:get-panel-data', 'host:run-query', 'host:get-portfolio-risk'];
 
@@ -73,6 +85,18 @@ export function validateDataCommand(type: DataCommandType, payload: unknown): Va
     if (q.length === 0 || q.length > 500) return fail('question must be 1-500 characters', id);
     return { ok: true, value: { id, question: q } };
   }
+
+  if ((payload.address === undefined) === (payload.positions === undefined)) return fail('send exactly one of address or positions', id);
+  if (payload.address !== undefined) {
+    const address = typeof payload.address === 'string' ? payload.address.trim() : '';
+    if (!SOLANA_ADDRESS_RE.test(address) && !EVM_ADDRESS_RE.test(address)) return fail('address must be a Solana (base58) or EVM (0x) address', id);
+    if (payload.chain === undefined) return { ok: true, value: { id, address } };
+    if (typeof payload.chain !== 'string' || !(PORTFOLIO_CHAINS as readonly string[]).includes(payload.chain)) {
+      return fail(`chain must be one of ${PORTFOLIO_CHAINS.join(', ')}`, id);
+    }
+    return { ok: true, value: { id, address, chain: payload.chain as PortfolioChain } };
+  }
+  if (payload.chain !== undefined) return fail('chain only applies with address', id);
 
   const positions = payload.positions;
   if (!Array.isArray(positions) || positions.length === 0 || positions.length > MAX_POSITIONS) {

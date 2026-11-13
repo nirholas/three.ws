@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { scoreProtocol, gradeFor } from '../api/protocol-health.js';
+import { scoreProtocol, gradeFor, parseProtocolToken } from '../api/protocol-health.js';
 import { deriveAccountSplit, baseFromInstId } from '../api/_okx-derivatives.js';
 
 const NOW = Math.floor(Date.parse('2026-08-01T00:00:00Z') / 1000);
@@ -115,5 +115,17 @@ describe('okx derivatives helpers', () => {
     assert.equal(baseFromInstId('DOGE-USDT-SWAP'), 'DOGE');
     assert.equal(baseFromInstId(''), '');
     assert.equal(baseFromInstId(undefined), '');
+  });
+});
+
+describe('parseProtocolToken', () => {
+  it('reads bare EVM addresses as Ethereum, keeps chain prefixes, and lowercases only EVM addresses', () => {
+    assert.deepEqual(parseProtocolToken('0xABCDEFabcdefABCDEFabcdefABCDEFabcdefABCD'), { chain: 'ethereum', address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' });
+    assert.deepEqual(parseProtocolToken('Solana:FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump'), { chain: 'solana', address: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump' });
+    assert.deepEqual(parseProtocolToken('arbitrum:0x1111111111111111111111111111111111111111'), { chain: 'arbitrum', address: '0x1111111111111111111111111111111111111111' });
+  });
+
+  it('returns null for missing or malformed values', () => {
+    for (const v of [undefined, null, '', '-', 'null', 'coingecko:synthetic', 'chain:0x1234']) assert.equal(parseProtocolToken(v), null);
   });
 });

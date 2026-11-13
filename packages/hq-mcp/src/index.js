@@ -24,7 +24,7 @@ export function buildServer() {
 			instructions:
 				'three.ws HQ DeFi tools. hq_top_yields, hq_chain_tvl, hq_protocol_health, hq_funding_rates, ' +
 				'hq_liquidations, hq_venue_spread, hq_whale_activity and hq_gas read live market data. ' +
-				'analyze_portfolio_risk scores positions you supply. hq_ask answers a plain-language question. ' +
+				'analyze_portfolio_risk scores a public wallet address (Solana first, EVM supported) or positions you supply. hq_ask answers a plain-language question. ' +
 				'Every tool is read-only: nothing here signs, sends or trades. Requires HQ_BASE.',
 		},
 	);

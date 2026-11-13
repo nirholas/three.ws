@@ -20,6 +20,7 @@ export const config = { runtime: 'edge' };
 import { getCorsHeaders, isDisallowedOrigin } from './_cors.js';
 import { createIpRateLimiter } from './_ip-rate-limit.js';
 import { assessPortfolio } from './_portfolio-risk.js';
+import { readWalletHoldings, EVM_EXPLORERS } from './_wallet-holdings.js';
 
 const limiter = createIpRateLimiter({ limit: 20, windowMs: 60_000 });
 const MAX_BODY_BYTES = 20_000;
@@ -221,10 +222,12 @@ export const TOOLS = {
   },
 
   portfolio_risk: {
-    description: 'Score a portfolio\'s risk from supplied positions: concentration, weak protocols, and crowded-leverage assets. Positions are caller-supplied; nothing is stored.',
+    description: 'Score a portfolio\'s risk from a public wallet address (Solana first, EVM supported) or from supplied positions: concentration, stablecoin share, protocol exposure with protocol-health grades, and crowded-leverage assets. Read-only; nothing is stored.',
     inputSchema: {
       type: 'object',
       properties: {
+        address: { type: 'string', description: 'Public wallet address to read balances from: a base58 Solana address, or a 0x EVM address.' },
+        chain: { type: 'string', enum: ['solana', 'evm', ...Object.keys(EVM_EXPLORERS)], description: 'Optional. Narrows an EVM address to one network; default reads every supported network.' },
         positions: {
           type: 'array',
           minItems: 1,
@@ -242,13 +245,43 @@ export const TOOLS = {
           },
         },
       },
-      required: ['positions'],
+      oneOf: [{ required: ['address'] }, { required: ['positions'] }],
       additionalProperties: false,
     },
-    async run(args, fetchData) {
-      const [health, funding] = await Promise.all([fetchData('/api/protocol-health'), fetchData('/api/funding-rates')]);
-      const report = assessPortfolio(args.positions, { protocols: health.protocols ?? [], rates: funding.rates ?? [] });
-      return { rows: report.positions, facts: report.facts, summary: report.summary };
+    async run(args, fetchData, { fetchImpl, env }) {
+      const hasAddress = args.address !== undefined;
+      if (hasAddress === (args.positions !== undefined)) {
+        throw Object.assign(new Error('portfolio_risk needs exactly one of address or positions'), { status: 400 });
+      }
+      if (!hasAddress && args.chain !== undefined) throw Object.assign(new Error('chain only applies with address'), { status: 400 });
+      const [wallet, health, funding, stables] = await Promise.all([
+        hasAddress ? readWalletHoldings(args.address, { chain: args.chain, fetchImpl, env }) : null,
+        fetchData('/api/protocol-health'),
+        fetchData('/api/funding-rates'),
+        // Stablecoin share is a nice-to-have: a stablecoin-list outage must not sink the risk score.
+        fetchData('/api/stablecoins-dashboard').catch(() => null),
+      ]);
+      if (wallet && wallet.holdings.length === 0) {
+        throw Object.assign(new Error(`No priced holdings found for ${wallet.address}${wallet.unpriced ? ` (${wallet.unpriced} tokens have no reliable price)` : ''}`), { status: 404 });
+      }
+      const report = assessPortfolio(wallet ? wallet.holdings : args.positions, {
+        protocols: health.protocols ?? [],
+        rates: funding.rates ?? [],
+        stablecoins: (stables?.stablecoins ?? []).map((c) => c.symbol).filter(Boolean),
+      });
+      const facts = [...report.facts];
+      if (wallet) {
+        const down = wallet.chains.filter((c) => !c.ok);
+        if (wallet.unpriced || wallet.omitted) facts.push(`${wallet.unpriced} unpriced and ${wallet.omitted} small holdings were left out of the valuation.`);
+        if (down.length) facts.push(`Not read: ${down.map((c) => `${c.chain} (${c.error})`).join(', ')}.`);
+      }
+      return {
+        rows: report.positions,
+        facts,
+        summary: report.summary,
+        protocolExposure: report.protocolExposure,
+        ...(wallet ? { wallet: { address: wallet.address, kind: wallet.kind, chains: wallet.chains, unpriced: wallet.unpriced, omitted: wallet.omitted } } : {}),
+      };
     },
   },
 };
@@ -271,8 +304,14 @@ const KNOWN_CHAINS =['Ethereum', 'Solana', 'Base', 'Arbitrum', 'Optimism', 'Poly
 
 /** Map a free-text question to {tool, args}, or null when nothing matches. */
 export function routeQuestion(question) {
-  const q = str(question, 500).toLowerCase();
+  const raw = str(question, 500);
+  const q = raw.toLowerCase();
   if (!q) return null;
+  // A wallet address plus any risk-ish word is a portfolio question about that wallet.
+  const address = raw.match(/\b0x[0-9a-fA-F]{40}\b/)?.[0] ?? raw.match(/(?<![0-9A-Za-z])[1-9A-HJ-NP-Za-km-z]{32,44}(?![0-9A-Za-z])/)?.[0];
+  if (address && /portfolio|risk|exposure|wallet|holding|position|concentrat|stablecoin/.test(q)) {
+    return { tool: 'portfolio_risk', args: { address } };
+  }
   const hit = INTENTS.find(([, re]) => re.test(q));
   if (!hit) return null;
   const tool = hit[0];
@@ -312,7 +351,7 @@ export async function runTool(name, args, { origin, fetchImpl = fetch, timeoutMs
   };
 
   const out = tool.run
-    ? await tool.run(safeArgs, fetchData)
+    ? await tool.run(safeArgs, fetchData, { fetchImpl, env: globalThis.process?.env ?? {} })
     : tool.reduce(await fetchData(tool.endpoint(safeArgs)), safeArgs);
   return { tool: name, timestamp: new Date().toISOString(), args: safeArgs, ...out };
 }
@@ -373,7 +412,7 @@ export default async function handler(request) {
   if (!name) {
     const routed = routeQuestion(question);
     if (!routed) {
-      return json({ error: 'No tool matched. Send {tool, args} or a question about yields, TVL, protocol health, funding, liquidations, spreads, whales or gas.', tools: listTools().map((t) => t.name) }, 422, cors);
+      return json({ error: 'No tool matched. Send {tool, args} or a question about yields, TVL, protocol health, funding, liquidations, spreads, whales, gas, or the portfolio risk of a wallet address.', tools: listTools().map((t) => t.name) }, 422, cors);
     }
     name = routed.tool;
     args = routed.args;

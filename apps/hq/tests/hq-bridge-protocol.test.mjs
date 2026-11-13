@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { validateDataCommand, isDataCommand, sizeCheck, MAX_RESULT_BYTES, callAgentTool } from '../src/services/hq-bridge-protocol.ts';
+import { validateDataCommand, isDataCommand, sizeCheck, MAX_RESULT_BYTES, callAgentTool, portfolioRiskArgs } from '../src/services/hq-bridge-protocol.ts';
 import { registerPanelData, readPanelData, hasPanelData, listPanelDataKeys, unregisterPanelData, markPanelDataLoaded, readPanelDataUpdatedAt } from '../src/services/panel-data-registry.ts';
 
 describe('validateDataCommand', () => {
@@ -44,6 +44,31 @@ describe('validateDataCommand', () => {
     assert.deepEqual(ok.value.positions, [{ symbol: 'eth', usd: 10, protocol: 'aave' }]);
     for (const positions of [[], 'x', [{ symbol: 'ETH', usd: 0 }], [{ symbol: 'ETH', usd: Infinity }], [{ usd: 5 }], Array.from({ length: 51 }, () => ({ symbol: 'A', usd: 1 }))]) {
       assert.equal(validateDataCommand('host:get-portfolio-risk', { id: 'p', positions }).ok, false);
+    }
+  });
+
+  it('portfolio-risk accepts a Solana or EVM wallet address, with an optional chain', () => {
+    const sol = validateDataCommand('host:get-portfolio-risk', { id: 'p', address: ' THREEsynthetic1111111111111111111111111111 ' });
+    assert.deepEqual(sol.value, { id: 'p', address: 'THREEsynthetic1111111111111111111111111111' });
+    assert.deepEqual(portfolioRiskArgs(sol.value), { address: 'THREEsynthetic1111111111111111111111111111' });
+    const evm = validateDataCommand('host:get-portfolio-risk', { id: 'p', address: '0x2222222222222222222222222222222222222222', chain: 'base' });
+    assert.deepEqual(portfolioRiskArgs(evm.value), { address: '0x2222222222222222222222222222222222222222', chain: 'base' });
+    assert.deepEqual(portfolioRiskArgs({ id: 'p', positions: [{ symbol: 'SOL', usd: 1 }] }), { positions: [{ symbol: 'SOL', usd: 1 }] });
+  });
+
+  it('portfolio-risk refuses a malformed address, a bad chain, or address and positions together', () => {
+    const cases = [
+      { address: 'not-an-address' },
+      { address: '0x1234' },
+      { address: 'THREEsynthetic1111111111111111111111111111', chain: 'moon' },
+      { address: 'THREEsynthetic1111111111111111111111111111', positions: [{ symbol: 'SOL', usd: 1 }] },
+      { positions: [{ symbol: 'SOL', usd: 1 }], chain: 'solana' },
+      {},
+    ];
+    for (const c of cases) {
+      const r = validateDataCommand('host:get-portfolio-risk', { id: 'p', ...c });
+      assert.equal(r.ok, false, JSON.stringify(c));
+      assert.equal(r.error.id, 'p');
     }
   });
 });
