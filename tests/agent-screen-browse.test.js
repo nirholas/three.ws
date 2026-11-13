@@ -67,6 +67,15 @@ describe('browse policy', () => {
 		expect(parseAction('no json')).toBeNull();
 		expect(normalizeDomains(['HTTPS://Www.A.com/p', 'a.com', '', 'b.org'])).toEqual(['a.com', 'b.org']);
 	});
+
+	it('shortens a long note on a word boundary with an ellipsis instead of mid-word', () => {
+		const long = 'I need to find the heading. The provided text shows paragraphs but no explicit heading. I will try to extract the content of the page or look for a hidden heading somewhere';
+		const { note } = parseAction(JSON.stringify({ action: 'scroll', note: long }));
+		expect(note.length).toBeLessThanOrEqual(160);
+		expect(note.endsWith('\u2026')).toBe(true);
+		expect(long.startsWith(note.slice(0, -1))).toBe(true);
+		expect(long[note.length - 1]).toBe(' ');
+	});
 });
 
 describe('browse loop', () => {
@@ -144,6 +153,17 @@ describe('browse loop', () => {
 		expect(h.logs.at(-1)).toMatchObject({ type: 'error', action: 'decide', reason: 'model_unavailable' });
 		expect(h.logs.at(-1).detail).toMatch(/no working route/);
 	});
+	it('does not re-read the same element twice in a row and tells the model to answer instead', async () => {
+		const h = harness({ actions: [{ action: 'extract', id: 0 }, { action: 'extract', id: 0 }, { action: 'done', result: 'Example Domain' }] });
+		const feedbacks = [];
+		const decide = h.deps.decide;
+		h.deps.decide = async (ctx) => { feedbacks.push(ctx.feedback); return decide(ctx); };
+		const r = await runBrowseLoop(h.deps);
+		expect(r.status).toBe('done');
+		expect(h.calls.act.filter((a) => a.action === 'extract')).toHaveLength(1);
+		expect(r.steps.map((s) => s.type)).toContain('invalid');
+		expect(feedbacks.at(-1)).toMatch(/already read/i);
+	});
 	it('gives up after repeated unparseable model output', async () => {
 		const h = harness({ actions: ['nope', 'still nope', 'again'] });
 		const r = await runBrowseLoop(h.deps);
@@ -196,9 +216,20 @@ describe('browse decider', () => {
 		expect(parseAction(reply.text)?.action).toBe('done');
 	});
 
+	it('waits and retries the chain once when every provider is briefly unavailable', async () => {
+		let calls = 0;
+		const waits = [];
+		const fetchImpl = async () => { calls++; return calls <= 2 ? sse(DEAD_ROUTE) : sse(ANSWER({ action: 'done', result: 'ok' })); };
+		const decide = brainDecider({ baseUrl: 'https://three.ws', fetchImpl, providers: ['gpt-oss-120b', 'llama-3.3-70b'], sleep: async (ms) => { waits.push(ms); } });
+		const reply = await decide(ctx);
+		expect(parseAction(reply.text)?.action).toBe('done');
+		expect(waits).toHaveLength(1);
+		expect(waits[0]).toBeGreaterThan(0);
+	});
+
 	it('names every provider and its failure when none can answer', async () => {
 		const h = brainHarness({ 'gpt-oss-120b': DEAD_ROUTE, 'llama-3.3-70b': 502 });
-		const decide = brainDecider({ baseUrl: 'https://three.ws', fetchImpl: h.fetchImpl, providers: ['gpt-oss-120b', 'llama-3.3-70b'] });
+		const decide = brainDecider({ baseUrl: 'https://three.ws', fetchImpl: h.fetchImpl, providers: ['gpt-oss-120b', 'llama-3.3-70b'], sleep: async () => {} });
 		await expect(decide(ctx)).rejects.toThrow(/gpt-oss-120b: .*no working route.*llama-3\.3-70b: brain 502/);
 	});
 });

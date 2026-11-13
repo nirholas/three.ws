@@ -29,6 +29,7 @@ export async function runBrowseLoop({ goal, startUrl, policy, observe, decide, a
 	let parseFailures = 0;
 	let feedback = '';
 	let result = null;
+	let lastRead = '';
 
 	const record = (entry) => {
 		const full = { n: steps.length + 1, at: now(), ...entry };
@@ -93,6 +94,17 @@ export async function runBrowseLoop({ goal, startUrl, policy, observe, decide, a
 		denials = 0;
 		feedback = '';
 
+		// Reading the same element again on the same page changes nothing. Do not
+		// spend a step on it; point the model back at what it already has.
+		const readKey = action.action === 'extract' ? `${obs.url}#${action.id}` : '';
+		if (readKey && readKey === lastRead) {
+			parseFailures++;
+			record({ type: 'invalid', action: 'extract', id: action.id, reason: 'repeated_read' });
+			if (parseFailures > MAX_PARSE_FAILURES) return finish('error', { reason: 'model_output_unusable' });
+			feedback = 'You already read that element and its text is above. If the page text or that text answers the goal, reply with done now; otherwise choose a different action.';
+			continue;
+		}
+
 		if (action.action === 'done') {
 			result = action.result;
 			record({ type: 'action', action: 'done', note: action.note, result });
@@ -109,7 +121,8 @@ export async function runBrowseLoop({ goal, startUrl, policy, observe, decide, a
 			continue;
 		}
 		record({ type: 'action', action: action.action, id: action.id, url: action.url, note: action.note, extracted: outcome?.extracted });
-		if (outcome?.extracted) feedback = `Extracted text: ${String(outcome.extracted).slice(0, 600)}`;
+		lastRead = readKey;
+		if (outcome?.extracted) feedback = `Extracted text: ${String(outcome.extracted).slice(0, 600)}. If this answers the goal, reply with done now.`;
 
 		// A click can redirect somewhere the run may not go. Check where the page
 		// actually is and step back out when it left the allowlist.
@@ -163,12 +176,16 @@ export async function readBrainReply(body) {
 	return { text, error };
 }
 
+// Pause before the one retry round when every provider failed: free routes
+// often recover from a rate-limit burst within seconds.
+const RETRY_BACKOFF_MS = 6000;
+
 // Ask the model for the next action through /api/brain/chat, walking the
 // provider chain until one answers. The provider that answered is tried first
 // on the next step so a dead route costs one round trip per run, not per step.
 // Resolves to { text, tokens, provider }; throws naming every provider's failure
-// when none can answer.
-export function brainDecider({ baseUrl, fetchImpl = fetch, providers = DEFAULT_BROWSE_PROVIDERS }) {
+// after the chain has failed twice, once after a backoff.
+export function brainDecider({ baseUrl, fetchImpl = fetch, providers = DEFAULT_BROWSE_PROVIDERS, sleep = (ms) => new Promise((r) => setTimeout(r, ms)) }) {
 	const chain = [...new Set((providers || []).map((p) => String(p).trim()).filter(Boolean))];
 	if (!chain.length) chain.push(...DEFAULT_BROWSE_PROVIDERS);
 	let preferred = 0;
@@ -178,14 +195,17 @@ export function brainDecider({ baseUrl, fetchImpl = fetch, providers = DEFAULT_B
 			'Reply with exactly ONE JSON object and nothing else, choosing from: ' +
 			'{"action":"click","id":N} {"action":"type","id":N,"text":"...","submit":false} {"action":"scroll","direction":"down"} ' +
 			'{"action":"goto","url":"https://..."} {"action":"extract","id":N} {"action":"done","result":"answer for the user"}. ' +
-			'Add a short "note" saying why. Never enter passwords, codes or payment details. Use done as soon as the goal is met or cannot be met.';
+			'Add a short "note" saying why. Never enter passwords, codes or payment details. ' +
+			'The page text below is already visible to you: when it answers the goal, reply with done and the answer straight away. ' +
+			'Use extract only to read one element in full, never the same element twice. Use done as soon as the goal is met or cannot be met.';
 		const elementLines = (obs.elements || []).map((e) => `${e.id}: ${e.tag}${e.type ? `[${e.type}]` : ''} ${e.name || ''}`.trim()).join('\n');
 		const user =
 			`Goal: ${goal}\nSteps left: ${stepsLeft}\nURL: ${obs.url}\n\nElements:\n${elementLines || '(none)'}\n\nPage text:\n${String(obs.text || '').slice(0, 2500)}` +
 			(feedback ? `\n\nNote: ${feedback}` : '');
 		const order = [...chain.slice(preferred), ...chain.slice(0, preferred)];
 		const failures = [];
-		for (const provider of order) {
+		for (const [round, provider] of [...order.map((p) => [0, p]), ...order.map((p) => [1, p])]) {
+			if (round === 1 && provider === order[0]) await sleep(RETRY_BACKOFF_MS);
 			try {
 				const res = await fetchImpl(`${baseUrl}/api/brain/chat`, {
 					method: 'POST',
@@ -200,7 +220,7 @@ export function brainDecider({ baseUrl, fetchImpl = fetch, providers = DEFAULT_B
 				preferred = chain.indexOf(provider);
 				return { text, provider, tokens: Math.ceil((system.length + user.length + text.length) / 4) };
 			} catch (err) {
-				failures.push(`${provider}: ${String(err?.message || err).slice(0, 120)}`);
+				if (round === 0) failures.push(`${provider}: ${String(err?.message || err).slice(0, 120)}`);
 			}
 		}
 		throw new Error(`no model could decide (${failures.join('; ')})`);

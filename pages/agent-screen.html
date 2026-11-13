@@ -333,6 +333,8 @@
 				font: inherit;
 				font-size: 13px;
 				font-weight: 600;
+				white-space: nowrap;
+				flex: none;
 				cursor: pointer;
 				box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
 				transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
@@ -2287,7 +2289,9 @@
 			.asc-panel--cam.minimized .asc-pose { display: none; }
 		
 			/* ── Browse panel (owner-only): goal form, step strip, Take over ──── */
-			.asc-brw { position: absolute; left: 12px; bottom: 12px; z-index: 8; width: min(340px, calc(100% - 24px)); font-size: 0.8rem; color: #fff; }
+			/* Top-left under the Take control button: the bottom edge belongs to the
+			   centered task bar, which covers a bottom-anchored panel at phone width. */
+			.asc-brw { position: absolute; left: 12px; top: 60px; z-index: 8; width: min(340px, calc(100% - 24px)); font-size: 0.8rem; color: #fff; }
 			body.asc-zen .asc-brw { opacity: 0; pointer-events: none; }
 			.asc-brw-toggle, .asc-brw-go, .asc-brw-take {
 				min-height: 36px; padding: 6px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14);
@@ -2300,7 +2304,7 @@
 			.asc-brw-go { background: var(--screen-accent); color: var(--screen-on-accent, #0a0a0e); border-color: transparent; }
 			.asc-brw-go:hover:not(:disabled) { opacity: 0.88; }
 			.asc-brw-go:disabled { opacity: 0.45; cursor: not-allowed; }
-			.asc-brw-body { margin-top: 8px; padding: 12px; border-radius: 14px; background: rgba(10,10,14,0.82); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); display: grid; gap: 10px; max-height: 55vh; overflow-y: auto; }
+			.asc-brw-body { margin-top: 8px; padding: 12px; border-radius: 14px; background: rgba(10,10,14,0.82); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); display: grid; gap: 10px; max-height: max(180px, min(55vh, calc(100svh - 300px))); overflow-y: auto; }
 			.asc-brw-form { display: grid; gap: 8px; }
 			.asc-brw-field { display: grid; gap: 3px; }
 			.asc-brw-field span { color: rgba(255,255,255,0.6); font-size: 0.7rem; }

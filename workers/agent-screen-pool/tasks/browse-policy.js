@@ -81,9 +81,18 @@ export function parseAction(text) {
 	return null;
 }
 
+// Notes show in the owner's step strip, so a long one ends on a whole word.
+function clipNote(text, max = 160) {
+	const t = text.trim();
+	if (t.length <= max) return t;
+	const cut = t.slice(0, max - 1);
+	const space = cut.lastIndexOf(' ');
+	return `${space > max / 2 ? cut.slice(0, space) : cut}\u2026`;
+}
+
 function validateShape(o) {
 	if (!o || typeof o !== 'object' || !ACTION_NAMES.includes(o.action)) return null;
-	const note = typeof o.note === 'string' ? o.note.slice(0, 160) : '';
+	const note = typeof o.note === 'string' ? clipNote(o.note) : '';
 	const id = Number.isInteger(o.id) && o.id >= 0 && o.id < 1000 ? o.id : null;
 	switch (o.action) {
 		case 'click': return id === null ? null : { action: 'click', id, note };
