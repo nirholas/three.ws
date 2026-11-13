@@ -595,13 +595,13 @@ def _dense_image_inputs(detected, width, height):
     return dense_fit.build_face_mask(landmarks_px, width, height), landmarks_px
 
 
-def _refine_dense(job_id, t0, glb, morphed, faces, detected, yaw, best_img, fg_img, uv_map) -> None:
+def dense_refine(morphed, faces, detected, yaw, best_img, fg_img, uv_map, *,
+                 time_budget=None) -> tuple[Optional["dense_fit.FitResult"], str]:
     """
-    Optional dense, photometric refinement of the morphed head (DENSE_FIT=1).
-
-    Runs only on inputs the morph accepted, under a wall-clock budget, with a
-    structurally bounded displacement. Any failure or non-improvement keeps the
-    morphed head untouched: this stage can only ever add detail.
+    Run the dense fit on a morphed head exactly as a job does, without touching
+    a GLB. Returns (result or None, reason). Shared by the job path below and by
+    the eval tools (run_eval --local, robustness --dense, detection_guard
+    --dense), so what the benchmark measures is what production runs.
     """
     lm_vtx = uv_map.get("landmark_vtx")
     lm_idx = np.asarray(lm_vtx, dtype=np.int64) if lm_vtx else None
@@ -611,11 +611,12 @@ def _refine_dense(job_id, t0, glb, morphed, faces, detected, yaw, best_img, fg_i
     )
     if not dense_fit.eligible(yaw_deg=yaw, max_yaw_deg=MAX_MORPH_YAW_DEG,
                               landmarks_ok=lm_idx is not None, camera_ok=camera is not None):
-        log.info("[%s] dense fit skipped: input not eligible", job_id)
-        return
+        return None, "input not eligible"
     width, height = best_img.size
     n = min(len(detected), len(lm_idx))
-    fg_alpha = np.array(fg_img.convert("RGBA"), dtype=np.uint8)[:, :, 3].astype(np.float32) / 255.0
+    fg_alpha = None
+    if fg_img is not None:
+        fg_alpha = np.array(fg_img.convert("RGBA"), dtype=np.uint8)[:, :, 3].astype(np.float32) / 255.0
     face_mask, landmarks_px = _dense_image_inputs(detected, width, height)
     result = dense_fit.fit_dense_head(
         morphed, faces, camera,
@@ -624,7 +625,25 @@ def _refine_dense(job_id, t0, glb, morphed, faces, detected, yaw, best_img, fg_i
         landmarks_px=landmarks_px[:n],
         landmark_vertices=lm_idx[:n],
         foreground=fg_alpha,
+        time_budget=time_budget,
     )
+    if result is None:
+        return None, "no improvement or out of budget"
+    return result, "refined"
+
+
+def _refine_dense(job_id, t0, glb, morphed, faces, detected, yaw, best_img, fg_img, uv_map) -> None:
+    """
+    Optional dense, photometric refinement of the morphed head (DENSE_FIT=1).
+
+    Runs only on inputs the morph accepted, under a wall-clock budget, with a
+    structurally bounded displacement. Any failure or non-improvement keeps the
+    morphed head untouched: this stage can only ever add detail.
+    """
+    result, reason = dense_refine(morphed, faces, detected, yaw, best_img, fg_img, uv_map)
+    if reason == "input not eligible":
+        log.info("[%s] dense fit skipped: input not eligible", job_id)
+        return
     if result is None:
         log.info("[%s] dense fit kept the morphed head (no improvement or out of budget)", job_id)
         return

@@ -102,9 +102,13 @@ def scene():
 
 def _fit(scene, **kw):
     verts, faces, photo, mask, _ = scene
+    # The budget is generous on purpose: these tests pin what the fit computes, and
+    # the CPU fit takes ~50 s idle but blew a 120 s budget on a loaded build box,
+    # which returned None and failed the convergence test for a reason that had
+    # nothing to do with convergence. Budget behaviour has its own test below.
     return dense_fit.fit_dense_head(
         verts, faces, _camera(), photo, mask, None, None, None,
-        iterations=kw.pop("iterations", 150), time_budget=kw.pop("time_budget", 120),
+        iterations=kw.pop("iterations", 150), time_budget=kw.pop("time_budget", 1800),
         device="cpu", **kw,
     )
 

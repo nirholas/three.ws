@@ -41,6 +41,7 @@ FLAME/MICA/BFM (licensed) are deliberately not used.
 
 from __future__ import annotations
 
+import functools
 import logging
 import os
 import time
@@ -108,6 +109,16 @@ def pytorch3d_available() -> bool:
     except Exception:  # noqa: BLE001
         return False
     return True
+
+
+@functools.lru_cache(maxsize=1)
+def silhouette_available() -> bool:
+    """True when the silhouette term will run: PyTorch3D importable and a CUDA device."""
+    if not (torch_available() and pytorch3d_available()):
+        return False
+    import torch
+
+    return bool(torch.cuda.is_available())
 
 
 def eligible(*, yaw_deg: float, max_yaw_deg: float, landmarks_ok: bool, camera_ok: bool) -> bool:

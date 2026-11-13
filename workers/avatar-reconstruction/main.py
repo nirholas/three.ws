@@ -16,7 +16,8 @@ changes:
                        "internal"   a service fault; `error` is an opaque
                                     correlation id to join against the logs.
 
-  GET  /health      → { ok, pipeline, model_loaded, uv_map_ready, geometry_morph }
+  GET  /health      → { ok, pipeline, model_loaded, uv_map_ready, geometry_morph,
+                        dense_fit, dense_fit_silhouette }
 
 Environment variables (all required unless noted):
   API_KEY               — shared bearer secret (set via GCP Secret Manager)
@@ -38,6 +39,7 @@ from fastapi import FastAPI, HTTPException, Header, BackgroundTasks
 from google.cloud import firestore, storage
 from pydantic import BaseModel, Field
 
+import dense_fit
 import face_pipeline
 from worker_security import require_api_key, safe_error
 
@@ -202,4 +204,6 @@ async def health() -> dict:
         "model_loaded": uv_ready,
         "uv_map_ready": uv_ready,
         "geometry_morph": bool(geometry_ready),
+        "dense_fit": dense_fit.enabled() and dense_fit.torch_available(),
+        "dense_fit_silhouette": dense_fit.silhouette_available(),
     }
