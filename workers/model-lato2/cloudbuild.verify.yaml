@@ -14,8 +14,8 @@ steps:
       - --tag
       - model-lato2:verify
       - .
-    timeout: 1800s
+    timeout: 3300s
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  machineType: E2_HIGHCPU_8
+  machineType: E2_HIGHCPU_32
