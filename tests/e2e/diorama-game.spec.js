@@ -29,7 +29,7 @@ async function propGlb() {
 	return Buffer.from(await new NodeIO().writeBinary(doc));
 }
 
-function world(ready = true) {
+function world(ready = true, timeLimitSec = 60) {
 	const obj = (id, x, z, label) => ({
 		id,
 		label,
@@ -53,7 +53,7 @@ function world(ready = true) {
 			goal: 'collect',
 			targetIds: ['obj-0', 'obj-1'],
 			count: 2,
-			timeLimitSec: 60,
+			timeLimitSec,
 			spawn: { x: 0, z: 4.5, heading: Math.PI },
 		},
 	};
@@ -113,5 +113,98 @@ test.describe('diorama microgame', () => {
 		await page.keyboard.press('Escape');
 		await expect(page.locator('.dio-play')).toBeHidden();
 		await expect(page.getByRole('button', { name: 'Play this world' })).toBeEnabled();
+	});
+
+	test('a timed goal left undone ends in a loss, and Play again restarts the run', async ({ page }) => {
+		// 10s is the schema floor (MIN_TIME_LIMIT_SEC), so this waits out a real clock.
+		await mountWorld(page, world(true, 10));
+		await page.goto(`/diorama?id=${WORLD_ID}&play=1`);
+		const start = page.locator('.dio-play__cta', { hasText: 'Start' });
+		await expect(start).toBeEnabled({ timeout: 90_000 });
+		await start.click();
+
+		await expect(page.locator('.dio-play__clock')).toHaveText(/^0:(10|09)$/);
+		await expect(page.locator('.dio-play__title')).toHaveText('Not this time', { timeout: 20_000 });
+		await expect(page.locator('.dio-play__body')).toContainText('Time ran out.');
+		await expect(page.locator('.dio-play__clock')).toHaveText('0:00');
+
+		await page.getByRole('button', { name: 'Play again' }).click();
+		await expect(page.locator('.dio-play__card')).toBeHidden();
+		await expect(page.locator('.dio-play__progress')).toHaveText('0/2');
+		await expect(page.locator('.dio-play__clock')).toHaveText(/^0:(10|09)$/);
+	});
+});
+
+test.describe('diorama microgame on a phone (390x844, touch)', () => {
+	test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+
+	async function expectTapFloor(locator) {
+		const box = await locator.boundingBox();
+		expect(box, 'control is laid out').not.toBeNull();
+		expect(box.width).toBeGreaterThanOrEqual(44);
+		expect(box.height).toBeGreaterThanOrEqual(44);
+	}
+
+	async function openAndStart(page) {
+		await mountWorld(page, world());
+		await page.goto(`/diorama?id=${WORLD_ID}&play=1`);
+		const start = page.locator('.dio-play__cta', { hasText: 'Start' });
+		await expect(start).toBeEnabled({ timeout: 90_000 });
+		await expectTapFloor(start);
+		await expectTapFloor(page.locator('.dio-play__card .dio-play__alt'));
+		await start.tap();
+		await expect(page.locator('.dio-play__progress')).toHaveText('0/2');
+		const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+		expect(overflow, 'no horizontal scroll at phone width').toBeLessThanOrEqual(0);
+		await expectTapFloor(page.locator('.dio-play__hud .dio-play__exit'));
+		const stick = page.locator('.dio-play__stick');
+		await expect(stick).toBeVisible();
+		return stick;
+	}
+
+	test('the touch pad walks the avatar to a win', async ({ page }) => {
+		const stick = await openAndStart(page);
+		const box = await stick.boundingBox();
+		const cx = box.x + box.width / 2;
+		const cy = box.y + box.height / 2;
+		const cdp = await page.context().newCDPSession(page);
+		const touch = (type, x) =>
+			cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y: cy, id: 1 }] });
+
+		// Thumb down on the pad, slide left: the walker heads screen-left (-x).
+		await touch('touchStart', cx);
+		await touch('touchMove', cx - 30);
+		await touch('touchMove', cx - 60);
+		await expect(page.locator('.dio-play__progress')).toHaveText('1/2', { timeout: 15_000 });
+		await touch('touchMove', cx + 60);
+		await expect(page.locator('.dio-play__title')).toHaveText('You won', { timeout: 30_000 });
+		await touch('touchEnd');
+		await expect(stick).toBeHidden();
+		await expectTapFloor(page.getByRole('button', { name: 'Play again' }));
+	});
+
+	test('tapping the ground walks the avatar there', async ({ page }) => {
+		const stick = await openAndStart(page);
+		const canvas = await page.locator('.dio-play').boundingBox();
+		const pad = await stick.boundingBox();
+		// The chase camera has no roll, so a screen row is a line of constant z on
+		// the ground. 60% down the stage is the row just in front of the walker's
+		// feet, on the lanterns' side; tapping toward the left edge of that row
+		// walks the walker left, and repeat taps carry it on, as a player would.
+		const x = canvas.x + canvas.width * 0.12;
+		const y = canvas.y + canvas.height * 0.6;
+		expect(y, 'tap row clears the touch pad').toBeLessThan(pad.y);
+		const progress = page.locator('.dio-play__progress');
+		await expect
+			.poll(
+				async () => {
+					const now = await progress.textContent();
+					if (now !== '1/2') await page.touchscreen.tap(x, y);
+					return now;
+				},
+				// Each interval is one walk leg: long enough to reach the tap point.
+				{ timeout: 30_000, intervals: [900] },
+			)
+			.toBe('1/2');
 	});
 });
