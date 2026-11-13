@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 /**
  * Compound alert rule builder (PriceAlertsPanel) in a real browser: empty
@@ -9,14 +9,21 @@ import { expect, test } from '@playwright/test';
 const RULES_KEY = 'hq-alert-rules-v1';
 const LEGACY_KEY = 'hq-price-alerts';
 
+/** The panel is lazy: a skeleton placeholder is swapped for the real panel once it scrolls into view. */
+async function alertsPanel(page: Page) {
+  const panel = page.locator('.panel[data-panel="price-alerts"]');
+  await panel.scrollIntoViewIfNeeded();
+  await expect(panel.locator('.pa-container')).toBeVisible();
+  return panel;
+}
+
 test.describe('HQ compound alert rules', () => {
   test('builds, persists and deletes a multi-condition rule', async ({ page }) => {
     await page.goto('/');
     await page.evaluate((k) => localStorage.removeItem(k), RULES_KEY);
     await page.reload();
 
-    const panel = page.locator('[data-panel="price-alerts"]');
-    await panel.scrollIntoViewIfNeeded();
+    const panel = await alertsPanel(page);
     await expect(panel.locator('.pa-empty')).toContainText('No alerts yet');
     await expect(panel.locator('.pa-empty')).toContainText('Press + Add');
 
@@ -50,7 +57,7 @@ test.describe('HQ compound alert rules', () => {
     ]);
 
     await page.reload();
-    await panel.scrollIntoViewIfNeeded();
+    await alertsPanel(page);
     await expect(panel.locator('.pa-alert-row')).toContainText('e2e compound');
 
     await panel.locator('[data-delete]').click();
@@ -64,8 +71,7 @@ test.describe('HQ compound alert rules', () => {
     await page.evaluate(([rk, lk, v]) => { localStorage.removeItem(rk); localStorage.setItem(lk, v); }, [RULES_KEY, LEGACY_KEY, JSON.stringify(legacy)] as const);
     await page.reload();
 
-    const panel = page.locator('[data-panel="price-alerts"]');
-    await panel.scrollIntoViewIfNeeded();
+    const panel = await alertsPanel(page);
     await expect(panel.locator('.pa-alert-row')).toContainText('BTC price >= $1000000');
     const after = await page.evaluate(([rk, lk]) => ({ rules: JSON.parse(localStorage.getItem(rk) || '[]'), legacy: localStorage.getItem(lk) }), [RULES_KEY, LEGACY_KEY] as const);
     expect(after.rules).toHaveLength(1);

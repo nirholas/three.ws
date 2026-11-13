@@ -146,8 +146,10 @@ test.describe('HQ host bridge', () => {
     await page.waitForFunction(() => window.__hq?.events.some((e) => e.type === 'hq:ready'), null, { timeout: 30000 });
 
     const hq = page.frameLocator('#hq');
-    const panel = hq.locator('[data-panel="price-alerts"]');
+    // Lazy panel: the skeleton placeholder is replaced by the real panel once in view.
+    const panel = hq.locator('.panel[data-panel="price-alerts"]');
     await panel.scrollIntoViewIfNeeded();
+    await expect(panel.locator('.pa-container')).toBeVisible();
     await panel.locator('#pa-toggle-form').click();
     await panel.locator('#pa-name').fill('e2e bridge rule');
     await panel.locator('.pa-clause-symbol').first().fill('BTC');
