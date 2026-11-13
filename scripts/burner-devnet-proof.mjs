@@ -87,13 +87,16 @@ const { getOrCreateAgentSolanaWallet } = await import('../api/_lib/agent-wallet.
 const { solUsdPrice } = await import('../api/_lib/avatar-wallet.js');
 
 const { solanaRpcEndpoints } = await import('../api/_lib/solana/connection.js');
+const { solanaConnection } = await import('../api/_lib/agent-pumpfun.js');
 const ENDPOINTS = solanaRpcEndpoints('devnet');
-const RPC = ENDPOINTS[0];
 const hostOf = (url) => new URL(url).host;
-const conn = new Connection(RPC, 'confirmed');
+// The same failover connection the spend path uses: a keyed lane that is over
+// quota (429 "max usage reached") rotates to the next devnet endpoint instead
+// of aborting the run.
+const conn = solanaConnection('devnet');
 const genesis = await conn.getGenesisHash();
 if (genesis !== DEVNET_GENESIS) {
-	console.error(`refusing to run: ${hostOf(RPC)} has genesis ${genesis}, which is not devnet`);
+	console.error(`refusing to run: the devnet connection reports genesis ${genesis}, which is not devnet`);
 	process.exit(2);
 }
 
@@ -313,6 +316,6 @@ console.table(spends.map((s) => ({ status: s.status, usd: Number(s.usd).toFixed(
 
 heading('summary');
 console.table(results);
-console.log(`\n${results.length - failed}/${results.length} checks passed on Solana devnet (${hostOf(RPC)}).`);
+console.log(`\n${results.length - failed}/${results.length} checks passed on Solana devnet (${hostOf(conn.rpcEndpoint)}).`);
 await pg.close().catch(() => {});
 process.exit(failed ? 1 : 0);
