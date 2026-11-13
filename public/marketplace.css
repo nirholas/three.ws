@@ -363,6 +363,36 @@ body.market-page > header {
 .market-card-agent.mv-loaded .thumb model-viewer {
 	opacity: 1;
 }
+
+/* A card's deferred viewer (src/shared/model-slot.js). It covers the same box
+   the viewer will, so hovering or tapping there is what wakes it, and paints
+   nothing but an optional poster: a cached render on an avatar card, the
+   stored thumbnail on a weekly theme pick. */
+model-slot {
+	display: block;
+}
+.market-card-agent .thumb model-slot,
+.market-card-avatar .thumb model-slot {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+}
+.market-theme-pick-stage model-slot {
+	width: 100%;
+	height: 100%;
+}
+model-slot > img.model-slot-poster {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	opacity: 0;
+	transition: opacity var(--duration-slow) var(--ease-standard);
+}
+.market-card-avatar.mv-poster-ready .thumb model-slot > img.model-slot-poster,
+.market-theme-pick-stage model-slot > img.model-slot-poster {
+	opacity: 1;
+}
 .market-card-agent.mv-loaded .thumb .mv-placeholder {
 	opacity: 0;
 }

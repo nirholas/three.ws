@@ -51,7 +51,12 @@ test.describe('desktop', () => {
 
 	test('hovering a card turns its slot into a model-viewer loading that card\'s model', async ({ page }) => {
 		await openMarketplace(page);
-		const card = page.locator('#market-grid .market-card-agent:has(model-slot), #market-grid .market-card-avatar:has(model-slot)').first();
+		// Pin the card first: once it wakes it no longer matches :has(model-slot).
+		await page.evaluate(() => {
+			const first = document.querySelector('#market-grid .market-card-agent:has(model-slot), #market-grid .market-card-avatar:has(model-slot)');
+			first.setAttribute('data-e2e-card', '');
+		});
+		const card = page.locator('[data-e2e-card]');
 		await card.scrollIntoViewIfNeeded();
 		const glb = await card.locator('model-slot').getAttribute('data-src');
 		expect(glb).toMatch(/^https?:\/\//);
