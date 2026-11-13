@@ -6,6 +6,8 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-11-13
 
+- **Docs · Forge on-device photo check** (`/docs/forge-photo-prep`): How Forge checks and prepares a photo in the browser before photo-to-3D: on-device background matting, a square subject crop, and plain-language warnings for photos that would make a bad mesh.
+- **Native $THREE launchpad coins can be quoted, bought and sold again, and the creator's launch buy shows as a buy**: $THREE is a Token-2022 token, and after a bonding-curve SDK upgrade every price quote, buy and sell on a native launchpad coin failed with an error about a missing quote mint and epoch. Quotes now read the $THREE mint and the current epoch with every request, so the curve prices trades again, anti-snipe fee included. The coin page's trade list also showed the creator's own first buy, the one bundled into the launch, as a sell of the whole curve supply; it now shows as a buy of the tokens the creator actually received. Both were caught by rerunning the launchpad's end-to-end test (launch, decaying-fee check, buy, sell, trade history) against the real bonding-curve program before the lane opens on mainnet. (`/docs/native-launchpad`) `[fix]`
 - **The Reconnect button and the active category chip on Agent integrations are readable in the dark theme**: On the Agent integrations page the Reconnect button shown for a server waiting for sign-in, and the selected category chip in the catalog, painted white text on a white background in the dark theme, so the button looked like an empty pill. Both now use the site-wide text color for accent surfaces and read clearly in every theme. (`/mcp-integrations`) `[fix]`
 
 ## 2026-11-12

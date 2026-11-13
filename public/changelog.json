@@ -1,11 +1,31 @@
 {
-	"generated_at": "2026-11-13T14:43:25.601Z",
+	"generated_at": "2026-11-13T14:46:33.781Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-13",
+			"type": "launch",
+			"title": "Docs · Forge on-device photo check",
+			"summary": "How Forge checks and prepares a photo in the browser before photo-to-3D: on-device background matting, a square subject crop, and plain-language warnings for photos that would make a bad mesh.",
+			"link": "/docs/forge-photo-prep",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-13",
+			"type": "update",
+			"title": "Native $THREE launchpad coins can be quoted, bought and sold again, and the creator's launch buy shows as a buy",
+			"summary": "$THREE is a Token-2022 token, and after a bonding-curve SDK upgrade every price quote, buy and sell on a native launchpad coin failed with an error about a missing quote mint and epoch. Quotes now read the $THREE mint and the current epoch with every request, so the curve prices trades again, anti-snipe fee included. The coin page's trade list also showed the creator's own first buy, the one bundled into the launch, as a sell of the whole curve supply; it now shows as a buy of the tokens the creator actually received. Both were caught by rerunning the launchpad's end-to-end test (launch, decaying-fee check, buy, sell, trade history) against the real bonding-curve program before the lane opens on mainnet.",
+			"link": "/docs/native-launchpad",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-11-13",
 			"type": "update",

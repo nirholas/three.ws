@@ -1,14 +1,34 @@
 {
-	"generated_at": "2026-11-13T14:43:25.629Z",
+	"generated_at": "2026-11-13T14:46:33.862Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4552,
+	"total": 4554,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-13",
+			"type": "launch",
+			"title": "Docs · Forge on-device photo check",
+			"summary": "How Forge checks and prepares a photo in the browser before photo-to-3D: on-device background matting, a square subject crop, and plain-language warnings for photos that would make a bad mesh.",
+			"link": "/docs/forge-photo-prep",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-13",
+			"type": "update",
+			"title": "Native $THREE launchpad coins can be quoted, bought and sold again, and the creator's launch buy shows as a buy",
+			"summary": "$THREE is a Token-2022 token, and after a bonding-curve SDK upgrade every price quote, buy and sell on a native launchpad coin failed with an error about a missing quote mint and epoch. Quotes now read the $THREE mint and the current epoch with every request, so the curve prices trades again, anti-snipe fee included. The coin page's trade list also showed the creator's own first buy, the one bundled into the launch, as a sell of the whole curve supply; it now shows as a buy of the tokens the creator actually received. Both were caught by rerunning the launchpad's end-to-end test (launch, decaying-fee check, buy, sell, trade history) against the real bonding-curve program before the lane opens on mainnet.",
+			"link": "/docs/native-launchpad",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-11-13",
 			"type": "update",
@@ -1502,27 +1522,6 @@
 			"title": "Agent sandbox settings",
 			"summary": "A new Settings page lists every program your agents ran in their sandbox with its output and exit code, lets you download the files it wrote, stop a workspace, and choose which hosts sandboxed code may call.",
 			"link": null,
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Agent wallet key export and rotation now require the real-funds agreements",
-			"summary": "Exporting an agent wallet key and confirming a rotate-and-sweep now check that the owner has signed the real-funds agreements, like every other path that moves or releases custodial funds. The rotation preview stays open, devnet is unaffected, and an owner who has not signed can sign and retry with the same re-authentication. Agent wallet provisioning also claims the wallet slot atomically, so two concurrent first requests can no longer replace a key whose address was already handed out.",
-			"link": null,
-			"tags": [
-				"security",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Agents can browse the web toward a goal",
-			"summary": "Give an agent a goal and a public page and it browses in a real browser you can watch, one validated step at a time. It stays on the allowed sites, never enters passwords or payment details, stops at its step limit, and hands the browser to you the moment you take over. Available in the Browse panel on the agent screen and as the browse_web tool.",
-			"link": "/agent-screen",
 			"tags": [
 				"feature"
 			]

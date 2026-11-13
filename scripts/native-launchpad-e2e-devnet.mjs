@@ -3,11 +3,10 @@
 // quoteBuy -> real swap buy -> state again.
 import 'dotenv/config';
 import bs58 from 'bs58';
-import BN from 'bn.js';
 import { Connection, Keypair, VersionedTransaction } from '@solana/web3.js';
-import { getBaseFeeParams, getBaseFeeNumerator, feeNumeratorToBps } from '@meteora-ag/dynamic-bonding-curve-sdk';
 import { buildCreatePoolTx, buildSwapTx, getPoolState, getRecentTrades, quoteBuy } from '../api/_lib/native-launch/dbc.js';
 import { curveBuildParams, NATIVE_LANE } from '../api/_lib/native-launch/config.js';
+import { feeBpsAtSlot } from '../api/_lib/native-launch/fee-config.js';
 
 const conn = new Connection(process.env.SOLANA_RPC_URL_DEVNET || 'https://api.devnet.solana.com', 'confirmed');
 const secret = process.env.NATIVE_LAUNCH_PARTNER_SECRET_BASE58 || process.env.X402_TREASURY_SECRET_BASE58;
@@ -34,6 +33,19 @@ async function signAndLand(txBase64, signers) {
 		if (s?.confirmationStatus === 'confirmed' || s?.confirmationStatus === 'finalized') return sig;
 	}
 	throw new Error(`confirm timeout: ${sig}`);
+}
+
+// The shared Solana connection reuses a getAccountInfo answer for a few seconds
+// (READ_CACHE_TTL_MS in api/_lib/solana/connection.js), so a read straight after a
+// confirmed swap can still show the pool as it was. Wait for that window to pass
+// and the landed swap to show, instead of asserting against a cached answer.
+async function poolStateAfter(previous) {
+	for (let i = 0; i < 20; i++) {
+		const state = await getPoolState({ network: 'devnet', mint });
+		if (state.quote_reserve_three !== previous.quote_reserve_three) return state;
+		await new Promise((r) => setTimeout(r, 500));
+	}
+	throw new Error('pool state never reflected the landed swap within 10s');
 }
 
 function assert(cond, message) {
@@ -71,24 +83,14 @@ const createTxInfo = await conn.getTransaction(createSig, { commitment: 'confirm
 const activationSlot = createTxInfo.slot;
 const antiSnipeAmountThree = 1_000;
 
-function predictedFeeBps(slotsSinceActivation) {
-	const sp = getBaseFeeParams(curveBuildParams().fee.baseFeeParams);
-	const numerator = getBaseFeeNumerator(
-		sp.cliffFeeNumerator,
-		sp.firstFactor,
-		sp.secondFactor,
-		sp.thirdFactor,
-		sp.baseFeeMode,
-		new BN(slotsSinceActivation),
-		new BN(0),
-	);
-	return feeNumeratorToBps(numerator);
-}
+// The SDK dropped its fee evaluator in 2.0; feeBpsAtSlot mirrors the program's
+// rule and is the same function the fee preview endpoint and the vitest use.
+const predictedFeeBps = (slotsSinceActivation) => feeBpsAtSlot(curveBuildParams().fee.baseFeeParams, slotsSinceActivation);
 
 const slotAtQuoteA = await conn.getSlot();
 const quoteA = await quoteBuy({ network: 'devnet', mint, threeIn: antiSnipeAmountThree });
 console.log(
-	`slot ${slotAtQuoteA} (+${slotAtQuoteA - activationSlot} since activation): fee for ${antiSnipeAmountThree} $THREE = ${quoteA.trading_fee_three} $THREE (predicted base fee ${predictedFeeBps(slotAtQuoteA - activationSlot)} bps)`,
+	`slot ${slotAtQuoteA} (+${slotAtQuoteA - activationSlot} since activation): fee for ${antiSnipeAmountThree} $THREE = ${quoteA.trading_fee_three} $THREE (predicted base fee ${await predictedFeeBps(slotAtQuoteA - activationSlot)} bps)`,
 );
 
 const waitSlots = 20; // comfortably inside the 100-slot decay window, no long sleep needed
@@ -100,7 +102,7 @@ while (slotNow < slotAtQuoteA + waitSlots) {
 }
 const quoteB = await quoteBuy({ network: 'devnet', mint, threeIn: antiSnipeAmountThree });
 console.log(
-	`slot ${slotNow} (+${slotNow - activationSlot} since activation): fee for ${antiSnipeAmountThree} $THREE = ${quoteB.trading_fee_three} $THREE (predicted base fee ${predictedFeeBps(slotNow - activationSlot)} bps)`,
+	`slot ${slotNow} (+${slotNow - activationSlot} since activation): fee for ${antiSnipeAmountThree} $THREE = ${quoteB.trading_fee_three} $THREE (predicted base fee ${await predictedFeeBps(slotNow - activationSlot)} bps)`,
 );
 
 assert(quoteB.trading_fee_three < quoteA.trading_fee_three, 'the anti-snipe fee must decay as slots since activation increase');
@@ -115,7 +117,7 @@ console.log(`quote 250,000 $THREE -> ${quote.tokens_out} tokens, fee ${quote.tra
 
 const buy = await buildSwapTx({ network: 'devnet', mint, trader: wallet.publicKey.toBase58(), side: 'buy', amountIn: 250_000 });
 console.log('buy landed: ', await signAndLand(buy.txBase64, [wallet]));
-const afterBuy = await getPoolState({ network: 'devnet', mint });
+const afterBuy = await poolStateAfter(afterCreate);
 assert(afterBuy.curve_progress > afterCreate.curve_progress, 'a buy moves the curve forward');
 
 const sell = await buildSwapTx({
@@ -126,7 +128,7 @@ const sell = await buildSwapTx({
 	amountIn: Math.floor(buy.expected_out / 2),
 });
 console.log('sell landed:', await signAndLand(sell.txBase64, [wallet]));
-const afterSell = await getPoolState({ network: 'devnet', mint });
+const afterSell = await poolStateAfter(afterBuy);
 assert(afterSell.quote_reserve_three < afterBuy.quote_reserve_three, 'a sell pays $THREE back out of the curve');
 
 console.log('progress:        ', afterCreate.curve_progress, '->', afterBuy.curve_progress, '->', afterSell.curve_progress);
@@ -137,7 +139,11 @@ console.log('$THREE in curve: ', afterCreate.quote_reserve_three, '->', afterBuy
 const { trades } = await getRecentTrades({ network: 'devnet', mint, limit: 20 });
 console.log('trades read from chain:', trades.map((t) => `${t.side} ${t.tokens} for ${t.three} $THREE`).join(' | '));
 assert(trades.length >= 3, 'the first buy, the buy and the sell all show in the parsed trades');
-assert(trades[0].side === 'sell' && trades[1].side === 'buy', 'trades come newest first with the right sides');
+assert(
+	trades[0].side === 'sell' && trades[1].side === 'buy' && trades[2].side === 'buy',
+	'trades come newest first with the right sides, the create-time first buy included',
+);
+assert(trades[2].three === 50_000, 'the create-time first buy shows the $THREE the creator put in');
 assert(trades.every((t) => t.trader === wallet.publicKey.toBase58()), 'every trade names the trading wallet');
 
 console.log('');

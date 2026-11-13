@@ -213,24 +213,53 @@ export async function getPoolState({ network = 'mainnet', mint } = {}) {
 
 // Live quote against the curve. side 'buy': `amountIn` $THREE -> tokens out.
 // side 'sell': `amountIn` tokens -> $THREE out. Amounts are whole units, pre-slippage.
-async function quoteSwap({ network, mint, side, amountIn, slippageBps, hasReferral = false }) {
-	const BN = (await import('bn.js')).default;
-	const { client, pool, account, wrapped } = await fetchPool({ network, mint });
-	const config = await client.state.getPoolConfig(account.config);
-	const slot = await getConnection({ network }).getSlot();
-	const selling = side === 'sell';
-	// client.pool.swapQuote takes a params object; the module-level swapQuote
-	// export is positional. Use the client so an argument-order change in the
-	// SDK can't silently mis-price a quote.
-	const quote = client.pool.swapQuote({
+//
+// $THREE is a Token-2022 mint, and the SDK refuses to quote a Token-2022-quoted
+// curve without the parsed quote mint and the current epoch, which it needs to
+// price any transfer fee the mint carries. They are passed for every quote; on a
+// plain SPL quote mint the SDK ignores them.
+//
+// client.pool.swapQuote takes a params object; the module-level swapQuote export
+// is positional. Use the client so an argument-order change in the SDK can't
+// silently mis-price a quote.
+export async function swapQuoteOnCurve({ client, connection, wrapped, config, quoteMint, selling, amountAtomics, slippageBps, hasReferral = false }) {
+	const [{ default: BN }, { unpackMint }] = await Promise.all([import('bn.js'), import('@solana/spl-token')]);
+	const [slot, { epoch }, mintInfo] = await Promise.all([
+		connection.getSlot(),
+		connection.getEpochInfo(),
+		connection.getAccountInfo(quoteMint),
+	]);
+	if (!mintInfo) {
+		throw Object.assign(new Error(`quote mint ${quoteMint.toBase58()} not found`), { status: 503, code: 'lane_not_configured' });
+	}
+	return client.pool.swapQuote({
+		quoteMint: unpackMint(quoteMint, mintInfo, mintInfo.owner),
+		currentEpoch: epoch,
 		virtualPool: wrapped,
 		config,
 		swapBaseForQuote: selling,
-		amountIn: new BN(toAtomics(amountIn, selling ? BASE_UNIT : QUOTE_UNIT)),
+		amountIn: new BN(amountAtomics),
 		slippageBps,
 		hasReferral,
 		eligibleForFirstSwapWithMinFee: false,
 		currentPoint: new BN(slot),
+	});
+}
+
+async function quoteSwap({ network, mint, side, amountIn, slippageBps, hasReferral = false }) {
+	const { client, pool, account, wrapped } = await fetchPool({ network, mint });
+	const config = await client.state.getPoolConfig(account.config);
+	const selling = side === 'sell';
+	const quote = await swapQuoteOnCurve({
+		client,
+		connection: getConnection({ network }),
+		wrapped,
+		config,
+		quoteMint: solanaPubkey(quoteMintFor(network)),
+		selling,
+		amountAtomics: toAtomics(amountIn, selling ? BASE_UNIT : QUOTE_UNIT),
+		slippageBps,
+		hasReferral,
 	});
 	return { pool, quote, selling };
 }
@@ -357,19 +386,33 @@ export async function getRecentTrades({ network = 'mainnet', mint, limit = 20, b
 export function tradeFromTx(tx, baseVault, quoteVault) {
 	if (!tx?.meta || tx.meta.err) return null;
 	const keys = tx.transaction.message.accountKeys.map((k) => (typeof k === 'string' ? k : k.pubkey.toBase58 ? k.pubkey.toBase58() : String(k.pubkey)));
+	const amt = (list, idx) => Number(list?.find((b) => b.accountIndex === idx)?.uiTokenAmount?.amount ?? 0);
+	const deltaAt = (idx) => amt(tx.meta.postTokenBalances, idx) - amt(tx.meta.preTokenBalances, idx);
 	const delta = (vault) => {
 		const idx = keys.indexOf(vault);
-		if (idx < 0) return 0;
-		const amt = (list) => Number(list?.find((b) => b.accountIndex === idx)?.uiTokenAmount?.amount ?? 0);
-		return amt(tx.meta.postTokenBalances) - amt(tx.meta.preTokenBalances);
+		return idx < 0 ? 0 : deltaAt(idx);
 	};
+	const baseIdx = keys.indexOf(baseVault);
 	const baseDelta = delta(baseVault);
 	const quoteDelta = delta(quoteVault);
 	if (baseDelta === 0 || quoteDelta === 0) return null;
-	const tokens = Math.abs(baseDelta) / BASE_UNIT;
+	// The pool-creation transaction mints the curve supply into the base vault and
+	// carries the creator's first buy, so the vault has no pre-balance and its net
+	// change is the mint, not the trade. There, the tokens bought are what every
+	// other holder of the base mint received in the same transaction.
+	const vaultCreated = !tx.meta.preTokenBalances?.some((b) => b.accountIndex === baseIdx);
+	const baseMint = tx.meta.postTokenBalances?.find((b) => b.accountIndex === baseIdx)?.mint;
+	const received = vaultCreated && baseMint
+		? (tx.meta.postTokenBalances ?? [])
+				.filter((b) => b.mint === baseMint && b.accountIndex !== baseIdx)
+				.reduce((sum, b) => sum + Math.max(0, deltaAt(b.accountIndex)), 0)
+		: 0;
+	const tokens = (received || Math.abs(baseDelta)) / BASE_UNIT;
 	const three = Math.abs(quoteDelta) / QUOTE_UNIT;
 	return {
-		side: baseDelta < 0 ? 'buy' : 'sell', // tokens leaving the vault means someone bought
+		// $THREE is never minted into the quote vault, so its direction is the side:
+		// $THREE arriving means someone bought.
+		side: quoteDelta > 0 ? 'buy' : 'sell',
 		trader: keys[0],
 		tokens,
 		three,

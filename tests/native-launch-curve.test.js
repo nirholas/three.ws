@@ -242,4 +242,100 @@ describe('tradeFromTx', () => {
 		expect(tradeFromTx(mk(1, 1, 1, 1), 'BaseVault', 'QuoteVault')).toBeNull();
 		expect(tradeFromTx({ meta: { err: {} } }, 'BaseVault', 'QuoteVault')).toBeNull();
 	});
+
+	// The creator's first buy lands in the pool-creation transaction, which also
+	// mints the curve supply into the base vault, so the vault has no pre-balance
+	// and ends up holding more than it started with. Read as a vault delta alone,
+	// that showed on the coin page as a sell of the entire curve supply.
+	it('reads the first buy bundled into pool creation as a buy of what the creator received', async () => {
+		const { tradeFromTx } = await import('../api/_lib/native-launch/dbc.js');
+		const keys = ['Creator', 'BaseVault', 'QuoteVault', 'CreatorBaseAta'];
+		const tx = {
+			meta: {
+				err: null,
+				preTokenBalances: [],
+				postTokenBalances: [
+					{ accountIndex: 1, mint: 'BaseMint', owner: 'Pool', uiTokenAmount: { amount: '987766199028842' } },
+					{ accountIndex: 2, mint: 'QuoteMint', owner: 'Pool', uiTokenAmount: { amount: '50000000000' } },
+					{ accountIndex: 3, mint: 'BaseMint', owner: 'Creator', uiTokenAmount: { amount: '12233800971157' } },
+				],
+			},
+			transaction: { message: { accountKeys: keys.map((k) => ({ pubkey: { toBase58: () => k } })) } },
+		};
+		expect(tradeFromTx(tx, 'BaseVault', 'QuoteVault')).toMatchObject({
+			side: 'buy',
+			trader: 'Creator',
+			tokens: 12233800.971157,
+			three: 50000,
+		});
+	});
+});
+
+// The devnet e2e and config scripts only run by hand, so an SDK bump that drops a
+// helper they import breaks them silently (SDK 2.0 removed getBaseFeeNumerator and
+// the e2e script died at import). Every SDK name they import must still exist.
+describe('native launchpad scripts against the installed SDK', () => {
+	it('imports only names the installed dynamic-bonding-curve SDK exports', async () => {
+		const { readFileSync, readdirSync } = await import('node:fs');
+		const sdk = await import('@meteora-ag/dynamic-bonding-curve-sdk');
+		const scripts = readdirSync('scripts').filter((f) => /^native-launchpad-.*\.mjs$/.test(f));
+		expect(scripts.length).toBeGreaterThan(0);
+		const missing = [];
+		for (const file of scripts) {
+			const src = readFileSync(`scripts/${file}`, 'utf8');
+			for (const m of src.matchAll(/import\s*\{([^}]*)\}\s*from\s*'@meteora-ag\/dynamic-bonding-curve-sdk'/g)) {
+				for (const name of m[1].split(',').map((s) => s.trim().split(/\s+as\s+/)[0]).filter(Boolean)) {
+					if (!(name in sdk)) missing.push(`${file}: ${name}`);
+				}
+			}
+		}
+		expect(missing).toEqual([]);
+	});
+});
+
+// $THREE is a Token-2022 mint, and DBC SDK 2.x refuses to quote a swap on a
+// Token-2022-quoted curve unless it is handed the parsed quote mint and the
+// current epoch (so it can price a transfer fee). Without them every quote, buy
+// and sell on the lane threw "quoteMint and currentEpoch are required". The
+// fixture is a synthetic pool recorded from a local validator running the real
+// DBC program, replayed through the real SDK decoder and quote math.
+describe('quoting a Token-2022-quoted curve', () => {
+	it('prices a buy and a sell on a pool quoted in a Token-2022 mint', async () => {
+		const { readFileSync } = await import('node:fs');
+		const { PublicKey } = await import('@solana/web3.js');
+		const { DynamicBondingCurveClient } = await import('@meteora-ag/dynamic-bonding-curve-sdk');
+		const { swapQuoteOnCurve } = await import('../api/_lib/native-launch/dbc.js');
+		const fx = JSON.parse(readFileSync('tests/fixtures/native-launch-token2022-pool.json', 'utf8'));
+		const byKey = new Map(
+			Object.values(fx.accounts).map((a) => [
+				a.pubkey,
+				{ owner: new PublicKey(a.owner), lamports: a.lamports, data: Buffer.from(a.data, 'base64'), executable: false, rentEpoch: 0 },
+			]),
+		);
+		const info = (pk) => byKey.get(pk.toBase58()) ?? null;
+		// Replays the recorded accounts; anything the code asks for that was not
+		// recorded comes back as a missing account, exactly as the chain would say.
+		const connection = {
+			commitment: 'confirmed',
+			rpcEndpoint: 'fixture',
+			getAccountInfo: async (pk) => info(pk),
+			getAccountInfoAndContext: async (pk) => ({ context: { slot: fx.slot }, value: info(pk) }),
+			getMultipleAccountsInfo: async (pks) => pks.map(info),
+			getSlot: async () => fx.slot,
+			getEpochInfo: async () => ({ epoch: fx.epoch, absoluteSlot: fx.slot }),
+		};
+		const client = new DynamicBondingCurveClient(connection, 'confirmed');
+		const raw = await client.state.getPool(new PublicKey(fx.accounts.pool.pubkey));
+		const account = raw?.poolState ?? raw;
+		const wrapped = raw?.poolState ? raw : { poolState: account };
+		const config = await client.state.getPoolConfig(account.config);
+		const quoteMint = new PublicKey(fx.accounts.quoteMint.pubkey);
+
+		const buy = await swapQuoteOnCurve({ client, connection, wrapped, config, quoteMint, selling: false, amountAtomics: 1_000 * 1e6, slippageBps: 100 });
+		expect(Number(buy.outputAmount.toString())).toBeGreaterThan(0);
+		expect(Number(buy.tradingFee.toString())).toBeGreaterThan(0);
+
+		const sell = await swapQuoteOnCurve({ client, connection, wrapped, config, quoteMint, selling: true, amountAtomics: 1_000_000 * 1e6, slippageBps: 100 });
+		expect(Number(sell.outputAmount.toString())).toBeGreaterThan(0);
+	});
 });

@@ -63,6 +63,8 @@ The curve deliberately mirrors the shape traders already recognise from pump.fun
 
 The DBC program takes the quote mint's token program as an ordinary account, so a Token-2022 quote is supported on-chain. SDK 1.5.x nevertheless hardcodes the legacy SPL Token program into `token_quote_program` when it builds a pool-initialize instruction, and with a Token-2022 quote the instruction fails with `IncorrectProgramId` as soon as the program creates the quote vault. `withQuoteTokenProgram` in [`dbc.js`](../api/_lib/native-launch/dbc.js) rewrites that one account, located by its position in the program's own IDL. Swaps are unaffected: the SDK reads the token program from the config for those. Remove the patch when the SDK is fixed upstream.
 
+Quoting is the other Token-2022 seam. SDK 2.x refuses to quote a swap on a Token-2022-quoted curve unless it gets the parsed quote mint and the current epoch (it needs them to price a transfer fee, which $THREE does not carry), and without them every quote, buy and sell on the lane threw `quoteMint and currentEpoch are required`. `swapQuoteOnCurve` in `dbc.js` reads the mint and the epoch alongside the slot and passes both on every quote; `tests/native-launch-curve.test.js` replays a synthetic Token-2022-quoted pool through the real SDK to keep it that way.
+
 ### Anti-snipe: a decaying fee instead of a flat one
 
 Every pool opens at a 50% trading fee (`antiSnipeStartFeeBps`), which decays exponentially down to the steady-state 1% (`antiSnipeEndFeeBps`) over the pool's first 100 slots (`antiSnipeDecaySlots`, about 40 seconds at Solana's ~400ms/slot), stepped through 25 discrete periods (`antiSnipeDecayPeriods`). A bot buying in the pool's first block pays close to half its $THREE in fees; an organic buyer a minute later pays the normal 1%. The coin's own creator is exempt: their bundled first buy (the same transaction as pool creation) always pays the lane's minimum fee via `enableFirstSwapWithMinFee`, since it is the creator funding their own launch, not a snipe.
@@ -186,7 +188,8 @@ node scripts/native-launchpad-create-config.mjs --simulate
 # shaped like it, then creates the config against that
 node scripts/native-launchpad-create-config.mjs --network devnet --create-quote-mint --airdrop
 
-# mainnet: spends about 0.006 SOL of rent from the partner wallet. Owner-approved only.
+# mainnet: spends about 0.0082 SOL (0.00818 rent for the config account plus the
+# transaction fee, measured on the cloned-devnet run) from the partner wallet. Owner-approved only.
 node scripts/native-launchpad-create-config.mjs --network mainnet
 ```
 
@@ -210,7 +213,21 @@ On production these live on the Cloud Run service, not in a file.
 node scripts/native-launchpad-e2e-devnet.mjs
 ```
 
-The SOL-quoted v1 of this lane was proven end to end on devnet (config `FK3HQrWG5y6rh3SC8ew5WVUfo31bfmkm2Z1nwuZaKcam`). The $THREE-quoted v2 has been proven against **mainnet in simulation** (config plus pool creation succeed against the live program with the real $THREE mint). Its devnet run was not possible on the day it shipped because the devnet faucet was dry, so the buy and sell transactions have not yet landed on any chain. Run the devnet script before opening the lane on mainnet.
+The SOL-quoted v1 of this lane was proven end to end on devnet (config `FK3HQrWG5y6rh3SC8ew5WVUfo31bfmkm2Z1nwuZaKcam`). The $THREE-quoted v2 with the anti-snipe fee is proven against **mainnet in simulation** (`--simulate`: config plus pool creation succeed against the live program with the real $THREE mint) and end to end on 2026-11-13 against a local `solana-test-validator` running the real devnet DBC and Metaplex programs (`--clone-upgradeable-program`), because every public devnet faucet was throttled that day. That run created the config, launched with a 50,000 $THREE first buy (charged the 1% floor, the `enableFirstSwapWithMinFee` exemption), quoted the same 1,000 $THREE buy at 3 and 24 slots after activation (400.04 then 156.52 $THREE in fees, matching the predicted 5000 and 1956 bps base fee), landed a buy and a sell, and read all three trades back with the right sides.
+
+To repeat it without a funded devnet wallet:
+
+```bash
+solana-test-validator --reset --quiet --url https://api.devnet.solana.com \
+  --clone-upgradeable-program dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN \
+  --clone-upgradeable-program metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s
+# fund a throwaway key with `solana airdrop 20 <pubkey> --url localhost`, then with
+# SOLANA_RPC_URL_DEVNET=http://127.0.0.1:8899 and that key as NATIVE_LAUNCH_PARTNER_SECRET_BASE58:
+node scripts/native-launchpad-create-config.mjs --network devnet --create-quote-mint
+node scripts/native-launchpad-e2e-devnet.mjs   # with the two printed NATIVE_LAUNCH_*_DEVNET values set
+```
+
+The shared Solana connection reuses a `getAccountInfo` answer for up to 4 seconds (`READ_CACHE_TTL_MS` in `api/_lib/solana/connection.js`), so a pool read straight after a confirmed swap can still show the old reserve; the e2e script waits for the landed swap to show rather than asserting against that cached read.
 
 ---
 
