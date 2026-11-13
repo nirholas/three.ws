@@ -9,7 +9,6 @@
 
 import { runBrowseLoop, brainDecider } from './tasks/agent-browse.js';
 import { createBrowsePolicy } from './tasks/browse-policy.js';
-import { drainBrainStream } from './task-runner.js';
 
 const OBSERVE_JS = () => {
 	document.querySelectorAll('[data-aw-id]').forEach((e) => e.removeAttribute('data-aw-id'));
@@ -32,7 +31,7 @@ const OBSERVE_JS = () => {
 	return out;
 };
 
-export function createBrowseRunner({ baseUrl, browseUrl, secret, newPage, egress, pushTaskFrame, log, sleep, maxConcurrent = 2 }) {
+export function createBrowseRunner({ baseUrl, browseUrl, secret, newPage, egress, pushTaskFrame, log, sleep, maxConcurrent = 2, providers }) {
 	const active = new Map(); // agentId -> entry (also read by the control drain)
 
 	async function api(body) {
@@ -112,7 +111,7 @@ export function createBrowseRunner({ baseUrl, browseUrl, secret, newPage, egress
 		try {
 			entry.page = await newPage();
 			const policy = createBrowsePolicy({ allowedDomains: job.allowedDomains, maxSteps: job.maxSteps });
-			const decide = brainDecider({ baseUrl, drain: drainBrainStream });
+			const decide = brainDecider({ baseUrl, providers });
 			await pushTaskFrame(entry, { activity: `Goal: ${job.goal}`, type: 'activity', shoot: false });
 			const v = await egress.checkUrl(job.startUrl);
 			if (v.ok) await entry.page.goto(job.startUrl, { waitUntil: 'domcontentloaded', timeout: 20_000 }).catch((e) => log('browse start goto', job.id, e?.message || e));

@@ -114,9 +114,54 @@ export async function runBrowseLoop({ goal, startUrl, policy, observe, decide, a
 	}
 }
 
-// Ask the model for the next action through /api/brain/chat, the same free
-// default provider the narration code uses. Resolves to { text, tokens }.
-export function brainDecider({ baseUrl, fetchImpl = fetch, provider = 'gpt-oss-120b', drain }) {
+// Providers tried in order for each decision. gpt-oss-120b is the free default
+// the narration code uses; llama-3.3-70b runs on a separate route, so one
+// provider losing its route (a billing or quota outage upstream) does not stop
+// every browse run. Override with BROWSE_PROVIDERS on the pool.
+export const DEFAULT_BROWSE_PROVIDERS = Object.freeze(['gpt-oss-120b', 'llama-3.3-70b']);
+
+// Read a /api/brain/chat SSE reply. Text arrives as `data: <json string>` lines;
+// a provider whose routes are all down streams `event: error` with a message and
+// no text, which must count as a failure rather than an empty answer.
+export async function readBrainReply(body) {
+	const reader = body.getReader();
+	const decoder = new TextDecoder();
+	let buf = '';
+	let text = '';
+	let event = '';
+	let error = '';
+	const take = (line) => {
+		if (line === '') { event = ''; return; }
+		if (line.startsWith('event:')) { event = line.slice(6).trim(); return; }
+		if (!line.startsWith('data:')) return;
+		const raw = line.slice(5).trim();
+		if (!raw || raw === '[DONE]') return;
+		let value;
+		try { value = JSON.parse(raw); } catch { return; }
+		if (event === 'error') error = String(value?.message || value?.reason || 'stream error');
+		else if (!event && typeof value === 'string') text += value;
+	};
+	for (;;) {
+		const { value, done } = await reader.read();
+		if (done) break;
+		buf += decoder.decode(value, { stream: true });
+		const lines = buf.split('\n');
+		buf = lines.pop() || '';
+		for (const line of lines) take(line.replace(/\r$/, ''));
+	}
+	if (buf) take(buf.replace(/\r$/, ''));
+	return { text, error };
+}
+
+// Ask the model for the next action through /api/brain/chat, walking the
+// provider chain until one answers. The provider that answered is tried first
+// on the next step so a dead route costs one round trip per run, not per step.
+// Resolves to { text, tokens, provider }; throws naming every provider's failure
+// when none can answer.
+export function brainDecider({ baseUrl, fetchImpl = fetch, providers = DEFAULT_BROWSE_PROVIDERS }) {
+	const chain = [...new Set((providers || []).map((p) => String(p).trim()).filter(Boolean))];
+	if (!chain.length) chain.push(...DEFAULT_BROWSE_PROVIDERS);
+	let preferred = 0;
 	return async ({ goal, obs, feedback, stepsLeft }) => {
 		const system =
 			'You operate a web browser to achieve a goal. Each turn you see the page and a numbered list of elements. ' +
@@ -128,14 +173,26 @@ export function brainDecider({ baseUrl, fetchImpl = fetch, provider = 'gpt-oss-1
 		const user =
 			`Goal: ${goal}\nSteps left: ${stepsLeft}\nURL: ${obs.url}\n\nElements:\n${elementLines || '(none)'}\n\nPage text:\n${String(obs.text || '').slice(0, 2500)}` +
 			(feedback ? `\n\nNote: ${feedback}` : '');
-		const res = await fetchImpl(`${baseUrl}/api/brain/chat`, {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ provider, system, messages: [{ role: 'user', content: user }], maxTokens: 300 }),
-			signal: AbortSignal.timeout(30_000),
-		});
-		if (!res.ok || !res.body) throw new Error(`brain ${res.status}`);
-		const text = await drain(res.body);
-		return { text, tokens: Math.ceil((system.length + user.length + text.length) / 4) };
+		const order = [...chain.slice(preferred), ...chain.slice(0, preferred)];
+		const failures = [];
+		for (const provider of order) {
+			try {
+				const res = await fetchImpl(`${baseUrl}/api/brain/chat`, {
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ provider, system, messages: [{ role: 'user', content: user }], maxTokens: 300 }),
+					signal: AbortSignal.timeout(45_000),
+				});
+				if (!res.ok || !res.body) throw new Error(`brain ${res.status}`);
+				const { text, error } = await readBrainReply(res.body);
+				if (error) throw new Error(error);
+				if (!text.trim()) throw new Error('empty reply');
+				preferred = chain.indexOf(provider);
+				return { text, provider, tokens: Math.ceil((system.length + user.length + text.length) / 4) };
+			} catch (err) {
+				failures.push(`${provider}: ${String(err?.message || err).slice(0, 120)}`);
+			}
+		}
+		throw new Error(`no model could decide (${failures.join('; ')})`);
 	};
 }

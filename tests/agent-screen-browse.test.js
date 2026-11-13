@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createBrowsePolicy, parseAction, normalizeDomains, isCredentialField } from '../workers/agent-screen-pool/tasks/browse-policy.js';
-import { runBrowseLoop } from '../workers/agent-screen-pool/tasks/agent-browse.js';
+import { runBrowseLoop, brainDecider } from '../workers/agent-screen-pool/tasks/agent-browse.js';
 
 const page = { url: 'https://example.com/', text: 'Example Domain', elements: [
 	{ id: 0, tag: 'a', name: 'More information' },
@@ -129,5 +129,56 @@ describe('browse loop', () => {
 		const r = await runBrowseLoop(h.deps);
 		expect(r.status).toBe('error');
 		expect(h.calls.act).toHaveLength(0);
+	});
+});
+
+// /api/brain/chat replies are SSE. These bodies copy the shapes production sends:
+// a dead route streams fallback events and then `event: error` with no text.
+const sse = (s) => new Response(new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode(s)); c.close(); } }), { status: 200, headers: { 'content-type': 'text/event-stream' } });
+const DEAD_ROUTE = 'event: meta\ndata: {"provider":"gpt-oss-120b"}\n\nevent: fallback\ndata: {"route":"vertex-gemini/google/gemini-2.5-flash"}\n\nevent: error\ndata: {"message":"This model has no working route on this deployment right now.","reason":"Forbidden"}\n\n';
+const ANSWER = (obj) => `event: meta\ndata: {"provider":"llama-3.3-70b"}\n\ndata: ${JSON.stringify(JSON.stringify(obj))}\n\nevent: done\ndata: {"elapsedMs":10}\n\ndata: [DONE]\n\n`;
+
+function brainHarness(routes) {
+	const asked = [];
+	const fetchImpl = async (_url, init) => {
+		const { provider } = JSON.parse(init.body);
+		asked.push(provider);
+		const r = routes[provider];
+		if (r === undefined) return new Response('no such provider', { status: 400 });
+		return typeof r === 'number' ? new Response('upstream', { status: r }) : sse(r);
+	};
+	return { asked, fetchImpl };
+}
+
+describe('browse decider', () => {
+	const ctx = { goal: 'report the heading', obs: page, feedback: '', stepsLeft: 5 };
+
+	it('falls through to the next provider when the first streams a route error', async () => {
+		const h = brainHarness({ 'gpt-oss-120b': DEAD_ROUTE, 'llama-3.3-70b': ANSWER({ action: 'done', result: 'Example Domain' }) });
+		const decide = brainDecider({ baseUrl: 'https://three.ws', fetchImpl: h.fetchImpl, providers: ['gpt-oss-120b', 'llama-3.3-70b'] });
+		const reply = await decide(ctx);
+		expect(parseAction(reply.text)).toMatchObject({ action: 'done', result: 'Example Domain' });
+		expect(h.asked).toEqual(['gpt-oss-120b', 'llama-3.3-70b']);
+	});
+
+	it('sticks to the provider that answered so later steps skip the dead route', async () => {
+		const h = brainHarness({ 'gpt-oss-120b': DEAD_ROUTE, 'llama-3.3-70b': ANSWER({ action: 'scroll', direction: 'down' }) });
+		const decide = brainDecider({ baseUrl: 'https://three.ws', fetchImpl: h.fetchImpl, providers: ['gpt-oss-120b', 'llama-3.3-70b'] });
+		await decide(ctx);
+		await decide(ctx);
+		expect(h.asked).toEqual(['gpt-oss-120b', 'llama-3.3-70b', 'llama-3.3-70b']);
+	});
+
+	it('defaults to a chain that does not depend on a single route', async () => {
+		const h = brainHarness({ 'gpt-oss-120b': DEAD_ROUTE, 'llama-3.3-70b': ANSWER({ action: 'done', result: 'ok' }) });
+		const decide = brainDecider({ baseUrl: 'https://three.ws', fetchImpl: h.fetchImpl });
+		const reply = await decide(ctx);
+		expect(parseAction(reply.text)?.action).toBe('done');
+	});
+
+	it('names every provider and its failure when none can answer', async () => {
+		const h = brainHarness({ 'gpt-oss-120b': DEAD_ROUTE, 'llama-3.3-70b': 502 });
+		const decide = brainDecider({ baseUrl: 'https://three.ws', fetchImpl: h.fetchImpl, providers: ['gpt-oss-120b', 'llama-3.3-70b'] });
+		await expect(decide(ctx)).rejects.toThrow(/gpt-oss-120b: .*no working route.*llama-3\.3-70b: brain 502/);
 	});
 });

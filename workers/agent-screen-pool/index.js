@@ -134,6 +134,7 @@ const BROWSE_POLL_MS = Number(process.env.BROWSE_POLL_MS) || 4000;
 const browseRunner = createBrowseRunner({
 	baseUrl: BASE_URL, browseUrl: BROWSE_URL, secret: SECRET, egress, log, sleep,
 	maxConcurrent: Number(process.env.BROWSE_MAX) || 2,
+	providers: process.env.BROWSE_PROVIDERS ? process.env.BROWSE_PROVIDERS.split(',') : undefined,
 	newPage: async () => { await ensureBrowser(); return context.newPage(); },
 	pushTaskFrame: (entry, opts) => pushTaskFrame(entry, opts),
 });
