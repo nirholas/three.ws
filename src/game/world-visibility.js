@@ -139,14 +139,19 @@ export function openWorldVisibility({ store, toast, fetchImpl, onChanged } = {})
 		}
 	}
 
-	// Mint the tier pass first (interactive only when the read says this identity
-	// is eligible, so a non-holder is never asked to sign for something that could
-	// not unlock anything), then call the server.
+	// Only making a world private is tier-gated on the server (gatePrivate in
+	// api/world/[action].js), so only that change mints a tier pass first, and only
+	// when the access read says this identity is eligible (or has not answered
+	// yet). A non-holder is never asked to sign for something that could not
+	// unlock anything; the server's 402 opens the upsell instead. Going public,
+	// inviting and uninviting go straight to the server.
 	async function call(action, payload) {
 		busy = true;
 		render();
 		try {
-			await getTierPass({ interactive: Boolean(access?.eligible) });
+			if (action === 'visibility' && payload?.visibility === 'private' && access?.eligible !== false) {
+				await getTierPass({ interactive: Boolean(access?.eligible) });
+			}
 			const result = await changeWorldAccess(store.worldId, action, payload, { fetchImpl, headers: attachTierPass({}) });
 			return result;
 		} finally {
