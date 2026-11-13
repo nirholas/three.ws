@@ -30,7 +30,22 @@ test('helper widgets clear the page\'s own bottom chrome on /app', async ({ page
 	// The stack measures the page's docks on a settle timer; give it a beat.
 	await page.waitForTimeout(2000);
 
-	const stack = await page.locator('#tws-corner-stack').boundingBox();
+	// The stack box is a fixed, invisible full-height column (so membership
+	// changes never shift it); what can cover the page is its members.
+	const stack = await page.evaluate(() => {
+		const rects = [...document.querySelectorAll('#tws-corner-stack > .tws-corner-item')]
+			.map((el) => el.getBoundingClientRect())
+			.filter((r) => r.width > 0 && r.height > 0);
+		if (!rects.length) return null;
+		const x = Math.min(...rects.map((r) => r.left));
+		const y = Math.min(...rects.map((r) => r.top));
+		return {
+			x,
+			y,
+			width: Math.max(...rects.map((r) => r.right)) - x,
+			height: Math.max(...rects.map((r) => r.bottom)) - y,
+		};
+	});
 	expect(stack).not.toBeNull();
 
 	for (const selector of ['#nxt-chat-dock', '.nxt-action-bar--secondary']) {

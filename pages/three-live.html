@@ -854,10 +854,8 @@
 			const r = node.getBoundingClientRect();
 			return r.height > 0 ? Math.max(0, window.innerHeight - r.top) : 0;
 		}
-		let stackRo = null, stackWatched = false;
 		function syncDock() {
 			const root = document.documentElement;
-			const stackEl = document.getElementById('tws-corner-stack');
 			// Wide layout parks the stack in the corner it shares with the orbit hint
 			// and nothing else. Narrow layout turns it into a full-width bar, where the
 			// bottom-most thing the page owns is the flow row. Reserving only that keeps
@@ -869,9 +867,6 @@
 				if (need > 0) stack.reserve(CORNER_KEY, { height: Math.round(need) });
 				else stack.release(CORNER_KEY);
 			}
-			// observe() fires the callback immediately, so this attaches exactly once:
-			// re-observing on every pass would spin the observer against itself.
-			if (stackEl && stackRo && !stackWatched) { stackWatched = true; stackRo.observe(stackEl); }
 			// Narrow layout turns the stack into a full-width bar sitting right where
 			// the stat grid does, so the grid steps over whatever is actually parked
 			// there (the stack alone, or the stack lifted by the walk companion).
@@ -880,12 +875,12 @@
 			// read could walk the band a little further up on every pass, and a HUD
 			// that climbs off the top is worse than one a helper pill overlaps.
 			let base = clearanceOf(flowPanel);
-			if (narrowLayout.matches && stackEl) {
-				const r = stackEl.getBoundingClientRect();
-				if (r.height > 0) {
-					base = Math.max(base, Math.round(window.innerHeight - r.top) + 10);
-					base = Math.min(base, Math.round(window.innerHeight * 0.4));
-				}
+			// The members' footprint, never the stack box: the box is a fixed
+			// invisible full-height column so that membership changes never shift.
+			const r = narrowLayout.matches && stack && stack.rect ? stack.rect() : null;
+			if (r) {
+				base = Math.max(base, Math.round(window.innerHeight - r.top) + 10);
+				base = Math.min(base, Math.round(window.innerHeight * 0.4));
 			}
 			root.style.setProperty('--pl-band-base', Math.round(base) + 'px');
 			const band = Math.max(clearanceOf(statsPanel), clearanceOf(flowPanel));
@@ -898,16 +893,16 @@
 				hudTop.classList.toggle('is-cramped', narrowLayout.matches && room < 112);
 			}
 		}
-		// The stack grows when its Getting started checklist opens, which moves the
-		// floor the stat grid sits on. Watched separately because the element is
-		// mounted by another module and may not exist on the first pass.
-		stackRo = new ResizeObserver(syncDock);
+		// The stack's footprint grows when its Getting started checklist opens,
+		// which moves the floor the stat grid sits on. The stack announces every
+		// member join, leave and resize, so no observer on its box is needed.
 		const dockRo = new ResizeObserver(syncDock);
 		if (statsPanel) dockRo.observe(statsPanel);
 		if (flowPanel) dockRo.observe(flowPanel);
 		if (heroEl) dockRo.observe(heroEl);
 		window.addEventListener('resize', syncDock);
 		window.addEventListener('tws-corner-stack:ready', syncDock);
+		window.addEventListener('tws-corner-stack:change', syncDock);
 		narrowLayout.addEventListener('change', syncDock);
 		syncDock();
 

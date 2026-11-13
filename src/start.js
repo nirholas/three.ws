@@ -1020,25 +1020,17 @@ updateEarnPriceHint();
 
 function trackHelperClearance() {
 	const root = document.documentElement;
-	let observed = null;
+	// The stack box is a fixed invisible column; what covers the step is the
+	// members, so read their footprint and re-read it whenever one joins,
+	// leaves or resizes.
 	const apply = () => {
-		const stack = document.getElementById('tws-corner-stack');
-		const h = stack ? stack.getBoundingClientRect().height : 0;
+		const r = window.twsCornerStack?.rect?.();
+		const h = r ? r.height : 0;
 		root.style.setProperty('--wz-helper-clearance', h > 0 ? `${Math.round(h) + 12}px` : '0px');
 	};
-	const watch = () => {
-		const stack = document.getElementById('tws-corner-stack');
-		if (!stack || stack === observed) return;
-		observed = stack;
-		if ('ResizeObserver' in window) new ResizeObserver(apply).observe(stack);
-		apply();
-	};
-	watch();
-	// The stack mounts lazily, after the deferred helper scripts run.
-	if ('MutationObserver' in window) {
-		new MutationObserver(watch).observe(document.body, { childList: true });
-	}
-	window.addEventListener('tws-corner-stack:ready', watch);
+	apply();
+	window.addEventListener('tws-corner-stack:change', apply);
+	window.addEventListener('tws-corner-stack:ready', apply);
 	window.addEventListener('resize', apply);
 }
 

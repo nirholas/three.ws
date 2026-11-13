@@ -81,6 +81,17 @@ describe('corner stack — membership', () => {
 		expect(order).toEqual([10, 50, 90]);
 	});
 
+	it('places a late arrival of equal rank above the member already shown', () => {
+		// Members sit at the bottom of the column, so a newcomer placed under an
+		// equal-rank member would lift that member, which is a layout shift.
+		const first = card(win, 10);
+		const late = card(win, 10);
+		win.twsCornerStack.mount(first);
+		win.twsCornerStack.mount(late);
+		const kids = [...win.document.getElementById('tws-corner-stack').children];
+		expect(kids).toEqual([late, first]);
+	});
+
 	it('adopts widgets that mounted to <body> before the script ran', () => {
 		// Order independence is the module's whole premise: a widget that beats
 		// it to the page tags itself and appends to <body>.
@@ -92,6 +103,21 @@ describe('corner stack — membership', () => {
 		const early = dom.window.document.getElementById('early');
 		expect(early.parentNode.id).toBe('tws-corner-stack');
 		expect(early.classList.contains('tws-corner-item')).toBe(true);
+	});
+
+	it('reports no footprint while empty and announces membership changes', async () => {
+		// The box is a fixed column, so consumers read rect() and listen for
+		// the change event instead of observing the box.
+		expect(win.twsCornerStack.rect()).toBeNull();
+		expect(win.twsCornerStack.CHANGE_EVENT).toBe('tws-corner-stack:change');
+		let fired = 0;
+		win.addEventListener('tws-corner-stack:change', () => fired++);
+		const el = card(win, 30);
+		win.twsCornerStack.mount(el);
+		await new Promise((r) => win.setTimeout(r, 40));
+		win.twsCornerStack.unmount(el);
+		await new Promise((r) => win.setTimeout(r, 40));
+		expect(fired).toBe(2);
 	});
 
 	it('unmount returns a member to nowhere rather than leaving a ghost', () => {
@@ -228,10 +254,18 @@ describe('corner stack — stylesheet contract', () => {
 		expect(SOURCE).not.toMatch(/transition:[^;]*\b(bottom|right|left|top|width|height)\b/);
 	});
 
-	it('caps its height against the reserve so a tall stack cannot overflow', () => {
-		expect(SOURCE).toContain(
-			'max-height:calc(100dvh - 36px - var(--tws-corner-reserve,0px) - var(--tws-corner-dock,0px))'
-		);
+	it('keeps a fixed box so a member joining or leaving is not a layout shift', () => {
+		// A bottom-anchored, content-sized box moved its top-left corner every
+		// time a member mounted or unmounted, and that corner is what the
+		// layout-instability API scores: 0.0595 CLS per feature-discovery card,
+		// twice per page view. The box is pinned on three sides at a fixed width
+		// and the members are pushed to the bottom instead. The browser-level
+		// proof is tests/e2e/corner-stack-layout-shift.spec.js.
+		expect(SOURCE).toContain("'position:fixed;top:18px;right:18px;bottom:18px;'");
+		expect(SOURCE).toContain("'width:min(380px,calc(100vw - 24px));box-sizing:border-box;'");
+		expect(SOURCE).toContain('justify-content:flex-end');
+		expect(SOURCE).toContain('{top:12px;right:12px;bottom:12px;width:calc(100vw - 24px);');
+		expect(SOURCE).not.toContain('max-height:calc(100dvh');
 	});
 
 	it('offsets by the measured page dock as well as the reserve', () => {

@@ -213,7 +213,7 @@ glasses and logs a d-pad event from a real pinch.
 
 ### Phase 1: the lens surface
 
-> Status 2026-11-04: built and covered by `tests/glass-dpad.test.js` and `tests/e2e/glass.spec.js` (600x600, keys only). On-lens verification is pending hardware.
+> Status 2026-11-13: built and covered by `tests/glass-dpad.test.js` and `tests/e2e/glass.spec.js`, which drives the lens at 600x600 with keys only against real pins placed through `POST /api/irl/pins` (no stubbed responses). The page ships 6.4 KB of gzipped JavaScript with no three.js. On-lens verification is pending hardware (owner).
 
 - [x] `pages/glass.html` with the documented viewport and
       `<meta name="mrbd-web-app-capable" content="yes">`, registered in
@@ -239,28 +239,33 @@ the five inputs.
 - [x] `src/glass/compass.js`: `deviceorientation` to a screen-relative bearing,
       `requestPermission()` behind the first pinch, a calibration state when the
       heading is unreliable.
-- [ ] Scanning view: heading ring, nearby count, last-fix age.
+- [x] Scanning view: heading ring, nearby count, last-fix age.
 - [x] Nearby view: ranked list, each row name + `formatDistance()` +
       `arrowGlyph()` from the shared protocol module.
-- [ ] Arrival: crossing into a pin's radius promotes that agent to the lens once,
-      with a real interaction logged (`POST /api/irl/interactions`, type
-      `glasses`, consistent with the BLE lane's telemetry).
+- [x] Arrival: crossing into a pin's radius (12 m in, 20 m out, so GPS jitter
+      never re-fires it) promotes that agent to the lens once, with a real
+      interaction logged (`POST /api/irl/interactions`, type `arrive`,
+      `device_type: 'glasses'`, the same device column the BLE lane writes).
 
 **Done when:** walking toward a real pin moves the distance down and the arrow
 tracks the turn, on hardware, with the phone in a pocket.
 
 ### Phase 3: conversation
 
-- [ ] Agent card: portrait from `/api/render/avatar-clip`, name, caption, the
-      actions (Talk, See it in AR, and its x402 endpoint when the pin carries one).
+- [x] Agent card: portrait from `/api/render/avatar-clip`, name, caption, the
+      actions (Talk, Open on phone for AR, and its paid services or x402
+      endpoint when the pin carries one).
 - [x] `POST /api/chat` extended with an opt-in `suggestReplies` count, returning
-      three short suggestions in the same completion. Wired for `/glass` first,
+      three short suggestions in the same completion. On the NVIDIA lane the
+      suggestion turn sends `enable_thinking: false`, because the extra
+      instruction otherwise tips nemotron into reasoning that spends the whole
+      token budget and streams an empty reply (fixed 2026-11-13). Wired for `/glass` first,
       then offered to [src/irl/pin-talk.js](../../src/irl/pin-talk.js), which
       wants it too.
 - [x] Talk view: transcript, focused reply list, send on pinch, honest thinking
       and error states, conversation capped to what fits on a lens.
-- [ ] Capability gates for the composer and for audio, each proven at runtime
-      rather than assumed.
+- [x] Capability gates for the composer and for audio, each proven at runtime
+      rather than assumed (`src/glass/caps.js`).
 - [x] One `talk` interaction per conversation, never the transcript, matching
       the existing IRL privacy posture.
 

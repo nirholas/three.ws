@@ -89,10 +89,9 @@ function esc(s) {
 // than guessing a clearance: lift the toast above it only when the two would
 // actually overlap horizontally.
 function toastBottom() {
-	const stack = document.querySelector('.tws-corner-stack');
-	if (!stack) return null;
-	const b = stack.getBoundingClientRect();
-	if (!b.height) return null;
+	// The members' footprint: the stack box itself is a fixed invisible column.
+	const b = window.twsCornerStack?.rect?.();
+	if (!b) return null;
 	// A centred toast is at most min(92vw, 420px) wide.
 	const toastHalf = Math.min(window.innerWidth * 0.92, 420) / 2;
 	const toastLeft = window.innerWidth / 2 - toastHalf;

@@ -1176,7 +1176,8 @@ function setPlayMode(m) {
 // or the companion on screen could not click the page's primary action at all.
 // Measure whatever is actually parked there and reserve that much room beside
 // the composer; an empty corner reserves nothing.
-const CORNER_WIDGET_SELECTOR = '#tws-corner-stack, .walk-companion';
+// Stack MEMBERS, not the stack: its box is a fixed invisible full-height column.
+const CORNER_WIDGET_SELECTOR = '#tws-corner-stack > .tws-corner-item, .walk-companion';
 
 function syncCornerReserve() {
 	const row = document.querySelector('.br-input-row');
@@ -1223,6 +1224,7 @@ function watchCornerWidgets() {
 	trackWidgets();
 	window.addEventListener('resize', schedule);
 	window.addEventListener('tws-corner-stack:ready', trackWidgets);
+	window.addEventListener('tws-corner-stack:change', trackWidgets);
 	new MutationObserver(trackWidgets).observe(document.body, { childList: true });
 }
 
