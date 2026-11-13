@@ -131,6 +131,18 @@ describe('upgradeLegacyBatch', () => {
 		expect(order).toEqual(['r2', 'db']);
 	});
 
+	it('upgrades every row of a batch when run concurrently', async () => {
+		const rows = ['c-1', 'c-2', 'c-3', 'c-4'].map((id) => ({ id, preview_key: `forge/thumb/${id}.png` }));
+		sqlRoutes = [
+			{ match: /SELECT id, preview_key/i, rows },
+			{ match: /UPDATE forge_creations/i, rows: [{ id: 'x' }] },
+		];
+		getObjectBufferMock.mockResolvedValue(realPng);
+		const r = await upgradeLegacyBatch({ limit: 4, concurrency: 3 });
+		expect(r).toMatchObject({ scanned: 4, upgraded: 4, failed: 0 });
+		expect(putObjectMock.mock.calls.map((c) => c[0].key).sort()).toEqual(rows.map((x) => `forge/thumb/${x.id}.webp`));
+	});
+
 	it('leaves the row on the old PNG when the object cannot be read', async () => {
 		sqlRoutes = [{ match: /SELECT id, preview_key/i, rows: [{ id: 'c-8', preview_key: 'forge/thumb/c-8.png' }] }];
 		getObjectBufferMock.mockRejectedValueOnce(new Error('NoSuchKey'));

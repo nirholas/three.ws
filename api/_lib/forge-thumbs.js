@@ -254,7 +254,7 @@ export async function renderBatch({ limit = 8, concurrency = 2, onResult } = {})
 // Idempotent and bounded: a row whose preview_key already ends in .webp never
 // matches, so the cron can run this every tick until the backlog is empty. The
 // old PNG object is left in place so a cached page that still names it works.
-export async function upgradeLegacyBatch({ limit = 20 } = {}) {
+export async function upgradeLegacyBatch({ limit = 20, concurrency = 1 } = {}) {
 	const rows = await sql`
 		SELECT id, preview_key
 		  FROM forge_creations
@@ -264,7 +264,7 @@ export async function upgradeLegacyBatch({ limit = 20 } = {}) {
 	`;
 	let upgraded = 0;
 	let failed = 0;
-	for (const row of rows) {
+	const upgradeOne = async (row) => {
 		try {
 			const png = await getObjectBuffer(row.preview_key);
 			const webp = await encodeThumbWebp(png);
@@ -281,6 +281,11 @@ export async function upgradeLegacyBatch({ limit = 20 } = {}) {
 		} catch {
 			failed++;
 		}
-	}
+	};
+	let next = 0;
+	const workers = Array.from({ length: Math.max(1, Math.min(concurrency, rows.length)) }, async () => {
+		while (next < rows.length) await upgradeOne(rows[next++]);
+	});
+	await Promise.all(workers);
 	return { scanned: rows.length, upgraded, failed };
 }
