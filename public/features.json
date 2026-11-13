@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-12T18:05:24.497Z",
+	"generated_at": "2026-11-13T14:46:33.753Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -6092,6 +6092,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.7,
+					"job": null
+				},
+				{
+					"path": "/docs/forge-photo-prep",
+					"title": "Docs · Forge on-device photo check",
+					"description": "How Forge checks and prepares a photo in the browser before photo-to-3D: on-device background matting, a square subject crop, and plain-language warnings for photos that would make a bad mesh.",
+					"added": "2026-11-13",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
 					"job": null
 				},
 				{

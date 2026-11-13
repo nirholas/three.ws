@@ -3086,6 +3086,12 @@ URL: https://three.ws/docs/forge-pipeline
 
 The engineering guide to the Forge: every entry point, the declared engine grid, free-first health-aware routing, the job lifecycle with two-layer failover, persistence and storage, GPU workers, post-processing, payments, and how to extend the pipeline.
 
+### Docs · Forge on-device photo check
+
+URL: https://three.ws/docs/forge-photo-prep
+
+How Forge checks and prepares a photo in the browser before photo-to-3D: on-device background matting, a square subject crop, and plain-language warnings for photos that would make a bad mesh.
+
 ### Docs · Transaction landing race
 
 URL: https://three.ws/docs/transaction-landing-race
