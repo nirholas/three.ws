@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-13T14:46:33.862Z",
+	"generated_at": "2026-11-13T14:58:32.481Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4554,
+	"total": 4557,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -22,11 +22,43 @@
 		{
 			"date": "2026-11-13",
 			"type": "update",
+			"title": "Choose who signs your agent's transactions, export its key encrypted, and see its balance over time",
+			"summary": "The new Custody tab in the agent wallet hub lets an owner pick who signs fund-moving transactions. Platform keeps today's behavior, where the server signs inside your spend policy. My wallet means the platform never signs: build routes called with signer \"external\" return an unsigned, simulated Solana transaction and a tx_id, your own wallet signs it, and POST /api/tx/submit checks the bytes match what was prepared before broadcasting and recording it in the custody ledger. Session key grants a delegate an on-chain USDC cap and an expiry, so the agent can act alone and a transfer over the cap is refused. Export key re-confirms your identity, seals the key so only your browser can open it, encrypts it to a passphrase that never leaves the page, shows it once, logs the export, and offers to rotate to a fresh key and sweep the funds. A balance history chart (24h, 7d, 30d) is filled by a new hourly snapshot job, and GET /api/me/wallet plus the get_private_wallet_balance, get_wallet_summaries and get_balance_history tools put your own linked wallet next to your agents'.",
+			"link": "/agent-wallet",
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-11-13",
+			"type": "update",
 			"title": "Native $THREE launchpad coins can be quoted, bought and sold again, and the creator's launch buy shows as a buy",
 			"summary": "$THREE is a Token-2022 token, and after a bonding-curve SDK upgrade every price quote, buy and sell on a native launchpad coin failed with an error about a missing quote mint and epoch. Quotes now read the $THREE mint and the current epoch with every request, so the curve prices trades again, anti-snipe fee included. The coin page's trade list also showed the creator's own first buy, the one bundled into the launch, as a sell of the whole curve supply; it now shows as a buy of the tokens the creator actually received. Both were caught by rerunning the launchpad's end-to-end test (launch, decaying-fee check, buy, sell, trade history) against the real bonding-curve program before the lane opens on mainnet.",
 			"link": "/docs/native-launchpad",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-13",
+			"type": "update",
+			"title": "Oracle stops showing a perfect win rate it could not actually measure",
+			"summary": "Oracle's outcome checker lost its main data source, so it could only confirm coins that graduated, and the Oracle page and the oracle_stats tool for AI agents showed a 100% win rate. They now hide the call win rate and the market base rate while most outcomes are unconfirmed, and say why, so nobody reads a gap in the data as a flawless record.",
+			"link": "/oracle",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-13",
+			"type": "update",
+			"title": "Self-hosted x402 facilitators no longer count a retried settle as a second payment or a second fee",
+			"summary": "The Solana facilitator in @three-ws/x402-server answers a resubmitted payment with the signature it already landed, which is correct, but its metrics counted that retry as another settlement and another sponsor fee, and when the RPC silently accepted the resend the fee budget was charged twice, so retries alone could exhaust a self-hoster's budget and refuse real payments. Retries now show under a separate replays count and never touch the fee budget or the burned-lamports total. Found by running the package's local-validator end-to-end test, which now settles a real transfer on chain and runs the full attack suite against the live instance.",
+			"link": "/docs/x402",
+			"tags": [
+				"fix",
+				"sdk"
 			]
 		},
 		{
@@ -1493,37 +1525,6 @@
 			"tags": [
 				"feature",
 				"sdk"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Agent memory recall now understands meaning, not just exact words",
-			"summary": "An agent whose memory says it prefers dark mode now recalls that when you ask what theme you like. The memory file layer ranks files by embedding similarity through a new signed-in endpoint, POST /api/memory/rank, instead of requiring the whole query to appear verbatim. Results carry a text field and honor a minimum score, so the studio Brain memory node gets usable recalls. If the endpoint is unreachable or embeddings are not configured, recall falls back to the old substring match, so it never fails mid-conversation.",
-			"link": "/docs/memory",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Agent payment mandates are pinned to USDC and refuse any other currency",
-			"summary": "An Intent Mandate lets your agent pay other agents without asking you each time, within a budget. Issuing one with an empty or non-USDC currency used to succeed and quietly turned off the currency check, so a payment in an asset the spend guard cannot price could bypass your per-payment, daily and per-recipient dollar limits. Mandates now accept USDC only, refuse anything else with unsupported_currency, and any mandate signed with a bad currency before this fix is refused when the agent tries to spend under it.",
-			"link": "/docs/a2a-payments",
-			"tags": [
-				"security",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Agent sandbox settings",
-			"summary": "A new Settings page lists every program your agents ran in their sandbox with its output and exit code, lets you download the files it wrote, stop a workspace, and choose which hosts sandboxed code may call.",
-			"link": null,
-			"tags": [
-				"feature"
 			]
 		}
 	]
