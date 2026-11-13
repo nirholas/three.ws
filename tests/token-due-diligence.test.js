@@ -255,6 +255,73 @@ describe('fleet-shared wallet profiles', () => {
 	});
 });
 
+describe('fleet-shared launch and first-receipt reads', () => {
+	// Measured 2026-11-13: 67 due-diligence requests in 12h over 16 mints cost about
+	// 36,000 getSignaturesForAddress calls (72,434 in 24h), about 540 per request.
+	// Profiles were already shared, but every recompute re-paged the mint's launch
+	// and each top holder's first receipt, and both are fixed once fully read.
+	const fresh = async (store) => {
+		vi.resetModules();
+		vi.doMock('../api/_lib/cache.js', async (orig) => ({
+			...(await orig()),
+			cacheGet: async (k) => store.get(k) ?? null,
+			cacheSet: async (k, v) => { store.set(k, v); },
+		}));
+		return import('../api/_lib/token-due-diligence.js');
+	};
+	const page = [{ signature: 'first', slot: 10, blockTime: 1000 }];
+	const launchRpc = () => vi.fn(async (m) => {
+		if (m === 'getSignaturesForAddress') return page;
+		if (m === 'getTransaction') return { transaction: { message: { accountKeys: [{ pubkey: W[0] }] } } };
+		return null;
+	});
+
+	it('a second instance resolves a mint launch another instance read, with no RPC', async () => {
+		const store = new Map();
+		const a = await fresh(store);
+		const first = await a.cachedLaunch(THREE_MINT, launchRpc());
+		expect(first).toEqual({ slot: 10, time: 1000, creator: W[0] });
+
+		const b = await fresh(store);
+		const rpcB = launchRpc();
+		expect(await b.cachedLaunch(THREE_MINT, rpcB)).toEqual(first);
+		expect(rpcB).not.toHaveBeenCalled();
+	});
+
+	it('never shares an unresolved launch', async () => {
+		const store = new Map();
+		const a = await fresh(store);
+		const launch = await a.cachedLaunch(THREE_MINT, vi.fn(async () => []));
+		expect(launch.slot).toBeNull();
+		expect(store.size).toBe(0);
+	});
+
+	it('shares a complete first receipt per token account and launch slot', async () => {
+		const store = new Map();
+		const a = await fresh(store);
+		const acq = await a.cachedAcquisition(W[5], launchRpc(), { minSlot: 5 });
+		expect(acq).toEqual({ slot: 10, time: 1000 });
+
+		const b = await fresh(store);
+		const rpcB = launchRpc();
+		expect(await b.cachedAcquisition(W[5], rpcB, { minSlot: 5 })).toEqual(acq);
+		expect(rpcB).not.toHaveBeenCalled();
+		// A different launch window is a different question.
+		await b.cachedAcquisition(W[5], rpcB, { minSlot: 7 });
+		expect(rpcB).toHaveBeenCalled();
+	});
+
+	it('never shares an incomplete or empty first receipt', async () => {
+		const store = new Map();
+		const a = await fresh(store);
+		expect(await a.cachedAcquisition(W[6], vi.fn(async () => []), { minSlot: 5 })).toBeNull();
+		let n = 1_000_000;
+		const endless = vi.fn(async () => Array.from({ length: 1000 }, () => ({ signature: `s${n}`, slot: n, blockTime: n-- })));
+		expect(await a.cachedAcquisition(W[7], endless, { minSlot: 5 })).toBeNull();
+		expect(store.size).toBe(0);
+	});
+});
+
 describe('traceFundingGraph', () => {
 	it('stops at a service funder whose history cannot be reached', async () => {
 		const rpc = vi.fn(async (method) => {

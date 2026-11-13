@@ -596,6 +596,58 @@ export async function cachedProfile(address, rpc) {
 	return value;
 }
 
+// A mint's launch and a token account's first receipt are fixed once read to
+// the start, so they are shared fleet-wide the same way profiles are. Measured
+// 2026-11-13: with only profiles shared, 67 requests in 12h over 16 mints still
+// cost about 540 getSignaturesForAddress each, because every recompute re-paged
+// the launch and all twenty holders' first receipts.
+const LAUNCH_TTL_SECONDS = 7 * 86400;
+const immutableMemo = new Map();
+
+async function sharedImmutable(key, ttlSeconds, read, shareable) {
+	const hit = immutableMemo.get(key);
+	if (hit && Date.now() - hit.at < ttlSeconds * 1000) return hit.value;
+	const shared = await cacheGet(key).catch(() => null);
+	if (shared) {
+		immutableMemo.set(key, { value: shared, at: Date.now() });
+		return shared;
+	}
+	const value = await read();
+	if (shareable(value)) {
+		immutableMemo.set(key, { value, at: Date.now() });
+		if (immutableMemo.size > 5000) immutableMemo.delete(immutableMemo.keys().next().value);
+		await cacheSet(key, value, ttlSeconds).catch(() => {});
+	}
+	return value;
+}
+
+/**
+ * Launch slot, time and creator of a mint, shared once resolved. An unresolved
+ * launch (history too long or unreadable) is never shared, so the next report
+ * tries again.
+ */
+export function cachedLaunch(mint, history) {
+	return sharedImmutable(`token-dd:launch:v1:${mint}`, LAUNCH_TTL_SECONDS, () => resolveLaunch(mint, history), (v) => v?.slot != null);
+}
+
+/**
+ * When a token account first received the mint (its oldest signature at or after
+ * the launch slot), shared once the history was read to the start. Returns
+ * { slot, time } or null when the answer is incomplete or empty; neither is
+ * shared, since a holder always has a receipt and an empty list is a lane fault.
+ */
+export function cachedAcquisition(tokenAccount, history, { minSlot = null } = {}) {
+	return sharedImmutable(
+		`token-dd:acq:v1:${tokenAccount}:${minSlot ?? 'any'}`,
+		FUNDING_TTL_SECONDS,
+		async () => {
+			const o = await oldestSignature(tokenAccount, history, { minSlot });
+			return o?.complete ? { slot: o.oldest.slot ?? null, time: o.oldest.blockTime ?? null } : null;
+		},
+		(v) => v != null,
+	);
+}
+
 const METADATA_PROGRAM = 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s';
 
 /**
@@ -643,7 +695,7 @@ export async function collectChainData(mint, deps = realChainDeps(), thresholds 
 	if (!mintInfo) return { status: 'not_found' };
 
 	let readErrors = 0;
-	const launch = await resolveLaunch(mint, history).catch(() => {
+	const launch = await cachedLaunch(mint, history).catch(() => {
 		readErrors++;
 		return { slot: null, time: null, creator: null };
 	});
@@ -654,7 +706,7 @@ export async function collectChainData(mint, deps = realChainDeps(), thresholds 
 	const holderRows = await mapPoolSettled(top, 3, async (h) => {
 		const programDerived = isProgramDerived(h.owner);
 		const [acq, profile] = await Promise.all([
-			oldestSignature(h.token_account, history, { minSlot: launch.slot }).catch(() => {
+			cachedAcquisition(h.token_account, history, { minSlot: launch.slot }).catch(() => {
 				readErrors++;
 				return null;
 			}),
@@ -670,8 +722,8 @@ export async function collectChainData(mint, deps = realChainDeps(), thresholds 
 			token_account: h.token_account,
 			amount: h.amount,
 			program_derived: programDerived,
-			first_slot: acq?.complete ? acq.oldest.slot ?? null : null,
-			first_time: acq?.complete ? acq.oldest.blockTime ?? null : null,
+			first_slot: acq?.slot ?? null,
+			first_time: acq?.time ?? null,
 			profile,
 		};
 	});
