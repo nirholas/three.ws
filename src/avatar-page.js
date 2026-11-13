@@ -218,6 +218,10 @@ async function init() {
  * unreadable. The engine's wording belongs in the console, where it is useful.
  */
 function renderInitFailure(err) {
+	// The action bar reserves a row for the view switcher, which never mounts
+	// for a subject that did not load. Give the row back.
+	const slot = $('view-switch-slot');
+	if (slot) slot.hidden = true;
 	const subject = mode === 'agent' ? 'agent' : 'avatar';
 	const browse = mode === 'agent'
 		? { href: '/agents', label: 'Browse agents' }

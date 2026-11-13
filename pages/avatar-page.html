@@ -91,18 +91,33 @@
 				color: var(--text-2);
 				text-decoration: none;
 				font-size: 13px;
+				flex-shrink: 0;
+				white-space: nowrap;
 			}
 			.av-back:hover {
 				color: var(--text);
 			}
+			/* The view switcher (src/view-switcher.js) is injected into this slot
+			   once the entity resolves. The slot reserves its height from the first
+			   paint, so the sticky bar never grows under the visitor: on a phone the
+			   late row pushed the whole page down 60 px (0.067 CLS per agent view,
+			   Pixel 5 against production, 2026-11-13). 36 px is the switcher's
+			   height with labels, 38 px its icon-only phone form (<= 640 px). Embed
+			   mode hides the bar, and a failed load hides the slot. */
 			.av-actionbar-center {
 				flex: 1 1 auto;
 				display: flex;
 				justify-content: center;
 				min-width: 0;
+				min-height: 36px;
 			}
-			.av-actionbar-center:empty {
+			.av-actionbar-center[hidden] {
 				display: none;
+			}
+			@media (max-width: 640px) {
+				.av-actionbar-center {
+					min-height: 38px;
+				}
 			}
 			@media (max-width: 600px) {
 				.av-actionbar-center {
@@ -114,6 +129,8 @@
 			.av-share-group {
 				display: inline-flex;
 				gap: 6px;
+				flex-shrink: 0;
+				white-space: nowrap;
 			}
 			.av-share-btn {
 				background: transparent;
