@@ -58,13 +58,43 @@ and rejected: non-commercial Adobe weights, splat output, not mesh.
 
 ### Templates
 
-`templates/default.glb` is the only template the pipeline can use. It is
-addressed by name throughout (a `Wolf3D_Head` mesh carrying the blendshapes, and
-`Wolf3D_Skin` / `Wolf3D_Hair` / `Wolf3D_Eye` materials), and `face_uv_map.json`
-is precomputed against that exact head topology. `body_type` therefore has no
-effect yet: every value resolves to `default.glb`. Adding a male/female variant
-means adding a GLB with the same head topology, or regenerating the UV map for
-its own.
+Two templates ship, and `RECON_TEMPLATE` picks one per process
+([`recon_templates.py`](recon_templates.py)). Every name the pipeline addresses
+a template by (head mesh, skin / hair / eye materials, UV map path, how the eye
+is recoloured, how hard the skin is graded) lives in one `TemplateSpec` there;
+no other module hardcodes a template's internals.
+
+| `RECON_TEMPLATE` | GLB | UV map | `body_type` |
+|---|---|---|---|
+| `wolf3d` (default) | `templates/default.glb`, the Wolf3D avatar: `Wolf3D_Head` with 52 ARKit + 15 visemes, outfit and hair | `face_uv_map.json` | One body for every value |
+| `parametric` | `templates/parametric.glb`, the owned CC0 parametric body (Anny / MakeHuman) with a split `Head` mesh carrying the 52 ARKit shapes transferred from ICT-FaceKit (MIT) and 15 visemes composed from them | `face_uv_map.parametric.json` | `male` / `female` / `neutral` bake slider presets (gender, muscle, weight, height, hips), with the skeleton re-solved and the feet kept on the floor |
+
+The parametric template describes itself: its root `extras.reconstruction`
+holds the head mesh name, materials, the five facial anchors `precompute_uv.py`
+aligns on, the iris layout, and the body-type presets.
+`glb_ops.bake_body_type` writes the chosen preset into the base geometry and
+sets the slider weights, so the output is that body at rest and every sculpt
+slider is still on the mesh for Avatar Studio. Rebuild it with:
+
+```bash
+node scripts/build-reconstruction-template.mjs
+python workers/avatar-reconstruction/precompute_uv.py --template parametric
+```
+
+The Docker build regenerates both UV maps, runs `test_parametric_template.py`,
+and smoke-tests both templates, so neither can ship broken.
+
+**Why `wolf3d` is still the default.** On the 40-face reference set the
+parametric template scores a lower mean ISE than Wolf3D (numbers and per-region
+breakdown in [Track 5 of the fidelity program](../../docs/avatar-fidelity-program.md#track-5-fully-owned-body-v3)),
+but ISE only measures face shape. In the viewer the parametric output is a bald,
+unclothed body, its skin grade lands lighter than the photographed face (a
+visible seam at the jaw on darker complexions), and the GLB is about 9 MB against
+2.9 MB. Flip production once those close:
+
+```bash
+gcloud run services update avatar-reconstruction --region us-central1 --update-env-vars RECON_TEMPLATE=parametric
+```
 
 ## Environment
 
@@ -77,6 +107,7 @@ its own.
 | `GEOMETRY_MORPH` | no (`1`) | `0` skips the identity morph (texture only). |
 | `MAX_MORPH_YAW_DEG` | no (35) | Above this head yaw the morph is skipped: a single view cannot constrain the occluded half of a turned face. |
 | `PROJECTIVE_TEXTURE` | no (`1`) | `0` falls back to warp-only skin. |
+| `RECON_TEMPLATE` | no (`wolf3d`) | `wolf3d` or `parametric`; see [Templates](#templates). An unknown value fails the job loudly rather than reconstructing onto the wrong body. |
 | `RECON_VIEW_SYNTHESIS` | no (`0`) | `1` enables synthesised views for the scalp, far cheek, ears and neck (see below). Off until `eval.texture_eval` passes. |
 | `RECON_VIEW_MODEL` | no (`gemini-2.5-flash-image`) | Vertex image model. A 404 retries once on `RECON_VIEW_FALLBACK_MODEL` (`gemini-3.1-flash-image`). |
 | `RECON_VIEW_BUDGET_S` | no (45) | Hard wall-clock cap for the whole batch of view requests. |
@@ -177,8 +208,10 @@ bounded).
 
 Only PNG, JPEG and WEBP are decoded (`open_caller_image` in `worker_security.py`); any other format, or bytes that do not decode, fails the job with `error_kind: "input"` and an error naming the three formats, before it reaches a model.
 
-`body_type` is `male` | `female` | `neutral` (default `neutral`); see
-[Templates](#templates) for why it currently has no effect. `job_id` lets the
+`body_type` is `male` | `female` | `neutral` (default `neutral`). On the
+`parametric` template it bakes that body preset into the output; on `wolf3d`
+there is one body, so it has no effect (see [Templates](#templates)). Any other
+value is treated as `neutral`. `job_id` lets the
 caller choose the id, which is how the platform correlates a reconstruction with
 its own job row; omit it and the service generates a UUID.
 

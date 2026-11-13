@@ -279,7 +279,7 @@ each link:
 | **v2 (fallback)** | Dense identity, no licence fee | HRN re-based on **FLAME-2023-Open** (CC-BY-4.0) | Clean, but weeks of GPU R&D to retrain the identity regressor |
 | **v2 (texture)** SHIPPED | Projective texturing off the morphed mesh: fills ears, jawline and neck from the *same* photo (10.5% to 41.1% of the head) | none, geometry we already have | Clean; no new model or licence |
 | **v3 (texture)** BUILT, flag off | Synthesise extra camera views (not UV inpaint) for what no camera saw (scalp, far cheek), gated and projected | **Gemini image** on Vertex AI | GCP, pre-approved; enable after `eval.texture_eval` passes |
-| **v3** | Drop the RPM-template dependency for a fully-owned body | **Anny** (parametric body) + **ICT-FaceKit** (ARKit-52) + deformation transfer | Anny Apache-2.0 + CC0; ICT-FaceKit + DT MIT — clean |
+| **v3 (body)** BUILT, flag off | Drop the RPM-template dependency for a fully-owned body: `templates/parametric.glb` with ARKit-52 + 15 visemes on its own `Head` mesh, and `body_type` baked as slider presets. Selected by `RECON_TEMPLATE=parametric`; production stays on `wolf3d` until hair, clothing and the face/body skin seam close (see [Track 5](avatar-fidelity-program.md#track-5-fully-owned-body-v3)) | **Anny** (parametric body) + **ICT-FaceKit** (ARKit-52) + deformation transfer | Anny Apache-2.0 + CC0; ICT-FaceKit + DT MIT, clean |
 
 **Rejected: FaceLift (ICCV'25)** — initially floated as the clean v2 model, but
 verification killed it: its weights are licensed from Adobe under the

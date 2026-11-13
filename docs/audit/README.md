@@ -15,6 +15,8 @@ A reading is only evidence when the machine is quiet.
 3. The tool re-runs failing routes serially and keeps the second reading. That clears a momentary spike but not a sweep run beside a long build. On 2026-09-09, 29 of 31 reported failures passed on a quiet box. Re-run just the failures once the load drops before acting on them.
 4. Separate working-tree defects from deploy lag: run the repo's own API (`node server/index.mjs`, port 8080) and start Vite with `DEV_API_PROXY=http://localhost:8080`. A route that clears against the local API is deploy lag, not a defect.
 
+5. On a fresh box, confirm headless Chromium can start before trusting the run. If the sweep dies at launch with `error while loading shared libraries` (for example `libatk-1.0.so.0`), the OS packages are missing, not the browser: run `sudo npx playwright install-deps chromium` once (and `npx playwright install chromium` if the browser itself is absent). Smoke-test with `node scripts/audit-console.mjs / /forge` first.
+
 ```bash
 node --env-file-if-exists=.env --env-file-if-exists=.env.local server/index.mjs &
 DEV_API_PROXY=http://localhost:8080 npx vite --port 3211 --strictPort &
