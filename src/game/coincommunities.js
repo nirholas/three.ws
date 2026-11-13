@@ -54,7 +54,7 @@ import { ForgeHologram } from './forge-hologram.js';
 // P3.1: durable per-world build persistence (Postgres index + R2 blob), the same
 // store the authoritative room writes through. See src/game/world-persist.js for
 // which side is the writer when.
-import { WorldBuildStore, worldIdForCoin, docObjects } from './world-persist.js';
+import { WorldBuildStore, worldIdForCoin, docObjects, fetchWorldAccessPass } from './world-persist.js';
 import {
 	MAX_WORLD_OBJECTS, MAX_OBJECTS_PER_PLAYER, OBJ_SCALE_MIN, OBJ_SCALE_MAX,
 	buildClearRadius,
@@ -1700,6 +1700,9 @@ export class CoinCommunities {
 			// coin world's name, so friends see the player as "Online · <coin>" and
 			// DMs route straight to this socket. Resolves to null when anonymous.
 			getPresence: getPresenceTicket,
+			// Private worlds (Silver `worlds.private`): the room seats only the owner
+			// and invitees, proven by a pass the API mints for this account.
+			getWorldPass: (opts) => this._worldPass(opts),
 		});
 		// Generic networked-object layer for this coin (R02): mirrors the server's
 		// authoritative `objects` map into the scene, build props (R18), and any
@@ -1795,6 +1798,13 @@ export class CoinCommunities {
 		// reconnect; if the server then refuses the join, drop the player back to
 		// the lobby with a clear reason rather than looping on a dead pass.
 		this.net.on('denied', (reason) => {
+			// A private world this account is not invited to (or was just removed
+			// from). No pass can fix it, so say why and return to the lobby.
+			if (reason === 'world_private') {
+				this._noticeWorldPrivate();
+				this.leave();
+				return;
+			}
 			// The platform token gate evicted us (pass expired, or the wallet dropped
 			// below the floor): force a fresh sign-in before they can play again, the
 			// cached pass is now void, so clear it so the gate re-checks the chain.
@@ -4785,9 +4795,9 @@ export class CoinCommunities {
 			if (this._worldStore !== store || epoch !== this._enterEpoch) return;
 			if (!error) { this._restorePersistedBuild(doc); return; }
 			// A private world that is not shared with this player: no retry can help,
-			// and the room (which has its own service access) still runs the live world.
+			// and the room refuses the same account at join, so one notice covers both.
 			if (hidden) {
-				this.ui?.toast('This world’s saved build is private. Ask its owner to invite you to see it.', 'info');
+				this._noticeWorldPrivate();
 				return;
 			}
 			// Designed degradation: the world opens without its persisted props and
@@ -4895,11 +4905,47 @@ export class CoinCommunities {
 		}
 		try {
 			const { openWorldVisibility } = await import('./world-visibility.js');
-			openWorldVisibility({ store, toast: (msg, kind) => this.ui.toast(msg, kind) });
+			openWorldVisibility({
+				store,
+				toast: (msg, kind) => this.ui.toast(msg, kind),
+				onChanged: () => this._announceWorldAccess(store),
+			});
 		} catch (err) {
 			log.warn('[coincommunities] visibility dialog failed to load:', err?.message || err);
 			this.ui.toast('Couldn’t open the visibility settings. Reload and try again.', 'warn');
 		}
+	}
+
+	// Resolve the world-access pass for a join. Only private worlds need one, so a
+	// public world costs no request; `force` is CommunityNet's single retry after a
+	// world_private refusal, for when this client's view of the world was stale.
+	async _worldPass({ force = false } = {}) {
+		const store = this._worldStore;
+		if (!store) return null;
+		if (!force && store.visibility !== 'private') return null;
+		const { pass } = await fetchWorldAccessPass(store.worldId);
+		return pass;
+	}
+
+	// The owner just changed visibility or invites. Hand the room our own fresh
+	// pass (so going private never evicts us) and have it re-check everyone else.
+	async _announceWorldAccess(store) {
+		if (store !== this._worldStore || !this.net) return;
+		let pass = null;
+		if (store.visibility === 'private') {
+			try { ({ pass } = await fetchWorldAccessPass(store.worldId)); } catch (err) {
+				log.info('[coincommunities] world pass refresh failed:', err?.message || err);
+			}
+		}
+		this.net?.notifyWorldAccess(pass);
+	}
+
+	// One plain explanation per world entry, whether the saved build or the live
+	// room was the first to refuse this account.
+	_noticeWorldPrivate() {
+		if (this._worldPrivateNoticeEpoch === this._enterEpoch) return;
+		this._worldPrivateNoticeEpoch = this._enterEpoch;
+		this.ui?.toast('This world is private. Only its owner and the people they invite can enter.', 'info');
 	}
 
 	_onWorldSaveError({ reason }) {

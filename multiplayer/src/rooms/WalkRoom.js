@@ -36,6 +36,7 @@ import { partyService } from '../party-service.js';
 import { verifyPresenceTicket } from '../presence-token.js';
 import { moderation, identityKeys, applyToStore, KICK_CLOSE_CODE, AUTO_MUTE_REPORTERS, AUTO_MUTE_MINUTES, REPORT_WINDOW_MS } from '../moderation.js';
 import { verifyPlayPass } from '../play-pass.js';
+import { verifyWorldAccessPass } from '../world-access-pass.js';
 import { containsHateSlur } from '../display-name-safety.js';
 import { newGuestId, signGuestToken, verifyGuestToken } from '../guest-token.js';
 import { consumeSettlement } from '../settlement-guard.js';
@@ -441,6 +442,16 @@ function hslToHex(h, s, l) {
 	return (f(0) << 16) | (f(8) << 8) | f(4);
 }
 
+// Close code for a session evicted because its world turned private (or its
+// account was uninvited). Distinct from the kick (4403) and play-pass (4402)
+// codes so the client can tell the player exactly why they left.
+export const WORLD_PRIVATE_CLOSE_CODE = 4404;
+// How often a live room re-reads its world's visibility and invitee list, so an
+// uninvite made in another tab still evicts within a couple of minutes.
+const WORLD_ACCESS_RECHECK_MS = 120_000;
+// Minimum gap between client-triggered `world-access` re-reads, per room.
+const WORLD_ACCESS_NUDGE_MS = 3000;
+
 export class WalkRoom extends Room {
 	// Players are matched into the same room instance only when their `coin`
 	// join option matches, so each coin community is an isolated world while a
@@ -465,6 +476,9 @@ export class WalkRoom extends Room {
 		// A banned identity never gets a seat. Checked first so a banned spectator
 		// or holder is refused the same way as anyone else.
 		this._assertNotBanned(client, options);
+		// A private world (Silver `worlds.private`) admits only its owner and the
+		// accounts they invited, spectators included, so this runs before seating.
+		this._assertWorldAccess(client, options);
 		// Director / projector view: a watch-only seat, capped per room. Seated here
 		// so the flag is server-decided before onJoin ever runs.
 		if (wantsSpectator(options)) {
@@ -687,6 +701,7 @@ export class WalkRoom extends Room {
 		this.onMessage('party', (client, payload) => partyService.handle(this, client, payload));
 		this.onMessage('avatar', (client, payload) => this._handleAvatar(client, payload));
 		this.onMessage('play-pass', (client, payload) => this._handlePlayPassRefresh(client, payload));
+		this.onMessage('world-access', (client, payload) => this._handleWorldAccessNudge(client, payload));
 		this.onMessage('place', (client, payload) => this._handlePlace(client, payload));
 		this.onMessage('place-batch', (client, payload) => this._handlePlaceBatch(client, payload));
 		this.onMessage('remove', (client, payload) => this._handleRemove(client, payload));
@@ -794,7 +809,11 @@ export class WalkRoom extends Room {
 		// don't collide. load() never throws (it falls back to its memory mirror).
 		this._objKey = this.worldKey || 'mainland';
 		try {
-			const { doc } = await worldPersistence.load(this._objKey);
+			const { doc, access } = await worldPersistence.load(this._objKey);
+			// null only when the API has never answered for this world, in which case
+			// no stored build was loaded either; the re-check below picks the real
+			// visibility up as soon as the API answers.
+			this._applyWorldAccess(access);
 			this._restoreObjects(doc);
 		} catch (err) {
 			console.warn(`[walk_world ${this.roomId}] object restore failed:`, err?.message);
@@ -861,6 +880,11 @@ export class WalkRoom extends Room {
 				}
 			}, 60_000);
 		}
+
+		// Private-world re-check: re-read visibility and invitees and evict anyone
+		// who lost access. The owner's dialog also nudges this immediately through
+		// the `world-access` message; this sweep covers changes made elsewhere.
+		this.clock.setInterval(() => { this._refreshWorldAccess(); }, WORLD_ACCESS_RECHECK_MS);
 
 		// Tag mini-game (R08): refresh the leaderboard time values for all clients
 		// periodically so the displayed "time as it" increments visibly even without
@@ -2033,6 +2057,81 @@ export class WalkRoom extends Room {
 		});
 		const ban = this._moderation.active(keys, 'ban');
 		if (ban) throw new Error(`banned: ${ban.reason || 'removed by a moderator'}`);
+	}
+
+	// ---- Private worlds (Silver `worlds.private`) --------------------------------
+	// The API owns who may read a world (owner + invitees, three.ws account ids).
+	// The room learns the list from its service-token load and enforces it with a
+	// world-access pass the API mints only for an allowed account
+	// (multiplayer/src/world-access-pass.js). The pass names the account; the room
+	// re-checks that account against the CURRENT list on every join and sweep, so
+	// an uninvite closes the door even while an old pass is still unexpired.
+
+	/** Store the access fields the API reported. Anything unrecognised is public. */
+	_applyWorldAccess(access) {
+		const isPrivate = access?.visibility === 'private';
+		this._worldAccess = {
+			private: isPrivate,
+			ownerId: isPrivate && typeof access.ownerId === 'string' ? access.ownerId : null,
+			invitees: new Set(isPrivate && Array.isArray(access.invitees) ? access.invitees : []),
+		};
+	}
+
+	/** True when `account` may be in this world right now. */
+	_worldMayRead(account) {
+		const a = this._worldAccess;
+		if (!a?.private) return true;
+		if (typeof account !== 'string' || !account) return false;
+		return account === a.ownerId || a.invitees.has(account);
+	}
+
+	/** Verify a world-access pass for THIS world and bind its account to the
+	 *  session. Returns false (binding nothing) for a forged, expired or
+	 *  other-world pass. */
+	_bindWorldPass(client, pass) {
+		const v = verifyWorldAccessPass(pass);
+		if (!v || v.worldId !== (this._objKey || this.worldKey || 'mainland')) return false;
+		client.userData = { ...(client.userData || {}), worldAccount: v.account, worldPassExp: v.exp };
+		return true;
+	}
+
+	/** Refuse a join to a private world unless a valid pass proves the account is
+	 *  the owner or a current invitee. Throws a `world_private`-prefixed error the
+	 *  client routes to its "this world is private" notice. */
+	_assertWorldAccess(client, options) {
+		if (!this._worldAccess?.private) return;
+		if (!this._bindWorldPass(client, options?.worldPass)) throw new Error('world_private');
+		if (!this._worldMayRead(client.userData.worldAccount)) throw new Error('world_private');
+	}
+
+	/** Disconnect every session whose bound account may no longer be here. */
+	_enforceWorldAccess() {
+		if (!this._worldAccess?.private) return;
+		for (const client of [...this.clients]) {
+			if (this._worldMayRead(client.userData?.worldAccount)) continue;
+			try { client.leave(WORLD_PRIVATE_CLOSE_CODE, 'world_private'); } catch { /* already gone */ }
+		}
+	}
+
+	/** Re-read access from the API and enforce it. An unreachable API keeps the
+	 *  access already in force rather than opening or slamming the world. */
+	async _refreshWorldAccess() {
+		const access = await worldPersistence.loadAccess(this._objKey || this.worldKey || 'mainland');
+		if (!access) return;
+		this._applyWorldAccess(access);
+		this._enforceWorldAccess();
+	}
+
+	/** The owner's visibility dialog sends `world-access` after a change, carrying
+	 *  their own fresh pass so going private never evicts the person who did it. */
+	_handleWorldAccessNudge(client, payload) {
+		if (payload?.worldPass) this._bindWorldPass(client, payload.worldPass);
+		const now = Date.now();
+		if (now - (this._worldAccessNudgeAt || 0) < WORLD_ACCESS_NUDGE_MS) return;
+		this._worldAccessNudgeAt = now;
+		this._refreshWorldAccess().catch((err) => {
+			console.warn(`[walk_world ${this.roomId}] world access re-check failed:`, err?.message);
+		});
 	}
 
 	/** True when this session is muted. Tells the player why at most once a

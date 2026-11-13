@@ -108,6 +108,33 @@ export async function changeWorldAccess(worldId, action, payload, { fetchImpl, h
 }
 
 /**
+ * Ask the API for a world-access pass, the ticket the realtime room requires
+ * before it seats anyone in a private world (POST /api/world/access-pass). The
+ * API mints one only for the owner or an invitee, with the same rule
+ * /api/world/load applies, and answers 404 to everyone else.
+ *
+ * @param {string} worldId
+ * @param {{ fetchImpl?: typeof fetch }} [opts]
+ * @returns {Promise<{ visibility: 'public'|'private', pass: string|null, denied: boolean }>}
+ *   `denied` is true when this account may not enter (the API's 404).
+ * @throws on a network failure or a 5xx, so the caller can retry
+ */
+export async function fetchWorldAccessPass(worldId, { fetchImpl } = {}) {
+	const doFetch = fetchImpl || ((...a) => fetch(...a));
+	const res = await doFetch('/api/world/access-pass', {
+		method: 'POST',
+		headers: { 'content-type': 'application/json' },
+		credentials: 'same-origin',
+		body: JSON.stringify({ worldId }),
+	});
+	if (res.status === 404) return { visibility: 'private', pass: null, denied: true };
+	if (!res.ok) throw new Error(`world access pass failed: HTTP ${res.status}`);
+	const body = await res.json();
+	const visibility = body?.visibility === 'private' ? 'private' : 'public';
+	return { visibility, pass: typeof body?.pass === 'string' ? body.pass : null, denied: false };
+}
+
+/**
  * A single world's durable document, as seen from the browser.
  *
  * Lifecycle: `load()` once on entering the world, `queueSave(produce)` on every

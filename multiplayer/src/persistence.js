@@ -48,9 +48,22 @@ function signServiceToken() {
 	return `${payload}.${sig}`;
 }
 
+// Normalize the API's access fields. Invitees arrive as raw ids (fields=access)
+// or as { id, username } (a full service load); the room only needs the ids.
+function accessOf(body) {
+	const invitees = Array.isArray(body?.invitees)
+		? body.invitees.map((i) => (i && typeof i === 'object' ? i.id : i)).filter((id) => typeof id === 'string' && id)
+		: [];
+	return {
+		visibility: body?.visibility === 'private' ? 'private' : 'public',
+		ownerId: typeof body?.ownerId === 'string' ? body.ownerId : null,
+		invitees,
+	};
+}
+
 class WorldPersistence {
 	constructor() {
-		// worldId → { produce: () => doc, lastDoc, etag, version, dirty }
+		// worldId → { produce: () => doc, lastDoc, etag, version, dirty, access }
 		this._mem = new Map();
 		this._timers = new Map();
 		// Flips true after a verified API round-trip; a room reads it to honestly
@@ -66,31 +79,57 @@ class WorldPersistence {
 	_entry(worldId) {
 		let e = this._mem.get(worldId);
 		if (!e) {
-			e = { produce: null, lastDoc: null, etag: null, version: 0, dirty: false };
+			e = { produce: null, lastDoc: null, etag: null, version: 0, dirty: false, access: null };
 			this._mem.set(worldId, e);
 		}
 		return e;
 	}
 
 	// Load a world's current doc from the API, falling back to the in-memory
-	// mirror if the network read fails. Returns { doc, etag, version }.
+	// mirror if the network read fails. Returns { doc, etag, version, access }.
+	//
+	// The read carries the service token. The game server is authoritative for
+	// every world, private ones included (Silver `worlds.private`): without the
+	// token a private world answers 404, the room booted an empty plaza, and every
+	// save then posted `ifMatch: null` against an existing row and 409'd forever.
+	// `access` ({ visibility, ownerId, invitees }) is what the room's join gate
+	// enforces; it is null only when the API has never answered for this world.
 	async load(worldId) {
 		const e = this._entry(worldId);
 		try {
 			const res = await fetch(`${API_BASE}/api/world/load?worldId=${encodeURIComponent(worldId)}`, {
-				headers: { accept: 'application/json' },
+				headers: { accept: 'application/json', authorization: `Bearer ${signServiceToken()}` },
 			});
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const body = await res.json();
 			e.etag = body.etag ?? null;
 			e.version = body.version ?? 0;
 			e.lastDoc = body.doc ?? null;
+			e.access = accessOf(body);
 			this._durable = true;
-			return { doc: e.lastDoc, etag: e.etag, version: e.version };
+			return { doc: e.lastDoc, etag: e.etag, version: e.version, access: e.access };
 		} catch (err) {
 			// Memory tier: a re-created room in the same process still rehydrates.
-			console.warn(`[world-persistence] load failed for ${worldId}: ${err?.message} — using memory mirror`);
-			return { doc: e.lastDoc, etag: e.etag, version: e.version };
+			console.warn(`[world-persistence] load failed for ${worldId}: ${err?.message}, using memory mirror`);
+			return { doc: e.lastDoc, etag: e.etag, version: e.version, access: e.access };
+		}
+	}
+
+	// Read only a world's access fields (no document) so a live room can notice a
+	// visibility or invite change. Returns null when the API is unreachable, so
+	// the caller keeps the access it already enforces.
+	async loadAccess(worldId) {
+		try {
+			const res = await fetch(`${API_BASE}/api/world/load?worldId=${encodeURIComponent(worldId)}&fields=access`, {
+				headers: { accept: 'application/json', authorization: `Bearer ${signServiceToken()}` },
+			});
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			const access = accessOf(await res.json());
+			this._entry(worldId).access = access;
+			return access;
+		} catch (err) {
+			console.warn(`[world-persistence] access read failed for ${worldId}: ${err?.message}`);
+			return null;
 		}
 	}
 

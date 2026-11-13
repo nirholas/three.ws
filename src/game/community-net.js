@@ -76,6 +76,9 @@ export class CommunityNet {
 	 * @param {number} [opts.holderMinUsd] USD floor the holder world gated on (HUD)
 	 * @param {string} [opts.playPass] signed wallet+token pass for the platform gate
 	 * @param {string} [opts.account]  verified wallet address bound as the account id
+	 * @param {(o:{force:boolean})=>Promise<string|null>} [opts.getWorldPass] resolves the
+	 *   world-access pass a private world (Silver `worlds.private`) requires at join;
+	 *   `force` asks for one even when the caller believes the world is public
 	 * @param {string} [opts.url]    server override
 	 * @param {boolean} [opts.spectator] watch-only seat (director view): no avatar on the
 	 *   server, sends nothing, reconnects forever
@@ -93,6 +96,12 @@ export class CommunityNet {
 		// refuses with a play_pass_* error. Sent for all tiers, not just holders.
 		this.playPass = opts.playPass || '';
 		this.account = opts.account || '';
+		// Private worlds: the room refuses a join without a pass proving this account
+		// is the owner or an invitee. Resolved per join (passes last 10 minutes).
+		this.getWorldPass = typeof opts.getWorldPass === 'function' ? opts.getWorldPass : null;
+		// One forced-pass retry per refusal, so a stale belief that the world was
+		// public costs a single extra join instead of a dead end.
+		this._worldPassForce = false;
 		// Pre-join cosmetic loadout (W03): the compact wire string the creator built.
 		// The server re-validates ownership before applying it, so an unowned premium
 		// id here is simply dropped, never trusted.
@@ -298,6 +307,12 @@ export class CommunityNet {
 			// must never block play, hence the catch: the world still joins, the
 			// player is simply offline to their friends until the next reconnect.
 			const presence = this.getPresence ? await this.getPresence().catch(() => null) : null;
+			// Same rule for the world pass: a failed mint never blocks a public world,
+			// and a private one answers with a world_private refusal handled below.
+			const forceWorldPass = this._worldPassForce;
+			const worldPass = this.getWorldPass
+				? await this.getWorldPass({ force: forceWorldPass }).catch(() => null)
+				: null;
 			const options = {
 				// filterBy('coin','tier') isolates each coin into its own instance and
 				// splits the open General world from the gated Holders world; the
@@ -339,6 +354,9 @@ export class CommunityNet {
 				// "Online · <coin> Town" and DMs route to this socket. Omitted entirely
 				// when anonymous, the server treats its absence as "don't publish".
 				...(presence ? { presence } : {}),
+				// World-access pass (private worlds only). WalkRoom verifies it in
+				// onAuth and binds the three.ws account it names to this session.
+				...(worldPass ? { worldPass } : {}),
 			};
 			// Holder worlds require a signed pass the server verifies in onAuth; carry
 			// it (and the floor it gated on, for the seed room's HUD) only for holders.
@@ -580,6 +598,10 @@ export class CommunityNet {
 				// at join (ban), so say why and stop.
 				if (code === 4403) { this._setStatus('denied', 'removed'); this._emit('removed', { reason: reason || 'kicked' }); return; }
 				if (/play_pass/i.test(reason || '')) { this._setStatus('denied', 'play_pass_required'); this._emit('denied', 'play_pass_required'); return; }
+				// The world turned private (or we were uninvited). Retry once with a
+				// fresh pass: an invitee who joined while it was public gets straight
+				// back in; anyone without access gets the terminal denial.
+				if (/world_private/i.test(reason || '')) { this._worldPrivateRefused(); return; }
 				if (code === 4002) log.warn('[community-net] server closed with error:', reason || '(no reason)');
 				if (!this._destroyed && (code !== 1000 || this.spectator)) this._scheduleReconnect();
 			});
@@ -597,6 +619,7 @@ export class CommunityNet {
 			this._pingSentAt = 0;
 			this.ping = null;
 			this._reconnectAttempts = 0;
+			this._worldPassForce = false;
 			this._setStatus('online');
 			this._emit('ready', {
 				mint: this.room.state.coin,
@@ -623,6 +646,10 @@ export class CommunityNet {
 				this._emit('removed', { reason: 'banned', detail: msg.replace(/^.*banned:?\s*/i, '') });
 				return;
 			}
+			if (/world_private/i.test(msg)) {
+				this._worldPrivateRefused();
+				return;
+			}
 			if (/holder_pass|play_pass/i.test(msg)) {
 				log.warn('[community-net] gate denied join:', msg);
 				this._setStatus('denied', msg);
@@ -639,6 +666,21 @@ export class CommunityNet {
 			this._setStatus('failed', msg);
 			this._scheduleReconnect();
 		}
+	}
+
+	// A private world refused or evicted us. The first time, rejoin at once with a
+	// freshly minted pass; if that is refused too, this account has no access, so
+	// stop and let the scene explain instead of looping on reconnects.
+	_worldPrivateRefused() {
+		if (!this._destroyed && this.getWorldPass && !this._worldPassForce) {
+			this._worldPassForce = true;
+			this.connect();
+			return;
+		}
+		this._worldPassForce = false;
+		log.info('[community-net] private world refused this account');
+		this._setStatus('denied', 'world_private');
+		this._emit('denied', 'world_private');
 	}
 
 	// Exponential backoff with a hard ceiling. When the game server isn't
@@ -873,6 +915,12 @@ export class CommunityNet {
 	// stranded anyone in a long building session). The server re-verifies the pass
 	// against the gate before extending; a forged or below-floor pass is ignored.
 	updatePlayPass(pass) { this.playPass = pass || ''; if (pass) this._send('play-pass', { playPass: pass }); }
+
+	// Tell the room this world's visibility or invite list just changed, carrying
+	// our own fresh world pass so going private never evicts the owner who did it.
+	// The room re-reads access from the API and evicts anyone who lost it. Servers
+	// that predate private worlds ignore the unknown message type.
+	notifyWorldAccess(worldPass) { this._send('world-access', worldPass ? { worldPass } : {}); }
 
 	get state() { return this.room?.state ?? null; }
 

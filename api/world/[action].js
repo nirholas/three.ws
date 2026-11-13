@@ -21,6 +21,18 @@
 //   POST /api/world/uninvite   { worldId, invitee }          owner only
 //     Access changes that do not rewrite the document. `invitee` is a username.
 //
+//   GET  /api/world/load?worldId=<id>&fields=access
+//     The same read rule, but only { visibility, ownerId, invitees? } from the
+//     index row, never the document. The game server re-checks a live room's
+//     access with it without downloading the build.
+//
+//   POST /api/world/access-pass { worldId }
+//     A private world's realtime room admits only its owner and invitees, but
+//     the room knows players by wallet, not by account. This mints the signed,
+//     10-minute world-access pass the room verifies in onAuth
+//     (api/_lib/world-access-pass.js). Public worlds need none ({ pass: null });
+//     anyone not allowed in gets the same 404 as /load.
+//
 // Storage lives in api/_lib/world-store.js (Postgres index + R2 blob offload).
 
 import { cors, json, method, wrap, error, readJson, rateLimited } from '../_lib/http.js';
@@ -30,6 +42,7 @@ import { resolveAccount } from '../_lib/account-auth.js';
 import { requireFeatureAccess } from '../_lib/require-three.js';
 import { resolveInvitee, describeInvitees } from '../_lib/world-invites.js';
 import { verifyWorldServiceToken } from '../_lib/world-service-auth.js';
+import { signWorldAccessPass } from '../_lib/world-access-pass.js';
 import {
 	loadWorld,
 	loadWorldMeta,
@@ -64,8 +77,25 @@ export default wrap(async (req, res) => {
 	if (action === 'visibility') return handleVisibility(req, res);
 	if (action === 'invite') return handleInvite(req, res, true);
 	if (action === 'uninvite') return handleInvite(req, res, false);
+	if (action === 'access-pass') return handleAccessPass(req, res);
 	return error(res, 404, 'not_found', 'unknown world action');
 });
+
+// Who is reading a private world, and may they? Identity is resolved only for a
+// private world, so a public read stays one indexed lookup with no session work.
+async function readerOf(req, res, world) {
+	if (world.visibility !== 'private') return { readable: true, isService: false, account: null };
+	const isService = Boolean(await verifyWorldServiceToken(extractBearer(req)));
+	const account = isService ? null : (await resolveAccount(req, res))?.userId ?? null;
+	const readable = canReadWorld({
+		isService,
+		account,
+		ownerId: world.ownerId,
+		visibility: world.visibility,
+		invitees: world.invitees,
+	});
+	return { readable, isService, account };
+}
 
 async function handleLoad(req, res) {
 	if (!method(req, res, ['GET'])) return;
@@ -73,28 +103,17 @@ async function handleLoad(req, res) {
 	const rl = await limits.publicIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const worldId = new URL(req.url, 'http://x').searchParams.get('worldId') || '';
+	const params = new URL(req.url, 'http://x').searchParams;
+	const worldId = params.get('worldId') || '';
 	if (!isValidWorldId(worldId)) return error(res, 400, 'validation_error', 'invalid or missing worldId');
+
+	if (params.get('fields') === 'access') return loadAccessOnly(req, res, worldId);
 
 	const world = await loadWorld(worldId);
 	if (!world) return json(res, 200, { worldId, doc: null, version: 0, etag: null, visibility: 'public' });
 
-	// Identity is resolved only for a private world: a public read stays one
-	// indexed lookup with no session work.
-	let isService = false;
-	let account = null;
-	if (world.visibility === 'private') {
-		isService = Boolean(await verifyWorldServiceToken(extractBearer(req)));
-		if (!isService) account = (await resolveAccount(req, res))?.userId ?? null;
-		const readable = canReadWorld({
-			isService,
-			account,
-			ownerId: world.ownerId,
-			visibility: world.visibility,
-			invitees: world.invitees,
-		});
-		if (!readable) return error(res, 404, 'not_found', 'world not found');
-	}
+	const { readable, isService, account } = await readerOf(req, res, world);
+	if (!readable) return error(res, 404, 'not_found', 'world not found');
 
 	const isOwner = Boolean(account && world.ownerId && account === world.ownerId);
 	return json(res, 200, {
@@ -109,6 +128,47 @@ async function handleLoad(req, res) {
 		...(isOwner || isService ? { invitees: await describeInvitees(world.invitees) } : {}),
 		updatedAt: world.updatedAt,
 	});
+}
+
+// GET /api/world/load?fields=access: the index row's access fields only.
+async function loadAccessOnly(req, res, worldId) {
+	const meta = await loadWorldMeta(worldId);
+	if (!meta) return json(res, 200, { worldId, visibility: 'public', ownerId: null });
+	const { readable, isService, account } = await readerOf(req, res, meta);
+	if (!readable) return error(res, 404, 'not_found', 'world not found');
+	const isOwner = Boolean(account && meta.ownerId && account === meta.ownerId);
+	return json(res, 200, {
+		worldId,
+		visibility: meta.visibility,
+		ownerId: meta.ownerId,
+		// Raw ids: the room matches them against the account in a world-access pass.
+		...(meta.visibility === 'private' && (isOwner || isService) ? { invitees: meta.invitees } : {}),
+	});
+}
+
+// POST /api/world/access-pass: the signed ticket a private world's room checks.
+async function handleAccessPass(req, res) {
+	if (!method(req, res, ['POST'])) return;
+
+	const rl = await limits.publicIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
+	const body = await readBody(req, res);
+	if (!body) return;
+	const { worldId } = body;
+	if (!isValidWorldId(worldId)) return error(res, 400, 'validation_error', 'invalid or missing worldId');
+
+	const meta = await loadWorldMeta(worldId);
+	if (!meta || meta.visibility !== 'private') return json(res, 200, { worldId, visibility: 'public', pass: null });
+
+	// The room needs an account to match against the owner and invitee list, so
+	// the service token (which has none) is not a reason to mint one.
+	const account = (await resolveAccount(req, res))?.userId ?? null;
+	const readable = canReadWorld({ account, ownerId: meta.ownerId, visibility: meta.visibility, invitees: meta.invitees });
+	if (!account || !readable) return error(res, 404, 'not_found', 'world not found');
+
+	const { pass, expiresAt } = await signWorldAccessPass({ worldId, account });
+	return json(res, 200, { worldId, visibility: 'private', pass, expiresAt });
 }
 
 // Resolve who is calling a world-access endpoint. Service tokens are authoritative;

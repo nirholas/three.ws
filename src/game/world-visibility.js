@@ -35,9 +35,11 @@ let open = null;
  * @param {import('./world-persist.js').WorldBuildStore} opts.store
  * @param {(msg:string, kind?:string)=>void} [opts.toast]
  * @param {typeof fetch} [opts.fetchImpl]
+ * @param {(access:{visibility:string, invitees:object[]})=>void} [opts.onChanged] called after
+ *   every saved change, so the live room can re-check who may stay in it
  * @returns {{ close:()=>void, root:HTMLElement }}
  */
-export function openWorldVisibility({ store, toast, fetchImpl } = {}) {
+export function openWorldVisibility({ store, toast, fetchImpl, onChanged } = {}) {
 	if (open) open.close();
 	const returnFocus = document.activeElement;
 
@@ -168,6 +170,7 @@ export function openWorldVisibility({ store, toast, fetchImpl } = {}) {
 		if (Array.isArray(body?.invitees)) invitees = body.invitees;
 		store.visibility = visibility;
 		store.invitees = invitees;
+		onChanged?.({ visibility, invitees });
 	}
 
 	async function choose(next) {

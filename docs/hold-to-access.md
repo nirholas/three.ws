@@ -318,8 +318,21 @@ permanent paywall on scarce supply.
   instant) is in the future, `POST /api/threews/subdomain` for any label above Common
   rarity (`priceName(label).free === false`) needs Genesis. Common labels are never gated.
   Unset the variable, or let the instant pass, and rare names are open to all.
+  `GET /api/threews/subdomain?label=` reports `rarity` (`{ tier, label, free }`) and
+  `holder_window` (`{ feature, public_opens_at, required }`, or `null` when the label is
+  Common or no window runs), and answers `no-store` while a window is set so the edge
+  never outlives a cache.
 - **Window logic** lives in `api/_lib/early-window.js` (pure, injectable clock).
-- **Tests**: `tests/drops-early-gate.test.js`, `tests/names-first-dibs-gate.test.js`.
+- **What the visitor sees.** `/drops/:slug` (`src/drop-collection.js`) and
+  `/threews/claim` (`pages/threews-claim.html`) show a live countdown to public open and
+  read the viewer's own access (`getAccess(feature, { fresh: true })`, re-read on
+  `wallet:changed`). A skeleton shows while the tier resolves. After that an eligible
+  holder sees **Early access**, anyone else sees the required tier with a link to `/three`,
+  and a failed read shows a retry. Inside a window an eligible identity attaches a fresh
+  tier pass to the reveal or mint; a `402` renders the tier needed, the USD still to go,
+  and the `/three` link. Countdown text comes from `src/early-countdown.js`.
+- **Tests**: `tests/drops-early-gate.test.js`, `tests/names-first-dibs-gate.test.js`,
+  `tests/early-countdown.test.js`.
 
 ---
 
