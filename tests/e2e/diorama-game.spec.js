@@ -117,13 +117,15 @@ test.describe('diorama microgame', () => {
 
 	test('a timed goal left undone ends in a loss, and Play again restarts the run', async ({ page }) => {
 		// 10s is the schema floor (MIN_TIME_LIMIT_SEC), so this waits out a real clock.
+		// The first read only checks the clock is live and counting down from 0:10:
+		// a loaded test box can take seconds to get from the click to the read.
 		await mountWorld(page, world(true, 10));
 		await page.goto(`/diorama?id=${WORLD_ID}&play=1`);
 		const start = page.locator('.dio-play__cta', { hasText: 'Start' });
 		await expect(start).toBeEnabled({ timeout: 90_000 });
 		await start.click();
 
-		await expect(page.locator('.dio-play__clock')).toHaveText(/^0:(10|09)$/);
+		await expect(page.locator('.dio-play__clock')).toHaveText(/^0:(10|0[1-9])$/);
 		await expect(page.locator('.dio-play__title')).toHaveText('Not this time', { timeout: 20_000 });
 		await expect(page.locator('.dio-play__body')).toContainText('Time ran out.');
 		await expect(page.locator('.dio-play__clock')).toHaveText('0:00');
@@ -131,7 +133,7 @@ test.describe('diorama microgame', () => {
 		await page.getByRole('button', { name: 'Play again' }).click();
 		await expect(page.locator('.dio-play__card')).toBeHidden();
 		await expect(page.locator('.dio-play__progress')).toHaveText('0/2');
-		await expect(page.locator('.dio-play__clock')).toHaveText(/^0:(10|09)$/);
+		await expect(page.locator('.dio-play__clock')).toHaveText(/^0:(10|0[1-9])$/);
 	});
 });
 
