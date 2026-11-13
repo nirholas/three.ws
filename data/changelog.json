@@ -39,7 +39,7 @@
 		{
 			"date": "2026-11-13",
 			"title": "Talking to an agent through three.ws Glass gets an answer again",
-			"summary": "On the /glass lens app, picking a reply to start talking to an agent could come back blank: the chat model spent its whole answer thinking to itself and returned nothing to show on the lens, along with no suggested next replies. Lens conversations now ask that model for a direct answer, so the agent replies and offers the next things to say. The lens app is also tested end to end against real agents placed on the map, walking from scanning to the nearby list, the agent card, a conversation and the phone handoff with only the arrow keys, Enter and Escape that the Neural Band produces.",
+			"summary": "On the /glass lens app, picking a reply to start talking to an agent could come back blank: the chat model spent its whole answer thinking to itself and returned nothing to show on the lens, along with no suggested next replies. Lens conversations now ask that model for a direct answer, so the agent replies and offers the next things to say. The lens app is also tested end to end against real agents placed on the map, walking from scanning to the nearby list, the agent card, a conversation and the phone handoff with only the arrow keys, Enter and Escape that the Neural Band produces. The lens page also loads about a third of the code it did, because desktop extras like the search palette and hidden keyboard surprises no longer ride along onto a display driven by the same arrow keys.",
 			"tags": ["fix"],
 			"link": "/glass"
 		},

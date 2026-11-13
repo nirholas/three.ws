@@ -213,7 +213,7 @@ glasses and logs a d-pad event from a real pinch.
 
 ### Phase 1: the lens surface
 
-> Status 2026-11-13: built and covered by `tests/glass-dpad.test.js` and `tests/e2e/glass.spec.js`, which drives the lens at 600x600 with keys only against real pins placed through `POST /api/irl/pins` (no stubbed responses). The page ships 6.4 KB of gzipped JavaScript with no three.js. On-lens verification is pending hardware (owner).
+> Status 2026-11-13: built and covered by `tests/glass-dpad.test.js` and `tests/e2e/glass.spec.js`, which drives the lens at 600x600 with keys only against real pins placed through `POST /api/irl/pins` (no stubbed responses). The built page loads 21.1 KB of gzipped JavaScript on first paint (the lens bundle is 6.4 KB; the rest is the site error reporter, inline-behaviors and the service worker register) with no three.js. Lens pages are named in `scripts/lib/lens-surfaces.mjs`, skip the Atlas palette, the iOS app bridge and the arrow-key easter eggs, and `npm run check:dist` fails any build that puts a lens page over 60 KB. On-lens verification is pending hardware (owner).
 
 - [x] `pages/glass.html` with the documented viewport and
       `<meta name="mrbd-web-app-capable" content="yes">`, registered in
