@@ -25,12 +25,16 @@ def load_glb(data: bytes) -> pygltflib.GLTF2:
 
 
 def save_glb(glb: pygltflib.GLTF2) -> bytes:
-    # pygltflib defaults Accessor.byteOffset to 0 and serialises it even on an
-    # accessor with no bufferView (a sparse morph target), which glTF forbids:
-    # the validator flags every such accessor UNSATISFIED_DEPENDENCY.
+    # pygltflib fills spec defaults in on load and serialises them back, two of
+    # them illegally: byteOffset on an accessor with no bufferView (a sparse
+    # morph target; validator UNSATISFIED_DEPENDENCY) and alphaCutoff on a
+    # material that is not in MASK mode (MATERIAL_ALPHA_CUTOFF_INVALID_MODE).
     for acc in glb.accessors:
         if acc.bufferView is None:
             acc.byteOffset = None
+    for mat in glb.materials:
+        if (mat.alphaMode or "OPAQUE") != "MASK":
+            mat.alphaCutoff = None
     return b"".join(glb.save_to_bytes())
 
 

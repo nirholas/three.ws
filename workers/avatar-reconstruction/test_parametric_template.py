@@ -189,11 +189,12 @@ def test_iris_recolour_leaves_the_sclera_white():
     assert blue[2] > blue[0] + 40, f"iris did not take the eye colour: mean {blue}"
 
 
-def test_saved_glb_keeps_sparse_accessors_valid():
+def test_saved_glb_stays_spec_valid():
     """
-    The template's morph targets are sparse accessors with no bufferView. glTF
-    forbids byteOffset there (the validator reports UNSATISFIED_DEPENDENCY), but
-    pygltflib defaults it to 0 and writes it back out on every save.
+    pygltflib fills spec defaults in on load and writes them back on save, two of
+    them illegally: byteOffset on the template's sparse morph accessors (which
+    have no bufferView; validator UNSATISFIED_DEPENDENCY) and alphaCutoff on
+    opaque materials (MATERIAL_ALPHA_CUTOFF_INVALID_MODE).
     """
     import struct
 
@@ -206,6 +207,10 @@ def test_saved_glb_keeps_sparse_accessors_valid():
     assert sparse, "template has no sparse accessors; this test no longer guards anything"
     bad = [i for i, a in enumerate(doc["accessors"]) if "bufferView" not in a and "byteOffset" in a]
     assert not bad, f"{len(bad)} accessors carry byteOffset without a bufferView, e.g. #{bad[0]}"
+    # Same default leak on materials: alphaCutoff is only legal in MASK mode.
+    cutoff = [m["name"] for m in doc["materials"]
+              if "alphaCutoff" in m and m.get("alphaMode", "OPAQUE") != "MASK"]
+    assert not cutoff, f"alphaCutoff written on non-MASK materials: {cutoff}"
 
 
 if __name__ == "__main__":
