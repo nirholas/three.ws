@@ -18,6 +18,25 @@ const RIM_MARGIN = 0.35;
 
 const footprint = (o) => 0.35 + (o.scale || 1) * OBSTACLE_SCALE;
 
+/** Most game time one rendered frame may advance: a stalled or hidden tab costs at most this. */
+export const MAX_FRAME_SEC = 0.25;
+/** Longest single movement step, so a walker on a slow frame cannot skip past a pickup. */
+export const MAX_SUBSTEP_SEC = 1 / 30;
+
+/**
+ * The game clock. Turns one rendered frame's real delta (seconds) into the
+ * game-time substeps to simulate. Movement and the timer both run on the sum,
+ * so a slow device walks at full speed against an honest clock, and a visitor
+ * who leaves the tab mid-run comes back to the time they left, not a loss.
+ * @returns {number[]}
+ */
+export function frameSteps(rawSec) {
+	if (!(rawSec > 0)) return [];
+	const total = Math.min(rawSec, MAX_FRAME_SEC);
+	const n = Math.ceil(total / MAX_SUBSTEP_SEC - 1e-9);
+	return Array.from({ length: n }, () => total / n);
+}
+
 /**
  * Can this world be played right now? A goal only needs its own targets forged:
  * a failed or pending decoration does not block play. Never reports ok for a

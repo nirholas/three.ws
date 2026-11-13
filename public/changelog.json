@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-13T17:45:16.704Z",
+	"generated_at": "2026-11-13T17:47:28.115Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -68,6 +68,17 @@
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-11-13",
+			"type": "update",
+			"title": "Diorama games keep an honest clock on slow phones and when you switch tabs",
+			"summary": "When you play a diorama world with a timer, your walker and the countdown now move on the same game clock. On a slow phone or a busy laptop the walker used to slow down while the timer kept counting real seconds, so a timed goal could become impossible to win. Switching to another tab mid-run used to burn the whole timer and greet you with a loss when you came back; now the clock waits for you. Pickups also stay reliable on slow frames, because each frame's movement is checked in small steps.",
+			"link": "/diorama",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

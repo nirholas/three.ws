@@ -19,6 +19,7 @@ import {
 	stepGame,
 	hudFor,
 	resolveWalker,
+	frameSteps,
 } from './game-rules.js';
 
 const WALKER_HEIGHT = 0.9;
@@ -99,6 +100,7 @@ export function createPlay({ stage, renderer, getDiorama, onExit }) {
 		target: null, // tap-to-move { x, z }
 		loadingAvatar: null,
 		lastStatus: '',
+		simMs: 0, // game clock: summed frameSteps, never wall time
 	};
 
 	// ── card states ────────────────────────────────────────────────────────
@@ -275,50 +277,61 @@ export function createPlay({ stage, renderer, getDiorama, onExit }) {
 
 	// ── per-frame ──────────────────────────────────────────────────────────
 
-	function frame(dt, now) {
+	// `rawDt` is the real seconds since the last rendered frame. The game runs on
+	// frameSteps(rawDt): movement and the timer advance by the same game time, so
+	// a slow device keeps full walking speed and a hidden tab does not burn the clock.
+	function frame(rawDt) {
 		const w = session.walker;
 		if (!w) return;
+		const steps = frameSteps(rawDt);
 		let moving = false;
+		let simDt = 0;
 
-		if (session.state.phase === 'playing') {
-			const { ix, iz } = inputVector();
-			cameraBasis();
-			let mx = right.x * ix + forward.x * -iz;
-			let mz = right.z * ix + forward.z * -iz;
-			let speed = Math.hypot(mx, mz);
-			if (speed < 0.05 && session.target) {
-				const dx = session.target.x - session.pos.x;
-				const dz = session.target.z - session.pos.z;
-				const dist = Math.hypot(dx, dz);
-				if (dist < ARRIVE_DIST) session.target = null;
-				else {
-					mx = dx / dist;
-					mz = dz / dist;
-					speed = 1;
-				}
-			}
-			if (speed > 0.05) {
-				const step = Math.min(1, speed) * WALK_SPEED * dt;
-				const len = Math.hypot(mx, mz);
-				const next = resolveWalker(
-					{ x: session.pos.x + (mx / len) * step, z: session.pos.z + (mz / len) * step },
-					session.diorama,
-					session.state.collected,
-				);
-				session.pos = next;
-				const want = Math.atan2(mx, mz);
-				let diff = want - session.heading;
-				diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-				session.heading += diff * Math.min(1, TURN_RATE * dt);
-				moving = true;
-			}
-			advance(now);
+		for (const step of steps) {
+			simDt += step;
+			if (session.state.phase !== 'playing') continue;
+			session.simMs += step * 1000;
+			if (walk(step)) moving = true;
+			advance(session.simMs);
 		}
 
 		syncWalkerTransform();
 		w.controller.setState(moving ? 'walk' : 'idle');
-		w.controller.update?.(dt);
-		chaseCamera(dt);
+		w.controller.update?.(simDt);
+		chaseCamera(simDt);
+	}
+
+	// One movement substep from keys, the pad or a tap target. True if the walker moved.
+	function walk(dt) {
+		const { ix, iz } = inputVector();
+		cameraBasis();
+		let mx = right.x * ix + forward.x * -iz;
+		let mz = right.z * ix + forward.z * -iz;
+		let speed = Math.hypot(mx, mz);
+		if (speed < 0.05 && session.target) {
+			const dx = session.target.x - session.pos.x;
+			const dz = session.target.z - session.pos.z;
+			const dist = Math.hypot(dx, dz);
+			if (dist < ARRIVE_DIST) session.target = null;
+			else {
+				mx = dx / dist;
+				mz = dz / dist;
+				speed = 1;
+			}
+		}
+		if (speed <= 0.05) return false;
+		const step = Math.min(1, speed) * WALK_SPEED * dt;
+		const len = Math.hypot(mx, mz);
+		session.pos = resolveWalker(
+			{ x: session.pos.x + (mx / len) * step, z: session.pos.z + (mz / len) * step },
+			session.diorama,
+			session.state.collected,
+		);
+		const want = Math.atan2(mx, mz);
+		let diff = want - session.heading;
+		diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+		session.heading += diff * Math.min(1, TURN_RATE * dt);
+		return true;
 	}
 
 	function advance(now) {
@@ -362,7 +375,7 @@ export function createPlay({ stage, renderer, getDiorama, onExit }) {
 	}
 
 	function begin() {
-		session.state = startGame(createGameState(session.diorama), performance.now());
+		session.state = startGame(createGameState(session.diorama), session.simMs);
 		resetPickups();
 		placeWalker();
 		hideCard();

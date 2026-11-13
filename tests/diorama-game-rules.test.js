@@ -9,6 +9,9 @@ import {
 	hudFor,
 	formatClock,
 	resolveWalker,
+	frameSteps,
+	MAX_FRAME_SEC,
+	MAX_SUBSTEP_SEC,
 } from '../src/diorama/game-rules.js';
 
 const ready = (id, label, x, z, extra = {}) => ({
@@ -171,5 +174,52 @@ describe('formatClock', () => {
 		expect(formatClock(29_001)).toBe('0:30');
 		expect(formatClock(61_000)).toBe('1:01');
 		expect(formatClock(-5)).toBe('0:00');
+	});
+});
+
+describe('frameSteps (the game clock)', () => {
+	const sum = (steps) => steps.reduce((a, b) => a + b, 0);
+
+	it('counts a slow 10 fps frame in full, so walking speed matches the clock', () => {
+		expect(sum(frameSteps(0.1))).toBeCloseTo(0.1, 9);
+	});
+
+	it('charges a hidden-tab or stalled frame at most a fraction of a second', () => {
+		// A visitor who switches tabs for 30s mid-run must come back to the same
+		// clock, not an instant "Time ran out".
+		expect(sum(frameSteps(30))).toBeCloseTo(MAX_FRAME_SEC, 9);
+		expect(MAX_FRAME_SEC).toBeLessThanOrEqual(0.25);
+	});
+
+	it('splits a frame into short substeps so a fast walker cannot skip a pickup', () => {
+		for (const raw of [0.016, 0.05, 0.1, 0.25, 5]) {
+			const steps = frameSteps(raw);
+			expect(steps.length).toBeGreaterThan(0);
+			for (const step of steps) expect(step).toBeLessThanOrEqual(MAX_SUBSTEP_SEC + 1e-12);
+		}
+	});
+
+	it('ignores a zero, negative or non-numeric delta', () => {
+		expect(frameSteps(0)).toEqual([]);
+		expect(frameSteps(-1)).toEqual([]);
+		expect(frameSteps(Number.NaN)).toEqual([]);
+	});
+
+	it('a 30s run at 10 fps ends on the frame its clock says, and a tab stall does not eat it', () => {
+		let s = startGame(createGameState(collect), 0);
+		let simMs = 0;
+		let frames = 0;
+		const far = { x: 0, z: 4 };
+		while (s.phase === 'playing' && frames < 1000) {
+			// Halfway through the visitor leaves the tab for a minute.
+			const raw = frames === 150 ? 60 : 0.1;
+			for (const step of frameSteps(raw)) simMs += step * 1000;
+			s = stepGame(s, collect, far, simMs);
+			frames += 1;
+		}
+		expect(s.phase).toBe('lost');
+		// 300 frames of 0.1s, minus the at-most-0.25s the stall frame contributed.
+		expect(frames).toBeGreaterThanOrEqual(298);
+		expect(frames).toBeLessThanOrEqual(300);
 	});
 });

@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-13",
+			"title": "Diorama games keep an honest clock on slow phones and when you switch tabs",
+			"summary": "When you play a diorama world with a timer, your walker and the countdown now move on the same game clock. On a slow phone or a busy laptop the walker used to slow down while the timer kept counting real seconds, so a timed goal could become impossible to win. Switching to another tab mid-run used to burn the whole timer and greet you with a loss when you came back; now the clock waits for you. Pickups also stay reliable on slow frames, because each frame's movement is checked in small steps.",
+			"tags": ["fix", "improvement"],
+			"link": "/diorama"
+		},
+		{
+			"date": "2026-11-13",
 			"title": "The marketplace opens on a picture and loads 3D only when you reach for it",
 			"summary": "The featured carousel at the top of the marketplace used to download the 3D viewer and a model of around 2 MB on every visit, showing a placeholder letter until it arrived. It now shows each avatar's picture straight away and turns it into the spinning 3D model the moment you hover, focus or tap it, so a visit that never touches a 3D preview never downloads one. Hovering an agent card in the grid now also loads its 3D preview wherever the pointer rests on the card; before, only the picture area counted, and in practice agent cards often never woke at all.",
 			"tags": ["improvement", "fix"],

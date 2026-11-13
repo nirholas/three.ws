@@ -1194,7 +1194,8 @@ export function createDioramaRenderer(container, opts = {}) {
 
 	function loop(now) {
 		rafId = requestAnimationFrame(loop);
-		const dt = Math.min(64, now - lastTime);
+		const rawDt = now - lastTime;
+		const dt = Math.min(64, rawDt);
 		lastTime = now;
 
 		if (!visible || document.hidden) {
@@ -1258,7 +1259,8 @@ export function createDioramaRenderer(container, opts = {}) {
 		}
 
 		if (playSession) {
-			playSession.onFrame(dt / 1000, now);
+			// Play mode gets the real delta: its game clock caps and substeps it.
+			playSession.onFrame(rawDt / 1000, now);
 			active = true;
 		}
 

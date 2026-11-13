@@ -116,6 +116,8 @@ A world can carry a small game. When the prompt names a goal ("collect the three
 
 The world page shows **Play this world** for any world with a goal. It stays disabled, with the reason as its tooltip, until the goal objects have forged (`playability()` in `game-rules.js`). Decorations that failed to forge do not block play. Controls: WASD or arrow keys, a drag pad on touch screens, or tap the ground. Escape exits. The walker is your own walk avatar, loaded through walk-sdk; if it fails to load you get a Retry card.
 
+The timer runs on game time, not wall time (`frameSteps()` in `game-rules.js`): walking and the clock advance by the same step every frame, so a slow phone walks at full speed against an honest clock, and switching tabs mid-run costs at most a quarter of a second instead of the whole timer.
+
 The game block is stored inside the saved world document, so no migration is needed. **Share as a game** (in the share sheet after saving) copies the permalink with `?play=1`, which opens the world straight into its game; the X post carries the objective text. Opening a `?play=1` link for a world with no goal or unforged goal objects shows the normal world view.
 
 ## States and limits

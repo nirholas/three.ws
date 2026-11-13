@@ -55,6 +55,14 @@
 			<description>The new Custody tab in the agent wallet hub lets an owner pick who signs fund-moving transactions. Platform keeps today's behavior, where the server signs inside your spend policy. My wallet means the platform never signs: build routes called with signer &quot;external&quot; return an unsigned, simulated Solana transaction and a tx_id, your own wallet signs it, and POST /api/tx/submit checks the bytes match what was prepared before broadcasting and recording it in the custody ledger. Session key grants a delegate an on-chain USDC cap and an expiry, so the agent can act alone and a transfer over the cap is refused. Export key re-confirms your identity, seals the key so only your browser can open it, encrypts it to a passphrase that never leaves the page, shows it once, logs the export, and offers to rotate to a fresh key and sweep the funds. A balance history chart (24h, 7d, 30d) is filled by a new hourly snapshot job, and GET /api/me/wallet plus the get_private_wallet_balance, get_wallet_summaries and get_balance_history tools put your own linked wallet next to your agents'.</description>
 		</item>
 		<item>
+			<title>Diorama games keep an honest clock on slow phones and when you switch tabs</title>
+			<link>https://three.ws/diorama</link>
+			<guid isPermaLink="false">2026-11-13:Diorama games keep an honest clock on slow phones and when you switch tabs</guid>
+			<pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When you play a diorama world with a timer, your walker and the countdown now move on the same game clock. On a slow phone or a busy laptop the walker used to slow down while the timer kept counting real seconds, so a timed goal could become impossible to win. Switching to another tab mid-run used to burn the whole timer and greet you with a loss when you came back; now the clock waits for you. Pickups also stay reliable on slow frames, because each frame's movement is checked in small steps.</description>
+		</item>
+		<item>
 			<title>Drops and rare threews.sol names show the holder early window before you try</title>
 			<link>https://three.ws/three</link>
 			<guid isPermaLink="false">2026-11-13:Drops and rare threews.sol names show the holder early window before you try</guid>
