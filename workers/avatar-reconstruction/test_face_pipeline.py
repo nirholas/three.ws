@@ -126,6 +126,33 @@ def test_selfie_decode_accepts_only_png_jpeg_webp():
     print("ok  selfie decode refuses every format outside PNG, JPEG and WEBP")
 
 
+def test_body_type_changes_the_reconstruction_template():
+    """
+    POST /reconstruct accepts body_type male | female | neutral and the selfie
+    modal offers Masc / Femme, so the three values must produce three different
+    bodies. On the parametric template body type is slider weights on one mesh;
+    a loader that hands back the same bytes for all three is the dead path this
+    pins shut.
+    """
+    import os
+
+    previous = os.environ.get("RECON_TEMPLATE")
+    os.environ["RECON_TEMPLATE"] = "parametric"
+    try:
+        loaded = {bt: fp._load_template(bt) for bt in ("male", "female", "neutral")}
+    finally:
+        if previous is None:
+            os.environ.pop("RECON_TEMPLATE", None)
+        else:
+            os.environ["RECON_TEMPLATE"] = previous
+    digests = {bt: hash(data) for bt, data in loaded.items()}
+    assert len(set(digests.values())) == 3, (
+        "body_type male/female/neutral resolved to identical template bytes: "
+        f"{sorted(digests)} all load the same GLB"
+    )
+    print("ok  body_type male, female and neutral load three distinct bodies")
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     try:
