@@ -20,6 +20,7 @@ const WIDTHS = [
 	{ name: 'phone', viewport: { width: 393, height: 851 }, isMobile: true },
 	{ name: 'small tablet', viewport: { width: 620, height: 900 } },
 	{ name: 'tablet', viewport: { width: 700, height: 900 } },
+	{ name: 'large tablet', viewport: { width: 860, height: 900 } },
 	{ name: 'desktop', viewport: { width: 1280, height: 800 } },
 ];
 

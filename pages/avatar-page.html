@@ -119,7 +119,14 @@
 					min-height: 38px;
 				}
 			}
-			@media (max-width: 600px) {
+			/* Inline, the labelled switcher (about 400 px) plus the back link and
+			   share buttons need about 830 px with the hire link showing. Below
+			   that it takes its own centred row instead of squeezing its
+			   neighbours onto two lines. */
+			@media (max-width: 860px) {
+				.av-actionbar {
+					flex-wrap: wrap;
+				}
 				.av-actionbar-center {
 					order: 3;
 					flex-basis: 100%;
