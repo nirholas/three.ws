@@ -209,6 +209,32 @@ export function injectTraceHeaders(span = als.getStore(), headers = {}) {
 	return headers;
 }
 
+/**
+ * A plain fetch wrapped in a CLIENT span that sends `traceparent`, for calls that
+ * must keep fetch's own semantics (no retries, the caller's own timeout), such as a
+ * handler calling another /api route on this deployment. Outside a request span it
+ * is exactly `fetch`.
+ * @param {string} name
+ * @param {string | URL} url
+ * @param {RequestInit} [init]
+ */
+export async function tracedFetch(name, url, init = {}) {
+	if (!als.getStore()) return fetch(url, init);
+	const span = startChildSpan(name, { 'http.request.method': String(init.method || 'GET').toUpperCase() }, SPAN_KIND_CLIENT);
+	const headers = new Headers(init.headers);
+	headers.set('traceparent', formatTraceparent(span.context));
+	try {
+		const res = await fetch(url, { ...init, headers });
+		span.setAttribute('http.response.status_code', res.status);
+		return res;
+	} catch (err) {
+		span.recordError(err);
+		throw err;
+	} finally {
+		span.end();
+	}
+}
+
 // ── export ──────────────────────────────────────────────────────────────
 
 /** @type {Span[]} */
@@ -311,7 +337,15 @@ async function networkExport(resourceSpans) {
 		body: JSON.stringify({ resourceSpans: [resourceSpans] }),
 		signal: AbortSignal.timeout(10_000),
 	});
-	if (!res.ok) throw new Error(`trace export http ${res.status}`);
+	if (!res.ok) {
+		// Google's error body names the cause (for a 403, the denied permission and the
+		// identity's project), so carry it into the warning instead of a bare status code.
+		const detail = await res
+			.json()
+			.then((b) => b?.error?.message || '')
+			.catch(() => '');
+		throw new Error(`trace export http ${res.status}${detail ? `: ${String(detail).slice(0, 300)}` : ''}`);
+	}
 }
 
 /** Flush buffered spans now. Never throws. */

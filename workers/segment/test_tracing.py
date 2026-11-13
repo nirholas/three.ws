@@ -1,6 +1,8 @@
 """Tests for the vendored tracing module. Stdlib only: run with python -m unittest."""
 
 import asyncio
+import json
+import time
 import unittest
 
 import tracing
@@ -101,6 +103,33 @@ class MiddlewareTests(unittest.TestCase):
         tracing._exporter.sender = explode
         self.call([(b"traceparent", ("00-%s-%s-01" % (TRACE, PARENT)).encode())])
         self.drain()
+
+
+class ExportErrorTests(unittest.TestCase):
+    """Production regression 2026-11-13: a rejected export logged only "HTTP Error 403: Forbidden"."""
+
+    def test_rejected_export_names_the_denied_permission(self):
+        import contextlib
+        import io
+        import urllib.error
+        from unittest import mock
+
+        body = json.dumps({"error": {"code": 403, "message": "Permission 'telemetry.traces.write' denied"}}).encode()
+
+        def reject(req, timeout=None):
+            raise urllib.error.HTTPError(req.full_url, 403, "Forbidden", {}, io.BytesIO(body))
+
+        exp = tracing._exporter
+        exp.last_warn = 0
+        exp.token, exp.token_expiry = "tok", time.time() + 3600
+        out = io.StringIO()
+        try:
+            with mock.patch.object(tracing.urllib.request, "urlopen", reject), contextlib.redirect_stdout(out):
+                exp.flush([tracing.Span("probe", tracing.SPAN_KIND_SERVER, TRACE, PARENT)])
+        finally:
+            exp.token, exp.token_expiry = None, 0.0
+        self.assertIn("403", out.getvalue())
+        self.assertIn("Permission 'telemetry.traces.write' denied", out.getvalue())
 
 
 if __name__ == "__main__":

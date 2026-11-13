@@ -16,6 +16,7 @@
 // front door and the generation pipeline are always the same deployment.
 
 import { selfOrigin } from '../_lib/self-origin.js';
+import { tracedFetch } from '../_lib/tracing.js';
 import { watsonxConfig, watsonxChatComplete } from '../_lib/watsonx.js';
 import { llmComplete } from '../_lib/llm.js';
 import { TICKET_HEADER, newTicket, ticketHandle } from '../_lib/forge-submit-ticket.js';
@@ -150,7 +151,7 @@ export async function startForge(base, { prompt, imageUrls, aspect, backend, pat
 		};
 		let res;
 		try {
-			res = await fetch(`${base}/api/gpt-forge`, {
+			res = await tracedFetch('studio gpt-forge submit', `${base}/api/gpt-forge`, {
 				method: 'POST',
 				headers: {
 					'content-type': 'application/json',
@@ -220,7 +221,7 @@ export async function startForge(base, { prompt, imageUrls, aspect, backend, pat
 export async function startRig(base, glbUrl, { deadline, ticket } = {}) {
 	let res;
 	try {
-		res = await fetch(`${base}/api/gpt-forge?action=rig`, {
+		res = await tracedFetch('studio gpt-forge rig', `${base}/api/gpt-forge?action=rig`, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json', ...(ticket ? { [TICKET_HEADER]: ticket } : {}) },
 			body: JSON.stringify({ glb_url: glbUrl }),
@@ -259,7 +260,7 @@ export async function pollJob(base, jobId, { timeoutMs, intervalMs, deadline: ca
 		let res = null;
 		let data = {};
 		try {
-			res = await fetch(`${base}/api/gpt-forge?job=${encodeURIComponent(jobId)}`, {
+			res = await tracedFetch('studio gpt-forge poll', `${base}/api/gpt-forge?job=${encodeURIComponent(jobId)}`, {
 				headers: { accept: 'application/json' },
 				signal: AbortSignal.timeout(Math.max(1_000, Math.min(Math.max(iMs * 3, 15_000), left()))),
 			});
@@ -313,7 +314,7 @@ export async function pollOnce(base, jobId) {
 		// the quality gate (20-30 s measured); every later poll of that job is
 		// served from the done-frame cache in milliseconds. 30 s covers the one
 		// slow read without letting a stalled upstream hold a buyer for a minute.
-		res = await fetch(`${base}/api/gpt-forge?job=${encodeURIComponent(jobId)}`, {
+		res = await tracedFetch('studio gpt-forge poll', `${base}/api/gpt-forge?job=${encodeURIComponent(jobId)}`, {
 			headers: { accept: 'application/json' },
 			signal: AbortSignal.timeout(30_000),
 		});

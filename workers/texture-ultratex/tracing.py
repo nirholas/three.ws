@@ -28,6 +28,7 @@ import re
 import secrets
 import threading
 import time
+import urllib.error
 import urllib.request
 
 DEFAULT_PROJECT = "aerial-vehicle-466722-p5"
@@ -133,8 +134,17 @@ class _Exporter:
                 "x-goog-user-project": project,
             },
         )
-        with urllib.request.urlopen(req, timeout=10):
-            pass
+        try:
+            with urllib.request.urlopen(req, timeout=10):
+                pass
+        except urllib.error.HTTPError as err:
+            # Google's error body names the cause (for a 403, the denied permission),
+            # so carry it into the warning instead of a bare status line.
+            try:
+                detail = json.loads(err.read().decode("utf-8")).get("error", {}).get("message", "")
+            except Exception:
+                detail = ""
+            raise RuntimeError("trace export http %d%s" % (err.code, ": " + str(detail)[:300] if detail else "")) from None
 
     def run(self):
         while True:

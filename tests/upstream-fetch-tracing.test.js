@@ -165,6 +165,32 @@ describe('export failure', () => {
 		expect(warn).toHaveBeenCalledOnce();
 		warn.mockRestore();
 	});
+
+	it('names the denied permission when the Telemetry API rejects the export', async () => {
+		// Production regression 2026-11-13: every export logged only "http 403", which hid
+		// that the exporting service account lacked telemetry.traces.write.
+		process.env.GCP_SERVICE_ACCOUNT_JSON = '';
+		const { _resetGcpTokenCache } = await import('../api/_lib/gcp-auth.js');
+		_resetGcpTokenCache();
+		const denied = {
+			error: { code: 403, message: "Permission 'telemetry.traces.write' denied on resource", status: 'PERMISSION_DENIED' },
+		};
+		global.fetch = vi.fn(async (url) => {
+			if (String(url).includes('metadata.google.internal')) {
+				return new Response(JSON.stringify({ access_token: 'tok', expires_in: 3600 }), { status: 200 });
+			}
+			return new Response(JSON.stringify(denied), { status: 403, headers: { 'content-type': 'application/json' } });
+		});
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const root = startRootSpan('GET /api/x', { traceparent: sampledHeader });
+		root.end();
+		await expect(flushSpans()).resolves.toBeUndefined();
+		const logged = warn.mock.calls.map((c) => c.join(' ')).join('\n');
+		expect(logged).toContain('http 403');
+		expect(logged).toContain("Permission 'telemetry.traces.write' denied");
+		warn.mockRestore();
+		_resetGcpTokenCache();
+	});
 });
 
 describe('express middleware', () => {

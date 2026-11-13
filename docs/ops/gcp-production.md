@@ -408,16 +408,19 @@ Environment (all optional): `TRACE_SAMPLE_RATE` (0..1; default 0.05 on Cloud Run
 
 Finding a slow Forge request: Console, Trace explorer, project `aerial-vehicle-466722-p5`, filter span name `POST /api/forge`, sort by latency, open the waterfall. Each `forge.submit <mode>` bar contains its `upstream gcp:submit:...` call, and the worker's own `POST /infer` span nests under it. From the CLI: `curl -H "authorization: Bearer $(gcloud auth print-access-token)" https://cloudtrace.googleapis.com/v1/projects/aerial-vehicle-466722-p5/traces/<trace id>`.
 
-One-time setup (already applied 2026-11-04; config only):
+One-time setup (config only; APIs enabled 2026-11-04, the exporter bindings corrected 2026-11-13):
 
 ```bash
 gcloud services enable cloudtrace.googleapis.com telemetry.googleapis.com --project aerial-vehicle-466722-p5
-gcloud projects add-iam-policy-binding aerial-vehicle-466722-p5 \
-  --member=serviceAccount:three-ws@aerial-vehicle-466722-p5.iam.gserviceaccount.com \
-  --role=roles/cloudtrace.agent --condition=None
+# roles/cloudtrace.agent carries telemetry.traces.write, the permission the OTLP endpoint checks.
+for sa in vercel-inference avatar-reconstruction-sa three-ws; do
+  gcloud projects add-iam-policy-binding aerial-vehicle-466722-p5 \
+    --member=serviceAccount:$sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com \
+    --role=roles/cloudtrace.agent --condition=None
+done
 ```
 
-A worker that runs as a different service account needs the same `roles/cloudtrace.agent` binding.
+**Grant the identity that actually exports, not the one the service runs as.** The API signs its export with `getGcpAccessToken()` ([api/_lib/gcp-auth.js](../../api/_lib/gcp-auth.js)), which prefers `GCP_SERVICE_ACCOUNT_JSON` over the metadata server. In production that env var is the secret `gcp-vercel-inference-sa-key`, so the API exports as `vercel-inference@`, not its runtime SA `three-ws@`. The Forge-path workers run as `avatar-reconstruction-sa@` and export with their metadata token. From 2026-11-04 to 2026-11-13 only `three-ws@` had the binding, so every export failed with `http 403` and no spans landed. Find the identities with `gcloud run services describe <service> --region us-central1 --format='value(spec.template.spec.serviceAccountName)'` (workers), and read only `client_email` from the API's key secret. An export failure now logs Google's error message (for example the denied permission), so a missing binding names itself in the logs: `gcloud logging read 'textPayload:"[tracing]"' --freshness=1h`.
 
 ## Crons (Cloud Scheduler)
 
