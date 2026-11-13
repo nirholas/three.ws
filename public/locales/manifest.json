@@ -40,6 +40,11 @@
 			"code": "pt-BR",
 			"name": "Português (BR)",
 			"dir": "ltr"
+		},
+		{
+			"code": "it",
+			"name": "Italiano",
+			"dir": "ltr"
 		}
 	]
 }
