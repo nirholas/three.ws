@@ -159,10 +159,12 @@ if (isMain) {
 		process.exit(opts.help ? 0 : 1);
 	}
 	const distRoot = path.resolve(opts.dist);
+	// Every Vite build emits hashed bundles under assets/; a directory without
+	// it is not a build (the route table, not an index.html, decides what / is).
 	try {
-		statSync(path.join(distRoot, 'index.html'));
+		if (!statSync(path.join(distRoot, 'assets')).isDirectory()) throw new Error('not a directory');
 	} catch {
-		console.error(`[perf-preview] ${distRoot} has no index.html; build first (npm run build).`);
+		console.error(`[perf-preview] ${distRoot} has no assets/ directory; build first (npm run build).`);
 		process.exit(1);
 	}
 	createApp({ distRoot, upstream: opts.upstream }).listen(opts.port, () => {
