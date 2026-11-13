@@ -22,9 +22,9 @@
 //   FORGE_THUMBNAIL_CONCURRENCY       parallel renders (default 2)
 //
 // Sizing: a render is ~3-6s, so 8 models at concurrency 2 lands ~25-40s, inside
-// maxDuration=120. At */5 that is ~96 models/hour; a large backlog is cleared
-// faster with the bulk loop script (scripts/backfill-forge-thumbnails.mjs),
-// which shares this claim ledger. `?dry_run=1` reports coverage without
+// maxDuration=120. At */5 that is ~96 models/hour. A large legacy PNG backlog
+// is drained faster with scripts/upgrade-forge-thumbnails.mjs, which runs the
+// same upgradeLegacyBatch() in bulk. `?dry_run=1` reports coverage without
 // rendering. Skips cleanly when forge persistence is unconfigured.
 
 import { json, method, wrapCron } from '../_lib/http.js';
