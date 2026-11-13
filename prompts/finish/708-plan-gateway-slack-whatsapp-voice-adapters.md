@@ -179,6 +179,10 @@ Notifications from `api/_lib/notify-prefs.js` gain `telegram` and `discord` chan
 ~~~~
 
 
+## Status (2026-11-13)
+
+Re-verified: the worker suite is still 12 files / 188 tests green, nothing under workers/agent-gateway or api/gateway has changed since, and the shipped commits are on threews/main as rebased copies (for example f3767e26b and 4d1caf30a), so the push is done. Production has not been redeployed: https://three.ws/api/gateway/{slack,whatsapp,voice} all return 404 "No API route matches". These routes need no vercel.json entry because filesystem routing serves them. Still owner-only: run `npm run deploy:gcp:full`, create the Slack app and the Meta WhatsApp app, buy a Twilio number, and set the env listed in docs/gateways.md on three-ws-api and agent-gateway with `--update-env-vars`.
+
 ## Status (2026-11-12)
 
 Built, tested and verified; kept open for owner steps only. Shipped: the Slack, WhatsApp and voice adapters and receivers (ad95ba508, be055e01b, e192880a2, 8a183d011, 4ed2d915c), the voice adapter tests and registry updates (2a2df1d49), the ffmpeg-static fallback fix with its test (0d149133a), the three Connections cards with the browser push-to-talk panel (f0e1a584f), and docs (abf5e1e75). Worker suite 12 files / 188 tests green; a real browser round trip on /settings/?tab=connections transcribed speech, ran the agent and played the spoken reply. Remaining, owner-gated: create the Slack app and the Meta WhatsApp app, buy a Twilio number, set the env listed in docs/gateways.md on three-ws-api and agent-gateway with `--update-env-vars`, then `git push threews main` and `npm run deploy:gcp:full`.
