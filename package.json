@@ -211,6 +211,7 @@
 		"setup": "node scripts/setup-dev.mjs",
 		"dev": "vite --port 3000",
 		"dev:multi": "npm run dev --prefix multiplayer",
+		"play:moderate": "node scripts/moderate-play.mjs",
 		"dev:walk-all": "node scripts/dev-walk-all.mjs",
 		"demo:agent-wallet-bridge": "node scripts/agent-wallet-x402-bridge.mjs",
 		"dev:lib": "TARGET=lib vite",

@@ -330,6 +330,8 @@ node scripts/moderate-play.mjs ban rowdy --minutes 1440 --reason "abuse" # omit 
 node scripts/moderate-play.mjs unban --account <wallet>
 ```
 
+`npm run play:moderate -- <command>` is the same CLI (for example `npm run play:moderate -- list`).
+
 Targets are a display name (case-insensitive), `--session <id>`, `--account <wallet>` or `--key <playerKey>`. Add `--coin <mint>` to act in one community's world only. A ban matches the wallet, the three.ws account and the guest token together, so reconnecting does not dodge it. A guest who clears browser storage gets a new guest identity: kick again, or ban their wallet if they sign in.
 
 Players can report each other from the player card (click a nameplate, then Report). Three distinct reporters inside five minutes mute the target for ten minutes automatically; a report never bans, a moderator decides that. The muted player sees a strip above the chat box saying how long is left. Reports are logged as `report <from> -> <to> (<reason>)` in the multiplayer service logs.

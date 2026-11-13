@@ -1,5 +1,7 @@
 # /play world moderation with host mute, kick, ban and player reports
 
+**Status (2026-11-13, re-verified):** 21 of 21 tests pass under `npx vitest run tests/walkroom-moderation.test.js` (it is a vitest suite; `node --test` cannot load it). Added the missing `npm run play:moderate` alias from task 5 and verified it live against a local multiplayer server (`list` exit 0; wrong secret gets `401 bad_signature`). Remaining for the owner, unchanged: redeploy multiplayer with `multiplayer/deploy-cloudrun.sh`, set `UPSTASH_REDIS_REST_URL`/`_TOKEN` on it for ban persistence, run `npm run i18n:translate` once Vertex billing is restored.
+
 **Status (2026-11-12, re-verified by w512-D):** 21 of 21 unit tests still pass and the code is on main. Only owner steps remain (below).
 
 **Status (2026-11-04):** Code, tests, CLI and runbook are committed (5944e12c5). Verified: 21 unit tests, a live signed e2e against a real multiplayer server (list, mute, unmute, kick, 401 on bad or missing signature), and a browser run of the report dialog and muted strip. Remaining for the owner: redeploy the multiplayer service with `multiplayer/deploy-cloudrun.sh`, set `UPSTASH_REDIS_REST_URL`/`_TOKEN` on it for ban persistence, run `npm run i18n:translate` once Vertex billing is restored (non-English locales fall back to English).
