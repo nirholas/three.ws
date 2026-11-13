@@ -18,6 +18,7 @@
 
 import { createListControls } from '../../src/shared/list-controls.js';
 import { ensureModelViewerOrFallback } from '../../src/shared/model-viewer-loader.js';
+import { resizedImageUrl } from '../../src/shared/image-url.js';
 import { skeletonHTML, emptyStateHTML, errorStateHTML } from '../../src/shared/state-kit.js';
 
 const CHAINS = [
@@ -554,13 +555,13 @@ function renderCard(item) {
  */
 function renderThumb({ image, glbUrl, has3d, alt }) {
 	if (image) {
-		// `decoding="async"` keeps the decode of every directory thumbnail off the
-		// critical rendering path. These are 768px source images painted into a
-		// 293px box, so a synchronous decode of a grid's worth of them lands as
-		// main-thread blocking time right when the page is trying to become
-		// interactive. The box itself is already reserved by CSS
+		// resizedImageUrl() asks /cdn/ for a 512 px WebP (2x the 293px box) instead
+		// of the stored 768px source. `decoding="async"` keeps the decode of a
+		// grid's worth of them off the main thread, where it would otherwise land
+		// as blocking time while the page is trying to become interactive. The
+		// box itself is already reserved by CSS
 		// (.explore-card-thumb is `aspect-ratio: 1 / 1`), so nothing shifts.
-		return `<img src="${escapeAttr(image)}" alt="${escapeAttr(alt || '')}" loading="lazy" decoding="async" data-fallback="element" data-fallback-class="explore-card-ph" data-fallback-text="${has3d ? '🎭' : '🤖'}" />`;
+		return `<img src="${escapeAttr(resizedImageUrl(image, 586))}" alt="${escapeAttr(alt || '')}" loading="lazy" decoding="async" data-fallback="element" data-fallback-class="explore-card-ph" data-fallback-text="${has3d ? '🎭' : '🤖'}" />`;
 	}
 	if (glbUrl) {
 		return `<model-viewer

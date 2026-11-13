@@ -23,6 +23,14 @@ describe('resizedImageUrl', () => {
 		expect(resizedImageUrl('data:image/png;base64,AAAA', 480)).toBe('data:image/png;base64,AAAA');
 		expect(resizedImageUrl('blob:http://localhost/1234', 480)).toBe('blob:http://localhost/1234');
 	});
+	it('serves first-party /cdn/ rasters as display-sized /cdn/_v/ variants', () => {
+		// Thumbnails became same-origin /cdn/ URLs on 2026-10-24, so the same-origin
+		// skip above sent /forge a 348 KB poster for a 200 px card.
+		expect(resizedImageUrl(`${location.origin}/cdn/forge/k/a.jpg`, 480)).toBe(`${location.origin}/cdn/_v/512/forge/k/a.jpg`);
+		expect(resizedImageUrl('https://three.ws/cdn/thumb/a.png', 72)).toBe('https://three.ws/cdn/_v/128/thumb/a.png');
+		expect(resizedImageUrl('/cdn/u/x/a_og.png', 240)).toBe('/cdn/_v/256/u/x/a_og.png');
+		expect(resizedImageUrl('https://three.ws/cdn/u/x/model.glb', 480)).toBe('https://three.ws/cdn/u/x/model.glb');
+	});
 	it('passes through empty and non-string inputs', () => {
 		expect(resizedImageUrl('', 480)).toBe('');
 		expect(resizedImageUrl(null, 480)).toBe(null);

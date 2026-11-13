@@ -19,11 +19,12 @@
 
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
-import { GetObjectCommand } from '@aws-sdk/client-s3';
+import { GetObjectCommand, HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { cors, error, wrap } from './_lib/http.js';
 import { r2, isStorageInfrastructureError, publicUrlOrNull } from './_lib/r2.js';
 import { fetchUpstream } from './_lib/upstream-fetch.js';
 import { env } from './_lib/env.js';
+import { parseVariantKey, variantObjectKey } from '../src/shared/cdn-variant.js';
 
 // A flat #e2e2e2 64x64 PNG, served in place of a 502 when the whole storage
 // product is down (both the signed read and the public-domain fallback fail
@@ -106,6 +107,95 @@ function cacheControlFor(key) {
 		: 'public, max-age=86400, s-maxage=2592000, stale-while-revalidate=604800';
 }
 
+// Sources above this are not decoded for a variant (a decode holds the whole
+// bitmap in memory); the caller is sent to the original instead.
+const MAX_VARIANT_SOURCE_BYTES = 25 * 1024 * 1024;
+
+async function readBody(body) {
+	const chunks = [];
+	for await (const chunk of body) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+	return Buffer.concat(chunks);
+}
+
+function isNotFound(err) {
+	const code = err?.Code || err?.name;
+	return code === 'NoSuchKey' || code === 'NotFound' || err?.$metadata?.httpStatusCode === 404;
+}
+
+// Same-origin hop to the untouched object. Same origin, so the wildcard CORS
+// grant survives the redirect (unlike the r2.dev hop described further down).
+function redirectToSource(res, source) {
+	res.statusCode = 302;
+	res.setHeader('location', `/cdn/${source}`);
+	res.setHeader('cache-control', 'public, max-age=60, s-maxage=60');
+	return res.end();
+}
+
+// GET /cdn/_v/<width>/<key>: the object at <key> resized to fit <width> and
+// encoded as WebP (see src/shared/cdn-variant.js). Built on the first request
+// for a source version and persisted under variants/, so later edge misses are
+// one HEAD plus one GET. Any failure to build a derivative serves the original
+// rather than an error: a full-size image beats a broken one.
+async function serveVariant(req, res, { width, source }) {
+	let head;
+	try {
+		head = await r2.send(new HeadObjectCommand({ Bucket: env.S3_BUCKET, Key: source }));
+	} catch (err) {
+		if (isNotFound(err)) return error(res, 404, 'not_found', 'object not found');
+		console.error('[cdn-object] variant head failed, serving original:', source, err?.message);
+		return redirectToSource(res, source);
+	}
+	const etag = `"${String(head.ETag || '').replace(/"/g, '')}-w${width}"`;
+	const cacheControl = cacheControlFor(source);
+	if (req.headers['if-none-match'] === etag) {
+		res.statusCode = 304;
+		res.setHeader('etag', etag);
+		res.setHeader('cache-control', cacheControl);
+		return res.end();
+	}
+
+	const vkey = variantObjectKey(source, width, head.ETag);
+	let bytes = null;
+	try {
+		const obj = await r2.send(new GetObjectCommand({ Bucket: env.S3_BUCKET, Key: vkey }));
+		bytes = await readBody(obj.Body);
+	} catch (err) {
+		if (!isNotFound(err)) console.error('[cdn-object] variant read failed, rebuilding:', vkey, err?.message);
+	}
+
+	if (!bytes) {
+		if (head.ContentLength > MAX_VARIANT_SOURCE_BYTES) return redirectToSource(res, source);
+		try {
+			const obj = await r2.send(new GetObjectCommand({ Bucket: env.S3_BUCKET, Key: source }));
+			const original = await readBody(obj.Body);
+			const sharp = (await import('sharp')).default;
+			bytes = await sharp(original)
+				.rotate()
+				.resize(width, width, { fit: 'inside', withoutEnlargement: true })
+				.webp({ quality: 80, effort: 4 })
+				.toBuffer();
+		} catch (err) {
+			console.error('[cdn-object] variant build failed, serving original:', source, err?.message);
+			return redirectToSource(res, source);
+		}
+		try {
+			await r2.send(new PutObjectCommand({ Bucket: env.S3_BUCKET, Key: vkey, Body: bytes, ContentType: 'image/webp' }));
+		} catch (err) {
+			console.error('[cdn-object] variant persist failed:', vkey, err?.message);
+		}
+	}
+
+	res.statusCode = 200;
+	res.setHeader('content-type', 'image/webp');
+	res.setHeader('content-security-policy', "default-src 'none'; sandbox");
+	res.setHeader('cross-origin-resource-policy', 'cross-origin');
+	res.setHeader('cache-control', cacheControl);
+	res.setHeader('etag', etag);
+	res.setHeader('content-length', String(bytes.length));
+	if (req.method === 'HEAD') return res.end();
+	return res.end(bytes);
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,HEAD,OPTIONS', origins: '*' })) return;
 	if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -118,6 +208,9 @@ export default wrap(async (req, res) => {
 	if (!key || key.length > MAX_KEY_LENGTH || key.includes('..') || !KEY_RE.test(key)) {
 		return error(res, 400, 'invalid_key', 'malformed object key');
 	}
+
+	const variant = parseVariantKey(key);
+	if (variant) return serveVariant(req, res, variant);
 
 	const ifNoneMatch = req.headers['if-none-match'];
 	const range = req.headers.range;
