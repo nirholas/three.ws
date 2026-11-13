@@ -447,6 +447,11 @@ export function txBase64FromPayload(paymentPayload) {
  * token balance: it is the sponsor being too poor to sign. Both spellings the
  * RPCs use are matched, the structured `err` object and the human sentence that
  * reaches the sweep path inside a SendTransactionError message.
+ *
+ * A fee payer at exactly 0 lamports does not exist on chain, so the runtime has
+ * nothing to charge and returns the bare top-level transaction error
+ * `AccountNotFound` (a missing account inside an instruction arrives wrapped in
+ * `InstructionError`, never bare). That is the same condition, one step deeper.
  * @param {unknown} simErr
  * @returns {boolean}
  */
@@ -456,6 +461,7 @@ export function isFeePayerRentFailure(simErr) {
 		return Number(/** @type {any} */ (simErr)?.InsufficientFundsForRent?.account_index) === 0;
 	}
 	const s = String(simErr);
+	if (s.trim() === 'AccountNotFound') return true;
 	if (/InsufficientFundsForRent/.test(s)) return /"account_index"\s*:\s*0/.test(s);
 	return /account \(0\) with insufficient funds for rent/i.test(s);
 }

@@ -61,6 +61,20 @@ describe('isFeePayerRentFailure', () => {
 	});
 });
 
+describe('isFeePayerRentFailure on a fee payer that does not exist', () => {
+	// Measured 2026-11-13: the sponsor sat at exactly 0 lamports, so the runtime has
+	// no account to charge and answers with the bare transaction error
+	// `AccountNotFound` (228 rows of the verify book), not InsufficientFundsForRent.
+	it('treats the top-level AccountNotFound as the fee payer being unfunded', () => {
+		expect(isFeePayerRentFailure('AccountNotFound')).toBe(true);
+	});
+
+	it('does not treat a missing account inside an instruction as the fee payer', () => {
+		expect(isFeePayerRentFailure({ InstructionError: [2, 'InvalidAccountData'] })).toBe(false);
+		expect(isFeePayerRentFailure('SomeOtherAccountNotFoundText')).toBe(false);
+	});
+});
+
 describe('noteSponsorRentFailure', () => {
 	// The guard holds for 60s and clears by timestamp, so each case runs on its
 	// own clock far past any previous trip rather than sharing a reset hook.
@@ -77,6 +91,12 @@ describe('noteSponsorRentFailure', () => {
 		const now = clock();
 		expect(sponsorKnownBelowFloor(now)).toBe(false);
 		expect(noteSponsorRentFailure(SIM_ERR_OBJECT, SPONSOR, now)).toBe(true);
+		expect(sponsorKnownBelowFloor(now)).toBe(true);
+	});
+
+	it('trips when the sponsor is at zero lamports and simulation says AccountNotFound', () => {
+		const now = clock();
+		expect(noteSponsorRentFailure('AccountNotFound', SPONSOR, now)).toBe(true);
 		expect(sponsorKnownBelowFloor(now)).toBe(true);
 	});
 
