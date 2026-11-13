@@ -6,7 +6,7 @@
 // as `'pending'` — saving its config while the runtime renders a "coming soon"
 // banner — and flipped to `'ready'` the moment its runtime lands.
 
-import { z } from 'zod';
+import { z } from './shared/zod.js';
 
 export const WIDGET_TYPES = {
 	turntable: {

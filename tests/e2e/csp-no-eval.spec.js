@@ -10,7 +10,7 @@ import { test, expect } from '@playwright/test';
 const POLICY =
 	"script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: http://localhost:* https:; worker-src 'self' blob:";
 
-const ROUTES = ['/', '/studio', '/viewer', '/agents', '/pay', '/activity'];
+const ROUTES = ['/', '/studio', '/viewer', '/showcase', '/agents', '/pay', '/activity'];
 
 for (const route of ROUTES) {
 	test(`no eval-class CSP violation or page error on ${route}`, async ({ page }) => {

@@ -59,9 +59,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // The pages whose inline handlers were converted to delegated listeners, plus
 // the shells that carry the most inline script. A regression shows up here
-// first.
+// first. /showcase is the app.html viewer shell, which loads zod schemas: it
+// guards the no-eval policy against a library feature probe (zod's JIT check)
+// that only fires once a schema is built.
 const DEFAULT_PATHS = [
 	'/',
+	'/showcase',
 	'/activity',
 	'/coin-intel',
 	'/daily-match',

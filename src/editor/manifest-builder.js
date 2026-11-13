@@ -2,7 +2,7 @@
 // Usage: mountManifestBuilder(rootEl, options)
 // Feature-flagged behind ?editor=v2 — do not remove register-ui.js until this ships.
 
-import { z } from 'zod';
+import { z } from '../shared/zod.js';
 import { renderMarkdown } from '../shared/markdown.js';
 import '../element.js';
 import { PersonaInterview } from './persona-interview.js';
