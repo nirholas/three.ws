@@ -21,8 +21,14 @@
 // the cluster answer AccountNotFound before any instruction runs).
 //
 // Usage:
-//   node scripts/verify-token2022-purchase.mjs [--payer <pubkey>] [--treasury <pubkey>] [--rpc <url>]
+//   node scripts/verify-token2022-purchase.mjs [--holder <pubkey>] [--payer <pubkey>] [--treasury <pubkey>] [--rpc <url>]
 //
+//   --holder    a $THREE holder wallet to simulate as. Default: discovered from
+//               getTokenLargestAccounts. Public and keyless lanes often answer
+//               that heavy method with 429 (seen 2026-11-13 on every keyless
+//               endpoint); --holder skips it and needs only cheap reads. The
+//               other way through is a keyed lane, loaded into the shell only:
+//               eval "$(node scripts/read-service-env.mjs '^(HELIUS_API_KEY|ALCHEMY_API_KEY)$')"
 //   --payer     gasless fee payer. Default: the public key of
 //               MARKETPLACE_PAYER_KEYPAIR when set locally (derived, never used
 //               to sign), else the holder itself, which is stated in the output.
@@ -74,8 +80,32 @@ function resolveTreasury() {
 	return { key: Keypair.generate().publicKey, source: 'fresh address (no treasury configured locally)' };
 }
 
+async function checkHolder(connection, mint, tokenProgram, minAtomics, ownerKey) {
+	const ata = ataFor(mint, ownerKey, tokenProgram);
+	const { value: balance } = await connection.getTokenAccountBalance(ata, 'confirmed');
+	const atomics = BigInt(balance.amount);
+	const lamports = await connection.getBalance(ownerKey, 'confirmed');
+	if (atomics < minAtomics || lamports < MIN_PAYER_LAMPORTS) {
+		throw new Error(
+			`--holder ${ownerKey.toBase58()} has ${atomics} atomics and ${lamports} lamports; the simulation needs >= ${minAtomics} atomics and >= ${MIN_PAYER_LAMPORTS} lamports`,
+		);
+	}
+	return { owner: ownerKey, ata, atomics, lamports };
+}
+
 async function findHolder(connection, mint, tokenProgram, minAtomics) {
-	const { value: largest } = await connection.getTokenLargestAccounts(mint, 'confirmed');
+	const holderFlag = arg('holder');
+	if (holderFlag) return checkHolder(connection, mint, tokenProgram, minAtomics, new PublicKey(holderFlag));
+	let largest;
+	try {
+		({ value: largest } = await connection.getTokenLargestAccounts(mint, 'confirmed'));
+	} catch (err) {
+		throw new Error(
+			`getTokenLargestAccounts failed on every endpoint (${err?.message || err}). Public and keyless lanes rate-limit this method: ` +
+				`pass --holder <pubkey> of a known $THREE holder, or load a keyed lane with ` +
+				`eval "$(node scripts/read-service-env.mjs '^(HELIUS_API_KEY|ALCHEMY_API_KEY)$')" and rerun`,
+		);
+	}
 	// A provider error on one candidate's read skips that candidate rather than
 	// ending the search: public lanes intermittently refuse single reads.
 	let lastReadError = null;
