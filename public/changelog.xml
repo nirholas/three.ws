@@ -31,6 +31,14 @@
 			<description>The new Custody tab in the agent wallet hub lets an owner pick who signs fund-moving transactions. Platform keeps today's behavior, where the server signs inside your spend policy. My wallet means the platform never signs: build routes called with signer &quot;external&quot; return an unsigned, simulated Solana transaction and a tx_id, your own wallet signs it, and POST /api/tx/submit checks the bytes match what was prepared before broadcasting and recording it in the custody ledger. Session key grants a delegate an on-chain USDC cap and an expiry, so the agent can act alone and a transfer over the cap is refused. Export key re-confirms your identity, seals the key so only your browser can open it, encrypts it to a passphrase that never leaves the page, shows it once, logs the export, and offers to rotate to a fresh key and sweep the funds. A balance history chart (24h, 7d, 30d) is filled by a new hourly snapshot job, and GET /api/me/wallet plus the get_private_wallet_balance, get_wallet_summaries and get_balance_history tools put your own linked wallet next to your agents'.</description>
 		</item>
 		<item>
+			<title>IBM Granite Guardian is live in production on our own GPU</title>
+			<link>https://three.ws/docs/ibm</link>
+			<guid isPermaLink="false">2026-11-13:IBM Granite Guardian is live in production on our own GPU</guid>
+			<pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The governance check that screens agent messages, new agent identities and autonomous sends now runs on real IBM Granite Guardian in production. Until today it answered with a not-configured error and the identity check let every agent through unscreened. We deployed IBM's open-weight Granite Guardian 3.3 model on a dedicated Cloud Run GPU and connected the site to it. In a live check, a friendly greeting came back allowed and a jailbreak that tried to drain an agent's SOL came back blocked with 99.98 percent confidence, each verdict scored from the model's own probabilities and labelled with the model that produced it. The health dashboard now shows the Guardian lane as healthy. Granite embeddings for the agent galaxy still need IBM's hosted watsonx.ai service, which is not connected yet.</description>
+		</item>
+		<item>
 			<title>Native $THREE launchpad coins can be quoted, bought and sold again, and the creator's launch buy shows as a buy</title>
 			<link>https://three.ws/docs/native-launchpad</link>
 			<guid isPermaLink="false">2026-11-13:Native $THREE launchpad coins can be quoted, bought and sold again, and the creator's launch buy shows as a buy</guid>

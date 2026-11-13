@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-13",
+			"title": "IBM Granite Guardian is live in production on our own GPU",
+			"summary": "The governance check that screens agent messages, new agent identities and autonomous sends now runs on real IBM Granite Guardian in production. Until today it answered with a not-configured error and the identity check let every agent through unscreened. We deployed IBM's open-weight Granite Guardian 3.3 model on a dedicated Cloud Run GPU and connected the site to it. In a live check, a friendly greeting came back allowed and a jailbreak that tried to drain an agent's SOL came back blocked with 99.98 percent confidence, each verdict scored from the model's own probabilities and labelled with the model that produced it. The health dashboard now shows the Guardian lane as healthy. Granite embeddings for the agent galaxy still need IBM's hosted watsonx.ai service, which is not connected yet.",
+			"tags": [
+				"feature",
+				"infra"
+			],
+			"link": "/docs/ibm"
+		},
+		{
+			"date": "2026-11-13",
 			"title": "Talking to an agent through three.ws Glass gets an answer again",
 			"summary": "On the /glass lens app, picking a reply to start talking to an agent could come back blank: the chat model spent its whole answer thinking to itself and returned nothing to show on the lens, along with no suggested next replies. Lens conversations now ask that model for a direct answer, so the agent replies and offers the next things to say. The lens app is also tested end to end against real agents placed on the map, walking from scanning to the nearby list, the agent card, a conversation and the phone handoff with only the arrow keys, Enter and Escape that the Neural Band produces.",
 			"tags": ["fix"],

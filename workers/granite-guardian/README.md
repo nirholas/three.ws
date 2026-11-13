@@ -28,7 +28,9 @@ gcloud run services update three-ws-api --region us-central1 \
   --project aerial-vehicle-466722-p5 --update-env-vars GRANITE_GUARDIAN_URL=$URL
 ```
 
-Verify with `node scripts/verify-granite-guardian.mjs` (a benign prompt must come back safe and a harmful one flagged, with logprob scores), then read the `granite_guardian` subsystem in `curl -s https://three.ws/api/healthz`: it turns from `down` to `ok` once the API's `GET /health` probe of this service passes.
+Verify with `GRANITE_GUARDIAN_URL=$URL GCP_RECONSTRUCTION_KEY=$(gcloud secrets versions access latest --secret avatar-reconstruction-key --project aerial-vehicle-466722-p5) node scripts/verify-granite-guardian.mjs --require-live` (it exits 1 unless the jailbreak prompt is labelled Yes and the greeting No, with logprob scores), then read the `granite_guardian` subsystem in `curl -s https://three.ws/api/healthz`: it turns from `down` to `ok` once the API's `GET /health` probe of this service passes.
+
+**Deployed 2026-11-13** (build `712b2af4`, revision `granite-guardian-00001-gtw`, URL `https://granite-guardian-lp642k3kpa-ez.a.run.app`). The first build ran about 45 minutes end to end. A cold start takes roughly 15 minutes: vLLM reads the 15 GB checkpoint over the Cloud Storage FUSE mount at about three minutes per shard, inside the 20-minute startup probe. That is why `_MIN_INSTANCES` stays at 1; do not drop it to 0 for a live surface.
 
 The `--args` in `cloudbuild.yaml` must only use flags the pinned `_VLLM_TAG` accepts, because `vllm serve` exits on an unknown argument and the startup probe then waits its full 20 minutes before failing the revision. On v0.29.0 request logging is off by default and only `--enable-log-requests` exists (the older `--disable-log-requests` was removed), so the config passes neither. Re-check the flags against that release's `vllm/engine/arg_utils.py` whenever you bump the tag.
 

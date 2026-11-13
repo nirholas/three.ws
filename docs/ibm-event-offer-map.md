@@ -27,7 +27,7 @@ IBM-facing that comes out of this document is read against [ibm.md](./ibm.md) an
 | Meetup #2 is already configured | `public/event.json` holds "$THREE Community Meetup #2", Friday 2026-09-25, 16:00 to 17:00 UTC, souvenir `star-shades-meetup-2`. Committed in `0e184e441`, passes `npm run check:event`. **Not deployed**: the live `/event.json` still answers the no-event state | The date exists in the repo and nowhere else. IBM Community shows 0 upcoming events, and T-7 is today |
 | The first meetup | 2026-08-07, nine hours inside `/play`, peak 3,145 concurrent avatars in the open world | The format is proven and the audience is mostly the open world, not the 18 group members |
 | Group size | 18 members, 7 blogs, 8 threads, 2 past events | Small. Events should recruit into the group, not assume it |
-| No IBM model is serving in production | Verified live: `/api/ibm/galaxy` answers `watsonx_not_configured` and `/api/guardian/assess` answers `guardian_unconfigured`. The Cloud Run service carries no `WATSONX_*` and no `GRANITE_GUARDIAN_*` variable, and the self-hosted Guardian GPU worker in `workers/granite-guardian/` is not deployed. Re-measured 2026-11-04: unchanged (`POST /api/guardian/assess` 503 `guardian_unconfigured`, no `granite-guardian` service in europe-west4). The worker's deploy config now matches the pinned vLLM v0.29.0 flags (its September run never got past staging weights), and `/api/healthz` reports the gap as the `granite_guardian` subsystem, `down` in production until a lane is wired | Every idea below marked "needs Granite" is code-complete and dark. Restoring this is the single highest-leverage fix on the page (section 6) |
+| Granite Guardian is serving in production; the watsonx.ai lane is not | Measured 2026-11-13: the self-hosted worker `granite-guardian` (europe-west4, one L4, revision `granite-guardian-00001-gtw`, ibm-granite/granite-guardian-3.3-8b on vLLM v0.29.0) is live and wired to `three-ws-api` through `GRANITE_GUARDIAN_URL` (revision `three-ws-api-00534-q8p`). `POST /api/guardian/assess` returns 200: a benign greeting comes back `allow` (top risk jailbreak p=0.0001), a jailbreak plus SOL-drain prompt comes back `block` (jailbreak p=0.9998), every score a real logprob from `provider: self-hosted`. `node scripts/verify-granite-guardian.mjs --require-live` passes, `/api/agents/identity-check` answers `configured: true`, and `/api/healthz` reports `granite_guardian` `ok`. Still dark: `/api/ibm/galaxy` answers `watsonx_not_configured`, because embeddings, Vision, TimeSeries and Orchestrate need the hosted watsonx.ai pair (`WATSONX_API_KEY`, `WATSONX_PROJECT_ID`) | Granite claims are now true for governance (Guardian verdicts, the identity screen, the spend cap). Claims about the galaxy, Vision, the twin or Orchestrate stay off until watsonx.ai is set (section 6) |
 | One room holds 100 people | `WALK_ROOM_MAX_CLIENTS` defaults to 100 and is not set on the live service. Past the cap, new joiners land silently in a parallel copy of the world | A crowd above 100 does not see itself as one crowd. Host announcements still reach every copy |
 | Moderation | Slur gate and rate limits, plus operator mute, kick and ban (`node scripts/moderate-play.mjs`) and in-world player reports that auto-mute at three distinct reporters | Name a moderator and rehearse the runbook in [LIVE-OPS.md](./event-readiness/LIVE-OPS.md#moderation) |
 | In-world stage | `StageRoom`, the show director and `/stage` all work. The plaza landmark `src/game/plaza-stage.js` is never imported by the world, and the show module it lazy-loads does not exist | Living Stage shows run at `/stage` today, not inside `/play`. The event-two kit's tour beat that points at a Plaza Stage marquee will find nothing |
@@ -85,7 +85,7 @@ This is IBM's home audience and the one we have shown the least.
 | `/guardian` | Threshold-approved, time-locked wallet recovery that never exposes a key | Continuity and key management |
 | `/brownout`, `/status`, `/guards` | Every fallback proven by breaking its upstream inside the real request path; 90-day uptime; a repo with no CI held correct by local guards | A reliability engineering session that is genuinely unusual |
 | `/smart-home` and its privacy pages | An agent that runs a real house and stops to ask before it unlocks, opens or disarms anything; role scopes; data that is never stored | Physical-world consent, the subject of the governance post published to the group on 2026-09-18 |
-| `/api/guardian/assess`, `@three-ws/guardian` | Granite Guardian verdicts plus a hash-chained audit ledger and per-period spend caps | The IBM-native governance demo. Dark until Guardian is restored |
+| `/api/guardian/assess`, `@three-ws/guardian` | Granite Guardian verdicts plus a hash-chained audit ledger and per-period spend caps | The IBM-native governance demo. Live since 2026-11-13 on the self-hosted Guardian lane |
 | `/agent-identities`, `/pill` | A brand brief becomes a rigged mascot with studio renders; the write-up of rigging a flat logo into a 52-bone character | "We can rig your mascot", made concrete |
 | `/concierge`, `/assistant`, `/herald`, `/glance` | One-tag site concierge, floating assistant, a character that announces events with an accessible fallback, an agent card on the Windows widgets board or in Slack | The embeds-on-your-site commercial track |
 | 85 locales | The site UI is translated and swapped at runtime | A global community can attend in its own language |
@@ -190,7 +190,7 @@ These fit IBM Community's event tooling directly and need nothing from the world
 
 ### E. What Granite unlocks once it is serving again
 
-All of this is code-complete and tested, and all of it is dark today.
+All of this is code-complete and tested. Since 2026-11-13 the Guardian row is live on the self-hosted lane; the rest needs the hosted watsonx.ai pair and is dark until it is set.
 
 | Surface | The demo |
 | --- | --- |
@@ -259,10 +259,11 @@ that does the thing being discussed.
 3. **Set the room size.** Decide `WALK_ROOM_MAX_CLIENTS` (ceiling 500) before the doors
    open. One room of several hundred has not been load-tested as a single crowd, so run
    `npm run event:capacity` against the chosen value.
-4. **Restore one IBM model.** Either create a watsonx.ai API key and project and set
-   `WATSONX_API_KEY` and `WATSONX_PROJECT_ID` on the Cloud Run service, or deploy the
-   self-hosted Guardian worker and set `GRANITE_GUARDIAN_URL`. Until one of these lands,
-   no Granite claim, no live Granite beat and no `@IBM` tag.
+4. **Restore one IBM model.** Done 2026-11-13 for governance: the self-hosted Guardian
+   worker is deployed and `GRANITE_GUARDIAN_URL` is set, so Guardian verdicts are a true
+   Granite claim. The galaxy, Vision, twin and Orchestrate beats still need a watsonx.ai
+   API key and project (`WATSONX_API_KEY`, `WATSONX_PROJECT_ID` on the Cloud Run service);
+   until then, no claim or live beat on those surfaces.
 5. **Fix the run of show.** The kit's plaza tour points at a Plaza Stage marquee that the
    world never mounts. Cut that stop or mount the landmark.
 6. **Plan moderation.** Name a moderator and keep `node scripts/moderate-play.mjs list` open in a

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-13T15:11:32.439Z",
+	"generated_at": "2026-11-13T15:20:02.134Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -36,6 +36,17 @@
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-11-13",
+			"type": "update",
+			"title": "IBM Granite Guardian is live in production on our own GPU",
+			"summary": "The governance check that screens agent messages, new agent identities and autonomous sends now runs on real IBM Granite Guardian in production. Until today it answered with a not-configured error and the identity check let every agent through unscreened. We deployed IBM's open-weight Granite Guardian 3.3 model on a dedicated Cloud Run GPU and connected the site to it. In a live check, a friendly greeting came back allowed and a jailbreak that tried to drain an agent's SOL came back blocked with 99.98 percent confidence, each verdict scored from the model's own probabilities and labelled with the model that produced it. The health dashboard now shows the Guardian lane as healthy. Granite embeddings for the agent galaxy still need IBM's hosted watsonx.ai service, which is not connected yet.",
+			"link": "/docs/ibm",
+			"tags": [
+				"feature",
+				"infra"
 			]
 		},
 		{
