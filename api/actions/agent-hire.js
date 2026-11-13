@@ -3,6 +3,9 @@
 // GET  /api/actions/agent-hire?agent=<uuid>[&offer=<slug>]
 //   → ActionGetResponse: one transaction action per Solana offer the agent sells,
 //     with the offer's input fields as Action parameters (in_<property>).
+// GET  /api/actions/agent-hire?agent=<uuid>&probe=1
+//   → { agent, offers: <count> } with 200 even when the count is 0. The agent
+//     page uses it to decide whether to show "Share hire link".
 // GET  /api/actions/agent-hire?agent=<uuid>&hire=<hireId>
 //   → the hire's receipt as an Action (completed, failed, or still confirming).
 //     A browser (Accept: text/html) gets the same receipt as a page.
@@ -134,6 +137,7 @@ export default wrap(async (req, res) => {
 	const confirmParam = url.searchParams.get('confirm');
 
 	if (req.method === 'GET' && hireParam) return handleReceipt(req, res, agent, hireParam);
+	if (req.method === 'GET' && url.searchParams.get('probe') === '1') return handleProbe(res, agent);
 	if (req.method === 'GET') return handleCard(res, agent, url.searchParams.get('offer'));
 	if (confirmParam) return handleConfirm(req, res, agent, confirmParam);
 	return handleHire(req, res, agent, url, network);
@@ -149,6 +153,14 @@ async function hireableOffers(agentId) {
 		if (parameters) offers.push({ row, parameters });
 	}
 	return offers;
+}
+
+// The agent page's "Share hire link" button asks this before showing itself.
+// A count with 200 instead of the card's spec-shaped 404, so a profile whose
+// agent sells nothing yet does not log a failed request on every view.
+async function handleProbe(res, agent) {
+	const offers = await hireableOffers(agent.id);
+	return json(res, 200, { agent: agent.id, offers: offers.length });
 }
 
 async function handleCard(res, agent, offerSlug) {

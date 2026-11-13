@@ -1728,28 +1728,30 @@ function bindShareButtons() {
  * "Share hire link": the agent's hire Blink (api/actions/agent-hire.js). The
  * link is /agents/<id>/hire, which unfurls as a share card for people and
  * resolves to the hire Action for Blink clients through actions.json. The
- * button only appears once the Action itself answers with at least one offer,
+ * button only appears once the Action's probe counts at least one offer,
  * so it never hands out a link that opens onto "nothing to hire".
  */
 async function bindHireShare(agentId) {
 	const btn = $('share-hire');
 	if (!btn) return;
-	let offers = [];
+	let offers = 0;
 	try {
-		const res = await fetch(`/api/actions/agent-hire?agent=${encodeURIComponent(agentId)}`, {
+		// probe=1 answers 200 with a count, so agents that sell nothing yet do
+		// not log a failed request on every profile view.
+		const res = await fetch(`/api/actions/agent-hire?agent=${encodeURIComponent(agentId)}&probe=1`, {
 			headers: { accept: 'application/json' },
 		});
 		if (!res.ok) return;
 		const body = await res.json();
-		offers = Array.isArray(body?.links?.actions) ? body.links.actions : [];
+		offers = Number.isInteger(body?.offers) ? body.offers : 0;
 	} catch (err) {
 		log.warn('[avatar] hire blink lookup', err);
 		return;
 	}
-	if (!offers.length) return;
+	if (offers < 1) return;
 
 	const hireUrl = `${location.origin}/agents/${encodeURIComponent(agentId)}/hire`;
-	btn.setAttribute('aria-label', `Copy hire link (${offers.length} offer${offers.length === 1 ? '' : 's'})`);
+	btn.setAttribute('aria-label', `Copy hire link (${offers} offer${offers === 1 ? '' : 's'})`);
 	btn.hidden = false;
 	btn.addEventListener('click', async () => {
 		try {

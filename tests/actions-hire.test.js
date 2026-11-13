@@ -307,6 +307,31 @@ describe('api/actions/agent-hire GET (the Blink card)', () => {
 		expect(parse(res).message).toMatch(/no Solana offers/i);
 	});
 
+	// The agent page asks whether to show "Share hire link" on every profile
+	// view. Most agents sell nothing yet, and the spec-shaped 404 above put a
+	// red network error in every such page's console. probe=1 answers the same
+	// question with a 200 count; Blink clients never send it.
+	it('answers probe=1 with a 200 offer count, even when there is nothing to hire', async () => {
+		services.listSolanaServicesForAgent.mockResolvedValue([]);
+		const empty = mockRes();
+		await hireHandler(mockReq('GET', `/api/actions/agent-hire?agent=${AGENT_UUID}&probe=1`), empty);
+		expect(empty.statusCode).toBe(200);
+		expect(parse(empty)).toEqual({ agent: AGENT_UUID, offers: 0 });
+
+		services.listSolanaServicesForAgent.mockResolvedValue([OFFER]);
+		const one = mockRes();
+		await hireHandler(mockReq('GET', `/api/actions/agent-hire?agent=${AGENT_UUID}&probe=1`), one);
+		expect(one.statusCode).toBe(200);
+		expect(parse(one)).toEqual({ agent: AGENT_UUID, offers: 1 });
+	});
+
+	it('still answers probe=1 for an unknown agent with a 404', async () => {
+		sqlMock.mockImplementation(async () => []);
+		const res = mockRes();
+		await hireHandler(mockReq('GET', `/api/actions/agent-hire?agent=${AGENT_UUID}&probe=1`), res);
+		expect(res.statusCode).toBe(404);
+	});
+
 	it('rejects a non-uuid agent id as 400 without touching the database', async () => {
 		const res = mockRes();
 		await hireHandler(mockReq('GET', '/api/actions/agent-hire?agent=nope'), res);
