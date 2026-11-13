@@ -60,3 +60,25 @@ export async function recentFeedLaunches({ limit = 40 } = {}) {
 	const events = Array.isArray(body?.events) ? body.events : [];
 	return events.map(launchFromFeedEvent).filter(Boolean);
 }
+
+const gradingOf = ({ venue, deployerRecord, devSold, devSoldPct, flags }) => ({ venue, deployerRecord, devSold, devSoldPct, flags });
+
+/**
+ * Merge the market lanes' rows (curve price and progress) with the worker's
+ * rows (venue and reputation). Where both saw a token, the market row is kept
+ * and the worker's grading is laid over it. The market lanes read name, symbol
+ * and block time over the public RPC and fail soft to null when it throttles;
+ * the worker resolved the same facts on chain, so it fills exactly those gaps.
+ * Returns rows keyed by token, unordered.
+ */
+export function mergeFeedLaunches(marketRows, feedRows) {
+	const byToken = new Map(marketRows.map((l) => [l.token.toLowerCase(), l]));
+	for (const f of feedRows) {
+		const key = f.token.toLowerCase();
+		const m = byToken.get(key);
+		byToken.set(key, m
+			? { ...m, ...gradingOf(f), name: m.name ?? f.name, symbol: m.symbol ?? f.symbol, timestamp: m.timestamp ?? f.timestamp }
+			: f);
+	}
+	return [...byToken.values()];
+}

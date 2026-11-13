@@ -14,10 +14,8 @@ import { rateLimited } from '../../_lib/http.js';
 import { limits } from '../../_lib/rate-limit.js';
 import { recentLaunches, dexSnapshot, BLOCKSCOUT_BASE, asOf } from '../../_lib/robinhood.js';
 import { recentPonsLaunches } from '../../_lib/pons.js';
-import { recentFeedLaunches } from '../../_lib/robinhood-feed.js';
+import { recentFeedLaunches, mergeFeedLaunches } from '../../_lib/robinhood-feed.js';
 import { fetchCoinPriceUsdOrNull } from '../../_lib/market-fallbacks.js';
-
-const gradingOf = ({ venue, deployerRecord, devSold, devSoldPct, flags }) => ({ venue, deployerRecord, devSold, devSoldPct, flags });
 
 const CACHE_CONTROL = 'public, max-age=30, s-maxage=30, stale-while-revalidate=45';
 
@@ -44,15 +42,7 @@ export default defineEndpoint({
 				return [];
 			}),
 		]);
-		// The worker's rows carry venue and reputation; the Pons and Odyssey rows
-		// carry curve price and progress. Where both saw a token, keep the richer
-		// market row and overlay the worker's grading onto it.
-		const byToken = new Map([...pons, ...others].map((l) => [l.token.toLowerCase(), l]));
-		for (const f of feed) {
-			const key = f.token.toLowerCase();
-			byToken.set(key, byToken.has(key) ? { ...byToken.get(key), ...gradingOf(f) } : f);
-		}
-		const launches = [...byToken.values()].sort((a, b) => b.block - a.block).slice(0, limit);
+		const launches = mergeFeedLaunches([...pons, ...others], feed).sort((a, b) => b.block - a.block).slice(0, limit);
 		const [dex, ethUsd] = await Promise.all([
 			dexSnapshot(launches.map((l) => l.token)),
 			launches.some((l) => l.priceEth != null) ? fetchCoinPriceUsdOrNull('ethereum') : null,
