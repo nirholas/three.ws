@@ -25,6 +25,10 @@ All notable changes to HQ are documented here.
 - **Storage keys**: browser storage keys and the IndexedDB name now use the `hq` prefix
 - **Host bridge**: iframe commands use the `host:` prefix and the allowed origins are three.ws and localhost
 
+### Fixed
+
+- **Bridge queries**: a `host:run-query` whose reply body times out mid-read or is not a JSON object now answers `hq:error` (`timeout` or `upstream_failed`) instead of an empty `hq:query-result`
+
 ### Removed
 
 - Legacy single-product docs, agent prompt files and CI workflow templates

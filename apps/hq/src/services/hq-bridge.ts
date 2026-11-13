@@ -10,6 +10,7 @@ import {
   isDataCommand,
   validateDataCommand,
   sizeCheck,
+  callAgentTool,
   type DataError,
   type DataCommandType,
   type PanelDataRequest,
@@ -340,17 +341,6 @@ class HQBridge {
     this.emit('hq:error', error);
   }
 
-  private async callAgentTool(body: Record<string, unknown>): Promise<unknown> {
-    const res = await fetch('/api/agent-tools', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(20000),
-    });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(typeof json?.error === 'string' ? json.error : `agent-tools HTTP ${res.status}`);
-    return json;
-  }
 
   private async handleDataCommand(type: DataCommandType, payload: unknown): Promise<void> {
     const checked = validateDataCommand(type, payload);
@@ -376,17 +366,17 @@ class HQBridge {
       const { id } = req as { id: string };
       const result =
         type === 'host:run-query'
-          ? await this.callAgentTool(
+          ? await callAgentTool(
               (req as QueryRequest).tool
                 ? { tool: (req as QueryRequest).tool, args: (req as QueryRequest).args ?? {} }
                 : { question: (req as QueryRequest).question, narrate: true },
             )
-          : await this.callAgentTool({ tool: 'portfolio_risk', args: { positions: (req as PortfolioRiskRequest).positions } });
+          : await callAgentTool({ tool: 'portfolio_risk', args: { positions: (req as PortfolioRiskRequest).positions } });
       const size = sizeCheck(result, id);
       if (!size.ok) return this.emitError(size.error);
       this.emit('hq:query-result', { id, result });
     } catch (err) {
-      const timedOut = err instanceof DOMException && err.name === 'TimeoutError';
+      const timedOut = err instanceof Error && err.name === 'TimeoutError';
       this.emitError({
         id: (req as { id: string }).id,
         code: timedOut ? 'timeout' : 'upstream_failed',

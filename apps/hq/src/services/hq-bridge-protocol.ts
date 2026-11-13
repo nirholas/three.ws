@@ -97,3 +97,38 @@ export function sizeCheck(value: unknown, id: string): { ok: true } | { ok: fals
   const bytes = JSON.stringify(value)?.length ?? 0;
   return bytes > MAX_RESULT_BYTES ? fail(`result is ${bytes} bytes, limit ${MAX_RESULT_BYTES}`, id, 'too_large') : { ok: true };
 }
+
+export const AGENT_TOOL_TIMEOUT_MS = 20000;
+
+/**
+ * POST to HQ's own /api/agent-tools and return the parsed result. A failed
+ * body read on a 2xx (the abort signal firing mid-body, a proxy's HTML page,
+ * a non-object) rejects, so the bridge answers hq:error instead of posting an
+ * empty hq:query-result. A TimeoutError is rethrown as-is for the timeout code.
+ */
+export async function callAgentTool(
+  body: Record<string, unknown>,
+  { fetchImpl = fetch, timeoutMs = AGENT_TOOL_TIMEOUT_MS }: { fetchImpl?: typeof fetch; timeoutMs?: number } = {},
+): Promise<unknown> {
+  const res = await fetchImpl('/api/agent-tools', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  if (!res.ok) {
+    const json = await res.json().catch(() => null);
+    throw new Error(typeof json?.error === 'string' ? json.error : `agent-tools HTTP ${res.status}`);
+  }
+  let json: unknown;
+  try {
+    json = await res.json();
+  } catch (err) {
+    if (err instanceof Error && err.name === 'TimeoutError') throw err;
+    throw new Error(`agent-tools returned an unreadable body (HTTP ${res.status})`);
+  }
+  if (!json || typeof json !== 'object' || Array.isArray(json)) {
+    throw new Error(`agent-tools returned a non-object body (HTTP ${res.status})`);
+  }
+  return json;
+}

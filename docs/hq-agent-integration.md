@@ -16,7 +16,7 @@ Data commands (validated in `hq-bridge-protocol.ts`, answered with the same `id`
 | `host:run-query {id, tool+args or question}` | `hq:query-result` |
 | `host:get-portfolio-risk {id, positions}` | `hq:query-result` |
 
-Failures arrive as `hq:error` with a code: `bad_request`, `unknown_panel`, `too_large` (256 KB cap), `upstream_failed`, `timeout`. Panels expose data with `registerPanelData` (`panel-data-registry.ts`). Registered keys: `markets`, `polymarket`, `news-clusters`, `panels`; DeFi data (yields, TVL, health, funding) is reached through `host:run-query` instead.
+Failures arrive as `hq:error` with a code: `bad_request`, `unknown_panel`, `too_large` (256 KB cap), `upstream_failed`, `timeout`. A query has 20 seconds end to end, including reading the reply body; a body that is cut off, unreadable or not a JSON object is an error, never an empty `hq:query-result`. Panels expose data with `registerPanelData` (`panel-data-registry.ts`). Registered keys: `markets`, `polymarket`, `news-clusters`, `panels`; DeFi data (yields, TVL, health, funding) is reached through `host:run-query` instead.
 
 `updatedAt` is the ISO time the panel's feed last landed (`markPanelDataLoaded`), or `null` while that feed has not loaded yet, so a host can tell "no data yet" from "empty market". `panels` is registered as live and always reports the time of the read. Data restored from a saved snapshot carries the snapshot's time.
 
