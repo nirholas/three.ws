@@ -71,6 +71,14 @@
 			<description>Three background jobs were spending a large share of the platform's Solana read quota on answers that had not changed. The hourly buyback check now reads every coin's vault in a couple of batched calls instead of four reads per coin, token due-diligence reports reuse a token's launch and each holder's first purchase once they are known, and agent reputation scores are refreshed every 12 hours unless the agent is being viewed. Together that is roughly 120,000 fewer chain reads a day, which leaves more headroom for payments and live pages.</description>
 		</item>
 		<item>
+			<title>HQ answer summaries keep working after the larger AI models run out for the day</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-13:HQ answer summaries keep working after the larger AI models run out for the day</guid>
+			<pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>HQ's agent tools can add a short written summary to a DeFi answer. The AI provider caps each model's daily usage separately, and once both models HQ used were capped the summaries stopped, even though a third model on the same account still had room. HQ now falls back to that third model, so summaries keep coming for longer each day. The data answers themselves never depended on it.</description>
+		</item>
+		<item>
 			<title>IBM Granite Guardian is live in production on our own GPU</title>
 			<link>https://three.ws/docs/ibm</link>
 			<guid isPermaLink="false">2026-11-13:IBM Granite Guardian is live in production on our own GPU</guid>
@@ -127,6 +135,14 @@
 			<description>The Solana facilitator in @three-ws/x402-server answers a resubmitted payment with the signature it already landed, which is correct, but its metrics counted that retry as another settlement and another sponsor fee, and when the RPC silently accepted the resend the fee budget was charged twice, so retries alone could exhaust a self-hoster's budget and refuse real payments. Retries now show under a separate replays count and never touch the fee budget or the burned-lamports total. Found by running the package's local-validator end-to-end test, which now settles a real transfer on chain and runs the full attack suite against the live instance.</description>
 		</item>
 		<item>
+			<title>Selfie avatars can now be built on our own body, where Masc and Femme really change the shape</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-13:Selfie avatars can now be built on our own body, where Masc and Femme really change the shape</guid>
+			<pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>The selfie to avatar service has always fitted every person onto a borrowed stock avatar, and the Masc and Femme choice in the selfie window never changed anything because only one stock body existed. It can now build the avatar on the three.ws parametric body instead: the same body Avatar Studio uses, with the full set of facial expressions and lip-sync mouth shapes, and Masc, Femme and neutral each give a genuinely different build while keeping every sculpt slider for editing afterwards. In our 40-face test set it also matches face shape more closely than the stock avatar. It stays switched off in production for now, because the new body still comes out without hair or clothes and its skin tone does not yet match the photographed face closely enough; the current avatars are unchanged until those are fixed.</description>
+		</item>
+		<item>
 			<title>Talking to an agent through three.ws Glass gets an answer again</title>
 			<link>https://three.ws/glass</link>
 			<guid isPermaLink="false">2026-11-13:Talking to an agent through three.ws Glass gets an answer again</guid>
@@ -141,6 +157,14 @@
 			<pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>GitHub fee-claim lookups used to page the whole PumpFees program, which handles about 500 transactions a second, so one page of history covered about a second and the feed came back empty. The listener, its backfill, and the API's RPC fallback now follow the one account that signs every GitHub fee claim and nothing else. That account's key is read from chain, and one page of its history covers days. The table now holds real claims, GET /api/pump/first-claims serves them from it, and the backfill resumes where it stopped instead of re-fetching claims it already stored.</description>
+		</item>
+		<item>
+			<title>The marketplace opens on a picture and loads 3D only when you reach for it</title>
+			<link>https://three.ws/marketplace</link>
+			<guid isPermaLink="false">2026-11-13:The marketplace opens on a picture and loads 3D only when you reach for it</guid>
+			<pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The featured carousel at the top of the marketplace used to download the 3D viewer and a model of around 2 MB on every visit, showing a placeholder letter until it arrived. It now shows each avatar's picture straight away and turns it into the spinning 3D model the moment you hover, focus or tap it, so a visit that never touches a 3D preview never downloads one. Hovering an agent card in the grid now also loads its 3D preview wherever the pointer rests on the card; before, only the picture area counted, and in practice agent cards often never woke at all.</description>
 		</item>
 		<item>
 			<title>The Reconnect button and the active category chip on Agent integrations are readable in the dark theme</title>

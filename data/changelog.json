@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-13",
+			"title": "The marketplace opens on a picture and loads 3D only when you reach for it",
+			"summary": "The featured carousel at the top of the marketplace used to download the 3D viewer and a model of around 2 MB on every visit, showing a placeholder letter until it arrived. It now shows each avatar's picture straight away and turns it into the spinning 3D model the moment you hover, focus or tap it, so a visit that never touches a 3D preview never downloads one. Hovering an agent card in the grid now also loads its 3D preview wherever the pointer rests on the card; before, only the picture area counted, and in practice agent cards often never woke at all.",
+			"tags": ["improvement", "fix"],
+			"link": "/marketplace"
+		},
+		{
+			"date": "2026-11-13",
 			"title": "Selfie avatars can now be built on our own body, where Masc and Femme really change the shape",
 			"summary": "The selfie to avatar service has always fitted every person onto a borrowed stock avatar, and the Masc and Femme choice in the selfie window never changed anything because only one stock body existed. It can now build the avatar on the three.ws parametric body instead: the same body Avatar Studio uses, with the full set of facial expressions and lip-sync mouth shapes, and Masc, Femme and neutral each give a genuinely different build while keeping every sculpt slider for editing afterwards. In our 40-face test set it also matches face shape more closely than the stock avatar. It stays switched off in production for now, because the new body still comes out without hair or clothes and its skin tone does not yet match the photographed face closely enough; the current avatars are unchanged until those are fixed.",
 			"tags": ["infra", "improvement"]
