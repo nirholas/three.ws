@@ -1,0 +1,15 @@
+# Build context for `gcloud builds submit workers/avatar-reconstruction`.
+# Without this file gcloud uploads everything in the directory.
+.gcloudignore
+.git
+__pycache__/
+*.pyc
+.pytest_cache/
+# Local eval harness: the venv and the downloaded benchmark sets (mirrored in
+# gs://three-ws-avatar-reconstructions/eval-*) never belong in a build context.
+# Uploading the venv once turned a 1 MB context into 677 MiB.
+.venv-eval/
+eval/refs/
+eval/adversarial/
+eval/heldout/
+eval/reports/

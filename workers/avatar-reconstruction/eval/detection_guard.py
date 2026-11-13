@@ -39,12 +39,17 @@ rather than morphing to garbage.
 Usage
 -----
     python -m eval.detection_guard --photos eval/refs --adversarial eval/adversarial
+
+    # through a deployed worker, so every head is the one a job ships (morph plus
+    # the dense fit when the worker runs DENSE_FIT=1)
+    python -m eval.detection_guard --url https://<service>.run.app --out eval/reports/guard.json
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import statistics
 import sys
 from pathlib import Path
@@ -61,8 +66,14 @@ PHOTO_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 _EYE_L, _EYE_R = 33, 263
 
 
-def probe(path: Path, base: np.ndarray, face_map: fg.FaceMap, interocular: float) -> dict:
-    """Detect, measure yaw, morph, and report how far the head travelled."""
+def probe(path: Path, base: np.ndarray, face_map: fg.FaceMap, interocular: float,
+          worker=None) -> dict:
+    """
+    Detect, measure yaw, morph, and report how far the head travelled. With a
+    worker (client, url, key) the head comes from a real /reconstruct job instead
+    of the in-process morph; detection and yaw stay local so the verdict columns
+    mean the same thing in both modes.
+    """
     import face_pipeline as fp
 
     img = Image.open(path).convert("RGB")
@@ -72,7 +83,23 @@ def probe(path: Path, base: np.ndarray, face_map: fg.FaceMap, interocular: float
 
     detected = fg.landmarks_to_array(landmarks, *img.size)
     yaw = fg.estimate_yaw_deg(detected, face_map)
-    morphed = fg.morph_head_to_landmarks(base, face_map, detected).astype(np.float64)
+    if worker is None:
+        morphed = fg.morph_head_to_landmarks(base, face_map, detected).astype(np.float64)
+    else:
+        from eval.run_eval import head_positions, reconstruct_image
+
+        import httpx
+
+        from eval.identity_eval import EvalError
+
+        client, url, key = worker
+        try:
+            morphed = head_positions(reconstruct_image(client, url, key, img, path.name))
+        except (EvalError, httpx.HTTPError) as exc:
+            # The worker refused the input (its own detector found no face) or the
+            # job failed: no head was shaped from it, the same safe outcome as a
+            # local non-detection.
+            return {"name": path.stem, "detected": False, "worker_error": str(exc)}
     idx = face_map.landmark_vtx
     displacement = float(np.linalg.norm(morphed[idx] - base[idx], axis=1).mean() / interocular)
     return {
@@ -90,7 +117,11 @@ def main() -> int:
     ap.add_argument("--adversarial", type=Path, default=Path("eval/adversarial"))
     ap.add_argument("--template", type=Path, default=Path("templates/default.glb"))
     ap.add_argument("--out", type=Path)
+    ap.add_argument("--url", help="build every head through this deployed worker")
+    ap.add_argument("--key", default=os.environ.get("RECON_KEY"), help="worker API key (or $RECON_KEY)")
     args = ap.parse_args()
+    if args.url and not args.key:
+        ap.error("--url needs --key (or $RECON_KEY)")
 
     face_map = fg.FaceMap.load()
     if face_map is None:
@@ -104,9 +135,22 @@ def main() -> int:
     interocular = float(np.linalg.norm(base[idx[_EYE_L]] - base[idx[_EYE_R]]))
 
     import face_pipeline as fp
-    print(f"morph yaw gate: {fp.MAX_MORPH_YAW_DEG:.0f}°\n")
+    print(f"morph yaw gate: {fp.MAX_MORPH_YAW_DEG:.0f}°")
 
-    real = [probe(p, base, face_map, interocular)
+    worker = None
+    health = None
+    if args.url:
+        import httpx
+
+        url = args.url.rstrip("/")
+        client = httpx.Client(follow_redirects=True)
+        health = client.get(f"{url}/health", timeout=300.0).json()
+        print(f"worker: {url}  {health.get('pipeline')}  dense_fit={health.get('dense_fit')}  "
+              f"silhouette={health.get('dense_fit_silhouette')}")
+        worker = (client, url, args.key)
+    print()
+
+    real = [probe(p, base, face_map, interocular, worker)
             for p in sorted(args.photos.iterdir()) if p.suffix.lower() in PHOTO_SUFFIXES]
     seen = [r for r in real if r["detected"]]
     if not seen:
@@ -124,7 +168,7 @@ def main() -> int:
           + (" ← a real face was rejected, the threshold is too tight"
              if gated_real else " (none — good)"))
 
-    adversarial = [probe(p, base, face_map, interocular)
+    adversarial = [probe(p, base, face_map, interocular, worker)
                    for p in sorted(args.adversarial.iterdir()) if p.suffix.lower() in PHOTO_SUFFIXES]
     print(f"\nADVERSARIAL ({sum(a['detected'] for a in adversarial)}/{len(adversarial)} detected)")
     print(f"  {'input':<38} {'yaw':>7}  {'displacement':>12}  verdict")
@@ -161,6 +205,8 @@ def main() -> int:
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(json.dumps(
             {"yaw_gate_deg": fp.MAX_MORPH_YAW_DEG, "real_band": band,
+             "url": args.url or "local", "worker_health": health,
+             "escaped": [a["name"] for a in escaped],
              "reference": real, "adversarial": adversarial}, indent=2))
         print(f"→ {args.out}")
     return 0

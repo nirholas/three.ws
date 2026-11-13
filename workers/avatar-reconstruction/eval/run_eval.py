@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import io
 import json
 import logging
 import os
@@ -65,11 +66,26 @@ def _data_url(path: Path) -> str:
 
 def reconstruct(client: httpx.Client, url: str, key: str, photo: Path, body_type: str) -> bytes:
     """Submit one photo, wait for the job, return the finished GLB bytes."""
+    return reconstruct_data_url(client, url, key, _data_url(photo), photo.name, body_type)
+
+
+def reconstruct_image(client: httpx.Client, url: str, key: str, img, label: str,
+                      body_type: str = "neutral") -> bytes:
+    """Submit an in-memory PIL image (e.g. a degraded variant) as a PNG."""
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    data_url = f"data:image/png;base64,{base64.b64encode(buf.getvalue()).decode()}"
+    return reconstruct_data_url(client, url, key, data_url, label, body_type)
+
+
+def reconstruct_data_url(client: httpx.Client, url: str, key: str, data_url: str, label: str,
+                         body_type: str) -> bytes:
+    """Submit one image, wait for the job, return the finished GLB bytes."""
     headers = {"authorization": f"Bearer {key}"}
     submit = client.post(
         f"{url}/reconstruct",
         headers=headers,
-        json={"images": [_data_url(photo)], "body_type": body_type},
+        json={"images": [data_url], "body_type": body_type},
         timeout=SUBMIT_TIMEOUT_S,
     )
     submit.raise_for_status()
@@ -78,20 +94,35 @@ def reconstruct(client: httpx.Client, url: str, key: str, photo: Path, body_type
     deadline = time.monotonic() + JOB_TIMEOUT_S
     while time.monotonic() < deadline:
         time.sleep(POLL_INTERVAL_S)
-        job = client.get(f"{url}/jobs/{job_id}", headers=headers, timeout=SUBMIT_TIMEOUT_S).json()
+        poll = client.get(f"{url}/jobs/{job_id}", headers=headers, timeout=SUBMIT_TIMEOUT_S)
+        if poll.status_code >= 500:
+            # A cold GPU instance or a transient frontend error: the job itself is
+            # still running server-side, so keep polling until the deadline.
+            continue
+        job = poll.json()
         status = job.get("status")
         if status == "done":
             glb_url = job.get("glb_url")
             if not glb_url:
-                raise EvalError(f"{photo.name}: job finished without a glb_url")
+                raise EvalError(f"{label}: job finished without a glb_url")
             glb = client.get(glb_url, timeout=120.0)
             glb.raise_for_status()
             return glb.content
         if status == "failed":
             detail = (job.get("error") or "unknown").strip().splitlines()[-1]
-            raise EvalError(f"{photo.name}: {detail}")
+            raise EvalError(f"{label}: {detail}")
 
-    raise EvalError(f"{photo.name}: job {job_id} did not finish within {JOB_TIMEOUT_S:.0f}s")
+    raise EvalError(f"{label}: job {job_id} did not finish within {JOB_TIMEOUT_S:.0f}s")
+
+
+def head_positions(glb_bytes: bytes):
+    """The reconstructed head's vertex positions, in template vertex order."""
+    import numpy as np
+
+    import glb_ops
+
+    positions, _, _ = glb_ops.get_head_mesh_data(glb_ops.load_glb(glb_bytes))
+    return np.asarray(positions, dtype=np.float64)
 
 
 class _DenseOutcome(logging.Handler):

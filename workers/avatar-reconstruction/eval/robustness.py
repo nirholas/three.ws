@@ -33,12 +33,18 @@ Usage
 -----
     python -m eval.robustness --photos eval/refs
     python -m eval.robustness --photos eval/refs --limit 10 --detail
+
+    # through a deployed worker: the whole job pipeline (morph, dense fit, gates)
+    # builds every head, so a pipeline flag such as DENSE_FIT is measured as it ships
+    python -m eval.robustness --photos eval/refs --url https://<service>.run.app \
+        --out eval/reports/robustness-dense-on.json
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import statistics
 import sys
 from pathlib import Path
@@ -54,6 +60,8 @@ from eval.identity_eval import EvalError  # noqa: E402
 
 PHOTO_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 CLAMPS = (0.18, 0.25, 0.35, 0.45, 0.55, 0.65, 0.8, 1.0)
+# face_geometry.morph_head_to_landmarks' default max_displacement_frac.
+SHIPPED_CLAMP = 0.55
 _EYE_L, _EYE_R = 33, 263
 
 
@@ -125,9 +133,70 @@ def divergence(a: np.ndarray, b: np.ndarray, face_map: fg.FaceMap) -> float:
     return float(np.linalg.norm(a[idx] - b[idx], axis=1).mean() / interocular)
 
 
+def run_worker(photos: list[Path], url: str, key: str, face_map: fg.FaceMap) -> dict:
+    """
+    Instability of the deployed pipeline at its own settings: every clean and
+    degraded photo goes through /reconstruct and the heads are read off the GLBs.
+    A degradation the worker rejects (no face) is recorded, not scored, exactly
+    like the in-process path.
+    """
+    import httpx
+
+    from eval.run_eval import head_positions, reconstruct_image
+
+    per_degradation: dict[str, list[float]] = {name: [] for name in DEGRADATIONS}
+    per_face: list[dict] = []
+    undetected: list[str] = []
+    with httpx.Client(follow_redirects=True) as client:
+        health = client.get(f"{url}/health", timeout=300.0).json()
+        print(f"worker: {health.get('pipeline')}  dense_fit={health.get('dense_fit')}  "
+              f"silhouette={health.get('dense_fit_silhouette')}")
+        for i, photo in enumerate(photos, 1):
+            img = Image.open(photo).convert("RGB")
+            print(f"[{i}/{len(photos)}] {photo.name} ", end="", flush=True)
+            try:
+                clean = head_positions(reconstruct_image(client, url, key, img, f"{photo.name}/clean"))
+            except (EvalError, httpx.HTTPError) as exc:
+                undetected.append(f"{photo.name}/clean")
+                print(f"clean failed: {exc}")
+                continue
+            row = {"name": photo.name}
+            for name, fn in DEGRADATIONS.items():
+                try:
+                    head = head_positions(reconstruct_image(client, url, key, fn(img), f"{photo.name}/{name}"))
+                except (EvalError, httpx.HTTPError):
+                    undetected.append(f"{photo.name}/{name}")
+                    print(f"{name}=-", end=" ", flush=True)
+                    continue
+                d = divergence(clean, head, face_map)
+                per_degradation[name].append(d)
+                row[name] = d
+                print(f"{name}={d:.4f}", end=" ", flush=True)
+            per_face.append(row)
+            print()
+
+    flat = [v for values in per_degradation.values() for v in values]
+    if not flat:
+        raise EvalError("no degraded version produced a head; nothing to score")
+    return {
+        "url": url,
+        "pipeline": health.get("pipeline"),
+        "dense_fit": health.get("dense_fit"),
+        "dense_fit_silhouette": health.get("dense_fit_silhouette"),
+        "mean": statistics.fmean(flat),
+        "worst": max(flat),
+        "scored": len(flat),
+        "per_degradation": {k: statistics.fmean(v) for k, v in per_degradation.items() if v},
+        "per_face": per_face,
+        "undetected": undetected,
+    }
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--photos", type=Path, default=Path("eval/refs"))
+    ap.add_argument("--url", help="score a deployed worker instead of the in-process morph sweep")
+    ap.add_argument("--key", default=os.environ.get("RECON_KEY"), help="worker API key (or $RECON_KEY)")
     ap.add_argument("--template", type=Path, default=Path("templates/default.glb"))
     ap.add_argument("--strength", type=float, default=0.6)
     ap.add_argument("--limit", type=int, help="use only the first N faces (detection is the slow part)")
@@ -150,6 +219,24 @@ def main() -> int:
     if not photos:
         print(f"error: no photos in {args.photos}", file=sys.stderr)
         return 1
+
+    if args.url:
+        if not args.key:
+            ap.error("--url needs --key (or $RECON_KEY)")
+        try:
+            report = run_worker(photos, args.url.rstrip("/"), args.key, face_map)
+        except EvalError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+        print(f"\ninstability {report['mean']:.4f} mean, {report['worst']:.4f} worst "
+              f"over {report['scored']} degraded versions ({len(report['undetected'])} not scored)")
+        for name, value in sorted(report["per_degradation"].items()):
+            print(f"  {name:9s} {value:.4f}")
+        if args.out:
+            args.out.parent.mkdir(parents=True, exist_ok=True)
+            args.out.write_text(json.dumps(report, indent=2))
+            print(f"→ {args.out}")
+        return 0
 
     print(f"detecting landmarks: {len(photos)} faces x {len(DEGRADATIONS) + 1} versions …")
     samples: list[dict] = []
@@ -204,7 +291,7 @@ def main() -> int:
     print("instability (lower = the same person keeps the same head)")
     print(f"{'clamp':>7}  {'mean':>8}  {'worst':>8}")
     for row in rows:
-        marker = "  ← shipped" if row["clamp"] == 0.45 else ""
+        marker = "  ← shipped" if row["clamp"] == SHIPPED_CLAMP else ""
         print(f"{row['clamp']:>7}  {row['mean']:>8.4f}  {row['worst']:>8.4f}{marker}")
 
     if args.detail:

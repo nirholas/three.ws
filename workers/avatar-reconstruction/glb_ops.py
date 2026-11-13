@@ -191,25 +191,46 @@ _COMPONENT_DTYPE = {
 _TYPE_NCOMP = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4, "MAT2": 4, "MAT3": 9, "MAT4": 16}
 
 
-def _read_accessor(glb: pygltflib.GLTF2, blob: bytes, acc_idx: int) -> np.ndarray:
-    """Stride-aware read of accessor acc_idx into an (count, ncomp) array."""
-    acc = glb.accessors[acc_idx]
-    bv = glb.bufferViews[acc.bufferView]
-    dtype = np.dtype(_COMPONENT_DTYPE[acc.componentType])
-    ncomp = _TYPE_NCOMP[acc.type]
+def _read_view(blob: bytes, bv, byte_offset: int, count: int, dtype: np.dtype, ncomp: int) -> np.ndarray:
     item = dtype.itemsize * ncomp
     stride = bv.byteStride or item
-    base = (bv.byteOffset or 0) + (acc.byteOffset or 0)
+    base = (bv.byteOffset or 0) + byte_offset
     if stride == item:
-        # Tightly packed — a single vectorised read is correct and fast.
-        flat = np.frombuffer(blob[base : base + acc.count * item], dtype=dtype)
-        out = flat.reshape(acc.count, ncomp)
+        # Tightly packed: a single vectorised read is correct and fast.
+        flat = np.frombuffer(blob[base : base + count * item], dtype=dtype)
+        return flat.reshape(count, ncomp)
+    # Interleaved: gather one element at a time honouring the stride.
+    out = np.empty((count, ncomp), dtype=dtype)
+    for i in range(count):
+        off = base + i * stride
+        out[i] = np.frombuffer(blob[off : off + item], dtype=dtype)
+    return out
+
+
+def _read_accessor(glb: pygltflib.GLTF2, blob: bytes, acc_idx: int) -> np.ndarray:
+    """
+    Stride-aware read of accessor acc_idx into an (count, ncomp) array.
+
+    Handles sparse accessors (glTF 2.0 section 3.6.2.3): a base view, or zeros
+    when there is none, with the listed elements substituted. Morph targets that
+    touch a small region (an ARKit shape, a nose slider) are stored that way.
+    """
+    acc = glb.accessors[acc_idx]
+    dtype = np.dtype(_COMPONENT_DTYPE[acc.componentType])
+    ncomp = _TYPE_NCOMP[acc.type]
+    if acc.bufferView is not None:
+        out = _read_view(blob, glb.bufferViews[acc.bufferView], acc.byteOffset or 0, acc.count, dtype, ncomp)
     else:
-        # Interleaved — gather one vertex at a time honouring the stride.
-        out = np.empty((acc.count, ncomp), dtype=dtype)
-        for i in range(acc.count):
-            off = base + i * stride
-            out[i] = np.frombuffer(blob[off : off + item], dtype=dtype)
+        out = np.zeros((acc.count, ncomp), dtype=dtype)
+    sparse = acc.sparse
+    if sparse is not None and sparse.count:
+        out = np.array(out, copy=True)
+        idx_view = glb.bufferViews[sparse.indices.bufferView]
+        idx = _read_view(blob, idx_view, sparse.indices.byteOffset or 0, sparse.count,
+                         np.dtype(_COMPONENT_DTYPE[sparse.indices.componentType]), 1).reshape(-1)
+        val_view = glb.bufferViews[sparse.values.bufferView]
+        out[idx.astype(np.int64)] = _read_view(blob, val_view, sparse.values.byteOffset or 0,
+                                               sparse.count, dtype, ncomp)
     return out if ncomp > 1 else out.reshape(-1)
 
 
@@ -236,21 +257,43 @@ def _write_accessor(glb: pygltflib.GLTF2, blob: bytearray, acc_idx: int, data: n
             blob[off : off + item] = d[i].tobytes()
 
 
-def _find_head_prim(glb: pygltflib.GLTF2):
-    mesh = next((m for m in glb.meshes if m.name == "Wolf3D_Head"), None)
+def template_info(glb: pygltflib.GLTF2) -> dict:
+    """
+    The `reconstruction` block a self-describing template carries in its root
+    extras (head mesh, materials, face anchors, body-type presets), written by
+    scripts/build-reconstruction-template.mjs. Empty for templates without one.
+    """
+    extras = glb.extras if isinstance(glb.extras, dict) else {}
+    info = extras.get("reconstruction")
+    return info if isinstance(info, dict) else {}
+
+
+def head_mesh_name(glb: pygltflib.GLTF2) -> str:
+    """The head mesh a template declares, else the Wolf3D head's name."""
+    import recon_templates
+
+    return template_info(glb).get("headMesh") or recon_templates.WOLF3D.head_mesh
+
+
+def _find_head_prim(glb: pygltflib.GLTF2, head_mesh: Optional[str] = None):
+    name = head_mesh or head_mesh_name(glb)
+    mesh = next((m for m in glb.meshes if m.name == name), None)
     if mesh is None:
-        raise ValueError("Wolf3D_Head mesh not found in GLB")
+        raise ValueError(f"{name} mesh not found in GLB")
     return mesh.primitives[0]
 
 
-def get_head_mesh_data(glb: pygltflib.GLTF2) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def get_head_mesh_data(
+    glb: pygltflib.GLTF2, head_mesh: Optional[str] = None
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Return (positions, uvs, face_indices) for the Wolf3D_Head mesh.
+    Return (positions, uvs, face_indices) for the template's head mesh (the
+    one its extras declare, or the Wolf3D head).
     positions: (N, 3) float32
     uvs:       (N, 2) float32  — TEXCOORD_0
     faces:     (F, 3) int32
     """
-    prim = _find_head_prim(glb)
+    prim = _find_head_prim(glb, head_mesh)
     blob = glb.binary_blob()
     positions = _read_accessor(glb, blob, prim.attributes.POSITION).astype(np.float32)
     uvs = _read_accessor(glb, blob, prim.attributes.TEXCOORD_0).astype(np.float32)
@@ -270,6 +313,55 @@ def recompute_vertex_normals(positions: np.ndarray, faces: np.ndarray) -> np.nda
     return (normals / lengths).astype(np.float32)
 
 
+def _position_keys(positions: np.ndarray) -> np.ndarray:
+    """Quantise positions to 10 µm so coincident vertices across meshes match."""
+    return np.round(np.asarray(positions, dtype=np.float64) * 1e5).astype(np.int64)
+
+
+def welded_vertex_normals(meshes: list[tuple[np.ndarray, np.ndarray]]) -> list[np.ndarray]:
+    """
+    Area-weighted normals accumulated per POSITION, not per vertex index, over
+    several triangle meshes at once: [(positions, faces), ...] → [normals, ...].
+
+    A mesh split for material or editing reasons (UV seams, the parametric
+    template's Head / Body split at the neck) duplicates vertices along the
+    split. Per-index normals shade each copy from one side only and draw the
+    split as a visible crease; welding by position shades it as one surface.
+    """
+    keys = np.concatenate([_position_keys(p) for p, _ in meshes])
+    _, group = np.unique(keys, axis=0, return_inverse=True)
+    group = group.reshape(-1)
+    acc = np.zeros((int(group.max()) + 1, 3), dtype=np.float64)
+    offset = 0
+    for positions, faces in meshes:
+        pos = np.asarray(positions, dtype=np.float64)
+        f = np.asarray(faces, dtype=np.int64)
+        fn = np.cross(pos[f[:, 1]] - pos[f[:, 0]], pos[f[:, 2]] - pos[f[:, 0]])
+        for k in range(3):
+            np.add.at(acc, group[offset + f[:, k]], fn)
+        offset += pos.shape[0]
+    lengths = np.linalg.norm(acc, axis=1, keepdims=True)
+    lengths[lengths == 0] = 1.0
+    acc /= lengths
+    out, offset = [], 0
+    for positions, _ in meshes:
+        n = positions.shape[0]
+        out.append(acc[group[offset : offset + n]].astype(np.float32))
+        offset += n
+    return out
+
+
+def _mesh_prim(glb: pygltflib.GLTF2, name: str):
+    mesh = next((m for m in glb.meshes if m.name == name), None)
+    return mesh.primitives[0] if mesh is not None else None
+
+
+def _prim_geometry(glb, blob, prim) -> tuple[np.ndarray, np.ndarray]:
+    pos = _read_accessor(glb, blob, prim.attributes.POSITION).astype(np.float64)
+    faces = _read_accessor(glb, blob, prim.indices).reshape(-1, 3).astype(np.int64)
+    return pos, faces
+
+
 def set_head_geometry(
     glb: pygltflib.GLTF2,
     positions: np.ndarray,
@@ -277,13 +369,19 @@ def set_head_geometry(
     recompute_normals: bool = True,
 ) -> None:
     """
-    Overwrite the Wolf3D_Head base geometry with morphed `positions` (N, 3).
+    Overwrite the head mesh's base geometry with morphed `positions` (N, 3).
 
     Vertex count and order are unchanged, so JOINTS_0/WEIGHTS_0 skinning and all
     morph targets (the 52 ARKit blendshapes + visemes, stored as deltas relative
     to the base) remain valid and attached. Updates the POSITION accessor min/max
     and, unless disabled, recomputes and writes vertex normals. In-place on the
     binary blob — no bufferView offsets shift because the byte size is identical.
+
+    When the template declares other meshes sharing the head's skin surface
+    (`skinMeshes`, the parametric Body below the neck split), the head's seam
+    with them stays exactly where it was: seam vertices keep their position and
+    normal, and the rest of the head is shaded welded across UV seams. A face
+    morph or dense fit therefore can never open a crack at the neck.
     """
     prim = _find_head_prim(glb)
     pos = np.ascontiguousarray(positions, dtype=np.float32)
@@ -295,6 +393,23 @@ def set_head_geometry(
         )
 
     blob = bytearray(glb.binary_blob())
+    info = template_info(glb)
+    head_name = head_mesh_name(glb)
+    others = [m for m in info.get("skinMeshes", []) if m != head_name]
+    seam = None
+    if others:
+        old = _read_accessor(glb, blob, prim.attributes.POSITION).astype(np.float32)
+        other_keys = set()
+        for name in others:
+            other = _mesh_prim(glb, name)
+            if other is not None:
+                other_pos = _read_accessor(glb, blob, other.attributes.POSITION)
+                other_keys.update(map(tuple, _position_keys(other_pos)))
+        seam = np.fromiter((tuple(k) in other_keys for k in _position_keys(old)), dtype=bool,
+                           count=old.shape[0])
+        pos = pos.copy()
+        pos[seam] = old[seam]
+
     _write_accessor(glb, blob, prim.attributes.POSITION, pos)
     acc.min = pos.min(axis=0).tolist()
     acc.max = pos.max(axis=0).tolist()
@@ -302,7 +417,87 @@ def set_head_geometry(
     if recompute_normals and prim.attributes.NORMAL is not None:
         if faces is None:
             faces = _read_accessor(glb, blob, prim.indices).reshape(-1, 3).astype(np.int64)
-        normals = recompute_vertex_normals(pos, faces.astype(np.int64))
+        if seam is None:
+            normals = recompute_vertex_normals(pos, faces.astype(np.int64))
+        else:
+            normals = welded_vertex_normals([(pos, faces.astype(np.int64))])[0]
+            normals[seam] = _read_accessor(glb, blob, prim.attributes.NORMAL)[seam]
         _write_accessor(glb, blob, prim.attributes.NORMAL, normals)
 
     glb.set_binary_blob(bytes(blob))
+
+
+def bake_body_type(glb: pygltflib.GLTF2, body_type: str) -> bool:
+    """
+    Bake a body-type preset the template declares into its rest pose.
+
+    The preset (root extras `reconstruction.bodyTypes[body_type]`) is a set of
+    slider weights over the template's own morph targets, the skeleton's world
+    joint positions re-solved for that shape, and the floor offset that keeps
+    the feet on the ground. Baking adds the weighted target deltas plus the
+    offset to every mesh's POSITION, re-welds normals across the shared skin,
+    moves each joint and rewrites the inverse bind matrices. Every morph target
+    stays in the file, so sliders keep working from the new rest shape.
+
+    Returns False (and changes nothing) when the template has no such preset.
+    """
+    info = template_info(glb)
+    preset = (info.get("bodyTypes") or {}).get(body_type)
+    if not preset:
+        return False
+    weights = {k: float(v) for k, v in (preset.get("morphs") or {}).items() if v}
+    offset_y = float(preset.get("offsetY") or 0.0)
+    joints_world = preset.get("joints") or []
+    joint_names = info.get("skinJoints") or []
+
+    blob = bytearray(glb.binary_blob())
+    baked: dict[str, tuple[object, np.ndarray, np.ndarray]] = {}
+    for mesh in glb.meshes:
+        names = list((mesh.extras or {}).get("targetNames") or [])
+        for prim in mesh.primitives:
+            pos, faces = _prim_geometry(glb, blob, prim)
+            for name, w in weights.items():
+                if name in names and prim.targets and names.index(name) < len(prim.targets):
+                    target = prim.targets[names.index(name)]
+                    t_idx = target.get("POSITION") if isinstance(target, dict) else getattr(target, "POSITION", None)
+                    if t_idx is not None:
+                        pos += w * _read_accessor(glb, blob, t_idx).astype(np.float64)
+            pos[:, 1] += offset_y
+            pos32 = pos.astype(np.float32)
+            _write_accessor(glb, blob, prim.attributes.POSITION, pos32)
+            acc = glb.accessors[prim.attributes.POSITION]
+            acc.min = pos32.min(axis=0).tolist()
+            acc.max = pos32.max(axis=0).tolist()
+            baked[mesh.name] = (prim, pos32, faces)
+
+    skin_meshes = [m for m in info.get("skinMeshes", []) if m in baked]
+    welded = welded_vertex_normals([(baked[m][1], baked[m][2]) for m in skin_meshes])
+    for name, normals in zip(skin_meshes, welded):
+        prim = baked[name][0]
+        if prim.attributes.NORMAL is not None:
+            _write_accessor(glb, blob, prim.attributes.NORMAL, normals)
+    for name, (prim, pos32, faces) in baked.items():
+        if name not in skin_meshes and prim.attributes.NORMAL is not None:
+            _write_accessor(glb, blob, prim.attributes.NORMAL, welded_vertex_normals([(pos32, faces)])[0])
+
+    if glb.skins and joints_world:
+        skin = glb.skins[0]
+        world_by_name = dict(zip(joint_names, joints_world))
+        parent_of = {c: i for i, node in enumerate(glb.nodes) for c in (node.children or [])}
+        world = {}
+        for j in skin.joints:
+            w = world_by_name.get(glb.nodes[j].name)
+            if w is None:
+                raise ValueError(f"body type {body_type!r} has no joint position for {glb.nodes[j].name}")
+            world[j] = np.asarray(w, dtype=np.float64)
+        for j in skin.joints:
+            parent = parent_of.get(j)
+            local = world[j] - world[parent] if parent in world else world[j]
+            glb.nodes[j].translation = [float(x) for x in local]
+        ibm = np.tile(np.eye(4, dtype=np.float32), (len(skin.joints), 1, 1))
+        for k, j in enumerate(skin.joints):
+            ibm[k, 3, :3] = -world[j]  # column-major: translation in the 4th column
+        _write_accessor(glb, blob, skin.inverseBindMatrices, ibm.reshape(len(skin.joints), 16))
+
+    glb.set_binary_blob(bytes(blob))
+    return True

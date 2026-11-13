@@ -16,7 +16,7 @@
 //     L/R paired names (earScaleLeft/earScaleRight) collapse to one slider
 //     under the panel's mirror lock.
 //
-// Run: node scripts/build-parametric-base.mjs
+// Run: node scripts/build-parametric-base.mjs [--out <path>]
 // Data provenance and license: avatar-sources/anny/README.md (all CC0).
 
 import { readFileSync, writeFileSync, statSync, existsSync } from 'node:fs';
@@ -26,11 +26,11 @@ import { fileURLToPath } from 'node:url';
 import { Document, NodeIO } from '@gltf-transform/core';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const SRC = resolve(ROOT, 'avatar-sources/anny');
-const OUT = resolve(ROOT, 'public/avatars/parametric-base.glb');
+export const SRC = resolve(ROOT, 'avatar-sources/anny');
+const DEFAULT_OUT = resolve(ROOT, 'public/avatars/parametric-base.glb');
 
 // MakeHuman units are decimeters; glTF wants meters.
-const SCALE = 0.1;
+export const SCALE = 0.1;
 
 /* ────────────────────────────────────────────────────────────────────────── *
  * Curated morph set. name → weighted recipe of .target files (region/file).
@@ -62,7 +62,7 @@ const g2 = (fn, s = 0.5) => ['female', 'male'].map((g) => [fn(g), s]);
 // Ethnicity-averaged recipe entries: one target per ethnicity at weight s each.
 const e3 = (fn, s = 1 / 3) => ['african', 'asian', 'caucasian'].map((e) => [fn(e), s]);
 
-const MORPHS = [
+export const MORPHS = [
 	// Nose
 	M('noseWider', 'nose/nose-scale-horiz-incr'),
 	M('noseNarrower', 'nose/nose-scale-horiz-decr'),
@@ -394,10 +394,10 @@ const MORPHS = [
  * wrong in one pass instead of failing on the first.
  * ────────────────────────────────────────────────────────────────────────── */
 
-function preflight() {
+export function preflight(morphs = MORPHS) {
 	const problems = [];
 	const seen = new Set();
-	for (const { name, files } of MORPHS) {
+	for (const { name, files } of morphs) {
 		if (seen.has(name)) problems.push(`duplicate morph name: ${name}`);
 		seen.add(name);
 		for (const { file } of files) {
@@ -415,7 +415,7 @@ function preflight() {
  * OBJ parsing (positions in source space, faces per group, v/vt indexing)
  * ────────────────────────────────────────────────────────────────────────── */
 
-function parseObj(text) {
+export function parseObj(text) {
 	const positions = [];
 	const uvs = [];
 	const faces = []; // { group, corners: [[v, vt], ...] }
@@ -444,8 +444,13 @@ function parseObj(text) {
 	return { positions, uvs, faces };
 }
 
-function loadTarget(relPath) {
-	const raw = gunzipSync(readFileSync(resolve(SRC, 'targets', `${relPath}.target.gz`)));
+/**
+ * Read one MakeHuman-format .target.gz (`vertex dx dy dz` lines, source units,
+ * original base.obj vertex indices). `dir` defaults to the Anny target tree;
+ * the reconstruction template passes the ICT-derived ARKit target directory.
+ */
+export function loadTarget(relPath, dir = resolve(SRC, 'targets')) {
+	const raw = gunzipSync(readFileSync(resolve(dir, `${relPath}.target.gz`)));
 	const deltas = new Map(); // origVertexIndex → [dx, dy, dz] in source units
 	for (const line of raw.toString('utf8').split('\n')) {
 		const t = line.trim();
@@ -467,11 +472,11 @@ function loadTarget(relPath) {
  * not a dev-machine one.
  * ────────────────────────────────────────────────────────────────────────── */
 
-const FILE_SIZE_BUDGET_MB = 12;
-const MORPH_VRAM_BUDGET_MB = 96;
+export const FILE_SIZE_BUDGET_MB = 12;
+export const MORPH_VRAM_BUDGET_MB = 96;
 
 /** Bytes three.js will allocate for this GLB's morph textures. */
-function morphTextureBytes(stats) {
+export function morphTextureBytes(stats) {
 	return stats.reduce((sum, s) => sum + s.verts * s.morphs * 16, 0);
 }
 
@@ -479,8 +484,42 @@ function morphTextureBytes(stats) {
  * Build
  * ────────────────────────────────────────────────────────────────────────── */
 
-function main() {
-	preflight();
+/** The shipped base's primitives: OBJ group(s) → one skinned primitive each. */
+export const DEFAULT_SUBMESHES = [
+	{ name: 'Body', groups: ['body'], color: [0.72, 0.42, 0.29, 1], rough: 0.85 },
+	{ name: 'Eyes', groups: ['helper-l-eye', 'helper-r-eye'], color: [0.18, 0.12, 0.09, 1], rough: 0.25 },
+	{ name: 'Teeth', groups: ['helper-upper-teeth', 'helper-lower-teeth'], color: [0.93, 0.91, 0.86, 1], rough: 0.4 },
+	{ name: 'Tongue', groups: ['helper-tongue'], color: [0.66, 0.3, 0.28, 1], rough: 0.6 },
+];
+
+/**
+ * Build the rigged, morphable glTF document from the Anny data. Defaults
+ * reproduce public/avatars/parametric-base.glb exactly; the selfie
+ * reconstruction template (scripts/build-reconstruction-template.mjs) reuses
+ * the same skeleton, skinning and morph baking with these options:
+ *
+ *   submeshes    [{ name, groups, color, rough, faceFilter?(face), uvFor?(v, vt),
+ *                   normalGroups? }] faceFilter splits one OBJ group across
+ *                   primitives; uvFor overrides TEXCOORD_0 (glTF orientation).
+ *   extraMorphs  [{ name, deltas: Map(origVertex → [dx,dy,dz] source units),
+ *                   alwaysOn?: [submeshName] }] emitted before the identity
+ *                   morphs; alwaysOn forces a (zero) target onto that submesh
+ *                   so a name like viseme_sil exists even with no motion.
+ *   materialFor  (sub, doc) → Material, to share or texture materials.
+ *   weldNormals  accumulate normals per ORIGINAL vertex over normalGroups, so
+ *                UV seams and primitive splits do not show as lighting seams.
+ */
+export function buildParametricDocument(opts = {}) {
+	const {
+		morphs = MORPHS,
+		submeshes = DEFAULT_SUBMESHES,
+		extraMorphs = [],
+		materialFor = null,
+		weldNormals = false,
+		generator = 'three.ws build-parametric-base',
+		name: docName = 'ParametricBase',
+	} = opts;
+	preflight(morphs);
 	const obj = parseObj(readFileSync(resolve(SRC, '3dobjs/base.obj'), 'utf8'));
 	const vertexGroups = JSON.parse(
 		readFileSync(resolve(SRC, 'mesh_metadata/basemesh_vertex_groups.json'), 'utf8'),
@@ -493,14 +532,14 @@ function main() {
 		if (!ranges) throw new Error(`vertex group missing: ${name}`);
 		return ranges; // [[start, end], ...] inclusive
 	};
-	const groupCentroid = (name) => {
+	const groupCentroid = (name, P = obj.positions) => {
 		let sx = 0;
 		let sy = 0;
 		let sz = 0;
 		let n = 0;
 		for (const [a, b] of groupRange(name)) {
 			for (let i = a; i <= b; i++) {
-				const [x, y, z] = obj.positions[i];
+				const [x, y, z] = P[i];
 				sx += x;
 				sy += y;
 				sz += z;
@@ -522,14 +561,6 @@ function main() {
 
 	const xform = ([x, y, z]) => [x * SCALE, y * SCALE - floorY, z * SCALE];
 
-	/* Submeshes: OBJ group(s) → one skinned primitive each. */
-	const SUBMESHES = [
-		{ name: 'Body', groups: ['body'], color: [0.72, 0.42, 0.29, 1], rough: 0.85 },
-		{ name: 'Eyes', groups: ['helper-l-eye', 'helper-r-eye'], color: [0.18, 0.12, 0.09, 1], rough: 0.25 },
-		{ name: 'Teeth', groups: ['helper-upper-teeth', 'helper-lower-teeth'], color: [0.93, 0.91, 0.86, 1], rough: 0.4 },
-		{ name: 'Tongue', groups: ['helper-tongue'], color: [0.66, 0.3, 0.28, 1], rough: 0.6 },
-	];
-
 	// Per-original-vertex skin influences from the per-bone weight lists.
 	const boneNames = Object.keys(rig.bones);
 	const boneIndex = new Map(boneNames.map((n, i) => [n, i]));
@@ -550,7 +581,7 @@ function main() {
 		if (!targetCache.has(file)) targetCache.set(file, loadTarget(file));
 		return targetCache.get(file);
 	};
-	const morphDeltas = MORPHS.map(({ name, files }) => {
+	const morphDeltas = morphs.map(({ name, files }) => {
 		const sum = new Map();
 		for (const { file, scale } of files) {
 			for (const [v, [dx, dy, dz]] of getTarget(file)) {
@@ -567,10 +598,10 @@ function main() {
 
 	/* glTF document */
 	const doc = new Document();
-	doc.getRoot().getAsset().generator = 'three.ws build-parametric-base';
+	doc.getRoot().getAsset().generator = generator;
 	const buffer = doc.createBuffer('data');
-	const scene = doc.createScene('ParametricBase');
-	const rootNode = doc.createNode('ParametricBase');
+	const scene = doc.createScene(docName);
+	const rootNode = doc.createNode(docName);
 	scene.addChild(rootNode);
 
 	// Skeleton: translation-only joints named exactly as the rig declares
@@ -578,14 +609,14 @@ function main() {
 	// vertex indices or centroid of a joint cube group), so rig and mesh agree
 	// by construction. animation-retarget.js's world-delta bind correction
 	// handles the identity orientations.
-	const headOf = (bone) => {
+	const headOf = (bone, P = obj.positions) => {
 		const h = bone.head;
 		if (h.strategy === 'MEAN') {
 			let sx = 0;
 			let sy = 0;
 			let sz = 0;
 			for (const i of h.vertex_indices) {
-				const [x, y, z] = obj.positions[i];
+				const [x, y, z] = P[i];
 				sx += x;
 				sy += y;
 				sz += z;
@@ -593,9 +624,12 @@ function main() {
 			const n = h.vertex_indices.length;
 			return xform([sx / n, sy / n, sz / n]);
 		}
-		if (h.strategy === 'CUBE') return xform(groupCentroid(h.cube_name));
+		if (h.strategy === 'CUBE') return xform(groupCentroid(h.cube_name, P));
 		throw new Error(`unknown joint strategy ${h.strategy}`);
 	};
+	// World joint positions for an arbitrary (e.g. morph-displaced) vertex set,
+	// so a baked body shape can carry a skeleton that matches it.
+	const jointWorldFor = (P) => boneNames.map((n) => headOf(rig.bones[n], P));
 
 	const jointWorld = new Map(boneNames.map((n) => [n, headOf(rig.bones[n])]));
 	const nodes = new Map();
@@ -634,8 +668,36 @@ function main() {
 	for (const name of boneNames) skin.addJoint(nodes.get(name));
 	skin.setSkeleton(nodes.get(boneNames.find((n) => !rig.bones[n].parent) || 'mixamorig:Hips'));
 
+	// Welded normals: one normal per ORIGINAL vertex, accumulated over every
+	// face of the listed groups, so a vertex duplicated across a UV seam or a
+	// primitive split gets the same normal on both sides.
+	const weldedCache = new Map();
+	const weldedNormals = (groups) => {
+		const key = groups.join('|');
+		if (weldedCache.has(key)) return weldedCache.get(key);
+		const set = new Set(groups);
+		const acc = new Float64Array(obj.positions.length * 3);
+		for (const face of obj.faces) {
+			if (!set.has(face.group)) continue;
+			const vs = face.corners.map(([v]) => v);
+			for (let i = 2; i < vs.length; i++) {
+				const [a, b, c] = [vs[0], vs[i - 1], vs[i]];
+				const [ax, ay, az] = obj.positions[a];
+				const [bx, by, bz] = obj.positions[b];
+				const [cx, cy, cz] = obj.positions[c];
+				const ux = bx - ax, uy = by - ay, uz = bz - az;
+				const vx = cx - ax, vy = cy - ay, vz = cz - az;
+				const n = [uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx];
+				for (const k of [a, b, c]) for (let d = 0; d < 3; d++) acc[k * 3 + d] += n[d];
+			}
+		}
+		weldedCache.set(key, acc);
+		return acc;
+	};
+
+	const allMorphs = [...extraMorphs, ...morphDeltas];
 	const stats = [];
-	for (const sub of SUBMESHES) {
+	for (const sub of submeshes) {
 		const wanted = new Set(sub.groups);
 		// Assemble unique (v, vt) output vertices and triangulated indices.
 		const outIndexOf = new Map();
@@ -651,13 +713,18 @@ function main() {
 				outIndexOf.set(key, idx);
 				origIndex.push(v);
 				pos.push(...xform(obj.positions[v]));
-				const t = vt >= 0 ? obj.uvs[vt] : [0, 0];
-				uv.push(t[0], 1 - t[1]);
+				if (sub.uvFor) {
+					uv.push(...sub.uvFor(v, vt));
+				} else {
+					const t = vt >= 0 ? obj.uvs[vt] : [0, 0];
+					uv.push(t[0], 1 - t[1]);
+				}
 			}
 			return idx;
 		};
 		for (const face of obj.faces) {
 			if (!wanted.has(face.group)) continue;
+			if (sub.faceFilter && !sub.faceFilter(face)) continue;
 			const c = face.corners.map(cornerIndex);
 			for (let i = 2; i < c.length; i++) indices.push(c[0], c[i - 1], c[i]);
 		}
@@ -666,7 +733,13 @@ function main() {
 
 		// Smooth normals from triangle accumulation.
 		const normal = new Float32Array(count * 3);
-		for (let i = 0; i < indices.length; i += 3) {
+		if (weldNormals) {
+			const acc = weldedNormals(sub.normalGroups || sub.groups);
+			for (let i = 0; i < count; i++) {
+				for (let d = 0; d < 3; d++) normal[i * 3 + d] = acc[origIndex[i] * 3 + d];
+			}
+		}
+		for (let i = 0; !weldNormals && i < indices.length; i += 3) {
 			const [a, b, c] = [indices[i], indices[i + 1], indices[i + 2]];
 			const ax = pos[a * 3];
 			const ay = pos[a * 3 + 1];
@@ -709,11 +782,13 @@ function main() {
 			});
 		}
 
-		const material = doc
-			.createMaterial(`Parametric_${sub.name}`)
-			.setBaseColorFactor(sub.color)
-			.setMetallicFactor(0)
-			.setRoughnessFactor(sub.rough);
+		const material = materialFor
+			? materialFor(sub, doc)
+			: doc
+					.createMaterial(`Parametric_${sub.name}`)
+					.setBaseColorFactor(sub.color)
+					.setMetallicFactor(0)
+					.setRoughnessFactor(sub.rough);
 
 		const acc = (name, type, array, extra = {}) => {
 			const a = doc.createAccessor(name).setType(type).setArray(array).setBuffer(buffer);
@@ -732,7 +807,7 @@ function main() {
 
 		// Morph targets: only those touching this submesh, as sparse accessors.
 		const targetNames = [];
-		for (const { name, deltas } of morphDeltas) {
+		for (const { name, deltas, alwaysOn } of allMorphs) {
 			let touched = 0;
 			const arr = new Float32Array(count * 3);
 			for (let i = 0; i < count; i++) {
@@ -743,10 +818,13 @@ function main() {
 				arr[i * 3 + 2] = d[2] * SCALE;
 				touched++;
 			}
-			if (!touched) continue;
+			const forced = !touched && alwaysOn?.includes(sub.name);
+			if (!touched && !forced) continue;
+			// A sparse accessor needs at least one stored element, so a forced
+			// all-zero target is written dense instead.
 			const target = doc
 				.createPrimitiveTarget(name)
-				.setAttribute('POSITION', acc(`${sub.name}-m-${name}`, 'VEC3', arr, { sparse: true }));
+				.setAttribute('POSITION', acc(`${sub.name}-m-${name}`, 'VEC3', arr, { sparse: !forced }));
 			prim.addTarget(target);
 			targetNames.push(name);
 		}
@@ -761,6 +839,15 @@ function main() {
 		stats.push({ name: sub.name, verts: count, tris: indices.length / 3, morphs: targetNames.length });
 	}
 
+	return { doc, stats, boneNames, jointWorld, jointWorldFor, obj, xform, influences, groupRange, morphDeltas, getTarget };
+}
+
+function main() {
+	// --out <path> writes elsewhere (used to verify a refactor reproduces the
+	// committed GLB byte for byte without touching it).
+	const outFlag = process.argv.indexOf('--out');
+	const OUT = outFlag > 0 ? resolve(process.argv[outFlag + 1]) : DEFAULT_OUT;
+	const { doc, stats, boneNames, jointWorld } = buildParametricDocument();
 	const io = new NodeIO();
 	io.write(OUT, doc).then(() => {
 		const size = statSync(OUT).size;
@@ -784,4 +871,4 @@ function main() {
 	});
 }
 
-main();
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();
