@@ -98,6 +98,7 @@
 		"follow-redirects@^1": "^1.16.2",
 		"node-forge": "^1.4.3",
 		"helia@^5": "^7.1.16",
-		"@helia/unixfs@^4": "^7"
+		"@helia/unixfs@^4": "^7",
+		"hono": "^4.13.18"
 	}
 }

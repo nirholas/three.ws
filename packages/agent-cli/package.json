@@ -67,5 +67,8 @@
   },
   "optionalDependencies": {
     "@three-ws/tty-avatar": "^0.1.0"
+  },
+  "overrides": {
+    "hono": "^4.13.18"
   }
 }
