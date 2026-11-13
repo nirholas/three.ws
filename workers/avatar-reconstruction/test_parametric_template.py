@@ -189,6 +189,25 @@ def test_iris_recolour_leaves_the_sclera_white():
     assert blue[2] > blue[0] + 40, f"iris did not take the eye colour: mean {blue}"
 
 
+def test_saved_glb_keeps_sparse_accessors_valid():
+    """
+    The template's morph targets are sparse accessors with no bufferView. glTF
+    forbids byteOffset there (the validator reports UNSATISFIED_DEPENDENCY), but
+    pygltflib defaults it to 0 and writes it back out on every save.
+    """
+    import struct
+
+    data = glb_ops.save_glb(rt.load(SPEC, "male"))
+    # Read the JSON chunk off the wire: reloading through pygltflib would put
+    # its byteOffset default straight back and hide the bug.
+    (json_len,) = struct.unpack_from("<I", data, 12)
+    doc = json.loads(data[20:20 + json_len])
+    sparse = [a for a in doc["accessors"] if "sparse" in a]
+    assert sparse, "template has no sparse accessors; this test no longer guards anything"
+    bad = [i for i, a in enumerate(doc["accessors"]) if "bufferView" not in a and "byteOffset" in a]
+    assert not bad, f"{len(bad)} accessors carry byteOffset without a bufferView, e.g. #{bad[0]}"
+
+
 if __name__ == "__main__":
     import sys
 

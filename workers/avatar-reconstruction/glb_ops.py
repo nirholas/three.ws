@@ -25,6 +25,12 @@ def load_glb(data: bytes) -> pygltflib.GLTF2:
 
 
 def save_glb(glb: pygltflib.GLTF2) -> bytes:
+    # pygltflib defaults Accessor.byteOffset to 0 and serialises it even on an
+    # accessor with no bufferView (a sparse morph target), which glTF forbids:
+    # the validator flags every such accessor UNSATISFIED_DEPENDENCY.
+    for acc in glb.accessors:
+        if acc.bufferView is None:
+            acc.byteOffset = None
     return b"".join(glb.save_to_bytes())
 
 
