@@ -403,50 +403,91 @@ GPU per avatar against a fleet already at its ceiling.
 - Vertex AI custom jobs for any batch experiment, so research load never competes
   with the serving fleet for the same three L4s.
 
-### Track 5 — Fully-owned body (v3)
+### Track 5: Fully-owned body (v3)
 
-The reconstruction template is a third-party Wolf3D base — the last such asset in
-the pipeline. **The replacement already exists in this repo** and the roadmap
-entry above is out of date: [`public/avatars/parametric-base.glb`](../public/avatars)
-is a CC0 MakeHuman/MPFB2 body (vendored via [naver/anny](https://github.com/naver/anny)
-in [`avatar-sources/anny/`](../avatar-sources/anny)) carrying **122 baked morph
-sliders** — nose, ears, mouth, eyes, jaw, cheeks, head shape, neck, plus gender,
-muscle, weight, age, height, torso, hips, limbs — on a 52-bone `mixamorig:*`
-skeleton, built by [`scripts/build-parametric-base.mjs`](../scripts/build-parametric-base.mjs)
-and already live in Avatar Studio's base switcher.
+**Status: built, behind `RECON_TEMPLATE`, production still on `wolf3d`.**
 
-That turns this track from "build a body" into "retarget reconstruction onto the
-body we ship", and it changes the shape of the whole program: the 122 sliders are
-a **parametric identity basis**. Fitting a person becomes solving for slider
-values, which is a far better-conditioned problem than free-form vertex
-optimisation — bounded, always on the face manifold, and interpretable. Track 3's
-differentiable fit should target this basis first and fall back to free-form
-vertex displacement only for residual detail.
+The reconstruction worker can now fit a selfie onto the owned CC0 parametric body
+instead of the third-party Wolf3D template. What exists:
 
-Work: rebuild `face_uv_map.json` against the parametric base (`precompute_uv.py`
-is already parameterised by template), transfer the ARKit-52 expression set with
-ICT-FaceKit (MIT) since the Anny base does not ship visemes, and re-baseline
-every ISE report — scores are only comparable within one template.
+- [`templates/parametric.glb`](../workers/avatar-reconstruction/templates), built by
+  [`scripts/build-reconstruction-template.mjs`](../scripts/build-reconstruction-template.mjs)
+  from the same Anny / MakeHuman data as
+  [`public/avatars/parametric-base.glb`](../public/avatars) (52-bone `mixamorig:*`
+  skeleton, the body and face sliders). The Head+Neck skin-weight region is split
+  into its own `Head` mesh so the face can be reshaped without touching the body.
+- The 52 ARKit expression shapes transferred from ICT-FaceKit (MIT, vendored in
+  [`avatar-sources/ict-facekit/`](../avatar-sources/ict-facekit)) by deformation
+  transfer, plus the 15 Oculus visemes composed from them with the runtime
+  lipsync recipes. 306 morph targets on the head, 178 on the body.
+- A `TemplateSpec` per template in
+  [`recon_templates.py`](../workers/avatar-reconstruction/recon_templates.py)
+  holds every name the pipeline addresses a template by, so no stage hardcodes a
+  `Wolf3D_` string, and
+  [`precompute_uv.py --template parametric`](../workers/avatar-reconstruction/precompute_uv.py)
+  builds `face_uv_map.parametric.json` against the new head.
+- **The `body_type` dead path is closed.** `face_pipeline._load_template` used to
+  look for `templates/male.glb` / `female.glb`, which never existed, so every
+  request fell back to `default.glb`. On the parametric template `male`,
+  `female` and `neutral` are slider presets (gender, muscle, weight, height,
+  hips) stored in the GLB, which `glb_ops.bake_body_type` bakes into the output
+  with the skeleton re-solved and the feet on the floor. The sculpt sliders stay
+  on the mesh for Avatar Studio. `test_face_pipeline.py::test_body_type_changes_the_reconstruction_template`
+  pins it: on the old loader it fails with all three values resolving to one GLB.
+  The API field and its values are unchanged.
 
-**This track also owns the `body_type` dead path.** `POST /reconstruct` accepts
-`male | female | neutral` and the selfie page offers the choice, but
-[`face_pipeline._load_template`](../workers/avatar-reconstruction/face_pipeline.py)
-looks for `templates/male.glb` and `female.glb`, neither of which exists, so every
-request silently falls back to `default.glb`. The parameter has never done
-anything.
+**Measured (2026-11-13, HEAD `ae34699b1`, 40-face reference set, CPU, dense fit
+off, `body_type=neutral`).** ISE is only comparable within a template, so both
+were re-baselined in the same run. The full reports are mirrored to
+`gs://three-ws-avatar-reconstructions/eval-reports/2026-11-13/` (`eval/reports/`
+is gitignored):
 
-Staging the existing stock bases as those two files is the obvious patch and is the
-wrong move. `public/avatars/realistic-male.glb` is topology-compatible (same 2162-
-vertex `Wolf3D_Head`) but carries only 60 morph targets against `default.glb`'s
-67, so it would silently drop seven expressions. `realistic-female.glb` is a
-different head entirely (1531 vertices, mesh names stripped), so it needs its own
-precomputed map and a `_find_head_prim` that does not key on a mesh name — and it
-would still leave two more templates to maintain in lockstep.
+| Template | ISE mean | ISE median | ISE worst | Template floor | Morph closes |
+|---|---|---|---|---|---|
+| `wolf3d` | 0.1591 | 0.1585 | 0.1653 | 0.3991 | 60.1% |
+| `parametric` | **0.1546** | **0.1540** | **0.1619** | 0.4234 | **63.5%** |
 
-The parametric base dissolves the problem: body type stops being a discrete
-template swap and becomes slider values (gender, muscle, weight, height, hips) on
-one mesh with one skeleton, one UV map and one blendshape set. Fix it here, not
-by adding template files.
+```
+python -m eval.run_eval --compare eval/reports/template-wolf3d.json eval/reports/template-parametric.json
+IMPROVED 2.8%
+by region:
+  brow     0.1406 → 0.1193  ↓ 15.1%
+  cheeks   0.2115 → 0.1246  ↓ 41.1%
+  jaw      0.1271 → 0.1597  ↑ 25.7%
+  nose     0.0810 → 0.1276  ↑ 57.6%
+  oval     0.1839 → 0.1795  ↓  2.4%
+```
+
+The parametric head starts further from people (higher floor) and the morph
+closes more of that gap, ending lower overall. It is worse at the nose and jaw:
+those are the regions to target when Track 3's fit moves onto the slider basis.
+
+**Why the default did not flip.** The ISE gate passes and `smoke_test.py` passes
+on both templates in the image build, but ISE measures face shape only. Loaded in
+the viewer, three reference faces across all three body types show three things
+the metric cannot see:
+
+1. No hair and no clothing. The parametric base is a bare body; Wolf3D ships an
+   outfit and hair the worker tints to the person. The parametric output needs
+   catalog hair and a default outfit fitted to its skeleton (Avatar Studio already
+   attaches both to this body).
+2. The skin grade lands lighter than the photographed face (a darker subject's
+   body texture grades to RGB 185, 120, 92), leaving a visible seam at the jaw on
+   darker complexions.
+3. The GLB is about 9 MB against 2.9 MB for Wolf3D; it needs meshopt / texture
+   compression on the output before it is the default download.
+
+Flip production when those three close. It is a config-only change:
+
+```bash
+gcloud run services update avatar-reconstruction --region us-central1 --update-env-vars RECON_TEMPLATE=parametric
+```
+
+Further out, the 122 sliders are a **parametric identity basis**: fitting a
+person becomes solving for slider values, a far better-conditioned problem than
+free-form vertex optimisation (bounded, always on the face manifold,
+interpretable). Track 3's differentiable fit should target this basis first and
+fall back to free-form displacement only for residual detail.
 
 ## Where the credits go
 
