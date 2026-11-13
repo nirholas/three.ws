@@ -43665,8 +43665,8 @@
 		{
 			"name": "hq_top_yields",
 			"title": "Top DeFi yields",
-			"description": "Highest-APY DeFi pools above a TVL floor, optionally for one chain or stablecoin pools only. Live DeFiLlama data via HQ. Use this to find where stablecoin or chain-specific yield is highest before choosing a pool.",
-			"whenToUse": "Use this to find where stablecoin or chain-specific yield is highest before choosing a pool.",
+			"description": "Highest-APY DeFi pools above a TVL floor, optionally for one chain, one token, or stablecoin pools only. Live DeFiLlama data via HQ. Use this to find where stablecoin, token-specific or chain-specific yield is highest before choosing a pool.",
+			"whenToUse": "Use this to find where stablecoin, token-specific or chain-specific yield is highest before choosing a pool.",
 			"server": {
 				"id": "hq-mcp",
 				"title": "@three-ws/hq-mcp",
@@ -43693,6 +43693,11 @@
 					"chain": {
 						"description": "Chain name, e.g. Ethereum, Solana.",
 						"type": "string"
+					},
+					"symbol": {
+						"description": "Single-asset pools of this token only, e.g. USDC or SOL. LP pairs that merely contain it are excluded.",
+						"type": "string",
+						"maxLength": 16
 					},
 					"minTvl": {
 						"description": "Minimum pool TVL in USD (default 1000000).",

@@ -44,11 +44,12 @@ const limitProp = { type: 'integer', minimum: 1, maximum: 25, description: 'Rows
 /** The registry. `reduce(data, args)` -> { rows, facts }. */
 export const TOOLS = {
   top_yields: {
-    description: 'Highest-APY DeFi pools above a TVL floor, optionally for one chain or stablecoin pools only.',
+    description: 'Highest-APY DeFi pools above a TVL floor, optionally for one chain, one token, or stablecoin pools only.',
     inputSchema: {
       type: 'object',
       properties: {
         chain: { type: 'string', description: 'Chain name, e.g. Ethereum, Solana.' },
+        symbol: { type: 'string', description: 'Single-asset pools of this token only, e.g. USDC or SOL. LP pairs that merely contain it are excluded.' },
         minTvl: { type: 'number', minimum: 0, description: 'Minimum pool TVL in USD (default 1000000).' },
         stablecoinOnly: { type: 'boolean' },
         limit: limitProp,
@@ -63,10 +64,16 @@ export const TOOLS = {
     reduce(data, a) {
       let pools = Array.isArray(data.pools) ? data.pools : [];
       if (a.stablecoinOnly === true) pools = pools.filter((p) => p.stablecoin);
+      const symbol = str(a.symbol, 16);
+      if (symbol) pools = pools.filter((p) => eqi(p.symbol, symbol));
       const rows = [...pools].sort((x, y) => y.apy - x.apy).slice(0, clampInt(a.limit, 1, 25, 10)).map((p) => ({
         project: p.project, symbol: p.symbol, chain: p.chain, apy: +p.apy.toFixed(2), tvlUsd: Math.round(p.tvlUsd),
         stablecoin: !!p.stablecoin, apyBase: p.apyBase ?? null, apyReward: p.apyReward ?? null,
       }));
+      if (rows.length === 0 && symbol) {
+        const where = str(a.chain) ? ` on ${str(a.chain)}` : '';
+        return { rows, facts: [`No ${symbol.toUpperCase()} pools${where} above the TVL floor right now.`] };
+      }
       return { rows, facts: rows.map((r) => `${r.project} ${r.symbol} on ${r.chain}: ${pct(r.apy)} APY, ${fmtUsd(r.tvlUsd)} TVL`) };
     },
   },
@@ -258,7 +265,8 @@ const INTENTS = [
 ];
 
 const KNOWN_ASSETS = ['BTC', 'ETH', 'SOL', 'DOGE', 'XRP', 'ARB', 'OP', 'AVAX', 'MATIC', 'LINK', 'BNB', 'SUI'];
-const KNOWN_CHAINS = ['Ethereum', 'Solana', 'Base', 'Arbitrum', 'Optimism', 'Polygon', 'BSC', 'Avalanche'];
+const YIELD_ASSETS = ['USDC', 'USDT', 'PYUSD', 'DAI', 'USDS', ...KNOWN_ASSETS];
+const KNOWN_CHAINS =['Ethereum', 'Solana', 'Base', 'Arbitrum', 'Optimism', 'Polygon', 'BSC', 'Avalanche'];
 
 /** Map a free-text question to {tool, args}, or null when nothing matches. */
 export function routeQuestion(question) {
@@ -273,6 +281,10 @@ export function routeQuestion(question) {
   if (['funding_rates', 'liquidations', 'venue_spread'].includes(tool) && asset) args.symbol = asset;
   if (['top_yields', 'chain_tvl', 'gas'].includes(tool) && chain) args.chain = chain;
   if (tool === 'top_yields' && /stable/.test(q)) args.stablecoinOnly = true;
+  if (tool === 'top_yields') {
+    const token = YIELD_ASSETS.find((s) => new RegExp(`\\b${s.toLowerCase()}\\b`).test(q));
+    if (token) args.symbol = token;
+  }
   if (tool === 'protocol_health' && /weak|risk|unsafe|worst/.test(q)) args.sort = 'weakest';
   return { tool, args };
 }

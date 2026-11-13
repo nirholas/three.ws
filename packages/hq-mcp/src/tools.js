@@ -22,8 +22,9 @@ function remote(name, title, description, inputSchema) {
 }
 
 export const TOOLS = [
-	remote('hq_top_yields', 'Top DeFi yields', 'Highest-APY DeFi pools above a TVL floor, optionally for one chain or stablecoin pools only. Live DeFiLlama data via HQ. Use this to find where stablecoin or chain-specific yield is highest before choosing a pool.', {
+	remote('hq_top_yields', 'Top DeFi yields', 'Highest-APY DeFi pools above a TVL floor, optionally for one chain, one token, or stablecoin pools only. Live DeFiLlama data via HQ. Use this to find where stablecoin, token-specific or chain-specific yield is highest before choosing a pool.', {
 		chain: z.string().optional().describe('Chain name, e.g. Ethereum, Solana.'),
+		symbol: z.string().max(16).optional().describe('Single-asset pools of this token only, e.g. USDC or SOL. LP pairs that merely contain it are excluded.'),
 		minTvl: z.number().min(0).optional().describe('Minimum pool TVL in USD (default 1000000).'),
 		stablecoinOnly: z.boolean().optional(),
 		limit,

@@ -51,6 +51,16 @@ describe('agent-tools registry', () => {
     assert.match(calls[1], /chain=Ethereum/);
   });
 
+  it('top_yields symbol filter keeps single-asset pools of that token only, not LP pairs containing it', async () => {
+    const { fetchImpl } = transport({ '/api/defi-yields': yields });
+    const usdc = await runTool('top_yields', { symbol: 'usdc' }, { origin: ORIGIN, fetchImpl });
+    assert.deepEqual(usdc.rows.map((r) => `${r.project}:${r.symbol}`), ['aave-v3:USDC']);
+    const none = await runTool('top_yields', { symbol: 'USDT', chain: 'Solana' }, { origin: ORIGIN, fetchImpl });
+    assert.deepEqual(none.rows, []);
+    assert.match(none.facts[0], /No USDT pools on Solana/);
+    assert.ok(TOOLS.top_yields.inputSchema.properties.symbol, 'symbol is in the schema');
+  });
+
   it('protocol_health sorts weakest first on request', async () => {
     const { fetchImpl } = transport({ '/api/protocol-health': health });
     const r = await runTool('protocol_health', { sort: 'weakest' }, { origin: ORIGIN, fetchImpl });
@@ -78,6 +88,10 @@ describe('routeQuestion', () => {
     assert.deepEqual(routeQuestion('is BTC funding overleveraged'), { tool: 'funding_rates', args: { symbol: 'BTC' } });
     assert.equal(routeQuestion('any big whale moves?').tool, 'whale_activity');
     assert.equal(routeQuestion('which protocols are unsafe').args.sort, 'weakest');
+  });
+  it('carries the asked-about token into a yield question so the answer is about that token', () => {
+    assert.deepEqual(routeQuestion('what is the best USDC yield on Solana right now?'), { tool: 'top_yields', args: { chain: 'Solana', symbol: 'USDC' } });
+    assert.deepEqual(routeQuestion('where can I stake SOL for the highest APY?'), { tool: 'top_yields', args: { symbol: 'SOL' } });
   });
   it('returns null for empty or unrelated text', () => {
     assert.equal(routeQuestion(''), null);

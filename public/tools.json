@@ -11556,7 +11556,7 @@
 			"category": "utility",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": "Use this to find where stablecoin or chain-specific yield is highest before choosing a pool.",
+			"whenToUse": "Use this to find where stablecoin, token-specific or chain-specific yield is highest before choosing a pool.",
 			"page": "https://three.ws/mcp-tools/hq-mcp/hq_top_yields"
 		},
 		{
