@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-12T18:05:24.587Z",
+	"generated_at": "2026-11-13T14:43:25.629Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4549,
+	"total": 4552,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-13",
+			"type": "update",
+			"title": "The Reconnect button and the active category chip on Agent integrations are readable in the dark theme",
+			"summary": "On the Agent integrations page the Reconnect button shown for a server waiting for sign-in, and the selected category chip in the catalog, painted white text on a white background in the dark theme, so the button looked like an empty pill. Both now use the site-wide text color for accent surfaces and read clearly in every theme.",
+			"link": "/mcp-integrations",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-11-12",
 			"type": "launch",
@@ -143,11 +153,31 @@
 		{
 			"date": "2026-11-12",
 			"type": "update",
+			"title": "Set a per-trade cap and a position limit for your agent's autopilot, and see the live quote before you confirm a trade",
+			"summary": "The autopilot trade scope now has two owner limits beside the daily SOL budget: a cap on the SOL any single buy may spend, and a maximum number of tokens the agent may hold at once ($THREE is never counted). Both are enforced on the server before anything is quoted. Previewing a trade proposal now shows the real quote it would fill at (venue, expected tokens, minimum received after slippage, price impact and value) together with the wallet guard, SOL balance and rug firewall verdicts, without signing or sending anything and without creating a wallet the agent does not have.",
+			"link": "/agents",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-12",
+			"type": "update",
 			"title": "Talk to your agent from Slack, WhatsApp, or out loud",
 			"summary": "Connections now has cards for Slack, WhatsApp and voice next to Telegram and Discord. Each card shows whether the platform is on, the steps to connect, how many chats are paired and when the last message arrived. In Slack your agent replies in the thread that asked and answers /three commands privately. On WhatsApp it handles text, voice notes and images, with Approve and Cancel as buttons. The Voice card has a Talk button: speak, and your agent answers in text and in its own voice, right in the browser. Phone calls are supported too, and a call can never approve a trade. Slack, WhatsApp and phone numbers switch on as each app is registered.",
 			"link": "/settings/connections",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-12",
+			"type": "update",
+			"title": "The agent editor shows its sections again on desktop",
+			"summary": "On a desktop screen the agent editor rendered as an empty strip under its header: the site footer was mounted inside the editor's full-height layout and pushed the persona, brain, autopilot and wallet sections down to zero height. The editor now keeps its full height on desktop, and on phones the header wraps cleanly so the title and wallet chip both stay readable.",
+			"link": "/agents",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1495,38 +1525,6 @@
 			"link": "/agent-screen",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Agents can lend idle funds on Solana",
-			"summary": "A new Lend tab in the agent wallet, v1 lending routes and five MCP tools let an agent supply idle USDC to Kamino Lend, see its position, APY and health factor, and withdraw. Every move is simulated first and needs an explicit confirm; an owner-set earn rule keeps idle funds working.",
-			"link": "/docs/agent-lending",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Agents on one stage take turns speaking instead of talking over each other",
-			"summary": "When several <agent-3d> agents share an <agent-stage>, everything they say out loud now goes through one speaking queue, so a cue answered by two agents plays one voice after the other. Lines from someone talking to an agent go first, then answers to a stage-wide cue, then idle chatter, and nobody is cut off mid-sentence. A voice that fails or never finishes is skipped so the scene keeps moving, and removing or pausing an agent cancels its waiting lines. Pages can follow who holds the floor with the new stage:speaking-change event, queue their own lines with stage.speak(), and say() now resolves to the reply. Agents also join the stage the moment their brain boots, which is what gives them say_to_agent and observe_agents; before this, a reply from say_to_agent always came back empty. The two-agents example shows the floor live.",
-			"link": "/docs/multi-agent",
-			"tags": [
-				"feature",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Agents SDK routes are all real",
-			"summary": "Every @three-ws/agents method now calls a mounted /api/v1 route: account usage, budget, ledger, integrations and link codes, six market intel reads (price, top movers, RSI/EMA/MACD indicators, signals, anomalies, macro) and read-only agent wallet balance and history. Swap execution and transfers stay out of the API by design. The package ships a route-parity test, a full transport, error and SSE suite, and runnable examples.",
-			"link": null,
-			"tags": [
-				"feature",
-				"sdk"
 			]
 		}
 	]

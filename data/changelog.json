@@ -2,6 +2,13 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-11-13",
+			"title": "The Reconnect button and the active category chip on Agent integrations are readable in the dark theme",
+			"summary": "On the Agent integrations page the Reconnect button shown for a server waiting for sign-in, and the selected category chip in the catalog, painted white text on a white background in the dark theme, so the button looked like an empty pill. Both now use the site-wide text color for accent surfaces and read clearly in every theme.",
+			"tags": ["fix"],
+			"link": "/mcp-integrations"
+		},
+		{
 			"date": "2026-11-12",
 			"title": "Set a per-trade cap and a position limit for your agent's autopilot, and see the live quote before you confirm a trade",
 			"summary": "The autopilot trade scope now has two owner limits beside the daily SOL budget: a cap on the SOL any single buy may spend, and a maximum number of tokens the agent may hold at once ($THREE is never counted). Both are enforced on the server before anything is quoted. Previewing a trade proposal now shows the real quote it would fill at (venue, expected tokens, minimum received after slippage, price impact and value) together with the wallet guard, SOL balance and rug firewall verdicts, without signing or sending anything and without creating a wallet the agent does not have.",
