@@ -23,6 +23,6 @@ describe('easter eggs', () => {
 	it('ships as valid standalone JS and is injected by the build', () => {
 		const src = readFileSync('public/easter-eggs.js', 'utf8');
 		expect(() => new Function(src)).not.toThrow();
-		expect(readFileSync('vite.config.js', 'utf8')).toContain('withEasterEggs(next)');
+		expect(readFileSync('vite.config.js', 'utf8')).toContain('withEasterEggs(next, entry)');
 	});
 });

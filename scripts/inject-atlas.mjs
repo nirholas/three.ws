@@ -26,6 +26,7 @@
 
 import { readdirSync, statSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, basename } from 'node:path';
+import { isLensEntry } from './lib/lens-surfaces.mjs';
 
 const EXCLUDED = new Set([
 	'widget.html',
@@ -46,7 +47,7 @@ export const ATLAS_TAG = '<script type="module" src="/atlas.js"></script>';
 const MARKER = 'src="/atlas.js"';
 
 export function shouldInject(filename) {
-	return !EXCLUDED.has(basename(filename));
+	return !EXCLUDED.has(basename(filename)) && !isLensEntry(filename);
 }
 
 export function injectInto(html) {

@@ -17,6 +17,7 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { rewriteHead } from './server/seo-head.mjs';
 import { keepEntryExports } from './scripts/vite/keep-entry-exports.mjs';
 import { watchIgnored } from './scripts/vite/watch-ignored.mjs';
+import { isLensEntry } from './scripts/lib/lens-surfaces.mjs';
 import { createCreationHeadRenderer, creationIdFromPath, apiCreationLoader } from './server/creation-head.mjs';
 import { isPlayPath, rewritePlayHead } from './server/play-head.mjs';
 import { presentDevRequestsAsSameSite } from './server/dev-proxy-origin.mjs';
@@ -153,8 +154,10 @@ function hasEasterEggs(html) {
 
 // Site-wide easter eggs (public/easter-eggs.js): deferred, self-contained, and a
 // no-op in iframes. Goes before </body>; a document without one is left alone.
-function withEasterEggs(html) {
-	if (hasEasterEggs(html)) return html;
+// Lens pages are skipped: the eggs listen to the arrow keys, which on a lens
+// are the wearer's d-pad (scripts/lib/lens-surfaces.mjs).
+function withEasterEggs(html, filename = '') {
+	if (isLensEntry(filename) || hasEasterEggs(html)) return html;
 	if (!/<\/body>/i.test(html)) return html;
 	return html.replace(/<\/body>/i, '<script src="/easter-eggs.js" defer></script>\n</body>');
 }
@@ -1442,7 +1445,7 @@ const appConfig = {
 								continue;
 							}
 							if (!entry.endsWith('.html')) continue;
-							if (IOS_BRIDGE_EXCLUDED.has(entry)) continue;
+							if (IOS_BRIDGE_EXCLUDED.has(entry) || isLensEntry(entry)) continue;
 							const html = readFileSync(full, 'utf8');
 							// Fragments have no </body> to inject into.
 							if (!html.includes('</body>')) continue;
@@ -3274,7 +3277,7 @@ const appConfig = {
 						.replace(/\\/g, '/')
 						.split('/')
 						.pop();
-					if (EXCLUDED.has(filename)) return [];
+					if (EXCLUDED.has(filename) || isLensEntry(filename)) return [];
 					return [
 						{
 							tag: 'script',
@@ -3354,7 +3357,7 @@ const appConfig = {
 					if (MOBILE_ERGONOMICS_EXCLUDED.has(filename)) return html;
 					// The link is injected as a tag rather than spliced in, so Vite
 					// places it with the rest of this page's head injections.
-					const out = withEasterEggs(withViewportFitCover(html));
+					const out = withEasterEggs(withViewportFitCover(html), filename);
 					const tags = hasMobileCss(out)
 						? []
 						: [
@@ -3395,7 +3398,7 @@ const appConfig = {
 							const html = readFileSync(full, 'utf8');
 							let next = withViewportFitCover(html);
 							next = withMobileCss(next);
-							next = withEasterEggs(next);
+							next = withEasterEggs(next, entry);
 							if (next !== html) {
 								writeFileSync(full, next);
 								patched++;

@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { gzipSync } from 'node:zlib';
 import { resolve, dirname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { LEDGER_REL, RELEASE_FILES, checkPins, readLedger, releasedVersions, sri } from './lib/agent-3d-releases.mjs';
+import { LENS_ENTRIES, LENS_JS_BUDGET_BYTES, firstPaintScripts } from './lib/lens-surfaces.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -243,6 +245,39 @@ if (!existsSync(resolve(distRoot, 'assets'))) {
 		ok = false;
 	} else {
 		console.log(`[check-dist] chunk graph OK - every asset reference across ${files.length} built files resolves`);
+	}
+}
+
+// Lens pages (scripts/lib/lens-surfaces.mjs) run in a smart-glasses browser and
+// must stay under the lens JS budget on first paint, counting every script tag,
+// modulepreload and static import the built page pulls in.
+for (const name of LENS_ENTRIES) {
+	const page = resolve(distRoot, name);
+	if (!existsSync(page)) {
+		console.error(`[check-dist] MISSING lens page: dist/${name}`);
+		ok = false;
+		continue;
+	}
+	const readDist = (url) => {
+		const abs = resolve(distRoot, url.replace(/^\//, ''));
+		return abs.startsWith(distRoot + sep) && existsSync(abs) ? readFileSync(abs, 'utf8') : null;
+	};
+	const scripts = firstPaintScripts(readFileSync(page, 'utf8'), readDist);
+	const sizes = scripts.map((url) => {
+		const code = readDist(url);
+		return { url, gz: code == null ? 0 : gzipSync(code).length, missing: code == null };
+	});
+	const total = sizes.reduce((n, f) => n + f.gz, 0);
+	for (const f of sizes.filter((x) => x.missing)) {
+		console.error(`[check-dist] dist/${name} loads ${f.url}, which is missing from dist/`);
+		ok = false;
+	}
+	if (total > LENS_JS_BUDGET_BYTES) {
+		console.error(`[check-dist] dist/${name} loads ${(total / 1024).toFixed(1)} KB of gzipped JS on first paint; the lens budget is ${LENS_JS_BUDGET_BYTES / 1024} KB:`);
+		for (const f of [...sizes].sort((a, b) => b.gz - a.gz)) console.error(`[check-dist]   ${(f.gz / 1024).toFixed(1).padStart(6)} KB  ${f.url}`);
+		ok = false;
+	} else {
+		console.log(`[check-dist] lens page dist/${name}: ${(total / 1024).toFixed(1)} KB gzipped JS across ${scripts.length} file(s), budget ${LENS_JS_BUDGET_BYTES / 1024} KB`);
 	}
 }
 

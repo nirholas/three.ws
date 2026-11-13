@@ -230,10 +230,11 @@ const G1_HEADER_LEN = 9;
 // for our short HUD, but the chunker is correct for longer text too).
 const G1_MAX_PACKET = 180;
 
+// TextEncoder is global in every browser and in Node, so no Buffer fallback:
+// naming Buffer here made the build inject an 11 KB polyfill into /glass.
+const utf8 = new TextEncoder();
 function utf8Bytes(str) {
-	if (typeof TextEncoder !== 'undefined') return new TextEncoder().encode(str);
-	// Node/test fallback — Buffer is UTF-8 by default.
-	return Uint8Array.from(Buffer.from(str, 'utf-8'));
+	return utf8.encode(str);
 }
 
 /**
