@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-13",
+			"title": "Browse runs keep going when one AI model is down, and Take over works on phones",
+			"summary": "When you send your agent browsing from its screen page, it now asks a short list of free AI models in turn, so one model being unavailable no longer stops the run, and it waits a few seconds and tries once more before giving up. If no model can answer, the step log says so plainly instead of failing silently. The agent also stops re-reading the same text over and over and answers as soon as the page shows what you asked for. You now watch the browse page itself instead of the agent's previous idle task, taking over while the agent is thinking stops it cleanly, and the Browse panel and Take over button fit and work on phone screens.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/agent-screen"
+		},
+		{
+			"date": "2026-11-13",
 			"title": "IBM Granite Guardian is live in production on our own GPU",
 			"summary": "The governance check that screens agent messages, new agent identities and autonomous sends now runs on real IBM Granite Guardian in production. Until today it answered with a not-configured error and the identity check let every agent through unscreened. We deployed IBM's open-weight Granite Guardian 3.3 model on a dedicated Cloud Run GPU and connected the site to it. In a live check, a friendly greeting came back allowed and a jailbreak that tried to drain an agent's SOL came back blocked with 99.98 percent confidence, each verdict scored from the model's own probabilities and labelled with the model that produced it. The health dashboard now shows the Guardian lane as healthy. Granite embeddings for the agent galaxy still need IBM's hosted watsonx.ai service, which is not connected yet.",
 			"tags": [

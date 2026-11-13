@@ -1,6 +1,6 @@
 # HQ - DeFi Dashboard Roadmap
 
-> Last updated: 2026-11-04
+> Last updated: 2026-11-13
 
 ## Vision
 
@@ -43,6 +43,14 @@ HQ is the world's first **spatial DeFi intelligence platform** - combining a 3D 
 
 ### Infrastructure
 - [x] Host page iframe bridge (postMessage)
+- [x] Typed bridge data commands with correlation ids, panel data with freshness timestamps, early `hq:ready` (`hq-bridge-protocol.ts`, `src/hq-host.js`)
+
+### three.ws Agent Integration
+- [x] DeFi agent tools API: 8 data tools plus `portfolio_risk`, with natural-language routing and narration (`api/agent-tools.js`)
+- [x] MCP server over the same tools (`packages/hq-mcp`)
+- [x] Compound alert rules (up to 4 price/funding/gas clauses, all/any) with legacy alert migration (`PriceAlertsPanel`, `alert-rules.ts`)
+- [x] Alert-to-action: an opted-in rule hands a reversible proposal to the owner's agent in Autopilot; never signs or moves funds
+- [x] LLM routes survive model retirement: ordered Groq model list (`api/_groq.js`) and OpenRouter free-tier fallback for narration
 - [x] Dashboard templates (7 built-in presets)
 - [x] Custom template save/load
 - [x] Variant system (full vs tech)
@@ -101,7 +109,7 @@ Move from aggregator-only to direct protocol data:
 ### Future - Advanced Features
 - [ ] DEX aggregator integration (swap execution from HQ)
 - [ ] Multi-chain portfolio tracking (via three.ws agent wallets)
-- [ ] Custom alert rule builder (compound conditions)
+- [x] Custom alert rule builder (compound conditions, 2026-11)
 - [ ] Dune Analytics query integration
 - [x] Cross-venue price discrepancy monitoring (Venue Spread panel + `/api/venue-spread`, 2026-08)
 - [ ] Chainlink oracle price discrepancy monitoring (on-chain oracle feeds specifically)
@@ -144,7 +152,7 @@ These layers are gated behind the `full` variant and can be toggled off. They ma
 4. **Integration**: Full three.ws agent tool coverage for all HQ data
 5. **Reliability**: <1% error rate on API routes, graceful degradation on failures
 
-## Open (as of 2026-11-04)
+## Open (as of 2026-11-13)
 
 Shipped with the protocol dashboards work: `ProtocolDashboardPanel`, `OracleMonitorPanel`, `RiskHeatmapPanel`, `DuneQueryPanel` (opt-in, needs `DUNE_API_KEY`). Still open:
 
@@ -152,6 +160,7 @@ Shipped with the protocol dashboards work: `ProtocolDashboardPanel`, `OracleMoni
 - [ ] Governance proposal data from Tally, and live proposal counts feeding the risk heatmap governance column
 - [ ] Oracle monitor feeds beyond Pyth SOL/BTC/ETH and Chainlink ETH/BTC/LINK on Ethereum
 - [ ] NFT floor price tracker
-- [ ] Deep three.ws agent context sharing, NL DeFi queries, trade signals, portfolio risk agent tool, alert-to-action workflows
-- [ ] DEX aggregator swap execution from HQ, multi-chain portfolio via agent wallets, custom alert rule builder
+- [ ] Trade signals for agents (agent context sharing, NL DeFi queries, portfolio risk tool and alert-to-action shipped 2026-11)
+- [ ] Server-side alert evaluation, so a rule fires while no HQ tab is open
+- [ ] DEX aggregator swap execution from HQ, multi-chain portfolio via agent wallets
 - [ ] Time-series charts for every DeFi metric (only TVL history is charted)

@@ -8,6 +8,8 @@ Real-time DeFi and crypto market intelligence dashboard, a [three.ws](https://th
 - **DeFi market data**: prices, DeFi yields, chain TVL, DEX volume and trending, funding rates, open interest, long/short ratios, liquidations, gas across 7 chains, BTC ETF flows, stablecoin health, token unlocks, protocol revenue, Bitcoin network health, sector rotation
 - **Analytics**: protocol health scores, cross-chain fee comparison, cross-venue price divergence, DeFi opportunity scanner, market movers, morning AI briefing, wallet tracker, exploit alerts and ledger, MEV monitoring, governance tracking
 - **Protocol dashboards, oracles and risk**: per-protocol dashboards (Solana first; Uniswap LP economics, lending utilization, Lido, Hyperliquid), an oracle monitor (Pyth via Solana RPC and Chainlink via Ethereum RPC against Coinbase and Kraken mids), a five-dimension risk heatmap, and an opt-in Dune panel that turns on when `DUNE_API_KEY` is set (`/api/protocol-dashboard`, `/api/oracle-deviation`, `/api/risk-heatmap`, `/api/dune-query`)
+- **Agent integration**: a read-only DeFi tools API for three.ws agents (`/api/agent-tools`: yields with chain and token filters, chain TVL, protocol health, funding, liquidations, venue spreads, whale flows, gas, portfolio risk) that also answers plain-language questions; the same tools over MCP (`packages/hq-mcp`); and a typed iframe bridge a host page drives with `src/hq-host.js`. See [docs/hq-agent-integration.md](../../docs/hq-agent-integration.md)
+- **Compound alerts**: rules of up to four price, funding and gas conditions (all/any); a rule can offer itself to the owner's agent as a reversible Autopilot proposal when it fires
 - **Real-time**: Binance WebSocket price streaming, 30+ RSS news lanes with NLP topic extraction
 - **3D globe**: 27+ deck.gl map layers (validator distribution, bridge flows, plus legacy geopolitical layers)
 - **Resilient by design**: every API route has keyless fallback lanes (CoinPaprika, DeFiLlama, OKX) and optional Upstash Redis caching, so the dashboard degrades gracefully instead of breaking
@@ -20,7 +22,7 @@ npm install
 npm run dev        # Vite dev server on :5173
 ```
 
-The dashboard works with zero configuration. Optional keys in `.env` unlock more lanes (see `.env.example`): `GROQ_API_KEY` (AI summaries), `FINNHUB_API_KEY` (stocks), `ACLED_API_KEY` (world events), `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` (shared cache).
+The dashboard works with zero configuration. Optional keys in `.env` unlock more lanes (see `.env.example`): `GROQ_API_KEY` (AI summaries, classification and agent-tool narration), `OPENROUTER_API_KEY` (free-tier summary fallback), `FINNHUB_API_KEY` (stocks), `ACLED_API_KEY` (world events), `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` (shared cache).
 
 Production-style local run (static build plus API sidecar, the same server the container uses):
 
@@ -36,7 +38,8 @@ npm run dev              # Dev server (full DeFi variant)
 npm run dev:tech         # Dev server (tech/AI variant)
 npm run typecheck        # tsc --noEmit
 npm run build:full       # Production build
-npm run test:e2e         # Playwright E2E tests
+npm run test:e2e         # Playwright E2E tests (e2e/, full then tech variant)
+npm run test:data        # Data-route, agent-tools, alert-rule and LLM-route unit tests
 npm run test:sidecar     # API/sidecar unit tests
 ```
 

@@ -88,7 +88,7 @@ import { TECH_HQS, ACCELERATORS } from '@/config/tech-geo';
 import { isDesktopRuntime } from '@/services/runtime';
 import { getCountryAtCoordinates, hasCountryGeometry, isCoordinateInCountry, preloadCountryGeometry } from '@/services/country-geometry';
 import { hqBridge } from '@/services/hq-bridge';
-import { registerPanelData } from '@/services/panel-data-registry';
+import { markPanelDataLoaded, registerPanelData } from '@/services/panel-data-registry';
 import type { HQCommandType, ApplyTemplatePayload, TogglePanelPayload, FlyToCountryPayload, ShowPanelPayload } from '@/services/hq-bridge';
 
 import type { PredictionMarket, MarketData, ClusteredEvent } from '@/types';
@@ -316,6 +316,13 @@ export class App {
     this.pendingDeepLinkCountry = initState.country ?? null;
     this.setupUrlStateSync();
     this.syncDataFreshnessWithLayers();
+
+    // Start the postMessage bridge (no-op when running standalone) as soon as
+    // the layout exists, so an embedding host gets hq:ready in seconds rather
+    // than after the full first data load. Panel data answers then carry a
+    // null updatedAt until each feed has landed.
+    this.initBridge();
+
     await preloadCountryGeometry();
     await this.loadAllData();
 
@@ -339,9 +346,6 @@ export class App {
 
     // Start real-time WebSocket price feed (Binance)
     startPriceFeed();
-
-    // Initialise postMessage bridge (no-op when running standalone)
-    this.initBridge();
 
     // Handle deep links for story sharing
     this.handleDeepLinks();
@@ -371,7 +375,7 @@ export class App {
     })));
     registerPanelData('panels', () => Object.fromEntries(
       Object.entries(this.panelSettings).map(([key, cfg]) => [key, cfg.enabled]),
-    ));
+    ), { live: true });
   }
 
   private handleBridgeCommand(type: HQCommandType, payload: unknown): void {
@@ -1585,6 +1589,7 @@ export class App {
 
     const events = snapshot.events as ClusteredEvent[];
     this.latestClusters = events;
+    markPanelDataLoaded('news-clusters', snapshot.timestamp);
 
     const predictions = snapshot.predictions.map((p, i) => ({
       id: `snap-${i}`,
@@ -1595,6 +1600,7 @@ export class App {
       liquidity: 0,
     }));
     this.latestPredictions = predictions;
+    markPanelDataLoaded('polymarket', snapshot.timestamp);
     (this.panels['polymarket'] as PredictionPanel).renderPredictions(predictions);
 
     this.map?.setHotspotLevels(snapshot.hotspotLevels);
@@ -4252,6 +4258,7 @@ export class App {
       this.latestClusters = mlWorker.isAvailable
         ? await clusterNewsHybrid(this.allNews)
         : await analysisWorker.clusterNews(this.allNews);
+      markPanelDataLoaded('news-clusters');
 
       // Update AI Insights panel with new clusters (if ML available)
       if (mlWorker.isAvailable && this.latestClusters.length > 0) {
@@ -4282,10 +4289,12 @@ export class App {
       const stocks = await fetchMultipleStocks(MARKET_SYMBOLS, {
         onBatch: (partialStocks) => {
           this.latestMarkets = partialStocks;
+          markPanelDataLoaded('markets');
           (this.panels['markets'] as MarketPanel).renderMarkets(partialStocks);
         },
       });
       this.latestMarkets = stocks;
+      markPanelDataLoaded('markets');
       (this.panels['markets'] as MarketPanel).renderMarkets(stocks);
       this.statusPanel?.updateApi('Finnhub', { status: 'ok' });
 
@@ -4341,6 +4350,7 @@ export class App {
     try {
       const predictions = await fetchPredictions();
       this.latestPredictions = predictions;
+      markPanelDataLoaded('polymarket');
       (this.panels['polymarket'] as PredictionPanel).renderPredictions(predictions);
 
       this.statusPanel?.updateFeed('Polymarket', { status: 'ok', itemCount: predictions.length });
@@ -5158,6 +5168,7 @@ export class App {
         this.latestClusters = mlWorker.isAvailable
           ? await clusterNewsHybrid(this.allNews)
           : await analysisWorker.clusterNews(this.allNews);
+        markPanelDataLoaded('news-clusters');
       }
 
       // Ingest news clusters for risk scoring

@@ -6,6 +6,10 @@ All notable changes to HQ are documented here.
 
 ### Added
 
+- **Agent tools API** (`/api/agent-tools`): `top_yields` (now with a `symbol` filter for single-asset pools), `chain_tvl`, `protocol_health`, `funding_rates`, `liquidations`, `venue_spread`, `whale_activity`, `gas` and `portfolio_risk`, callable by name or with a plain-language question that is routed to the right tool and optionally narrated
+- **Bridge data commands**: `host:get-panel-data`, `host:run-query` and `host:get-portfolio-risk` with correlation ids and `hq:error` codes; panel data replies carry `updatedAt` (null until the feed has loaded), and `hq:ready` now fires once the layout is built instead of after the first full data load
+- **Compound alert rules**: up to four price, funding and gas conditions joined by all/any, legacy alerts migrated in place, and an opt-in hand-off of a fired rule to the owner's agent as a reversible Autopilot proposal
+- **Browser tests** in `e2e/`: host bridge round trip and the alert rule builder
 - **Protocol Dashboards panel**: pick any protocol (Solana first, ranked by Solana TVL) for TVL history, per-chain split, fees, yields and protocol-specific views: Uniswap LP fees vs impermanent loss over 7/30/90 days, lending utilization and rates, Lido staking, Hyperliquid perp markets. Each block settles on its own and says why when a source has no data (`/api/protocol-dashboard`)
 - **Oracle Monitor panel**: Pyth prices read from Solana price accounts and Chainlink `latestRoundData` over Ethereum RPC, compared with Coinbase and Kraken mids in basis points, with heartbeat-based stale detection and a configurable threshold (`/api/oracle-deviation`)
 - **Protocol Risk Heatmap panel**: contract, oracle, governance, liquidity and market risk per protocol from public data, with unknown cells shown as unknown (`/api/risk-heatmap`)
@@ -14,6 +18,7 @@ All notable changes to HQ are documented here.
 
 ### Changed
 
+- **LLM routes**: Groq calls walk an ordered model list (`api/_groq.js`) instead of a single hardcoded model that Groq retired on 2026-11-13; the OpenRouter summarizer moved to a current free-tier model; agent-tool narration falls back from Groq to OpenRouter and reports `narrativeProvider`
 - ROADMAP reconciled with what is shipped, with a dated Open list
 - **Now a three.ws app**: rebranded to HQ for three.ws (titles, metadata, manifest, header, story cards), package renamed to `three-ws-hq`
 - **$THREE panel**: replaces the previous single-protocol panel with a live $THREE market signal from the three.ws API (`/api/three-signal`, origin configurable with `VITE_THREE_API_ORIGIN`)

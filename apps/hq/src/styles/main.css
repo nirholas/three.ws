@@ -19228,6 +19228,10 @@ body.has-critical-banner .panels-grid {
 .pa-form-error { font-size: 11px; color: var(--red, #ef4444); }
 .pa-alert-rule { font-size: 12px; }
 .pa-cond-btn:focus-visible, .pa-handoff-label input:focus-visible, .pa-clause .pa-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pa-cond-btn:not(.active):hover { border-color: var(--accent); color: var(--text); }
+.pa-add-btn:active, .pa-submit-btn:active, .pa-cond-btn:active, .pa-delete-btn:active { transform: translateY(1px); }
+.pa-add-btn:focus-visible, .pa-submit-btn:focus-visible, .pa-delete-btn:focus-visible, .pa-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pa-toggle:focus-visible + .pa-toggle-slider { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* ============================================
    PROTOCOL DASHBOARD / ORACLE MONITOR / RISK HEATMAP / DUNE
