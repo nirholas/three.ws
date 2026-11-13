@@ -4210,6 +4210,14 @@
 					"added": "2026-07-18"
 				},
 				{
+					"path": "/docs/forge-photo-prep",
+					"title": "Docs · Forge on-device photo check",
+					"description": "How Forge checks and prepares a photo in the browser before photo-to-3D: on-device background matting, a square subject crop, and plain-language warnings for photos that would make a bad mesh.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-11-13"
+				},
+				{
 					"path": "/docs/transaction-landing-race",
 					"title": "Docs · Transaction landing race",
 					"description": "How every signed Solana trade is sent through several landing providers at once: the provider table, first-confirmation-wins racing, per-provider landed and latency stats, failure-streak skipping with health probes, and the per-trade tip ceiling.",
