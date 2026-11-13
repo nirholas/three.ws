@@ -777,11 +777,11 @@
 				resultEl.classList.remove('on');
 				try {
 					const token = await getCsrf().catch(() => null);
-					// A rare name inside the Genesis window is checked server side, so prove
-					// the hold with a fresh pass. The wallet is asked to sign only when the
-					// read says this identity is eligible.
-					if (lastChecked.holder_window && windowRemaining() > 0) {
-						await getTierPass({ interactive: windowView() === 'eligible' });
+					// A rare name inside the Genesis window is checked server side, so an
+					// eligible identity proves the hold with a fresh pass. A non-holder mints
+					// none: it could not unlock anything, and the server answers with the 402.
+					if (lastChecked.holder_window && windowRemaining() > 0 && windowView() === 'eligible') {
+						await getTierPass({ interactive: true });
 					}
 					const headers = attachTierPass({ 'content-type': 'application/json' });
 					if (token) headers['x-csrf-token'] = token;

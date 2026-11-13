@@ -570,11 +570,11 @@ async function startReveal(item, button) {
 	button.disabled = true;
 	note(el.itemNote, 'Starting the forge...', '');
 	try {
-		// Inside the holder window the server checks drops.early, so prove the hold
-		// with a fresh tier pass. Ask the wallet to sign only when the read says this
-		// identity is eligible, so a non-holder is never prompted for nothing.
-		if (earlyRemaining() > 0) {
-			await getTierPass({ interactive: earlyEligible() });
+		// Inside the holder window the server checks drops.early, so an eligible
+		// identity proves the hold with a fresh tier pass. A non-holder mints none: a
+		// pass could not unlock anything, and the server answers with the 402.
+		if (earlyRemaining() > 0 && earlyEligible()) {
+			await getTierPass({ interactive: true });
 		}
 		const res = await fetch('/api/drops/reveal', {
 			method: 'POST',
