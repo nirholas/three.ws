@@ -39,9 +39,15 @@ export class MaterialEditor {
 
 		this.folder = this.gui.addFolder('Materials');
 
+		// GLTFLoader clones a material per morph/skin variant, so one glTF material
+		// can arrive as several instances sharing a name; dat.gui rejects duplicate
+		// folder names, so later instances get a numbered label.
+		const used = new Map();
 		mats.forEach((mat, i) => {
-			const label = mat.name || `Material ${i + 1}`;
-			const sub = this.folder.addFolder(label);
+			const base = mat.name || `Material ${i + 1}`;
+			const n = (used.get(base) || 0) + 1;
+			used.set(base, n);
+			const sub = this.folder.addFolder(n === 1 ? base : `${base} (${n})`);
 			this._addControls(sub, mat);
 			this.subfolders.push(sub);
 		});
