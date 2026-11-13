@@ -422,6 +422,14 @@ cut and attribute quota spend before a lane is ever picked:
   verifies. Unset, the guard is off; invalid JSON logs a warning and disables it. Saved
   reads (`cache`, `coalesced`) never count against a lane. Pinned by the lane budget guard
   suite in [tests/solana-rpc-priority-and-breaker.test.js](../../tests/solana-rpc-priority-and-breaker.test.js).
+- **Attempt cap per non-money request.** A read that is not on a money path (no
+  `fresh: true`, not `sendTransaction`/`simulateTransaction`/`requestAirdrop`) tries at
+  most `RPC_READ_MAX_ATTEMPTS` lanes (default 3) across the cooldown passes, and at most
+  that many again in the one egress re-sweep, then falls back to last-good or a clean
+  error. Before the cap, a read arriving while every lane cooled walked the whole chain in
+  the cooldown-forgiving pass, so each routine read cost up to 11 provider calls and
+  re-armed the bench on lanes that were already exhausted. Money callers still walk every
+  lane. Pinned by [tests/solana-rpc-attempt-cap.test.js](../../tests/solana-rpc-attempt-cap.test.js).
 - **Health detail.** `/api/healthz` and `/api/ops/health` carry the same ledger in the
   `rpc_lanes` subsystem: the detail line ends with `N calls/24h, top <caller> (<n>)`, and
   the metrics hold `calls_24h`, `saved_24h`, `top_caller`, `top_caller_calls_24h`, plus
@@ -548,6 +556,32 @@ and `run-buyback` (per-mint balance reads that can batch through `getMultipleAcc
 `/api/pump-fun-mcp` `getTransaction` and `/api/cron/solana-attestations-crawl`
 `getSignaturesForAddress` figures against 249,658 and 140,729, plus the total against
 1,304,108.
+
+### Second window and the attempt cap (2026-11-13)
+
+Production was still on commit `0d4c38210` (built 2026-11-11, `/api/version`), so neither
+the 2026-11-12 source cuts above nor the attempt cap were live. Revision
+`three-ws-api-00533-zjh` of 2026-11-12 was a config-only update. The report for
+2026-11-12 15:00 to 2026-11-13 15:00 UTC (94 instances) is therefore a second pre-cut
+baseline: 1,265,666 provider calls, 77,887 (5.8%) saved. Top pairs: `/api/pump-fun-mcp`
+`getTransaction` 155,947, `/api/cron/solana-attestations-crawl` `getSignaturesForAddress`
+132,366, `/api/crypto/security` `getTokenLargestAccounts` 99,536, `/api/crypto/due-diligence`
+`getSignaturesForAddress` 71,771. Lanes: Helius 349,935, Alchemy 349,436, mainnet-beta
+347,609, publicnode 137,817. The three heaviest lanes taking near-equal shares while the
+paid pair sat in quota cooldown is the failover walk itself, which is why the deferred
+lane-amplification item landed now as the attempt cap above.
+
+`blockhash_expired` stayed at 0 on `/api/healthz`. Verify did show 0 ok since 2026-11-10
+16:01 UTC, but those rejects (`simulation_failed:AccountNotFound` and
+`InstructionError [2, InvalidAccountData]`) come from an unfunded x402 sponsor and a
+seeder with no USDC account, not from RPC routing. `simulateTransaction` is never cached
+or capped, and verifies kept succeeding for four days after the read cache shipped
+(revision 00526, 2026-11-06).
+
+**Verify after deploy:** the same 24h report, against 1,265,666 total and the per-pair
+figures above. The attempt cap alone should bring holders and security from about 7
+provider calls per request back toward the 2.69 logical reads per request the 2026-11-04
+model counted.
 
 ## Knock-on effects to expect
 

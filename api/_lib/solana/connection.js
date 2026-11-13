@@ -1533,6 +1533,20 @@ const READ_CACHE_TTL_MS = {
 const FINALIZED_STATUS_TTL_MS = 30_000;
 // Methods that are never coalesced or cached, whatever their name suggests.
 const NEVER_SHARE_METHODS = new Set(['sendTransaction', 'simulateTransaction', 'requestAirdrop']);
+
+// Lane attempts one non-money request may spend before it settles for last-good
+// or a clean error. Measured 2026-11-12: with every lane cooling, the
+// cooldown-forgiving pass walked all 11 lanes for each routine read, so holders
+// and security cost about 7 provider calls per request against 2.69 logical
+// reads, and each 429 re-armed the bench on lanes that were already exhausted.
+// Money callers (fresh connections, sends, simulations) are never capped.
+const DEFAULT_READ_MAX_ATTEMPTS = 3;
+
+/** Lane attempts a non-money request may make (RPC_READ_MAX_ATTEMPTS, default 3). */
+export function readAttemptCap() {
+	const n = Number(process.env.RPC_READ_MAX_ATTEMPTS);
+	return Number.isInteger(n) && n > 0 ? n : DEFAULT_READ_MAX_ATTEMPTS;
+}
 const READ_CACHE_MAX_ENTRIES = 5_000;
 const READ_CACHE_MAX_BYTES = 256 * 1024;
 /** @type {Map<string, { body: string, expiresAt: number }>} */
@@ -1703,7 +1717,7 @@ export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 	// Reads are shared only between connections on the SAME endpoint chain, so a
 	// devnet connection can never be handed a mainnet answer.
 	const chainKey = hashText(endpoints.join(','));
-	const rotatingCore = async (_info, init, endpoints) => {
+	const rotatingCore = async (_info, init, endpoints, { money = false } = {}) => {
 		// The call shapes in this request. Empty for an unreadable body, which makes
 		// every capability check a no-op rather than guessing.
 		const methods = rpcMethodsFromBody(typeof init?.body === 'string' ? init.body : '');
@@ -1926,6 +1940,9 @@ export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 		else hydrateEndpointCooldowns();
 
 		let lastErr = null;
+		// Each phase (the passes, then the egress re-sweep) may spend at most `cap`
+		// lane attempts on a non-money request; see readAttemptCap().
+		const cap = money ? Infinity : readAttemptCap();
 		// The last-good key for this call (null for a batch, a write, or a read not
 		// on the list), and whether every failed attempt so far was a transport
 		// error. Both feed the two whole-chain fallbacks after the passes.
@@ -1950,12 +1967,15 @@ export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 			{ ignoreCooldown: true, ignoreCapability: false },
 			{ ignoreCooldown: true, ignoreCapability: true },
 		];
+		let attempts = 0;
 		for (const pass of PASSES) {
 			let attempted = false;
 			for (const url of endpoints) {
+				if (attempts >= cap) break;
 				if (!pass.ignoreCooldown && isEndpointCooling(url)) continue;
 				if (!pass.ignoreCapability && isAnyMethodDemoted(url, methods)) continue;
 				attempted = true;
+				attempts += 1;
 				const out = await tryEndpoint(url);
 				if (out.response) return succeed(out);
 				lastErr = out.error;
@@ -1974,9 +1994,11 @@ export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 		// that has already walked away.
 		if (transportOnly && lastErr && init?.signal?.aborted !== true) {
 			await sleep(RESWEEP_DELAY_MIN_MS + Math.random() * (RESWEEP_DELAY_MAX_MS - RESWEEP_DELAY_MIN_MS));
+			let resweeps = 0;
 			for (const url of endpoints) {
-				if (init?.signal?.aborted === true) break;
+				if (init?.signal?.aborted === true || resweeps >= cap) break;
 				if (isAnyMethodDemoted(url, methods)) continue;
+				resweeps += 1;
 				const out = await tryEndpoint(url);
 				if (out.response) return succeed(out);
 				lastErr = out.error;
@@ -2014,7 +2036,7 @@ export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 		const order = orderEndpointsForCaller(endpoints, { money });
 		const readKey = fresh ? null : readShareKey(parsed);
 		const shareKey = readKey ? `${chainKey}${METHOD_KEY_SEP}${readKey}` : null;
-		if (!shareKey) return rotatingCore(_info, init, order);
+		if (!shareKey) return rotatingCore(_info, init, order, { money });
 
 		const method = parsed.method;
 		const id = parsed.id ?? null;
@@ -2033,7 +2055,7 @@ export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 		// caller walking away must not abort the answer every follower is
 		// waiting on. Each attempt is still bounded by ATTEMPT_TIMEOUT_MS.
 		const shared = (async () => {
-			const resp = await rotatingCore(_info, { ...init, signal: undefined }, order);
+			const resp = await rotatingCore(_info, { ...init, signal: undefined }, order, { money });
 			const text = await resp.text();
 			const stale = resp.headers.get('x-solana-rpc-stale');
 			if (!stale) readCachePut(shareKey, method, text);
