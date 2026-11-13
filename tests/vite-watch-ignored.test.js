@@ -25,8 +25,8 @@ describe('vite watch ignore list', () => {
 		'.claude/worktrees',
 		'.claude/worktrees/agent-a1/src/main.js',
 		'contracts/lib',
-		'contracts/lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol',
-		'contracts/v4-hooks/lib/v4-core/src/types/Currency.sol',
+		'contracts/lib/forge-std/src/Test.sol',
+		'contracts/hooks/lib/forge-std/src/Vm.sol',
 		'dist-lib',
 		'dist-lib/agent-3d/latest/agent-3d.js',
 	])('ignores %s', (rel) => {
@@ -42,7 +42,7 @@ describe('vite watch ignore list', () => {
 		'workers/avatar-reconstruction/server.py',
 		'scripts/build-ict-expression-targets.py',
 		'public/sitemap/index.html',
-		'contracts/v4-hooks/src/Hook.sol',
+		'contracts/hooks/src/Hook.sol',
 	])('still watches %s', (rel) => {
 		expect(ignored(`${ROOT}/${rel}`)).toBe(false);
 	});
