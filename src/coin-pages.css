@@ -380,6 +380,135 @@ html.cv-page,
 	gap: 1rem;
 	margin-top: 0.75rem;
 }
+
+/* The /coin/<id> header: every row has a fixed height, and the skeleton in
+   pages/coin.html and src/coin-page.js is built from the same rows, so the
+   header is the same height before and after the market data lands. Content
+   that would wrap (a long name, many categories, the change chips on a narrow
+   phone) is cut to one line or scrolls sideways instead. Measured 2026-11-13:
+   the old 96 px skeleton became a 248 px header on a Pixel 5 and moved the
+   chart 152 px (CLS 0.1155). */
+.cv-coin-head.steady .title-row {
+	flex-wrap: nowrap;
+	height: 2.5rem;
+	min-width: 0;
+}
+.cv-coin-head.steady h1 {
+	line-height: 2.5rem;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.cv-coin-head.steady .ticker,
+.cv-coin-head.steady .cv-rank-badge {
+	flex-shrink: 0;
+	white-space: nowrap;
+}
+.cv-coin-head.steady .title-row > .cv-skel {
+	width: 12rem;
+	max-width: 100%;
+	height: 2rem;
+}
+.cv-coin-head.steady .cv-price-row {
+	flex-direction: column;
+	flex-wrap: nowrap;
+	align-items: flex-start;
+	gap: 0.5rem;
+}
+.cv-coin-head.steady .cv-price {
+	height: 2.75rem;
+	line-height: 2.75rem;
+	white-space: nowrap;
+}
+.cv-coin-head.steady .cv-price-row > .cv-skel {
+	width: 10rem;
+	height: 2.75rem;
+}
+.cv-chips,
+.cv-coin-head.steady .cv-cats {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	gap: 0.5rem;
+	max-width: 100%;
+	overflow-x: auto;
+	overflow-y: hidden;
+	scrollbar-width: none;
+}
+.cv-chips::-webkit-scrollbar,
+.cv-coin-head.steady .cv-cats::-webkit-scrollbar {
+	display: none;
+}
+.cv-chips {
+	height: 1.5rem;
+}
+.cv-chips > * {
+	flex-shrink: 0;
+	white-space: nowrap;
+}
+.cv-chips > .cv-skel {
+	width: 9rem;
+	height: 1.25rem;
+}
+.cv-coin-head.steady .cv-today {
+	height: 1.375rem;
+	line-height: 1.375rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.cv-coin-head.steady .cv-today > .cv-skel {
+	display: inline-block;
+	vertical-align: middle;
+	width: 6rem;
+	height: 0.875rem;
+}
+.cv-coin-head.steady .cv-cats {
+	gap: 0.375rem;
+	height: 1.375rem;
+}
+.cv-coin-head.steady .cv-cats:focus-visible {
+	outline: 2px solid var(--cv-accent-solid);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+.cv-coin-head.steady .cv-cat {
+	box-sizing: border-box;
+	display: inline-flex;
+	align-items: center;
+	flex-shrink: 0;
+	height: 1.375rem;
+	line-height: 1rem;
+	white-space: nowrap;
+}
+.cv-coin-head.steady .cv-cats > .cv-skel {
+	width: 14rem;
+	max-width: 100%;
+	height: 1.25rem;
+	flex-shrink: 1;
+}
+@media (min-width: 768px) {
+	.cv-coin-head.steady .title-row {
+		height: 3rem;
+	}
+	.cv-coin-head.steady h1 {
+		line-height: 3rem;
+	}
+	.cv-coin-head.steady .cv-price-row {
+		flex-direction: row;
+		align-items: center;
+		gap: 1rem;
+	}
+	.cv-coin-head.steady .cv-price {
+		height: 3.5rem;
+		line-height: 3.5rem;
+	}
+	.cv-coin-head.steady .cv-price-row > .cv-skel {
+		width: 14rem;
+		height: 3.5rem;
+	}
+}
 .cv-price {
 	font-size: 2.25rem;
 	font-weight: 700;

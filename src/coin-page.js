@@ -71,15 +71,17 @@ async function getJson(url) {
 const CHART_SKELETON_HTML =
 	'<div class="cv-chart-panel"><div class="cv-chart-bar"></div><div class="cv-skel cv-chart-skel"></div></div>';
 
+// The header's first paint, also carried by pages/coin.html. It is built from
+// the same fixed-height rows as renderHead() (.cv-coin-head.steady in
+// src/coin-pages.css), so the data swapping in does not move the chart below.
+const HEAD_SKELETON_HTML =
+	'<div class="cv-coin-head steady"><div class="cv-skel" style="width:64px;height:64px;border-radius:50%;flex-shrink:0"></div>' +
+	'<div style="flex:1;min-width:0"><div class="title-row"><div class="cv-skel"></div></div>' +
+	'<div class="cv-price-row"><div class="cv-skel"></div><div class="cv-chips"><div class="cv-skel"></div></div></div>' +
+	'<p class="cv-today"><span class="cv-skel"></span></p><div class="cv-cats"><div class="cv-skel"></div></div></div></div>';
+
 function renderSkeletons() {
-	$('cv-head').innerHTML = `
-		<div class="cv-coin-head">
-			<div class="cv-skel" style="width:64px;height:64px;border-radius:50%"></div>
-			<div style="flex:1;min-width:0">
-				<div class="cv-skel" style="width:14rem;height:2.25rem"></div>
-				<div class="cv-skel" style="width:18rem;height:3rem;margin-top:0.75rem"></div>
-			</div>
-		</div>`;
+	$('cv-head').innerHTML = HEAD_SKELETON_HTML;
 	$('cv-chart').innerHTML = CHART_SKELETON_HTML;
 	$('cv-stats').innerHTML =
 		'<div class="cv-stats-grid">' +
@@ -100,29 +102,31 @@ function renderHead(coin) {
 	const todayAbs = m.change_24h_abs;
 	$('cv-crumb-name').textContent = coin.name;
 	$('cv-head').innerHTML = `
-		<div class="cv-coin-head">
+		<div class="cv-coin-head steady">
 			${coin.image ? `<img loading="lazy" decoding="async" class="coin-icon" src="${esc(coin.image)}" alt="" width="64" height="64" data-no-dark-filter />` : ''}
 			<div style="flex:1;min-width:0">
 				<div class="title-row">
-					<h1>${esc(coin.name)}</h1>
+					<h1 title="${esc(coin.name)}">${esc(coin.name)}</h1>
 					<span class="ticker">${esc(coin.symbol || '')}</span>
 					${coin.rank != null ? `<span class="cv-rank-badge">#${coin.rank}</span>` : ''}
 				</div>
 				<div class="cv-price-row">
 					<span class="cv-price cv-mono">${esc(formatPrice(m.price))}</span>
-					<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+					<div class="cv-chips">
 						${chip('24h', m.change_pct?.h24)}${chip('7d', m.change_pct?.d7)}${chip('30d', m.change_pct?.d30)}
 					</div>
 				</div>
 				${
+					// The "today" and category rows keep their height when empty, so a
+					// coin without them does not pull the chart up either.
 					todayAbs != null
 						? `<p class="cv-today">${todayAbs >= 0 ? '+' : '−'}$${Math.abs(todayAbs).toFixed(Math.abs(todayAbs) < 1 ? 4 : 2)} today</p>`
-						: ''
+						: '<p class="cv-today" aria-hidden="true"></p>'
 				}
 				${
 					coin.categories?.length
-						? `<div class="cv-cats">${coin.categories.map((c) => `<span class="cv-cat">${esc(c)}</span>`).join('')}</div>`
-						: ''
+						? `<div class="cv-cats" tabindex="0" role="group" aria-label="Categories">${coin.categories.map((c) => `<span class="cv-cat">${esc(c)}</span>`).join('')}</div>`
+						: '<div class="cv-cats" aria-hidden="true"></div>'
 				}
 			</div>
 		</div>`;
