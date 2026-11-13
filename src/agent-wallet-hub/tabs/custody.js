@@ -659,8 +659,11 @@ registerWalletTab({
 		loadSigner();
 		loadHistory();
 
+		// The hub calls onShow right after the lazy mount; the mount already loaded the
+		// signer, so only later re-entries to the tab refresh it.
+		let mountedShow = true;
 		return {
-			onShow() { loadSigner(); },
+			onShow() { if (mountedShow) { mountedShow = false; return; } loadSigner(); },
 			destroy() {
 				destroyed = true;
 				closeModal();
