@@ -191,6 +191,31 @@ simulated Total Blocking Time, and there is deliberately no blended
 Reports the median of `--runs` runs per page. Every run gets a fresh browser
 context with service workers blocked, so transfer bytes are always cold-cache.
 
+### `perf-preview-server.mjs`: measure a fix before it deploys
+
+```sh
+npm run build
+node scripts/perf-preview-server.mjs --dist dist --port 4317
+npm run perf:mobile -- --base http://localhost:4317 --budget
+```
+
+`--base http://localhost:3000` measures the Vite dev server, which ships
+unbundled modules, so its LCP, blocking time and transfer bytes say nothing
+about production. A plain static server over `dist/` answers every `/api` call
+with a 404, so data-driven pages measure their error states instead. This
+server serves the built HTML and assets from `--dist`, resolved through the
+same `vercel.json` route table production uses (so `/coin/<mint>` and
+`/agents/<id>` reach the right documents), and streams everything the build
+does not have (`/api/*`, `/cdn/*`, bucket avatars, crawler-only routes) from
+`--upstream` (default `https://three.ws`), so every page renders live data.
+Responses use production's compression filter, so transfer sizes match.
+
+For a before/after comparison, build both commits in a separate git worktree
+(the post-build plugins write to `./dist`), move each `dist` aside, serve them
+on two ports and interleave the runs so both see the same machine load. It is
+a measurement tool: no SSR head rewrites, no CSP hashing, no local API
+handlers. Routing tests: `tests/perf-preview-server.test.js`.
+
 ### `mobile-touch-audit.mjs`: touch targets, gesture conflicts, safe areas
 
 ```sh

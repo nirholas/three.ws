@@ -43,3 +43,43 @@ Same harness and profile (Pixel 5, slow 4G, 4x CPU, 1 run), against https://thre
 | /play | probe failed | | | 4240 KB | 142 | main thread blocked for over 30 s; Rapier (1.55 MB) is the largest download |
 
 Every page breaks the budget (15 OVER lines). Several of the CLS sources were already fixed locally by other passes the same day and were waiting on a deploy: the corner stack (`541124072`), the coin header (`921a32abd`), the marketplace theme strip, the avatar-page action bar (`5695b5950`) and the forge starter chips.
+
+## Fix: the agent profile no longer downloads three.js on first load
+
+`/agents/<id>` shows its avatar in `<model-viewer>`, but [src/avatar-page.js](../../src/avatar-page.js) statically imported three click-only features that each build their own three.js scene: the Talk overlay, the Pose stage and the client-side GLB/OBJ/USDZ export. So every visit modulepreloaded the site's three.js stack (`three-addons`, `talk-scene`, `usdz-pipeline` and their dependencies), the largest script on the page. They now load through cached dynamic imports that retry after a failed load. Talk starts fetching on hover, focus or touch, shows a busy state, and toasts if the chunk cannot load. [tests/avatar-page-first-load.test.js](../../tests/avatar-page-first-load.test.js) walks the static import graph with es-module-lexer ([scripts/lib/static-import-graph.mjs](../../scripts/lib/static-import-graph.mjs)) and fails if anything reachable from the page entry pulls in three.js.
+
+Built output, same page: modulepreloads 67 to 44, first-load JavaScript 896 KB to 137 KB gzip.
+
+## After (local production builds, 2026-11-13)
+
+Measured with [scripts/perf-preview-server.mjs](../../scripts/perf-preview-server.mjs) (see [scripts/README.md](../../scripts/README.md)): the built bundle served through the production route table, with `/api`, `/cdn` and bucket assets streamed live from https://three.ws. "Before" is a build of `d71c512e3`, "after" a build of `9728d0dab`. Both builds already contain the other passes' undeployed CLS fixes, which is why CLS is under budget in both columns; the agent-profile delta between them is this pass alone (no other commit in that range touches the page or its imports). Host load average was about 200 on 32 cores, so TBT* is inflated and noisy.
+
+Agent profile, three interleaved runs per build (median, range):
+
+| build | LCP ms | CLS | TBT* ms | transfer | requests |
+|---|---|---|---|---|---|
+| before | 21900 (15676 to 22892) | 0.006 | 34611 | 4026 KB | 156 |
+| after | 13680 (10296 to 16656) | 0.006 | 27822 | 3269 KB | 132 |
+
+Full `--budget` pass, one run per page, before then after:
+
+| page | LCP ms | CLS | TBT* ms | transfer |
+|---|---|---|---|---|
+| /marketplace | 28568 / 18664 | 0.000 / 0.000 | 26680 / 13715 | 3217 KB / 783 KB |
+| /agents/d94d2a50-... | 16356 / 18408 | 0.007 / 0.000 | 52117 / 27411 | 4024 KB / 3315 KB |
+| /coin/FeMb...pump | 12908 / 13924 | 0.000 / 0.000 | 5868 / 5411 | 604 KB / 656 KB |
+| /forge | 3592 / 4484 | 0.009 / 0.009 | 18878 / 20141 | 1703 KB / 1778 KB |
+| / | 2068 / 1512 | 0.052 / 0.052 | 5236 / 2947 | 996 KB / 953 KB |
+| /play | probe failed / probe failed | | | 3085 KB / 3085 KB |
+
+The single-run agent LCP in this table (16356 to 18408) sits inside the run-to-run spread the interleaved runs show, which is why the A/B above uses three. The marketplace drop between builds (3217 KB to 783 KB, no WebGL context created) comes from another pass in the range, the shared marketplace hero rework (`9af7292d1`, `ab4412953`), not from this one.
+
+Verified in a Pixel 5 emulated browser against the after build: no 3D chunk on first load; Talk opens its overlay (fetching talk-mode, talk-scene and three-addons on demand); the Pose tab mounts its canvas and, for this unrigged avatar, shows the designed "needs a rigged humanoid skeleton" message; the VRM export loads the exporter and reports its own skeleton error. The only other console error was a 404 from production's `/api/actions/agent-hire?probe=1`, already fixed locally in `86647347d` and waiting on the same deploy.
+
+## Remaining work (2026-11-13)
+
+1. Deploy (`git push threews main`, then `npm run deploy:gcp:full`), then run `node scripts/mobile-perf.mjs --budget --base https://three.ws` on a quiet machine. CLS should then clear on every page; LCP and TBT* will not.
+2. Agent profile: the avatar GLB itself (1.46 MB for this agent) is now the largest download and `<model-viewer>` evaluation follows it. Serve a decimated mobile tier of the GLB, or show the avatar's still thumbnail until the viewer is in view and idle.
+3. `/play`: the probe cannot even read metrics because the main thread is blocked for over 30 s. Rapier (1.55 MB) and the world bundle need to load after first paint, behind an explicit "enter world" step on mobile.
+4. `/marketplace` and `/coin`: LCP is bound to API data (the hero thumbnail, the live price), so it moves with API latency more than with bundle size.
+5. TBT* at 4x CPU is over 600 ms on every page, including home. Reaching that bar needs per-page main-thread budgets, not one more lazy import.
