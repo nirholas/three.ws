@@ -10,8 +10,10 @@
 // 2.9 s of main-thread blocking for models nobody had asked to see.
 //
 // Cards now carry an inert <model-slot> that becomes a real <model-viewer> on
-// first attention. Only the hero carousel, which shows its model straight
-// away, builds viewers during load.
+// first attention. Since the same day the hero carousel follows that contract
+// too: it paints each avatar's stored poster first and builds its viewer only
+// once the visitor hovers, focuses or taps the hero, so no model-viewer is
+// constructed (and model-viewer.min.js is not even fetched) during load.
 
 import { test, expect } from '@playwright/test';
 
@@ -34,15 +36,30 @@ test.describe('phone', () => {
 	test('cards build no model-viewer during load', async ({ page }) => {
 		await openMarketplace(page);
 		await page.waitForTimeout(1500);
-		const counts = await page.evaluate(() => {
-			const viewers = [...document.querySelectorAll('model-viewer')];
-			return {
-				outsideHero: viewers.filter((mv) => !mv.closest('#market-hero')).length,
-				slots: document.querySelectorAll('#market-grid model-slot, #market-theme-picks model-slot').length,
-			};
-		});
+		const counts = await page.evaluate(() => ({
+			viewers: document.querySelectorAll('model-viewer').length,
+			defined: !!customElements.get('model-viewer'),
+			slots: document.querySelectorAll('#market-grid model-slot, #market-theme-picks model-slot').length,
+			heroSlots: document.querySelectorAll('#market-hero-stage model-slot').length,
+		}));
 		expect(counts.slots, 'the grid must still offer 3D previews').toBeGreaterThan(0);
-		expect(counts.outsideHero, JSON.stringify(counts)).toBe(0);
+		expect(counts.viewers, JSON.stringify(counts)).toBe(0);
+		expect(counts.defined, 'model-viewer must load on demand, not with the page').toBe(false);
+	});
+
+	test('tapping the hero wakes its active slide only', async ({ page }) => {
+		await openMarketplace(page);
+		const stage = page.locator('#market-hero-stage');
+		await expect(stage.locator('.market-hero-slide model-slot')).not.toHaveCount(0, { timeout: 60_000 });
+		// Slide 0 is on screen at first paint, so its poster is the one fetched at
+		// high priority; autoplay may have moved on by now.
+		await expect(stage.locator('.market-hero-slide[data-slot="0"] img.market-hero-poster')).toHaveAttribute('fetchpriority', 'high');
+		await stage.dispatchEvent('pointerdown', { pointerType: 'touch', bubbles: true });
+		const mv = stage.locator('.market-hero-slide.active model-viewer');
+		await expect(mv).toHaveCount(1, { timeout: 30_000 });
+		await expect(mv).toHaveAttribute('src', /^https?:\/\/.+\.glb/);
+		await expect(mv).toHaveAttribute('auto-rotate', '');
+		expect(await page.evaluate(() => document.querySelectorAll('model-viewer:not(#market-hero model-viewer)').length)).toBe(0);
 	});
 });
 

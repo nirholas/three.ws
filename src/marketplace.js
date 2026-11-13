@@ -1590,6 +1590,12 @@ function prefersReducedMotion() {
 	}
 }
 
+// The element whose hover, focus or tap counts as attention on a card: the
+// whole card, never just its slot. The slot sits under the card's placeholder
+// and thumbnail layers and covers only the picture box, so a pointer resting
+// on an agent card's name or stats never entered it and the card never woke.
+const CARD_ATTENTION_HOSTS = '.market-card-agent, .market-card-avatar, .market-theme-pick';
+
 let cardObserver = null;
 function observeCardModelViewers() {
 	const LAZY_SLOTS =
@@ -1598,7 +1604,7 @@ function observeCardModelViewers() {
 		// Browser without IntersectionObserver: wake every card now so the
 		// previews still render. Acceptable fallback for ancient browsers.
 		document.querySelectorAll(LAZY_SLOTS).forEach((slot) => {
-			wakeCardViewer(slot, slot.closest('.market-card-avatar, .market-theme-pick'));
+			wakeCardViewer(slot, slot.closest(CARD_ATTENTION_HOSTS));
 		});
 		return;
 	}
@@ -1610,7 +1616,7 @@ function observeCardModelViewers() {
 					if (!entry.isIntersecting || slot.dataset.slotBound === '1') continue;
 					slot.dataset.slotBound = '1';
 					cardObserver.unobserve(slot);
-					const attention = slot.closest('.market-card-avatar, .market-theme-pick');
+					const attention = slot.closest(CARD_ATTENTION_HOSTS);
 					// Reduced motion: nothing turns, so the still model is the whole
 					// preview; load it as soon as the card is near the viewport.
 					if (prefersReducedMotion()) {
