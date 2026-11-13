@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { validateDataCommand, isDataCommand, sizeCheck, MAX_RESULT_BYTES } from '../src/services/hq-bridge-protocol.ts';
-import { registerPanelData, readPanelData, hasPanelData, listPanelDataKeys, unregisterPanelData } from '../src/services/panel-data-registry.ts';
+import { registerPanelData, readPanelData, hasPanelData, listPanelDataKeys, unregisterPanelData, markPanelDataLoaded, readPanelDataUpdatedAt } from '../src/services/panel-data-registry.ts';
 
 describe('validateDataCommand', () => {
   it('recognises only the three data commands', () => {
@@ -70,5 +70,38 @@ describe('panel data registry', () => {
     assert.deepEqual(live.rows, [1, 2]);
     unregisterPanelData('unit-test');
     assert.equal(readPanelData('unit-test'), undefined);
+  });
+});
+
+describe('panel data freshness', () => {
+  it('reports null until the data has loaded, then the load time as ISO', () => {
+    registerPanelData('fresh-test', () => []);
+    assert.equal(readPanelDataUpdatedAt('fresh-test'), null);
+    markPanelDataLoaded('fresh-test', Date.parse('2026-11-13T10:00:00Z'));
+    assert.equal(readPanelDataUpdatedAt('fresh-test'), '2026-11-13T10:00:00.000Z');
+    markPanelDataLoaded('fresh-test', Date.parse('2026-11-13T10:05:00Z'));
+    assert.equal(readPanelDataUpdatedAt('fresh-test'), '2026-11-13T10:05:00.000Z');
+    unregisterPanelData('fresh-test');
+    assert.equal(readPanelDataUpdatedAt('fresh-test'), null);
+  });
+
+  it('a live provider is always current, and a load mark survives re-registration', () => {
+    registerPanelData('live-test', () => ({}), { live: true });
+    const before = Date.now();
+    const at = Date.parse(readPanelDataUpdatedAt('live-test'));
+    assert.ok(at >= before && at <= Date.now() + 1);
+    unregisterPanelData('live-test');
+
+    markPanelDataLoaded('early-test', Date.parse('2026-11-13T09:00:00Z'));
+    registerPanelData('early-test', () => 1);
+    assert.equal(readPanelDataUpdatedAt('early-test'), '2026-11-13T09:00:00.000Z');
+    unregisterPanelData('early-test');
+  });
+
+  it('ignores an invalid load time instead of storing NaN', () => {
+    registerPanelData('nan-test', () => 1);
+    markPanelDataLoaded('nan-test', Number.NaN);
+    assert.equal(readPanelDataUpdatedAt('nan-test'), null);
+    unregisterPanelData('nan-test');
   });
 });

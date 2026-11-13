@@ -16,7 +16,7 @@ import {
   type QueryRequest,
   type PortfolioRiskRequest,
 } from './hq-bridge-protocol';
-import { readPanelData, hasPanelData } from './panel-data-registry';
+import { readPanelData, readPanelDataUpdatedAt, hasPanelData } from './panel-data-registry';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -369,7 +369,7 @@ class HQBridge {
         const data = readPanelData(key);
         const size = sizeCheck(data, id);
         if (!size.ok) return this.emitError(size.error);
-        this.emit('hq:panel-data', { id, key, data });
+        this.emit('hq:panel-data', { id, key, data, updatedAt: readPanelDataUpdatedAt(key) });
         return;
       }
 

@@ -77,7 +77,7 @@ export function createHqHost({ frame, origin, agentId, apiFetch, win = window, t
 				pending.delete(id);
 				clearTimeout(entry.timer);
 				if (data.type === 'hq:error') entry.reject(Object.assign(new Error(data.payload.message || 'HQ error'), { code: data.payload.code }));
-				else entry.resolve(data.type === 'hq:panel-data' ? data.payload.data : data.payload.result);
+				else entry.resolve(entry.pick(data.payload));
 				return;
 			}
 		}
@@ -91,7 +91,7 @@ export function createHqHost({ frame, origin, agentId, apiFetch, win = window, t
 	}
 	win.addEventListener('message', onMessage);
 
-	function request(type, payload) {
+	function request(type, payload, pick = (reply) => reply.result) {
 		if (disposed) return Promise.reject(new Error('hq-host disposed'));
 		const target = frame.contentWindow;
 		if (!target) return Promise.reject(new Error('HQ frame is not loaded'));
@@ -101,14 +101,16 @@ export function createHqHost({ frame, origin, agentId, apiFetch, win = window, t
 				pending.delete(id);
 				reject(Object.assign(new Error('HQ did not answer in time'), { code: 'timeout' }));
 			}, timeoutMs);
-			pending.set(id, { resolve, reject, timer });
+			pending.set(id, { resolve, reject, timer, pick });
 			target.postMessage({ type, payload: { ...payload, id } }, expected);
 		});
 	}
 
 	return {
 		/** Current data of an HQ panel (markets, polymarket, news-clusters, panels). */
-		getPanelData: (key) => request('host:get-panel-data', { key }),
+		getPanelData: (key) => request('host:get-panel-data', { key }, (p) => p.data),
+		/** Same request, resolving { key, data, updatedAt } (ISO string, or null before the panel has loaded). */
+		getPanelSnapshot: (key) => request('host:get-panel-data', { key }, (p) => ({ key: p.key, data: p.data, updatedAt: p.updatedAt ?? null })),
 		/** Run an HQ DeFi tool by name, e.g. runTool('top_yields', { chain: 'Solana' }). */
 		runTool: (tool, args = {}) => request('host:run-query', { tool, args }),
 		/** Ask a natural-language question; HQ routes it to a tool and narrates the result. */

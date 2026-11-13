@@ -36,6 +36,17 @@ describe('hq-host requests', () => {
 		await expect(p).rejects.toMatchObject({ code: 'unknown_panel' });
 	});
 
+	it('getPanelSnapshot resolves the data with its freshness timestamp; getPanelData stays data-only', async () => {
+		const { host, sent, deliver } = harness();
+		const snap = host.getPanelSnapshot('markets');
+		const data = host.getPanelData('markets');
+		expect(sent[0].msg).toMatchObject({ type: 'host:get-panel-data', payload: { key: 'markets' } });
+		deliver({ type: 'hq:panel-data', payload: { id: sent[0].msg.payload.id, key: 'markets', data: [{ symbol: 'X' }], updatedAt: '2026-11-13T10:00:00.000Z' } });
+		deliver({ type: 'hq:panel-data', payload: { id: sent[1].msg.payload.id, key: 'markets', data: [{ symbol: 'X' }], updatedAt: null } });
+		await expect(snap).resolves.toEqual({ key: 'markets', data: [{ symbol: 'X' }], updatedAt: '2026-11-13T10:00:00.000Z' });
+		await expect(data).resolves.toEqual([{ symbol: 'X' }]);
+	});
+
 	it('ignores replies from the wrong origin or the wrong window', async () => {
 		const { host, sent, deliver } = harness({ timeoutMs: 30 });
 		const p = host.getPanelData('markets');
