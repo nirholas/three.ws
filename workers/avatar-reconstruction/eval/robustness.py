@@ -56,6 +56,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import face_geometry as fg  # noqa: E402
 import glb_ops  # noqa: E402
+import recon_templates  # noqa: E402
 from eval.identity_eval import EvalError  # noqa: E402
 
 PHOTO_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
@@ -197,7 +198,7 @@ def main() -> int:
     ap.add_argument("--photos", type=Path, default=Path("eval/refs"))
     ap.add_argument("--url", help="score a deployed worker instead of the in-process morph sweep")
     ap.add_argument("--key", default=os.environ.get("RECON_KEY"), help="worker API key (or $RECON_KEY)")
-    ap.add_argument("--template", type=Path, default=Path("templates/default.glb"))
+    ap.add_argument("--template", type=Path, default=recon_templates.active().glb_path)
     ap.add_argument("--strength", type=float, default=0.6)
     ap.add_argument("--limit", type=int, help="use only the first N faces (detection is the slow part)")
     ap.add_argument("--detail", action="store_true", help="per-degradation breakdown")

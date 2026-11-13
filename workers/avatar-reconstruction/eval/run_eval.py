@@ -51,6 +51,7 @@ import httpx
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import recon_templates  # noqa: E402
 from eval.identity_eval import EvalError, evaluate  # noqa: E402
 
 POLL_INTERVAL_S = 3.0
@@ -171,11 +172,26 @@ def local_health() -> dict:
 
     geometry = face_pipeline.GEOMETRY_MORPH_ENABLED and face_pipeline._get_face_map() is not None
     return {
+        "template": recon_templates.active().key,
         "pipeline": ("face_texture_transfer_v2" if geometry else "face_texture_transfer_v1") + " (local)",
         "geometry_morph": bool(geometry),
         "dense_fit": dense_fit.enabled() and dense_fit.torch_available(),
         "dense_fit_silhouette": dense_fit.silhouette_available(),
     }
+
+
+def template_floor_glb(template: str, body_type: str, out: Path) -> Path:
+    """
+    The unmorphed template, shaped for body_type exactly as a job shapes it,
+    written beside the report so every sample is scored against the floor its
+    texture-only output would reach.
+    """
+    import glb_ops
+
+    path = out.parent / f"{out.stem}-template-{template}-{body_type}.glb"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(glb_ops.save_glb(recon_templates.load(recon_templates.get(template), body_type)))
+    return path
 
 
 def run(photos: Path, url: str | None, key: str | None, out: Path, body_type: str, keep_glb: bool) -> dict:
@@ -192,7 +208,12 @@ def run(photos: Path, url: str | None, key: str | None, out: Path, body_type: st
 
     with httpx.Client(follow_redirects=True) as client:
         health = client.get(f"{url}/health", timeout=30.0).json() if url else local_health()
-        print(f"worker: {health.get('pipeline')}  geometry_morph={health.get('geometry_morph')}  "
+        # Workers older than the template switch report no key: they ran Wolf3D.
+        template = health.get("template", "wolf3d")
+        floor_glb = template_floor_glb(template, body_type, out)
+        uv_map = recon_templates.get(template).uv_map_path
+        print(f"worker: {health.get('pipeline')}  template={template}  "
+              f"geometry_morph={health.get('geometry_morph')}  "
               f"dense_fit={health.get('dense_fit')}  silhouette={health.get('dense_fit_silhouette')}")
 
         for i, photo in enumerate(samples, 1):
@@ -206,17 +227,19 @@ def run(photos: Path, url: str | None, key: str | None, out: Path, body_type: st
                 glb_path = (glb_dir if keep_glb else out.parent) / f"{photo.stem}.glb"
                 glb_path.parent.mkdir(parents=True, exist_ok=True)
                 glb_path.write_bytes(glb_bytes)
-                result = evaluate(photo, glb_path)
+                result = evaluate(photo, glb_path, floor_glb, uv_map)
                 if not keep_glb:
                     glb_path.unlink()
                 if dense is not None:
                     result["dense"] = dense
                 results.append(result)
-                print(f"ISE {result['ise']:.4f}" + (f"  [dense {dense}]" if dense else ""))
+                print(f"ISE {result['ise']:.4f}  floor {result['template_floor']:.4f}"
+                      + (f"  [dense {dense}]" if dense else ""))
             except (EvalError, httpx.HTTPError) as exc:
                 failures.append({"selfie": photo.name, "error": str(exc)})
                 print(f"FAILED — {exc}")
 
+    floor_glb.unlink()
     if not results:
         raise EvalError("every sample failed — nothing to summarise")
 
@@ -224,6 +247,8 @@ def run(photos: Path, url: str | None, key: str | None, out: Path, body_type: st
     regions = sorted({name for r in results for name in r["regions"]})
     report = {
         "url": url or "local",
+        "template": template,
+        "body_type": body_type,
         "pipeline": health.get("pipeline"),
         "geometry_morph": health.get("geometry_morph"),
         "dense_fit": health.get("dense_fit"),
@@ -233,6 +258,8 @@ def run(photos: Path, url: str | None, key: str | None, out: Path, body_type: st
         "ise_mean": statistics.fmean(scores),
         "ise_median": statistics.median(scores),
         "ise_worst": max(scores),
+        "template_floor_mean": statistics.fmean([r["template_floor"] for r in results]),
+        "improvement_mean": statistics.fmean([r["improvement"] for r in results]),
         "region_mean": {
             name: statistics.fmean([r["regions"][name] for r in results if name in r["regions"]])
             for name in regions
@@ -248,6 +275,8 @@ def run(photos: Path, url: str | None, key: str | None, out: Path, body_type: st
     print(f"  ISE mean   {report['ise_mean']:.4f}")
     print(f"  ISE median {report['ise_median']:.4f}")
     print(f"  ISE worst  {report['ise_worst']:.4f}")
+    print(f"  template floor mean {report['template_floor_mean']:.4f}  "
+          f"(morph closes {report['improvement_mean'] * 100:.1f}% of it)")
     print(f"  report → {out}")
     return report
 
@@ -259,10 +288,13 @@ def compare(before: Path, after: Path) -> int:
 
     def label(r):
         dense = "" if r.get("dense_fit") is None else f", dense_fit={r['dense_fit']}"
-        return f"{r.get('pipeline')}{dense}"
+        return f"{r.get('template', 'wolf3d')}, {r.get('pipeline')}{dense}"
 
-    print(f"{before.name}  ({label(a)})  ISE {a['ise_mean']:.4f}  n={a['samples']}")
-    print(f"{after.name}   ({label(b)})  ISE {b['ise_mean']:.4f}  n={b['samples']}")
+    def floor(r):
+        return f"  floor {r['template_floor_mean']:.4f}" if "template_floor_mean" in r else ""
+
+    print(f"{before.name}  ({label(a)})  ISE {a['ise_mean']:.4f}{floor(a)}  n={a['samples']}")
+    print(f"{after.name}   ({label(b)})  ISE {b['ise_mean']:.4f}{floor(b)}  n={b['samples']}")
     print(f"\n{'IMPROVED' if delta < 0 else 'REGRESSED'} {abs(pct):.1f}%")
 
     print("\nby region:")

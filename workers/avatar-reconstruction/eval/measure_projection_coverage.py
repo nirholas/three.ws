@@ -28,6 +28,7 @@ import face_geometry as fg  # noqa: E402
 import face_pipeline as fp  # noqa: E402
 import face_projection as fpr  # noqa: E402
 import glb_ops  # noqa: E402
+import recon_templates  # noqa: E402
 
 
 def measure(image_path: str, with_views: bool = False) -> dict | None:
@@ -54,7 +55,7 @@ def measure(image_path: str, with_views: bool = False) -> dict | None:
     positions, uvs, faces = glb_ops.get_head_mesh_data(glb)
     normals = glb_ops.recompute_vertex_normals(positions, faces)
 
-    tex = glb_ops.get_material_texture(glb, "Wolf3D_Skin")
+    tex = glb_ops.get_material_texture(glb, recon_templates.active().skin_material)
     tex_w, tex_h = tex.size
 
     lm_idx = np.asarray(uv_map["landmark_vtx"], dtype=np.int64)

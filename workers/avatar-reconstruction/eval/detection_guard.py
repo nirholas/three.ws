@@ -61,6 +61,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import face_geometry as fg  # noqa: E402
 import glb_ops  # noqa: E402
+import recon_templates  # noqa: E402
 
 PHOTO_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 _EYE_L, _EYE_R = 33, 263
@@ -115,7 +116,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--photos", type=Path, default=Path("eval/refs"))
     ap.add_argument("--adversarial", type=Path, default=Path("eval/adversarial"))
-    ap.add_argument("--template", type=Path, default=Path("templates/default.glb"))
+    ap.add_argument("--template", type=Path, default=recon_templates.active().glb_path)
     ap.add_argument("--out", type=Path)
     ap.add_argument("--url", help="build every head through this deployed worker")
     ap.add_argument("--key", default=os.environ.get("RECON_KEY"), help="worker API key (or $RECON_KEY)")

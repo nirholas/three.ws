@@ -1,0 +1,78 @@
+# Staging build for avatar-reconstruction: the production image (same Dockerfile,
+# same build-time tests and smoke runs on BOTH templates), pushed to :staging
+# tags and deployed as a NO-TRAFFIC revision tagged `staging`. Production traffic
+# and the :latest tag are never touched, so this is how a template change gets
+# evaluated against a real Cloud Run instance before it goes live.
+#
+#   gcloud builds submit workers/avatar-reconstruction \
+#     --config workers/avatar-reconstruction/cloudbuild.staging.yaml \
+#     --project aerial-vehicle-466722-p5
+#
+# The revision answers at https://staging---<service-host>; score it with
+#   python -m eval.run_eval --photos eval/refs --url https://staging---<service-host> \
+#     --out eval/reports/staging-parametric.json
+#
+# To promote, deploy cloudbuild.yaml with --substitutions=_RECON_TEMPLATE=parametric
+# (the template is part of its --set-env-vars, so it survives later deploys).
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE: avatar-reconstruction
+  _REPO: avatar-reconstruction
+  _GCS_BUCKET: three-ws-avatar-reconstructions
+  _RECON_TEMPLATE: parametric
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:staging-$BUILD_ID
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:staging
+      - --cache-from
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+      - .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server
+
+  # Same runtime shape as production (cloudbuild.yaml), minus traffic. Instance
+  # bounds are omitted so the revision inherits the service's scaling; a
+  # no-traffic revision only spins up when its tagged URL is called.
+  - id: deploy-no-traffic
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:staging-$BUILD_ID
+      - --service-account=avatar-reconstruction-sa@$PROJECT_ID.iam.gserviceaccount.com
+      - --region=${_REGION}
+      - --platform=managed
+      - --port=8080
+      - --no-traffic
+      - --tag=staging
+      - --no-cpu-throttling
+      - --cpu=8
+      - --memory=16Gi
+      - --timeout=120
+      - --allow-unauthenticated
+      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},FIRESTORE_PROJECT=$PROJECT_ID,DEVICE=cpu,RECON_TEMPLATE=${_RECON_TEMPLATE}
+      - --set-secrets=API_KEY=avatar-reconstruction-key:latest
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:staging-$BUILD_ID
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:staging
+
+serviceAccount: projects/$PROJECT_ID/serviceAccounts/avatar-reconstruction-sa@$PROJECT_ID.iam.gserviceaccount.com
+
+options:
+  machineType: E2_HIGHCPU_32
+  logging: CLOUD_LOGGING_ONLY

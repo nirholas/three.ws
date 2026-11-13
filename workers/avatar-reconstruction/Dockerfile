@@ -50,31 +50,37 @@ COPY face_projection.py /app/face_projection.py
 COPY view_synthesis.py /app/view_synthesis.py
 COPY view_texture.py  /app/view_texture.py
 COPY glb_ops.py       /app/glb_ops.py
+COPY recon_templates.py /app/recon_templates.py
 COPY precompute_uv.py /app/precompute_uv.py
 COPY test_face_geometry.py /app/test_face_geometry.py
+COPY test_parametric_template.py /app/test_parametric_template.py
 COPY test_face_projection.py /app/test_face_projection.py
 COPY test_face_pipeline.py /app/test_face_pipeline.py
 COPY smoke_test.py    /app/smoke_test.py
 
 # ── Template GLBs ─────────────────────────────────────────────────────────────
-# Baked into the image so cold starts are instant. default.glb is the Wolf3D
-# unisex base and the only template the pipeline can use: face_uv_map.json is
-# precomputed against its exact head topology (see _load_template). Every
-# body_type resolves to it until a male/female variant with that topology exists.
+# Baked into the image so cold starts are instant. Both templates ship and
+# RECON_TEMPLATE picks one at runtime (recon_templates.py): default.glb is the
+# Wolf3D avatar, parametric.glb the owned CC0 parametric body whose body_type is
+# baked from sliders. Rebuild parametric.glb with
+# scripts/build-reconstruction-template.mjs, never by hand.
 RUN mkdir -p /app/templates
 COPY templates/ /app/templates/
 
 # ── UV pre-computation ────────────────────────────────────────────────────────
-# Run once at image build time.  Generates face_uv_map.json from the
-# canonical MediaPipe face model and the Wolf3D_Head mesh in default.glb.
-# Requires network access during build (downloads ~200 KB OBJ from GitHub).
-RUN python /app/precompute_uv.py /app/templates/default.glb
+# Run once per template at image build time: each UV map is precomputed against
+# that template's exact head topology, so a template without its map cannot
+# serve. Requires network access during build (downloads the ~200 KB canonical
+# MediaPipe face OBJ from GitHub).
+RUN python /app/precompute_uv.py --template wolf3d \
+ && python /app/precompute_uv.py --template parametric
 
 # ── Build-time guards ─────────────────────────────────────────────────────────
 # The geometry morph must preserve the rig + 52 ARKit blendshapes and never blow
 # up the mesh. Fail the image build if the morph math regresses, rather than
 # shipping a broken avatar pipeline.
 RUN python /app/test_face_geometry.py
+RUN python /app/test_parametric_template.py
 RUN python /app/test_face_projection.py
 RUN python /app/test_face_pipeline.py
 
@@ -86,7 +92,8 @@ RUN python /app/test_face_pipeline.py
 # requires for the UV pre-computation above. It also warms rembg's u2net weights
 # into the image, so the first request on a cold instance no longer waits on that
 # download.
-RUN python /app/smoke_test.py
+RUN python /app/smoke_test.py \
+ && RECON_TEMPLATE=parametric python /app/smoke_test.py
 
 EXPOSE 8080
 

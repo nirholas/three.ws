@@ -55,6 +55,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import face_geometry  # noqa: E402
 import glb_ops  # noqa: E402
+import recon_templates  # noqa: E402
 
 # `face_pipeline` drags in mediapipe, cv2 and rembg. Scoring is pure geometry and
 # needs none of that, so the detector is imported only when a selfie is actually
@@ -105,17 +106,20 @@ def selfie_landmarks(image_path: Path) -> np.ndarray:
     return face_geometry.landmarks_to_array(landmarks, *img.size)
 
 
-def head_landmark_points(glb_path: Path, face_map: face_geometry.FaceMap) -> np.ndarray:
-    """Read the avatar's own version of the 468 landmark points out of a GLB."""
+def head_landmark_points(glb_path: Path, face_map: face_geometry.FaceMap) -> tuple[np.ndarray, int]:
+    """
+    Read the avatar's own version of the 468 landmark points out of a GLB, and
+    the head's vertex count (so a caller can check two GLBs share a template).
+    """
     glb = glb_ops.load_glb(glb_path.read_bytes())
     positions, _, _ = glb_ops.get_head_mesh_data(glb)
     idx = face_map.landmark_vtx
     if idx.max() >= positions.shape[0]:
         raise EvalError(
             f"{glb_path.name}: landmark map indexes vertex {int(idx.max())} but the head "
-            f"has only {positions.shape[0]} — the GLB is not the template this map was built for"
+            f"has only {positions.shape[0]}; the GLB is not the template this map was built for"
         )
-    return positions[idx].astype(np.float64)
+    return positions[idx].astype(np.float64), positions.shape[0]
 
 
 def score(
@@ -156,27 +160,38 @@ def score(
     }
 
 
-def evaluate(selfie: Path, glb: Path, template: Path | None = None) -> dict:
+def evaluate(selfie: Path, glb: Path, template: Path | None = None,
+             uv_map: Path | None = None) -> dict:
     """
     Score one reconstruction, and (when a template is given) the texture-only
-    floor it has to beat.
+    floor it has to beat. `uv_map` is the UV map of the template the GLB was
+    built on; it defaults to the one RECON_TEMPLATE selects.
     """
-    face_map = face_geometry.FaceMap.load()
+    face_map = face_geometry.FaceMap.load(uv_map)
     if face_map is None:
         raise EvalError(
-            "face_uv_map.json has no geometry fields — rebuild it with precompute_uv.py "
+            "the template's UV map has no geometry fields; rebuild it with precompute_uv.py "
             "(this is also the condition that silently disables the Phase-2 morph)"
         )
 
     selfie_pts = selfie_landmarks(selfie)
+    head_pts, head_vertices = head_landmark_points(glb, face_map)
     result = {
         "selfie": selfie.name,
         "glb": glb.name,
-        **score(selfie_pts, head_landmark_points(glb, face_map), face_map),
+        **score(selfie_pts, head_pts, face_map),
     }
 
     if template is not None:
-        floor = score(selfie_pts, head_landmark_points(template, face_map), face_map)
+        floor_pts, floor_vertices = head_landmark_points(template, face_map)
+        if floor_vertices != head_vertices:
+            # Scored against the wrong map, indices still land on real vertices
+            # and the numbers look plausible; refuse rather than report them.
+            raise EvalError(
+                f"{glb.name} has a {head_vertices}-vertex head but the template {template.name} "
+                f"has {floor_vertices}: the GLB was not built on the template being scored"
+            )
+        floor = score(selfie_pts, floor_pts, face_map)
         result["template_floor"] = floor["ise"]
         result["improvement"] = (
             (floor["ise"] - result["ise"]) / floor["ise"] if floor["ise"] > 0 else 0.0
@@ -192,8 +207,9 @@ def main() -> int:
     ap.add_argument(
         "--template",
         type=Path,
-        default=Path(__file__).resolve().parent.parent / "templates" / "default.glb",
-        help="unmorphed template GLB — the texture-only floor to beat",
+        default=recon_templates.active().glb_path,
+        help="unmorphed template GLB, the texture-only floor to beat "
+             "(default: the one RECON_TEMPLATE selects)",
     )
     ap.add_argument("--json", action="store_true", help="emit JSON only")
     args = ap.parse_args()

@@ -43,6 +43,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import face_geometry as fg  # noqa: E402
 import glb_ops  # noqa: E402
+import recon_templates  # noqa: E402
 from eval.identity_eval import EvalError, score, selfie_landmarks  # noqa: E402
 
 PHOTO_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
@@ -59,7 +60,7 @@ def load_template(path: Path) -> np.ndarray:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--photos", type=Path, default=Path("eval/refs"))
-    ap.add_argument("--template", type=Path, default=Path("templates/default.glb"))
+    ap.add_argument("--template", type=Path, default=recon_templates.active().glb_path)
     ap.add_argument("--detail", action="store_true", help="per-face spread for the winner")
     ap.add_argument("--out", type=Path, help="write the full grid as JSON")
     args = ap.parse_args()

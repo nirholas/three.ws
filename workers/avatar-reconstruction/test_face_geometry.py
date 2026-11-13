@@ -15,12 +15,15 @@ import numpy as np
 
 import glb_ops
 import face_geometry as fg
+import recon_templates as rt
 
 
 def _load():
-    glb = glb_ops.load_glb(open("templates/default.glb", "rb").read())
+    # Pinned to Wolf3D (its 67-target counts are asserted below) whatever
+    # RECON_TEMPLATE says; test_parametric_template.py covers the parametric head.
+    glb = glb_ops.load_glb(rt.WOLF3D.glb_path.read_bytes())
     base, _, faces = glb_ops.get_head_mesh_data(glb)
-    fmap = fg.FaceMap.load()
+    fmap = fg.FaceMap.load(rt.WOLF3D.uv_map_path)
     assert fmap is not None, "face_uv_map.json missing geometry fields — run precompute_uv.py"
     return glb, base.astype(np.float64), faces, fmap
 

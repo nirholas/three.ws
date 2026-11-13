@@ -182,6 +182,7 @@ def main(argv: list[str]) -> int:
     import face_geometry as fg
     import face_pipeline as pipe
     import glb_ops
+    import recon_templates
     import view_synthesis as vs
     import view_texture as vt
 
@@ -213,7 +214,7 @@ def main(argv: list[str]) -> int:
         glb = glb_ops.load_glb(pipe._load_template("neutral"))
         pos, uvs, faces = glb_ops.get_head_mesh_data(glb)
         nrm = glb_ops.recompute_vertex_normals(pos, faces)
-        tex = glb_ops.get_material_texture(glb, "Wolf3D_Skin")
+        tex = glb_ops.get_material_texture(glb, recon_templates.active().skin_material)
         base = np.array(tex.convert("RGB"), dtype=np.uint8)
         lm_idx = np.asarray(uv_map["landmark_vtx"], dtype=np.int64)
         det = fg.landmarks_to_array(lms, *img.size)

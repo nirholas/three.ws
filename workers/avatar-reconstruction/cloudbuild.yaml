@@ -8,6 +8,13 @@
 #   _GCS_BUCKET     — Cloud Storage bucket for output GLBs
 #   _MIN_INSTANCES  — minimum warm instances       (default: 1)
 #   _MAX_INSTANCES  — maximum instances            (default: 6)
+#   _RECON_TEMPLATE: reconstruction template, wolf3d or parametric (default: wolf3d)
+#
+# The template lives here, not in a one-off `gcloud run services update`:
+# --set-env-vars below replaces the service's whole env set on every deploy, so
+# a template flipped by hand would silently revert on the next build.
+# cloudbuild.staging.yaml builds the same image to a :staging tag and a
+# no-traffic revision for evaluating a template before it goes live.
 #
 # Required secrets in Secret Manager (must exist before first deploy):
 #   avatar-reconstruction-key — the API_KEY bearer secret
@@ -20,6 +27,7 @@ substitutions:
   _MIN_INSTANCES: "1"   # keep one warm — face pipeline cold-start is ~15 s
   _MAX_INSTANCES: "6"   # no longer GPU-bound (see the deploy step) — CPU-only,
                         # so this scales on CPU quota rather than the 3-GPU pool
+  _RECON_TEMPLATE: wolf3d
 
 steps:
   # ── Build ──────────────────────────────────────────────────────────────────
@@ -80,7 +88,7 @@ steps:
       - --timeout=120
       # Cloud Run IAM handles external auth; the service itself checks API_KEY.
       - --allow-unauthenticated
-      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},FIRESTORE_PROJECT=$PROJECT_ID,DEVICE=cpu
+      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},FIRESTORE_PROJECT=$PROJECT_ID,DEVICE=cpu,RECON_TEMPLATE=${_RECON_TEMPLATE}
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest
 
 images:
