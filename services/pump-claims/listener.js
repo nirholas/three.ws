@@ -36,6 +36,10 @@ export class ClaimListener {
 	 *   Connection.onLogs's signature `(programId, handler, commitment) => subId`,
 	 *   used by tests to inject a fake subscription. `connection` is still used
 	 *   for the heartbeat probe when both are provided.
+	 * @param {PublicKey} [opts.mentionKey] Account whose mentions to subscribe
+	 *   to. index.js passes the social claim authority (see
+	 *   api/_lib/pump-fee-global.js) so the socket carries claims only instead
+	 *   of every PumpFees transaction; defaults to the PumpFees program id.
 	 * @param {number} [opts.heartbeatMs]
 	 * @param {number} [opts.maxMissedHeartbeats]
 	 * @param {number} [opts.heartbeatTimeoutMs]
@@ -43,12 +47,14 @@ export class ClaimListener {
 	constructor({
 		connection,
 		logSubscriber,
+		mentionKey = PUMP_FEE_PROGRAM_KEY,
 		heartbeatMs = HEARTBEAT_MS,
 		maxMissedHeartbeats = MAX_MISSED_HEARTBEATS,
 		heartbeatTimeoutMs = HEARTBEAT_TIMEOUT_MS,
 	} = {}) {
 		this._conn = connection;
 		this._logSubscriber = logSubscriber;
+		this._mentionKey = mentionKey;
 		this._heartbeatMs = heartbeatMs;
 		this._maxMissed = maxMissedHeartbeats;
 		this._heartbeatTimeoutMs = heartbeatTimeoutMs;
@@ -92,8 +98,8 @@ export class ClaimListener {
 		};
 		try {
 			this._subId = this._logSubscriber
-				? this._logSubscriber(PUMP_FEE_PROGRAM_KEY, handler, 'confirmed')
-				: this._conn.onLogs(PUMP_FEE_PROGRAM_KEY, handler, 'confirmed');
+				? this._logSubscriber(this._mentionKey, handler, 'confirmed')
+				: this._conn.onLogs(this._mentionKey, handler, 'confirmed');
 			this._backoffAttempt = 0;
 		} catch (err) {
 			console.error('[pump-claims] subscribe failed:', err?.message || err);

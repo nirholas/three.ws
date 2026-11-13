@@ -106,8 +106,12 @@ The same scanner also backs `GET /api/pump/first-claims` and the
 GitHub fee-PDA claims no longer depend on an RPC scan at read time, or on
 `PUMPFUN_BOT_URL`, which only ever covered ordinary wallet claims. A standalone
 long-lived process, [services/pump-claims](../services/pump-claims), holds a
-Solana log subscription on the PumpFees program, decodes and attributes each
-`claim_social_fee_pda` as it lands, and writes it into `pump_fee_claims`
+Solana log subscription on the PumpFees `social_claim_authority` (the key that
+cosigns every claim and nothing else, read at runtime from the
+`FeeProgramGlobal` account by
+[api/_lib/pump-fee-global.js](../api/_lib/pump-fee-global.js)), decodes and
+attributes each `claim_social_fee_pda` as it lands, and writes it into
+`pump_fee_claims`
 (migration
 [20261015080000_pump_fee_claims.sql](../api/_lib/migrations/20261015080000_pump_fee_claims.sql)).
 
@@ -208,8 +212,12 @@ State lives in `app_settings` under `pump_claims_push_telegram`:
 ## Known limits: the RPC fallback cannot serve the wallet-claim feed
 
 This limit is specific to **ordinary wallet claims**. The GitHub fee-claim path
-(`_fetchGithubClaimsFromRpc`) always runs a direct RPC scan, independent of
-`PUMPFUN_BOT_URL`; see "Verifying it" above for a live check of that path.
+(`fetchGithubClaimsFromRpc`) always runs a direct RPC scan, independent of
+`PUMPFUN_BOT_URL`, and does not share this limit: it pages the
+`social_claim_authority` rather than the PumpFees program, and that key signs
+only claims (measured 2026-11-13: 1,000 signatures over 264 hours, against
+about 500 a second on the program). See "Verifying it" above for a live check
+of that path.
 
 `scanFirstClaims` prefers the `PUMPFUN_BOT_URL` indexer for wallet claims and
 falls back to a direct RPC scan of the pump program's recent signatures. **That

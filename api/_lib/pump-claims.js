@@ -31,7 +31,8 @@ import bs58 from 'bs58';
 import { getConnection } from './pump.js';
 import { sql } from './db.js';
 import { filterFirstClaims } from '../../src/pump/first-claims.js';
-import { PUMP_PROGRAM_ID, PUMP_FEE_PROGRAM_ID, WSOL_MINT } from './solana/programs.js';
+import { PUMP_PROGRAM_ID, WSOL_MINT } from './solana/programs.js';
+import { resolveClaimHistoryKey } from './pump-fee-global.js';
 import {
 	isSocialClaimLog,
 	parseSocialFeeClaim,
@@ -317,8 +318,8 @@ export async function fetchGithubClaimsFromRpc(lookbackTs, opts = {}) {
 	const { budget = GITHUB_CLAIMS_BUDGET, sigLimit = 200, before, connection: conn } = opts;
 	try {
 		const connection = conn || getConnection({ network: 'mainnet' });
-		const { PublicKey } = await import('@solana/web3.js');
-		const sigs = await connection.getSignaturesForAddress(new PublicKey(PUMP_FEE_PROGRAM_ID), {
+		const { key: historyKey } = await resolveClaimHistoryKey(connection);
+		const sigs = await connection.getSignaturesForAddress(historyKey, {
 			limit: sigLimit,
 			...(before ? { before } : {}),
 		});

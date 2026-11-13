@@ -1,5 +1,6 @@
 /**
- * One-off backfill: walks the PumpFees program's signature history back
+ * One-off backfill: walks the PumpFees social claim authority's signature
+ * history (it cosigns every claim and nothing else) back
  * `--days` (default 7) and stores every GitHub social-fee-PDA claim found, so
  * the claims feed isn't empty on day one of the listener's deployment. Safe
  * to re-run: insertClaim is idempotent on signature, and a page's signatures
@@ -9,18 +10,17 @@
  */
 
 import { pathToFileURL } from 'node:url';
-import { PublicKey } from '@solana/web3.js';
-import { PUMP_FEE_PROGRAM_ID } from '../../api/_lib/solana/programs.js';
 import { isSocialClaimLog } from '../../api/_lib/pump-events.js';
+import { resolveClaimHistoryKey } from '../../api/_lib/pump-fee-global.js';
 import { buildConnection, createClaimHandler } from './index.js';
 import { makeStore } from './store.js';
 import { SeenSignatures } from './dedupe.js';
 import { sleep, getParsedTransactionWithBackoff, withRpcBackoff } from './rpc-pace.js';
 
 const PAGE_LIMIT = 200;
-// Safety cap: ~100 pages. The PumpFees program is a single shared account, so
-// an unbounded backward walk could run indefinitely on a busy chain; this caps
-// one backfill run's RPC cost regardless of how far `--days` reaches.
+// Safety cap: ~100 pages. The social claim authority signs roughly a hundred
+// claims a day, so 7 days is a few pages; the cap bounds one run's RPC cost if
+// the key falls back to the far busier program id or `--days` is very large.
 const MAX_SIGNATURES_SCANNED = 20_000;
 // Per-call pace between getParsedTransaction fetches; see rpc-pace.js. A paid
 // lane set via SOLANA_RPC_URL tolerates a shorter pace, so this is overridable.
@@ -54,7 +54,8 @@ export async function backfill({ days = 7, connection: conn, store: st } = {}) {
 	const maybeProcess = createClaimHandler({ connection, store, seen, state });
 
 	const lookbackTs = Math.floor(Date.now() / 1000) - days * 86400;
-	const programKey = new PublicKey(PUMP_FEE_PROGRAM_ID);
+	const { key: historyKey, source } = await resolveClaimHistoryKey(connection);
+	console.log('[pump-claims backfill] paging %s (%s)', historyKey.toBase58(), source);
 
 	let before;
 	let scanned = 0;
@@ -62,7 +63,7 @@ export async function backfill({ days = 7, connection: conn, store: st } = {}) {
 
 	while (scanned < MAX_SIGNATURES_SCANNED) {
 		const sigs = await withRpcBackoff(() =>
-			connection.getSignaturesForAddress(programKey, {
+			connection.getSignaturesForAddress(historyKey, {
 				limit: PAGE_LIMIT,
 				...(before ? { before } : {}),
 			}),

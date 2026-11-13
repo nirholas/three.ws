@@ -21,10 +21,11 @@
 
 import { createServer } from 'node:http';
 import { pathToFileURL } from 'node:url';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection } from '@solana/web3.js';
 import { normalizeRpcUrl, resolveWsEndpoint } from '../../api/_lib/solana/connection.js';
 import { PUMP_FEE_PROGRAM_ID } from '../../api/_lib/solana/programs.js';
 import { isSocialClaimLog } from '../../api/_lib/pump-events.js';
+import { resolveClaimHistoryKey } from '../../api/_lib/pump-fee-global.js';
 import { ClaimListener } from './listener.js';
 import { processLogEntry } from './pipeline.js';
 import { makeStore } from './store.js';
@@ -103,15 +104,17 @@ export function createClaimHandler({ connection, store, seen, state }) {
 }
 
 /**
- * Walk the PumpFees program's recent signature history and process any
+ * Walk the social claim authority's recent signature history (see
+ * api/_lib/pump-fee-global.js for why not the program's) and process any
  * GitHub claim this process hasn't seen yet. Covers the gap behind a dropped
  * WS subscription (called on every forced reconnect) and fills the table
  * immediately on cold start, before the first live claim arrives.
  */
 export async function gapFill({ connection, seen, maybeProcess }) {
 	try {
+		const { key: historyKey } = await resolveClaimHistoryKey(connection);
 		const sigs = await withRpcBackoff(() =>
-			connection.getSignaturesForAddress(new PublicKey(PUMP_FEE_PROGRAM_ID), {
+			connection.getSignaturesForAddress(historyKey, {
 				limit: GAP_FILL_SIG_LIMIT,
 			}),
 		);
@@ -147,7 +150,8 @@ async function main() {
 	const maybeProcess = createClaimHandler({ connection, store, seen, state });
 	const runGapFill = () => gapFill({ connection, seen, maybeProcess }).catch(() => {});
 
-	const listener = new ClaimListener({ connection });
+	const { key: mentionKey, source } = await resolveClaimHistoryKey(connection);
+	const listener = new ClaimListener({ connection, mentionKey });
 	state.listener = listener;
 	listener.start(
 		(entry, context) => {
@@ -162,7 +166,12 @@ async function main() {
 		},
 	);
 
-	console.log('[pump-claims] listener started, program=%s', PUMP_FEE_PROGRAM_ID);
+	console.log(
+		'[pump-claims] listener started, program=%s mentions=%s (%s)',
+		PUMP_FEE_PROGRAM_ID,
+		mentionKey.toBase58(),
+		source,
+	);
 	runGapFill();
 
 	const server = createHealthServer(state);
@@ -179,4 +188,9 @@ async function main() {
 	process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+	main().catch((err) => {
+		console.error('[pump-claims] fatal:', err?.message || err);
+		process.exit(1);
+	});
+}

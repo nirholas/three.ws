@@ -15,10 +15,24 @@ cannot hold a subscription open between invocations. This process holds one
 instead, is deployed with `--min-instances=1 --no-cpu-throttling`, and is
 designed to run forever.
 
+## Which address it watches
+
+Every `claim_social_fee_pda` (V1 and V2) is cosigned by the
+`social_claim_authority` stored in the PumpFees `FeeProgramGlobal` account,
+and that key signs nothing else. The PumpFees program itself handles about
+500 transactions a second (every trade touches it), so one page of its
+signature history covers about a second; one page of the authority's covers
+days (measured 2026-11-13: 1,000 signatures over 264 hours). The live
+subscription, the reconnect gap-fill, the backfill, and the API's RPC fallback
+all resolve that key at runtime through `api/_lib/pump-fee-global.js`
+(`resolveClaimHistoryKey`) and fall back to the program id only if the global
+account cannot be read. The key is never hardcoded, so a rotation is picked up
+on the next resolve.
+
 ## How it works
 
 ```
-PumpFees program logs
+Logs mentioning the social claim authority
         │  Connection.onLogs (listener.js)
         ▼
 decodeClaim() / processLogEntry()        pipeline.js
@@ -49,7 +63,7 @@ store.insertClaim()                      store.js
 - **`index.js`**: process entrypoint. Wires `ClaimListener` to the decode/
   store pipeline, runs gap-fill on cold start and after every forced
   reconnect, and serves `GET /health`.
-- **`backfill.js`**: one-off script. Walks the PumpFees program's signature history
+- **`backfill.js`**: one-off script. Walks the social claim authority's signature history
   back N days (default 7) through the exact same `createClaimHandler` pipeline
   the live listener uses, so the table isn't empty on day one. Safe to re-run.
 
@@ -97,7 +111,8 @@ cd services/pump-claims
 npm test
 ```
 
-`pipeline.test.js`, `listener.test.js`, and `store.test.js` run on `node:test`
+`pipeline.test.js`, `listener.test.js`, `store.test.js`, `rpc-pace.test.js` and
+`claim-authority.test.js` run on `node:test`
 (not the root vitest suite) and need no live database or RPC endpoint: the
 listener's log subscriber and the store's `sql` function are both injectable.
 `tests/pump-claims-worker-image.test.js` (root vitest suite) guards the
