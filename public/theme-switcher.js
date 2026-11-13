@@ -206,6 +206,26 @@
 	// sheet flips to the theme the user actually chose. The watch stops the
 	// moment the page reads as capable, and gives up a few seconds after load so
 	// nothing observes the document forever.
+	// A visitor whose theme resolves to dark paints dark whatever the verdict
+	// says; for them the probe only decides whether the nav toggle shows. Each
+	// probe forces a full-document style recalc (two, with the transition
+	// suspension), so for dark the boot verdict stands until one settle probe
+	// after load instead of a fresh probe for every sheet and for the nav.
+	// Measured on a Pixel 5 (4x CPU) on production /marketplace, 2026-11-13: ten
+	// probes per load, the last 304 ms on its own over 7,200 nodes, about 1.8 s
+	// of main-thread time on a page that is a dark island all along.
+	function wantsLight() {
+		return resolve() === 'light';
+	}
+	function capableNow() {
+		if (islandCache !== null && !wantsLight()) return !islandCache;
+		return pageSupportsLight();
+	}
+	function whenIdle(fn) {
+		if (window.requestIdleCallback) window.requestIdleCallback(fn, { timeout: 2000 });
+		else setTimeout(fn, 0);
+	}
+
 	function reprobeCapability() {
 		var wasCapable = islandCache === false;
 		islandCache = null;
@@ -215,7 +235,7 @@
 		return capable;
 	}
 
-	if (!pageSupportsLight()) {
+	if (!capableNow()) {
 		var sheetWatch = null;
 		var giveUp = 0;
 		var stopWatching = function () {
@@ -238,8 +258,10 @@
 		// onto an animation frame also made the probe outlive boot, which is
 		// exactly what the "own probe stylesheet re-triggers the watch" guard
 		// exists to catch. The saving comes from the filter below, not from
-		// deferring: only a stylesheet can change the verdict.
+		// deferring: only a stylesheet can change the verdict. That urgency is a
+		// light visitor's alone; a dark one waits for the settle probe below.
 		var onSheet = function () {
+			if (!wantsLight()) return;
 			if (reprobeCapability()) stopWatching();
 		};
 		var isSheetNode = function (node) {
@@ -279,8 +301,12 @@
 			// One last look a beat after load, then settle: an @import resolves
 			// after its own link's load event, and nav.js may inject even later.
 			giveUp = setTimeout(function () {
-				if (!reprobeCapability()) stopWatching();
-				else stopWatching();
+				giveUp = 0;
+				whenIdle(function () {
+					if (!sheetWatch && islandSettled) return;
+					reprobeCapability();
+					stopWatching();
+				});
 			}, 3000);
 		});
 	}
@@ -312,7 +338,7 @@
 	// button appears, set its visibility + state, then stop observing.
 	function bindToggle() {
 		if (!document.getElementById('nav-theme-toggle')) return false;
-		setToggleVisible(pageSupportsLight());
+		setToggleVisible(capableNow());
 		syncToggle(document.documentElement.getAttribute('data-theme') || 'dark');
 		return true;
 	}

@@ -167,7 +167,9 @@ describe('theme switcher light-capability probe', () => {
 		try {
 			boot();
 			const afterBoot = probes;
-			for (let i = 0; i < 6; i++) addStylesheet().dispatchEvent(new Event('load'));
+			const links = Array.from({ length: 6 }, addStylesheet);
+			await new Promise((r) => setTimeout(r, 0));
+			for (const link of links) link.dispatchEvent(new Event('load'));
 			const style = document.createElement('style');
 			style.textContent = 'main{color:red}';
 			document.head.appendChild(style);
@@ -198,21 +200,34 @@ describe('theme switcher light-capability probe', () => {
 			return light ? 'rgb(255, 255, 255)' : 'rgb(0, 0, 0)';
 		};
 		vi.useFakeTimers();
+		// Earlier tests' instances still listen on this shared window, so keep
+		// this instance's own load handler instead of dispatching a global event.
+		const onLoad = [];
+		const addListener = window.addEventListener.bind(window);
+		const spy = vi.spyOn(window, 'addEventListener').mockImplementation((type, fn, opts) => {
+			if (type === 'load') onLoad.push(fn);
+			else addListener(type, fn, opts);
+		});
 		try {
 			boot();
+			spy.mockRestore();
 			expect(btn.hidden).toBe(true);
 			const afterBoot = probes;
 			// tokens.css lands behind nav.css: the page turns out to be capable.
 			light = true;
-			addStylesheet().dispatchEvent(new Event('load'));
+			const link = addStylesheet();
+			await Promise.resolve();
+			link.dispatchEvent(new Event('load'));
 			expect(probes).toBe(afterBoot);
 			Object.defineProperty(document, 'readyState', { configurable: true, get: () => 'complete' });
-			window.dispatchEvent(new Event('load'));
+			expect(onLoad.length).toBe(1);
+			onLoad[0](new Event('load'));
 			await vi.runAllTimersAsync();
 			expect(probes - afterBoot).toBe(1);
 			expect(btn.hidden, 'a capable page shows the toggle once settled').toBe(false);
 			expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
 		} finally {
+			spy.mockRestore();
 			vi.useRealTimers();
 			delete document.readyState;
 		}
