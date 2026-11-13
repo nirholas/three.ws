@@ -37,8 +37,13 @@ export function publicOpensAt(earlyMinutes, now = Date.now()) {
  * means rare names are open to everyone, as before.
  */
 export function rareNameWindowOpen(env = process.env, now = Date.now()) {
+	return rareNamesPublicOpensAt(env, now) !== null;
+}
+
+/** The instant rare names open to everyone, or null when no Genesis window is running. */
+export function rareNamesPublicOpensAt(env = process.env, now = Date.now()) {
 	const raw = env.THREEWS_RARE_NAMES_PUBLIC_AT;
-	if (!raw) return false;
+	if (!raw) return null;
 	const at = new Date(raw).getTime();
-	return Number.isFinite(at) && now < at;
+	return Number.isFinite(at) && now < at ? new Date(at) : null;
 }

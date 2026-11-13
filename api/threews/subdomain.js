@@ -1,7 +1,10 @@
 // /api/threews/subdomain
 //
 // GET  ?label=<label>            → availability check on `<label>.threews.sol`.
-//                                  Returns { available, owner, claim, full }.
+//                                  Returns { available, owner, claim, full,
+//                                  rarity, holder_window }. holder_window is
+//                                  set while a rare label sits inside the
+//                                  Genesis-only window (names.first_dibs).
 // POST { label, owner_wallet? }  → mint `<label>.threews.sol`, set its URL
 //                                  record to https://three.ws/u/<label>, and
 //                                  transfer ownership to `owner_wallet` (or
@@ -22,7 +25,8 @@ import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';
 import { requireFeatureAccess } from '../_lib/require-three.js';
-import { rareNameWindowOpen } from '../_lib/early-window.js';
+import { rareNameWindowOpen, rareNamesPublicOpensAt } from '../_lib/early-window.js';
+import { requiredTierFor } from '../_lib/three-access.js';
 import { priceName } from '../_lib/pricing/name-rarity.js';
 import {
 	PARENT_LABEL,
@@ -76,12 +80,28 @@ async function handleCheck(req, res) {
 		}
 	}
 
+	// Rarity drives the Genesis first-dibs window: a non-common label inside it can
+	// only be minted by a Genesis holder until public_opens_at, so the page shows
+	// the countdown and the tier before the visitor tries.
+	const price = priceName(label);
+	const opensAt = price.free ? null : rareNamesPublicOpensAt();
+	const required = requiredTierFor('names.first_dibs');
+	const holderWindow = opensAt
+		? {
+				feature: 'names.first_dibs',
+				public_opens_at: opensAt.toISOString(),
+				required: { level: required.level, id: required.id, label: required.label, min_usd: required.minUsd },
+			}
+		: null;
+
 	return json(
 		res,
 		200,
 		{
 			data: {
 				full: fullDomain(label),
+				rarity: { tier: price.rarity, label: price.rarity_label, free: price.free },
+				holder_window: holderWindow,
 				label,
 				parent: PARENT_LABEL,
 				available: !owner,
@@ -101,8 +121,9 @@ async function handleCheck(req, res) {
 				showcase_url: claim ? `${env.APP_ORIGIN}/u/${claim.username}` : null,
 			},
 		},
-		// Don't cache RPC-degraded responses — caller should retry once SNS is back.
-		{ 'cache-control': chainCheckError ? 'no-store' : 'public, max-age=30' },
+		// Don't cache RPC-degraded responses (the caller retries once SNS is back), nor
+		// a response carrying a holder window, whose edge must not outlive the cache.
+		{ 'cache-control': chainCheckError || holderWindow ? 'no-store' : 'public, max-age=30' },
 	);
 }
 

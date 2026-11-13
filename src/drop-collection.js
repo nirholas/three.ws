@@ -14,6 +14,8 @@
  */
 
 import { initMintPanel } from './drop-mint-panel.js';
+import { getAccess, getTierPass, attachTierPass } from './three-access.js';
+import { formatRemaining } from './early-countdown.js';
 
 const PAGE_SIZE = 48;
 const POLL_MS = 4000;
@@ -30,6 +32,7 @@ const el = {
 	name: document.getElementById('dr-name'),
 	symbol: document.getElementById('dr-symbol'),
 	status: document.getElementById('dr-status'),
+	early: document.getElementById('dr-early'),
 	description: document.getElementById('dr-description'),
 	stage: document.getElementById('dr-stage'),
 	itemActions: document.getElementById('dr-item-actions'),
@@ -145,23 +148,118 @@ function fail(message) {
 /* ── header and panels ────────────────────────────────────────────────── */
 
 let earlyTimer = null;
+// The viewer's drops.early read for the current identity: null (not read yet),
+// 'loading', 'error', or the access payload from /api/three/access.
+let earlyAccess = null;
 
-/** Status chip: the draft/closed state, or a live countdown through the holder-only window. */
+function earlyRemaining() {
+	const drop = state.drop;
+	if (drop?.status !== 'live' || !drop.public_opens_at) return 0;
+	return new Date(drop.public_opens_at).getTime() - Date.now();
+}
+
+function earlyEligible() {
+	return Boolean(earlyAccess && typeof earlyAccess === 'object' && earlyAccess.eligible);
+}
+
+/** Status chip plus the holder-window banner, re-rendered every second while the window runs. */
 function renderStatus() {
 	clearTimeout(earlyTimer);
-	const drop = state.drop;
-	const opens = drop.public_opens_at ? new Date(drop.public_opens_at).getTime() : 0;
-	const remaining = opens - Date.now();
-	if (drop.status === 'live' && remaining > 0) {
-		const mins = Math.floor(remaining / 60000);
-		const secs = Math.floor((remaining % 60000) / 1000);
-		el.status.textContent = `Gold holders reveal first. Opens to everyone in ${mins}:${String(secs).padStart(2, '0')}`;
-		el.status.title = 'Hold Gold or higher in $THREE to reveal during the early window. See three.ws/three.';
+	const remaining = earlyRemaining();
+	if (remaining > 0) {
+		el.status.textContent = `Public in ${formatRemaining(remaining)}`;
+		renderEarlyBanner(remaining);
 		earlyTimer = setTimeout(renderStatus, 1000);
 		return;
 	}
-	el.status.title = '';
-	el.status.textContent = drop.status === 'live' ? '' : drop.status;
+	el.early.hidden = true;
+	el.status.textContent = state.drop.status === 'live' ? '' : state.drop.status;
+	if (earlyAccess !== null) {
+		// The window just closed: the reveal button no longer carries the holder hint.
+		earlyAccess = null;
+		renderItemActions();
+	}
+}
+
+function earlyState() {
+	if (earlyAccess === 'loading' || earlyAccess === null) return 'loading';
+	if (earlyAccess === 'error') return 'error';
+	return earlyAccess.eligible ? 'eligible' : 'locked';
+}
+
+function renderEarlyBanner(remaining) {
+	el.early.hidden = false;
+	if (earlyAccess === null) loadEarlyAccess();
+	const clock = formatRemaining(remaining);
+	const view = earlyState();
+	el.early.setAttribute('aria-busy', view === 'loading' ? 'true' : 'false');
+
+	// Only the clock changes every tick; rebuild the banner when the state does.
+	if (el.early.dataset.state === view) {
+		const c = el.early.querySelector('[data-clock]');
+		if (c) c.textContent = clock;
+		return;
+	}
+	el.early.dataset.state = view;
+	el.early.innerHTML = '';
+
+	if (view === 'loading') {
+		el.early.innerHTML =
+			'<span class="dr-sr-only">Checking your $THREE tier</span>' +
+			'<span class="dr-early-skel" style="width:58%" aria-hidden="true"></span>' +
+			'<span class="dr-early-skel" style="width:32%" aria-hidden="true"></span>';
+		return;
+	}
+
+	const badge = document.createElement('span');
+	badge.className = 'dr-early-badge';
+	const text = document.createElement('p');
+	text.className = 'dr-early-text';
+	const countdown = document.createElement('strong');
+	countdown.dataset.clock = '';
+	countdown.textContent = clock;
+
+	if (view === 'error') {
+		badge.textContent = 'Holder window';
+		text.append('We could not check your $THREE tier. Gold holders reveal first; everyone can reveal in ', countdown, '.');
+		const retry = document.createElement('button');
+		retry.type = 'button';
+		retry.className = 'dr-btn dr-btn-sm';
+		retry.textContent = 'Retry';
+		retry.addEventListener('click', () => {
+			earlyAccess = null;
+			renderStatus();
+		});
+		el.early.append(badge, text, retry);
+		return;
+	}
+
+	const tierLabel = earlyAccess.required?.label || 'Gold';
+	if (view === 'eligible') {
+		badge.textContent = 'Early access';
+		const held = earlyAccess.held?.label || tierLabel;
+		text.append(`Your ${held} hold lets you reveal now. Everyone else can in `, countdown, '.');
+		el.early.append(badge, text);
+		return;
+	}
+
+	badge.textContent = `${tierLabel} holders first`;
+	text.append('Reveals open to everyone in ', countdown, `. Hold ${tierLabel} in $THREE to reveal now.`);
+	const tiers = document.createElement('a');
+	tiers.className = 'dr-btn dr-btn-sm';
+	tiers.href = '/three';
+	tiers.textContent = 'See $THREE tiers';
+	el.early.append(badge, text, tiers);
+}
+
+async function loadEarlyAccess() {
+	earlyAccess = 'loading';
+	const data = await getAccess('drops.early', { fresh: true });
+	earlyAccess = data?.access || 'error';
+	if (earlyRemaining() > 0) {
+		renderStatus();
+		renderItemActions();
+	}
 }
 
 function renderHeader() {
@@ -447,6 +545,10 @@ function renderItemActions() {
 		reveal.type = 'button';
 		reveal.className = 'dr-btn dr-btn-primary';
 		reveal.textContent = item.status === 'failed' ? 'Retry reveal' : 'Reveal this item';
+		if (earlyRemaining() > 0 && earlyState() === 'locked') {
+			const tier = earlyAccess.required?.label || 'Gold';
+			reveal.title = `Opens to everyone when the countdown ends, or now for ${tier} holders.`;
+		}
 		reveal.addEventListener('click', () => startReveal(item, reveal));
 		el.itemActions.appendChild(reveal);
 	}
@@ -468,9 +570,15 @@ async function startReveal(item, button) {
 	button.disabled = true;
 	note(el.itemNote, 'Starting the forge...', '');
 	try {
+		// Inside the holder window the server checks drops.early, so prove the hold
+		// with a fresh tier pass. Ask the wallet to sign only when the read says this
+		// identity is eligible, so a non-holder is never prompted for nothing.
+		if (earlyRemaining() > 0) {
+			await getTierPass({ interactive: earlyEligible() });
+		}
 		const res = await fetch('/api/drops/reveal', {
 			method: 'POST',
-			headers: { 'content-type': 'application/json' },
+			headers: attachTierPass({ 'content-type': 'application/json' }),
 			credentials: 'same-origin',
 			body: JSON.stringify({ slug: state.slug, index: item.index }),
 		});
@@ -482,11 +590,7 @@ async function startReveal(item, button) {
 			return;
 		}
 		if (res.status === 402 && data?.error === 'three_hold_required') {
-			note(
-				el.itemNote,
-				`${data.message || 'This drop is in its holder early window.'} It opens to everyone when the countdown ends.`,
-				'error',
-			);
+			holdRequiredNote(data);
 			button.disabled = false;
 			return;
 		}
@@ -618,6 +722,23 @@ async function verify() {
 
 /* ── wire ─────────────────────────────────────────────────────────────── */
 
+/** The 402 from the holder window: which tier is needed, how far off, and where to get it. */
+function holdRequiredNote(gate) {
+	const tier = gate.required?.label || 'Gold';
+	const toGo = Number(gate.usd_to_go);
+	const short = toGo > 0 ? ` You are $${toGo.toFixed(2)} short.` : '';
+	note(
+		el.itemNote,
+		`${tier} holders reveal first during this window.${short} It opens to everyone when the countdown ends. `,
+		'error',
+	);
+	const a = document.createElement('a');
+	a.href = '/three';
+	a.className = 'dr-note-link';
+	a.textContent = 'See $THREE tiers';
+	el.itemNote.appendChild(a);
+}
+
 function note(target, message, kind) {
 	target.textContent = message || '';
 	target.className = `dr-note${kind ? ` dr-note--${kind}` : ''}`;
@@ -625,6 +746,13 @@ function note(target, message, kind) {
 
 el.more?.addEventListener('click', () => loadMore(false));
 el.verify?.addEventListener('click', verify);
+
+// A different wallet is a different holder: re-read the early-window access.
+window.addEventListener('wallet:changed', () => {
+	if (!state.drop || earlyRemaining() <= 0) return;
+	earlyAccess = null;
+	renderStatus();
+});
 
 // A backgrounded tab must not keep an open poll loop running.
 document.addEventListener('visibilitychange', () => {

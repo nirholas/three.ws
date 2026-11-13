@@ -208,6 +208,52 @@
 				animation: tw-shimmer 1.2s linear infinite;
 			}
 			.tw-skel + .tw-skel { margin-top: 0.6em; }
+			/* Genesis first-dibs window on rare names (names.first_dibs) */
+			.tw-window {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: 0.6rem 0.9rem;
+				margin-top: 0.9rem;
+				padding: 0.8rem 1rem;
+				border: 1px solid var(--stroke-strong, rgba(255, 255, 255, 0.14));
+				border-radius: 12px;
+				background: var(--surface-2, rgba(255, 255, 255, 0.04));
+				min-height: 3.2rem;
+			}
+			.tw-window[data-state="eligible"] {
+				border-color: color-mix(in srgb, #a97bf5 55%, transparent);
+				background: color-mix(in srgb, #a97bf5 9%, transparent);
+			}
+			.tw-window[data-state="error"] { border-color: color-mix(in srgb, var(--tw-bad) 45%, transparent); }
+			.tw-window[data-state="loading"] { flex-direction: column; align-items: stretch; gap: 0; }
+			.tw-window-badge {
+				padding: 0.15rem 0.55rem;
+				border-radius: 999px;
+				font-size: 0.72rem;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				white-space: nowrap;
+				color: #a97bf5;
+				background: color-mix(in srgb, #a97bf5 15%, transparent);
+			}
+			.tw-window[data-state="error"] .tw-window-badge { color: var(--ink-dim, #888888); background: var(--surface-3, rgba(255, 255, 255, 0.08)); }
+			.tw-window-text { flex: 1 1 15rem; margin: 0; font-size: 0.85rem; line-height: 1.5; color: var(--ink-dim, #a0a0a0); }
+			.tw-window-text strong { color: var(--ink, #e8e8e8); font-variant-numeric: tabular-nums; }
+			.tw-window .tw-btn { margin-top: 0; padding: 0.5rem 0.9rem; font-size: 0.85rem; }
+			.tw-inline-link {
+				margin-left: 0.4em;
+				color: var(--ink, #e8e8e8);
+				text-decoration: underline;
+				text-underline-offset: 0.15em;
+				border-radius: 3px;
+			}
+			.tw-inline-link:hover { color: var(--accent, #ffffff); }
+			.tw-inline-link:active { opacity: 0.8; }
+			.tw-inline-link:focus-visible {
+				outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #ffffff);
+				outline-offset: var(--focus-ring-offset, 2px);
+			}
 			.tw-result {
 				border: 1px solid color-mix(in srgb, var(--tw-ok) 35%, transparent);
 				background: color-mix(in srgb, var(--tw-ok) 7%, transparent);
@@ -314,6 +360,7 @@
 					<div class="tw-suffix" aria-hidden="true">.threews.sol</div>
 				</div>
 				<div class="tw-status muted" id="tw-status" role="status">Type a label to check availability.</div>
+				<div class="tw-window" id="tw-window" role="status" aria-live="polite" hidden></div>
 				<button class="tw-btn" id="tw-mint" type="button" disabled data-i18n="threews_claim.mint_subdomain">Mint subdomain</button>
 				<p class="tw-help" style="margin-top:1rem" data-i18n="threews_claim.minting_is_paid_by_three_ws_the">
 					Minting is paid by three.ws. The on-chain subdomain is transferred to
@@ -339,7 +386,11 @@
 		<script src="/footer.js"></script>
 
 		<script type="module">
+			import { getAccess, getTierPass, attachTierPass } from '/src/three-access.js';
+			import { formatRemaining } from '/src/early-countdown.js';
+
 			const labelEl = document.getElementById('tw-label');
+			const windowEl = document.getElementById('tw-window');
 			const statusEl = document.getElementById('tw-status');
 			const mintBtn = document.getElementById('tw-mint');
 			const resultEl = document.getElementById('tw-result');
@@ -361,6 +412,10 @@
 			let lastChecked = null;
 			let csrfToken = null;
 			let forcedLabel = null;
+			// Genesis first-dibs read for the label on screen: null | 'loading' | 'error'
+			// | the access payload from /api/three/access?feature=names.first_dibs.
+			let windowAccess = null;
+			let windowTimer = null;
 
 			function escapeHtml(value) {
 				return String(value).replace(/[&<>"']/g, (c) => ({
@@ -536,12 +591,118 @@
 				renderReady(handle);
 			}
 
+			function clearWindow() {
+				clearTimeout(windowTimer);
+				windowEl.hidden = true;
+				windowEl.innerHTML = '';
+				delete windowEl.dataset.state;
+			}
+
+			function windowRemaining() {
+				const at = lastChecked?.holder_window?.public_opens_at;
+				return at ? new Date(at).getTime() - Date.now() : 0;
+			}
+
+			function windowView() {
+				if (windowAccess === null || windowAccess === 'loading') return 'loading';
+				if (windowAccess === 'error') return 'error';
+				return windowAccess.eligible ? 'eligible' : 'locked';
+			}
+
+			async function loadWindowAccess() {
+				windowAccess = 'loading';
+				const data = await getAccess('names.first_dibs', { fresh: true });
+				windowAccess = data?.access || 'error';
+				renderWindow();
+			}
+
+			// Rendered every second while the window runs; only the clock changes per tick.
+			function renderWindow() {
+				clearTimeout(windowTimer);
+				const w = lastChecked?.holder_window;
+				const remaining = windowRemaining();
+				if (!w || remaining <= 0) {
+					const label = lastChecked?.label;
+					clearWindow();
+					// The window closed while the visitor watched: re-read the label so the
+					// page reflects open availability rather than a stale countdown. Spaced
+					// out so a client clock ahead of the server re-asks every 2s, not in a loop.
+					if (w && label) windowTimer = setTimeout(() => check(label), 2000);
+					return;
+				}
+				windowEl.hidden = false;
+				const view = windowView();
+				const clock = formatRemaining(remaining);
+				windowEl.setAttribute('aria-busy', view === 'loading' ? 'true' : 'false');
+				windowTimer = setTimeout(renderWindow, 1000);
+				if (windowEl.dataset.state === view) {
+					const c = windowEl.querySelector('[data-clock]');
+					if (c) c.textContent = clock;
+					return;
+				}
+				windowEl.dataset.state = view;
+				windowEl.innerHTML = '';
+				if (view === 'loading') {
+					windowEl.innerHTML = '<span class="tw-sr-only">Checking your $THREE tier</span><span class="tw-skel" style="width:64%" aria-hidden="true"></span><span class="tw-skel" style="width:36%" aria-hidden="true"></span>';
+					return;
+				}
+				const tier = w.required?.label || 'Genesis';
+				const rarity = lastChecked.rarity?.label || 'Rare';
+				const badge = document.createElement('span');
+				badge.className = 'tw-window-badge';
+				const text = document.createElement('p');
+				text.className = 'tw-window-text';
+				const strong = document.createElement('strong');
+				strong.dataset.clock = '';
+				strong.textContent = clock;
+
+				if (view === 'error') {
+					badge.textContent = `${tier} first dibs`;
+					text.append(`This is a ${rarity.toLowerCase()} name. ${tier} holders get first dibs; it opens to everyone in `, strong, '. We could not check your $THREE tier.');
+					const retry = document.createElement('button');
+					retry.type = 'button';
+					retry.className = 'tw-btn ghost';
+					retry.textContent = 'Retry';
+					retry.addEventListener('click', () => { windowAccess = null; loadWindowAccess(); renderWindow(); });
+					windowEl.append(badge, text, retry);
+					return;
+				}
+				if (view === 'eligible') {
+					badge.textContent = 'Early access';
+					text.append(`Your ${windowAccess.held?.label || tier} hold lets you mint this ${rarity.toLowerCase()} name now. It opens to everyone in `, strong, '.');
+					windowEl.append(badge, text);
+					return;
+				}
+				badge.textContent = `${tier} first dibs`;
+				text.append(`This is a ${rarity.toLowerCase()} name. Only ${tier} holders can mint it for the next `, strong, '. After that it opens to everyone.');
+				const tiers = document.createElement('a');
+				tiers.className = 'tw-btn ghost';
+				tiers.href = '/three';
+				tiers.textContent = 'See $THREE tiers';
+				windowEl.append(badge, text, tiers);
+			}
+
+			function showHoldRequired(gate) {
+				const tier = gate?.required?.label || 'Genesis';
+				const toGo = Number(gate?.usd_to_go);
+				setStatus(
+					`${tier} holders have first dibs on this name right now.${toGo > 0 ? ` You are $${toGo.toFixed(2)} short.` : ''} It opens to everyone when the countdown ends.`,
+					'bad',
+				);
+				const a = document.createElement('a');
+				a.className = 'tw-inline-link';
+				a.href = '/three';
+				a.textContent = 'See $THREE tiers';
+				statusEl.append(a);
+			}
+
 			labelEl.addEventListener('input', () => {
 				const raw = labelEl.value.trim().toLowerCase();
 				const cleaned = raw.replace(/[^a-z0-9-]/g, '');
 				if (cleaned !== raw) labelEl.value = cleaned;
 				mintBtn.disabled = true;
 				clearTimeout(checkTimer);
+				clearWindow();
 				if (!cleaned) {
 					setStatus('Type a label to check availability.', 'muted');
 					return;
@@ -568,6 +729,7 @@
 					return;
 				}
 				lastChecked = data?.data;
+				clearWindow();
 				if (!lastChecked) {
 					setStatus('Unexpected reply from three.ws.', 'bad', () => check(label));
 					return;
@@ -581,6 +743,10 @@
 						'ok',
 					);
 					mintBtn.disabled = false;
+					if (lastChecked.holder_window) {
+						if (windowAccess === null || windowAccess === 'error') loadWindowAccess();
+						renderWindow();
+					}
 				} else {
 					const who = lastChecked.claim?.username
 						? `claimed by @${lastChecked.claim.username}`
@@ -611,7 +777,13 @@
 				resultEl.classList.remove('on');
 				try {
 					const token = await getCsrf().catch(() => null);
-					const headers = { 'content-type': 'application/json' };
+					// A rare name inside the Genesis window is checked server side, so prove
+					// the hold with a fresh pass. The wallet is asked to sign only when the
+					// read says this identity is eligible.
+					if (lastChecked.holder_window && windowRemaining() > 0) {
+						await getTierPass({ interactive: windowView() === 'eligible' });
+					}
+					const headers = attachTierPass({ 'content-type': 'application/json' });
 					if (token) headers['x-csrf-token'] = token;
 					const res = await fetch('/api/threews/subdomain', {
 						method: 'POST',
@@ -624,6 +796,11 @@
 					if (res.status === 401) {
 						setStatus('Your session has expired. Sign in again to mint.', 'bad');
 						acctActions.innerHTML = actionLink(SIGN_IN_HREF, 'Sign in');
+						return;
+					}
+					if (res.status === 402 && data?.error === 'three_hold_required') {
+						showHoldRequired(data);
+						mintBtn.disabled = false;
 						return;
 					}
 					if (!res.ok) {
@@ -640,6 +817,7 @@
 						return;
 					}
 					const d = data.data;
+					clearWindow();
 					setStatus(`${d.full} minted.`, 'ok');
 					setAccount('claimed', `You own ${d.full}.`, 'ok', d.showcase_url ? actionLink(d.showcase_url, 'View your showcase') : '');
 					showOwnedClaim({
@@ -653,6 +831,15 @@
 					setStatus('Could not reach three.ws to mint. Check your connection and', 'bad', () => mintBtn.click());
 					mintBtn.disabled = false;
 				}
+			});
+
+			// A different wallet is a different holder: re-read first-dibs access.
+			window.addEventListener('wallet:changed', () => {
+				if (!lastChecked?.holder_window) return;
+				windowAccess = null;
+				delete windowEl.dataset.state;
+				loadWindowAccess();
+				renderWindow();
 			});
 
 			loadAccountState();

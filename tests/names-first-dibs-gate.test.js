@@ -24,6 +24,7 @@ vi.mock('../api/_lib/db.js', async (orig) => ({
 vi.mock('../api/_lib/threews-sns.js', async (orig) => ({
 	...(await orig()),
 	hasOwnerKey: () => true,
+	getSubdomainOwner: async () => null,
 }));
 
 let handler;
@@ -38,6 +39,15 @@ function mockRes() {
 		end(b) { this._body = b || ''; },
 		get json() { try { return JSON.parse(this._body); } catch { return null; } },
 	};
+}
+async function check(label) {
+	const r = Readable.from([]);
+	r.method = 'GET';
+	r.url = `/api/threews/subdomain?label=${encodeURIComponent(label)}`;
+	r.headers = { origin: 'http://localhost:3000' };
+	const res = mockRes();
+	await handler(r, res);
+	return res;
 }
 async function claim(label, headers = {}) {
 	const r = Readable.from([Buffer.from(JSON.stringify({ label }))]);
@@ -107,5 +117,28 @@ describe('POST /api/threews/subdomain during the rare-name window', () => {
 		delete process.env.THREEWS_RARE_NAMES_PUBLIC_AT;
 		const res = await claim('ab');
 		expect(res.statusCode).not.toBe(402);
+	});
+});
+
+describe('GET /api/threews/subdomain reports the holder window so the page can show it', () => {
+	it('flags a rare label inside the window with its Genesis requirement and public open time', async () => {
+		const res = await check('ab');
+		expect(res.statusCode).toBe(200);
+		const w = res.json.data.holder_window;
+		expect(w).toMatchObject({ feature: 'names.first_dibs', required: { level: 4, id: 'genesis' } });
+		expect(new Date(w.public_opens_at).toISOString()).toBe(process.env.THREEWS_RARE_NAMES_PUBLIC_AT);
+		expect(res.json.data.rarity).toMatchObject({ tier: priceName('ab').rarity, free: false });
+		expect(res._headers['cache-control']).toBe('no-store');
+	});
+
+	it('reports no window for a Common label', async () => {
+		const res = await check('a-much-longer-handle');
+		expect(res.json.data.holder_window).toBeNull();
+	});
+
+	it('reports no window once the configured instant is unset', async () => {
+		delete process.env.THREEWS_RARE_NAMES_PUBLIC_AT;
+		const res = await check('ab');
+		expect(res.json.data.holder_window).toBeNull();
 	});
 });
