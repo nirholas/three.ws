@@ -225,3 +225,14 @@ def test_pipeline_feeds_the_dense_fit_image_space_landmarks():
     assert mask.shape == (height, width)
     assert mask.sum() > 0.05 * width * height
     np.testing.assert_allclose(landmarks_px, px, atol=1e-6)
+
+
+def test_warmup_runs_a_real_fit_and_never_raises(monkeypatch):
+    """The server lifespan calls this before the first job; it must finish and report time."""
+    calls = []
+    real = dense_fit.fit_dense_head
+    monkeypatch.setattr(dense_fit, "fit_dense_head",
+                        lambda *a, **kw: calls.append(kw) or real(*a, **{**kw, "device": "cpu"}))
+    spent = dense_fit.warmup()
+    assert spent is not None and spent >= 0
+    assert len(calls) == 1 and calls[0]["iterations"] == 3

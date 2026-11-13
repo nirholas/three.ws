@@ -226,6 +226,47 @@ def fit_dense_head(
     return None
 
 
+def warmup(iterations: int = 3) -> Optional[float]:
+    """
+    Run a tiny fit on an analytic sphere so the first real job does not pay the
+    one-off device start-up. On a fresh GPU instance the first fit spends most of
+    its 20 s budget creating the CUDA context and loading the PyTorch3D
+    rasteriser kernels, so the first job of every instance silently kept the
+    morph output; warm jobs refine in ~5 s. Called once from the server lifespan
+    when DENSE_FIT=1. Returns the seconds spent, or None when torch is absent.
+    """
+    if not torch_available():
+        return None
+    started = time.time()
+    side, scale = 128, 48.0
+    lat, lon = np.meshgrid(np.linspace(-1.5, 1.5, 16), np.linspace(-3.0, 3.0, 24, endpoint=False),
+                           indexing="ij")
+    verts = np.stack([np.cos(lat) * np.sin(lon), np.sin(lat), np.cos(lat) * np.cos(lon)],
+                     axis=-1).reshape(-1, 3)
+    ring = lon.shape[1]
+    i, j = np.meshgrid(np.arange(lat.shape[0] - 1), np.arange(ring), indexing="ij")
+    a, b = i * ring + j, i * ring + (j + 1) % ring
+    c, d = a + ring, b + ring
+    faces = np.concatenate([np.stack([a, b, c], -1).reshape(-1, 3),
+                            np.stack([b, d, c], -1).reshape(-1, 3)])
+    # The photo is the Lambertian shading of the sphere itself, computed per
+    # pixel: a realisable image, so the warm-up exercises the same code path a
+    # real job does (photometric, smoothness, silhouette) with no rasteriser here.
+    ys, xs = np.mgrid[0:side, 0:side].astype(np.float64)
+    x, y = (xs - side / 2.0) / scale, -(ys - side / 2.0) / scale
+    inside = (x ** 2 + y ** 2) < 1.0
+    z = np.sqrt(np.clip(1.0 - x ** 2 - y ** 2, 0.0, 1.0))
+    light = np.array([0.25, 0.35, 0.9]) / np.linalg.norm([0.25, 0.35, 0.9])
+    shade = np.where(inside, 0.35 + 0.65 * np.clip(x * light[0] + y * light[1] + z * light[2], 0, 1), 0.1)
+    photo = (np.clip(np.stack([shade * 0.85, shade * 0.68, shade * 0.58], -1), 0, 1) * 255).astype(np.uint8)
+    from face_projection import WeakPerspectiveCamera
+
+    camera = WeakPerspectiveCamera(scale, np.eye(3), np.array([side / 2.0, -side / 2.0, 0.0]), side, side)
+    fit_dense_head(verts, faces, camera, photo, inside.astype(np.float32), None, None,
+                   inside.astype(np.float32), iterations=iterations, time_budget=600.0)
+    return time.time() - started
+
+
 def _face_id_map(px: np.ndarray, depth: np.ndarray, faces: np.ndarray, h: int, w: int) -> np.ndarray:
     """
     Z-buffered face id per pixel (-1 = empty) for the projected head. Visibility

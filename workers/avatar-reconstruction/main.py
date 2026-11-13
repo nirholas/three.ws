@@ -74,6 +74,11 @@ async def lifespan(app: FastAPI):
     # Warm up the UV map and template GLBs on startup (loads them into memory).
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(None, face_pipeline._get_uv_map)
+    if dense_fit.enabled():
+        # Pay the CUDA context and PyTorch3D kernel start-up now: left to the
+        # first job it ate the 20 s fit budget and that job kept the morph output.
+        spent = await loop.run_in_executor(None, dense_fit.warmup)
+        log.info("dense fit warm-up: %s", "torch absent" if spent is None else f"{spent:.1f}s")
 
     _db = firestore.Client(project=FIRESTORE_PROJECT)
     _bucket = storage.Client().bucket(GCS_BUCKET)
