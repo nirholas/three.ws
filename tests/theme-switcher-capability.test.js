@@ -19,7 +19,7 @@
 // stylesheet actually lands, and the page flips to the user's chosen theme the
 // moment one does.
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -144,6 +144,78 @@ describe('theme switcher light-capability probe', () => {
 		await new Promise((resolve) => setTimeout(resolve, 20));
 		expect(probes).toBe(afterBoot);
 		expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+	});
+
+	it('does not re-probe on every stylesheet for a visitor who wants dark', async () => {
+		// Each probe flips data-theme on <html> and reads the body, which forces a
+		// full-document style recalc (and the transition suspension forces
+		// another). Measured on a Pixel 5 (4x CPU) against production /marketplace
+		// on 2026-11-13: ten probes per load, the last one 304 ms on its own over
+		// 7,200 nodes, about 1.8 s of main-thread time on a page that is a genuine
+		// dark island. For a visitor whose theme resolves to dark the verdict
+		// cannot change what paints, only whether the nav toggle shows, so a
+		// stylesheet landing must not cost a synchronous probe; one settle probe
+		// after load answers the toggle question.
+		localStorage.setItem('twx_theme', 'dark');
+		document.documentElement.setAttribute('data-theme', 'dark');
+		Object.defineProperty(document, 'readyState', { configurable: true, get: () => 'interactive' });
+		let probes = 0;
+		bodyBg = () => {
+			probes += 1;
+			return 'rgb(0, 0, 0)';
+		};
+		try {
+			boot();
+			const afterBoot = probes;
+			for (let i = 0; i < 6; i++) addStylesheet().dispatchEvent(new Event('load'));
+			const style = document.createElement('style');
+			style.textContent = 'main{color:red}';
+			document.head.appendChild(style);
+			// The nav (and its toggle) is injected after boot.
+			const btn = document.createElement('button');
+			btn.id = 'nav-theme-toggle';
+			document.body.appendChild(btn);
+			await new Promise((r) => setTimeout(r, 0));
+			expect(probes - afterBoot, 'stylesheets and the nav must reuse the boot verdict').toBe(0);
+			expect(btn.hidden).toBe(true);
+			expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+		} finally {
+			delete document.readyState;
+		}
+	});
+
+	it('settles a dark visitor\'s toggle with one probe after load', async () => {
+		localStorage.setItem('twx_theme', 'dark');
+		document.documentElement.setAttribute('data-theme', 'dark');
+		Object.defineProperty(document, 'readyState', { configurable: true, get: () => 'interactive' });
+		const btn = document.createElement('button');
+		btn.id = 'nav-theme-toggle';
+		document.body.appendChild(btn);
+		let probes = 0;
+		let light = false;
+		bodyBg = () => {
+			probes += 1;
+			return light ? 'rgb(255, 255, 255)' : 'rgb(0, 0, 0)';
+		};
+		vi.useFakeTimers();
+		try {
+			boot();
+			expect(btn.hidden).toBe(true);
+			const afterBoot = probes;
+			// tokens.css lands behind nav.css: the page turns out to be capable.
+			light = true;
+			addStylesheet().dispatchEvent(new Event('load'));
+			expect(probes).toBe(afterBoot);
+			Object.defineProperty(document, 'readyState', { configurable: true, get: () => 'complete' });
+			window.dispatchEvent(new Event('load'));
+			await vi.runAllTimersAsync();
+			expect(probes - afterBoot).toBe(1);
+			expect(btn.hidden, 'a capable page shows the toggle once settled').toBe(false);
+			expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+		} finally {
+			vi.useRealTimers();
+			delete document.readyState;
+		}
 	});
 
 	it('still honours an explicit dark preference on a light-capable page', () => {

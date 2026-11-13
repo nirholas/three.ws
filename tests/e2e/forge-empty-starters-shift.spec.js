@@ -27,7 +27,6 @@ for (const { name, viewport, isMobile } of WIDTHS) {
 		test('randomized starter labels do not shift the starters', async ({ page }) => {
 			await page.addInitScript(() => {
 				window.__starterShift = 0;
-				window.__staticLabels = null;
 				new PerformanceObserver((list) => {
 					for (const entry of list.getEntries()) {
 						if (entry.hadRecentInput) continue;
@@ -35,18 +34,19 @@ for (const { name, viewport, isMobile } of WIDTHS) {
 						if (hit) window.__starterShift += entry.value;
 					}
 				}).observe({ type: 'layout-shift', buffered: true });
-				document.addEventListener('DOMContentLoaded', () => {
-					window.__staticLabels = [...document.querySelectorAll('#empty-starters .chip')].map((c) => c.textContent.trim());
-				});
 			});
+			// The labels the HTML ships (module scripts run before DOMContentLoaded,
+			// so the live DOM never shows them to a test).
+			const html = await (await page.request.get('/forge')).text();
+			const start = html.indexOf('id="empty-starters"');
+			const block = html.slice(start, html.indexOf('</div>', start));
+			const staticLabels = [...block.matchAll(/<button class="chip"[^>]*>([^<]+)<\/button>/g)].map((m) => m[1].trim());
+			expect(staticLabels.length).toBeGreaterThan(0);
 			await page.goto('/forge', { waitUntil: 'domcontentloaded', timeout: 120_000 });
 			// seedChips() has run once any starter label differs from the HTML copy.
 			await page.waitForFunction(
-				() => {
-					const labels = [...document.querySelectorAll('#empty-starters .chip')].map((c) => c.textContent.trim());
-					return window.__staticLabels && labels.some((l, i) => l !== window.__staticLabels[i]);
-				},
-				null,
+				(fixed) => [...document.querySelectorAll('#empty-starters .chip')].some((c, i) => c.textContent.trim() !== fixed[i]),
+				staticLabels,
 				{ timeout: 120_000 },
 			);
 			await page.waitForTimeout(1500);

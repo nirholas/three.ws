@@ -3381,13 +3381,24 @@
 			}
 			/* Starter prompts inside the empty stage: a first-time visitor sees
 			   exactly what to type and can generate in one click. Reuses the .chip
-			   look; wired in forge.js (fills the prompt and submits). */
+			   look; wired in forge.js (fills the prompt and submits).
+			   A grid of fixed cells, each chip filling its cell, with an explicit
+			   width (the parent centers its children, which would otherwise size
+			   the grid to its labels): seedChips() swaps in random labels after
+			   first paint, and in the old centered flex row every changed width
+			   slid the chips after it sideways, 0.05 of /forge's desktop CLS.
+			   Guarded by tests/e2e/forge-empty-starters-shift.spec.js. */
 			.forge-empty-starters {
-				display: flex;
-				flex-wrap: wrap;
-				justify-content: center;
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
 				gap: var(--space-xs);
+				box-sizing: border-box;
+				width: min(100%, 60rem);
 				padding: 0 var(--space-md);
+			}
+			.forge-empty-starters .chip {
+				justify-self: stretch;
+				text-align: center;
 			}
 			.forge-empty-hint {
 				font-size: var(--text-xs);
