@@ -1,0 +1,68 @@
+{
+  "agent-crawler": {
+    "status": "SUCCESS",
+    "buildId": "fd6c8cdd-72b7-4c95-a33f-d7e3d968f0ac",
+    "date": "2026-11-13",
+    "needs": "secret crawl-worker-secret"
+  },
+  "agent-screen-pool": {
+    "status": "SUCCESS",
+    "buildId": "1d877a9b-6f32-4993-be0e-7c75c01fd758",
+    "date": "2026-11-13",
+    "needs": "secret screen-worker-secret"
+  },
+  "agent-mm": {
+    "status": "SUCCESS",
+    "buildId": "fef260f2-5901-4637-a5a0-d32d152bd373",
+    "date": "2026-11-13",
+    "needs": "secrets agent-mm-database-url, agent-mm-jwt-secret, wallet-encryption-key, agent-mm-solana-rpc-url, upstash-redis-rest-url"
+  },
+  "agora-citizens": {
+    "status": "SUCCESS",
+    "buildId": "064bfd2f-e04c-4dac-b177-fd74d2dc8651",
+    "date": "2026-11-13",
+    "needs": "secrets DATABASE_URL, upstash-redis-rest-token, agora-signer-seed, agora-devnet-funder-secret"
+  },
+  "avatar-pipeline-controller": {
+    "status": "SUCCESS",
+    "buildId": "fadeb78a-d827-4366-a302-35a80e595bb0",
+    "date": "2026-11-13",
+    "needs": "secret avatar-reconstruction-key"
+  },
+  "cad-forge": {
+    "status": "SUCCESS",
+    "buildId": "5aeba329-e0a9-4554-908a-5889f999e112",
+    "date": "2026-11-13",
+    "needs": "secret cad-forge-key"
+  },
+  "model-lato2": {
+    "status": "SUCCESS",
+    "buildId": "831aaab3-4ad2-481e-a7ab-e20cc38698ef",
+    "date": "2026-11-13",
+    "needs": "1x L4 (us-central1), secret avatar-reconstruction-key"
+  },
+  "model-video2scene": {
+    "status": "SUCCESS",
+    "buildId": "7405b2b7-18e7-4903-bcdf-76658c3d08ab",
+    "date": "2026-11-13",
+    "needs": "1x L4 (us-central1), secret avatar-reconstruction-key"
+  },
+  "modly": {
+    "status": "SUCCESS",
+    "buildId": "17a7459d-4f28-4357-ba96-8a77511a0137",
+    "date": "2026-11-13",
+    "needs": "1x L4 (us-central1), secret avatar-reconstruction-key"
+  },
+  "robinhood-feed": {
+    "status": "SUCCESS",
+    "buildId": "fd196012-2ade-4926-a6e9-9e2e7c05d887",
+    "date": "2026-11-13",
+    "needs": "none"
+  },
+  "texture": {
+    "status": "SUCCESS",
+    "buildId": "817e2a77-fb1b-48ff-9e25-af5e302bbd36",
+    "date": "2026-11-13",
+    "needs": "1x L4 (us-central1), secret avatar-reconstruction-key"
+  }
+}
