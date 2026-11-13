@@ -196,8 +196,11 @@ function surprise() {
 // silently undoing every rotation and re-wrapping the flex row underneath it.
 // Dropping the attribute hands the node to its real owner, the same way
 // nav-auth's data-auth-name guard does in src/i18n.js.
+// A chip holds one line and ellipsizes a long prompt, so the full prompt (the
+// one a click submits) is a hover away.
 function setChipPrompt(chip, text) {
 	chip.textContent = text;
+	chip.title = text;
 	chip.removeAttribute('data-i18n');
 }
 
