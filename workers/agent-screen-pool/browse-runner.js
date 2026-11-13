@@ -31,7 +31,7 @@ const OBSERVE_JS = () => {
 	return out;
 };
 
-export function createBrowseRunner({ baseUrl, browseUrl, secret, newPage, egress, pushTaskFrame, log, sleep, maxConcurrent = 2, providers }) {
+export function createBrowseRunner({ baseUrl, browseUrl, secret, newPage, egress, pushTaskFrame, log, sleep, maxConcurrent = 2, providers, onClaim }) {
 	const active = new Map(); // agentId -> entry (also read by the control drain)
 
 	async function api(body) {
@@ -110,6 +110,9 @@ export function createBrowseRunner({ baseUrl, browseUrl, secret, newPage, egress
 		let outcome = { status: 'error', steps: [], result: null };
 		const stepsSoFar = [];
 		try {
+			// The agent may already be on an idle cast. Close it first so the owner
+			// watches, and drives, the browse page and nothing else.
+			await onClaim?.(job.agentId);
 			entry.page = await newPage();
 			const policy = createBrowsePolicy({ allowedDomains: job.allowedDomains, maxSteps: job.maxSteps });
 			const decide = brainDecider({ baseUrl, providers });

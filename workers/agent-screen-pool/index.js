@@ -137,6 +137,7 @@ const browseRunner = createBrowseRunner({
 	providers: process.env.BROWSE_PROVIDERS ? process.env.BROWSE_PROVIDERS.split(',') : undefined,
 	newPage: async () => { await ensureBrowser(); return context.newPage(); },
 	pushTaskFrame: (entry, opts) => pushTaskFrame(entry, opts),
+	onClaim: (agentId) => stopCasting(agentId),
 });
 const BOOT_AT = new Date().toISOString();
 

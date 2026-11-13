@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { createBrowsePolicy, parseAction, normalizeDomains, isCredentialField } from '../workers/agent-screen-pool/tasks/browse-policy.js';
 import { runBrowseLoop, brainDecider } from '../workers/agent-screen-pool/tasks/agent-browse.js';
+import { createBrowseRunner } from '../workers/agent-screen-pool/browse-runner.js';
 
 const page = { url: 'https://example.com/', text: 'Example Domain', elements: [
 	{ id: 0, tag: 'a', name: 'More information' },
@@ -199,5 +200,33 @@ describe('browse decider', () => {
 		const h = brainHarness({ 'gpt-oss-120b': DEAD_ROUTE, 'llama-3.3-70b': 502 });
 		const decide = brainDecider({ baseUrl: 'https://three.ws', fetchImpl: h.fetchImpl, providers: ['gpt-oss-120b', 'llama-3.3-70b'] });
 		await expect(decide(ctx)).rejects.toThrow(/gpt-oss-120b: .*no working route.*llama-3\.3-70b: brain 502/);
+	});
+});
+
+describe('browse runner', () => {
+	afterEach(() => vi.unstubAllGlobals());
+
+	it('stops the agent\'s idle cast before opening the browse page, so only one page streams to the owner', async () => {
+		const order = [];
+		const reports = [];
+		const job = { id: 'job-1', agentId: 'agent-1', goal: 'report the heading', startUrl: 'https://example.com/', allowedDomains: ['example.com'], maxSteps: 3 };
+		vi.stubGlobal('fetch', async (_url, init) => {
+			const body = JSON.parse(init.body);
+			if (body.op === 'claim') return Response.json({ job });
+			reports.push(body);
+			return Response.json({ ok: true });
+		});
+		const runner = createBrowseRunner({
+			baseUrl: 'https://three.ws', browseUrl: 'https://three.ws/api/agent-screen-browse', secret: 'x'.repeat(32),
+			egress: { checkUrl: async () => ({ ok: true }) },
+			pushTaskFrame: async () => {}, log: () => {}, sleep: async () => {},
+			onClaim: async (agentId) => { order.push(`stop-cast:${agentId}`); },
+			newPage: async () => { order.push('browse-page'); throw new Error('browser unavailable'); },
+		});
+		await runner.poll();
+		await vi.waitFor(() => expect(reports.some((r) => r.status === 'error')).toBe(true));
+		expect(order).toEqual(['stop-cast:agent-1', 'browse-page']);
+		const final = reports.find((r) => r.status === 'error');
+		expect(final.steps.at(-1)).toMatchObject({ type: 'error', action: 'run', reason: 'browser unavailable' });
 	});
 });
