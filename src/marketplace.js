@@ -788,7 +788,12 @@ function renderTheme() {
 	const titleEl = $('market-theme-title');
 	const blurbEl = $('market-theme-blurb');
 	if (titleEl) titleEl.textContent = state.theme.title;
-	if (blurbEl) blurbEl.textContent = state.theme.blurb || '';
+	if (titleEl) titleEl.title = state.theme.title;
+	// The header holds one line for the blurb, so the full text is a hover away.
+	if (blurbEl) {
+		blurbEl.textContent = state.theme.blurb || '';
+		blurbEl.title = state.theme.blurb || '';
+	}
 	const cta = $('market-theme-cta');
 	// The theme endpoint scopes by category (general = all). Wire the CTA to
 	// browse that category; hide it for the catch-all "general" weeks.

@@ -2,11 +2,12 @@
 // replaces its placeholder.
 //
 // Measured on a Pixel 5 against production on 2026-11-13: the strip's header
-// shipped as one line ("This week" followed by two placeholder dashes). When /api/marketplace/theme answered,
-// the real title and blurb no longer fit, the blurb wrapped to its own line and
-// the category's "Browse ..." button appeared on a third, so the header grew
-// 89 px and moved the picks row, the hero carousel and everything under it: a
-// 0.1059 layout shift on its own, more than the page's 0.1 budget.
+// shipped as one line ("This week" and two placeholder dashes). When
+// /api/marketplace/theme answered, the real title and blurb no longer fit, the
+// blurb wrapped to its own line and the category's "Browse ..." button
+// appeared on a third, so the header grew 89 px and moved the picks row, the
+// hero carousel and everything under it: a 0.1059 layout shift on its own,
+// more than the page's 0.1 budget.
 //
 // The header is now a fixed grid (eyebrow, title and button on one row, the
 // blurb on one line under it; one row on wide screens), so the placeholder and
@@ -31,7 +32,7 @@ for (const { name, viewport, isMobile } of WIDTHS) {
 					const head = document.querySelector('#market-theme-strip .market-theme-head');
 					window.__first = {
 						head: head ? head.getBoundingClientRect().height : -1,
-						title: document.getElementById('market-theme-title')?.textContent.trim(),
+						busy: !!document.getElementById('market-theme-strip')?.hasAttribute('aria-busy'),
 					};
 				});
 			});
@@ -60,8 +61,8 @@ for (const { name, viewport, isMobile } of WIDTHS) {
 				};
 			});
 			test.skip(now.hidden, 'no theme this week: the strip collapses, nothing to compare');
-			expect(first.title, 'the theme must not be in before DOMContentLoaded').toBe('\u2014');
-			expect(now.title).not.toBe('\u2014');
+			expect(first.busy, 'the theme must not be in before DOMContentLoaded').toBe(true);
+			expect(now.title.length).toBeGreaterThan(1);
 			expect(Math.abs(now.head - first.head), JSON.stringify({ first, now })).toBeLessThanOrEqual(0.5);
 			// A blurb cut to one line stays readable in full on hover.
 			expect(now.blurbTitle).toBe(now.blurbText);

@@ -717,11 +717,55 @@
 				font-size: 13px;
 				color: #d4d4d8;
 			}
+			/* A fixed grid, so the "-" placeholders and the real theme take the
+			   same height. Measured 2026-11-13 on a Pixel 5: as a wrapping flex
+			   row the header grew from one line to three when the theme loaded
+			   (blurb on its own line, the Browse button on a third), moving the
+			   hero and the grid 89 px (CLS 0.1059). Phone: eyebrow, title and
+			   button on a 30 px row, the blurb on one line under it. Wide: all
+			   on one row. Long text is cut with an ellipsis; renderTheme() puts
+			   the full blurb in its title. */
 			.market-theme-head {
-				display: flex;
+				display: grid;
+				grid-template-columns: auto minmax(0, 1fr) auto;
+				grid-template-rows: 30px 20px;
 				align-items: center;
-				gap: 12px;
-				flex-wrap: wrap;
+				column-gap: 12px;
+				row-gap: 4px;
+			}
+			.market-theme-head > .market-theme-eyebrow {
+				grid-area: 1 / 1;
+			}
+			.market-theme-strip .market-theme-head > .market-theme-title {
+				grid-area: 1 / 2;
+				min-width: 0;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.market-theme-strip .market-theme-head > .market-theme-blurb {
+				grid-area: 2 / 1 / 3 / -1;
+				min-width: 0;
+				line-height: 20px;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.market-theme-head > .market-theme-cta {
+				grid-area: 1 / 3;
+				white-space: nowrap;
+			}
+			@media (min-width: 720px) {
+				.market-theme-head {
+					grid-template-columns: auto minmax(0, max-content) minmax(0, 1fr) auto;
+					grid-template-rows: 30px;
+				}
+				.market-theme-strip .market-theme-head > .market-theme-blurb {
+					grid-area: 1 / 3;
+				}
+				.market-theme-head > .market-theme-cta {
+					grid-area: 1 / 4;
+				}
 			}
 			.market-theme-strip .market-theme-eyebrow {
 				font-family: var(--font-display);
