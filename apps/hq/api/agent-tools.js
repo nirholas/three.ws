@@ -11,7 +11,8 @@ export const config = { runtime: 'edge' };
  *   POST /api/agent-tools {tool, args}          -> run one tool
  *   POST /api/agent-tools {question, narrate?}  -> route a question to a tool;
  *                                                  narrate:true adds a summary
- *                                                  from HQ's groq-summarize route
+ *                                                  from HQ's groq-summarize route,
+ *                                                  then openrouter-summarize
  *
  * No tool moves funds or signs anything.
  */
@@ -320,22 +321,32 @@ function json(body, status, cors, extra = {}) {
   return new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json', ...extra } });
 }
 
+/** Summary rungs in the same order the HQ client uses (services/summarization.ts). */
+const NARRATORS = [
+  ['groq', '/api/groq-summarize'],
+  ['openrouter', '/api/openrouter-summarize'],
+];
+
 async function narrate(result, question, origin, request) {
   const headlines = result.facts.slice(0, 8);
   if (headlines.length === 0) return null;
-  try {
-    const res = await fetch(new URL('/api/groq-summarize', origin), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Origin: request.headers.get('origin') || origin },
-      body: JSON.stringify({ headlines, mode: 'analysis', geoContext: question ? `User question: ${question}` : '' }),
-      signal: AbortSignal.timeout(15000),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return typeof data.summary === 'string' ? data.summary : null;
-  } catch {
-    return null;
+  const body = JSON.stringify({ headlines, mode: 'analysis', geoContext: question ? `User question: ${question}` : '' });
+  for (const [provider, path] of NARRATORS) {
+    try {
+      const res = await fetch(new URL(path, origin), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: request.headers.get('origin') || origin },
+        body,
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (typeof data.summary === 'string' && data.summary) return { text: data.summary, provider };
+    } catch (err) {
+      console.warn(`[agent-tools] ${provider} narration failed: ${err.message}`);
+    }
   }
+  return null;
 }
 
 export default async function handler(request) {
@@ -371,7 +382,11 @@ export default async function handler(request) {
   try {
     const origin = new URL(request.url).origin;
     const result = await runTool(name, args, { origin });
-    if (body?.narrate === true) result.narrative = await narrate(result, question, origin, request);
+    if (body?.narrate === true) {
+      const told = await narrate(result, question, origin, request);
+      result.narrative = told?.text ?? null;
+      result.narrativeProvider = told?.provider ?? null;
+    }
     return json(result, 200, cors, { 'Cache-Control': 'no-store' });
   } catch (err) {
     return json({ error: err.message || 'Tool failed' }, err.status || 500, cors);

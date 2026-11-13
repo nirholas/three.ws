@@ -1,6 +1,7 @@
 import { getCachedJson, setCachedJson, hashString } from './_upstash-cache.js';
 import { getCorsHeaders, isDisallowedOrigin } from './_cors.js';
 import { createIpRateLimiter } from './_ip-rate-limit.js';
+import { groqChat } from './_groq.js';
 
 export const config = {
   runtime: 'edge',
@@ -8,8 +9,6 @@ export const config = {
 
 const rateLimiter = createIpRateLimiter({ limit: 30, windowMs: 60_000 });
 
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'llama-3.1-8b-instant';
 const CACHE_TTL_SECONDS = 86400;
 const CACHE_VERSION = 'v1';
 
@@ -95,32 +94,24 @@ ${isTech ? 'Focus: technology, startups, AI, cybersecurity. Most tech news is "l
 
 Return: {"level":"...","category":"..."}`;
 
-    const response = await fetch(GROQ_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: title },
-        ],
-        temperature: 0,
-        max_tokens: 50,
-      }),
+    const groq = await groqChat(apiKey, {
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: title },
+      ],
+      temperature: 0,
+      max_tokens: 50,
     });
 
-    if (!response.ok) {
-      console.error('[Classify] Groq error:', response.status);
+    if (!groq.ok) {
+      console.error('[Classify] Groq error:', groq.status, groq.model);
       return new Response(JSON.stringify({ fallback: true }), {
-        status: response.status,
+        status: groq.status === 429 ? 429 : 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const data = await response.json();
+    const data = groq.data;
     const raw = data.choices?.[0]?.message?.content?.trim();
     if (!raw) {
       return new Response(JSON.stringify({ fallback: true }), {

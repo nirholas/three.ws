@@ -7,6 +7,7 @@
 import { getCachedJson, setCachedJson, hashString } from './_upstash-cache.js';
 import { getCorsHeaders, isDisallowedOrigin } from './_cors.js';
 import { createIpRateLimiter } from './_ip-rate-limit.js';
+import { groqChat } from './_groq.js';
 
 export const config = {
   runtime: 'edge',
@@ -14,8 +15,6 @@ export const config = {
 
 const rateLimiter = createIpRateLimiter({ limit: 10, windowMs: 60_000 });
 
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'llama-3.1-8b-instant';
 const CACHE_TTL_SECONDS = 7200; // 2 hours
 const CACHE_VERSION = 'ci-v2';
 
@@ -146,40 +145,30 @@ Rules:
 
     const userPrompt = `Country: ${country} (${code})${dataSection}`;
 
-    const groqRes = await fetch(GROQ_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.4,
-        max_tokens: 900,
-      }),
+    const groq = await groqChat(apiKey, {
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      temperature: 0.4,
+      max_tokens: 900,
     });
 
-    if (!groqRes.ok) {
-      const errText = await groqRes.text();
-      console.error('[CountryIntel] Groq error:', groqRes.status, errText);
+    if (!groq.ok) {
+      console.error('[CountryIntel] Groq error:', groq.status, groq.model, groq.errorText);
       return new Response(JSON.stringify({ error: 'AI service error', fallback: true }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const groqData = await groqRes.json();
-    const brief = groqData.choices?.[0]?.message?.content || '';
+    const brief = groq.data.choices?.[0]?.message?.content || '';
 
     const result = {
       brief,
       country,
       code,
-      model: MODEL,
+      model: groq.model,
       generatedAt: new Date().toISOString(),
     };
 

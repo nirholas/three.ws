@@ -1,8 +1,9 @@
 /**
  * OpenRouter API Summarization Endpoint with Redis Caching
  * Fallback when Groq is rate-limited
- * Uses Llama 3.3 70B free model
- * Free tier: 50 requests/day (20/min)
+ * Always a full ':free' model id so this lane can never bill. Keep it in step
+ * with DEFAULT_FREE_MODEL in the platform's api/_lib/chat-models.js: the
+ * Llama 3.3 70B ':free' twin this route used was retired on 2026-11-13.
  * Server-side Redis cache for cross-user deduplication
  */
 
@@ -17,7 +18,7 @@ export const config = {
 const rateLimiter = createIpRateLimiter({ limit: 10, windowMs: 60_000 });
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
+const MODEL = 'google/gemma-4-31b-it:free';
 const CACHE_TTL_SECONDS = 86400; // 24 hours
 
 const CACHE_VERSION = 'v3';
@@ -236,7 +237,7 @@ Rules:
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://defistech.vercel.app',
+        'HTTP-Referer': 'https://three.ws',
         'X-Title': 'HQ',
       },
       body: JSON.stringify({

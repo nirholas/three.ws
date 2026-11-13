@@ -1,6 +1,7 @@
 import { getCachedJson, setCachedJson, mget, hashString } from './_upstash-cache.js';
 import { getCorsHeaders, isDisallowedOrigin } from './_cors.js';
 import { createIpRateLimiter } from './_ip-rate-limit.js';
+import { groqChat } from './_groq.js';
 
 export const config = {
   runtime: 'edge',
@@ -8,8 +9,6 @@ export const config = {
 
 const rateLimiter = createIpRateLimiter({ limit: 20, windowMs: 60_000 });
 
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'llama-3.1-8b-instant';
 const CACHE_TTL_SECONDS = 86400;
 const CACHE_VERSION = 'v1';
 const MAX_BATCH_SIZE = 20;
@@ -122,32 +121,24 @@ ${isTech ? 'Focus: technology, startups, AI, cybersecurity. Most tech news is "l
 Return a JSON array with one object per headline in order: [{"level":"...","category":"..."},...]`;
 
   try {
-    const response = await fetch(GROQ_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: numberedList },
-        ],
-        temperature: 0,
-        max_tokens: uncachedTitles.length * 60,
-      }),
+    const groq = await groqChat(apiKey, {
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: numberedList },
+      ],
+      temperature: 0,
+      max_tokens: uncachedTitles.length * 60,
     });
 
-    if (!response.ok) {
-      console.error('[ClassifyBatch] Groq error:', response.status);
-      return new Response(JSON.stringify({ results, fallback: true, reason: `Groq API error ${response.status}` }), {
+    if (!groq.ok) {
+      console.error('[ClassifyBatch] Groq error:', groq.status, groq.model);
+      return new Response(JSON.stringify({ results, fallback: true, reason: `Groq API error ${groq.status}` }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const data = await response.json();
+    const data = groq.data;
     const raw = data.choices?.[0]?.message?.content?.trim();
     if (!raw) {
       return new Response(JSON.stringify({ results, fallback: true }), {
