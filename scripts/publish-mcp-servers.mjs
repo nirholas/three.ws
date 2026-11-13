@@ -346,6 +346,25 @@ if (!process.argv[1] || import.meta.url !== pathToFileURL(process.argv[1]).href)
 	);
 }
 
+// The default action is a live publish, so a flag this script does not know
+// (a typo like --dryrun, or --help) must never fall through to it.
+const KNOWN_FLAGS = new Set(['--dry-run', '--npm-only', '--deprecate', '--apply', '--only', '--stale', '--help', '-h']);
+if (args.includes('--help') || args.includes('-h')) {
+	const header = readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\nimport ')[0];
+	console.log(header.split('\n').filter((l) => l.startsWith('//')).map((l) => l.replace(/^\/\/ ?/, '')).join('\n'));
+	process.exit(0);
+}
+for (const [i, a] of args.entries()) {
+	const isOnlyValue = i > 0 && args[i - 1] === '--only';
+	if (isOnlyValue || KNOWN_FLAGS.has(a) || a.startsWith('--only=')) continue;
+	console.error(`✗ unknown option: ${a} (refusing to run, the default action publishes). See --help.`);
+	process.exit(2);
+}
+if (apply && !deprecate) {
+	console.error('✗ --apply only applies to --deprecate; plain runs publish without it. Use --dry-run to preview.');
+	process.exit(2);
+}
+
 // --stale reuses the same check publish-packages.mjs runs: it reports across
 // every publishable directory (library and MCP alike), so running it here
 // too is just a convenience alias, not a second implementation.
