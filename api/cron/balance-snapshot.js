@@ -5,16 +5,17 @@
 // the top of the hour so a retried run overwrites its own row instead of
 // duplicating it. Agents with money movement in the last 30 days, or a snapshot
 // in the last 7, are valued least-recently-snapshotted first in a capped batch,
-// so the sweep rotates through all of them. Read-only against the chain.
+// so the sweep rotates through all of them. Read-only against the chain, and
+// batched: each network's wallets are valued with one getMultipleAccountsInfo per
+// 50 wallets, because two reads per wallet burst past every RPC rate limit.
 
 import { sql } from '../_lib/db.js';
 import { json, method, wrapCron } from '../_lib/http.js';
 import { requireCron } from '../_lib/cron-auth.js';
 import { cachedSolUsd } from '../_lib/trader-stats.js';
-import { readSolUsdc } from '../_lib/custody/balance-reader.js';
+import { readSolUsdcMany } from '../_lib/custody/balance-reader.js';
 
 const BATCH = 60;
-const CONCURRENCY = 4;
 
 export async function agentsDueForBalanceSnapshot({ limit = BATCH } = {}) {
 	return sql`
@@ -52,12 +53,22 @@ export default wrapCron(async (req, res) => {
 	const solUsd = await cachedSolUsd();
 	let recorded = 0;
 	let failed = 0;
-	const queue = [...due];
-	async function worker() {
-		while (queue.length) {
-			const { agent_id: agentId, address, network } = queue.shift();
+	for (const network of ['mainnet', 'devnet']) {
+		const rows = due.filter((r) => r.network === network);
+		if (!rows.length) continue;
+		const readings = await readSolUsdcMany({
+			addresses: [...new Set(rows.map((r) => r.address))],
+			network,
+			solUsd: network === 'mainnet' ? solUsd : null,
+		});
+		for (const { agent_id: agentId, address } of rows) {
+			const reading = readings.get(address);
+			if (!reading || reading instanceof Error) {
+				failed += 1;
+				console.warn('[cron/balance-snapshot] snapshot failed', agentId, reading?.message || 'no reading');
+				continue;
+			}
 			try {
-				const reading = await readSolUsdc({ address, network, solUsd: network === 'mainnet' ? solUsd : null });
 				await recordBalanceSnapshot({ agentId, reading });
 				recorded += 1;
 			} catch (e) {
@@ -66,6 +77,5 @@ export default wrapCron(async (req, res) => {
 			}
 		}
 	}
-	await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 	return json(res, 200, { ok: true, due: due.length, recorded, failed });
 });

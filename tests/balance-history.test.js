@@ -2,7 +2,8 @@
 // Only the Postgres tagged template and the RPC Connection are faked; the math,
 // the SQL parameters and the summary are the real code.
 import { test, expect, vi, beforeEach } from 'vitest';
-import { Keypair } from '@solana/web3.js';
+import { Keypair, PublicKey } from '@solana/web3.js';
+import { AccountLayout, ACCOUNT_SIZE, getAssociatedTokenAddressSync } from '@solana/spl-token';
 
 const calls = [];
 let dueRows = [];
@@ -19,13 +20,25 @@ vi.mock('../api/_lib/db.js', () => {
 });
 vi.mock('../api/_lib/cron-auth.js', () => ({ requireCron: () => true }));
 vi.mock('../api/_lib/trader-stats.js', () => ({ cachedSolUsd: async () => 150 }));
-const rpc = { balance: 2_500_000_000, usdc: '12340000' };
+const rpc = { balance: 2_500_000_000, usdc: '12340000', perWallet: 0, multi: [] };
+function tokenAccountData(amount) {
+	const data = Buffer.alloc(ACCOUNT_SIZE);
+	AccountLayout.encode({
+		mint: PublicKey.default, owner: PublicKey.default, amount: BigInt(amount), delegateOption: 0, delegate: PublicKey.default,
+		state: 1, isNativeOption: 0, isNative: 0n, delegatedAmount: 0n, closeAuthorityOption: 0, closeAuthority: PublicKey.default,
+	}, data);
+	return data;
+}
 vi.mock('../api/_lib/solana/connection.js', () => ({
 	solanaConnection: () => ({
-		getBalance: async () => rpc.balance,
-		getParsedTokenAccountsByOwner: async () => ({
+		getMultipleAccountsInfo: async (keys) => {
+			rpc.multi.push(keys.length);
+			return keys.map((_, i) => (i % 2 === 0 ? { lamports: rpc.balance, data: Buffer.alloc(0) } : { lamports: 2039280, data: tokenAccountData(rpc.usdc) }));
+		},
+		getBalance: async () => { rpc.perWallet += 1; return rpc.balance; },
+		getParsedTokenAccountsByOwner: async () => { rpc.perWallet += 1; return {
 			value: [{ account: { data: { parsed: { info: { tokenAmount: { amount: rpc.usdc } } } } } }],
-		}),
+		}; },
 	}),
 }));
 
@@ -41,7 +54,7 @@ function makeRes() {
 	};
 }
 
-beforeEach(() => { calls.length = 0; dueRows = []; historyRows = []; });
+beforeEach(() => { calls.length = 0; dueRows = []; historyRows = []; rpc.perWallet = 0; rpc.multi = []; });
 
 test('readSolUsdc totals SOL and USDC from the chain', async () => {
 	const r = await readSolUsdc({ address: Keypair.generate().publicKey.toBase58() });
@@ -73,6 +86,40 @@ test('the cron records one hourly row per due agent and reports counts', async (
 	expect(insert.text).toMatch(/on conflict \(agent_id, network, captured_at\)/);
 	expect(insert.values).toContain('2500000000');
 	expect(insert.values).toContain('12340000');
+});
+
+test('the cron values a whole batch in a constant number of RPC calls, not two per wallet', async () => {
+	// 60 wallets at two calls each burst 120 requests, which rate-limited Helius and
+	// the free tail in a live run (49 of 60 snapshots failed with 429).
+	dueRows = Array.from({ length: 60 }, (_, i) => ({
+		agent_id: `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+		address: Keypair.generate().publicKey.toBase58(),
+		network: 'mainnet',
+	}));
+	const res = makeRes();
+	await cron({ method: 'GET', url: '/api/cron/balance-snapshot', headers: {} }, res);
+	expect(res.body).toMatchObject({ ok: true, due: 60, recorded: 60, failed: 0 });
+	expect(rpc.perWallet).toBe(0);
+	expect(rpc.multi.length).toBeLessThanOrEqual(2);
+	expect(rpc.multi.every((n) => n <= 100)).toBe(true);
+	const inserts = calls.filter((c) => /insert into agent_balance_history/i.test(c.text));
+	expect(inserts).toHaveLength(60);
+	expect(inserts[0].values).toContain('2500000000');
+	expect(inserts[0].values).toContain('12340000');
+});
+
+test('readSolUsdcMany reads each owner and its USDC associated token account', async () => {
+	const { readSolUsdcMany } = await import('../api/_lib/custody/balance-reader.js');
+	const owner = Keypair.generate().publicKey;
+	const seen = [];
+	const connection = {
+		getMultipleAccountsInfo: async (keys) => { seen.push(...keys.map((k) => k.toBase58())); return [{ lamports: 1_000_000_000 }, null]; },
+	};
+	const out = await readSolUsdcMany({ addresses: [owner.toBase58()], network: 'devnet', connection, solUsd: null });
+	const ata = getAssociatedTokenAddressSync(new PublicKey('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'), owner, true);
+	expect(seen).toEqual([owner.toBase58(), ata.toBase58()]);
+	const r = out.get(owner.toBase58());
+	expect(r).toMatchObject({ network: 'devnet', sol: 1, usdc: 0, sol_usd: null, usd_total: null });
 });
 
 test('summarizeHistory reports the change across the range', () => {
