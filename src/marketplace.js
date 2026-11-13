@@ -30,7 +30,9 @@ import { debounce, syncStateToUrl } from './shared/list-controls.js';
 import { log } from './shared/log.js';
 import { pickHeroSet } from './shared/hero-glb-budget.js';
 import { track, trackError, ANALYTICS_EVENTS } from './analytics.js';
-import { placeholderHtml, cardThumbHtml, agentCardPreviewHtml } from './shared/marketplace-card-preview.js';
+import { placeholderHtml, cardThumbHtml, agentCardPreviewHtml, CARD_VIEWER_ATTRS } from './shared/marketplace-card-preview.js';
+import { modelSlotHtml, materializeModelSlot, setModelSlotPoster, MODEL_SLOT_READY_EVENT } from './shared/model-slot.js';
+import { ensureModelViewerOrFallback } from './shared/model-viewer-loader.js';
 import { leaveAppForPayment } from './shared/native-handoff.js';
 import { buildReferencedSplTransfer } from './shared/spl-token-program.js';
 import { withPayoutStepUp } from './payout-step-up.js';
@@ -341,7 +343,9 @@ async function _posterSet(key, blob) {
  */
 async function attachModelViewerBehavior(root = els.grid) {
 	if (!root) return;
-	const viewers = root.querySelectorAll('model-viewer');
+	// A card's <model-slot> (a viewer that does not exist yet) still shows the
+	// cached poster; the viewer it becomes is wired when it arrives.
+	const viewers = root.querySelectorAll('model-viewer, model-slot');
 	for (const mv of viewers) {
 		if (mv.dataset.posterWired === '1') continue;
 		mv.dataset.posterWired = '1';
@@ -356,10 +360,14 @@ async function attachModelViewerBehavior(root = els.grid) {
 			mv.closest('.market-card-avatar, .market-card-agent, .market-hero-slide') || mv;
 
 		const cached = await _posterGet(key);
+		const isSlot = mv.localName === 'model-slot';
 		if (cached) {
-			mv.setAttribute('poster', URL.createObjectURL(cached));
+			const posterUrl = URL.createObjectURL(cached);
+			if (isSlot && mv.isConnected) setModelSlotPoster(mv, posterUrl);
+			else mv.setAttribute('poster', posterUrl);
 			host.classList.add('mv-poster-ready');
 		}
+		if (isSlot) continue;
 
 		const onLoad = async () => {
 			host.classList.add('mv-loaded');
@@ -858,22 +866,22 @@ function renderThemePicks() {
 					<span class="market-theme-pick-rank">#${i + 1}</span>
 					${views > 0 ? `<span class="market-theme-pick-views">⊙ ${fmtNumber(views)}</span>` : ''}
 					<span class="market-theme-pick-placeholder" aria-hidden="true">${escapeHtml(initial(a.name || 'A'))}</span>
-					<model-viewer
-						data-src="${escapeHtml(a.avatar_glb_url)}"
-						alt="${escapeHtml(a.name || 'Agent')}"
-						${a.thumbnail_url ? `poster="${escapeHtml(resizedImageUrl(a.thumbnail_url, 264))}"` : ''}
-						autoplay
-						rotation-per-second="22deg"
-						interaction-prompt="none"
-						disable-zoom
-						disable-pan
-						disable-tap
-						exposure="1.05"
-						shadow-intensity="0.5"
-						tone-mapping="aces"
-						loading="lazy"
-						reveal="auto"
-					></model-viewer>
+					${modelSlotHtml({
+						'data-src': a.avatar_glb_url,
+						alt: a.name || 'Agent',
+						poster: a.thumbnail_url ? resizedImageUrl(a.thumbnail_url, 264) : null,
+						autoplay: true,
+						'rotation-per-second': '22deg',
+						'interaction-prompt': 'none',
+						'disable-zoom': true,
+						'disable-pan': true,
+						'disable-tap': true,
+						exposure: '1.05',
+						'shadow-intensity': '0.5',
+						'tone-mapping': 'aces',
+						loading: 'lazy',
+						reveal: 'auto',
+					})}
 				</div>
 				<div class="market-theme-pick-meta">
 					<span class="market-theme-pick-name">${escapeHtml(a.name || 'Untitled')}</span>
@@ -884,8 +892,10 @@ function renderThemePicks() {
 		.join('');
 	row.querySelectorAll('.market-theme-pick').forEach((card) => {
 		card.addEventListener('click', () => navTo(`/marketplace/agents/${card.dataset.id}`));
-		const mv = card.querySelector('model-viewer');
-		if (mv) {
+		// The pick's viewer only exists once someone engages with it (a
+		// <model-slot> until then), so its listeners go on when it does.
+		card.addEventListener(MODEL_SLOT_READY_EVENT, (e) => {
+			const mv = e.detail.viewer;
 			mv.addEventListener('load', () => card.classList.add('mv-loaded'), { once: true });
 			mv.addEventListener('poster-dismissed', () => card.classList.add('mv-loaded'), { once: true });
 			// If a GLB 404s or is CORS-blocked, drop the card so the strip never
@@ -898,10 +908,10 @@ function renderThemePicks() {
 				},
 				{ once: true },
 			);
-		}
+		}, { once: true });
 	});
-	// Hand the freshly built viewers to the shared observer so their data-src is
-	// promoted when, and only when, the strip is actually near the viewport.
+	// Hand the freshly built slots to the shared observer, which wakes each one
+	// when, and only when, a visitor engages with its pick.
 	observeCardModelViewers();
 }
 
@@ -1569,14 +1579,41 @@ function renderGrid() {
 // to re-init — but pausing rotation drops GPU usage to ~0 for off-screen
 // cards.
 
+// Turn a card's <model-slot> into its real <model-viewer> and load the model.
+// Runs on the visitor's first hover, focus or tap, so the model starts loading
+// in the same breath, and attendRotation takes over the turning from there.
+function wakeCardViewer(slot, attention) {
+	const mv = materializeModelSlot(slot);
+	if (mv.localName !== 'model-viewer') return;
+	attachModelViewerBehavior(mv.parentNode);
+	if (mv.dataset.src && !mv.getAttribute('src')) {
+		mv.setAttribute('src', mv.dataset.src);
+		delete mv.dataset.src;
+	}
+	ensureModelViewerOrFallback(mv.parentNode || document);
+	if (mv.dataset.shouldRotate !== '0') {
+		mv.setAttribute('auto-rotate', '');
+		attendRotation(mv, { attention });
+	}
+}
+
+function prefersReducedMotion() {
+	try {
+		return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
+	} catch {
+		return false;
+	}
+}
+
 let cardObserver = null;
 function observeCardModelViewers() {
+	const LAZY_SLOTS =
+		'.market-card-avatar model-slot, .market-grid model-slot, .market-theme-pick model-slot';
 	if (typeof IntersectionObserver === 'undefined') {
-		// Browser without IntersectionObserver: eagerly promote data-src so
-		// the cards still render. Acceptable fallback for ancient browsers.
-		document.querySelectorAll('model-viewer[data-src]').forEach((mv) => {
-			mv.setAttribute('src', mv.dataset.src);
-			mv.setAttribute('auto-rotate', '');
+		// Browser without IntersectionObserver: wake every card now so the
+		// previews still render. Acceptable fallback for ancient browsers.
+		document.querySelectorAll(LAZY_SLOTS).forEach((slot) => {
+			wakeCardViewer(slot, slot.closest('.market-card-avatar, .market-theme-pick'));
 		});
 		return;
 	}
@@ -1584,35 +1621,43 @@ function observeCardModelViewers() {
 		cardObserver = new IntersectionObserver(
 			(entries) => {
 				for (const entry of entries) {
-					const mv = entry.target;
-					if (!entry.isIntersecting) continue;
-					// attendRotation owns both the model and its rotation from here. It
-					// promotes data-src on the first hover, focus or tap, turns the card
-					// while it is being looked at, and settles it once it has turned far
-					// enough to read as 3D.
-					//
-					// Promoting on intersect instead, which is what this did, downloaded
-					// and decoded a full avatar for every thumbnail-less card in view:
-					// four of them were 8.7 s of the page's blocking time, and decoding a
-					// GLB is one unbreakable main-thread task each. The card already
-					// renders its designed placeholder underneath (placeholderHtml), so
-					// nothing is blank in the meantime, and a card that carries a stored
-					// thumbnail never had a viewer in the first place.
-					if (mv.dataset.shouldRotate !== '0' && mv.dataset.attendedRotateBound !== '1') {
-						mv.setAttribute('auto-rotate', '');
-						attendRotation(mv, { attention: mv.closest('.market-card-avatar, .market-theme-pick') });
+					const slot = entry.target;
+					if (!entry.isIntersecting || slot.dataset.slotBound === '1') continue;
+					slot.dataset.slotBound = '1';
+					cardObserver.unobserve(slot);
+					const attention = slot.closest('.market-card-avatar, .market-theme-pick');
+					// Reduced motion: nothing turns, so the still model is the whole
+					// preview; load it as soon as the card is near the viewport.
+					if (prefersReducedMotion()) {
+						wakeCardViewer(slot, attention);
+						continue;
 					}
+					// The model and the <model-viewer> element both wait for the first
+					// hover, focus or tap. Promoting on intersect, which is what this
+					// once did, downloaded and decoded a full avatar for every
+					// thumbnail-less card in view: four of them were 8.7 s of the
+					// page's blocking time, and decoding a GLB is one unbreakable
+					// main-thread task each. Constructing the viewer element early was
+					// the rest of the bill (see src/shared/model-slot.js). The card
+					// already renders its designed placeholder or thumbnail
+					// underneath, so nothing is blank in the meantime.
+					const host = attention || slot;
+					const wake = () => {
+						host.removeEventListener('pointerenter', wake);
+						host.removeEventListener('focusin', wake);
+						wakeCardViewer(slot, attention);
+					};
+					host.addEventListener('pointerenter', wake);
+					host.addEventListener('focusin', wake);
 				}
 			},
 			{ rootMargin: '200px 0px', threshold: 0.01 },
 		);
 	}
-	const LAZY_VIEWERS =
-		'.market-card-avatar model-viewer, .market-grid model-viewer, .market-theme-pick model-viewer';
-	document.querySelectorAll(LAZY_VIEWERS).forEach((mv) => {
-		if (mv.dataset.observed) return;
-		mv.dataset.observed = '1';
-		cardObserver.observe(mv);
+	document.querySelectorAll(LAZY_SLOTS).forEach((slot) => {
+		if (slot.dataset.observed) return;
+		slot.dataset.observed = '1';
+		cardObserver.observe(slot);
 	});
 }
 
@@ -4760,30 +4805,16 @@ function renderAvatarCard(a, spotlight = false) {
 	const tagPills = tags.length
 		? `<div class="card-tags">${tags.map((t) => `<button type="button" class="tag-pill" data-tag="${escapeHtml(t)}" title="Filter by ${escapeHtml(t)}">${escapeHtml(t)}</button>`).join('')}</div>`
 		: '';
-	// Lazy GLB load: don't set `src` until the card scrolls into view (handled
-	// by observeCardModelViewers below). Each <model-viewer> instance still
-	// allocates a WebGL context, so we also stash the URL in `data-src` and
-	// the observer promotes it to `src` on intersect — no GLB download, no
-	// scene parse, no animation loop until the card is actually on screen.
+	// Lazy preview: the card carries a <model-slot>, not a <model-viewer>, and
+	// observeCardModelViewers() turns it into the real viewer and loads the
+	// model on the first hover, focus or tap. Until then there is no viewer
+	// element, no GLB download, no scene parse and no animation loop.
 	// reveal="auto" (default) means model-viewer un-veils the model on load;
 	// no explicit dismissPoster() call needed.
 	const preview = a.image
 		? cardThumbHtml(a.image, name)
 		: a.glbUrl
-			? `${placeholderHtml(a.name)}<model-viewer
-					data-src="${escapeHtml(a.glbUrl)}"
-					alt="${name}"
-					autoplay
-					rotation-per-second="14deg"
-					interaction-prompt="none"
-					disable-zoom
-					disable-pan
-					disable-tap
-					exposure="1"
-					shadow-intensity="0.4"
-					tone-mapping="aces"
-					loading="lazy"
-				></model-viewer>`
+			? `${placeholderHtml(a.name)}${modelSlotHtml({ 'data-src': a.glbUrl, alt: a.name || 'Untitled avatar', ...CARD_VIEWER_ATTRS })}`
 			: `<div class="thumb-fallback"><span class="thumb-fallback-initial">${escapeHtml(initial(a.name))}</span></div>`;
 	const isSpotlight = spotlight || a.featured;
 	const spotlightBadge = isSpotlight ? '<span class="card-featured-badge" title="Featured">⭐</span>' : '';
@@ -4918,21 +4949,7 @@ function renderOnchainCard(a) {
 	const preview = a.image
 		? cardThumbHtml(a.image, name)
 		: a.glbUrl
-			? `${placeholderHtml(a.name)}<model-viewer
-					data-src="${escapeHtml(a.glbUrl)}"
-					alt="${name}"
-					autoplay
-					rotation-per-second="14deg"
-					interaction-prompt="none"
-					disable-zoom
-					disable-pan
-					disable-tap
-					exposure="1"
-					shadow-intensity="0.4"
-					tone-mapping="aces"
-					loading="lazy"
-					reveal="auto"
-				></model-viewer>`
+			? `${placeholderHtml(a.name)}${modelSlotHtml({ 'data-src': a.glbUrl, alt: a.name || `Agent #${a.agentId}`, ...CARD_VIEWER_ATTRS, reveal: 'auto' })}`
 			: `<div class="thumb-fallback"><span class="thumb-fallback-initial">${escapeHtml(initial(a.name))}</span></div>`;
 	const onchainId = a.chainId != null && a.agentId != null ? `${a.chainId}-${a.agentId}` : '';
 	return `<div class="market-card-avatar onchain" role="link" tabindex="0" data-onchain-id="${escapeHtml(onchainId)}" data-onchain-href="${escapeHtml(href)}">

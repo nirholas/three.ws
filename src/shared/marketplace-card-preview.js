@@ -4,6 +4,7 @@
 // visitor sees before any GLB has loaded) is unit-testable in Node.
 
 import { resizedImageUrl } from './image-url.js';
+import { modelSlotHtml } from './model-slot.js';
 
 function escapeHtml(s) {
 	return String(s || '').replace(
@@ -54,27 +55,34 @@ export function cardThumbHtml(url, alt) {
 //
 // The base layer is what the visitor sees until they attend to the card: the
 // stored thumbnail as a real <img> when there is one, the name placeholder
-// otherwise. When the agent has a public avatar GLB a lazy model-viewer sits
-// on top; it only fetches on hover/focus/tap (attendRotation) and fades in
-// over the base layer once loaded (.mv-loaded). The thumbnail must not be a
-// model-viewer `poster`: the grid's viewer is opacity:0 until it has loaded,
-// so a poster is hidden with it and every card showed only its letter.
+// otherwise. When the agent has a public avatar GLB a <model-slot> sits on
+// top: it becomes a real model-viewer only on hover/focus/tap (see
+// src/shared/model-slot.js for why the element itself waits), fetches the
+// model then, and fades in over the base layer once loaded (.mv-loaded). The
+// thumbnail must not be a model-viewer `poster`: the grid's viewer is
+// opacity:0 until it has loaded, so a poster is hidden with it and every card
+// showed only its letter.
+// The viewer settings every grid card's deferred model-viewer shares.
+export const CARD_VIEWER_ATTRS = Object.freeze({
+	autoplay: true,
+	'rotation-per-second': '14deg',
+	'interaction-prompt': 'none',
+	'disable-zoom': true,
+	'disable-pan': true,
+	'disable-tap': true,
+	exposure: '1',
+	'shadow-intensity': '0.4',
+	'tone-mapping': 'aces',
+	loading: 'lazy',
+});
+
 export function agentCardPreviewHtml(a) {
 	const name = escapeHtml(a.name || 'Agent');
 	const base = a.thumbnail_url ? cardThumbHtml(a.thumbnail_url, name) : placeholderHtml(a.name);
 	if (!a.avatar_glb_url) return `<div class="thumb">${base}</div>`;
-	return `<div class="thumb">${base}<model-viewer
-				data-src="${escapeHtml(a.avatar_glb_url)}"
-				alt="${name}"
-				autoplay
-				rotation-per-second="14deg"
-				interaction-prompt="none"
-				disable-zoom
-				disable-pan
-				disable-tap
-				exposure="1"
-				shadow-intensity="0.4"
-				tone-mapping="aces"
-				loading="lazy"
-			></model-viewer></div>`;
+	return `<div class="thumb">${base}${modelSlotHtml({
+		'data-src': a.avatar_glb_url,
+		alt: a.name || 'Agent',
+		...CARD_VIEWER_ATTRS,
+	})}</div>`;
 }
