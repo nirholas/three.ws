@@ -199,9 +199,11 @@ def run(photos: Path, url: str | None, key: str | None, out: Path, body_type: st
     if not samples:
         raise EvalError(f"no photos in {photos} (looked for {', '.join(sorted(PHOTO_SUFFIXES))})")
 
+    # Sample GLBs live under a directory named after this report, never directly
+    # in the reports directory: two runs into one directory (dense off and on side
+    # by side) would otherwise share `<photo>.glb` and delete each other's files.
     glb_dir = out.parent / f"{out.stem}-glb"
-    if keep_glb:
-        glb_dir.mkdir(parents=True, exist_ok=True)
+    glb_dir.mkdir(parents=True, exist_ok=True)
 
     results: list[dict] = []
     failures: list[dict] = []
@@ -224,8 +226,7 @@ def run(photos: Path, url: str | None, key: str | None, out: Path, body_type: st
                     glb_bytes = reconstruct(client, url, key, photo, body_type)
                 else:
                     glb_bytes, dense = reconstruct_local(photo, body_type)
-                glb_path = (glb_dir if keep_glb else out.parent) / f"{photo.stem}.glb"
-                glb_path.parent.mkdir(parents=True, exist_ok=True)
+                glb_path = glb_dir / f"{photo.stem}.glb"
                 glb_path.write_bytes(glb_bytes)
                 result = evaluate(photo, glb_path, floor_glb, uv_map)
                 if not keep_glb:
@@ -240,6 +241,10 @@ def run(photos: Path, url: str | None, key: str | None, out: Path, body_type: st
                 print(f"FAILED — {exc}")
 
     floor_glb.unlink()
+    if not keep_glb:
+        for leftover in glb_dir.glob("*.glb"):
+            leftover.unlink()
+        glb_dir.rmdir()
     if not results:
         raise EvalError("every sample failed — nothing to summarise")
 
