@@ -1,9 +1,15 @@
-// agora-citizens — devnet keypair cache + faucet top-up. Each citizen (and the
-// internal work dispatcher) keeps a stable signing keypair under .cache/ so it
-// holds the same on-chain identity across restarts. Mirrors the proven approach
-// in examples/agenc-task-roundtrip/run.mjs. NEVER commit .cache/ (see .gitignore).
+// agora-citizens: devnet signers + faucet top-up. Each citizen (and the internal
+// work dispatcher) needs a stable signing keypair so it holds the same on-chain
+// identity across restarts. Two sources:
+//   - AGORA_SIGNER_SEED set: every signer is derived from that one secret
+//     (HMAC-SHA256(seed, key) as the ed25519 seed). Nothing touches disk, so a
+//     Cloud Run instance, whose filesystem is wiped on every restart, gets the
+//     same keypairs back on each boot. This is what a deployed fleet uses.
+//   - unset: a per-key file under .cache/ (the local-run path, mirroring
+//     examples/agenc-task-roundtrip/run.mjs). NEVER commit .cache/.
 
 import { promises as fs } from 'node:fs';
+import { createHmac } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Keypair, LAMPORTS_PER_SOL, SystemProgram, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
@@ -17,8 +23,26 @@ function safeName(key) {
 	return String(key).replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80) || 'kp';
 }
 
-/** Load a cached keypair for `key`, or generate + persist a fresh one. */
-export async function loadOrCreateKeypair(key) {
+// A seed shorter than this is a password, not a key: refuse it rather than derive
+// a whole fleet's signers from something guessable.
+const MIN_SEED_LENGTH = 32;
+
+/** Derive the signer for `key` from the fleet seed. Deterministic, no I/O. */
+export function deriveSignerKeypair(seed, key) {
+	const raw = String(seed ?? '');
+	if (raw.length < MIN_SEED_LENGTH) {
+		throw new Error(`AGORA_SIGNER_SEED must be at least ${MIN_SEED_LENGTH} characters (generate one with: openssl rand -hex 32)`);
+	}
+	const digest = createHmac('sha256', raw).update(`agora-citizens:signer:${key}`).digest();
+	return Keypair.fromSeed(Uint8Array.from(digest));
+}
+
+/**
+ * The signer for `key`: derived from `seed` when one is configured, otherwise a
+ * cached keypair under .cache/ (generated and persisted on first use).
+ */
+export async function loadOrCreateKeypair(key, seed = '') {
+	if (seed) return deriveSignerKeypair(seed, key);
 	const file = path.join(CACHE_DIR, `${safeName(key)}.json`);
 	try {
 		const raw = await fs.readFile(file, 'utf8');

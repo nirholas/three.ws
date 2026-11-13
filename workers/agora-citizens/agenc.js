@@ -6,6 +6,7 @@
 // wrapped in bounded retry/backoff so a transient RPC failure for one citizen
 // never halts the fleet.
 
+import { createHash } from 'node:crypto';
 import { PublicKey } from '@solana/web3.js';
 import { log } from './log.js';
 
@@ -121,46 +122,124 @@ export function isAlreadyRegisteredError(err) {
 	return /already in use/i.test(message);
 }
 
+// How many identity slots a citizen may walk before giving up. Slot 0 is the
+// canonical id; each later slot exists only because an earlier one is held by an
+// authority this fleet lost (a signer that lived on a machine's disk). Eight
+// losses of the same citizen's key means something is wrong with key custody,
+// and that should fail loudly rather than keep registering.
+export const MAX_IDENTITY_SLOTS = 8;
+
 /**
- * Ensure a wallet is registered as an AgenC agent (idempotent). If the PDA
- * already exists on-chain we reconcile from it rather than re-registering.
- * Returns { agentPda, txSignature|null, existed, agent }.
+ * The 32-byte AgenC agent id for `slot` of a citizen's canonical identity (hex).
+ * Slot 0 IS the canonical id from the identity bridge; slot n is
+ * sha256(canonical bytes || "agora-slot:" || n), deterministic, so a restart walks
+ * to the same slot it registered last time.
  */
-export async function ensureRegistered(client, agentIdHex, params, cfg) {
-	const s = await sdk();
-	const pda = s.deriveAgenCAgentPda(client, agentIdHex);
-	const existing = await withRetry(() => s.getAgenCAgent(client, pda), cfg, 'getAgent');
-	if (existing) {
-		return { agentPda: pda, txSignature: null, existed: true, agent: existing };
+export function slotAgentIdHex(canonicalHex, slot) {
+	const hex = String(canonicalHex).replace(/^0x/, '').toLowerCase();
+	if (!slot) return hex;
+	return createHash('sha256')
+		.update(Buffer.from(hex, 'hex'))
+		.update(`agora-slot:${slot}`)
+		.digest('hex');
+}
+
+function signerPublicKey(client) {
+	const pk = client?.signer?.publicKey;
+	if (!pk) throw new Error('[agora-citizens] ensureRegistered needs a signer client');
+	return pk;
+}
+
+function heldBy(agent, pubkey) {
+	const authority = agent?.authority;
+	if (!authority) return false;
+	const a = authority instanceof PublicKey ? authority : new PublicKey(authority);
+	return a.equals(pubkey);
+}
+
+/**
+ * Ensure this client's signer is registered as an AgenC agent for a citizen
+ * (idempotent). An existing account counts as ours only when its on-chain
+ * authority IS this signer: an account held by any other authority (the
+ * citizen's previous signer, lost with the disk it lived on) can never sign a
+ * claim or completion, so reporting it "registered" would leave the citizen
+ * failing every tick. Such a slot is recorded as orphaned and the walk moves to
+ * the next deterministic slot, where it either finds the agent this signer
+ * registered before or registers a fresh one.
+ *
+ * `chain` defaults to the real SDK; tests pass an in-memory one. With
+ * `{ readOnly: true }` the walk stops at the first free slot and reports it
+ * (`wouldRegister: true`) instead of registering, which is what the dry run uses.
+ * Returns { agentPda, agentIdHex, slot, txSignature|null, existed, agent, orphanedPdas }.
+ */
+export async function ensureRegistered(client, canonicalHex, params, cfg, chain = null, { readOnly = false } = {}) {
+	const s = chain || (await sdk());
+	const me = signerPublicKey(client);
+	const orphanedPdas = [];
+	for (let slot = 0; slot < MAX_IDENTITY_SLOTS; slot++) {
+		const agentIdHex = slotAgentIdHex(canonicalHex, slot);
+		const pda = s.deriveAgenCAgentPda(client, agentIdHex);
+		const existing = await withRetry(() => s.getAgenCAgent(client, pda), cfg, 'getAgent');
+		if (existing) {
+			if (heldBy(existing, me)) {
+				return { agentPda: pda, agentIdHex, slot, txSignature: null, existed: true, agent: existing, orphanedPdas };
+			}
+			orphanedPdas.push(pda.toBase58());
+			log.warn('agent id held by another authority, moving to the next identity slot', {
+				pda: pda.toBase58(),
+				slot,
+				authority: String(existing.authority),
+				signer: me.toBase58(),
+			});
+			continue;
+		}
+		if (readOnly) {
+			return { agentPda: pda, agentIdHex, slot, txSignature: null, existed: false, agent: null, orphanedPdas, wouldRegister: true };
+		}
+		let result;
+		try {
+			result = await withRetry(
+				() =>
+					s.registerAgenCAgent(client, {
+						agentId: agentIdHex,
+						capabilities: params.capabilities,
+						endpoint: params.endpoint,
+						metadataUri: params.metadataUri ?? null,
+						stakeAmount: params.stakeLamports,
+					}),
+				cfg,
+				'registerAgent',
+			);
+		} catch (err) {
+			// A registration that fails because the account is ALREADY IN USE is proof
+			// the agent is registered: the pre-flight read above just missed it (a
+			// rate-limited or lagging RPC returns "account does not exist" for an
+			// account that is really there). Re-read and reconcile instead of dropping
+			// the citizen, still checking who holds it.
+			if (!isAlreadyRegisteredError(err)) throw err;
+			const recovered = await withRetry(() => s.getAgenCAgent(client, pda), cfg, 'getAgent:afterInUse');
+			if (!recovered) throw err;
+			if (!heldBy(recovered, me)) {
+				orphanedPdas.push(pda.toBase58());
+				continue;
+			}
+			log.warn('agent already registered on-chain, reconciled after a stale read', { pda: pda.toBase58() });
+			return { agentPda: pda, agentIdHex, slot, txSignature: null, existed: true, agent: recovered, orphanedPdas };
+		}
+		const agent = await withRetry(() => s.getAgenCAgent(client, result.agentPda), cfg, 'getAgent:postRegister');
+		return {
+			agentPda: result.agentPda,
+			agentIdHex,
+			slot,
+			txSignature: result.txSignature,
+			existed: false,
+			agent,
+			orphanedPdas,
+		};
 	}
-	let result;
-	try {
-		result = await withRetry(
-			() =>
-				s.registerAgenCAgent(client, {
-					agentId: agentIdHex,
-					capabilities: params.capabilities,
-					endpoint: params.endpoint,
-					metadataUri: params.metadataUri ?? null,
-					stakeAmount: params.stakeLamports,
-				}),
-			cfg,
-			'registerAgent',
-		);
-	} catch (err) {
-		// A registration that fails because the account is ALREADY IN USE is proof
-		// the agent is registered: the pre-flight read above just missed it (a
-		// rate-limited or lagging RPC returns "account does not exist" for an account
-		// that is really there). Re-read and reconcile instead of dropping the
-		// citizen: losing every citizen this way takes the whole fleet down.
-		if (!isAlreadyRegisteredError(err)) throw err;
-		const recovered = await withRetry(() => s.getAgenCAgent(client, pda), cfg, 'getAgent:afterInUse');
-		if (!recovered) throw err;
-		log.warn('agent already registered on-chain, reconciled after a stale read', { pda: pda.toBase58() });
-		return { agentPda: pda, txSignature: null, existed: true, agent: recovered };
-	}
-	const agent = await withRetry(() => s.getAgenCAgent(client, result.agentPda), cfg, 'getAgent:postRegister');
-	return { agentPda: result.agentPda, txSignature: result.txSignature, existed: false, agent };
+	throw new Error(
+		`[agora-citizens] every identity slot (${MAX_IDENTITY_SLOTS}) for ${canonicalHex} is held by another authority; this signer (${me.toBase58()}) cannot act for the citizen`,
+	);
 }
 
 /** List every task created by a wallet (used to reconcile the dispatcher pool). */

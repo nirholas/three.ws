@@ -189,6 +189,31 @@ export function makeStore(cfg) {
 				identityLabel: info.identityLabel,
 				home: spec.home,
 			});
+			// Re-key: the citizen's previous on-chain agent is held by a signer this
+			// fleet lost, so the engine registered it at a new identity slot. Move the
+			// existing row onto the new PDA (keeping its id, so every past activity row
+			// stays attached) instead of inserting a second copy of the same citizen.
+			// Skipped when a row for the new PDA already exists (a later restart).
+			if (Array.isArray(info.rekeyFromPdas) && info.rekeyFromPdas.length) {
+				const rekeyMeta = JSON.stringify({
+					identitySlot: info.identitySlot ?? null,
+					rekeyedFrom: info.rekeyFromPdas,
+					rekeyedAt: new Date().toISOString(),
+				});
+				await db`
+					update agora_citizens set
+						agenc_agent_pda = ${info.agentPda},
+						agenc_agent_id = ${info.agentIdHex},
+						meta = coalesce(meta, '{}'::jsonb) || ${rekeyMeta}::jsonb
+					where id = (
+						select id from agora_citizens
+						where agenc_agent_pda = any(${info.rekeyFromPdas}::text[])
+						order by last_active_at desc nulls last
+						limit 1
+					)
+					and not exists (select 1 from agora_citizens where agenc_agent_pda = ${info.agentPda})
+				`;
+			}
 			const rows = await db`
 				insert into agora_citizens (
 					kind, agent_id, display_name, avatar_url,

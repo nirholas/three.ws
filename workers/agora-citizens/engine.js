@@ -81,7 +81,7 @@ function rewardShape(cfg, lamports) {
 async function setupDispatcher(ctx) {
 	if (!ctx.cfg.dispatchTasks) return null;
 	const cfg = ctx.cfg;
-	const signer = await loadOrCreateKeypair('agora-dispatcher');
+	const signer = await loadOrCreateKeypair('agora-dispatcher', cfg.signerSeed);
 	await ensureBalance(ctx.readClient.connection, signer, cfg, 'dispatcher');
 	const ident = await deriveIdentity({ handle: 'agora-dispatcher' });
 	const client = await makeSignerClient(cfg, signer);
@@ -114,7 +114,7 @@ async function setupDispatcher(ctx) {
 	return {
 		signer,
 		client,
-		agentIdHex: ident.agentIdHex,
+		agentIdHex: reg.agentIdHex,
 		agentPda: reg.agentPda,
 		pubkey: signer.publicKey,
 	};
@@ -122,7 +122,7 @@ async function setupDispatcher(ctx) {
 
 async function registerCitizen(ctx, spec) {
 	const cfg = ctx.cfg;
-	const signer = await loadOrCreateKeypair(spec.key);
+	const signer = await loadOrCreateKeypair(spec.key, cfg.signerSeed);
 	await ensureBalance(ctx.readClient.connection, signer, cfg, spec.key);
 
 	const ident = await deriveIdentity(spec.identityRef);
@@ -143,7 +143,7 @@ async function registerCitizen(ctx, spec) {
 	const stake = reg.agent?.stakeAmount != null ? reg.agent.stakeAmount : cfg.stakeLamports;
 
 	const citizenId = await ctx.store.upsertCitizen(spec, {
-		agentIdHex: ident.agentIdHex,
+		agentIdHex: reg.agentIdHex,
 		agentPda: reg.agentPda.toBase58(),
 		capabilityBits: spec.professionBits,
 		identitySource: ident.source,
@@ -151,6 +151,11 @@ async function registerCitizen(ctx, spec) {
 		reputation,
 		stakeLamports: stake,
 		status: 'idle',
+		// The citizen's earlier on-chain identities this signer cannot act for. The
+		// row that pointed at one of them is moved to the new agent, so the citizen
+		// keeps its history instead of appearing twice in the Commons.
+		rekeyFromPdas: reg.orphanedPdas,
+		identitySlot: reg.slot,
 	});
 
 	// Project the registration once. A fresh register carries a tx (idempotent on
@@ -190,7 +195,7 @@ async function registerCitizen(ctx, spec) {
 	return {
 		spec,
 		id: citizenId,
-		agentIdHex: ident.agentIdHex,
+		agentIdHex: reg.agentIdHex,
 		agentPda: reg.agentPda,
 		pubkey: signer.publicKey.toBase58(),
 		signer,
@@ -1008,7 +1013,23 @@ export async function planDryRun(cfg, store) {
 	const plan = [];
 	for (const spec of specs) {
 		const ident = await deriveIdentity(spec.identityRef);
-		const signer = await loadOrCreateKeypair(spec.key);
+		const signer = await loadOrCreateKeypair(spec.key, cfg.signerSeed);
+		// Read-only identity walk: which slot this signer owns or would register,
+		// and which earlier slots are held by an authority it cannot sign for.
+		let identity = null;
+		try {
+			const slotClient = await makeSignerClient(cfg, signer);
+			const reg = await ensureRegistered(slotClient, ident.agentIdHex, {}, cfg, null, { readOnly: true });
+			identity = {
+				slot: reg.slot,
+				agentIdHex: reg.agentIdHex,
+				agentPda: reg.agentPda.toBase58(),
+				registered: reg.existed,
+				orphanedPdas: reg.orphanedPdas,
+			};
+		} catch (err) {
+			identity = { error: err?.message };
+		}
 		plan.push({
 			key: spec.key,
 			name: spec.displayName,
@@ -1017,6 +1038,7 @@ export async function planDryRun(cfg, store) {
 			agentIdHex: ident.agentIdHex,
 			identitySource: ident.source,
 			pubkey: signer.publicKey.toBase58(),
+			identity,
 			seededFrom: spec.agentDbId || null,
 		});
 	}

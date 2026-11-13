@@ -154,6 +154,11 @@ export function loadConfig() {
 		// faucet if the funder is empty. Devnet test SOL only, never a mainnet key
 		// the worker is expected to spend.
 		funderSecret: opt('AGORA_DEVNET_FUNDER_SECRET') || '',
+		// Fleet signer seed. When set, every citizen and dispatcher keypair is
+		// derived from it (keypair.js), so a deployed instance with no persistent
+		// disk keeps the same on-chain identities across restarts. Unset, signers
+		// live in .cache/ on the machine that runs the worker.
+		signerSeed: opt('AGORA_SIGNER_SEED') || '',
 		// How far ABOVE the threshold a funder top-up lands, so a signer isn't
 		// re-topped on every tick as fees nibble at it.
 		funderTopupLamports: Math.max(0, num('AGORA_FUNDER_TOPUP_LAMPORTS', 100_000_000)), // 0.1 SOL
