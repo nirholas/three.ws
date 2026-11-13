@@ -21,7 +21,8 @@ import { requireCron } from '../_lib/cron-auth.js';
 
 // How many agents to recompute per tick. Each is a handful of indexed DB reads
 // plus (for full mode) one cached price + light RPC; 40 fits comfortably in the
-// cron budget and, at a 10-minute cadence, rolls a few thousand agents per hour.
+// cron budget. Only scores older than REPUTATION_RECOMPUTE_MIN_AGE_H (default 12)
+// are picked, so once the population is current most ticks score few or none.
 const BATCH = 40;
 
 // vercel.json declares 300s for this route; without wiring it into wrapCron

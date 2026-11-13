@@ -151,16 +151,31 @@ export async function getEffectiveReputation(agentId, { maxAgeMs = STORE_FRESH_M
 	return live;
 }
 
+// A current-version score younger than this is not recomputed by the cron.
+// Measured 2026-11-13: without a floor the cron re-scored each of 1,068 agents
+// about every 4.4 hours at about 11 Solana provider calls per score (62,427 calls
+// in 24h). A viewed agent refreshes its durable score on view (getAgentReputation
+// above), so the cron's job is only to keep idle agents from going stale.
+const DEFAULT_RECOMPUTE_MIN_AGE_H = 12;
+
+/** Hours a stored score stays current for the cron (REPUTATION_RECOMPUTE_MIN_AGE_H, default 12). */
+export function recomputeMinAgeHours() {
+	const n = Number(process.env.REPUTATION_RECOMPUTE_MIN_AGE_H);
+	return Number.isInteger(n) && n > 0 ? n : DEFAULT_RECOMPUTE_MIN_AGE_H;
+}
+
 /**
  * Agents most in need of a recompute, stalest first. Prioritises agents that have
  * a custodial Solana wallet (the ones with real financial life to score) and have
- * either never been scored or whose stored score is oldest / on an old version.
+ * either never been scored, are on an old version, or whose stored score is older
+ * than recomputeMinAgeHours(). An empty result means every score is current.
  *
  * @param {number} limit
  * @returns {Promise<string[]>} agent ids
  */
 export async function listStaleAgents(limit = 40) {
 	await ensureTable();
+	const minAgeHours = recomputeMinAgeHours();
 	try {
 		const rows = await sql`
 			select a.id
@@ -168,6 +183,11 @@ export async function listStaleAgents(limit = 40) {
 			left join agent_reputation_scores r on r.agent_id = a.id
 			where a.deleted_at is null
 			  and a.meta->>'solana_address' is not null
+			  and (
+				r.agent_id is null
+				or r.version is distinct from ${REPUTATION_VERSION}
+				or r.computed_at < now() - make_interval(hours => ${minAgeHours})
+			  )
 			order by
 				(r.agent_id is null) desc,                       -- never-scored first
 				(r.version is distinct from ${REPUTATION_VERSION}) desc, -- then old-version
