@@ -44,7 +44,7 @@ HQ price/funding/gas alerts are compound rules (up to 4 clauses, all/any) in the
 
 `top_yields` takes `chain`, `symbol`, `minTvl`, `stablecoinOnly`, `limit`. `symbol` keeps single-asset pools of that token only (a `SOL-USDC` LP is not a USDC pool). The question router fills `chain` and `symbol` from the text, so "best USDC yield on Solana" becomes `{chain: 'Solana', symbol: 'USDC'}`.
 
-With `narrate: true` the result gains a two-sentence `narrative` and `narrativeProvider` (`groq` or `openrouter`). Narration tries Groq first, then OpenRouter's free tier; when every lane is capped the data still returns with no narrative. Groq calls go through `api/_groq.js`, which walks an ordered model list and moves on when a model is retired (404/model_not_found) or its bucket is exhausted (429/503).
+With `narrate: true` the result gains a two-sentence `narrative` and `narrativeProvider` (`groq` or `openrouter`). Narration tries Groq first, then OpenRouter's free tier; when every lane is capped the data still returns with no narrative. Groq calls go through `api/_groq.js`, which walks an ordered model list and moves on when a model is retired (404/model_not_found) or its bucket is exhausted (429/503). Groq meters daily tokens per model, so the list is three models deep: `qwen/qwen3.8-27b`, then `openai/gpt-oss-120b`, then the instant `openai/gpt-oss-20b`.
 
 ## MCP
 

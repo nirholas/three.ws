@@ -18,7 +18,7 @@ All notable changes to HQ are documented here.
 
 ### Changed
 
-- **LLM routes**: Groq calls walk an ordered model list (`api/_groq.js`) instead of a single hardcoded model that Groq retired on 2026-11-13; the OpenRouter summarizer moved to a current free-tier model; agent-tool narration falls back from Groq to OpenRouter and reports `narrativeProvider`
+- **LLM routes**: Groq calls walk an ordered model list (`api/_groq.js`) instead of a single hardcoded model that Groq retired on 2026-11-13; the OpenRouter summarizer moved to a current free-tier model; agent-tool narration falls back from Groq to OpenRouter and reports `narrativeProvider`; the Groq list ends on the platform's instant model (`openai/gpt-oss-20b`), a third per-model daily token bucket, so narration keeps working when both larger models hit their daily cap
 - ROADMAP reconciled with what is shipped, with a dated Open list
 - **Now a three.ws app**: rebranded to HQ for three.ws (titles, metadata, manifest, header, story cards), package renamed to `three-ws-hq`
 - **$THREE panel**: replaces the previous single-protocol panel with a live $THREE market signal from the three.ws API (`/api/three-signal`, origin configurable with `VITE_THREE_API_ORIGIN`)

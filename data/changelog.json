@@ -3,6 +3,20 @@
 	"entries": [
 		{
 			"date": "2026-11-13",
+			"title": "Selfie avatars can now be built on our own body, where Masc and Femme really change the shape",
+			"summary": "The selfie to avatar service has always fitted every person onto a borrowed stock avatar, and the Masc and Femme choice in the selfie window never changed anything because only one stock body existed. It can now build the avatar on the three.ws parametric body instead: the same body Avatar Studio uses, with the full set of facial expressions and lip-sync mouth shapes, and Masc, Femme and neutral each give a genuinely different build while keeping every sculpt slider for editing afterwards. In our 40-face test set it also matches face shape more closely than the stock avatar. It stays switched off in production for now, because the new body still comes out without hair or clothes and its skin tone does not yet match the photographed face closely enough; the current avatars are unchanged until those are fixed.",
+			"tags": ["infra", "improvement"]
+		},
+		{
+			"date": "2026-11-13",
+			"title": "HQ answer summaries keep working after the larger AI models run out for the day",
+			"summary": "HQ's agent tools can add a short written summary to a DeFi answer. The AI provider caps each model's daily usage separately, and once both models HQ used were capped the summaries stopped, even though a third model on the same account still had room. HQ now falls back to that third model, so summaries keep coming for longer each day. The data answers themselves never depended on it.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-13",
 			"title": "Private worlds now keep strangers out of the live world too",
 			"summary": "A Silver holder's private world already hid its saved build from anyone not invited, but the live multiplayer world was still open: anyone could walk in and watch what was being built, and the game server could not read the private build at all, so the world opened empty and new building was lost. The game server now reads private worlds properly, and it seats only the owner and the people they invited. Making a world private or removing an invite takes effect within seconds for anyone already inside, who is told the world is private and sent back to the lobby. An invitee who was there when the world went private stays in.",
 			"tags": ["fix"],

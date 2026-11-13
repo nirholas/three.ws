@@ -104,6 +104,20 @@ describe('groqChat model fallback', () => {
     assert.equal(limited.seen[0].max_tokens, 50);
   });
 
+  // Observed 2026-11-13: qwen3.8-27b and gpt-oss-120b both hit their per-model
+  // tokens-per-day cap while the platform's instant model (api/_lib/llm.js
+  // GROQ_INSTANT_MODEL) still answered on the same key, so HQ narration went
+  // dark with a healthy Groq bucket left unused.
+  it('reaches the instant model when both larger models are out of daily tokens', async () => {
+    const up = groqUpstream({ reply: 'ok', blocked: ['qwen/qwen3.8-27b', 'openai/gpt-oss-120b'] });
+    const r = await groqChat('k', payload, { fetchImpl: up.fetchImpl });
+    assert.equal(r.ok, true);
+    assert.equal(r.model, 'openai/gpt-oss-20b');
+    assert.equal(up.seen.at(-1).reasoning_effort, 'low');
+    assert.equal(up.seen.at(-1).include_reasoning, false);
+    assert.ok(up.seen.at(-1).max_tokens >= 512);
+  });
+
   it('stops on a non-model error such as a bad key and reports it', async () => {
     let calls = 0;
     const fetchImpl = async () => { calls += 1; return new Response('{"error":{"message":"Invalid API Key"}}', { status: 401 }); };

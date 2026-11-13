@@ -13,6 +13,10 @@
  * fast non-reasoning model that returns clean content. The fallback is the
  * platform's large model, a reasoning model, so it runs at low effort with
  * enough token headroom that the answer is not consumed by reasoning.
+ *
+ * Groq meters daily tokens per model, so the last rung is the platform's
+ * instant model (api/_lib/llm.js GROQ_INSTANT_MODEL) on its own bucket. On
+ * 2026-11-13 both larger models hit their daily cap while it still answered.
  */
 
 export const GROQ_CHAT_URL = 'https://api.groq.com/openai/v1/chat/completions';
@@ -20,6 +24,7 @@ export const GROQ_CHAT_URL = 'https://api.groq.com/openai/v1/chat/completions';
 export const GROQ_MODELS = Object.freeze([
   Object.freeze({ id: 'qwen/qwen3.8-27b' }),
   Object.freeze({ id: 'openai/gpt-oss-120b', params: { reasoning_effort: 'low', include_reasoning: false }, minTokens: 512 }),
+  Object.freeze({ id: 'openai/gpt-oss-20b', params: { reasoning_effort: 'low', include_reasoning: false }, minTokens: 512 }),
 ]);
 
 export const GROQ_PRIMARY_MODEL = GROQ_MODELS[0].id;
