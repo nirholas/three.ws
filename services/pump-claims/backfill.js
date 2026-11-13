@@ -49,11 +49,18 @@ function parseDays(argv) {
 export async function backfill({ days = 7, connection: conn, store: st } = {}) {
 	const connection = conn || buildConnection();
 	const store = st || makeStore(requiredEnv('DATABASE_URL'));
-	const seen = new SeenSignatures(MAX_SIGNATURES_SCANNED + 1);
+	const seen = new SeenSignatures(MAX_SIGNATURES_SCANNED * 2);
 	const state = { claimsSeen: 0, claimsStored: 0, lastClaimAt: null, reconnects: 0, listener: null };
 	const maybeProcess = createClaimHandler({ connection, store, seen, state });
 
 	const lookbackTs = Math.floor(Date.now() / 1000) - days * 86400;
+	// Resume: claims a previous run already stored skip the transaction fetch
+	// and attribution (the slow part) instead of redoing them.
+	const stored = store.signaturesSince ? await store.signaturesSince(lookbackTs) : [];
+	for (const sig of stored) seen.add(sig);
+	if (stored.length) {
+		console.log('[pump-claims backfill] resuming past %d stored claims', stored.length);
+	}
 	const { key: historyKey, source } = await resolveClaimHistoryKey(connection);
 	console.log('[pump-claims backfill] paging %s (%s)', historyKey.toBase58(), source);
 

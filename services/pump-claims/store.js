@@ -61,5 +61,13 @@ export function makeStore(databaseUrlOrSql) {
 			`;
 			return rows[0]?.n ?? 0;
 		},
+
+		/** Signatures already stored at or after `sinceTs` (unix seconds); lets a backfill resume. */
+		async signaturesSince(sinceTs) {
+			const rows = await sql`
+				select signature from pump_fee_claims where created_at >= to_timestamp(${sinceTs})
+			`;
+			return rows.map((r) => r.signature);
+		},
 	};
 }

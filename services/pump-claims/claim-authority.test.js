@@ -112,3 +112,26 @@ describe('ClaimListener subscription filter', () => {
 		assert.deepEqual(calls, [SYNTHETIC_AUTHORITY.toBase58()]);
 	});
 });
+
+describe('backfill resume', () => {
+	test('skips signatures already stored instead of re-fetching and re-attributing them', async () => {
+		const now = Math.floor(Date.now() / 1000);
+		const fetched = [];
+		const connection = {
+			...fakeConnection(),
+			async getSignaturesForAddress() {
+				return [
+					{ signature: 'storedSig', blockTime: now - 60, err: null },
+					{ signature: 'freshSig', blockTime: now - 120, err: null },
+				];
+			},
+			async getParsedTransaction(signature) {
+				fetched.push(signature);
+				return { meta: { err: null, logMessages: [] } };
+			},
+		};
+		const store = { ...fakeStore, signaturesSince: async () => ['storedSig'] };
+		await backfill({ days: 7, connection, store });
+		assert.deepEqual(fetched, ['freshSig']);
+	});
+});

@@ -20,6 +20,10 @@ function makeFakeSql() {
 			const n = [...rows.values()].filter((r) => r.ts >= sinceTs).length;
 			return [{ n }];
 		}
+		if (text.includes('select signature from pump_fee_claims')) {
+			const [sinceTs] = values;
+			return [...rows.values()].filter((r) => r.ts >= sinceTs).map((r) => ({ signature: r.signature }));
+		}
 		return [];
 	}
 	sql.rows = rows;
@@ -95,5 +99,15 @@ describe('store.countSince', () => {
 		await store.insertClaim(store.toRow({ signature: 'new', creator: 'W', lamports: 1, ts: 2_000 }));
 		assert.equal(await store.countSince(1_500), 1);
 		assert.equal(await store.countSince(500), 2);
+	});
+});
+
+describe('store.signaturesSince', () => {
+	test('returns stored signatures at or after the cutoff', async () => {
+		const store = makeStore(makeFakeSql());
+		const base = { mint: null, claimer: 'c', githubUserId: '1', lamports: '1', label: 'unverified', held: false, slot: null };
+		await store.insertClaim({ ...base, signature: 'old', ts: 100 });
+		await store.insertClaim({ ...base, signature: 'new', ts: 200 });
+		assert.deepEqual(await store.signaturesSince(150), ['new']);
 	});
 });
