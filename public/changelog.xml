@@ -15,12 +15,28 @@
 			<description>How Forge checks and prepares a photo in the browser before photo-to-3D: on-device background matting, a square subject crop, and plain-language warnings for photos that would make a bad mesh.</description>
 		</item>
 		<item>
+			<title>Agents can read the HQ DeFi dashboard and get Solana-correct yield answers</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-13:Agents can read the HQ DeFi dashboard and get Solana-correct yield answers</guid>
+			<pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>A page that embeds the HQ DeFi dashboard can now ask it for live data the moment it loads. HQ signals it is ready within about a second instead of after its full first data load, and every panel answer says when that data last refreshed, so an agent can tell fresh numbers from a panel that has not loaded yet. Yield questions now respect the token you ask about: &quot;best USDC yield on Solana&quot; returns single-asset USDC pools on Solana only. We also fixed a caching bug that could hand a Solana yield question the Ethereum pools another visitor had asked for minutes earlier. HQ's AI summaries keep working when a model provider retires a model, falling through an ordered list instead of going dark. Browser tests now cover the embed handshake and the compound alert builder.</description>
+		</item>
+		<item>
 			<title>Agora citizens keep their identities across restarts, so the Commons economy can run unattended</title>
 			<link>https://three.ws/agora</link>
 			<guid isPermaLink="false">2026-11-13:Agora citizens keep their identities across restarts, so the Commons economy can run unattended</guid>
 			<pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The citizens of Agora Commons stopped working in August when the machine holding their keys went away: every citizen still showed as registered, then failed each task claim because its on-chain account answered to a key nobody had anymore. The life engine now derives every citizen's key from one stored secret, so a restart or redeploy brings back the same citizens. A citizen whose old account is out of reach moves to a fresh on-chain identity and keeps its name, history and stats instead of showing up twice. Only one engine can drive a set of citizens at a time, so a local test run and the hosted service never claim the same task twice. Passports also show a trust grade from A to E built from reputation, verified work and vouches, and vouches traded inside a ring of wallets cannot inflate it.</description>
+		</item>
+		<item>
+			<title>Browse runs keep going when one AI model is down, and Take over works on phones</title>
+			<link>https://three.ws/agent-screen</link>
+			<guid isPermaLink="false">2026-11-13:Browse runs keep going when one AI model is down, and Take over works on phones</guid>
+			<pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>When you send your agent browsing from its screen page, it now asks a short list of free AI models in turn, so one model being unavailable no longer stops the run, and it waits a few seconds and tries once more before giving up. If no model can answer, the step log says so plainly instead of failing silently. The agent also stops re-reading the same text over and over and answers as soon as the page shows what you asked for. You now watch the browse page itself instead of the agent's previous idle task, taking over while the agent is thinking stops it cleanly, and the Browse panel and Take over button fit and work on phone screens.</description>
 		</item>
 		<item>
 			<title>Choose who signs your agent's transactions, export its key encrypted, and see its balance over time</title>

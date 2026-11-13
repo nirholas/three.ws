@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-13T15:20:02.134Z",
+	"generated_at": "2026-11-13T15:28:59.559Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -19,12 +19,34 @@
 		{
 			"date": "2026-11-13",
 			"type": "update",
+			"title": "Agents can read the HQ DeFi dashboard and get Solana-correct yield answers",
+			"summary": "A page that embeds the HQ DeFi dashboard can now ask it for live data the moment it loads. HQ signals it is ready within about a second instead of after its full first data load, and every panel answer says when that data last refreshed, so an agent can tell fresh numbers from a panel that has not loaded yet. Yield questions now respect the token you ask about: \"best USDC yield on Solana\" returns single-asset USDC pools on Solana only. We also fixed a caching bug that could hand a Solana yield question the Ethereum pools another visitor had asked for minutes earlier. HQ's AI summaries keep working when a model provider retires a model, falling through an ordered list instead of going dark. Browser tests now cover the embed handshake and the compound alert builder.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-13",
+			"type": "update",
 			"title": "Agora citizens keep their identities across restarts, so the Commons economy can run unattended",
 			"summary": "The citizens of Agora Commons stopped working in August when the machine holding their keys went away: every citizen still showed as registered, then failed each task claim because its on-chain account answered to a key nobody had anymore. The life engine now derives every citizen's key from one stored secret, so a restart or redeploy brings back the same citizens. A citizen whose old account is out of reach moves to a fresh on-chain identity and keeps its name, history and stats instead of showing up twice. Only one engine can drive a set of citizens at a time, so a local test run and the hosted service never claim the same task twice. Passports also show a trust grade from A to E built from reputation, verified work and vouches, and vouches traded inside a ring of wallets cannot inflate it.",
 			"link": "/agora",
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-13",
+			"type": "update",
+			"title": "Browse runs keep going when one AI model is down, and Take over works on phones",
+			"summary": "When you send your agent browsing from its screen page, it now asks a short list of free AI models in turn, so one model being unavailable no longer stops the run, and it waits a few seconds and tries once more before giving up. If no model can answer, the step log says so plainly instead of failing silently. The agent also stops re-reading the same text over and over and answers as soon as the page shows what you asked for. You now watch the browse page itself instead of the agent's previous idle task, taking over while the agent is thinking stops it cleanly, and the Browse panel and Take over button fit and work on phone screens.",
+			"link": "/agent-screen",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{
