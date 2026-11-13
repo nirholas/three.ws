@@ -13,7 +13,9 @@ describe('agentCardPreviewHtml', () => {
 	it('paints the stored thumbnail as a visible <img> when the agent also has a GLB', () => {
 		const html = agentCardPreviewHtml({ name: 'Risk Auditor 9', thumbnail_url: THUMB, avatar_glb_url: GLB });
 		const beforeViewer = html.slice(0, html.indexOf('<model-viewer'));
-		expect(beforeViewer).toMatch(/<img [^>]*src="\/api\/img\?url=[^"]*2faa666b/);
+		// A first-party /cdn/ thumbnail is served as its display-sized /cdn/_v/
+		// variant (src/shared/cdn-variant.js), not through the /api/img proxy.
+		expect(beforeViewer).toMatch(/<img [^>]*src="https:\/\/three\.ws\/cdn\/_v\/\d+\/thumb\/2faa666b/);
 		expect(beforeViewer).not.toContain('mv-placeholder');
 		expect(html).toContain(`data-src="${GLB}"`);
 	});
