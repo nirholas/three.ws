@@ -211,6 +211,48 @@ written to the audit log as `gateway.pause_agent` or `gateway.kill_all`.
 
 Telegram delivery runs on the [agent-gateway worker](../workers/agent-gateway/README.md).
 
+### Live check with a throwaway bot
+
+The unit and replay tests cover the signing and the state machine. To also see
+the real Telegram surface (the rendered table, the toasts, the message edits),
+run the live check against a bot you made only for this:
+
+1. Create a bot with [@BotFather](https://t.me/BotFather) (`/newbot`) and copy
+   its token. Do not reuse the production bot.
+2. Run `TELEGRAM_BOT_TOKEN=<token> npm run approvals:telegram-live-check`.
+3. Send the printed `/link CODE` to the bot, then tap the buttons when the
+   script asks.
+
+What the script guarantees, so nothing real can move:
+
+- **Isolated database.** It runs the real gateway worker, approvals library and
+  notification fan-out in one process, but routes every query to a throwaway
+  PGlite database built from the production schema
+  ([scripts/lib/isolated-db.mjs](../scripts/lib/isolated-db.mjs)). The
+  `DATABASE_URL` in `.env.local` is never opened, so the production worker
+  cannot race this one for inbox rows. It long-polls Telegram instead of
+  needing a webhook.
+- **Paper mode only.** `SNIPER_MODE=simulate`, devnet, a fresh random
+  `JWT_SECRET`, and no Redis, email, push or other chat credentials.
+- **Refuses a production bot.** It stops if the token fails `getMe`, if the bot
+  has a webhook set, or if the bot id matches the production token.
+
+It creates two paper swaps of $THREE on Solana devnet and checks three things:
+
+| Step | You do | Pass condition |
+| --- | --- | --- |
+| Approve once | Tap **Approve** on request A (0.01 SOL, 15 min) | Status leaves `pending` via `telegram`, exactly one `approval_executed` or `approval_failed` audit row |
+| Replay | Tap **Approve** on the "Replay check" message, which re-posts A's identical signed buttons | Toast "Already failed." (or "Already executed."), the row's `updated_at` and the audit count do not change |
+| Expiry | Wait for request B (0.02 SOL, `--expire-seconds`, default 120) to lapse, then tap **Approve** | Toast "Already expired.", message edited to "Expired before a decision. Nothing was sent.", status `expired`, nothing executed |
+
+A paper buy on devnet usually has no bonding curve to price against, so request
+A typically ends "Approved, but it did not execute: could not price the buy".
+That is the fail-safe outcome and still proves the button runs the action
+exactly once. The script prints a JSON report and PASS or FAIL (exit 0 or 1);
+the toasts and edits you saw in the chat are the part only a human can report.
+Flags: `--expire-seconds`, `--pair-timeout`, `--step-timeout`, `--health-port`,
+`--report <file>`.
+
 ## Auto-approve rules
 
 The default is that every gated action asks you. An auto-approve rule is an
