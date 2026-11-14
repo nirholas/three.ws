@@ -12,11 +12,14 @@
 //   - the first poll of an account only anchors the cursor at "now": the bot
 //     never answers an account's history.
 //
-// Dry run is the default. The adapter posts only when X_MENTION_BOT_LIVE is
-// "1" AND a poster token resolver is supplied; this loop supplies none for the
-// company account, so going live is the separate owner step (order 928). An
-// agent account (x-agent-mentions.js) goes live only when its owner also turned
-// its mention-reply dry run off.
+// Dry run is the default. The company account (@trythreews) goes live only
+// when the operator sets X_MENTION_BOT_LIVE=1 (owner step, order 928) and its
+// OAuth 1.0a credentials are present (x-company-sender.js); only mentions
+// recorded while live are ever posted, so switching on never answers the dry
+// backlog. X_MENTION_COMPANY_INTENTS (comma list) limits which intents the
+// company account answers; unset means all. An agent account
+// (x-agent-mentions.js) goes live only when its owner also turned its
+// mention-reply dry run off.
 //
 // Mention text is untrusted data: it is parsed by the pure parser and quoted
 // to the reply brain as data. The only action it can ever cause is one reply
@@ -34,9 +37,10 @@ import { ensureKnownBots, loadKnownBots } from './x-mention-known-bots.js';
 import { answerOnBehalf } from './x-mention-on-behalf.js';
 import * as xBudget from './x-budget.js';
 import { handleAvatar, finishPendingAvatars } from './x-mention-avatar.js';
-import { finishPendingMakes } from './x-mention-make.js';
+import { handleMake, finishPendingMakes } from './x-mention-make.js';
+import { companySender } from './x-company-sender.js';
 import { handleImage3d, finishPendingImage3d } from './x-mention-image3d.js';
-import { composeLaunchReply } from './x-mention-launch.js';
+import { composeLaunchReply, launchHelpReply } from './x-mention-launch.js';
 import { selfOrigin } from './self-origin.js';
 import { createDeliver } from './x-mention-deliver.js';
 import { xBotLive } from './gateway/adapters/x.js';
@@ -50,12 +54,25 @@ const DAY = 86400;
 
 const REFUSED_REPLY = 'I cannot move funds or handle keys, and no one can ask me to. I make 3D models: try "make a red vintage scooter". https://three.ws/grok';
 
-/** Intents whose dedicated handler is a later order; they answer with help until it lands. */
-const UNBUILT_HANDLERS = Object.freeze(new Set(['make']));
-
 function intEnv(env, name, fallback) {
 	const n = Number.parseInt(env[name] ?? '', 10);
 	return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
+/**
+ * Whether the company account answers this intent. X_MENTION_COMPANY_INTENTS
+ * is a comma list (for example "make,help" for a narrow launch); unset or
+ * empty means every intent.
+ */
+export function companyIntentAllowed(intent, env = process.env) {
+	const list = String(env.X_MENTION_COMPANY_INTENTS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+	return list.length === 0 || list.includes(intent);
+}
+
+/** The company sender for a recorded row, only while the global switch is on. */
+async function companySenderForRow(row, env, resolve = companySender) {
+	if (row?.account_kind !== 'company' || !xBotLive(env)) return null;
+	return resolve(env);
 }
 
 /** Reply limits per author per account, configurable by env. */
@@ -100,14 +117,12 @@ export async function overReplyLimit(authorId, account, limits, store = mentionS
 /** The text a parsed mention is answered with, or why it is not answered. */
 async function composeAnswer({ mention, parsed, account, compose, agent = null, launch = composeLaunchReply }) {
 	if (parsed.intent === 'help') {
+		if (parsed.args?.topic === 'launch') return { text: launchHelpReply(parsed.reason, account?.handle), reason: parsed.reason };
 		return { text: parsed.args?.topic === 'refused' ? REFUSED_REPLY : FIXED_HELP_REPLY, reason: parsed.reason };
 	}
 	if (parsed.intent === 'launch') {
 		const reply = await launch({ args: parsed.args, authorId: mention.userId || mention.author?.id || null, base: selfOrigin() });
 		return { text: reply.text, reason: reply.reason };
-	}
-	if (UNBUILT_HANDLERS.has(parsed.intent)) {
-		return { text: FIXED_HELP_REPLY, reason: 'handler_not_built' };
 	}
 	const reply = await compose(agent ? { agent, mention } : { company: { handle: account.handle }, mention });
 	return { text: reply.text, reason: reply.source === 'model' ? parsed.reason : `fallback:${reply.reason}`, provider: reply.provider, model: reply.model };
@@ -118,11 +133,13 @@ async function composeAnswer({ mention, parsed, account, compose, agent = null, 
  * Only ever throws for a store failure on the mention row itself, which the
  * caller treats as "not fully recorded" and stops the batch there.
  */
-export async function handleMention({ mention, account, limits, env, store = mentionStore, compose = composePublicReply, adapterFactory = createXAdapter, guard = guardMention, paused = isPaused, budget = xBudget, request = null, onBehalf = answerOnBehalf, knownBots = null, avatar = handleAvatar, image3d = handleImage3d, agentCtx = null, posterFor = agentPosterUrl, launch = composeLaunchReply }) {
+export async function handleMention({ mention, account, limits, env, store = mentionStore, compose = composePublicReply, adapterFactory = createXAdapter, guard = guardMention, paused = isPaused, budget = xBudget, request = null, onBehalf = answerOnBehalf, knownBots = null, avatar = handleAvatar, image3d = handleImage3d, make = handleMake, agentCtx = null, posterFor = agentPosterUrl, launch = composeLaunchReply, companySender: resolveCompanySender = companySender }) {
 	const parsed = parseMentionIntent(mention, account);
-	// The company account is always dry run here. An agent answers for real only
-	// when its owner turned dry run off AND the operator's global switch is on.
-	const dryRun = agentCtx ? agentCtx.policy.dry_run || !xBotLive(env) : true;
+	// The company account answers for real only when the operator's global
+	// switch is on and its credentials resolve to a sender. An agent answers for
+	// real only when its owner turned dry run off AND the global switch is on.
+	const sender = !agentCtx && xBotLive(env) ? await resolveCompanySender(env) : null;
+	const dryRun = agentCtx ? agentCtx.policy.dry_run || !xBotLive(env) : !sender;
 	const getAccessToken = agentCtx && !dryRun ? agentTokenResolver({ agentId: agentCtx.agentId, userId: agentCtx.userId }) : null;
 	const { inserted } = await store.recordMention({ mention, parsed, dryRun });
 	if (!inserted) return { tweetId: mention.id, decision: 'duplicate', reason: null };
@@ -138,6 +155,12 @@ export async function handleMention({ mention, account, limits, env, store = men
 			return { tweetId: mention.id, intent: 'ignore', decision: 'skip', reason: parsed.reason };
 		}
 
+		if (!agentCtx && !companyIntentAllowed(parsed.intent, env)) {
+			const reason = `intent_not_allowed:${parsed.intent}`;
+			await store.updateDecision(mention.id, { decision: 'skip', reason });
+			return { tweetId: mention.id, intent: parsed.intent, decision: 'skip', reason };
+		}
+
 		const verdict = await guard({ mention, account: mention.account, env, store });
 		if (!verdict.allow && verdict.reason === 'known_bot' && !agentCtx) {
 			// A known xAI account tagged us: answer on behalf of the human at the
@@ -148,7 +171,7 @@ export async function handleMention({ mention, account, limits, env, store = men
 				return { tweetId: mention.id, intent: parsed.intent, decision: 'budget', reason: allowedBot.reason };
 			}
 			const answered = await onBehalf({
-				mention, parsed, account: mention.account, limits, env, store, adapterFactory,
+				mention, parsed, account: mention.account, limits, env, store, adapterFactory, sender,
 				bots: knownBots || (await loadKnownBots({ env })),
 				request: typeof request === 'function' ? await request() : request,
 			});
@@ -181,7 +204,14 @@ export async function handleMention({ mention, account, limits, env, store = men
 			await store.updateDecision(mention.id, { decision: 'budget', reason: allowed.reason });
 			return { tweetId: mention.id, intent: parsed.intent, decision: 'budget', reason: allowed.reason };
 		}
-		const lateDeps = getAccessToken ? { deliver: createDeliver({ env, adapterFactory, getAccessToken: () => getAccessToken }) } : undefined;
+		const lateDeps = getAccessToken
+			? { deliver: createDeliver({ env, adapterFactory, getAccessToken: () => getAccessToken }) }
+			: sender ? { deliver: createDeliver({ env, adapterFactory, getSender: () => sender }) } : undefined;
+		if (parsed.intent === 'make') {
+			const result = await make({ tweetId: mention.id, authorId: mention.userId || mention.author?.id, prompt: parsed.args?.prompt, dryRun }, lateDeps);
+			if (result.decision === 'reply') await budget.recordPosts(1);
+			return { tweetId: mention.id, intent: 'make', decision: result.decision, reason: result.reason, text: result.text, dry_run: dryRun };
+		}
 		if (parsed.intent === 'avatar') {
 			const result = await avatar({ tweetId: mention.id, authorId: mention.userId || mention.author?.id, author: mention.author, dryRun }, lateDeps);
 			if (result.decision === 'reply') await budget.recordPosts(1);
@@ -193,7 +223,7 @@ export async function handleMention({ mention, account, limits, env, store = men
 			return { tweetId: mention.id, intent: 'image3d', decision: result.decision, reason: result.reason, text: result.text, dry_run: dryRun };
 		}
 		const answer = await composeAnswer({ mention, parsed, account, compose, agent: agentCtx?.agent || null, launch });
-		const adapter = adapterFactory({ mention, parsed, env, policyDryRun: agentCtx ? dryRun : true, getAccessToken });
+		const adapter = adapterFactory({ mention, parsed, env, policyDryRun: dryRun, getAccessToken, sender });
 		const poster = agentCtx && parsed.intent === 'chat' ? await posterFor(agentCtx.agent).catch(() => null) : null;
 		if (poster) await adapter.sendMedia(mention.id, { url: poster, caption: answer.text });
 		else await adapter.sendText(mention.id, answer.text);
@@ -262,7 +292,7 @@ export async function pollAccount({ descriptor, env = process.env, maxMentions =
 	let stoppedAt = null;
 	for (const mention of batch) {
 		try {
-			decisions.push(await handleMention({ mention, account: page.account, limits, env, store, compose: deps.compose, adapterFactory: deps.adapterFactory, guard: deps.guard, paused: deps.paused, budget: deps.budget, request: resolve, onBehalf: deps.onBehalf, knownBots: deps.knownBots, avatar: deps.avatar, image3d: deps.image3d, agentCtx: descriptor.agentCtx || null, posterFor: deps.posterFor }));
+			decisions.push(await handleMention({ mention, account: page.account, limits, env, store, compose: deps.compose, adapterFactory: deps.adapterFactory, guard: deps.guard, paused: deps.paused, budget: deps.budget, request: resolve, onBehalf: deps.onBehalf, knownBots: deps.knownBots, avatar: deps.avatar, image3d: deps.image3d, make: deps.make, agentCtx: descriptor.agentCtx || null, posterFor: deps.posterFor, companySender: deps.companySender }));
 			lastRecorded = mention.id;
 		} catch (err) {
 			stoppedAt = mention.id;
@@ -317,7 +347,12 @@ export async function runFollowUps({ env = process.env, deps = {} } = {}) {
 	if (await (deps.paused || isPaused)(env)) return { followUps: { skipped: 'kill_switch' } };
 	const gate = await budget.readGate({ env }).catch(() => ({ allow: true }));
 	if (!gate.allow) return { followUps: { skipped: 'budget', reason: gate.reason } };
-	const baseDeliver = deps.deliver || createDeliver({ env, adapterFactory: deps.adapterFactory, getAccessToken: deps.getAccessToken || tokenResolverForRow });
+	const baseDeliver = deps.deliver || createDeliver({
+		env,
+		adapterFactory: deps.adapterFactory,
+		getAccessToken: deps.getAccessToken || tokenResolverForRow,
+		getSender: (row) => companySenderForRow(row, env, deps.companySender),
+	});
 	const deliver = async (args) => {
 		const id = await baseDeliver(args);
 		if (id) await budget.recordPosts(1).catch(() => {});

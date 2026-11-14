@@ -24365,6 +24365,152 @@
 			],
 			"mentions": {},
 			"note": "Draft article. Needs the cover image, 4 inline images, partners section and 2,400 words before review."
+		},
+		{
+			"id": "bring-your-avatar",
+			"status": "review",
+			"kind": "post",
+			"tier": 1,
+			"lane": "creation",
+			"pattern": "how-to",
+			"notBefore": "2026-11-14T00:00:00Z",
+			"covers": [
+				"/import/rpm"
+			],
+			"posts": [
+				{
+					"text": "If you have an avatar file and nowhere left to use it, bring it here. Paste its link or upload the .glb or .vrm, and it is saved to your account, mapped onto our animation library, and ready to put on a website with two lines of HTML.\n\nthree.ws/import/rpm",
+					"textFrom": "docs/announcements/bring-your-avatar.post.txt",
+					"media": [
+						{
+							"path": "public/x-media/bring-your-avatar/card.png",
+							"alt": "A three.ws card reading \"Your avatar file keeps working here.\" beside a browser window open on the import page, with a field for a GLB or VRM link, an Upload File tab and an Import from URL button"
+						}
+					]
+				},
+				{
+					"text": "Finding the file: if an app loaded your avatar from a link, open your browser's developer tools, go to the Network tab, filter by .glb or .vrm, and copy the request URL. If you saved the file earlier, use the Upload File tab instead."
+				},
+				{
+					"text": "Whatever rig it came with, its bone names are mapped onto one canonical skeleton, so the idle and walk clips play on it. VRM 0.x and 1.0 files keep their toon shading, spring-bone hair and cloth, and expressions, and voice or camera capture can drive the face."
+				},
+				{
+					"text": "Then give it a job. Make it an agent with its own page and a Solana wallet, or put it on your own site with <agent-3d body=\"my-avatar.glb\" brain=\"free\"> and it talks to visitors with no API key. The embed guide: three.ws/docs/embedding"
+				}
+			],
+			"claims": [
+				{
+					"says": "upload the .glb or .vrm",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/import-rpm.html",
+							"contains": "accept=\".glb,.vrm"
+						}
+					]
+				},
+				{
+					"says": "two lines of HTML",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/tutorials/embed-in-30-seconds.md",
+							"contains": "One script tag, one `<agent-3d>` tag, one working 3D agent."
+						}
+					]
+				},
+				{
+					"says": "its bone names are mapped onto one canonical skeleton, so the idle and walk clips play on it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "set the clip library drives, so any rig using these conventions animates"
+						}
+					]
+				},
+				{
+					"says": "VRM 0.x and 1.0 files keep their toon shading, spring-bone hair and cloth, and expressions",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/avatar-engines-data.js",
+							"contains": "VRM 0.x and 1.0 avatars get genuine spring-bone physics"
+						},
+						{
+							"type": "file",
+							"path": "docs/orphaned-avatar-campaign.md",
+							"contains": "MToon materials, spring-bone physics"
+						}
+					]
+				},
+				{
+					"says": "voice or camera capture can drive the face",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/game/vrm-expressions.js",
+							"contains": "Voice/face capture across the site"
+						}
+					]
+				},
+				{
+					"says": "its own page and a Solana wallet",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/agent-skills.md",
+							"contains": "custodial Solana wallet is minted in that request"
+						}
+					]
+				},
+				{
+					"says": "it talks to visitors with no API key",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/embedding.md",
+							"matches": "brain=\"free\"` to give it a real conversation with zero setup"
+						},
+						{
+							"type": "file",
+							"path": "docs/embedding.md",
+							"matches": "no\\s+API key, no backend"
+						}
+					]
+				}
+			],
+			"mentions": {},
+			"probes": [
+				{
+					"type": "api",
+					"name": "the import page the thread links is live",
+					"url": "https://three.ws/import/rpm",
+					"expect": {
+						"status": 200,
+						"contains": "Import Your 3D Avatar"
+					}
+				},
+				{
+					"type": "api",
+					"name": "the embed guide the last post links is live",
+					"url": "https://three.ws/docs/embedding",
+					"expect": {
+						"status": 200
+					}
+				},
+				{
+					"type": "command",
+					"name": "the import save step and the real three-vrm loader still behave as the thread says",
+					"argv": [
+						"npx",
+						"vitest",
+						"run",
+						"tests/import-rpm-source.test.js",
+						"tests/vrm-real.test.js"
+					]
+				}
+			]
 		}
 	]
 }

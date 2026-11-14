@@ -6,9 +6,10 @@
 //
 //   - dry run (the default): the adapter records the would-be reply on the
 //     x_mention_events row and makes no HTTP call; `deliver` resolves to null;
-//   - live (X_MENTION_BOT_LIVE=1, the row is not dry, and a token resolver is
-//     supplied): the adapter posts the reply, with its media, to the mention's
-//     author and `deliver` resolves to the new post id.
+//   - live (X_MENTION_BOT_LIVE=1, the row is not dry, and a token resolver or
+//     a sender is supplied for the row's account): the adapter posts the reply,
+//     with its media, to the mention's author and `deliver` resolves to the new
+//     post id.
 //
 // Callers only invoke `deliver` for rows that are not dry, so the adapter's own
 // policy gate is the second lock, never the only one.
@@ -30,21 +31,24 @@ function mentionFromRow(row) {
 }
 
 /**
- * @param {{ env?: Record<string,string|undefined>, store?: typeof mentionStore, adapterFactory?: typeof createXAdapter, getAccessToken?: ((row: object) => (() => Promise<string>)|null)|null }} [opts]
+ * @param {{ env?: Record<string,string|undefined>, store?: typeof mentionStore, adapterFactory?: typeof createXAdapter, getAccessToken?: ((row: object) => (() => Promise<string>)|null)|null, getSender?: ((row: object) => Promise<object|null>|object|null)|null }} [opts]
  *   `getAccessToken(row)` returns the posting account's token resolver for that
- *   row, or null when none exists (the adapter then stays in dry run).
+ *   row (an agent's OAuth2 account); `getSender(row)` returns an authenticated
+ *   sender (the company account). With neither, the adapter stays in dry run.
  * @returns {(args: { text: string, mediaUrl?: string|null, inReplyToTweetId: string }) => Promise<string|null>}
  */
-export function createDeliver({ env = process.env, store = mentionStore, adapterFactory = createXAdapter, getAccessToken = null } = {}) {
+export function createDeliver({ env = process.env, store = mentionStore, adapterFactory = createXAdapter, getAccessToken = null, getSender = null } = {}) {
 	return async function deliver({ text, mediaUrl = null, inReplyToTweetId }) {
 		const row = await store.getMentionEvent(inReplyToTweetId);
 		if (!row) return null;
 		const resolver = typeof getAccessToken === 'function' ? getAccessToken(row) : null;
+		const sender = !resolver && typeof getSender === 'function' ? await getSender(row) : null;
 		const adapter = adapterFactory({
 			mention: mentionFromRow(row),
 			parsed: { intent: row.intent },
 			policyDryRun: row.dry_run !== false,
 			getAccessToken: resolver,
+			sender,
 			env,
 			store,
 		});

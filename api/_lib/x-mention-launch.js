@@ -24,6 +24,27 @@ import { claimUrl } from './x-creation-claim.js';
 
 export const LAUNCH_NO_SPEND_LINE = 'Nothing is paid until you review and sign on three.ws.';
 
+/**
+ * The reply to a launch mention the parser could not fill (no ticker, a bad
+ * ticker, a missing name). It teaches the grammar instead of the generic
+ * make-a-model help, so the author can try again in one post. PURE.
+ * @param {string} reason  the parser's launch_* reason
+ * @param {string} [handle] the account the mention addressed, without the @
+ */
+export function launchHelpReply(reason, handle = 'trythreews') {
+	const usage = `@${String(handle).replace(/^@/, '')} launch <name> $<TICKER> <optional description>`;
+	if (reason === 'launch_reserved_ticker') {
+		return `$THREE is the three.ws platform coin, so it cannot be launched again. Pick your own ticker: ${usage}`;
+	}
+	if (reason === 'launch_bad_ticker') {
+		return `A ticker needs 2 to 10 letters or digits after the $. Try: ${usage}. ${LAUNCH_NO_SPEND_LINE}`;
+	}
+	if (reason === 'launch_name_too_long') {
+		return `That coin name is too long. Keep it short and try: ${usage}. ${LAUNCH_NO_SPEND_LINE}`;
+	}
+	return `To launch a coin, post: ${usage}. I reply with a link you review and sign. ${LAUNCH_NO_SPEND_LINE}`;
+}
+
 /** The agent that would launch for this user: newest live agent that has a 3D body. */
 export async function launchAgentForUser(userId) {
 	const [row] = await sql`

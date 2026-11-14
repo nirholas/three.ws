@@ -170,9 +170,10 @@ export async function generateMake({ prompt, base, env = process.env, deps = {} 
  * @param {object} o.bots          known-bot matcher
  * @param {Function|null} o.request  X transport for the root lookup
  * @param {Function} o.adapterFactory
+ * @param {{ post: Function, uploadMedia: Function }|null} [o.sender]  the company sender when the bot is live; null keeps the reply in dry run
  * @param {Function} [o.generate]  (intent args) => reply shape; default is the free studio lane
  */
-export async function answerOnBehalf({ mention, parsed, account, limits, env = process.env, store, bots, request, adapterFactory, read, generate = null, lookup }) {
+export async function answerOnBehalf({ mention, parsed, account, limits, env = process.env, store, bots, request, adapterFactory, sender = null, read, generate = null, lookup }) {
 	const settle = async (decision, reason) => {
 		await store.updateDecision(mention.id, { decision, reason });
 		return { tweetId: mention.id, intent: parsed.intent, decision, reason };
@@ -198,7 +199,7 @@ export async function answerOnBehalf({ mention, parsed, account, limits, env = p
 		await store.updateDecision(mention.id, { decision: 'unsafe', reason: `safety_${reply.category}`, replyText: reply.text });
 		return { tweetId: mention.id, intent: parsed.intent, decision: 'unsafe', reason: `safety_${reply.category}`, text: reply.text };
 	}
-	const adapter = adapterFactory({ mention, parsed, env, policyDryRun: true });
+	const adapter = adapterFactory({ mention, parsed, env, policyDryRun: !sender, sender });
 	await adapter.sendText(mention.id, reply.text);
 	const reason = reply.kind === 'success' ? 'bot_make_done' : reply.reason;
 	await store.updateDecision(mention.id, { reason, replyLink: reply.link, creationId: reply.creationId || undefined });

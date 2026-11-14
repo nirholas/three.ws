@@ -1,7 +1,8 @@
 {
-  "generatedAt": "2026-11-14T02:33:24.057Z",
+  "generatedAt": "2026-11-14T02:33:59.499Z",
   "base": "https://three.ws",
   "dryRun": true,
+  "reachableAuthors": 0,
   "rows": [
     {
       "case": "linked author, agent with a body",
@@ -11,7 +12,7 @@
     {
       "case": "author not linked to three.ws",
       "post": "@trythreews launch Fixture Frog $FXFROG",
-      "tweetId": "7527196950525902849",
+      "tweetId": "7527197098744217601",
       "expectedReason": "launch_unlinked",
       "handler": {
         "intent": "launch",
@@ -36,7 +37,7 @@
     {
       "case": "missing ticker",
       "post": "@trythreews launch Fixture Cat",
-      "tweetId": "7527196950525902850",
+      "tweetId": "7527197098744217602",
       "expectedReason": "launch_malformed",
       "handler": {
         "intent": "help",
@@ -58,7 +59,7 @@
     {
       "case": "reserved ticker",
       "post": "@trythreews launch Copycat $THREE",
-      "tweetId": "7527196950525902851",
+      "tweetId": "7527197098744217603",
       "expectedReason": "launch_reserved_ticker",
       "handler": {
         "intent": "help",

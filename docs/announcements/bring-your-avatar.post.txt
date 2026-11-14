@@ -1,0 +1,3 @@
+If you have an avatar file and nowhere left to use it, bring it here. Paste its link or upload the .glb or .vrm, and it is saved to your account, mapped onto our animation library, and ready to put on a website with two lines of HTML.
+
+three.ws/import/rpm

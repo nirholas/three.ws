@@ -23,7 +23,7 @@ import { sql } from './db.js';
 import { fetchUpstreamPublic } from './upstream-fetch.js';
 import { getMentionEvent, updateDecision } from './x-mention-store.js';
 import { postOne, uploadMediaV2, refreshIfNeeded } from './x-post.js';
-import { xClientFromEnv } from './x-content/publisher.js';
+import { companySender } from './x-company-sender.js';
 
 export const PAUSE_KEY = 'x_mention_bot_paused';
 export const BLOCKLIST_KEY = 'x_mention_blocklist';
@@ -88,11 +88,6 @@ export async function unblockAuthor(authorId) {
 	return ids;
 }
 
-function mediaCategoryFor(mimeType) {
-	if (mimeType.startsWith('video/')) return 'tweet_video';
-	if (mimeType === 'image/gif') return 'tweet_gif';
-	return 'tweet_image';
-}
 
 /** Fetch a recorded reply_media_url's bytes, SSRF-safe: this URL was written by our own generation pipeline, but it is still an outbound fetch to an operator-triggered address. */
 async function fetchReplyMedia(url) {
@@ -109,7 +104,7 @@ async function fetchReplyMedia(url) {
 
 /**
  * The posting surface for one mention's account: company (@trythreews, OAuth
- * 1.0a via x-content/publisher.js) or one agent's own connected account
+ * 1.0a via x-company-sender.js) or one agent's own connected account
  * (OAuth2 via x-post.js). This is deliberately not publishTweet() in
  * x-post.js: that function enforces a monthly quota, a posting-cadence floor
  * and dedup rules meant for a user choosing to post, none of which apply to
@@ -117,18 +112,9 @@ async function fetchReplyMedia(url) {
  */
 async function resolveSendTarget(accountKind, accountRef) {
 	if (accountKind === 'company') {
-		const client = await xClientFromEnv();
-		if (!client) throw new MentionAdminError('the company X account is not configured on this deployment', 'not_configured', 501);
-		return {
-			async post({ text, replyTo, mediaIds }) {
-				const payload = { text };
-				if (replyTo) payload.reply = { in_reply_to_tweet_id: replyTo };
-				if (mediaIds?.length) payload.media = { media_ids: mediaIds };
-				const { data } = await client.tweet(payload);
-				return data.id;
-			},
-			uploadMedia: (buffer, mimeType) => client.uploadMedia(buffer, { media_type: mimeType, media_category: mediaCategoryFor(mimeType) }),
-		};
+		const sender = await companySender();
+		if (!sender) throw new MentionAdminError('the company X account is not configured on this deployment', 'not_configured', 501);
+		return sender;
 	}
 	if (accountKind === 'agent') {
 		const [conn] = await sql`

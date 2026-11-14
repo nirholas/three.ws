@@ -345,6 +345,32 @@ other intent uses. With `X_MENTION_BOT_LIVE` unset the company account only
 records the reply it would send (`x_mention_events.reply_text`, visible in
 `/x/ops`); nothing is posted. Going live is the owner step (order 928).
 
+A launch post the parser cannot fill is recorded as `intent = 'help'` with
+the parser's reason, and answered by `launchHelpReply` with the grammar for
+the account that was tagged, never the generic make-a-model help:
+
+| Post | `reason` | Reply |
+|---|---|---|
+| No `$TICKER` | `launch_malformed` | "To launch a coin, post: @trythreews launch <name> $<TICKER> <optional description>. ..." |
+| Ticker under 2 or over 10 characters | `launch_bad_ticker` | The ticker bounds plus the grammar |
+| Name too long | `launch_name_too_long` | Keep it short, plus the grammar |
+| `$THREE` | `launch_reserved_ticker` | `$THREE` is the platform coin; pick your own ticker, plus the grammar |
+
+**Dry-run evidence.** `node scripts/x-mention-launch-dry-run.mjs` sends launch
+posts through `handleMention`, the exact function the cron calls, under
+`account_ref = 'trythreews-evidence'` (kept out of the real account's console
+and limits; the post budget gate runs but is not charged), reads each row back
+from `x_mention_events`, checks every link it would send, and writes
+`prompts/x-grok/_generated/launch-dry-run.json`. Its `reachableAuthors` field
+counts connected X authors who own an agent with a body, i.e. who could get a
+`launch_link` reply today. The linked case runs against a platform admin's own
+connected X account (or `--linked-x-id`), never a stranger's.
+
+`findUserByXId` resolves an author through `social_connections` and
+`agent_x_connections` only, not `user_identities` (sign in with X). Someone who
+only signed in with X gets `launch_unlinked`, and `/x/claim` takes them through
+the connect flow that creates the link.
+
 Going live stays the separate owner step.
 
 ## The operator console: `/x/ops`

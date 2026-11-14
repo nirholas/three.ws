@@ -1,0 +1,9 @@
+{
+	"out": "public/x-media/bring-your-avatar/card.png",
+	"headline": "Your avatar file\nkeeps working here.",
+	"headlineSize": 66,
+	"body": "Paste its link or upload the .glb or .vrm. It is saved to your account, takes the animation library, and goes on any website with two lines of HTML.",
+	"frame": "browser",
+	"shot": "public/x-media/bring-your-avatar/import-page.png",
+	"label": "three.ws/import/rpm"
+}

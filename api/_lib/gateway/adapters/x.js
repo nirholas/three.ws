@@ -6,8 +6,10 @@
 //
 // Safety shape (order x-grok 27, CLAUDE.md gate 2):
 //  - Dry run is the default. A send reaches X only when X_MENTION_BOT_LIVE is
-//    exactly "1" AND the account's policy is not in dry run AND a token
-//    resolver was supplied. Otherwise the would-be reply is written to
+//    exactly "1" AND the account's policy is not in dry run AND a way to post
+//    was supplied: a token resolver (an agent's OAuth2 account) or a sender
+//    (the company account's OAuth 1.0a client, x-company-sender.js). Otherwise
+//    the would-be reply is written to
 //    x_mention_events and a synthetic delivery marked `dry_run` comes back;
 //    no HTTP call is made.
 //  - The adapter is bound to ONE mention. It can only reply to that post
@@ -65,6 +67,7 @@ const MEDIA_MIME = /^(image\/(png|jpe?g|webp|gif)|video\/mp4)$/;
  * @param {{ intent: string, args?: object }} [opts.parsed]  the parser result, used to create the audit row when it does not exist yet
  * @param {boolean} [opts.policyDryRun]     the account's own dry-run toggle (true keeps the adapter in dry run)
  * @param {() => Promise<string>} [opts.getAccessToken]  resolves the posting account's OAuth token; never called in dry run
+ * @param {{ post: Function, uploadMedia: Function }|null} [opts.sender]  an already-authenticated poster (the company account); never called in dry run
  * @param {string} [opts.buttonsUrl]        where choices render, default the three.ws dashboard
  * @param {number} [opts.maxPosts]
  * @param {Record<string,string|undefined>} [opts.env]
@@ -78,6 +81,7 @@ export function createXAdapter({
 	parsed = { intent: 'chat' },
 	policyDryRun = true,
 	getAccessToken = null,
+	sender = null,
 	buttonsUrl = null,
 	maxPosts = MAX_REPLY_POSTS,
 	env = process.env,
@@ -88,7 +92,8 @@ export function createXAdapter({
 } = {}) {
 	const mentionId = String(mention?.id ?? '');
 	if (!/^\d{1,25}$/.test(mentionId)) throw new XAdapterError('bad_mention', 'the X adapter needs the mention it answers');
-	const live = xBotLive(env) && policyDryRun === false && typeof getAccessToken === 'function';
+	const hasSender = Boolean(sender) && typeof sender.post === 'function' && typeof sender.uploadMedia === 'function';
+	const live = xBotLive(env) && policyDryRun === false && (hasSender || typeof getAccessToken === 'function');
 
 	let posted = 0;
 	let dryCount = 0;
@@ -129,9 +134,14 @@ export function createXAdapter({
 
 	async function liveDeliver(text, { mediaIds = null, mediaUrl = null, link = null } = {}) {
 		await ensureRow();
-		const accessToken = await getAccessToken();
-		const send = post || (await defaultPost());
-		const d = await send({ accessToken, text, replyTo: tail, mediaIds });
+		let d;
+		if (hasSender) {
+			d = { id: await sender.post({ text, replyTo: tail, mediaIds }) };
+		} else {
+			const accessToken = await getAccessToken();
+			const send = post || (await defaultPost());
+			d = await send({ accessToken, text, replyTo: tail, mediaIds });
+		}
 		if (!d?.id) throw new XAdapterError('post_failed', 'X accepted the reply but returned no post id');
 		posted++;
 		tail = String(d.id);
@@ -166,9 +176,14 @@ export function createXAdapter({
 		if (!live) return dryDeliver(caption, url);
 		const { buffer, mimeType } = await fetchMedia(url);
 		if (!MEDIA_MIME.test(mimeType)) throw new XAdapterError('bad_media', `X cannot take ${mimeType || 'unknown'} media`);
-		const accessToken = await getAccessToken();
-		const upload = uploadMedia || (await defaultUpload());
-		const mediaId = await upload({ accessToken, buffer, mimeType });
+		let mediaId;
+		if (hasSender) {
+			mediaId = await sender.uploadMedia(buffer, mimeType);
+		} else {
+			const accessToken = await getAccessToken();
+			const upload = uploadMedia || (await defaultUpload());
+			mediaId = await upload({ accessToken, buffer, mimeType });
+		}
 		return liveDeliver(caption, { mediaIds: [mediaId], mediaUrl: url });
 	}
 
