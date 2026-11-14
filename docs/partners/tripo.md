@@ -37,7 +37,7 @@ Star counts from the GitHub API on 2026-10-09:
 | [TripoSR](https://github.com/VAST-AI-Research/TripoSR) | 7,035 | MIT | Yes: hosted failover rung (Hugging Face Space, Replicate) |
 | [TripoSG](https://github.com/VAST-AI-Research/TripoSG) | 1,825 | MIT | Yes: self-hosted worker `workers/model-triposg` |
 | [UniRig](https://github.com/VAST-AI-Research/UniRig) | 1,804 | MIT | Planned: non-humanoid rigging, order `069-best3d-03` |
-| TripoSplat | 1,365 | MIT | No |
+| TripoSplat | 1,365 | MIT | Yes since 2026-11-03: self-hosted worker `workers/model-triposplat` behind the Forge's image-to-splat lane |
 | TripoSF, HoloPart, AniGen, SkinTokens, MIDI-3D | 463 to 952 each | check each LICENSE before use | AniGen and SkinTokens are planned in `069-best3d-03` |
 
 ---
@@ -160,9 +160,11 @@ description of what shipped:
   the owner's standing GCP-first directive prefers over an equivalent paid third-party lane.
   Wiring Tripo here would add a strictly narrower alternative, not new capability; revisit
   if the partnership itself makes Tripo's version the one worth shipping.
-- **Splat**: no live Tripo endpoint exists to wire (checked again 2026-10-12). The splat
-  stage (`docs/splat.md`) has no Tripo-backed path; this is the "early access" item in the
-  proposal above, not something we can build today.
+- **Splat**: Tripo's hosted API still has no splat endpoint (checked again 2026-11-14), so
+  the "early access" item in the proposal stands. The open-weight model is a different
+  story: since 2026-11-03 TripoSplat (MIT) runs self-hosted on an L4 as
+  `workers/model-triposplat`, behind `POST /api/forge-splat`, and its output opens in the
+  Splat Viewer. A hosted Tripo splat endpoint would be an alternative lane next to it.
 
 ---
 
@@ -208,28 +210,99 @@ grows each month and the paid lane is nearly unused (2 jobs).
 
 ---
 
+## Refresh, 2026-11-14
+
+What was re-checked on this date for work order 936. Anything not listed here is unchanged
+from the 2026-10-23 refresh.
+
+| Item | 2026-11-14 reading | How |
+|---|---|---|
+| Reply to Tripo | **Still not sent.** Tripo reached out on 2026-10-09, so the reply below opens with an apology for the delay | Tracker row in `marketing/growth/opportunities.csv` |
+| House key on the service | **Still absent.** No `TRIPO*` variable on `three-ws-api` | `node scripts/read-service-env.mjs '^TRIPO' --names` |
+| Paid lane, last 30 days | 0 jobs. All time, `backend = 'tripo'` has 3 rows, the last on 2026-10-05 | `npm run forge:tripo`, plus a read-only SELECT |
+| Tripo API surface | v3, documented base URL now `openapi.tripo3d.ai`. Our provider calls `openapi.tripo3d.com/v3`; both hosts answer an invalid key with the same v3 envelope (`HTTP 401`, `{"code":2,"message":"Invalid API key"}`), so nothing needs to move. Models listed: H3.1, P2.0 (native quad), AI Texture, Segmentation V2, example model string `v3.1-20260211` | [developers.tripo3d.ai](https://developers.tripo3d.ai) fetched today; live probes of both hosts |
+| Tripo API pricing | Same headline rates (text to 3D 10 to 20, image or multiview to 3D 20 to 30, auto-rig 25, retarget 10 per animation, rig check free, 1 credit = USD 0.01). The page now itemises more: texture 10 to 30, retopology 10 to 40 (no separate quad line), segmentation and completion 30 to 50, format convert 5 to 10, text to image 5. Still no splat endpoint. Concurrency is "an independent quota per task type", no numbers published | Same page |
+| Announcements since 2026-10-23 | **Agentic Canvas**, 2026-11-02 (PR Newswire): a node-based workspace in Tripo Studio where an agent assembles multi-step 3D workflows. No pricing announced. Tripo exhibits at **Formnext, 2026-11-17 to 20**. No new model or funding news found | [PR Newswire](https://www.prnewswire.com/news-releases/tripo-ai-unveils-agentic-canvas-to-make-ai-3d-more-accessible-and-scalable-302926715.html); Tripo's own social posts |
+| Tripo inside three.ws | Now **four** surfaces, not three: TripoSplat runs self-hosted since 2026-11-03 (`model-triposplat` Cloud Run service, `MODEL_TRIPOSPLAT_URL` set on `three-ws-api`, `/api/forge-splat` answering in production). The splat endpoint does not write job rows, so it has no usage count | Cloud Run service list, service env, live request |
+| Tripo tests | 8 Tripo test files, 68 tests, all passing | `npx vitest run` on the Tripo suites |
+
+### Tripo-family jobs, `forge_creations`, internal jobs excluded
+
+Read with read-only SELECTs against production on 2026-11-14. No catalog-seeder rows
+(`forge_seed_jobs`) are among them, so every row is a maker-facing job.
+
+Last 30 days (2026-10-15 to 2026-11-14), by backend and status:
+
+| Lane | Finished | Failed |
+|---|---|---|
+| TripoSG, self-hosted (open weights) | 490 | 95 |
+| Tripo API, user's own key | 0 | 0 |
+
+Per calendar month, all Tripo-family backends:
+
+| Month | Jobs |
+|---|---|
+| 2026-07 | 32 |
+| 2026-08 | 81 |
+| 2026-09 | 99 |
+| 2026-10 | 263 |
+| 2026-11 (through the 14th) | 500 |
+
+The open-weight lane is now running at more than five times its September volume, and the
+paid lane has gone from 2 jobs to none. The case for the house key is stronger than it was
+on 2026-10-09.
+
+### October platform numbers (for the reply)
+
+From `node scripts/partner-proof-brief.mjs --from 2026-10-01 --to 2026-10-31 --skip-gcp
+--skip-public`, run 2026-11-14:
+
+| Metric | October 2026 | September 2026 (proof brief) | Two months |
+|---|---|---|---|
+| Maker generation and rigging requests | 7,785 (5,399 finished) | 12,373 (7,111 finished) | 20,158 |
+| MCP tool calls | 11,548 at 92.4% handler success | 13,898 at 99.4% | 25,446 |
+| Completion, whole month | 69.4% (34.7% over Oct 27 to 31, an incident window) | 57.5% | |
+
+October was smaller than September, so the reply quotes the two-month totals, which are
+exact sums of the audited monthly figures, rather than "last month". Do not quote October's
+completion rate to Tripo without the incident context; if asked, point to the proof brief's
+normal-operation method.
+
+---
+
 ## Reply draft
 
 Send from the owner's account to the person who reached out, copying
-`business@tripo3d.ai` if the first contact did not come from there.
+`business@tripo3d.ai` if the first contact did not come from there. Rewritten 2026-11-14:
+it now apologises for the delay, counts four Tripo surfaces, says the v3 and webhook work is
+done rather than promised, and uses the September plus October totals.
 
-> Subject: three.ws x Tripo: a house lane for Tripo in the Forge
+> Subject: three.ws x Tripo: your models already run in four places in our Forge
 >
-> Hi, thanks for reaching out. Good timing: Tripo already runs in three places inside
-> three.ws. Your v3.1 model is a lane in our Forge, TripoSG powers our sketch-to-3D tool and
-> sits in our photo failover chain, and TripoSR is a rung in the free tier.
+> Hi, thanks for reaching out in October, and sorry for the slow reply. We spent the time
+> building, so there is more to show you now.
 >
-> The catch is that the v3.1 lane only works for users who bring their own Tripo key, so
-> almost nobody uses it, while the Forge took over 12,000 generation and rigging requests from real makers last month.
-> We would like to change that: make Tripo a built-in lane on our top quality tier, move to
-> your v3 API with webhooks, and add your rigging, low-poly, splat and segmentation
-> endpoints as Forge features. Those would also reach the agents that use three.ws through
-> MCP (about 14,000 tool calls last month, from ChatGPT, Claude, Cursor and others).
+> Tripo already runs in four places inside three.ws. Your v3.1 model is a Forge lane on the
+> v3 API with signed webhooks. TripoSG powers our sketch-to-3D tool and sits in our photo
+> failover chain, TripoSR is a rung in the free tier, and TripoSplat drives our new
+> image-to-splat lane. TripoSG alone finished 490 jobs for makers in the last 30 days.
 >
-> A simple first step would be a 60-day pilot on partner credits, with us reporting
-> completion, latency and quality numbers side by side with the other engines we run.
+> The gap is your hosted API. The v3.1 lane only works for users who bring their own Tripo
+> key, so almost nobody uses it, while the Forge took more than 20,000 generation and
+> rigging requests from real makers in September and October. The code that makes Tripo a
+> built-in engine on our top quality tier, selectable by name, with Tripo auto-rigging
+> feeding our animation library, is already shipped. It is waiting on one thing: a
+> platform key.
 >
-> Are you free for a call next week? Happy to show the Forge live.
+> It would reach agents too. Agents use three.ws through MCP (more than 25,000 tool calls in
+> September and October, from Claude, ChatGPT, Codex, Antigravity and other clients), which
+> looks like a natural fit with your Agentic Canvas launch.
+>
+> A simple first step would be a 60-day pilot on partner credits: we switch the lane on and
+> report completion, latency and quality numbers from live traffic, side by side with the
+> other engines we run.
+>
+> Are you free for a call in the next two weeks? Happy to show the Forge live.
 >
 > Best,
 > [owner name], three.ws

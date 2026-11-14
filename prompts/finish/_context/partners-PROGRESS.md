@@ -488,3 +488,23 @@ orders still on disk.
   re-runs the workflows (`--rerun`), and opens the PR with real links (`--open`) once they pass.
   The export now skips `__pycache__` (test-first, `tests/export-hacs-repo.test.js`).
 - Remaining (owner): clear the billing lock in the browser, then the two commands. Row 58.
+
+## 2026-11-14: order 936 (Tripo reply and house key) second pass; owner steps remain
+
+- **Step 0**: the reply has not been sent; no `TRIPO*` variable on `three-ws-api`; order 084 is
+  closed. `npm run forge:tripo`: 0 paid-lane jobs in the last 30 days (3 all time, last
+  2026-10-05). TripoSG: 490 finished, 95 failed in the last 30 days; 263 jobs in October and 500
+  in November through the 14th, none of them seeder rows.
+- **New since 2026-10-23**: TripoSplat runs self-hosted in production (2026-11-03), so Tripo now
+  has four surfaces in three.ws. Tripo launched Agentic Canvas (2026-11-02) and is at Formnext
+  2026-11-17 to 20. Both Tripo API hosts (`.com`, which the provider uses, and the documented `.ai`)
+  answer the same v3 401 envelope, so nothing in the provider needs to move. Tripo suites: 8 files, 68
+  tests, all passing.
+- **Changed**: the Tripo brief gets a 2026-11-14 refresh section, October platform numbers, a
+  corrected TripoSplat row and splat note, and a rewritten reply (apology for the five-week delay,
+  v3 and webhooks described as shipped, September plus October totals: 20,158 maker requests, 25,446
+  MCP tool calls). The launch-post facts table and copy are updated to match. Tracker row 100
+  `next_action`, owner and target date are refreshed.
+- **Remaining (owner)**: send the reply, hold the call, approve and set `TRIPO_API_KEY`. After the
+  key lands, an agent runs the production house-lane job, the daily `npm run forge:tripo` pilot
+  report and the launch post. The order file stays until then.
