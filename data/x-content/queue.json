@@ -24194,6 +24194,9 @@
 			],
 			"probes": [
 				{
+					"type": "scenario"
+				},
+				{
 					"type": "api",
 					"name": "the Grok connector answers an anonymous initialize",
 					"url": "https://three.ws/api/mcp-grok",
@@ -24256,7 +24259,67 @@
 			"mentions": {
 				"trythreews": "the account that replies"
 			},
-			"note": "Owner approval required before posting. Third post links the recipes tutorial; confirm the page is live first."
+			"note": "Owner approval required before posting. Third post links the recipes tutorial; confirm the page is live first.",
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/grok",
+						"settle": 6000
+					},
+					{
+						"hold": 2200,
+						"caption": "Grok Bot adds three.ws with one URL"
+					},
+					{
+						"scroll": "Run exactly what Grok runs",
+						"ms": 1600,
+						"caption": "Same server, same calls as Grok Bot"
+					},
+					{
+						"type": "a red vintage scooter",
+						"into": "a small reusable rocket booster",
+						"caption": "One sentence, no account, no key"
+					},
+					{
+						"click": "Generate in 3D",
+						"awaits": "/api/mcp-grok"
+					},
+					{
+						"expect": "Landed in",
+						"within": 300000
+					},
+					{
+						"read": "landed",
+						"match": "Landed in (\\d+)s"
+					},
+					{
+						"scroll": "Open viewer",
+						"ms": 1400,
+						"caption": "A real GLB, ready to spin or embed"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"drag": [
+							[
+								0.35,
+								0.45
+							],
+							[
+								0.65,
+								0.45
+							]
+						],
+						"ms": 1800
+					},
+					{
+						"hold": 3200,
+						"caption": "Grok Bot gets these same links back"
+					}
+				]
+			}
 		},
 		{
 			"id": "grok-bot-mention-bot-article",
