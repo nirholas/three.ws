@@ -433,6 +433,12 @@ and `JWT_SECRET` (nothing written, no new key supplied):
 | `vanity_inventory.secret_ciphertext` | 2 | 0 | 2 | 0 |
 | every other target | 0 | 0 | 0 | 0 |
 
+**Re-measured 2026-11-14** (same command, still read-only): keys still match
+(`--keys-only` exits 4, fingerprint `245209ce`). Undecryptable and mismatch figures are
+unchanged (24, 21, 0, 2, 35, 2 stuck; 8 mismatched); only new wallets grew the resealable
+counts: `encrypted_solana_secret` 1181 rows (1157 resealable), `encrypted_wallet_key` 620
+(591), `x402_fresh_wallets` 10953 (10953). No new row became stranded.
+
 How to read it:
 
 - **Undecryptable** rows are the already-known sealed set (24 Solana wallets sealed by
