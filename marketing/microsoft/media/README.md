@@ -53,7 +53,17 @@ Logos come from `public/pwa-512x512.png` (Marketplace and Microsoft Store tile) 
 
 ## The video
 
-The video runs 60 to 70 seconds at 1920 x 1080 and 30 fps. It is H.264 High with a silent AAC 48 kHz stereo track, and starts with faststart.
+The video runs exactly 60 seconds at 1920 x 1080 and 30 fps: the Microsoft Store recommends 60 seconds or less for a trailer, and the same cut serves every listing. The end card holds for whatever time brings the cut to 60 seconds; if the segments before it run past 57 seconds the run stops and says which to shorten.
+
+It is encoded to the Store's MP4 trailer spec (`TRAILER` and `trailerEncodeArgs` in `scripts/lib/microsoft-listing-media.mjs`):
+
+- H.264 High, progressive, 4:2:0, CABAC
+- 2 consecutive B-frames and a closed GOP of 15 frames (half the frame rate), with scene-cut keyframes off
+- AAC-LC stereo at 48 kHz, 384 kbps nominal, and faststart
+
+The audio track is silent, so the measured audio rate is a few kbps whatever the setting: silence leaves the encoder nothing to spend bits on.
+
+After encoding, `trailerProblems` checks both cuts and the downloaded public copy against that spec. It reads the stream with ffprobe, reads the settings x264 writes into the stream, and lists every keyframe.
 
 It is stepped frame by frame, not screen-recorded. Each motion frame is a screenshot taken after the camera, the animation clock or the typed prompt has advanced exactly 1/30 s. The motion is therefore smooth and identical on any machine.
 
@@ -96,7 +106,7 @@ Two image sets are produced by their own pipelines. The kit checks them against 
 - Edge screenshots, from `scripts/extension-screenshots.mjs` (the real extension on live sites)
 - VS Code images, from `packages/vscode-3d/scripts/screenshots.mjs` (a real VS Code)
 
-The run fails if any image misses its size, format, alpha rule or byte cap, or if the video is not 1920 x 1080 H.264 with AAC and 60 to 90 seconds long.
+The run fails if any image misses its size, format, alpha rule or byte cap, or if any cut (clean, captioned or the public download) misses the trailer spec above or is not 60 seconds long.
 
 ## Flags
 

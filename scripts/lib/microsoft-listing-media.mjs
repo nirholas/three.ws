@@ -364,3 +364,98 @@ export function findBinary(name, { extra = [], probe = ['--version'], hint = '' 
 	}
 	throw new Error(`${name} not found. ${hint ? `${hint} ` : ''}Or set ${env} to its path.`);
 }
+
+/**
+ * The demo video's encoding, from the Microsoft Store trailer requirements
+ * (STORES.msstore.source, "Trailer requirements" and its MP4 section): 1920 x
+ * 1080, H.264 High, progressive, CABAC, 2 consecutive B-frames, a closed GOP of
+ * half the frame rate, 4:2:0, AAC-LC stereo at 48 kHz and 384 kbps, faststart,
+ * and 60 seconds or less. The same cut serves the YouTube and Vimeo listings,
+ * and 60 seconds also meets the work order's 60 to 90 second floor.
+ */
+export const TRAILER = {
+	width: 1920,
+	height: 1080,
+	fps: 30,
+	seconds: 60,
+	gop: 15,
+	bFrames: 2,
+	audio: { profile: 'LC', sampleRate: 48000, channels: 2, bitrate: '384k' },
+	source: STORES.msstore.source,
+};
+
+/** ffmpeg output arguments that produce a TRAILER-conformant stream. */
+export function trailerEncodeArgs() {
+	return {
+		video: [
+			'-c:v', 'libx264', '-profile:v', 'high', '-level', '4.1', '-preset', 'slow', '-crf', '18',
+			'-pix_fmt', 'yuv420p', '-r', String(TRAILER.fps),
+			// A fixed GOP: no scene-cut keyframes, every GOP closed, always 2 B-frames.
+			'-g', String(TRAILER.gop), '-keyint_min', String(TRAILER.gop), '-sc_threshold', '0',
+			'-bf', String(TRAILER.bFrames), '-b_strategy', '0', '-flags', '+cgop', '-coder', 'cabac',
+		],
+		audio: [
+			'-c:a', 'aac', '-profile:a', 'aac_low', '-b:a', TRAILER.audio.bitrate,
+			'-ar', String(TRAILER.audio.sampleRate), '-ac', String(TRAILER.audio.channels),
+		],
+	};
+}
+
+/**
+ * The settings x264 records in its SEI message ("x264 - core ... options: a=1
+ * b=2"), read from the file's bytes. Returns null when no x264 string is present.
+ */
+export function x264Options(bytes) {
+	const text = typeof bytes === 'string' ? bytes : Buffer.from(bytes).toString('latin1');
+	const match = /x264 - core [^\0]*? options: ([^\0]+)/.exec(text);
+	if (!match) return null;
+	const options = {};
+	for (const pair of match[1].trim().split(/\s+/)) {
+		const eq = pair.indexOf('=');
+		if (eq > 0) options[pair.slice(0, eq)] = pair.slice(eq + 1);
+	}
+	return options;
+}
+
+/**
+ * Check a cut against TRAILER. `probe` is ffprobe JSON (streams and format),
+ * `x264` the parsed encoder options, `keyframes` the indices of key frames and
+ * `frames` the frame count. Returns one sentence per problem.
+ */
+export function trailerProblems({ probe, x264, keyframes, frames }) {
+	const problems = [];
+	const v = probe.streams.find((s) => s.codec_type === 'video');
+	const a = probe.streams.find((s) => s.codec_type === 'audio');
+	const duration = Number(probe.format.duration);
+	if (!v) return ['the video has no video stream'];
+	if (v.width !== TRAILER.width || v.height !== TRAILER.height) problems.push(`video is ${v.width}x${v.height}, the Store requires ${TRAILER.width}x${TRAILER.height}`);
+	if (v.codec_name !== 'h264' || v.profile !== 'High') problems.push(`video is ${v.codec_name} ${v.profile}, the Store requires H.264 High`);
+	if (v.pix_fmt !== 'yuv420p') problems.push(`video is ${v.pix_fmt}, the Store requires 4:2:0`);
+	if (v.field_order && v.field_order !== 'progressive') problems.push(`video is ${v.field_order}, the Store requires progressive scan`);
+	if (v.r_frame_rate !== `${TRAILER.fps}/1`) problems.push(`video runs at ${v.r_frame_rate} fps, not ${TRAILER.fps}`);
+	if (Math.abs(duration - TRAILER.seconds) > 0.05) problems.push(`video runs ${duration.toFixed(1)} s; the cut is ${TRAILER.seconds} s (the Store recommends 60 s or less)`);
+	if (!x264) {
+		problems.push('no x264 settings string in the stream, so B-frames, GOP and CABAC cannot be confirmed');
+	} else {
+		if (x264.cabac !== '1') problems.push('CABAC is off; the Store requires CABAC');
+		if (x264.bframes !== String(TRAILER.bFrames) || x264.b_adapt !== '0') problems.push(`B-frames are bframes=${x264.bframes} b_adapt=${x264.b_adapt}; the Store requires 2 consecutive B-frames (bframes=2 b_adapt=0)`);
+		if (x264.keyint !== String(TRAILER.gop)) problems.push(`keyint=${x264.keyint}; the Store requires a GOP of ${TRAILER.gop} frames (half the frame rate)`);
+		if (x264.scenecut !== '0') problems.push(`scenecut=${x264.scenecut} lets scene-cut keyframes break the fixed GOP`);
+		if (x264.open_gop !== '0') problems.push('open_gop is on; the Store requires a closed GOP');
+	}
+	for (let i = 0; i < keyframes.length; i++) {
+		if (keyframes[i] !== i * TRAILER.gop) {
+			problems.push(`keyframe at frame ${keyframes[i]}, expected one every ${TRAILER.gop} frames`);
+			break;
+		}
+	}
+	if (keyframes.length && keyframes.length !== Math.ceil(frames / TRAILER.gop)) problems.push(`${keyframes.length} keyframes in ${frames} frames, expected one every ${TRAILER.gop}`);
+	if (!a) {
+		problems.push('the video has no audio stream; the Store requires AAC-LC stereo');
+	} else {
+		if (a.codec_name !== 'aac' || a.profile !== TRAILER.audio.profile) problems.push(`audio is ${a.codec_name} ${a.profile}, the Store requires AAC-LC`);
+		if (Number(a.sample_rate) !== TRAILER.audio.sampleRate) problems.push(`audio is ${a.sample_rate} Hz, the Store requires 48 kHz`);
+		if (a.channels !== TRAILER.audio.channels) problems.push(`audio has ${a.channels} channel(s), the Store requires stereo`);
+	}
+	return problems;
+}

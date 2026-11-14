@@ -47,6 +47,7 @@ import {
 	SCENES,
 	STORES,
 	SUBMISSION_FILES,
+	TRAILER,
 	bannedTextIn,
 	cuesFor,
 	dimensionProblems,
@@ -57,7 +58,10 @@ import {
 	toNarration,
 	toSrt,
 	toVtt,
+	trailerEncodeArgs,
+	trailerProblems,
 	upsertBlock,
+	x264Options,
 } from './lib/microsoft-listing-media.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -71,8 +75,8 @@ const FORGE_RECORD = join(MASTERS, 'forge.json');
 const FRAMES = join(WORK, 'frames');
 const MANIFEST = join(OUT, 'manifest.json');
 const BUCKET = 'three-ws-desktop-releases';
-const FPS = 30;
-const VIDEO = { width: 1920, height: 1080 };
+const FPS = TRAILER.fps;
+const VIDEO = { width: TRAILER.width, height: TRAILER.height };
 const DEFAULT_PROMPT = 'a brass ship compass on a walnut stand';
 const BROWSER_ARGS = ['--disable-dev-shm-usage', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
 const SHOT = { timeout: 180_000, animations: 'disabled', caret: 'hide' };
@@ -642,8 +646,8 @@ async function buildFrames(browser, ctx) {
 
 		t.end();
 		t.begin('forge-orbit', ['A textured 3D model from that one prompt.', 'Orbit it, download it as GLB, or place it in a scene.']);
-		for (let f = 0; f < 10 * FPS; f++) {
-			await orbitTo(page, '#viewer', -20 + (f / (10 * FPS)) * 110, 72, radius);
+		for (let f = 0; f < 8 * FPS; f++) {
+			await orbitTo(page, '#viewer', -20 + (f / (8 * FPS)) * 110, 72, radius);
 			await t.frame(page);
 		}
 	});
@@ -669,8 +673,8 @@ async function buildFrames(browser, ctx) {
 		await hideOverlays(page, AGENT_HIDE, AGENT_REMOVE);
 		await gateText(page, 'video agent');
 	}, async (page) => {
-		for (let f = 0; f < 9 * FPS; f++) {
-			await orbitTo(page, '#av-viewer', -12 + (f / (9 * FPS)) * 24, 82, agentRadius, f / FPS);
+		for (let f = 0; f < 8 * FPS; f++) {
+			await orbitTo(page, '#av-viewer', -12 + (f / (8 * FPS)) * 24, 82, agentRadius, f / FPS);
 			// The walk companion and late panels mount after load; keep them out of every frame.
 			await hideOverlays(page, AGENT_HIDE, AGENT_REMOVE);
 			await t.frame(page);
@@ -694,8 +698,12 @@ async function buildFrames(browser, ctx) {
 		img{width:1440px;border-radius:12px;box-shadow:0 30px 100px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.07)}
 	</style></head><body><h2>three.ws in Visual Studio Code</h2><img src="${await dataUri('packages/vscode-3d/images/copilot-chat-commands.png', 'image/png')}" alt=""></body></html>`);
 	await stillSegment('vscode', ['In Visual Studio Code, ask GitHub Copilot to make and preview 3D models with three.ws.'], vscode, 6);
+	// The end card holds for whatever brings the cut to exactly TRAILER.seconds
+	// (its 0.4 s cross-fade comes out of the vscode slide, not out of this hold).
+	const endHold = TRAILER.seconds - t.length;
+	if (endHold < 3) throw new Error(`the cut reaches ${t.length.toFixed(1)} s before the end card; shorten a segment or the prompt so the end card holds at least 3 s inside ${TRAILER.seconds} s`);
 	await stillSegment('end', ['three.ws is live on Microsoft Marketplace. Start free at three.ws.'],
-		await titleCard('three.ws is live on<br>Microsoft Marketplace.', 'Start free at three.ws'), 6);
+		await titleCard('three.ws is live on<br>Microsoft Marketplace.', 'Start free at three.ws'), endHold);
 	t.end();
 
 	await writeFile(join(WORK, 'timeline.json'), JSON.stringify({ items: t.items.map((i) => ({ file: rel(i.file), seconds: i.seconds })), segments: t.segments, forgeSeconds }, null, 2));
@@ -703,8 +711,17 @@ async function buildFrames(browser, ctx) {
 }
 
 function ffprobe(ffprobeBin, target) {
-	const out = execFileSync(ffprobeBin, ['-v', 'error', '-show_entries', 'format=duration:stream=codec_type,codec_name,width,height,r_frame_rate,profile,pix_fmt,sample_rate', '-of', 'json', target], { encoding: 'utf8' });
+	const out = execFileSync(ffprobeBin, ['-v', 'error', '-show_entries', 'format=duration:stream=codec_type,codec_name,width,height,r_frame_rate,profile,pix_fmt,sample_rate,channels,field_order', '-of', 'json', target], { encoding: 'utf8' });
 	return JSON.parse(out);
+}
+
+/** Probe a local cut and check it against the Microsoft Store trailer spec; returns the probe. */
+async function checkTrailer(ffprobeBin, file, label) {
+	const probe = ffprobe(ffprobeBin, file);
+	const flags = execFileSync(ffprobeBin, ['-v', 'error', '-select_streams', 'v', '-show_entries', 'frame=key_frame', '-of', 'csv=p=0', file], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).trim().split('\n');
+	const keyframes = flags.flatMap((line, i) => (line.trim() === '1' ? [i] : []));
+	for (const p of trailerProblems({ probe, x264: x264Options(await readFile(file)), keyframes, frames: flags.length })) problems.push(`${label}: ${p}`);
+	return probe;
 }
 
 async function encodeVideo(ffmpegBin, timeline, files) {
@@ -712,9 +729,9 @@ async function encodeVideo(ffmpegBin, timeline, files) {
 	const listPath = join(WORK, 'frames.txt');
 	await writeFile(listPath, list);
 	const total = timeline.items.reduce((s, i) => s + i.seconds, 0);
-	const videoOut = ['-c:v', 'libx264', '-profile:v', 'high', '-level', '4.1', '-preset', 'slow', '-crf', '18', '-pix_fmt', 'yuv420p', '-r', String(FPS)];
+	const { video: videoOut, audio: audioOut } = trailerEncodeArgs();
 	const tail = ['-movflags', '+faststart', '-t', total.toFixed(3)];
-	execFileSync(ffmpegBin, ['-y', '-v', 'error', '-f', 'concat', '-safe', '0', '-i', listPath, '-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo', '-vf', `fps=${FPS},scale=${VIDEO.width}:${VIDEO.height},format=yuv420p`, ...videoOut, '-c:a', 'aac', '-b:a', '128k', '-ar', '48000', ...tail, files.clean], { stdio: 'inherit' });
+	execFileSync(ffmpegBin, ['-y', '-v', 'error', '-f', 'concat', '-safe', '0', '-i', listPath, '-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo', '-vf', `fps=${FPS},scale=${VIDEO.width}:${VIDEO.height},format=yuv420p`, ...videoOut, ...audioOut, ...tail, files.clean], { stdio: 'inherit' });
 	const style = 'FontName=DejaVu Sans,FontSize=15,PrimaryColour=&H00FFFFFF,BackColour=&H99000000,BorderStyle=4,Outline=0,Shadow=0,MarginV=34';
 	const srtArg = files.srt.replace(/([\\:'])/g, '\\$1');
 	execFileSync(ffmpegBin, ['-y', '-v', 'error', '-i', files.clean, '-vf', `subtitles='${srtArg}':force_style='${style}'`, ...videoOut, '-c:a', 'copy', ...tail, files.captioned], { stdio: 'inherit' });
@@ -740,8 +757,7 @@ async function verifyPublic(ffprobeBin, url, expectedSha) {
 	const copy = join(WORK, `public-${expectedSha.slice(0, 12)}.mp4`);
 	await writeFile(copy, buf);
 	try {
-		const probe = ffprobe(ffprobeBin, copy);
-		if (!probe.streams.some((s) => s.codec_type === 'video' && s.codec_name === 'h264')) problems.push(`${url} has no H.264 stream`);
+		await checkTrailer(ffprobeBin, copy, url);
 	} finally {
 		await rm(copy, { force: true });
 	}
@@ -770,17 +786,15 @@ async function makeVideo(browser, ctx, previous) {
 	};
 	await writeFile(files.srt, toSrt(cues));
 	await writeFile(files.vtt, toVtt(cues));
-	await writeFile(files.narration, toNarration(cues, 'three.ws demo: narration script (60 to 70 seconds, English)'));
+	await writeFile(files.narration, toNarration(cues, `three.ws demo: narration script (${TRAILER.seconds} seconds, English)`));
 	const total = await encodeVideo(ffmpegBin, timeline, files);
 
-	const probe = ffprobe(ffprobeBin, files.clean);
+	const probe = await checkTrailer(ffprobeBin, files.clean, 'clean cut');
+	await checkTrailer(ffprobeBin, files.captioned, 'captioned cut');
 	const v = probe.streams.find((s) => s.codec_type === 'video');
 	const a = probe.streams.find((s) => s.codec_type === 'audio');
 	const duration = Number(probe.format.duration);
-	if (v.width !== VIDEO.width || v.height !== VIDEO.height) problems.push(`video is ${v.width}x${v.height}, not ${VIDEO.width}x${VIDEO.height}`);
-	if (v.codec_name !== 'h264' || !a || a.codec_name !== 'aac') problems.push(`video codecs are ${v.codec_name}/${a?.codec_name}, the Store needs H.264 with AAC`);
-	if (duration < 60 || duration > 90) problems.push(`video runs ${duration.toFixed(1)} s, outside 60 to 90 s`);
-	log(`encoded ${duration.toFixed(2)} s (timeline ${total.toFixed(2)} s)`);
+	log(`encoded ${duration.toFixed(2)} s (timeline ${total.toFixed(2)} s), checked against the Microsoft Store trailer spec`);
 
 	const describe = async (file) => {
 		const buf = await readFile(file);
@@ -810,6 +824,7 @@ async function makeVideo(browser, ctx, previous) {
 		fps: FPS,
 		durationSeconds: Math.round(duration * 10) / 10,
 		codecs: `${v.codec_name} ${v.profile}, ${a.codec_name} ${a.sample_rate} Hz`,
+		encoding: `progressive 4:2:0, CABAC, ${TRAILER.bFrames} consecutive B-frames, closed GOP of ${TRAILER.gop} frames, AAC-LC stereo ${TRAILER.audio.sampleRate} Hz at ${TRAILER.audio.bitrate} nominal (the track is silent), faststart`,
 		captioned: { url: urls.captioned, ...captioned, note: 'Captions burned in, for hosts that ignore caption files.' },
 		srt: rel(files.srt),
 		vtt: rel(files.vtt),

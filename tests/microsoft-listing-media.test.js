@@ -6,6 +6,7 @@ import {
 	STORES,
 	SCENES,
 	SUBMISSION_FILES,
+	TRAILER,
 	bannedTextIn,
 	cuesFor,
 	dimensionProblems,
@@ -16,7 +17,10 @@ import {
 	timestamp,
 	toSrt,
 	toVtt,
+	trailerEncodeArgs,
+	trailerProblems,
 	upsertBlock,
+	x264Options,
 } from '../scripts/lib/microsoft-listing-media.mjs';
 
 describe('store requirements', () => {
@@ -180,5 +184,75 @@ describe('findBinary', () => {
 	it('names the missing tool and how to get it', () => {
 		expect(() => findBinary('gcloud-missing-xyz', { probe: ['--version'], hint: 'Install the Google Cloud CLI.' }))
 			.toThrow(/gcloud-missing-xyz not found\. Install the Google Cloud CLI\./);
+	});
+});
+
+describe('Microsoft Store trailer conformance', () => {
+	// What ffprobe and the x264 SEI string report for a cut. The first is the
+	// 2026-11-12 upload (three-ws-demo-a9ba45979ad6.mp4), measured from its bytes.
+	const stream = { codec_type: 'video', codec_name: 'h264', profile: 'High', width: 1920, height: 1080, pix_fmt: 'yuv420p', field_order: 'progressive', r_frame_rate: '30/1' };
+	const audio = { codec_type: 'audio', codec_name: 'aac', profile: 'LC', sample_rate: '48000', channels: 2 };
+	const keyframesEvery = (gop, frames) => Array.from({ length: Math.ceil(frames / gop) }, (_, i) => i * gop);
+	const published = {
+		probe: { streams: [stream, audio], format: { duration: '64.000000' } },
+		x264: x264Options('x264 - core 164 r3191 4613ac3 - H.264/MPEG-4 AVC codec - options: cabac=1 ref=4 bframes=3 b_adapt=1 open_gop=0 keyint=250 keyint_min=25 scenecut=40 rc=crf crf=18.0'),
+		keyframes: [0, 250, 500, 750, 1000, 1250, 1500, 1750],
+		frames: 1920,
+	};
+	const conforming = {
+		probe: { streams: [stream, audio], format: { duration: '60.000000' } },
+		x264: x264Options('x264 - core 164 - options: cabac=1 bframes=2 b_adapt=0 open_gop=0 keyint=15 keyint_min=8 scenecut=0 rc=crf'),
+		keyframes: keyframesEvery(15, 1800),
+		frames: 1800,
+	};
+
+	it('reads the encoder settings x264 writes into the stream', () => {
+		expect(x264Options('junk x264 - core 164 - options: cabac=1 bframes=2 open_gop=0 keyint=15\0trailing')).toEqual({ cabac: '1', bframes: '2', open_gop: '0', keyint: '15' });
+		expect(x264Options('no encoder string here')).toBeNull();
+	});
+
+	it('rejects the 2026-11-12 cut: 3 B-frames, a 250-frame GOP, scene-cut keyframes and 64 seconds', () => {
+		const problems = trailerProblems(published).join('\n');
+		expect(problems).toMatch(/2 consecutive B-frames/);
+		expect(problems).toMatch(/GOP of 15 frames/);
+		expect(problems).toMatch(/scene-cut/);
+		expect(problems).toMatch(/64\.0 s/);
+	});
+
+	it('passes a cut encoded to the published MP4 spec', () => {
+		expect(trailerProblems(conforming)).toEqual([]);
+	});
+
+	it('flags an open GOP, a missing encoder string, interlacing and the wrong audio', () => {
+		const problems = trailerProblems({
+			...conforming,
+			probe: { streams: [{ ...stream, field_order: 'tt' }, { ...audio, profile: 'HE-AAC', sample_rate: '44100', channels: 1 }], format: { duration: '60' } },
+			x264: null,
+		}).join('\n');
+		expect(problems).toMatch(/x264 settings/);
+		expect(problems).toMatch(/progressive/);
+		expect(problems).toMatch(/AAC-LC/);
+		expect(problems).toMatch(/48 kHz/);
+		expect(problems).toMatch(/stereo/);
+		expect(trailerProblems({ ...conforming, x264: { ...conforming.x264, open_gop: '1' } }).join()).toMatch(/closed GOP/);
+		expect(trailerProblems({ ...conforming, keyframes: [0, 15, 31] }).join()).toMatch(/keyframe at frame 31/);
+	});
+
+	it('encodes with the settings the spec names', () => {
+		const { video, audio: a } = trailerEncodeArgs();
+		const arg = (list, flag) => list[list.indexOf(flag) + 1];
+		expect(arg(video, '-c:v')).toBe('libx264');
+		expect(arg(video, '-profile:v')).toBe('high');
+		expect(arg(video, '-bf')).toBe(String(TRAILER.bFrames));
+		expect(arg(video, '-g')).toBe(String(TRAILER.gop));
+		expect(arg(video, '-sc_threshold')).toBe('0');
+		expect(arg(video, '-flags')).toBe('+cgop');
+		expect(arg(video, '-pix_fmt')).toBe('yuv420p');
+		expect(arg(a, '-profile:a')).toBe('aac_low');
+		expect(arg(a, '-b:a')).toBe('384k');
+		expect(arg(a, '-ar')).toBe('48000');
+		expect(arg(a, '-ac')).toBe('2');
+		expect(TRAILER.gop * 2).toBe(TRAILER.fps);
+		expect(TRAILER.seconds).toBe(60);
 	});
 });
