@@ -59,11 +59,12 @@ def unweighted_merge_glb(
     for name, parent, t in bones:
         base = np.zeros(3) if parent < 0 else world[parent]
         world.append(base + np.array(t, dtype=float))
-    world = np.array(world)
+    world = np.array(world).reshape(-1, 3)
 
     rng = np.random.default_rng(7)
+    centers = world if len(world) else np.zeros((1, 3))
     positions = np.concatenate([
-        w + rng.normal(scale=0.03, size=(vertices_per_bone, 3)) for w in world
+        w + rng.normal(scale=0.03, size=(vertices_per_bone, 3)) for w in centers
     ]).astype(np.float32)
     n = len(positions)
 

@@ -24,7 +24,6 @@ from pipeline import (
     run_pipeline,
 )
 from glb_fixtures import QUADRUPED, SKINTOKENS_TRIM_SCRIPT, skin_joint_count, unweighted_merge_glb
-from skeleton_roots import write_glb
 
 _FAILED = False
 
@@ -78,15 +77,6 @@ def _fake_bash_script(path: Path, writes: Path | None = None, exit_code: int = 0
     body += f"exit {exit_code}\n"
     path.write_text(body)
     path.chmod(path.stat().st_mode | stat.S_IEXEC)
-
-
-def _fake_py_script(path: Path, writes: Path | None = None, exit_code: int = 0) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    lines = ["import sys"]
-    if writes is not None:
-        lines.append(f"open(r'{writes}', 'w').write('fake')")
-    lines.append(f"sys.exit({exit_code})")
-    path.write_text("\n".join(lines) + "\n")
 
 
 def _merged_glb(path: Path, two_roots: bool) -> None:

@@ -205,12 +205,26 @@ needs the GPU image and real checkpoints. MDM is exercised in production:
 verified 2026-08-11 against the us-east4 lane, a 3-second 30 fps prompt
 returning 90 frames in 2.7 s warm, with all 22 quaternion tracks unit-norm, 17
 of 22 bones actually animating, and `Hips.position` carrying real travel.
-MoMask has not yet had an in-house production run: `gcloud builds submit` /
-`gcloud run deploy` are not available in every environment this worker is
-developed from, so until a deploy lands, treat MoMask's FID 0.045 figure above
-as momask-codes' own published HumanML3D number, not a number reproduced by
-this deployment. See `prompts/finish/_context/production-100-OWNER-ACTIONS.md`
-for the exact staging + deploy + benchmark commands.
+MoMask has not yet produced a clip in production. The 2026-11-04 image
+(`592750041`, revisions `model-text2motion-00002-sqf` in us-east4 and
+`-00008-dmr` in us-central1) ships the backend, and `/health` lists it in
+`models_available`, but the first benchmark call on 2026-11-14
+(`scripts/benchmark-momask.mjs`) failed in `_load()` with
+`AttributeError: module 'numpy' has no attribute 'float'`: momask-codes'
+`common/quaternion.py` evaluates `np.finfo(np.float).eps` at import, and NumPy
+1.24 removed that alias. `prepare_upstream_imports()` now restores it (as the
+builtin `float`, exactly what NumPy defined) before any upstream import;
+`test_momask_import.py` reproduces the failure and pins the fix. Until the next
+image rolls out and the benchmark completes, MDM stays the default and MoMask's
+FID 0.045 above is momask-codes' own published HumanML3D number, not one
+reproduced by this deployment. Benchmark the rolled image with:
+
+```bash
+WORKER_KEY=$(gcloud secrets versions access latest --secret=avatar-reconstruction-key \
+  --project aerial-vehicle-466722-p5) \
+node workers/model-text2motion/scripts/benchmark-momask.mjs \
+  --url https://model-text2motion-93741856042.us-east4.run.app --models momask,mdm --runs 2
+```
 
 `smpl_to_clip`'s `rest_offsets` parameter defaults to identity, which emits the
 raw SMPL local rotations. That is the correct baseline for SMPL-rest targets;

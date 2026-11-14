@@ -212,8 +212,30 @@ export PATH=$PATH:$HOME/.foundry/bin
 forge test --match-contract ThreeWsUniswapLauncherTest --fork-url $BASE_RPC_URL
 ```
 
-Deploying it to mainnet and setting `UNISWAP_LAUNCHER_ADDRESS` on the API service is the owner's action. Until that
-is set, `GET /api/launches/lanes` reports the lane as unavailable. See [../docs/launch-lanes.md](../docs/launch-lanes.md).
+[`script/DeployUniswapLauncher.s.sol`](./script/DeployUniswapLauncher.s.sol) deploys it on Base mainnet. It refuses any
+other chain, checks that the position manager reports the expected factory and WETH, and reads every immutable back
+after deploying. The economics are immutable and come from the environment (all default to zero, a launcher that
+charges nothing):
+
+| Variable | Meaning |
+| --- | --- |
+| `UNISWAP_LAUNCHER_TREASURY` | Receives the launch fee and the platform share. Must be an address you control. Required when either is non-zero. |
+| `UNISWAP_LAUNCHER_FEE_WEI` | Exact ETH each launch sends, in wei. |
+| `UNISWAP_LAUNCHER_PLATFORM_SHARE_BPS` | Share of fees collected from locked positions, at most 2000. |
+
+```bash
+cd contracts
+# Simulate first: nothing is sent.
+forge script script/DeployUniswapLauncher.s.sol:DeployUniswapLauncher --rpc-url base -vv
+# Deploy (irreversible). About 4.05M gas.
+forge script script/DeployUniswapLauncher.s.sol:DeployUniswapLauncher --rpc-url base \
+  --private-key $DEPLOYER_PK --broadcast --verify
+```
+
+The script prints the `gcloud run services update ... --update-env-vars UNISWAP_LAUNCHER_ADDRESS=<address>` command
+that opens the lane. Deploying and setting that variable are the owner's actions. Until it is set,
+`GET /api/launches/lanes` reports the lane as unavailable. See [../docs/launch-lanes.md](../docs/launch-lanes.md).
+`test/DeployUniswapLauncher.t.sol` runs the script itself against a Base fork.
 
 ## Layout
 

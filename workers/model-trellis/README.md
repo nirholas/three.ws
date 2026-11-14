@@ -237,8 +237,10 @@ against two real error events, which is how a genuine failure goes unnoticed.
 | `DINOV2_LOCAL_DIR` | no | `/opt/dinov2` | Image-baked dinov2 checkout used for TRELLIS's image conditioner, so the load never calls GitHub |
 | `TORCH_HOME` | no | `/opt/torch` | Set in the image; holds the pre-baked `dinov2_vitl14_reg` checkpoint so `torch.hub` finds it cached |
 
-Weights are **not** baked into the image — the `three-ws-model-weights` bucket
-is mounted at `/weights`, so refreshing weights needs no rebuild.
+The TRELLIS weights are **not** baked into the image: the `three-ws-model-weights`
+bucket is mounted at `/weights`, so refreshing weights needs no rebuild. The one
+checkpoint the image does carry is the DINOv2 ViT-L/14 conditioner (Apache-2.0)
+under `TORCH_HOME`, so the model load never reaches the network.
 
 At startup the loader **stages** that tree to local disk (`WEIGHTS_GCS_URI` →
 `WEIGHTS_LOCAL_DIR`) with the storage client and loads from there. The GCS FUSE
@@ -288,6 +290,37 @@ The local backend persists task JSON under `/output/tasks` and generated GLBs
 under `/output/results`. It does not require Google credentials or make the
 output directory public; downloads retain the worker's bearer authentication.
 
+### Third-party licenses
+
+Every image carries its own license bundle at `/licenses`, generated at build
+time by [`third_party_notices.py`](./third_party_notices.py) from what is really
+installed: each Python distribution's license files, each source-built
+component's license and pinned commit (saved in the builder stage), the baked
+DINOv2 checkpoint, every Ubuntu package, and the CUDA base image license. The
+index is `/licenses/THIRD_PARTY_NOTICES.md`; the committed copy from the last
+validated image is [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
+
+Two components the inference path needs are licensed for **non-commercial
+research and evaluation only**, and the notices list them first:
+
+- **nvdiffrast** (NVIDIA Source Code License, 1-Way Commercial): the GLB
+  texture bake and mesh renderer.
+- **diff-gaussian-rasterization**, mip-splatting fork (Inria / MPII
+  Gaussian-Splatting License): renders the views the texture bake projects.
+
+Both allow redistribution only with the full license text, which is what the
+bundle provides. **diffoctreerast** (also Inria / MPII, research only) is
+deliberately not installed: TRELLIS imports it lazily and only to render Octree
+samples, and this service decodes `gaussian` and `mesh` only.
+[`test_third_party_notices.py`](./test_third_party_notices.py) runs in the build
+gate and fails the build if a license text is missing or diffoctreerast returns.
+To refresh the committed copy from a built image:
+
+```bash
+docker run --rm --entrypoint cat <image> /licenses/THIRD_PARTY_NOTICES.md \
+  > workers/model-trellis/THIRD_PARTY_NOTICES.md
+```
+
 ## Tests
 
 The request policy (quality tiers, the clamps that stop a caller value from
@@ -298,7 +331,7 @@ so it can be proven anywhere:
 ```bash
 cd workers/model-trellis
 python3 -m pip install pytest httpx
-python3 -m pytest test_request_policy.py test_storage_backend.py -q
+python3 -m pytest test_request_policy.py test_storage_backend.py test_third_party_notices.py -q
 ```
 
 [`test_app_contract.py`](./test_app_contract.py) covers the served surface
