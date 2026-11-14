@@ -241,6 +241,20 @@ It needs `GROK_API_KEY` or `XAI_API_KEY`, is capped per UTC day by
 [docs/sentiment-scout.md](../sentiment-scout.md#failover-x-search-through-xai).
 No xAI key is configured in production yet, so the rung is dormant.
 
+### Installing the production key
+
+One command stores the key and wires every Grok rung at once:
+
+    pbpaste | npm run setup:xai-key      # or run it bare for a hidden prompt
+
+`scripts/install-xai-key.mjs` checks the key against `GET /v1/models` before
+storing anything, adds it to the Secret Manager secret `grok-api-key`, grants
+the `three-ws@` runtime service account `secretAccessor` on that one secret,
+runs `gcloud run services update three-ws-api --update-secrets
+GROK_API_KEY=grok-api-key:latest` (never `--set-env-vars`), reads the value back
+off the service and re-checks it, then runs `npm run e2e:xai-mcp` live. The key
+never appears in an argv or in output. `--dry-run` prints the exact commands.
+
 ## Grok model ids
 
 xAI retires model ids in batches. On 2026-05-15 it retired eight at once,

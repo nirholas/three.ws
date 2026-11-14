@@ -128,3 +128,8 @@ No xAI key exists in `process.env`, `.env`, `.env.local` or the `three-ws-api` s
 - Full `E2E_PORT=3107 npm test` at HEAD: 3050 files passed, 14 skipped, 1 failed: `deploy-artifacts` "lockfile the pinned npm accepts" with `spawnSync npx ETIMEDOUT` (fetching npm 11.19.1 under full-suite load, not a lockfile problem). Rerun alone: 22/22 pass.
 - Every earlier red (order 975 route, node_modules drift, sandbox Chromium, parametric bake timeout) passes at HEAD.
 - Shipped in `0e9635b52`, `e92209633`, `efdcaf7ae`; local two-token probe PASS (see the earlier 2026-11-10 entry); recheck logged in `ef07e28e3`.
+
+## 2026-11-14: order 927 (x-grok 46, production xAI key) re-verified, owner line open
+- Step 0: no xAI key in `process.env`, `.env`, `.env.local`, any Cloud Run service in the project, or Secret Manager (`gcloud secrets list` filtered on grok/xai is empty).
+- Shipped `npm run setup:xai-key` (`scripts/install-xai-key.mjs`, 7/7 in `tests/install-xai-key.test.js`): key check before storing, secret `grok-api-key`, accessor on `three-ws@` only, `--update-secrets GROK_API_KEY=grok-api-key:latest`, read-back verify, live `e2e:xai-mcp`. A bogus key against the real API is refused with xAI's 400 and nothing is stored. Documented in `docs/ops/llm-lanes.md`.
+- Open: owner creates the key at console.x.ai and runs `npm run setup:xai-key`. Then delete orders 927 and 941 together.
