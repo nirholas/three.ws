@@ -58,7 +58,8 @@ export function guardProblems(row) {
 	if (row.decision === 'reply' && !text) problems.push('decision is reply but there is no reply text');
 	if (row.decision === 'reply' && row.dry_run === false && !row.reply_tweet_id)
 		problems.push('live row without a reply tweet id');
-	if (row.decision === 'unsafe' && text) problems.push('unsafe decision carries reply text');
+	// Unsafe rows keep their fixed refusal for the audit trail; it is never sent.
+	if (row.decision === 'unsafe' && row.reply_tweet_id) problems.push('unsafe decision was posted to X');
 	return problems;
 }
 

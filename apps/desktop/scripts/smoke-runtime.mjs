@@ -63,6 +63,7 @@ try {
 	console.log(`FAIL smoke threw: ${err.stack || err}`);
 	failures.push('threw');
 } finally {
+	runtime.stop();
 	rmSync(dir, { recursive: true, force: true });
 }
 

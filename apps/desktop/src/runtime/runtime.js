@@ -455,6 +455,8 @@ export function createRuntime({ stateStore, keystore, log, feed = createPumpFeed
 	function stop() {
 		if (timer) clearInterval(timer);
 		timer = null;
+		// The on-chain launch stream is a live socket; release it with the scheduler.
+		feed.close?.();
 	}
 
 	// ── views ────────────────────────────────────────────────────────────────

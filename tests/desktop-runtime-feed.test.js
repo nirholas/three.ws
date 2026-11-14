@@ -1,19 +1,21 @@
 // three.ws Desktop launch feed: when the venue's public HTTP feed refuses this
 // network (Cloudflare 403 to datacenter and some residential ranges), the
-// runtime must still see new launches, read straight from Solana: the pump
-// program's mint authority signs every create, so its signature list is the
-// launch stream, and each create instruction carries name, symbol, uri and
-// creator. The RPC replies below follow the real CreateV2 layout observed on
-// mainnet, with synthetic keys.
+// runtime must still see new launches, read straight from Solana: a
+// logsSubscribe stream on the pump mint authority delivers every CreateEvent,
+// and a cold start backfills the newest creates from the mint authority's
+// signatures and their create instructions. The RPC replies and log lines
+// below follow the real CreateV2 and CreateEvent layouts observed on mainnet,
+// with synthetic keys.
 
 import { describe, it, expect } from 'vitest';
 import { createHash } from 'node:crypto';
 import { Keypair } from '@solana/web3.js';
 import bs58 from 'bs58';
-import { createPumpFeed, parseCreateInstruction, decodeBase58, isPublicMetadataUrl, PUMP_MINT_AUTHORITY } from '../apps/desktop/src/runtime/feed.js';
+import { createPumpFeed, parseCreateInstruction, parseCreateEvent, decodeBase58, isPublicMetadataUrl, PUMP_MINT_AUTHORITY } from '../apps/desktop/src/runtime/feed.js';
 
 const PUMP_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
 const RPC = 'https://rpc.test';
+const RPC2 = 'https://rpc-fallback.test';
 const BASE = 'https://frontend.test';
 const BLOCK_TIME = 1_794_623_428;
 const SOL_USD = 150;
@@ -56,12 +58,54 @@ function createTx({ inner = false, data = createData() } = {}) {
 	};
 }
 
+function createEventLog({ eventMint = mint, name = 'Streamed Coin', symbol = 'STR', uri = 'https://meta.test/syn.json', vTok = 1_073_000_000_000_000n, vSol = 30_000_000_000n, realTok = 793_100_000_000_000n, supply = 1_000_000_000_000_000n } = {}) {
+	const disc = createHash('sha256').update('event:CreateEvent').digest().subarray(0, 8);
+	const u64 = (v) => {
+		const b = Buffer.alloc(8);
+		b.writeBigUInt64LE(v);
+		return b;
+	};
+	const ts = Buffer.alloc(8);
+	ts.writeBigInt64LE(BigInt(BLOCK_TIME));
+	const data = Buffer.concat([
+		disc, borshString(name), borshString(symbol), borshString(uri),
+		bs58.decode(eventMint), bs58.decode(curveKey), bs58.decode(other), bs58.decode(creator),
+		ts, u64(vTok), u64(vSol), u64(realTok), u64(supply),
+		Buffer.alloc(84), // token program and flags appended by newer program versions
+	]);
+	return `Program data: ${data.toString('base64')}`;
+}
+
+// Minimal WebSocket the feed drives the same way it drives the real one.
+function fakeSocketClass() {
+	const sockets = [];
+	class FakeSocket {
+		constructor(url) {
+			this.url = url;
+			this.sent = [];
+			this.closed = false;
+			sockets.push(this);
+			queueMicrotask(() => this.onopen?.());
+		}
+		send(m) {
+			this.sent.push(JSON.parse(m));
+		}
+		close() {
+			this.closed = true;
+		}
+		emit(logs, err = null) {
+			this.onmessage?.({ data: JSON.stringify({ jsonrpc: '2.0', method: 'logsNotification', params: { result: { value: { signature: 'sigStream', err, logs } } } }) });
+		}
+	}
+	return { FakeSocket, sockets };
+}
+
 function json(body, status = 200) {
 	return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 }
 
-function harness({ frontend = 403, tx = createTx(), curve = curveAccount(), meta = { twitter: 'https://x.com/synthetic' }, metaUrlOk = true } = {}) {
-	const calls = { rpc: [], frontend: 0, meta: 0 };
+function harness({ frontend = 403, tx = createTx(), curve = curveAccount(), meta = { twitter: 'https://x.com/synthetic' }, metaUrlOk = true, primary = 200 } = {}) {
+	const calls = { rpc: [], rpc2: [], frontend: 0, meta: 0, txParams: [] };
 	const fetchImpl = async (url, init = {}) => {
 		const u = String(url);
 		if (u.startsWith(BASE)) {
@@ -70,12 +114,17 @@ function harness({ frontend = 403, tx = createTx(), curve = curveAccount(), meta
 			return json([{ mint: 'frontend-mint', symbol: 'FRT', created_timestamp: BLOCK_TIME * 1000, real_sol_reserves: 5e9 }]);
 		}
 		if (u.startsWith('https://api.coinbase.com/')) return json({ data: { amount: String(SOL_USD) } });
-		if (u === RPC) {
+		if (u === RPC && primary === 429) {
+			calls.rpc.push(JSON.parse(init.body).method);
+			return json({ jsonrpc: '2.0', error: { code: 429, message: 'Too many requests for a specific RPC call' } }, 429);
+		}
+		if (u === RPC || u === RPC2) {
 			const body = JSON.parse(init.body);
-			calls.rpc.push(body.method);
+			(u === RPC ? calls.rpc : calls.rpc2).push(body.method);
+			if (body.method === 'getTransaction') calls.txParams.push(body.params[1]);
 			if (body.method === 'getSignaturesForAddress') return json({ result: [{ signature: 'sigCreate1', err: null, blockTime: BLOCK_TIME }, { signature: 'sigFailed', err: { InstructionError: [0, 'x'] }, blockTime: BLOCK_TIME }] });
 			if (body.method === 'getTransaction') return json({ result: tx });
-			if (body.method === 'getMultipleAccounts') return json({ result: { value: [curve ? { data: [curve, 'base64'] } : null] } });
+			if (body.method === 'getMultipleAccounts') return json({ result: { value: body.params[0].map(() => (curve ? { data: [curve, 'base64'] } : null)) } });
 			return json({ error: { code: -32601, message: 'unknown' } });
 		}
 		if (u === 'https://meta.test/syn.json') {
@@ -85,8 +134,9 @@ function harness({ frontend = 403, tx = createTx(), curve = curveAccount(), meta
 		throw new Error(`unexpected fetch ${u}`);
 	};
 	const lookup = async () => (metaUrlOk ? [{ address: '93.184.216.34', family: 4 }] : [{ address: '127.0.0.1', family: 4 }]);
-	const feed = createPumpFeed({ fetchImpl, base: BASE, rpcUrl: RPC, lookup });
-	return { feed, calls };
+	const { FakeSocket, sockets } = fakeSocketClass();
+	const feed = createPumpFeed({ fetchImpl, base: BASE, rpcUrl: RPC, fallbackRpcUrls: [RPC2], wsUrl: 'wss://rpc.test', WebSocketImpl: FakeSocket, lookup });
+	return { feed, calls, sockets };
 }
 
 describe('desktop launch feed: on-chain fallback when the venue feed is blocked', () => {
@@ -107,8 +157,40 @@ describe('desktop launch feed: on-chain fallback when the venue feed is blocked'
 		expect(l.twitter).toBe('https://x.com/synthetic');
 		expect(l.graduated).toBe(false);
 		expect(feed.lastSource).toBe('chain');
-		// The failed transaction is never fetched.
+		// The failed transaction is never fetched, and versioned (v0 and v1)
+		// transactions are accepted: mainnet creates are v1 now.
 		expect(calls.rpc.filter((m) => m === 'getTransaction')).toHaveLength(1);
+		expect(calls.txParams[0].maxSupportedTransactionVersion).toBe(1);
+		feed.close();
+	});
+
+	it('serves launches streamed over logsSubscribe without any per-launch RPC', async () => {
+		const { feed, calls, sockets } = harness();
+		await feed.launches({ limit: 5 });
+		expect(sockets).toHaveLength(1);
+		await new Promise((r) => queueMicrotask(r));
+		expect(sockets[0].sent[0]).toMatchObject({ method: 'logsSubscribe', params: [{ mentions: [PUMP_MINT_AUTHORITY] }, { commitment: 'confirmed' }] });
+
+		const streamed = Keypair.generate().publicKey.toBase58();
+		sockets[0].emit(['Program log: Instruction: CreateV2', createEventLog({ eventMint: streamed }), 'Program log: unrelated']);
+		sockets[0].emit([createEventLog({ eventMint: Keypair.generate().publicKey.toBase58() })], { InstructionError: [0, 'x'] });
+		const before = calls.rpc.filter((m) => m === 'getTransaction').length;
+		const launches = await feed.launches({ limit: 5 });
+		expect(calls.rpc.filter((m) => m === 'getTransaction').length).toBe(before);
+		// Newest first; the failed transaction's event is ignored.
+		expect(launches.map((l) => l.mint)).toEqual([streamed, mint]);
+		expect(launches[0]).toMatchObject({ name: 'Streamed Coin', symbol: 'STR', creator, created_at: BLOCK_TIME * 1000 });
+		feed.close();
+		expect(sockets[0].closed).toBe(true);
+	});
+
+	it('fails over to the next RPC when the public one rate-limits', async () => {
+		const { feed, calls } = harness({ primary: 429 });
+		const launches = await feed.launches({ limit: 5 });
+		expect(launches.map((l) => l.mint)).toEqual([mint]);
+		expect(calls.rpc).toContain('getSignaturesForAddress');
+		expect(calls.rpc2).toEqual(expect.arrayContaining(['getSignaturesForAddress', 'getTransaction', 'getMultipleAccounts']));
+		feed.close();
 	});
 
 	it('finds a create made through another program (inner instruction) and the v1 create', async () => {
@@ -150,7 +232,15 @@ describe('desktop launch feed: on-chain fallback when the venue feed is blocked'
 	});
 });
 
-describe('create instruction and metadata URL guards', () => {
+describe('create instruction, create event and metadata URL guards', () => {
+	it('decodes a CreateEvent log and ignores every other event', () => {
+		const ev = parseCreateEvent(Buffer.from(createEventLog().slice(14), 'base64'));
+		expect(ev).toMatchObject({ mint, name: 'Streamed Coin', symbol: 'STR', uri: 'https://meta.test/syn.json', creator, created_at: BLOCK_TIME * 1000 });
+		expect(ev.curve).toMatchObject({ virtual_token_reserves: 1_073_000_000_000_000, virtual_sol_reserves: 30_000_000_000, token_total_supply: 1_000_000_000_000_000, complete: false });
+		const tradeDisc = createHash('sha256').update('event:TradeEvent').digest().subarray(0, 8);
+		expect(parseCreateEvent(Buffer.concat([tradeDisc, Buffer.alloc(300)]))).toBeNull();
+		expect(parseCreateEvent(Buffer.from(createEventLog().slice(14), 'base64').subarray(0, 60))).toBeNull();
+	});
 	it('parses name, symbol, uri and creator and rejects other instructions', () => {
 		const parsed = parseCreateInstruction(decodeBase58(createData()));
 		expect(parsed).toEqual({ name: 'Synthetic Coin', symbol: 'SYN', uri: 'https://meta.test/syn.json', creator });

@@ -332,6 +332,19 @@ const decodeB64Json = (v) => JSON.parse(Buffer.from(v, 'base64').toString('utf8'
 // Sign through the TEE wallet, the exact path an OKX buyer agent takes.
 // `mutate` lets a case hand the signer a doctored challenge (case 5c needs a
 // one-second validity window) without ever hand-rolling a signature.
+// Whether the onchainos wallet can sign right now. The CLI answers `wallet
+// status` with `loggedIn` even when the session has expired.
+function walletSession() {
+	try {
+		const out = execFileSync(CLI, ['wallet', 'status'], { encoding: 'utf8', timeout: 60_000 });
+		const data = JSON.parse(out).data ?? {};
+		return { loggedIn: data.loggedIn === true, reason: data.loggedIn === true ? 'logged in' : 'loggedIn: false' };
+	} catch (err) {
+		const reason = err.code === 'ENOENT' ? `onchainos is not installed at ${CLI}` : String(err.stdout || err.message).trim().slice(0, 200);
+		return { loggedIn: false, reason };
+	}
+}
+
 // `selectedIndex` picks the rail: 0 is always X Layer, case 7 pays another.
 function signChallenge(challengeHeader, { mutate, selectedIndex = 0 } = {}) {
 	let payload = challengeHeader;
@@ -923,6 +936,21 @@ async function main() {
 	}
 	const mode = args.dryRun ? '  (DRY RUN, no signing)' : args.noSpend ? '  (NO SPEND: only cases that cannot move money)' : '';
 	log(`OKX.AI end-to-end gauntlet against ${args.base}${mode}\n`);
+
+	// Every mode but --dry-run signs through the OKX agentic wallet, and that
+	// wallet's browser-OTP session expires on its own. Read it once up front so
+	// a logged-out run stops here with the way back in, instead of dying inside
+	// the first signing case.
+	if (!args.dryRun) {
+		const session = walletSession();
+		if (!session.loggedIn) {
+			console.error(`The onchainos wallet session is not live (${session.reason}), and this mode signs through it.`);
+			console.error('With a human at the browser: onchainos wallet login --phase init');
+			console.error('then: onchainos wallet login --phase poll --session-id <authSessionId>');
+			console.error('Nothing was signed. --dry-run needs no session.');
+			process.exit(4);
+		}
+	}
 
 	// Refuse to start a paid run that cannot finish: a half-funded run burns the
 	// cheap cases and then fails the dear ones on balance, which reads like a

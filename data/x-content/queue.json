@@ -24379,7 +24379,7 @@
 			],
 			"posts": [
 				{
-					"text": "If you have an avatar file and nowhere left to use it, bring it here. Paste its link or upload the .glb or .vrm, and it is saved to your account, mapped onto our animation library, and ready to put on a website with two lines of HTML.\n\nthree.ws/import/rpm",
+					"text": "Paste your avatar's .glb or .vrm link, or upload the file, and it is saved to your account, its bones are mapped onto one canonical skeleton for our animation library, and it goes on any website with two lines of HTML.\n\nthree.ws/import/rpm",
 					"textFrom": "docs/announcements/bring-your-avatar.post.txt",
 					"media": [
 						{
@@ -24392,15 +24392,15 @@
 					"text": "Finding the file: if an app loaded your avatar from a link, open your browser's developer tools, go to the Network tab, filter by .glb or .vrm, and copy the request URL. If you saved the file earlier, use the Upload File tab instead."
 				},
 				{
-					"text": "Whatever rig it came with, its bone names are mapped onto one canonical skeleton, so the idle and walk clips play on it. VRM 0.x and 1.0 files keep their toon shading, spring-bone hair and cloth, and expressions, and voice or camera capture can drive the face."
+					"text": "Whatever rig it came with, the idle and walk clips then play on it. VRM 0.x and 1.0 files keep their toon shading, spring-bone hair and cloth, and expressions, and voice or camera capture can drive the face."
 				},
 				{
-					"text": "Then give it a job. Make it an agent with its own page and a Solana wallet, or put it on your own site with <agent-3d body=\"my-avatar.glb\" brain=\"free\"> and it talks to visitors with no API key. The embed guide: three.ws/docs/embedding"
+					"text": "Then give it a job. Make it an agent with its own page and a Solana wallet, or put it on your own site with <agent-3d body=\"my-avatar.glb\" brain=\"free\"> and it talks to visitors with no API key."
 				}
 			],
 			"claims": [
 				{
-					"says": "upload the .glb or .vrm",
+					"says": ".glb or .vrm link, or upload the file",
 					"evidence": [
 						{
 							"type": "file",
@@ -24420,12 +24420,22 @@
 					]
 				},
 				{
-					"says": "its bone names are mapped onto one canonical skeleton, so the idle and walk clips play on it",
+					"says": "its bones are mapped onto one canonical skeleton",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "src/glb-canonicalize.js",
 							"contains": "set the clip library drives, so any rig using these conventions animates"
+						}
+					]
+				},
+				{
+					"says": "the idle and walk clips then play on it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "(idle + walk with legs moving)"
 						}
 					]
 				},
@@ -24493,7 +24503,7 @@
 				},
 				{
 					"type": "api",
-					"name": "the embed guide the last post links is live",
+					"name": "the embed docs behind the last post are live",
 					"url": "https://three.ws/docs/embedding",
 					"expect": {
 						"status": 200

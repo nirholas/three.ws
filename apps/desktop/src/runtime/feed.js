@@ -478,6 +478,7 @@ export function createPumpFeed({
 	}
 
 	async function chainLaunches(limit, usd) {
+		closed = false;
 		ensureStream();
 		if (!backfilled && recent.size === 0) await backfill();
 		const n = Math.min(100, Math.max(1, Number(limit) || 50));
@@ -557,9 +558,15 @@ export function createPumpFeed({
 				return null;
 			}
 		},
-		/** Stop the launch stream; the feed stays usable for HTTP and RPC reads. */
+		/**
+		 * Stop the launch stream. The feed stays usable: the next `launches()`
+		 * call opens a fresh stream and backfills again, since anything held
+		 * from before the gap would hide the launches made during it.
+		 */
 		close() {
 			closed = true;
+			recent.clear();
+			backfilled = false;
 			if (wsTimer) clearTimeout(wsTimer);
 			wsTimer = null;
 			const sock = ws;

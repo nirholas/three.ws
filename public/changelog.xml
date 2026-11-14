@@ -39,6 +39,14 @@
 			<description>The community skills page and API now include a separate External skills section with 60 skills from obra/superpowers (MIT), huggingface/skills, cloudflare/skills and getsentry/skills (all Apache-2.0). Each source is pinned to one commit, so what you read cannot change underneath you, and every card shows its source repository, commit and license. External skills are not reviewed by three.ws and are never turned on for an agent automatically: you read one, then install it through the usual scan and approval step, or with `three-ws skills import`. Skills that break the registry rules (a description over 400 characters, a body over 12,000) are left out, with the reason listed in the API response.</description>
 		</item>
 		<item>
+			<title>Download GLB on a model page follows the same keep rules as Forge</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-14:Download GLB on a model page follows the same keep rules as Forge</guid>
+			<pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Download GLB button on every model page (/m/:id) now goes through the same pay-to-keep check as the Forge result button, so the two can never disagree once pay-to-keep is switched on. Pay-to-keep is still off, so downloads stay free and instant exactly as before. The file now saves with a readable name taken from the model's title instead of a long storage id, and the button shows Preparing while it works. The holder check that runs before a download is now capped at 4 seconds, so a slow wallet or network can no longer leave the Download button stuck on Preparing. The cost preview docs also list the real path values (image, geometry, sketch).</description>
+		</item>
+		<item>
 			<title>Memory seeding writes your seed instead of failing when some AI providers hang</title>
 			<link>https://three.ws/demos/memory-seed.html</link>
 			<guid isPermaLink="false">2026-11-14:Memory seeding writes your seed instead of failing when some AI providers hang</guid>

@@ -33,6 +33,13 @@ describe('x-mention-review-sample', () => {
 		expect(guardProblems({ decision: 'reply', reply_text: 'a \u2014 b' })).toContain('reply contains a dash glyph');
 		expect(guardProblems({ decision: 'reply', reply_text: '' })).toContain('decision is reply but there is no reply text');
 		expect(guardProblems({ decision: 'reply', reply_text: 'hi', dry_run: false })).toContain('live row without a reply tweet id');
-		expect(guardProblems({ decision: 'unsafe', reply_text: 'hi' })).toContain('unsafe decision carries reply text');
+	});
+
+	it('accepts a recorded refusal on an unsafe row but flags one that reached X', () => {
+		// The image3d and make handlers record a fixed refusal on an unsafe row for
+		// the audit trail and never deliver it, so the text alone is not a problem.
+		const refusal = { decision: 'unsafe', reason: 'image_unusable', reply_text: 'I could not use that image.', dry_run: true, reply_tweet_id: null };
+		expect(guardProblems(refusal)).toEqual([]);
+		expect(guardProblems({ ...refusal, dry_run: false, reply_tweet_id: '1912000000000000001' })).toContain('unsafe decision was posted to X');
 	});
 });

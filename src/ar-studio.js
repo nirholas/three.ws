@@ -48,11 +48,14 @@ import {
 	PINCH_SCALE_MAX, PINCH_SCALE_MIN,
 } from '../packages/ar-studio/src/studio/pinch.js';
 import {
-	deserializeScene, fitTransform, MAX_PLACEMENTS, normalizeGlbUrl,
-	parseSrcParams, roomLightFromPixels, sceneFromHashParam, serializeScene,
-	SPAWN_DISTANCE_M, spawnPointInFront, studioSceneUrl, studioShareUrl,
-	touchAngle, twistDelta,
+	deserializeScene, fitTransform, glbBaseUrl, MAX_PLACEMENTS, nodeRefSrc, normalizeGlbUrl,
+	parseSrcParams, photoObjectPlacements, photoSceneFit, roomLightFromPixels,
+	sceneFromHashParam, serializeScene, SPAWN_DISTANCE_M, spawnPointInFront, splitNodeRef,
+	studioSceneUrl, studioShareUrl, touchAngle, twistDelta,
 } from '../packages/ar-studio/src/studio/scene-math.js';
+import {
+	captureFrame, preparePhoto, probePhotoScene, startPhotoScene, uploadPhoto, waitForPhotoScene,
+} from './ar/photo-scene.js';
 import { renderQRToSVG } from './erc8004/qr.js';
 import { deriveVerticalFovDeg, DEFAULT_DIAG_FOV_DEG } from './irl/camera-fov.js';
 import { createLoadQueue, loadGLTF } from './irl/load-queue.js';
@@ -422,17 +425,64 @@ function positionSelRing() {
 }
 
 // ── Model loading + placement ─────────────────────────────────────────────────
+const plainBox = (b) => ({
+	min: { x: b.min.x, y: b.min.y, z: b.min.z },
+	max: { x: b.max.x, y: b.max.y, z: b.max.z },
+});
+
+// Photo scenes (SAM 3D Objects): one GLB with a node per object. Every object
+// placed from it shares this single download and one scene-wide scale, so sizes
+// and spacing stay true to the photo.
+const photoScenes = new Map();
+function loadPhotoScene(base) {
+	let s = photoScenes.get(base);
+	if (!s) {
+		s = loadQueue.request(base).then((gltf) => {
+			gltf.scene.updateMatrixWorld(true);
+			const box = plainBox(new Box3().setFromObject(gltf.scene));
+			return { gltf, box, fit: photoSceneFit(box) };
+		});
+		photoScenes.set(base, s);
+		s.catch(() => photoScenes.delete(base));
+	}
+	return s;
+}
+
+// One object of a photo scene as its own template (`<scene.glb>#node=object_03`).
+// The node keeps its levelled orientation and its height above the floor (a mug
+// stays at table height); it is re-centred on its own footprint so dragging and
+// rotating pivot around the object, not around the scene origin.
+async function loadNodeTemplate({ base, node }) {
+	const sceneTpl = await loadPhotoScene(base);
+	const obj = sceneTpl.gltf.scene.getObjectByName(node);
+	if (!obj) throw new Error(`the scene has no object named ${node}`);
+	const nb = new Box3().setFromObject(obj);
+	const piece = obj.clone(true);
+	obj.matrixWorld.decompose(piece.position, piece.quaternion, piece.scale);
+	piece.position.x -= (nb.min.x + nb.max.x) / 2;
+	piece.position.z -= (nb.min.z + nb.max.z) / 2;
+	const root = new Group();
+	root.name = node;
+	root.add(piece);
+	const { fit } = sceneTpl;
+	const radius = (Math.max(nb.max.x - nb.min.x, nb.max.z - nb.min.z) * fit.scale) / 2;
+	const height = nb.max.y * fit.scale + fit.yOffset;
+	return {
+		gltf: { scene: root, animations: [] }, skinned: false, fit,
+		radius: Number.isFinite(radius) && radius > 0 ? radius : 0.3,
+		height: Number.isFinite(height) && height > 0 ? height : 0.75,
+	};
+}
+
 function loadTemplate(src) {
 	let t = templates.get(src);
 	if (!t) {
-		t = loadQueue.request(src).then((gltf) => {
+		const ref = splitNodeRef(src);
+		t = ref ? loadNodeTemplate(ref) : loadQueue.request(src).then((gltf) => {
 			let skinned = false;
 			gltf.scene.traverse((o) => { if (o.isSkinnedMesh) skinned = true; });
 			const box = new Box3().setFromObject(gltf.scene);
-			const fit = fitTransform(
-				{ min: { x: box.min.x, y: box.min.y, z: box.min.z }, max: { x: box.max.x, y: box.max.y, z: box.max.z } },
-				{ skinned },
-			);
+			const fit = fitTransform(plainBox(box), { skinned });
 			const radius = Math.max(
 				(box.max.x - box.min.x) * fit.scale,
 				(box.max.z - box.min.z) * fit.scale,
@@ -1813,79 +1863,304 @@ async function fetchTrayItems(tab) {
 }
 
 
-// "From a photo": SAM 3D Objects (POST /api/forge-scene-objects) turns one photo
-// into a single GLB with a named node per object, laid out like the photo. The
-// scene lands in the room as one model. The endpoint answers 503
-// backend_unconfigured until the GPU worker is deployed, and the tab says so.
-const PHOTO_POLL_MS = 4000;
-const PHOTO_MAX_POLLS = 150;
-let photoJobRunning = false;
+// "From a photo": SAM 3D Objects (workers/model-sam3d-objects behind
+// /api/forge-scene-objects) turns one photo into one GLB with a node per object,
+// levelled and laid out like the photo. Each object lands as its own placement
+// (`<scene.glb>#node=object_03`), so the arrangement arrives intact and every
+// piece can then be moved on its own. The tab asks the server first whether the
+// lane is on here (?status reads config only and never wakes the GPU) and shows
+// a designed off state instead of a form that can only fail.
+const photo = {
+	probe: null,   // Promise of the probe result; dropped when it could not answer
+	source: null,  // { blob?, url?, previewUrl, label }
+	run: null,     // { ac, startedAt, stage, labels }
+	error: '',
+	timer: 0,
+};
 
-async function runPhotoScene(imageUrl, ui) {
-	const res = await fetch('/api/forge-scene-objects', {
-		method: 'POST',
-		credentials: 'include',
-		headers: { 'content-type': 'application/json', 'x-forge-client': CLIENT_ID },
-		body: JSON.stringify({ image_url: imageUrl }),
-	});
-	const start = await res.json().catch(() => ({}));
-	if (!res.ok) throw new Error(start.message || start.error_description || `Request failed (${res.status}).`);
-	ui.progress(`Reading the photo: ${start.objects?.length || 'some'} object(s) found. Rebuilding in 3D…`);
-	for (let i = 0; i < PHOTO_MAX_POLLS; i++) {
-		await new Promise((r) => setTimeout(r, PHOTO_POLL_MS));
-		const poll = await fetch(`/api/forge-scene-objects?job=${encodeURIComponent(start.job_id)}`, { credentials: 'include' });
-		const body = await poll.json().catch(() => ({}));
-		if (!poll.ok) throw new Error(body.message || `Status check failed (${poll.status}).`);
-		if (body.status === 'failed' || body.error) throw new Error(body.error || 'The reconstruction failed.');
-		if (body.result_url) return body;
-	}
-	throw new Error('The reconstruction is taking too long. Try again in a few minutes.');
+const PHOTO_OFF_COPY = {
+	backend_unconfigured: [
+		'Scene from a photo is not switched on yet',
+		'It runs on a GPU model that is still being set up. Until then, add ready-made objects or paste a GLB link.',
+	],
+	unavailable_in_region: [
+		'Scene from a photo is not available in your region',
+		'The license for the model behind it (SAM 3D Objects) does not cover your region, so it is off here. Ready-made objects and GLB links still work.',
+	],
+};
+
+const PHOTO_STAGE_COPY = {
+	preparing: 'Preparing the photo…',
+	uploading: 'Uploading the photo…',
+	finding: 'Finding the objects in your photo…',
+	queued: 'Waiting for the 3D model to start. A cold start loads the model first and can take a few minutes.',
+	running: 'Rebuilding each object in 3D…',
+	placing: 'Placing the objects in your space…',
+};
+
+function photoTabVisible() {
+	return trayTab === 'photo' && tray && !tray.hidden;
 }
 
-function renderPhotoTab() {
+function getPhotoProbe() {
+	if (!photo.probe) {
+		photo.probe = probePhotoScene();
+		photo.probe.then((p) => {
+			if (p.reason === 'network' || p.reason === 'probe_failed') photo.probe = null;
+		}, () => { photo.probe = null; });
+	}
+	return photo.probe;
+}
+
+function setPhotoSource(next) {
+	if (photo.source?.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(photo.source.previewUrl);
+	photo.source = next;
+	photo.error = '';
+}
+
+function formatElapsed(ms) {
+	const s = Math.max(0, Math.floor(ms / 1000));
+	return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+function titleCase(label) {
+	const t = String(label || '').trim();
+	return t ? t[0].toUpperCase() + t.slice(1) : '';
+}
+
+function paintPhotoRun() {
+	const run = photo.run;
+	if (!run || !photoTabVisible()) return;
+	const stage = $('ars-photo-stage');
+	const elapsed = $('ars-photo-elapsed');
+	const labels = $('ars-photo-labels');
+	if (stage) stage.textContent = PHOTO_STAGE_COPY[run.stage] || PHOTO_STAGE_COPY.running;
+	if (elapsed) elapsed.textContent = `${formatElapsed(Date.now() - run.startedAt)} elapsed`;
+	if (labels && labels.childElementCount !== run.labels.length) {
+		labels.replaceChildren(...run.labels.map((l) => {
+			const li = document.createElement('li');
+			li.textContent = l;
+			return li;
+		}));
+		labels.hidden = !run.labels.length;
+	}
+}
+
+async function renderPhotoTab() {
+	if (photo.run) {
+		trayBody.innerHTML = `
+			<div class="ars-photo-run">
+				<div class="ars-photo-progress"><span class="ars-spinner" aria-hidden="true"></span><span id="ars-photo-stage" role="status" aria-live="polite"></span></div>
+				<p class="ars-photo-elapsed" id="ars-photo-elapsed"></p>
+				<ul class="ars-photo-labels" id="ars-photo-labels" aria-label="Objects found" hidden></ul>
+				<div class="ars-photo-actions">
+					<button type="button" class="ars-btn" id="ars-photo-cancel">Cancel</button>
+				</div>
+				<p class="ars-link-hint">You can close this panel and keep arranging. The objects appear in your space when they are ready.</p>
+			</div>`;
+		$('ars-photo-cancel')?.addEventListener('click', () => photo.run?.ac.abort());
+		paintPhotoRun();
+		return;
+	}
+
 	trayBody.innerHTML = `
-		<form class="ars-link-form" id="ars-photo-form">
-			<label class="ars-link-label" for="ars-photo-input">Paste a photo link</label>
-			<div class="ars-link-row">
-				<input id="ars-photo-input" type="url" inputmode="url" required
-					placeholder="https://example.com/desk.jpg" />
-				<button type="submit" class="ars-btn ars-btn-primary" id="ars-photo-go">Build scene</button>
+		<div class="ars-photo-skeleton" aria-busy="true" aria-label="Checking whether scene from a photo is available">
+			<span></span><span></span><span class="is-short"></span>
+		</div>`;
+	const probe = await getPhotoProbe();
+	if (trayTab !== 'photo' || photo.run) return;
+
+	if (!probe.available) {
+		const copy = PHOTO_OFF_COPY[probe.reason];
+		const retryable = !copy;
+		trayBody.innerHTML = `
+			<div class="ars-tray-empty ars-photo-off">
+				<p class="ars-photo-off-title"></p>
+				<p class="ars-photo-off-body"></p>
+				<div class="ars-photo-actions">
+					${retryable ? '<button type="button" class="ars-btn ars-btn-primary" id="ars-photo-recheck">Check again</button>' : ''}
+					<button type="button" class="ars-btn" id="ars-photo-objects">Browse ready-made objects</button>
+				</div>
+			</div>`;
+		trayBody.querySelector('.ars-photo-off-title').textContent = copy ? copy[0] : 'Could not check scene from a photo';
+		trayBody.querySelector('.ars-photo-off-body').textContent = copy
+			? copy[1]
+			: `${probe.message || 'The server did not answer.'} Check your connection, then check again.`;
+		$('ars-photo-recheck')?.addEventListener('click', () => renderPhotoTab());
+		$('ars-photo-objects')?.addEventListener('click', () => setTrayTab('objects'));
+		return;
+	}
+
+	const src = photo.source;
+	trayBody.innerHTML = `
+		<div class="ars-photo">
+			<p class="ars-link-hint">Photograph a desk, a shelf or a corner of a room. Each object in it becomes its own 3D model, set out the way it sits in the picture.</p>
+			<div class="ars-photo-sources">
+				${arActive ? '<button type="button" class="ars-btn" id="ars-photo-snap">Use what the camera sees</button>' : ''}
+				<button type="button" class="ars-btn" id="ars-photo-pick">${src ? 'Choose another photo' : 'Choose a photo'}</button>
+				<input id="ars-photo-file" type="file" accept="image/*" hidden />
 			</div>
-			<p class="ars-link-hint">Every object SAM 3D finds in the photo becomes a 3D object, laid out the way it sits in the picture. Takes a couple of minutes.</p>
-			<div id="ars-photo-state" role="status" aria-live="polite"></div>
-		</form>`;
-	const form = $('ars-photo-form');
-	const state = $('ars-photo-state');
-	const go = $('ars-photo-go');
-	form?.addEventListener('submit', async (e) => {
-		e.preventDefault();
-		if (photoJobRunning) return;
-		const url = String($('ars-photo-input')?.value || '').trim();
-		if (!/^https:\/\//i.test(url)) {
-			state.innerHTML = '<p class="ars-photo-error">That needs to be a public https link to a photo.</p>';
-			return;
-		}
-		photoJobRunning = true;
-		go.disabled = true;
-		const ui = {
-			progress: (msg) => {
-				state.innerHTML = '<div class="ars-photo-progress"><span class="ars-spinner" aria-hidden="true"></span><span></span></div>';
-				state.querySelector('span:last-child').textContent = msg;
-			},
-		};
-		ui.progress('Finding the objects in your photo…');
-		try {
-			const done = await runPhotoScene(url, ui);
-			closeTray();
-			await addModel({ src: done.result_url, title: 'Photo scene' });
-		} catch (err) {
-			state.innerHTML = '<p class="ars-photo-error"></p>';
-			state.firstChild.textContent = err.message;
-		} finally {
-			photoJobRunning = false;
-			go.disabled = false;
-		}
+			${src ? `
+			<figure class="ars-photo-preview">
+				<img id="ars-photo-img" alt="The photo to rebuild" />
+				<figcaption><span id="ars-photo-name"></span><button type="button" class="ars-photo-clear" id="ars-photo-clear">Remove</button></figcaption>
+			</figure>` : ''}
+			<form class="ars-link-form" id="ars-photo-form">
+				<label class="ars-link-label" for="ars-photo-input">Or paste a photo link</label>
+				<div class="ars-link-row">
+					<input id="ars-photo-input" type="url" inputmode="url" placeholder="https://example.com/desk.jpg" />
+					<button type="submit" class="ars-btn">Use link</button>
+				</div>
+			</form>
+			<p class="ars-photo-error" id="ars-photo-error" role="alert" hidden></p>
+			<button type="button" class="ars-btn ars-btn-primary ars-photo-go" id="ars-photo-go" ${src ? '' : 'disabled'}>Build ${probe.defaultObjects > 1 ? 'the objects' : 'the scene'}</button>
+		</div>`;
+
+	if (src) {
+		const img = $('ars-photo-img');
+		img.src = src.previewUrl;
+		img.addEventListener('error', () => {
+			img.closest('figure')?.classList.add('is-broken');
+		}, { once: true });
+		$('ars-photo-name').textContent = src.label;
+		$('ars-photo-clear')?.addEventListener('click', () => {
+			setPhotoSource(null);
+			renderPhotoTab();
+		});
+	}
+	if (photo.error) {
+		const el = $('ars-photo-error');
+		el.textContent = photo.error;
+		el.hidden = false;
+	}
+
+	const file = $('ars-photo-file');
+	$('ars-photo-pick')?.addEventListener('click', () => file?.click());
+	file?.addEventListener('change', () => {
+		const f = file.files?.[0];
+		if (!f) return;
+		setPhotoSource({ blob: f, previewUrl: URL.createObjectURL(f), label: f.name || 'Your photo' });
+		renderPhotoTab();
 	});
+	$('ars-photo-snap')?.addEventListener('click', async () => {
+		try {
+			const blob = await captureFrame(videoEl);
+			setPhotoSource({ blob, prepared: true, previewUrl: URL.createObjectURL(blob), label: 'Camera view' });
+		} catch (err) {
+			photo.error = err.message;
+		}
+		renderPhotoTab();
+	});
+	$('ars-photo-form')?.addEventListener('submit', (e) => {
+		e.preventDefault();
+		const url = String($('ars-photo-input')?.value || '').trim();
+		if (!/^https:\/\/[^\s]+$/i.test(url)) {
+			photo.error = 'That needs to be a public https link to a photo.';
+		} else {
+			setPhotoSource({ url, previewUrl: url, label: url.split('/').pop()?.split('?')[0] || 'Linked photo' });
+		}
+		renderPhotoTab();
+	});
+	$('ars-photo-go')?.addEventListener('click', () => runPhotoScene(probe));
+}
+
+async function runPhotoScene(probe) {
+	const src = photo.source;
+	if (!src || photo.run) return;
+	const room = MAX_PLACEMENTS - placements.length;
+	if (room <= 0) {
+		photo.error = `Your scene is full (${MAX_PLACEMENTS} models). Remove some models, then build again.`;
+		renderPhotoTab();
+		return;
+	}
+	const ac = new AbortController();
+	const run = { ac, startedAt: Date.now(), stage: 'preparing', labels: [] };
+	photo.run = run;
+	photo.error = '';
+	const stage = (name) => {
+		run.stage = name;
+		paintPhotoRun();
+	};
+	photo.timer = setInterval(paintPhotoRun, 1000);
+	renderPhotoTab();
+	try {
+		let imageUrl = src.url;
+		if (!imageUrl) {
+			const jpeg = src.prepared ? src.blob : await preparePhoto(src.blob);
+			stage('uploading');
+			imageUrl = await uploadPhoto(jpeg, { clientId: CLIENT_ID, signal: ac.signal });
+		}
+		stage('finding');
+		const start = await startPhotoScene(imageUrl, {
+			clientId: CLIENT_ID, maxObjects: Math.min(probe.defaultObjects, room), signal: ac.signal,
+		});
+		const labels = (start.objects || []).map((o, i) => titleCase(o.label) || `Object ${i + 1}`);
+		run.labels = labels;
+		stage('queued');
+		const done = await waitForPhotoScene(start.job_id, {
+			signal: ac.signal,
+			onTick: (_ms, status) => stage(status === 'running' ? 'running' : 'queued'),
+		});
+		stage('placing');
+		const placed = await placePhotoObjects(done, labels);
+		setPhotoSource(null);
+		photo.run = null;
+		if (photoTabVisible()) closeTray();
+		const notes = [];
+		if (done.skipped?.length) notes.push(`${done.skipped.length} could not be rebuilt`);
+		if (placed.dropped) notes.push(`${placed.dropped} left out because the scene is full`);
+		setStatus(`Placed ${placed.count} object${placed.count === 1 ? '' : 's'} from your photo${notes.length ? ` (${notes.join(', ')})` : ''}. Drag any one to move it.`);
+	} catch (err) {
+		photo.run = null;
+		if (err?.name === 'AbortError') {
+			photo.error = '';
+		} else {
+			log.warn('photo scene failed', err);
+			if (err?.code === 'unconfigured' || err?.code === 'unavailable_in_region') photo.probe = null;
+			photo.error = err?.message || 'The scene could not be built. Try again.';
+			if (!photoTabVisible()) setStatus(photo.error, { warn: true, actionLabel: 'Open', onAction: () => openTray('photo') });
+		}
+	} finally {
+		clearInterval(photo.timer);
+		if (trayTab === 'photo') renderPhotoTab();
+	}
+}
+
+// Lay the reconstructed objects out in front of the viewer the way they sat in
+// the photo: the photo's camera side faces the viewer, one shared scale.
+async function placePhotoObjects(done, labels) {
+	const base = normalizeGlbUrl(done.result_url);
+	if (!base) throw new Error('The scene came back without a usable file. Try again.');
+	const sceneTpl = await loadPhotoScene(base);
+	const root = sceneTpl.gltf.scene;
+	const entries = Array.isArray(done.objects) && done.objects.length
+		? done.objects
+		: root.children.filter((c) => /^object_\d+$/.test(c.name)).map((c, i) => ({ name: c.name, input_index: i }));
+	const nodes = [];
+	for (const e of entries) {
+		const obj = e?.name && root.getObjectByName(e.name);
+		if (!obj) continue;
+		nodes.push({ node: e.name, title: labels[e.input_index] || titleCase(e.name.replace('_', ' ')), box: plainBox(new Box3().setFromObject(obj)) });
+	}
+	if (!nodes.length) throw new Error('The scene came back empty. Try a photo with clearer, whole objects.');
+	const room = Math.max(0, MAX_PLACEMENTS - placements.length);
+	const take = nodes.slice(0, room);
+	const { scale } = sceneTpl.fit;
+	const depth = (sceneTpl.box.max.z - sceneTpl.box.min.z) * scale;
+	const fwd = camera.getWorldDirection(new Vector3());
+	const anchor = spawnPointInFront(camera.position, fwd, SPAWN_DISTANCE_M + depth / 2);
+	const yaw = Math.atan2(camera.position.x - anchor.x, camera.position.z - anchor.z);
+	const spots = photoObjectPlacements(sceneTpl.box, take, { scale, anchor, yaw });
+	let count = 0;
+	for (const spot of spots) {
+		const n = take.find((t) => t.node === spot.node);
+		const p = await addModel({ src: nodeRefSrc(base, spot.node), title: n.title }, {
+			x: spot.x, z: spot.z, yaw: spot.yaw, announce: false,
+		});
+		if (p) count++;
+	}
+	if (!count) throw new Error('The objects could not be placed. Try again.');
+	return { count, dropped: nodes.length - take.length };
 }
 
 async function renderTray() {
@@ -2096,7 +2371,7 @@ async function placeNative(placement) {
 	try {
 		if (canUseQuickLook()) {
 			setStatus('Fetching the model…', { sticky: true });
-			const res = await fetch(target.src);
+			const res = await fetch(glbBaseUrl(target.src));
 			if (!res.ok) throw new Error(`model fetch ${res.status}`);
 			const glbBlob = await res.blob();
 			setStatus('Preparing it for AR…', { sticky: true });
@@ -2107,7 +2382,7 @@ async function placeNative(placement) {
 			openQuickLook(nativeArObjectUrl);
 		} else if (canUseSceneViewer()) {
 			setStatus('Opening AR…', { sticky: true });
-			openSceneViewer(target.src, { title: target.title || '', link: location.href });
+			openSceneViewer(glbBaseUrl(target.src), { title: target.title || '', link: location.href });
 		} else {
 			setStatus('This device has no AR viewer. Open this scene on a phone to place it in a room.', {
 				warn: true, actionLabel: 'Show QR', onAction: () => qrBtn?.click(),

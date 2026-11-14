@@ -10896,8 +10896,8 @@ a delivery from the log or the `/dashboard/developers` page. The signing secret
 
 | Method and path | Auth | Purpose |
 | --- | --- | --- |
-| `GET /api/forge-quote?path=text&tier=standard` | none | What a generation would cost. Optional `backend`, `images`, `own_key`, `gameready`; `table=1` returns every tier. No spend, `cache-control: private, max-age=30`. |
-| `GET /api/forge-keep?id=<creation>` | none | Whether the creation is kept, and whether pay-to-keep is enabled. |
+| `GET /api/forge-quote?path=image&tier=standard` | none | What a generation would cost. `path` is `image`, `geometry` or `sketch`. Optional `backend`, `images`, `own_key`, `gameready`; `table=1` returns every tier. No spend, `cache-control: private, max-age=30`. |
+| `GET /api/forge-keep?creation_id=<creation>` | none | Whether the creation is kept, and whether pay-to-keep is enabled. |
 | `POST /api/forge-keep` | optional $THREE wallet or payment | Release a creation for download. With `FORGE_PAY_TO_KEEP` off it always returns `kept: true`. Non-holders get `402 three_hold_required` with the `pay_per_use` action. A reused payment returns `409 payment_already_used`. |
 
 Details and the enable command: [forge.md](./forge.md#cost-preview-and-pay-to-keep).
