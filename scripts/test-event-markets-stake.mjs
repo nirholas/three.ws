@@ -6,7 +6,7 @@
 // Guide: contracts/event-markets-stake/README.md.
 
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -37,8 +37,12 @@ if (!existsSync(so) || !existsSync(idFile)) {
 const programId = spawnSync('solana-keygen', ['pubkey', idFile], { env, encoding: 'utf8' }).stdout.trim();
 
 const ledger = mkdtempSync(path.join(tmpdir(), 'em-stake-ledger-'));
+// Every port is derived from PORT, gossip and the dynamic range included: the
+// defaults (gossip 8000, dynamic 8000-10000) collide with any other validator on
+// this machine, and the validator then panics on bind before RPC ever comes up.
 const validator = spawn('solana-test-validator', [
 	'--reset', '--quiet', '--ledger', ledger, '--rpc-port', String(PORT), '--faucet-port', String(PORT + 100),
+	'--gossip-port', String(PORT + 101), '--dynamic-port-range', `${PORT + 200}-${PORT + 300}`,
 	'--bpf-program', programId, so,
 ], { env, stdio: 'ignore' });
 
@@ -63,7 +67,13 @@ async function ready() {
 	return false;
 }
 
-if (!(await ready())) { stop(); console.error('validator did not become healthy'); process.exit(1); }
+if (!(await ready())) {
+	const log = path.join(ledger, 'validator.log');
+	const tail = existsSync(log) ? readFileSync(log, 'utf8').split('\n').filter((l) => /panic|error|in use/i.test(l)).slice(0, 5).join('\n') : '';
+	stop();
+	console.error(`validator did not become healthy on port ${PORT}${tail ? `:\n${tail}` : ''}\nSet STAKE_VALIDATOR_PORT to a free base port if another process holds this range.`);
+	process.exit(1);
+}
 
 const t = spawnSync('npx', ['vitest', 'run', 'tests/event-markets-staking.chain.test.js'], {
 	cwd: root, stdio: 'inherit', env: { ...env, STAKE_RPC_URL: rpc, EVENT_MARKETS_STAKE_PROGRAM_ID: programId },

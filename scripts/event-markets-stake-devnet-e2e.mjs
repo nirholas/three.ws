@@ -35,11 +35,12 @@ if (/mainnet/i.test(rpc)) die('devnet only: refusing a mainnet RPC');
 const loadKp = (f) => Keypair.fromSecretKey(Uint8Array.from(JSON.parse(readFileSync(f, 'utf8'))));
 if (!existsSync(payerFile)) die(`payer keypair ${payerFile} not found`);
 
+const cluster = /devnet/i.test(rpc) ? 'devnet' : /127\.0\.0\.1|localhost/.test(rpc) ? 'a local validator (rehearsal, not the devnet proof)' : rpc;
 const conn = new Connection(rpc, 'confirmed');
 const payer = loadKp(payerFile);
 const programKeyFile = 'contracts/event-markets-stake/target/deploy/event_markets_stake-keypair.json';
 const program = new PublicKey(process.env.EVENT_MARKETS_STAKE_PROGRAM_ID || (existsSync(programKeyFile) ? loadKp(programKeyFile).publicKey : die('set EVENT_MARKETS_STAKE_PROGRAM_ID')));
-if (!(await conn.getAccountInfo(program))?.executable) die(`program ${program.toBase58()} is not deployed on devnet; deploy it first (node scripts/deploy-solana-programs.mjs --cluster devnet)`);
+if (!(await conn.getAccountInfo(program))?.executable) die(`program ${program.toBase58()} is not deployed on ${cluster}; deploy it first (node scripts/deploy-solana-programs.mjs --cluster devnet)`);
 
 const keyDir = '.deploy/stake-devnet';
 mkdirSync(keyDir, { recursive: true, mode: 0o700 });
@@ -64,7 +65,7 @@ async function send(label, ixs, signers = []) {
 
 const balanceNeeded = 3 * LAMPORTS_PER_SOL;
 const have = await conn.getBalance(payer.publicKey);
-if (have < balanceNeeded) die(`payer ${payer.publicKey.toBase58()} holds ${have / LAMPORTS_PER_SOL} devnet SOL, needs ${balanceNeeded / LAMPORTS_PER_SOL}. Fund it at https://faucet.solana.com and rerun.`);
+if (have < balanceNeeded) die(`payer ${payer.publicKey.toBase58()} holds ${have / LAMPORTS_PER_SOL} SOL on ${cluster}, needs ${balanceNeeded / LAMPORTS_PER_SOL}. Fund it at https://faucet.solana.com and rerun.`);
 
 async function fundWallet(owner, sol) {
 	const bal = await conn.getBalance(owner.publicKey);
@@ -83,7 +84,7 @@ const readPool = async (id) => decodePool((await conn.getAccountInfo(poolPda(pro
 const checks = [];
 const check = (name, ok, detail) => { checks.push({ name, ok, detail }); console.log(`  ${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? `: ${detail}` : ''}`); };
 
-console.log(`Program ${program.toBase58()} on devnet, payer ${payer.publicKey.toBase58()}`);
+console.log(`Program ${program.toBase58()} on ${cluster}, payer ${payer.publicKey.toBase58()}`);
 for (const o of [authority, resolver, treasuryOwner, buybackOwner]) await fundWallet(o, 0.2);
 
 const FEE_BPS = 300, SHARE_BPS = 5000;
@@ -112,8 +113,7 @@ const lock = (poolId) => send('lock', [build.lock(program, { resolver: resolver.
 async function reconcileVault(label, poolId, { mint, tp }, ledger) {
 	const chain = await readPool(poolId);
 	const r = reconcilePool({ chain, vaultBalance: await bal(mint, poolPda(program, poolId), tp), ledger });
-	const surplusOnly = r.problems.every((p) => p.code === 'vault_surplus');
-	check(`${label}: vault == staked - fee - paid`, r.ok || (surplusOnly && false), r.ok ? 'zero drift' : JSON.stringify(r.problems));
+	check(`reconcile ${label}: vault == staked - fee - paid`, r.ok, r.ok ? `zero drift (vault ${r.vault}, expected ${r.expected_vault})` : JSON.stringify(r.problems));
 }
 
 for (const [name, tokenSet] of Object.entries(mints)) {
@@ -143,6 +143,7 @@ for (const [name, tokenSet] of Object.entries(mints)) {
 	check('paidOut equals the claims', p.paidOut === paid, `${p.paidOut} vs ${paid}`);
 	const dust = await bal(mint, poolPda(program, poolId), tp);
 	check('vault left is only rounding dust', dust === total - fee.fee - paid && dust < 2n, `${dust}`);
+	await reconcileVault(`pool A ${name}`, poolId, tokenSet, { staked: total, paidOut: paid });
 }
 
 console.log('\nPool B (spl): stake, void, every staker refunded');
@@ -159,6 +160,7 @@ console.log('\nPool B (spl): stake, void, every staker refunded');
 		check('refund returns the full stake', (await bal(mint, k.publicKey, tp)) - before === (k === ks[0] ? 500_000n : 750_000n));
 	}
 	check('void pool vault is empty', (await bal(mint, poolPda(program, poolId), tp)) === 0n);
+	await reconcileVault('pool B voided', poolId, tokenSet, { staked: 1_250_000n, paidOut: 1_250_000n });
 }
 
 console.log('\nPool C (spl): left to void_expired');
@@ -174,6 +176,7 @@ console.log('\nPool C (spl): left to void_expired');
 	const before = await bal(mint, k.publicKey, tp);
 	await send('refund after expiry', [build.refund(program, { owner: k.publicKey, poolId, mint, tokenProgram: tp })], [k]);
 	check('expired pool refunds the full stake', (await bal(mint, k.publicKey, tp)) - before === 400_000n);
+	await reconcileVault('pool C expired', poolId, tokenSet, { staked: 400_000n, paidOut: 400_000n });
 }
 
 const failed = checks.filter((c) => !c.ok);
