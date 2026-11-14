@@ -28,6 +28,11 @@ module.exports = {
 	directories: { output: 'dist', buildResources: 'build' },
 	files: ['src/**/*', 'assets/**/*', 'package.json', '!**/*.test.js'],
 	asar: true,
+	// The only native modules are ws's optional accelerators (bufferutil,
+	// utf-8-validate): N-API prebuilds that load under Electron unchanged, with a
+	// pure-JS fallback. Rebuilding them gains nothing and breaks the Windows build
+	// under wine, where node-gyp refuses to cross-compile for win32.
+	npmRebuild: false,
 	// The generic provider is a static directory of files. electron-builder
 	// writes latest.yml / latest-mac.yml / latest-linux.yml next to the
 	// artifacts and bakes this URL into the app as app-update.yml, which is

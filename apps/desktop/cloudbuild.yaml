@@ -48,6 +48,16 @@ steps:
     entrypoint: bash
     args: ['-c', 'npm ci --no-audit --no-fund']
 
+  # The local agent runtime against live launches (paper mode, nothing signed).
+  # The venue's HTTP feed refuses Cloud Build's IPs, so this exercises the
+  # on-chain launch source the shipped app falls back to. A failing runtime
+  # stops the release here, before anything is packaged.
+  - id: smoke
+    name: electronuserland/builder:20-wine
+    dir: apps/desktop
+    entrypoint: bash
+    args: ['-c', 'node scripts/smoke-runtime.mjs']
+
   - id: linux
     name: electronuserland/builder:20-wine
     dir: apps/desktop
