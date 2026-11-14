@@ -597,3 +597,32 @@ Owner message sent with both gates batched: the browser login for `claude@three.
 funding legs in `prompts/okx-ai/e2e-evidence/FUNDING-REQUEST.md` (2.16 USD₮0 to the buyer on X
 Layer chain 196, plus the case 7 Solana leg). GO/NO-GO for OKX-05: **NO-GO on settlement
 evidence, unchanged**; no real settlement has landed. Order 913 stays on disk.
+
+## 2026-11-14 | order 08 (911) | Steps 0 and 1 re-measured green; login minted, waiting on the owner's browser login
+
+No on-chain write, no payment, no deploy, no push.
+
+**Step 0: PASS.** Live API `518f61469` (`three-ws-api-00535-6pd`, built 2026-11-13). `GET
+/api/okx/3d/catalog` lists exactly the seven forge/free rows; the nine back-burner rows,
+`identity-studio` among them, sit under `unlisted`.
+
+**Step 1: PASS, items 1 to 6.** Unpaid `forge_3d` on the four paid rows answers 402,
+`x402Version 2`, `accepts[0]` `exact` / `eip155:196` / payTo `0x4022de2D…f402` at 10000 / 50000 /
+250000 / 250000. Rails once each: X Layer USD₮0, Solana USDC, Solana $THREE, Base USDC.
+`forge-status` POST 200 (no 402), `getting_started` 200 on every MCP row, `catalog` and `health`
+GET 200. `node scripts/okx-compliance-probe.mjs`: PASS 20 probes. `node
+scripts/okx-three-copy-check.mjs`: module == live == listing (7 rows); on-chain NOT COMPARED (no
+session). Six OKX suites: 229/229.
+
+**Delta expectation corrected.** The order expects 7 deletes plus 7 creates. That is stale: the
+forge names have been on-chain since the 2026-08-27 update (ids 39975 to 39981, RUNBOOK §5.5),
+so `--delta` should produce 7 `operation: update` entries carrying the four-part descriptions,
+which keeps the service ids and their history. The four-part format (capability, parameters,
+method, runnable curl) contradicts the skill's two-part invariant but is OKX's own rule per
+`agent update --help` and rejection #2 (2026-07-26); `validate-listing` passed it on 2026-08-31.
+
+**Blocked on the owner.** `onchainos` 4.6.9, `wallet status` `loggedIn: false`, `get-agents`
+answers `session expired`. Login session `66242c4f-cb44-42e3-af1b-e549a3c92909` minted with
+`wallet login --phase init`; the poll is running. Once it lands: Step 2 delta, one
+`validate-listing` pass, diff card, owner confirm, `agent update`, `agent activate
+--preferred-language en-US`.
