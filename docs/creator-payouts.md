@@ -75,3 +75,4 @@ A held share notifies the owner once per reason change, not once per run.
 - Migration: `api/_lib/migrations/20261023190000_creator_payouts.sql`.
 - Page: `pages/creator-payouts.html`, `src/creator-payouts-page.js`.
 - Tests: `tests/creator-payouts.test.js`.
+- Live check: `scripts/creator-payouts-prod-e2e.mjs` drives the page in a headless browser against a deployment as the QA account (register, stage a change, cancel, CSV, public payouts block). Run `npm run audit:web:login` first.
