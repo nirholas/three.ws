@@ -68,7 +68,6 @@ function swapResultText(r) {
 	if (r.simulated) {
 		return `Simulation ${r.status === 'would_succeed' ? 'passed' : 'failed'}: ${r.in.amount} in via ${r.via}, at least ${r.min_received.amount} out. ${r.simulation.err ? `Error: ${JSON.stringify(r.simulation.err)}` : `${r.simulation.units_consumed} compute units.`} Nothing was signed; the quote_id is still valid.`;
 	}
-	if (r.status === 'submitted_unconfirmed') return `Submitted but not yet confirmed. ${r.message || ''} Check the signature before retrying.`;
 	return `Swap confirmed via ${r.via}: ${r.in.amount} in, about ${r.expected_out.amount} out. Signature ${r.signature} ${r.explorer || ''}`.trim();
 }
 

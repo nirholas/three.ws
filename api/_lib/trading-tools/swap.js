@@ -371,18 +371,6 @@ async function custodyClaimed(agentId, key) {
 	return rows.length > 0;
 }
 
-function unconfirmed(detail) {
-	return {
-		chain: 'solana',
-		network: 'mainnet',
-		status: 'submitted_unconfirmed',
-		signature: detail?.signature ?? null,
-		explorer: detail?.explorer ?? null,
-		custody_event_id: detail?.custody_event_id ?? null,
-		message: 'The swap was submitted but not confirmed in time. Check the explorer link before trying again; do not re-quote and resend blindly.',
-	};
-}
-
 /**
  * Fill a quote from the agent wallet. `dry_run: true` runs every guard, builds
  * the exact transaction and simulates it on chain without signing, spending
@@ -434,7 +422,6 @@ export async function swapExecute(args, ctx) {
 		throw err;
 	}
 	if (r.error) {
-		if (r.error.code === 'trade_unconfirmed') return { ...unconfirmed(r.error.detail), agent_id: agent.id, wallet: address, via: pin.aggregator };
 		// Refused before the executor claimed its custody row (the price moved, a
 		// guard said no, the wallet is short): the quote stays spendable while it
 		// is fresh, so the owner can fix the cause and confirm it again.

@@ -646,7 +646,6 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 	// uses the protected single-tx route (tipMode 'off'; no Jito tip).
 	const signConn = solanaConnection(network);
 	let signature;
-	let confirmed = true;
 	let execTelemetry = null;
 	try {
 		const result = await submitProtected({
@@ -657,20 +656,23 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 		execTelemetry = { route: result.route, priority_fee_microlamports: result.priorityFeeMicroLamports, landed_ms: result.landedMs, attempts: result.attempts };
 	} catch (e) {
 		if (e?.code === 'TX_ERR') {
-			// Landed but reverted on-chain; record the failed signature, don't re-send.
-			signature = e.signature || null;
-			confirmed = false;
+			// Landed and reverted on-chain: definitive, no tokens or SOL changed hands
+			// beyond the network fee. Settle the claim as failed (a pending row would
+			// refuse every retry with this idempotency key as trade_in_progress) and
+			// never re-send this transaction.
+			const reverted = e.signature || null;
+			await updateCustodyEvent(claimId, { status: 'failed', signature: reverted, meta: { error: 'tx_reverted', message: (e?.message || '').slice(0, 200) } }).catch(() => {});
+			logAudit({ userId: auth.userId, action: 'custody.trade_failed', resourceId: id, meta: { side, mint: mintStr, reason: 'tx_reverted', signature: reverted }, req });
+			return fail(422, 'trade_reverted', 'the trade reverted on-chain (the market most likely moved past the slippage bound); only the network fee was spent, so it is safe to quote and try again', {
+				signature: reverted,
+				explorer: reverted ? explorerTxUrl(reverted, network) : null,
+				custody_event_id: claimId,
+			});
 		} else {
 			await updateCustodyEvent(claimId, { status: 'failed', meta: { error: 'send_failed', message: (e?.message || '').slice(0, 200) } }).catch(() => {});
 			logAudit({ userId: auth.userId, action: 'custody.trade_failed', resourceId: id, meta: { side, mint: mintStr, reason: 'send_failed' }, req });
 			return fail(502, 'send_failed', 'the trade could not be submitted and no funds were moved; try again');
 		}
-	}
-
-	if (!confirmed) {
-		await updateCustodyEvent(claimId, { signature, meta: { confirm: 'unconfirmed' } }).catch(() => {});
-		logAudit({ userId: auth.userId, action: 'custody.trade_unconfirmed', resourceId: id, meta: { side, mint: mintStr, signature }, req });
-		return fail(202, 'trade_unconfirmed', 'the trade was submitted but not yet confirmed; check the explorer link before retrying', { signature, explorer: explorerTxUrl(signature, network), custody_event_id: claimId });
 	}
 
 	await updateCustodyEvent(claimId, {
