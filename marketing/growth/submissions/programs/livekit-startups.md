@@ -1,7 +1,7 @@
 # LiveKit Startups
 
 Program: LiveKit Startups (credits). Companion to the plugin pull request in [../livekit-avatar-plugin.md](../livekit-avatar-plugin.md) (order 938); this file covers only the credits application.
-Page last read: 2026-10-23 (<https://livekit.com/startups>). Launch date 2026-09-16 per `docs/partners/prospects.md`.
+Page last read: 2026-11-14 (<https://livekit.com/startups>): credits, eligibility, the FAQ's net-new rule and step 1 fields all unchanged since 2026-10-23; no deadline and no change notice. Launch date 2026-09-16 per `docs/partners/prospects.md`.
 Tracker row: "LiveKit Agents avatar plugin" in `marketing/growth/opportunities.csv` (target 2026-10-30).
 Nothing has been submitted. Shared facts and owner-only inputs: [README.md](./README.md).
 
@@ -28,7 +28,7 @@ None stated on the page.
 
 ## Form fields
 
-Only step 1 of 4 ("About you") was visible on 2026-10-23: First name, Last name, Work email, LinkedIn, Role (dropdown), all required. Steps 2 to 4: **not verified on 2026-10-23** (they sit behind the first step). Drafted answers for the likely company questions:
+Only step 1 of 4 ("About you") is visible: First name, Last name, Work email, LinkedIn, Role (dropdown), all required; the page says it "takes a few minutes" and no pitch deck is required. Steps 2 to 4: **not verified on 2026-11-14** (they sit behind the first step). Drafted answers for the likely company questions:
 
 | Question | Draft answer |
 |---|---|
@@ -43,4 +43,4 @@ Only step 1 of 4 ("About you") was visible on 2026-10-23: First name, Last name,
 
 1. Open the plugin pull request first (order 938) so the application can link a real, reviewable contribution.
 2. Apply at <https://livekit.com/startups>; complete steps 2 to 4 using the table above; update this file with the fields seen.
-3. On approval, redeem the promo code on the Scale plan, wire LiveKit Cloud env vars through the credential playbook, and log the outcome in `opportunities.csv`.
+3. On approval, redeem the promo code on the Scale plan, wire LiveKit Cloud env vars through the credential playbook (no `LIVEKIT_*` variable is set on `three-ws-api` as of 2026-11-14), and log the outcome in `opportunities.csv`.

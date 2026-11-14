@@ -1,7 +1,7 @@
 # Meshy Partner Program
 
 Program: Meshy partner form at <https://www.meshy.ai/partners> (Reseller or Sales agent).
-Page last read: 2026-10-23.
+Page last read: 2026-11-14: partner types, benefits, the Europe-first start, the 2-business-day reply and all ten form fields unchanged since 2026-10-23. Note `https://www.meshy.ai/partner` (singular) is a 404; use the plural URL.
 Prospect context: score 14 in `docs/partners/prospects.md` (the bring-your-own-key lane is `api/_providers/meshy.js`; the goal is platform pricing so Meshy can be a house lane).
 Nothing has been submitted. Shared facts and owner-only inputs: [README.md](./README.md).
 
@@ -37,4 +37,4 @@ Submitting means agreeing to Meshy's Privacy Policy.
 
 1. Fill the form at <https://www.meshy.ai/partners> with the table above and press Apply Now.
 2. Take the intro call with the volume figure above and ask for embedded API pricing.
-3. Log the outcome in `opportunities.csv` (no Meshy row exists) and, if pricing lands, wire the house key per the credential playbook.
+3. Log the outcome in the Meshy row of `opportunities.csv` and, if pricing lands, wire the house key per the credential playbook (no Meshy key is set on `three-ws-api` as of 2026-11-14).

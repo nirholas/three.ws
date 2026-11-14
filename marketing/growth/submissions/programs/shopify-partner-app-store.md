@@ -2,15 +2,26 @@
 
 Program: Shopify Partner account, then App Store review of "Photo to 3D product media".
 Full build record, app configuration, env vars, billing, webhooks, listing copy and verification packet: [../shopify-app.md](../shopify-app.md) (order 091). This file adds the review layer and the verified listing limits.
-Page last read: 2026-10-23 (<https://shopify.dev/docs/apps/launch/app-requirements-checklist>). The page covers billing, listing fields and screencast rules; it does not state the submission steps or the review turnaround, so those are **not verified on 2026-10-23**.
-Tracker: no dedicated row in `opportunities.csv`; prospect score 14 in `docs/partners/prospects.md`.
+Page last read: 2026-11-14 (<https://shopify.dev/docs/apps/launch/app-requirements-checklist>, unchanged on every limit below, and <https://shopify.dev/docs/apps/launch/app-store-review/submit-app-for-review>, which gives the submission steps). Neither page states a review turnaround: **not verified on 2026-11-14**.
+Tracker row: "Shopify App Store: Photo to 3D product media" in `opportunities.csv`; prospect score 14 in `docs/partners/prospects.md`.
 Nothing has been submitted. Shared facts and owner-only inputs: [README.md](./README.md).
 
 ## Deadline and eligibility
 
-No deadline. Partner account is free. Blocker to date: `SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET`, `SHOPIFY_APP_URL` and `VITE_SHOPIFY_API_KEY` are unset in production, so the app has not been installed on any store.
+No deadline. Partner account is free. Blocker to date: `SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET`, `SHOPIFY_APP_URL` and `VITE_SHOPIFY_API_KEY` are unset in production (rechecked 2026-11-14), so the app has not been installed on any store.
 
-## Listing fields against Shopify's limits (read 2026-10-23)
+Submission limits (2026-11-14): only one new app can be in review at a time, and each published app needs 10 or more paid installs before another new app can be submitted. Apps using an API deprecated within 90 days cannot be submitted. The app must not lower the storefront's Lighthouse score by more than 10 points (weighted home 17%, product 40%, collection 43%).
+
+## Submission steps (read 2026-11-14)
+
+1. Open the app's Shopify App Store review page in the Partner Dashboard; it walks through the mandatory fields and automated tests and saves progress.
+2. Configuration: app URLs (must not contain "Shopify" or "Example"), compliance webhooks, app icon and API contact details.
+3. Create at least one App Store listing and set a primary language.
+4. Protected customer data: opt out (this app reads no customer data; scopes are `read_products,write_products`).
+5. Emergency developer contact: an email and a phone number (owner input). Shopify writes to the app submission email from the listing's contact section during review.
+6. Run the automated checks, fix and rerun until they pass, then submit.
+
+## Listing fields against Shopify's limits (read 2026-11-14)
 
 | Field | Limit | Draft |
 |---|---|---|
@@ -36,6 +47,6 @@ Scopes requested: `read_products,write_products`. No customer or order data is r
 
 1. Create the Partner account and app (Steps 1 and 2 of the linked file); set env vars, migration, install on a development store.
 2. Verify live and record the screencast (Step 6).
-3. Distribution tab in the Partner Dashboard: choose Public distribution, paste the table above, submit.
+3. Distribution tab in the Partner Dashboard: choose Public distribution, then follow the six submission steps above with the listing table.
 4. Switch billing out of test mode only after the app has Public distribution, as built.
 5. Log the outcome in `opportunities.csv` and add the App Store URL to `docs/shopify-app.md`.

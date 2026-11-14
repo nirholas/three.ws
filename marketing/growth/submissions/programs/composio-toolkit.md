@@ -1,13 +1,13 @@
 # Composio Toolkit Partnership
 
 Program: Composio Toolkit Partnership (Composio builds and lists a toolkit for our API or MCP server).
-Page last read: 2026-10-23 (<https://composio.dev/partnerships/toolkit>). Re-verified 2026-11-14: the URL still resolves (HTTP 200) and every three.ws URL in the answers resolves; numbers refreshed below. The form fields were not re-read, so glance at them when you open it.
+Page last read: 2026-11-14 (<https://composio.dev/partnerships/toolkit>). The full form was re-read that day: every field, option list and required marker below matches the page; no deadline, eligibility rule or partner benefit is stated. Every three.ws URL in the answers resolves and the numbers were refreshed. Previous read: 2026-10-23.
 Tracker row: "Composio toolkit partnership" in `marketing/growth/opportunities.csv` (target date 2026-10-30).
 Nothing has been submitted. Shared facts and owner-only inputs: [README.md](./README.md).
 
 ## Deadline and eligibility
 
-- No deadline stated. The tracker target is 2026-10-30.
+- No deadline stated. The tracker target of 2026-10-30 has passed; submit this week.
 - No eligibility criteria stated. A partial application is accepted; Composio asks for the rest as work proceeds. Composio asks to disclose any paid plan, allowlist or approval requirement, and wants company-owned test accounts.
 - Never type credentials into the form. Share them through a private, expiring link to our own secret store.
 

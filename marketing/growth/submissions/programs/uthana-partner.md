@@ -1,13 +1,13 @@
 # Uthana partner or design-partner inquiry
 
 Program: no application form. Uthana's site routes everything to `sales@uthana.com` through mailto links, including "Become a design partner" and "Custom dataset inquiry".
-Page last read: 2026-10-23 (<https://uthana.com>; `https://www.uthana.com/partners` is a 404). Form fields: none exist. The partners page lists customer logos only (Unity AI, Replicate, Scenario, Sloyd and others) and describes no program terms.
+Page last read: 2026-11-14 (<https://uthana.com>; `https://www.uthana.com/partners` was a 404 on 2026-10-23). Form fields: none exist. The home page lists logo partners only (Unity AI, Replicate, Scenario, Sloyd and others) and describes no program terms. The "Become a design partner" invitation is addressed to simulation teams.
 Prospect context: score 12 in `docs/partners/prospects.md`; seed USD 4.3M (2025-03) and "45,000+ characters animated" are vendor claims from the 2026-10-09 sweep.
 Nothing has been sent. Shared facts and owner-only inputs: [README.md](./README.md).
 
 ## Facts about their product (read today)
 
-One GraphQL API for generating motion, extracting motion from video, retargeting and auto-rigging (docs at `/docs/api`); public Blender and Maya plugins. API access terms, keys and rate limits are not stated on the page. Pricing: **not verified on 2026-10-23** (the page links `/pricing` and shows none).
+One GraphQL API for generating motion, extracting motion from video, retargeting and auto-rigging (docs at `/docs/api`, changelog at `/docs/api/changelog`); public Blender and Maya plugins; and now an Uthana MCP server for creating motion from Claude, Codex or Cursor (setup at `/mcp/setup`). API usage draws on the same credit balance as the web app. Published per-unit rates (2026-11-14): USD 0.10 per second of Text-to-motion 3.0 output, USD 0.06 per second of Video-to-motion 3.0, USD 0.02 per second of Locomotion, USD 0.15 per auto-rigged character; datasets and custom integrations priced to scope. Clip redistribution terms: not stated. Other routes: `/contact`, `/support`, Discord `discord.gg/PbMzMPSyTG`.
 
 ## The ask
 
@@ -23,6 +23,6 @@ Subject: three.ws integration and motion data licensing
 
 ## Owner steps
 
-1. Send the message; add a tracker row (no Uthana row exists today).
+1. Send the message; record the date in the Uthana row of `opportunities.csv`.
 2. When terms arrive, check whether clip redistribution inside an app is allowed before wiring anything.
-3. Do not onboard a paid API without approval, per CLAUDE.md.
+3. Do not onboard a paid API without approval, per CLAUDE.md. The published rates above are per second of output, so any commercial lane needs a cost cap before it goes live.

@@ -1,7 +1,7 @@
 # GitHub Technology Partner Program
 
 Program: GitHub Technology Partner Program.
-Re-verified 2026-11-14: the program URL still resolves; the GitHub MCP Registry API (`api.mcp.github.com/v0/servers`) now lists 790 servers (the 394 below is stale) and none is ours, so the registry gap is still open. Our official-registry count is 80 under io.github.nirholas, not 73. Page last read: 2026-10-23 (<https://github.com/partners/technology-partners> and the form at <https://github.com/partners/technology-partners/apply>).
+Page last read: 2026-11-14 (the form at <https://github.com/partners/technology-partners/apply>, every field re-read; it states no eligibility or benefits, so those sections come from the program page <https://github.com/partners/technology-partners>, read 2026-10-23). Same day: the GitHub MCP Registry API (`api.mcp.github.com/v0/servers`) lists 790 servers and none is ours, so the registry gap is still open; our official-registry count is 80 under io.github.nirholas.
 Prospect context: score 13 in `docs/partners/prospects.md`. Related tracker rows: "GitHub Open Source Friday" and the MCP registry work.
 Nothing has been submitted. Shared facts and owner-only inputs: [README.md](./README.md).
 
@@ -38,8 +38,8 @@ None stated.
 | 10 | State, province or country of incorporation | yes | Owner input |
 | 11 | GitHub organization | yes | Owner input. The repo is `github.com/nirholas/three.ws` under the user account `nirholas`; if no organization exists, state that and use the user |
 | 12 | GitHub username | yes | `nirholas` |
-| 13 | Category | yes | AI (alternates in the dropdown: IDEs, Utilities, Publishing) |
-| 14 | Marketplace integration (building or soon launching a technical integration) | yes | Yes: an MCP server listing in the GitHub MCP Registry (`mcp-server/server.json`, name `io.github.nirholas/3d-agent-mcp`, already in the official MCP registry) |
+| 13 | Category | yes | AI. The 2026-11-14 dropdown: AI, Chat, IDEs, Mobile, Copilot, Support, Testing, Learning, Security, Utilities, Codespaces, Deployment, Monitoring, Publishing, Code review, Code quality, Localization, API management, Project management, Dependency management, Continuous integration |
+| 14 | "Are you building or soon launching a technical integration for the GitHub Marketplace?" (options not shown to a fetch) | yes | Yes: an MCP server listing in the GitHub MCP Registry (`mcp-server/server.json`, name `io.github.nirholas/3d-agent-mcp`, already in the official MCP registry) |
 | 15 | Country | yes | Owner input |
 | 16 | Marketing consent | no | Owner's choice |
 

@@ -1,7 +1,7 @@
 # Deepgram Startup Program (and Technology partner track)
 
 Program: Deepgram Startup Program (credits) and, separately, the Technology Partner track at <https://deepgram.com/partners>.
-Page last read: 2026-10-23 (<https://deepgram.com/startup-program>, <https://deepgram.com/partners>). `https://deepgram.com/startups` returned 404, so use the `startup-program` URL.
+Page last read: 2026-11-14 (<https://deepgram.com/startup-program>); the Technology Partner page <https://deepgram.com/partners> was last read 2026-10-23. `https://deepgram.com/startups` returned 404, so use the `startup-program` URL.
 Tracker row: "Deepgram Startup Program" in `opportunities.csv` (status `owner_decision_required`, target 2026-10-09, overdue).
 Nothing has been submitted. Shared facts and owner-only inputs: [README.md](./README.md).
 
@@ -11,7 +11,7 @@ Deepgram is not in our code today (our speech recognition runs on NVIDIA Riva be
 
 ## What it grants and deadline
 
-- "Up to $100,000 in credits" over 12 months, used within 12 months. Search results quoting Deepgram's terms say direct applicants start at USD 1,000 with upgrades as usage grows; the program page itself does not list tiers. Treat the USD 1,000 start as the realistic expectation.
+- "Up to $100,000 in credits". The program page now states it directly (2026-11-14): direct applicants start at USD 1,000, with higher tiers as usage grows; applicants referred by partner VCs, accelerators or startup networks may get enhanced offers. Each grant expires 12 months after issue. Expect USD 1,000.
 - No deadline. Response typically within a week; credits within 24 to 48 hours of approval.
 
 ## Eligibility
@@ -25,7 +25,7 @@ Deepgram is not in our code today (our speech recognition runs on NVIDIA Riva be
 
 ## Form fields
 
-The page lists a Deepgram console account and Project ID, and asks you to describe the startup and how you plan to use voice AI. Other fields: **not verified on 2026-10-23**.
+The page lists a Deepgram console account and Project ID, and asks you to describe the startup and how you plan to use voice AI. Other fields: **not verified on 2026-11-14** (the page still lists none).
 
 | Field | Draft answer |
 |---|---|

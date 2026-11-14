@@ -5,128 +5,91 @@ Target: [PrusaSlicer](https://github.com/prusa3d/PrusaSlicer) pull request and
 order 938: both a GitHub account action (filing a PR/issue) that only the
 owner can take, so this file carries the exact patch and issue text to paste.
 
+Re-verified 2026-11-14 (both repos live, not archived, AGPL-3.0, default branch `master`):
+
+- PrusaSlicer: THE OLD PATCH NO LONGER APPLIES TO `master`. `master` was re-architected (2727
+  commits ahead of the `version_2.9.7` tag the patch was built on). `src/slic3r/GUI/Downloader.cpp`
+  survives as a stale leftover with a two-host list (`printables.com`, `thingiverse.com`) and no
+  `GUI_App.cpp` beside it; `libslic3r/AppConfig.hpp` is now `Slic3r/App/AppConfig.hpp`. The live
+  allowlist is `validate_and_complete_input` in
+  `src/slic3r-shared/src/Slic3r/Biz/FileDownloader/FileDownloaderInteractor.cpp` (blob
+  `8b77368a65`, last changed 2026-11-02). It now allows `prusa.com`, `prusa3d.com`, `prusa.cz`,
+  `prusa3d.cz`, `prusa3d.dev`, `printables.com`, `testprusaverse.com`, `thingiverse.com` and
+  `cults3d.com`. The `AppConfig`-backed `download_url_extra_hosts` design would now need a new
+  accessor on `Biz::Platform::IAppConfigProvider` plus its implementation in
+  `src/slic3r-shared/src/Slic3r/App/AppConfigProvider.cpp`, which I did not build. Because
+  `.github/CONTRIBUTING.md` says every PR must be minimal and local ("no one-trick ponies", "no
+  architectural changes", "keep the number of changes to a minimum") and says feature requests
+  belong in GitHub Discussions (the issue tracker is for bugs only), the submission is now a
+  Discussion plus the one-line patch below, not the configurable-allowlist PR.
+- Bambu Studio: still current, with two changes. The function is now at lines 1116-1162 (was
+  1105-1151), same five-entry `trusted_entries[]` list. Blank issues are disabled, so the issue
+  must be filed from the "Feature request" template (headings below).
+- The doc anchor this file used for Forge was stale; the section is now
+  [`docs/forge.md#open-in-a-3d-printing-slicer`](../../../docs/forge.md#open-in-a-3d-printing-slicer).
+  `src/slicer-handoff.js` still exists and still offers no PrusaSlicer button.
+
 ## Why this matters
 
-Forge's "Get it printed" slicer handoff (`src/slicer-handoff.js`,
-`docs/forge.md#get-it-printed-live-prices-from-craftcloud`) opens a
-`prusaslicer://` or `bambustudio://` deep link pointing at a three.ws-hosted
-STL/3MF. Both slicers gate `prusaslicer://open?file=` style downloads behind a
-hardcoded allowlist of trusted hosts, so a user who clicks "Open in
-PrusaSlicer" or "Open in Bambu Studio" from three.ws currently gets a "not
-from a trusted site" warning dialog instead of a clean handoff.
+Forge's slicer handoff (`src/slicer-handoff.js`,
+`docs/forge.md#open-in-a-3d-printing-slicer`) opens an `orcaslicer://` or `bambustudio://`
+deep link pointing at a three.ws-hosted STL/3MF. Bambu Studio checks `bambustudio://open?file=`
+URLs against a hardcoded allowlist and shows a "not from a trusted site" confirmation for any
+other host. PrusaSlicer is stricter: `prusaslicer://open?file=` downloads from a host outside
+its list are refused outright, which is why Forge offers no PrusaSlicer button today.
 
-## PrusaSlicer: patch makes the allowlist configurable (built and tested locally)
+## PrusaSlicer: Discussion first, then a one-line patch if they ask for it
 
-File: `src/slic3r/GUI/Downloader.cpp`. The host check lived at
-`Downloader::start_download`, hardcoded to
-`{"printables.com", "testprusaverse.com", "thingiverse.com", "cults3d.com"}`
-with no extension point. The patch below adds a `trusted_download_hosts()`
-helper that keeps those four hosts, adds `three.ws`, and additionally reads a
-comma-separated `download_url_extra_hosts` key from `AppConfig` so any user
-(or distro) can add a host without a rebuild:
+Route (per `.github/CONTRIBUTING.md`, re-read 2026-11-14): post in
+<https://github.com/prusa3d/PrusaSlicer/discussions> under "Feature requests" (the issue tracker
+rejects non-bugs). Offer the one-line patch below; open a PR only if a maintainer asks, because
+the guide warns that unrequested feature PRs are routinely not accepted. The configurable
+`download_url_extra_hosts` idea from the earlier draft is dropped for `master` (see above).
+
+File: `src/slic3r-shared/src/Slic3r/Biz/FileDownloader/FileDownloaderInteractor.cpp`, function
+`validate_and_complete_input`. The diff below was generated today with `git diff --no-index`
+against the real `master` blob (`8b77368a65`):
 
 ```diff
-diff --git a/src/slic3r/GUI/Downloader.cpp b/src/slic3r/GUI/Downloader.cpp
-index 5899fc2315..1de1659f25 100644
---- a/src/slic3r/GUI/Downloader.cpp
-+++ b/src/slic3r/GUI/Downloader.cpp
-@@ -6,6 +6,7 @@
- #include "GUI_App.hpp"
- #include "NotificationManager.hpp"
- #include "format.hpp"
-+#include "libslic3r/AppConfig.hpp"
- 
- #include <boost/algorithm/string.hpp>
- #include <boost/log/trivial.hpp>
-@@ -151,6 +152,27 @@ bool is_any_subdomain(const std::string& url, const std::vector<std::string>& su
-     return false;
- }
- 
-+// The built-in list covers the sites PrusaSlicer ships with support for.
-+// Any other site that wants to hand a model to PrusaSlicer via the
-+// prusaslicer:// protocol (for example three.ws) can be added without a
-+// rebuild by setting app_config's "download_url_extra_hosts" to a
-+// comma-separated list of hostnames.
-+std::vector<std::string> trusted_download_hosts()
-+{
-+    std::vector<std::string> hosts = {"printables.com", "testprusaverse.com", "thingiverse.com", "cults3d.com", "three.ws"};
-+    if (wxGetApp().app_config != nullptr) {
-+        std::string extra = wxGetApp().app_config->get("download_url_extra_hosts");
-+        std::vector<std::string> extra_hosts;
-+        boost::algorithm::split(extra_hosts, extra, boost::algorithm::is_any_of(","));
-+        for (std::string& host : extra_hosts) {
-+            boost::algorithm::trim(host);
-+            if (!host.empty())
-+                hosts.push_back(host);
-+        }
-+    }
-+    return hosts;
-+}
-+
- }
- void Downloader::start_download(const std::string& full_url)
- {
-@@ -168,7 +190,7 @@ void Downloader::start_download(const std::string& full_url)
-     
-     size_t id = get_next_id();
- 
--    if (!boost::starts_with(escaped_url, "https://") || !is_any_subdomain(escaped_url, {"printables.com", "testprusaverse.com", "thingiverse.com", "cults3d.com"})) {
-+    if (!boost::starts_with(escaped_url, "https://") || !is_any_subdomain(escaped_url, trusted_download_hosts())) {
- 		std::string msg = format(_L("Download won't start. Download URL doesn't point to allowed subdomains : %1%"), escaped_url);
- 		BOOST_LOG_TRIVIAL(error) << msg;
- 		NotificationManager* ntf_mngr = wxGetApp().notification_manager();
+diff --git a/src/slic3r-shared/src/Slic3r/Biz/FileDownloader/FileDownloaderInteractor.cpp b/src/slic3r-shared/src/Slic3r/Biz/FileDownloader/FileDownloaderInteractor.cpp
+index 8b77368..7055990 100644
+--- a/src/slic3r-shared/src/Slic3r/Biz/FileDownloader/FileDownloaderInteractor.cpp
++++ b/src/slic3r-shared/src/Slic3r/Biz/FileDownloader/FileDownloaderInteractor.cpp
+@@ -71,6 +71,7 @@ bool validate_and_complete_input(FileDownloaderJobInput& input)
+                 "testprusaverse.com",
+                 "thingiverse.com",
+                 "cults3d.com",
++                "three.ws",
+ #if !defined(NDEBUG) || defined(SLIC3R_ALLOW_LOCALHOST_SERVICES)
+                 "localhost",
+ #endif
 ```
 
-**Verified locally this session** (2026-10-13), full from-source build against
-upstream `master`:
+Build status: not rebuilt against `master` today (it is a one-string change in a literal list).
+The earlier full from-source build (2026-10-13, 689/689 targets, `ctest` 7/7 suites) was against
+the `version_2.9.7` tag with the older configurable-allowlist patch, so do not quote it for this
+diff. Before any PR, build `master` and run `ctest` yourself, and add the commit-message
+reasoning the guide asks for.
 
-- Deps superbuild: `cmake -S deps -B deps/build-296 -DDEP_WX_GTK3=ON
-  -DCMAKE_BUILD_TYPE=Release -GNinja && cmake --build deps/build-296 -j16`.
-  (`-DDEP_WX_GTK3=ON` is a local-verification-only toolkit choice, not part of
-  the patch: upstream's own `find_package(GTK2 REQUIRED)` call in
-  `build/cmake/toolkit.cmake`, inherited from the `prusa3d/wxWidgets` fork,
-  silently resolves with empty include/library paths under this machine's
-  CMake, a pre-existing upstream GTK2-detection bug unrelated to this patch.
-  Building against GTK3 instead sidesteps it; the patch itself is
-  toolkit-independent.)
-- Root project: `cmake -S . -B build-296 -GNinja -DCMAKE_BUILD_TYPE=Release
-  -DCMAKE_PREFIX_PATH=<deps destdir> -DwxWidgets_CONFIG_EXECUTABLE=<deps
-  destdir>/bin/wx-config -DSLIC3R_GTK=3 -DSLIC3R_STATIC=1`, then
-  `cmake --build build-296 -j16`: **689/689 targets built, zero errors**
-  (warnings only: pre-existing sign-compare/unused-variable/ODR notices in
-  unrelated files, none touching this patch).
-- `ctest --output-on-failure -j8` inside `build-296`: **100% tests passed, 0
-  failed, 7 of 7 suites** (`libseqarrange_tests`, `arrange_tests`,
-  `thumbnails_tests`, `libslic3r_tests`, `fff_print_tests`, `sla_print_tests`,
-  `slic3rutils_tests`), total 43.22s.
+### Discussion text to paste
 
-### PR text to paste
-
-Title: `Make the trusted download-host allowlist for prusaslicer:// configurable`
+Category: Feature requests. Title: `Allow three.ws in the prusaslicer:// download allowlist`
 
 Body:
 
-> `Downloader::start_download` gates `prusaslicer://open?file=` downloads
-> behind a hardcoded host list (`printables.com`, `testprusaverse.com`,
-> `thingiverse.com`, `cults3d.com`). That's correct as a default, but there's
-> no way for a user or a third-party model site to add a host without
-> patching and rebuilding PrusaSlicer themselves.
->
-> This PR adds a `trusted_download_hosts()` helper that keeps the same
-> built-in four hosts and reads an additional comma-separated
-> `download_url_extra_hosts` key from `AppConfig`, so a user who trusts
-> another site (for example a different print-on-demand or generative-3D
-> platform) can add it via their own config without a custom build. No
-> behavior changes for anyone who doesn't set the key.
->
-> Built and tested locally against `master`: 689/689 targets, `ctest` 7/7
-> suites passing, 0 failures.
+> `validate_and_complete_input` in `FileDownloaderInteractor.cpp` only accepts
+> `prusaslicer://open?file=` downloads from a fixed host list (`prusa.com`, `printables.com`,
+> `thingiverse.com`, `cults3d.com` and a few others). three.ws is a generative-3D site
+> that produces print-ready STL and 3MF files, and a user who wants to print one in PrusaSlicer
+> currently has to download the file and open it by hand, so we offer no "Open in PrusaSlicer"
+> button. Would you accept adding `three.ws` to that list? It is a one-line change and I can send
+> it as a PR if that is welcome. We already ship the equivalent button for OrcaSlicer and Bambu
+> Studio.
 
 ## Bambu Studio: issue only (no patch attempted; closed-allowlist design differs from PrusaSlicer's)
 
 File: `src/slic3r/GUI/GUI_App.cpp`, function `is_trusted_model_download_url`
-(lines 1105-1151 as of the current `master`, confirmed via a sparse checkout
-this session). Unlike PrusaSlicer's flat string list, Bambu Studio's allowlist
+(lines 1116-1162 on `master`, re-read 2026-11-14). Unlike PrusaSlicer's flat string list, Bambu Studio's allowlist
 is a `static const TrustEntry trusted_entries[]` array of
 `{host, suffix, https_only}` structs matched through `libcurl`'s `CURLU`
 parser, scoped entirely to Bambu/MakerWorld-owned domains
@@ -139,32 +102,31 @@ mechanism, not a PR assuming one particular shape.
 
 ### Issue text to paste
 
-Title: `Model-download trust check is a hardcoded Bambu-only allowlist, no way to add a host`
+File it at <https://github.com/bambulab/BambuStudio/issues/new/choose> using the **Feature
+request** template (blank issues are disabled; the template adds the `feature` label). Title:
+`Model-download trust check is a hardcoded Bambu-only allowlist, no way to add a host`. Put the
+text below under the template's "Describe the solution you'd like" heading, and one line under
+"Describe the alternatives you've considered": the user can confirm the warning each time.
 
 Body:
 
 > `is_trusted_model_download_url` in `src/slic3r/GUI/GUI_App.cpp` (currently
-> lines 1105-1151) checks incoming `bambustudio://open?file=` URLs against a
+> lines 1116-1162) checks incoming `bambustudio://open?file=` URLs against a
 > fixed `trusted_entries[]` array scoped to Bambu/MakerWorld domains only.
 > Any other site that wants to hand a model to Bambu Studio by deep link (for
 > example a generative-3D or print-on-demand platform) can't do so without
 > the user seeing the "not from a trusted site" warning dialog every time,
 > and there's no config key, CLI flag, or settings-UI entry to add a host.
 >
-> PrusaSlicer has (as of
-> [prusa3d/PrusaSlicer#<PR number from the submission above>]) the same kind
-> of hardcoded list, now made configurable via an `AppConfig`-backed
-> `download_url_extra_hosts` key that a user can set without a rebuild. Would
-> a similar mechanism (even scoped to the existing `TrustEntry` shape, e.g. an
-> `app_config`-sourced list of additional non-suffix, https-only hosts) be
-> something upstream would take a PR for? Happy to adapt the PrusaSlicer patch
-> to this codebase's `CURLU`-based matcher if the general direction is
-> welcome.
+> PrusaSlicer keeps a similar fixed list in
+> `FileDownloaderInteractor.cpp`, which covers a few third-party model sites. Would you consider
+> either adding `three.ws` as a non-suffix, https-only `TrustEntry`, or a user-editable list of
+> extra hosts read from the app config? Happy to send a PR for whichever shape you prefer.
 
 ## Owner action required
 
-Filing a PR and opening an issue both need the owner's own GitHub account
-(CLAUDE.md gate 2: external posting) and are a "third-party-account-only
-step" under this work order's never-blocked table. This file holds the full
-diff and both pieces of ready-to-paste text; no further engineering work is
-needed before filing.
+Posting the PrusaSlicer Discussion and opening the Bambu Studio issue both need the owner's
+own GitHub account (CLAUDE.md gate 2: external posting). This file holds the diff and both
+pieces of ready-to-paste text. Order: post the Discussion at
+<https://github.com/prusa3d/PrusaSlicer/discussions/new?category=feature-requests>, then the
+Bambu issue. Do not open a PrusaSlicer PR unless a maintainer asks for it.

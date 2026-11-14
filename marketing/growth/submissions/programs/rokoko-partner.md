@@ -1,11 +1,11 @@
 # Rokoko integration listing inquiry
 
 Program: no dedicated partner form found. The closest route is the general "Get in touch" form at <https://www.rokoko.com/get-in-touch>; the device SDK lives at sdk.rokoko.com.
-Page last read: 2026-10-23 (the get-in-touch page). A partner or integrations application, and any partner terms: **not verified on 2026-10-23**. The page lists integrations (Blender, Unreal, Unity) but no way to apply to be listed.
+Page last read: 2026-11-14 (the get-in-touch page: fields unchanged). A partner or integrations application, and any partner terms: **not verified on 2026-11-14**. The page lists integrations (Blender, Unreal, Unity, iClone, Cinema 4D, Maya, Houdini, MotionBuilder, Cartoon Animator 4) with a "See all integrations" link but no way to apply to be listed. It also links "Get sponsored" under Contact, with no details on the page; that is a creator sponsorship route, not an integration listing, so it is not used here.
 Prospect context: score 12 in `docs/partners/prospects.md` ("250,000 users" is a vendor claim from the 2026-10-09 sweep).
 Nothing has been sent. Shared facts and owner-only inputs: [README.md](./README.md).
 
-## Form fields (verified today)
+## Form fields (verified 2026-11-14)
 
 | Field | Draft |
 |---|---|
@@ -26,5 +26,5 @@ A listing on Rokoko's integrations page, and an answer on how a web app can acce
 ## Owner steps
 
 1. Confirm the recorded-take import path works with a real Rokoko export before sending (a Studio FBX or BVH). If it does not, send the message with only the live-mocap question.
-2. Send through the form; add a tracker row (no Rokoko row exists today).
+2. Send through the form; record the date in the Rokoko row of `opportunities.csv`.
 3. If Rokoko lists us, add the link to the integrations docs.

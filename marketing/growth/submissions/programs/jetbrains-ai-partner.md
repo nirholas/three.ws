@@ -1,7 +1,7 @@
 # JetBrains AI partner route
 
 Program: JetBrains technology partnership and Marketplace, plus the JetBrains for Startups discount.
-Page last read: 2026-10-23, **through search results only**. A direct fetch of `https://www.jetbrains.com/partners/` returned only a topic summary, and search found no JetBrains page for an "AI partner" application. **The existence of an AI-specific partner program: not verified on 2026-10-23.**
+Page last read: 2026-11-14 (<https://www.jetbrains.com/startups/> read in full). `https://www.jetbrains.com/partners/` again returned only its title to a fetch. The startups page describes no AI partner program, and none was found on 2026-10-23 either: **an AI-specific partner program does not appear to exist; its existence is not verified on 2026-11-14.**
 Prospect context: score 10 in `docs/partners/prospects.md` ("Marketplace plugin, 50% startup discount, manual upload and review, `marketplace@jetbrains.com`").
 Nothing has been submitted. Shared facts and owner-only inputs: [README.md](./README.md).
 
@@ -11,7 +11,8 @@ Nothing has been submitted. Shared facts and owner-only inputs: [README.md](./RE
 - A 2020 JetBrains post describes a Technology Partnership for software vendors who publish apps and integrations to JetBrains Marketplace. It is old, so its application page may have changed.
 - A newer design-partner program exists for JetBrains Central (agentic software development). It is for early customers shaping that product, not a listing route.
 - JetBrains AI Assistant supports MCP servers (Settings, AI Assistant, Model Context Protocol); a third-party guide says 2025.2 or later, and Streamable HTTP works best. So users can already add the three.ws MCP server without any partnership.
-- JetBrains for Startups at `https://jetbrains.com/startups` exists; the 50 percent discount for private companies under five years old comes from the 2026-10-09 prospects sweep and was not re-read today.
+- JetBrains for Startups (read 2026-11-14): for privately owned companies established within the last five years, with evidence, and a website. 50% off up to 10 IDE subscriptions, 10 team or learning tool subscriptions and 10 JetBrains AI subscriptions (AI Pro and AI Ultimate only, including Junie) for five years, once per organization, commercial licenses only. Startups also get 50% off participating Marketplace plugins (list at `jb.gg/startups-plugins`). Applications are reviewed within 48 hours. The form fields are behind the "Apply Now" button: **not verified on 2026-11-14**.
+- The JetBrains Partner Program on that page is for incubators, accelerators, VCs and startup communities with at least 10 startups; a startup cannot apply to both. It is not our route.
 
 ## Honest position
 
@@ -28,7 +29,7 @@ Subject: three.ws 3D Studio plugin and MCP integration, partnership route
 | Item | Answer |
 |---|---|
 | Company, website | three.ws, `https://three.ws` |
-| Age and ownership | Owner input (private company under five years old, for the discount) |
+| Age and ownership | Owner input (privately owned, established within five years, with evidence such as the incorporation document) |
 | Product | Open-source MCP servers and web component; plugin does not exist yet |
 | Support | `support@three.ws` |
 

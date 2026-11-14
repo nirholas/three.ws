@@ -1,7 +1,7 @@
 # Avaturn partner or integration inquiry
 
 Program: no dedicated partner program found. Routes: developer portal, the contact form on avaturn.me, Discord, and `hello@in3d.io` (printed in the 2026-10-09 sweep).
-Page last read: 2026-10-23, **not verified**. `https://developer.avaturn.me` returned only its title, and search found the docs (`docs.avaturn.me`) and the npm SDK but no partner page or partner terms. A partner program's existence and terms: not verified on 2026-10-23.
+Page last read: 2026-11-14 attempt, **not verified**: `https://docs.avaturn.me` returned only its title (as `developer.avaturn.me` did on 2026-10-23), and search found no partner page or partner terms. A partner program's existence and terms: not verified on 2026-11-14.
 Prospect context: score 12 in `docs/partners/prospects.md`. We already ship the integration (`src/avatar-creator.js`, `src/avaturn-client.js`). `@avaturn/sdk` is 728 downloads a week (npm, 2026-10-09). Pricing seen: free tier, PRO USD 800 a month (vendor pricing page, per the sweep).
 Nothing has been sent. Shared facts and owner-only inputs: [README.md](./README.md).
 
@@ -23,10 +23,10 @@ Subject: three.ws x Avaturn: case study and "works with" badge
 
 ## Eligibility and fields
 
-No form fields known. The avaturn.me contact form is a general form; its fields were **not verified on 2026-10-23**. Expect name, email, company, message.
+No form fields known. The avaturn.me contact form is a general form; its fields were **not verified on 2026-11-14**. Expect name, email, company, message.
 
 ## Owner steps
 
 1. Confirm the Avaturn share of the 154 selfie avatars.
-2. Send the message through the contact form (or `hello@in3d.io`), record the date in `opportunities.csv` (no Avaturn row exists).
+2. Send the message through the contact form (or `hello@in3d.io`), record the date in the Avaturn row of `opportunities.csv`.
 3. On a reply, write the case study draft in `docs/partners/` and wire the badge into the integrations page.

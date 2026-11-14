@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>A launch mention with a missing ticker now explains how to launch</title>
+			<link>https://three.ws/launch</link>
+			<guid isPermaLink="false">2026-11-14:A launch mention with a missing ticker now explains how to launch</guid>
+			<pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Tag @trythreews with launch, a coin name and a $TICKER and the bot replies with a prefilled launch link you review and sign yourself. If the post leaves out the ticker, uses one that is too short or too long, or tries to reuse $THREE, the reply now shows the exact launch format to post instead of the general make-a-3D-model help, so you can get it right on the next try. The bot is still in dry run: it records these replies and posts nothing until it goes live.</description>
+		</item>
+		<item>
+			<title>Agents set to a retired Groq model answer again</title>
+			<link>https://three.ws/dashboard</link>
+			<guid isPermaLink="false">2026-11-14:Agents set to a retired Groq model answer again</guid>
+			<pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Groq retired its Llama 3.3 70B and Llama 3.1 8B models, and every place three.ws still asked for them got an error back: agents whose brain was set to one, the second step of the embed brain's fallback chain, the Groq lane of skills and widgets, and the Groq option in the avatar chat, editor, /start and dashboard model pickers. Those settings now run on Groq's live Qwen3 27B, the embed fallback chain steps through Groq Qwen and NVIDIA Nemotron 3 Ultra before any paid model, and the pickers offer models that actually answer. The dashboard Brain tab also labels every model correctly, and its live test now works for the Claude and Nemotron options, which used to fail with an unknown provider error.</description>
+		</item>
+		<item>
 			<title>Memory seeding writes your seed instead of failing when some AI providers hang</title>
 			<link>https://three.ws/demos/memory-seed.html</link>
 			<guid isPermaLink="false">2026-11-14:Memory seeding writes your seed instead of failing when some AI providers hang</guid>
@@ -21,6 +37,14 @@
 			<pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>When you put a 3D Drop or a single 3D asset on Solana, a mint that had already landed could be reported as failed if the live connection used to watch for confirmation dropped. Pressing the button again then minted a second copy and spent rent twice. Confirmation now checks the transaction status directly, so a landed mint always reads as minted. If a mint is still undecided after the wait, the item stays locked for a few minutes and you get the transaction link to check, instead of a retry that could mint it again.</description>
+		</item>
+		<item>
+			<title>The open source page links three.js and Mesh2Motion sponsor pages and can show who we sponsor</title>
+			<link>https://three.ws/open-source</link>
+			<guid isPermaLink="false">2026-11-14:The open source page links three.js and Mesh2Motion sponsor pages and can show who we sponsor</guid>
+			<pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The /open-source credits page now carries a Sponsor link on the three.js and Mesh2Motion cards, read from the funding routes both projects publish in their own repositories. It is also ready to show the open-source projects three.ws pays a recurring sponsorship to: once a sponsorship is live, the project appears in a &quot;Projects three.ws sponsors&quot; section at the top of the page and its credit cards are marked &quot;Sponsored by three.ws&quot; with the month it started. Nothing shows until a sponsorship has actually begun.</description>
 		</item>
 		<item>
 			<title>Docs · Forge on-device photo check</title>
@@ -23732,7 +23756,7 @@ And all of it is public. Oracle Lab publishes the actual model: every weight, th
 			<guid isPermaLink="false">2026-07-07:3D Studio tools can now be paid on X Layer via the OKX Agent Payments Protocol</guid>
 			<pubDate>Tue, 07 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
-			<description>Agents on the OKX.AI marketplace can now pay for our 3D tools the way that marketplace expects: our payment challenge now offers X Layer (chain 196) in the USD₮0 stablecoin alongside the existing USDC-on-Base/Solana options, and speaks the OKX buyer flow end to end, it verifies the payment on-chain before doing any work and only charges after the tool succeeds. Existing customers paying on Base or Solana are unaffected; this simply adds a rail. It's the integration OKX asked us to complete before re-listing our 3D Studio agent.</description>
+			<description>Agents on the OKX.AI marketplace can now pay for our 3D tools the way that marketplace expects: our payment challenge now offers X Layer (chain 196) in the USD₮0 stablecoin alongside the existing USDC-on-Base/Solana options, and speaks the OKX buyer flow end to end, it verifies the payment on-chain before doing any work and charges once the tool accepts the job (a job that later fails during generation has still been charged). Existing customers paying on Base or Solana are unaffected; this simply adds a rail. It's the integration OKX asked us to complete before re-listing our 3D Studio agent.</description>
 		</item>
 		<item>
 			<title>Agent reputation now scores any wallet or agent on any chain</title>

@@ -1,14 +1,14 @@
 # ElevenLabs Startup Grant (and Commercial Partner Program)
 
 Program: ElevenLabs Startup Grants (33,000,000 characters over 12 months, "$5,500+ in value"), plus the separate Commercial Partner Program.
-Page last read: 2026-10-23 (<https://elevenlabs.io/startup-grants> read in full; <https://elevenlabs.io/grants-application> read, which shows only an "Apply now" heading and a sign-up button; <https://elevenlabs.io/partner-application> read).
-The complete, source-verified application sheet already exists: [../../applications/elevenlabs-startup-grants.md](../../applications/elevenlabs-startup-grants.md) (verified 2026-09-17). Its answers are the ones to paste. This file records what changed on 2026-10-23 and the figures to correct before pasting.
+Page last read: 2026-11-14 (<https://elevenlabs.io/startup-grants> read in full: grant, eligibility and conversion terms unchanged since 2026-10-23; <https://elevenlabs.io/grants-application> still shows only an "Apply now" button behind sign-up). The partner-application page was last read 2026-10-23.
+The complete, source-verified application sheet already exists: [../../applications/elevenlabs-startup-grants.md](../../applications/elevenlabs-startup-grants.md) (verified 2026-09-17). Its answers are the ones to paste. This file records the corrections to make before pasting.
 Tracker row: "ElevenLabs Startup Grants and Demo Day" in `opportunities.csv` (target date 2026-09-24, now overdue).
 Nothing has been submitted. Shared facts and owner-only inputs: [README.md](./README.md).
 
 ## Deadline
 
-Rolling; ElevenLabs says to expect an answer within one week. The "Startup Grants Virtual Demo Day" on 2026-10-21 has passed, so do not mention Demo Day 2026.
+Rolling; ElevenLabs says to expect an answer within one week. The "Startup Grants Virtual Demo Day" on 2026-10-21 has passed, so do not mention Demo Day 2026. At the end of 12 months, or at 10,000 credits left, the plan converts to Free unless changed.
 
 ## Eligibility re-read today
 
@@ -27,11 +27,11 @@ Rolling; ElevenLabs says to expect an answer within one week. The "Startup Grant
 
 - The traction paragraph there quotes 75,959 avatars, 3,831 agents and 23,444 generations from the platform stats endpoint. Those include seeded and machine-created rows. Replace them with the people-only figures from the October proof brief: 727 agents by 415 owners (725 with a 3D body), 703 avatars, 7,111 finished 3D models in 31 days, 412 signups. Rerun `npm run partners:proof` the day of submission.
 - The sheet's "632 widgets embedded on other sites" conflicts with the proof brief ("Embeds: weak": 18 widgets created, 173 views, all but one on three.ws). Drop that claim.
-- The platform lane still has no ElevenLabs key on `three-ws-api` as of the 2026-09-17 check; re-run `node scripts/read-service-env.mjs '^ELEVENLABS' --names` on the day and state the result truthfully.
+- The platform lane still has no ElevenLabs key on `three-ws-api` (rechecked 2026-11-14 with `node scripts/read-service-env.mjs --names`: no `ELEVENLABS` variable). Rerun on the day and state the result truthfully; until a key is set, voice runs on the bring-your-own-key lane only.
 
 ## Application questions
 
-The live form is behind sign-in and lists only "tell us more about the startup you're building, your team, how you expect to grow". Field-level questions: **not verified on 2026-10-23**. Use the answers in the linked sheet for: company one-liner, what you are building, how you use ElevenLabs, business model, growth, team (owner input), anything else.
+The live form is behind sign-in and lists only "tell us more about the startup you're building, your team, how you expect to grow". Field-level questions: **not verified on 2026-11-14**. Use the answers in the linked sheet for: company one-liner, what you are building, how you use ElevenLabs, business model, growth, team (owner input), anything else.
 
 ## Commercial Partner Program (secondary)
 
