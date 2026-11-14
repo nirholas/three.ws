@@ -77,11 +77,6 @@ if ! curl -sSfL -o /dev/null -m 10 "https://three.ws/.well-known/assetlinks.json
 	exit 1
 fi
 
-if ! npx --no-install dapp-store --version >/dev/null 2>&1; then
-	echo "[publish] installing @solana-mobile/dapp-store-cli"
-	npm install --no-save --no-audit --no-fund @solana-mobile/dapp-store-cli@latest
-fi
-
 CMD=(npx --no-install dapp-store
 	--apk-file "$APK_PATH"
 	--keypair "$SOLANA_KEYPAIR"
@@ -94,8 +89,14 @@ fi
 
 echo "[publish] \$ ${CMD[*]}"
 if [[ "${DAPP_STORE_DRYRUN:-0}" == "1" ]]; then
+	# A dry run has no side effects: the CLI is installed only for a real run.
 	echo "[publish] dry run, nothing submitted"
 	exit 0
+fi
+
+if ! npx --no-install dapp-store --version >/dev/null 2>&1; then
+	echo "[publish] installing @solana-mobile/dapp-store-cli"
+	npm install --no-save --no-audit --no-fund @solana-mobile/dapp-store-cli@latest
 fi
 
 # The API key goes over stdin so it never appears in a process listing.
