@@ -259,6 +259,19 @@ function noteRungFailure(p, status, retryAfter) {
 	if (ms > 0) COOLDOWNS.set(rungKey(p), { until: Date.now() + ms, status });
 }
 
+// A rung that hung to its attempt cap (request or body read aborted by the
+// timeout) sits out briefly. Without this a lane that stalls keeps eating its
+// full slice of every call's budget: on 2026-11-14 four stalling rungs in a row
+// spent all 18s of /api/seed/synthesize's chain on every retry, and the keyless
+// tail that answered in under a second was never reached. Short on purpose: a
+// stall is often load, not death, and the lane gets its next shot in minutes.
+// Other transport errors (reset, DNS) stay uncooled; they fail fast already.
+const COOLDOWN_STALL_MS = 2 * 60_000;
+
+function noteRungStall(p) {
+	COOLDOWNS.set(rungKey(p), { until: Date.now() + COOLDOWN_STALL_MS, status: 'stall' });
+}
+
 // The self-hosted Phi worker scales to zero: a stall or 5xx is almost always a
 // GPU instance booting, so the lane sits out about one cold start instead of
 // making every call in that window wait out its timeout first.
@@ -1084,7 +1097,10 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 			});
 		} catch (e) {
 			lastErr = Object.assign(new Error(`${p.name} unreachable: ${e.message}`), { status: 502, code: 'upstream_unreachable' });
-			if (isStall(e)) stalledHosts.add(hostOf(p.url));
+			if (isStall(e)) {
+				stalledHosts.add(hostOf(p.url));
+				noteRungStall(p);
+			}
 			if (p.name === 'phi') notePhiStall(p, 'stall');
 			attempts.push({ provider: p.name, ms: Date.now() - startedAt, error: `unreachable: ${e.message}` });
 			continue;
@@ -1107,7 +1123,10 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 			data = await upstream.json();
 		} catch (e) {
 			lastErr = Object.assign(new Error(`${p.name} returned an unparseable 200 body: ${e.message}`), { status: 502, code: 'upstream_bad_body' });
-			if (isStall(e)) stalledHosts.add(hostOf(p.url));
+			if (isStall(e)) {
+				stalledHosts.add(hostOf(p.url));
+				noteRungStall(p);
+			}
 			attempts.push({ provider: p.name, ms: Date.now() - startedAt, error: `unparseable 200 body: ${e.message}` });
 			continue;
 		}

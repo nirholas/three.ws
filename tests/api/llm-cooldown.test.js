@@ -142,6 +142,50 @@ describe('llmComplete with cooldowns', () => {
 		expect(calls.length).toBeGreaterThan(1);
 	});
 
+	// Production 2026-11-14: four rungs in a row (nvidia:ultra, cloudflare, kilo,
+	// ovh) hung to their attempt cap on every /api/seed/synthesize call, spent the
+	// whole chain budget, and left the keyless tail that was answering in <1s at
+	// budget_exhausted. A stall never cooled, so every retry paid the same ~18s and
+	// 502d again. A rung that stalled must sit out the next calls like a 429 does.
+	it('sits a stalled rung out so the next call reaches a live lane immediately', async () => {
+		onlyGroq();
+		const stall = () => Promise.reject(new DOMException('The operation was aborted due to timeout', 'TimeoutError'));
+		routeFetch(({ model }) => (model === 'qwen/qwen3.8-27b' ? stall() : ok('another lane')));
+		// Within the call the stall also skips groq's sibling rungs (host_stalled),
+		// so some other host answers; that part is existing behavior.
+		const first = await llmComplete({ system: 's', user: 'u' });
+		expect(first.text).toBe('another lane');
+
+		const calls = routeFetch(() => ok('from 120b again'));
+		const second = await llmComplete({ system: 's', user: 'u' });
+		expect(second.provider).toBe('groq#120b');
+		expect(calls.map((c) => c.model)).toEqual(['openai/gpt-oss-120b']);
+		expect(llmCooldownSnapshot()).toEqual([
+			expect.objectContaining({ rung: 'groq|qwen/qwen3.8-27b', status: 'stall' }),
+		]);
+	});
+
+	it('lets a stalled rung back in after its stall cooldown passes', async () => {
+		vi.useFakeTimers({ toFake: ['Date'] });
+		onlyGroq();
+		const stall = () => Promise.reject(new DOMException('The operation was aborted due to timeout', 'TimeoutError'));
+		routeFetch(({ model }) => (model === 'qwen/qwen3.8-27b' ? stall() : ok('fallback')));
+		await llmComplete({ system: 's', user: 'u' });
+
+		vi.setSystemTime(Date.now() + 2 * 60_000 + 1_000);
+		const calls = routeFetch(() => ok('primary is back'));
+		const out = await llmComplete({ system: 's', user: 'u' });
+		expect(out.provider).toBe('groq');
+		expect(calls[0].model).toBe('qwen/qwen3.8-27b');
+	});
+
+	it('does not cool a rung on a non-stall transport error', async () => {
+		onlyGroq();
+		routeFetch(({ model }) => (model === 'qwen/qwen3.8-27b' ? Promise.reject(new TypeError('fetch failed: ECONNRESET')) : ok('fallback')));
+		await llmComplete({ system: 's', user: 'u' });
+		expect(llmCooldownSnapshot()).toEqual([]);
+	});
+
 	it('clears a rung from cooldown the moment it answers again', async () => {
 		onlyGroq();
 		routeFetch(() => fail(402));
