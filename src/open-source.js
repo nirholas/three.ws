@@ -2,7 +2,9 @@
 // asset source three.ws is built on, grouped by area. Data comes from
 // GET /api/open-source-credits, itself a static read of
 // data/open-source-credits.json generated at build time by
-// scripts/build-open-source-credits.mjs (never hand-edited).
+// scripts/build-open-source-credits.mjs (never hand-edited). Live
+// sponsorships from data/sponsorships.json arrive as `data.sponsorships` and a
+// `sponsoredSince` stamp on the credit cards they cover.
 
 const $ = (id) => document.getElementById(id);
 
@@ -19,6 +21,29 @@ function escapeHtml(s) {
 	);
 }
 
+const MONTH_FMT = new Intl.DateTimeFormat(undefined, { month: 'short', year: 'numeric', timeZone: 'UTC' });
+
+function fmtSince(isoDay) {
+	return MONTH_FMT.format(new Date(`${isoDay}T00:00:00Z`));
+}
+
+function renderSponsors(sponsorships) {
+	const host = $('sponsors-host');
+	if (!sponsorships?.length) {
+		host.hidden = true;
+		return;
+	}
+	$('sponsors-list').innerHTML = sponsorships
+		.map(
+			(s) => `
+		<li><a href="${escapeHtml(s.url)}" rel="noopener" target="_blank">${escapeHtml(s.name)}
+			<span class="since">since ${escapeHtml(fmtSince(s.since))}</span></a></li>
+	`,
+		)
+		.join('');
+	host.hidden = false;
+}
+
 function renderCard(entry) {
 	const kindLabel = KIND_LABEL[entry.kind] || entry.kind;
 	const links = [];
@@ -33,6 +58,7 @@ function renderCard(entry) {
 				<span class="kind">${escapeHtml(kindLabel)}</span>
 			</div>
 			<div class="license">${escapeHtml(entry.license)}</div>
+			${entry.sponsoredSince ? `<span class="sponsored">Sponsored by three.ws since ${escapeHtml(fmtSince(entry.sponsoredSince))}</span>` : ''}
 			${entry.powers ? `<div class="powers">${escapeHtml(entry.powers)}</div>` : ''}
 			${links.length ? `<div class="links">${links.join('')}</div>` : ''}
 		</div>
@@ -79,6 +105,7 @@ async function load() {
 			$('empty-state').hidden = false;
 			return;
 		}
+		renderSponsors(data.sponsorships);
 		renderAreas(data);
 		$('loading-state').hidden = true;
 	} catch (err) {

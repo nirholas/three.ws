@@ -175,6 +175,70 @@
 				outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #6c8cff);
 				outline-offset: var(--focus-ring-offset, 2px);
 			}
+			.os-card .sponsored {
+				align-self: flex-start;
+				font-size: 0.72rem;
+				font-weight: 600;
+				color: var(--accent, #6c8cff);
+				border: 1px solid var(--accent, #6c8cff);
+				border-radius: 999px;
+				padding: 0.1rem 0.55rem;
+			}
+			.os-sponsors {
+				margin-top: 2rem;
+				background: var(--surface-1, #14161c);
+				border: 1px solid var(--stroke, #262a33);
+				border-radius: 14px;
+				padding: 1.1rem 1.25rem;
+			}
+			.os-sponsors h2 {
+				font-size: 1.05rem;
+				margin: 0 0 0.3rem;
+			}
+			.os-sponsors p {
+				margin: 0 0 0.8rem;
+				font-size: 0.85rem;
+				color: var(--ink-dim, #9aa3b2);
+			}
+			.os-sponsors ul {
+				list-style: none;
+				margin: 0;
+				padding: 0;
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.5rem;
+			}
+			.os-sponsors a {
+				display: inline-flex;
+				align-items: baseline;
+				gap: 0.4rem;
+				padding: 0.35rem 0.75rem;
+				border-radius: 999px;
+				border: 1px solid var(--stroke, #262a33);
+				background: var(--surface-2, #1c1f27);
+				color: var(--ink, #e8ebf2);
+				font-size: 0.85rem;
+				font-weight: 600;
+				text-decoration: none;
+				transition:
+					border-color var(--duration-fast),
+					background var(--duration-fast);
+			}
+			.os-sponsors a:hover {
+				border-color: var(--accent, #6c8cff);
+			}
+			.os-sponsors a:active {
+				background: var(--surface-1, #14161c);
+			}
+			.os-sponsors a:focus-visible {
+				outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #6c8cff);
+				outline-offset: var(--focus-ring-offset, 2px);
+			}
+			.os-sponsors .since {
+				font-size: 0.75rem;
+				font-weight: 500;
+				color: var(--ink-dim, #9aa3b2);
+			}
 			.state-msg {
 				text-align: center;
 				padding: 2.25rem 1.25rem;
@@ -337,6 +401,14 @@
 					<div class="skel"></div>
 				</div>
 			</div>
+
+			<section id="sponsors-host" class="os-sponsors" aria-labelledby="sponsors-title" hidden>
+				<h2 id="sponsors-title" data-i18n="open_source.projects_we_sponsor">Projects three.ws sponsors</h2>
+				<p data-i18n="open_source.projects_we_sponsor_intro">
+					We pay a recurring sponsorship to these projects because three.ws depends on them.
+				</p>
+				<ul id="sponsors-list"></ul>
+			</section>
 
 			<div id="areas-host" role="status" aria-live="polite"></div>
 		</main>

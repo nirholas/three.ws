@@ -1,0 +1,127 @@
+{
+	"readOn": "2026-11-14",
+	"doc": "docs/partners/sponsorships.md",
+	"projects": [
+		{
+			"id": "threejs",
+			"name": "three.js",
+			"url": "https://threejs.org",
+			"route": "https://github.com/sponsors/mrdoob",
+			"recommendedUsdMonthly": 50,
+			"creditIds": ["npm:three", "vendor:threejs-editor"],
+			"decision": "pending",
+			"decidedOn": null,
+			"startedOn": null,
+			"endedOn": null
+		},
+		{
+			"id": "gltf-transform",
+			"name": "glTF-Transform",
+			"url": "https://gltf-transform.dev",
+			"route": "https://github.com/sponsors/donmccurdy",
+			"recommendedUsdMonthly": 15,
+			"creditIds": ["npm:@gltf-transform/core", "npm:@gltf-transform/extensions", "npm:@gltf-transform/functions"],
+			"decision": "pending",
+			"decidedOn": null,
+			"startedOn": null,
+			"endedOn": null
+		},
+		{
+			"id": "polyhaven",
+			"name": "Poly Haven",
+			"url": "https://polyhaven.com",
+			"route": "https://www.patreon.com/polyhaven",
+			"recommendedUsdMonthly": 10,
+			"creditIds": ["asset:polyhaven"],
+			"decision": "pending",
+			"decidedOn": null,
+			"startedOn": null,
+			"endedOn": null
+		},
+		{
+			"id": "quaternius",
+			"name": "Quaternius",
+			"url": "https://quaternius.com",
+			"route": "https://www.patreon.com/quaternius",
+			"recommendedUsdMonthly": 10,
+			"creditIds": ["asset:quaternius"],
+			"decision": "pending",
+			"decidedOn": null,
+			"startedOn": null,
+			"endedOn": null
+		},
+		{
+			"id": "orcaslicer",
+			"name": "OrcaSlicer",
+			"url": "https://github.com/SoftFever/OrcaSlicer",
+			"route": "https://github.com/sponsors/SoftFever",
+			"recommendedUsdMonthly": 10,
+			"creditIds": [],
+			"decision": "pending",
+			"decidedOn": null,
+			"startedOn": null,
+			"endedOn": null
+		},
+		{
+			"id": "pmndrs",
+			"name": "pmndrs (react-three-fiber, drei)",
+			"url": "https://pmnd.rs",
+			"route": "https://github.com/sponsors/pmndrs",
+			"recommendedUsdMonthly": 10,
+			"creditIds": [],
+			"decision": "pending",
+			"decidedOn": null,
+			"startedOn": null,
+			"endedOn": null
+		},
+		{
+			"id": "mesh2motion",
+			"name": "Mesh2Motion",
+			"url": "https://www.mesh2motion.org",
+			"route": "https://support.mesh2motion.org",
+			"recommendedUsdMonthly": 0,
+			"recommendedOneTimeUsd": 25,
+			"creditIds": ["asset:mesh2motion"],
+			"decision": "pending",
+			"decidedOn": null,
+			"startedOn": null,
+			"endedOn": null
+		},
+		{
+			"id": "blender-fund",
+			"name": "Blender Development Fund",
+			"url": "https://fund.blender.org",
+			"route": "https://fund.blender.org/corporate-memberships/",
+			"recommendedUsdMonthly": 0,
+			"creditIds": [],
+			"decision": "pending",
+			"decidedOn": null,
+			"startedOn": null,
+			"endedOn": null
+		},
+		{
+			"id": "three-vrm",
+			"name": "three-vrm (pixiv)",
+			"url": "https://github.com/pixiv/three-vrm",
+			"route": null,
+			"recommendedUsdMonthly": 0,
+			"creditIds": ["npm:@pixiv/three-vrm", "npm:@pixiv/three-vrm-animation"],
+			"decision": "no-route",
+			"decidedOn": null,
+			"startedOn": null,
+			"endedOn": null
+		},
+		{
+			"id": "meshoptimizer",
+			"name": "meshoptimizer",
+			"url": "https://github.com/zeux/meshoptimizer",
+			"route": null,
+			"recommendedUsdMonthly": 0,
+			"creditIds": ["npm:meshoptimizer", "model:gltfpack"],
+			"decision": "no-route",
+			"decidedOn": null,
+			"startedOn": null,
+			"endedOn": null
+		}
+	]
+}

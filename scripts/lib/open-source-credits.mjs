@@ -16,6 +16,11 @@
 //            packs) and vendored/forked source trees recorded in NOTICE and
 //            third_party/README.md.
 //
+// data/sponsorships.json records which of these projects three.ws sponsors
+// (work order 937). applySponsorships() merges the live ones into the dataset:
+// a top-level `sponsorships` list and a `sponsoredSince` stamp on each credit
+// card a sponsorship names.
+//
 // Every area id used below must appear in AREAS; the page and the guard test
 // both read AREAS as the source of truth for section order and labels.
 
@@ -454,7 +459,8 @@ export const ASSET_SOURCES = [
 		name: "Mesh2Motion human animation packs",
 		license: 'CC0 1.0',
 		repo: 'https://www.mesh2motion.org',
-		funding: null,
+		// Mesh2Motion/mesh2motion-app .github/FUNDING.yml (read 2026-11-14).
+		funding: 'https://support.mesh2motion.org',
 		area: 'motion',
 		powers: 'Part of the bulk mocap library at GET /api/animations/library.',
 	},
@@ -536,6 +542,14 @@ const REPO_OVERRIDES = {
 	'@upstash/ratelimit': 'https://github.com/upstash/ratelimit-js',
 };
 
+// ---- funding overrides for packages whose installed package.json has no
+// funding field but whose upstream repository declares one ------------------
+const FUNDING_OVERRIDES = {
+	// The npm tarball omits `funding`; mrdoob/three.js .github/FUNDING.yml
+	// (read 2026-11-14) lists github: mrdoob first.
+	three: 'https://github.com/sponsors/mrdoob',
+};
+
 // Some tarballs publish "v1.2.3"; the page shows bare semver.
 function normalizeVersion(version) {
 	return version ? String(version).replace(/^v(?=\d)/, '') : null;
@@ -580,7 +594,7 @@ function npmEntries() {
 			area: curated?.area || fallbackArea(name),
 			license: meta.license || meta.licenses?.[0]?.type || LICENSE_OVERRIDES[name] || 'unknown',
 			repo: normalizeRepoUrl(repo),
-			funding: normalizeFunding(meta.funding),
+			funding: normalizeFunding(meta.funding) || FUNDING_OVERRIDES[name] || null,
 			version: normalizeVersion(meta.version),
 			powers: curated?.powers || null,
 		});
@@ -648,5 +662,48 @@ export function buildCredits() {
 		}
 	}
 	entries.sort((a, b) => a.area.localeCompare(b.area) || a.name.localeCompare(b.name));
-	return { areas: AREAS, entries };
+	const sponsorshipsDoc = readJson(resolve(ROOT, 'data/sponsorships.json'));
+	return applySponsorships({ areas: AREAS, entries }, sponsorshipsDoc);
+}
+
+// ---- sponsorships ------------------------------------------------------------
+const SPONSORSHIP_DECISIONS = new Set(['pending', 'approved', 'declined', 'no-route']);
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Merge the live sponsorships from a data/sponsorships.json document into a
+ * credits dataset. A row is live only when the owner approved it, it has a
+ * start date, and it has no end date; nothing else reaches the page.
+ * Throws on a malformed row so a bad edit fails the build, not the page.
+ */
+export function applySponsorships(credits, doc) {
+	const byId = new Map(credits.entries.map((e) => [e.id, e]));
+	const sponsoredSince = new Map();
+	const sponsorships = [];
+	for (const p of doc.projects || []) {
+		if (!SPONSORSHIP_DECISIONS.has(p.decision)) {
+			throw new Error(`sponsorships: "${p.id}" has an unknown decision "${p.decision}"`);
+		}
+		for (const field of ['decidedOn', 'startedOn', 'endedOn']) {
+			if (p[field] != null && !ISO_DAY.test(p[field])) {
+				throw new Error(`sponsorships: "${p.id}" ${field} must be YYYY-MM-DD, got "${p[field]}"`);
+			}
+		}
+		if (p.startedOn && p.decision !== 'approved') {
+			throw new Error(`sponsorships: "${p.id}" has a startedOn date but the owner has not approved it`);
+		}
+		for (const creditId of p.creditIds || []) {
+			if (!byId.has(creditId)) {
+				throw new Error(`sponsorships: "${p.id}" names credit "${creditId}", which is not in the dataset`);
+			}
+		}
+		if (p.decision !== 'approved' || !p.startedOn || p.endedOn) continue;
+		sponsorships.push({ id: p.id, name: p.name, url: p.url, since: p.startedOn });
+		for (const creditId of p.creditIds || []) sponsoredSince.set(creditId, p.startedOn);
+	}
+	sponsorships.sort((a, b) => a.since.localeCompare(b.since) || a.name.localeCompare(b.name));
+	const entries = credits.entries.map((e) =>
+		sponsoredSince.has(e.id) ? { ...e, sponsoredSince: sponsoredSince.get(e.id) } : e,
+	);
+	return { ...credits, entries, sponsorships };
 }

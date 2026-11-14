@@ -473,7 +473,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/vercel/ai",
 			"funding": null,
-			"version": "4.0.97",
+			"version": "4.0.99",
 			"powers": null
 		},
 		{
@@ -484,7 +484,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/vercel/ai",
 			"funding": null,
-			"version": "4.0.110",
+			"version": "4.0.111",
 			"powers": null
 		},
 		{
@@ -495,7 +495,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1164.0",
+			"version": "3.1165.0",
 			"powers": null
 		},
 		{
@@ -528,7 +528,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1163.0",
+			"version": "3.1165.0",
 			"powers": null
 		},
 		{
@@ -616,7 +616,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/coinbase/cdp-sdk",
 			"funding": null,
-			"version": "1.60.0",
+			"version": "1.61.0",
 			"powers": null
 		},
 		{
@@ -671,7 +671,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/electric-sql/pglite",
 			"funding": null,
-			"version": "0.5.15",
+			"version": "0.5.16",
 			"powers": null
 		},
 		{
@@ -715,7 +715,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/microsoft/FluidFramework",
 			"funding": null,
-			"version": "1.2.0",
+			"version": "3.12.0",
 			"powers": null
 		},
 		{
@@ -1551,7 +1551,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/vercel/ai",
 			"funding": null,
-			"version": "7.0.162",
+			"version": "7.0.166",
 			"powers": "The Vercel AI SDK powering agent chat streaming and tool calls."
 		},
 		{
@@ -2101,7 +2101,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/wevm/mppx",
 			"funding": null,
-			"version": "0.17.1",
+			"version": "0.17.6",
 			"powers": null
 		},
 		{
@@ -2145,7 +2145,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/taoqf/node-fast-html-parser",
 			"funding": null,
-			"version": "9.0.6",
+			"version": "9.0.7",
 			"powers": null
 		},
 		{
@@ -2332,7 +2332,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/nolimits4web/Swiper",
 			"funding": "https://sponsors.nolimits4web.com",
-			"version": "12.2.0",
+			"version": "14.4.0",
 			"powers": null
 		},
 		{
@@ -2398,7 +2398,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/nodejs/undici",
 			"funding": null,
-			"version": "8.12.3",
+			"version": "8.12.4",
 			"powers": null
 		},
 		{
@@ -2453,7 +2453,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/vitejs/vite",
 			"funding": "https://github.com/vitejs/vite?sponsor=1",
-			"version": "8.3.6",
+			"version": "8.3.7",
 			"powers": null
 		},
 		{
@@ -2654,7 +2654,7 @@
 			"area": "motion",
 			"license": "CC0 1.0",
 			"repo": "https://www.mesh2motion.org",
-			"funding": null,
+			"funding": "https://support.mesh2motion.org",
 			"version": null,
 			"powers": "Part of the bulk mocap library at GET /api/animations/library."
 		},
@@ -2889,7 +2889,7 @@
 			"area": "rendering",
 			"license": "MIT",
 			"repo": "https://github.com/mrdoob/three.js",
-			"funding": null,
+			"funding": "https://github.com/sponsors/mrdoob",
 			"version": "0.187.0",
 			"powers": "The 3D engine behind every viewer: the Forge stage, AR Studio, the agent embeds, and the Entity Studio."
 		},
@@ -2992,5 +2992,6 @@
 			"version": "0.0.2",
 			"powers": "Drives the avatar's mouth shapes from live or recorded speech audio."
 		}
-	]
+	],
+	"sponsorships": []
 }
