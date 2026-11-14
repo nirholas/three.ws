@@ -11,7 +11,7 @@ no hardware run yet**. Meta's toolkit is in developer preview.
 |---|---|---|
 | Web bridge | [src/irl/glasses/native-bridge.js](../../src/irl/glasses/native-bridge.js) | Feature-detects `Capacitor.Plugins.ThreeWsWearables`; absent on the plain web build, so nothing changes there. Session state, voice route, and one-frame re-localization. |
 | Capacitor plugin | [ThreeWsWearablesPlugin.swift](../native/App/App/ThreeWsWearablesPlugin.swift) | `getSession`, `sessionChanged`, `startAudioRoute`, `stopAudioRoute`, `capturePhoto`. Registered in `MainViewController`. Compiles with or without the toolkit linked (`#if canImport(WearablesKit)`); without it, it reports `unavailable`. |
-| Swift package | [ios/native/WearablesKit/](../native/WearablesKit) | `GlassesService` over `MWDATCore` and `MWDATCamera`, pinned to toolkit `1.0.1` (released 2026-10-09). Builds and tests on its own; the `MWDATMockDevice` test target runs on the simulator with no glasses. |
+| Swift package | [ios/native/WearablesKit/](../native/WearablesKit) | `GlassesService` over `MWDATCore` and `MWDATCamera`, pinned to toolkit `1.0.1` (released 2026-10-09, still the newest tag on 2026-11-14), minimum iOS 17.2 to match the toolkit binaries. Builds and tests on its own; the `MWDATMockDevice` test target pairs a mock `metaRayBanDisplay` on the simulator with no glasses. |
 | JS tests | [tests/irl-native-bridge.test.js](../../tests/irl-native-bridge.test.js) | Fake plugin boundary; real marker pose math, plus JPEG camera frames in [tests/fixtures/glasses-relocalize/](../../tests/fixtures/glasses-relocalize) decoded with `sharp` and `jsqr` and checked against the ground truth in `manifest.json` (distance within 5%, lateral offset within 5 cm). |
 | Frame renderer | [scripts/glasses/render-relocalize-fixtures.mjs](../../scripts/glasses/render-relocalize-fixtures.mjs) | Deterministically renders those frames: a real QR symbol projected through the lane's pinhole model at a known pose, with sensor noise, lens blur and JPEG encoding. Frames recorded on Ray-Ban Display hardware join this directory after the hardware demo. |
 
@@ -41,6 +41,14 @@ returns `wrong_marker`, none returns `no_marker`, an implausible read
 
 ## Build and test (on a Mac)
 
+Every toolkit call in `GlassesService.swift` and the test target was checked
+on 2026-11-14 against the `.swiftinterface` files shipped in the `1.0.1`
+xcframeworks (names, argument labels, typed throws, enum cases). That pass
+raised the package minimum to iOS 17.2, moved MockDeviceKit teardown to an
+async `tearDown` (the kit has sync and async `disable()` overloads), and
+pinned the mock model to `metaRayBanDisplay`. It is a source check, not a
+compile: the first `xcodebuild test` below is still the real proof.
+
 ```bash
 cd ios/native/WearablesKit
 xcodebuild test -scheme WearablesKit -destination 'platform=iOS Simulator,name=iPhone 16'
@@ -48,6 +56,10 @@ xcodebuild test -scheme WearablesKit -destination 'platform=iOS Simulator,name=i
 
 Link it into the app: Xcode, File, Add Package Dependencies, Add Local,
 `ios/native/WearablesKit`, add the `WearablesKit` library to the App target.
+The App target currently deploys to iOS 16.0 and the toolkit requires 17.2,
+so linking also means raising the App target's `IPHONEOS_DEPLOYMENT_TARGET`
+to 17.2, which drops iOS 16 devices from the app. That is a product call, so
+it lands with the link rather than ahead of it.
 Then add the `MWDAT` block, the Bluetooth/external-accessory background modes
 and `NSBluetoothAlwaysUsageDescription` to `Info.plist` per the toolkit README,
 and `Wearables.handleUrl` to the scene's URL handler (`GlassesService.handle`).
@@ -59,7 +71,8 @@ question (see [REVIEW-RISK.md](REVIEW-RISK.md)).
 
 1. Enroll in Meta's Wearables developer preview, create the organization and a
    release channel, and take the `MetaAppID` and `ClientToken`.
-2. Run the `xcodebuild test` command above on a Mac and link the package.
+2. Run the `xcodebuild test` command above on a Mac, raise the App target to
+   iOS 17.2, and link the package.
 3. Calibrate the glasses camera vertical field of view on hardware and pass it
    as `vfovDeg` (the bridge refuses to guess it: `fov_unknown`).
 4. Hardware demo: a spoken turn with a street agent through the glasses and a

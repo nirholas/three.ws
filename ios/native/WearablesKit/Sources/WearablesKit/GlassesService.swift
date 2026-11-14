@@ -12,7 +12,6 @@ public final class GlassesService: @unchecked Sendable {
 
     private let lock = NSLock()
     private var observers: [UUID: @Sendable (GlassesSnapshot) -> Void] = [:]
-    private var tokens: [any AnyListenerToken] = []
     private var tasks: [Task<Void, Never>] = []
     private var deviceTokens: [any AnyListenerToken] = []
     private var configured = false

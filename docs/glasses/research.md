@@ -35,8 +35,10 @@ Platform facts worth repeating because they change the architecture:
   they arrive as arrow keys and Enter. The raw sEMG stream is not exposed.
 - **Publishing is closed during developer preview.** Distribution today is a
   URL and a QR code, which is enough for a demo and a pilot.
-- Mock Device Kit does not cover the display glasses, so display work needs
-  either the simulator or hardware.
+- Mock Device Kit covers the display glasses as of toolkit `1.0.1`
+  (checked 2026-11-14): `GlassesModel.metaRayBanDisplay` plus a `MockDisplayKit`
+  with a preview view and simulated clicks. The lens web app still needs the
+  simulator or hardware, since the mock covers the native toolkit only.
 
 ## Community work worth reading (reference, not dependency)
 

@@ -6,6 +6,13 @@ import XCTest
 
 /// Runs on the simulator against MockDeviceKit: no glasses needed.
 final class GlassesServiceTests: XCTestCase {
+    /// The kit exposes both a sync and an async `disable()`; tearing down here
+    /// with the async one keeps overload resolution unambiguous in async tests.
+    override func tearDown() async throws {
+        if MockDeviceKit.shared.isEnabled { await MockDeviceKit.shared.disable() }
+        try await super.tearDown()
+    }
+
     func testStateMapping() {
         XCTAssertEqual(mapGlassesState(registered: false, hasDevice: true, link: .connected), .disconnected)
         XCTAssertEqual(mapGlassesState(registered: true, hasDevice: false, link: nil), .disconnected)
@@ -22,9 +29,8 @@ final class GlassesServiceTests: XCTestCase {
     func testMockGlassesReportConnected() async throws {
         let service = GlassesService()
         MockDeviceKit.shared.enable()
-        defer { MockDeviceKit.shared.disable() }
         try service.configure()
-        let glasses = try MockDeviceKit.shared.pairGlasses(model: GlassesModel.allCases[0])
+        let glasses = try MockDeviceKit.shared.pairGlasses(model: .metaRayBanDisplay)
         glasses.powerOn()
         glasses.don()
         try await Task.sleep(nanoseconds: 500_000_000)
@@ -37,9 +43,8 @@ final class GlassesServiceTests: XCTestCase {
     func testCapturePhotoFromMockCamera() async throws {
         let service = GlassesService()
         MockDeviceKit.shared.enable()
-        defer { MockDeviceKit.shared.disable() }
         try service.configure()
-        let glasses = try MockDeviceKit.shared.pairGlasses(model: GlassesModel.allCases[0])
+        let glasses = try MockDeviceKit.shared.pairGlasses(model: .metaRayBanDisplay)
         glasses.powerOn()
         glasses.don()
         let url = try Self.writeSampleJpeg()
