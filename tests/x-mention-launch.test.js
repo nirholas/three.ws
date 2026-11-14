@@ -103,3 +103,56 @@ describe('the poll loop with a launch mention (dry run)', () => {
 		expect(await store.getMentionEvent(id)).toMatchObject({ intent: 'launch', decision: 'reply', dry_run: true, reply_tweet_id: null });
 	});
 });
+
+describe('a launch mention the parser cannot fill (dry run)', () => {
+	const MIG = new URL('../api/_lib/migrations/', import.meta.url);
+	const COMPANY = { kind: 'company', ref: 'trythreews', userId: '1700000000000000001', handle: 'trythreews' };
+	const budget = { readGate: async () => ({ allow: true }), budgetGate: async () => ({ allow: true }), recordPosts: async () => {} };
+
+	beforeEach(async () => {
+		dbState.pg = new PGlite();
+		const src = readFileSync(new URL('20260922210000_free_tier_models.sql', MIG), 'utf8');
+		const start = src.indexOf('CREATE TABLE IF NOT EXISTS app_settings');
+		await dbState.pg.exec(src.slice(start, src.indexOf(');', start) + 2));
+		await dbState.pg.exec(readFileSync(new URL('20261008170000_x_mention_events.sql', MIG), 'utf8'));
+	});
+
+	const send = (id, text) => poll.handleMention({
+		mention: {
+			id, userId: '42', username: 'alice', text, createdAt: new Date().toISOString(), conversationId: id, account: COMPANY,
+			mentions: [{ username: 'trythreews', id: COMPANY.userId }], urls: [], media: [], inReplyToUserId: null, repliedTo: null, quoted: null, isRetweet: false, fromSelf: false,
+		},
+		account: COMPANY, limits: poll.replyLimits({}), env: {}, budget, paused: async () => false, guard: async () => ({ allow: true }),
+	});
+
+	it('teaches the launch grammar instead of the make-a-model help when the ticker is missing', async () => {
+		const out = await send('1900000000000000801', '@trythreews launch Moon Cat');
+		expect(out).toMatchObject({ intent: 'help', decision: 'reply', reason: 'launch_malformed', dry_run: true });
+		expect(out.text).toContain('@trythreews launch');
+		expect(out.text).toContain('$');
+		expect(out.text).not.toMatch(/make a red vintage scooter/);
+		expect(weightedLength(out.text)).toBeLessThanOrEqual(X_POST_MAX_WEIGHT);
+	});
+
+	it('says why the platform ticker is refused and how to pick another', async () => {
+		const out = await send('1900000000000000802', '@trythreews launch Copycat $THREE');
+		expect(out).toMatchObject({ intent: 'help', reason: 'launch_reserved_ticker' });
+		expect(out.text).toMatch(/\$THREE/);
+		expect(out.text).toContain('@trythreews launch');
+		expect(out.text).not.toMatch(/make a red vintage scooter/);
+		expect([...out.text].some((ch) => ch.charCodeAt(0) === 0x2013 || ch.charCodeAt(0) === 0x2014)).toBe(false);
+	});
+});
+
+describe('launchHelpReply', () => {
+	it('quotes the real ticker bounds and fits one post for every launch reason', async () => {
+		const { SYMBOL_MAX } = await import('../src/launch/launch-model.js');
+		const { launchHelpReply } = await import('../api/_lib/x-mention-launch.js');
+		expect(launchHelpReply('launch_bad_ticker')).toContain(`2 to ${SYMBOL_MAX}`);
+		for (const reason of ['launch_malformed', 'launch_missing_name', 'launch_name_too_long', 'launch_bad_ticker', 'launch_reserved_ticker']) {
+			const text = launchHelpReply(reason, 'someagent');
+			expect(text).toContain('@someagent launch <name> $<TICKER>');
+			expect(weightedLength(text)).toBeLessThanOrEqual(X_POST_MAX_WEIGHT);
+		}
+	});
+});

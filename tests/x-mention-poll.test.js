@@ -56,7 +56,12 @@ const image3dEdges = (extra = {}) => ({
 	startForge: async () => I3D_DONE,
 	...extra,
 });
-const deps = (extra = {}) => ({ request, resolvedAccount: COMPANY, compose, image3d: (e) => image3d.handleImage3d(e, image3dEdges()), ...extra });
+const MAKE_CREATION = '3c9d2f41-6a7b-4e1c-9d8f-0b2a4c6e8f10';
+const MAKE_DONE = { status: 'done', glb_url: 'https://cdn.three.test/forge/lighthouse.glb', creation_id: MAKE_CREATION };
+/** The real make handler with only its 3D lane and prompt director replaced. */
+const makeEdges = (extra = {}) => ({ base: I3D_BASE, directPrompt: async () => null, startForge: async () => MAKE_DONE, ...extra });
+const makeWith = (extra = {}) => (e, late) => make.handleMake(e, { ...makeEdges(extra), ...(late || {}) });
+const deps = (extra = {}) => ({ request, resolvedAccount: COMPANY, compose, image3d: (e) => image3d.handleImage3d(e, image3dEdges()), make: makeWith(), ...extra });
 
 beforeEach(async () => {
 	dbState.pg = new PGlite();
@@ -95,11 +100,16 @@ describe('a poll with a cursor', () => {
 		expect(await store.getCursor(ACCT)).toBe(out.cursor);
 	});
 
-	it('routes the make intent (a later order) to help with handler_not_built', async () => {
+	it('answers a make mention with the make handler (a 3D model), never the help text', async () => {
 		await poll.pollAccount({ descriptor: DESCRIPTOR, env: {}, deps: deps() });
 		const rows = await store.recentDecisions(ACCT, { limit: 50 });
-		const unbuilt = rows.filter((r) => r.intent === 'make' && r.decision === 'reply');
-		for (const r of unbuilt) expect(r.reason).toBe('handler_not_built');
+		const makes = rows.filter((r) => r.intent === 'make');
+		expect(makes.length).toBeGreaterThan(0);
+		for (const r of makes) {
+			expect(r).toMatchObject({ decision: 'reply', reason: 'make_done', dry_run: true, reply_tweet_id: null });
+			expect(r.reply_text).toContain(`/m/${MAKE_CREATION}`);
+			expect(r.reply_media_url).toContain(encodeURIComponent(MAKE_DONE.glb_url));
+		}
 	});
 
 	it('answers an image3d mention with the image3d handler, not help', async () => {
@@ -171,6 +181,123 @@ describe('a poll with a cursor', () => {
 			guard: async () => ({ allow: true }),
 		})).resolves.toMatchObject({ decision: 'error' });
 		expect(await store.getMentionEvent(id)).toMatchObject({ decision: 'error' });
+	});
+});
+
+describe('going live (order 928)', () => {
+	const LIVE = { X_MENTION_BOT_LIVE: '1' };
+	let seq = 0;
+	const mentionOf = (text) => {
+		seq += 1;
+		const id = String(1910000000000000000n + BigInt(seq));
+		return {
+			id, userId: '42', username: 'alice', text, createdAt: new Date().toISOString(), conversationId: id, account: ACCT,
+			mentions: [{ username: 'trythreews', id: COMPANY.userId }], urls: [], media: [],
+			inReplyToUserId: null, repliedTo: null, quoted: null, isRetweet: false, fromSelf: false,
+		};
+	};
+	const sender = () => ({ post: vi.fn(async () => '2910000000000000001'), uploadMedia: vi.fn(async () => 'media-9') });
+	const budget = () => ({ readGate: async () => ({ allow: true }), budgetGate: async () => ({ allow: true }), recordPosts: vi.fn(async () => {}) });
+	const PNG_MEDIA = async () => ({ buffer: PNG, mimeType: 'image/png' });
+	const adapterFactory = (o) => createXAdapter({ ...o, fetchMedia: PNG_MEDIA });
+	const handle = (mention, env, extra = {}) => poll.handleMention({
+		mention, account: COMPANY, limits: poll.replyLimits({}), env, budget: budget(), paused: async () => false,
+		guard: async () => ({ allow: true }), compose, adapterFactory, make: makeWith(), ...extra,
+	});
+
+	it('keeps the company account in dry run while X_MENTION_BOT_LIVE is unset', async () => {
+		const s = sender();
+		const companySender = vi.fn(async () => s);
+		const m = mentionOf('@trythreews what is three.ws?');
+		const out = await handle(m, {}, { companySender });
+		expect(out).toMatchObject({ intent: 'chat', decision: 'reply', dry_run: true });
+		expect(companySender).not.toHaveBeenCalled();
+		expect(s.post).not.toHaveBeenCalled();
+		expect(await store.getMentionEvent(m.id)).toMatchObject({ dry_run: true, reply_tweet_id: null, reply_text: 'Hello from three.ws' });
+	});
+
+	it('posts the company reply through the company sender once X_MENTION_BOT_LIVE=1', async () => {
+		const s = sender();
+		const m = mentionOf('@trythreews what is three.ws?');
+		const out = await handle(m, LIVE, { companySender: async () => s });
+		expect(out).toMatchObject({ intent: 'chat', decision: 'reply', dry_run: false });
+		expect(s.post).toHaveBeenCalledTimes(1);
+		expect(s.post.mock.calls[0][0]).toEqual({ text: 'Hello from three.ws', replyTo: m.id, mediaIds: null });
+		expect(await store.getMentionEvent(m.id)).toMatchObject({ decision: 'reply', dry_run: false, reply_tweet_id: '2910000000000000001' });
+	});
+
+	it('posts a live make reply with its rendered model as media', async () => {
+		const s = sender();
+		const m = mentionOf('@trythreews make a red vintage scooter');
+		const out = await handle(m, LIVE, { companySender: async () => s });
+		expect(out).toMatchObject({ intent: 'make', decision: 'reply', reason: 'make_done', dry_run: false });
+		expect(s.uploadMedia).toHaveBeenCalledWith(PNG, 'image/png');
+		expect(s.post).toHaveBeenCalledTimes(1);
+		expect(s.post.mock.calls[0][0]).toMatchObject({ replyTo: m.id, mediaIds: ['media-9'] });
+		expect(s.post.mock.calls[0][0].text).toContain(`/m/${MAKE_CREATION}`);
+		expect(await store.getMentionEvent(m.id)).toMatchObject({ intent: 'make', decision: 'reply', dry_run: false, reply_tweet_id: '2910000000000000001' });
+	});
+
+	it('stays in dry run when the switch is on but the company credentials are missing', async () => {
+		const m = mentionOf('@trythreews what is three.ws?');
+		const out = await handle(m, LIVE, { companySender: async () => null });
+		expect(out).toMatchObject({ decision: 'reply', dry_run: true });
+		expect(await store.getMentionEvent(m.id)).toMatchObject({ dry_run: true, reply_tweet_id: null });
+	});
+
+	it('answers only the intents X_MENTION_COMPANY_INTENTS lists', async () => {
+		const s = sender();
+		const env = { ...LIVE, X_MENTION_COMPANY_INTENTS: 'make, help' };
+		const chat = mentionOf('@trythreews what is three.ws?');
+		expect(await handle(chat, env, { companySender: async () => s })).toMatchObject({ intent: 'chat', decision: 'skip', reason: 'intent_not_allowed:chat' });
+		const help = mentionOf('@trythreews help');
+		expect(await handle(help, env, { companySender: async () => s })).toMatchObject({ intent: 'help', decision: 'reply', dry_run: false });
+		expect(s.post).toHaveBeenCalledTimes(1);
+		expect(await store.getMentionEvent(chat.id)).toMatchObject({ decision: 'skip', reason: 'intent_not_allowed:chat', reply_tweet_id: null });
+	});
+
+	it('posts a late reply for a company row recorded live', async () => {
+		const id = '1910000000000009001';
+		await store.recordMention({
+			mention: { id, userId: '42', username: 'alice', text: '@trythreews make a dragon', conversationId: id, account: ACCT },
+			parsed: { intent: 'make', args: { make: { job_id: 'job-make', stage: 'mesh', prompt: 'a dragon', started_at: new Date().toISOString() } } },
+			dryRun: false,
+			decision: 'pending',
+		});
+		const s = sender();
+		const out = await poll.runFollowUps({
+			env: LIVE,
+			deps: {
+				paused: async () => false, budget: budget(), adapterFactory, companySender: async () => s,
+				finishPendingMakes: (o, d) => make.finishPendingMakes(o, { ...d, base: I3D_BASE, pollOnce: async () => MAKE_DONE }),
+				finishPendingAvatars: async () => ({ checked: 0 }), finishPendingImage3d: async () => ({ checked: 0 }),
+			},
+		});
+		expect(out.makeFollowUp).toMatchObject({ replied: 1 });
+		expect(s.post).toHaveBeenCalledTimes(1);
+		expect(s.post.mock.calls[0][0]).toMatchObject({ replyTo: id, mediaIds: ['media-9'] });
+		expect(await store.getMentionEvent(id)).toMatchObject({ decision: 'reply', dry_run: false, reply_tweet_id: '2910000000000000001' });
+	});
+
+	it('never posts a live-recorded company row after the switch is turned off', async () => {
+		const id = '1910000000000009002';
+		await store.recordMention({
+			mention: { id, userId: '42', username: 'alice', text: '@trythreews make a dragon', conversationId: id, account: ACCT },
+			parsed: { intent: 'make', args: { make: { job_id: 'job-make', stage: 'mesh', prompt: 'a dragon', started_at: new Date().toISOString() } } },
+			dryRun: false,
+			decision: 'pending',
+		});
+		const s = sender();
+		await poll.runFollowUps({
+			env: {},
+			deps: {
+				paused: async () => false, budget: budget(), adapterFactory, companySender: async () => s,
+				finishPendingMakes: (o, d) => make.finishPendingMakes(o, { ...d, base: I3D_BASE, pollOnce: async () => MAKE_DONE }),
+				finishPendingAvatars: async () => ({ checked: 0 }), finishPendingImage3d: async () => ({ checked: 0 }),
+			},
+		});
+		expect(s.post).not.toHaveBeenCalled();
+		expect(await store.getMentionEvent(id)).toMatchObject({ reply_tweet_id: null });
 	});
 });
 

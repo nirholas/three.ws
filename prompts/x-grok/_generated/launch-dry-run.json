@@ -1,0 +1,81 @@
+{
+  "generatedAt": "2026-11-14T02:33:24.057Z",
+  "base": "https://three.ws",
+  "dryRun": true,
+  "rows": [
+    {
+      "case": "linked author, agent with a body",
+      "post": "@trythreews launch Fixture Moon $FXMOON the cat that lives on the moon",
+      "skipped": "no connected X account found for a platform admin with an agent that has a 3D body"
+    },
+    {
+      "case": "author not linked to three.ws",
+      "post": "@trythreews launch Fixture Frog $FXFROG",
+      "tweetId": "7527196950525902849",
+      "expectedReason": "launch_unlinked",
+      "handler": {
+        "intent": "launch",
+        "decision": "reply",
+        "reason": "launch_unlinked",
+        "dry_run": true
+      },
+      "ledger": {
+        "intent": "launch",
+        "decision": "reply",
+        "reason": "launch_unlinked",
+        "dry_run": true,
+        "reply_tweet_id": null,
+        "reply_text": "Sign in to three.ws and connect this X account first, then ask again: https://three.ws/x/claim Nothing is paid until you review and sign on three.ws."
+      },
+      "linkCheck": {
+        "link": "https://three.ws/x/claim",
+        "status": 200
+      },
+      "pass": true
+    },
+    {
+      "case": "missing ticker",
+      "post": "@trythreews launch Fixture Cat",
+      "tweetId": "7527196950525902850",
+      "expectedReason": "launch_malformed",
+      "handler": {
+        "intent": "help",
+        "decision": "reply",
+        "reason": "launch_malformed",
+        "dry_run": true
+      },
+      "ledger": {
+        "intent": "help",
+        "decision": "reply",
+        "reason": "launch_malformed",
+        "dry_run": true,
+        "reply_tweet_id": null,
+        "reply_text": "To launch a coin, post: @trythreews launch <name> $<TICKER> <optional description>. I reply with a link you review and sign. Nothing is paid until you review and sign on three.ws."
+      },
+      "linkCheck": null,
+      "pass": true
+    },
+    {
+      "case": "reserved ticker",
+      "post": "@trythreews launch Copycat $THREE",
+      "tweetId": "7527196950525902851",
+      "expectedReason": "launch_reserved_ticker",
+      "handler": {
+        "intent": "help",
+        "decision": "reply",
+        "reason": "launch_reserved_ticker",
+        "dry_run": true
+      },
+      "ledger": {
+        "intent": "help",
+        "decision": "reply",
+        "reason": "launch_reserved_ticker",
+        "dry_run": true,
+        "reply_tweet_id": null,
+        "reply_text": "$THREE is the three.ws platform coin, so it cannot be launched again. Pick your own ticker: @trythreews launch <name> $<TICKER> <optional description>"
+      },
+      "linkCheck": null,
+      "pass": true
+    }
+  ]
+}
