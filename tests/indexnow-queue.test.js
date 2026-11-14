@@ -361,12 +361,36 @@ describe('manifest pages', () => {
 		expect(out.types[0]).toMatchObject({ scanned: 2, live: 1, notLive: 1, enqueued: 1 });
 		expect(out.types[0].skipped).toEqual(['https://three.ws/unreleased']);
 		expect(calls).toEqual([['https://three.ws/forge']]);
-		expect(await holder.db.query(`select * from indexnow_cursors where resource_type = 'page'`)).toEqual([]);
+		const [held] = await holder.db.query(`select cursor_ts from indexnow_cursors where resource_type = 'page'`);
+		expect(new Date(held.cursor_ts).toISOString().slice(0, 10) <= today).toBe(true);
+		expect(q.changedManifestPages(manifest, new Date(held.cursor_ts)).map((p) => p.key)).toContain('/unreleased');
 
 		const after = await q.reconcileIndexNow({ types: ['page'], manifest, isLive: async () => true, send });
 		expect(after.types[0]).toMatchObject({ live: 2, notLive: 0 });
 		expect(calls.at(-1)).toEqual(['https://three.ws/unreleased']);
 		expect(await holder.db.query(`select resource_type from indexnow_cursors where resource_type = 'page'`)).toHaveLength(1);
+	});
+
+	it('still announces a held page when the deployed cron first runs days later', async () => {
+		// The first manual run happens before any page cursor exists. If a held
+		// page left no cursor behind, the cron's first run would fall back to a
+		// 24-hour lookback that has slid past the page's date, and the page would
+		// never be announced.
+		vi.useFakeTimers({ toFake: ['Date'] });
+		try {
+			vi.setSystemTime(new Date('2026-11-11T17:17:00Z'));
+			const manifest = { sections: [{ id: 'make', pages: [{ path: '/forge', added: '2026-11-11' }, { path: '/held', added: '2026-11-11' }] }] };
+			const { send, calls } = sender();
+			await q.reconcileIndexNow({ types: ['page'], manifest, isLive: async (url) => !url.endsWith('/held'), send });
+			expect(calls).toEqual([['https://three.ws/forge']]);
+
+			vi.setSystemTime(new Date('2026-11-14T02:20:00Z'));
+			const cron = await q.reconcileIndexNow({ types: ['page'], manifest, send });
+			expect(cron.types[0].urls).toContain('https://three.ws/held');
+			expect(calls.at(-1)).toEqual(['https://three.ws/held']);
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	it('picks public pages changed on or after the cursor day, by the same rule as core.xml', () => {

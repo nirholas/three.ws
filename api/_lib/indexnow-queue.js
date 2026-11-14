@@ -487,9 +487,11 @@ async function reconcileType(type, { since, dryRun, source, pageSize, manifest, 
 		summary.skipped = skipped;
 		if (!dryRun) {
 			summary.enqueued = await enqueueIndexNow(items, { source });
-			// Hold the cursor while any page is waiting on a deploy, so the
-			// next run (or the deployed cron) still sees it.
-			if (!skipped.length) await writeCursor('page', new Date(), '');
+			// While any page is waiting on a deploy, pin the cursor at this
+			// run's window start so the next run (or the deployed cron) still
+			// sees it. Leaving no row would let the lookback default slide past
+			// the page's date before the deploy lands.
+			await writeCursor('page', skipped.length ? cursor.ts : new Date(), '');
 		}
 		summary.urls = items.map((i) => resourceUrl(INDEXNOW_ORIGIN, 'page', i.key));
 		return summary;
