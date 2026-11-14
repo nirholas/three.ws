@@ -8,6 +8,7 @@ import {
 import {
 	validateStrategy,
 	backtestStrategy,
+	snapshotMint,
 } from '../../examples/skills/pump-fun-strategy/handlers.js';
 
 describe('parsePredicate', () => {
@@ -36,11 +37,65 @@ describe('evalPredicate', () => {
 });
 
 describe('buildView', () => {
-	it('handles missing fields without NaN cascade', () => {
+	it('leaves unknown metrics undefined so predicates on them fail closed', () => {
 		const v = buildView({});
-		expect(v.holders.total).toBe(0);
-		expect(v.creator.rugCount).toBe(0);
-		expect(v.curve.priceSol).toBe(0);
+		expect(v.holders.total).toBeUndefined();
+		expect(v.creator.rugCount).toBeUndefined();
+		expect(v.curve.priceSol).toBeUndefined();
+		// A filter on data we could not fetch must not pass: "no rugs" is not
+		// proven by a creator profile that never loaded.
+		const s = compileStrategy({
+			scan: { kind: 'newTokens' },
+			filters: ['creator.rugCount == 0'],
+			entry: { side: 'buy', amountSol: 0.05 },
+		});
+		expect(s.passes(v)).toBe(false);
+		expect(evalPredicate(parsePredicate('holders.topHolderPct < 25'), v)).toBe(false);
+	});
+
+	// The live pump-fun MCP payloads (api/pump-fun-mcp.js), captured 2026-11-14.
+	const LIVE_CURVE = {
+		mint: 'THREEsynthetic1111111111111111111111111111',
+		network: 'mainnet',
+		complete: false,
+		graduationPercent: 12.5,
+		solReserves: '0.0000',
+		tokenReserves: '793100000000000',
+		virtualSolReserves: '30000000010',
+		virtualTokenReserves: '1073000000000000',
+	};
+	const LIVE_DETAILS = { mint: LIVE_CURVE.mint, decimals: 6, supply: '1000000000000000', mintAuthority: null, freezeAuthority: null };
+	const LIVE_HOLDERS = { mint: LIVE_CURVE.mint, count: 3, topHolderPercent: 18.2, holders: [{ percent: 18.2 }, { percent: 9 }, { percent: 4 }] };
+
+	it('derives price, graduation and market cap from the live bonding-curve payload', () => {
+		const v = buildView({ curve: LIVE_CURVE, details: LIVE_DETAILS });
+		// 30 SOL virtual / 1.073e9 tokens virtual = ~2.796e-8 SOL per token.
+		expect(v.curve.priceSol).toBeCloseTo(30.00000001 / 1_073_000_000, 15);
+		expect(v.curve.graduationPct).toBe(12.5);
+		// 1e9 whole tokens of supply at that price.
+		expect(v.token.marketCapSol).toBeCloseTo((30.00000001 / 1_073_000_000) * 1e9, 6);
+	});
+
+	it('reads the live holder payload without inventing a holder count from the sample size', () => {
+		const v = buildView({ holders: LIVE_HOLDERS });
+		expect(v.holders.topHolderPct).toBe(18.2);
+		// `count` is the size of the largest-accounts sample (max 20), not how
+		// many wallets hold the coin, so it must not be reported as the total.
+		expect(v.holders.total).toBeUndefined();
+	});
+
+	it('takes token age from the launch timestamp in either shape', () => {
+		const createdMs = Date.now() - 90_000;
+		expect(buildView({ details: { createdAt: new Date(createdMs).toISOString() } }).token.ageSec).toBeGreaterThan(85);
+		expect(buildView({ details: { created_at: createdMs } }).token.ageSec).toBeGreaterThan(85);
+	});
+
+	it('marks a position to its last known price when the curve has no price', () => {
+		const v = buildView({
+			curve: null,
+			position: { entryPriceSol: 0.001, lastPriceSol: 0.0005, openedAt: Date.now(), amountTokens: 10 },
+		});
+		expect(v.position.pnlPct).toBeCloseTo(-50, 5);
 	});
 	it('computes pnlPct from entry vs current price', () => {
 		const v = buildView({
@@ -201,5 +256,62 @@ describe('backtestStrategy', () => {
 		}, ctx);
 		expect(r.data.tradeCount).toBe(2);
 		expect(r.data.maxDrawdownSol).toBeGreaterThan(0);
+	});
+});
+
+describe('snapshotMint', () => {
+	// Production returns "holders unavailable: solana rpc 429" from time to time
+	// and getCreatorProfile needs an optional indexer. One missing source must
+	// not throw away the whole candidate: the metrics it would have filled stay
+	// undefined, and only filters that reference them fail closed.
+	function ctxWith(failing) {
+		const responses = {
+			'pump-fun.getTokenDetails': { mint: 'M', decimals: 6, supply: '1000000000000000', creator: 'C' },
+			'pump-fun.getBondingCurve': { virtualSolReserves: '30000000000', virtualTokenReserves: '1000000000000000', graduationPercent: 3 },
+			'pump-fun.getTokenHolders': { count: 2, topHolderPercent: 11, holders: [] },
+			'pump-fun.getCreatorProfile': { rugCount: 0 },
+		};
+		return {
+			skills: {
+				invoke: async (tool) => (failing.includes(tool)
+					? { ok: false, error: 'holders unavailable: solana rpc 429' }
+					: { ok: true, data: responses[tool] }),
+			},
+		};
+	}
+
+	it('keeps the candidate when holders and the creator profile are unavailable', async () => {
+		const snap = await snapshotMint(ctxWith(['pump-fun.getTokenHolders', 'pump-fun.getCreatorProfile']), 'M');
+		const v = buildView(snap);
+		expect(v.curve.priceSol).toBeCloseTo(30 / 1e9, 12);
+		expect(v.holders.topHolderPct).toBeUndefined();
+		expect(v.creator.rugCount).toBeUndefined();
+	});
+
+	it('still throws when the token itself cannot be read', async () => {
+		await expect(snapshotMint(ctxWith(['pump-fun.getTokenDetails']), 'M')).rejects.toThrow(/getTokenDetails/);
+	});
+});
+
+describe('runStrategy entry price', () => {
+	it('records the entry at the price derived from the live curve payload, not 0', async () => {
+		const responses = {
+			'pump-fun.getNewTokens': { tokens: [{ mint: 'THREEsynthetic1111111111111111111111111111', created_at: Date.now() - 30_000 }] },
+			'pump-fun.getTokenDetails': { decimals: 6, supply: '1000000000000000' },
+			'pump-fun.getBondingCurve': { virtualSolReserves: '30000000000', virtualTokenReserves: '1000000000000000', graduationPercent: 1 },
+		};
+		const ctx = {
+			skillConfig: { defaultPollMs: 5 },
+			skills: { invoke: async (tool) => (responses[tool] ? { ok: true, data: responses[tool] } : { ok: false, error: 'unavailable' }) },
+		};
+		const { runStrategy } = await import('../../examples/skills/pump-fun-strategy/handlers.js');
+		const r = await runStrategy({
+			strategy: { scan: { kind: 'newTokens' }, filters: ['token.ageSec < 600'], entry: { side: 'buy', amountSol: 0.05 } },
+			durationSec: 0.05,
+			simulate: true,
+		}, ctx);
+		const enter = r.data.log.find((e) => e.action === 'enter');
+		expect(enter).toBeTruthy();
+		expect(enter.entryPriceSol).toBeCloseTo(30 / 1e9, 12);
 	});
 });
