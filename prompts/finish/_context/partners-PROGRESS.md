@@ -546,7 +546,8 @@ orders still on disk.
   rows on /open-source (section plus card badge), test-first in
   `tests/open-source-sponsorships.test.js`. three.js and Mesh2Motion cards now link their
   FUNDING.yml routes. Code landed in 0fb132625 (committed by a concurrent agent's sweep, content
-  identical to this work); docs and changelog in the commit that adds this entry. Verified in
+  identical to this work); the docs, this entry, the STRUCTURE row and the changelog entry landed
+  in 95beecb8b and 09ff630ea, also through concurrent sweeps, content identical. Verified in
   headless Chromium against the dev server: hidden with no live rows, renders with one, no console
   errors.
 - **Remaining (owner)**: approve or decline each row, start the approved ones from the owner's
