@@ -489,6 +489,26 @@ orders still on disk.
   The export now skips `__pycache__` (test-first, `tests/export-hacs-repo.test.js`).
 - Remaining (owner): clear the billing lock in the browser, then the two commands. Row 58.
 
+## 2026-11-14: Sketchfab AI-tag backfill (order 940), nothing to backfill
+
+- **Already built** in `309a22c28`: `scripts/sketchfab-retag.mjs` (dry run by default, `--apply`
+  sends a tags-only `PATCH /v3/models/{uid}` with the existing tags plus `createdwithai`, honours
+  `429 Retry-After`), `tests/sketchfab-retag.test.js` (5/5 pass) and the backfill note in
+  `docs/sketchfab.md`.
+- **Measured**: the `sketchfab_uploads` ledger in production has 0 rows (the cron claims a row
+  before any network call, so every upload attempt would leave one). None of the 535 `three-ws-api`
+  revisions from 2026-07-07 to 2026-11-13 has carried `SKETCHFAB_API_TOKEN`. The showcase has never
+  uploaded, so there is no pre-2026-10-09 catalog, and every future upload carries the tag from
+  `919e54e82`.
+- **Live dry run**: `node scripts/sketchfab-retag.mjs --user threews` printed
+  `0 models listed, 0 already tagged, 0 to change.` The same run against an unrelated public
+  account listed 16 models over pagination and planned 16 tags-only patches, which proves the
+  listing and plan against the real API. `GET /v3/me/models` without a token answers 401, and
+  `--apply` without a token exits 2 before touching anything.
+- Fixed the stale prospects finding (row on the `createdwithai` tag). The order file is deleted in
+  this commit. Owner action only if the official account was ever populated by hand outside the
+  cron: set the token and run `node scripts/sketchfab-retag.mjs`.
+
 ## 2026-11-14: order 936 (Tripo reply and house key) second pass; owner steps remain
 
 - **Step 0**: the reply has not been sent; no `TRIPO*` variable on `three-ws-api`; order 084 is
