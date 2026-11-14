@@ -466,7 +466,7 @@ export function mountAutopilotMind(container, { agentId }) {
 
 	function renderDryRun(preview) {
 		const checks = (preview.checks || []).map((c) =>
-			`<div class="apm-check ${c.ok ? 'ok' : 'no'}"><span class="ck">${c.ok ? '✓' : '✕'}</span><span>${esc(c.label)} — <span class="apm-prop-conf">${esc(c.detail)}</span></span></div>`).join('');
+			`<div class="apm-check ${c.ok ? 'ok' : 'no'}"><span class="ck">${c.ok ? '✓' : '✕'}</span><span>${esc(c.label)}: <span class="apm-prop-conf">${esc(c.detail)}</span></span></div>`).join('');
 		const q = preview.quote;
 		const fmt = (n) => (n == null ? 'n/a' : Number(n).toLocaleString(undefined, { maximumFractionDigits: 6 }));
 		const quote = q ? `<dl class="apm-quote" aria-label="Live quote">
@@ -485,14 +485,14 @@ export function mountAutopilotMind(container, { agentId }) {
 		return new Promise((resolve) => {
 			const isTrade = p.kind === 'trade';
 			const t = p.params;
-			const tokenName = t.mint === 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump' ? '$THREE' : `${String(t.mint).slice(0, 6)}…${String(t.mint).slice(-4)}`;
+			const tokenName = t.mint === THREE_MINT ? '$THREE' : `${String(t.mint).slice(0, 6)}…${String(t.mint).slice(-4)}`;
 			const heading = isTrade ? `Confirm ${t.side === 'sell' ? 'sale' : 'purchase'}` : 'Confirm SOL transfer';
 			const line = isTrade
 				? (t.side === 'buy'
 					? `Your agent will buy <b>${esc(tokenName)}</b> with <b>${esc(t.amount_sol)} SOL</b>, up to ${esc(t.slippage_bps)} bps slippage.`
-					: `Your agent will sell <b>${esc(t.token_amount_raw)}</b> base units of <b>${esc(tokenName)}</b> for SOL, up to ${esc(t.slippage_bps)} bps slippage.`)
+					: `Your agent will sell <b>${esc(sellSizeText(t))}</b> of <b>${esc(tokenName)}</b> for SOL, up to ${esc(t.slippage_bps)} bps slippage. The size is checked against the wallet's live balance first.`)
 				: `Your agent will send <b>${esc(t.amount_sol)} SOL</b> to <b>${esc(String(t.recipient).slice(0, 10))}…${esc(String(t.recipient).slice(-6))}</b>.`;
-			const okLabel = isTrade ? (t.side === 'buy' ? `Buy with ${t.amount_sol} SOL` : 'Sell') : `Send ${t.amount_sol} SOL`;
+			const okLabel = isTrade ? (t.side === 'buy' ? `Buy with ${t.amount_sol} SOL` : (t.amount_tokens === 'all' ? 'Sell all' : `Sell ${sellSizeText(t)}`)) : `Send ${t.amount_sol} SOL`;
 			const back = document.createElement('div');
 			back.className = 'apm-modal-backdrop';
 			back.innerHTML = `
@@ -640,6 +640,29 @@ export function mountAutopilotMind(container, { agentId }) {
 
 // ── Shared receipt row (used by the tab + the standalone Activity page) ───────
 
+const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+const fmtAmount = (n) => Number(n).toLocaleString(undefined, { maximumFractionDigits: 6 });
+
+/** The size of a queued sell as the owner should read it. */
+function sellSizeText(t) {
+	if (t.amount_tokens === 'all') return 'the whole position';
+	if (t.amount_tokens != null) return `${fmtAmount(t.amount_tokens)} tokens`;
+	return `${t.token_amount_raw} base units`;
+}
+
+/** One receipt line for a filled trade: what moved, in which direction, for how much. */
+function tradeLine(r) {
+	const three = r.mint === THREE_MINT;
+	const token = three ? '$THREE' : `${String(r.mint || '').slice(0, 6)}…`;
+	const amount = r.token_amount != null
+		? `<b>${esc(fmtAmount(r.token_amount))}</b> ${three ? '$THREE' : `tokens of <b>${esc(token)}</b>`}`
+		: `<b>${esc(token)}</b>`;
+	if (r.side === 'sell') {
+		return `Sold ${amount}${r.realized_sol != null ? ` for about <b>${esc(fmtAmount(r.realized_sol))} SOL</b>` : ' for SOL'}.`;
+	}
+	return `Bought ${amount} with <b>${esc(r.amount_sol)} SOL</b>.`;
+}
+
 export function receiptRow(rc, agentId, { undo = false, showAgent = false } = {}) {
 	// Surfaces that reuse the row without mounting the full panel (the
 	// /autopilot-activity ledger) get the stylesheet from here.
@@ -650,7 +673,7 @@ export function receiptRow(rc, agentId, { undo = false, showAgent = false } = {}
 	if (rc.kind === 'alert_created') line = `Created a <b>${esc(String(result.rule_kind || 'alert').replace('_', ' '))}</b> alert${result.target_mint ? ` on ${esc(result.target_mint === 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump' ? '$THREE' : String(result.target_mint).slice(0, 6) + '…')}` : ''}.`;
 	else if (rc.kind === 'briefing_authored') line = `Authored a briefing${result.body_preview ? `: "${esc(String(result.body_preview).slice(0, 90))}…"` : ''}.`;
 	else if (rc.kind === 'wallet_transfer') line = `Sent <b>${esc(result.amount_sol)} SOL</b>${result.recipient ? ` to ${esc(String(result.recipient).slice(0, 8))}…` : ''}.`;
-	else if (rc.kind === 'trade_executed') line = `${result.side === 'sell' ? 'Sold' : 'Bought'} <b>${esc(result.mint === 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump' ? '$THREE' : String(result.mint || '').slice(0, 6) + '…')}</b>${result.side === 'sell' ? '' : ` with ${esc(result.amount_sol)} SOL`}.`;
+	else if (rc.kind === 'trade_executed') line = tradeLine(result);
 	else line = esc(rc.type);
 
 	const sources = (rc.sources || []).slice(0, 3).map((s) => sourceChip(rc.agentId || agentId, s)).join('');
