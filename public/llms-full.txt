@@ -3794,6 +3794,12 @@ URL: https://three.ws/docs/mcp-studio
 
 The free, no-auth MCP server behind the ChatGPT 3D Studio app: text and image to 3D, rigged avatars, conversational refinement, and living agent personas.
 
+### Docs · Vercel AI SDK tools
+
+URL: https://three.ws/docs/ai-sdk
+
+@three-ws/ai-sdk: forge, rig, render and animate 3D models and chat with a three.ws agent from any Vercel AI SDK agent loop. Four of the five tools are free with no key.
+
 ### Docs · three.ws with Google ADK
 
 URL: https://three.ws/docs/google-adk

@@ -3,7 +3,7 @@
 Program: Shopify Partner account, then App Store review of "Photo to 3D product media".
 Full build record, app configuration, env vars, billing, webhooks, listing copy and verification packet: [../shopify-app.md](../shopify-app.md) (order 091). This file adds the review layer and the verified listing limits.
 Page last read: 2026-11-14 (<https://shopify.dev/docs/apps/launch/app-requirements-checklist>, unchanged on every limit below, and <https://shopify.dev/docs/apps/launch/app-store-review/submit-app-for-review>, which gives the submission steps). Neither page states a review turnaround: **not verified on 2026-11-14**.
-Tracker row: "Shopify App Store: Photo to 3D product media" in `opportunities.csv`; prospect score 14 in `docs/partners/prospects.md`.
+Tracker row: "Shopify product-media app" in `opportunities.csv`; prospect score 14 in `docs/partners/prospects.md`.
 Nothing has been submitted. Shared facts and owner-only inputs: [README.md](./README.md).
 
 ## Deadline and eligibility

@@ -275,14 +275,20 @@ def _round(values, n=4):
 
 
 def manifest_entry(index: int, posed: np.ndarray, faces: np.ndarray, standalone: np.ndarray,
-                   quat_wxyz, translation, scale, source: str) -> dict:
-    """Machine-readable record of one reconstructed object."""
+                   quat_wxyz, translation, scale, source: str, input_index: int | None = None) -> dict:
+    """Machine-readable record of one reconstructed object.
+
+    `input_index` is the position of the mask or box this object came from in the
+    request. Names stay compact over the objects that survived, so after a skip
+    object_02 can be input 2; the index lets a caller pair it with its label.
+    """
     lo, hi = posed.min(axis=0), posed.max(axis=0)
     size = standalone.max(axis=0) - standalone.min(axis=0)
     return {
         "id": object_name(index),
         "name": object_name(index),
         "source": source,  # "mask" or "box"
+        "input_index": index if input_index is None else int(input_index),
         "face_count": int(len(faces)),
         "vertex_count": int(len(posed)),
         "bbox": {"min": _round(lo), "max": _round(hi)},

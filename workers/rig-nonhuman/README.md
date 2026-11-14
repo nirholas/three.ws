@@ -29,6 +29,20 @@ plus a stray `neutral_bone`), and SkinTokens refuses any skeleton with
 their world transforms preserved (max world delta 2.2e-16 on the fox), and
 the GLB's binary chunk is left untouched.
 
+Then `skin_seed.py` gives every joint a starting skin weight. UniRig's merge
+grafts a skeleton with no weights, so Blender's glTF exporter weights every
+vertex 1.0 to `neutral_bone`, and SkinTokens' loader runs
+`Asset.trim_skeleton`, which deletes every joint whose subtree has no skin.
+Before this step every production rig (2026-11-04 to 2026-11-14) came back
+with one joint, `bone_0`, and could not move. Each vertex now goes to its
+nearest joint (bind positions from the inverse bind matrices), any joint no
+vertex chose is added to its nearest vertex with a free influence slot, and
+`neutral_bone` ends at zero so the trim drops it. SkinTokens still predicts
+the final weights; the seed only decides which joints survive. On the
+production fox file, 1 joint survived the trim before and all 23 survive
+after. As a last guard, `pipeline.py` fails the task when the rigged GLB has
+fewer than 2 joints instead of returning a rig that cannot articulate.
+
 Both are subprocess CLIs, not importable Python packages; `pipeline.py`
 chains them exactly per their own documented command contracts (verified
 against their live READMEs 2026-10-09/2026-10-11, not assumed from memory).
@@ -110,6 +124,7 @@ cd workers/rig-nonhuman
 python3 test_pipeline.py        # command contracts + subprocess chaining/errors
 python3 test_gltf_meshopt.py    # the meshopt decode every input GLB passes through
 python3 test_skeleton_roots.py  # single-root normalization between merge and skinning
+python3 test_skin_seed.py       # starting weights so SkinTokens' trim keeps every joint
 ```
 
 The Docker build also imports `bpy`, UniRig's `run` and merge module

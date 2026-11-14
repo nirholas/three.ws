@@ -11,6 +11,39 @@ and a Webflow account), so creating the account and submitting are owner actions
 gate 2 and the "Never blocked" rule for a step that needs a third-party account). This Evolve
 session confirmed no such accounts are referenced anywhere in this repository's env or config.
 
+Re-verified 2026-11-14 (read-only; no accounts exist, nothing was submitted):
+
+- WordPress.org: <https://wordpress.org/plugins/developers/add/> resolves and still takes a plugin
+  zip after login. Review time is now stated as 1 to 10 days with a 5-business-day goal (the old
+  text said "a few weeks"). Latest WordPress is 7.1.4; `readme.txt` says `Tested up to: 7.1`, fine.
+  REJECTION RISK to fix before uploading: Guideline 8 of the
+  [detailed plugin guidelines](https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/)
+  says "Calling third party CDNs for reasons other than font inclusions; all non-service related
+  JavaScript and CSS must be included locally", while `includes/pinned-release.php` enqueues
+  `https://three.ws/agent-3d/1.5.2/agent-3d.js` from our CDN (SRI-pinned, but remote). The
+  reviewer may require the loader to ship inside the zip. Either bundle `agent-3d.js` into
+  `integrations/wordpress/three-ws-agent/` and enqueue it locally, or argue in the submission
+  note that `<agent-3d>` is the client of a documented service (Guideline 6 allows SaaS). Bundling
+  is the safer path and is the next engineering step; it was not done here (this pass edits the
+  submission text only).
+- Framer: the documented Marketplace flow is for Plugins: Marketplace dashboard at
+  <https://www.framer.com/marketplace/dashboard/plugins/> ("New Plugin", `npm run pack`, upload
+  `plugin.zip`, per <https://www.framer.com/developers/publishing>). Our package is a Code
+  Component. The Marketplace has a Components section
+  (<https://www.framer.com/marketplace/components/>, free "Copy" and paid items) but how a
+  creator submits one sits behind the login, so I could not confirm it. The dashboard URLs
+  redirect to the Framer login. Treat "Submit to Marketplace" in Framer Step 3 as: sign in at the
+  dashboard and look for the Component submission option; if there is none, Code Components
+  cannot be listed standalone and the route is a Framer plugin that inserts the component.
+- Webflow: STEP 3 AS WRITTEN IS NOT POSSIBLE. `webflow devlink import` (CLI 2.17.0, docs at
+  <https://developers.webflow.com/code-components/reference/cli>) only shares a Code Components
+  library to your own Workspace (docs: "Share, update, and install code components on any site in
+  your Workspace"). The Apps marketplace (<https://developers.webflow.com/apps/docs>, submit page
+  <https://developers.webflow.com/submit>) lists Apps built as a Data Client, a Designer Extension,
+  or both; a Code Components library has no marketplace listing path. Step 1 and 2 are still
+  valid. Listing on the marketplace needs a Designer Extension that inserts `<agent-3d>`, which
+  is a new build (it matches the Webflow row in `docs/partners/prospects.md`).
+
 ## What ships
 
 - [`integrations/wordpress/three-ws-agent/`](../../../integrations/wordpress/three-ws-agent): a
@@ -51,7 +84,8 @@ WordPress.org account.
 1. Click **Add your plugin**, upload a zip of
    `integrations/wordpress/three-ws-agent/` (the directory as-is: `three-ws-agent.php`,
    `readme.txt`, `includes/`, `blocks/`), and submit.
-2. The review team replies by email, usually within a few weeks, either approving (with SVN
+2. The review team replies by email, usually within 1 to 10 days (their stated goal is 5
+   business days), either approving (with SVN
    repository access) or requesting changes. `readme.txt` already follows the directory's
    required header/sections format (`Stable tag`, `Requires at least`, `Tested up to`, `License:
    GPLv2 or later`); if the reviewer flags anything plugin-specific, fix it in
@@ -129,10 +163,12 @@ making "three.ws Agent" draggable from the Components panel in any site in that 
 is the real-tool verification beyond this session's local `devlink bundle` check; it needs the
 Webflow account above and cannot run in this sandbox.
 
-### Step 3: list on the Webflow Apps marketplace
+### Step 3: list on the Webflow Apps marketplace (not available for Code Components)
 
-Follow Webflow's app submission flow at <https://developers.webflow.com/apps/docs> for a Code
-Components library. Suggested listing copy:
+As of 2026-11-14 Webflow's Apps marketplace only accepts Data Client and Designer Extension apps
+(<https://developers.webflow.com/submit>); a Code Components library stays Workspace-only. Keep
+the listing copy below for a future Designer Extension and skip this step for now. Suggested
+listing copy:
 
 > **Name:** three.ws Agent
 >
@@ -166,5 +202,7 @@ Components library. Suggested listing copy:
    confirm the component renders in Framer's own canvas, and submit to the Marketplace with the
    listing copy above (Framer Step 1-3).
 3. Create (or reuse) a Webflow account, run `webflow auth login` and `webflow devlink import`
-   from `integrations/webflow/`, confirm the component drags into the Designer, and submit to
-   the Apps marketplace with the listing copy above (Webflow Step 1-3).
+   from `integrations/webflow/`, and confirm the component drags into the Designer (Webflow Step
+   1-2). There is no marketplace submission for a Code Components library (see the note at the top).
+4. Before step 1: decide whether to bundle `agent-3d.js` into the WordPress plugin (Guideline 8
+   risk, see the note at the top).

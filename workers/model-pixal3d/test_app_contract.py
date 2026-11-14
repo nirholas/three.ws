@@ -194,6 +194,43 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001 - must be the caller-facing class
             check(f"refuses {label}", False, f"raised {type(exc).__name__}: {exc}")
 
+    # Task records live in a publicly readable bucket, where an upload with no
+    # Cache-Control is edge-cacheable for an hour; a poll that reads a frozen
+    # copy fails a live job as orphaned (europe-west4, 2026-11-14). Drive the
+    # real _update_task against a recording bucket: the submit write and a
+    # heartbeat must both go out no-store.
+    import asyncio
+
+    class _RecordingBlob:
+        def __init__(self, sink):
+            self.cache_control = None
+            self._sink = sink
+
+        def upload_from_string(self, data, content_type=None):
+            self._sink.append((self.cache_control, content_type, data))
+
+    class _RecordingBucket:
+        def __init__(self):
+            self.writes = []
+
+        def blob(self, _name):
+            return _RecordingBlob(self.writes)
+
+    bucket = _RecordingBucket()
+    saved_bucket = app_module._bucket
+    app_module._bucket = bucket
+    try:
+        asyncio.run(app_module._update_task("contract-task", status="queued"))
+        asyncio.run(app_module._update_task("contract-task"))
+    finally:
+        app_module._bucket = saved_bucket
+    check(
+        "task record writes are uncacheable (submit and heartbeat)",
+        len(bucket.writes) == 2
+        and all(cc == "no-store" and ct == "application/json" for cc, ct, _ in bucket.writes),
+        f"{[(cc, ct) for cc, ct, _ in bucket.writes]}",
+    )
+
     print(f"\n{PASSED} contract assertions passed")
     return 0
 

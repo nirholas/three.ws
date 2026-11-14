@@ -106,8 +106,12 @@ forum). The form is tied to the signed-in Cursor account, not a company.
 The plugin folder is already public and identical to local HEAD, so the SHA can be pinned now:
 `60226f15515e089f3675471b07f97a557973d11a` (`git ls-remote https://github.com/nirholas/three.ws.git HEAD`
 on 2026-11-14). On a fresh clone of the marketplace with this entry appended,
-`python3 scripts/validate-catalog.py` prints `Catalog OK (.grok-plugin/marketplace.json)`.
-Index generation result: see "Index check" below.
+`python3 scripts/validate-catalog.py` prints `Catalog OK (.grok-plugin/marketplace.json)`,
+`python3 scripts/generate-plugin-index.py` fetches our pinned commit and writes the index (exit 0),
+and `python3 scripts/generate-plugin-index.py --check` prints `Plugin index OK`. The generated
+`three-ws` record lists version 1.0.0, one command (`three-ws-tour`), one MCP server (`three-ws`,
+http) and six skills (anatomy, create-3d-avatar, embed-three-ws-avatar, find-3d-assets,
+generate-3d-model, rig-a-model).
 
 Append to the `plugins` array in `.grok-plugin/marketplace.json`, matching the file's existing
 two-space style:

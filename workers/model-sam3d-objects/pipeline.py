@@ -105,7 +105,7 @@ def run_objects(image_rgb: np.ndarray, masks: list[np.ndarray], sources: list[st
             skipped.append({"index": i, "reason": str(exc)[:200]})
             continue
         posed_items.append({"vertices": posed, "faces": faces, "vertex_colors": colors})
-        poses.append({"solo": solo, "quat": quat, "trans": trans, "scale": scale, "source": sources[i]})
+        poses.append({"solo": solo, "quat": quat, "trans": trans, "scale": scale, "source": sources[i], "input_index": i})
 
     if not posed_items:
         reasons = "; ".join(s["reason"] for s in skipped) or "no objects"
@@ -120,7 +120,7 @@ def run_objects(image_rgb: np.ndarray, masks: list[np.ndarray], sources: list[st
     )
     for n, (item, verts, p) in enumerate(zip(posed_items, levelled, poses)):
         item["vertices"] = verts
-        manifest.append(layout.manifest_entry(n, verts, item["faces"], p["solo"], p["quat"], p["trans"], p["scale"], p["source"]))
+        manifest.append(layout.manifest_entry(n, verts, item["faces"], p["solo"], p["quat"], p["trans"], p["scale"], p["source"], p["input_index"]))
 
     scene_glb = layout.export_glb(layout.build_scene(posed_items))
     return {"scene_glb": scene_glb, "objects": manifest, "skipped": skipped, "leveling": leveling}

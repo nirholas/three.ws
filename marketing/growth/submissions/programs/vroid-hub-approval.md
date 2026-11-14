@@ -3,7 +3,7 @@
 Program: pixiv VRoid Hub developer application, then the approval request that publishes the app at <https://hub.vroid.com/apps>.
 Full build record, registration steps, redirect URI, env vars and verification packet: [../vroid-hub-app.md](../vroid-hub-app.md) (order 092). This file adds the approval layer only.
 Page last read: 2026-11-14 attempt: `developer.vroid.com/en/api/recognize.html` again returned HTTP 403 to a direct fetch, so the facts below are still the 2026-10-23 reading through search results quoting that page. The Approval request page and its field list: **not verified on 2026-11-14**; the owner reads them when opening the page in a browser.
-Tracker row: "VRoid Hub app registration and approval" in `opportunities.csv`; prospect score 13 in `docs/partners/prospects.md`.
+Tracker row: "VRoid Hub avatar import" in `opportunities.csv`; prospect score 13 in `docs/partners/prospects.md`.
 Nothing has been submitted. Shared facts and owner-only inputs: [README.md](./README.md).
 
 ## What the documentation says

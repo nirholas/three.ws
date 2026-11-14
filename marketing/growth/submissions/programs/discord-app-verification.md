@@ -3,7 +3,7 @@
 Program: Discord Developer Portal app verification, then Activity Discovery listing for the Forge Room Activity.
 Full build record, Developer Portal setup, URL mappings, env vars and the verification packet: [../discord-activity.md](../discord-activity.md) (order 088). This file adds the application-form layer only and does not repeat that setup.
 Page last read: 2026-11-14. `https://docs.discord.com/developers/activities/discovery` still returns 404, and Discord's developer help center article "What are Verified and Unverified Activities?" (<https://support-dev.discord.com/hc/en-us/articles/26576097154199>) answered HTTP 403 to a direct fetch, so the facts below come from search results quoting that article and the App Directory articles on the same help center. The existing submission file cites the old URL.
-Tracker row: "Discord Activity (Forge Room)" in `opportunities.csv` (the Discord Activities prospect is in `docs/partners/prospects.md`, F-R-A score 14).
+Tracker row: "Discord Activity" in `opportunities.csv` (the Discord Activities prospect is in `docs/partners/prospects.md`, F-R-A score 14).
 Nothing has been submitted. Shared facts and owner-only inputs: [README.md](./README.md).
 
 ## Deadline and eligibility

@@ -23,7 +23,8 @@
  *   node scripts/okx-payment-leg-probe.mjs --rows forge-draft
  *   node scripts/okx-payment-leg-probe.mjs --allow-spend   # buyer is funded: this BUYS
  *
- * Requires a live `onchainos` wallet session (`onchainos wallet status`).
+ * Requires a live `onchainos` wallet session (`onchainos wallet status`). Without
+ * one it exits 2 and prints the login steps.
  */
 import { execFileSync } from 'node:child_process';
 import { writeFileSync, mkdirSync } from 'node:fs';
@@ -73,8 +74,43 @@ async function rpc(method, params) {
 	throw lastErr;
 }
 
-const cli = (argv, timeout = 200_000) =>
-	JSON.parse(execFileSync(CLI, argv, { encoding: 'utf8', maxBuffer: 1 << 24, timeout }));
+/** A refusal from the onchainos CLI itself, carrying the CLI's own error text. */
+class CliRefusal extends Error {}
+
+/**
+ * Run one onchainos command and return its JSON. The CLI answers a refusal
+ * (an expired session above all) as `{"ok":false,"error":...}` on stdout with
+ * a non-zero exit, so the message is read from there rather than from the
+ * child-process exception, which only says the command failed.
+ */
+function cli(argv, timeout = 200_000) {
+	let stdout;
+	try {
+		stdout = execFileSync(CLI, argv, { encoding: 'utf8', maxBuffer: 1 << 24, timeout });
+	} catch (err) {
+		let reason = err.code === 'ENOENT' ? `onchainos is not installed at ${CLI}` : err.message;
+		try {
+			const body = JSON.parse(err.stdout || '');
+			if (body && body.error) reason = String(body.error);
+		} catch {
+			/* no JSON on stdout: keep the process error */
+		}
+		throw new CliRefusal(`onchainos ${argv.slice(0, 2).join(' ')}: ${reason}`);
+	}
+	return JSON.parse(stdout);
+}
+
+/** Stop the run on a CLI refusal with the next step, never a stack trace. */
+function exitOnCliRefusal(err) {
+	if (!(err instanceof CliRefusal)) throw err;
+	console.error(`payment-leg probe stopped: ${err.message}`);
+	if (/not logged in|session expired|login/i.test(err.message)) {
+		console.error('The probe signs through the OKX agentic wallet, which needs a live session.');
+		console.error('With a human at the browser: onchainos wallet login --phase init');
+		console.error('then: onchainos wallet login --phase poll --session-id <authSessionId>');
+	}
+	process.exit(2);
+}
 
 const decodeB64Json = (v) => JSON.parse(Buffer.from(v, 'base64').toString('utf8'));
 
@@ -138,7 +174,12 @@ async function callRow(endpoint, body, paymentHeader) {
 const failures = [];
 const results = [];
 
-const buyer = buyerAddress();
+let buyer;
+try {
+	buyer = buyerAddress();
+} catch (err) {
+	exitOnCliRefusal(err);
+}
 const float = await buyerFloat(buyer);
 
 for (const id of ROWS) {
@@ -178,7 +219,12 @@ for (const id of ROWS) {
 		continue;
 	}
 
-	const signed = cli(['payment', 'pay', '--payload', unpaid.challengeHeader, '--selected-index', String(index)]);
+	let signed;
+	try {
+		signed = cli(['payment', 'pay', '--payload', unpaid.challengeHeader, '--selected-index', String(index)]);
+	} catch (err) {
+		exitOnCliRefusal(err);
+	}
 	const header = (signed.data ?? signed).authorization_header;
 	if (!header) {
 		failures.push(`${id}: the wallet returned no authorization_header to replay`);

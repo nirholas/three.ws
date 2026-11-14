@@ -70,3 +70,6 @@ def test_one_failed_object_is_skipped_not_fatal(stub):
     out = pipeline.run_objects(np.zeros((8, 8, 3), np.uint8), masks, sources, seed=7)
     assert len(out["objects"]) == 2
     assert out["skipped"] == [{"index": 1, "reason": "decoder produced NaNs"}]
+    # Names stay compact (object_01, object_02) but each entry says which input
+    # mask or box it came from, so the client can title it with that box's label.
+    assert [(o["name"], o["input_index"]) for o in out["objects"]] == [("object_01", 0), ("object_02", 2)]

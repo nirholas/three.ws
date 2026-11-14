@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-14T02:39:53.457Z",
+	"generated_at": "2026-11-14T02:41:19.730Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4579,
+	"total": 4581,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-14",
+			"type": "launch",
+			"title": "Docs · Vercel AI SDK tools",
+			"summary": "@three-ws/ai-sdk: forge, rig, render and animate 3D models and chat with a three.ws agent from any Vercel AI SDK agent loop. Four of the five tools are free with no key.",
+			"link": "/docs/ai-sdk",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-11-14",
 			"type": "update",
@@ -27,6 +37,16 @@
 			"link": "/dashboard",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-14",
+			"type": "update",
+			"title": "Community skills now lists 60 external skills from four open-source repositories",
+			"summary": "The community skills page and API now include a separate External skills section with 60 skills from obra/superpowers (MIT), huggingface/skills, cloudflare/skills and getsentry/skills (all Apache-2.0). Each source is pinned to one commit, so what you read cannot change underneath you, and every card shows its source repository, commit and license. External skills are not reviewed by three.ws and are never turned on for an agent automatically: you read one, then install it through the usual scan and approval step, or with `three-ws skills import`. Skills that break the registry rules (a description over 400 characters, a body over 12,000) are left out, with the reason listed in the API response.",
+			"link": "/skills/community",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1510,26 +1530,6 @@
 			"title": "Docs · Microsoft distribution and offer plan",
 			"summary": "How three.ws turns its live Microsoft Marketplace publisher profile into offers: a transactable SaaS listing, Copilot MCP certification, professional services, a Power Platform connector, a Teams app, and the VS Code and Edge stores.",
 			"link": "/docs/microsoft-marketplace-offer-plan",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "launch",
-			"title": "Docs · Microsoft Marketplace SaaS offer",
-			"summary": "How a Microsoft Marketplace purchase becomes a three.ws plan: the landing page, Entra sign-in, the fulfilment webhook, hourly metered billing and its retry rules, the env vars, and how to test against a preview offer.",
-			"link": "/docs/microsoft-marketplace-saas",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "launch",
-			"title": "Docs · Multichain Launchpad",
-			"summary": "How three.ws/launch/multichain launches a coin about an animation, avatar or agent on Solana, BNB Chain, Base and Robinhood Chain: subjects and /l/:id showcase pages, the four.meme and flap.sh paths, agent and wallet signers, and the API.",
-			"link": "/docs/multichain-launchpad",
 			"tags": [
 				"launch"
 			]

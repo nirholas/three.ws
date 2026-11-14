@@ -7,10 +7,15 @@
 //   1. The venue's public HTTP feed (frontend-api-v3.pump.fun). It sits behind
 //      a Cloudflare challenge that answers 403 to datacenter and some
 //      residential networks.
-//   2. Solana itself. The pump program's mint authority signs every create, so
-//      its signature list is the launch stream; each create instruction carries
-//      the name, symbol, metadata uri and creator, and the bonding-curve
-//      account gives reserves. Needs nothing but an RPC endpoint.
+//   2. Solana itself. The pump program's mint authority signs every create.
+//      A logsSubscribe websocket on that account delivers each launch's
+//      CreateEvent (name, symbol, uri, mint, creator, reserves) the moment it
+//      confirms, at no per-launch RPC cost. On a cold start, before the socket
+//      has seen anything, the newest creates are backfilled once from the
+//      mint authority's signatures and their create instructions. Reserves are
+//      refreshed from the bonding-curve accounts in one call per sweep. RPC
+//      calls fail over from the public endpoint to the three.ws proxy when the
+//      public one rate-limits.
 
 import { createHash } from 'node:crypto';
 import { lookup as dnsLookup } from 'node:dns/promises';
@@ -21,14 +26,21 @@ const PUMP_PROGRAM_ID = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
 const PUMP_PROGRAM = new PublicKey(PUMP_PROGRAM_ID);
 export const PUMP_MINT_AUTHORITY = 'TSLvdd1pWpHVjahSpsvCXUbgwsL3JAcvokwaKt1eokM';
 const DEFAULT_RPC = 'https://api.mainnet-beta.solana.com';
+const DEFAULT_WS = 'wss://api.mainnet-beta.solana.com';
+// Next rung when the public RPC rate-limits (it caps getTransaction hard).
+// Proxies to the platform's keyed upstream; also rate-limited, so the feed
+// only sends it the few calls a cold start or a sweep needs.
+const FALLBACK_RPCS = ['https://three.ws/api/solana-rpc'];
 
-// How many of the newest creates one on-chain sweep reads. The scheduler ticks
-// every 30 s and the venue sees well under one create a second, so this keeps
-// up while staying inside public RPC rate limits; transactions already parsed
-// are cached, so a steady-state sweep only fetches the new ones.
-const CHAIN_SWEEP_MAX = 25;
-const RPC_CONCURRENCY = 4;
+// Cold-start backfill size: one getSignaturesForAddress plus at most this many
+// getTransaction calls, once, until the websocket takes over.
+const BACKFILL_MAX = 10;
+const RPC_CONCURRENCY = 2;
 const CACHE_LIMIT = 2000;
+// Launches held from the websocket, newest last.
+const RECENT_LIMIT = 300;
+const WS_RETRY_MIN_MS = 2000;
+const WS_RETRY_MAX_MS = 60_000;
 // After the HTTP feed refuses, read from chain for this long before asking it again.
 const FRONTEND_RETRY_MS = 5 * 60_000;
 const METADATA_TIMEOUT_MS = 4000;
@@ -156,6 +168,49 @@ export function parseCreateInstruction(data) {
 	return { name: strings[0], symbol: strings[1], uri: strings[2], creator: new PublicKey(buf.subarray(o, o + 32)).toBase58() };
 }
 
+const CREATE_EVENT_DISCRIMINATOR = createHash('sha256').update('event:CreateEvent').digest().subarray(0, 8);
+
+/**
+ * Decode a pump CreateEvent, the `Program data:` log line every create emits:
+ * 8-byte Anchor event discriminator, Borsh strings name, symbol, uri, then
+ * mint, bonding curve, user and creator pubkeys, an i64 unix timestamp and the
+ * u64 virtual token, virtual SOL, real token reserves and total supply (newer
+ * program versions append fields this reader does not need). Null for any
+ * other event or a truncated one. The strings are attacker-chosen.
+ */
+export function parseCreateEvent(data) {
+	if (!data || data.length < 8 + 12 + 128 + 40) return null;
+	const buf = Buffer.from(data);
+	if (!buf.subarray(0, 8).equals(CREATE_EVENT_DISCRIMINATOR)) return null;
+	let o = 8;
+	const strings = [];
+	for (let i = 0; i < 3; i++) {
+		if (o + 4 > buf.length) return null;
+		const len = buf.readUInt32LE(o);
+		o += 4;
+		if (len > 1024 || o + len > buf.length) return null;
+		strings.push(buf.toString('utf8', o, o + len));
+		o += len;
+	}
+	if (o + 128 + 40 > buf.length) return null;
+	const key = () => {
+		const k = new PublicKey(buf.subarray(o, o + 32)).toBase58();
+		o += 32;
+		return k;
+	};
+	const mint = key();
+	key(); // bonding curve: derived from the mint wherever it is needed
+	key(); // user who paid for the create
+	const creator = key();
+	const timestamp = Number(buf.readBigInt64LE(o));
+	const u64 = (at) => Number(buf.readBigUInt64LE(o + 8 + at * 8));
+	return {
+		mint, name: strings[0], symbol: strings[1], uri: strings[2], creator,
+		created_at: timestamp > 0 ? timestamp * 1000 : null,
+		curve: { virtual_token_reserves: u64(0), virtual_sol_reserves: u64(1), real_token_reserves: u64(2), real_sol_reserves: 0, token_total_supply: u64(3), complete: false },
+	};
+}
+
 /**
  * Find the pump create in a `getTransaction` (json encoding) result, top-level
  * or made through another program as an inner instruction. The mint is the
@@ -260,16 +315,41 @@ async function mapLimit(items, limit, fn) {
 	await Promise.all(workers);
 }
 
-function remember(map, key, value) {
+function cache(map, key, value) {
 	map.set(key, value);
 	if (map.size > CACHE_LIMIT) map.delete(map.keys().next().value);
 }
 
-export function createPumpFeed({ fetchImpl = fetch, base = BASE, rpcUrl = DEFAULT_RPC, now = Date.now, lookup = defaultLookup } = {}) {
+function capSolFromCurve(curve) {
+	if (!curve || !(curve.virtual_token_reserves > 0) || !(curve.token_total_supply > 0)) return null;
+	return (curve.virtual_sol_reserves / 1e9) * (curve.token_total_supply / curve.virtual_token_reserves);
+}
+
+// A rate limit or an unreachable node moves the call to the next RPC; any
+// other JSON-RPC error is a real answer and is not retried elsewhere.
+const retryable = (status) => status === 403 || status === 429 || status >= 500;
+
+export function createPumpFeed({
+	fetchImpl = fetch,
+	base = BASE,
+	rpcUrl = DEFAULT_RPC,
+	fallbackRpcUrls = FALLBACK_RPCS,
+	wsUrl = rpcUrl === DEFAULT_RPC ? DEFAULT_WS : rpcUrl.replace(/^http/, 'ws'),
+	WebSocketImpl = globalThis.WebSocket,
+	now = Date.now,
+	lookup = defaultLookup,
+} = {}) {
 	let sol = { at: 0, usd: 0 };
 	let lastSource = null;
 	let frontendRetryAt = 0;
-	const creates = new Map(); // signature -> parsed create
+	let backfilled = false;
+	let closed = false;
+	let ws = null;
+	let wsRetryMs = WS_RETRY_MIN_MS;
+	let wsTimer = null;
+	const endpoints = [rpcUrl, ...fallbackRpcUrls.filter((u) => u && u !== rpcUrl)];
+	const recent = new Map(); // mint -> create, newest last
+	const creates = new Map(); // signature -> parsed create | null
 	const socials = new Map(); // mint -> { twitter, telegram, website } | null
 
 	// SOL/USD from Coinbase's public spot endpoint, cached a minute, so the
@@ -283,15 +363,101 @@ export function createPumpFeed({ fetchImpl = fetch, base = BASE, rpcUrl = DEFAUL
 	}
 
 	async function rpc(method, params) {
-		const r = await fetchImpl(rpcUrl, {
-			method: 'POST', headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-			signal: AbortSignal.timeout(8000),
+		let lastErr = null;
+		for (const url of endpoints) {
+			let r;
+			try {
+				r = await fetchImpl(url, {
+					method: 'POST', headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+					signal: AbortSignal.timeout(8000),
+				});
+			} catch (err) {
+				lastErr = err;
+				continue;
+			}
+			if (!r.ok) {
+				lastErr = new Error(`rpc ${method} http ${r.status}`);
+				if (retryable(r.status)) continue;
+				throw lastErr;
+			}
+			const body = await r.json();
+			if (body?.error) {
+				lastErr = new Error(`rpc ${method}: ${body.error.message || body.error.code}`);
+				if (body.error.code === 429 || body.error.code === -32429 || /too many requests/i.test(body.error.message || '')) continue;
+				throw lastErr;
+			}
+			return body?.result;
+		}
+		throw lastErr || new Error(`rpc ${method}: no endpoint`);
+	}
+
+	function remember(mint, create) {
+		if (!create?.mint || recent.has(mint)) return;
+		recent.set(mint, create);
+		if (recent.size > RECENT_LIMIT) recent.delete(recent.keys().next().value);
+	}
+
+	function onLogs(raw) {
+		let msg;
+		try {
+			msg = JSON.parse(typeof raw === 'string' ? raw : Buffer.from(raw).toString('utf8'));
+		} catch {
+			return;
+		}
+		const value = msg?.params?.result?.value;
+		if (!value || value.err != null || !Array.isArray(value.logs)) return;
+		wsRetryMs = WS_RETRY_MIN_MS;
+		for (const line of value.logs) {
+			if (typeof line !== 'string' || !line.startsWith('Program data: ')) continue;
+			const event = parseCreateEvent(Buffer.from(line.slice(14), 'base64'));
+			if (event) remember(event.mint, event);
+		}
+	}
+
+	function ensureStream() {
+		if (ws || wsTimer || closed || typeof WebSocketImpl !== 'function') return;
+		let sock;
+		try {
+			sock = new WebSocketImpl(wsUrl);
+		} catch {
+			scheduleReconnect();
+			return;
+		}
+		ws = sock;
+		sock.onopen = () => sock.send(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'logsSubscribe', params: [{ mentions: [PUMP_MINT_AUTHORITY] }, { commitment: 'confirmed' }] }));
+		sock.onmessage = (e) => onLogs(e.data);
+		sock.onerror = () => {};
+		sock.onclose = () => {
+			if (ws === sock) ws = null;
+			scheduleReconnect();
+		};
+	}
+
+	function scheduleReconnect() {
+		if (closed || wsTimer) return;
+		wsTimer = setTimeout(() => {
+			wsTimer = null;
+			ensureStream();
+		}, wsRetryMs);
+		wsTimer.unref?.();
+		wsRetryMs = Math.min(WS_RETRY_MAX_MS, wsRetryMs * 2);
+	}
+
+	async function backfill() {
+		const sigs = await rpc('getSignaturesForAddress', [PUMP_MINT_AUTHORITY, { limit: BACKFILL_MAX, commitment: 'confirmed' }]);
+		const ok = (Array.isArray(sigs) ? sigs : []).filter((s) => s && s.err == null && typeof s.signature === 'string');
+		await mapLimit(ok.filter((s) => !creates.has(s.signature)), RPC_CONCURRENCY, async (s) => {
+			const tx = await rpc('getTransaction', [s.signature, { encoding: 'json', maxSupportedTransactionVersion: 1, commitment: 'confirmed' }]);
+			// A transaction the node has not indexed yet is retried on the next sweep.
+			if (tx) cache(creates, s.signature, extractCreate(tx));
 		});
-		if (!r.ok) throw new Error(`rpc ${method} http ${r.status}`);
-		const body = await r.json();
-		if (body?.error) throw new Error(`rpc ${method}: ${body.error.message || body.error.code}`);
-		return body?.result;
+		// Oldest first, so the newest create ends up newest in `recent`.
+		for (const s of [...ok].reverse()) {
+			const c = creates.get(s.signature);
+			if (c) remember(c.mint, c);
+		}
+		backfilled = ok.every((s) => creates.has(s.signature));
 	}
 
 	async function fetchSocials(uri) {
@@ -312,46 +478,32 @@ export function createPumpFeed({ fetchImpl = fetch, base = BASE, rpcUrl = DEFAUL
 	}
 
 	async function chainLaunches(limit, usd) {
-		const n = Math.min(CHAIN_SWEEP_MAX, Math.max(1, Number(limit) || CHAIN_SWEEP_MAX));
-		const sigs = await rpc('getSignaturesForAddress', [PUMP_MINT_AUTHORITY, { limit: n, commitment: 'confirmed' }]);
-		const ok = (Array.isArray(sigs) ? sigs : []).filter((s) => s && s.err == null && typeof s.signature === 'string');
-		await mapLimit(ok.filter((s) => !creates.has(s.signature)), RPC_CONCURRENCY, async (s) => {
-			const tx = await rpc('getTransaction', [s.signature, { encoding: 'json', maxSupportedTransactionVersion: 0, commitment: 'confirmed' }]);
-			// A transaction the node has not indexed yet is retried next sweep.
-			if (tx) remember(creates, s.signature, extractCreate(tx));
-		});
-		const seen = new Set();
-		const found = [];
-		for (const s of ok) {
-			const c = creates.get(s.signature);
-			if (c && !seen.has(c.mint)) {
-				seen.add(c.mint);
-				found.push(c);
-			}
-		}
+		ensureStream();
+		if (!backfilled && recent.size === 0) await backfill();
+		const n = Math.min(100, Math.max(1, Number(limit) || 50));
+		const found = [...recent.values()].slice(-n).reverse();
 		if (!found.length) return [];
 
-		let curves = [];
+		let live = [];
 		try {
 			const res = await rpc('getMultipleAccounts', [found.map((c) => bondingCurveAddress(c.mint)), { encoding: 'base64', commitment: 'confirmed' }]);
-			curves = (res?.value || []).map((v) => (v?.data?.[0] ? parseBondingCurve(Buffer.from(v.data[0], 'base64')) : null));
+			live = (res?.value || []).map((v) => (v?.data?.[0] ? parseBondingCurve(Buffer.from(v.data[0], 'base64')) : null));
 		} catch {
-			// Reserves unknown this sweep: market cap and liquidity stay null and
+			// Live reserves unavailable this sweep: fall back to the reserves the
+			// CreateEvent carried; backfilled creates without them stay null and
 			// the strategy's own gates decide what that means.
 		}
 
-		await mapLimit(found.filter((c) => !socials.has(c.mint)), RPC_CONCURRENCY, async (c) => {
-			remember(socials, c.mint, await fetchSocials(c.uri));
+		await mapLimit(found.filter((c) => !socials.has(c.mint)), 4, async (c) => {
+			cache(socials, c.mint, await fetchSocials(c.uri));
 		});
 
 		return found.map((c, i) => {
-			const curve = curves[i] || null;
+			const curve = live[i] || c.curve || null;
 			const s = socials.get(c.mint) || null;
 			const real = curve ? curve.real_sol_reserves : 0;
 			const virt = curve ? curve.virtual_sol_reserves : 0;
-			const capSol = curve && curve.virtual_token_reserves > 0 && curve.token_total_supply > 0
-				? (curve.virtual_sol_reserves / 1e9) * (curve.token_total_supply / curve.virtual_token_reserves)
-				: null;
+			const capSol = capSolFromCurve(curve);
 			return {
 				mint: c.mint, name: cleanTokenLabel(c.name), symbol: cleanTokenLabel(c.symbol),
 				created_at: c.created_at,
@@ -403,6 +555,19 @@ export function createPumpFeed({ fetchImpl = fetch, base = BASE, rpcUrl = DEFAUL
 				return curve ? { mint, symbol, ...curve } : null;
 			} catch {
 				return null;
+			}
+		},
+		/** Stop the launch stream; the feed stays usable for HTTP and RPC reads. */
+		close() {
+			closed = true;
+			if (wsTimer) clearTimeout(wsTimer);
+			wsTimer = null;
+			const sock = ws;
+			ws = null;
+			try {
+				sock?.close();
+			} catch {
+				// Already closed.
 			}
 		},
 	};

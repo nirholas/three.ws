@@ -506,7 +506,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1164.0",
+			"version": "3.1165.0",
 			"powers": null
 		},
 		{
@@ -517,7 +517,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1162.0",
+			"version": "3.1166.0",
 			"powers": null
 		},
 		{
@@ -2311,6 +2311,17 @@
 			"repo": "https://github.com/vercel/satori",
 			"funding": null,
 			"version": "0.63.2",
+			"powers": null
+		},
+		{
+			"id": "npm:smol-toml",
+			"kind": "npm",
+			"name": "smol-toml",
+			"area": "infrastructure",
+			"license": "BSD-3-Clause",
+			"repo": "https://github.com/squirrelchat/smol-toml",
+			"funding": "https://github.com/sponsors/cyyynthia",
+			"version": "1.9.1",
 			"powers": null
 		},
 		{

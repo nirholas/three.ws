@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-14T02:39:52.083Z",
+	"generated_at": "2026-11-14T02:41:19.135Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -7503,6 +7503,18 @@
 					"title": "Docs · 3D Studio MCP (free)",
 					"description": "The free, no-auth MCP server behind the ChatGPT 3D Studio app: text and image to 3D, rigged avatars, conversational refinement, and living agent personas.",
 					"added": "2026-07-14",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/ai-sdk",
+					"title": "Docs · Vercel AI SDK tools",
+					"description": "@three-ws/ai-sdk: forge, rig, render and animate 3D models and chat with a three.ws agent from any Vercel AI SDK agent loop. Four of the five tools are free with no key.",
+					"added": "2026-11-14",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
