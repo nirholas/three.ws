@@ -26,7 +26,11 @@
 		p, li { color: var(--ink); font-size: 15px; }
 		ul { padding-left: 20px; }
 		li { margin-bottom: 6px; }
-		a { color: var(--ink-bright); }
+		a { color: var(--ink-bright); text-underline-offset: 2px; }
+		a:hover { text-decoration-thickness: 2px; }
+		a:active { opacity: .8; }
+		a:focus-visible { outline: 2px solid var(--ink-bright); outline-offset: 2px; border-radius: 2px; }
+		code { font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; padding: 1px 5px; border: 1px solid var(--stroke); border-radius: 4px; overflow-wrap: anywhere; }
 		hr { border: none; border-top: 1px solid var(--stroke); margin: 48px 0; }
 		.foot { color: var(--ink-faint); font-size: 13px; }
 	</style>
@@ -56,7 +60,7 @@
 	<script src="/nav.js"></script>
 <main id="main-content" class="wrap" tabindex="-1">
 	<h1 data-i18n="legal_nvidia_ngc_eula.nvidia_ngc_container_end_user_license_agreem">NVIDIA NGC Container End User License Agreement</h1>
-	<p class="meta" data-i18n-html="legal_nvidia_ngc_eula.effective_september_2_2026_terms_of_service">Effective: September 2, 2026 &nbsp;·&nbsp; <a href="/legal/tos">Terms of Service</a> &nbsp;·&nbsp; <a href="/legal/privacy">Privacy Policy</a></p>
+	<p class="meta" data-i18n-html="legal_nvidia_ngc_eula.effective_september_2_2026_updated_november_14">Effective: September 2, 2026 &nbsp;·&nbsp; Last updated: November 14, 2026 &nbsp;·&nbsp; <a href="/legal/tos">Terms of Service</a> &nbsp;·&nbsp; <a href="/legal/privacy">Privacy Policy</a></p>
 
 	<p data-i18n="legal_nvidia_ngc_eula.this_end_user_license_agreement_eula_is">This End User License Agreement ("EULA") is a binding agreement between three.ws ("we", "us", "our") and the individual or entity ("you") that pulls, runs, or otherwise uses a three.ws container image published in the NVIDIA NGC catalog (each, the "Container"). By pulling or running the Container, you agree to this EULA. If you do not agree, do not pull or run it.</p>
 
@@ -70,8 +74,9 @@
 	<p data-i18n-html="legal_nvidia_ngc_eula.the_container_packages_a_gpu_inference_serve">The Container packages a GPU inference server: our serving code, its Python dependencies, and CUDA build artifacts compiled at image build time. It exposes an HTTP API documented in the listing overview and in the repository at <a href="https://github.com/nirholas/three.ws">github.com/nirholas/three.ws</a>. It is inference software, not a hosted service: you run it on your own hardware, under your own control, and we have no access to it or to anything it produces.</p>
 
 	<h2 data-i18n="legal_nvidia_ngc_eula.4_model_weights_and_third_party_components">4. Model Weights and Third-Party Components</h2>
-	<p data-i18n="legal_nvidia_ngc_eula.the_container_ships_no_machine_learning_mode">The Container ships no machine-learning model weights. Weights are obtained by you, at run time, from the upstream publisher named in the listing overview, and your use of them is governed by the upstream license that accompanies them, not by this EULA. You are responsible for reading and complying with that license, including any non-commercial or field-of-use restriction it carries.</p>
-	<p data-i18n="legal_nvidia_ngc_eula.the_container_also_includes_open_source_comp">The Container also includes open-source components licensed by their respective owners, including the NVIDIA CUDA base image and the NVIDIA software it contains, which remain subject to the NVIDIA license terms shipped with them. A complete component and license listing is included in the image and in the repository. Where a third-party license conflicts with this EULA for that component, the third-party license governs that component.</p>
+	<p data-i18n="legal_nvidia_ngc_eula.the_container_does_not_ship_the_generative_mo">The Container does not ship the generative model weights. Those are obtained by you, at run time, from the upstream publisher named in the listing overview, and your use of them is governed by the upstream license that accompanies them, not by this EULA. You are responsible for reading and complying with that license, including any non-commercial or field-of-use restriction it carries. The one checkpoint the Container does include is the DINOv2 image encoder published by Meta AI under the Apache License, Version 2.0, baked in so that loading the model never depends on a network call.</p>
+	<p data-i18n="legal_nvidia_ngc_eula.the_container_also_includes_third_party_comp">The Container also includes third-party software licensed by its respective owners, including the NVIDIA CUDA base image and the NVIDIA software it contains, which remain subject to the NVIDIA license terms shipped with them. Where a third-party license conflicts with this EULA for that component, the third-party license governs that component.</p>
+	<p data-i18n-html="legal_nvidia_ngc_eula.two_components_limit_use_to_non_commercial_r"><strong>Non-commercial components.</strong> Two components the Container cannot run inference without are licensed for non-commercial research and evaluation use only: nvdiffrast (NVIDIA Source Code License, 1-Way Commercial) and diff-gaussian-rasterization (Inria and Max Planck Institut for Informatik Gaussian-Splatting License). Your use of the Container is limited by those licenses, so commercial use of the Container requires permission from their rights holders; nothing in this EULA grants it. Their complete license texts, and a listing of every component in the image with its version and license, are inside the image at <code>/licenses/THIRD_PARTY_NOTICES.md</code> and in the repository at <a href="https://github.com/nirholas/three.ws/blob/main/workers/model-trellis/THIRD_PARTY_NOTICES.md">workers/model-trellis/THIRD_PARTY_NOTICES.md</a>.</p>
 
 	<h2 data-i18n="legal_nvidia_ngc_eula.5_no_fees">5. No Fees</h2>
 	<p data-i18n="legal_nvidia_ngc_eula.the_container_is_offered_free_of_charge">The Container is offered free of charge. No license fees, subscription fees, or usage fees are payable to us for it, and accordingly no refunds apply. You bear the cost of the hardware, cloud capacity, and bandwidth you use to run it. Because the Container is provided at no cost, you acknowledge that you receive it without payment and bear all risk of its use.</p>

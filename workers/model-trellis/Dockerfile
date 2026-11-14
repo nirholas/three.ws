@@ -4,7 +4,7 @@
 # build. Reliability choices that matter for Cloud Build, Cloud Run L4 and the
 # NGC Catalog build (docs/nvidia-ngc-listing.md):
 #   * TWO STAGES. The CUDA *devel* base (nvcc) is needed only to compile
-#     diffoctreerast / nvdiffrast / diff-gaussian-rasterization, so it is the
+#     nvdiffrast / diff-gaussian-rasterization, so it is the
 #     `builder` stage. The shipped image is the CUDA *runtime* base plus the
 #     built virtualenv, TRELLIS source and baked dinov2 copied across: no
 #     compiler, no CUDA headers, far fewer packages for a CVE scanner to flag
@@ -19,6 +19,13 @@
 #   * Attention backend = xformers, NOT flash-attn. flash-attn compiles from
 #     source for 30+ min and routinely OOMs the builder; xformers is an upstream-
 #     supported backend. Set via ATTN_BACKEND.
+#   * LICENSE BUNDLE. Every git checkout below saves its license file and commit
+#     to /opt/licenses-src before the checkout is deleted, and the runtime stage
+#     turns that plus the installed packages into /licenses and
+#     /licenses/THIRD_PARTY_NOTICES.md (third_party_notices.py). nvdiffrast and
+#     diff-gaussian-rasterization may only be redistributed with a complete
+#     copy of their (research / evaluation only) licenses, and the NGC EULA
+#     promises the listing; the build gate fails without it.
 #   * TORCH_CUDA_ARCH_LIST defaults to 8.9 for the production L4 image. The NGC
 #     build (cloudbuild.ngc.yaml) passes "8.0;8.6;8.9;9.0+PTX", pinned on
 #     2026-11-10 after real inference passed on an A100 (8.0) and an L4 (8.9);
@@ -79,14 +86,25 @@ RUN pip install \
         "pillow>=13.0.0" imageio imageio-ffmpeg tqdm easydict opencv-python-headless \
         scipy ninja "rembg==2.0.86" onnxruntime trimesh xatlas pyvista pymeshfix \
         igraph "transformers==5.21.0" "open3d==0.20.0" \
-    && pip install git+https://github.com/EasternJournalist/utils3d.git@9a4eb15e4021b67b12c460c7057d642626897ec8
+    && git clone https://github.com/EasternJournalist/utils3d.git /tmp/utils3d \
+    && git -C /tmp/utils3d checkout 9a4eb15e4021b67b12c460c7057d642626897ec8 \
+    && pip install /tmp/utils3d \
+    && mkdir -p /opt/licenses-src/utils3d \
+    && cp /tmp/utils3d/LICENSE /opt/licenses-src/utils3d/ \
+    && git -C /tmp/utils3d rev-parse HEAD > /opt/licenses-src/utils3d/COMMIT \
+    && rm -rf /tmp/utils3d
 
 # -- 3. setup.sh --xformers / --spconv / --kaolin (prebuilt wheels) ------------
 RUN pip install xformers==0.0.29.post3 --index-url https://download.pytorch.org/whl/cu126
 RUN pip install spconv-cu126==2.3.8
 RUN pip install kaolin==0.18.0 -f https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.6.0_cu126.html
 
-# -- 4. setup.sh --nvdiffrast / --diffoctreerast / --mipgaussian (compiled) ----
+# -- 4. setup.sh --nvdiffrast / --mipgaussian (compiled) ----------------------
+# upstream setup.sh also builds diffoctreerast. It is deliberately left out: it
+# only rasterises Octree (radiance-field) samples, TRELLIS imports it lazily
+# inside OctreeRenderer's render(), and main.py decodes formats=["gaussian",
+# "mesh"] only, so it never loads. Shipping it would add a third research-only
+# license (Inria / MPII derivative) to the image for no runtime use.
 # These build CUDA kernels with nvcc for every arch in TORCH_CUDA_ARCH_LIST.
 # --no-build-isolation is REQUIRED: each extension's setup.py `import torch` at
 # build time, but PEP517 isolation hides the torch installed in step 1, so nvdiffrast
@@ -94,14 +112,18 @@ RUN pip install kaolin==0.18.0 -f https://nvidia-kaolin.s3.us-east-2.amazonaws.c
 # --no-build-isolation". The flag makes the build reuse the image's torch. setuptools/
 # wheel are already present (installed in the apt layer), so no build deps are missing.
 RUN git clone https://github.com/NVlabs/nvdiffrast.git /tmp/ext/nvdiffrast \
-    && pip install --no-build-isolation /tmp/ext/nvdiffrast
-RUN git clone --recurse-submodules https://github.com/JeffreyXiang/diffoctreerast.git /tmp/ext/diffoctreerast \
-    && pip install --no-build-isolation /tmp/ext/diffoctreerast
+    && pip install --no-build-isolation /tmp/ext/nvdiffrast \
+    && mkdir -p /opt/licenses-src/nvdiffrast \
+    && cp /tmp/ext/nvdiffrast/LICENSE.txt /opt/licenses-src/nvdiffrast/ \
+    && git -C /tmp/ext/nvdiffrast rev-parse HEAD > /opt/licenses-src/nvdiffrast/COMMIT
 # diff-gaussian-rasterization uses uint32_t/uintptr_t without <cstdint>, which
 # GCC 13 (Ubuntu 24.04) no longer pulls in transitively, so the include is added.
 RUN git clone https://github.com/autonomousvision/mip-splatting.git /tmp/ext/mip-splatting \
     && sed -i '1i #include <cstdint>' /tmp/ext/mip-splatting/submodules/diff-gaussian-rasterization/cuda_rasterizer/rasterizer_impl.h \
     && pip install --no-build-isolation /tmp/ext/mip-splatting/submodules/diff-gaussian-rasterization/ \
+    && mkdir -p /opt/licenses-src/diff-gaussian-rasterization \
+    && cp /tmp/ext/mip-splatting/submodules/diff-gaussian-rasterization/LICENSE.md /opt/licenses-src/diff-gaussian-rasterization/ \
+    && git -C /tmp/ext/mip-splatting rev-parse HEAD > /opt/licenses-src/diff-gaussian-rasterization/COMMIT \
     && rm -rf /tmp/ext
 
 # -- 5. Server deps ------------------------------------------------------------
@@ -127,7 +149,12 @@ RUN pip install \
 # to carry run_multi_image, which main.py uses for multi-view fusion.
 RUN git clone --recurse-submodules https://github.com/microsoft/TRELLIS.git /app/TRELLIS \
     && git -C /app/TRELLIS checkout 442aa1e1afb9014e80681d3bf604e8d728a86ee7 \
-    && git -C /app/TRELLIS submodule update --init --recursive
+    && git -C /app/TRELLIS submodule update --init --recursive \
+    && mkdir -p /opt/licenses-src/TRELLIS /opt/licenses-src/flexicubes \
+    && cp /app/TRELLIS/LICENSE /opt/licenses-src/TRELLIS/ \
+    && git -C /app/TRELLIS rev-parse HEAD > /opt/licenses-src/TRELLIS/COMMIT \
+    && cp /app/TRELLIS/trellis/representations/mesh/flexicubes/LICENSE.txt /opt/licenses-src/flexicubes/ \
+    && git -C /app/TRELLIS/trellis/representations/mesh/flexicubes rev-parse HEAD > /opt/licenses-src/flexicubes/COMMIT
 
 # -- 7. dinov2 image conditioner, baked so the model load never calls out ------
 # pipeline.json sets image_cond_model=dinov2_vitl14_reg, and TRELLIS resolves it
@@ -146,6 +173,9 @@ ENV TORCH_HOME=/opt/torch \
     DINOV2_LOCAL_DIR=/opt/dinov2
 RUN git clone https://github.com/facebookresearch/dinov2.git /opt/dinov2 \
     && git -C /opt/dinov2 checkout 7764ea0f912e53c92e82eb78a2a1631e92725fc8 \
+    && mkdir -p /opt/licenses-src/dinov2 \
+    && cp /opt/dinov2/LICENSE /opt/licenses-src/dinov2/ \
+    && git -C /opt/dinov2 rev-parse HEAD > /opt/licenses-src/dinov2/COMMIT \
     && mkdir -p /opt/torch/hub/checkpoints \
     && curl -fsSL -o /opt/torch/hub/checkpoints/dinov2_vitl14_reg4_pretrain.pth \
          https://dl.fbaipublicfiles.com/dinov2/dinov2_vitl14/dinov2_vitl14_reg4_pretrain.pth \
@@ -189,6 +219,7 @@ COPY --from=builder /opt/venv /opt/venv
 COPY --from=builder /app/TRELLIS /app/TRELLIS
 COPY --from=builder /opt/dinov2 /opt/dinov2
 COPY --from=builder /opt/torch /opt/torch
+COPY --from=builder /opt/licenses-src /opt/licenses-src
 
 WORKDIR /app
 COPY worker_security.py /app/worker_security.py
@@ -197,17 +228,24 @@ COPY storage_backend.py /app/storage_backend.py
 COPY instance_health.py /app/instance_health.py
 COPY tracing.py /app/tracing.py
 COPY main.py /app/main.py
-COPY test_request_policy.py test_storage_backend.py test_instance_health.py test_app_contract.py test_tracing.py /app/
+COPY third_party_notices.py /app/third_party_notices.py
+COPY test_request_policy.py test_storage_backend.py test_instance_health.py test_app_contract.py test_tracing.py test_third_party_notices.py /app/
 
-# Build-time gate, neither half of which needs a GPU:
+# License bundle from the real image contents (see the header), generated before
+# the gate so test_third_party_notices.py can prove every license text shipped.
+RUN python3 /app/third_party_notices.py --sources /opt/licenses-src --out /licenses
+
+# Build-time gate, no part of which needs a GPU:
 #   1. The quality tiers, the clamps that keep a caller value from crashing the
 #      nvdiffrast bake, the image-fetch retry policy, and the memory-recycle and
 #      orphan-expiry decisions are pure logic, proven here rather than in
 #      production.
-#   2. The served contract, against the exact dependency set that will run: the
+#   2. The license bundle: every source component's license text ships verbatim
+#      under /licenses and the notices list the use-restricted ones first.
+#   3. The served contract, against the exact dependency set that will run: the
 #      TRELLIS import chain (FlexiCubes submodule included), the auth boundary,
 #      the probe surfaces, request validation, and the SSRF guard.
-RUN python3 -m pytest /app/test_request_policy.py /app/test_storage_backend.py /app/test_instance_health.py /app/test_tracing.py -q \
+RUN python3 -m pytest /app/test_request_policy.py /app/test_storage_backend.py /app/test_instance_health.py /app/test_tracing.py /app/test_third_party_notices.py -q \
     && python3 /app/test_app_contract.py
 
 EXPOSE 8080
