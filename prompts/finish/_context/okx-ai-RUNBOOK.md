@@ -7,7 +7,7 @@ human or agent: every command below was run from this repo and its real output r
 - **Full history:** [`okx-ai-PROGRESS.md`](okx-ai-PROGRESS.md).
 - **Public docs:** [`docs/okx-marketplace.md`](../../docs/okx-marketplace.md), [`specs/okx-agent-payments.md`](../../specs/okx-agent-payments.md).
 
-**CLI:** `onchainos` at `~/.local/bin/onchainos` (v4.6.2 as of 2026-09-24, installed from the
+**CLI:** `onchainos` at `~/.local/bin/onchainos` (v4.6.9 as of 2026-11-14, installed from the
 `okx/onchainos-skills` release binary and checked against that release's `checksums.txt`; the
 release publishes no `installer-checksums.txt`, so the installer script cannot be verified and
 the binary route is the one to use; check drift with `onchainos --version`). Almost everything here needs an authenticated session as
@@ -44,23 +44,22 @@ onchainos wallet status   # loggedIn: true once done
 are reads. Re-confirmed 2026-08-01: logged out, all three return
 `{"ok":false,"error":"session expired, please login again: onchainos wallet login"}`, so
 **approval status cannot be read at all without a human completing the browser login.**
-Only `curl` against our own `/api/okx/3d/*` endpoints (§7), public RPC reads, and
-`--help` on any subcommand are truly login-free.
+Only `curl` against our own `/api/okx/3d/*` endpoints (§7), public RPC reads,
+`onchainos payment quote` (§5.5) and `--help` on any subcommand are truly login-free.
+Re-confirmed 2026-11-14 on v4.6.9: `get-agents`, `service-list` and `search` all answer
+`session expired, please login again`, and `wallet status` reads `loggedIn: false`.
 
 ---
 
 ## 0.5 The chat bot: read the Cloud Run host, never start a local daemon
 
-> **State on 2026-09-24.** Cloud Run `okx-chat-bot-00001-926` is still the only host: its
-> `bot_heartbeat` row was 20 s old, `loggedIn: true`, `activeClients: 1`, `daemonRestarts: 0`,
-> instance booted 2026-09-22. It still has no `providerLane` in its beat, so it is the pre-lane
-> code pinned to Vertex, which answers `Lightning dunning decision is deny`: chat arrives and no
-> reply is authored. The API half of the fix is LIVE (`c8f10f437` contains `53687d994` and
-> `d3074c1c8`; the agent-scoped path answers `agent not found` instead of `no API route
-> matches`). What remains is the bot deploy, `npm run okx:bot:deploy` (preview with
-> `-- --dry-run`), which needs an authenticated `gcloud` and is owner-gated. It replaces the
-> bare `gcloud builds submit` further down this section: it also provisions the metering lane
-> and waits for the new revision to take the single-writer lease.
+> **State on 2026-11-14.** Cloud Run `okx-chat-bot-00002-s4s` is the only host (deployed
+> 2026-09-29 with `npm run okx:bot:deploy`, which supersedes the bare `gcloud builds submit`
+> further down this section). Its `bot_heartbeat` row read `providerLane: anthropic-gateway`,
+> `loggedIn: true`, `daemonRestarts: 0`, and the lease holder
+> `cloudrun:okx-chat-bot (okx-chat-bot-00002-s4s)#…`; `/api/healthz` reported the
+> `okx_chat_bot` subsystem `ok`. Chat is delivered AND answered. The 2026-09-24 state below
+> this block (pre-lane code pinned to a refused Vertex lane) is history.
 >
 > **Read this first, 2026-09-09.** The bot is NOT local any more. It runs on Cloud Run
 > (`okx-chat-bot`, up since 2026-09-04) and that host owns the GCS state object and the XMTP
@@ -193,6 +192,11 @@ onchainos agent get-my-agents
 > against it dies with `KeyError: 'approvalLabel'`, which reads like a broken CLI and is just a
 > moved field. `get-my-agents` (own agents only, no `--agent-ids`) carries all four. Use it for
 > every status read; keep `get-agents` for the card copy, description and profile photo.
+
+> **2026-11-14: no fresher reading exists.** The session had expired, so `get-my-agents` could
+> not be read. The last real reading is the 2026-09-09 one below. Nothing has been resubmitted
+> since (the buyer, seller and relayer nonces on X Layer are unchanged, and the owner wallet
+> `0x75d0…cf69` signs every listing write), so expect it to read the same until a resubmission.
 
 Verified output (2026-09-09, the fields that matter):
 
@@ -330,9 +334,10 @@ this session's `payment pay` command signs from, so a "self-payment" test is no 
 self-payment (buyer `0x75d0…cf69` → seller `0x4022de2D…f402`), which is arguably a more
 realistic E2E test, not a problem, but the funding target below is what actually needs money.
 
-**Wallet balances re-checked live 2026-09-09, block 70162898 (X Layer RPC `rpc.xlayer.tech`,
-direct `eth_call` on `balanceOf` + `eth_getBalance`). Every figure below is unchanged from
-2026-09-02, 2026-08-01 and 2026-07-23, and the live 402's `payTo` was re-probed the same day
+**Wallet balances re-checked live 2026-11-14, block 75854262 (X Layer RPC `rpc.xlayer.tech`,
+direct `eth_call` on `balanceOf` + `eth_getBalance`; buyer nonce 1, seller nonce 3, relayer
+nonce 0). Every figure below is unchanged from 2026-09-09, 2026-09-02, 2026-08-01 and
+2026-07-23, and the live 402's `payTo` was re-probed the same day
 across all four paid rows and had NOT drifted again. Six weeks with nothing moving on this
 rail is itself a finding: no funding story explains any listing rejection.**
 
@@ -396,7 +401,9 @@ This is the holder-visible moment. Work the list top to bottom.
    onchainos agent service-list --agent-id 2632    # services present, prices correct
    ```
    Reconcile the service names against `api/_lib/okx-catalog.js`, see §2. If they still
-   differ, WO-05 did not take; re-run it before announcing.
+   differ, the service delta did not take; re-run it from
+   [`911-okx-ai-08-forge-relisting.md`](../911-okx-ai-08-forge-relisting.md) (the retired
+   WO-05's successor) before announcing.
 
 2. **Search as a buyer would.** We must actually appear:
    ```bash
@@ -481,8 +488,8 @@ product had delivered nothing for two days.
 node scripts/okx-compliance-probe.mjs      # the 402 quotation, as the reviewer parses it
 node scripts/okx-payment-leg-probe.mjs     # the signed replay, as the reviewer pays it
 for s in forge-draft forge-standard forge-hd forge-image; do
-  onchainos agent x402-check --endpoint "https://three.ws/api/okx/3d/$s" --agent-id 2632
-done                                       # the quotation, as OKX's OWN validator parses it
+  onchainos payment quote --method POST --param prompt=cube "https://three.ws/api/okx/3d/$s"
+done                                       # the quotation, as OKX's OWN CLI parses it
 ```
 
 - **`okx-compliance-probe.mjs`** walks all four paid rows through five request shapes,
@@ -506,14 +513,20 @@ done                                       # the quotation, as OKX's OWN validat
   buyer holds no USD₮0, so the run spends nothing; if it is ever funded the script refuses to
   sign without `--allow-spend`, because then a pass would be a real purchase.
 
-- **`onchainos agent x402-check`** is OKX's own endpoint validator, the tool behind the
-  review's quotation stage, so it answers the exact question the rejection note asks. A pass
-  reads `"valid": true` and echoes the rail it resolved: `network: eip155:196`,
-  `scheme: exact`, `amountMinimal` equal to the row's registered fee, `payTo` and `asset`
-  matching the service row. It needs a live wallet session (`onchainos wallet status` →
-  `loggedIn: true`), which is why the two scripts above stay the machine-runnable gate and
-  this is the confirmation on top of them. Capture:
+- **`onchainos payment quote`** is OKX's own challenge reader: it probes the endpoint, parses
+  the 402 and ranks the rails a wallet could pay, and never signs. It needs no session. A
+  pass is `ok: true` with `candidates[0]` on `chainId: 196`, `tokenSymbol: USD₮0`,
+  `amount` equal to the row's registered fee, and `decodedChallenge.supported: true` with
+  `recipient` equal to the live payTo (all four rows read exactly that on 2026-11-14).
+  Two traps: the default method is GET, which our rows answer 405, so pass `--method POST`;
+  and a bodyless POST is refused 411 by the edge, so pass at least one `--param`.
+  **`onchainos agent x402-check` no longer exists** (v4.6.9 answers `unrecognized
+  subcommand`); it read `"valid": true` on all four rows on 2026-09-07, capture
   `prompts/okx-ai/e2e-evidence/84-2026-09-07-okx-x402-check.json`.
+- **Logged out?** `okx-payment-leg-probe.mjs` and `npm run okx:gauntlet -- --no-spend` both sign
+  through the wallet. Without a session they exit (2 and 4 respectively) with the login steps
+  and sign nothing; `okx-compliance-probe.mjs`, `payment quote` and the gauntlet's `--dry-run`
+  still run.
 
 **4. The product actually delivers.** The three checks above all stop at the payment. None of
 them buys anything, so none of them can see a generation that is accepted, charged, and then
@@ -578,12 +591,13 @@ service id, so nothing is deleted and no id is lost.
 | What | How |
 | --- | --- |
 | Did we sell? | `onchainos agent get-my-agents` → `soldCount`. `get-agents --agent-ids 2632` also carries `soldCount`, but it is the one command that does NOT carry `approvalLabel` (verified 2026-09-02, it reads `None` there), so use `get-my-agents` for the daily watch below and read both fields from one call. |
-| What did buyers say? | `onchainos agent feedback-list --agent-id 2632` ("Query Agent reviews"). `--agent-id` is runtime-enforced: omit it and the CLI answers `missing required parameter: --agent-id`. Optional `--page` / `--page-size`. |
+| What did buyers say? | `onchainos agent feedback-list --agent-id 2632` ("Query Agent reviews"). `--agent-id` is runtime-enforced: omit it and the CLI answers `missing required parameter: --agent-id`. Optional `--page` / `--page-size` / `--chain` (flags re-read from `--help` on v4.6.9, 2026-11-14). Needs a session. |
 | Where does revenue land? | The seller/payTo wallet on X Layer (196), **verify live**, it has moved before (see §3); as of 2026-07-23 it is `0x4022de2D36C334E73C7a108805Cea11C0564f402`, the platform's standard EVM merchant wallet, not the buyer wallet. Confirm the first payout against the settlement tx hash from WO-04. |
-| Where do errors surface? | The existing error-reporting path in [`api/_mcp/payments.js`](../../api/_mcp/payments.js); paid-endpoint failures answer **before** settlement, so a failed job never charges a buyer. |
+| Where do errors surface? | Payment-leg errors go through [`api/_mcp/payments.js`](../../api/_mcp/payments.js): a refused payment answers a fresh 402 naming the reason, anything unexpected answers `internal` with a `quote ref` the buyer can hand to support. Refusals at acceptance (bad input, content gate, `tier_unavailable`, `delivery_unavailable`) answer **before** settlement and charge nothing. A job that fails **after** acceptance, during generation, HAS been charged, and there is no refund path; watch its rate (below). |
 | Can a buyer talk to us? | Chat is a buyer's first contact and OKX tests it during review. `curl -s -H "Authorization: Bearer $(gcloud auth print-identity-token)" https://okx-chat-bot-lp642k3kpa-uc.a.run.app/readyz` reads the host directly (it is not public, so an unauthenticated curl answers 403 from Google, not from us), and `/api/healthz`'s `okx_chat_bot` subsystem carries the same verdict. `ready:true` is the only healthy form: on 2026-09-09 the daemon was running, the wallet session live and every message delivered, while `verdict:"unauthorized"` meant no reply could be authored at all. `.remedy` names the three ways out. |
 | Two sales already, no settlement | `soldCount` reads 2 and has since before any funded call, while nothing has ever moved into the seller wallet on our rail (swept 2026-08-03 to 2026-09-09). Never cite it as revenue; the first real sale is the first settlement tx hash. |
-| Daily watch | `soldCount`, `approvalLabel`, the `okx_chat_bot` verdict, and the paid-endpoint health/catalog free routes (§7). |
+| Is the product failing paid buyers? | The post-acceptance failure rate is the number a buyer pays for. Read it from the DB (`node --env-file=.env.local`, same pattern as the heartbeat read in §0.5): `select date_trunc('day', created_at) d, count(*) filter (where status='done') done, count(*) filter (where status='failed') failed from forge_creations where created_at > now() - interval '7 days' group by 1 order by 1;`. 2026-10-31 to 2026-11-13 read 898 failed of 6,387 (14.1%), with weeks above 90% during fleet outages since September; `docs/okx-marketplace.md` quotes that figure and must be updated when it moves. |
+| Daily watch | `soldCount`, `approvalLabel`, the `okx_chat_bot` verdict, the forge failure rate (above), and the paid-endpoint health/catalog free routes (§7). |
 
 ---
 

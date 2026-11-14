@@ -626,3 +626,60 @@ answers `session expired`. Login session `66242c4f-cb44-42e3-af1b-e549a3c92909` 
 `wallet login --phase init`; the poll is running. Once it lands: Step 2 delta, one
 `validate-listing` pass, diff card, owner confirm, `agent update`, `agent activate
 --preferred-language en-US`.
+
+## 2026-11-14 | order 07 (914) | Final audit re-run against production; docs corrected; approval unreadable (logged out)
+
+No on-chain write, no payment, no deploy, no push. Every claim below was re-measured today.
+
+**Re-verified (held up):**
+- Unpaid 402 on every paid row, spec-valid: `node scripts/okx-compliance-probe.mjs` PASS 20
+  probes, OKX's `parsePaymentRequired` reads header and body. OKX's own CLI agrees:
+  `onchainos payment quote --method POST --param prompt=cube <row>` returns `ok: true`,
+  candidate X Layer USD₮0 at 10000 (draft) / 50000 (standard), `decodedChallenge.supported:
+  true`, recipient `0x4022de2D…f402`. Rails once each: X Layer USD₮0, Solana USDC, Solana $THREE
+  (flat 10000000), Base USDC.
+- RUNBOOK §7 loop: 402 on all four rows with the MCP headers, `forge-status` GET 405.
+- Free lane: `/api/okx/3d/health` 200 with `payment-rail` `settleable: true`,
+  `relayer_funded: true`, `facilitator_configured: false` (block 75855006). Catalog 7 listed + 9
+  unlisted. `npm run okx:three-copy`: module == live == listing submission; on-chain NOT
+  COMPARED (no session).
+- Gauntlet `--dry-run`: 3/3 runnable cases pass (1, 1d, 5d), settlements 0.
+- Wallets at block 75854262: buyer 0 USD₮0 / 0 OKB (nonce 1), seller 2.427731 USD₮0 / 0.8395955
+  OKB (nonce 3), relayer 0.02 OKB (nonce 0). Unchanged since 2026-09-09: no sale has settled.
+- Chat bot: `okx-chat-bot-00002-s4s` holds the lease, `loggedIn: true`, lane
+  `anthropic-gateway`, `daemonRestarts: 0`, healthz `okx_chat_bot` ok.
+- `specs/okx-agent-payments.md` §1.5 and `docs/agent-identities.md` match production.
+- Every curl in `docs/okx-marketplace.md` re-run and answers as documented.
+
+**Failed re-verification (all corrected in this commit):**
+- `docs/okx-marketplace.md` claimed a BSC USDC rail (none is advertised), said every rail quotes
+  the same amount (the $THREE accept is a flat 10 $THREE), quoted a 2.5% post-acceptance
+  failure rate (measured 898 of 6,387, 14.1%, 2026-10-31 to 2026-11-13), and had a sentence glued
+  onto a closing code fence.
+- `data/changelog.json` 2026-07-07 said the X Layer rail "only charges after the tool succeeds";
+  it charges at acceptance.
+- `STRUCTURE.md` bot row said replies were blocked on AI funding; they are not.
+- `docs/start-here.md` led the OKX link with the back-burner Identity Studio, with an em-dash.
+- RUNBOOK: CLI version (4.6.2, now 4.6.9), §0.5 bot state, §4 pointer to retired WO-05, §5.5
+  `agent x402-check` (removed in 4.6.9, replaced with `payment quote`), §6 "a failed job never
+  charges a buyer" (false after acceptance).
+- `scripts/okx-payment-leg-probe.mjs` and the gauntlet's `--no-spend` crashed with a Node stack
+  trace on an expired session. Both now stop before signing with the login steps (exit 2 and
+  4), covered by `tests/scripts/okx-payment-leg-probe-session.test.js` and
+  `tests/scripts/okx-gauntlet-session.test.js`.
+
+**Not verifiable today (owner-gated):** the paid end-to-end call with on-chain settlement and the
+replay case 5a need a funded buyer (SHORT 1.08 USD₮0 per `npm run okx:gauntlet -- --budget`) and
+a session. Approval status needs a session: `get-agents`, `get-my-agents`, `service-list` and
+`search` answer `session expired`. Last real reading stays 2026-09-09 `Listing rejected`
+(remark sha256 `c30676a2…`).
+
+**Launch branch executed: still pending / unreadable.** Recorded here and in RUNBOOK §1; the
+watch command (`onchainos agent get-my-agents` one-liner, RUNBOOK §1) stays in place; no daemon,
+no loop. The login session order 911 minted today (`66242c4f…`) was left alone: a second
+`--phase init` would have invalidated it.
+
+**Owner action (single, unchanged from orders 911 and 913):** complete the browser login for
+`claude@three.ws`, and fund the buyer per `prompts/okx-ai/e2e-evidence/FUNDING-REQUEST.md`.
+Then: `npm run okx:gauntlet -- --yes` (spends), the 911 resubmission, and this order's
+approval read. Order 914 stays on disk until those three land.
