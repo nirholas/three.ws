@@ -57,6 +57,37 @@ VQ_NAME = "rvq_nq6_dc512_nc512_noshare_qdp0.2"
 T2M_NAME = "t2m_nlayer8_nhead6_ld384_ff1024_cdp0.1_rvq6ns"
 RES_NAME = "tres_nlayer8_ld384_ff1024_rvq6ns_cdp0.2_sw"
 
+MOMASK_REPO = "/opt/momask"
+
+
+def prepare_upstream_imports(repo_dir: str = MOMASK_REPO) -> None:
+    """Make momask-codes importable in this process.
+
+    Two things upstream needs that a modern image does not give it:
+
+    1. Its own top-level `utils` package, not MDM's (see the namespace note in
+       the module docstring): purge any cached `utils*` modules and pin the
+       repo to the front of `sys.path`.
+    2. The `np.float` alias. momask-codes' `common/quaternion.py` evaluates
+       `np.finfo(np.float).eps` at import time and `utils/motion_process.py`
+       calls `.astype(np.float)`; NumPy 1.24 removed that alias, so on the
+       `numpy>=1.24` this image installs every MoMask load failed with
+       `AttributeError: module 'numpy' has no attribute 'float'`. NumPy
+       defined the alias as the builtin `float`, so restoring exactly that is
+       behaviour-identical to the NumPy upstream was written against.
+    """
+    import sys
+
+    if "float" not in np.__dict__:
+        np.float = float  # type: ignore[attr-defined]
+
+    for name in list(sys.modules):
+        if name == "utils" or name.startswith("utils."):
+            del sys.modules[name]
+    while repo_dir in sys.path:
+        sys.path.remove(repo_dir)
+    sys.path.insert(0, repo_dir)
+
 # Generation hyperparameters: upstream's own EvalT2MOptions CLI defaults
 # (options/eval_option.py), not tuned here.
 TIME_STEPS = 18
@@ -84,17 +115,10 @@ class MomaskSampler:
         # Imports are GPU-only (and momask-repo-only), kept here so the
         # module imports without torch or the cloned repo present.
         import os
-        import sys
 
         import torch
 
-        momask_repo = "/opt/momask"
-        for name in list(sys.modules):
-            if name == "utils" or name.startswith("utils."):
-                del sys.modules[name]
-        if momask_repo in sys.path:
-            sys.path.remove(momask_repo)
-        sys.path.insert(0, momask_repo)
+        prepare_upstream_imports(MOMASK_REPO)
 
         from models.mask_transformer.transformer import MaskTransformer, ResidualTransformer
         from models.vq.model import RVQVAE

@@ -942,6 +942,9 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 					if (Array.isArray(data.objects)) result.objects = data.objects;
 					if (typeof data.object_count === 'number') result.objectCount = data.object_count;
 					if (Array.isArray(data.skipped) && data.skipped.length) result.skipped = data.skipped;
+					// Whether the worker stood the scene upright (undoing the
+					// photo's camera pitch) and by how much.
+					if (data.leveling && typeof data.leveling === 'object') result.leveling = data.leveling;
 				} else if (mode === 'video2scene') {
 					// The result is a .ply point cloud, not a GLB mesh. Surface the
 					// reconstruction telemetry so the client can show point/frame counts.

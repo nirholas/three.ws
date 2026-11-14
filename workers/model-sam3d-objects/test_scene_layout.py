@@ -134,3 +134,107 @@ def test_manifest_entry_reports_position_and_size():
     assert entry["centroid"] == pytest.approx([4, 0, -5])
     assert entry["face_count"] == len(box.faces)
     assert entry["pose"]["rotation_wxyz"] == [1.0, 0.0, 0.0, 0.0]
+
+
+# ── Levelling: a photo taken looking down must not tip every object in AR ──────
+
+def _pitch_quat(deg):
+    """Real-first quaternion for a rotation of `deg` about the camera X axis."""
+    h = np.radians(deg) / 2
+    return [np.cos(h), np.sin(h), 0.0, 0.0]
+
+
+def _upright_box_quat(camera_pitch_deg):
+    """Pose quaternion of an object standing upright in a room seen by a camera
+    pitched down by `camera_pitch_deg`.
+
+    The object's canonical up is decoder +Z. In the camera frame, gravity-up is
+    +Y when the camera is level, so the base rotation maps decoder +Z to camera
+    +Y (-90 deg about X), then the camera pitch tips that up vector toward the
+    camera's -Z/+Z axis.
+    """
+    base = sl.quat_wxyz_to_matrix(_pitch_quat(-90))
+    tilt = sl.quat_wxyz_to_matrix(_pitch_quat(camera_pitch_deg))
+    m = tilt @ base
+    # matrix -> real-first quaternion (m is a proper rotation, trace path is safe here)
+    w = np.sqrt(max(1e-12, 1 + m[0, 0] + m[1, 1] + m[2, 2])) / 2
+    return [w, (m[2, 1] - m[1, 2]) / (4 * w), (m[0, 2] - m[2, 0]) / (4 * w), (m[1, 0] - m[0, 1]) / (4 * w)]
+
+
+def test_object_up_of_an_upright_object_seen_level_is_plus_y():
+    up = sl.object_up_gltf(_upright_box_quat(0))
+    assert np.allclose(up, [0, 1, 0], atol=1e-9)
+
+
+def test_rotation_between_maps_a_onto_b():
+    rng = np.random.default_rng(3)
+    for _ in range(20):
+        a, b = rng.normal(size=3), rng.normal(size=3)
+        r = sl.rotation_between(a, b)
+        assert np.allclose(r @ (a / np.linalg.norm(a)), b / np.linalg.norm(b), atol=1e-9)
+        assert np.allclose(r @ r.T, np.eye(3), atol=1e-9)
+    # antiparallel input still yields a proper rotation
+    r = sl.rotation_between([0, 1, 0], [0, -1, 0])
+    assert np.allclose(r @ [0, 1, 0], [0, -1, 0], atol=1e-9)
+    assert np.linalg.det(r) == pytest.approx(1.0)
+
+
+def test_consensus_up_ignores_an_object_lying_on_its_side():
+    ups = [[0, 1, 0], [0.05, 0.99, 0], [0, 0.98, 0.05], [1, 0, 0]]  # last one is a fallen bottle
+    up = sl.consensus_up(ups, weights=[1, 1, 1, 5])
+    assert up is not None
+    assert np.degrees(np.arccos(np.clip(up @ [0, 1, 0], -1, 1))) < 4
+
+
+def test_consensus_up_is_none_when_nothing_agrees():
+    assert sl.consensus_up([[1, 0, 0], [0, 0, 1], [-1, 0, 0]], weights=[1, 1, 1]) is None
+    assert sl.consensus_up([], weights=[]) is None
+
+
+def _posed_desk_scene(camera_pitch_deg):
+    """Two upright boxes, one stacked on the other, posed for a pitched camera."""
+    q = _upright_box_quat(camera_pitch_deg)
+    table = trimesh.creation.box(extents=(2, 1, 1))  # decoder frame: 2 wide, 1 deep, 1 tall (Z up)
+    mug = trimesh.creation.box(extents=(0.3, 0.3, 0.4))
+    table_glb = np.asarray(table.vertices) @ sl._DECODER_TO_GLB
+    mug_glb = np.asarray(mug.vertices) @ sl._DECODER_TO_GLB
+    tilt = sl.quat_wxyz_to_matrix(_pitch_quat(camera_pitch_deg))
+    # Room-frame centres (camera frame of a LEVEL camera: +Y up, +Z away), then pitched.
+    table_c = tilt @ np.array([0.0, -1.0, 4.0])
+    mug_c = tilt @ np.array([0.3, -1.0 + 0.5 + 0.2, 4.0])  # resting on the table top
+    posed = [sl.pose_vertices(table_glb, q, table_c, 1.0), sl.pose_vertices(mug_glb, q, mug_c, 1.0)]
+    return posed, [q, q], [len(table.faces), len(mug.faces)]
+
+
+def test_level_scene_undoes_camera_pitch_and_grounds_it():
+    posed, quats, faces = _posed_desk_scene(35)
+    levelled, info = sl.level_scene(posed, quats, weights=faces)
+    assert info["applied"] is True
+    assert info["tilt_deg"] == pytest.approx(35, abs=0.5)
+    allv = np.vstack(levelled)
+    assert allv[:, 1].min() == pytest.approx(0.0, abs=1e-9)  # grounded
+    assert (allv[:, 0].min() + allv[:, 0].max()) / 2 == pytest.approx(0.0, abs=1e-9)
+    assert (allv[:, 2].min() + allv[:, 2].max()) / 2 == pytest.approx(0.0, abs=1e-9)
+    table, mug = levelled
+    # The table's top is flat again: its height is its real 1 unit, not a tipped slab.
+    assert table[:, 1].max() - table[:, 1].min() == pytest.approx(1.0, abs=1e-6)
+    # And the mug still sits on it.
+    assert mug[:, 1].min() == pytest.approx(table[:, 1].max(), abs=1e-6)
+
+
+def test_level_scene_leaves_an_unclear_scene_alone_but_grounds_it():
+    posed, _, faces = _posed_desk_scene(0)
+    sideways = [_pitch_quat(0), [np.cos(np.pi / 4), 0, np.sin(np.pi / 4), 0]]  # ups disagree by 90 deg
+    levelled, info = sl.level_scene(posed, sideways, weights=faces)
+    assert info["applied"] is False
+    allv = np.vstack(levelled)
+    assert allv[:, 1].min() == pytest.approx(0.0, abs=1e-9)
+    # geometry is translated only: the table's tipped extent is unchanged
+    assert np.ptp(levelled[0], axis=0) == pytest.approx(np.ptp(posed[0], axis=0))
+
+
+def test_level_scene_refuses_a_tilt_beyond_the_guard():
+    posed, quats, faces = _posed_desk_scene(80)
+    _, info = sl.level_scene(posed, quats, weights=faces, max_tilt_deg=60)
+    assert info["applied"] is False
+    assert info["tilt_deg"] == pytest.approx(80, abs=0.5)

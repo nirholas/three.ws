@@ -12,7 +12,14 @@
  *     → 202 { job_id, status, eta_seconds, source: 'boxes'|'masks'|'detected', objects: [{ label, box }] }
  *
  *   GET  /api/forge-scene-objects?job=<id>
- *     → { job_id, status, result_url?, objects?, object_count?, skipped?, error? }
+ *     → { job_id, status, result_url?, objects?, object_count?, skipped?, leveling?, error? }
+ *
+ *   GET  /api/forge-scene-objects?status
+ *     → 200 { available, reason: null|'backend_unconfigured'|'unavailable_in_region',
+ *             message, max_objects, default_objects }
+ *     A capability probe for the UI: always 200 so an off lane is a designed
+ *     state, not a console error. It reads configuration only and never wakes
+ *     the scale-to-zero GPU worker.
  *
  * The scene GLB has one named node per object (object_01, ...) laid out like the
  * photo, and `objects` carries each node's position and size.
@@ -39,12 +46,35 @@ import {
 const JOB_ID_RE = /^[A-Za-z0-9_-]{20,600}$/;
 const SEED_MAX = 4_294_967_295;
 
+const UNCONFIGURED_MESSAGE =
+	'Scene-from-a-photo is not switched on yet. It needs the SAM 3D Objects worker (a 32 GB+ GPU): ' +
+	'deploy workers/model-sam3d-objects and set MODEL_SAM3D_URL and GCP_RECONSTRUCTION_KEY.';
+const REGION_MESSAGE =
+	'This model is licensed to exclude comprehensively sanctioned jurisdictions, so it is not available from your region.';
+
 function unconfigured(res) {
-	return json(res, 503, {
-		error: 'backend_unconfigured',
-		message:
-			'Scene-from-a-photo is not switched on yet. It needs the SAM 3D Objects worker (a 32 GB+ GPU): ' +
-			'deploy workers/model-sam3d-objects and set MODEL_SAM3D_URL and GCP_RECONSTRUCTION_KEY.',
+	return json(res, 503, { error: 'backend_unconfigured', message: UNCONFIGURED_MESSAGE });
+}
+
+function laneConfigured() {
+	try {
+		return createRegenProvider().supportsMode('sam3d');
+	} catch {
+		return false;
+	}
+}
+
+function availability(req, res) {
+	let reason = null;
+	if (isSanctionedTerritory(requestTerritory(req))) reason = 'unavailable_in_region';
+	else if (!laneConfigured()) reason = 'backend_unconfigured';
+	res.setHeader('cache-control', 'no-store');
+	return json(res, 200, {
+		available: reason === null,
+		reason,
+		message: reason === 'unavailable_in_region' ? REGION_MESSAGE : reason ? UNCONFIGURED_MESSAGE : null,
+		max_objects: MAX_SCENE_OBJECTS,
+		default_objects: DEFAULT_SCENE_OBJECTS,
 	});
 }
 
@@ -62,10 +92,7 @@ async function publicUrl(value, field, res) {
 
 async function startJob(req, res) {
 	if (isSanctionedTerritory(requestTerritory(req))) {
-		return json(res, 451, {
-			error: 'unavailable_in_region',
-			message: 'This model is licensed to exclude comprehensively sanctioned jurisdictions, so it is not available from your region.',
-		});
+		return json(res, 451, { error: 'unavailable_in_region', message: REGION_MESSAGE });
 	}
 
 	const rl = await limits.mcp3dGenerate(clientIp(req));
@@ -189,6 +216,7 @@ async function pollJob(req, res, jobId) {
 		objects: result.objects || null,
 		object_count: result.objectCount ?? null,
 		skipped: result.skipped || null,
+		leveling: result.leveling || null,
 		error: result.error || null,
 	});
 }
@@ -200,6 +228,7 @@ export default wrap(async (req, res) => {
 	if (req.method === 'POST') return startJob(req, res);
 
 	const url = new URL(req.url, 'http://localhost');
+	if (url.searchParams.has('status')) return availability(req, res);
 	const jobId = (url.searchParams.get('job') || '').trim();
 	if (!jobId) return json(res, 400, { error: 'missing_job', message: 'Pass ?job=<id> to poll.' });
 	return pollJob(req, res, jobId);

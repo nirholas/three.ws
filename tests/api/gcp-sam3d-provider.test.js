@@ -72,6 +72,7 @@ describe('gcp provider: sam3d', () => {
 					objects: [{ id: 'object_01', centroid: [0, 0, -2] }],
 					object_count: 1,
 					skipped: [{ index: 1, reason: 'no mesh' }],
+					leveling: { applied: true, tilt_deg: 31.5, up: [0, 0.85, 0.52] },
 				}),
 				{ status: 200 },
 			),
@@ -83,6 +84,7 @@ describe('gcp provider: sam3d', () => {
 			objects: [{ id: 'object_01', centroid: [0, 0, -2] }],
 			objectCount: 1,
 			skipped: [{ index: 1, reason: 'no mesh' }],
+			leveling: { applied: true, tilt_deg: 31.5, up: [0, 0.85, 0.52] },
 		});
 	});
 });

@@ -167,6 +167,111 @@ export function normalizeGlbUrl(raw) {
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
+// ── Photo scenes: one GLB, many placeable objects ─────────────────────────────
+// A scene-from-a-photo result (SAM 3D Objects) is ONE GLB with a named node per
+// object (object_01, object_02, ...), already levelled and resting on y = 0. To
+// make each object independently movable, a placement points at one node with a
+// URL fragment: `<scene.glb>#node=object_03`. The fragment rides through
+// localStorage, share links and room sync untouched (they all carry `src`
+// verbatim, and fetch never sends a fragment), and every peer resolves it the
+// same way: one download of the scene, one shared scale, one node per placement.
+
+/** Longest horizontal span (m) a photo scene is normalized to. */
+export const PHOTO_SCENE_SPAN_M = 2.4;
+
+const NODE_NAME_RE = /^[A-Za-z0-9_.-]{1,64}$/;
+
+/**
+ * Split a node reference into the scene URL and the node name.
+ *
+ * @param {unknown} src
+ * @returns {{ base: string, node: string } | null} null when `src` does not
+ *   point at a node (no fragment, no `node=` key, or a name outside
+ *   [A-Za-z0-9_.-]{1,64}).
+ */
+export function splitNodeRef(src) {
+	const s = String(src ?? '');
+	const hash = s.indexOf('#');
+	if (hash < 0) return null;
+	const node = new URLSearchParams(s.slice(hash + 1)).get('node');
+	if (!node || !NODE_NAME_RE.test(node)) return null;
+	const base = normalizeGlbUrl(s.slice(0, hash));
+	return base ? { base, node } : null;
+}
+
+/**
+ * Build the placement source for one node of a scene GLB.
+ *
+ * @param {string} base  Scene GLB URL (https or site-relative, no fragment).
+ * @param {string} node  Node name in that GLB.
+ * @returns {string|null}
+ */
+export function nodeRefSrc(base, node) {
+	const b = normalizeGlbUrl(String(base ?? '').split('#')[0]);
+	if (!b || !NODE_NAME_RE.test(String(node ?? ''))) return null;
+	return `${b}#node=${node}`;
+}
+
+/** The scene URL with any fragment removed (what a native AR viewer is handed). */
+export function glbBaseUrl(src) {
+	return String(src ?? '').split('#')[0];
+}
+
+/**
+ * Scale for a whole photo scene so it fits a room. The layout is relative, not
+ * metric (no tape measure was in the photo), so the scene's longest horizontal
+ * span is brought to PHOTO_SCENE_SPAN_M, unless it is already within 2x of that
+ * (then the model's own scale is believable and kept). One scale for every
+ * object keeps their sizes and spacing true to the photo.
+ *
+ * @param {{min:{x:number,y:number,z:number}, max:{x:number,y:number,z:number}}} box
+ * @returns {{ scale: number, yOffset: number }}
+ */
+export function photoSceneFit(box) {
+	const dx = Number(box?.max?.x) - Number(box?.min?.x);
+	const dy = Number(box?.max?.y) - Number(box?.min?.y);
+	const dz = Number(box?.max?.z) - Number(box?.min?.z);
+	if (![dx, dy, dz].every((v) => Number.isFinite(v) && v >= 0)) return { scale: 1, yOffset: 0 };
+	const span = Math.max(dx, dz) > 1e-6 ? Math.max(dx, dz) : dy;
+	if (!(span > 1e-6)) return { scale: 1, yOffset: 0 };
+	let scale = PHOTO_SCENE_SPAN_M / span;
+	if (scale > 0.5 && scale < 2) scale = 1;
+	return { scale, yOffset: -Number(box.min.y) * scale };
+}
+
+/**
+ * Where each object of a photo scene lands on the floor, keeping the photo's
+ * layout. The scene is turned to face the viewer by `yaw` (the photo's camera
+ * side, +Z, toward them) around `anchor`, and every object gets that same yaw so
+ * the arrangement turns as one.
+ *
+ * @param {{min:{x:number,z:number}, max:{x:number,z:number}}} sceneBox  Raw scene bounds.
+ * @param {Array<{ node: string, box: {min:{x:number,z:number}, max:{x:number,z:number}} }>} nodes
+ * @param {{ scale: number, anchor: {x:number, z:number}, yaw: number }} at
+ * @returns {Array<{ node: string, x: number, z: number, yaw: number }>}
+ */
+export function photoObjectPlacements(sceneBox, nodes, { scale, anchor, yaw }) {
+	const scx = (Number(sceneBox.min.x) + Number(sceneBox.max.x)) / 2;
+	const scz = (Number(sceneBox.min.z) + Number(sceneBox.max.z)) / 2;
+	const s = Number.isFinite(scale) && scale > 0 ? scale : 1;
+	const c = Math.cos(yaw), sn = Math.sin(yaw);
+	const out = [];
+	for (const n of Array.isArray(nodes) ? nodes : []) {
+		const lx = ((Number(n.box.min.x) + Number(n.box.max.x)) / 2 - scx) * s;
+		const lz = ((Number(n.box.min.z) + Number(n.box.max.z)) / 2 - scz) * s;
+		if (!Number.isFinite(lx) || !Number.isFinite(lz)) continue;
+		// Same rotation three.js applies for rotation.y = yaw.
+		out.push({
+			node: n.node,
+			x: clamp(anchor.x + lx * c + lz * sn, -50, 50),
+			z: clamp(anchor.z - lx * sn + lz * c, -50, 50),
+			yaw,
+		});
+	}
+	return out;
+}
+
+
 /**
  * Serialize live placements for localStorage. Only source + transform survive
  * a refresh: meshes are re-loaded from their URLs on restore.

@@ -66,13 +66,16 @@ test.describe('forge player embed (X player card target)', () => {
 			if (msg.type() === 'error' && !DEV_SERVER_NOISE.test(msg.text())) consoleErrors.push(msg.text());
 		});
 		const player = `${baseURL}/forge-embed.html?src=${encodeURIComponent(FOX)}&title=${encodeURIComponent('A fox, forged')}`;
-		await page.route('http://card-host.test/', (route) =>
+		// 127.0.0.1 and localhost are different origins but both loopback, so the
+		// frame is truly cross-origin without tripping local-network-access blocks.
+		const host = `${new URL(baseURL).protocol}//127.0.0.1:${new URL(baseURL).port}/__card-host__`;
+		await page.route(host, (route) =>
 			route.fulfill({
 				contentType: 'text/html',
 				body: `<!doctype html><title>card host</title><iframe id="card" src="${player}" width="480" height="480"></iframe>`,
 			}),
 		);
-		await page.goto('http://card-host.test/');
+		await page.goto(host);
 		const frame = page.frameLocator('#card');
 		await expect(frame.locator('model-viewer#mv').locator('#webgl-canvas')).toBeVisible({ timeout: 30_000 });
 		await expect(frame.locator('body')).not.toHaveAttribute('data-state', 'error');

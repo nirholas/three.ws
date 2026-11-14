@@ -272,6 +272,15 @@
 					return;
 				}
 
+				// A cross-origin frame (the X player card, most third-party embeds)
+				// usually lacks xr-spatial-tracking. Probing WebXR there only logs a
+				// permissions-policy error, so keep the AR modes a framed page can
+				// still launch. Browsers without the policy API have no WebXR AR.
+				var policy = document.permissionsPolicy || document.featurePolicy;
+				if (policy && typeof policy.allowsFeature === 'function' && !policy.allowsFeature('xr-spatial-tracking')) {
+					mv.setAttribute('ar-modes', 'scene-viewer quick-look');
+				}
+
 				mv.setAttribute('src', src);
 				if (title) mv.setAttribute('alt', title + ' — forged on three.ws');
 				var safePoster = safeUrl(poster);

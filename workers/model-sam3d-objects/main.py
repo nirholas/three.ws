@@ -353,6 +353,7 @@ async def _run_job(task_id: str, request: dict) -> None:
                 objects=result["objects"],
                 object_count=len(result["objects"]),
                 skipped=result["skipped"],
+                leveling=result.get("leveling"),
                 bytes=len(glb_bytes),
                 elapsed_ms=int(elapsed * 1000),
             )

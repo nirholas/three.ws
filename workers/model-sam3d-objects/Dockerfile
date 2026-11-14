@@ -61,13 +61,13 @@ COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 
 COPY worker_security.py storage_backend.py request_policy.py scene_layout.py pipeline.py main.py entrypoint.sh /app/
-COPY test_request_policy.py test_scene_layout.py test_app_contract.py /app/
+COPY test_request_policy.py test_scene_layout.py test_pipeline_layout.py test_app_contract.py /app/
 RUN chmod +x /app/entrypoint.sh
 
 # Build-time guard: the pure-logic tests and the served-contract test need no
 # GPU and no checkpoints, so they run here and the image does not ship if request
 # validation, the scene geometry or the import chain broke.
-RUN python -m pytest -q /app/test_request_policy.py /app/test_scene_layout.py \
+RUN cd /app && python -m pytest -q test_request_policy.py test_scene_layout.py test_pipeline_layout.py \
     && python /app/test_app_contract.py
 
 EXPOSE 8080

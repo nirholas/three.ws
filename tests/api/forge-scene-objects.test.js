@@ -16,6 +16,7 @@ const status = vi.fn(async () => ({
 	resultGlbUrl: 'https://storage.googleapis.com/bucket/sam3d/task.glb',
 	objects: [{ id: 'object_01', centroid: [0, 0, -3] }],
 	objectCount: 1,
+	leveling: { applied: true, tilt_deg: 28.4, up: [0, 0.88, 0.47] },
 }));
 let supportsSam3d = true;
 
@@ -193,6 +194,7 @@ describe('GET /api/forge-scene-objects?job=<id>', () => {
 		expect(body.result_url).toBe('https://storage.googleapis.com/bucket/sam3d/task.glb');
 		expect(body.objects).toEqual([{ id: 'object_01', centroid: [0, 0, -3] }]);
 		expect(body.object_count).toBe(1);
+		expect(body.leveling).toEqual({ applied: true, tilt_deg: 28.4, up: [0, 0.88, 0.47] });
 	});
 
 	it('rejects a malformed or missing job id', async () => {
@@ -203,5 +205,37 @@ describe('GET /api/forge-scene-objects?job=<id>', () => {
 		await handler(makeReq({ method: 'GET', url: '/api/forge-scene-objects' }), res);
 		expect(JSON.parse(res.body).error).toBe('missing_job');
 		expect(status).not.toHaveBeenCalled();
+	});
+});
+
+describe('GET /api/forge-scene-objects?status', () => {
+	it('says the lane is available once the worker is configured', async () => {
+		const res = makeRes();
+		await handler(makeReq({ method: 'GET', url: '/api/forge-scene-objects?status' }), res);
+		expect(res.statusCode).toBe(200);
+		const body = JSON.parse(res.body);
+		expect(body).toMatchObject({ available: true, reason: null, max_objects: 12, default_objects: 8 });
+		expect(submit).not.toHaveBeenCalled();
+		expect(status).not.toHaveBeenCalled();
+	});
+
+	it('answers 200 with a reason, not a 503, while the worker is off', async () => {
+		supportsSam3d = false;
+		const res = makeRes();
+		await handler(makeReq({ method: 'GET', url: '/api/forge-scene-objects?status=1' }), res);
+		expect(res.statusCode).toBe(200);
+		const body = JSON.parse(res.body);
+		expect(body.available).toBe(false);
+		expect(body.reason).toBe('backend_unconfigured');
+		expect(body.message).toMatch(/not switched on/i);
+	});
+
+	it('tells a sanctioned jurisdiction up front instead of after an upload', async () => {
+		const res = makeRes();
+		await handler(makeReq({ method: 'GET', url: '/api/forge-scene-objects?status', headers: { 'x-client-geo-location': 'KP,Pyongyang' } }), res);
+		expect(res.statusCode).toBe(200);
+		const body = JSON.parse(res.body);
+		expect(body.available).toBe(false);
+		expect(body.reason).toBe('unavailable_in_region');
 	});
 });

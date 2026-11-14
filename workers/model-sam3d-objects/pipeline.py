@@ -68,8 +68,9 @@ def _to_numpy(value) -> np.ndarray:
 def run_objects(image_rgb: np.ndarray, masks: list[np.ndarray], sources: list[str], seed: int) -> dict:
     """Reconstruct every masked object and lay the results out like the photo.
 
-    Returns {"scene_glb": bytes, "objects": [manifest entries], "skipped": [...]}.
-    The scene GLB has one named node per object (object_01, object_02, ...).
+    Returns {"scene_glb": bytes, "objects": [manifest entries], "skipped": [...],
+    "leveling": {"applied", "tilt_deg", "up"}}. The scene GLB has one named node
+    per object (object_01, object_02, ...), levelled and resting on y = 0.
     A single object that fails is skipped and reported; the call fails only when
     none succeeds.
     """
@@ -78,6 +79,7 @@ def run_objects(image_rgb: np.ndarray, masks: list[np.ndarray], sources: list[st
         raise RuntimeError("pipeline is not loaded")
 
     posed_items: list[dict] = []
+    poses: list[dict] = []
     manifest: list[dict] = []
     skipped: list[dict] = []
 
@@ -102,13 +104,23 @@ def run_objects(image_rgb: np.ndarray, masks: list[np.ndarray], sources: list[st
             log.warning("object %d failed: %s", i + 1, exc)
             skipped.append({"index": i, "reason": str(exc)[:200]})
             continue
-        n = len(posed_items)
         posed_items.append({"vertices": posed, "faces": faces, "vertex_colors": colors})
-        manifest.append(layout.manifest_entry(n, posed, faces, solo, quat, trans, scale, sources[i]))
+        poses.append({"solo": solo, "quat": quat, "trans": trans, "scale": scale, "source": sources[i]})
 
     if not posed_items:
         reasons = "; ".join(s["reason"] for s in skipped) or "no objects"
         raise ObjectReconstructionError(f"no object could be reconstructed ({reasons})")
 
+    # Undo the camera's pitch and ground the scene, so each object stands upright
+    # on y = 0 when AR Studio places it on a real floor.
+    levelled, leveling = layout.level_scene(
+        [item["vertices"] for item in posed_items],
+        [p["quat"] for p in poses],
+        weights=[len(item["faces"]) for item in posed_items],
+    )
+    for n, (item, verts, p) in enumerate(zip(posed_items, levelled, poses)):
+        item["vertices"] = verts
+        manifest.append(layout.manifest_entry(n, verts, item["faces"], p["solo"], p["quat"], p["trans"], p["scale"], p["source"]))
+
     scene_glb = layout.export_glb(layout.build_scene(posed_items))
-    return {"scene_glb": scene_glb, "objects": manifest, "skipped": skipped}
+    return {"scene_glb": scene_glb, "objects": manifest, "skipped": skipped, "leveling": leveling}

@@ -23,6 +23,7 @@ from pipeline import (
     build_skin_cmd,
     run_pipeline,
 )
+from glb_fixtures import QUADRUPED, SKINTOKENS_TRIM_SCRIPT, skin_joint_count, unweighted_merge_glb
 from skeleton_roots import write_glb
 
 _FAILED = False
@@ -319,6 +320,75 @@ def test_unreadable_merge_output_is_a_named_merge_failure():
         shutil.rmtree(root)
 
 
+def _pipeline_with_merge_output(root: Path, merge_output: Path, skin_script: str) -> tuple[Path, Path, Path, Path]:
+    unirig_dir, skintokens_dir = _stub_checkouts(root)
+    workdir = root / "work"
+    workdir.mkdir()
+    mesh_glb = workdir / "mesh.glb"
+    mesh_glb.write_bytes(b"glTF-fake-mesh")
+    _fake_bash_script(
+        unirig_dir / "launch/inference/generate_skeleton.sh", workdir / "skeleton.fbx"
+    )
+    _fake_merge_copying(unirig_dir / "launch/inference/merge.sh", merge_output)
+    (skintokens_dir / "demo.py").write_text(skin_script)
+    return mesh_glb, workdir, unirig_dir, skintokens_dir
+
+
+def test_unweighted_unirig_skeleton_survives_skintokens_trim():
+    """Production, 2026-11-04 to 2026-11-14: every non-humanoid rig came back
+    with exactly one joint (bone_0). UniRig's merge grafts the skeleton with
+    no weights, so Blender's exporter puts every vertex on neutral_bone, and
+    SkinTokens' --use_skeleton loader runs Asset.trim_skeleton, which deletes
+    every joint whose subtree has no skin weight. Only neutral_bone survived.
+    The whole UniRig skeleton must reach SkinTokens' predictor."""
+    root = Path(tempfile.mkdtemp())
+    try:
+        unweighted_merge_glb(root / "merge-output.glb")
+        args = _pipeline_with_merge_output(root, root / "merge-output.glb", SKINTOKENS_TRIM_SCRIPT)
+        result = run_pipeline(*args)
+        kept = skin_joint_count(result)
+        _check(kept == len(QUADRUPED), f"SkinTokens keeps all {len(QUADRUPED)} UniRig joints (kept {kept})")
+    except PipelineStepError as exc:
+        _check(False, f"pipeline failed instead of rigging: {exc}")
+    finally:
+        shutil.rmtree(root)
+
+
+# Writes a rig whose skin has exactly one joint, whatever the input.
+_SKIN_ONE_JOINT = """
+import json, struct, sys
+args = sys.argv[1:]
+src, dst = args[args.index('--input') + 1], args[args.index('--output') + 1]
+data = open(src, 'rb').read()
+size = struct.unpack_from('<I', data, 12)[0]
+doc = json.loads(data[20:20 + size])
+doc['skins'][0]['joints'] = doc['skins'][0]['joints'][:1]
+doc['skins'][0].pop('inverseBindMatrices', None)
+body = json.dumps(doc).encode()
+body += b' ' * (-len(body) % 4)
+rest = data[20 + size:]
+chunks = struct.pack('<II', len(body), 0x4E4F534A) + body + rest
+open(dst, 'wb').write(b'glTF' + struct.pack('<II', 2, 12 + len(chunks)) + chunks)
+"""
+
+
+def test_single_joint_rig_is_a_named_failure_not_a_success():
+    """A rig with one joint cannot move anything. The worker used to hand it
+    back as done; it must fail the task with a message that says why."""
+    root = Path(tempfile.mkdtemp())
+    try:
+        unweighted_merge_glb(root / "merge-output.glb")
+        args = _pipeline_with_merge_output(root, root / "merge-output.glb", _SKIN_ONE_JOINT)
+        try:
+            run_pipeline(*args)
+            _check(False, "expected PipelineStepError for a one-joint rig")
+        except PipelineStepError as exc:
+            msg = str(exc)
+            _check("skintokens-skin" in msg and "1 joint" in msg, f"names the step and the joint count: {msg}")
+    finally:
+        shutil.rmtree(root)
+
+
 if __name__ == "__main__":
     test_skeleton_cmd_matches_unirig_cli_contract()
     test_merge_cmd_matches_unirig_cli_contract()
@@ -330,6 +400,8 @@ if __name__ == "__main__":
     test_missing_output_error_carries_the_step_stdout()
     test_two_root_merge_output_reaches_skinning_with_one_root()
     test_unreadable_merge_output_is_a_named_merge_failure()
+    test_unweighted_unirig_skeleton_survives_skintokens_trim()
+    test_single_joint_rig_is_a_named_failure_not_a_success()
     if _FAILED:
         print("\nFAILED")
         sys.exit(1)

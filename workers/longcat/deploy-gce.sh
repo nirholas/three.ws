@@ -9,7 +9,10 @@
 #
 # Environment (all optional):
 #   GCP_PROJECT     aerial-vehicle-466722-p5
-#   ZONE            us-central1-a
+#   ZONE            us-central1-a (any zone with the GPU; europe-west4-a and
+#                   asia-southeast1-c are where GPU quota has been granted before)
+#   AR_LOCATION     Artifact Registry region holding the image (default us-central1,
+#                   independent of ZONE: a host elsewhere pulls cross-region)
 #   MACHINE_TYPE    a2-ultragpu-1g (1x A100-80GB) or a3-highgpu-1g (1x H100-80GB)
 #   PROVISIONING    STANDARD (default) or SPOT
 #   IMAGE_URI       worker image (default: the :latest tag in Artifact Registry)
@@ -36,7 +39,8 @@ SA_EMAIL="${SA_NAME}@${PROJECT}.iam.gserviceaccount.com"
 SECRET="longcat-video-avatar-key"
 WEIGHTS_BUCKET="three-ws-model-weights"
 OUTPUT_BUCKET="three-ws-avatar-reconstructions"
-IMAGE_URI="${IMAGE_URI:-${REGION}-docker.pkg.dev/${PROJECT}/longcat-video-avatar/server:latest}"
+AR_LOCATION="${AR_LOCATION:-us-central1}"
+IMAGE_URI="${IMAGE_URI:-${AR_LOCATION}-docker.pkg.dev/${PROJECT}/longcat-video-avatar/server:latest}"
 IDLE_MINUTES="${IDLE_MINUTES:-20}"
 GRACE_MINUTES="${GRACE_MINUTES:-15}"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -80,7 +84,7 @@ gc storage buckets add-iam-policy-binding "gs://${WEIGHTS_BUCKET}" --member "ser
 	--role roles/storage.objectViewer >/dev/null
 gc storage buckets add-iam-policy-binding "gs://${OUTPUT_BUCKET}" --member "serviceAccount:${SA_EMAIL}" \
 	--role roles/storage.objectAdmin >/dev/null
-gc artifacts repositories add-iam-policy-binding longcat-video-avatar --location "${REGION}" \
+gc artifacts repositories add-iam-policy-binding longcat-video-avatar --location "${AR_LOCATION}" \
 	--member "serviceAccount:${SA_EMAIL}" --role roles/artifactregistry.reader >/dev/null
 gc projects add-iam-policy-binding "${PROJECT}" --member "serviceAccount:${SA_EMAIL}" \
 	--role roles/datastore.user --condition=None >/dev/null

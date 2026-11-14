@@ -9,9 +9,10 @@ import { join } from 'node:path';
 
 const payForConsumption = vi.fn();
 vi.mock('../src/forge-pay.js', () => ({ payForConsumption: (...a) => payForConsumption(...a) }));
+let tierPass = async () => null;
 vi.mock('../src/three-access.js', () => ({
 	attachTierPass: (h) => h,
-	getTierPass: async () => null,
+	getTierPass: (...a) => tierPass(...a),
 }));
 
 const { releaseDownload } = await import('../src/forge-keep.js');
@@ -28,9 +29,11 @@ describe('releaseDownload (pay-to-keep gate for a creation download)', () => {
 	beforeEach(() => {
 		calls = [];
 		payForConsumption.mockReset();
+		tierPass = async () => null;
 	});
 	afterEach(() => {
 		vi.unstubAllGlobals();
+		vi.useRealTimers();
 	});
 
 	function stubFetch(...replies) {
@@ -74,6 +77,17 @@ describe('releaseDownload (pay-to-keep gate for a creation download)', () => {
 		const r = await releaseDownload({ creationId: CREATION, url: URL_GLB, filename: 'a.glb', save });
 		expect(r).toEqual({ ok: true });
 		expect(calls[1].body).toEqual({ creation_id: CREATION, payment_id: 'pay_1', ref_id: 'forge-keep-1' });
+		expect(save).toHaveBeenCalledOnce();
+	});
+
+	it('does not wait forever on a tier-pass mint that never answers', async () => {
+		vi.useFakeTimers();
+		tierPass = () => new Promise(() => {});
+		stubFetch(reply(200, { enabled: false, kept: true, reason: 'pay_to_keep_off' }));
+		const save = vi.fn();
+		const pending = releaseDownload({ creationId: CREATION, url: URL_GLB, filename: 'a.glb', save });
+		await vi.advanceTimersByTimeAsync(10_000);
+		await expect(pending).resolves.toEqual({ ok: true });
 		expect(save).toHaveBeenCalledOnce();
 	});
 

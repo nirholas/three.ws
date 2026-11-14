@@ -81,6 +81,108 @@ def standalone_vertices(glb_vertices: np.ndarray, scale: Sequence[float] | float
     return out
 
 
+def object_up_gltf(quat_wxyz: Sequence[float]) -> np.ndarray:
+    """Unit up vector of a posed object in the glTF scene frame.
+
+    An object's canonical up is decoder +Z (upstream's ``to_glb`` turns it into
+    GLB +Y). Its pose rotation carries that axis into the camera frame, and the
+    camera-to-glTF flip finishes the job.
+    """
+    up_cam = quat_wxyz_to_matrix(quat_wxyz) @ np.array([0.0, 0.0, 1.0])
+    up = _CAMERA_TO_GLTF @ up_cam
+    return up / np.linalg.norm(up)
+
+
+def rotation_between(a: Sequence[float], b: Sequence[float]) -> np.ndarray:
+    """Proper rotation matrix that turns direction ``a`` onto direction ``b``."""
+    a = np.asarray(a, dtype=np.float64)
+    b = np.asarray(b, dtype=np.float64)
+    a = a / np.linalg.norm(a)
+    b = b / np.linalg.norm(b)
+    c = float(a @ b)
+    if c < -1.0 + 1e-9:
+        # Opposite directions: a half turn about any axis perpendicular to a.
+        helper = np.array([1.0, 0.0, 0.0]) if abs(a[0]) < 0.9 else np.array([0.0, 1.0, 0.0])
+        axis = np.cross(a, helper)
+        axis /= np.linalg.norm(axis)
+        return 2.0 * np.outer(axis, axis) - np.eye(3)
+    v = np.cross(a, b)
+    vx = np.array([[0.0, -v[2], v[1]], [v[2], 0.0, -v[0]], [-v[1], v[0], 0.0]])
+    return np.eye(3) + vx + (vx @ vx) / (1.0 + c)
+
+
+def _angle_deg(a: np.ndarray, b: np.ndarray) -> float:
+    return float(np.degrees(np.arccos(np.clip(float(a @ b), -1.0, 1.0))))
+
+
+def consensus_up(ups: Sequence[Sequence[float]], weights: Sequence[float], agree_deg: float = 25.0) -> np.ndarray | None:
+    """The scene's gravity-up direction, voted on by the objects in it.
+
+    Most things in a photo stand upright, so most objects' up vectors agree on
+    where gravity points. Each object nominates its own up; the nominee backed
+    by a strict majority of OBJECTS (within ``agree_deg``) wins, and its backers
+    are averaged by ``weights`` (face count, so a detailed object counts more
+    than a sliver). Counting objects rather than weight keeps one large fallen
+    object from outvoting three upright ones. No majority means no consensus.
+    """
+    if len(ups) == 0:
+        return None
+    units = [np.asarray(u, dtype=np.float64) / np.linalg.norm(u) for u in ups]
+    w = [max(float(x), 1e-9) for x in weights]
+    best: list[int] = []
+    best_weight = -1.0
+    for cand in units:
+        backers = [j for j, u in enumerate(units) if _angle_deg(cand, u) <= agree_deg]
+        backing = sum(w[j] for j in backers)
+        if len(backers) > len(best) or (len(backers) == len(best) and backing > best_weight):
+            best, best_weight = backers, backing
+    if len(best) * 2 <= len(units):
+        return None
+    mean = sum(w[j] * units[j] for j in best)
+    return mean / np.linalg.norm(mean)
+
+
+def level_scene(
+    posed: Sequence[np.ndarray],
+    quats_wxyz: Sequence[Sequence[float]],
+    weights: Sequence[float],
+    max_tilt_deg: float = 60.0,
+) -> tuple[list[np.ndarray], dict]:
+    """Stand the scene up straight and put it on the floor.
+
+    The posed scene is in the photo's camera frame, so a photo taken looking
+    down at a desk tips every object by the camera's pitch, and in AR each
+    object would lean. This rotates the objects' consensus up onto +Y, then
+    grounds the whole scene at y = 0 and centres it on X and Z, so relative
+    layout (a mug on its table) is kept exactly.
+
+    The rotation is skipped, and only the grounding applied, when the objects
+    agree on no up direction or when that direction is more than
+    ``max_tilt_deg`` from the camera's up. A photo is almost never taken more
+    steeply than that, so a larger answer means the up estimate is not to be
+    trusted, and leaving the scene as the model laid it out is the safe choice.
+    """
+    ups = [object_up_gltf(q) for q in quats_wxyz]
+    up = consensus_up(ups, weights)
+    world_up = np.array([0.0, 1.0, 0.0])
+    tilt = _angle_deg(up, world_up) if up is not None else None
+    applied = up is not None and tilt <= max_tilt_deg
+    out = [np.asarray(v, dtype=np.float64) for v in posed]
+    if applied:
+        r = rotation_between(up, world_up)
+        out = [v @ r.T for v in out]
+    allv = np.vstack(out)
+    lo, hi = allv.min(axis=0), allv.max(axis=0)
+    shift = np.array([-(lo[0] + hi[0]) / 2.0, -lo[1], -(lo[2] + hi[2]) / 2.0])
+    out = [v + shift for v in out]
+    info = {
+        "applied": bool(applied),
+        "tilt_deg": round(tilt, 2) if tilt is not None else None,
+        "up": _round(up) if up is not None else None,
+    }
+    return out, info
+
+
 def box_to_pixels(box: Sequence[float], width: int, height: int) -> tuple[int, int, int, int]:
     """Normalized [x0, y0, x1, y1] to an integer pixel rectangle inside the image."""
     x0, y0, x1, y1 = box
