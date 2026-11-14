@@ -30,7 +30,7 @@ every piece below:
    replied, and posts nothing. Replies are written to `x_mention_events` and
    counted against every rate limit and budget exactly as a live reply would,
    so dry run behaves exactly as live will and the numbers are honest before
-   going live.
+   going live. See "Going live" below for exactly what the flag turns on.
 4. **Reply only when addressed**, one reply per mention, never to our own
    replies.
 5. **`$THREE` is the only coin this bot promotes or recommends.**
@@ -310,14 +310,16 @@ wait is recorded as `pending`. Every `x-mentions` tick then runs
   the `deliver` the finishers use on `createXAdapter`. A dry row
   (`dry_run = true`, the default) is only recorded on the `x_mention_events`
   row and nothing is posted. A live row is posted by the adapter only when
-  `X_MENTION_BOT_LIVE=1` and a token resolver is supplied
-  (`getAccessToken(row)`); each real post counts against the post budget.
-  With no resolver the adapter stays in dry run, so rows are no longer held
-  as `paused` for lack of a deliver.
+  `X_MENTION_BOT_LIVE=1` and a way to post is supplied for the row's
+  account: a token resolver for an agent row (`getAccessToken(row)`) or the
+  company sender for a company row (`getSender(row)`, see "Going live");
+  each real post counts against the post budget. With neither the adapter
+  stays in dry run, so rows are never held as `paused` for lack of a deliver.
 
-The `image3d` intent is routed to `handleImage3d()` in `handleMention` (dry
-run, same budget and per-author limits as any reply); only `make` still
-answers with help (`handler_not_built`).
+`make`, `avatar` and `image3d` mentions are each routed to their handler in
+`handleMention` (`handleMake()` in `api/_lib/x-mention-make.js`,
+`handleAvatar()`, `handleImage3d()`), with the same budget and per-author
+limits as any reply. A `make` mention gets a 3D model, never the help text.
 
 ## Launch by mention
 
@@ -485,15 +487,51 @@ through [`api/_lib/x-agent-mentions.js`](../api/_lib/x-agent-mentions.js):
 
 Tests: [`tests/x-agent-mentions.test.js`](../tests/x-agent-mentions.test.js).
 
+## Going live
+
+`X_MENTION_BOT_LIVE=1` on the Cloud Run service is the one switch. With it
+set:
+
+- **The company account (@trythreews) posts.** `handleMention` resolves the
+  company sender (`companySender()` in
+  [`api/_lib/x-company-sender.js`](../api/_lib/x-company-sender.js), the same
+  OAuth 1.0a client the `/x/ops` manual send and the content publisher use,
+  from `X_API_KEY`, `X_API_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_SECRET`). A
+  mention is recorded `dry_run = false` and answered live only when that
+  sender exists; with any of the four credentials missing it stays in dry run
+  even with the flag on. Late replies resolve the sender again per row.
+- **Agents post only when their own toggle is off too.** An agent account
+  needs `mention_replies_dry_run` off as well (see "Agent mode").
+- **Only mentions recorded after the flip are answered live.** Rows recorded
+  in dry run keep `dry_run = true`; they are never posted retroactively
+  (an operator can still send one by hand from `/x/ops`).
+
+`X_MENTION_COMPANY_INTENTS` limits which intents the company account answers,
+as a comma separated list (for example `make,help` for a narrow launch). A
+mention whose intent is not on the list is recorded `skip` /
+`intent_not_allowed:<intent>` and gets no reply. Unset or empty means every
+intent. Agent accounts use their own `mention_replies_allowed_intents` setting instead.
+
+Rollback is `X_MENTION_BOT_PAUSED=1` (or the `x_mention_bot_paused` app
+setting from `/x/ops`): the tick stops before reading anything. The owner
+runbook with the exact commands, the X cost ceiling and the account label
+steps is [docs/ops/x-mention-go-live.md](ops/x-mention-go-live.md).
+
+Tests: the `going live (order 928)` block in
+[`tests/x-mention-poll.test.js`](../tests/x-mention-poll.test.js) and the
+company sender block in
+[`tests/x-gateway-adapter.test.js`](../tests/x-gateway-adapter.test.js).
+
 ## What is not wired yet
 
 Documented plainly rather than papered over, since this file is the single
 source of truth for everything in this subsystem:
 
-- **The bot is not live.** Every piece above, including the poll cron, the
-  automatic guard, the budget ladder, the on-behalf-of handling, and the
-  follow-up finishers, runs end to end in dry run. Nothing posts to X until
-  the owner sets `X_MENTION_BOT_LIVE=1` (owner order 928).
+- **The bot is not live yet.** Every piece above, including the poll cron,
+  the automatic guard, the budget ladder, the on-behalf-of handling, and the
+  follow-up finishers, runs end to end in dry run, and the live path is
+  built and tested. Nothing posts to X until the owner sets
+  `X_MENTION_BOT_LIVE=1` (owner order 928, "Going live" above).
 - **The Account Activity webhook needs an X tier we do not hold.** The
   handler exists and is tested, but subscribing needs an Enterprise or
   Pay-Per-Use tier; it stays disabled (`X_WEBHOOK_ENABLED` unset) until owner

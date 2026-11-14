@@ -37,6 +37,7 @@ const store = await import('../api/_lib/x-mention-store.js');
 const { normalizeMentions } = await import('../api/_lib/x-mentions.js');
 const { parseMentionIntent } = await import('../api/_lib/x-mention-intents.js');
 const { weightedLength } = await import('../api/_lib/x-text-weight.js');
+const { senderFromClient } = await import('../api/_lib/x-company-sender.js');
 
 const MIG = new URL('../api/_lib/migrations/', import.meta.url);
 const MIGRATION = readFileSync(new URL('20261008170000_x_mention_events.sql', MIG), 'utf8');
@@ -170,5 +171,47 @@ describe('live mode request shape', () => {
 		await liveAdapter().sendText(MENTION.id, 'first');
 		await expect(liveAdapter().sendText(MENTION.id, 'second')).rejects.toMatchObject({ code: 'already_replied' });
 		expect(httpCalls).toHaveLength(1);
+	});
+});
+
+describe('the company sender (order 928)', () => {
+	// A twitter-api-v2 client double that records the calls the real client gets.
+	const clientFixture = () => {
+		const calls = [];
+		return {
+			calls,
+			tweet: async (payload) => { calls.push(['tweet', payload]); return { data: { id: `${9100 + calls.length}` } }; },
+			uploadMedia: async (buffer, opts) => { calls.push(['upload', buffer.toString(), opts]); return 'cm-1'; },
+		};
+	};
+	const senderAdapter = (client, extra = {}) => createXAdapter({ mention: MENTION, parsed, env: LIVE_ENV, policyDryRun: false, sender: senderFromClient(client), ...extra });
+
+	it('turns the adapter live with a sender and no token resolver', () => {
+		expect(senderAdapter(clientFixture()).live).toBe(true);
+		expect(createXAdapter({ mention: MENTION, parsed, env: {}, policyDryRun: false, sender: senderFromClient(clientFixture()) }).live).toBe(false);
+		expect(createXAdapter({ mention: MENTION, parsed, env: LIVE_ENV, policyDryRun: false, sender: { post: async () => '1' } }).live).toBe(false);
+	});
+	it('replies to the mention through the sender and records the post id', async () => {
+		const client = clientFixture();
+		const out = await senderAdapter(client).sendText(MENTION.id, 'Hello from three.ws');
+		expect(out).toMatchObject({ dry_run: false, ref: { messageId: '9101' } });
+		expect(client.calls).toEqual([['tweet', { text: 'Hello from three.ws', reply: { in_reply_to_tweet_id: MENTION.id } }]]);
+		expect(httpCalls).toHaveLength(0);
+		const row = await store.getMentionEvent(MENTION.id);
+		expect(row).toMatchObject({ reply_tweet_id: '9101', dry_run: false });
+	});
+	it('uploads media with the right category, then replies with the media id', async () => {
+		const client = clientFixture();
+		const fetchMedia = async () => ({ buffer: Buffer.from('png-bytes'), mimeType: 'image/png' });
+		await senderAdapter(client, { fetchMedia }).sendMedia(MENTION.id, { url: 'https://three.ws/api/render/x.png', caption: 'Your render' });
+		expect(client.calls).toEqual([
+			['upload', 'png-bytes', { media_type: 'image/png', media_category: 'tweet_image' }],
+			['tweet', { text: 'Your render', reply: { in_reply_to_tweet_id: MENTION.id }, media: { media_ids: ['cm-1'] } }],
+		]);
+	});
+	it('never calls the sender in dry run', async () => {
+		const client = clientFixture();
+		await createXAdapter({ mention: MENTION, parsed, env: {}, policyDryRun: false, sender: senderFromClient(client) }).sendText(MENTION.id, 'hi');
+		expect(client.calls).toEqual([]);
 	});
 });

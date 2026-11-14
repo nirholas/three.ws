@@ -130,6 +130,26 @@ describe('on-behalf-of mapping', () => {
 		expect(weightedLength(row.reply_text)).toBeLessThanOrEqual(280);
 	});
 
+	it('posts the on-behalf reply live through the company sender once X_MENTION_BOT_LIVE=1 (order 928)', async () => {
+		const m = botMention();
+		const h = harness();
+		const sender = { post: vi.fn(async () => '2910000000000000101'), uploadMedia: vi.fn(async () => 'media-1') };
+		const env = { X_MENTION_BOT_LIVE: '1' };
+		const out = await poll.handleMention({
+			mention: m, account: ACCOUNT, limits: poll.replyLimits(env), env,
+			adapterFactory: (o) => realAdapter(o),
+			companySender: async () => sender,
+			request: async () => null,
+			onBehalf: (o) => onBehalf.answerOnBehalf({ ...o, generate: h.generate, lookup: h.lookup }),
+			compose: vi.fn(),
+		});
+		expect(out).toMatchObject({ decision: 'reply', on_behalf_of: HUMAN.id, dry_run: false });
+		expect(sender.post).toHaveBeenCalledTimes(1);
+		expect(sender.post.mock.calls[0][0]).toMatchObject({ replyTo: m.id });
+		const row = await store.getMentionEvent(m.id);
+		expect(row).toMatchObject({ dry_run: false, reply_tweet_id: '2910000000000000101' });
+	});
+
 	it('looks the root post up when the bot replied deeper in the thread', async () => {
 		const m = botMention({ repliedTo: { id: '1790000000000000009', available: true, text: 'x', author: { id: '1700000000000000099', username: 'fixture_amy' }, media: [], conversationId: ROOT_ID } });
 		const request = vi.fn();
