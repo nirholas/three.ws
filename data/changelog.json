@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-14",
+			"title": "Community skills now lists 60 external skills from four open-source repositories",
+			"summary": "The community skills page and API now include a separate External skills section with 60 skills from obra/superpowers (MIT), huggingface/skills, cloudflare/skills and getsentry/skills (all Apache-2.0). Each source is pinned to one commit, so what you read cannot change underneath you, and every card shows its source repository, commit and license. External skills are not reviewed by three.ws and are never turned on for an agent automatically: you read one, then install it through the usual scan and approval step, or with `three-ws skills import`. Skills that break the registry rules (a description over 400 characters, a body over 12,000) are left out, with the reason listed in the API response.",
+			"tags": [
+				"feature"
+			],
+			"link": "/skills/community"
+		},
+		{
+			"date": "2026-11-14",
 			"title": "The TRELLIS NGC container ships its full license bundle",
 			"summary": "The three.ws TRELLIS image-to-3D container now carries a complete third-party license bundle at /licenses inside the image, generated at build time from what is really installed: every Python package, every component built from source with its pinned commit, the one baked DINOv2 checkpoint, every Ubuntu package and the CUDA base license. The NVIDIA NGC Container EULA now names the two bundled CUDA extensions that are licensed for non-commercial research and evaluation only (nvdiffrast and diff-gaussian-rasterization), and an unused research-only renderer was removed from the image. The build fails if any license text goes missing.",
 			"tags": [

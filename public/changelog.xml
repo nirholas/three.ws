@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Vercel AI SDK tools</title>
+			<link>https://three.ws/docs/ai-sdk</link>
+			<guid isPermaLink="false">2026-11-14:Docs · Vercel AI SDK tools</guid>
+			<pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>@three-ws/ai-sdk: forge, rig, render and animate 3D models and chat with a three.ws agent from any Vercel AI SDK agent loop. Four of the five tools are free with no key.</description>
+		</item>
+		<item>
 			<title>A launch mention with a missing ticker now explains how to launch</title>
 			<link>https://three.ws/launch</link>
 			<guid isPermaLink="false">2026-11-14:A launch mention with a missing ticker now explains how to launch</guid>
@@ -21,6 +29,14 @@
 			<pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Groq retired its Llama 3.3 70B and Llama 3.1 8B models, and every place three.ws still asked for them got an error back: agents whose brain was set to one, the second step of the embed brain's fallback chain, the Groq lane of skills and widgets, and the Groq option in the avatar chat, editor, /start and dashboard model pickers. Those settings now run on Groq's live Qwen3 27B, the embed fallback chain steps through Groq Qwen and NVIDIA Nemotron 3 Ultra before any paid model, and the pickers offer models that actually answer. The dashboard Brain tab also labels every model correctly, and its live test now works for the Claude and Nemotron options, which used to fail with an unknown provider error.</description>
+		</item>
+		<item>
+			<title>Community skills now lists 60 external skills from four open-source repositories</title>
+			<link>https://three.ws/skills/community</link>
+			<guid isPermaLink="false">2026-11-14:Community skills now lists 60 external skills from four open-source repositories</guid>
+			<pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The community skills page and API now include a separate External skills section with 60 skills from obra/superpowers (MIT), huggingface/skills, cloudflare/skills and getsentry/skills (all Apache-2.0). Each source is pinned to one commit, so what you read cannot change underneath you, and every card shows its source repository, commit and license. External skills are not reviewed by three.ws and are never turned on for an agent automatically: you read one, then install it through the usual scan and approval step, or with `three-ws skills import`. Skills that break the registry rules (a description over 400 characters, a body over 12,000) are left out, with the reason listed in the API response.</description>
 		</item>
 		<item>
 			<title>Memory seeding writes your seed instead of failing when some AI providers hang</title>
