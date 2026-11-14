@@ -79,7 +79,7 @@ function resolveTier(input) {
 	return tier;
 }
 
-function resolveLock(input) {
+function resolveLock(input, nowSec) {
 	const mode = LOCK_MODES.find((m) => m.id === (input.lock?.mode ?? 'none'));
 	if (!mode) throw new PairedMarketError(`The lock must be one of ${LOCK_MODES.map((m) => m.id).join(', ')}.`);
 	let unlockAt = 0n;
@@ -88,7 +88,7 @@ function resolveLock(input) {
 		if (!Number.isFinite(days) || days < MIN_LOCK_DAYS || days > MAX_LOCK_DAYS) {
 			throw new PairedMarketError(`A timelock needs unlock_days between ${MIN_LOCK_DAYS} and ${MAX_LOCK_DAYS}.`);
 		}
-		unlockAt = timelockUnlockAt(days, Math.floor(Date.now() / 1000));
+		unlockAt = timelockUnlockAt(days, nowSec);
 	}
 	return { ...mode, unlockAt };
 }
@@ -126,8 +126,11 @@ async function prepare(agent, input) {
 	const config = await uniswapLaneConfig();
 	if (!config.available) throw new EvmLegError('lane_unavailable', config.unavailable_reason, 503);
 
+	// The lock end and the deadline share one clock reading: the lock end is
+	// clamped to what the contract accepts in any block before that deadline.
+	const nowSec = Math.floor(Date.now() / 1000);
 	const tier = resolveTier(input);
-	const lock = resolveLock(input);
+	const lock = resolveLock(input, nowSec);
 	const marketCapEth = Number(input.start_market_cap_eth ?? DEFAULT_START_MARKET_CAP_ETH);
 	if (!Number.isFinite(marketCapEth) || marketCapEth < MIN_START_MARKET_CAP_ETH || marketCapEth > MAX_START_MARKET_CAP_ETH) {
 		throw new PairedMarketError(`The starting market cap must be between ${MIN_START_MARKET_CAP_ETH} and ${MAX_START_MARKET_CAP_ETH} ETH.`);
@@ -152,7 +155,7 @@ async function prepare(agent, input) {
 		unlockAt: lock.unlockAt,
 		metadataHash: descriptor.hash,
 		metadataURI: descriptor.url,
-		deadline: BigInt(Math.floor(Date.now() / 1000) + LAUNCH_DEADLINE_SECONDS),
+		deadline: BigInt(nowSec + LAUNCH_DEADLINE_SECONDS),
 	};
 	const data = encodeFunctionData({ abi: launcherAbi, functionName: 'launch', args: [params] });
 

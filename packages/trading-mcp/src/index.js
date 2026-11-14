@@ -37,7 +37,8 @@ export function buildServer() {
 			capabilities: { tools: {} },
 			instructions:
 				'three.ws Trading MCP: guarded Solana swaps from an agent wallet. Flow: list_positions to see ' +
-				'holdings, quote_trade to price a buy (amountSol) or sell (tokenAmountRaw), show the owner the side, ' +
+				'holdings, quote_trade to price a buy (amountSol) or sell (amountTokens: "all" or a token amount; ' +
+				'tokenAmountRaw for exact base units), show the owner the side, ' +
 				'mint, size, minimum received and guard verdict, and only after an explicit yes call execute_trade ' +
 				'with confirm:true and a stable idempotencyKey. execute_trade moves REAL funds on Solana mainnet and ' +
 				'cannot be undone. Per-trade cap, daily budget, price-impact breaker, rug firewall and kill switch ' +
