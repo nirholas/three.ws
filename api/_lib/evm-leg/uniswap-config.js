@@ -32,6 +32,13 @@ export const LOCK_MODES = Object.freeze([
 
 export const MIN_LOCK_DAYS = 1;
 export const MAX_LOCK_DAYS = 3650;
+const DAY_SECONDS = 86_400;
+
+/**
+ * A launch carries a deadline so a transaction stuck in a mempool cannot land
+ * long after the owner approved it. The contract rejects any block past it.
+ */
+export const LAUNCH_DEADLINE_SECONDS = 600;
 
 /** Market cap bounds, in ETH, at the first block (price times the whole supply). */
 export const MIN_START_MARKET_CAP_ETH = 0.01;
@@ -112,6 +119,25 @@ export function startTickFor(marketCapEth, tickSpacing) {
 	const price = marketCapEth / Number(TOTAL_SUPPLY_WHOLE);
 	const raw = Math.log(price) / Math.log(1.0001);
 	return Math.round(raw / tickSpacing) * tickSpacing;
+}
+
+/** How far a block timestamp may trail the server clock that built the launch. */
+const BLOCK_CLOCK_SKEW_SECONDS = 60;
+
+/**
+ * Unix second a timelock of `days` ends, for a launch built at `nowSec`.
+ *
+ * The launcher checks the lock against the block it mines in
+ * (block.timestamp + 1 day <= unlockAt <= block.timestamp + 3650 days), and
+ * that block can land any time up to the deadline. The requested end is
+ * clamped into the window every such block accepts, so the 1 day minimum ends
+ * a few minutes past 24 hours and the 10 year maximum a minute short of it.
+ */
+export function timelockUnlockAt(days, nowSec) {
+	const requested = nowSec + Math.round(days * DAY_SECONDS);
+	const earliest = nowSec + LAUNCH_DEADLINE_SECONDS + MIN_LOCK_DAYS * DAY_SECONDS;
+	const latest = nowSec - BLOCK_CLOCK_SKEW_SECONDS + MAX_LOCK_DAYS * DAY_SECONDS;
+	return BigInt(Math.min(Math.max(requested, earliest), latest));
 }
 
 /** The market cap in ETH a tick actually gives, for quoting the rounded value. */

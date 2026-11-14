@@ -456,3 +456,32 @@ export async function ensureDraftPlan({ agent, imageUrl = null }) {
 		return { created: false, row: null };
 	}
 }
+
+/**
+ * Put a newly created agent on the coin path: make sure it holds a custodial
+ * Solana wallet that can sign the launch, then draft its coin plan. Every
+ * agent-creation surface calls this, so the agent home leads with the coin no
+ * matter where the agent was born. Idempotent and never throws: a wallet that
+ * cannot be minted now is minted lazily on first use, and the draft is still
+ * written so the owner sees the plan. An agent that already launched a coin
+ * gets no draft.
+ *
+ * @param {{ agent: { id: string, user_id: string, name?: string, meta?: object|null }, imageUrl?: string|null }} o
+ * @returns {Promise<{ wallet: string|null, plan: { created: boolean, row: object|null } }>}
+ */
+export async function ensureAgentLaunchPath({ agent, imageUrl = null }) {
+	const none = { created: false, row: null };
+	if (!agent?.id || !agent?.user_id) return { wallet: null, plan: none };
+	let wallet = agent.meta?.solana_address || null;
+	if (!wallet) {
+		try {
+			const { getOrCreateAgentSolanaWallet } = await import('./agent-wallet.js');
+			wallet = (await getOrCreateAgentSolanaWallet(agent.id))?.address || null;
+		} catch (err) {
+			console.warn('[agent-token-plan] solana wallet provisioning deferred:', err?.message);
+		}
+	}
+	if (agent.meta?.token) return { wallet, plan: none };
+	const plan = await ensureDraftPlan({ agent, imageUrl });
+	return { wallet, plan };
+}

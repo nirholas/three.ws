@@ -7,8 +7,8 @@
 // stay with the caller.
 
 import { sql } from './db.js';
-import { generateAgentWallet, generateSolanaAgentWallet, getOrCreateAgentSolanaWallet } from './agent-wallet.js';
-import { ensureDraftPlan } from './agent-token-plan.js';
+import { generateAgentWallet, generateSolanaAgentWallet } from './agent-wallet.js';
+import { ensureAgentLaunchPath } from './agent-token-plan.js';
 import { checkIdentityIntegrity } from './identity-integrity.js';
 import { announceIndexNow } from './indexnow-queue.js';
 import { isIndexableAgent } from './indexable-entity.js';
@@ -127,14 +127,7 @@ export async function createAgentIdentity({
 	// Make the coin the default next step: make sure the agent can sign a launch
 	// (a mint that failed above is retried now) and draft its coin plan. Neither
 	// may fail creation; both self-heal on later use.
-	if (!agent.meta?.solana_address) {
-		try {
-			await getOrCreateAgentSolanaWallet(agent.id);
-		} catch (err) {
-			console.warn('[agents] solana wallet provisioning deferred:', err?.message);
-		}
-	}
-	await ensureDraftPlan({ agent });
+	await ensureAgentLaunchPath({ agent });
 
 	// Queue the new agent's URL for IndexNow so Bing and Copilot discover it
 	// within minutes instead of at the next crawl. Only a public agent with its

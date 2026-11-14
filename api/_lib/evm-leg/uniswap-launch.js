@@ -33,9 +33,9 @@ import {
 } from './paired-launch.js';
 import { PairedMarketError } from '../paired-markets.js';
 import {
-	DEFAULT_FEE_TIER, DEFAULT_START_MARKET_CAP_ETH, FEE_TIERS, LOCK_MODES, MAX_LOCK_DAYS, MAX_START_MARKET_CAP_ETH, MIN_LOCK_DAYS,
-	MIN_START_MARKET_CAP_ETH, TOTAL_SUPPLY_WHOLE, UNISWAP_CHAIN as CHAIN, UNISWAP_VENUE, launchedEvent, launcherAbi, marketCapEthAt,
-	startTickFor, uniswapLaneConfig,
+	DEFAULT_FEE_TIER, DEFAULT_START_MARKET_CAP_ETH, FEE_TIERS, LAUNCH_DEADLINE_SECONDS, LOCK_MODES, MAX_LOCK_DAYS, MAX_START_MARKET_CAP_ETH,
+	MIN_LOCK_DAYS, MIN_START_MARKET_CAP_ETH, TOTAL_SUPPLY_WHOLE, UNISWAP_CHAIN as CHAIN, UNISWAP_VENUE, launchedEvent, launcherAbi,
+	marketCapEthAt, startTickFor, timelockUnlockAt, uniswapLaneConfig,
 } from './uniswap-config.js';
 
 export { UNISWAP_VENUE };
@@ -46,11 +46,7 @@ const LEDGER_CHAIN = { key: CHAIN.slug, name: CHAIN.name };
 // still say how much to fund. Measured on a Base fork at about 5.8M gas with
 // either lock mode; this carries headroom over that.
 const MEASURED_LAUNCH_GAS = 6_500_000n;
-// The launch carries a deadline so a transaction stuck in a mempool cannot land
-// long after the owner approved it.
-const DEADLINE_SECONDS = 600;
 const DESCRIPTOR_PREFIX = 'uniswap/meta';
-const DAY_SECONDS = 86_400;
 
 export { LIMITS };
 
@@ -92,7 +88,7 @@ function resolveLock(input) {
 		if (!Number.isFinite(days) || days < MIN_LOCK_DAYS || days > MAX_LOCK_DAYS) {
 			throw new PairedMarketError(`A timelock needs unlock_days between ${MIN_LOCK_DAYS} and ${MAX_LOCK_DAYS}.`);
 		}
-		unlockAt = BigInt(Math.floor(Date.now() / 1000) + Math.round(days * DAY_SECONDS));
+		unlockAt = timelockUnlockAt(days, Math.floor(Date.now() / 1000));
 	}
 	return { ...mode, unlockAt };
 }
@@ -156,7 +152,7 @@ async function prepare(agent, input) {
 		unlockAt: lock.unlockAt,
 		metadataHash: descriptor.hash,
 		metadataURI: descriptor.url,
-		deadline: BigInt(Math.floor(Date.now() / 1000) + DEADLINE_SECONDS),
+		deadline: BigInt(Math.floor(Date.now() / 1000) + LAUNCH_DEADLINE_SECONDS),
 	};
 	const data = encodeFunctionData({ abi: launcherAbi, functionName: 'launch', args: [params] });
 

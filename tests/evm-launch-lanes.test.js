@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { fingerprintOf, readIdempotencyKey, publicRecord } from '../api/_lib/evm-launch-records.js';
-import { startTickFor, marketCapEthAt, FEE_TIERS, LOCK_MODES } from '../api/_lib/evm-leg/uniswap-config.js';
+import {
+	startTickFor, marketCapEthAt, timelockUnlockAt, FEE_TIERS, LOCK_MODES, LAUNCH_DEADLINE_SECONDS, MIN_LOCK_DAYS, MAX_LOCK_DAYS,
+} from '../api/_lib/evm-leg/uniswap-config.js';
 import { lanesMarkdown, formatAmount } from '../api/_lib/launch-lanes.js';
 import { feeAmount, launchCostLine } from '../src/launch/lane-picker.js';
 
@@ -53,6 +55,28 @@ describe('start tick', () => {
 	});
 	it('offers none, timelock and permanent locks', () => {
 		expect(LOCK_MODES.map((m) => m.id)).toEqual(['none', 'timelock', 'permanent']);
+	});
+});
+
+describe('timelock unlock time', () => {
+	// ThreeWsUniswapLauncher._validate: block.timestamp + MIN_LOCK <= unlockAt <= block.timestamp + MAX_LOCK.
+	const DAY = 86_400;
+	const accepted = (unlockAt, ts) => unlockAt >= BigInt(ts + MIN_LOCK_DAYS * DAY) && unlockAt <= BigInt(ts + MAX_LOCK_DAYS * DAY);
+	// The launch mines at most LAUNCH_DEADLINE_SECONDS after it is built (the contract enforces the
+	// deadline), and a block timestamp can trail the server clock by up to a minute.
+	const blockTimes = (now) => [now - 60, now, now + 1, now + 2, now + LAUNCH_DEADLINE_SECONDS / 2, now + LAUNCH_DEADLINE_SECONDS];
+	const now = 1_790_000_000;
+
+	it('the minimum lock is accepted in any block before the deadline', () => {
+		const unlockAt = timelockUnlockAt(MIN_LOCK_DAYS, now);
+		for (const ts of blockTimes(now)) expect(accepted(unlockAt, ts), `block at now${ts - now >= 0 ? '+' : ''}${ts - now}s`).toBe(true);
+	});
+	it('the maximum lock is accepted in any block before the deadline', () => {
+		const unlockAt = timelockUnlockAt(MAX_LOCK_DAYS, now);
+		for (const ts of blockTimes(now)) expect(accepted(unlockAt, ts), `block at now${ts - now >= 0 ? '+' : ''}${ts - now}s`).toBe(true);
+	});
+	it('a lock in between ends on the day the owner picked', () => {
+		expect(Number(timelockUnlockAt(30, now)) - (now + 30 * DAY)).toBe(0);
 	});
 });
 

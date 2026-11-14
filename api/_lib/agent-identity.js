@@ -12,6 +12,7 @@
 
 import { sql } from './db.js';
 import { getOrCreateAgentSolanaWallet } from './agent-wallet.js';
+import { ensureAgentLaunchPath } from './agent-token-plan.js';
 
 /**
  * Resolve the agent identity for a launch/wallet action, creating one from the
@@ -20,7 +21,9 @@ import { getOrCreateAgentSolanaWallet } from './agent-wallet.js';
  * Resolution order:
  *   1. explicit agentId (scoped to the user)
  *   2. the user's agent identity already linked to this avatar
- *   3. a new identity created from the avatar's name/description
+ *   3. a new identity created from the avatar's name/description, put on the
+ *      coin path (custodial Solana wallet + auto-drafted plan) like every other
+ *      newly created agent
  *   4. on the per-user uniqueness constraint, an existing unlinked identity is
  *      linked to this avatar; failing that, the user's first identity
  *
@@ -55,9 +58,10 @@ export async function resolveOrCreateAgentForAvatar({ userId, agentId, avatarId 
 		const [created] = await sql`
 			insert into agent_identities (user_id, name, description, avatar_id)
 			values (${userId}, ${agentName}, ${agentDesc}, ${avatar.id})
-			returning id, name
+			returning id, user_id, name, description, meta
 		`;
-		return created;
+		await ensureAgentLaunchPath({ agent: created });
+		return { id: created.id, name: created.name };
 	} catch (err) {
 		if (err?.code !== '23505') throw err;
 		// Unique-per-user constraint: reuse the user's existing identity and
