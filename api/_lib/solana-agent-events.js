@@ -738,6 +738,12 @@ export async function sweepAgentEvents({
 			} catch (err) {
 				breaker.failure(err);
 				summary.failed += 1;
+				// A provider failure says nothing about this agent. Stamping it
+				// marks a healthy agent as erroring (252 rows, 12.4%, during the
+				// 2026-11-13 429 storm) and defers it a full dormant interval.
+				// Leave the cursor alone: it stays at the head of the queue and
+				// the breaker bounds what a dead fabric can cost per tick.
+				if (isTransientRpcError(err)) return;
 				await markAgentEventError({
 					agentRef: row.agent_ref,
 					network: row.network,

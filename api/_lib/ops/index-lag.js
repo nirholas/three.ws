@@ -92,6 +92,12 @@ function withTimeout(promise, ms) {
 /**
  * Read the freshness of every indexer leg.
  *
+ * The Solana aggregate counts only cursors whose agent is still in the sweep's
+ * candidate set (the same two sources nextAgentBatch draws from). A cursor whose
+ * agent was deactivated or deleted is never crawled again, so its age grows
+ * forever: on 2026-11-14 three such rows reported a 502-hour worst overdue and
+ * held the leg at `down` while every live agent was within schedule.
+ *
  * @returns {Promise<{
  *   solana: { medianLagMin: number|null, worstLagMin: number|null, overdueMin: number|null, agents: number,
  *             uncrawled: number, errored: number, events: number,
@@ -126,6 +132,16 @@ export async function readIndexLag() {
 					)), 0)::int AS overdue_min
 				FROM agent_event_cursor cur
 				WHERE cur.chain = 'solana'
+				  AND (
+					EXISTS (
+						SELECT 1 FROM solana_agents_index s
+						WHERE s.active = true AND coalesce(s.asset, s.ref) = cur.agent_ref
+					)
+					OR EXISTS (
+						SELECT 1 FROM agent_identities a
+						WHERE a.deleted_at IS NULL AND a.meta->>'sol_mint_address' = cur.agent_ref
+					)
+				  )
 			`,
 			QUERY_TIMEOUT_MS,
 		),
