@@ -172,6 +172,8 @@ export async function setAutopilotConfig(agentId, patch) {
 // ── Proposal validation (per kind) ────────────────────────────────────────────
 
 const SOLANA_ADDR_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+// How the owner and the generator name the promoted coin instead of its address.
+const THREE_ALIAS_RE = /^\$?three$/i;
 const ALERT_CONDITIONS = ['price_above', 'price_below', 'graduation', 'whale_buy'];
 
 // Map a high-level proposal into concrete, validated params + a pump_alert_rules
@@ -237,21 +239,25 @@ function validateWalletTransfer(params) {
 }
 
 /**
- * A discretionary swap from the agent wallet. Buys spend SOL; sells send token
- * base units. Buy-only $THREE: a sell of the promoted coin is refused here, at
- * the first boundary, and again in executeTrade.
+ * A discretionary swap from the agent wallet. Buys spend SOL; sells are sized
+ * in tokens (amount_tokens: "all" or an amount) or exact base units
+ * (token_amount_raw). The mint may be named "three" / "$THREE". Buy-only
+ * $THREE: a sell of the promoted coin is refused here, at the first boundary,
+ * and again in executeTrade. max_slippage_bps is accepted as slippage_bps.
  */
 function validateTrade(params) {
 	const bad = (reason, code = 'invalid_trade') => ({ ok: false, reason, code });
 	const side = params?.side === 'sell' ? 'sell' : params?.side === 'buy' ? 'buy' : null;
 	if (!side) return bad('side must be "buy" or "sell"');
-	const mint = typeof params?.mint === 'string' ? params.mint.trim() : '';
-	if (!SOLANA_ADDR_RE.test(mint)) return bad('mint must be a valid Solana address');
+	const named = typeof params?.mint === 'string' ? params.mint.trim() : '';
+	const mint = THREE_ALIAS_RE.test(named) ? THREE_CA : named;
+	if (!SOLANA_ADDR_RE.test(mint)) return bad('mint must be a valid Solana address (or "three" for $THREE)');
 	if (mint === WSOL_MINT_ADDR) return bad('wrapped SOL cannot be traded as a token');
 	if (side === 'sell' && mint === THREE_CA) {
 		return bad('the agent never sells $THREE: it only accumulates and burns it', 'three_sell_forbidden');
 	}
-	let slippage = params?.slippage_bps == null ? DEFAULT_TRADE_SLIPPAGE_BPS : Number(params.slippage_bps);
+	const bound = params?.slippage_bps ?? params?.max_slippage_bps;
+	const slippage = bound == null ? DEFAULT_TRADE_SLIPPAGE_BPS : Number(bound);
 	if (!Number.isInteger(slippage) || slippage < 1 || slippage > MAX_TRADE_SLIPPAGE_BPS) {
 		return bad(`slippage_bps must be a whole number from 1 to ${MAX_TRADE_SLIPPAGE_BPS}`);
 	}
@@ -261,11 +267,29 @@ function validateTrade(params) {
 		if (!Number.isFinite(amount) || amount <= 0) return bad('amount_sol must be > 0');
 		return { ok: true, params: { side, mint, amount_sol: amount, slippage_bps: slippage, reason } };
 	}
+
+	// A sell is sized either in base units (exact) or in tokens ("all" or a
+	// positive amount), which execution resolves against the live position.
 	const raw = params?.token_amount_raw;
-	if (raw == null || !/^\d{1,30}$/.test(String(raw)) || BigInt(String(raw)) <= 0n) {
-		return bad('token_amount_raw must be a positive base-unit integer');
+	const tokens = params?.amount_tokens;
+	if (raw != null && tokens != null) return bad('give either amount_tokens or token_amount_raw on a sell, not both');
+	if (tokens != null) {
+		const amountTokens = parseAmountTokens(tokens);
+		if (amountTokens == null) return bad('amount_tokens must be "all" or a positive token amount');
+		return { ok: true, params: { side, mint, token_amount_raw: null, amount_tokens: amountTokens, amount_sol: 0, slippage_bps: slippage, reason } };
 	}
-	return { ok: true, params: { side, mint, token_amount_raw: String(raw), amount_sol: 0, slippage_bps: slippage, reason } };
+	if (raw == null || !/^\d{1,30}$/.test(String(raw)) || BigInt(String(raw)) <= 0n) {
+		return bad('a sell needs amount_tokens ("all" or a token amount) or token_amount_raw (a positive base-unit integer)');
+	}
+	return { ok: true, params: { side, mint, token_amount_raw: String(raw), amount_tokens: null, amount_sol: 0, slippage_bps: slippage, reason } };
+}
+
+/** "all" (any case) or a positive finite token amount; null when neither. */
+function parseAmountTokens(value) {
+	if (typeof value === 'string' && value.trim().toLowerCase() === 'all') return 'all';
+	if (typeof value !== 'number' && !(typeof value === 'string' && /^\s*\d*\.?\d+\s*$/.test(value))) return null;
+	const n = Number(value);
+	return Number.isFinite(n) && n > 0 ? n : null;
 }
 
 /** Validate + normalize a proposal of a given kind. Returns { ok, kind, params, rule? } | { ok:false, reason }. */
@@ -310,9 +334,9 @@ const PROPOSAL_SYSTEM = [
 	'      { summary: string, cadence: "once"|"daily"|"weekly", topic: string }',
 	'  • "wallet_transfer" — send native SOL from the agent\'s own wallet. params:',
 	'      { recipient: "<solana address>", amount_sol: number, reason: string }',
-	'  • "trade"        , swap from the agent\'s own wallet. params:',
-	'      { side: "buy"|"sell", mint: "<solana address>", amount_sol: number (buy),',
-	'        token_amount_raw: "<base units>" (sell), slippage_bps?: 1-500, reason: string }',
+	'  • "trade"         : swap from the agent\'s own wallet. params:',
+	'      { side: "buy"|"sell", mint: "three" | "<solana address>", amount_sol: number (buy),',
+	'        amount_tokens: "all" | number (sell), slippage_bps?: 1-500, reason: string }',
 	'',
 	'RULES:',
 	'1. PROVENANCE IS MANDATORY. Every proposal must cite "source_memory_ids" using',
@@ -374,8 +398,9 @@ function parseProposalPayload(text) {
 }
 
 // Deterministic fallback when no LLM provider is configured (the platform must
-// degrade, never fake). Mines memories for two well-grounded patterns:
+// degrade, never fake). Mines memories for three well-grounded patterns:
 //   • interest in a $THREE price/market-cap level → a price alert
+//   • an explicit sized buy/sell in an intel or pump.fun memory → a trade
 //   • a stated routine ("every morning", "daily digest") → a daily briefing
 // Each proposal cites the exact memory it came from. Pure + synchronous.
 export function heuristicProposals(memories) {
@@ -399,20 +424,8 @@ export function heuristicProposals(memories) {
 				});
 			}
 		}
-		const buyMatch = String(m.content || '').match(/\bbuy\s+([\d.]+)\s*sol\s+(?:of\s+)?([1-9A-HJ-NP-Za-km-z]{32,44})\b/i);
-		if (buyMatch && ['intel', 'pumpfun', 'pump_fun', 'feedback', 'instruction'].some((t) => (Array.isArray(m.tags) ? m.tags : []).includes(t) || m.type === t)) {
-			const amount = Number(buyMatch[1]);
-			if (Number.isFinite(amount) && amount > 0) {
-				out.push({
-					kind: 'trade',
-					title: `Buy ${buyMatch[2] === THREE_CA ? '$THREE' : `${buyMatch[2].slice(0, 6)}…`} with ${amount} SOL`,
-					rationale: `A memory records your intent to buy ${amount} SOL of this mint. Nothing is traded until you confirm.`,
-					confidence: 0.5,
-					source_memory_ids: [m.id],
-					params: { side: 'buy', mint: buyMatch[2], amount_sol: amount, slippage_bps: 100, reason: 'memory-recorded buy intent' },
-				});
-			}
-		}
+		const trade = tradeIntent(m);
+		if (trade) out.push(trade);
 		if (/(every morning|each morning|daily|each day|every day|digest|briefing|catch me up)/.test(text)) {
 			out.push({
 				kind: 'briefing',
@@ -425,6 +438,55 @@ export function heuristicProposals(memories) {
 		}
 	}
 	return out;
+}
+
+const TRADE_INTENT_TAGS = ['intel', 'pumpfun', 'pump_fun', 'feedback', 'instruction'];
+const MINT_OR_THREE = '([1-9A-HJ-NP-Za-km-z]{32,44}|\\$?three)';
+const BUY_INTENT_RE = new RegExp(`\\bbuy\\s+([\\d.]+)\\s*sol\\s+(?:of\\s+)?${MINT_OR_THREE}(?![\\w$])`, 'i');
+const SELL_INTENT_RE = new RegExp(`\\bsell\\s+(all|[\\d,]*\\.?\\d+)\\s+(?:tokens?\\s+)?(?:of\\s+)?${MINT_OR_THREE}(?![\\w$])`, 'i');
+
+/**
+ * An explicit, sized buy or sell instruction in an intel / pump.fun / owner
+ * instruction memory, as a trade proposal citing that memory. Untagged
+ * memories never become trades, and a $THREE sell is never proposed.
+ */
+function tradeIntent(m) {
+	const tags = Array.isArray(m.tags) ? m.tags : [];
+	if (!TRADE_INTENT_TAGS.some((t) => tags.includes(t) || m.type === t)) return null;
+	const content = String(m.content || '');
+	const named = (mint) => (THREE_ALIAS_RE.test(mint) || mint === THREE_CA ? THREE_CA : mint);
+	const sym = (mint) => (mint === THREE_CA ? '$THREE' : `${mint.slice(0, 6)}…`);
+
+	const buy = content.match(BUY_INTENT_RE);
+	if (buy) {
+		const amount = Number(buy[1]);
+		if (!(Number.isFinite(amount) && amount > 0)) return null;
+		const mint = named(buy[2]);
+		return {
+			kind: 'trade',
+			title: `Buy ${sym(mint)} with ${amount} SOL`,
+			rationale: `A memory records your intent to buy ${amount} SOL of ${sym(mint)}. Nothing is traded until you confirm.`,
+			confidence: 0.5,
+			source_memory_ids: [m.id],
+			params: { side: 'buy', mint, amount_sol: amount, slippage_bps: DEFAULT_TRADE_SLIPPAGE_BPS, reason: 'memory-recorded buy intent' },
+		};
+	}
+
+	const sell = content.match(SELL_INTENT_RE);
+	if (!sell) return null;
+	const mint = named(sell[2]);
+	if (mint === THREE_CA) return null;
+	const amountTokens = parseAmountTokens(sell[1].replace(/,/g, ''));
+	if (amountTokens == null) return null;
+	const size = amountTokens === 'all' ? 'the whole position' : `${amountTokens.toLocaleString('en-US')} tokens`;
+	return {
+		kind: 'trade',
+		title: amountTokens === 'all' ? `Sell all ${sym(mint)} for SOL` : `Sell ${size} of ${sym(mint)} for SOL`,
+		rationale: `A memory records your intent to sell ${size} of ${sym(mint)}. Nothing is sold until you confirm.`,
+		confidence: 0.5,
+		source_memory_ids: [m.id],
+		params: { side: 'sell', mint, amount_tokens: amountTokens, slippage_bps: DEFAULT_TRADE_SLIPPAGE_BPS, reason: 'memory-recorded sell intent' },
+	};
 }
 
 // Map a reflection's proposed_action (Task 04) into one of our action kinds.
@@ -644,7 +706,8 @@ function defaultTitle(kind, v) {
 	if (kind === 'trade') {
 		const t = v.params;
 		const sym = t.mint === THREE_CA ? '$THREE' : `${t.mint.slice(0, 6)}…`;
-		return t.side === 'buy' ? `Buy ${sym} with ${t.amount_sol} SOL` : `Sell ${sym} for SOL`;
+		if (t.side === 'buy') return `Buy ${sym} with ${t.amount_sol} SOL`;
+		return t.amount_tokens === 'all' ? `Sell all ${sym} for SOL` : `Sell ${sellSizeLabel(t)} of ${sym} for SOL`;
 	}
 	return `Send ${v.params.amount_sol} SOL`;
 }
@@ -742,24 +805,76 @@ async function agentSolBalance(address) {
 }
 
 /**
- * Mints the wallet holds a non-zero balance of (SPL Token and Token-2022),
- * excluding $THREE, which the agent only ever accumulates. Live RPC read.
+ * Every token the wallet holds a non-zero balance of (SPL Token and
+ * Token-2022), as Map<mint, { raw: bigint, decimals }> summed across token
+ * accounts. Live RPC read.
  */
-async function agentOpenPositionMints(address) {
+async function agentTokenBalances(address) {
 	const { PublicKey } = await import('@solana/web3.js');
 	const { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } = await import('@solana/spl-token');
 	const { solanaConnection } = await import('./solana/connection.js');
 	const conn = solanaConnection({ url: process.env.SOLANA_RPC_URL || null, network: 'mainnet', commitment: 'confirmed' });
 	const owner = new PublicKey(address);
-	const mints = new Set();
+	const balances = new Map();
 	for (const programId of [TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID]) {
 		const resp = await conn.getParsedTokenAccountsByOwner(owner, { programId });
 		for (const { account } of resp.value) {
 			const info = account.data?.parsed?.info;
-			if (info?.mint && info.mint !== THREE_CA && BigInt(info.tokenAmount?.amount ?? '0') > 0n) mints.add(info.mint);
+			const raw = BigInt(info?.tokenAmount?.amount ?? '0');
+			if (!info?.mint || raw <= 0n) continue;
+			const prev = balances.get(info.mint);
+			balances.set(info.mint, { raw: (prev?.raw ?? 0n) + raw, decimals: Number(info.tokenAmount.decimals) || 0 });
 		}
 	}
-	return mints;
+	return balances;
+}
+
+/** Open positions: held mints excluding $THREE, which the agent only ever accumulates. */
+async function agentOpenPositionMints(address) {
+	const balances = await agentTokenBalances(address);
+	balances.delete(THREE_CA);
+	return new Set(balances.keys());
+}
+
+/** A decimal token amount in base units, truncated (never rounded up) to the mint decimals. */
+function tokensToRaw(amount, decimals) {
+	const text = amount.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 });
+	const [whole, frac = ''] = text.split('.');
+	return BigInt(whole + frac.slice(0, decimals).padEnd(decimals, '0'));
+}
+
+/**
+ * The exact base-unit size of a sell against the live position: "all" is the
+ * whole balance, a token amount converts with the mint decimals. Returns
+ * { raw, held } or { refusal: { code, message } }.
+ */
+function resolveSellSize(p, position) {
+	const sym = p.mint.slice(0, 6) + '…';
+	if (!position) return { refusal: { code: 'no_position', message: `The agent wallet holds none of ${sym}, so there is nothing to sell.` } };
+	let raw;
+	if (p.amount_tokens === 'all') raw = position.raw;
+	else if (p.amount_tokens != null) raw = tokensToRaw(p.amount_tokens, position.decimals);
+	else raw = BigInt(p.token_amount_raw);
+	if (raw <= 0n) return { refusal: { code: 'invalid_trade', message: `That amount is below the smallest unit of ${sym}.` } };
+	if (raw > position.raw) {
+		return { refusal: { code: 'insufficient_tokens', message: `The wallet holds ${formatRaw(position.raw, position.decimals)} of ${sym}, less than the ${formatRaw(raw, position.decimals)} this sell asks for.` } };
+	}
+	return { raw: raw.toString(), held: position };
+}
+
+/** Base units as a human token amount (exact, no float rounding). */
+function formatRaw(raw, decimals) {
+	const s = raw.toString().padStart(decimals + 1, '0');
+	const whole = s.slice(0, s.length - decimals);
+	const frac = decimals ? s.slice(-decimals).replace(/0+$/, '') : '';
+	return `${BigInt(whole).toLocaleString('en-US')}${frac ? `.${frac}` : ''}`;
+}
+
+/** How a sell is sized, for titles and previews. */
+function sellSizeLabel(t) {
+	if (t.amount_tokens === 'all') return 'the whole position';
+	if (t.amount_tokens != null) return `${t.amount_tokens.toLocaleString('en-US', { maximumFractionDigits: 9 })} tokens`;
+	return `${t.token_amount_raw} base units`;
 }
 
 /**
@@ -812,7 +927,7 @@ export async function dryRunProposal({ proposal, agent, config }) {
 			const sym = t.mint === THREE_CA ? '$THREE' : t.mint;
 			willDo = t.side === 'buy'
 				? `Buy ${sym} with ${t.amount_sol} SOL from the agent wallet at up to ${t.slippage_bps} bps slippage. IRREVERSIBLE. Always requires explicit confirmation. Every wallet guard still applies.`
-				: `Sell ${t.token_amount_raw} base units of ${sym} from the agent wallet for SOL at up to ${t.slippage_bps} bps slippage. IRREVERSIBLE. Always requires explicit confirmation.`;
+				: `Sell ${sellSizeLabel(t)} of ${sym} from the agent wallet for SOL at up to ${t.slippage_bps} bps slippage. IRREVERSIBLE. Always requires explicit confirmation.`;
 			const preview = await previewTrade({ proposal, agent, config, t, checks });
 			quote = preview;
 		}
@@ -872,10 +987,26 @@ async function previewTrade({ proposal, agent, config, t, checks }) {
 		}
 	}
 
+	let sellRaw = null;
+	if (t.side === 'sell') {
+		let position;
+		try { position = (await agentTokenBalances(address)).get(t.mint) || null; } catch {
+			checks.push({ label: 'Position held', ok: false, detail: 'could not read the wallet positions' });
+			return null;
+		}
+		const size = resolveSellSize(t, position);
+		if (size.refusal) {
+			checks.push({ label: 'Position held', ok: false, detail: size.refusal.message });
+			return null;
+		}
+		sellRaw = size.raw;
+		checks.push({ label: 'Position held', ok: true, detail: `${formatRaw(position.raw, position.decimals)} held, selling ${formatRaw(BigInt(sellRaw), position.decimals)}` });
+	}
+
 	const { runAgentTrade, parseTradeRequest } = await import('../agents/solana-trade.js');
 	const parsed = parseTradeRequest({
 		side: t.side, mint: t.mint, network: 'mainnet', slippage_bps: t.slippage_bps, preview: true,
-		...(t.side === 'buy' ? { sol_amount: t.amount_sol } : { token_amount_raw: t.token_amount_raw }),
+		...(t.side === 'buy' ? { sol_amount: t.amount_sol } : { token_amount_raw: sellRaw }),
 	});
 	if (!parsed.ok) {
 		checks.push({ label: 'Live quote', ok: false, detail: parsed.message });
@@ -1041,19 +1172,29 @@ async function executeTrade({ proposal, agent, userId, config }) {
 	const address = row?.meta?.solana_address;
 	if (!encryptedSecret || !address) throw new AutopilotError('Agent wallet not provisioned.', { code: 'no_wallet', status: 409 });
 
+	const positionsUnavailable = () => new AutopilotError('Could not read the wallet positions, so nothing was traded. Try again shortly.', { code: 'positions_unavailable', status: 503 });
 	if (p.side === 'buy' && config.max_open_positions > 0) {
 		let held;
-		try { held = await agentOpenPositionMints(address); } catch {
-			throw new AutopilotError('Could not read the wallet positions to check the open-position limit, so nothing was traded. Try again shortly.', { code: 'positions_unavailable', status: 503 });
-		}
+		try { held = await agentOpenPositionMints(address); } catch { throw positionsUnavailable(); }
 		const refusal = tradeLimitRefusal(p, config, held);
 		if (refusal) throw new AutopilotError(refusal.message, { code: refusal.code, status: 403 });
+	}
+
+	// A sell is sized against the live position at fill time, so "all" sells
+	// exactly what the wallet holds and an oversized sell never reaches the venue.
+	let sellRaw = null;
+	if (p.side === 'sell') {
+		let position;
+		try { position = (await agentTokenBalances(address)).get(p.mint) || null; } catch { throw positionsUnavailable(); }
+		const size = resolveSellSize(p, position);
+		if (size.refusal) throw new AutopilotError(size.refusal.message, { code: size.refusal.code, status: size.refusal.code === 'invalid_trade' ? 400 : 409 });
+		sellRaw = size.raw;
 	}
 
 	const { runAgentTrade, parseTradeRequest } = await import('../agents/solana-trade.js');
 	const parsed = parseTradeRequest({
 		side: p.side, mint: p.mint, network: 'mainnet', slippage_bps: p.slippage_bps,
-		...(p.side === 'buy' ? { sol_amount: p.amount_sol } : { token_amount_raw: p.token_amount_raw }),
+		...(p.side === 'buy' ? { sol_amount: p.amount_sol } : { token_amount_raw: sellRaw }),
 		idempotency_key: `autopilot:${proposal.id}`,
 	});
 	if (!parsed.ok) throw new AutopilotError(parsed.message, { code: parsed.code, status: parsed.status });
@@ -1065,11 +1206,23 @@ async function executeTrade({ proposal, agent, userId, config }) {
 	if (out.error) {
 		throw new AutopilotError(out.error.message, { code: out.error.code, status: out.status >= 400 && out.status < 600 ? out.status : 502 });
 	}
+	const d = out.data;
+	const tokenSide = p.side === 'buy' ? d.out : d.in;
 	return {
-		signature: out.data.signature, side: p.side, mint: p.mint, amount_sol: p.side === 'buy' ? p.amount_sol : 0,
-		token_amount_raw: p.token_amount_raw || null, venue: out.data.venue, slippage_bps: p.slippage_bps,
-		custody_id: out.data.custody_event_id ?? null, replayed: out.data.replayed === true,
+		signature: d.signature, side: p.side, mint: p.mint, amount_sol: p.side === 'buy' ? p.amount_sol : 0,
+		token_amount_raw: p.side === 'sell' ? sellRaw : tokenSide?.atomics ?? null,
+		token_amount: numOrNull(tokenSide?.amount),
+		realized_sol: p.side === 'sell' && d.out?.asset === 'SOL' ? numOrNull(d.out.amount) : null,
+		min_received: numOrNull(d.min_received?.amount),
+		price_impact_pct: numOrNull(d.price_impact_pct),
+		venue: d.venue, slippage_bps: p.slippage_bps, explorer: d.explorer ?? null,
+		custody_id: d.custody_event_id ?? null, replayed: d.replayed === true,
 	};
+}
+
+function numOrNull(v) {
+	const n = Number(v);
+	return v == null || !Number.isFinite(n) ? null : n;
 }
 
 async function executeWalletTransfer({ proposal, agent, userId, config }) {
@@ -1171,8 +1324,17 @@ async function composeBriefing({ agentId, userId, agent, params }) {
 function buildReceipt(kind, result) {
 	if (kind === 'create_alert') return `Created a ${String(result.rule_kind).replace('_', ' ')} alert.`;
 	if (kind === 'briefing') return 'Authored a briefing and delivered it to your inbox.';
-	if (kind === 'trade') return `${result.side === 'buy' ? 'Bought' : 'Sold'} ${result.mint} (${result.signature}).`;
+	if (kind === 'trade') return tradeReceipt(result);
 	return `Sent ${result.amount_sol} SOL.`;
+}
+
+/** "Bought 51,234.5 $THREE with 0.2 SOL (sig)." / "Sold 987.65 tokens of AbCdEf… for about 0.42 SOL (sig)." */
+function tradeReceipt(r) {
+	const fmt = (n) => n.toLocaleString('en-US', { maximumFractionDigits: 6 });
+	const token = r.mint === THREE_CA ? '$THREE' : `${r.mint.slice(0, 6)}…`;
+	const amount = r.token_amount != null ? (r.mint === THREE_CA ? `${fmt(r.token_amount)} $THREE` : `${fmt(r.token_amount)} tokens of ${token}`) : token;
+	if (r.side === 'buy') return `Bought ${amount} with ${fmt(r.amount_sol)} SOL (${r.signature}).`;
+	return `Sold ${amount}${r.realized_sol != null ? ` for about ${fmt(r.realized_sol)} SOL` : ' for SOL'} (${r.signature}).`;
 }
 
 // ── Trust loop (approve / dismiss / undo) ─────────────────────────────────────

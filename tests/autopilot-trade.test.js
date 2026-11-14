@@ -69,6 +69,37 @@ describe('trade proposal kind', () => {
 		expect(ok.params.token_amount_raw).toBe('5000');
 	});
 
+	it('refuses a sell of $THREE named by its alias', () => {
+		for (const mint of ['three', 'THREE', '$three', ' $THREE ']) {
+			const v = validateProposal('trade', { side: 'sell', mint, amount_tokens: 'all' });
+			expect(v.ok, mint).toBe(false);
+			expect(v.code, mint).toBe('three_sell_forbidden');
+		}
+	});
+
+	it('resolves the $THREE alias to the contract address on a buy', () => {
+		const v = validateProposal('trade', { side: 'buy', mint: 'three', amount_sol: 0.05 });
+		expect(v.ok).toBe(true);
+		expect(v.params.mint).toBe(THREE_CA);
+	});
+
+	it('accepts max_slippage_bps as the slippage bound, with the same 500 bps ceiling', () => {
+		expect(validateProposal('trade', { side: 'buy', mint: MINT, amount_sol: 1, max_slippage_bps: 501 }).ok).toBe(false);
+		expect(validateProposal('trade', { side: 'buy', mint: MINT, amount_sol: 1, max_slippage_bps: 250 }).params.slippage_bps).toBe(250);
+	});
+
+	it('accepts amount_tokens "all" or a positive token amount on a sell', () => {
+		const all = validateProposal('trade', { side: 'sell', mint: MINT, amount_tokens: 'all' });
+		expect(all.ok).toBe(true);
+		expect(all.params.amount_tokens).toBe('all');
+		expect(all.params.token_amount_raw).toBeNull();
+		const some = validateProposal('trade', { side: 'sell', mint: MINT, amount_tokens: 12.5 });
+		expect(some.ok).toBe(true);
+		expect(some.params.amount_tokens).toBe(12.5);
+		expect(validateProposal('trade', { side: 'sell', mint: MINT, amount_tokens: 0 }).ok).toBe(false);
+		expect(validateProposal('trade', { side: 'sell', mint: MINT, amount_tokens: 'most' }).ok).toBe(false);
+	});
+
 	it('defaults the trade scope to off and never auto-executes', () => {
 		const c = normalizeAutopilotConfig({ enabled: true, scopes: { trade: true }, auto_execute: { trade: true } });
 		expect(c.scopes.trade).toBe(true);
@@ -143,5 +174,27 @@ describe('trade proposals from memory', () => {
 		expect(trades).toHaveLength(1);
 		expect(trades[0].source_memory_ids).toEqual(['m1']);
 		expect(validateProposal('trade', trades[0].params).ok).toBe(true);
+	});
+
+	it('proposes sells sized in tokens from tagged exit intent, and never a $THREE sell', async () => {
+		const { heuristicProposals } = await import('../api/_lib/autopilot.js');
+		const out = heuristicProposals([
+			{ id: 'm1', type: 'fact', tags: ['pumpfun'], content: `Exit plan: sell all of ${MINT} once it graduates` },
+			{ id: 'm2', type: 'fact', tags: ['intel'], content: `Take profit, sell 2,500 tokens of ${MINT}` },
+			{ id: 'm3', type: 'fact', tags: ['intel'], content: `sell all of ${THREE_CA}` },
+			{ id: 'm4', type: 'fact', tags: ['intel'], content: 'sell all of $THREE now' },
+		]);
+		const trades = out.filter((p) => p.kind === 'trade');
+		expect(trades.map((t) => t.source_memory_ids[0])).toEqual(['m1', 'm2']);
+		expect(trades[0].params).toMatchObject({ side: 'sell', mint: MINT, amount_tokens: 'all' });
+		expect(trades[1].params).toMatchObject({ side: 'sell', mint: MINT, amount_tokens: 2500 });
+		for (const t of trades) expect(validateProposal('trade', t.params).ok).toBe(true);
+	});
+
+	it('reads a buy of $THREE named by its ticker', async () => {
+		const { heuristicProposals } = await import('../api/_lib/autopilot.js');
+		const [t] = heuristicProposals([{ id: 'm1', type: 'fact', tags: ['intel'], content: 'buy 0.25 SOL of $THREE on the dip' }]).filter((p) => p.kind === 'trade');
+		expect(t.params).toMatchObject({ side: 'buy', mint: THREE_CA, amount_sol: 0.25 });
+		expect(t.title).toBe('Buy $THREE with 0.25 SOL');
 	});
 });
