@@ -13,6 +13,11 @@
  * so nothing falls in the gap between snapshot and stream. It is clamped to ten
  * minutes back so a stale tab cannot ask for a replay of the whole ledger.
  *
+ * Chat rides the same connection: each poll also reads messages created, and
+ * messages hidden, after a chat cursor (`chat_since`, defaulting to `since`).
+ * A chat table that is not migrated yet disables chat for this connection and
+ * leaves the trade stream untouched.
+ *
  * `session` is the viewer's random tab id. While the connection is open the
  * session counts as a spectator of this room (api/_lib/trade-room-presence.js)
  * and is removed on close, so the room's "watching" number is live.
@@ -21,6 +26,8 @@
  *   open      { agent_id, network, spectators, presence_scope }
  *   trade     one positionEvents() row (kind buy | sell)
  *   quote     { position_id, symbol, current_sol, unrealized_pct, at }
+ *   chat      one shaped chat message (api/_lib/trade-room-chat.js shapeMessage)
+ *   chat_hidden { id }  a message the owner hid or its author removed
  *   presence  { spectators, presence_scope }
  *   ping      { t }
  *   error     { message }
@@ -33,6 +40,9 @@ import { isUuid } from '../_lib/validate.js';
 import {
 	loadRoomAgent, fetchChangedPositions, eventsSince, sanitizeSession, streamStartCursor,
 } from '../_lib/trade-room.js';
+import {
+	chatCursor, fetchNewMessages, fetchHiddenSince, shapeMessage, isMissingTable,
+} from '../_lib/trade-room-chat.js';
 import { touchSpectator, leaveSpectator, countSpectators } from '../_lib/trade-room-presence.js';
 
 const MAX_DURATION_MS = 90_000;
@@ -80,6 +90,11 @@ export default async function handleRoomStream(req, res) {
 	let cursorMs = streamStartCursor(url.searchParams.get('since'));
 	let polling = false;
 	let lastPresence = null;
+	let chatPolling = false;
+	let chatEnabled = true;
+	let chatCursorMs = chatCursor(url.searchParams.get('chat_since') || url.searchParams.get('since'));
+	let hiddenCursorMs = chatCursorMs;
+	const ownerId = agent.user_id || null;
 
 	const poll = async () => {
 		if (!active || polling) return;
@@ -99,6 +114,31 @@ export default async function handleRoomStream(req, res) {
 			send('error', { message: 'poll_failed' });
 		} finally {
 			polling = false;
+		}
+	};
+
+	// Chat is decoration on the trades: a failure here never emits `error` or
+	// stops the stream. A missing table switches chat off for this connection.
+	const pollChat = async () => {
+		if (!active || !chatEnabled || chatPolling) return;
+		chatPolling = true;
+		try {
+			const fresh = await fetchNewMessages({ agentId, cursorIso: new Date(chatCursorMs).toISOString() });
+			for (const m of fresh) {
+				send('chat', shapeMessage(m, { ownerId }));
+				const t = new Date(m.created_at).getTime();
+				if (t > chatCursorMs) chatCursorMs = t;
+			}
+			const hidden = await fetchHiddenSince({ agentId, cursorIso: new Date(hiddenCursorMs).toISOString() });
+			for (const h of hidden) {
+				send('chat_hidden', { id: h.id });
+				const t = new Date(h.hidden_at).getTime();
+				if (t > hiddenCursorMs) hiddenCursorMs = t;
+			}
+		} catch (err) {
+			if (isMissingTable(err)) chatEnabled = false;
+		} finally {
+			chatPolling = false;
 		}
 	};
 
@@ -125,7 +165,7 @@ export default async function handleRoomStream(req, res) {
 		presence_scope: opening ? opening.scope : null,
 	});
 
-	const pollTimer = setInterval(poll, POLL_INTERVAL_MS);
+	const pollTimer = setInterval(() => { poll(); pollChat(); }, POLL_INTERVAL_MS);
 	const presenceTimer = setInterval(readPresence, PRESENCE_READ_MS);
 	const touchTimer = session
 		? setInterval(() => touchSpectator(agentId, session).catch(() => null), PRESENCE_TOUCH_MS)

@@ -13,6 +13,7 @@ import {
 	identicon, verifiedBadge, signatureCoin,
 } from './trader-format.js';
 import { mountCopyPanel } from './copy-panel.js';
+import { mountTraderFollow } from './trader-follow.js';
 import { mountTraderSyndicates } from './trader-syndicates.js';
 import { mountTraderDuels } from './trader-duels.js';
 import { mountPassport, resetPassport } from './trader-passport.js';
@@ -350,6 +351,7 @@ function render(data) {
 					${a.copiers ? `<span class="tp-copiers">${a.copiers} copying</span>` : ''}
 				</div>
 				${walletChip ? `<div class="tp-wallet-chip" style="margin-top:var(--space-2xs)">${walletChip}</div>` : ''}
+				<div class="tf" id="tp-follow"></div>
 				${a.description ? `<p class="tp-desc">${escapeHtml(a.description)}</p>` : ''}
 			</div>
 			<div class="tp-gauge">
@@ -461,6 +463,7 @@ function render(data) {
 	wireShare();
 	wireWalletChips(content);
 	openDeepLinkedReceipt();
+	mountTraderFollow(document.getElementById('tp-follow'), { agentId: a.id, name: a.name, toast });
 	const panel = document.getElementById('tp-copy-panel');
 	if (panel) mountCopyPanel(panel, { leaderAgentId: a.id, leaderName: a.name, network: ctx.network });
 	mountTraderSyndicates(document.getElementById('tp-syndicates'), { agentId: a.id, name: a.name, network: ctx.network });

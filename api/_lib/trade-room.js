@@ -238,7 +238,7 @@ function thumbFor(row) {
  */
 export async function loadRoomAgent(agentId) {
 	const [row] = await sql`
-		select i.id, i.name, i.description, i.avatar_url, i.profile_image_url,
+		select i.id, i.user_id, i.name, i.description, i.avatar_url, i.profile_image_url,
 		       a.id as avatar_row_id, a.storage_key, a.baked_storage_key, a.appearance_hash,
 		       a.appearance, a.visibility as avatar_visibility, a.thumbnail_key
 		from agent_identities i

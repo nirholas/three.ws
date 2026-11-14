@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { currentWinStreak, winStreaksByAgent, HOT_STREAK_MIN } from '../api/_lib/win-streak.js';
+import { currentWinStreak, winStreaksByAgent, HOT_STREAK_MIN, isStreakMilestone } from '../api/_lib/win-streak.js';
 
 const w = (n = '1000') => ({ realized_pnl_lamports: n });
 const l = (n = '-500') => ({ realized_pnl_lamports: n });
@@ -38,6 +38,23 @@ describe('winStreaksByAgent', () => {
 		expect(m.get('b')).toBe(0);
 	});
 	it('exposes the hot threshold', () => {
+		expect(HOT_STREAK_MIN).toBe(3);
+	});
+});
+
+describe('isStreakMilestone', () => {
+	it('announces the first hot streak, then 5, 7 and 10', () => {
+		for (const n of [3, 5, 7, 10]) expect(isStreakMilestone(n)).toBe(true);
+	});
+	it('then every 5 after 10', () => {
+		for (const n of [15, 20, 25, 100]) expect(isStreakMilestone(n)).toBe(true);
+		for (const n of [11, 12, 14, 16, 24]) expect(isStreakMilestone(n)).toBe(false);
+	});
+	it('stays quiet below the hot-streak minimum and between milestones', () => {
+		for (const n of [0, 1, 2, 4, 6, 8, 9]) expect(isStreakMilestone(n)).toBe(false);
+	});
+	it('rejects non-integers and junk', () => {
+		for (const n of [3.5, NaN, -3, null, undefined, 'x']) expect(isStreakMilestone(n)).toBe(false);
 		expect(HOT_STREAK_MIN).toBe(3);
 	});
 });

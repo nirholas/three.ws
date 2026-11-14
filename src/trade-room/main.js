@@ -25,6 +25,7 @@ import { forkButton, mountForkLinks } from '../fork-trade.js';
 import { receiptHTML, receiptSkeletonHTML, RECEIPT_CSS } from '../shared/trade-receipt-view.js';
 import { emptyStateHTML, errorStateHTML, skeletonHTML } from '../shared/state-kit.js';
 import { isWebGLAvailable } from '../webgl-support.js';
+import { mountChat } from './chat.js';
 import {
 	STATE_LABEL, ago, backoffMs, coinLabel, lastTradedText, mergeTrade, newSessionId,
 	roomIdFromLocation, roomState, signedPct, solAmount, toneOf, tradeLine,
@@ -62,6 +63,8 @@ const state = {
 	stageMsg: '',
 	receipts: new Map(),
 	latestWhyId: '',
+	chat: null,
+	streamOpened: false,
 };
 
 // ── small utilities ──────────────────────────────────────────────────────
@@ -292,6 +295,8 @@ function renderRoom(data) {
 					${L.copiers ? `<p class="tr-dim tr-copiers">${L.copiers} ${L.copiers === 1 ? 'person copies' : 'people copy'} this trader</p>` : ''}
 				</section>
 
+				<section class="trc" id="trc" aria-labelledby="trc-title"></section>
+
 				<section class="tr-why" id="tr-why" aria-labelledby="tr-why-h" hidden>
 					<h2 id="tr-why-h" class="tr-h">Why the latest trade</h2>
 					<div id="tr-why-body"></div>
@@ -323,6 +328,13 @@ function renderRoom(data) {
 	content.querySelector('#tr-view-toggle').addEventListener('click', toggleView);
 	content.querySelector('#tr-list').addEventListener('click', onListClick);
 	content.querySelector('#tr-why-body').addEventListener('click', onListClick);
+	state.chat?.destroy();
+	state.chat = mountChat({
+		host: content.querySelector('#trc'),
+		agentId: L.id,
+		leaderName: L.name,
+		roomState: () => state.room?.room?.state || 'quiet',
+	});
 }
 
 function tradeRow(t) {
@@ -411,6 +423,7 @@ function renderRoomState() {
 			: 'No trades yet. This room lights up the moment they make one.';
 	}
 	renderStageNote();
+	state.chat?.onRoomState();
 }
 
 function renderSpectators() {
@@ -690,6 +703,7 @@ function connect() {
 	if (!state.room) return;
 	const since = state.trades[0]?.at || new Date(state.room.t).toISOString();
 	const q = new URLSearchParams({ agent_id: state.id, network: state.network, since, session: state.session });
+	if (state.chat) q.set('chat_since', state.chat.sinceIso());
 	const es = new EventSource(`/api/sniper/room-stream?${q}`);
 	state.es = es;
 	const alive = () => { state.attempt = 0; setConn('live'); };
@@ -698,9 +712,15 @@ function connect() {
 		if (!e.data) return;
 		const d = parse(e);
 		alive();
+		// A re-open means the stream dropped for a while: re-read the chat so a
+		// message hidden or sent in the gap is not missed.
+		if (state.streamOpened) state.chat?.reconnected();
+		state.streamOpened = true;
 		if (d && d.spectators != null) { state.spectators = d.spectators; state.scope = d.presence_scope; renderSpectators(); }
 	});
 	es.addEventListener('trade', (e) => { alive(); const t = parse(e); if (t) onTrade(t); });
+	es.addEventListener('chat', (e) => { alive(); const m = parse(e); if (m) state.chat?.onChat(m); });
+	es.addEventListener('chat_hidden', (e) => { alive(); const d = parse(e); if (d?.id) state.chat?.onHidden(d.id); });
 	es.addEventListener('quote', (e) => { alive(); const d = parse(e); if (d) onQuote(d); });
 	es.addEventListener('presence', (e) => {
 		alive();

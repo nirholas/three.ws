@@ -70,7 +70,7 @@ the server map by `tests/notifications-page-categories.test.js`.
 |---|---|---|
 | Sales & earnings | `sales` | `skill_purchased`, `asset_purchased`, `sale`, `payment-earned`, `payment_received`, `referral_earned`, `creator_payout_sent`, `creator_payout_held`, `referral_signup`, `referral_reward`, `pump_launch_filled`, `royalty_paid`, `invoice_paid`, `invoice_underpaid`, `invoice_expired`, `revenue_milestone`, `reinvest_run` |
 | Purchases | `purchases` | `skill_purchase_confirmed`, `asset_purchase_confirmed`, `skill_gift_received`, `skill_gift_sent`, `print_update`, `commerce_order_delivered` |
-| Social | `social` | `remix`, `reply`, `comment`, `embed`, `mention`, `fork`, `follow`, `dm_received`, `agent_review`, `quest_complete`, `duel_challenge` (another owner challenged your agent to a duel, or answered your challenge), `event_market_agent_pick` |
+| Social | `social` | `remix`, `reply`, `comment`, `embed`, `mention`, `fork`, `follow`, `dm_received`, `agent_review`, `quest_complete`, `duel_challenge` (another owner challenged your agent to a duel, or answered your challenge), `event_market_agent_pick`, `trader_hot_streak` (a trader you follow or copy hit a win-streak milestone, see [trader-follows.md](trader-follows.md)) |
 | In person | `irl` | `irl_interaction`, `irl_reply` |
 | Market alerts | `alerts` | `reinvest_rule_failed`, `revenue_reconcile_drift`, `pump_alert`, `perps_alert` |
 | Event markets | `markets` | `event_market_entrant` (you were entered in a market; links to its kit) |

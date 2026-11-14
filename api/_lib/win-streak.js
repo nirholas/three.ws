@@ -45,3 +45,17 @@ export function winStreaksByAgent(rows) {
 	for (const [id, list] of byAgent) out.set(id, currentWinStreak(list));
 	return out;
 }
+
+/**
+ * Whether a streak length is worth announcing: the first hot streak
+ * (HOT_STREAK_MIN), then 5, 7 and 10, then every 5 after that. Anything between
+ * milestones stays quiet so a long run is a handful of pushes, not one per win.
+ * @param {number} streak
+ * @returns {boolean}
+ */
+export function isStreakMilestone(streak) {
+	const n = Number(streak);
+	if (!Number.isInteger(n) || n < HOT_STREAK_MIN) return false;
+	if (n === HOT_STREAK_MIN || n === 5 || n === 7 || n === 10) return true;
+	return n > 10 && n % 5 === 0;
+}

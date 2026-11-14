@@ -46,6 +46,7 @@ import { getBuyQuote, getSellQuote } from '../_lib/solana/sdk-bridge.js';
 import { getAmmPoolState } from '../_lib/pump.js';
 import { assessTradeSafety, recordFirewallDecision } from '../_lib/trade-firewall.js';
 import { submitProtected } from '../_lib/execution-engine.js';
+import { readTokenBalances, parseAmountTokens, resolveSellSize } from '../_lib/token-position.js';
 import { buildAgentTradeFee } from '../_lib/pump-platform-fee.js';
 import { feeEventFromDisclosure } from '../_lib/platform-fee-events.js';
 
@@ -296,7 +297,7 @@ export async function handleTrade(req, res, id) {
  * @returns {{ ok: false, status: number, code: string, message: string }
  *   | { ok: true, side: 'buy'|'sell', mintStr: string, mintPk: PublicKey, network: 'mainnet'|'devnet',
  *       preview: boolean, slippageBps: number, solAmount: number|null, tokenAmountRaw: string|null,
- *       idempotencyKey: string|null }}
+ *       tokenAmount: 'all'|number|null, idempotencyKey: string|null }}
  */
 export function parseTradeRequest(body = {}) {
 	const bad = (message) => ({ ok: false, status: 400, code: 'validation_error', message });
@@ -316,26 +317,34 @@ export function parseTradeRequest(body = {}) {
 	if (!Number.isFinite(slippageBps)) slippageBps = DEFAULT_SLIPPAGE_BPS;
 	slippageBps = Math.max(0, Math.min(5_000, Math.round(slippageBps)));
 
-	// Amount: buy spends SOL; sell sends token base units.
+	// Amount: buy spends SOL; sell sends token base units, or a token amount
+	// ("all" or e.g. 12.5) that runAgentTrade sizes against the live balance.
 	let solAmount = null;
 	let tokenAmountRaw = null;
+	let tokenAmount = null;
 	if (side === 'buy') {
 		solAmount = Number(body.sol_amount ?? body.amount);
 		if (!(solAmount > 0)) return bad('sol_amount must be greater than zero');
 		if (solAmount > 1000) return bad('sol_amount exceeds the 1000 SOL ceiling');
 	} else {
 		const raw = body.token_amount_raw ?? body.amount_raw;
-		if (raw == null || !/^\d+$/.test(String(raw)) || BigInt(String(raw)) <= 0n) {
-			return bad('token_amount_raw must be a positive base-unit integer');
+		const tokens = body.token_amount ?? body.amount_tokens;
+		if (raw != null && tokens != null) return bad('give either token_amount or token_amount_raw on a sell, not both');
+		if (tokens != null) {
+			tokenAmount = parseAmountTokens(tokens);
+			if (tokenAmount == null) return bad('token_amount must be "all" or a positive token amount');
+		} else if (raw == null || !/^\d+$/.test(String(raw)) || BigInt(String(raw)) <= 0n) {
+			return bad('a sell needs token_amount ("all" or a token amount) or token_amount_raw (a positive base-unit integer)');
+		} else {
+			tokenAmountRaw = String(raw);
 		}
-		tokenAmountRaw = String(raw);
 	}
 
 	const idempotencyKey = typeof body.idempotency_key === 'string' && body.idempotency_key.trim()
 		? body.idempotency_key.trim().slice(0, 128)
 		: null;
 
-	return { ok: true, side, mintStr, mintPk, network, preview, slippageBps, solAmount, tokenAmountRaw, idempotencyKey };
+	return { ok: true, side, mintStr, mintPk, network, preview, slippageBps, solAmount, tokenAmountRaw, tokenAmount, idempotencyKey };
 }
 
 /**
@@ -367,7 +376,8 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 	const id = agentId;
 	const auth = { userId };
 	const fail = (status, code, message, detail) => ({ status, error: { code, message, ...(detail ? { detail } : {}) } });
-	const { side, mintStr, mintPk, network, preview, slippageBps, solAmount, tokenAmountRaw } = parsed;
+	const { side, mintStr, mintPk, network, preview, slippageBps, solAmount } = parsed;
+	let { tokenAmountRaw } = parsed;
 
 	if (!address) {
 		return fail(409, 'wallet_preparing', 'this agent’s wallet is still being prepared; try again in a moment');
@@ -380,6 +390,22 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 	}
 
 	const readConn = solanaConnection(network);
+
+	// 0. A sell sized in tokens resolves to exact base units against the live
+	// on-chain balance, so "all" never overshoots and an oversized sell or a
+	// token the wallet does not hold is refused before any quote.
+	if (side === 'sell' && tokenAmountRaw == null) {
+		let position;
+		try {
+			position = (await readTokenBalances(readConn, ownerPk)).get(mintStr) || null;
+		} catch (e) {
+			console.error('[trade] token balance read failed', e?.message);
+			return fail(503, 'positions_unavailable', 'could not read the wallet token balance to size this sell; try again shortly');
+		}
+		const size = resolveSellSize({ mint: mintStr, amountTokens: parsed.tokenAmount }, position);
+		if (size.refusal) return fail(size.refusal.status, size.refusal.code, size.refusal.message);
+		tokenAmountRaw = size.raw;
+	}
 
 	// 1. Quote (always; preview and execute both need it).
 	let quote;

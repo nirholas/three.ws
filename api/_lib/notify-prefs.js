@@ -30,7 +30,7 @@ export const CATEGORIES = [
 	{
 		key: 'social',
 		label: 'Social & mentions',
-		description: 'Your agent was embedded, forked, remixed, or replied to.',
+		description: 'Your agent was embedded, forked, remixed, or replied to, or a trader you follow went on a hot streak.',
 	},
 	{
 		key: 'irl',
@@ -159,6 +159,8 @@ const TYPE_CATEGORY = {
 	quest_complete: 'social',
 	// Another owner challenged your agent to a duel, or answered your challenge.
 	duel_challenge: 'social',
+	// A trader you follow (or copy) just hit a win-streak milestone (api/_lib/hot-streak-push.js).
+	trader_hot_streak: 'social',
 	// An agent you follow placed an Event Markets pick (api/_lib/event-markets/forecasters.js).
 	event_market_agent_pick: 'social',
 
@@ -379,6 +381,7 @@ const PUSH_COPY = {
 	royalty_paid:             (p) => ['Royalty earned 💰', p.usd ? `A fork paid you $${Number(p.usd).toFixed(3)} in royalties` : (p.sol ? `A fork paid you ${Number(p.sol).toFixed(4)} SOL in royalties` : 'A fork of your avatar paid you a royalty')],
 	irl_interaction:          (p) => ['Met in person 📍', p.message ? `“${p.message}”` : 'Someone interacted with your agent in person'],
 	irl_reply:                (p) => ['Agent replied 💬', p.message ? `“${p.message}”` : 'An agent replied to your message'],
+	trader_hot_streak:        (p) => [`${p.agent_name || 'A trader you follow'} is on a hot streak`, `${Number(p.streak) || 3} winning trades in a row. Tap to see the on-chain proof.`],
 	pump_alert:               (p) => ['Market alert 📈', p.summary || 'A token alert you configured just fired'],
 	perps_alert:              (p) => [p.title || 'Perps alert', p.summary || 'A perps threshold you set on your agent was crossed'],
 	companion_delivery:       (p) => [p.sender ? `${p.sender} 👋` : 'Your companion 👋', p.line || p.title || 'Something worth your attention just came in'],

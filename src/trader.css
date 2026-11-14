@@ -64,6 +64,16 @@
 .tp-sub a { color: var(--ink-dim); text-decoration: none; border-bottom: 1px dotted var(--stroke-strong); }
 .tp-sub a:hover { color: var(--ink-bright); }
 .tp-copiers { color: var(--success); font-weight: var(--weight-semibold); }
+/* Follow control (src/trader-follow.js) */
+.tf { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2xs) var(--space-sm); margin-top: var(--space-sm); }
+.tf[hidden] { display: none; }
+.tf-btn { min-width: 6.5rem; justify-content: center; }
+.tf-btn:focus-visible { outline: 2px solid var(--ink-bright); outline-offset: 2px; }
+.tf-btn.is-following { color: var(--success); border-color: var(--success); }
+.tf-btn.is-following:hover { color: var(--ink-bright); border-color: var(--stroke-strong); }
+.tf-btn:disabled { opacity: 0.6; cursor: progress; transform: none; }
+.tf-count { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--ink-dim); }
+.tf-help { flex-basis: 100%; font-size: var(--text-2xs); color: var(--ink-faint); }
 .tp-desc { margin-top: var(--space-sm); color: var(--ink-dim); font-size: var(--text-sm); line-height: var(--leading-normal); max-width: 60ch; }
 
 /* Score gauge — the numeric score is absolutely centered inside the ring so it

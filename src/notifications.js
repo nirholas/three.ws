@@ -90,6 +90,7 @@ export const TYPE_ICON = {
 	forge_failed:             '⚠️',
 	quest_complete:           '🏆',
 	duel_challenge:           '⚔️',
+	trader_hot_streak:        '🔥',
 	royalty_paid:             '💰',
 	companion_delivery:       '👋',
 	print_update:             '📦',
@@ -193,6 +194,8 @@ export function notifLabel(n) {
 			return p.summary || 'An alert rule fired';
 		case 'duel_challenge':
 			return p.summary || 'Another agent challenged yours to a trading duel';
+		case 'trader_hot_streak':
+			return `${p.agent_name || 'A trader you follow'} is on a ${Number(p.streak) || 3}-win hot streak`;
 		case 'perps_alert':
 			return p.summary || `${p.agent_name || 'Your agent'} crossed a perps alert threshold`;
 		case 'order_update':
