@@ -193,6 +193,7 @@ async function mintAll() {
 	setBusy(true);
 	let total = 0;
 	let failures = 0;
+	let pending = 0;
 	try {
 		for (let i = 0; i < BATCH_PAUSE_GUARD; i++) {
 			say(total ? `Minted ${total} so far...` : 'Minting revealed items in batches...', '');
@@ -206,17 +207,23 @@ async function mintAll() {
 				confirm_mainnet: network === 'mainnet' ? ui.confirm.checked : undefined,
 			});
 			total += data.minted.length;
-			failures += data.failed.length;
+			// confirm_pending items were sent and may still land, so they are locked,
+			// not retryable; report them apart from genuine failures.
+			const unsettled = data.failed.filter((f) => f.code === 'confirm_pending').length;
+			pending += unsettled;
+			failures += data.failed.length - unsettled;
 			data.minted.forEach((m) => api.onMinted(m));
 			await api.reloadDrop();
 			if (data.done || data.remaining === 0 || (data.minted.length === 0 && data.failed.length > 0)) break;
 		}
-		say(
-			failures
-				? `${total} minted, ${failures} failed. Failed items stay retryable; press the button again.`
-				: `${total} minted.`,
-			failures ? 'error' : 'ok',
-		);
+		const parts = [`${total} minted.`];
+		if (failures) parts.push(`${failures} failed and stay retryable; press the button again.`);
+		if (pending) {
+			parts.push(
+				`${pending} sent but not confirmed yet; they stay locked for a few minutes so they cannot be minted twice. Refresh to see them land.`,
+			);
+		}
+		say(parts.join(' '), failures || pending ? 'error' : 'ok');
 	} catch (err) {
 		say(`${total} minted before it stopped: ${err.message}`, 'error');
 	} finally {

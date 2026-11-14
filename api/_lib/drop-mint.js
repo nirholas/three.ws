@@ -24,6 +24,7 @@ import { sql } from './db.js';
 import { env } from './env.js';
 import { collectionAuthoritySigner } from './solana-collection.js';
 import { solanaConnection } from './solana/connection.js';
+import { sendAndConfirmUmi } from './solana/confirm.js';
 import { THREE_WS, threeTokenLinks } from './three-brand.js';
 import {
 	buildTokenized3dMetadata,
@@ -36,7 +37,6 @@ import {
 	resolveNetwork,
 	rpcForNetwork,
 	isValidBase58Pubkey,
-	encodeSignature,
 } from './tokenize-3d.js';
 import {
 	claimCollectionCreate,
@@ -163,15 +163,16 @@ export function buildDropItemMetadata({
  * ────────────────────────────────────────────────────────────────────────── */
 
 function umiFor(network) {
-	const umi = createUmi(solanaConnection({ url: rpcForNetwork(network), network })).use(mplCore());
+	const conn = solanaConnection({ url: rpcForNetwork(network), network });
+	const umi = createUmi(conn).use(mplCore());
 	umi.use(signerIdentity(collectionAuthoritySigner(umi)));
-	return umi;
+	return { umi, conn };
 }
 
 async function createCollectionOnChain({ network, name, uri }) {
-	const umi = umiFor(network);
+	const { umi, conn } = umiFor(network);
 	const collectionSigner = generateSigner(umi);
-	const { signature } = await createCollection(umi, {
+	const builder = createCollection(umi, {
 		collection: collectionSigner,
 		name: String(name).slice(0, 32),
 		uri,
@@ -184,15 +185,16 @@ async function createCollectionOnChain({ network, name, uri }) {
 				],
 			},
 		],
-	}).sendAndConfirm(umi, { confirm: { commitment: 'confirmed' } });
-	return { address: collectionSigner.publicKey.toString(), signature: encodeSignature(signature) };
+	});
+	const { signature } = await sendAndConfirmUmi(umi, builder, conn);
+	return { address: collectionSigner.publicKey.toString(), signature };
 }
 
 async function mintItemOnChain({ network, collection, ownerWallet, name, metadataUri, royaltyBps, royaltyRecipient }) {
-	const umi = umiFor(network);
+	const { umi, conn } = umiFor(network);
 	const collectionAccount = await fetchCollection(umi, umiPublicKey(collection));
 	const assetSigner = generateSigner(umi);
-	const { signature } = await create(umi, {
+	const builder = create(umi, {
 		asset: assetSigner,
 		collection: collectionAccount,
 		owner: umiPublicKey(ownerWallet),
@@ -206,8 +208,9 @@ async function mintItemOnChain({ network, collection, ownerWallet, name, metadat
 				ruleSet: ruleSet('None'),
 			},
 		],
-	}).sendAndConfirm(umi, { confirm: { commitment: 'confirmed' } });
-	return { mint: assetSigner.publicKey.toString(), signature: encodeSignature(signature) };
+	});
+	const { signature } = await sendAndConfirmUmi(umi, builder, conn);
+	return { mint: assetSigner.publicKey.toString(), signature };
 }
 
 /** Record a drop mint in the launch directory (/minted) the same way mint_3d_asset does. */
@@ -313,6 +316,7 @@ export async function createDropCollection({ drop, network: requested }, deps = 
 		await deps.store.setCollectionAddress(drop.id, address, network, signature);
 		return { created: true, collection_address: address, network, signature };
 	} catch (err) {
+		if (err?.code === 'tx_confirm_timeout') throw confirmPending(err, 'collection');
 		await deps.store.releaseCollectionClaim(drop.id).catch(() => {});
 		throw err;
 	}
@@ -412,9 +416,25 @@ export async function mintDropItem(
 			.catch((err) => console.warn('[drop-mint] launch record failed:', err?.message));
 		return { ...resultOf(saved || { ...state, mint_address: mint, owner_wallet: ownerWallet }, drop, false), signature };
 	} catch (err) {
+		if (err?.code === 'tx_confirm_timeout') throw confirmPending(err, 'item');
 		await deps.store.releaseItemMintClaim(drop.id, index, err?.message).catch(() => {});
 		throw err;
 	}
+}
+
+// The transaction was broadcast but neither landed nor expired inside the confirm
+// window, so it may still land. Releasing the claim here would let the next click
+// send a second transaction for the same item (or a second collection), so the
+// claim stays held until MINT_CLAIM_STALE_MS passes and the blockhash is long dead.
+function confirmPending(err, what) {
+	const sig = err?.signature ? ` (transaction ${err.signature})` : '';
+	const e = new DropMintError(
+		'confirm_pending',
+		`the ${what} transaction was sent but is not confirmed yet${sig}. It is locked for a few minutes so it cannot be minted twice; check the explorer, then refresh.`,
+		409,
+	);
+	e.signature = err?.signature ?? null;
+	return e;
 }
 
 function resultOf(item, drop, idempotent) {

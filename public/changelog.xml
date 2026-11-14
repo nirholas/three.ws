@@ -15,6 +15,14 @@
 			<description>The memory-seeding demo could fail with a server error every time you pressed synthesize. A few free AI providers were hanging until they timed out, and together they used up the whole time budget before a provider that was answering got a turn. Now a provider that hangs sits out for two minutes, and synthesis gets enough time to reach a working one, so your memory seed comes back instead of an error.</description>
 		</item>
 		<item>
+			<title>Minting on Solana can no longer charge you twice for one item</title>
+			<link>https://three.ws/drops</link>
+			<guid isPermaLink="false">2026-11-14:Minting on Solana can no longer charge you twice for one item</guid>
+			<pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When you put a 3D Drop or a single 3D asset on Solana, a mint that had already landed could be reported as failed if the live connection used to watch for confirmation dropped. Pressing the button again then minted a second copy and spent rent twice. Confirmation now checks the transaction status directly, so a landed mint always reads as minted. If a mint is still undecided after the wait, the item stays locked for a few minutes and you get the transaction link to check, instead of a retry that could mint it again.</description>
+		</item>
+		<item>
 			<title>Docs · Forge on-device photo check</title>
 			<link>https://three.ws/docs/forge-photo-prep</link>
 			<guid isPermaLink="false">2026-11-13:Docs · Forge on-device photo check</guid>

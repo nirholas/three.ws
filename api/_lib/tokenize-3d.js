@@ -41,6 +41,7 @@ import { sql } from './db.js';
 import { env } from './env.js';
 import { collectionAuthoritySigner, collectionAuthorityAddress } from './solana-collection.js';
 import { solanaConnection } from './solana/connection.js';
+import { sendAndConfirmUmi } from './solana/confirm.js';
 import { explorerTxUrl } from './avatar-wallet.js';
 import { putObject, publicUrl } from './r2.js';
 import { pinToIPFS, ipfsPinningConfigured } from './ipfs-pin.js';
@@ -311,12 +312,13 @@ export async function uploadMetadataJson({ idempotencyKey, metadata }) {
  * the recipient wallet is the owner.
  */
 export async function mintCoreAsset({ network, ownerWallet, name, metadataUri, royaltyBps, royaltyRecipient }) {
-	const umi = createUmi(solanaConnection({ url: rpcForNetwork(network), network })).use(mplCore());
+	const conn = solanaConnection({ url: rpcForNetwork(network), network });
+	const umi = createUmi(conn).use(mplCore());
 	const authority = collectionAuthoritySigner(umi);
 	umi.use(signerIdentity(authority));
 
 	const assetSigner = generateSigner(umi);
-	const { signature } = await create(umi, {
+	const builder = create(umi, {
 		asset: assetSigner,
 		owner: umiPublicKey(ownerWallet),
 		name: String(name).slice(0, 32) || '3D Asset',
@@ -329,9 +331,12 @@ export async function mintCoreAsset({ network, ownerWallet, name, metadataUri, r
 				ruleSet: ruleSet('None'),
 			},
 		],
-	}).sendAndConfirm(umi, { confirm: { commitment: 'confirmed' } });
+	});
+	// HTTP-polling confirm: umi's own sendAndConfirm uses a websocket subscription
+	// that can report a landed mint as failed (see solana/confirm.js).
+	const { signature } = await sendAndConfirmUmi(umi, builder, conn);
 
-	return { mint: assetSigner.publicKey.toString(), signature: encodeSignature(signature) };
+	return { mint: assetSigner.publicKey.toString(), signature };
 }
 
 // ── Public API: mint ─────────────────────────────────────────────────────────

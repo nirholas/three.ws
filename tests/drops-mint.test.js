@@ -290,3 +290,93 @@ describe('metadata', () => {
 		expect(attrs.Seed).toBe('seed-abc');
 	});
 });
+
+// A transaction can land while its confirmation fails or stalls. Releasing the
+// claim in that case lets the next click mint the same item a second time (or
+// create a second collection), spending rent twice. Confirmation goes over HTTP
+// polling, never a websocket, and an ambiguous outcome keeps the claim held.
+describe('confirmation safety', () => {
+	it('keeps the item claim when the mint was sent but its confirmation timed out', async () => {
+		const f = makeWorld();
+		await createDropCollection({ drop: f.drop, network: 'devnet' }, f.deps);
+		f.deps.chain.mintItem = async () => {
+			throw Object.assign(new Error('Transaction sigX not confirmed within 90s'), {
+				code: 'tx_confirm_timeout',
+				signature: 'sigX',
+			});
+		};
+		await expect(
+			mintDropItem({ drop: { ...f.drop }, index: 0, ownerWallet: OWNER, network: 'devnet' }, f.deps),
+		).rejects.toMatchObject({ code: 'confirm_pending' });
+		expect(f.items.get(0).claimed).toBe(true);
+		await expect(
+			mintDropItem({ drop: { ...f.drop }, index: 0, ownerWallet: OWNER, network: 'devnet' }, f.deps),
+		).rejects.toMatchObject({ code: 'in_progress' });
+	});
+
+	it('keeps the collection claim when creation was sent but its confirmation timed out', async () => {
+		const f = makeWorld();
+		f.deps.chain.createCollection = async () => {
+			throw Object.assign(new Error('not confirmed'), { code: 'tx_confirm_timeout', signature: 'sigC' });
+		};
+		await expect(createDropCollection({ drop: f.drop, network: 'devnet' }, f.deps)).rejects.toMatchObject({
+			code: 'confirm_pending',
+		});
+		expect(f.drop.claimed).toBe(true);
+	});
+
+	it('still releases the claim when the transaction definitely did not land', async () => {
+		const f = makeWorld();
+		await createDropCollection({ drop: f.drop, network: 'devnet' }, f.deps);
+		f.deps.chain.mintItem = async () => {
+			throw Object.assign(new Error('blockhash expired'), { code: 'tx_expired' });
+		};
+		await expect(
+			mintDropItem({ drop: { ...f.drop }, index: 0, ownerWallet: OWNER, network: 'devnet' }, f.deps),
+		).rejects.toMatchObject({ code: 'tx_expired' });
+		expect(f.items.get(0).claimed).toBe(false);
+	});
+});
+
+describe('sendAndConfirmUmi', () => {
+	const sigBytes = new Uint8Array(64).fill(7);
+	const umi = { rpc: { getLatestBlockhash: async () => ({ blockhash: 'BH1', lastValidBlockHeight: 500 }) } };
+	function builder() {
+		return {
+			blockhash: null,
+			setBlockhash(bh) {
+				this.blockhash = bh;
+				return this;
+			},
+			async send() {
+				if (!this.blockhash) throw new Error('sent without a pinned blockhash');
+				return sigBytes;
+			},
+		};
+	}
+	function conn(status) {
+		return {
+			async getSignatureStatuses() {
+				return { value: [status] };
+			},
+			confirmTransaction() {
+				throw new Error('websocket confirmation used');
+			},
+		};
+	}
+
+	it('confirms by polling signature status, never the websocket path', async () => {
+		const { sendAndConfirmUmi } = await import('../api/_lib/solana/confirm.js');
+		const bs58 = (await import('bs58')).default;
+		const r = await sendAndConfirmUmi(umi, builder(), conn({ confirmationStatus: 'confirmed', err: null, slot: 9 }));
+		expect(r.signature).toBe(bs58.encode(sigBytes));
+		expect(r.blockhash).toBe('BH1');
+	});
+
+	it('throws tx_reverted for a transaction that landed but failed', async () => {
+		const { sendAndConfirmUmi } = await import('../api/_lib/solana/confirm.js');
+		await expect(
+			sendAndConfirmUmi(umi, builder(), conn({ confirmationStatus: 'confirmed', err: { InstructionError: [0, 'Custom'] }, slot: 9 })),
+		).rejects.toMatchObject({ code: 'tx_reverted' });
+	});
+});

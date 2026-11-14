@@ -215,9 +215,18 @@ and the API refuses a mainnet call without `confirm_mainnet: true`. Mainnet is
 capped at 25 mints per account per day.
 
 **Safe to retry.** Claims are atomic conditional updates. A double submit returns
-the same mint and sends no second transaction; a chain failure releases the claim
-so the item can be minted again; a claim abandoned by a crashed process expires
-after ten minutes. An unrevealed item cannot be minted.
+the same mint and sends no second transaction; a transaction that definitely did
+not land (rejected, reverted, or its blockhash expired) releases the claim so the
+item can be minted again; a claim abandoned by a crashed process expires after
+ten minutes. An unrevealed item cannot be minted.
+
+Confirmation polls the signature status over HTTP through the RPC failover
+(`sendAndConfirmUmi` in `api/_lib/solana/confirm.js`) and never opens a
+websocket, so a dropped socket cannot make a landed mint look failed. When a
+transaction was sent but is still undecided at the end of the confirm window,
+the call answers `409 confirm_pending` with the signature and keeps the claim
+held, because releasing it would let the next click mint the same item twice.
+The claim frees itself after ten minutes, long after the blockhash is dead.
 
 Item states: `sealed`, `revealed`, `minting`, `minted`, `failed`.
 
@@ -227,7 +236,9 @@ Operations: the schema additions live in
 `node scripts/drops-devnet-e2e.mjs` runs the real mint path against devnet and
 reads each asset back over RPC to confirm collection membership and owner; it
 needs a funded throwaway devnet key in `DROPS_E2E_DEVNET_KEY` while the public
-faucet is closed.
+faucet is closed. Without one, run it against a local `solana-test-validator`
+that clones the real mpl-core program from devnet (the command is in the
+script header) by setting `SOLANA_RPC_URL_DEVNET=http://127.0.0.1:8899`.
 
 ## API reference
 

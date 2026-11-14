@@ -26,7 +26,10 @@
 // `strategy` is whatever confirmTransaction accepts — a bare signature string or the
 // `{ signature, blockhash, lastValidBlockHeight }` object form. Callers that need the
 // raw result without the throw-on-revert (to map their own error) use
-// `pollConfirmation`. Legacy `sendAndConfirmTransaction` call sites use `sendAndConfirm`.
+// `pollConfirmation`. Legacy `sendAndConfirmTransaction` call sites use `sendAndConfirm`,
+// and umi `builder.sendAndConfirm(umi)` call sites use `sendAndConfirmUmi`.
+
+import bs58 from 'bs58';
 
 // Commitment ordering — a status at or above the requested level satisfies the wait.
 const COMMITMENT_RANK = { processed: 0, confirmed: 1, finalized: 2 };
@@ -236,4 +239,34 @@ export async function sendAndConfirm(conn, tx, signers, opts = {}) {
 		timeoutMs != null ? { timeoutMs } : {},
 	);
 	return signature;
+}
+
+/**
+ * HTTP-polling replacement for a umi `TransactionBuilder.sendAndConfirm(umi)`. umi's
+ * own confirm goes through web3.js `confirmTransaction`, which opens the same
+ * `signatureSubscribe` WebSocket this module exists to avoid. A landed transaction
+ * whose socket fails is then reported as failed, and a caller that releases its
+ * claim on failure sends it again. Here the builder is pinned to a fresh blockhash,
+ * sent once, and confirmed through `confirmOrThrow` over `conn` (the failover
+ * Connection the umi instance wraps), so a revert throws `tx_reverted`, a dropped
+ * transaction throws `tx_expired`, and an undecided one throws `tx_confirm_timeout`.
+ *
+ * @param {{ rpc: { getLatestBlockhash: Function } }} umi
+ * @param {{ setBlockhash: Function }} builder  a umi TransactionBuilder
+ * @param {import('@solana/web3.js').Connection} conn
+ * @param {{ commitment?: import('@solana/web3.js').Commitment, timeoutMs?: number }} [opts]
+ * @returns {Promise<{ signature: string, blockhash: string, lastValidBlockHeight: number }>}
+ */
+export async function sendAndConfirmUmi(umi, builder, conn, opts = {}) {
+	const { commitment = 'confirmed', timeoutMs } = opts;
+	const latest = await umi.rpc.getLatestBlockhash({ commitment });
+	const raw = await builder.setBlockhash(latest).send(umi);
+	const signature = typeof raw === 'string' ? raw : bs58.encode(raw);
+	await confirmOrThrow(
+		conn,
+		{ signature, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight },
+		commitment,
+		timeoutMs != null ? { timeoutMs } : {},
+	);
+	return { signature, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight };
 }

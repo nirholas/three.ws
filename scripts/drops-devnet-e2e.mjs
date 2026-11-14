@@ -10,6 +10,14 @@
 // in-memory store with the same atomic-claim contract as drop-store.js, and a
 // stub media promoter), so no database or R2 object is touched and the script
 // is safe to run anywhere. Never mainnet: the network is hard-coded to devnet.
+//
+// While the public devnet faucet is closed, the same code path runs against a
+// local validator carrying the real mpl-core program cloned from devnet:
+//
+//   solana-test-validator --reset \
+//     --clone-upgradeable-program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d \
+//     --url https://api.devnet.solana.com
+//   SOLANA_RPC_URL_DEVNET=http://127.0.0.1:8899 node scripts/drops-devnet-e2e.mjs
 
 import { Keypair, Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import bs58 from 'bs58';
@@ -155,7 +163,9 @@ try {
 }
 console.log('sealed item refused =', sealedRefused);
 
-const umi = createUmi(RPC).use(mplCore());
+// Read at 'confirmed', the level the writes confirmed at. A bare createUmi(RPC)
+// reads at the node default (finalized) and races the writes a few slots behind.
+const umi = createUmi(RPC, 'confirmed').use(mplCore());
 const coll = await fetchCollection(umi, publicKey(drop.collection_address));
 console.log('chain collection name =', coll.name, 'numMinted =', coll.numMinted);
 let ok = sealedRefused && !c2.created && again.idempotent;

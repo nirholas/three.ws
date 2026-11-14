@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-14T02:13:55.735Z",
+	"generated_at": "2026-11-14T02:30:02.933Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4574,
+	"total": 4575,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -15,6 +15,16 @@
 			"title": "Memory seeding writes your seed instead of failing when some AI providers hang",
 			"summary": "The memory-seeding demo could fail with a server error every time you pressed synthesize. A few free AI providers were hanging until they timed out, and together they used up the whole time budget before a provider that was answering got a turn. Now a provider that hangs sits out for two minutes, and synthesis gets enough time to reach a working one, so your memory seed comes back instead of an error.",
 			"link": "/demos/memory-seed.html",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-14",
+			"type": "update",
+			"title": "Minting on Solana can no longer charge you twice for one item",
+			"summary": "When you put a 3D Drop or a single 3D asset on Solana, a mint that had already landed could be reported as failed if the live connection used to watch for confirmation dropped. Pressing the button again then minted a second copy and spent rent twice. Confirmation now checks the transaction status directly, so a landed mint always reads as minted. If a mint is still undecided after the wait, the item stays locked for a few minutes and you get the transaction link to check, instead of a retry that could mint it again.",
+			"link": "/drops",
 			"tags": [
 				"fix"
 			]
@@ -1519,16 +1529,6 @@
 			"title": "Docs · Tool gateway",
 			"summary": "Metered web search, page fetch, document parsing, speech and image tools on one credit balance: prices, the REST and MCP contracts, refunds, idempotency and the SSRF guard.",
 			"link": "/docs/tool-gateway",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "launch",
-			"title": "Docs · World chat in /play: scrollback and the community board",
-			"summary": "How a late joiner sees a /play world's last 60 chat lines above a caught-up divider, the cap, expiry and privacy rules for stored lines, and the read-only Board tab that shows a coin's community posts in-world.",
-			"link": "/docs/play-chat",
 			"tags": [
 				"launch"
 			]
