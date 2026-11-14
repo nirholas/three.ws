@@ -277,6 +277,9 @@ def _load_pipeline():
     _pipeline.cuda()
     log.info("TRELLIS.2 pipeline loaded")
     shutil.rmtree(os.path.join(WEIGHTS_LOCAL_DIR, "stream"), ignore_errors=True)
+    if WEIGHTS_GCS_URI.startswith("gs://"):
+        freed = pipeline_config.release_staged_weights(AUX_DIR)
+        log.info("released %.2f GiB of staged aux weights from the in-memory /tmp", freed / GIB)
     trim_heap()
     _memory_baseline = read_memory()
     if _memory_baseline is not None:

@@ -83,6 +83,26 @@ def write_local_config(
     return path
 
 
+def release_staged_weights(aux_root: str | os.PathLike[str]) -> int:
+    """Delete the staged aux tensors once the pipeline holds them; return bytes freed.
+
+    Cloud Run's /tmp is an in-memory filesystem, so the DINOv3 and BiRefNet
+    safetensors (about 1.7 GB) stay charged against the instance's memory limit
+    after both models are loaded. Their configs and BiRefNet's remote code stay:
+    they are small, and an imported module may still read beside itself. A
+    retried load stages everything again.
+    """
+    freed = 0
+    for path in Path(aux_root).rglob("*.safetensors"):
+        try:
+            size = path.stat().st_size
+            path.unlink()
+            freed += size
+        except OSError as exc:
+            log.warning("could not release staged weight %s: %s", path, exc)
+    return freed
+
+
 def link_weight_tree(root: str | os.PathLike[str], out_dir: str | os.PathLike[str]) -> None:
     """Symlink each top-level entry of a local weight tree into `out_dir`.
 

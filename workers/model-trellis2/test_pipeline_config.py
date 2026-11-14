@@ -165,3 +165,27 @@ def test_staged_model_streams_through_and_cleans_scratch(tmp_path):
     assert streaming(str(tmp_path / "config") + "/ckpts/m") == "model"
     assert seen["json"] == "pfx/ckpts/m.json"
     assert not (tmp_path / "stream").exists()
+
+
+def test_release_staged_weights_frees_loaded_tensors_but_keeps_code_and_config(tmp_path):
+    # Cloud Run's /tmp is RAM: the staged DINOv3 and BiRefNet tensors stay
+    # charged against the 32 GiB ceiling after both models are already loaded.
+    aux = tmp_path / "aux"
+    (aux / "dinov3").mkdir(parents=True)
+    (aux / "birefnet").mkdir(parents=True)
+    (aux / "dinov3" / "model.safetensors").write_bytes(b"x" * 1000)
+    (aux / "dinov3" / "config.json").write_text("{}")
+    (aux / "birefnet" / "model.safetensors").write_bytes(b"y" * 500)
+    (aux / "birefnet" / "birefnet.py").write_text("# remote code")
+
+    freed = pipeline_config.release_staged_weights(aux)
+
+    assert freed == 1500
+    assert not (aux / "dinov3" / "model.safetensors").exists()
+    assert not (aux / "birefnet" / "model.safetensors").exists()
+    assert (aux / "dinov3" / "config.json").exists()
+    assert (aux / "birefnet" / "birefnet.py").exists()
+
+
+def test_release_staged_weights_on_a_missing_tree_frees_nothing(tmp_path):
+    assert pipeline_config.release_staged_weights(tmp_path / "absent") == 0
