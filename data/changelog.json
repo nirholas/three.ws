@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-14",
+			"title": "The TRELLIS NGC container ships its full license bundle",
+			"summary": "The three.ws TRELLIS image-to-3D container now carries a complete third-party license bundle at /licenses inside the image, generated at build time from what is really installed: every Python package, every component built from source with its pinned commit, the one baked DINOv2 checkpoint, every Ubuntu package and the CUDA base license. The NVIDIA NGC Container EULA now names the two bundled CUDA extensions that are licensed for non-commercial research and evaluation only (nvdiffrast and diff-gaussian-rasterization), and an unused research-only renderer was removed from the image. The build fails if any license text goes missing.",
+			"tags": [
+				"infra",
+				"docs"
+			],
+			"link": "/legal/nvidia-ngc-eula"
+		},
+		{
+			"date": "2026-11-14",
 			"title": "Agents set to a retired Groq model answer again",
 			"summary": "Groq retired its Llama 3.3 70B and Llama 3.1 8B models, and every place three.ws still asked for them got an error back: agents whose brain was set to one, the second step of the embed brain's fallback chain, the Groq lane of skills and widgets, and the Groq option in the avatar chat, editor, /start and dashboard model pickers. Those settings now run on Groq's live Qwen3 27B, the embed fallback chain steps through Groq Qwen and NVIDIA Nemotron 3 Ultra before any paid model, and the pickers offer models that actually answer. The dashboard Brain tab also labels every model correctly, and its live test now works for the Claude and Nemotron options, which used to fail with an unknown provider error.",
 			"tags": [

@@ -903,6 +903,7 @@
 		"prettier": "^3.9.8",
 		"prismarine-nbt": "^2.8.0",
 		"puppeteer": "^25.14.0",
+		"smol-toml": "^1.9.1",
 		"topojson-client": "^3.1.0",
 		"turndown": "^7.2.4",
 		"typescript": "^6.0.3",

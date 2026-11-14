@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-14T02:38:29.693Z",
+	"generated_at": "2026-11-14T02:39:53.457Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4578,
+	"total": 4579,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -57,6 +57,17 @@
 			"link": "/open-source",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-14",
+			"type": "update",
+			"title": "The TRELLIS NGC container ships its full license bundle",
+			"summary": "The three.ws TRELLIS image-to-3D container now carries a complete third-party license bundle at /licenses inside the image, generated at build time from what is really installed: every Python package, every component built from source with its pinned commit, the one baked DINOv2 checkpoint, every Ubuntu package and the CUDA base license. The NVIDIA NGC Container EULA now names the two bundled CUDA extensions that are licensed for non-commercial research and evaluation only (nvdiffrast and diff-gaussian-rasterization), and an unused research-only renderer was removed from the image. The build fails if any license text goes missing.",
+			"link": "/legal/nvidia-ngc-eula",
+			"tags": [
+				"infra",
+				"docs"
 			]
 		},
 		{
@@ -1519,16 +1530,6 @@
 			"title": "Docs · Multichain Launchpad",
 			"summary": "How three.ws/launch/multichain launches a coin about an animation, avatar or agent on Solana, BNB Chain, Base and Robinhood Chain: subjects and /l/:id showcase pages, the four.meme and flap.sh paths, agent and wallet signers, and the API.",
 			"link": "/docs/multichain-launchpad",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "launch",
-			"title": "Docs · Partner shoutout playbook",
-			"summary": "How three.ws earns public mentions from partners and prospective partners: give real value first, make the post a byproduct, and never sell credit for a post.",
-			"link": "/docs/partner-shoutout-playbook",
 			"tags": [
 				"launch"
 			]

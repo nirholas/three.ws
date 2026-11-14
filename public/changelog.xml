@@ -47,6 +47,14 @@
 			<description>The /open-source credits page now carries a Sponsor link on the three.js and Mesh2Motion cards, read from the funding routes both projects publish in their own repositories. It is also ready to show the open-source projects three.ws pays a recurring sponsorship to: once a sponsorship is live, the project appears in a &quot;Projects three.ws sponsors&quot; section at the top of the page and its credit cards are marked &quot;Sponsored by three.ws&quot; with the month it started. Nothing shows until a sponsorship has actually begun.</description>
 		</item>
 		<item>
+			<title>The TRELLIS NGC container ships its full license bundle</title>
+			<link>https://three.ws/legal/nvidia-ngc-eula</link>
+			<guid isPermaLink="false">2026-11-14:The TRELLIS NGC container ships its full license bundle</guid>
+			<pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>The three.ws TRELLIS image-to-3D container now carries a complete third-party license bundle at /licenses inside the image, generated at build time from what is really installed: every Python package, every component built from source with its pinned commit, the one baked DINOv2 checkpoint, every Ubuntu package and the CUDA base license. The NVIDIA NGC Container EULA now names the two bundled CUDA extensions that are licensed for non-commercial research and evaluation only (nvdiffrast and diff-gaussian-rasterization), and an unused research-only renderer was removed from the image. The build fails if any license text goes missing.</description>
+		</item>
+		<item>
 			<title>Docs · Forge on-device photo check</title>
 			<link>https://three.ws/docs/forge-photo-prep</link>
 			<guid isPermaLink="false">2026-11-13:Docs · Forge on-device photo check</guid>
