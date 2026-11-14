@@ -71,8 +71,10 @@ COPY main.py /app/main.py
 # GLB to FBX round trip run against synthetic fixtures at build time, so a
 # regression fails the image instead of reaching Cloud Run. No network, no GCS.
 COPY test_remesh.py /app/test_remesh.py
+COPY test_quad_budget.py /app/test_quad_budget.py
 COPY test_gltf_meshopt.py /app/test_gltf_meshopt.py
 RUN API_KEY=build-gate GCS_BUCKET=build-gate python test_remesh.py \
+    && python test_quad_budget.py \
     && python test_gltf_meshopt.py
 
 EXPOSE 8080

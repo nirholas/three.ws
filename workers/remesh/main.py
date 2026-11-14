@@ -372,7 +372,8 @@ def _quad_remesh(mesh, target_faces: int):
 
     Returns (verts, polys, quad_ratio) where polys is a list of 0-based index
     lists (length 3 or 4). Walks QUADRIFLOW_ATTEMPTS until one succeeds, sharing
-    a single wall-clock budget across them. Raises with an actionable message if
+    a single wall-clock budget across them (each non-final solver gets at most
+    half of what remains, so a hung solver cannot starve its fallbacks). Raises with an actionable message if
     the binary is missing or every solver fails."""
     binary = shutil.which(QUADRIFLOW_BIN) or QUADRIFLOW_BIN
     if shutil.which(QUADRIFLOW_BIN) is None and not os.path.isfile(binary):
@@ -406,6 +407,12 @@ def _quad_remesh(mesh, target_faces: int):
                 )
                 break
 
+            # A solver that hangs must not starve the ones after it: every
+            # attempt but the last may use at most half of what is left, and the
+            # last gets all of it.
+            is_last = attempt == len(QUADRIFLOW_ATTEMPTS) - 1
+            attempt_timeout = remaining if is_last else remaining / 2
+
             candidate = Path(tmp) / f"out{attempt}.obj"
             cmd = [
                 binary,
@@ -416,7 +423,7 @@ def _quad_remesh(mesh, target_faces: int):
             ]
             try:
                 proc = subprocess.run(
-                    cmd, capture_output=True, text=True, timeout=remaining, check=False,
+                    cmd, capture_output=True, text=True, timeout=attempt_timeout, check=False,
                 )
             except subprocess.TimeoutExpired:
                 last_error = f"solver {flags or ('default',)} timed out"
