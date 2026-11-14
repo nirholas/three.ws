@@ -553,3 +553,33 @@ orders still on disk.
 - **Remaining (owner)**: approve or decline each row, start the approved ones from the owner's
   account, then an agent sets `startedOn` and regenerates; the owner sends outreach template 2.
   Order file kept until then.
+
+## 2026-11-14: order 939-partners-16 (program applications), agent work done, owner submits
+
+- **Re-read every program page today** and re-dated all 15 drafts plus the index in
+  `marketing/growth/submissions/programs/` ("Page last read: 2026-11-14"). Changes found:
+  Microsoft MCP certification now runs through an intake form into a limited preview queue (the
+  legacy Partner Center route stays open through 2026-11-18) and its FAQ says the certification
+  service supports neither DCR nor PKCE; Cloudflare excludes Workers AI for new members from
+  December 1 and does not cover AI Gateway for now; Deepgram states a USD 1,000 start; Shopify
+  allows one app in review at a time; Uthana publishes an MCP server and per-second rates;
+  JetBrains has a startup discount but no AI partner program; ElevenLabs' Commercial Partner
+  Program is a poor fit and is not pursued. Unreadable today (403/404 to automated readers):
+  Cloudflare /lp/startups form, Discord verification article, VRoid Hub, Avaturn docs body;
+  those drafts say so.
+- **Microsoft PKCE blocker fixed**: hand-registered confidential clients may skip PKCE
+  (`pkceOptional` in `api/oauth/[action].js`), with `scripts/oauth-register-client.mjs` to mint
+  the Key Vault client. Test-first, 7 new tests, 107/107 pass. Migration
+  `20261114120000_oauth_codes_optional_pkce.sql` is applied in production; the code is not yet
+  deployed. Commit 456a6385d.
+- **Tracker**: every program has a row in `marketing/growth/opportunities.csv` (7 rows added:
+  Cloudflare, Meshy, GitHub, JetBrains, Avaturn, Uthana, Rokoko), targets deadline-first, all
+  `last_verified` 2026-11-14. Seven prospect rows in `docs/partners/prospects.md` corrected.
+- **Commits**: drafts, index and tracker landed through concurrent agents' sweeps, content
+  identical to this work: 09ff630ea (14 drafts), 8655051b2 (index, tracker), 95beecb8b (Microsoft
+  draft), a31feccc7 (prospects rows, Discord/Shopify/VRoid tracker names).
+- **Remaining (owner)**: submit each application in the index's deadline order (Microsoft intake
+  first, before 2026-11-18), approve the production deploy of 456a6385d, run
+  `oauth-register-client.mjs --apply` into Key Vault, supply the owner-only inputs (legal entity,
+  country, headcount, funding, founders, business email, phone). An agent then logs each
+  submission and outcome in the tracker and wires granted credits. Order file kept until then.
