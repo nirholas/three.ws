@@ -20,6 +20,7 @@ import { forkLicensePlan } from '../_lib/vroid/license-gate.js';
 import { recordEvent } from '../_lib/usage.js';
 import { dispatchWebhooks } from '../_lib/webhook-dispatch.js';
 import { resolveScheduleForSource, snapshotForkRoyaltyTerms } from '../_lib/fork-royalties.js';
+import { ensureAgentLaunchPath } from '../_lib/agent-token-plan.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
@@ -188,6 +189,11 @@ export default wrap(async (req, res) => {
 		if (agent?.id) {
 			const wallets = await provisionAgentWallets(agent.id);
 			agent = { id: agent.id, wallet_address: wallets.evm, solana_address: wallets.solana };
+			// The forked agent's home leads with its coin like every new agent's.
+			// The wallet is already provisioned, so this only drafts the plan.
+			await ensureAgentLaunchPath({
+				agent: { id: agent.id, user_id: auth.userId, name: avatar.name || 'My Agent', meta: { solana_address: wallets.solana } },
+			});
 			// Freeze the consent snapshot the forker just accepted. Immutable: a later
 			// change to an ancestor's rate never retroactively re-taxes this fork.
 			if (royaltySchedule.total_bps > 0) {

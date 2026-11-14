@@ -8,7 +8,9 @@ import { renderMarkdown } from '../../../shared/markdown.js';
 ensureStateKitStyles();
 
 // ── Model registry ─────────────────────────────────────────────────────────────
-// Mirrors the MODELS table in api/llm/anthropic.js.
+// Each `model` is a route in the MODELS table of api/llm/anthropic.js (what the
+// saved brain runs on). Each `brain_key` is a PROVIDERS key of api/brain/chat.js
+// (what the live test below streams from), chosen to be the same model family.
 
 const MODELS = [
 	{
@@ -18,7 +20,7 @@ const MODELS = [
 		tier:    'Best quality',
 		ctx:     '200K',
 		color:   '#c8a96e',
-		brain_key: 'anthropic',
+		brain_key: 'claude-sonnet-4-6',
 	},
 	{
 		model:   'claude-haiku-4-5-20251001',
@@ -27,46 +29,52 @@ const MODELS = [
 		tier:    'Fast · cheap',
 		ctx:     '200K',
 		color:   '#b89050',
-		brain_key: 'anthropic',
-	},
-	{
-		model:   'llama-3.3-70b-versatile',
-		label:   'Llama 3.3 70B',
-		network: 'Groq',
-		tier:    'Free · fast',
-		ctx:     '128K',
-		color:   '#ff9a3c',
-		brain_key: 'groq-llama',
+		brain_key: 'claude-haiku-4-5',
 	},
 	{
 		model:   'google/gemma-4-31b-it:free',
-		label:   'Llama 3.3 70B',
+		label:   'Gemma 4 31B',
 		network: 'OpenRouter',
 		tier:    'Free · open-source',
 		ctx:     '128K',
 		color:   '#ff7b24',
-		brain_key: 'groq-llama',
+		brain_key: 'gpt-oss-120b',
 	},
 	{
-		model:   'nvidia/nemotron-3-super-120b-a12b:free',
-		label:   'GPT-OSS 120B',
-		network: 'OpenRouter',
-		tier:    'Free · OpenAI open-source',
+		model:   'qwen/qwen3.8-27b',
+		label:   'Qwen3 27B',
+		network: 'Groq',
+		tier:    'Free · fast',
+		ctx:     '128K',
+		color:   '#ff9a3c',
+		brain_key: 'qwen3.8-27b',
+	},
+	{
+		model:   'nvidia/nemotron-3-ultra-550b-a55b',
+		label:   'Nemotron 3 Ultra 550B',
+		network: 'NVIDIA NIM',
+		tier:    'Free · large reasoning',
 		ctx:     '128K',
 		color:   '#74c0fc',
-		brain_key: 'openai',
+		brain_key: 'nvidia-nemotron-super-49b',
 	},
 	{
-		model:   'google/gemma-4-31b-it:free',
-		label:   'Hermes 3 405B',
-		network: 'OpenRouter',
-		tier:    'Free · large open-source',
+		model:   'nvidia/nemotron-3.5-lightning-30b-a3b',
+		label:   'Nemotron 3.5 Lightning 30B',
+		network: 'NVIDIA NIM',
+		tier:    'Free · fast',
 		ctx:     '128K',
 		color:   '#69db7c',
-		brain_key: 'groq-llama',
+		brain_key: 'nvidia-nemotron-120b',
 	},
 ];
 const MODEL_DEFAULT = 'google/gemma-4-31b-it:free';
+// Groq ids retired upstream that older agents still store; the embed proxy
+// runs them on Groq's Qwen3 27B (api/llm/anthropic.js RETIRED_MODEL_IDS).
+const RETIRED_MODELS = {
+	'llama-3.3-70b-versatile': 'qwen/qwen3.8-27b',
+	'llama-3.1-8b-instant': 'qwen/qwen3.8-27b',
+};
 const MMAP = new Map(MODELS.map((m) => [m.model, m]));
 
 function friendly(err) {
@@ -377,7 +385,8 @@ export async function renderBrain(host) {
 	}
 
 	function renderAgentConfig(agent) {
-		const currentModel = agent.meta?.brain?.model || MODEL_DEFAULT;
+		const storedModel = agent.meta?.brain?.model || MODEL_DEFAULT;
+		const currentModel = RETIRED_MODELS[storedModel] || storedModel;
 		const systemPrompt = agent.system_prompt || '';
 		const currentInfo = MMAP.get(currentModel) || MMAP.get(MODEL_DEFAULT);
 

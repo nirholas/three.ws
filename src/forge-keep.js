@@ -68,6 +68,18 @@ export async function renderQuote(el, { tier, path, backend, images = false, hea
 	}
 }
 
+const TIER_PASS_WAIT_MS = 4_000;
+
+function passWithin(ms) {
+	let timer;
+	return Promise.race([
+		getTierPass({ interactive: false }).catch(() => null),
+		new Promise((resolve) => {
+			timer = setTimeout(() => resolve(null), ms);
+		}),
+	]).finally(() => clearTimeout(timer));
+}
+
 async function keepRequest(creationId, headers, payment) {
 	const res = await fetch('/api/forge-keep', {
 		method: 'POST',
@@ -90,7 +102,10 @@ async function keepRequest(creationId, headers, payment) {
 export async function ensureKept(creationId, { headers = {} } = {}) {
 	if (!creationId) return { ok: true };
 	try {
-		await getTierPass({ interactive: false }).catch(() => null);
+		// The holder pass is a bonus: a mint that stalls on a slow network must not
+		// freeze the Download button, so it gets a bounded wait and the keep check
+		// proceeds without it (the server then prices the caller as a non-holder).
+		await passWithin(TIER_PASS_WAIT_MS);
 		let { res, data } = await keepRequest(creationId, headers);
 		if (res.ok && data.kept) return { ok: true };
 		// The keep check is a bonus gate, never a reason a download that worked before

@@ -1,0 +1,83 @@
+{
+	"id": "grok-bot-mention-bot",
+	"scenarioHash": "a2892092e80a6b4b0034b9ba3a3ce0654bc9e21d0a6d27235907ae296c02c2c3",
+	"ranAt": "2026-11-14T02:30:00.815Z",
+	"target": {
+		"commit": "518f61469",
+		"revision": "three-ws-api-00536-rjn"
+	},
+	"passed": false,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/grok",
+			"detail": "loaded https://three.ws/grok",
+			"ok": true,
+			"ms": 15969,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 79298,
+			"frames": 66
+		},
+		{
+			"index": 3,
+			"kind": "scroll",
+			"target": "Run exactly what Grok runs",
+			"detail": "scrolled 2406 px",
+			"ok": true,
+			"ms": 27590,
+			"frames": 48
+		},
+		{
+			"index": 4,
+			"kind": "type",
+			"target": "a red vintage scooter",
+			"detail": "typed 21 characters",
+			"ok": true,
+			"ms": 45716,
+			"frames": 58
+		},
+		{
+			"index": 5,
+			"kind": "click",
+			"target": "Generate in 3D",
+			"detail": "clicked; POST /api/mcp-grok answered 200 in 0.3 s",
+			"ok": true,
+			"ms": 21226,
+			"frames": 21
+		},
+		{
+			"index": 6,
+			"kind": "expect",
+			"target": "Landed in",
+			"ok": false,
+			"detail": "locator.waitFor: Timeout 300000ms exceeded.",
+			"ms": 300862,
+			"frames": 0
+		}
+	],
+	"facts": {},
+	"saw": [],
+	"responses": [
+		{
+			"method": "POST",
+			"path": "/api/mcp-grok",
+			"status": 200,
+			"seconds": 0.3
+		}
+	],
+	"cuts": [
+		{
+			"afterStep": 6,
+			"seconds": 300.1
+		}
+	],
+	"video": null
+}

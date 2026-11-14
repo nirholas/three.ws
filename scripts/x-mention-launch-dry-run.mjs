@@ -5,13 +5,16 @@
 // function the /api/cron/x-mentions tick calls for every new mention
 // (handleMention in api/_lib/x-mention-poll.js): the real parser, the real
 // guard, the real per-author limits, the real budget gate, the real author
-// lookup against social_connections, and the real reply composer. Each post is
+// lookup (findUserByXId), and the real reply composer. Each post is
 // recorded on x_mention_events as a dry run, then read back so the evidence is
 // what the ledger (and /x/ops) actually holds, not what the script believes.
 //
-// Nothing is posted to X and nothing is launched: the company account is always
-// dry run inside handleMention, and a launch mention only ever produces a reply
-// carrying a /launch link the author signs on three.ws themselves.
+// Nothing is posted to X and nothing is launched. The run forces dry run no
+// matter what the calling shell holds: X_MENTION_BOT_LIVE is cleared in the env
+// handed to handleMention and the company sender resolver returns none, so the
+// live posting path (x-company-sender.js) can never engage. A launch mention
+// only ever produces a reply carrying a /launch link the author signs on
+// three.ws themselves.
 //
 // Rows land under account_ref `trythreews-evidence`, so they never appear in the
 // real account's review console or per-author limits. The shared post budget is
@@ -110,7 +113,10 @@ const CASES = [
 
 // The real gate decides; only the counter bump is withheld (see header).
 const budget = { ...xBudget, recordPosts: async () => {} };
-const limits = replyLimits(process.env);
+// Forced dry run (see header): no live switch, no company sender.
+const dryEnv = { ...process.env, X_MENTION_BOT_LIVE: '' };
+const noSender = async () => null;
+const limits = replyLimits(dryEnv);
 
 const rows = [];
 for (const [i, c] of CASES.entries()) {
@@ -126,7 +132,7 @@ for (const [i, c] of CASES.entries()) {
 		mentions: [{ username: 'trythreews', id: ACCOUNT.userId }], urls: [], media: [], isRetweet: false, fromSelf: false,
 		inReplyToUserId: null, repliedTo: null, quoted: null, account: ACCOUNT,
 	};
-	const result = await handleMention({ mention, account: ACCOUNT, limits, env: process.env, budget });
+	const result = await handleMention({ mention, account: ACCOUNT, limits, env: dryEnv, budget, companySender: noSender });
 	const event = await getMentionEvent(tweetId);
 	let linkStatus = null;
 	if (event?.reply_text) {

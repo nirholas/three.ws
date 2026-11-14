@@ -1,6 +1,7 @@
 // Headless smoke test for the local agent runtime. Starts the real runtime in a
 // temp directory (no Electron), points a paper-mode strategy at the live
-// pump.fun launch feed, runs one scheduler pass and prints what it did.
+// pump.fun launches (the venue's HTTP feed, or Solana RPC when that feed
+// refuses this network), runs one scheduler pass and prints what it did.
 // Nothing is signed and no funds move. Exit 0 on pass, 1 on fail.
 //
 //   npm run smoke:runtime
@@ -13,7 +14,8 @@ import { createPumpFeed } from '../src/runtime/feed.js';
 
 const dir = mkdtempSync(join(tmpdir(), 'three-ws-runtime-smoke-'));
 const events = [];
-const { runtime, keystore, log } = createLocalRuntime({ dir, safeStorage: null, onEvent: (e) => events.push(e.type) });
+const feed = createPumpFeed();
+const { runtime, keystore, log } = createLocalRuntime({ dir, safeStorage: null, feed, onEvent: (e) => events.push(e.type) });
 const failures = [];
 const check = (name, ok, detail = '') => {
 	console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${detail ? `: ${detail}` : ''}`);
@@ -28,11 +30,14 @@ try {
 	});
 	check('agent created with a keychain-store address', Boolean(agent.address) && keystore.address(agent.id) === agent.address, agent.address);
 
-	// The fill checks need real launches. When the venue's public feed is
-	// unreachable from this network (it answers 403 to some hosts), say so and
-	// skip them rather than reporting a runtime fault that is not one.
-	const feedLive = (await createPumpFeed().launches({ limit: 5 })).length > 0;
-	if (!feedLive) console.log('SKIP live launch feed unreachable from this network: fill checks not run');
+	// The fill checks need real launches. The feed reads them from the venue's
+	// HTTP feed, or from Solana RPC when that feed refuses this network; only
+	// when neither answers (no internet) are the fill checks skipped rather
+	// than reported as a runtime fault that is not one.
+	const live = await feed.launches({ limit: 5 });
+	const feedLive = live.length > 0;
+	if (feedLive) console.log(`INFO ${live.length} live launch(es) from ${feed.lastSource === 'chain' ? 'Solana RPC (venue HTTP feed refused this network)' : 'the venue HTTP feed'}`);
+	else console.log(`SKIP no live launches (source: ${feed.lastSource}): fill checks not run`);
 
 	await runtime.tick();
 

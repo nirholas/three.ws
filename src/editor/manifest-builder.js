@@ -16,8 +16,8 @@ import { GROK_MENU_MODELS, grokMenuModelId } from '../../api/_lib/chat-models.js
 const FREE_MODELS = [
 	{ id: 'google/gemma-4-31b-it:free', label: 'Gemma 4 31B (OpenRouter · free)' },
 	{ id: 'nvidia/nemotron-3-super-120b-a12b:free', label: 'Nemotron 3 Super 120B (OpenRouter · free)' },
-	{ id: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B (Groq · free, sub-second)' },
-	{ id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B (Groq · free, fastest)' },
+	{ id: 'qwen/qwen3.8-27b', label: 'Qwen3 27B (Groq · free, sub-second)' },
+	{ id: 'nvidia/nemotron-3-ultra-550b-a55b', label: 'Nemotron 3 Ultra 550B (NVIDIA · free)' },
 ];
 const ANTHROPIC_MODELS = [
 	{ id: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5' },

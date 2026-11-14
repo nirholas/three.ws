@@ -25,6 +25,7 @@
 import { sql } from './db.js';
 import { llmComplete, llmConfigured, LlmUnavailableError } from './llm.js';
 import { THREE_CA } from './three-gate.js';
+import { readTokenBalances, parseAmountTokens, resolveSellSize, formatRaw } from './token-position.js';
 import { recordCustodyEvent } from './agent-trade-guards.js';
 
 // pump.fun mints (including $THREE) are 6-decimal SPL tokens.
@@ -282,14 +283,6 @@ function validateTrade(params) {
 		return bad('a sell needs amount_tokens ("all" or a token amount) or token_amount_raw (a positive base-unit integer)');
 	}
 	return { ok: true, params: { side, mint, token_amount_raw: String(raw), amount_tokens: null, amount_sol: 0, slippage_bps: slippage, reason } };
-}
-
-/** "all" (any case) or a positive finite token amount; null when neither. */
-function parseAmountTokens(value) {
-	if (typeof value === 'string' && value.trim().toLowerCase() === 'all') return 'all';
-	if (typeof value !== 'number' && !(typeof value === 'string' && /^\s*\d*\.?\d+\s*$/.test(value))) return null;
-	const n = Number(value);
-	return Number.isFinite(n) && n > 0 ? n : null;
 }
 
 /** Validate + normalize a proposal of a given kind. Returns { ok, kind, params, rule? } | { ok:false, reason }. */
@@ -804,29 +797,11 @@ async function agentSolBalance(address) {
 	return lamports / LAMPORTS_PER_SOL;
 }
 
-/**
- * Every token the wallet holds a non-zero balance of (SPL Token and
- * Token-2022), as Map<mint, { raw: bigint, decimals }> summed across token
- * accounts. Live RPC read.
- */
+/** Every token the agent wallet holds, exact base units (see token-position.js). Live RPC read. */
 async function agentTokenBalances(address) {
-	const { PublicKey } = await import('@solana/web3.js');
-	const { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } = await import('@solana/spl-token');
 	const { solanaConnection } = await import('./solana/connection.js');
 	const conn = solanaConnection({ url: process.env.SOLANA_RPC_URL || null, network: 'mainnet', commitment: 'confirmed' });
-	const owner = new PublicKey(address);
-	const balances = new Map();
-	for (const programId of [TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID]) {
-		const resp = await conn.getParsedTokenAccountsByOwner(owner, { programId });
-		for (const { account } of resp.value) {
-			const info = account.data?.parsed?.info;
-			const raw = BigInt(info?.tokenAmount?.amount ?? '0');
-			if (!info?.mint || raw <= 0n) continue;
-			const prev = balances.get(info.mint);
-			balances.set(info.mint, { raw: (prev?.raw ?? 0n) + raw, decimals: Number(info.tokenAmount.decimals) || 0 });
-		}
-	}
-	return balances;
+	return readTokenBalances(conn, address);
 }
 
 /** Open positions: held mints excluding $THREE, which the agent only ever accumulates. */
@@ -834,40 +809,6 @@ async function agentOpenPositionMints(address) {
 	const balances = await agentTokenBalances(address);
 	balances.delete(THREE_CA);
 	return new Set(balances.keys());
-}
-
-/** A decimal token amount in base units, truncated (never rounded up) to the mint decimals. */
-function tokensToRaw(amount, decimals) {
-	const text = amount.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 });
-	const [whole, frac = ''] = text.split('.');
-	return BigInt(whole + frac.slice(0, decimals).padEnd(decimals, '0'));
-}
-
-/**
- * The exact base-unit size of a sell against the live position: "all" is the
- * whole balance, a token amount converts with the mint decimals. Returns
- * { raw, held } or { refusal: { code, message } }.
- */
-function resolveSellSize(p, position) {
-	const sym = p.mint.slice(0, 6) + '…';
-	if (!position) return { refusal: { code: 'no_position', message: `The agent wallet holds none of ${sym}, so there is nothing to sell.` } };
-	let raw;
-	if (p.amount_tokens === 'all') raw = position.raw;
-	else if (p.amount_tokens != null) raw = tokensToRaw(p.amount_tokens, position.decimals);
-	else raw = BigInt(p.token_amount_raw);
-	if (raw <= 0n) return { refusal: { code: 'invalid_trade', message: `That amount is below the smallest unit of ${sym}.` } };
-	if (raw > position.raw) {
-		return { refusal: { code: 'insufficient_tokens', message: `The wallet holds ${formatRaw(position.raw, position.decimals)} of ${sym}, less than the ${formatRaw(raw, position.decimals)} this sell asks for.` } };
-	}
-	return { raw: raw.toString(), held: position };
-}
-
-/** Base units as a human token amount (exact, no float rounding). */
-function formatRaw(raw, decimals) {
-	const s = raw.toString().padStart(decimals + 1, '0');
-	const whole = s.slice(0, s.length - decimals);
-	const frac = decimals ? s.slice(-decimals).replace(/0+$/, '') : '';
-	return `${BigInt(whole).toLocaleString('en-US')}${frac ? `.${frac}` : ''}`;
 }
 
 /** How a sell is sized, for titles and previews. */
@@ -994,7 +935,7 @@ async function previewTrade({ proposal, agent, config, t, checks }) {
 			checks.push({ label: 'Position held', ok: false, detail: 'could not read the wallet positions' });
 			return null;
 		}
-		const size = resolveSellSize(t, position);
+		const size = resolveSellSize({ mint: t.mint, amountTokens: t.amount_tokens, tokenAmountRaw: t.token_amount_raw }, position);
 		if (size.refusal) {
 			checks.push({ label: 'Position held', ok: false, detail: size.refusal.message });
 			return null;
@@ -1186,8 +1127,8 @@ async function executeTrade({ proposal, agent, userId, config }) {
 	if (p.side === 'sell') {
 		let position;
 		try { position = (await agentTokenBalances(address)).get(p.mint) || null; } catch { throw positionsUnavailable(); }
-		const size = resolveSellSize(p, position);
-		if (size.refusal) throw new AutopilotError(size.refusal.message, { code: size.refusal.code, status: size.refusal.code === 'invalid_trade' ? 400 : 409 });
+		const size = resolveSellSize({ mint: p.mint, amountTokens: p.amount_tokens, tokenAmountRaw: p.token_amount_raw }, position);
+		if (size.refusal) throw new AutopilotError(size.refusal.message, { code: size.refusal.code, status: size.refusal.status });
 		sellRaw = size.raw;
 	}
 

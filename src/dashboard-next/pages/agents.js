@@ -488,8 +488,13 @@ const BRAIN_LABELS = {
 	'claude-haiku-4-5-20251001': 'Claude Haiku 4.5',
 	'claude-opus-4-6': 'Claude Opus 4.6',
 	'claude-opus-4-7': 'Claude Opus 4.7',
-	'llama-3.3-70b-versatile': 'Llama 3.3 70B · Groq',
-	'llama-3.1-8b-instant': 'Llama 3.1 8B · Groq',
+	// Retired Groq ids still stored on older agents run on Groq's Qwen3 27B
+	// (api/llm/anthropic.js RETIRED_MODEL_IDS), so they label as what answers.
+	'qwen/qwen3.8-27b': 'Qwen3 27B · Groq',
+	'llama-3.3-70b-versatile': 'Qwen3 27B · Groq',
+	'llama-3.1-8b-instant': 'Qwen3 27B · Groq',
+	'nvidia/nemotron-3-ultra-550b-a55b': 'Nemotron 3 Ultra 550B · NVIDIA',
+	'nvidia/nemotron-3.5-lightning-30b-a3b': 'Nemotron 3.5 Lightning 30B · NVIDIA',
 	'google/gemma-4-31b-it:free': 'Gemma 4 31B · OpenRouter',
 	'meta-llama/llama-3.1-8b-instruct:free': 'Llama 3.1 8B · OpenRouter',
 	'nvidia/nemotron-3-super-120b-a12b:free': 'Nemotron 3 Super 120B · OpenRouter',

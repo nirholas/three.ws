@@ -101,24 +101,78 @@ export const METRICS = {
 
 export const SCAN_KINDS = ['newTokens', 'trending', 'mintList'];
 
+const LAMPORTS_PER_SOL = 1e9;
+const PUMP_TOKEN_DECIMALS = 6;
+
+/** A finite number from a number or numeric string, else undefined. */
+function num(v) {
+	if (v == null || v === '') return undefined;
+	const n = typeof v === 'number' ? v : Number(v);
+	return Number.isFinite(n) ? n : undefined;
+}
+
+/** First finite value among the candidates, else undefined. */
+function firstNum(...candidates) {
+	for (const c of candidates) {
+		const n = num(c);
+		if (n !== undefined) return n;
+	}
+	return undefined;
+}
+
+/**
+ * Spot price in SOL per whole token. An explicit price wins; otherwise it is
+ * derived from the bonding curve's virtual reserves, which is what the live
+ * pump-fun MCP `getBondingCurve` returns (lamports over 6-decimal base units).
+ */
+export function curvePriceSol(curve, decimals = PUMP_TOKEN_DECIMALS) {
+	const explicit = firstNum(curve?.priceSol, curve?.price);
+	if (explicit !== undefined) return explicit;
+	const vSol = num(curve?.virtualSolReserves);
+	const vTok = num(curve?.virtualTokenReserves);
+	if (vSol === undefined || vTok === undefined || vSol <= 0 || vTok <= 0) return undefined;
+	return (vSol / LAMPORTS_PER_SOL) / (vTok / 10 ** decimals);
+}
+
+function launchAgeSec(details) {
+	const raw = details?.createdAt ?? details?.created_at ?? details?.created_timestamp;
+	if (raw == null) return undefined;
+	const ms = typeof raw === 'number' ? (raw < 1e12 ? raw * 1000 : raw) : new Date(raw).getTime();
+	if (!Number.isFinite(ms)) return undefined;
+	return Math.max(0, (Date.now() - ms) / 1000);
+}
+
 // Build the `view` object the predicates evaluate against. Pure: takes raw
 // pump-fun-style payloads + (optional) position state.
+//
+// A metric whose source payload is missing or does not carry it stays
+// undefined, never 0: evalPredicate treats undefined as false, so a filter on
+// data we could not fetch fails closed instead of passing on a fabricated zero
+// ("creator.rugCount == 0" must not pass because the creator profile is down).
 export function buildView({ details, holders, creator, curve, position, trades }) {
+	const decimals = firstNum(details?.decimals) ?? PUMP_TOKEN_DECIMALS;
+	const priceSol = curvePriceSol(curve, decimals);
+	const supplyRaw = num(details?.supply);
 	const v = {
 		holders: {
-			total: holders?.total ?? holders?.holders?.length ?? 0,
-			topHolderPct: holders?.topHolderPct ?? holders?.holders?.[0]?.pct ?? 0,
+			// `holders.count` from the MCP is the size of the largest-accounts
+			// sample (max 20), not the number of holders, so it is not used here.
+			total: firstNum(holders?.total, holders?.holderCount),
+			topHolderPct: firstNum(holders?.topHolderPct, holders?.topHolderPercent, holders?.holders?.[0]?.pct),
 		},
 		creator: {
-			rugCount: creator?.rugCount ?? creator?.rugFlags?.length ?? 0,
+			rugCount: firstNum(creator?.rugCount, creator?.rug_count, Array.isArray(creator?.rugFlags) ? creator.rugFlags.length : undefined),
 		},
 		curve: {
-			graduationPct: curve?.graduationPct ?? curve?.progressPct ?? 0,
-			priceSol: curve?.priceSol ?? curve?.price ?? 0,
+			graduationPct: firstNum(curve?.graduationPct, curve?.graduationPercent, curve?.progressPct),
+			priceSol,
 		},
 		token: {
-			ageSec: details?.createdAt ? (Date.now() - new Date(details.createdAt).getTime()) / 1000 : 0,
-			marketCapSol: details?.marketCapSol ?? 0,
+			ageSec: launchAgeSec(details),
+			marketCapSol: firstNum(
+				details?.marketCapSol,
+				priceSol !== undefined && supplyRaw !== undefined ? priceSol * (supplyRaw / 10 ** decimals) : undefined,
+			),
 		},
 	};
 	if (position) {

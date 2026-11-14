@@ -55,7 +55,7 @@ const PRESETS = {
 const MODELS = {
 	'claude-sonnet-4-6': { label: 'Claude Sonnet 4.6' },
 	'google/gemma-4-31b-it:free': { label: 'Gemma 4 31B' },
-	'llama-3.3-70b-versatile': { label: 'Llama 3.3 70B' },
+	'qwen/qwen3.8-27b': { label: 'Qwen3 27B' },
 };
 const DEFAULT_MODEL = 'claude-sonnet-4-6';
 

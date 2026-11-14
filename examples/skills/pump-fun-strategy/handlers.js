@@ -118,10 +118,14 @@ async function fetchCandidates(ctx, scan) {
 	return r?.tokens ?? r ?? [];
 }
 
+// The token itself must be readable. Holders and the creator profile are
+// optional sources: when one is down (an RPC 429, an unconfigured indexer) its
+// metrics stay undefined in buildView, so only the filters that reference them
+// fail closed and every other strategy keeps running.
 async function snapshotMint(ctx, mint) {
 	const [details, holders, curve] = await Promise.all([
 		call(ctx, 'pump-fun.getTokenDetails', { mint }),
-		call(ctx, 'pump-fun.getTokenHolders', { mint, limit: 20 }),
+		call(ctx, 'pump-fun.getTokenHolders', { mint, limit: 20 }).catch(() => null),
 		call(ctx, 'pump-fun.getBondingCurve', { mint }).catch(() => null),
 	]);
 	const creatorAddr = details?.creator ?? details?.token?.creator;
@@ -129,6 +133,13 @@ async function snapshotMint(ctx, mint) {
 		? await call(ctx, 'pump-fun.getCreatorProfile', { creator: creatorAddr }).catch(() => ({}))
 		: {};
 	return { details, holders, curve, creator };
+}
+
+/** Fill a missing launch time on token details from the scan listing row. */
+function withListingTime(details, listing) {
+	if (details?.createdAt != null || details?.created_at != null) return details;
+	const created = listing?.created_at ?? listing?.createdAt ?? listing?.created_timestamp;
+	return created == null ? details : { ...details, created_at: created };
 }
 
 async function maybeBuy(ctx, simulate, mint, amountSol) {
@@ -205,7 +216,8 @@ export async function runStrategy(args, ctx) {
 				seen.add(mint);
 				const snap = await snapshotMint(ctx, mint).catch(() => null);
 				if (!snap) continue;
-				const view = buildView(snap);
+				// getTokenDetails carries no launch time; the scan listing does.
+				const view = buildView({ ...snap, details: withListingTime(snap.details, t) });
 				if (!compiled.passes(view)) {
 					emit({ mint, action: 'skip', view });
 					continue;
@@ -223,10 +235,10 @@ export async function runStrategy(args, ctx) {
 					spent += perTrade;
 					positions.set(mint, {
 						amountTokens: buy.amountTokens ?? 0,
-						entryPriceSol: snap.curve?.priceSol ?? 0,
+						entryPriceSol: view.curve.priceSol ?? 0,
 						openedAt: Date.now(),
 					});
-					emit({ mint, action: 'enter', sig: buy.sig, spent, entryPriceSol: snap.curve?.priceSol ?? 0 });
+					emit({ mint, action: 'enter', sig: buy.sig, spent, entryPriceSol: view.curve.priceSol ?? 0 });
 					if (spent + perTrade > cap) break;
 				} catch (e) {
 					if (policySettle && !simulate) await policySettle({ mint, ok: false }).catch(() => {});
@@ -432,4 +444,4 @@ export async function closeAllPositions(args, ctx) {
 }
 
 // Re-exported for tests.
-export { parsePredicate, evalPredicate, buildView, compileStrategy, validateStrategySpec, strategyErrors };
+export { parsePredicate, evalPredicate, buildView, compileStrategy, validateStrategySpec, strategyErrors, snapshotMint, fetchCandidates, withListingTime };

@@ -112,6 +112,7 @@ from instance_health import (
     task_is_orphaned,
     trim_heap,
 )
+from memory_probe import GIB, PhasePeaks
 
 logging.basicConfig(
     level=logging.INFO,
@@ -155,6 +156,23 @@ _task_locks: dict[str, asyncio.Lock] = {}
 # Tasks this instance has accepted and not yet finished.
 _live_tasks: set[str] = set()
 _memory_baseline: Optional[MemorySample] = None
+# Peak host memory per pipeline stage, logged as each stage finishes so the last
+# line before a signal 9 names the stage that crossed the 32 GiB ceiling.
+_probe = PhasePeaks(
+    on_exit=lambda name, peak: log.info("memory phase %s peaked at %.1f GiB", name, peak / GIB)
+)
+# The TRELLIS.2 pipeline methods each stage runs, and the phase name they log as.
+PIPELINE_PHASES = {
+    "preprocess_image": "preprocess",
+    "get_cond": "condition",
+    "sample_sparse_structure": "sample_structure",
+    "sample_shape_slat": "sample_shape",
+    "sample_shape_slat_cascade": "sample_shape",
+    "sample_tex_slat": "sample_texture",
+    "decode_shape_slat": "decode_shape",
+    "decode_tex_slat": "decode_texture",
+    "decode_latent": "decode",
+}
 _draining = False
 _restart_signalled = False
 
@@ -263,6 +281,9 @@ def _load_pipeline():
     _memory_baseline = read_memory()
     if _memory_baseline is not None:
         log.info("memory after load: %s", _memory_baseline.describe())
+    for method, phase in PIPELINE_PHASES.items():
+        _probe.wrap(_pipeline, method, phase)
+    _probe.start()
 
 
 async def _load_pipeline_bg():
@@ -716,6 +737,7 @@ async def _run_job(
                 elapsed_ms=int((time.time() - t0) * 1000),
             )
         finally:
+            log.info("[%s] %s", task_id, _probe.describe())
             # Hand this job's GPU memory back before releasing the semaphore so
             # the next inference starts against a drained device. Torch's caching
             # allocator and the native bake libraries hold freed blocks in
@@ -736,7 +758,13 @@ def _generate(
     """One synchronous generation: sample, bake to a PBR GLB, keep alpha, pack."""
     import o_voxel
 
+    _probe.reset()
     overrides = sampler or {}
+    with _probe.phase("generate"):
+        return _sample_and_bake(o_voxel, image, resolution, seed, texture_size, decimation_target, overrides)
+
+
+def _sample_and_bake(o_voxel, image, resolution, seed, texture_size, decimation_target, overrides):
     outputs = _pipeline.run(
         image,
         seed=seed,
@@ -749,9 +777,28 @@ def _generate(
         tex_slat_sampler_params=overrides.get("tex_slat", {}),
     )
     mesh = outputs[0]
-    mesh.simplify(16777216)  # largest face id a float32 rast channel holds exactly
+    del outputs
+    log.info(
+        "decoded mesh: %d vertices, %d faces, %d texture voxels",
+        mesh.vertices.shape[0], mesh.faces.shape[0], mesh.coords.shape[0],
+    )
+    with _probe.phase("simplify"):
+        mesh.simplify(16777216)  # largest face id a float32 rast channel holds exactly
     bake = bake_params(resolution, texture_size, decimation_target)
-    glb = o_voxel.postprocess.to_glb(
+    with _probe.phase("to_glb"):
+        glb = _to_glb(o_voxel, mesh, bake)
+    del mesh
+    with _probe.phase("export"):
+        alpha_mode = glb_pack.blend_if_translucent(glb)
+        raw = glb.export(file_type="glb", extension_webp=True)
+    del glb
+    with _probe.phase("pack"):
+        packed_bytes, packed = glb_pack.compress(raw)
+    return packed_bytes, alpha_mode, packed
+
+
+def _to_glb(o_voxel, mesh, bake):
+    return o_voxel.postprocess.to_glb(
         vertices=mesh.vertices,
         faces=mesh.faces,
         attr_volume=mesh.attrs,
@@ -766,10 +813,6 @@ def _generate(
         remesh_project=0,
         verbose=False,
     )
-    alpha_mode = glb_pack.blend_if_translucent(glb)
-    raw = glb.export(file_type="glb", extension_webp=True)
-    packed_bytes, packed = glb_pack.compress(raw)
-    return packed_bytes, alpha_mode, packed
 
 
 def _release_gpu_memory() -> None:

@@ -85,7 +85,7 @@ const PROVIDERS = {
 	},
 	groq: {
 		envKey: 'GROQ_API_KEY',
-		defaultModel: 'llama-3.3-70b-versatile',
+		defaultModel: PROVIDER_MODEL_DEFAULTS.groq,
 		url: 'https://api.groq.com/openai/v1/chat/completions',
 		style: 'openai',
 	},

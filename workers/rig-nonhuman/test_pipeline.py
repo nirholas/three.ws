@@ -91,22 +91,15 @@ def _fake_py_script(path: Path, writes: Path | None = None, exit_code: int = 0) 
 
 def _merged_glb(path: Path, two_roots: bool) -> None:
     """A minimal GLB shaped like UniRig's merge output: an Armature node over
-    the skin's joints. With two_roots the last joint is a second root, the
-    shape the fox QA run produced on 2026-11-04."""
-    doc = {
-        "asset": {"version": "2.0"},
-        "scenes": [{"nodes": [0, 4]}],
-        "nodes": [
-            {"name": "Armature", "children": [1, 3] if two_roots else [1]},
-            {"name": "bone_1", "children": [2], "translation": [0.0, 1.0, 0.0]},
-            {"name": "bone_2", **({} if two_roots else {"children": [3]}), "translation": [0.0, 1.0, 0.0]},
-            {"name": "bone_3", "translation": [0.2, 2.1, 0.0] if two_roots else [0.2, 0.1, 0.0]},
-            {"name": "character", "mesh": 0, "skin": 0},
-        ],
-        "meshes": [{"primitives": [{"attributes": {"POSITION": 0}}]}],
-        "skins": [{"joints": [1, 2, 3]}],
-    }
-    write_glb(path, doc, b"\x00" * 16)
+    the skin's joints, with real geometry and skin accessors. With two_roots
+    the last joint is a second root, the shape the fox QA run produced on
+    2026-11-04."""
+    bones = [
+        ("bone_1", -1, (0.0, 1.0, 0.0)),
+        ("bone_2", 0, (0.0, 1.0, 0.0)),
+        ("bone_3", -1, (0.2, 2.1, 0.0)) if two_roots else ("bone_3", 1, (0.2, 0.1, 0.0)),
+    ]
+    unweighted_merge_glb(path, bones=bones, neutral_bone=False)
 
 
 def _fake_merge_copying(path: Path, source: Path) -> None:
@@ -157,7 +150,7 @@ def test_run_pipeline_chains_all_three_steps():
         )
         _merged_glb(root / "merge-output.glb", two_roots=False)
         _fake_merge_copying(unirig_dir / "launch/inference/merge.sh", root / "merge-output.glb")
-        _fake_py_script(skintokens_dir / "demo.py", workdir / "rigged.glb")
+        (skintokens_dir / "demo.py").write_text(SKINTOKENS_TRIM_SCRIPT)
 
         result = run_pipeline(mesh_glb, workdir, unirig_dir, skintokens_dir)
 

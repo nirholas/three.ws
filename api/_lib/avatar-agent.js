@@ -6,9 +6,15 @@
 import { sql } from './db.js';
 import { withDbRetry } from './db-retry.js';
 import { writeAssetProvenance } from './asset-provenance.js';
+import { ensureAgentLaunchPath } from './agent-token-plan.js';
+
+// Names the platform gives an agent before its owner names it. A coin drafted
+// for an agent still wearing one of these takes the avatar's name instead.
+const PLACEHOLDER_AGENT_NAMES = new Set(['my first agent', 'my agent', 'agent']);
 
 // Claim an existing agent that has no avatar yet, or create a default one, then
-// ensure that agent has a custodial Solana wallet. Idempotent and safe to retry
+// put that agent on the coin path: a custodial Solana wallet and a private
+// auto-drafted coin plan (ensureAgentLaunchPath). Idempotent and safe to retry
 // (the claim is naturally idempotent and the insert is guarded by NOT EXISTS),
 // so a transient DB blip never leaves an avatar without its agent. Never throws
 // — callers run it fire-and-forget via queueMicrotask. Returns the agent id (or
@@ -22,7 +28,7 @@ import { writeAssetProvenance } from './asset-provenance.js';
 //   authorship alone is meaningful provenance. Best-effort, never blocks.
 export async function provisionAvatarAgent({ userId, avatarId, avatarName, provenance }) {
 	try {
-		const agentId = await withDbRetry(async () => {
+		const agent = await withDbRetry(async () => {
 			const linked = await sql`
 				WITH agent_to_update AS (
 					SELECT id FROM agent_identities
@@ -36,9 +42,10 @@ export async function provisionAvatarAgent({ userId, avatarId, avatarName, prove
 				SET avatar_id = ${avatarId}, updated_at = NOW()
 				FROM agent_to_update
 				WHERE agent_identities.id = agent_to_update.id
-				RETURNING agent_identities.id
+				RETURNING agent_identities.id, agent_identities.user_id, agent_identities.name,
+					agent_identities.description, agent_identities.persona_prompt, agent_identities.meta
 			`;
-			if (linked.length) return linked[0].id;
+			if (linked.length) return linked[0];
 			const [created] = await sql`
 				INSERT INTO agent_identities (user_id, name, avatar_id, is_public, created_at, updated_at)
 				SELECT
@@ -52,20 +59,21 @@ export async function provisionAvatarAgent({ userId, avatarId, avatarName, prove
 					SELECT 1 FROM agent_identities
 					WHERE user_id = ${userId} AND avatar_id = ${avatarId}
 				)
-				RETURNING id
+				RETURNING id, user_id, name, description, persona_prompt, meta
 			`;
-			return created?.id ?? null;
+			return created ?? null;
 		});
+		const agentId = agent?.id ?? null;
 
 		// Every 3D avatar's agent gets a custodial Solana wallet on first save so
-		// it can transact immediately. Solana-only by product decision — EVM is
-		// opt-in via the wallet panel. Idempotent: an agent that already has a
-		// Solana wallet is untouched.
+		// it can transact immediately (Solana-only by product decision; EVM is
+		// opt-in via the wallet panel), and a draft coin plan so its home page
+		// leads with the launch. Both idempotent and never throw.
 		if (agentId) {
-			const { getOrCreateAgentSolanaWallet } = await import('./agent-wallet.js');
-			await getOrCreateAgentSolanaWallet(agentId).catch((e) =>
-				console.warn('[avatar-agent] solana wallet provision failed', agentId, e?.message),
-			);
+			const placeholder = PLACEHOLDER_AGENT_NAMES.has(String(agent.name || '').trim().toLowerCase());
+			await ensureAgentLaunchPath({
+				agent: { ...agent, user_id: agent.user_id || userId, name: placeholder && avatarName ? avatarName : agent.name },
+			});
 
 			// Signed provenance on generation (Prompt 08, task 1): a durable,
 			// append-only ledger record of authorship — creator (the agent),

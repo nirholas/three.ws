@@ -8,6 +8,9 @@ so this worker calls them as subprocesses, the same way their own docs do.
      arbitrary mesh (quadruped, creature, prop) and writes it as .fbx.
   2. UniRig's merge.sh grafts that skeleton onto the ORIGINAL .glb (adds
      joint nodes; no skinning weights yet).
+  2b. skeleton_roots.single_root_skeleton gives the skeleton one root, and
+      skin_seed.seed_skin_weights gives every joint a starting weight so
+      SkinTokens' trim keeps the whole skeleton.
   3. SkinTokens' demo.py --use_skeleton --use_transfer takes the
      skeleton-merged .glb and predicts ONLY the skinning weights, preserving
      the original texture and scale, and writes a fully rigged .glb.
@@ -26,6 +29,7 @@ import subprocess
 from pathlib import Path
 
 from skeleton_roots import SkeletonNormalizeError, single_root_skeleton
+from skin_seed import seed_skin_weights, skin_joint_count
 
 log = logging.getLogger("rig-nonhuman.pipeline")
 
@@ -33,6 +37,10 @@ log = logging.getLogger("rig-nonhuman.pipeline")
 # one mesh; generous but finite so a wedged subprocess cannot hang a task
 # forever. The caller still enforces an overall job timeout on top of this.
 SUBPROCESS_TIMEOUT_S = 600.0
+
+# One joint cannot articulate anything: a rig with fewer joints than this is a
+# failed rig, never a result.
+MIN_RIG_JOINTS = 2
 
 
 def build_skeleton_cmd(mesh_glb: Path, skeleton_fbx: Path) -> list[str]:
@@ -150,8 +158,25 @@ def run_pipeline(mesh_glb: Path, workdir: Path, unirig_dir: Path, skintokens_dir
         raise PipelineStepError(f"unirig-merge wrote an unusable file: {exc}") from exc
     if reparented:
         log.info("[unirig-merge] re-parented %d extra root joint(s) under the main skeleton", reparented)
+    # UniRig's merge leaves every vertex on Blender's neutral_bone, and
+    # SkinTokens' trim then deletes every unweighted joint. See skin_seed.py.
+    try:
+        seeded = seed_skin_weights(merged_glb)
+    except SkeletonNormalizeError as exc:
+        raise PipelineStepError(f"unirig-merge wrote an unusable file: {exc}") from exc
+    log.info("[unirig-merge] seeded starting weights on %d joint(s)", seeded)
     _run_step(
         build_skin_cmd(merged_glb, rigged_glb), skintokens_dir,
         "skintokens-skin", rigged_glb,
     )
+    try:
+        joints = skin_joint_count(rigged_glb)
+    except SkeletonNormalizeError as exc:
+        raise PipelineStepError(f"skintokens-skin wrote an unusable file: {exc}") from exc
+    if joints < MIN_RIG_JOINTS:
+        raise PipelineStepError(
+            f"skintokens-skin returned a rig with {joints} joint{'' if joints == 1 else 's'} "
+            f"(the UniRig skeleton had {seeded}); a rig needs at least {MIN_RIG_JOINTS} joints to move"
+        )
+    log.info("[skintokens-skin] rig has %d joint(s) of %d predicted", joints, seeded)
     return rigged_glb

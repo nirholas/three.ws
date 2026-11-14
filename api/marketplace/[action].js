@@ -24,6 +24,7 @@ import { thumbnailUrl, cdnUrlOrNull } from '../_lib/r2.js';
 import { pedigreeScore } from '../_lib/genome.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
+import { ensureAgentLaunchPath } from '../_lib/agent-token-plan.js';
 import { markProviderCooldown, AUTH_COOLDOWN_SECONDS } from '../_lib/provider-health.js';
 import { OPENROUTER_ATTRIBUTION_HEADERS } from '../_lib/openrouter-attribution.js';
 import {
@@ -37,6 +38,7 @@ import {
 	XAI_CHAT_COMPLETIONS_URL,
 	GROK_BUDGET_MODEL,
 	GROK_BUDGET_EXTRA_BODY,
+	PROVIDER_MODEL_DEFAULTS,
 } from '../_lib/chat-models.js';
 import { getSkillPrices, skillPriceMap } from '../_lib/skill-price-cache.js';
 import { viewerNftGatedSkills } from '../_lib/nft-gate.js';
@@ -370,6 +372,9 @@ async function handleCreate(req, res) {
 		)
 		RETURNING *
 	`;
+	// The coin is the default next step for every new agent: a custodial Solana
+	// wallet to sign the launch and a private draft plan. Never throws.
+	await ensureAgentLaunchPath({ agent });
 
 	if (publish) {
 		await sql`
@@ -900,7 +905,8 @@ const PREVIEW_PROVIDERS = {
 	groq: {
 		envKey: 'GROQ_API_KEY',
 		url: 'https://api.groq.com/openai/v1/chat/completions',
-		defaultModel: 'llama-3.3-70b-versatile',
+		// Groq retired its Llama 3.x lanes; the shared default tracks the live id.
+		defaultModel: PROVIDER_MODEL_DEFAULTS.groq,
 		style: 'openai',
 	},
 	// NVIDIA NIM free tier — third independent free lane (see api/_lib/llm.js).
@@ -1362,14 +1368,16 @@ async function handleFork(req, res, id) {
 				${src.capabilities}::jsonb,
 				${src.id}
 			)
-			RETURNING id, name, description, category, tags, fork_of, created_at
+			RETURNING id, user_id, name, description, category, tags, fork_of, created_at
 		`,
 		sql`UPDATE agent_identities SET forks_count = forks_count + 1 WHERE id = ${id}`,
 	]);
 
 	const created = createdRows[0];
 	if (!created) return error(res, 500, 'db_error', 'Fork failed');
-	return json(res, 201, { data: { agent: created } });
+	await ensureAgentLaunchPath({ agent: { ...created, meta: {} } });
+	const { user_id: _owner, ...forked } = created;
+	return json(res, 201, { data: { agent: forked } });
 }
 
 // ── Bookmark ───────────────────────────────────────────────────────────────
