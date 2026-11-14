@@ -53,6 +53,17 @@ describe('store requirements', () => {
 		for (const store of Object.keys(STORES)) expect(covered.has(store)).toBe(true);
 	});
 
+	it('renders the 300 x 300 store logos for the PowerPoint add-in and Power BI visual listings', () => {
+		for (const store of ['powerpoint', 'powerbi']) {
+			const logos = ASSETS.filter((a) => a.store === store);
+			expect(logos).toEqual([expect.objectContaining({ file: 'logo-300x300.png', from: 'logo', width: 300, height: 300, format: 'png' })]);
+		}
+		expect(STORES.powerbi.verified).toBe(true);
+		expect(STORES.powerpoint.verified).toBe(false);
+		expect(SUBMISSION_FILES['marketing/growth/submissions/programs/microsoft-power-bi-visual.md']).toEqual(['powerbi']);
+		expect(SUBMISSION_FILES['marketing/growth/submissions/programs/microsoft-powerpoint-addin.md']).toEqual(['powerpoint']);
+	});
+
 	it('caps Teams screenshots at the published 1,024 KB', () => {
 		for (const a of ASSETS.filter((x) => x.store === 'teams')) expect(a.maxBytes).toBe(1024 * 1024);
 	});

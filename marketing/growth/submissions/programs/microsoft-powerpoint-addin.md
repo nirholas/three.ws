@@ -13,7 +13,7 @@ The add-in is a task pane served by `https://three.ws/office/powerpoint`. Its ma
 |---|---|
 | Manifest | [`integrations/microsoft/office-addin/manifest.xml`](../../../../integrations/microsoft/office-addin/manifest.xml) (XML, TaskPaneApp, host Presentation, PowerPointApi 1.2). `npx office-addin-manifest validate manifest.xml` passes |
 | Icons in the manifest | `https://three.ws/office/powerpoint/icon-{16,32,64,80}.png`, from `public/office/powerpoint/` |
-| Store logo, 300 x 300 PNG | Upscale `public/office/powerpoint/icon-128.png` to 300 x 300 |
+| Store logo, 300 x 300 PNG | [`marketing/microsoft/media/powerpoint/logo-300x300.png`](../../../microsoft/media/powerpoint/logo-300x300.png), rendered by `npm run media:microsoft` from the same brand cube as the manifest icons (listed under Listing media below) |
 | Screenshots, 1366 x 768 PNG, one to five | Taken by the owner in PowerPoint for the web: the pane signed in with Your models, generating a model with the progress bar, the inserted slide in edit mode, the slideshow with the model rotated, the slide after a Morph transition |
 | Test notes for the validators | Below, plus a three.ws test account the owner creates for review (credentials go only into the Partner Center "Notes for certification" field, never into this repo) |
 | Support link | `https://three.ws/support`, contact `support@three.ws` |

@@ -10,7 +10,7 @@ Output:
 
 | Path | What it is |
 | --- | --- |
-| `marketplace/`, `teams/`, `msstore/`, `edge/` | Store images at each slot's exact size, committed. |
+| `marketplace/`, `teams/`, `msstore/`, `edge/`, `powerpoint/`, `powerbi/` | Store images at each slot's exact size, committed. The PowerPoint add-in and Power BI visual folders hold only their 300 x 300 store logos: their screenshots have to show the add-in inside PowerPoint and the visual inside Power BI Desktop, so the owner takes those in the apps. |
 | `video/three-ws-demo.en.srt`, `.vtt` | Captions for the demo video (SRT for YouTube and Vimeo, WebVTT for the Microsoft Store). |
 | `video/narration.txt` | The voice-over script, line by line, timed to the captions. |
 | `manifest.json` | Every asset with its size, bytes and sha256, plus the video's public URL, size and sha256. |
@@ -100,6 +100,8 @@ Read on 2026-11-14. The script copy is `STORES` in `scripts/lib/microsoft-listin
 | Microsoft Store (Windows app) | Desktop screenshots: 1 to 10, PNG, 1366 x 768 up to 3840 x 2160, 50 MB maximum. 1:1 tile icon: 300 x 300. Trailer: MP4, H.264 and AAC, 1920 x 1080, under 2 GB, 60 s or less recommended, with a 1920 x 1080 thumbnail and optional WebVTT. | <https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/screenshots-and-images> |
 | Microsoft Edge Add-ons | Logo: 300 x 300 recommended, 128 x 128 minimum. Small tile 440 x 280. Large tile 1400 x 560. Screenshots: up to 6, 640 x 480 or 1280 x 800. Optional YouTube video. | <https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension> |
 | Visual Studio Marketplace | Icon: PNG, 128 px or larger, not SVG. README images: https and not SVG. | <https://code.visualstudio.com/api/working-with-extensions/publishing-extension> |
+| Office add-in (PowerPoint) | At least one 1366 x 768 screenshot, 1,024 KB maximum. Store logo 300 x 300 PNG: Partner Center asks for it, but no Microsoft Learn page publishes the size, so the kit marks this store unverified. | <https://learn.microsoft.com/en-us/partner-center/marketplace-offers/craft-effective-appsource-store-images> |
+| Power BI visual | Logo: PNG, exactly 300 x 300. Screenshots: 1 to 5, PNG, exactly 1366 x 768, 1,024 KB maximum. Optional https video link. | <https://learn.microsoft.com/en-us/power-bi/developer/visuals/office-store> |
 
 Two image sets are produced by their own pipelines. The kit checks them against their slots and lists them in the manifest, without capturing them again:
 

@@ -13,7 +13,7 @@ Approved partnership wording only: "three.ws and Microsoft have announced a part
 |---|---|
 | `.pbiviz` package | `cd integrations/microsoft/power-bi-visual && npm ci && npm run package` writes `dist/threeWsModels8BB6C69EBE4F4886851A7E3082576E7B.1.0.0.0.pbiviz` |
 | Sample report (`sample.pbix`) | Built by the owner in Power BI Desktop with the exact steps in the visual's [README](../../../../integrations/microsoft/power-bi-visual/README.md#building-the-sample-report-samplepbix). It uses three production models: a GLB URL, a model id and a Draco GLB |
-| Logo, 300 x 300 PNG | Upscale `integrations/microsoft/power-bi-visual/assets/icon.png` (the visual icon) to 300 x 300 |
+| Logo, 300 x 300 PNG | [`marketing/microsoft/media/powerbi/logo-300x300.png`](../../../microsoft/media/powerbi/logo-300x300.png), rendered by `npm run media:microsoft` from the same brand cube as the visual icon (listed under Listing media below) |
 | Screenshots, 1366 x 768 PNG, one to five | Taken from `sample.pbix` in Power BI Desktop: grid with the colour measure, single model, turntable gallery with 30 rows, cross-filtering with a bar chart, the landing page |
 | Source code link | `https://github.com/nirholas/three.ws/tree/main/integrations/microsoft/power-bi-visual` (also `gitHubUrl` in `pbiviz.json`) |
 | Support link | `https://three.ws/support`, contact `support@three.ws` (author in `pbiviz.json`) |
