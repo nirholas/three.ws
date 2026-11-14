@@ -1,6 +1,6 @@
 # microsoft 21: an internal Microsoft partnership dashboard (SaaS subscriptions, metering, Teams, connector, alerts)
 
-Status 2026-11-11: built and verified against production data; paused on owner steps (alert channel env, Marketplace credentials, Partner Center Entra app with Manager role, Cloud Scheduler sync, push and deploy). Not deleted until those land.
+Status 2026-11-14: re-verified. Push, production deploy and Cloud Scheduler sync have landed (microsoft-alerts returns 200 every 5 min on prod, microsoft-partner-center ran 200 with not_configured). Remaining owner steps: a private alert channel (TELEGRAM_ALERTS_CHAT_ID and/or OPS_ALERT_EMAILS on three-ws-api), MS_MARKETPLACE_TENANT_ID/CLIENT_ID/CLIENT_SECRET, and the Entra app added in Partner Center with the Manager role. Not deleted until those land.
 
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3121.
 
