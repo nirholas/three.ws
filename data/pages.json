@@ -5075,6 +5075,12 @@
 					"added": "2026-07-14"
 				},
 				{
+					"path": "/docs/ai-sdk",
+					"title": "Docs · Vercel AI SDK tools",
+					"description": "@three-ws/ai-sdk: forge, rig, render and animate 3D models and chat with a three.ws agent from any Vercel AI SDK agent loop. Four of the five tools are free with no key.",
+					"added": "2026-11-14"
+				},
+				{
 					"path": "/docs/google-adk",
 					"title": "Docs · three.ws with Google ADK",
 					"description": "Connect a Google Agent Development Kit agent to the free three.ws 3D studio over MCPToolset: discover the tool catalog, forge and rig models, and run a full LlmAgent conversation. No account, payment or API key for the studio tools.",

@@ -1138,6 +1138,10 @@
 					"path": "mcp-x402"
 				},
 				{
+					"label": "Vercel AI SDK tools",
+					"path": "ai-sdk"
+				},
+				{
 					"label": "AR in ChatGPT",
 					"path": "chatgpt-ar"
 				},
