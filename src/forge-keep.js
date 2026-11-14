@@ -116,3 +116,40 @@ export async function ensureKept(creationId, { headers = {} } = {}) {
 		return { ok: true };
 	}
 }
+
+/**
+ * Save a file under `filename`. Fetching to a blob is what makes the filename
+ * stick for a cross-origin storage URL; a storage host that refuses CORS falls
+ * back to opening the URL, which the browser saves as a binary download.
+ */
+export async function saveUrl(url, filename) {
+	const a = document.createElement('a');
+	a.rel = 'noopener';
+	try {
+		const res = await fetch(url);
+		if (!res.ok) throw new Error(String(res.status));
+		const blobUrl = URL.createObjectURL(await res.blob());
+		a.href = blobUrl;
+		a.download = filename || 'model.glb';
+		a.click();
+		setTimeout(() => URL.revokeObjectURL(blobUrl), 30_000);
+	} catch {
+		a.href = url;
+		a.download = filename || 'model.glb';
+		a.click();
+	}
+}
+
+/**
+ * The one download path for a stored creation outside the Forge result panel
+ * (the /m/:id page): pay-to-keep first, then the file. Resolves { ok:true } once
+ * the file was handed to the browser and { ok:false, message } when there is no
+ * file or the keep payment was cancelled or refused. Never throws.
+ */
+export async function releaseDownload({ creationId, url, filename, headers = {}, save = saveUrl } = {}) {
+	if (!url) return { ok: false, message: 'This model has no file to download yet.' };
+	const keep = await ensureKept(creationId, { headers });
+	if (!keep.ok) return keep;
+	await save(url, filename);
+	return { ok: true };
+}

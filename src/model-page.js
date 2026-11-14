@@ -283,7 +283,7 @@ function renderInfo() {
 			</button>
 			<span class="mp-stat" title="Page views">👁 <b id="mp-views">${formatCount(c.view_count)}</b></span>
 			${c.remix_count ? `<span class="mp-stat" title="Remixes">⑂ <b>${formatCount(c.remix_count)}</b></span>` : ''}
-			<a class="mp-action" href="${esc(c.glb_url)}" download>Download GLB</a>
+			<button class="mp-action" id="mp-download" type="button" title="Download the original GLB file">Download GLB</button>
 			<button class="mp-action" id="mp-pptx" type="button" title="Download a PowerPoint slide with this model as an interactive 3D object you can rotate">PowerPoint</button>
 			<a class="mp-action" href="/materialize?creation=${encodeURIComponent(c.id)}" title="Order this model as a real physical print, shipped to you">⬢ Materialize</a>
 			<button class="mp-action" id="mp-readme3d" type="button" title="Copy a block that GitHub renders as an interactive 3D model in any README">Copy for GitHub README</button>
@@ -715,6 +715,29 @@ function wireActions() {
 			toast(String(err?.message || 'Could not convert this model. Try again.'));
 		} finally {
 			btn.disabled = false;
+		}
+	});
+
+	// Download goes through pay-to-keep (off unless FORGE_PAY_TO_KEEP is on), the
+	// same gate as the Forge result button, so this page is not a way around it.
+	// Loaded on click: the wallet prompt behind the gate is not part of page load.
+	$('mp-download')?.addEventListener('click', async () => {
+		const btn = $('mp-download');
+		if (btn.disabled) return;
+		btn.disabled = true;
+		btn.setAttribute('aria-busy', 'true');
+		btn.textContent = 'Preparing…';
+		try {
+			const { releaseDownload } = await import('./forge-keep.js');
+			const base = creationName(c).replace(/[^\w-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60).toLowerCase();
+			const r = await releaseDownload({ creationId: c.id, url: c.glb_url, filename: `${base || 'model'}.glb` });
+			if (!r.ok) toast(r.message, 6000);
+		} catch {
+			toast('Could not start the download. Check your connection and try again.', 6000);
+		} finally {
+			btn.disabled = false;
+			btn.removeAttribute('aria-busy');
+			btn.textContent = 'Download GLB';
 		}
 	});
 

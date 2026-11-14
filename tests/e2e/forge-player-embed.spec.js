@@ -51,6 +51,43 @@ test.describe('forge player embed (X player card target)', () => {
 		expect(errors, `page errors: ${errors.join(' | ')}`).toEqual([]);
 	});
 
+	test('framed by another origin (how X shows the card), it renders without a permissions-policy error', async ({
+		page,
+		baseURL,
+	}) => {
+		// X loads twitter:player in a cross-origin iframe that grants no
+		// xr-spatial-tracking. model-viewer's "webxr" ar-mode probes WebXR anyway,
+		// which Chromium reports as a console error inside the card. The host page
+		// is served from a different origin so the frame gets the real
+		// third-party permissions policy.
+		const errors = watchErrors(page);
+		const consoleErrors = [];
+		page.on('console', (msg) => {
+			if (msg.type() === 'error' && !DEV_SERVER_NOISE.test(msg.text())) consoleErrors.push(msg.text());
+		});
+		const player = `${baseURL}/forge-embed.html?src=${encodeURIComponent(FOX)}&title=${encodeURIComponent('A fox, forged')}`;
+		await page.route('http://card-host.test/', (route) =>
+			route.fulfill({
+				contentType: 'text/html',
+				body: `<!doctype html><title>card host</title><iframe id="card" src="${player}" width="480" height="480"></iframe>`,
+			}),
+		);
+		await page.goto('http://card-host.test/');
+		const frame = page.frameLocator('#card');
+		await expect(frame.locator('model-viewer#mv').locator('#webgl-canvas')).toBeVisible({ timeout: 30_000 });
+		await expect(frame.locator('body')).not.toHaveAttribute('data-state', 'error');
+		// AR stays available through the modes a framed page can still launch.
+		await expect(frame.locator('model-viewer#mv')).toHaveAttribute('ar-modes', 'scene-viewer quick-look');
+		const xrErrors = consoleErrors.filter((t) => /xr-spatial-tracking|permissions policy/i.test(t));
+		expect(xrErrors, `console errors: ${xrErrors.join(' | ')}`).toEqual([]);
+		expect(errors, `page errors: ${errors.join(' | ')}`).toEqual([]);
+	});
+
+	test('keeps WebXR AR when the page is opened directly', async ({ page }) => {
+		await page.goto(`/forge-embed.html?src=${encodeURIComponent(FOX)}`, { waitUntil: 'domcontentloaded' });
+		await expect(page.locator('model-viewer#mv')).toHaveAttribute('ar-modes', 'webxr scene-viewer quick-look');
+	});
+
 	test('shows the designed empty state, not a blank frame, when no model URL is given', async ({ page }) => {
 		await page.goto('/forge-embed.html', { waitUntil: 'domcontentloaded' });
 		await expect(page.locator('body')).toHaveAttribute('data-state', 'error');
