@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-11-13T18:00:53.015Z",
+	"generated_at": "2026-11-14T02:13:55.709Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-14",
+			"type": "update",
+			"title": "Memory seeding writes your seed instead of failing when some AI providers hang",
+			"summary": "The memory-seeding demo could fail with a server error every time you pressed synthesize. A few free AI providers were hanging until they timed out, and together they used up the whole time budget before a provider that was answering got a turn. Now a provider that hangs sits out for two minutes, and synthesis gets enough time to reach a working one, so your memory seed comes back instead of an error.",
+			"link": "/demos/memory-seed.html",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-11-13",
 			"type": "launch",

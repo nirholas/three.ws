@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Memory seeding writes your seed instead of failing when some AI providers hang</title>
+			<link>https://three.ws/demos/memory-seed.html</link>
+			<guid isPermaLink="false">2026-11-14:Memory seeding writes your seed instead of failing when some AI providers hang</guid>
+			<pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The memory-seeding demo could fail with a server error every time you pressed synthesize. A few free AI providers were hanging until they timed out, and together they used up the whole time budget before a provider that was answering got a turn. Now a provider that hangs sits out for two minutes, and synthesis gets enough time to reach a working one, so your memory seed comes back instead of an error.</description>
+		</item>
+		<item>
 			<title>Docs · Forge on-device photo check</title>
 			<link>https://three.ws/docs/forge-photo-prep</link>
 			<guid isPermaLink="false">2026-11-13:Docs · Forge on-device photo check</guid>

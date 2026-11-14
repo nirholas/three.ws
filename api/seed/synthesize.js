@@ -131,15 +131,17 @@ export default wrap(async (req, res) => {
 
 	let result;
 	try {
-		// Per-provider timeout well under the function's 60s maxDuration so a slow
-		// or hung upstream falls through to the next provider (and the handler
-		// still returns a clean 502/503 below) instead of the function getting
-		// killed mid-flight and surfacing a raw 504 to the browser.
+		// timeoutMs is the budget for the WHOLE provider chain. 18s was too tight:
+		// four stalling free lanes (about 4-6s each) spent all of it and the
+		// keyless tail rungs that answer in under a second were never reached.
+		// 45s leaves the chain room to get there while staying under the
+		// function's 60s maxDuration, so the handler still returns a clean
+		// 502/503 below instead of being killed mid-flight with a raw 504.
 		result = await llmComplete({
 			system: SYSTEM_PROMPT,
 			user: userMessage,
 			maxTokens: 1024,
-			timeoutMs: 18_000,
+			timeoutMs: 45_000,
 			track: { userId, tool: 'seed/synthesize' },
 		});
 	} catch (err) {

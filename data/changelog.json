@@ -2,6 +2,13 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-11-14",
+			"title": "Memory seeding writes your seed instead of failing when some AI providers hang",
+			"summary": "The memory-seeding demo could fail with a server error every time you pressed synthesize. A few free AI providers were hanging until they timed out, and together they used up the whole time budget before a provider that was answering got a turn. Now a provider that hangs sits out for two minutes, and synthesis gets enough time to reach a working one, so your memory seed comes back instead of an error.",
+			"tags": ["fix"],
+			"link": "/demos/memory-seed.html"
+		},
+		{
 			"date": "2026-11-13",
 			"title": "Diorama games keep an honest clock on slow phones and when you switch tabs",
 			"summary": "When you play a diorama world with a timer, your walker and the countdown now move on the same game clock. On a slow phone or a busy laptop the walker used to slow down while the timer kept counting real seconds, so a timed goal could become impossible to win. Switching to another tab mid-run used to burn the whole timer and greet you with a loss when you came back; now the clock waits for you. Pickups also stay reliable on slow frames, because each frame's movement is checked in small steps.",

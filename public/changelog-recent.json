@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-13T18:00:53.080Z",
+	"generated_at": "2026-11-14T02:13:55.735Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4573,
+	"total": 4574,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-14",
+			"type": "update",
+			"title": "Memory seeding writes your seed instead of failing when some AI providers hang",
+			"summary": "The memory-seeding demo could fail with a server error every time you pressed synthesize. A few free AI providers were hanging until they timed out, and together they used up the whole time budget before a provider that was answering got a turn. Now a provider that hangs sits out for two minutes, and synthesis gets enough time to reach a working one, so your memory seed comes back instead of an error.",
+			"link": "/demos/memory-seed.html",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-11-13",
 			"type": "launch",
@@ -1519,16 +1529,6 @@
 			"title": "Docs · World chat in /play: scrollback and the community board",
 			"summary": "How a late joiner sees a /play world's last 60 chat lines above a caught-up divider, the cap, expiry and privacy rules for stored lines, and the read-only Board tab that shows a coin's community posts in-world.",
 			"link": "/docs/play-chat",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "launch",
-			"title": "Docs: The three.ws A2A agent",
-			"summary": "The A2A endpoint any agent can call: the Agent Card, the generate-3d-model, validate-model and search-avatars skills, A2A 1.0 and 0.3 JSON-RPC methods, task lifetime, error codes, optional bearer auth, and curl calls that work today.",
-			"link": "/docs/a2a-agent",
 			"tags": [
 				"launch"
 			]
