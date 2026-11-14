@@ -22,7 +22,7 @@ Set one of:
 
 ...then pick a background (transparent, dark, light) and framing (full or portrait).
 
-The loader script is fetched from three.ws's immutable CDN (`https://three.ws/agent-3d/<version>/agent-3d.js`) with a `integrity` hash pinned to the exact release this plugin ships against, so a CDN or MITM swap is refused by the browser rather than silently served. No three.ws account, API key, or outbound request beyond that script and the agent's own GLB/manifest is required to render a public agent.
+The `<agent-3d>` element is the client of the three.ws agent service, so it loads from three.ws itself (`https://three.ws/agent-3d/<version>/agent-3d.js`) with an `integrity` hash pinned to the exact release this plugin ships against: a swapped file is refused by the browser rather than silently served. No three.ws account or API key is required to render a public agent. Every request the element makes is listed under External services below.
 
 Full attribute reference: https://three.ws/docs/web-component
 
@@ -34,6 +34,21 @@ For the classic editor, widgets, or any template that cannot use the block:
 
 `[three_ws_agent model="https://three.ws/avatars/default.glb" height="600px"]`
 
+== External services ==
+
+This plugin embeds the three.ws agent service (https://three.ws). The block and shortcode render nothing until a visitor's browser loads a page that contains them; the plugin itself makes no server-side requests from your WordPress site.
+
+When a page with the block or shortcode is viewed, the visitor's browser connects to three.ws to:
+
+* Load the `<agent-3d>` element from `https://three.ws/agent-3d/<version>/agent-3d.js`, pinned by SRI hash.
+* Load the agent's public manifest, its 3D model (GLB), the shared animation manifest and model decoders, and the agent's embed policy. For a bare model URL, the GLB is fetched from whatever URL you entered.
+* Only if the visitor chats with the agent: send the typed message (or, with voice turned on, the speech audio) to three.ws to produce the agent's reply.
+
+As with any web request, three.ws receives the visitor's IP address, browser user agent and the page URL that embeds the agent. No cookies are set for anonymous visitors and no tracking or advertising script is loaded.
+
+three.ws Terms of Service: https://three.ws/legal/tos
+three.ws Privacy Policy: https://three.ws/legal/privacy
+
 == Installation ==
 
 1. Upload the plugin to the `/wp-content/plugins/` directory, or install it through the WordPress plugin directory.
@@ -44,7 +59,7 @@ For the classic editor, widgets, or any template that cannot use the block:
 
 = Do I need a three.ws account? =
 
-No. A bare model URL or a public agent ID renders with no account, no API key, and no backend calls beyond the agent's own manifest and GLB.
+No. A bare model URL or a public agent ID renders with no account and no API key. The requests the element makes to three.ws are listed under External services.
 
 = Does this load any tracking script? =
 

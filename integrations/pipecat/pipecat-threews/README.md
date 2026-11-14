@@ -129,7 +129,7 @@ to publish the matching transcript and gesture data.
 
 ## Pipecat version compatibility
 
-Tested with Pipecat v1.12.0.
+Tested with Pipecat v1.16.0.
 
 ## License
 

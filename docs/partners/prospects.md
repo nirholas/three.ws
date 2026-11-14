@@ -347,7 +347,7 @@ Recorded so nobody re-researches them.
 | VNyan | States it is "developed without generative AI" |
 | Squarespace | No public extension intake |
 | Union Avatars, Masterpiece X, Sudo AI, Shap-E, Plask | Offline, moved to legacy, pivoted away from 3D, or dormant |
-| Direct competitors | 14 real-time 2D video-avatar vendors, 4 3D character and companion platforms, and 3 design or marketplace tools that run their own 3D generators. They sell what three.ws sells, so they are not named here. The two notes worth keeping: all 16 avatar providers on LiveKit's avatar page are 2D video faces, which is the opening for our 3D body, and one of them has a LiveKit plugin with about 41,700 downloads a week, which shows how big that slot is |
+| Direct competitors | 14 real-time 2D video-avatar vendors, 4 3D character and companion platforms, and 3 design or marketplace tools that run their own 3D generators. They sell what three.ws sells, so they are not named here. The two notes worth keeping: 15 of the 16 avatar providers on LiveKit's avatar page are 2D video faces and the 16th (Spatius) needs its vendor SDK to decode motion carried in a video track, so none is an open 3D body, which is the opening for ours (re-counted 2026-11-14), and one of them has a LiveKit plugin with about 41,700 downloads a week, which shows how big that slot is |
 
 ---
 

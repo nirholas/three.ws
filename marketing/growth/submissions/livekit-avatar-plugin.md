@@ -56,7 +56,7 @@ LiveKit `AgentSession`.
 ## Why
 
 The avatar providers on the current [avatar docs
-page](https://docs.livekit.io/agents/integrations/avatar/) either render video
+page](https://docs.livekit.io/agents/models/avatar/) either render video
 server-side or, in Spatius's case, ship motion data inside a video track that a
 vendor SDK decodes. None of them is an open, vendor-neutral 3D avatar. three.ws avatars
 render entirely on the visitor's own device (the 3D model, rig, and animation clip library
