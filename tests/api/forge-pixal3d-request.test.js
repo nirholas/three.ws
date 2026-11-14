@@ -241,3 +241,47 @@ describe('Pixal3D happy path: multi-image request', () => {
 		expect(creation.multiview).toBe(false);
 	});
 });
+
+describe('Pixal3D worker unavailable: never a silent single-view downgrade', () => {
+	// Production, 2026-11-14: model-pixal3d in us-central1 answered 503 (the
+	// region's L4 quota was exhausted), and the handler fell through to the
+	// standing reconstruct chain, which degraded the job to self-hosted TRELLIS
+	// v1. That lane reads only the first photo, yet the response still said
+	// views_used: 3 and multiview: true. "Match my photo" is opt-in and never a
+	// failover target, so a down worker must surface as a designed busy state.
+	it('answers 503 lane_unavailable for pixal3d and submits to no other lane', async () => {
+		gcpSubmit.mockImplementation(async ({ mode }) => {
+			if (mode === 'pixal3d') {
+				throw Object.assign(new Error('pixal3d worker returned 503'), {
+					code: 'provider_error',
+					providerStatus: 503,
+				});
+			}
+			return { extJobId: `gcpjob-${mode}`, viewsUsed: 1, multiview: false };
+		});
+		try {
+			const req = makeReq({
+				image_urls: PHOTOS,
+				view_labels: ['front', 'back', 'left'],
+				tier: 'standard',
+				path: 'image',
+				backend: 'pixal3d',
+				skip_validation: true,
+			});
+			const res = makeRes();
+			await handler(req, res);
+			expect(res.statusCode).toBe(503);
+			expect(res.body.error).toBe('lane_unavailable');
+			expect(res.body.backend).toBe('pixal3d');
+			expect(res.body.retryable).toBe(true);
+			expect(gcpSubmit.mock.calls.map(([arg]) => arg.mode)).toEqual(['pixal3d']);
+			expect(createCreation).not.toHaveBeenCalled();
+		} finally {
+			gcpSubmit.mockImplementation(async ({ params }) => ({
+				extJobId: 'gcpjob-pixal3d-01',
+				viewsUsed: params.images.length,
+				multiview: params.images.length > 1,
+			}));
+		}
+	});
+});

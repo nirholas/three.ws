@@ -1,3 +1,4 @@
+import http from 'node:http';
 import { test, expect } from '@playwright/test';
 
 // Order x-grok-43: the X player card on /forge/share/:id (api/forge-share.js)
@@ -66,24 +67,28 @@ test.describe('forge player embed (X player card target)', () => {
 			if (msg.type() === 'error' && !DEV_SERVER_NOISE.test(msg.text())) consoleErrors.push(msg.text());
 		});
 		const player = `${baseURL}/forge-embed.html?src=${encodeURIComponent(FOX)}&title=${encodeURIComponent('A fox, forged')}`;
-		// 127.0.0.1 and localhost are different origins but both loopback, so the
-		// frame is truly cross-origin without tripping local-network-access blocks.
-		const host = `${new URL(baseURL).protocol}//127.0.0.1:${new URL(baseURL).port}/__card-host__`;
-		await page.route(host, (route) =>
-			route.fulfill({
-				contentType: 'text/html',
-				body: `<!doctype html><title>card host</title><iframe id="card" src="${player}" width="480" height="480"></iframe>`,
-			}),
-		);
-		await page.goto(host);
-		const frame = page.frameLocator('#card');
-		await expect(frame.locator('model-viewer#mv').locator('#webgl-canvas')).toBeVisible({ timeout: 30_000 });
-		await expect(frame.locator('body')).not.toHaveAttribute('data-state', 'error');
-		// AR stays available through the modes a framed page can still launch.
-		await expect(frame.locator('model-viewer#mv')).toHaveAttribute('ar-modes', 'scene-viewer quick-look');
-		const xrErrors = consoleErrors.filter((t) => /xr-spatial-tracking|permissions policy/i.test(t));
-		expect(xrErrors, `console errors: ${xrErrors.join(' | ')}`).toEqual([]);
-		expect(errors, `page errors: ${errors.join(' | ')}`).toEqual([]);
+		// A real loopback server on 127.0.0.1 hosts the card: a different origin
+		// from the localhost player, and (unlike a page.route stub, which Chromium
+		// treats as public) it passes the local-network-access check for framing.
+		const host = http.createServer((req, res) => {
+			res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+			res.end(`<!doctype html><title>card host</title><iframe id="card" src="${player}" width="480" height="480"></iframe>`);
+		});
+		await new Promise((resolve) => host.listen(0, '127.0.0.1', resolve));
+		try {
+			await page.goto(`http://127.0.0.1:${host.address().port}/`, { waitUntil: 'domcontentloaded' });
+			const frame = page.frameLocator('#card');
+			await expect(frame.locator('model-viewer#mv').locator('#webgl-canvas')).toBeVisible({ timeout: 30_000 });
+			await expect(frame.locator('body')).not.toHaveAttribute('data-state', 'error');
+			// AR stays available through the modes a framed page can still launch.
+			await expect(frame.locator('model-viewer#mv')).toHaveAttribute('ar-modes', 'scene-viewer quick-look');
+			const xrErrors = consoleErrors.filter((t) => /xr-spatial-tracking|permissions policy/i.test(t));
+			expect(xrErrors, `console errors: ${xrErrors.join(' | ')}`).toEqual([]);
+			expect(errors, `page errors: ${errors.join(' | ')}`).toEqual([]);
+		} finally {
+			host.closeAllConnections();
+			await new Promise((resolve) => host.close(resolve));
+		}
 	});
 
 	test('keeps WebXR AR when the page is opened directly', async ({ page }) => {
