@@ -217,4 +217,43 @@ describe('loadExternalSkills', () => {
 		const r = await loadExternalSkills({ env: {} });
 		expect(r).toEqual({ enabled: false, count: 0, skills: [], sources: [] });
 	});
+
+	// A pinned commit's tree never changes, so re-listing it every few minutes
+	// only burns the unauthenticated GitHub limit (60/hour per egress IP), which
+	// Cloud Run instances share. Refetch a clean load daily, a failed one soon.
+	const pinnedEnv = () => ({
+		COMMUNITY_SKILL_SOURCES: JSON.stringify([{ repo: 'fixture-org/skills-repo', ref: SHA, path: 'skills', license: 'MIT' }]),
+		COMMUNITY_SKILL_GITHUB_API: base,
+		COMMUNITY_SKILL_RAW_BASE: base,
+	});
+	const quiet = () => {};
+
+	it('does not re-list a fully loaded pinned commit within a day', async () => {
+		let t = 1_000_000;
+		const now = () => t;
+		const env = pinnedEnv();
+		await loadExternalSkills({ env, now, log: quiet });
+		const first = hits.length;
+		expect(first).toBeGreaterThan(0);
+		t += 6 * 60 * 60 * 1000;
+		await loadExternalSkills({ env, now, log: quiet });
+		expect(hits.length).toBe(first);
+		t += 19 * 60 * 60 * 1000;
+		await loadExternalSkills({ env, now, log: quiet });
+		expect(hits.length).toBeGreaterThan(first);
+	});
+
+	it('retries a failed source after a minute', async () => {
+		let t = 1_000_000;
+		const now = () => t;
+		const env = pinnedEnv();
+		mode = 'down';
+		const down = await loadExternalSkills({ env, now, log: quiet });
+		expect(down.sources[0].loaded).toBe(false);
+		mode = 'ok';
+		t += 61 * 1000;
+		const up = await loadExternalSkills({ env, now, log: quiet });
+		expect(up.sources[0].loaded).toBe(true);
+		expect(up.count).toBe(3);
+	});
 });

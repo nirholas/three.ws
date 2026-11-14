@@ -19,7 +19,11 @@
 import { createHash } from 'node:crypto';
 import { LIMITS, parseSkillMarkdown, estimateTokens } from '../../community-skills/tools/registry.mjs';
 
-export const TTL_MS = 5 * 60 * 1000;
+// Every source is pinned to a commit sha, so a clean load cannot go stale; the
+// daily refetch only notices a repository that was deleted or made private.
+// Refetching more often would spend the unauthenticated GitHub API limit
+// (60 tree listings per hour per egress IP, shared by Cloud Run instances).
+export const TTL_MS = 24 * 60 * 60 * 1000;
 export const FAILURE_TTL_MS = 60 * 1000;
 export const MAX_SKILLS_PER_SOURCE = 100;
 export const FETCH_TIMEOUT_MS = 8000;
