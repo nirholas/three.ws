@@ -1069,3 +1069,89 @@ describe('two MCP clients on one account', () => {
 		expect(await authenticateBearer(refreshSecond.json().access_token, { audience: RESOURCE })).toMatchObject({ clientId: 'mcp_second' });
 	});
 });
+
+// Microsoft's MCP certification service (Copilot Studio, Foundry) connects with
+// a pre-registered confidential client whose ClientId, ClientSecret,
+// AuthorizationUrl and TokenUrl it reads from the publisher's Key Vault, and its
+// FAQ states that it supports neither Dynamic Client Registration nor PKCE.
+// /oauth/authorize demanded a code_challenge from every client, so that service
+// failed at the first redirect. PKCE stays mandatory for every self-registered
+// client; only a confidential client an operator registered by hand
+// (dynamically_registered = false), which must still prove its secret at the
+// token endpoint, may leave it out (RFC 9700 section 2.1.1).
+describe('pre-registered confidential client without PKCE', () => {
+	const NO_PKCE = { code_challenge: undefined, code_challenge_method: undefined };
+	const withoutPkce = (extra = {}) => Object.fromEntries(Object.entries(authorizeQuery({ ...NO_PKCE, ...extra })).filter(([, v]) => v !== undefined));
+
+	async function seedOperatorClient(overrides = {}) {
+		return seedClient({ client_type: 'confidential', client_secret_hash: await sha256(CONFIDENTIAL_SECRET), token_endpoint_auth: 'client_secret_basic', dynamically_registered: false, ...overrides });
+	}
+
+	async function approveWithoutPkce() {
+		return call('authorize', { method: 'POST', form: { ...withoutPkce(), csrf: await csrf(), decision: 'allow' } });
+	}
+
+	it('authorizes and exchanges the code with the client secret and no code_verifier', async () => {
+		await seedOperatorClient();
+		const consent = await call('authorize', { query: withoutPkce() });
+		expect(consent.statusCode).toBe(200);
+		const authorized = await approveWithoutPkce();
+		expect(authorized.statusCode).toBe(302);
+		const code = new URL(authorized.getHeader('location')).searchParams.get('code');
+		expect(code).toBeTruthy();
+		expect(db.codes[0].code_challenge).toBeNull();
+		const res = await call('token', { method: 'POST', headers: basicHeader('mcp_test_client', CONFIDENTIAL_SECRET), form: { grant_type: 'authorization_code', code, redirect_uri: 'https://client.example/cb' } });
+		expect(res.statusCode).toBe(200);
+		const payload = await verifyAccessToken(res.json().access_token);
+		expect(payload.client_id).toBe('mcp_test_client');
+		expect(payload.aud).toBe(RESOURCE);
+	});
+
+	it('still refuses the code exchange without the client secret', async () => {
+		await seedOperatorClient();
+		const code = new URL((await approveWithoutPkce()).getHeader('location')).searchParams.get('code');
+		const res = await call('token', { method: 'POST', form: { grant_type: 'authorization_code', client_id: 'mcp_test_client', code, redirect_uri: 'https://client.example/cb' } });
+		expect(res.statusCode).toBe(401);
+		expect(db.codes[0].consumed_at).toBeNull();
+	});
+
+	it('refuses a code_verifier for a code issued without a challenge (PKCE downgrade)', async () => {
+		await seedOperatorClient();
+		const code = new URL((await approveWithoutPkce()).getHeader('location')).searchParams.get('code');
+		const res = await call('token', { method: 'POST', headers: basicHeader('mcp_test_client', CONFIDENTIAL_SECRET), form: { grant_type: 'authorization_code', code, redirect_uri: 'https://client.example/cb', code_verifier: VERIFIER } });
+		expect(res.statusCode).toBe(400);
+		expect(res.json().error).toBe('invalid_grant');
+		expect(db.codes[0].consumed_at).toBeNull();
+	});
+
+	it('still demands the verifier when the operator client did send a challenge', async () => {
+		await seedOperatorClient();
+		const code = new URL((await approve()).getHeader('location')).searchParams.get('code');
+		const res = await call('token', { method: 'POST', headers: basicHeader('mcp_test_client', CONFIDENTIAL_SECRET), form: { grant_type: 'authorization_code', code, redirect_uri: 'https://client.example/cb' } });
+		expect(res.statusCode).toBe(400);
+		expect(res.json().error).toBe('invalid_request');
+		expect(db.codes[0].consumed_at).toBeNull();
+	});
+
+	it('keeps PKCE mandatory for a confidential client that registered itself', async () => {
+		await seedOperatorClient({ dynamically_registered: true });
+		const res = await call('authorize', { query: withoutPkce() });
+		expect(res.statusCode).toBe(400);
+		expect(res.json().error_description).toMatch(/code_challenge required/);
+	});
+
+	it('keeps PKCE mandatory for a public client even when an operator registered it', async () => {
+		seedClient({ dynamically_registered: false });
+		const res = await call('authorize', { query: withoutPkce() });
+		expect(res.statusCode).toBe(400);
+		expect(res.json().error_description).toMatch(/code_challenge required/);
+	});
+
+	it('does not tell the person a hand-registered client registered itself', async () => {
+		await seedOperatorClient({ name: 'Microsoft Copilot Studio' });
+		const res = await call('authorize', { query: withoutPkce() });
+		expect(res.statusCode).toBe(200);
+		expect(res.body).toContain('Authorize <b>Microsoft Copilot Studio</b>');
+		expect(res.body).not.toContain('This app registered itself.');
+	});
+});

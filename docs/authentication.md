@@ -624,7 +624,7 @@ If you're building a third-party app that users authorize to access their three.
 | `POST /api/oauth/introspect` | Inspect a token |
 | `POST /api/oauth/register` | Dynamic client registration (RFC 7591) |
 
-PKCE (S256) is mandatory. The authorization server metadata is at `/.well-known/oauth-authorization-server`.
+PKCE (S256) is mandatory for every self-registered client; the one exception, a confidential client an operator registers with `scripts/oauth-register-client.mjs` for a partner service that cannot do PKCE, is described in [MCP: cloud connectors](./mcp.md#cloud-connectors-and-revocation). The authorization server metadata is at `/.well-known/oauth-authorization-server`.
 
 Native clients may register a loopback redirect on `http://127.0.0.1` or `http://[::1]`; at authorize time any port on that address matches (RFC 8252 section 7.3), so a CLI or desktop app registers once and binds whatever port the OS hands it. `localhost` redirects still match their exact port.
 

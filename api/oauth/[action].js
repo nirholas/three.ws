@@ -163,7 +163,18 @@ function renderConsent(res, { client, user, params, csrf, grantedScope }) {
 	const groups = groupsForScope(grantedScope);
 	const connection = scopeList.filter((s) => CONNECTION_SCOPES.includes(s));
 	const connectionNote = connection.length ? `<p class="conn">${connection.map(scopeLabel).join('. ')}. Revoking from Settings ends that on the app's next request.</p>` : '';
-	res.end(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Authorize ${esc(client.name)} · three.ws</title><style>:root{color-scheme:light dark}body{font:16px/1.5 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;background:#0b0b10;color:#eee;margin:0;min-height:100vh;display:grid;place-items:center;padding:24px}.card{background:#14141c;border:1px solid #2a2a36;border-radius:16px;padding:28px 28px 24px;max-width:440px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.4)}h1{font-size:20px;margin:0 0 8px}.sub{color:#aaa;margin:0 0 20px}.who{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 12px;background:#1b1b25;border-radius:10px}.dot{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6a5cff,#ff5ca8);display:grid;place-items:center;color:#fff;font-weight:600}ul{margin:12px 0 20px;padding-left:0;list-style:none}li{padding:8px 0;border-bottom:1px solid #22222e;display:flex;gap:10px}li:last-child{border:0}li::before{content:"✓";color:#6a5cff}.actions{display:flex;gap:10px}button{flex:1;padding:12px 16px;border-radius:10px;border:0;font-size:15px;font-weight:600;cursor:pointer}.allow{background:#6a5cff;color:#fff}.deny{background:transparent;color:#aaa;border:1px solid #2a2a36}.foot{margin-top:16px;font-size:12px;color:#777}.host{display:block;font-size:13px;color:#aaa;word-break:break-all}.warn{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#1b1b25;border:1px solid #2a2a36;font-size:13px;color:#bbb}.nospend{margin:0 0 20px;padding:10px 12px;border-radius:10px;background:#12201a;border:1px solid #1f3a2c;font-size:13px;color:#b9e6cc}a{color:#9a8cff}.group{display:flex;gap:12px;padding:12px;margin:0 0 10px;border:1px solid #2a2a36;border-radius:12px;background:#10101a;cursor:pointer;transition:border-color .15s,background .15s}.group:hover{border-color:#6a5cff}.group:focus-within{outline:2px solid #6a5cff;outline-offset:2px}.group.locked{cursor:default;opacity:.9}.group:has(input:not(:checked)){background:transparent;opacity:.7}.tick{padding-top:2px}.tick input{width:18px;height:18px;accent-color:#6a5cff;cursor:inherit}.body{flex:1;min-width:0}.name{display:block;font-weight:600}.name small{font-weight:400;color:#888;font-size:12px}.blurb{display:block;color:#aaa;font-size:13px;margin:2px 0 4px}.group ul{margin:0}.group li{padding:4px 0;border:0;font-size:14px}.asks{margin:6px 0 0;font-size:12px;color:#c9b8ff}.conn{margin:0 0 12px;font-size:12px;color:#888}</style></head><body><form class="card" method="post" action="/api/oauth/authorize"><h1>Authorize <b>${esc(client.name)}</b></h1><p class="sub">Grant this application access to your three.ws account.</p><p class="warn"><b>${esc(client.name)}</b><span class="host">Site: ${esc(clientHost(client, params.redirect_uri))}</span>This app registered itself. Only continue if you started this connection and you recognize the site.</p><div class="who"><div class="dot">${esc((user.display_name || user.email)[0].toUpperCase())}</div><div><div>${esc(user.display_name || user.email)}</div><div style="color:#888;font-size:13px">${esc(user.email)}</div></div></div><p style="margin:0 0 10px"><b>${esc(client.name)}</b> is asking to:</p>${groups.map(renderGroup).join('')}${connectionNote}<p class="nospend">${spendStatement(client.name, scopeList)}</p><input type="hidden" name="csrf" value="${esc(csrf || '')}"> ${Object.entries(params).filter(([k]) => k !== 'csrf' && k !== 'decision' && !k.startsWith('grant_')).map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`).join('')}<div class="actions"><button class="deny" type="submit" name="decision" value="deny">Cancel</button><button class="allow" type="submit" name="decision" value="allow">Authorize</button></div><p class="foot">You can revoke access any time from <a href="/dashboard/settings#connected-apps">Settings, Connected apps</a>.</p></form></body></html>`);
+	res.end(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Authorize ${esc(client.name)} · three.ws</title><style>:root{color-scheme:light dark}body{font:16px/1.5 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;background:#0b0b10;color:#eee;margin:0;min-height:100vh;display:grid;place-items:center;padding:24px}.card{background:#14141c;border:1px solid #2a2a36;border-radius:16px;padding:28px 28px 24px;max-width:440px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.4)}h1{font-size:20px;margin:0 0 8px}.sub{color:#aaa;margin:0 0 20px}.who{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 12px;background:#1b1b25;border-radius:10px}.dot{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6a5cff,#ff5ca8);display:grid;place-items:center;color:#fff;font-weight:600}ul{margin:12px 0 20px;padding-left:0;list-style:none}li{padding:8px 0;border-bottom:1px solid #22222e;display:flex;gap:10px}li:last-child{border:0}li::before{content:"✓";color:#6a5cff}.actions{display:flex;gap:10px}button{flex:1;padding:12px 16px;border-radius:10px;border:0;font-size:15px;font-weight:600;cursor:pointer}.allow{background:#6a5cff;color:#fff}.deny{background:transparent;color:#aaa;border:1px solid #2a2a36}.foot{margin-top:16px;font-size:12px;color:#777}.host{display:block;font-size:13px;color:#aaa;word-break:break-all}.warn{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#1b1b25;border:1px solid #2a2a36;font-size:13px;color:#bbb}.nospend{margin:0 0 20px;padding:10px 12px;border-radius:10px;background:#12201a;border:1px solid #1f3a2c;font-size:13px;color:#b9e6cc}a{color:#9a8cff}.group{display:flex;gap:12px;padding:12px;margin:0 0 10px;border:1px solid #2a2a36;border-radius:12px;background:#10101a;cursor:pointer;transition:border-color .15s,background .15s}.group:hover{border-color:#6a5cff}.group:focus-within{outline:2px solid #6a5cff;outline-offset:2px}.group.locked{cursor:default;opacity:.9}.group:has(input:not(:checked)){background:transparent;opacity:.7}.tick{padding-top:2px}.tick input{width:18px;height:18px;accent-color:#6a5cff;cursor:inherit}.body{flex:1;min-width:0}.name{display:block;font-weight:600}.name small{font-weight:400;color:#888;font-size:12px}.blurb{display:block;color:#aaa;font-size:13px;margin:2px 0 4px}.group ul{margin:0}.group li{padding:4px 0;border:0;font-size:14px}.asks{margin:6px 0 0;font-size:12px;color:#c9b8ff}.conn{margin:0 0 12px;font-size:12px;color:#888}</style></head><body><form class="card" method="post" action="/api/oauth/authorize"><h1>Authorize <b>${esc(client.name)}</b></h1><p class="sub">Grant this application access to your three.ws account.</p><p class="warn"><b>${esc(client.name)}</b><span class="host">Site: ${esc(clientHost(client, params.redirect_uri))}</span>${client.dynamically_registered === false ? 'three.ws registered this app.' : 'This app registered itself.'} Only continue if you started this connection and you recognize the site.</p><div class="who"><div class="dot">${esc((user.display_name || user.email)[0].toUpperCase())}</div><div><div>${esc(user.display_name || user.email)}</div><div style="color:#888;font-size:13px">${esc(user.email)}</div></div></div><p style="margin:0 0 10px"><b>${esc(client.name)}</b> is asking to:</p>${groups.map(renderGroup).join('')}${connectionNote}<p class="nospend">${spendStatement(client.name, scopeList)}</p><input type="hidden" name="csrf" value="${esc(csrf || '')}"> ${Object.entries(params).filter(([k]) => k !== 'csrf' && k !== 'decision' && !k.startsWith('grant_')).map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`).join('')}<div class="actions"><button class="deny" type="submit" name="decision" value="deny">Cancel</button><button class="allow" type="submit" name="decision" value="allow">Authorize</button></div><p class="foot">You can revoke access any time from <a href="/dashboard/settings#connected-apps">Settings, Connected apps</a>.</p></form></body></html>`);
+}
+
+// PKCE is mandatory for every client except a confidential one an operator
+// registered by hand (scripts/oauth-register-client.mjs). Microsoft's MCP
+// certification service connects with exactly such a client and supports
+// neither PKCE nor Dynamic Client Registration, so it could not get past this
+// endpoint. The exemption never reaches a self-registered client, and the
+// token endpoint still makes the exempt client prove its secret (RFC 9700
+// section 2.1.1 permits confidential clients to rely on that).
+function pkceOptional(client) {
+	return client.client_type === 'confidential' && client.dynamically_registered === false && Boolean(client.client_secret_hash);
 }
 
 async function handleAuthorize(req, res) {
@@ -176,14 +187,14 @@ async function handleAuthorize(req, res) {
 	if (response_type !== 'code') return error(res, 400, 'unsupported_response_type', 'only response_type=code supported');
 	if (!client_id) return error(res, 400, 'invalid_request', 'client_id required');
 	if (!redirect_uri) return error(res, 400, 'invalid_request', 'redirect_uri required');
-	if (!code_challenge) return error(res, 400, 'invalid_request', 'code_challenge required (PKCE)');
-	if (!code_challenge_method) return error(res, 400, 'invalid_request', 'code_challenge_method required (must be S256)');
-	if (code_challenge_method !== 'S256') return error(res, 400, 'invalid_request', 'code_challenge_method must be S256');
+	if (code_challenge_method && code_challenge_method !== 'S256') return error(res, 400, 'invalid_request', 'code_challenge_method must be S256');
+	if (code_challenge && !code_challenge_method) return error(res, 400, 'invalid_request', 'code_challenge_method required (must be S256)');
 	const targetResource = canonicalResource(resource);
 	if (!targetResource) return error(res, 400, 'invalid_target', INVALID_TARGET);
 	const rows = await sql`select * from oauth_clients where client_id = ${client_id} limit 1`;
 	const client = rows[0];
 	if (!client) return error(res, 400, 'invalid_client', 'unknown client');
+	if (!code_challenge && !pkceOptional(client)) return error(res, 400, 'invalid_request', 'code_challenge required (PKCE)');
 	if (!redirectUriMatches(redirect_uri, client.redirect_uris)) return error(res, 400, 'invalid_redirect_uri', 'redirect_uri not registered');
 	const user = await getSessionUser(req);
 	if (!user) {
@@ -208,7 +219,7 @@ async function handleAuthorize(req, res) {
 	const ticked = Object.keys(params).filter((k) => k.startsWith('grant_') && params[k]).map((k) => k.slice('grant_'.length));
 	const issuedScope = grantedScopeFromGroups(grantedScope, ticked);
 	const code = randomToken(24);
-	await sql`insert into oauth_auth_codes (code, client_id, user_id, redirect_uri, scope, resource, code_challenge, code_challenge_method, expires_at) values (${code}, ${client_id}, ${user.id}, ${redirect_uri}, ${issuedScope}, ${targetResource}, ${code_challenge}, 'S256', now() + ${'60 seconds'}::interval)`;
+	await sql`insert into oauth_auth_codes (code, client_id, user_id, redirect_uri, scope, resource, code_challenge, code_challenge_method, expires_at) values (${code}, ${client_id}, ${user.id}, ${redirect_uri}, ${issuedScope}, ${targetResource}, ${code_challenge || null}, ${code_challenge ? 'S256' : null}, now() + ${'60 seconds'}::interval)`;
 	const back = new URL(redirect_uri);
 	back.searchParams.set('code', code);
 	if (state) back.searchParams.set('state', state);
@@ -305,7 +316,7 @@ async function handleToken(req, res) {
 	const grantType = form.grant_type;
 	if (grantType === 'authorization_code') {
 		const { code, redirect_uri, code_verifier } = form;
-		if (!code || !redirect_uri || !code_verifier) return error(res, 400, 'invalid_request', 'code, redirect_uri, code_verifier required');
+		if (!code || !redirect_uri) return error(res, 400, 'invalid_request', 'code and redirect_uri required');
 		const r = await sql`select * from oauth_auth_codes where code = ${code} limit 1`;
 		const row = r[0];
 		if (!row) return error(res, 400, 'invalid_grant', 'unknown code');
@@ -316,7 +327,16 @@ async function handleToken(req, res) {
 		if (new Date(row.expires_at) < new Date()) return error(res, 400, 'invalid_grant', 'code expired');
 		if (row.client_id !== client.client_id) return error(res, 400, 'invalid_grant', 'client mismatch');
 		if (row.redirect_uri !== redirect_uri) return error(res, 400, 'invalid_grant', 'redirect_uri mismatch');
-		if (await sha256Base64Url(code_verifier) !== row.code_challenge) return error(res, 400, 'invalid_grant', 'PKCE verification failed');
+		if (row.code_challenge) {
+			if (!code_verifier) return error(res, 400, 'invalid_request', 'code_verifier required');
+			if (await sha256Base64Url(code_verifier) !== row.code_challenge) return error(res, 400, 'invalid_grant', 'PKCE verification failed');
+		} else {
+			// RFC 9700 section 2.1.1: a verifier for a code issued without a challenge
+			// is a downgrade attempt, and only a client allowed to skip PKCE (which
+			// authenticateClient has just made prove its secret) may redeem one.
+			if (code_verifier) return error(res, 400, 'invalid_grant', 'code_verifier sent for a code issued without PKCE');
+			if (!pkceOptional(client)) return error(res, 400, 'invalid_grant', 'PKCE required for this client');
+		}
 		// Consume atomically: the consumed_at check above + this update was a TOCTOU
 		// window where two concurrent requests with the same code + verifier could both
 		// mint tokens (OAuth 2.1 §4.1.3 requires single use). Only the request whose

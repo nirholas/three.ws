@@ -295,8 +295,8 @@ create table if not exists oauth_auth_codes (
     redirect_uri        text not null,
     scope               text not null,
     resource            text,                                -- RFC 8707 resource indicator
-    code_challenge      text not null,
-    code_challenge_method text not null default 'S256',
+    code_challenge      text,                                -- null only for a hand-registered confidential client (pkceOptional)
+    code_challenge_method text default 'S256',
     expires_at          timestamptz not null,
     consumed_at         timestamptz,
     created_at          timestamptz not null default now()
