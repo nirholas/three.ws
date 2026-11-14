@@ -24,6 +24,7 @@
 #   WEIGHTS_PREFIX   object prefix inside the bucket  (default: longcat)
 #   LOCAL_DIR        local staging directory (default: /tmp/longcat-weights)
 #   HF_TOKEN         optional; the repos are public, so normally unset
+#   HF_ENDPOINT      optional HuggingFace mirror (default: https://huggingface.co)
 #
 # After the layout check the script writes <dest>/weights.sha256 (one sha256sum line
 # per file) and uploads it with the weights. The repo copy is workers/longcat/weights.sha256;
@@ -88,9 +89,11 @@ python3 - "$BASE_REPO" "${#BASE_INCLUDE[@]}" "${BASE_INCLUDE[@]}" \
 """Resolve the include patterns against the live HF file listing and report."""
 import fnmatch
 import json
+import os
 import sys
 import urllib.request
 
+endpoint = os.environ.get("HF_ENDPOINT", "https://huggingface.co").rstrip("/")
 argv = sys.argv[1:]
 groups = []
 while argv:
@@ -101,7 +104,7 @@ while argv:
 
 grand_total = 0
 for repo, patterns in groups:
-    url = f"https://huggingface.co/api/models/{repo}?blobs=true"
+    url = f"{endpoint}/api/models/{repo}?blobs=true"
     with urllib.request.urlopen(url, timeout=60) as response:
         data = json.load(response)
     matched, total = [], 0
@@ -128,20 +131,26 @@ if [[ "$DRY_RUN" == "1" ]]; then
   exit 0
 fi
 
-if ! command -v huggingface-cli >/dev/null 2>&1; then
-  echo "huggingface-cli not found. Install it with: pip install 'huggingface_hub[cli]>=0.30,<1.0'" >&2
+if ! python3 -c 'import huggingface_hub' >/dev/null 2>&1; then
+  echo "huggingface_hub not found. Install it with: pip install 'huggingface_hub>=0.30' hf_transfer" >&2
   exit 1
 fi
 
+# snapshot_download takes the whole pattern list as one argument. Do not go back
+# to `huggingface-cli download --include A --include B`: that parser stores
+# --include with nargs="*", so a repeated flag keeps only the LAST pattern and
+# each repo fetches a single file (Cloud Build a7a81ea6, 2026-11-04).
 download() {
   local repo="$1" dest="$2"
   shift 2
-  local include_args=()
-  for pattern in "$@"; do include_args+=(--include "$pattern"); done
   echo "==> downloading $repo into $dest"
-  huggingface-cli download "$repo" \
-    --local-dir "$dest" \
-    "${include_args[@]}"
+  python3 - "$repo" "$dest" "$@" <<'PY'
+import sys
+from huggingface_hub import snapshot_download
+
+repo, dest, patterns = sys.argv[1], sys.argv[2], sys.argv[3:]
+print(snapshot_download(repo_id=repo, local_dir=dest, allow_patterns=patterns))
+PY
 }
 
 download "$BASE_REPO"   "$LOCAL_DIR/LongCat-Video"            "${BASE_INCLUDE[@]}"
