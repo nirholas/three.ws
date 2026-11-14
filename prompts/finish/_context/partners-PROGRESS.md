@@ -528,3 +528,27 @@ orders still on disk.
 - **Remaining (owner)**: send the reply, hold the call, approve and set `TRIPO_API_KEY`. After the
   key lands, an agent runs the production house-lane job, the daily `npm run forge:tripo` pilot
   report and the launch post. The order file stays until then.
+
+## 2026-11-14: order 937-partners-14 (sponsorships), agent work done, owner decision open
+
+- **Re-read every sponsorship page today** and rewrote `docs/partners/sponsorships.md`. Corrections
+  from the 2026-10-23 pass: glTF-Transform written credit is at $100 and logo at $250 (last pass
+  mis-mapped them); Poly Haven has a $10 Patreon "Sponsor" tier that gives a permanent name and
+  link on one asset a month; Quaternius tiers read ($3, $10, $20, $50) from Patreon's public
+  campaign JSON (the page 403s automated readers); three-vrm and meshoptimizer still have no
+  payment route; Blender corporate tiers unchanged (EUR 6k a year minimum).
+- **Sizing**: `x402-revenue-readout --window 30d` reports $43.44 external revenue (was $150.08);
+  `credit_ledger` shows no deposits in 30 days. Recommended total cut to $105 a month plus a
+  one-time $25 tip, with a $35 option that stays inside revenue. Linked from prospects and the
+  outreach plan.
+- **Credits page wired for step 4**: `data/sponsorships.json` holds the owner decision per project;
+  `applySponsorships()` in `scripts/lib/open-source-credits.mjs` shows only approved and started
+  rows on /open-source (section plus card badge), test-first in
+  `tests/open-source-sponsorships.test.js`. three.js and Mesh2Motion cards now link their
+  FUNDING.yml routes. Code landed in 0fb132625 (committed by a concurrent agent's sweep, content
+  identical to this work); docs and changelog in the commit that adds this entry. Verified in
+  headless Chromium against the dev server: hidden with no live rows, renders with one, no console
+  errors.
+- **Remaining (owner)**: approve or decline each row, start the approved ones from the owner's
+  account, then an agent sets `startedOn` and regenerates; the owner sends outreach template 2.
+  Order file kept until then.

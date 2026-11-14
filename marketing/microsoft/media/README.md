@@ -91,7 +91,7 @@ The end card uses only the approved claim "three.ws is live on Microsoft Marketp
 
 ## Requirements and sources
 
-Read on 2026-11-11. The script copy is `STORES` in `scripts/lib/microsoft-listing-media.mjs`. Change a size there and rerun.
+Read on 2026-11-14. The script copy is `STORES` in `scripts/lib/microsoft-listing-media.mjs`. Change a size there and rerun.
 
 | Store | Requirement | Source |
 | --- | --- | --- |

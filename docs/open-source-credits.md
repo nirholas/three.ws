@@ -36,3 +36,11 @@ Beyond the `/open-source` page itself, a few product surfaces carry an inline cr
 - The Forge export dialog (`src/forge-export.js`) names meshoptimizer and glTF-Transform, the libraries that compress and optimize the exported file, and links to `/open-source#area-formats`.
 
 A new surface that visibly depends on a credited dependency, model, or asset source should link to the relevant `/open-source#area-<id>` anchor rather than repeating the license text inline.
+
+## Sponsorship status
+
+[`data/sponsorships.json`](../data/sponsorships.json) records, per upstream project, whether three.ws sponsors it: the owner's `decision` (`pending`, `approved`, `declined`, or `no-route` when the project takes no money), `decidedOn`, `startedOn` and `endedOn`, plus the `creditIds` of the credit entries it covers. `buildCredits()` passes it through `applySponsorships()`, which adds a top-level `sponsorships` list to the dataset and a `sponsoredSince` field to every credit entry a live sponsorship names. A row is live only when it is `approved`, has a `startedOn` day and no `endedOn`. `/open-source` renders the list as a "Projects three.ws sponsors" section (hidden when empty) and the field as a badge on the card.
+
+`applySponsorships()` throws on an unknown decision, a date that is not `YYYY-MM-DD`, a `startedOn` on a row that is not approved, or a `creditIds` value that names no credit entry, so a bad edit fails the build rather than the page. Tests: [`tests/open-source-sponsorships.test.js`](../tests/open-source-sponsorships.test.js). The tiers, recommendations and owner decisions behind each row are in [`docs/partners/sponsorships.md`](partners/sponsorships.md).
+
+A credit entry's Sponsor link comes from the package's own `funding` metadata. When an npm tarball omits it but the upstream repository's `.github/FUNDING.yml` declares one, add it to `FUNDING_OVERRIDES` in `scripts/lib/open-source-credits.mjs` (today only `three`).

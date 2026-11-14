@@ -5,6 +5,12 @@
 
 Target: `https://github.com/OpenHands/extensions`, default branch `main`, license MIT.
 
+Re-verified 2026-11-14: PR #902 is still an open draft (no comments, no review). Repo not archived, MIT, `main`.
+`integrations/README.md` and `catalog.schema.json` still match the format below (same required fields), and the
+allowlist in `tests/test_catalogs.py::test_remote_no_auth_mcp_entries_are_intentionally_public` is still
+`{cloudflare-docs, deepwiki, huggingface}` on `main` (our PR adds `three-ws`). Unchanged; the owner step below is
+still the only blocker.
+
 ## Owner step (the one thing left)
 
 The repo's PR template has a `HUMAN:` section that AI agents are told not to edit, and asks that the PR stay a

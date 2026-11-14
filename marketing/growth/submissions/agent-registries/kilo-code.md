@@ -5,6 +5,11 @@
 
 Target: `https://github.com/Kilo-Org/kilo-marketplace`, file `mcps/three-ws/MCP.yaml`, default branch `main`.
 
+Re-verified 2026-11-14: PR #624 is still open (not draft, blocked on review). The Kilo review bot posted "No Issues
+Found, Recommendation: Merge" (it could not reach three.ws from its sandbox). Repo not archived, Apache-2.0, `main`.
+`CONTRIBUTING.md` format unchanged (same required fields and category list). The server now answers `tools/list`
+with 16 tools, not 17. Nothing to resend.
+
 ## Format (verified live 2026-11-04)
 
 Kilo's `CONTRIBUTING.md` ("Contributing MCP Servers") requires `id`, `name`, `description`, `author`, `url`,
@@ -38,7 +43,7 @@ content:
 
 - `npx tsx generate-mcps-marketplace.ts` (Kilo's own generator, run in `bin/`) picked up the entry: "Generated
   marketplace.yaml with 129 MCPs".
-- The server answers `initialize` and `tools/list` anonymously (17 tools).
+- The server answers `initialize` and `tools/list` anonymously (17 tools on 2026-11-04; 16 on 2026-11-14).
 
 ## Remaining
 

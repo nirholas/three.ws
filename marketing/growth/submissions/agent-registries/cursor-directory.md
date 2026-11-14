@@ -2,13 +2,14 @@
 
 Target: `https://cursor.directory/mcp`.
 
-Not fully confirmed: cursor.directory rate-limited (HTTP 429) every direct fetch attempted in this session
-(both the homepage and a guessed `/submit` path, via `curl` and via `WebFetch`), so the exact current
-submission mechanism (a form, a GitHub repo PR, or an account-gated dashboard) could not be verified live.
-cursor.directory is a community-run directory (not an official Cursor/Anysphere product); its public
-listings historically accept submissions either through a logged-in "Submit" button on the site or through
-its companion GitHub repo, but which applies today is unconfirmed as of 2026-10-13. Flagging this
-transparently rather than guessing at a mechanism this session couldn't verify.
+Re-verified 2026-11-14: cursor.directory still returns HTTP 429 to scripted fetches (homepage, /mcp, robots.txt),
+so the live site could not be read. The mechanism is now confirmed from the source repo instead
+(`https://github.com/pontusab/cursor.directory`, not archived, 4024 stars, last push 2026-11-05): its README says
+all content is submitted through the website, no pull requests. Submission is a plugin: sign in with GitHub or
+Google at `https://cursor.directory/plugins/new`, paste a GitHub repo URL, and the site auto-detects components
+(an MCP server comes from a `.mcp.json` in the repo). Submissions are auto-scanned by an agent. This repo
+already has a root `.mcp.json` and `mcp-server/plugins/three-ws-mcp-server/.mcp.json`. The older `/mcp`
+submit-button idea is superseded.
 
 ## What ships (listing copy, ready to paste into whichever form the owner finds)
 
@@ -31,6 +32,7 @@ transparently rather than guessing at a mechanism this session couldn't verify.
 
 ## Owner steps (not automatable here)
 
-1. Visit `https://cursor.directory/mcp` directly (not rate-limited from a real browser session) and locate
-   the current submission entry point.
-2. Paste the listing copy above into whatever form or PR process it presents.
+1. In a real browser, open `https://cursor.directory/plugins/new` and sign in with GitHub or Google.
+2. Paste `https://github.com/nirholas/three.ws` (or the plugin subfolder repo URL if the form wants a plugin
+   root) and submit. Use the listing copy above for any name or description field it asks for.
+3. Wait for the automated scan verdict; fix anything it flags.

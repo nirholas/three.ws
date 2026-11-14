@@ -13,7 +13,7 @@
 import { spawnSync } from 'node:child_process';
 
 /** The day the requirement pages below were last read. */
-export const REQUIREMENTS_READ = '2026-11-11';
+export const REQUIREMENTS_READ = '2026-11-14';
 
 /**
  * One entry per store listing. `rules` are the requirements as published;

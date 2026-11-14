@@ -1,7 +1,7 @@
 # Composio Toolkit Partnership
 
 Program: Composio Toolkit Partnership (Composio builds and lists a toolkit for our API or MCP server).
-Page last read: 2026-10-23 (<https://composio.dev/partnerships/toolkit>).
+Page last read: 2026-10-23 (<https://composio.dev/partnerships/toolkit>). Re-verified 2026-11-14: the URL still resolves (HTTP 200) and every three.ws URL in the answers resolves; numbers refreshed below. The form fields were not re-read, so glance at them when you open it.
 Tracker row: "Composio toolkit partnership" in `marketing/growth/opportunities.csv` (target date 2026-10-30).
 Nothing has been submitted. Shared facts and owner-only inputs: [README.md](./README.md).
 
@@ -21,7 +21,7 @@ Nothing has been submitted. Shared facts and owner-only inputs: [README.md](./RE
 | Your role | no | Owner input |
 | Website | no | `https://three.ws` |
 | Partnership type (dropdown) | no | Composio Toolkit Partnership |
-| Company description | no | three.ws is an open-source platform for embodied 3D AI agents. It turns a text prompt or photo into a textured, rigged 3D model or avatar, and embeds it on any page with one web component. Its hosted MCP servers (73 listed in the official MCP registry) let any agent generate, rig, find and view 3D content. |
+| Company description | no | three.ws is an open-source platform for embodied 3D AI agents. It turns a text prompt or photo into a textured, rigged 3D model or avatar, and embeds it on any page with one web component. Its hosted MCP servers (80 listed in the official MCP registry under io.github.nirholas, counted 2026-11-14) let any agent generate, rig, find and view 3D content. |
 | Developer documentation | no | `https://three.ws/docs/mcp-studio` (source `docs/mcp-studio.md`) and `https://three.ws/docs/mcp` |
 | Product logo URL | no | `https://three.ws/logo.png` |
 | Technical contact | no | Owner input |
@@ -35,7 +35,7 @@ Nothing has been submitted. Shared facts and owner-only inputs: [README.md](./RE
 | Anything else | no | Production traffic, Sep 2026 (proof brief): 13,898 MCP tool calls at 99.4% handler success, handler p50 143 ms; 7,111 finished 3D models; 13 OAuth client names including Claude, ChatGPT, Cursor and Codex. Endpoint: `https://three.ws/api/mcp-studio` (Streamable HTTP, MCP 2025-06-18). |
 | LinkedIn URL, company LinkedIn, socials | no | Owner input; X handle `@trythreews`, Telegram `t.me/three_ws` (from `docs/i18n.md`) |
 
-Honesty notes: the tool list in the description comes from `docs/mcp-studio.md` (fifteen tools). Re-pull `tools/list` on the submission day so the names above are exact.
+Honesty notes: the tool list in the description comes from `docs/mcp-studio.md` (sixteen tools; live `tools/list` on `/api/mcp-studio` returned 16 on 2026-11-14). Re-pull `tools/list` on the submission day so the names above are exact.
 
 ## Owner steps
 

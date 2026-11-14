@@ -1,7 +1,26 @@
 # Pipecat community avatar integration submission
 
-Target: [pipecat-ai/pipecat](https://github.com/pipecat-ai/pipecat), following
-`COMMUNITY_INTEGRATIONS.md` step by step.
+Target: the docs repository [pipecat-ai/docs](https://github.com/pipecat-ai/docs) (default branch
+`main`), NOT `pipecat-ai/pipecat`, following `COMMUNITY_INTEGRATIONS.md` (in the pipecat repo) step
+by step.
+
+Re-verified 2026-11-14: both repos are live and not archived. `pipecat-ai/pipecat` has no
+`docs.json` or `api-reference/` directory; those live only in `pipecat-ai/docs`, so the PR
+goes there (the old text said pipecat-ai/pipecat). `COMMUNITY_INTEGRATIONS.md` Step 4 still
+requires: a fork of `pipecat-ai/docs`, a row on
+`api-reference/server/services/supported-services.mdx`, a service page with the shared
+`CommunityMaintained` badge (ours has it), a `docs.json` navigation entry, a redirect entry
+"following the existing pattern", a 30-60 second demo video link in the PR description, and a post in
+the `#community-integrations` Discord channel after the PR is open (join first:
+https://discord.gg/pipecat). The `docs-submission/` files need these updates, applied below in
+"Corrections to docs-submission": the Extensions table gained a "Turn Blend" row and the
+`docs.json` Extensions group moved to `navigation.tabs[4].groups[2].pages[5]`. The 4 unit tests
+pass today against `pipecat-ai` 1.16.0 (latest release; the README says "Tested with Pipecat
+v1.12.0", bump it to v1.16.0 before publishing). `pipecat-threews` is not on PyPI yet (404). The
+repo link returns 200. The guide expects a dedicated repository with its own LICENSE and
+changelog; ours is a monorepo subdirectory (CHANGELOG.md is there, LICENSE is the Apache-2.0
+file at the repo root), which existing community entries do not do, so be ready for a reviewer to
+ask for a standalone `nirholas/pipecat-threews` repository.
 
 Ready for owner order 938. Built, tested, and verified end to end in work order 087;
 the pull request is an owner action (CLAUDE.md gate 2: publishing to a third party
@@ -26,7 +45,8 @@ needs explicit owner approval).
   `api-reference/server/extensions/pipecat-threews.mdx`.
 - `docs-submission/supported-services-row.md`: the exact row and full-table diff for
   `api-reference/server/services/supported-services.mdx`.
-- `docs-submission/docs-json-navigation.md`: the exact `docs.json` navigation diff.
+- `docs-submission/docs-json-navigation.md`: the exact `docs.json` navigation diff (superseded
+  by "Corrections to docs-submission" below for the current array position).
 
 ## Pull request title
 
@@ -56,7 +76,7 @@ data channel (LiveKit, Daily) works unchanged.
 
 - `api-reference/server/extensions/pipecat-threews.mdx` (new)
 - `api-reference/server/services/supported-services.mdx` (new row)
-- `docs.json` (new navigation entry)
+- `docs.json` (new navigation entry and a redirect entry)
 
 ## How it was tested
 
@@ -73,7 +93,7 @@ data channel (LiveKit, Daily) works unchanged.
 
 ## Checklist
 
-- [x] Package published to PyPI as `pipecat-threews`
+- [ ] Package published to PyPI as `pipecat-threews` (tick only after owner step 1)
 - [x] Passes `ruff check` / `ruff format`
 - [x] Ships a runnable example
 - [x] Ships unit tests
@@ -96,9 +116,32 @@ data channel (LiveKit, Daily) works unchanged.
   `test-results/agent-3d-pipecat-avatar-ag-64cca-wser-avatar-lipsync-gesture/video.webm`
   (gitignored, not committed; attach to the PR when opened)
 
+## Corrections to docs-submission (2026-11-14)
+
+Apply these when copying the files into a fork of `pipecat-ai/docs`:
+
+1. `supported-services.mdx`, `## Extensions` table: insert the row between "Pipecat Backchannel"
+   and "Turn Blend" (alphabetical; "Turn Blend" is new since the files were written):
+
+   ```text
+   | [three.ws Avatar](/api-reference/server/extensions/pipecat-threews)           | `uv add pipecat-threews`                                                    | Community  |
+   ```
+
+2. `docs.json`: the Extensions group is now at `navigation.tabs[4].groups[2].pages[5]`. Insert
+   `"api-reference/server/extensions/pipecat-threews"` after `pipecat-duplexjev` and before
+   `pipecat-turn-blend`.
+3. Redirect: the guide asks for one "following the existing pattern". The three existing community
+   extension pages have none, so a redirect is optional. If a reviewer asks, add to `redirects`:
+   `{"source": "/server/extensions/pipecat-threews", "destination": "/api-reference/server/extensions/pipecat-threews"}`.
+4. The docs page's section order (Overview, Installation, Prerequisites, Configuration, Usage,
+   Compatibility) matches the guide and the `pipecat-duplexjev` page. Set its Compatibility note
+   to Pipecat v1.16.0 after bumping the README.
+
 ## Owner steps (not automatable here)
 
 1. Publish `pipecat-threews` to PyPI (package metadata is already correct).
-2. Open the documentation pull request above against `pipecat-ai/pipecat`, using the
-   three files in `docs-submission/` verbatim.
-3. Attach the local demo video (path above) to the pull request.
+2. Join https://discord.gg/pipecat.
+3. Fork https://github.com/pipecat-ai/docs, apply the three files in `docs-submission/` plus the
+   corrections above, and open the pull request against `pipecat-ai/docs` `main`.
+4. Attach the local demo video (path above) to the pull request description (30-60 seconds).
+5. Post the PR link in `#community-integrations` on Discord.

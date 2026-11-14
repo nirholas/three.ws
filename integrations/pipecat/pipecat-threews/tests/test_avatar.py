@@ -30,7 +30,6 @@ from __future__ import annotations
 
 import pytest
 from pipecat.frames.frames import (
-    AggregationType,
     OutputTransportMessageUrgentFrame,
     TranscriptionFrame,
     TTSStartedFrame,
@@ -53,8 +52,8 @@ async def test_finished_tts_turn_publishes_transcript_and_gesture():
         processor,
         frames_to_send=[
             TTSStartedFrame(),
-            TTSTextFrame("Hello! ", aggregated_by=AggregationType.SENTENCE),
-            TTSTextFrame("I'm the three.ws avatar.", aggregated_by=AggregationType.SENTENCE),
+            TTSTextFrame("Hello! ", "sentence"),
+            TTSTextFrame("I'm the three.ws avatar.", "sentence"),
             TTSStoppedFrame(),
         ],
     )
@@ -75,7 +74,7 @@ async def test_tts_text_outside_a_turn_is_not_published():
         processor,
         frames_to_send=[
             TTSStartedFrame(),
-            TTSTextFrame("Hello there", aggregated_by=AggregationType.SENTENCE),
+            TTSTextFrame("Hello there", "sentence"),
         ],
     )
 

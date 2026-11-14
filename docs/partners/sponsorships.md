@@ -1,78 +1,112 @@
 # Open-source sponsorships
 
-*Read 2026-10-23 by fetching each project's sponsorship page. This is the working table for
-[work order 937](../../prompts/finish/937-partners-14-sponsorships.md). Every sponsorship is
-recurring spend, so the **Owner decision** column is left blank on purpose. Nothing here has
-been started, paid or announced.*
+*Re-read 2026-11-14 from each project's own sponsorship page (first pass 2026-10-23). This is
+the working table for [work order 937](../../prompts/finish/937-partners-14-sponsorships.md).
+Every sponsorship is recurring spend, so nothing here has been started, paid or announced until
+the **Owner decision** column says so.*
 
 Context: [prospects](./prospects.md) scores these projects, and the
 [outreach plan](./outreach-plan.md) puts "Contribute" before every ask. Money is the fastest
 contribution.
 
-**Reading rule.** A GitHub Sponsors page shows prices to a signed-out reader but often not what
-a tier gives. Where a page did not state a price or a perk, the cell says `not verified on
-2026-10-23` rather than guessing. Prices are USD per month unless stated.
+**Source of truth for decisions.** [`data/sponsorships.json`](../../data/sponsorships.json)
+holds one row per project with the owner's `decision`, `decidedOn` and `startedOn`. The
+[/open-source](https://three.ws/open-source) credits page (order 086) reads it at build time: a
+row that is `approved` and has a `startedOn` date shows in a "Projects three.ws sponsors"
+section and as a "Sponsored by three.ws since ..." badge on the matching credit cards. Pending,
+declined and ended rows show nothing. How to record a decision is at the
+[end of this page](#recording-a-decision).
+
+**Reading rule.** Prices are USD per month unless stated. Where a page did not state a price or
+a perk, the cell says so instead of guessing. Patreon pages refuse automated readers (HTTP 403),
+so Patreon tiers were read from Patreon's public campaign JSON
+(`/api/campaigns?filter[vanity]=<name>&include=rewards`), which returns the same tier titles,
+prices and benefit text the page shows.
 
 ## Dependencies measured
 
-`package.json` today: `three ^0.184.0`, `@gltf-transform/core ^4.4.0` (plus `extensions`,
-`functions`), `@pixiv/three-vrm ^3.5.5` (plus `three-vrm-animation`), `meshoptimizer ^1.2.0`.
-No `@react-three/*` dependency; pmndrs is a prospect for an R3F-native component, not a
-current dependency.
+`package.json` on 2026-11-14: `three ^0.187.0`, `@gltf-transform/core ^4.4.0` (plus
+`extensions ^4.5.1`, `functions ^4.5.0`), `@pixiv/three-vrm ^3.5.5` (plus
+`three-vrm-animation`), `meshoptimizer ^1.2.0`. No `@react-three/*` dependency; pmndrs is a
+prospect for an R3F-native component, not a current dependency.
+
+Licenses, read from each LICENSE file on 2026-11-14: three.js MIT, glTF-Transform MIT, three-vrm
+MIT, meshoptimizer MIT, react-three-fiber MIT, OrcaSlicer AGPL-3.0 (we only hand files to it,
+we ship none of its code), Mesh2Motion MIT for code and CC0 1.0 for every model, rig and
+animation. Poly Haven and Quaternius assets are CC0.
+
+## What changed since 2026-10-23
+
+- **glTF-Transform tiers were mis-mapped last time.** The page now reads unambiguously: written
+  credit starts at **$100** (not $250), logo placement at **$250**, and the Large Company tier
+  is **$500** with two logos and an hour of consulting.
+- **Poly Haven has a real $10 "Sponsor" tier** that puts our name and a link next to one asset of
+  our choosing every month, permanently. The old $25 figure was not a tier.
+- **Quaternius tiers are now read**: $3, $10, $20, $50.
+- **three.js and Mesh2Motion declare a funding route in their repositories** (`.github/FUNDING.yml`)
+  that our credits page did not link. Both cards on /open-source now carry a Sponsor link.
+- **Revenue fell.** Trailing 30-day external revenue is $43.44, down from $150.08, so the
+  recommended total is roughly halved.
 
 ## Table
 
-| Project | What it powers in three.ws | Tiers and prices read today | Payment route | Recognition by tier | Recommended | Why | Owner decision |
+| Project | What it powers in three.ws | Tiers and prices read 2026-11-14 | Payment route | Recognition by tier | Recommended | Why | Owner decision |
 |---|---|---|---|---|---|---|---|
-| three.js (mrdoob) | Every viewer, the `<agent-3d>` embed, all GLB rendering | Custom, $5, $10, $50, $100, $500, $1,000 a month; monthly or one-time toggle | [GitHub Sponsors](https://github.com/sponsors/mrdoob) | Page states no per-tier perks. It lists 31 current sponsors by GitHub username and avatar; no company display shown | **$100 (the 100 tier)** | The foundation of the product; $500 and up is not justified by revenue today | |
-| glTF-Transform (Don McCurdy) | Forge GLB optimisation and inspection | Custom, $5, $15, $50, $100, $250, $500, plus a Large Company tier whose price was not captured (verify on the live page, tier-to-price mapping was inferred from layout). Rewards read: $5 profile badge and Sponsor label on issues and PRs; $250 written credit on one personal repo; $500 logo on one personal repo; Large Company logo on two repos plus 1 hour a month of consulting | [GitHub Sponsors](https://github.com/sponsors/donmccurdy) | As listed in the tiers column; no tier includes a link to the sponsor's site | **$250 (Small Company or Agency)** once revenue allows; **$50 (Supporter)** to start | $250 buys a written credit, the first tier with public recognition; the $500 company tier is the long-term target | |
-| @pixiv/three-vrm | VRM avatar loading and VRM animation | No sponsor tiers found. The pixiv org page shows no funding link, and `.github/FUNDING.yml` returned 404 on the `dev` branch. not verified on 2026-10-23 | none found | n/a | $0. Send upstream fixes instead | There is no payment route to use | n/a |
-| meshoptimizer (zeux) | Mesh compression across the Forge and glTF delivery | The GitHub Sponsors page for `zeux` showed no tiers and `.github/FUNDING.yml` returned 404 on `master`. not verified on 2026-10-23 | none found | n/a | $0 for now. Re-check the repository's Sponsor button | Cannot recommend a tier that cannot be read | n/a |
-| Poly Haven | Source of the `/objects` library | Corporate page lists no prices or levels: companies fund specific work (HDRI trips, textures, scanning gear, hardware, infrastructure); the Patreon tiers page returned 403, not verified on 2026-10-23 | Contact via [polyhaven.com/corporate](https://polyhaven.com/corporate); Patreon for individuals | "From acknowledgements and logo placement up to deeper collaboration"; levels not defined | **$25 on Patreon** after the credit ships (order 086), once the owner reads the live tiers | Credit first (prospects page), money second; a Sponsored Project needs a conversation, which is outreach and owner-sent | |
-| Blender Development Fund | Blender is the authoring tool for the CC0 catalog and the Blender add-on | Corporate memberships are annual: Bronze EUR 6,000, Silver EUR 12,000, Gold EUR 30,000, Platinum EUR 60,000, Titanium EUR 120,000, Patron EUR 240,000 | [fund.blender.org](https://fund.blender.org/) (Platinum and above go through the foundation chairman) | Bronze and Silver: logo and URL on the website. Gold adds a social mention and credit in reports and events. Platinum adds a developer liaison. Titanium adds a front-page mention and board contact. Patron adds a press release, a blog post and a dedicated product manager. Individual tiers exist but their prices were not on the page, not verified on 2026-10-23 | **Not now** | EUR 500 a month at the lowest corporate tier is more than twice the recommended monthly total; revisit if revenue grows | |
-| OrcaSlicer (SoftFever) | "Open in OrcaSlicer" handoff | Page shows one tier with the price blank and monthly or one-time options; the only stated reward is a Public Sponsor achievement on your profile. Prices not verified on 2026-10-23 | [GitHub Sponsors](https://github.com/sponsors/SoftFever) | Public Sponsor achievement only | **$25** (a sizing assumption, since no price was readable) | The handoff sends real users to their app; the owner sets the amount once the tier list loads while signed in | |
-| Mesh2Motion | CC0 animation library and auto-rigger source | No tiers. The support site takes a free-amount tip, routed through Venmo; funds animators for the shared library plus hosting. The GitHub Sponsors and Patreon routes were not found | [support.mesh2motion.org](https://support.mesh2motion.org) (Venmo) | None offered to donors | **$25 one-time tip** | Venmo is a personal-payment route, so it is a one-off the owner makes, not a recurring line | |
-| Quaternius | CC0 characters and the Universal Animation Library | The site links Patreon (`patreon.com/quaternius`), but tiers, prices and perks were not readable (the page fetch returned no tier data). not verified on 2026-10-23 | Patreon | not verified on 2026-10-23 | **$10** (a sizing assumption) | Fastest way out of the Mixamo licensing risk; the owner picks the tier on the live Patreon page | |
-| pmndrs collective | react-three-fiber and drei ecosystem; target for an R3F-native component | GitHub Sponsors (pmndrs): Easy $10, Normal $20, Hard $50, custom monthly, one-time option; perks not stated. Open Collective (react-three-fiber): Backer $5, Sponsor $100, custom one-time or recurring; perks not stated | [GitHub Sponsors](https://github.com/sponsors/pmndrs) or [Open Collective](https://opencollective.com/react-three-fiber) | Sponsor names and avatars appear on the GitHub page; no tier is tied to a logo or link | **$20 (Normal)** | We do not depend on R3F yet; a modest tier signals intent ahead of the component | |
+| three.js (mrdoob) | Every viewer, the `<agent-3d>` embed, all GLB rendering, the vendored Scene Studio editor | Custom, $5, $10, $50, $100, $500, $1,000 a month; a one-time tab with no listed amounts. 30 current sponsors | [GitHub Sponsors](https://github.com/sponsors/mrdoob). The repo's FUNDING.yml also lists HumanInteractive, donmccurdy, gkjohnson and WestLangley | No tier states a perk. Sponsors appear as GitHub avatars on the page; no company logo wall | **$50** | The foundation of the product. No tier buys more visibility than another, so $50 is a sizeable signal at a cost revenue can grow into | Pending |
+| glTF-Transform (Don McCurdy) | Forge GLB optimisation, inspection and export | $5, $15 Supporter, $50 Developer, $100 Small Company or Agency, $250 Company or Startup, $500 Large Company, plus custom | [GitHub Sponsors](https://github.com/sponsors/donmccurdy) | $5 to $50: profile badge and a "Sponsor" label on our issues and PRs. $100: written credit on one of his repos. $250: logo on one repo. $500: logos on two repos and 1 hour a month of consulting | **$15 (Supporter)** now; **$100** when external revenue passes $500 a month | The Sponsor label shows on every upstream fix the outreach plan has us send. $100 is the first tier with public credit | Pending |
+| @pixiv/three-vrm | VRM avatar loading and VRM animation | No sponsor route. No FUNDING.yml on `dev` and none at the org level | none | n/a | $0. Send upstream fixes instead (best3d order 075) | There is no payment route | No route |
+| meshoptimizer (zeux) | Mesh compression across the Forge and glTF delivery (`meshoptimizer`, `gltfpack`) | No GitHub Sponsors profile for `zeux`; no FUNDING.yml on `master` | none | n/a | $0. Re-check on the next pass | There is no payment route | No route |
+| Poly Haven | Every prop in `/objects` and the curated HDRI set | Patreon: Early Access + Vaults $3, Offline Access and Blender Add-on $5, Learn $7, **Sponsor $10**, Stakeholder $50 (4,214 paid members). Corporate: no price list; companies fund specific work through the contact page | [Patreon](https://www.patreon.com/polyhaven); corporate via [polyhaven.com/corporate](https://polyhaven.com/corporate) | $10 Sponsor: "Choose an asset every month to stick your name and a link next to permanently", kept even after dropping a tier. $50 adds their internal planning channels. Corporate: "acknowledgements and logo placement through to deeper collaboration" | **$10 (Sponsor)** | The cheapest tier anywhere on this list that buys a permanent, public link back to three.ws, on a site with millions of users | Pending |
+| Blender Development Fund | Authoring tool for the CC0 catalog and the Blender add-on | Corporate, billed yearly: Bronze EUR 6k, Silver EUR 12k, Gold EUR 30k, Platinum EUR 60k, Titanium EUR 120k, Patron EUR 240k. Individual monthly amounts are not listed on the page; a one-time donation page exists | [fund.blender.org/corporate-memberships](https://fund.blender.org/corporate-memberships/) | Bronze and Silver: "Logo and url on website". Gold adds a social mention and credit in reports and at events. Platinum adds a developer liaison; Titanium a blender.org front-page mention and board contact; Patron a press release, a tech blog post and a dedicated product manager | **Not now** | EUR 500 a month at Bronze is about five times the recommended total | Pending |
+| OrcaSlicer (SoftFever) | "Open in OrcaSlicer" handoff | One custom-amount tier, monthly or one-time; no listed prices. 50 current sponsors. FUNDING.yml also lists Ko-fi and PayPal | [GitHub Sponsors](https://github.com/sponsors/SoftFever) | "A Public Sponsor achievement will be added to your profile". Nothing else | **$10** (custom amount) | The handoff sends real users to their app; no tier buys more, so a modest amount is the right size | Pending |
+| Mesh2Motion | CC0 animation library and auto-rigger source | No tiers. support.mesh2motion.org takes an open-amount tip via Venmo; the repo's FUNDING.yml names GitHub user scottpetrovic, who has no Sponsors profile | [support.mesh2motion.org](https://support.mesh2motion.org) | None. Funds "Pay an animator" and "Hosting Costs and Application Development" | **$25 one-time** | Venmo is a personal-payment route, so this is a one-off the owner makes, not a recurring line | Pending |
+| Quaternius | CC0 characters and the Universal Animation Library 2 | Patreon: Supporter $3, Silver $10, Gold $20, Diamond $50 (1,007 paid members) | [Patreon](https://www.patreon.com/quaternius) | No public listing at any tier. Perks are content: claim credits for source kits (5, 15, 30, 75 a month), voting credits for the next kit, custom models at $20 and up | **$10 (Silver)** | Supports the source of our CC0 motion library. Silver's 15 source-kit claims a month are a practical bonus for the asset team | Pending |
+| pmndrs collective | react-three-fiber and drei; target for an R3F-native component | GitHub Sponsors: $10 "easy", $20 "normal", $50 "hard", custom, one-time option (11 current sponsors, 3% of a $5,000 goal). Open Collective (react-three-fiber): Backer $5, Sponsor $100, custom | [GitHub Sponsors](https://github.com/sponsors/pmndrs) or [Open Collective](https://opencollective.com/react-three-fiber) | No tier states a perk; sponsor avatars appear on the GitHub page | **$10** | We do not depend on R3F yet; a small line signals intent ahead of the component and the guest-post ask | Pending |
 
 ## Recommended monthly total
 
-**$250 a month ceiling.** The line items are:
+**$105 a month, plus a one-time $25.**
 
 | Line | Amount |
 |---|---|
-| three.js | $100 |
-| glTF-Transform (Supporter) | $50 |
-| pmndrs (Normal) | $20 |
-| OrcaSlicer | $25 |
-| Poly Haven Patreon | $25 |
-| Quaternius Patreon | $10 |
-| **Total recurring** | **$230** |
+| three.js | $50 |
+| glTF-Transform (Supporter) | $15 |
+| Poly Haven (Sponsor) | $10 |
+| Quaternius (Silver) | $10 |
+| OrcaSlicer | $10 |
+| pmndrs (easy) | $10 |
+| **Total recurring** | **$105** |
+| Mesh2Motion tip, one-time | $25 |
 
-Plus a one-time $25 tip to Mesh2Motion. Moving glTF-Transform to the $250 Small Company tier
-raises the total to $430 a month and is the next step once revenue supports it.
+**Step-up when external revenue passes $500 a month:** glTF-Transform to $100 (written credit)
+and three.js to $100, for $240 a month.
 
 ### How it was sized
 
-- **Revenue evidence.** `node scripts/x402-revenue-readout.mjs --window 30d`, run 2026-10-23,
-  separates real revenue from the x402 ring paying itself. Of $5,467 gross settled volume,
-  **$150.08 across 28 calls from 5 external buyers** is real; 99.92% is internal ring
-  dogfooding that the script's own header says never counts as traction. No other revenue
-  source (subscriptions, skill-marketplace fees) was read in this pass, so $150 a month is the
-  only revenue figure with evidence behind it.
-- **Judgment call.** $230 a month exceeds the verified external revenue, so this is sized as a
-  deliberate credibility and marketing line, comparable to the 1.5x trailing external revenue,
-  not as a share of income. The Google Cloud credits cannot pay a sponsorship (they are
-  metered cloud spend). Each line is independent: the owner can approve any subset, and a
-  lower total just drops lines from the bottom of the table.
-- **Where amounts are assumptions.** OrcaSlicer, Poly Haven and Quaternius prices could not be
-  read, so those three amounts are placeholders for the owner to replace with a real tier on
-  the live page. They are labelled as such above.
+- **Revenue evidence, read 2026-11-14.** `node scripts/x402-revenue-readout.mjs --window 30d`
+  (window since 2026-10-15): $6,333.26 gross settled across 64,367 calls, of which **$43.44
+  across 9,039 calls is external revenue**; 85.96% is the internal ring paying itself, which the
+  script excludes from traction. Prepaid credit deposits in the same 30 days, read from
+  `credit_ledger`: **none**. $43.44 a month is the only revenue figure with evidence behind it.
+- **Judgment call.** $105 a month is about 2.4 times verified external revenue, so it is sized as
+  a credibility line in the marketing budget, not as a share of income. Each recurring line is
+  the lowest tier that either buys public recognition (Poly Haven's link, glTF-Transform's
+  Sponsor label) or is a meaningful amount where no tier buys more (three.js, OrcaSlicer,
+  pmndrs, Quaternius). Lines are independent: the owner can approve any subset. A total that
+  stays inside revenue is Poly Haven $10, glTF-Transform $15 and three.js $10, which is $35.
+- **What cannot pay for this.** The Google Cloud credits are metered cloud spend and cannot fund
+  a sponsorship.
 
-## What happens after approval
+## Recording a decision
 
-1. The owner starts each approved sponsorship from their own account (it is spend, and the
-   payer must be the owner).
-2. The agent adds "sponsored by three.ws" for each started project to the credits page (order
-   086) and sends nothing externally.
-3. The owner sends the one-line note from message template 2 in the outreach plan.
+For each project, edit its row in [`data/sponsorships.json`](../../data/sponsorships.json):
+
+1. Owner decides: set `decision` to `approved` or `declined` and `decidedOn` to the day
+   (`YYYY-MM-DD`). Update the **Owner decision** column above to match.
+2. Owner starts the sponsorship from their own account (it is spend, so the payer is the owner).
+3. Set `startedOn` to the day the first payment went through, then run
+   `node scripts/build-open-source-credits.mjs` and commit both files. The project appears on
+   /open-source on the next deploy. `startedOn` on a row that is not `approved` fails the build.
+4. If a sponsorship stops, set `endedOn`; the page drops it.
+5. The owner sends the one-line note from message template 2 in the
+   [outreach plan](./outreach-plan.md#2-an-open-source-project-we-depend-on). Nothing is sent by an agent.

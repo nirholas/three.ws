@@ -94,16 +94,23 @@ describe.skipIf(!LIVE)('Power Platform connector against production', () => {
 	}, 120_000);
 
 	it('Get generation job matches the declared schema', async () => {
-		if (!job) {
-			// A draft that finished inside the first call leaves nothing to poll. The
-			// high tier always runs on the async lanes, so it yields a real job.
-			const submit = await invoke('GenerateModel', { prompt: 'a small ceramic robot figurine', tier: 'high' });
+		// A draft that finished inside the first call leaves nothing to poll. High
+		// usually runs on the async lanes, but a free high submit degrades to
+		// standard when no high lane answers, and standard can finish inside the
+		// call too (a declared 200 done with no job). Each submit is checked against
+		// the contract; keep submitting until one hands back a job to poll.
+		const prompts = ['a small ceramic robot figurine', 'a brass desk lamp with a round shade', 'a wooden toy sailboat'];
+		const outcomes = [];
+		for (const prompt of prompts) {
+			if (job) break;
+			const submit = await invoke('GenerateModel', { prompt, tier: 'high' });
 			expectContract('GenerateModel', submit);
-			job = submit.body.job;
+			outcomes.push(`${submit.body.status}${submit.body.tier ? `/${submit.body.tier}` : ''}`);
+			job = submit.body.job ?? null;
 		}
-		expect(job, 'Generate a 3D model returned no job id to poll').toBeTruthy();
+		expect(job, `every high submit finished without a job to poll (${outcomes.join(', ')})`).toBeTruthy();
 		const res = await invoke('GetGenerationJob', { job, title: 'a small ceramic robot figurine' });
 		expectContract('GetGenerationJob', res);
 		expect(['done', 'pending', 'error']).toContain(res.body.status);
-	}, 60_000);
+	}, 240_000);
 });

@@ -1,7 +1,7 @@
 # GitHub Technology Partner Program
 
 Program: GitHub Technology Partner Program.
-Page last read: 2026-10-23 (<https://github.com/partners/technology-partners> and the form at <https://github.com/partners/technology-partners/apply>).
+Re-verified 2026-11-14: the program URL still resolves; the GitHub MCP Registry API (`api.mcp.github.com/v0/servers`) now lists 790 servers (the 394 below is stale) and none is ours, so the registry gap is still open. Our official-registry count is 80 under io.github.nirholas, not 73. Page last read: 2026-10-23 (<https://github.com/partners/technology-partners> and the form at <https://github.com/partners/technology-partners/apply>).
 Prospect context: score 13 in `docs/partners/prospects.md`. Related tracker rows: "GitHub Open Source Friday" and the MCP registry work.
 Nothing has been submitted. Shared facts and owner-only inputs: [README.md](./README.md).
 
@@ -16,7 +16,7 @@ Five complimentary GitHub Enterprise Server licenses for integration development
 - Technical resources to build, secure, support and maintain it.
 - Integration path: GitHub Apps and Marketplace, Actions, **MCP (listed in the GitHub MCP Registry)**, Advanced Security, or secret scanning.
 
-Fit: three.ws ships MCP servers (73 in the official MCP registry) and a VS Code extension. The prospects sweep found GitHub's curated MCP registry lists 394 servers and none of ours (searched 2026-10-09; re-check). The honest path is MCP. Do not choose Marketplace or Actions; CLAUDE.md forbids GitHub Actions.
+Fit: three.ws ships MCP servers (80 in the official MCP registry) and a VS Code extension. The prospects sweep found GitHub's curated MCP registry listed 394 servers and none of ours on 2026-10-09; 790 on 2026-11-14, still none of ours. The honest path is MCP. Do not choose Marketplace or Actions; CLAUDE.md forbids GitHub Actions.
 
 ## Deadline
 

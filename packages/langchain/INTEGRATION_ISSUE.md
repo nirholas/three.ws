@@ -3,13 +3,22 @@
 Per `docs/partners/prospects.md`: LangChain's integration directory is populated from published npm
 packages, not hand-written listing PRs ("Publish on npm, then file their 'Integration listing issue'.
 Hand-written listing pull requests are now closed automatically"). This file is the issue text to file
-against `langchain-ai/langchainjs` once `@three-ws/langchain` is live on npm.
+as a LangChain Forum topic (see the note below) once `@three-ws/langchain` is live on npm.
+
+Re-verified 2026-11-14: DRIFTED. `langchain-ai/langchainjs` (not archived, MIT) has blank issues disabled and its
+issue forms are only Bug report, Documentation and Privileged (maintainers, or people a maintainer asked); there is
+no "Integration request" template and GitHub Discussions are off. `CONTRIBUTING.md` still says new integrations are
+not accepted in the repo, must be standalone npm packages, then "let us know by opening an issue or discussion".
+Non-maintainers are told to start on the LangChain Forum, `https://forum.langchain.com/` (HTTP 200). So post the
+text below as a new Forum topic, not a GitHub issue. `@three-ws/langchain` is still NOT on npm (registry returns
+404), so step 1 still gates everything. The five tool names match `src/index.js`.
 
 ## Owner steps (not automatable here)
 
 1. `npm publish --access public` from `packages/langchain` (after `npm pack --dry-run` is clean).
-2. Open an issue on `https://github.com/langchain-ai/langchainjs` using the "Integration request" template
-   (or the closest current equivalent) with the title and body below.
+2. Post a new topic on the LangChain Forum, `https://forum.langchain.com/`, with the title and body below (the
+   GitHub repo has blank issues disabled and no integration template). Use the GitHub Privileged form only if a
+   maintainer asks you to.
 
 ## Issue title
 

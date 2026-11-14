@@ -3,6 +3,26 @@
 Target: [`hacs/default`](https://github.com/hacs/default) (the `integration` file). No
 `home-assistant/brands` PR is needed; see that section below.
 
+Re-verified 2026-11-14: BILLING LOCK STILL ACTIVE. `gh run list -R nirholas/three-ws-home-assistant`
+shows every scheduled Hassfest and HACS run on `main` (latest 2026-11-13) failing in 3 to 4 seconds
+with "The job was not started because your account is locked due to a billing issue", and
+`node scripts/hacs-default-submit.mjs` (read-only mode) reports BLOCKED for both. Nothing else has
+drifted that blocks us: `hacs/default` is live, not archived (MIT, default branch `master`, 5165
+entries in `integration`, still sorted); the PR template is unchanged (same six checkboxes and three
+links); our repo `nirholas/three-ws-home-assistant` is public, not archived, Apache-2.0, release
+`v1.0.2` is still latest and `manifest.json` is unchanged. The fork branch
+`nirholas:add-three-ws-home-assistant` is now 495 commits behind `hacs/default` `master` (still one
+commit ahead, one added line), but the neighbouring entries `NirBY/ha-mashov` and
+`Nischay-Pro/ha-zebra` are unchanged, so the line still merges cleanly and sorts correctly. No PR from
+`nirholas` exists on `hacs/default`. New since 2026-11-04: the `hacs/default` `Check` workflow now runs
+more checks on a new-repository PR (owner, releases, existing, removed, core domain conflict,
+editable PR, its own Hassfest run, and the HACS action), and its Hassfest step fails the PR on any
+`[BRAND_IMAGES]` warning. We pass each by inspection: PR author `nirholas` equals the repo owner, the
+repo has releases, the domain `three_ws` is absent from
+`https://next.home-assistant.io/integrations.json`, and the integration ships its own `brand/`
+folder. I could not re-run the real HACS and hassfest containers today (no Docker daemon in this
+environment), so the "all 10 checks passed" result below is still the 2026-11-04 one.
+
 **Status (2026-11-04):** the standalone repository
 [`nirholas/three-ws-home-assistant`](https://github.com/nirholas/three-ws-home-assistant) is live
 with release [`v1.0.2`](https://github.com/nirholas/three-ws-home-assistant/releases/tag/v1.0.2),

@@ -23,8 +23,18 @@ proves it.
 
 **Publishable candidate: [workers/model-trellis](../workers/model-trellis).**
 Single image in, textured GLB out, on one L4. It is the strongest of the GPU
-fleet for an outside user because its model is MIT-licensed, its weights are not
-baked into the image, and it collects nothing.
+fleet for an outside user because its model is MIT-licensed, its generative
+weights are not baked into the image, and it collects nothing.
+
+**It is not commercial-clean, and the listing must say so.** Two CUDA
+extensions the TRELLIS inference path cannot run without are licensed for
+non-commercial research and evaluation only: nvdiffrast (NVIDIA Source Code
+License, 1-Way Commercial, the GLB texture bake) and diff-gaussian-rasterization
+(Inria / MPII Gaussian-Splatting License, the splat renders the bake projects).
+That is the same class of restriction this doc uses to rule out Hunyuan3D, so
+the decision to publish is the owner's, not a formality. See
+[gate 5](#gate-5-third-party-licenses-in-the-image) for what the image now does
+about it and the two ways forward.
 
 **The two portability blockers are now implemented.** The container keeps its
 production GCS backend when `GCS_BUCKET` is set and switches to a mounted local
@@ -47,20 +57,22 @@ NVIDIA's four published prerequisites, each against the code:
 |---|---|---|
 | Containerized using the CUDA 9 or later base container | **Met** | Two-stage build in [workers/model-trellis/Dockerfile](../workers/model-trellis/Dockerfile): `nvidia/cuda:12.6.3-devel-ubuntu24.04` compiles the CUDA extensions and the shipped image is `nvidia/cuda:12.6.3-runtime-ubuntu24.04`. Eight GPU workers in the tree are built on `nvidia/cuda` 12.1 to 12.8. |
 | GPU accelerated, automatically multi-GPU capable, runs on Pascal or newer | **Partly met** | GPU acceleration is implemented with TRELLIS, nvdiffrast, diffoctreerast, diff-gaussian-rasterization, and NVIDIA Kaolin. The NGC image is compiled for `8.0;8.6;8.9;9.0+PTX` and ran real inference on an A100 and an L4, but the server remains single-GPU by design. See [gate 2](#gate-2-the-kernels-are-compiled-for-one-gpu-generation) and [gate 3](#gate-3-multi-gpu-requirement-needs-nvidia-guidance). |
-| An end-user license agreement for the application | **Met by this change** | [NVIDIA NGC Container EULA](https://three.ws/legal/nvidia-ngc-eula), source at [public/legal/nvidia-ngc-eula.html](../public/legal/nvidia-ngc-eula.html). It covers the Apache-2.0 code, the third-party components, and the fact that the image ships no weights. |
+| An end-user license agreement for the application | **Met** | [NVIDIA NGC Container EULA](https://three.ws/legal/nvidia-ngc-eula), source at [public/legal/nvidia-ngc-eula.html](../public/legal/nvidia-ngc-eula.html). It covers the Apache-2.0 code, the user-mounted generative weights, the one baked checkpoint (DINOv2, Apache-2.0), and, since 2026-11-14, names the two non-commercial components and points at the in-image license bundle. |
 | Container does not collect personal data or violate GDPR | **Met** | The worker has no analytics, telemetry, or reporting of any kind: a search of [workers/model-trellis](../workers/model-trellis) for `posthog`, `analytics`, `telemetry`, `mixpanel`, and `sentry` returns nothing. The only outbound calls it makes are the ones the caller asks for, and those go through the SSRF guard in [worker_security.py](../workers/model-trellis/worker_security.py). |
 
 ## Why this container and not the others
 
 | Worker | Model license | Verdict for NGC |
 |---|---|---|
-| [model-trellis](../workers/model-trellis) | Microsoft TRELLIS, MIT | **Candidate.** Commercial-safe upstream, weights fetched by the user. |
+| [model-trellis](../workers/model-trellis) | Microsoft TRELLIS, MIT | **Candidate, with a disclosed restriction.** Model and code are MIT and the weights are fetched by the user, but nvdiffrast and diff-gaussian-rasterization are research and evaluation only ([gate 5](#gate-5-third-party-licenses-in-the-image)). |
 | [model-text2motion](../workers/model-text2motion) | MDM, MIT | **Second candidate.** Commercial-safe code and model, but the deployed HumanML3D checkpoint inherits research-only dataset terms, so the listing would have to point users at the upstream checkpoint and say so plainly. |
 | [model-hunyuan3d](../workers/model-hunyuan3d) | Tencent Hunyuan **non-commercial** | **Not publishable.** The license is documented in [its README](../workers/model-hunyuan3d/README.md). Publishing a serving image for it into an enterprise catalog invites exactly the use the license forbids. |
 | [model-triposg](../workers/model-triposg), [model-triposr](../workers/model-triposr), [model-video2scene](../workers/model-video2scene), [avatar-reconstruction](../workers/avatar-reconstruction), [longcat](../workers/longcat) | Mixed | Not first. Each carries its own upstream terms to clear, and one clean listing beats five contested ones. |
 
-None of these images bake weights, which is what makes any of this possible: the
-container is our serving code plus a CUDA build, and the user brings the model.
+None of these images bake the generative weights, which is what makes any of
+this possible: the container is our serving code plus a CUDA build, and the user
+brings the model. model-trellis does bake one small conditioner checkpoint
+(DINOv2 ViT-L/14, Apache-2.0) so its model load never makes a network call.
 
 ## The gates
 
@@ -170,6 +182,50 @@ scripts/ngc-stage-trellis.sh --org <org> --version 1.0.0 \
 Without `--yes-push` the script prints the plan, contacts neither Artifact
 Registry nor NGC, and exits 2.
 
+### Gate 5: third-party licenses in the image
+
+**Status: compliant for redistribution since 2026-11-14; commercial positioning
+is an owner decision.**
+
+A license review on 2026-11-14 read each source-built component's license from
+its repository:
+
+| Component | License | Use limit | In the image |
+|---|---|---|---|
+| nvdiffrast | NVIDIA Source Code License (1-Way Commercial) | Section 3.3: non-commercial (research or evaluation) only; commercial use reserved to NVIDIA | Yes: the TRELLIS GLB texture bake and mesh renderer import it |
+| diff-gaussian-rasterization (mip-splatting) | Inria / MPII Gaussian-Splatting License | Section 3: research and evaluation only; section 5: no commercial use without consent | Yes: renders the views the texture bake projects |
+| diffoctreerast | Inria / MPII derivative | Research and evaluation only | **Removed.** It only renders Octree samples, TRELLIS imports it lazily, and `main.py` decodes `gaussian` and `mesh` only, so it never loaded |
+| TRELLIS, FlexiCubes, utils3d, DINOv2 (code and checkpoint), Kaolin, xformers, spconv, torch | MIT / Apache-2.0 / BSD | None | Yes |
+
+Both remaining restricted licenses allow redistribution only with a complete
+copy of the license. The image now carries that: every git checkout saves its
+license file and commit in the builder stage, and
+[third_party_notices.py](../workers/model-trellis/third_party_notices.py) writes
+`/licenses/` and `/licenses/THIRD_PARTY_NOTICES.md` from the real image contents
+at build time (every Python distribution, every source component, the baked
+checkpoint, every Ubuntu package, the CUDA base license). The in-image gate
+([test_third_party_notices.py](../workers/model-trellis/test_third_party_notices.py))
+fails the build if any license text is missing or if diffoctreerast comes back.
+The committed copy is
+[THIRD_PARTY_NOTICES.md](../workers/model-trellis/THIRD_PARTY_NOTICES.md), and
+the EULA's section 4 names both restrictions.
+
+The two ways forward, for the owner:
+
+1. **Publish as research and evaluation software.** The image is compliant as
+   built: the restrictions are disclosed in the EULA, the notices, and the
+   listing overview below. NVIDIA owns nvdiffrast, but Inria's license still
+   binds every user, so the listing cannot be positioned for commercial use.
+2. **Make it commercial-clean first.** Replace nvdiffrast with the pure-PyTorch
+   rasteriser already vendored at
+   [bake_raster.py](../workers/model-trellis/bake_raster.py) (built for the
+   TRELLIS.2 UV bake; the TRELLIS v1 bake also needs screen-space renders), and
+   replace diff-gaussian-rasterization with an Apache-2.0 splat rasteriser such as
+   gsplat, then re-validate texture quality and rerun the GPU gate.
+
+The same two extensions run in the production TRELLIS lane on three.ws, so the
+choice is not only about NGC.
+
 ## The publishing process, as NVIDIA documents it
 
 1. Sign the NGC Partner Legal Agreement.
@@ -204,6 +260,8 @@ and the setuptools copy pip vendors). Details in
 > It is the production server, not a demo wrapper: asynchronous job handling with a task API, four quality tiers from draft to max, optional background matting before reconstruction, an SSRF guard on every caller-supplied image URL, and a health endpoint that reports whether the pipeline finished loading so an orchestrator can route around a cold instance.
 >
 > Model weights are not included. Download `TRELLIS-image-large` from Microsoft's Hugging Face repository and mount it at `/weights/trellis-large`. TRELLIS is MIT licensed; this container is licensed under the three.ws NVIDIA NGC Container EULA and its source is Apache-2.0 at github.com/nirholas/three.ws.
+>
+> License note: the container includes nvdiffrast (NVIDIA Source Code License) and diff-gaussian-rasterization (Inria / MPII Gaussian-Splatting License), both limited to non-commercial research and evaluation use, so the container as a whole is offered for research and evaluation. Every component and its license is listed at `/licenses/THIRD_PARTY_NOTICES.md` inside the image.
 
 **Tags:** 3D, generative AI, mesh generation, inference server, digital humans, TRELLIS, computer vision
 
@@ -238,7 +296,9 @@ location selections must match the account holder's legal information.
 > custom CUDA extensions. The container supports authenticated asynchronous
 > jobs, configurable quality tiers, SSRF-protected image intake, health checks,
 > and local mounted-volume output without requiring a cloud account. Model
-> weights are mounted separately and are not included in the image.
+> weights are mounted separately and are not included in the image. Two bundled
+> CUDA extensions (nvdiffrast and diff-gaussian-rasterization) are licensed for
+> non-commercial research and evaluation use, which the listing and EULA disclose.
 
 **List NVIDIA GPUs supported by your Product:**
 
@@ -289,7 +349,9 @@ and none of them are an agent's call:
 
 1. Submit **Become an NGC Software Partner** at [nvidia.com/en-us/gpu-cloud/ngc-software-partners](https://www.nvidia.com/en-us/gpu-cloud/ngc-software-partners/). Mention the Inception membership in the form; it is the same company record.
 2. Sign the NGC Partner Legal Agreement when it comes back.
-3. Confirm the multi-GPU interpretation with NVIDIA (gate 3), then stage the
+3. Decide the commercial positioning (gate 5): publish as research and
+   evaluation software as built, or fund the rasteriser replacement first.
+4. Confirm the multi-GPU interpretation with NVIDIA (gate 3), then stage the
    validated digest with `scripts/ngc-stage-trellis.sh --yes-push` (gate 4).
 
 ## Verification log
@@ -300,12 +362,13 @@ and none of them are an agent's call:
 | A self-serve intake form exists | Same fetch | "Become an NGC Software Partner" form on that page; no email address published |
 | Base images are CUDA 12.x | `grep FROM workers/*/Dockerfile` | Eight GPU workers on `nvidia/cuda` 12.1 to 12.8 |
 | The container collects nothing | `grep -rniE "posthog|analytics|telemetry|mixpanel|sentry" workers/model-trellis` | No matches |
-| Weights are not baked into the image | [workers/model-trellis/README.md](../workers/model-trellis/README.md) and the Dockerfile | Weights mount at `/weights`; no `COPY` of any checkpoint |
+| Generative weights are not baked into the image | [workers/model-trellis/README.md](../workers/model-trellis/README.md) and the Dockerfile | TRELLIS weights mount at `/weights`; the only baked checkpoint is DINOv2 ViT-L/14 (Apache-2.0) at `/opt/torch/hub/checkpoints` |
 | Standalone storage | [main.py](../workers/model-trellis/main.py), [storage_backend.py](../workers/model-trellis/storage_backend.py) | Local mounted-volume mode implemented; GCS remains the production path |
 | CUDA architecture configuration | [Dockerfile](../workers/model-trellis/Dockerfile) | Production defaults to `8.9`; the NGC build pins `8.0;8.6;8.9;9.0+PTX` |
 | Two-stage image is smaller and scan-clean of CRITICAL | Cloud Build `0d26c01f`, Trivy scan build `1d5a5e6c`, 2026-11-10 | 22 layers and 8.39 GB (was 31 and 12.30 GB); 0 CRITICAL, 2 upstream-only HIGH (was 70 and 1437) |
 | Real inference on Ampere and Ada | `scripts/ngc-validate-trellis.sh` on GCE A100 and L4 VMs, 2026-11-10 | Both tasks `done`, both GLBs load with a textured mesh; VMs deleted. H100 quota denied |
 | Upstream licenses | Worker READMEs | TRELLIS MIT, MDM MIT, Hunyuan3D non-commercial |
+| Source-built component licenses | Each repository's LICENSE file, read 2026-11-14 | nvdiffrast and diff-gaussian-rasterization research/evaluation only; diffoctreerast removed; the rest MIT, Apache-2.0 or BSD. Bundled in-image at `/licenses` |
 
 ## Related
 

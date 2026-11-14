@@ -5,11 +5,15 @@ on-chain agent marketplace. Buyers are agents: they discover a service, receive 
 payment challenge, pay in stablecoins on X Layer (or USDC on our other x402 rails), and get
 the artifact. Our marketplace entry is agent **#2632 "three.ws 3D Studio"**.
 
-> **Listing state, read live 2026-09-09: rejected, awaiting resubmission.** The line-up below
+> **Listing state, last read live 2026-09-09: rejected, awaiting resubmission.** A fresh read
+> needs an OKX wallet session (a browser OTP); the 2026-11-14 attempt found the session expired,
+> so no newer reading exists. The line-up below
 > was resubmitted on 2026-08-27 (on-chain update tx `0xb4b2f51d…415ba`, X Layer) and the review
 > rejected it on 2026-09-03 over the payment leg: an OKX agentic wallet is an EIP-7702 delegated
 > EOA and our verifier refused its signature. That is fixed and live (2026-09-05 release), OKX's
-> own `agent x402-check` reads `valid: true` on all four paid rows, and a TEE-signed
+> own validator parses the challenge on every paid row (`agent x402-check` read `valid: true`
+> in September; on CLI 4.6.9 that command is gone and `payment quote` reads the X Layer accept
+> `supported: true`, re-run 2026-11-14), and a TEE-signed
 > authorization is accepted end to end. The resubmission itself is an on-chain write and is the
 > only step left. The first rejection, on 2026-07-04 ("your A2MCP service has not been
 > integrated with the OKX Agent Payments Protocol standard"), was closed by the X Layer rail
@@ -132,7 +136,8 @@ is identical across all of them: every endpoint exposes the same four tools (the
 | `look_at_model` | free | Renders any public `https` GLB from up to six angles and returns the frames as MCP image blocks, plus its geometry (triangles, materials, textures) and a plain reading of it |
 
 `forge_status` lives on every endpoint, so you poll a job where you paid for it and never
-have to discover a second host mid-flight.
+have to discover a second host mid-flight. It is also listed as its own free service, so an
+agent can hold one status endpoint for jobs started anywhere.
 
 `look_at_model` exists because a buying agent that receives a `.glb` link cannot open it.
 Hand it the `glbUrl` you were delivered and it returns pictures of the model, so the agent can
@@ -148,8 +153,7 @@ curl -sS -X POST https://three.ws/api/okx/3d/forge-status \
     "params": { "name": "look_at_model",
       "arguments": { "glb_url": "https://three.ws/avatars/fox.glb", "views": ["front", "side"], "size": 256 } }
   }'
-``` It is also listed as its own free service, so an
-agent can hold one status endpoint for jobs started anywhere.
+```
 
 ### 1 · Start a generation (paid)
 
@@ -243,8 +247,10 @@ name them, `retryBackends`: the alternate engines that can still serve this requ
 exhausts its own backend failover chain before it ever reports a failure, so an `error` frame
 is terminal for that job. **A retry is a new paid call**: these rows settle when the lane
 accepts a job (see Payment semantics below), so a job that fails during generation has been
-charged. Over the 30 days to 2026-09-02, 255 of 10,278 forge jobs (2.5%) ended `failed` after
-acceptance.
+charged. Plan for that rate honestly: from 2026-10-31 to 2026-11-13, 898 of 6,387 forge jobs
+(14.1%) ended `failed` after acceptance, and the weekly rate has swung from 3% to above 90%
+during fleet outages since September. The `draft` tier on the self-hosted engine is the
+steadiest (29 failures in 795 jobs over the last of those weeks).
 
 ### Payment semantics
 
@@ -278,8 +284,11 @@ unit tests in [`tests/api/okx-forge.test.js`](../tests/api/okx-forge.test.js).
   (replay-guarded), and the settled amount always equals the advertised price.
 - **Retried payments are safe.** The same payment plus the same body replays the same
   response through the idempotency cache instead of running a second job.
-- **Each rail is advertised once**, and every rail in a service's 402 quotes the same
-  amount, derived from the catalog module. That holds for *every* unpaid POST, not just a
+- **Each rail is advertised once**, and every dollar rail in a service's 402 (X Layer
+  USD₮0, Solana USDC, Base USDC) quotes the same amount, derived from the catalog module.
+  The Solana $THREE accept is the one exception by design: it is a flat 10 $THREE
+  (`10000000` atomic, the platform's `X402_THREE_AMOUNT_SOLANA` setting) on every row,
+  whatever the dollar price. That holds for *every* unpaid POST, not just a
   well-formed `tools/call`: a body that names no priced tool (an empty body, a plain
   business payload, a mistyped tool name) is quoted at the row's list price rather than
   falling back to the platform default, so a buyer never reads two prices for one rail.
@@ -350,8 +359,9 @@ here as on the listed rows: a job that fails later, during generation, has been 
 ## Rails
 
 Challenges advertise every rail the deployment can settle: **X Layer (`eip155:196`,
-USD₮0)** first for OKX.AI buyers, plus the existing Solana / Base / BSC USDC rails so
-non-OKX agents can pay the same endpoint. The wire format OKX buyers use (headers
+USD₮0)** first for OKX.AI buyers, then Solana USDC, Solana $THREE (a flat 10 $THREE on every
+row) and Base USDC, so non-OKX agents can pay the same endpoint. That is the live order read
+off production on 2026-11-14; no other rail is advertised. The wire format OKX buyers use (headers
 `PAYMENT-REQUIRED` / `PAYMENT-SIGNATURE` / `PAYMENT-RESPONSE`, scheme `exact` EIP-3009) is
 pinned down in [`specs/okx-agent-payments.md`](../specs/okx-agent-payments.md).
 
@@ -363,7 +373,10 @@ Everything above states what the code is built to do. This section states only w
 *measured* against production, so a buyer can tell the two apart. It is written from the
 end-to-end gauntlet (`npm run okx:gauntlet`, source
 [`scripts/okx-e2e-gauntlet.mjs`](../scripts/okx-e2e-gauntlet.mjs)), and every claim below has a
-capture under `prompts/okx-ai/e2e-evidence/`. Last run 2026-09-09 against `https://three.ws`.
+capture under `prompts/okx-ai/e2e-evidence/`. Last full run 2026-09-09 against
+`https://three.ws`. Re-checked 2026-11-14: `node scripts/okx-compliance-probe.mjs` passed all
+20 probes and the gauntlet `--dry-run` passed its 3 runnable cases. The `--no-spend` mode below
+signs authorizations through the OKX wallet, so it needs a live `onchainos` session.
 
 Every claim in this section is reproducible without spending anything:
 
@@ -394,8 +407,8 @@ demanded, and MCP `initialize` plus `tools/list` are free on every paid row, so 
 read the tool schema before deciding to pay.
 
 **Legacy rails: advertised, not yet bought.** The same 402 also offers the pre-OKX rails the
-platform already sells on (Solana USDC, Solana $THREE, and Base), each at the same price as
-the X Layer accept. That the advertisement is correct is measured. That one of them still
+platform already sells on (Solana USDC and Base USDC at the same price as the X Layer accept,
+and Solana $THREE at a flat 10 $THREE). That the advertisement is correct is measured. That one of them still
 *pays* is not: like the X Layer rail below, no funded purchase has been made, so this is a
 verified advertisement and an unverified purchase, and it is listed here as exactly that.
 

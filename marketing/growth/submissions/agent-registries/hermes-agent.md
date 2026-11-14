@@ -2,7 +2,13 @@
 
 Target: `https://github.com/NousResearch/hermes-agent`, file `optional-mcps/three-ws/manifest.yaml`.
 
-Confirmed 2026-10-13 against the real `optional-mcps/context7/manifest.yaml` (fetched live from
+Re-verified 2026-11-14: repo exists, not archived, MIT, default branch `main`; `optional-mcps/` now holds 66
+entries and none is three.ws; the live `optional-mcps/context7/manifest.yaml` still has the same keys
+(`manifest_version: 1`, `transport: {type: http, url}`, `auth: {type: none}`, `suggest`, `post_install`), so the
+manifest below is unchanged and valid. No open or merged PR from us. `https://three.ws/api/mcp-studio` now lists
+16 tools (the three named below are all still present).
+
+Originally confirmed 2026-10-13 against the real `optional-mcps/context7/manifest.yaml` (fetched live from
 `raw.githubusercontent.com`): remote HTTP MCP entries use `manifest_version: 1`, `transport: {type: http, url}`,
 and `auth: {type: none}` for a no-key server, which matches three.ws's free `/api/mcp-studio` endpoint exactly.
 
