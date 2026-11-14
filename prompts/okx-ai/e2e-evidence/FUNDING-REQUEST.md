@@ -1,4 +1,16 @@
-# Work Order 04: funding request (current ask re-verified 2026-09-25)
+# Work Order 04: funding request (current ask re-verified 2026-11-14)
+
+## Re-measured 2026-11-14: the ask below is unchanged
+
+X Layer block 75854189 (`rpc.xlayer.tech`, direct `balanceOf` + `eth_getBalance`): buyer
+`0x75d0…cf69` 0 USD₮0 / 0 OKB (nonce 1); seller `0x4022de2D…f402` 2.427731 USD₮0 / 0.839596
+OKB (nonce 3); relayer `0xe81DE501…415B` 0.02 OKB (nonce 0, never broadcast); gas 0.02 gwei.
+The buyer's Solana account still holds no token account for the case 7 mint. Step 0 green:
+health `ok` with `payment-rail` `settleable: true` and `relayer_funded: true`; three-copy PASS
+(module == live == listing, 7 rows); unpaid `text-to-3d` 402 with `exact` / `eip155:196` /
+10000 first and `payTo` unchanged; OKX suites 83/83; `--dry-run` 3/3 (1, 1d, 5d), now written
+to a temp directory so the committed captures stay intact; `--budget` still $1.07 settled from
+a $1.08 float. `onchainos` is v4.6.9 and logged OUT, so the browser login is needed again.
 
 ## Current ask, 2026-09-25 (supersedes the 5.0 USD₮0 and 0.10 USDC figures further down)
 

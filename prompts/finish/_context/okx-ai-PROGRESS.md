@@ -573,3 +573,27 @@ account, publishing a task that names #2632 and sending one chat line.
 scratch log path and failed on its own (`agent-sniper-00034-7zp` did not listen on 8080).
 
 **907 stays open.** DoD lines 1 and 3 need a real inbound message and a reply on the host. When one lands, the daemon logs `queued ai-dispatch command=... job=...` then `ai-dispatch command completed`; read them with `gcloud logging read 'resource.labels.service_name="okx-chat-bot" jsonPayload.line:"ai-dispatch"' --freshness=1h`.
+
+## 2026-11-14 | order 913 (WO-04) | Step 0 re-proved against production; still parked on funding plus a fresh wallet login
+
+Nothing signed, nothing paid, nothing deployed. Every leg that needs no signature was re-run live:
+
+| Check | Result |
+| --- | --- |
+| `GET /api/okx/3d/health` | `ok: true`, six subsystems ok, `payment-rail` `settleable: true`, `relayer_funded: true` |
+| `npm run okx:three-copy` | PASS, module == live == listing (7 rows); on-chain not compared (logged out) |
+| Unpaid `POST /api/okx/3d/text-to-3d` | 402, `accepts[0]` `exact` / `eip155:196` / 10000 / USD₮0, `payTo` `0x4022de2D…f402` unchanged |
+| `okx-3d-services` + `okx-forge` suites | 83/83 |
+| `npm run okx:gauntlet -- --dry-run` | 3/3 exercised PASS (1, 1d, 5d), 11 skipped, 0 settlements; captures went to `/tmp/okx-gauntlet-dry-run`, committed evidence untouched |
+| `--budget` | $1.07 settles from a $1.08 float; buyer SHORT by 1.08 |
+
+X Layer block 75854189: buyer `0x75d0…cf69` 0 USD₮0 / 0 OKB (nonce 1), seller 2.427731 USD₮0 /
+0.839596 OKB (nonce 3), relayer 0.02 OKB (nonce 0). Nothing has moved on this rail since
+2026-09-09. The buyer's Solana account still has no token account for case 7. `onchainos` is now
+v4.6.9 and `loggedIn: false`, so `--no-spend` (5b, 5c) and every paid case need the browser login
+first.
+
+Owner message sent with both gates batched: the browser login for `claude@three.ws`, and the
+funding legs in `prompts/okx-ai/e2e-evidence/FUNDING-REQUEST.md` (2.16 USD₮0 to the buyer on X
+Layer chain 196, plus the case 7 Solana leg). GO/NO-GO for OKX-05: **NO-GO on settlement
+evidence, unchanged**; no real settlement has landed. Order 913 stays on disk.
