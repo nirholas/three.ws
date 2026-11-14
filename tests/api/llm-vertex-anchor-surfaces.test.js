@@ -266,7 +266,7 @@ describe('anthropic-proxy (api/llm/anthropic.js): model fallback anchor', () => 
 			provider: 'vertex-gemini',
 		});
 		// Static allowlist entries are untouched.
-		expect(resolveModelRoute('llama-3.3-70b-versatile')).toMatchObject({ provider: 'groq' });
+		expect(resolveModelRoute('qwen/qwen3.8-27b')).toMatchObject({ provider: 'groq' });
 		// Unknown models still resolve to nothing (the 400 allowlist gate).
 		expect(resolveModelRoute('made-up/model')).toBeNull();
 	});

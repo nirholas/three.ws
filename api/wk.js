@@ -1155,7 +1155,7 @@ const REST_OUTPUT_EXAMPLES = Object.freeze({
 	},
 	'/api/x402/llm-proxy': {
 		content: '1, 2, 3.',
-		model: 'llama-3.3-70b-versatile',
+		model: 'qwen/qwen3.8-27b',
 		provider: 'groq',
 		latency_ms: 312,
 		tokens_used: 11,

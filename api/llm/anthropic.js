@@ -85,9 +85,12 @@ const MODELS = {
 		envKey: 'OPENROUTER_API_KEY',
 	},
 
-	// Groq free tier (sub-second latency; per-IP+per-key minute caps).
-	'llama-3.3-70b-versatile': { kind: 'openai', provider: 'groq', envKey: 'GROQ_API_KEY' },
-	'llama-3.1-8b-instant': { kind: 'openai', provider: 'groq', envKey: 'GROQ_API_KEY' },
+	// Groq free tier (sub-second latency; per-key minute and daily caps).
+	// Non-reasoning, so a small max_tokens budget still yields visible text.
+	// Groq retired llama-3.3-70b-versatile and llama-3.1-8b-instant (404, gone
+	// from GET /openai/v1/models on 2026-11-14); saved policies that still name
+	// them resolve forward through RETIRED_MODEL_IDS below.
+	'qwen/qwen3.8-27b': { kind: 'openai', provider: 'groq', envKey: 'GROQ_API_KEY' },
 
 	// NVIDIA NIM free tier (build.nvidia.com). One nvapi key, OpenAI-compatible,
 	// tool-call capable. Used both as directly-selectable models and as a free
@@ -212,19 +215,18 @@ export function modelFallbackChain(requestedModel) {
 	const chain = [
 		requestedModel,
 		...[
-			// Groq's small free model. Every rung here must resolve through
-			// resolveModelRoute or the attempt loop skips it without a trace: the
-			// rung this replaced ('meta-llama/llama-3.1-8b-instruct:free') was in
-			// neither MODELS nor OpenRouter's live catalog, so the documented
-			// second step of the chain never ran. Groq is also a different account
-			// and quota pool from the OpenRouter lane above, so an OpenRouter rate
-			// limit does not carry over into it.
-			'llama-3.1-8b-instant',
-			// Was 'meta/llama-4-maverick-17b-128e-instruct' until 2026-09-10, when
-			// it was found retired from the NIM catalog and answering 410 Gone.
-			// A dead id in this chain is not a no-op: it consumes a rung, so a
-			// request that should have reached SambaNova spent an attempt on a
-			// model that could never answer.
+			// Groq's live free model. Every rung here must resolve through
+			// resolveModelRoute or the attempt loop skips it without a trace, and
+			// every rung must still exist upstream: this slot held
+			// 'llama-3.1-8b-instant' until Groq retired it (404) on 2026-11-14.
+			// Groq is a different account and quota pool from the OpenRouter
+			// lane above, so an OpenRouter rate limit does not carry over into it.
+			'qwen/qwen3.8-27b',
+			// NVIDIA NIM free tier: Ultra first for answer quality, Lightning as
+			// the fast small model on the same key. Dead ids are not no-ops here:
+			// 'meta/llama-4-maverick-17b-128e-instruct' sat in this slot answering
+			// 410 Gone until 2026-09-10, spending a rung on every degradation.
+			'nvidia/nemotron-3-ultra-550b-a55b',
 			'nvidia/nemotron-3.5-lightning-30b-a3b',
 			// SambaNova free 70B: an independent quota pool between the NVIDIA
 			// free rung and the paid Anthropic backstop. Skipped at call time
@@ -308,12 +310,21 @@ const FREE_DEFAULT_MODEL = 'google/gemma-4-31b-it:free';
 // Resolve the model to run: the caller's choice when it costs the host nothing
 // or matches what the owner configured, otherwise the policy's own model. The
 // response echoes the model actually used, so a clamped caller sees what it got.
-// A Grok id xAI has retired (saved in a policy or sent by an embed) resolves to
-// its successor first, so it neither 404s upstream nor falls out of the
-// allowlist.
+// A Grok id xAI has retired, or a Groq id Groq has retired (saved in a policy
+// or sent by an embed), resolves to its successor first, so it neither 404s
+// upstream nor falls out of the allowlist.
+const RETIRED_MODEL_IDS = {
+	'llama-3.3-70b-versatile': 'qwen/qwen3.8-27b',
+	'llama-3.1-8b-instant': 'qwen/qwen3.8-27b',
+};
+
+function liveModelId(id) {
+	return resolveGrokModelId(RETIRED_MODEL_IDS[id] || id);
+}
+
 function resolveRequestedModel(rawRequested, policyModel) {
-	const configured = resolveGrokModelId(policyModel || FREE_DEFAULT_MODEL);
-	const requested = rawRequested && resolveGrokModelId(rawRequested);
+	const configured = liveModelId(policyModel || FREE_DEFAULT_MODEL);
+	const requested = rawRequested && liveModelId(rawRequested);
 	if (!requested || requested === configured) return configured;
 	if (PAID_HOST_KEY_MODELS.has(requested)) return configured;
 	return requested;
@@ -596,11 +607,13 @@ export default wrap(async (req, res) => {
 	const requestedModel = resolveRequestedModel(body.model, policy.brain?.model);
 
 	// Ordered fallback chain for 429 / 5xx from OpenRouter free tier:
-	//   1. Requested model (e.g. llama-3.3-70b:free)
-	//   2. llama-3.1-8b-instant                       (smaller free model, Groq)
-	//   3. nvidia/nemotron-3.5-lightning-30b-a3b      (free NVIDIA NIM tier)
-	//   4. claude-haiku-4-5-20251001                  (paid Anthropic)
-	//   5. Vertex Gemini credits anchor               (keyless last resort)
+	//   1. Requested model (e.g. google/gemma-4-31b-it:free)
+	//   2. qwen/qwen3.8-27b                           (free Groq)
+	//   3. nvidia/nemotron-3-ultra-550b-a55b          (free NVIDIA NIM tier)
+	//   4. nvidia/nemotron-3.5-lightning-30b-a3b      (free NVIDIA NIM tier)
+	//   5. Meta-Llama-3.3-70B-Instruct                (free SambaNova)
+	//   6. claude-haiku-4-5-20251001                  (paid Anthropic)
+	//   7. Vertex Gemini credits anchor               (keyless last resort)
 	// The NVIDIA free tier sits ahead of paid Anthropic so a rate-limited OpenRouter
 	// free model exhausts every free option before any per-token cost is incurred.
 	// A non-reasoning model is used here on purpose: a reasoning model can spend a

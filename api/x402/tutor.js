@@ -91,7 +91,7 @@ const OUTPUT_EXAMPLE = {
 	example: 'function f(n){ if (n <= 0) return 0; return n + f(n - 1); }',
 	followUp: 'How would you convert this recursion into an iterative loop?',
 	level: 'beginner',
-	model: 'llama-3.3-70b-versatile',
+	model: 'qwen/qwen3.8-27b',
 	costThisCharge: '10000',
 	costThisChargeUsd: '0.010000',
 	sessionTotal: '30000',

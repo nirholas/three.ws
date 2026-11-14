@@ -596,6 +596,21 @@ const CALL_SHAPE_REFUSAL =
 const CALLER_REFUSAL =
 	/blocked from this endpoint|not available for anonymous access|available for paid plans only|upgrade your subscription|please register at/i;
 
+// A provider capping how many accounts one call may RETURN. Leo's free lane
+// answers a getProgramAccounts whose result set is past its cap with a 200 and
+// -32602 "Too many accounts requested" (measured 2026-11-14 loading a lending
+// market, which reads every reserve of one program); other lanes serve the same
+// call. Only a scan method qualifies: the identical words on a getMultipleAccounts
+// mean the caller's own key list is over the protocol limit, which every lane
+// rejects the same way, so that stays an answer for the caller.
+const RESULT_CAP_REFUSAL = /too many accounts requested/i;
+const RESULT_CAPPED_METHODS = new Set(['getProgramAccounts']);
+
+/** True when `text` is a lane's result-size cap on a scan call in `methods`. */
+function isResultCapRefusal(text, methods) {
+	return RESULT_CAP_REFUSAL.test(text || '') && methods.some((m) => RESULT_CAPPED_METHODS.has(m));
+}
+
 /**
  * True when `text` is a provider declining to serve this request for a reason the
  * NEXT lane will not share and that says nothing about our credential, so the
@@ -1133,7 +1148,9 @@ function isProviderCapacityError(rpcError) {
 // `{jsonrpc,id}` envelope with neither `result` nor `error`). We detect every one
 // of those shapes here: plus provider-capacity JSON-RPC errors, and route past
 // the bad node instead of handing the caller something it cannot parse.
-export function classifyRpcBody(body) {
+// `methods` are the request's JSON-RPC methods (rpcMethodsFromBody), for the
+// refusals whose meaning depends on the call they answer.
+export function classifyRpcBody(body, methods = []) {
 	const trimmed = (body || '').trim();
 	if (trimmed === '')
 		return { status: 502, reason: 'empty body', log: '200 but empty body', bodyText: '' };
@@ -1196,6 +1213,18 @@ export function classifyRpcBody(body) {
 				log: `200 + provider error ${code} ${msg.slice(0, 48)}`.trim(),
 				bodyText: msg,
 				methodBlock: isMethodRefusal(msg),
+			};
+		}
+		// A lane's result-size cap on a scan (see RESULT_CAP_REFUSAL): fail over and
+		// demote the shape on this lane, never the lane.
+		if (hasError && isResultCapRefusal(String(item.error?.message || ''), methods)) {
+			const msg = String(item.error?.message || '');
+			return {
+				status: 429,
+				reason: 'result cap',
+				log: `200 + result cap ${item.error?.code ?? ''} ${msg.slice(0, 48)}`.trim(),
+				bodyText: msg,
+				methodBlock: true,
 			};
 		}
 		// The node's own internal fault on this call shape (see JSONRPC_INTERNAL_ERROR).
@@ -1780,7 +1809,7 @@ export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 					const resp = await fetch(url, { ...init, signal, body: JSON.stringify(batch[i]) });
 					if (!resp.ok) throw new Error(`solana rpc ${resp.status} @ ${maskUrl(url)} (unbatched)`);
 					const text = await resp.text();
-					const bad = classifyRpcBody(text);
+					const bad = classifyRpcBody(text, batch[i]?.method ? [batch[i].method] : []);
 					if (bad) throw new Error(`solana rpc ${bad.reason} @ ${maskUrl(url)} (unbatched)`);
 					envelopes[i] = JSON.parse(text);
 				}
@@ -1869,7 +1898,7 @@ export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 					);
 					return { response: await sendUnbatched(url, signal) };
 				}
-				const bad = classifyRpcBody(okBody);
+				const bad = classifyRpcBody(okBody, methods);
 				if (bad) {
 					if (!bad.noPenalty) penalise(url, bad.status, bad.bodyText || '', bad.methodBlock === true, bad.log);
 					return { error: new Error(`solana rpc ${bad.reason} @ ${maskUrl(url)}`) };

@@ -438,6 +438,52 @@ describe('classifyRpcBody: history a node does not hold is a free failover', () 
 	});
 });
 
+// Leo's free lane caps how many accounts a getProgramAccounts may return and
+// answers past that cap with a 200 carrying -32602 "Too many accounts requested"
+// (measured live 2026-11-14 loading the lending market, which reads every reserve
+// of one program). Other lanes serve the same call, so it is a call-shape refusal.
+// The same words on a getMultipleAccounts mean OUR key list is over the protocol
+// limit, which every lane rejects identically, so that one must still surface.
+const LEO_RESULT_CAP = {
+	jsonrpc: '2.0',
+	id: null,
+	result: null,
+	error: { code: -32602, message: 'Too many accounts requested' },
+};
+
+describe('classifyRpcBody: a lane capping getProgramAccounts results is a per-shape failover', () => {
+	it('demotes getProgramAccounts on the capping lane', () => {
+		const bad = classifyRpcBody(JSON.stringify(LEO_RESULT_CAP), ['getProgramAccounts']);
+		expect(bad).toBeTruthy();
+		expect(bad.methodBlock).toBe(true);
+	});
+
+	it('leaves an oversized getMultipleAccounts, or an unknown method, to the caller', () => {
+		expect(classifyRpcBody(JSON.stringify(LEO_RESULT_CAP), ['getMultipleAccounts'])).toBeNull();
+		expect(classifyRpcBody(JSON.stringify(LEO_RESULT_CAP))).toBeNull();
+	});
+
+	it('rotates the market load onto a lane that serves it, without cooling the capping lane', async () => {
+		const capping = 'https://cap-r1.test/';
+		const serving = 'https://cap-r2.test/';
+		const accounts = { jsonrpc: '2.0', id: 1, result: [] };
+		global.fetch = vi.fn(async (url, init) => {
+			const { method } = JSON.parse(init.body);
+			if (url === capping && method === 'getProgramAccounts') return resp(LEO_RESULT_CAP);
+			return resp(method === 'getProgramAccounts' ? accounts : OK);
+		});
+		const rf = makeRotatingFetch([capping, serving]);
+
+		const r = await rf(null, rpc('getProgramAccounts', ['ProgramPlaceholder11111111111111111111111111', { filters: [{ dataSize: 8624 }] }]));
+		await expect(r.json()).resolves.toEqual(accounts);
+		expect(isMethodDemoted(capping, 'getProgramAccounts')).toBe(true);
+		expect(isEndpointCooling(capping)).toBe(false);
+
+		await rf(null, rpc('getAccountInfo'));
+		expect(global.fetch.mock.calls.at(-1)[0]).toBe(capping);
+	});
+});
+
 // PublicNode accepts a getTokenLargestAccounts and then never answers it: no
 // response at 35 s, while getAccountInfo comes back in milliseconds. Charging
 // that hang to the LANE parked the free chain's primary for every method, on one

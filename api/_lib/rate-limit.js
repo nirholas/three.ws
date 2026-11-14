@@ -1508,6 +1508,11 @@ export const limits = {
 	// Direct messages between friends — its own bucket so DM spam can't starve
 	// world-chat posting and vice versa. Mirrors world chat's order of magnitude.
 	dmSend: (userId) => getLimiter('dm:send', { limit: 30, window: '1 m' }).limit(userId),
+	// Trade-room spectator chat (api/sniper/room-chat). A burst of four per ten
+	// seconds lets a live conversation flow while a script pasting spam hits the
+	// wall at once. Keyed on the user id: the abuse is one account flooding a room.
+	tradeRoomChat: (userId) =>
+		getLimiter('traderoom:chat', { limit: 4, window: '10 s' }).limit(userId),
 	// Demo /api/x402-pay — agent wallet pays real USDC per call, so we keep the
 	// per-IP burst small (6/min ≈ $0.006/min) and rely on the agent wallet
 	// balance as the global ceiling.

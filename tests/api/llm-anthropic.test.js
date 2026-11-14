@@ -532,9 +532,20 @@ describe('/api/llm/anthropic: paid-model clamp', () => {
 
 	it('caller-supplied free model overrides the policy default', async () => {
 		policyState.policy.brain.model = 'google/gemma-4-31b-it:free';
-		await invoke({ body: { ...VALID_BODY, model: 'llama-3.3-70b-versatile' } });
+		await invoke({ body: { ...VALID_BODY, model: 'qwen/qwen3.8-27b' } });
 		const sentBody = JSON.parse(fetchState.calls[0].init.body);
-		expect(sentBody.model).toBe('llama-3.3-70b-versatile');
+		expect(sentBody.model).toBe('qwen/qwen3.8-27b');
+	});
+
+	// Agent policies saved before Groq retired its Llama 3.x lanes still carry
+	// those ids. Groq answers them 404, so an agent whose owner picked one had a
+	// dead first rung on every turn. They resolve forward to Groq's live model.
+	it('forwards a retired Groq id saved as the policy model to the live one', async () => {
+		policyState.policy.brain.model = 'llama-3.3-70b-versatile';
+		await invoke({ body: VALID_BODY });
+		const call = fetchState.calls[0];
+		expect(call.url).toBe('https://api.groq.com/openai/v1/chat/completions');
+		expect(JSON.parse(call.init.body).model).toBe('qwen/qwen3.8-27b');
 	});
 
 	it('clamps a caller-requested paid model back to the policy model', async () => {
@@ -653,12 +664,22 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 
 	it('routes Groq model ids to api.groq.com', async () => {
 		await invoke({
-			body: { ...VALID_BODY, model: 'llama-3.3-70b-versatile' },
+			body: { ...VALID_BODY, model: 'qwen/qwen3.8-27b' },
 		});
 		const call = fetchState.calls[0];
 		expect(call.url).toBe('https://api.groq.com/openai/v1/chat/completions');
 		expect(call.init.headers.authorization).toBe('Bearer gsk-test');
 	});
+
+	it.each(['llama-3.1-8b-instant', 'llama-3.3-70b-versatile'])(
+		'sends a caller-requested retired Groq id (%s) to the live Groq model',
+		async (retired) => {
+			await invoke({ body: { ...VALID_BODY, model: retired } });
+			const call = fetchState.calls[0];
+			expect(call.url).toBe('https://api.groq.com/openai/v1/chat/completions');
+			expect(JSON.parse(call.init.body).model).toBe('qwen/qwen3.8-27b');
+		},
+	);
 
 	it('degrades through the fallback chain when the requested model has no key', async () => {
 		// The requested OpenRouter lane is unkeyed; the request must NOT 503 —
@@ -826,13 +847,13 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 
 	it('translates OpenAI-shape upstream response → Anthropic-shape body', async () => {
 		const { status, body } = await invoke({
-			body: { ...VALID_BODY, model: 'llama-3.3-70b-versatile' },
+			body: { ...VALID_BODY, model: 'qwen/qwen3.8-27b' },
 		});
 		expect(status).toBe(200);
 		expect(body).toMatchObject({
 			type: 'message',
 			role: 'assistant',
-			model: 'llama-3.3-70b-versatile',
+			model: 'qwen/qwen3.8-27b',
 			content: [{ type: 'text', text: 'hi from free model' }],
 			stop_reason: 'end_turn',
 			usage: { input_tokens: 7, output_tokens: 9 },
@@ -913,6 +934,21 @@ describe('/api/llm/anthropic: fallback chain integrity', () => {
 		const chain = modelFallbackChain('google/gemma-4-31b-it:free');
 		expect(chain[chain.length - 1]).toBe('claude-haiku-4-5-20251001');
 	});
+
+	// Production 2026-11-14: Groq retired llama-3.1-8b-instant and
+	// llama-3.3-70b-versatile (absent from GET /openai/v1/models, 404 on call).
+	// The chain's second rung was the 8b id, so every embed degradation spent
+	// an attempt on a model that could never answer.
+	it('lists no model id Groq has retired', () => {
+		const chain = modelFallbackChain('google/gemma-4-31b-it:free');
+		expect(chain).not.toContain('llama-3.1-8b-instant');
+		expect(chain).not.toContain('llama-3.3-70b-versatile');
+	});
+
+	it('backs the requested model with a live Groq rung, then NVIDIA Ultra', () => {
+		const chain = modelFallbackChain('google/gemma-4-31b-it:free');
+		expect(chain.slice(1, 3)).toEqual(['qwen/qwen3.8-27b', 'nvidia/nemotron-3-ultra-550b-a55b']);
+	});
 });
 
 // ── Anthropic request shaping ──────────────────────────────────────────────
@@ -990,7 +1026,7 @@ describe('/api/llm/anthropic: streaming, OpenAI-shape lanes', () => {
 				'data: {"choices":[{"delta":{},"finish_reason":"stop"}],"x_groq":{"usage":{"prompt_tokens":8,"completion_tokens":3}}}\n\n',
 				'data: [DONE]\n\n',
 			]);
-		await invoke({ body: { ...VALID_BODY, model: 'llama-3.3-70b-versatile', stream: true } });
+		await invoke({ body: { ...VALID_BODY, model: 'qwen/qwen3.8-27b', stream: true } });
 		expect(redisStore.get(`llm:tokens:agent-1:${monthKey()}`)).toBe(11);
 	});
 
