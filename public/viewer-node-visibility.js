@@ -49,3 +49,11 @@ export function bindModelViewer(mv) {
 	mv.addEventListener('load', () => apply(mv));
 	if (mv.loaded) apply(mv);
 }
+
+// /viewer loads this file as `<script type="module" src>` (an inline module
+// would go through Vite's html-proxy in dev), so it binds the page's viewer
+// itself. Importing it anywhere without a #mv model-viewer does nothing.
+if (typeof document !== 'undefined') {
+	const mv = document.getElementById('mv');
+	if (mv && mv.localName === 'model-viewer') bindModelViewer(mv);
+}

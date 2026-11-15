@@ -242,6 +242,6 @@ describe('re-import in the /viewer page (model-viewer)', () => {
 	it('is loaded by public/viewer.html', async () => {
 		const { readFileSync } = await import('node:fs');
 		const html = readFileSync(new URL('../public/viewer.html', import.meta.url), 'utf8');
-		expect(html).toMatch(/import\s*\{\s*bindModelViewer\s*\}\s*from\s*'\/viewer-node-visibility\.js'/);
+		expect(html).toMatch(/<script type="module" src="\/viewer-node-visibility\.js"><\/script>/);
 	});
 });
