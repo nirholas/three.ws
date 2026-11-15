@@ -6,6 +6,7 @@
 //   compliance    nothing that reads as investment advice or a price promise
 //   register      no crypto slang, marketing filler, or begging calls to action
 //   typography    spacing, punctuation, one link per post
+//   voice         sentence constructions that read as machine-written (voice.js)
 //   claims        every number, superlative, and @tag is declared with evidence
 //   media         resolution, crop-safe aspect ratio, useful alt text, fresh frames
 //
@@ -17,6 +18,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { mediaType } from './media.js';
 import { urlsIn } from './quality.js';
+import { constructionProblems } from './voice.js';
 
 // Prose checks strip links but keep bare domains, so a brand name written
 // "Three.ws" is still caught; link counting uses X's own notion of a link.
@@ -115,6 +117,7 @@ export function languageProblems(text, { body = false } = {}) {
 	if (oneWord.some((flag, index) => flag && oneWord[index + 1] && oneWord[index + 2])) {
 		problems.push({ rule: 'structure', severity: 'blocking', message: 'one-word-sentence drumbeat reads as ad copy' });
 	}
+	problems.push(...constructionProblems(text));
 	const links = urlsIn(text);
 	if (links.length > 1 && !body) problems.push({ rule: 'links', severity: 'blocking', message: `${links.length} links (${links.join(', ')}); one post links one surface, and X reads a bare three.ws as a link` });
 	const mentions = prose.match(/(?<![\w@])@\w{1,15}/g) || [];

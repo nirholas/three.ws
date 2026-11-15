@@ -14,6 +14,7 @@ import { loadArticle } from './queue.js';
 import { readMedia } from './media.js';
 import { attachArticleMedia } from './articles.js';
 import { formatOf } from './formats.js';
+import { audienceOf, shapeOf } from './voice.js';
 
 // X expires an uploaded media id after 24 hours; re-upload past this age.
 const MEDIA_ID_TTL_MS = 23 * 60 * 60 * 1000;
@@ -75,6 +76,8 @@ async function publishPosts({ client, root, posts, progress, persist, quoteId = 
 		for (const media of post.media || []) mediaIds.push(await uploadOnce({ client, root, media, progress, persist }));
 		const payload = { text: post.text.trim() };
 		if (mediaIds.length) payload.media = { media_ids: mediaIds };
+		// X takes a poll or media on a post, never both (validated in queue.js).
+		if (post.poll) payload.poll = { options: post.poll.options.map((option) => String(option).trim()), duration_minutes: Number(post.poll.durationMinutes) };
 		const replyTo = index === 0 ? null : progress.postIds[index - 1];
 		if (replyTo) payload.reply = { in_reply_to_tweet_id: replyTo };
 		if (index === 0 && quoteId) payload.quote_tweet_id = quoteId;
@@ -130,6 +133,8 @@ export async function publishItem({ item, client, root, state, store, account = 
 		lane: item.lane,
 		pattern: item.pattern,
 		format: formatOf(item),
+		audience: audienceOf(item),
+		shape: shapeOf(item),
 		publishedAt: new Date(now).toISOString(),
 		text: item.kind === 'article' ? item.article.title : item.posts[0].text,
 		postIds: progress.postIds,

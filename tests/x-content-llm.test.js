@@ -115,3 +115,11 @@ describe('the NVIDIA rung', () => {
 		}
 	});
 });
+
+describe('chain failure reasons', () => {
+	it('keeps every rung failure on one line, so a one-line log still says why', async () => {
+		const { failureReason } = await import('../api/_lib/x-content/llm.js');
+		const error = new Error('no model was reachable:\n  groq 429: rate limit\n  nvidia 504: timeout');
+		expect(failureReason(error)).toBe('no model was reachable: groq 429: rate limit | nvidia 504: timeout');
+	});
+});

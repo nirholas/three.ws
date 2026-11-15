@@ -8,6 +8,7 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { copyProblems, copySimilarity, hasUrl, maxLengthOf, weightedLength } from './quality.js';
+import { houseTics, postedHeads, ticProblems } from './voice.js';
 import { attachmentProblems, mediaProblems, mediaType } from './media.js';
 import { MARKDOWN_ENTITY_BUDGET, markdownToContentState } from './articles.js';
 import { claimProblems, languageProblems } from './editorial.js';
@@ -171,7 +172,31 @@ function postProblems(item, root, { headMinimum, headNeedsUrl, maximum }) {
 		}
 		for (const problem of attachmentProblems(post.media)) problems.push(`${label}: ${problem}`);
 		for (const media of post.media || []) for (const problem of mediaProblems(media, root)) problems.push(`${label}: ${problem}`);
+		if (post.poll !== undefined) for (const problem of pollProblems(post)) problems.push(`${label}: ${problem}`);
 	});
+	return problems;
+}
+
+// X's poll limits: 2 to 4 options of at most 25 characters, open for 5 minutes
+// to 7 days, and never on a post that carries media.
+export const POLL_LIMITS = { options: [2, 4], optionLength: 25, minutes: [5, 10_080] };
+
+export function pollProblems(post) {
+	const poll = post.poll;
+	if (!poll || typeof poll !== 'object') return ['poll must be { "options": [...], "durationMinutes": n }'];
+	const problems = [];
+	const options = Array.isArray(poll.options) ? poll.options.map((option) => String(option).trim()) : [];
+	const [fewest, most] = POLL_LIMITS.options;
+	if (options.length < fewest || options.length > most) problems.push(`a poll needs ${fewest} to ${most} options`);
+	for (const option of options) {
+		if (!option) problems.push('a poll option is empty');
+		else if ([...option].length > POLL_LIMITS.optionLength) problems.push(`poll option "${option}" is over ${POLL_LIMITS.optionLength} characters`);
+	}
+	if (new Set(options.map((option) => option.toLowerCase())).size !== options.length) problems.push('poll options repeat');
+	const minutes = Number(poll.durationMinutes);
+	const [shortest, longest] = POLL_LIMITS.minutes;
+	if (!(Number.isInteger(minutes) && minutes >= shortest && minutes <= longest)) problems.push(`poll durationMinutes must be a whole number from ${shortest} to ${longest}`);
+	if (post.media?.length) problems.push('X takes a poll or media on a post, never both');
 	return problems;
 }
 
@@ -257,8 +282,9 @@ export function validateItem(item, root, { quality = qualityAt(root), now = Date
 	if (item.kind === 'post') {
 		if (!item.posts?.length) problems.push('a post item needs at least one post');
 		else {
-			if (!item.textOnly && !item.posts[0].media?.length) {
-				problems.push('head post has no media; attach an image, GIF, or video, or set "textOnly": true on purpose');
+			// A poll is the head's attachment: X will not take media beside it.
+			if (!item.textOnly && !item.posts[0].media?.length && !item.posts[0].poll) {
+				problems.push('head post has no media; attach an image, GIF, or video, a poll, or set "textOnly": true on purpose');
 			}
 			problems.push(...postProblems(item, root, { headMinimum: 100, headNeedsUrl: true, maximum }));
 		}
@@ -319,6 +345,15 @@ export function validateQueue(queue, root, { state = null, now = Date.now() } = 
 			const score = copySimilarity(headText(live[left]), headText(live[right]));
 			if (score >= queueLimit) problems[live[right].id].push(`reads like ${live[left].id} (similarity ${score.toFixed(2)} >= ${queueLimit})`);
 		}
+	}
+
+	// Phrases the account has already posted more than once. Every post in a
+	// live item is held to it, replies included: a tic in the second post of a
+	// thread is read just the same.
+	const tics = houseTics([...postedHeads(queue.items), ...(state?.published || []).map((row) => row.text).filter(Boolean)]);
+	for (const item of live) {
+		const texts = [item.kind === 'article' ? item.article?.title : null, ...(item.posts || []).map((post) => post.text)].filter(Boolean);
+		for (const finding of texts.flatMap((text) => ticProblems(text, tics))) problems[item.id].push(`${finding.rule}: ${finding.message}`);
 	}
 
 	const history = loadHistory(root, state);

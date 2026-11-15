@@ -34,6 +34,11 @@
 //               (video, GIF, still, text, article; formats.js) more times in a
 //               row than `maximumSameFormatInARow` allows, so a run of clips is
 //               broken by a card or a GIF whenever the stock holds one
+//   audience    a penalty when the post would talk to the same reader
+//               (developer, educator, student, founder, creator, community;
+//               voice.js) more times in a row than the queue allows
+//   shape       a penalty when the head would have the same shape as the last
+//               ones: opener, length, layout, single or thread (voice.js)
 //
 // Small samples are shrunk toward no effect: the archive measured "names
 // $THREE" at 13.3x over only four posts, and one lucky post should not decide
@@ -45,6 +50,7 @@ import { FORMAT_DIMENSIONS, LENGTH_BUCKETS, TOPICS } from '../../../scripts/x-ar
 import { weightedLength } from './quality.js';
 import { LEARNED_MIN_SAMPLE, learnedScore } from './outcomes.js';
 import { formatOf } from './formats.js';
+import { audienceOf, shapeOf } from './voice.js';
 
 const DAY = 24 * 60 * 60_000;
 // Prior strength for shrinkage: a signal measured on n posts keeps n / (n + K)
@@ -213,6 +219,12 @@ export function scoreItem(item, { lifts, published = [], quality = {}, review = 
 	}
 	const maxFormat = Number(quality.maximumSameFormatInARow ?? Infinity);
 	if (trailingRun(sorted, 'format', formatOf(item)) >= maxFormat) parts.format = -25;
+	// The same reader twice running, or the same head shape (opener, length,
+	// layout, thread), is what made the feed read as one template.
+	const maxAudience = Number(quality.maximumSameAudienceInARow ?? Infinity);
+	if (trailingRun(sorted, 'audience', audienceOf(item)) >= maxAudience) parts.audience = -20;
+	const maxShape = Number(quality.maximumSameShapeInARow ?? Infinity);
+	if (trailingRun(sorted, 'shape', shapeOf(item)) >= maxShape) parts.shape = -20;
 
 	const score = Math.round(Object.values(parts).reduce((sum, value) => sum + value, 0) * 10) / 10;
 	return {

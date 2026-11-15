@@ -33,7 +33,7 @@ import { fileURLToPath } from 'node:url';
 import { loadHistory, loadQueue, partnerNames, validateItem } from '../api/_lib/x-content/queue.js';
 import { proveItem, reelFrames } from '../api/_lib/x-content/reel.js';
 import { browserProblem } from '../api/_lib/x-content/verify.js';
-import { callModelChain } from '../api/_lib/x-content/llm.js';
+import { callModelChain, failureReason } from '../api/_lib/x-content/llm.js';
 import { ARTICLE_MIN_FIGURES, HEAD_ROTATION, PATTERN_ROTATION, SERIES, articleBlocks, articleId, articleItemFor, articleSeriesFindings, assembleArticle, buildArticleBrief, buildBrief, draftArticle, draftSpotlight, itemFor, loadPartners, maximumLength, nextArticleDay, nextDay, partnerArticles, partnerProblems, pickArticlePartner, pickNext, spotlightId, spotlights } from '../api/_lib/x-content/partners.js';
 import { headDir, rebuildHead, reelFrame } from './lib/x-heads.mjs';
 
@@ -234,7 +234,7 @@ async function generate({ count, picks = null }) {
 		try {
 			outcome = await spotlight({ partners, queue, rows, pick, dryRun, ship });
 		} catch (err) {
-			outcome = { id: spotlightId(pick.partner, pick.feature, nextDay(rows, seriesStart(queue))), ok: false, reason: String(err.message || err).split('\n')[0] };
+			outcome = { id: spotlightId(pick.partner, pick.feature, nextDay(rows, seriesStart(queue))), ok: false, reason: failureReason(err) };
 		}
 		results.push(outcome);
 		if (!outcome.ok) {
@@ -432,7 +432,7 @@ async function articleIfDue({ days, force = false, partnerId = null }) {
 		try {
 			outcome = await writeArticle({ partner, partners, queue, day, dryRun, ship });
 		} catch (err) {
-			outcome = { id: articleId(partner, day), ok: false, reason: String(err.message || err).split('\n')[0] };
+			outcome = { id: articleId(partner, day), ok: false, reason: failureReason(err) };
 		}
 		console.log(`${outcome.id}: ${outcome.ok ? outcome.status || outcome.reason : `FAILED: ${outcome.reason}`}`);
 		if (outcome.ok || partnerId) return outcome;

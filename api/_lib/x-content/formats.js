@@ -27,6 +27,7 @@ import { describeItem } from './outcomes.js';
 import { languageProblems } from './editorial.js';
 import { loadProof } from './reel.js';
 import { mediaType } from './media.js';
+import { audienceOf, shapeOf } from './voice.js';
 
 export const FORMATS = ['video', 'gif', 'photo', 'text', 'article'];
 export const HEAD_KINDS = ['reel', 'card', 'gif', 'art'];
@@ -49,9 +50,15 @@ export function formatOf(item) {
 
 // Ledger rows written before the format was recorded take it from the queue
 // item they published, so rotation is right from the first tick after deploy.
+// Audience and shape are filled the same way, for the same reason: rows
+// written before either was recorded still rotate correctly.
 export function withFormats(published, items) {
 	const byId = new Map((items || []).map((item) => [item.id, item]));
-	return (published || []).map((row) => (row.format || !byId.has(row.id) ? row : { ...row, format: formatOf(byId.get(row.id)) }));
+	return (published || []).map((row) => {
+		const item = byId.get(row.id);
+		if (!item) return row;
+		return { ...row, format: row.format || formatOf(item), audience: row.audience || audienceOf(item), shape: row.shape || shapeOf(item) };
+	});
 }
 
 // Approved stock by feed format, for `plan` and the low-variety warning.

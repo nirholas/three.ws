@@ -110,6 +110,18 @@ export function modelRungs(request, env = process.env) {
 	];
 }
 
+// The chain's error opens with "no model was reachable:" and lists each rung's
+// failure on its own line. A caller that logs one line must keep all of them,
+// or every failure reads the same and the cause is lost.
+export function failureReason(error) {
+	return String(error?.message || error)
+		.split('\n')
+		.map((line) => line.trim())
+		.filter(Boolean)
+		.join(' | ')
+		.replace(/: \| /, ': ');
+}
+
 // `parse` turns a rung's raw text into the caller's shape and may throw to
 // reject that rung. The parsed value comes back with the model that produced it
 // and the failures of every rung above it.
