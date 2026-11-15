@@ -1,5 +1,7 @@
 # /play world moderation with host mute, kick, ban and player reports
 
+**Status (2026-11-15, re-verified):** 21 of 21 tests pass (`npx vitest run tests/walkroom-moderation.test.js`). Two of the three owner steps are now done: production `three-ws-multiplayer` serves `/internal/moderate` (unsigned POST returns `401 {"error":"bad_signature"}`, an unknown internal path returns 404), and `UPSTASH_REDIS_REST_URL`/`_TOKEN` are set on it. One step remains for the owner: restore Vertex billing on project `aerial-vehicle-466722-p5` (generateContent still returns 403), then run `npm run i18n:translate`. 530 of the 1,118 locale entries for the 13 moderation UI keys are missing and fall back to English until then.
+
 **Status (2026-11-13, re-verified):** 21 of 21 tests pass under `npx vitest run tests/walkroom-moderation.test.js` (it is a vitest suite; `node --test` cannot load it). Added the missing `npm run play:moderate` alias from task 5 and verified it live against a local multiplayer server (`list` exit 0; wrong secret gets `401 bad_signature`). Remaining for the owner, unchanged: redeploy multiplayer with `multiplayer/deploy-cloudrun.sh`, set `UPSTASH_REDIS_REST_URL`/`_TOKEN` on it for ban persistence, run `npm run i18n:translate` once Vertex billing is restored.
 
 **Status (2026-11-12, re-verified by w512-D):** 21 of 21 unit tests still pass and the code is on main. Only owner steps remain (below).

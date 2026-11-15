@@ -107,7 +107,12 @@ export function isStorageInfrastructureError(err) {
 	const text = [err?.name, err?.Code, err?.message ?? (err == null ? '' : String(err))]
 		.filter(Boolean)
 		.join(' ');
-	return STORAGE_ERROR_RE.test(text);
+	if (STORAGE_ERROR_RE.test(text)) return true;
+	// A HEAD response has no body, so a rejected credential reaches us as name
+	// `Unknown`, message `UnknownError`, and only the status says what happened.
+	// R2 has no per-object permissions, so a 401 or 403 is always the credential.
+	const status = err?.$metadata?.httpStatusCode;
+	return status === 401 || status === 403;
 }
 
 // Cached liveness of the storage credential, for the one caller shape that
@@ -269,10 +274,22 @@ export async function deleteObject(key) {
 	// The key may have been written while R2 refused writes, so it can live in
 	// the fallback bucket too. Remove that copy first; R2 stays authoritative for
 	// whether the delete as a whole succeeded.
+	let removedFromFallback = false;
 	if (fallbackBucket()) {
-		await fallbackDelete(key).catch((err) => console.warn(`[storage-fallback] delete ${key} failed: ${err?.message || err}`));
+		removedFromFallback = await fallbackDelete(key).catch((err) => {
+			console.warn(`[storage-fallback] delete ${key} failed: ${err?.message || err}`);
+			return false;
+		});
 	}
-	await r2.send(new DeleteObjectCommand({ Bucket: env.S3_BUCKET, Key: key }));
+	try {
+		await r2.send(new DeleteObjectCommand({ Bucket: env.S3_BUCKET, Key: key }));
+	} catch (err) {
+		// An object written during an R2 outage lives only in the fallback bucket,
+		// and that copy is now gone, so the delete did what the caller asked even
+		// though R2 cannot be reached to confirm it never held one.
+		if (removedFromFallback && isStorageInfrastructureError(err)) return;
+		throw err;
+	}
 }
 
 export async function putObject({ key, body, contentType, metadata = {} }) {

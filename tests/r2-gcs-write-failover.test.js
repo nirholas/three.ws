@@ -57,13 +57,25 @@ beforeAll(() => {
 });
 
 const r2mod = await import('../api/_lib/r2.js');
-const { putObject, getObjectBuffer, getObjectWithMetadata, headObject, copyObject, getObjectRange } = r2mod;
+const { putObject, getObjectBuffer, getObjectWithMetadata, headObject, copyObject, getObjectRange, deleteObject } = r2mod;
 
 /** R2's answer to a revoked or deleted access key id (measured 2026-11-15). */
 function unauthorized() {
 	const err = new Error('Unauthorized');
 	err.name = 'Unauthorized';
 	err.Code = 'Unauthorized';
+	err.$metadata = { httpStatusCode: 401 };
+	return err;
+}
+
+/**
+ * R2's answer to a HEAD with a rejected credential: a HEAD response has no body,
+ * so the SDK cannot read a code and raises name `Unknown`, message
+ * `UnknownError`, with only the 401 status to go on (measured 2026-11-15).
+ */
+function bodylessUnauthorized() {
+	const err = new Error('UnknownError');
+	err.name = 'Unknown';
 	err.$metadata = { httpStatusCode: 401 };
 	return err;
 }
@@ -224,5 +236,19 @@ describe('reads find objects that only exist in the fallback bucket', () => {
 	it('copyObject duplicates a fallback-only object inside the fallback bucket', async () => {
 		await expect(copyObject({ fromKey: 'forge/abc/model.glb', toKey: 'u/owner/model.glb' })).resolves.toBe(true);
 		expect(gcs.objects.get('u/owner/model.glb').body.toString()).toBe('0123456789');
+	});
+
+	it('headObject falls back on the bodyless 401 a HEAD gets from R2', async () => {
+		send.mockRejectedValue(bodylessUnauthorized());
+		expect(await headObject('forge/abc/model.glb')).toMatchObject({ ContentLength: 10 });
+	});
+
+	it('deleteObject succeeds for a diverted object while R2 rejects the credential', async () => {
+		await expect(deleteObject('forge/abc/model.glb')).resolves.toBeUndefined();
+		expect(gcs.objects.has('forge/abc/model.glb')).toBe(false);
+	});
+
+	it('deleteObject still throws for an object only R2 holds while R2 rejects the credential', async () => {
+		await expect(deleteObject('forge/r2-only.glb')).rejects.toThrow('Unauthorized');
 	});
 });

@@ -129,10 +129,11 @@ export async function fallbackHead(key) {
 	};
 }
 
-/** Delete an object; absent is success. */
+/** Delete an object; absent is success. Returns whether a copy existed. */
 export async function fallbackDelete(key) {
 	const res = await call('DELETE', key);
-	if (res.ok || res.status === 404) return;
+	if (res.ok) return true;
+	if (res.status === 404) return false;
 	throw await failure(res, 'delete', key);
 }
 
