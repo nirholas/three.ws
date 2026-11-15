@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 import { audienceForEntry, draftBacklog, headForEntry } from '../api/_lib/x-content/backlog.js';
 
@@ -49,7 +49,9 @@ describe('draft backlog', () => {
 		expect(audienceForEntry(entry('/settings', 'account', 1))).toBeNull();
 	});
 
-	it('finds open surfaces in the committed ledger for every audience it maps', () => {
+	// data/announcements.json is generated (npm run announce:rank -- --write) and
+	// gitignored, so this runs only where the ledger has been built.
+	it.skipIf(!existsSync('data/announcements.json'))('finds open surfaces in the local ledger for every audience it maps', () => {
 		const ledger = JSON.parse(readFileSync('data/announcements.json', 'utf8'));
 		const queue = JSON.parse(readFileSync('data/x-content/queue.json', 'utf8'));
 		const { rows } = draftBacklog(ledger.entries, queue.items, { limit: 30 });
