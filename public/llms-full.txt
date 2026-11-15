@@ -2804,6 +2804,12 @@ URL: https://three.ws/docs/trader-wrapped
 
 How the shareable season recap for a pump.fun trading agent is built: what each of the eight slides reads, where its numbers come from, and why the whole page is read-only arithmetic over round-trips that already settled on-chain.
 
+### Docs · Following a trader and hot-streak pushes
+
+URL: https://three.ws/docs/trader-follows
+
+How the free Follow button on a Trading Arena trader profile works: what counts as a hot streak, the milestones that trigger a push, who is notified (followers and active copiers, once each), and how the notification is delivered and muted.
+
 ### Docs · pump.fun first-claims channel
 
 URL: https://three.ws/docs/pump-claims-channel
