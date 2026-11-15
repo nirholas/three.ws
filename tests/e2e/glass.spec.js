@@ -16,6 +16,10 @@ const FIX_WALK = BASE;
 const FIX_ARRIVE = { latitude: BASE.latitude + 0.01, longitude: BASE.longitude };
 const FIX_EMPTY = { latitude: BASE.latitude + 0.02, longitude: BASE.longitude };
 const METRE_LAT = 1 / 111_320;
+// The lens logs interactions fire-and-forget and the run goes through the dev
+// proxy to the real API, where a write can take over ten seconds. Poll that long
+// rather than Playwright's 5 s default, which flaked on real latency.
+const API_WAIT = { timeout: 30_000 };
 
 const deviceToken = `glass-e2e-${randomUUID()}`;
 const placed = [];
@@ -97,7 +101,7 @@ test('scanning to nearby to agent to talk to handoff, keys only', async ({ page,
 	await page.keyboard.press('Enter');
 	await expect(page.locator('h1')).toHaveText('Glass Walker');
 	await expect(page.locator('.g-sub').first()).toContainText('Glass e2e run');
-	await expect.poll(() => api.some((r) => r.path === '/api/irl/interactions' && r.body?.type === 'view' && r.body?.pinId === walkPin && r.status < 300)).toBe(true);
+	await expect.poll(() => api.some((r) => r.path === '/api/irl/interactions' && r.body?.type === 'view' && r.body?.pinId === walkPin && r.status < 300), API_WAIT).toBe(true);
 
 	// Talk: pick a reply with the d-pad, the agent answers from the real chat API.
 	await swipeTo(page, 'Talk');
@@ -107,8 +111,8 @@ test('scanning to nearby to agent to talk to handoff, keys only', async ({ page,
 	await page.keyboard.press('Enter');
 	await expect(page.locator('.g-reply')).not.toHaveText(/^(|Pick a reply to start talking\.)$/, { timeout: 60_000 });
 	await expect(page.locator('.g-alert')).toHaveCount(0);
-	await expect.poll(() => api.some((r) => r.path === '/api/chat' && r.status === 200)).toBe(true);
-	expect(api.filter((r) => r.path === '/api/irl/interactions' && r.body?.type === 'talk')).toHaveLength(1);
+	await expect.poll(() => api.some((r) => r.path === '/api/chat' && r.status === 200), API_WAIT).toBe(true);
+	await expect.poll(() => api.filter((r) => r.path === '/api/irl/interactions' && r.body?.type === 'talk' && r.status < 300).length, API_WAIT).toBe(1);
 
 	// Back to the card, then hand the agent off to the phone.
 	await page.keyboard.press('Escape');
@@ -133,7 +137,7 @@ test('arrival within the radius promotes the agent once and logs it', async ({ p
 	await page.goto('/glass');
 	await page.keyboard.press('Enter');
 	await expect(page.locator('h1')).toHaveText('Glass Greeter', { timeout: 30_000 });
-	await expect.poll(() => api.filter((r) => r.path === '/api/irl/interactions' && r.body?.type === 'arrive' && r.body?.pinId === arrivePin && r.status < 300).length).toBe(1);
+	await expect.poll(() => api.filter((r) => r.path === '/api/irl/interactions' && r.body?.type === 'arrive' && r.body?.pinId === arrivePin && r.status < 300).length, API_WAIT).toBe(1);
 	expect(api.find((r) => r.body?.type === 'arrive').body).toMatchObject({ device_type: 'glasses' });
 });
 
