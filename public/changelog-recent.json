@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-15T03:51:17.734Z",
+	"generated_at": "2026-11-15T03:55:54.997Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4585,
+	"total": 4586,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -15,6 +15,16 @@
 			"title": "3D generation keeps working when our storage provider goes down",
 			"summary": "Finished 3D models are now saved to a second storage provider whenever the primary one refuses us, so a storage outage no longer throws away a model that already finished generating. Links to models made during an outage keep working, and they move back to the primary store once it recovers.",
 			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-15",
+			"type": "update",
+			"title": "Parts you hide in the GLB editor stay hidden in the /viewer page",
+			"summary": "A part you hid in the GLB editor came back when the exported model was opened from a /viewer link, because that page's 3D engine ignores the standard hidden-node marker the editor writes. /viewer now reads the marker and keeps those parts hidden, with their size untouched, so the shared link shows exactly what you exported. Emissive glow already carried over and still does.",
+			"link": "/viewer",
 			"tags": [
 				"fix"
 			]
@@ -1521,16 +1531,6 @@
 			"title": "Docs · AG-UI event stream",
 			"summary": "Drive a three.ws agent from CopilotKit, assistant-ui or any AG-UI front end: POST /api/agent/run?protocol=ag-ui, the event sequence, tool calls, avatar embodiment cues and a CopilotKit example.",
 			"link": "/docs/ag-ui",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "launch",
-			"title": "Docs · Agent evals",
-			"summary": "Score an agent against fixed task suites from the Evaluate tab, REST or CLI, replay a finished run with its receipt chain verified, re-run it on another model as a preview, and export the trajectory as JSONL.",
-			"link": "/docs/agent-evals",
 			"tags": [
 				"launch"
 			]

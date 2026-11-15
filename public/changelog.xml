@@ -15,6 +15,14 @@
 			<description>Finished 3D models are now saved to a second storage provider whenever the primary one refuses us, so a storage outage no longer throws away a model that already finished generating. Links to models made during an outage keep working, and they move back to the primary store once it recovers.</description>
 		</item>
 		<item>
+			<title>Parts you hide in the GLB editor stay hidden in the /viewer page</title>
+			<link>https://three.ws/viewer</link>
+			<guid isPermaLink="false">2026-11-15:Parts you hide in the GLB editor stay hidden in the /viewer page</guid>
+			<pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A part you hid in the GLB editor came back when the exported model was opened from a /viewer link, because that page's 3D engine ignores the standard hidden-node marker the editor writes. /viewer now reads the marker and keeps those parts hidden, with their size untouched, so the shared link shows exactly what you exported. Emissive glow already carried over and still does.</description>
+		</item>
+		<item>
 			<title>The site header fits on one row at every width</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-15:The site header fits on one row at every width</guid>
