@@ -50,6 +50,7 @@ import { setBounded, touchBounded } from './bounded-cache.mjs';
 import { runWithRequestContext } from '../api/_lib/request-context.js';
 import { tracingMiddleware, flushSpans } from '../api/_lib/tracing.js';
 import { rpcCallerTag } from './rpc-caller-tag.mjs';
+import { acquisitionMiddleware } from '../api/_lib/acquisition.js';
 // Route resolution lives in its own module so the audit scripts
 // (scripts/audit-cron-liveness.mjs) exercise the SAME resolver production runs,
 // instead of a copy that can silently drift from it.
@@ -448,6 +449,11 @@ app.use(async (req, res, next) => {
 	}
 	next();
 });
+
+// First-touch attribution for visitors from X, and the claim that turns it
+// into a counted signup (api/_lib/acquisition.js). Page loads only, and it
+// never fails a request.
+app.use(acquisitionMiddleware());
 
 // External-dest proxy: before the body parsers (see proxyExternal above).
 app.use((req, res, next) => {
