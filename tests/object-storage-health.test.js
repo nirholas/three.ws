@@ -117,3 +117,68 @@ describe('gatherObjectStorageHealth retry', () => {
 		expect(result.metrics.retried).toBeUndefined();
 	});
 });
+
+/** R2's answer to a revoked or deleted access key id (production, 2026-11-14). */
+function unauthorized() {
+	const err = new Error('Unauthorized');
+	err.name = 'Unauthorized';
+	err.Code = 'Unauthorized';
+	err.$metadata = { httpStatusCode: 401 };
+	return err;
+}
+
+describe('a bare 401 Unauthorized from R2', () => {
+	it('is reported as a rejected credential, not an unreachable endpoint', () => {
+		const v = classifyObjectStorageProbe({ configured: true, ok: false, error: unauthorized() });
+		expect(v.status).toBe('down');
+		expect(v.detail).toMatch(/rejected our credential/);
+	});
+});
+
+describe('with a GCS fallback bucket configured', () => {
+	it('reports R2 down as degraded when the fallback bucket answers, and names the bucket', async () => {
+		const result = await gatherObjectStorageHealth({
+			probe: async () => {
+				throw unauthorized();
+			},
+			fallback: { bucket: 'three-ws-storage-fallback', probe: async () => {} },
+		});
+		expect(result.status).toBe('degraded');
+		expect(result.detail).toMatch(/three-ws-storage-fallback/);
+		expect(result.detail).toMatch(/rejected our credential/);
+		expect(result.hint).toMatch(/storage-fallback-backfill/);
+		expect(result.metrics.fallback).toBe('ok');
+	});
+
+	it('stays down when the fallback bucket fails too', async () => {
+		const result = await gatherObjectStorageHealth({
+			probe: async () => {
+				throw unauthorized();
+			},
+			fallback: {
+				bucket: 'three-ws-storage-fallback',
+				probe: async () => {
+					throw new Error('gcs fallback head 403');
+				},
+			},
+		});
+		expect(result.status).toBe('down');
+		expect(result.detail).toMatch(/fallback .*403/);
+		expect(result.metrics.fallback).toBe('failed');
+	});
+
+	it('never probes the fallback while R2 is healthy', async () => {
+		let fallbackCalls = 0;
+		const result = await gatherObjectStorageHealth({
+			probe: async () => {},
+			fallback: {
+				bucket: 'three-ws-storage-fallback',
+				probe: async () => {
+					fallbackCalls += 1;
+				},
+			},
+		});
+		expect(result.status).toBe('ok');
+		expect(fallbackCalls).toBe(0);
+	});
+});

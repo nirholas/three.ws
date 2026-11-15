@@ -22,11 +22,16 @@
 //   unknown  : storage isn't configured on this deployment (local/dev): neutral.
 //   ok       : the bucket answered a signed request.
 //   down     : the credential was rejected, or the endpoint is unreachable.
-//   degraded : the bucket answered, but slowly enough to hurt every asset read.
+//   degraded : the bucket answered, but slowly enough to hurt every asset read;
+//              or R2 failed but the GCS fallback bucket (STORAGE_FALLBACK_BUCKET,
+//              ../storage-fallback.js) answered, so writes and reads are being
+//              diverted there and generation keeps working. The credential still
+//              needs a human; the platform just is not down while it waits.
 
 import { ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { r2, objectStorageConfigured, isStorageInfrastructureError } from '../r2.js';
 import { env } from '../env.js';
+import { fallbackBucket, fallbackFetch } from '../storage-fallback.js';
 
 const PROBE_TIMEOUT_MS = 3_000;
 // R2 normally answers a one-key list in well under 200ms from Cloud Run. A
@@ -66,9 +71,9 @@ export function classifyObjectStorageProbe(probe) {
 	// The compact code lives in name/Code and the sentence in message, so read
 	// both: `SignatureDoesNotMatch` never appears in the text a user or a log
 	// line sees (see isStorageInfrastructureError in ../r2.js).
-	const rejected = /signaturedoesnotmatch|does not match the signature|invalidaccesskeyid|access denied|forbidden/i.test(
+	const rejected = /signaturedoesnotmatch|does not match the signature|invalidaccesskeyid|access denied|forbidden|unauthorized/i.test(
 		[err?.name, err?.Code, message].filter(Boolean).join(' '),
-	);
+	) || err?.$metadata?.httpStatusCode === 401 || err?.$metadata?.httpStatusCode === 403;
 	return {
 		status: 'down',
 		detail: rejected
@@ -93,6 +98,16 @@ async function probeOnce() {
 }
 
 /**
+ * Signed HEAD of a key that never exists in the fallback bucket: a 404 proves the
+ * runtime service account can reach and authorize against the bucket, at the
+ * cost of one Class-B operation. fallbackFetch throws on anything but 404/2xx.
+ * @returns {Promise<void>}
+ */
+async function probeFallbackOnce() {
+	await fallbackFetch('ops/health-probe', { method: 'HEAD' });
+}
+
+/**
  * @param {() => Promise<void>} probe
  * @returns {Promise<{ ok: boolean, latencyMs: number, error?: unknown }>}
  */
@@ -108,11 +123,12 @@ async function timeProbe(probe) {
 
 /**
  * Run the signed probe, retrying once after a short backoff on failure, and
- * classify the outcome. Never throws.
- * @param {{ probe?: () => Promise<void> }} [opts] test-only probe override
+ * classify the outcome. When R2 fails and a GCS fallback bucket is configured,
+ * probe that too: a healthy fallback turns DOWN into DEGRADED. Never throws.
+ * @param {{ probe?: () => Promise<void>, fallback?: { bucket: string|null, probe: () => Promise<void> } }} [opts] test-only overrides
  * @returns {Promise<{ name: 'object_storage', label: string, status: string, detail: string, hint?: string, metrics?: object }>}
  */
-export async function gatherObjectStorageHealth({ probe = probeOnce } = {}) {
+export async function gatherObjectStorageHealth({ probe = probeOnce, fallback } = {}) {
 	const base = { name: /** @type {const} */ ('object_storage'), label: 'Object storage (Cloudflare R2)' };
 	if (!objectStorageConfigured()) {
 		const v = classifyObjectStorageProbe({ configured: false });
@@ -136,11 +152,33 @@ export async function gatherObjectStorageHealth({ probe = probeOnce } = {}) {
 		};
 	}
 	const v = classifyObjectStorageProbe({ configured: true, ok: false, latencyMs: result.latencyMs, error: result.error });
+	const metrics = { latencyMs: result.latencyMs, retried, credentialFault: isStorageInfrastructureError(result.error) };
+	const fb = fallback ?? { bucket: fallbackBucket(), probe: probeFallbackOnce };
+	if (fb.bucket) {
+		const fbResult = await timeProbe(fb.probe);
+		if (fbResult.ok) {
+			return {
+				...base,
+				status: 'degraded',
+				detail: `R2 ${v.detail}; writes and reads are diverted to the GCS fallback bucket ${fb.bucket}`,
+				hint: `Generation keeps working on the fallback, so this is not an outage, but R2 still needs its credential fixed. ${v.hint || ''} Once R2 answers again, run \`node scripts/storage-fallback-backfill.mjs\` to copy the diverted objects back.`.trim(),
+				metrics: { ...metrics, fallback: 'ok', fallbackLatencyMs: fbResult.latencyMs },
+			};
+		}
+		const fbMessage = String(/** @type {any} */ (fbResult.error)?.message || fbResult.error || 'unknown error').slice(0, 160);
+		return {
+			...base,
+			status: 'down',
+			detail: `R2 ${v.detail}; the GCS fallback ${fb.bucket} failed too: ${fbMessage}`,
+			hint: `${v.hint || ''} The fallback bucket must also be reachable: check it exists and that the runtime service account holds roles/storage.objectAdmin on it.`.trim(),
+			metrics: { ...metrics, fallback: 'failed' },
+		};
+	}
 	return {
 		...base,
 		status: v.status,
 		detail: v.detail,
 		...(v.hint ? { hint: v.hint } : {}),
-		metrics: { latencyMs: result.latencyMs, retried, credentialFault: isStorageInfrastructureError(result.error) },
+		metrics,
 	};
 }
