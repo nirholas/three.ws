@@ -208,6 +208,38 @@ async function alertMissedSlots(state, store, cadence, seed, now) {
 	return missed.map((slot) => slot.key);
 }
 
+// ── A quiet account ─────────────────────────────────────────────────────────
+// Every other alert names one cause. This one names the symptom: a live account
+// that has posted nothing for a day, whatever the reason (a tick that throws on
+// every run, an overlay that never verifies, a queue blocked by validation).
+// The clock only runs while posting is on: `liveSince` is stamped by the first
+// live tick and cleared by any preview tick, so switching auto-publish on after
+// a long pause does not raise it before the first slot has had a chance.
+export const QUIET_ALERT_HOURS = 24;
+
+export function quietHours(state, now = Date.now()) {
+	const liveSince = Date.parse(state?.liveSince || '');
+	if (!Number.isFinite(liveSince)) return 0;
+	const last = Math.max(liveSince, ...(state.published || []).map((row) => Date.parse(row.publishedAt) || 0));
+	return Math.max(0, Math.floor((now - last) / HOUR));
+}
+
+async function alertQuiet(state, store, now) {
+	const hours = quietHours(state, now);
+	const today = new Date(now).toISOString().slice(0, 10);
+	if (hours < QUIET_ALERT_HOURS || state.quietAlertedOn === today) return null;
+	state.quietAlertedOn = today;
+	await store.save(state);
+	const last = (state.published || []).map((row) => row.publishedAt).sort().at(-1);
+	const { sendOpsAlert } = await import('../alerts.js');
+	await sendOpsAlert(
+		`x-content: @trythreews has posted nothing for ${hours} hours`,
+		`Auto-publish is on and no post has gone out since ${last || state.liveSince}. Read the latest tick: curl the /api/cron/x-content response in the Cloud Scheduler logs, or run npm run x:content -- check.`,
+		{ severity: 'critical' },
+	);
+	return hours;
+}
+
 // `client` and `checks` default to the real X client and the real pre-flight;
 // tests pass their own to drive the hold-and-fall-through path. `outcomes` and
 // `collect` default to the stored record and the real timeline read.
@@ -259,6 +291,10 @@ export async function runTick({
 	const unrefreshed = { refreshed: false, sample: learned?.sample || 0 };
 
 	if (dryRun) {
+		if (state.liveSince) {
+			delete state.liveSince;
+			await store.save(state);
+		}
 		const decision = pickDue({ ...context, exclude: activeHolds(state, publishable, root, now) });
 		if (!decision.item) return { published: null, reason: decision.reason, blocked, outcomes: unrefreshed };
 		const client = previewClient();
@@ -274,14 +310,22 @@ export async function runTick({
 	// The tail runs whether the slot was filled, left empty, or the publish threw,
 	// and adds `outcomes` to the result without touching the rest of it. A named
 	// run is an operator sending one post by hand; it reads nothing back.
+	if (!state.liveSince) {
+		state.liveSince = new Date(now).toISOString();
+		await store.save(state);
+	}
 	let result;
 	let report = unrefreshed;
+	let quiet = null;
 	try {
 		result = await fillSlot({ queue, state, store, root, now, requestedId, client, checks, context, publishable, blocked });
 	} finally {
-		if (!requestedId) report = await refreshOutcomes({ outcomes, stored, collect, client, ledger: state, now, loadPrices });
+		if (!requestedId) {
+			report = await refreshOutcomes({ outcomes, stored, collect, client, ledger: state, now, loadPrices });
+			quiet = await alertQuiet(state, store, now).catch(() => null);
+		}
 	}
-	return { ...result, outcomes: report };
+	return { ...result, outcomes: report, quiet };
 }
 
 async function fillSlot({ queue, state, store, root, now, requestedId, client, checks, context, publishable, blocked }) {
