@@ -75,7 +75,9 @@ export class OracleMonitorPanel extends Panel {
     this.setContent(`<div class="pd-wrap">
       <div class="pd-controls"><label class="pd-check">Alert above <select class="pd-select" data-om-threshold aria-label="Deviation threshold">${opts}</select></label></div>
       ${lanes}
-      <div class="pd-tablewrap"><table class="pd-table"><thead><tr><th>Oracle</th><th>Pair</th><th>Oracle price</th><th>Exchange mid</th><th>Deviation</th><th>Age / heartbeat</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>
+      ${r.rows.length === 0
+        ? '<div class="pd-empty"><p>No oracle feeds answered this round. The Pyth and Chainlink reads both came back empty, usually a brief RPC outage.</p><button type="button" class="pd-btn" data-pd-retry>Check again</button></div>'
+        : `<div class="pd-tablewrap"><table class="pd-table"><thead><tr><th>Oracle</th><th>Pair</th><th>Oracle price</th><th>Exchange mid</th><th>Deviation</th><th>Age / heartbeat</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>`}
       <details class="pd-method"><summary>Method and sources</summary><p>${escapeHtml(r.methodology)}</p><p>Sources: ${escapeHtml(r.sources.join(', '))}</p></details>
     </div>`);
     this.bind();
