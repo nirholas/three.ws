@@ -1,5 +1,7 @@
 # Evaluate and add UltraTex as a Forge texture rung behind the existing texture worker contract
 
+**Status (2026-11-15): RE-VERIFIED (kept, owner-gated).** Worker contract tests 8/8 (pytest) and routing test 7/7 (`tests/forge-texture-rung.test.js`) pass; default tier unchanged. Upstream UltraTex still last pushed 2026-10-07; its README weights layout still lists LoRAs only for FLUX.1-dev and FLUX.2-Klein 9B (albedo and metallic-roughness), both non-commercial bases, so the license gate stays closed. Remaining, owner only: buy a Black Forest Labs commercial license, or approve the FLUX.2-klein-base-4B LoRA training run (commands in the 2026-11-12 status).
+
 **Status (2026-11-13): RE-VERIFIED (kept, owner-gated).** Worker contract tests 8/8 and routing test 7/7 pass; default tier unchanged. Upstream UltraTex last pushed 2026-10-07 and still ships LoRAs only for FLUX.1-dev and FLUX.2-Klein 9B (non-commercial), so the license gate stays closed. Remaining, owner only: the Black Forest Labs license or the 4B LoRA training decision below.
 
 **Status (2026-11-12): RE-VERIFIED (kept, owner-gated).** Worker contract tests (8) and the routing test pass; default tier unchanged. Owner commands: either buy a Black Forest Labs commercial license and run `gcloud run services update <texture-ultratex> --region us-central1 --update-env-vars ULTRATEX_BASE_MODEL_LICENSE_ACK=commercial-license-held`, or approve the FLUX.2-klein-base-4B LoRA training run; then `node scripts/forge-texture-ab.mjs --manifest meshes.json ... --write-doc` and set the routing flag.
