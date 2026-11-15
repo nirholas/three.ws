@@ -4,7 +4,7 @@
 //
 //   npm run x:content -- check                     validate every item
 //   npm run x:content -- plan                      when each item lands, and what is blocking it
-//   npm run x:content -- backlog [--audience developer] [--limit 20]   the best unannounced live surfaces to draft next
+//   npm run x:content -- backlog [--audience developer] [--limit 20]   unannounced surfaces, unshared blog posts, pages with news, re-cuts
 //   npm run x:content -- run --dry-run [--id slug]  print the exact X API calls for the next due item
 //   npm run x:content -- run --id slug              publish one item now (owner-approved posts only)
 //   npm run x:content -- import <blog-slug|url> --as post|article --id slug [--lane l] [--pattern p]
@@ -46,7 +46,7 @@ import { DEFAULT_CADENCE, TIERS, currentSlot, pickDue, reservedKinds, reservedSe
 import { loadLifts, rankItems } from '../api/_lib/x-content/priority.js';
 import { activeHolds, inventory, stockLabel } from '../api/_lib/x-content/runner.js';
 import { runTick } from '../api/_lib/x-content/runner.js';
-import { dbStore, memoryStore } from '../api/_lib/x-content/state.js';
+import { dbStore, markPublished, memoryStore } from '../api/_lib/x-content/state.js';
 import { MAX_SPEED, VIDEO_LIMITS, mediaType, parseFfmpegProbe, videoFilterChain } from '../api/_lib/x-content/media.js';
 import { weightedLength } from '../api/_lib/x-content/quality.js';
 import { approvalProblems, loadReview, reviewItem } from '../api/_lib/x-content/review.js';
@@ -58,6 +58,7 @@ import { learnLifts, outcomesStore } from '../api/_lib/x-content/outcomes.js';
 import { browserProblem } from '../api/_lib/x-content/verify.js';
 import { FORMATS as FEED_FORMATS, HEAD_KINDS as HEAD_AS, STANDALONE_HEADS, formatMix, formatOf, headProblems, headSpecProblems, withFormats } from '../api/_lib/x-content/formats.js';
 import { draftBacklog, itemsByLanding } from '../api/_lib/x-content/backlog.js';
+import { blogBacklog, blogPostMeta, changelogBacklog, recutCandidates } from '../api/_lib/x-content/mining.js';
 import { AUDIENCES } from '../api/_lib/x-content/voice.js';
 import { placeHead, rebuildHead } from './lib/x-heads.mjs';
 
@@ -122,13 +123,17 @@ async function plan() {
 	const queue = loadQueue(root);
 	const s = store();
 	const state = await s.load();
+	// Read-only: items production sent count as posted here, and advance records it.
+	const sent = markPublished(queue.items, state.published);
+	if (sent.length) console.log(`${sent.length} item(s) the ledger sent still say approved or review in this checkout (${sent.join(', ')}); advance records them as posted\n`);
 	const { problems } = validateQueue(queue, root, { state });
 	const now = Date.now();
 	const cadence = { ...DEFAULT_CADENCE, ...queue.cadence };
 	const seed = process.env.X_CONTENT_SCHEDULE_SEED || null;
 	const published = new Map((state.published || []).map((row) => [row.id, row]));
 	// Rank the way a tick does: with what the account's own posts measured.
-	const learned = process.env.DATABASE_URL ? learnLifts((await outcomesStore().load().catch(() => ({ posts: [] }))).posts, { now }) : null;
+	const outcomeRows = process.env.DATABASE_URL ? (await outcomesStore().load().catch(() => ({ posts: [] }))).posts : null;
+	const learned = outcomeRows ? learnLifts(outcomeRows, { now }) : null;
 	const lifts = learned ? Object.assign(loadLifts(root) || new Map(), { learned }) : loadLifts(root);
 	const reviews = new Map(queue.items.map((item) => [item.id, loadReview(root, item.id)]));
 	const holds = activeHolds(state, queue.items, root, now);
@@ -190,6 +195,7 @@ async function plan() {
 
 	await printSignups(queue.items, now);
 	printBacklog(queue.items, { limit: 8 });
+	printMined(queue.items, { published: state.published || [], outcomeRows, now, limit: 4 });
 
 	const publishable = queue.items.filter((item) => !problems[item.id].length);
 	const next = pickDue({ items: publishable, allItems: queue.items, state, now, cadence: queue.cadence, quality: queue.quality, seed, lifts, reviews, exclude: holds });
@@ -227,10 +233,48 @@ function printBacklog(items, { limit, audience = null }) {
 	for (const row of rows) console.log(`  ${String(row.score).padStart(4)}  ${row.audience.padEnd(9)} ${row.head.padEnd(4)}  ${row.key.padEnd(34)} ${row.title}${row.partner ? `  (${row.partner})` : ''}`);
 }
 
+// Posts mined from what three.ws already wrote and already posted
+// (api/_lib/x-content/mining.js): unshared blog posts, pages with changelog
+// news since they were last linked, and the account's best posts from weeks
+// ago, to cut again in another format.
+function printMined(items, { published = [], outcomeRows = null, now = Date.now(), limit = 6 } = {}) {
+	const blogDir = resolve(root, 'blog');
+	const posts = existsSync(blogDir)
+		? readdirSync(blogDir)
+				.filter((name) => name.endsWith('.html'))
+				.map((name) => blogPostMeta(readFileSync(resolve(blogDir, name), 'utf8'), name.slice(0, -5)))
+		: [];
+	const blog = blogBacklog(posts, items, { limit });
+	console.log(`\nBlog posts never shared (${blog.length} shown of ${posts.length} posts):`);
+	if (!blog.length) console.log('  none: every post in blog/ is linked or imported by a queue item');
+	for (const row of blog) console.log(`  ${row.published || '          '}  ${row.as.padEnd(7)} ${String(row.words).padStart(5)} words  ${row.title}\n              ${row.command}`);
+
+	const changelogPath = resolve(root, 'data/changelog.json');
+	const changelog = existsSync(changelogPath) ? JSON.parse(readFileSync(changelogPath, 'utf8')) : [];
+	const pages = changelogBacklog(Array.isArray(changelog) ? changelog : changelog.entries, items, { now, published, limit });
+	console.log(`\nPages with news since they were last posted (data/changelog.json, last 30 days${published.length ? '' : '; the publish ledger is empty here, so every linked page counts as not yet posted'}):`);
+	if (!pages.length) console.log('  none: no feature or improvement shipped on a page the queue has not already covered');
+	for (const row of pages) {
+		console.log(`  ${String(row.changes.length).padStart(3)} changes  ${row.path.padEnd(26)} since ${row.since || 'never linked'}, head: shot of ${row.url}`);
+		for (const change of row.changes.slice(0, 3)) console.log(`              ${change.date}  ${change.title}`);
+	}
+
+	if (!outcomeRows) return console.log('\nRe-cuts: DATABASE_URL is not set, so the account\'s measured posts are not available');
+	const recuts = recutCandidates(outcomeRows, published, items, { now, limit });
+	console.log('\nRe-cuts (best posts from 3 to 13 weeks ago, in a format they have not had; write new copy and set "recutOf"):');
+	if (!recuts.length) console.log('  none: no post from that window beat the account average, or each one has been re-cut already');
+	for (const row of recuts) console.log(`  ${row.posted}  ${row.id.padEnd(30)} ${String(row.likes).padStart(4)} likes ${String(row.bookmarks).padStart(4)} saves  was ${row.format}, try ${row.heads.join(' / ')}`);
+}
+
 async function backlog() {
 	const audience = option('audience');
 	if (audience && !AUDIENCES.includes(audience)) fail(`--audience must be one of ${AUDIENCES.join(', ')}`);
-	printBacklog(loadQueue(root).items, { limit: Number(option('limit', 20)), audience });
+	const items = loadQueue(root).items;
+	const limit = Number(option('limit', 20));
+	printBacklog(items, { limit, audience });
+	const state = await store().load();
+	const outcomeRows = process.env.DATABASE_URL ? (await outcomesStore().load().catch(() => ({ posts: [] }))).posts : null;
+	printMined(items, { published: state.published || [], outcomeRows, limit: Math.min(limit, 10) });
 }
 
 async function run() {
@@ -655,7 +699,7 @@ async function advance() {
 	const dryRun = has('dry-run');
 	const policy = approvalPolicy(queue);
 	const quality = queue.quality || {};
-	await syncOwnerApprovals(queue);
+	await syncQueue(queue);
 	const items = queue.items.filter((item) => (id ? item.id === id : ['draft', 'review'].includes(item.status)));
 	const priors = new Map();
 	if (has('refresh') && !id) {
@@ -780,6 +824,24 @@ async function advance() {
 
 // Mark every 'review' item the owner approved in the inbox as approved in the
 // queue file, so the checkout says what production will do.
+// Bring the checkout's queue up to what production knows before acting on it:
+// items the publish ledger sent are recorded as posted, so they are never
+// reviewed, counted as stock, or put to the owner again, and items the owner
+// approved in the inbox are recorded as approved.
+async function syncQueue(queue) {
+	if (process.env.DATABASE_URL) {
+		try {
+			for (const id of markPublished(queue.items, (await store().load()).published)) {
+				saveQueueItem(root, queue.items.find((item) => item.id === id));
+				console.log(`sent  ${id}: the publish ledger has it, recorded as posted`);
+			}
+		} catch (err) {
+			console.log(`(the publish ledger could not be read: ${String(err.message || err).split('\n')[0]})`);
+		}
+	}
+	return syncOwnerApprovals(queue);
+}
+
 async function syncOwnerApprovals(queue) {
 	if (!process.env.DATABASE_URL) return [];
 	try {
@@ -815,7 +877,7 @@ async function ask() {
 	const policy = approvalPolicy(queue);
 	const id = positional[1];
 	if (!process.env.DATABASE_URL) fail('ask needs DATABASE_URL: the approval inbox lives in the database');
-	await syncOwnerApprovals(queue);
+	await syncQueue(queue);
 	const items = queue.items.filter((item) => item.status === 'review' && (!id || item.id === id));
 	if (!items.length) fail(id ? `${id} is not in review` : 'nothing to ask about: no item is in review');
 	for (const item of items) {

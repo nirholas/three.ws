@@ -9047,7 +9047,7 @@
 		},
 		{
 			"id": "restyle-presets",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -9370,7 +9370,7 @@
 		},
 		{
 			"id": "embed-article",
-			"status": "review",
+			"status": "posted",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
@@ -11804,7 +11804,7 @@
 		},
 		{
 			"id": "mcp-article",
-			"status": "review",
+			"status": "posted",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
@@ -14119,7 +14119,7 @@
 		},
 		{
 			"id": "wardrobe-article",
-			"status": "review",
+			"status": "posted",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
@@ -15130,7 +15130,7 @@
 		},
 		{
 			"id": "forge-article",
-			"status": "review",
+			"status": "posted",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
@@ -17927,7 +17927,7 @@
 		},
 		{
 			"id": "avatar-embed-moves",
-			"status": "review",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -18263,7 +18263,7 @@
 		},
 		{
 			"id": "openai-partner-benefits",
-			"status": "review",
+			"status": "posted",
 			"kind": "post",
 			"pattern": "mechanism",
 			"source": {
@@ -19942,7 +19942,7 @@
 		},
 		{
 			"id": "changelog-feed",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -20199,7 +20199,7 @@
 		},
 		{
 			"id": "concierge-ask",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
@@ -20395,7 +20395,7 @@
 		},
 		{
 			"id": "docs-freshness",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
@@ -21758,7 +21758,7 @@
 		},
 		{
 			"id": "parts-studio",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
@@ -22220,12 +22220,12 @@
 			],
 			"mentions": {},
 			"kind": "post",
-			"status": "approved",
+			"status": "posted",
 			"approvedBy": "policy"
 		},
 		{
 			"id": "render-lab-call",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 3,
 			"lane": "developer",

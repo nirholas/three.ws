@@ -16,6 +16,21 @@ const LOCK_TTL_S = 900;
 
 const emptyState = () => ({ published: [], inflight: {} });
 
+// The production tick writes the ledger, never the checkout's queue file, so an
+// item it sent still says 'approved' (or 'review') here until something records
+// it. Left that way it counts as stock and can be put to the owner again. Marks
+// every item the ledger published as posted, in place; returns the ids changed.
+export function markPublished(items, published) {
+	const sent = new Set((published || []).map((row) => row?.id).filter(Boolean));
+	const changed = [];
+	for (const item of items || []) {
+		if (!sent.has(item.id) || item.status === 'posted') continue;
+		item.status = 'posted';
+		changed.push(item.id);
+	}
+	return changed;
+}
+
 export function dbStore() {
 	const db = () => import('../db.js').then((module) => module.sql);
 	return {
