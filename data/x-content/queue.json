@@ -18274,8 +18274,7 @@
 								"videoCodec": "h264",
 								"pixFmt": "yuv420p"
 							},
-							"reel": true,
-							"alt": "A screen recording of the three.ws OpenAI page headlined \"3D, natively, inside ChatGPT.\" with an OpenAI Select Partner badge, scrolling to the live 3D Studio connector URL, which needs no key and no account, and the list of free generation tools"
+							"reel": true
 						}
 					]
 				}

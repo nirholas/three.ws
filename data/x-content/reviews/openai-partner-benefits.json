@@ -1,17 +1,15 @@
 {
 	"id": "openai-partner-benefits",
-	"contentHash": "cbcd892e2da533d6beaa50432159e618f09c084560a473955888a9e811f7ab1a",
-	"reviewedAt": "2026-11-15T15:14:25.749Z",
+	"contentHash": "db7d23d22ea45c50c4f89c30a6ea8e62c71992a9f91c920741653084dfe42992",
+	"reviewedAt": "2026-11-15T15:22:01.962Z",
 	"passed": false,
 	"blockers": [
 		"evidence:proof tools: the run read tools = \"16\"; the claim needs \"15\"",
-		"evidence:page https://three.ws/openai: live page does not show \"Live. 15 tools answered\"",
-		"editor (accuracy): Verification read tools = \"16\"; the reel frame at 4.7 s shows \"Live. 16 tools answered...\" which contradicts \"15 tools.\"",
-		"editor (accuracy): Page verification failed because it expected \"Live. 15 tools answered\" but the live product shows \"16 tools.\" The claim is true only with the corrected number.",
+		"editor (accuracy): Proof verification failed for this claim: the run read tools = \"16\" but the claim/proof needs \"15\". A claim whose verification failed is a blocking issue and must not be published as is.",
 		"editor verdict is revise"
 	],
 	"texts": [
-		"We are an OpenAI Select Partner, and the 2026 program year has brought a dedicated API organization and a ChatGPT workspace with Codex credits, valid for the full program year.\n\nThe workspace and credits fund testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents. The connector is live now and answers with 15 tools without asking for a key or an account. three.ws/openai"
+		"We are an OpenAI Select Partner, and the 2026 program year has brought a dedicated API organization and a ChatGPT workspace with Codex credits, valid for the full program year.\n\nThe workspace and credits fund testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents. The connector is live now and answers with 16 tools without asking for a key or an account. three.ws/openai"
 	],
 	"lint": [],
 	"verification": {
@@ -67,14 +65,14 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "answers with 15 tools without asking for a key or an account",
+				"claim": "answers with 16 tools without asking for a key or an account",
 				"kind": "evidence:proof",
 				"target": "tools",
 				"ok": false,
 				"detail": "the run read tools = \"16\"; the claim needs \"15\""
 			},
 			{
-				"claim": "answers with 15 tools without asking for a key or an account",
+				"claim": "answers with 16 tools without asking for a key or an account",
 				"kind": "evidence:page",
 				"target": "https://three.ws/openai",
 				"ok": true,
@@ -84,8 +82,8 @@
 				"claim": "The connector is live now",
 				"kind": "evidence:page",
 				"target": "https://three.ws/openai",
-				"ok": false,
-				"detail": "live page does not show \"Live. 15 tools answered\""
+				"ok": true,
+				"detail": "live page shows \"Live. 16 tools answered\""
 			},
 			{
 				"kind": "probe:scenario",
@@ -111,37 +109,44 @@
 		"verdict": "revise",
 		"scores": {
 			"accuracy": 2,
-			"clarity": 4,
-			"specificity": 4,
-			"voice": 5,
-			"professionalism": 5,
+			"clarity": 3,
+			"specificity": 3,
+			"voice": 3,
+			"professionalism": 4,
 			"visual": 4
 		},
 		"issues": [
 			{
 				"severity": "blocking",
 				"area": "accuracy",
-				"quote": "answers with 15 tools without asking for a key or an account",
-				"problem": "Verification read tools = \"16\"; the reel frame at 4.7 s shows \"Live. 16 tools answered...\" which contradicts \"15 tools.\"",
-				"fix": "Replace \"15 tools\" with \"16 tools.\""
+				"quote": "answers with 16 tools without asking for a key or an account",
+				"problem": "Proof verification failed for this claim: the run read tools = \"16\" but the claim/proof needs \"15\". A claim whose verification failed is a blocking issue and must not be published as is.",
+				"fix": "Remove the disputed tool count from the post. Keep the verified portions: the connector is live, answers without a key or account, and links to three.ws/openai. Do not substitute 15 because the live page shows 16; the proof evidence conflicts with the live product and the post should not repeat a number that failed verification."
 			},
 			{
-				"severity": "blocking",
-				"area": "accuracy",
-				"quote": "The connector is live now",
-				"problem": "Page verification failed because it expected \"Live. 15 tools answered\" but the live product shows \"16 tools.\" The claim is true only with the corrected number.",
-				"fix": "Keep the claim after correcting the tool count to 16 so it matches the reel caption \"Live. 16 tools answered in 157 ms, no key and no account.\""
+				"severity": "major",
+				"area": "voice",
+				"quote": "We are an OpenAI Select Partner, and the 2026 program year has brought a dedicated API organization and a ChatGPT workspace with Codex credits, valid for the full program year.",
+				"problem": "The post opens with partnership status rather than the mechanism or strongest true statement. The house voice contract requires opening with a mechanism lead or number lead so the reader understands what the thing does from the first line.",
+				"fix": "Open with the connector being live in ChatGPT and requiring no key or account. Move the OpenAI Select Partner statement to the second paragraph."
+			},
+			{
+				"severity": "minor",
+				"area": "clarity",
+				"quote": "testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents",
+				"problem": "A reader who has never heard of three.ws does not learn what the 3D Studio connector actually does from this post alone. The reel shows the mechanism but the post does not describe it for someone who cannot see the reel.",
+				"fix": "Add one plain sentence explaining that the connector turns a sentence or prompt into an interactive 3D model rendered inline in the conversation."
 			}
 		],
 		"rewrite": {
 			"posts": [
-				"We are an OpenAI Select Partner, and the 2026 program year has brought a dedicated API organization and a ChatGPT workspace with Codex credits, valid for the full program year.\n\nThe workspace and credits fund testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents. The connector is live now and answers with 16 tools without asking for a key or an account. three.ws/openai"
+				"The free 3D Studio connector is live in ChatGPT. It turns a sentence into an interactive 3D model rendered inline in the conversation, and it answers without asking for a key or an account: three.ws/openai\n\nthree.ws is an OpenAI Select Partner in the 2026 program year, with a dedicated API organization and ChatGPT workspace with Codex credits valid for the full program year. The workspace and credits support testing the connector, customer proofs of concept, and live demos of 3D agents."
 			],
 			"altText": [
-				"Reel of the three.ws OpenAI page showing the 3D Studio connector for ChatGPT with no key and no account and 16 tools answered live."
+				"Reel showing the three.ws OpenAI Select Partner page, the 3D Studio connector for ChatGPT with live server connection and 16 tools answered, and the generation tools with no key and no account required."
 			]
 		},
-		"summary": "The post is accurate except for the tool count: verification and the reel show 16 tools, not 15. Change 15 to 16 and republish; all other claims and voice requirements pass.",
+		"summary": "The post cannot ship because the \"16 tools\" claim failed proof verification even though the live page shows 16. It also opens with partnership status instead of the mechanism. The rewrite leads with the live connector in ChatGPT, drops the disputed tool count, keeps the verified partner facts, and explains what the connector does.",
 		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
@@ -149,8 +154,12 @@
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
 		"rewriteFindings": [
-			"claims: claim \"answers with 15 tools without asking for a key or an account\" does not appear in the copy; claims must quote the post",
-			"claims: \"16\" is an unverified number; declare it in claims with evidence"
+			"head: 2 links (three.ws/openai, three.ws); one post links one surface, and X reads a bare three.ws as a link",
+			"claims: claim \"We are an OpenAI Select Partner\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the 2026 program year has brought a dedicated API organization and a ChatGPT workspace with Codex credits\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"answers with 16 tools without asking for a key or an account\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The connector is live now\" does not appear in the copy; claims must quote the post"
 		]
 	},
 	"editorError": null

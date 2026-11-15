@@ -1,15 +1,13 @@
 {
 	"id": "give-your-ai-a-body",
-	"contentHash": "73bcca64ea57000ba100f2d35b347aaebbb0588b886d07c67d941c46bf77fd7b",
-	"reviewedAt": "2026-11-15T15:13:06.915Z",
+	"contentHash": "febe8150ffb975632565da56a6a498a5fac07ef966b808f7a01726600dc60ad3",
+	"reviewedAt": "2026-11-15T15:19:56.162Z",
 	"passed": false,
 	"blockers": [
-		"editor (voice): Opens with abstract marketing fluff instead of a mechanism, number, or correction lead. The house contract requires the first line to carry the strongest true statement and the post to stand on its first 280 characters.",
-		"editor (accuracy): The live page and verification detail say \"textured 3D model\", not \"painted mesh\". Copy must use facts word-for-word from the passing verification or live page text.",
 		"editor verdict is revise"
 	],
 	"texts": [
-		"Your AI has a brain. Give it a body. In the Forge, text or photos become a painted mesh you can orbit, view in AR and download.\n\nPick the engine that builds it, and several are free to use. Below the prompt, a live feed shows what other people just forged, each one ready to open in the viewer or remix.",
+		"Your AI has a brain. Give it a body. In the Forge, text or photos become textured 3D models you can orbit, view in AR and download.\n\nPick the engine that builds it, and several are free to use. Below the prompt, a live feed shows what other people just forged, each one ready to open in the viewer or remix.",
 		"Quality has three tiers: Draft, Standard and High. High is a $THREE holder feature: hold to unlock, or pay per generation.\n\nOpen the Forge and try a prompt: three.ws/forge"
 	],
 	"lint": [],
@@ -17,7 +15,7 @@
 		"ok": true,
 		"checks": [
 			{
-				"claim": "text or photos become a painted mesh you can orbit, view in AR and download",
+				"claim": "text or photos become textured 3D models you can orbit, view in AR and download",
 				"kind": "evidence:page",
 				"target": "https://three.ws/forge",
 				"ok": true,
@@ -81,51 +79,46 @@
 	"editor": {
 		"verdict": "revise",
 		"scores": {
-			"accuracy": 3,
+			"accuracy": 4,
 			"clarity": 3,
 			"specificity": 3,
-			"voice": 2,
-			"professionalism": 3,
+			"voice": 3,
+			"professionalism": 4,
 			"visual": 4
 		},
 		"issues": [
 			{
-				"severity": "blocking",
+				"severity": "major",
 				"area": "voice",
 				"quote": "Your AI has a brain. Give it a body.",
-				"problem": "Opens with abstract marketing fluff instead of a mechanism, number, or correction lead. The house contract requires the first line to carry the strongest true statement and the post to stand on its first 280 characters.",
-				"fix": "Replace the opening with the mechanism lead: \"In the Forge, text or photos become a textured 3D model you can orbit, view in AR and download.\""
-			},
-			{
-				"severity": "blocking",
-				"area": "accuracy",
-				"quote": "painted mesh",
-				"problem": "The live page and verification detail say \"textured 3D model\", not \"painted mesh\". Copy must use facts word-for-word from the passing verification or live page text.",
-				"fix": "Replace \"painted mesh\" with \"textured 3D model\"."
-			},
-			{
-				"severity": "major",
-				"area": "specificity",
-				"quote": "Pick the engine that builds it, and several are free to use",
-				"problem": "Vague; names no engine although the page text includes Hunyuan3D.",
-				"fix": "Change to: \"Pick an engine that builds it, including Hunyuan3D. Several are free to use.\""
+				"problem": "The post opens with a metaphor instead of the mechanism. The house contract requires the strongest true statement first and to say what the thing does in the order a person would notice it. This line tells a reader nothing checkable about the Forge and assumes they already have an AI.",
+				"fix": "Replace the opening with \"In the Forge, text or photos become textured 3D models you can orbit, view in AR and download.\""
 			},
 			{
 				"severity": "major",
 				"area": "clarity",
 				"quote": "Your AI has a brain. Give it a body.",
-				"problem": "A reader who has never heard of three.ws cannot tell what Forge does from this opener.",
-				"fix": "Same as the voice fix: open with the mechanism so the feature is self-explanatory."
+				"problem": "A reader who has never heard of three.ws cannot tell from this line what the product is or does. The first line must carry the strongest true statement so the post stands alone before Show more.",
+				"fix": "Lead with \"In the Forge, text or photos become textured 3D models you can orbit, view in AR and download.\""
+			},
+			{
+				"severity": "major",
+				"area": "specificity",
+				"quote": "Your AI has a brain. Give it a body.",
+				"problem": "This is a vague metaphor, not a mechanism or checkable fact. The first line should state what the Forge accepts as input and produces as output.",
+				"fix": "Open with \"In the Forge, text or photos become textured 3D models you can orbit, view in AR and download.\""
 			}
 		],
 		"rewrite": {
 			"posts": [
-				"In the Forge, text or photos become a textured 3D model you can orbit, view in AR and download. Pick an engine that builds it, including Hunyuan3D. Several are free to use. Below the prompt, a live feed shows what other people just forged, each one ready to open in the viewer or remix.",
-				"Quality has three tiers: Draft, Standard and High. High is a $THREE holder feature: hold to unlock, or pay per generation. Open the Forge and try a prompt: three.ws/forge"
+				"In the Forge, text or photos become textured 3D models you can orbit, view in AR and download. Pick an engine that builds it, and several are free to use. Below the prompt, a live feed shows what other people just forged, each one ready to open in the viewer or remix.",
+				"Quality has three tiers: Draft, Standard and High. High is a $THREE holder feature: hold to unlock, or pay per generation. Open the Forge: three.ws/forge"
 			],
-			"altText": []
+			"altText": [
+				"Screen recording of the Forge page on three.ws showing the text prompt input, Draft Standard High quality buttons, engine row with free badges, photo upload tab, and the Fresh from the Forge community feed."
+			]
 		},
-		"summary": "The post must be revised because it opens with marketing fluff instead of a mechanism lead and calls the output a \"painted mesh\" although the live page says \"textured 3D model\"; the rewrite opens with the Forge's true mechanism and matches the page's exact wording.",
+		"summary": "The post’s claims verify against the live Forge page, but the opening metaphor “Your AI has a brain. Give it a body.” fails the house rule to lead with the mechanism. Replace it with the exact product line about text or photos becoming textured 3D models so the first 280 characters carry the strongest true statement.",
 		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
@@ -133,7 +126,6 @@
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
 		"rewriteFindings": [
-			"claims: claim \"text or photos become a painted mesh you can orbit, view in AR and download\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"Pick the engine that builds it, and several are free to use\" does not appear in the copy; claims must quote the post"
 		]
 	},
