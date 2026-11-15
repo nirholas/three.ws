@@ -338,7 +338,7 @@ Add the boolean `editor` attribute to an `<agent-3d>` element (it is ignored whe
 <agent-3d editor src="/avatars/cesium-man.glb"></agent-3d>
 ```
 
-The element carries `data-editor-version="agent-editor/0.2"` and dispatches bubbling `editor:ready`, `editor:change` (`{ kind, editCount }`), `editor:export` (`{ bytes, warnings }`) and `editor:error` events. Hidden nodes are exported with `KHR_node_visibility`, emissive intensity with `KHR_materials_emissive_strength`.
+The element carries `data-editor-version="agent-editor/0.2"` and dispatches bubbling `editor:ready`, `editor:change` (`{ kind, editCount }`), `editor:export` (`{ bytes, warnings }`) and `editor:error` events. Hidden nodes are exported with `KHR_node_visibility`, emissive intensity with `KHR_materials_emissive_strength`. Both survive a re-open in `<agent-3d>`, the viewer, and the standalone `/viewer` page.
 
 The full contract lives in [specs/EDITOR_SPEC.md](https://github.com/nirholas/three.ws/blob/main/specs/EDITOR_SPEC.md).
 

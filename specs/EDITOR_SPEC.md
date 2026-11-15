@@ -253,7 +253,7 @@ Nodes are identified in the tree DOM by `data-uuid` attribute.
 - Material properties: base color factor, metallic factor, roughness factor, emissive factor, alpha mode, alpha cutoff, double-sided.
 - Node transforms: translation, rotation (converted from Euler XYZ to quaternion), scale.
 - Emissive intensity: written as `KHR_materials_emissive_strength` (1.0 removes the extension).
-- Node visibility: hidden nodes get `KHR_node_visibility { visible: false }` plus `extras.threeWsHidden: true`; the node keeps its real scale. The viewer reads both back on load (`src/viewer/node-visibility.js`).
+- Node visibility: hidden nodes get `KHR_node_visibility { visible: false }` plus `extras.threeWsHidden: true`; the node keeps its real scale. The viewer reads both back on load (`src/viewer/node-visibility.js`, a GLTFLoader plugin). The standalone `/viewer` page renders with `<model-viewer>`, whose bundled loader ignores the extension and takes no plugins, so `public/viewer-node-visibility.js` hides the same nodes after `load` from the markers that loader keeps in `userData`.
 - Textures: a replaced image is written as one new texture per edited material slot (base color, normal, metallic-roughness, occlusion, emissive). The old texture is removed only if nothing else uses it. WebP is written with the required `EXT_texture_webp`.
 
 **What is stripped:** Nothing — all geometry, animations, extensions, and accessories in the source file are preserved.
