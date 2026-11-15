@@ -3830,6 +3830,14 @@
 					"added": "2026-09-04"
 				},
 				{
+					"path": "/docs/trader-follows",
+					"title": "Docs · Following a trader and hot-streak pushes",
+					"description": "How the free Follow button on a Trading Arena trader profile works: what counts as a hot streak, the milestones that trigger a push, who is notified (followers and active copiers, once each), and how the notification is delivered and muted.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-11-14"
+				},
+				{
 					"path": "/docs/pump-claims-channel",
 					"title": "Docs · pump.fun first-claims channel",
 					"description": "A live Telegram feed of first-time pump.fun creator fee claims: how the delivery lane scans, dedupes by transaction signature, and drains a backlog in order, plus the configuration it needs and why the direct on-chain fallback cannot serve the feed.",
