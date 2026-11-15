@@ -28,8 +28,8 @@ export const EVAL_PROBE_REWRITES = [
 	{
 		// zod v4 probes `Function("")` the first time an object schema is
 		// constructed, unless globalThis.__zod_globalConfig.jitless is set.
-		// src/shared/zod.js sets it, but dependencies (x402, the MCP SDK, reown,
-		// cdp-sdk) build schemas at import time, before any app module runs. Make
+		// src/shared/zod.js sets it, but dependencies (payment, wallet and MCP
+		// SDKs) build schemas at import time, before any app module runs. Make
 		// jitless the default where zod's core creates the global config: every
 		// zod copy shares that global and the core module evaluates before any
 		// schema exists. An explicit `z.config({ jitless: false })` still wins.

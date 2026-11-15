@@ -119,6 +119,10 @@ test.describe('diorama microgame', () => {
 		// 10s is the schema floor (MIN_TIME_LIMIT_SEC), so this waits out a real clock.
 		// The first read only checks the clock is live and counting down from 0:10:
 		// a loaded test box can take seconds to get from the click to the read.
+		// The clock runs on game time (capped frame steps, see frameSteps), so a
+		// starved software renderer at a few fps stretches 10 game seconds into
+		// minutes of wall time. The loss must still land; how long it takes in
+		// wall time is the box's frame rate, not the game's behaviour.
 		await mountWorld(page, world(true, 10));
 		await page.goto(`/diorama?id=${WORLD_ID}&play=1`);
 		const start = page.locator('.dio-play__cta', { hasText: 'Start' });
@@ -126,7 +130,7 @@ test.describe('diorama microgame', () => {
 		await start.click();
 
 		await expect(page.locator('.dio-play__clock')).toHaveText(/^0:(10|0[1-9])$/);
-		await expect(page.locator('.dio-play__title')).toHaveText('Not this time', { timeout: 20_000 });
+		await expect(page.locator('.dio-play__title')).toHaveText('Not this time', { timeout: 180_000 });
 		await expect(page.locator('.dio-play__body')).toContainText('Time ran out.');
 		await expect(page.locator('.dio-play__clock')).toHaveText('0:00');
 

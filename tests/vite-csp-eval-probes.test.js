@@ -4,7 +4,7 @@
 // violation report on every page that loads them:
 //   - zod v4 probes the first time an object schema is constructed. The
 //     src/shared/zod.js jitless config only covers schemas built after it
-//     runs; x402, the MCP SDK, reown and cdp-sdk build theirs at import time,
+//     runs; payment, wallet and MCP SDKs build theirs at import time,
 //     and /showcase kept reporting `script-src blocked eval` in production.
 //   - msgpackr (Colyseus) probes once at module load; /temporary reported it.
 //
