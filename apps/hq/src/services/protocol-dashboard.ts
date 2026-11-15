@@ -67,9 +67,12 @@ async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
 export const fetchProtocolDashboard = (slug: string, windowDays: number, signal?: AbortSignal) =>
   getJson<ProtocolDashboard>(`/api/protocol-dashboard?slug=${encodeURIComponent(slug)}&window=${windowDays}`, signal);
 
+/** Custodial venues and base layers have no protocol contracts to chart; same exclusions as the risk heatmap and protocol health. */
+const NON_PROTOCOL_CATEGORIES = new Set(['CEX', 'Chain', 'Infrastructure', 'Staking Pool']);
+
 export async function fetchPickerProtocols(signal?: AbortSignal): Promise<PickerProtocol[]> {
   const json = await getJson<{ protocols: PickerProtocol[] }>('/api/top-protocols', signal);
-  return json.protocols || [];
+  return (json.protocols || []).filter((p) => p.slug && !NON_PROTOCOL_CATEGORIES.has(p.category));
 }
 
 export const fetchOracleDeviation = (thresholdBps: number, signal?: AbortSignal) =>

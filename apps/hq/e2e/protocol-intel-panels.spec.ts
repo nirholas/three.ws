@@ -67,6 +67,9 @@ function failOnce(page: Page, pattern: string, message: string) {
 
 test.describe('HQ protocol intelligence panels', () => {
   test.setTimeout(180_000);
+  test.afterEach(async ({ page }) => {
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+  });
 
   test('risk heatmap: skeleton, live Solana matrix with honest unknown cells', async ({ page }) => {
     const release = await holdThenForward(page, '**/api/risk-heatmap*');
@@ -87,8 +90,11 @@ test.describe('HQ protocol intelligence panels', () => {
     await unknown.focus();
     await expect(unknown).toBeFocused();
 
-    await p.locator('.pd-method summary').click();
-    await expect(p.locator('.pd-method')).toContainText('Heuristic, not financial advice');
+    const method = p.locator('.pd-method');
+    await method.locator('summary').focus();
+    await page.keyboard.press('Enter');
+    await expect(method).toHaveAttribute('open', '');
+    await expect(method).toContainText('Heuristic, not financial advice');
   });
 
   test('risk heatmap: error with working retry, then designed empty state', async ({ page }) => {
@@ -183,7 +189,7 @@ test.describe('HQ protocol intelligence panels', () => {
     await expect(p.locator('[data-pd-window="7"]')).toHaveAttribute('aria-pressed', 'true', { timeout: 90_000 });
   });
 
-  test('protocol dashboard: error with working retry, and empty picker state', async ({ page }) => {
+  test('protocol dashboard: error with working retry', async ({ page }) => {
     await page.route('**/api/top-protocols*', forward);
     await failOnce(page, '**/api/protocol-dashboard*', 'DeFiLlama did not answer. Try again in a moment.');
     await page.goto('/');
@@ -191,12 +197,13 @@ test.describe('HQ protocol intelligence panels', () => {
     await expect(p.locator('.pd-error[role="alert"]')).toContainText('DeFiLlama did not answer', { timeout: 90_000 });
     await p.locator('[data-pd-retry]').click();
     await expect(p.locator('.pd-head')).toBeVisible({ timeout: 90_000 });
+  });
 
-    const empty = await page.context().newPage();
-    await empty.route('**/api/top-protocols*', (route) => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ protocols: [] }) }));
-    await empty.goto('/');
-    const q = await panel(empty, 'protocol-dashboard');
-    await expect(q.locator('.pd-empty')).toContainText('No protocols with Solana TVL came back');
+  test('protocol dashboard: designed empty picker state with a chain toggle', async ({ page }) => {
+    await page.route('**/api/top-protocols*', (route) => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ protocols: [] }) }));
+    await page.goto('/');
+    const q = await panel(page, 'protocol-dashboard');
+    await expect(q.locator('.pd-empty')).toContainText('No protocols with Solana TVL came back', { timeout: 90_000 });
     await q.locator('[data-pd-toggle-solana]').click();
     await expect(q.locator('.pd-empty')).toContainText('No protocols with TVL came back');
   });
