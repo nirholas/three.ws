@@ -229,7 +229,7 @@ export function describeItem(item) {
 	const isArticle = item.kind === 'article';
 	const head = item.posts?.[0] || {};
 	const text = String(isArticle ? item.article?.title || '' : head.text || '').trim();
-	const kinds = isArticle ? [] : (head.media || []).map((row) => pathMediaKind(row.path)).filter(Boolean);
+	const kinds = isArticle || !Array.isArray(head.media) ? [] : head.media.map((row) => pathMediaKind(row?.path)).filter(Boolean);
 	if (isArticle && item.article?.cover) kinds.push('photo');
 	return {
 		media: mediaKind(kinds),

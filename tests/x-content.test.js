@@ -288,6 +288,14 @@ describe('schedule', () => {
 const tierOfPick = (pick) => Number(pick.item.tier);
 
 describe('priority', () => {
+	it('ranks a draft whose media is malformed instead of crashing the plan', () => {
+		// studio-jobs carried "media": "reel" and took `x-content plan` down at the T3 group.
+		const draft = { id: 'bad-media', status: 'draft', kind: 'post', tier: 3, lane: 'developer', pattern: 'p', notBefore: '2026-09-01T00:00:00Z', posts: [{ text: 'A draft: three.ws/x', media: 'reel' }] };
+		const lifts = new Map([['format:image', { lift: 2, count: 10 }]]);
+		expect(engagementSignals(draft, lifts)).toEqual(expect.any(Array));
+		expect(() => rankItems([draft], { lifts, published: [], quality: {}, reviews: new Map(), now: Date.now() })).not.toThrow();
+	});
+
 	const lifts = loadLifts(root);
 	const post = (text, over = {}) => ({ id: 'x', kind: 'post', lane: 'l', pattern: 'p', notBefore: '2026-09-17T00:00:00Z', posts: [{ text, media: [{ path: 'public/x.webp' }] }], ...over });
 

@@ -81,7 +81,7 @@ export function loadVolumeModel(root) {
 // reported chance is an honest one. A cadence with a slot outside that window
 // would make `usHours` untrue; keep the slots inside it.
 const VOLUME_CHECKS = {
-	video: (item) => (item.posts?.[0]?.media || []).some((row) => /\.(mp4|mov)$/i.test(row.path || '')),
+	video: (item) => [item.posts?.[0]?.media].flat().some((row) => /\.(mp4|mov)$/i.test(row?.path || '')),
 	thread: (item) => (item.posts?.length || 0) >= 2,
 	long: (item) => String(item.posts?.[0]?.text || '').length > 180,
 	usHours: () => true,
@@ -132,7 +132,8 @@ const shrunkLog = ({ lift, count }) => (count / (count + SHRINK_K)) * Math.log(l
 // post, so the signals line up with the ones the report measured.
 function asArchivePost(item) {
 	const head = item.posts?.[0] || {};
-	const media = head.media || [];
+	// A draft can carry malformed media (validation names it); rank it as having none.
+	const media = Array.isArray(head.media) ? head.media.filter((row) => typeof row?.path === 'string') : [];
 	const text = String(item.kind === 'article' ? `${item.article?.title || ''}\n${head.text || ''}` : head.text || '');
 	return {
 		text,
