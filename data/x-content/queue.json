@@ -9833,7 +9833,7 @@
 					]
 				},
 				{
-					"says": "A plain tag with a body is a bare avatar: a transparent canvas and the character, with no chat box, no input, no debug controls and no name plate",
+					"says": "A plain tag with a body is a bare avatar: a transparent canvas and the character, with the chat box, input, debug controls and name plate all switched off",
 					"evidence": [
 						{
 							"type": "file",
@@ -19775,7 +19775,7 @@
 			],
 			"posts": [
 				{
-					"text": "More than 3,900 free 3D assets now answer one GET on three.ws/docs/api-reference, served from Cloud Run on @GoogleCloud. Objects, characters and motion clips sit behind a single search with no authentication, no API key and no payment. Every word of the query has to match; when nothing matches all of them the search retries on any of them and marks the answer relaxed: true, so a phrase never dead-ends silently.",
+					"text": "More than 3,900 free 3D assets now answer one GET on three.ws/docs/api-reference, served from Cloud Run on @GoogleCloud. Objects, characters and motion clips sit behind a single search that anyone can call without signing in, holding a key, or paying. Every word of the query has to match; when nothing matches all of them the search retries on any of them and marks the answer relaxed: true, so a phrase never dead-ends silently.",
 					"media": [
 						{
 							"path": "public/x-media/catalog-api/reel.mp4",
@@ -19837,7 +19837,7 @@
 					]
 				},
 				{
-					"says": "no authentication, no API key and no payment",
+					"says": "without signing in, holding a key, or paying",
 					"evidence": [
 						{
 							"type": "page",
@@ -20256,7 +20256,7 @@
 					"text": "When a visitor asks, the widget reads the live page (title, headings, nav and content) plus any facts you curate, and the answer streams back from a free-first inference chain, with failover across providers. Whatever your page says today is what it knows today.\n\nthree.ws/concierge"
 				},
 				{
-					"text": "No account, no crawler setup, no per-seat pricing. The widget is open source, and you can add it as a script tag, a web component or an npm package.\n\nVoice comes built in: push-to-talk speech input and browser-native speech output."
+					"text": "You skip the account, the crawler setup and the per-seat pricing. The widget is open source, and you can add it as a script tag, a web component or an npm package.\n\nVoice comes built in: push-to-talk speech input and browser-native speech output."
 				}
 			],
 			"claims": [
@@ -20340,7 +20340,7 @@
 					]
 				},
 				{
-					"says": "No account, no crawler setup, no per-seat pricing",
+					"says": "You skip the account, the crawler setup and the per-seat pricing",
 					"evidence": [
 						{
 							"type": "page",
@@ -21210,7 +21210,7 @@
 			],
 			"posts": [
 				{
-					"text": "A glTF file, Three.js and WebGL on the viewer's own GPU: no plugin, no video, no server drawing frames. That is how three.ws renders 3D, and the Article follows one rigged character through making, packing, loading, lighting and animating, with the embed code, the free checking tools, our partners and the roadmap.",
+					"text": "three.ws renders 3D with a glTF file, Three.js and WebGL on the viewer's own GPU, so the frames are drawn in the browser rather than streamed from a server. The Article follows one rigged character through making, packing, loading, lighting and animating, with the embed code, the free checking tools, our partners and the roadmap.",
 					"media": [
 						{
 							"path": "public/x-media/how-we-render-3d-article/cover.png",
@@ -21661,7 +21661,7 @@
 			],
 			"posts": [
 				{
-					"text": "A glTF file, Three.js and WebGL on the viewer's own GPU. No plugin, no video stream, no server drawing frames. Here is the full path of one rigged character, from a sentence to a lit, animated model in a browser tab, in six stages.",
+					"text": "A three.ws model is drawn by the viewer's own GPU, from a glTF file, with Three.js and WebGL. This thread follows one rigged character from a sentence to a lit, animated model in a browser tab, in six stages.",
 					"media": [
 						{
 							"path": "public/x-media/how-we-render-3d-article/cover.png",

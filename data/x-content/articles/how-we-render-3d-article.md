@@ -1,6 +1,6 @@
 A reader asked us how we render 3D, under our OpenAI Select Partner announcement. It is a fair question for a 3D company, and it deserves a long answer in place of a one-liner. This is that answer, from the opening byte to the final pixel.
 
-The short version fits in one sentence. A three.ws model is a glTF file. A browser downloads it, decodes it on the visitor's own graphics chip with Three.js and WebGL, lights it, animates it, and draws it frame after frame, with no plugin, no video and no server rendering a single frame. The rest of this article follows one rigged character through each of those steps, then shows the tools around the renderer, the partners who carry the weight underneath, and where we are heading next.
+The short version fits in one sentence. A three.ws model is a glTF file. A browser downloads it, decodes it on the visitor's own graphics chip with Three.js and WebGL, lights it, animates it, and draws it frame after frame on the visitor's machine, without a plugin, a video stream, or a server rendering anything. The rest of this article follows one rigged character through each of those steps, then shows the tools around the renderer, the partners who carry the weight underneath, and where we are heading next.
 
 ![A rigged three.ws avatar standing in the live glTF viewer: a figure in a long yellow oilskin coat, rendered in the browser by Three.js with studio lighting](/x-media/how-we-render-3d-article/cover.png)
 

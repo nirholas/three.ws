@@ -23,7 +23,7 @@ The top four rows are the dancers in the picture. The bottom two rows are not, a
 
 A clip does not store a body. It stores tracks, and each track names the joint it turns. Every clip in the three.ws library is authored against one canonical skeleton: Hips, LeftForeArm, RightUpLeg, 52 joints in total. A track that names LeftForeArm drives nothing on a rig that calls that joint lowerarm_l.
 
-That is the whole problem in one line. Each tool that exports a humanoid picks its own spelling. A library tied to one spelling animates one family of avatars and leaves the rest standing in their bind pose with their arms out. The Boxer Dance clip is no different from the others: open its JSON and the track names read like Hips.quaternion and LeftForeArm.quaternion, spelled exactly one way.
+The problem fits in that one sentence. Each tool that exports a humanoid picks its own spelling. A library tied to one spelling animates one family of avatars and leaves the rest standing in their bind pose with their arms out. The Boxer Dance clip is no different from the others: open its JSON and the track names read like Hips.quaternion and LeftForeArm.quaternion, spelled exactly one way.
 
 Two avatars in the picture above show the failure mode at its mildest. Michelle's bones are called mixamorig:LeftForeArm. The site worker's are called mixamorig1:LeftForeArm, with a different digit. Neither string matches the clip, and a literal name lookup would leave both of them frozen.
 

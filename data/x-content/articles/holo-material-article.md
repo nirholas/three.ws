@@ -204,7 +204,7 @@ A key light of intensity 1.7 and a pale blue rim light add direct highlights on 
 
 ## The peel is a cylinder roll inside the vertex shader
 
-The corner that lifts is the detail people remember. It is not an animation clip and not a second model. It is a few lines of GLSL injected into the material with onBeforeCompile, which lets the page edit the shader three.js generates and keep everything else, including the iridescence and the clearcoat, exactly as written.
+The corner that lifts is the detail people remember, and it comes from a few lines of GLSL injected into the material with onBeforeCompile, which lets the page edit the shader three.js generates and keep everything else, including the iridescence and the clearcoat, exactly as written.
 
 The idea is the one a real sticker follows. Pick a fold line across the corner. Everything on the sheet side of the line stays flat. Everything beyond the line is wrapped around a virtual cylinder, so a point at distance t past the fold turns through an angle of t divided by the radius. The page computes that angle for each vertex on the GPU, moves the vertex around the cylinder, and rotates its normal by the same angle in a second injected block. The second block matters most: because the normals turn with the surface, the light on the curled lip is computed for the curled lip, so the underside catches the environment and the outer curve brightens as it would on foil in a hand.
 

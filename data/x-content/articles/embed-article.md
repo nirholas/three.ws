@@ -119,7 +119,7 @@ The element also ships as `agent-3d.umd.cjs` for pages without ES modules, and a
 
 ## Bare by default, still when asked
 
-A plain tag with a `body` is a bare avatar: a transparent canvas and the character, with no chat box, no input, no debug controls and no name plate. The page behind it shows through, which is why the avatar in the demo stands on the page's own background instead of in a box.
+A plain tag with a `body` is a bare avatar: a transparent canvas and the character, with the chat box, input, debug controls and name plate all switched off. The page behind it shows through, which is why the avatar in the demo stands on the page's own background instead of in a box.
 
 It also listens to the visitor's motion setting. When the system asks for reduced motion, a bare avatar settles into a single clean idle pose and freezes there, which also lets the render loop stop drawing and costs no continuous GPU or CPU time. We checked this while writing. With reduced motion emulated in the browser, captures taken seconds apart came out byte for byte identical, while the same page without the setting changed between captures. The element watches the setting live, so switching it in the operating system takes effect without a reload.
 
