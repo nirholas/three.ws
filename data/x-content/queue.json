@@ -24531,6 +24531,242 @@
 					]
 				}
 			]
+		},
+		{
+			"id": "mocap",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "developer",
+			"pattern": "how-to",
+			"audience": "developer",
+			"notBefore": "2026-11-16T00:00:00Z",
+			"covers": [
+				"@three-ws/mocap",
+				"/mocap-studio"
+			],
+			"head": {
+				"as": "code",
+				"headline": "Record a face once.\nReplay it on any avatar.",
+				"code": [
+					"import { saveClip, getClip } from '@three-ws/mocap';",
+					"const { id, slug } = await saveClip(recording, {",
+					"  name: 'Surprised reaction',",
+					"  tags: ['emote', 'reaction'],",
+					"}, { token: process.env.THREEWS_TOKEN });",
+					"const clip = await getClip(id);"
+				],
+				"source": "packages/mocap/README.md",
+				"url": null,
+				"frame": null
+			},
+			"posts": [
+				{
+					"text": "This mocap package saves a face recording from the browser as a clip you can replay on a different avatar. The clip stores ARKit blendshapes, 52 per frame plus head pose, not keyframes baked to one rig.\n\nnpmjs.com/package/@three-ws/mocap",
+					"media": [
+						{
+							"path": "public/x-media/mocap/code.png",
+							"alt": "three.ws card on a black background with the headline \"Record a face once. Replay it on any avatar.\" Below it, 6 lines of code from packages/mocap/README.md: import { saveClip, getClip } from '@three-ws/mocap'; const { id, slug } = await saveClip(recording, { name: 'Surprised reaction', tags: ['emote', 'reaction'], }, { token: process.env.THREEWS_TOKEN }); const clip = await getClip(id);",
+							"derived": {
+								"as": "code",
+								"code": "472c698cfbc62bd6",
+								"source": "packages/mocap/README.md"
+							}
+						}
+					]
+				},
+				{
+					"text": "Each clip carries a format string, three.ws.face-mocap.v1, and the player checks it before replay, so a newer clip cannot load on an older player and mangle the face."
+				},
+				{
+					"text": "Clips are private by default. Set one public and attach a $THREE price to list it. Record your own in the browser at three.ws/mocap-studio"
+				}
+			],
+			"claims": [
+				{
+					"says": "replay on a different avatar",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/mocap/README.md",
+							"contains": "hands any clip\n> back so you can replay it on a different avatar"
+						}
+					]
+				},
+				{
+					"says": "ARKit blendshapes, 52 per frame plus head pose",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/mocap/README.md",
+							"contains": "emits 52 ARKit\n> blendshapes plus a head-pose matrix per frame"
+						}
+					]
+				},
+				{
+					"says": "not keyframes baked to one rig",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/mocap/README.md",
+							"contains": "A clip is rig-agnostic ARKit blendshapes,\n  not baked keyframes"
+						}
+					]
+				},
+				{
+					"says": "three.ws.face-mocap.v1, and the player checks it before replay",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/mocap/README.md",
+							"contains": "The runtime asserts on it before replay"
+						}
+					]
+				},
+				{
+					"says": "Clips are private by default. Set one public and attach a $THREE price to list it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/mocap/README.md",
+							"contains": "Clips are private by default; flip one to\n  `public`, attach a `$THREE` price, and it's listed"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "genesis-shot",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "creation",
+			"pattern": "walkthrough",
+			"audience": "creator",
+			"notBefore": "2026-11-16T00:00:00Z",
+			"covers": [
+				"/genesis"
+			],
+			"head": {
+				"as": "shot",
+				"headline": "A selfie or a sentence in.\nA 3D agent out.",
+				"url": "https://three.ws/genesis",
+				"frame": "browser",
+				"source": null
+			},
+			"posts": [
+				{
+					"text": "Describe a character or upload a selfie, and Genesis returns a rigged 3D agent with its own custodial wallet and an on-chain identity, in under a minute. It is yours from the moment it exists.\n\nthree.ws/genesis",
+					"media": [
+						{
+							"path": "public/x-media/genesis-shot/shot.png",
+							"alt": "three.ws card on a black background with the headline \"A selfie or a sentence in. A 3D agent out.\" Beside it, a live capture of three.ws/genesis.",
+							"derived": {
+								"as": "shot",
+								"url": "https://three.ws/genesis",
+								"capturedAt": "2026-11-15T15:55:06.679Z"
+							}
+						}
+					]
+				},
+				{
+					"text": "Leave the name blank and it suggests one. Describe how it should talk, like \"warm, precise, explains things like a patient mentor\", and that is the voice it chats in."
+				}
+			],
+			"claims": [
+				{
+					"says": "upload a selfie, and Genesis returns a rigged 3D agent with its own custodial wallet",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/genesis.html",
+							"contains": "selfie becomes a rigged 3D AI agent with its own custodial Solana"
+						}
+					]
+				},
+				{
+					"says": "in under a minute",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/genesis.html",
+							"contains": "under a minute"
+						}
+					]
+				},
+				{
+					"says": "Leave the name blank and it suggests one",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/genesis.html",
+							"contains": "We'll suggest one if you leave this blank"
+						}
+					]
+				},
+				{
+					"says": "warm, precise, explains things like a patient mentor",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/genesis.html",
+							"contains": "Warm, precise, explains things like a patient mentor"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "genome-poll",
+			"status": "draft",
+			"kind": "post",
+			"tier": 3,
+			"lane": "community",
+			"pattern": "mechanism",
+			"audience": "community",
+			"notBefore": "2026-11-16T00:00:00Z",
+			"covers": [
+				"/genome"
+			],
+			"posts": [
+				{
+					"text": "Breed two agents on three.ws/genome and the child inherits a mix of both parents' brain, voice, body and on-chain skills, with a family tree anyone can check.\n\nIf you could pass down one trait, which would it be?",
+					"poll": {
+						"options": [
+							"Brain",
+							"Voice",
+							"Body",
+							"Skills"
+						],
+						"durationMinutes": 1440
+					}
+				},
+				{
+					"text": "Each breeding records its seed, so the child's traits can be derived again from the parents, and a forged lineage shows up when you rerun it."
+				}
+			],
+			"claims": [
+				{
+					"says": "the child inherits a mix of both parents' brain, voice, body and on-chain skills",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/genome.html",
+							"contains": "The child inherits a recombination of both parents' brain, voice, body, and on"
+						}
+					]
+				},
+				{
+					"says": "Each breeding records its seed",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/announcements.json",
+							"contains": "each breeding event seed-recorded so the lineage is re-derivable and forgery-detectable"
+						}
+					]
+				}
+			]
 		}
 	]
 }
