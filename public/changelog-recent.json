@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-15T03:48:04.970Z",
+	"generated_at": "2026-11-15T03:50:02.487Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4584,
+	"total": 4585,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-15",
+			"type": "update",
+			"title": "3D generation keeps working when our storage provider goes down",
+			"summary": "Finished 3D models are now saved to a second storage provider whenever the primary one refuses us, so a storage outage no longer throws away a model that already finished generating. Links to models made during an outage keep working, and they move back to the primary store once it recovers.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-11-15",
 			"type": "update",
@@ -1521,16 +1531,6 @@
 			"title": "Docs · Agent evals",
 			"summary": "Score an agent against fixed task suites from the Evaluate tab, REST or CLI, replay a finished run with its receipt chain verified, re-run it on another model as a preview, and export the trajectory as JSONL.",
 			"link": "/docs/agent-evals",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "launch",
-			"title": "Docs · Agent trading over MCP",
-			"summary": "Arm an agent on Oracle calls, watch it, set its guardrails and stop it from any MCP client. Can move real SOL; simulate by default.",
-			"link": "/docs/agent-trading-mcp",
 			"tags": [
 				"launch"
 			]

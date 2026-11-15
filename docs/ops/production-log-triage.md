@@ -186,10 +186,41 @@ Two traps that produce this exact error and look like a correct value:
 Verify with `curl -s https://three.ws/api/healthz | jq '.subsystems.subsystems[]
 | select(.name=="object_storage")'`, then one `POST /api/forge {"prompt":"cube"}`.
 
-**No code change routes around it.** The read paths fail over to the public bucket
-domain (`/cdn/*` by redirect, `/api/avatars/:id/glb` by streaming it through), which
-is rate-limited and uncached, so it is a degradation and not a fix. Writes cannot fail
-over at all.
+**The GCS failover (since 2026-11-15) keeps generation alive meanwhile.** With
+`STORAGE_FALLBACK_BUCKET` set on the service (production: the private bucket
+`three-ws-storage-fallback`, us-central1), every `api/_lib/r2.js` helper diverts a write
+R2 refuses for an infrastructure reason into that bucket under the same key, and every
+read helper plus `/cdn/<key>` looks there when R2 cannot answer or lacks the key
+(`api/_lib/storage-fallback.js`). URLs already handed out keep resolving. Added after
+2026-11-14 ~17:23 UTC, when Cloudflare stopped accepting every R2 credential we hold
+(both key pairs and the Cloudflare API token, a bare `401 Unauthorized`) and Forge fell
+from ~300-550 successes a day to 1 of 44, because every finished GLB died in
+`materializeCreation`.
+
+- **What still fails:** browser uploads (`/api/forge-upload` still answers `503
+  storage_unavailable`, because a presigned R2 URL cannot be pointed at GCS), and the
+  routes that call `r2.send` directly (avatar CRUD, agent token/register/onchain,
+  erc8004) rather than the helpers.
+- **What the monitor shows:** `object_storage: degraded` with `writes and reads are
+  diverted to the GCS fallback bucket` instead of `down`, and `[storage-fallback] <op>
+  <key> served by GCS fallback` warnings (one per key per instance). `down` with `the
+  GCS fallback ... failed too` means the bucket or its IAM is broken: both the runtime
+  SA `three-ws@` and the key-file SA `vercel-inference@` (it is what
+  `GCP_SERVICE_ACCOUNT_JSON` signs as) need `roles/storage.objectAdmin` on it.
+- **After the credential is fixed:** drain the bucket back into R2, then confirm it is
+  empty:
+  ```bash
+  node --env-file=.env.local scripts/storage-fallback-backfill.mjs --dry-run
+  node --env-file=.env.local scripts/storage-fallback-backfill.mjs --delete-after
+  gcloud storage ls gs://three-ws-storage-fallback --recursive | head
+  ```
+  The script refuses to start while R2 still rejects the credential, skips keys R2
+  already holds at the same size, and deletes a GCS copy only after R2 verifies it.
+  Reads keep falling back for anything not yet moved, so a partial run is safe.
+
+The read paths that bypass the helpers still fall back to the public bucket domain
+(`/api/avatars/:id/glb` streams it through), which is rate-limited, and does not help
+when Cloudflare's whole account is refusing us.
 
 ---
 

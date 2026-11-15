@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>3D generation keeps working when our storage provider goes down</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-15:3D generation keeps working when our storage provider goes down</guid>
+			<pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Finished 3D models are now saved to a second storage provider whenever the primary one refuses us, so a storage outage no longer throws away a model that already finished generating. Links to models made during an outage keep working, and they move back to the primary store once it recovers.</description>
+		</item>
+		<item>
 			<title>The site header fits on one row at every width</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-15:The site header fits on one row at every width</guid>

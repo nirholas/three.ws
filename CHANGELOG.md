@@ -6,6 +6,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-11-15
 
+- **3D generation keeps working when our storage provider goes down**: Finished 3D models are now saved to a second storage provider whenever the primary one refuses us, so a storage outage no longer throws away a model that already finished generating. Links to models made during an outage keep working, and they move back to the primary store once it recovers. `[fix]`
 - **The site header fits on one row at every width**: Signed in, the header could run past the right edge of the screen on laptops and small desktops: a long account name pushed the row wider than the window, and between tablet and desktop widths the Sign in and account buttons wrapped onto two lines. Your name now shortens with an ellipsis and shows in full when you hover it, the duplicate Dashboard link steps aside because your name already opens the dashboard, labels collapse to icons as the window narrows, and below 1080px the header switches to the menu button. The page no longer scrolls sideways at any width. `[fix]`
 
 ## 2026-11-14
