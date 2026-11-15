@@ -98,12 +98,37 @@
 	padding: 7px 16px; border-radius: 7px; margin-left: 6px;
 }
 .nav-end .console:hover { border-color: var(--nv-text); background: rgba(255,255,255,0.04); }
-/* Signed in, the pill carries the visitor's display name (nav-auth.js). A long
-   name must not push the header row past the viewport: cap it and ellipsize.
-   nav-auth.js mirrors the full name into the title attribute. */
+/* Signed in, the row carries more controls than signed out (My creations,
+   Dashboard, the name pill), and a long display name used to push the header
+   past the viewport at every width between the drawer breakpoint and ~1360px.
+   The signed-in row gives way in steps instead: the name pill is capped and
+   ellipsized (nav-auth.js mirrors the full name into its title), the Dashboard
+   link hides because the pill links to the same /dashboard, and the My
+   creations, Search and Walk labels collapse to icons earlier than they do
+   for a signed-out row. */
 .nav-end .console[data-auth-named] {
-	display: block; max-width: 16ch;
+	display: block; max-width: 9.5rem;
 	overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+@media (max-width: 1440px) {
+	.nav-end:has(.console[data-auth-named]) #home-nav-dashboard-li { display: none; }
+}
+@media (max-width: 1320px) {
+	.nav-end:has(.console[data-auth-named]) .nav-mine-label { display: none; }
+	.nav-end:has(.console[data-auth-named]) .nav-mine { padding: 6px 9px; }
+}
+@media (max-width: 1180px) {
+	.nav-end:has(.console[data-auth-named]) .nav-search-label,
+	.nav-end:has(.console[data-auth-named]) .nav-search-hint { display: none; }
+	.nav-end:has(.console[data-auth-named]) .nav-search-btn {
+		width: 36px; height: 36px; padding: 0;
+		justify-content: center; border-radius: 8px;
+		border-color: transparent;
+	}
+}
+@media (max-width: 1040px) {
+	.nav-end:has(.console[data-auth-named]) .nav-walk-label { display: none; }
+	.nav-end:has(.console[data-auth-named]) .nav-walk-toggle { padding: 7px 10px; }
 }
 
 /* "My creations": the way back to everything you built. It sits beside the
