@@ -179,6 +179,10 @@ Notifications from `api/_lib/notify-prefs.js` gain `telegram` and `discord` chan
 ~~~~
 
 
+## Status (2026-11-15)
+
+Production is now deployed: https://three.ws/api/gateway/slack answers 400 "unknown leg" to an unsigned request, /whatsapp answers 403 "verify token mismatch" to a bad hub verify, and POST /voice answers "not_configured: phone calls are not enabled on this deployment". So the handlers are live and fail closed. The worker suite is still 12 files / 188 tests green, and nothing under workers/agent-gateway or api/gateway has changed since 4d1caf30a. The only remaining steps belong to the owner: create the Slack app and the Meta WhatsApp app, buy a Twilio number, then set the env listed in docs/gateways.md on three-ws-api and agent-gateway with `gcloud run services update --update-env-vars`. No further deploy is needed for the code.
+
 ## Status (2026-11-13)
 
 Re-verified: the worker suite is still 12 files / 188 tests green, nothing under workers/agent-gateway or api/gateway has changed since, and the shipped commits are on threews/main as rebased copies (for example f3767e26b and 4d1caf30a), so the push is done. Production has not been redeployed: https://three.ws/api/gateway/{slack,whatsapp,voice} all return 404 "No API route matches". These routes need no vercel.json entry because filesystem routing serves them. Still owner-only: run `npm run deploy:gcp:full`, create the Slack app and the Meta WhatsApp app, buy a Twilio number, and set the env listed in docs/gateways.md on three-ws-api and agent-gateway with `--update-env-vars`.
