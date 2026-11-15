@@ -8,7 +8,7 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { copyProblems, copySimilarity, hasUrl, maxLengthOf, weightedLength } from './quality.js';
-import { houseTics, postedHeads, ticProblems } from './voice.js';
+import { AUDIENCES, houseTics, postedHeads, ticProblems } from './voice.js';
 import { attachmentProblems, mediaProblems, mediaType } from './media.js';
 import { MARKDOWN_ENTITY_BUDGET, markdownToContentState } from './articles.js';
 import { claimProblems, languageProblems } from './editorial.js';
@@ -258,6 +258,7 @@ export function validateItem(item, root, { quality = qualityAt(root), now = Date
 	if (!STATUSES.includes(item.status)) problems.push(`status must be one of ${STATUSES.join(', ')}`);
 	if (!KINDS.includes(item.kind)) problems.push(`kind must be one of ${KINDS.join(', ')}`);
 	if (!item.lane || !item.pattern) problems.push('lane and pattern are required (they drive rotation)');
+	if (item.audience !== undefined && !AUDIENCES.includes(item.audience)) problems.push(`audience must be one of ${AUDIENCES.join(', ')}`);
 	if (!Number.isFinite(Date.parse(item.notBefore))) problems.push('notBefore must be an ISO-8601 timestamp');
 	if (![1, 2, 3].includes(Number(item.tier))) problems.push('tier must be 1 (flagship), 2 (feature), or 3 (proof of work)');
 	if (item.expiresAt !== undefined && !Number.isFinite(Date.parse(item.expiresAt))) problems.push('expiresAt must be an ISO-8601 timestamp');
