@@ -84,6 +84,19 @@ describe('gcp-triage classify', () => {
 		expect(classify(line, ['model-hunyuan3d-21-rtx'])).toBeNull();
 	});
 
+	// 2026-11-15: 50 of these in 14 days on model-triposg, every one printed
+	// seconds after uvicorn's "Finished server process" and a glibc
+	// "malloc_consolidate(): unaligned fastbin chunk detected", i.e. a native
+	// heap abort while the interpreter tears down a scaled-in instance.
+	it('classifies a SIGSEGV at triposg shutdown as self-healing only on model-triposg', () => {
+		const line = 'Container terminated on signal 11.';
+		const hit = classify(line, ['model-triposg']);
+		expect(hit?.id).toBe('triposg-teardown-sigsegv');
+		expect(hit?.class).toBe('self-healing');
+		expect(classify(line, ['model-trellis'])).toBeNull();
+		expect(classify(line, ['three-ws-api'])).toBeNull();
+	});
+
 	it('returns null for an unknown message', () => {
 		expect(classify('some brand new failure nobody has seen', ['three-ws-api'])).toBeNull();
 	});
@@ -171,6 +184,19 @@ describe('gcp-triage HTTP classification', () => {
 		// A 500 (not the designed 502) is still a code fault and must stay loud.
 		const [stats] = buildFindings([request({ status: 500, path: '/api/pump-bounties/stats' })]);
 		expect(stats.signature).not.toBe('pump-bounties-upstream-challenge-502');
+	});
+
+	// 2026-11-15: username and social-handle lookups have no on-chain fallback,
+	// so while pump.fun's Cloudflare challenge is up they answer the designed
+	// retryable 503. A 5xx other than 503, or any other path, stays loud.
+	it('classifies the creator-rewards username 503 as self-healing', () => {
+		for (const path of ['/api/fees', '/api/earnings']) {
+			const [finding] = buildFindings([request({ service: 'pumpfun-creator-rewards', status: 503, path })]);
+			expect(finding.signature).toBe('creator-rewards-username-blocked-503');
+			expect(finding.class).toBe('self-healing');
+		}
+		const [crash] = buildFindings([request({ service: 'pumpfun-creator-rewards', status: 502, path: '/api/fees' })]);
+		expect(crash.signature).not.toBe('creator-rewards-username-blocked-503');
 	});
 
 	// 2026-10-15 deep sweep: /api/v1/ai/text-to-3d 502'd ("lane_error") pinning

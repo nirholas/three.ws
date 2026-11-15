@@ -113,6 +113,20 @@ const KNOWN_SIGNATURES = [
 		action: `model-trellis was SIGKILLed, almost always an out-of-memory kill mid-job: its L4 instance is already at Cloud Run's 32 GiB ceiling, so --memory cannot be raised. Confirm with the revision's memory utilization (a step ratchet toward 0.9 before the kill; query in the runbook) and the job log stopping inside mesh postprocess. The in-flight job's record goes orphaned and expires within ~3 min so forge fails it over. A clean "recycling instance" restart is the designed alternative and is not this signature. ${RUNBOOK} §gpu-worker-sigkill.`,
 	},
 	{
+		// 2026-11-15: 50 occurrences in 14 days on model-triposg, all on one
+		// revision, each printed 1 to 3 seconds after uvicorn logs "Finished
+		// server process" and glibc prints "malloc_consolidate(): unaligned
+		// fastbin chunk detected". The server has already drained and exited, so
+		// this is a native heap abort in interpreter teardown (torch/CUDA
+		// extension destructors) of an instance Cloud Run was scaling in, not a
+		// crash inside a job. Scoped so a SIGSEGV anywhere else stays loud.
+		id: 'triposg-teardown-sigsegv',
+		match: /Container terminated on signal 11/i,
+		services: ['model-triposg'],
+		class: 'self-healing',
+		action: `model-triposg segfaulted during interpreter teardown after uvicorn finished its graceful shutdown (glibc "malloc_consolidate(): unaligned fastbin chunk detected"), on an instance being scaled in. No job is in flight at that point. Investigate only if the line is NOT preceded by "Finished server process" in the same instance's log, or if a job record is orphaned right after it. ${RUNBOOK} §triposg-teardown-sigsegv.`,
+	},
+	{
 		id: 'run-no-instance',
 		match: /no available instance|The request was aborted because there was no available instance/i,
 		class: 'env-action',
@@ -564,6 +578,18 @@ const KNOWN_HTTP_SIGNATURES = [
 		test: (g) => g.service === 'cryptocurrency-cv' && g.status >= 500 && g.path === '/api/whales',
 		class: 'owner',
 		action: `cryptocurrency-cv's source lives in its own repository (nirholas/cryptocurrency.cv), not this one, so a crash here cannot be fixed from this checkout. Root-cause with npm run logs -- -s cryptocurrency-cv --errors --app --since 6h and, if the cause matches the already-tracked AI-provider billing hold (${RUNBOOK} §ccv-ai-providers-unavailable), no further action; otherwise file it against the cryptocurrency.cv repo. ${RUNBOOK} §cryptocurrency-cv-separate-repo.`,
+	},
+	{
+		// pumpfun-creator-rewards (its own repository) answers a username or
+		// social-handle lookup with a one-line 503 + Retry-After: 30 while
+		// pump.fun's Cloudflare challenge is up, because only mint and wallet
+		// lookups have an on-chain fallback. Only the designed 503 matches; a
+		// 502 or 500 on the same routes is a real fault and stays loud.
+		id: 'creator-rewards-username-blocked-503',
+		test: (g) => g.service === 'pumpfun-creator-rewards' && g.status === 503
+			&& (g.path === '/api/fees' || g.path === '/api/earnings'),
+		class: 'self-healing',
+		action: `A username or social-handle lookup hit pump.fun's Cloudflare bot challenge and has no on-chain fallback, so pumpfun-creator-rewards answered its designed retryable 503 (Retry-After: 30). Mint and wallet lookups keep working from the cluster. Investigate only if a mint or wallet query 503s, or if the 503s outlast the challenge (curl -sI https://frontend-api-v3.pump.fun/users/x | grep cf-mitigated). Malformed q values such as a pasted docs placeholder answer 400 since commit 5a784dc of that repo. ${RUNBOOK} §creator-rewards-onchain-fallback.`,
 	},
 ];
 

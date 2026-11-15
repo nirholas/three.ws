@@ -1343,6 +1343,60 @@ ERROR  502 POST /api/pump/launch-agent
 
 ---
 
+## 🟢 HTTP 503 on `/api/fees`, `/api/earnings` (pumpfun-creator-rewards ONLY): `creator-rewards-username-blocked-503` (§creator-rewards-onchain-fallback)
+
+```
+HTTP 503 GET /api/fees?q=<username>   {"error":"pump.fun APIs unavailable: ... usernames and social handles cannot be resolved without pump.fun, retry shortly ..."}
+```
+
+- **Source:** `api/fees.js` and `api/earnings.js` in the separate
+  `nirholas/pumpfun-creator-rewards` repository. While pump.fun's Cloudflare
+  challenge is up, a username or social-handle lookup cannot be resolved (only
+  mints and wallets have the on-chain fallback above), so the handler answers
+  its designed 503 with `Retry-After: 30`.
+- **A crawler's literal docs placeholder** (`q=<mint|wallet|username>`, seen
+  2026-11-15) used to land here too, which read as an outage. It is not an
+  identifier, so since commit `5a784dc` of that repository both handlers answer
+  400 without any upstream call (`invalidLookupQuery` in `lib/pump.js`).
+  That commit is local until the repository is pushed and the service
+  redeployed; until then the placeholder keeps 503ing.
+- **Investigate only if:** a mint or wallet query answers 503, or username 503s
+  persist after `curl -sI https://frontend-api-v3.pump.fun/users/x | grep
+  cf-mitigated` stops showing `challenge`. Only status 503 matches; a 502 or
+  500 stays loud.
+- **Monitor signature:** `creator-rewards-username-blocked-503` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), `self-healing`.
+
+---
+
+## 🟢 `Container terminated on signal 11.` on `model-triposg` (triposg-teardown-sigsegv)
+
+```
+INFO     Finished server process [1]
+         malloc_consolidate(): unaligned fastbin chunk detected
+WARNING  [model-triposg] Container terminated on signal 11.
+```
+
+- **What it means:** the server already drained and exited ("Application
+  shutdown complete", "Finished server process"); one to three seconds later a
+  native heap abort in interpreter teardown (the GPU worker's torch/CUDA
+  extension destructors) kills the process. Cloud Run is scaling the instance
+  in, so no job is in flight. Measured 2026-11-15: 50 occurrences in 14 days
+  (9, 22, 18, 1 per day for 2026-11-12 through 2026-11-15), all revision
+  `model-triposg-00009-z8b`, every one preceded by the same four shutdown
+  lines. Not a job crash, so it is not the `gpu-worker-sigkill` OOM.
+- **Investigate only if:** the signal-11 line is NOT preceded by "Finished
+  server process" on the same instance (that would be a crash inside a job), or
+  a job record is orphaned right after it.
+- **Optional hardening (not done, needs a worker rebuild):** call `os._exit(0)`
+  at the end of the app lifespan shutdown so teardown never reaches the
+  allocator abort.
+- **Monitor signature:** `triposg-teardown-sigsegv` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), `self-healing`,
+  scoped to `model-triposg`.
+
+---
+
 ## 🟢 `[news] <feed> unavailable: ...` (crypto-data-aggregator ONLY): `cda-news-feed-unavailable` (§cda-news-feed-unavailable)
 
 ```
