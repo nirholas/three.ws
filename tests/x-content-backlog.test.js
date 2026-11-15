@@ -46,3 +46,18 @@ describe('draft backlog', () => {
 		expect(new Set(rows.map((row) => row.audience)).size).toBeGreaterThanOrEqual(4);
 	});
 });
+
+describe('items by landing page', () => {
+	it('joins a landing page to the items that cover it or link to it', async () => {
+		const { itemsByLanding } = await import('../api/_lib/x-content/backlog.js');
+		const map = itemsByLanding([
+			{ id: 'genesis', covers: ['/genesis', '@three-ws/sdk'], posts: [{ text: 'Breed two agents: three.ws/genome.' }] },
+			{ id: 'forge', posts: [{ text: 'Try it at https://three.ws/forge/ today, or start at three.ws' }] },
+		]);
+		expect([...map.get('/genesis')]).toEqual(['genesis']);
+		expect([...map.get('/genome')]).toEqual(['genesis']);
+		expect([...map.get('/forge')]).toEqual(['forge']);
+		expect([...map.get('/')]).toEqual(['forge']);
+		expect(map.has('@three-ws/sdk')).toBe(false);
+	});
+});

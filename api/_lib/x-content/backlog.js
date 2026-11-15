@@ -58,3 +58,21 @@ export function draftBacklog(entries, items, { limit = 12, audience = null } = {
 	}
 	return { open: open.length, rows: picked };
 }
+
+// The queue items that send readers to a landing page: every page an item
+// covers, and every three.ws link in its posts. Signups per landing page
+// (api/_lib/acquisition.js) are joined to posts through this.
+export function itemsByLanding(items) {
+	const map = new Map();
+	const add = (path, id) => {
+		const key = path.replace(/\/+$/, '') || '/';
+		if (!map.has(key)) map.set(key, new Set());
+		map.get(key).add(id);
+	};
+	for (const item of items || []) {
+		for (const key of item.covers || []) if (key.startsWith('/')) add(key, item.id);
+		const text = (item.posts || []).map((post) => post.text || '').join('\n');
+		for (const match of text.matchAll(/(?:https?:\/\/)?(?<![\w.])three\.ws(\/[A-Za-z0-9/_.~-]*)?/g)) add((match[1] || '/').replace(/[.]+$/, ''), item.id);
+	}
+	return map;
+}

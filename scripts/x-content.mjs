@@ -54,7 +54,7 @@ import { priorApproval, restoreApproval, sameCopy, staleApproved, stuckDigest } 
 import { learnLifts, outcomesStore } from '../api/_lib/x-content/outcomes.js';
 import { browserProblem } from '../api/_lib/x-content/verify.js';
 import { FORMATS as FEED_FORMATS, HEAD_KINDS as HEAD_AS, STANDALONE_HEADS, formatMix, formatOf, headProblems, headSpecProblems, withFormats } from '../api/_lib/x-content/formats.js';
-import { draftBacklog } from '../api/_lib/x-content/backlog.js';
+import { draftBacklog, itemsByLanding } from '../api/_lib/x-content/backlog.js';
 import { AUDIENCES } from '../api/_lib/x-content/voice.js';
 import { placeHead, rebuildHead } from './lib/x-heads.mjs';
 
@@ -185,11 +185,32 @@ async function plan() {
 		for (const row of published.values()) console.log(`  ${row.publishedAt}  ${row.id.padEnd(26)} ${row.slot ? `slot ${row.slot} ` : ''}${row.url}`);
 	}
 
+	await printSignups(queue.items, now);
 	printBacklog(queue.items, { limit: 8 });
 
 	const publishable = queue.items.filter((item) => !problems[item.id].length);
 	const next = pickDue({ items: publishable, allItems: queue.items, state, now, cadence: queue.cadence, quality: queue.quality, seed, lifts, reviews, exclude: holds });
 	console.log(`\nnow: ${next.item ? `${next.item.id} would fill slot ${next.slot.key} (${next.slot.kind ? `${next.slot.kind}, T${next.tier}` : `T${next.tier}`}${next.filledDown ? `, filling a T${next.slot.tier} slot` : ''}, score ${next.score})` : next.reason}`);
+}
+
+// Accounts created after a visitor arrived from X, per landing page, over the
+// last 14 days (api/_lib/acquisition.js), with the queue items that link there.
+// Reporting only: a database problem prints one line and never breaks plan.
+async function printSignups(items, now) {
+	if (!process.env.DATABASE_URL) return console.log('\nX signups: DATABASE_URL is not set, so signups per landing page are not shown');
+	try {
+		const { signupsByLanding } = await import('../api/_lib/acquisition.js');
+		const rows = await signupsByLanding({ since: new Date(now - 14 * 86_400_000).toISOString() });
+		const linked = itemsByLanding(items);
+		console.log(`\nX signups, last 14 days: ${rows.reduce((sum, row) => sum + row.signups, 0)}`);
+		if (!rows.length) return console.log('  none yet: every post links a three.ws page, and an account made within 30 days of the click is counted here');
+		for (const row of rows) {
+			const ids = [...(linked.get(row.landing_path) || [])];
+			console.log(`  ${String(row.signups).padStart(4)}  ${row.landing_path.padEnd(28)} ${ids.length ? ids.join(', ') : '(no queue item links here)'}`);
+		}
+	} catch (err) {
+		console.log(`\nX signups: could not read acquisition_touches (${err?.message || err})`);
+	}
 }
 
 // The best-scoring live surfaces nothing has announced and no queue item
