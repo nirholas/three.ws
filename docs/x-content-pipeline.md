@@ -32,13 +32,16 @@ pipeline, enforced before anything is sent:
 | Rules nobody re-measured | The queue reads its own results back through the X API and ranks with what they show ([What the queue learns](#what-the-queue-learns)). |
 | Missing alt text | Every image and GIF needs alt text, sent to X as media metadata. |
 | Silent autoplay | `prepare-video` burns captions into the clip, because most of the feed watches muted. |
+| Machine-written cadence | [api/_lib/x-content/voice.js](../api/_lib/x-content/voice.js) rejects the constructions readers named as AI tells: negation stacks ("not X, not Y, just Z"), contrast reframes ("This isn't X. It's Y."), rule-of-three lists, colon reveals, and the phrases the account has already worn out. Every drafter and the editor is handed the same rules. |
+| Every post for the same reader | Each item has an `audience` (developer, educator, student, founder, creator, community), set or implied by its lane, and the ranking will not put the same audience twice in a row (`maximumSameAudienceInARow`). |
+| Every post the same shape | A head's shape is how it opens (number, question, imperative, code, quote, first person, statement), its length band, whether it breaks into paragraphs, and whether it threads. Two heads of the same shape never run back to back (`maximumSameShapeInARow`). |
 | Hype copy | [api/_lib/x-content/quality.js](../api/_lib/x-content/quality.js) rejects launch openers ("Introducing", "We're excited"), hype vocabulary, hashtags, emoji, stacked exclamation marks, all-caps shouting, and en or em dashes. |
 | Repeats | A head that reads too much like another queued item, or like anything @trythreews already posted (the scraped archive in `data/archives/` plus everything this pipeline published), is rejected. |
-| Clockwork timing | Three slots a day inside US hours, every day, plus an X Article every second evening, each opening at a jittered minute, with a minimum gap and a daily cap. |
+| Clockwork timing | Five slots a day inside US hours, every day, plus an X Article every second evening, each opening at a jittered minute, with a minimum gap and a daily cap. |
 | A schedule anyone can read off the repository | The slot jitter is an HMAC under `X_CONTENT_SCHEDULE_SEED` (production only), and which post fills a slot is decided at the moment it opens. Unset, the jitter falls back to a public hash, and `plan` says its minutes are placeholders. |
 | A link that cannot be checked | Every link is resolved before a post can be approved, and again seconds before it is sent. npm answers 403 to any non-browser client, so a package page is resolved against `registry.npmjs.org`, which is the authoritative record of whether that package exists and answers any client. |
 | A broken post stalling the feed | A post that cannot go out (a link is down, a feature probe fails, X rejects the content) is held with the reason and a backoff, and the slot goes to the next-best post in the same run. |
-| Same format on repeat | Lane (audience), pattern (post shape) and feed format (video, GIF, still, text, Article) rotate. A due item waits if it would repeat the previous lane, pattern or format too many times, unless it has been waiting a full day. |
+| Same format on repeat | Lane, pattern, audience, head shape and feed format (video, GIF, still, text, Article) rotate. A due item waits if it would repeat the previous lane, pattern or format too many times, unless it has been waiting a full day. |
 | Retry double-posts | Every created media id, post id, and Article id is written to the ledger the moment X returns it. A crash mid-thread resumes at the next unposted reply. |
 
 ## What it can publish
@@ -46,6 +49,8 @@ pipeline, enforced before anything is sent:
 | Kind | What goes out |
 |---|---|
 | `post` | One post, or a thread when `posts` has more than one entry. Each post may carry up to four images, or exactly one GIF or one video. |
+| `post` with a poll | A native X poll on the head post: `"poll": { "options": ["..", ".."], "durationMinutes": 1440 }` with 2 to 4 options of up to 25 characters, open for 5 minutes to 7 days. A poll head carries no media. |
+| `post` led by a code card or a live capture | `head.as` `code` (a black card showing lines from a file that ships) or `shot` (a framed capture of a live three.ws page). Neither needs a proof reel, so a developer tip or a page tour can post on its own. |
 | `post` imported from a blog or any URL | A native-image post with the page's own image and the canonical link, drafted by `import --as post`. |
 | `article` | A full X Article (title, cover, headings, lists, quotes, links, inline images, code, tables) created with `POST /2/articles/draft` and published with `POST /2/articles/:id/publish`, followed by posts that quote it. |
 | `article` imported from a blog or any URL | The page converted to Markdown with its images saved locally, drafted by `import --as article`, ending with an "Originally published at" link to the canonical page. |
@@ -68,6 +73,11 @@ X Articles require the posting account to be on X Premium.
 | [api/_lib/x-content/price-impact.js](../api/_lib/x-content/price-impact.js) | What the $THREE price did 1, 4 and 24 hours after each post, from the pool's 15-minute candles. The learning loop stamps each outcome row with it. |
 | [api/_lib/x-content/formats.js](../api/_lib/x-content/formats.js) | Feed formats and heads: what leads a post in the timeline, and the checks that a derived head was cut from the reel on record. |
 | [api/_lib/x-content/approval.js](../api/_lib/x-content/approval.js) | The approval policy. |
+| [api/_lib/x-content/owner-approval.js](../api/_lib/x-content/owner-approval.js) | The owner's yes from the [approval inbox](./approvals.md): the request, its preview media, and releasing what was approved. |
+| [api/_lib/x-content/voice.js](../api/_lib/x-content/voice.js) | The voice check (AI-sounding constructions, worn phrases), audiences, and head shapes. |
+| [api/_lib/x-content/backlog.js](../api/_lib/x-content/backlog.js), [api/_lib/x-content/mining.js](../api/_lib/x-content/mining.js) | What to draft next: unannounced live surfaces, unshared blog posts, pages with changelog news, and re-cuts of past hits ([Finding the next post](#finding-the-next-post)). |
+| [api/_lib/x-content/refresh.js](../api/_lib/x-content/refresh.js) | Which approved posts went stale before they could go out, for the daily refill job. |
+| [api/_lib/acquisition.js](../api/_lib/acquisition.js) | First-touch X attribution: which landing page a visitor from X arrived on, joined to the account they created. |
 | [api/_lib/x-content/overlay.js](../api/_lib/x-content/overlay.js) | Signed bundles in object storage, laid over the image's files so a post can ship without a deploy. |
 | [scripts/x-outcomes.mjs](../scripts/x-outcomes.mjs), [scripts/x-bundle.mjs](../scripts/x-bundle.mjs) | `npm run x:outcomes` and `npm run x:bundle`. |
 | [api/_lib/x-content/llm.js](../api/_lib/x-content/llm.js) | The model chain (Vertex, Groq gpt-oss-120b, OpenRouter, OpenAI, NVIDIA NIM) the editor and the announcement drafter share. |
@@ -116,12 +126,13 @@ X Articles require the posting account to be on X Premium.
 ```
 
 - `status`: `draft` (may be unfinished), `review` (must pass `check`), `approved` (eligible to publish), `paused`, `posted`. Move an item to `approved` with `npm run x:content -- approve <slug>` (or `--status review` for a whole batch), which refuses anything a passing review record does not already cover. `npm run x:content -- advance` does the whole line: it films, reviews, and releases what the policy allows.
-- `head` is optional and only for a `post`. By default the reel leads the post. `{ "as": "card" | "gif" | "art" }` leads with a black headline card, a GIF cut from the reel, or AI key art instead, and the reel moves to a reply (`reelIn`, default the first reply). The head is built from the reel on record: `npm run x:content -- remix <slug>` rebuilds it, and a head cut from an older reel fails validation. A card or art headline may state only numbers a post in the item states.
+- `head` is optional and only for a `post`. By default the reel leads the post. `{ "as": "code" | "shot" }` leads with a code card or a live page capture and needs no reel (see [formats.js](../api/_lib/x-content/formats.js) for their fields); a code card's lines must appear in the file its `source` names. `{ "as": "card" | "gif" | "art" }` leads with a black headline card, a GIF cut from the reel, or AI key art instead, and the reel moves to a reply (`reelIn`, default the first reply). The head is built from the reel on record: `npm run x:content -- remix <slug>` rebuilds it, and a head cut from an older reel fails validation. A card or art headline may state only numbers a post in the item states.
 - `scenario` is the run that is filmed: see [Proof reels](#proof-reels) and [Writing a story](./x-story-authoring.md). An item with a scenario declares `{ "type": "scenario" }` in `probes`.
 - `covers` lists the backlog surfaces the story speaks for, by ledger key (`/galaxy`, `@three-ws/scene-mcp`, `workers/rig`), so the announcement plan stops offering them.
 - `tier`: 1 (flagship: partner news, $THREE utility, major launches), 2 (features with proof), or 3 (proof of work: short demos, stats, build notes). Each tier owns one slot a day.
 - `priority` is an optional owner boost from -50 to 50 on top of the computed score. `expiresAt` marks time-sensitive news: it rises as its window closes and is dropped once it passes. `notBefore` is an embargo: the post is not ready before it.
-- `lane` and `pattern` are free-form labels; the score penalizes repeating the last ones.
+- `lane` and `pattern` are free-form labels; the score penalizes repeating the last ones. `audience` is one of developer, educator, student, founder, creator or community; without it the lane implies one, and an unknown value fails `check`.
+- `recutOf` names an earlier, posted item this one re-cuts in another format with new copy, so the re-cut list stops offering it.
 - `probes` prove the feature works, not just that its page loads (types in the editorial bar below). Every post needs at least one.
 - `claims` is the fact ledger. Every number, ordinal, and absolute word (first, only, every, never, fastest) in the copy must sit inside some claim's `says`, every `says` must quote the copy, and every claim carries at least one piece of `evidence` (types below).
 - `mentions` maps each @handle in the copy to the reason the tag is true. A tag with no reason is blocked.
@@ -134,7 +145,7 @@ Cadence lives at the top of the file: `slots` (each `{ tier, at }` in UTC, a ser
 
 ## How the next post is chosen
 
-**When:** three slots a day, one per tier, every day of the week, all inside 12:00 to 20:00 UTC: T2 at 12:00, T1 at 15:30, T3 at 19:00 (8:00, 11:30 and 15:00 in New York). The volume study measured every original post against the $THREE pool's candles and found a post in that window was followed by a volume response about 1.7 times as often as one outside it, one of the two strongest effects in the model. The owner's 2026-09-20 cadence spread the three slots eight hours apart (04:00, 12:00, 20:00), which put two of them outside the window; on 2026-10-01 the owner made pool volume the goal, so all three moved inside it, three and a half hours apart. Each slot opens at a minute only the production seed can reproduce (up to `windowMinutes` late), and stays open for three hours (`slotOpenMinutes`), so a missed run or a deploy still posts, but no slot is ever spent twice. Slots are at least `minimumMinutesApart` apart even at their latest opening, so an earlier post never blocks a later slot. There are no quiet hours: the fixed slots already say when the account posts. `flagshipWeekdaysOnly` would withhold the T1 slot on Saturday and Sunday and keep T1 posts out of the lower slots too; the queue no longer sets it, and it is the one lever that would return the account to weekdays-only flagships.
+**When:** five slots a day, every day of the week, all inside 12:00 to 20:00 UTC: T2 at 12:00, T3 at 13:40, the T1 partner spotlight at 15:20, T2 at 17:00 and T3 at 18:40 (8:00 to 14:40 in New York), at least 80 minutes apart, with `dailyCap` 5 and each slot open for 90 minutes. The owner raised the cadence from three to five on 2026-11-15, so the feed carries more formats a day without a format repeating. Stock is counted against each tier's slots: a tier with two slots a day spends two posts a day. The volume study measured every original post against the $THREE pool's candles and found a post in that window was followed by a volume response about 1.7 times as often as one outside it, one of the two strongest effects in the model. The owner's 2026-09-20 cadence spread three slots eight hours apart (04:00, 12:00, 20:00), which put two of them outside the window; on 2026-10-01 the owner made pool volume the goal, so every slot moved inside it. Each slot opens at a minute only the production seed can reproduce (up to `windowMinutes` late), and stays open for three hours (`slotOpenMinutes`), so a missed run or a deploy still posts, but no slot is ever spent twice. Slots are at least `minimumMinutesApart` apart even at their latest opening, so an earlier post never blocks a later slot. There are no quiet hours: the fixed slots already say when the account posts. `flagshipWeekdaysOnly` would withhold the T1 slot on Saturday and Sunday and keep T1 posts out of the lower slots too; the queue no longer sets it, and it is the one lever that would return the account to weekdays-only flagships.
 
 **One X Article every two days** (owner, 2026-10-08) has its own slot: `{ "kind": "article", "at": "22:30", "everyDays": 2, "from": "2026-10-08" }`, which opens at 22:30 UTC (18:30 in New York) on 2026-10-08 and every second day after it. 22:30 is the earliest time that is still `minimumMinutesApart` after the latest the T3 slot can open, so an Article never blocks a daily post or waits on one. A kind slot works like this:
 
@@ -145,9 +156,9 @@ Cadence lives at the top of the file: `slots` (each `{ tier, at }` in UTC, a ser
 
 Drop the slot from `slots` and Articles go back to being ordinary tier 1 items.
 
-**The daily partner spotlight owns the T1 slot** (owner, 2026-10-11): `{ "tier": 1, "series": "partners", "at": "15:30" }`. A series slot spends its series' best ready post first, ranked across every tier, and posts of a series that owns a slot are kept for it, so the series goes out once a day and never twice. When the series has nothing ready the slot is the ordinary T1 slot, so the prime-time flagship never goes empty. It is a daily slot and counts toward `dailyCap`. The series itself (registry, rotation, filming, lint) is in [x-partner-series.md](x-partner-series.md).
+**The daily partner spotlight owns the T1 slot** (owner, 2026-10-11): `{ "tier": 1, "series": "partners", "at": "15:20" }`. A series slot spends its series' best ready post first, ranked across every tier, and posts of a series that owns a slot are kept for it, so the series goes out once a day and never twice. When the series has nothing ready the slot is the ordinary T1 slot, so the prime-time flagship never goes empty. It is a daily slot and counts toward `dailyCap`. The series itself (registry, rotation, filming, lint) is in [x-partner-series.md](x-partner-series.md).
 
-**Three a day is a quota** (owner, 2026-09-30), so a slot is never left empty while an approved post
+**The daily slots are a quota** (owner, 2026-09-30), so a slot is never left empty while an approved post
 could fill it. When the usual order finds nothing, the slot takes, in turn:
 
 1. **A higher tier's last ready post.** The usual order keeps a tier's last post for that tier's
@@ -173,14 +184,18 @@ closed unfilled in the last day is raised once as missed. The cure for either is
 | `boost` | The owner's `priority`. |
 | `waiting` | +1 per day ready, capped at +10, so nothing starves. |
 | `review` | The AI editor's average score above or below 4. |
-| `variety` | -25 when the post would repeat the last lane or pattern too many times in a row. |
+| `variety` | -25 when the post would repeat the last lane, pattern, audience or head shape too many times in a row. |
 | `format` | -25 when the post would repeat the last feed format too many times in a row. |
 
 **Quoting an earlier post:** a post item may carry `quotes`, the numeric id of an existing post (the id, not the URL, which the validator enforces). The head becomes a quote tweet of it and any further posts thread under the head as usual. That is how a follow-up adds the detail its original left out, such as the numbers behind a page, without repeating the original's copy.
 
 **When a post fails:** it is held, not dropped. Link or probe failures and X rejecting the content (a 4xx such as a duplicate) hold the post for 2 hours, then 6, then 24, and the slot goes to the next post in the same run. Editing the post releases the hold at once. X being down, rate limiting, rejecting our credentials, or refusing the account because its API credits are spent (402) is not the post's fault, so the run stops and the next run retries the same post. A refusal of the account (401, 402, or a 403 that is not a duplicate) is also raised once a day as a critical alert that says what to fix, because until a person acts every slot is a missed one. A thread cut off mid-way always resumes before anything else.
 
-**Stock:** every run counts approved, ready posts per tier (one per day). When any tier has fewer than 3 days left, it raises one alert a day through the platform's ops alerts: always recorded in `ops_alerts`, and pushed to Telegram when `TELEGRAM_ALERTS_CHAT_ID` is set on the service. Running low never makes the queue post something unreviewed; it only posts less.
+**Stock:** every run counts approved, ready posts per tier, against that tier's slots a day. When any tier has fewer than 3 days left, it raises one alert a day through the platform's ops alerts: always recorded in `ops_alerts`, and pushed to Telegram when `TELEGRAM_ALERTS_CHAT_ID` is set on the service. Running low never makes the queue post something unreviewed; it only posts less.
+
+**A quiet account:** when the live account has posted nothing for 24 hours, whatever the cause (auto-publish off, credits spent, every post held, the cron not running), the tick raises one critical alert a day that says how long it has been. Alerts go to `ops_alerts`, to Telegram when `TELEGRAM_ALERTS_CHAT_ID` is set, and by email when `OPS_ALERT_EMAILS` and `RESEND_API_KEY` are set.
+
+**The refill job:** approved posts expire with their reel, head and review (14 days each), so a queue that sits approved while auto-publish is off turns into posts the publisher refuses. The partner job ([deploy/x-partners/run.sh](../deploy/x-partners/run.sh)) runs `advance --refresh` daily: every approved, unpublished item [refresh.js](../api/_lib/x-content/refresh.js) names as stale is filmed again, its head rebuilt and reviewed again, and it gets back the approval it had.
 
 ## Proof reels
 
@@ -312,6 +327,44 @@ Telegram when `TELEGRAM_ALERTS_CHAT_ID` is set), so there is always a window to 
 npm run x:content -- pause <slug>
 ```
 
+### Approving from the inbox
+
+A post the policy leaves to the owner (tier 1, a tag, never filmed, an editor override) no longer
+waits for someone at a laptop. `advance` puts it in the platform's [approval inbox](./approvals.md)
+as an `x_post` request, and `npm run x:content -- ask [<slug>]` does the same for items already in
+review without reviewing them again. The request reaches the owner as a bell on three.ws, a web or
+iOS push, a paired Telegram or Discord chat, or an email when none of those is set up. Its page at
+`/approvals` shows every post of the thread in full, the poll, and the images and video exactly
+as they will go out (served from `GET /api/approvals/:id?media=<n>`, and only when the bytes hash
+to what was reviewed). One tap on Approve is the decision.
+
+The yes is bound to the review record, not to the request: the payload names the record's content
+hash, and the production tick and `advance` release a `review` item only while that record still
+passes, is current, and matches the item. Change one word after the owner approved and the yes no
+longer applies; `advance` asks again with the new copy and closes the old request. Nothing writes
+the queue from the inbox: the executed request row is the record, read back on every tick.
+
+`advance --ship` publishes held posts as bundles too (`x:bundle publish --approved --awaiting`),
+so the moment the owner taps Approve, production has everything it needs to send the post.
+Live check, on an isolated database: `node scripts/x-owner-approval-live-check.mjs <slug>`.
+
+## Finding the next post
+
+`npm run x:content -- backlog` (and the bottom of `plan`) lists what to draft next, from five
+sources, so stock never depends on someone remembering what shipped:
+
+| Source | What it offers |
+|---|---|
+| The announcement ledger | The highest-scoring live surfaces nobody has announced and no item covers, interleaved across audiences, each with the head that suits it: code for a package, a GIF for a page that moves, a live capture for any other page ([backlog.js](../api/_lib/x-content/backlog.js)). |
+| `blog/` | Blog posts no item links or was imported from, newest first, with the `import` command; a post of 900 words or more is offered as an Article. |
+| `data/changelog.json` | Pages with features or improvements from the last 30 days that shipped after the last post linking that page, with the changes listed. A post saying what is new on a page, led by a fresh capture of it. |
+| The account's measured posts | Re-cuts: the best posts from 3 to 13 weeks ago that beat the account average, with heads in a format they have not had. A re-cut is a new item with new copy (the repeat check rejects old copy) and sets `recutOf`. Needs `DATABASE_URL`. |
+| Signups by landing page | `plan` lists accounts created in the last 14 days by visitors who arrived from X, per landing page, with the items that link there ([api/_lib/acquisition.js](../api/_lib/acquisition.js)). |
+
+Before acting, `advance` and `ask` record as posted every item the publish ledger has sent,
+because the production tick writes the ledger and never the checkout's queue file. Without it an
+item already on X counts as stock and can be put to the owner again.
+
 ## Publishing without a deploy
 
 The queue, the review records and the media are files baked into the image, so by default a post
@@ -361,6 +414,12 @@ npm run x:content -- review --status review
 # 5. See exactly what would be sent, and when the queue will send it
 npm run x:content -- run --dry-run --id web-component-article
 npm run x:content:plan
+
+# Or the whole line: film, review, release what the policy allows, ask the owner about the rest, ship bundles
+npm run x:content -- advance --ship
+
+# What to draft next: unannounced surfaces, unshared blog posts, pages with news, re-cuts
+npm run x:content -- backlog --audience educator
 ```
 
 `import` accepts a blog slug from `blog/`, a three.ws URL (read from this checkout, so it works before a deploy), or any public URL. SVG and AVIF images are rasterized, and oversized images are recompressed to fit X's 5 MB limit. Imports always land as `draft`: the importer cannot know your voice, and the lint cannot either, so a human rewrites the copy before it moves to `review`.
@@ -435,5 +494,7 @@ Queue edits reach production with the next deploy, because the cron reads the qu
 ## Tests
 
 [tests/x-content-reel.test.js](../tests/x-content-reel.test.js) covers scenario validation, the proof binding, proof as evidence, post length, and what the editor is given for a reel. [tests/x-content-approval.test.js](../tests/x-content-approval.test.js) covers the approval policy and story coverage. [tests/x-content-partners.test.js](../tests/x-content-partners.test.js) covers the partner spotlight: the registry check, the rotation, the series lint, claims built from the registry and the run, and the drafting loop. [tests/x-content-outcomes.test.js](../tests/x-content-outcomes.test.js) covers the learning loop, including the price stamp and its lifts, and [tests/x-content-overlay.test.js](../tests/x-content-overlay.test.js) the bundles.
+
+[tests/x-content-voice.test.js](../tests/x-content-voice.test.js) covers the voice check, audiences and shapes; [tests/x-content-owner-approval.test.js](../tests/x-content-owner-approval.test.js) the inbox approval; [tests/x-content-backlog.test.js](../tests/x-content-backlog.test.js) and [tests/x-content-mining.test.js](../tests/x-content-mining.test.js) what to draft next; [tests/x-content-ledger-sync.test.js](../tests/x-content-ledger-sync.test.js) recording sent items; [tests/x-content-refresh.test.js](../tests/x-content-refresh.test.js) and [tests/x-content-quiet.test.js](../tests/x-content-quiet.test.js) the refill job and the quiet alert; [tests/x-content-heads-standalone.test.js](../tests/x-content-heads-standalone.test.js) code and shot heads.
 
 [tests/x-content.test.js](../tests/x-content.test.js) covers the tiered slots, fill-down, priority scoring, holds and the fall-through that publishes the next post when one fails, stock counting, quote-tweet ids and their publish wiring, hand-sent posts counting toward spacing but not the cap, the video speed-up filter chain and its caption ordering, the voice and editorial lint, the claims ledger, media quality, review records binding approval to exact content, the editor verdict rules, the media rules, the Markdown to Article offsets, the scheduler's spacing, cap, embargo, and resume rules, and the publisher's thread chaining, crash resume, and Article draft, publish, and quote sequence.

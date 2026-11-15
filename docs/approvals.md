@@ -29,6 +29,14 @@ it was about to take. Approving lifts only that step-up rule. Your numeric
 caps, block rules, and any wallet freeze still apply when the approved action
 runs, so an approval can never push an action past a limit you set elsewhere.
 
+The @trythreews content queue raises requests too: a reviewed X post its
+approval policy leaves to the owner becomes an `x_post` request (venue
+`x_post`, never auto-approvable). Its confirmation table shows the account,
+every post of the thread in full, the poll, the media and alt text, and when
+it goes out, instead of an amount and recipient, and the inbox renders the
+thread as it will appear on X. Approving releases the post to the queue's
+schedule; see [Approving from the inbox](./x-content-pipeline.md#approving-from-the-inbox).
+
 Each request stores:
 
 - the **payload**: the exact action the executor will run, nothing more;
@@ -284,6 +292,7 @@ a session or bearer; writes need a session plus `x-csrf-token`.
 GET    /api/approvals?status=pending|done|denied|expired|all&agent=<uuid>&limit=&cursor=
 POST   /api/approvals            { action: "bulk_deny", ids: [uuid, ...] }
 GET    /api/approvals/:id?t=<link token>
+GET    /api/approvals/:id?media=<n>   (x_post requests: the nth image or video, as reviewed)
 POST   /api/approvals/:id        { decision: "approve"|"deny", payload_hash, token?, via? }
 GET    /api/approvals/policies
 POST   /api/approvals/policies   { venues, max_usd, agent_id?, team_id?, expires_at?, label? }

@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-11-15T04:40:47.362Z",
+	"generated_at": "2026-11-15T16:33:14.023Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-15",
+			"type": "update",
+			"title": "@trythreews posts in more formats, for more readers, five times a day",
+			"summary": "The @trythreews feed now rotates code cards from files that ship, live captures of three.ws pages, polls, GIFs, filmed demos and X Articles, and writes each post for one reader: developers, teachers, students, founders, creators or the community. Posts that read as machine-written are rejected before they are queued, two posts in a row never open the same way, and the account posts five times a day inside US hours. A post the account owner must approve now arrives in the approval inbox showing every post, poll and video exactly as it will go out, approved with one tap.",
+			"link": null,
+			"tags": [
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-11-15",
 			"type": "update",

@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>@trythreews posts in more formats, for more readers, five times a day</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-15:@trythreews posts in more formats, for more readers, five times a day</guid>
+			<pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The @trythreews feed now rotates code cards from files that ship, live captures of three.ws pages, polls, GIFs, filmed demos and X Articles, and writes each post for one reader: developers, teachers, students, founders, creators or the community. Posts that read as machine-written are rejected before they are queued, two posts in a row never open the same way, and the account posts five times a day inside US hours. A post the account owner must approve now arrives in the approval inbox showing every post, poll and video exactly as it will go out, approved with one tap.</description>
+		</item>
+		<item>
 			<title>3D generation keeps working when our storage provider goes down</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-15:3D generation keeps working when our storage provider goes down</guid>
