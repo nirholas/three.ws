@@ -22,6 +22,7 @@ import { pipeline } from 'node:stream/promises';
 import { GetObjectCommand, HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { cors, error, wrap } from './_lib/http.js';
 import { r2, isStorageInfrastructureError, publicUrlOrNull } from './_lib/r2.js';
+import { fallbackBucket, fallbackFetch, fallbackHead, noteFallback } from './_lib/storage-fallback.js';
 import { fetchUpstream } from './_lib/upstream-fetch.js';
 import { env } from './_lib/env.js';
 import { parseVariantKey, variantObjectKey } from '../src/shared/cdn-variant.js';
@@ -131,6 +132,37 @@ function redirectToSource(res, source) {
 	return res.end();
 }
 
+// Stream a fetch Response (the GCS fallback bucket or the public bucket domain)
+// as this object, with the same headers the signed read sets. The edge cache is
+// kept short (60s) so traffic returns to R2 within a minute of it recovering.
+async function streamDegraded(req, res, key, upstream, range) {
+	const type = contentTypeFor(key, upstream.headers.get('content-type'));
+	res.statusCode = upstream.status === 206 ? 206 : 200;
+	res.setHeader('content-type', type);
+	res.setHeader('content-security-policy', "default-src 'none'; sandbox");
+	res.setHeader('cross-origin-resource-policy', 'cross-origin');
+	if (!isInlineSafe(type)) res.setHeader('content-disposition', 'attachment');
+	res.setHeader('accept-ranges', 'bytes');
+	res.setHeader('cache-control', 'public, max-age=60, s-maxage=60');
+	const len = upstream.headers.get('content-length');
+	if (len && (range || Number(len) <= MAX_BUFFERED_BYTES)) res.setHeader('content-length', len);
+	const contentRange = upstream.headers.get('content-range');
+	if (contentRange) res.setHeader('content-range', contentRange);
+	const etag = upstream.headers.get('etag');
+	if (etag) res.setHeader('etag', etag);
+	if (req.method === 'HEAD' || !upstream.body) {
+		upstream.body?.cancel?.();
+		return res.end();
+	}
+	await pipeline(Readable.fromWeb(upstream.body), res);
+}
+
+function clearObjectHeaders(res) {
+	res.removeHeader('content-length');
+	res.removeHeader('content-range');
+	res.removeHeader('etag');
+}
+
 // GET /cdn/_v/<width>/<key>: the object at <key> resized to fit <width> and
 // encoded as WebP (see src/shared/cdn-variant.js). Built on the first request
 // for a source version and persisted under variants/, so later edge misses are
@@ -141,6 +173,12 @@ async function serveVariant(req, res, { width, source }) {
 	try {
 		head = await r2.send(new HeadObjectCommand({ Bucket: env.S3_BUCKET, Key: source }));
 	} catch (err) {
+		// A source diverted to the GCS fallback bucket has no R2 copy to resize
+		// from; send the caller to the full-size original, which /cdn serves.
+		if (fallbackBucket() && (isNotFound(err) || isStorageInfrastructureError(err))) {
+			const inFallback = await fallbackHead(source).catch(() => null);
+			if (inFallback) return redirectToSource(res, source);
+		}
 		if (isNotFound(err)) return error(res, 404, 'not_found', 'object not found');
 		console.error('[cdn-object] variant head failed, serving original:', source, err?.message);
 		return redirectToSource(res, source);
@@ -267,7 +305,26 @@ export default wrap(async (req, res) => {
 			return res.end();
 		}
 		const code = err?.Code || err?.name;
-		if (code === 'NoSuchKey' || code === 'NotFound' || status === 404) {
+		const notFound = code === 'NoSuchKey' || code === 'NotFound' || status === 404;
+		const isInfraFault = isStorageInfrastructureError(err);
+		// Objects written while R2 refused our credential live in the GCS fallback
+		// bucket under the same key (api/_lib/storage-fallback.js). Look there when
+		// R2 cannot answer, and when R2 answers but never received the object (it
+		// recovered and the backfill has not copied it back yet).
+		if (fallbackBucket() && (notFound || isInfraFault)) {
+			try {
+				const upstream = await fallbackFetch(key, { range, method: req.method === 'HEAD' ? 'HEAD' : 'GET' });
+				if (upstream) {
+					noteFallback('cdn', key, err);
+					return await streamDegraded(req, res, key, upstream, range);
+				}
+			} catch (fallbackErr) {
+				console.error('[cdn-object] gcs fallback read failed:', key, fallbackErr?.message);
+				if (res.headersSent) return res.destroy(fallbackErr);
+				clearObjectHeaders(res);
+			}
+		}
+		if (notFound) {
 			return error(res, 404, 'not_found', 'object not found');
 		}
 		if (code === 'InvalidRange' || status === 416) {
@@ -301,7 +358,6 @@ export default wrap(async (req, res) => {
 		// thumbnails costs r2.dev one fetch instead of one per viewer, and traffic
 		// still returns to the signed path within a minute of the credential being
 		// healthy again.
-		const isInfraFault = isStorageInfrastructureError(err);
 		const fallback = isInfraFault ? publicUrlOrNull(key) : null;
 		if (fallback) {
 			console.error('[cdn-object] signed read failed, streaming public bucket domain:', key, err?.message);
@@ -325,26 +381,7 @@ export default wrap(async (req, res) => {
 					upstream.body?.cancel?.();
 					return error(res, 404, 'not_found', 'object not found');
 				}
-				const type = contentTypeFor(key, upstream.headers.get('content-type'));
-				res.statusCode = upstream.status === 206 ? 206 : 200;
-				res.setHeader('content-type', type);
-				res.setHeader('content-security-policy', "default-src 'none'; sandbox");
-				res.setHeader('cross-origin-resource-policy', 'cross-origin');
-				if (!isInlineSafe(type)) res.setHeader('content-disposition', 'attachment');
-				res.setHeader('accept-ranges', 'bytes');
-				res.setHeader('cache-control', 'public, max-age=60, s-maxage=60');
-				const len = upstream.headers.get('content-length');
-				if (len && (range || Number(len) <= MAX_BUFFERED_BYTES)) res.setHeader('content-length', len);
-				const contentRange = upstream.headers.get('content-range');
-				if (contentRange) res.setHeader('content-range', contentRange);
-				const etag = upstream.headers.get('etag');
-				if (etag) res.setHeader('etag', etag);
-				if (req.method === 'HEAD') {
-					upstream.body?.cancel?.();
-					return res.end();
-				}
-				await pipeline(Readable.fromWeb(upstream.body), res);
-				return;
+				return await streamDegraded(req, res, key, upstream, range);
 			} catch (fallbackErr) {
 				console.error('[cdn-object] public bucket domain failed too:', key, fallbackErr?.message);
 				if (res.headersSent) return res.destroy(fallbackErr);
@@ -354,9 +391,7 @@ export default wrap(async (req, res) => {
 				// never clears headers, so a leftover content-length would pin the
 				// JSON body to the object's byte count and hang the client waiting
 				// for megabytes that are never coming.
-				res.removeHeader('content-length');
-				res.removeHeader('content-range');
-				res.removeHeader('etag');
+				clearObjectHeaders(res);
 			}
 		}
 		console.error('[cdn-object] r2 fetch failed:', key, err?.message);
@@ -365,9 +400,7 @@ export default wrap(async (req, res) => {
 		// An image key can at least avoid a broken-image icon; a model key cannot
 		// be stood in for by a flat PNG, so it still falls through to the 502.
 		if (isInfraFault && contentTypeFor(key, null).startsWith('image/')) {
-			res.removeHeader('content-length');
-			res.removeHeader('content-range');
-			res.removeHeader('etag');
+			clearObjectHeaders(res);
 			res.statusCode = 200;
 			res.setHeader('content-type', 'image/png');
 			res.setHeader('cross-origin-resource-policy', 'cross-origin');
