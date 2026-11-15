@@ -11636,7 +11636,7 @@
 			"category": "utility",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": "Use this to check how risky a set of holdings is before rebalancing.",
+			"whenToUse": "Use this to check how risky a wallet or a set of holdings is before rebalancing.",
 			"page": "https://three.ws/mcp-tools/hq-mcp/analyze_portfolio_risk"
 		},
 		{
@@ -12886,7 +12886,7 @@
 			"category": "utility",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": "Use it to size a sell (tokenAmountRaw) or to confirm a fill landed.",
+			"whenToUse": "Use it to pick a sell and size it (pass amountTokens: \"all\" or an amount to quote_trade), or to confirm a fill landed.",
 			"page": "https://three.ws/mcp-tools/trading-mcp/list_positions"
 		},
 		{

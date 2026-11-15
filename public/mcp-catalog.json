@@ -44030,8 +44030,8 @@
 		{
 			"name": "analyze_portfolio_risk",
 			"title": "Portfolio risk score",
-			"description": "Score a portfolio 0-100 from positions you supply: concentration, exposure to weakly scored protocols, and crowded-leverage assets, using live HQ protocol health and funding data. Nothing is stored. A heuristic, not financial advice. Use this to check how risky a set of holdings is before rebalancing.",
-			"whenToUse": "Use this to check how risky a set of holdings is before rebalancing.",
+			"description": "Score a portfolio 0-100 from a public wallet address (Solana first; EVM addresses read Ethereum, Base, Arbitrum and Optimism) or from positions you supply. Returns concentration, stablecoin share, protocol exposure with the matching protocol-health grades, and crowded-leverage assets, from live HQ data. Pass exactly one of address or positions. Read-only: nothing is signed, sent or stored. A heuristic, not financial advice. Use this to check how risky a wallet or a set of holdings is before rebalancing.",
+			"whenToUse": "Use this to check how risky a wallet or a set of holdings is before rebalancing.",
 			"server": {
 				"id": "hq-mcp",
 				"title": "@three-ws/hq-mcp",
@@ -44055,6 +44055,24 @@
 			"inputSchema": {
 				"type": "object",
 				"properties": {
+					"address": {
+						"description": "Public wallet address: base58 Solana, or 0x EVM.",
+						"type": "string",
+						"minLength": 32,
+						"maxLength": 64
+					},
+					"chain": {
+						"description": "Narrows an EVM address to one network. Default reads every supported network.",
+						"type": "string",
+						"enum": [
+							"solana",
+							"evm",
+							"ethereum",
+							"base",
+							"arbitrum",
+							"optimism"
+						]
+					},
 					"positions": {
 						"minItems": 1,
 						"maxItems": 50,
@@ -44086,9 +44104,6 @@
 						}
 					}
 				},
-				"required": [
-					"positions"
-				],
 				"$schema": "http://json-schema.org/draft-07/schema#"
 			},
 			"page": "/mcp-tools/hq-mcp/analyze_portfolio_risk",
@@ -51558,7 +51573,7 @@
 		{
 			"name": "quote_trade",
 			"title": "Quote a trade from an agent wallet",
-			"description": "Quote a buy or sell from the agent's custodial wallet without sending anything. Runs the same guard chain a real fill runs (kill switch, per-trade cap, daily budget, USD ceiling, price-impact breaker, rug firewall, SOL headroom) and returns the venue, expected output, minimum received, price impact, fees, wallet balance and any guard or funds warning. Use this before every execute_trade to show the owner what a fill would do.",
+			"description": "Quote a buy or sell from the agent's custodial wallet without sending anything. Runs the same guard chain a real fill runs (kill switch, per-trade cap, daily budget, USD ceiling, price-impact breaker, rug firewall, SOL headroom) and returns the venue, expected output, minimum received, price impact, fees, wallet balance and any guard or funds warning. Use this before every execute_trade to show the owner what a fill would do. A sell sized past the position, or of a token the wallet does not hold, is refused (insufficient_tokens, no_position).",
 			"whenToUse": "Use this before every execute_trade to show the owner what a fill would do.",
 			"server": {
 				"id": "trading-mcp",
@@ -51598,16 +51613,29 @@
 					},
 					"mint": {
 						"type": "string",
-						"minLength": 32,
-						"description": "Solana mint of the token. A sell of $THREE is refused."
+						"minLength": 1,
+						"description": "Solana mint of the token, or \"three\" for $THREE. A sell of $THREE is refused."
 					},
 					"amountSol": {
 						"description": "Buys: SOL to spend.",
 						"type": "number",
 						"exclusiveMinimum": 0
 					},
+					"amountTokens": {
+						"description": "Sells: \"all\" for the whole position, or a token amount (e.g. 12.5). Sized server-side against the exact on-chain balance.",
+						"anyOf": [
+							{
+								"type": "string",
+								"const": "all"
+							},
+							{
+								"type": "number",
+								"exclusiveMinimum": 0
+							}
+						]
+					},
 					"tokenAmountRaw": {
-						"description": "Sells: amount in the token's base units (an integer string).",
+						"description": "Sells, exact alternative to amountTokens: amount in the token's base units (an integer string).",
 						"type": "string"
 					},
 					"slippageBps": {
@@ -51630,8 +51658,8 @@
 		{
 			"name": "list_positions",
 			"title": "List agent wallet positions",
-			"description": "List what the agent wallet holds right now: native SOL and every token position with its balance and USD value, as valued by the platform. Use it to size a sell (tokenAmountRaw) or to confirm a fill landed.",
-			"whenToUse": "Use it to size a sell (tokenAmountRaw) or to confirm a fill landed.",
+			"description": "List what the agent wallet holds right now: native SOL and every token position with its balance, USD value, cost basis and unrealized P&L in SOL, plus net worth and risk flags. Use it to pick a sell and size it (pass amountTokens: \"all\" or an amount to quote_trade), or to confirm a fill landed. sellable:false marks $THREE, which the agent never sells.",
+			"whenToUse": "Use it to pick a sell and size it (pass amountTokens: \"all\" or an amount to quote_trade), or to confirm a fill landed.",
 			"server": {
 				"id": "trading-mcp",
 				"title": "@three-ws/trading-mcp",
@@ -51712,16 +51740,29 @@
 					},
 					"mint": {
 						"type": "string",
-						"minLength": 32,
-						"description": "Solana mint of the token. A sell of $THREE is refused."
+						"minLength": 1,
+						"description": "Solana mint of the token, or \"three\" for $THREE. A sell of $THREE is refused."
 					},
 					"amountSol": {
 						"description": "Buys: SOL to spend.",
 						"type": "number",
 						"exclusiveMinimum": 0
 					},
+					"amountTokens": {
+						"description": "Sells: \"all\" for the whole position, or a token amount (e.g. 12.5). Sized server-side against the exact on-chain balance.",
+						"anyOf": [
+							{
+								"type": "string",
+								"const": "all"
+							},
+							{
+								"type": "number",
+								"exclusiveMinimum": 0
+							}
+						]
+					},
 					"tokenAmountRaw": {
-						"description": "Sells: amount in the token's base units (an integer string).",
+						"description": "Sells, exact alternative to amountTokens: amount in the token's base units (an integer string).",
 						"type": "string"
 					},
 					"slippageBps": {
