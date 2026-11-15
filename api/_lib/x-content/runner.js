@@ -96,7 +96,13 @@ export function inventory(items, state, root, now = Date.now(), cadence = {}) {
 		else if (series.has(seriesOf(item))) bySeries.set(seriesOf(item), bySeries.get(seriesOf(item)) + 1);
 		else counts.set(tierOf(item), counts.get(tierOf(item)) + 1);
 	}
-	const tiers = TIERS.map((tier) => ({ tier, days: counts.get(tier), low: counts.get(tier) < INVENTORY_WARN_DAYS }));
+	// A tier with two plain daily slots spends two posts a day. A tier with none
+	// still counts one per day: it fills other tiers' empty slots.
+	const perDay = (tier) => Math.max(1, (cadence.slots || []).filter((slot) => !isKindSlot(slot) && !slot.series && Number(slot.tier) === tier).length);
+	const tiers = TIERS.map((tier) => {
+		const days = Math.floor(counts.get(tier) / perDay(tier));
+		return { tier, days, low: days < INVENTORY_WARN_DAYS };
+	});
 	const kinds = (cadence.slots || []).filter(isKindSlot).map((slot) => {
 		const days = byKind.get(slot.kind) * Math.max(1, Math.floor(Number(slot.everyDays) || 1));
 		return { kind: slot.kind, count: byKind.get(slot.kind), days, low: days < INVENTORY_WARN_DAYS };

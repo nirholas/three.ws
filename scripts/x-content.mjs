@@ -140,7 +140,7 @@ async function plan() {
 		console.log(`  ${new Date(slot.opensAt).toISOString().slice(0, 16)}Z  ${slotLabel(slot)}  ${state_}`);
 	}
 
-	console.log('\nStock (approved, ready, not held), one slot per tier per day:');
+	console.log('\nStock (approved, ready, not held), in days of each tier\'s daily slots:');
 	for (const row of inventory(queue.items.filter((item) => !problems[item.id].length), state, root, now, cadence)) console.log(`  ${stockLabel(row)}${row.low ? '   LOW' : ''}`);
 	// The feed format each approved post would lead with, and the last few sent.
 	const approved = queue.items.filter((item) => item.status === 'approved' && !published.has(item.id));

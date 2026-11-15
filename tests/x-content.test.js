@@ -329,15 +329,17 @@ describe('priority', () => {
 		expect(scored.volumeChance).toBeNull();
 	});
 
-	it('keeps the three daily slots inside the volume window, and every slot far enough apart that all of them can post', () => {
-		// Owner cadence (2026-10-01): three posts a day inside 12:00 to 20:00 UTC,
+	it('keeps the five daily slots inside the volume window, and every slot far enough apart that all of them can post', () => {
+		// Owner cadence (2026-10-01): posts go out inside 12:00 to 20:00 UTC,
 		// where the volume study found a post is most often followed by a volume
 		// response. Owner directive (2026-10-08): one X Article every second day,
-		// in its own slot after the last daily post.
+		// in its own slot after the last daily post. Owner directive (2026-11-15):
+		// more than three a day once the formats vary, so five daily slots.
 		const queue = loadQueue(root);
 		const toMinutes = (at) => Number(at.slice(0, 2)) * 60 + Number(at.slice(3));
 		const daily = queue.cadence.slots.filter((slot) => !slot.kind);
-		expect(daily).toHaveLength(3);
+		expect(daily).toHaveLength(5);
+		expect(queue.cadence.dailyCap).toBe(daily.length);
 		for (const slot of daily) {
 			expect(toMinutes(slot.at)).toBeGreaterThanOrEqual(12 * 60);
 			expect(toMinutes(slot.at) + queue.cadence.windowMinutes).toBeLessThanOrEqual(20 * 60);
@@ -354,7 +356,7 @@ describe('priority', () => {
 		}
 	});
 
-	it('opens all three slots every day, weekends included, and still lets a flagship take the flagship slot', () => {
+	it('opens every daily slot every day, weekends included, and still lets a flagship take the flagship slot', () => {
 		// Owner directive (2026-09-20): three a day, Sundays too. The queue no
 		// longer sets flagshipWeekdaysOnly, so no slot is withheld on a weekend.
 		const cadence = loadQueue(root).cadence;
@@ -470,6 +472,13 @@ describe('holds and fall-through', () => {
 			{ tier: 3, days: 0, low: true },
 			{ kind: 'article', count: 1, days: 2, low: true },
 		]);
+	});
+
+	it('counts a tier with two daily slots as using two posts a day', () => {
+		const dir = sandbox();
+		const items = ['a', 'b', 'c', 'd', 'e'].map((id) => ({ id, status: 'approved', tier: 2, kind: 'post', posts: [{ text: id }] }));
+		const cadence = { slots: [{ tier: 2, at: '12:00' }, { tier: 2, at: '17:00' }, { tier: 1, series: 'partners', at: '15:20' }] };
+		expect(inventory(items, { published: [] }, dir, Date.now(), cadence).find((row) => row.tier === 2)).toEqual({ tier: 2, days: 2, low: true });
 	});
 
 	it('never ends a tick on a failed post: it holds it and publishes the next best', async () => {

@@ -2,9 +2,10 @@
 	"version": 2,
 	"account": "trythreews",
 	"cadence": {
-		"windowMinutes": 30,
-		"minimumMinutesApart": 180,
-		"dailyCap": 3,
+		"windowMinutes": 20,
+		"minimumMinutesApart": 80,
+		"dailyCap": 5,
+		"slotOpenMinutes": 90,
 		"quietHoursUtc": null,
 		"slots": [
 			{
@@ -12,13 +13,21 @@
 				"at": "12:00"
 			},
 			{
+				"tier": 3,
+				"at": "13:40"
+			},
+			{
 				"tier": 1,
 				"series": "partners",
-				"at": "15:30"
+				"at": "15:20"
+			},
+			{
+				"tier": 2,
+				"at": "17:00"
 			},
 			{
 				"tier": 3,
-				"at": "19:00"
+				"at": "18:40"
 			},
 			{
 				"kind": "article",
