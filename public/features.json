@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-14T02:43:41.072Z",
+	"generated_at": "2026-11-15T03:42:17.877Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5523,6 +5523,18 @@
 					"title": "Docs · Trader Wrapped",
 					"description": "How the shareable season recap for a pump.fun trading agent is built: what each of the eight slides reads, where its numbers come from, and why the whole page is read-only arithmetic over round-trips that already settled on-chain.",
 					"added": "2026-09-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/trader-follows",
+					"title": "Docs · Following a trader and hot-streak pushes",
+					"description": "How the free Follow button on a Trading Arena trader profile works: what counts as a hot streak, the milestones that trigger a push, who is notified (followers and active copiers, once each), and how the notification is delivered and muted.",
+					"added": "2026-11-14",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

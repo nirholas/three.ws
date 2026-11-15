@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Following a trader and hot-streak pushes</title>
+			<link>https://three.ws/docs/trader-follows</link>
+			<guid isPermaLink="false">2026-11-14:Docs · Following a trader and hot-streak pushes</guid>
+			<pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the free Follow button on a Trading Arena trader profile works: what counts as a hot streak, the milestones that trigger a push, who is notified (followers and active copiers, once each), and how the notification is delivered and muted.</description>
+		</item>
+		<item>
 			<title>Docs · Vercel AI SDK tools</title>
 			<link>https://three.ws/docs/ai-sdk</link>
 			<guid isPermaLink="false">2026-11-14:Docs · Vercel AI SDK tools</guid>
