@@ -47,6 +47,11 @@
 //   node scripts/audit-csp.mjs --all            # every page in data/pages.json
 //   node scripts/audit-csp.mjs --headers-only --base https://three.ws --all
 //   node scripts/audit-csp.mjs /pay /studio     # only these paths
+//   CSP_AUDIT_CONCURRENCY=6 node scripts/audit-csp.mjs --all   # pages in parallel
+//
+// A same-origin script that 404s fails the run (exit 4): it never executed, so
+// it was never judged. That is what a server still holding a previous build's
+// HTML looks like after a rebuild, so restart the server after `npm run build`.
 
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -188,6 +193,17 @@ async function auditInBrowser(browser, p) {
 		});
 	});
 	page.on('pageerror', (err) => errors.push(String(err.message).slice(0, 200)));
+	// A same-origin script that 404s never runs, so it cannot violate anything:
+	// a page served from a stale or half-written dist/ would otherwise pass.
+	const missing = [];
+	const origin = new URL(BASE).origin;
+	page.on('response', (res) => {
+		const req = res.request();
+		const type = req.resourceType();
+		if ((type === 'script' || type === 'worker') && res.status() >= 400 && new URL(req.url()).origin === origin) {
+			missing.push(`${res.status()} ${new URL(req.url()).pathname}`);
+		}
+	});
 
 	let status = 0;
 	const headers = [];
@@ -209,38 +225,64 @@ async function auditInBrowser(browser, p) {
 		errors.push(`navigation: ${err.message}`);
 	}
 	await context.close();
-	return { status, violations, errors, headers };
+	return { status, violations, errors, headers, missing };
 }
 
 const browser = headersOnly
 	? null
 	: await chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 
+// Pages audited at once. Each browser page gets its own context, so they do
+// not share state; keep it low on a loaded machine so a slow page is not
+// judged before its scripts ran (see SETTLE_MS).
+const CONCURRENCY = Math.max(1, Number(process.env.CSP_AUDIT_CONCURRENCY) || 1);
+
 const results = [];
-for (const p of paths) {
-	const { status, violations, errors, headers } = headersOnly
-		? await auditHeaders(p)
-		: await auditInBrowser(browser, p);
+const pending = new Map();
+let nextIndex = 0;
+let printIndex = 0;
+const runs = paths.map((p) => () => (headersOnly ? auditHeaders(p) : auditInBrowser(browser, p)));
+await Promise.all(
+	Array.from({ length: Math.min(CONCURRENCY, paths.length) }, async () => {
+		while (nextIndex < paths.length) {
+			const i = nextIndex++;
+			pending.set(i, await runs[i]());
+			// Report in catalogue order, whatever order the pages finish in.
+			while (pending.has(printIndex)) {
+				record(paths[printIndex], pending.get(printIndex));
+				pending.delete(printIndex++);
+			}
+		}
+	}),
+);
+
+function record(p, { status, violations, errors, headers, missing = [] }) {
 	// A page that never loaded, or answered with an error status, proves
 	// nothing: it has no inline scripts to block. Counting it as clean is how a
 	// sweep reports success over a wiped dist/ or a server that died halfway.
 	const unreachable = status === 0 || status >= 400;
-	results.push({ path: p, status, violations, errors, headers, unreachable });
+	results.push({ path: p, status, violations, errors, headers, missing, unreachable });
 	const mark = violations.length
 		? 'CSP'
 		: unreachable
 			? 'DEAD'
-			: headers.length
-				? 'HDR'
-				: errors.length
-					? 'err'
-					: ' ok';
+			: missing.length
+				? 'MISS'
+				: headers.length
+					? 'HDR'
+					: errors.length
+						? 'err'
+						: ' ok';
 	const note = violations.length
 		? `  (${violations.length} violation(s))`
-		: headers.length
-			? `  (${headers.length} header problem(s))`
-			: '';
+		: missing.length
+			? `  (${missing.length} missing script(s): ${missing.slice(0, 3).join(', ')})`
+			: headers.length
+				? `  (${headers.length} header problem(s))`
+				: '';
 	console.log(`[${mark}] ${String(status).padEnd(3)} ${p}${note}`);
+	// Name the source as it happens, so a long --all run is readable before it ends.
+	for (const v of violations) console.log(`        ${v.directive} blocked ${v.blocked || '(inline)'} at ${v.source}:${v.line}`);
 }
 
 if (browser) await browser.close();
@@ -248,6 +290,7 @@ if (browser) await browser.close();
 const failed = results.filter((r) => r.violations.length > 0);
 const unreachable = results.filter((r) => r.unreachable);
 const misheaded = results.filter((r) => !r.unreachable && r.headers.length > 0);
+const unscripted = results.filter((r) => !r.unreachable && r.missing.length > 0);
 const errored = results.filter((r) => r.errors.length > 0 && r.violations.length === 0 && !r.unreachable);
 
 if (errored.length) {
@@ -260,6 +303,13 @@ if (unreachable.length) {
 	console.error(`A page that does not render has no inline script to block. Check that ${BASE} is serving a built dist/. First few:`);
 	for (const r of unreachable.slice(0, 8)) console.error(`  ${r.path} (status ${r.status})`);
 	process.exit(2);
+}
+
+if (unscripted.length) {
+	console.error(`\nCSP audit: ${unscripted.length} page(s) requested same-origin scripts that 404ed, so those scripts were never judged.`);
+	console.error(`Check that ${BASE} serves the dist/ it was built from (restart the server after a rebuild).`);
+	for (const r of unscripted.slice(0, 8)) console.error(`  ${r.path}: ${r.missing.join(', ')}`);
+	process.exit(4);
 }
 
 if (misheaded.length) {
