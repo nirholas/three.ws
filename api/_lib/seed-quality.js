@@ -93,7 +93,34 @@ function parseJsonReply(text) {
 		.replace(/^```(?:json)?\s*/i, '')
 		.replace(/\s*```$/, '');
 	const start = trimmed.search(/[{[]/);
-	return JSON.parse(start >= 0 ? trimmed.slice(start) : trimmed);
+	const candidate = start >= 0 ? trimmed.slice(start) : trimmed;
+	try {
+		return JSON.parse(candidate);
+	} catch (err) {
+		const repaired = quoteBareValues(candidate);
+		if (repaired === candidate) throw err;
+		try {
+			return JSON.parse(repaired);
+		} catch {
+			throw err;
+		}
+	}
+}
+
+// Matches `"key": <value>` where the value opens with none of the tokens a JSON
+// value can start with, and runs up to the next `, "key":` or the closing brace.
+const BARE_VALUE = /("[A-Za-z_]\w*"\s*:\s*)(?!["{[\-\d]|true\b|false\b|null\b)([^\n]*?)(?=\s*,\s*"[A-Za-z_]\w*"\s*:|\s*\}[^}]*$)/g;
+
+/**
+ * Quote free-text values a vision lane emitted bare, e.g.
+ * `"critique": The render shows...`. On 2026-11-15 this shape, with every
+ * score present, was the first production vision-phase verdict and was
+ * recorded as an outage. Only values that cannot be any JSON token are
+ * touched, so a score is never rewritten: a bare word where a number belongs
+ * becomes a string and still fails the numeric check downstream.
+ */
+function quoteBareValues(src) {
+	return src.replace(BARE_VALUE, (_, key, value) => key + JSON.stringify(value.trim()));
 }
 
 function normalizeRigReadiness(parsed) {
@@ -262,7 +289,7 @@ function buildTransport({ name, origin = null, fetchImpl = fetch, timeoutMs, vis
 		} catch (err) {
 			const retry = await visionAsk({
 				png,
-				prompt: `${prompt}\n\nYour previous reply was prose and could not be parsed. Reply with ONLY the JSON object, starting with { and ending with }. No prose, no markdown fence.`,
+				prompt: `${prompt}\n\nYour previous reply could not be parsed as JSON. Quote every string value. Reply with ONLY the JSON object, starting with { and ending with }. No prose, no markdown fence.`,
 			});
 			try {
 				return parseJsonReply(retry);
