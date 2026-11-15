@@ -1,13 +1,13 @@
 {
 	"id": "concierge-ask",
-	"contentHash": "689a721bf7e048e90d5a16a1004ab86bc6091f5678c51ed2ae84813d5abf6751",
-	"reviewedAt": "2026-11-04T21:45:37.630Z",
+	"contentHash": "33dbcc3c28129555f16dbe76fca968bfcfdf2ed191563410850b6bb3ea70557b",
+	"reviewedAt": "2026-11-15T15:08:43.610Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
 		"A support chat with a face is one script tag away. Concierge puts a rigged 3D avatar in the corner of your page. A visitor asks, the answer streams in, and the avatar starts speaking the first sentence while the rest is still arriving.\n\nIn the reel it is asked how to install itself, and it answers from the page it is sitting on.",
 		"When a visitor asks, the widget reads the live page (title, headings, nav and content) plus any facts you curate, and the answer streams back from a free-first inference chain, with failover across providers. Whatever your page says today is what it knows today.\n\nthree.ws/concierge",
-		"No account, no crawler setup, no per-seat pricing. The widget is open source, and you can add it as a script tag, a web component or an npm package.\n\nVoice comes built in: push-to-talk speech input and browser-native speech output."
+		"You skip the account, the crawler setup and the per-seat pricing. The widget is open source, and you can add it as a script tag, a web component or an npm package.\n\nVoice comes built in: push-to-talk speech input and browser-native speech output."
 	],
 	"lint": [],
 	"verification": {
@@ -70,7 +70,7 @@
 				"detail": "live page shows \"Whatever your page says today is what the concierge knows today\""
 			},
 			{
-				"claim": "No account, no crawler setup, no per-seat pricing",
+				"claim": "You skip the account, the crawler setup and the per-seat pricing",
 				"kind": "evidence:page",
 				"target": "https://three.ws/concierge",
 				"ok": true,
@@ -126,13 +126,16 @@
 			"posts": [
 				"A support chat with a face is one script tag away. Concierge puts a rigged 3D avatar in the corner of your page. A visitor asks, the answer streams in, and the avatar starts speaking the first sentence while the rest is still arriving.\n\nIn the reel it is asked how to install itself, and it answers from the page it is sitting on.",
 				"When a visitor asks, the widget reads the live page (title, headings, nav and content) plus any facts you curate, and the answer streams back from a free-first inference chain, with failover across providers. Whatever your page says today is what it knows today.\n\nthree.ws/concierge",
-				"No account, no crawler setup, no per-seat pricing. The widget is open source, and you can add it as a script tag, a web component or an npm package.\n\nVoice comes built in: push-to-talk speech input and browser-native speech output."
+				"You skip the account, the crawler setup and the per-seat pricing. The widget is open source, and you can add it as a script tag, a web component or an npm package.\n\nVoice comes built in: push-to-talk speech input and browser-native speech output."
 			],
 			"altText": [
-				""
+				"three.ws Concierge widget appears in the corner of the page with a helmeted 3D avatar and suggested questions like How do I install you?",
+				"A visitor types How do I install you on my site into the Concierge widget input field",
+				"The widget begins streaming an answer starting with a script src tag and a link to the build-a-site-concierge tutorial",
+				"The answer continues explaining no account, no build step, no crawler, just paste the tag and it's live."
 			]
 		},
-		"summary": "All claims are verified against the live concierge page and the filmed production run. The post follows the house voice contract, leads with a checkable mechanism, and requires no changes.",
+		"summary": "All claims are verified against the live three.ws concierge page and the filmed scenario. The post follows the house voice contract with no hashtags, emoji, or banned openers, and leads with a specific checkable mechanism.",
 		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

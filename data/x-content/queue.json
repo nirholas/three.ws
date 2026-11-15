@@ -34,6 +34,8 @@
 		"maximumSameLaneInARow": 2,
 		"maximumSamePatternInARow": 1,
 		"maximumSameFormatInARow": 1,
+		"maximumSameAudienceInARow": 1,
+		"maximumSameShapeInARow": 1,
 		"glossary": [
 			"Hunyuan",
 			"Tripo",
@@ -15132,7 +15134,7 @@
 				"workers/model-triposg"
 			],
 			"article": {
-				"title": "A picture became a textured 3D model in 2 minutes 17 seconds, and a signed receipt shows how",
+				"title": "A picture became a fully textured mesh in 2 minutes 17 seconds, and a signed receipt shows how",
 				"body": "data/x-content/articles/forge-article.md",
 				"cover": {
 					"path": "public/x-media/forge-article/cover.png",
@@ -15169,7 +15171,7 @@
 			],
 			"posts": [
 				{
-					"text": "One picture into the Forge, no account: 2 minutes 17 seconds later, a textured 3D model built on our own NVIDIA L4, plus a signed receipt for every stage. The write-up covers the engine ladder, the mid-job rescue and the free lane: three.ws/forge"
+					"text": "One picture into the Forge, no account: 2 minutes 17 seconds later, a fully textured mesh built on our own NVIDIA L4, plus a signed receipt for every stage. The write-up covers the engine ladder, the mid-job rescue and the free lane: three.ws/forge"
 				}
 			],
 			"claims": [
@@ -18118,7 +18120,7 @@
 			],
 			"posts": [
 				{
-					"text": "Your AI has a brain. Give it a body. In the Forge, text or photos become a textured 3D model you can orbit, view in AR and download.\n\nPick the engine that builds it, and several are free to use. Below the prompt, a live feed shows what other people just forged, each one ready to open in the viewer or remix.",
+					"text": "Your AI has a brain. Give it a body. In the Forge, text or photos become textured 3D models you can orbit, view in AR and download.\n\nPick the engine that builds it, and several are free to use. Below the prompt, a live feed shows what other people just forged, each one ready to open in the viewer or remix.",
 					"media": [
 						{
 							"path": "public/x-media/give-your-ai-a-body/reel.mp4",
@@ -18140,7 +18142,7 @@
 			],
 			"claims": [
 				{
-					"says": "text or photos become a textured 3D model you can orbit, view in AR and download",
+					"says": "text or photos become textured 3D models you can orbit, view in AR and download",
 					"evidence": [
 						{
 							"type": "page",
@@ -18260,7 +18262,7 @@
 			},
 			"posts": [
 				{
-					"text": "We are an OpenAI Select Partner, and the 2026 program year has brought a dedicated API organization and a ChatGPT workspace with Codex credits, valid for the full program year.\n\nThe workspace and credits fund testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents. The connector is live now and answers with 15 tools, no key and no account. three.ws/openai",
+					"text": "We are an OpenAI Select Partner, and the 2026 program year has brought a dedicated API organization and a ChatGPT workspace with Codex credits, valid for the full program year.\n\nThe workspace and credits fund testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents. The connector is live now and answers with 16 tools without asking for a key or an account. three.ws/openai",
 					"media": [
 						{
 							"path": "public/x-media/openai-partner-benefits/reel.mp4",
@@ -18335,7 +18337,7 @@
 					]
 				},
 				{
-					"says": "answers with 15 tools, no key and no account",
+					"says": "answers with 16 tools without asking for a key or an account",
 					"evidence": [
 						{
 							"type": "proof",
@@ -18355,7 +18357,7 @@
 						{
 							"type": "page",
 							"url": "https://three.ws/openai",
-							"contains": "Live. 15 tools answered"
+							"contains": "Live. 16 tools answered"
 						}
 					]
 				}
@@ -21832,7 +21834,7 @@
 			],
 			"posts": [
 				{
-					"text": "Parts Studio is live on three.ws. Paste a link to a 3D model and it splits the mesh into named parts, cutting at disconnected shells and concave creases, so each piece can be isolated, hidden or exported on its own.\n\nThe mannequin in the reel came back as 24 parts, found from the geometry alone.",
+					"text": "Parts Studio is live on three.ws. Give it the URL of a 3D model and it splits the mesh into named parts, cutting at disconnected shells and concave creases, so each piece can be isolated, hidden or exported on its own.\n\nIn the reel, a mannequin comes back as 24 parts, found from the geometry alone.",
 					"media": [
 						{
 							"path": "public/x-media/parts-studio/reel.mp4",
@@ -21849,12 +21851,12 @@
 					]
 				},
 				{
-					"text": "Agents get the same tool: segment_model over MCP, and a plain REST endpoint at /api/forge-segment. The segmentation worker runs on Google Cloud Run.\n\nPaste a link and try it: three.ws/segment"
+					"text": "Agents get the same tool: segment_model over MCP, and a plain REST endpoint at /api/forge-segment. The segmentation worker runs on Google Cloud Run.\n\nTry it on your own model: three.ws/segment"
 				}
 			],
 			"claims": [
 				{
-					"says": "Paste a link to a 3D model",
+					"says": "Give it the URL of a 3D model",
 					"evidence": [
 						{
 							"type": "page",

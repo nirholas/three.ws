@@ -1,19 +1,19 @@
 {
 	"id": "parts-studio",
-	"contentHash": "5c2b16c5fda98814d09a799f2e493e35cb057a7f587079cb3ddd2dd0894ae3f7",
-	"reviewedAt": "2026-11-04T21:49:16.759Z",
+	"contentHash": "cb20ebeff6f5a0a898e4552515a3fc8c461c2152dd76f68a9e35172d5e9ed6e5",
+	"reviewedAt": "2026-11-15T15:10:46.997Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
-		"Parts Studio is live on three.ws. Paste a link to a 3D model and it splits the mesh into named parts, cutting at disconnected shells and concave creases, so each piece can be isolated, hidden or exported on its own.\n\nThe mannequin in the reel came back as 24 parts, found from the geometry alone.",
-		"Agents get the same tool: segment_model over MCP, and a plain REST endpoint at /api/forge-segment. The segmentation worker runs on Google Cloud Run.\n\nPaste a link and try it: three.ws/segment"
+		"Parts Studio is live on three.ws. Give it the URL of a 3D model and it splits the mesh into named parts, cutting at disconnected shells and concave creases, so each piece can be isolated, hidden or exported on its own.\n\nIn the reel, a mannequin comes back as 24 parts, found from the geometry alone.",
+		"Agents get the same tool: segment_model over MCP, and a plain REST endpoint at /api/forge-segment. The segmentation worker runs on Google Cloud Run.\n\nTry it on your own model: three.ws/segment"
 	],
 	"lint": [],
 	"verification": {
 		"ok": true,
 		"checks": [
 			{
-				"claim": "Paste a link to a 3D model",
+				"claim": "Give it the URL of a 3D model",
 				"kind": "evidence:page",
 				"target": "https://three.ws/segment",
 				"ok": true,
@@ -105,7 +105,7 @@
 		"verdict": "publish",
 		"scores": {
 			"accuracy": 5,
-			"clarity": 4,
+			"clarity": 5,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
@@ -114,11 +114,11 @@
 		"issues": [],
 		"rewrite": {
 			"posts": [
-				"Parts Studio is live on three.ws. Paste a link to a 3D model and it splits the mesh into named parts, cutting at disconnected shells and concave creases, so each piece can be isolated, hidden or exported on its own.\n\nThe mannequin in the reel came back as 24 parts, found from the geometry alone.\n\nAgents get the same tool: segment_model over MCP, and a plain REST endpoint at /api/forge-segment. The segmentation worker runs on Google Cloud Run.\n\nPaste a link and try it: three.ws/segment"
+				"Parts Studio is live on three.ws. Give it the URL of a 3D model and it splits the mesh into named parts, cutting at disconnected shells and concave creases, so each piece can be isolated, hidden or exported on its own.\n\nIn the reel, a mannequin comes back as 24 parts, found from the geometry alone.\n\nAgents get the same tool: segment_model over MCP, and a plain REST endpoint at /api/forge-segment. The segmentation worker runs on Google Cloud Run.\n\nTry it on your own model: three.ws/segment"
 			],
 			"altText": []
 		},
-		"summary": "All claims are verified against the live page, the filmed run, and the server response. The post follows the house voice contract with no banned openers, hashtags, emoji, or dashes, and the reel captions match the copy.",
+		"summary": "All claims are verified against the live page, code, and filmed run. The voice follows the house contract with no banned openers, hashtags, emoji, or dashes. The reel captions match the frames and the post stands alone for readers who cannot see the media.",
 		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

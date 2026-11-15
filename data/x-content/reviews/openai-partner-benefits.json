@@ -1,15 +1,17 @@
 {
 	"id": "openai-partner-benefits",
-	"contentHash": "4a9f17dac1e124e611d3f6becbe3fe44007029d0a0c187387d00db17ce41b81e",
-	"reviewedAt": "2026-11-02T23:38:55.114Z",
+	"contentHash": "cbcd892e2da533d6beaa50432159e618f09c084560a473955888a9e811f7ab1a",
+	"reviewedAt": "2026-11-15T15:14:25.749Z",
 	"passed": false,
 	"blockers": [
 		"evidence:proof tools: the run read tools = \"16\"; the claim needs \"15\"",
 		"evidence:page https://three.ws/openai: live page does not show \"Live. 15 tools answered\"",
-		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"Request had insufficient authentication scopes.\",; \"status\": \"PERMISSION_DENIED\",; \"details\": [; {; \"@type\": \"type.googleapis.com/goog; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"};"
+		"editor (accuracy): Verification read tools = \"16\"; the reel frame at 4.7 s shows \"Live. 16 tools answered...\" which contradicts \"15 tools.\"",
+		"editor (accuracy): Page verification failed because it expected \"Live. 15 tools answered\" but the live product shows \"16 tools.\" The claim is true only with the corrected number.",
+		"editor verdict is revise"
 	],
 	"texts": [
-		"We are an OpenAI Select Partner, and the 2026 program year has brought a dedicated API organization and a ChatGPT workspace with Codex credits, valid for the full program year.\n\nThe workspace and credits fund testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents. The connector is live now and answers with 15 tools, no key and no account. three.ws/openai"
+		"We are an OpenAI Select Partner, and the 2026 program year has brought a dedicated API organization and a ChatGPT workspace with Codex credits, valid for the full program year.\n\nThe workspace and credits fund testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents. The connector is live now and answers with 15 tools without asking for a key or an account. three.ws/openai"
 	],
 	"lint": [],
 	"verification": {
@@ -65,14 +67,14 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "answers with 15 tools, no key and no account",
+				"claim": "answers with 15 tools without asking for a key or an account",
 				"kind": "evidence:proof",
 				"target": "tools",
 				"ok": false,
 				"detail": "the run read tools = \"16\"; the claim needs \"15\""
 			},
 			{
-				"claim": "answers with 15 tools, no key and no account",
+				"claim": "answers with 15 tools without asking for a key or an account",
 				"kind": "evidence:page",
 				"target": "https://three.ws/openai",
 				"ok": true,
@@ -105,6 +107,51 @@
 			}
 		]
 	},
-	"editor": null,
-	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"}\n"
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 2,
+			"clarity": 4,
+			"specificity": 4,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 4
+		},
+		"issues": [
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "answers with 15 tools without asking for a key or an account",
+				"problem": "Verification read tools = \"16\"; the reel frame at 4.7 s shows \"Live. 16 tools answered...\" which contradicts \"15 tools.\"",
+				"fix": "Replace \"15 tools\" with \"16 tools.\""
+			},
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "The connector is live now",
+				"problem": "Page verification failed because it expected \"Live. 15 tools answered\" but the live product shows \"16 tools.\" The claim is true only with the corrected number.",
+				"fix": "Keep the claim after correcting the tool count to 16 so it matches the reel caption \"Live. 16 tools answered in 157 ms, no key and no account.\""
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"We are an OpenAI Select Partner, and the 2026 program year has brought a dedicated API organization and a ChatGPT workspace with Codex credits, valid for the full program year.\n\nThe workspace and credits fund testing the free 3D Studio connector in ChatGPT, customer proofs of concept, and live demos of 3D agents. The connector is live now and answers with 16 tools without asking for a key or an account. three.ws/openai"
+			],
+			"altText": [
+				"Reel of the three.ws OpenAI page showing the 3D Studio connector for ChatGPT with no key and no account and 16 tools answered live."
+			]
+		},
+		"summary": "The post is accurate except for the tool count: verification and the reel show 16 tools, not 15. Change 15 to 16 and republish; all other claims and voice requirements pass.",
+		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"answers with 15 tools without asking for a key or an account\" does not appear in the copy; claims must quote the post",
+			"claims: \"16\" is an unverified number; declare it in claims with evidence"
+		]
+	},
+	"editorError": null
 }
