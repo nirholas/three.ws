@@ -18,6 +18,7 @@ import { rewriteHead } from './server/seo-head.mjs';
 import { keepEntryExports } from './scripts/vite/keep-entry-exports.mjs';
 import { watchIgnored } from './scripts/vite/watch-ignored.mjs';
 import { cspEvalProbes } from './scripts/vite/csp-eval-probes.mjs';
+import { rewriteCopiedSrc } from './scripts/vite/src-public-imports.mjs';
 import { vendorChunkFor } from './scripts/vite/vendor-chunks.mjs';
 import { isLensEntry } from './scripts/lib/lens-surfaces.mjs';
 import { createCreationHeadRenderer, creationIdFromPath, apiCreationLoader } from './server/creation-head.mjs';
@@ -3714,6 +3715,9 @@ const appConfig = {
 				cpSync(resolve(__dirname, 'src'), resolve(__dirname, 'dist/src'), {
 					recursive: true,
 				});
+				// dist/ serves public/ at its root, so '../../public/x.js' in a raw
+				// src module must become '../../x.js' in the copy.
+				rewriteCopiedSrc(resolve(__dirname, 'dist/src'));
 				cpSync(
 					resolve(__dirname, 'pump-fun-skills'),
 					resolve(__dirname, 'dist/pump-fun-skills'),
