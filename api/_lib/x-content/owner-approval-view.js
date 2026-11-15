@@ -7,6 +7,8 @@ export const X_ACCOUNT = '@trythreews';
 
 // The confirmation table: the account, every post in full, the media, and
 // when it may go out. Rendered by the approval page, the email, and chat.
+const pollLength = (minutes) => (Number(minutes) < 120 ? `${Number(minutes)} min` : `${Math.round(Number(minutes) / 60)} h`);
+
 export function xPostTable(row) {
 	const p = row.payload || {};
 	const posts = Array.isArray(p.posts) ? p.posts : [];
@@ -16,7 +18,7 @@ export function xPostTable(row) {
 		const key = index === 0 ? 'post' : `reply-${index}`;
 		rows.push({ key, label: index === 0 ? (posts.length > 1 ? 'Post 1' : 'Post') : `Post ${index + 1}`, value: post.text || '(media only)' });
 	});
-	if (p.poll?.options?.length) rows.push({ key: 'poll', label: 'Poll', value: `${p.poll.options.join(' / ')} (${Math.round((p.poll.minutes || 1440) / 60)} h)` });
+	if (p.poll?.options?.length) rows.push({ key: 'poll', label: 'Poll', value: `${p.poll.options.join(' / ')} (${pollLength(p.poll.durationMinutes)})` });
 	const media = posts.flatMap((post) => post.media || []);
 	const counts = {};
 	for (const m of media) counts[m.type || 'image'] = (counts[m.type || 'image'] || 0) + 1;

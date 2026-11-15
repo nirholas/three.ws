@@ -40,6 +40,15 @@ describe('owner approval payload', () => {
 		expect(payload.not_before).toBe('2026-11-16T00:00:00Z');
 	});
 
+	it('shows a poll for as long as it will actually run', () => {
+		const entry = { id: 'p', kind: 'post', status: 'review', tier: 3, posts: [{ text: 'Which one?', poll: { options: ['Rig', 'Pose'], durationMinutes: 4320 } }], claims: [] };
+		const row = { action_type: 'x_post_publish', payload: ownerApprovalPayload(entry, { contentHash: 'f'.repeat(64), reviewedAt: new Date(NOW).toISOString() }, root) };
+		expect(row.payload.poll).toEqual({ options: ['Rig', 'Pose'], durationMinutes: 4320 });
+		expect(xPostTable(row).find((r) => r.key === 'poll').value).toBe('Rig / Pose (72 h)');
+		row.payload.poll.durationMinutes = 5;
+		expect(xPostTable(row).find((r) => r.key === 'poll').value).toBe('Rig / Pose (5 min)');
+	});
+
 	it('expires when the review does, and never in under an hour', () => {
 		expect(approvalTtlMs({ reviewedAt: new Date(NOW - 86_400_000).toISOString() }, NOW)).toBe(13 * 86_400_000);
 		expect(approvalTtlMs({ reviewedAt: new Date(NOW - 20 * 86_400_000).toISOString() }, NOW)).toBe(3_600_000);

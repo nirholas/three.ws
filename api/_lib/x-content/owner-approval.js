@@ -50,7 +50,7 @@ export function ownerApprovalPayload(item, record, root) {
 		reviewed_at: record.reviewedAt,
 		kind: item.kind,
 		tier: Number(item.tier) || null,
-		poll: item.posts?.[0]?.poll ? { options: item.posts[0].poll.options, minutes: item.posts[0].poll.minutes } : null,
+		poll: item.posts?.[0]?.poll ? { options: item.posts[0].poll.options, durationMinutes: item.posts[0].poll.durationMinutes } : null,
 		article_title: item.kind === 'article' ? item.article?.title || null : null,
 		posts: (item.posts || []).map((post) => ({ text: String(post.text || '').trim(), media: (post.media || []).map(media) })),
 		not_before: item.notBefore || null,
