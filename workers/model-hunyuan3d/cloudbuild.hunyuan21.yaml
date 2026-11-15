@@ -17,6 +17,11 @@ steps:
   - id: build
     name: gcr.io/cloud-builders/docker
     dir: workers/model-hunyuan3d
+    env:
+      # Dockerfile.hunyuan21 writes the bpy stub with a heredoc
+      # (RUN python - <<'PY'), which only the BuildKit frontend parses; the
+      # legacy builder fails with "unknown instruction" on the heredoc body.
+      - DOCKER_BUILDKIT=1
     args:
       - build
       - --file
