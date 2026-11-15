@@ -8,10 +8,16 @@
 // three-ws-api service (the model keys, DATABASE_URL, object storage, the bundle
 // secret), copied as the service has it: Secret Manager references stay references.
 //
+// The same image runs a second job, `--job refill`: the queue's own upkeep
+// (`x-content advance --refresh --ship`), which films and reviews drafts,
+// renews approved posts whose evidence expired before they went out, and alerts
+// on whatever it could not renew (api/_lib/x-content/refresh.js).
+//
 // Shipping a bundle publishes, so this is owner-gated: the default prints the
 // plan and changes nothing.
 //
 //   node scripts/create-x-partners-job.mjs            # plan
+//   node scripts/create-x-partners-job.mjs --job refill --apply   # the refill job (reuses the image with --skip-build)
 //   node scripts/create-x-partners-job.mjs --apply    # build the image, create or update the job and its schedule
 //   node scripts/create-x-partners-job.mjs --apply --skip-build   # reuse the last image
 //   node scripts/create-x-partners-job.mjs --run-now  # also start one run
@@ -25,15 +31,42 @@ import { fileURLToPath } from 'node:url';
 const PROJECT = 'aerial-vehicle-466722-p5';
 const REGION = 'us-central1';
 const SERVICE = 'three-ws-api';
-const JOB = 'three-ws-x-partners';
-const SCHEDULER_JOB = 'three-ws-x-partners-daily';
-// 08:10 UTC: hours before the first slot, so a released spotlight clears its veto window in time.
-const SCHEDULE = '10 8 * * *';
+// Both jobs run before the first posting slot (12:00 UTC), so whatever they
+// release clears its veto window in time. The refill runs first, so the
+// partner run sees a renewed queue.
+export const JOBS = {
+	partners: {
+		job: 'three-ws-x-partners',
+		scheduler: 'three-ws-x-partners-daily',
+		schedule: '10 8 * * *',
+		env: { X_RUNNER_TASK: 'partners', X_PARTNERS_DAYS: '3' },
+		description: 'Daily partner spotlight for @trythreews: film, draft, review and ship (docs/x-partner-series.md)',
+	},
+	refill: {
+		job: 'three-ws-x-refill',
+		scheduler: 'three-ws-x-refill-daily',
+		schedule: '20 6 * * *',
+		env: { X_RUNNER_TASK: 'refill' },
+		description: 'Daily @trythreews queue upkeep: renew expired approved posts, advance drafts, alert on what is stuck (docs/x-content-pipeline.md)',
+	},
+};
+const jobArg = argvValue('--job') || 'partners';
+if (!JOBS[jobArg]) throw new Error(`--job must be one of ${Object.keys(JOBS).join(', ')}`);
+const CHOSEN = JOBS[jobArg];
+const JOB = CHOSEN.job;
+const SCHEDULER_JOB = CHOSEN.scheduler;
+const SCHEDULE = CHOSEN.schedule;
 const TIME_ZONE = 'Etc/UTC';
 const IMAGE = `${REGION}-docker.pkg.dev/${PROJECT}/cloud-run-source-deploy/x-partners:latest`;
 const BUILD_SA = `three-ws-build@${PROJECT}.iam.gserviceaccount.com`;
 const RUNTIME_SA = `three-ws@${PROJECT}.iam.gserviceaccount.com`;
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
+
+function argvValue(flag) {
+	const args = process.argv.slice(2);
+	const at = args.indexOf(flag);
+	return at >= 0 ? args[at + 1] : null;
+}
 
 const argv = process.argv.slice(2);
 const runNow = argv.includes('--run-now');
@@ -65,11 +98,12 @@ export function serviceEnv(service) {
 	return container.env.filter((entry) => entry.name && !['PORT', 'K_SERVICE', 'K_REVISION', 'K_CONFIGURATION'].includes(entry.name));
 }
 
-export function jobSpec(env) {
+export function jobSpec(env, chosen = CHOSEN) {
+	const extra = Object.entries(chosen.env).map(([name, value]) => ({ name, value }));
 	return {
 		apiVersion: 'run.googleapis.com/v1',
 		kind: 'Job',
-		metadata: { name: JOB, labels: { app: 'three-ws', component: 'x-partners' } },
+		metadata: { name: chosen.job, labels: { app: 'three-ws', component: chosen.job.replace(/^three-ws-/, '') } },
 		spec: {
 			template: {
 				spec: {
@@ -87,7 +121,7 @@ export function jobSpec(env) {
 							containers: [
 								{
 									image: IMAGE,
-									env: [...env.filter((entry) => entry.name !== 'X_PARTNERS_DAYS'), { name: 'X_PARTNERS_DAYS', value: '3' }],
+									env: [...env.filter((entry) => !(entry.name in chosen.env)), ...extra],
 									resources: { limits: { cpu: '2', memory: '4Gi' } },
 								},
 							],
@@ -114,7 +148,7 @@ const schedulerArgs = (verb) => [
 	`--oauth-service-account-email=${RUNTIME_SA}`,
 	'--oauth-token-scope=https://www.googleapis.com/auth/cloud-platform',
 	'--attempt-deadline=180s',
-	'--description=Daily partner spotlight for @trythreews: film, draft, review and ship (docs/x-partner-series.md)',
+	`--description=${CHOSEN.description}`,
 ];
 // The build uploads the repo through the shared .gcloudignore allowlist, plus
 // the two paths only this image needs: docs/ (the house voice, and the files the

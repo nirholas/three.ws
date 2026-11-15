@@ -49,6 +49,7 @@ import { weightedLength } from '../api/_lib/x-content/quality.js';
 import { approvalProblems, loadReview, reviewItem } from '../api/_lib/x-content/review.js';
 import { FORMATS, proofPath, proofProblems, proveItem, scoutPage } from '../api/_lib/x-content/reel.js';
 import { approvalPolicy, policyBlockers, releaseDigest, vetoUntil } from '../api/_lib/x-content/approval.js';
+import { priorApproval, restoreApproval, sameCopy, staleApproved, stuckDigest } from '../api/_lib/x-content/refresh.js';
 import { learnLifts, outcomesStore } from '../api/_lib/x-content/outcomes.js';
 import { browserProblem } from '../api/_lib/x-content/verify.js';
 import { FORMATS as FEED_FORMATS, HEAD_KINDS as HEAD_AS, STANDALONE_HEADS, formatMix, formatOf, headProblems, headSpecProblems, withFormats } from '../api/_lib/x-content/formats.js';
@@ -596,6 +597,11 @@ async function pause() {
 
 // One command for the whole line. Each item is taken as far as it can go and
 // stops at the first thing that needs a person, with the reason.
+//
+// `--refresh` also takes every approved item the ledger has not published whose
+// reel, head, or review has expired (refresh.js), renews the evidence, and gives
+// back the approval it had when the reviewed copy is unchanged. Whatever it
+// cannot bring back is sent as an ops alert. This is the unattended refill job.
 async function advance() {
 	await requireBrowser();
 	const queue = loadQueue(root);
@@ -604,7 +610,26 @@ async function advance() {
 	const policy = approvalPolicy(queue);
 	const quality = queue.quality || {};
 	const items = queue.items.filter((item) => (id ? item.id === id : ['draft', 'review'].includes(item.status)));
-	if (!items.length) fail(id ? `${id} is not in the queue` : 'nothing to advance: no draft or review items');
+	const priors = new Map();
+	if (has('refresh') && !id) {
+		const state = await store().load();
+		for (const { item, reasons } of staleApproved(queue.items, root, { published: state.published || [] })) {
+			priors.set(item.id, { ...priorApproval(item), review: loadReview(root, item.id) });
+			items.push(item);
+			console.log(`stale ${item.id}: ${reasons[0]}${reasons.length > 1 ? ` (+${reasons.length - 1} more)` : ''}`);
+		}
+		console.log(`refresh: ${priors.size} approved item(s) to renew`);
+	} else if (id && queue.items.find((item) => item.id === id)?.status === 'approved') {
+		const item = queue.items.find((row) => row.id === id);
+		priors.set(id, { ...priorApproval(item), review: loadReview(root, id) });
+	}
+	if (!items.length) {
+		if (has('refresh')) {
+			console.log('nothing to advance: no draft or review items, and every approved item is current');
+			return;
+		}
+		fail(id ? `${id} is not in the queue` : 'nothing to advance: no draft or review items');
+	}
 	console.log(`approval: ${policy.mode === 'auto' ? `by policy for tier ${policy.tiers.join(', ')}${policy.articles ? ' and for articles' : ''}, embargoed ${policy.vetoHours} h` : 'by the owner'}`);
 	if (!dryRun) hydrateReviewEnv();
 
@@ -655,6 +680,14 @@ async function advance() {
 				row.stopped = record.blockers[0];
 				continue;
 			}
+			const prior = priors.get(item.id);
+			if (prior && sameCopy(prior.review, record)) {
+				restoreApproval(item, prior);
+				row.reached = 'approved';
+				row.stopped = 'renewed; approval kept (copy unchanged)';
+				saveQueueItem(root, item);
+				continue;
+			}
 			const blockers = policyBlockers(item, record, policy, root);
 			if (blockers.length) {
 				row.stopped = `passed review; waits for the owner because ${blockers[0]}`;
@@ -673,6 +706,13 @@ async function advance() {
 
 	console.log('\nitem                         from     reached   stopped at');
 	for (const row of rows) console.log(`${row.id.padEnd(28)} ${row.from.padEnd(8)} ${row.reached.padEnd(9)} ${row.stopped || ''}`);
+	const stuck = rows.filter((row) => priors.has(row.id) && row.reached !== 'approved').map((row) => ({ id: row.id, reason: row.stopped || 'did not finish' }));
+	const stuckAlert = stuckDigest(stuck);
+	if (stuckAlert && !dryRun) {
+		console.log(`\n${stuckAlert.title}\n${stuckAlert.detail}`);
+		const { sendOpsAlert } = await import('../api/_lib/alerts.js');
+		await sendOpsAlert(stuckAlert.title, stuckAlert.detail, { severity: 'warning' }).catch((err) => console.log(`(the ops alert was not recorded: ${err.message})`));
+	}
 	if (released.length) {
 		const digest = releaseDigest(released);
 		console.log(`\n${digest.title}\n${digest.detail}`);
