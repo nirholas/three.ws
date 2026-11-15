@@ -98,6 +98,13 @@
 	padding: 7px 16px; border-radius: 7px; margin-left: 6px;
 }
 .nav-end .console:hover { border-color: var(--nv-text); background: rgba(255,255,255,0.04); }
+/* Signed in, the pill carries the visitor's display name (nav-auth.js). A long
+   name must not push the header row past the viewport: cap it and ellipsize.
+   nav-auth.js mirrors the full name into the title attribute. */
+.nav-end .console[data-auth-named] {
+	display: block; max-width: 16ch;
+	overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 
 /* "My creations": the way back to everything you built. It sits beside the
    plain nav-end links but reads as a control, not prose: people came looking

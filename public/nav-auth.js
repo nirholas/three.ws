@@ -60,15 +60,21 @@
 		scope.querySelectorAll('[data-auth-name]').forEach((el) => {
 			if (el.dataset.authNameOriginal === undefined) {
 				el.dataset.authNameOriginal = el.textContent;
+				el.dataset.authTitleOriginal = el.getAttribute('title') ?? '';
 			}
 			if (authed && name) {
 				el.textContent = name;
+				// nav.css truncates a long name with an ellipsis; the title keeps
+				// the full name readable on hover.
+				el.title = name;
 				// Mark the element as personalized so the i18n runtime knows not to
 				// overwrite the display name with a translated label (the two systems
 				// otherwise race on the same text node, whoever runs last wins).
 				el.dataset.authNamed = '1';
 			} else {
 				el.textContent = el.dataset.authNameOriginal;
+				if (el.dataset.authTitleOriginal) el.title = el.dataset.authTitleOriginal;
+				else el.removeAttribute('title');
 				delete el.dataset.authNamed;
 			}
 		});
