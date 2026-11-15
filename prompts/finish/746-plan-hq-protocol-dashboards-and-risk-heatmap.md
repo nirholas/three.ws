@@ -1,5 +1,7 @@
 # HQ gets data-driven protocol dashboards (Solana first), an oracle deviation monitor and a DeFi risk heatmap
 
+**Status (2026-11-15):** built and verified. Dashboards, oracle monitor, risk heatmap and Dune proxy shipped in 296d50a53. This pass fixed exchanges and chains showing up in the heatmap (d6f7adea6, test-first) and in the dashboard picker (95e8b851e, e2e-first), added the Oracle Monitor empty state and a 7-test Playwright spec (4e3610be1, 7/7 pass against live data through the local API sidecar), and reconciled ROADMAP.md (49d54b486). test:data 140/140, typecheck and build clean. Remaining, owner: `git push threews main` for 95e8b851e, then the HQ Cloud Run deploy per apps/hq/docs/deploy-cloud-run.md, with its data/changelog.json entry added at that deploy.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/746-plan-hq-protocol-dashboards-and-risk-heatmap.md`.
 
 **Priority:** P2, new capability with clear value (score 44 of 100 inside the tier). **Area:** hq. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
