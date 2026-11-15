@@ -627,14 +627,15 @@ HTTP 502 GET /api/pump/coin?mint=<mint>&miss=empty
 
 ---
 
-## 🟢 HTTP 502 on `/api/pump-bounties`, `/api/pump-bounties/<id>`: `pump-bounties-upstream-challenge-502` (§pump-bounties-upstream-challenge)
+## 🟢 HTTP 502 on `/api/pump-bounties`, `/api/pump-bounties/<id>`, `/api/pump-bounties/stats`: `pump-bounties-upstream-challenge-502` (§pump-bounties-upstream-challenge)
 
 ```
 HTTP 502 GET /api/pump-bounties/<uuid>   {"error":"pump_go_upstream","error_description":"pump.fun GO upstream 403"}
 ```
 
-- **Source:** [api/pump-bounties.js](../../api/pump-bounties.js) and
-  [api/pump-bounties/[id].js](../../api/pump-bounties/[id].js) proxy
+- **Source:** [api/pump-bounties.js](../../api/pump-bounties.js),
+  [api/pump-bounties/[id].js](../../api/pump-bounties/[id].js) and
+  [api/pump-bounties/stats.js](../../api/pump-bounties/stats.js) proxy
   `livestream-api.pump.fun` through `cacheWrapLastGood` (30s fresh, 24h
   last-good). A 502 only fires when the live fetch is refused AND no last-good
   copy exists for that cache key.
@@ -644,7 +645,11 @@ HTTP 502 GET /api/pump-bounties/<uuid>   {"error":"pump_go_upstream","error_desc
   from the operator machine alike, browser user-agent included. There is no
   server-side way past a managed challenge, and we do not try to defeat it.
 - **Check:** `curl -sI "https://livestream-api.pump.fun/bounties/tasks?limit=5" | grep cf-mitigated`.
-  The board recovers on the first fetch Cloudflare lets through.
+  The board recovers on the first fetch Cloudflare lets through. Only a 502 is
+  this signature: a 500 on `/stats` (or anywhere here) is still a code fault.
+  The `/stats` walk is one cache unit (`pumpgo:stats:v1`), so it has no
+  last-good copy until one full walk succeeds, which a sustained challenge
+  prevents (2026-11-15: list and stats both 502).
 - **Monitor signature:** `pump-bounties-upstream-challenge-502` in
   [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `self-healing`.
 

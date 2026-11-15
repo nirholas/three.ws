@@ -159,11 +159,16 @@ describe('gcp-triage HTTP classification', () => {
 	// challenge (cf-mitigated: challenge) to every datacenter IP, so the 24h
 	// last-good copy in cacheWrapLastGood was the only thing that could answer.
 	it('classifies a pump.fun GO bounty upstream challenge as self-healing', () => {
-		for (const path of ['/api/pump-bounties', '/api/pump-bounties/11e1d97d-f3b7-450d-b09b-368c9268d615']) {
+		for (const path of [
+			'/api/pump-bounties',
+			'/api/pump-bounties/11e1d97d-f3b7-450d-b09b-368c9268d615',
+			'/api/pump-bounties/stats',
+		]) {
 			const [finding] = buildFindings([request({ status: 502, path })]);
 			expect(finding.signature).toBe('pump-bounties-upstream-challenge-502');
 			expect(finding.class).toBe('self-healing');
 		}
+		// A 500 (not the designed 502) is still a code fault and must stay loud.
 		const [stats] = buildFindings([request({ status: 500, path: '/api/pump-bounties/stats' })]);
 		expect(stats.signature).not.toBe('pump-bounties-upstream-challenge-502');
 	});
