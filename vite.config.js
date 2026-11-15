@@ -18,6 +18,7 @@ import { rewriteHead } from './server/seo-head.mjs';
 import { keepEntryExports } from './scripts/vite/keep-entry-exports.mjs';
 import { watchIgnored } from './scripts/vite/watch-ignored.mjs';
 import { cspEvalProbes } from './scripts/vite/csp-eval-probes.mjs';
+import { vendorChunkFor } from './scripts/vite/vendor-chunks.mjs';
 import { isLensEntry } from './scripts/lib/lens-surfaces.mjs';
 import { createCreationHeadRenderer, creationIdFromPath, apiCreationLoader } from './server/creation-head.mjs';
 import { isPlayPath, rewritePlayHead } from './server/play-head.mjs';
@@ -661,42 +662,9 @@ const appConfig = {
 				// body evaluates BEFORE the entry that imports it, so an
 				// entry-only banner would land too late to protect it.
 				banner: LEGACY_RUNTIME_POLYFILL,
-				manualChunks(id) {
-					// Node polyfills (buffer/process shims) get their own tiny chunk.
-					// Without this, Rollup colocates the `buffer` module inside the
-					// 1 MB `solana` chunk — and any chunk that needs the injected
-					// Buffer global (e.g. three-addons via its exporters) then
-					// imports the whole solana chunk, which transitively chains
-					// ethers too. That single colocation put ~1.4 MB of crypto code
-					// on the home page's critical path.
-					if (
-						id.includes('node_modules/buffer/') ||
-						id.includes('node_modules/process/') ||
-						id.includes('vite-plugin-node-polyfills')
-					)
-						return 'node-polyfills';
-					if (id.includes('node_modules/three/')) {
-						if (id.includes('three/examples/') || id.includes('three/addons/'))
-							return 'three-addons';
-						return 'three-core';
-					}
-					if (id.includes('node_modules/ethers/')) return 'ethers';
-					if (
-						id.includes('node_modules/@solana/') ||
-						id.includes('node_modules/@coral-xyz/')
-					)
-						return 'solana';
-					if (id.includes('node_modules/@mediapipe/')) return 'mediapipe';
-					// Rapier is 2.2 MB of WASM glue and is ALWAYS loaded through a
-					// dynamic import (see src/physics/physics-world.js). Left to
-					// Rollup's automatic grouping it gets folded into whichever
-					// shared chunk happens to also be statically reachable, and on
-					// /play it was: it rode a shared world-HUD chunk onto the
-					// critical path and cost the world 800 KB gzip before the first
-					// frame. Pinning it here means no future static import can drag
-					// the physics engine back in front of the world.
-					if (id.includes('node_modules/@dimforge/')) return 'rapier';
-				},
+				// Vendor groups (node polyfills, three's WebGL build, ethers, solana,
+				// mediapipe, rapier). Rules and the reasons for each: scripts/vite/vendor-chunks.mjs.
+				manualChunks: vendorChunkFor,
 				// A few entries need stable, unhashed filenames so plain public/
 				// scripts can load them by a predictable URL without knowing the
 				// build hash: footer.js → /footer-bot.js, nav.js → /walk-companion.js.
