@@ -209,3 +209,39 @@ describe('re-import in the viewer loader', () => {
 		expect(gltf.parser.associations.get(hat)?.nodes).toBe(0);
 	});
 });
+
+describe('re-import in the /viewer page (model-viewer)', () => {
+	// model-viewer bundles its own GLTFLoader with no KHR_node_visibility
+	// support and no way to register a plugin, so /viewer has to apply the
+	// visibility itself from what that loader keeps in userData.
+	async function loadPlain(bytes) {
+		const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
+		return new Promise((res, rej) =>
+			new GLTFLoader().parse(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '', res, rej),
+		);
+	}
+
+	it('hides a node the editor hid, keeping its real scale', async () => {
+		const { hideMarkedNodes } = await import('../public/viewer-node-visibility.js');
+		const src = await glbOf((d) => {
+			const scene = d.createScene();
+			scene.addChild(d.createNode('Hat').setScale([2, 2, 2]));
+			scene.addChild(d.createNode('Head'));
+		});
+		const { bytes } = await run(
+			session(src, { visibilityEdits: { u1: { name: 'Hat', uuid: 'u1', nodeIndex: 0, visible: false } } }),
+		);
+		const gltf = await loadPlain(bytes);
+		expect(gltf.scene.getObjectByName('Hat').visible).toBe(true);
+		expect(hideMarkedNodes(gltf.scene)).toBe(1);
+		expect(gltf.scene.getObjectByName('Hat').visible).toBe(false);
+		expect(gltf.scene.getObjectByName('Hat').scale.x).toBe(2);
+		expect(gltf.scene.getObjectByName('Head').visible).toBe(true);
+	});
+
+	it('is loaded by public/viewer.html', async () => {
+		const { readFileSync } = await import('node:fs');
+		const html = readFileSync(new URL('../public/viewer.html', import.meta.url), 'utf8');
+		expect(html).toMatch(/import\s*\{\s*bindModelViewer\s*\}\s*from\s*'\/viewer-node-visibility\.js'/);
+	});
+});
