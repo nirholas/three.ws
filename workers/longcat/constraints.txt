@@ -11,10 +11,12 @@
 # build instead of the first job.
 torch==2.6.0
 numpy==1.26.4
-transformers==5.10.1
+# 5.11.0, not 5.10.x: 5.10.x reads torch.float8_e8m0fnu at import, which torch
+# < 2.7 lacks (tests/worker-transformers-torch-compat.test.js).
+transformers==5.11.0
 diffusers==0.38.0
 
-# transformers 5.10.1 requires huggingface-hub>=1.5,<2 and diffusers 0.38.0
+# transformers 5.11.0 requires huggingface-hub>=1.5,<2 and diffusers 0.38.0
 # requires safetensors>=0.8. Nothing in the image imports either directly, but
 # transformers and diffusers both do, so keep any late install from resolving
 # them back under those floors.

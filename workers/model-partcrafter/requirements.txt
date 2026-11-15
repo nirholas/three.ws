@@ -12,7 +12,9 @@
 # environment.
 numpy==1.26.4
 diffusers==0.38.0
-transformers==5.10.1
+# 5.11.0, not 5.10.x: 5.10.x reads torch.float8_e8m0fnu at import, which torch
+# < 2.7 lacks (tests/worker-transformers-torch-compat.test.js).
+transformers==5.11.0
 accelerate==1.15.0
 einops==0.8.1
 omegaconf==2.3.0

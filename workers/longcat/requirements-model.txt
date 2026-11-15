@@ -19,11 +19,13 @@
 
 # Core video pipeline.
 numpy==1.26.4
-# transformers 5.10.1 and diffusers 0.38.0: first releases clear of every
+# transformers 5.11.0 and diffusers 0.38.0: first releases clear of every
 # published advisory (no 4.x release is patched). avatar-v1.0's Wav2Vec2
 # wrapper breaks on transformers 4.53+, but main.py pins avatar-v1.5 (UMT5 text
 # and whisper-large-v3 audio encoders).
-transformers==5.10.1
+# 5.11.0, not 5.10.x: 5.10.x reads torch.float8_e8m0fnu at import, which torch
+# < 2.7 lacks (tests/worker-transformers-torch-compat.test.js).
+transformers==5.11.0
 diffusers==0.38.0
 loguru==0.7.2
 einops==0.8.0
