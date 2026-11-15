@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-11-15
+
+- **The site header fits on one row at every width**: Signed in, the header could run past the right edge of the screen on laptops and small desktops: a long account name pushed the row wider than the window, and between tablet and desktop widths the Sign in and account buttons wrapped onto two lines. Your name now shortens with an ellipsis and shows in full when you hover it, the duplicate Dashboard link steps aside because your name already opens the dashboard, labels collapse to icons as the window narrows, and below 1080px the header switches to the menu button. The page no longer scrolls sideways at any width. `[fix]`
+
 ## 2026-11-14
 
 - **Docs · Following a trader and hot-streak pushes** (`/docs/trader-follows`): How the free Follow button on a Trading Arena trader profile works: what counts as a hot streak, the milestones that trigger a push, who is notified (followers and active copiers, once each), and how the notification is delivered and muted.

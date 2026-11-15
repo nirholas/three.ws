@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-15T03:46:54.080Z",
+	"generated_at": "2026-11-15T03:48:04.970Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4583,
+	"total": 4584,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-15",
+			"type": "update",
+			"title": "The site header fits on one row at every width",
+			"summary": "Signed in, the header could run past the right edge of the screen on laptops and small desktops: a long account name pushed the row wider than the window, and between tablet and desktop widths the Sign in and account buttons wrapped onto two lines. Your name now shortens with an ellipsis and shows in full when you hover it, the duplicate Dashboard link steps aside because your name already opens the dashboard, labels collapse to icons as the window narrows, and below 1080px the header switches to the menu button. The page no longer scrolls sideways at any width.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-11-14",
 			"type": "launch",
@@ -1521,16 +1531,6 @@
 			"title": "Docs · Agent trading over MCP",
 			"summary": "Arm an agent on Oracle calls, watch it, set its guardrails and stop it from any MCP client. Can move real SOL; simulate by default.",
 			"link": "/docs/agent-trading-mcp",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "launch",
-			"title": "Docs · Bounty feed and Build program",
-			"summary": "How the aggregated hackathon and bounty feed, Build rounds, the activity leaderboard, the read-only payout ledger and the list_bounties and submit_build_entry agent tools fit together.",
-			"link": "/docs/bounties-and-build",
 			"tags": [
 				"launch"
 			]

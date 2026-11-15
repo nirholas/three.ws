@@ -2,6 +2,14 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-11-15",
+			"title": "The site header fits on one row at every width",
+			"summary": "Signed in, the header could run past the right edge of the screen on laptops and small desktops: a long account name pushed the row wider than the window, and between tablet and desktop widths the Sign in and account buttons wrapped onto two lines. Your name now shortens with an ellipsis and shows in full when you hover it, the duplicate Dashboard link steps aside because your name already opens the dashboard, labels collapse to icons as the window narrows, and below 1080px the header switches to the menu button. The page no longer scrolls sideways at any width.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
 			"date": "2026-11-14",
 			"title": "Download GLB on a model page follows the same keep rules as Forge",
 			"summary": "The Download GLB button on every model page (/m/:id) now goes through the same pay-to-keep check as the Forge result button, so the two can never disagree once pay-to-keep is switched on. Pay-to-keep is still off, so downloads stay free and instant exactly as before. The file now saves with a readable name taken from the model's title instead of a long storage id, and the button shows Preparing while it works. The holder check that runs before a download is now capped at 4 seconds, so a slow wallet or network can no longer leave the Download button stuck on Preparing. The cost preview docs also list the real path values (image, geometry, sketch).",
