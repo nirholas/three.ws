@@ -56,7 +56,10 @@ COPY --from=gltfpack /usr/local/bin/gltfpack /usr/local/bin/gltfpack
 # numpy 2 and pandas 3 (which refuses numpy 1). SkinTokens' demo.py imports
 # gradio, which imports pandas, so that mismatch crashed skinning at import
 # time; the import gate at the end of this file now fails the build instead.
-RUN printf 'numpy==1.26.4\npandas==2.2.3\n' > /app-constraints.txt
+# diffusers is capped too: SkinTokens imports LayerNorm from
+# diffusers.models.normalization, which diffusers 0.43 dropped (its requirements
+# say only diffusers>=0.35.0, so an unpinned install broke the import gate).
+RUN printf 'numpy==1.26.4\npandas==2.2.3\ndiffusers==0.36.0\n' > /app-constraints.txt
 
 # torch first, as its own cached layer, matching SkinTokens' documented
 # install (the newer and more exacting of the two dependency sets; UniRig
