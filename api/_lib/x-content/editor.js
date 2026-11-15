@@ -22,6 +22,7 @@ import { mediaType } from './media.js';
 import { EDITOR_MODEL, callModelChain } from './llm.js';
 import { STANDARD_MAX_LENGTH } from './quality.js';
 import { loadProof, reelFrames } from './reel.js';
+import { audienceOf, voiceGuidance } from './voice.js';
 
 export { EDITOR_MODEL };
 const MAX_SOURCE_CHARS = 24_000;
@@ -148,6 +149,7 @@ export async function buildReviewRequest(item, { root, verification, lint, maxim
 		article ? `## Article body (Markdown)\n${article}` : null,
 		source ? `## Announcement pack this post came from\n${source}` : null,
 		voice ? `## House voice contract\n${voice}` : null,
+		`${voiceGuidance(audienceOf(item))}\nJudge voice against this reader and these shapes: a post that reads as written for someone else, or that leans on one of these shapes, scores voice 3 or lower.`,
 		`## The account's best-performing posts, for calibration\n${JSON.stringify(calibration?.length ? calibration : topPosts(root), null, 2)}`,
 		'Review the post now. Respond with the JSON object only.',
 	]

@@ -30,7 +30,7 @@ import { dirname, relative, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-import { loadHistory, loadQueue, partnerNames, validateItem } from '../api/_lib/x-content/queue.js';
+import { accountTics, loadHistory, loadQueue, partnerNames, validateItem } from '../api/_lib/x-content/queue.js';
 import { proveItem, reelFrames } from '../api/_lib/x-content/reel.js';
 import { browserProblem } from '../api/_lib/x-content/verify.js';
 import { callModelChain, failureReason } from '../api/_lib/x-content/llm.js';
@@ -185,6 +185,7 @@ async function spotlight({ partners, queue, rows, pick, dryRun, ship }) {
 		voice: readText('docs/announce-voice.md', 12000),
 		exemplar: readText('data/x-content/articles/keeper-article.md', 5000),
 		maximum: maximumLength(queue.quality),
+		tics: accountTics(root),
 	});
 	for (const attempt of result.attempts) console.log(`  draft ${attempt.attempt} on ${attempt.model}: ${attempt.findings.length ? `${attempt.findings.length} finding(s): ${attempt.findings[0]}` : 'passes'}`);
 	if (!result.ok) return { id, ok: false, reason: `no draft passed in ${result.attempts.length} attempts: ${result.findings.join('; ')}` };

@@ -180,3 +180,23 @@ describe('native polls', () => {
 		expect(row.shape).toBe('question/short/one-block/single');
 	});
 });
+
+describe('prompt guidance', () => {
+	it('names the reader and lists every rejected shape, so a drafter avoids them before the lint has to', async () => {
+		const { voiceGuidance, AI_CONSTRUCTIONS } = await import('../api/_lib/x-content/voice.js');
+		const text = voiceGuidance('educator', { tics: ['no model file behind'] });
+		expect(text).toMatch(/teacher or lecturer/);
+		expect(text).toMatch(/no model file behind/);
+		for (const [, message] of AI_CONSTRUCTIONS) expect(text).toContain(message.split(';')[0]);
+	});
+
+	it('reaches the partner drafter, the announce drafter, and the drafter lint', async () => {
+		const partners = await import('../api/_lib/x-content/partners.js');
+		const announce = await import('../api/_lib/announce/draft.js');
+		const brief = { feature: { lane: 'developer' }, partner: {} };
+		expect(partners.buildDraftRequest(brief, { tics: ['worn phrase here'] }).parts[0].text).toMatch(/working developer[\s\S]*worn phrase here/);
+		expect(announce.buildDraftRequest({ lane: 'tutorial', pattern: 'mechanism' }).parts[0].text).toMatch(/student or self-taught/);
+		const findings = announce.draftFindings({ lane: 'tutorial' }, { post: 'A bouncing cube with no model file behind it. three.ws/labs', thread: [], claims: [], alt: '' }, { tics: new Set(['no model file behind']) });
+		expect(findings.join('\n')).toMatch(/reuses phrasing/);
+	});
+});

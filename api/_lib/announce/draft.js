@@ -25,7 +25,8 @@ import { resolve } from 'node:path';
 import { callModelChain } from '../x-content/llm.js';
 import { copyProblems, copySimilarity, maxLengthOf } from '../x-content/quality.js';
 import { claimProblems, languageProblems } from '../x-content/editorial.js';
-import { loadHistory } from '../x-content/queue.js';
+import { accountTics, loadHistory } from '../x-content/queue.js';
+import { audienceOf, ticProblems, voiceGuidance } from '../x-content/voice.js';
 import { TIERS } from './plan.js';
 
 // The floor a head post must clear, and the length of the part a reader sees
@@ -74,7 +75,7 @@ The same announcement also goes to the community Telegram channel, which has no 
 Respond with a single JSON object and nothing else:
 {"post":"...","thread":["optional reply","optional reply"],"telegram":"...","alt":"...","probes":[{"type":"api","name":"...","url":"..."}],"claims":[{"says":"exact words from your post","evidence":[{...one of the brief's evidenceCandidates, copied exactly...}]}],"mentions":{"@handle":"why the tag is true"},"why":"two sentences for the approver: what the post leads on and why that is the strongest true thing about this surface","headline":"a five to nine word title for the announcement pack"}`;
 
-export function buildDraftRequest(brief, { voice = null, findings = [], previous = null, maximum = VISIBLE_HEAD } = {}) {
+export function buildDraftRequest(brief, { voice = null, findings = [], previous = null, maximum = VISIBLE_HEAD, tics = [] } = {}) {
 	const guidance = [
 		`Pattern for this post: ${brief.pattern}. ${PATTERN_GUIDE[brief.pattern] || PATTERN_GUIDE.mechanism}`,
 		`Lane: ${brief.lane}. ${LANE_GUIDE[brief.lane] || LANE_GUIDE.community}`,
@@ -94,6 +95,7 @@ export function buildDraftRequest(brief, { voice = null, findings = [], previous
 		`## Evidence brief\n${JSON.stringify(brief, null, 2)}`,
 		`## How this one should read\n${guidance}`,
 		voice ? `## House voice contract\n${voice}` : null,
+		voiceGuidance(audienceOf(brief), { tics }),
 		retry,
 		'Write the post now. Respond with the JSON object only.',
 	]
@@ -162,12 +164,13 @@ const candidateKey = (evidence) => JSON.stringify([evidence.type, evidence.url |
 
 // Everything wrong with a draft, in the words the model will be shown. Offline:
 // no network, so a retry costs one model call and nothing else.
-export function draftFindings(brief, draft, { root = null, otherHeads = [], maximum = maxLengthOf(queueQuality(root)) } = {}) {
+export function draftFindings(brief, draft, { root = null, otherHeads = [], maximum = maxLengthOf(queueQuality(root)), tics = new Set() } = {}) {
 	const findings = [];
 	const head = String(draft.post || '').trim();
 
 	for (const problem of copyProblems(head, { minimum: MINIMUM_HEAD, maximum })) findings.push(`head: ${problem}`);
 	for (const reply of draft.thread) for (const problem of copyProblems(reply, { minimum: 40, maximum, requireUrl: false })) findings.push(`reply: ${problem}`);
+	for (const text of [head, ...draft.thread]) for (const finding of ticProblems(text, tics)) findings.push(`${finding.rule}: ${finding.message}`);
 
 	const texts = [head, ...draft.thread];
 	for (const text of texts) {
@@ -221,10 +224,11 @@ export async function draftPost(brief, { root, env = process.env, voice = null, 
 	const tries = [];
 	let previous = null;
 	let findings = [];
+	const tics = root ? accountTics(root) : new Set();
 	for (let attempt = 1; attempt <= attempts; attempt++) {
-		const request = buildDraftRequest(brief, { voice, findings, previous, maximum: maxLengthOf(queueQuality(root)) });
+		const request = buildDraftRequest(brief, { voice, findings, previous, maximum: maxLengthOf(queueQuality(root)), tics: [...tics] });
 		const { value, model, fallbacks } = await callModelChain(request, { env, parse: parseDraft });
-		findings = draftFindings(brief, value, { root, otherHeads });
+		findings = draftFindings(brief, value, { root, otherHeads, tics });
 		tries.push({ attempt, model, fallbacks, findings, draft: value });
 		if (!findings.length) return { draft: value, model, attempts: tries, ok: true };
 		previous = value;

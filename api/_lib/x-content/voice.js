@@ -178,3 +178,21 @@ export function postedHeads(items) {
 		.map((row) => row.text)
 		.filter(Boolean);
 }
+
+// --- prompt guidance --------------------------------------------------------
+
+// The section every drafter and the editor are given, so a model writes for
+// one reader and avoids the shapes the lint above rejects, instead of finding
+// out after the fact. The list is built from AI_CONSTRUCTIONS, so a rule added
+// there reaches the prompts with no second edit.
+export function voiceGuidance(audience, { tics = [] } = {}) {
+	const reader = AUDIENCE_BRIEFS[audience] || AUDIENCE_BRIEFS.community;
+	const shapes = [...new Set(AI_CONSTRUCTIONS.map(([, message]) => message.split(';')[0]))];
+	return [
+		`## Who this one is for\n${reader}. Write the whole post for that reader: their words, their reason to care, the detail they would check. Do not address any other reader in it.`,
+		`## Sentence shapes that read as machine-written (a machine rejects each one)\n${shapes.map((shape) => `- ${shape}`).join('\n')}\nSay what the thing does, in the order a person would notice it. Vary sentence length. One idea per sentence.`,
+		tics.length ? `## Phrases this account has already worn out (do not reuse any of them)\n${tics.slice(0, 40).map((tic) => `- ${tic}`).join('\n')}` : null,
+	]
+		.filter(Boolean)
+		.join('\n\n');
+}

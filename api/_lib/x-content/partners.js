@@ -29,6 +29,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { claimProblems, languageProblems, mentionsIn } from './editorial.js';
 import { headSpecProblems } from './formats.js';
+import { ticProblems, voiceGuidance } from './voice.js';
 import { copyProblems, copySimilarity, maxLengthOf } from './quality.js';
 
 export const SERIES = 'partners';
@@ -211,7 +212,7 @@ Hard rules, each enforced by a machine after you answer:
 Respond with a single JSON object and nothing else:
 {"post":"the head post","thread":["reply 1","reply 2","reply 3"],"headline":"card or art headline, two short lines split with \\n","body":"one sentence for the card","prompt":"art prompt, only when the head is art, else empty","why":"two sentences for the editor: what the thread leads on and why it is the strongest true thing about this feature"}`;
 
-export function buildDraftRequest(brief, { voice = null, exemplar = null, findings = [], previous = null, maximum = 1000 } = {}) {
+export function buildDraftRequest(brief, { voice = null, exemplar = null, findings = [], previous = null, maximum = 1000, tics = [] } = {}) {
 	const guidance = [
 		`Pattern: ${brief.pattern}. ${PATTERN_GUIDE[brief.pattern] || PATTERN_GUIDE.mechanism}`,
 		`Lane: ${brief.feature.lane}. ${LANE_GUIDE[brief.feature.lane] || LANE_GUIDE.community}`,
@@ -225,6 +226,8 @@ export function buildDraftRequest(brief, { voice = null, exemplar = null, findin
 		`## Brief\n${JSON.stringify(brief, null, 2)}`,
 		`## How this one should read\n${guidance}`,
 		voice ? `## House voice contract\n${voice}` : null,
+		// A partner spotlight talks to a founder or product lead unless the feature's lane names another reader.
+		voiceGuidance(brief.feature?.lane === 'developer' ? 'developer' : 'founder', { tics }),
 		exemplar ? `## The house exemplar (an Article; match its voice and its warmth toward partners, not its length)\n${exemplar}` : null,
 		retry,
 		'Write the thread now. Respond with the JSON object only.',
@@ -313,7 +316,7 @@ export function seriesFindings(partner, feature, draft, { partners = [] } = {}) 
 
 // Everything wrong with a draft, in the words the model will be shown. Offline,
 // so a retry costs one model call.
-export function draftFindings({ partner, feature, head, draft, proof = null, partners = [], rivals = [], maximum = 1000 }) {
+export function draftFindings({ partner, feature, head, draft, proof = null, partners = [], rivals = [], maximum = 1000, tics = new Set() }) {
 	const findings = [...seriesFindings(partner, feature, draft, { partners })];
 	const texts = [draft.post, ...draft.thread];
 	for (const problem of copyProblems(draft.post, { minimum: 100, maximum })) findings.push(`head: ${problem}`);
@@ -323,6 +326,7 @@ export function draftFindings({ partner, feature, head, draft, proof = null, par
 	const labelled = [['head', draft.post], ...draft.thread.map((reply, index) => [`reply ${index + 1}`, reply]), ['headline', draft.headline], ['body', draft.body]];
 	for (const [label, text] of labelled.filter(([, text]) => text)) {
 		for (const finding of languageProblems(text)) if (finding.severity !== 'minor') findings.push(`${label}: ${finding.rule}: ${finding.message}`);
+		for (const finding of ticProblems(text, tics)) findings.push(`${label}: ${finding.rule}: ${finding.message}`);
 	}
 	const claims = claimsFor(partner, feature, texts, proof);
 	for (const finding of claimProblems({ posts: texts.map((text) => ({ text })), claims, mentions: {} })) {
@@ -353,14 +357,14 @@ export function specFor(head, draft) {
 
 // Drafts until the machine checks pass or the attempts run out. `call` is
 // callModelChain or a stand-in with its signature.
-export async function draftSpotlight(brief, context, { call, voice = null, exemplar = null, attempts = 3, maximum = 1000 } = {}) {
+export async function draftSpotlight(brief, context, { call, voice = null, exemplar = null, attempts = 3, maximum = 1000, tics = new Set() } = {}) {
 	const tries = [];
 	let previous = null;
 	let findings = [];
 	for (let attempt = 1; attempt <= attempts; attempt++) {
-		const request = buildDraftRequest(brief, { voice, exemplar, findings, previous, maximum });
+		const request = buildDraftRequest(brief, { voice, exemplar, findings, previous, maximum, tics: [...tics] });
 		const { value, model } = await call(request, { parse: parseDraft });
-		findings = draftFindings({ ...context, head: brief.head, draft: value, maximum });
+		findings = draftFindings({ ...context, head: brief.head, draft: value, maximum, tics });
 		tries.push({ attempt, model, findings });
 		if (!findings.length) return { ok: true, draft: value, model, attempts: tries };
 		previous = value;

@@ -77,6 +77,14 @@ export function loadQueue(root, path = QUEUE_PATH) {
 	return JSON.parse(readFileSync(resolve(root, path), 'utf8'));
 }
 
+// The phrases the account has worn out, from the heads it posted and the
+// ledger, so a drafter is told them before it writes and its draft is checked
+// against the same set `check` uses.
+export function accountTics(root, state = null) {
+	const queue = loadQueue(root);
+	return houseTics([...postedHeads(queue.items), ...(state?.published || []).map((row) => row.text).filter(Boolean)]);
+}
+
 // Write one item back into the queue as it stands on disk now, not into the copy
 // a long command loaded minutes ago: a whole-queue save from a stale snapshot
 // reverts every change other authors committed in between.
