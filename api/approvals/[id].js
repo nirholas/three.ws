@@ -4,6 +4,8 @@
 //        The request with its confirmation table. With ?t= (the signed deep link
 //        every delivery carries) the response also says whether the link still
 //        matches the request on file (link_verified / link_problem).
+//   GET  ?media=<n>
+//        The nth image or video of an X post request, as reviewed (owner only).
 //   POST { decision: 'approve'|'deny', payload_hash, token?, via?, wallet_signature? }
 //        Decide. Approve needs the payload_hash the owner was shown; a mismatch
 //        is 409 and nothing runs, an expired request is 410. A repeat approve
@@ -20,7 +22,7 @@ import { getRequestUser, getSessionUser } from '../_lib/auth.js';
 import { cors, json, method, wrap, error, readJson, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { limits } from '../_lib/rate-limit.js';
-import { getApproval, decideApproval, ApprovalError } from '../_lib/approvals.js';
+import { getApproval, getApprovalMedia, decideApproval, ApprovalError } from '../_lib/approvals.js';
 
 const BROWSER_VIAS = new Set(['web', 'push']);
 
@@ -37,7 +39,17 @@ export default wrap(async (req, res) => {
 	const id = String(req.query?.id || '');
 	try {
 		if (req.method === 'GET') {
-			const token = new URL(req.url, 'http://x').searchParams.get('t');
+			const params = new URL(req.url, 'http://x').searchParams;
+			if (params.has('media')) {
+				const media = await getApprovalMedia(user.id, id, Number(params.get('media')));
+				res.statusCode = 200;
+				res.setHeader('content-type', media.contentType);
+				res.setHeader('cache-control', 'private, max-age=3600');
+				res.setHeader('x-content-type-options', 'nosniff');
+				res.end(media.bytes);
+				return;
+			}
+			const token = params.get('t');
 			const request = await getApproval(user.id, id, { token });
 			return json(res, 200, { request }, { 'cache-control': 'no-store' });
 		}

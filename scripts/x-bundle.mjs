@@ -4,6 +4,9 @@
 //
 //   node scripts/x-bundle.mjs publish <id> [<id>...]   bundle approved items and upload them
 //   node scripts/x-bundle.mjs publish --approved       every approved item the ledger has not published
+//   node scripts/x-bundle.mjs publish --approved --awaiting
+//                                                      also every reviewed item waiting on the owner, so a
+//                                                      yes in the approval inbox releases it (owner-approval.js)
 //   node scripts/x-bundle.mjs list                     the verified index, one bundle per line
 //   node scripts/x-bundle.mjs pull [--dir <path>]      build the root production will see, locally
 //   node scripts/x-bundle.mjs remove <id>              drop a bundle and its files
@@ -24,7 +27,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 import { loadQueue } from '../api/_lib/x-content/queue.js';
-import { REVIEW_MAX_AGE_DAYS } from '../api/_lib/x-content/review.js';
+import { REVIEW_MAX_AGE_DAYS, approvalProblems } from '../api/_lib/x-content/review.js';
 import { dbStore, memoryStore } from '../api/_lib/x-content/state.js';
 import { DEFAULT_OVERLAY_DIR, INDEX_VERSION, buildBundle, materialize, publishBundles, bundleStorage, readIndex, removeBundle, signIndex, verifyBundles } from '../api/_lib/x-content/overlay.js';
 
@@ -90,7 +93,8 @@ async function approvedIds() {
 	const state = await store.load();
 	const published = new Set((state.published || []).map((row) => row.id));
 	console.log(`ledger: ${store.label}`);
-	return loadQueue(root).items.filter((item) => item.status === 'approved' && !published.has(item.id)).map((item) => item.id);
+	const wanted = (item) => item.status === 'approved' || (has('awaiting') && item.status === 'review' && !approvalProblems({ ...item, status: 'approved' }, root).length);
+	return loadQueue(root).items.filter((item) => wanted(item) && !published.has(item.id)).map((item) => item.id);
 }
 
 async function publish() {
@@ -108,7 +112,7 @@ async function publish() {
 	const refused = [];
 	for (const id of ids) {
 		try {
-			const bundle = buildBundle(root, id);
+			const bundle = buildBundle(root, id, { awaitingOwner: has('awaiting') });
 			ready.push(id);
 			console.log(`ready  ${id}: ${bundle.files.length} file(s), ${kb(totalBytes(bundle))}`);
 		} catch (err) {
@@ -119,7 +123,7 @@ async function publish() {
 	if (refused.length && named.length) fail(`Nothing was uploaded: ${refused.join(', ')} cannot be bundled.`);
 	if (!ready.length) fail('Nothing was uploaded: no item could be bundled.');
 
-	const result = await publishBundles({ root, ids: ready, storage: bundleStorage(), replaceIndex: has('replace-index') });
+	const result = await publishBundles({ root, ids: ready, storage: bundleStorage(), replaceIndex: has('replace-index'), awaitingOwner: has('awaiting') });
 	console.log(`\nPublished ${result.published.join(', ')}: ${result.uploaded} file(s) uploaded, ${result.skipped} already stored.`);
 	console.log('Production reads the index at the start of its next tick when X_CONTENT_REMOTE_QUEUE is true.');
 	if (refused.length) process.exit(1);

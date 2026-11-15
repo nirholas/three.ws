@@ -35,6 +35,7 @@ import { logAudit } from './audit.js';
 import { normalizeBurnerPolicy, burnerEnabled, classifyBurnerSpend, ownerSignMessage } from './burner-tier.js';
 import { verifyOwnerSignature } from './owner-sign.js';
 import { recordDecision } from './reasoning-ledger.js';
+import { X_POST_ACTION, previewOf, xPostTable } from './x-content/owner-approval-view.js';
 
 export const APPROVAL_STATUSES = Object.freeze(['pending', 'approved', 'executing', 'executed', 'failed', 'denied', 'expired']);
 export const DECISIONS = Object.freeze(['approve', 'deny']);
@@ -90,6 +91,10 @@ export const VENUES = Object.freeze({
 	// spend policy wants the owner to answer. The rule itself was confirmed, but
 	// a policy step-up is a separate yes, so it never auto-approves.
 	revenue_reinvest: { label: 'Reinvest rule transfers above your spend policy', auto: false },
+	// A reviewed @trythreews post the queue policy leaves to the owner
+	// (api/_lib/x-content/owner-approval.js). It moves no funds, but it speaks
+	// for the platform in public, so it is never auto-approved.
+	x_post: { label: 'Posts to @trythreews', auto: false },
 });
 
 // Ceiling on a single auto-approve policy. Anything bigger is a decision the
@@ -204,6 +209,7 @@ export function confirmationTable(row) {
 	if (row.action_type === 'mail_rule_run') return mailRuleTable(row);
 	if (row.action_type === 'token_budget_extend') return tokenBudgetTable(row);
 	if (row.action_type === 'payout_wallet_set') return payoutWalletTable(row);
+	if (row.action_type === X_POST_ACTION) return xPostTable(row);
 	const usd = row.amount_usd != null && Number.isFinite(Number(row.amount_usd)) ? ` (~$${Number(row.amount_usd).toFixed(2)})` : '';
 	return [
 		{ key: 'recipient', label: 'Recipient', value: row.recipient_label ? `${row.recipient_label} (${shortAddr(row.recipient)})` : (row.recipient || 'n/a'), full: row.recipient || null },
@@ -350,6 +356,8 @@ export function publicApproval(row, { now = Date.now(), withLink = true } = {}) 
 		explorer: explorerUrl(row.signature, row.network),
 		result: row.result || null,
 		link: withLink && status === 'pending' ? approvalPath(row) : `/approvals/${row.id}`,
+		// A post the owner is asked to release is shown as the post itself.
+		preview: row.action_type === X_POST_ACTION ? previewOf(row) : null,
 	};
 }
 
@@ -380,6 +388,8 @@ const EXECUTORS = {
 	a2a_hire: async () => (await import('../agents/a2a-hire.js')).executeApprovedA2aHire,
 	// A trade parked by the agent's burner cap (api/agents/agent-trade.js).
 	agent_trade: async () => (await import('../agents/agent-trade.js')).executeApprovedAgentTrade,
+	// A reviewed X post the owner released (api/_lib/x-content/owner-approval.js).
+	x_post: async () => (await import('./x-content/owner-approval.js')).executeApprovedXPost,
 };
 
 export function hasExecutor(source) {
@@ -767,6 +777,20 @@ export async function getApproval(userId, id, { token = null } = {}) {
 		if (!v.ok) out.link_problem = v.reason;
 	}
 	return out;
+}
+
+/**
+ * One media file of an X post request, for the owner's preview: the reviewed
+ * bytes, verified against the hash in the payload. 404 when the request is not
+ * a post or the file is not available.
+ */
+export async function getApprovalMedia(userId, id, index) {
+	const row = await loadRow(userId, id);
+	if (row.action_type !== X_POST_ACTION) throw new ApprovalError(404, 'no_media', 'This request has no post media.');
+	const { approvalMediaBytes } = await import('./x-content/owner-approval.js');
+	const media = await approvalMediaBytes(row, index);
+	if (!media) throw new ApprovalError(404, 'media_unavailable', 'That file is not available yet. The post text above is exactly what will go out.');
+	return media;
 }
 
 // ── decide ──────────────────────────────────────────────────────────────────────

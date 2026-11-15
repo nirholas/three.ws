@@ -29,6 +29,8 @@
 //   npm run x:content -- review --status review            review every item awaiting review
 //   npm run x:content -- approve <slug>                    owner gate: release a reviewed item
 //   npm run x:content -- approve --status review           release every item whose review passed
+//   npm run x:content -- ask [<slug>]                      send reviewed posts the policy holds to the owner's
+//                                                          approval inbox (push, chat, email; one-tap approve)
 //
 // Env: reads .env.local then .env. DATABASE_URL gives plan/run the shared
 // publish ledger; X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_SECRET are
@@ -48,6 +50,7 @@ import { dbStore, memoryStore } from '../api/_lib/x-content/state.js';
 import { MAX_SPEED, VIDEO_LIMITS, mediaType, parseFfmpegProbe, videoFilterChain } from '../api/_lib/x-content/media.js';
 import { weightedLength } from '../api/_lib/x-content/quality.js';
 import { approvalProblems, loadReview, reviewItem } from '../api/_lib/x-content/review.js';
+import { applyOwnerApprovals, loadOwnerApprovals, requestOwnerApproval } from '../api/_lib/x-content/owner-approval.js';
 import { FORMATS, proofPath, proofProblems, proveItem, scoutPage } from '../api/_lib/x-content/reel.js';
 import { approvalPolicy, policyBlockers, releaseDigest, vetoUntil } from '../api/_lib/x-content/approval.js';
 import { priorApproval, restoreApproval, sameCopy, staleApproved, stuckDigest } from '../api/_lib/x-content/refresh.js';
@@ -652,6 +655,7 @@ async function advance() {
 	const dryRun = has('dry-run');
 	const policy = approvalPolicy(queue);
 	const quality = queue.quality || {};
+	await syncOwnerApprovals(queue);
 	const items = queue.items.filter((item) => (id ? item.id === id : ['draft', 'review'].includes(item.status)));
 	const priors = new Map();
 	if (has('refresh') && !id) {
@@ -733,7 +737,7 @@ async function advance() {
 			}
 			const blockers = policyBlockers(item, record, policy, root);
 			if (blockers.length) {
-				row.stopped = `passed review; waits for the owner because ${blockers[0]}`;
+				row.stopped = `passed review; waits for the owner because ${blockers[0]}${await askOwner(item, record, blockers)}`;
 				continue;
 			}
 			item.status = 'approved';
@@ -765,8 +769,64 @@ async function advance() {
 	if (has('ship') && !dryRun) {
 		// Everything approved and not yet sent, whoever approved it: the bundles
 		// are what production reads, so they should always say what the queue says.
-		const ship = spawnSync(process.execPath, [resolve(root, 'scripts/x-bundle.mjs'), 'publish', '--approved'], { cwd: root, stdio: 'inherit' });
+		// Reviewed posts waiting on the owner ship too, so a yes from the
+		// approval inbox releases one at the next tick without another run.
+		const ship = spawnSync(process.execPath, [resolve(root, 'scripts/x-bundle.mjs'), 'publish', '--approved', '--awaiting'], { cwd: root, stdio: 'inherit' });
 		if (ship.status !== 0) process.exitCode = 1;
+	}
+}
+
+// --- owner approval from the inbox --------------------------------------------
+
+// Mark every 'review' item the owner approved in the inbox as approved in the
+// queue file, so the checkout says what production will do.
+async function syncOwnerApprovals(queue) {
+	if (!process.env.DATABASE_URL) return [];
+	try {
+		const promoted = applyOwnerApprovals(queue.items, await loadOwnerApprovals(), root);
+		for (const id of promoted) {
+			saveQueueItem(root, queue.items.find((item) => item.id === id));
+			console.log(`owner ${id}: approved in the inbox`);
+		}
+		return promoted;
+	} catch (err) {
+		console.log(`(the approval inbox could not be read: ${String(err.message || err).split('\n')[0]})`);
+		return [];
+	}
+}
+
+// Ask the owner to approve one reviewed post. Returns a note for the report.
+async function askOwner(item, record, blockers) {
+	if (has('dry-run')) return '; would ask the owner in the approval inbox';
+	if (!process.env.DATABASE_URL) return ' (DATABASE_URL is not set, so the owner was not asked)';
+	try {
+		const asked = await requestOwnerApproval(item, record, { root, blockers });
+		if (!asked.length) return ' (no admin account to ask)';
+		return asked.some((row) => row.created) ? '; asked the owner in the approval inbox' : '; already in the owner\'s approval inbox';
+	} catch (err) {
+		return ` (the approval inbox refused the request: ${String(err.message || err).split('\n')[0]})`;
+	}
+}
+
+// `ask [<id>]`: put every reviewed post the policy leaves to the owner in the
+// approval inbox, without running the review again.
+async function ask() {
+	const queue = loadQueue(root);
+	const policy = approvalPolicy(queue);
+	const id = positional[1];
+	if (!process.env.DATABASE_URL) fail('ask needs DATABASE_URL: the approval inbox lives in the database');
+	await syncOwnerApprovals(queue);
+	const items = queue.items.filter((item) => item.status === 'review' && (!id || item.id === id));
+	if (!items.length) fail(id ? `${id} is not in review` : 'nothing to ask about: no item is in review');
+	for (const item of items) {
+		const problems = approvalProblems({ ...item, status: 'approved' }, root);
+		if (problems.length) {
+			console.log(`skip  ${item.id}: ${problems[0]}`);
+			continue;
+		}
+		const record = loadReview(root, item.id);
+		const blockers = policyBlockers(item, record, policy, root);
+		console.log(`${blockers.length ? 'ask ' : 'note'}  ${item.id}${blockers.length ? await askOwner(item, record, blockers) : ': the policy can release this one; run advance'}`);
 	}
 }
 
@@ -862,6 +922,6 @@ async function approve() {
 	if (blocked) process.exit(1);
 }
 
-const commands = { check, plan, backlog, run, review, approve, scout, prove, adopt, advance, remix, pause, import: importSource, 'prepare-video': prepareVideo };
+const commands = { check, plan, backlog, run, review, approve, ask, scout, prove, adopt, advance, remix, pause, import: importSource, 'prepare-video': prepareVideo };
 if (!commands[command]) fail(`Unknown command ${command}. Commands: ${Object.keys(commands).join(', ')}`);
 await commands[command]();

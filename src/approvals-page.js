@@ -136,8 +136,33 @@ function liveStatus(item) {
 
 // ── cards ───────────────────────────────────────────────────────────────────────
 
+// A post the owner is asked to release, drawn as the post: every part of the
+// thread in order, its full text, and the reviewed images or video. The table
+// below it keeps the account and when it goes out; email and chat, which
+// cannot show the images, keep the media row.
+const POST_ROW = /^(post|reply-\d+|article|media)$/;
+
+function previewHtml(item) {
+	const p = item.preview;
+	if (!p?.posts?.length) return '';
+	const media = (m) => {
+		const src = `/api/approvals/${encodeURIComponent(item.id)}?media=${m.index}`;
+		return m.type === 'video'
+			? `<video class="ap-media" src="${esc(src)}" controls preload="metadata" playsinline aria-label="${esc(m.alt || 'Video')}"></video>`
+			: `<img class="ap-media" src="${esc(src)}" alt="${esc(m.alt || '')}" loading="lazy" decoding="async" />`;
+	};
+	const parts = p.posts.map((post, i) => `<li class="ap-post">
+		<div class="ap-post-who">${esc(p.account)}${p.posts.length > 1 ? ` <span>${i + 1}/${p.posts.length}</span>` : ''}</div>
+		${i === 0 && p.article_title ? `<div class="ap-post-article">Article: ${esc(p.article_title)}</div>` : ''}
+		${post.text ? `<p class="ap-post-text">${esc(post.text)}</p>` : ''}
+		${i === 0 && p.poll?.options?.length ? `<ul class="ap-poll" aria-label="Poll options">${p.poll.options.map((o) => `<li>${esc(o)}</li>`).join('')}</ul>` : ''}
+		${post.media?.length ? `<div class="ap-post-media">${post.media.map(media).join('')}</div>` : ''}
+	</li>`).join('');
+	return `<ol class="ap-thread" aria-label="Exactly what will be posted">${parts}</ol>`;
+}
+
 function tableHtml(item) {
-	const rows = (item.confirmation || []).map((r) => {
+	const rows = (item.confirmation || []).filter((r) => !(item.preview && POST_ROW.test(r.key))).map((r) => {
 		const mono = r.key === 'recipient' && r.full;
 		const copy = r.full ? `<button type="button" class="ap-copy" data-copy="${esc(r.full)}" aria-label="Copy full ${esc(r.label.toLowerCase())}">Copy</button>` : '';
 		return `<tr><th scope="row">${esc(r.label)}</th><td${mono ? ' class="mono"' : ''} title="${esc(r.full || r.value)}">${esc(r.value)}${copy}</td></tr>`;
@@ -195,6 +220,7 @@ function cardHtml(item, { focus = false } = {}) {
 			</div>
 			<span class="pill pill-${esc(s)}">${esc(STATUS_LABEL[s] || s)}</span>
 		</div>
+		${previewHtml(item)}
 		${tableHtml(item)}
 		${risks}
 		${gate}
@@ -808,6 +834,17 @@ function bind() {
 		if (!t.closest('.btn-approve')) disarmAll();
 	});
 	document.addEventListener('keydown', (e) => { if (e.key === 'Escape') disarmAll(); });
+	// A preview image the server could not serve yet says so instead of
+	// leaving a broken frame; the text above it is still exactly what posts.
+	els.main.addEventListener('error', (e) => {
+		const el = e.target;
+		if (!el.classList?.contains('ap-media') || el.dataset.failed) return;
+		el.dataset.failed = '1';
+		const note = document.createElement('p');
+		note.className = 'ap-media-missing';
+		note.textContent = `Preview not available yet${el.alt ? `: ${el.alt}` : ''}. The file is the one the review checked.`;
+		el.replaceWith(note);
+	}, true);
 	els.form.addEventListener('submit', createPolicy);
 	els.auditMoreBtn.addEventListener('click', () => loadAudit({ more: true }));
 	els.push.addEventListener('click', onEnablePush);

@@ -181,6 +181,16 @@ describe('buildBundle', () => {
 		expect(() => buildBundle(root, 'absent')).toThrow(/no queue item/);
 	});
 
+	it('bundles a review item waiting on the owner only when asked, and only while its review passes', () => {
+		const { root, item } = checkout({ status: 'review' });
+		const bundle = buildBundle(root, 'fresh', { awaitingOwner: true });
+		expect(bundle.item.status).toBe('review');
+		writeReview(root, item, { passed: false, blockers: ['a fact did not check out'] });
+		expect(() => buildBundle(root, 'fresh', { awaitingOwner: true })).toThrow(/did not pass/);
+		writeQueue(root, [{ ...item, status: 'draft' }]);
+		expect(() => buildBundle(root, 'fresh', { awaitingOwner: true })).toThrow(/status is draft/);
+	});
+
 	it('refuses an item whose review record does not match its content', () => {
 		const { root, item } = checkout();
 		writeQueue(root, [{ ...item, posts: [{ ...item.posts[0], text: FRESH.replace('Rig Doctor', 'The Rig Doctor') }] }]);

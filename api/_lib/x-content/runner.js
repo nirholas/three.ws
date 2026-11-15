@@ -21,6 +21,7 @@ import { previewClient, publishItem, xClientFromEnv } from './publisher.js';
 import { itemTexts, linkChecks, probeChecks } from './verify.js';
 import { OUTCOMES_WINDOW_DAYS, collectOutcomes, learnLifts, outcomesAreStale, outcomesStore } from './outcomes.js';
 import { loadSeriesOrNull } from './price-impact.js';
+import { applyOwnerApprovals, loadOwnerApprovals } from './owner-approval.js';
 
 const HOUR = 60 * 60_000;
 const DAY = 24 * HOUR;
@@ -249,6 +250,18 @@ async function alertQuiet(state, store, now) {
 // `client` and `checks` default to the real X client and the real pre-flight;
 // tests pass their own to drive the hold-and-fall-through path. `outcomes` and
 // `collect` default to the stored record and the real timeline read.
+// The inbox is a separate system: when it cannot be read, the tick posts what
+// was already approved and releases nothing new, rather than failing the slot.
+async function releaseOwnerApprovals(queue, load, root, now) {
+	if (!load) return [];
+	try {
+		return applyOwnerApprovals(queue.items, await load(), root, now);
+	} catch (err) {
+		console.warn('[x-content] owner approvals unreadable:', err?.message || err);
+		return [];
+	}
+}
+
 export async function runTick({
 	root,
 	store,
@@ -263,8 +276,12 @@ export async function runTick({
 	// The $THREE candles the rows are stamped with. A caller that swaps `collect`
 	// is not reading the real timeline, so it gets no price read either.
 	loadPrices = collect === collectOutcomes ? loadSeriesOrNull : async () => null,
+	// The owner's yeses from the approval inbox (owner-approval.js). A 'review'
+	// item whose current review the owner approved is publishable this tick.
+	ownerApprovals = env.DATABASE_URL ? loadOwnerApprovals : null,
 }) {
 	const queue = loadQueue(root);
+	const ownerApproved = await releaseOwnerApprovals(queue, ownerApprovals, root, now);
 	const state = await store.load();
 	const { problems } = validateQueue(queue, root, { state, now });
 	const stored = await loadOutcomes(outcomes);
@@ -302,16 +319,16 @@ export async function runTick({
 			await store.save(state);
 		}
 		const decision = pickDue({ ...context, exclude: activeHolds(state, publishable, root, now) });
-		if (!decision.item) return { published: null, reason: decision.reason, blocked, outcomes: unrefreshed };
+		if (!decision.item) return { published: null, reason: decision.reason, blocked, ownerApproved, outcomes: unrefreshed };
 		const client = previewClient();
 		// Preview against a scratch copy: the real ledger must not change.
 		const scratch = structuredClone(state);
 		await publishItem({ item: decision.item, client, root, state: scratch, store: { save: async () => {} }, account: queue.account });
-		return { preview: { id: decision.item.id, kind: decision.item.kind, score: decision.score, parts: decision.parts, ranking: decision.ranking, calls: client.calls }, blocked, outcomes: unrefreshed };
+		return { preview: { id: decision.item.id, kind: decision.item.kind, score: decision.score, parts: decision.parts, ranking: decision.ranking, calls: client.calls }, blocked, ownerApproved, outcomes: unrefreshed };
 	}
 
 	const client = injectedClient || (await xClientFromEnv(env));
-	if (!client) return { published: null, skipped: 'not_configured', reason: 'X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_SECRET are required', blocked, outcomes: unrefreshed };
+	if (!client) return { published: null, skipped: 'not_configured', reason: 'X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_SECRET are required', blocked, ownerApproved, outcomes: unrefreshed };
 
 	// The tail runs whether the slot was filled, left empty, or the publish threw,
 	// and adds `outcomes` to the result without touching the rest of it. A named
@@ -331,7 +348,7 @@ export async function runTick({
 			quiet = await alertQuiet(state, store, now).catch(() => null);
 		}
 	}
-	return { ...result, outcomes: report, quiet };
+	return { ...result, ownerApproved, outcomes: report, quiet };
 }
 
 async function fillSlot({ queue, state, store, root, now, requestedId, client, checks, context, publishable, blocked }) {

@@ -27,7 +27,7 @@ import { tmpdir } from 'node:os';
 import { isAbsolute, join, resolve, sep } from 'node:path';
 import { MEDIA_ROOTS, mediaType } from './media.js';
 import { QUEUE_PATH, loadArticle, loadQueue, validateItem } from './queue.js';
-import { loadReview, reviewPath } from './review.js';
+import { approvalProblems, loadReview, reviewPath } from './review.js';
 
 export const INDEX_KEY = 'x-content/bundles/index.json';
 export const INDEX_VERSION = 1;
@@ -240,11 +240,17 @@ function itemPaths(item, root) {
 	return [...new Set(paths)];
 }
 
-export function buildBundle(root, id, { now = Date.now() } = {}) {
+// `awaitingOwner` also bundles a 'review' item whose review passed and is
+// current: production then holds the post the owner is being asked about, so a
+// yes from the approval inbox releases it without another deploy or bundle run
+// (owner-approval.js). The tick still publishes only what is approved.
+export function buildBundle(root, id, { now = Date.now(), awaitingOwner = false } = {}) {
 	const item = (loadQueue(root).items || []).find((row) => row.id === id);
 	if (!item) throw new Error(`${id} cannot be bundled: no queue item has that id`);
 	const reasons = [];
-	if (item.status !== 'approved') reasons.push(`status is ${item.status}; only an approved item is bundled`);
+	const waiting = awaitingOwner && item.status === 'review';
+	if (item.status !== 'approved' && !waiting) reasons.push(`status is ${item.status}; only an approved item${awaitingOwner ? ', or one in review,' : ''} is bundled`);
+	if (waiting) reasons.push(...approvalProblems({ ...item, status: 'approved' }, root, now));
 	reasons.push(...validateItem(item, root));
 	if (!reasons.length) {
 		for (const path of itemPaths(item, root)) {
@@ -290,14 +296,14 @@ async function removeFiles(storage, id, files, keep = new Set()) {
 
 // `replaceIndex` starts a new index when the stored one cannot be verified,
 // which is what an operator needs after rotating the secret.
-export async function publishBundles({ root, ids, storage = null, env = process.env, now = Date.now(), replaceIndex = false }) {
+export async function publishBundles({ root, ids, storage = null, env = process.env, now = Date.now(), replaceIndex = false, awaitingOwner = false }) {
 	storage ||= bundleStorage(env);
 	secretFrom(env);
 	const built = [];
 	const failures = [];
 	for (const id of [...new Set(ids)]) {
 		try {
-			built.push(buildBundle(root, id, { now }));
+			built.push(buildBundle(root, id, { now, awaitingOwner }));
 		} catch (err) {
 			failures.push(err.message);
 		}
