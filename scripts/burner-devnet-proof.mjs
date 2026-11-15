@@ -100,6 +100,25 @@ if (genesis !== DEVNET_GENESIS) {
 	process.exit(2);
 }
 
+const FUND_SOL = 0.15;
+const funderPath = flag('--funder');
+// Check the funder before creating anything: an empty keypair otherwise fails
+// deep inside sendAndConfirmTransaction with an opaque simulation error.
+const funder = funderPath
+	? Keypair.fromSecretKey(Uint8Array.from(JSON.parse(readFileSync(funderPath.replace(/^~/, process.env.HOME || ''), 'utf8'))))
+	: null;
+if (funder) {
+	const needLamports = Math.round(FUND_SOL * LAMPORTS_PER_SOL) + 10_000;
+	const haveLamports = await conn.getBalance(funder.publicKey, 'confirmed');
+	if (haveLamports < needLamports) {
+		console.error(
+			`the funder ${funder.publicKey.toBase58()} holds ${haveLamports / LAMPORTS_PER_SOL} devnet SOL; the run needs ${needLamports / LAMPORTS_PER_SOL}.\n` +
+				`Send at least 0.2 devnet SOL to it at https://faucet.solana.com, then rerun this command.`,
+		);
+		process.exit(3);
+	}
+}
+
 // ── the owner, their linked main wallet, and the agent ───────────────────────
 heading('setup');
 const ownerId = randomUUID();
@@ -136,11 +155,8 @@ async function airdrop(to, sol) {
 	throw new Error(`every devnet faucet declined:\n      ${declined.slice(-ENDPOINTS.length).join('\n      ')}`);
 }
 
-const FUND_SOL = 0.15;
-const funderPath = flag('--funder');
 let fundSig;
-if (funderPath) {
-	const funder = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(readFileSync(funderPath.replace(/^~/, process.env.HOME || ''), 'utf8'))));
+if (funder) {
 	const tx = new Transaction().add(SystemProgram.transfer({ fromPubkey: funder.publicKey, toPubkey: new PublicKey(wallet.address), lamports: Math.round(FUND_SOL * LAMPORTS_PER_SOL) }));
 	fundSig = await sendAndConfirmTransaction(conn, tx, [funder], { commitment: 'confirmed' });
 } else {
