@@ -84,3 +84,25 @@ def test_worker_installs_the_bake_backend_before_the_pipeline_import():
     source = DOCKERFILE.with_name("main.py").read_text()
     body = source.split("def _load_pipeline():", 1)[1]
     assert body.index("bake_raster.install()") < body.index("from trellis2.pipelines import")
+
+
+def test_every_local_module_main_imports_is_copied_into_the_image():
+    # Regression for the 2026-11-15 rebuild: main.py imported memory_probe, the
+    # Dockerfile never COPYed it, and the build gate's app-contract test died with
+    # "No module named 'memory_probe'", so no new image could ship.
+    import ast
+
+    tree = ast.parse(DOCKERFILE.with_name("main.py").read_text())
+    imported = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported.update(a.name.split(".")[0] for a in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            imported.add(node.module.split(".")[0])
+    local = {m for m in imported if DOCKERFILE.with_name(f"{m}.py").exists()}
+    missing = sorted(f"{m}.py" for m in local if f"{m}.py" not in _copied_files())
+    assert not missing, f"main.py imports modules the Dockerfile never copies: {missing}"
+
+
+def test_memory_probe_suite_runs_in_the_build_gate():
+    assert "/app/test_memory_probe.py" in DOCKERFILE.read_text()
