@@ -15,6 +15,14 @@
 			<description>Finished 3D models are now saved to a second storage provider whenever the primary one refuses us, so a storage outage no longer throws away a model that already finished generating. Links to models made during an outage keep working, and they move back to the primary store once it recovers.</description>
 		</item>
 		<item>
+			<title>Agent voice loads again on pages that embed the 3D agent directly</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-15:Agent voice loads again on pages that embed the 3D agent directly</guid>
+			<pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Pages that load the 3D agent element straight from the site, such as /cz, asked for a helper file at the wrong address, so starting a live voice session failed to load. The build now points those imports at the right file. Pages using the multiplayer client or form validation also stop filing false script-policy warnings, which keeps real security reports easy to spot.</description>
+		</item>
+		<item>
 			<title>Gallery cards on /forge and /discover load small images again</title>
 			<link>https://three.ws/discover</link>
 			<guid isPermaLink="false">2026-11-15:Gallery cards on /forge and /discover load small images again</guid>

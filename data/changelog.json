@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-15",
+			"title": "Agent voice loads again on pages that embed the 3D agent directly",
+			"summary": "Pages that load the 3D agent element straight from the site, such as /cz, asked for a helper file at the wrong address, so starting a live voice session failed to load. The build now points those imports at the right file. Pages using the multiplayer client or form validation also stop filing false script-policy warnings, which keeps real security reports easy to spot.",
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-11-15",
 			"title": "Gallery cards on /forge and /discover load small images again",
 			"summary": "While our storage credential is being refused, the resized card images on /forge and /discover fell back to the full-size originals, so one card could cost 2.6 MB. They are now resized from a backup copy instead, so a 2.6 MB render arrives as about 10 KB. The app's install screenshots are also smaller with no visible change.",
 			"tags": [
