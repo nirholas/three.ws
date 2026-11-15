@@ -4,6 +4,7 @@
 //
 //   npm run x:content -- check                     validate every item
 //   npm run x:content -- plan                      when each item lands, and what is blocking it
+//   npm run x:content -- backlog [--audience developer] [--limit 20]   the best unannounced live surfaces to draft next
 //   npm run x:content -- run --dry-run [--id slug]  print the exact X API calls for the next due item
 //   npm run x:content -- run --id slug              publish one item now (owner-approved posts only)
 //   npm run x:content -- import <blog-slug|url> --as post|article --id slug [--lane l] [--pattern p]
@@ -53,6 +54,8 @@ import { priorApproval, restoreApproval, sameCopy, staleApproved, stuckDigest } 
 import { learnLifts, outcomesStore } from '../api/_lib/x-content/outcomes.js';
 import { browserProblem } from '../api/_lib/x-content/verify.js';
 import { FORMATS as FEED_FORMATS, HEAD_KINDS as HEAD_AS, STANDALONE_HEADS, formatMix, formatOf, headProblems, headSpecProblems, withFormats } from '../api/_lib/x-content/formats.js';
+import { draftBacklog } from '../api/_lib/x-content/backlog.js';
+import { AUDIENCES } from '../api/_lib/x-content/voice.js';
 import { placeHead, rebuildHead } from './lib/x-heads.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -69,7 +72,7 @@ loadEnvFile(resolve(root, '.env.local'));
 loadEnvFile(resolve(root, '.env'));
 
 const args = process.argv.slice(2);
-const VALUE_FLAGS = new Set(['--id', '--as', '--lane', '--pattern', '--out', '--captions', '--item', '--now', '--status', '--speed', '--format', '--shot', '--file', '--headline', '--body', '--at', '--from', '--to', '--width', '--prompt', '--alt']);
+const VALUE_FLAGS = new Set(['--id', '--as', '--lane', '--pattern', '--out', '--captions', '--item', '--now', '--status', '--speed', '--format', '--shot', '--file', '--headline', '--body', '--at', '--from', '--to', '--width', '--prompt', '--alt', '--code', '--source', '--url', '--frame', '--scroll', '--audience', '--limit']);
 const positional = args.filter((arg, index) => !arg.startsWith('--') && !VALUE_FLAGS.has(args[index - 1]));
 const has = (flag) => args.includes(`--${flag}`);
 const option = (name, fallback = null) => {
@@ -182,9 +185,28 @@ async function plan() {
 		for (const row of published.values()) console.log(`  ${row.publishedAt}  ${row.id.padEnd(26)} ${row.slot ? `slot ${row.slot} ` : ''}${row.url}`);
 	}
 
+	printBacklog(queue.items, { limit: 8 });
+
 	const publishable = queue.items.filter((item) => !problems[item.id].length);
 	const next = pickDue({ items: publishable, allItems: queue.items, state, now, cadence: queue.cadence, quality: queue.quality, seed, lifts, reviews, exclude: holds });
 	console.log(`\nnow: ${next.item ? `${next.item.id} would fill slot ${next.slot.key} (${next.slot.kind ? `${next.slot.kind}, T${next.tier}` : `T${next.tier}`}${next.filledDown ? `, filling a T${next.slot.tier} slot` : ''}, score ${next.score})` : next.reason}`);
+}
+
+// The best-scoring live surfaces nothing has announced and no queue item
+// covers, one reader at a time (api/_lib/x-content/backlog.js).
+function printBacklog(items, { limit, audience = null }) {
+	const ledgerPath = resolve(root, 'data/announcements.json');
+	if (!existsSync(ledgerPath)) return console.log('\nNext to draft: data/announcements.json is missing; run npm run announce:rank -- --write');
+	const ledger = JSON.parse(readFileSync(ledgerPath, 'utf8'));
+	const { open, rows } = draftBacklog(ledger.entries, items, { limit, audience });
+	console.log(`\nNext to draft (${open} live surfaces never announced and not in the queue; ledger ranked ${String(ledger.generatedAt).slice(0, 10)}):`);
+	for (const row of rows) console.log(`  ${String(row.score).padStart(4)}  ${row.audience.padEnd(9)} ${row.head.padEnd(4)}  ${row.key.padEnd(34)} ${row.title}${row.partner ? `  (${row.partner})` : ''}`);
+}
+
+async function backlog() {
+	const audience = option('audience');
+	if (audience && !AUDIENCES.includes(audience)) fail(`--audience must be one of ${AUDIENCES.join(', ')}`);
+	printBacklog(loadQueue(root).items, { limit: Number(option('limit', 20)), audience });
 }
 
 async function run() {
@@ -819,6 +841,6 @@ async function approve() {
 	if (blocked) process.exit(1);
 }
 
-const commands = { check, plan, run, review, approve, scout, prove, adopt, advance, remix, pause, import: importSource, 'prepare-video': prepareVideo };
+const commands = { check, plan, backlog, run, review, approve, scout, prove, adopt, advance, remix, pause, import: importSource, 'prepare-video': prepareVideo };
 if (!commands[command]) fail(`Unknown command ${command}. Commands: ${Object.keys(commands).join(', ')}`);
 await commands[command]();

@@ -1,0 +1,48 @@
+import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+
+import { audienceForEntry, draftBacklog, headForEntry } from '../api/_lib/x-content/backlog.js';
+
+const entry = (key, section, score, extra = {}) => ({ key, kind: ['package', 'worker', 'service'].includes(section) ? section : 'page', section, title: key, url: key.startsWith('/') ? key : null, coverage: 'no', live: { ok: true }, score, ...extra });
+
+describe('draft backlog', () => {
+	it('leaves out what was announced, what is down, what is covered, and account pages', () => {
+		const entries = [
+			entry('/a', 'build', 90),
+			entry('/announced', 'build', 99, { coverage: 'announced' }),
+			entry('/down', 'build', 98, { live: { ok: false } }),
+			entry('/queued', 'build', 97),
+			entry('/settings', 'account', 96),
+		];
+		const { rows, open } = draftBacklog(entries, [{ id: 'q', covers: ['/queued'] }]);
+		expect(open).toBe(1);
+		expect(rows.map((row) => row.key)).toEqual(['/a']);
+		expect(rows[0].url).toBe('https://three.ws/a');
+	});
+
+	it('interleaves readers instead of following the score into one section', () => {
+		const entries = [entry('/c1', 'crypto', 100), entry('/c2', 'crypto', 99), entry('/c3', 'crypto', 98), entry('@x/sdk', 'package', 60), entry('/learn-a', 'learn', 40)];
+		const { rows } = draftBacklog(entries, [], { limit: 4 });
+		expect(rows.map((row) => row.key)).toEqual(['/c1', '@x/sdk', '/learn-a', '/c2']);
+		expect(rows.map((row) => row.audience)).toEqual(['community', 'developer', 'educator', 'community']);
+	});
+
+	it('filters to one reader on request', () => {
+		const entries = [entry('/c1', 'crypto', 100), entry('@x/sdk', 'package', 60)];
+		expect(draftBacklog(entries, [], { audience: 'developer' }).rows.map((row) => row.key)).toEqual(['@x/sdk']);
+	});
+
+	it('suggests a code head for installables, a GIF for pages that move, and a live capture otherwise', () => {
+		expect(headForEntry(entry('@x/sdk', 'package', 1))).toBe('code');
+		expect(headForEntry(entry('/flow', 'build', 1, { moves: true }))).toBe('gif');
+		expect(headForEntry(entry('/genesis', 'build', 1))).toBe('shot');
+		expect(audienceForEntry(entry('/settings', 'account', 1))).toBeNull();
+	});
+
+	it('finds open surfaces in the committed ledger for every audience it maps', () => {
+		const ledger = JSON.parse(readFileSync('data/announcements.json', 'utf8'));
+		const queue = JSON.parse(readFileSync('data/x-content/queue.json', 'utf8'));
+		const { rows } = draftBacklog(ledger.entries, queue.items, { limit: 30 });
+		expect(new Set(rows.map((row) => row.audience)).size).toBeGreaterThanOrEqual(4);
+	});
+});
