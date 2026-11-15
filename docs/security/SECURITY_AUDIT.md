@@ -356,10 +356,19 @@ it with `Function` blocked: probed without the plugin, clean with it). The same
 plugin rewrites msgpackr's import-time probe, which `--all` found on `/temporary`.
 `audit-csp.mjs` now takes `CSP_AUDIT_CONCURRENCY` for the full catalogue and fails
 (exit 4) when a page's same-origin scripts 404, since a stale server once made a
-rebuilt `dist/` look clean. Local
-production build: `audit-csp.mjs` clean on all 26 default pages, `/showcase`
-included. After the next deploy the browser run against `https://three.ws`
-should report clean.
+rebuilt `dist/` look clean. The full `--all` run (1,089 pages) also found
+MathJax 2, which needs eval, on `/cookbook/self-correcting-3d`. That page is a
+notebook export with no math, so the loader was removed;
+`tests/csp-eval-cdn-libraries.test.js` keeps eval-only CDN libraries off every
+static page. The same run found the raw `dist/src` copies asking for
+`/public/load-module.js` (404 on `/cz`). The copy step now rewrites those
+imports (`scripts/vite/src-public-imports.mjs`, pinned by
+`tests/vite-src-public-imports.test.js`). Local production build, built in
+deploy order (`build:lib`, `build`, `publish:lib`): `audit-csp.mjs` is clean on
+all 26 default pages and on `/showcase`, `/temporary`, `/irl`, `/cz`,
+`/cookbook/self-correcting-3d` and `/demos-embed/forge.html`, and the seven
+pages that timed out under concurrency 6 pass when run on their own. After
+the next deploy the browser run against `https://three.ws` should report clean.
 **Status: `'unsafe-inline'` fixed (per-response hashes); CDN trim +
 dedupe done; `'unsafe-eval'` scoped to `/scene`.**
 
