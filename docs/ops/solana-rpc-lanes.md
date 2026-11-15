@@ -607,6 +607,44 @@ Still uncut, in order: `/api/crypto/security` and `/holders` `getTokenLargestAcc
 `/api/cron/run-buyback`, `/api/crypto/due-diligence` and `/api/cron/recompute-reputation`
 against the figures in this table.
 
+### Measured after the full deploy (2026-11-15): 62% fewer calls
+
+Revision `three-ws-api-00535` went live 2026-11-13 20:13 UTC on `518f61469`, which carries
+every cut above: the claims scan, the dormancy-tiered sweep, the lane attempt cap, the
+batched buyback prefetch, the shared due-diligence reads and the reputation recompute
+floor. The first full 24h window after it, 2026-11-14 04:00 to 2026-11-15 04:00 UTC
+(119 instances, `node scripts/rpc-spend-report.mjs --base https://three.ws --hours 24`),
+read **504,119 provider calls**, 24,495 (4.6%) saved by cache and coalescing. The
+`rpc_lanes` health detail agreed: 501,309 calls/24h, top `/api/pump-fun-mcp` (131,756).
+
+| Measure | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| Total provider calls/24h (against the 2026-11-13 window) | 1,332,768 | 504,119 | -62.2% |
+| Total provider calls/24h (against the 2026-11-12 window) | 1,304,108 | 504,119 | -61.3% |
+| `/api/crypto/holders` + `/security`, calls/h (the 2026-11-04 baseline) | 10,479 | 1,441 | -86.2% |
+| Holders + security, calls/24h (against the 2026-11-12 window) | 295,336 | 34,595 | -88.3% |
+| `/api/pump-fun-mcp` `getTransaction` | 155,947 | 94,142 | -39.6% |
+| `/api/cron/solana-attestations-crawl` `getSignaturesForAddress` (the sweep) | 140,729 | 19,533 | -86.1% |
+| `/api/cron/run-buyback` (all methods) | 45,290 | 2,179 | -95.2% |
+| `/api/crypto/due-diligence` (all methods) | 72,434 | 1,645 | -97.7% |
+| `/api/cron/recompute-reputation` (all methods) | 62,427 | 11,972 | -80.8% |
+| `/api/agents/[id]` (all methods) | 30,294 | 4,887 | -83.9% |
+| x402 verify `blockhash_expired` on `/api/healthz` | 3 (2026-11-04) | 2 | not rising |
+
+The 40% target is met. The `blockhash_expired` count stays at or below the pre-change
+figure, but verify itself is still at 0 ok: 125 of 240 rejections are
+`sponsor_fee_unfunded`. The x402 sponsor `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`
+needs SOL and the seeder `X4o2UuVNMxnrgkzVy97kPF5gmS6CLRCVJGB48VastML` needs a USDC
+account. That is a funding fault, not an RPC fault, so re-read `blockhash_expired` once
+verify is passing again.
+
+The residual is now led by `/api/pump-fun-mcp` (132,272 across methods, 26%), then the
+treasury crons (`treasury-topup` 39,363, `treasury-sweepback` 26,477) and
+`/api/cron/economy-reconcile` `getTransaction` (31,238). Both paid lanes still sit in
+quota cooldown, with calls split about evenly across Helius, Alchemy and mainnet-beta
+(about 161k each). If the next quota event needs more headroom, start with the
+pump-fun-mcp transaction reads, then the treasury balance polls.
+
 ## Knock-on effects to expect
 
 RPC starvation does not stay in the RPC layer:
