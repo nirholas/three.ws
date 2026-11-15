@@ -28,8 +28,17 @@ RUN pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.py
 
 # TripoSR is not a pip package (no setup.py/pyproject) — clone it, install its
 # own deps (incl. torchmcubes, which compiles here), and put it on PYTHONPATH.
-RUN git clone --depth 1 https://github.com/VAST-AI-Research/TripoSR.git /opt/triposr \
-    && pip install -r /opt/triposr/requirements.txt
+#
+# torchmcubes is built first and without build isolation: its current upstream
+# metadata hook reads the installed torch version and aborts when pip's isolated
+# build environment has none ("torchmcubes must be built against an installed
+# PyTorch"). TripoSR's requirements.txt lists it as an unpinned git URL, so that
+# line is dropped from the second install to keep pip from rebuilding it.
+RUN pip install scikit-build-core pybind11 cmake ninja numpy \
+    && pip install --no-build-isolation git+https://github.com/tatsy/torchmcubes.git \
+    && git clone --depth 1 https://github.com/VAST-AI-Research/TripoSR.git /opt/triposr \
+    && grep -v torchmcubes /opt/triposr/requirements.txt > /tmp/triposr-requirements.txt \
+    && pip install -r /tmp/triposr-requirements.txt
 
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
