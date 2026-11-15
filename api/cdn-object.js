@@ -163,6 +163,79 @@ function clearObjectHeaders(res) {
 	res.removeHeader('etag');
 }
 
+async function resizeToWebp(original, width) {
+	const sharp = (await import('sharp')).default;
+	return sharp(original)
+		.rotate()
+		.resize(width, width, { fit: 'inside', withoutEnlargement: true })
+		.webp({ quality: 80, effort: 4 })
+		.toBuffer();
+}
+
+// The source's bytes when R2's signed read cannot answer: the GCS fallback
+// bucket first (objects written while R2 refused our credential live only
+// there), then the bucket's public domain, which serves every R2 key
+// unauthenticated. Returns { response } or { notFound: true }, or null when no
+// degraded copy is reachable.
+async function degradedSource(source) {
+	if (fallbackBucket()) {
+		const fromGcs = await fallbackFetch(source).catch((err) => {
+			console.error('[cdn-object] variant gcs fallback read failed:', source, err?.message);
+			return null;
+		});
+		if (fromGcs) return { response: fromGcs };
+	}
+	const url = publicUrlOrNull(source);
+	if (!url) return null;
+	const response = await fetchUpstream(
+		url,
+		{},
+		{ name: 'r2:public-object', timeoutMs: 20_000, attempts: 2, okWhen: (r) => r.ok || r.status === 404 },
+	).catch((err) => {
+		console.error('[cdn-object] variant public bucket domain failed:', source, err?.message);
+		return null;
+	});
+	if (!response) return null;
+	if (response.status === 404) {
+		response.body?.cancel?.();
+		return { notFound: true };
+	}
+	return { response };
+}
+
+// R2 cannot answer for the source, but the bytes are still readable elsewhere.
+// Build the variant from that copy rather than redirecting: the redirect sends
+// every gallery card to the full-size original, which on 2026-11-15 meant a
+// 2.6 MB PNG per card for as long as the credential stayed rejected. Nothing is
+// persisted (the variant store is the bucket that is refusing us), and the edge
+// keeps the result only briefly, so the version-keyed path below takes over
+// within a minute of R2 recovering.
+async function serveDegradedVariant(req, res, { width, source }) {
+	const found = await degradedSource(source);
+	if (found?.notFound) return error(res, 404, 'not_found', 'object not found');
+	if (!found) return redirectToSource(res, source);
+	const { response } = found;
+	if (Number(response.headers.get('content-length')) > MAX_VARIANT_SOURCE_BYTES) {
+		response.body?.cancel?.();
+		return redirectToSource(res, source);
+	}
+	let bytes;
+	try {
+		bytes = await resizeToWebp(Buffer.from(await response.arrayBuffer()), width);
+	} catch (err) {
+		console.error('[cdn-object] degraded variant build failed, serving original:', source, err?.message);
+		return redirectToSource(res, source);
+	}
+	res.statusCode = 200;
+	res.setHeader('content-type', 'image/webp');
+	res.setHeader('content-security-policy', "default-src 'none'; sandbox");
+	res.setHeader('cross-origin-resource-policy', 'cross-origin');
+	res.setHeader('cache-control', 'public, max-age=60, s-maxage=60');
+	res.setHeader('content-length', String(bytes.length));
+	if (req.method === 'HEAD') return res.end();
+	return res.end(bytes);
+}
+
 // GET /cdn/_v/<width>/<key>: the object at <key> resized to fit <width> and
 // encoded as WebP (see src/shared/cdn-variant.js). Built on the first request
 // for a source version and persisted under variants/, so later edge misses are
@@ -173,11 +246,16 @@ async function serveVariant(req, res, { width, source }) {
 	try {
 		head = await r2.send(new HeadObjectCommand({ Bucket: env.S3_BUCKET, Key: source }));
 	} catch (err) {
-		// A source diverted to the GCS fallback bucket has no R2 copy to resize
-		// from; send the caller to the full-size original, which /cdn serves.
-		if (fallbackBucket() && (isNotFound(err) || isStorageInfrastructureError(err))) {
-			const inFallback = await fallbackHead(source).catch(() => null);
-			if (inFallback) return redirectToSource(res, source);
+		const infraFault = isStorageInfrastructureError(err);
+		// R2 refused the credential, or never received an object that was
+		// diverted to the GCS fallback bucket: resize whichever copy answers.
+		if (infraFault || (isNotFound(err) && fallbackBucket())) {
+			if (infraFault) console.error('[cdn-object] variant head failed, building from a degraded copy:', source, err?.message);
+			if (isNotFound(err)) {
+				const inFallback = await fallbackHead(source).catch(() => null);
+				if (!inFallback) return error(res, 404, 'not_found', 'object not found');
+			}
+			return serveDegradedVariant(req, res, { width, source });
 		}
 		if (isNotFound(err)) return error(res, 404, 'not_found', 'object not found');
 		console.error('[cdn-object] variant head failed, serving original:', source, err?.message);
@@ -205,13 +283,7 @@ async function serveVariant(req, res, { width, source }) {
 		if (head.ContentLength > MAX_VARIANT_SOURCE_BYTES) return redirectToSource(res, source);
 		try {
 			const obj = await r2.send(new GetObjectCommand({ Bucket: env.S3_BUCKET, Key: source }));
-			const original = await readBody(obj.Body);
-			const sharp = (await import('sharp')).default;
-			bytes = await sharp(original)
-				.rotate()
-				.resize(width, width, { fit: 'inside', withoutEnlargement: true })
-				.webp({ quality: 80, effort: 4 })
-				.toBuffer();
+			bytes = await resizeToWebp(await readBody(obj.Body), width);
 		} catch (err) {
 			console.error('[cdn-object] variant build failed, serving original:', source, err?.message);
 			return redirectToSource(res, source);
