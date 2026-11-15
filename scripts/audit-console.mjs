@@ -90,6 +90,7 @@ import { get as httpGet } from 'node:http';
 import { get as httpsGet } from 'node:https';
 import { chromium, devices } from 'playwright';
 import { isIgnorableConsole, isDevOnlyAsset } from './lib/console-noise.mjs';
+import { isBrowserGone, HARNESS_DOWN } from './lib/console-harness.mjs';
 import { loadBaseline, diffAgainstBaseline, mergeBaseline, saveBaseline, formatLoadNote } from './lib/console-baseline.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -491,12 +492,9 @@ function newContext(browser, vp) {
 // loaded or memory-tight box. That is the machine dying, not a page defect, and
 // it used to abort the whole sweep on whichever route happened to be next. Bring
 // a fresh browser up instead and re-run that route: a real defect still fails on
-// the retry, so nothing is excused, only re-measured.
-const BROWSER_GONE = /has been closed|Target closed|browser has (been )?disconnected|Browser closed/i;
-
-// The dev server went away, or the tab died taking the page with it. Either way
-// the reading is about this machine, not about the route.
-const HARNESS_DOWN = /ERR_CONNECTION_REFUSED|ERR_EMPTY_RESPONSE|ERR_CONNECTION_RESET|Page crashed/i;
+// the retry, so nothing is excused, only re-measured. The patterns that decide
+// "machine, not page" (isBrowserGone, HARNESS_DOWN) live in
+// scripts/lib/console-harness.mjs, tested by tests/console-harness.test.js.
 
 // Wait for the base URL to answer again, so a route is re-read against a live
 // server rather than blamed for a dead one. Bounded: a server that is gone for
@@ -552,7 +550,7 @@ for (const vpKey of viewportKeys) {
 			try {
 				return await checkRoute(context, base, route);
 			} catch (e) {
-				if (!BROWSER_GONE.test(e?.message || '') || attempt >= RECYCLE_ATTEMPTS) throw e;
+				if (!isBrowserGone(e) || attempt >= RECYCLE_ATTEMPTS) throw e;
 				await recycle();
 			}
 		}

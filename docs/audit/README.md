@@ -27,7 +27,7 @@ AUDIT_BASE=http://localhost:3211 CONCURRENCY=3 npm run audit:console -- --report
 
 `scripts/audit-console.baseline.json` maps route to viewport to the accepted error count. The target is empty. The sweep exits non-zero only when a route/viewport exceeds its baseline, and prints each new error plus any count that dropped. After fixing errors, ratchet the file down with `--update-baseline` (it rewrites only the routes and viewports that were measured and drops zeros). Never add an entry to hide a defect: fix the source, or filter environment noise in `scripts/lib/console-noise.mjs` with a stated reason.
 
-Pure logic lives in `scripts/lib/console-baseline.mjs`, tested by `tests/console-baseline.test.js`.
+Pure logic lives in `scripts/lib/console-baseline.mjs`, tested by `tests/console-baseline.test.js`. The rules for when an error is the machine rather than the page (a crashed or closed browser triggers a relaunch and re-read, and a refused connection triggers a wait for the dev server) live in `scripts/lib/console-harness.mjs`, tested by `tests/console-harness.test.js`.
 
 ### Reports
 
