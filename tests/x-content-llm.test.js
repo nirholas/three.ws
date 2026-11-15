@@ -123,3 +123,28 @@ describe('chain failure reasons', () => {
 		expect(failureReason(error)).toBe('no model was reachable: groq 429: rate limit | nvidia 504: timeout');
 	});
 });
+
+describe('a rung whose reply cannot be parsed', () => {
+	it('is asked once more before the chain gives up, because a reasoning model that ran out of room mid-thought usually answers on the next call', async () => {
+		const { callModelChain } = await import('../api/_lib/x-content/llm.js');
+		const replies = ['I will now write the JSON. First, check the brief', '{"post":"ok"}'];
+		const rung = async () => ({ model: 'nvidia:test', text: replies.shift() });
+		const parse = (text) => {
+			const start = text.indexOf('{');
+			if (start < 0) throw new Error('drafter returned no JSON object');
+			return JSON.parse(text.slice(start));
+		};
+		const result = await callModelChain({ system: '', parts: [] }, { parse, rungs: [rung] });
+		expect(result.value).toEqual({ post: 'ok' });
+		expect(result.fallbacks).toEqual(['nvidia:test answered but its reply did not parse (drafter returned no JSON object); asked again']);
+	});
+
+	it('still fails over when the second reply does not parse either', async () => {
+		const { callModelChain } = await import('../api/_lib/x-content/llm.js');
+		const rung = async () => ({ model: 'nvidia:test', text: 'prose' });
+		const parse = () => {
+			throw new Error('drafter returned no JSON object');
+		};
+		await expect(callModelChain({ system: '', parts: [] }, { parse, rungs: [rung] })).rejects.toThrow(/nvidia:test answered but its reply did not parse \(drafter returned no JSON object\)/);
+	});
+});

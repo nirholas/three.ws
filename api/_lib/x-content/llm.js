@@ -43,8 +43,10 @@ export const RUNG_RETRY_MS = 4000;
 // out mid-thought: the reply came back with no content at all and the review
 // failed as if no model had answered. This leaves room for both. Only that rung
 // sends it: Groq counts a requested budget against its per-minute token limit,
-// and OpenAI's reasoning models refuse the parameter outright.
-export const RUNG_MAX_TOKENS = 16_000;
+// and OpenAI's reasoning models refuse the parameter outright. A partner draft
+// was measured at 12,826 reasoning tokens before a 541-token answer (2026-11-15),
+// too close to the old 16,000 ceiling, so the budget is twice that.
+export const RUNG_MAX_TOKENS = 32_000;
 
 export function isRetryable({ status = null, body = '', networkError = false } = {}) {
 	if (networkError) return true;
@@ -122,18 +124,34 @@ export function failureReason(error) {
 		.replace(/: \| /, ': ');
 }
 
+// How many times a rung that answered is asked again when its reply does not
+// parse. The NVIDIA rung reasons before it writes, and a run that thinks past
+// its budget comes back as prose with no JSON in it; with every paid rung
+// unfunded it is the last rung, so one unlucky reply used to stop the whole
+// drafting job. Asked again, it nearly always answers properly.
+export const PARSE_ATTEMPTS = 2;
+
 // `parse` turns a rung's raw text into the caller's shape and may throw to
 // reject that rung. The parsed value comes back with the model that produced it
-// and the failures of every rung above it.
-export async function callModelChain(request, { env = process.env, parse = (text) => text } = {}) {
+// and the failures of every rung above it. `rungs` is injectable for tests.
+export async function callModelChain(request, { env = process.env, parse = (text) => text, rungs = modelRungs(request, env) } = {}) {
 	const failures = [];
-	for (const rung of modelRungs(request, env)) {
-		try {
-			const result = await rung();
-			if (!result) continue;
-			return { value: parse(result.text), model: result.model, fallbacks: failures };
-		} catch (err) {
-			failures.push(err.message);
+	for (const rung of rungs) {
+		for (let attempt = 1; attempt <= PARSE_ATTEMPTS; attempt++) {
+			let result;
+			try {
+				result = await rung();
+			} catch (err) {
+				failures.push(err.message);
+				break;
+			}
+			if (!result) break;
+			try {
+				return { value: parse(result.text), model: result.model, fallbacks: failures };
+			} catch (err) {
+				const again = attempt < PARSE_ATTEMPTS;
+				failures.push(`${result.model} answered but its reply did not parse (${err.message})${again ? '; asked again' : ''}`);
+			}
 		}
 	}
 	throw new Error(`no model was reachable:\n  ${failures.join('\n  ') || 'no credentials for Vertex, OpenRouter, OpenAI, or NVIDIA'}`);

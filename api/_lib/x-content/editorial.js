@@ -90,7 +90,7 @@ function termHits(text, terms) {
 
 // `body` marks an Article body: one long piece that links wherever the reader
 // needs to go, so the one-link rule (a post's reach) does not apply to it.
-export function languageProblems(text, { body = false } = {}) {
+export function languageProblems(text, { body = false, poll = false } = {}) {
 	const problems = [];
 	const prose = withoutUrls(text);
 	for (const [wrong, right] of BRAND_RULES) {
@@ -112,7 +112,8 @@ export function languageProblems(text, { body = false } = {}) {
 	if (/\b(?:1\/\d*|\(1\/\d+\))\s*$/.test(text.trim())) problems.push({ rule: 'structure', severity: 'blocking', message: 'thread counter teaser; lead with the strongest true statement instead' });
 
 	const sentences = prose.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
-	if (sentences[0]?.endsWith('?')) problems.push({ rule: 'structure', severity: 'blocking', message: 'rhetorical-question opener; state what it does' });
+	// A poll asks its question by design; everywhere else a question opener is a tease.
+	if (!poll && sentences[0]?.endsWith('?')) problems.push({ rule: 'structure', severity: 'blocking', message: 'rhetorical-question opener; state what it does' });
 	const oneWord = sentences.map((s) => s.split(/\s+/).length === 1);
 	if (oneWord.some((flag, index) => flag && oneWord[index + 1] && oneWord[index + 2])) {
 		problems.push({ rule: 'structure', severity: 'blocking', message: 'one-word-sentence drumbeat reads as ad copy' });

@@ -299,9 +299,9 @@ export function validateItem(item, root, { quality = qualityAt(root), now = Date
 
 	// Editorial standards that can be judged offline block at every stage.
 	const articleText = articleProse(root, item);
-	const texts = [item.kind === 'article' ? item.article?.title : null, ...(item.posts || []).map((post) => post.text)].filter(Boolean);
-	for (const text of texts) {
-		for (const finding of languageProblems(text)) if (finding.severity === 'blocking') problems.push(`${finding.rule}: ${finding.message}`);
+	const texts = [item.kind === 'article' ? { text: item.article?.title } : null, ...(item.posts || []).map((post) => ({ text: post.text, poll: Boolean(post.poll) }))].filter((row) => row?.text);
+	for (const { text, poll } of texts) {
+		for (const finding of languageProblems(text, { poll })) if (finding.severity === 'blocking') problems.push(`${finding.rule}: ${finding.message}`);
 	}
 	if (articleText) {
 		for (const finding of languageProblems(articleText, { body: true })) if (finding.severity === 'blocking') problems.push(`article body ${finding.rule}: ${finding.message}`);
