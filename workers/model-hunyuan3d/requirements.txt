@@ -6,13 +6,15 @@
 # (DTensor import) that fails to load on the torch pinned below.
 
 # ── Model stack (torch 2.5.1/cu121, matching the Dockerfile pin) ─────────────
-# diffusers 0.38.0 + transformers 5.10.1 clear every open advisory on both
+# diffusers 0.38.0 + transformers 5.11.0 clear every open advisory on both
 # (ReDoS, model-file deserialization, custom_pipeline code loading) and are the
 # pair workers/model-partcrafter and workers/modly already run. transformers 5
 # needs huggingface_hub 1.x and torch>=2.4; accelerate 1.15.0 clears the
-# sharded-checkpoint path traversal.
+# sharded-checkpoint path traversal. 5.11.0, not 5.10.x: 5.10.1 through 5.10.4
+# assign torch.float8_e8m0fnu at import time, which torch 2.5.1 lacks, so
+# `import transformers.CLIPVisionModelWithProjection` failed the build's deps gate.
 diffusers==0.38.0
-transformers==5.10.1
+transformers==5.11.0
 accelerate==1.15.0
 safetensors==0.8.0
 huggingface_hub==1.33.0

@@ -24,7 +24,8 @@ pybind11==2.13.4
 
 # ── Core ML / diffusion ──────────────────────────────────────────────────────
 # Security bumps over upstream's list, each clearing every advisory its line has:
-#   - transformers 5.10.1 (from 4.46.0) needs torch>=2.4 (both Dockerfiles ship
+#   - transformers 5.11.0 (from 4.46.0; 5.10.x assigns torch.float8_e8m0fnu at
+#     import, absent from torch 2.5.1) needs torch>=2.4 (both Dockerfiles ship
 #     2.5.1 or newer) and huggingface-hub 1.x, hence 1.33.0 and safetensors 0.8.0.
 #   - diffusers 0.38.0 (from 0.30.0): the custom_pipeline / remote-repo loading
 #     advisories.
@@ -42,7 +43,7 @@ pybind11==2.13.4
 # basicsr 1.4.2 is the newest release and has no fix for its advisory (shell
 # injection through SLURM_NODELIST in its distributed-training init); the paint
 # pass only imports its RRDBNet arch for RealESRGAN inference.
-transformers==5.10.1
+transformers==5.11.0
 diffusers==0.38.0
 accelerate==1.15.0
 pytorch-lightning==2.6.6
