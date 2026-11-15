@@ -200,6 +200,14 @@ open with "The image shows...", and treating that as an infrastructure failure
 recorded the asset as ungated and re-spent GPU time on the same prompt at the
 next resume.
 
+Before any retry, a reply that is JSON except for a bare free-text value
+(`"critique": The render shows...`, every score present) has that value quoted
+and is parsed again. That shape was the first production vision-phase verdict on
+2026-11-15 and was being recorded as `vision_unavailable`; on the 10 most recent
+seeds it took the local measurement from 7 unavailable to 0. Only values that
+cannot start any JSON token are touched, so a score is never rewritten: a bare
+word where a number belongs still fails the numeric check.
+
 The bulk batch runner is [`scripts/gcp/seed-avatars.mjs`](../scripts/gcp/seed-avatars.mjs).
 It has no 70 s function wall, so unlike the cron it runs **both** stages; pass
 `--judge=local` to point its judge at `localJudgeTransport`.
