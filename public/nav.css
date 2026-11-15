@@ -87,7 +87,7 @@
 .nav-drawer a[aria-current="page"] { color: var(--nv-text); background: var(--nv-surface-1); }
 .nav-end { display: flex; align-items: center; gap: 8px; }
 .nav-end a {
-	display: inline-flex; align-items: center;
+	display: inline-flex; align-items: center; white-space: nowrap;
 	padding: 7px 12px; font-size: var(--text-ui); font-weight: 450; color: var(--nv-text-2);
 	transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
 }
@@ -104,8 +104,7 @@
    The signed-in row gives way in steps instead: the name pill is capped and
    ellipsized (nav-auth.js mirrors the full name into its title), the Dashboard
    link hides because the pill links to the same /dashboard, and the My
-   creations, Search and Walk labels collapse to icons earlier than they do
-   for a signed-out row. */
+   creations label collapses to its icon earlier than it does signed out. */
 .nav-end .console[data-auth-named] {
 	display: block; max-width: 9.5rem;
 	overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -116,19 +115,6 @@
 @media (max-width: 1320px) {
 	.nav-end:has(.console[data-auth-named]) .nav-mine-label { display: none; }
 	.nav-end:has(.console[data-auth-named]) .nav-mine { padding: 6px 9px; }
-}
-@media (max-width: 1180px) {
-	.nav-end:has(.console[data-auth-named]) .nav-search-label,
-	.nav-end:has(.console[data-auth-named]) .nav-search-hint { display: none; }
-	.nav-end:has(.console[data-auth-named]) .nav-search-btn {
-		width: 36px; height: 36px; padding: 0;
-		justify-content: center; border-radius: 8px;
-		border-color: transparent;
-	}
-}
-@media (max-width: 1040px) {
-	.nav-end:has(.console[data-auth-named]) .nav-walk-label { display: none; }
-	.nav-end:has(.console[data-auth-named]) .nav-walk-toggle { padding: 7px 10px; }
 }
 
 /* "My creations": the way back to everything you built. It sits beside the
@@ -187,7 +173,7 @@
 	border: 1px solid var(--nv-hairline-strong);
 	border-radius: 4px; padding: 2px 5px;
 }
-@media (max-width: 1080px) {
+@media (max-width: 1180px) {
 	.nav-search-label { display: none; }
 	.nav-search-hint { display: none; }
 	/* Collapse to a square icon button that matches the notifications bell,
@@ -438,7 +424,10 @@
 }
 .nav-walk-ico { font-size: var(--text-ui); line-height: 1; }
 
-@media (max-width: 880px) {
+/* The desktop row needs ~1040px even with every label collapsed (brand,
+   primary links and the end controls never shrink), so the drawer takes over
+   at 1080px rather than letting the row run off the viewport. */
+@media (max-width: 1080px) {
 	.nav-main { display: none; }
 	.nav-inner { padding: 14px 20px; gap: 16px; }
 	/* 44px minimum touch targets: expand the brand's hit area without moving it */
@@ -759,7 +748,7 @@
 .nav-drawer .btn:hover { border-color: var(--nv-text); background: rgba(255,255,255,0.04); }
 .nav-drawer .btn.primary { background: var(--nv-text); color: var(--nv-bg); border-color: var(--nv-text); }
 .nav-drawer .btn.primary:hover { background: var(--ink-bright); color: var(--on-accent); }
-@media (max-width: 880px) {
+@media (max-width: 1080px) {
 	.nav-toggle { display: flex; }
 	.nav-end { display: none; }
 }

@@ -842,7 +842,7 @@ function initDrawer(root) {
 		}
 	});
 	window.addEventListener('resize', () => {
-		if (window.innerWidth > 880 && isOpen()) setOpen(false);
+		if (window.innerWidth > 1080 && isOpen()) setOpen(false);
 	});
 }
 

@@ -338,16 +338,11 @@
    Add menubar row shipped with its glyph tops sliced off. */
 :root { --nav-h: 72px; }
 #nav-container:empty { min-height: var(--nav-h); }
-@media (max-width: 880px) {
+/* The header is a single row at every width: the drawer bar (73px) at
+   1080px and below, the full bar (71.6px) above, where the end-row labels
+   collapse by width instead of wrapping the bar onto a second row. */
+@media (max-width: 1080px) {
 	:root { --nav-h: 73px; }
-}
-/* Between the mobile drawer and the full-width bar the menu wraps onto a
-   second row (measured 94.3px at 881 to 1169px, 71.6px from 1170px, 73px at
-   880px and below). Reserve that band's real height or the page drops 22px
-   when the header lands. --nav-h stays the single-row figure that pinned
-   surfaces offset by. */
-@media (min-width: 881px) and (max-width: 1169px) {
-	#nav-container:empty { min-height: 95px; }
 }
 
 
