@@ -83,3 +83,64 @@ Verified in a Pixel 5 emulated browser against the after build: no 3D chunk on f
 3. `/play`: the probe cannot even read metrics because the main thread is blocked for over 30 s. Rapier (1.55 MB) and the world bundle need to load after first paint, behind an explicit "enter world" step on mobile.
 4. `/marketplace` and `/coin`: LCP is bound to API data (the hero thumbnail, the live price), so it moves with API latency more than with bundle size.
 5. TBT* at 4x CPU is over 600 ms on every page, including home. Reaching that bar needs per-page main-thread budgets, not one more lazy import.
+
+## Re-measure and fixes (2026-11-15)
+
+### Production, before this pass
+
+`node scripts/mobile-perf.mjs --budget --base https://three.ws` on 2026-11-15 (production build `518f61469`), Pixel 5, slow 4G, 4x CPU, one run per page, host load average about 70:
+
+| page | LCP ms | CLS | TBT* ms | transfer | LCP element |
+|---|---|---|---|---|---|
+| /play | 50252 | 0.001 | 65333 | 3882 KB | `p.pi-body` |
+| /marketplace | 15228 | 0.000 | 7709 | 1010 KB | `img.market-hero-poster` |
+| /agents/d94d2a50-... | 7436 | 0.000 | 22144 | 3457 KB | `#av-stage-loading` |
+| /forge | 4904 | 0.006 | 9227 | 1722 KB | |
+| /coin/FeMb...pump | 2656 | 0.001 | 1316 | 1188 KB | |
+| / | 2464 | 0.094 | 3004 | 1012 KB | |
+
+CLS now clears on every page (the 2026-11-03 to 2026-11-13 fixes are live). Ten budget lines are over: LCP on /play, /marketplace, /agents and /forge, and TBT* on all six.
+
+### Root cause 1: one 2.4 MB "three-addons" chunk on every 3D surface
+
+The request initiator trace showed /, /coin, /forge and /play each downloading `three-addons-*.js` at 638 KB transfer, even on pages that only render the walk companion or footer bot. Its source map (built with `build.sourcemap`) explained it: the `manualChunks` rule sent every module under `three/examples` to one group, and rolldown packed that group into a single 2.4 MB chunk (664 KB gzip) that held three's WebGPU and TSL builds (about 700 KB, only used by the cinematic TSL path), chevrotain (148 KB, VRML only), and the FBX, USD, Collada, LDraw and 3DM loaders next to GLTFLoader. Every lazy `import('three/addons/loaders/FBXLoader.js')` compiled to a facade that imported the whole chunk.
+
+Fix: the vendor rules moved to [scripts/vite/vendor-chunks.mjs](../../scripts/vite/vendor-chunks.mjs) (unit-tested in [tests/vite-vendor-chunks.test.js](../../tests/vite-vendor-chunks.test.js)). Only three's WebGL build (`three.core.js`, `three.module.js`) stays a shared `three-core` vendor chunk (183 KB transfer); addons and the WebGPU/TSL builds follow the import graph, so a lazy loader stays lazy.
+
+Static import closure (everything a page must download before the entry runs), gzip, same commit before and after the rule change:
+
+| entry | before | after |
+|---|---|---|
+| walk companion (site-wide) | 741 KB | 280 KB |
+| footer bot | 667 KB | 206 KB |
+| feature tour | 732 KB | 270 KB |
+| /play | 1145 KB | 700 KB |
+| /forge | 1165 KB | 741 KB |
+
+### Root cause 2: the agent profile's stats row raced the avatar download
+
+`fetchGlbStats` in [src/lib/glb-stats.js](../../src/lib/glb-stats.js) sent a HEAD request and then a 256 KB range request to read the GLB's JSON chunk, which is 1,324 bytes for this agent. On a 1.6 Mbps link that 256 KB shared bandwidth with `<model-viewer>`'s own download of the same 1.46 MB file. It now reads a 16 KB first window, takes the file size from the GLB header, and fetches only the missing bytes when the JSON chunk is larger. A server that ignores Range still works. Pinned by [tests/glb-stats.test.js](../../tests/glb-stats.test.js).
+
+### Local before and after
+
+Both builds served by [scripts/perf-preview-server.mjs](../../scripts/perf-preview-server.mjs) with `/api` and `/cdn` proxied to production. "Before" is the session's starting HEAD, "after" adds the two fixes. One run each, measured concurrently, host load average about 200 on 32 cores, so LCP and TBT* swing by seconds between runs and only transfer is a reliable comparison:
+
+| page | transfer before / after | LCP ms before / after | TBT* ms before / after |
+|---|---|---|---|
+| / | 1412 KB / 965 KB | 984 / 5112 | 3689 / 4316 |
+| /forge | 1767 KB / 1364 KB | 3244 / 3168 | 8963 / 7448 |
+| /play | 3074 KB / 2616 KB | probe failed / probe failed | |
+| /coin/FeMb...pump | 650 KB / 850 KB | 3984 / 4912 | 2418 / 3599 |
+| /agents/d94d2a50-... | 3259 KB / 3275 KB | 7812 / 6088 | 22460 / 23054 |
+| /marketplace | 1054 KB / 1237 KB | 23492 / 30412 | 11272 / 12455 |
+
+The coin "after" run includes the walk companion's first-visit auto-summon (it fires when the page goes quiet, which the "before" run missed inside its settle window); that summon now costs 280 KB instead of 741 KB. The marketplace difference is its live API data, not the bundle: no file it loads changed. The agent profile saving does not show through the proxy, which does not honour Range the way the bucket does.
+
+Verified in a Pixel 5 emulated browser (SwiftShader WebGL) against the after build with the companion enabled: /, /coin, /forge, /agents, /walk, /app and /play load with no page errors and no failed asset requests; the companion, footer bot, agent stage, viewer and /play canvases render; /play reaches its lobby. The only console error was a 429 from the production API behind the proxy.
+
+### Remaining work (2026-11-15)
+
+1. Deploy (`git push threews main`, then `npm run deploy:gcp:full`) and re-run `node scripts/mobile-perf.mjs --budget --runs 3 --base https://three.ws` on a quiet machine to record the production after column.
+2. `/play` is still far over: the world's own bundle (700 KB gzip static closure) plus Rapier load before the first frame. A mobile "enter world" step that defers both is the next lever.
+3. `/marketplace` and `/coin` LCP track API latency (hero thumbnail, live price), not bundle size.
+4. TBT* under 600 ms at 4x CPU is not reachable on these pages with lazy loading alone; it needs per-page main-thread budgets.

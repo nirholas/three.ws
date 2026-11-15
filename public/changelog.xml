@@ -15,6 +15,14 @@
 			<description>Finished 3D models are now saved to a second storage provider whenever the primary one refuses us, so a storage outage no longer throws away a model that already finished generating. Links to models made during an outage keep working, and they move back to the primary store once it recovers.</description>
 		</item>
 		<item>
+			<title>3D pages download far less on phones</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-15:3D pages download far less on phones</guid>
+			<pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Every page with a 3D element, including the walk companion that follows you around the site, used to download one 2.4 MB bundle of 3D loaders it mostly never used. Each page now loads only the 3D code it needs: the companion drops from about 741 KB to 280 KB, and /forge and /play each start with about 440 KB less. Agent profiles also stop competing with their own avatar download to read its stats, so the avatar appears sooner on slow connections.</description>
+		</item>
+		<item>
 			<title>Agent voice loads again on pages that embed the 3D agent directly</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-15:Agent voice loads again on pages that embed the 3D agent directly</guid>

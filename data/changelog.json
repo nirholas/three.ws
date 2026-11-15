@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-15",
+			"title": "3D pages download far less on phones",
+			"summary": "Every page with a 3D element, including the walk companion that follows you around the site, used to download one 2.4 MB bundle of 3D loaders it mostly never used. Each page now loads only the 3D code it needs: the companion drops from about 741 KB to 280 KB, and /forge and /play each start with about 440 KB less. Agent profiles also stop competing with their own avatar download to read its stats, so the avatar appears sooner on slow connections.",
+			"tags": ["improvement"],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-15",
 			"title": "Agent voice loads again on pages that embed the 3D agent directly",
 			"summary": "Pages that load the 3D agent element straight from the site, such as /cz, asked for a helper file at the wrong address, so starting a live voice session failed to load. The build now points those imports at the right file. Pages using the multiplayer client or form validation also stop filing false script-policy warnings, which keeps real security reports easy to spot.",
 			"tags": [
