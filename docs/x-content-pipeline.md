@@ -10,6 +10,8 @@ that passed is the queue's `approval` setting: the owner, or a policy that only
 ever releases posts filmed against the live product
 ([Who approves a post](#who-approves-a-post)).
 
+Relaunch status and the owner-gated steps: [x-content-relaunch-checklist.md](./x-content-relaunch-checklist.md).
+
 To write a post, start with [Writing a story](./x-story-authoring.md). An author working one
 product area at a time is handed [the author brief](./x-story-author-brief.md), and an author
 writing a long-form X Article is handed [the article brief](./x-article-author-brief.md).
