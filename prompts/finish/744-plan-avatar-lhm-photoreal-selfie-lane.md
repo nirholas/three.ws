@@ -2,6 +2,8 @@
 
 **Status (2026-11-04):** License gate checked first (Step 0): LHM code and LHM-500M-HF weights are Apache-2.0, but the required prior bundle contains SMPL-X (non-commercial research only, commercial needs a Meshcapade licence) and Meta Sapiens (treated as non-commercial). Per the Never-blocked table, only the dev-only worker is shipped: `workers/model-lhm/` (README with the licence table, contract-compatible `main.py`, Dockerfile with `TORCH_CUDA_ARCH_LIST=8.9`, cloudbuild with auth required, stage script, CPU guard test `test_lhm_prep.py` passing, vendored `worker_security.py` verified). Not done on purpose: API route, Forge UI and splat render path (tasks 4 to 6) stay unwired until the SMPL-X licence is obtained. The GPU path was never exercised (weights need a licence-gated tar). Owner: obtain the SMPL-X commercial licence and clear Sapiens, then stage weights and deploy.
 
+**Re-checked 2026-11-15:** still blocked on the same owner action. LHM upstream licence is still Apache-2.0; no SMPL-X commercial licence or Sapiens clearance is recorded anywhere in the repo. Worker checks still pass (`test_lhm_prep.py` ok, `npm run check:vendored` OK). Tasks 4 to 6 stay unwired by design.
+
 
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/744-plan-avatar-lhm-photoreal-selfie-lane.md`.
 

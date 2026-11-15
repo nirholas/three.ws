@@ -17,6 +17,7 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { rewriteHead } from './server/seo-head.mjs';
 import { keepEntryExports } from './scripts/vite/keep-entry-exports.mjs';
 import { watchIgnored } from './scripts/vite/watch-ignored.mjs';
+import { zodJitlessDefault } from './scripts/vite/zod-jitless-default.mjs';
 import { isLensEntry } from './scripts/lib/lens-surfaces.mjs';
 import { createCreationHeadRenderer, creationIdFromPath, apiCreationLoader } from './server/creation-head.mjs';
 import { isPlayPath, rewritePlayHead } from './server/play-head.mjs';
@@ -1354,6 +1355,9 @@ const appConfig = {
 		// /herald.js is imported by third-party pages and by /herald's own playground:
 		// `import { createHerald, pollSource } from 'https://three.ws/herald.js'`.
 		keepEntryExports({ herald: resolve(__dirname, 'src/herald-embed.js') }),
+		// zod's import-time Function("") probe would trip the no-eval CSP from
+		// dependency schemas built before src/shared/zod.js runs.
+		zodJitlessDefault(),
 		// Resolve the shared runtime i18n entry as an EXTERNAL script — but only
 		// during BUILD. Many static pages load the locale runtime via
 		// `<script type="module" src="/i18n.js">` (injected by
