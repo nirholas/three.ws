@@ -37,8 +37,20 @@ export function headForEntry(entry) {
 	return entry.moves ? 'gif' : 'shot';
 }
 
+// Every surface the queue already covers. Items written before `covers`
+// existed never declared it, so an item also covers the three.ws pages its
+// posts link to, any @three-ws package its posts name, and the package whose
+// unscoped name is its id; without that the backlog keeps offering surfaces
+// the account has already posted.
 export function coveredKeys(items) {
-	return new Set((items || []).flatMap((item) => item.covers || []));
+	const keys = new Set([...itemsByLanding(items).keys()]);
+	for (const item of items || []) {
+		for (const key of item.covers || []) keys.add(key);
+		if (item.id) keys.add(`@three-ws/${item.id}`);
+		const text = (item.posts || []).map((post) => post.text || '').join('\n');
+		for (const match of text.matchAll(/@three-ws\/[a-z0-9][a-z0-9._-]*/g)) keys.add(match[0].replace(/[.]+$/, ''));
+	}
+	return keys;
 }
 
 export function draftBacklog(entries, items, { limit = 12, audience = null } = {}) {

@@ -20,6 +20,16 @@ describe('draft backlog', () => {
 		expect(rows[0].url).toBe('https://three.ws/a');
 	});
 
+	it('counts an older item without covers as covering the pages it links and the packages it names', () => {
+		const entries = [entry('/linked', 'build', 90), entry('@three-ws/named-mcp', 'package', 80), entry('@three-ws/by-id', 'package', 70), entry('/open', 'build', 60)];
+		const items = [
+			{ id: 'old-page', posts: [{ text: 'Try it: three.ws/linked' }] },
+			{ id: 'old-pkg', posts: [{ text: 'npm install @three-ws/named-mcp' }] },
+			{ id: 'by-id', posts: [{ text: 'A post with no link.' }] },
+		];
+		expect(draftBacklog(entries, items).rows.map((row) => row.key)).toEqual(['/open']);
+	});
+
 	it('interleaves readers instead of following the score into one section', () => {
 		const entries = [entry('/c1', 'crypto', 100), entry('/c2', 'crypto', 99), entry('/c3', 'crypto', 98), entry('@x/sdk', 'package', 60), entry('/learn-a', 'learn', 40)];
 		const { rows } = draftBacklog(entries, [], { limit: 4 });
