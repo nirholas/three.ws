@@ -269,6 +269,24 @@
 			"height": 560,
 			"bytes": 125555,
 			"sha256": "cec4327f635af639c5cc0bae366558a4d1aeea56c0ec5d214dc92cff6bb85264"
+		},
+		{
+			"store": "powerpoint",
+			"from": "logo",
+			"path": "marketing/microsoft/media/powerpoint/logo-300x300.png",
+			"width": 300,
+			"height": 300,
+			"bytes": 30689,
+			"sha256": "1a9f502f4af502c67775f9f55b5f583ac7339fc33cf485bc62c393fb75e0ddd7"
+		},
+		{
+			"store": "powerbi",
+			"from": "logo",
+			"path": "marketing/microsoft/media/powerbi/logo-300x300.png",
+			"width": 300,
+			"height": 300,
+			"bytes": 30689,
+			"sha256": "1a9f502f4af502c67775f9f55b5f583ac7339fc33cf485bc62c393fb75e0ddd7"
 		}
 	],
 	"referenced": [
