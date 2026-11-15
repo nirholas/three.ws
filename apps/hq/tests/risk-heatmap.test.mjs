@@ -51,3 +51,29 @@ describe('risk scoring', () => {
     assert.equal(overallRisk([{ risk: null }]).risk, null);
   });
 });
+
+describe('buildHeatmap protocol selection', () => {
+  it('leaves custodial and non-contract categories out of the DeFi heatmap', async () => {
+    const { buildHeatmap } = await import('../api/risk-heatmap.js');
+    const synthetic = [
+      { id: '1', slug: 'synthetic-exchange', name: 'Synthetic Exchange', category: 'CEX', tvl: 9e10, chains: ['Solana'], chainTvls: { Solana: 9e10 } },
+      { id: '2', slug: 'synthetic-chain', name: 'Synthetic Chain', category: 'Chain', tvl: 8e10, chains: ['Solana'], chainTvls: { Solana: 8e10 } },
+      { id: '3', slug: 'synthetic-lend', name: 'Synthetic Lend', category: 'Lending', tvl: 3e9, chains: ['Solana'], chainTvls: { Solana: 3e9 }, audits: '2', listedAt: NOW - 2 * YEAR },
+      { id: '4', slug: 'synthetic-dex', name: 'Synthetic Dex', category: 'Dexs', tvl: 1e9, chains: ['Solana'], chainTvls: { Solana: 1e9 } },
+    ];
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async (url) => {
+      const u = String(url);
+      if (u === 'https://api.llama.fi/protocols') return new Response(JSON.stringify(synthetic), { status: 200 });
+      if (u === 'https://api.llama.fi/hacks') return new Response('[]', { status: 200 });
+      return new Response('unavailable', { status: 503 });
+    };
+    try {
+      const report = await buildHeatmap('Solana', 24);
+      assert.deepEqual(report.rows.map((r) => r.slug), ['synthetic-lend', 'synthetic-dex']);
+      assert.match(report.methodology, /exchanges/i);
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  });
+});

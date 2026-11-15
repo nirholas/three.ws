@@ -18,6 +18,8 @@ const limiter = createIpRateLimiter({ limit: 20, windowMs: 60_000 });
 const TIMEOUT_MS = 12_000;
 const CACHE_TTL_MS = 5 * 60_000;
 const DIMENSIONS = ['contract', 'oracle', 'governance', 'liquidity', 'market'];
+/** Custodial venues and base layers have no protocol contracts to score; same exclusions as protocol-health.js. */
+const EXCLUDED_CATEGORIES = new Set(['CEX', 'Chain', 'Infrastructure', 'Staking Pool']);
 
 /** DeFiLlama slug -> the oracle feeds that protocol prices off. Unlisted protocols have no oracle mapping. */
 const ORACLE_MAP = {
@@ -53,7 +55,7 @@ export async function buildHeatmap(chain, limit) {
   }
   const chainTvl = (p) => (chain ? Number(p.chainTvls?.[chain]) || 0 : Number(p.tvl) || 0);
   const picked = (Array.isArray(protocols) ? protocols : [])
-    .filter((p) => p.slug && chainTvl(p) > 0 && (!chain || (p.chains || []).includes(chain)))
+    .filter((p) => p.slug && !EXCLUDED_CATEGORIES.has(p.category) && chainTvl(p) > 0 && (!chain || (p.chains || []).includes(chain)))
     .sort((a, b) => chainTvl(b) - chainTvl(a))
     .slice(0, limit);
 
@@ -76,7 +78,7 @@ export async function buildHeatmap(chain, limit) {
   return {
     timestamp: new Date().toISOString(), chain: chain || 'all', dimensions: DIMENSIONS, rows,
     sources: ['DeFiLlama protocols and hacks', 'Oracle monitor (Pyth via Solana RPC, Chainlink via Ethereum RPC, Coinbase and Kraken)'],
-    methodology: 'Each cell is a 0-100 risk score (higher is riskier) from public data only. Contract: audit count, listing age, hack losses. Oracle: worst deviation from exchange mids and staleness, only for protocols with a mapped feed. Governance: whether a governance space is listed. Liquidity: TVL scale and 7d drawdown. Market: 1d and 7d TVL swing. A dimension with no data is unknown and is excluded from the overall average. Heuristic, not financial advice or an audit.',
+    methodology: 'Centralized exchanges, chains, infrastructure and staking pools are left out because they have no protocol contracts to score. Each cell is a 0-100 risk score (higher is riskier) from public data only. Contract: audit count, listing age, hack losses. Oracle: worst deviation from exchange mids and staleness, only for protocols with a mapped feed. Governance: whether a governance space is listed. Liquidity: TVL scale and 7d drawdown. Market: 1d and 7d TVL swing. A dimension with no data is unknown and is excluded from the overall average. Heuristic, not financial advice or an audit.',
   };
 }
 
