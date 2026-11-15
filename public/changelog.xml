@@ -15,6 +15,14 @@
 			<description>Finished 3D models are now saved to a second storage provider whenever the primary one refuses us, so a storage outage no longer throws away a model that already finished generating. Links to models made during an outage keep working, and they move back to the primary store once it recovers.</description>
 		</item>
 		<item>
+			<title>Gallery cards on /forge and /discover load small images again</title>
+			<link>https://three.ws/discover</link>
+			<guid isPermaLink="false">2026-11-15:Gallery cards on /forge and /discover load small images again</guid>
+			<pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>While our storage credential is being refused, the resized card images on /forge and /discover fell back to the full-size originals, so one card could cost 2.6 MB. They are now resized from a backup copy instead, so a 2.6 MB render arrives as about 10 KB. The app's install screenshots are also smaller with no visible change.</description>
+		</item>
+		<item>
 			<title>Parts you hide in the GLB editor stay hidden in the /viewer page</title>
 			<link>https://three.ws/viewer</link>
 			<guid isPermaLink="false">2026-11-15:Parts you hide in the GLB editor stay hidden in the /viewer page</guid>

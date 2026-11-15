@@ -599,6 +599,22 @@ Every Lighthouse run against production this afternoon came back at a `benchmark
 - **Agent cards wake on the whole card.** Agent cards bound their wake listener to the `<model-slot>` alone, which sits under the placeholder and thumbnail layers and covers only the picture box, so hovering an agent card never loaded its model. They now use the card as the attention host, like avatar cards and theme picks (`CARD_ATTENTION_HOSTS` in [src/marketplace.js](../src/marketplace.js)); the e2e spec's hover test reproduced it.
 - **Still open.** All of it, the 2026-11-13 variants and starter-chip grid included, ships with the next production deploy; the Lighthouse targets (`/forge` CLS under 0.05, `/discover` under 3,500 KiB, `/marketplace` under 6,000 KiB at 70 or better) need a re-measure after it, on a host idle enough to read 800 or more.
 
+### Updated 2026-11-15: the live re-measure, and variants that redirected to the full-size original
+
+Production revision `three-ws-api-00537-jb6` (deployed 2026-11-14) carries both 2026-11-13 passes. The shared host was again too loaded to read (load average 84 to 129), so the sweep ran on a dedicated Cloud Build `E2_HIGHCPU_8` worker with the same flags and Lighthouse 13.0.1, two runs per page, every run at `benchmarkIndex` 2,514 to 2,736:
+
+| Page | Score | CLS | Transferred | LCP | TBT |
+|---|---|---|---|---|---|
+| `/forge` | 94 / 89 | **0.014** | 6,765 KiB | 840 / 1,336ms | 43ms |
+| `/marketplace` | 85 / **96** | 0.030 | **3,782 to 3,965 KiB** (was 11,790) | 2,679 / 1,271ms | 56ms |
+| `/discover` | 39 / 83 | 0.218 / 0.038 | 5,324 to 5,397 KiB | 3,191 / 2,509ms | 1,023 / 47ms |
+
+`/forge` CLS and both `/marketplace` lines are closed. `/discover`'s bytes, and `/forge`'s rise from 2,597 KiB, had one root cause: production's R2 credential is being rejected (`signed read failed ... Unauthorized` in the logs, first seen 2026-10-23 and on every read checked 2026-11-15). The plain `/cdn/<key>` read already streams the public bucket domain on that fault, but `/cdn/_v/<width>/<key>` answered every failed HEAD with a 302 to the untouched original, so each card downloaded the full render: a 2,662 KiB PNG on `/forge`, a 1,263 KiB PNG plus six 138 to 173 KiB thumbnails on `/discover`. The variant route now builds the WebP from whichever copy answers (the GCS fallback bucket, then the public domain), keeps it 60 s at the edge and persists nothing ([api/cdn-object.js](../api/cdn-object.js), [tests/cdn-variant-degraded.test.js](../tests/cdn-variant-degraded.test.js)). Run against the real bucket with a rejected credential, that 2,662 KiB original serves as a 10,626-byte 385x512 WebP.
+
+Every page also paid about 1.1 MB for the five 1440x900 PNG install screenshots in the web manifest, which Chrome fetches during load. They are recompressed losslessly (1,486 KB to 1,271 KB, pixels verified identical); they stay PNG because the Microsoft Store packaging path ([scripts/package-microsoft-store-pwa.mjs](../scripts/package-microsoft-store-pwa.mjs)) reads them. A WebP swap would take them to about 240 KB and is the next lever if the Store tooling accepts it.
+
+- **Still open.** The `/discover` under-3,500 KiB line needs one more live measure after the next deploy (expected about 3,000 KiB once the variants resize). Rotating the R2 credential itself is the owner's step, and it also brings back the persisted, version-keyed variants.
+
 ### Updated 2026-11-13 (mobile): the agent profile stops preloading three.js
 
 On a Pixel 5 slow-4G profile, `/agents/<id>` modulepreloaded the site's whole three.js stack because Talk, Pose and the client-side export were static imports, even though the profile renders in `<model-viewer>`. They now load on first use ([src/avatar-page.js](../src/avatar-page.js)): first-load JavaScript went from 896 KB to 137 KB gzip and median LCP from 21.9 s to 13.7 s on a loaded host. [tests/avatar-page-first-load.test.js](../tests/avatar-page-first-load.test.js) fails if a static import chain from the page entry reaches `three` again. Measured before deploy with [scripts/perf-preview-server.mjs](../scripts/perf-preview-server.mjs), which serves a local build through the production route table with live `/api` data. Full tables and the remaining work: [docs/audit/mobile-perf-2026-11-03.md](audit/mobile-perf-2026-11-03.md).

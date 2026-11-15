@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-15T03:55:54.833Z",
+	"generated_at": "2026-11-15T04:04:49.753Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -13,6 +13,17 @@
 			"summary": "Finished 3D models are now saved to a second storage provider whenever the primary one refuses us, so a storage outage no longer throws away a model that already finished generating. Links to models made during an outage keep working, and they move back to the primary store once it recovers.",
 			"link": null,
 			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-15",
+			"type": "update",
+			"title": "Gallery cards on /forge and /discover load small images again",
+			"summary": "While our storage credential is being refused, the resized card images on /forge and /discover fell back to the full-size originals, so one card could cost 2.6 MB. They are now resized from a backup copy instead, so a 2.6 MB render arrives as about 10 KB. The app's install screenshots are also smaller with no visible change.",
+			"link": "/discover",
+			"tags": [
+				"improvement",
 				"fix"
 			]
 		},
