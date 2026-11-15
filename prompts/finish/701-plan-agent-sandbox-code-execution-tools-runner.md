@@ -1,5 +1,7 @@
 # Give agents sandboxed code execution: runner worker, execute_code and file tools, settings page
 
+**Status (2026-11-15):** Re-checked. The sandbox suite still passes (10 files, 134 tests). `gcloud run services list` in us-central1 shows no sandbox runner service, and `three-ws-api` has no `SANDBOX_*` env vars, so the runner deploy is still the only open step, owned by the owner (commands in `workers/sandbox-runner/README.md`).
+
 **Status (2026-11-13):** Re-checked. The sandbox suite still passes (10 files, 134 tests). `gcloud run services list` in us-central1 shows no sandbox runner service, and `three-ws-api` has no `SANDBOX_*` env vars, so the runner deploy has not happened yet. It remains the only open step, owned by the owner (commands in `workers/sandbox-runner/README.md`).
 
 **Status (2026-11-12):** Everything except the runner deploy is done and verified. `npx vitest run tests/sandbox-*.test.js tests/api/sandbox-owner-routes.test.js` passes 10 files, 134 tests (the isolation test's host-load-dependent CPU threshold was relaxed in 1a0773264). Through `executeInSandbox` on the docker backend as the QA account: `print(sum(range(10)))` returned 45, `while True: pass` stopped at the 5s wall-clock cap, and an HTTPS call failed with no name resolution; the proof run's rows were deleted afterwards. Full `npx vitest run`: 8 failing files, none sandbox related. Remaining, owned by the owner: deploy the runner and set `SANDBOX_RUNNER_URL` and `SANDBOX_RUNNER_TOKEN` on `three-ws-api` (commands in `workers/sandbox-runner/README.md`).
