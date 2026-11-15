@@ -72,10 +72,36 @@ export async function capturePage(url, { frame = 'browser', hide = [], scrollBy 
 	}
 }
 
+// One pass over a line, each token classed and escaped on its own, so a
+// highlight can never break the markup around it. Covers what the cards show:
+// HTML tags and attributes, JS/TS, shell, and JSON.
+const TOKEN = /((?<![:\w])\/\/.*$|(?<!\S)#(?=\s).*$|<!--.*?-->)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`)|(<\/?[a-zA-Z][\w-]*|\/?>)|(\b(?:import|from|export|const|let|var|await|async|function|return|new|if|else|for|of|in|await|class|extends|true|false|null|undefined|npm|npx|curl|git)\b)|(\b\d[\d_.]*\b)|([a-zA-Z_][\w-]*(?==)|[a-zA-Z_$][\w$]*(?=\())/g;
+const TOKEN_CLASS = ['c', 's', 't', 'k', 'n', 'a'];
+
+export function highlightLine(line) {
+	let out = '';
+	let last = 0;
+	for (const match of String(line).matchAll(TOKEN)) {
+		out += esc(line.slice(last, match.index));
+		const group = match.slice(1).findIndex((value) => value !== undefined);
+		out += `<span class="${TOKEN_CLASS[group]}">${esc(match[0])}</span>`;
+		last = match.index + match[0].length;
+	}
+	return out + esc(String(line).slice(last));
+}
+
+// Type size for a full-width code card: as large as the longest line and the
+// line count allow, so a two-line snippet reads from across a room and twelve
+// lines still fit. Monospace advances about 0.6 em per character.
+export function codeSize(lines = []) {
+	const longest = Math.max(1, ...lines.map((line) => String(line).length));
+	const byWidth = Math.floor((1456 - 64) / (longest * 0.6));
+	const byHeight = Math.floor(560 / (Math.max(1, lines.length) * 1.6));
+	return Math.max(18, Math.min(30, byWidth, byHeight));
+}
+
 function codeHtml(lines) {
-	return (lines || [])
-		.map((line) => `<div>${esc(line).replace(/(&lt;\/?)([a-z0-9-]+)/gi, '$1<b>$2</b>').replace(/([a-z-]+)=(&quot;|")/gi, '<i>$1</i>=$2')}</div>`)
-		.join('');
+	return (lines || []).map((line) => `<div>${highlightLine(line) || '&nbsp;'}</div>`).join('');
 }
 
 function frameHtml(spec, shotUri) {
@@ -96,8 +122,9 @@ export function cardHtml(spec, shotUri, brand) {
 	const W = CARD_WIDTH;
 	const H = CARD_HEIGHT;
 	const art = spec.frame === 'art';
-	const copyWidth = spec.frame === 'phone' ? 760 : spec.frame === 'panel' ? 700 : art ? 820 : 650;
-	const copyTop = art ? 'auto' : `${spec.code ? 196 : 232}px`;
+	const wide = spec.frame === 'code';
+	const copyWidth = wide ? W - 144 : spec.frame === 'phone' ? 760 : spec.frame === 'panel' ? 700 : art ? 820 : 650;
+	const copyTop = art ? 'auto' : `${wide ? 170 : spec.code ? 196 : 232}px`;
 	const headline = esc(spec.headline || '').replace(/\n/g, '<br>');
 	const code = codeHtml(spec.code);
 	return `<!doctype html><meta charset="utf-8"><style>
@@ -115,11 +142,13 @@ body{width:${W}px;height:${H}px;background:#000;color:#fff;overflow:hidden;posit
 .lockup img{width:64px;height:64px;border-radius:17px}
 .lockup span{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:42px;letter-spacing:-.045em}
 .copy{position:absolute;left:72px;top:${copyTop};${art ? 'bottom:96px;' : ''}width:${copyWidth}px;z-index:3}
-h1{font-family:'Space Grotesk',sans-serif;font-weight:600;letter-spacing:-.04em;line-height:1.02;font-size:${spec.headlineSize || (art ? 84 : 74)}px;${art ? 'text-shadow:0 4px 40px rgba(0,0,0,.85);' : ''}}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:600;letter-spacing:-.04em;line-height:1.02;font-size:${spec.headlineSize || (art ? 84 : wide ? 60 : 74)}px;${art ? 'text-shadow:0 4px 40px rgba(0,0,0,.85);' : ''}}
 .copy p{margin-top:26px;font-size:27px;line-height:1.45;color:${art ? '#c4d0e8' : '#a7b6d3'};${art ? 'text-shadow:0 2px 24px rgba(0,0,0,.9);' : ''}}
 .code{margin-top:34px;padding:22px 24px;border-radius:16px;background:rgba(12,16,32,.78);box-shadow:0 0 0 1px rgba(255,255,255,.10) inset;
 	font:500 16px/1.75 ui-monospace,'SF Mono',Menlo,Consolas,monospace;color:#c9d6f2;white-space:nowrap;overflow:hidden}
-.code b{color:#7fb2ff;font-weight:600}.code i{color:#b79bff;font-style:normal}
+.code .t{color:#7fb2ff;font-weight:600}.code .a{color:#b79bff}.code .s{color:#8fe3b4}.code .k{color:#ff9ecf}.code .n{color:#ffd28a}.code .c{color:#6b7a99;font-style:italic}
+${wide ? `.copy{top:150px;bottom:${spec.foot ? 110 : 70}px;display:flex;flex-direction:column;justify-content:center}.copy p{margin-top:16px;font-size:24px}
+.code{margin-top:30px;padding:28px 32px;font-size:${codeSize(spec.code)}px;line-height:1.6;white-space:pre;background:rgba(10,13,26,.88)}` : ''}
 .foot{position:absolute;left:72px;bottom:58px;font-size:21px;color:#8fa3c6;letter-spacing:.01em;z-index:3}
 .browser{position:absolute;left:760px;top:150px;width:780px;border-radius:18px;overflow:hidden;
 	background:#12131f;box-shadow:0 50px 100px rgba(0,0,0,.9), 0 12px 30px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.12) inset;

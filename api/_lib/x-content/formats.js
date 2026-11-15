@@ -19,18 +19,34 @@
 //   "head": { "as": "gif", "from": 2, "to": 8, "width": 640 }
 //   "head": { "as": "art", "headline": "...", "prompt": "what the key art shows", "at": 4 }
 //
+// Two heads stand on their own and need no reel, so a developer tip or a page
+// tour can go out without a scenario. When the item does carry one, its reel
+// still moves to a reply like any other head's.
+//
+//   "head": { "as": "code", "headline": "...", "code": ["<agent-3d src=...>"], "source": "path/in/repo" }
+//   "head": { "as": "shot", "headline": "...", "url": "https://three.ws/forge", "frame": "browser" }
+//
+// A code head's lines must appear in the file `source` names, so the snippet
+// on the card is code that ships. A shot head is a live capture of a three.ws
+// page; it records when it was taken and expires on the same clock as a proof
+// reel, so the page on the card is never older than the reels beside it.
+//
 // This module is pure: it runs in the production image, which renders nothing.
 
-import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describeItem } from './outcomes.js';
 import { languageProblems } from './editorial.js';
-import { loadProof } from './reel.js';
+import { PROOF_MAX_AGE_DAYS, loadProof } from './reel.js';
 import { mediaType } from './media.js';
 import { audienceOf, shapeOf } from './voice.js';
 
 export const FORMATS = ['video', 'gif', 'photo', 'text', 'article'];
-export const HEAD_KINDS = ['reel', 'card', 'gif', 'art'];
+export const HEAD_KINDS = ['reel', 'card', 'gif', 'art', 'code', 'shot'];
+// Heads built without a reel.
+export const STANDALONE_HEADS = ['code', 'shot'];
+const SHOT_HOSTS = /^(?:[a-z0-9-]+\.)*three\.ws$/i;
 
 export const HEAD_LIMITS = {
 	headline: 90,
@@ -38,7 +54,15 @@ export const HEAD_LIMITS = {
 	prompt: 1200,
 	gifSeconds: [1, 10],
 	gifWidth: [320, 1080],
+	codeLines: 12,
+	codeLineLength: 72,
 };
+
+// What a code head shows, as a fingerprint the built card records, so an edit
+// to the snippet or its headline cannot ship on the old picture.
+export function codeHash(head) {
+	return createHash('sha256').update(JSON.stringify([head?.headline || '', head?.body || '', head?.code || []])).digest('hex').slice(0, 16);
+}
 
 // The format of an item as the feed shows it.
 export function formatOf(item) {
@@ -76,6 +100,7 @@ export function formatMix(items) {
 export function reelPostIndex(item) {
 	const head = item?.head;
 	if (!head || head.as === 'reel') return 0;
+	if (STANDALONE_HEADS.includes(head.as) && !item.scenario) return null;
 	return Number.isInteger(head.reelIn) ? head.reelIn : 1;
 }
 
@@ -98,13 +123,14 @@ export function headSpecProblems(item) {
 	if (!head || !HEAD_KINDS.includes(head.as)) return [`head.as must be one of ${HEAD_KINDS.join(', ')}`];
 	if (item.kind !== 'post') return ['a head is only for post items; an article leads with its cover'];
 	if (head.as === 'reel') return [];
-	if (!item.scenario) problems.push(`a ${head.as} head is built from the item's proof reel, and the item carries no scenario`);
+	const standalone = STANDALONE_HEADS.includes(head.as);
+	if (!item.scenario && !standalone) problems.push(`a ${head.as} head is built from the item's proof reel, and the item carries no scenario`);
 
 	const reelIndex = reelPostIndex(item);
-	if (!(reelIndex >= 1 && reelIndex < (item.posts?.length || 0))) {
+	if (reelIndex !== null && !(reelIndex >= 1 && reelIndex < (item.posts?.length || 0))) {
 		problems.push(`head.as ${head.as} moves the reel to post ${reelIndex + 1}, so the item needs a reply there to carry it`);
 	}
-	if (['card', 'art'].includes(head.as)) {
+	if (['card', 'art', 'code', 'shot'].includes(head.as)) {
 		const headline = String(head.headline || '').trim();
 		if (!headline) problems.push(`a ${head.as} head needs a headline`);
 		if (headline.length > HEAD_LIMITS.headline) problems.push(`head.headline is ${headline.length} characters; keep it under ${HEAD_LIMITS.headline} so it reads in a phone timeline`);
@@ -121,6 +147,27 @@ export function headSpecProblems(item) {
 	}
 	if (head.as === 'art' && !String(head.prompt || '').trim()) problems.push('an art head needs a prompt that says what the key art shows');
 	if (head.as === 'art' && String(head.prompt || '').length > HEAD_LIMITS.prompt) problems.push(`head.prompt is over ${HEAD_LIMITS.prompt} characters`);
+	if (head.as === 'code') {
+		const lines = Array.isArray(head.code) ? head.code : [];
+		if (!lines.length || lines.every((line) => !String(line).trim())) problems.push('a code head needs code: the lines the card shows');
+		if (lines.length > HEAD_LIMITS.codeLines) problems.push(`head.code has ${lines.length} lines; a card reads at ${HEAD_LIMITS.codeLines} or fewer`);
+		for (const line of lines) {
+			if (typeof line !== 'string') problems.push('every line of head.code must be a string');
+			else if (line.length > HEAD_LIMITS.codeLineLength) problems.push(`head.code line "${line.slice(0, 30)}..." is ${line.length} characters; keep each under ${HEAD_LIMITS.codeLineLength} so it reads on a phone`);
+		}
+		if (!String(head.source || '').trim()) problems.push('a code head names its source: the repo file the lines come from, so the card shows code that ships');
+	}
+	if (head.as === 'shot') {
+		let url = null;
+		try {
+			url = new URL(head.url);
+		} catch {
+			problems.push('a shot head needs url: the three.ws page to capture');
+		}
+		if (url && !(url.protocol === 'https:' && SHOT_HOSTS.test(url.hostname))) problems.push(`head.url ${head.url} is not a three.ws page; a shot shows our own product`);
+		if (head.frame !== undefined && !['browser', 'phone'].includes(head.frame)) problems.push('head.frame must be browser or phone');
+		if (head.scrollBy !== undefined && !(Number.isFinite(head.scrollBy) && head.scrollBy >= 0)) problems.push('head.scrollBy must be a number of pixels, 0 or more');
+	}
 	if (head.as === 'gif') {
 		const [minSeconds, maxSeconds] = HEAD_LIMITS.gifSeconds;
 		if (head.from !== undefined || head.to !== undefined) {
@@ -141,15 +188,36 @@ function headMediaProblems(item, root) {
 	const problems = [];
 	const media = item.posts?.[0]?.media?.[0];
 	const expected = head.as === 'gif' ? 'gif' : 'image';
-	if (!media?.derived) problems.push(`the head post does not carry a ${head.as} built from the reel; run \`npm run x:content -- remix ${item.id}\``);
+	if (head.as === 'code') problems.push(...codeSourceProblems(head, root));
+	if (!media?.derived) problems.push(`the head post does not carry a ${head.as} built ${STANDALONE_HEADS.includes(head.as) ? 'for it' : 'from the reel'}; run \`npm run x:content -- remix ${item.id}\``);
 	else {
 		if (mediaType(media.path)?.kind !== expected) problems.push(`the head post carries ${media.path}, not a ${head.as}`);
 		if (media.derived.as !== head.as) problems.push(`the head post carries a ${media.derived.as}, but head.as is ${head.as}; run remix again`);
 		if (!existsSync(resolve(root, media.path))) problems.push(`${media.path} is missing`);
-		const proof = item.scenario ? loadProof(root, item.id) : null;
+		if (head.as === 'code' && media.derived.code !== codeHash(head)) problems.push(`the code card shows an older snippet or headline; run \`npm run x:content -- remix ${item.id}\``);
+		if (head.as === 'shot') {
+			if (media.derived.url !== head.url) problems.push(`the shot shows ${media.derived.url}, but head.url is ${head.url}; run remix again`);
+			const age = (Date.now() - Date.parse(media.derived.capturedAt)) / 86_400_000;
+			if (!(age >= 0)) problems.push('the shot records no capture time; run remix again');
+			else if (age > PROOF_MAX_AGE_DAYS) problems.push(`the shot was captured ${Math.floor(age)} days ago; the page moves, so run \`npm run x:content -- remix ${item.id}\``);
+		}
+		const proof = item.scenario && !STANDALONE_HEADS.includes(head.as) ? loadProof(root, item.id) : null;
 		if (proof?.video?.sha256 && media.derived.reel !== proof.video.sha256) {
 			problems.push(`the head was cut from an older reel; run \`npm run x:content -- remix ${item.id}\` so it shows what the latest run filmed`);
 		}
 	}
 	return problems;
+}
+
+// Every non-blank line on a code card must be a line of its source file
+// (leading and trailing space aside), so the card can only show shipped code.
+export function codeSourceProblems(head, root) {
+	const path = String(head.source || '').trim();
+	if (!path) return [];
+	const file = resolve(root, path);
+	if (!file.startsWith(resolve(root)) || !existsSync(file)) return [`head.source ${path} is not a file in the repo`];
+	const shipped = new Set(readFileSync(file, 'utf8').split('\n').map((line) => line.trim()));
+	return (head.code || [])
+		.filter((line) => typeof line === 'string' && line.trim() && !shipped.has(line.trim()))
+		.map((line) => `head.code line "${line.trim().slice(0, 40)}" is not in ${path}`);
 }

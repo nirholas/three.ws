@@ -1,6 +1,8 @@
 // Builds the head an item declares (api/_lib/x-content/formats.js) from its
 // proof reel: a black card around a frame of the reel, a looping GIF cut from
 // the reel's busiest stretch, or AI key art grounded on a frame of the reel.
+// Two heads need no reel: a code card (a snippet from a shipped file) and a
+// shot (a live capture of a three.ws page framed on the card).
 //
 // Every head records the sha256 of the reel it was cut from (`derived.reel`),
 // and the queue refuses a head whose reel has since been re-filmed, so a post
@@ -19,8 +21,8 @@ import sharp from 'sharp';
 import { FORMATS, ffmpegPath, loadProof } from '../../api/_lib/x-content/reel.js';
 import { GIF_LIMITS, MEDIA_TYPES, gifInfo, parseFfmpegProbe } from '../../api/_lib/x-content/media.js';
 import { GIF_MIN_WIDTH } from '../../api/_lib/x-content/editorial.js';
-import { HEAD_LIMITS, reelPostIndex } from '../../api/_lib/x-content/formats.js';
-import { encodeCard, renderCard } from './x-card.mjs';
+import { HEAD_LIMITS, STANDALONE_HEADS, codeHash, codeSourceProblems, reelPostIndex } from '../../api/_lib/x-content/formats.js';
+import { capturePage, encodeCard, isBlank, renderCard } from './x-card.mjs';
 
 const execFileAsync = promisify(execFile);
 const MB = 1024 * 1024;
@@ -182,6 +184,39 @@ async function buildCard(item, { root, proof, probe }) {
 	writeHead(root, path, buffer);
 	const alt = head.alt || `three.ws card on a black background with the headline "${oneLine(head.headline)}"${/[.!?]$/.test(oneLine(head.headline)) ? '' : '.'}${head.body ? ` ${sentence(head.body)}` : ''} Beside it, a frame of ${label} from the reel filmed live on the product.`;
 	return { path, alt, derived: derived(head, proof, { at: still.atSec }) };
+}
+
+// ── Code ────────────────────────────────────────────────────────────────────
+
+async function buildCode(item, { root }) {
+	const head = item.head;
+	const wrong = codeSourceProblems(head, root);
+	if (wrong.length) throw new Error(wrong.join('; '));
+	const png = await renderCard({ headline: head.headline, body: head.body, code: head.code, frame: 'code', foot: head.foot }, { root });
+	const { buffer, ext } = await encodeCard(png);
+	const path = `${headDir(item.id)}/code${ext}`;
+	writeHead(root, path, buffer);
+	const lines = head.code.filter((line) => line.trim());
+	const alt = head.alt || `three.ws card on a black background with the headline "${oneLine(head.headline)}"${/[.!?]$/.test(oneLine(head.headline)) ? '' : '.'}${head.body ? ` ${sentence(head.body)}` : ''} Below it, ${lines.length} line${lines.length === 1 ? '' : 's'} of code from ${head.source}: ${lines.map((line) => line.trim()).join(' ')}`;
+	return { path, alt: alt.slice(0, 1000), derived: { as: 'code', code: codeHash(head), source: head.source } };
+}
+
+// ── Shot ────────────────────────────────────────────────────────────────────
+
+async function buildShot(item, { root, log = () => {} }) {
+	const head = item.head;
+	const frame = head.frame || 'browser';
+	log(`  capturing ${head.url} (${frame})`);
+	const shot = await capturePage(head.url, { frame, hide: head.hide || [], scrollBy: head.scrollBy || 0 });
+	if (await isBlank(shot)) throw new Error(`${head.url} captured blank; the page did not render`);
+	const url = new URL(head.url);
+	const label = `${url.host}${url.pathname === '/' ? '' : url.pathname}`;
+	const png = await renderCard({ headline: head.headline, body: head.body, frame, label, foot: head.foot }, { root, shot });
+	const { buffer, ext } = await encodeCard(png);
+	const path = `${headDir(item.id)}/shot${ext}`;
+	writeHead(root, path, buffer);
+	const alt = head.alt || `three.ws card on a black background with the headline "${oneLine(head.headline)}"${/[.!?]$/.test(oneLine(head.headline)) ? '' : '.'}${head.body ? ` ${sentence(head.body)}` : ''} Beside it, a live capture of ${label}.`;
+	return { path, alt, derived: { as: 'shot', url: head.url, capturedAt: new Date().toISOString() } };
 }
 
 // ── GIF ─────────────────────────────────────────────────────────────────────
@@ -378,7 +413,15 @@ function writeHead(root, path, buffer) {
 
 // ── Placement ───────────────────────────────────────────────────────────────
 
-const BUILDERS = { card: buildCard, gif: buildGif, art: buildArt };
+const BUILDERS = { card: buildCard, gif: buildGif, art: buildArt, code: buildCode, shot: buildShot };
+
+// Builds a head that needs no reel and puts it on the head post. The reel, if
+// the item has one, stays wherever placeHead put it.
+async function placeStandalone(item, { root, log }) {
+	const media = await BUILDERS[item.head.as](item, { root, log });
+	item.posts[0].media = [media];
+	return { head: media };
+}
 
 // Puts the reel where the head says it goes and builds the head in front of
 // it. `reel` is the media entry proveItem returned. Mutates the item.
@@ -392,6 +435,7 @@ export async function placeHead(item, reel, { root, log = () => {} } = {}) {
 	if (!item.posts[reelIndex]) throw new Error(`head.as ${head.as} moves the reel to post ${reelIndex + 1}, which the item does not have; add a reply to carry it`);
 	// The reply carries the reel alone: X allows a video no company on its post.
 	item.posts[reelIndex].media = [reel];
+	if (STANDALONE_HEADS.includes(head.as)) return placeStandalone(item, { root, log });
 	const proof = loadProof(root, item.id);
 	if (!proof?.video?.sha256) throw new Error('no filmed proof on record to build the head from');
 	const probe = probeReel(root, proof.video.path);
@@ -402,6 +446,7 @@ export async function placeHead(item, reel, { root, log = () => {} } = {}) {
 
 // Rebuilds the head of an item that is already filmed, without filming again.
 export async function rebuildHead(item, { root, log = () => {} } = {}) {
+	if (STANDALONE_HEADS.includes(item.head?.as) && !item.scenario) return placeStandalone(item, { root, log });
 	const proof = loadProof(root, item.id);
 	if (!proof?.video?.path) throw new Error(`${item.id} has no filmed proof; run \`npm run x:content -- prove ${item.id}\` first`);
 	const reel = (item.posts || []).flatMap((post) => post.media || []).find((media) => media.path === proof.video.path);

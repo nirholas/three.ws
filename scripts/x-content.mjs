@@ -17,7 +17,9 @@
 //                                                            film, review, and release by policy where the queue allows it
 //   npm run x:content -- advance --ship                      and publish what is approved as bundles, so it goes out
 //                                                            without waiting for a deploy (needs X_CONTENT_BUNDLE_SECRET)
-//   npm run x:content -- remix <slug> --as card|gif|art|reel [--headline "..."] [--body "..."] [--at 6]
+//   npm run x:content -- remix <slug> --as card|gif|art|code|shot|reel [--headline "..."] [--body "..."] [--at 6]
+//                                    code: --code "line one\nline two" --source path/in/repo
+//                                    shot: --url https://three.ws/page [--frame browser|phone] [--scroll 400]
 //                                  [--from 2 --to 8] [--width 720] [--prompt "..."]
 //                                                            lead a filmed post with a black card, a GIF cut from
 //                                                            the reel, or AI key art; the reel moves to the first reply
@@ -49,7 +51,7 @@ import { FORMATS, proofPath, proofProblems, proveItem, scoutPage } from '../api/
 import { approvalPolicy, policyBlockers, releaseDigest, vetoUntil } from '../api/_lib/x-content/approval.js';
 import { learnLifts, outcomesStore } from '../api/_lib/x-content/outcomes.js';
 import { browserProblem } from '../api/_lib/x-content/verify.js';
-import { FORMATS as FEED_FORMATS, HEAD_KINDS as HEAD_AS, formatMix, formatOf, headSpecProblems, withFormats } from '../api/_lib/x-content/formats.js';
+import { FORMATS as FEED_FORMATS, HEAD_KINDS as HEAD_AS, STANDALONE_HEADS, formatMix, formatOf, headProblems, headSpecProblems, withFormats } from '../api/_lib/x-content/formats.js';
 import { placeHead, rebuildHead } from './lib/x-heads.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -545,7 +547,7 @@ async function adopt() {
 // `advance` reviews it again and releases it by policy.
 async function remix() {
 	const id = positional[1];
-	const usage = `Usage: remix <slug> [--as ${HEAD_AS.join('|')}] [--headline "Line one\\nLine two"] [--body "..."] [--at 6] [--from 2 --to 8] [--width 720] [--prompt "..."] [--alt "..."]\n       Without --as, rebuilds the head the item already declares.`;
+	const usage = `Usage: remix <slug> [--as ${HEAD_AS.join('|')}] [--headline "Line one\\nLine two"] [--body "..."] [--at 6] [--from 2 --to 8] [--width 720] [--prompt "..."] [--alt "..."]\n       [--code "line\\nline" --source path] [--url https://three.ws/page --frame browser|phone --scroll 400]\n       Without --as, rebuilds the head the item already declares.`;
 	if (!id) fail(usage);
 	const queue = loadQueue(root);
 	const item = queue.items.find((row) => row.id === id);
@@ -554,13 +556,13 @@ async function remix() {
 	if (!HEAD_AS.includes(as)) fail(usage);
 	await requireBrowser();
 	if (item.status === 'posted') fail(`${id} has already gone out`);
-	if (!item.scenario) fail(`${id} carries no scenario, so it has no reel to build a head from`);
+	if (!item.scenario && !STANDALONE_HEADS.includes(as)) fail(`${id} carries no scenario, so it has no reel to build a ${as} head from; a code or shot head needs none`);
 
 	const previous = item.head?.as === as ? item.head : {};
 	const text = (name) => option(name)?.replace(/\\n/g, '\n');
 	const number = (name) => (option(name) == null ? undefined : Number(option(name)));
 	const head = { ...previous, as };
-	for (const [key, value] of Object.entries({ headline: text('headline'), body: text('body'), prompt: text('prompt'), alt: text('alt'), at: number('at'), from: number('from'), to: number('to'), width: number('width') })) {
+	for (const [key, value] of Object.entries({ headline: text('headline'), body: text('body'), prompt: text('prompt'), alt: text('alt'), at: number('at'), from: number('from'), to: number('to'), width: number('width'), code: text('code')?.split('\n'), source: option('source'), url: option('url'), frame: option('frame'), scrollBy: number('scroll') })) {
 		if (value !== undefined) head[key] = value;
 	}
 	if (as === 'reel') delete item.head;
@@ -623,6 +625,16 @@ async function advance() {
 					row.stopped = `the feature did not pass its scenario at step ${failed.index} (${failed.kind} ${failed.target}): ${failed.detail}`;
 					continue;
 				}
+				saveQueueItem(root, item);
+			}
+			// A code or shot head is rebuilt when its snippet changed or its capture
+			// aged out, the same way a stale reel is filmed again above.
+			if (STANDALONE_HEADS.includes(item.head?.as) && headProblems(item, root).length) {
+				if (dryRun) {
+					row.stopped = `would rebuild its ${item.head.as} head`;
+					continue;
+				}
+				await rebuildHead(item, { root, log: console.log });
 				saveQueueItem(root, item);
 			}
 			const problems = validateItem({ ...item, status: 'review' }, root, { quality });
