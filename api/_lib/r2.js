@@ -11,6 +11,15 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { env } from './env.js';
+import {
+	fallbackBucket,
+	fallbackPut,
+	fallbackCopy,
+	fallbackGet,
+	fallbackHead,
+	fallbackDelete,
+	noteFallback,
+} from './storage-fallback.js';
 
 // Lazy client — S3Client constructor reads env credentials eagerly, so defer
 // until first use to keep this module importable without storage configured.
@@ -197,11 +206,38 @@ export async function presignGet({ key, expiresIn = 600 }) {
 	return getSignedUrl(r2, cmd, { expiresIn });
 }
 
+function isMissingObject(err) {
+	const code = err?.Code || err?.name;
+	return code === 'NoSuchKey' || code === 'NotFound' || err?.$metadata?.httpStatusCode === 404;
+}
+
+// Whether a failed R2 READ should be retried against the GCS fallback bucket
+// (api/_lib/storage-fallback.js): R2 could not answer at all, or answered that
+// it does not have the key, which is exactly the state of an object written
+// while R2 was refusing writes and not yet copied back.
+function readFallsBack(err) {
+	return Boolean(fallbackBucket()) && (isStorageInfrastructureError(err) || isMissingObject(err));
+}
+
+// Whether a failed R2 WRITE should be diverted to the fallback bucket. Only an
+// infrastructure refusal qualifies: an object-level fault (too large, bad
+// checksum) is the caller's and would fail identically anywhere.
+function writeFallsBack(err) {
+	return Boolean(fallbackBucket()) && isStorageInfrastructureError(err);
+}
+
 export async function headObject(key) {
 	if (isAbsoluteUrl(key)) return null; // not a bucket object
 	try {
 		return await r2.send(new HeadObjectCommand({ Bucket: env.S3_BUCKET, Key: key }));
 	} catch (err) {
+		if (readFallsBack(err)) {
+			const head = await fallbackHead(key).catch(() => null);
+			if (head) {
+				noteFallback('head', key, err);
+				return head;
+			}
+		}
 		if (err?.$metadata?.httpStatusCode === 404) return null;
 		throw err;
 	}
@@ -230,19 +266,31 @@ export async function listObjectsPage({ prefix, continuationToken, maxKeys = 100
 
 export async function deleteObject(key) {
 	if (isAbsoluteUrl(key)) return; // externally-hosted asset — nothing in our bucket to delete
+	// The key may have been written while R2 refused writes, so it can live in
+	// the fallback bucket too. Remove that copy first; R2 stays authoritative for
+	// whether the delete as a whole succeeded.
+	if (fallbackBucket()) {
+		await fallbackDelete(key).catch((err) => console.warn(`[storage-fallback] delete ${key} failed: ${err?.message || err}`));
+	}
 	await r2.send(new DeleteObjectCommand({ Bucket: env.S3_BUCKET, Key: key }));
 }
 
 export async function putObject({ key, body, contentType, metadata = {} }) {
-	await r2.send(
-		new PutObjectCommand({
-			Bucket: env.S3_BUCKET,
-			Key: key,
-			Body: body,
-			ContentType: contentType,
-			Metadata: metadata,
-		}),
-	);
+	try {
+		await r2.send(
+			new PutObjectCommand({
+				Bucket: env.S3_BUCKET,
+				Key: key,
+				Body: body,
+				ContentType: contentType,
+				Metadata: metadata,
+			}),
+		);
+	} catch (err) {
+		if (!writeFallsBack(err)) throw err;
+		await fallbackPut({ key, body, contentType, metadata });
+		noteFallback('put', key, err);
+	}
 }
 
 // Server-side object copy (no download/re-upload). Used by avatar forks to
@@ -253,18 +301,54 @@ export async function putObject({ key, body, contentType, metadata = {} }) {
 // copying.
 export async function copyObject({ fromKey, toKey }) {
 	if (isAbsoluteUrl(fromKey)) return false;
-	await r2.send(
-		new CopyObjectCommand({
-			Bucket: env.S3_BUCKET,
-			CopySource: `${env.S3_BUCKET}/${encodeR2Key(fromKey)}`,
-			Key: toKey,
-		}),
-	);
+	try {
+		await r2.send(
+			new CopyObjectCommand({
+				Bucket: env.S3_BUCKET,
+				CopySource: `${env.S3_BUCKET}/${encodeR2Key(fromKey)}`,
+				Key: toKey,
+			}),
+		);
+	} catch (err) {
+		// A missing source may simply have been written to the fallback bucket;
+		// an infrastructure refusal means R2 cannot copy anything right now.
+		if (!readFallsBack(err)) throw err;
+		if (!(await fallbackCopy({ fromKey, toKey }))) {
+			// The source lives only in R2, which cannot be written. Read it from
+			// the public bucket domain (it is readable there without the
+			// credential) and land the copy in the fallback bucket.
+			if (!isStorageInfrastructureError(err)) throw err;
+			const url = publicUrlOrNull(fromKey);
+			const res = url ? await fetch(url, { signal: AbortSignal.timeout(30_000) }).catch(() => null) : null;
+			if (!res?.ok) throw err;
+			await fallbackPut({
+				key: toKey,
+				body: Buffer.from(await res.arrayBuffer()),
+				contentType: res.headers.get('content-type') || 'application/octet-stream',
+			});
+		}
+		noteFallback('copy', toKey, err);
+	}
 	return true;
 }
 
+// Retry a failed R2 read against the fallback bucket; rethrow the R2 error when
+// the fallback does not hold the key either (so NoSuchKey stays NoSuchKey).
+async function readFromFallback(op, key, err, opts) {
+	if (!readFallsBack(err)) throw err;
+	const out = await fallbackGet(key, opts).catch(() => null);
+	if (!out) throw err;
+	noteFallback(op, key, err);
+	return out;
+}
+
 export async function getObjectBuffer(key) {
-	const { Body } = await r2.send(new GetObjectCommand({ Bucket: env.S3_BUCKET, Key: key }));
+	let Body;
+	try {
+		({ Body } = await r2.send(new GetObjectCommand({ Bucket: env.S3_BUCKET, Key: key })));
+	} catch (err) {
+		return (await readFromFallback('get', key, err)).body;
+	}
 	const chunks = [];
 	for await (const chunk of Body) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
 	return Buffer.concat(chunks);
@@ -328,6 +412,13 @@ export async function getObjectWithMetadata(key) {
 	try {
 		out = await r2.send(new GetObjectCommand({ Bucket: env.S3_BUCKET, Key: key }));
 	} catch (err) {
+		if (readFallsBack(err)) {
+			const fb = await fallbackGet(key).catch(() => null);
+			if (fb) {
+				noteFallback('get', key, err);
+				return { body: fb.body, metadata: fb.metadata, contentType: fb.contentType || null };
+			}
+		}
 		if (err?.$metadata?.httpStatusCode === 404 || err?.name === 'NoSuchKey') return null;
 		throw err;
 	}
@@ -340,9 +431,13 @@ export async function getObjectWithMetadata(key) {
 // Used by the rig classifier to read a GLB's glTF JSON chunk (which lives at
 // the file head) without downloading the whole — potentially large — mesh.
 export async function getObjectRange(key, length) {
-	const { Body } = await r2.send(
-		new GetObjectCommand({ Bucket: env.S3_BUCKET, Key: key, Range: `bytes=0-${length - 1}` }),
-	);
+	const range = `bytes=0-${length - 1}`;
+	let Body;
+	try {
+		({ Body } = await r2.send(new GetObjectCommand({ Bucket: env.S3_BUCKET, Key: key, Range: range })));
+	} catch (err) {
+		return (await readFromFallback('range', key, err, { range })).body;
+	}
 	const chunks = [];
 	for await (const chunk of Body) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
 	return Buffer.concat(chunks);
