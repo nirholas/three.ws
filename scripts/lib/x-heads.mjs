@@ -192,7 +192,7 @@ async function buildCode(item, { root }) {
 	const head = item.head;
 	const wrong = codeSourceProblems(head, root);
 	if (wrong.length) throw new Error(wrong.join('; '));
-	const png = await renderCard({ headline: head.headline, body: head.body, code: head.code, frame: 'code', foot: head.foot }, { root });
+	const png = await renderCard({ headline: head.headline, body: head.body, code: head.code.map((line) => line.replace(/\t/g, '  ')), frame: 'code', foot: head.foot }, { root });
 	const { buffer, ext } = await encodeCard(png);
 	const path = `${headDir(item.id)}/code${ext}`;
 	writeHead(root, path, buffer);

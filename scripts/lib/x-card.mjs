@@ -75,7 +75,7 @@ export async function capturePage(url, { frame = 'browser', hide = [], scrollBy 
 // One pass over a line, each token classed and escaped on its own, so a
 // highlight can never break the markup around it. Covers what the cards show:
 // HTML tags and attributes, JS/TS, shell, and JSON.
-const TOKEN = /((?<![:\w])\/\/.*$|(?<!\S)#(?=\s).*$|<!--.*?-->)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`)|(<\/?[a-zA-Z][\w-]*|\/?>)|(\b(?:import|from|export|const|let|var|await|async|function|return|new|if|else|for|of|in|await|class|extends|true|false|null|undefined|npm|npx|curl|git)\b)|(\b\d[\d_.]*\b)|([a-zA-Z_][\w-]*(?==)|[a-zA-Z_$][\w$]*(?=\())/g;
+const TOKEN = /((?<![:\w])\/\/.*$|(?<!\S)#(?=\s).*$|<!--.*?-->)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`)|(<\/?[a-zA-Z][\w-]*|(?<!=)\/?>)|(\b(?:import|from|export|const|let|var|await|async|function|return|new|if|else|for|of|in|await|class|extends|true|false|null|undefined|npm|npx|curl|git)\b)|(\b\d[\d_.]*\b)|([a-zA-Z_][\w-]*(?==)|[a-zA-Z_$][\w$]*(?=\())/g;
 const TOKEN_CLASS = ['c', 's', 't', 'k', 'n', 'a'];
 
 export function highlightLine(line) {
