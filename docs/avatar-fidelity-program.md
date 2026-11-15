@@ -336,7 +336,36 @@ generation is rejected rather than painted on.
 
 ### Track 3 — Dense identity geometry by per-subject optimisation
 
-**Status 2026-11-04.** The optimiser is built and ships disabled: `workers/avatar-reconstruction/dense_fit.py` behind `DENSE_FIT=1` (per-pixel Lambertian photometric term, landmark, smoothness and symmetry priors, optional PyTorch3D silhouette on CUDA, normal-only bounded displacement, wall-clock budget, returns None rather than a worse head). On a synthetic sphere with a known relief it recovers the relief shape (correlation above 0.6 with the truth, detrended error below the starting error). The 40-face `eval.run_eval` on/off comparison and `eval/detection_guard.py` have not been run: they need the GPU image (`Dockerfile.rtx`, `cloudbuild.rtx.yaml`), so no fidelity gain is claimed yet and the step stays off.
+**Status 2026-11-15: measured on the RTX PRO 6000, stays off.** The optimiser is built and ships disabled: `workers/avatar-reconstruction/dense_fit.py` behind `DENSE_FIT=1` (per-pixel Lambertian photometric term, landmark, smoothness and symmetry priors, PyTorch3D silhouette on CUDA, normal-only bounded displacement, wall-clock budget, returns None rather than a worse head). On a synthetic sphere with a known relief it recovers the relief shape (correlation above 0.6 with the truth, detrended error below the starting error).
+
+The acceptance run used two Cloud Run services in europe-west4 on one RTX PRO 6000 image (`server-rtx@sha256:1ffd5549...`, built from `Dockerfile.rtx`), differing only in the flag: `avatar-reconstruction-rtx` (`DENSE_FIT=0`) and `avatar-reconstruction-dense-staging` (`DENSE_FIT=1`). Both answer `/health` with `dense_fit` reporting the flag (`/healthz` is reserved by the run.app front end). The fit ran on all 40 reference faces (0 skipped), median 6.9 s per head. Reports are mirrored to `gs://three-ws-avatar-reconstructions/eval-reports/2026-11-15-dense-fit/`.
+
+Fidelity, 40-face reference set (`eval/refs`), wolf3d template:
+
+```
+python -m eval.run_eval --compare eval/reports/dense-off-93f96515.json eval/reports/dense-on-93f96515.json
+dense-off  ISE 0.1591  floor 0.3991  n=40
+dense-on   ISE 0.1507  floor 0.3991  n=40
+IMPROVED 5.2%
+by region:
+  brow     0.1406 -> 0.1496  up    6.4%
+  cheeks   0.2115 -> 0.2142  up    1.3%
+  jaw      0.1271 -> 0.1182  down  7.0%
+  nose     0.0810 -> 0.0786  down  3.0%
+  oval     0.1839 -> 0.1667  down  9.4%
+1 face got worse: black-african-adult-man-long-hair 0.1612 -> 0.1664
+```
+
+Stability (`eval/robustness.py --url`, 200 degraded versions of the same 40 faces):
+
+| | instability mean | worst | blurred | dim | low_res | occluded | turned |
+|---|---|---|---|---|---|---|---|
+| dense off | 0.0056 | 0.0200 | 0.0049 | 0.0037 | 0.0036 | 0.0117 | 0.0043 |
+| dense on | 0.0213 | 0.0678 | 0.0189 | 0.0143 | 0.0152 | 0.0414 | 0.0167 |
+
+Safety (`eval/detection_guard.py --url`, 40 refs plus 16 adversarial): 0 ungated adversarial inputs distort more than a real face, with the fit off and on. The fit widens the real-face displacement band from 0.2713-0.2839 to 0.2706-0.2912, and every adversarial head stays inside it.
+
+**Verdict: fails acceptance, ships disabled.** The ISE gain is real (5.2%, 62.2% of the template gap closed against 60.1%), but instability rises 3.8x, to 0.0213, far past the clamp-0.55 knee (0.0057, Track 1). The morph clamp buys 40-50 units of fidelity per unit of stability across its usable range; the dense fit buys about 0.5 (0.0084 ISE for 0.0156 instability). A user retrying with a slightly worse photo would get a visibly different head. Cause: the photometric term fits whatever shading the photo carries, so blur, dim light and occluders become geometry; the worst case is occlusion (hair or a hand), 3.5x the morph's own instability. Next: move the fit onto the parametric slider basis (Track 5), which keeps every solution on the face manifold, and weight the photometric term by a per-pixel confidence (sharpness, exposure, skin mask) before re-measuring. Enable only when the stability number stays at or below the knee.
 
 The Phase-2 morph is driven by 468 sparse landmarks diffused across 2162 head
 vertices. It captures gross proportion — face width, jaw, nose projection, brow
@@ -396,10 +425,14 @@ GPU per avatar against a fleet already at its ceiling.
 - Chase the L4 quota preference (`l4-no-zonal-us-central1-8`, preferred 16). On
   a grant ≥ 8, the fleet-wide scale-up commands are pre-approved and listed in
   [ops/gcp-credits-plan.md](ops/gcp-credits-plan.md).
-- Port the reconstruction worker to the granted RTX PRO 6000 (CUDA 12.8 / torch
-  cu128; platform minimum 20 CPU / 80 Gi). `workers/model-hunyuan3d/Dockerfile.hunyuan21rtx`
-  is the first mover to copy. 96 GB of VRAM makes the Track 3 optimisation loop
-  practical at interactive latency.
+- **Done 2026-11-15:** the reconstruction worker runs on the RTX PRO 6000
+  (`workers/avatar-reconstruction/Dockerfile.rtx`: CUDA 12.8, torch cu128,
+  PyTorch3D built for sm_120; `cloudbuild.rtx.yaml`). Two scale-to-zero services
+  in europe-west4 (`avatar-reconstruction-rtx`, `avatar-reconstruction-dense-staging`,
+  max 1 instance each, 20 CPU / 80 Gi) served the Track 3 acceptance run: the
+  dense fit costs a median 6.9 s per head there. Production still routes every
+  job to the CPU service; `RECONSTRUCT_DENSE_URL` stays unset until Track 3
+  passes its stability gate.
 - Vertex AI custom jobs for any batch experiment, so research load never competes
   with the serving fleet for the same three L4s.
 

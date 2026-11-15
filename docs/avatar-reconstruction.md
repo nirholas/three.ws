@@ -242,7 +242,10 @@ never fails a job: a timeout or a fit that does not lower the loss keeps the mor
 head. The CPU image ships no torch, so the step stays off there. When
 `RECONSTRUCT_DENSE_URL` is set, [`api/_providers/gcp.js`](../api/_providers/gcp.js)
 routes face jobs (those without a tier, path or polycount budget) to the RTX
-service built from `Dockerfile.rtx`; otherwise every job takes the CPU service. See
+service built from `Dockerfile.rtx`; otherwise every job takes the CPU service.
+Measured 2026-11-15 on the RTX PRO 6000: ISE improves 5.2% but photo-quality
+instability rises 3.8x past the shipped knee, so production keeps the variable
+unset (details in [avatar-fidelity-program.md](avatar-fidelity-program.md), Track 3). See
 [`workers/avatar-reconstruction/README.md`](../workers/avatar-reconstruction/README.md#dense-head-fit-default-off-dense_fit1).
 
 > **Every buffer read is stride-aware.** The head's vertex attributes share one

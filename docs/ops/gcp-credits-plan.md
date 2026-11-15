@@ -123,6 +123,13 @@ rebuild. First mover: `workers/model-hunyuan3d/Dockerfile.hunyuan21rtx`
 the L4 build cannot even load (see the fleet table). When an L4 lane needs
 headroom before the L4 grant lands, port it the same way rather than parking
 work on the quota.
+
+Avatar reconstruction has an RTX lane too (2026-11-15): `avatar-reconstruction-rtx`
+(`DENSE_FIT=0`) and `avatar-reconstruction-dense-staging` (`DENSE_FIT=1`) in
+**europe-west4**, one image from `workers/avatar-reconstruction/cloudbuild.rtx.yaml`,
+20 CPU / 80 Gi, min 0 / max 1 each, so they cost nothing idle. They exist for the
+dense-fit acceptance runs (Vertex-free, see `docs/avatar-fidelity-program.md`
+Track 3); production routes nothing to them while `RECONSTRUCT_DENSE_URL` is unset.
 - **When granted ≥ 8, execute immediately (no owner input needed):**
   ```sh
   gcloud run services update model-trellis   --region us-central1 --max-instances=3

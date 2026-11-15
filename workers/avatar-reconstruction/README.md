@@ -268,7 +268,16 @@ Unauthenticated, and what the Cloud Run startup probe hits.
 
 Licensing: PyTorch and PyTorch3D are BSD-3. No nvdiffrast, FLAME or MICA.
 
-The CPU image (`Dockerfile`) does not ship torch, so the step stays off there. `Dockerfile.rtx` (CUDA 12.8, torch cu128, PyTorch3D built for sm_120) builds the GPU variant and runs `test_dense_fit.py` as a build gate; `cloudbuild.rtx.yaml` builds and pushes it without deploying. The API routes face jobs to that service when `RECONSTRUCT_DENSE_URL` is set (`api/_providers/gcp.js`); high-detail jobs (tier, path or polycount budget) and an unset variable keep the CPU service. Acceptance (40-face eval on and off, `--compare`, `eval/detection_guard.py`) runs on that image and is an owner step; the step ships disabled until the report shows a material ISE gain.
+The CPU image (`Dockerfile`) does not ship torch, so the step stays off there. `Dockerfile.rtx` (CUDA 12.8, torch cu128, PyTorch3D built for sm_120) builds the GPU variant and runs `test_dense_fit.py` as a build gate; `cloudbuild.rtx.yaml` builds and pushes it without deploying. The API routes face jobs to that service when `RECONSTRUCT_DENSE_URL` is set (`api/_providers/gcp.js`); high-detail jobs (tier, path or polycount budget) and an unset variable keep the CPU service. Acceptance ran on that image on 2026-11-15 (europe-west4, RTX PRO 6000, median 6.9 s per fit): mean ISE 0.1591 to 0.1507 (5.2% better) on the 40 references, 0 ungated adversarial inputs distorting more than a real face, but `eval/robustness.py` instability 0.0056 to 0.0213, far past the clamp-0.55 knee (0.0057). The step therefore stays off. Numbers, commands and the next step are in [docs/avatar-fidelity-program.md](../../docs/avatar-fidelity-program.md) (Track 3). To re-measure, point the eval tools at the two staging services, which differ only in `DENSE_FIT`:
+
+```bash
+export RECON_KEY=$(gcloud secrets versions access latest --secret avatar-reconstruction-key)
+python -m eval.run_eval    --photos eval/refs --url https://avatar-reconstruction-dense-staging-lp642k3kpa-ez.a.run.app --out eval/reports/dense-on.json
+python -m eval.robustness  --photos eval/refs --url https://avatar-reconstruction-dense-staging-lp642k3kpa-ez.a.run.app --out eval/reports/robustness-dense-on.json
+python -m eval.detection_guard --photos eval/refs --adversarial eval/adversarial --url https://avatar-reconstruction-dense-staging-lp642k3kpa-ez.a.run.app --out eval/reports/guard-dense-on.json
+```
+
+Use `avatar-reconstruction-rtx-lp642k3kpa-ez.a.run.app` for the dense-off side. `eval.detection_guard` imports `face_pipeline` locally even in `--url` mode, so run it from an environment with `requirements.txt` installed (Python 3.11).
 
 ## View synthesis (texture only, default off)
 
