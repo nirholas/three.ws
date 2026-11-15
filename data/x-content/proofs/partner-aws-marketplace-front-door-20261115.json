@@ -1,0 +1,142 @@
+{
+	"id": "partner-aws-marketplace-front-door-20261115",
+	"scenarioHash": "08a6e0f4f461cbe0073f060a845011072b4a68e6b193a3fd68643279a0b264ea",
+	"ranAt": "2026-11-15T14:59:59.776Z",
+	"target": {
+		"commit": "559f73663",
+		"revision": "three-ws-api-00545-cbr"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/aws",
+			"detail": "loaded https://three.ws/aws",
+			"ok": true,
+			"ms": 4898,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "read",
+			"target": "path",
+			"detail": "path = \"Software Path\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 6845,
+			"frames": 66
+		},
+		{
+			"index": 4,
+			"kind": "scroll",
+			"target": "Free AWS subscription",
+			"detail": "scrolled 543 px",
+			"ok": true,
+			"ms": 4455,
+			"frames": 36
+		},
+		{
+			"index": 5,
+			"kind": "expect",
+			"target": "issues your x402 access key",
+			"detail": "appeared after 0.0 s",
+			"ok": true,
+			"ms": 14,
+			"frames": 0
+		},
+		{
+			"index": 6,
+			"kind": "hold",
+			"target": "3000",
+			"detail": "3000 ms",
+			"ok": true,
+			"ms": 10034,
+			"frames": 90
+		},
+		{
+			"index": 7,
+			"kind": "scroll",
+			"target": "AWS Marketplace does not meter or bill it",
+			"detail": "scrolled 30 px",
+			"ok": true,
+			"ms": 4551,
+			"frames": 36
+		},
+		{
+			"index": 8,
+			"kind": "expect",
+			"target": "AWS Marketplace does not meter or bill it",
+			"detail": "appeared after 0.0 s",
+			"ok": true,
+			"ms": 11,
+			"frames": 0
+		},
+		{
+			"index": 9,
+			"kind": "hold",
+			"target": "3500",
+			"detail": "3500 ms",
+			"ok": true,
+			"ms": 11873,
+			"frames": 105
+		},
+		{
+			"index": 10,
+			"kind": "scroll",
+			"target": "Marketplace APIs in us-east-1",
+			"detail": "scrolled 470 px",
+			"ok": true,
+			"ms": 5554,
+			"frames": 36
+		},
+		{
+			"index": 11,
+			"kind": "read",
+			"target": "region",
+			"detail": "region = \"us-east-1\"",
+			"ok": true,
+			"ms": 4,
+			"frames": 0
+		},
+		{
+			"index": 12,
+			"kind": "hold",
+			"target": "4500",
+			"detail": "4500 ms",
+			"ok": true,
+			"ms": 16349,
+			"frames": 135
+		}
+	],
+	"facts": {
+		"path": "Software Path",
+		"region": "us-east-1"
+	},
+	"saw": [
+		"issues your x402 access key",
+		"AWS Marketplace does not meter or bill it"
+	],
+	"responses": [],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/partner-aws-marketplace-front-door-20261115/reel.mp4",
+		"sha256": "69a340ca2ba5e7730db289ab0f8b9ece4829ee96304cf953789d5495532874fb",
+		"frames": 504,
+		"motion": 0.205,
+		"durationSec": 16.8,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}
