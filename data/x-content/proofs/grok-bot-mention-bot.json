@@ -1,10 +1,10 @@
 {
 	"id": "grok-bot-mention-bot",
 	"scenarioHash": "a2892092e80a6b4b0034b9ba3a3ce0654bc9e21d0a6d27235907ae296c02c2c3",
-	"ranAt": "2026-11-14T02:30:00.815Z",
+	"ranAt": "2026-11-16T15:23:26.590Z",
 	"target": {
-		"commit": "518f61469",
-		"revision": "three-ws-api-00536-rjn"
+		"commit": "559f73663",
+		"revision": "three-ws-api-00545-cbr"
 	},
 	"passed": false,
 	"steps": [
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/grok",
 			"detail": "loaded https://three.ws/grok",
 			"ok": true,
-			"ms": 15969,
+			"ms": 15731,
 			"frames": 0
 		},
 		{
@@ -23,7 +23,7 @@
 			"target": "2200",
 			"detail": "2200 ms",
 			"ok": true,
-			"ms": 79298,
+			"ms": 94765,
 			"frames": 66
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "Run exactly what Grok runs",
 			"detail": "scrolled 2406 px",
 			"ok": true,
-			"ms": 27590,
+			"ms": 56404,
 			"frames": 48
 		},
 		{
@@ -41,16 +41,16 @@
 			"target": "a red vintage scooter",
 			"detail": "typed 21 characters",
 			"ok": true,
-			"ms": 45716,
+			"ms": 57581,
 			"frames": 58
 		},
 		{
 			"index": 5,
 			"kind": "click",
 			"target": "Generate in 3D",
-			"detail": "clicked; POST /api/mcp-grok answered 200 in 0.3 s",
+			"detail": "clicked; POST /api/mcp-grok answered 200 in 0.4 s",
 			"ok": true,
-			"ms": 21226,
+			"ms": 20459,
 			"frames": 21
 		},
 		{
@@ -59,7 +59,7 @@
 			"target": "Landed in",
 			"ok": false,
 			"detail": "locator.waitFor: Timeout 300000ms exceeded.",
-			"ms": 300862,
+			"ms": 309540,
 			"frames": 0
 		}
 	],
@@ -70,13 +70,13 @@
 			"method": "POST",
 			"path": "/api/mcp-grok",
 			"status": 200,
-			"seconds": 0.3
+			"seconds": 0.4
 		}
 	],
 	"cuts": [
 		{
 			"afterStep": 6,
-			"seconds": 300.1
+			"seconds": 300
 		}
 	],
 	"video": null
