@@ -736,6 +736,14 @@ export const env = {
 		return opt('NVIDIA_A2F_FUNCTION_ID');
 	},
 
+	// Booth key for the digital-human kiosk lane (api/_lib/kiosk-auth.js). A kiosk
+	// opened once with /audio2face?kiosk=1&key=<value> sends it as x-kiosk-key and
+	// moves /api/a2f and /api/asr onto the finite digitalHumanKiosk bucket instead
+	// of the anonymous per-IP buckets. Unset means the kiosk lane is off.
+	get DIGITAL_HUMAN_KIOSK_KEY() {
+		return opt('DIGITAL_HUMAN_KIOSK_KEY');
+	},
+
 	// Optional override for the hosted NVIDIA Cosmos world-model invoke URL used by
 	// the Cosmos text→world video lane (api/_providers/nvidia-cosmos.js, api/cosmos.js).
 	// Defaults to the published cosmos gateway path for cosmos-predict
