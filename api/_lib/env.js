@@ -1052,6 +1052,15 @@ export const env = {
 	get A2A_TASK_TTL_SECONDS() {
 		return opt('A2A_TASK_TTL_SECONDS', '86400');
 	},
+	// A2A streaming (message/stream, SendStreamingMessage, tasks/resubscribe):
+	// how often the server polls the generation job behind an open stream, and
+	// the longest one stream stays open before the client must resubscribe.
+	get A2A_STREAM_POLL_MS() {
+		return opt('A2A_STREAM_POLL_MS', '3000');
+	},
+	get A2A_STREAM_MAX_SECONDS() {
+		return opt('A2A_STREAM_MAX_SECONDS', '540');
+	},
 	// Per-network facilitators. PayAI supports both Solana and Base mainnet;
 	// x402.org's reference facilitator only supports base-sepolia, so it cannot
 	// be the default for Base mainnet payments.

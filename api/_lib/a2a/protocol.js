@@ -51,7 +51,7 @@ const METHODS = {
 	'tasks/get': { op: 'get', dialect: DIALECT_LEGACY },
 	'tasks/cancel': { op: 'cancel', dialect: DIALECT_LEGACY },
 	'message/stream': { op: 'stream', dialect: DIALECT_LEGACY },
-	'tasks/resubscribe': { op: 'stream', dialect: DIALECT_LEGACY },
+	'tasks/resubscribe': { op: 'resubscribe', dialect: DIALECT_LEGACY },
 	'tasks/pushNotificationConfig/set': { op: 'push', dialect: DIALECT_LEGACY },
 	'tasks/pushNotificationConfig/get': { op: 'push', dialect: DIALECT_LEGACY },
 	'tasks/pushNotificationConfig/list': { op: 'push', dialect: DIALECT_LEGACY },
@@ -62,7 +62,7 @@ const METHODS = {
 	CancelTask: { op: 'cancel', dialect: DIALECT_V1 },
 	ListTasks: { op: 'list', dialect: DIALECT_V1 },
 	SendStreamingMessage: { op: 'stream', dialect: DIALECT_V1 },
-	SubscribeToTask: { op: 'stream', dialect: DIALECT_V1 },
+	SubscribeToTask: { op: 'resubscribe', dialect: DIALECT_V1 },
 	CreateTaskPushNotificationConfig: { op: 'push', dialect: DIALECT_V1 },
 	GetTaskPushNotificationConfig: { op: 'push', dialect: DIALECT_V1 },
 	ListTaskPushNotificationConfigs: { op: 'push', dialect: DIALECT_V1 },
@@ -243,17 +243,54 @@ function serializeArtifact(artifact, dialect) {
 	});
 }
 
+export function serializeStatus(status, dialect) {
+	return clean({
+		state: dialect === DIALECT_V1 ? stateV1(status?.state) : status?.state,
+		message: serializeMessage(status?.message, dialect),
+		timestamp: status?.timestamp,
+	});
+}
+
+/**
+ * One event of a streaming response, in the caller's dialect. `kind` is
+ * 'task' | 'message' | 'status' | 'artifact'. 0.3 tags events with `kind` and
+ * marks the last status event `final`; 1.0 wraps each in a StreamResponse oneof
+ * and ends the stream with the terminal state instead.
+ */
+export function streamEvent(kind, payload, dialect) {
+	const v1 = dialect === DIALECT_V1;
+	switch (kind) {
+		case 'task':
+			return v1 ? { task: serializeTask(payload.task, dialect) } : serializeTask(payload.task, dialect);
+		case 'message':
+			return sendMessageResult(payload.message, dialect);
+		case 'status': {
+			const base = { taskId: payload.taskId, contextId: payload.contextId, status: serializeStatus(payload.status, dialect) };
+			return v1
+				? { statusUpdate: base }
+				: { kind: 'status-update', ...base, final: payload.final === true };
+		}
+		case 'artifact': {
+			const base = {
+				taskId: payload.taskId,
+				contextId: payload.contextId,
+				artifact: serializeArtifact(payload.artifact, dialect),
+				lastChunk: true,
+			};
+			return v1 ? { artifactUpdate: base } : { kind: 'artifact-update', ...base };
+		}
+		default:
+			throw new Error(`unknown stream event kind ${kind}`);
+	}
+}
+
 /** Serialize an internal task for the wire. `historyLength` trims history. */
 export function serializeTask(task, dialect, { historyLength } = {}) {
 	let history = Array.isArray(task.history) ? task.history : undefined;
 	if (history && Number.isInteger(historyLength) && historyLength >= 0) {
 		history = historyLength === 0 ? undefined : history.slice(-historyLength);
 	}
-	const status = clean({
-		state: dialect === DIALECT_V1 ? stateV1(task.status?.state) : task.status?.state,
-		message: serializeMessage(task.status?.message, dialect),
-		timestamp: task.status?.timestamp,
-	});
+	const status = serializeStatus(task.status, dialect);
 	const out = clean({
 		...(dialect === DIALECT_V1 ? {} : { kind: 'task' }),
 		id: task.id,

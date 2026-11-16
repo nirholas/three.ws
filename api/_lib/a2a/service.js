@@ -48,6 +48,7 @@ import {
 	sendMessageResult,
 	sendResult,
 	serializeTask,
+	streamEvent,
 } from './protocol.js';
 import { loadTask, saveTask } from './task-store.js';
 import { A2A_SKILLS, cardSkill, skillById } from './skills.js';
@@ -451,7 +452,7 @@ async function runGenerate({ message, ip, base }) {
 	return {
 		state: 'working',
 		text:
-			`Generating "${prompt}". Poll this task with GetTask (tasks/get on 0.3)` +
+			`Generating "${prompt}". Poll this task with GetTask (tasks/get on 0.3) or stream it with SendStreamingMessage (message/stream on 0.3)` +
 			`${shaped.etaSeconds ? `; about ${shaped.etaSeconds}s left` : ''}.` +
 			`${shaped.watchUrl ? ` Watch it live: ${shaped.watchUrl}` : ''}`,
 		parts: [pendingData(shaped)],
@@ -553,7 +554,9 @@ export function createA2AService(paid) {
 	if (typeof paid.handler !== 'function') throw new Error('createA2AService: handler is required');
 	const paidSkill = A2A_SKILLS.find((s) => s.pricing === 'x402');
 
-	async function delegatePaid({ req, id, message, record, dialect }) {
+	// Paid skill: the a2a-x402 flow owns verification and settlement. Returns
+	// { error } (a JSON-RPC error body) or { task } (internal 0.3 shape).
+	async function delegatePaid({ req, id, message, record }) {
 		const reply = await handleA2ARequest({
 			req,
 			body: { jsonrpc: '2.0', id, method: 'message/send', params: { message } },
@@ -568,7 +571,7 @@ export function createA2AService(paid) {
 			prompt: paid.prompt,
 			handler: paid.handler,
 		});
-		if (reply.error || !reply.result) return reply;
+		if (reply.error || !reply.result) return { error: reply };
 		const task = reply.result;
 		task.contextId = record?.task?.contextId || message.contextId || task.contextId || randomUUID();
 		task.status = { ...task.status, timestamp: now() };
@@ -577,15 +580,17 @@ export function createA2AService(paid) {
 		if (task.status.message) task.history.push(task.status.message);
 		task.history = task.history.slice(-HISTORY_CAP);
 		await saveTask(route, { task, skillId: paidSkill.id, state: {} });
-		return rpcResult(id, sendResult(task, dialect));
+		return { task };
 	}
 
-	async function onSend({ req, id, params, dialect, ctx }) {
+	// The part of a send both the plain and the streaming methods share.
+	// Returns { error } (JSON-RPC error body), { message } (a direct agent reply
+	// with no task) or { task } (internal 0.3 shape, already saved).
+	async function sendCore({ req, id, params, ctx }) {
 		const normalized = normalizeMessage(params?.message);
-		if (normalized.error) return rpcError(id, RPC.INVALID_PARAMS, `Invalid params: ${normalized.error}`);
+		if (normalized.error) return { error: rpcError(id, RPC.INVALID_PARAMS, `Invalid params: ${normalized.error}`) };
 		const message = normalized.message;
 		const hasPayment = !!message.metadata?.['x402.payment.payload'];
-
 		let record = null;
 		if (message.taskId) {
 			record = await loadTask(route, message.taskId);
@@ -593,33 +598,143 @@ export function createA2AService(paid) {
 			// flow owns that leg (including idempotent replay of a settled proof),
 			// so it goes through even when this instance holds no record of it.
 			if (!record && !hasPayment && !ctx.extensions.has(A2A_X402_EXTENSION_URI)) {
-				return rpcError(id, RPC.TASK_NOT_FOUND, `Task not found: ${message.taskId}`);
+				return { error: rpcError(id, RPC.TASK_NOT_FOUND, `Task not found: ${message.taskId}`) };
 			}
 			if (record && TERMINAL_STATES.has(record.task?.status?.state) && !hasPayment) {
-				return rpcError(
-					id,
-					RPC.UNSUPPORTED_OPERATION,
-					`Task ${message.taskId} is ${record.task.status.state}; start a new task without taskId.`,
-				);
+				return {
+					error: rpcError(
+						id,
+						RPC.UNSUPPORTED_OPERATION,
+						`Task ${message.taskId} is ${record.task.status.state}; start a new task without taskId.`,
+					),
+				};
 			}
 		}
-
 		const picked = selectSkill(message, { record, extensions: ctx.extensions });
-		if (picked.error) return rpcError(id, picked.error.code, picked.error.message);
+		if (picked.error) return { error: rpcError(id, picked.error.code, picked.error.message) };
 		if (!picked.skill) {
 			const reply = agentMessage(undefined, message.contextId || randomUUID(), helpText());
 			delete reply.taskId;
-			return rpcResult(id, sendMessageResult(reply, dialect));
+			return { message: reply };
 		}
-		if (picked.skill.pricing === 'x402') return delegatePaid({ req, id, message, record, dialect });
-
+		if (picked.skill.pricing === 'x402') return delegatePaid({ req, id, message, record });
 		const run = FREE_RUNNERS[picked.skill.id];
 		const task = record?.task ? structuredClone(record.task) : newTask(message);
 		withUserMessage(task, message);
 		const outcome = await run({ message, auth: ctx.auth, ip: ctx.ip, base: ctx.base, origin: ctx.base });
 		applyOutcome(task, outcome);
 		await saveTask(route, { task, skillId: picked.skill.id, state: outcome.continuation || null });
-		return rpcResult(id, sendResult(task, dialect));
+		return { task };
+	}
+
+	async function onSend({ req, id, params, dialect, ctx }) {
+		const out = await sendCore({ req, id, params, ctx });
+		if (out.error) return out.error;
+		if (out.message) return rpcResult(id, sendMessageResult(out.message, dialect));
+		return rpcResult(id, sendResult(out.task, dialect));
+	}
+
+	// ── streaming ──────────────────────────────────────────────────────────
+
+	function sleep(ms, signal) {
+		return new Promise((resolve) => {
+			if (signal.aborted) return resolve();
+			const t = setTimeout(done, ms);
+			function done() {
+				clearTimeout(t);
+				signal.removeEventListener('abort', done);
+				resolve();
+			}
+			signal.addEventListener('abort', done, { once: true });
+		});
+	}
+
+	function streamSettings() {
+		const poll = Number.parseInt(env.A2A_STREAM_POLL_MS, 10);
+		const max = Number.parseInt(env.A2A_STREAM_MAX_SECONDS, 10);
+		return {
+			pollMs: Number.isFinite(poll) && poll >= 5 ? poll : 3000,
+			maxMs: (Number.isFinite(max) && max > 0 ? max : 540) * 1000,
+		};
+	}
+
+	const isWatchable = (record) => record?.skillId === 'generate-3d-model' && record.task?.status?.state === 'working';
+
+	// Follow a working generation until it finishes, is canceled, the client
+	// leaves, or the stream budget runs out (the client then resubscribes).
+	// Yields internal events: { kind, ...payload }.
+	async function* watchGeneration(record, ctx, signal) {
+		const { pollMs, maxMs } = streamSettings();
+		const deadline = Date.now() + maxMs;
+		let rec = record;
+		while (!signal.aborted && Date.now() < deadline) {
+			await sleep(pollMs, signal);
+			if (signal.aborted) return;
+			const latest = await loadTask(route, rec.task.id);
+			if (latest?.task) rec = latest;
+			const state = rec.task.status?.state;
+			if (TERMINAL_STATES.has(state)) {
+				// Finished or canceled by another request while we waited.
+				yield statusEvent(rec.task, true);
+				return;
+			}
+			const outcome = await refreshGenerate(rec, { ip: ctx.ip, base: ctx.base });
+			if (!outcome) continue;
+			const task = applyOutcome(structuredClone(rec.task), outcome);
+			// A cancel can land between the poll and the save; it wins.
+			const fresh = await loadTask(route, task.id);
+			if (fresh?.task && TERMINAL_STATES.has(fresh.task.status?.state)) {
+				yield statusEvent(fresh.task, true);
+				return;
+			}
+			await saveTask(route, { task, skillId: rec.skillId, state: outcome.continuation || null });
+			for (const artifact of outcome.artifacts || []) {
+				yield { kind: 'artifact', taskId: task.id, contextId: task.contextId, artifact };
+			}
+			const final = TERMINAL_STATES.has(outcome.state);
+			yield statusEvent(task, final);
+			if (final) return;
+			rec = { ...rec, task, state: outcome.continuation || null };
+		}
+	}
+
+	function statusEvent(task, final) {
+		return { kind: 'status', taskId: task.id, contextId: task.contextId, status: task.status, final };
+	}
+
+	// message/stream and SendStreamingMessage. Returns a JSON-RPC error body
+	// (the stream never opened) or { events }, an async iterator of response bodies.
+	async function onStream({ req, id, params, dialect, ctx, op }) {
+		let first;
+		let watch = null;
+		if (op === 'resubscribe') {
+			const taskId = taskIdFromParams(params);
+			if (!taskId) return rpcError(id, RPC.INVALID_PARAMS, 'Invalid params: id is required');
+			const record = await loadTask(route, taskId);
+			if (!record?.task) return rpcError(id, RPC.TASK_NOT_FOUND, `Task not found: ${taskId}`);
+			if (TERMINAL_STATES.has(record.task.status?.state)) {
+				return rpcError(id, RPC.UNSUPPORTED_OPERATION, `Task ${taskId} is ${record.task.status.state}; read it with GetTask.`);
+			}
+			first = { kind: 'task', task: record.task };
+			if (isWatchable(record)) watch = record;
+		} else {
+			const out = await sendCore({ req, id, params, ctx });
+			if (out.error) return out.error;
+			if (out.message) first = { kind: 'message', message: out.message };
+			else {
+				first = { kind: 'task', task: out.task };
+				const record = await loadTask(route, out.task.id);
+				if (isWatchable(record)) watch = record;
+			}
+		}
+		async function* events() {
+			yield rpcResult(id, streamEvent(first.kind, first, dialect));
+			if (!watch) return;
+			for await (const ev of watchGeneration(watch, ctx, ctx.signal)) {
+				yield rpcResult(id, streamEvent(ev.kind, ev, dialect));
+			}
+		}
+		return { events: events() };
 	}
 
 	async function onGet({ id, params, dialect, ctx }) {
@@ -645,9 +760,10 @@ export function createA2AService(paid) {
 		const record = await loadTask(route, taskId);
 		if (!record?.task) return rpcError(id, RPC.TASK_NOT_FOUND, `Task not found: ${taskId}`);
 		const state = record.task.status?.state;
-		// Only a task waiting on the caller can be cancelled: a running GPU job
-		// cannot be recalled from the lane, and a finished task is final.
-		if (state !== 'input-required' && state !== 'submitted') {
+		// A finished task is final. A working generation is canceled on our side:
+		// the GPU lane has no recall, so its job runs out unseen and the result is
+		// discarded, but the task stops reporting and streaming progress at once.
+		if (TERMINAL_STATES.has(state)) {
 			return rpcError(id, RPC.TASK_NOT_CANCELABLE, `Task ${taskId} is ${state} and cannot be canceled.`);
 		}
 		const task = applyOutcome(structuredClone(record.task), { state: 'canceled', text: 'Canceled at the caller\'s request.' });
@@ -675,7 +791,8 @@ export function createA2AService(paid) {
 			case 'cancel':
 				return onCancel({ id, params, dialect });
 			case 'stream':
-				return rpcError(id, RPC.UNSUPPORTED_OPERATION, 'Streaming is not supported: send the message and poll the task with GetTask.');
+			case 'resubscribe':
+				return onStream({ req, id, params, dialect, ctx, op });
 			case 'push':
 				return rpcError(id, RPC.PUSH_NOTIFICATION_NOT_SUPPORTED, 'Push notifications are not supported: poll the task with GetTask.');
 			case 'extendedCard':
@@ -698,7 +815,7 @@ export function createA2AService(paid) {
 				{ url: `${env.APP_ORIGIN}${route}`, protocolBinding: 'JSONRPC', protocolVersion: DIALECT_V1 },
 			],
 			capabilities: {
-				streaming: false,
+				streaming: true,
 				pushNotifications: false,
 				stateTransitionHistory: false,
 				extensions: [
@@ -727,7 +844,7 @@ export function createA2AService(paid) {
 		res.setHeader('access-control-allow-methods', 'GET,POST,OPTIONS');
 		res.setHeader(
 			'access-control-allow-headers',
-			`content-type, authorization, ${A2A_VERSION_HEADER.toLowerCase()}, ${A2A_EXTENSIONS_HEADER_V1.toLowerCase()}, ${A2A_EXTENSIONS_HEADER_LEGACY.toLowerCase()}`,
+			`content-type, authorization, x-api-key, ${A2A_VERSION_HEADER.toLowerCase()}, ${A2A_EXTENSIONS_HEADER_V1.toLowerCase()}, ${A2A_EXTENSIONS_HEADER_LEGACY.toLowerCase()}`,
 		);
 		res.setHeader('access-control-expose-headers', `${A2A_EXTENSIONS_HEADER_V1}, ${A2A_EXTENSIONS_HEADER_LEGACY}, Retry-After`);
 		res.setHeader('vary', 'Origin');
@@ -766,7 +883,10 @@ export function createA2AService(paid) {
 
 		const ip = clientIp(req);
 		let auth = null;
-		const token = extractBearer(req);
+		// Bearer is the primary form; Copilot Studio and Foundry connections store a
+		// key under a header name of the builder's choosing, so X-API-Key is read too.
+		const apiKeyHeader = req.headers?.['x-api-key'];
+		const token = extractBearer(req) || (typeof apiKeyHeader === 'string' && apiKeyHeader.trim() ? apiKeyHeader.trim() : null);
 		if (token) {
 			try {
 				auth = await authenticateBearer(token, { ip });
@@ -796,7 +916,9 @@ export function createA2AService(paid) {
 			return;
 		}
 
-		const ctx = { extensions, auth, ip, base: originFromReq(req) };
+		const abort = new AbortController();
+		res.on?.('close', () => abort.abort());
+		const ctx = { extensions, auth, ip, base: originFromReq(req), signal: abort.signal };
 		let reply;
 		try {
 			reply = await dispatch(req, body, ctx);
@@ -810,7 +932,38 @@ export function createA2AService(paid) {
 			send(res, 200, rpcError(body?.id ?? null, RPC.INTERNAL_ERROR, 'Internal error while handling the request. Retry shortly.'));
 			return;
 		}
+		if (reply.events) {
+			await pipeEvents(res, reply.events, abort);
+			return;
+		}
 		send(res, 200, reply);
 	};
+
+	// Server-sent events: one `data:` frame per JSON-RPC response, a comment
+	// frame every 15s so proxies keep an idle stream open.
+	async function pipeEvents(res, events, abort) {
+		res.statusCode = 200;
+		res.setHeader('content-type', 'text/event-stream; charset=utf-8');
+		res.setHeader('cache-control', 'no-cache, no-transform');
+		res.setHeader('x-accel-buffering', 'no');
+		res.flushHeaders?.();
+		const beat = setInterval(() => {
+			if (!abort.signal.aborted) res.write(': keepalive\n\n');
+		}, 15_000);
+		try {
+			for await (const ev of events) {
+				if (abort.signal.aborted) break;
+				res.write(`data: ${JSON.stringify(ev)}\n\n`);
+			}
+		} catch (err) {
+			console.error('[a2a] stream failed:', err);
+			if (!abort.signal.aborted) {
+				res.write(`data: ${JSON.stringify(rpcError(null, RPC.INTERNAL_ERROR, 'The stream failed. Resubscribe with tasks/resubscribe.'))}\n\n`);
+			}
+		} finally {
+			clearInterval(beat);
+			res.end();
+		}
+	}
 }
 

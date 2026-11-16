@@ -254,8 +254,7 @@ describe('A2A service: errors and unsupported operations', () => {
 		expect(res.json.error.code).toBe(-32602);
 	});
 
-	it('streaming, list and push methods answer with their spec codes', async () => {
-		expect((await rpc('SendStreamingMessage', { message: v1Msg([{ text: 'x' }]) })).json.error.code).toBe(-32004);
+	it('list, push and extended-card methods answer with their spec codes', async () => {
 		expect((await rpc('ListTasks', {})).json.error.code).toBe(-32004);
 		expect((await rpc('tasks/pushNotificationConfig/set', {})).json.error.code).toBe(-32003);
 		expect((await rpc('GetExtendedAgentCard', {})).json.error.code).toBe(-32007);

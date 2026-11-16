@@ -126,7 +126,7 @@ if (paid.length < 40) {
 		documentationUrl: A2A_DOCUMENTATION_URL,
 		version: pkg.version,
 		capabilities: {
-			streaming: false,
+			streaming: true,
 			pushNotifications: false,
 			stateTransitionHistory: false,
 			extensions: [
@@ -145,13 +145,40 @@ if (paid.length < 40) {
 				type: 'http',
 				scheme: 'bearer',
 				description:
-					'Optional three.ws API key (sk_live_...) or session token. Anonymous calls work and are rate ' +
-					'limited per IP; a valid key is limited per account instead and raises the search result cap. ' +
-					'An invalid key is rejected with 401.',
+					'Optional three.ws API key (sk_live_...) or OAuth access token. Anonymous calls work and are rate ' +
+					'limited per IP; a valid credential is limited per account instead and raises the search result ' +
+					'cap. An invalid credential is rejected with 401.',
+			},
+			apiKey: {
+				type: 'apiKey',
+				in: 'header',
+				name: 'X-API-Key',
+				description:
+					'The same three.ws API key as the bearer scheme, sent in the X-API-Key header. For clients that ' +
+					'store a key under a header name, such as Copilot Studio and Foundry connections.',
+			},
+			oauth2: {
+				type: 'oauth2',
+				description:
+					'Sign in with a three.ws account (OAuth 2.0 authorization code with PKCE). Optional: anonymous ' +
+					'calls work.',
+				flows: {
+					authorizationCode: {
+						authorizationUrl: `${SITE}/oauth/authorize`,
+						tokenUrl: `${SITE}/api/oauth/token`,
+						refreshUrl: `${SITE}/api/oauth/token`,
+						scopes: { 'avatars:read': 'Read the signed-in account\'s avatars' },
+					},
+				},
 			},
 		},
-		security: [{}, { bearer: [] }],
-		securityRequirements: [{ schemes: {} }, { schemes: { bearer: { list: [] } } }],
+		security: [{}, { bearer: [] }, { apiKey: [] }, { oauth2: ['avatars:read'] }],
+		securityRequirements: [
+			{ schemes: {} },
+			{ schemes: { bearer: { list: [] } } },
+			{ schemes: { apiKey: { list: [] } } },
+			{ schemes: { oauth2: { list: ['avatars:read'] } } },
+		],
 		defaultInputModes: ['text/plain', 'application/json'],
 		defaultOutputModes: ['application/json', 'text/plain'],
 		skills: A2A_SKILLS.map((entry) => (entry.id === generated.id ? generated : cardSkill(entry))),
