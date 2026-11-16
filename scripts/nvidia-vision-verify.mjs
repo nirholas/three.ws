@@ -2,7 +2,13 @@
 // Verify every vision consumer with one real request on the live chain, and
 // record which rung answered it.
 //
+//   PORT=3353 node server/index.mjs                       # local API, with the vision keys
+//   DEV_API_PROXY=http://localhost:3353 npx vite --port 3252
 //   node scripts/nvidia-vision-verify.mjs --base http://localhost:3252 --date 2026-11-16
+//
+// The vite dev server does not run api/ itself: it forwards /api/* to
+// DEV_API_PROXY, which defaults to production. Without the local API server
+// above, the HTTP rows would measure the deployed chain, not this checkout.
 //
 // Consumers with a side-effect-free HTTP route are called through the dev
 // server (POST /api/vision, /api/diorama compose-photo, /api/forge-quality-check).
@@ -138,7 +144,7 @@ async function main() {
 		inProcessTransport().judgeRealism({ png: IMG('r-alarm-clock'), prompt: 'a vintage twin bell alarm clock', viewLabel: 'three-quarter' })));
 
 	const L = [];
-	L.push(`Verified ${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC with \`node scripts/nvidia-vision-verify.mjs --base ${base} --date ${values.date}\` (dev server on port ${new URL(base).port}). Every row is one live request.`);
+	L.push(`Verified ${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC with \`node scripts/nvidia-vision-verify.mjs --base ${base} --date ${values.date}\` (dev server on port ${new URL(base).port}, its /api/* served by this checkout's server/index.mjs). Every row is one live request.`);
 	L.push('');
 	L.push('| Consumer | How | Answered by | Time | Output |');
 	L.push('|---|---|---|---|---|');

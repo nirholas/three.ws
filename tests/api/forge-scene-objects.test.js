@@ -29,7 +29,8 @@ vi.mock('../../api/_providers/gcp.js', () => ({
 }));
 
 const detect = vi.fn();
-vi.mock('../../api/_lib/vision.js', () => ({
+vi.mock('../../api/_lib/vision.js', async (importOriginal) => ({
+	VISION_TASK_LEAD: (await importOriginal()).VISION_TASK_LEAD,
 	describeImageJson: (...a) => detect(...a),
 }));
 

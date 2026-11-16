@@ -11,7 +11,7 @@
 // No mocks: a vision outage surfaces as a typed error the route maps to a
 // designed 503, never as an invented room.
 
-import { describeImageJson, visionConfigured } from './vision.js';
+import { describeImageJson, visionConfigured, VISION_TASK_LEAD } from './vision.js';
 import { planFromPhotoAnalysis } from '../../src/diorama/photo-layout.js';
 import { normalizeDiorama, MAX_OBJECTS, MOODS, GROUNDS } from '../../src/diorama/schema.js';
 
@@ -62,6 +62,7 @@ export async function composePlanFromPhoto({ imageUrl = null, imageBase64 = null
 	try {
 		result = await describeImageJson({
 			prompt: PHOTO_SET_DESIGNER_PROMPT,
+			lead: VISION_TASK_LEAD.diorama,
 			imageUrl,
 			imageBase64,
 			mimeType,

@@ -94,6 +94,73 @@ describe('leadWith routes a task to a provider or a model', () => {
 	});
 });
 
+describe('the rung order the 2026-11-16 eval decided', () => {
+	const BOLT = 'nvidia/nemotron-3.5-bolt-e4b';
+	const SUPER_VL = 'nvidia/nemotron-3.5-super-vl-120b-a12b';
+
+	it('bolt-e4b leads the NIM lane and the previous first rung stays right behind it', () => {
+		expect(vision.NVIDIA_VISION_MODELS.map((m) => m.model)).toEqual([BOLT, SUPER_VL]);
+		const nim = vision.visionChain().filter((p) => p.name === 'nvidia');
+		expect(nim.map((p) => p.model)).toEqual([BOLT, SUPER_VL]);
+		expect(vision.visionChain()[0].model).toBe(BOLT);
+	});
+
+	it('switches thinking off on both reasoning models', () => {
+		for (const m of vision.NVIDIA_VISION_MODELS) expect(m.extraBody).toEqual({ chat_template_kwargs: { enable_thinking: false } });
+	});
+
+	it('routes each consumer task to the model that won it', () => {
+		expect({ ...vision.VISION_TASK_LEAD }).toEqual({
+			caption: [SUPER_VL],
+			forge_precheck: [SUPER_VL],
+			image3d_review: [SUPER_VL],
+			object_detect: [SUPER_VL],
+			diorama: [SUPER_VL],
+			describe: [BOLT],
+			avatar_review: [BOLT],
+			quality_gate: [BOLT],
+			seed_judge: [BOLT],
+		});
+	});
+
+	it('a super-vl task asks super-vl first and keeps bolt-e4b behind it', async () => {
+		fetchSpy.mockResolvedValueOnce(reply('{"usable":true,"subject":"clock"}'));
+		await vision.describeImageJson({ prompt: 'check', imageBase64: PNG_1PX, mimeType: 'image/png', timeoutMs: 5000, lead: vision.VISION_TASK_LEAD.forge_precheck });
+		expect(modelOf(0)).toBe(SUPER_VL);
+		const routed = vision.leadWith(vision.visionChain(), vision.VISION_TASK_LEAD.forge_precheck);
+		expect(routed.slice(0, 2).map((p) => p.model)).toEqual([SUPER_VL, BOLT]);
+	});
+
+	it('a super-vl task falls to bolt-e4b when super-vl is retired', async () => {
+		fetchSpy.mockResolvedValueOnce(failure(410, 'gone')).mockResolvedValueOnce(reply('{"objects":[]}'));
+		await vision.describeImageJson({ prompt: 'boxes', imageBase64: PNG_1PX, mimeType: 'image/png', timeoutMs: 5000, lead: vision.VISION_TASK_LEAD.object_detect });
+		expect([modelOf(0), modelOf(1)]).toEqual([SUPER_VL, BOLT]);
+	});
+
+	it('the forge quality gate leads with bolt-e4b, not the Workers AI rung', async () => {
+		const { QUALITY_GATE_VISION_LEAD } = await import('../api/_lib/forge-quality-gate.js');
+		expect([...QUALITY_GATE_VISION_LEAD]).toEqual([BOLT]);
+	});
+});
+
+describe('each consumer passes its task lead', () => {
+	const PNG = Buffer.from(PNG_1PX, 'base64');
+
+	it('the image-to-3D mention review asks with the image3d_review lead', async () => {
+		const { reviewImage } = await import('../api/_lib/x-mention-image3d.js');
+		const describe = vi.fn().mockResolvedValue({ json: { safe: true, usable: true, subject: 'clock' } });
+		await reviewImage(PNG, 'image/png', { describe });
+		expect(describe.mock.calls[0][0].lead).toBe(vision.VISION_TASK_LEAD.image3d_review);
+	});
+
+	it('the avatar mention review asks with the avatar_review lead', async () => {
+		const { reviewProfileImage } = await import('../api/_lib/x-mention-avatar.js');
+		const describe = vi.fn().mockResolvedValue({ json: { safe: true, usable: true } });
+		await reviewProfileImage(PNG, 'image/png', { describe });
+		expect(describe.mock.calls[0][0].lead).toBe(vision.VISION_TASK_LEAD.avatar_review);
+	});
+});
+
 describe('stripReasoning', () => {
 	it('removes a closed think block and keeps the answer', () => {
 		expect(vision.stripReasoning('<think>the user wants JSON</think>\n{"usable":true}')).toBe('{"usable":true}');

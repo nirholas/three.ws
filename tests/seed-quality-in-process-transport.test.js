@@ -13,7 +13,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const calls = { describe: [], render: [] };
 
-vi.mock('../api/_lib/vision.js', () => ({
+vi.mock('../api/_lib/vision.js', async (importOriginal) => ({
+	VISION_TASK_LEAD: (await importOriginal()).VISION_TASK_LEAD,
 	describeImage: vi.fn(async (opts) => {
 		calls.describe.push(opts);
 		if (/rendered view of a 3D asset generated for a public asset catalog/.test(opts.prompt)) {
@@ -59,8 +60,8 @@ describe('inProcessTransport', () => {
 		expect(out).toMatchObject({ photorealism: 7, geometryIntegrity: 8, textureFidelity: 6, promptAdherence: 9 });
 		expect(calls.describe).toHaveLength(1);
 		expect(calls.describe[0].imageBase64).toBe(Buffer.from('png').toString('base64'));
-		// The rung measured to answer in bare JSON is asked first.
-		expect(calls.describe[0].lead).toEqual(['cloudflare']);
+		// The model the 2026-11-16 vision eval measured best on this task is asked first.
+		expect(calls.describe[0].lead).toEqual(['nvidia/nemotron-3.5-bolt-e4b']);
 		expect(calls.describe[0].mimeType).toBe('image/png');
 	});
 

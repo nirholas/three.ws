@@ -48,7 +48,7 @@
 // See the SEAM comment block at the end of this file for the copy-paste contract.
 
 import { getGcpAccessToken } from './gcp-auth.js';
-import { describeImageJson, visionConfigured, parseJsonLoose } from './vision.js';
+import { describeImageJson, visionConfigured, parseJsonLoose, VISION_TASK_LEAD } from './vision.js';
 import {
 	AUTH_COOLDOWN_SECONDS,
 	clearProviderCooldown,
@@ -339,17 +339,15 @@ async function scoreViaVertex({ imageBase64, mimeType, prompt, subject, timeoutM
 	return { json: parseJsonLoose(text), provider: 'vertex', model: `vertex-ai/${model}` };
 }
 
-// The rung the gate asks first. Measured 2026-09-30 with this rubric on real
-// turntable renders from production (a TRELLIS avatar and a catalog armchair):
-// Workers AI's Llama 4 Scout returned the JSON verdict 8 times in 8, in 2.4 to
-// 6.9 s, while the NIM 11B lane returned it 4 times in 8, in 8 to 20 s, and
-// described the avatar in prose on all four tries. Asked first, that lane spent
-// most of the gate's 29 s deadline and then failed, and the rungs behind it
-// (free OpenRouter routes at 429, Vertex on a billing hold, OpenAI with billing
-// inactive) could not answer either, so the gate failed open on 8 of 10
-// production checks. Leading with the measured-reliable rung keeps the rest of
-// the chain as its fallback, cooldowns included.
-export const QUALITY_GATE_VISION_LEAD = Object.freeze(['cloudflare']);
+// The rung the gate asks first. From 2026-09-30 it was Workers AI's Llama 4
+// Scout, which returned this rubric's JSON verdict 8 times in 8 while the NIM
+// 11B lane (since retired) narrated half the time and spent the gate's deadline.
+// The 2026-11-16 vision eval (docs/nvidia/evals/vision-2026-11-16.md) scored
+// nemotron-3.5-bolt-e4b at 15 of 15 on this task with every verdict valid JSON,
+// in 2.0 s p50, and found the production Workers AI token rejected with a 401,
+// so a Scout lead costs every gate call a failed round trip first. Bolt leads;
+// Scout and the rest of the chain stay behind it as fallback, cooldowns included.
+export const QUALITY_GATE_VISION_LEAD = VISION_TASK_LEAD.quality_gate;
 
 // Score one render via the platform vision chain. Reuses describeImageJson so
 // the JSON acceptance test and the spend ledger are inherited.

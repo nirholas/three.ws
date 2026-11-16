@@ -3,7 +3,7 @@
 // behind POST /api/asr, Gemini on Vertex as the failover, any container
 // transcoded first); photos run through the same vision chain as POST /api/vision.
 
-import { describeImage, visionConfigured } from '../vision.js';
+import { describeImage, visionConfigured, VISION_TASK_LEAD } from '../vision.js';
 import { transcribeAudio, speechConfigured } from './audio.js';
 
 export const MAX_VOICE_BYTES = 8 * 1024 * 1024;
@@ -58,7 +58,7 @@ export async function describePhoto({ buffer, mimeType = 'image/jpeg', caption =
 	if (!buffer?.length) throw new MediaError('empty_image', 'That photo was empty.');
 	if (buffer.length > MAX_IMAGE_BYTES) throw new MediaError('image_too_large', 'That photo is too large. Send one under 8 MB.');
 	const prompt = describePhotoPrompt(caption);
-	const out = await describeImage({ prompt, imageBase64: buffer.toString('base64'), mimeType, maxTokens: 400 });
+	const out = await describeImage({ prompt, imageBase64: buffer.toString('base64'), mimeType, maxTokens: 400, lead: VISION_TASK_LEAD.describe });
 	const description = String(out?.text || '').trim();
 	return caption
 		? `${caption}\n\n[Attached image: ${description}]`

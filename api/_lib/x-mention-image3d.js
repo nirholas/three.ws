@@ -28,7 +28,7 @@ import { weightedLength, X_POST_MAX_WEIGHT } from './x-text-weight.js';
 import { updateDecision } from './x-mention-store.js';
 import { fetchXImage, XMediaError } from './x-media-image.js';
 import { persistImageBytes } from './image-persist.js';
-import { describeImageJson } from './vision.js';
+import { describeImageJson, VISION_TASK_LEAD } from './vision.js';
 import { withClaimNote } from './x-creation-claim.js';
 import { attributeCreation, creationLink, shortenPrompt, makeBudgetMs, makeGiveUpMs } from './x-mention-make.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
@@ -81,6 +81,7 @@ export async function reviewImage(bytes, contentType, { describe = describeImage
 			mimeType: contentType,
 			maxTokens: 120,
 			timeoutMs: REVIEW_TIMEOUT_MS,
+			lead: VISION_TASK_LEAD.image3d_review,
 			track: { tool: 'x.mention.image3d.review' },
 		});
 	} catch {

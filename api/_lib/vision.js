@@ -62,9 +62,49 @@ import {
 // back empty. It is slow even so, and a timeout cools it for the next 45s, so a
 // request that cannot wait for it falls straight through to the OpenRouter
 // routes below.
+//
+// The order below is measured, not assumed: `npm run nvidia:vision-eval` on
+// 2026-11-16 (docs/nvidia/evals/vision-2026-11-16.md) ran every served NIM VLM
+// against 66 licence-clean images on the nine real consumer tasks, scored with
+// the consumers' own parsers. nemotron-3.5-bolt-e4b answered 87.1% correctly
+// with 99.1% schema adherence and a 0.9% error rate; super-vl answered 84.5%
+// with 89.7% schema adherence (its seed-judge JSON is invalid 9 times in 12).
+// Bolt beats it by more than the eval's 2-point tie threshold, so it leads and
+// super-vl stays behind it. super-vl still wins some tasks outright; those
+// route to it through VISION_TASK_LEAD below. Both are reasoning models with
+// thinking switched off the same way.
+const NIM_THINKING_OFF = Object.freeze({ chat_template_kwargs: { enable_thinking: false } });
 export const NVIDIA_VISION_MODELS = [
-	{ model: 'nvidia/nemotron-3.5-super-vl-120b-a12b', extraBody: { chat_template_kwargs: { enable_thinking: false } } },
+	{ model: 'nvidia/nemotron-3.5-bolt-e4b', extraBody: NIM_THINKING_OFF },
+	{ model: 'nvidia/nemotron-3.5-super-vl-120b-a12b', extraBody: NIM_THINKING_OFF },
 ];
+
+// Per-task lead, from the same eval's winner-per-task table. Each consumer
+// passes its entry as `lead`, which moves that model's rungs (on every key) to
+// the front for that call only; the rest of the chain stays behind as fallback.
+// Accuracy is bolt-e4b vs super-vl on that task.
+//   caption         super-vl  100%  vs 93.3%
+//   forge_precheck  super-vl  95.8% vs 83.3%
+//   image3d_review  super-vl  81.3% vs 62.5%
+//   object_detect   super-vl  100%  vs 77.8%
+//   diorama         super-vl  100% tie with bolt, 6.8 s p50 vs 15.0 s
+//   describe        bolt-e4b  85.7% vs 71.4%
+//   avatar_review   bolt-e4b  92.3% vs 84.6%
+//   quality_gate    bolt-e4b  100%  vs 93.3%
+//   seed_judge      bolt-e4b  100%  vs 25.0%
+const SUPER_VL = 'nvidia/nemotron-3.5-super-vl-120b-a12b';
+const BOLT = 'nvidia/nemotron-3.5-bolt-e4b';
+export const VISION_TASK_LEAD = Object.freeze({
+	caption: Object.freeze([SUPER_VL]),
+	forge_precheck: Object.freeze([SUPER_VL]),
+	image3d_review: Object.freeze([SUPER_VL]),
+	object_detect: Object.freeze([SUPER_VL]),
+	diorama: Object.freeze([SUPER_VL]),
+	describe: Object.freeze([BOLT]),
+	avatar_review: Object.freeze([BOLT]),
+	quality_gate: Object.freeze([BOLT]),
+	seed_judge: Object.freeze([BOLT]),
+});
 // Free OpenRouter vision lanes, in order.
 //
 // The text chain (llm.js providerChain) has carried an OpenRouter rung for a
@@ -547,9 +587,10 @@ function normalizeStatus(status) {
 // successful call records a kind:'vision' usage event with provider/model/tokens/cost
 // (free NIM prices to 0 in llm-pricing.js).
 //
-// `lead` (provider names) moves those rungs to the front for one caller that has
-// measured them as its reliable answerers; cooldowns still apply on top, so a
-// cooling lead rung drops to the back like any other.
+// `lead` (provider names or model ids, usually a VISION_TASK_LEAD entry) moves
+// those rungs to the front for one caller that has measured them as its best
+// answerers; cooldowns still apply on top, so a cooling lead rung drops to the
+// back like any other.
 //
 // Returns { text, provider, model, usage:{input,output}, raw }.
 // Throws VisionUnavailableError when nothing is configured, or the last upstream

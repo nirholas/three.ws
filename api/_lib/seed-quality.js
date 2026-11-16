@@ -180,20 +180,24 @@ export function inProcessTransport({ timeoutMs = 20_000 } = {}) {
 // QUALITY_GATE_VISION_LEAD in api/_lib/forge-quality-gate.js). On 2026-11-04 the
 // rest of the chain was down at once (NIM 404, the free OpenRouter routes 429,
 // Vertex and OpenAI on billing holds), so without the lead an in-process judge
-// had nothing to answer it. The other rungs stay behind it as fallback.
-const SEED_JUDGE_VISION_LEAD = Object.freeze(['cloudflare']);
+// had nothing to answer it. The 2026-11-16 vision eval
+// (docs/nvidia/evals/vision-2026-11-16.md) moved the lead to
+// nemotron-3.5-bolt-e4b: 12 of 12 valid judge verdicts, where super-vl wrote
+// invalid JSON 9 times in 12 and the production Workers AI token answered 401.
+// VISION_TASK_LEAD.seed_judge carries that choice; the other rungs stay behind
+// it as fallback.
 
 // One judge question through vision.js's provider chain, in this process.
 function chainVisionAsk(timeoutMs) {
 	return async ({ png, prompt }) => {
-		const { describeImage } = await import('./vision.js');
+		const { describeImage, VISION_TASK_LEAD } = await import('./vision.js');
 		const out = await describeImage({
 			imageBase64: png.toString('base64'),
 			mimeType: 'image/png',
 			prompt,
 			maxTokens: 700,
 			timeoutMs,
-			lead: SEED_JUDGE_VISION_LEAD,
+			lead: VISION_TASK_LEAD.seed_judge,
 		});
 		return String(out?.text || '');
 	};

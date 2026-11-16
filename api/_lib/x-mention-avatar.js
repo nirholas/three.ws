@@ -30,7 +30,7 @@ import { weightedLength, X_POST_MAX_WEIGHT } from './x-text-weight.js';
 import { updateDecision } from './x-mention-store.js';
 import { fetchXImage, XMediaError, xProfileImageUrl } from './x-media-image.js';
 import { persistImageBytes } from './image-persist.js';
-import { describeImageJson } from './vision.js';
+import { describeImageJson, VISION_TASK_LEAD } from './vision.js';
 import { withClaimNote } from './x-creation-claim.js';
 import { attributeCreation, creationLink, makeBudgetMs, makeGiveUpMs } from './x-mention-make.js';
 import { startForge, startRig, pollJob, pollOnce } from '../_mcp-studio/gpt-forge-client.js';
@@ -75,6 +75,7 @@ export async function reviewProfileImage(bytes, contentType, { describe = descri
 			mimeType: contentType,
 			maxTokens: 80,
 			timeoutMs: REVIEW_TIMEOUT_MS,
+			lead: VISION_TASK_LEAD.avatar_review,
 			track: { tool: 'x.mention.avatar.review' },
 		});
 	} catch {

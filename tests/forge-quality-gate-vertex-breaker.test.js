@@ -22,7 +22,8 @@ const describeImageJson = vi.fn(async () => ({
 	model: 'nvidia/nemotron-3.5-super-vl-120b-a12b',
 }));
 
-vi.mock('../api/_lib/vision.js', () => ({
+vi.mock('../api/_lib/vision.js', async (importOriginal) => ({
+	VISION_TASK_LEAD: (await importOriginal()).VISION_TASK_LEAD,
 	describeImageJson: (...args) => describeImageJson(...args),
 	visionConfigured: () => true,
 	parseJsonLoose: (text) => JSON.parse(text),

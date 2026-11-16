@@ -12,7 +12,7 @@
  * And one that talks to the vision chain: detectObjectBoxes.
  */
 
-import { describeImageJson } from './vision.js';
+import { describeImageJson, VISION_TASK_LEAD } from './vision.js';
 
 export const MAX_SCENE_OBJECTS = 12;
 export const DEFAULT_SCENE_OBJECTS = 8;
@@ -118,6 +118,7 @@ export async function detectObjectBoxes(imageUrl, maxObjects = DEFAULT_SCENE_OBJ
 	const result = await describeImageJson({
 		prompt: DETECT_PROMPT(maxObjects),
 		imageUrl,
+		lead: VISION_TASK_LEAD.object_detect,
 		maxTokens: 1024,
 		timeoutMs: 25_000,
 		deadlineMs: 45_000,

@@ -9,7 +9,8 @@ import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from 'vites
 const CURRENT = { score: 72, realism: 65, completeness: 80, defects: [], reason: 'clean model' };
 const describeImageJson = vi.fn(async () => ({ json: CURRENT, provider: 'cloudflare', model: '@cf/meta/llama-4-scout' }));
 
-vi.mock('../api/_lib/vision.js', () => ({
+vi.mock('../api/_lib/vision.js', async (importOriginal) => ({
+	VISION_TASK_LEAD: (await importOriginal()).VISION_TASK_LEAD,
 	describeImageJson: (...args) => describeImageJson(...args),
 	visionConfigured: () => true,
 	parseJsonLoose: (text) => JSON.parse(String(text).match(/\{[\s\S]*\}/)[0]),

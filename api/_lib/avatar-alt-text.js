@@ -11,7 +11,7 @@
 // yet" and the gallery falls back to the name — alt text generation never blocks
 // or breaks an avatar upload.
 
-import { describeImage, visionConfigured } from './vision.js';
+import { describeImage, visionConfigured, VISION_TASK_LEAD } from './vision.js';
 
 const TIMEOUT_MS = 15_000;
 const MAX_LEN = 160; // alt text should be terse; trim hard.
@@ -43,6 +43,7 @@ export async function generateAltText({ imageUrl = null, imageBase64 = null, mim
 			imageUrl,
 			imageBase64,
 			mimeType,
+			lead: VISION_TASK_LEAD.caption,
 			maxTokens: 60,
 			timeoutMs: TIMEOUT_MS,
 			track: { tool: 'avatar.alt-text', ...(track || {}) },

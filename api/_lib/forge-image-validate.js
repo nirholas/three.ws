@@ -12,7 +12,7 @@
 // proceeds exactly as it did before this check existed. A vision outage must
 // never block a paying user's generation (CLAUDE.md: never block on an outage).
 
-import { describeImageJson, visionConfigured } from './vision.js';
+import { describeImageJson, visionConfigured, VISION_TASK_LEAD } from './vision.js';
 
 // Tight budget — this sits in front of an interactive submit. ~1–2 s is typical
 // (probes/vision.md); 12 s is a generous ceiling before we fail open.
@@ -72,6 +72,7 @@ export async function validateForgeImage(imageUrl, { track = null } = {}) {
 		result = await describeImageJson({
 			prompt: PROMPT,
 			imageUrl,
+			lead: VISION_TASK_LEAD.forge_precheck,
 			maxTokens: 120,
 			timeoutMs: VALIDATION_TIMEOUT_MS,
 			track: { tool: 'forge.validate', ...(track || {}) },
