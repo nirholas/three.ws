@@ -2144,6 +2144,19 @@ export const limits = {
 		getLimiter('a2f:user', { limit: 40, window: '1 h', critical: true }).limit(userId),
 	a2fIp: (ip) =>
 		getLimiter('a2f:ip', { limit: 10, window: '1 h', critical: true }).limit(ip),
+	// Browser digital human (/audio2face): one spoken reply is streamed sentence
+	// by sentence, so a turn costs several /api/a2f calls. The FIRST segment of a
+	// turn spends the a2f bucket above (turns per hour stay as metered as before);
+	// follow-up segments of an already-paid turn spend this one, which bounds how
+	// many sentences a turn can stretch to. Critical: fail closed.
+	a2fSegment: (key) =>
+		getLimiter('a2f:segment', { limit: 120, window: '1 h', critical: true }).limit(key),
+	// Unattended conference kiosk (/audio2face?kiosk=1 with the booth key): one
+	// device serves a queue of visitors from a single IP all day. Sized for a
+	// visitor every minute or so, still finite so a leaked key cannot drain the
+	// free NVIDIA credits. Critical: fail closed.
+	digitalHumanKiosk: (key) =>
+		getLimiter('dh:kiosk', { limit: 1500, window: '1 h', critical: true }).limit(key),
 	// Talking-avatar clips (api/clips/voice): a Magpie synthesis plus an
 	// Audio2Face-3D track per clip. The per-day ceiling comes from the caller's
 	// plan (api/_lib/clip-policy.js), so the bucket name carries the plan and a

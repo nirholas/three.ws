@@ -364,20 +364,21 @@ async function getClient() {
 }
 
 /**
- * Open the NVCF channel ahead of the first request so a talking avatar's first
- * line does not pay the TLS + HTTP/2 setup. Resolves with the time it took and
- * the channel state; never throws.
+ * Open and authenticate the A2F stream path ahead of the first request, so a
+ * talking avatar's first line does not pay TLS + per-stream NVCF auth. Streams
+ * a third of a second of silence through a real session, which also runs the
+ * rotation healer if the pinned function is gone. Never throws.
  */
-export async function warmA2fChannel({ timeoutMs = 5000 } = {}) {
+export async function warmA2fChannel({ timeoutMs = 8000, functionId, apiKey } = {}, deps = {}) {
 	const t0 = Date.now();
 	try {
-		const { client } = await getClient();
-		await new Promise((resolve) => {
-			client.waitForReady(new Date(Date.now() + timeoutMs), () => resolve());
-		});
-		return { ok: true, ms: Date.now() - t0 };
+		const session = await openA2fSession({ functionId, apiKey, timeoutMs }, deps);
+		session.write(new Int16Array(Math.round(A2F_SAMPLE_RATE_HZ / 3)));
+		session.end();
+		const result = await session.done;
+		return { ok: true, ms: Date.now() - t0, functionId: result.functionId, healedFrom: result.healedFrom };
 	} catch (e) {
-		return { ok: false, ms: Date.now() - t0, error: e?.message || String(e) };
+		return { ok: false, ms: Date.now() - t0, error: e?.code || e?.message || String(e) };
 	}
 }
 

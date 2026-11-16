@@ -26,6 +26,7 @@
 import { cors, method, readBody, readJson, error, json, wrap, rateLimited } from './_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
+import { isKioskRequest, kioskBucketKey } from './_lib/kiosk-auth.js';
 import {
 	transcribeNvidiaAsr,
 	nvidiaAsrConfigured,
@@ -109,10 +110,15 @@ export default wrap(async function handler(req, res) {
 	// Metered: free upstream but credit-limited, and each call holds an audio clip
 	// in memory. Authenticated callers get a per-user budget; anonymous a tight
 	// per-IP one. Mirrors the TTS metering policy.
+	// The conference kiosk (/audio2face?kiosk=1 with the booth key) has its own
+	// finite bucket because one device serves a queue of visitors from one IP.
 	const session = await getSessionUser(req);
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
 	const userId = session?.id ?? bearer?.userId ?? null;
-	if (userId) {
+	if (isKioskRequest(req)) {
+		const rl = await limits.digitalHumanKiosk(kioskBucketKey());
+		if (!rl.success) return rateLimited(res, rl, 'Kiosk hourly budget reached, it refills within the hour');
+	} else if (userId) {
 		const rl = await limits.asrUser(userId);
 		if (!rl.success) return rateLimited(res, rl, 'ASR rate limit exceeded, try again later');
 	} else {

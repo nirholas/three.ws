@@ -32,11 +32,24 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 // The 9 languages the live model config reports, plus bare-tag aliases so
 // callers can pass "en" / "ja" etc.
 export const MAGPIE_LANGUAGES = new Map([
-	['en-US', 'en-US'], ['es-US', 'es-US'], ['fr-FR', 'fr-FR'], ['de-DE', 'de-DE'],
-	['zh-CN', 'zh-CN'], ['vi-VN', 'vi-VN'], ['it-IT', 'it-IT'], ['hi-IN', 'hi-IN'],
+	['en-US', 'en-US'],
+	['es-US', 'es-US'],
+	['fr-FR', 'fr-FR'],
+	['de-DE', 'de-DE'],
+	['zh-CN', 'zh-CN'],
+	['vi-VN', 'vi-VN'],
+	['it-IT', 'it-IT'],
+	['hi-IN', 'hi-IN'],
 	['ja-JP', 'ja-JP'],
-	['en', 'en-US'], ['es', 'es-US'], ['fr', 'fr-FR'], ['de', 'de-DE'],
-	['zh', 'zh-CN'], ['vi', 'vi-VN'], ['it', 'it-IT'], ['hi', 'hi-IN'], ['ja', 'ja-JP'],
+	['en', 'en-US'],
+	['es', 'es-US'],
+	['fr', 'fr-FR'],
+	['de', 'de-DE'],
+	['zh', 'zh-CN'],
+	['vi', 'vi-VN'],
+	['it', 'it-IT'],
+	['hi', 'hi-IN'],
+	['ja', 'ja-JP'],
 ]);
 
 // OpenAI-style voice name → nearest Magpie persona (en-US set, live-verified
@@ -64,7 +77,8 @@ export function nvidiaTtsConfigured() {
 
 export function resolveMagpieLanguage(language) {
 	if (!language) return 'en-US';
-	const exact = MAGPIE_LANGUAGES.get(language) || MAGPIE_LANGUAGES.get(String(language).toLowerCase());
+	const exact =
+		MAGPIE_LANGUAGES.get(language) || MAGPIE_LANGUAGES.get(String(language).toLowerCase());
 	if (exact) return exact;
 	// Try the primary subtag ("en-GB" → "en" → "en-US").
 	const primary = String(language).toLowerCase().split('-')[0];
@@ -90,12 +104,16 @@ export function resolveMagpieVoice(voice, language) {
 // about what was actually sent. The OpenAI backstop still produces native
 // mp3/opus/aac/flac when it serves.
 export function resolveMagpieFormat(format) {
-	if (format === 'pcm') return { encoding: 'LINEAR_PCM', wrapWav: false, format: 'pcm', contentType: 'audio/pcm' };
+	if (format === 'pcm')
+		return { encoding: 'LINEAR_PCM', wrapWav: false, format: 'pcm', contentType: 'audio/pcm' };
 	return { encoding: 'LINEAR_PCM', wrapWav: true, format: 'wav', contentType: 'audio/wav' };
 }
 
 // Standard 44-byte RIFF/WAVE header around raw little-endian s16 PCM.
-export function pcmToWav(pcm, { sampleRateHz = SAMPLE_RATE_HZ, channels = 1, bitsPerSample = 16 } = {}) {
+export function pcmToWav(
+	pcm,
+	{ sampleRateHz = SAMPLE_RATE_HZ, channels = 1, bitsPerSample = 16 } = {},
+) {
 	const blockAlign = channels * (bitsPerSample >> 3);
 	const byteRate = sampleRateHz * blockAlign;
 	const header = Buffer.alloc(44);
@@ -165,6 +183,10 @@ async function getClient() {
 				grpc,
 				client: new Synthesis(NVIDIA_TTS_HOST, grpc.credentials.createSsl(), {
 					'grpc.max_receive_message_length': 64 * 1024 * 1024,
+					// Keep the HTTP/2 connection to NVCF alive between requests: a cold
+					// channel adds ~1.1 s of TLS + auth to the first audio (measured).
+					'grpc.keepalive_time_ms': 30_000,
+					'grpc.keepalive_permit_without_calls': 1,
 				}),
 			};
 		})().catch((e) => {
@@ -222,7 +244,9 @@ export async function synthesizeNvidiaTts({
 		);
 	});
 
-	const raw = Buffer.isBuffer(response?.audio) ? response.audio : Buffer.from(response?.audio || []);
+	const raw = Buffer.isBuffer(response?.audio)
+		? response.audio
+		: Buffer.from(response?.audio || []);
 	if (!raw.length) {
 		const err = new Error('NVIDIA Magpie TTS returned empty audio');
 		err.code = 'provider_error';
@@ -236,4 +260,121 @@ export async function synthesizeNvidiaTts({
 		model: NVIDIA_TTS_MODEL,
 		sampleRateHz: SAMPLE_RATE_HZ,
 	};
+}
+
+// Magpie's native synthesis rate. The streaming lane asks for it directly so
+// no audio is upsampled on NVIDIA's side only to be resampled again for A2F.
+export const STREAM_SAMPLE_RATE_HZ = 22050;
+
+/**
+ * Synthesize speech as a stream (Riva SynthesizeOnline). Raw little-endian s16
+ * mono PCM chunks reach `onChunk` as Magpie produces them, so a caller can
+ * start playback and Audio2Face long before the sentence finishes. Measured on
+ * a warm channel: first chunk ~240 ms, versus ~750 ms for the blocking RPC.
+ *
+ *   { text, voice?, language?, sampleRateHz?, onChunk(Buffer), timeoutMs?, apiKey? }
+ *     -> { voiceName, model, sampleRateHz, bytes, firstChunkMs, totalMs }
+ *
+ * Throws the same .code set as synthesizeNvidiaTts. `deps.getClient` lets the
+ * stream plumbing be tested without a network.
+ */
+export async function synthesizeNvidiaTtsStream(
+	{
+		text,
+		voice = 'nova',
+		language = 'en-US',
+		sampleRateHz = STREAM_SAMPLE_RATE_HZ,
+		onChunk,
+		timeoutMs = DEFAULT_TIMEOUT_MS,
+		apiKey,
+	} = {},
+	deps = {},
+) {
+	const key = apiKey || env.NVIDIA_API_KEY;
+	if (!key) {
+		const err = new Error('NVIDIA_API_KEY not set');
+		err.code = 'not_configured';
+		throw err;
+	}
+	const voiceName = resolveMagpieVoice(voice, language);
+	const languageCode = resolveMagpieLanguage(language);
+	const { grpc, client } = await (deps.getClient || getClient)();
+	const metadata = new grpc.Metadata();
+	metadata.set('function-id', MAGPIE_FUNCTION_ID);
+	metadata.set('authorization', `Bearer ${key}`);
+
+	const t0 = Date.now();
+	let bytes = 0;
+	let firstChunkMs = null;
+	await new Promise((resolveCall, rejectCall) => {
+		let settled = false;
+		const finish = (fn, v) => {
+			if (settled) return;
+			settled = true;
+			fn(v);
+		};
+		// SynthesizeOnline is declared bidi in the Riva descriptor: one request
+		// written, then the stream is half-closed and audio flows back.
+		const call = client.synthesizeOnline(metadata, {
+			deadline: new Date(Date.now() + timeoutMs),
+		});
+		call.on('data', (res) => {
+			const raw = Buffer.isBuffer(res?.audio) ? res.audio : Buffer.from(res?.audio || []);
+			if (!raw.length) return;
+			if (firstChunkMs === null) firstChunkMs = Date.now() - t0;
+			bytes += raw.length;
+			try {
+				onChunk?.(raw);
+			} catch (e) {
+				try {
+					call.cancel();
+				} catch {}
+				finish(rejectCall, e);
+			}
+		});
+		call.on('error', (e) => finish(rejectCall, normalizeGrpcError(e)));
+		call.on('end', () => finish(resolveCall));
+		call.write({
+			text,
+			language_code: languageCode,
+			encoding: 'LINEAR_PCM',
+			sample_rate_hz: sampleRateHz,
+			voice_name: voiceName,
+		});
+		call.end();
+	});
+	if (!bytes) {
+		const err = new Error('NVIDIA Magpie TTS returned empty audio');
+		err.code = 'provider_error';
+		throw err;
+	}
+	return {
+		voiceName,
+		model: NVIDIA_TTS_MODEL,
+		sampleRateHz,
+		bytes,
+		firstChunkMs,
+		totalMs: Date.now() - t0,
+	};
+}
+
+/**
+ * Open and authenticate the Magpie stream path ahead of the first request.
+ * waitForReady alone is not enough: NVCF authorizes per stream, so the first
+ * real stream on a fresh channel still paid ~900 ms (measured 2026-11-16). A
+ * one-word synthesis pays it here instead. Never throws.
+ */
+export async function warmTtsChannel({ timeoutMs = 5000, apiKey } = {}) {
+	const t0 = Date.now();
+	try {
+		await synthesizeNvidiaTtsStream({
+			text: 'Hi.',
+			sampleRateHz: STREAM_SAMPLE_RATE_HZ,
+			timeoutMs,
+			apiKey,
+		});
+		return { ok: true, ms: Date.now() - t0 };
+	} catch (e) {
+		return { ok: false, ms: Date.now() - t0, error: e?.code || e?.message || String(e) };
+	}
 }
