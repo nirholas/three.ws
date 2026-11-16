@@ -1,5 +1,7 @@
 # microsoft 34: meet Microsoft's AI app requirements in the Teams bot: AI labels, feedback, content reporting, streaming and citations
 
+Status 2026-11-16: built and verified (872e59a86, 363960b0a, bbe47936e, 3954b9d60, b2687807a, d9ac162e4, a38b16e84); migration 20261116145416 applied to the live DB. Remaining, owner: push, `npm run deploy:gcp:full`, rebuild the app package (`npm run package:microsoft-app`) and upload it so the Report message action appears, then a live check in a real tenant.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3134.
 
 ## Operating clause (binding)
