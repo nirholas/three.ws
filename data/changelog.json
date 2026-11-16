@@ -3,8 +3,27 @@
 	"entries": [
 		{
 			"date": "2026-11-16",
+			"title": "Repeat prompts download again",
+			"summary": "A prompt someone had already generated in the past week could come back with a Download GLB link that went nowhere, on Forge and in the Teams \"Create a 3D model\" card. Cached results now always point at the working download address.",
+			"tags": [
+				"fix"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-16",
+			"title": "Two-step verification and a published security trail",
+			"summary": "Turn on two-step verification in Settings (Security tab) with any authenticator app and ten single-use recovery codes; it applies whichever way you sign in. Your action log records sensitive account actions and exports as CSV, and team owners export their team's admin activity. The trust center now states exactly what is in place and what is not held, with a link to the code behind each answer.",
+			"tags": [
+				"security",
+				"feature"
+			],
+			"link": "/trust"
+		},
+		{
+			"date": "2026-11-16",
 			"title": "Microsoft Phi joins the self-hosted model fleet",
-			"summary": "three.ws can now run Microsoft's open Phi-4-mini model on its own GPU, with streaming and tool calling, as a brain an agent can pick by name. We tested it against the current default on 91 real platform tasks and published the results: it trails on every one, so it does not take over any internal work by default yet. If the Phi lane is slow or down, requests move to the next model automatically.",
+			"summary": "Microsoft's open Phi-4-mini model is built and tested on three.ws's own GPU fleet, with streaming and tool calling, ready to switch on as a brain an agent can pick by name. We tested it against the current default on 91 real platform tasks and published the results: it trails on every one, so it does not take over any internal work by default yet. If the Phi lane is slow or down, requests move to the next model automatically.",
 			"tags": [
 				"feature"
 			],
