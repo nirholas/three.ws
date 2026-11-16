@@ -1,5 +1,7 @@
 # nvidia 04: knowledge retrieval gets a working NVIDIA reranker again, enabled only if it measurably helps
 
+Status 2026-11-16: code, tests, eval and docs committed (2334a6c78, earlier work swept into af7a6030d and 96660abd5). Measured nDCG@5 1.000 vs 0.860 cosine when the model answers, but the eval rule failed on hosted latency, so the stage ships opt-in. Waiting on the owner: git push and deploy:gcp:full (three-ws-api).
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `nvidia-` order, so it can run in parallel with all of them. Dev port: 3254.
 
 ## Operating clause (binding)
