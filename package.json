@@ -900,7 +900,7 @@
 		"lintapple": "^0.1.24",
 		"openapi-to-postmanv2": "^6.4.2",
 		"playwright": "^1.63.0",
-		"prettier": "^3.9.8",
+		"prettier": "^3.10.1",
 		"prismarine-nbt": "^2.8.0",
 		"puppeteer": "^25.14.0",
 		"smol-toml": "^1.9.1",
