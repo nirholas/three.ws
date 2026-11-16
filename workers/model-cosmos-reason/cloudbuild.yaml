@@ -18,13 +18,13 @@ serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build
 
 substitutions:
   # europe-west4 has L4 quota; us-central1's three L4s are held by model-trellis and
-  # model-rig. The weights bucket is us-central1, the same cross-region FUSE read
-  # granite-guardian does in this region.
+  # model-rig. The weights sit in the europe-west4 bucket so the boot read stays
+  # in-region (a cross-region FUSE read failed the startup probe on 2026-11-16).
   _REGION: europe-west4
   _SERVICE: model-cosmos-reason
   _REPO: model-cosmos-reason
   _RUN_SA: avatar-reconstruction-sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com
-  _WEIGHTS_BUCKET: three-ws-model-weights
+  _WEIGHTS_BUCKET: three-ws-model-weights-euw4
   _VLLM_TAG: v0.29.0
   # Scale to zero: the judge runs in shadow (or as a fail-open tie-breaker), so a
   # cold start costs a missing shadow verdict, never a failed generation.
@@ -85,10 +85,10 @@ steps:
       - --labels=lane=cosmos-reason-judge,program=gcp-credits
       - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET},readonly=true
       - --add-volume-mount=volume=weights,mount-path=/weights
-      # 17.5 GB over a cross-region FUSE read plus torch.compile and CUDA graph
-      # capture. serve.sh prefetches the shards; the 30 minute ceiling is the
-      # margin for a slow cross-region read (lazy mmap reads needed 13.5 minutes
-      # for the shards alone and failed a 15 minute probe on 2026-11-16).
+      # 17.5 GB read through FUSE plus torch.compile and CUDA graph capture.
+      # serve.sh warms the page cache sequentially first; the 30 minute ceiling
+      # is margin (lazy mmap reads from the us-central1 bucket needed 13.5
+      # minutes for the shards alone and failed a 15 minute probe on 2026-11-16).
       - --startup-probe=httpGet.path=/health,httpGet.port=8080,periodSeconds=20,timeoutSeconds=5,failureThreshold=90
       - --set-secrets=VLLM_API_KEY=avatar-reconstruction-key:latest
 

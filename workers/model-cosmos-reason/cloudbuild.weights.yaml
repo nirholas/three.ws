@@ -11,7 +11,7 @@
 serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
 
 substitutions:
-  _WEIGHTS_BUCKET: three-ws-model-weights
+  _WEIGHTS_BUCKET: three-ws-model-weights-euw4
   # Pinned NGC version: an upstream re-upload must not change verdicts without a deploy.
   _NGC_VERSION: hf-0303
   _WEIGHTS_PATH: cosmos-reason2-8b

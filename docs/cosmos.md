@@ -1,87 +1,118 @@
 # Cosmos: living worlds behind your 3D avatar
 
-Cosmos turns a sentence into a living, photoreal world that plays behind your 3D avatar. You pick an avatar, describe a place, and NVIDIA Cosmos renders a short cinematic video of that world; the platform composites it as a full-bleed backdrop behind your transparent avatar, so your character appears to stand inside a moving scene. Generate it, preview it live, and download the clip.
+Cosmos turns a sentence, or the avatar's own scene, into a living, photoreal world that plays behind your 3D avatar. You pick an avatar, describe a place, and an NVIDIA Cosmos world model renders a short cinematic video of it; the page composites that clip as a full-bleed backdrop behind the transparent avatar, so the character appears to stand inside a moving scene. Preview it live, download the MP4, or share a link that opens on the finished world.
 
-Page: [/cosmos](https://three.ws/cosmos) · API: `/api/cosmos`
+Page: [/cosmos](https://three.ws/cosmos) · API: `/api/cosmos` · Worker: [workers/model-cosmos](../workers/model-cosmos/README.md)
 
 ## Why it exists
 
-A 3D avatar on a flat gradient is a portrait. A 3D avatar standing in a neon Tokyo street in the rain is a scene. Cosmos gives every avatar a world to inhabit without a render farm, a game engine, or a video editor: you type the place, and a world model paints it in motion. It is the cinematic backdrop layer of the platform, the fastest way to put a character somewhere and make the result look alive.
+A 3D avatar on a flat gradient is a portrait. A 3D avatar standing in a neon Tokyo street in the rain is a scene. Cosmos gives every avatar a world to inhabit without a render farm, a game engine, or a video editor. Scene mode goes further: the world is built from the avatar's own framing, pose and silhouette, so the backdrop matches the character instead of being a stock clip behind it.
+
+## Two ways to build a world
+
+The mode picker above the prompt has two choices.
+
+- **Text.** Describe the place in up to 600 characters. Cosmos renders it from scratch (text-to-world).
+- **From my scene.** The page captures the avatar as it stands on the stage and the world is conditioned on it. Three kinds:
+  - **Still** (image-to-world): a snapshot of the avatar over its current backdrop becomes the first frame, and the world grows out of it.
+  - **Depth** (layout transfer): a three.js depth pass of the avatar slowly orbiting (4 seconds, near = bright) steers the world's geometry, so the generated scene keeps the avatar's shape and camera move.
+  - **Edge** (layout transfer): a lit three.js render of the same orbit, which the worker turns into Canny edges, steers the world's outlines.
+
+Captures run in the browser with the same camera orbit and field of view as the on-page viewer, at the output geometry (1280x720 for 720p, 832x480 for 480p). The scene card shows a thumbnail of the capture, its size, and a Recapture button; changing the avatar, the kind, or the resolution marks the capture stale and the next Generate takes a fresh one.
 
 ## How it works
 
-Cosmos runs on NVIDIA's Cosmos World Foundation Model family. The endpoint (`api/cosmos.js`) calls the **Text2World predict** model through NVIDIA's NVCF async gateway: a submit returns a request id, which is handed back to the browser as the `job_id`, and each poll asks NVCF for status and, on completion, persists the resulting MP4 to durable object storage (R2) and returns a stable URL. There is no server-side job store; the NVCF request id is the durable handle, exactly like the free TRELLIS text-to-3D lane. Cosmos predict renders roughly five seconds of 1280x704 video at 24fps, which on the shared free tier typically lands in 60 to 120 seconds.
+`/api/cosmos` walks a model ladder ([api/_lib/cosmos-ladder.js](../api/_lib/cosmos-ladder.js)). Each rung owns its request builder, its limits, and the modes it can render, so a request only reaches a rung that can honor it.
 
-The lane reuses the platform `NVIDIA_API_KEY` (the free NIM tier). When that key is absent, the lane reports itself unconfigured (503) and the page degrades gracefully: the avatar still stands on a designed, slowly shifting aurora backdrop instead of a blank void.
+| Rung | Where it runs | Modes | Limits |
+|---|---|---|---|
+| `cosmos3-nano` (Cosmos 3 Nano) | self-hosted worker on a Cloud Run RTX PRO 6000 ([workers/model-cosmos](../workers/model-cosmos/README.md)) | text, image, depth, edge | 600-character prompts, 480p or 720p, 33 to 121 frames |
+| `cosmos-predict1-7b` | hosted NVIDIA NVCF Text2World | text | 300-character prompts, 1280x704, 121 frames |
+| `cosmos-predict1-5b` | hosted NVIDIA NVCF Text2World | text | same as 7B |
 
-NVIDIA retires a hosted preview model without retiring its gateway path: the route keeps answering, and only an authenticated submit reveals that the function behind it is gone for your account. So the submit walks the published `cosmos-predict` routes in order and only gives up when every rung is gone, at which point it answers `503 {"error":"lane_unavailable"}` and the page shows the same designed offline state as an unconfigured deployment. Setting `NVIDIA_COSMOS_INVOKE_URL` opts out of the chain and pins one endpoint (a specific model, or a self-hosted Cosmos NIM), which is the lever for pointing the lane at a live function without a code change. Confirm what an account can actually reach with `node scripts/verify-nvidia-cosmos.mjs`.
+Rungs are tried in order. A rung that is not configured, or cannot render the mode, is skipped; a rung that reports itself gone or unreachable is stepped past. A busy worker, a bad key, or invalid input stops the walk instead, because an older model would not fix them and a busy GPU should tell the user to wait rather than silently swap in a weaker model. As of 2026-11-16 the hosted predict1 routes answer 404 "Not found for account" (see the [eval](./nvidia/evals/cosmos-2026-11-16.md)), so in practice every world renders on Cosmos 3 Nano; the hosted rungs stay in the ladder for as long as NVIDIA keeps the gateway paths up.
 
-Upstream detail never reaches the browser. The gateway phrases a retired model as `Function '<uuid>': Not found for account '<id>'`; that is operator diagnostics (it carries the account id), so it is logged server-side and the caller gets a sentence it can act on instead.
+The worker loads [nvidia/Cosmos3-Nano](https://huggingface.co/nvidia/Cosmos3-Nano) through diffusers and samples with NVIDIA's published defaults: 35 steps at 24 fps for text and still, 50 steps at 30 fps with control guidance for depth and edge. Before sampling it expands the prompt into the structured JSON caption Cosmos 3 was trained on with a Nemotron model from the NVIDIA API Catalog, and falls back to the plain prompt (recorded as `upsampler: "none"`) if that call fails.
 
-On the page (`src/cosmos.js`), the avatar is a Google `<model-viewer>` with a transparent background. Five humanoid avatars ship bundled for instant selection (Aria, Kai, Michelle, X-Bot, Mona), and you can bring your own. The generate flow is real async with no fake timers: submit to `POST /api/cosmos`, then poll `GET /api/cosmos?job=<id>` every four seconds (with a five-minute ceiling), driving a real elapsed-based progress state. When the clip is ready it plays on canplay as a looping backdrop behind the avatar, a regenerate control appears, and the clip is available to download.
+### Jobs
+
+A submit answers `202 { job_id }`. The job id names its rung (`cw_` for the worker, `nv_` and `n5_` for the hosted routes), and every rung keeps its own durable job record (the worker writes each state change to GCS), so a poll needs only the id. The page stores the active job in `localStorage` and resumes it after a reload, a closed tab, or an API redeploy. When the worker reports `done`, the API copies the clip once to R2 at `forge/cosmos/<job_id>.mp4` and every later poll gets that CDN URL.
+
+The page polls with backoff: first after 2.5 seconds, then 1.35x per poll up to 15 seconds, held at 6 seconds while frames render so the step counter stays live, and a 429 waits the full interval. A job is abandoned after 40 minutes. Twelve consecutive network failures stop polling but keep the job saved, so reopening the page picks it up again.
+
+### Progress
+
+The progress bar reads the worker's real state, never a timer:
+
+| Worker status | What the page shows |
+|---|---|
+| `queued` with `model loading` | Warming the GPU (the first world after an idle period pays a checkpoint load of about 7 minutes) |
+| `queued` | the queue position |
+| `upsampling` | Writing the shot (prompt upsampling) |
+| `generating` | step x of y and the worker's ETA |
+| `decoding`, `encoding` | Decoding frames, Encoding the clip |
+
+Five phase pills (Capture, Queue, Shot, Frames, Encode) mark where the job is. On completion the result chip shows the model and the measured timings (shot, control decode, sampling, encode, total).
 
 ## Walkthrough
 
-1. Open [/cosmos](https://three.ws/cosmos).
-2. Pick an avatar from the bundled set, or load your own GLB. The avatar renders immediately over the fallback aurora backdrop.
-3. Describe a world in 3 to 300 characters, for example `a neon Tokyo street in the rain at night` or `a windswept desert canyon at golden hour`.
-4. Optionally set a seed for a reproducible render.
-5. Click Generate. A real progress state runs while the NVCF job renders; expect roughly 60 to 120 seconds on the free tier.
-6. When the world lands it plays behind your avatar. Preview it, regenerate with a new prompt or seed, or download the clip.
-7. Share copies a link that carries the finished clip, the avatar, the prompt, and the seed (`?world=…&avatar=…&prompt=…&seed=…`), so whoever opens it lands on the world already playing rather than an empty stage.
+1. Open [/cosmos](https://three.ws/cosmos). The badge names the model that will render (Cosmos 3 Nano when the worker is configured).
+2. Pick an avatar from the bundled set, or load your own GLB.
+3. Choose **Text**, or **From my scene** and a kind (Still, Depth, Edge). In scene mode, frame the avatar on the stage first; Capture takes the still or records the 4-second orbit.
+4. Describe the world, for example `a neon Tokyo street in the rain at night`.
+5. Optionally open Advanced to set a seed, the resolution (720p or 480p), and the length (about 5, 2.5 or 1.5 seconds).
+6. Click Generate and watch the real progress. You can leave; the job resumes when you come back.
+7. When the world lands it plays behind your avatar. Scene worlds already contain the avatar, so the overlay is hidden; the layers button brings it back. Regenerate, download (`cosmos-<mode>-<prompt>.mp4`), or Share a link that carries the clip, avatar, prompt, seed and mode.
 
 ## Examples
 
-The Cosmos lane is a plain async HTTP job. Reuse the platform key server-side.
-
 ```bash
-# Start a world render, then poll the NVCF job for the MP4.
+# Text world: start the job, then poll it.
 JOB=$(curl -s -X POST 'https://three.ws/api/cosmos' \
   -H 'content-type: application/json' \
-  -d '{"prompt":"a neon Tokyo street in the rain at night"}' \
+  -d '{"mode":"text","prompt":"a neon Tokyo street in the rain at night","resolution":"720"}' \
   | python3 -c 'import sys,json;print(json.load(sys.stdin).get("job_id",""))')
 
 curl "https://three.ws/api/cosmos?job=$JOB"
+
+# Which rungs and modes this deployment can serve right now.
+curl https://three.ws/api/cosmos
 ```
 
-Example prompts that read well as living backdrops:
-
-- `a neon Tokyo street in the rain at night`
-- `a windswept desert canyon at golden hour`
-- `a bioluminescent forest at midnight`
-- `a rooftop garden above a foggy city skyline`
-- `a snowy mountain pass under aurora`
-
-A poll-until-ready loop in JavaScript:
+Scene worlds send the capture as a data URL: `"image": "data:image/jpeg;base64,..."` for `mode: "image"`, or `"control_video": "data:video/webm;base64,..."` for `depth` and `edge` (a browser MediaRecorder type with codec parameters such as `video/webm;codecs=vp9` is accepted). The request body may be up to 30 MB.
 
 ```javascript
 const start = await fetch('https://three.ws/api/cosmos', {
   method: 'POST',
   headers: { 'content-type': 'application/json' },
-  body: JSON.stringify({ prompt: 'a bioluminescent forest at midnight' }),
+  body: JSON.stringify({ mode: 'image', prompt: 'a bioluminescent forest at midnight', image: stillDataUrl }),
 }).then((r) => r.json());
 
-if (start.status === 'done') console.log(start.video_url);
-else {
-  let job = start;
-  while (job.status !== 'done' && job.status !== 'failed') {
-    await new Promise((r) => setTimeout(r, 4000));
-    job = await fetch(`https://three.ws/api/cosmos?job=${start.job_id}`).then((r) => r.json());
-  }
-  console.log(job.video_url); // durable MP4 URL
+let job = start;
+while (job.status !== 'done' && job.status !== 'failed') {
+  await new Promise((r) => setTimeout(r, 6000));
+  job = await fetch(`https://three.ws/api/cosmos?job=${start.job_id}`).then((r) => r.json());
+  console.log(job.status, job.step, job.total_steps, job.eta_seconds);
 }
+console.log(job.video_url ?? job.error);
 ```
 
 ## States and limits
 
-- **Prompt** must be 3 to 300 characters; an optional integer `seed` makes a render reproducible.
-- **Render time** is roughly 60 to 120 seconds on the shared free tier; the client shows a real elapsed progress state and gives up after five minutes with a "try a simpler prompt" message.
-- **Unconfigured (503)**: when `NVIDIA_API_KEY` is absent, the page keeps the avatar on a designed aurora backdrop and tells you generation is offline. No mock clip is ever shown.
-- **Lane unavailable (503, `lane_unavailable`)**: the key is present but NVIDIA has retired every hosted `cosmos-predict` route this account can reach. Same designed offline state, and deliberately no Retry button: the request cannot succeed until an operator points `NVIDIA_COSMOS_INVOKE_URL` at a live function.
-- **Rate limited (429)** and **invalid key (401)** surface with honest messages and, where provided, a retry-after hint.
-- **Unplayable clip**: a durable URL that will not decode drops the stage out of its finished state and offers a retry, rather than leaving a "done" stage with nothing in it.
-- Output is a durable MP4; the avatar is a standard GLB rendered with `<model-viewer>`.
-- Rate limits are per client IP on the shared 3D generation buckets.
+- **Offline (503, `lane_unavailable`)**: no rung can serve the mode (the worker is not configured and the hosted routes are retired). The avatar keeps its aurora backdrop, the badge reads offline, and modes no rung renders are disabled with a tooltip. No mock clip is ever shown.
+- **Busy (429, `lane_busy`)**: the worker queue (4 worlds) is full. Try again in a few minutes.
+- **Invalid input (400)**: prompt length, seed, resolution, frame count, or a capture the worker cannot decode, with a sentence saying which.
+- **Job failures** carry a code and a recovery hint: `worker_restarted` (start again, settings are kept), `timeout` and `gpu_oom` (try 480p or fewer frames), `bad_image` and `bad_control_video` (capture again), `expired`, `generation_failed`.
+- **Rate limits**: 8 worlds per hour per IP, 90 per hour across the deployment.
+- **Empty scene**: scene mode with no capture yet tells you to frame the avatar and press Capture, and Generate captures for you if you skip it.
+- **Unplayable clip**: a URL that will not decode drops the stage out of its finished state and offers a retry.
+- Upstream details (which can carry an NVIDIA account id) are logged server-side, never returned.
+
+## Operating it
+
+- The API needs `COSMOS_WORKER_URL` and `COSMOS_WORKER_KEY` for the top rung and `NVIDIA_API_KEY` for the hosted rungs. `NVIDIA_COSMOS_INVOKE_URL` pins the hosted rungs to one endpoint.
+- The worker scales to zero between worlds. Raise `_MIN_INSTANCES` in [workers/model-cosmos/cloudbuild.yaml](../workers/model-cosmos/cloudbuild.yaml) if the lane needs instant starts.
+- `node scripts/verify-nvidia-cosmos.mjs` probes every rung and renders one world end to end on the first live one. `node scripts/nvidia-cosmos-eval.mjs` reruns the five-prompt comparison in [docs/nvidia/evals](./nvidia/evals/cosmos-2026-11-16.md).
 
 ## Related
 

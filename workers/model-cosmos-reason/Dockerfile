@@ -3,7 +3,7 @@
 # plausibility judge over multi-view renders (api/_lib/cosmos-reason-judge.js).
 #
 # The base is the stock, pinned vLLM image (the same tag model-phi runs). Weights
-# are not baked in: they live checksummed in gs://three-ws-model-weights/cosmos-reason2-8b
+# are not baked in: they live checksummed in gs://three-ws-model-weights-euw4/cosmos-reason2-8b
 # (cloudbuild.weights.yaml, sourced from NGC) and reach the container on a
 # read-only GCS FUSE mount at /weights; serve.sh checks them before vLLM starts.
 ARG VLLM_IMAGE=vllm/vllm-openai:v0.29.0

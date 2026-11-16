@@ -164,7 +164,7 @@
 		}
 	},
 	"unavailable": {
-		"gemma-4-31b": "not configured: no NVIDIA_API_KEY in the environment",
-		"cf-scout": "not configured: no CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_AI_API_TOKEN in the environment"
+		"gemma-4-31b": "timeout",
+		"cf-scout": "401 {\"result\":null,\"success\":false,\"errors\":[{\"code\":10000,\"message\":\"Authentication error\"}],\"messages\":[]}"
 	}
 }
