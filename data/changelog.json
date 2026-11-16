@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-16",
+			"title": "Cosmos worlds now render on Cosmos 3 Nano and can grow out of your avatar's own scene",
+			"summary": "The /cosmos world lane is back. Worlds now render on NVIDIA Cosmos 3 Nano on our own GPU worker, with the older hosted models kept behind it as fallbacks. A new mode picker adds From my scene: the page captures your avatar as it stands on the stage and the world is built from it, as a still that becomes the first frame, or as a depth or edge render of a slow orbit that steers the layout. Progress shows the real step count and time left, and a job survives a reload or a closed tab, so you can leave and come back to a finished world.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/cosmos"
+		},
+		{
+			"date": "2026-11-16",
 			"title": "Export any Forge model as simulation-ready OpenUSD",
 			"summary": "Forge models now export as OpenUSD that drops straight into NVIDIA Omniverse and Isaac Sim with physics already set up. Pick OpenUSD (simulation-ready) in the Forge export menu and you get .usdz, .usd with textures and .usda: convex collision hulls, a rigid body whose mass comes from the hull volume and a density for the object class, a friction and restitution material, semantic class labels for synthetic-data annotators, and skeletons for rigged avatars. Every file passes the OpenUSD usdchecker and the NVIDIA asset validator before you see it, and a report lists the mass method and every finding. Developers get the same export from POST /api/forge/export-usd and the export_openusd MCP tool.",
 			"tags": [

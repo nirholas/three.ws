@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-16T19:10:22.795Z",
+	"generated_at": "2026-11-16T19:10:58.412Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4635,
+	"total": 4636,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -231,6 +231,16 @@
 			"tags": [
 				"feature",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Cosmos worlds now render on Cosmos 3 Nano and can grow out of your avatar's own scene",
+			"summary": "The /cosmos world lane is back. Worlds now render on NVIDIA Cosmos 3 Nano on our own GPU worker, with the older hosted models kept behind it as fallbacks. A new mode picker adds From my scene: the page captures your avatar as it stands on the stage and the world is built from it, as a still that becomes the first frame, or as a depth or edge render of a slow orbit that steers the layout. Progress shows the real step count and time left, and a job survives a reload or a closed tab, so you can leave and come back to a finished world.",
+			"link": "/docs/cosmos",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1533,16 +1543,6 @@
 			"title": "TRELLIS.2 Lab: every parameter of Microsoft Research's image-to-3D model",
 			"summary": "A new lab at /lab/trellis2 runs TRELLIS.2 with all of its controls in your hands: voxel resolution, seed, texture size, face budget, and the steps and guidance of each of its three sampler stages. Every control shows its default and a plain-language explanation. Pick Fast draft, Balanced or Maximum detail; their speed labels come from real production runs, not estimates. Inspect the result in texture, wireframe or normal view, with triangle count, texture resolution and file size read from the model itself. Run a second engine on the same photo to compare the two side by side, and share the pair with one link. The page credits Microsoft Research, with the citation, the MIT license and how we run it.",
 			"link": "/lab/trellis2",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "update",
-			"title": "Turn a photo into a 3D diorama",
-			"summary": "Diorama can now rebuild a scene you photographed. Click From a photo, or drop or paste an image onto the page. An AI set designer reads the photo, boxes every separate object, and estimates how far away and how big each one is and what it rests on. Each object is then turned into its own 3D model from its crop of your photo, so it keeps its real shape and colour. Objects that are partly hidden are built from a description instead. The pieces drop into place where they stood in the picture, and a laptop sits on top of the desk it was on, not beside it. A small copy of your photo stays in the corner with a live box for every object, and hovering a piece highlights its box. Pieces built from your photo carry a small picture mark. The camera frames the objects, not the whole island, so the scene reads at the size it had in the photo. Photo worlds save, share, remix and export like any other world. The scene reader also got more reliable: when one free vision route is busy it now tries the next one instead of giving up, and an end-of-life model was replaced with its current successor.",
-			"link": "/diorama",
 			"tags": [
 				"feature"
 			]

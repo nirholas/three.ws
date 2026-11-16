@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T19:10:22.768Z",
+	"generated_at": "2026-11-16T19:10:58.295Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -228,6 +228,16 @@
 			"tags": [
 				"feature",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Cosmos worlds now render on Cosmos 3 Nano and can grow out of your avatar's own scene",
+			"summary": "The /cosmos world lane is back. Worlds now render on NVIDIA Cosmos 3 Nano on our own GPU worker, with the older hosted models kept behind it as fallbacks. A new mode picker adds From my scene: the page captures your avatar as it stands on the stage and the world is built from it, as a still that becomes the first frame, or as a depth or edge render of a slow orbit that steers the layout. Progress shows the real step count and time left, and a job survives a reload or a closed tab, so you can leave and come back to a finished world.",
+			"link": "/docs/cosmos",
+			"tags": [
+				"feature"
 			]
 		},
 		{
