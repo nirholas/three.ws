@@ -310,7 +310,12 @@ export function buildMasker(doNotTranslate = []) {
 		stash(ENTITY_RE);
 		for (const term of terms) {
 			if (!term) continue;
-			stash(new RegExp(escapeRe(term), 'g'));
+			// An identifier (a domain, handle, or code like ERC-8004) is the same
+			// name in any case, and a title capitalizes it ("Three.ws Docs"),
+			// so it matches case-insensitively; the sentinel restores the casing
+			// the source used. A plain word stays exact: "Forge" is the product,
+			// "forge" is a verb the copy needs translated.
+			stash(new RegExp(escapeRe(term), /[^A-Za-z\s]/.test(term) ? 'gi' : 'g'));
 		}
 		return { masked, tokens };
 	}

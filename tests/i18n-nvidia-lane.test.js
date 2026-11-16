@@ -211,6 +211,22 @@ describe('brand glossary', () => {
 		expect(r.passed).toEqual({});
 		expect(r.failed.k[0]).toMatch(/^token drift/);
 	});
+
+	it('masks a dotted or numbered identifier at the start of a title in any case', () => {
+		// Measured on the 2026-11-16 Swedish run: titles that open with a
+		// capitalized brand ("Three.ws ...") reached the model unmasked (the
+		// glossary spells it three.ws), so the reply echoed it and the gate
+		// rejected the key.
+		const m = buildMasker(['three.ws', 'watsonx.ai', 'x402', 'Forge']);
+		const { masked, tokens } = m.mask('Three.ws runs Watsonx.ai, X402 ready');
+		expect(masked).toMatch(/^\[\[T\d\]\] runs \[\[T\d\]\], \[\[T\d\]\] ready$/);
+		expect(m.unmask(masked, tokens)).toBe('Three.ws runs Watsonx.ai, X402 ready');
+	});
+
+	it('keeps a plain-word term case-sensitive, so the verb "forge" still translates', () => {
+		const m = buildMasker(['Forge']);
+		expect(m.mask('Open Forge to forge a sword').masked).toBe('Open [[T0]] to forge a sword');
+	});
 });
 
 describe('quality gate', () => {
