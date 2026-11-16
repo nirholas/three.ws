@@ -548,6 +548,24 @@ async function main() {
 		}
 	}
 
+	// A partial run (--docs / --conditions) replaces only the pairs it ran and
+	// keeps every other row and extraction record from the same day's results.
+	if ((wantDocs || values.conditions) && existsSync(resultsPath)) {
+		const prev = JSON.parse(readFileSync(resultsPath, 'utf8'));
+		const ran = (doc, condition) => documents.some((d) => d.id === doc) && conditions.includes(condition);
+		rows.unshift(...prev.rows.filter((r) => !ran(r.doc, r.condition)));
+		for (const [doc, byCondition] of Object.entries(prev.extraction || {})) {
+			for (const [condition, stats] of Object.entries(byCondition)) {
+				if (!ran(doc, condition)) (extraction[doc] ||= {})[condition] = stats;
+			}
+		}
+		for (const d of prev.documents || []) if (!documents.some((x) => x.id === d.id)) documents.push(d);
+		questions.splice(0, questions.length, ...new Map([...prev.rows, ...rows].map((r) => [`${r.doc}|${r.q}`, r])).values());
+		const order = set.documents.map((d) => d.id);
+		documents.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+		rows.sort((a, b) => order.indexOf(a.doc) - order.indexOf(b.doc) || questions.findIndex((q) => q.doc === a.doc && q.q === a.q) - questions.findIndex((q) => q.doc === b.doc && q.q === b.q));
+	}
+
 	const results = {
 		meta: {
 			date: values.date,
@@ -566,7 +584,7 @@ async function main() {
 	writeFileSync(resultsPath, `${JSON.stringify(results, null, '\t')}\n`);
 	console.log(`[pdf-eval] results: ${resultsPath}`);
 	console.log(`[pdf-eval] report: ${writeReport(results)}`);
-	for (const c of conditions) {
+	for (const c of [...new Set(rows.map((r) => r.condition))]) {
 		const t = tally(rows.filter((r) => r.condition === c));
 		console.log(`[pdf-eval] ${c}: ${t.pass}/${t.n} (${pct(t.pass, t.n)})`);
 	}

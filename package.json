@@ -216,6 +216,8 @@
 		"nvidia:embed-eval": "node scripts/nvidia-embed-eval.mjs",
 		"nvidia:reembed": "node scripts/nvidia-reembed.mjs",
 		"nvidia:guard-eval": "node scripts/nvidia-guard-eval.mjs",
+		"nvidia:pdf-eval": "node scripts/nvidia-pdf-extraction-eval.mjs",
+		"knowledge:pdf-live-check": "node scripts/knowledge-pdf-live-check.mjs",
 		"dev:walk-all": "node scripts/dev-walk-all.mjs",
 		"demo:agent-wallet-bridge": "node scripts/agent-wallet-x402-bridge.mjs",
 		"dev:lib": "TARGET=lib vite",

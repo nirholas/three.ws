@@ -74,7 +74,7 @@ const ENV_NOISE = [
 	/^error: Failed to load resource: net::ERR_FAILED$/,
 	/^http 500: GET http:\/\/localhost:\d+\/api\/x\/triggers$/,
 	/^error: Failed to load resource: the server responded with a status of 500 \(Internal Server Error\)$/,
-	/^warning: \[\.WebGL-[0-9a-fx]+\]GL Driver Message \(OpenGL, Performance, GL_CLOSE_PATH_NV, High\): GPU stall due to ReadPixels$/,
+	/^warning: \[\.WebGL-[0-9a-fx]+\]GL Driver Message \(OpenGL, Performance, GL_CLOSE_PATH_NV, High\): GPU stall due to ReadPixels( \(this message will no longer repeat\))?$/,
 ];
 
 let failed = 0;
@@ -163,6 +163,19 @@ async function main() {
 	const { createSession } = await import('../api/_lib/auth.js');
 	const sid = await createSession({ userId: user.id, userAgent: 'live-check', ip: '127.0.0.1', recordActivity: false });
 
+	// Every NVIDIA call that fails is logged, so a turn that loses its document
+	// context to an upstream error says why.
+	const upstreamFailures = [];
+	const realFetch = globalThis.fetch;
+	globalThis.fetch = async (input, init) => {
+		const url = String(input?.url || input);
+		const res = await realFetch(input, init);
+		if (!res.ok && /nvidia\.com/.test(url)) upstreamFailures.push(`${new Date().toISOString()} ${res.status} ${url}`);
+		return res;
+	};
+	process.on('exit', () => {
+		if (upstreamFailures.length) writeFileSync(join(OUT, 'upstream-failures.txt'), `${upstreamFailures.join('\n')}\n`);
+	});
 	await import('../server/index.mjs');
 	await waitFor('the API to listen', async () => !!(await fetch(`${API}/api/agents/${agent.id}/knowledge`, { headers: { Cookie: `__Host-sid=${sid}` }, signal: AbortSignal.timeout(5000) }).catch(() => null)));
 
@@ -232,6 +245,9 @@ async function main() {
 		});
 
 		await step('"View tables" renders the extracted tables with the expected value', async () => {
+			// Dismiss the finished upload row so only the document's own table view shows.
+			const dismiss = panel.locator('[data-kd="uploads"] .kd-up-x');
+			if (await dismiss.count()) await dismiss.first().click();
 			const btn = panel.locator('[data-tables]').first();
 			await btn.click();
 			const tables = panel.locator('[data-tables-panel] table');
@@ -239,13 +255,16 @@ async function main() {
 			const n = await tables.count();
 			const text = await panel.locator('[data-tables-panel]').first().innerText();
 			assert(text.includes(EXPECTED), `the table preview does not contain ${EXPECTED}`);
-			await panel.screenshot({ path: join(OUT, 'tables.png') });
+			const fig = panel.locator('[data-tables-panel] figure').filter({ hasText: EXPECTED }).first();
+			await fig.scrollIntoViewIfNeeded();
+			await fig.screenshot({ path: join(OUT, 'tables.png') });
 			return `${n} tables rendered`;
 		});
 
 		await step('the question retrieves a table chunk from the uploaded PDF', async () => {
 			const { searchKnowledge } = await import('../api/_lib/agent-knowledge.js');
 			const { results } = await searchKnowledge(agent.id, QUESTION, { topK: 4, minScore: 0.2 });
+			writeFileSync(join(OUT, 'retrieved.md'), results.map((r, i) => `## ${i + 1}. ${r.name} | ${r.heading || ''} (score ${r.score?.toFixed?.(3) ?? r.score})\n\n${r.content}`).join('\n\n'));
 			const hit = results.find((r) => r.content.includes(EXPECTED));
 			assert(hit, `no retrieved chunk holds ${EXPECTED}: ${results.map((r) => r.heading).join(' / ')}`);
 			assert(/\|\s*-{3,}/.test(hit.content), 'the chunk holding the value is not a markdown table');
