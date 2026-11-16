@@ -186,7 +186,7 @@ The harness sets these variables for the API process only. Unset, every call goe
 | `MS_MARKETPLACE_METERING_BASE` | Metering API base (default the same host) |
 | `MS_MARKETPLACE_TOKEN_URL` | Publisher token endpoint (default the tenant's `login.microsoftonline.com` token URL) |
 
-The 23 steps cover purchase and activation, a sign-in from the wrong tenant, ChangePlan accepted and refused (a plan three.ws does not sell), ChangeQuantity with the owner taking the first seat, Suspend, Reinstate, Renew, webhook redelivery, five metering runs (batches of at most 25, a suspended subscription that records nothing, Duplicate settlement keeping the accepted event id, an idempotent rerun), the remaining metering error statuses, Unsubscribe, and a final check that every operation is in `microsoft_saas_operations`. Each step prints `PASS` or `FAIL` with its evidence, and the command exits non-zero on any failure. `--verbose` also streams the emulator and API logs.
+The 23 steps cover purchase and activation, a sign-in from the wrong tenant, ChangePlan accepted and refused (a plan three.ws does not sell), ChangeQuantity with the owner taking the first seat, Suspend, Reinstate, Renew, webhook redelivery, five metering runs (batches of at most 25, a suspended subscription that records nothing, Duplicate settlement keeping the accepted event id, an idempotent rerun), the remaining metering error statuses, Unsubscribe, and a final check that every operation is in `microsoft_saas_operations`. Each step prints `ok` or `FAIL` with its evidence, the run ends with `PASS: 23/23 steps`, and the command exits non-zero on any failure. `--verbose` also streams the emulator and API logs.
 
 ## Testing against preview
 
