@@ -33,10 +33,10 @@ const ORIGINAL_KEY = process.env.NVIDIA_API_KEY;
 // assert the decoded GLB bytes flow through to storage and the public URL flows
 // back out, without touching real object storage.
 const putObjectMock = vi.fn(async () => ({}));
-const publicUrlMock = vi.fn((key) => `https://three.ws/cdn/${key}`);
+const cdnUrlMock = vi.fn((key) => `https://three.ws/cdn/${key}`);
 vi.mock('../../api/_lib/r2.js', () => ({
 	putObject: (...args) => putObjectMock(...args),
-	publicUrl: (...args) => publicUrlMock(...args),
+	cdnUrl: (...args) => cdnUrlMock(...args),
 }));
 
 function jsonResponse(body, status = 200, headers = {}) {
@@ -49,7 +49,7 @@ function jsonResponse(body, status = 200, headers = {}) {
 beforeEach(() => {
 	process.env.NVIDIA_API_KEY = 'nvapi-test-key';
 	putObjectMock.mockClear();
-	publicUrlMock.mockClear();
+	cdnUrlMock.mockClear();
 });
 
 afterEach(() => {

@@ -109,12 +109,12 @@ export function createStabilityProvider(apiKey) {
 				});
 			}
 
-			const { putObject, publicUrl } = await import('../_lib/r2.js');
+			const { putObject, cdnUrl } = await import('../_lib/r2.js');
 			const key = `forge/stability/${globalThis.crypto.randomUUID()}.glb`;
 			await putObject({ key, body: bytes, contentType: 'model/gltf-binary' });
 
 			// Synchronous completion: no poll handle, just the durable GLB url.
-			return { kind: 'image-to-3d', taskId: null, resultGlbUrl: publicUrl(key) };
+			return { kind: 'image-to-3d', taskId: null, resultGlbUrl: cdnUrl(key) };
 		},
 	};
 }

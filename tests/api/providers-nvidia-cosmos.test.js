@@ -26,10 +26,10 @@ const ORIGINAL_ENV = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]])
 // persistVideo dynamically imports ../_lib/r2.js; intercept it so the decoded
 // MP4 bytes and the returned public URL are assertable without object storage.
 const putObjectMock = vi.fn(async () => ({}));
-const publicUrlMock = vi.fn((key) => `https://three.ws/cdn/${key}`);
+const cdnUrlMock = vi.fn((key) => `https://three.ws/cdn/${key}`);
 vi.mock('../../api/_lib/r2.js', () => ({
 	putObject: (...args) => putObjectMock(...args),
-	publicUrl: (...args) => publicUrlMock(...args),
+	cdnUrl: (...args) => cdnUrlMock(...args),
 }));
 
 // A base64 blob only counts as inline video above the module's 64-char floor.
@@ -47,7 +47,7 @@ beforeEach(() => {
 	process.env.NVIDIA_API_KEY = 'nvapi-test-key';
 	delete process.env.NVIDIA_COSMOS_INVOKE_URL;
 	putObjectMock.mockClear();
-	publicUrlMock.mockClear();
+	cdnUrlMock.mockClear();
 });
 
 afterEach(() => {

@@ -18,8 +18,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const putObject = vi.fn(async () => {});
-const publicUrl = vi.fn((key) => `https://cdn.example/${key}`);
-vi.mock('../../api/_lib/r2.js', () => ({ putObject, publicUrl }));
+const cdnUrl = vi.fn((key) => `https://cdn.example/${key}`);
+vi.mock('../../api/_lib/r2.js', () => ({ putObject, cdnUrl }));
 
 const ORIGINAL_FETCH = globalThis.fetch;
 const S3_KEYS = ['S3_ENDPOINT', 'S3_BUCKET', 'S3_PUBLIC_DOMAIN', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY'];
@@ -66,7 +66,7 @@ beforeEach(() => {
 	process.env.HF_TOKEN = 'hf_test_token';
 	process.env.HF_RECONSTRUCT_SPACES = 'foo/A';
 	putObject.mockClear();
-	publicUrl.mockClear();
+	cdnUrl.mockClear();
 	vi.resetModules();
 });
 

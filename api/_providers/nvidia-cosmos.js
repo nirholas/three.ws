@@ -284,14 +284,14 @@ export function createNvidiaCosmosProvider() {
 
 	// Decode a base64 MP4 and store it in R2, returning a durable public URL.
 	async function persistVideo(base64) {
-		const { putObject, publicUrl } = await import('../_lib/r2.js');
+		const { putObject, cdnUrl } = await import('../_lib/r2.js');
 		const key = `forge/cosmos/${globalThis.crypto.randomUUID()}.mp4`;
 		await putObject({
 			key,
 			body: Buffer.from(base64, 'base64'),
 			contentType: 'video/mp4',
 		});
-		return publicUrl(key);
+		return cdnUrl(key);
 	}
 
 	// POST the invoke. Returns { done:true, videoBase64 } on synchronous 200, or

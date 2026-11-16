@@ -343,14 +343,14 @@ export function createNvidiaProvider() {
 	// Decode a base64 GLB and store it in R2, returning a durable public URL —
 	// the same persist the Vertex inline-PNG path uses, but for model bytes.
 	async function persistGlb(base64) {
-		const { putObject, publicUrl } = await import('../_lib/r2.js');
+		const { putObject, cdnUrl } = await import('../_lib/r2.js');
 		const key = `forge/nvidia/${globalThis.crypto.randomUUID()}.glb`;
 		await putObject({
 			key,
 			body: Buffer.from(base64, 'base64'),
 			contentType: 'model/gltf-binary',
 		});
-		return publicUrl(key);
+		return cdnUrl(key);
 	}
 
 	// POST the invoke request. Returns either { done:true, glbBase64 } when the

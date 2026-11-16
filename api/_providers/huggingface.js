@@ -420,7 +420,7 @@ async function rehostGlbToR2(glbUrls, token) {
 		);
 	}
 
-	const { putObject, publicUrl } = await import('../_lib/r2.js');
+	const { putObject, cdnUrl } = await import('../_lib/r2.js');
 	const { randomUUID } = await import('node:crypto');
 	const key = `hf-recon/${randomUUID()}.glb`;
 	await putObject({
@@ -429,7 +429,7 @@ async function rehostGlbToR2(glbUrls, token) {
 		contentType: 'model/gltf-binary',
 		metadata: { source: 'huggingface-reconstruct' },
 	});
-	return publicUrl(key);
+	return cdnUrl(key);
 }
 
 // Authorization header set for a Space call. Anonymous calls (token=null) must

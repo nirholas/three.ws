@@ -498,9 +498,17 @@ export function publicUrlOrNull(key) {
 // serves, or null when the URL lives outside our bucket. Lets deletion paths
 // find the stored object behind a URL-bearing column (e.g. a forge creation's
 // preview_image_url) so the bytes are actually removed, not just unlinked.
+//
+// Both forms the bucket is served under resolve: the first-party /cdn/<key>
+// proxy that cdnUrl() writes, and the raw public domain publicUrl() wrote
+// before that. The /cdn/ prefix is checked first because it needs no bucket
+// configuration.
 export function keyFromPublicUrl(url) {
-	if (typeof url !== 'string' || !url.startsWith(`${env.S3_PUBLIC_DOMAIN}/`)) return null;
-	const path = url.slice(`${env.S3_PUBLIC_DOMAIN}/`.length).split(/[?#]/)[0];
+	if (typeof url !== 'string') return null;
+	const cdnPrefix = `${env.APP_ORIGIN}/cdn/`;
+	const prefix = url.startsWith(cdnPrefix) ? cdnPrefix : `${env.S3_PUBLIC_DOMAIN}/`;
+	if (!url.startsWith(prefix)) return null;
+	const path = url.slice(prefix.length).split(/[?#]/)[0];
 	if (!path) return null;
 	try {
 		return path.split('/').map(decodeURIComponent).join('/');

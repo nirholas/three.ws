@@ -26,7 +26,7 @@ vi.mock('../../api/_lib/ssrf-guard.js', async (importOriginal) => ({
 // R2 is mocked once for the whole file — only the Stability adapter reaches it.
 vi.mock('../../api/_lib/r2.js', () => ({
 	putObject: vi.fn(async () => ({})),
-	publicUrl: (key) => `https://three.ws/cdn/${key}`,
+	cdnUrl: (key) => `https://three.ws/cdn/${key}`,
 }));
 
 describe('forge-tiers — new BYOK backend registration', () => {
