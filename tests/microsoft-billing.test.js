@@ -90,6 +90,14 @@ describe('billingPeriod', () => {
 		expect(billingPeriod({ termStart: null, termEnd: null, now: new Date('2026-11-16T10:00:00Z') }))
 			.toEqual({ start: new Date('2026-11-01T00:00:00Z'), end: new Date('2026-12-01T00:00:00Z'), anchored: false });
 	});
+
+	it('ignores a term that ends where it starts and anchors on the activation instead', () => {
+		// The SaaS API emulator reports this shape: start and end both one month out.
+		const bogus = { termStart: '2026-12-16T15:34:44Z', termEnd: '2026-12-16T15:34:44Z' };
+		expect(billingPeriod({ ...bogus, activatedAt: '2026-11-15T16:34:45Z', now: new Date('2026-11-16T15:40:00Z') }))
+			.toEqual({ start: new Date('2026-11-15T16:34:45Z'), end: new Date('2026-12-15T16:34:45Z'), anchored: true });
+		expect(billingPeriod({ ...bogus, now: new Date('2026-11-16T15:40:00Z') }).anchored).toBe(false);
+	});
 });
 
 // ── Usage aggregation ───────────────────────────────────────────────────────

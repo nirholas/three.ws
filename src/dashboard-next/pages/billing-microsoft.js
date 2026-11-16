@@ -262,7 +262,7 @@ function injectStyles() {
 		.msb-select { flex: 1 1 12rem; min-width: 0; max-width: 100%; font: inherit; font-size: .82rem; color: var(--nxt-ink); background: var(--nxt-glass); border: 1px solid var(--nxt-stroke); border-radius: 8px; padding: .45rem .55rem; }
 		.msb-select:hover { border-color: var(--nxt-stroke-strong); }
 		.msb-select:focus-visible { outline: 2px solid var(--nxt-accent); outline-offset: 1px; }
-		.msb-btn { font: inherit; font-size: .8rem; font-weight: 600; padding: .45rem .85rem; border-radius: 8px; border: 1px solid var(--nxt-accent); background: var(--nxt-accent); color: var(--nxt-on-accent, #fff); cursor: pointer; transition: filter .15s ease, transform .1s ease, background .15s ease; }
+		.msb-btn { font: inherit; font-size: .8rem; font-weight: 600; padding: .45rem .85rem; border-radius: 8px; border: 1px solid var(--nxt-accent); background: var(--nxt-accent); color: var(--on-accent, #0a0a0a); cursor: pointer; transition: filter .15s ease, transform .1s ease, background .15s ease; }
 		.msb-btn:hover:not(:disabled) { filter: brightness(1.08); }
 		.msb-btn:active:not(:disabled) { transform: translateY(1px); }
 		.msb-btn:focus-visible { outline: 2px solid var(--nxt-accent); outline-offset: 2px; }

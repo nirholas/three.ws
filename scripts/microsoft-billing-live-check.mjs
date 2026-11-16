@@ -62,7 +62,7 @@ const SSO = { clientId: crypto.randomUUID(), clientSecret: crypto.randomBytes(24
 const BUYER = { name: 'Avery Lindqvist', email: 'avery.lindqvist@contoso.example', tid: crypto.randomUUID(), oid: crypto.randomUUID() };
 
 const say = (...lines) => process.stdout.write(`${lines.join('\n')}\n`);
-const fail = (message) => { throw new Error(message); };
+const fail = (message) => { process.stderr.write(`live check failed: ${message}\n`); process.exit(1); };
 
 function freePort() {
 	return new Promise((resolve, reject) => {

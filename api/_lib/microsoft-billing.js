@@ -149,11 +149,19 @@ function validDate(v) {
  * anchored on term_start (a 31st clamps to the month's last day) and the last
  * one ends at term_end. Before the term starts the first period is returned;
  * after it ends, the last. With no term (not activated yet) the calendar month
- * in UTC is used. Pure.
+ * in UTC is used. A term that does not end after it starts is ignored in
+ * favour of a monthly window anchored on activatedAt. Pure.
  */
-export function billingPeriod({ termStart, termEnd, now = new Date() }) {
+export function billingPeriod({ termStart, termEnd, activatedAt = null, now = new Date() }) {
 	const t = new Date(now);
-	const start = validDate(termStart);
+	let start = validDate(termStart);
+	let end = validDate(termEnd);
+	// A term that ends where it starts (or before) is not a term; anchor on the
+	// activation instead so usage since then is not dropped from the window.
+	if (start && end && end <= start) {
+		start = validDate(activatedAt);
+		end = null;
+	}
 	if (!start) {
 		return {
 			start: new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), 1)),
@@ -161,7 +169,6 @@ export function billingPeriod({ termStart, termEnd, now = new Date() }) {
 			anchored: false,
 		};
 	}
-	const end = validDate(termEnd);
 	let ref = t;
 	if (ref < start) ref = start;
 	if (end && end > start && ref >= end) ref = new Date(end.getTime() - 1);
@@ -388,7 +395,7 @@ export async function listBillingSubscriptions(userId, { now = new Date() } = {}
 		? refreshRow(r)
 		: { row: r, freshness: { source: 'microsoft', refreshed_at: r.refreshed_at || r.updated_at, error: null } })));
 	const subscriptions = await Promise.all(refreshed.map(async ({ row, freshness }) => {
-		const period = billingPeriod({ termStart: row.term_start, termEnd: row.term_end, now });
+		const period = billingPeriod({ termStart: row.term_start, termEnd: row.term_end, activatedAt: row.activated_at, now });
 		const role = roleFor(row, userId);
 		const [usageRows, seats] = await Promise.all([
 			usageFor(row, period),
