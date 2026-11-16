@@ -25,7 +25,26 @@ const GENERATION_ATTEMPTS = 6;
 
 const log = (...m) => console.log(`[copilot-agent-proof ${new Date().toISOString().slice(11, 19)}]`, ...m);
 
+/** Seconds the server asked us to wait (a studio rate limit or a busy generator), or null. */
+export function retryAfterSeconds(text) {
+	const m = /\(in (\d+) s\)|try again in about (\d+)\s*s/i.exec(text || '');
+	return m ? Number(m[1] ?? m[2]) : null;
+}
+
+const RATE_LIMITED = /^Rate limited:/;
+
+/** One tools/call. The starters share one IP quota, so a rate limit is waited out, never counted as a failure. */
 async function call(name, args) {
+	for (let attempt = 1; ; attempt++) {
+		const r = await callOnce(name, args);
+		if (!r.isError || !RATE_LIMITED.test(r.text) || attempt >= 10) return r;
+		const wait = (retryAfterSeconds(r.text) ?? 30) + 2;
+		log(`${name}: studio rate limit, waiting ${wait}s`);
+		await sleep(wait * 1000);
+	}
+}
+
+async function callOnce(name, args) {
 	const started = Date.now();
 	const res = await fetch(MCP_URL, {
 		method: 'POST',
@@ -52,18 +71,13 @@ function find(obj, key) {
 	return undefined;
 }
 
-const busyWait = (text) => {
-	const m = /try again in about (\d+)\s*s/i.exec(text || '');
-	return m ? Number(m[1]) : null;
-};
-
 /** Start a generation and follow it with check_job until done, retrying as the instructions say. */
 async function generate(steps, tool, args) {
 	for (let attempt = 1; attempt <= GENERATION_ATTEMPTS; attempt++) {
 		const key = `copilot-proof-${randomUUID()}`;
 		const first = await call(tool, { ...args, idempotency_key: key });
 		steps.push(step(first));
-		const wait = busyWait(first.text);
+		const wait = retryAfterSeconds(first.text);
 		if (first.isError) {
 			const pause = Math.max(wait ?? 0, 30 * attempt);
 			log(`${tool} attempt ${attempt}: ${first.sc.message || first.text.split('\n')[0]}; retrying in ${pause}s`);

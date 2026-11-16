@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { unzipSync } from 'fflate';
-import { missingSequences } from '../scripts/microsoft-copilot-agent-proof.mjs';
+import { missingSequences, retryAfterSeconds } from '../scripts/microsoft-copilot-agent-proof.mjs';
 import { REPORT_COMMAND_ID } from '../api/_lib/teams-ai.js';
 import {
 	AGENT_ID,
@@ -272,5 +272,13 @@ describe('microsoft 365 copilot declarative agent', () => {
 	it('has a production proof sequence for every conversation starter', () => {
 		expect(missingSequences()).toEqual([]);
 		expect(missingSequences({ conversation_starters: [{ title: 'Unproven starter' }] })).toEqual(['Unproven starter']);
+	});
+
+	it('the proof waits out the studio rate limit instead of failing a starter on it', () => {
+		const limited =
+			'Rate limited: the free 3D studio allows 4 generations per minute for your IP address, and that limit is used up. It resets at 2026-11-16T16:23:00.000Z (in 19 s). Lift it with a free install token.';
+		expect(retryAfterSeconds(limited)).toBe(19);
+		expect(retryAfterSeconds('The 3D generator is busy right now. Try again in about 10s.')).toBe(10);
+		expect(retryAfterSeconds('Generation failed: 3D generation hit a snag, please try again.')).toBeNull();
 	});
 });
