@@ -99,8 +99,15 @@ RUN git clone --recursive https://github.com/JeffreyXiang/FlexGEMM.git /tmp/ext/
     && pip install --no-build-isolation /tmp/ext/FlexGEMM
 RUN pip install --no-build-isolation /tmp/ext/TRELLIS.2/o-voxel
 # natten has no prebuilt wheel for CUDA 12.4 + torch 2.6; Pixal3D's attention
-# blocks need it for neighborhood attention.
-RUN pip install natten==0.21.0 --no-build-isolation
+# blocks need it for neighborhood attention. Its setup.py compiles libnatten
+# (the CUTLASS kernels) only when NATTEN_CUDA_ARCH is set or a GPU is visible,
+# and Cloud Build has no GPU: without the arch pin the build silently shipped
+# Python-only natten and every job failed with "Can't run CUTLASS FNA; NATTEN
+# was not built with libnatten". 8.9 is the L4. The find_spec gate fails the
+# build instead of the first request if the extension is ever missing again
+# (tests/worker-natten-libnatten.test.js).
+RUN NATTEN_CUDA_ARCH="8.9" NATTEN_N_WORKERS=8 pip install natten==0.21.0 --no-build-isolation \
+    && python -c "import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('natten.libnatten') else 'natten built without libnatten')"
 RUN rm -rf /tmp/ext
 
 # 5. MoGe-2 (microsoft/moge, MIT): the single-view camera estimator. Installed
