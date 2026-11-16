@@ -542,6 +542,11 @@ async function storePreflight(files, env, { check, offline }) {
 		...store.checkListingLinks(manifest, intro),
 		...store.checkValidDomains(manifest),
 		...store.checkBot(manifest),
+		...store.checkListingWording(manifest, intro),
+		...store.checkSignUpPath(manifest),
+		...store.checkNotifications(manifest),
+		...store.checkChannels(manifest),
+		...store.checkMessageExtension(manifest),
 	];
 	const notes = [];
 	const developer = store.checkDeveloperName(manifest, env, { check });

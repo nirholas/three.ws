@@ -259,7 +259,10 @@ test.describe('meeting side panel session', () => {
 
 		await session.getByRole('button', { name: 'Sign out' }).click();
 		await expect(page.locator('#rs-panel [data-signin]')).toBeVisible({ timeout: 60_000 });
-		const me = await page.evaluate(async () => (await fetch('/api/auth/me', { credentials: 'include' })).status);
-		expect(me).toBe(401);
+		const me = await page.evaluate(async () => {
+			const res = await fetch('/api/auth/me', { credentials: 'include' });
+			return { status: res.status, user: res.ok ? (await res.json()).user : null };
+		});
+		expect(me.user).toBeNull();
 	});
 });

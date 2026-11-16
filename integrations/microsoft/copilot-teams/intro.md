@@ -4,7 +4,7 @@ Turn a plain-language request or a photo into a textured 3D model, from any Copi
 
 ## What it does
 
-- Generate a textured, downloadable GLB 3D model from a text description (free, no account).
+- Generate a textured, downloadable GLB 3D model from a text description (no account needed).
 - Generate a rigged, animation-ready avatar.
 - Auto-rig a GLB you already have.
 - Search a catalog of ready-made CC0 3D assets before generating from scratch.
@@ -17,7 +17,7 @@ Ask your agent for a 3D object, for example "make a 3D model of a friendly round
 ## Known limitations
 
 - Generation is asynchronous and can take up to five minutes. Draft quality is fastest, high quality is slowest.
-- Free generation is rate limited per user. If a limit is reached the tool says so and when to retry.
+- Generation without an account is rate limited per user. If a limit is reached the tool says so and when to retry.
 - Describe one subject at a time. A scene with many objects will not generate as one model.
 
 ## Support

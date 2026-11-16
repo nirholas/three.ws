@@ -30,7 +30,7 @@ beforeAll(async () => {
 });
 
 describe('rule catalogue', () => {
-	const PREFLIGHT_BY = new Set(['assemble', 'atkValidate', 'checkName', 'checkDescriptions', 'checkCopilotText', 'checkTeamsJs', 'checkColorIcon', 'checkDeveloperName', 'checkListingLinks', 'checkValidDomains', 'checkBot', 'checkLive']);
+	const PREFLIGHT_BY = new Set(['assemble', 'atkValidate', 'checkName', 'checkDescriptions', 'checkCopilotText', 'checkTeamsJs', 'checkColorIcon', 'checkDeveloperName', 'checkListingLinks', 'checkValidDomains', 'checkBot', 'checkListingWording', 'checkSignUpPath', 'checkNotifications', 'checkChannels', 'checkMessageExtension', 'checkLive']);
 
 	it('gives every rule a unique id, a known source, a section and a check type', () => {
 		expect(new Set(rules.map((r) => r.id)).size).toBe(rules.length);

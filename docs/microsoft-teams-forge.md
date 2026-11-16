@@ -385,6 +385,16 @@ Verify the whole path without a tenant:
 throwaway database and asserts the Graph request. Tests:
 `npx vitest run tests/teams-activity.test.js tests/teams-identity.test.js`.
 
+## Store validation
+
+Before a Teams Store or Copilot submission, run the preflight. It checks the assembled package against the catalogue in [validation/rules.json](../integrations/microsoft/copilot-teams/validation/rules.json) (listing name and description rules, Copilot text rules, icons, valid domains, bot, channels, activity feed, message extension, Teams SDK version) and runs Microsoft's own `atk validate`.
+
+    node scripts/build-microsoft-app-package.mjs --check --store            # adds live URL, TLS, frame-ancestors and response checks
+    node scripts/build-microsoft-app-package.mjs --check --store --offline  # package rules only
+    npx playwright test tests/e2e/microsoft-teams-store.spec.js              # behaviour in a framed tab, themes, mobile, meeting
+
+Rules that need a person (test notes, questionnaire, listing assets, publisher verification) point at sections of the reviewer pack: [microsoft-teams-store-review.md](../marketing/growth/submissions/programs/microsoft-teams-store-review.md). `tests/microsoft-store-rules.test.js` fails if a rule maps to a check the preflight does not run or to a missing pack section.
+
 ## Files
 
 | File | Role |
