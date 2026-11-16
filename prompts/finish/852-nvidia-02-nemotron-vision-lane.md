@@ -1,5 +1,7 @@
 # nvidia 02: agents see with Nemotron: the vision lane leads with the newest Nemotron VL model, chosen by a measured eval
 
+> Status 2026-11-16: code complete, eval committed (docs/nvidia/evals/vision-2026-11-16.md) and every vision consumer verified live on the dev server. Not archived: the full `npm test` (36 failures in 18 files) and `npm run audit:docs` (16 findings) fail only in other orders' files. Live after the owner pushes and runs `npm run deploy:gcp:full`.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `nvidia-` order, so it can run in parallel with all of them. Dev port: 3252.
 
 ## Operating clause (binding)
