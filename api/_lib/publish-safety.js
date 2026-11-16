@@ -25,11 +25,15 @@
 
 const NIM_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 
-// nvidia/llama-3.1-nemoguard-8b-content-safety returns a JSON verdict + named
-// categories, median ~340 ms on the free tier (see probe). Override via
-// PUBLISH_SAFETY_MODEL; the parser also understands the Llama-Guard
-// `unsafe\nS#` text form, so meta/llama-guard-4-12b is a drop-in.
-const DEFAULT_MODEL = 'nvidia/llama-3.1-nemoguard-8b-content-safety';
+// nvidia/llama-3.1-nemotron-safety-guard-8b-v3 (NemoGuard content safety v3)
+// returns the same JSON verdict + named categories as its predecessor. NVIDIA
+// retired llama-3.1-nemoguard-8b-content-safety on 2026-11-16 (HTTP 410), and
+// because this module fails open that retirement silently disabled the screen,
+// so the default tracks the served successor. Measured in
+// docs/nvidia/evals/guardrails-2026-11-16.md. Override via PUBLISH_SAFETY_MODEL;
+// the parser also understands the Llama-Guard `unsafe\nS#` text form, so
+// meta/llama-guard-4-12b is a drop-in.
+const DEFAULT_MODEL = 'nvidia/llama-3.1-nemotron-safety-guard-8b-v3';
 
 // Per-call abort budget. Probe median is ~340 ms with a ~680 ms tail; 2 s leaves
 // generous headroom and still fails over fast when the lane stalls.

@@ -64,7 +64,10 @@ describe('publishSafetyConfig / publishSafetyEnabled', () => {
 		const cfg = publishSafetyConfig();
 		expect(cfg.enabled).toBe(true);
 		expect(cfg.key).toBe('nvapi-test');
-		expect(cfg.model).toMatch(/nemoguard/);
+		// NVIDIA retired llama-3.1-nemoguard-8b-content-safety on 2026-11-16
+		// (HTTP 410). The fail-open path turned that into a silent "not flagged"
+		// on every upload, so the default must be the served successor.
+		expect(cfg.model).toBe('nvidia/llama-3.1-nemotron-safety-guard-8b-v3');
 		expect(cfg.timeoutMs).toBe(2000);
 	});
 
@@ -191,7 +194,7 @@ describe('classifyPublishSafety', () => {
 		fetchMock.mockResolvedValueOnce(nimReply('{"User Safety": "safe"}'));
 		await classifyPublishSafety('a low-poly wooden chair');
 		const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-		expect(body.model).toMatch(/nemoguard/);
+		expect(body.model).toBe('nvidia/llama-3.1-nemotron-safety-guard-8b-v3');
 		expect(body.temperature).toBe(0);
 		expect(body.messages).toEqual([{ role: 'user', content: 'a low-poly wooden chair' }]);
 		expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer nvapi-test');
