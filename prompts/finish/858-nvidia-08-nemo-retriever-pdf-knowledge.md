@@ -1,5 +1,7 @@
 # nvidia 08: agents understand PDF tables, charts and scanned pages through NVIDIA NeMo Retriever extraction
 
+**Status 2026-11-16:** code complete, deploy pending. Eval 38.6% to 90.9% answer accuracy; live dev-server upload answered 34.3 from Page 4 Table 2. Not archived only because full `npm test` (37 failures) and `npm run audit:docs` (16 findings) fail in other orders' files; every knowledge and PDF suite passes. See the 858 entry in `_context/nvidia-PROGRESS.md`.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `nvidia-` order, so it can run in parallel with all of them. Dev port: 3258.
 
 ## Operating clause (binding)
