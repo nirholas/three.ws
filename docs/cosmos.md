@@ -61,7 +61,7 @@ Five phase pills (Capture, Queue, Shot, Frames, Encode) mark where the job is. O
 3. Choose **Text**, or **From my scene** and a kind (Still, Depth, Edge). In scene mode, frame the avatar on the stage first; Capture takes the still or records the 4-second orbit.
 4. Describe the world, for example `a neon Tokyo street in the rain at night`.
 5. Optionally open Advanced to set a seed, the resolution (720p or 480p), and the length (about 5, 2.5 or 1.5 seconds).
-6. Click Generate and watch the real progress. You can leave; the job resumes when you come back.
+6. Click Generate and watch the real progress. On a warm worker at 720p, a text or still world takes about 4 minutes and a depth or edge world about 18 minutes (measured 2026-11-16 in the [eval](./nvidia/evals/cosmos-2026-11-16.md)); 480p or a shorter clip is faster. You can leave; the job resumes when you come back.
 7. When the world lands it plays behind your avatar. Scene worlds already contain the avatar, so the overlay is hidden; the layers button brings it back. Regenerate, download (`cosmos-<mode>-<prompt>.mp4`), or Share a link that carries the clip, avatar, prompt, seed and mode.
 
 ## Examples
