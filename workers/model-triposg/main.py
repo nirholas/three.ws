@@ -56,6 +56,16 @@ Environment variables:
                           download-to-/tmp loader. A streamer failure always
                           falls back to the staged loader (runai_weights.py).
   RUNAI_STREAMER_CONCURRENCY : streamer range-read concurrency (default: 32)
+  TRT_MODE              : "on" serves the image pipeline's DiT denoiser from the
+                          prebuilt NVIDIA TensorRT FP16 engine published for this
+                          GPU, TensorRT version and checkpoint (trt_runtime.py);
+                          "off" (default) is the PyTorch path. Any missing engine
+                          or engine error falls back to PyTorch per call.
+  TRT_ENGINE_GCS_PREFIX : where engines are published
+                          (default: gs://three-ws-model-weights/trt-engines/triposg)
+  DECODER_KV_CACHE      : "on" (default) reuses the VAE decoder's latent
+                          self-attention across geometry queries (decode_cache.py,
+                          exact); "off" disables it.
 """
 
 from __future__ import annotations
@@ -92,6 +102,7 @@ from runai_weights import (
     streamer_available,
     tree_prefix,
 )
+from trt_policy import DEFAULT_ENGINE_GCS_PREFIX, trt_mode
 from request_policy import (
     DEFAULT_SCRIBBLE_CONFIDENCE,
     MODES,
@@ -143,6 +154,14 @@ WEIGHTS_GCS_URI = os.environ.get("WEIGHTS_GCS_URI", "")
 SCRIBBLE_WEIGHTS_GCS_URI = os.environ.get("SCRIBBLE_WEIGHTS_GCS_URI", "")
 WEIGHTS_LOCAL_ROOT = os.environ.get("WEIGHTS_LOCAL_ROOT", "/tmp/triposg-weights")
 WEIGHTS_LOADER = os.environ.get("WEIGHTS_LOADER", "")
+TRT_MODE = trt_mode()
+TRT_ENGINE_GCS_PREFIX = os.environ.get("TRT_ENGINE_GCS_PREFIX", "") or DEFAULT_ENGINE_GCS_PREFIX
+TRT_ENGINE_LOCAL_DIR = os.environ.get("TRT_ENGINE_LOCAL_DIR", "/tmp/triposg-trt")
+DECODER_KV_CACHE = os.environ.get("DECODER_KV_CACHE", "on").strip().lower() != "off"
+# Cloud Run sets K_REVISION; recorded on every task so a traffic-split canary
+# can be read straight from the task records.
+REVISION = os.environ.get("K_REVISION", "")
+_PROCESS_START = time.time()
 
 DTYPE = torch.float16
 
@@ -165,6 +184,11 @@ _load_error: Optional[str] = None
 # back, for /health and the cold-start bench (docs/nvidia-runai-model-streamer.md).
 _weights_loader: Optional[str] = None
 _streamer_error: Optional[str] = None
+# Accelerator state for /health and the task records: the TensorRT denoiser
+# status (trt_runtime.enable_trt_denoiser) and the decoder KV memo stats.
+_trt_status: Optional[dict] = None
+_kv_stats = None
+_ready_s: Optional[float] = None
 # In-memory cache only. Cloud Run runs this service across up to max-instances
 # containers with no session affinity, so a POST /infer and a later GET
 # /tasks/:id can land on different containers. The durable source of truth is
@@ -255,7 +279,33 @@ def _load_models():
     _pipe, _weights_loader, _streamer_error = _load_pipeline(
         TripoSGPipeline, WEIGHTS_GCS_URI, "triposg", WEIGHTS_DIR
     )
+    _install_accelerators(_pipe)
     log.info("TripoSG ready (weights loader: %s)", _weights_loader)
+
+
+def _install_accelerators(pipe) -> None:
+    """Attach the decoder KV memo and, with TRT_MODE=on, the TensorRT denoiser
+    to the image pipeline. Neither can fail the load: the engine path returns a
+    status and leaves PyTorch serving on any problem."""
+    global _trt_status, _kv_stats
+    if DECODER_KV_CACHE:
+        from decode_cache import install_decoder_kv_cache
+
+        _kv_stats = install_decoder_kv_cache(pipe.vae.decoder)
+    if TRT_MODE == "on":
+        from trt_runtime import enable_trt_denoiser
+
+        _trt_status = enable_trt_denoiser(pipe, TRT_ENGINE_GCS_PREFIX, TRT_ENGINE_LOCAL_DIR)
+    else:
+        _trt_status = {"enabled": False, "reason": "TRT_MODE=off"}
+
+
+def _trt_snapshot() -> dict:
+    status = dict(_trt_status or {})
+    stats = status.pop("stats", None)
+    if stats is not None:
+        status.update(stats.snapshot())
+    return status
 
 
 def _ensure_scribble_pipe():
@@ -280,11 +330,16 @@ def _ensure_scribble_pipe():
 
 async def _load_models_bg() -> None:
     global _load_error
+    global _ready_s
     loop = asyncio.get_event_loop()
     try:
         await loop.run_in_executor(None, _load_models)
+        _ready_s = time.time() - _PROCESS_START
         _ready.set()
-        log.info("Service ready, max_concurrent=%d", MAX_CONCURRENT)
+        log.info(
+            "Service ready in %.1fs since process start, max_concurrent=%d, trt=%s",
+            _ready_s, MAX_CONCURRENT, (_trt_status or {}).get("enabled"),
+        )
     except Exception as exc:  # noqa: BLE001, surfaced via /health and per task
         _load_error = safe_error(exc, context="model load")
         log.error("TripoSG model load FAILED: %s", exc)
@@ -546,6 +601,7 @@ async def _run_inference(
         await _update_task(task_id, status="running")
         loop = asyncio.get_event_loop()
         t0 = time.time()
+        gpu = {}
         try:
             def _generate() -> bytes:
                 seed_gen = torch.Generator(device="cuda").manual_seed(0)
@@ -559,8 +615,15 @@ async def _run_inference(
                         outputs = pipe(image=img, generator=seed_gen, **settings).samples[0]
                 else:
                     img = _prepare_photo(images[0])
+                    stats = (_trt_status or {}).get("stats")
+                    trt_before = stats.trt_calls if stats else 0
+                    torch.cuda.synchronize()
+                    t_gpu = time.time()
                     with torch.no_grad():
                         outputs = _pipe(image=img, generator=seed_gen, **settings).samples[0]
+                    torch.cuda.synchronize()
+                    gpu["gpu_ms"] = int((time.time() - t_gpu) * 1000)
+                    gpu["trt"] = bool(stats and stats.trt_calls > trt_before)
 
                 mesh = trimesh.Trimesh(
                     outputs[0].astype(np.float32),
@@ -587,6 +650,8 @@ async def _run_inference(
                 status="done",
                 result_gcs_url=gcs_url,
                 elapsed_ms=int(elapsed * 1000),
+                revision=REVISION,
+                **gpu,
             )
             log.info(
                 "[%s] %s done in %.1fs, %d bytes, %s",
@@ -670,6 +735,10 @@ async def health() -> dict:
         "load_error": _load_error,
         "weights_loader": _weights_loader,
         "streamer_error": _streamer_error,
+        "ready_s": _ready_s,
+        "revision": REVISION,
+        "trt": _trt_snapshot(),
+        "decoder_kv_cache": _kv_stats.snapshot() if _kv_stats is not None else None,
     }
 
 

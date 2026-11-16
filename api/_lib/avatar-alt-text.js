@@ -16,7 +16,7 @@ import { describeImage, visionConfigured } from './vision.js';
 const TIMEOUT_MS = 15_000;
 const MAX_LEN = 160; // alt text should be terse; trim hard.
 
-const PROMPT =
+export const PROMPT =
 	'Write a short, literal alt-text description of this avatar/character image for a ' +
 	'screen reader. One sentence, under 20 words. Describe what is visibly shown — the ' +
 	'subject, its appearance, colors, and style. Do NOT start with "Image of" or "A picture ' +

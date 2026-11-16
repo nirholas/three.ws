@@ -38,6 +38,17 @@ export async function transcribeVoice({ buffer, mimeType = 'audio/ogg', language
 }
 
 /**
+ * The vision prompt for one photo. Exported so the vision eval
+ * (scripts/nvidia-vision-eval.mjs) scores models on the exact production text.
+ * PURE.
+ */
+export function describePhotoPrompt(caption = '') {
+	return caption
+		? `The user sent this image with the message: "${caption.slice(0, 500)}". Describe what the image shows that is relevant to that message. Transcribe any visible text, numbers, token names or addresses exactly.`
+		: 'Describe this image in a few sentences. Transcribe any visible text, numbers, token names or addresses exactly.';
+}
+
+/**
  * Describe a photo so the agent can reason about it. The caption, when the
  * owner sent one, is what they asked; the description is what the image shows.
  * @returns {Promise<string>} a message for the agent
@@ -46,9 +57,7 @@ export async function describePhoto({ buffer, mimeType = 'image/jpeg', caption =
 	if (!visionConfigured()) throw new MediaError('vision_unavailable', 'Photos are not available right now. Describe it in text instead.');
 	if (!buffer?.length) throw new MediaError('empty_image', 'That photo was empty.');
 	if (buffer.length > MAX_IMAGE_BYTES) throw new MediaError('image_too_large', 'That photo is too large. Send one under 8 MB.');
-	const prompt = caption
-		? `The user sent this image with the message: "${caption.slice(0, 500)}". Describe what the image shows that is relevant to that message. Transcribe any visible text, numbers, token names or addresses exactly.`
-		: 'Describe this image in a few sentences. Transcribe any visible text, numbers, token names or addresses exactly.';
+	const prompt = describePhotoPrompt(caption);
 	const out = await describeImage({ prompt, imageBase64: buffer.toString('base64'), mimeType, maxTokens: 400 });
 	const description = String(out?.text || '').trim();
 	return caption

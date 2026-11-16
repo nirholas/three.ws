@@ -106,7 +106,7 @@ export function parseUserBoxes(raw, maxObjects = MAX_SCENE_OBJECTS) {
 	return { boxes };
 }
 
-const DETECT_PROMPT = (max) =>
+export const DETECT_PROMPT = (max) =>
 	`List the distinct, separable physical objects in this photo, up to ${max}, most prominent first. ` +
 	'Skip walls, floors, ceilings, sky, ground, and anything cut off by more than half the frame edge. ' +
 	'Reply ONLY with JSON: {"objects":[{"label":"short name","box_2d":[ymin,xmin,ymax,xmax]}]} ' +

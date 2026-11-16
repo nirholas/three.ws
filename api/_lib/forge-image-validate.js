@@ -18,7 +18,7 @@ import { describeImageJson, visionConfigured } from './vision.js';
 // (probes/vision.md); 12 s is a generous ceiling before we fail open.
 const VALIDATION_TIMEOUT_MS = 12_000;
 
-const PROMPT =
+export const PROMPT =
 	'You are the input checker for a photo→3D model generator. The user uploaded this ' +
 	'image as the reference to reconstruct into a 3D object. Judge ONLY whether it is a ' +
 	'usable reference: it should show ONE clear physical subject (an object, character, ' +

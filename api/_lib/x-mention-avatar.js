@@ -42,7 +42,7 @@ const DEFAULT_PROFILE_MARKER = '/default_profile_images/';
 const UNSAFE_REPLY = 'I cannot make an avatar from that picture. Build one on three.ws instead: https://three.ws/create';
 const UNUSABLE_REPLY = 'Your profile picture has no clear person, character or creature to turn into an avatar. Make one from a prompt on three.ws: https://three.ws/create';
 
-const REVIEW_PROMPT =
+export const REVIEW_PROMPT =
 	'You are the safety and input checker for a public profile picture to 3D avatar bot that must be suitable for ages 13 and up. ' +
 	'Judge this picture and reply ONLY with compact JSON in exactly this shape: {"safe":true|false,"usable":true|false}. ' +
 	'safe=false when the picture shows nudity or sexual content, graphic violence or gore, hate symbols, real weapons or drugs, ' +

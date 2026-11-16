@@ -155,7 +155,7 @@ export function subjectFromPrompt(prompt, hint = null) {
 
 // Build the rubric prompt sent to the vision model. Subject-aware, and it demands
 // a strict JSON reply so the parse is reliable (VLMs honor "reply ONLY JSON").
-function rubricPrompt(subject, prompt) {
+export function rubricPrompt(subject, prompt) {
 	const rule = SUBJECT_RULES[subject] || SUBJECT_RULES.object;
 	const promptLine = prompt
 		? `The model was generated from this request: "${String(prompt).slice(0, 400)}".`

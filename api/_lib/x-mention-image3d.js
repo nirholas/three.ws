@@ -40,7 +40,7 @@ const REVIEW_TIMEOUT_MS = 20_000;
 const UNSAFE_REPLY = 'I cannot make that one into 3D. Try a photo of a toy, a shoe or a sketch with one clear subject.';
 const UNUSABLE_REPLY = 'I could not find one clear subject in that picture. Try a photo of a single object on a plain background.';
 
-const REVIEW_PROMPT =
+export const REVIEW_PROMPT =
 	'You are the safety and input checker for a public photo to 3D bot that must be suitable for ages 13 and up. ' +
 	'Judge this picture and reply ONLY with compact JSON in exactly this shape: ' +
 	'{"safe":true|false,"usable":true|false,"subject":"<2 to 4 word description of the main subject, or empty>"}. ' +
