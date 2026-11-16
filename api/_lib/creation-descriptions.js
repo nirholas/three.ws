@@ -138,9 +138,12 @@ async function markBlankPoster({ creationId, sourceImageUrl }) {
 	const fromRender = typeof sourceImageUrl === 'string' && sourceImageUrl.includes(RENDER_PATH);
 	const status = fromRender ? 'skipped' : 'queued';
 	const error = fromRender ? 'blank poster and blank GLB render' : BLANK_POSTER_ERROR;
+	// A re-queued row is released at once (lease backdated), so the very next
+	// claim tries the render; attempts still counts toward MAX_ATTEMPTS.
 	await sql`
 		insert into forge_creation_descriptions (creation_id, status, error, attempts, updated_at)
-		select id, ${status}, ${error}, 1, now() from forge_creations where id = ${creationId}
+		select id, ${status}, ${error}, 1, now() - make_interval(mins => ${LEASE_MINUTES})
+		from forge_creations where id = ${creationId}
 		on conflict (creation_id) do update set
 			status = excluded.status,
 			error = excluded.error,

@@ -18,12 +18,19 @@
  * written from results.json.
  *
  * Usage (dev server on 3109, GCP spend pre-approved for this lane):
- *   TRELLIS2_URL=https://model-trellis2-…run.app \
+ *   TRELLIS2_URL=https://model-trellis2-…run.app[,https://another-copy…run.app] \
  *   TRELLIS2_KEY="$(gcloud secrets versions access latest --secret avatar-reconstruction-key)" \
  *   node scripts/forge-photo-prep-bench.mjs --photos=docs/forge-photo-prep/photos --out=<dir> [--base=http://localhost:3109] [--only=name,name] [--skip-generate] [--skip-prep]
  *
  * --skip-prep reuses the prepared variants already in <out>/results.json, so the
  * generation half can run without a dev server.
+ *
+ * TRELLIS2_URL takes a comma-separated list of workers running the same image
+ * (for example copies of the production revision in another region when the
+ * home region's GPU quota is held). Each worker is one serial lane: jobs are
+ * shared out across lanes, every task is polled on the worker that took it, and
+ * no job is submitted until every worker reports a loaded pipeline, so cold
+ * starts never land inside a measured end-to-end time.
  */
 import { chromium } from 'playwright';
 import { execFileSync } from 'node:child_process';
@@ -42,10 +49,14 @@ const base = flags.base || 'http://localhost:3109';
 const photosDir = resolve(flags.photos || 'docs/forge-photo-prep/photos');
 const outDir = resolve(flags.out || 'docs/forge-photo-prep/bench');
 const only = flags.only ? new Set(String(flags.only).split(',')) : null;
-const workerUrl = process.env.TRELLIS2_URL;
+const workerUrls = (process.env.TRELLIS2_URL || '')
+	.split(',')
+	.map((u) => u.trim().replace(/\/+$/, ''))
+	.filter(Boolean);
 const workerKey = process.env.TRELLIS2_KEY;
 const POLL_MS = 5000;
 const POLL_RETRIES = 36;
+const READY_DEADLINE_MS = 20 * 60 * 1000;
 // Generous because jobs queue behind each other on a one-GPU lane (about 7 min each at 1024).
 const JOB_DEADLINE_MS = 45 * 60 * 1000;
 // Worker images built before 1e6ece653 store task records without Cache-Control
@@ -55,7 +66,7 @@ const JOB_DEADLINE_MS = 45 * 60 * 1000;
 // the GPU work and queueing a duplicate behind it.
 const isFalseOrphan = (task) => task?.status === 'failed' && /task orphaned/.test(task?.error || '');
 
-if (!flags['skip-generate'] && (!workerUrl || !workerKey)) {
+if (!flags['skip-generate'] && (!workerUrls.length || !workerKey)) {
 	console.error('Set TRELLIS2_URL and TRELLIS2_KEY (see the header), or pass --skip-generate.');
 	process.exit(2);
 }
@@ -127,7 +138,7 @@ async function prepareAll() {
 	await browser.close();
 }
 
-async function api(path, init = {}) {
+async function api(workerUrl, path, init = {}) {
 	const res = await fetch(workerUrl + path, {
 		...init,
 		headers: { authorization: `Bearer ${workerKey}`, 'content-type': 'application/json', ...(init.headers || {}) },
@@ -137,10 +148,25 @@ async function api(path, init = {}) {
 	return body;
 }
 
-async function generate(name, key) {
+/** Block until the worker's pipeline is loaded, so a cold start is not timed as a job. */
+async function waitReady(workerUrl) {
+	const start = Date.now();
+	for (;;) {
+		const health = await api(workerUrl, '/health').catch((err) => ({ error: err.message }));
+		if (health.ready) return;
+		if (health.load_error) throw new Error(`${workerUrl} failed to load: ${health.load_error}`);
+		if (Date.now() - start > READY_DEADLINE_MS) throw new Error(`${workerUrl} not ready after ${READY_DEADLINE_MS / 60000} min`);
+		await new Promise((r) => setTimeout(r, 15000));
+	}
+}
+
+async function generate(name, key, laneUrl) {
 	const entry = results.photos[name];
 	const v = entry.variants[key];
 	if (!v || v.glb) return;
+	// A re-attached task is polled on the worker that took it. Records written
+	// before tasks carried their worker fall back to this lane's URL.
+	const workerUrl = v.task?.worker || laneUrl;
 	const ext = { 'image/jpeg': '.jpg', 'image/webp': '.webp', 'image/png': '.png' }[v.type];
 	const file = join(outDir, name, key + ext);
 	const dataUri = `data:${v.type};base64,${readFileSync(file).toString('base64')}`;
@@ -150,12 +176,13 @@ async function generate(name, key) {
 	const t0 = resumed ? (v.submittedAt ?? null) : Date.now();
 	let task_id = resumed;
 	if (!resumed) {
-		({ task_id } = await api('/infer', { method: 'POST', body: JSON.stringify({ images: [dataUri], resolution: 1024, seed: 42 }) }));
+		({ task_id } = await api(workerUrl, '/infer', { method: 'POST', body: JSON.stringify({ images: [dataUri], resolution: 1024, seed: 42 }) }));
 		v.submittedAt = t0;
-		v.task = { id: task_id, status: 'queued' };
+		v.task = { id: task_id, status: 'queued', worker: workerUrl };
 		save();
+		console.log(`  ${name}/${key}: submitted task ${task_id} to ${workerUrl}`);
 	} else {
-		console.log(`  ${name}/${key}: re-attaching to task ${task_id}`);
+		console.log(`  ${name}/${key}: re-attaching to task ${task_id} on ${workerUrl}`);
 	}
 	const pollStart = Date.now();
 	let task;
@@ -163,7 +190,7 @@ async function generate(name, key) {
 	for (;;) {
 		await new Promise((r) => setTimeout(r, POLL_MS));
 		try {
-			task = await api(`/tasks/${task_id}`);
+			task = await api(workerUrl, `/tasks/${task_id}`);
 			pollErrors = 0;
 		} catch (err) {
 			// The job keeps running on the worker while the network blips (a dropped
@@ -176,7 +203,7 @@ async function generate(name, key) {
 		const terminal = task.status === 'done' || task.status === 'succeeded' || task.status === 'failed' || task.status === 'error';
 		if (terminal && !isFalseOrphan(task)) break;
 		if (Date.now() - pollStart > JOB_DEADLINE_MS) {
-			v.task = { id: task_id, status: task.status, error: task.error || null };
+			v.task = { id: task_id, status: task.status, error: task.error || null, worker: workerUrl };
 			save();
 			throw new Error(`task ${task_id} still ${task.status} after ${JOB_DEADLINE_MS / 60000} min`);
 		}
@@ -194,6 +221,7 @@ async function generate(name, key) {
 		gpu_ms: task.gpu_ms ?? null,
 		elapsed_ms: task.elapsed_ms ?? null,
 		error: task.error || null,
+		worker: workerUrl,
 	};
 	const url = task.result_gcs_url || task.result_url;
 	if (task.status !== 'done' || !url) {
@@ -229,16 +257,28 @@ if (flags['skip-prep']) {
 	await prepareAll();
 }
 if (!flags['skip-generate']) {
+	await Promise.all(workerUrls.map(waitReady));
+	console.log(`${workerUrls.length} worker(s) ready`);
+	const jobs = [];
 	for (const f of photos) {
 		const name = basename(f, extname(f));
 		for (const key of ['original', 'prepared', 'cutout']) {
-			try {
-				await generate(name, key);
-			} catch (err) {
-				console.error(`  ${name}/${key} failed: ${err.message}`);
-			}
+			const v = results.photos[name]?.variants?.[key];
+			if (v && !v.glb) jobs.push({ name, key });
 		}
 	}
+	// One serial lane per worker pulling from a shared queue.
+	await Promise.all(
+		workerUrls.map(async (laneUrl) => {
+			for (let job = jobs.shift(); job; job = jobs.shift()) {
+				try {
+					await generate(job.name, job.key, laneUrl);
+				} catch (err) {
+					console.error(`  ${job.name}/${job.key} failed: ${err.message}`);
+				}
+			}
+		}),
+	);
 }
 save();
 console.log(`results → ${resultsPath}`);

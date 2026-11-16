@@ -92,9 +92,10 @@ async function newPage(viewport) {
 
 async function openForge(viewport) {
 	const page = await newPage(viewport);
-	const configSeen = page.waitForResponse((r) => r.url().startsWith(`${base}/api/config`), { timeout: 60_000 });
-	await page.goto(`${base}/forge`, { waitUntil: 'domcontentloaded' });
-	await page.waitForSelector('#views-counter', { state: 'attached', timeout: 60_000 });
+	const configSeen = page.waitForResponse((r) => r.url().startsWith(`${base}/api/config`), { timeout: 240_000 });
+	// A cold Vite dev server transforms Forge's module graph on the first visit.
+	await page.goto(`${base}/forge`, { waitUntil: 'domcontentloaded', timeout: 180_000 });
+	await page.waitForSelector('#views-counter', { state: 'attached', timeout: 120_000 });
 	await configSeen;
 	return page;
 }
