@@ -1,142 +1,141 @@
 #!/usr/bin/env node
-// Live verification for the free NVIDIA Cosmos text→world VIDEO lane.
+// Live verification for the /api/cosmos world lane, rung by rung.
 //
-//   node scripts/verify-nvidia-cosmos.mjs                 # full round-trip (needs NVIDIA_API_KEY)
-//   node scripts/verify-nvidia-cosmos.mjs "a koi pond at dawn, mist on the water"
-//   node scripts/verify-nvidia-cosmos.mjs --out world.mp4 # also save the clip to disk
+//   node scripts/verify-nvidia-cosmos.mjs                          # probe every rung, render one text world
+//   node scripts/verify-nvidia-cosmos.mjs "a koi pond at dawn"     # custom prompt
+//   node scripts/verify-nvidia-cosmos.mjs --mode image --image still.jpg
+//   node scripts/verify-nvidia-cosmos.mjs --mode depth --video depth.webm
+//   node scripts/verify-nvidia-cosmos.mjs --probe-only             # rung health only, no generation
+//   node scripts/verify-nvidia-cosmos.mjs --out world.mp4          # also save the clip
 //
-// Proves the contract the provider (api/_providers/nvidia-cosmos.js) and the
-// /api/cosmos endpoint depend on, against the REAL hosted endpoint: it submits a
-// Text2World prompt to the NVCF genai gateway, follows the 202 + NVCF-REQID async
-// handshake by polling pexec/status, and confirms a decodable MP4 comes back. It
-// prints the exact request/response shapes so a deployment can confirm the live
-// contract (and, if NVIDIA's gateway differs for an account, point
-// NVIDIA_COSMOS_INVOKE_URL at the right path without a code change).
+// Walks the ladder in api/_lib/cosmos-ladder.js with the real provider code:
+//   cosmos3-nano        GET /health on the self-hosted worker (ready, GPU, revision)
+//   cosmos-predict1-*   an authenticated hosted Text2World submit (NVIDIA retires a
+//                       model behind a gateway path that still answers, so only a
+//                       submit tells whether this account can reach it)
+// then renders one world end to end through submitToLadder + pollLadderJob,
+// which includes the R2 copy, and checks the MP4 decodes (ftyp box, size).
 //
-// Nothing is written to disk unless --out is passed.
+// Needs the API env: COSMOS_WORKER_URL/KEY, NVIDIA_API_KEY, R2_* (from
+// .env.local or the shell). Upstream details are printed with any account id
+// redacted.
 
 import { config as dotenv } from 'dotenv';
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { extname } from 'node:path';
 
 dotenv({ path: new URL('../.env.local', import.meta.url) });
 // .env.local can carry prod flags; clear them so nothing fails closed locally.
 delete process.env.NODE_ENV;
 delete process.env.VERCEL_ENV;
 
-const KEY = process.env.NVIDIA_API_KEY;
-if (!KEY) {
-	console.error('[cosmos] NVIDIA_API_KEY missing from environment/.env.local — cannot verify');
-	process.exit(1);
-}
-
-const INVOKE_URL =
-	process.env.NVIDIA_COSMOS_INVOKE_URL || 'https://ai.api.nvidia.com/v1/cosmos/nvidia/cosmos-predict1-7b';
-const STATUS_URL = 'https://api.nvcf.nvidia.com/v2/nvcf/pexec/status';
-
 const args = process.argv.slice(2);
-const outIdx = args.indexOf('--out');
-const outPath = outIdx !== -1 ? args[outIdx + 1] : null;
-const prompt =
-	args.filter((a, i) => a !== '--out' && i !== outIdx + 1 && !a.startsWith('--')).join(' ') ||
-	'a serene alpine lake at sunrise, mist drifting over the water, cinematic';
-
-const auth = { authorization: `Bearer ${KEY}` };
-
-function isBase64Blob(s) {
-	return typeof s === 'string' && s.length > 64 && !/^https?:\/\//.test(s);
-}
-
-// Same multi-shape extraction the provider uses — kept in sync so a pass here
-// means the provider will parse the same body.
-async function extract(res) {
-	const ct = (res.headers.get('content-type') || '').toLowerCase();
-	if (ct.includes('json')) {
-		const data = await res.json().catch(() => null);
-		if (data && typeof data === 'object') {
-			console.log(`[cosmos] response json keys: ${JSON.stringify(Object.keys(data))}`);
-			const outs = Array.isArray(data.outputs) ? data.outputs : null;
-			if (outs) {
-				for (const o of outs) {
-					const d = Array.isArray(o?.data) ? o.data[0] : o?.data;
-					if (isBase64Blob(d)) return Buffer.from(d, 'base64');
-					if (typeof d === 'string' && /^https?:\/\//.test(d)) return fetchBytes(d);
-				}
-			}
-			for (const k of ['b64_video', 'video', 'b64_json', 'output']) {
-				if (isBase64Blob(data[k])) return Buffer.from(data[k], 'base64');
-			}
-			const a = data?.artifacts?.[0];
-			if (a) {
-				const inline = a.base64 ?? a.data ?? (isBase64Blob(a) ? a : null);
-				if (isBase64Blob(inline)) return Buffer.from(inline, 'base64');
-				const url = a.url ?? (typeof a === 'string' && a.startsWith('http') ? a : null);
-				if (url) return fetchBytes(url);
-			}
-		}
-		return null;
-	}
-	if (ct.includes('mp4') || ct.startsWith('video/') || ct.includes('octet-stream') || ct.includes('binary')) {
-		return Buffer.from(await res.arrayBuffer());
-	}
-	console.log(`[cosmos] unexpected content-type: ${ct}\n${(await res.text().catch(() => '')).slice(0, 300)}`);
-	return null;
-}
-
-async function fetchBytes(url) {
-	const r = await fetch(url);
-	if (!r.ok) throw new Error(`artifact url ${url.slice(0, 60)} → ${r.status}`);
-	return Buffer.from(await r.arrayBuffer());
-}
-
-const body = {
-	inputs: [
-		{ name: 'command', shape: [1], datatype: 'BYTES', data: [`text2world --prompt="${prompt.replace(/"/g, "'")}"`] },
-	],
+const valueFlags = new Set(['--mode', '--image', '--video', '--out', '--resolution', '--frames']);
+const flag = (name) => {
+	const i = args.indexOf(`--${name}`);
+	return i === -1 ? null : args[i + 1];
 };
+const positional = args.filter((a, i) => !a.startsWith('--') && !valueFlags.has(args[i - 1]));
+const mode = flag('mode') || 'text';
+const prompt = positional.join(' ') || 'a serene alpine lake at sunrise, mist drifting over the water, cinematic';
+const redact = (s) => String(s || '').replace(/account '[^']*'/gi, "account '<redacted>'").slice(0, 300);
 
-console.log(`[cosmos] POST ${INVOKE_URL}`);
-console.log(`[cosmos] prompt: ${prompt}`);
+const { RUNGS, submitToLadder, pollLadderJob } = await import('../api/_lib/cosmos-ladder.js');
+const { createNvidiaCosmosProvider, COSMOS_PREDICT1_7B_URL, COSMOS_PREDICT1_5B_URL } = await import(
+	'../api/_providers/nvidia-cosmos.js'
+);
 
-const submit = await fetch(INVOKE_URL, {
-	method: 'POST',
-	headers: { ...auth, accept: 'application/json', 'content-type': 'application/json', 'nvcf-poll-seconds': '30' },
-	body: JSON.stringify(body),
-});
+async function probeWorker() {
+	const base = (process.env.COSMOS_WORKER_URL || '').replace(/\/+$/, '');
+	if (!base) return 'not configured (COSMOS_WORKER_URL unset)';
+	try {
+		const res = await fetch(`${base}/health`, { signal: AbortSignal.timeout(30_000) });
+		const h = await res.json();
+		if (h.load_error) return `DOWN ${res.status}: ${h.load_error}`;
+		if (!h.ready) return `loading (attempt ${h.load_attempts}); a submit now waits for the model`;
+		return `READY on ${h.gpu_name}, loaded in ${h.load_seconds}s, revision ${String(h.revision).slice(0, 12)}, modes ${h.modes.join('/')}, queue ${h.queue_depth}`;
+	} catch (err) {
+		return `unreachable: ${err?.message}`;
+	}
+}
 
-console.log(`[cosmos] submit → ${submit.status} ${submit.statusText}`);
+async function probeHosted(url) {
+	if (!process.env.NVIDIA_API_KEY) return 'not configured (NVIDIA_API_KEY unset)';
+	try {
+		const r = await createNvidiaCosmosProvider().textToWorld({ prompt: 'a quiet harbor at dawn', routes: [url] });
+		return r.resultVideoUrl ? 'SERVED synchronously' : `SERVING (accepted request ${r.taskId})`;
+	} catch (err) {
+		return `${err?.code || 'error'} (HTTP ${err?.providerStatus ?? err?.status ?? '-'}): ${redact(err?.message)}`;
+	}
+}
 
-let bytes = null;
-if (submit.status === 202) {
-	const reqId = submit.headers.get('nvcf-reqid');
-	if (!reqId) throw new Error('202 but no NVCF-REQID header');
-	console.log(`[cosmos] async job ${reqId} — polling pexec/status…`);
-	const deadline = Date.now() + 5 * 60_000;
+console.log('[cosmos] ladder:');
+const probes = {
+	'cosmos3-nano': await probeWorker(),
+	'cosmos-predict1-7b': await probeHosted(COSMOS_PREDICT1_7B_URL),
+	'cosmos-predict1-5b': await probeHosted(COSMOS_PREDICT1_5B_URL),
+};
+for (const rung of RUNGS) console.log(`  ${rung.id.padEnd(20)} ${probes[rung.id]}`);
+if (args.includes('--probe-only')) process.exit(0);
+
+function dataUrl(path, kind) {
+	const ext = extname(path).slice(1).toLowerCase();
+	const type = kind === 'image' ? `image/${ext === 'jpg' ? 'jpeg' : ext}` : `video/${ext}`;
+	return `data:${type};base64,${readFileSync(path).toString('base64')}`;
+}
+
+const req = { mode, prompt };
+if (flag('resolution')) req.resolution = flag('resolution');
+if (flag('frames')) req.numFrames = Number(flag('frames'));
+if (mode === 'image') {
+	if (!flag('image')) throw new Error('--mode image needs --image <png|jpg|webp>');
+	req.image = dataUrl(flag('image'), 'image');
+}
+if (mode === 'depth' || mode === 'edge') {
+	if (!flag('video')) throw new Error(`--mode ${mode} needs --video <webm|mp4>`);
+	req.controlVideo = dataUrl(flag('video'), 'video');
+}
+
+console.log(`[cosmos] ${mode} world: ${prompt}`);
+const t0 = Date.now();
+const start = await submitToLadder(req);
+let videoUrl = start.videoUrl || null;
+if (!start.done) {
+	console.log(`[cosmos] ${start.rung.id} accepted ${start.jobId} (queue ${start.queuePosition ?? '-'})`);
+	const deadline = t0 + 40 * 60_000;
+	let last = '';
 	while (Date.now() < deadline) {
-		await new Promise((r) => setTimeout(r, 5_000));
-		const poll = await fetch(`${STATUS_URL}/${reqId}`, { headers: { ...auth, accept: 'application/json' } });
-		process.stdout.write(`  poll → ${poll.status}\r`);
-		if (poll.status === 202) continue;
-		if (poll.ok) {
-			bytes = await extract(poll);
+		await new Promise((r) => setTimeout(r, 5000));
+		const job = await pollLadderJob(start.jobId);
+		const line = `${job.status}${job.detail && job.status === 'queued' ? ` (${job.detail})` : ''}${job.step != null ? ` step ${job.step}/${job.total_steps}` : ''}`;
+		if (line !== last) console.log(`  ${((Date.now() - t0) / 1000).toFixed(0).padStart(5)}s ${line}`);
+		last = line;
+		if (job.status === 'failed') {
+			console.error(`[cosmos] FAIL ${job.error_code}: ${redact(job.worker_error || job.diagnostic)}`);
+			process.exit(2);
+		}
+		if (job.status === 'done' && job.video_url) {
+			videoUrl = job.video_url;
+			if (job.timings) console.log(`[cosmos] worker timings: ${JSON.stringify(job.timings)}`);
 			break;
 		}
-		throw new Error(`poll failed ${poll.status}: ${(await poll.text().catch(() => '')).slice(0, 300)}`);
 	}
-} else if (submit.ok) {
-	bytes = await extract(submit);
-} else {
-	throw new Error(`submit failed ${submit.status}: ${(await submit.text().catch(() => '')).slice(0, 400)}`);
 }
-
-if (!bytes || bytes.length < 1000) {
-	console.error('\n[cosmos] FAIL — no decodable MP4 came back. Check the response shape printed above.');
+if (!videoUrl) {
+	console.error('[cosmos] FAIL: no video after 40 minutes');
 	process.exit(2);
 }
 
-// MP4 files begin with an `ftyp` box; the type tag sits at bytes 4–8.
+const bytes = Buffer.from(await (await fetch(videoUrl)).arrayBuffer());
+// MP4 files begin with an `ftyp` box; the type tag sits at bytes 4-8.
 const looksMp4 = bytes.length > 12 && bytes.toString('ascii', 4, 8) === 'ftyp';
-console.log(`\n[cosmos] PASS — received ${(bytes.length / 1024 / 1024).toFixed(2)} MB, ftyp box: ${looksMp4 ? 'yes' : 'no'}`);
-if (outPath) {
-	writeFileSync(outPath, bytes);
-	console.log(`[cosmos] wrote ${outPath}`);
+const wall = ((Date.now() - t0) / 1000).toFixed(1);
+if (!looksMp4) {
+	console.error(`[cosmos] FAIL: ${videoUrl} is not an MP4 (${bytes.length} bytes)`);
+	process.exit(2);
+}
+console.log(`[cosmos] PASS ${start.rung.id} ${mode}: ${(bytes.length / 1e6).toFixed(2)} MB in ${wall}s → ${videoUrl}`);
+if (flag('out')) {
+	writeFileSync(flag('out'), bytes);
+	console.log(`[cosmos] wrote ${flag('out')}`);
 }
