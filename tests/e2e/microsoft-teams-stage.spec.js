@@ -39,7 +39,11 @@ function freePort() {
 
 test.beforeAll(async () => {
 	const port = await freePort();
-	const entry = path.join(path.dirname(require.resolve('@fluidframework/azure-local-service/package.json')), 'dist', 'index.js');
+	// Resolve the entry from the package's own bin field: its file layout has
+	// moved between releases (dist/index.js earlier, index.js in 3.12).
+	const pkgPath = require.resolve('@fluidframework/azure-local-service/package.json');
+	const { bin } = require(pkgPath);
+	const entry = path.join(path.dirname(pkgPath), typeof bin === 'string' ? bin : bin['azure-local-service']);
 	fluid = spawn(process.execPath, [entry], { env: { ...process.env, PORT: String(port) }, stdio: 'pipe' });
 	fluidUrl = `http://localhost:${port}`;
 	const deadline = Date.now() + 60_000;

@@ -2,9 +2,11 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { unzipSync } from 'fflate';
 import { missingSequences } from '../scripts/microsoft-copilot-agent-proof.mjs';
+import { REPORT_COMMAND_ID } from '../api/_lib/teams-ai.js';
 import {
 	AGENT_ID,
 	AGENT_LIMITS,
+	BOT_DEPENDENT_COMMANDS,
 	PLUGIN_LIMITS,
 	assemble,
 	buildManifest,
@@ -37,9 +39,21 @@ describe('microsoft app package', () => {
 		expect(checkHosts(manifest)).toEqual([]);
 		expect(manifest.validDomains).toEqual(expect.arrayContaining(['three.ws', 'www.three.ws']));
 		const dep = manifest.elementRelationshipSet.oneWayDependencies[0];
-		expect(dep.element).toEqual({ name: 'composeExtensions', id: manifest.composeExtensions[0].id, commandIds: ['createModel'] });
+		expect(dep.element).toEqual({ name: 'composeExtensions', id: manifest.composeExtensions[0].id, commandIds: ['createModel', REPORT_COMMAND_ID] });
 		expect(dep.dependsOn).toEqual([{ name: 'bots', id: OWNER.MS_TEAMS_BOT_APP_ID }]);
 		expect(manifest.composeExtensions[0].commands.find((c) => c.id === 'searchAgents').context).toContain('compose');
+	});
+
+	it('declares the Report message action the bot answers, only on messages, behind the bot', () => {
+		const { manifest } = buildManifest(OWNER);
+		const report = manifest.composeExtensions[0].commands.find((c) => c.id === REPORT_COMMAND_ID);
+		expect(report).toMatchObject({ type: 'action', fetchTask: true, context: ['message'] });
+		expect(report.title.length).toBeLessThanOrEqual(32);
+		expect(report.description.length).toBeLessThanOrEqual(128);
+		expect(BOT_DEPENDENT_COMMANDS).toContain(REPORT_COMMAND_ID);
+		const ungated = JSON.parse(JSON.stringify(manifest));
+		ungated.elementRelationshipSet.oneWayDependencies[0].element.commandIds = ['createModel'];
+		expect(checkHosts(ungated).join('\n')).toContain(`command ${REPORT_COMMAND_ID} needs the bot`);
 	});
 
 	it('rejects host declarations that would break outside Teams', () => {

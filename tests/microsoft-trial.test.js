@@ -20,8 +20,10 @@ vi.mock('../api/_lib/db.js', async (importActual) => {
 });
 const audit = vi.hoisted(() => ({ logAudit: vi.fn() }));
 vi.mock('../api/_lib/audit.js', () => audit);
+// insertNotification returns the user_notifications row id, a uuid string.
+const NOTIFICATION_ID = 'f0183bd8-1183-4da4-a9b9-534ee39b8292';
 const notify = vi.hoisted(() => ({
-	insertNotification: vi.fn(async () => ({ id: 77, in_app: true, delivered: { push: 0 } })),
+	insertNotification: vi.fn(async () => ({ id: 'f0183bd8-1183-4da4-a9b9-534ee39b8292', in_app: true, delivered: { push: 0 } })),
 	emailAllowedForType: vi.fn(async () => true),
 }));
 vi.mock('../api/_lib/notify.js', () => notify);
@@ -75,6 +77,16 @@ describe('trial dates', () => {
 describe('nextTrialState', () => {
 	const pending = { is_free_trial: true, saas_status: 'PendingFulfillmentStart', term_start: null, term_end: null };
 	const trialing = { is_free_trial: true, saas_status: 'Subscribed', term_start: '2026-11-02T00:00:00Z', term_end: '2026-12-01T00:00:00Z' };
+
+	it('never records a trial start later than the moment it is first seen', () => {
+		// Microsoft's SaaS API emulator mutates its start date into the end date on
+		// activation; a start in the future would skew the starts-in-window count.
+		const future = { ...trialing, term_start: '2026-11-22T12:00:00Z', term_end: '2026-11-22T12:00:00Z' };
+		const { columns, events } = nextTrialState(null, future, NOW);
+		expect(columns.trial_started_at).toBe(NOW.toISOString());
+		expect(columns.trial_ends_at).toBe('2026-11-22T12:00:00.000Z');
+		expect(events).toEqual(['trial_started']);
+	});
 
 	it('does not start a trial before activation', () => {
 		const { columns, events } = nextTrialState(null, pending, NOW);
@@ -198,7 +210,7 @@ create table users (id uuid primary key default gen_random_uuid(), email text, d
 create table user_identities (id uuid primary key default gen_random_uuid(), user_id uuid, provider text not null,
   subject text, constraint user_identities_provider_check check (provider in ('google')));
 create table subscriptions (user_id uuid, plan text, status text, active_until timestamptz);`;
-const MIGRATIONS = ['20261104180000_microsoft_marketplace_saas.sql', '20261116152500_microsoft_saas_free_trial.sql']
+const MIGRATIONS = ['20261104180000_microsoft_marketplace_saas.sql', '20261116152500_microsoft_saas_free_trial.sql', '20261116162459_microsoft_trial_reminder_notification_uuid.sql']
 	.map((f) => readFileSync(`api/_lib/migrations/${f}`, 'utf8'));
 
 function microsoftSub(over = {}) {
@@ -361,8 +373,8 @@ describe('trial persistence and reminders', () => {
 
 		const ledger = await db.sql`select milestone, notification_id, email_status, email_to from microsoft_saas_trial_reminders order by id`;
 		expect(ledger).toEqual([
-			{ milestone: '7d', notification_id: 77, email_status: 'sent', email_to: 'buyer@contoso.example' },
-			{ milestone: '1d', notification_id: 77, email_status: 'sent', email_to: 'buyer@contoso.example' },
+			{ milestone: '7d', notification_id: NOTIFICATION_ID, email_status: 'sent', email_to: 'buyer@contoso.example' },
+			{ milestone: '1d', notification_id: NOTIFICATION_ID, email_status: 'sent', email_to: 'buyer@contoso.example' },
 		]);
 	});
 
