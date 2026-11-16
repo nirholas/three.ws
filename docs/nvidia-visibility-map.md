@@ -87,22 +87,41 @@ diffs the NIM catalog against its last snapshot every 6 hours and pages ops
 `nvidia/*` ids listed first. The first run seeds silently and an unreachable
 catalog never counts as a release.
 
-**When the alert fires:**
+**The evaluation is automated too (since 2026-11-16).** The same audit queues
+every new id in `nim_release_evals`, and
+[api/cron/nim-release-eval.js](../api/cron/nim-release-eval.js) (every 15
+minutes, one model per tick) classifies it into a lane by live probes (chat,
+vision, embeddings, rerank, safety; never from the name), runs the lane's
+versioned eval set from [data/evals/](../data/evals/) against it and against the
+model the lane runs today, and stores a verdict (adopt, hold, reject, skip). A
+second alert (`llm:nim-release-eval:<model>`) carries the verdict, the numbers,
+a link to [/admin/nim-releases](https://three.ws/admin/nim-releases), the exact
+config diff and a post draft. Production config is never switched by the
+pipeline. Details: [nvidia-models.md](./nvidia-models.md#day-0-release-pipeline).
 
-1. Pick the lane the model fits (chat garden, vision, embeddings, safety, voice) from [nvidia-models.md](./nvidia-models.md) and wire it as the lane's first rung with the current model kept behind it.
-2. Verify on production with a real request, and record one measured number (latency, quality delta, cost) for the post.
-3. Draft the post: what the model now does on three.ws, the number, a 10 to 15 second clip, `@NVIDIAAIDev`, `#NVIDIAInception`. Owner approves and posts (external-channel gate). Same day if at all possible: a day-3 post is just a changelog entry.
+**When the eval alert says adopt:**
+
+1. Open the row on /admin/nim-releases, copy the diff, `git apply` it, run the lane's tests. A diff the pipeline could not build says why and names the file to wire by hand.
+2. Deploy (owner gate), then verify on production with a real request. The measured number for the post is already in the report.
+3. Post the draft with a 10 to 15 second clip, tagging `@NVIDIAAIDev` and `#NVIDIAInception`. Owner approves and posts (external-channel gate). Same day if at all possible: a day-3 post is just a changelog entry.
 4. Add the changelog entry and update [nvidia-models.md](./nvidia-models.md).
 
-**Backlog as of 2026-11-06** (releases already in the catalog that our user-facing lanes do not run yet, found by the first live run of the watch):
+**Backlog (found 2026-11-06, evaluated 2026-11-16 by the pipeline above).**
+Super VL and embed-8b have since been wired as their lanes' first rungs, so the
+pipeline scored them as baselines of production against the lane floor. Reports
+are committed under [docs/nvidia/evals/](./nvidia/evals/).
 
-| NVIDIA release | Our lane today | Story if adopted |
-|---|---|---|
-| `nvidia/nemotron-3.5-super-vl-120b-a12b` | Vision runs `meta/llama-3.2-11b-vision-instruct` ([api/_lib/vision.js](../api/_lib/vision.js)); Super VL is only a last-resort rung in the internal X-content editor | Agents that see: image understanding on Nemotron end to end, alongside Nemotron chat |
-| `nvidia/nemotron-3.5-embed-1b` (and `-8b`) | Embeddings run `nvidia/nemotron-3-embed-1b` ([api/_lib/embeddings.js](../api/_lib/embeddings.js)) | Agent memory on the newest Nemotron embedder. Needs a re-embed of stored vectors, so measure first |
+| NVIDIA release | Lane today | Verdict and measured result | Report |
+|---|---|---|---|
+| `nvidia/nemotron-3.5-super-vl-120b-a12b` | First vision rung ([api/_lib/vision.js](../api/_lib/vision.js)) | Reject as a baseline: 79% accuracy and 79% format adherence on the 14-task vision set, under the 80% format floor, because it writes out its reasoning on the counting items despite `enable_thinking: false` | [md](./nvidia/evals/vision/nvidia_nemotron-3.5-super-vl-120b-a12b.md) |
+| `nvidia/nemotron-3.5-embed-8b` | First embeddings rung at 2048 dims ([api/_lib/embeddings.js](../api/_lib/embeddings.js)) | Adopt as a baseline: 92% recall@1 on the 12-query set, p50 124 ms | [md](./nvidia/evals/embeddings/nvidia_nemotron-3.5-embed-8b.md) |
+| `nvidia/nemotron-3.5-embed-1b` | Not wired | Adopt on the small set: 100% vs 92% for embed-8b at 2048 dims, p50 120 vs 124 ms. The small set is saturated, so this is not enough to re-pin: run the deeper `node scripts/nvidia-embed-eval.mjs` (BEIR plus the three.ws docs set), the benchmark that moved the lane from nemotron-3-embed-1b to 8b (81.3 to 91.3 nDCG@10). 8b stays until 1b beats it there, and 1b cannot be proposed as a diff until the current re-embed retires `NIM_EMBED_TAG_PREVIOUS` | [md](./nvidia/evals/embeddings/nvidia_nemotron-3.5-embed-1b.md) |
 
-These are no longer day-0, so they carry a smaller post, but they are free to
-ship and they close the gap before the next release lands.
+The pipeline's first end-to-end run on a live catalog model,
+`nvidia/nemotron-3.5-bolt-e4b`, classified it as a vision model by probe and
+returned adopt: 86% accuracy vs 79% for Super VL, 100% format adherence, p50
+588 ms vs 889 ms ([run record](./nvidia/evals/pipeline/nvidia_nemotron-3.5-bolt-e4b.md)).
+That is the next vision rung to wire and the next post.
 
 ---
 
