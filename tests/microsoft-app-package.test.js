@@ -12,6 +12,7 @@ import {
 	checkDeclarativeAgent,
 	checkPlugin,
 	checkMeetingStage,
+	checkHosts,
 	checkTools,
 	STAGE_RSC,
 	STAGE_TAB_ID,
@@ -30,6 +31,35 @@ const OWNER = {
 };
 
 describe('microsoft app package', () => {
+	it('declares the hosts: Outlook and the Microsoft 365 app run search and unfurl, the live 3D command stays with the bot', () => {
+		const { manifest, problems } = buildManifest(OWNER);
+		expect(problems).toEqual([]);
+		expect(checkHosts(manifest)).toEqual([]);
+		expect(manifest.validDomains).toEqual(expect.arrayContaining(['three.ws', 'www.three.ws']));
+		const dep = manifest.elementRelationshipSet.oneWayDependencies[0];
+		expect(dep.element).toEqual({ name: 'composeExtensions', id: manifest.composeExtensions[0].id, commandIds: ['createModel'] });
+		expect(dep.dependsOn).toEqual([{ name: 'bots', id: OWNER.MS_TEAMS_BOT_APP_ID }]);
+		expect(manifest.composeExtensions[0].commands.find((c) => c.id === 'searchAgents').context).toContain('compose');
+	});
+
+	it('rejects host declarations that would break outside Teams', () => {
+		const { manifest } = buildManifest(OWNER);
+		const clone = () => JSON.parse(JSON.stringify(manifest));
+		const ungated = clone();
+		delete ungated.elementRelationshipSet;
+		expect(checkHosts(ungated).join('\n')).toContain('command createModel needs the bot');
+		const dangling = clone();
+		dangling.elementRelationshipSet.oneWayDependencies[0].dependsOn[0].id = 'another-bot';
+		expect(checkHosts(dangling).join('\n')).toContain('bots "another-bot", which the manifest does not declare');
+		const badCommand = clone();
+		badCommand.elementRelationshipSet.oneWayDependencies[0].element.commandIds = ['nope'];
+		expect(checkHosts(badCommand).join('\n')).toContain('command nope');
+		const old = { ...clone(), manifestVersion: '1.12', validDomains: ['three.ws'] };
+		const text = checkHosts(old).join('\n');
+		expect(text).toContain('Outlook and the Microsoft 365 app need 1.13 or later');
+		expect(text).toContain('validDomains needs www.three.ws');
+	});
+
 	it('--check passes without the owner values', async () => {
 		const quiet = console.log;
 		console.log = () => {};

@@ -131,6 +131,7 @@ export function buildManifest(values) {
 
 	problems.push(...schemaProblems('MicrosoftTeams.schema.v1.30.json', manifest, 'manifest'));
 	problems.push(...checkMeetingStage(manifest));
+	problems.push(...checkHosts(manifest));
 	problems.push(...checkAgentReference(manifest));
 	const bad = nonAscii(JSON.stringify(manifest));
 	if (bad) problems.push(`manifest.json contains a non-ASCII character (${bad})`);
@@ -286,6 +287,81 @@ function parseJsonFile(name, problems) {
 		problems.push(`${name} is not valid JSON: ${err.message}`);
 		return null;
 	}
+}
+
+// Outlook and the Microsoft 365 app run the same package as Teams (manifest
+// 1.13 or later). A capability a host cannot run is declared away with
+// elementRelationshipSet, so every reference there must name a real element:
+// bots by botId, staticTabs by entityId, composeExtensions and configurableTabs
+// by id, and commandIds that exist. An action command that needs the bot (the
+// live 3D card) must depend on it, so hosts without bots never show it. Search
+// stays available in Outlook, which runs message extensions in compose only.
+// https://learn.microsoft.com/en-us/microsoftteams/platform/m365-apps/teams-app-manifest-hosts
+// https://learn.microsoft.com/en-us/microsoftteams/platform/m365-apps/extend-m365-teams-message-extension
+export const HOST_MIN_MANIFEST = [1, 13];
+export const BOT_DEPENDENT_COMMANDS = ['createModel'];
+export const OUTLOOK_DOMAINS_REQUIRED = ['three.ws', 'www.three.ws'];
+
+function elementIds(manifest, name) {
+	const list = manifest[name] || [];
+	if (name === 'bots') return list.map((b) => b.botId);
+	if (name === 'staticTabs') return list.map((t) => t.entityId);
+	return list.map((e) => e.id).filter(Boolean);
+}
+
+function hostOf(url) {
+	try {
+		return new URL(url.replace(/\{[^}]+\}/g, 'x')).hostname;
+	} catch {
+		return null;
+	}
+}
+
+export function checkHosts(manifest) {
+	const problems = [];
+	const [major, minor] = String(manifest.manifestVersion || '0').split('.').map(Number);
+	if (major < HOST_MIN_MANIFEST[0] || (major === HOST_MIN_MANIFEST[0] && minor < HOST_MIN_MANIFEST[1])) {
+		problems.push(`manifestVersion ${manifest.manifestVersion} runs only in Teams; Outlook and the Microsoft 365 app need ${HOST_MIN_MANIFEST.join('.')} or later`);
+	}
+	const domains = manifest.validDomains || [];
+	for (const d of OUTLOOK_DOMAINS_REQUIRED) if (!domains.includes(d)) problems.push(`validDomains needs ${d}`);
+	for (const tab of manifest.staticTabs || []) {
+		const h = hostOf(tab.contentUrl || '');
+		if (tab.contentUrl && !domains.includes(h)) problems.push(`staticTabs ${tab.entityId} contentUrl host ${h} is not in validDomains`);
+	}
+	const ext = manifest.composeExtensions || [];
+	for (const e of ext) {
+		for (const handler of e.messageHandlers || []) {
+			for (const d of handler.value?.domains || []) if (!domains.includes(d)) problems.push(`link unfurl domain ${d} is not in validDomains`);
+		}
+		for (const c of e.commands || []) {
+			if (c.type === 'query' && !(c.context || ['compose', 'commandBox']).includes('compose')) {
+				problems.push(`search command ${c.id} needs the compose context, the only one Outlook runs`);
+			}
+		}
+	}
+	const deps = manifest.elementRelationshipSet?.oneWayDependencies || [];
+	const mutual = (manifest.elementRelationshipSet?.mutualDependencies || []).flat();
+	for (const ref of [...deps.flatMap((d) => [d.element, ...d.dependsOn]), ...mutual]) {
+		if (!elementIds(manifest, ref.name).includes(ref.id)) {
+			problems.push(`elementRelationshipSet names ${ref.name} "${ref.id}", which the manifest does not declare`);
+			continue;
+		}
+		if (ref.commandIds && ref.name === 'composeExtensions') {
+			const known = (ext.find((e) => e.id === ref.id)?.commands || []).map((c) => c.id);
+			for (const id of ref.commandIds) if (!known.includes(id)) problems.push(`elementRelationshipSet names command ${id}, which ${ref.id} does not declare`);
+		}
+	}
+	for (const cmd of BOT_DEPENDENT_COMMANDS) {
+		const owner = ext.find((e) => (e.commands || []).some((c) => c.id === cmd));
+		if (!owner) continue;
+		const gated = deps.some((d) =>
+			d.element.name === 'composeExtensions' && d.element.id === owner.id
+			&& (!d.element.commandIds || d.element.commandIds.includes(cmd))
+			&& d.dependsOn.some((t) => t.name === 'bots' && t.id === owner.botId));
+		if (!gated) problems.push(`command ${cmd} needs the bot (its card updates live), so elementRelationshipSet must make it depend on bots "${owner.botId}"`);
+	}
+	return problems;
 }
 
 export function checkTools(text) {
@@ -461,7 +537,7 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
 		const agent = JSON.parse(files[AGENT_FILE]);
 		const plugin = JSON.parse(files[PLUGIN_FILE]);
 		console.log(
-			`OK: manifest, schema v1.30, ${JSON.parse(files['mcptools.json']).tools.length} tools, meeting stage tab and RSC, ` +
+			`OK: manifest, schema v1.30, ${JSON.parse(files['mcptools.json']).tools.length} tools, meeting stage tab and RSC, Teams, Outlook and Microsoft 365 app host declarations, ` +
 				`declarative agent "${agent.name}" (schema ${agent.version}, ${agent.instructions.length}/${AGENT_LIMITS.instructions} instruction characters, ` +
 				`${agent.conversation_starters.length} starters), plugin schema ${plugin.schema_version} pinning ${plugin.functions.length} tools, ` +
 				'icons and ASCII checks pass (owner values not checked).',

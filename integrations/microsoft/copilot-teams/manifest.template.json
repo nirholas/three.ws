@@ -90,7 +90,8 @@
     ]
   },
   "validDomains": [
-    "three.ws"
+    "three.ws",
+    "www.three.ws"
   ],
   "webApplicationInfo": {
     "id": "${MS_TEAMS_BOT_APP_ID}",
@@ -180,6 +181,7 @@
   ],
   "composeExtensions": [
     {
+      "id": "threews-compose",
       "botId": "${MS_TEAMS_BOT_APP_ID}",
       "commands": [
         {
@@ -227,5 +229,24 @@
         }
       ]
     }
-  ]
+  ],
+  "elementRelationshipSet": {
+    "oneWayDependencies": [
+      {
+        "element": {
+          "name": "composeExtensions",
+          "id": "threews-compose",
+          "commandIds": [
+            "createModel"
+          ]
+        },
+        "dependsOn": [
+          {
+            "name": "bots",
+            "id": "${MS_TEAMS_BOT_APP_ID}"
+          }
+        ]
+      }
+    ]
+  }
 }
