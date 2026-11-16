@@ -109,6 +109,7 @@
 					<li><b>People:</b> email and password, Sign-In With Solana, EVM wallet sign-in (EIP-4361, single-use nonces), Google, GitHub and X, or Privy social sign-in. Browser sessions are opaque 32-byte random tokens in a <code>__Host-</code> cookie (HttpOnly, Secure, SameSite=Lax) with a 30-day lifetime.</li>
 					<li><b>Apps and MCP clients:</b> OAuth 2.1 with PKCE, where only <code>S256</code> is accepted, and audience-bound access tokens that expire after one hour. Refresh tokens rotate, and if an old one is reused the whole token chain is revoked. Scoped API keys can be revoked at any time.</li>
 					<li><b>Microsoft Marketplace buyers</b> sign in with their Microsoft Entra ID work account to activate a purchase.</li>
+					<li><b>Rolling out to a Microsoft organisation:</b> an Entra administrator approves the sign-in app once on the <a href="/enterprise/admin-consent">admin consent page</a> (delegated sign-in and own-profile permissions only), and the <a href="/docs/microsoft-admin-deployment">IT admin deployment guide</a> covers pushing the Teams app, the web app and the Edge extensions through Intune, Group Policy and Teams policies.</li>
 					<li><b>Enterprise SSO:</b> SAML 2.0 service-provider support is built and can be enabled for a deployment with that organisation's identity provider. It is not enabled on three.ws today.</li>
 					<li><b>Multi-factor:</b> three.ws has no built-in second factor today. Wallet sign-in is passwordless, and SSO sign-in inherits the identity provider's MFA policy. Passkeys are not supported yet.</li>
 				</ul>

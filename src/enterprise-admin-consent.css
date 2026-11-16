@@ -1,0 +1,92 @@
+/* Admin consent page (/enterprise/admin-consent). Tokens come from
+   public/tokens.css via style.css, so the page follows both themes. */
+
+.ac-wrap {
+	width: 100%;
+	max-width: 720px;
+	margin: 0 auto;
+	padding: calc(var(--space-md) * 2) var(--space-md) calc(var(--space-md) * 5);
+}
+.ac-crumb { font-size: var(--text-sm); color: var(--ink-dim); margin: 0 0 var(--space-lg); }
+.ac-crumb a { color: inherit; }
+.ac-crumb a:hover { color: var(--ink); }
+.ac-sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.ac-eyebrow { font-size: var(--text-xs); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); margin: 0 0 6px; }
+.ac-h1 { font-family: var(--font-display); font-size: var(--text-xl); color: var(--ink-bright); margin: 0; line-height: 1.15; letter-spacing: -0.01em; }
+.ac-lede { color: var(--ink-dim); font-size: var(--text-md); line-height: 1.55; margin: var(--space-xs) 0 0; }
+
+.ac-card {
+	margin-top: var(--space-lg);
+	padding: var(--space-lg);
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-card, 14px);
+}
+.ac-card.is-error { border-color: color-mix(in srgb, var(--danger) 55%, var(--stroke)); }
+.ac-card.is-good { border-color: color-mix(in srgb, var(--success, #22c55e) 55%, var(--stroke)); }
+.ac-card h2 { font-size: var(--text-lg); color: var(--ink-bright); margin: 0 0 var(--space-xs); }
+.ac-card p { color: var(--ink); line-height: 1.55; margin: 0 0 var(--space-sm); }
+.ac-card p:last-child { margin-bottom: 0; }
+
+.ac-facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px; margin: var(--space-md) 0; font-size: var(--text-sm); }
+.ac-facts dt { color: var(--ink-dim); }
+.ac-facts dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+	.ac-facts { grid-template-columns: 1fr; gap: 2px; }
+	.ac-facts dd { margin-bottom: 8px; }
+}
+
+.ac-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: var(--text-xs); border: 1px solid var(--stroke-strong); color: var(--ink); }
+.ac-badge.is-good { color: var(--success, #22c55e); border-color: currentColor; }
+.ac-badge.is-warn { color: var(--warning, #f59e0b); border-color: currentColor; }
+.ac-badge.is-bad { color: var(--danger); border-color: currentColor; }
+
+.ac-steps { margin: var(--space-md) 0 0; padding-left: 1.2em; color: var(--ink); line-height: 1.6; }
+.ac-steps li { margin-bottom: 4px; }
+
+.ac-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: var(--space-md); }
+.ac-btn {
+	display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+	min-height: 42px; padding: 10px 18px;
+	font: var(--weight-medium) var(--text-sm) / 1 var(--font-body);
+	color: var(--ink); background: var(--surface-2);
+	border: 1px solid var(--stroke-strong); border-radius: var(--radius-control, 8px);
+	cursor: pointer; text-decoration: none; white-space: nowrap;
+	transition: border-color var(--duration-fast), background var(--duration-fast), transform var(--duration-instant), filter var(--duration-fast);
+}
+.ac-btn:hover { border-color: var(--ink-dim); background: var(--surface-3); }
+.ac-btn:active { transform: translateY(1px); }
+.ac-btn[aria-disabled="true"], .ac-btn:disabled { opacity: .45; cursor: default; transform: none; pointer-events: none; }
+.ac-btn-primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: var(--weight-semibold); }
+.ac-btn-primary:hover { background: var(--accent); border-color: var(--accent); filter: brightness(1.08); }
+.ac-btn svg { width: 16px; height: 16px; flex: none; }
+.ac-btn:focus-visible, .ac-wrap a:focus-visible {
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #3b82f6);
+	outline-offset: var(--focus-ring-offset, 2px);
+}
+.ac-wrap a:not(.ac-btn) { color: var(--ink-bright); }
+.ac-trust { margin: var(--space-lg) 0 0; font-size: var(--text-sm); color: var(--ink-dim); }
+.ac-wrap a:not(.ac-btn):hover { color: var(--accent); }
+
+.ac-hint { color: var(--ink-dim); font-size: var(--text-xs); line-height: 1.5; margin-top: var(--space-sm); }
+.ac-code { font-family: var(--font-mono, ui-monospace, monospace); font-size: var(--text-xs); color: var(--ink-dim); }
+
+.ac-skel { border-radius: var(--radius-card, 14px); background: var(--skeleton-base); background-image: linear-gradient(90deg, var(--skeleton-base) 0%, var(--skeleton-sheen) 50%, var(--skeleton-base) 100%); background-size: 200% 100%; animation: ac-shimmer 1.4s ease-in-out infinite; }
+.ac-skel.is-title { height: 64px; max-width: 420px; }
+.ac-skel.is-card { height: 260px; margin-top: var(--space-lg); }
+@keyframes ac-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .ac-skel { animation: none; } }
+
+.ac-perms { list-style: none; margin: var(--space-md) 0 0; padding: 0; display: grid; gap: 10px; }
+.ac-perms li { padding: 10px 12px; border: 1px solid var(--stroke); border-radius: var(--radius-control, 8px); background: var(--surface-2); }
+.ac-perms strong { display: block; color: var(--ink-bright); font-size: var(--text-sm); }
+.ac-perms span { display: block; color: var(--ink-dim); font-size: var(--text-sm); line-height: 1.5; margin-top: 2px; }
+.ac-field { display: grid; gap: 6px; margin-top: var(--space-md); }
+.ac-field label { font-size: var(--text-sm); color: var(--ink-dim); }
+.ac-field input { min-height: 42px; padding: 8px 12px; font: var(--text-sm) var(--font-body); color: var(--ink); background: var(--surface-2); border: 1px solid var(--stroke-strong); border-radius: var(--radius-control, 8px); }
+.ac-field input:hover { border-color: var(--ink-dim); }
+.ac-field input:focus-visible { outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #3b82f6); outline-offset: var(--focus-ring-offset, 2px); }
+.ac-field input[aria-invalid="true"] { border-color: var(--danger); }
+.ac-field .ac-hint { margin: 0; }
+.ac-link { margin-top: var(--space-sm); padding: 10px 12px; border: 1px dashed var(--stroke-strong); border-radius: var(--radius-control, 8px); overflow-wrap: anywhere; user-select: all; }

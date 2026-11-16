@@ -4722,6 +4722,14 @@
 					"added": "2026-06-05"
 				},
 				{
+					"path": "/docs/sharing",
+					"title": "Docs · Sharing and link previews",
+					"description": "Share creations and agents to Teams and LinkedIn, the link-preview rules both enforce, and how to refresh a stale LinkedIn card.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-11-16"
+				},
+				{
 					"path": "/docs/sketchfab",
 					"title": "Docs · Sketchfab Showcase",
 					"description": "How the best community forge models get published to the official three.ws Sketchfab account: what gets picked, AI disclosure, and the backlinks that make referrals measurable.",
@@ -8448,6 +8456,22 @@
 					"priority": 0.4,
 					"changefreq": "monthly",
 					"added": "2026-07-20"
+				},
+				{
+					"path": "/enterprise/admin-consent",
+					"title": "Admin consent (Microsoft Entra)",
+					"description": "What the three.ws sign-in app asks for in plain language, and the tenant-wide admin consent link for a Microsoft Entra administrator, with clear success and error results.",
+					"priority": 0.4,
+					"changefreq": "monthly",
+					"added": "2026-11-16"
+				},
+				{
+					"path": "/docs/microsoft-admin-deployment",
+					"title": "Docs · Microsoft IT admin deployment guide",
+					"description": "Roll three.ws out to every seat: Teams setup policy, Edge WebAppInstallForceList and ExtensionInstallForcelist through Intune or Group Policy, tenant-wide admin consent, verification, rollback and FAQ.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-16"
 				},
 				{
 					"path": "/trust",

@@ -2,6 +2,20 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-11-16",
+			"title": "Roll three.ws out to every seat from your Microsoft admin consoles",
+			"summary": "IT admins get a ready deployment kit: the exact Edge policy values to install the web app and extensions through Intune or Group Policy, a Teams setup policy script that installs and pins three.ws for a group, a tenant-wide admin consent page that explains each permission in plain language, and a guide with verification, rollback and FAQ. Every script has a dry run.",
+			"tags": ["feature"],
+			"link": "/docs/microsoft-admin-deployment"
+		},
+		{
+			"date": "2026-11-16",
+			"title": "Share any creation or agent to Teams and LinkedIn",
+			"summary": "The share menu now has Share to Teams and Share on LinkedIn, on creations, agents and avatars. The link cards behind them were fixed so they show a proper image: agent cards are now PNG instead of SVG, avatar cards are 1200x630, and over a hundred pages now declare their card size.",
+			"tags": ["feature", "improvement"],
+			"link": "/forge"
+		},
+		{
 			"date": "2026-11-15",
 			"title": "@trythreews posts in more formats, for more readers, five times a day",
 			"summary": "The @trythreews feed now rotates code cards from files that ship, live captures of three.ws pages, polls, GIFs, filmed demos and X Articles, and writes each post for one reader: developers, teachers, students, founders, creators or the community. Posts that read as machine-written are rejected before they are queued, two posts in a row never open the same way, and the account posts five times a day inside US hours. A post the account owner must approve now arrives in the approval inbox showing every post, poll and video exactly as it will go out, approved with one tap.",

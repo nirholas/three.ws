@@ -46,6 +46,7 @@
 
 .tt-card { margin-top: var(--space-sm); padding: var(--space-md); background: var(--surface-1); border: 1px solid var(--stroke); border-radius: var(--radius-card, 14px); }
 .tt-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-sm); flex-wrap: wrap; }
+.tt-job-poster { display: block; width: 100%; max-height: 320px; object-fit: contain; margin-top: var(--space-sm); border-radius: var(--radius-card, 14px); background: var(--surface-2, var(--surface-1)); }
 .tt-card h1 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--ink-bright); margin: 0; line-height: 1.2; }
 .tt-headline { color: var(--ink-dim); margin: 4px 0 0; font-size: var(--text-sm); line-height: 1.5; }
 .tt-desc { color: var(--ink); margin: var(--space-sm) 0 0; font-size: var(--text-sm); line-height: 1.55; }
@@ -106,4 +107,19 @@
 	.tt-list { max-height: none; }
 	.tt-head { flex-wrap: wrap; }
 	.tt-search { max-width: none; flex-basis: 100%; margin-left: 0; }
+}
+
+/* Teams high-contrast theme (?theme=contrast sets data-contrast on the root):
+   pure black and white with a yellow accent, matching the Teams contrast
+   palette. forced-colors covers Windows high-contrast modes outside Teams. */
+:root[data-contrast] {
+	--bg-0: #000000; --surface-1: #000000; --surface-2: #000000;
+	--ink: #ffffff; --ink-dim: #ffffff; --ink-bright: #ffffff; --ink-faint: #ffffff;
+	--stroke: #ffffff; --stroke-strong: #ffffff;
+	--accent: #ffff00; --focus-ring-color: #ffff00;
+	--skeleton-base: #000000; --skeleton-sheen: #333333;
+}
+:root[data-contrast] a { color: #ffff00; }
+@media (forced-colors: active) {
+	:is(a, button, input, select, textarea):focus-visible { outline: 2px solid CanvasText; }
 }

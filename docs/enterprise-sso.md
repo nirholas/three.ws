@@ -23,6 +23,8 @@ The button uses one multitenant Entra app on the `common` authority, so any orga
   - With no match, a new account is created.
 - **Unlinking** in Settings requires proof from the last five minutes (your password, or a fresh Microsoft sign-in), and is refused when Microsoft is the account's only way in.
 
+To roll three.ws out to every seat (Teams, Edge web app, extensions), see the [Microsoft IT admin deployment guide](microsoft-admin-deployment.md).
+
 ## Claim your organisation's tenant
 
 A team can hold one Entra tenant, and a tenant can belong to one team.
@@ -130,8 +132,8 @@ All endpoints are under `https://three.ws/scim/v2` and answer `application/scim+
 | A provisioned person does not appear as a member | They have not signed in with Microsoft yet. They join on first sign-in, matched by their `userPrincipalName` or email. |
 | "That Microsoft account is not a directory administrator" when claiming | Sign in with one of the four admin roles listed above. |
 | "That Microsoft tenant already belongs to another three.ws team" | The other team's owner has to unclaim it first. |
-| "Your organisation has to approve three.ws" at sign-in | The tenant requires admin consent for apps. An Entra administrator grants consent once, then everyone can sign in. |
-| Provisioning log shows 429 | The team exceeded 1,200 requests per minute. Entra retries automatically; no action needed. |
+| "Your organisation has to approve three.ws" at sign-in | The tenant requires admin consent for apps. An Entra administrator grants consent once at [/enterprise/admin-consent](https://three.ws/enterprise/admin-consent), then everyone can sign in. |
+| Provisioning log shows 429 | The team exceeded 3,000 requests per minute. Entra retries automatically; no action needed. |
 
 ## Operator setup (three.ws deployment)
 

@@ -332,3 +332,18 @@ kbd { font: var(--text-xs) / 1 var(--font-mono, monospace); padding: 2px 5px; bo
 	.rs-skel, .rs-conn::before, .rs-follow-text::before { animation: none !important; }
 	.rs-drawer, .rs-dialog[open], .rs-pin-item.is-flash { animation: none; }
 }
+
+/* Teams high-contrast theme (?theme=contrast sets data-contrast on the root):
+   pure black and white with a yellow accent, matching the Teams contrast
+   palette. forced-colors covers Windows high-contrast modes outside Teams. */
+:root[data-contrast] {
+	--bg-0: #000000; --surface-1: #000000; --surface-2: #000000;
+	--ink: #ffffff; --ink-dim: #ffffff; --ink-bright: #ffffff; --ink-faint: #ffffff;
+	--stroke: #ffffff; --stroke-strong: #ffffff;
+	--accent: #ffff00; --focus-ring-color: #ffff00;
+	--skeleton-base: #000000; --skeleton-sheen: #333333;
+}
+:root[data-contrast] a { color: #ffff00; }
+@media (forced-colors: active) {
+	:is(a, button, input, select, textarea):focus-visible { outline: 2px solid CanvasText; }
+}

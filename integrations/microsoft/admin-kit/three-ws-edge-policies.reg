@@ -1,0 +1,4 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge]
+"WebAppInstallForceList"="[{\"url\":\"https://three.ws/?source=pwa\",\"launch_container\":\"window\",\"create_desktop_shortcut\":true,\"fallback_app_name\":\"three.ws\"}]"

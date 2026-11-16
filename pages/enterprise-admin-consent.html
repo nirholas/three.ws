@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<title>Approve three.ws for your organisation · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="description" content="What the three.ws sign-in app asks for, in plain language, and the tenant-wide admin consent link for a Microsoft Entra administrator." />
+		<meta name="robots" content="index, follow" />
+		<link rel="canonical" href="https://three.ws/enterprise/admin-consent" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Approve three.ws for your organisation · three.ws" />
+		<meta property="og:description" content="Approve the three.ws sign-in app once for your whole Microsoft Entra tenant." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=legal&amp;t=Admin+consent&amp;d=Approve+three.ws+once+for+your+whole+Microsoft+Entra+tenant.&amp;p=%2Fenterprise%2Fadmin-consent" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+	</head>
+	<body>
+		<div id="nav-container"></div>
+
+		<main class="ac-wrap">
+			<p class="ac-crumb"><a href="/">Home</a> / <a href="/trust">Trust center</a> / Admin consent</p>
+			<p class="ac-eyebrow">For Microsoft Entra administrators</p>
+			<h1 class="ac-h1">Approve three.ws for your organisation</h1>
+			<p class="ac-lede">Grant consent once for the whole tenant, so nobody sees a request for permission or a "needs admin approval" block at sign-in.</p>
+			<div id="ac-live" class="ac-sr" aria-live="polite"></div>
+			<div id="ac-root" aria-busy="true">
+				<div class="ac-skel is-title" aria-hidden="true"></div>
+				<div class="ac-skel is-card" aria-hidden="true"></div>
+			</div>
+			<p class="ac-trust">Rolling three.ws out to every seat? See the <a href="/docs/microsoft-admin-deployment">admin deployment guide</a>. IT review: hosting, encryption and retention are in the <a href="/trust">trust center</a>.</p>
+		</main>
+
+		<script type="module" src="/src/enterprise-admin-consent.js"></script>
+		<script src="/nav.js" defer></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

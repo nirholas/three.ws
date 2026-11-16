@@ -963,6 +963,7 @@ const appConfig = {
 				'agent-invoice': resolve(__dirname, 'pages/agent-invoice.html'),
 				'microsoft-activate': resolve(__dirname, 'pages/microsoft-activate.html'),
 				trust: resolve(__dirname, 'pages/trust.html'),
+				'enterprise-admin-consent': resolve(__dirname, 'pages/enterprise-admin-consent.html'),
 				accessibility: resolve(__dirname, 'pages/accessibility.html'),
 				'trust-subprocessors': resolve(__dirname, 'pages/trust-subprocessors.html'),
 				'microsoft-teams-tab': resolve(__dirname, 'pages/microsoft-teams-tab.html'),
@@ -2636,6 +2637,9 @@ const appConfig = {
 						filePath = resolve(root, 'pages/office-powerpoint.html');
 					// /microsoft/teams-tab → the Agents tab of the three.ws Teams app.
 					else if (!filePath && /^\/microsoft\/teams-tab\/?$/.test(path))
+					// /enterprise/admin-consent → tenant-wide admin consent page. Mirrors vercel.json.
+					else if (!filePath && /^\/enterprise\/admin-consent\/?$/.test(path))
+						filePath = resolve(root, 'pages/enterprise-admin-consent.html');
 						filePath = resolve(root, 'pages/microsoft-teams-tab.html');
 					// /microsoft/teams-stage → the Live Share review stage (meeting stage, side panel, config).
 					else if (!filePath && /^\/microsoft\/teams-stage\/?$/.test(path))

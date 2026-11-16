@@ -20,6 +20,7 @@
 import './stage.css';
 import { detectTeams, onThemeChange, createLiveShareHost, stageSharing, shareToStage, registerTabConfig } from './teams-host.js';
 import { SoloSession } from './solo-session.js';
+import { themeFor } from './theme.js';
 import {
 	cleanName,
 	colorFor,
@@ -116,9 +117,10 @@ function randomId() {
 }
 
 function applyTheme(theme) {
-	if (!theme) return;
-	const light = theme === 'default' || theme === 'light';
-	document.documentElement.setAttribute('data-theme', light ? 'light' : 'dark');
+	const resolved = themeFor({ theme, frameContext: state.host?.frameContext });
+	if (!resolved) return;
+	document.documentElement.setAttribute('data-theme', resolved.mode);
+	document.documentElement.toggleAttribute('data-contrast', resolved.contrast);
 }
 
 function showView(view) {

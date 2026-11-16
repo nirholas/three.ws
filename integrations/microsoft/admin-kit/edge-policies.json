@@ -1,0 +1,10 @@
+{
+	"WebAppInstallForceList": [
+		{
+			"url": "https://three.ws/?source=pwa",
+			"launch_container": "window",
+			"create_desktop_shortcut": true,
+			"fallback_app_name": "three.ws"
+		}
+	]
+}

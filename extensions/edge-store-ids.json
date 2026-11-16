@@ -1,0 +1,5 @@
+{
+	"_about": "Edge Add-ons extension ids, filled in once each extension is published (Partner Center shows the id on the listing). Read by scripts/microsoft-admin-kit.mjs to generate the ExtensionInstallForcelist entries. null means not yet published, and the kit leaves that extension out of the force-install list.",
+	"walk-avatar": null,
+	"checkout-companion": null
+}
