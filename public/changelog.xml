@@ -55,12 +55,28 @@
 			<description>Share creations and agents to Teams and LinkedIn, the link-preview rules both enforce, and how to refresh a stale LinkedIn card.</description>
 		</item>
 		<item>
+			<title>Docs · three.ws 3D Studio agent for Microsoft 365 Copilot</title>
+			<link>https://three.ws/docs/microsoft-copilot-agent</link>
+			<guid isPermaLink="false">2026-11-16:Docs · three.ws 3D Studio agent for Microsoft 365 Copilot</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The three.ws declarative agent for Microsoft 365 Copilot: what users see, its six conversation starters, how it is validated, sideloading in a developer tenant, and production proof for every starter.</description>
+		</item>
+		<item>
 			<title>Approve or deny your agents' actions from a Microsoft Teams card</title>
 			<link>https://three.ws/approvals</link>
 			<guid isPermaLink="false">2026-11-16:Approve or deny your agents' actions from a Microsoft Teams card</guid>
 			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>When an agent asks to move money or run an action you hold for review, the request now also arrives in your 1:1 chat with the three.ws app in Microsoft Teams. The card shows the agent, the action, the amounts, the destination and the deadline, with Approve and Deny buttons, and it updates to show who decided and what happened. Only the account owner, matched through their linked Microsoft sign-in, can decide; anyone else sees a card with no details. A press goes through the same check as the web inbox, so an altered button, an expired request or a double click never runs an action twice. Turn it on or off and send a labelled test card that runs nothing from the Microsoft Teams panel on /approvals, or type approvals in the chat to list what is waiting.</description>
+		</item>
+		<item>
+			<title>Ask Microsoft 365 Copilot for a 3D model with the three.ws 3D Studio agent</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-16:Ask Microsoft 365 Copilot for a 3D model with the three.ws 3D Studio agent</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The three.ws Microsoft 365 app now includes a Copilot agent. Pick three.ws 3D Studio in Microsoft 365 Copilot or Copilot in Teams and ask for a product model for a deck, a rigged mascot, a free ready-made asset, paste-ready embed code for a website, or a look at a model from every side. It uses the free three.ws studio tools, so there is no account to create. A generation gives you a viewer link at once that opens the model the moment it is ready, then the GLB download, the poster and how to drop it into PowerPoint.</description>
 		</item>
 		<item>
 			<title>Call three.ws agents from Copilot Studio and Azure AI Foundry over A2A</title>
@@ -77,6 +93,14 @@
 			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Link your three.ws account to Microsoft Teams by sending the bot a one-time code, and finished or failed 3D models, mentions, messages and (if you choose) agent task reports appear in your Teams activity feed and on your phone. Each event has its own switch in Settings, Notifications, with a button that sends a real test notification. Tapping a notification opens the three.ws tab on that model or agent. Uninstalling the app removes the link. A tenant admin approves notifications once with the TeamsActivity.Send permission, and settings shows the consent link if that is still missing.</description>
+		</item>
+		<item>
+			<title>Microsoft Marketplace free trials, from activation to the first paid month</title>
+			<link>https://three.ws/microsoft/activate</link>
+			<guid isPermaLink="false">2026-11-16:Microsoft Marketplace free trials, from activation to the first paid month</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Plans bought on Microsoft Marketplace can now start with a free trial. The activation page says when the trial ends and what it becomes afterwards, using the price Microsoft publishes for the plan. While the trial runs, a slim banner under the site header shows the days left, what it converts to and a Manage in Microsoft link, and you can dismiss it for the session. You get one notification and one email a week before the trial ends and again the day before, never more. Microsoft bills nothing until the trial is over, and cancelling in Microsoft before then means no charge.</description>
 		</item>
 		<item>
 			<title>Roll three.ws out to every seat from your Microsoft admin consoles</title>
@@ -101,6 +125,14 @@
 			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The share menu now has Share to Teams and Share on LinkedIn, on creations, agents and avatars. The link cards behind them were fixed so they show a proper image: agent cards are now PNG instead of SVG, avatar cards are 1200x630, and over a hundred pages now declare their card size.</description>
+		</item>
+		<item>
+			<title>Text to 3D keeps working when model storage is having trouble</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-16:Text to 3D keeps working when model storage is having trouble</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When our primary model storage rejects a write, generated reference images are saved to the backup store, but the 3D engines were still being pointed at the primary copy and every one of those generations failed. They now read the image through three.ws itself, which finds it wherever it was saved, so text to 3D carries on through a storage outage.</description>
 		</item>
 		<item>
 			<title>Use the three.ws app in Outlook and the Microsoft 365 app, not only Teams</title>

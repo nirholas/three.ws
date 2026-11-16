@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T15:21:38.947Z",
+	"generated_at": "2026-11-16T15:28:02.667Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -68,10 +68,30 @@
 		},
 		{
 			"date": "2026-11-16",
+			"type": "launch",
+			"title": "Docs · three.ws 3D Studio agent for Microsoft 365 Copilot",
+			"summary": "The three.ws declarative agent for Microsoft 365 Copilot: what users see, its six conversation starters, how it is validated, sideloading in a developer tenant, and production proof for every starter.",
+			"link": "/docs/microsoft-copilot-agent",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
 			"type": "update",
 			"title": "Approve or deny your agents' actions from a Microsoft Teams card",
 			"summary": "When an agent asks to move money or run an action you hold for review, the request now also arrives in your 1:1 chat with the three.ws app in Microsoft Teams. The card shows the agent, the action, the amounts, the destination and the deadline, with Approve and Deny buttons, and it updates to show who decided and what happened. Only the account owner, matched through their linked Microsoft sign-in, can decide; anyone else sees a card with no details. A press goes through the same check as the web inbox, so an altered button, an expired request or a double click never runs an action twice. Turn it on or off and send a labelled test card that runs nothing from the Microsoft Teams panel on /approvals, or type approvals in the chat to list what is waiting.",
 			"link": "/approvals",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Ask Microsoft 365 Copilot for a 3D model with the three.ws 3D Studio agent",
+			"summary": "The three.ws Microsoft 365 app now includes a Copilot agent. Pick three.ws 3D Studio in Microsoft 365 Copilot or Copilot in Teams and ask for a product model for a deck, a rigged mascot, a free ready-made asset, paste-ready embed code for a website, or a look at a model from every side. It uses the free three.ws studio tools, so there is no account to create. A generation gives you a viewer link at once that opens the model the moment it is ready, then the GLB download, the poster and how to drop it into PowerPoint.",
+			"link": null,
 			"tags": [
 				"feature"
 			]
@@ -96,6 +116,16 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Microsoft Marketplace free trials, from activation to the first paid month",
+			"summary": "Plans bought on Microsoft Marketplace can now start with a free trial. The activation page says when the trial ends and what it becomes afterwards, using the price Microsoft publishes for the plan. While the trial runs, a slim banner under the site header shows the days left, what it converts to and a Manage in Microsoft link, and you can dismiss it for the session. You get one notification and one email a week before the trial ends and again the day before, never more. Microsoft bills nothing until the trial is over, and cancelling in Microsoft before then means no charge.",
+			"link": "/microsoft/activate",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -128,6 +158,16 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Text to 3D keeps working when model storage is having trouble",
+			"summary": "When our primary model storage rejects a write, generated reference images are saved to the backup store, but the 3D engines were still being pointed at the primary copy and every one of those generations failed. They now read the image through three.ws itself, which finds it wherever it was saved, so text to 3D carries on through a storage outage.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
