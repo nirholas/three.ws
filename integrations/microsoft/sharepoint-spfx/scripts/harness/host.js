@@ -97,6 +97,7 @@
 
 	function resolveModule(name) {
 		if (modules[name]) return Promise.resolve(modules[name]);
+		if (window.__harnessExternals && window.__harnessExternals[name]) return Promise.resolve(window.__harnessExternals[name]);
 		if (/Strings$/.test(name)) {
 			return assetFor(name + '_en-us_')
 				.then(requireAsset)
