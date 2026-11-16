@@ -165,7 +165,10 @@ for (const width of [1280, 400]) {
 		await btn.click();
 		const popup = await popupPromise;
 		await popup.waitForLoadState('domcontentloaded').catch(() => {});
-		await popup.waitForTimeout(4000);
+		// Microsoft's sign-in page is an SPA: wait for its form (or an AADSTS error) to render.
+		await popup
+			.waitForFunction(() => /AADSTS\d+|sign in|pick an account/i.test(document.body?.innerText || ''), null, { timeout: 30000 })
+			.catch(() => {});
 		const url = popup.url();
 		const text = await popup.evaluate(() => document.body?.innerText || '').catch(() => '');
 		check('sign-in popup opens on login.microsoftonline.com', /login\.(microsoftonline|live)\.com/.test(url), url.slice(0, 90));
@@ -176,8 +179,11 @@ for (const width of [1280, 400]) {
 		await popup.screenshot({ path: join(SHOTS, 'microsoft-signin.png') }).catch(() => {});
 		await popup.close();
 		const status = page.locator('#od-photo-status');
+		const closedAt = Date.now();
 		await page.waitForFunction(() => document.querySelector('.od-source button')?.getAttribute('aria-busy') !== 'true', null, { timeout: 15000 }).catch(() => {});
-		check('closing the popup is treated as a cancel (no error text, button usable)', (await status.textContent()).trim() === '' && (await btn.getAttribute('aria-busy')) !== 'true', `status="${(await status.textContent()).trim()}"`);
+		const tookMs = Date.now() - closedAt;
+		const statusText = (await status.textContent()).trim();
+		check('closing the popup is a quiet cancel within seconds (no error text, button usable)', statusText === '' && (await btn.getAttribute('aria-busy')) !== 'true' && tookMs < 5000, `${tookMs} ms, status="${statusText}"`);
 		await page.screenshot({ path: join(SHOTS, 'after-cancel.png') });
 	}
 

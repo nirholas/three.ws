@@ -28,6 +28,7 @@ import {
 	normalizeImageType,
 	pickedItemRef,
 	pickerActionUrl,
+	watchPopupClosed,
 	pickerTokenScopes,
 	planChunks,
 	retryAfterMs,
@@ -400,5 +401,78 @@ describe('downloading a picked photo', () => {
 		expect(normalizeImageType('', 'a.webp')).toBe('image/webp');
 		expect(normalizeImageType('application/octet-stream', 'scan.png')).toBe('image/png');
 		expect(normalizeImageType('image/gif', 'a.gif')).toBeNull();
+	});
+});
+
+describe('noticing a closed sign-in popup', () => {
+	// MSAL v5 waits on a BroadcastChannel and never polls the popup, so closing
+	// the Microsoft window used to look like a 60 s "did not finish" error.
+	const fakePopup = () => ({ closed: false });
+
+	it('reports a cancel soon after the user closes the popup and the page has focus again', async () => {
+		vi.useFakeTimers();
+		try {
+			const popup = fakePopup();
+			const watch = watchPopupClosed(popup, { hasFocus: () => true, intervalMs: 250 });
+			const seen = vi.fn();
+			watch.promise.then(seen);
+			await vi.advanceTimersByTimeAsync(2000);
+			expect(seen).not.toHaveBeenCalled();
+			popup.closed = true;
+			await vi.advanceTimersByTimeAsync(600);
+			expect(seen).toHaveBeenCalledTimes(1);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('ignores a handle that reads closed while focus is still in the popup (COOP severed it)', async () => {
+		vi.useFakeTimers();
+		try {
+			const popup = fakePopup();
+			let focused = false;
+			const watch = watchPopupClosed(popup, { hasFocus: () => focused, intervalMs: 250 });
+			const seen = vi.fn();
+			watch.promise.then(seen);
+			popup.closed = true;
+			await vi.advanceTimersByTimeAsync(5000);
+			expect(seen).not.toHaveBeenCalled();
+			focused = true;
+			await vi.advanceTimersByTimeAsync(600);
+			expect(seen).toHaveBeenCalledTimes(1);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('stops polling once the sign-in finishes', async () => {
+		vi.useFakeTimers();
+		try {
+			const popup = fakePopup();
+			const watch = watchPopupClosed(popup, { hasFocus: () => true, intervalMs: 250 });
+			const seen = vi.fn();
+			watch.promise.then(seen);
+			watch.stop();
+			popup.closed = true;
+			await vi.advanceTimersByTimeAsync(2000);
+			expect(seen).not.toHaveBeenCalled();
+			expect(vi.getTimerCount()).toBe(0);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('never fires for a missing window handle', async () => {
+		vi.useFakeTimers();
+		try {
+			const watch = watchPopupClosed(null, { hasFocus: () => true });
+			const seen = vi.fn();
+			watch.promise.then(seen);
+			await vi.advanceTimersByTimeAsync(2000);
+			expect(seen).not.toHaveBeenCalled();
+			watch.stop();
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 });

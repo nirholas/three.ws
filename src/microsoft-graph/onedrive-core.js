@@ -305,6 +305,38 @@ export function msalError(err) {
 	return new OneDriveError('auth_failed', `Microsoft sign-in failed${err?.errorCode ? ` (${err.errorCode})` : ''}. Try again.`, { cause: err });
 }
 
+/**
+ * Notice that the person closed the Microsoft sign-in popup. MSAL v5 waits on a
+ * BroadcastChannel from the redirect bridge and never looks at the window, so
+ * without this a closed popup only surfaces when its bridge timeout runs out.
+ *
+ * A handle can read `closed` while the window is still open when the sign-in
+ * page's Cross-Origin-Opener-Policy severs it, so a close only counts once this
+ * page has focus again (it does after a real close; the person is in the popup
+ * otherwise), on two polls in a row.
+ *
+ * @returns {{ promise: Promise<void>, stop: () => void }} `promise` resolves on a close and never rejects
+ */
+export function watchPopupClosed(popupWindow, { hasFocus = () => document.hasFocus(), intervalMs = 250 } = {}) {
+	let timer = null;
+	const stop = () => {
+		clearInterval(timer);
+		timer = null;
+	};
+	const promise = new Promise((resolve) => {
+		if (!popupWindow) return;
+		let streak = 0;
+		timer = setInterval(() => {
+			streak = popupWindow.closed && hasFocus() ? streak + 1 : 0;
+			if (streak >= 2) {
+				stop();
+				resolve();
+			}
+		}, intervalMs);
+	});
+	return { promise, stop };
+}
+
 /** True when an MSAL silent failure means a person has to see a Microsoft screen. */
 export function needsInteraction(err) {
 	if (!err) return false;

@@ -12,7 +12,7 @@
 //   <sharepoint>/.default  the work picker page (SharePoint MyFiles.Write,
 //                          AllSites.Read on the app registration)
 
-import { PublicClientApplication } from '@azure/msal-browser';
+import { BrowserAuthError, PublicClientApplication } from '@azure/msal-browser';
 
 import {
 	AUTHORITY,
@@ -31,7 +31,37 @@ import {
 	pickerActionUrl,
 	pickerTokenScopes,
 	REDIRECT_PATH,
+	watchPopupClosed,
 } from './onedrive-core.js';
+
+/**
+ * How long the sign-in popup may stay open. MSAL's default is 60 s, which cuts
+ * off a person still typing a password or approving MFA; closing the window is
+ * noticed separately (CancellablePopupApplication below).
+ */
+const SIGN_IN_TIMEOUT_MS = 10 * 60_000;
+
+/**
+ * MSAL's PublicClientApplication with a sign-in popup that can be cancelled by
+ * closing it. waitForPopupResponse is MSAL's hook for subclasses; ours races
+ * the redirect bridge against watchPopupClosed and answers a close with MSAL's
+ * own user_cancelled error, which MSAL turns into a clean interaction end.
+ */
+class CancellablePopupApplication extends PublicClientApplication {
+	async waitForPopupResponse(request, popupWindow, popupWindowParent) {
+		const watch = watchPopupClosed(popupWindow);
+		try {
+			return await Promise.race([
+				super.waitForPopupResponse(request, popupWindow, popupWindowParent),
+				watch.promise.then(() => {
+					throw new BrowserAuthError('user_cancelled', 'The Microsoft sign-in window was closed.');
+				}),
+			]);
+		} finally {
+			watch.stop();
+		}
+	}
+}
 
 /** How long the picker page may take to say hello before we call it broken. */
 const PICKER_INIT_TIMEOUT_MS = 45_000;
@@ -45,9 +75,10 @@ const PICKER_INIT_TIMEOUT_MS = 45_000;
  */
 export function createOneDriveSession({ clientId, askToContinue }) {
 	if (!clientId) throw new OneDriveError('not_configured', 'OneDrive is not set up on this site.');
-	const pca = new PublicClientApplication({
+	const pca = new CancellablePopupApplication({
 		auth: { clientId, authority: AUTHORITY, redirectUri: `${location.origin}${REDIRECT_PATH}` },
 		cache: { cacheLocation: 'sessionStorage' },
+		system: { popupBridgeTimeout: SIGN_IN_TIMEOUT_MS },
 	});
 	let ready = null;
 	let pickerBase = null;
