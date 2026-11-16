@@ -13,6 +13,8 @@ import {
 	findBinary,
 	listingSafeAgent,
 	pickShowcaseAgent,
+	relaunchingBrowser,
+	retryInFreshPage,
 	submissionBlock,
 	timestamp,
 	toSrt,
@@ -265,5 +267,68 @@ describe('Microsoft Store trailer conformance', () => {
 		expect(arg(a, '-ac')).toBe('2');
 		expect(TRAILER.gop * 2).toBe(TRAILER.fps);
 		expect(TRAILER.seconds).toBe(60);
+	});
+});
+
+describe('recovering from a crashed browser', () => {
+	// A browser stand-in: the capture only needs isConnected() and close().
+	const fakeBrowser = (id) => {
+		const b = { id, connected: true, closed: false };
+		b.isConnected = () => b.connected;
+		b.close = async () => { b.closed = true; b.connected = false; };
+		return b;
+	};
+
+	it('relaunches when the browser process has died, and reuses a live one', async () => {
+		let launches = 0;
+		const browsers = relaunchingBrowser(async () => fakeBrowser(++launches));
+		const first = await browsers.get();
+		expect(await browsers.get()).toBe(first);
+		first.connected = false;
+		const second = await browsers.get();
+		expect(second.id).toBe(2);
+		expect(first.closed).toBe(true);
+		await browsers.close();
+		expect(second.closed).toBe(true);
+	});
+
+	it('retries a scene on a new browser after "Target crashed" kills the old one', async () => {
+		let launches = 0;
+		const browsers = relaunchingBrowser(async () => fakeBrowser(++launches));
+		const used = [];
+		const retries = [];
+		const result = await retryInFreshPage({
+			browsers,
+			open: async (browser) => {
+				if (!browser.isConnected()) throw new Error('browserContext.newPage: Target crashed');
+				used.push(browser.id);
+				return { browser, close: async () => {} };
+			},
+			run: async (page) => {
+				if (page.browser.id === 1) {
+					page.browser.connected = false;
+					throw new Error('page.waitForSelector: Target crashed');
+				}
+				return 'shot';
+			},
+			attempts: 3,
+			onRetry: (attempt, err) => retries.push(`${attempt}: ${err.message}`),
+		});
+		expect(result).toBe('shot');
+		expect(used).toEqual([1, 2]);
+		expect(retries).toEqual(['1: page.waitForSelector: Target crashed']);
+	});
+
+	it('counts a failure to open the page as an attempt and gives up after the last one', async () => {
+		const browsers = relaunchingBrowser(async () => fakeBrowser(1));
+		let opens = 0;
+		await expect(retryInFreshPage({
+			browsers,
+			open: async () => { opens++; throw new Error('Target crashed'); },
+			run: async () => 'never',
+			attempts: 2,
+			onRetry: () => {},
+		})).rejects.toThrow('Target crashed');
+		expect(opens).toBe(2);
 	});
 });

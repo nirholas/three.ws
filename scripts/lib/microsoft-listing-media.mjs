@@ -486,3 +486,44 @@ export function trailerProblems({ probe, x264, keyframes, frames }) {
 	}
 	return problems;
 }
+
+/**
+ * Hold one browser and launch a new one whenever the old process has died. On a
+ * machine short of memory the OOM killer can take the whole Chromium process,
+ * after which every newContext() on it fails with "Target crashed".
+ */
+export function relaunchingBrowser(launch) {
+	let current = null;
+	return {
+		async get() {
+			if (current && current.isConnected()) return current;
+			if (current) await current.close().catch(() => {});
+			current = await launch();
+			return current;
+		},
+		async close() {
+			if (current) await current.close().catch(() => {});
+			current = null;
+		},
+	};
+}
+
+/**
+ * Run one scene in a fresh page, retrying on a renderer crash, a dead browser or a
+ * timeout. Opening the page is part of the attempt, so a browser that died between
+ * attempts is relaunched instead of failing the run.
+ */
+export async function retryInFreshPage({ browsers, open, run, attempts = 3, onRetry, close = (page) => page.close() }) {
+	for (let attempt = 1; ; attempt++) {
+		let page = null;
+		try {
+			page = await open(await browsers.get());
+			return await run(page);
+		} catch (err) {
+			if (attempt >= attempts) throw err;
+			onRetry(attempt, err);
+		} finally {
+			if (page) await Promise.resolve().then(() => close(page)).catch(() => {});
+		}
+	}
+}

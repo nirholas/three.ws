@@ -53,6 +53,8 @@ import {
 	dimensionProblems,
 	listingSafeAgent,
 	pickShowcaseAgent,
+	relaunchingBrowser,
+	retryInFreshPage,
 	sizeLabel,
 	submissionBlock,
 	toNarration,
@@ -339,24 +341,22 @@ async function adaptiveCardSlide(page, agent, card, hostConfig, logo) {
 
 /**
  * Run one scene in a fresh page, retrying on a renderer crash or timeout. Software
- * WebGL on a busy machine can lose a renderer; a new page recovers it, and forge
- * returns the same prompt's finished result on a retry instead of a new job.
+ * WebGL on a busy machine can lose a renderer or the whole browser; a new page (on a
+ * relaunched browser if needed) recovers it, and forge returns the same prompt's
+ * finished result on a retry instead of a new job.
  */
-async function withRetry(browser, viewport, label, run, attempts = 3) {
-	for (let attempt = 1; ; attempt++) {
-		const page = await newPage(browser, viewport);
-		try {
-			return await run(page);
-		} catch (err) {
-			if (attempt >= attempts) throw err;
-			log(`${label} attempt ${attempt} failed (${err.message.split('\n')[0]}); retrying in a fresh page`);
-		} finally {
-			await page.context().close().catch(() => {});
-		}
-	}
+function withRetry(browsers, viewport, label, run, attempts = 3) {
+	return retryInFreshPage({
+		browsers,
+		open: (browser) => newPage(browser, viewport),
+		run,
+		attempts,
+		close: (page) => page.context().close(),
+		onRetry: (attempt, err) => log(`${label} attempt ${attempt} failed (${err.message.split('\n')[0]}); retrying in a fresh page`),
+	});
 }
 
-async function captureMasters(browser, agent, card, hostConfig, logo) {
+async function captureMasters(browsers, agent, card, hostConfig, logo) {
 	await mkdir(MASTERS, { recursive: true });
 	const shot = async (page, name, hide = [], remove = []) => {
 		await hideOverlays(page, hide, remove);
@@ -364,7 +364,7 @@ async function captureMasters(browser, agent, card, hostConfig, logo) {
 		await page.screenshot({ path: join(MASTERS, `${name}.png`), ...SHOT });
 		log(`captured ${name}`);
 	};
-	const scene = (name, run) => withRetry(browser, MASTER, `scene ${name}`, run);
+	const scene = (name, run) => withRetry(browsers, MASTER, `scene ${name}`, run);
 
 	await scene('forge-composer', async (page) => {
 		await openForge(page);
@@ -421,28 +421,28 @@ async function renderLogo(file, size) {
 		.toBuffer();
 }
 
-async function renderHtml(browser, html, width, height) {
-	const page = await newPage(browser, { width, height, scale: 2 });
+async function renderHtml(browsers, html, width, height) {
+	const page = await newPage(await browsers.get(), { width, height, scale: 2 });
 	await setSlide(page, html);
 	const buf = await page.screenshot({ ...SHOT });
 	await page.context().close();
 	return buf;
 }
 
-async function renderArtwork(browser, logo) {
+async function renderArtwork(browsers, logo) {
 	const art = {};
 	art.logo = await renderLogo('public/pwa-512x512.png', 600);
 	art['edge-logo'] = await renderLogo('public/pwa-icon.svg', 600);
 
 	const shot = await dataUri('extensions/walk-avatar/store-assets/screenshot-1.png', 'image/png');
-	art['tile-small'] = await renderHtml(browser, `<!doctype html><html><head>${INTER}<style>${SLIDE_CSS}
+	art['tile-small'] = await renderHtml(browsers, `<!doctype html><html><head>${INTER}<style>${SLIDE_CSS}
 		body{display:flex;flex-direction:column;justify-content:center;padding:0 36px}
 		.brand{font-size:15px;color:#a3a9b6;font-weight:600;margin-bottom:14px}
 		h1{font-size:40px;font-weight:800;letter-spacing:-.025em;line-height:1.05}
 		p{font-size:16px;margin-top:12px;line-height:1.4}
 	</style></head><body><div class="brand"><img src="${logo}" alt="">three.ws</div><h1>Walk Avatar</h1><p class="muted">A 3D companion that walks<br>and reads on any page.</p></body></html>`, 440, 280);
 
-	art['tile-large'] = await renderHtml(browser, `<!doctype html><html><head>${INTER}<style>${SLIDE_CSS}
+	art['tile-large'] = await renderHtml(browsers, `<!doctype html><html><head>${INTER}<style>${SLIDE_CSS}
 		.wrap{display:grid;grid-template-columns:560px 1fr;height:100%;align-items:center}
 		.copy{padding-left:84px}
 		.brand{font-size:24px;color:#a3a9b6;font-weight:600;margin-bottom:22px}
@@ -454,10 +454,10 @@ async function renderArtwork(browser, logo) {
 	return art;
 }
 
-async function renderThumbnail(browser, logo, agentMaster, forgeMaster) {
+async function renderThumbnail(browsers, logo, agentMaster, forgeMaster) {
 	const agentImg = `data:image/png;base64,${(await readFile(agentMaster)).toString('base64')}`;
 	const forgeImg = `data:image/png;base64,${(await readFile(forgeMaster)).toString('base64')}`;
-	return renderHtml(browser, `<!doctype html><html><head>${INTER}<style>${SLIDE_CSS}
+	return renderHtml(browsers, `<!doctype html><html><head>${INTER}<style>${SLIDE_CSS}
 		.wrap{display:grid;grid-template-columns:820px 1fr;height:100%;align-items:center}
 		.copy{padding-left:110px}
 		.brand{font-size:34px;margin-bottom:40px}
@@ -565,11 +565,11 @@ class Timeline {
 	}
 }
 
-async function buildFrames(browser, ctx) {
+async function buildFrames(browsers, ctx) {
 	await rm(FRAMES, { recursive: true, force: true });
 	await mkdir(FRAMES, { recursive: true });
 	const t = new Timeline(FRAMES);
-	const slide = (html) => renderHtml(browser, html, VIDEO.width, VIDEO.height);
+	const slide = (html) => renderHtml(browsers, html, VIDEO.width, VIDEO.height);
 	const titleCard = (headline, sub) => slide(`<!doctype html><html><head>${INTER}<style>${SLIDE_CSS}
 		body{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
 		.brand{font-size:40px;margin-bottom:44px}
@@ -584,7 +584,7 @@ async function buildFrames(browser, ctx) {
 	 * frame; the previous segment cross-fades into it; `frames` records the
 	 * segment. A crashed renderer rolls the timeline back and retries.
 	 */
-	const segment = (id, lines, setup, frames) => withRetry(browser, { ...VIDEO, scale: 1 }, `video ${id}`, async (page) => {
+	const segment = (id, lines, setup, frames) => withRetry(browsers, { ...VIDEO, scale: 1 }, `video ${id}`, async (page) => {
 		const snapshot = { items: t.items.map((i) => ({ ...i })), segments: t.segments.map((x) => ({ ...x })), n: t.n };
 		try {
 			await setup(page);
@@ -764,7 +764,7 @@ async function verifyPublic(ffprobeBin, url, expectedSha) {
 	log(`verified ${url}: ${type}, ${sizeLabel(buf.length)}, sha256 matches`);
 }
 
-async function makeVideo(browser, ctx, previous) {
+async function makeVideo(browsers, ctx, previous) {
 	const ffmpegBin = findBinary('ffmpeg', { extra: [join(homedir(), '.local/bin/ffmpeg')], probe: ['-version'], hint: FFMPEG_HINT });
 	const ffprobeBin = findBinary('ffprobe', { extra: [join(homedir(), '.local/bin/ffprobe')], probe: ['-version'], hint: FFMPEG_HINT });
 	const videoDir = join(OUT, 'video');
@@ -774,7 +774,7 @@ async function makeVideo(browser, ctx, previous) {
 			const j = JSON.parse(s);
 			return { items: j.items.map((i) => ({ file: join(ROOT, i.file), seconds: i.seconds })), segments: j.segments, forgeSeconds: j.forgeSeconds };
 		})
-		: await buildFrames(browser, ctx);
+		: await buildFrames(browsers, ctx);
 
 	const cues = cuesFor(timeline.segments);
 	const files = {
@@ -847,18 +847,18 @@ async function main() {
 	const hostConfig = JSON.parse(await fetchText('https://unpkg.com/adaptivecards-designer@2.4.4/lib/hostConfigs/microsoft-teams-dark.json'));
 	const logo = await dataUri('public/pwa-icon.svg', 'image/svg+xml');
 
-	const browser = await chromium.launch({ args: BROWSER_ARGS });
+	const browsers = relaunchingBrowser(() => chromium.launch({ args: BROWSER_ARGS }));
 	try {
 		let forge;
 		if (REUSE && existsSync(FORGE_RECORD) && existsSync(join(MASTERS, 'forge-result.png'))) {
 			forge = JSON.parse(await readFile(FORGE_RECORD, 'utf8'));
 			log(`reusing masters from the last run (forge ${forge.seconds} s: ${forge.glb})`);
 		} else {
-			forge = await captureMasters(browser, agent, card, hostConfig, logo);
+			forge = await captureMasters(browsers, agent, card, hostConfig, logo);
 		}
 
-		const art = await renderArtwork(browser, logo);
-		art['video-thumbnail'] = await renderThumbnail(browser, logo, join(MASTERS, 'agent.png'), join(MASTERS, 'forge-result.png'));
+		const art = await renderArtwork(browsers, logo);
+		art['video-thumbnail'] = await renderThumbnail(browsers, logo, join(MASTERS, 'agent.png'), join(MASTERS, 'forge-result.png'));
 
 		const assets = [];
 		for (const slot of ASSETS) {
@@ -870,7 +870,7 @@ async function main() {
 		const referenced = await checkReferenced();
 
 		let video = previous?.video ?? null;
-		if (!SKIP_VIDEO) video = await makeVideo(browser, { agent, card, hostConfig, logo, forge }, previous?.video);
+		if (!SKIP_VIDEO) video = await makeVideo(browsers, { agent, card, hostConfig, logo, forge }, previous?.video);
 		else if (!video) problems.push('--skip-video with no earlier video in the manifest');
 
 		const manifest = {
@@ -901,7 +901,7 @@ async function main() {
 		for (const a of assets) log(`  ${a.path} ${a.width}x${a.height} ${sizeLabel(a.bytes)}`);
 		if (video) log(`video ${video.url} ${video.durationSeconds} s ${sizeLabel(video.bytes)} sha256 ${video.sha256}`);
 	} finally {
-		await browser.close();
+		await browsers.close();
 	}
 
 	if (problems.length) {
