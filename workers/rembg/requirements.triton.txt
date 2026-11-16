@@ -3,7 +3,7 @@
 # and the build gate uses it as the parity reference.
 rembg==2.0.86
 onnxruntime==1.28.0
-onnx==1.17.0
+onnx==1.22.0
 Pillow==13.0.0
 fastapi==0.115.5
 uvicorn[standard]==0.32.1
