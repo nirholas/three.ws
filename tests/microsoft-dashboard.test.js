@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest';
 import {
 	priceForMicrosoftPlan, summarizeSubscriptions, summarizeOperations, meteringVerdict,
 	summarizeMetering, teamsKind, summarizeTeams, summarizeConnector, summarizePartnerCenter,
-	attentionList, connectorThreshold, dayKeys, ACK_DEADLINE_MS, runbook,
+	attentionList, connectorThreshold, dayKeys, ACK_DEADLINE_MS, runbook, summarizeTrials,
 } from '../api/_lib/microsoft-dashboard.js';
 
 const NOW = Date.parse('2026-11-11T12:00:00Z');
@@ -84,6 +84,40 @@ describe('summarizeSubscriptions', () => {
 		expect(s.mrr_usd).toBe(0);
 		expect(s.unmapped_plans).toEqual([{ id: 'x', plan_id: 'legacy-gold' }]);
 		expect(s.pending_activation.map((p) => p.id)).toEqual(['p1']);
+	});
+});
+
+describe('summarizeTrials', () => {
+	const trial = (over = {}) => sub({ is_free_trial: false, trial_started_at: null, trial_ends_at: null, trial_converted_at: null, trial_cancelled_at: null, ...over });
+
+	it('counts starts, active, conversions and cancellations, with the rate over decided trials', () => {
+		const t = summarizeTrials([
+			trial({ id: 'running', is_free_trial: true, trial_started_at: at(10 * D), trial_ends_at: at(-4 * D) }),
+			trial({ id: 'late', is_free_trial: true, trial_started_at: at(20 * D), trial_ends_at: at(-20 * D) }),
+			trial({ id: 'conv-recent', trial_started_at: at(40 * D), trial_ends_at: at(10 * D), trial_converted_at: at(9 * D) }),
+			trial({ id: 'conv-old', trial_started_at: at(90 * D), trial_ends_at: at(60 * D), trial_converted_at: at(59 * D) }),
+			trial({ id: 'cancel', saas_status: 'Unsubscribed', trial_started_at: at(15 * D), trial_ends_at: at(-15 * D), trial_cancelled_at: at(3 * D) }),
+			trial({ id: 'never-trialled' }),
+			trial({ id: 'test', is_test: true, is_free_trial: true, trial_started_at: at(D), trial_ends_at: at(-29 * D) }),
+		], NOW, 30);
+		expect(t).toMatchObject({
+			started: 5, started_window: 3, active: 2, ending_7d: 1,
+			converted: 2, converted_window: 1, cancelled: 1, cancelled_window: 1, window_days: 30,
+		});
+		expect(t.conversion_rate).toBeCloseTo(2 / 3);
+		expect(t.active_list.map((r) => [r.id, r.days_left])).toEqual([['running', 4], ['late', 20]]);
+	});
+
+	it('has no rate before any trial is decided', () => {
+		expect(summarizeTrials([trial({ is_free_trial: true, trial_started_at: at(D), trial_ends_at: at(-13 * D) })], NOW).conversion_rate).toBeNull();
+		expect(summarizeTrials([], NOW)).toMatchObject({ started: 0, conversion_rate: null, active_list: [] });
+	});
+
+	it('keeps trialing seats out of MRR', () => {
+		const s = summarizeSubscriptions([sub({ id: 'paid' }), sub({ id: 'trial', is_free_trial: true })], NOW);
+		expect(s.mrr_usd).toBe(49);
+		expect(s.by_plan[0]).toMatchObject({ subscribed: 2, trialing: 1, mrr_usd: 49 });
+		expect(s.unmapped_plans).toEqual([]);
 	});
 });
 

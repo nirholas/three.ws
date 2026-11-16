@@ -79,14 +79,16 @@ export function summarizeSubscriptions(rows, now = Date.now()) {
 		byStatus[r.saas_status] = (byStatus[r.saas_status] || 0) + 1;
 		const key = r.plan_id || '(none)';
 		const price = priceForMicrosoftPlan(r.plan_id);
-		if (!plans.has(key)) plans.set(key, { plan_id: key, three_ws_plan: planForMicrosoftPlan(r.plan_id), price_usd: price, subscriptions: 0, subscribed: 0, seats: 0, mrr_usd: 0 });
+		if (!plans.has(key)) plans.set(key, { plan_id: key, three_ws_plan: planForMicrosoftPlan(r.plan_id), price_usd: price, subscriptions: 0, subscribed: 0, trialing: 0, seats: 0, mrr_usd: 0 });
 		const p = plans.get(key);
 		p.subscriptions += 1;
 		if (r.saas_status === 'Subscribed') {
 			const seats = Number(r.quantity) > 0 ? Number(r.quantity) : 1;
 			p.subscribed += 1;
 			p.seats += seats;
-			if (price == null) unmapped.push({ id: r.id, plan_id: r.plan_id });
+			// Microsoft bills nothing during a free trial, so it is not revenue yet.
+			if (r.is_free_trial === true) p.trialing += 1;
+			else if (price == null) unmapped.push({ id: r.id, plan_id: r.plan_id });
 			else {
 				p.mrr_usd += price * seats;
 				mrr += price * seats;
@@ -105,6 +107,44 @@ export function summarizeSubscriptions(rows, now = Date.now()) {
 		unmapped_plans: unmapped,
 		pending_activation: pendingActivation,
 	};
+}
+
+// ── Free trials ─────────────────────────────────────────────────────────────
+
+/**
+ * Free trial funnel from the trial columns api/_lib/microsoft-trial.js keeps on
+ * every subscription. A trial is "decided" once it converted or was cancelled;
+ * the conversion rate is converted / decided, so trials still running do not
+ * drag it down. Test subscriptions are excluded.
+ * @param {Array<{ id: string, plan_id: string|null, saas_status: string, is_test: boolean, is_free_trial?: boolean, trial_started_at?: string|Date|null, trial_ends_at?: string|Date|null, trial_converted_at?: string|Date|null, trial_cancelled_at?: string|Date|null }>} rows
+ */
+export function summarizeTrials(rows, now = Date.now(), days = 30) {
+	const since = now - days * DAY_MS;
+	const out = { started: 0, started_window: 0, active: 0, ending_7d: 0, converted: 0, converted_window: 0, cancelled: 0, cancelled_window: 0, conversion_rate: null, window_days: days, active_list: [] };
+	for (const r of rows) {
+		if (r.is_test || !r.trial_started_at) continue;
+		out.started += 1;
+		if (ms(r.trial_started_at) >= since) out.started_window += 1;
+		if (r.trial_converted_at) {
+			out.converted += 1;
+			if (ms(r.trial_converted_at) >= since) out.converted_window += 1;
+		}
+		if (r.trial_cancelled_at) {
+			out.cancelled += 1;
+			if (ms(r.trial_cancelled_at) >= since) out.cancelled_window += 1;
+		}
+		if (r.is_free_trial === true && r.saas_status === 'Subscribed') {
+			out.active += 1;
+			const left = r.trial_ends_at ? Math.max(0, Math.ceil((ms(r.trial_ends_at) - now) / DAY_MS)) : null;
+			if (left != null && left <= 7) out.ending_7d += 1;
+			out.active_list.push({ id: r.id, plan_id: r.plan_id, trial_started_at: iso(r.trial_started_at), trial_ends_at: iso(r.trial_ends_at), days_left: left });
+		}
+	}
+	const decided = out.converted + out.cancelled;
+	out.conversion_rate = decided ? out.converted / decided : null;
+	out.active_list.sort((a, b) => (a.days_left ?? Infinity) - (b.days_left ?? Infinity));
+	out.active_list = out.active_list.slice(0, 50);
+	return out;
 }
 
 // ── Webhook operations ──────────────────────────────────────────────────────
@@ -423,7 +463,9 @@ export async function loadMicrosoftDashboard({ now = Date.now(), config }) {
 	const since7 = new Date(now - 7 * DAY_MS);
 	const since30 = new Date(now - 30 * DAY_MS);
 	const [subs, ops, usage, surface, pcReports, pcTotals, openIncidents, recentIncidents] = await Promise.all([
-		sql`select id, plan_id, quantity, saas_status, is_test, created_at from microsoft_saas_subscriptions`,
+		sql`select id, plan_id, quantity, saas_status, is_test, created_at,
+		           is_free_trial, trial_started_at, trial_ends_at, trial_converted_at, trial_cancelled_at
+		    from microsoft_saas_subscriptions`,
 		sql`select id, subscription_id, action, plan_id, quantity, status, outcome, error, received_at, processed_at
 		    from microsoft_saas_operations where received_at >= ${since7} order by received_at desc`,
 		sql`select id, subscription_id, plan_id, dimension, effective_start_time, quantity, status, message, attempts, updated_at
@@ -440,6 +482,7 @@ export async function loadMicrosoftDashboard({ now = Date.now(), config }) {
 		    from microsoft_alert_incidents where resolved_at >= ${since30} order by resolved_at desc limit 20`,
 	]);
 	const subscriptions = summarizeSubscriptions(subs, now);
+	const trials = summarizeTrials(subs, now, 30);
 	const operations = summarizeOperations(ops, now, 7);
 	const metering = summarizeMetering(usage, now, 7);
 	const teams = summarizeTeams(surface.filter((r) => r.surface === 'teams_bot'), now, 30, 7);
@@ -457,6 +500,8 @@ export async function loadMicrosoftDashboard({ now = Date.now(), config }) {
 		kpis: {
 			mrr_usd: subscriptions.mrr_usd,
 			subscribed: subscriptions.by_status.Subscribed || 0,
+			trials_active: trials.active,
+			trial_conversion_rate: trials.conversion_rate,
 			webhook_failures_7d: operations.failures.length + operations.unacknowledged.length,
 			metering_accepted_7d: metering.verdicts.accepted,
 			metering_rejected_7d: metering.verdicts.rejected,
@@ -466,6 +511,7 @@ export async function loadMicrosoftDashboard({ now = Date.now(), config }) {
 			connector_error_rate_7d: connector.error_rate,
 		},
 		subscriptions,
+		trials,
 		operations,
 		metering,
 		teams,

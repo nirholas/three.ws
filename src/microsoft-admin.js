@@ -131,8 +131,10 @@ function renderAttention(items) {
 
 function renderKpis(k, threshold) {
 	const tiles = [
-		['MRR', usd(k.mrr_usd), 'Subscribed seats x list price'],
+		['MRR', usd(k.mrr_usd), 'Paid seats x list price, trials excluded'],
 		['Subscribed', num(k.subscribed), 'Live Marketplace subscriptions'],
+		['Active trials', num(k.trials_active), 'Free trials running now'],
+		['Trial conversion', k.trial_conversion_rate == null ? 'n/a' : pct(k.trial_conversion_rate), 'Converted of trials decided'],
 		['Webhook failures', num(k.webhook_failures_7d), 'Failed or unacknowledged, 7 days', k.webhook_failures_7d ? 'danger' : null],
 		['Metering accepted', num(k.metering_accepted_7d), 'Usage events, 7 days'],
 		['Metering rejected', num(k.metering_rejected_7d), 'Usage events, 7 days', k.metering_rejected_7d ? 'danger' : null],
@@ -158,6 +160,7 @@ function subscriptionsPanel(s, missing) {
 		{ label: 'three.ws plan', value: (r) => r.three_ws_plan || 'unmapped' },
 		{ label: 'List price', value: (r) => (r.price_usd == null ? 'n/a' : usd(r.price_usd)), num: true },
 		{ label: 'Subscriptions', value: (r) => num(r.subscriptions), num: true },
+		{ label: 'In trial', value: (r) => num(r.trialing), num: true },
 		{ label: 'Seats', value: (r) => num(r.seats), num: true },
 		{ label: 'MRR', value: (r) => usd(r.mrr_usd), num: true },
 	], s.by_plan) : ''}
@@ -168,6 +171,27 @@ function subscriptionsPanel(s, missing) {
 		{ label: 'Subscription', value: (r) => r.id, mono: true }, { label: 'Plan', value: (r) => r.plan_id, mono: true }, { label: 'Purchased', value: (r) => fmtDate(r.created_at) },
 	], s.pending_activation, { anchor: 'pending-activation' })}` : ''}`;
 	return panel('msa-p-subs', 'SaaS subscriptions', `MRR ${esc(usd(s.mrr_usd))} from <code>data/plans.json</code> list prices`, s.total ? body : '', empty);
+}
+
+function trialsPanel(t) {
+	const empty = t.started === 0
+		? `<strong>No free trials yet.</strong> A trial starts when a buyer activates a plan that has a free trial turned on in Partner Center (Plans, then the plan, then Pricing and availability, then Free trial). Each start, conversion and cancellation lands here from the subscription's trial columns.`
+		: '';
+	const body = `${stats([
+		['Trial starts', num(t.started)], [`Starts, ${t.window_days} days`, num(t.started_window)],
+		['Active', num(t.active)], ['Ending in 7 days', num(t.ending_7d)],
+		['Converted', num(t.converted)], ['Cancelled during trial', num(t.cancelled), t.cancelled > t.converted ? 'warn' : null],
+		['Conversion rate', t.conversion_rate == null ? 'n/a' : pct(t.conversion_rate)],
+		[`Converted, ${t.window_days} days`, num(t.converted_window)], [`Cancelled, ${t.window_days} days`, num(t.cancelled_window)],
+	])}
+	<h3 class="msa-h3">Running now</h3>${table([
+		{ label: 'Subscription', value: (r) => r.id, mono: true },
+		{ label: 'Plan', value: (r) => r.plan_id, mono: true },
+		{ label: 'Started', value: (r) => fmtDate(r.trial_started_at) },
+		{ label: 'Ends', value: (r) => fmtDate(r.trial_ends_at) },
+		{ label: 'Days left', value: (r) => (r.days_left == null ? 'n/a' : num(r.days_left)), num: true },
+	], t.active_list, { empty: 'No trial is running right now.' })}`;
+	return panel('msa-p-trials', 'Free trials', 'Conversion rate is converted of trials that converted or were cancelled; trials still running are not counted against it', t.started ? body : '', empty);
 }
 
 function operationsPanel(o) {
@@ -294,6 +318,7 @@ function render(board) {
 	renderKpis(board.kpis, board.connector_threshold);
 	panelsEl.innerHTML = [
 		subscriptionsPanel(board.subscriptions, board.config.marketplace_missing),
+		trialsPanel(board.trials),
 		operationsPanel(board.operations),
 		meteringPanel(board.metering),
 		teamsPanel(board.teams),
