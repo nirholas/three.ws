@@ -338,6 +338,7 @@
       "MS_TEAMS_BOT_APP_ID"
     ],
     "unmanaged": {
+      "MS_PARTNER_CENTER_PUBLISHER_NAME": "Partner Center publisher display name the Teams store validator compares developer.name against; an owner value read from Partner Center, not an Azure resource.",
       "MS_MARKETPLACE_LEADS_TOKEN": "three.ws-generated shared secret for the Partner Center leads webhook; not a Microsoft resource.",
       "MS_MARKETPLACE_API_BASE": "Fulfillment API base override for the local SaaS emulator; production uses the Microsoft default.",
       "MS_MARKETPLACE_METERING_BASE": "Metering API base override for the local SaaS emulator; production uses the Microsoft default.",
