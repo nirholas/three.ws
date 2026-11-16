@@ -1178,6 +1178,13 @@ export const limits = {
 	// the Upstash quota without buying any real protection here.
 	mcp3dStatus: (key) =>
 		getLimiter('mcp3d:status', { limit: 240, window: '1 m', local: true }).limit(key),
+	// /api/cosmos world generation. One world holds a dedicated RTX PRO 6000 for
+	// roughly two to four minutes, so the per-principal ceiling is tight and a
+	// global breaker keeps an influx from queueing hours of GPU time.
+	cosmosWorldGenerate: (key) =>
+		getLimiter('cosmos:world', { limit: 8, window: '1 h', critical: true }).limit(key),
+	cosmosWorldGenerateGlobal: () =>
+		getLimiter('cosmos:world:global', { limit: 90, window: '1 h', critical: true }).limit('global'),
 	// Free X post reader / video tool. Extract fans out to up to three third-party
 	// endpoints per call; download streams bytes through us, so both are per IP.
 	xVideoExtract: (ip) => getLimiter('x-video:extract', { limit: 20, window: '1 m' }).limit(ip),

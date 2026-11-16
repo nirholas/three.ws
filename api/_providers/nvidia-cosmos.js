@@ -1,4 +1,7 @@
-// NVIDIA Cosmos provider — the FREE text→world VIDEO backend.
+// NVIDIA Cosmos provider: the HOSTED text→world VIDEO rungs of the /api/cosmos
+// model ladder (api/_lib/cosmos-ladder.js). The ladder tries the self-hosted
+// Cosmos 3 Nano worker first (api/_providers/cosmos-worker.js) and only reaches
+// these predict1 routes for text worlds while NVIDIA still serves them.
 //
 // Cosmos is NVIDIA's omnimodal World Foundation Model family for Physical AI.
 // The `cosmos-predict` line generates a short photoreal video of a world state
@@ -69,15 +72,14 @@ const NVCF_STATUS_URL = 'https://api.nvcf.nvidia.com/v2/nvcf/pexec/status';
 // order and only reports the lane unavailable when every rung is gone. Pinning
 // NVIDIA_COSMOS_INVOKE_URL opts out: an explicit pin is used alone, because the
 // operator who set it means that model (or a self-hosted NIM), not a sibling.
-const COSMOS_ROUTE_CANDIDATES = [
-	DEFAULT_COSMOS_INVOKE_URL,
-	'https://ai.api.nvidia.com/v1/cosmos/nvidia/cosmos-predict1-5b',
-];
+export const COSMOS_PREDICT1_5B_URL = 'https://ai.api.nvidia.com/v1/cosmos/nvidia/cosmos-predict1-5b';
+export const COSMOS_PREDICT1_7B_URL = DEFAULT_COSMOS_INVOKE_URL;
+const COSMOS_ROUTE_CANDIDATES = [COSMOS_PREDICT1_7B_URL, COSMOS_PREDICT1_5B_URL];
 
 // Cosmos predict renders a fixed ~5 s 1280×704 @ 24fps clip; the prompt is the
 // only knob that meaningfully changes the output, so we keep the body minimal.
 // A long prompt is clamped so the request is honest about what conditions it.
-const COSMOS_PROMPT_MAX = 300;
+export const COSMOS_PROMPT_MAX = 300;
 
 // Without scene/lighting cues Cosmos drifts toward muted, overcast worlds. Append
 // a cinematic suffix unless the caller already steered the look — the backdrop
@@ -377,10 +379,11 @@ export function createNvidiaCosmosProvider() {
 
 	return {
 		// Native text→world video. Returns a poll handle, or a ready R2 MP4 URL when
-		// NVCF completed within the submit request (rare for video).
-		async textToWorld({ prompt, seed } = {}) {
+		// NVCF completed within the submit request (rare for video). `routes` lets
+		// the ladder submit to one rung at a time; an operator pin still wins.
+		async textToWorld({ prompt, seed, routes } = {}) {
 			const body = buildWorldBody({ prompt, seed });
-			const candidates = invokeCandidates();
+			const candidates = env.NVIDIA_COSMOS_INVOKE_URL || !routes?.length ? invokeCandidates() : [...routes];
 			let retiredErr = null;
 			let parsed = null;
 			for (const [i, url] of candidates.entries()) {

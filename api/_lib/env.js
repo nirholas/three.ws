@@ -755,6 +755,17 @@ export const env = {
 		return opt('NVIDIA_COSMOS_INVOKE_URL');
 	},
 
+	// Self-hosted Cosmos 3 Nano world worker (workers/model-cosmos, Cloud Run RTX
+	// PRO 6000). The top rung of the /api/cosmos model ladder: text, image, depth
+	// and edge worlds. Both must be set for the rung to be offered; the key is the
+	// worker's bearer token (Secret Manager: cosmos-worker-key).
+	get COSMOS_WORKER_URL() {
+		return opt('COSMOS_WORKER_URL');
+	},
+	get COSMOS_WORKER_KEY() {
+		return opt('COSMOS_WORKER_KEY');
+	},
+
 	// IBM watsonx.ai (Granite foundation models) — selectable brain in
 	// /api/chat and /api/brain/chat. Requires the API key AND a project (or
 	// space) id; the shared client in _lib/watsonx.js exchanges the key for an

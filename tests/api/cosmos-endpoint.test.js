@@ -9,6 +9,8 @@
 // hands back provider diagnostics.
 //
 // The provider module is stubbed at the seam; no network, no live NVCF spend.
+// The self-hosted worker rung is left unconfigured here so every request reaches
+// the hosted rungs (tests/cosmos-world-lane.test.js covers the worker rung).
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Readable } from 'node:stream';
@@ -20,6 +22,17 @@ const configured = vi.fn(() => true);
 vi.mock('../../api/_providers/nvidia-cosmos.js', () => ({
 	nvidiaCosmosConfigured: (...a) => configured(...a),
 	createNvidiaCosmosProvider: () => ({ textToWorld, status }),
+	COSMOS_PREDICT1_7B_URL: 'https://ai.api.nvidia.com/v1/cosmos/nvidia/cosmos-predict1-7b',
+	COSMOS_PREDICT1_5B_URL: 'https://ai.api.nvidia.com/v1/cosmos/nvidia/cosmos-predict1-5b',
+	COSMOS_PROMPT_MAX: 300,
+}));
+vi.mock('../../api/_lib/rate-limit.js', () => ({
+	limits: {
+		cosmosWorldGenerate: async () => ({ success: true, reset: Date.now() + 1000 }),
+		cosmosWorldGenerateGlobal: async () => ({ success: true, reset: Date.now() + 1000 }),
+		mcp3dStatus: async () => ({ success: true, reset: Date.now() + 1000 }),
+	},
+	clientIp: () => '127.0.0.1',
 }));
 
 function makeReq({ method = 'POST', url = '/api/cosmos', body = null } = {}) {
@@ -62,6 +75,8 @@ async function dispatch(req) {
 const RETIRED_DETAIL = "Function '01327741-a1cb-4bdb-a31e-5391c8ca48c2': Not found for account 'umJDGCKdQZeA'";
 
 beforeEach(() => {
+	delete process.env.COSMOS_WORKER_URL;
+	delete process.env.COSMOS_WORKER_KEY;
 	vi.spyOn(console, 'warn').mockImplementation(() => {});
 	configured.mockReturnValue(true);
 	textToWorld.mockReset();
@@ -105,19 +120,19 @@ describe('/api/cosmos: submit failures never leak upstream detail', () => {
 		expect(res.body.retry_after).toBe(12);
 	});
 
-	it('reports an unconfigured deployment as 503 without starting a job', async () => {
+	it('reports a deployment with no configured rung as 503 without starting a job', async () => {
 		configured.mockReturnValue(false);
 		const res = await dispatch(makeReq({ body: { prompt: 'a bioluminescent forest' } }));
 
 		expect(res.status).toBe(503);
-		expect(res.body.error).toBe('unconfigured');
+		expect(res.body.error).toBe('lane_unavailable');
 		expect(textToWorld).not.toHaveBeenCalled();
 	});
 
 	it('still rejects a too-short prompt before touching the provider', async () => {
 		const res = await dispatch(makeReq({ body: { prompt: 'a' } }));
 		expect(res.status).toBe(400);
-		expect(res.body.error).toBe('invalid_prompt');
+		expect(res.body.error).toBe('invalid_input');
 		expect(textToWorld).not.toHaveBeenCalled();
 	});
 
@@ -126,8 +141,13 @@ describe('/api/cosmos: submit failures never leak upstream detail', () => {
 		const res = await dispatch(makeReq({ body: { prompt: 'a golden savanna at sunset', seed: 7 } }));
 
 		expect(res.status).toBe(202);
-		expect(res.body.job_id).toBe('req-world-42');
-		expect(textToWorld).toHaveBeenCalledWith({ prompt: 'a golden savanna at sunset', seed: 7 });
+		expect(res.body.job_id).toBe('nv_req-world-42');
+		expect(res.body.model).toBe('cosmos-predict1-7b');
+		expect(textToWorld).toHaveBeenCalledWith({
+			prompt: 'a golden savanna at sunset',
+			seed: 7,
+			routes: ['https://ai.api.nvidia.com/v1/cosmos/nvidia/cosmos-predict1-7b'],
+		});
 	});
 });
 
@@ -139,7 +159,7 @@ describe('/api/cosmos: the poll hands back status, never diagnostics', () => {
 		const res = await dispatch(makeReq({ method: 'GET', url: `/api/cosmos?job=${JOB}` }));
 
 		expect(res.status).toBe(200);
-		expect(res.body.status).toBe('running');
+		expect(res.body.status).toBe('generating');
 		expect(res.body.error).toBeNull();
 	});
 
