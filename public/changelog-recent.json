@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-16T19:14:54.222Z",
+	"generated_at": "2026-11-16T19:17:27.244Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4636,
+	"total": 4637,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -292,6 +292,16 @@
 			"link": null,
 			"tags": [
 				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Image understanding now picks the best NVIDIA Nemotron model for each job",
+			"summary": "Every feature that reads an image (photo checks before 3D generation, the forge quality gate, avatar alt text, scene object boxes, photo to diorama, and the image review behind X mentions) now asks the Nemotron vision model that scored best on that exact job in a measured test of 162 real tasks. Nemotron 3.5 Super VL leads overall, Bolt E4B handles the quality gate and avatar review, and Nemotron 3 Nano Omni writes alt text, each with the others behind it as fallback. A bug that turned the seed judge's scores into text when it repaired a reply is fixed, and photo to diorama now reports which model read your photo.",
+			"link": null,
+			"tags": [
 				"improvement"
 			]
 		},
@@ -1535,16 +1545,6 @@
 			"link": "/lab/trellis2",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "update",
-			"title": "TRELLIS.2 Lab: every parameter of Microsoft Research's image-to-3D model",
-			"summary": "A new lab at /lab/trellis2 runs TRELLIS.2 with all of its controls in your hands: voxel resolution, seed, texture size, face budget, and the steps and guidance of each of its three sampler stages. Every control shows its default and a plain-language explanation. Pick Fast draft, Balanced or Maximum detail; their speed labels come from real production runs, not estimates. Inspect the result in texture, wireframe or normal view, with triangle count, texture resolution and file size read from the model itself. Run a second engine on the same photo to compare the two side by side, and share the pair with one link. The page credits Microsoft Research, with the citation, the MIT license and how we run it.",
-			"link": "/lab/trellis2",
-			"tags": [
-				"feature"
 			]
 		}
 	]

@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-16",
+			"title": "Image understanding now picks the best NVIDIA Nemotron model for each job",
+			"summary": "Every feature that reads an image (photo checks before 3D generation, the forge quality gate, avatar alt text, scene object boxes, photo to diorama, and the image review behind X mentions) now asks the Nemotron vision model that scored best on that exact job in a measured test of 162 real tasks. Nemotron 3.5 Super VL leads overall, Bolt E4B handles the quality gate and avatar review, and Nemotron 3 Nano Omni writes alt text, each with the others behind it as fallback. A bug that turned the seed judge's scores into text when it repaired a reply is fixed, and photo to diorama now reports which model read your photo.",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-16",
 			"title": "Cosmos worlds now render on Cosmos 3 Nano and can grow out of your avatar's own scene",
 			"summary": "The /cosmos world lane is back. Worlds now render on NVIDIA Cosmos 3 Nano on our own GPU worker, with the older hosted models kept behind it as fallbacks. A new mode picker adds From my scene: the page captures your avatar as it stands on the stage and the world is built from it, as a still that becomes the first frame, or as a depth or edge render of a slow orbit that steers the layout. Progress shows the real step count and time left, and a job survives a reload or a closed tab, so you can leave and come back to a finished world.",
 			"tags": [

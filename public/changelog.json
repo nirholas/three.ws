@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T19:14:54.185Z",
+	"generated_at": "2026-11-16T19:17:27.217Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -289,6 +289,16 @@
 			"link": null,
 			"tags": [
 				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Image understanding now picks the best NVIDIA Nemotron model for each job",
+			"summary": "Every feature that reads an image (photo checks before 3D generation, the forge quality gate, avatar alt text, scene object boxes, photo to diorama, and the image review behind X mentions) now asks the Nemotron vision model that scored best on that exact job in a measured test of 162 real tasks. Nemotron 3.5 Super VL leads overall, Bolt E4B handles the quality gate and avatar review, and Nemotron 3 Nano Omni writes alt text, each with the others behind it as fallback. A bug that turned the seed judge's scores into text when it repaired a reply is fixed, and photo to diorama now reports which model read your photo.",
+			"link": null,
+			"tags": [
 				"improvement"
 			]
 		},
