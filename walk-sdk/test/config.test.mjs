@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { resolveConfig, resolveAvatarEntry, DEFAULT_EXCLUDED_PREFIXES } from '../src/config.js';
-import { WALK_AVATARS, DEFAULT_AVATAR_ID } from '../src/roster.js';
+import { WALK_AVATARS, DEFAULT_AVATAR_ID, resolveAvatarUrl } from '../src/roster.js';
 
 test('resolveConfig fills sensible defaults', () => {
 	const c = resolveConfig();
@@ -85,6 +85,17 @@ test('resolveAvatarEntry falls back to the default avatar for empty ids', () => 
 	const c = resolveConfig();
 	assert.equal(resolveAvatarEntry(null, c).id, DEFAULT_AVATAR_ID);
 	assert.equal(resolveAvatarEntry('', c).id, DEFAULT_AVATAR_ID);
+});
+
+test('resolveAvatarEntry loads a ?avatar= GLB URL or site path directly, not as an api id', () => {
+	const c = resolveConfig();
+	for (const url of ['/avatars/default.glb', 'https://cdn.example.com/u/me.vrm']) {
+		const e = resolveAvatarEntry(url, c);
+		assert.equal(e.source, 'static');
+		assert.equal(e.asset, url);
+		assert.equal(e.rig, 'shared');
+		assert.equal(resolveAvatarUrl(e, c), url);
+	}
 });
 
 test('resolveAvatarEntry treats an unknown id as a user-generated api avatar', () => {

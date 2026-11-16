@@ -5,7 +5,7 @@
 // keys — so dropping the SDK in is behaviourally identical to the hand-written
 // modules it replaces, and an existing visitor's saved state carries over.
 
-import { WALK_AVATARS, DEFAULT_AVATAR_ID, getAvatar, makeApiAvatarEntry } from './roster.js';
+import { WALK_AVATARS, DEFAULT_AVATAR_ID, getAvatar, makeApiAvatarEntry, makeGuestAvatarEntry } from './roster.js';
 
 // Routes that already own the viewport with their own full-screen 3D, where a
 // corner mascot would be redundant or intrusive.
@@ -58,11 +58,15 @@ export function resolveConfig(opts = {}) {
 /**
  * Resolve a stored/queried avatar id into a roster entry. An id that isn't in
  * the static roster is assumed to be a user-generated avatar served by the GLB
- * proxy, so it becomes an on-the-fly API entry.
+ * proxy, so it becomes an on-the-fly API entry; a GLB URL or root-relative
+ * path becomes a direct (guest) entry.
  */
 export function resolveAvatarEntry(id, config) {
 	if (!id) return getAvatar(config.defaultAvatarId) || config.avatars[0];
 	const fromRoster = config.avatars.find((a) => a.id === id) || getAvatar(id);
 	if (fromRoster) return fromRoster;
+	// A GLB URL or site path (a page's own ?avatar=<url>, as /walk/embed and
+	// /audio2face accept) loads as-is instead of going through the api proxy.
+	if (/^https?:\/\//i.test(id) || id.startsWith('/')) return makeGuestAvatarEntry(id, { name: 'Page avatar' });
 	return makeApiAvatarEntry(id);
 }
