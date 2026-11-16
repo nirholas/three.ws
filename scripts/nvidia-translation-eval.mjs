@@ -6,12 +6,13 @@
 // NVIDIA_TRANSLATION_CANDIDATES this scores:
 //
 //   chrF        corpus chrF2 on an evenly spaced FLORES-200 devtest sample,
-//               translated through the exact JSON prompt the pipeline uses
+//               translated through the exact request the pipeline makes
+//               (JSON for Nemotron, numbered tagged segments for Riva)
 //   integrity   share of real catalog strings (ones carrying placeholders,
 //               HTML, or glossary terms) whose [[Tn]] tokens and markup
 //               survive the round trip, with the product reference in the
 //               prompt as in production
-//   parse       share of requests whose reply parsed as the JSON asked for
+//   parse       share of requests whose reply parsed in the shape asked for
 //   latency     median seconds per request
 //
 // Then it routes each locale to the best model that clears the bar and writes:
@@ -40,8 +41,8 @@ import { corpusChrF, tokensIntact, backoffDelay } from './lib/i18n-quality.mjs';
 import {
 	NVIDIA_TRANSLATION_CANDIDATES,
 	ROUTES_PATH,
-	buildTranslatePrompt,
-	nvidiaChat,
+	nvidiaMaxKeysPerChunk,
+	nvidiaTranslate,
 	promptLanguageName,
 } from './lib/i18n-nvidia.mjs';
 import { markupDrift } from './lib/i18n-shared.mjs';
@@ -127,31 +128,18 @@ function chunk(list, size) {
 	return out;
 }
 
-function parseReply(raw) {
-	const text = String(raw).replace(/^\s*```(?:json)?/i, '').replace(/```\s*$/, '').trim();
-	try {
-		return JSON.parse(text);
-	} catch {
-		const s = text.indexOf('{');
-		const e = text.lastIndexOf('}');
-		if (s === -1 || e <= s) return null;
-		try {
-			return JSON.parse(text.slice(s, e + 1));
-		} catch {
-			return null;
-		}
-	}
-}
-
-async function callWithBackoff(model, prompt, key) {
+// One request with backoff on rate limits and gateway errors. A reply that
+// never parses is a scored failure (it counts against `parse` and leaves its
+// sentences empty), not something to retry until it happens to pass.
+async function translateWithBackoff({ model, langName, payload, reference, key }) {
 	for (let attempt = 0; ; attempt++) {
 		const t0 = Date.now();
 		try {
-			const raw = await nvidiaChat({ model, prompt, key, temperature: 0 });
-			return { raw, seconds: (Date.now() - t0) / 1000 };
+			const out = await nvidiaTranslate({ model, langName, payload, reference, key, temperature: 0, timeoutMs: 120_000 });
+			return { out, seconds: (Date.now() - t0) / 1000 };
 		} catch (err) {
-			const transient = err.status === 429 || err.status >= 500 || err.name === 'TimeoutError';
-			if (!transient || attempt >= 6) return { raw: null, seconds: (Date.now() - t0) / 1000, error: err.message };
+			const transient = err.status === 429 || err.status >= 500;
+			if (!transient || attempt >= 6) return { out: null, seconds: (Date.now() - t0) / 1000, error: err.message };
 			await new Promise((r) => setTimeout(r, backoffDelay(attempt, { retryAfterSec: err.retryAfter })));
 		}
 	}
@@ -181,16 +169,17 @@ async function evalCell({ code, model, key, cfg, eng, devtest, sentenceIdx, stri
 	const requests = [];
 	const latencies = [];
 	let parsed = 0;
+	const size = Math.min(batchSize, nvidiaMaxKeysPerChunk(model));
 
 	// FLORES: news sentences, no product reference (it would bias the register).
 	const hyps = [];
 	const refs = [];
-	for (const group of chunk(sentenceIdx, batchSize)) {
+	for (const group of chunk(sentenceIdx, size)) {
 		const payload = Object.fromEntries(group.map((i) => [`s${i}`, eng[i]]));
 		requests.push(async () => {
-			const r = await callWithBackoff(model, buildTranslatePrompt(langName, payload), key);
+			const r = await translateWithBackoff({ model, langName, payload, key });
 			latencies.push(r.seconds);
-			const out = r.raw == null ? null : parseReply(r.raw);
+			const out = r.out;
 			if (out) parsed++;
 			for (const i of group) {
 				hyps[i] = typeof out?.[`s${i}`] === 'string' ? out[`s${i}`] : '';
@@ -202,7 +191,7 @@ async function evalCell({ code, model, key, cfg, eng, devtest, sentenceIdx, stri
 	// Integrity: real catalog strings, masked exactly as the pipeline masks them.
 	let intact = 0;
 	const failures = [];
-	for (const group of chunk(stringKeys, batchSize)) {
+	for (const group of chunk(stringKeys, size)) {
 		const payload = {};
 		const tokens = {};
 		for (const k of group) {
@@ -211,9 +200,9 @@ async function evalCell({ code, model, key, cfg, eng, devtest, sentenceIdx, stri
 			tokens[k] = m.tokens;
 		}
 		requests.push(async () => {
-			const r = await callWithBackoff(model, buildTranslatePrompt(langName, payload, cfg.reference), key);
+			const r = await translateWithBackoff({ model, langName, payload, reference: cfg.reference, key });
 			latencies.push(r.seconds);
-			const out = r.raw == null ? null : parseReply(r.raw);
+			const out = r.out;
 			if (out) parsed++;
 			for (const k of group) {
 				const v = out?.[k];
@@ -269,9 +258,13 @@ function writeOutputs(cfg, locales) {
 	const byLocale = {};
 	for (const c of cells) (byLocale[c.code] ||= []).push(c);
 	const routes = { generatedAt: date, bar: BAR, candidates: NVIDIA_TRANSLATION_CANDIDATES, locales: {} };
+	// Route a locale only once every candidate has been scored on it, so a
+	// --report-only taken while an eval is still running never picks a model
+	// just because its rivals have not finished yet.
 	for (const code of cfg.outputLocales) {
-		if (!byLocale[code]) continue;
-		routes.locales[code] = chooseRoute(code, byLocale[code]);
+		const scored = byLocale[code] || [];
+		if (!NVIDIA_TRANSLATION_CANDIDATES.every((m) => scored.some((c) => c.model === m))) continue;
+		routes.locales[code] = chooseRoute(code, scored);
 	}
 	// Merge into an existing table so a subset run only refreshes its locales.
 	const prior = existsSync(ROUTES_PATH) ? JSON.parse(readFileSync(ROUTES_PATH, 'utf8')) : { locales: {} };

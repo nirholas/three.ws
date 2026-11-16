@@ -266,3 +266,24 @@ export function backoffDelay(attempt, { retryAfterSec = 0, baseMs = 2000, capMs 
 	const ceiling = Math.min(capMs, baseMs * 2 ** attempt);
 	return Math.round(ceiling / 2 + random() * (ceiling / 2));
 }
+
+// --- resume ----------------------------------------------------------------
+
+/**
+ * Run `fn` and, when it fails with an error `isResumable` accepts (a spent
+ * free-tier quota, a gateway outage), sleep `waitMs` and run it again, up to
+ * `maxResumes` times. The translate pipeline persists after every chunk and
+ * only ever asks for missing keys, so each resume continues where the last
+ * attempt stopped instead of starting over. Anything else rethrows at once.
+ */
+export async function runWithResume(fn, { waitMs, maxResumes, isResumable, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), onWait } = {}) {
+	for (let resumes = 0; ; resumes++) {
+		try {
+			return await fn(resumes);
+		} catch (err) {
+			if (!waitMs || resumes >= maxResumes || !isResumable(err)) throw err;
+			onWait?.({ resumes: resumes + 1, waitMs, err });
+			await sleep(waitMs);
+		}
+	}
+}

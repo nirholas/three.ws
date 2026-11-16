@@ -42,6 +42,22 @@
 		"modelName": {
 			"type": "string"
 		},
+		"qualityGate": {
+			"type": "object",
+			"additionalProperties": false,
+			"description": "The bar every translated batch must clear before it is written (scripts/lib/i18n-quality.mjs). Token, markup, length and echo checks always run.",
+			"properties": {
+				"backTranslate": {
+					"type": "boolean",
+					"description": "Translate each surviving value back to English and require chrF similarity to the source. Default true; --no-back-translate disables it for one run."
+				},
+				"maxRounds": {
+					"type": "integer",
+					"minimum": 1,
+					"description": "Attempts per key before it is left untranslated. Default 3; --gate-rounds overrides."
+				}
+			}
+		},
 		"temperature": {
 			"type": "number",
 			"minimum": 0,

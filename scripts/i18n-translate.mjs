@@ -1,16 +1,16 @@
 #!/usr/bin/env node
-// i18n-translate — incremental, glossary-locked machine translation of the
+// i18n-translate - incremental, glossary-locked machine translation of the
 // source catalog into every target locale, modeled on LobeHub's lobe-i18n.
 //
 // Pipeline (matches the LobeHub approach, adapted for three.ws):
 //   1. Read the entryLocale catalog (locales/en.json) as the source of truth.
 //   2. For each target locale, diff against the committed translation and
-//      translate ONLY the missing/empty keys — re-runs are nearly free.
+//      translate ONLY the missing/empty keys - re-runs are nearly free.
 //   3. Brand/protocol terms, {{placeholders}}, and HTML tags are masked to
 //      opaque sentinels before the text reaches the model and restored after,
 //      so `$THREE`, the contract address, etc. come back byte-for-byte.
 //   4. Large namespaces are split under a token budget; chunks run concurrently.
-//   5. Output is committed as static JSON — zero runtime translation cost.
+//   5. Output is committed as static JSON - zero runtime translation cost.
 //
 // Backends (real APIs, selected by `provider` in .i18nrc.json):
 //   gemini    → Generative Language API   (GEMINI_API_KEY | GOOGLE_API_KEY)
@@ -38,6 +38,16 @@
 //   node scripts/i18n-translate.mjs --dry-run       # report what would translate
 //   node scripts/i18n-translate.mjs --concurrency=8 # widen the chunk pool for a bulk run
 //   node scripts/i18n-translate.mjs --split-token=2400 # bigger chunks, fewer requests
+//   node scripts/i18n-translate.mjs --provider=nvidia  # NVIDIA lane, model routed per locale
+//   node scripts/i18n-translate.mjs --resume-wait=600  # on a spent quota, sleep and resume
+//   node scripts/i18n-translate.mjs --gate-rounds=3    # quality-gate re-queue rounds per chunk
+//   node scripts/i18n-translate.mjs --no-back-translate # skip the back-translation check
+//
+// Quality gate: every batch from every lane must keep its placeholders, HTML
+// and glossary tokens, stay a plausible length, not echo the English, and
+// survive a back-translation similarity check (scripts/lib/i18n-quality.mjs).
+// Keys that fail are re-queued; keys that never pass are left untranslated,
+// never written.
 
 import { writeFileSync, existsSync, readFileSync, renameSync, unlinkSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -61,11 +71,19 @@ import {
 	lintLocale,
 	markupDrift,
 } from './lib/i18n-shared.mjs';
+import { gateBatch, translateWithRequeue, backoffDelay, runWithResume } from './lib/i18n-quality.mjs';
+import {
+	buildTranslatePrompt,
+	loadNvidiaRoutes,
+	nvidiaMaxKeysPerChunk,
+	nvidiaTranslate,
+	promptLanguageName,
+	resolveNvidiaModel,
+} from './lib/i18n-nvidia.mjs';
 
 // The backend credentials live in .env alongside every other platform secret.
 // Without this the default provider (vertex) has no project, every call fails
-// its config check, and the run bakes English into the whole catalog - the
-// silent-English failure `i18n:backfill` exists to clean up afterwards. dotenv
+// its config check and the run aborts on its first chunk. dotenv
 // never overrides a var already exported, so a one-off `GEMINI_API_KEY=… npm
 // run i18n:translate` still wins.
 dotenv({ path: new URL('../.env', import.meta.url), quiet: true });
@@ -125,7 +143,7 @@ function runLint() {
 	for (const code of targets) {
 		const target = readJSON(localePath(code));
 		if (!target) {
-			// Configured but not yet translated — not an integrity failure. Lint
+			// Configured but not yet translated - not an integrity failure. Lint
 			// gates the catalogs we actually ship; run `npm run i18n:translate` to
 			// generate the rest.
 			console.log(`◦ ${code}: not generated yet (skipped)`);
@@ -208,13 +226,13 @@ function writeJsonAtomic(path, text) {
 
 // Split missing keys into chunks whose combined source text stays under the
 // token budget (≈4 chars/token) so no single request risks truncation.
-function chunkKeys(keys, budgetChars) {
+function chunkKeys(keys, budgetChars, maxKeys = Infinity) {
 	const chunks = [];
 	let cur = [];
 	let size = 0;
 	for (const k of keys) {
 		const len = String(getDeep(source, k) ?? '').length + k.length + 8;
-		if (cur.length && size + len > budgetChars) {
+		if (cur.length && (size + len > budgetChars || cur.length >= maxKeys)) {
 			chunks.push(cur);
 			cur = [];
 			size = 0;
@@ -261,9 +279,12 @@ const PROVIDER_DEFAULT_MODEL = {
 	// serving 429s. The larger model is the faster lane here because it is not
 	// the one the free tier is throttling, and it translates the hard scripts
 	// (Sinhala, Amharic, Khmer, Lao) with nothing left in English.
-	// nvidia/riva-translate-4b looks like the obvious pick for a translation job
-	// and is a trap: it is a plain sentence-in/sentence-out model, so it echoes
-	// the English back for a JSON payload and never parses for most locales.
+	// This is only the fallback for a locale the evaluation never scored: the
+	// nvidia lane routes each locale to the model that measured best for it
+	// (scripts/lib/i18n-nvidia-routes.json, written by
+	// scripts/nvidia-translation-eval.mjs). Riva Translate is one of those
+	// candidates, driven in its own tagged-segment request mode, because a JSON
+	// payload is the one shape it cannot keep.
 	nvidia: 'nvidia/nemotron-3-ultra-550b-a55b',
 	mistral: 'mistral-small-latest',
 	openai: 'gpt-4o-mini',
@@ -274,7 +295,7 @@ const PROVIDER_DEFAULT_MODEL = {
 };
 
 // OpenAI-compatible lanes. jsonMode is set only where the endpoint reliably
-// honors response_format:json_object — free models often 400 on it, so those
+// honors response_format:json_object - free models often 400 on it, so those
 // rely on prompt-enforced JSON plus fence stripping instead.
 const OPENAI_COMPAT = {
 	// No jsonMode: Groq's `response_format:json_object` is server-validated, and
@@ -321,24 +342,26 @@ function httpError(provider, status, body, retryAfter) {
 
 /**
  * A backend that is not configured at all - no key, no project. Distinct from a
- * key the model choked on, and it must never be treated like one: the per-key
- * fallback bakes the English source, so an unconfigured provider would quietly
- * rewrite an entire catalog into English and leave lint green. Marked so the
- * run can abort instead.
+ * key the model choked on, and it must never be treated like one: a per-key
+ * failure is re-queued, so an unconfigured provider would grind through every
+ * chunk of every locale failing identically. Marked so the run can abort
+ * instead.
  */
 export function configError(message) {
 	return Object.assign(new Error(message), { isConfigError: true });
 }
 
 /**
- * Should this failure abort the run instead of falling back to English?
+ * Should this failure abort the run instead of re-queuing the key?
  *
  * True for anything that means "this key will never be served", which fails
  * identically on every key: an absent key or project (configError), an auth
- * rejection from the provider (401/403), and an exhausted balance (402). The
- * English fallback exists for the occasional value a model cannot render as
- * valid JSON; applied to a whole-account failure it silently rewrites a whole
- * catalog into English and exits 0.
+ * rejection from the provider (401/403), and an exhausted balance (402).
+ * Re-queuing exists for the occasional value a model cannot render; applied
+ * to a whole-account failure it spends every retry on a call that cannot
+ * succeed. (Before the quality gate, the per-key fallback baked the English
+ * source instead, and a whole-account failure silently rewrote a catalog into
+ * English and exited 0.)
  *
  * `isQuotaExhausted` is set by the retry loop for a 429 or a 5xx that survives
  * the whole backoff budget, which is how a spent quota and a downed gateway
@@ -380,23 +403,11 @@ function stripFences(text) {
 		.trim();
 }
 
-function buildPrompt(langName, payload) {
-	return [
-		`You are a professional software localizer translating UI and marketing copy from English to ${langName}.`,
-		cfg.reference || '',
-		'',
-		'Rules:',
-		`- Translate every VALUE in the JSON below into ${langName}. Keep every KEY exactly as-is.`,
-		'- Each KEY names the page and UI element the value belongs to (page.element). Use it as context to pick the right sense of short or ambiguous labels: on a 3D-printing page, "Finish" is the surface finish of a print, not "complete".',
-		'- Return ONLY a single JSON object with the same keys. No prose, no markdown, no code fences.',
-		'- Some values contain protected tokens written as [[T0]], [[T1]], and so on. They stand in for brand names, code, and placeholders. Copy each token VERBATIM into a natural position for the target language. Never translate a token, change its number, add one, or drop one.',
-		'- Preserve meaning and tone. Do not add explanations.',
-		'',
-		'JSON to translate:',
-		JSON.stringify(payload),
-	]
-		.filter(Boolean)
-		.join('\n');
+// The product reference shapes the forward pass only. On a back-translation it
+// would nudge the model to embellish, which is exactly the drift the gate is
+// trying to measure.
+function buildPrompt(langName, payload, fromName = 'English') {
+	return buildTranslatePrompt(langName, payload, fromName === 'English' ? cfg.reference : '', fromName);
 }
 
 async function callGemini(prompt, modelOverride = null) {
@@ -406,7 +417,7 @@ async function callGemini(prompt, modelOverride = null) {
 		process.env.GOOGLE_GENAI_API_KEY;
 	if (!key)
 		throw configError(
-			'GEMINI_API_KEY (or GOOGLE_API_KEY) not set — free keys: https://aistudio.google.com/apikey',
+			'GEMINI_API_KEY (or GOOGLE_API_KEY) not set - free keys: https://aistudio.google.com/apikey',
 		);
 	const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelOverride || modelName()}:generateContent?key=${key}`;
 	const res = await fetch(url, {
@@ -536,7 +547,7 @@ async function callThreews(prompt, modelOverride = null) {
 	return text;
 }
 
-// Vertex AI Gemini — service-account/metadata-server auth, billed to the
+// Vertex AI Gemini - service-account/metadata-server auth, billed to the
 // platform's GCP credit pool instead of a free-tier key. No quota to exhaust
 // (unlike groq/gemini-aistudio/nvidia's shared free tiers, which can 429
 // mid-batch and leave a run partially translated), so this is the reliability
@@ -546,7 +557,7 @@ async function callThreews(prompt, modelOverride = null) {
 // 2026-07-16 (translated a real key through the endpoint end-to-end).
 //
 // Gotcha (verified live): Gemini 2.5 Flash spends part of its budget on
-// internal "reasoning" tokens before emitting any visible content — a tight
+// internal "reasoning" tokens before emitting any visible content - a tight
 // max_tokens (as the chat-completion callers elsewhere use) can burn the
 // whole budget on reasoning and return empty content with
 // finish_reason:"length". Use a generous ceiling, matching callAnthropic's.
@@ -607,7 +618,7 @@ async function callVertex(prompt, modelOverride = null) {
 	const project = process.env.GOOGLE_CLOUD_PROJECT;
 	if (!project) {
 		throw configError(
-			'GOOGLE_CLOUD_PROJECT not set — vertex needs the same GCP project + credentials ' +
+			'GOOGLE_CLOUD_PROJECT not set - vertex needs the same GCP project + credentials ' +
 				'(GCP_SERVICE_ACCOUNT_JSON, or the Cloud Run/GCE metadata server) as the rest of the ' +
 				'platform\'s Vertex AI callers.',
 		);
@@ -633,7 +644,7 @@ async function callVertex(prompt, modelOverride = null) {
 	// A token that was valid at mint time can be revoked long before it expires
 	// (a Workspace reauth policy invalidates outstanding gcloud tokens), and a
 	// bulk run holds one for hours. Re-mint once on 401/403 rather than letting
-	// a stale token turn into thousands of English-baked keys.
+	// a stale token fail thousands of keys.
 	if (res.status === 401 || res.status === 403) {
 		res = await send(await vertexToken({ fresh: true }));
 		if (res.status === 401 || res.status === 403) {
@@ -760,15 +771,80 @@ function laneCall(provider) {
 	return (prompt) => callOpenAICompat(prompt, provider, model);
 }
 
-function backendChain() {
-	const chain = [{ name: cfg.provider, call: (p) => backend()(p) }];
+// --- the NVIDIA lane -----------------------------------------------------------
+//
+// Unlike every other lane, nvidia picks its model per locale from the measured
+// routing table, and talks to Riva Translate in that model's own request mode.
+// `--model=` still pins one model for every locale when nvidia is the primary.
+
+const nvidiaRoutes = loadNvidiaRoutes();
+
+function nvidiaRoute(code) {
+	return resolveNvidiaModel(code, nvidiaRoutes, { pinned: cfg.provider === 'nvidia' ? cfg.modelName || '' : '' });
+}
+
+function nvidiaLaneCall() {
+	return async ({ code, langName, payload, fromName }) => {
+		const key = process.env.NVIDIA_API_KEY?.trim();
+		if (!key) throw configError('NVIDIA_API_KEY not set');
+		return nvidiaTranslate({
+			model: nvidiaRoute(code).model,
+			langName,
+			payload,
+			fromName,
+			reference: fromName === 'English' ? cfg.reference : '',
+			key,
+			temperature: cfg.temperature ?? 0.2,
+			topP: cfg.topP ?? 0.9,
+			timeoutMs: REQUEST_TIMEOUT_MS,
+			parseJSON: parseModelJSON,
+		});
+	};
+}
+
+// Adapt a prompt-in, text-out backend to the job-in, object-out shape the
+// chain speaks.
+function promptLane(fn) {
+	return async ({ langName, payload, fromName }) => {
+		const parsed = parseModelJSON(await fn(buildPrompt(langName, payload, fromName)));
+		if (!parsed || typeof parsed !== 'object') throw new Error('non-object response');
+		return parsed;
+	};
+}
+
+/**
+ * The ordered backend chain for one locale. Each rung's `call` takes a job
+ * `{ code, langName, payload, fromName }` and resolves to key -> value.
+ *
+ * The nvidia rung is left out for a locale the evaluation measured below the
+ * bar on every NVIDIA model: sending it there would only produce translations
+ * already known to be substandard, which the gate would then reject one batch
+ * at a time.
+ */
+function backendChain(code) {
+	const chain = [];
+	const nvidiaOk = nvidiaRoute(code).eligible;
+	if (cfg.provider === 'nvidia') {
+		if (nvidiaOk) chain.push({ name: `nvidia(${nvidiaRoute(code).model})`, call: nvidiaLaneCall() });
+	} else {
+		chain.push({ name: cfg.provider, call: promptLane((p) => backend()(p)) });
+	}
 	for (const [provider, envKey] of FALLBACK_LANES) {
 		if (provider === cfg.provider) continue;
 		if (!laneCredentialPresent(provider, envKey)) continue;
+		if (provider === 'nvidia') {
+			if (nvidiaOk) chain.push({ name: `nvidia(${nvidiaRoute(code).model})`, call: nvidiaLaneCall() });
+			continue;
+		}
 		const model = provider === 'openrouter' ? '' : PROVIDER_DEFAULT_MODEL[provider] || '';
-		chain.push({ name: model ? `${provider}(${model})` : provider, call: laneCall(provider) });
+		chain.push({ name: model ? `${provider}(${model})` : provider, call: promptLane(laneCall(provider)) });
 	}
 	return chain;
+}
+
+// Largest chunk (in keys) the first rung can take for this locale.
+function maxKeysPerChunk(code) {
+	return cfg.provider === 'nvidia' ? nvidiaMaxKeysPerChunk(nvidiaRoute(code).model) : Infinity;
 }
 
 // Parse the model's reply into an object, tolerating the usual LLM JSON noise:
@@ -789,34 +865,39 @@ function parseModelJSON(raw) {
 		} catch {
 			// JSON5 tolerates single quotes, unquoted keys, and trailing commas that
 			// small models sometimes emit. It still can't fix a truly broken string
-			// (an unescaped quote) — that key drops to the per-key split retry.
+			// (an unescaped quote) - that key drops to the per-key split retry.
 			return JSON5.parse(span);
 		}
 	}
 }
 
-// Try one backend with the existing retry/backoff. Returns the parsed object or
-// throws the last error after exhausting retries for THIS backend.
-async function callBackendWithRetry(call, langName, payload, attempt = 0) {
+// Try one backend with retry/backoff. Returns the parsed object or throws the
+// last error after exhausting retries for THIS backend.
+//
+// A 429 gets eight retries with exponential backoff and full jitter (2s
+// doubling to a 60s cap, about four minutes in all), honoring Retry-After when
+// the server sends one. The old linear 2s-10s ladder gave up inside 30 seconds,
+// which on NVIDIA's free tier is shorter than one rate-limit window, so a
+// healthy lane read as an exhausted one.
+const RATE_LIMIT_RETRIES = Number(process.env.I18N_RATE_LIMIT_RETRIES || 8);
+
+async function callBackendWithRetry(call, job, attempt = 0) {
 	try {
-		const raw = await call(buildPrompt(langName, payload));
-		const parsed = parseModelJSON(raw);
+		const parsed = await call(job);
 		if (!parsed || typeof parsed !== 'object') throw new Error('non-object response');
 		return parsed;
 	} catch (err) {
 		// A missing key or project is not transient - retrying it just burns the
 		// backoff budget on an outcome that cannot change.
 		if (isFatalAuthFailure(err)) throw err;
-		// Free tiers rate-limit hard; honor Retry-After and back off more on a 429
-		// than on a transient parse/5xx error.
-		const max = err.status === 429 ? 5 : 2;
+		const max = err.status === 429 ? RATE_LIMIT_RETRIES : 2;
 		if (attempt < max) {
 			const wait =
 				err.status === 429
-					? Math.max((err.retryAfter || 0) * 1000, 2000 * (attempt + 1))
+					? backoffDelay(attempt, { retryAfterSec: err.retryAfter })
 					: 400 * (attempt + 1);
 			await new Promise((r) => setTimeout(r, wait));
-			return callBackendWithRetry(call, langName, payload, attempt + 1);
+			return callBackendWithRetry(call, job, attempt + 1);
 		}
 		// A 429 that survives the full backoff budget is a spent quota, not one
 		// bad key. Mark it so the caller aborts instead of splitting down to
@@ -842,12 +923,17 @@ async function callBackendWithRetry(call, langName, payload, attempt = 0) {
 // OpenRouter). Each backend gets its full retry budget before the next is tried;
 // only when every backend is exhausted does the error propagate (to the caller's
 // halve-and-retry / English-fallback logic).
-async function translateChunk(langName, payload) {
-	const chain = backendChain();
+async function translateChunk(code, langName, payload, fromName = 'English') {
+	const chain = backendChain(code);
+	if (!chain.length) {
+		throw configError(
+			`${code}: no configured lane may translate this locale (the nvidia evaluation measured it below the bar; see scripts/lib/i18n-nvidia-routes.json)`,
+		);
+	}
 	let lastErr;
 	for (const [i, b] of chain.entries()) {
 		try {
-			return await callBackendWithRetry(b.call, langName, payload);
+			return await callBackendWithRetry(b.call, { code, langName, payload, fromName });
 		} catch (err) {
 			lastErr = err;
 			if (i < chain.length - 1) {
@@ -876,91 +962,105 @@ async function pool(items, limit, worker) {
 
 const masker = buildMasker(cfg.doNotTranslate);
 
+// The quality gate (scripts/lib/i18n-quality.mjs) runs on every batch from
+// every lane. Back-translation doubles the request count, so it can be turned
+// off for a lane already proven on the language (`--no-back-translate`), but it
+// is on by default and the committed config keeps it on.
+const BACK_TRANSLATE = !flag('no-back-translate') && cfg.qualityGate?.backTranslate !== false;
+const GATE_ROUNDS = Math.max(1, Number(opt('gate-rounds') || cfg.qualityGate?.maxRounds || 3));
+
+/**
+ * Translate one set of keys and run the gate. Pure with respect to the
+ * catalog: returns `{ passed, failed }` and writes nothing.
+ */
+async function translateAndGate(code, langName, keys) {
+	const masked = {};
+	const sources = {};
+	const tokenMap = {};
+	for (const k of keys) {
+		sources[k] = String(getDeep(source, k) ?? '');
+		const m = masker.mask(sources[k]);
+		masked[k] = m.masked;
+		tokenMap[k] = m.tokens;
+	}
+	const unmask = (k, v) => masker.unmask(v, tokenMap[k]);
+	let out;
+	try {
+		out = await translateChunk(code, langName, masked);
+	} catch (err) {
+		if (isFatalAuthFailure(err)) throw err;
+		return { passed: {}, failed: Object.fromEntries(keys.map((k) => [k, [err.message.slice(0, 120)]])) };
+	}
+	const first = gateBatch({ code, masked, sources, out, unmask });
+	if (!BACK_TRANSLATE || !Object.keys(first.passed).length) return first;
+
+	// Back-translate the survivors (still masked, so tokens cannot skew the
+	// score) and gate again with the similarity check switched on.
+	const forward = Object.fromEntries(Object.keys(first.passed).map((k) => [k, out[k]]));
+	let back;
+	try {
+		back = await translateChunk(code, 'English', forward, langName);
+	} catch (err) {
+		if (isFatalAuthFailure(err)) throw err;
+		const reason = `back-translation failed: ${err.message.slice(0, 100)}`;
+		return { passed: {}, failed: { ...first.failed, ...Object.fromEntries(Object.keys(forward).map((k) => [k, [reason]])) } };
+	}
+	const subset = (o) => Object.fromEntries(Object.keys(forward).map((k) => [k, o[k]]));
+	const second = gateBatch({ code, masked: subset(masked), sources: subset(sources), out: forward, unmask, back });
+	return { passed: second.passed, failed: { ...first.failed, ...second.failed } };
+}
+
 async function translateLocale(code) {
-	const langName = cfg.localeNames?.[code] || code;
+	const langName = promptLanguageName(code, cfg.localeNames?.[code]);
 	const existing = readJSON(localePath(code), {}) || {};
 	const todo = flag('force') ? Object.keys(flatten(source)) : missingKeys(source, existing);
 
 	if (!todo.length) {
 		console.log(`• ${code}: up to date`);
-		return { code, translated: 0 };
+		return { code, translated: 0, rejected: 0 };
+	}
+	if (!backendChain(code).length) {
+		console.log(`◦ ${code}: skipped, ${todo.length} key(s) left: no configured lane passes the bar for this locale`);
+		return { code, translated: 0, rejected: 0, skipped: true };
 	}
 	if (flag('dry-run')) {
-		console.log(`• ${code}: would translate ${todo.length} key(s)`);
-		return { code, translated: 0 };
+		console.log(`• ${code}: would translate ${todo.length} key(s) via ${backendChain(code)[0].name}`);
+		return { code, translated: 0, rejected: 0 };
 	}
 
-	const chunks = chunkKeys(todo, (cfg.splitToken || 1200) * 4);
-	console.log(
-		`→ ${code}: ${todo.length} key(s) in ${chunks.length} chunk(s) via ${cfg.provider}`,
-	);
+	const chunks = chunkKeys(todo, (cfg.splitToken || 1200) * 4, maxKeysPerChunk(code));
+	console.log(`→ ${code}: ${todo.length} key(s) in ${chunks.length} chunk(s) via ${backendChain(code)[0].name}`);
 
 	const translatedFlat = {};
+	const rejectedKeys = {};
 	let done = 0;
 
-	let failedKeys = 0;
-
-	// Translate one set of keys. On a hard failure (a model reply that never
-	// parses, a persistent 5xx) the set is split in half and each half retried,
-	// down to a single key. This isolates the one value whose translation the
-	// model keeps mangling (a stray unescaped quote in Arabic, an empty Korean
-	// reply) so it can't sink the dozens of good keys chunked alongside it; only
-	// that lone key falls back to English, and the rest land.
+	// Each chunk goes through up to GATE_ROUNDS rounds. Keys the gate rejects
+	// are re-queued, and each later round splits them into smaller requests
+	// (halves, then quarters) so one value the model keeps mangling cannot keep
+	// sinking the keys batched beside it. A key that never passes is NOT
+	// written: the catalog keeps it missing, parity keeps counting it, the
+	// runtime shows English, and the next run retries it.
 	async function translateKeySet(keys) {
-		const payload = {};
-		const tokenMap = {};
-		for (const k of keys) {
-			const { masked, tokens } = masker.mask(String(getDeep(source, k) ?? ''));
-			payload[k] = masked;
-			tokenMap[k] = tokens;
-		}
-		let out;
-		try {
-			out = await translateChunk(langName, payload);
-		} catch (err) {
-			// An unconfigured backend fails identically on every key, so the
-			// per-key English fallback below would march through the entire
-			// catalog rewriting it into English and finish "successfully". Fail
-			// the run instead: nothing already translated is lost (the pipeline
-			// persists after each chunk) and the operator gets the one line that
-			// actually tells them what to fix.
-			if (isFatalAuthFailure(err)) throw err;
-			if (keys.length > 1) {
-				const mid = Math.ceil(keys.length / 2);
-				await translateKeySet(keys.slice(0, mid));
-				await translateKeySet(keys.slice(mid));
-				return;
-			}
-			// A lone key that fails every retry is one the model genuinely can't
-			// render as valid JSON (usually a value it mangles into an unescaped
-			// quote). Bake the English source so the catalog stays complete and
-			// lint-clean, the runtime shows English (the same graceful fallback an
-			// empty value would trigger), and re-runs don't loop on it forever.
-			failedKeys++;
-			translatedFlat[keys[0]] = getDeep(source, keys[0]);
-			if (cfg.saveImmediately) persist(code, existing, translatedFlat);
-			console.warn(`  ! ${code} ${keys[0]}: unrenderable after retries (${err.message}); English fallback baked`);
-			return;
-		}
-		for (const k of keys) {
-			const val = out[k];
-			const src = getDeep(source, k);
-			if (typeof val !== 'string') {
-				console.warn(`  ! ${code} ${k}: model omitted key, keeping source`);
-				translatedFlat[k] = src;
-				continue;
-			}
-			const unmasked = masker.unmask(val, tokenMap[k]);
-			// An empty reply for a non-empty source is the model dropping the
-			// value, not a translation. Writing it through is what put 501 empty
-			// strings in the catalog: lint then reads them as untranslated
-			// forever and the runtime renders a blank label. Keep the source.
-			if (!unmasked.trim() && String(src ?? '').trim()) {
-				console.warn(`  ! ${code} ${k}: model returned an empty value, keeping source`);
-				translatedFlat[k] = src;
-				continue;
-			}
-			translatedFlat[k] = unmasked;
+		const { accepted, rejected } = await translateWithRequeue(
+			keys,
+			async (queue, round) => {
+				const parts = 2 ** (round - 1);
+				const size = Math.max(1, Math.ceil(queue.length / parts));
+				const merged = { passed: {}, failed: {} };
+				for (let i = 0; i < queue.length; i += size) {
+					const r = await translateAndGate(code, langName, queue.slice(i, i + size));
+					Object.assign(merged.passed, r.passed);
+					Object.assign(merged.failed, r.failed);
+				}
+				return merged;
+			},
+			{ maxRounds: GATE_ROUNDS },
+		);
+		Object.assign(translatedFlat, accepted);
+		for (const [k, reasons] of Object.entries(rejected)) {
+			rejectedKeys[k] = reasons;
+			console.warn(`  ! ${code} ${k}: rejected after ${GATE_ROUNDS} round(s) (${reasons.join('; ')}); left untranslated`);
 		}
 		done += keys.length;
 		if (cfg.saveImmediately) persist(code, existing, translatedFlat);
@@ -968,10 +1068,11 @@ async function translateLocale(code) {
 	}
 
 	await pool(chunks, cfg.concurrency || 4, (keys) => translateKeySet(keys));
-	if (failedKeys) console.warn(`  ⚠ ${code}: ${failedKeys} key(s) left as English fallback — re-run to retry`);
+	const rejected = Object.keys(rejectedKeys).length;
+	if (rejected) console.warn(`  ⚠ ${code}: ${rejected} key(s) failed the quality gate and stay untranslated; re-run to retry`);
 
 	persist(code, existing, translatedFlat);
-	return { code, translated: todo.length };
+	return { code, translated: Object.keys(translatedFlat).length, rejected };
 }
 
 // Merge fresh translations over prior ones, dropping stale keys (mergeOrdered
@@ -1026,9 +1127,9 @@ function writeManifest() {
 // on unmask and the key fails lint. That drop is probabilistic, not
 // deterministic: re-translating the same key usually preserves the sentinel.
 // Repair re-runs only the failing keys, one at a time, retrying until the key
-// passes its own integrity check, and bakes English on the rare key that never
-// converges (lint-clean, graceful runtime fallback). Idempotent: a clean locale
-// reports "nothing to repair".
+// passes its own integrity check, and clears the rare key that never converges
+// so the next translate run picks it up again (the runtime shows English for a
+// missing key). Idempotent: a clean locale reports "nothing to repair".
 async function repairLocale(code, maxAttempts = 4) {
 	const existing = readJSON(localePath(code), {}) || {};
 	if (!existing || !Object.keys(existing).length) {
@@ -1054,7 +1155,7 @@ async function repairLocale(code, maxAttempts = 4) {
 		console.log(`• ${code}: nothing to repair`);
 		return { code, repaired: 0, baked: 0 };
 	}
-	const langName = cfg.localeNames?.[code] || code;
+	const langName = promptLanguageName(code, cfg.localeNames?.[code]);
 	console.log(`→ ${code}: repairing ${failingKeys.length} key(s) via ${cfg.provider}`);
 
 	const passes = (key, value) => {
@@ -1082,7 +1183,7 @@ async function repairLocale(code, maxAttempts = 4) {
 	// pass the same per-key check, so anything the batch mangles simply falls
 	// through to the per-key retries below.
 	const batched = {};
-	for (const keys of chunkKeys(failingKeys, (cfg.splitToken || 1200) * 4)) {
+	for (const keys of chunkKeys(failingKeys, (cfg.splitToken || 1200) * 4, maxKeysPerChunk(code))) {
 		const payload = {};
 		const tokenMap = {};
 		for (const k of keys) {
@@ -1092,7 +1193,7 @@ async function repairLocale(code, maxAttempts = 4) {
 		}
 		let out;
 		try {
-			out = await translateChunk(langName, payload);
+			out = await translateChunk(code, langName, payload);
 		} catch (err) {
 			if (isFatalAuthFailure(err)) throw err;
 			continue;
@@ -1109,7 +1210,7 @@ async function repairLocale(code, maxAttempts = 4) {
 			const { masked, tokens } = masker.mask(String(getDeep(source, key) ?? ''));
 			let out;
 			try {
-				out = await translateChunk(langName, { [key]: masked });
+				out = await translateChunk(code, langName, { [key]: masked });
 			} catch {
 				continue;
 			}
@@ -1118,19 +1219,19 @@ async function repairLocale(code, maxAttempts = 4) {
 			if (candidate && passes(key, candidate)) fixed = candidate;
 		}
 		if (fixed === null) {
-			// Never converged: bake the English source so the key is lint-clean and
-			// the runtime shows English (the same graceful fallback an empty value
-			// triggers). Rare — brand terms preserved on the very next attempt.
-			fixed = getDeep(source, key);
+			// Never converged: drop the broken value rather than baking English over
+			// it. A baked English string counts as translated, so parity would never
+			// list the key again; a missing one renders English at runtime just the
+			// same, stays in the backlog, and the next translate run retries it.
 			baked++;
-			console.warn(`  ! ${code} ${key}: baked English after ${maxAttempts} attempts`);
+			console.warn(`  ! ${code} ${key}: no passing translation after ${maxAttempts} attempts; key cleared for the next run`);
 		} else {
 			repaired++;
 		}
-		setDeep(existing, key, fixed);
+		setDeep(existing, key, fixed === null ? undefined : fixed);
 		writeJsonAtomic(localePath(code), JSON.stringify(existing, null, '\t') + '\n');
 	}
-	console.log(`  ${code}: repaired ${repaired}, baked ${baked}`);
+	console.log(`  ${code}: repaired ${repaired}, cleared ${baked}`);
 	return { code, repaired, baked };
 }
 
@@ -1142,23 +1243,42 @@ async function main() {
 		const results = await pool(targets, 1, (c) => repairLocale(c));
 		const r = results.reduce((s, x) => s + (x?.repaired || 0), 0);
 		const b = results.reduce((s, x) => s + (x?.baked || 0), 0);
-		console.log(`\ni18n-repair: ${r} key(s) repaired, ${b} baked across ${targets.length} locale(s).`);
+		console.log(`\ni18n-repair: ${r} key(s) repaired, ${b} cleared across ${targets.length} locale(s).`);
 		return;
 	}
 
 	writeManifest();
-	const results = await pool(targets, 1, translateLocale); // locales sequential; chunks parallel within
+	// An overnight run on a free tier will hit its quota. With --resume-wait the
+	// locale sleeps and resumes from its persisted progress instead of ending
+	// the run; auth and config failures still stop it immediately.
+	const resumeWaitMs = Number(opt('resume-wait') || 0) * 1000;
+	const resumeMax = Number(opt('resume-max') || 24);
+	const runLocale = (code) =>
+		runWithResume(() => translateLocale(code), {
+			waitMs: resumeWaitMs,
+			maxResumes: resumeMax,
+			isResumable: (err) => Boolean(err?.isQuotaExhausted),
+			onWait: ({ resumes, waitMs, err }) =>
+				console.warn(`  ⏸ ${code}: ${err.message.slice(0, 100)}; resuming in ${waitMs / 1000}s (${resumes}/${resumeMax})`),
+		});
+	const results = await pool(targets, 1, runLocale); // locales sequential; chunks parallel within
 	// The manifest lists only complete locales, and the pass above is what
 	// completes them. Written only before it, the language menu always lagged one
 	// run behind: a run that finished 16 locales left all 16 out of the menu.
 	writeManifest();
 	const n = results.reduce((s, r) => s + (r?.translated || 0), 0);
-	console.log(`\ni18n-translate: ${n} key(s) translated across ${targets.length} locale(s).`);
+	const rejected = results.reduce((s, r) => s + (r?.rejected || 0), 0);
+	const skipped = results.filter((r) => r?.skipped).map((r) => r.code);
+	console.log(
+		`\ni18n-translate: ${n} key(s) translated across ${targets.length} locale(s); ${rejected} rejected by the quality gate` +
+			(skipped.length ? `; skipped (below the bar): ${skipped.join(', ')}` : '') +
+			'.',
+	);
 }
 
 // Run only when invoked as a CLI. Importing this module for its pure helpers
 // (the markup tests import `configError` / `isFatalAuthFailure`) must not kick off
-// a translation run — it did, and its failure called process.exit(1) from inside
+// a translation run - it did, and its failure called process.exit(1) from inside
 // the test worker, so a fully green suite still reported a red exit code.
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
 	main().catch((err) => {

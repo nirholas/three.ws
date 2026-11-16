@@ -53,10 +53,13 @@ export function promptLanguageName(code, nativeName) {
 	return english && english !== code ? english : nativeName || code;
 }
 
-/** The translation prompt every backend receives. */
-export function buildTranslatePrompt(langName, payload, reference = '') {
+/**
+ * The translation prompt every backend receives. `fromName` is English for a
+ * forward pass and the target language for the quality gate's back-translation.
+ */
+export function buildTranslatePrompt(langName, payload, reference = '', fromName = 'English') {
 	return [
-		`You are a professional software localizer translating UI and marketing copy from English to ${langName}.`,
+		`You are a professional software localizer translating UI and marketing copy from ${fromName} to ${langName}.`,
 		reference || '',
 		'',
 		'Rules:',
@@ -71,6 +74,50 @@ export function buildTranslatePrompt(langName, payload, reference = '') {
 	]
 		.filter(Boolean)
 		.join('\n');
+}
+
+// --- request modes -----------------------------------------------------------
+//
+// Nemotron follows the JSON contract every other backend uses. Riva Translate
+// does not: measured 2026-11-16, it translates a JSON payload as running prose
+// (structure gone past about 10 entries) and leaves inner quotes unescaped, so
+// half its replies never parse. Its native shape is text in, text out, and it
+// keeps inline tags, so it gets each value wrapped in a numbered <sN> tag
+// instead, at most 10 per request (20 dropped segments on Japanese and German).
+// A system prompt made it answer in the wrong language (German request,
+// Romanian reply), so the instruction stays in the user turn.
+
+export const SEGMENT_BATCH_MAX = 10;
+
+export function nvidiaRequestMode(model) {
+	return /riva-translate/i.test(model) ? 'segments' : 'json';
+}
+
+/** Largest number of keys one request may carry for this model. */
+export function nvidiaMaxKeysPerChunk(model) {
+	return nvidiaRequestMode(model) === 'segments' ? SEGMENT_BATCH_MAX : Infinity;
+}
+
+/**
+ * The tagged-segment prompt. Values are addressed by position, so a key never
+ * reaches the model (it would translate it). The instruction is one line and
+ * nothing else: Riva reads every further line of instructions as text to
+ * translate, renders them, and stops before the segments.
+ */
+export function buildSegmentPrompt(langName, payload, fromName = 'English') {
+	const keys = Object.keys(payload);
+	const body = keys.map((k, i) => `<s${i}>${payload[k]}</s${i}>`).join('\n');
+	return `Translate the following text from ${fromName} to ${langName}:\n${body}`;
+}
+
+/** Map a tagged reply back onto the payload's keys; absent segments stay absent. */
+export function parseSegmentReply(raw, keys) {
+	const out = {};
+	for (const m of String(raw ?? '').matchAll(/<s(\d+)>([\s\S]*?)<\/s\1>/g)) {
+		const k = keys[Number(m[1])];
+		if (k !== undefined && !(k in out)) out[k] = m[2].trim();
+	}
+	return out;
 }
 
 export const NVIDIA_CHAT_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
@@ -128,4 +175,39 @@ export function resolveNvidiaModel(code, routes, { pinned = '' } = {}) {
 	if (!r) return { model: NVIDIA_DEFAULT_MODEL, eligible: true, source: 'default' };
 	if (!r.model) return { model: null, eligible: false, source: 'eval' };
 	return { model: r.model, eligible: r.eligible !== false, source: 'eval' };
+}
+
+function parseJsonReply(raw) {
+	const text = String(raw ?? '')
+		.replace(/^\s*```(?:json)?/i, '')
+		.replace(/```\s*$/, '')
+		.trim();
+	try {
+		return JSON.parse(text);
+	} catch {
+		const s = text.indexOf('{');
+		const e = text.lastIndexOf('}');
+		if (s === -1 || e <= s) throw new Error('no JSON object in response');
+		return JSON.parse(text.slice(s, e + 1).replace(/,\s*([}\]])/g, '$1'));
+	}
+}
+
+/**
+ * Translate one payload (key -> English value) with an NVIDIA model, in the
+ * request mode that model needs. Resolves to key -> translated value; a key
+ * the model dropped is simply absent, for the quality gate to re-queue.
+ * `parseJSON` lets the pipeline pass its more forgiving JSON5-backed parser.
+ */
+export async function nvidiaTranslate({ model, langName, payload, reference = '', fromName = 'English', key, temperature, topP, timeoutMs, fetchImpl, parseJSON = parseJsonReply }) {
+	const keys = Object.keys(payload);
+	if (nvidiaRequestMode(model) === 'segments') {
+		const raw = await nvidiaChat({ model, prompt: buildSegmentPrompt(langName, payload, fromName), key, temperature, topP, timeoutMs, fetchImpl });
+		const out = parseSegmentReply(raw, keys);
+		if (!Object.keys(out).length) throw new Error('no tagged segments in response');
+		return out;
+	}
+	const raw = await nvidiaChat({ model, prompt: buildTranslatePrompt(langName, payload, reference, fromName), key, temperature, topP, timeoutMs, fetchImpl });
+	const parsed = parseJSON(raw);
+	if (!parsed || typeof parsed !== 'object') throw new Error('non-object response');
+	return parsed;
 }
