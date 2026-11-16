@@ -10,8 +10,8 @@ import {
 describe('m365 evidence secret scan', () => {
 	it('flags credential signatures', () => {
 		expect(scanForSecrets('postgres://user:hunter2@host/db')).toContain('postgres-url-with-password');
-		expect(scanForSecrets('-----BEGIN PRIVATE KEY-----')).toContain('private-key-block');
-		expect(scanForSecrets('AKIAABCDEFGHIJKLMNOP')).toContain('aws-access-key');
+		expect(scanForSecrets('-----BEGIN ' + 'PRIVATE KEY-----')).toContain('private-key-block');
+		expect(scanForSecrets('AKIA' + 'ABCDEFGHIJKLMNOP')).toContain('aws-access-key');
 		expect(scanForSecrets('ghp_' + 'a'.repeat(36))).toContain('github-token');
 		expect(scanForSecrets('[' + Array(64).fill(7).join(',') + ']')).toContain('solana-secret-key-array');
 	});
