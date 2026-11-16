@@ -54,7 +54,8 @@ async function handleLogin(req, res) {
 	}
 	const raw = await readJson(req);
 	const body = parse(loginBody, raw);
-	const accountRl = await limits.authAccount(await sha256(body.email.toLowerCase()));
+	const accountHash = await sha256(body.email.toLowerCase());
+	const accountRl = await limits.authAccount(accountHash);
 	if (!accountRl.success) return rateLimited(res, accountRl, 'too many attempts for this account; try again later');
 	const isEmail = body.email.includes('@');
 	const rows = isEmail
@@ -68,7 +69,17 @@ async function handleLogin(req, res) {
 	const hashToCheck = user?.password_hash || DUMMY_PASSWORD_HASH;
 	const passwordOk = await verifyPassword(body.password, hashToCheck);
 	const ok = Boolean(user) && passwordOk;
-	if (!ok) return error(res, 401, 'invalid_credentials', 'invalid username/email or password');
+	if (!ok) {
+		// Invalid access attempts are part of the security log. The submitted
+		// identifier is stored only as its hash, never in clear.
+		logAudit({
+			userId: user?.id ?? null,
+			action: 'login_failed',
+			meta: { account_hash: accountHash, known_account: Boolean(user) },
+			req,
+		});
+		return error(res, 401, 'invalid_credentials', 'invalid username/email or password');
+	}
 	await destroySession(req);
 	const token = await createSession({ userId: user.id, userAgent: req.headers['user-agent'], ip });
 	res.setHeader('set-cookie', sessionCookie(token));
