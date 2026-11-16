@@ -10,6 +10,7 @@
 // paging walks every row exactly once, and key creation and use are audited.
 
 import { beforeAll, beforeEach, describe, it, expect, vi } from 'vitest';
+import { spawnSync } from 'node:child_process';
 import { createPgliteSql } from './_helpers/pglite-sql.js';
 import { createFullSchemaDb } from './_helpers/pglite-full-schema.js';
 import { invoke } from './_helpers/scim-harness.js';
@@ -147,6 +148,18 @@ describe('OData query parser', () => {
 		expect(preferredPageSize('odata.maxpagesize=250')).toBe(250);
 		expect(preferredPageSize('return=minimal, odata.maxpagesize=5000')).toBe(1000);
 		expect(preferredPageSize('')).toBeNull();
+	});
+});
+
+// The OASIS OData v4.0 edmx.xsd and edm.xsd, via scripts/validate-odata-csdl.py
+// (python3 with lxml; the schemas are fetched once into ~/.cache).
+const hasLxml = spawnSync('python3', ['-c', 'import lxml'], { stdio: 'ignore' }).status === 0;
+
+describe('$metadata', () => {
+	it.skipIf(!hasLxml)('validates against the OData v4.0 CSDL XML schema', () => {
+		const r = spawnSync('python3', ['scripts/validate-odata-csdl.py'], { encoding: 'utf8', timeout: 60_000 });
+		expect(r.stdout + r.stderr).toMatch(/^VALID: .*5 entity types, 5 entity sets/m);
+		expect(r.status).toBe(0);
 	});
 });
 
