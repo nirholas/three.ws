@@ -204,7 +204,7 @@ if (-not $cmd) {
 $threats = Get-MpThreatDetection -ErrorAction SilentlyContinue
 Say 'INFO' 'defender' ("Defender detections: " + @($threats).Count)
 
-$null = Run 'uninstall' $winget @('uninstall', '--manifest', $dir, '--scope', 'machine', '--disable-interactivity')
+$null = Run 'uninstall' $winget @('uninstall', '--id', 'ThreeWs.Agent', '--exact', '--scope', 'machine', '--disable-interactivity')
 Refresh-Path
 if (Get-Command three-ws-agent -ErrorAction SilentlyContinue) {
 	Say 'EXIT' 'removed' '1'

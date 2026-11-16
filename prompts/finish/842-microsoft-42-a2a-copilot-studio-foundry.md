@@ -1,6 +1,6 @@
 # microsoft 42: three.ws agents callable as A2A agents from Copilot Studio and Azure AI Foundry
 
-Status 2026-11-16: code, tests and docs landed; owner steps remain (deploy, live GLB and cancel run with a healthy lane, in-product click-through). See _context/microsoft-PROGRESS.md.
+Status 2026-11-16: code, tests, docs and the live Agent Framework proof (question, streamed GLB, cancel) are done; the remaining owner steps are the deploy and the in-product click-through. See _context/microsoft-PROGRESS.md.
 
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3142.
 

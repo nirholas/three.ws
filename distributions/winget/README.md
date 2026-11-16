@@ -134,3 +134,15 @@ reason a Windows install fails. The single executable is the same code
 embedded Node.js 26 LTS; the session store uses the built-in `node:sqlite`, so
 there is no native addon to ship. The Draco decoder that `--avatar` uses for
 compressed GLBs is embedded as a SEA asset.
+
+## Known behaviour on Windows Server
+
+On the Windows Server 2025 GCE image (winget 1.29), the first `winget install`
+of any zip package fails with "Failed to extract the contents of the archive"
+(exit `-1978335140`) because winget's default Shell extraction needs a desktop
+shell the server image lacks. The package is fine: the archive lists and expands
+with `tar` and `Expand-Archive`, and the hash check passes. The verification
+script records that failure, sets `installBehavior.archiveExtractionMethod` to
+`tar` in the user settings and installs again, which succeeds. On Windows 10 and
+11 desktops the default method works; if a user sees the same error, the same
+setting is the fix (`winget settings`).
