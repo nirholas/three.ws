@@ -15,6 +15,8 @@
 
 import { normalizeDetectedBoxes } from '../../api/_lib/forge-objects.js';
 import { planFromPhotoAnalysis } from '../../src/diorama/photo-layout.js';
+import { parseJsonLoose } from '../../api/_lib/vision.js';
+import { parseJsonReply as parseSeedJudgeReply } from '../../api/_lib/seed-quality.js';
 
 export const QUALITY_GATE_PASS_SCORE = 60;
 export const SEED_MATCH_MIN = 6;
@@ -22,6 +24,19 @@ export const SEED_MISMATCH_MAX = 3;
 export const DETECT_MIN_RECALL = 0.6;
 export const DIORAMA_MIN_RECALL = 0.5;
 export const CAPTION_MAX_WORDS = 20;
+
+// The seed judge repairs a bare unquoted string value before giving up, so a
+// reply it would act on must not be scored as a schema miss. Every other
+// consumer reads replies through vision.js's parseJsonLoose.
+const CONSUMER_PARSERS = Object.freeze({ seed_judge: parseSeedJudgeReply });
+
+/**
+ * Parse a JSON task's reply the way its consumer does. Throws when the
+ * consumer could not read it either.
+ */
+export function parseReplyFor(task, text) {
+	return (CONSUMER_PARSERS[task] || parseJsonLoose)(text);
+}
 
 const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 

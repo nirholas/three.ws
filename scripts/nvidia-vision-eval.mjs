@@ -29,7 +29,7 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import sharp from 'sharp';
 
-import { openaiCompatVisionProvider, parseJsonLoose } from '../api/_lib/vision.js';
+import { openaiCompatVisionProvider } from '../api/_lib/vision.js';
 import { PROMPT as FORGE_PRECHECK_PROMPT } from '../api/_lib/forge-image-validate.js';
 import { REVIEW_PROMPT as IMAGE3D_REVIEW_PROMPT } from '../api/_lib/x-mention-image3d.js';
 import { REVIEW_PROMPT as AVATAR_REVIEW_PROMPT } from '../api/_lib/x-mention-avatar.js';
@@ -41,7 +41,7 @@ import { buildJudgePrompt } from '../api/_lib/quality-bench.js';
 import { SEED_WATCHLIST } from '../api/_lib/seed-quality.js';
 import { describePhotoPrompt } from '../api/_lib/gateway/media.js';
 import { MOODS, GROUNDS } from '../src/diorama/schema.js';
-import { SCORERS, summarize } from './lib/vision-eval-score.mjs';
+import { SCORERS, summarize, parseReplyFor } from './lib/vision-eval-score.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SET_DIR = join(ROOT, 'data/evals/vision');
@@ -202,7 +202,7 @@ function scoreRow(task, exp, reply) {
 	let json = null;
 	if (TASKS[task].json) {
 		try {
-			json = parseJsonLoose(reply.text);
+			json = parseReplyFor(task, reply.text);
 		} catch {
 			return { schemaOk: false, correct: false, detail: 'reply was not valid JSON' };
 		}

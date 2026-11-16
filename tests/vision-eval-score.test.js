@@ -1,10 +1,29 @@
 // Scoring rules for the vision eval. Each rule mirrors how the production
 // consumer acts on a reply, so a wrong rule would crown the wrong first rung.
 import { describe, it, expect } from 'vitest';
-import { SCORERS, scoreDiorama, mentions, percentile, summarize, QUALITY_GATE_PASS_SCORE } from '../scripts/lib/vision-eval-score.mjs';
+import { SCORERS, scoreDiorama, mentions, percentile, summarize, parseReplyFor, QUALITY_GATE_PASS_SCORE } from '../scripts/lib/vision-eval-score.mjs';
 
 const MOODS = ['dawn', 'day', 'dusk', 'night'];
 const GROUNDS = ['grass', 'sand', 'stone'];
+
+describe('parseReplyFor reads a reply the way its consumer does', () => {
+	// A real super-vl seed-judge reply from the 2026-11-16 run: every score
+	// present, the free-text critique left unquoted. seed-quality.js repairs
+	// that shape and acts on the verdict, so the eval must too.
+	const BARE_CRITIQUE = '{"photorealism": 4, "geometryIntegrity": 6, "textureFidelity": 3, "promptAdherence": 8, "critique": The binoculars are recognizable but the black body has a flat, featureless plastic look.}';
+
+	it('repairs an unquoted seed-judge critique like seed-quality.js', () => {
+		expect(parseReplyFor('seed_judge', BARE_CRITIQUE)).toMatchObject({ photorealism: 4, promptAdherence: 8 });
+	});
+
+	it('does not grant that repair to consumers that parse strictly', () => {
+		expect(() => parseReplyFor('quality_gate', BARE_CRITIQUE.replace('critique', 'reason'))).toThrow();
+	});
+
+	it('parses a clean reply for every JSON task', () => {
+		expect(parseReplyFor('forge_precheck', '{"usable":true}')).toEqual({ usable: true });
+	});
+});
 
 describe('mentions', () => {
 	it('matches at a word start, case-insensitive', () => {
