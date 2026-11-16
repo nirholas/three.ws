@@ -124,6 +124,9 @@ export const FREE_TOOLS = Object.freeze(
 		// an asset before paying to generate, buy, or rig it spends less overall,
 		// which is the point.
 		'grade_sim_readiness',
+		// The OpenUSD export runs on the platform's own CPU worker and is free on
+		// the web route; the MCP tool matches it, rate limited per caller.
+		'export_openusd',
 		// Free on purpose and permanently. An assurance check that costs money is one
 		// nobody calls, and one nobody calls prevents nothing.
 		'x402_preflight',
