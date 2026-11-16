@@ -2591,6 +2591,12 @@
 		},
 		{
 			"date": "2026-10-30",
+			"title": "The web desktop now opens as a clean dark graphite desktop with a menu bar and dock",
+			"summary": "New visitors land in the Aqua shell on a neutral graphite wallpaper: a top menu bar, a magnifying dock, traffic-light window controls and a neutral titlebar instead of the purple Mica tint. Desktop shortcuts and the File Explorer now say Computer and Trash, and the address bar still accepts This PC and Recycle Bin. Fluent and Classic stay one click away in Settings, Personalization.",
+			"tags": ["desktop", "improvement"]
+		},
+		{
+			"date": "2026-10-30",
 			"title": "Community Meetup #3 is set for November 6 inside /play, hosted with IBM Community",
 			"summary": "The Three.ws User Group on IBM Community meets inside the $THREE home town again on Friday, November 6, 8 to 9 AM Pacific (16:00 to 17:00 UTC). /event carries the countdown and add-to-calendar, the world runs the agenda itself (a live agent build, Video to Motion, /forge, an agent paying for a tool, a community showcase, Q&A and a group photo with fireworks), and everyone in the world during the hour receives the Meetup Orbit Crown, a headwear souvenir granted only during that session.",
 			"tags": [
