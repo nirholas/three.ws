@@ -33,7 +33,7 @@ import {
 	resolveNvidiaModel,
 	loadNvidiaRoutes,
 } from '../scripts/lib/i18n-nvidia.mjs';
-import { chooseRoute, sampleIndices } from '../scripts/nvidia-translation-eval.mjs';
+import { chooseRoute, sampleIndices, renderScoreTables } from '../scripts/nvidia-translation-eval.mjs';
 
 const RIVA = 'nvidia/riva-translate-4b-instruct-v2';
 const LIGHTNING = 'nvidia/nemotron-3.5-lightning-30b-a3b';
@@ -122,6 +122,18 @@ describe('choosing a route from evaluation cells', () => {
 	it('uses the lower floor for scripts written without spaces', () => {
 		expect(chooseRoute('ja', [cell(ULTRA, 25)]).eligible).toBe(true);
 		expect(chooseRoute('de', [cell(ULTRA, 25)]).eligible).toBe(false);
+	});
+
+	it('renders the report table with the route in bold and refused locales explained', () => {
+		const byLocale = { sv: [cell(RIVA, 67.8), cell(LIGHTNING, 62.2, 0.967), cell(ULTRA, 68.2)], am: [cell(RIVA, 0.5, 0.97)] };
+		const routes = {
+			sv: chooseRoute('sv', byLocale.sv),
+			am: { model: null, eligible: false, floor: 30, best: { model: RIVA, chrF: 0.5, integrity: 0.97 } },
+		};
+		const md = renderScoreTables(['sv', 'am', 'de'], byLocale, routes).split('\n');
+		expect(md).toHaveLength(4);
+		expect(md[2]).toBe('| sv | **67.8 / 1 / 1** | 62.2 / 0.967 / 1 | 68.2 / 1 / 1 | Riva 4B | Ultra 550B |');
+		expect(md[3]).toBe('| am | 0.5 / 0.97 / 1 | not run | not run | none (best 0.5 < 30) | - |');
 	});
 
 	it('samples evenly across the whole devtest file', () => {
