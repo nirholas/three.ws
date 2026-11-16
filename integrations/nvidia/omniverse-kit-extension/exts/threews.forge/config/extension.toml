@@ -16,6 +16,7 @@ preview_image = "data/preview.png"
 "omni.usd" = {}
 "omni.kit.commands" = {}
 "omni.kit.asset_converter" = {}
+"omni.kit.pip_archive" = {}  # numpy and Pillow, for decoding web-compressed GLBs
 "omni.ui" = { optional = true }
 "omni.kit.menu.utils" = { optional = true }
 "omni.kit.viewport.utility" = { optional = true }

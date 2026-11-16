@@ -78,6 +78,8 @@ async def convert_glb_to_usd(glb_path: str, usd_path: Optional[str] = None) -> T
     out = usd_path or os.path.splitext(glb_path)[0] + ".usd"
     if os.path.isfile(out) and os.path.getmtime(out) >= os.path.getmtime(glb_path):
         return out, 0.0
+    started = time.monotonic()
+    source = _converter_input(glb_path)
     ctx = converter.AssetConverterContext()
     ctx.use_meter_as_world_unit = True
     ctx.create_world_as_default_root_prim = True
@@ -85,8 +87,7 @@ async def convert_glb_to_usd(glb_path: str, usd_path: Optional[str] = None) -> T
     ctx.export_preview_surface = True
     ctx.keep_all_materials = False
     ctx.smooth_normals = True
-    started = time.monotonic()
-    task = converter.get_instance().create_converter_task(glb_path, out, None, ctx)
+    task = converter.get_instance().create_converter_task(source, out, None, ctx)
     ok = await task.wait_until_finished()
     if not ok or not os.path.isfile(out):
         raise StageImportError(
@@ -95,6 +96,29 @@ async def convert_glb_to_usd(glb_path: str, usd_path: Optional[str] = None) -> T
             hint="The GLB is kept in the cache; try the import again or open it with File > Import.",
         )
     return out, round(time.monotonic() - started, 2)
+
+
+def _converter_input(glb_path: str) -> str:
+    """The GLB the converter should read: a plain-glTF rewrite when the original
+    uses web compression the converter cannot decode (see gltf_compat)."""
+    from .gltf_compat import GltfCompatError, make_kit_compatible, needs_rewrite
+
+    with open(glb_path, "rb") as fh:
+        data = fh.read()
+    if not needs_rewrite(data):
+        return glb_path
+    try:
+        plain = make_kit_compatible(data)
+    except GltfCompatError as exc:
+        raise StageImportError(
+            f"This model uses a GLB encoding the importer cannot read: {exc}.",
+            code="unsupported_glb",
+            hint="Download it from three.ws and re-export it as a plain GLB, then use File > Import.",
+        ) from exc
+    rewritten = os.path.splitext(glb_path)[0] + ".kit.glb"
+    with open(rewritten, "wb") as fh:
+        fh.write(plain)
+    return rewritten
 
 
 def _layer_units(usd_path: str) -> Tuple[str, float]:
