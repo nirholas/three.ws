@@ -8787,7 +8787,7 @@ Image→3D is the same endpoint with `image_urls: ["https://…/front.png", …]
 
 ### From Claude, Cursor, or any MCP client
 
-The **3D Studio MCP server** at `https://three.ws/api/mcp-3d` exposes the full pipeline as <!-- mcp-count:mcp-3d.tools -->40<!-- /mcp-count --> tools (`text_to_3d`, `image_to_3d`, `auto_rig_model`, `apply_animation`, `stylize_model`, `retexture_model`, `segment_model`, and more), so an AI assistant can generate, rig, and animate a model mid-conversation and render it as an inline interactive artifact. See [docs/mcp-3d-studio.md](docs/mcp-3d-studio.md).
+The **3D Studio MCP server** at `https://three.ws/api/mcp-3d` exposes the full pipeline as <!-- mcp-count:mcp-3d.tools -->41<!-- /mcp-count --> tools (`text_to_3d`, `image_to_3d`, `auto_rig_model`, `apply_animation`, `stylize_model`, `retexture_model`, `segment_model`, and more), so an AI assistant can generate, rig, and animate a model mid-conversation and render it as an inline interactive artifact. See [docs/mcp-3d-studio.md](docs/mcp-3d-studio.md).
 
 ### Pay-per-call for autonomous agents (x402)
 

@@ -19,8 +19,8 @@ NVIDIA Omniverse and Isaac Sim with physics already set up:
   hull volume times a density chosen from the prompt's object class. The method
   is written into the asset metadata and `report.json`.
 - **Semantics**: a class label (`chair`, `vehicle`, `robot`, ...) from the
-  prompt, applied with `UsdSemantics` labels and Isaac's `semanticLabel`
-  attribute so synthetic-data annotators pick it up.
+  prompt and its group, applied with the OpenUSD `UsdSemantics` labels schema
+  (instances `class` and `category`) so synthetic-data annotators pick it up.
 - **Skeletons**: a rigged GLB becomes a `UsdSkel` SkelRoot with one Skeleton per
   skin, joint bindings and weights, blend shapes, and one shared
   `SkelAnimation` per joint topology. Rigged assets are kinematic bodies.
@@ -83,14 +83,16 @@ browser.
 | `test_export.py` | build-time gate (runs in the Dockerfile) |
 | `bench.py` | export real Forge creations, locally or through the deployed service |
 | `drop_test.py` | physics drop test in Newton (not shipped in the image) |
+| `render_preview.py` | glTF, USD visual mesh and collision hull preview image (not shipped in the image) |
 
 ## Test
 
 ```
-python test_export.py                       # 12 tests, both validators, about 15 s
+python test_export.py                       # 13 tests, both validators, about 20 s
 USD_EXPORT_KEY=... python bench.py --worker https://usd-export-service-lp642k3kpa-uc.a.run.app \
   --json ../../docs/openusd-export/bench-results.json
 pip install newton warp-lang && python drop_test.py out/asset.usd
+python render_preview.py --glb model.glb --usd out/asset.usdz --out preview.png
 ```
 
 ## Deploy

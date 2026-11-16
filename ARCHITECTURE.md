@@ -980,8 +980,8 @@ All remote servers implement **MCP 2025-06-18 Streamable HTTP transport** (JSON-
 
 | Server | Endpoint | Tools | Auth | Registry ID |
 |--------|----------|-------|------|-------------|
-| Main | `/api/mcp` | <!-- mcp-count:mcp.tools -->158<!-- /mcp-count --> | OAuth or x402 USDC | `io.github.nirholas/three.ws` |
-| 3D Studio | `/api/mcp-3d` | <!-- mcp-count:mcp-3d.tools -->40<!-- /mcp-count --> | OAuth or x402 USDC | `io.github.nirholas/threews-3d-studio` |
+| Main | `/api/mcp` | <!-- mcp-count:mcp.tools -->162<!-- /mcp-count --> | OAuth or x402 USDC | `io.github.nirholas/three.ws` |
+| 3D Studio | `/api/mcp-3d` | <!-- mcp-count:mcp-3d.tools -->41<!-- /mcp-count --> | OAuth or x402 USDC | `io.github.nirholas/threews-3d-studio` |
 | Free Studio | `/api/mcp-studio` |<!-- mcp-count:mcp-studio.tools -->16<!-- /mcp-count --> | None (operator-funded) | `io.github.nirholas/threews-3d-studio-free` |
 | Agent Wallet | `/api/mcp-agent` | <!-- mcp-count:mcp-agent.tools -->176<!-- /mcp-count --> | OAuth | `io.github.nirholas/threews-agent` |
 | Bazaar | `/api/mcp-bazaar` | <!-- mcp-count:mcp-bazaar.tools -->6<!-- /mcp-count --> | None / OAuth | `io.github.nirholas/threews-x402-bazaar` |
@@ -989,13 +989,13 @@ All remote servers implement **MCP 2025-06-18 Streamable HTTP transport** (JSON-
 | pump.fun | `/api/pump-fun-mcp` | <!-- mcp-count:pump-fun-mcp.tools -->25<!-- /mcp-count --> | None (open CORS) | `io.github.nirholas/threews-pumpfun` |
 | Viewer Control | `/api/chat/mcp` | <!-- mcp-count:chat-mcp.tools -->11<!-- /mcp-count --> | None | (unlisted) |
 
-#### `/api/mcp`: Main Server Tools (<!-- mcp-count:mcp.tools -->158<!-- /mcp-count --> tools)
+#### `/api/mcp`: Main Server Tools (<!-- mcp-count:mcp.tools -->162<!-- /mcp-count --> tools)
 
 Highlights below. Every tool on every server, with its schema, hints and price, is listed on [/mcp-tools](https://three.ws/mcp-tools) and in [/tools.json](https://three.ws/tools.json); the counts in this section are checked against that census by `npm run check:mcp-counts`.
 
 3D avatar CRUD · `call_agent` · `register_agent` · `identity_check` · `remember` · `recall` · `forget` · animations · Solana agent passport/reputation/attestations · pump.fun market tools · Oracle conviction signals · trader leaderboard · copy-trading
 
-#### `/api/mcp-3d`: 3D Studio Tools (<!-- mcp-count:mcp-3d.tools -->40<!-- /mcp-count --> tools)
+#### `/api/mcp-3d`: 3D Studio Tools (<!-- mcp-count:mcp-3d.tools -->41<!-- /mcp-count --> tools)
 
 `getting_started` · `text_to_3d` · `image_to_3d` · `generation_status` · `capture_scene` · `preview_3d` · `remove_background` · `remesh_model` · `stylize_model` · `segment_model` · `retexture_model` · `retexture_region` · `auto_rig_model` · `pose_model` · `direct_prompt` · `generate_material` · `save_avatar` · `create_agent_persona` · `get_agent_persona` · `persona_say` · `cad_generate` · `cad_rebuild` · `validate_spatial_response` · `export_ar` · `verify_provenance` · `anchor_provenance` · `grade_sim_readiness` · `persona_identity` · `persona_payment_preview` · `persona_tip` · `persona_send` · `x402_preflight` · `inspect_model` · `optimize_model` · `list_animations` · `animation_signature` · `find_similar_animations` · `apply_animation` · `text_to_animation` · `read_resource`
 

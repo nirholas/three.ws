@@ -76,6 +76,7 @@ analyze:  inspect_model · optimize_model        preview:  preview_3d
 | `save_avatar(glb_url, name, visibility?, source_prompt?, tags?)` | Copy a generated GLB into three.ws storage (so it survives the provider URL expiring) and register it as a named avatar you own. Free. |
 | `capture_scene(video_url, mode?, fps?, …)` | Reconstruct a real space from a video walkaround into an explorable 3D point cloud (LingBot-Map streaming reconstructor, drift-corrected across the clip). |
 | `grade_sim_readiness(glb_url, hash?)` | Free: can this GLB be dropped into a physics simulator (MuJoCo, Isaac, Bullet, a game engine) and behave? Returns `simulation_ready`, `needs_scale`, `needs_repair`, or `unusable`, plus the measurements behind the verdict. |
+| `export_openusd(creation_id \| glb_url, job?, wait_seconds?)` | Free: a Forge model or public GLB as a validated OpenUSD package for NVIDIA Omniverse and Isaac Sim, with CoACD collision hulls, mass from volume times class density, semantic labels and UsdSkel for rigged avatars. Waits up to `wait_seconds`, otherwise returns a `job` to poll. See [OpenUSD export](openusd-export.md). |
 | `anchor_provenance(glb_url, creator?, prompt?, …)` | Issue a signed content credential for a generated GLB and anchor its hash on Solana, so anyone can later check authenticity for free. |
 | `verify_provenance(glb_url, hash?)` | Free: recompute the model’s content hash, check the signed credential and its on-chain anchor, and answer `verified`, `tampered`, or `unknown`. |
 | `read_resource(uri?, format?)` | Free: read a live `three://` resource (`three://me`, `three://agents`, `three://agents/<id>`, `three://models`, `three://assets/<id>`) for clients that render tools but not MCP resources. Omit `uri` to list what you can read. |
@@ -224,7 +225,7 @@ For tool calls there are two lanes:
 | `cad_generate`                                          | $0.05                                     |
 | `cad_rebuild`                                           | $0.01                                     |
 | `remove_background`, `pose_model`, `apply_animation`, `direct_prompt`, `generate_material` | $0.01 |
-| `generation_status`, `preview_3d`, `list_animations`, `animation_signature`, `find_similar_animations`, `text_to_animation`, `inspect_model`, `optimize_model`, `save_avatar`, `export_ar`, `verify_provenance`, `grade_sim_readiness`, `x402_preflight`, the persona tools (including `persona_payment_preview`), `read_resource`, `validate_spatial_response`, `getting_started` | free |
+| `generation_status`, `preview_3d`, `list_animations`, `animation_signature`, `find_similar_animations`, `text_to_animation`, `inspect_model`, `optimize_model`, `save_avatar`, `export_ar`, `verify_provenance`, `grade_sim_readiness`, `export_openusd`, `x402_preflight`, the persona tools (including `persona_payment_preview`), `read_resource`, `validate_spatial_response`, `getting_started` | free |
 
 Payment settles only after the work succeeds — a wholesale failure costs
 nothing, and the same signed payment cannot be replayed.

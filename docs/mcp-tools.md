@@ -27,7 +27,7 @@ page explains how the servers are grouped and how the paid ones charge.
 
 ## How the totals are calculated
 
-The totals are computed, never typed. At build time `npm run build:mcp-catalog` imports the exact catalog each hosted endpoint serves, and loads every stdio package in-process and asks it for `tools/list`, `resources/list` and `prompts/list` over an in-memory MCP transport. The result is [`/tools.json`](/tools.json) and [`/mcp-catalog.json`](/mcp-catalog.json), currently <!-- mcp-count:all.tools -->794<!-- /mcp-count --> tools (<!-- mcp-count:all.uniqueTools -->672<!-- /mcp-count --> unique names) on <!-- mcp-count:all.servers -->56<!-- /mcp-count --> servers. At request time [`/api/mcp-census`](/api/mcp-census) recounts the hosted endpoints from the running code and reports whether they still match the build.
+The totals are computed, never typed. At build time `npm run build:mcp-catalog` imports the exact catalog each hosted endpoint serves, and loads every stdio package in-process and asks it for `tools/list`, `resources/list` and `prompts/list` over an in-memory MCP transport. The result is [`/tools.json`](/tools.json) and [`/mcp-catalog.json`](/mcp-catalog.json), currently <!-- mcp-count:all.tools -->799<!-- /mcp-count --> tools (<!-- mcp-count:all.uniqueTools -->677<!-- /mcp-count --> unique names) on <!-- mcp-count:all.servers -->56<!-- /mcp-count --> servers. At request time [`/api/mcp-census`](/api/mcp-census) recounts the hosted endpoints from the running code and reports whether they still match the build.
 
 - **tools**: every tool a server can serve, including financial-tier tools the policy hides until a session enables them.
 - **resources, templates, prompts**: the matching `*/list` entries, prompts rendered against that server's own catalog.
@@ -35,7 +35,7 @@ The totals are computed, never typed. At build time `npm run build:mcp-catalog` 
 
 Every tool declares all four annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`) and a description with a "Use this when..." line; `tests/mcp-tool-quality.test.js` fails otherwise, and `tests/mcp-prompt-references.test.js` fails when a prompt names a tool, resource or prompt that does not exist. Run both with `npm run test:mcp-surface`.
 
-**Quoting a count in a doc.** Wrap it in a marker: `<!-- mcp-count:mcp-3d.tools -->40<!-- /mcp-count -->`. The key is `<scope>.<field>`: scope is `all`, `hosted`, `stdio` or a server id from `/tools.json`; field is `servers`, `tools`, `uniqueTools`, `resources`, `templates`, `prompts`, `free` or `paid`. `npm run check:mcp-counts` (part of `npm run gate`) fails on a marker that disagrees with the census and on an unmarked "N tools" in a living doc that is about a server; `npm run check:mcp-counts -- --fix` rewrites marker values. Add `<!-- mcp-count-ignore -->` to a line whose number is not about a three.ws server.
+**Quoting a count in a doc.** Wrap it in a marker: `<!-- mcp-count:mcp-3d.tools -->41<!-- /mcp-count -->`. The key is `<scope>.<field>`: scope is `all`, `hosted`, `stdio` or a server id from `/tools.json`; field is `servers`, `tools`, `uniqueTools`, `resources`, `templates`, `prompts`, `free` or `paid`. `npm run check:mcp-counts` (part of `npm run gate`) fails on a marker that disagrees with the census and on an unmarked "N tools" in a living doc that is about a server; `npm run check:mcp-counts -- --fix` rewrites marker values. Add `<!-- mcp-count-ignore -->` to a line whose number is not about a three.ws server.
 
 ## Per-tool pages and releases
 
@@ -290,7 +290,9 @@ Free studio helpers (no charge): `getting_started`, `generation_status`,
 `verify_provenance`, `grade_sim_readiness` (the physics grade: whether a solver
 could use a GLB as a rigid body, and exactly what is wrong when it could not,
 see [Simulation readiness](sim-readiness.md); free so an agent can check ten
-candidates before paying for one), `x402_preflight` (asks any x402 seller's
+candidates before paying for one), `export_openusd` (a Forge model or GLB as a
+validated, simulation-ready OpenUSD package for Omniverse and Isaac Sim, see
+[OpenUSD export](openusd-export.md)), `x402_preflight` (asks any x402 seller's
 signed payability attestation whether it can actually settle before you pay it;
 free on purpose and permanently), the persona tools (`create_agent_persona`, `get_agent_persona`,
 `persona_say`, `persona_identity`, `persona_tip`, `persona_send`), and
