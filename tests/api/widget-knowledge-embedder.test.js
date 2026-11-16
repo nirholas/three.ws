@@ -28,8 +28,17 @@ const mockEmbedState = {
 	configured: new Set([NIM_TAG]),
 	scoreResult: { scored: [], needsReembed: [] },
 };
-const embedPassagesMock = vi.fn(async (_tag, texts) =>
-	texts.map(() => Float64Array.from([1, 0, 0, 0])),
+// The default model's content screen refuses some passages with a 422; the
+// fallback lane accepts them. REFUSED marks the text the screen rejects.
+const FALLBACK_TAG = 'nvidia/nemotron-3-embed-1b@2048';
+const REFUSED = /curl -H/;
+const refusal = () => Object.assign(new Error('NIM embeddings 422: content safety screening'), { code: 'content_refused', status: 422 });
+const embedPassagesMock = vi.fn(async (_tag, texts) => {
+	if (texts.some((t) => REFUSED.test(t))) throw refusal();
+	return texts.map(() => Float64Array.from([1, 0, 0, 0]));
+});
+const embedPassagesEachMock = vi.fn(async (tag, texts) =>
+	texts.map((t) => ({ tag: REFUSED.test(t) ? FALLBACK_TAG : tag, vector: Float64Array.from([1, 0, 0, 0]) })),
 );
 vi.mock('../../api/_lib/embeddings.js', () => ({
 	NIM_EMBED_TAG: NIM_TAG,
@@ -43,6 +52,7 @@ vi.mock('../../api/_lib/embeddings.js', () => ({
 		return t === NIM_TAG || t === LEGACY_TAG ? t : null;
 	},
 	embedPassages: embedPassagesMock,
+	embedPassagesEach: embedPassagesEachMock,
 	scoreRowsBySpace: vi.fn(async () => mockEmbedState.scoreResult),
 }));
 
@@ -67,6 +77,7 @@ beforeEach(() => {
 	sqlCalls.length = 0;
 	sqlMock.mockClear();
 	embedPassagesMock.mockClear();
+	embedPassagesEachMock.mockClear();
 	mockEmbedState.defaultTag = NIM_TAG;
 	mockEmbedState.configured = new Set([NIM_TAG]);
 	mockEmbedState.scoreResult = { scored: [], needsReembed: [] };
@@ -91,8 +102,8 @@ describe('ingestKnowledge — embedder tagging', () => {
 
 		expect(out.status).toBe('ready');
 		// Chunks embedded as passages, in the NIM space.
-		expect(embedPassagesMock).toHaveBeenCalledTimes(1);
-		expect(embedPassagesMock.mock.calls[0][0]).toBe(NIM_TAG);
+		expect(embedPassagesEachMock).toHaveBeenCalledTimes(1);
+		expect(embedPassagesEachMock.mock.calls[0][0]).toBe(NIM_TAG);
 		// Doc row carries the tag…
 		const docInsert = findCall('insert into widget_knowledge_docs');
 		expect(docInsert.params).toContain(NIM_TAG);
@@ -100,6 +111,24 @@ describe('ingestKnowledge — embedder tagging', () => {
 		const chunkInserts = sqlCalls.filter((c) => c.text.includes('insert into widget_knowledge_chunks'));
 		expect(chunkInserts.length).toBeGreaterThan(0);
 		for (const call of chunkInserts) expect(call.params).toContain(NIM_TAG);
+	});
+
+	it('stores a chunk the content screen refused in the fallback space instead of failing the upload', async () => {
+		sqlQueue.push([{ n: 0 }]); // doc count
+		sqlQueue.push([]); // doc insert
+		sqlQueue.push([]); // status=ready update
+
+		const out = await ingestKnowledge({
+			widgetId: 'wdgt_x',
+			userId: 'user-1',
+			input: { source_type: 'text', content: 'Call the API with curl -H "Authorization: Bearer $KEY" to list agents.', title: 'API' },
+		});
+
+		expect(out.status).toBe('ready');
+		const chunkInserts = sqlCalls.filter((c) => c.text.includes('insert into widget_knowledge_chunks'));
+		expect(chunkInserts).toHaveLength(1);
+		expect(chunkInserts[0].params).toContain(FALLBACK_TAG);
+		expect(chunkInserts[0].params).not.toContain(NIM_TAG);
 	});
 
 	it('503s with an actionable message when no embedding provider is configured', async () => {
@@ -112,7 +141,7 @@ describe('ingestKnowledge — embedder tagging', () => {
 				input: { source_type: 'text', content: 'some content here', title: 'T' },
 			}),
 		).rejects.toMatchObject({ status: 503, code: 'embedder_unavailable' });
-		expect(embedPassagesMock).not.toHaveBeenCalled();
+		expect(embedPassagesEachMock).not.toHaveBeenCalled();
 	});
 });
 
@@ -187,7 +216,7 @@ describe('processQueuedDoc — worker re-resolves the embedder', () => {
 
 		const out = await processQueuedDoc({ docId: 'wkd_a', widgetId: 'wdgt_x' });
 		expect(out.status).toBe('ready');
-		expect(embedPassagesMock.mock.calls[0][0]).toBe(NIM_TAG);
+		expect(embedPassagesEachMock.mock.calls[0][0]).toBe(NIM_TAG);
 		// The ready update writes the tag that was ACTUALLY used.
 		const readyUpdate = findCall("status = 'ready'");
 		expect(readyUpdate.params).toContain(NIM_TAG);
@@ -203,7 +232,7 @@ describe('processQueuedDoc — worker re-resolves the embedder', () => {
 		sqlQueue.push([]); // ready update
 
 		await processQueuedDoc({ docId: 'wkd_a', widgetId: 'wdgt_x' });
-		expect(embedPassagesMock.mock.calls[0][0]).toBe(LEGACY_TAG);
+		expect(embedPassagesEachMock.mock.calls[0][0]).toBe(LEGACY_TAG);
 	});
 
 	it('fails the doc cleanly when nothing can embed', async () => {

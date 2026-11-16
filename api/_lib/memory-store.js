@@ -23,7 +23,7 @@ import { sql, sqlValues } from './db.js';
 import {
 	embeddingsConfigured,
 	defaultIngestEmbedderTag,
-	embedPassages,
+	embedPassagesEach,
 	scoreRowsBySpace,
 } from './embeddings.js';
 import { extractEntities } from './memory-entities.js';
@@ -123,9 +123,12 @@ export async function ensureEmbeddings(agentId, cap = EMBED_CAP) {
 	const capped = rows.length > cap;
 	const batch = capped ? rows.slice(0, cap) : rows;
 
-	let vectors;
+	// Per-text spaces: a memory the default model's content screen refuses is
+	// embedded by the next lane and tagged with it, instead of failing the
+	// batch and stalling this agent's embedding on the same rows every pass.
+	let results;
 	try {
-		vectors = await embedPassages(tag, batch.map((r) => r.content || ''));
+		results = await embedPassagesEach(tag, batch.map((r) => r.content || ''));
 	} catch (err) {
 		console.warn('[memory-store] embed batch failed', err?.code || err?.message);
 		return { configured: true, embedded: 0, remaining: rows.length };
@@ -133,12 +136,12 @@ export async function ensureEmbeddings(agentId, cap = EMBED_CAP) {
 
 	let embedded = 0;
 	for (let i = 0; i < batch.length; i++) {
-		const vec = vectors[i];
-		if (!vec) continue;
+		const res = results[i];
+		if (!res?.vector) continue;
 		try {
 			await sql`
 				UPDATE agent_memories
-				SET embedding = ${JSON.stringify(Array.from(vec))}::jsonb, embedder = ${tag}
+				SET embedding = ${JSON.stringify(Array.from(res.vector))}::jsonb, embedder = ${res.tag}
 				WHERE id = ${batch[i].id}
 			`;
 			embedded++;

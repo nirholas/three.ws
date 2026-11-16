@@ -20,7 +20,7 @@ import { sql } from './db.js';
 import {
 	defaultIngestEmbedderTag,
 	embedderConfigured,
-	embedPassagesAny,
+	embedPassagesEach,
 	embedQuery,
 	embeddingsConfigured,
 } from './embeddings.js';
@@ -189,25 +189,23 @@ export async function ingestDocument({ agentId, userId, name, bytes }) {
 	const kept = chunks.slice(0, MAX_CHUNKS_PER_DOC);
 
 	// Embed everything before writing anything, so a provider failure leaves no
-	// half-stored document behind. The walk returns the lane that answered; a
-	// document stays in one vector space, so later batches pin to that lane.
-	let tag = defaultIngestEmbedderTag();
-	const vectors = [];
+	// half-stored document behind. Each chunk records the vector space that
+	// embedded it: the default model's content screen can refuse a passage (a
+	// 422 on some API docs), and that one chunk then lands in the next lane while
+	// the rest stay in the default space. Search scores every chunk only against
+	// a query embedded by its own model, so a mixed document retrieves cleanly.
+	const tag = defaultIngestEmbedderTag();
+	const embedded = [];
 	for (let i = 0; i < kept.length; i += EMBED_BATCH) {
 		const slice = kept.slice(i, i + EMBED_BATCH).map((c) => c.content);
-		let out;
 		try {
-			out = await embedPassagesAny(tag, slice);
+			embedded.push(...(await embedPassagesEach(tag, slice)));
 		} catch (err) {
 			console.error('[agent-knowledge] embed failed', err?.message);
 			throw new KnowledgeError(502, 'embed_failed', 'Indexing the document failed. Try again in a moment.');
 		}
-		if (i > 0 && out.tag !== tag) {
-			throw new KnowledgeError(502, 'embed_failed', 'The embedding provider changed mid-document. Try again in a moment.');
-		}
-		tag = out.tag;
-		vectors.push(...out.vectors);
 	}
+	const docTag = dominantTag(embedded);
 
 	const docId = shortId('akd');
 	const tokenCount = kept.reduce((s, c) => s + c.token_count, 0);
@@ -223,7 +221,7 @@ export async function ingestDocument({ agentId, userId, name, bytes }) {
 		VALUES
 			(${docId}, ${agentId}, ${userId}, ${name.slice(0, 255)}, ${format.kind}, ${format.mime},
 			 ${bytes.length}, ${sha256}, ${title}, ${JSON.stringify(storedMeta)},
-			 ${kept.length}, ${tokenCount}, ${tag})
+			 ${kept.length}, ${tokenCount}, ${docTag})
 		RETURNING ${DOC_COLUMNS}
 	`;
 
@@ -235,15 +233,16 @@ export async function ingestDocument({ agentId, userId, name, bytes }) {
 				locator: c.locator || null,
 				content: c.content,
 				token_count: c.token_count,
-				embedding: JSON.stringify(Array.from(vectors[i + j])),
+				embedder: embedded[i + j].tag,
+				embedding: JSON.stringify(Array.from(embedded[i + j].vector)),
 			}));
 			await sql`
 				INSERT INTO agent_knowledge_chunks
 					(doc_id, agent_id, embedder, chunk_index, heading, locator, content, token_count, embedding)
-				SELECT ${docId}, ${agentId}, ${tag}, r.chunk_index, r.heading, r.locator, r.content,
+				SELECT ${docId}, ${agentId}, r.embedder, r.chunk_index, r.heading, r.locator, r.content,
 				       r.token_count, r.embedding::vector
 				FROM jsonb_to_recordset(${JSON.stringify(payload)}::jsonb)
-					AS r(chunk_index int, heading text, locator text, content text, token_count int, embedding text)
+					AS r(chunk_index int, heading text, locator text, content text, token_count int, embedder text, embedding text)
 			`;
 		}
 	} catch (err) {
@@ -252,6 +251,13 @@ export async function ingestDocument({ agentId, userId, name, bytes }) {
 	}
 
 	return { doc: presentDoc(row), duplicate: false };
+}
+
+// The space most of a document's chunks live in, recorded on the doc row.
+function dominantTag(embedded) {
+	const counts = new Map();
+	for (const { tag } of embedded) counts.set(tag, (counts.get(tag) || 0) + 1);
+	return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
 }
 
 function pickMeta(meta) {

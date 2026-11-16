@@ -20,7 +20,7 @@ import { createHash } from 'node:crypto';
 import { sql } from './db.js';
 import { watsonxEmbed } from './watsonx.js';
 import {
-	NIM_EMBED_TAG,
+	NIM_EMBED_TAG_PREVIOUS,
 	VERTEX_EMBED_TAG,
 	OPENAI_EMBED_TAG,
 	embedderConfigured,
@@ -35,8 +35,13 @@ const WATSONX_EMBED_CHUNK = 96;
 // the platform lanes take smaller batches of the (up to 2000 char) agent texts.
 const PLATFORM_EMBED_CHUNK = 16;
 
-// Platform lanes in the same free-first order embeddings.js ingests with.
-const PLATFORM_EMBED_TAGS = [NIM_EMBED_TAG, VERTEX_EMBED_TAG, OPENAI_EMBED_TAG];
+// Platform lanes, free first. The galaxy pins NIM's nemotron-3-embed-1b rather
+// than following embeddings.js to nemotron-3.5-embed-8b: a galaxy is one map
+// of the whole population in ONE space, and the 8b model's content screen
+// refuses some inputs (a 422 per request), which would fail the 8b lane for
+// every agent and flip the cache between two models on each rebuild. Agent
+// memory and knowledge store a space per row, so they take the 8b model.
+const PLATFORM_EMBED_TAGS = [NIM_EMBED_TAG_PREVIOUS, VERTEX_EMBED_TAG, OPENAI_EMBED_TAG];
 
 function watsonxEmbedder(cfg, model = cfg.embedModel) {
 	return {
@@ -222,15 +227,16 @@ async function upsertEmbeddings(records, model) {
 	`;
 }
 
-// Read stored vectors for a set of agent ids — the read path for semantic
+// Read stored vectors for a set of agent ids, the read path for semantic
 // search. Returns Map agent_id → vector (number[]); agents without a cached
-// vector are simply absent.
+// vector in that model's space are simply absent. `model` is required: the
+// table holds vectors from several models (some of the same length), and the
+// caller is about to compare them against a query from exactly one of them.
 export async function readAgentVectors(agentIds, { model } = {}) {
+	if (!model) throw new Error('readAgentVectors: model is required (the space the caller will query)');
 	if (!agentIds?.length) return new Map();
 	await ensureTable();
-	const rows = model
-		? await sql`SELECT agent_id, vector FROM agent_embeddings WHERE agent_id = ANY(${agentIds}::uuid[]) AND model = ${model}`
-		: await sql`SELECT agent_id, vector FROM agent_embeddings WHERE agent_id = ANY(${agentIds}::uuid[])`;
+	const rows = await sql`SELECT agent_id, vector FROM agent_embeddings WHERE agent_id = ANY(${agentIds}::uuid[]) AND model = ${model}`;
 	const out = new Map();
 	for (const r of rows) out.set(r.agent_id, r.vector);
 	return out;

@@ -15,6 +15,10 @@ const STRANGER = '22222222-2222-4222-8222-222222222222';
 const AGENT = '33333333-3333-4333-8333-333333333333';
 const OTHER_AGENT = '44444444-4444-4444-8444-444444444444';
 const TAG = 'test/embed@3';
+// The lane the platform falls to when the default model's content screen
+// refuses a passage (nemotron-3.5-embed-8b refuses some API docs with a 422).
+const FALLBACK = 'test/fallback@3';
+const REFUSED = /price list/i;
 
 const db = { docs: [], chunks: [], seq: 0 };
 
@@ -39,8 +43,9 @@ function query(q, values) {
 		return [{ ...row }];
 	}
 	if (q.startsWith('INSERT INTO agent_knowledge_chunks')) {
-		const [docId, agentId, embedder, payload] = values;
-		for (const r of JSON.parse(payload)) db.chunks.push({ id: ++db.seq, doc_id: docId, agent_id: agentId, embedder, ...r });
+		// Chunks carry their own vector space in the payload (`r.embedder`).
+		const [docId, agentId, payload] = values;
+		for (const r of JSON.parse(payload)) db.chunks.push({ id: ++db.seq, doc_id: docId, agent_id: agentId, ...r });
 		return [];
 	}
 	if (q.startsWith('DELETE FROM agent_knowledge_docs WHERE id = ? AND agent_id = ?')) {
@@ -72,6 +77,8 @@ function query(q, values) {
 }
 
 vi.mock('../api/_lib/db.js', () => ({
+	isDbUnavailableError: () => false,
+	isDbCapacityError: () => false,
 	sql: vi.fn((strings, ...values) => {
 		const q = strings.join('?').replace(/\s+/g, ' ').trim();
 		if (q.startsWith('id, agent_id, uploaded_by')) return { __fragment: 'doc-columns' };
@@ -98,9 +105,12 @@ const embedText = (t) => {
 };
 vi.mock('../api/_lib/embeddings.js', () => ({
 	embeddingsConfigured: () => true,
-	embedderConfigured: (tag) => tag === TAG,
+	embedderConfigured: (tag) => tag === TAG || tag === FALLBACK,
 	defaultIngestEmbedderTag: () => TAG,
-	embedPassagesAny: vi.fn(async (_tag, texts) => ({ tag: TAG, vectors: texts.map(embedText) })),
+	// The real lane walk: one refused text sends the whole batch to the next lane.
+	embedPassagesAny: vi.fn(async (_tag, texts) => ({ tag: texts.some((t) => REFUSED.test(t)) ? FALLBACK : TAG, vectors: texts.map(embedText) })),
+	// The real per-text walk: only the refused text moves to the next lane.
+	embedPassagesEach: vi.fn(async (_tag, texts) => texts.map((t) => ({ tag: REFUSED.test(t) ? FALLBACK : TAG, vector: embedText(t) }))),
 	embedQuery: vi.fn(async (_tag, text) => embedText(text)),
 }));
 vi.mock('../api/_lib/rerank.js', () => ({ rerankConfigured: () => false, rerankPassages: vi.fn() }));
@@ -271,7 +281,21 @@ describe('ingest, list, retrieve, delete', () => {
 		expect(doc).toMatchObject({ name: 'handbook.docx', kind: 'docx', title: 'Field Handbook', byte_size: 13, uploaded_by: OWNER });
 		expect(doc.chunk_count).toBe(db.chunks.length);
 		expect(db.chunks.map((c) => c.heading)).toEqual(['Field Handbook', 'Field Handbook > Returns', 'Field Handbook > Price list']);
-		expect(db.chunks.every((c) => c.embedder === TAG && JSON.parse(c.embedding).length === 3)).toBe(true);
+		expect(db.chunks.every((c) => JSON.parse(c.embedding).length === 3)).toBe(true);
+	});
+
+	it('keeps every accepted chunk in the default space when the content screen refuses one, and still finds the refused one', async () => {
+		const r = await upload('handbook.docx', Buffer.from('PK-real-bytes'));
+		expect(r.status).toBe(201);
+		const byHeading = Object.fromEntries(db.chunks.map((c) => [c.heading, c.embedder]));
+		expect(byHeading).toEqual({
+			'Field Handbook': TAG,
+			'Field Handbook > Returns': TAG,
+			'Field Handbook > Price list': FALLBACK,
+		});
+		expect(db.docs[0].embedder).toBe(TAG);
+		const hit = await call('POST', { action: 'search', body: { query: 'what does a screen price come to?' }, headers: { 'content-type': 'application/json' } });
+		expect(hit.body.data.results[0].heading).toBe('Field Handbook > Price list');
 	});
 
 	it('answers a re-upload of the same file with the existing doc instead of a copy', async () => {

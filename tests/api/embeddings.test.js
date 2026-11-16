@@ -36,6 +36,10 @@ const OPENAI_URL = 'https://api.openai.com/v1/embeddings';
 const VERTEX_URL =
 	'https://us-central1-aiplatform.googleapis.com/v1/projects/test-project/locations/us-central1/publishers/google/models/text-embedding-005:predict';
 
+// A direction padded with zeros to a space's real dimension: scoreRowsBySpace
+// refuses a row whose vector length contradicts its tag.
+const inSpace = (tag, head) => [...head, ...new Array(embedderInfo(tag).dim - head.length).fill(0)];
+
 function okEmbeddings(vectors) {
 	return {
 		ok: true,
@@ -118,7 +122,7 @@ describe('embedder tag resolution (vector-space identity)', () => {
 
 	it('exposes model id + dimension for known tags', () => {
 		expect(embedderInfo(NIM_EMBED_TAG)).toMatchObject({
-			model: 'nvidia/nemotron-3-embed-1b',
+			model: 'nvidia/nemotron-3.5-embed-8b',
 			dim: 2048,
 			free: true,
 		});
@@ -173,9 +177,10 @@ describe('embedWith — NIM lane', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 		expect(fetchMock.mock.calls[0][0]).toBe(NIM_URL);
 		expect(lastBody()).toEqual({
-			model: 'nvidia/nemotron-3-embed-1b',
+			model: 'nvidia/nemotron-3.5-embed-8b',
 			input: ['one', 'two'],
 			input_type: 'passage',
+			dimensions: 2048,
 		});
 		expect(out).toHaveLength(2);
 		expect(out[0]).toBeInstanceOf(Float64Array);
@@ -346,12 +351,12 @@ describe('scoreRowsBySpace — same-space routing, cross-space refusal', () => {
 		// NIM query vector [1,0]; OpenAI query vector [0,1].
 		fetchMock.mockImplementation(async (url, init) => {
 			const body = JSON.parse(init.body);
-			return okEmbeddings([body.model.startsWith('nvidia/') ? [1, 0] : [0, 1]]);
+			return okEmbeddings([body.model.startsWith('nvidia/') ? inSpace(NIM_EMBED_TAG, [1, 0]) : inSpace(OPENAI_EMBED_TAG, [0, 1])]);
 		});
 		const rows = [
-			{ id: 1, embedder: NIM_EMBED_TAG, embedding: [1, 0] }, // matches NIM query
-			{ id: 2, embedder: null, embedding: [0, 1] }, // legacy → OpenAI space, matches
-			{ id: 3, embedder: NIM_EMBED_TAG, embedding: [0, 1] }, // orthogonal in NIM space
+			{ id: 1, embedder: NIM_EMBED_TAG, embedding: inSpace(NIM_EMBED_TAG, [1, 0]) }, // matches NIM query
+			{ id: 2, embedder: null, embedding: inSpace(OPENAI_EMBED_TAG, [0, 1]) }, // legacy → OpenAI space, matches
+			{ id: 3, embedder: NIM_EMBED_TAG, embedding: inSpace(NIM_EMBED_TAG, [0, 1]) }, // orthogonal in NIM space
 		];
 		const { scored, needsReembed } = await scoreRowsBySpace(rows, 'question?');
 		expect(needsReembed).toEqual([]);
@@ -365,9 +370,9 @@ describe('scoreRowsBySpace — same-space routing, cross-space refusal', () => {
 
 	it('refuses to score rows whose space no configured provider can serve', async () => {
 		process.env.NVIDIA_API_KEY = 'nvapi-test'; // OpenAI NOT configured
-		fetchMock.mockResolvedValue(okEmbeddings([[1, 0]]));
+		fetchMock.mockResolvedValue(okEmbeddings([inSpace(NIM_EMBED_TAG, [1, 0])]));
 		const rows = [
-			{ id: 1, embedder: NIM_EMBED_TAG, embedding: [1, 0] },
+			{ id: 1, embedder: NIM_EMBED_TAG, embedding: inSpace(NIM_EMBED_TAG, [1, 0]) },
 			{ id: 2, embedder: null, embedding: [0.9, 0.1] }, // legacy OpenAI space
 			{ id: 3, embedder: 'retired-model@999', embedding: [0.9, 0.1] },
 		];

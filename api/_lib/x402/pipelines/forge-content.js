@@ -44,7 +44,9 @@ import { logger } from '../../usage.js';
 import { payX402, bootstrapSolanaContext, USDC_MINT } from '../pay.js';
 import {
 	embeddingsConfigured,
+	embedderConfigured,
 	defaultIngestEmbedderTag,
+	NIM_EMBED_TAG_PREVIOUS,
 	embedPassages,
 	cosine,
 } from '../../embeddings.js';
@@ -143,9 +145,14 @@ function featureHashEmbed(text, dim = LOCAL_EMBED_DIM) {
 // Embed the prop prompt. Prefer the configured free-first provider; on any
 // failure fall back to the local hash embedding so a provider outage degrades
 // the diversity metric rather than failing the call's bookkeeping.
+//
+// Diversity is a population metric scored inside one space, so it stays on
+// nemotron-3-embed-1b, where the existing catalog already lives, rather than
+// following new ingest to nemotron-3.5-embed-8b and restarting from an empty
+// population (every prop would read as maximally novel until it refilled).
 async function embedProp(prompt) {
 	if (embeddingsConfigured()) {
-		const tag = defaultIngestEmbedderTag();
+		const tag = embedderConfigured(NIM_EMBED_TAG_PREVIOUS) ? NIM_EMBED_TAG_PREVIOUS : defaultIngestEmbedderTag();
 		if (tag) {
 			try {
 				const [vec] = await embedPassages(tag, [prompt]);

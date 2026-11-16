@@ -11,7 +11,7 @@ import { z } from 'zod';
 
 import { sql } from '../../_lib/db.js';
 import {
-	embedPassages,
+	embedPassagesEach,
 	embeddingsConfigured,
 	embedderConfigured,
 	defaultIngestEmbedderTag,
@@ -315,19 +315,21 @@ export async function ingestKnowledge({ widgetId, userId, input }) {
 // Shared embed+insert loop used by both the inline path and the QStash worker.
 // Chunks are corpus text, so they embed as 'passage' (NIM's asymmetric
 // retrieval models require the ingest/search distinction); every row stores
-// the embedder tag it was produced with.
+// the embedder tag it was actually produced with. The default model's content
+// screen can refuse a passage (a 422), and that chunk then lands in the next
+// lane rather than failing the upload; retrieval scores per row space.
 async function embedAndInsertChunks({ docId, widgetId, chunks, embedderTag }) {
 	for (let i = 0; i < chunks.length; i += EMBED_BATCH) {
 		const slice = chunks.slice(i, i + EMBED_BATCH);
-		const embedded = await embedPassages(embedderTag, slice.map((c) => c.content));
+		const embedded = await embedPassagesEach(embedderTag, slice.map((c) => c.content));
 		const inserts = slice.map((c, j) => {
-			const vec = Array.from(embedded[j]);
+			const vec = Array.from(embedded[j].vector);
 			return sql`
 				insert into widget_knowledge_chunks
 					(doc_id, widget_id, chunk_index, content, embedding, token_count, embedder)
 				values
 					(${docId}, ${widgetId}, ${i + j}, ${c.content},
-					 ${JSON.stringify(vec)}::jsonb, ${c.token_count}, ${embedderTag})
+					 ${JSON.stringify(vec)}::jsonb, ${c.token_count}, ${embedded[j].tag})
 			`;
 		});
 		await sql.transaction(inserts);

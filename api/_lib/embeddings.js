@@ -1,8 +1,9 @@
 // Multi-provider text embeddings with vector-space tagging.
 //
 // Provider policy (free-first, per the platform LLM policy): NVIDIA NIM's
-// nemotron-3-embed-1b (2048-dim, free with one nvapi key) is the default for new
-// ingests; Vertex AI's text-embedding-005 (768-dim, service-account auth,
+// nemotron-3.5-embed-8b (requested at 2048 dims, free with one nvapi key) is the
+// default for new ingests, with nemotron-3-embed-1b (the model it replaced,
+// also 2048-dim) kept live right behind it; Vertex AI's text-embedding-005 (768-dim, service-account auth,
 // billed to the platform's GCP credit pool — no vendor quota to exhaust) is
 // the second-choice ingest lane when NIM is unconfigured; OpenAI
 // text-embedding-3-small @ 256 dims (Matryoshka truncation) is the last-resort
@@ -55,11 +56,18 @@ function vertexEmbedUrl() {
 const NIM_MAX_TOKENS = 512;
 const NIM_SAFE_CHARS = NIM_MAX_TOKENS * 3;
 
-// The current free NIM embedder. `nv-embedqa-e5-v5` held this slot until it
-// reached end of life on 2026-08-25 and began answering every call with a
-// 410 Gone, which took the free ingest lane out silently. Re-pinned 2026-09-10
-// from GET /v1/models, dimension measured from a live call rather than assumed.
-export const NIM_EMBED_TAG = 'nvidia/nemotron-3-embed-1b@2048';
+// The current free NIM embedder. Promoted 2026-11-16 on a measured win
+// (docs/nvidia/evals/embeddings-2026-11-16.md): on the three.ws docs set it
+// lifts nDCG@10 from 81.3 to 91.3 and recall@5 from 92.0 to 100. It is a
+// Matryoshka model (native 4096); it is asked for 2048 dims, which keeps the
+// stored size of the space it replaced and costs under a point of nDCG.
+export const NIM_EMBED_TAG = 'nvidia/nemotron-3.5-embed-8b@2048';
+// The embedder this tag replaced: rows written before the re-pin carry it,
+// so it stays resolvable and stays the ingest rung behind the new one.
+// It also catches what the new model's content screen refuses (a 422 on some
+// inputs, such as API docs with bearer tokens), so a refused text still gets
+// a vector. Do not retire it while rows carry it (npm run nvidia:reembed -- --status).
+export const NIM_EMBED_TAG_PREVIOUS = 'nvidia/nemotron-3-embed-1b@2048';
 // The retired NIM embedder. Rows embedded before 2026-09-10 carry this tag and
 // resolve through it forever: like LEGACY_EMBED_TAG below, this must never be
 // removed even though nothing new is written with it. It is deliberately absent
@@ -77,6 +85,17 @@ export const LEGACY_EMBED_TAG = OPENAI_EMBED_TAG;
 const EMBEDDERS = Object.freeze({
 	[NIM_EMBED_TAG]: Object.freeze({
 		tag: NIM_EMBED_TAG,
+		provider: 'nim',
+		model: 'nvidia/nemotron-3.5-embed-8b',
+		dim: 2048,
+		// Send `dimensions`: the API truncates and renormalizes server-side
+		// (verified equal to client-side truncation, cosine 1.000000).
+		matryoshka: true,
+		free: true,
+		configured: () => !!process.env.NVIDIA_API_KEY,
+	}),
+	[NIM_EMBED_TAG_PREVIOUS]: Object.freeze({
+		tag: NIM_EMBED_TAG_PREVIOUS,
 		provider: 'nim',
 		model: 'nvidia/nemotron-3-embed-1b',
 		dim: 2048,
@@ -116,9 +135,10 @@ const EMBEDDERS = Object.freeze({
 	}),
 });
 
-// Free lane first, then the credit-funded Vertex lane (no vendor quota to
-// exhaust), OpenAI as the true last-resort paid backstop.
-const INGEST_PREFERENCE = Object.freeze([NIM_EMBED_TAG, VERTEX_EMBED_TAG, OPENAI_EMBED_TAG]);
+// Free lanes first (the new NIM model, then the one it replaced), then the
+// credit-funded Vertex lane (no vendor quota to exhaust), OpenAI as the true
+// last-resort paid backstop.
+const INGEST_PREFERENCE = Object.freeze([NIM_EMBED_TAG, NIM_EMBED_TAG_PREVIOUS, VERTEX_EMBED_TAG, OPENAI_EMBED_TAG]);
 
 /** True when at least one embedding provider can actually serve. */
 export function embeddingsConfigured() {
@@ -126,8 +146,8 @@ export function embeddingsConfigured() {
 }
 
 /**
- * The embedder tag new document sets should be ingested with — free NIM when
- * the key is present, OpenAI otherwise, null when nothing is configured.
+ * The embedder tag new document sets should be ingested with: free NIM when
+ * the key is present, then Vertex, then OpenAI, null when nothing is configured.
  */
 export function defaultIngestEmbedderTag() {
 	for (const tag of INGEST_PREFERENCE) {
@@ -223,11 +243,18 @@ const embedLaneKey = (tag) => `embed:${tag}`;
  * @throws the last lane's error, or { code: 'no_embedder' } when none is configured
  */
 export async function embedPassagesAny(preferredTag, texts) {
+	return walkLanes(laneOrder(preferredTag), texts);
+}
+
+function laneOrder(preferredTag, exclude = null) {
 	const resolved = resolveEmbedderTag(preferredTag);
-	const order = [
+	return [
 		...(resolved && EMBEDDERS[resolved].configured() ? [resolved] : []),
 		...INGEST_PREFERENCE.filter((t) => t !== resolved && EMBEDDERS[t].configured()),
-	];
+	].filter((t) => t !== exclude);
+}
+
+async function walkLanes(order, texts) {
 	if (!order.length) {
 		throw Object.assign(new Error('no embedding provider is configured'), { code: 'no_embedder' });
 	}
@@ -252,8 +279,9 @@ export async function embedPassagesAny(preferredTag, texts) {
 			return { tag, info: EMBEDDERS[tag], vectors };
 		} catch (err) {
 			// A misconfigured or unknown lane is not a health signal, it simply
-			// cannot serve; only a real upstream failure earns a cooldown.
-			if (err?.code !== 'no_embedder' && err?.code !== 'unknown_embedder') {
+			// cannot serve, and a content refusal is about the input, not the lane;
+			// only a real upstream failure earns a cooldown.
+			if (err?.code !== 'no_embedder' && err?.code !== 'unknown_embedder' && err?.code !== 'content_refused') {
 				const authFault = err?.status === 401 || err?.status === 403 || err?.status === 402;
 				void markProviderCooldown(
 					embedLaneKey(tag),
@@ -265,6 +293,49 @@ export async function embedPassagesAny(preferredTag, texts) {
 		}
 	}
 	throw lastErr || Object.assign(new Error('every embedding lane failed'), { code: 'embedder_error' });
+}
+
+/**
+ * Embed `texts` as passages, one vector space per text. Every text the
+ * preferred lane accepts lands in that space; a text its content screen
+ * refuses (code `content_refused`) is isolated by bisection and embedded by the
+ * next lane that answers, so one refused input never fails or demotes the rest.
+ * Any other failure of the preferred lane walks the lanes for the whole batch,
+ * exactly like embedPassagesAny. Callers store each result's tag next to its
+ * vector.
+ *
+ * @param {string|null} preferredTag
+ * @param {string[]} texts
+ * @returns {Promise<Array<{ tag: string, vector: Float64Array }>>} aligned with `texts`
+ */
+export async function embedPassagesEach(preferredTag, texts) {
+	if (!texts.length) return [];
+	const order = laneOrder(preferredTag);
+	if (!order.length) {
+		throw Object.assign(new Error('no embedding provider is configured'), { code: 'no_embedder' });
+	}
+	const first = order[0];
+	const isolate = async (slice) => {
+		try {
+			const vectors = await embedWith(first, slice, 'passage');
+			return vectors.map((vector) => ({ tag: first, vector }));
+		} catch (err) {
+			if (err?.code !== 'content_refused') throw err;
+			if (slice.length === 1) {
+				const { tag, vectors } = await walkLanes(laneOrder(first, first), slice);
+				return [{ tag, vector: vectors[0] }];
+			}
+			const mid = Math.ceil(slice.length / 2);
+			return [...(await isolate(slice.slice(0, mid))), ...(await isolate(slice.slice(mid)))];
+		}
+	};
+	try {
+		return await isolate(texts);
+	} catch (err) {
+		if (err?.code === 'no_embedder') throw err;
+		const { tag, vectors } = await walkLanes(order, texts);
+		return vectors.map((vector) => ({ tag, vector }));
+	}
 }
 
 /** Convenience: embed one search string; resolves to a single Float64Array. */
@@ -284,11 +355,22 @@ async function embedNim(embedder, texts, inputType, { truncated = false } = {}) 
 			model: embedder.model,
 			input: texts,
 			input_type: inputType,
+			...(embedder.matryoshka ? { dimensions: embedder.dim } : {}),
 		}),
 		signal: AbortSignal.timeout(30_000),
 	});
 	if (!upstream.ok) {
 		const body = await upstream.text().catch(() => '');
+		// The nemotron-3.5 models screen inputs and refuse a whole request with a
+		// 422 when any input trips the filter. That is a verdict on the input,
+		// not an outage: callers isolate it (embedPassagesEach) instead of
+		// retrying or cooling the lane down.
+		if (upstream.status === 422 && /content safety/i.test(body)) {
+			throw Object.assign(new Error(`nim embedding refused by content safety screening (${embedder.tag})`), {
+				code: 'content_refused',
+				status: 422,
+			});
+		}
 		// Over-length input: retry once with every input clamped to a budget that
 		// cannot exceed the 512-token cap. Better to truncate one outlier chunk
 		// than to fail a whole ingest batch.
@@ -384,13 +466,15 @@ function upstreamError(provider, status, body) {
  * vector spaces. Rows are grouped by their `embedder` tag (untagged legacy
  * rows are OpenAI — LEGACY_EMBED_TAG), the query is embedded once per space
  * whose provider is configured, and cosine runs strictly within each space.
- * Rows in a space no configured provider can serve are counted in
- * `needsReembed` — reported, never silently compared.
+ * The tag, not the vector length, decides the space: the current NIM model and
+ * the one it replaced are both 2048-dim. Rows in a space no configured
+ * provider can serve, and rows whose vector length contradicts their tag, are
+ * counted in `needsReembed`, reported and never silently compared.
  *
  * @param {Array<{embedder?: string|null, embedding: number[]|{values:number[]}}>} rows
  * @param {string} query
  * @returns {Promise<{scored: Array<object & {embedder: string, score: number}>,
- *                    needsReembed: Array<{embedder: string, chunks: number}>}>}
+ *                    needsReembed: Array<{embedder: string, chunks: number, reason?: string}>}>}
  */
 export async function scoreRowsBySpace(rows, query) {
 	const bySpace = new Map();
@@ -407,13 +491,38 @@ export async function scoreRowsBySpace(rows, query) {
 			needsReembed.push({ embedder: tag, chunks: group.length });
 			continue;
 		}
+		const { dim } = EMBEDDERS[resolveEmbedderTag(tag)];
+		const vectorOf = (r) => (Array.isArray(r.embedding) ? r.embedding : r.embedding?.values || []);
+		const fit = group.filter((r) => vectorOf(r).length === dim);
+		if (fit.length < group.length) {
+			needsReembed.push({ embedder: tag, chunks: group.length - fit.length, reason: 'dimension_mismatch' });
+		}
+		if (!fit.length) continue;
 		const queryEmbedding = await embedQuery(tag, query);
-		for (const r of group) {
-			const e = Array.isArray(r.embedding) ? r.embedding : r.embedding?.values || [];
-			scored.push({ ...r, embedder: tag, score: cosine(queryEmbedding, e) });
+		for (const r of fit) {
+			scored.push({ ...r, embedder: tag, score: cosine(queryEmbedding, vectorOf(r)) });
 		}
 	}
 	return { scored, needsReembed };
+}
+
+/**
+ * Cosine between two tagged vectors, refusing outright when the tags name
+ * different spaces. Use this wherever both sides carry a tag; it is the
+ * only cosine that can catch two same-length vectors from different models.
+ *
+ * @param {{ tag: string|null, vector: ArrayLike<number> }} a
+ * @param {{ tag: string|null, vector: ArrayLike<number> }} b
+ */
+export function cosineInSpace(a, b) {
+	const ta = a.tag || LEGACY_EMBED_TAG;
+	const tb = b.tag || LEGACY_EMBED_TAG;
+	if (ta !== tb) {
+		throw Object.assign(new Error(`refusing to compare vectors from different vector spaces: ${ta} vs ${tb}`), {
+			code: 'space_mismatch',
+		});
+	}
+	return cosine(a.vector, b.vector);
 }
 
 /**

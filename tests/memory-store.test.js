@@ -16,15 +16,18 @@ vi.mock('../api/_lib/db.js', async () => {
 const embeddingsConfigured = vi.fn(() => true);
 const defaultIngestEmbedderTag = vi.fn(() => 'nvidia/nv-embedqa-e5-v5@1024');
 const embedPassages = vi.fn();
+const embedPassagesEach = vi.fn();
 const scoreRowsBySpace = vi.fn();
 vi.mock('../api/_lib/embeddings.js', () => ({
 	embeddingsConfigured: (...a) => embeddingsConfigured(...a),
 	defaultIngestEmbedderTag: (...a) => defaultIngestEmbedderTag(...a),
 	embedPassages: (...a) => embedPassages(...a),
+	embedPassagesEach: (...a) => embedPassagesEach(...a),
 	scoreRowsBySpace: (...a) => scoreRowsBySpace(...a),
 }));
 
 const {
+	ensureEmbeddings,
 	searchMemories,
 	computeContext,
 	buildGraph,
@@ -45,6 +48,7 @@ beforeEach(() => {
 	embeddingsConfigured.mockReturnValue(true);
 	defaultIngestEmbedderTag.mockReturnValue('nvidia/nv-embedqa-e5-v5@1024');
 	embedPassages.mockReset();
+	embedPassagesEach.mockReset();
 	scoreRowsBySpace.mockReset();
 });
 function queueSql(...r) { sqlQueue.push(...r); }
@@ -57,6 +61,39 @@ describe('estimateTokens / defaultTier', () => {
 		expect(defaultTier({ pinned: true })).toBe('working');
 		expect(defaultTier({ type: 'reference', salience: 0.2 })).toBe('archival');
 		expect(defaultTier({ salience: 0.6, type: 'project' })).toBe('recall');
+	});
+});
+
+describe('ensureEmbeddings', () => {
+	it('stores each memory in the space that embedded it, so one refused memory never stalls the rest', async () => {
+		defaultIngestEmbedderTag.mockReturnValue('nvidia/nemotron-3.5-embed-8b@2048');
+		queueSql([
+			{ id: 'm1', content: 'likes dark mode' },
+			{ id: 'm2', content: 'curl -H "Authorization: Bearer ..."' },
+			{ id: 'm3', content: 'trades on Solana' },
+		]);
+		queueSql([], [], []); // one UPDATE per memory
+		embedPassagesEach.mockResolvedValue([
+			{ tag: 'nvidia/nemotron-3.5-embed-8b@2048', vector: [0.6, 0.8] },
+			{ tag: 'nvidia/nemotron-3-embed-1b@2048', vector: [1, 0] },
+			{ tag: 'nvidia/nemotron-3.5-embed-8b@2048', vector: [0, 1] },
+		]);
+
+		const out = await ensureEmbeddings('agent1', 10);
+		expect(out).toEqual({ configured: true, embedded: 3, remaining: 0 });
+		expect(embedPassagesEach).toHaveBeenCalledWith('nvidia/nemotron-3.5-embed-8b@2048', [
+			'likes dark mode',
+			'curl -H "Authorization: Bearer ..."',
+			'trades on Solana',
+		]);
+		expect(embedPassages).not.toHaveBeenCalled();
+		// Each UPDATE binds that row's own tag next to its own vector.
+		const updates = sqlMock.mock.calls.slice(1).map(([, ...params]) => params);
+		expect(updates.map((p) => [p[1], p[2]])).toEqual([
+			['nvidia/nemotron-3.5-embed-8b@2048', 'm1'],
+			['nvidia/nemotron-3-embed-1b@2048', 'm2'],
+			['nvidia/nemotron-3.5-embed-8b@2048', 'm3'],
+		]);
 	});
 });
 
