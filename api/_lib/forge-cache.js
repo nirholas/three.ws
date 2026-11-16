@@ -20,6 +20,7 @@
 
 import { createHash } from 'node:crypto';
 import { getRedis } from './redis.js';
+import { normalizeStoredUrl } from './r2.js';
 
 const CACHE_PREFIX = 'fr:result:';
 const BIND_PREFIX = 'fr:job:';
@@ -96,9 +97,21 @@ export async function getCachedForgeResult(key, { redis } = {}) {
 		const value = typeof raw === 'string' ? JSON.parse(raw) : raw;
 		// Only a stored, public durable URL is a valid hit.
 		if (!value || typeof value.glb_url !== 'string' || !value.glb_url) return null;
-		return value;
+		// Entries written before providers switched to /cdn/ carry the raw public
+		// bucket domain, which now 404s; replay them in the /cdn/ form.
+		return { ...value, glb_url: cdnFormOf(value.glb_url) };
 	} catch {
 		return null;
+	}
+}
+
+// normalizeStoredUrl() reads S3_PUBLIC_DOMAIN, which throws when object
+// storage is not configured; a URL that cannot be mapped is returned as stored.
+function cdnFormOf(url) {
+	try {
+		return normalizeStoredUrl(url);
+	} catch {
+		return url;
 	}
 }
 
