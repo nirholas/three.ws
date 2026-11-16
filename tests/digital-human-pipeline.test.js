@@ -296,7 +296,21 @@ describe('runTurn say mode', () => {
 		const client = fakeClient(log, { tokens: ['never'] });
 		const out = await runTurn({ client, say: 'Hello there. I am a digital human.' });
 		expect(log.some((l) => l.startsWith('token:'))).toBe(false);
-		expect(log.filter((l) => l.startsWith('line:'))).toEqual(['line:Hello there.', 'line:I am a digital human.']);
+		expect(log.filter((l) => l.startsWith('line:'))).toEqual([
+			'line:Hello there.',
+			'line:I am a digital human.',
+		]);
 		expect(out.reply).toBe('Hello there. I am a digital human.');
+	});
+});
+
+describe('runTurn timings', () => {
+	it('records no ASR stage for a typed question', async () => {
+		const out = await runTurn({
+			client: fakeClient([], { tokens: ['Hi there.'] }),
+			text: 'hi',
+		});
+		expect(out.timings.asrText).toBeUndefined();
+		expect(typeof out.timings.llmFirstToken).toBe('number');
 	});
 });

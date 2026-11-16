@@ -4,7 +4,7 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title data-i18n="demos_audio2face.meta_title">Audio2Face · two NVIDIA models on one face · three.ws</title>
-		<meta name="description" content="Type text, hear it in NVIDIA Magpie's voice, and watch the 3D avatar's face animate in real time — driven frame-for-frame by NVIDIA Audio2Face-3D. Real ARKit blendshapes, mapped onto any rig."  data-i18n-attr="content:demos_audio2face.meta_description"/>
+		<meta name="description" content="Talk to a 3D digital human. NVIDIA Riva hears you, each sentence of the reply is voiced by NVIDIA Magpie while the next is still being written, and NVIDIA Audio2Face-3D animates the face from that audio in real time."  data-i18n-attr="content:demos_audio2face.meta_description"/>
 		<link rel="canonical" href="https://three.ws/audio2face" />
 		<meta property="og:title" content="Audio2Face · two NVIDIA models on one face · three.ws"  data-i18n-attr="content:demos_audio2face.meta_og_title"/>
 		<meta property="og:description" content="NVIDIA Magpie voice + NVIDIA Audio2Face-3D facial animation, in sync, in the browser. The avatar's lips track the real audio."  data-i18n-attr="content:demos_audio2face.meta_og_description"/>
@@ -70,52 +70,159 @@
 			.shape-row { display: grid; grid-template-columns: 96px 1fr; gap: 8px; align-items: center; font-size: 11.5px; color: #8a8d98; font-family: ui-monospace, monospace; }
 			.meter { height: 7px; border-radius: 4px; background: rgba(118,224,161,0.12); overflow: hidden; }
 			.meter > span { display: block; height: 100%; width: 0%; background: linear-gradient(90deg,#3aa873,#76e0a1); border-radius: 4px; transition: width var(--duration-instant) var(--ease-standard); }
-			.a2f-error { background: rgba(255, 120, 86, 0.08); border: 1px solid rgba(255, 120, 86, 0.3); color: #ffc6ad; border-radius: 9px; padding: 11px 13px; font-size: 13px; line-height: 1.5; display: flex; align-items: center; gap: 10px; justify-content: space-between; }
-			.a2f-error[hidden] { display: none; }
-			.a2f-error span { flex: 1; }
-			.a2f-error strong { color: #fff; font-weight: 600; }
-			.a2f-error .retry { flex: 0 0 auto; cursor: pointer; font: inherit; font-weight: 600; color: #1a0d07; background: #ffb48a; border: 0; border-radius: 7px; padding: 7px 13px; }
-			.a2f-error .retry:hover { filter: brightness(1.07); }
-			.a2f-error .retry:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 			.foot { color: #6a6d75; font-size: 12px; margin-top: 28px; max-width: 70ch; }
 			.foot code { color: #9fe9bd; }
 			.foot a { color: #76e0a1; }
+			.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+			.dh-error { background: rgba(255, 120, 86, 0.08); border: 1px solid rgba(255, 120, 86, 0.3); color: #ffc6ad; border-radius: 9px; padding: 11px 13px; font-size: 13px; line-height: 1.5; display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+			.dh-error[hidden] { display: none; }
+			.dh-error span { flex: 1; }
+			.dh-error strong { color: #fff; font-weight: 600; }
+			.dh-error .retry { flex: 0 0 auto; cursor: pointer; font: inherit; font-weight: 600; color: #1a0d07; background: #ffb48a; border: 0; border-radius: 7px; padding: 7px 13px; transition: filter var(--duration-fast) var(--ease-standard); }
+			.dh-error .retry:hover { filter: brightness(1.07); }
+			.dh-error .retry:active { transform: translateY(1px); }
+			.dh-error .retry:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+			/* Stage health: one pill per stage, colored by the lane it is on. */
+			.lanes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+			.lane { display: grid; grid-template-columns: 8px auto 1fr; align-items: center; gap: 7px; background: #070807; border: 1px solid #161c17; border-radius: 8px; padding: 6px 9px; font-size: 11.5px; color: #8a8d98; min-width: 0; transition: border-color var(--duration-base) var(--ease-standard); }
+			.lane b { color: #cfeede; font-weight: 600; }
+			.lane-detail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+			.lane-dot { width: 8px; height: 8px; border-radius: 50%; background: #3a3f46; }
+			.lane[data-state="ok"] .lane-dot { background: #76e0a1; box-shadow: 0 0 6px #76e0a1; }
+			.lane[data-state="fallback"] { border-color: rgba(255, 210, 122, 0.35); }
+			.lane[data-state="fallback"] .lane-dot { background: #ffd27a; box-shadow: 0 0 6px #ffd27a; }
+			.lane[data-state="down"] { border-color: rgba(255, 120, 86, 0.4); }
+			.lane[data-state="down"] .lane-dot { background: #ff7856; }
+			/* Push to talk */
+			.ptt { position: relative; width: 100%; min-height: 64px; border-radius: 14px !important; font-size: 16px !important; touch-action: none; user-select: none; -webkit-user-select: none; }
+			.ptt .mic { width: 18px; height: 18px; flex: 0 0 auto; }
+			.ptt.held { background: #ffd27a !important; color: #1a1406 !important; box-shadow: 0 0 0 4px rgba(255, 210, 122, 0.25), 0 0 28px rgba(255, 210, 122, 0.35); }
+			.ask { display: flex; gap: 8px; }
+			.ask input { flex: 1; min-width: 0; background: #070807; border: 1px solid #1c241d; color: #eee; padding: 10px 12px; border-radius: 9px; font: inherit; }
+			.ask input:focus { outline: 2px solid #2c6b46; outline-offset: 1px; border-color: #2c6b46; }
+			.ask button { flex: 0 0 auto !important; }
+			.log { max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 2px; scroll-behavior: smooth; }
+			.log-empty { color: #8a8d98; font-size: 12.5px; display: flex; flex-wrap: wrap; gap: 6px; }
+			.log-empty p { margin: 0 0 4px; width: 100%; }
+			.panel .suggest { flex: 0 0 auto; background: rgba(118, 224, 161, 0.08); color: #9fe9bd; border: 1px solid #1d2a20; padding: 6px 10px; font-size: 12px; font-weight: 600; }
+			.panel .suggest:hover { background: rgba(118, 224, 161, 0.16); filter: none; }
+			.bubble { border-radius: 11px; padding: 8px 11px; font-size: 13.5px; line-height: 1.45; max-width: 92%; white-space: pre-wrap; animation: rise var(--duration-base) var(--ease-standard); }
+			.bubble.user { align-self: flex-end; background: #13241a; color: #dff5e8; }
+			.bubble.avatar { align-self: flex-start; background: #111417; color: #e6e8ec; }
+			.bubble.pending:empty::after { content: ''; display: inline-block; width: 36px; height: 9px; border-radius: 5px; background: linear-gradient(90deg, #1d2226 0%, #2a3036 50%, #1d2226 100%); background-size: 200% 100%; animation: shimmer 1.1s linear infinite; }
+			@keyframes shimmer { to { background-position: -200% 0; } }
+			@keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+			details.say { border-top: 1px solid #161c17; padding-top: 12px; }
+			details.say summary { cursor: pointer; font-size: 12px; color: #8a8d98; text-transform: uppercase; letter-spacing: 0.08em; list-style: none; }
+			details.say summary::-webkit-details-marker { display: none; }
+			details.say summary::before { content: '+ '; color: #76e0a1; }
+			details.say[open] summary::before { content: '- '; }
+			details.say summary:hover { color: #cfeede; }
+			details.say summary:focus-visible { outline: 2px solid #2c6b46; outline-offset: 2px; border-radius: 4px; }
+			details.say > div { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+			/* Captions and the latency HUD sit on the 3D view. */
+			.caption { position: absolute; left: 50%; bottom: 52px; transform: translateX(-50%); width: min(92%, 760px); text-align: center; z-index: 2; font-size: 17px; line-height: 1.4; color: #fff; text-shadow: 0 1px 3px #000, 0 0 12px rgba(0,0,0,0.8); pointer-events: none; }
+			.caption:empty { display: none; }
+			.hud-toggle { position: absolute; top: 10px; right: 10px; z-index: 3; background: rgba(0,0,0,0.6); color: #cfeede; border: 1px solid #263028; border-radius: 8px; padding: 5px 10px; font: 600 11.5px ui-monospace, monospace; cursor: pointer; transition: background var(--duration-fast) var(--ease-standard); }
+			.hud-toggle:hover { background: rgba(20, 40, 28, 0.85); }
+			.hud-toggle:active { transform: translateY(1px); }
+			.hud-toggle:focus-visible { outline: 2px solid #76e0a1; outline-offset: 2px; }
+			.hud-toggle[aria-pressed="true"] { color: #06140c; background: #76e0a1; border-color: #76e0a1; }
+			.hud { position: absolute; top: 44px; right: 10px; z-index: 3; background: rgba(4, 6, 5, 0.86); border: 1px solid #1c241d; border-radius: 10px; padding: 10px 12px; font: 11.5px/1.45 ui-monospace, monospace; color: #cfeede; backdrop-filter: blur(4px); max-width: calc(100% - 20px); }
+			.hud[hidden] { display: none; }
+			.hud table { border-collapse: collapse; }
+			.hud th, .hud td { padding: 1px 6px; text-align: right; white-space: nowrap; }
+			.hud th:first-child { text-align: left; color: #8a8d98; font-weight: 500; }
+			.hud tr:first-child th { color: #6a6d75; font-weight: 500; border-bottom: 1px solid #1c241d; }
+			.hud td.na { color: #4a4d55; }
+			.hud-foot { margin-top: 6px; color: #8a8d98; max-width: 300px; }
+			.kiosk-start { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 18px; background: radial-gradient(circle at 50% 40%, #0f2017 0%, #030403 70%); color: #eee; border: 0; font: inherit; cursor: pointer; width: 100%; }
+			.kiosk-start[hidden] { display: none; }
+			.kiosk-start strong { font-size: clamp(28px, 5vw, 56px); font-weight: 650; letter-spacing: -0.02em; }
+			.kiosk-start span { color: #9fe9bd; font-size: clamp(15px, 2vw, 22px); }
+			.kiosk-start:focus-visible { outline: 3px solid #76e0a1; outline-offset: -8px; }
+			/* Kiosk: the avatar is the whole screen, one giant button to talk. */
+			body.kiosk header, body.kiosk #footer-container, body.kiosk .crumb, body.kiosk h1, body.kiosk .sub, body.kiosk .models, body.kiosk .foot,
+			body.kiosk .ask, body.kiosk .log, body.kiosk details.say, body.kiosk .shapes-field, body.kiosk .pathline, body.kiosk .viewer-badge { display: none !important; }
+			body.kiosk { overflow: hidden; }
+			body.kiosk .stage { max-width: none; padding: 0; height: 100vh; height: 100dvh; }
+			body.kiosk .row { display: block; height: 100%; }
+			body.kiosk .viewer-host { position: fixed; inset: 0; border: 0; border-radius: 0; min-height: 0; }
+			body.kiosk .panel { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); width: min(560px, calc(100% - 32px)); z-index: 4; background: rgba(4, 6, 5, 0.72); backdrop-filter: blur(6px); }
+			body.kiosk .ptt { min-height: 104px; font-size: 26px !important; }
+			body.kiosk .ptt .mic { width: 30px; height: 30px; }
+			body.kiosk .caption { bottom: 260px; font-size: clamp(20px, 2.6vw, 32px); }
+			body.kiosk .status { font-size: 15px; justify-content: center; }
+			@media (prefers-reduced-motion: reduce) { .bubble { animation: none; } .bubble.pending:empty::after { animation: none; } }
 		</style>
-		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Audio2Face","description":"NVIDIA Magpie voice + NVIDIA Audio2Face-3D facial animation, in sync, in the browser.","url":"https://three.ws/audio2face","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Audio2Face digital human","description":"Talk to a 3D digital human: NVIDIA Riva ASR, NVIDIA Magpie voice and NVIDIA Audio2Face-3D facial animation, pipelined in the browser.","url":"https://three.ws/audio2face","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 	</head>
 	<body>
 		<header><div id="nav-container"></div></header>
 
 		<main class="stage">
 			<p class="crumb" data-i18n-html="demos_audio2face.three_ws_audio2face_amplitude_lipsync"><a href="/">three.ws</a> · audio2face · <a href="/lipsync">amplitude lipsync</a></p>
-			<h1 data-i18n="demos_audio2face.two_nvidia_models_on_one_face">Two NVIDIA models on one face</h1>
-			<p class="sub" data-i18n-html="demos_audio2face.type_a_line_it_s_spoken_in">
-				Type a line. It's spoken in <strong>NVIDIA Magpie</strong>'s voice, and that exact
-				audio is sent to <strong>NVIDIA Audio2Face-3D</strong>, which returns a per-frame
-				ARKit blendshape track. The avatar's mouth and face animate frame-for-frame with the
-				real voice — mapped onto whatever morph-target convention the loaded GLB ships
-				(ARKit, common avatar-platform, VRM, Oculus visemes). If Audio2Face is unavailable, the
-				avatar still speaks and falls back to amplitude lipsync — never a frozen face.
+			<h1 data-i18n="demos_audio2face.talk_to_a_digital_human">Talk to a digital human</h1>
+			<p class="sub" data-i18n-html="demos_audio2face.hold_the_button_and_ask">
+				Hold the button and ask anything. <strong>NVIDIA Riva</strong> hears you, a language
+				model writes the answer, and each sentence is voiced by <strong>NVIDIA Magpie</strong>
+				while the next one is still being written. That exact audio drives
+				<strong>NVIDIA Audio2Face-3D</strong>, which animates the face frame by frame on
+				whatever rig you pick. If any stage fails, the avatar switches to a backup and the
+				pills below say which one.
 			</p>
 			<div class="models">
+				<span class="chip voice" data-i18n-html="demos_audio2face.riva_asr_ears"><span class="dot"></span>Riva ASR · ears</span>
 				<span class="chip voice" data-i18n-html="demos_audio2face.magpie_tts_voice"><span class="dot"></span>Magpie TTS · voice</span>
 				<span class="chip" data-i18n-html="demos_audio2face.audio2face_3d_facial_animation"><span class="dot"></span>Audio2Face-3D · facial animation</span>
 			</div>
 
 			<div class="row">
 				<div class="viewer-host" id="viewer-host">
-					<div class="viewer-label">live · Magpie → Audio2Face → morphs</div>
-					<div class="viewer-badge" id="viewer-badge">—</div>
+					<div class="viewer-label" data-i18n="demos_audio2face.live_riva_magpie_audio2face">live · Riva → LLM → Magpie → Audio2Face</div>
+					<button type="button" class="hud-toggle" id="hud-toggle" aria-pressed="false" aria-controls="hud" title="Latency HUD (L)" data-i18n="demos_audio2face.hud_ms">HUD · ms</button>
+					<div class="hud" id="hud" hidden aria-live="off"></div>
+					<div class="caption" id="caption" aria-hidden="true"></div>
+					<div class="viewer-badge" id="viewer-badge">Detecting rig…</div>
 					<div class="viewer-loading" id="viewer-loading">
 						<div class="spinner"></div>
 						<div id="loading-text">Loading avatar…</div>
 					</div>
 				</div>
 				<div class="panel">
-					<div class="field">
-						<label for="text" data-i18n="demos_audio2face.text_to_speak">Text to speak</label>
-						<textarea id="text">Hi! I'm a three dot w s avatar. My voice is NVIDIA Magpie, and my face is animated by NVIDIA Audio2Face, frame for frame.</textarea>
-					</div>
+					<ul class="lanes" id="lanes" aria-label="Stage health"></ul>
+
+					<button type="button" id="ptt" class="ptt" aria-pressed="false">
+						<svg class="mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v5"/></svg>
+						<span id="ptt-label" data-i18n-owned="1">Hold to talk (Space)</span>
+					</button>
+
+					<form class="ask" id="ask-form" autocomplete="off">
+						<label for="ask" class="sr-only" data-i18n="demos_audio2face.type_a_question">Type a question</label>
+						<input id="ask" type="text" maxlength="500" placeholder="…or type a question" data-i18n-attr="placeholder:demos_audio2face.or_type_a_question" />
+						<button type="submit" data-i18n="demos_audio2face.ask">Ask</button>
+					</form>
+
+					<div class="status" id="status" role="status" aria-live="polite"></div>
+					<div id="dh-error" class="dh-error" role="alert" aria-live="assertive" hidden></div>
+
+					<div class="log" id="dh-log" aria-live="polite" aria-label="Conversation"></div>
+
+					<div class="pathline" id="pathline" data-i18n="demos_audio2face.path_appears_after_first_turn">The pipeline path and first-sound latency appear here after your first question.</div>
+
+					<details class="say">
+						<summary data-i18n="demos_audio2face.make_it_say_a_line">Make it say a line</summary>
+						<div>
+							<div class="field">
+								<label for="text" data-i18n="demos_audio2face.text_to_speak">Text to speak</label>
+								<textarea id="text">Hi! I'm a three dot w s avatar. My voice is NVIDIA Magpie, and my face is animated by NVIDIA Audio2Face, frame for frame.</textarea>
+							</div>
+							<div class="btns">
+								<button id="speak" type="button" data-i18n="demos_audio2face.speak">Speak</button>
+								<button id="stop" type="button" class="secondary" disabled data-i18n="demos_audio2face.stop">Stop</button>
+							</div>
+						</div>
+					</details>
 
 					<div class="grid2">
 						<div class="field">
@@ -142,390 +249,31 @@
 						</div>
 					</div>
 
-					<div class="btns">
-						<button id="speak"><span id="speak-label" data-i18n="demos_audio2face.speak">Speak</span></button>
-						<button id="stop" class="secondary" disabled data-i18n="demos_audio2face.stop">Stop</button>
-					</div>
-
-					<div class="status" id="status" role="status" aria-live="polite"></div>
-
-					<div id="a2f-error" class="a2f-error" role="alert" aria-live="assertive" hidden></div>
-
-					<div class="pathline" id="pathline">Pipeline path will appear here after you press Speak.</div>
-
-					<div class="field">
+					<div class="field shapes-field">
 						<label data-i18n="demos_audio2face.live_blendshapes">Live blendshapes</label>
 						<div class="shapes" id="shapes"></div>
 					</div>
 				</div>
 			</div>
 
-			<p class="foot" data-i18n-html="demos_audio2face.powered_by_nvidia_audio2face_3d_over_nvcf">
-				Powered by <code>/api/a2f</code> (NVIDIA Audio2Face-3D over NVCF gRPC) and
-				<code>/api/tts/speak</code> (NVIDIA Magpie). The blendshape→morph mapping lives in
-				<code>src/voice/a2f-player.js</code> — it reuses the ARKit/VRM/Oculus vocabulary in
-				<code>src/voice/arkit-blendshapes.js</code>, so any humanoid rig lip-syncs without a
-				per-rig allowlist. See the <a href="/lipsync">amplitude-only lipsync demo</a> for the
-				fallback path on its own.
+			<p class="foot" data-i18n-html="demos_audio2face.powered_by_pipelined_nvidia">
+				Powered by <code>/api/asr</code> (NVIDIA Riva), <code>/api/chat</code>, and
+				<code>/api/a2f</code> in stream mode (NVIDIA Magpie and Audio2Face-3D over NVCF gRPC,
+				one sentence at a time). Press <code>L</code> for the latency HUD. Booth mode:
+				<a href="/audio2face?kiosk=1">/audio2face?kiosk=1</a>. See the
+				<a href="/lipsync">amplitude-only lipsync demo</a> for the fallback path on its own.
 			</p>
 		</main>
 
+		<button type="button" class="kiosk-start" id="kiosk-start" hidden>
+			<strong data-i18n="demos_audio2face.talk_to_me">Talk to me</strong>
+			<span data-i18n="demos_audio2face.tap_anywhere_to_start">Tap anywhere to start</span>
+		</button>
+
 		<script src="/nav.js" defer></script>
-		<script type="module">
-			import * as THREE from 'three';
-			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-			import { getDecoders } from '/src/viewer/internal.js';
-			import { A2FPlayer } from '/src/voice/a2f-player.js';
-			import { LipsyncDriver, tapAudioElement } from '/src/voice/lipsync-driver.js';
-			import { AvatarMouthTarget } from '/src/voice/avatar-morph-target.js';
-
-			const $ = (id) => document.getElementById(id);
-			const host = $('viewer-host');
-			const statusEl = $('status');
-			const badgeEl = $('viewer-badge');
-			const pathEl = $('pathline');
-			const errEl = $('a2f-error');
-			const speakBtn = $('speak');
-			const speakLabel = $('speak-label');
-			const stopBtn = $('stop');
-			const loadingEl = $('viewer-loading');
-			const loadingText = $('loading-text');
-
-			// ── Live blendshape meters ────────────────────────────────────────────
-			const METERS = [
-				['jawOpen', 'JawOpen'],
-				['mouthFunnel', 'MouthFunnel'],
-				['mouthSmileLeft', 'MouthSmile'],
-				['mouthPucker', 'MouthPucker'],
-				['browInnerUp', 'BrowInnerUp'],
-				['eyeBlinkLeft', 'EyeBlink'],
-			];
-			const meterBars = new Map();
-			for (const [key, label] of METERS) {
-				const row = document.createElement('div');
-				row.className = 'shape-row';
-				row.innerHTML = `<span>${label}</span><span class="meter"><span data-k="${key}"></span></span>`;
-				$('shapes').appendChild(row);
-				meterBars.set(key, row.querySelector(`[data-k="${key}"]`));
-			}
-			function paintMeters(getter) {
-				for (const [key] of METERS) {
-					const v = Math.max(0, Math.min(1, getter(key)));
-					meterBars.get(key).style.width = (v * 100).toFixed(0) + '%';
-				}
-			}
-			function clearMeters() { for (const [key] of METERS) meterBars.get(key).style.width = '0%'; }
-
-			// ── Three.js viewer ───────────────────────────────────────────────────
-			const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-			renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-			renderer.setSize(host.clientWidth, host.clientHeight);
-			renderer.outputColorSpace = THREE.SRGBColorSpace;
-			host.appendChild(renderer.domElement);
-
-			const scene = new THREE.Scene();
-			const camera = new THREE.PerspectiveCamera(26, host.clientWidth / host.clientHeight, 0.01, 100);
-			camera.position.set(0, 1.58, 0.7);
-			const controls = new OrbitControls(camera, renderer.domElement);
-			controls.target.set(0, 1.57, 0);
-			controls.enableDamping = true;
-			controls.minDistance = 0.35;
-			controls.maxDistance = 3.0;
-
-			scene.add(new THREE.HemisphereLight(0xffffff, 0x404050, 1.15));
-			const key = new THREE.DirectionalLight(0xffffff, 1.5);
-			key.position.set(2, 4, 3);
-			scene.add(key);
-			const rim = new THREE.DirectionalLight(0x88ccff, 0.6);
-			rim.position.set(-3, 2, -2);
-			scene.add(rim);
-
-			window.addEventListener('resize', () => {
-				const w = host.clientWidth, h = host.clientHeight;
-				renderer.setSize(w, h);
-				camera.aspect = w / h;
-				camera.updateProjectionMatrix();
-			});
-
-			// Avatars baked through the three.ws pipeline are EXT_meshopt_compression
-			// (and some carry Draco/KTX2), so wire the shared decoder set before load.
-			const loader = new GLTFLoader();
-			const decodersReady = getDecoders().then(({ dracoLoader, ktx2Loader, meshoptDecoder }) => {
-				loader.setDRACOLoader(dracoLoader)
-					.setKTX2Loader(ktx2Loader.detectSupport(renderer))
-					.setMeshoptDecoder(meshoptDecoder);
-			});
-			const player = new A2FPlayer();          // A2F track-driven path
-			const mouthTarget = new AvatarMouthTarget(); // amplitude fallback target
-			let currentModel = null;
-			let avatarReady = false;
-
-			async function loadAvatar(url) {
-				avatarReady = false;
-				loadingEl.hidden = false;
-				loadingText.textContent = 'Loading avatar…';
-				badgeEl.textContent = '—';
-				try {
-					await decodersReady;
-					const gltf = await loader.loadAsync(url);
-					if (currentModel) { scene.remove(currentModel); disposeModel(currentModel); }
-					currentModel = gltf.scene;
-					// Frame the head: lift so the face sits at camera height regardless of rig origin.
-					const box = new THREE.Box3().setFromObject(currentModel);
-					const height = box.max.y - box.min.y;
-					if (height > 0.1) currentModel.position.y = -box.min.y;
-					scene.add(currentModel);
-
-					player.attach(currentModel);
-					mouthTarget.attach(currentModel);
-					avatarReady = true;
-					loadingEl.hidden = true;
-
-					// Report the convention we actually DETECTED on the rig, not a guess.
-					const cov = player.describe();
-					const conv = cov.direct.length ? 'ARKit / RPM' :
-						cov.expression.length ? 'VRM / viseme' :
-						mouthTarget.hasMouthMorphs() ? 'generic morphs' :
-						mouthTarget.hasJawBone() ? 'jaw bone' : 'head fallback';
-					const drivers = cov.direct.length ? `${cov.direct.length} ARKit morphs (direct)` :
-						cov.expression.length ? `${cov.expression.length} viseme morphs (derived)` :
-						'amplitude only';
-					badgeEl.innerHTML = `<b>${conv}</b> · ${drivers}`;
-				} catch (err) {
-					loadingText.textContent = `Avatar load failed: ${err.message}`;
-				}
-			}
-
-			function disposeModel(root) {
-				root.traverse((n) => {
-					if (n.geometry) n.geometry.dispose?.();
-					if (n.material) (Array.isArray(n.material) ? n.material : [n.material]).forEach((m) => m.dispose?.());
-				});
-			}
-
-			// ── Playback state ────────────────────────────────────────────────────
-			let audioEl = null;
-			let currentURL = null;
-			let mode = 'idle';        // 'a2f' | 'amplitude' | 'idle'
-			let amplitudeDriver = null;
-			let audioTap = null;
-
-			function tick() {
-				requestAnimationFrame(tick);
-				controls.update();
-				if (avatarReady && mode === 'a2f' && audioEl && !audioEl.paused) {
-					player.update(audioEl.currentTime);
-					paintMeters((k) => player.currentWeight(k));
-				}
-				renderer.render(scene, camera);
-			}
-			tick();
-
-			// ── Error banner ──────────────────────────────────────────────────────
-			function clearError() { errEl.hidden = true; errEl.innerHTML = ''; }
-			function showError(title, detail) {
-				errEl.innerHTML = `<span><strong>${title}</strong> ${detail}</span>`;
-				const btn = document.createElement('button');
-				btn.type = 'button';
-				btn.className = 'retry';
-				btn.textContent = 'Retry';
-				btn.addEventListener('click', speak);
-				errEl.appendChild(btn);
-				errEl.hidden = false;
-			}
-
-			function setStatus(text, live) {
-				statusEl.innerHTML = live ? `<span class="live-dot"></span>${text}` : text;
-			}
-			// The label is translated copy until a run starts. While busy the script
-			// owns it (so a late catalog pass cannot overwrite the spinner), and when
-			// the run ends it gets back the localized label it had, not English.
-			let idleLabel = null;
-			function busy(on, label) {
-				speakBtn.disabled = on;
-				stopBtn.disabled = !on;
-				if (on) {
-					if (idleLabel === null) idleLabel = speakLabel.textContent;
-					speakLabel.setAttribute('data-i18n-owned', '1');
-					speakLabel.innerHTML = `<span class="btn-spin"></span>${label || 'Working…'}`;
-				} else if (idleLabel !== null) {
-					speakLabel.textContent = idleLabel;
-					speakLabel.removeAttribute('data-i18n-owned');
-					idleLabel = null;
-				}
-			}
-
-			function teardownAudio() {
-				if (amplitudeDriver) { amplitudeDriver.stop(); amplitudeDriver = null; }
-				if (audioTap) { audioTap.disconnect(); audioTap = null; }
-				if (audioEl) { audioEl.pause(); audioEl.src = ''; audioEl = null; }
-				player.reset();
-				mouthTarget.setMouthShape({ open: 0, wide: 0, round: 0 });
-				clearMeters();
-			}
-
-			function onEnded() {
-				mode = 'idle';
-				busy(false);
-				setStatus('Done.');
-				player.reset();
-				clearMeters();
-			}
-
-			// ── The pipeline ──────────────────────────────────────────────────────
-			async function speak() {
-				const text = $('text').value.trim();
-				if (!text) { setStatus('Enter some text first.'); return; }
-				if (!avatarReady) { setStatus('Avatar still loading…'); return; }
-
-				clearError();
-				teardownAudio();
-				busy(true, 'Synthesizing…');
-				const voice = $('voice').value;
-
-				// Primary path: one round-trip to /api/a2f → Magpie audio + A2F track.
-				setStatus('Generating voice + facial animation…', true);
-				let data = null;
-				try {
-					const res = await fetch('/api/a2f', {
-						method: 'POST',
-						headers: { 'content-type': 'application/json' },
-						body: JSON.stringify({ text, voice }),
-					});
-					if (res.ok) {
-						data = await res.json();
-					} else {
-						const body = await res.json().catch(() => ({}));
-						// 503 not_configured (or 404 in an environment where the route
-						// isn't deployed yet) → drop to the amplitude fallback cleanly.
-						console.info(`[a2f] endpoint returned ${res.status} (${body.error || ''}); using amplitude fallback`);
-					}
-				} catch (err) {
-					console.info(`[a2f] request failed (${err.message}); using amplitude fallback`);
-				}
-
-				if (data?.animation?.frames?.length && data?.audio?.base64) {
-					return playA2F(data);
-				}
-				// Fallback: synthesize via /api/tts/speak and drive amplitude lipsync.
-				return playAmplitude(text, voice);
-			}
-
-			function makeAudio(blobUrl) {
-				if (currentURL) URL.revokeObjectURL(currentURL);
-				currentURL = blobUrl;
-				const el = new Audio();
-				el.crossOrigin = 'anonymous';
-				el.src = blobUrl;
-				el.addEventListener('ended', onEnded);
-				el.addEventListener('error', () => {
-					mode = 'idle'; busy(false);
-					showError('Playback failed.', 'The generated audio could not be played. Try again.');
-				});
-				return el;
-			}
-
-			function b64ToBlob(b64, type) {
-				const bin = atob(b64);
-				const bytes = new Uint8Array(bin.length);
-				for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-				return new Blob([bytes], { type });
-			}
-
-			async function playA2F(data) {
-				const anim = data.animation;
-				player.setTrack(anim);
-				if (!player.hasCoverage()) {
-					// Rig has no morphs A2F can drive — honour the track but the rig
-					// can't show it, so fall back to jaw/amplitude motion instead.
-					console.info('[a2f] track received but rig exposes no usable morphs; amplitude fallback');
-					return playAmplitude($('text').value.trim(), $('voice').value, data.audio);
-				}
-				const blob = b64ToBlob(data.audio.base64, data.audio.contentType || 'audio/wav');
-				audioEl = makeAudio(URL.createObjectURL(blob));
-				mode = 'a2f';
-				pathEl.className = 'pathline a2f';
-				pathEl.innerHTML = `<b>Audio2Face-3D</b> · ${anim.frameCount} frames @ ${anim.fps} fps · ${anim.blendShapeNames.length} ARKit blendshapes · ${anim.durationSec.toFixed(1)}s`;
-				try {
-					await audioEl.play();
-					busy(true, 'Speaking…');
-					setStatus('Lips tracking the real audio.', true);
-				} catch (err) {
-					mode = 'idle'; busy(false);
-					showError('Playback was blocked.', 'Your browser needs a click to play audio — press Retry.');
-				}
-			}
-
-			async function playAmplitude(text, voice, existingAudio) {
-				try {
-					let blobUrl;
-					if (existingAudio?.base64) {
-						blobUrl = URL.createObjectURL(b64ToBlob(existingAudio.base64, existingAudio.contentType || 'audio/wav'));
-					} else {
-						setStatus('Generating voice…', true);
-						const res = await fetch('/api/tts/speak', {
-							method: 'POST',
-							headers: { 'content-type': 'application/json' },
-							body: JSON.stringify({ text, voice, format: 'wav' }),
-						});
-						if (!res.ok) {
-							const detail = res.status === 429 ? 'Rate limit reached — wait a moment.' :
-								res.status >= 500 ? 'The speech service hit an error.' : `HTTP ${res.status}.`;
-							mode = 'idle'; busy(false);
-							setStatus('');
-							showError('Speech generation failed.', detail);
-							return;
-						}
-						blobUrl = URL.createObjectURL(await res.blob());
-					}
-
-					audioEl = makeAudio(blobUrl);
-					mode = 'amplitude';
-					pathEl.className = 'pathline fallback';
-					pathEl.innerHTML = `<b>Amplitude fallback</b> · Audio2Face unavailable — driving mouth shape from the audio envelope so the avatar never freezes.`;
-
-					// Web Audio analyser → LipsyncDriver → AvatarMouthTarget.
-					audioTap = tapAudioElement(audioEl);
-					amplitudeDriver = new LipsyncDriver({ analyser: audioTap.analyser, target: mouthTarget });
-					// Reflect the amplitude 'open' value on the JawOpen meter for feedback.
-					const origSet = mouthTarget.setMouthShape.bind(mouthTarget);
-					mouthTarget.setMouthShape = (s) => { origSet(s); paintMeters((k) => k === 'jawOpen' ? (s.open || 0) : 0); };
-					amplitudeDriver.start();
-
-					await audioEl.play();
-					busy(true, 'Speaking…');
-					setStatus('Speaking with amplitude lipsync.', true);
-				} catch (err) {
-					mode = 'idle'; busy(false);
-					showError('Could not play audio.', err.message || 'Try again.');
-				}
-			}
-
-			function stop() {
-				teardownAudio();
-				mode = 'idle';
-				busy(false);
-				setStatus('Stopped.');
-			}
-
-			speakBtn.addEventListener('click', speak);
-			stopBtn.addEventListener('click', stop);
-			$('avatar').addEventListener('change', () => { stop(); loadAvatar($('avatar').value); });
-
-			// Probe capability so the UI can hint when A2F isn't configured upstream.
-			fetch('/api/a2f', { method: 'GET' })
-				.then((r) => r.ok ? r.json() : null)
-				.then((cap) => {
-					if (cap && cap.configured === false) {
-						setStatus('Audio2Face is not configured on this deployment — the avatar will speak with amplitude lipsync.');
-					}
-				})
-				.catch(() => {});
-
-			loadAvatar($('avatar').value);
-		</script>
-		<script src="/brand.js" defer></script>
+		<script type="module" src="/src/voice/digital-human-page.js"></script>
+		
+<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
 		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
