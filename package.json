@@ -477,6 +477,7 @@
 		"generate-icons": "node scripts/generate-pwa-icons.mjs",
 		"build:extension": "node scripts/build-extension-icons.mjs && node scripts/build-extension.mjs",
 		"package:edge": "node scripts/package-edge-addons.mjs",
+		"package:sharepoint": "npm --prefix integrations/microsoft/sharepoint-spfx run package:sharepoint",
 		"package:microsoft-app": "node scripts/build-microsoft-app-package.mjs",
 		"microsoft:provision": "node scripts/microsoft-provision.mjs",
 		"microsoft:saas-e2e": "node scripts/microsoft-saas-e2e.mjs",
