@@ -1,0 +1,23 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "whichFolder": "subdir",
+    "solutionName": "sharepoint-spfx",
+    "environment": "spo",
+    "packageManager": "npm",
+    "skipFeatureDeployment": true,
+    "useGulp": false,
+    "componentType": "adaptiveCardExtension",
+    "template": "none",
+    "componentName": "ThreeWsAgentCard",
+    "componentDescription": "A Viva Connections card for a three.ws agent.",
+    "plusBeta": false,
+    "isCreatingSolution": false,
+    "nodeVersion": "24.22.2",
+    "sdksVersions": {},
+    "version": "1.24.1",
+    "libraryName": "sharepoint-spfx",
+    "libraryId": "498157c3-9cd8-48d9-998c-5e13373e05b7",
+    "solutionShortDescription": "sharepoint-spfx description",
+    "aceTemplateType": "Generic"
+  }
+}

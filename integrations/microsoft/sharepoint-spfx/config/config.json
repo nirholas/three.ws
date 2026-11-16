@@ -1,0 +1,36 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "three-ws-agent-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/threeWsAgent/ThreeWsAgentWebPart.js",
+          "manifest": "./src/webparts/threeWsAgent/ThreeWsAgentWebPart.manifest.json"
+        }
+      ]
+    },
+    "three-ws-model-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/threeWsModel/ThreeWsModelWebPart.js",
+          "manifest": "./src/webparts/threeWsModel/ThreeWsModelWebPart.manifest.json"
+        }
+      ]
+    },
+    "three-ws-agent-card-adaptive-card-extension": {
+      "components": [
+        {
+          "entrypoint": "./lib/adaptiveCardExtensions/threeWsAgentCard/ThreeWsAgentCardAdaptiveCardExtension.js",
+          "manifest": "./src/adaptiveCardExtensions/threeWsAgentCard/ThreeWsAgentCardAdaptiveCardExtension.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {
+    "ThreeWsAgentWebPartStrings": "lib/webparts/threeWsAgent/loc/{locale}.js",
+    "ThreeWsModelWebPartStrings": "lib/webparts/threeWsModel/loc/{locale}.js",
+    "ThreeWsAgentCardAdaptiveCardExtensionStrings": "lib/adaptiveCardExtensions/threeWsAgentCard/loc/{locale}.js"
+  }
+}
