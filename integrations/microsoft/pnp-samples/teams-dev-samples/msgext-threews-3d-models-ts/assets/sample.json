@@ -1,0 +1,73 @@
+[
+  {
+    "name": "pnp-sp-dev-teams-sample-msgext-threews-3d-models-ts",
+    "source": "pnp",
+    "title": "three.ws 3D models message extension",
+    "shortDescription": "Teams message extension and link unfurl that shares three.ws 3D models and agents as Adaptive Cards with an interactive stage view.",
+    "url": "https://github.com/pnp/teams-dev-samples/tree/main/samples/msgext-threews-3d-models-ts",
+    "downloadUrl": "https://pnp.github.io/download-partial/?url=https://github.com/pnp/teams-dev-samples/tree/main/samples/msgext-threews-3d-models-ts",
+    "longDescription": [
+      "Search and share free three.ws 3D models and public 3D agents from the Teams compose box, or paste a three.ws link and get the same card. The card has a stage view that opens the interactive 3D viewer inside Teams. Built with the Teams AI library (@microsoft/teams.apps) and TypeScript."
+    ],
+    "creationDateTime": "2026-11-16",
+    "updateDateTime": "2026-11-16",
+    "products": [
+      "Teams"
+    ],
+    "metadata": [
+      {
+        "key": "API-PLUGIN",
+        "value": "No"
+      },
+      {
+        "key": "BOT",
+        "value": "Yes"
+      },
+      {
+        "key": "MESSAGE-EXTENSION",
+        "value": "Yes"
+      }
+    ],
+    "categories": [
+      "Teams",
+      "Message extension",
+      "Link unfurling",
+      "3D"
+    ],
+    "thumbnails": [
+      {
+        "type": "image",
+        "order": 100,
+        "url": "https://github.com/pnp/teams-dev-samples/raw/main/samples/msgext-threews-3d-models-ts/assets/message-extension-cards.png",
+        "alt": "Teams message extension results listing three.ws 3D models as Adaptive Cards"
+      },
+      {
+        "type": "image",
+        "order": 101,
+        "url": "https://github.com/pnp/teams-dev-samples/raw/main/samples/msgext-threews-3d-models-ts/assets/stage-view.png",
+        "alt": "Teams stage view showing the interactive three.ws 3D viewer"
+      }
+    ],
+    "authors": [
+      {
+        "gitHubAccount": "nirholas",
+        "company": "three.ws",
+        "pictureUrl": "https://github.com/nirholas.png"
+      }
+    ],
+    "references": [
+      {
+        "name": "three.ws developer documentation",
+        "description": "Public catalog, agents and viewer endpoints used by this sample.",
+        "url": "https://three.ws/docs"
+      },
+      {
+        "name": "Build a message extension with the Teams AI library",
+        "description": "Microsoft guidance for message extensions.",
+        "url": "https://learn.microsoft.com/microsoftteams/platform/messaging-extensions/what-are-messaging-extensions"
+      }
+    ],
+    "reponame": "msgext-threews-3d-models-ts",
+    "version": "1.0"
+  }
+]

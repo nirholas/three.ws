@@ -1,0 +1,57 @@
+[
+  {
+    "name": "pnp-copilot-pro-dev-da-threews-3d-studio",
+    "source": "pnp",
+    "title": "three.ws 3D Studio declarative agent",
+    "shortDescription": "Declarative agent for Microsoft 365 Copilot that finds free 3D models and 3D agents on three.ws, lists your own agents and generates a textured GLB from a description.",
+    "url": "https://github.com/pnp/copilot-pro-dev-samples/tree/main/samples/da-threews-3d-studio",
+    "downloadUrl": "https://pnp.github.io/download-partial/?url=https://github.com/pnp/copilot-pro-dev-samples/tree/main/samples/da-threews-3d-studio",
+    "longDescription": [
+      "This sample adds a declarative agent to Microsoft 365 Copilot with one API plugin (API key authentication). Users search a catalog of free CC0 models, find public three.ws agents, list the agents they own and generate a textured 3D model (GLB) from a plain-language prompt. Every answer is an Adaptive Card with an Open in 3D viewer link."
+    ],
+    "creationDateTime": "2026-11-16",
+    "updateDateTime": "2026-11-16",
+    "products": [
+      "Microsoft 365 Copilot"
+    ],
+    "metadata": [
+      {
+        "key": "API-PLUGIN",
+        "value": "Yes"
+      },
+      {
+        "key": "COPILOT-AGENT",
+        "value": "Declarative"
+      }
+    ],
+    "categories": [
+      "Copilot",
+      "Agents",
+      "3D",
+      "API plugin"
+    ],
+    "thumbnails": [
+      {
+        "type": "image",
+        "order": 100,
+        "url": "https://github.com/pnp/copilot-pro-dev-samples/raw/main/samples/da-threews-3d-studio/assets/search-models-card.png",
+        "alt": "Microsoft 365 Copilot showing a three.ws model search result as an Adaptive Card with a 3D viewer link"
+      }
+    ],
+    "authors": [
+      {
+        "gitHubAccount": "nirholas",
+        "company": "three.ws",
+        "pictureUrl": "https://github.com/nirholas.png"
+      }
+    ],
+    "references": [
+      {
+        "name": "three.ws developer documentation",
+        "description": "Public catalog, agents and viewer endpoints used by this sample.",
+        "url": "https://three.ws/docs"
+      }
+    ],
+    "version": "1.0"
+  }
+]

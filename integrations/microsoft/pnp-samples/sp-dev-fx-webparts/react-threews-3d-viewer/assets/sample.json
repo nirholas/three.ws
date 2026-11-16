@@ -1,0 +1,65 @@
+[
+  {
+    "name": "pnp-sp-dev-spfx-web-parts-react-threews-3d-viewer",
+    "source": "pnp",
+    "title": "three.ws 3D viewer web part",
+    "shortDescription": "SPFx web part that shows an interactive 3D model on a SharePoint page using the hosted three.ws viewer or the agent-3d web component.",
+    "url": "https://github.com/pnp/sp-dev-fx-webparts/tree/main/samples/react-threews-3d-viewer",
+    "downloadUrl": "https://pnp.github.io/download-partial/?url=https://github.com/pnp/sp-dev-fx-webparts/tree/main/samples/react-threews-3d-viewer",
+    "longDescription": [
+      "Page authors paste a GLB URL and choose a title, render mode and height in the property pane. The web part renders the model in the hosted three.ws viewer, or with the agent-3d web component loaded on demand. Includes a Teams tab manifest so the same web part works in Teams."
+    ],
+    "creationDateTime": "2026-11-16",
+    "updateDateTime": "2026-11-16",
+    "products": [
+      "SharePoint"
+    ],
+    "metadata": [
+      {
+        "key": "SAMPLE-TYPE",
+        "value": "SPFx-WebPart"
+      },
+      {
+        "key": "CLIENT-SIDE-DEV",
+        "value": "React"
+      },
+      {
+        "key": "SPFX-VERSION",
+        "value": "1.24.1"
+      },
+      {
+        "key": "PNPJS",
+        "value": "No"
+      }
+    ],
+    "categories": [
+      "SharePoint",
+      "SPFx",
+      "3D",
+      "Web part"
+    ],
+    "thumbnails": [
+      {
+        "type": "image",
+        "order": 100,
+        "url": "https://github.com/pnp/sp-dev-fx-webparts/raw/main/samples/react-threews-3d-viewer/assets/web-part.png",
+        "alt": "SharePoint page showing the three.ws 3D viewer web part with a rendered 3D model"
+      }
+    ],
+    "authors": [
+      {
+        "gitHubAccount": "nirholas",
+        "company": "three.ws",
+        "pictureUrl": "https://github.com/nirholas.png"
+      }
+    ],
+    "references": [
+      {
+        "name": "three.ws developer documentation",
+        "description": "Public catalog, agents and viewer endpoints used by this sample.",
+        "url": "https://three.ws/docs"
+      }
+    ],
+    "version": "1.0"
+  }
+]
