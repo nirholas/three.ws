@@ -1,0 +1,601 @@
+{
+  "models": 11,
+  "passed": 11,
+  "mode": "worker https://usd-export-service-lp642k3kpa-uc.a.run.app",
+  "rows": [
+    {
+      "id": "1e4c9d74-65e0-4b73-b2d9-f07325c760d6",
+      "prompt": "a wooden chair, matte finish, plain background",
+      "lane": "triposg",
+      "label": "chair",
+      "rigged": false,
+      "triangles": 22500,
+      "joints": 0,
+      "size_m": [
+        0.6066,
+        0.6283,
+        0.95
+      ],
+      "scale_method": "category-typical-size",
+      "mass_kg": 35.1742,
+      "hulls": 16,
+      "usdchecker": {
+        "usd": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 0
+        }
+      },
+      "asset_validator": {
+        "usd": {
+          "errors": 0,
+          "warnings": 2,
+          "warning_rules": [
+            "ManifoldChecker"
+          ]
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 2,
+          "warning_rules": [
+            "ManifoldChecker"
+          ]
+        }
+      },
+      "passed": true,
+      "usdz_bytes": 1041166,
+      "seconds": 19.7,
+      "task_id": "61b119144774bc3cb8bd15d75a7c1f6c5ea8da62",
+      "files": {
+        "usd": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/61b119144774bc3cb8bd15d75a7c1f6c5ea8da62/asset.usd",
+        "usda": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/61b119144774bc3cb8bd15d75a7c1f6c5ea8da62/asset.usda",
+        "usdz": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/61b119144774bc3cb8bd15d75a7c1f6c5ea8da62/asset.usdz",
+        "zip": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/61b119144774bc3cb8bd15d75a7c1f6c5ea8da62/asset.zip",
+        "report": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/61b119144774bc3cb8bd15d75a7c1f6c5ea8da62/report.json"
+      }
+    },
+    {
+      "id": "8a0cff6a-652f-461b-8d76-f4659ce0fc6d",
+      "prompt": "glazed ceramic vase, embossed floral relief, flared rim, glossy teal, Add intric",
+      "lane": "triposg",
+      "label": "vase",
+      "rigged": false,
+      "triangles": 22498,
+      "joints": 0,
+      "size_m": [
+        0.2725,
+        0.273,
+        0.35
+      ],
+      "scale_method": "category-typical-size",
+      "mass_kg": 9.4747,
+      "hulls": 24,
+      "usdchecker": {
+        "usd": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 0
+        }
+      },
+      "asset_validator": {
+        "usd": {
+          "errors": 0,
+          "warnings": 0,
+          "warning_rules": []
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 0,
+          "warning_rules": []
+        }
+      },
+      "passed": true,
+      "usdz_bytes": 717269,
+      "seconds": 25.5,
+      "task_id": "18c128329f3ad0014aad6ab152bcb17e3d5da65b",
+      "files": {
+        "usd": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/18c128329f3ad0014aad6ab152bcb17e3d5da65b/asset.usd",
+        "usda": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/18c128329f3ad0014aad6ab152bcb17e3d5da65b/asset.usda",
+        "usdz": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/18c128329f3ad0014aad6ab152bcb17e3d5da65b/asset.usdz",
+        "zip": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/18c128329f3ad0014aad6ab152bcb17e3d5da65b/asset.zip",
+        "report": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/18c128329f3ad0014aad6ab152bcb17e3d5da65b/report.json"
+      }
+    },
+    {
+      "id": "cbc2a58e-8bff-44cd-8324-a6282449fbbb",
+      "prompt": "Stylized faceted mid-poly flying squirrel standing on all four legs, side view, ",
+      "lane": "triposg",
+      "label": "rodent",
+      "rigged": false,
+      "triangles": 22500,
+      "joints": 0,
+      "size_m": [
+        0.4,
+        0.1238,
+        0.1587
+      ],
+      "scale_method": "category-typical-size",
+      "mass_kg": 1.6539,
+      "hulls": 10,
+      "usdchecker": {
+        "usd": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 0
+        }
+      },
+      "asset_validator": {
+        "usd": {
+          "errors": 0,
+          "warnings": 0,
+          "warning_rules": []
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 0,
+          "warning_rules": []
+        }
+      },
+      "passed": true,
+      "usdz_bytes": 656603,
+      "seconds": 13.0,
+      "task_id": "621a839b0684bfb6f7f2555f0e578959c0be558d",
+      "files": {
+        "usd": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/621a839b0684bfb6f7f2555f0e578959c0be558d/asset.usd",
+        "usda": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/621a839b0684bfb6f7f2555f0e578959c0be558d/asset.usda",
+        "usdz": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/621a839b0684bfb6f7f2555f0e578959c0be558d/asset.usdz",
+        "zip": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/621a839b0684bfb6f7f2555f0e578959c0be558d/asset.zip",
+        "report": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/621a839b0684bfb6f7f2555f0e578959c0be558d/report.json"
+      }
+    },
+    {
+      "id": "943c6787-ebf4-44da-83f3-2317eef49bb1",
+      "prompt": "upholstered dining chair, dark wood frame, cream fabric tufted back and seat, na",
+      "lane": "trellis_selfhost",
+      "label": "chair",
+      "rigged": false,
+      "triangles": 29664,
+      "joints": 0,
+      "size_m": [
+        0.5809,
+        0.6141,
+        0.9995
+      ],
+      "scale_method": "native",
+      "mass_kg": 26.6743,
+      "hulls": 8,
+      "usdchecker": {
+        "usd": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 0
+        }
+      },
+      "asset_validator": {
+        "usd": {
+          "errors": 0,
+          "warnings": 2,
+          "warning_rules": [
+            "IndexedPrimvarChecker",
+            "ManifoldChecker"
+          ]
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 2,
+          "warning_rules": [
+            "IndexedPrimvarChecker",
+            "ManifoldChecker"
+          ]
+        }
+      },
+      "passed": true,
+      "usdz_bytes": 12288717,
+      "seconds": 22.8,
+      "task_id": "6ef7271385b552f36d9ae151a5c38e0dd2717410",
+      "files": {
+        "usd": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/6ef7271385b552f36d9ae151a5c38e0dd2717410/asset.usd",
+        "usda": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/6ef7271385b552f36d9ae151a5c38e0dd2717410/asset.usda",
+        "usdz": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/6ef7271385b552f36d9ae151a5c38e0dd2717410/asset.usdz",
+        "zip": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/6ef7271385b552f36d9ae151a5c38e0dd2717410/asset.zip",
+        "report": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/6ef7271385b552f36d9ae151a5c38e0dd2717410/report.json"
+      }
+    },
+    {
+      "id": "c8547eed-446b-456f-b52a-79ea46430766",
+      "prompt": "a low poly duck, simple game asset",
+      "lane": "trellis_selfhost",
+      "label": "bird",
+      "rigged": false,
+      "triangles": 20552,
+      "joints": 0,
+      "size_m": [
+        0.1761,
+        0.4,
+        0.3303
+      ],
+      "scale_method": "category-typical-size",
+      "mass_kg": 3.741,
+      "hulls": 11,
+      "usdchecker": {
+        "usd": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 0
+        }
+      },
+      "asset_validator": {
+        "usd": {
+          "errors": 0,
+          "warnings": 1,
+          "warning_rules": [
+            "ManifoldChecker"
+          ]
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 1,
+          "warning_rules": [
+            "ManifoldChecker"
+          ]
+        }
+      },
+      "passed": true,
+      "usdz_bytes": 39601791,
+      "seconds": 39.1,
+      "task_id": "5ce7b358b2d7f3772fdea694689b6cf0a0ea48e8",
+      "files": {
+        "usd": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/5ce7b358b2d7f3772fdea694689b6cf0a0ea48e8/asset.usd",
+        "usda": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/5ce7b358b2d7f3772fdea694689b6cf0a0ea48e8/asset.usda",
+        "usdz": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/5ce7b358b2d7f3772fdea694689b6cf0a0ea48e8/asset.usdz",
+        "zip": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/5ce7b358b2d7f3772fdea694689b6cf0a0ea48e8/asset.zip",
+        "report": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/5ce7b358b2d7f3772fdea694689b6cf0a0ea48e8/report.json"
+      }
+    },
+    {
+      "id": "5fe20c33-15e3-491e-91af-cf4ada42beea",
+      "prompt": "i need the car   \u200cmodel\u200c",
+      "lane": "trellis_selfhost",
+      "label": "car",
+      "rigged": false,
+      "triangles": 78272,
+      "joints": 0,
+      "size_m": [
+        3.4067,
+        4.5,
+        1.9819
+      ],
+      "scale_method": "category-typical-size",
+      "mass_kg": 1237.1552,
+      "hulls": 24,
+      "usdchecker": {
+        "usd": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 0
+        }
+      },
+      "asset_validator": {
+        "usd": {
+          "errors": 0,
+          "warnings": 2,
+          "warning_rules": [
+            "IndexedPrimvarChecker",
+            "ManifoldChecker"
+          ]
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 2,
+          "warning_rules": [
+            "IndexedPrimvarChecker",
+            "ManifoldChecker"
+          ]
+        }
+      },
+      "passed": true,
+      "usdz_bytes": 10645976,
+      "seconds": 51.3,
+      "task_id": "1b51536c16ed6dfc06b758399dc324a3f17e3b10",
+      "files": {
+        "usd": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/1b51536c16ed6dfc06b758399dc324a3f17e3b10/asset.usd",
+        "usda": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/1b51536c16ed6dfc06b758399dc324a3f17e3b10/asset.usda",
+        "usdz": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/1b51536c16ed6dfc06b758399dc324a3f17e3b10/asset.usdz",
+        "zip": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/1b51536c16ed6dfc06b758399dc324a3f17e3b10/asset.zip",
+        "report": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/1b51536c16ed6dfc06b758399dc324a3f17e3b10/report.json"
+      }
+    },
+    {
+      "id": "3891b587-1d4b-4856-8bf6-9b75278bd5cb",
+      "prompt": "Create a detailed 3D cyber-security shield inspired by the DPES Cyber Security C",
+      "lane": "hunyuan3d",
+      "label": "shield",
+      "rigged": false,
+      "triangles": 30000,
+      "joints": 0,
+      "size_m": [
+        0.1671,
+        0.9,
+        0.2286
+      ],
+      "scale_method": "category-typical-size",
+      "mass_kg": 1.5243,
+      "hulls": 14,
+      "usdchecker": {
+        "usd": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 0
+        }
+      },
+      "asset_validator": {
+        "usd": {
+          "errors": 0,
+          "warnings": 2,
+          "warning_rules": [
+            "IndexedPrimvarChecker",
+            "ManifoldChecker"
+          ]
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 2,
+          "warning_rules": [
+            "IndexedPrimvarChecker",
+            "ManifoldChecker"
+          ]
+        }
+      },
+      "passed": true,
+      "usdz_bytes": 6333331,
+      "seconds": 22.9,
+      "task_id": "399a49f808371aae530aa7aee10cc6aa06b8eca7",
+      "files": {
+        "usd": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/399a49f808371aae530aa7aee10cc6aa06b8eca7/asset.usd",
+        "usda": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/399a49f808371aae530aa7aee10cc6aa06b8eca7/asset.usda",
+        "usdz": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/399a49f808371aae530aa7aee10cc6aa06b8eca7/asset.usdz",
+        "zip": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/399a49f808371aae530aa7aee10cc6aa06b8eca7/asset.zip",
+        "report": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/399a49f808371aae530aa7aee10cc6aa06b8eca7/report.json"
+      }
+    },
+    {
+      "id": "6ad4d72d-a696-4530-9ce1-3a7fd4a80046",
+      "prompt": "Create The Cipher Core, a premium 3D cybersecurity artifact inspired by reverse ",
+      "lane": "hunyuan3d",
+      "label": "device",
+      "rigged": false,
+      "triangles": 30000,
+      "joints": 0,
+      "size_m": [
+        0.0833,
+        0.4,
+        0.0819
+      ],
+      "scale_method": "category-typical-size",
+      "mass_kg": 0.6734,
+      "hulls": 10,
+      "usdchecker": {
+        "usd": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 0
+        }
+      },
+      "asset_validator": {
+        "usd": {
+          "errors": 0,
+          "warnings": 1,
+          "warning_rules": [
+            "ManifoldChecker"
+          ]
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 1,
+          "warning_rules": [
+            "ManifoldChecker"
+          ]
+        }
+      },
+      "passed": true,
+      "usdz_bytes": 7909234,
+      "seconds": 19.8,
+      "task_id": "9812f8c778aad4241d93524a40cf725de4ebf60b",
+      "files": {
+        "usd": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/9812f8c778aad4241d93524a40cf725de4ebf60b/asset.usd",
+        "usda": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/9812f8c778aad4241d93524a40cf725de4ebf60b/asset.usda",
+        "usdz": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/9812f8c778aad4241d93524a40cf725de4ebf60b/asset.usdz",
+        "zip": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/9812f8c778aad4241d93524a40cf725de4ebf60b/asset.zip",
+        "report": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/9812f8c778aad4241d93524a40cf725de4ebf60b/report.json"
+      }
+    },
+    {
+      "id": "c1a4378a-a859-490a-af1c-4f5306824def",
+      "prompt": "a pair of retro chunky-sole basketball sneakers in black and gold, bold silhouet",
+      "lane": "hunyuan3d",
+      "label": "shoe",
+      "rigged": false,
+      "triangles": 30000,
+      "joints": 0,
+      "size_m": [
+        0.3,
+        0.2489,
+        0.2102
+      ],
+      "scale_method": "category-typical-size",
+      "mass_kg": 1.6441,
+      "hulls": 24,
+      "usdchecker": {
+        "usd": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 0
+        }
+      },
+      "asset_validator": {
+        "usd": {
+          "errors": 0,
+          "warnings": 1,
+          "warning_rules": [
+            "ManifoldChecker"
+          ]
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 1,
+          "warning_rules": [
+            "ManifoldChecker"
+          ]
+        }
+      },
+      "passed": true,
+      "usdz_bytes": 5320363,
+      "seconds": 57.5,
+      "task_id": "8e176a078e2c963cb0bf44d5f810ad1f8c71c4a5",
+      "files": {
+        "usd": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/8e176a078e2c963cb0bf44d5f810ad1f8c71c4a5/asset.usd",
+        "usda": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/8e176a078e2c963cb0bf44d5f810ad1f8c71c4a5/asset.usda",
+        "usdz": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/8e176a078e2c963cb0bf44d5f810ad1f8c71c4a5/asset.usdz",
+        "zip": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/8e176a078e2c963cb0bf44d5f810ad1f8c71c4a5/asset.zip",
+        "report": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/8e176a078e2c963cb0bf44d5f810ad1f8c71c4a5/report.json"
+      }
+    },
+    {
+      "id": "f25348ec-0f5a-4bcc-a6f1-8a42967f513d",
+      "prompt": "a pair of white wireless over-ear headphones with padded cushions and a folding ",
+      "lane": "hunyuan3d",
+      "label": "headphones",
+      "rigged": false,
+      "triangles": 30000,
+      "joints": 0,
+      "size_m": [
+        0.1854,
+        0.1264,
+        0.2
+      ],
+      "scale_method": "category-typical-size",
+      "mass_kg": 0.5043,
+      "hulls": 24,
+      "usdchecker": {
+        "usd": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 0
+        }
+      },
+      "asset_validator": {
+        "usd": {
+          "errors": 0,
+          "warnings": 2,
+          "warning_rules": [
+            "IndexedPrimvarChecker",
+            "ManifoldChecker"
+          ]
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 2,
+          "warning_rules": [
+            "IndexedPrimvarChecker",
+            "ManifoldChecker"
+          ]
+        }
+      },
+      "passed": true,
+      "usdz_bytes": 6706786,
+      "seconds": 54.9,
+      "task_id": "72fa39c929e1835aeaf8b89ad8c04ce1c01010c3",
+      "files": {
+        "usd": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/72fa39c929e1835aeaf8b89ad8c04ce1c01010c3/asset.usd",
+        "usda": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/72fa39c929e1835aeaf8b89ad8c04ce1c01010c3/asset.usda",
+        "usdz": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/72fa39c929e1835aeaf8b89ad8c04ce1c01010c3/asset.usdz",
+        "zip": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/72fa39c929e1835aeaf8b89ad8c04ce1c01010c3/asset.zip",
+        "report": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/72fa39c929e1835aeaf8b89ad8c04ce1c01010c3/report.json"
+      }
+    },
+    {
+      "id": "168db152-5a66-48d9-b897-0752df6843f0",
+      "prompt": "auto-rig",
+      "lane": null,
+      "label": "person",
+      "rigged": true,
+      "triangles": 112498,
+      "joints": 52,
+      "size_m": [
+        0.8898,
+        0.4549,
+        1.872
+      ],
+      "scale_method": "native",
+      "mass_kg": 214.2043,
+      "hulls": 15,
+      "usdchecker": {
+        "usd": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 0
+        }
+      },
+      "asset_validator": {
+        "usd": {
+          "errors": 0,
+          "warnings": 2,
+          "warning_rules": [
+            "ManifoldChecker"
+          ]
+        },
+        "usdz": {
+          "errors": 0,
+          "warnings": 2,
+          "warning_rules": [
+            "ManifoldChecker"
+          ]
+        }
+      },
+      "passed": true,
+      "usdz_bytes": 4870433,
+      "seconds": 28.7,
+      "task_id": "f560aa7aaaa822574145f909ad4672defde4e410",
+      "files": {
+        "usd": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/f560aa7aaaa822574145f909ad4672defde4e410/asset.usd",
+        "usda": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/f560aa7aaaa822574145f909ad4672defde4e410/asset.usda",
+        "usdz": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/f560aa7aaaa822574145f909ad4672defde4e410/asset.usdz",
+        "zip": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/f560aa7aaaa822574145f909ad4672defde4e410/asset.zip",
+        "report": "https://storage.googleapis.com/three-ws-avatar-reconstructions/usd/f560aa7aaaa822574145f909ad4672defde4e410/report.json"
+      }
+    }
+  ]
+}

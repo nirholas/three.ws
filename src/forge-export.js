@@ -31,6 +31,7 @@ import { creationIdFromGlbUrl, mountSlicerMenuItems } from './slicer-handoff.js'
 import { mountCraftcloudMenuItem } from './craftcloud-print.js';
 import { mountMinecraftMenuItem } from './forge-minecraft.js';
 import { mountPowerPointMenuItem } from './forge-powerpoint.js';
+import { mountOpenUsdMenuItem } from './forge-openusd.js';
 import { mountOneDriveMenuItem } from './forge-onedrive.js';
 
 const log = createLogger('forge-export');
@@ -127,12 +128,17 @@ if (download && resultPanel) {
 			transform: translateX(var(--export-menu-shift, 0px));
 			border: 1px solid var(--border, rgba(255,255,255,0.14));
 			border-radius: 12px;
-			background: var(--surface-1, #16161d);
+			background: var(--bg-1, #16161d); /* solid: --surface-1 is a 3% tint, so the page showed through */
 			box-shadow: 0 16px 40px rgba(0,0,0,0.45);
 			opacity: 0; pointer-events: none;
 			transition: opacity 0.16s ease, transform 0.16s ease;
+			/* Opens upward; clampIntoView() caps the height to the room above
+			   the button so every row stays reachable by scrolling. */
+			max-height: var(--export-menu-max-h, 70vh);
+			overflow-y: auto; overscroll-behavior: contain;
 		}
 		.export-menu { transform: translate(var(--export-menu-shift, 0px), 6px); }
+		.export-menu.opens-down { bottom: auto; top: calc(100% + 8px); }
 		.export-menu.is-open {
 			opacity: 1; pointer-events: auto;
 			transform: translate(var(--export-menu-shift, 0px), 0);
@@ -241,6 +247,13 @@ if (download && resultPanel) {
 		isLocalEdit: () => (download.getAttribute('href') || '').startsWith('blob:'),
 	});
 
+	// OpenUSD (simulation-ready): collision hulls, mass, semantics and
+	// skeletons for Omniverse and Isaac Sim, validated on the server
+	// (api/forge/export-usd.js, workers/usd-export).
+	const openUsdItem = mountOpenUsdMenuItem(menu, {
+		isLocalEdit: () => (download.getAttribute('href') || '').startsWith('blob:'),
+	});
+
 	// OneDrive: GLB, poster and slide into a OneDrive or SharePoint folder the
 	// person picks (src/forge-onedrive.js). Hidden unless the server has the
 	// Entra client id configured.
@@ -266,11 +279,25 @@ if (download && resultPanel) {
 	// ever overflowing the document, so no scrollbar appeared to hint at it.
 	// Measure once per open and slide it back inside the gutter.
 	const VIEWPORT_GUTTER_PX = 12;
+	// It opens upward and has outgrown a laptop screen (at 1440x900 the GLB and
+	// OBJ rows sat 530px above the viewport, unreachable), so the height is
+	// capped to the room between the top of the screen and the button.
+	const MENU_GAP_PX = 8;
 	function clampIntoView() {
-		menu.style.removeProperty('--export-menu-shift');
-		const left = menu.getBoundingClientRect().left;
+		const anchor = split.getBoundingClientRect();
+		const above = anchor.top - MENU_GAP_PX - VIEWPORT_GUTTER_PX;
+		const below = innerHeight - anchor.bottom - MENU_GAP_PX - VIEWPORT_GUTTER_PX;
+		// Scrolled so the button is near the top: open downward instead.
+		const down = above < menu.scrollHeight && below > above;
+		menu.classList.toggle('opens-down', down);
+		menu.style.setProperty('--export-menu-max-h', `${Math.max(200, Math.floor(down ? below : above))}px`);
+		// From layout, not getBoundingClientRect(): a scroll can re-run this
+		// mid-transition, when the rect still carries the animating transform.
+		const left = anchor.right - menu.offsetWidth;
 		if (left < VIEWPORT_GUTTER_PX) {
 			menu.style.setProperty('--export-menu-shift', `${Math.ceil(VIEWPORT_GUTTER_PX - left)}px`);
+		} else {
+			menu.style.removeProperty('--export-menu-shift');
 		}
 	}
 
@@ -287,6 +314,14 @@ if (download && resultPanel) {
 	addEventListener('resize', () => {
 		if (menu.classList.contains('is-open')) clampIntoView();
 	});
+	// So does a page scroll: the room above the button changes with it.
+	addEventListener(
+		'scroll',
+		() => {
+			if (menu.classList.contains('is-open')) clampIntoView();
+		},
+		{ passive: true },
+	);
 	const isOpen = () => menu.classList.contains('is-open');
 
 	caret.addEventListener('click', () => setOpen(!isOpen()));
@@ -531,6 +566,7 @@ if (download && resultPanel) {
 		craftcloudItem.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl), e.detail?.glbUrl || null);
 		minecraftItem.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl), e.detail?.glbUrl || null);
 		powerPointItem.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl));
+		openUsdItem.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl));
 		oneDriveItem.setModel({
 			glbUrl: e.detail?.glbUrl || null,
 			label: e.detail?.label || '',
