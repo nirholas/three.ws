@@ -7,7 +7,7 @@ const API = '/api/ops/microsoft-leads';
 const STATUSES = ['new', 'contacted', 'qualified', 'closed'];
 const STATUS_LABEL = { new: 'New', contacted: 'Contacted', qualified: 'Qualified', closed: 'Closed' };
 const ACTION_LABEL = { PLT: 'Contact me', INS: 'Acquired', Create: 'Portal purchase', DNC: 'Do not contact' };
-const SOURCE_LABEL = { AzureMarketplace: 'Azure Marketplace', AppSource: 'AppSource', AzurePortal: 'Azure portal', other: 'Other' };
+const SOURCE_LABEL = { AzureMarketplace: 'Azure Marketplace', AppSource: 'AppSource', AzurePortal: 'Azure portal', Website: 'Enterprise page', other: 'Other' };
 const DRAFT_LABEL = { pending: 'Draft pending', ready: 'Draft ready', failed: 'Draft failed', skipped: 'No draft' };
 
 const listEl = document.getElementById('ml-list');

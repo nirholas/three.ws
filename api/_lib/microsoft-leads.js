@@ -39,7 +39,11 @@ import { telegramTransport, emailTransport } from './alerts.js';
 
 const MARKETPLACE = JSON.parse(readFileSync(new URL('../../data/microsoft-marketplace.json', import.meta.url), 'utf8'));
 
-export const LEAD_SOURCES = Object.freeze(['AzureMarketplace', 'AzurePortal', 'AppSource']);
+// Website is the three.ws enterprise page's contact form (/enterprise, posted
+// through api/enterprise/contact.js), stored in the same shape so one admin
+// view and one follow-up pipeline cover every business lead.
+export const LEAD_SOURCES = Object.freeze(['AzureMarketplace', 'AzurePortal', 'AppSource', 'Website']);
+export const WEBSITE_LEAD_SOURCE = 'Website-PLT';
 export const LEAD_ACTIONS = Object.freeze(['INS', 'PLT', 'DNC', 'Create']);
 export const LEAD_STATUSES = Object.freeze(['new', 'contacted', 'qualified', 'closed']);
 export const DRAFT_STATUSES = Object.freeze(['pending', 'ready', 'failed', 'skipped']);
@@ -105,6 +109,7 @@ function normalizeSource(raw) {
 	if (key === 'azuremarketplace') return 'AzureMarketplace';
 	if (key === 'azureportal') return 'AzurePortal';
 	if (key === 'appsource' || key === 'spza' || key === 'appsourcespza') return 'AppSource';
+	if (key === 'website') return 'Website';
 	return 'other';
 }
 
@@ -224,10 +229,11 @@ export function ownerMessage(lead, origin = env.APP_ORIGIN) {
 	const who = lead.company ? `${name}, ${lead.company}` : name;
 	const actionLabel = ACTION_LABEL[lead.action] || lead.action || 'unknown action';
 	const link = `${ADMIN_PATH}?id=${encodeURIComponent(lead.id)}`;
-	const title = `Microsoft Marketplace lead: ${who}`;
+	const fromWebsite = lead.source === 'Website';
+	const title = `${fromWebsite ? 'Enterprise page inquiry' : 'Microsoft Marketplace lead'}: ${who}`;
 	const summary = `${actionLabel} via ${lead.source === 'other' ? lead.leadSourceRaw || 'an unknown source' : lead.source}${lead.offerTitle ? ` on ${lead.offerTitle}` : ''}`;
 	const text = [
-		'New Microsoft Marketplace lead',
+		fromWebsite ? 'New inquiry from the three.ws enterprise page' : 'New Microsoft Marketplace lead',
 		`Who: ${who}`,
 		`Source: ${lead.source === 'other' ? lead.leadSourceRaw || 'unknown' : lead.source}`,
 		`Action: ${actionLabel}${lead.action && ACTION_LABEL[lead.action] ? ` (${lead.action})` : ''}`,
@@ -347,6 +353,8 @@ const OFFER_FACTS = [
 	`Plans on the Microsoft Marketplace SaaS offer: ${Object.keys(MARKETPLACE.plans).join(', ')}. Pricing: https://three.ws/pricing.`,
 	`A Microsoft Marketplace purchase is activated at https://three.ws${MARKETPLACE.landing_path} with a Microsoft sign-in, and grants the same plan a direct purchase does.`,
 	'Docs: https://three.ws/docs. Embedding guide: https://three.ws/docs/embedding.',
+	'Procurement and security review: https://three.ws/enterprise (buying paths, identity, deployment surfaces, a printable vendor packet) and https://three.ws/trust (hosting on Google Cloud Run in us-central1, encryption, retention, subprocessors, an honest compliance status with no SOC 2 or ISO certification today).',
+	'Identity: Sign in with Microsoft, an Entra tenant claim for a team, and SCIM 2.0 provisioning from Microsoft Entra ID are built: https://three.ws/docs/enterprise-sso.',
 ];
 
 const ACTION_GUIDANCE = {
@@ -361,8 +369,9 @@ const ACTION_GUIDANCE = {
  */
 export function draftPrompt(lead) {
 	const isOurOffer = lead.offerId === MARKETPLACE.offer_id;
+	const fromWebsite = lead.source === 'Website';
 	const system = [
-		'You write the first reply email from the three.ws team to a business lead who came from Microsoft Marketplace.',
+		`You write the first reply email from the three.ws team to a business lead who came from ${fromWebsite ? 'the three.ws enterprise page (https://three.ws/enterprise)' : 'Microsoft Marketplace'}.`,
 		'Rules:',
 		'- Facts about three.ws come only from the FACTS list. Never invent features, prices, customers or timelines.',
 		'- About Microsoft you may say only: "three.ws and Microsoft have announced a partnership" and "three.ws is live on Microsoft Marketplace". Never claim a Microsoft partner tier, certification, co-sell status or endorsement.',
@@ -379,7 +388,9 @@ export function draftPrompt(lead) {
 		`Lead action: ${ACTION_LABEL[lead.action] || lead.action || 'unknown'}.`,
 		ACTION_GUIDANCE[lead.action] || ACTION_GUIDANCE.PLT,
 		`Offer: ${lead.offerTitle || (isOurOffer ? 'three.ws' : 'a three.ws listing')}${lead.offerId ? ` (offer id ${lead.offerId})` : ''}.`,
-		`Marketplace: ${lead.source === 'other' ? lead.leadSourceRaw || 'Microsoft Marketplace' : lead.source}.`,
+		fromWebsite
+			? 'Came from: the contact form on https://three.ws/enterprise. They are evaluating three.ws for their company; answer procurement, security or deployment questions from the FACTS only.'
+			: `Marketplace: ${lead.source === 'other' ? lead.leadSourceRaw || 'Microsoft Marketplace' : lead.source}.`,
 		`First name: ${lead.firstName || 'not given'}.`,
 		`Company: ${lead.company || 'not given'}.`,
 		`Their role: ${lead.jobTitle || 'not given'}.`,

@@ -1,0 +1,98 @@
+{
+	"$comment": "The single source for /enterprise (pages/enterprise.html, src/enterprise.js), the /pricing company row and the printable procurement packet. Deployment surface statuses are not repeated here: they come from data/microsoft-surfaces.json, the same file /microsoft renders. Change a status only with evidence. tests/enterprise.test.js validates the shape and fails on any certification, co-sell or partner-tier claim.",
+	"updated": "2026-11-16",
+	"marketplace": {
+		"publisher_profile_url": "https://marketplace.microsoft.com/en-us/partners/d11c4453-6e12-499d-8dfe-48fcbaa22e2f/overview",
+		"offer_url": "",
+		"offer_comment": "Set offer_url to the public SaaS offer page once Partner Center publishes it. Empty means the page and /pricing link the publisher profile and /enterprise instead."
+	},
+	"publisher": {
+		"name": "three.ws",
+		"legal_entity": "",
+		"legal_entity_comment": "Fill with the registered entity name and country from the Partner Center account record. Empty means the packet says the details come with the order form.",
+		"website": "https://three.ws",
+		"source": "https://github.com/nirholas/three.ws",
+		"license": "Apache-2.0"
+	},
+	"contacts": {
+		"sales": "support@three.ws",
+		"security": "security@three.ws",
+		"privacy": "privacy@three.ws"
+	},
+	"attestation": {
+		"name": "Microsoft 365 App Compliance: Publisher Attestation",
+		"status": "in preparation",
+		"detail": "Answers are drafted from the code and have not been submitted. three.ws holds no SOC 2 or ISO 27001 report today."
+	},
+	"buy": [
+		{
+			"id": "marketplace",
+			"name": "Microsoft Marketplace",
+			"summary": "Find three.ws on Microsoft Marketplace and buy through the Microsoft relationship your company already has. A Marketplace subscription grants the same plan a direct purchase does, activated with a Microsoft sign-in.",
+			"probe": "marketplace"
+		},
+		{
+			"id": "invoice",
+			"name": "Invoice or purchase order",
+			"summary": "Send your PO, vendor onboarding form or order form through the contact form below. We reply within one business day with a quote and invoice terms.",
+			"action": { "label": "Start a quote", "url": "#contact" }
+		},
+		{
+			"id": "self-serve",
+			"name": "Self-serve on three.ws",
+			"summary": "Buy the Pro plan yourself on the pricing page with an on-chain wallet payment. There is no card checkout today: companies that need one use Marketplace or an invoice.",
+			"action": { "label": "See plans", "url": "/pricing" }
+		}
+	],
+	"identity": [
+		{
+			"id": "microsoft-signin",
+			"name": "Sign in with Microsoft",
+			"status": "built, not switched on",
+			"probe": "sso",
+			"detail": "OpenID Connect on the common authority with PKCE, accounts keyed by tenant and object id, strict per-tenant issuer checks.",
+			"link": { "label": "How it works", "url": "/docs/enterprise-sso" }
+		},
+		{
+			"id": "tenant-claim",
+			"name": "Entra tenant claim",
+			"status": "built, not switched on",
+			"probe": "sso",
+			"detail": "A directory administrator claims the organisation's tenant for a team, so colleagues are offered the team or joined automatically when they sign in.",
+			"link": { "label": "Claim a tenant", "url": "/docs/enterprise-sso" }
+		},
+		{
+			"id": "scim",
+			"name": "SCIM 2.0 provisioning",
+			"status": "built, not switched on",
+			"probe": "sso",
+			"detail": "Microsoft Entra ID adds, updates and removes people over SCIM at https://three.ws/scim/v2 with a per-team token stored only as a hash.",
+			"link": { "label": "SCIM setup", "url": "/docs/enterprise-sso" }
+		},
+		{
+			"id": "saml",
+			"name": "SAML 2.0 single sign-on",
+			"status": "available on request",
+			"detail": "Service-provider support is built and is enabled per deployment with your identity provider. It is not enabled on three.ws today.",
+			"link": { "label": "Authentication details", "url": "/trust#authentication" }
+		}
+	],
+	"surfaces": ["marketplace", "teams", "mcp", "power-platform", "edge", "store"],
+	"security": [
+		{ "label": "Hosting", "value": "Google Cloud Run, us-central1 (Iowa, United States). Database on Neon managed PostgreSQL, AWS us-west-2 (Oregon). Files in Cloudflare R2. All customer data is processed in the United States.", "link": "/trust#hosting" },
+		{ "label": "Encryption in transit", "value": "HTTPS only, HSTS with preload on every response, TLS to the database, storage and model providers.", "link": "/trust#encryption" },
+		{ "label": "Encryption at rest", "value": "Provider encryption at rest on every store, plus application-level AES-256-GCM for wallet and provider keys. Sessions, refresh tokens and API keys stored only as SHA-256 hashes; passwords with bcrypt.", "link": "/trust#encryption" },
+		{ "label": "Access control", "value": "Every API request checked against the caller's scopes. OAuth 2.1 with PKCE (S256 only) for apps, one-hour audience-bound access tokens, rotating refresh tokens, revocable scoped API keys.", "link": "/trust#access" },
+		{ "label": "Retention", "value": "Every retention window is enforced by a scheduled job: sessions deleted 30 days after expiry, security audit logs kept 365 days then archived, raw MCP sessions 30 days.", "link": "/trust#retention" },
+		{ "label": "Backups", "value": "Neon point-in-time restore, archives to Google Cloud Storage verified before rows are pruned, immutable Cloud Run revisions for one-command rollback.", "link": "/trust#backups" },
+		{ "label": "AI data use", "value": "Which model providers see prompts, and for what, is listed per provider on the subprocessor list.", "link": "/trust#ai" },
+		{ "label": "Incidents", "value": "Automatic detection, documented containment steps, and notification of affected people if a breach affects personal data.", "link": "/trust#incidents" },
+		{ "label": "Vulnerability disclosure", "value": "Report to security@three.ws. The code is open source under Apache 2.0, so reviewers can read every control.", "link": "/trust#disclosure" }
+	],
+	"support": [
+		{ "label": "Enterprise inquiries", "value": "Reply within one business day through the contact form or support@three.ws." },
+		{ "label": "Service status", "value": "Live service status and incident history are public.", "link": "/status" },
+		{ "label": "Uptime commitment", "value": "No standard uptime SLA is published today. Service levels are agreed per contract on Enterprise plans." },
+		{ "label": "Data processing agreement", "value": "Send your DPA or vendor questionnaire through the contact form and we review it with you." }
+	]
+}

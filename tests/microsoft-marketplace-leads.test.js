@@ -118,7 +118,8 @@ describe('validateLeadPayload: documented lead sources and actions', () => {
 	}
 
 	it('exports the documented sets', () => {
-		expect([...LEAD_SOURCES]).toEqual(['AzureMarketplace', 'AzurePortal', 'AppSource']);
+		// The three Microsoft sources plus Website, the /enterprise contact form.
+		expect([...LEAD_SOURCES]).toEqual(['AzureMarketplace', 'AzurePortal', 'AppSource', 'Website']);
 		expect([...LEAD_ACTIONS]).toEqual(['INS', 'PLT', 'DNC', 'Create']);
 	});
 
