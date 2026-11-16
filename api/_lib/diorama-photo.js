@@ -1,8 +1,9 @@
 // Diorama: rebuild a scene from one photo.
 //
-// The vision chain (api/_lib/vision.js: the free OpenRouter routes lead for this
-// caller, then the NIM lane, Vertex Gemini, and the paid OpenAI backstop) reads the photo as a set
-// designer would: it lists the separable physical objects, boxes each one,
+// The vision chain (api/_lib/vision.js: NIM nemotron-3.5-super-vl leads for this
+// caller, per VISION_TASK_LEAD.diorama from the 2026-11-16 vision eval, then the
+// rest of the NIM lane, the free OpenRouter routes, Vertex Gemini, and the paid
+// OpenAI backstop) reads the photo as a set designer would: it lists the separable physical objects, boxes each one,
 // estimates its real size and distance, and says what it rests on.
 // src/diorama/photo-layout.js turns that report into a placed plan; the browser
 // then forges every object (from its crop of the photo where it is fully

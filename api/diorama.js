@@ -237,7 +237,7 @@ async function handleComposePhoto(req, res, body) {
 	}
 
 	try {
-		const { diorama } = await composePlanFromPhoto({
+		const { diorama, provider, model } = await composePlanFromPhoto({
 			imageUrl: imageUrl || null,
 			imageBase64: inline?.base64 ?? null,
 			mimeType: inline?.mimeType,
@@ -245,7 +245,8 @@ async function handleComposePhoto(req, res, body) {
 			// the public gallery); any other URL is read once and not republished.
 			sourceImage: imageUrl && isOwnStorageUrl(imageUrl) ? imageUrl : null,
 		});
-		return json(res, 200, { diorama });
+		// provider/model name the vision rung that read the photo, as /api/vision does.
+		return json(res, 200, { diorama, provider, model });
 	} catch (err) {
 		if (err?.code === 'photo_unreadable') {
 			return json(res, 422, { error: 'photo_unreadable', message: err.message });
