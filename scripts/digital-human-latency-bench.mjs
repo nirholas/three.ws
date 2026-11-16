@@ -18,7 +18,7 @@
 //   --strategy <s>         pipelined | serial (default pipelined)
 //   --runs <n>             turns to run (default 20)
 //   --gap <ms>             pause between turns (default 2500)
-//   --audio <wav>          question fixture (default tests/fixtures/digital-human/question-16k.wav)
+//   --audio <wav>          question fixture (default data/digital-human/question-16k.wav)
 //   --login                sign in with AUDIT_EMAIL / AUDIT_PASSWORD (per-account limits)
 //   --kiosk-key-file <f>   send the booth key from this file (x-kiosk-key)
 //   --label <name>         store the summary under this name in --out
@@ -43,7 +43,7 @@ function parseArgs(argv) {
 		strategy: 'pipelined',
 		runs: 20,
 		gap: 2500,
-		audio: path.join(ROOT, 'tests/fixtures/digital-human/question-16k.wav'),
+		audio: path.join(ROOT, 'data/digital-human/question-16k.wav'),
 		login: false,
 		kioskKeyFile: null,
 		label: null,

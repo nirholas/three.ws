@@ -28,6 +28,10 @@ import {
 import { StreamSpeechPlayer } from './stream-speech-player.js';
 import { speakWithVisemes, browserVoiceSupported } from './viseme-fallback.js';
 import { gateUtterance, encodeWav } from './utterance-gate.js';
+import { mountEmotionPanel } from './emotion-panel.js';
+import '../game/vrm-boot.js';
+import { installVrmPlugin, prepareVrmModel } from '../game/vrm-loader.js';
+import { isSafeQueryModelUrl } from '../shared/safe-model-url.js';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -64,8 +68,12 @@ try {
 } catch {
 	kioskKey = null;
 }
+// Facial emotion: mounted once the A2F player exists (below); every spoken
+// line carries the current choice.
+let emotionPanel = null;
 const client = createDigitalHumanClient({
 	headers: KIOSK && kioskKey ? { 'x-kiosk-key': kioskKey } : {},
+	emotion: () => emotionPanel?.requestFields() ?? null,
 });
 const health = new LaneHealth();
 
@@ -156,6 +164,7 @@ function resize() {
 window.addEventListener('resize', resize);
 
 const loader = new GLTFLoader();
+installVrmPlugin(loader); // VRM avatars: expression presets, humanoid, look-at
 const decodersReady = getDecoders().then(({ dracoLoader, ktx2Loader, meshoptDecoder }) => {
 	loader
 		.setDRACOLoader(dracoLoader)
@@ -165,7 +174,10 @@ const decodersReady = getDecoders().then(({ dracoLoader, ktx2Loader, meshoptDeco
 const a2f = new A2FPlayer();
 const mouthTarget = new AvatarMouthTarget();
 let currentModel = null;
+let currentVrm = null;
 let avatarReady = false;
+let lastFrameAt = performance.now();
+emotionPanel = mountEmotionPanel($('emotion-panel'), { player: a2f, params });
 
 async function loadAvatar(url) {
 	avatarReady = false;
@@ -175,11 +187,13 @@ async function loadAvatar(url) {
 	try {
 		await decodersReady;
 		const gltf = await loader.loadAsync(url);
+		prepareVrmModel(gltf);
 		if (currentModel) {
 			scene.remove(currentModel);
 			disposeModel(currentModel);
 		}
 		currentModel = gltf.scene;
+		currentVrm = gltf.userData?.vrm || null;
 		const box = new THREE.Box3().setFromObject(currentModel);
 		if (box.max.y - box.min.y > 0.1) currentModel.position.y = -box.min.y;
 		scene.add(currentModel);
@@ -190,7 +204,9 @@ async function loadAvatar(url) {
 		const cov = a2f.describe();
 		const conv = cov.direct.length
 			? 'ARKit / RPM'
-			: cov.expression.length
+			: cov.vrmExpressions
+				? 'VRM expressions'
+				: cov.expression.length
 				? 'VRM / viseme'
 				: mouthTarget.hasMouthMorphs()
 					? 'generic morphs'
@@ -199,12 +215,14 @@ async function loadAvatar(url) {
 						: 'head fallback';
 		const drivers = cov.direct.length
 			? `${cov.direct.length} ARKit morphs (direct)`
-			: cov.expression.length
+			: cov.vrmExpressions
+				? 'aa/ih/ou/ee/oh presets'
+				: cov.expression.length
 				? `${cov.expression.length} viseme morphs (derived)`
 				: 'amplitude only';
 		badgeEl.replaceChildren(
 			Object.assign(document.createElement('b'), { textContent: conv }),
-			` · ${drivers}`,
+			` · ${drivers} · emotion tuned for ${cov.rig}`,
 		);
 	} catch (err) {
 		loadingText.textContent = `Avatar load failed: ${err.message}. Pick another rig or reload.`;
@@ -636,6 +654,7 @@ function makeSink(bubble) {
 		},
 		segment: () => setStatus('Speaking…', true),
 		line: (i, type, data) => {
+			if (type === 'intent') emotionPanel.noteIntent(data.emotion);
 			if (type === 'degraded') {
 				setLane('face', [
 					'fallback',
@@ -837,6 +856,38 @@ $('avatar').addEventListener('change', () => {
 	stopSpeaking('stopped');
 	loadAvatar($('avatar').value);
 });
+// Your own rig straight from disk: a blob URL, nothing is uploaded.
+let ownAvatarUrl = null;
+$('own-avatar').addEventListener('change', (ev) => {
+	const file = ev.target.files?.[0];
+	if (!file) return;
+	stopSpeaking('stopped');
+	if (ownAvatarUrl) URL.revokeObjectURL(ownAvatarUrl);
+	ownAvatarUrl = URL.createObjectURL(file);
+	selectAvatarOption(ownAvatarUrl, `Yours: ${file.name}`, true);
+	loadAvatar(ownAvatarUrl);
+});
+function selectAvatarOption(value, label, own = false) {
+	const select = $('avatar');
+	let opt = [...select.options].find((o) => o.value === value || (own && o.dataset.own));
+	if (!opt) {
+		opt = new Option(label, value);
+		if (own) opt.dataset.own = '1';
+		select.add(opt);
+	}
+	opt.value = value;
+	opt.textContent = label;
+	select.value = value;
+}
+// ?avatar=<same-origin path | trusted https URL> preselects a rig.
+function initialAvatar() {
+	const want = params.get('avatar');
+	if (!want) return $('avatar').value;
+	const sameOrigin = want.startsWith('/') && !want.startsWith('//');
+	if (!sameOrigin && !isSafeQueryModelUrl(want)) return $('avatar').value;
+	selectAvatarOption(want, want.split('/').pop().split('?')[0]);
+	return want;
+}
 
 // ── Warm path: preconnect both NVIDIA channels before the first question ──
 async function warm() {
@@ -965,6 +1016,10 @@ function startKiosk() {
 function tick() {
 	requestAnimationFrame(tick);
 	controls.update();
+	const now = performance.now();
+	currentVrm?.update(Math.min((now - lastFrameAt) / 1000, 0.1));
+	lastFrameAt = now;
+	emotionPanel.paint(speech?.mouthSource === 'a2f' ? a2f.currentEmotion() : null);
 	if (speech?.mouthSource === 'a2f') paintMeters((k) => a2f.currentWeight(k));
 	else if (speech) paintMeters((k) => (k === 'jawOpen' ? speech.shape.open || 0 : 0));
 	renderer.render(scene, camera);
@@ -972,7 +1027,7 @@ function tick() {
 tick();
 
 resetPtt();
-loadAvatar($('avatar').value).then(resize);
+loadAvatar(initialAvatar()).then(resize);
 if (KIOSK) startKiosk();
 else {
 	// Preconnect on the first sign of intent, not on page load: a visitor who

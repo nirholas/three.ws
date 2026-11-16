@@ -873,12 +873,27 @@ function renderShell(glbUrl) {
 		talkBtn?.addEventListener(ev, () => loadTalkMode().catch(() => {}), { once: true, passive: true });
 	}
 	$('av-download')?.addEventListener('click', openDownloadMenu);
+	// The clip renderer draws every frame of the export on its own WebGL
+	// context. Freeze the profile stage meanwhile so the two never compete for
+	// the GPU; the returned function restores whatever was running.
+	const holdViewerForClip = () => {
+		const mv = $('av-viewer');
+		if (!mv) return undefined;
+		const rotating = mv.hasAttribute('auto-rotate');
+		const playing = typeof mv.paused === 'boolean' && !mv.paused;
+		mv.removeAttribute('auto-rotate');
+		if (playing) mv.pause?.();
+		return () => {
+			if (rotating) mv.setAttribute('auto-rotate', '');
+			if (playing) mv.play?.();
+		};
+	};
 	$('av-clip')?.addEventListener('click', async (ev) => {
 		const btn = ev.currentTarget;
 		btn.disabled = true;
 		try {
 			const { openClipDialog } = await loadClipDialog();
-			openClipDialog({ name: avatar.name, glbUrl });
+			openClipDialog({ name: avatar.name, glbUrl, onClose: holdViewerForClip() });
 		} catch {
 			btn.textContent = 'Clip unavailable, retry';
 		} finally {

@@ -153,6 +153,12 @@
 			body.kiosk .ptt .mic { width: 30px; height: 30px; }
 			body.kiosk .caption { bottom: 260px; font-size: clamp(20px, 2.6vw, 32px); }
 			body.kiosk .status { font-size: 15px; justify-content: center; }
+			.own-input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+			.own-label { align-self: flex-start; text-transform: none !important; letter-spacing: 0 !important; font-size: 12px !important; color: #9fe9bd !important; cursor: pointer; border-radius: 6px; padding: 2px 0; text-decoration: underline; text-decoration-color: rgba(159, 233, 189, 0.35); text-underline-offset: 3px; transition: color var(--duration-fast) var(--ease-standard), text-decoration-color var(--duration-fast) var(--ease-standard); }
+			.own-label:hover { color: #cfeede !important; text-decoration-color: #cfeede; }
+			.own-label:active { color: #76e0a1 !important; }
+			.own-input:focus-visible + .own-label { outline: 2px solid #2c6b46; outline-offset: 2px; }
+			body.kiosk #emotion-panel, body.kiosk .own-label { display: none !important; }
 			@media (prefers-reduced-motion: reduce) { .bubble { animation: none; } .bubble.pending:empty::after { animation: none; } }
 		</style>
 		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Audio2Face digital human","description":"Talk to a 3D digital human: NVIDIA Riva ASR, NVIDIA Magpie voice and NVIDIA Audio2Face-3D facial animation, pipelined in the browser.","url":"https://three.ws/audio2face","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
@@ -233,6 +239,8 @@
 								<option value="/avatars/realistic-male.glb" data-i18n="demos_audio2face.realistic_male">Realistic male</option>
 								<option value="/avatars/selfie-girl.glb" data-i18n="demos_audio2face.selfie_girl">Selfie girl</option>
 							</select>
+							<input type="file" id="own-avatar" class="own-input" accept=".glb,.vrm,model/gltf-binary" />
+							<label for="own-avatar" class="own-label" data-i18n="demos_audio2face.use_your_own_avatar">Use your own .glb or .vrm</label>
 						</div>
 						<div class="field">
 							<label for="voice" data-i18n="demos_audio2face.voice">Voice</label>
@@ -248,6 +256,8 @@
 							</select>
 						</div>
 					</div>
+
+					<div id="emotion-panel"></div>
 
 					<div class="field shapes-field">
 						<label data-i18n="demos_audio2face.live_blendshapes">Live blendshapes</label>

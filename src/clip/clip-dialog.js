@@ -89,9 +89,11 @@ async function requestVoice(payload, signal) {
 
 /**
  * Open the clip dialog for an avatar.
- * @param {{ name:string, glbUrl:string, defaultText?:string }} opts
+ * `onClose` runs once when the dialog closes, so a host page can pause its own
+ * live viewer while a clip renders and resume it afterwards.
+ * @param {{ name:string, glbUrl:string, defaultText?:string, onClose?:() => void }} opts
  */
-export function openClipDialog({ name, glbUrl, defaultText = '' }) {
+export function openClipDialog({ name, glbUrl, defaultText = '', onClose }) {
 	if (!glbUrl) return;
 	if (open) open.close();
 
@@ -131,7 +133,7 @@ export function openClipDialog({ name, glbUrl, defaultText = '' }) {
 	document.body.appendChild(dlg);
 	const body = dlg.querySelector('[data-slot="body"]');
 
-	const close = () => {
+	const close = ({ reopening = false } = {}) => {
 		state.abort?.abort();
 		if (state.resultUrl) URL.revokeObjectURL(state.resultUrl);
 		state.bgImage?.close?.();
@@ -139,6 +141,7 @@ export function openClipDialog({ name, glbUrl, defaultText = '' }) {
 		dlg.remove();
 		open = null;
 		state.lastFocus?.focus?.();
+		if (!reopening) onClose?.();
 	};
 	open = { close };
 	dlg.addEventListener('cancel', (e) => {
@@ -505,7 +508,7 @@ export function openClipDialog({ name, glbUrl, defaultText = '' }) {
 			renderMessage({
 				title: 'Could not load clip options',
 				text: 'Check your connection and try again.',
-				actions: [{ id: 'retry', label: 'Try again', primary: true, onClick: () => { close(); openClipDialog({ name, glbUrl, defaultText }); } }],
+				actions: [{ id: 'retry', label: 'Try again', primary: true, onClick: () => { close({ reopening: true }); openClipDialog({ name, glbUrl, defaultText, onClose }); } }],
 			});
 		}
 	})();
