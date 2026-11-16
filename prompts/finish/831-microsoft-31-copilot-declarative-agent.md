@@ -1,5 +1,7 @@
 # microsoft 31: a three.ws declarative agent for Microsoft 365 Copilot, built on the existing MCP tools
 
+Status 2026-11-16: built and validated (97d6fe763, 6396778e1, db9f17888, df7587dab, 041f954b8). 4 of 6 starters proven on production. Remaining owner step: deploy main (contains R2 reference fix c3ec82891), then rerun the proof for "Rigged mascot" and "Inspect a model" and record their job ids in docs/microsoft-copilot-agent.md.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3131.
 
 ## Operating clause (binding)
