@@ -135,6 +135,10 @@ function stubNvidia({ pageElements = 'ok', phantomTable = false } = {}) {
 				}));
 			}
 			if (u.endsWith('/nemotron-table-structure-v1')) return reply(200, cv(structureForCrop()));
+			// A table box with no text layer inside is OCRed (it may be a pasted
+			// screenshot). The only such box here is the blank phantom, so OCR
+			// reads nothing, as the model does on blank space.
+			if (u.endsWith('/nemotron-ocr-v2')) return reply(200, { data: [{ index: 0, text_detections: [] }] });
 			throw new Error(`unexpected fetch in test: ${u}`);
 		}),
 	);

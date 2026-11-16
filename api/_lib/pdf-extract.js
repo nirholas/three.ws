@@ -73,12 +73,16 @@ async function tableBlock(render, box, pageWordsAll, scanned) {
 	const area = padBox(box, 0.01);
 	const image = await crop(render, area);
 	const structurePromise = tableStructure(image);
-	const words = scanned ? explodeLines(await ocr(image)) : toCrop(wordsIn(pageWordsAll, padBox(box, 0.003)), area);
+	let words = scanned ? [] : toCrop(wordsIn(pageWordsAll, padBox(box, 0.003)), area);
+	// A table pasted in as a picture (a screenshot) has no text layer even on a
+	// born-digital page, so its words come from OCR of the crop.
+	const viaOcr = words.length < 3;
+	if (viaOcr) words = explodeLines(await ocr(image));
 	const structure = await structurePromise;
 	const cells = assembleTable(structure, words);
 	const markdown = cells ? tableMarkdown(cells) : '';
 	const text = markdown || groupLines(words).map((l) => l.text).join('\n');
-	return { type: 'table', bbox: bboxOf(box), text, markdown, cells: cells || null, method: scanned ? 'ocr' : 'text-layer' };
+	return { type: 'table', bbox: bboxOf(box), text, markdown, cells: cells || null, method: viaOcr ? 'ocr' : 'text-layer' };
 }
 
 async function chartBlock(render, box, pageWordsAll, scanned) {
