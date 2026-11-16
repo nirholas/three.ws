@@ -84,8 +84,10 @@ export const COSMOS_JUDGE_DEFAULTS = Object.freeze({
 	model: readEnv('COSMOS_REASON_MODEL') || 'nvidia/cosmos-reason2-8b',
 	renderSize: numEnv('COSMOS_REASON_RENDER_SIZE', 448),
 	timeoutMs: numEnv('COSMOS_REASON_TIMEOUT_MS', 45_000),
-	// Cosmos Reason can think before answering. The eval measured both; the
-	// default follows it (see docs/nvidia/evals/).
+	// Cosmos Reason can think before answering. Off by default: with this rubric
+	// it answers in about 35 tokens either way, and asking it to think did not
+	// produce a trace on the probes (2026-11-16), so the flag only raises the
+	// output budget. The eval ran with it off.
 	reasoning: readEnv('COSMOS_REASON_THINK') === '1',
 	// A rejection only counts as a veto at or above this confidence.
 	vetoConfidence: numEnv('FORGE_COSMOS_VETO_CONFIDENCE', 0.7),

@@ -12,8 +12,9 @@
 //
 // Then the report: agreement with the human label, precision and recall on
 // rejects, Cohen's kappa, latency, per-issue reject rates, and the promotion
-// rule applied to a held-out half. Written to
-// docs/nvidia/evals/cosmos-reason-judge-<date>.md with the raw rows beside it.
+// rule applied to a held-out half. The numbers and every row are written to
+// docs/nvidia/evals/data/cosmos-reason-judge-<date>.json (summary alone in
+// .summary.json); the written report beside them in docs/nvidia/evals/ cites it.
 //
 //   node --env-file=<prod env> scripts/cosmos-judge-eval.mjs            judge + report
 //   node --env-file=<prod env> scripts/cosmos-judge-eval.mjs --report   report only
