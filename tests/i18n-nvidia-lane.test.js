@@ -18,6 +18,7 @@ import {
 	translateWithRequeue,
 	backoffDelay,
 	runWithResume,
+	BACK_TRANSLATION,
 } from '../scripts/lib/i18n-quality.mjs';
 import {
 	NVIDIA_DEFAULT_MODEL,
@@ -58,6 +59,11 @@ describe('routing', () => {
 		expect(resolveNvidiaModel('xx', routes)).toEqual({ model: NVIDIA_DEFAULT_MODEL, eligible: true, source: 'default' });
 	});
 
+	it('hands back the second qualifying model as the fallback for keys the first keeps failing', () => {
+		const r = { locales: { sv: { model: RIVA, eligible: true, fallback: ULTRA } } };
+		expect(resolveNvidiaModel('sv', r)).toEqual({ model: RIVA, eligible: true, source: 'eval', fallback: ULTRA });
+	});
+
 	it('lets an explicit --model pin override the table, even for a refused locale', () => {
 		expect(resolveNvidiaModel('am', routes, { pinned: ULTRA })).toEqual({ model: ULTRA, eligible: true, source: 'pinned' });
 	});
@@ -95,6 +101,12 @@ describe('choosing a route from evaluation cells', () => {
 	it('prefers the smaller model inside the tie band', () => {
 		const r = chooseRoute('sv', [cell(RIVA, 67.8), cell(ULTRA, 68.2)]);
 		expect(r.model).toBe(RIVA);
+	});
+
+	it('records the best other qualifier as the fallback, and none when only one qualifies', () => {
+		const r = chooseRoute('sv', [cell(RIVA, 67.8), cell(LIGHTNING, 62, 0.9), cell(ULTRA, 68.2)]);
+		expect(r.fallback).toBe(ULTRA);
+		expect(chooseRoute('de', [cell(ULTRA, 68), cell(RIVA, 10)]).fallback).toBeNull();
 	});
 
 	it('disqualifies a model that breaks placeholders, however fluent', () => {
@@ -260,11 +272,39 @@ describe('quality gate', () => {
 			...b,
 			out: { a: 'Starta en ny konversation med din agent', b: 'Dela modellänken med ditt team' },
 			back: { a: 'Begin a fresh chat alongside the agent', b: 'Give your group the link for the model' },
-			bar: { minKeyChrF: 0, minBatchChrF: 90 },
+			bar: { minKeyChrF: 0, minBatchChrF: 90, minBatchKeys: 0 },
 		});
 		expect(r.passed).toEqual({});
 		expect(r.batchChrF).toBeLessThan(90);
 		expect(r.failed.a[0]).toMatch(/^batch back-translation chrF/);
+	});
+
+	it('rejects a key whose back-translation never came back without dragging the batch mean to zero', () => {
+		const b = batch({
+			a: 'Your agent can now accept payments from other agents',
+			b: 'Share the rigged model link with your whole team today',
+			c: 'Download the finished avatar as a binary GLB file',
+			d: 'Open the dashboard to review every receipt your agent paid',
+			e: 'Pick a voice for your agent before the meetup starts',
+			lost: 'This key was dropped from the back-translation reply',
+		});
+		const out = Object.fromEntries(Object.keys(b.masked).map((k) => [k, `sv ${b.masked[k]}`]));
+		const back = Object.fromEntries(Object.keys(b.masked).filter((k) => k !== 'lost').map((k) => [k, b.masked[k]]));
+		const r = gateBatch({ code: 'sv', ...b, out, back });
+		expect(r.failed).toEqual({ lost: ['back-translation missing'] });
+		expect(r.batchChrF).toBe(100);
+	});
+
+	it('leaves a small batch to the per-key floor instead of the noisy batch mean', () => {
+		const b = batch({ a: 'Outbound spend, across every Payment Session', c: 'Re-fetch outbound receipts now' });
+		const r = gateBatch({
+			code: 'sv',
+			...b,
+			out: { a: 'Utgående utgifter, över varje betalningssession', c: 'Hämta utgående kvitton igen nu' },
+			back: { a: 'Money spent outward in all payment sessions', c: 'Get the outgoing receipts again' },
+		});
+		expect(r.batchChrF).toBeLessThan(BACK_TRANSLATION.minBatchChrF);
+		expect(Object.keys(r.passed)).toEqual(['a', 'c']);
 	});
 
 	it('does not score short labels on back-translation, where a synonym swings chrF', () => {
@@ -284,6 +324,15 @@ describe('quality gate', () => {
 	it('only calls a short identical label an echo when it is a real sentence', () => {
 		expect(isEcho('API key', 'API key')).toBe(false);
 		expect(isEcho('Save your changes before leaving', 'save your changes before leaving')).toBe(true);
+	});
+
+	it('does not call a code sample an echo, since code must come back unchanged', () => {
+		const src = '<strong>iframe</strong> - <code>&lt;iframe src="/agents/:id/embed"&gt;</code>';
+		const { mask: m } = buildMasker([]);
+		const masked = m(src).masked;
+		expect(isEcho(masked, masked, src)).toBe(false);
+		const prose = 'Embed the agent on any page with one line';
+		expect(isEcho(prose, prose, prose)).toBe(true);
 	});
 
 	it('compares token multisets, so a duplicated or renumbered token fails', () => {

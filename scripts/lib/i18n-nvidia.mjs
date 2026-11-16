@@ -168,13 +168,20 @@ export function loadNvidiaRoutes(path = ROUTES_PATH) {
  * than writing translations it already measured as below standard. A locale
  * the evaluation never scored keeps the lane default and stays eligible, so a
  * newly added locale is not silently dropped.
+ *
+ * `fallback` is the second model that cleared the bar for the locale, when
+ * there is one: the pipeline sends it the final re-queue round, the keys the
+ * first model kept failing (Riva drops long, markup-heavy values that
+ * Nemotron renders cleanly).
  */
 export function resolveNvidiaModel(code, routes, { pinned = '' } = {}) {
 	if (pinned) return { model: pinned, eligible: true, source: 'pinned' };
 	const r = routes?.locales?.[code];
 	if (!r) return { model: NVIDIA_DEFAULT_MODEL, eligible: true, source: 'default' };
 	if (!r.model) return { model: null, eligible: false, source: 'eval' };
-	return { model: r.model, eligible: r.eligible !== false, source: 'eval' };
+	const out = { model: r.model, eligible: r.eligible !== false, source: 'eval' };
+	if (r.fallback) out.fallback = r.fallback;
+	return out;
 }
 
 function parseJsonReply(raw) {

@@ -133,10 +133,23 @@ export function lengthSane(source, out, code) {
 // A model that gives up hands the English back. For a real sentence that is a
 // failure even when every token survived: the key would be written, counted as
 // translated, and render in English forever. Short labels are exempt because
-// many are identical across languages ("OK", "Email", "API").
-export function isEcho(maskedSource, maskedOut) {
-	const words = String(maskedSource).replace(TOKEN_RE, ' ').match(/[A-Za-z]{2,}/g) || [];
-	if (words.length < 4) return false;
+// many are identical across languages ("OK", "Email", "API"), and so is code:
+// when the original source is passed, words inside <code>/<pre> blocks, tags,
+// entities and URLs do not count, since a code sample must come back unchanged.
+function proseWords(text) {
+	return (
+		String(text ?? '')
+			.replace(/<(code|pre|kbd|samp)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ')
+			.replace(/<[^>]+>/g, ' ')
+			.replace(/&[#a-zA-Z0-9]+;/g, ' ')
+			.replace(/https?:\/\/\S+/g, ' ')
+			.replace(TOKEN_RE, ' ')
+			.match(/[A-Za-z]{2,}/g) || []
+	);
+}
+
+export function isEcho(maskedSource, maskedOut, source = maskedSource) {
+	if (proseWords(source).length < 4) return false;
 	const norm = (s) => String(s).replace(/\s+/g, ' ').trim().toLowerCase();
 	return norm(maskedSource) === norm(maskedOut);
 }
@@ -157,6 +170,10 @@ export const BACK_TRANSLATION = {
 	// below this was translated by a model that is struggling with the
 	// language, and all of it goes back to the queue.
 	minBatchChrF: 40,
+	// The batch mean only applies from this many scored keys. On the two or
+	// three keys a re-queued round sends, one loose paraphrase is the whole
+	// mean, and the per-key floor already judges each of them.
+	minBatchKeys: 5,
 };
 
 /**
@@ -195,7 +212,7 @@ export function gateBatch({ code, masked, sources, out, unmask, back = null, bar
 		const value = unmask(k, v);
 		if (markupDrift(sources[k], value)) reject(k, 'markup drift');
 		if (!lengthSane(m, v, code)) reject(k, 'length out of range');
-		if (isEcho(m, v)) reject(k, 'untranslated echo');
+		if (isEcho(m, v, sources[k])) reject(k, 'untranslated echo');
 		if (!failed[k]) passed[k] = value;
 	}
 
@@ -206,8 +223,15 @@ export function gateBatch({ code, masked, sources, out, unmask, back = null, bar
 			const src = String(masked[k]).replace(TOKEN_RE, ' ');
 			if (src.replace(/\s+/g, '').length < b.minScoredChars) continue;
 			const bt = back[k];
-			const score = typeof bt === 'string' ? chrF(bt.replace(TOKEN_RE, ' '), src) : 0;
-			scored.push([k, score]);
+			// A value the back-translation reply dropped was never judged, so it
+			// is re-queued as unverified rather than scored 0, which would also
+			// sink every key in the batch mean.
+			if (typeof bt !== 'string' || !bt.trim()) {
+				delete passed[k];
+				reject(k, 'back-translation missing');
+				continue;
+			}
+			scored.push([k, chrF(bt.replace(TOKEN_RE, ' '), src)]);
 		}
 		if (scored.length) {
 			batchChrF = scored.reduce((s, [, x]) => s + x, 0) / scored.length;
@@ -217,7 +241,7 @@ export function gateBatch({ code, masked, sources, out, unmask, back = null, bar
 					reject(k, `back-translation chrF ${score.toFixed(1)} < ${b.minKeyChrF}`);
 				}
 			}
-			if (batchChrF < b.minBatchChrF) {
+			if (scored.length >= b.minBatchKeys && batchChrF < b.minBatchChrF) {
 				for (const k of Object.keys(passed)) {
 					delete passed[k];
 					reject(k, `batch back-translation chrF ${batchChrF.toFixed(1)} < ${b.minBatchChrF}`);

@@ -784,11 +784,12 @@ function nvidiaRoute(code) {
 }
 
 function nvidiaLaneCall() {
-	return async ({ code, langName, payload, fromName }) => {
+	return async ({ code, langName, payload, fromName, fallback = false }) => {
 		const key = process.env.NVIDIA_API_KEY?.trim();
 		if (!key) throw configError('NVIDIA_API_KEY not set');
+		const route = nvidiaRoute(code);
 		return nvidiaTranslate({
-			model: nvidiaRoute(code).model,
+			model: fallback && route.fallback ? route.fallback : route.model,
 			langName,
 			payload,
 			fromName,
@@ -814,7 +815,9 @@ function promptLane(fn) {
 
 /**
  * The ordered backend chain for one locale. Each rung's `call` takes a job
- * `{ code, langName, payload, fromName }` and resolves to key -> value.
+ * `{ code, langName, payload, fromName, fallback }` and resolves to key ->
+ * value. `fallback` asks the nvidia rung for the locale's second qualifying
+ * model; other rungs ignore it.
  *
  * The nvidia rung is left out for a locale the evaluation measured below the
  * bar on every NVIDIA model: sending it there would only produce translations
@@ -923,7 +926,7 @@ async function callBackendWithRetry(call, job, attempt = 0) {
 // OpenRouter). Each backend gets its full retry budget before the next is tried;
 // only when every backend is exhausted does the error propagate (to the caller's
 // halve-and-retry / English-fallback logic).
-async function translateChunk(code, langName, payload, fromName = 'English') {
+async function translateChunk(code, langName, payload, fromName = 'English', { fallback = false } = {}) {
 	const chain = backendChain(code);
 	if (!chain.length) {
 		throw configError(
@@ -933,7 +936,7 @@ async function translateChunk(code, langName, payload, fromName = 'English') {
 	let lastErr;
 	for (const [i, b] of chain.entries()) {
 		try {
-			return await callBackendWithRetry(b.call, { code, langName, payload, fromName });
+			return await callBackendWithRetry(b.call, { code, langName, payload, fromName, fallback });
 		} catch (err) {
 			lastErr = err;
 			if (i < chain.length - 1) {
@@ -973,7 +976,7 @@ const GATE_ROUNDS = Math.max(1, Number(opt('gate-rounds') || cfg.qualityGate?.ma
  * Translate one set of keys and run the gate. Pure with respect to the
  * catalog: returns `{ passed, failed }` and writes nothing.
  */
-async function translateAndGate(code, langName, keys) {
+async function translateAndGate(code, langName, keys, { fallback = false } = {}) {
 	const masked = {};
 	const sources = {};
 	const tokenMap = {};
@@ -986,7 +989,7 @@ async function translateAndGate(code, langName, keys) {
 	const unmask = (k, v) => masker.unmask(v, tokenMap[k]);
 	let out;
 	try {
-		out = await translateChunk(code, langName, masked);
+		out = await translateChunk(code, langName, masked, 'English', { fallback });
 	} catch (err) {
 		if (isFatalAuthFailure(err)) throw err;
 		return { passed: {}, failed: Object.fromEntries(keys.map((k) => [k, [err.message.slice(0, 120)]])) };
@@ -999,7 +1002,7 @@ async function translateAndGate(code, langName, keys) {
 	const forward = Object.fromEntries(Object.keys(first.passed).map((k) => [k, out[k]]));
 	let back;
 	try {
-		back = await translateChunk(code, 'English', forward, langName);
+		back = await translateChunk(code, 'English', forward, langName, { fallback });
 	} catch (err) {
 		if (isFatalAuthFailure(err)) throw err;
 		const reason = `back-translation failed: ${err.message.slice(0, 100)}`;
@@ -1038,18 +1041,22 @@ async function translateLocale(code) {
 	// Each chunk goes through up to GATE_ROUNDS rounds. Keys the gate rejects
 	// are re-queued, and each later round splits them into smaller requests
 	// (halves, then quarters) so one value the model keeps mangling cannot keep
-	// sinking the keys batched beside it. A key that never passes is NOT
-	// written: the catalog keeps it missing, parity keeps counting it, the
+	// sinking the keys batched beside it. The final round sends each survivor
+	// alone, to the locale's second qualifying NVIDIA model when it has one:
+	// measured on the 2026-11-16 Swedish run, one long markup-heavy value made
+	// Riva return no segments at all, failing every short label batched with
+	// it, and Nemotron renders those values cleanly. A key that never passes is
+	// NOT written: the catalog keeps it missing, parity keeps counting it, the
 	// runtime shows English, and the next run retries it.
 	async function translateKeySet(keys) {
 		const { accepted, rejected } = await translateWithRequeue(
 			keys,
 			async (queue, round) => {
-				const parts = 2 ** (round - 1);
-				const size = Math.max(1, Math.ceil(queue.length / parts));
+				const final = round === GATE_ROUNDS && round > 1;
+				const size = final ? 1 : Math.max(1, Math.ceil(queue.length / 2 ** (round - 1)));
 				const merged = { passed: {}, failed: {} };
 				for (let i = 0; i < queue.length; i += size) {
-					const r = await translateAndGate(code, langName, queue.slice(i, i + size));
+					const r = await translateAndGate(code, langName, queue.slice(i, i + size), { fallback: final });
 					Object.assign(merged.passed, r.passed);
 					Object.assign(merged.failed, r.failed);
 				}

@@ -244,7 +244,9 @@ export function chooseRoute(code, cells, bar = BAR) {
 	const pick = NVIDIA_TRANSLATION_CANDIDATES.map((m) => qualified.find((c) => c.model === m)).find(
 		(c) => c && c.chrF >= top - bar.tieChrF,
 	);
-	return { model: pick.model, eligible: true, floor, chrF: pick.chrF, integrity: pick.integrity };
+	// The best other qualifier takes the keys the pick keeps failing.
+	const runnerUp = qualified.filter((c) => c.model !== pick.model).sort((x, y) => y.chrF - x.chrF)[0];
+	return { model: pick.model, eligible: true, floor, chrF: pick.chrF, integrity: pick.integrity, fallback: runnerUp?.model ?? null };
 }
 
 function cellPath(code, model) {
