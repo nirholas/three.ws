@@ -56,6 +56,14 @@ import {
 	providersInCooldown,
 } from './provider-health.js';
 import { renderAvatarScene, SCENE_PRESETS } from './avatar-render.js';
+import {
+	cosmosJudgeMode,
+	renderCosmosViews,
+	judgeWithCosmos,
+	combineJudgeVerdicts,
+	COSMOS_JUDGE_DEFAULTS,
+} from './cosmos-reason-judge.js';
+import { recordJudgeShadow } from './forge-judge-shadow.js';
 import { assertPublicHttpsUrl, SsrfError } from './ssrf.js';
 import { fetchSafePublicUrlPinned, MaxBytesExceededError, SsrfBlockedError } from './ssrf-guard.js';
 
@@ -443,7 +451,78 @@ function failOpen(reason, { subject = 'object', renderSource = 'none' } = {}) {
 }
 
 /**
- * Run the realism / quality gate on a generated model.
+ * Run the quality gate on a generated model: the current vision judge, plus the
+ * NVIDIA Cosmos Reason physical-plausibility judge when FORGE_COSMOS_JUDGE is on
+ * (cosmos-reason-judge.js). Same options and verdict shape as runCurrentJudge.
+ *
+ * Cosmos starts in parallel with the current judge, on its own four-view render
+ * of the same GLB. Both verdicts go to the forge_judge_shadow log. In shadow mode
+ * (the default once COSMOS_REASON_URL is set) the returned verdict is exactly
+ * the current judge's; the gate waits at most FORGE_COSMOS_SHADOW_GRACE_MS after
+ * the current judge for Cosmos so the log row is written inside the request
+ * (Cloud Run throttles CPU once a response is sent), then returns regardless. In
+ * a deciding mode (veto, tiebreak, primary) it waits up to the Cosmos timeout
+ * and combineJudgeVerdicts decides; a Cosmos outage leaves the current verdict.
+ *
+ * Extra options: creationId and source label the shadow row.
+ */
+export async function runQualityGate(opts = {}) {
+	const mode = cosmosJudgeMode();
+	if (mode === 'off' || !opts.glbUrl) return runCurrentJudge(opts);
+
+	const passScore = opts.passScore ?? QUALITY_GATE_DEFAULTS.passScore;
+	const t0 = Date.now();
+	const cosmosRun = (async () => {
+		let views = null;
+		try {
+			views = await renderCosmosViews(opts.glbUrl);
+		} catch (e) {
+			return { views: null, verdict: { available: false, error: `render failed: ${e?.message || e}` } };
+		}
+		return { views, verdict: await judgeWithCosmos({ views, prompt: opts.prompt || null }) };
+	})();
+
+	const current = await runCurrentJudge(opts);
+	const currentLatencyMs = Date.now() - t0;
+	const waitMs = mode === 'shadow'
+		? COSMOS_JUDGE_DEFAULTS.shadowGraceMs
+		: COSMOS_JUDGE_DEFAULTS.timeoutMs + COSMOS_JUDGE_DEFAULTS.shadowGraceMs;
+	let timer;
+	const settled = await Promise.race([
+		cosmosRun,
+		new Promise((resolve) => { timer = setTimeout(() => resolve(null), waitMs); }),
+	]);
+	clearTimeout(timer);
+
+	const { verdict, applied } = settled
+		? combineJudgeVerdicts(current, settled.verdict, { mode, passScore })
+		: { verdict: current, applied: 'current' };
+
+	const record = (run) => recordJudgeShadow({
+		source: opts.source || 'forge',
+		creationId: opts.creationId || null,
+		glbUrl: opts.glbUrl,
+		prompt: opts.prompt || null,
+		subject: current.subject || null,
+		current,
+		currentLatencyMs,
+		cosmos: run.verdict,
+		views: run.views,
+		mode,
+		applied,
+	});
+	if (settled) {
+		await record(settled);
+	} else {
+		// Cosmos is still running (cold worker): log it whenever it lands, in case
+		// the instance keeps CPU long enough. The shipped decision is already made.
+		void cosmosRun.then(record);
+	}
+	return verdict;
+}
+
+/**
+ * Run the realism / quality gate (the current vision judge) on a generated model.
  *
  * Provide the GLB to render, or a render you already have. Exactly one image is
  * scored: a provided renderBase64, else a fetched renderUrl, else a fresh render
@@ -460,7 +539,7 @@ function failOpen(reason, { subject = 'object', renderSource = 'none' } = {}) {
  * @param {object} [opts.track]         spend-ledger attribution passed to platform vision
  * @returns {Promise<object>} verdict (never throws - fail-open on any error)
  */
-export async function runQualityGate({
+export async function runCurrentJudge({
 	glbUrl = null,
 	renderUrl = null,
 	renderBase64 = null,

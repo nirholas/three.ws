@@ -40,8 +40,10 @@ steps:
       - |
         gcloud storage cat "gs://${_WEIGHTS_BUCKET}/cosmos-reason2-8b/MANIFEST.json" >/dev/null \
           || { echo "weights are not staged: run cloudbuild.weights.yaml first"; exit 1; }
+        # The build SA cannot create repositories; the repo is a one-time setup
+        # done by an operator (created 2026-11-16).
         gcloud artifacts repositories describe ${_REPO} --location=${_REGION} >/dev/null 2>&1 \
-          || gcloud artifacts repositories create ${_REPO} --repository-format=docker --location=${_REGION}
+          || { echo "create the registry once: gcloud artifacts repositories create ${_REPO} --repository-format=docker --location=${_REGION}"; exit 1; }
 
   - id: build
     name: gcr.io/cloud-builders/docker
