@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-16T15:02:58.418Z",
+	"generated_at": "2026-11-16T15:11:18.738Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4598,
+	"total": 4600,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -47,6 +47,16 @@
 			"link": "/docs/sharing",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Approve or deny your agents' actions from a Microsoft Teams card",
+			"summary": "When an agent asks to move money or run an action you hold for review, the request now also arrives in your 1:1 chat with the three.ws app in Microsoft Teams. The card shows the agent, the action, the amounts, the destination and the deadline, with Approve and Deny buttons, and it updates to show who decided and what happened. Only the account owner, matched through their linked Microsoft sign-in, can decide; anyone else sees a card with no details. A press goes through the same check as the web inbox, so an altered button, an expired request or a double click never runs an action twice. Turn it on or off and send a labelled test card that runs nothing from the Microsoft Teams panel on /approvals, or type approvals in the chat to list what is waiting.",
+			"link": "/approvals",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1528,16 +1538,6 @@
 			"link": "/radar",
 			"tags": [
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-05",
-			"type": "update",
-			"title": "Every animation in the gallery plays again",
-			"summary": "Opening any of the 469 community clips on /animations showed \"Couldn't load this clip's preview\", and clips that did load froze in a T-pose at 0.0s once the detail view opened. Community clips now load in the gallery, the Animation Studio and every embed, and the detail view plays each clip from start to finish with a working scrubber.",
-			"link": "/animations",
-			"tags": [
-				"fix"
 			]
 		}
 	]

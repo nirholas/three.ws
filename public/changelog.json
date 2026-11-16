@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T15:02:58.259Z",
+	"generated_at": "2026-11-16T15:11:18.564Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -44,6 +44,16 @@
 			"link": "/docs/sharing",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Approve or deny your agents' actions from a Microsoft Teams card",
+			"summary": "When an agent asks to move money or run an action you hold for review, the request now also arrives in your 1:1 chat with the three.ws app in Microsoft Teams. The card shows the agent, the action, the amounts, the destination and the deadline, with Approve and Deny buttons, and it updates to show who decided and what happened. Only the account owner, matched through their linked Microsoft sign-in, can decide; anyone else sees a card with no details. A press goes through the same check as the web inbox, so an altered button, an expired request or a double click never runs an action twice. Turn it on or off and send a labelled test card that runs nothing from the Microsoft Teams panel on /approvals, or type approvals in the chat to list what is waiting.",
+			"link": "/approvals",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -4003,6 +4013,17 @@
 			"link": "/chat",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-30",
+			"type": "update",
+			"title": "The web desktop now opens as a clean dark graphite desktop with a menu bar and dock",
+			"summary": "New visitors land in the Aqua shell on a neutral graphite wallpaper: a top menu bar, a magnifying dock, traffic-light window controls and a neutral titlebar instead of the purple Mica tint. Desktop shortcuts and the File Explorer now say Computer and Trash, and the address bar still accepts This PC and Recycle Bin. Fluent and Classic stay one click away in Settings, Personalization.",
+			"link": null,
+			"tags": [
+				"desktop",
+				"improvement"
 			]
 		},
 		{

@@ -39,6 +39,14 @@
 			<description>Share creations and agents to Teams and LinkedIn, the link-preview rules both enforce, and how to refresh a stale LinkedIn card.</description>
 		</item>
 		<item>
+			<title>Approve or deny your agents' actions from a Microsoft Teams card</title>
+			<link>https://three.ws/approvals</link>
+			<guid isPermaLink="false">2026-11-16:Approve or deny your agents' actions from a Microsoft Teams card</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>When an agent asks to move money or run an action you hold for review, the request now also arrives in your 1:1 chat with the three.ws app in Microsoft Teams. The card shows the agent, the action, the amounts, the destination and the deadline, with Approve and Deny buttons, and it updates to show who decided and what happened. Only the account owner, matched through their linked Microsoft sign-in, can decide; anyone else sees a card with no details. A press goes through the same check as the web inbox, so an altered button, an expired request or a double click never runs an action twice. Turn it on or off and send a labelled test card that runs nothing from the Microsoft Teams panel on /approvals, or type approvals in the chat to list what is waiting.</description>
+		</item>
+		<item>
 			<title>Call three.ws agents from Copilot Studio and Azure AI Foundry over A2A</title>
 			<link>https://three.ws/docs/microsoft-a2a</link>
 			<guid isPermaLink="false">2026-11-16:Call three.ws agents from Copilot Studio and Azure AI Foundry over A2A</guid>
@@ -3125,6 +3133,14 @@
 			<pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>When the free OpenRouter quota is exhausted, the chat now falls back to Vertex Gemini on the platform's own capacity instead of showing &quot;the built-in model is rate-limited&quot;. Tools and streaming work the same on either lane.</description>
+		</item>
+		<item>
+			<title>The web desktop now opens as a clean dark graphite desktop with a menu bar and dock</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-30:The web desktop now opens as a clean dark graphite desktop with a menu bar and dock</guid>
+			<pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
+			<category>desktop</category>
+			<description>New visitors land in the Aqua shell on a neutral graphite wallpaper: a top menu bar, a magnifying dock, traffic-light window controls and a neutral titlebar instead of the purple Mica tint. Desktop shortcuts and the File Explorer now say Computer and Trash, and the address bar still accepts This PC and Recycle Bin. Fluent and Classic stay one click away in Settings, Personalization.</description>
 		</item>
 		<item>
 			<title>three.ws partners with Microsoft and is live on Microsoft Marketplace</title>

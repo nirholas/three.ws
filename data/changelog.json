@@ -3,29 +3,58 @@
 	"entries": [
 		{
 			"date": "2026-11-16",
+			"title": "Get a Teams notification when your 3D model finishes or an agent needs you",
+			"summary": "Link your three.ws account to Microsoft Teams by sending the bot a one-time code, and finished or failed 3D models, mentions, messages and (if you choose) agent task reports appear in your Teams activity feed and on your phone. Each event has its own switch in Settings, Notifications, with a button that sends a real test notification. Tapping a notification opens the three.ws tab on that model or agent. Uninstalling the app removes the link. A tenant admin approves notifications once with the TeamsActivity.Send permission, and settings shows the consent link if that is still missing.",
+			"tags": [
+				"feature",
+				"integration"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"title": "Approve or deny your agents' actions from a Microsoft Teams card",
+			"summary": "When an agent asks to move money or run an action you hold for review, the request now also arrives in your 1:1 chat with the three.ws app in Microsoft Teams. The card shows the agent, the action, the amounts, the destination and the deadline, with Approve and Deny buttons, and it updates to show who decided and what happened. Only the account owner, matched through their linked Microsoft sign-in, can decide; anyone else sees a card with no details. A press goes through the same check as the web inbox, so an altered button, an expired request or a double click never runs an action twice. Turn it on or off and send a labelled test card that runs nothing from the Microsoft Teams panel on /approvals, or type approvals in the chat to list what is waiting.",
+			"tags": [
+				"feature"
+			],
+			"link": "/approvals"
+		},
+		{
+			"date": "2026-11-16",
 			"title": "Set up every Microsoft resource three.ws needs with one command",
 			"summary": "npm run microsoft:provision creates or reconciles the Entra apps for Marketplace fulfillment, Microsoft sign-in and the Microsoft 365 connector, and the Teams bot. It also sets up their redirect URIs, Graph permissions and 365-day client secrets, the Azure Bot with its Teams and Microsoft 365 channels, and the Key Vaults, all from the operator's own Azure login. It shows a plan before it changes anything, never removes what an admin added by hand, and changes nothing on a rerun. Secrets go only to Key Vault and a private local file, never to the terminal, and it prints the exact production env update. A test now fails whenever code asks Microsoft for a permission or redirect the provisioner does not set up.",
-			"tags": ["infra", "feature"]
+			"tags": [
+				"infra",
+				"feature"
+			]
 		},
 		{
 			"date": "2026-11-16",
 			"title": "Call three.ws agents from Copilot Studio and Azure AI Foundry over A2A",
 			"summary": "The three.ws A2A endpoint now streams over SSE, lets you cancel a running generation, and accepts an X-API-Key header or OAuth 2.0 as well as bearer tokens, all declared in the agent card. Responses are checked against the A2A schema in the test suite, and a builder guide covers adding three.ws in Copilot Studio and Foundry plus a Microsoft Agent Framework sample.",
-			"tags": ["feature", "docs"],
+			"tags": [
+				"feature",
+				"docs"
+			],
 			"link": "/docs/microsoft-a2a"
 		},
 		{
 			"date": "2026-11-16",
 			"title": "Roll three.ws out to every seat from your Microsoft admin consoles",
 			"summary": "IT admins get a ready deployment kit: the exact Edge policy values to install the web app and extensions through Intune or Group Policy, a Teams setup policy script that installs and pins three.ws for a group, a tenant-wide admin consent page that explains each permission in plain language, and a guide with verification, rollback and FAQ. Every script has a dry run.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/docs/microsoft-admin-deployment"
 		},
 		{
 			"date": "2026-11-16",
 			"title": "Share any creation or agent to Teams and LinkedIn",
 			"summary": "The share menu now has Share to Teams and Share on LinkedIn, on creations, agents and avatars. The link cards behind them were fixed so they show a proper image: agent cards are now PNG instead of SVG, avatar cards are 1200x630, and over a hundred pages now declare their card size.",
-			"tags": ["feature", "improvement"],
+			"tags": [
+				"feature",
+				"improvement"
+			],
 			"link": "/forge"
 		},
 		{
@@ -40,7 +69,9 @@
 			"date": "2026-11-15",
 			"title": "3D pages download far less on phones",
 			"summary": "Every page with a 3D element, including the walk companion that follows you around the site, used to download one 2.4 MB bundle of 3D loaders it mostly never used. Each page now loads only the 3D code it needs: the companion drops from about 741 KB to 280 KB, and /forge and /play each start with about 440 KB less. Agent profiles also stop competing with their own avatar download to read its stats, so the avatar appears sooner on slow connections.",
-			"tags": ["improvement"],
+			"tags": [
+				"improvement"
+			],
 			"link": "/forge"
 		},
 		{
@@ -129,7 +160,9 @@
 			"date": "2026-11-14",
 			"title": "The open source page links three.js and Mesh2Motion sponsor pages and can show who we sponsor",
 			"summary": "The /open-source credits page now carries a Sponsor link on the three.js and Mesh2Motion cards, read from the funding routes both projects publish in their own repositories. It is also ready to show the open-source projects three.ws pays a recurring sponsorship to: once a sponsorship is live, the project appears in a \"Projects three.ws sponsors\" section at the top of the page and its credit cards are marked \"Sponsored by three.ws\" with the month it started. Nothing shows until a sponsorship has actually begun.",
-			"tags": ["improvement"],
+			"tags": [
+				"improvement"
+			],
 			"link": "/open-source"
 		},
 		{
@@ -145,35 +178,48 @@
 			"date": "2026-11-14",
 			"title": "Minting on Solana can no longer charge you twice for one item",
 			"summary": "When you put a 3D Drop or a single 3D asset on Solana, a mint that had already landed could be reported as failed if the live connection used to watch for confirmation dropped. Pressing the button again then minted a second copy and spent rent twice. Confirmation now checks the transaction status directly, so a landed mint always reads as minted. If a mint is still undecided after the wait, the item stays locked for a few minutes and you get the transaction link to check, instead of a retry that could mint it again.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/drops"
 		},
 		{
 			"date": "2026-11-14",
 			"title": "Memory seeding writes your seed instead of failing when some AI providers hang",
 			"summary": "The memory-seeding demo could fail with a server error every time you pressed synthesize. A few free AI providers were hanging until they timed out, and together they used up the whole time budget before a provider that was answering got a turn. Now a provider that hangs sits out for two minutes, and synthesis gets enough time to reach a working one, so your memory seed comes back instead of an error.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/demos/memory-seed.html"
 		},
 		{
 			"date": "2026-11-13",
 			"title": "Diorama games keep an honest clock on slow phones and when you switch tabs",
 			"summary": "When you play a diorama world with a timer, your walker and the countdown now move on the same game clock. On a slow phone or a busy laptop the walker used to slow down while the timer kept counting real seconds, so a timed goal could become impossible to win. Switching to another tab mid-run used to burn the whole timer and greet you with a loss when you came back; now the clock waits for you. Pickups also stay reliable on slow frames, because each frame's movement is checked in small steps.",
-			"tags": ["fix", "improvement"],
+			"tags": [
+				"fix",
+				"improvement"
+			],
 			"link": "/diorama"
 		},
 		{
 			"date": "2026-11-13",
 			"title": "The marketplace opens on a picture and loads 3D only when you reach for it",
 			"summary": "The featured carousel at the top of the marketplace used to download the 3D viewer and a model of around 2 MB on every visit, showing a placeholder letter until it arrived. It now shows each avatar's picture straight away and turns it into the spinning 3D model the moment you hover, focus or tap it, so a visit that never touches a 3D preview never downloads one. Hovering an agent card in the grid now also loads its 3D preview wherever the pointer rests on the card; before, only the picture area counted, and in practice agent cards often never woke at all.",
-			"tags": ["improvement", "fix"],
+			"tags": [
+				"improvement",
+				"fix"
+			],
 			"link": "/marketplace"
 		},
 		{
 			"date": "2026-11-13",
 			"title": "Selfie avatars can now be built on our own body, where Masc and Femme really change the shape",
 			"summary": "The selfie to avatar service has always fitted every person onto a borrowed stock avatar, and the Masc and Femme choice in the selfie window never changed anything because only one stock body existed. It can now build the avatar on the three.ws parametric body instead: the same body Avatar Studio uses, with the full set of facial expressions and lip-sync mouth shapes, and Masc, Femme and neutral each give a genuinely different build while keeping every sculpt slider for editing afterwards. In our 40-face test set it also matches face shape more closely than the stock avatar. It stays switched off in production for now, because the new body still comes out without hair or clothes and its skin tone does not yet match the photographed face closely enough; the current avatars are unchanged until those are fixed.",
-			"tags": ["infra", "improvement"]
+			"tags": [
+				"infra",
+				"improvement"
+			]
 		},
 		{
 			"date": "2026-11-13",
@@ -187,48 +233,64 @@
 			"date": "2026-11-13",
 			"title": "Private worlds now keep strangers out of the live world too",
 			"summary": "A Silver holder's private world already hid its saved build from anyone not invited, but the live multiplayer world was still open: anyone could walk in and watch what was being built, and the game server could not read the private build at all, so the world opened empty and new building was lost. The game server now reads private worlds properly, and it seats only the owner and the people they invited. Making a world private or removing an invite takes effect within seconds for anyone already inside, who is told the world is private and sent back to the lobby. An invitee who was there when the world went private stays in.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/three"
 		},
 		{
 			"date": "2026-11-13",
 			"title": "Robinhood Chain launches keep their names and launch times when the chain is busy",
 			"summary": "The Robinhood Chain coins table reads each new coin's name, symbol and launch time from the public chain RPC. When that RPC was rate-limiting, rows showed up with a blank name and no age, even though the launch watcher had already read the same details on chain. The table now fills those gaps from the watcher, so every row keeps its name, ticker and age alongside its venue, deployer record and dev-sold flag.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/markets/robinhood"
 		},
 		{
 			"date": "2026-11-13",
 			"title": "Agent profiles open faster on phones",
 			"summary": "An agent's profile page shows its avatar in a lightweight viewer, but it was also downloading the full 3D engine used by Talk, Pose and the GLB/OBJ/USDZ export, even for visitors who never opened them. That engine was the single largest download on the page. It now loads only when you press Talk, open the Pose tab or export a file, and Talk starts fetching it the moment you hover or touch the button, so the button rarely makes you wait. On a slow phone connection the profile finishes rendering sooner and uses noticeably less data.",
-			"tags": ["improvement"],
+			"tags": [
+				"improvement"
+			],
 			"link": "/agents"
 		},
 		{
 			"date": "2026-11-13",
 			"title": "Drops and rare threews.sol names show the holder early window before you try",
 			"summary": "During a drop's holder-only window, its page now shows a live countdown to public open and checks your own $THREE tier. Gold-and-up holders see an Early access banner and can reveal right away; everyone else sees which tier opens it now, with a link to the tiers page. Rare names on threews.sol/claim work the same way during a Genesis first-dibs window. If you are below the tier, the page tells you how far short you are and when the name or drop opens to everyone, instead of failing with a bare error.",
-			"tags": ["improvement"],
+			"tags": [
+				"improvement"
+			],
 			"link": "/three"
 		},
 		{
 			"date": "2026-11-13",
 			"title": "Fewer Solana reads behind buybacks, token due diligence and agent reputation",
 			"summary": "Three background jobs were spending a large share of the platform's Solana read quota on answers that had not changed. The hourly buyback check now reads every coin's vault in a couple of batched calls instead of four reads per coin, token due-diligence reports reuse a token's launch and each holder's first purchase once they are known, and agent reputation scores are refreshed every 12 hours unless the agent is being viewed. Together that is roughly 120,000 fewer chain reads a day, which leaves more headroom for payments and live pages.",
-			"tags": ["improvement", "infra"]
+			"tags": [
+				"improvement",
+				"infra"
+			]
 		},
 		{
 			"date": "2026-11-13",
 			"title": "Marketplace and Discover cards load small WebP images, and Forge's starter prompts stop jumping",
 			"summary": "Avatar renders, maker posters and social cards were sent at full size into small card boxes. Every first-party image on three.ws now also has a display-sized WebP form, built once per image version and cached, and the Marketplace and Discover grids use it: a typical avatar card image drops from about 160 KB to under 3 KB, while the original file stays available for downloads, prints and exports. The 18,184 older Forge thumbnails that were still full-size PNGs are now 512 px WebP, after a fix to the background job that had been skipping them. On Forge, the starter prompts under the empty viewer no longer slide sideways when they change on load, and each one shows its full prompt on hover.",
-			"tags": ["improvement", "fix"],
+			"tags": [
+				"improvement",
+				"fix"
+			],
 			"link": "/marketplace"
 		},
 		{
 			"date": "2026-11-13",
 			"title": "The GitHub fee-claims feed now finds claims from the last several days, not the last second",
 			"summary": "GitHub fee-claim lookups used to page the whole PumpFees program, which handles about 500 transactions a second, so one page of history covered about a second and the feed came back empty. The listener, its backfill, and the API's RPC fallback now follow the one account that signs every GitHub fee claim and nothing else. That account's key is read from chain, and one page of its history covers days. The table now holds real claims, GET /api/pump/first-claims serves them from it, and the backfill resumes where it stopped instead of re-fetching claims it already stored.",
-			"tags": ["fix"]
+			"tags": [
+				"fix"
+			]
 		},
 		{
 			"date": "2026-11-13",
@@ -263,21 +325,28 @@
 			"date": "2026-11-13",
 			"title": "Talking to an agent through three.ws Glass gets an answer again",
 			"summary": "On the /glass lens app, picking a reply to start talking to an agent could come back blank: the chat model spent its whole answer thinking to itself and returned nothing to show on the lens, along with no suggested next replies. Lens conversations now ask that model for a direct answer, so the agent replies and offers the next things to say. The lens app is also tested end to end against real agents placed on the map, walking from scanning to the nearby list, the agent card, a conversation and the phone handoff with only the arrow keys, Enter and Escape that the Neural Band produces. The lens page also loads about a third of the code it did, because desktop extras like the search palette and hidden keyboard surprises no longer ride along onto a display driven by the same arrow keys.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/glass"
 		},
 		{
 			"date": "2026-11-13",
 			"title": "Agora citizens keep their identities across restarts, so the Commons economy can run unattended",
 			"summary": "The citizens of Agora Commons stopped working in August when the machine holding their keys went away: every citizen still showed as registered, then failed each task claim because its on-chain account answered to a key nobody had anymore. The life engine now derives every citizen's key from one stored secret, so a restart or redeploy brings back the same citizens. A citizen whose old account is out of reach moves to a fresh on-chain identity and keeps its name, history and stats instead of showing up twice. Only one engine can drive a set of citizens at a time, so a local test run and the hosted service never claim the same task twice. Passports also show a trust grade from A to E built from reputation, verified work and vouches, and vouches traded inside a ring of wallets cannot inflate it.",
-			"tags": ["fix", "infra"],
+			"tags": [
+				"fix",
+				"infra"
+			],
 			"link": "/agora"
 		},
 		{
 			"date": "2026-11-13",
 			"title": "Oracle stops showing a perfect win rate it could not actually measure",
 			"summary": "Oracle's outcome checker lost its main data source, so it could only confirm coins that graduated, and the Oracle page and the oracle_stats tool for AI agents showed a 100% win rate. They now hide the call win rate and the market base rate while most outcomes are unconfirmed, and say why, so nobody reads a gap in the data as a flawless record.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/oracle"
 		},
 		{
@@ -304,96 +373,124 @@
 			"date": "2026-11-13",
 			"title": "Native $THREE launchpad coins can be quoted, bought and sold again, and the creator's launch buy shows as a buy",
 			"summary": "$THREE is a Token-2022 token, and after a bonding-curve SDK upgrade every price quote, buy and sell on a native launchpad coin failed with an error about a missing quote mint and epoch. Quotes now read the $THREE mint and the current epoch with every request, so the curve prices trades again, anti-snipe fee included. The coin page's trade list also showed the creator's own first buy, the one bundled into the launch, as a sell of the whole curve supply; it now shows as a buy of the tokens the creator actually received. Both were caught by rerunning the launchpad's end-to-end test (launch, decaying-fee check, buy, sell, trade history) against the real bonding-curve program before the lane opens on mainnet.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/docs/native-launchpad"
 		},
 		{
 			"date": "2026-11-13",
 			"title": "The Reconnect button and the active category chip on Agent integrations are readable in the dark theme",
 			"summary": "On the Agent integrations page the Reconnect button shown for a server waiting for sign-in, and the selected category chip in the catalog, painted white text on a white background in the dark theme, so the button looked like an empty pill. Both now use the site-wide text color for accent surfaces and read clearly in every theme.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/mcp-integrations"
 		},
 		{
 			"date": "2026-11-12",
 			"title": "Set a per-trade cap and a position limit for your agent's autopilot, and see the live quote before you confirm a trade",
 			"summary": "The autopilot trade scope now has two owner limits beside the daily SOL budget: a cap on the SOL any single buy may spend, and a maximum number of tokens the agent may hold at once ($THREE is never counted). Both are enforced on the server before anything is quoted. Previewing a trade proposal now shows the real quote it would fill at (venue, expected tokens, minimum received after slippage, price impact and value) together with the wallet guard, SOL balance and rug firewall verdicts, without signing or sending anything and without creating a wallet the agent does not have.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/agents"
 		},
 		{
 			"date": "2026-11-12",
 			"title": "The agent editor shows its sections again on desktop",
 			"summary": "On a desktop screen the agent editor rendered as an empty strip under its header: the site footer was mounted inside the editor's full-height layout and pushed the persona, brain, autopilot and wallet sections down to zero height. The editor now keeps its full height on desktop, and on phones the header wraps cleanly so the title and wallet chip both stay readable.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/agents"
 		},
 		{
 			"date": "2026-11-12",
 			"title": "A reinvest rule can no longer be confirmed while one of its destinations is missing",
 			"summary": "The confirm screen on /earnings already said when a rule could not be confirmed yet, for example when the platform deposit wallet for model credits was not configured or the agent had no coin on the rule's network, but the confirm button could still turn back on after a preview and the server accepted the click. The server now refuses to activate any rule whose confirmation table marks a destination unavailable, and the confirm button stays disabled until every destination is ready.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/earnings"
 		},
 		{
 			"date": "2026-11-12",
 			"title": "News cards show images from publishers that block hotlinking",
 			"summary": "Some news publishers refuse to let their images load on other sites, so those cards on /markets/news briefly showed a broken image and logged a browser error before falling back. Card images now load through three.ws's own image proxy, so they appear on the first try, and a story whose image is truly gone shows its source initials tile without an error. The $THREE chart card also stopped logging a failed request when the Oracle or the coin intel engine has no reading for the coin yet; that slot simply stays hidden.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/markets/news"
 		},
 		{
 			"date": "2026-11-12",
 			"title": "The Shopify app link and the Build leaderboard open without console errors",
 			"summary": "Opening /apps/shopify outside Shopify admin used to load the embedded app with no store attached, which threw an App Bridge error and left a blank shell. A direct visit now goes to the app's documentation page, while merchants opening it from their Shopify admin get the app exactly as before. Before the first Build round opens, /build/leaderboard now shows its \"No Build round yet\" state from a normal empty response instead of logging a failed request.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/docs/shopify-app"
 		},
 		{
 			"date": "2026-11-12",
 			"title": "The language picker stays readable on light pages and inside embeds",
 			"summary": "The floating language picker drew pale grey text over a nearly transparent background, so on a light page or inside an embedded agent it was hard to read and failed the WCAG AA contrast check. On pages that do not set their own theme colours it is now a solid dark chip that stays readable on any background. Themed pages look exactly as before.",
-			"tags": ["fix"]
+			"tags": [
+				"fix"
+			]
 		},
 		{
 			"date": "2026-11-12",
 			"title": "New sign languages ship only after fluent signers approve each sign",
 			"summary": "Signing avatars can now carry sign languages beyond ASL, and none of them goes live on authoring alone. Each sign needs two approvals from fluent signers on its exact current version, and one objection holds it back. Reviewers work on the new /sign-review page: watch each sign on a live avatar at half speed or with either hand, then approve it, ask for a change, or reject it with a note. The sign API and the MCP sign tools take a lang parameter, and /sign-language gains a language picker once a second language has reviewed signs. If you sign a language other than ASL fluently, write to support@three.ws to become a reviewer.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/sign-review"
 		},
 		{
 			"date": "2026-11-12",
 			"title": "The Robinhood Chain feed shows the last day of launches again on a cold start",
 			"summary": "The Robinhood Chain feed worker came up empty after a restart. The public RPC throttles log queries on about every other call, and the backfill gave up on the first throttled request instead of retrying it. It now retries only the chunk that was throttled and keeps the work already done, so a full day of history (1,703 launches across six venues in a live run) loads in about eleven minutes. Odyssey launches no longer wait for the slower venue scan, older history arriving late no longer pushes newer launches out of the replay buffer, and the worker log now shows backfill progress and every warning instead of failing silently.",
-			"tags": ["fix"]
+			"tags": [
+				"fix"
+			]
 		},
 		{
 			"date": "2026-11-12",
 			"title": "Follow a trading agent in one tap, with a spend cap",
 			"summary": "Solana agent profiles now have a Follow button. Set a total SOL cap, a per-trade max and a drawdown stop, and the agent's trades are copied into your own wallet until the cap is used. Nothing past the cap is ever copied. A copy that would go over it is skipped and the reason shows in your inbox. While you follow, the agent tells you about each trade it makes: on its 3D avatar with a gesture and a spoken line, or as a toast when the avatar is not shown. The button shows how much of the cap you have used, and pausing or unfollowing takes effect right away.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/leaderboard"
 		},
 		{
 			"date": "2026-11-12",
 			"title": "Talk to your agent from Slack, WhatsApp, or out loud",
 			"summary": "Connections now has cards for Slack, WhatsApp and voice next to Telegram and Discord. Each card shows whether the platform is on, the steps to connect, how many chats are paired and when the last message arrived. In Slack your agent replies in the thread that asked and answers /three commands privately. On WhatsApp it handles text, voice notes and images, with Approve and Cancel as buttons. The Voice card has a Talk button: speak, and your agent answers in text and in its own voice, right in the browser. Phone calls are supported too, and a call can never approve a trade. Slack, WhatsApp and phone numbers switch on as each app is registered.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/settings/connections"
 		},
 		{
 			"date": "2026-11-12",
 			"title": "Agents draft learned skills again, and admit when memory is off",
 			"summary": "Skill drafts from multi-tool runs were silently failing: a reasoning model spent its whole budget thinking, and the database rejected learned skills after a later migration. Both are fixed, so drafts reach the review queue on /settings/memory again. With memory switched off, an agent now tells you it cannot remember instead of promising to.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/settings/memory"
 		},
 		{
 			"date": "2026-11-12",
 			"title": "Agents now identify themselves to the sites they fetch",
 			"summary": "Pages fetched by agent tools now carry a Web Bot Auth signature, so sites can tell a three.ws agent from an anonymous scraper and let it through. The public key is published at three.ws/.well-known/http-message-signatures-directory, and the directory response is itself signed.",
-			"tags": ["improvement"],
+			"tags": [
+				"improvement"
+			],
 			"link": "/docs/web-bot-auth"
 		},
 		{
@@ -428,35 +525,46 @@
 			"date": "2026-11-12",
 			"title": "Every agent wallet is in every custody attestation again",
 			"summary": "The six-hourly custody snapshot read wallet balances one at a time and ran out of time partway through the fleet, so some epochs covered as few as 400 of 1,063 wallets and the owners of the rest had no inclusion proof to check on /proof that epoch. Balances are now read 100 accounts per call, which covers the whole fleet in seconds. The public /integrity page also stopped logging a console error on every load, and its attestation history table now scrolls cleanly on phones instead of running the columns together.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/docs/custody"
 		},
 		{
 			"date": "2026-11-12",
 			"title": "three-ws/agent output tokens now cost $3 per million",
 			"summary": "The three-ws/agent model on /api/v1/chat/completions now charges $3.00 per million output tokens, up from $2.00. Input stays at $0.50 per million. The old output rate was below what our paid fallback model costs us, so a busy hour could sell those tokens at a loss. The new rate covers it with margin, and a test now fails if a model change would put the price below cost again. API keys, agent wallet funding and pay-per-request over x402 all use the same rate. Live prices are always at GET /api/v1/models.",
-			"tags": ["improvement"],
+			"tags": [
+				"improvement"
+			],
 			"link": "/docs/metered-router"
 		},
 		{
 			"date": "2026-11-12",
 			"title": "Onchain viewer recognizes the real SPL Memo v1 program",
 			"summary": "The /onchain viewer and the Solana Memo Media MCP listed SPL Memo v1 under an address that is not a valid Solana key, so a v1 memo that an RPC did not tag as spl-memo was skipped. Both now use the real program, Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo, and a test checks that every recognized memo program is a real 32-byte key.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/onchain"
 		},
 		{
 			"date": "2026-11-11",
 			"title": "An accessibility statement, a full WCAG 2.2 AA conformance report, and fixes for every serious barrier found",
 			"summary": "three.ws now publishes an accessibility statement at /accessibility. It sets out our commitment, rates the site against WCAG 2.2 Level AA, lists the known gaps with a workaround for each, and tells you how to report a barrier. Behind it is a conformance report in the VPAT 2.x format covering all 56 Level A and AA criteria. Every core page was checked with axe in both themes at desktop and phone width, walked with the keyboard alone, read with the Orca screen reader, zoomed to 400% and viewed in forced colours. All 104 serious or critical issues found are fixed. Among them: 3D views now have names and keyboard orbit, collapsed menus no longer swallow focus, every search field and sign-in field shows a clear focus ring, the home desktop and agent embeds have a main landmark, and invisible controls no longer take focus.",
-			"tags": ["feature", "improvement"],
+			"tags": [
+				"feature",
+				"improvement"
+			],
 			"link": "/accessibility"
 		},
 		{
 			"date": "2026-11-11",
 			"title": "TRELLIS.2 Lab presets now show when a setting is failing on production",
 			"summary": "The preset cards in the TRELLIS.2 Lab now read the first real TRELLIS.2 production runs. Fast draft shows its measured time, about a minute end to end. Balanced and Maximum detail now say \"Failing on production\" and give the number of failed runs, instead of a vague \"Not measured yet\", so you know to start with Fast draft. When a run fails, its error panel no longer shows a stray \"null\" beside Retry or a doubled full stop.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/lab/trellis2"
 		},
 		{
@@ -472,55 +580,73 @@
 			"date": "2026-11-11",
 			"title": "Put an interactive 3D model on a PowerPoint slide in one click",
 			"summary": "Choose PowerPoint in the Forge export menu, in Forge Studio or on any model page and you get a ready slide: the prompt as the title and the model as a real PowerPoint 3D object you can drag to rotate in a slideshow, animate with Morph and resize like a picture. Every model is prepared for Office first: compressed geometry is decoded, textures become PNG or JPEG at up to 2048 px, rigs and animation are kept, and a rendered poster shows in viewers without 3D. The new three.ws 3D Models add-in for PowerPoint does the same from inside your presentation: sign in with your three.ws account to insert one of your models, or describe one and generate it free. The add-in can be sideloaded today and its AppSource listing is pending review.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/docs/powerpoint"
 		},
 		{
 			"date": "2026-11-11",
 			"title": "Find 3D models by what is in them",
 			"summary": "Every finished 3D creation is now described from its poster by Florence-2 on our own GPU: a short caption, a detailed caption and tags. Model search matches those captions and tags, so a model forged from a photo with no written prompt still turns up when you search for what it shows, like \"bicycle wheel\". Model pages use the detailed caption as their description and as alt text for the 3D viewer and share images, and list the tags as chips that open a search for similar models. Creators can add, remove or clear the tags on their own models.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/search?type=model"
 		},
 		{
 			"date": "2026-11-11",
 			"title": "Put interactive 3D models in a Power BI report",
 			"summary": "three.ws 3D Models is a custom visual for Power BI reports. Bind a column of three.ws model ids or GLB links and it shows one model you can orbit, a grid, or a turntable gallery for larger sets. Measures can colour and size each model, a click cross-filters the rest of the report, selections elsewhere highlight the matching models, and tooltips show any fields you add. The format pane covers background, lighting, layout, auto-rotate, colour mode and labels, and the visual supports the keyboard, high-contrast themes and the context menu. It downloads models only from three.ws. The package is built and tested against real production models, and the AppSource submission is next.",
-			"tags": ["feature"]
+			"tags": [
+				"feature"
+			]
 		},
 		{
 			"date": "2026-11-11",
 			"title": "Teach your agent from Word, PowerPoint, Excel, PDF and Outlook files",
 			"summary": "Open the Knowledge tab on an agent's edit page and drop in a handbook, a pitch deck, a price list, a policy PDF or an email. Each file shows its own upload progress, then is read with Microsoft MarkItDown on our own hardened converter, split into sections, one per slide, sheet or email, and indexed for search. From the next message the agent answers from those files and names the one it used. A test box shows exactly which passages it would draw on and streams a real answer beside them. Delete a file and everything derived from it goes with it; the original file is never stored. Up to 50 files of 25 MB each per agent.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/docs/agent-knowledge"
 		},
 		{
 			"date": "2026-11-11",
 			"title": "Give a Semantic Kernel or Microsoft Agent Framework agent 3D generation",
 			"summary": "Two new plugins, threews-semantic-kernel for Python and ThreeWs.SemanticKernel for .NET, give an agent six functions on three.ws: generate a textured 3D model from text and wait for it, check a generation, search thousands of free ready-made props, characters and motion clips, list your agents, search the public agent directory and message an agent. Each also attaches the free MCP 3D studio in one line. Python and .NET Agent Framework samples pick the prop a scene needs, check the catalog and return a real downloadable model, and a quickstart attaches the studio to a Foundry agent. No account or key is needed except to list your own agents. Both packages ship with live tests against the real API and go up on PyPI and NuGet with the owner's publish.",
-			"tags": ["sdk", "feature"],
+			"tags": [
+				"sdk",
+				"feature"
+			],
 			"link": "/docs/microsoft-agent-stack"
 		},
 		{
 			"date": "2026-11-11",
 			"title": "Review a 3D model together in a Microsoft Teams meeting",
 			"summary": "Add three.ws to a Teams meeting and share a model to the meeting stage, and everyone in the call looks at the same mesh. Press Present and your camera drives everyone's view; anyone who orbits away gets a one-click jump back to the presenter. Each person's initials show who is watching, and their pointer appears on everyone else's screen as a coloured laser on the exact spot of the model. Click the mesh to pin a comment, and the pin appears for the whole meeting; export every pin as markdown when you are done. Clip, play state and playhead stay in sync, so everyone sees the same frame. Pick from your own models, the featured library or a pasted link. Opened outside a meeting, the stage works for one person and explains how to review together. three.ws keeps no meeting content unless you export the pins.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/microsoft/teams-stage"
 		},
 		{
 			"date": "2026-11-11",
 			"title": "Sign in with Microsoft, and let Microsoft Entra ID manage your team",
 			"summary": "Anyone can now sign in with a work, school or personal Microsoft account, and link it to an existing account from Settings. Team owners can claim their organisation's Microsoft Entra tenant with an admin sign-in, so colleagues are offered the team (or join automatically) the first time they sign in. Entra ID can provision people and groups over SCIM: when someone leaves or is unassigned, their team access ends and their sessions from that organisation are signed out. Setup takes a few minutes and every change is logged on the team page.",
-			"tags": ["feature", "security"],
+			"tags": [
+				"feature",
+				"security"
+			],
 			"link": "/docs/enterprise-sso"
 		},
 		{
 			"date": "2026-11-11",
 			"title": "See Microsoft technology running live on three.ws/microsoft",
 			"summary": "The new Microsoft page shows Microsoft open source at work inside three.ws: 3D models people made with TRELLIS, speech to text that runs entirely in your browser so the audio never leaves your device, and a real agent's card drawn with Adaptive Cards that you can copy into the designer. It also lists every Microsoft surface three.ws is built for, from Marketplace and Teams to Power Platform, Edge and VS Code, with an honest status for each and what you can do there today.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/microsoft"
 		},
 		{
@@ -536,7 +662,9 @@
 			"date": "2026-11-11",
 			"title": "Detailed 3D models no longer fall back to a plain mesh mid-generation",
 			"summary": "Some requests for a textured model finished as an untextured one. The job was still running on one server, but another server checking on it read an outdated status, decided the job was dead, and handed it to a faster lane without textures. Job status is now always read fresh, so the textured model you asked for is the one you get. The fix covers TRELLIS, TRELLIS.2, Modly, Hunyuan3D and TripoSG.",
-			"tags": ["fix"]
+			"tags": [
+				"fix"
+			]
 		},
 		{
 			"date": "2026-11-11",
@@ -578,94 +706,125 @@
 			"date": "2026-11-11",
 			"title": "Microsoft Marketplace leads land in three.ws with a reply ready to send",
 			"summary": "When someone asks for a demo, starts a trial or installs three.ws from Microsoft Marketplace, the lead now arrives in three.ws within seconds. It is stored once even if Microsoft retries, the team is notified once, and a reply is drafted from the offer and the person's own message. Nothing is sent automatically: the team reviews the draft, sends it themselves and marks the lead contacted. Do-not-contact requests get no reply, and personal details are deleted on a fixed schedule.",
-			"tags": ["feature"]
+			"tags": [
+				"feature"
+			]
 		},
 		{
 			"date": "2026-11-11",
 			"title": "Generate a 3D model without leaving a Teams chat",
 			"summary": "The three.ws Teams app can now make 3D models inside a conversation. Choose Create a 3D model from the compose box or a message's menu, or message the bot forge followed by a description. A card shows your prompt, who asked and where the job really is (GPU waking up, queued, rendering), and it turns into the finished model when it is ready: a rendered preview, Open in 3D in the three.ws viewer, Download GLB, and Make a variation for a new take on the same prompt. If a job fails, the card says what went wrong and offers Try again. It runs on the same free text-to-3D lane as the three.ws MCP tools.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/docs/microsoft-teams-forge"
 		},
 		{
 			"date": "2026-11-11",
 			"title": "3D generation no longer fails while our own GPU worker is busy",
 			"summary": "Text and photo to 3D in Forge, the GPT forge and the ChatGPT app could fail with Could not generate the model right now even though the three.ws TRELLIS GPU worker had room for the job. A busy worker answers its health check slowly, the router read that as down, and when the outside lanes were also unavailable nothing was left to try. Forge now gives every remaining engine a chance before it gives up, including a worker that only looked down because it was busy, so the job is queued instead of refused.",
-			"tags": ["fix"]
+			"tags": [
+				"fix"
+			]
 		},
 		{
 			"date": "2026-11-11",
 			"title": "Export any Forge model as a Minecraft: Bedrock structure pack",
 			"summary": "The Forge download menu has a new Minecraft: Bedrock option. It turns your model into blocks, shows a live 3D block preview, and downloads a .mcpack you open in Bedrock and place with a structure block or one /function command. Pick the height (16 to 128 blocks), which blocks to use (all, concrete, wool, terracotta, builder or colorful), solid or hollow, and optional dithering. Colors come from the model's texture at every block, and dark textures are brightened automatically so a steel knight does not come out as coal. Builds wider than one structure block are split into tiles that the function places together. Not an official Minecraft product; not approved by or associated with Mojang or Microsoft.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/docs/minecraft-export"
 		},
 		{
 			"date": "2026-11-11",
 			"title": "Find your three.ws agents and 3D models in Microsoft 365 Copilot",
 			"summary": "A Microsoft 365 administrator can now connect a three.ws account to their organization from Settings > Microsoft 365. Your public agents, Forge models and avatars are indexed into the tenant, so people in the organization find them in Microsoft Search and can ask Microsoft 365 Copilot about them, with links back to three.ws. You choose who sees them: everyone in the organization except guests, one Entra group, or only you. Changes reach Microsoft every 15 minutes, items you delete or make private are removed, Microsoft's throttling is respected, and a Full re-sync button resends everything at once. Disconnecting deletes the index from the tenant. It goes live once the three.ws Microsoft app is approved for the two Graph permissions it needs.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/settings/microsoft-365"
 		},
 		{
 			"date": "2026-11-11",
 			"title": "A trust center with security answers that link to the code",
 			"summary": "three.ws/trust explains where three.ws runs, how data is encrypted, how people and apps sign in, who has admin access, what is logged, how long each kind of data is kept and the job that deletes it, how agent wallet custody works, which AI providers can see prompts (with each provider's own published terms quoted), and how incidents and vulnerability reports are handled. Every answer links to the file in the open-source code that proves it, and the compliance table says plainly what is in place, in progress and not pursued. three.ws/trust/subprocessors lists every third party that processes data, with a filter. Expired sessions, old sign-in nonces and year-old widget views are now actually deleted, as the privacy policy says.",
-			"tags": ["security", "feature"],
+			"tags": [
+				"security",
+				"feature"
+			],
 			"link": "/trust"
 		},
 		{
 			"date": "2026-11-11",
 			"title": "Open 3D files from File Explorer and keep your agent in the Edge sidebar",
 			"summary": "The installed three.ws app now opens .glb, .gltf and .vrm files you double-click in Windows File Explorer, reading them on your PC with nothing uploaded unless you press Save to account. web+threews: links from Teams, Outlook or a document open the right agent, model or text to 3D prompt, and a link that is broken or unsafe is explained instead of followed. A second launch reuses the window you already have open, the site header doubles as the title bar when the title bar is hidden, and a new narrow layout at /sidebar puts agent chat, quick text to 3D and your recent models in the Microsoft Edge sidebar.",
-			"tags": ["feature", "desktop"],
+			"tags": [
+				"feature",
+				"desktop"
+			],
 			"link": "/sidebar"
 		},
 		{
 			"date": "2026-11-10",
 			"title": "Multiplayer worlds hold together across several servers",
 			"summary": "Players who land on a different server than the one hosting their world are now bridged to it, so a crowd can be spread over several servers without anyone being cut off. Measured on a two-server test fleet backed by a dedicated shared Redis: 200 players across 4 coin worlds joined with no failures or dropped connections, and every one of 186000 chat deliveries arrived. The live world server is unchanged until its next deploy.",
-			"tags": ["infra"]
+			"tags": [
+				"infra"
+			]
 		},
 		{
 			"date": "2026-11-10",
 			"title": "The site header no longer pushes pages down as it loads",
 			"summary": "The skip link and the shared header now hold their final space from the first paint on every page, and the Forge example prompts sit in fixed cells, so content stops jumping under your cursor while a page loads.",
-			"tags": ["improvement"]
+			"tags": [
+				"improvement"
+			]
 		},
 		{
 			"date": "2026-11-10",
 			"title": "Forge composer no longer jumps while it loads",
 			"summary": "The engine picker, the cost caption and the Enhance button now hold their space from the first frame, so the page stops shifting under your cursor on a first visit. Measured layout shift on the Forge page fell from 0.11 to 0.41 down to 0.05 to 0.28 across phone and desktop widths.",
-			"tags": ["improvement"],
+			"tags": [
+				"improvement"
+			],
 			"link": "/forge"
 		},
 		{
 			"date": "2026-11-10",
 			"title": "Every demo surface now opens on the house avatar",
 			"summary": "The home page, viewer, pricing, features, game NPCs, Pose Studio, Arena, Create Agent and the avatar templates no longer default to a real person's likeness. They start on the house avatar or another house body, and avatars you bring yourself work exactly as before.",
-			"tags": ["improvement"],
+			"tags": [
+				"improvement"
+			],
 			"link": "/"
 		},
 		{
 			"date": "2026-11-10",
 			"title": "One button style across Brain, Flow, Home, Avatar Studio and agent pages",
 			"summary": "Buttons on the Brain, Flow map, First Meet, Home studio cards, Avatar Studio and agent detail pages now use the shared button component, so hover, pressed, keyboard focus and disabled states look and behave the same everywhere.",
-			"tags": ["improvement"],
+			"tags": [
+				"improvement"
+			],
 			"link": "/brain"
 		},
 		{
 			"date": "2026-11-10",
 			"title": "Restyle Studio states its 18 material presets on the page",
 			"summary": "The preset count now sits above the preset grid in Restyle Studio, so visitors see how many PBR looks are on offer without reading the page metadata.",
-			"tags": ["improvement"],
+			"tags": [
+				"improvement"
+			],
 			"link": "/restyle"
 		},
 		{
 			"date": "2026-11-10",
 			"title": "Buy a skill bundle straight from an agent's marketplace page",
 			"summary": "An agent's Capabilities tab now shows its published skill bundles above the individual skills: what is included, the bundle price in $THREE or USDC, and how much you save against buying each skill alone (computed from the agent's real list prices, never estimated). Buy opens the usual payment modal with wallet or Solana Pay QR checkout, and once the payment is verified on-chain every skill in the bundle shows as owned. This also fixes bundle checkout itself, which failed with a server error whenever no platform fee applied and quoted the wrong split when one did, and now answers 'already owned' instead of opening a second purchase.",
-			"tags": ["feature", "fix"],
+			"tags": [
+				"feature",
+				"fix"
+			],
 			"link": "/marketplace"
 		},
 		{
@@ -689,26 +848,35 @@
 			"date": "2026-11-10",
 			"title": "The agent-3d embed script is 18% smaller",
 			"summary": "The single-file <agent-3d> embed had grown to 5.8MB because the LiveKit voice session and the on-device speech detector were baked into it, even on pages that never start a voice call. Both now load from the CDN the first time a visitor starts voice, so the script every embedding page downloads is down to 4.8MB. Voice behaves the same once it starts.",
-			"tags": ["improvement", "sdk"]
+			"tags": [
+				"improvement",
+				"sdk"
+			]
 		},
 		{
 			"date": "2026-11-10",
 			"title": "Connect your Robinhood Crypto account and let agents trade inside your caps",
 			"summary": "You can now connect your own Robinhood Crypto account to three.ws with a Crypto Trading API key, generating the key pair right in your browser. Set a per-order and a daily spend cap, and your agents can read holdings, quote pairs and preview orders. An order is only placed after you approve its confirm table, every buy is checked against your caps on the server before it reaches Robinhood, and you can pause trading or disconnect at any time. Crypto pairs only.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/settings/robinhood"
 		},
 		{
 			"date": "2026-11-10",
 			"title": "Pump.fun claim lookups stop draining the shared Solana RPC budget",
 			"summary": "The pump.fun MCP tools that list a creator's fee claims were the largest single consumer of the platform's Solana RPC quota, because a busy poller rescanned every transaction on every call and retried each one when the providers were throttling. A claims scan now skips transactions that failed on-chain, stops at the first throttled read, reads a bounded number of new transactions per call, and shares a fresh answer between rapid repeat polls. Results cut short say so with an incomplete flag and fill in on the next call, so payments and balance reads keep their RPC headroom.",
-			"tags": ["fix"]
+			"tags": [
+				"fix"
+			]
 		},
 		{
 			"date": "2026-11-10",
 			"title": "Places search keeps answering when the public map servers stall",
 			"summary": "The paid and free places search returned an error for every caller when the public OpenStreetMap servers it reads were overloaded at the same time. It now asks several map servers in parallel and takes the first answer, remembers recent results so repeat searches return instantly, and if every server is down it serves the last real answer it saw, clearly marked as stale with the time it was fetched.",
-			"tags": ["fix"]
+			"tags": [
+				"fix"
+			]
 		},
 		{
 			"date": "2026-11-07",
@@ -769,14 +937,18 @@
 			"date": "2026-11-06",
 			"title": "Agent payments on Solana stop stalling on a starved RPC",
 			"summary": "The background leak scanner was spending a quarter of the platform's daily Solana RPC calls rechecking wallets that never move money, which used up the paid RPC lanes and left agent-to-agent x402 payments waiting on slow public ones. Idle wallets are now checked in a steady rotation while every wallet that actually paid is still checked within ten minutes, so payments at the Agent Exchange settle on the fast lanes again.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/play"
 		},
 		{
 			"date": "2026-11-06",
 			"title": "The Play world holds up on phones, blocked storage and blocked scripts",
 			"summary": "Every Play button on a touch screen now meets the 44 px target size, the meetup countdown chip sits under the top bar instead of covering Shop, Buy and Friends, the event countdown keeps running when the browser blocks local storage, a blocked locale script no longer stops the world from loading, and the agent exchange no longer downloads the animation list a second time.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/play"
 		},
 		{
@@ -2593,7 +2765,10 @@
 			"date": "2026-10-30",
 			"title": "The web desktop now opens as a clean dark graphite desktop with a menu bar and dock",
 			"summary": "New visitors land in the Aqua shell on a neutral graphite wallpaper: a top menu bar, a magnifying dock, traffic-light window controls and a neutral titlebar instead of the purple Mica tint. Desktop shortcuts and the File Explorer now say Computer and Trash, and the address bar still accepts This PC and Recycle Bin. Fluent and Classic stay one click away in Settings, Personalization.",
-			"tags": ["desktop", "improvement"]
+			"tags": [
+				"desktop",
+				"improvement"
+			]
 		},
 		{
 			"date": "2026-10-30",
