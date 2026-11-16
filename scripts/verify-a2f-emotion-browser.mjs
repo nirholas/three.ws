@@ -11,7 +11,8 @@
 //     --rig arkit=/avatars/default.glb --rig vrm=file:/path/avatar.vrm \
 //     --out docs/nvidia-media/a2f-emotion
 //
-// Emotion settings default to "joy" (strength 1) and "off". The run writes
+// Emotion settings default to "joy" (strength 1) and "off" (--settings a,b);
+// the viewport defaults to 1280x1400 (--size WxH). The run writes
 // <out>/<rig>-<setting>.png, .webm and a summary.json.
 
 import { chromium } from 'playwright';
@@ -34,6 +35,8 @@ for (let i = 0; i < argv.length; i++) {
 }
 if (!rigs.length) rigs.push({ name: 'arkit', src: '/avatars/default.glb' });
 const settings = (arg('settings', 'joy,off')).split(',');
+// Tall enough at 1280 wide for the whole viewer and the emotion meters.
+const [width, height] = arg('size', '1280x1400').split('x').map(Number);
 mkdirSync(out, { recursive: true });
 
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--autoplay-policy=no-user-gesture-required'] });
@@ -44,10 +47,11 @@ for (const rig of rigs) {
 	for (const setting of settings) {
 		const tag = `${rig.name}-${setting}`;
 		const context = await browser.newContext({
-			viewport: { width: 1280, height: 800 },
-			recordVideo: { dir: out, size: { width: 1280, height: 800 } },
+			viewport: { width, height },
+			recordVideo: { dir: out, size: { width, height } },
 		});
 		const page = await context.newPage();
+		const recordStart = Date.now();
 		const errors = [];
 		page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
 		page.on('pageerror', (e) => errors.push(String(e)));
@@ -68,6 +72,7 @@ for (const rig of rigs) {
 		}, line);
 		await page.waitForFunction(() => window.__digitalHuman.state().speaking, null, { timeout: 60_000 });
 
+		const speakAtMs = Date.now() - recordStart;
 		const samples = [];
 		let shot = false;
 		const t0 = Date.now();
@@ -88,6 +93,7 @@ for (const rig of rigs) {
 			}
 			await page.waitForTimeout(100);
 		}
+		const spokeMs = Date.now() - recordStart - speakAtMs;
 		const note = samples.at(-1)?.note || '';
 		const peak = {};
 		for (const s of samples) for (const [k, v] of Object.entries(s.emo)) peak[k] = Math.max(peak[k] || 0, v);
@@ -96,7 +102,7 @@ for (const rig of rigs) {
 		await context.close();
 		const videoPath = join(out, `${tag}.webm`);
 		renameSync(await video.path(), videoPath);
-		const row = { rig: rig.name, setting, badge, note, a2fFrames, peak, errors };
+		const row = { rig: rig.name, setting, badge, note, a2fFrames, peak, speakAtMs, spokeMs, errors };
 		const ok =
 			!errors.length &&
 			a2fFrames > 0 &&
