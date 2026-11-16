@@ -87,7 +87,7 @@ Reply with ONLY a JSON object, no markdown fence, no prose:
 {"subjectPresent": <true|false>, "singleSubject": <true|false>, "complete": <true|false>, "limbsSeparated": <true|false>, "blob": <true|false>, "note": "<one short sentence naming the decisive detail>"}`;
 }
 
-function parseJsonReply(text) {
+export function parseJsonReply(text) {
 	const trimmed = String(text || '')
 		.trim()
 		.replace(/^```(?:json)?\s*/i, '')
@@ -109,7 +109,10 @@ function parseJsonReply(text) {
 
 // Matches `"key": <value>` where the value opens with none of the tokens a JSON
 // value can start with, and runs up to the next `, "key":` or the closing brace.
-const BARE_VALUE = /("[A-Za-z_]\w*"\s*:\s*)(?!["{[\-\d]|true\b|false\b|null\b)([^\n]*?)(?=\s*,\s*"[A-Za-z_]\w*"\s*:|\s*\}[^}]*$)/g;
+// Whitespace is in the lookahead so `\s*` cannot backtrack short of the value:
+// without it, `"score": 4` matched with the space as the "bare" start and every
+// number, boolean and null in a repaired reply came back as a string.
+const BARE_VALUE = /("[A-Za-z_]\w*"\s*:\s*)(?![\s"{[\-\d]|true\b|false\b|null\b)([^\n]*?)(?=\s*,\s*"[A-Za-z_]\w*"\s*:|\s*\}[^}]*$)/g;
 
 /**
  * Quote free-text values a vision lane emitted bare, e.g.

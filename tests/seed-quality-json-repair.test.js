@@ -14,7 +14,7 @@
 // real fetchImpl seam, so the repair is the exact code inProcessTransport runs.
 
 import { describe, it, expect } from 'vitest';
-import { remoteTransport } from '../api/_lib/seed-quality.js';
+import { parseJsonReply, remoteTransport } from '../api/_lib/seed-quality.js';
 
 function visionServer(replies) {
 	const prompts = [];
@@ -72,6 +72,13 @@ describe('judge replies with an unquoted free-text value', () => {
 		const { fetchImpl } = visionServer([reply]);
 		const t = remoteTransport({ origin: 'https://judge.test', fetchImpl });
 		await expect(t.judgeRealism({ png: PNG, prompt: 'a lamp', viewLabel: 'front' })).rejects.toThrow(/missing numeric photorealism/);
+	});
+
+	it('quotes only the bare value: scores stay numbers and flags stay booleans', () => {
+		const out = parseJsonReply(
+			'{"photorealism": 4, "geometryIntegrity": 6, "blob": false, "note": null, "critique": The body reads as flat plastic.}',
+		);
+		expect(out).toEqual({ photorealism: 4, geometryIntegrity: 6, blob: false, note: null, critique: 'The body reads as flat plastic.' });
 	});
 
 	it('still fails a reply that is prose with no JSON at all, after the one format retry', async () => {
