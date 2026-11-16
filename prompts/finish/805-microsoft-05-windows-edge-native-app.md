@@ -1,6 +1,6 @@
 # microsoft 05: make three.ws feel native on Windows and in Edge (open .glb from Explorer, protocol links, Edge sidebar)
 
-Status 2026-11-11: built and verified locally (commits 21e1d7c2d, 01bc78892, 802cde150, 1d8bfa73c, 8cd3cb74b). Waiting on the owner to push and deploy, after which the live `npm run package:microsoft-store -- --check` passes (the local production build already passes it). Full `npm test` is red only on suites owned by sibling work (theme-switcher-capability, vision-json-lane-failover and others); every suite this order touched passes.
+Status 2026-11-16: live and re-verified on production. Pushed and deployed (the docs commit landed on threews/main as e7537366d). https://three.ws/manifest.webmanifest serves file_handlers, protocol_handlers, launch_handler, edge_side_panel and display_override with window-controls-overlay; the live `npm run package:microsoft-store -- --check` passes (23 URLs, 0 warnings); /sidebar returns 200 with no console errors at 360px in both themes; the launchQueue Playwright spec passes 2/2 and the parser and Store-check suites pass 51/51. Remaining, owner only: repackage the MSIX with MS_STORE_VERSION raised, resubmit in Partner Center with the updated listing, then run the Windows hands-on check.
 
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3105.
 
