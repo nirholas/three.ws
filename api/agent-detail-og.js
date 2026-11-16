@@ -18,7 +18,7 @@ import { env } from './_lib/env.js';
 import { isUuid } from './_lib/validate.js';
 import { esc, isSearchCrawler, renderCrawlerPage, renderCrawlerNotFound } from './_lib/crawler-page.js';
 import { isIndexableAgent } from './_lib/indexable-entity.js';
-import { publicUrlOrNull } from './_lib/r2.js';
+import { storedObjectUrl } from './_lib/r2.js';
 import { creationJsonLd } from './_lib/creation-jsonld.js';
 
 export default wrap(async (req, res) => {
@@ -182,7 +182,7 @@ export default wrap(async (req, res) => {
 				type: 'SoftwareApplication',
 				name: title,
 				description: desc,
-				glbUrl: publicUrlOrNull(agent.body_storage_key),
+				glbUrl: storedObjectUrl(agent.body_storage_key),
 				glbSizeBytes: agent.body_size_bytes,
 				image: ogImage,
 				creator: agent.owner_username

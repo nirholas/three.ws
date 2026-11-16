@@ -30,7 +30,7 @@ vi.mock('../api/_lib/rate-limit.js', async (importActual) => {
 	const ok = async () => ({ success: true, limit: 100, remaining: 99, reset: Date.now() + 60_000 });
 	return { ...actual, limits: new Proxy({}, { get: () => ok }), clientIp: () => '127.0.0.1' };
 });
-vi.mock('../api/_lib/r2.js', () => ({ thumbnailUrl: () => null, publicUrlOrNull: () => null }));
+vi.mock('../api/_lib/r2.js', () => ({ thumbnailUrl: () => null, storedObjectUrl: () => null }));
 vi.mock('../api/_lib/zauth.js', () => ({ instrument: () => {}, drain: async () => {} }));
 vi.mock('../api/_lib/sentry.js', () => ({ captureException: () => {} }));
 

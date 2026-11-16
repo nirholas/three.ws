@@ -15,7 +15,7 @@
 
 import { sql } from './db.js';
 import { env } from './env.js';
-import { publicUrlOrNull, thumbnailUrl } from './r2.js';
+import { storedObjectUrl, thumbnailUrl } from './r2.js';
 
 export const CATEGORIES = [
 	{ slug: 'trading', label: 'Trading & markets' },
@@ -82,7 +82,7 @@ function avatarUrls(row) {
 	if (!visible) return { thumbnail: null, glb: null };
 	return {
 		thumbnail: row.avatar_thumbnail_key ? thumbnailUrl(row.avatar_thumbnail_key) : null,
-		glb: row.avatar_storage_key ? publicUrlOrNull(row.avatar_storage_key) : null,
+		glb: row.avatar_storage_key ? storedObjectUrl(row.avatar_storage_key) : null,
 	};
 }
 

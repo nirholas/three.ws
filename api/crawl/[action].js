@@ -28,7 +28,7 @@ import { sql } from '../_lib/db.js';
 import { isUuid } from '../_lib/validate.js';
 import { getSessionUser, extractBearer } from '../_lib/auth.js';
 import { requireCsrf } from '../_lib/csrf.js';
-import { objectStorageConfigured, putObject, publicUrlOrNull, thumbnailUrl } from '../_lib/r2.js';
+import { objectStorageConfigured, putObject, storedObjectUrl, thumbnailUrl } from '../_lib/r2.js';
 import { resolveAvatarUrl } from '../_lib/avatars.js';
 import {
 	CRAWL_LIVE_TTL, CRAWL_ACTIVE_WINDOW_MS, isFrameB64, pageMemory, sanitizePage, sanitizeStep, validateMission,
@@ -464,7 +464,7 @@ async function handlePages(req, res) {
 		linksOut: row.links_out,
 		relevance: row.relevance,
 		fromUrl: row.from_url,
-		textUrl: publicUrlOrNull(row.text_key),
+		textUrl: storedObjectUrl(row.text_key),
 		readAt: row.created_at,
 	}));
 	if (p.get('format') === 'jsonl') {

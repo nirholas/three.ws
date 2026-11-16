@@ -83,7 +83,7 @@ vi.mock('../api/_lib/x402/bazaar-client.js', () => ({
 // Object storage is an I/O boundary like the DB: give publicUrl a domain so the
 // citizens batch resolve can build a real URL without S3 config in the test env.
 vi.mock('../api/_lib/r2.js', () => ({
-	publicUrlOrNull: (key) => (key ? `https://cdn.example/${key}` : null),
+	storedObjectUrl: (key) => (key ? `https://cdn.example/${key}` : null),
 }));
 vi.mock('@tetsuo-ai/sdk', () => ({ getAgent: async () => null }));
 

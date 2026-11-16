@@ -47,7 +47,7 @@
 import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
-import { publicUrlOrNull, thumbnailUrl } from '../_lib/r2.js';
+import { storedObjectUrl, thumbnailUrl } from '../_lib/r2.js';
 import { trackConnectorCall } from '../_lib/microsoft-surface-events.js';
 
 const SORTS = new Set(['newest', 'popular', 'name', 'live']);
@@ -73,7 +73,7 @@ function mapAgent(r) {
 	// The body itself, under the same public/unlisted gate as /api/agents/:id.
 	// Lets a crowd surface (the desktop campus) dress every agent from one call
 	// instead of one profile fetch per agent.
-	const modelUrl = r.avatar_storage_key && thumbPub ? publicUrlOrNull(r.avatar_storage_key) : null;
+	const modelUrl = r.avatar_storage_key && thumbPub ? storedObjectUrl(r.avatar_storage_key) : null;
 
 	return {
 		id:                r.id,

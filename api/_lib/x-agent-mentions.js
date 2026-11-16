@@ -77,7 +77,7 @@ export async function agentMentionAccounts({ db = sql } = {}) {
 export async function agentPosterUrl(agent, { db = sql, base = appOrigin() } = {}) {
 	if (!agent?.avatar_id) return null;
 	const [row] = await db`select storage_key from avatars where id = ${agent.avatar_id} and deleted_at is null limit 1`;
-	const glbUrl = row ? (await import('./r2.js')).publicUrlOrNull(row.storage_key) : null;
+	const glbUrl = row ? (await import('./r2.js')).storedObjectUrl(row.storage_key) : null;
 	return glbUrl ? posterPngUrl(base, glbUrl) : null;
 }
 

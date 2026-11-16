@@ -7,7 +7,7 @@
 // true under concurrency. Callers read the RETURNING rows to learn if they won.
 
 import { sql } from '../db.js';
-import { thumbnailUrl, publicUrlOrNull } from '../r2.js';
+import { thumbnailUrl, storedObjectUrl } from '../r2.js';
 import { currencyInfo, formatAtomics } from './chain.js';
 
 export const LISTING_STATUSES = ['active', 'settling', 'sold', 'delisted', 'expired'];
@@ -355,7 +355,7 @@ export function listingView(row, { viewerId = null } = {}) {
 			category: row.agent_category || null,
 			skills: row.agent_skills || [],
 			thumbnail_url: thumbnailUrl(row.avatar_thumbnail_key),
-			avatar_glb_url: row.avatar_storage_key && avatarPublic ? publicUrlOrNull(row.avatar_storage_key) : null,
+			avatar_glb_url: row.avatar_storage_key && avatarPublic ? storedObjectUrl(row.avatar_storage_key) : null,
 			wallet_address: row.agent_solana_address || null,
 			url: `/agents/${row.agent_id}`,
 		},

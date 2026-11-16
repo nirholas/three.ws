@@ -46,7 +46,7 @@ import { loadTrust } from '../_lib/agora-trust-read.js';
 // pool badly enough that the economy ticker's own polls timed out). One batch
 // read here hands the client a ready-to-load URL instead.
 import { isBakedFresh } from '../_lib/avatars.js';
-import { publicUrlOrNull } from '../_lib/r2.js';
+import { storedObjectUrl } from '../_lib/r2.js';
 // Terminal-kind sets + type helpers are the labour engine's single source of
 // truth (workers/agora-citizens/policy.js) — the board's open lane and the
 // reconcile sweep MUST agree on what "still open" means per task type, so we
@@ -137,7 +137,7 @@ async function resolveCitizenAvatarUrls(rows) {
 	const byId = new Map();
 	for (const a of avatars) {
 		const key = isBakedFresh(a) ? a.baked_storage_key : a.storage_key;
-		const url = publicUrlOrNull(key);
+		const url = storedObjectUrl(key);
 		if (url) byId.set(String(a.id), url);
 	}
 	return byId;

@@ -19,7 +19,7 @@ import { env } from './_lib/env.js';
 import { isUuid } from './_lib/validate.js';
 import { esc, isSearchCrawler, renderCrawlerPage, renderCrawlerNotFound } from './_lib/crawler-page.js';
 import { isIndexableAvatar } from './_lib/indexable-entity.js';
-import { publicUrlOrNull } from './_lib/r2.js';
+import { storedObjectUrl } from './_lib/r2.js';
 import { creationJsonLd } from './_lib/creation-jsonld.js';
 
 export default wrap(async (req, res) => {
@@ -172,7 +172,7 @@ export default wrap(async (req, res) => {
 				pageUrl,
 				name: title,
 				description: desc,
-				glbUrl: publicUrlOrNull(avatar.storage_key),
+				glbUrl: storedObjectUrl(avatar.storage_key),
 				glbSizeBytes: avatar.size_bytes,
 				image: ogImage,
 				creator: avatar.owner_username

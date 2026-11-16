@@ -23,7 +23,7 @@ vi.mock('../api/_lib/rate-limit.js', () => ({
 	limits: new Proxy({}, { get: () => async () => ({ success: true }) }),
 	clientIp: () => '127.0.0.1',
 }));
-vi.mock('../api/_lib/r2.js', () => ({ publicUrlOrNull: () => null, thumbnailUrl: () => null }));
+vi.mock('../api/_lib/r2.js', () => ({ storedObjectUrl: () => null, thumbnailUrl: () => null }));
 
 process.env.DATABASE_URL ||= 'postgres://pglite.test/db';
 process.env.JWT_SECRET ||= 'team-events-test-secret-team-events-test-secret';

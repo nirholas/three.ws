@@ -19,7 +19,7 @@
 // so api/search.js only has to merge + rank arrays, never branch on shape.
 
 import { sql } from './db.js';
-import { publicUrlOrNull, thumbnailUrl } from './r2.js';
+import { storedObjectUrl, thumbnailUrl } from './r2.js';
 import { searchPublicCreations } from './forge-store.js';
 import { listDioramas } from './diorama-store.js';
 import { listDesigns } from './cad/store.js';
@@ -57,7 +57,7 @@ export async function searchAvatars({ q, limit = 12 } = {}) {
 		title: r.name || 'Untitled avatar',
 		description: r.description || '',
 		image: thumbnailUrl(r.thumbnail_key),
-		glbUrl: publicUrlOrNull(r.storage_key),
+		glbUrl: storedObjectUrl(r.storage_key),
 		assetUrl: `/avatars/${r.id}`,
 		creator: r.owner_username
 			? { label: `@${r.owner_username}`, url: `/u/${r.owner_username}` }

@@ -10,7 +10,7 @@
 // through: the team's policy agent, else its Trader, else the solo agent.
 
 import { sql } from '../db.js';
-import { publicUrlOrNull, thumbnailUrl } from '../r2.js';
+import { storedObjectUrl, thumbnailUrl } from '../r2.js';
 
 export const CHAT_ROLES = Object.freeze(['researcher', 'entry', 'trader', 'launcher']);
 
@@ -46,7 +46,7 @@ function shapeMember(row) {
 		name: row.name || 'Agent',
 		avatar_id: row.avatar_id || null,
 		wallet: row.meta?.solana_address || null,
-		model_url: row.storage_key ? publicUrlOrNull(row.storage_key) : null,
+		model_url: row.storage_key ? storedObjectUrl(row.storage_key) : null,
 		thumbnail_url: row.thumbnail_key ? thumbnailUrl(row.thumbnail_key) : null,
 		permissions: row.permissions || null,
 		status: row.status || 'active',
