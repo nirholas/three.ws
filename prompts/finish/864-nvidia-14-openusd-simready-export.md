@@ -1,5 +1,7 @@
 # nvidia 14: every Forge model exports as validated OpenUSD with physics, semantics and skeletons, ready for NVIDIA Omniverse and Isaac Sim
 
+**Status 2026-11-16:** code complete and verified. Worker live on Cloud Run (`usd-export-service`), 11 of 11 real Forge models pass usdchecker and the NVIDIA asset validator with 0 errors, Newton 1.8.0 drop test settles. Not archived because the `/api/forge/export-usd` route, the `export_openusd` MCP tool and the Forge menu row reach users only after the owner pushes and deploys `three-ws-api`; the Omniverse row of the visibility map flips to shipped after that deploy.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `nvidia-` order, so it can run in parallel with all of them. Dev port: 3264.
 
 ## Operating clause (binding)
