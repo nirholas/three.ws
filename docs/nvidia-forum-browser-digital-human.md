@@ -86,3 +86,19 @@ The reason to do this in WebGL instead of an engine is distribution. Our whole e
 2. **A mode that returns the ARKit track for a text input directly**, so a client that already uses Magpie does not have to round-trip the audio through its own server to resample it. We do the resampling for our users today; it would be one fewer thing every ACE-on-the-web integrator has to get right.
 
 Happy to go deeper on any of it, particularly the derived-blendshape path, which I have not seen written up anywhere and which took the longest to get right. If you are driving A2F-3D onto rigs you did not author, I would like to compare mapping tables.
+
+## Follow-up: emotion past the mouth (under evaluation, 2026-11-16)
+
+The first version only used A2F-3D for the mouth. A face that says "that is wonderful news" with flat brows reads as wrong even when the lips are perfect, so the next step was the emotion half of the API. Notes for anyone doing the same over NVCF gRPC:
+
+**Asking for it.** Emotion goes in as timed keyframes in `AudioWithEmotion.emotions` (ten channels: amazement, anger, cheekiness, disgust, fear, grief, joy, outofbreath, pain, sadness). The header's `emotion_post_processing_params` scales how much of it the model applies, and a strength of 0 is a clean off switch: same audio, neutral upper face. `emotion_params.beginning_emotion` keeps the first frames from easing in from neutral.
+
+**Reading it back.** The model also reports the emotion it actually applied, per frame, in `metadata.emotion_aggregate`. It arrives as a protobuf `Any`, so the client has to unpack it with the aggregate's type URL before it is usable. We stream that track to the browser next to the blendshape frames, and the page's meters show what the face is really doing, not what was asked for.
+
+**Choosing the feeling.** The agent that writes the reply also names the intent (joy, concern, surprised, empathy and so on), and an "auto" mode reads it from the reply text when the agent does not. The intent maps onto a channel mix, so the same line can be voiced warm or worried.
+
+**Past the face mesh.** A2F's output stops at blendshapes. We carry the emotion track on to the head and eyes on our side: a small additive nod and tilt on the head bone and a gaze offset, applied as quaternion deltas on top of whatever idle animation is running and removed when emotion is off. Each rig kind gets its own tuning: ARKit meshes take the brow, eye and cheek shapes directly, VRM gets them through its expression presets, and Oculus viseme rigs (which have no brow shapes at all) lean harder on the head and gaze.
+
+One trap worth a sentence: on VRM with `autoUpdateHumanBones`, `vrm.update()` copies the normalized humanoid bones onto the raw bones every frame. A head offset written to the raw bone is silently erased; it has to go on the normalized bone.
+
+**Measured, same audio, production A2F-3D.** With a joy intent, the mean `mouthSmileLeft` over the line rises from 0.025 to 0.230 (about 9.3x). With a sad intent, `browDownLeft` rises from 0.077 to 0.225. We checked it in a browser on all three rig kinds (an ARKit avatar, a VRM 1.0 sample and an Oculus viseme rig), each with emotion on and off, with no console errors.

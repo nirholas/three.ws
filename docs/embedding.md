@@ -367,6 +367,43 @@ window.addEventListener('message', e => {
 
 The `agent:ready` message is sent once on init and again in response to any `agent:hello` you send.
 
+### Avatar-only embed: facial emotion
+
+The avatar-only embed (`/embed/avatar/<handle>`, `/a-embed.html`, runtime `src/avatar-embed.js`) speaks its own `v1.avatar.*` bridge. When a spoken line is animated by NVIDIA Audio2Face-3D, the face carries the line's feeling as well as its words: Audio2Face drives brows, eyes and cheeks from the emotion it is given, and the player carries that emotion on to head nods, tilt and gaze. The mapping is tuned per rig kind (ARKit blendshapes, VRM expressions, Oculus viseme rigs). This lane is under evaluation until it ships to production.
+
+URL parameters set the embed-wide default:
+
+| Parameter | Values | Default |
+|-----------|--------|---------|
+| `emotion` | `auto` (read the feeling from the line's text), `off` (neutral face), or an intent: `neutral`, `joy`, `celebration`, `curiosity`, `surprised`, `concern`, `empathy`, `sad`, `angry` | `auto` |
+| `emotionStrength` | `0` to `1`: how strongly emotion reaches brows, eyes, cheeks and head. `0` is the same as `off` | `0.6` |
+| `emotionUi` | `0` hides the small on-face emotion control | shown |
+
+From the host page:
+
+```js
+const frame = document.getElementById('avatar-frame').contentWindow;
+
+// One line with its own feeling. `emotion` is an intent, 'auto', 'off',
+// or an Audio2Face channel map such as { joy: 0.8, amazement: 0.3 }.
+// With 'auto', `emotionText` (if given) is read instead of `text`, so an
+// agent can pass the reply it wrote while the audio says something shorter.
+frame.postMessage(
+  { type: 'v1.avatar.speak', audioUrl: 'https://example.com/line.wav', emotion: 'joy' },
+  'https://three.ws'
+);
+
+// Change the embed-wide setting: on/off, strength and the default intent.
+frame.postMessage({ type: 'v1.avatar.emotion', enabled: true, strength: 0.8, emotion: 'auto' }, 'https://three.ws');
+```
+
+The embed answers:
+
+| Message | Payload | Meaning |
+|---------|---------|---------|
+| `v1.avatar.emotion:state` | `{ enabled, strength, emotion }` | The current setting, after any change |
+| `v1.avatar.speak:a2f` | `{ frames, fps, emotion }` | Audio2Face took over the face for this line. `emotion` is `{ intent, dominant }` (the intent as resolved, the channel the face actually showed most) or `null` |
+
 ### Structured host protocol (Claude.ai / LobeHub)
 
 Platforms like Claude.ai and LobeHub use the versioned `EMBED_HOST_PROTOCOL` envelope for richer bidirectional communication:
