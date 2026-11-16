@@ -15,6 +15,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const getSessionUser = vi.fn(async () => null);
 const sqlMock = vi.fn(async () => []);
 
+// Admin sessions here have passed two-step verification; that rule has its own
+// suite (tests/admin-mfa.test.js).
+vi.mock('../api/_lib/admin-mfa.js', async (importActual) => ({ ...(await importActual()), sessionPassedMfa: async () => true }));
 vi.mock('../api/_lib/auth.js', () => ({ getSessionUser }));
 vi.mock('../api/_lib/db.js', () => ({
 	sql: sqlMock,

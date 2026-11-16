@@ -16,6 +16,9 @@ const holder = vi.hoisted(() => ({ db: null }));
 const authState = vi.hoisted(() => ({ session: null }));
 const audits = vi.hoisted(() => []);
 
+// Admin sessions here have passed two-step verification; that rule has its own
+// suite (tests/admin-mfa.test.js).
+vi.mock('../api/_lib/admin-mfa.js', async (importActual) => ({ ...(await importActual()), sessionPassedMfa: async () => true }));
 vi.mock('../api/_lib/db.js', async (importActual) => {
 	const actual = await importActual();
 	return { ...actual, sql: (...args) => holder.db.sql(...args) };

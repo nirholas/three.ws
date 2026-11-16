@@ -16,7 +16,8 @@ const isAdminUser = vi.fn(async () => false);
 const sqlMock = vi.fn(async () => []);
 
 vi.mock('../api/_lib/auth.js', () => ({ getSessionUser }));
-vi.mock('../api/_lib/admin.js', () => ({ isAdminUser, requireAdmin: vi.fn() }));
+// isVerifiedAdmin is isAdminUser plus the two-step rule, which tests/admin-mfa.test.js covers.
+vi.mock('../api/_lib/admin.js', () => ({ isAdminUser, isVerifiedAdmin: isAdminUser, requireAdmin: vi.fn() }));
 vi.mock('../api/_lib/db.js', () => ({
 	sql: sqlMock,
 	isDbUnavailableError: () => false,

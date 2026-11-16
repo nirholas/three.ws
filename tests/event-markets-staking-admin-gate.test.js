@@ -8,6 +8,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const state = { user: null };
 const reconcile = vi.fn(async () => []);
 
+// Admin sessions here have passed two-step verification; that rule has its own
+// suite (tests/admin-mfa.test.js).
+vi.mock('../api/_lib/admin-mfa.js', async (importActual) => ({ ...(await importActual()), sessionPassedMfa: async () => true }));
 vi.mock('../api/_lib/auth.js', () => ({
 	getSessionUser: vi.fn(async () => state.user),
 	authenticateBearer: vi.fn(async () => null),
