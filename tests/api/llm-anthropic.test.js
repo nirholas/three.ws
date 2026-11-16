@@ -671,6 +671,25 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 		expect(call.init.headers.authorization).toBe('Bearer gsk-test');
 	});
 
+	it.each(['nvidia/nemotron-3.5-lightning-30b-a3b', 'nvidia/nemotron-3-ultra-550b-a55b'])(
+		'asks NVIDIA (%s) to answer directly, with thinking off',
+		async (model) => {
+			// Live 2026-11-16: with thinking on, Lightning spent a 700-token budget
+			// entirely on reasoning_content and returned no content at all.
+			process.env.NVIDIA_API_KEY = 'nvapi-test';
+			await invoke({ body: { ...VALID_BODY, model } });
+			const call = fetchState.calls[0];
+			expect(call.url).toBe('https://integrate.api.nvidia.com/v1/chat/completions');
+			expect(JSON.parse(call.init.body).chat_template_kwargs).toEqual({ enable_thinking: false });
+			delete process.env.NVIDIA_API_KEY;
+		},
+	);
+
+	it('sends no thinking switch to a provider without one', async () => {
+		await invoke({ body: { ...VALID_BODY, model: 'qwen/qwen3.8-27b' } });
+		expect(JSON.parse(fetchState.calls[0].init.body)).not.toHaveProperty('chat_template_kwargs');
+	});
+
 	it.each(['llama-3.1-8b-instant', 'llama-3.3-70b-versatile'])(
 		'sends a caller-requested retired Groq id (%s) to the live Groq model',
 		async (retired) => {

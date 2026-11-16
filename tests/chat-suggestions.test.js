@@ -67,20 +67,21 @@ describe('createReplyFilter', () => {
 // NVIDIA lane streamed no chunks and a done event with reply "" and no
 // suggestions. The suggestion instruction tipped nemotron-3.5-lightning into
 // reasoning mode, which spent the whole max_tokens budget on reasoning_content
-// and left message.content null. Suggestion turns must ask NVIDIA to answer
-// directly, and every other turn must keep its payload byte-identical.
-describe('chat route payload in suggestion mode', () => {
+// and left message.content null. NVIDIA turns must ask for a direct answer
+// (since 2026-11-16 every NVIDIA turn, not only suggestion turns), and other
+// providers must keep their payload byte-identical.
+describe('chat route payload on the NVIDIA lane', () => {
 	const args = { systemPrompt: 'sys', history: [{ role: 'user', content: 'hi' }], maxTokens: 64, includeTools: false };
-	it('turns NVIDIA thinking off when the turn asks for suggested replies', () => {
+	it('turns NVIDIA thinking off on every turn, with or without tools', () => {
+		// Live 2026-11-16: with thinking on, Lightning spent a 700-token budget
+		// entirely on reasoning_content (finish_reason "length", 0 content
+		// chars), so a six-step answer streamed empty or stopped at "2.".
 		const route = chatRouteFor('nvidia', 'test-key');
-		expect(route.buildPayload({ ...args, direct: true }).chat_template_kwargs).toEqual({ enable_thinking: false });
-	});
-	it('leaves an ordinary NVIDIA turn untouched', () => {
-		const route = chatRouteFor('nvidia', 'test-key');
-		expect(route.buildPayload(args)).not.toHaveProperty('chat_template_kwargs');
+		expect(route.buildPayload(args).chat_template_kwargs).toEqual({ enable_thinking: false });
+		expect(route.buildPayload({ ...args, includeTools: true }).chat_template_kwargs).toEqual({ enable_thinking: false });
 	});
 	it('adds nothing for a provider with no direct-answer switch', () => {
 		const route = chatRouteFor('sambanova', 'test-key');
-		expect(route.buildPayload({ ...args, direct: true })).not.toHaveProperty('chat_template_kwargs');
+		expect(route.buildPayload(args)).not.toHaveProperty('chat_template_kwargs');
 	});
 });

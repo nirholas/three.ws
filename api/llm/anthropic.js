@@ -1252,6 +1252,9 @@ export function anthropicBodyToOpenAI(body, { provider } = {}) {
 		stream: !!body.stream,
 	};
 	if (typeof body.temperature === 'number') out.temperature = body.temperature;
+	// Nemotron thinks by default and can spend the whole max_tokens budget on
+	// reasoning_content, which this proxy drops, so the agent got an empty reply.
+	if (provider === 'nvidia') out.chat_template_kwargs = { enable_thinking: false };
 	if (out.stream && STREAM_USAGE_PROVIDERS.has(provider)) {
 		out.stream_options = { include_usage: true };
 	}
