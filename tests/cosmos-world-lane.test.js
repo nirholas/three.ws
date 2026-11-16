@@ -15,13 +15,16 @@ import { Readable } from 'node:stream';
 process.env.PUBLIC_APP_ORIGIN = 'https://three.ws';
 process.env.APP_ORIGIN = 'https://three.ws';
 
-const store = vi.hoisted(() => ({ puts: [], objects: new Map() }));
+const store = vi.hoisted(() => ({ puts: [], objects: new Map(), headError: null }));
 vi.mock('../api/_lib/r2.js', () => ({
 	putObject: async ({ key, body, contentType }) => {
 		store.puts.push({ key, size: body.length, contentType });
 		store.objects.set(key, body);
 	},
-	headObject: async (key) => (store.objects.has(key) ? { ContentLength: store.objects.get(key).length } : null),
+	headObject: async (key) => {
+		if (store.headError) throw store.headError;
+		return store.objects.has(key) ? { ContentLength: store.objects.get(key).length } : null;
+	},
 	cdnUrl: (key) => `https://three.ws/cdn/${key}`,
 	isStorageInfrastructureError: () => false,
 }));
@@ -56,6 +59,7 @@ beforeEach(() => {
 	calls = [];
 	store.puts.length = 0;
 	store.objects.clear();
+	store.headError = null;
 	process.env.NVIDIA_API_KEY = 'nvapi-test';
 	process.env.COSMOS_WORKER_URL = WORKER;
 	process.env.COSMOS_WORKER_KEY = 'worker-secret';
@@ -273,6 +277,19 @@ describe('jobs resume from their id alone', () => {
 		expect(again.json.video_url).toBe(first.json.video_url);
 		expect(store.puts).toHaveLength(1);
 		expect(calls.some((c) => c.url.endsWith('/video'))).toBe(false);
+	});
+
+	it('still delivers a finished clip when the R2 existence check is rejected', async () => {
+		// Production on 2026-11-16: the R2 credential answered 401, and a HEAD has
+		// no body, so the SDK raised name Unknown / UnknownError. putObject diverts
+		// to the GCS fallback bucket on that error, but the existence check ran
+		// first and threw, so every poll reported "encoding" forever.
+		store.headError = Object.assign(new Error('UnknownError'), { name: 'Unknown', $metadata: { httpStatusCode: 401 } });
+		routes.task = () => jsonResponse(200, { status: 'done', progress: 1, timings: { sample_s: 231.1, total_s: 244.1 } });
+		const res = await get(`/api/cosmos?job=cw_${TASK}`);
+		expect(res.json.status).toBe('done');
+		expect(res.json.video_url).toBe(`https://three.ws/cdn/forge/cosmos/cw_${TASK}.mp4`);
+		expect(store.puts).toEqual([{ key: `forge/cosmos/cw_${TASK}.mp4`, size: 9, contentType: 'video/mp4' }]);
 	});
 
 	it('turns a worker failure code into a reason the user can act on', async () => {

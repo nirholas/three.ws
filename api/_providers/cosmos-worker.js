@@ -111,7 +111,15 @@ export async function submitWorld(input) {
 async function persistOnce(jobId, taskId) {
 	const { headObject, putObject, cdnUrl } = await import('../_lib/r2.js');
 	const key = workerVideoKey(jobId);
-	if (await headObject(key)) return cdnUrl(key);
+	// The existence check is only a shortcut. When R2 cannot answer it (a
+	// rejected credential reaches a HEAD as a bodiless 401), copy anyway:
+	// putObject diverts to the GCS fallback bucket on exactly that error, and
+	// /cdn serves the key from wherever it landed.
+	const existing = await headObject(key).catch((err) => {
+		console.warn('[cosmos-worker] R2 head %s failed, copying anyway: %s', key, err?.message || err);
+		return null;
+	});
+	if (existing) return cdnUrl(key);
 	const res = await fetch(`${baseUrl()}/tasks/${taskId}/video`, {
 		headers: authHeaders({ accept: 'video/mp4' }),
 		signal: AbortSignal.timeout(VIDEO_TIMEOUT_MS),
