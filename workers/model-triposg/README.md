@@ -148,6 +148,9 @@ root and treat any status under 500 as "up").
 | `REMBG_SERVICE_URL` | image mode | unset | rembg-service base URL for the image-mode matte; image tasks fail as a worker fault without it |
 | `REMBG_MODEL` | no | `birefnet-general-lite` | Matting model the service runs |
 | `REMBG_TIMEOUT_S` | no | `120` | Matte round-trip budget |
+| `TRT_MODE` | no | `off` | `on` serves the image pipeline's DiT denoiser from the prebuilt NVIDIA TensorRT engine for this GPU, TensorRT version and checkpoint. Any other value is `off`. A missing engine or an engine error falls back to PyTorch per call |
+| `TRT_ENGINE_GCS_PREFIX` | no | `gs://three-ws-model-weights/trt-engines/triposg` | Where `trt_build.py` publishes engines and the worker fetches them at boot |
+| `DECODER_KV_CACHE` | no | `on` | Reuses the VAE decoder's latent self-attention across the geometry query batches of one mesh (`decode_cache.py`). The same math, measured against the PyTorch baseline. `off` disables it |
 
 Both weight sets live in the `three-ws-model-weights` bucket, mounted at
 `/weights` (see [`workers/deploy/stage-weights.sh`](../deploy/stage-weights.sh)):
@@ -203,6 +206,10 @@ python3 workers/model-triposg/test_request_policy.py
 # and that startup stages and loads no RMBG weights.
 python3 workers/model-triposg/test_matte.py
 python3 workers/model-triposg/test_startup_no_rmbg.py
+
+# TensorRT flag, engine cache keys, checkpoint fingerprint, shape gate and the
+# parity verdict that decides whether an engine may be published.
+python3 workers/model-triposg/test_trt_policy.py
 
 # The served contract against the real dependency set. Ships in the image.
 docker run --rm model-triposg python3 test_app_contract.py

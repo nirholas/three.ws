@@ -185,7 +185,34 @@ Every non-terminal poll also carries honest timing: `elapsed_seconds` (the age o
 
 - **Quality gate + best-of retry.** `scoreQualityGate` flags degenerate results (near-empty geometry, texture failures); synchronous lanes retry once inline before returning.
 - **Result cache** (`api/_lib/forge-cache.js`). Identical text prompts on platform-keyed non-high lanes are served from cache with `cached: true`. The key covers path, tier, backend, the normalized prompt, and the output-affecting options (seed included), with a 7-day TTL that a read never refreshes. `force_regenerate: true` in the request body skips the cache READ while still writing the fresh result back. Any caller that must prove the pipeline is alive rather than that a mesh exists has to send it: the daily smoke cron (`api/cron/forge-smoke.js`) submits a constant prompt with no seed, so without the flag its key never changes and it verifies a replay. Automation that seeds the gallery takes the other route and varies the seed per submit (`api/cron/forge-seed-cron.js`), so a repeated prompt yields a genuinely new asset instead of a second catalog entry pointing at one GLB.
+- **Physical plausibility judge** (`api/_lib/cosmos-reason-judge.js`). A second judge, NVIDIA Cosmos Reason, runs beside the quality gate and logs both verdicts. See [the section below](#physical-plausibility-judge-nvidia-cosmos-reason).
 - **Scale controls** (`api/_lib/forge-scale.js`). In-flight coalescing, blocking-lane slots, and daily paid caps keep a traffic spike from stampeding the GPU fleet or the paid last resort. Its circuit breaker (`circuitRecordFailure`) widens the open window linearly per consecutive failure but caps it at one hour (`CIRCUIT_MAX_OPEN_MS`), so a provider outage parks the seed cron for at most an hour before it re-probes the lane.
+
+### Physical plausibility judge (NVIDIA Cosmos Reason)
+
+The quality gate scores one front render with a general vision model. It is good at "is this a recognisable lamp" and weak at physics: a part floating beside the body, a figure that could not stand, a model that is really a flat card. NVIDIA Cosmos Reason 2 8B is a vision-language model trained for physical reasoning, so it runs as a second judge on the same GLB. It is **under evaluation**, self-hosted on our own GPU under the NVIDIA Open Model License.
+
+**What it sees and says.** `renderCosmosViews` renders four views of the delivered GLB (front, right, back, left at 448 px, slightly above eye level so ground contact shows). `judgeWithCosmos` sends them with the generation prompt and gets back a structured verdict: `plausible` (yes or no), `issues` from a fixed list (`floating_parts`, `interpenetration`, `unsupported`, `wrong_orientation`, `implausible_proportions`, `missing_parts`, `duplicated_parts`, `fused_parts`, `melted_blob`, `thin_shell`), `prompt_match` (yes, partial, no) and a `confidence`. Tags outside the list are dropped, so verdicts stay comparable across model versions. If reasoning is on (`COSMOS_REASON_THINK=1`), the trace is stripped before the verdict leaves the module; no trace is ever stored. The call fails open: any error returns `{ available: false }` and the current judge's verdict stands.
+
+**How it runs beside the gate.** `runQualityGate` starts the Cosmos render and call in parallel with the current judge (`runCurrentJudge`). The flag `FORGE_COSMOS_JUDGE` picks what Cosmos is allowed to do:
+
+| Mode | Effect on the shipped verdict |
+| --- | --- |
+| `off` | Cosmos never runs. This is the only mode when `COSMOS_REASON_URL` is unset. |
+| `shadow` (default once the URL is set; an unknown value also maps here) | None. The current judge decides; both verdicts are logged. |
+| `veto` | A confident Cosmos rejection (`FORGE_COSMOS_VETO_CONFIDENCE`, default 0.7) for an issue in `FORGE_COSMOS_VETO_ISSUES` fails a model the current judge passed. |
+| `tiebreak` | Cosmos decides when the current score sits within `FORGE_COSMOS_TIEBREAK_BAND` (default 10) points of the pass score, or when the current judge has no verdict. |
+| `primary` | Cosmos decides whenever it answers; the current judge is the fallback. |
+
+In shadow mode the gate waits at most `FORGE_COSMOS_SHADOW_GRACE_MS` (default 6000) after the current judge for Cosmos, because Cloud Run throttles CPU once the response is sent, then returns either way. A deciding mode waits up to `COSMOS_REASON_TIMEOUT_MS` (default 45000). Every run writes one row to `forge_judge_shadow`: both verdicts, the four views (stored in R2 under `forge/judge-shadow/`), whether they disagree, the mode and which judge was applied.
+
+**Promotion is a rule, not a taste call.** `scripts/cosmos-judge-eval.mjs` judges every Forge creation a user kept or threw away (`forge_creations.outcome`, written by the keep and throw-away buttons) with both judges, then applies the rule. Rejects count as the positive class.
+- **Veto:** an issue qualifies if, on a fixed half of the data, at least 5 models the current judge passed carry it and at least 70% of those were thrown away by the user. Veto mode is then promoted only if, on the other half, it beats the current judge's accuracy without lowering its reject precision.
+- **Tiebreak and primary:** tested the same way on all rows.
+
+The narrowest mode that passes wins; otherwise the judge stays in shadow. The worker is in [workers/model-cosmos-reason/](../workers/model-cosmos-reason/README.md).
+
+**Tuning board.** `/admin/forge-judge` (ops session) lists the disagreements with all four views and both verdicts. It can filter by issue, by source (live Forge traffic or the eval) and by unlabelled rows. An operator's Keep or Throw away label is stored on the row (`labelled_by = admin:<actor>`) and feeds the next eval run.
 
 ## 6. Persistence and storage
 
