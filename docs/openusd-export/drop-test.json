@@ -1,0 +1,25 @@
+{
+  "engine": "Newton 1.8.0 (Warp 1.19.0, XPBD, CPU)",
+  "asset": "Forge creation 1e4c9d74-65e0-4b73-b2d9-f07325c760d6 (a wooden chair), asset.usd",
+  "authored_mass_kg": 35.1742,
+  "imported_mass_kg": 35.1742,
+  "collision_shapes": 16,
+  "drop_height_m": 1.0,
+  "start_lowest_point_m": 0.9171,
+  "first_contact_s": 0.425,
+  "min_lowest_point_m": -0.0019,
+  "final_lowest_point_m": -0.0,
+  "final_linear_speed_m_s": 0.00072,
+  "final_angular_speed_rad_s": 0.0,
+  "settled_max_linear_speed_last_0_5s": 0.00087,
+  "settled_max_angular_speed_last_0_5s": 0.0004,
+  "checks": {
+    "mass_imported": true,
+    "fell_and_collided": true,
+    "settled": true,
+    "no_tunnelling": true
+  },
+  "passed": true,
+  "wall_seconds_cpu": 240.9,
+  "date": "2026-11-16"
+}
