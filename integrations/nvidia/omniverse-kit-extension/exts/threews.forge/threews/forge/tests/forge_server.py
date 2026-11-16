@@ -33,6 +33,9 @@ class ForgeStandIn:
         self.polls_until_done = 2
         self.job_status = "done"      # or "failed"
         self.cache_hit = False
+        self.long_job_ids = False     # issue signed job tokens longer than a file name may be, like production
+        self.storage_down = False     # answer upload presigns with 503 storage_unavailable
+        self.uploads: Dict[str, bytes] = {}
         self.glb = box_glb()
         self.models = [
             {"id": f"m{i:02d}", "name": f"Saved model {i}", "size_bytes": len(self.glb), "visibility": "private",
@@ -66,6 +69,18 @@ class ForgeStandIn:
                 length = int(self.headers.get("content-length") or 0)
                 body = json.loads(self.rfile.read(length) or b"{}")
                 self._record(body)
+                if self.path == "/api/forge-upload":
+                    if stand_in.storage_down:
+                        return self._json(503, {"error": "storage_unavailable", "message": "Image storage is not configured."})
+                    name = f"ref{len(stand_in.uploads) + 1}"
+                    return self._json(
+                        200,
+                        {
+                            "upload_url": stand_in.url(f"/put/{name}"),
+                            "public_url": stand_in.url(f"/refs/{name}"),
+                            "headers": {"content-type": body.get("content_type") or "image/png"},
+                        },
+                    )
                 if self.path != "/api/forge":
                     return self._json(404, {"error": "not_found"})
                 if stand_in.busy_submit > 0:
@@ -85,7 +100,21 @@ class ForgeStandIn:
                 with stand_in._lock:
                     stand_in._jobs += 1
                     job = f"job{stand_in._jobs}"
+                    if stand_in.long_job_ids:
+                        job = f"f1.{job}." + "eyJwIjoiZ2NwIiwiayI6bnVsbH0" * 12
                 return self._json(202, {"job_id": job, "status": "queued", "backend": "fixture", "eta_seconds": 20})
+
+            def do_PUT(self):
+                length = int(self.headers.get("content-length") or 0)
+                data = self.rfile.read(length)
+                self._record({"bytes": len(data)})
+                if not self.path.startswith("/put/"):
+                    return self._json(404, {"error": "not_found"})
+                with stand_in._lock:
+                    stand_in.uploads[self.path[len("/put/"):]] = data
+                self.send_response(200)
+                self.send_header("content-length", "0")
+                self.end_headers()
 
             def _bearer(self) -> str:
                 auth = self.headers.get("authorization") or ""

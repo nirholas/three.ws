@@ -724,3 +724,6 @@ integrations/microsoft/agent-framework/dotnet/obj/
 docs/forge-photo-prep/verify/
 # forge-photo-prep-bench.mjs GLBs (renders and results.json are kept; the GLBs regenerate from the worker)
 docs/forge-photo-prep/bench/**/*.glb
+
+# Kit extension test runner output (kit.log, captures)
+integrations/nvidia/omniverse-kit-extension/.test-output/

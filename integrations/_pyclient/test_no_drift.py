@@ -2,7 +2,8 @@
 
 ``three_ws_client.py`` is the one source of truth for the Forge contract. Each
 plugin ships a byte-identical copy so it stays self-contained and distributable
-(a Blender add-on zip, a ComfyUI custom_nodes clone, a Modly extension folder). This test fails if any
+(a Blender add-on zip, a ComfyUI custom_nodes clone, a Modly extension folder,
+a Kit extension). This test fails if any
 copy drifts from the canonical file. Re-copy it and the contract stays in lockstep.
 """
 
@@ -21,6 +22,7 @@ _VENDORED = [
     os.path.join(_ROOT, "modly", "three-ws-publish", "three_ws_client.py"),
     os.path.join(_ROOT, "huggingface-space", "three_ws_client.py"),
     os.path.join(_ROOT, "poe", "three_ws_client.py"),
+    os.path.join(_ROOT, "nvidia", "omniverse-kit-extension", "exts", "threews.forge", "threews", "forge", "three_ws_client.py"),
 ]
 
 

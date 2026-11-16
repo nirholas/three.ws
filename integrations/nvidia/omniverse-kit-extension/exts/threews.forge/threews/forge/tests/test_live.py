@@ -4,6 +4,11 @@ the stage, the account library, and the real error for a bad key.
 Runs only when ``THREEWS_LIVE=1`` (it spends real GPU time). The account tests
 also need ``THREEWS_API_KEY``. ``THREEWS_LIVE_REPORT`` names a JSON file that
 receives the measured timings, so the GPU VM runner can publish them.
+
+Both generation routes run: image to 3D from a public image URL
+(``THREEWS_LIVE_IMAGE_URL``, a cache-busting query is added) and text to 3D.
+``THREEWS_LIVE_TEXT=0`` skips the text route, for a run that has to measure the
+image route while text to 3D is down on the server side.
 """
 
 from __future__ import annotations
@@ -23,6 +28,8 @@ from ..service import ForgeError, ForgeService, GenerationRequest
 
 LIVE = os.environ.get("THREEWS_LIVE") == "1"
 REPORT = os.environ.get("THREEWS_LIVE_REPORT", "")
+# A real AI-generated product shot of a lantern, served by three.ws itself.
+DEFAULT_IMAGE = "https://three.ws/cdn/forge/refs/1db6b71e-36cf-4692-a50c-b1451935da9c.jpg"
 
 
 def _write_report(section: str, payload: dict) -> None:
@@ -42,25 +49,35 @@ class TestLive(omni.kit.test.AsyncTestCase):
         if not LIVE:
             self.skipTest("set THREEWS_LIVE=1 to run against the real three.ws API")
 
-    async def test_real_generation_is_imported_upright(self):
+    async def test_real_image_generation_is_imported_upright(self):
+        # A unique query so the Forge cache cannot answer: this must be a real GPU job.
+        url = os.environ.get("THREEWS_LIVE_IMAGE_URL") or DEFAULT_IMAGE
+        url += ("&" if "?" in url else "?") + "kit=" + uuid.uuid4().hex[:8]
+        await self._generate_and_check("image_generation", GenerationRequest(image_path=url, lane="draft", name="live image lantern"))
+
+    async def test_real_text_generation_is_imported_upright(self):
+        if os.environ.get("THREEWS_LIVE_TEXT") == "0":
+            self.skipTest("THREEWS_LIVE_TEXT=0")
+        nonce = uuid.uuid4().hex[:8]
+        prompt = f"a small weathered bronze ship lantern with a glass panel, studio product shot, item {nonce}"
+        await self._generate_and_check("text_generation", GenerationRequest(prompt=prompt, lane="draft", name="live text lantern"))
+
+    async def _generate_and_check(self, section: str, request: GenerationRequest) -> None:
         await omni.usd.get_context().new_stage_async()
         stage = omni.usd.get_context().get_stage()
         UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.z)
         UsdGeom.SetStageMetersPerUnit(stage, 0.01)
         stage.SetDefaultPrim(UsdGeom.Xform.Define(stage, "/World").GetPrim())
 
-        # A unique prompt so the Forge cache cannot answer: this must be a real GPU job.
-        nonce = uuid.uuid4().hex[:8]
-        prompt = f"a small weathered bronze ship lantern with a glass panel, studio product shot, item {nonce}"
         controller = ForgeController()
         events = []
         controller.subscribe(lambda name, payload: events.append((time.monotonic(), name, payload)))
         started = time.monotonic()
-        outcome = await controller.generate(GenerationRequest(prompt=prompt, lane="draft", name="live lantern"), placement="origin")
+        outcome = await controller.generate(request, placement="origin")
         total = time.monotonic() - started
 
         gen, imp = outcome.generation, outcome.imported
-        self.assertFalse(gen.cached, "the unique prompt must produce a fresh generation")
+        self.assertFalse(gen.cached, "the unique input must produce a fresh generation")
         self.assertTrue(gen.job_id)
         self.assertTrue(os.path.getsize(gen.glb_path) > 1024)
         prim = stage.GetPrimAtPath(imp.prim_path)
@@ -73,9 +90,9 @@ class TestLive(omni.kit.test.AsyncTestCase):
         self.assertTrue(any(p.fraction is not None and p.fraction > 0.1 for p in progress), "real progress reported")
         self.assertIn("done", [n for _, n, _ in events])
         _write_report(
-            "generation",
+            section,
             {
-                "prompt": prompt,
+                "input": request.image_path or request.prompt,
                 "lane": gen.lane,
                 "backend": gen.backend,
                 "job_id": gen.job_id,
@@ -93,7 +110,8 @@ class TestLive(omni.kit.test.AsyncTestCase):
         )
         out_usd = os.environ.get("THREEWS_LIVE_STAGE", "")
         if out_usd:
-            stage.Export(out_usd)
+            root, ext = os.path.splitext(out_usd)
+            stage.Export(f"{root}-{section}{ext or '.usda'}")
 
     async def test_invalid_key_is_rejected_by_the_real_api(self):
         service = ForgeService(settings.base_url(), api_key="sk_live_" + uuid.uuid4().hex)

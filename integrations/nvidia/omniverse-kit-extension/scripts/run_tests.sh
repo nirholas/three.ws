@@ -32,6 +32,7 @@ exec "$py" -m omni.kit_app \
   --enable omni.kit.test \
   --/app/file/ignoreUnsavedOnExit=true \
   --/app/asyncRendering=false \
+  --/app/useFabricSceneDelegate=false \
   --/exts/omni.kit.test/runTestsAndQuit=true \
   --/exts/omni.kit.test/includeTests/0="threews.forge.*" \
   --/exts/omni.kit.test/testOutputPath="$out" \

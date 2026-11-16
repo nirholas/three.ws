@@ -67,6 +67,13 @@ class TestForgeService(omni.kit.test.AsyncTestCase):
         self.assertEqual(submit["headers"]["x-forge-client"], "kit-test-handle")
         self.assertEqual(submit["headers"]["user-agent"], svc.USER_AGENT)
 
+    async def test_signed_job_token_longer_than_a_file_name_still_downloads(self):
+        self.server.long_job_ids = True
+        result = self._service().generate(GenerationRequest(prompt="a brass lantern"))
+        self.assertTrue(result.job_id.startswith("f1.job1."))
+        self.assertTrue(os.path.isfile(result.glb_path))
+        self.assertLessEqual(len(os.path.basename(os.path.dirname(result.glb_path))), 64)
+
     async def test_cache_hit_needs_no_poll(self):
         self.server.cache_hit = True
         result = self._service().generate(GenerationRequest(prompt="a teapot", lane="draft"))
@@ -212,6 +219,39 @@ class TestForgeService(omni.kit.test.AsyncTestCase):
         with self.assertRaises(ForgeError) as ctx:
             self._service().generate(GenerationRequest(prompt="a mug"))
         self.assertEqual(ctx.exception.code, "invalid_glb")
+
+    async def test_public_image_url_is_sent_without_an_upload(self):
+        url = "https://three.ws/cdn/forge/refs/lantern.jpg?v=2"
+        request = GenerationRequest(image_path=url, lane="draft")
+        self._service().generate(request)
+        self.assertEqual(self.server.requests_to("/api/forge-upload"), [])
+        submit = self.server.requests_to("/api/forge")[0]
+        self.assertEqual(submit["body"], {"image_urls": [url], "tier": "draft", "path": "image"})
+        self.assertEqual(request.display_name(), "lantern")
+
+    async def test_local_image_is_uploaded_then_referenced(self):
+        path = os.path.join(self.tmp, "mug.png")
+        png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
+        with open(path, "wb") as fh:
+            fh.write(png)
+        self._service().generate(GenerationRequest(image_path=path, lane="draft"))
+        self.assertEqual(self.server.uploads.get("ref1"), png)
+        presign = self.server.requests_to("/api/forge-upload")[0]["body"]
+        self.assertEqual(presign["content_type"], "image/png")
+        self.assertEqual(presign["size_bytes"], len(png))
+        submit = [r for r in self.server.requests if r["method"] == "POST" and r["path"] == "/api/forge"][0]
+        self.assertEqual(submit["body"]["image_urls"], [self.server.url("/refs/ref1")])
+
+    async def test_upload_outage_suggests_a_public_url(self):
+        self.server.storage_down = True
+        path = os.path.join(self.tmp, "mug.png")
+        with open(path, "wb") as fh:
+            fh.write(b"\x89PNG\r\n\x1a\n" + b"\x00" * 64)
+        with self.assertRaises(ForgeError) as ctx:
+            self._service().generate(GenerationRequest(image_path=path, lane="draft"))
+        self.assertEqual(ctx.exception.code, "storage_unavailable")
+        self.assertIn("https://", ctx.exception.hint)
+        self.assertEqual(self.server.requests_to("/api/forge?"), [])
 
     async def test_with_retries_does_not_retry_client_errors(self):
         calls = []

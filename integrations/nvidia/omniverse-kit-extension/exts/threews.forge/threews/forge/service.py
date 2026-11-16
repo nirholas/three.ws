@@ -435,7 +435,9 @@ class ForgeService:
                 glb_url, preview, backend = self._poll(job_id, cancel, emit, poll_timeout, backend)
                 cached = False
             emit("downloading", 0.9, "Downloading the model")
-            dest_dir = os.path.join(self.cache_dir, "generations", job_id or hashlib.sha1(glb_url.encode()).hexdigest()[:16])
+            # Production job ids are signed tokens of several hundred characters,
+            # longer than a file name may be, so the folder is named by a digest.
+            dest_dir = os.path.join(self.cache_dir, "generations", hashlib.sha1((job_id or glb_url).encode()).hexdigest()[:16])
             os.makedirs(dest_dir, exist_ok=True)
             dest = os.path.join(dest_dir, f"{slugify(request.display_name())}.glb")
             self._download(glb_url, dest, headers={"user-agent": USER_AGENT}, cancel=cancel)
