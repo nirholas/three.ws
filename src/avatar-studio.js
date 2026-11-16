@@ -2241,11 +2241,38 @@ function bindHeader() {
 	$('as-save').addEventListener('click', () => saveAvatar());
 	$('as-reset').addEventListener('click', () => resetAll());
 	bindPlayAs();
+	bindClip();
 	// A renamed avatar is an unsaved change too, so keep the dirty marker honest.
 	$('as-name')?.addEventListener('input', () => updateDirtyState());
 	$('as-randomize')?.addEventListener('click', () => randomizeAppearance());
 	$('as-undo')?.addEventListener('click', () => undoAppearance());
 	$('as-redo')?.addEventListener('click', () => redoAppearance());
+}
+
+// "Make a clip": render the look on screen right now (unsaved edits included)
+// as a talking-avatar MP4. The live scene is exported the same way Save does,
+// then handed to the clip dialog as a blob URL, so no save is needed first.
+let clipGlbUrl = null;
+function bindClip() {
+	const btn = $('as-clip');
+	if (!btn) return;
+	btn.addEventListener('click', async () => {
+		const label = btn.textContent;
+		btn.disabled = true;
+		btn.textContent = 'Preparing...';
+		try {
+			const [{ openClipDialog }, blob] = await Promise.all([import('./clip/clip-dialog.js'), exportSceneGlb()]);
+			if (clipGlbUrl) URL.revokeObjectURL(clipGlbUrl);
+			clipGlbUrl = URL.createObjectURL(blob);
+			openClipDialog({ name: currentName(), glbUrl: clipGlbUrl });
+		} catch (err) {
+			log.warn('[avatar-studio] clip export failed:', err?.message);
+			setStatus('err', `Could not prepare the clip: ${err?.message || 'unknown error'}. Wait for the avatar to finish loading, then press Make a clip again.`);
+		} finally {
+			btn.disabled = false;
+			btn.textContent = label;
+		}
+	});
 }
 
 // "Play as this": drop straight into /play wearing the avatar on the stage.

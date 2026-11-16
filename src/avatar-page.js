@@ -58,6 +58,7 @@ function lazyModule(load) {
 const loadTalkMode = lazyModule(() => import('./voice/talk-mode.js'));
 const loadPoseModule = lazyModule(() => import('./avatar-pose.js'));
 const loadExportModule = lazyModule(() => import('./avatar-export.js'));
+const loadClipDialog = lazyModule(() => import('./clip/clip-dialog.js'));
 
 const ATTACHED_KEY_PREFIX = 'avatar_attached_v1:';
 
@@ -669,6 +670,7 @@ function renderShell(glbUrl) {
 				${mode === 'agent'
 					? `<a class="av-cta" href="/agents/${encodeURIComponent(entityId)}/profile" title="Capabilities, economy, activity, trust and developer tools">Full profile</a>`
 					: `<button class="av-cta" id="av-use">Start an agent</button>`}
+				${glbUrl ? `<button class="av-cta-sec" id="av-clip" type="button" title="Turn a line of text into a talking video of this ${mode}">Make a clip</button>` : ''}
 				<a class="av-cta-sec" href="/brain" title="Build a persona and test with AI models">Brain</a>
 				<a class="av-cta-sec" href="/voice" title="Clone a voice for this ${mode}">Voice Lab</a>
 				${avatarId ? `<a class="av-cta-sec" href="/studio?avatar=${encodeURIComponent(avatarId)}" title="Use this body in Widget Studio">Open in Studio</a>` : ''}
@@ -871,6 +873,18 @@ function renderShell(glbUrl) {
 		talkBtn?.addEventListener(ev, () => loadTalkMode().catch(() => {}), { once: true, passive: true });
 	}
 	$('av-download')?.addEventListener('click', openDownloadMenu);
+	$('av-clip')?.addEventListener('click', async (ev) => {
+		const btn = ev.currentTarget;
+		btn.disabled = true;
+		try {
+			const { openClipDialog } = await loadClipDialog();
+			openClipDialog({ name: avatar.name, glbUrl });
+		} catch {
+			btn.textContent = 'Clip unavailable, retry';
+		} finally {
+			btn.disabled = false;
+		}
+	});
 
 	// Per-avatar ownership + wallet surface: owner gets the agent-wallet panel
 	// (create / manage), everyone else gets "Save to my avatars" (fork). Seed it
