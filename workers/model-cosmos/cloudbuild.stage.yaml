@@ -1,0 +1,28 @@
+# One-time (idempotent) weight stage for the Cosmos world worker. Runs the
+# stage script on Cloud Build so the ~35 GB copy survives a closed laptop or an
+# ended agent session.
+#
+#   TMPDIR=/home/user/.cache/gcloud-tmp gcloud builds submit workers/model-cosmos \
+#     --config workers/model-cosmos/cloudbuild.stage.yaml \
+#     --project aerial-vehicle-466722-p5 --region us-central1
+steps:
+  - id: stage
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:stable
+    entrypoint: bash
+    # The cloud-sdk image ships without curl, CA certificates and a system python3.
+    args:
+      - -c
+      - apt-get update -qq && apt-get install -y -qq --no-install-recommends ca-certificates curl python3 >/dev/null && ./stage_weights.sh
+    secretEnv: ["HF_TOKEN"]
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/$PROJECT_ID/secrets/hf-token/versions/latest
+      env: HF_TOKEN
+
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
+
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+timeout: 7200s

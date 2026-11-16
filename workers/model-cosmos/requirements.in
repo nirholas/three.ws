@@ -1,0 +1,15 @@
+diffusers @ git+https://github.com/huggingface/diffusers.git@1dabc292d8413638cf0666cca6d7a6c2c765befa
+accelerate
+av
+fastapi
+google-cloud-storage
+httpx
+huggingface_hub
+imageio
+imageio-ffmpeg
+opencv-python-headless
+pillow
+torch
+torchvision
+transformers
+uvicorn[standard]
