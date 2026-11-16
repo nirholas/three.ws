@@ -151,7 +151,7 @@ On 2026-11-03 every tracked markdown file in this repository (2969 of them) was 
 | 775 | [Avatars carry a saved animation identity (idle, walk, gesture intensity, emote loadout) honored everywhere](../775-plan-avatar-animation-identity.md) | avatar | 26 |
 | 776 | [ARCHITECTURE.md Known Gaps is rewritten to match the code, and the two real env-hygiene gaps are fixed](../776-plan-docs-architecture-known-gaps-truth-pass.md) | docs | 26 |
 | 777 | [Playwright covers the agent on-chain deploy and token-launch buttons with an injected wallet, devnet only](../777-plan-onchain-deploy-wallet-flow-e2e.md) | onchain | 25 |
-| 778 | [Re-verify every Robinhood Chain standalone repo builds and tests green against the current chain endpoints](../778-plan-robinhood-standalone-repos-reverify.md) | robinhood | 25 |
+| 778 | [Re-verify every Robinhood Chain standalone repo builds and tests green against the current chain endpoints](../../archive/778-plan-robinhood-standalone-repos-reverify.md) | robinhood | 25 |
 | 779 | The agent resolver verifies ENS and DNS name claims in both directions and reports a trust state (shipped) | agent | 24 |
 | 780 | [ROADMAP.md is repaired (invalid UTF-8) and its phase statuses are re-measured and synced with the README roadmap](../780-plan-docs-roadmap-phase-status-truth-pass.md) | docs | 24 |
 | 781 | [Add a drift check for the UX Flow Atlas and trace the highest-traffic routes it never covered](../781-plan-docs-ux-flows-atlas-route-coverage.md) | docs | 24 |

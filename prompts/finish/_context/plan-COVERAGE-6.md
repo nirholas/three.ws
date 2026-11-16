@@ -262,8 +262,8 @@ Rows `packages/companion-sdk/README.md` to `robinhood/robinhood-chain-examples/e
 | `prompts/quality-bar/_generated/10/pass-2026-09-08/REPORT.md` | excluded | machine-written evidence |
 | `prompts/README.md` | not-a-plan | queue meta |
 | `prompts/robinhood-chain/_shared.md` | not-a-plan | shared rules |
-| `prompts/robinhood-chain/00-INDEX.md` | order | [778](../778-plan-robinhood-standalone-repos-reverify.md). 17 standalone repos need re-verification |
-| `prompts/robinhood-chain/PLAN.md` | order | [778](../778-plan-robinhood-standalone-repos-reverify.md). 17 standalone repos need re-verification |
+| `prompts/robinhood-chain/00-INDEX.md` | order | [778](../../archive/778-plan-robinhood-standalone-repos-reverify.md). 17 standalone repos need re-verification |
+| `prompts/robinhood-chain/PLAN.md` | order | [778](../../archive/778-plan-robinhood-standalone-repos-reverify.md). 17 standalone repos need re-verification |
 | `prompts/RUN-ORDER.md` | not-a-plan | queue meta |
 | `prompts/store-submissions/_generated/ar/README.md` | excluded | machine-written evidence |
 | `prompts/store-submissions/_generated/claude-plugin-marketplace-e2e.md` | excluded | machine-written evidence |
