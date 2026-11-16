@@ -16,7 +16,7 @@ import { recordConversion } from './_lib/campaign-ledger.js';
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from './_lib/auth.js';
 import { assertBearerMaySpend } from './_lib/spend-scope.js';
 import { sql } from './_lib/db.js';
-import { cors, json, method, readJson, wrap, error, serverError, rateLimited } from './_lib/http.js';
+import { cors, isAllowedOrigin, json, method, readJson, wrap, error, serverError, rateLimited } from './_lib/http.js';
 import { requireCsrf } from './_lib/csrf.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { createAgentIdentity, mintAgentWalletMeta } from './_lib/agent-create.js';
@@ -344,7 +344,18 @@ async function handleCreate(req, res) {
 // ── Get One ───────────────────────────────────────────────────────────────
 
 export async function handleGetOne(req, res, id) {
-	if (cors(req, res, { methods: 'GET,PUT,PATCH,DELETE,OPTIONS', credentials: true })) return;
+	// Writes and credentialed reads stay first-party. A site that is not three.ws
+	// (an <agent-3d> embed on a SharePoint page, say) may still read the public
+	// record without credentials, so it gets a wildcard origin for reads only.
+	const origin = req.headers.origin;
+	const thirdParty = Boolean(origin) && !isAllowedOrigin(origin, null);
+	if (
+		thirdParty
+			? cors(req, res, { origins: '*', methods: 'GET,OPTIONS' })
+			: cors(req, res, { methods: 'GET,PUT,PATCH,DELETE,OPTIONS', credentials: true })
+	) {
+		return;
+	}
 	if (!method(req, res, ['GET', 'PUT', 'PATCH', 'DELETE'])) return;
 
 	if (!isUuid(String(id || ''))) return error(res, 404, 'not_found', 'agent not found');

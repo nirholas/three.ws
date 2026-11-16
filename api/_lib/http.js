@@ -565,7 +565,7 @@ export function embedReadCors(req, res, { methods = 'GET,OPTIONS', authedMethods
 	return cors(req, res, { methods: authedMethods, credentials: true });
 }
 
-function isAllowedOrigin(origin, allowed) {
+export function isAllowedOrigin(origin, allowed) {
 	if (!allowed) {
 		if (origin === env.APP_ORIGIN) return true;
 		if (origin === 'https://x402scan.com') return true;
