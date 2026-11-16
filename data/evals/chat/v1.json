@@ -1,0 +1,36 @@
+{
+	"lane": "chat",
+	"version": 1,
+	"created": "2026-11-16",
+	"licence": "CC0-1.0",
+	"sources": [
+		"Authored in-house for three.ws on 2026-11-16. Every prompt and expected answer is original; no benchmark, dataset or third-party text was copied."
+	],
+	"notes": "Objective, single-answer tasks so a model can be graded without an LLM judge. `expect` grades quality (answer correct, tolerant of formatting); `format` grades adherence to the output contract the prompt states.",
+	"items": [
+		{ "id": "arith-1", "prompt": "What is 17 multiplied by 23? Reply with the number only.", "expect": { "type": "equals", "value": "391" }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "arith-2", "prompt": "A shop sells pencils at 3 for 45 cents. How many cents do 12 pencils cost? Reply with the number only.", "expect": { "type": "equals", "value": "180" }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "arith-3", "prompt": "What is 2 to the power of 10, minus 24? Reply with the number only.", "expect": { "type": "equals", "value": "1000" }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "logic-1", "prompt": "Ana is taller than Ben. Ben is taller than Caro. Who is the shortest? Reply with the name only.", "expect": { "type": "equals", "value": "caro" }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "logic-2", "prompt": "If today is Wednesday, what day of the week will it be 10 days from now? Reply with the day only.", "expect": { "type": "equals", "value": "saturday" }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "logic-3", "prompt": "A box holds 4 red balls and 6 blue balls. What fraction of the balls are red, in lowest terms? Reply with the fraction only, like 1/2.", "expect": { "type": "equals", "value": "2/5" }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "fact-1", "prompt": "What is the chemical symbol for gold? Reply with the symbol only.", "expect": { "type": "equals", "value": "au" }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "fact-2", "prompt": "How many sides does a hexagon have? Reply with the number only.", "expect": { "type": "equals", "value": "6" }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "fact-3", "prompt": "Which planet in our solar system is closest to the Sun? Reply with the name only.", "expect": { "type": "equals", "value": "mercury" }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "fact-4", "prompt": "In a 3D file format, what does the letter B in GLB stand for? Reply with one word.", "expect": { "type": "equals", "value": "binary" }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "json-1", "prompt": "Return a JSON object with exactly two keys: \"name\" set to \"robot\" and \"legs\" set to the integer 4. Output only the JSON, no code fences, no prose.", "expect": { "type": "json", "keys": { "name": "robot", "legs": 4 } }, "format": { "type": "json" } },
+		{ "id": "json-2", "prompt": "Extract the city and the year from this sentence and return them as JSON with keys \"city\" (string) and \"year\" (integer): \"The studio opened its second office in Lisbon in 2024.\" Output only the JSON, no code fences, no prose.", "expect": { "type": "json", "keys": { "city": "Lisbon", "year": 2024 } }, "format": { "type": "json" } },
+		{ "id": "json-3", "prompt": "Classify the sentiment of this review as positive, negative or neutral and return JSON with a single key \"sentiment\": \"The avatar loaded instantly and the lip sync looked great.\" Output only the JSON, no code fences, no prose.", "expect": { "type": "json", "keys": { "sentiment": "positive" } }, "format": { "type": "json" } },
+		{ "id": "json-4", "prompt": "Return a JSON array of the first five prime numbers, as integers. Output only the JSON, no code fences, no prose.", "expect": { "type": "jsonArray", "value": [2, 3, 5, 7, 11] }, "format": { "type": "json" } },
+		{ "id": "instr-1", "prompt": "Write the word cat in uppercase letters, three times, separated by single commas with no spaces. Output nothing else.", "expect": { "type": "equals", "value": "cat,cat,cat" }, "format": { "type": "regex", "pattern": "^CAT,CAT,CAT$" } },
+		{ "id": "instr-2", "prompt": "List three primary colours of light, one per line, lowercase, with no numbering, bullets or other text.", "expect": { "type": "containsAll", "values": ["red", "green", "blue"] }, "format": { "type": "lines", "n": 3 } },
+		{ "id": "instr-3", "prompt": "Reverse the letters of the word avatar. Reply with the reversed word only.", "expect": { "type": "equals", "value": "ratava" }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "instr-4", "prompt": "Answer with exactly one word, yes or no: is 91 a prime number?", "expect": { "type": "equals", "value": "no" }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "summ-1", "prompt": "Summarise in at most 12 words: \"The forge lane turns a text prompt into a textured 3D model, then checks the render with a vision model before it is saved, so broken meshes never reach the gallery.\"", "expect": { "type": "containsAny", "values": ["3d", "model", "mesh"] }, "format": { "type": "maxWords", "n": 12 } },
+		{ "id": "code-1", "prompt": "What does this JavaScript expression evaluate to: [1, 2, 3].map((n) => n * 2).reduce((a, b) => a + b, 0)? Reply with the number only.", "expect": { "type": "equals", "value": "12" }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "code-2", "prompt": "In JavaScript, what does typeof null return? Reply with the exact string value only, without quotes.", "expect": { "type": "equals", "value": "object" }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "unit-1", "prompt": "How many milliseconds are in 2.5 seconds? Reply with the number only.", "expect": { "type": "equals", "value": "2500" }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "unit-2", "prompt": "A 3D scene runs at 60 frames per second. How many frames does it render in 90 seconds? Reply with the number only.", "expect": { "type": "equals", "value": "5400" }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "lang-1", "prompt": "Translate the English word \"house\" into Spanish. Reply with the single Spanish word only.", "expect": { "type": "equals", "value": "casa" }, "format": { "type": "maxWords", "n": 1 } }
+	]
+}

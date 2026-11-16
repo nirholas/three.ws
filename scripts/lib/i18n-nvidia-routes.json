@@ -1,0 +1,31 @@
+{
+	"generatedAt": "smoke",
+	"bar": {
+		"chrF": 30,
+		"chrFUnsegmented": 20,
+		"integrity": 0.95,
+		"parse": 0.9,
+		"tieChrF": 0.5
+	},
+	"candidates": [
+		"nvidia/riva-translate-4b-instruct-v2",
+		"nvidia/nemotron-3.5-lightning-30b-a3b",
+		"nvidia/nemotron-3-ultra-550b-a55b"
+	],
+	"locales": {
+		"de": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 67.37,
+			"integrity": 1
+		},
+		"sv": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 69.7,
+			"integrity": 1
+		}
+	}
+}

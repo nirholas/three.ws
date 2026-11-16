@@ -1,0 +1,28 @@
+{
+	"lane": "vision",
+	"version": 1,
+	"created": "2026-11-16",
+	"licence": "CC0-1.0",
+	"sources": [
+		"Authored in-house for three.ws on 2026-11-16. Every image is a synthetic SVG drawn from the spec in this file and rasterised to PNG at eval time, so no photograph, dataset or third-party image is used and the ground truth is exact by construction.",
+		"Digits are drawn as seven-segment bars (render.kind = \"digits\") rather than text, so the images do not depend on whatever fonts the host has installed."
+	],
+	"notes": "Each item is sent as a base64 PNG data URL with the question. `expect` grades the answer; `format` checks the one-word output contract the question states.",
+	"size": 384,
+	"items": [
+		{ "id": "colour-1", "render": { "kind": "svg", "body": "<rect x='112' y='112' width='160' height='160' fill='#e11d1d'/>" }, "question": "What colour is the square? Answer with one word.", "expect": { "type": "equalsAny", "values": ["red"] }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "colour-2", "render": { "kind": "svg", "body": "<circle cx='192' cy='192' r='90' fill='#1d4ed8'/>" }, "question": "What colour is the circle? Answer with one word.", "expect": { "type": "equalsAny", "values": ["blue"] }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "colour-3", "background": "#000000", "render": { "kind": "svg", "body": "<circle cx='192' cy='192' r='70' fill='#ffffff'/>" }, "question": "What colour is the background of this image? Answer with one word.", "expect": { "type": "equalsAny", "values": ["black"] }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "shape-1", "render": { "kind": "svg", "body": "<polygon points='192,72 316,300 68,300' fill='#16a34a'/>" }, "question": "What shape is drawn in the image? Answer with one word.", "expect": { "type": "equalsAny", "values": ["triangle"] }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "shape-2", "render": { "kind": "svg", "body": "<polygon points='192,70 308,154 264,290 120,290 76,154' fill='#7c3aed'/>" }, "question": "How many sides does the shape have? Answer with a number.", "expect": { "type": "equalsAny", "values": ["5", "five"] }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "count-1", "render": { "kind": "svg", "body": "<circle cx='96' cy='192' r='40' fill='#111'/><circle cx='192' cy='192' r='40' fill='#111'/><circle cx='288' cy='192' r='40' fill='#111'/>" }, "question": "How many circles are in the image? Answer with a number.", "expect": { "type": "equalsAny", "values": ["3", "three"] }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "count-2", "render": { "kind": "svg", "body": "<rect x='40' y='60' width='70' height='70' fill='#ea580c'/><rect x='160' y='60' width='70' height='70' fill='#ea580c'/><rect x='280' y='60' width='70' height='70' fill='#ea580c'/><rect x='100' y='230' width='70' height='70' fill='#ea580c'/><rect x='220' y='230' width='70' height='70' fill='#ea580c'/>" }, "question": "How many squares are in the image? Answer with a number.", "expect": { "type": "equalsAny", "values": ["5", "five"] }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "count-3", "render": { "kind": "svg", "body": "<circle cx='70' cy='90' r='22' fill='#0891b2'/><circle cx='190' cy='70' r='22' fill='#0891b2'/><circle cx='310' cy='100' r='22' fill='#0891b2'/><circle cx='120' cy='200' r='22' fill='#0891b2'/><circle cx='260' cy='210' r='22' fill='#0891b2'/><circle cx='80' cy='310' r='22' fill='#0891b2'/><circle cx='300' cy='320' r='22' fill='#0891b2'/>" }, "question": "How many dots are in the image? Answer with a number.", "expect": { "type": "equalsAny", "values": ["7", "seven"] }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "digits-1", "render": { "kind": "digits", "value": "47" }, "question": "What number is shown in the image? Answer with the number only.", "expect": { "type": "equalsAny", "values": ["47"] }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "digits-2", "render": { "kind": "digits", "value": "305" }, "question": "What number is shown in the image? Answer with the number only.", "expect": { "type": "equalsAny", "values": ["305"] }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "position-1", "render": { "kind": "svg", "body": "<circle cx='96' cy='192' r='60' fill='#1d4ed8'/><rect x='238' y='132' width='120' height='120' fill='#e11d1d'/>" }, "question": "Is the blue circle on the left or the right side of the image? Answer with one word.", "expect": { "type": "equalsAny", "values": ["left"] }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "position-2", "render": { "kind": "svg", "body": "<rect x='182' y='40' width='20' height='304' fill='#111'/>" }, "question": "Is the black line horizontal or vertical? Answer with one word.", "expect": { "type": "equalsAny", "values": ["vertical"] }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "direction-1", "render": { "kind": "svg", "body": "<polygon points='192,48 300,170 228,170 228,336 156,336 156,170 84,170' fill='#111'/>" }, "question": "Which direction does the arrow point: up, down, left or right? Answer with one word.", "expect": { "type": "equalsAny", "values": ["up", "upward", "upwards"] }, "format": { "type": "maxWords", "n": 1 } },
+		{ "id": "compare-1", "render": { "kind": "svg", "body": "<circle cx='130' cy='192' r='100' fill='#e11d1d'/><circle cx='310' cy='192' r='36' fill='#1d4ed8'/>" }, "question": "Is the larger circle red or blue? Answer with one word.", "expect": { "type": "equalsAny", "values": ["red"] }, "format": { "type": "maxWords", "n": 1 } }
+	]
+}

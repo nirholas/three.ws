@@ -1,6 +1,6 @@
-// GENERATED FILE — do not edit by hand.
+// GENERATED FILE: do not edit by hand.
 // Regenerate with: node scripts/generate-a2f-descriptor.mjs
-// protobufjs JSON descriptor for NVIDIA Audio2Face-3D (ACE) — the
+// protobufjs JSON descriptor for NVIDIA Audio2Face-3D (ACE): the
 // nvidia_ace.services.a2f_controller.v1.A2FControllerService gRPC surface,
 // parsed (keepCase) from the vendored protos in api/_lib/a2f-protos/*.proto,
 // themselves from https://github.com/NVIDIA/Audio2Face-3D-Samples.
@@ -136,6 +136,33 @@ export default {
 											"keyType": "string",
 											"type": "float",
 											"id": 2
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"emotion_aggregate": {
+					"nested": {
+						"v1": {
+							"nested": {
+								"EmotionAggregate": {
+									"fields": {
+										"input_emotions": {
+											"rule": "repeated",
+											"type": "nvidia_ace.emotion_with_timecode.v1.EmotionWithTimeCode",
+											"id": 1
+										},
+										"a2e_output": {
+											"rule": "repeated",
+											"type": "nvidia_ace.emotion_with_timecode.v1.EmotionWithTimeCode",
+											"id": 2
+										},
+										"a2f_smoothed_output": {
+											"rule": "repeated",
+											"type": "nvidia_ace.emotion_with_timecode.v1.EmotionWithTimeCode",
+											"id": 3
 										}
 									}
 								}

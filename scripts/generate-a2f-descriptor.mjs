@@ -47,6 +47,7 @@ const SOURCES = [
 	'nvidia_ace.animation_id.v1.proto',
 	'nvidia_ace.status.v1.proto',
 	'nvidia_ace.emotion_with_timecode.v1.proto',
+	'nvidia_ace.emotion_aggregate.v1.proto',
 	'nvidia_ace.a2f.v1.proto',
 	'nvidia_ace.animation_data.v1.proto',
 	'nvidia_ace.controller.v1.proto',
@@ -81,10 +82,13 @@ root.lookupType('nvidia_ace.controller.v1.AnimationDataStream');
 root.lookupType('nvidia_ace.audio.v1.AudioHeader');
 root.lookupType('nvidia_ace.a2f.v1.AudioWithEmotion');
 root.lookupType('nvidia_ace.animation_data.v1.SkelAnimation');
+// Emotion output: AnimationData.metadata["emotion_aggregate"] is a
+// google.protobuf.Any packing this message (decoded in a2f-nvidia.js).
+root.lookupType('nvidia_ace.emotion_aggregate.v1.EmotionAggregate');
 
-const banner = `// GENERATED FILE — do not edit by hand.
+const banner = `// GENERATED FILE: do not edit by hand.
 // Regenerate with: node scripts/generate-a2f-descriptor.mjs
-// protobufjs JSON descriptor for NVIDIA Audio2Face-3D (ACE) — the
+// protobufjs JSON descriptor for NVIDIA Audio2Face-3D (ACE): the
 // nvidia_ace.services.a2f_controller.v1.A2FControllerService gRPC surface,
 // parsed (keepCase) from the vendored protos in api/_lib/a2f-protos/*.proto,
 // themselves from https://github.com/NVIDIA/Audio2Face-3D-Samples.

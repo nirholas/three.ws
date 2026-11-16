@@ -255,10 +255,13 @@ function gcpWorkerProbe(id, urlEnv, labelOverride = null) {
 		// worker actually publishes; a worker that publishes none is not held to
 		// a readiness bar it never claimed.
 		const readiness = [body.ready, body.pipeline_loaded, body.model_loaded].find((v) => typeof v === 'boolean');
+		// The workers report the GPU they run on (torch.cuda.get_device_name), so
+		// /nvidia can say which GPU type served a lane without a static fleet map.
+		const gpu = typeof body.gpu_name === 'string' && body.gpu_name.trim() ? { gpu_name: body.gpu_name.trim().slice(0, 80) } : {};
 		if (readiness === false) {
-			return result(id, 'degraded', `The ${label} worker is up but still loading its model; a generation will queue until it is ready.`, { latency_ms: latency });
+			return result(id, 'degraded', `The ${label} worker is up but still loading its model; a generation will queue until it is ready.`, { latency_ms: latency, ...gpu });
 		}
-		return result(id, 'ok', `The ${label} worker is reachable.`, { latency_ms: latency });
+		return result(id, 'ok', `The ${label} worker is reachable.`, { latency_ms: latency, ...gpu });
 	};
 }
 
@@ -496,6 +499,14 @@ export async function probeForgeHealth({ force = false } = {}) {
 }
 
 // Test hook — health is cached per lambda instance; tests need a clean slate.
+// One lane's live probe, uncached: the same check ?health=1 runs, for callers
+// that record lane health on their own schedule (api/cron/nvidia-lane-probes.js).
+// Unknown ids resolve to null rather than a fabricated verdict.
+export async function probeForgeLane(id) {
+	const probe = PROBES[id];
+	return probe ? probe() : null;
+}
+
 export function resetForgeHealthCache() {
 	cache = null;
 }

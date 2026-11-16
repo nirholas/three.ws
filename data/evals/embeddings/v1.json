@@ -1,0 +1,50 @@
+{
+	"lane": "embeddings",
+	"version": 1,
+	"created": "2026-11-16",
+	"licence": "CC0-1.0",
+	"sources": [
+		"Authored in-house for three.ws on 2026-11-16. Queries and passages are original text written for this set; no dataset, documentation or third-party text was copied."
+	],
+	"notes": "Retrieval over a small corpus. Each query has exactly one relevant passage; the other passages include hard distractors that share its vocabulary. Queries are embedded with input_type=query and passages with input_type=passage, then ranked by cosine similarity. Quality is recall@1; MRR is reported alongside.",
+	"passages": [
+		{ "id": "p-rig", "text": "Auto-rigging adds a humanoid skeleton and skin weights to a static mesh so it can be posed and animated without manual weight painting." },
+		{ "id": "p-rig-d", "text": "A static mesh exported without a skeleton can still be lit, textured and rendered, but it cannot bend at the joints." },
+		{ "id": "p-glb", "text": "GLB is the binary container for glTF: the JSON scene description, the vertex buffers and the textures are packed into one file." },
+		{ "id": "p-glb-d", "text": "A glTF file can reference external PNG textures and a separate .bin buffer, which is convenient when editing assets by hand." },
+		{ "id": "p-lipsync", "text": "Audio-driven facial animation predicts blendshape weights from speech so an avatar's mouth moves in time with the voice." },
+		{ "id": "p-lipsync-d", "text": "Blendshapes can also be keyed by hand in an animation tool, which gives an artist full control over every expression." },
+		{ "id": "p-wallet", "text": "A custodial wallet is held by the platform on the user's behalf, so the user does not manage a seed phrase themselves." },
+		{ "id": "p-wallet-d", "text": "Hardware wallets keep private keys on a separate device and require a physical button press to approve each transaction." },
+		{ "id": "p-ratelimit", "text": "When a free inference endpoint answers 429, the client should back off and route the request to the next provider in its fallback chain." },
+		{ "id": "p-ratelimit-d", "text": "A 404 response means the requested resource does not exist, so retrying the same request will not help." },
+		{ "id": "p-embed", "text": "Embedding vectors from two different models live in different spaces and cannot be compared, so stored vectors are tagged with the model that produced them." },
+		{ "id": "p-embed-d", "text": "Cosine similarity measures the angle between two vectors and ignores their length, which suits normalised embeddings." },
+		{ "id": "p-coldstart", "text": "A GPU service that scales to zero pays a cold start on the first request, because the container and the model weights must load before it can answer." },
+		{ "id": "p-coldstart-d", "text": "Keeping one instance warm costs idle GPU time but removes the delay for users who arrive after a quiet period." },
+		{ "id": "p-photo", "text": "Before a generation slot is spent, the uploaded photo is screened for problems such as a screenshot of text, a cluttered scene, or an image that is too dark." },
+		{ "id": "p-photo-d", "text": "Photographers often shoot in raw format so they can recover detail in dark areas of the image during editing." },
+		{ "id": "p-lod", "text": "Level of detail swaps a high-polygon mesh for simpler versions as the camera moves away, keeping the frame rate steady in large scenes." },
+		{ "id": "p-lod-d", "text": "Increasing the polygon count of a model makes curved surfaces look smoother when the camera is close." },
+		{ "id": "p-usd", "text": "OpenUSD describes a scene as layers that can be composed and overridden, which lets several tools edit the same stage without overwriting each other." },
+		{ "id": "p-usd-d", "text": "Exporting a scene to a single flattened file is simpler to share but loses the ability to override individual layers later." },
+		{ "id": "p-tts", "text": "Text-to-speech turns written text into audio; multilingual voices let one avatar speak several languages with the same identity." },
+		{ "id": "p-tts-d", "text": "Speech recognition converts spoken audio into text so a voice command can be handled like a typed message." },
+		{ "id": "p-rerank", "text": "A cross-encoder reranker reads the query and each candidate passage together and re-scores the top results so the most relevant context comes first." },
+		{ "id": "p-rerank-d", "text": "Keyword search ranks documents by how often the query terms appear, which misses passages that use different words for the same idea." }
+	],
+	"items": [
+		{ "id": "q-rig", "query": "how do I make a still character model poseable without painting weights", "relevant": "p-rig" },
+		{ "id": "q-glb", "query": "what is inside a single-file binary glTF", "relevant": "p-glb" },
+		{ "id": "q-lipsync", "query": "make the avatar's lips follow the audio automatically", "relevant": "p-lipsync" },
+		{ "id": "q-wallet", "query": "wallet where the service keeps the keys for me", "relevant": "p-wallet" },
+		{ "id": "q-ratelimit", "query": "what to do when the free model API says too many requests", "relevant": "p-ratelimit" },
+		{ "id": "q-embed", "query": "why can't I mix vectors from different embedding models", "relevant": "p-embed" },
+		{ "id": "q-coldstart", "query": "why is the first request to a GPU server so slow after idle", "relevant": "p-coldstart" },
+		{ "id": "q-photo", "query": "checking a user's picture is usable before generating", "relevant": "p-photo" },
+		{ "id": "q-lod", "query": "keep frame rate up by simplifying distant meshes", "relevant": "p-lod" },
+		{ "id": "q-usd", "query": "scene format where multiple apps can edit layers without clobbering", "relevant": "p-usd" },
+		{ "id": "q-tts", "query": "give my character a voice in several languages", "relevant": "p-tts" },
+		{ "id": "q-rerank", "query": "re-score retrieved passages so the best context leads", "relevant": "p-rerank" }
+	]
+}

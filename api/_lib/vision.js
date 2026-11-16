@@ -62,7 +62,7 @@ import {
 // back empty. It is slow even so, and a timeout cools it for the next 45s, so a
 // request that cannot wait for it falls straight through to the OpenRouter
 // routes below.
-const NVIDIA_VISION_MODELS = [
+export const NVIDIA_VISION_MODELS = [
 	{ model: 'nvidia/nemotron-3.5-super-vl-120b-a12b', extraBody: { chat_template_kwargs: { enable_thinking: false } } },
 ];
 // Free OpenRouter vision lanes, in order.
