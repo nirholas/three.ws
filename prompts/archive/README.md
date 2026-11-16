@@ -20,6 +20,8 @@ Microsoft campaign orders below were archived on 2026-11-16 with every agent-sid
 
 | Order | Shipped in | Verified 2026-11-16 |
 |---|---|---|
+| 813 VS Code Copilot Chat tools | `942762176`, `2a9909f46`, `eb2b59a5d`, `b1b5cd419` | vscode-3d 0.3.0 suite passes except the live @threews /forge call, which fails only on the production free-lane outage (r2.dev reference URL 404) whose fix `c3ec82891` is pushed and awaits deploy |
+| 814 Semantic Kernel and Agent Framework | `0a670d97a`, `3b37f68c6`, `cb56fdcb9` | .NET 18/18; Python 17 pass, 1 skip, 1 live generation test fails on the same undeployed outage; Agent Framework samples, wheel and nupkg built |
 | 806 Minecraft Bedrock export | `bfaa8f6f7`, `3f1094c01`, `331aab947`, `9c9c66912`, `cc0b01f64` | `tests/minecraft-export.test.js` passes; three sample .mcpack files list clean; POST /api/minecraft-export live (400 on empty body); docs, STRUCTURE, pages, changelog present |
 | 807 Office files as agent knowledge | 807 commits (`8f3d5864d` to `3d70fab98`) | agent-knowledge API, chunker and chat suites pass; /api/agents/:id/knowledge live; docs, worker README, STRUCTURE, changelog present |
 | 801 /microsoft partner hub | `60bf0fba8`, `e7d208609`, `072f53106` | production `/microsoft` 200 with no overflow or console errors at 1280 and 400 px; `tests/microsoft-hub.test.js` passes |

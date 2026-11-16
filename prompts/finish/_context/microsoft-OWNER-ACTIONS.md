@@ -4,7 +4,7 @@ Every step below needs the owner (push, deploy, Partner Center, Entra, store sub
 
 ## Do these first: they unblock most rows
 
-1. **Push and deploy.** `git push threews main`, then `npm run deploy:gcp:full` (see the deploy-runbook skill). This ships the r2.dev to /cdn/ fix (97669b7df) that 824, 831 and 804 need, plus the code for 828 to 831, 838, 842 and 845 to 847.
+1. **Push and deploy (urgent).** Production runs 559f73663 (2026-11-15), so free text-to-3D fails for every user: each job hands TRELLIS a `pub-...r2.dev` reference URL that now 404s (verified 2026-11-16 19:55 UTC in model-trellis logs). The fix `c3ec82891` is already on threews/main and only needs the deploy. `git push threews main`, then `npm run deploy:gcp:full` (see the deploy-runbook skill). This ships the r2.dev to /cdn/ fix (97669b7df) that 824, 831 and 804 need, plus the code for 828 to 831, 838, 842 and 845 to 847.
 2. **Apply the pending migrations** after `npm run db:status`: `20261116120000_teams_identities.sql` (846), `20261116144659_teams_conversation_refs.sql` (847), `20261116150000_usage_feed_keys.sql` (845), plus any other queued ones.
 3. **Entra and Azure provisioning (827).** `az login`, `npm run microsoft:provision -- --apply --subscription <id>`, run the printed `gcloud run services update three-ws-api --update-env-vars ...` line, then `npm run microsoft:provision -- --verify`. This produces MS_ENTRA_SSO_CLIENT_ID/SECRET (816, 844), MS_MARKETPLACE_TENANT_ID/CLIENT_ID/CLIENT_SECRET (801, 821) and the bot app (804, 846).
 
@@ -19,6 +19,8 @@ Every step below needs the owner (push, deploy, Partner Center, Entra, store sub
 | 805 Windows and Edge app | Bump MS_STORE_VERSION, `npm run package:microsoft-store`, resubmit the Store listing in Partner Center; check the file handler on a real Windows machine. |
 | 806 Minecraft export | Import the three .mcpack samples in docs/minecraft-export/samples into Bedrock and load threews:knight, threews:windmill and `/function threews/go_kart`. |
 | 807 agent knowledge | Deploy the converter: `gcloud builds submit --config workers/markitdown/cloudbuild.yaml`, then set GCP_MARKITDOWN_URL with `--update-env-vars` (steps in workers/markitdown/README.md). Until then uploads answer 503 converter_unavailable. |
+| 813 VS Code Copilot Chat | Step 1 (restores production free text-to-3D, see below), then rerun the live @threews /forge test; `THREEWS_SIGNED_IN_PROFILE=<dir> npm run screenshots` in packages/vscode-3d; set VSCE_PAT and OVSX_PAT and `npm run release`. |
+| 814 Semantic Kernel | Step 1, then rerun `test_generation_submits_and_returns_a_pollable_job`; `twine upload` threews-semantic-kernel; `dotnet nuget push` ThreeWs.SemanticKernel 0.1.0; run the Foundry quickstart; refresh copilot-teams mcptools.json with `--refresh-tools`. |
 | 816 M365 Copilot connector | Step 3; connect a developer tenant and run a sync. |
 | 817 Power Platform | Deploy; register the public PKCE client and rebuild with PP_OAUTH_CLIENT_ID; `paconn validate`; import templates in a dev environment and run each action 10 times; Solution Checker and ConnectorPackageValidator.ps1; PR to microsoft/PowerPlatformConnectors `dev`; Partner Center submission. |
 | 818 Phi brain lane | Deploy model-phi with `workers/model-phi/cloudbuild.yaml` and set PHI_WORKER_URL (no task type is routed to it: it lost the evaluation). |
