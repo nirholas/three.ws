@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T19:09:35.060Z",
+	"generated_at": "2026-11-16T19:10:22.768Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -62,6 +62,16 @@
 			"title": "Docs · OneDrive and SharePoint in Forge",
 			"summary": "Pick source photos from OneDrive or SharePoint in Forge and save finished 3D models back to your Microsoft files.",
 			"link": "/docs/onedrive",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "launch",
+			"title": "Docs · OpenUSD export (simulation-ready)",
+			"summary": "Export a Forge model or any public GLB as validated OpenUSD for NVIDIA Omniverse and Isaac Sim: convex collision hulls, a rigid body with mass from volume times density, semantic labels and skeletons, from the Forge menu, the API or the MCP tool.",
+			"link": "/docs/openusd-export",
 			"tags": [
 				"launch"
 			]

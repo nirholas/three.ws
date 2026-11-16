@@ -55,6 +55,14 @@
 			<description>Pick source photos from OneDrive or SharePoint in Forge and save finished 3D models back to your Microsoft files.</description>
 		</item>
 		<item>
+			<title>Docs · OpenUSD export (simulation-ready)</title>
+			<link>https://three.ws/docs/openusd-export</link>
+			<guid isPermaLink="false">2026-11-16:Docs · OpenUSD export (simulation-ready)</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Export a Forge model or any public GLB as validated OpenUSD for NVIDIA Omniverse and Isaac Sim: convex collision hulls, a rigid body with mass from volume times density, semantic labels and skeletons, from the Forge menu, the API or the MCP tool.</description>
+		</item>
+		<item>
 			<title>Docs · Phi brain lane (self-hosted Phi-4-mini)</title>
 			<link>https://three.ws/docs/phi-brain-lane</link>
 			<guid isPermaLink="false">2026-11-16:Docs · Phi brain lane (self-hosted Phi-4-mini)</guid>

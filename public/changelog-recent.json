@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-16T19:09:35.103Z",
+	"generated_at": "2026-11-16T19:10:22.795Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4634,
+	"total": 4635,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -65,6 +65,16 @@
 			"title": "Docs · OneDrive and SharePoint in Forge",
 			"summary": "Pick source photos from OneDrive or SharePoint in Forge and save finished 3D models back to your Microsoft files.",
 			"link": "/docs/onedrive",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "launch",
+			"title": "Docs · OpenUSD export (simulation-ready)",
+			"summary": "Export a Forge model or any public GLB as validated OpenUSD for NVIDIA Omniverse and Isaac Sim: convex collision hulls, a rigid body with mass from volume times density, semantic labels and skeletons, from the Forge menu, the API or the MCP tool.",
+			"link": "/docs/openusd-export",
 			"tags": [
 				"launch"
 			]
@@ -1535,16 +1545,6 @@
 			"link": "/diorama",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-11-10",
-			"type": "launch",
-			"title": "Docs · Robinhood Crypto connector",
-			"summary": "Connect your own Robinhood Crypto Trading API key to three.ws, set hard per-order and daily spend caps, and let agents quote, preview and place crypto orders through REST or MCP: the two-step confirm flow, cap reservation, error codes and security model.",
-			"link": "/docs/robinhood-crypto",
-			"tags": [
-				"launch"
 			]
 		}
 	]
