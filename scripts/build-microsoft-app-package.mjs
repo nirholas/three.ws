@@ -302,7 +302,7 @@ function parseJsonFile(name, problems) {
 // https://learn.microsoft.com/en-us/microsoftteams/platform/m365-apps/teams-app-manifest-hosts
 // https://learn.microsoft.com/en-us/microsoftteams/platform/m365-apps/extend-m365-teams-message-extension
 export const HOST_MIN_MANIFEST = [1, 13];
-export const BOT_DEPENDENT_COMMANDS = ['createModel'];
+export const BOT_DEPENDENT_COMMANDS = ['createModel', 'reportContent'];
 export const OUTLOOK_DOMAINS_REQUIRED = ['three.ws', 'www.three.ws'];
 
 function elementIds(manifest, name) {

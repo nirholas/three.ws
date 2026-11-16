@@ -222,6 +222,16 @@
             "commandBox",
             "message"
           ]
+        },
+        {
+          "id": "reportContent",
+          "type": "action",
+          "title": "Report",
+          "description": "Report AI generated content from three.ws for review",
+          "fetchTask": true,
+          "context": [
+            "message"
+          ]
         }
       ],
       "messageHandlers": [
@@ -245,7 +255,8 @@
           "name": "composeExtensions",
           "id": "threews-compose",
           "commandIds": [
-            "createModel"
+            "createModel",
+            "reportContent"
           ]
         },
         "dependsOn": [

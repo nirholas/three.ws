@@ -151,6 +151,14 @@
 			<description>We ran the full Microsoft Marketplace subscription lifecycle against Microsoft's SaaS API emulator and fixed what it caught. When a Microsoft-billed subscription moves to a per-seat plan, the buyer who owns it now keeps their access instead of dropping to the free plan. Usage that Microsoft already counted is now recorded as settled when it is sent again, instead of staying pending, and webhook replies now follow Microsoft's documented contract, so a plan three.ws does not sell is refused cleanly. Developers can rerun the same check locally with one command.</description>
 		</item>
 		<item>
+			<title>Rate, report and trace the AI answers in the three.ws Teams app</title>
+			<link>https://three.ws/docs/microsoft-teams-forge</link>
+			<guid isPermaLink="false">2026-11-16:Rate, report and trace the AI answers in the three.ws Teams app</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every answer an agent writes and every 3D model the three.ws app makes in Microsoft Teams now carries the AI generated label. Each one has thumbs up and down buttons with an optional comment, plus a Report option: on a model card, or in any bot message's menu. A report asks for a reason, goes to a three.ws reviewer (usually within one business day) and the person gets a confirmation. In a personal chat, agent answers stream in as they are written. When an answer draws on the agent's knowledge files, it shows numbered citations that link back to the agent on three.ws. Conversation and person ids are hashed and message text is never kept, except the short excerpt a reviewer needs to judge a report.</description>
+		</item>
+		<item>
 			<title>Roll three.ws out to every seat from your Microsoft admin consoles</title>
 			<link>https://three.ws/docs/microsoft-admin-deployment</link>
 			<guid isPermaLink="false">2026-11-16:Roll three.ws out to every seat from your Microsoft admin consoles</guid>

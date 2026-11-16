@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-16T16:23:13.791Z",
+	"generated_at": "2026-11-16T16:29:38.655Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4615,
+	"total": 4616,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -189,6 +189,17 @@
 			"link": "/microsoft/activate",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Rate, report and trace the AI answers in the three.ws Teams app",
+			"summary": "Every answer an agent writes and every 3D model the three.ws app makes in Microsoft Teams now carries the AI generated label. Each one has thumbs up and down buttons with an optional comment, plus a Report option: on a model card, or in any bot message's menu. A report asks for a reason, goes to a three.ws reviewer (usually within one business day) and the person gets a confirmation. In a personal chat, agent answers stream in as they are written. When an answer draws on the agent's knowledge files, it shows numbered citations that link back to the agent on three.ws. Conversation and person ids are hashed and message text is never kept, except the short excerpt a reviewer needs to judge a report.",
+			"link": "/docs/microsoft-teams-forge",
+			"tags": [
+				"feature",
+				"security"
 			]
 		},
 		{
@@ -1527,16 +1538,6 @@
 			"link": "/play/lite",
 			"tags": [
 				"launch"
-			]
-		},
-		{
-			"date": "2026-11-06",
-			"type": "update",
-			"title": "Agent payments on Solana stop stalling on a starved RPC",
-			"summary": "The background leak scanner was spending a quarter of the platform's daily Solana RPC calls rechecking wallets that never move money, which used up the paid RPC lanes and left agent-to-agent x402 payments waiting on slow public ones. Idle wallets are now checked in a steady rotation while every wallet that actually paid is still checked within ten minutes, so payments at the Agent Exchange settle on the fast lanes again.",
-			"link": "/play",
-			"tags": [
-				"fix"
 			]
 		}
 	]
