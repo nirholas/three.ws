@@ -313,10 +313,10 @@ describe('OpenRouter free-route throttles', () => {
 describe('free NIM vision lane', () => {
 	it('asks a live NIM model with thinking switched off, not the retired 11B one', async () => {
 		delete process.env.OPENAI_API_KEY;
-		await clearProviderCooldown('vision:nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b');
+		await clearProviderCooldown('vision:nvidia:nvidia/nemotron-3.5-bolt-e4b');
 		const calls = stubFetch([['integrate.api.nvidia.com', () => chatOk('a lamp')]]);
 		const r = await describeImage({ prompt: 'p', imageBase64: 'AAAA', mimeType: 'image/png' });
-		expect(r.model).toBe('nvidia/nemotron-3.5-super-vl-120b-a12b');
+		expect(r.model).toBe('nvidia/nemotron-3.5-bolt-e4b');
 		expect(calls[0].body.chat_template_kwargs).toEqual({ enable_thinking: false });
 	});
 });

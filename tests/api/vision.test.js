@@ -116,7 +116,8 @@ describe('vision helper — provider chain', () => {
 		const r = await describeImage({ prompt: 'color?', imageUrl: 'https://cdn/x.jpg' });
 		expect(r.text).toBe('Gray');
 		expect(r.provider).toBe('nvidia');
-		expect(r.model).toBe('nvidia/nemotron-3.5-super-vl-120b-a12b');
+		// The 2026-11-16 vision eval put bolt-e4b on the first rung.
+		expect(r.model).toBe('nvidia/nemotron-3.5-bolt-e4b');
 		// One call, to the OpenAI-compatible chat host, multimodal user content.
 		expect(calls).toHaveLength(1);
 		const userMsg = calls[0].body.messages.at(-1);
@@ -155,18 +156,20 @@ describe('vision helper — provider chain', () => {
 	});
 
 	it('falls over from the free NIM lane to the paid backstop on a 5xx', async () => {
-		// The chain carries ONE free rung since nvidia/nemotron-nano-12b-v2-vl was
-		// retired (410 Gone, end of life 2026-08-26), so a 5xx there lands on the
-		// paid backstop rather than a sibling free model.
+		// The chain carries two free NIM rungs (bolt-e4b, then super-vl), so a 5xx
+		// on both lands on the paid backstop.
 		process.env.OPENAI_API_KEY = 'sk-x';
 		const calls = stubFetch([
 			['integrate.api.nvidia.com', () => httpErr(500, 'boom')],
 			['api.openai.com', () => chatOk('ok')],
 		]);
 		const r = await describeImage({ prompt: 'p', imageUrl: 'https://cdn/x.jpg' });
-		expect(calls).toHaveLength(2);
-		expect(calls[0].body.model).toBe('nvidia/nemotron-3.5-super-vl-120b-a12b');
-		expect(calls[1].url).toContain('openai.com');
+		expect(calls).toHaveLength(3);
+		expect(calls.slice(0, 2).map((c) => c.body.model)).toEqual([
+			'nvidia/nemotron-3.5-bolt-e4b',
+			'nvidia/nemotron-3.5-super-vl-120b-a12b',
+		]);
+		expect(calls[2].url).toContain('openai.com');
 		expect(r.text).toBe('ok');
 	});
 
@@ -192,7 +195,7 @@ describe('vision helper — provider chain', () => {
 			status: 502,
 			code: 'invalid_key',
 		});
-		expect(calls).toHaveLength(1); // the one free NIM lane attempted
+		expect(calls).toHaveLength(2); // both free NIM rungs attempted
 		expect(usageState.events).toHaveLength(0); // nothing succeeded → no spend
 	});
 
