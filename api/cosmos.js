@@ -41,7 +41,7 @@ const JOB_ID_RE = /^[A-Za-z0-9_-]{20,64}$/;
 const BODY_LIMIT_BYTES = 30 * 1024 * 1024;
 const MEDIA_RE = {
 	image: /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=\s]+$/,
-	control_video: /^data:video\/(webm|mp4)(;[^,]*)?;base64,[A-Za-z0-9+/=\s]+$/,
+	control_video: /^data:video\/(webm|mp4)(;[^,;]+=[^,;]*)*;base64,[A-Za-z0-9+/=\s]+$/,
 };
 
 // Copy per submit failure code. Validation and queue messages from the worker
@@ -131,7 +131,10 @@ function parseBody(body) {
 		if (typeof body?.control_video !== 'string' || !MEDIA_RE.control_video.test(body.control_video)) {
 			return { error: `${mode === 'depth' ? 'Depth' : 'Edge'} worlds need a recording of your scene (a WebM or MP4 data URL). Record the scene and try again.` };
 		}
-		req.controlVideo = body.control_video;
+		// Browsers label MediaRecorder output with codec parameters
+		// (data:video/webm;codecs=vp9;base64,...). The worker parses the bare
+		// container type only, and the codec is in the stream itself.
+		req.controlVideo = body.control_video.replace(/^data:(video\/(?:webm|mp4))(?:;[^,;]+=[^,;]*)*;base64,/, 'data:$1;base64,');
 	}
 	return { req };
 }

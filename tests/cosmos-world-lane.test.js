@@ -196,6 +196,17 @@ describe('worlds conditioned on the avatar and its scene', () => {
 		}
 	});
 
+	it('forwards a browser recording with codec parameters as the bare container type the worker accepts', async () => {
+		// FileReader.readAsDataURL on a MediaRecorder blob yields
+		// data:video/webm;codecs=vp9;base64,... and the worker's data-URL parser
+		// only takes data:<type>;base64, so the parameters must not reach it.
+		const payload = Buffer.from('webm-bytes-for-the-test').toString('base64');
+		const res = await post({ mode: 'depth', prompt: 'a sunlit marble temple', control_video: `data:video/webm;codecs=vp9;base64,${payload}` });
+		expect(res.statusCode).toBe(202);
+		const infer = calls.find((c) => c.url === `${WORKER}/infer`);
+		expect(infer.body.control_video).toBe(`data:video/webm;base64,${payload}`);
+	});
+
 	it('refuses a scene mode that has no scene attached', async () => {
 		const missingImage = await post({ mode: 'image', prompt: 'orbit the avatar' });
 		expect(missingImage.statusCode).toBe(400);
