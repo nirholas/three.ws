@@ -21,7 +21,7 @@
 		.nr-stat b { display: block; font-size: 13.5px; font-weight: 600; overflow-wrap: anywhere; }
 		.nr-stat span { font-size: 11.5px; color: rgba(255,255,255,0.45); }
 		.nr-controls { display: flex; gap: 0.6rem; margin-bottom: 1.1rem; align-items: center; flex-wrap: wrap; }
-		.nr-btn { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: #e2e8f0; cursor: pointer; transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
+		.nr-btn { display: inline-block; text-decoration: none; font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: #e2e8f0; cursor: pointer; transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
 		.nr-btn:hover { border-color: rgba(255,255,255,0.28); background: rgba(255,255,255,0.09); }
 		.nr-btn:active { transform: translateY(1px); }
 		.nr-btn:focus-visible, .nr-row:focus-visible { outline: 2px solid rgba(124,92,255,0.75); outline-offset: 2px; }
@@ -50,7 +50,7 @@
 		.nr-table th { color: rgba(255,255,255,0.45); font-weight: 600; }
 		.nr-table td.fail { color: #fca5a5; }
 		.nr-pre { margin: 0; padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.06); font-size: 12px; line-height: 1.55; overflow-x: auto; white-space: pre; }
-		.nr-pre.wrap { white-space: pre-wrap; overflow-wrap: anywhere; }
+		.nr-pre.nr-wrap-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 		.nr-pre .add { color: #86efac; }
 		.nr-pre .del { color: #fca5a5; }
 		.nr-pre .hunk { color: #93c5fd; }

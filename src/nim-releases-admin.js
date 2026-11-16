@@ -71,7 +71,7 @@ function renderStats() {
 	const pins = Object.entries(state.pins).map(([lane, p]) => stat(p.model || 'not set', `${lane} lane today`));
 	const count = (pred) => state.rows.filter(pred).length;
 	statsEl.innerHTML = [
-		stat(`${count((r) => r.verdict === 'adopt')} adopt · ${count((r) => r.verdict === 'hold')} hold`, 'proposals waiting on a person'),
+		stat(`${count((r) => r.verdict === 'adopt')} adopt · ${count((r) => r.verdict === 'hold')} hold`, 'verdicts to review'),
 		stat(`${count((r) => r.status === 'queued' || r.status === 'running')} queued · ${count((r) => r.status === 'failed')} failed`, 'queue'),
 		...pins,
 	].join('');
@@ -85,8 +85,9 @@ function renderList() {
 		return;
 	}
 	listEl.innerHTML = state.rows.map((r) => {
+		const versus = r.incumbent_quality != null ? `vs ${pct(r.incumbent_quality)} today` : 'baseline of the model the lane runs today';
 		const numbers = r.candidate_quality != null
-			? `${pct(r.candidate_quality)} vs ${pct(r.incumbent_quality)} today · p50 ${ms(r.candidate_p50)}`
+			? `${pct(r.candidate_quality)} ${versus} · p50 ${ms(r.candidate_p50)}`
 			: (r.last_error ? esc(r.last_error).slice(0, 140) : 'not evaluated yet');
 		return `<button class="nr-row" type="button" data-model="${esc(r.model_id)}" aria-current="${r.model_id === state.selected}">
 			<div class="nr-row-id">${esc(r.model_id)}</div>
@@ -130,7 +131,7 @@ function renderDetail() {
 		? `<pre class="nr-pre">${diffHtml(row.config_diff)}</pre><div class="nr-actions"><button class="nr-btn" type="button" data-copy="diff">Copy diff</button></div>`
 		: `<p class="nr-muted">${esc(report.diff?.note || (row.verdict === 'reject' ? 'No diff: rejected candidates are not proposed.' : 'No diff for this row.'))}</p>`;
 	const post = row.post_draft
-		? `<pre class="nr-pre wrap">${esc(row.post_draft)}</pre><div class="nr-actions"><button class="nr-btn" type="button" data-copy="post">Copy post draft</button></div>`
+		? `<pre class="nr-pre nr-wrap-text">${esc(row.post_draft)}</pre><div class="nr-actions"><button class="nr-btn" type="button" data-copy="post">Copy post draft</button></div>`
 		: '<p class="nr-muted">No post draft: drafts are written only for adopt and hold verdicts.</p>';
 	detailEl.innerHTML = `<article class="nr-detail">
 		<h2>${esc(row.model_id)}</h2>
