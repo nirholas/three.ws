@@ -361,4 +361,16 @@ describe('chat grounding', () => {
 		expect(block).toMatch(/not instructions/i);
 		expect(lib.knowledgePromptBlock([])).toBe('');
 	});
+
+	it('shows a citation example built from the retrieved sources, never an invented section', () => {
+		// A fixed example ("Handbook.docx, Returns policy") got copied verbatim by
+		// models: a PDF answer came back as "(source: Mistral-7B.pdf, returns policy)".
+		const block = lib.knowledgePromptBlock([
+			{ name: 'Mistral-7B.pdf', heading: 'Page 4 · Table 2: Comparison of Mistral 7B with Llama', content: '| Model | GSM8K |\n| --- | --- |\n| LLaMA 2 13B | 34.3% |' },
+		]);
+		expect(block).toContain('"(source: Mistral-7B.pdf, Page 4)"');
+		expect(block).not.toMatch(/returns policy|handbook/i);
+		const plain = lib.knowledgePromptBlock([{ name: 'notes.txt', heading: 'notes.txt', content: 'Office opens at 9.' }]);
+		expect(plain).toContain('"(source: notes.txt)"');
+	});
 });

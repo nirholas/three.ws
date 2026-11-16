@@ -1,0 +1,47 @@
+{
+	"about": "PDF extraction eval set (scripts/nvidia-pdf-extraction-eval.mjs). Three CC BY 4.0 arXiv papers pinned by version and sha1, plus an image-only copy of one built by the script to stand in for a scanned upload. Every answer was read off the rendered page image by a person, never taken from either extractor. Grading: 'number' passes when the reply contains a number within tol of value; 'match' passes when the reply matches the regex (case-insensitive).",
+	"documents": [
+		{ "id": "mistral7b", "name": "Mistral-7B.pdf", "arxiv": "2310.06825v1", "sha1": "a98df469ceaa3052187c0fadbca68c51b71b37d3", "pages": 9, "license": "CC BY 4.0" },
+		{ "id": "mixtral", "name": "Mixtral-of-Experts.pdf", "arxiv": "2401.04088v1", "sha1": "e3a27fb74ebf3b2be29942db7290d50942aec658", "pages": 13, "license": "CC BY 4.0" },
+		{ "id": "phi3", "name": "Phi-3-Technical-Report.pdf", "arxiv": "2404.14219v1", "sha1": "1fbc6bee739960ea4f01685406c852fa5003a596", "pages": 12, "license": "CC BY 4.0" },
+		{ "id": "mixtral-scan", "name": "Mixtral-of-Experts-scanned.pdf", "scanOf": "mixtral", "pages": 13, "license": "CC BY 4.0" }
+	],
+	"questions": [
+		{ "doc": "mistral7b", "kind": "table", "page": 4, "q": "What GSM8K score does LLaMA 2 13B get?", "number": 34.3 },
+		{ "doc": "mistral7b", "kind": "table", "page": 4, "q": "What HumanEval score does Code-Llama 7B get?", "number": 31.1 },
+		{ "doc": "mistral7b", "kind": "table", "page": 4, "q": "What MATH score does Mistral 7B reach?", "number": 13.1 },
+		{ "doc": "mistral7b", "kind": "table", "page": 5, "q": "What MT Bench score does Llama 2 7B Chat get?", "number": 6.27 },
+		{ "doc": "mistral7b", "kind": "table", "page": 5, "q": "What Chatbot Arena ELO rating does Vicuna 13B have?", "number": 1041 },
+		{ "doc": "mistral7b", "kind": "table", "page": 6, "q": "What MT Bench score does Mistral 7B get when the Llama 2 system prompt is used?", "number": 6.38 },
+		{ "doc": "mistral7b", "kind": "chart", "page": 4, "q": "In Figure 4, which model scores lowest on Math?", "match": "llama\\s*2\\s*7b" },
+		{ "doc": "mistral7b", "kind": "chart", "page": 4, "q": "In Figure 4, which model scores highest on BBH?", "match": "llama\\s*1\\s*34b" },
+		{ "doc": "mistral7b", "kind": "chart", "page": 5, "q": "In Figure 5, what effective LLaMA 2 model size (in billions of parameters) does Mistral 7B match on MMLU?", "number": 23 },
+		{ "doc": "mistral7b", "kind": "chart", "page": 5, "q": "In Figure 5, roughly what reading comprehension score (percent) does LLaMA 2 13B reach?", "number": 63.3, "tol": 1 },
+
+		{ "doc": "mixtral", "kind": "table", "page": 4, "q": "What TriviaQA score does LLaMA 1 33B get?", "number": 68.5 },
+		{ "doc": "mixtral", "kind": "table", "page": 4, "q": "What Math score does Mixtral 8x7B get?", "number": 28.4 },
+		{ "doc": "mixtral", "kind": "table", "page": 4, "q": "What GSM-8K score does GPT-3.5 get?", "number": 57.1 },
+		{ "doc": "mixtral", "kind": "table", "page": 4, "q": "What MT Bench score does LLaMA 2 70B get?", "number": 6.86 },
+		{ "doc": "mixtral", "kind": "table", "page": 5, "q": "What Arc-c score does Mixtral 8x7B get in German?", "number": 54.3 },
+		{ "doc": "mixtral", "kind": "table", "page": 5, "q": "What HellaSwag score does LLaMA 2 70B get in Italian?", "number": 70.9 },
+		{ "doc": "mixtral", "kind": "table", "page": 6, "q": "What average BOLD sentiment score does Llama 2 70B get for religious_ideology?", "number": 0.188 },
+		{ "doc": "mixtral", "kind": "table", "page": 8, "q": "In Table 5, what share of tokens on Github get the same expert as first or second choice at Layer 0?", "number": 49.9 },
+		{ "doc": "mixtral", "kind": "image", "page": 6, "q": "On the LMSys leaderboard screenshot (Figure 6), what Arena Elo rating does GPT-4-0613 have?", "number": 1158 },
+		{ "doc": "mixtral", "kind": "image", "page": 6, "q": "On the LMSys leaderboard screenshot (Figure 6), what MT-bench score does GPT-4-Turbo have?", "number": 9.32 },
+		{ "doc": "mixtral", "kind": "image", "page": 6, "q": "On the LMSys leaderboard screenshot (Figure 6), what Arena Elo rating does Claude-1 have?", "number": 1149 },
+
+		{ "doc": "phi3", "kind": "table", "page": 5, "q": "What MedQA score does Gemma 7b get?", "number": 50.0 },
+		{ "doc": "phi3", "kind": "table", "page": 5, "q": "What HumanEval score does Phi-3-small get?", "number": 59.1 },
+		{ "doc": "phi3", "kind": "table", "page": 5, "q": "What TriviaQA score does Mixtral 8x7b get?", "number": 82.2 },
+		{ "doc": "phi3", "kind": "table", "page": 5, "q": "What GSM-8K score does Llama-3-Instruct 8b get?", "number": 77.4 },
+		{ "doc": "phi3", "kind": "table", "page": 5, "q": "What MT Bench score does Phi-3-medium get?", "number": 8.91 },
+		{ "doc": "phi3", "kind": "table", "page": 5, "q": "What BigBench-Hard score does Phi-2 get?", "number": 59.4 },
+		{ "doc": "phi3", "kind": "table", "page": 6, "q": "In Table 1, what Intellectual Property DR-1 defect rate does Gemma have?", "number": 38.33 },
+		{ "doc": "phi3", "kind": "table", "page": 6, "q": "In Table 1, what Harmful Content Summarization defect rate does Mistral have?", "number": 22.33 },
+		{ "doc": "phi3", "kind": "chart", "page": 6, "q": "In Figure 3, which harm category had the highest score before safety post-training?", "match": "political" },
+		{ "doc": "phi3", "kind": "chart", "page": 6, "q": "In Figure 3, which harm category had the lowest score after safety post-training?", "match": "model[\\s_-]*identity" },
+		{ "doc": "phi3", "kind": "chart", "page": 6, "q": "In Figure 3, roughly what was the model_identity score before safety post-training?", "number": 21, "tol": 3 },
+		{ "doc": "phi3", "kind": "chart", "page": 6, "q": "In Figure 3, roughly what was the cyber score before safety post-training?", "number": 44, "tol": 3 }
+	],
+	"scanQuestionsFrom": "mixtral"
+}

@@ -9,9 +9,9 @@
 import { beforeAll, beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
 import { Readable } from 'node:stream';
 import { createPgliteSql } from './_helpers/pglite-sql.js';
-import { readFileSync } from 'node:fs';
 import sharp from 'sharp';
-import { createFullSchemaDb, splitStatements } from './_helpers/pglite-full-schema.js';
+import { createFullSchemaDb } from './_helpers/pglite-full-schema.js';
+import { addVectorSupport } from './_helpers/pglite-vector.js';
 import { buildPdf } from './_helpers/tiny-pdf.js';
 
 const holder = vi.hoisted(() => ({ db: null, user: null }));
@@ -145,28 +145,6 @@ function stubNvidia({ pageElements = 'ok', phantomTable = false } = {}) {
 // `vector` type that accepts pgvector's text form ('[0.1,0.2]', which is also
 // JSON) and the cosine distance operator <=>, computed exactly. Then apply
 // the knowledge migrations again so the chunk table lands as written.
-async function addVectorSupport(pg) {
-	await pg.exec(`
-		DO $$ BEGIN CREATE DOMAIN vector AS text; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-		CREATE OR REPLACE FUNCTION test_cosine_distance(a text, b text) RETURNS float8 LANGUAGE sql IMMUTABLE AS $f$
-			SELECT 1 - sum(x.v::float8 * y.v::float8) / (sqrt(sum(x.v::float8 ^ 2)) * sqrt(sum(y.v::float8 ^ 2)))
-			FROM jsonb_array_elements_text(a::jsonb) WITH ORDINALITY x(v, i)
-			JOIN jsonb_array_elements_text(b::jsonb) WITH ORDINALITY y(v, i) USING (i)
-		$f$;
-		DO $$ BEGIN CREATE OPERATOR <=> (LEFTARG = text, RIGHTARG = text, FUNCTION = test_cosine_distance);
-		EXCEPTION WHEN duplicate_function THEN NULL; END $$;
-	`);
-	for (const file of ['20261111161519_agent_knowledge.sql', '20261116182500_agent_knowledge_pdf_jobs.sql', '20261116193000_embedding_migration_shadow.sql']) {
-		const text = readFileSync(new URL(`../api/_lib/migrations/${file}`, import.meta.url), 'utf8');
-		for (const stmt of splitStatements(text)) {
-			if (/CREATE EXTENSION/i.test(stmt)) continue;
-			await pg.exec(stmt).catch((err) => {
-				if (!/does not exist/.test(err.message) || !/widget_knowledge_chunks|agent_memories/.test(stmt)) throw err;
-			});
-		}
-	}
-}
-
 let OWNER;
 let AGENT;
 beforeAll(async () => {
