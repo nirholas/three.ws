@@ -1,23 +1,24 @@
 {
 	"id": "bring-your-avatar",
-	"contentHash": "eacce0eb1a455634be7af130ce1c77b8af94b521a8143ac26a20beadac8718fa",
-	"reviewedAt": "2026-11-14T02:42:05.976Z",
+	"contentHash": "cc23e22105582321a74aca49d17b524f2fbc15c98d6cf738edcb3ada7b5bcc6b",
+	"reviewedAt": "2026-11-16T15:35:03.182Z",
 	"passed": false,
 	"blockers": [
+		"editor (visual): House Rule 1 requires filming the feature. Avatar import is animated (paste, import, skeleton mapping, idle/walk clips) so a static marketing card is not acceptable media; it must be a reel of the feature in use.",
 		"editor verdict is revise"
 	],
 	"texts": [
-		"If you have an avatar file and nowhere left to use it, bring it here. Paste its link or upload the .glb or .vrm, and it is saved to your account, mapped onto our animation library, and ready to put on a website with two lines of HTML.\n\nthree.ws/import/rpm",
+		"Paste your avatar's .glb or .vrm link, or upload the file, and it is saved to your account, its bones are mapped onto one canonical skeleton for our animation library, and it goes on any website with two lines of HTML.\n\nthree.ws/import/rpm",
 		"Finding the file: if an app loaded your avatar from a link, open your browser's developer tools, go to the Network tab, filter by .glb or .vrm, and copy the request URL. If you saved the file earlier, use the Upload File tab instead.",
-		"Whatever rig it came with, its bone names are mapped onto one canonical skeleton, so the idle and walk clips play on it. VRM 0.x and 1.0 files keep their toon shading, spring-bone hair and cloth, and expressions, and voice or camera capture can drive the face.",
-		"Then give it a job. Make it an agent with its own page and a Solana wallet, or put it on your own site with <agent-3d body=\"my-avatar.glb\" brain=\"free\"> and it talks to visitors with no API key. The embed guide: three.ws/docs/embedding"
+		"Whatever rig it came with, the idle and walk clips then play on it. VRM 0.x and 1.0 files keep their toon shading, spring-bone hair and cloth, and expressions, and voice or camera capture can drive the face.",
+		"Then give it a job. Make it an agent with its own page and a Solana wallet, or put it on your own site with <agent-3d body=\"my-avatar.glb\" brain=\"free\"> and it talks to visitors with no API key."
 	],
 	"lint": [],
 	"verification": {
 		"ok": true,
 		"checks": [
 			{
-				"claim": "upload the .glb or .vrm",
+				"claim": ".glb or .vrm link, or upload the file",
 				"kind": "evidence:file",
 				"target": "pages/import-rpm.html",
 				"ok": true,
@@ -31,7 +32,14 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "its bone names are mapped onto one canonical skeleton, so the idle and walk clips play on it",
+				"claim": "its bones are mapped onto one canonical skeleton",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the idle and walk clips then play on it",
 				"kind": "evidence:file",
 				"target": "src/glb-canonicalize.js",
 				"ok": true,
@@ -87,7 +95,7 @@
 			},
 			{
 				"kind": "probe:api",
-				"target": "the embed guide the last post links is live",
+				"target": "the embed docs behind the last post are live",
 				"ok": true,
 				"detail": "HTTP 200, expectations met"
 			},
@@ -102,12 +110,6 @@
 				"target": "https://three.ws/import/rpm",
 				"ok": true,
 				"detail": "HTTP 200"
-			},
-			{
-				"kind": "link",
-				"target": "https://three.ws/docs/embedding",
-				"ok": true,
-				"detail": "HTTP 200"
 			}
 		]
 	},
@@ -116,39 +118,39 @@
 		"scores": {
 			"accuracy": 5,
 			"clarity": 4,
-			"specificity": 5,
+			"specificity": 4,
 			"voice": 3,
-			"professionalism": 5,
-			"visual": 5
+			"professionalism": 4,
+			"visual": 2
 		},
 		"issues": [
 			{
-				"severity": "major",
-				"area": "voice",
-				"quote": "If you have an avatar file and nowhere left to use it, bring it here.",
-				"problem": "The head post does not open with the mechanism or the strongest true statement as required by the house voice contract. It leads with a conditional invitation instead of stating what the feature does.",
-				"fix": "Replace the opening with a mechanism lead: Paste a .glb or .vrm avatar link or upload the file, and three.ws saves it to your account, maps its bones onto one canonical skeleton, and makes it embeddable with two lines of HTML."
+				"severity": "blocking",
+				"area": "visual",
+				"quote": "public/x-media/bring-your-avatar/card.png",
+				"problem": "House Rule 1 requires filming the feature. Avatar import is animated (paste, import, skeleton mapping, idle/walk clips) so a static marketing card is not acceptable media; it must be a reel of the feature in use.",
+				"fix": "Replace card.png with a reel of three.ws/import/rpm in use: a .glb or .vrm link pasted, the avatar appearing, and the idle and walk animations playing. Use alt text describing that reel."
 			},
 			{
 				"severity": "major",
-				"area": "accuracy",
-				"quote": "three.ws/docs/embedding",
-				"problem": "The house voice contract requires linking the surface once, one link to the page the post is about. The thread contains two links (import page in post 1, embed guide in post 4).",
-				"fix": "Remove the embed guide link from post 4 and keep only three.ws/import/rpm in the head post."
+				"area": "voice",
+				"quote": "Paste your avatar's .glb or .vrm link, or upload the file, and it is saved to your account, its bones are mapped onto one canonical skeleton for our animation library, and it goes on any website with two lines of HTML.",
+				"problem": "Position 1 opens with an imperative instruction rather than the strongest true statement. The reader must see what the product does before what they should do.",
+				"fix": "Rewrite position 1 to open with the verified outcome: \"Your .glb or .vrm file is saved to your account, its bones are mapped onto one canonical skeleton, and it goes on any website with two lines of HTML. Paste the link or upload the file: three.ws/import/rpm\""
 			}
 		],
 		"rewrite": {
 			"posts": [
-				"Paste a .glb or .vrm avatar link or upload the file, and three.ws saves it to your account, maps its bones onto one canonical skeleton, and makes it embeddable with two lines of HTML.\n\nthree.ws/import/rpm",
+				"Your .glb or .vrm file is saved to your account, its bones are mapped onto one canonical skeleton, and it goes on any website with two lines of HTML. Paste the link or upload the file: three.ws/import/rpm",
 				"Finding the file: if an app loaded your avatar from a link, open your browser's developer tools, go to the Network tab, filter by .glb or .vrm, and copy the request URL. If you saved the file earlier, use the Upload File tab instead.",
-				"Whatever rig it came with, its bone names are mapped onto one canonical skeleton, so the idle and walk clips play on it. VRM 0.x and 1.0 files keep their toon shading, spring-bone hair and cloth, and expressions, and voice or camera capture can drive the face.",
+				"Whatever rig it came with, the idle and walk clips then play on it. VRM 0.x and 1.0 files keep their toon shading, spring-bone hair and cloth, and expressions. Voice or camera capture can drive the face.",
 				"Then give it a job. Make it an agent with its own page and a Solana wallet, or put it on your own site with <agent-3d body=\"my-avatar.glb\" brain=\"free\"> and it talks to visitors with no API key."
 			],
 			"altText": [
-				"A three.ws card reading \"Your avatar file keeps working here.\" beside a browser window open on the import page, with a field for a GLB or VRM link, an Upload File tab and an Import from URL button"
+				"A browser window on three.ws/import/rpm shows the import page with a .glb URL pasted into the field, an Upload File tab, and an Import from URL button."
 			]
 		},
-		"summary": "The thread is factually accurate and visually sound, but the head post opens with a weak conditional invitation instead of the mechanism lead required by house voice, and it carries a second link in violation of the one-link rule. Replace the first sentence with a checkable mechanism statement and drop the embed guide link from the final reply.",
+		"summary": "The post is factually accurate and specific, but it opens with a user instruction instead of the strongest true statement, and its static card violates the house rule to film the feature. Recast the first post as a mechanism lead and replace the image with a reel of the import and animation before shipping.",
 		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
@@ -156,8 +158,7 @@
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
 		"rewriteFindings": [
-			"head: 2 links (three.ws, three.ws/import/rpm); one post links one surface, and X reads a bare three.ws as a link",
-			"claims: claim \"upload the .glb or .vrm\" does not appear in the copy; claims must quote the post"
+			"claims: claim \".glb or .vrm link, or upload the file\" does not appear in the copy; claims must quote the post"
 		]
 	},
 	"editorError": null

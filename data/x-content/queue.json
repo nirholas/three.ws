@@ -24536,7 +24536,7 @@
 		},
 		{
 			"id": "mocap",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
@@ -24639,7 +24639,7 @@
 		},
 		{
 			"id": "genesis-shot",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "creation",
@@ -24720,7 +24720,7 @@
 		},
 		{
 			"id": "genome-poll",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 3,
 			"lane": "community",

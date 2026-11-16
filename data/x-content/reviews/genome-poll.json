@@ -1,0 +1,110 @@
+{
+	"id": "genome-poll",
+	"contentHash": "2c69b6d09e9decb2728c4fde139e4bb44988d0e6d731bc6697a9d28b47d3aa5f",
+	"reviewedAt": "2026-11-16T15:40:06.283Z",
+	"passed": false,
+	"blockers": [
+		"probe genome-poll: no feature probe declared; add one to `probes` that proves the feature works, not just that its page loads",
+		"editor (voice): Rhetorical questions are banned by the house voice contract; the line reads as engagement bait and makes the thread read like a teaser rather than a mechanism announcement.",
+		"editor (visual): The post carries no media attachment. House contract rule 1 states nothing ships with no media; a reel of the feature being used is required.",
+		"editor verdict is revise"
+	],
+	"texts": [
+		"Breed two agents on three.ws/genome and the child inherits a mix of both parents' brain, voice, body and on-chain skills, with a family tree anyone can check.\n\nIf you could pass down one trait, which would it be?",
+		"Each breeding records its seed, so the child's traits can be derived again from the parents, and a forged lineage shows up when you rerun it."
+	],
+	"lint": [],
+	"verification": {
+		"ok": false,
+		"checks": [
+			{
+				"claim": "the child inherits a mix of both parents' brain, voice, body and on-chain skills",
+				"kind": "evidence:file",
+				"target": "pages/genome.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each breeding records its seed",
+				"kind": "evidence:file",
+				"target": "data/announcements.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe",
+				"target": "genome-poll",
+				"ok": false,
+				"detail": "no feature probe declared; add one to `probes` that proves the feature works, not just that its page loads"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/genome",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 3,
+			"clarity": 4,
+			"specificity": 4,
+			"voice": 2,
+			"professionalism": 3,
+			"visual": 1
+		},
+		"issues": [
+			{
+				"severity": "blocking",
+				"area": "voice",
+				"quote": "If you could pass down one trait, which would it be?",
+				"problem": "Rhetorical questions are banned by the house voice contract; the line reads as engagement bait and makes the thread read like a teaser rather than a mechanism announcement.",
+				"fix": "Delete the sentence. Let the head post state the mechanism and end on the link, as in the rewrite."
+			},
+			{
+				"severity": "blocking",
+				"area": "visual",
+				"quote": "(no media declared)",
+				"problem": "The post carries no media attachment. House contract rule 1 states nothing ships with no media; a reel of the feature being used is required.",
+				"fix": "Attach a reel from `npm run x:content -- prove <id>` showing the genome breeding flow, or a real product frame from `npm run announce:media`, with alt text describing the screen."
+			},
+			{
+				"severity": "major",
+				"area": "accuracy",
+				"quote": "with a family tree anyone can check",
+				"problem": "This phrasing does not appear word-for-word in the passing verification evidence or the live page text quoted by a passing check; the evidence supports seed-recorded lineage and forgery detection, not the exact phrase.",
+				"fix": "Remove the phrase or replace it with evidenced wording such as 'The lineage is seed-recorded so it can be re-derived and forgery is detectable on rerun.'"
+			},
+			{
+				"severity": "major",
+				"area": "accuracy",
+				"quote": "no feature probe declared; add one to `probes` that proves the feature works, not just that its page loads",
+				"problem": "No end-to-end probe proves the breeding feature works; the only live check was a page load. The house contract requires the strongest evidence to be the run itself.",
+				"fix": "Add a probe that runs a breeding and reads the seed and lineage result off the screen, then confirm the post states only what the run observed."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"Breeding two agents on three.ws/genome produces a child that inherits a recombination of both parents' brain, voice, body, and on-chain skills. https://three.ws/genome",
+				"Each breeding records its seed, so the child's traits can be derived again from the parents, and a forged lineage shows up when you rerun it."
+			],
+			"altText": [
+				"Reel of the three.ws genome breeding page showing two parent agents selected and a child agent that inherits a recombination of brain, voice, body, and on-chain skills with a seed-recorded lineage."
+			]
+		},
+		"summary": "The post cannot ship as written because it ends with a banned rhetorical question and declares no media, both hard stops under the house voice contract. Removing the question, attaching a real product reel with alt text, and using only evidenced wording makes it compliant.",
+		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"head: 2 links (three.ws/genome, https://three.ws/genome); one post links one surface, and X reads a bare three.ws as a link",
+			"claims: claim \"the child inherits a mix of both parents' brain, voice, body and on-chain skills\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
+}

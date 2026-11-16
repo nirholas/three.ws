@@ -1,0 +1,123 @@
+{
+	"id": "genesis-shot",
+	"contentHash": "5a753fadf7acedc5ee1e8e371a64b433e4ace980120615f84cfccf79fc141eb5",
+	"reviewedAt": "2026-11-16T15:38:25.191Z",
+	"passed": false,
+	"blockers": [
+		"probe genesis-shot: no feature probe declared; add one to `probes` that proves the feature works, not just that its page loads",
+		"editor (accuracy): Only the selfie upload path is backed by a passing page check; \"Describe a character\" has no verification evidence behind it.",
+		"editor (accuracy): This phrase is not covered by any passing verification result; no check quoted it word for word.",
+		"editor (accuracy): This sentence is not covered by any passing verification result; no check quoted it word for word.",
+		"editor (visual): The genesis-shot probe failed: no feature probe was declared, so the media cannot be confirmed as a passing end-to-end run against production.",
+		"editor verdict is revise"
+	],
+	"texts": [
+		"Describe a character or upload a selfie, and Genesis returns a rigged 3D agent with its own custodial wallet and an on-chain identity, in under a minute. It is yours from the moment it exists.\n\nthree.ws/genesis",
+		"Leave the name blank and it suggests one. Describe how it should talk, like \"warm, precise, explains things like a patient mentor\", and that is the voice it chats in."
+	],
+	"lint": [],
+	"verification": {
+		"ok": false,
+		"checks": [
+			{
+				"claim": "upload a selfie, and Genesis returns a rigged 3D agent with its own custodial wallet",
+				"kind": "evidence:file",
+				"target": "pages/genesis.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "in under a minute",
+				"kind": "evidence:file",
+				"target": "pages/genesis.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Leave the name blank and it suggests one",
+				"kind": "evidence:file",
+				"target": "pages/genesis.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "warm, precise, explains things like a patient mentor",
+				"kind": "evidence:file",
+				"target": "pages/genesis.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe",
+				"target": "genesis-shot",
+				"ok": false,
+				"detail": "no feature probe declared; add one to `probes` that proves the feature works, not just that its page loads"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/genesis",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 2,
+			"clarity": 4,
+			"specificity": 4,
+			"voice": 4,
+			"professionalism": 4,
+			"visual": 2
+		},
+		"issues": [
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "Describe a character",
+				"problem": "Only the selfie upload path is backed by a passing page check; \"Describe a character\" has no verification evidence behind it.",
+				"fix": "Change post 1 to open with the verified path only: \"Upload a selfie\"."
+			},
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "and an on-chain identity",
+				"problem": "This phrase is not covered by any passing verification result; no check quoted it word for word.",
+				"fix": "Remove \"and an on-chain identity\" from post 1."
+			},
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "It is yours from the moment it exists.",
+				"problem": "This sentence is not covered by any passing verification result; no check quoted it word for word.",
+				"fix": "Delete the sentence from post 1."
+			},
+			{
+				"severity": "blocking",
+				"area": "visual",
+				"quote": "Alt text: \"three.ws card on a black background with the headline \\\"A selfie or a sentence in. A 3D agent out.\\\" Beside it, a live capture of three.ws/genesis.\"",
+				"problem": "The genesis-shot probe failed: no feature probe was declared, so the media cannot be confirmed as a passing end-to-end run against production.",
+				"fix": "Add a feature probe to `probes` for genesis-shot, run it against production, and recapture `public/x-media/genesis-shot/shot.png` from that passing run before publishing."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"Upload a selfie, and Genesis returns a rigged 3D agent with its own custodial wallet in under a minute. three.ws/genesis",
+				"Leave the name blank and it suggests one. Describe how it should talk, like \"warm, precise, explains things like a patient mentor\"."
+			],
+			"altText": [
+				"three.ws card on a black background with the headline \"A selfie or a sentence in. A 3D agent out.\" Beside it, a live capture of three.ws/genesis."
+			]
+		},
+		"summary": "The post contains unverified claims and its media probe failed, so it must be revised before publishing. Removing the unsupported phrases and recapturing the shot from a passing end-to-end run will make it safe to ship.",
+		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}
