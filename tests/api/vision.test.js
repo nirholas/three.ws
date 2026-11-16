@@ -116,8 +116,8 @@ describe('vision helper — provider chain', () => {
 		const r = await describeImage({ prompt: 'color?', imageUrl: 'https://cdn/x.jpg' });
 		expect(r.text).toBe('Gray');
 		expect(r.provider).toBe('nvidia');
-		// The 2026-11-16 vision eval put bolt-e4b on the first rung.
-		expect(r.model).toBe('nvidia/nemotron-3.5-bolt-e4b');
+		// The 2026-11-16 vision eval kept super-vl on the first rung.
+		expect(r.model).toBe('nvidia/nemotron-3.5-super-vl-120b-a12b');
 		// One call, to the OpenAI-compatible chat host, multimodal user content.
 		expect(calls).toHaveLength(1);
 		const userMsg = calls[0].body.messages.at(-1);
@@ -156,20 +156,21 @@ describe('vision helper — provider chain', () => {
 	});
 
 	it('falls over from the free NIM lane to the paid backstop on a 5xx', async () => {
-		// The chain carries two free NIM rungs (bolt-e4b, then super-vl), so a 5xx
-		// on both lands on the paid backstop.
+		// The chain carries three free NIM rungs (super-vl, bolt-e4b, nano-omni),
+		// so a 5xx on all of them lands on the paid backstop.
 		process.env.OPENAI_API_KEY = 'sk-x';
 		const calls = stubFetch([
 			['integrate.api.nvidia.com', () => httpErr(500, 'boom')],
 			['api.openai.com', () => chatOk('ok')],
 		]);
 		const r = await describeImage({ prompt: 'p', imageUrl: 'https://cdn/x.jpg' });
-		expect(calls).toHaveLength(3);
-		expect(calls.slice(0, 2).map((c) => c.body.model)).toEqual([
-			'nvidia/nemotron-3.5-bolt-e4b',
+		expect(calls).toHaveLength(4);
+		expect(calls.slice(0, 3).map((c) => c.body.model)).toEqual([
 			'nvidia/nemotron-3.5-super-vl-120b-a12b',
+			'nvidia/nemotron-3.5-bolt-e4b',
+			'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning',
 		]);
-		expect(calls[2].url).toContain('openai.com');
+		expect(calls[3].url).toContain('openai.com');
 		expect(r.text).toBe('ok');
 	});
 
@@ -195,7 +196,7 @@ describe('vision helper — provider chain', () => {
 			status: 502,
 			code: 'invalid_key',
 		});
-		expect(calls).toHaveLength(2); // both free NIM rungs attempted
+		expect(calls).toHaveLength(3); // every free NIM rung attempted
 		expect(usageState.events).toHaveLength(0); // nothing succeeded → no spend
 	});
 

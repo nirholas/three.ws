@@ -97,44 +97,51 @@ describe('leadWith routes a task to a provider or a model', () => {
 describe('the rung order the 2026-11-16 eval decided', () => {
 	const BOLT = 'nvidia/nemotron-3.5-bolt-e4b';
 	const SUPER_VL = 'nvidia/nemotron-3.5-super-vl-120b-a12b';
+	const NANO_OMNI = 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning';
 
-	it('bolt-e4b leads the NIM lane and the previous first rung stays right behind it', () => {
-		expect(vision.NVIDIA_VISION_MODELS.map((m) => m.model)).toEqual([BOLT, SUPER_VL]);
+	it('super-vl keeps the first rung, with bolt-e4b and nano-omni behind it', () => {
+		expect(vision.NVIDIA_VISION_MODELS.map((m) => m.model)).toEqual([SUPER_VL, BOLT, NANO_OMNI]);
 		const nim = vision.visionChain().filter((p) => p.name === 'nvidia');
-		expect(nim.map((p) => p.model)).toEqual([BOLT, SUPER_VL]);
-		expect(vision.visionChain()[0].model).toBe(BOLT);
+		expect(nim.map((p) => p.model)).toEqual([SUPER_VL, BOLT, NANO_OMNI]);
+		expect(vision.visionChain()[0].model).toBe(SUPER_VL);
 	});
 
-	it('switches thinking off on both reasoning models', () => {
+	it('switches thinking off on every NIM reasoning model', () => {
 		for (const m of vision.NVIDIA_VISION_MODELS) expect(m.extraBody).toEqual({ chat_template_kwargs: { enable_thinking: false } });
 	});
 
 	it('routes each consumer task to the model that won it', () => {
 		expect({ ...vision.VISION_TASK_LEAD }).toEqual({
-			caption: [SUPER_VL],
+			caption: [NANO_OMNI],
+			avatar_review: [BOLT],
+			quality_gate: [BOLT],
+			describe: [SUPER_VL],
 			forge_precheck: [SUPER_VL],
 			image3d_review: [SUPER_VL],
 			object_detect: [SUPER_VL],
 			diorama: [SUPER_VL],
-			describe: [BOLT],
-			avatar_review: [BOLT],
-			quality_gate: [BOLT],
-			seed_judge: [BOLT],
+			seed_judge: [SUPER_VL],
 		});
 	});
 
-	it('a super-vl task asks super-vl first and keeps bolt-e4b behind it', async () => {
-		fetchSpy.mockResolvedValueOnce(reply('{"usable":true,"subject":"clock"}'));
-		await vision.describeImageJson({ prompt: 'check', imageBase64: PNG_1PX, mimeType: 'image/png', timeoutMs: 5000, lead: vision.VISION_TASK_LEAD.forge_precheck });
+	it('a call with no task lead asks super-vl first', async () => {
+		fetchSpy.mockResolvedValueOnce(reply('A mint green alarm clock.'));
+		await vision.describeImage({ prompt: 'describe', imageBase64: PNG_1PX, mimeType: 'image/png', timeoutMs: 5000 });
 		expect(modelOf(0)).toBe(SUPER_VL);
-		const routed = vision.leadWith(vision.visionChain(), vision.VISION_TASK_LEAD.forge_precheck);
-		expect(routed.slice(0, 2).map((p) => p.model)).toEqual([SUPER_VL, BOLT]);
 	});
 
-	it('a super-vl task falls to bolt-e4b when super-vl is retired', async () => {
-		fetchSpy.mockResolvedValueOnce(failure(410, 'gone')).mockResolvedValueOnce(reply('{"objects":[]}'));
-		await vision.describeImageJson({ prompt: 'boxes', imageBase64: PNG_1PX, mimeType: 'image/png', timeoutMs: 5000, lead: vision.VISION_TASK_LEAD.object_detect });
-		expect([modelOf(0), modelOf(1)]).toEqual([SUPER_VL, BOLT]);
+	it('the caption task asks nano-omni first and keeps the default order behind it', async () => {
+		fetchSpy.mockResolvedValueOnce(reply('A mint green alarm clock.'));
+		await vision.describeImage({ prompt: 'alt text', imageBase64: PNG_1PX, mimeType: 'image/png', timeoutMs: 5000, lead: vision.VISION_TASK_LEAD.caption });
+		expect(modelOf(0)).toBe(NANO_OMNI);
+		const routed = vision.leadWith(vision.visionChain(), vision.VISION_TASK_LEAD.caption);
+		expect(routed.slice(0, 3).map((p) => p.model)).toEqual([NANO_OMNI, SUPER_VL, BOLT]);
+	});
+
+	it('a bolt-e4b task falls to super-vl when bolt-e4b is retired', async () => {
+		fetchSpy.mockResolvedValueOnce(failure(410, 'gone')).mockResolvedValueOnce(reply('{"verdict":"ok"}'));
+		await vision.describeImageJson({ prompt: 'review', imageBase64: PNG_1PX, mimeType: 'image/png', timeoutMs: 5000, lead: vision.VISION_TASK_LEAD.avatar_review });
+		expect([modelOf(0), modelOf(1)]).toEqual([BOLT, SUPER_VL]);
 	});
 
 	it('the forge quality gate leads with bolt-e4b, not the Workers AI rung', async () => {

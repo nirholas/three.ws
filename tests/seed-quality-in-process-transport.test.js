@@ -61,7 +61,7 @@ describe('inProcessTransport', () => {
 		expect(calls.describe).toHaveLength(1);
 		expect(calls.describe[0].imageBase64).toBe(Buffer.from('png').toString('base64'));
 		// The model the 2026-11-16 vision eval measured best on this task is asked first.
-		expect(calls.describe[0].lead).toEqual(['nvidia/nemotron-3.5-bolt-e4b']);
+		expect(calls.describe[0].lead).toEqual(['nvidia/nemotron-3.5-super-vl-120b-a12b']);
 		expect(calls.describe[0].mimeType).toBe('image/png');
 	});
 

@@ -65,45 +65,42 @@ import {
 //
 // The order below is measured, not assumed: `npm run nvidia:vision-eval` on
 // 2026-11-16 (docs/nvidia/evals/vision-2026-11-16.md) ran every served NIM VLM
-// against 66 licence-clean images on the nine real consumer tasks, scored with
-// the consumers' own parsers. nemotron-3.5-bolt-e4b answered 87.1% correctly
-// with 99.1% schema adherence and a 0.9% error rate; super-vl answered 84.5%
-// with 89.7% schema adherence (its seed-judge JSON is invalid 9 times in 12).
-// Bolt beats it by more than the eval's 2-point tie threshold, so it leads and
-// super-vl stays behind it. super-vl still wins some tasks outright; those
-// route to it through VISION_TASK_LEAD below. Both are reasoning models with
-// thinking switched off the same way.
+// against 66 licence-clean images on 162 graded consumer tasks, scored with the
+// consumers' own parsers. super-vl answered 92.6% correctly inside each
+// consumer's time budget, bolt-e4b 86.4% and nano-omni 83.3%, so super-vl keeps
+// the first rung: neither candidate is within the eval's 2-point tie threshold.
+// The two candidates win specific tasks outright, so they sit behind it as
+// fallback rungs and lead only the tasks they won, through VISION_TASK_LEAD.
+// All three are reasoning models with thinking switched off the same way.
 const NIM_THINKING_OFF = Object.freeze({ chat_template_kwargs: { enable_thinking: false } });
 export const NVIDIA_VISION_MODELS = [
-	{ model: 'nvidia/nemotron-3.5-bolt-e4b', extraBody: NIM_THINKING_OFF },
 	{ model: 'nvidia/nemotron-3.5-super-vl-120b-a12b', extraBody: NIM_THINKING_OFF },
+	{ model: 'nvidia/nemotron-3.5-bolt-e4b', extraBody: NIM_THINKING_OFF },
+	{ model: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning', extraBody: NIM_THINKING_OFF },
 ];
 
-// Per-task lead, from the same eval's winner-per-task table. Each consumer
-// passes its entry as `lead`, which moves that model's rungs (on every key) to
-// the front for that call only; the rest of the chain stays behind as fallback.
-// Accuracy is bolt-e4b vs super-vl on that task.
-//   caption         super-vl  100%  vs 93.3%
-//   forge_precheck  super-vl  95.8% vs 83.3%
-//   image3d_review  super-vl  81.3% vs 62.5%
-//   object_detect   super-vl  100%  vs 77.8%
-//   diorama         super-vl  100% tie with bolt, 6.8 s p50 vs 15.0 s
-//   describe        bolt-e4b  85.7% vs 71.4%
-//   avatar_review   bolt-e4b  92.3% vs 84.6%
-//   quality_gate    bolt-e4b  100%  vs 93.3%
-//   seed_judge      bolt-e4b  100%  vs 25.0%
+// Per-task lead, from the same eval's winner-per-task table (in-budget
+// accuracy; a tie within 2 points goes to the lower p50). Each consumer passes
+// its entry as `lead`, which moves that model's rungs (on every key) to the
+// front for that call only; the rest of the chain stays behind as fallback.
+//   caption         nano-omni  100%  vs super-vl 95.2% (one reply over 15 s)
+//   avatar_review   bolt-e4b   91.7% tie with super-vl, 1.10 s p50 vs 1.19 s
+//   quality_gate    bolt-e4b   100%  vs super-vl 93.3%
+//   seed_judge      super-vl   100% tie with bolt-e4b, 1.06 s p50 vs 1.18 s
+//   describe, forge_precheck, image3d_review, object_detect, diorama: super-vl
 const SUPER_VL = 'nvidia/nemotron-3.5-super-vl-120b-a12b';
 const BOLT = 'nvidia/nemotron-3.5-bolt-e4b';
+const NANO_OMNI = 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning';
 export const VISION_TASK_LEAD = Object.freeze({
-	caption: Object.freeze([SUPER_VL]),
+	caption: Object.freeze([NANO_OMNI]),
+	avatar_review: Object.freeze([BOLT]),
+	quality_gate: Object.freeze([BOLT]),
+	describe: Object.freeze([SUPER_VL]),
 	forge_precheck: Object.freeze([SUPER_VL]),
 	image3d_review: Object.freeze([SUPER_VL]),
 	object_detect: Object.freeze([SUPER_VL]),
 	diorama: Object.freeze([SUPER_VL]),
-	describe: Object.freeze([BOLT]),
-	avatar_review: Object.freeze([BOLT]),
-	quality_gate: Object.freeze([BOLT]),
-	seed_judge: Object.freeze([BOLT]),
+	seed_judge: Object.freeze([SUPER_VL]),
 });
 // Free OpenRouter vision lanes, in order.
 //
