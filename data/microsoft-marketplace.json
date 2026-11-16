@@ -8,6 +8,12 @@
 		"team": "team",
 		"enterprise": "enterprise"
 	},
+	"included_comment": "Quantity of each metered dimension included in one monthly billing period of each Partner Center plan, entered on the plan as the dimension's included quantity. Derived from data/plans.json: mcp_tool_calls = limits.mcp_calls_per_day x billing_period_days, agent_messages = limits.free_model_messages_per_day x billing_period_days. tests/microsoft-billing.test.js fails if the two drift. Shown on /dashboard/billing as the meter's ceiling.",
+	"included": {
+		"pro": { "mcp_tool_calls": 1500000, "agent_messages": 30000 },
+		"team": { "mcp_tool_calls": 15000000, "agent_messages": 150000 },
+		"enterprise": { "mcp_tool_calls": 300000000, "agent_messages": 600000 }
+	},
 	"dimensions": [
 		{
 			"id": "mcp_tool_calls",
