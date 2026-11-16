@@ -1557,6 +1557,21 @@
 			"schemaHash": "a13b01f481c6"
 		}
 	],
+	"api/_mcp3d/tools/openusd.js": [
+		{
+			"name": "export_openusd",
+			"title": "Export a 3D model as simulation-ready OpenUSD",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "25a25f263453"
+		}
+	],
 	"api/_mcp3d/tools/persona-identity.js": [
 		{
 			"name": "persona_identity",
