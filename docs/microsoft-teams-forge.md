@@ -86,12 +86,24 @@ Abuse limits reuse the Forge studio's per-user buckets (`studioGenBurst`,
 `studioGenHourly`, keyed by the Teams user id) and the global generation
 budget. Prompts pass the same safety check as every other forge surface.
 
+## Agent approvals in the same bot
+
+The bot that runs the Forge also delivers agent approval requests. Card
+actions with the verbs `approval.approve`, `approval.deny` and
+`approval.refresh` are routed to
+[`api/_lib/teams-approvals.js`](../api/_lib/teams-approvals.js) before the
+Forge handler sees them; every other `adaptiveCard/action` still reaches the
+Forge. Installation and message activities in a 1:1 chat also store the
+conversation reference the approval cards are posted to, and uninstalling
+clears it. The full flow, who may decide and the failure cases are in
+[docs/approvals.md, Approving from Microsoft Teams](approvals.md#approving-from-microsoft-teams).
+
 ## Configuration
 
 | Variable | Needed for | Without it |
 |---|---|---|
 | `MS_TEAMS_BOT_APP_ID` | Every Teams feature. It is the JWT audience every activity is verified against. | The bot rejects all activities. |
-| `MS_TEAMS_BOT_APP_PASSWORD` | Posting cards: Send on the preview, the `forge` reply, and the finished-card update for the whole chat | The action inserts the card into the compose box for the user to send, and the requester's refreshes keep it current. `forge <prompt>` cannot reply, and logs a warning. |
+| `MS_TEAMS_BOT_APP_PASSWORD` | Posting cards: Send on the preview, the `forge` reply, the finished-card update for the whole chat, and approval cards in the owner's 1:1 chat | The action inserts the card into the compose box for the user to send, and the requester's refreshes keep it current. `forge <prompt>` cannot reply, and logs a warning. |
 | `MS_TEAMS_BOT_TENANT_ID` | Single-tenant bot registrations | Tokens are minted from `botframework.com` (multi-tenant). |
 | `CRON_SECRET` | Dispatching runs to `/api/microsoft-teams/forge-run` | Runs happen in the bot's process (CPU-throttled after the response on Cloud Run). |
 

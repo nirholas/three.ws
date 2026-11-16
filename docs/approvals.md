@@ -110,8 +110,9 @@ the **Approvals** category (on by default for every channel):
 | Bell and [/notifications](https://three.ws/notifications) | A row that opens the request's deep link. |
 | Web push | A notification with **Approve** and **Deny** buttons. Each request has its own tag, so two pending approvals never replace each other. The Approve button sends the request's payload hash, so it executes exactly what the notification described. |
 | iOS app | An APNs alert that opens the deep link. |
+| Microsoft Teams | A Universal Actions card in your 1:1 chat with the three.ws app, with the confirmation table, risk notes, deadline and **Approve** and **Deny** buttons. It refreshes to show who decided and what happened. Switch it off on [/approvals](https://three.ws/approvals). See [Approving from Microsoft Teams](#approving-from-microsoft-teams). |
 | Telegram and Discord | A message in every paired chat with the full confirmation table, the risk notes, the payload fingerprint, the deadline, the deep link, and signed **Approve** and **Deny** buttons. See [Approving from Telegram and Discord](#approving-from-telegram-and-discord). |
-| Email | The fallback. Sent only when no push device or chat received the request, and only if email is on for Approvals in `/dashboard/settings`. It carries the full confirmation table, the risk notes, and the deep link. |
+| Email | The fallback. Sent only when no push device, chat or Teams card received the request, and only if email is on for Approvals in `/dashboard/settings`. It carries the full confirmation table, the risk notes, and the deep link. |
 
 Turn browser push on from the **Turn on push** button in the inbox header.
 Change channels from **Delivery settings**, which opens `/dashboard/settings`.
@@ -261,6 +262,76 @@ the toasts and edits you saw in the chat are the part only a human can report.
 Flags: `--expire-seconds`, `--pair-timeout`, `--step-timeout`, `--health-port`,
 `--report <file>`.
 
+## Approving from Microsoft Teams
+
+Every request also goes to the owner's 1:1 chat with the three.ws app in
+Microsoft Teams, as an Adaptive Card (schema 1.5) with Universal Actions. It
+carries the same content as the inbox: the agent, the action, the confirmation
+table (recipient, amount, asset, chain, formatted by `confirmationTable`), the
+venue, why it was held, the risk notes, the payload fingerprint and the
+deadline. **Approve** and **Deny** are `Action.Execute` buttons.
+
+| Piece | Source |
+| --- | --- |
+| Delivery, owner mapping, invoke handler, test card | [api/_lib/teams-approvals.js](../api/_lib/teams-approvals.js) |
+| The card and the signed button data | [api/_lib/teams-approval-cards.js](../api/_lib/teams-approval-cards.js) |
+| Routing (before the Forge handler) | [api/_lib/teams-bot.js](../api/_lib/teams-bot.js) `handleActivity` |
+| Settings API | [api/approvals/teams.js](../api/approvals/teams.js) |
+| Schema | `teams_conversation_refs`, `teams_approval_prefs` in [20261116144659_teams_conversation_refs.sql](../api/_lib/migrations/20261116144659_teams_conversation_refs.sql) |
+| Tests | [tests/teams-approvals.test.js](../tests/teams-approvals.test.js) |
+
+**Setting it up.** Add Microsoft as a sign-in method in
+`/dashboard/settings#sign-in-methods`, add the three.ws app in Teams and send
+it any message. The **Microsoft Teams** panel on `/approvals` shows each step,
+the on/off switch (on by default once the app is installed) and **Send a test
+card**.
+
+**Who can decide.** Teams posts `adaptiveCard/action` to
+`/api/microsoft-teams/messages`. The Bot Framework token is verified first
+(`verifyBotToken`). The presser is `<tenant id>:<Entra object id>` from the
+activity, and they are the owner only when that is the Microsoft identity
+linked to the account that owns the request (`user_identities`, the key Sign in
+with Microsoft writes), or a Teams identity linked with `link <code>`. Anyone
+else, including someone a card was forwarded to, gets a read-only card with no
+request details.
+
+**What a press does.** The button data is an HMAC under `JWT_SECRET` over the
+verb, the request id, the presser's identity, the payload hash and the
+deadline. The handler recomputes it from the row on file, then calls
+`decideApproval({ via: 'teams' })`, the same path as the inbox: the payload
+hash in the conditional UPDATE, single execution, idempotent repeats, the
+executor's re-hash. The response is the updated card. `refresh` is scoped to the
+owner (`userIds`), so opening the chat later shows the current state: pending,
+approved by, denied by, expired, or executed with a **View transaction** link.
+
+| Case | What the owner sees |
+| --- | --- |
+| The button was altered, moved to another request, or the payload changed after sending | "This button does not match the request on file, so nothing ran." |
+| A different three.ws account presses it | "Only the three.ws account owner this request belongs to can view or decide it." No details. |
+| The Teams account is not linked | How to link it. No details. |
+| The deadline passed | "Expired before a decision. Nothing ran." |
+| Double click, or a press after a decision | The card is redrawn as it stands; the action never runs twice. |
+| Above the wallet-signature threshold | "Not executed:" with the reason; sign it on the web. |
+
+**Failure isolation.** The Teams leg runs inside `deliverApproval` after the
+bell, push and chats, and never throws. A delivered card counts as out-of-app
+reach, so the email fallback is skipped; a Teams failure leaves email as the
+fallback. A 403 or 404 from the Bot Connector (the app was removed) forgets
+that chat. Uninstalling the app deletes the conversation reference.
+
+**The test card.** `POST /api/approvals/teams { action: "test" }` creates an
+`approval_test` request (venue `approval_test`, never auto-approved, 15 minute
+deadline, at most five per 10 minutes) and sends it to Teams only, even with
+the switch off. Its executor runs nothing and records "Test approval: nothing
+ran." The card is titled "Test approval (nothing runs)".
+
+**Bot command.** `approvals` in the 1:1 chat replies with every pending
+request (up to five, soonest deadline first), each as its own card.
+
+**Needs.** `MS_TEAMS_BOT_APP_ID` (token audience) and
+`MS_TEAMS_BOT_APP_PASSWORD` (proactive posting). Without the password the
+panel says the bot cannot post and requests arrive by push and email.
+
 ## Auto-approve rules
 
 The default is that every gated action asks you. An auto-approve rule is an
@@ -294,6 +365,9 @@ POST   /api/approvals            { action: "bulk_deny", ids: [uuid, ...] }
 GET    /api/approvals/:id?t=<link token>
 GET    /api/approvals/:id?media=<n>   (x_post requests: the nth image or video, as reviewed)
 POST   /api/approvals/:id        { decision: "approve"|"deny", payload_hash, token?, via? }
+GET    /api/approvals/teams      (the Microsoft Teams panel: linked, installed, bot_configured, enabled)
+PUT    /api/approvals/teams      { enabled: true|false }
+POST   /api/approvals/teams      { action: "test" }   (a labelled test card that runs nothing)
 GET    /api/approvals/policies
 POST   /api/approvals/policies   { venues, max_usd, agent_id?, team_id?, expires_at?, label? }
 DELETE /api/approvals/policies?id=<uuid>
