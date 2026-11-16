@@ -71,7 +71,7 @@ function call({ method = 'GET', query = '', body, url } = {}) {
 
 describe('recordJudgeShadow', () => {
 	it('stores both verdicts, the views and the disagreement, without any reasoning field', async () => {
-		const id = await recordJudgeShadow({ source: 'forge', creationId: 'c1', glbUrl: 'https://cdn.three.ws/a.glb', prompt: 'a lamp', current: currentPass, currentLatencyMs: 3200, cosmos: { ...cosmosReject, trace: 'should never be stored' }, views: VIEWS, mode: 'shadow' });
+		const id = await recordJudgeShadow({ source: 'forge', creationId: 'c1', glbUrl: 'https://three.ws/cdn/a.glb', prompt: 'a lamp', current: currentPass, currentLatencyMs: 3200, cosmos: { ...cosmosReject, trace: 'should never be stored' }, views: VIEWS, mode: 'shadow' });
 		expect(id).toBeTruthy();
 		expect(holder.puts).toHaveLength(4);
 		const [row] = await holder.db.sql`select * from forge_judge_shadow where id = ${id}`;
@@ -85,13 +85,13 @@ describe('recordJudgeShadow', () => {
 	});
 
 	it('does not count a disagreement when the current judge had no verdict', async () => {
-		const id = await recordJudgeShadow({ glbUrl: 'https://cdn.three.ws/b.glb', current: currentDown, cosmos: cosmosReject, mode: 'shadow' });
+		const id = await recordJudgeShadow({ glbUrl: 'https://three.ws/cdn/b.glb', current: currentDown, cosmos: cosmosReject, mode: 'shadow' });
 		const [row] = await holder.db.sql`select disagree, current_pass from forge_judge_shadow where id = ${id}`;
 		expect(row).toEqual({ disagree: false, current_pass: null });
 	});
 
 	it('keeps one eval row per creation so a resumed eval never double counts', async () => {
-		const args = { source: 'eval', creationId: 'c9', glbUrl: 'https://cdn.three.ws/c.glb', current: currentPass, cosmos: cosmosPass, mode: 'shadow', humanLabel: 'accepted', labelledBy: 'forge-user' };
+		const args = { source: 'eval', creationId: 'c9', glbUrl: 'https://three.ws/cdn/c.glb', current: currentPass, cosmos: cosmosPass, mode: 'shadow', humanLabel: 'accepted', labelledBy: 'forge-user' };
 		expect(await recordJudgeShadow(args)).toBeTruthy();
 		expect(await recordJudgeShadow(args)).toBeNull();
 		const [{ n }] = await holder.db.sql`select count(*)::int as n from forge_judge_shadow`;
@@ -101,8 +101,8 @@ describe('recordJudgeShadow', () => {
 
 describe('/api/admin/forge-judge', () => {
 	beforeEach(async () => {
-		await recordJudgeShadow({ source: 'forge', creationId: 'd1', glbUrl: 'https://cdn.three.ws/d1.glb', current: currentPass, cosmos: cosmosReject, views: VIEWS, mode: 'shadow' });
-		await recordJudgeShadow({ source: 'eval', creationId: 'a1', glbUrl: 'https://cdn.three.ws/a1.glb', current: currentPass, cosmos: cosmosPass, mode: 'shadow', humanLabel: 'accepted', labelledBy: 'forge-user' });
+		await recordJudgeShadow({ source: 'forge', creationId: 'd1', glbUrl: 'https://three.ws/cdn/d1.glb', current: currentPass, cosmos: cosmosReject, views: VIEWS, mode: 'shadow' });
+		await recordJudgeShadow({ source: 'eval', creationId: 'a1', glbUrl: 'https://three.ws/cdn/a1.glb', current: currentPass, cosmos: cosmosPass, mode: 'shadow', humanLabel: 'accepted', labelledBy: 'forge-user' });
 	});
 
 	it('refuses without an admin session', async () => {

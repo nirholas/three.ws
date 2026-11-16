@@ -197,7 +197,7 @@ describe('runQualityGate with Cosmos in shadow', () => {
 			}
 			throw new Error(`unexpected fetch ${url}`);
 		});
-		const verdict = await gate.runQualityGate({ glbUrl: 'https://cdn.three.ws/m/test.glb', prompt: 'a robot', creationId: 'c-123' });
+		const verdict = await gate.runQualityGate({ glbUrl: 'https://three.ws/cdn/m/test.glb', prompt: 'a robot', creationId: 'c-123' });
 		expect(verdict.pass).toBe(true);
 		expect(verdict.score).toBe(72);
 		expect(verdict.judge).toBeUndefined();
@@ -217,7 +217,7 @@ describe('runQualityGate with Cosmos in shadow', () => {
 		process.env.FORGE_COSMOS_JUDGE = 'veto';
 		process.env.FORGE_COSMOS_VETO_ISSUES = 'floating_parts';
 		fetchSpy.mockResolvedValue(cosmosReply('{"plausible": false, "issues": ["floating_parts"], "prompt_match": "yes", "confidence": 0.95}'));
-		const verdict = await gate.runQualityGate({ glbUrl: 'https://cdn.three.ws/m/test.glb', prompt: 'a robot' });
+		const verdict = await gate.runQualityGate({ glbUrl: 'https://three.ws/cdn/m/test.glb', prompt: 'a robot' });
 		expect(verdict.pass).toBe(false);
 		expect(verdict.judge).toBe('cosmos-reason');
 		expect(inserts).toHaveLength(1);
