@@ -192,3 +192,24 @@ describe('the same Bot Framework auth for every channel', () => {
 		});
 	}
 });
+
+describe('the tab routes let every Microsoft 365 host frame them', () => {
+	// The frame-ancestors hosts Microsoft lists for a tab that runs in Teams,
+	// Outlook (work and outlook.com) and the Microsoft 365 app:
+	// https://learn.microsoft.com/en-us/microsoftteams/platform/m365-apps/extend-m365-teams-personal-tab
+	const HOSTS = [
+		'https://teams.microsoft.com', 'https://*.teams.microsoft.com', 'https://*.cloud.microsoft',
+		'https://*.office.com', 'https://outlook.office.com', 'https://outlook.office365.com',
+		'https://outlook-sdf.office.com', 'https://outlook-sdf.office365.com',
+		'https://outlook.live.com', 'https://outlook-sdf.live.com', 'https://*.microsoft365.com',
+	];
+	const routes = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8')).routes;
+
+	for (const src of ['/microsoft/teams-tab/?', '/microsoft/teams-stage/?']) {
+		it(`${src} allows Teams, Outlook and the Microsoft 365 app as frame ancestors`, () => {
+			const csp = routes.find((r) => r.src === src && r.headers?.['content-security-policy'])?.headers['content-security-policy'];
+			const ancestors = (csp.match(/frame-ancestors ([^;]+)/)?.[1] || '').split(/\s+/);
+			for (const host of HOSTS) expect(ancestors, host).toContain(host);
+		});
+	}
+});
