@@ -13,7 +13,7 @@ Reproduce: `npm run nvidia:embed-eval -- --datasets docs,scifact,nfcorpus --late
 
 ## Method
 
-- **three-ws-docs**: 44 hand-labelled questions over 425 docs/ pages split into 491 passages
+- **three-ws-docs**: 44 hand-labelled questions over 425 docs/ pages split into 496 passages
   ([data/evals/nvidia-embed/three-ws-docs-qrels.json](../../../data/evals/nvidia-embed/three-ws-docs-qrels.json)).
   This is the closest stand-in for agent knowledge: product docs, API sections, code blocks.
 - **BEIR SciFact** (300 queries, 5183 passages) and **BEIR NFCorpus** (323 queries, 3633 passages): public, out-of-domain
@@ -28,7 +28,7 @@ Reproduce: `npm run nvidia:embed-eval -- --datasets docs,scifact,nfcorpus --late
 
 ## Results
 
-### three-ws-docs (44 queries, 491 passages)
+### three-ws-docs (44 queries, 496 passages)
 
 | Model @ dim | recall@5 | recall@10 | nDCG@10 | refused passages / queries |
 |---|---:|---:|---:|---:|
@@ -49,7 +49,7 @@ Reproduce: `npm run nvidia:embed-eval -- --datasets docs,scifact,nfcorpus --late
 | nemotron-3.5-embed-1b@1024 | 79.7 | 85.8 | 74.5 | 1 / 0 |
 | nemotron-3.5-embed-1b@512 | 78.6 | 84.3 | 71.4 | 1 / 0 |
 | nemotron-3.5-embed-8b@4096 | 91.5 | 94.0 | 83.2 | 1 / 0 |
-| **nemotron-3.5-embed-8b@2048 (chosen)** | **90.5** | **93.9** | **81.9** | 1 / 0 |
+| **nemotron-3.5-embed-8b@2048 (chosen)** | **90.6** | **93.9** | **81.9** | 1 / 0 |
 | nemotron-3.5-embed-8b@1024 | 88.9 | 93.0 | 80.4 | 1 / 0 |
 
 ### BEIR NFCorpus (323 queries, 3633 passages)
@@ -57,9 +57,9 @@ Reproduce: `npm run nvidia:embed-eval -- --datasets docs,scifact,nfcorpus --late
 | Model @ dim | recall@5 | recall@10 | nDCG@10 | refused passages / queries |
 |---|---:|---:|---:|---:|
 | nemotron-3-embed-1b@2048 (current) | 14.1 | 17.7 | 36.9 | 0 / 0 |
-| nemotron-3.5-embed-1b@2048 | 14.1 | 17.7 | 37.0 | 5 / 0 |
-| nemotron-3.5-embed-1b@1024 | 13.3 | 17.3 | 35.9 | 5 / 0 |
-| nemotron-3.5-embed-1b@512 | 12.7 | 16.4 | 34.5 | 5 / 0 |
+| nemotron-3.5-embed-1b@2048 | 14.1 | 17.7 | 36.9 | 4 / 0 |
+| nemotron-3.5-embed-1b@1024 | 13.3 | 17.3 | 35.9 | 4 / 0 |
+| nemotron-3.5-embed-1b@512 | 12.7 | 16.4 | 34.5 | 4 / 0 |
 | nemotron-3.5-embed-8b@4096 | 16.4 | 21.0 | 42.6 | 4 / 0 |
 | **nemotron-3.5-embed-8b@2048 (chosen)** | **16.0** | **20.1** | **41.6** | 4 / 0 |
 | nemotron-3.5-embed-8b@1024 | 14.7 | 18.9 | 38.7 | 4 / 0 |
@@ -73,13 +73,14 @@ Single-query embedding, 20 sequential calls per model from the dev box to `integ
 
 | Model | p50 ms | p95 ms |
 |---|---:|---:|
-| nemotron-3-embed-1b (current) | 381 | 390 |
-| nemotron-3.5-embed-1b | 183 | 194 |
-| nemotron-3.5-embed-8b | 247 | 1347 |
+| nemotron-3-embed-1b (current) | 380 | 397 |
+| nemotron-3.5-embed-1b | 186 | 200 |
+| nemotron-3.5-embed-8b | 248 | 269 |
 
 Batch probe (passages of about 400 words): 1 input took 289 ms on 8b vs 391 ms on the current model; 64 inputs took
-3387 ms vs 3924 ms. The 8b p95 tail (one slow call in 20) is the hosted queue, not the model; the memory and
-knowledge read paths already tolerate it, since they embed one query per request and fail open to lexical ranking.
+3387 ms vs 3924 ms. An earlier run the same day measured an 8b p95 of 1347 ms (one slow call in 20): that tail is the hosted queue, not
+the model. The memory and knowledge read paths tolerate it, since they embed one query per request and fail open to
+lexical ranking.
 
 ## Why 8b at 2048, not 4096 or 3.5-1b
 
@@ -152,3 +153,43 @@ dropped only by a separate migration held in `api/_lib/migrations/held/` until v
 The production run and its verification are recorded in [the run log below](#production-run).
 
 ## Production run
+
+Run 2026-11-16 against the production database (Neon), shadow migration
+`20261116193000_embedding_migration_shadow.sql` applied on its own with `--file`.
+
+**Before:**
+
+| table | rows | in target | pending | spaces |
+|---|---:|---:|---:|---|
+| agent_memories | 2961 | 0 | 2961 | 2779 no vector, 165 `nemotron-3-embed-1b@2048`, 17 retired `nv-embedqa-e5-v5@1024` |
+| agent_knowledge_chunks | 11 | 0 | 11 | 11 `nemotron-3-embed-1b@2048` |
+| widget_knowledge_chunks | 0 | 0 | 0 | |
+
+**Run** (batch 16, 400 ms pause): agent_knowledge_chunks scanned 11, moved 11, cut over. agent_memories: a
+`--limit 40` pass, then a resumed run from the saved cursor, reached 1512 scanned, 1512 moved, 0 refused, 0 skipped
+(`--status`: "in progress", 1522 in target, 1439 pending, 103 old vectors kept in prev). No content refusals occurred
+on production memories or knowledge.
+
+**Verify on production rows** (`--verify`: each row's first ten words as a known-item query, ranked against every row
+of the same agent in both spaces):
+
+| table | queries | scopes | new space recall@1 | new space MRR | old space recall@1 | old space MRR |
+|---|---:|---:|---:|---:|---:|---:|
+| agent_memories | 85 | 2 | 84.7 | 90.0 | 83.5 | 89.3 |
+| agent_knowledge_chunks | 11 | 1 | 100 | 100 | 100 | 100 |
+
+The new space is at least as good on production data, which is all the cutover requires; production memories are
+short and near-duplicate within an agent, so the docs and BEIR sets above carry the size of the win.
+
+**Stopped and rolled back.** Mid-run the production service was found to be on commit `559f73663` (2026-11-15),
+which predates the reader change. Its `scoreRowsBySpace` treats an unknown tag as an unconfigured space, so every row
+moved into the 8b space dropped out of live semantic search until a deploy. The run was stopped, both tables were
+restored with `--restore` (103 + 11 rows), and the 1419 memories that had no vector before the run were returned to
+no vector. `--status` afterwards matches the "before" table exactly. Three fixes came out of it, each with a
+reproducing test: a deploy gate (a writing run reads `/api/version` and refuses unless production contains the
+reader commit), restore of rows that had no vector (an empty-string `embedder_prev` sentinel), and numeric cursor
+order on bigint ids.
+
+**Remaining step (owner):** after `three-ws-api` is deployed from a commit that contains `60128b5cc`, run
+`npm run nvidia:reembed`, then `npm run nvidia:reembed -- --verify`. When every table reads "verified" in `--status`,
+promote `api/_lib/migrations/held/20261116193100_drop_embedding_prev.sql`.

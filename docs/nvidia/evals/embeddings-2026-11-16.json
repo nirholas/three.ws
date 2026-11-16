@@ -1,0 +1,258 @@
+{
+	"generated_at": "2026-11-16T18:26:34.219Z",
+	"max_passage_chars": 2048,
+	"datasets": [
+		{
+			"name": "three-ws-docs",
+			"queries": 44,
+			"docs": 426,
+			"passages": 496,
+			"results": [
+				{
+					"label": "nemotron-3-embed-1b@2048 (current)",
+					"model": "nvidia/nemotron-3-embed-1b",
+					"dim": 2048,
+					"recall5": 0.9204545454545454,
+					"recall10": 0.9772727272727273,
+					"ndcg10": 0.8130544340688537,
+					"refused_passages": 0,
+					"refused_queries": 0
+				},
+				{
+					"label": "nemotron-3.5-embed-1b@2048",
+					"model": "nvidia/nemotron-3.5-embed-1b",
+					"dim": 2048,
+					"recall5": 0.9204545454545454,
+					"recall10": 0.9772727272727273,
+					"ndcg10": 0.8133824995488933,
+					"refused_passages": 2,
+					"refused_queries": 0
+				},
+				{
+					"label": "nemotron-3.5-embed-1b@1024",
+					"model": "nvidia/nemotron-3.5-embed-1b",
+					"dim": 1024,
+					"recall5": 0.875,
+					"recall10": 0.9318181818181818,
+					"ndcg10": 0.7858566838952392,
+					"refused_passages": 2,
+					"refused_queries": 0
+				},
+				{
+					"label": "nemotron-3.5-embed-1b@512",
+					"model": "nvidia/nemotron-3.5-embed-1b",
+					"dim": 512,
+					"recall5": 0.8522727272727273,
+					"recall10": 0.8977272727272727,
+					"ndcg10": 0.7324075905685377,
+					"refused_passages": 2,
+					"refused_queries": 0
+				},
+				{
+					"label": "nemotron-3.5-embed-8b@4096",
+					"model": "nvidia/nemotron-3.5-embed-8b",
+					"dim": 4096,
+					"recall5": 1,
+					"recall10": 1,
+					"ndcg10": 0.9223937574075155,
+					"refused_passages": 2,
+					"refused_queries": 0
+				},
+				{
+					"label": "nemotron-3.5-embed-8b@2048",
+					"model": "nvidia/nemotron-3.5-embed-8b",
+					"dim": 2048,
+					"recall5": 1,
+					"recall10": 1,
+					"ndcg10": 0.9134464937912579,
+					"refused_passages": 2,
+					"refused_queries": 0
+				},
+				{
+					"label": "nemotron-3.5-embed-8b@1024",
+					"model": "nvidia/nemotron-3.5-embed-8b",
+					"dim": 1024,
+					"recall5": 0.9772727272727273,
+					"recall10": 1,
+					"ndcg10": 0.9167813511002773,
+					"refused_passages": 2,
+					"refused_queries": 0
+				}
+			]
+		},
+		{
+			"name": "beir-scifact",
+			"queries": 300,
+			"docs": 5183,
+			"passages": 5183,
+			"results": [
+				{
+					"label": "nemotron-3-embed-1b@2048 (current)",
+					"model": "nvidia/nemotron-3-embed-1b",
+					"dim": 2048,
+					"recall5": 0.8045555555555555,
+					"recall10": 0.8642222222222222,
+					"ndcg10": 0.7487190111105726,
+					"refused_passages": 0,
+					"refused_queries": 0
+				},
+				{
+					"label": "nemotron-3.5-embed-1b@2048",
+					"model": "nvidia/nemotron-3.5-embed-1b",
+					"dim": 2048,
+					"recall5": 0.8045555555555555,
+					"recall10": 0.8642222222222222,
+					"ndcg10": 0.7481319033612487,
+					"refused_passages": 1,
+					"refused_queries": 0
+				},
+				{
+					"label": "nemotron-3.5-embed-1b@1024",
+					"model": "nvidia/nemotron-3.5-embed-1b",
+					"dim": 1024,
+					"recall5": 0.7967777777777777,
+					"recall10": 0.8576666666666667,
+					"ndcg10": 0.7447360309621995,
+					"refused_passages": 1,
+					"refused_queries": 0
+				},
+				{
+					"label": "nemotron-3.5-embed-1b@512",
+					"model": "nvidia/nemotron-3.5-embed-1b",
+					"dim": 512,
+					"recall5": 0.7861111111111111,
+					"recall10": 0.8434444444444444,
+					"ndcg10": 0.7143472668375132,
+					"refused_passages": 1,
+					"refused_queries": 0
+				},
+				{
+					"label": "nemotron-3.5-embed-8b@4096",
+					"model": "nvidia/nemotron-3.5-embed-8b",
+					"dim": 4096,
+					"recall5": 0.9146666666666666,
+					"recall10": 0.94,
+					"ndcg10": 0.8323373627358986,
+					"refused_passages": 1,
+					"refused_queries": 0
+				},
+				{
+					"label": "nemotron-3.5-embed-8b@2048",
+					"model": "nvidia/nemotron-3.5-embed-8b",
+					"dim": 2048,
+					"recall5": 0.9055,
+					"recall10": 0.9393333333333334,
+					"ndcg10": 0.8192837128768832,
+					"refused_passages": 1,
+					"refused_queries": 0
+				},
+				{
+					"label": "nemotron-3.5-embed-8b@1024",
+					"model": "nvidia/nemotron-3.5-embed-8b",
+					"dim": 1024,
+					"recall5": 0.8888333333333333,
+					"recall10": 0.9303333333333335,
+					"ndcg10": 0.8043402328740282,
+					"refused_passages": 1,
+					"refused_queries": 0
+				}
+			]
+		},
+		{
+			"name": "beir-nfcorpus",
+			"queries": 323,
+			"docs": 3633,
+			"passages": 3633,
+			"results": [
+				{
+					"label": "nemotron-3-embed-1b@2048 (current)",
+					"model": "nvidia/nemotron-3-embed-1b",
+					"dim": 2048,
+					"recall5": 0.1409299389608164,
+					"recall10": 0.17667472501437193,
+					"ndcg10": 0.36927731841253764,
+					"refused_passages": 0,
+					"refused_queries": 0
+				},
+				{
+					"label": "nemotron-3.5-embed-1b@2048",
+					"model": "nvidia/nemotron-3.5-embed-1b",
+					"dim": 2048,
+					"recall5": 0.14096359086551422,
+					"recall10": 0.1766010113183672,
+					"ndcg10": 0.36915064790902247,
+					"refused_passages": 4,
+					"refused_queries": 0
+				},
+				{
+					"label": "nemotron-3.5-embed-1b@1024",
+					"model": "nvidia/nemotron-3.5-embed-1b",
+					"dim": 1024,
+					"recall5": 0.13345289691007622,
+					"recall10": 0.172948678467881,
+					"ndcg10": 0.3587867038519729,
+					"refused_passages": 4,
+					"refused_queries": 0
+				},
+				{
+					"label": "nemotron-3.5-embed-1b@512",
+					"model": "nvidia/nemotron-3.5-embed-1b",
+					"dim": 512,
+					"recall5": 0.12668339092157352,
+					"recall10": 0.16421240113468724,
+					"ndcg10": 0.34463252974672576,
+					"refused_passages": 4,
+					"refused_queries": 0
+				},
+				{
+					"label": "nemotron-3.5-embed-8b@4096",
+					"model": "nvidia/nemotron-3.5-embed-8b",
+					"dim": 4096,
+					"recall5": 0.16394831025648415,
+					"recall10": 0.20980010588771897,
+					"ndcg10": 0.4257019191259922,
+					"refused_passages": 4,
+					"refused_queries": 0
+				},
+				{
+					"label": "nemotron-3.5-embed-8b@2048",
+					"model": "nvidia/nemotron-3.5-embed-8b",
+					"dim": 2048,
+					"recall5": 0.15967470235199668,
+					"recall10": 0.201136532189801,
+					"ndcg10": 0.4156152365372341,
+					"refused_passages": 4,
+					"refused_queries": 0
+				},
+				{
+					"label": "nemotron-3.5-embed-8b@1024",
+					"model": "nvidia/nemotron-3.5-embed-8b",
+					"dim": 1024,
+					"recall5": 0.14699473395967144,
+					"recall10": 0.18866889341749138,
+					"ndcg10": 0.38674184631676334,
+					"refused_passages": 4,
+					"refused_queries": 0
+				}
+			]
+		}
+	],
+	"latency": {
+		"nvidia/nemotron-3-embed-1b": {
+			"n": 20,
+			"p50_ms": 380,
+			"p95_ms": 397
+		},
+		"nvidia/nemotron-3.5-embed-1b": {
+			"n": 20,
+			"p50_ms": 186,
+			"p95_ms": 200
+		},
+		"nvidia/nemotron-3.5-embed-8b": {
+			"n": 20,
+			"p50_ms": 248,
+			"p95_ms": 269
+		}
+	},
+	"refusal_samples": {}
+}
