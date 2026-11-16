@@ -45,6 +45,10 @@ Microsoft campaign orders below were archived on 2026-11-16 with every agent-sid
 | 834 Teams bot Responsible AI | `bbe47936e`, `a38b16e84` | Responsible AI suites pass; live check wrote feedback and report rows on an isolated DB |
 | 835 SharePoint web part | `7075f49ae`, `704446f67`, `10771e967` | package validates 53/53; `tests/agents-public-read-cors.test.js` 3/3; guide, listing, STRUCTURE, changelog, pages rows |
 | 836 OneDrive file picker | `22630f29b`, `31ea71bda` | `tests/onedrive-core.test.js` 33/33; Forge verifier passes disabled and enabled (reaches Microsoft sign-in) at 400 px, no console errors; docs and changelog |
+| 838 Share to Teams and LinkedIn | `7e0da777b`, `3eee5d850` | share tests pass; Teams and LinkedIn targets exercised in a browser; `docs/sharing.md`, changelog |
+| 839 Microsoft 365 Certification evidence | `4ff1a7cc1`, `985ea3cea` | ten policies and risk register R1 to R10; 70-row control matrix; `tests/m365-evidence.test.js` passes; evidence collector secret scan clean |
+| 840 Defender for Cloud Apps catalog | `d8a87bf47`, `5acc9b76b` | catalog matrix and owner pack re-verified |
+| 841 Entra app gallery | `64116d19c` | `tests/scim-entra-conformance.test.js` passes; `/sso/microsoft` launch traced locally; submission pack complete |
 | 842 A2A for Copilot Studio and Foundry | `662d8e46d` | conformance and card tests pass; real Agent Framework client streamed a GLB and cancelled a task locally |
 | 843 PnP community samples | `6062e3b43` and the pnp-samples commits | sample JSON 3/3, secret scan clean, `verify-live.mjs` 22/23 (the last needs a real key) |
 | 844 IT admin deployment kit | `474878e38` | `tests/microsoft-admin-kit.test.js` passes; consent page in Playwright; PSScriptAnalyzer 1.25.0 0 findings |

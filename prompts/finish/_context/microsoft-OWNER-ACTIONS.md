@@ -37,6 +37,10 @@ Every step below needs the owner (push, deploy, Partner Center, Entra, store sub
 | 834 Teams Responsible AI | Deploy. |
 | 835 SharePoint web part | Deploy (ships the CORS fix on GET /api/agents/:id); upload the .sppkg to the App Catalog; add `https://three.ws/agent-3d/1.5.2/` to Trusted script sources; take real-tenant screenshots; submit to AppSource. |
 | 836 OneDrive picker | Add Entra redirect URI `https://three.ws/auth/microsoft/redirect` with Files.ReadWrite; set MS_ENTRA_SSO_CLIENT_ID (step 3); run one real pick-and-save with a Microsoft account (`node scripts/verify-forge-onedrive.mjs --expect enabled` reaches the sign-in boundary today). |
+| 838 Share to Teams and LinkedIn | Deploy; run `npm run audit:share-previews` against production; check one URL in LinkedIn Post Inspector. |
+| 839 M365 Certification | The 7-item owner pack in docs/compliance/m365-certification/controls.md (pen test, branch protection and 2FA, console MFA, dev DB split and SA key retirement, training and tabletop, sign policies and name a deputy, Partner Center submission). |
+| 840 Defender for Cloud Apps | The owner pack in docs/compliance/defender-cloud-apps.md. |
+| 841 Entra app gallery | Deploy (`/sso/microsoft` and `/docs/entra-gallery-tutorial` 404 until then); get a Partner One ID; create the test tenant and team; submit the gallery request. |
 | 842 A2A | Deploy; Copilot Studio and Foundry click-through; rerun the Agent Framework client against https://three.ws. |
 | 843 PnP samples | Fork the three galleries and open the three PRs (steps in `integrations/microsoft/pnp-samples/README.md`); run `THREEWS_API_KEY=<key> node integrations/microsoft/pnp-samples/scripts/verify-live.mjs` with a real key (22 of 23 checks pass without one). |
 | 844 IT admin kit | Step 3 (the consent page shows "not configured" until MS_ENTRA_SSO_* is set). PSScriptAnalyzer 1.25.0 already passed with 0 findings. |
