@@ -2,7 +2,7 @@
 // Live check of the Teams bot's Responsible AI paths on the full production
 // schema, through the real code.
 //
-//   npm run teams:responsible-ai-live-check   [--report <file>]
+//   node scripts/teams-responsible-ai-live-check.mjs   [--report <file>]
 //
 // What it proves, end to end through api/_lib/teams-bot.js handleActivity:
 //   1. a feedback invoke (`message/submitAction`, actionName 'feedback') on a
@@ -25,6 +25,7 @@
 // sends; ids are synthetic.
 
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 
 const args = process.argv.slice(2);
@@ -74,9 +75,11 @@ const step = (name, data) => {
 	console.log(JSON.stringify(data, null, 2));
 };
 
-await db.sql`insert into agent_identities (id, name) values (${AGENT}, 'Live Check Agent') on conflict do nothing`.catch(async () => {
-	await db.query('insert into agent_identities (id, name, user_id) values ($1, $2, gen_random_uuid())', [AGENT, 'Live Check Agent']);
-});
+// agent_identities.user_id references users, so the agent gets a real owner row.
+const [owner] = await db.sql`
+	insert into users (email, display_name) values ('teams-rai-owner@live-check.invalid', 'Live Check Owner') returning id
+`;
+await db.sql`insert into agent_identities (id, name, user_id) values (${AGENT}, 'Live Check Agent', ${owner.id})`;
 
 // 1. Feedback on a labelled agent reply.
 await recordAiMessage({ conversationId: PERSONAL, activityId: '1:lc-reply-1', tenantId: TENANT, kind: 'agent_reply', agentId: AGENT, model: 'llama-3.3-70b' });
@@ -109,7 +112,9 @@ const cardReports = await db.query("select id, subject_kind, forge_key, model_ur
 assert.equal(cardReports.length, 1);
 const alertRows = await db.query('select signature, title, detail, severity, environment, count from ops_alerts');
 assert.equal(alertRows.length, 1);
-assert.equal(alertRows[0].signature, `content_report:${cardReports[0].id}`);
+// ops_alerts keys rows by the sha256 prefix of the signature (api/_lib/alerts.js).
+const alertKey = (sig) => createHash('sha256').update(sig).digest('hex').slice(0, 16);
+assert.equal(alertRows[0].signature, alertKey(`content_report:${cardReports[0].id}`));
 step('card Report -> content_reports + ops_alerts', {
 	dialogTitle: dialog.task.value.title,
 	confirmation: cardDone.task.value,
