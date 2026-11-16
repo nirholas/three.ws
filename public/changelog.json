@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T19:21:25.723Z",
+	"generated_at": "2026-11-16T19:46:10.683Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -52,6 +52,16 @@
 			"title": "Docs · Microsoft IT admin deployment guide",
 			"summary": "Roll three.ws out to every seat: Teams setup policy, Edge WebAppInstallForceList and ExtensionInstallForcelist through Intune or Group Policy, tenant-wide admin consent, verification, rollback and FAQ.",
 			"link": "/docs/microsoft-admin-deployment",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "launch",
+			"title": "Docs · Omniverse Kit extension",
+			"summary": "The threews.forge Kit extension: generate a textured model from a prompt or image and reference it into the open USD stage upright and to scale, or import a saved model from your three.ws library. Install, API key handling, import details and the measured GPU test run.",
+			"link": "/docs/omniverse-extension",
 			"tags": [
 				"launch"
 			]
@@ -289,6 +299,16 @@
 			"link": "/forge",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Generate Forge models straight into NVIDIA Omniverse with the three.ws Kit extension",
+			"summary": "The new threews.forge extension adds a Forge panel to any Kit 110 app such as USD Composer. Type a prompt or pick a reference image, press Generate, and the textured model is referenced into the open USD stage upright and to scale, at the world origin, the selected prim or in front of the camera, with live progress and cancel. A My models browser imports anything saved in your three.ws account. On an NVIDIA L4 a real image to 3D job went from Generate to framed in the stage in 78.5 seconds, and all 62 extension tests passed with no Kit errors. Install steps are in the extension's README.",
+			"link": "/docs/omniverse-extension",
+			"tags": [
+				"feature"
 			]
 		},
 		{

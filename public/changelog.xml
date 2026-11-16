@@ -47,6 +47,14 @@
 			<description>Roll three.ws out to every seat: Teams setup policy, Edge WebAppInstallForceList and ExtensionInstallForcelist through Intune or Group Policy, tenant-wide admin consent, verification, rollback and FAQ.</description>
 		</item>
 		<item>
+			<title>Docs · Omniverse Kit extension</title>
+			<link>https://three.ws/docs/omniverse-extension</link>
+			<guid isPermaLink="false">2026-11-16:Docs · Omniverse Kit extension</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The threews.forge Kit extension: generate a textured model from a prompt or image and reference it into the open USD stage upright and to scale, or import a saved model from your three.ws library. Install, API key handling, import details and the measured GPU test run.</description>
+		</item>
+		<item>
 			<title>Docs · OneDrive and SharePoint in Forge</title>
 			<link>https://three.ws/docs/onedrive</link>
 			<guid isPermaLink="false">2026-11-16:Docs · OneDrive and SharePoint in Forge</guid>
@@ -229,6 +237,14 @@
 			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Storage's old public download domain stopped serving files, so some forge results opened to a blank viewer with a broken Download button, and many agents in the directory, the Teams tab and search showed no 3D body. Every one of those links now goes through three.ws's own file proxy, which serves the same files reliably. Older links saved before the change are rewritten when they are read, so nothing has to be regenerated.</description>
+		</item>
+		<item>
+			<title>Generate Forge models straight into NVIDIA Omniverse with the three.ws Kit extension</title>
+			<link>https://three.ws/docs/omniverse-extension</link>
+			<guid isPermaLink="false">2026-11-16:Generate Forge models straight into NVIDIA Omniverse with the three.ws Kit extension</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The new threews.forge extension adds a Forge panel to any Kit 110 app such as USD Composer. Type a prompt or pick a reference image, press Generate, and the textured model is referenced into the open USD stage upright and to scale, at the world origin, the selected prim or in front of the camera, with live progress and cancel. A My models browser imports anything saved in your three.ws account. On an NVIDIA L4 a real image to 3D job went from Generate to framed in the stage in 78.5 seconds, and all 62 extension tests passed with no Kit errors. Install steps are in the extension's README.</description>
 		</item>
 		<item>
 			<title>Get a Teams notification when your 3D model finishes or an agent needs you</title>

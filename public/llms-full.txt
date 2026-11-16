@@ -5186,6 +5186,12 @@ URL: https://three.ws/docs/openusd-export
 
 Export a Forge model or any public GLB as validated OpenUSD for NVIDIA Omniverse and Isaac Sim: convex collision hulls, a rigid body with mass from volume times density, semantic labels and skeletons, from the Forge menu, the API or the MCP tool.
 
+### Docs · Omniverse Kit extension
+
+URL: https://three.ws/docs/omniverse-extension
+
+The threews.forge Kit extension: generate a textured model from a prompt or image and reference it into the open USD stage upright and to scale, or import a saved model from your three.ws library. Install, API key handling, import details and the measured GPU test run.
+
 ### Docs · Engine QA
 
 URL: https://three.ws/docs/engine-qa

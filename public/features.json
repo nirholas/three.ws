@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T19:14:54.155Z",
+	"generated_at": "2026-11-16T19:46:10.661Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -10286,6 +10286,18 @@
 					"path": "/docs/openusd-export",
 					"title": "Docs · OpenUSD export (simulation-ready)",
 					"description": "Export a Forge model or any public GLB as validated OpenUSD for NVIDIA Omniverse and Isaac Sim: convex collision hulls, a rigid body with mass from volume times density, semantic labels and skeletons, from the Forge menu, the API or the MCP tool.",
+					"added": "2026-11-16",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/omniverse-extension",
+					"title": "Docs · Omniverse Kit extension",
+					"description": "The threews.forge Kit extension: generate a textured model from a prompt or image and reference it into the open USD stage upright and to scale, or import a saved model from your three.ws library. Install, API key handling, import details and the measured GPU test run.",
 					"added": "2026-11-16",
 					"auth": null,
 					"indexable": true,
