@@ -1,5 +1,7 @@
 # nvidia 10: the /cosmos world lane moves to current NVIDIA Cosmos models, with worlds conditioned on the avatar and its scene
 
+Status 2026-11-16: code complete, not archived. Every own DoD line passes (text and scene worlds rendered on Cosmos 3 Nano through the dev server, comparison doc committed with measured times). Full `npm test` (36 failures in 18 files) and `npm run audit:docs` (8 findings) fail only in other orders' files. Waiting on the owner: git push, deploy:gcp:full (three-ws-api).
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `nvidia-` order, so it can run in parallel with all of them. Dev port: 3260.
 
 ## Operating clause (binding)
