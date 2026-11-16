@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>NIM Releases Admin · three.ws</title>
+	<meta name="robots" content="noindex, nofollow" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<style>
+		body { background: #0a0a0f; color: #e2e8f0; min-height: 100vh; }
+		.nr-wrap { width: 100%; min-width: 0; box-sizing: border-box; max-width: 1280px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3rem) 1.25rem 5rem; }
+		.nr-title { font-size: clamp(1.4rem, 3vw, 1.85rem); font-weight: 800; letter-spacing: -0.025em; margin: 0 0 0.5rem; }
+		.nr-sub { color: rgba(255,255,255,0.45); font-size: 13.5px; margin: 0 0 1.25rem; max-width: 86ch; line-height: 1.65; }
+		.nr-sub a, .nr-muted a, .nr-note a { color: var(--accent-violet-strong, #a78bfa); }
+		.nr-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; margin-bottom: 1.1rem; }
+		.nr-stat { border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; background: rgba(255,255,255,0.02); padding: 10px 12px; min-width: 0; }
+		.nr-stat b { display: block; font-size: 13.5px; font-weight: 600; overflow-wrap: anywhere; }
+		.nr-stat span { font-size: 11.5px; color: rgba(255,255,255,0.45); }
+		.nr-controls { display: flex; gap: 0.6rem; margin-bottom: 1.1rem; align-items: center; flex-wrap: wrap; }
+		.nr-btn { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: #e2e8f0; cursor: pointer; transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
+		.nr-btn:hover { border-color: rgba(255,255,255,0.28); background: rgba(255,255,255,0.09); }
+		.nr-btn:active { transform: translateY(1px); }
+		.nr-btn:focus-visible, .nr-row:focus-visible { outline: 2px solid rgba(124,92,255,0.75); outline-offset: 2px; }
+		.nr-btn[disabled] { opacity: 0.5; cursor: progress; }
+		.nr-stamp { font-size: 11.5px; color: rgba(255,255,255,0.3); margin-left: auto; font-variant-numeric: tabular-nums; }
+		.nr-layout { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 14px; align-items: start; }
+		@media (max-width: 860px) { .nr-layout { grid-template-columns: minmax(0, 1fr); } }
+		.nr-list { display: flex; flex-direction: column; gap: 6px; }
+		.nr-row { display: block; width: 100%; text-align: left; font: inherit; color: inherit; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; background: rgba(255,255,255,0.02); padding: 10px 12px; cursor: pointer; transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); }
+		.nr-row:hover { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.05); }
+		.nr-row:active { background: rgba(255,255,255,0.07); }
+		.nr-row[aria-current="true"] { border-color: rgba(124,92,255,0.6); background: rgba(124,92,255,0.12); }
+		.nr-row-id { font-weight: 600; font-size: 13.5px; overflow-wrap: anywhere; }
+		.nr-muted { color: rgba(255,255,255,0.45); font-size: 12px; overflow-wrap: anywhere; line-height: 1.55; }
+		.nr-pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: rgba(255,255,255,0.08); margin: 4px 4px 0 0; white-space: nowrap; }
+		.nr-pill.adopt { background: rgba(45,212,191,0.14); color: #5eead4; }
+		.nr-pill.hold { background: rgba(250,204,21,0.12); color: #fde68a; }
+		.nr-pill.reject, .nr-pill.failed { background: rgba(248,113,113,0.14); color: #fca5a5; }
+		.nr-pill.skip, .nr-pill.queued, .nr-pill.running { color: rgba(255,255,255,0.65); }
+		.nr-detail { border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; background: rgba(255,255,255,0.02); padding: 16px; min-width: 0; }
+		.nr-detail h2 { font-size: 1.1rem; margin: 0 0 4px; overflow-wrap: anywhere; }
+		.nr-detail h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.45); margin: 18px 0 6px; font-weight: 700; }
+		.nr-table-wrap { overflow-x: auto; }
+		.nr-table { border-collapse: collapse; width: 100%; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+		.nr-table th, .nr-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.06); vertical-align: top; }
+		.nr-table th { color: rgba(255,255,255,0.45); font-weight: 600; }
+		.nr-table td.fail { color: #fca5a5; }
+		.nr-pre { margin: 0; padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.06); font-size: 12px; line-height: 1.55; overflow-x: auto; white-space: pre; }
+		.nr-pre.wrap { white-space: pre-wrap; overflow-wrap: anywhere; }
+		.nr-pre .add { color: #86efac; }
+		.nr-pre .del { color: #fca5a5; }
+		.nr-pre .hunk { color: #93c5fd; }
+		.nr-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+		.nr-note { padding: 2.25rem 1.5rem; text-align: center; border-radius: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.6); line-height: 1.75; }
+		.nr-note.bad { background: rgba(248,113,113,0.05); border-color: rgba(248,113,113,0.18); }
+		.nr-note h2 { font-size: 15px; margin: 0 0 0.6rem; color: #e2e8f0; font-weight: 700; }
+		.nr-note code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; font-size: 12.5px; }
+		.nr-skeleton { height: 64px; border-radius: 12px; margin-bottom: 6px; background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.04) 75%); background-size: 200% 100%; animation: nr-shimmer 1.4s linear infinite; }
+		.nr-skeleton.tall { height: 420px; }
+		.nr-skeleton.stat { height: 52px; margin: 0; }
+		@keyframes nr-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+		.nr-toast { position: fixed; right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); max-width: min(420px, calc(100vw - 2rem)); padding: 12px 16px; border-radius: 10px; background: #1a1a24; border: 1px solid rgba(255,255,255,0.16); font-size: 13px; line-height: 1.5; z-index: 50; }
+		.nr-toast.bad { border-color: rgba(248,113,113,0.5); }
+		@media (prefers-reduced-motion: reduce) { .nr-skeleton { animation: none; } .nr-btn, .nr-row { transition: none; } }
+	</style>
+</head>
+<body>
+	<div class="nr-wrap">
+		<h1 class="nr-title">NIM day-0 releases</h1>
+		<p class="nr-sub">
+			Every model that appears in the NVIDIA NIM catalog is classified into a lane by live probes, run against that lane's
+			versioned eval set next to the model the lane uses today, and given a verdict. Adopt and hold rows carry the exact
+			config diff and a post draft. Nothing here switches production: apply the diff, test, deploy, verify, then post.
+			Runbook: <a href="https://github.com/nirholas/three.ws/blob/main/docs/nvidia-models.md#day-0-release-pipeline" rel="noopener">docs/nvidia-models.md</a>.
+		</p>
+		<div class="nr-stats" id="nr-stats" aria-live="polite"></div>
+		<div class="nr-controls">
+			<button class="nr-btn" id="nr-refresh" type="button">Refresh</button>
+			<span class="nr-stamp" id="nr-stamp"></span>
+		</div>
+		<div class="nr-layout">
+			<div id="nr-list" class="nr-list" aria-live="polite" aria-busy="true" aria-label="Evaluated models"></div>
+			<div id="nr-detail" aria-live="polite"></div>
+		</div>
+	</div>
+	<div id="nr-toast-host" role="status" aria-live="polite"></div>
+
+	<script src="/nav.js"></script>
+	<script type="module" src="/src/nim-releases-admin.js"></script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>
