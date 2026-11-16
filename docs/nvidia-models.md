@@ -173,6 +173,24 @@ The free NVIDIA TTS lane: **Magpie multilingual on Riva**, selected by an NVCF `
 
 ---
 
+## Day-0 release pipeline
+
+**Source:** [api/cron/nim-release-eval.js](../api/cron/nim-release-eval.js), [api/_lib/nim-lanes.js](../api/_lib/nim-lanes.js), [api/_lib/nim-lane-eval.js](../api/_lib/nim-lane-eval.js), [api/_lib/nim-release-store.js](../api/_lib/nim-release-store.js), eval sets in [data/evals/](../data/evals/).
+
+A model that appears in the NIM catalog goes from "listed" to an evaluated, ready-to-apply proposal without anyone touching it:
+
+1. **Enqueue.** `/api/cron/free-model-audit` diffs the catalog against its snapshot every 6 hours and inserts each new id into `nim_release_evals` (unique on the model id, so a cold snapshot cache can never queue a model twice).
+2. **Classify.** `/api/cron/nim-release-eval` runs every 15 minutes and claims one queued row (`for update skip locked`). The lane comes from live probes, never from the name: a vector from `/v1/embeddings` is embeddings; a chat reply that is a safety verdict is safety; a chat model that names the colour of a drawn square is vision; any other chat reply is chat; a full ranking from the retrieval host is rerank. A 410 is retired, an account 404 is not entitled, a timeout or 5xx is requeued (up to 3 attempts), and a model that answers none of these (speech is gRPC) is stored as skip.
+3. **Evaluate.** The lane's versioned set (`data/evals/<lane>/v1.json`, CC0) runs against the candidate and against the model the lane runs today, called the way production calls it (for example embeddings at the pinned Matryoshka dimension). Each run records quality (accuracy, recall@1, top-1 or verdict accuracy), format adherence, error rate and p50/p95 latency.
+4. **Decide.** Reject when errors pass 20%, format adherence is under 80% or quality is under the lane floor (70%, 80% for safety). Adopt when the lane's current model is down, when quality is 5 points better, or when quality is within 2 points at no more than 1.25x the p50. Hold within 5 points; reject otherwise. A model that is already the lane's first rung is scored as a baseline of production against the floor.
+5. **Propose.** Adopt and hold rows get the exact unified diff against the lane's config file (`git apply`-ready) and a post draft carrying the measured number. The row, the markdown report and both go to ops in one alert (`llm:nim-release-eval:<model>`) and to **[/admin/nim-releases](https://three.ws/admin/nim-releases)** (platform admin with two-step verification, or the ops secret).
+
+**Nothing switches production.** No pipeline module writes a file or touches the env (a test enforces both and hashes the lane files around a full adopt run). A person applies the diff, runs the lane's tests, deploys and verifies, then posts.
+
+Run it by hand: `node scripts/nvidia-lane-eval.mjs --model <id>` (one model, writes `docs/nvidia/evals/<lane>/<id>.{json,md,diff}`), `--backfill` (the 2026-11-06 backlog), or `--pipeline <id>` (the full enqueue, claim, evaluate and store path on a throwaway database). First end-to-end run, 2026-11-16: `nvidia/nemotron-3.5-bolt-e4b` was probed as a vision model and returned adopt, 86% vs 79% accuracy for the current vision rung with 100% format adherence ([run record](./nvidia/evals/pipeline/nvidia_nemotron-3.5-bolt-e4b.md)).
+
+---
+
 ## Design principles across every lane
 
 1. **Free-first, always.** NVIDIA NIM leads its category (or sits in a free trio with Groq/OpenRouter) before any paid model is touched. Cost to the platform is $0.
