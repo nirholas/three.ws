@@ -194,7 +194,9 @@ export async function claimDescribeBatch({ limit = 8, backfill = true, origin = 
 /**
  * Store one describe result. Upserts, so the batch-job import works whether or
  * not the row was claimed first. Owner-edited tags are never overwritten;
- * generated_tags always holds what the model produced.
+ * generated_tags always holds what the model produced. A creation deleted
+ * after it was leased stores nothing and returns false (the insert selects
+ * from forge_creations, so the foreign key never fires).
  */
 export async function storeDescription({ creationId, result, sourceImageUrl = null }) {
 	const r = sanitizeDescribeResult(result);
@@ -206,10 +208,11 @@ export async function storeDescription({ creationId, result, sourceImageUrl = nu
 		insert into forge_creation_descriptions (
 			creation_id, status, caption, detailed, tags, generated_tags, objects,
 			model, model_version, latency_ms, source_image_url, described_at, updated_at
-		) values (
-			${creationId}, 'done', ${r.caption}, ${r.detailed}, ${r.tags}, ${r.tags}, ${JSON.stringify(r.objects)}::jsonb,
-			${r.model}, ${r.modelVersion}, ${r.latencyMs}, ${sourceImageUrl}, now(), now()
 		)
+		select
+			id, 'done', ${r.caption}, ${r.detailed}, ${r.tags}, ${r.tags}, ${JSON.stringify(r.objects)}::jsonb,
+			${r.model}, ${r.modelVersion}, ${r.latencyMs}, ${sourceImageUrl}, now(), now()
+		from forge_creations where id = ${creationId}
 		on conflict (creation_id) do update set
 			status = 'done',
 			caption = excluded.caption,
@@ -230,12 +233,15 @@ export async function storeDescription({ creationId, result, sourceImageUrl = nu
 	return rows.length > 0;
 }
 
-/** Record a failed attempt; the row goes back to the queue until MAX_ATTEMPTS. */
+/**
+ * Record a failed attempt; the row goes back to the queue until MAX_ATTEMPTS.
+ * A creation deleted since the lease is skipped.
+ */
 export async function markDescribeFailed({ creationId, error }) {
 	const message = String(error || 'describe failed').slice(0, 500);
 	await sql`
 		insert into forge_creation_descriptions (creation_id, status, error, attempts, updated_at)
-		values (${creationId}, 'queued', ${message}, 1, now())
+		select id, 'queued', ${message}, 1, now() from forge_creations where id = ${creationId}
 		on conflict (creation_id) do update set
 			status = case when forge_creation_descriptions.attempts >= ${MAX_ATTEMPTS} then 'failed' else 'queued' end,
 			error = excluded.error,

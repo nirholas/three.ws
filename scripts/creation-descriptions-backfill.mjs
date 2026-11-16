@@ -127,7 +127,7 @@ async function importBatch() {
 			failed += 1;
 		}
 	}
-	console.log(`imported ${stored} descriptions, ${failed} failures from ${uri}`);
+	console.log(`imported ${stored} descriptions, ${failed} not stored (failed, empty or creation deleted) from ${uri}`);
 	if (data.stats) console.log('job stats:', JSON.stringify(data.stats));
 	printStats('coverage', await lib.describeStats());
 }
