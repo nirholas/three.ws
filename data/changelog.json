@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-16",
+			"title": "Buying three.ws for a company now takes one page",
+			"summary": "The new enterprise page gives a company buyer and their security team everything in one visit: how to buy through Microsoft Marketplace or by invoice and purchase order, Sign in with Microsoft, Entra tenant claim and SCIM provisioning, hosting, encryption, retention, every subprocessor, which Microsoft surfaces are live today, and what support is offered. Every status is read from data and states what is true now, so nothing claims a certification three.ws does not hold. A print button turns the page into a procurement packet for vendor review, and the contact form reaches the team directly. Pricing now has a Buying for a company row that leads here.",
+			"tags": [
+				"feature"
+			],
+			"link": "/enterprise"
+		},
+		{
+			"date": "2026-11-16",
 			"title": "Analyze your three.ws usage in Power BI and Excel",
 			"summary": "Settings now has a Connect to Power BI or Excel panel. Create a read-only key for your own usage or for a team you own, paste the feed URL into Power BI or Excel, and report on MCP tool calls, LLM tokens and cost, Forge 3D generations and metered billing. It is a standard OData feed, so the Power BI Service refreshes it on a schedule without a gateway, and filters you set in Power Query are applied on the server. Keys can be revoked at any time, every key creation and refresh is in your audit log, and typed Power Query scripts with a starter report are in the repository.",
 			"tags": [
