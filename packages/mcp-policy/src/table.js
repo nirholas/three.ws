@@ -509,6 +509,7 @@ export const POLICY = {
 		verify_provenance: r('assets'),
 		anchor_provenance: w('assets'),
 		grade_sim_readiness: r('assets'),
+		export_openusd: w('assets'),
 		validate_spatial_response: r('utility'),
 		create_agent_persona: w('agents'),
 		get_agent_persona: r('agents'),

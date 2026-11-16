@@ -111,7 +111,7 @@ export function createExportOpenUsdHandler({
 			let job = await startUsdExport(input, { loadCreation, config });
 			const waitS = Math.min(MAX_WAIT_S, Math.max(0, Number(args.wait_seconds ?? DEFAULT_WAIT_S) || 0));
 			const deadline = Date.now() + waitS * 1000;
-			while ((job.status === 'queued' || job.status === 'running') && Date.now() + pollMs <= deadline) {
+			while ((job.status === 'queued' || job.status === 'running') && Date.now() + pollMs < deadline) {
 				await sleep(pollMs);
 				job = await pollUsdExport(job.job, { config });
 			}
@@ -136,7 +136,7 @@ export const toolDefs = [
 			'avatars. Z-up, meters, standing on the ground at the origin. Every file passes OpenUSD usdchecker and the ' +
 			'NVIDIA asset validator before it is returned. Returns .usdz, .usd (zipped with textures), .usda and a ' +
 			'report.json with the mass method and every validator finding. Takes 10 to 60 s: the tool waits up to ' +
-			'wait_seconds, otherwise returns a job; call again with job to collect the files. Free, no account needed. ' +
+			'wait_seconds, otherwise returns a job; call again with job to collect the files. No per-call charge; rate limited per caller. ' +
 			'Docs: https://three.ws/docs/openusd-export',
 		inputSchema: {
 			type: 'object',
