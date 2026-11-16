@@ -1,0 +1,21 @@
+# three.ws GPU quickstart, Python dependencies (installed on top of torch 2.7.1+cu128).
+# TripoSR's own requirements.txt is NOT installed: it pulls gradio, moderngl and
+# imageio[ffmpeg] for its demo UI and video renders, none of which this image runs.
+# The pins below are the subset the inference path imports (tsr/system.py,
+# tsr/utils.py, tsr/models/*), checked against the pinned TripoSR commit.
+omegaconf==2.3.0
+einops==0.7.0
+transformers==4.35.0
+huggingface-hub==0.25.2
+trimesh==4.5.3
+imageio==2.36.1
+Pillow==13.0.0
+rembg[gpu]==2.0.86
+
+# Studio server
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+python-multipart==0.0.20
+
+# Notebook
+jupyterlab==4.4.10

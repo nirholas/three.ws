@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>three.ws GPU quickstart</title>
+<script type="module" src="/static/vendor/model-viewer.min.js"></script>
+<style>
+:root {
+  --bg: #0b0d10; --panel: #13171c; --line: #252b33; --text: #e8ecf1; --muted: #93a0ae;
+  --accent: #76b900; --accent-strong: #8fd400; --danger: #ff6b6b; --radius: 10px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { padding: 20px 24px; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; justify-content: space-between; }
+header h1 { margin: 0; font-size: 18px; font-weight: 650; }
+header p { margin: 0; color: var(--muted); font-size: 13px; }
+#gpu { font-variant-numeric: tabular-nums; }
+main { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 20px; padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+@media (max-width: 860px) { main { grid-template-columns: 1fr; padding: 16px; } }
+section { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+h2 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+.samples { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.sample { padding: 0; border: 2px solid var(--line); border-radius: 8px; background: #fff; cursor: pointer; aspect-ratio: 1; overflow: hidden; transition: border-color .15s, transform .1s; }
+.sample img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.sample:hover { border-color: var(--muted); }
+.sample:active { transform: scale(.97); }
+.sample:focus-visible, button:focus-visible, label.upload:focus-within, select:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 2px; }
+.sample[aria-pressed="true"] { border-color: var(--accent); }
+label.upload { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; padding: 14px; border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); cursor: pointer; text-align: center; transition: border-color .15s, color .15s; }
+label.upload:hover { border-color: var(--muted); color: var(--text); }
+label.upload input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.row { display: flex; gap: 10px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
+select { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: inherit; }
+select:hover { border-color: var(--muted); }
+button.primary { flex: 1; min-width: 140px; padding: 11px 16px; border: 0; border-radius: 8px; background: var(--accent); color: #0b0d10; font: inherit; font-weight: 650; cursor: pointer; transition: background .15s, transform .1s; }
+button.primary:hover:not(:disabled) { background: var(--accent-strong); }
+button.primary:active:not(:disabled) { transform: translateY(1px); }
+button.primary:disabled { opacity: .45; cursor: not-allowed; }
+.selected { margin-top: 10px; font-size: 13px; color: var(--muted); min-height: 1.5em; word-break: break-all; }
+.viewer-wrap { position: relative; min-height: 460px; border-radius: 8px; overflow: hidden; background: radial-gradient(circle at 50% 40%, #1d232b, #0e1115); }
+model-viewer { width: 100%; height: 520px; --poster-color: transparent; }
+.overlay { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 10px; align-items: center; justify-content: center; padding: 24px; text-align: center; color: var(--muted); }
+.overlay strong { color: var(--text); font-size: 16px; }
+.bar { width: min(320px, 80%); height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.bar::after { content: ""; display: block; width: 35%; height: 100%; background: var(--accent); animation: slide 1.1s ease-in-out infinite; }
+@keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(290%); } }
+.error { color: var(--danger); }
+table { width: 100%; border-collapse: collapse; margin-top: 14px; font-variant-numeric: tabular-nums; font-size: 14px; }
+td { padding: 6px 0; border-bottom: 1px solid var(--line); }
+td:last-child { text-align: right; white-space: nowrap; padding-left: 12px; }
+tr.total td { font-weight: 650; border-bottom: 0; }
+.meta { margin-top: 10px; font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 18px; }
+a.download { color: var(--accent-strong); }
+a.download:hover { color: var(--text); }
+a.download:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 2px; }
+.skeleton { height: 14px; margin: 10px 0; border-radius: 4px; background: linear-gradient(90deg, var(--line), #313843, var(--line)); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+footer { padding: 8px 24px 24px; color: var(--muted); font-size: 12px; max-width: 1400px; margin: 0 auto; }
+footer a { color: var(--muted); }
+footer a:hover, footer a:focus-visible { color: var(--text); }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>three.ws GPU quickstart</h1>
+    <p>Image to 3D mesh with TripoSR, running on this machine's NVIDIA GPU.</p>
+  </div>
+  <p id="gpu" aria-live="polite">Connecting to the GPU engine...</p>
+</header>
+<main>
+  <section aria-labelledby="input-h">
+    <h2 id="input-h">1. Choose an image</h2>
+    <div class="samples" id="samples" role="group" aria-label="Sample images">
+      <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+    </div>
+    <label class="upload">
+      <input type="file" id="file" accept="image/png,image/jpeg,image/webp">
+      <span>Or upload a PNG, JPEG or WEBP of one object</span>
+    </label>
+    <div class="selected" id="selected">Pick a sample or upload a photo to start.</div>
+    <div class="row">
+      <label for="res" style="color:var(--muted);font-size:13px">Mesh detail</label>
+      <select id="res">
+        <option value="192">192 (fastest)</option>
+        <option value="256" selected>256 (default)</option>
+        <option value="320">320 (finest)</option>
+      </select>
+      <button class="primary" id="go" disabled>Generate 3D model</button>
+    </div>
+  </section>
+  <section aria-labelledby="out-h">
+    <h2 id="out-h">2. Your model</h2>
+    <div class="viewer-wrap">
+      <model-viewer id="viewer" camera-controls auto-rotate shadow-intensity="1" exposure="1.05" environment-image="neutral" alt="Generated 3D model" hidden></model-viewer>
+      <div class="overlay" id="overlay">
+        <strong>No model yet</strong>
+        <span>Choose an image on the left and press Generate. The first run on a fresh machine takes a few seconds longer while CUDA kernels warm up.</span>
+      </div>
+    </div>
+    <table id="timings" hidden><tbody></tbody></table>
+    <div class="meta" id="meta"></div>
+  </section>
+</main>
+<footer>
+  TripoSR (MIT) by Tripo AI and Stability AI. Built by <a href="https://three.ws">three.ws</a>, a member of the NVIDIA Inception program. The JupyterLab notebook on port 8888 walks through the same pipeline step by step.
+</footer>
+<script>
+const STAGES = [
+  ["background_removal_ms", "Background removal (U2-Net, ONNX Runtime CUDA)"],
+  ["model_forward_ms", "TripoSR forward pass"],
+  ["mesh_extraction_ms", "Marching cubes (torchmcubes, CUDA)"],
+  ["export_ms", "GLB export"],
+];
+const $ = (id) => document.getElementById(id);
+let choice = null;
+let ready = false;
+
+function setOverlay(html, isError) {
+  const o = $("overlay");
+  o.hidden = false;
+  o.innerHTML = html;
+  o.classList.toggle("error", !!isError);
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function refreshButton() { $("go").disabled = !(ready && choice); }
+
+async function waitForEngine() {
+  for (;;) {
+    try {
+      const res = await fetch("/health");
+      const body = await res.json();
+      if (res.ok) {
+        ready = true;
+        $("gpu").textContent = `${body.gpu_name} ready (model loaded in ${body.startup_to_ready_s}s)`;
+        refreshButton();
+        return;
+      }
+      if (body.status === "failed") {
+        $("gpu").innerHTML = `<span class="error">GPU engine failed: ${escapeHtml(body.error)}</span>`;
+        setOverlay(`<strong>The GPU engine could not start</strong><span>${escapeHtml(body.error)}</span><span>Check <code>docker logs three-ws-gpu</code> on the host, then restart the container.</span>`, true);
+        return;
+      }
+      $("gpu").textContent = `Loading TripoSR onto the GPU (${body.uptime_s}s)...`;
+    } catch (err) {
+      $("gpu").textContent = "Waiting for the studio server...";
+    }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+}
+
+async function loadSamples() {
+  const box = $("samples");
+  try {
+    const res = await fetch("/api/samples");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const { samples } = await res.json();
+    box.innerHTML = "";
+    for (const s of samples) {
+      const b = document.createElement("button");
+      b.className = "sample";
+      b.type = "button";
+      b.setAttribute("aria-pressed", "false");
+      b.setAttribute("aria-label", `Sample: ${s.name.replace(/\.\w+$/, "").replace(/_/g, " ")}`);
+      b.innerHTML = `<img src="${s.url}" alt="" loading="lazy">`;
+      b.addEventListener("click", () => {
+        document.querySelectorAll(".sample").forEach((x) => x.setAttribute("aria-pressed", "false"));
+        b.setAttribute("aria-pressed", "true");
+        $("file").value = "";
+        choice = { sample: s.name };
+        $("selected").textContent = `Selected sample: ${s.name}`;
+        refreshButton();
+      });
+      box.appendChild(b);
+    }
+  } catch (err) {
+    box.innerHTML = `<p class="error" style="grid-column:1/-1">Could not list samples (${escapeHtml(err.message)}). Upload your own image instead.</p>`;
+  }
+}
+
+$("file").addEventListener("change", () => {
+  const f = $("file").files[0];
+  if (!f) return;
+  document.querySelectorAll(".sample").forEach((x) => x.setAttribute("aria-pressed", "false"));
+  choice = { file: f };
+  $("selected").textContent = `Selected upload: ${f.name} (${(f.size / 1024).toFixed(0)} KB)`;
+  refreshButton();
+});
+
+$("go").addEventListener("click", async () => {
+  if (!choice) return;
+  const form = new FormData();
+  if (choice.file) form.append("image", choice.file);
+  else form.append("sample", choice.sample);
+  form.append("resolution", $("res").value);
+  $("go").disabled = true;
+  $("viewer").hidden = true;
+  $("timings").hidden = true;
+  $("meta").textContent = "";
+  setOverlay(`<strong>Generating on the GPU</strong><div class="bar" role="progressbar" aria-label="Generating"></div><span>Matting, triplane inference, marching cubes, GLB export.</span>`);
+  try {
+    const res = await fetch("/api/generate", { method: "POST", body: form });
+    const body = await res.json();
+    if (!res.ok) throw new Error(typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail));
+    const v = $("viewer");
+    v.src = body.glb_url;
+    v.hidden = false;
+    $("overlay").hidden = true;
+    const rows = STAGES.filter(([k]) => k in body.timings)
+      .map(([k, label]) => `<tr><td>${label}</td><td>${body.timings[k].toFixed(0)} ms</td></tr>`).join("");
+    $("timings").querySelector("tbody").innerHTML = rows +
+      `<tr class="total"><td>Total GPU pipeline</td><td>${body.timings.total_ms.toFixed(0)} ms</td></tr>`;
+    $("timings").hidden = false;
+    $("meta").innerHTML = `<span>${escapeHtml(body.gpu_name)}</span><span>${body.mesh.vertices.toLocaleString()} vertices</span>` +
+      `<span>${(body.mesh.bytes / 1024).toFixed(0)} KB GLB</span><span>peak ${body.peak_gpu_memory_mb} MB GPU memory</span>` +
+      `<a class="download" href="${body.glb_url}" download="three-ws-${body.id}.glb">Download GLB</a>`;
+  } catch (err) {
+    setOverlay(`<strong>Generation failed</strong><span>${escapeHtml(err.message)}</span><span>Try a different image: one object, plain background, well lit.</span>`, true);
+  } finally {
+    refreshButton();
+  }
+});
+
+loadSamples();
+waitForEngine();
+</script>
+</body>
+</html>

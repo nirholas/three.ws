@@ -1,0 +1,47 @@
+# Cloud Build for the three.ws GPU quickstart image. Builds and pushes only:
+# there is no deploy step, because the image runs on the user's GPU machine
+# (NVIDIA Brev, a GCE VM, a workstation), not on Cloud Run.
+#
+# Submit through build.sh, which stages the context first:
+#   distributions/nvidia-brev/build.sh cloud
+#
+# The repository is private until the owner publishes it (LAUNCHABLE.md,
+# "Publish the image"). The image path does not change when it goes public.
+
+# Builds run as the pinned three-ws-build service account: the project's
+# default compute service account was deleted.
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+substitutions:
+  _IMAGE: us-docker.pkg.dev/aerial-vehicle-466722-p5/three-ws-public/gpu-quickstart
+  _VERSION: "0.1.0"
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    env:
+      - DOCKER_BUILDKIT=1
+    args:
+      - build
+      - --progress=plain
+      - --tag=${_IMAGE}:${_VERSION}
+      - --tag=${_IMAGE}:latest
+      - .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: [push, --all-tags, "${_IMAGE}"]
+
+  - id: digest
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - gcloud artifacts docker images describe "${_IMAGE}:${_VERSION}" --format='value(image_summary.fully_qualified_digest)'
+
+options:
+  machineType: E2_HIGHCPU_32
+  diskSizeGb: 200
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 7200s
