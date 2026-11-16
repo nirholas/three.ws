@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-16T17:39:37.260Z",
+	"generated_at": "2026-11-16T18:32:09.969Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4628,
+	"total": 4629,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -138,6 +138,18 @@
 			"tags": [
 				"improvement",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Agent owners can turn on chat guardrails",
+			"summary": "Edit agent > Brain > Guardrails lets an owner switch on, per agent, jailbreak detection, content safety on the visitor's message and on the agent's streamed reply, and topic control that politely redirects off-topic questions to the topics the owner lists. Everything is off by default. The checks run on NVIDIA NemoGuard models alongside the reply, so a clean turn barely waits, and the panel shows how many turns each check stopped over 30 days without storing any message text. In our eval, jailbreak detection caught 95% of jailbreak prompts and flagged none of 350 ordinary ones. Agents on the NVIDIA chat lane also no longer return empty or cut-off replies.",
+			"link": null,
+			"tags": [
+				"feature",
+				"security",
+				"fix"
 			]
 		},
 		{
@@ -1531,16 +1543,6 @@
 			"title": "Every demo surface now opens on the house avatar",
 			"summary": "The home page, viewer, pricing, features, game NPCs, Pose Studio, Arena, Create Agent and the avatar templates no longer default to a real person's likeness. They start on the house avatar or another house body, and avatars you bring yourself work exactly as before.",
 			"link": "/",
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-10",
-			"type": "update",
-			"title": "Forge composer no longer jumps while it loads",
-			"summary": "The engine picker, the cost caption and the Enhance button now hold their space from the first frame, so the page stops shifting under your cursor on a first visit. Measured layout shift on the Forge page fell from 0.11 to 0.41 down to 0.05 to 0.28 across phone and desktop widths.",
-			"link": "/forge",
 			"tags": [
 				"improvement"
 			]

@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-16",
+			"title": "Agent owners can turn on chat guardrails",
+			"summary": "Edit agent > Brain > Guardrails lets an owner switch on, per agent, jailbreak detection, content safety on the visitor's message and on the agent's streamed reply, and topic control that politely redirects off-topic questions to the topics the owner lists. Everything is off by default. The checks run on NVIDIA NemoGuard models alongside the reply, so a clean turn barely waits, and the panel shows how many turns each check stopped over 30 days without storing any message text. In our eval, jailbreak detection caught 95% of jailbreak prompts and flagged none of 350 ordinary ones. Agents on the NVIDIA chat lane also no longer return empty or cut-off replies.",
+			"tags": [
+				"feature",
+				"security",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-16",
 			"title": "Every NVIDIA lane, live on /nvidia",
 			"summary": "The /nvidia page now shows whether each NVIDIA lane we run (NIM chat, vision and embeddings, NemoGuard, Riva speech, Audio2Face and the TRELLIS, Hunyuan3D, TripoSG and Pixal3D GPU workers) answered its most recent scheduled probe, with median and p95 latency over 7 days. A new /nvidia/benchmarks page publishes the full probe, job and GPU fleet tables, measured from real generation jobs, with a CSV download and the method behind every number. The first full run caught a retired NVIDIA model still pinned in the chat chain, which now leads with Nemotron Ultra.",
 			"tags": [

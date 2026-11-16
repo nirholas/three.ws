@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T17:39:37.172Z",
+	"generated_at": "2026-11-16T18:32:09.939Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -135,6 +135,18 @@
 			"tags": [
 				"improvement",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Agent owners can turn on chat guardrails",
+			"summary": "Edit agent > Brain > Guardrails lets an owner switch on, per agent, jailbreak detection, content safety on the visitor's message and on the agent's streamed reply, and topic control that politely redirects off-topic questions to the topics the owner lists. Everything is off by default. The checks run on NVIDIA NemoGuard models alongside the reply, so a clean turn barely waits, and the panel shows how many turns each check stopped over 30 days without storing any message text. In our eval, jailbreak detection caught 95% of jailbreak prompts and flagged none of 350 ordinary ones. Agents on the NVIDIA chat lane also no longer return empty or cut-off replies.",
+			"link": null,
+			"tags": [
+				"feature",
+				"security",
+				"fix"
 			]
 		},
 		{
