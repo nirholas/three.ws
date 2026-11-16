@@ -39,8 +39,8 @@ visitor message
   |-- topic ------|
   |-- model call -|  (starts at the same time; nothing is written until the checks answer)
         |
-   first flag wins (priority: jailbreak > input safety > topic); the model stream is cancelled
-   and the visitor gets one short reply instead
+   a flag blocks once every higher-priority check has answered (jailbreak > input safety > topic);
+   the model stream is cancelled and the visitor gets one short reply instead
         |
    no flag: the reply streams through the output gate
         sentence buffer -> safety verdict -> release, in order (two verdicts in flight)
