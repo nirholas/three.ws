@@ -58,6 +58,19 @@ in the csproj comment.
 Each sample exits 0 only when the answer contains a real `MODEL: https://` line,
 so either one works as a smoke test in a script.
 
+## Call three.ws as an A2A agent
+
+[`python/a2a_client.py`](python/a2a_client.py) uses Agent Framework's `A2AAgent`
+to call the three.ws A2A endpoint: a plain question, a streamed Forge
+generation, and a cancel. Setup for Copilot Studio and Foundry is in
+[docs/microsoft-a2a.md](../../../docs/microsoft-a2a.md).
+
+```bash
+cd python
+pip install -r requirements-a2a.txt
+python a2a_client.py
+```
+
 ## What a run looks like
 
 A free generation usually takes one to three minutes. When the GPU pool is busy,

@@ -36,8 +36,9 @@ Google Cloud Marketplace copy of the card.
 | `supportedInterfaces` | JSON-RPC at `1.0` and at `0.3.0`, both on `url` | Read by 1.0 clients |
 | `documentationUrl` | `https://three.ws/docs/a2a-agent` | This page |
 | `version` | `package.json` version | Written by the generator on every build |
-| `securitySchemes` | `bearer` (HTTP bearer), optional | See [Auth](#auth) |
-| `security` / `securityRequirements` | anonymous, or bearer | The 0.3 and 1.0 spellings of the same rule |
+| `capabilities.streaming` | `true` | `SendStreamingMessage` and `SubscribeToTask` over SSE |
+| `securitySchemes` | `bearer`, `apiKey` (`X-API-Key` header), `oauth2` (authorization code), all optional | See [Auth](#auth) |
+| `security` / `securityRequirements` | anonymous, or any one scheme | The 0.3 and 1.0 spellings of the same rule |
 | `capabilities.extensions` | the a2a-x402 extension, `required: false` | Only the paid skill uses it |
 | `skills` | the registry in `api/_lib/a2a/skills.js` | Every listed skill routes |
 
@@ -80,10 +81,12 @@ header the endpoint speaks 0.3. A version it does not serve is `-32009`.
 |---|---|---|
 | `SendMessage` | `message/send` | 1.0: `{ "task": … }` or `{ "message": … }`. 0.3: the bare task or message |
 | `GetTask` | `tasks/get` | The task; `historyLength` trims the history |
-| `CancelTask` | `tasks/cancel` | Only `submitted` and `input-required` tasks cancel; a running generation cannot be recalled |
+| `CancelTask` | `tasks/cancel` | `submitted`, `input-required` and `working` tasks cancel. The GPU job cannot be recalled, so a canceled generation's result is discarded |
+| `SendStreamingMessage` | `message/stream` | SSE: a task or message first, then status and artifact events until the task is final. A generation streams its GLB as a file artifact |
+| `SubscribeToTask` | `tasks/resubscribe` | Re-attach to a working task. A finished task is `-32004`, an unknown one `-32001` |
 
 1.0 uses `ROLE_USER`/`ROLE_AGENT`, `TASK_STATE_*` states and untagged parts;
-0.3 uses lowercase roles and states and `kind`-tagged parts. Streaming, push
+0.3 uses lowercase roles and states and `kind`-tagged parts. Push
 notifications, the extended card and task listing are not offered, and answer
 with the spec errors below rather than a generic failure.
 
@@ -103,7 +106,7 @@ server; knowing it is the capability to read that task.
 | `-32001` | Task not found (unknown or expired id) |
 | `-32002` | Task not cancelable in its current state |
 | `-32003` | Push notifications not supported |
-| `-32004` | Unsupported operation (streaming, task listing, a new message on a finished task) |
+| `-32004` | Unsupported operation (task listing, resubscribing to a finished task, a new message on a finished task) |
 | `-32007` | No extended card |
 | `-32009` | Unsupported `A2A-Version` |
 | `-32029` | Rate limited (HTTP 429 with `Retry-After`) |
@@ -111,13 +114,21 @@ server; knowing it is the capability to read that task.
 ## Auth
 
 Anonymous calls work. `Authorization: Bearer <three.ws API key or session
-token>` is optional. Every caller gets 120 requests per minute; an anonymous
+token>` is optional, as is the same key in an `X-API-Key` header (what Copilot
+Studio and Foundry send for an API key connection) or an OAuth 2.0 access token
+from `https://three.ws/oauth/authorize` and `/api/oauth/token`. Every caller gets 120 requests per minute; an anonymous
 caller is counted per IP, a keyed caller per account, so a key moves you off a
 shared IP's bucket and raises the avatar search cap from 10 to 50. Generation
 has its own tighter per-caller bucket on top. An invalid, expired or revoked key
 is rejected with HTTP 401 and `WWW-Authenticate: Bearer error="invalid_token"`
 instead of being silently treated as anonymous; if the key cannot be checked
 right now the answer is HTTP 503 with `Retry-After: 5`.
+
+## Streaming
+
+`A2A_STREAM_POLL_MS` (default 3000) is how often the server polls a generation
+while a stream is open, and `A2A_STREAM_MAX_SECONDS` (default 540) caps one
+stream. A dropped stream loses nothing: `SubscribeToTask` re-attaches.
 
 ## The paid skill
 
