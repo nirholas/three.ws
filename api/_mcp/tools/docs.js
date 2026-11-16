@@ -23,7 +23,7 @@ export const toolDefs = [
 		title: 'Search the three.ws documentation',
 		annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
 		description:
-			'FREE, no account or payment. Search the three.ws documentation for the section that answers a question, such as "how do I embed an avatar on my site" or "how does auto-rigging work". Returns the best sections ranked, each with the page and heading title, a url that opens the docs reader at that heading, and a snippet from the start of the section. Use this before guessing at an API or a flow; to browse ready-made 3D assets call search_catalog instead.',
+			'FREE, no account or payment. Search the three.ws documentation for the section that answers a question, such as "how do I embed an avatar on my site" or "how does auto-rigging work". Returns the matching sections ranked, each with the page and heading title, a url that opens the docs reader at that heading, and a snippet from the start of the section. Use this before guessing at an API or a flow; to browse ready-made 3D assets call search_catalog instead.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,

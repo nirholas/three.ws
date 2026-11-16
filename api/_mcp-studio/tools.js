@@ -1185,7 +1185,7 @@ const BASE_DEFS = [
 		name: 'text_to_avatar',
 		title: 'Generate a 3D avatar',
 		description:
-			'Generate a textured 3D avatar (GLB) from a text description or a reference image URL. Best for ' +
+			'Generate a textured 3D avatar (GLB) from a text description or a reference image URL. Suited to ' +
 			'characters and figures. Renders inline in an interactive 3D viewer. Use this when the user wants a character or figure generated from a text description or a reference image.',
 		inputSchema: {
 			type: 'object',
@@ -1243,7 +1243,7 @@ const BASE_DEFS = [
 		description:
 			'Generate a rigged, animation-ready 3D avatar (GLB) from a single text prompt or a reference image, ' +
 			'in one step. Generates the mesh, then auto-rigs it with a humanoid skeleton so it is ready to pose and ' +
-			'animate. Best for characters; objects are steered to the mesh generator. Renders inline in an ' +
+			'animate. Made for characters; objects are steered to the mesh generator. Renders inline in an ' +
 			'interactive 3D viewer. Use this when the user wants a posable, animation-ready character in one step instead of generating then rigging.',
 		inputSchema: {
 			type: 'object',

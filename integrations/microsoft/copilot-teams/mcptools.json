@@ -57,7 +57,7 @@
     {
       "name": "text_to_avatar",
       "title": "Generate a 3D avatar",
-      "description": "Generate a textured 3D avatar (GLB) from a text description or a reference image URL. Best for characters and figures. Renders inline in an interactive 3D viewer. Use this when the user wants a character or figure generated from a text description or a reference image.",
+      "description": "Generate a textured 3D avatar (GLB) from a text description or a reference image URL. Suited to characters and figures. Renders inline in an interactive 3D viewer. Use this when the user wants a character or figure generated from a text description or a reference image.",
       "inputSchema": {
         "type": "object",
         "additionalProperties": false,
@@ -193,7 +193,7 @@
     {
       "name": "forge_avatar",
       "title": "Generate a rigged, animation-ready avatar",
-      "description": "Generate a rigged, animation-ready 3D avatar (GLB) from a single text prompt or a reference image, in one step. Generates the mesh, then auto-rigs it with a humanoid skeleton so it is ready to pose and animate. Best for characters; objects are steered to the mesh generator. Renders inline in an interactive 3D viewer. Use this when the user wants a posable, animation-ready character in one step instead of generating then rigging.",
+      "description": "Generate a rigged, animation-ready 3D avatar (GLB) from a single text prompt or a reference image, in one step. Generates the mesh, then auto-rigs it with a humanoid skeleton so it is ready to pose and animate. Made for characters; objects are steered to the mesh generator. Renders inline in an interactive 3D viewer. Use this when the user wants a posable, animation-ready character in one step instead of generating then rigging.",
       "inputSchema": {
         "type": "object",
         "additionalProperties": false,
@@ -588,7 +588,7 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "Free, no account needed. Returns working code that renders one three.ws catalog item on any site: the <agent-3d> web component (pinned to the exact published version with its SRI hash), the <model-viewer> tag our own browse grids use, plain three.js with GLTFLoader, or a React component. Motion clips return three.js code that parses the clip JSON and plays it. Omit `framework` to get the one that fits the item best; pass `all` to get every variant at once. Use this when you are ready to put a catalog item on a page or in an app; call get_catalog_item first if you still need its license or metadata.",
+      "description": "Free, no account needed. Returns working code that renders one three.ws catalog item on any site: the <agent-3d> web component (pinned to the exact published version with its SRI hash), the <model-viewer> tag our own browse grids use, plain three.js with GLTFLoader, or a React component. Motion clips return three.js code that parses the clip JSON and plays it. Omit `framework` to get the one that fits the item; pass `all` to get every variant at once. Use this when you are ready to put a catalog item on a page or in an app; call get_catalog_item first if you still need its license or metadata.",
       "inputSchema": {
         "type": "object",
         "additionalProperties": false,
@@ -633,7 +633,7 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "Free, no account needed. Search the three.ws documentation for the section that answers a question, such as \"how do I embed an avatar on my site\" or \"how does auto-rigging work\". Returns the best sections ranked, each with the page and heading title, a url that opens the docs reader at that heading, and a snippet from the start of the section. Use this before guessing at an API or a flow; to browse ready-made 3D assets call search_catalog instead.",
+      "description": "Free, no account needed. Search the three.ws documentation for the section that answers a question, such as \"how do I embed an avatar on my site\" or \"how does auto-rigging work\". Returns the matching sections ranked, each with the page and heading title, a url that opens the docs reader at that heading, and a snippet from the start of the section. Use this before guessing at an API or a flow; to browse ready-made 3D assets call search_catalog instead.",
       "inputSchema": {
         "type": "object",
         "additionalProperties": false,
