@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-16T19:08:22.383Z",
+	"generated_at": "2026-11-16T19:09:35.103Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4633,
+	"total": 4634,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -232,6 +232,16 @@
 			"tags": [
 				"feature",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Export any Forge model as simulation-ready OpenUSD",
+			"summary": "Forge models now export as OpenUSD that drops straight into NVIDIA Omniverse and Isaac Sim with physics already set up. Pick OpenUSD (simulation-ready) in the Forge export menu and you get .usdz, .usd with textures and .usda: convex collision hulls, a rigid body whose mass comes from the hull volume and a density for the object class, a friction and restitution material, semantic class labels for synthetic-data annotators, and skeletons for rigged avatars. Every file passes the OpenUSD usdchecker and the NVIDIA asset validator before you see it, and a report lists the mass method and every finding. Developers get the same export from POST /api/forge/export-usd and the export_openusd MCP tool.",
+			"link": "/docs/openusd-export",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1533,16 +1543,6 @@
 			"title": "Docs · Robinhood Crypto connector",
 			"summary": "Connect your own Robinhood Crypto Trading API key to three.ws, set hard per-order and daily spend caps, and let agents quote, preview and place crypto orders through REST or MCP: the two-step confirm flow, cap reservation, error codes and security model.",
 			"link": "/docs/robinhood-crypto",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-10",
-			"type": "launch",
-			"title": "Robinhood Crypto Connector Settings",
-			"summary": "Connect your own Robinhood Crypto account with its Crypto Trading API key, generate the Ed25519 key pair in your browser, set hard per-order and daily spend caps for agent orders, pause trading, see holdings and the order ledger, and disconnect.",
-			"link": "/settings/robinhood",
 			"tags": [
 				"launch"
 			]

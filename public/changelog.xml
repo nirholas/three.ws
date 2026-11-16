@@ -183,6 +183,14 @@
 			<description>The /nvidia page now shows whether each NVIDIA lane we run (NIM chat, vision and embeddings, NemoGuard, Riva speech, Audio2Face and the TRELLIS, Hunyuan3D, TripoSG and Pixal3D GPU workers) answered its most recent scheduled probe, with median and p95 latency over 7 days. A new /nvidia/benchmarks page publishes the full probe, job and GPU fleet tables, measured from real generation jobs, with a CSV download and the method behind every number. The first full run caught a retired NVIDIA model still pinned in the chat chain, which now leads with Nemotron Ultra.</description>
 		</item>
 		<item>
+			<title>Export any Forge model as simulation-ready OpenUSD</title>
+			<link>https://three.ws/docs/openusd-export</link>
+			<guid isPermaLink="false">2026-11-16:Export any Forge model as simulation-ready OpenUSD</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Forge models now export as OpenUSD that drops straight into NVIDIA Omniverse and Isaac Sim with physics already set up. Pick OpenUSD (simulation-ready) in the Forge export menu and you get .usdz, .usd with textures and .usda: convex collision hulls, a rigid body whose mass comes from the hull volume and a density for the object class, a friction and restitution material, semantic class labels for synthetic-data annotators, and skeletons for rigged avatars. Every file passes the OpenUSD usdchecker and the NVIDIA asset validator before you see it, and a report lists the mass method and every finding. Developers get the same export from POST /api/forge/export-usd and the export_openusd MCP tool.</description>
+		</item>
+		<item>
 			<title>Forge reads photos from and saves models to OneDrive and SharePoint</title>
 			<link>https://three.ws/docs/onedrive</link>
 			<guid isPermaLink="false">2026-11-16:Forge reads photos from and saves models to OneDrive and SharePoint</guid>

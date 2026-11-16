@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-16",
+			"title": "Export any Forge model as simulation-ready OpenUSD",
+			"summary": "Forge models now export as OpenUSD that drops straight into NVIDIA Omniverse and Isaac Sim with physics already set up. Pick OpenUSD (simulation-ready) in the Forge export menu and you get .usdz, .usd with textures and .usda: convex collision hulls, a rigid body whose mass comes from the hull volume and a density for the object class, a friction and restitution material, semantic class labels for synthetic-data annotators, and skeletons for rigged avatars. Every file passes the OpenUSD usdchecker and the NVIDIA asset validator before you see it, and a report lists the mass method and every finding. Developers get the same export from POST /api/forge/export-usd and the export_openusd MCP tool.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/openusd-export"
+		},
+		{
+			"date": "2026-11-16",
 			"title": "Forge reads photos from and saves models to OneDrive and SharePoint",
 			"summary": "In Forge image mode, From OneDrive or SharePoint opens Microsoft's file picker so you can bring in up to six photos from a personal or work OneDrive or a SharePoint library, and Save to OneDrive in the Download menu writes the GLB, a poster image and, for a stored model, a one-slide PowerPoint deck into the folder you choose. Microsoft sign-in is asked for on that click only, existing files are never overwritten, large uploads resume after throttling, and closing the picker simply cancels. The buttons appear once the three.ws Microsoft app is connected on the server.",
 			"tags": [
