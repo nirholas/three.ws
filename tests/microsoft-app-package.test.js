@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { unzipSync } from 'fflate';
+import { missingSequences } from '../scripts/microsoft-copilot-agent-proof.mjs';
 import {
 	AGENT_ID,
 	AGENT_LIMITS,
@@ -222,5 +223,10 @@ describe('microsoft 365 copilot declarative agent', () => {
 		expect(checkPlugin(elsewhere, TOOL_NAMES, { exists: inPackage }).join('\n')).toContain('runtime url must be https://three.ws/api/mcp-studio');
 		const openapi = { ...plugin, runtimes: [{ type: 'OpenApi', auth: { type: 'None' }, spec: { url: 'https://three.ws/openapi.json' } }] };
 		expect(checkPlugin(openapi, TOOL_NAMES, { exists: inPackage }).join('\n')).toContain('exactly one runtime, of type RemoteMCPServer');
+	});
+
+	it('has a production proof sequence for every conversation starter', () => {
+		expect(missingSequences()).toEqual([]);
+		expect(missingSequences({ conversation_starters: [{ title: 'Unproven starter' }] })).toEqual(['Unproven starter']);
 	});
 });
