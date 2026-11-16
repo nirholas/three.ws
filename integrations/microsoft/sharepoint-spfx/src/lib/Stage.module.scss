@@ -1,0 +1,190 @@
+// Colours come from CSS custom properties that theme.ts sets from the
+// SharePoint section theme (theme variants), with neutral fallbacks for hosts
+// that provide no theme.
+
+.stage {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--tw-stage-height, 520px);
+  border-radius: 8px;
+  overflow: hidden;
+  color: var(--tw-text, #242424);
+  font-family: inherit;
+}
+
+.bg_dark {
+  background: #0b0d12;
+}
+
+.bg_light {
+  background: #f5f6f8;
+}
+
+.bg_transparent {
+  background: transparent;
+}
+
+.setup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  border: 1px dashed var(--tw-border, #c8c8c8);
+  background: var(--tw-surface, #faf9f8);
+  color: var(--tw-text, #242424);
+}
+
+.heading {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.muted {
+  margin: 0;
+  max-width: 44ch;
+  color: var(--tw-muted, #605e5c);
+  line-height: 1.45;
+}
+
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 6px 16px;
+  border-radius: 4px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+
+  &:focus-visible {
+    outline: 2px solid var(--tw-focus, #0f6cbd);
+    outline-offset: 2px;
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
+
+.primary {
+  border: 1px solid transparent;
+  background: var(--tw-accent, #0f6cbd);
+  color: var(--tw-accent-text, #ffffff);
+
+  &:hover {
+    background: var(--tw-accent-hover, #115ea3);
+  }
+}
+
+.secondary {
+  border: 1px solid var(--tw-border, #c8c8c8);
+  background: transparent;
+  color: var(--tw-text, #242424);
+
+  &:hover {
+    background: var(--tw-hover, rgba(0, 0, 0, 0.05));
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 52ch;
+
+  p {
+    margin: 0;
+    line-height: 1.45;
+  }
+}
+
+.skeleton {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--tw-skeleton, rgba(127, 127, 127, 0.12)) 0%, var(--tw-skeleton-hi, rgba(127, 127, 127, 0.22)) 50%, var(--tw-skeleton, rgba(127, 127, 127, 0.12)) 100%);
+  background-size: 200% 100%;
+  animation: twShimmer 1.4s ease-in-out infinite;
+}
+
+.overlay {
+  z-index: 1;
+  pointer-events: none;
+}
+
+@keyframes twShimmer {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -100% 0;
+  }
+}
+
+.poster {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+.play {
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.agent {
+  display: block;
+  width: 100%;
+  height: var(--tw-stage-height, 520px);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+
+  .primary,
+  .secondary {
+    transition: none;
+  }
+}

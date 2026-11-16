@@ -6,18 +6,23 @@ npm-debug.log*
 # Dependency directories
 node_modules
 
-# Build generated files
-dist
-lib
-lib-dts
-lib-commonjs
-lib-esm
-jest-output
-release
-solution
-temp
+# Build generated files (anchored to the package root: src/lib and
+# scripts/lib are source, not output)
+/dist
+/lib
+/lib-dts
+/lib-commonjs
+/lib-esm
+/jest-output
+/release
+/sharepoint/solution
+/solution
+/temp
 *.sppkg
 .heft
+
+# Harness screenshots and report
+/harness-output
 
 # Coverage directory used by tools like istanbul
 coverage

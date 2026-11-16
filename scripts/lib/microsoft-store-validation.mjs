@@ -275,6 +275,108 @@ export function checkBot(manifest) {
 	return out;
 }
 
+/**
+ * Listing copy that the Microsoft 365 mobile clients and the store review
+ * reject: "free" (and "free account") is prohibited on mobile, and a listing
+ * shown in the mobile store carries the same text.
+ */
+const FREE_RE = /\bfree(\s+account)?\b/i;
+
+export function checkListingWording(manifest, intro) {
+	const out = [];
+	for (const [label, text] of [['description.short', manifest.description?.short], ['description.full', manifest.description?.full], ['intro.md', intro]]) {
+		const m = FREE_RE.exec(String(text ?? ''));
+		if (m) out.push(issue('desc.no-free', `${label} uses "${m[0]}", which Microsoft prohibits on mobile`));
+	}
+	return out;
+}
+
+/** Features that need a three.ws sign-in: an SSO resource, a bot with a link command, or a tab that signs in. */
+const needsAccount = (manifest) => Boolean(manifest.webApplicationInfo?.resource) || (manifest.bots ?? []).length > 0;
+
+export function checkSignUpPath(manifest) {
+	if (!needsAccount(manifest)) return [];
+	const full = String(manifest.description?.full ?? '');
+	if (/\b(create|sign up for|register)\b[^.]*\baccount\b/i.test(full)) return [];
+	return [issue('auth.way-forward', 'description.full does not tell a person without an account how to create one')];
+}
+
+export function checkNotifications(manifest) {
+	const out = [];
+	const types = manifest.activities?.activityTypes ?? [];
+	if (!types.length) return out;
+	const full = String(manifest.description?.full ?? '');
+	if (!/\bactivity feed\b/i.test(full)) out.push(issue('notify.described', 'description.full does not say the app sends activity feed notifications'));
+	else if (!/\bactivity feed\b[^.]*\b(only|not|limit|cannot|can't|no)\b|\b(only|not|limit|cannot|can't|no)\b[^.]*\bactivity feed\b/i.test(full)) {
+		out.push(issue('notify.described', 'description.full mentions the activity feed without stating its limitations'));
+	}
+	const seenType = new Set();
+	const seenText = new Set();
+	for (const t of types) {
+		if (seenType.has(t.type)) out.push(issue('notify.no-duplicates', `activity type ${t.type} is declared twice`));
+		if (seenText.has(t.templateText)) out.push(issue('notify.no-duplicates', `activity template "${t.templateText}" is used by two activity types`));
+		seenType.add(t.type);
+		seenText.add(t.templateText);
+	}
+	return out;
+}
+
+/** True when any capability can be added to a team, which puts it in channels. */
+const inTeams = (manifest) =>
+	[...(manifest.bots ?? []), ...(manifest.configurableTabs ?? []), ...(manifest.staticTabs ?? [])].some((c) => (c.scopes ?? []).includes('team'));
+
+export function checkChannels(manifest) {
+	if (!inTeams(manifest)) return [];
+	const out = [];
+	if (!versionAtLeast(manifest.manifestVersion, [1, 25])) {
+		out.push(issue('channels.manifest', `manifestVersion ${manifest.manifestVersion} is below 1.25, the minimum for apps in channels`));
+	}
+	if (manifest.supportsChannelFeatures !== 'tier1') out.push(issue('channels.manifest', 'the app has team scope but does not declare supportsChannelFeatures "tier1"'));
+	if (manifest.supportedChannelTypes) out.push(issue('channels.manifest', 'supportedChannelTypes blocks upload from manifest 1.25; use supportsChannelFeatures'));
+	const full = String(manifest.description?.full ?? '');
+	const missing = ['standard', 'shared', 'private'].filter((kind) => !new RegExp(`\\b${kind}\\b`, 'i').test(full));
+	if (missing.length || !/\bchannels?\b/i.test(full)) {
+		out.push(issue('channels.documented', `description.full does not describe ${missing.length ? missing.join(', ') : 'the'} channel behaviour`));
+	}
+	return out;
+}
+
+const TLD_WILDCARD = /^\*\.[^.]+$|^\*$/;
+
+export function checkMessageExtension(manifest) {
+	const out = [];
+	const domains = manifest.validDomains ?? [];
+	const ids = new Set();
+	const titles = new Set();
+	for (const ext of manifest.composeExtensions ?? []) {
+		for (const cmd of ext.commands ?? []) {
+			if (ids.has(cmd.id)) out.push(issue('msgext.no-duplicates', `message extension command id ${cmd.id} is declared twice`));
+			if (titles.has(cmd.title.toLowerCase())) out.push(issue('msgext.no-duplicates', `message extension command title "${cmd.title}" is used twice`));
+			ids.add(cmd.id);
+			titles.add(cmd.title.toLowerCase());
+			if (!String(cmd.description ?? '').trim()) out.push(issue('msgext.help-text', `command ${cmd.id} has no description`));
+			if (cmd.type === 'query') {
+				if (!(cmd.parameters ?? []).length) out.push(issue('msgext.help-text', `search command ${cmd.id} has no parameter to describe the search`));
+				for (const p of cmd.parameters ?? []) {
+					if (!String(p.title ?? '').trim() || !String(p.description ?? '').trim()) {
+						out.push(issue('msgext.help-text', `search command ${cmd.id} parameter ${p.name} needs a title and help text`));
+					}
+				}
+			}
+		}
+		for (const handler of ext.messageHandlers ?? []) {
+			for (const d of handler.value?.domains ?? []) {
+				if (/botframework\.com$/i.test(d)) out.push(issue('msgext.unfurl-domains', `link unfurling claims ${d}, a Bot Framework domain`));
+				else if (TLD_WILDCARD.test(d)) out.push(issue('msgext.unfurl-domains', `link unfurling wildcards the top-level domain ${d}`));
+				else if (!hostCovered(d.replace(/^\*\./, 'x.'), domains) && !domains.includes(d)) {
+					out.push(issue('msgext.unfurl-domains', `link unfurling claims ${d}, which is not in validDomains`));
+				}
+			}
+		}
+	}
+	return out;
+}
+
 /** Fill a manifest URL template the way a Teams host would. */
 export const resolveTemplate = (url) => url.replace('{theme}', 'default').replace(/\{[^}]+\}/g, '');
 
