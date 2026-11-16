@@ -18117,12 +18117,12 @@
 		},
 		{
 			"id": "give-your-ai-a-body",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "clip",
-			"notBefore": "2026-10-11T00:00:00Z",
+			"notBefore": "2026-11-16T16:48:43.972Z",
 			"covers": [
 				"/forge",
 				"/marketplace"
@@ -18259,7 +18259,8 @@
 						"hold": 4000
 					}
 				]
-			}
+			},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "openai-partner-benefits",

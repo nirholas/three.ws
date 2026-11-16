@@ -1,10 +1,10 @@
 {
 	"id": "agent-lab-entrance",
 	"contentHash": "0f360009239e81bd318117046c390f2cf9e59bb25ea5df8c5efe418b060f77f4",
-	"reviewedAt": "2026-11-02T23:39:22.685Z",
+	"reviewedAt": "2026-11-16T14:50:30.651Z",
 	"passed": false,
 	"blockers": [
-		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"Request had insufficient authentication scopes.\",; \"status\": \"PERMISSION_DENIED\",; \"details\": [; {; \"@type\": \"type.googleapis.com/goog; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"};"
+		"editor verdict is revise"
 	],
 	"texts": [
 		"Websites have mascots. three.ws pages have agents that physically show up.\n\nThis one swings in from off screen on a rope, hits the button, watches it wobble back into place, and then just hangs there. A real 3D character rendered over the page in WebGL, not a video.",
@@ -62,6 +62,59 @@
 			}
 		]
 	},
-	"editor": null,
-	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"}\n"
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 4,
+			"specificity": 3,
+			"voice": 3,
+			"professionalism": 4,
+			"visual": 5
+		},
+		"issues": [
+			{
+				"severity": "major",
+				"area": "voice",
+				"quote": "Websites have mascots.",
+				"problem": "The opening is a generalization and contrast setup rather than the strongest true statement or mechanism; it reads as a machine-written contrast reframe and wastes the first 280 characters on a vague observation instead of the feature itself.",
+				"fix": "Replace with the mechanism lead: \"She swings in from off screen on a rope, knocks the button sideways, and hangs there.\""
+			},
+			{
+				"severity": "major",
+				"area": "specificity",
+				"quote": "three.ws pages have agents that physically show up.",
+				"problem": "Not a checkable mechanism; the first line should carry the strongest true statement about how it works, and \"physically show up\" is vague.",
+				"fix": "Follow the opening with \"A real 3D agent rendered over the page in WebGL, not a video.\""
+			},
+			{
+				"severity": "minor",
+				"area": "voice",
+				"quote": "and then just hangs there.",
+				"problem": "Colloquial and less precise than the source text \"she dangles before letting go\" and the reel caption \"Then she hangs around.\"",
+				"fix": "Change to \"and dangles\" or \"and hangs around.\""
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"She swings in from off screen on a rope, knocks the button sideways, and hangs there. A real 3D agent rendered over the page in WebGL, not a video.",
+				"It is one of a set of interaction prototypes for 3D agents on ordinary web pages: entrances, pick-ups, face mocap and more.\n\nPlay with all of them: three.ws/demos/agents"
+			],
+			"altText": [
+				"A 3D agent swings in from off screen on a rope, knocks a button sideways, and hangs from it on a live three.ws page."
+			]
+		},
+		"summary": "The post is accurate and the reel matches the live product, but it opens with a vague generalization instead of the mechanism lead required by house voice. Rewrite the first post to lead with the rope-swing interaction and WebGL render, keeping the second post and link unchanged.",
+		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"swings in from off screen on a rope, hits the button, watches it wobble back into place, and then just hangs there\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A real 3D character rendered over the page in WebGL\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
 }

@@ -1,11 +1,11 @@
 {
 	"id": "cad-forge",
 	"contentHash": "a647bdc618f5364a435627dab26c3e5359d753a388c38e0350fe583fa128cc7a",
-	"reviewedAt": "2026-11-02T23:40:01.118Z",
+	"reviewedAt": "2026-11-16T14:53:42.545Z",
 	"passed": false,
 	"blockers": [
 		"probe:api CAD Forge answers as available on the deployment: available is false",
-		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"Request had insufficient authentication scopes.\",; \"status\": \"PERMISSION_DENIED\",; \"details\": [; {; \"@type\": \"type.googleapis.com/goog; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"};"
+		"editor verdict is revise"
 	],
 	"texts": [
 		"75 by 19 by 90 mm, 1 solid, 23 faces, 66 edges, kernel check passed.\n\nThat is a wall-mounted phone holder, built from one sentence on CAD Forge, live now at three.ws/cad. Not a mesh guess: a parametric build123d program the OpenCascade kernel has accepted, with every key size as a slider and STEP, STL, GLB, a drawing sheet and the Python program itself to download.",
@@ -173,6 +173,44 @@
 			}
 		]
 	},
-	"editor": null,
-	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"}\n"
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 4,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "voice",
+				"quote": "Not a mesh guess: a parametric build123d program the OpenCascade kernel has accepted",
+				"problem": "Uses the banned contrast-reframe sentence shape (\"Not X: Y\") that the house voice contract flags as machine-written. The fact remains accurate without it.",
+				"fix": "Replace with \"A parametric build123d program the OpenCascade kernel has accepted.\""
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"75 by 19 by 90 mm, 1 solid, 23 faces, 66 edges, kernel check passed.\n\nThat is a wall-mounted phone holder, built from one sentence on CAD Forge, live now at three.ws/cad. A parametric build123d program the OpenCascade kernel has accepted, with every key size as a slider and STEP, STL, GLB, a drawing sheet and the Python program itself to download.",
+				"When the kernel rejects a program, its real error (kind, message, failing line) goes back to the writer, which rewrites it, up to three times. Nothing is shown until the kernel has accepted it. Moving a slider rebuilds the same program with only that value changed, on the kernel, with no model involved. Standard parts come from bd_warehouse: involute spur gears, ISO threads, nuts, cap screws, washers and ball bearings. The Python runs anywhere after pip install build123d bd_warehouse."
+			],
+			"altText": [
+				"A screen recording of CAD Forge showing a wall-mounted phone holder with kernel dimension callouts, slider controls, and download options for STEP, STL, GLB, drawing sheet, and the Python program."
+			]
+		},
+		"summary": "The post is accurate and specific with a strong number lead, but uses a banned contrast-reframe voice shape in \"Not a mesh guess:\". Remove that phrase and keep the rest unchanged.",
+		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"Not a mesh guess: a parametric build123d program the OpenCascade kernel has accepted\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
 }

@@ -1,9 +1,11 @@
 {
 	"id": "holo-material-article",
-	"contentHash": "5d3b5ab355fc1c70fdbdfefc1c32bade25fe362e5d26f806c58441c9b80acbd7",
-	"reviewedAt": "2026-10-13T06:36:28.961Z",
+	"contentHash": "7f809d8d66a7cc71855143329b2d81017d6f0392b6e89c6d732d9bcdad5b8584",
+	"reviewedAt": "2026-11-16T14:42:48.011Z",
 	"passed": false,
 	"blockers": [
+		"evidence:page https://three.ws/holo: live page does not show \"Text to die-cut (up to 16 characters)\"",
+		"editor (professionalism): The post ends with no link to the surface it describes. House rule 5 requires one link to the page the post is about, in the head or first reply.",
 		"editor verdict is revise"
 	],
 	"texts": [
@@ -12,6 +14,12 @@
 	],
 	"lint": [
 		{
+			"where": "head",
+			"rule": "voice",
+			"severity": "major",
+			"message": "\"whether you're a X or a Y\" audience sweep: \"from keystroke to curl,\""
+		},
+		{
 			"where": "article body",
 			"rule": "register",
 			"severity": "major",
@@ -19,7 +27,7 @@
 		}
 	],
 	"verification": {
-		"ok": true,
+		"ok": false,
 		"checks": [
 			{
 				"claim": "no images, no model files",
@@ -135,10 +143,10 @@
 			},
 			{
 				"claim": "up to 16 characters",
-				"kind": "evidence:file",
-				"target": "pages/holo.html",
-				"ok": true,
-				"detail": "file supports the claim"
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": false,
+				"detail": "live page does not show \"Text to die-cut (up to 16 characters)\""
 			},
 			{
 				"claim": "Type a word of up to 16 characters",
@@ -890,6 +898,48 @@
 				"detail": "file supports the claim"
 			},
 			{
+				"claim": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"three.ws is an OpenAI Select Partner in the OpenAI Partner Network.\""
+			},
+			{
+				"claim": "three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building\""
+			},
+			{
+				"claim": "three.ws is a member of the Quicknode Startup Program with approved infrastructure credits",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"three.ws is a member of the Quicknode Startup Program with approved\""
+			},
+			{
+				"claim": "The partners page lists IBM as a Strategic partner",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"IBM\""
+			},
+			{
+				"claim": "The partners page lists IBM as a Strategic partner",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"Strategic\""
+			},
+			{
+				"claim": "it extends three.ws into APAC markets with Qwen model integration",
+				"kind": "evidence:page",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "live page shows \"extends three.ws into APAC markets with Qwen model integration\""
+			},
+			{
 				"claim": "It starts at 36% of the canvas height, which is a font size of about 230 pixels",
 				"kind": "evidence:file",
 				"target": "src/holo.js",
@@ -1016,116 +1066,11 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network.",
-				"kind": "evidence:page",
-				"target": "https://three.ws/partners",
-				"ok": true,
-				"detail": "live page shows \"three.ws is an OpenAI Select Partner in the OpenAI Partner Network.\""
-			},
-			{
-				"claim": "The 3D Studio connector gives ChatGPT eleven keyless 3D tools.",
-				"kind": "evidence:page",
-				"target": "https://three.ws/partners",
-				"ok": true,
-				"detail": "live page shows \"3D Studio connector gives ChatGPT eleven keyless 3D tools\""
-			},
-			{
-				"claim": "The partners page lists IBM as a Strategic partner",
-				"kind": "evidence:page",
-				"target": "https://three.ws/partners",
-				"ok": true,
-				"detail": "live page shows \"Strategic\""
-			},
-			{
-				"claim": "three.ws 3D agent identity integrates with IBM watsonx and IBM Granite.",
-				"kind": "evidence:page",
-				"target": "https://three.ws/partners",
-				"ok": true,
-				"detail": "live page shows \"integrate with IBM watsonx\""
-			},
-			{
-				"claim": "The partners page lists Amazon Web Services under Cloud",
-				"kind": "evidence:page",
-				"target": "https://three.ws/partners",
-				"ok": true,
-				"detail": "live page shows \"Amazon Web Services\""
-			},
-			{
-				"claim": "three.ws is deployed on AWS infrastructure with Marketplace availability.",
-				"kind": "evidence:page",
-				"target": "https://three.ws/partners",
-				"ok": true,
-				"detail": "live page shows \"Marketplace availability\""
-			},
-			{
-				"claim": "The partners page lists Google Cloud under Cloud",
-				"kind": "evidence:page",
-				"target": "https://three.ws/partners",
-				"ok": true,
-				"detail": "live page shows \"Google Cloud\""
-			},
-			{
-				"claim": "its Vertex AI integration lets agents leverage Gemini models alongside the three.ws identity layer.",
-				"kind": "evidence:page",
-				"target": "https://three.ws/partners",
-				"ok": true,
-				"detail": "live page shows \"Vertex AI integration lets agents leverage Gemini models\""
-			},
-			{
-				"claim": "The partners page lists Alibaba Cloud under Cloud",
-				"kind": "evidence:page",
-				"target": "https://three.ws/partners",
-				"ok": true,
-				"detail": "live page shows \"Alibaba Cloud\""
-			},
-			{
-				"claim": "it extends three.ws into APAC markets with Qwen model integration.",
-				"kind": "evidence:page",
-				"target": "https://three.ws/partners",
-				"ok": true,
-				"detail": "live page shows \"extends three.ws into APAC markets with Qwen model integration\""
-			},
-			{
-				"claim": "three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing.",
-				"kind": "evidence:page",
-				"target": "https://three.ws/partners",
-				"ok": true,
-				"detail": "live page shows \"three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building\""
-			},
-			{
-				"claim": "Every 3D generation lane already runs on NVIDIA silicon.",
+				"claim": "Every 3D generation lane already runs on NVIDIA silicon",
 				"kind": "evidence:page",
 				"target": "https://three.ws/partners",
 				"ok": true,
 				"detail": "live page shows \"Every 3D generation lane already runs on NVIDIA silicon\""
-			},
-			{
-				"claim": "The partners page lists HackerNoon under Media",
-				"kind": "evidence:page",
-				"target": "https://three.ws/partners",
-				"ok": true,
-				"detail": "live page shows \"HackerNoon\""
-			},
-			{
-				"claim": "a builder-focused publishing partnership, with articles published to HackerNoon's developer audience.",
-				"kind": "evidence:page",
-				"target": "https://three.ws/partners",
-				"ok": true,
-				"detail": "live page shows \"A builder-focused publishing partnership\""
-			},
-			{
-				"claim": "three.ws is a member of the Quicknode Startup Program with approved infrastructure credits.",
-				"kind": "evidence:page",
-				"target": "https://three.ws/partners",
-				"ok": true,
-				"detail": "live page shows \"three.ws is a member of the Quicknode Startup Program with approved\""
-			},
-			{
-				"claim": "Quicknode's globally distributed RPC endpoints add capacity and redundancy to the chain access behind agent wallets.",
-				"kind": "evidence:page",
-				"target": "https://three.ws/partners",
-				"ok": true,
-				"detail": "live page shows \"Quicknode's globally distributed RPC endpoints add\""
 			},
 			{
 				"kind": "probe:api",
@@ -1137,7 +1082,7 @@
 				"kind": "probe:browser",
 				"target": "the sticker renders and the foil controls answer",
 				"ok": true,
-				"detail": "4 steps passed"
+				"detail": "5 steps passed"
 			},
 			{
 				"kind": "link",
@@ -1169,38 +1114,38 @@
 		"verdict": "revise",
 		"scores": {
 			"accuracy": 5,
-			"clarity": 5,
+			"clarity": 4,
 			"specificity": 5,
-			"voice": 4,
-			"professionalism": 4,
+			"voice": 3,
+			"professionalism": 3,
 			"visual": 5
 		},
 		"issues": [
 			{
 				"severity": "major",
 				"area": "voice",
-				"quote": "its Vertex AI integration lets agents leverage Gemini models alongside the three.ws identity layer",
-				"problem": "\"leverage\" is filler register flagged by the voice gate; the sentence also reads as marketing copy inside an otherwise exact partners section.",
-				"fix": "Replace with: \"its Vertex AI integration lets agents use Gemini models alongside the three.ws identity layer.\""
+				"quote": "from keystroke to curl",
+				"problem": "Matches the banned \"whether you're a X or a Y\" audience-sweep sentence shape flagged in the mechanical findings; reads as machine-generated copywriting rather than a specific mechanism.",
+				"fix": "Replace with a concrete outcome phrase such as \"to a curled corner\"."
 			},
 			{
-				"severity": "minor",
-				"area": "clarity",
-				"quote": "A word of 16 characters, the most the text box accepts, is scaled to fit with the same rule.",
-				"problem": "Minor: the sentence sits in the font-sizing paragraph before the 16-character limit is introduced in the next paragraph, so the limit appears before its justification.",
-				"fix": "Swap the order so the input limit is stated first: \"The text box trims the input and cuts it at 16 characters. A word of that full 16 is scaled to fit with the same sizing rule.\""
+				"severity": "blocking",
+				"area": "professionalism",
+				"quote": "with the code.",
+				"problem": "The post ends with no link to the surface it describes. House rule 5 requires one link to the page the post is about, in the head or first reply.",
+				"fix": "Append \" https://three.ws/holo\" after the final period."
 			}
 		],
 		"rewrite": {
 			"posts": [
-				"A foil sticker from five typed letters, with no image or model file behind it: a 640 pixel canvas, 48 stamps for the die-cut margin, 16 marching squares cases, a Delaunay mesh and a shader peel. The walkthrough follows one word from keystroke to curl, with the code."
+				"A foil sticker from five typed letters, with no image or model file behind it: a 640 pixel canvas, 48 stamps for the die-cut margin, 16 marching squares cases, a Delaunay mesh and a shader peel. The walkthrough follows one typed word to a curled corner, with the code. https://three.ws/holo"
 			],
 			"altText": [
 				"A die-cut holographic foil sticker of three slanted bars floating on black, its backing shading from violet to teal, its top corner curling up where it peels, rendered live on the three.ws Holo Sticker page"
 			]
 		},
-		"summary": "Every number, mechanism and partner designation in this Article verifies against the code or the live pages, the structure hits the Article standard (one run followed end to end, real code, four images, partners, Try it), and the cover matches its alt text. One fix needed: replace \"leverage\" in the Google Cloud partner line, per the register gate; a small reorder of the 16-character limit sentence is optional polish.",
-		"model": "nvidia:moonshotai/kimi-k3",
+		"summary": "The post is accurate and highly specific, but it uses a banned machine-written sentence shape and omits the required link to three.ws/holo. Both issues are fixed in the rewrite.",
+		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
 			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
@@ -1283,6 +1228,11 @@
 			"claims: claim \"by Marco Gunnink\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"Delaunay triangulation for the flat faces\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"Chaikin corner cutting\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is an OpenAI Select Partner in the OpenAI Partner Network\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is a member of the Quicknode Startup Program with approved infrastructure credits\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The partners page lists IBM as a Strategic partner\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"it extends three.ws into APAC markets with Qwen model integration\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"It starts at 36% of the canvas height, which is a font size of about 230 pixels\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"with a spacing of about 0.04 world units\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"it is the tightest peel radius, 0.17 world units, times 0.24\" does not appear in the copy; claims must quote the post",
@@ -1299,22 +1249,7 @@
 			"claims: claim \"the clearcoat roughness is 0.12 on the base and 0.18 on the lettering\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"the environment light is scaled by 1.9 on the base and 2.2 on the lettering\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"clamped to 1.1 radians\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"three.ws is an OpenAI Select Partner in the OpenAI Partner Network.\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The 3D Studio connector gives ChatGPT eleven keyless 3D tools.\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The partners page lists IBM as a Strategic partner\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"three.ws 3D agent identity integrates with IBM watsonx and IBM Granite.\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The partners page lists Amazon Web Services under Cloud\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"three.ws is deployed on AWS infrastructure with Marketplace availability.\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The partners page lists Google Cloud under Cloud\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"its Vertex AI integration lets agents leverage Gemini models alongside the three.ws identity layer.\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The partners page lists Alibaba Cloud under Cloud\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"it extends three.ws into APAC markets with Qwen model integration.\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing.\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Every 3D generation lane already runs on NVIDIA silicon.\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The partners page lists HackerNoon under Media\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a builder-focused publishing partnership, with articles published to HackerNoon's developer audience.\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"three.ws is a member of the Quicknode Startup Program with approved infrastructure credits.\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Quicknode's globally distributed RPC endpoints add capacity and redundancy to the chain access behind agent wallets.\" does not appear in the copy; claims must quote the post"
+			"claims: claim \"Every 3D generation lane already runs on NVIDIA silicon\" does not appear in the copy; claims must quote the post"
 		]
 	},
 	"editorError": null

@@ -1,7 +1,7 @@
 {
 	"id": "give-your-ai-a-body",
 	"contentHash": "14bd9134c06dc5515c706af9f533f8f2175c877e10d1c2751d8d9bb5e6e78649",
-	"reviewedAt": "2026-11-15T15:29:06.664Z",
+	"reviewedAt": "2026-11-16T14:48:43.957Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -94,7 +94,7 @@
 				""
 			]
 		},
-		"summary": "The Forge post passes all verification checks against the live page and matches the filmed reel exactly. It follows the house voice contract with no banned openings, no hashtags, no em-dashes, and a mechanism-led first line.",
+		"summary": "All claims verify against the live Forge page and the filmed reel matches the copy. The post follows the voice contract with no banned openers, emoji, hashtags, or dashes, and leads with a specific checkable mechanism.",
 		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

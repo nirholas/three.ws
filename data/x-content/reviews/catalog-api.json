@@ -1,14 +1,18 @@
 {
 	"id": "catalog-api",
-	"contentHash": "2b5f36644f6604022e6aacd82a0e2e49a91f1aa654c841571b6715998429a05e",
-	"reviewedAt": "2026-11-02T23:40:24.068Z",
+	"contentHash": "dace4c046f00c61f03bd77fed83822a1a98a4c4766f94769e90409636d36e7ee",
+	"reviewedAt": "2026-11-16T14:55:47.203Z",
 	"passed": false,
 	"blockers": [
 		"evidence:proof relaxed: no step of the run expected \"relaxed\"",
-		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"Request had insufficient authentication scopes.\",; \"status\": \"PERMISSION_DENIED\",; \"details\": [; {; \"@type\": \"type.googleapis.com/goog; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"};"
+		"probe:scenario the filmed scenario: total is now \"1306\", under the floor of 3900 the post claims; prove it again",
+		"probe:api https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2: total is 1306; needs at least 3900",
+		"editor (accuracy): Live probes read total as 1306, under the 3900 floor the post claims. The earlier run read 3961, but the live product is the source of truth, so publishing 3900 would leave a false impression.",
+		"editor (accuracy): The reel frame shows total 3961 from a November 2 run while the live API returns 1306; the attachment contradicts the live product.",
+		"editor verdict is revise"
 	],
 	"texts": [
-		"More than 3,900 free 3D assets now answer one GET on three.ws/docs/api-reference, served from Cloud Run on @GoogleCloud. Objects, characters and motion clips sit behind a single search with no authentication, no API key and no payment. Every word of the query has to match; when nothing matches all of them the search retries on any of them and marks the answer relaxed: true, so a phrase never dead-ends silently.",
+		"More than 3,900 free 3D assets now answer one GET on three.ws/docs/api-reference, served from Cloud Run on @GoogleCloud. Objects, characters and motion clips sit behind a single search that anyone can call without signing in, holding a key, or paying. Every word of the query has to match; when nothing matches all of them the search retries on any of them and marks the answer relaxed: true, so a phrase never dead-ends silently.",
 		"Each hit carries a direct GLB URL, its license and its byte size. Pages run 1 to 50 results with next_offset for the next page, open CORS, cached at the edge for 5 minutes. The same join backs the free MCP catalog tools and the assets CLI, so all three surfaces answer identically."
 	],
 	"lint": [],
@@ -51,7 +55,7 @@
 				"detail": "live page shows \"GET /api/catalog?q=wooden+chair&kind=object&limit=12&offset=0\""
 			},
 			{
-				"claim": "no authentication, no API key and no payment",
+				"claim": "without signing in, holding a key, or paying",
 				"kind": "evidence:page",
 				"target": "https://three.ws/docs/api-reference",
 				"ok": true,
@@ -130,14 +134,14 @@
 			{
 				"kind": "probe:scenario",
 				"target": "the filmed scenario",
-				"ok": true,
-				"detail": "12 steps passed against the live product, every claimed fact still holds (total 3961, matched 10, license CC0)"
+				"ok": false,
+				"detail": "total is now \"1306\", under the floor of 3900 the post claims; prove it again"
 			},
 			{
 				"kind": "probe:api",
 				"target": "https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2",
-				"ok": true,
-				"detail": "HTTP 200, expectations met"
+				"ok": false,
+				"detail": "total is 1306; needs at least 3900"
 			},
 			{
 				"kind": "probe:api",
@@ -159,6 +163,67 @@
 			}
 		]
 	},
-	"editor": null,
-	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"}\n"
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 2,
+			"clarity": 4,
+			"specificity": 3,
+			"voice": 4,
+			"professionalism": 4,
+			"visual": 3
+		},
+		"issues": [
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "More than 3,900 free 3D assets now answer one GET on three.ws/docs/api-reference",
+				"problem": "Live probes read total as 1306, under the 3900 floor the post claims. The earlier run read 3961, but the live product is the source of truth, so publishing 3900 would leave a false impression.",
+				"fix": "Remove the unverifiable total count from the copy and recapture the reel so no stale count appears on screen."
+			},
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "total counts the whole catalog",
+				"problem": "The reel frame shows total 3961 from a November 2 run while the live API returns 1306; the attachment contradicts the live product.",
+				"fix": "Recapture the 15.6s reel against production so the on-screen total matches the live catalog."
+			},
+			{
+				"severity": "major",
+				"area": "visual",
+				"quote": "(reel frames)",
+				"problem": "Reel frames display total 3961 while live probes read 1306; a stale attachment would publish a false impression.",
+				"fix": "Recapture the reel from the live product before publishing."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"One GET searches every free 3D asset on three.ws without authentication, an API key, or payment. The catalog covers objects, characters, and motion clips. Every word of q must match somewhere; if nothing matches all of them, the search retries on any of them and sets relaxed: true. Served from Cloud Run on @GoogleCloud. three.ws/docs/api-reference",
+				"Each hit carries a direct GLB URL and its license. Limit runs 1 to 50 with a default of 12; use next_offset from the previous response for the next page. Open CORS, cached at the edge for 5 minutes. The free MCP catalog tools and the assets CLI answer identically."
+			],
+			"altText": [
+				""
+			]
+		},
+		"summary": "The post claims over 3,900 assets but live probes show 1,306, a blocking accuracy failure, and the reel shows a stale total of 3,961. The rewrite drops the unverifiable count, keeps mechanism-level claims supported by passing checks, and requires recapturing the reel against production.",
+		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"head: 2 links (three.ws, three.ws/docs/api-reference); one post links one surface, and X reads a bare three.ws as a link",
+			"claims: claim \"More than 3,900 free 3D assets\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"answer one GET\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Objects, characters and motion clips sit behind a single search\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"without signing in, holding a key, or paying\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Every word of the query has to match; when nothing matches all of them the search retries on any of them and marks the answer relaxed: true, so a phrase never dead-ends silently.\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Each hit carries a direct GLB URL, its license and its byte size\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Pages run 1 to 50 results with next_offset for the next page\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The same join backs the free MCP catalog tools and the assets CLI, so all three surfaces answer identically\" does not appear in the copy; claims must quote the post",
+			"claims: \"12\" is an unverified number; declare it in claims with evidence"
+		]
+	},
+	"editorError": null
 }

@@ -1,12 +1,15 @@
 {
 	"id": "quality-gate-article",
 	"contentHash": "8269aab53360193add27185234b8c07f3ded53245a1b85d7eeb0820e6f0cdba5",
-	"reviewedAt": "2026-11-02T23:38:08.795Z",
+	"reviewedAt": "2026-11-16T14:47:12.572Z",
 	"passed": false,
 	"blockers": [
+		"evidence:file api/cron/forge-seed-cron.js: file does not contain \"import { evaluateSeedAsset, inProcessTransport, quarantineReject } from '../_lib/seed-quality.js';\"",
+		"evidence:file api/_lib/seed-quality.js: file does not contain \"2. VISION JUDGE (Vertex Gemini). Renders the mesh and asks the judge two\"",
 		"evidence:file CLAUDE.md: file does not contain \"Most three.ws avatars ship with `EXT_meshopt_compression`\"",
+		"evidence:page https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmannequin.glb: live page does not show \"0.561 units across\"",
 		"evidence:file packages/glb-diff/package.json: file does not contain \"\"@gltf-transform/extensions\": \"^4.4.0\"\"",
-		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"Request had insufficient authentication scopes.\",; \"status\": \"PERMISSION_DENIED\",; \"details\": [; {; \"@type\": \"type.googleapis.com/goog; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"};"
+		"editor verdict is revise"
 	],
 	"texts": [
 		"Two checks before a 3D model ships: the catalog gate, and a diff that names what broke",
@@ -48,8 +51,8 @@
 				"claim": "The seeding job that fills the catalog imports it, and so does the inspector page",
 				"kind": "evidence:file",
 				"target": "api/cron/forge-seed-cron.js",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"import { evaluateSeedAsset, inProcessTransport, quarantineReject } from '../_lib/seed-quality.js';\""
 			},
 			{
 				"claim": "A threshold change lands in both places at once because there is only one place",
@@ -118,8 +121,8 @@
 				"claim": "The gate is the first of two stages. On the catalog path a vision model then renders the mesh",
 				"kind": "evidence:file",
 				"target": "api/_lib/seed-quality.js",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"2. VISION JUDGE (Vertex Gemini). Renders the mesh and asks the judge two\""
 			},
 			{
 				"claim": "The gate is the first of two stages. On the catalog path a vision model then renders the mesh",
@@ -335,8 +338,8 @@
 				"claim": "The other three checks pass, and each still prints its measurement: 5,196 vertices inside the density range, a 238 KB file, and a bounding box 0.561 units across",
 				"kind": "evidence:page",
 				"target": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Fmannequin.glb",
-				"ok": true,
-				"detail": "live page shows \"0.561 units across\""
+				"ok": false,
+				"detail": "live page does not show \"0.561 units across\""
 			},
 			{
 				"claim": "For texture it says to bake and embed at least a base-colour map before publishing",
@@ -750,6 +753,127 @@
 			}
 		]
 	},
-	"editor": null,
-	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"}\n"
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 3,
+			"clarity": 4,
+			"specificity": 4,
+			"voice": 4,
+			"professionalism": 3,
+			"visual": 4
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "accuracy",
+				"quote": "The write-up covers the five structural checks",
+				"problem": "The phrase \"five structural checks\" does not appear word for word in any passing verification result; only the individual checks are verified.",
+				"fix": "Replace the count with the verified check names: geometry density, file weight, surface texture, bounds and assembly."
+			},
+			{
+				"severity": "minor",
+				"area": "accuracy",
+				"quote": "without uploading it",
+				"problem": "This phrase is not word-for-word in a passing verification result or live page text quoted by a passing check.",
+				"fix": "Drop the phrase or restate using verified language such as \"reads nothing but the glTF JSON chunk\"."
+			},
+			{
+				"severity": "minor",
+				"area": "professionalism",
+				"quote": "names the joints and clips a change removed",
+				"problem": "Ungrammatical; \"removed\" should be \"removes\" or rephrased.",
+				"fix": "Change to \"names the joints and clips a change removes\"."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"Our catalog rejects a character with more than 8 meshes. The inspector runs a gate that reads nothing but the glTF JSON chunk, so you can run that check on your own .glb. The write-up covers geometry density, file weight, surface texture, bounds and assembly. Model Diff names the joints and clips a change removes, the exit codes for CI, and rename pairing guides a review: three.ws/inspect"
+			],
+			"altText": [
+				"Two 3D characters on a black background: a translucent pink jointed mannequin standing beside Michelle, a green-skinned character with leafy green hair and yellow trousers"
+			]
+		},
+		"summary": "The post leads with a strong, specific mechanism and stays within length limits, but it relies on two unverified phrases and contains a grammar slip. The rewrite swaps those for verified language, keeps the same link, and preserves the strong opening.",
+		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"has to clear a structural gate before anyone sees it, and the Model Inspector runs that same gate, the same module with the same thresholds\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The seeding job that fills the catalog imports it, and so does the inspector page\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A threshold change lands in both places at once because there is only one place\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the gate reads nothing but the glTF JSON chunk\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A build check walks the real bundler graph from the page and fails the moment a Node built-in becomes reachable\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Every verdict carries a gate version, because an accept rate is only comparable within one version of the rules\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A failed check comes with the fix, written next to the rule it explains, so the guidance cannot drift from the rule\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The texture rule is deliberately stricter than the interactive Forge\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It clears the density floor of 1,500 with 1,728 vertices\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The gate is the first of two stages. On the catalog path a vision model then renders the mesh\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"pairs objects across the two the way git pairs renamed files: by name first, then by a hash of the content, then by similarity\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Vertex data is compared at a quantum of 1e-4 units, so the float drift of a re-export does not register while a genuine edit does\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Every change set carries one severity: none, cosmetic, minor, major or breaking\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A texture swap is minor because everything still loads and plays\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"That is the failure that renders fine and never moves\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The skeleton section names the two eye joints that are gone and says clips addressing them will not play. The animation section lists the five clips that no longer exist\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The page, a command line tool and a free HTTP endpoint all run the same published package\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"caps each side at 32 MB\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Most avatars on the platform ship with compressed geometry\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Geometry density holds a model between 1,500 and 1,500,000 vertices, and file weight holds it between 20 KB and 80 MB\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Geometry density asks for a model dense enough to read as a real object, without so much geometry that the viewer stalls on a phone\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"File weight asks for an asset heavy enough to be a real textured model and light enough to load before a visitor gives up\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A collapsed mesh passes every triangle count and still draws as a speck, which is why bounds have a check of their own\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A character arriving as a dozen disconnected meshes is a scene, not a character, and it will not rig or animate as one body\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A prop is exempt from the assembly rule, since a prop can legitimately be a loose collection of parts\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The inspector also reports whether the model is rigged and how many joints it carries\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The Mannequin sample is labelled \"Fails two rules\" on the page\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The headline says two checks short, and it names them: surface texture and single assembled character\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The Mannequin has no texture and arrives as 22 meshes against a limit of 8\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The other three checks pass, and each still prints its measurement: 5,196 vertices inside the density range, a 238 KB file, and a bounding box 0.561 units across\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"For texture it says to bake and embed at least a base-colour map before publishing\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"For assembly it says to join the parts into one mesh, or to switch the category to Prop, where loose parts are legitimate and the check does not apply\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The page also reports that the model has no skeleton and cannot be animated until it is rigged\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Copy verdict JSON puts the full report on your clipboard\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Copy shareable link builds an address that carries the model's URL, and opening it runs the same gate on the same file\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The page also has a Character and Prop switch, which is how the assembly rule knows whether loose parts are expected\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Michelle is the sample labelled \"A clean pass\"\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the rigged line reads 65 joints, ready to animate\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Fox shows what headroom looks like at the other end. It is labelled \"Passes, barely\" for a reason\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The page puts it in one line: one melted blob on the storefront costs more trust than ten rejected generations cost compute\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"That stage needs a renderer and a model call, so the page runs the structural half, which measures whether a model is built well enough to publish, and leaves the question of whether it looks good to the vision stage\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Here is the diff for the pair we ran, as the free endpoint reports it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The skeleton section names the two eye joints that are gone and says clips addressing them will not play\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Four objects kept their content and changed name\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The pairing of clips is a similarity score over the joints they drive and their duration\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"on this pair headShake pairs with SambaDance because both drive the same rig\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The command line tool takes four options, and each one maps to a place a diff gets read\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A texture swap should not fail a build, and a deleted bone that animation clips target should\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The exit codes are the contract a pipeline depends on\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A tool that returned one for both \"your model regressed\" and \"I could not open the file\" would be useless in a pipeline, which is why two exists\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The function takes bytes, so the same call works in Node, in a worker, in a serverless handler and in a browser\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The same verdict is one function call in the repository, which is how the seeding job uses it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A reason code never ships without an explanation: a test asserts that every code the gate can emit has a label, a reason and a fix\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The vertex counts match the pictures above\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It reads glTF through glTF-Transform, the open source toolkit for loading, inspecting and transforming glTF files, and uses its core and extensions packages\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The browser page decodes it for you, and the command line tool uses meshoptimizer as an optional peer package installed next to it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The package itself is released under the Apache-2.0 licence\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The similarity pass is bounded at 40,000 comparisons, and the result says when a pair of models was large enough to use the bound\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A rendered check from the GPU-free renderer package can sit beside the structural verdict\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the gate version on every verdict lets the thresholds move as the catalog grows\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is an OpenAI Select Partner in the OpenAI Partner Network\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"IBM is listed in the Strategic tier of the partner map\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws agent identity integrates with IBM watsonx and IBM Granite\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is deployed on AWS infrastructure with Marketplace availability\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a builder-focused publishing partnership with HackerNoon\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is a member of the Quicknode Startup Program with approved infrastructure credits\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Google Cloud powers three.ws inference, storage and real-time serving\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Alibaba Cloud extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"with low-latency inference close to users in Asia\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"feature articles, tutorials and developer guides for people shipping with AI, published to HackerNoon's developer audience\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
 }
