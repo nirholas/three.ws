@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T17:18:39.575Z",
+	"generated_at": "2026-11-16T17:23:54.981Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -186,6 +186,17 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Microsoft community gallery samples",
+			"summary": "Three ready-to-submit samples for the Microsoft PnP galleries: a Copilot declarative agent, a Teams message extension with link unfurl and a SharePoint 3D viewer web part, each built to its gallery's rules and checked against production.",
+			"link": null,
+			"tags": [
+				"feature",
+				"docs"
 			]
 		},
 		{

@@ -196,7 +196,7 @@ async function verifySpfx() {
 	check('hosted viewer answers 200', viewer.ok, `status ${viewer.status}`);
 	check('hosted viewer can be framed by SharePoint', !xfo && (!ancestors || /\*|sharepoint\.com/.test(ancestors)), xfo ? `X-Frame-Options ${xfo}` : `frame-ancestors ${ancestors || 'unset'}`);
 
-	const runtime = readFileSync(join(SPFX, 'src', 'webparts', 'threeWs3DViewer', 'lib', 'runtime.ts'), 'utf8');
+	const runtime = readFileSync(join(SPFX, 'src', 'webparts', 'threeWs3DViewer', 'helpers', 'runtime.ts'), 'utf8');
 	const version = /RUNTIME_VERSION = '([^']+)'/.exec(runtime)?.[1];
 	const integrity = /RUNTIME_INTEGRITY = '([^']+)'/.exec(runtime)?.[1];
 	const script = await fetch(`${ORIGIN}/agent-3d/${version}/agent-3d.js`, { signal: AbortSignal.timeout(30000) });

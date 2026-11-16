@@ -1,4 +1,4 @@
-import type { DisplayMode } from '../lib/model';
+import type { DisplayMode } from '../helpers/model';
 
 export interface IThreeWs3DViewerProps {
   /** The resolved https model file URL, or undefined when none is configured. */

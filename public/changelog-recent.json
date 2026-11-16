@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-16T16:57:15.152Z",
+	"generated_at": "2026-11-16T17:23:55.031Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4620,
+	"total": 4623,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -75,6 +75,16 @@
 			"title": "Docs · Sharing and link previews",
 			"summary": "Share creations and agents to Teams and LinkedIn, the link-preview rules both enforce, and how to refresh a stale LinkedIn card.",
 			"link": "/docs/sharing",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "launch",
+			"title": "Docs · The /enterprise procurement page",
+			"summary": "How the three.ws enterprise page is built: purchase paths, identity, security answers, Microsoft surface statuses from data, the printable procurement packet and the contact form that files a lead.",
+			"link": "/docs/enterprise",
 			"tags": [
 				"launch"
 			]
@@ -179,6 +189,17 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Microsoft community gallery samples",
+			"summary": "Three ready-to-submit samples for the Microsoft PnP galleries: a Copilot declarative agent, a Teams message extension with link unfurl and a SharePoint 3D viewer web part, each built to its gallery's rules and checked against production.",
+			"link": null,
+			"tags": [
+				"feature",
+				"docs"
 			]
 		},
 		{
@@ -304,6 +325,17 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Written security policies and an evidence collector",
+			"summary": "The trust center now links the full set of written security policies (information security, access control, change management, patching, logging, backup and recovery, retention, secure development, suppliers) and a risk register that lists the gaps we have not closed. The off-provider backup row is now marked in place, with the measured 215 second recovery time.",
+			"link": "/trust",
+			"tags": [
+				"security",
+				"docs"
 			]
 		},
 		{
@@ -1507,38 +1539,6 @@
 			"link": "/restyle",
 			"tags": [
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-10",
-			"type": "update",
-			"title": "The agent-3d embed script is 18% smaller",
-			"summary": "The single-file <agent-3d> embed had grown to 5.8MB because the LiveKit voice session and the on-device speech detector were baked into it, even on pages that never start a voice call. Both now load from the CDN the first time a visitor starts voice, so the script every embedding page downloads is down to 4.8MB. Voice behaves the same once it starts.",
-			"link": null,
-			"tags": [
-				"improvement",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-11-10",
-			"type": "update",
-			"title": "The site header no longer pushes pages down as it loads",
-			"summary": "The skip link and the shared header now hold their final space from the first paint on every page, and the Forge example prompts sit in fixed cells, so content stops jumping under your cursor while a page loads.",
-			"link": null,
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-10",
-			"type": "update",
-			"title": "The TRELLIS image-to-3D container now runs on A100 and L4 GPUs with no critical vulnerabilities",
-			"summary": "The container behind our image-to-3D lane, prepared for NVIDIA's NGC Catalog, is now a two-stage build on CUDA 12.6 and Python 3.12. It is 32% smaller (8.4GB instead of 12.3GB), and its security scan went from 70 critical and 1437 high findings to 0 critical and 2 high, both waiting on upstream releases. A real job ran end to end on an NVIDIA A100 and an NVIDIA L4, each producing a textured 3D model, with the code also compiled for Hopper GPUs.",
-			"link": null,
-			"tags": [
-				"infra",
-				"security"
 			]
 		}
 	]

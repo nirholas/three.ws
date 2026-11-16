@@ -14,8 +14,8 @@ import type { IReadonlyTheme } from '@microsoft/sp-component-base';
 import * as strings from 'ThreeWs3DViewerWebPartStrings';
 import ThreeWs3DViewer from './components/ThreeWs3DViewer';
 import type { IThreeWs3DViewerProps } from './components/IThreeWs3DViewerProps';
-import { CATALOG_URL, clampHeight, type DisplayMode, resolveModelUrl, validateModelUrl } from './lib/model';
-import { RUNTIME_TRUSTED_SOURCE } from './lib/runtime';
+import { CATALOG_URL, clampHeight, type DisplayMode, resolveModelUrl, validateModelUrl } from './helpers/model';
+import { RUNTIME_TRUSTED_SOURCE } from './helpers/runtime';
 
 export interface IThreeWs3DViewerWebPartProps {
   modelUrl: string;

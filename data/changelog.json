@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-16",
+			"title": "Microsoft community gallery samples",
+			"summary": "Three ready-to-submit samples for the Microsoft PnP galleries: a Copilot declarative agent, a Teams message extension with link unfurl and a SharePoint 3D viewer web part, each built to its gallery's rules and checked against production.",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-11-16",
 			"title": "Written security policies and an evidence collector",
 			"summary": "The trust center now links the full set of written security policies (information security, access control, change management, patching, logging, backup and recovery, retention, secure development, suppliers) and a risk register that lists the gaps we have not closed. The off-provider backup row is now marked in place, with the measured 215 second recovery time.",
 			"tags": [

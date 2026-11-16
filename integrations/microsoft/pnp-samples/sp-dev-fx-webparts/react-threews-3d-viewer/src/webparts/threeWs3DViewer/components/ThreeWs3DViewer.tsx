@@ -3,8 +3,8 @@ import * as strings from 'ThreeWs3DViewerWebPartStrings';
 
 import styles from './ThreeWs3DViewer.module.scss';
 import type { IThreeWs3DViewerProps } from './IThreeWs3DViewerProps';
-import { CATALOG_URL, viewerUrl } from '../lib/model';
-import { loadAgentRuntime, RUNTIME_TRUSTED_SOURCE, RuntimeBlockedError } from '../lib/runtime';
+import { CATALOG_URL, viewerUrl } from '../helpers/model';
+import { loadAgentRuntime, RUNTIME_TRUSTED_SOURCE, RuntimeBlockedError } from '../helpers/runtime';
 
 type LoadState = 'loading' | 'ready' | 'blocked' | 'failed';
 

@@ -151,6 +151,14 @@
 			<description>Link your three.ws account to Microsoft Teams by sending the bot a one-time code, and finished or failed 3D models, mentions, messages and (if you choose) agent task reports appear in your Teams activity feed and on your phone. Each event has its own switch in Settings, Notifications, with a button that sends a real test notification. Tapping a notification opens the three.ws tab on that model or agent. Uninstalling the app removes the link. A tenant admin approves notifications once with the TeamsActivity.Send permission, and settings shows the consent link if that is still missing.</description>
 		</item>
 		<item>
+			<title>Microsoft community gallery samples</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-16:Microsoft community gallery samples</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Three ready-to-submit samples for the Microsoft PnP galleries: a Copilot declarative agent, a Teams message extension with link unfurl and a SharePoint 3D viewer web part, each built to its gallery's rules and checked against production.</description>
+		</item>
+		<item>
 			<title>Microsoft Marketplace free trials, from activation to the first paid month</title>
 			<link>https://three.ws/microsoft/activate</link>
 			<guid isPermaLink="false">2026-11-16:Microsoft Marketplace free trials, from activation to the first paid month</guid>
