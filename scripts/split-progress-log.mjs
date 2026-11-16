@@ -26,6 +26,7 @@ const KEEP_BUDGET = 40_000; // live log target, leaves room for several appends
 const PART_BUDGET = 46_000;
 const DATE = /20\d\d-\d\d-\d\d/g;
 const POINTER_PREFIX = '**Older entries:**';
+const ENTRY_LIST_HEADING = /^## (Entries|Log|History|Progress log)\s*$/i;
 
 export const charCount = (s) => [...s].length;
 const size = (lines) => lines.reduce((n, l) => n + charCount(l) + 1, 0);
@@ -33,7 +34,8 @@ const datesOf = (line) => line.match(DATE) || [];
 
 // Entry boundaries: every top-level `## ` heading, plus one-line-per-entry
 // records (`2026-11-03 ...` or `- 2026-11-03 ...`) that sit outside any `## `
-// section. Inside a section a dated line is body text, not a new entry.
+// section or under an undated list heading such as `## Entries`. Inside any
+// other section a dated line is body text, not a new entry.
 function entryStarts(lines) {
 	const starts = [];
 	let fence = null;
@@ -46,7 +48,11 @@ function entryStarts(lines) {
 			return;
 		}
 		if (fence) return;
-		if (line.startsWith('## ')) {
+		// An undated list heading (`## Entries`, `## Log`) only introduces the
+		// one-line-per-entry records below it; it stays in the preamble.
+		if (ENTRY_LIST_HEADING.test(line)) {
+			inSection = false;
+		} else if (line.startsWith('## ')) {
 			inSection = true;
 			starts.push(i);
 		} else if (!inSection && /^(- )?(\*\*)?20\d\d-\d\d-\d\d/.test(line)) starts.push(i);

@@ -56,6 +56,18 @@ describe('splitProgressLog', () => {
 		for (const line of nonEmptyLines(log)) expect(kept).toContain(line);
 	});
 
+	it('splits dated bullets listed under an undated "## Entries" heading', () => {
+		const lines = ['# demo progress log', '', 'Append one dated entry per order.', '', '## Entries', ''];
+		for (let i = 0; i < 60; i += 1) lines.push(`- 2026-11-${String((i % 28) + 1).padStart(2, '0')}: ${800 + i} built. ${body(900)}`);
+		const log = lines.join('\n');
+		const r = splitProgressLog(log, { baseName: 'demo-PROGRESS', today: '2026-11-16' });
+		expect(r).not.toBeNull();
+		expect(charCount(r.live)).toBeLessThanOrEqual(PROMPT_CHAR_LIMIT);
+		expect(r.live).toContain('## Entries');
+		const kept = nonEmptyLines(r.live, ...r.archives.map((a) => a.text));
+		for (const line of nonEmptyLines(log)) expect(kept).toContain(line);
+	});
+
 	it('continues archive numbering and keeps earlier archive links on a re-split', () => {
 		const entries = Array.from({ length: 30 }, (_, i) => ({ head: `## 2026-10-${String(i + 1).padStart(2, '0')}: o${i}`, text: body(3_000) }));
 		const first = splitProgressLog(headingLog(entries), { baseName: 'demo-PROGRESS', today: '2026-11-10' });
