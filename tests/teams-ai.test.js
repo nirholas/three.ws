@@ -176,7 +176,7 @@ describe('report dialog', () => {
 	});
 
 	it('turns the reported message HTML into a capped excerpt', () => {
-		expect(reportExcerpt('<p>Returns &amp; refunds<br/>within <b>30</b> days</p>')).toBe('Returns & refunds\n within 30 days');
+		expect(reportExcerpt('<p>Returns &amp; refunds<br/>within <b>30</b> days</p>')).toBe('Returns & refunds\nwithin 30 days');
 		expect(reportExcerpt('x'.repeat(3000))).toHaveLength(2000);
 		expect(reportExcerpt('')).toBeNull();
 	});
