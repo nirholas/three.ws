@@ -257,7 +257,12 @@ function gcpWorkerProbe(id, urlEnv, labelOverride = null) {
 		const readiness = [body.ready, body.pipeline_loaded, body.model_loaded].find((v) => typeof v === 'boolean');
 		// The workers report the GPU they run on (torch.cuda.get_device_name), so
 		// /nvidia can say which GPU type served a lane without a static fleet map.
-		const gpu = typeof body.gpu_name === 'string' && body.gpu_name.trim() ? { gpu_name: body.gpu_name.trim().slice(0, 80) } : {};
+		// They also name the checkpoint they serve (`model`), which is what /nvidia
+		// shows as the lane's model id.
+		const gpu = {
+			...(typeof body.gpu_name === 'string' && body.gpu_name.trim() ? { gpu_name: body.gpu_name.trim().slice(0, 80) } : {}),
+			...(typeof body.model === 'string' && body.model.trim() ? { worker_model: body.model.trim().slice(0, 80) } : {}),
+		};
 		if (readiness === false) {
 			return result(id, 'degraded', `The ${label} worker is up but still loading its model; a generation will queue until it is ready.`, { latency_ms: latency, ...gpu });
 		}
@@ -294,6 +299,9 @@ const PROBES = {
 	// failure reads as down for both.
 	modly: gcpWorkerProbe('modly', 'MODEL_MODLY_URL'),
 	modly_hunyuan: gcpWorkerProbe('modly_hunyuan', 'MODEL_MODLY_URL'),
+	// Pixal3D publishes the same /health contract (gpu_name and load_error
+	// included), so it gets the live probe rather than the env-presence branch.
+	pixal3d: gcpWorkerProbe('pixal3d', 'MODEL_PIXAL3D_URL'),
 };
 
 // The editing lanes: everything the result panel offers AFTER a mesh exists

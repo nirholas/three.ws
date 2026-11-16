@@ -21,6 +21,7 @@ import { databaseConfigured } from './env.js';
 import { putObject, cdnUrl, deleteObject, keyFromPublicUrl, normalizeStoredUrl, objectStorageConfigured } from './r2.js';
 import { recordDailyActivity, maybeAwardFirstCreation } from './streaks.js';
 import { recordGenerationEvent } from './forge-events.js';
+import { backendWorkerHost } from './gpu-worker-host.js';
 import { scoreGlbQuality } from './glb-quality.js';
 import { stripFloorSlab } from './glb-floor-slab.js';
 import { fitBbox } from './glb-bbox-fit.js';
@@ -781,6 +782,21 @@ async function recordWorkerStats(id, stats) {
 	}
 }
 
+// The Cloud Run host of the self-hosted worker that served this creation, so
+// /api/nvidia/stats can split job latency by the GPU that host reports. A
+// separate statement from the stats write so a deploy that lands before its
+// migration loses only this column, never the worker stats. Hosted lanes have
+// no worker host and write nothing.
+async function recordServingWorker(id, backend) {
+	const host = backendWorkerHost(backend);
+	if (!host) return;
+	try {
+		await sql`update forge_creations set worker_host = ${host} where id = ${id}`;
+	} catch (err) {
+		console.error('[forge-store] serving worker write failed:', err?.message);
+	}
+}
+
 export async function materializeCreation({ replicateJobId, clientKey, glbUrl, quality = false, compress = null, cleanup = true, derivePbr = true, bbox = null, lods = false, workerStats = null }) {
 	if (!forgeStoreEnabled() || !replicateJobId || !glbUrl) return null;
 	const existing = await findByJob({ replicateJobId, clientKey });
@@ -851,6 +867,7 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 			where id = ${existing.id} and client_key = ${clientKey}
 		`;
 		await recordWorkerStats(existing.id, workerStats);
+		await recordServingWorker(existing.id, existing.backend);
 		// Terminal success — the one universal completion writer every lane (free
 		// HF, async Replicate poll, BYOK) flows through, so it's where the rolling
 		// success/latency counters are recorded. Latency is wall-clock from the row's
