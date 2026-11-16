@@ -94,16 +94,20 @@ async function revokeKey(key) {
 	log(`revoked the short-lived key ${key.id}`);
 }
 
-/** Follow serial port 1 until the startup script reports DONE. */
+/**
+ * Follow serial port 1 until the startup script reports DONE. Each poll reads
+ * the whole serial buffer and takes the THREEWS lines it has not reported yet:
+ * a byte offset passed through --start drifts from the real stream (gcloud
+ * rewrites the text it returns), which silently stalled the follower mid-run.
+ */
 async function followSerial(deadline) {
-	let start = 0;
-	let buffer = '';
+	let seen = 0;
 	const results = new Map();
 	while (Date.now() < deadline) {
 		await new Promise((r) => setTimeout(r, 20_000));
 		let out;
 		try {
-			out = execFileSync('gcloud', ['compute', 'instances', 'get-serial-port-output', vm, `--zone=${values.zone}`, '--port=1', `--start=${start}`, `--project=${values.project}`], {
+			out = execFileSync('gcloud', ['compute', 'instances', 'get-serial-port-output', vm, `--zone=${values.zone}`, '--port=1', `--project=${values.project}`], {
 				encoding: 'utf8',
 				stdio: ['ignore', 'pipe', 'pipe'],
 				maxBuffer: 64 * 1024 * 1024,
@@ -113,19 +117,16 @@ async function followSerial(deadline) {
 			if (/not ready|not found|unavailable/i.test(String(err.stderr))) continue;
 			throw err;
 		}
-		start += Buffer.byteLength(out, 'utf8');
-		buffer += out;
-		const lines = buffer.split(/\r?\n/);
-		buffer = lines.pop();
-		for (const raw of lines) {
+		const lines = out.split(/\r?\n/).filter((l) => l.includes('THREEWS|'));
+		for (const raw of lines.slice(seen)) {
 			const i = raw.indexOf('THREEWS|');
-			if (i < 0) continue;
 			const [, kind, step, ...rest] = raw.slice(i).split('|');
 			const text = rest.join('|');
 			log(`${kind.padEnd(4)} ${step}: ${text}`);
 			if (kind === 'EXIT') results.set(step, Number(text));
 			if (kind === 'DONE') return { summary: text, results };
 		}
+		seen = lines.length;
 	}
 	throw new Error(`timed out after ${values['timeout-min']} minutes waiting for the VM to finish`);
 }
