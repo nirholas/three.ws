@@ -69,6 +69,7 @@ Skipped Partner Center offer types: Azure Application, Azure Virtual Machine, Ma
 
 - Preview subscriptions with an allow-listed tenant: purchase, plan change, suspend, reinstate, cancel.
 - Unit tests for the webhook state machine and metering batching. One end-to-end run against Microsoft's sandbox before submitting.
+- Local end-to-end pass against Microsoft's SaaS API emulator: `npm run microsoft:saas-e2e` (details in [microsoft-marketplace-saas.md](./microsoft-marketplace-saas.md#run-the-lifecycle-locally)). Green on 2026-11-16, 23 of 23 steps.
 - Browser check of landing page error states (expired token, tenant mismatch, already linked): each one says what went wrong and how to recover.
 
 ## 2. Apps and Agents for M365 and Copilot
@@ -211,7 +212,7 @@ Every remaining step needs Partner Center, the owner's own Azure login or a prod
 10. Partner Center, Marketplace offers, New SaaS offer with the offer id `three-ws`. Technical configuration: landing page `https://three.ws/microsoft/activate`, connection webhook `https://three.ws/api/microsoft-marketplace/webhook`, Entra tenant id and app id from step 4.
 11. Create the plans with the plan ids `pro`, `team` and `enterprise` (they must match [`data/microsoft-marketplace.json`](../data/microsoft-marketplace.json)), set prices, and declare the metered dimensions `mcp_tool_calls` and `agent_messages` on each plan that bills usage.
 12. Listing, properties and legal fields from section 1 above. Add the preview audience (an allow-listed tenant) and publish to preview.
-13. In the preview tenant, buy each plan and run the test plan in section 1: purchase, landing page sign-in and activation, plan change, quantity change, suspend, reinstate, cancel. Each step shows on `/microsoft/activate` and in `microsoft_saas_operations`. Then go live.
+13. Before preview, run `npm run microsoft:saas-e2e` and confirm all 23 steps pass (green on 2026-11-16, so this is a recheck after any later change). In the preview tenant, buy each plan and run the test plan in section 1: purchase, landing page sign-in and activation, plan change, quantity change, suspend, reinstate, cancel. Each step shows on `/microsoft/activate` and in `microsoft_saas_operations`. Then go live.
 
 **#2 and #5 Copilot and Teams app**
 

@@ -166,6 +166,28 @@ The internal Microsoft board (`/admin/microsoft`, [`api/_lib/microsoft-dashboard
 
 Before deploying this code, apply `20261116152500_microsoft_saas_free_trial.sql` in production: the board and the subscriptions query read the trial columns.
 
+## Run the lifecycle locally
+
+`npm run microsoft:saas-e2e` runs the whole SaaS lifecycle on a developer machine against Microsoft's open-source [SaaS Fulfillment API emulator](https://github.com/microsoft/Commercial-Marketplace-SaaS-API-Emulator) before any Partner Center step. It needs the repo's Node version and nothing else: no Azure account, no database and no Partner Center offer. Network is used only on the first run, to clone the emulator from GitHub and install its packages.
+
+What it starts:
+
+- The emulator, pinned to commit `bb7bc63`. The first run clones and builds it into `~/.cache/three-ws/saas-emulator/<sha>`; later runs reuse that checkout. Pass `--emulator-dir <path>` to use a checkout you already built.
+- The real three.ws API (`server/index.mjs`) on port 3126, with an isolated PGlite database ([`scripts/lib/isolated-db.mjs`](../scripts/lib/isolated-db.mjs)) carrying every Microsoft SaaS migration. The production database is never touched.
+- A small receiver for the parts the emulator does not implement, written to Microsoft's documented contracts: the publisher token, Entra sign-in (authorize, token and signing keys for an ID token the harness signs), and the Metering `batchUsageEvent` API with all ten documented statuses. It also relays the emulator's webhook calls to the API.
+
+The harness sets these variables for the API process only. Unset, every call goes to the Microsoft production hosts:
+
+| Env var | What it points at |
+|---|---|
+| `MS_MARKETPLACE_EMULATOR=1` | Emulator mode: webhooks are accepted without the Entra bearer token and sign-in uses the base below. Refused when `NODE_ENV=production`, `K_SERVICE` or `VERCEL_ENV=production` is set: the server will not start, and every Marketplace call throws |
+| `MS_MARKETPLACE_EMULATOR_LOGIN_BASE` | Stand-in for `login.microsoftonline.com`, read only in emulator mode |
+| `MS_MARKETPLACE_API_BASE` | Fulfillment API base (default `https://marketplaceapi.microsoft.com/api`) |
+| `MS_MARKETPLACE_METERING_BASE` | Metering API base (default the same host) |
+| `MS_MARKETPLACE_TOKEN_URL` | Publisher token endpoint (default the tenant's `login.microsoftonline.com` token URL) |
+
+The 23 steps cover purchase and activation, a sign-in from the wrong tenant, ChangePlan accepted and refused (a plan three.ws does not sell), ChangeQuantity with the owner taking the first seat, Suspend, Reinstate, Renew, webhook redelivery, five metering runs (batches of at most 25, a suspended subscription that records nothing, Duplicate settlement keeping the accepted event id, an idempotent rerun), the remaining metering error statuses, Unsubscribe, and a final check that every operation is in `microsoft_saas_operations`. Each step prints `PASS` or `FAIL` with its evidence, and the command exits non-zero on any failure. `--verbose` also streams the emulator and API logs.
+
 ## Testing against preview
 
 Partner Center's preview audience lets an allow-listed tenant buy the offer without being charged. Microsoft marks such subscriptions `isTest`, and three.ws stores that flag. Run the test plan in the [plan doc](./microsoft-marketplace-offer-plan.md#test-plan):

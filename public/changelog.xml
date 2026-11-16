@@ -103,6 +103,14 @@
 			<description>Plans bought on Microsoft Marketplace can now start with a free trial. The activation page says when the trial ends and what it becomes afterwards, using the price Microsoft publishes for the plan. While the trial runs, a slim banner under the site header shows the days left, what it converts to and a Manage in Microsoft link, and you can dismiss it for the session. You get one notification and one email a week before the trial ends and again the day before, never more. Microsoft bills nothing until the trial is over, and cancelling in Microsoft before then means no charge.</description>
 		</item>
 		<item>
+			<title>Microsoft Marketplace subscriptions keep their access through plan and seat changes</title>
+			<link>https://three.ws/microsoft/activate</link>
+			<guid isPermaLink="false">2026-11-16:Microsoft Marketplace subscriptions keep their access through plan and seat changes</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>We ran the full Microsoft Marketplace subscription lifecycle against Microsoft's SaaS API emulator and fixed what it caught. When a Microsoft-billed subscription moves to a per-seat plan, the buyer who owns it now keeps their access instead of dropping to the free plan. Usage that Microsoft already counted is now recorded as settled when it is sent again, instead of staying pending, and webhook replies now follow Microsoft's documented contract, so a plan three.ws does not sell is refused cleanly. Developers can rerun the same check locally with one command.</description>
+		</item>
+		<item>
 			<title>Roll three.ws out to every seat from your Microsoft admin consoles</title>
 			<link>https://three.ws/docs/microsoft-admin-deployment</link>
 			<guid isPermaLink="false">2026-11-16:Roll three.ws out to every seat from your Microsoft admin consoles</guid>

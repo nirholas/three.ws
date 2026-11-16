@@ -478,6 +478,7 @@
 		"package:edge": "node scripts/package-edge-addons.mjs",
 		"package:microsoft-app": "node scripts/build-microsoft-app-package.mjs",
 		"microsoft:provision": "node scripts/microsoft-provision.mjs",
+		"microsoft:saas-e2e": "node scripts/microsoft-saas-e2e.mjs",
 		"package:power-platform-connector": "node scripts/build-power-platform-connector.mjs",
 		"package:microsoft-store": "node scripts/package-microsoft-store-pwa.mjs",
 		"build:extension:prod": "node scripts/build-extension-icons.mjs && node scripts/build-extension.mjs --prod",
