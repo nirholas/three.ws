@@ -127,6 +127,103 @@ and `adaptiveCard/action`, is verified with `verifyBotToken`
   success, variation, failure and retry, and real RS256-signed tokens for
   each invoke type.
 
+## Running in Outlook and the Microsoft 365 app
+
+The same app package runs in Outlook (web, new Windows and outlook.com) and in
+the Microsoft 365 app, not only in Teams. Manifest 1.13 or later is enough for
+Microsoft 365 to load a personal tab and a search message extension in those
+hosts
+([personal tab](https://learn.microsoft.com/en-us/microsoftteams/platform/m365-apps/extend-m365-teams-personal-tab),
+[message extension](https://learn.microsoft.com/en-us/microsoftteams/platform/m365-apps/extend-m365-teams-message-extension)).
+The package is at 1.30.
+
+### What runs where
+
+| Feature | Teams | Outlook | Microsoft 365 app |
+|---|---|---|---|
+| Agents tab (`/microsoft/teams-tab`) | Yes | Yes, in the app bar | Yes, under Apps |
+| Agent search (message extension) | Yes | Yes, in a new email | Not offered by the host |
+| Agent link unfurl | Yes | Yes, in a new email | Not offered by the host |
+| Create a 3D model (`createModel`) | Yes | No | No |
+| `forge` bot command, approvals, activity feed | Yes | No | No |
+
+`createModel` is Teams-only because its card refreshes itself with
+`Action.Execute` and is delivered by the bot, and Outlook runs neither. The
+manifest declares this in `elementRelationshipSet.oneWayDependencies`
+(`createModel` depends on the bot), so Microsoft 365 hides the command where the
+bot cannot run. If an invoke still arrives from Outlook, the bot answers with a
+message that points to Teams instead of opening the form.
+
+### Cards per host
+
+The bot reads the host from the Bot Framework `channelId` on each activity
+(`channelHostOf` in [`api/_lib/teams-bot.js`](../api/_lib/teams-bot.js)):
+
+- `msteams` is Teams. The agent Glance card is Adaptive Cards 1.6 with rounded
+  images.
+- `m365extensions` is Outlook and the Microsoft 365 app. The card is Adaptive
+  Cards **1.4**, uses `Action.OpenUrl` only, and has no `refresh` and no
+  1.6-only styles. Microsoft documents `openURL` as the only card action
+  Outlook supports for a message extension, with no bot-delivered cards; 1.4
+  is the newest version every supported Outlook client renders, so the card
+  targets it. Any unknown channel gets the same conservative card.
+
+Both channels use the same Bot Framework token, verified by `verifyBotToken`
+against the same issuer, keys and audience (`MS_TEAMS_BOT_APP_ID`). Nothing in
+the auth path depends on the channel.
+
+`tests/teams-outlook-host.test.js` validates the Outlook card against the
+official 1.4 schema (`tests/fixtures/adaptive-card-1.4.schema.json`), checks
+its actions, refresh, styles and size limit, checks the Teams card against 1.5,
+and checks that both channels verify the same signed token.
+
+### The tab in each host
+
+The Agents tab loads TeamsJS only when it is framed. It reads the host from
+`app.host.name` ([`src/microsoft-365-host.js`](../src/microsoft-365-host.js))
+and follows the host theme (default, dark and high contrast), including live
+theme changes. Every host-specific call is behind its capability's
+`isSupported()`:
+
+| Host | Share button | Calls |
+|---|---|---|
+| Teams | Share in Teams | `sharing.shareWebContent` |
+| Outlook, the Microsoft 365 app | Email this agent | `mail.composeMail` |
+| Plain browser | Share, or Copy link | Web Share API or the clipboard |
+
+The tab and meeting stage routes in `vercel.json` allow every frame ancestor
+Microsoft lists for these hosts, including `outlook.live.com` for outlook.com.
+
+Check all three without a tenant (dev server on port 3132):
+
+```
+node scripts/microsoft-365-tab-hosts-check.mjs [--base http://localhost:3132] [--out dist/microsoft/tab-hosts]
+```
+
+It loads the tab standalone, framed by `https://outlook.office.com` answering
+TeamsJS as Outlook (dark), and framed by `https://teams.microsoft.com` as Teams
+(high contrast). It fails on any console error and saves a screenshot per host.
+`npm run package:microsoft-app -- --check` validates the host declarations:
+manifest version, valid domains, compose context and the relationship set.
+
+### Turn it on
+
+1. **Azure Bot channel.** In the Azure portal, open the three.ws Azure Bot,
+   then **Channels**, and add **Microsoft 365 Extensions**. That channel
+   delivers Outlook and Microsoft 365 app activities with `channelId`
+   `m365extensions` to the same messaging endpoint. If the older **Outlook**
+   channel is enabled, remove it.
+2. **Sideload.** Build the package (`npm run package:microsoft-app`) and upload
+   it in Teams under **Apps > Manage your apps > Upload an app > Upload a
+   custom app**. Microsoft 365 then offers it in the other hosts for the same
+   account.
+3. **Outlook on the web.** Open outlook.office.com (or outlook.com), choose
+   **New mail**, then **Apps** in the ribbon, and pick three.ws to search
+   agents. Paste a `https://three.ws/agents/...` link to see the unfurl. The
+   Agents tab is under **More apps** in the left app bar.
+4. **Microsoft 365 app.** Open microsoft365.com, choose **Apps** in the left
+   rail and open three.ws for the Agents tab.
+
 ## Activity feed notifications
 
 A finished (or failed) 3D model, and agent events, reach a linked person's Teams
