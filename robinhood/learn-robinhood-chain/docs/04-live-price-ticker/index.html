@@ -107,9 +107,7 @@ SPY    $    753.62   (feed 44.1h old)</code></pre></figure><p>Those are real pri
 <li><strong><code>Promise.all</code>, not a loop.</strong> All symbols are fetched concurrently; the ticker&#39;s latency is one RPC round-trip, not N of them.</li>
 <li><strong>Typed catches.</strong> <code>FeedNotFoundError</code> and <code>StaleFeedError</code> are distinct outcomes with distinct UI — &quot;no feed&quot; is permanent, &quot;stale&quot; is temporary. Never collapse them into a generic &quot;error.&quot;</li>
 </ul>
-</div>
-
-<h2 id="add-the-multiplier-for-context"><a class="anchor" href="#add-the-multiplier-for-context" aria-label="Link to this section">#</a>Add the multiplier, for context</h2><p>Users like to see share-equivalents. Remember the Tutorial 3 rule: the multiplier is for <em>display</em>, never for the dollar math. Add it as a separate column:</p>
+</div><h2 id="add-the-multiplier-for-context"><a class="anchor" href="#add-the-multiplier-for-context" aria-label="Link to this section">#</a>Add the multiplier, for context</h2><p>Users like to see share-equivalents. Remember the Tutorial 3 rule: the multiplier is for <em>display</em>, never for the dollar math. Add it as a separate column:</p>
 <figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">import</span> { getMultiplier } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;hoodchain&#x27;</span>
 
 <span class="hljs-keyword">const</span> [q, m] = <span class="hljs-keyword">await</span> <span class="hljs-title class_">Promise</span>.<span class="hljs-title function_">all</span>([<span class="hljs-title function_">getQuote</span>(hood, <span class="hljs-built_in">symbol</span>, { maxAgeSeconds }), <span class="hljs-title function_">getMultiplier</span>(hood, <span class="hljs-built_in">symbol</span>)])
