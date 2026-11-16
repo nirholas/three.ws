@@ -7571,6 +7571,10 @@
 			"schedule": "7 * * * *"
 		},
 		{
+			"path": "/api/cron/microsoft-trial-reminders",
+			"schedule": "15 * * * *"
+		},
+		{
 			"path": "/api/cron/microsoft-alerts",
 			"schedule": "*/5 * * * *"
 		},
