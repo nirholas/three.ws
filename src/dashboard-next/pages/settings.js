@@ -7,6 +7,7 @@
 //   • Avatar storage mode (R2 vs IPFS, pin to IPFS)
 //   • Storage usage (avatar files, animation clips)
 //   • LLM usage (calls this month, tokens consumed, by model)
+//   • Connect to Power BI or Excel (OData usage feed keys)
 //   • App preferences (dashboard prefs via /api/dashboard/prefs)
 //   • Vanity wallet shortcuts (SOL vanity + ETH CREATE2)
 //
@@ -26,6 +27,7 @@
 //   POST /api/notifications/read-all
 //   GET  /api/billing/summary               { usage: { total_bytes, avatar_count, ... } }
 //   GET  /api/usage/summary                 { llm: { calls_month, tokens_month, by_model } }
+//   GET  /api/usage/feed-keys               { keys, teams, feed_url } OData feed keys (settings-usage-feed.js)
 //   GET  /api/dashboard/prefs               { prefs }
 //   PATCH /api/dashboard/prefs              body prefs patch
 //   GET  /api/avatars/mine                  { avatars: [{ storage, ... }] }
@@ -39,6 +41,7 @@ import { emptyStateHTML, errorStateHTML, ensureStateKitStyles, attachRetry } fro
 import { toast } from '../../shared/toast.js';
 import { renderAccountStatus, renderXPosting } from './settings-account-status.js';
 import { renderTeamsNotifications } from './settings-teams.js';
+import { renderUsageFeed } from './settings-usage-feed.js';
 import { IPFS_GATEWAYS } from '../../ipfs.js';
 
 const MONO = `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
@@ -123,7 +126,7 @@ async function loadContent(host) {
 
 	const retry = () => loadContent(host);
 
-	const [sessionsResp, grantsResp, googleResp, telegramResp, microsoftResp, notifResp, notifPrefsResp, teamsResp, avatarsResp, summaryResp, usageResp, prefsResp, versionResp, statusResp, xResp] =
+	const [sessionsResp, grantsResp, googleResp, telegramResp, microsoftResp, notifResp, notifPrefsResp, teamsResp, avatarsResp, summaryResp, usageResp, prefsResp, versionResp, statusResp, xResp, feedResp] =
 		await Promise.all([
 			safeGet('/api/auth/sessions'),
 			safeGet('/api/oauth/grants'),
@@ -140,6 +143,7 @@ async function loadContent(host) {
 			safeGet('/api/version'),
 			safeGet('/api/v1/me/status'),
 			safeGet('/api/x/agents'),
+			safeGet('/api/usage/feed-keys'),
 		]);
 
 	const prefs = prefsResp.data?.prefs || prefsResp.data || {};
@@ -171,13 +175,14 @@ async function loadContent(host) {
 	host.appendChild(renderAvatarStorage(avatarsResp, retry));
 	host.appendChild(renderStorage(summaryResp, retry));
 	host.appendChild(renderLlmUsage(usageResp, retry));
+	host.appendChild(renderUsageFeed(feedResp, retry));
 	host.appendChild(renderVanityTools());
 	host.appendChild(renderPrefs(prefs));
 	host.appendChild(renderDataExport());
 	host.appendChild(renderAbout(versionResp));
 	// The OAuth consent screen and three.ws Desktop link here to revoke an app,
 	// and the /notifications empty states link to the notification matrix.
-	if (location.hash === '#connected-apps' || location.hash === '#x-posting' || location.hash === '#account-status' || location.hash === '#notification-preferences') {
+	if (location.hash === '#connected-apps' || location.hash === '#x-posting' || location.hash === '#account-status' || location.hash === '#notification-preferences' || location.hash === '#usage-feed') {
 		document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start' });
 	}
 }
