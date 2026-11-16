@@ -19,6 +19,7 @@ NVIDIA exposes its catalog over a few distinct surfaces. three.ws uses four:
 | **NIM (OpenAI-compatible)** | `https://integrate.api.nvidia.com/v1` | `chat/completions`, `embeddings` | LLM chat, vision (VLM), embeddings, content-safety |
 | **GenAI invoke** | `https://ai.api.nvidia.com/v1/genai/…` | Async (202 + poll) or sync | TRELLIS text→3D, FLUX text→image |
 | **Retrieval** | `https://ai.api.nvidia.com/v1/retrieval/<publisher>/<model>/reranking` (one URL per model) | Sync rerank | Cross-encoder reranking |
+| **CV inference** | `https://ai.api.nvidia.com/v1/cv/nvidia/<model>` | Sync, one page image per call | PDF page layout, table structure, chart elements, OCR |
 | **NVCF gRPC** | `grpc.nvcf.nvidia.com:443` | Riva gRPC | Magpie text-to-speech |
 | **NVCF status** | `https://api.nvcf.nvidia.com/v2/nvcf/pexec/status/{id}` | Poll | Async job status (TRELLIS) |
 
@@ -40,6 +41,7 @@ Because it is one key for everything, a deployment either has the whole NVIDIA l
 | **Content safety** | `nvidia/llama-3.1-nemotron-safety-guard-8b-v3`, `meta/llama-guard-4-12b` | `api/_lib/publish-safety.js` | ✅ |
 | **Chat guardrails** (owner opt-in) | `nvidia/nemoguard-jailbreak-detect`, `nvidia/llama-3.1-nemotron-safety-guard-8b-v3`, topic control on `nvidia/nemotron-3.5-lightning-30b-a3b` | `api/_lib/chat-guardrails.js` | Under evaluation |
 | **Text-to-speech** | `magpie-tts-multilingual` (Riva) | `api/_lib/tts-nvidia.js` | ✅ |
+| **Document extraction** (PDF knowledge) | `nvidia/nemotron-page-elements-v3`, `nvidia/nemotron-table-structure-v1`, `nvidia/nemotron-graphic-elements-v1`, `nvidia/nemotron-ocr-v2`, charts read by `nvidia/nemotron-3.5-super-vl-120b-a12b` | `api/_lib/pdf-extract.js`, `api/_lib/nvidia-doc-extract.js` | Under evaluation |
 
 ---
 
@@ -196,6 +198,23 @@ The free NVIDIA TTS lane: **Magpie multilingual on Riva**, selected by an NVCF `
 
 ---
 
+## 9. Document extraction: NeMo Retriever page models
+
+<a id="document-extraction"></a>
+
+**Models:** `nvidia/nemotron-page-elements-v3`, `nvidia/nemotron-table-structure-v1`, `nvidia/nemotron-graphic-elements-v1`, `nvidia/nemotron-ocr-v2` (charts read by `nvidia/nemotron-3.5-super-vl-120b-a12b`) · **Endpoint:** `ai.api.nvidia.com/v1/cv/nvidia/<model>`
+**Source:** [api/_lib/pdf-extract.js](../api/_lib/pdf-extract.js) (per page), [api/_lib/nvidia-doc-extract.js](../api/_lib/nvidia-doc-extract.js) (model calls), [api/_lib/knowledge-pdf-jobs.js](../api/_lib/knowledge-pdf-jobs.js) (job, fallback) · **Eval:** [docs/nvidia/evals/pdf-extraction-2026-11-16.md](nvidia/evals/pdf-extraction-2026-11-16.md) · **Status:** under evaluation until the `three-ws-api` deploy that ships it.
+
+A PDF uploaded to an agent's knowledge is read page by page as layout: page elements boxes tables, charts and text; table structure gives each table its row and column grid, filled from the text layer or from OCR when the page is scanned or the table is a pasted screenshot; graphic elements plus the VLM turn a chart into labelled values. Each table becomes one chunk with its caption, so an agent answers "what does model X score on Y" from the right cell. Feature doc: [docs/agent-knowledge.md](agent-knowledge.md#how-pdfs-are-read).
+
+- **Measured.** On 44 questions over three CC BY 4.0 papers and a scanned copy, answer accuracy went from 38.6% (MarkItDown) to 90.9%: born-digital tables 77.3% to 100%, charts 0% to 75%, screenshot tables 0% to 100%, scanned pages 0% to 81.8%. Every exact value reached the prompt (37/37).
+- **Job, not a request.** Upload answers `202`; the panel steps the job (about 20 s of reading per call) and shows per-page progress with a live table preview; the `knowledge-pdf-jobs` cron finishes abandoned jobs.
+- **Fallback.** If the layout models fail for a document, it is read with MarkItDown (or the text layer) instead and the source is marked "Read as plain text". `KNOWLEDGE_PDF_EXTRACTOR=text` forces that path.
+- **Data path.** Page images are sent to NVIDIA's hosted API for the duration of the call; only the extracted text is stored.
+- **Re-measure** with `npm run nvidia:pdf-eval`; `npm run knowledge:pdf-live-check` uploads a real PDF through the dev server and asks the agent a table question.
+
+---
+
 ## Day-0 release pipeline
 
 **Source:** [api/cron/nim-release-eval.js](../api/cron/nim-release-eval.js), [api/_lib/nim-lanes.js](../api/_lib/nim-lanes.js), [api/_lib/nim-lane-eval.js](../api/_lib/nim-lane-eval.js), [api/_lib/nim-release-store.js](../api/_lib/nim-release-store.js), eval sets in [data/evals/](../data/evals/).
@@ -231,6 +250,7 @@ Run it by hand: `node scripts/nvidia-lane-eval.mjs --model <id>` (one model, wri
 | `NVIDIA_API_KEY` | Every model on this page (`nvapi-…` from build.nvidia.com) |
 | `KNOWLEDGE_RERANK_ENABLED=1` | Turns on the rerank stage (§6) |
 | `KNOWLEDGE_RERANK_MODEL` | Re-pins the reranker after a retirement (§6) |
+| `KNOWLEDGE_PDF_EXTRACTOR=text` | Skips the layout models and reads PDFs with MarkItDown or the text layer (§9) |
 | `FORGE_PREFER_FREE` | Free-first reconstruct ordering (default on) |
 | `TEXT_TO_IMAGE_BUDGET_MS` | Shared deadline for the whole text-to-image ladder (§2), default 60000 |
 | `VERTEX_IMAGEN_FIRST=0` | Puts the free NIM FLUX lane ahead of Vertex Imagen again (§2) |
