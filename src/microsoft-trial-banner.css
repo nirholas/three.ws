@@ -1,0 +1,101 @@
+/* Free trial banner (src/microsoft-trial-banner.js). Sits in normal flow under
+   the sticky header, spans every grid column when the page body is a grid, and
+   takes its colors from the shared tokens so it follows the light theme. */
+
+.ms-trial-banner {
+	grid-column: 1 / -1;
+	border-bottom: 1px solid var(--hairline-strong, rgba(255, 255, 255, 0.09));
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	color: var(--text, #f6f6f6);
+	font-size: 13.5px;
+	line-height: 1.45;
+	transition: opacity 160ms ease, transform 160ms ease;
+}
+.ms-trial-banner.is-leaving { opacity: 0; transform: translateY(-4px); }
+
+.ms-trial-banner__inner {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 14px;
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 9px 20px;
+}
+
+.ms-trial-banner__badge {
+	flex: none;
+	padding: 2px 8px;
+	border: 1px solid currentColor;
+	border-radius: var(--radius-pill, 999px);
+	font-size: 11.5px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	color: var(--accent, #ffffff);
+}
+
+.ms-trial-banner__text { flex: 1 1 320px; margin: 0; color: var(--text-2, #a8a8a8); }
+.ms-trial-banner__text strong { color: var(--text, #f6f6f6); font-weight: 600; }
+
+.ms-trial-banner__actions { display: flex; align-items: center; gap: 6px; flex: none; }
+
+.ms-trial-banner__link,
+.ms-trial-banner__details {
+	padding: 5px 10px;
+	border-radius: var(--radius-sm, 6px);
+	font-weight: 600;
+	text-decoration: none;
+	color: var(--text, #f6f6f6);
+	transition: background-color 120ms ease, border-color 120ms ease;
+}
+.ms-trial-banner__link { border: 1px solid var(--hairline-strong, rgba(255, 255, 255, 0.09)); }
+.ms-trial-banner__details { color: var(--text-2, #a8a8a8); }
+.ms-trial-banner__link:hover,
+.ms-trial-banner__details:hover { background: var(--surface-2, rgba(255, 255, 255, 0.05)); color: var(--text, #f6f6f6); border-color: currentColor; }
+.ms-trial-banner__link:active,
+.ms-trial-banner__details:active,
+.ms-trial-banner__close:active { transform: translateY(1px); }
+
+.ms-trial-banner__close {
+	display: inline-grid;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: 0;
+	border-radius: var(--radius-sm, 6px);
+	background: transparent;
+	color: var(--text-2, #a8a8a8);
+	cursor: pointer;
+	transition: background-color 120ms ease, color 120ms ease;
+}
+.ms-trial-banner__close:hover { background: var(--surface-2, rgba(255, 255, 255, 0.05)); color: var(--text, #f6f6f6); }
+
+.ms-trial-banner__link:focus-visible,
+.ms-trial-banner__details:focus-visible,
+.ms-trial-banner__close:focus-visible {
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, var(--accent, #ffffff));
+	outline-offset: var(--focus-ring-offset, 2px);
+}
+
+.ms-trial-banner__sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+	.ms-trial-banner__inner { padding: 9px 16px; }
+	.ms-trial-banner__actions { width: 100%; }
+	.ms-trial-banner__close { margin-left: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ms-trial-banner,
+	.ms-trial-banner__link,
+	.ms-trial-banner__details,
+	.ms-trial-banner__close { transition: none; }
+}

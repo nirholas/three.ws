@@ -692,6 +692,13 @@ function mount() {
 	const inbox = new NotificationInbox(btn);
 	inbox.start();
 	window.__notifInbox = inbox;
+	// Microsoft Marketplace free trial notice. Lazy so only signed-in visitors
+	// pay for it; a failure here must never affect the inbox.
+	if (isAuthed()) {
+		import('./microsoft-trial-banner.js').then((m) => m.mountTrialBanner()).catch((err) => {
+			console.warn('[trial-banner]', err?.message || err);
+		});
+	}
 }
 
 if (document.readyState === 'loading') {
