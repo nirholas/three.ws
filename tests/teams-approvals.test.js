@@ -36,6 +36,7 @@ const dbState = { pg: null };
 vi.mock('../api/_lib/db.js', () => {
 	const sql = async (strings, ...values) => {
 		const text = strings.reduce((acc, part, i) => acc + part + (i < values.length ? `$${i + 1}` : ''), '');
+		if (!dbState.pg) return [];
 		const out = await dbState.pg.query(text, values);
 		return out.rows;
 	};

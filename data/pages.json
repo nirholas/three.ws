@@ -8522,6 +8522,14 @@
 					"added": "2026-11-16"
 				},
 				{
+					"path": "/docs/enterprise",
+					"title": "Docs · The /enterprise procurement page",
+					"description": "How the three.ws enterprise page is built: purchase paths, identity, security answers, Microsoft surface statuses from data, the printable procurement packet and the contact form that files a lead.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-16"
+				},
+				{
 					"path": "/enterprise",
 					"title": "Enterprise: buy and review three.ws",
 					"description": "Buy three.ws for your company through Microsoft Marketplace or by invoice, and clear vendor review in one visit: Microsoft sign-in, Entra tenant claim, SCIM, hosting, encryption, subprocessors and a printable procurement packet.",
