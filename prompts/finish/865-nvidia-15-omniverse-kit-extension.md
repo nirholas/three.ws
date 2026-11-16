@@ -1,5 +1,7 @@
 # nvidia 15: a three.ws extension for NVIDIA Omniverse Kit apps: generate and import 3D models inside the stage
 
+Status 2026-11-16: extension, panel, import, library, tests, owner pack (PUBLISHING.md, docs/omniverse-extension.md, media, preview image), STRUCTURE row and changelog committed. Measured on an NVIDIA L4: 62 tests OK with 0 Kit log errors, live image to 3D imported in 78.5 s; `scripts/gce_gpu_run.sh` verified end to end (62 OK); headless 63 OK; `npm run audit:docs` has no finding in this order's files. Not archived: full `npm test` (36 failures in 18 files) and `npm run audit:docs` (8 findings) fail only in other orders' files. Waiting on the owner: git push, deploy:gcp:full (three-ws-api, enables the live text to 3D test), Exchange submission, GitHub topic.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `nvidia-` order, so it can run in parallel with all of them. Dev port: 3265.
 
 ## Operating clause (binding)
