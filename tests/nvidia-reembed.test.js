@@ -9,6 +9,8 @@ import {
 	verifyRows,
 	runTable,
 	TABLES,
+	deployGate,
+	READER_COMMIT,
 } from '../scripts/nvidia-reembed.mjs';
 
 const NEW = 'nvidia/nemotron-3.5-embed-8b@2048';
@@ -292,4 +294,22 @@ describe('runTable on a real Postgres engine (PGlite)', () => {
 		expect(left).toEqual([]);
 		await pg.close();
 	}, 30000);
+});
+
+describe('deployGate', () => {
+	// Moving rows into a space the deployed readers do not know drops them out of
+	// live search (measured 2026-11-16: production skipped every moved memory).
+	const ancestry = (deployed) => async (a, b) => a === READER_COMMIT && b === deployed;
+	it('allows a writing run once the deployed commit contains the reader change', async () => {
+		expect(await deployGate({ commit: 'new' }, ancestry('new'))).toEqual({ ok: true, commit: 'new' });
+	});
+	it('refuses while production runs code that cannot read the target space', async () => {
+		const r = await deployGate({ commit: 'old' }, async () => false);
+		expect(r.ok).toBe(false);
+		expect(r.reason).toMatch(/deploy three-ws-api first/);
+	});
+	it('refuses when the deployed commit is unknown', async () => {
+		expect((await deployGate({ commit: 'unknown' }, ancestry('x'))).ok).toBe(false);
+		expect((await deployGate(null, ancestry('x'))).ok).toBe(false);
+	});
 });

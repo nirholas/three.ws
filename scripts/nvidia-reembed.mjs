@@ -33,6 +33,8 @@
 // Requires DATABASE_URL and NVIDIA_API_KEY in the environment (or .env.local / .env).
 
 import { readFileSync } from 'node:fs';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -42,7 +44,7 @@ export const DEFAULTS = Object.freeze({ batch: 16, pauseMs: 400, limit: Infinity
 
 export const USAGE = `usage: npm run nvidia:reembed -- [--status | --dry-run | --verify | --restore]
        [--table agent_memories|agent_knowledge_chunks|widget_knowledge_chunks]
-       [--batch N] [--pause-ms N] [--limit N] [--sample N]`;
+       [--batch N] [--pause-ms N] [--limit N] [--sample N] [--skip-deploy-check]`;
 
 // ── Tables ──────────────────────────────────────────────────────────────────
 // Column names cannot be bound as parameters, so each table spells out its own
@@ -220,6 +222,7 @@ export function parseCliArgs(argv) {
 		else if (a === '--pause-ms') opts.pauseMs = Math.floor(Number(argv[++i]) || 0);
 		else if (a === '--limit') opts.limit = Math.floor(num(a, argv[++i]));
 		else if (a === '--sample') opts.verifySample = Math.floor(num(a, argv[++i]));
+		else if (a === '--skip-deploy-check') opts.skipDeployCheck = true;
 		else if (a === '--help' || a === '-h') opts.mode = 'help';
 		else throw new Error(`unknown argument ${a}\n${USAGE}`);
 	}
@@ -351,6 +354,48 @@ export async function verifyRows(rows, target, embedQueryIn) {
 		old: { recall_at_1: pct(score.old.hits), mrr: pct(score.old.rr) },
 		passed: queries > 0 && score.new.rr >= score.old.rr - 0.02 * queries,
 	};
+}
+
+// ── Deploy gate ─────────────────────────────────────────────────────────────
+// The commit that taught every reader the target space. Rows moved into a
+// space the deployed readers do not recognise drop out of live search (the
+// old scoreRowsBySpace treats an unknown tag as unconfigured), so a writing
+// run refuses until production serves a build that contains this commit.
+export const READER_COMMIT = '60128b5cc3159ecbf135273ba080b28da491299f';
+export const VERSION_URL = process.env.REEMBED_VERSION_URL || 'https://three.ws/api/version';
+
+/**
+ * Decide whether a writing run may start, from the deployed /api/version body
+ * and `isAncestor(a, b)` (true when commit a is contained in commit b).
+ */
+export async function deployGate(version, isAncestor) {
+	const commit = version?.commit;
+	if (!commit || commit === 'unknown') {
+		return { ok: false, reason: `cannot tell which commit production runs (${VERSION_URL}); deploy three-ws-api first, or pass --skip-deploy-check for a non-production database` };
+	}
+	if (await isAncestor(READER_COMMIT, commit)) return { ok: true, commit };
+	return {
+		ok: false,
+		reason: `production runs ${commit.slice(0, 9)}, which cannot read ${READER_COMMIT.slice(0, 9)}'s embedding spaces: moved rows would drop out of live search. deploy three-ws-api first`,
+	};
+}
+
+async function gitIsAncestor(a, b) {
+	try {
+		await promisify(execFile)('git', ['merge-base', '--is-ancestor', a, b], { cwd: root });
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+async function fetchDeployedVersion() {
+	try {
+		const res = await fetch(VERSION_URL, { signal: AbortSignal.timeout(15_000) });
+		return res.ok ? await res.json() : null;
+	} catch {
+		return null;
+	}
 }
 
 // ── Database-backed steps ───────────────────────────────────────────────────
@@ -522,6 +567,12 @@ async function main() {
 			console.log(result.passed ? (verifiedAt ? '  PASSED: cutover verified' : '  passed, but the scan has not finished: run it to the end, then verify again') : '  FAILED: the new space retrieves worse here; keep the old vectors and investigate (--restore rolls back)');
 		}
 		return;
+	}
+
+	if (!opts.skipDeployCheck) {
+		const gate = await deployGate(await fetchDeployedVersion(), gitIsAncestor);
+		if (!gate.ok) throw new Error(gate.reason);
+		console.log(`production runs ${gate.commit.slice(0, 9)}, which reads every embedding space: ok to move rows`);
 	}
 
 	const log = (m) => console.log(m);
