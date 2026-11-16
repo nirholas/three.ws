@@ -134,13 +134,37 @@
 				"reply": "apple, lemon"
 			},
 			"bytes3072": 592084
+		},
+		"step-5": {
+			"base64_1024": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 2463,
+				"reply": ""
+			},
+			"url": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 10513,
+				"reply": ""
+			},
+			"base64_3072": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 2957,
+				"reply": ""
+			},
+			"two_images": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 1972,
+				"reply": ""
+			},
+			"bytes3072": 592084
 		}
 	},
 	"unavailable": {
-		"step-5": "not configured: no NVIDIA_API_KEY in the environment",
 		"gemma-4-31b": "not configured: no NVIDIA_API_KEY in the environment",
-		"cf-scout": "not configured: no CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_AI_API_TOKEN in the environment",
-		"mistral-large-4": "not configured: no NVIDIA_API_KEY in the environment",
-		"muse-glimmer": "not configured: no NVIDIA_API_KEY in the environment"
+		"cf-scout": "not configured: no CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_AI_API_TOKEN in the environment"
 	}
 }
