@@ -28,7 +28,9 @@ dest = Path(sys.argv[1] if len(sys.argv) > 1 else "/opt/weights/triposr")
 dest.mkdir(parents=True, exist_ok=True)
 
 for name in ("config.yaml", "model.ckpt"):
-    path = hf_hub_download(TRIPOSR_REPO, name, revision=TRIPOSR_REVISION, local_dir=dest)
+    path = hf_hub_download(
+        TRIPOSR_REPO, name, revision=TRIPOSR_REVISION, local_dir=dest, local_dir_use_symlinks=False
+    )
     print(f"{TRIPOSR_REPO}@{TRIPOSR_REVISION[:7]} {name}: {os.path.getsize(path):,} bytes")
 
 ckpt = dest / "model.ckpt"
@@ -48,6 +50,10 @@ refs.mkdir(parents=True, exist_ok=True)
 from rembg import new_session  # noqa: E402  (after the HF downloads: rembg is heavy)
 
 new_session("u2net")
-u2net = Path(os.environ["U2NET_HOME"]) / "u2net.onnx"
+# rembg decides the layout under U2NET_HOME (2.0.86: models/u2net/u2net.onnx).
+found = sorted(Path(os.environ["U2NET_HOME"]).rglob("u2net.onnx"))
+if not found:
+    raise SystemExit(f"rembg did not write u2net.onnx under {os.environ['U2NET_HOME']}")
+u2net = found[0]
 digest = hashlib.sha256(u2net.read_bytes()).hexdigest()
 print(f"u2net.onnx: {u2net.stat().st_size:,} bytes sha256 {digest}")

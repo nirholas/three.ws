@@ -85,8 +85,11 @@ steps:
       - --labels=lane=cosmos-reason-judge,program=gcp-credits
       - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET},readonly=true
       - --add-volume-mount=volume=weights,mount-path=/weights
-      # 17.5 GB over a cross-region FUSE read plus CUDA graph capture: allow 15 minutes.
-      - --startup-probe=httpGet.path=/health,httpGet.port=8080,periodSeconds=10,timeoutSeconds=5,failureThreshold=90
+      # 17.5 GB over a cross-region FUSE read plus torch.compile and CUDA graph
+      # capture. serve.sh prefetches the shards; the 30 minute ceiling is the
+      # margin for a slow cross-region read (lazy mmap reads needed 13.5 minutes
+      # for the shards alone and failed a 15 minute probe on 2026-11-16).
+      - --startup-probe=httpGet.path=/health,httpGet.port=8080,periodSeconds=20,timeoutSeconds=5,failureThreshold=90
       - --set-secrets=VLLM_API_KEY=avatar-reconstruction-key:latest
 
 options:

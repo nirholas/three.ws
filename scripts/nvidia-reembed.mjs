@@ -51,6 +51,11 @@ export const USAGE = `usage: npm run nvidia:reembed -- [--status | --dry-run | -
 // would skip rows. `vec` is a JSON array string; jsonb tables cast it to jsonb and
 // the pgvector table to vector.
 
+// embedder_prev marks every row the run migrated. A row that had no vector
+// before gets this sentinel instead of NULL, so --restore can return it to no
+// vector and still tell it apart from rows new code wrote in the target space.
+export const NO_PREVIOUS = '';
+
 export const TABLES = Object.freeze({
 	agent_memories: {
 		scope: 'agent_id',
@@ -65,7 +70,7 @@ export const TABLES = Object.freeze({
 		`,
 		write: (sql, row, tag, vec) => sql`
 			UPDATE agent_memories
-			SET embedding_prev = embedding, embedder_prev = embedder,
+			SET embedding_prev = embedding, embedder_prev = COALESCE(embedder, ${NO_PREVIOUS}),
 			    embedding = ${vec}::jsonb, embedder = ${tag}
 			WHERE id = ${row.id}::uuid
 			  AND embedder IS NOT DISTINCT FROM ${row.embedder}
@@ -74,12 +79,12 @@ export const TABLES = Object.freeze({
 		`,
 		restore: (sql, target) => sql`
 			UPDATE agent_memories
-			SET embedding = embedding_prev, embedder = embedder_prev, embedding_prev = NULL, embedder_prev = NULL
+			SET embedding = embedding_prev, embedder = NULLIF(embedder_prev, ${NO_PREVIOUS}), embedding_prev = NULL, embedder_prev = NULL
 			WHERE embedder = ${target} AND embedder_prev IS NOT NULL
 			RETURNING id
 		`,
 		counts: (sql) => sql`
-			SELECT embedder, (embedding IS NOT NULL) AS has_vector, (embedder_prev IS NOT NULL) AS has_prev, count(*)::int AS n
+			SELECT embedder, (embedding IS NOT NULL) AS has_vector, (embedding_prev IS NOT NULL) AS has_prev, count(*)::int AS n
 			FROM agent_memories GROUP BY 1, 2, 3
 		`,
 		pending: (sql, target, cursor) => sql`
@@ -111,7 +116,7 @@ export const TABLES = Object.freeze({
 		`,
 		write: (sql, row, tag, vec) => sql`
 			UPDATE agent_knowledge_chunks
-			SET embedding_prev = embedding, embedder_prev = embedder,
+			SET embedding_prev = embedding, embedder_prev = COALESCE(embedder, ${NO_PREVIOUS}),
 			    embedding = ${vec}::vector, embedder = ${tag}
 			WHERE id = ${row.id}::bigint
 			  AND embedder IS NOT DISTINCT FROM ${row.embedder}
@@ -120,12 +125,12 @@ export const TABLES = Object.freeze({
 		`,
 		restore: (sql, target) => sql`
 			UPDATE agent_knowledge_chunks
-			SET embedding = embedding_prev, embedder = embedder_prev, embedding_prev = NULL, embedder_prev = NULL
-			WHERE embedder = ${target} AND embedder_prev IS NOT NULL AND embedding_prev IS NOT NULL
+			SET embedding = embedding_prev, embedder = NULLIF(embedder_prev, ${NO_PREVIOUS}), embedding_prev = NULL, embedder_prev = NULL
+			WHERE embedder = ${target} AND embedder_prev IS NOT NULL
 			RETURNING id
 		`,
 		counts: (sql) => sql`
-			SELECT embedder, true AS has_vector, (embedder_prev IS NOT NULL) AS has_prev, count(*)::int AS n
+			SELECT embedder, true AS has_vector, (embedding_prev IS NOT NULL) AS has_prev, count(*)::int AS n
 			FROM agent_knowledge_chunks GROUP BY 1, 2, 3
 		`,
 		pending: (sql, target, cursor) => sql`
@@ -157,7 +162,7 @@ export const TABLES = Object.freeze({
 		`,
 		write: (sql, row, tag, vec) => sql`
 			UPDATE widget_knowledge_chunks
-			SET embedding_prev = embedding, embedder_prev = embedder,
+			SET embedding_prev = embedding, embedder_prev = COALESCE(embedder, ${NO_PREVIOUS}),
 			    embedding = ${vec}::jsonb, embedder = ${tag}
 			WHERE id = ${row.id}::bigint
 			  AND embedder IS NOT DISTINCT FROM ${row.embedder}
@@ -166,12 +171,12 @@ export const TABLES = Object.freeze({
 		`,
 		restore: (sql, target) => sql`
 			UPDATE widget_knowledge_chunks
-			SET embedding = embedding_prev, embedder = embedder_prev, embedding_prev = NULL, embedder_prev = NULL
+			SET embedding = embedding_prev, embedder = NULLIF(embedder_prev, ${NO_PREVIOUS}), embedding_prev = NULL, embedder_prev = NULL
 			WHERE embedder = ${target} AND embedder_prev IS NOT NULL
 			RETURNING id
 		`,
 		counts: (sql) => sql`
-			SELECT embedder, (embedding IS NOT NULL) AS has_vector, (embedder_prev IS NOT NULL) AS has_prev, count(*)::int AS n
+			SELECT embedder, (embedding IS NOT NULL) AS has_vector, (embedding_prev IS NOT NULL) AS has_prev, count(*)::int AS n
 			FROM widget_knowledge_chunks GROUP BY 1, 2, 3
 		`,
 		pending: (sql, target, cursor) => sql`

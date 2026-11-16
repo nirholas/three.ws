@@ -52,6 +52,11 @@ const NIM_URL = 'https://integrate.api.nvidia.com/v1/embeddings';
 // token), applied to every model so no model is judged on longer inputs.
 const MAX_PASSAGE_CHARS = 2048;
 const BATCH = 64;
+// Measured 2026-11-16: the hosted nemotron-3.5-embed-1b answers 500 "service
+// inference failed" for any request carrying two or more non-trivial inputs
+// (2 x 400 words fails, 1 x 1500 words succeeds), so it is driven one input per
+// request, several requests in flight. The other two take 64 x 400 words.
+const MODEL_LANE = { 'nvidia/nemotron-3.5-embed-1b': { batch: 1, parallel: 6 } };
 
 export const CONFIGS = [
 	{ label: 'nemotron-3-embed-1b@2048 (current)', model: 'nvidia/nemotron-3-embed-1b', dim: 2048 },
@@ -100,6 +105,10 @@ function parseArgs(argv) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// 429 is a rate limit: wait and retry patiently. A 5xx gets two quick retries
+// and is then thrown as `upstream_5xx`, so the caller can split the batch: the
+// nemotron-3.5 lane intermittently fails a small batch whose inputs each embed
+// fine on their own.
 async function nimEmbed(model, texts, inputType) {
 	for (let attempt = 0; ; attempt++) {
 		let res;
@@ -111,7 +120,7 @@ async function nimEmbed(model, texts, inputType) {
 				signal: AbortSignal.timeout(120_000),
 			});
 		} catch (err) {
-			if (attempt >= 6) throw err;
+			if (attempt >= 4) throw err;
 			await sleep(2000 * 2 ** attempt);
 			continue;
 		}
@@ -125,11 +134,17 @@ async function nimEmbed(model, texts, inputType) {
 		if (res.status === 422 && /content safety/i.test(body)) {
 			throw Object.assign(new Error(`${model}: input rejected by content safety screening`), { code: 'content_safety' });
 		}
-		if ((res.status === 429 || res.status >= 500) && attempt < 6) {
-			await sleep(2000 * 2 ** attempt);
+		if (res.status === 429 && attempt < 8) {
+			await sleep(2000 * 2 ** Math.min(attempt, 5));
 			continue;
 		}
-		throw new Error(`${model} ${res.status}: ${body.slice(0, 200)}`);
+		if (res.status >= 500 && attempt < 2) {
+			await sleep(1500 * (attempt + 1));
+			continue;
+		}
+		throw Object.assign(new Error(`${model} ${res.status}: ${body.slice(0, 200)}`), {
+			code: res.status >= 500 ? 'upstream_5xx' : 'upstream_error',
+		});
 	}
 }
 
@@ -159,20 +174,22 @@ function openCache(model, inputType) {
 }
 
 // The nemotron-3.5 lane screens inputs and refuses a whole batch with a 422
-// when one input trips the filter. Bisect down to the offending inputs, which
-// come back null (counted as rejections, never retrieved), so one flagged
-// passage costs only itself, exactly as it would in production.
+// when one input trips the filter, and intermittently 500s on batches. Bisect
+// down to the offending inputs, which come back null (counted as refusals,
+// never retrieved), so one bad input costs only itself, as in production.
 export const rejections = new Map();
 
 async function embedScreened(model, texts, inputType) {
 	try {
 		return await nimEmbed(model, texts, inputType);
 	} catch (err) {
-		if (err?.code !== 'content_safety') throw err;
+		if (err?.code !== 'content_safety' && err?.code !== 'upstream_5xx') throw err;
 		if (texts.length === 1) {
-			const key = `${model} ${inputType}`;
-			rejections.set(key, [...(rejections.get(key) || []), texts[0].slice(0, 120)]);
-			return [null];
+			const key = `${model} ${inputType} ${err.code}`;
+			rejections.set(key, [...(rejections.get(key) || []), texts[0].slice(0, 160)]);
+			// A refusal is a property of the input and is cached (null); a 5xx is
+			// transient, so it is not cached (undefined) and a rerun retries it.
+			return [err.code === 'content_safety' ? null : undefined];
 		}
 		const mid = Math.ceil(texts.length / 2);
 		return [
@@ -191,11 +208,18 @@ async function embedAll(model, texts, inputType, tag) {
 		if (!cache.has(h) && !firstIndex.has(h)) firstIndex.set(h, i);
 	});
 	const missing = [...firstIndex.values()];
-	for (let i = 0; i < missing.length; i += BATCH) {
-		const idx = missing.slice(i, i + BATCH);
-		const vecs = await embedScreened(model, idx.map((j) => clipped[j]), inputType);
-		idx.forEach((j, k) => cache.put(hashes[j], vecs[k]));
-		process.stderr.write(`\r  ${tag} ${model} ${inputType}: ${Math.min(i + BATCH, missing.length)}/${missing.length} new`);
+	const { batch, parallel } = MODEL_LANE[model] || { batch: BATCH, parallel: 1 };
+	const step = batch * parallel;
+	for (let i = 0; i < missing.length; i += step) {
+		const groups = [];
+		for (let g = i; g < Math.min(i + step, missing.length); g += batch) groups.push(missing.slice(g, g + batch));
+		const results = await Promise.all(groups.map((idx) => embedScreened(model, idx.map((j) => clipped[j]), inputType)));
+		groups.forEach((idx, gi) => {
+			idx.forEach((j, k) => {
+				if (results[gi][k] !== undefined) cache.put(hashes[j], results[gi][k]);
+			});
+		});
+		process.stderr.write(`\r  ${tag} ${model} ${inputType}: ${Math.min(i + step, missing.length)}/${missing.length} new`);
 	}
 	if (missing.length) process.stderr.write('\n');
 	return hashes.map((h) => cache.get(h));

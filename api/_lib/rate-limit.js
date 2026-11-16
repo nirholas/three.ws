@@ -2459,6 +2459,11 @@ export const limits = {
 	// CDN. Sized for someone building a deck from a handful of models.
 	pptxExportIp: (ip) =>
 		getLimiter('pptx:export:ip', { limit: 20, window: '5 m', local: true }).limit(ip),
+	// OpenUSD export (api/forge/export-usd.js). A miss runs a CoACD convex
+	// decomposition and two validators on an 8 vCPU worker for 10 to 60 s;
+	// repeats of the same model are cache hits on the worker but still count.
+	usdExportIp: (ip) =>
+		getLimiter('usd:export:ip', { limit: 20, window: '1 h', local: true }).limit(ip),
 	// Bedrock structure export (api/minecraft-export.js). Each call voxelizes a
 	// GLB (the parsed mesh is cached per URL, so slider moves skip the download),
 	// sized for someone dragging the height slider and downloading a few packs.

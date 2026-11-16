@@ -1,0 +1,146 @@
+{
+	"probes": {
+		"super-vl": {
+			"base64_1024": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 737,
+				"reply": "A mint green alarm clock."
+			},
+			"url": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 1794,
+				"reply": "Alarm clock."
+			},
+			"base64_3072": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 3162,
+				"reply": "Snowy mountain reflected in calm lake surrounded by forest."
+			},
+			"two_images": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 1574,
+				"reply": "apple, lemon"
+			},
+			"bytes3072": 592084
+		},
+		"nano-omni": {
+			"base64_1024": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 514,
+				"reply": "Alarm clock"
+			},
+			"url": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 1158,
+				"reply": "Alarm clock"
+			},
+			"base64_3072": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 1319,
+				"reply": "Snowy mountain, calm lake, dense forest, rocky shore."
+			},
+			"two_images": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 1359,
+				"reply": "apple, lemon"
+			},
+			"bytes3072": 592084
+		},
+		"bolt-e4b": {
+			"base64_1024": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 576,
+				"reply": "Vintage metal alarm clock"
+			},
+			"url": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 1196,
+				"reply": "Chrome bicycle handlebar detail"
+			},
+			"base64_3072": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 6605,
+				"reply": "Snow-capped mountain reflected in still, dark water."
+			},
+			"two_images": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 1241,
+				"reply": "apple, lemon"
+			},
+			"bytes3072": 592084
+		},
+		"mistral-large-4": {
+			"base64_1024": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 3695,
+				"reply": "A mint green alarm"
+			},
+			"url": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 6304,
+				"reply": ""
+			},
+			"base64_3072": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 11195,
+				"reply": ""
+			},
+			"two_images": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 7708,
+				"reply": ""
+			},
+			"bytes3072": 592084
+		},
+		"muse-glimmer": {
+			"base64_1024": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 1544,
+				"reply": ""
+			},
+			"url": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 7157,
+				"reply": ""
+			},
+			"base64_3072": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 2974,
+				"reply": ""
+			},
+			"two_images": {
+				"ok": true,
+				"status": 200,
+				"latencyMs": 5642,
+				"reply": "apple, lemon"
+			},
+			"bytes3072": 592084
+		}
+	},
+	"unavailable": {
+		"step-5": "not configured: no NVIDIA_API_KEY in the environment",
+		"gemma-4-31b": "not configured: no NVIDIA_API_KEY in the environment",
+		"cf-scout": "not configured: no CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_AI_API_TOKEN in the environment",
+		"mistral-large-4": "not configured: no NVIDIA_API_KEY in the environment",
+		"muse-glimmer": "not configured: no NVIDIA_API_KEY in the environment"
+	}
+}

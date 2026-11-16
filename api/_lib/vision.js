@@ -301,11 +301,32 @@ export class VisionUnavailableError extends Error {
 	}
 }
 
+/**
+ * Remove a reasoning model's thinking from a reply so only the answer reaches
+ * the consumer. NIM's Nemotron, Mistral and Step reasoning models put thinking
+ * in reasoning_content when the template honours enable_thinking, but a model
+ * that ignores the flag inlines it as <think>...</think> in content, and some
+ * chat templates emit only the closing tag. Alt text then read "<think>The
+ * image shows..." and a JSON consumer parsed the first brace inside the
+ * thinking instead of the verdict after it. Handled shapes:
+ *   closed blocks (<think> or <thinking>)   removed wherever they appear
+ *   a stray closing tag                     everything before it is thinking
+ *   an unclosed opening tag                 the reply is all thinking: ''
+ * PURE.
+ */
+export function stripReasoning(text) {
+	let out = String(text || '').replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, ' ');
+	const close = out.search(/<\/think(?:ing)?>(?![\s\S]*<\/think(?:ing)?>)/i);
+	if (close >= 0) out = out.slice(close).replace(/^<\/think(?:ing)?>/i, '');
+	if (/<think(?:ing)?>/i.test(out)) out = out.slice(0, out.search(/<think(?:ing)?>/i));
+	return out.replace(/[ \t]{2,}/g, ' ').trim();
+}
+
 // One OpenAI-compatible vision provider entry. The multimodal user message is
 // the only shape difference from llm.js's text providers. `getHeaders` (async)
 // replaces the static key header for keyless lanes whose auth is minted per
 // request (the Vertex Gemini credits anchor).
-function openaiCompatVisionProvider({ name, key, url, model, getHeaders = null, extraBody = null, extraHeaders = null }) {
+export function openaiCompatVisionProvider({ name, key, url, model, getHeaders = null, extraBody = null, extraHeaders = null }) {
 	return {
 		name,
 		model,
@@ -319,7 +340,10 @@ function openaiCompatVisionProvider({ name, key, url, model, getHeaders = null, 
 			messages.push({ role: 'user', content: parts });
 			return { model, max_tokens: maxTokens, temperature: 0, messages, ...(extraBody || {}) };
 		},
-		extractText: (r) => r.choices?.[0]?.message?.content || '',
+		// Only message.content is an answer. reasoning_content is the model
+		// narrating to itself and is never handed to a consumer, even when content
+		// is null (a reasoning rung whose thinking ate its token budget).
+		extractText: (r) => stripReasoning(r.choices?.[0]?.message?.content || ''),
 		extractUsage: (r) => ({ input: r.usage?.prompt_tokens ?? 0, output: r.usage?.completion_tokens ?? 0 }),
 	};
 }
@@ -531,11 +555,20 @@ function normalizeStatus(status) {
 // Throws VisionUnavailableError when nothing is configured, or the last upstream
 // error (with .status = 502/504, .code = normalized) when every provider failed
 // or the deadline elapsed.
-/** Stable reorder: rungs whose provider name is in `lead` first, in chain order. */
+/**
+ * Stable reorder: rungs named in `lead` first. An entry matches a rung by its
+ * provider name ('cloudflare') or its model id ('nvidia/nemotron-3.5-bolt-e4b'),
+ * so a caller can route its task to one measured model on every key's lane.
+ * Lead rungs come out in `lead` order, then chain order within one entry.
+ */
 export function leadWith(chain, lead) {
 	if (!Array.isArray(lead) || !lead.length) return chain;
-	const names = new Set(lead);
-	return [...chain.filter((p) => names.has(p.name)), ...chain.filter((p) => !names.has(p.name))];
+	const matches = (p, entry) => p.name === entry || p.model === entry;
+	const front = [];
+	for (const entry of lead) {
+		for (const p of chain) if (matches(p, entry) && !front.includes(p)) front.push(p);
+	}
+	return [...front, ...chain.filter((p) => !front.includes(p))];
 }
 
 export async function describeImage({

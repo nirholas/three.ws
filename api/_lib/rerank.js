@@ -38,6 +38,7 @@ import { sendOpsAlert } from './alerts.js';
 
 export const DEFAULT_RERANK_MODEL = 'nvidia/nemotron-3.5-rerank-8b';
 export const RERANK_TIMEOUT_MS = 2_500;
+export const RERANK_HEDGE_AFTER_MS = 1_000;
 export const RETIRED_COOLDOWN_S = 6 * 60 * 60;
 const RETIREMENT_STATUSES = new Set([404, 410]);
 
@@ -59,13 +60,17 @@ export function rerankUrl(model = rerankModel()) {
 const retiredKey = (model) => `rerank:retired:${model}`;
 
 /**
- * True when the rerank stage should run: the NVIDIA key is present and the
- * stage is not switched off. On by default since the 2026-11-16 eval cleared
- * its gain threshold inside the latency budget (docs/nvidia/evals/
- * rerank-2026-11-16.md); KNOWLEDGE_RERANK_ENABLED=0 turns it off.
+ * True when the rerank stage should run: KNOWLEDGE_RERANK_ENABLED=1 and the
+ * NVIDIA key. Opt-in by the 2026-11-16 eval rule (docs/nvidia/evals/
+ * rerank-2026-11-16.md): enable by default only when the served nDCG@5 gain at
+ * RERANK_TIMEOUT_MS is at least +0.05 AND the added p95 over all calls is at
+ * most 1500ms. The model itself is excellent (nDCG@5 1.000 vs 0.860 cosine
+ * when it answers) but hosted queue latency fails both halves: at 2500ms only
+ * 21 of 96 calls answered (served gain +0.029, added p95 2504ms), and with no
+ * practical timeout the added p95 was 5199ms. Re-run the eval before flipping.
  */
 export function rerankConfigured() {
-	return process.env.KNOWLEDGE_RERANK_ENABLED !== '0' && !!process.env.NVIDIA_API_KEY;
+	return process.env.KNOWLEDGE_RERANK_ENABLED === '1' && !!process.env.NVIDIA_API_KEY;
 }
 
 /** Whether `model` is inside a retirement cool-down (local or shared). */
@@ -109,51 +114,155 @@ async function markRetired(model, status, detail, now = Date.now()) {
 }
 
 /**
+ * One POST to the reranker. Resolves with the status and the parsed body (the
+ * body is always consumed, so aborting a losing hedge leaks nothing); rejects
+ * only on a network error or abort.
+ * @returns {Promise<{ status: number, ok: boolean, data: any, text: string }>}
+ */
+async function postRerank(model, query, texts, signal) {
+	const res = await fetch(rerankUrl(model), {
+		method: 'POST',
+		headers: {
+			Authorization: `Bearer ${process.env.NVIDIA_API_KEY}`,
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({ model, query: { text: query }, passages: texts.map((text) => ({ text })) }),
+		signal,
+	});
+	const text = await res.text();
+	let data = null;
+	try {
+		data = JSON.parse(text);
+	} catch {
+		/* non-JSON body: handled as a malformed answer by the caller */
+	}
+	return { status: res.status, ok: res.ok, data, text };
+}
+
+// A 4xx other than 429 is the same on a retry, so it settles the race; a 5xx,
+// a 429 or a network error lets the other request (or a retry) decide.
+const decisive = (res) => res.ok || (res.status < 500 && res.status !== 429);
+
+/**
+ * Hedged request: start one call, start a second if the first has not
+ * answered within `hedgeAfterMs` (or as soon as it fails non-decisively), and
+ * resolve with the first decisive answer. At most two calls; the loser is
+ * aborted. Hosted reranker latency is queue-dominated (the same 29-token call
+ * measured 0.5s, 2.6s and 4.6s back to back), so a second draw cuts the tail.
+ */
+function hedged(run, { hedgeAfterMs, signal, trace }) {
+	return new Promise((resolve, reject) => {
+		const controllers = [];
+		let done = false;
+		let inFlight = 0;
+		let fallback = null;
+		let timer = null;
+		const finish = (settle, value) => {
+			if (done) return;
+			done = true;
+			clearTimeout(timer);
+			for (const c of controllers) c.abort();
+			settle(value);
+		};
+		const launch = () => {
+			if (done || controllers.length >= 2) return;
+			if (controllers.length === 1) trace.hedged = true;
+			const own = new AbortController();
+			controllers.push(own);
+			inFlight++;
+			run(AbortSignal.any([signal, own.signal])).then(
+				(res) => {
+					inFlight--;
+					if (decisive(res)) return finish(resolve, res);
+					fallback = { res };
+					if (controllers.length < 2) return launch();
+					if (!inFlight) finish(resolve, res);
+				},
+				(err) => {
+					inFlight--;
+					if (signal.aborted) return finish(reject, signal.reason ?? err);
+					fallback ??= { err };
+					if (controllers.length < 2) return launch();
+					if (!inFlight) fallback.res ? finish(resolve, fallback.res) : finish(reject, fallback.err);
+				},
+			);
+		};
+		launch();
+		if (hedgeAfterMs > 0) timer = setTimeout(launch, hedgeAfterMs);
+	});
+}
+
+/** A full permutation of 0..n-1 from a rankings array, or null. */
+function permutationFrom(rankings, n) {
+	if (!Array.isArray(rankings)) return null;
+	const order = rankings.map((r) => r?.index).filter((i) => Number.isInteger(i) && i >= 0 && i < n);
+	// A partial or garbled ranking is worse than no ranking.
+	return order.length === n && new Set(order).size === n ? order : null;
+}
+
+const isSafetyRejection = (res) => res.status === 422 && /safety/i.test(res.text);
+
+/**
+ * Score every passage on its own (in parallel) after the batch was rejected by
+ * the content-safety screen. Pair logits do not depend on the batch, so the
+ * scored passages are reordered by logit exactly as the batch would have; each
+ * passage the screen rejects keeps its cosine slot, so the reranker neither
+ * promotes nor buries what it could not read. Null when nothing scored (the
+ * query itself was rejected).
+ */
+async function rerankBySingles(model, query, passages, signal, trace) {
+	const logits = await Promise.all(
+		passages.map((text) =>
+			postRerank(model, query, [text], signal).then(
+				(res) => (res.ok && Number.isFinite(res.data?.rankings?.[0]?.logit) ? res.data.rankings[0].logit : null),
+				() => null,
+			),
+		),
+	);
+	const scored = logits.map((logit, i) => ({ i, logit })).filter((s) => s.logit !== null);
+	trace.flagged = passages.length - scored.length;
+	if (!scored.length || signal.aborted) return null;
+	scored.sort((a, b) => b.logit - a.logit);
+	let next = 0;
+	return logits.map((logit, slot) => (logit === null ? slot : scored[next++].i));
+}
+
+/**
  * Rerank candidate passages against a query. Returns the candidate indexes
  * best-first (e.g. [2, 0, 1]), or null on ANY failure so callers keep their
- * existing cosine order (fail-open by contract).
+ * existing cosine order (fail-open by contract). `timeoutMs` bounds the whole
+ * operation, hedge and safety fallback included.
  *
  * @param {string} query
  * @param {string[]} passages
- * @param {{ timeoutMs?: number }} [opts]
+ * @param {{ timeoutMs?: number, hedgeAfterMs?: number, trace?: object }} [opts]
+ *   trace, when given, is filled with { path, hedged, flagged } for evals.
  * @returns {Promise<number[]|null>}
  */
-export async function rerankPassages(query, passages, { timeoutMs = RERANK_TIMEOUT_MS } = {}) {
+export async function rerankPassages(
+	query,
+	passages,
+	{ timeoutMs = RERANK_TIMEOUT_MS, hedgeAfterMs = RERANK_HEDGE_AFTER_MS, trace = {} } = {},
+) {
 	if (!rerankConfigured() || !query || !Array.isArray(passages) || passages.length < 2) return null;
 	const model = rerankModel();
 	if (await rerankRetired(model)) return null;
+	const signal = AbortSignal.timeout(timeoutMs);
+	trace.path = 'batch';
+	trace.hedged = false;
 	try {
-		const upstream = await fetch(rerankUrl(model), {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${process.env.NVIDIA_API_KEY}`,
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				model,
-				query: { text: query },
-				passages: passages.map((text) => ({ text })),
-			}),
-			signal: AbortSignal.timeout(timeoutMs),
-		});
-		if (!upstream.ok) {
-			if (RETIREMENT_STATUSES.has(upstream.status)) {
-				const body = await upstream.text().catch(() => '');
-				await markRetired(model, upstream.status, body);
-			} else {
-				console.warn('[rerank] upstream', upstream.status);
-			}
+		const res = await hedged((s) => postRerank(model, query, passages, s), { hedgeAfterMs, signal, trace });
+		if (res.ok) return permutationFrom(res.data?.rankings, passages.length);
+		if (RETIREMENT_STATUSES.has(res.status)) {
+			await markRetired(model, res.status, res.text);
 			return null;
 		}
-		const data = await upstream.json();
-		const rankings = Array.isArray(data?.rankings) ? data.rankings : null;
-		if (!rankings) return null;
-		const order = rankings
-			.map((r) => r.index)
-			.filter((i) => Number.isInteger(i) && i >= 0 && i < passages.length);
-		// A partial or garbled ranking is worse than no ranking: require a full
-		// permutation of the candidates before trusting it.
-		return new Set(order).size === passages.length && order.length === passages.length ? order : null;
+		if (isSafetyRejection(res)) {
+			trace.path = 'split';
+			return await rerankBySingles(model, query, passages, signal, trace);
+		}
+		console.warn('[rerank] upstream', res.status, res.text.slice(0, 160));
+		return null;
 	} catch (err) {
 		console.warn('[rerank] failed', err?.name === 'TimeoutError' ? `timeout after ${timeoutMs}ms` : err?.message);
 		return null;

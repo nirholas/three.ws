@@ -40,6 +40,10 @@ PY
 
 # VLLM_API_KEY (from Secret Manager) gates every /v1 route; /health stays open
 # for the Cloud Run startup probe. Images only: the judge never sends video.
+# Prefetch: vLLM does not recognise GCS FUSE as a network filesystem, so by
+# default it mmaps the shards and faults them in page by page, which measured
+# 196 s per 4.1 GB shard on the first revision. A sequential read up front is
+# what FUSE is fast at.
 exec vllm serve "$WEIGHTS_DIR" \
   --served-model-name "$SERVED_MODEL_NAME" \
   --host 0.0.0.0 \
@@ -50,4 +54,5 @@ exec vllm serve "$WEIGHTS_DIR" \
   --max-num-seqs "$MAX_NUM_SEQS" \
   --limit-mm-per-prompt '{"image":6,"video":0}' \
   --enable-prefix-caching \
+  --safetensors-load-strategy prefetch \
   "$@"

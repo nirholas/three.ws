@@ -8,6 +8,7 @@ import {
 	knownItemQuery,
 	verifyRows,
 	runTable,
+	TABLES,
 } from '../scripts/nvidia-reembed.mjs';
 
 const NEW = 'nvidia/nemotron-3.5-embed-8b@2048';
@@ -51,10 +52,10 @@ function fakeDb(rows) {
 				.map((r) => ({ id: r.id, content: r.content, embedder: r.embedder, has_vector: r.embedding != null }));
 		}
 		if (text.includes('UPDATE agent_memories') && text.includes('embedding_prev = embedding')) {
-			const [vec, tag, id, embedder, content] = v;
+			const [noPrevious, vec, tag, id, embedder, content] = v;
 			const r = table.find((x) => x.id === id && (x.embedder ?? null) === (embedder ?? null) && x.content === content);
 			if (!r) return [];
-			Object.assign(r, { embedding_prev: r.embedding, embedder_prev: r.embedder, embedding: JSON.parse(vec), embedder: tag });
+			Object.assign(r, { embedding_prev: r.embedding, embedder_prev: r.embedder ?? noPrevious, embedding: JSON.parse(vec), embedder: tag });
 			return [{ id }];
 		}
 		throw new Error(`unexpected query: ${text}`);
@@ -164,7 +165,8 @@ describe('runTable', () => {
 		const by = Object.fromEntries(db.table.map((x) => [x.id, x]));
 		expect(by.a).toMatchObject({ embedder: NEW, embedder_prev: OLD, embedding_prev: [1, 0] });
 		expect(by.b).toMatchObject({ embedder: OLD, embedding: [0, 1], embedder_prev: null });
-		expect(by.c).toMatchObject({ embedder: NEW, embedder_prev: null });
+		// It had no vector: the sentinel marks it migrated so --restore can undo it.
+		expect(by.c).toMatchObject({ embedder: NEW, embedder_prev: '', embedding_prev: null });
 		expect(by.d).toMatchObject({ embedder: OLD, embedding: [11, 1] });
 		expect(by.e).toMatchObject({ embedder: NEW, embedding: [1, 1], embedder_prev: null });
 		expect(db.cursors.get(`agent_memories|${NEW}`).completed_at).toBeTruthy();
@@ -233,23 +235,49 @@ describe('verifyRows', () => {
 	});
 });
 
+async function pgliteDb() {
+	const { PGlite } = await import('@electric-sql/pglite');
+	const pg = new PGlite();
+	const sql = async (strings, ...values) => {
+		const text = strings.reduce((acc, s, i) => acc + `$${i}` + s);
+		return (await pg.query(text, values)).rows;
+	};
+	await pg.exec(`
+		CREATE TABLE widget_knowledge_chunks (id bigserial PRIMARY KEY, widget_id text, content text,
+			embedding jsonb, embedder text, embedding_prev jsonb, embedder_prev text);
+		CREATE TABLE embedding_migrations (table_name text, target text, cursor text,
+			scanned int NOT NULL DEFAULT 0, moved int NOT NULL DEFAULT 0, backfilled int NOT NULL DEFAULT 0,
+			kept int NOT NULL DEFAULT 0, skipped int NOT NULL DEFAULT 0, started_at timestamptz NOT NULL DEFAULT now(),
+			updated_at timestamptz NOT NULL DEFAULT now(), completed_at timestamptz, verified_at timestamptz,
+			verification jsonb, PRIMARY KEY (table_name, target));
+	`);
+	return { pg, sql };
+}
+
+describe('--restore on a real Postgres engine (PGlite)', () => {
+	it('returns a row that had no vector to no vector, and leaves rows the run never touched alone', async () => {
+		const { pg, sql } = await pgliteDb();
+		await pg.query(`INSERT INTO widget_knowledge_chunks (widget_id, content, embedding, embedder) VALUES ('w', 'had old', '[1,0]', $1)`, [OLD]);
+		await pg.query(`INSERT INTO widget_knowledge_chunks (widget_id, content, embedding, embedder) VALUES ('w', 'had none', NULL, NULL)`);
+		const embed = async (texts) => texts.map(() => ({ tag: NEW, vector: [0, 1] }));
+		await runTable(sql, 'widget_knowledge_chunks', { target: NEW, embed, isServable: servable, batch: 8, pauseMs: 0, limit: Infinity, sleep: noSleep });
+		// A row written by new code after the run: in the target space, never migrated.
+		await pg.query(`INSERT INTO widget_knowledge_chunks (widget_id, content, embedding, embedder) VALUES ('w', 'fresh', '[0,1]', $1)`, [NEW]);
+		const restored = await TABLES.widget_knowledge_chunks.restore(sql, NEW);
+		expect(restored).toHaveLength(2);
+		const rows = (await pg.query(`SELECT content, embedding, embedder, embedding_prev, embedder_prev FROM widget_knowledge_chunks ORDER BY id`)).rows;
+		expect(rows).toEqual([
+			{ content: 'had old', embedding: [1, 0], embedder: OLD, embedding_prev: null, embedder_prev: null },
+			{ content: 'had none', embedding: null, embedder: null, embedding_prev: null, embedder_prev: null },
+			{ content: 'fresh', embedding: [0, 1], embedder: NEW, embedding_prev: null, embedder_prev: null },
+		]);
+		await pg.close();
+	}, 30000);
+});
+
 describe('runTable on a real Postgres engine (PGlite)', () => {
 	it('resumes a bigint-id table in numeric order, so ids past 9 are not skipped', async () => {
-		const { PGlite } = await import('@electric-sql/pglite');
-		const pg = new PGlite();
-		const sql = async (strings, ...values) => {
-			const text = strings.reduce((acc, s, i) => acc + `$${i}` + s);
-			return (await pg.query(text, values)).rows;
-		};
-		await pg.exec(`
-			CREATE TABLE widget_knowledge_chunks (id bigserial PRIMARY KEY, widget_id text, content text,
-				embedding jsonb, embedder text, embedding_prev jsonb, embedder_prev text);
-			CREATE TABLE embedding_migrations (table_name text, target text, cursor text,
-				scanned int NOT NULL DEFAULT 0, moved int NOT NULL DEFAULT 0, backfilled int NOT NULL DEFAULT 0,
-				kept int NOT NULL DEFAULT 0, skipped int NOT NULL DEFAULT 0, started_at timestamptz NOT NULL DEFAULT now(),
-				updated_at timestamptz NOT NULL DEFAULT now(), completed_at timestamptz, verified_at timestamptz,
-				verification jsonb, PRIMARY KEY (table_name, target));
-		`);
+		const { pg, sql } = await pgliteDb();
 		// 20 rows: sorted as text, the first batch of 5 is 1, 10, 11, 12, 13 and a
 		// cursor at 13 would leave 2..9 behind.
 		for (let i = 1; i <= 20; i++) {

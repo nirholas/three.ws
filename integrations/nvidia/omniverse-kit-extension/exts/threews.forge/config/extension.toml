@@ -1,0 +1,42 @@
+[package]
+version = "1.0.0"
+title = "three.ws Forge"
+description = "Generate a textured 3D model from a text prompt or a reference image with three.ws Forge and drop it into the stage, upright and to scale. Browse and import the models saved in your three.ws account."
+category = "Content"
+keywords = ["3D generation", "text to 3D", "image to 3D", "GLB", "assets", "three.ws", "generative"]
+authors = ["three.ws"]
+repository = "https://github.com/nirholas/three.ws/tree/main/integrations/nvidia/omniverse-kit-extension"
+readme = "docs/README.md"
+changelog = "docs/CHANGELOG.md"
+license = "Apache-2.0"
+icon = "data/icon.png"
+preview_image = "data/preview.png"
+
+[dependencies]
+"omni.usd" = {}
+"omni.kit.commands" = {}
+"omni.kit.asset_converter" = {}
+"omni.ui" = { optional = true }
+"omni.kit.menu.utils" = { optional = true }
+"omni.kit.viewport.utility" = { optional = true }
+"omni.kit.window.filepicker" = { optional = true }
+
+[[python.module]]
+name = "threews.forge"
+
+[settings]
+persistent.exts."threews.forge".baseUrl = "https://three.ws"
+persistent.exts."threews.forge".lane = "standard"
+persistent.exts."threews.forge".placement = "origin"
+persistent.exts."threews.forge".saveToAccount = false
+
+[[test]]
+dependencies = ["omni.kit.test"]
+args = [
+    "--/app/file/ignoreUnsavedOnExit=true",
+    "--/app/asyncRendering=false",
+]
+stdoutFailPatterns.exclude = [
+    "*Could not reach*",
+    "*three.ws request failed*",
+]

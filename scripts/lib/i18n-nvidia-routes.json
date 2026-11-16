@@ -1,5 +1,5 @@
 {
-	"generatedAt": "smoke",
+	"generatedAt": "2026-11-16",
 	"bar": {
 		"chrF": 30,
 		"chrFUnsegmented": 20,
@@ -17,15 +17,243 @@
 			"model": "nvidia/nemotron-3-ultra-550b-a55b",
 			"eligible": true,
 			"floor": 30,
-			"chrF": 67.37,
-			"integrity": 1
+			"chrF": 67.15,
+			"integrity": 1,
+			"fallback": "nvidia/riva-translate-4b-instruct-v2"
 		},
 		"sv": {
 			"model": "nvidia/nemotron-3-ultra-550b-a55b",
 			"eligible": true,
 			"floor": 30,
-			"chrF": 69.7,
-			"integrity": 1
+			"chrF": 68.88,
+			"integrity": 0.967,
+			"fallback": "nvidia/riva-translate-4b-instruct-v2"
+		},
+		"am": {
+			"model": null,
+			"eligible": false,
+			"floor": 30,
+			"best": {
+				"model": "nvidia/riva-translate-4b-instruct-v2",
+				"chrF": 0.48,
+				"integrity": 0.967
+			}
+		},
+		"ja": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 20,
+			"chrF": 40.41,
+			"integrity": 1,
+			"fallback": "nvidia/riva-translate-4b-instruct-v2"
+		},
+		"es": {
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 55.76,
+			"integrity": 1,
+			"fallback": "nvidia/nemotron-3-ultra-550b-a55b"
+		},
+		"zh-CN": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 20,
+			"chrF": 36.71,
+			"integrity": 1,
+			"fallback": "nvidia/nemotron-3.5-lightning-30b-a3b"
+		},
+		"ko": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 37.68,
+			"integrity": 1,
+			"fallback": null
+		},
+		"fr": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 72.71,
+			"integrity": 1,
+			"fallback": "nvidia/riva-translate-4b-instruct-v2"
+		},
+		"pt-BR": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 71.78,
+			"integrity": 1,
+			"fallback": null
+		},
+		"ar": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 59.93,
+			"integrity": 1,
+			"fallback": "nvidia/riva-translate-4b-instruct-v2"
+		},
+		"hi": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 57.59,
+			"integrity": 1,
+			"fallback": "nvidia/riva-translate-4b-instruct-v2"
+		},
+		"ru": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 57.84,
+			"integrity": 1,
+			"fallback": "nvidia/riva-translate-4b-instruct-v2"
+		},
+		"pl": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 51.09,
+			"integrity": 1,
+			"fallback": "nvidia/riva-translate-4b-instruct-v2"
+		},
+		"mr": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 44.64,
+			"integrity": 0.967,
+			"fallback": null
+		},
+		"no": {
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 59.44,
+			"integrity": 1,
+			"fallback": "nvidia/nemotron-3-ultra-550b-a55b"
+		},
+		"el": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 50.21,
+			"integrity": 1,
+			"fallback": "nvidia/riva-translate-4b-instruct-v2"
+		},
+		"bg": {
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 61.77,
+			"integrity": 0.967,
+			"fallback": "nvidia/nemotron-3-ultra-550b-a55b"
+		},
+		"sw": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 56.69,
+			"integrity": 1,
+			"fallback": null
+		},
+		"hr": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 55.28,
+			"integrity": 1,
+			"fallback": "nvidia/riva-translate-4b-instruct-v2"
+		},
+		"sk": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 57.32,
+			"integrity": 1,
+			"fallback": "nvidia/riva-translate-4b-instruct-v2"
+		},
+		"gu": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 44.61,
+			"integrity": 1,
+			"fallback": null
+		},
+		"kn": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 45.98,
+			"integrity": 1,
+			"fallback": null
+		},
+		"ml": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 47.35,
+			"integrity": 1,
+			"fallback": null
+		},
+		"ne": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 48.18,
+			"integrity": 0.967,
+			"fallback": "nvidia/nemotron-3.5-lightning-30b-a3b"
+		},
+		"kk": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 46.91,
+			"integrity": 1,
+			"fallback": null
+		},
+		"uz": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 50.52,
+			"integrity": 1,
+			"fallback": "nvidia/nemotron-3.5-lightning-30b-a3b"
+		},
+		"az": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 40.66,
+			"integrity": 1,
+			"fallback": null
+		},
+		"pa": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 44.69,
+			"integrity": 1,
+			"fallback": null
+		},
+		"ka": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 47.03,
+			"integrity": 1,
+			"fallback": null
+		},
+		"hy": {
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"eligible": true,
+			"floor": 30,
+			"chrF": 47.33,
+			"integrity": 1,
+			"fallback": null
 		}
 	}
 }

@@ -386,7 +386,15 @@ async function main() {
 	const rowsFile = join(RUNS_DIR, `vision-${date}.jsonl`);
 	const metaFile = join(RUNS_DIR, `vision-${date}.meta.json`);
 	const meta = existsSync(metaFile) ? JSON.parse(readFileSync(metaFile, 'utf8')) : { probes: {}, unavailable: {} };
-	const readRows = () => (existsSync(rowsFile) ? readFileSync(rowsFile, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []);
+	// A run killed mid-append can leave one torn line; that reply is simply
+	// collected again on resume.
+	const readRows = () => (existsSync(rowsFile) ? readFileSync(rowsFile, 'utf8').split('\n').flatMap((l) => {
+		try {
+			return l.trim() ? [JSON.parse(l)] : [];
+		} catch {
+			return [];
+		}
+	}) : []);
 
 	if (!values['report-only']) {
 		const wantModels = values.models ? new Set(values.models.split(',')) : null;

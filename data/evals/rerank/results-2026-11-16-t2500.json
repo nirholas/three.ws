@@ -1,0 +1,1693 @@
+{
+	"date": "2026-11-16",
+	"model": "nvidia/nemotron-3.5-rerank-8b",
+	"embedder": "nvidia/nemotron-3-embed-1b@2048",
+	"corpus_commit": "64b05444c36c5a28a677f42ab7c0ac4386e1f51e",
+	"corpus_chunks": 652,
+	"corpus_docs": 49,
+	"queries": 48,
+	"pool": 12,
+	"gold_in_pool": 48,
+	"rerank_timeout_ms": 2500,
+	"rerank_calls": 96,
+	"rerank_failures": 75,
+	"hedged_calls": 77,
+	"safety_split_calls": 14,
+	"cosine": {
+		"ndcg_at_5": 0.86,
+		"hit_at_1": 0.75,
+		"hit_at_4_chat": 0.938,
+		"hit_at_5": 0.958
+	},
+	"rerank_served": {
+		"ndcg_at_5": 0.889,
+		"hit_at_1": 0.802,
+		"hit_at_4_chat": 0.948,
+		"hit_at_5": 0.969
+	},
+	"delta_served": {
+		"ndcg_at_5": 0.029,
+		"hit_at_1": 0.052,
+		"hit_at_4_chat": 0.01,
+		"hit_at_5": 0.011
+	},
+	"rerank_model": {
+		"queries": 16,
+		"ndcg_at_5": 1,
+		"hit_at_1": 1,
+		"hit_at_4_chat": 1,
+		"hit_at_5": 1
+	},
+	"cosine_same_queries": {
+		"ndcg_at_5": 0.825,
+		"hit_at_1": 0.688,
+		"hit_at_4_chat": 0.938,
+		"hit_at_5": 0.938
+	},
+	"added_latency_ms_all_calls": {
+		"samples": 96,
+		"p50": 2502,
+		"p95": 2504,
+		"max": 2506
+	},
+	"latency_ms_answered_calls": {
+		"samples": 21,
+		"p50": 1633,
+		"p95": 2410,
+		"max": 2428
+	},
+	"per_query": [
+		{
+			"id": "r01",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 0.43067655807339306,
+				"hit1": 0,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 4
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 0.43067655807339306,
+				"hit1": 0,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2506,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r02",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 0,
+				"hit1": 0,
+				"hit4": 0,
+				"hit5": 0,
+				"gold_rank": 8
+			},
+			"model": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"served": {
+				"ndcg5": 0.5,
+				"hit1": 0.5,
+				"hit4": 0.5,
+				"hit5": 0.5
+			},
+			"calls": [
+				{
+					"ms": 2503,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 280,
+					"answered": true,
+					"path": "batch",
+					"hedged": false
+				}
+			]
+		},
+		{
+			"id": "r03",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r04",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 472,
+					"answered": true,
+					"path": "split",
+					"hedged": false
+				},
+				{
+					"ms": 355,
+					"answered": true,
+					"path": "split",
+					"hedged": false
+				}
+			]
+		},
+		{
+			"id": "r05",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 0.6309297535714575,
+				"hit1": 0,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 2
+			},
+			"model": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"served": {
+				"ndcg5": 0.8154648767857288,
+				"hit1": 0.5,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 184,
+					"answered": true,
+					"path": "batch",
+					"hedged": false
+				},
+				{
+					"ms": 2501,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r06",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2428,
+					"answered": true,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r07",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "split",
+					"hedged": false
+				},
+				{
+					"ms": 2504,
+					"answered": false,
+					"path": "split",
+					"hedged": false
+				}
+			]
+		},
+		{
+			"id": "r08",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 0.5,
+				"hit1": 0,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 3
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 0.5,
+				"hit1": 0,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2501,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2503,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r09",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 0.43067655807339306,
+				"hit1": 0,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 4
+			},
+			"model": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"served": {
+				"ndcg5": 0.7153382790366966,
+				"hit1": 0.5,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2410,
+					"answered": true,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2501,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r10",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2503,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r11",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2027,
+					"answered": true,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 325,
+					"answered": true,
+					"path": "batch",
+					"hedged": false
+				}
+			]
+		},
+		{
+			"id": "r12",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2208,
+					"answered": true,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r13",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 0.6309297535714575,
+				"hit1": 0,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 2
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 0.6309297535714575,
+				"hit1": 0,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r14",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2503,
+					"answered": false,
+					"path": "split",
+					"hedged": false
+				},
+				{
+					"ms": 2506,
+					"answered": false,
+					"path": "split",
+					"hedged": false
+				}
+			]
+		},
+		{
+			"id": "r15",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2501,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2501,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r16",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2503,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2501,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r17",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2503,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r18",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 0.38685280723454163,
+				"hit1": 0,
+				"hit4": 0,
+				"hit5": 1,
+				"gold_rank": 5
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 0.38685280723454163,
+				"hit1": 0,
+				"hit4": 0,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2504,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r19",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r20",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2503,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r21",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2501,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r22",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2504,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r23",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2504,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2503,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r24",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 0,
+				"hit1": 0,
+				"hit4": 0,
+				"hit5": 0,
+				"gold_rank": 6
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 0,
+				"hit1": 0,
+				"hit4": 0,
+				"hit5": 0
+			},
+			"calls": [
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r25",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2501,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2501,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r26",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r27",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2503,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r28",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 0.5,
+				"hit1": 0,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 3
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 0.5,
+				"hit1": 0,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2501,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r29",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r30",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2503,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r31",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r32",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 0.5,
+				"hit1": 0,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 3
+			},
+			"model": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"served": {
+				"ndcg5": 0.75,
+				"hit1": 0.5,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 1633,
+					"answered": true,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r33",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2504,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2501,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r34",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2501,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2306,
+					"answered": true,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r35",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 0.6309297535714575,
+				"hit1": 0,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 2
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 0.6309297535714575,
+				"hit1": 0,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "split",
+					"hedged": false
+				},
+				{
+					"ms": 2504,
+					"answered": false,
+					"path": "split",
+					"hedged": false
+				}
+			]
+		},
+		{
+			"id": "r36",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2503,
+					"answered": false,
+					"path": "split",
+					"hedged": false
+				},
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "split",
+					"hedged": false
+				}
+			]
+		},
+		{
+			"id": "r37",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 0.6309297535714575,
+				"hit1": 0,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 2
+			},
+			"model": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"served": {
+				"ndcg5": 0.8154648767857288,
+				"hit1": 0.5,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 1713,
+					"answered": true,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2501,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r38",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2501,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r39",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2501,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2501,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r40",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2503,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r41",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2503,
+					"answered": false,
+					"path": "split",
+					"hedged": false
+				},
+				{
+					"ms": 1913,
+					"answered": true,
+					"path": "split",
+					"hedged": false
+				}
+			]
+		},
+		{
+			"id": "r42",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2501,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r43",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": null,
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "split",
+					"hedged": false
+				},
+				{
+					"ms": 2502,
+					"answered": false,
+					"path": "split",
+					"hedged": false
+				}
+			]
+		},
+		{
+			"id": "r44",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 1355,
+					"answered": true,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2501,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r45",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2274,
+					"answered": true,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 303,
+					"answered": true,
+					"path": "batch",
+					"hedged": false
+				}
+			]
+		},
+		{
+			"id": "r46",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 2504,
+					"answered": false,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 2238,
+					"answered": true,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r47",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 1298,
+					"answered": true,
+					"path": "batch",
+					"hedged": true
+				},
+				{
+					"ms": 1163,
+					"answered": true,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		},
+		{
+			"id": "r48",
+			"in_pool": true,
+			"cosine": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"model": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1,
+				"gold_rank": 1
+			},
+			"served": {
+				"ndcg5": 1,
+				"hit1": 1,
+				"hit4": 1,
+				"hit5": 1
+			},
+			"calls": [
+				{
+					"ms": 508,
+					"answered": true,
+					"path": "batch",
+					"hedged": false
+				},
+				{
+					"ms": 2303,
+					"answered": true,
+					"path": "batch",
+					"hedged": true
+				}
+			]
+		}
+	]
+}

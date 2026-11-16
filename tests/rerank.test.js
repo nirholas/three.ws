@@ -26,7 +26,7 @@ function json(status, body) {
 
 beforeEach(() => {
 	process.env.NVIDIA_API_KEY = 'nvapi-test';
-	delete process.env.KNOWLEDGE_RERANK_ENABLED;
+	process.env.KNOWLEDGE_RERANK_ENABLED = '1';
 	delete process.env.KNOWLEDGE_RERANK_MODEL;
 	shared.clear();
 	resetRerankState();
@@ -40,11 +40,13 @@ afterEach(() => {
 });
 
 describe('configuration', () => {
-	it('is on by default with a key, off with KNOWLEDGE_RERANK_ENABLED=0 or no key', () => {
+	it('is opt-in: on only with KNOWLEDGE_RERANK_ENABLED=1 and a key', () => {
 		expect(rerankConfigured()).toBe(true);
+		delete process.env.KNOWLEDGE_RERANK_ENABLED;
+		expect(rerankConfigured()).toBe(false);
 		process.env.KNOWLEDGE_RERANK_ENABLED = '0';
 		expect(rerankConfigured()).toBe(false);
-		delete process.env.KNOWLEDGE_RERANK_ENABLED;
+		process.env.KNOWLEDGE_RERANK_ENABLED = '1';
 		delete process.env.NVIDIA_API_KEY;
 		expect(rerankConfigured()).toBe(false);
 	});
@@ -118,6 +120,83 @@ describe('fail-open', () => {
 		const started = Date.now();
 		expect(await rerankPassages('q', PASSAGES, { timeoutMs: 50 })).toBeNull();
 		expect(Date.now() - started).toBeLessThan(1_000);
+	});
+});
+
+describe('content-safety rejection', () => {
+	// The hosted endpoint rejects the WHOLE batch with 422 when any one passage
+	// trips its safety screen (9 of 652 docs chunks did in the 2026-11-16 eval,
+	// which sank 7 of 48 twelve-passage pools). Pair logits do not depend on the
+	// batch, so scoring each passage alone and merging by logit is exact.
+	const SAFETY = { error: { message: 'input rejected by content safety screening' } };
+	const four = ['a cosine first', 'b flagged', 'c best match', 'd middling'];
+	const logits = { 'a cosine first': -3, 'c best match': 2, 'd middling': -1 };
+
+	function safetyFetch() {
+		return vi.fn(async (_url, init) => {
+			const { passages } = JSON.parse(init.body);
+			if (passages.some((p) => p.text.includes('flagged'))) return json(422, SAFETY);
+			if (passages.length > 1) return json(500, 'unexpected batch');
+			return json(200, { rankings: [{ index: 0, logit: logits[passages[0].text] }] });
+		});
+	}
+
+	it('rescores passages one by one and keeps a flagged passage in its cosine slot', async () => {
+		const fetchMock = safetyFetch();
+		vi.stubGlobal('fetch', fetchMock);
+		const trace = {};
+		expect(await rerankPassages('q', four, { trace })).toEqual([2, 1, 3, 0]);
+		expect(fetchMock).toHaveBeenCalledTimes(1 + four.length);
+		expect(trace).toMatchObject({ path: 'split', flagged: 1 });
+		expect(sendOpsAlert).not.toHaveBeenCalled();
+	});
+
+	it('returns null when the query itself is rejected (every passage flagged)', async () => {
+		vi.stubGlobal('fetch', vi.fn(async () => json(422, SAFETY)));
+		expect(await rerankPassages('q', four)).toBeNull();
+	});
+
+	it('does not treat a safety 422 as a retirement', async () => {
+		vi.stubGlobal('fetch', safetyFetch());
+		await rerankPassages('q', four);
+		const fetchMock = vi.fn(async () => json(200, { rankings: [{ index: 1 }, { index: 0 }, { index: 2 }] }));
+		vi.stubGlobal('fetch', fetchMock);
+		expect(await rerankPassages('q', PASSAGES)).toEqual([1, 0, 2]);
+	});
+});
+
+describe('hedging', () => {
+	it('fires a second request when the first is slow and uses whichever answers first', async () => {
+		let calls = 0;
+		const fetchMock = vi.fn((_url, init) => {
+			calls++;
+			if (calls === 1) {
+				return new Promise((_resolve, reject) => init.signal.addEventListener('abort', () => reject(init.signal.reason)));
+			}
+			return Promise.resolve(json(200, { rankings: [{ index: 2 }, { index: 1 }, { index: 0 }] }));
+		});
+		vi.stubGlobal('fetch', fetchMock);
+		const trace = {};
+		expect(await rerankPassages('q', PASSAGES, { hedgeAfterMs: 20, trace })).toEqual([2, 1, 0]);
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+		expect(trace.hedged).toBe(true);
+	});
+
+	it('uses the hedge as one retry when the first request fails fast with a 5xx', async () => {
+		let calls = 0;
+		const fetchMock = vi.fn(async () =>
+			++calls === 1 ? json(503, 'busy') : json(200, { rankings: [{ index: 0 }, { index: 2 }, { index: 1 }] }),
+		);
+		vi.stubGlobal('fetch', fetchMock);
+		expect(await rerankPassages('q', PASSAGES, { hedgeAfterMs: 5_000 })).toEqual([0, 2, 1]);
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+	});
+
+	it('never sends more than two requests for one batch', async () => {
+		const fetchMock = vi.fn(async () => json(503, 'busy'));
+		vi.stubGlobal('fetch', fetchMock);
+		expect(await rerankPassages('q', PASSAGES, { hedgeAfterMs: 1 })).toBeNull();
+		expect(fetchMock).toHaveBeenCalledTimes(2);
 	});
 });
 

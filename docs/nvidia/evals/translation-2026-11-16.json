@@ -1,0 +1,1355 @@
+{
+	"date": "2026-11-16",
+	"dataset": "FLORES-200 devtest, 40 evenly spaced sentences per language",
+	"integritySet": "30 public/locales/en.json strings carrying placeholders, HTML or glossary terms",
+	"bar": {
+		"chrF": 30,
+		"chrFUnsegmented": 20,
+		"integrity": 0.95,
+		"parse": 0.9,
+		"tieChrF": 0.5
+	},
+	"cells": [
+		{
+			"code": "ar",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 59.93,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 15.78,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "ar",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 47.59,
+			"integrity": 0.9,
+			"parse": 1,
+			"latencyMedianSec": 5.33,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]إطلاق الرمز[[T3]] [[T4]]بنقرة واحدة[[T5]] [[T6]]شاهد →[[T7]]"
+				},
+				{
+					"key": "ibm_x402_demo.want_image_3d_auto_rigging_ar_preview",
+					"got": "تريد صورة→3D، rigging تلقائي، معاينة الواقع المعزز والمعرض الكامل؟ [[T0]]افتح الأداة الكاملة ↗[[T2]]"
+				},
+				{
+					"key": "news_2057780453709648200.create_your_3d_agent_give_it_an",
+					"got": "أنشئ وكيل 3D، أعطه عقل LLM (ذاكرة + مشاعر + استخدام أدوات)، محفظة على السلسلة حقيقية، ونقطة نهاية دفع مباشر - كل ذلك من داخل Claude."
+				}
+			]
+		},
+		{
+			"code": "ar",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 49.76,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 5.62,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "az",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 40.66,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 39.91,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "az",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 28.34,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 12.61,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]Token Luncması[[T3]] [[T4]]Tek tıkla[[T5]] [[T6]]Gör →[[T7]]"
+				}
+			]
+		},
+		{
+			"code": "az",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 23.76,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 6.24,
+			"requests": 7,
+			"integrityFailures": [
+				{
+					"key": "news_2049447738434339171.meta_twitter_description",
+					"got": "ağlara para erişimini sağlayın. vanity adresleriyle solana ajanları oluşturun. ön ekleri seçin, anahtarlar klient tarafında oluşturulur, [[T1]]de ticaret yapmak"
+				}
+			]
+		},
+		{
+			"code": "bg",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 59.95,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 24.65,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "bg",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 23.9,
+			"integrity": 0.967,
+			"parse": 0.75,
+			"latencyMedianSec": 11.57,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]Токен Запуск[[T3]] [[T4]]Едно клик[[T5]] [[T6]]Виж →[[T7]]"
+				}
+			]
+		},
+		{
+			"code": "bg",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 61.77,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 7.53,
+			"requests": 7,
+			"integrityFailures": [
+				{
+					"key": "marketplace.memory",
+					"got": "[[T0]]◎[[T1]] [[T2]]Памет"
+				}
+			]
+		},
+		{
+			"code": "de",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 67.15,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 16.83,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "de",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 61.89,
+			"integrity": 0.933,
+			"parse": 1,
+			"latencyMedianSec": 5.52,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]Token-Launch[[T3]] [[T4]]Ein-Klick[[T5]] [[T6]]Sieht →[[T7]]"
+				},
+				{
+					"key": "ibm_x402_demo.want_image_3d_auto_rigging_ar_preview",
+					"got": "[[T0]]Bild→3D, Auto-Rigging, AR-Vorschau und die volle Galerie? [[T0]]Vollständiges [[T2]]-Tool ↗[[T1]]"
+				}
+			]
+		},
+		{
+			"code": "de",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 64.65,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 5.39,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "el",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 50.21,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 28.34,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "el",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 36.77,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 9.84,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]Έναρξη Τόκена[[T3]] [[T4]]Μια κλικ[[T5]] [[T6]]Δείτε →[[T7]]"
+				}
+			]
+		},
+		{
+			"code": "el",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 47.58,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 8.91,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "es",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 55.66,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 21.55,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "es",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 54.59,
+			"integrity": 0.933,
+			"parse": 1,
+			"latencyMedianSec": 4.53,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]Lanzamiento de Token[[T3]] [[T4]]Un clic[[T5]] [[T6]]Ver →[[T7]]"
+				},
+				{
+					"key": "ibm_x402_demo.want_image_3d_auto_rigging_ar_preview",
+					"got": "¿Quieres imagen→3D, auto-rigging, vista previa AR y el galería completa? [[T0]]Abre la herramienta completa ↗[[T1]]"
+				}
+			]
+		},
+		{
+			"code": "es",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 55.76,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 6.23,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "fr",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 72.71,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 13.16,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "fr",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 70,
+			"integrity": 0.933,
+			"parse": 1,
+			"latencyMedianSec": 5.52,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "connect.grok_auth_none",
+					"got": "[[T0]]Aucun[[T1]].[[T2]] Ces outils sont gratuits et ne nécessitent aucun compte, donc aucune carte de connexion n'apparaît."
+				},
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]Lancement de Token[[T3]] [[T4]]Un clic[[T5]] [[T6]]Voir →[[T7]]"
+				}
+			]
+		},
+		{
+			"code": "fr",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 67.32,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 5.64,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "gu",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 44.61,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 45.99,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "gu",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 19.06,
+			"integrity": 0.967,
+			"parse": 0.75,
+			"latencyMedianSec": 15.73,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "news_live_on_alibaba_cloud_marketplace.three_ws_launches_on_alibaba_cloud_marketpla",
+					"got": null
+				}
+			]
+		},
+		{
+			"code": "gu",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 0.74,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 7.18,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "hi",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 57.59,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 16.34,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "hi",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 48.13,
+			"integrity": 0.9,
+			"parse": 1,
+			"latencyMedianSec": 7.26,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "news_2057780453709648200.create_your_3d_agent_give_it_an",
+					"got": "[[T0]] बनाएं अपना 3D एजेंट, एक LLM दिमाग दें (memory + emotions + tool use), एक real on-chain wallet दें, और एक live [[T0]] payment endpoint - सब Claude के भीतर"
+				},
+				{
+					"key": "news_live_on_alibaba_cloud_marketplace.three_ws_launches_on_alibaba_cloud_marketpla",
+					"got": null
+				},
+				{
+					"key": "pose.meta_description",
+					"got": "[[T0]]अपने ब्राउज़र में किसी भी [[T0]] अवतार को पोज़ और एनिमेट करें। IK के साथ जोड़ों को खींचें, टाइमलाइन को कीफ़्रेम करें, लाइव पूर्वावलोकन करें, फिर एक एनिमेट"
+				}
+			]
+		},
+		{
+			"code": "hi",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 51.53,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 7.22,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "hr",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 55.28,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 26.12,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "hr",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 25.17,
+			"integrity": 0.967,
+			"parse": 0.75,
+			"latencyMedianSec": 8.55,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]Pokretanje tokena[[T3]] [[T4]]Jednoklik[[T5]] [[T6]]Pogledaj →[[T7]]"
+				}
+			]
+		},
+		{
+			"code": "hr",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 49.94,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 6.82,
+			"requests": 7,
+			"integrityFailures": [
+				{
+					"key": "docs_walk_walk_page.meta_description",
+					"got": "Stranica s opisanjem: tipkovnica i kontrola dotičanjem, četiri načina kamere, šest okoliša, osam gestikula, prisutnost za zajednički igranje u stvarnom vremenu,"
+				}
+			]
+		},
+		{
+			"code": "hy",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 47.33,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 31.23,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "hy",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 12.47,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 7.72,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "hy",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 0.12,
+			"integrity": 0.9,
+			"parse": 0.714,
+			"latencyMedianSec": 52.22,
+			"requests": 7,
+			"integrityFailures": [
+				{
+					"key": "docs_walk_walk_page.meta_description",
+					"got": null
+				},
+				{
+					"key": "features.for_creators_who_have_built_something_useful",
+					"got": null
+				},
+				{
+					"key": "forge.what_other_people_just_forged_open_one",
+					"got": null
+				}
+			]
+		},
+		{
+			"code": "id",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 60.82,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 7.08,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "nvidia_index.physically_based_materials_basecolor_metalli",
+					"got": "[[T0]]Material fisika dasar[[T1]: baseColor, metallicRoughness, dan normal maps"
+				}
+			]
+		},
+		{
+			"code": "id",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 67.52,
+			"integrity": 0.933,
+			"parse": 1,
+			"latencyMedianSec": 6.03,
+			"requests": 7,
+			"integrityFailures": [
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]Peluncuran Token[[T3]] [[T4]]Token satu klik[[T5]] [[T6]]Lihat →[[T7]]"
+				},
+				{
+					"key": "sitemap_index.t_news_three_ws_first_month_3d_agent_layer",
+					"got": "Satu Bulan di [[T0]]: Bagaimana [[T0]] Membangun Lapisan Agen 3D Internet"
+				}
+			]
+		},
+		{
+			"code": "ja",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 40.41,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 18.11,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "ja",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 34.48,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 6.71,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "news_2057780453709648200.create_your_3d_agent_give_it_an",
+					"got": "[[T0]] を使って 3D エージェントを作成し、メモリ + 感情 + ツール使用機能を持つ LLM ブレインを与え、オンチェーン ウォレットとライブ [[T0]] 支払いエンドポイントを付与します。Claude の中からすべて行えます。"
+				}
+			]
+		},
+		{
+			"code": "ja",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 34.88,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 7.07,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "ka",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 47.03,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 42.13,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "ka",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 15.29,
+			"integrity": 0.967,
+			"parse": 0.75,
+			"latencyMedianSec": 12.04,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "news_live_on_alibaba_cloud_marketplace.three_ws_launches_on_alibaba_cloud_marketpla",
+					"got": null
+				}
+			]
+		},
+		{
+			"code": "ka",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 1.45,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 6.8,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "kk",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 46.91,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 42.41,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "kk",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 0,
+			"integrity": 0.933,
+			"parse": 0.5,
+			"latencyMedianSec": 45.14,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "ibm_x402_demo.want_image_3d_auto_rigging_ar_preview",
+					"got": "Көшірме 3D, авто-руикальдау, AR көру және бүгінгі галерея? [[T0]]Бұл құралны бүгінгі қараңыз ↗[[T1]]"
+				},
+				{
+					"key": "news_2057780453709648200.create_your_3d_agent_give_it_an",
+					"got": "3D агентіңізді құру, оны LLM аумақ (қатысушылық + әсер + құрал қолдану), жиырма бір нақты on-chain қондырғы және жиырма бір жиі төлем төмендігі - барлық мәселел"
+				}
+			]
+		},
+		{
+			"code": "kk",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 16.46,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 6.1,
+			"requests": 7,
+			"integrityFailures": [
+				{
+					"key": "docs_walk_walk_page.meta_description",
+					"got": "Страница «Посмотрите»: управление клавиатурой и сенсорным экраном, четыре режима камеры, шесть сред, восемь жестов, живой мультиплеер, прохождение камеры AR и п"
+				}
+			]
+		},
+		{
+			"code": "km",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 2.95,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 5.79,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "kn",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 45.98,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 40.09,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "kn",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 5.63,
+			"integrity": 1,
+			"parse": 0.75,
+			"latencyMedianSec": 8.03,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "kn",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 0.64,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 6.9,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "ko",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 37.68,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 21.72,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "ko",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 29.86,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 5.79,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "sitemap_index.d_docs_autopilot",
+					"got": "[[T0]]로 매수-소각 및 홀더 분배 규칙을 설정하고 [[T0]] 플로어와 가드레일을 적용해 에이전트가 자율적으로 코인을 운용하게 하세요."
+				}
+			]
+		},
+		{
+			"code": "ko",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 32.5,
+			"integrity": 0.933,
+			"parse": 1,
+			"latencyMedianSec": 6.07,
+			"requests": 7,
+			"integrityFailures": [
+				{
+					"key": "features.for_creators_who_have_built_something_useful",
+					"got": "[[T0]]대상: 유용한 것을 구축한 창작자들이 있으며 청구 인프라를 구축하지 않고 이를 위해 비용을 청구하고자 하는 경우."
+				},
+				{
+					"key": "vanity_premium_index.point_an_x402_client_a_pay_capable",
+					"got": null
+				}
+			]
+		},
+		{
+			"code": "ky",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 17.12,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 6.84,
+			"requests": 7,
+			"integrityFailures": [
+				{
+					"key": "docs_walk_walk_page.meta_description",
+					"got": "Страница «Посмотрите»: управление клавиатурой и сенсорным экраном, четыре режима камеры, шесть сред, восемь жестов, живая многопользовательская присутность, про"
+				}
+			]
+		},
+		{
+			"code": "ml",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 47.35,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 34.14,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "ml",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 0,
+			"integrity": 0.933,
+			"parse": 0.5,
+			"latencyMedianSec": 46.81,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]ടോക്ക് ലോഞ്ച്[[T3]] [[T4]]ഒരു ക്ലിക്കിൽ[[T5]] [[T6]]നോക്കി →[[T7]]"
+				},
+				{
+					"key": "ibm_x402_demo.want_image_3d_auto_rigging_ar_preview",
+					"got": "ഇമേജ്→3D, ഓട്ടോ‑റിഗിംഗ്, AR പ്രീവ്യൂ ആണ് ആഗ്രഹിക്കുന്നത്? [[T0]]To[[T2]] the full [[T3]] tool ↗[[T1]]"
+				}
+			]
+		},
+		{
+			"code": "ml",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 0.7,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 5.43,
+			"requests": 7,
+			"integrityFailures": [
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]Token Launch[[T3]] [[T4]]Token satu klik[[T5]] [[T6]]Lihat →[[T7]]"
+				}
+			]
+		},
+		{
+			"code": "mr",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 44.64,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 33.13,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "features.for_creators_who_have_built_something_useful",
+					"got": null
+				}
+			]
+		},
+		{
+			"code": "mr",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 0,
+			"integrity": 0.933,
+			"parse": 0.5,
+			"latencyMedianSec": 67.62,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "news_live_on_alibaba_cloud_marketplace.three_ws_launches_on_alibaba_cloud_marketpla",
+					"got": "[[T0]] Alibaba Cloud Marketplace वर लॉन्च, नेमोट्रॉन एजेंट पेमेंट्स ला हाइपरस्केल"
+				},
+				{
+					"key": "pose.meta_description",
+					"got": "[[T0]] अवाॅटरचा पोज आणि एनीमेशन तुमच्या ब्राउझरमध्ये. जोइंट्सचा घुमाव IK येथे, टाइमलाइनचा कीफ्रेम, लाइव पूर्वावलोकन, तर एक एनिमेटेड [[T2]] एक्सपोर्ट करा. तो तुम"
+				}
+			]
+		},
+		{
+			"code": "mr",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 22.79,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 7.61,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "ne",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 48.18,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 34.97,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "features.for_creators_who_have_built_something_useful",
+					"got": null
+				}
+			]
+		},
+		{
+			"code": "ne",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 33.74,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 15.08,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "marketplace.memory",
+					"got": "[[T0]]◎[[T1]] [[T2]]याद्दाशा"
+				}
+			]
+		},
+		{
+			"code": "ne",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 20.88,
+			"integrity": 1,
+			"parse": 0.857,
+			"latencyMedianSec": 7.35,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "no",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 59.78,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 26.56,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "no",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 54.55,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 19.39,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "no",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 59.44,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 6.22,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "or",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 0,
+			"integrity": 0.333,
+			"parse": 0.25,
+			"latencyMedianSec": 44.28,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "3d.checking",
+					"got": null
+				},
+				{
+					"key": "ar_view.ar_ready",
+					"got": null
+				},
+				{
+					"key": "aws_index.three_ws_on_aws",
+					"got": null
+				}
+			]
+		},
+		{
+			"code": "or",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 0.89,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 6.9,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "pa",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 44.69,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 43.52,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "pa",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 27.18,
+			"integrity": 0.867,
+			"parse": 1,
+			"latencyMedianSec": 12.82,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "connect.grok_auth_none",
+					"got": "[[T0]]None[[T1]]. [[T2]] ਇਹ ਟੂਲਜ਼ ਫਰੀ ਹਨ ਅਤੇ ਕੋਈ ਖਾਤਾ ਲੋੜ ਨਹੀਂ, ਇਸ ਲਈ ਸਾਈਨ-ਇਨ ਕਾਰਡ ਨਹੀਂ ਦਿਖਾਇਆ ਜਾਂਦਾ।"
+				},
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]ਟੋਕਨ ਲਾਚ[[T3]] [[T4]]ਇਕ-ਕਲਿੱਕ[[T5]] [[T6]]ਦेखੋ →[[T7]]"
+				},
+				{
+					"key": "news_2049447738434339171.meta_twitter_description",
+					"got": "ਆਪਣੇ ਏਜেন্টਾਂ ਨੂੰ ਪੈਸੇ ਦਿਓ। ਸੋਲਾਨਾ ਏਜেন্টਸ ਉੱਚੇ ਕਰੋ। ਪ੍ਰੀਫਿਕਸ ਚੁਣੋ, ਕੁੱਲੀ ਜਨਰੇਟ ਹੋਏ ਕੁੱਲੀ, ਤਿਆਰ ਹਨ ਤਰੋਦਾਰ ਬਿਨਾਂ।"
+				}
+			]
+		},
+		{
+			"code": "pa",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 1.05,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 7.25,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "pl",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 51.09,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 22.14,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "pl",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 49.1,
+			"integrity": 0.9,
+			"parse": 1,
+			"latencyMedianSec": 9.02,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "connect.grok_auth_none",
+					"got": "[[T0]]Brak[[T1]].[[T2]] Te narzędzia są darmowe i nie wymagają konta, więc nie pojawia się karta logowania."
+				},
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]Uruchomienie tokenu[[T3]] [[T4]]Jedno kliknięcie[[T5]] [[T6]]Zobacz →[[T7]]"
+				},
+				{
+					"key": "news_live_on_alibaba_cloud_marketplace.three_ws_launches_on_alibaba_cloud_marketpla",
+					"got": "[[T0]] Debiut na Alibaba Cloud Marketplace, przynoszący native płatności agentów do hyperskali"
+				}
+			]
+		},
+		{
+			"code": "pl",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 49.04,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 6.75,
+			"requests": 7,
+			"integrityFailures": [
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]Token Launch[[T3]] [[T4]]Jednoklikowe tokeny[[T5]] [[T6]]Zobacz →[[T7]]"
+				}
+			]
+		},
+		{
+			"code": "pt-BR",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 71.78,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 15.4,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "pt-BR",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 65.3,
+			"integrity": 0.9,
+			"parse": 1,
+			"latencyMedianSec": 4.93,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "connect.grok_auth_none",
+					"got": "[[T0]]Nenhum[[T1]].[[T2]] Essas ferramentas são gratuitas e não exigem conta, então nenhum cartão de login aparece."
+				},
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]Lançamento de Token[[T3]] [[T4]]Um clique[[T5]] [[T6]]Ver →[[T7]]"
+				},
+				{
+					"key": "ibm_x402_demo.want_image_3d_auto_rigging_ar_preview",
+					"got": "Quer image→3D, auto-rigging, preview AR e a galeria completa? [[T0]]Abra a ferramenta completa ↗[[T1]]"
+				}
+			]
+		},
+		{
+			"code": "pt-BR",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 68.57,
+			"integrity": 0.933,
+			"parse": 1,
+			"latencyMedianSec": 5.41,
+			"requests": 7,
+			"integrityFailures": [
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]Lançamento de token[[T3]] [[T4]]Token de um clique[[T5]] [[T6]]Veja →[[T7]]"
+				},
+				{
+					"key": "forge.what_other_people_just_forged_open_one",
+					"got": "O que outras pessoas apenas criaram. Abra um no visualizador ou [[T0]Remix[[T1]] a prompt e faça dele seu."
+				}
+			]
+		},
+		{
+			"code": "ru",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 57.84,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 21.55,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "ru",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 48.45,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 8.56,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]Запуск токена[[T3]] [[T4]]Однонажатие[[T5]] [[T6]]Смотреть →[[T7]]"
+				}
+			]
+		},
+		{
+			"code": "ru",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 49.81,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 6.18,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "si",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 0,
+			"integrity": 0,
+			"parse": 0,
+			"latencyMedianSec": 42.73,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "3d.checking",
+					"got": null
+				},
+				{
+					"key": "ar_view.ar_ready",
+					"got": null
+				},
+				{
+					"key": "aws_index.three_ws_on_aws",
+					"got": null
+				}
+			]
+		},
+		{
+			"code": "si",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 0.78,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 6.27,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "sk",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 57.32,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 31.3,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "sk",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 46.19,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 8.54,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "sk",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 55.18,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 7.17,
+			"requests": 7,
+			"integrityFailures": [
+				{
+					"key": "forge.what_other_people_just_forged_open_one",
+					"got": "Čo iní ľudia len vyrobili. Otvorte jeden v prehliadači, alebo [[T0]Remix[[T1]] jeho prompt a urobte si ho svojím."
+				}
+			]
+		},
+		{
+			"code": "sv",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 68.88,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 23.81,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "ar_view.ar_ready",
+					"got": null
+				}
+			]
+		},
+		{
+			"code": "sv",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 61.55,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 7.93,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "nvidia_index.physically_based_materials_basecolor_metalli",
+					"got": "[[T0]]Fysiskt baserade material[[T1]: baseColor, metallicRoughness, och normal maps"
+				}
+			]
+		},
+		{
+			"code": "sv",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 66.5,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 6.34,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "sw",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 56.69,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 29.02,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "sw",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 34.75,
+			"integrity": 0.333,
+			"parse": 0.75,
+			"latencyMedianSec": 15.15,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "3d.checking",
+					"got": null
+				},
+				{
+					"key": "ar_view.ar_ready",
+					"got": null
+				},
+				{
+					"key": "aws_index.three_ws_on_aws",
+					"got": null
+				}
+			]
+		},
+		{
+			"code": "sw",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 1.27,
+			"integrity": 1,
+			"parse": 0.857,
+			"latencyMedianSec": 5.83,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "tr",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 46.36,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 7.17,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "tr",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 54.39,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 5.85,
+			"requests": 7,
+			"integrityFailures": [
+				{
+					"key": "news_2049447738434339171.meta_twitter_description",
+					"got": "Ajanlarınızın para erişimine izin verin. vanity adresleriyle solana ajanlarını başlatın. Ön ekleri seçin, müşteri tarafında oluşturulan anahtarlar, [[T1]]de tic"
+				}
+			]
+		},
+		{
+			"code": "uz",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 50.52,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 28.34,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "uz",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 36.27,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 8.95,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "news_live_on_alibaba_cloud_marketplace.three_ws_launches_on_alibaba_cloud_marketpla",
+					"got": null
+				}
+			]
+		},
+		{
+			"code": "uz",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 11.32,
+			"integrity": 0.933,
+			"parse": 1,
+			"latencyMedianSec": 6.58,
+			"requests": 7,
+			"integrityFailures": [
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]Token Launch[[T3]] [[T4]]Единоразовый нажатие на токен[[T5]] [[T6]]Смотреть →[[T7]]"
+				},
+				{
+					"key": "docs_walk_walk_page.meta_description",
+					"got": "Страница «Посмотрите»: управление клавиатурой и сенсорным экраном, четыре режима камеры, шесть сред, восемь жестов, живой мультиплеер, прохождение камеры AR и п"
+				}
+			]
+		},
+		{
+			"code": "vi",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 49.74,
+			"integrity": 0.933,
+			"parse": 1,
+			"latencyMedianSec": 7.03,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "connect.grok_auth_none",
+					"got": "[[T0]]Không có[[T1]].[[T2]] Các công cụ này miễn phí và không cần tài khoản, nên không có card đăng nhập xuất hiện."
+				},
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]Khởi Động Token[[T3]] [[T4]]Một Click[[T5]] [[T6]]Xem →[[T7]]"
+				}
+			]
+		},
+		{
+			"code": "vi",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 56.32,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 6.14,
+			"requests": 7,
+			"integrityFailures": []
+		},
+		{
+			"code": "zh-CN",
+			"model": "nvidia/nemotron-3-ultra-550b-a55b",
+			"chrF": 36.71,
+			"integrity": 1,
+			"parse": 1,
+			"latencyMedianSec": 17.3,
+			"requests": 4,
+			"integrityFailures": []
+		},
+		{
+			"code": "zh-CN",
+			"model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+			"chrF": 32.99,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 5.92,
+			"requests": 4,
+			"integrityFailures": [
+				{
+					"key": "create_review.token_launch_one_click_pump_fun_token",
+					"got": "[[T0]]🪙[[T1]] [[T2]]一键[[T3]] [[T4]]代币发行[[T5]] [[T6]]查看 →[[T7]]"
+				}
+			]
+		},
+		{
+			"code": "zh-CN",
+			"model": "nvidia/riva-translate-4b-instruct-v2",
+			"chrF": 24.48,
+			"integrity": 0.967,
+			"parse": 1,
+			"latencyMedianSec": 6.62,
+			"requests": 7,
+			"integrityFailures": [
+				{
+					"key": "pose.meta_description",
+					"got": "在浏览器中拖动关节使用 IK、关键帧时间轴、实时预览，然后导出动画 [[T2]]。将其保存到您的帐户中，并将动画出售 [[T1]]。"
+				}
+			]
+		}
+	]
+}
