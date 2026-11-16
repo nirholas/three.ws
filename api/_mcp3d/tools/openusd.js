@@ -129,6 +129,8 @@ export const toolDefs = [
 		title: 'Export a 3D model as simulation-ready OpenUSD',
 		annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 		description:
+			'Use this when a 3D model has to run in a physics simulator or a USD pipeline (NVIDIA Omniverse, Isaac Sim, ' +
+			'synthetic-data generation) rather than only render on the web. ' +
 			'Convert a three.ws Forge model (creation_id) or any public GLB (glb_url) into a validated OpenUSD package ' +
 			'for NVIDIA Omniverse and Isaac Sim, with physics already set up: convex collision hulls (CoACD), a rigid ' +
 			'body whose mass is hull volume times a density for the object class, a friction and restitution material, ' +

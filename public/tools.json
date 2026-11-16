@@ -8936,7 +8936,7 @@
 			"category": "assets",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": null,
+			"whenToUse": "Use this when a 3D model has to run in a physics simulator or a USD pipeline (NVIDIA Omniverse, Isaac Sim, synthetic-data generation) rather than only render on the web.",
 			"page": "https://three.ws/mcp-tools/mcp-3d/export_openusd"
 		},
 		{

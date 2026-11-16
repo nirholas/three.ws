@@ -286,6 +286,7 @@ as tool errors with the API's codes.
 | Task | Command |
 |---|---|
 | Worker tests (both validators) | `cd workers/usd-export && python test_export.py` |
+| Preview renderer test (needs matplotlib) | `cd workers/usd-export && python test_preview.py` |
 | API and MCP tests | `npx vitest run tests/forge-export-usd.test.js tests/mcp-export-openusd.test.js` |
 | Benchmark real creations | `USD_EXPORT_KEY=... python workers/usd-export/bench.py --worker <url> --json docs/openusd-export/bench-results.json` |
 | Drop test | `pip install newton warp-lang && python workers/usd-export/drop_test.py out/asset.usd` |

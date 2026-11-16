@@ -84,11 +84,13 @@ browser.
 | `bench.py` | export real Forge creations, locally or through the deployed service |
 | `drop_test.py` | physics drop test in Newton (not shipped in the image) |
 | `render_preview.py` | glTF, USD visual mesh and collision hull preview image (not shipped in the image) |
+| `test_preview.py` | local check for `render_preview.py` (needs matplotlib; not in the image) |
 
 ## Test
 
 ```
-python test_export.py                       # 13 tests, both validators, about 20 s
+python test_export.py                       # 12 tests, both validators, about 20 s
+python test_preview.py                      # preview renderer, needs matplotlib
 USD_EXPORT_KEY=... python bench.py --worker https://usd-export-service-lp642k3kpa-uc.a.run.app \
   --json ../../docs/openusd-export/bench-results.json
 pip install newton warp-lang && python drop_test.py out/asset.usd
