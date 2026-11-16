@@ -20,6 +20,8 @@ Microsoft campaign orders below were archived on 2026-11-16 with every agent-sid
 
 | Order | Shipped in | Verified 2026-11-16 |
 |---|---|---|
+| 806 Minecraft Bedrock export | `bfaa8f6f7`, `3f1094c01`, `331aab947`, `9c9c66912`, `cc0b01f64` | `tests/minecraft-export.test.js` passes; three sample .mcpack files list clean; POST /api/minecraft-export live (400 on empty body); docs, STRUCTURE, pages, changelog present |
+| 807 Office files as agent knowledge | 807 commits (`8f3d5864d` to `3d70fab98`) | agent-knowledge API, chunker and chat suites pass; /api/agents/:id/knowledge live; docs, worker README, STRUCTURE, changelog present |
 | 801 /microsoft partner hub | `60bf0fba8`, `e7d208609`, `072f53106` | production `/microsoft` 200 with no overflow or console errors at 1280 and 400 px; `tests/microsoft-hub.test.js` passes |
 | 802 Forge to PowerPoint | `f56b7a70c` and siblings | production export-pptx 200 (2,008,205 bytes); office tests pass; add-in manifest valid |
 | 803 Teams Live Share review | `9fc26fc7d` to `6d3311b0d`, `5cbf4f6f4` | `tests/microsoft-teams-stage*` pass; package check confirms meeting tab and Live Share permissions |

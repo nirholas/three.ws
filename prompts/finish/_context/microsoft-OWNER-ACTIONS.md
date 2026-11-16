@@ -17,6 +17,8 @@ Every step below needs the owner (push, deploy, Partner Center, Entra, store sub
 | 803 Teams Live Share review | Sideload and run a real two-person Teams meeting; upload the app package to the Teams Store. |
 | 804 Teams Adaptive Cards | Register the Azure Bot client credentials and set the bot env vars (step 3); deploy (step 1). |
 | 805 Windows and Edge app | Bump MS_STORE_VERSION, `npm run package:microsoft-store`, resubmit the Store listing in Partner Center; check the file handler on a real Windows machine. |
+| 806 Minecraft export | Import the three .mcpack samples in docs/minecraft-export/samples into Bedrock and load threews:knight, threews:windmill and `/function threews/go_kart`. |
+| 807 agent knowledge | Deploy the converter: `gcloud builds submit --config workers/markitdown/cloudbuild.yaml`, then set GCP_MARKITDOWN_URL with `--update-env-vars` (steps in workers/markitdown/README.md). Until then uploads answer 503 converter_unavailable. |
 | 816 M365 Copilot connector | Step 3; connect a developer tenant and run a sync. |
 | 817 Power Platform | Deploy; register the public PKCE client and rebuild with PP_OAUTH_CLIENT_ID; `paconn validate`; import templates in a dev environment and run each action 10 times; Solution Checker and ConnectorPackageValidator.ps1; PR to microsoft/PowerPlatformConnectors `dev`; Partner Center submission. |
 | 818 Phi brain lane | Deploy model-phi with `workers/model-phi/cloudbuild.yaml` and set PHI_WORKER_URL (no task type is routed to it: it lost the evaluation). |
