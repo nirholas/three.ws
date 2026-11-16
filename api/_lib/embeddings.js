@@ -301,14 +301,17 @@ async function walkLanes(order, texts) {
  * refuses (code `content_refused`) is isolated by bisection and embedded by the
  * next lane that answers, so one refused input never fails or demotes the rest.
  * Any other failure of the preferred lane walks the lanes for the whole batch,
- * exactly like embedPassagesAny. Callers store each result's tag next to its
- * vector.
+ * exactly like embedPassagesAny, unless `strict` is set: then it throws, so a
+ * migration can back off and retry instead of writing a whole batch into the
+ * fallback space because of one 429. Callers store each result's tag next to
+ * its vector.
  *
  * @param {string|null} preferredTag
  * @param {string[]} texts
+ * @param {{ strict?: boolean }} [opts]
  * @returns {Promise<Array<{ tag: string, vector: Float64Array }>>} aligned with `texts`
  */
-export async function embedPassagesEach(preferredTag, texts) {
+export async function embedPassagesEach(preferredTag, texts, { strict = false } = {}) {
 	if (!texts.length) return [];
 	const order = laneOrder(preferredTag);
 	if (!order.length) {
@@ -332,7 +335,7 @@ export async function embedPassagesEach(preferredTag, texts) {
 	try {
 		return await isolate(texts);
 	} catch (err) {
-		if (err?.code === 'no_embedder') throw err;
+		if (strict || err?.code === 'no_embedder') throw err;
 		const { tag, vectors } = await walkLanes(order, texts);
 		return vectors.map((vector) => ({ tag, vector }));
 	}

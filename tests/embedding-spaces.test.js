@@ -33,9 +33,11 @@ function fakeVector(model, text, dim) {
 
 let calls;
 let refuse;
+let down;
 beforeEach(() => {
 	calls = [];
 	refuse = new Set();
+	down = new Set();
 	process.env.NVIDIA_API_KEY = 'test-key';
 	delete process.env.GOOGLE_CLOUD_PROJECT;
 	delete process.env.OPENAI_API_KEY;
@@ -44,6 +46,7 @@ beforeEach(() => {
 		vi.fn(async (url, init) => {
 			const body = JSON.parse(init.body);
 			calls.push(body);
+			if (down.has(body.model)) return new Response('{"detail":"rate limited"}', { status: 429 });
 			if (body.input.some((t) => refuse.has(`${body.model}|${t}`))) {
 				return new Response('{"detail":"input rejected by content safety screening"}', { status: 422 });
 			}
@@ -135,5 +138,19 @@ describe('content-safety refusals', () => {
 		const out = await emb.embedPassagesEach(NEW, ['alpha', 'refused text', 'beta']);
 		expect(out.map((r) => r.tag)).toEqual([NEW, OLD, NEW]);
 		for (const r of out) expect(r.vector).toHaveLength(2048);
+	});
+
+	it('strict mode throws on a lane outage instead of demoting the batch to the previous model', async () => {
+		// A re-embed must never rewrite rows into the old space because of a 429.
+		down.add('nvidia/nemotron-3.5-embed-8b');
+		const loose = await emb.embedPassagesEach(NEW, ['alpha', 'beta']);
+		expect(loose.map((r) => r.tag)).toEqual([OLD, OLD]);
+		await expect(emb.embedPassagesEach(NEW, ['alpha', 'beta'], { strict: true })).rejects.toMatchObject({ status: 429 });
+	});
+
+	it('strict mode still moves a content refusal to the next lane', async () => {
+		refuse.add('nvidia/nemotron-3.5-embed-8b|refused text');
+		const out = await emb.embedPassagesEach(NEW, ['alpha', 'refused text'], { strict: true });
+		expect(out.map((r) => r.tag)).toEqual([NEW, OLD]);
 	});
 });
