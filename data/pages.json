@@ -8474,6 +8474,22 @@
 					"added": "2026-11-16"
 				},
 				{
+					"path": "/docs/entra-gallery-tutorial",
+					"title": "Docs · Microsoft Entra SSO and user provisioning",
+					"description": "Connect three.ws to a Microsoft Entra tenant: OpenID Connect single sign-on, launch from My Apps, and automatic user provisioning and deprovisioning over SCIM 2.0.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-16"
+				},
+				{
+					"path": "/docs/onedrive",
+					"title": "Docs · OneDrive and SharePoint in Forge",
+					"description": "Pick source photos from OneDrive or SharePoint in Forge and save finished 3D models back to your Microsoft files.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-16"
+				},
+				{
 					"path": "/docs/microsoft-a2a",
 					"title": "Docs · Call three.ws agents from Copilot Studio and Foundry over A2A",
 					"description": "Add the three.ws A2A agent in Copilot Studio and Azure AI Foundry: endpoint, agent card, API key and OAuth setup, streaming, cancel, and an Agent Framework client sample.",

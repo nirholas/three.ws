@@ -23,12 +23,28 @@
 			<description>Add the three.ws A2A agent in Copilot Studio and Azure AI Foundry: endpoint, agent card, API key and OAuth setup, streaming, cancel, and an Agent Framework client sample.</description>
 		</item>
 		<item>
+			<title>Docs · Microsoft Entra SSO and user provisioning</title>
+			<link>https://three.ws/docs/entra-gallery-tutorial</link>
+			<guid isPermaLink="false">2026-11-16:Docs · Microsoft Entra SSO and user provisioning</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Connect three.ws to a Microsoft Entra tenant: OpenID Connect single sign-on, launch from My Apps, and automatic user provisioning and deprovisioning over SCIM 2.0.</description>
+		</item>
+		<item>
 			<title>Docs · Microsoft IT admin deployment guide</title>
 			<link>https://three.ws/docs/microsoft-admin-deployment</link>
 			<guid isPermaLink="false">2026-11-16:Docs · Microsoft IT admin deployment guide</guid>
 			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Roll three.ws out to every seat: Teams setup policy, Edge WebAppInstallForceList and ExtensionInstallForcelist through Intune or Group Policy, tenant-wide admin consent, verification, rollback and FAQ.</description>
+		</item>
+		<item>
+			<title>Docs · OneDrive and SharePoint in Forge</title>
+			<link>https://three.ws/docs/onedrive</link>
+			<guid isPermaLink="false">2026-11-16:Docs · OneDrive and SharePoint in Forge</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Pick source photos from OneDrive or SharePoint in Forge and save finished 3D models back to your Microsoft files.</description>
 		</item>
 		<item>
 			<title>Docs · Sharing and link previews</title>
