@@ -182,6 +182,17 @@ export class A2FPlayer {
 		this._lastTime = -1;
 	}
 
+	/**
+	 * Attach (or replace) the emotion track on its own, for a streamed turn whose
+	 * emotion frames arrive after the blendshape track was set. The arrays may
+	 * keep growing in place.
+	 * @param {{ names:string[], frames:Array<{t:number,v:number[]}> }|null} track
+	 */
+	setEmotionTrack(track) {
+		this._emotion.setTrack(track || null);
+		if (this._track) this._track.emotionFrames = track?.frames?.length ?? 0;
+	}
+
 	get duration() {
 		const f = this._track?.frames;
 		return f && f.length ? f[f.length - 1].t : 0;

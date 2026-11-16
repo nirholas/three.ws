@@ -30,6 +30,16 @@
 //      `degraded` if Audio2Face drops out (audio continues), then `done` with
 //      per-stage timings. See api/_lib/digital-human-stream.js.
 //
+//   Emotion, on all three paths: A2F animates brows, eyes and cheeks too
+//   with an emotion, and the response carries the emotion it applied
+//   (animation.emotion, or `emotion` events when streamed). Pass
+//      • emotion: an intent label ('joy', 'sad', 'concern', ...), an A2F channel
+//        map ({ joy: 0.8 }), 'auto' (default: read the text), or 'off'
+//      • emotionStrength: 0..1 (0 is off; default 0.6)
+//   in the JSON body, or ?emotion= / ?emotionStrength= on a raw-audio body. The
+//   resolved intent is echoed back as `emotionIntent` (an `intent` event first
+//   when streamed).
+//
 //   GET ?warm=1 opens and authenticates both NVIDIA channels (and runs the
 //   function-rotation check) so the next spoken line skips the cold start.
 //
@@ -50,6 +60,8 @@ import {
 } from './_lib/a2f-nvidia.js';
 import { synthesizeNvidiaTts, nvidiaTtsConfigured, warmTtsChannel } from './_lib/tts-nvidia.js';
 import { streamSpeechAnimation } from './_lib/digital-human-stream.js';
+import { resolveEmotionRequest } from './_lib/a2f-emotion-wire.js';
+import { INTENT_LABELS } from '../src/voice/a2f-emotion-intent.js';
 import { isKioskRequest, kioskBucketKey } from './_lib/kiosk-auth.js';
 import { cacheSetIfAbsent } from './_lib/cache.js';
 import { TTS_VOICE_IDS } from './_lib/tts-voices.js';
@@ -135,7 +147,7 @@ async function warm() {
 // Streamed text -> speech -> animation as server-sent events. Once the stream
 // has started, failures are reported in-band (`error` with a stage) because the
 // HTTP status is already committed.
-async function streamLine(req, res, { text, voice, language, animate }) {
+async function streamLine(req, res, { text, voice, language, animate, emotion }) {
 	res.writeHead(200, {
 		'Content-Type': 'text/event-stream; charset=utf-8',
 		'Cache-Control': 'no-store, no-transform',
@@ -150,12 +162,14 @@ async function streamLine(req, res, { text, voice, language, animate }) {
 		if (res.writableEnded) return;
 		res.write(`event: ${type}\ndata: ${JSON.stringify(data)}\n\n`);
 	};
+	send('intent', { emotion: emotion.intent });
 	try {
 		await streamSpeechAnimation({
 			text,
 			voice,
 			language,
 			animate,
+			emotion: emotion.a2f,
 			emit: send,
 			signal: abort.signal,
 			ttsTimeoutMs: TTS_TIMEOUT_MS,
@@ -227,7 +241,12 @@ export default wrap(async function handler(req, res) {
 				// whatever convention the loaded GLB exposes (ARKit/RPM/VRM/Oculus).
 				blendshapeFormat: 'arkit',
 				sampleRate: 16000,
-				accepts: { audio: ['wav', 'pcm'], json: ['audio', 'text', 'stream'] },
+				accepts: {
+					audio: ['wav', 'pcm'],
+					json: ['audio', 'text', 'stream', 'emotion', 'emotionStrength'],
+				},
+				// Emotion input and output: see the header comment.
+				emotion: { input: true, output: true, labels: INTENT_LABELS, defaultStrength: 0.6 },
 			},
 			// Private: the body reflects the caller's kiosk key.
 			{ 'cache-control': 'private, max-age=60' },
@@ -262,6 +281,7 @@ export default wrap(async function handler(req, res) {
 	let rawPcm = null;
 	let rawRate = 0;
 	let audioOut = null; // { base64, contentType, format } when we synthesized
+	let emotion = null; // resolveEmotionRequest() result
 
 	try {
 		if (isJson) {
@@ -275,6 +295,12 @@ export default wrap(async function handler(req, res) {
 			if (denied) return rateLimited(res, denied.rl, denied.message);
 
 			const text = typeof body.text === 'string' ? body.text.trim() : '';
+			emotion = resolveEmotionRequest({
+				emotion: body.emotion,
+				emotionStrength: body.emotionStrength,
+				intensity: body.emotionIntensity,
+				text,
+			});
 			const b64 =
 				typeof body.audio === 'string' ? body.audio.replace(/^data:[^,]*,/, '') : '';
 
@@ -314,6 +340,7 @@ export default wrap(async function handler(req, res) {
 						voice,
 						language,
 						animate: body.animate !== false,
+						emotion,
 					});
 				}
 				// WAV so A2F can parse the rate from the header and we can hand the
@@ -351,6 +378,10 @@ export default wrap(async function handler(req, res) {
 					`Unsupported audio Content-Type "${contentType.split(';')[0] || 'none'}". Send audio/wav or audio/pcm (with ?rate=), or a JSON body.`,
 				);
 			}
+			emotion = resolveEmotionRequest({
+				emotion: q.get('emotion') ?? undefined,
+				emotionStrength: q.get('emotionStrength') ?? undefined,
+			});
 			const buf = await readBody(req, MAX_AUDIO_BYTES);
 			if (fmt === 'pcm') {
 				rawPcm = buf;
@@ -390,8 +421,8 @@ export default wrap(async function handler(req, res) {
 	try {
 		const animation = await animateNvidiaA2F(
 			wavBuffer
-				? { wav: wavBuffer, timeoutMs: A2F_TIMEOUT_MS }
-				: { pcm: rawPcm, sampleRateHz: rawRate, timeoutMs: A2F_TIMEOUT_MS },
+				? { wav: wavBuffer, timeoutMs: A2F_TIMEOUT_MS, emotion: emotion?.a2f }
+				: { pcm: rawPcm, sampleRateHz: rawRate, timeoutMs: A2F_TIMEOUT_MS, emotion: emotion?.a2f },
 		);
 		return json(
 			res,
@@ -400,6 +431,7 @@ export default wrap(async function handler(req, res) {
 				ok: true,
 				...(audioOut ? { audio: audioOut } : {}),
 				animation,
+				...(emotion ? { emotionIntent: emotion.intent } : {}),
 			},
 			{ 'cache-control': 'no-store', 'server-timing': `a2f;dur=${Date.now() - a2fStart}` },
 		);

@@ -16,7 +16,8 @@
 
 import { createRequire } from 'node:module';
 import descriptor from './a2f-protos/descriptor.js';
-import { A2F_EMOTIONS } from '../../src/voice/a2f-emotion-intent.js';
+import { A2F_EMOTIONS, intentToA2fEmotion } from '../../src/voice/a2f-emotion-intent.js';
+import { detectEmotion } from '../../src/embodiment/emotion.js';
 
 const AGGREGATE_TYPE = 'nvidia_ace.emotion_aggregate.v1.EmotionAggregate';
 const A2F_SET = new Set(A2F_EMOTIONS);
@@ -115,18 +116,36 @@ export class EmotionTrackBuilder {
 		this.messages = 0;
 	}
 
-	/** Feed one AnimationData message (proto-loader shape). */
+	/**
+	 * Feed one AnimationData message (proto-loader shape).
+	 * @returns {Array<{ t:number, v:number[] }>} frames first seen in this message,
+	 *   in A2F_EMOTIONS order (what a streaming caller forwards right away)
+	 */
 	addAnimationData(animationData) {
 		const any = animationData?.metadata?.emotion_aggregate;
 		const agg = decodeEmotionAggregate(any);
-		if (!agg) return;
+		if (!agg) return [];
 		this.messages++;
 		if (!this.input && agg.input.length) this.input = agg.input[0].emotion;
 		for (const e of agg.a2e) {
 			for (const [k, v] of Object.entries(e.emotion)) this.a2eSum[k] = (this.a2eSum[k] || 0) + v;
 			this.a2eCount++;
 		}
-		for (const e of agg.smoothed) this.byTime.set(round4(e.t), e.emotion);
+		const fresh = [];
+		for (const e of agg.smoothed) {
+			const t = round4(e.t);
+			if (!this.byTime.has(t)) fresh.push({ t, v: A2F_EMOTIONS.map((n) => round4(e.emotion[n] || 0)) });
+			this.byTime.set(t, e.emotion);
+		}
+		return fresh;
+	}
+
+	/** build() without the per-frame track: the summary a stream ends with. */
+	summary() {
+		const track = this.build();
+		if (!track) return null;
+		const { frames, ...rest } = track;
+		return { ...rest, frameCount: frames.length };
 	}
 
 	/** @returns {object|null} null when the service reported no emotion at all */
@@ -160,6 +179,45 @@ export class EmotionTrackBuilder {
 		}
 		return { names, frames, input: roundMap(this.input), a2e: this.a2eCount ? a2e : null, mean, peak, dominant };
 	}
+}
+
+/**
+ * Turn a caller's emotion request into A2F options plus a description of the
+ * intent, for /api/a2f and the streamed digital-human path.
+ *
+ *   emotion: a label from the agent vocabulary ('joy', 'concern', ...), a raw
+ *     A2F channel name, a channel map ({ joy: 0.8 }), 'auto' / omitted (derive
+ *     from `text`), or 'off'. 'neutral' means "no intent": A2F reads the voice.
+ *   emotionStrength: 0..1 overall emotion strength on the face; 0 is off.
+ *   intensity: 0..1 scale on the intent itself (default 1).
+ *
+ * @returns {{ intent:{ label:string, source:'request'|'text'|'audio', input?:object },
+ *   a2f:{ enabled:boolean, strength?:number, input?:object } }}
+ */
+export function resolveEmotionRequest({ emotion, emotionStrength, intensity, text } = {}) {
+	const off = { intent: { label: 'off', source: 'request' }, a2f: { enabled: false } };
+	const hasStrength = emotionStrength !== undefined && emotionStrength !== null && emotionStrength !== '';
+	const strength = hasStrength ? clampNum(emotionStrength, EMOTION_STRENGTH_DEFAULT) : undefined;
+	if (strength === 0) return off;
+
+	const ask = typeof emotion === 'string' && emotion.trim().toLowerCase() === 'auto' ? null : emotion;
+	let r = intentToA2fEmotion(ask, intensity ?? 1);
+	if (r.off) return off;
+	let source = 'request';
+	if (!r.label && typeof text === 'string' && text.trim()) {
+		const d = detectEmotion(text);
+		if (d.emotion !== 'neutral') {
+			// A single cue word reads as a mild intent, never as no intent.
+			r = intentToA2fEmotion(d.emotion, Math.max(0.5, d.intensity));
+			source = 'text';
+		}
+	}
+	const input = Object.keys(r.emotion).length ? r.emotion : undefined;
+	if (!r.label) return { intent: { label: 'neutral', source: 'audio' }, a2f: { enabled: true, strength, input } };
+	return {
+		intent: { label: r.label, source, ...(input ? { input } : {}) },
+		a2f: { enabled: true, strength, input },
+	};
 }
 
 function clampNum(v, dflt) {

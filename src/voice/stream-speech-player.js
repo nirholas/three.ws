@@ -98,6 +98,7 @@ export class StreamSpeechPlayer {
 		this._segments = new Map(); // index -> { clock, rate, coverEnd }
 		this._frames = null; // the array handed to A2FPlayer (grows in place)
 		this._names = null;
+		this._emotionTrack = null; // { names, frames } handed to A2FPlayer (grows in place)
 		this._external = 0; // browser-voice utterances in flight
 		this._idleWaiters = [];
 		this._mouthRest();
@@ -109,6 +110,16 @@ export class StreamSpeechPlayer {
 	get pending() {
 		if (this._origin === null) return 0;
 		return Math.max(0, this._playhead - this._now());
+	}
+
+	/** The amplitude-driven mouth shape last applied ({ open, wide, round }). */
+	get shape() {
+		return this._shape;
+	}
+
+	/** Which driver owns the mouth right now: a2f | amplitude | visemes | rest. */
+	get mouthSource() {
+		return this._external > 0 ? 'visemes' : this._source;
 	}
 
 	get speaking() {
@@ -163,6 +174,8 @@ export class StreamSpeechPlayer {
 			this._ensureTrack(data.blendShapeNames, data.fps);
 		} else if (type === 'frames') {
 			this._appendFrames(index, data.frames);
+		} else if (type === 'emotion') {
+			this._appendEmotion(index, data);
 		}
 	}
 
@@ -232,6 +245,26 @@ export class StreamSpeechPlayer {
 			this._frames.push({ t, w: f.w });
 			seg.coverEnd = t;
 		}
+	}
+
+	// The emotion A2F applied ({ names, frames: [{ t, v }] }, t in segment audio
+	// time) goes onto the same turn clock as the blendshape frames, so brows,
+	// eyes and head follow the voice across segments and stalls.
+	_appendEmotion(index, data) {
+		const names = data?.names;
+		if (!Array.isArray(names) || !names.length || !Array.isArray(data.frames)) return;
+		if (!this._emotionTrack || this._emotionTrack.names.join() !== names.join()) {
+			this._emotionTrack = { names, frames: [] };
+		}
+		const seg = this._seg(index);
+		const out = this._emotionTrack.frames;
+		for (const f of data.frames) {
+			const t = seg.clock.toTurn(f.t);
+			if (t === null) continue;
+			if (out.length && t <= out[out.length - 1].t) continue;
+			out.push({ t, v: f.v });
+		}
+		if (out.length) this.a2f?.setEmotionTrack?.(this._emotionTrack);
 	}
 
 	/** True when A2F frames exist for turn time `t`. */

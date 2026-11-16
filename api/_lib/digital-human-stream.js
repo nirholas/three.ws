@@ -17,12 +17,17 @@
 //   audio    { seq, pcm: <base64 s16le mono at meta.sampleRateHz> }
 //   header   { blendShapeNames, fps }
 //   frames   { frames: [{ t, w }] }
+//   emotion  { names, frames: [{ t, v }] }  the emotion A2F applied (v in names
+//            order), forwarded as it is reported; absent when emotion is off
 //   degraded { stage: 'a2f', code, message }
-//   done     { timings, functionId, healedFrom, audioBytes, frameCount, degraded }
+//   done     { timings, functionId, healedFrom, audioBytes, frameCount, degraded,
+//              emotion: { input, a2e, mean, peak, dominant, frameCount } | null }
 // Throws (with .stage = 'tts') only when no audio could be produced at all.
 
 import { synthesizeNvidiaTtsStream, STREAM_SAMPLE_RATE_HZ } from './tts-nvidia.js';
 import { openA2fSession, StreamingResampler, A2F_SAMPLE_RATE_HZ } from './a2f-nvidia.js';
+import { EmotionTrackBuilder } from './a2f-emotion-wire.js';
+import { A2F_EMOTIONS } from '../../src/voice/a2f-emotion-intent.js';
 
 const A2F_FPS = 30;
 
@@ -32,6 +37,8 @@ const A2F_FPS = 30;
  * @param {string} [opts.voice]
  * @param {string} [opts.language]
  * @param {boolean} [opts.animate=true]  false skips A2F (caller knows it is down)
+ * @param {object} [opts.emotion]  { enabled, strength, input } for A2F (see
+ *   resolveEmotionRequest in a2f-emotion-wire.js)
  * @param {(type: string, data: object) => void} opts.emit
  * @param {AbortSignal} [opts.signal]     client went away: stop both upstreams
  * @param {number} [opts.ttsTimeoutMs]
@@ -44,6 +51,7 @@ export async function streamSpeechAnimation(
 		voice,
 		language,
 		animate = true,
+		emotion,
 		emit,
 		signal,
 		ttsTimeoutMs = 20_000,
@@ -66,6 +74,9 @@ export async function streamSpeechAnimation(
 	let session = null;
 	let degraded = null;
 	let frameCount = 0;
+	const emotionOn = emotion?.enabled !== false;
+	const emotionTrack = new EmotionTrackBuilder();
+	let emotionError = null;
 	const degrade = (code, message) => {
 		if (degraded) return;
 		degraded = {
@@ -84,6 +95,19 @@ export async function streamSpeechAnimation(
 	const sessionReady = animate
 		? openSession({
 				timeoutMs: a2fTimeoutMs,
+				emotion,
+				onAnimationData: emotionOn
+					? (data) => {
+							if (emotionError) return;
+							try {
+								const fresh = emotionTrack.addAnimationData(data);
+								if (fresh.length) emit('emotion', { names: A2F_EMOTIONS, frames: fresh });
+							} catch (e) {
+								// A bad emotion payload never costs the mouth.
+								emotionError = e?.message || String(e);
+							}
+						}
+					: undefined,
 				onHeader: (blendShapeNames) => emit('header', { blendShapeNames, fps: A2F_FPS }),
 				onFrames: (frames) => {
 					if (timings.a2fFirstMs === null) timings.a2fFirstMs = now() - t0;
@@ -188,6 +212,8 @@ export async function streamSpeechAnimation(
 		audioSeconds: audioBytes / 2 / STREAM_SAMPLE_RATE_HZ,
 		frameCount,
 		degraded: degraded ? degraded.code : null,
+		emotion: emotionOn ? emotionTrack.summary() : null,
+		...(emotionError ? { emotionError } : {}),
 	};
 	emit('done', summary);
 	return summary;
