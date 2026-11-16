@@ -176,8 +176,23 @@
       "signInAudience": "AzureADMyOrg",
       "purpose": "Identity of the Azure Bot. Inbound Teams and Microsoft 365 activities carry a Bot Framework token whose audience is this app id; proactive sends (Adaptive Card universal actions, Teams notifications) mint a Bot Framework token with this app's secret.",
       "redirectUris": [],
-      "permissions": [],
+      "permissions": [
+        {
+          "name": "TeamsActivity.Send",
+          "type": "Role",
+          "id": "a267235f-af13-44dc-8385-c1dc93023186",
+          "usedBy": [
+            "api/_lib/teams-activity.js"
+          ]
+        }
+      ],
       "tokenAudiences": [
+        {
+          "resource": "https://graph.microsoft.com",
+          "via": "client_credentials scope https://graph.microsoft.com/.default in the recipient's tenant",
+          "usedBy": "api/_lib/teams-activity.js",
+          "note": "Grants TeamsActivity.Send once that tenant's admin consents; sendActivityNotification fails with 403 until then."
+        },
         {
           "resource": "https://api.botframework.com",
           "via": "client_credentials scope https://api.botframework.com/.default from the bot's tenant",
@@ -321,7 +336,7 @@
     },
     {
       "surface": "Teams tab and meeting stage",
-      "reason": "No Teams SSO: the manifest has no webApplicationInfo and the tab uses three.ws sessions. Resource-specific consent permissions live in the Teams app manifest, not on an app registration."
+      "reason": "No Teams SSO: the manifest's webApplicationInfo only names the bot app so activity feed notifications can be sent, and the tab uses three.ws sessions. Resource-specific consent permissions live in the Teams app manifest, not on an app registration."
     }
   ]
 }

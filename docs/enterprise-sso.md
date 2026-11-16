@@ -7,7 +7,8 @@ Sign in with Microsoft works for everyone: work, school and personal Microsoft a
 - SCIM base URL: `https://three.ws/scim/v2`
 - Code: `api/_lib/entra-oidc.js` (OpenID Connect), `api/auth/microsoft/[action].js` (sign-in round trip), `api/_lib/identities.js` (account linking rules), `api/_lib/team-enterprise.js` (tenant claims, people, tokens, events), `api/_lib/scim.js` and `api/scim/v2.js` (SCIM)
 - Tables: `team_tenant_claims`, `team_people`, `team_scim_tokens`, `team_scim_groups`, `team_scim_group_members`, `team_enterprise_events` (migration `20261111160232_enterprise_sso_scim.sql`)
-- Tests: `tests/entra-oidc.test.js`, `tests/identity-login-rules.test.js`, `tests/scim.test.js`, `tests/teams-ui-handlers.test.js`
+- Tests: `tests/entra-oidc.test.js`, `tests/entra-gallery-oidc.test.js`, `tests/identity-login-rules.test.js`, `tests/scim.test.js`, `tests/scim-entra-conformance.test.js`, `tests/teams-ui-handlers.test.js`
+- Step-by-step for a customer's Entra administrator, in the Microsoft gallery tutorial layout: [Microsoft Entra SSO and provisioning tutorial](entra-gallery-tutorial.md)
 
 ## Sign in with Microsoft
 
@@ -22,6 +23,16 @@ The button uses one multitenant Entra app on the `common` authority, so any orga
   - An email Microsoft does not vouch for never reaches an existing account. A new account is created with a private placeholder address instead of the unproven one, and the person can add a real address later.
   - With no match, a new account is created.
 - **Unlinking** in Settings requires proof from the last five minutes (your password, or a fresh Microsoft sign-in), and is refused when Microsoft is the account's only way in.
+
+### Launch from My Apps
+
+`https://three.ws/sso/microsoft` is the sign-on URL for the My Apps tile and the Microsoft 365 app launcher (also served at `/api/auth/microsoft/launch`). It starts the same Microsoft sign-in without forcing the account picker, so someone already signed in to Microsoft lands on their dashboard with no extra prompt. Optional query parameters:
+
+- `next`: a path on three.ws to land on (for example `/teams`). Anything off three.ws is ignored and the dashboard is used.
+- `domain_hint` (or `tenant`): an organisation domain, which sends the person straight to that organisation's sign-in page.
+- `login_hint`: the account to pre-fill.
+
+When the person's own tenant refuses the sign-in, `/login` names the reason instead of a generic failure: not assigned to the app (AADSTS50105), the app disabled in the tenant (AADSTS7000112, AADSTS700016), a Conditional Access block (AADSTS53000 to 53004), or admin consent required (AADSTS65001, AADSTS90094).
 
 To roll three.ws out to every seat (Teams, Edge web app, extensions), see the [Microsoft IT admin deployment guide](microsoft-admin-deployment.md).
 
@@ -144,6 +155,9 @@ Event types the owner can trigger: `team_created`, `team_updated`, `team_archive
 | "That Microsoft account is not a directory administrator" when claiming | Sign in with one of the four admin roles listed above. |
 | "That Microsoft tenant already belongs to another three.ws team" | The other team's owner has to unclaim it first. |
 | "Your organisation has to approve three.ws" at sign-in | The tenant requires admin consent for apps. An Entra administrator grants consent once at [/enterprise/admin-consent](https://three.ws/enterprise/admin-consent), then everyone can sign in. |
+| "Your organisation has not given you access to three.ws yet" | The enterprise application requires assignment and the person is not assigned. Assign them under **Users and groups**. |
+| "three.ws is turned off in your organisation's Microsoft Entra directory" | **Enabled for users to sign-in?** is No in the enterprise application's Properties, or its service principal was deleted. |
+| "Your organisation's sign-in policy blocked this sign-in" | A Conditional Access policy blocked it. The tenant's sign-in log names the policy. |
 | Provisioning log shows 429 | The team exceeded 3,000 requests per minute. Entra retries automatically; no action needed. |
 
 ## Operator setup (three.ws deployment)
@@ -154,7 +168,8 @@ Sign in with Microsoft needs the multitenant app registration that the Microsoft
 2. Redirect URI (Web): `https://three.ws/api/auth/microsoft/callback`.
 3. **Token configuration**: add the optional ID token claims `email` and `xms_edov`, and set group claims to **Directory roles** (`groupMembershipClaims: "DirectoryRole"`), so the admin check can read `wids` from the ID token.
 4. **API permissions**: Microsoft Graph delegated `openid`, `profile`, `email`, `offline_access`, `User.Read`.
-5. Set `MS_ENTRA_SSO_CLIENT_ID` and `MS_ENTRA_SSO_CLIENT_SECRET` on the Cloud Run service. Until both are set, the button stays hidden and `/api/auth/microsoft/start` returns people to `/login` with a clear message.
+5. **Branding & properties**: Home page URL `https://three.ws/sso/microsoft`. My Apps opens this URL when someone selects the three.ws tile, and it is the sign-on URL the Entra app gallery request lists.
+6. Set `MS_ENTRA_SSO_CLIENT_ID` and `MS_ENTRA_SSO_CLIENT_SECRET` on the Cloud Run service. Until both are set, the button stays hidden and `/api/auth/microsoft/start` returns people to `/login` with a clear message.
 
 Microsoft, Microsoft Entra, Microsoft Entra ID and Microsoft Marketplace are trademarks of the Microsoft group of companies.
 
