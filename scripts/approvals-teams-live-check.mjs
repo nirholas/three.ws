@@ -2,7 +2,7 @@
 // Live check of agent approvals in Microsoft Teams, over HTTP against the real
 // Cloud Run server (server/index.mjs) on a throwaway database.
 //
-//   node scripts/approvals-teams-live-check.mjs [--port 8147]
+//   npm run approvals:teams-live-check   (or: node scripts/approvals-teams-live-check.mjs [--port 8147])
 //   node scripts/approvals-teams-live-check.mjs --serve [--port 8147] [--cookie-file <path>]
 //
 // What it proves, through the real route handlers:

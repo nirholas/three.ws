@@ -328,6 +328,14 @@ ran." The card is titled "Test approval (nothing runs)".
 **Bot command.** `approvals` in the 1:1 chat replies with every pending
 request (up to five, soonest deadline first), each as its own card.
 
+**Live check.** `npm run approvals:teams-live-check` runs the real server on a
+throwaway database (`scripts/lib/isolated-db.mjs`), sends signed Bot Framework
+activities over HTTP, captures the card the fan-out posts to the Bot Connector,
+validates it against the Adaptive Cards 1.5 schema, and asserts a single
+execution, the restricted card and the tamper refusal. Nothing reaches
+Microsoft. `--serve` leaves it running with an owner session for driving the
+`/approvals` panel in a browser.
+
 **Needs.** `MS_TEAMS_BOT_APP_ID` (token audience) and
 `MS_TEAMS_BOT_APP_PASSWORD` (proactive posting). Without the password the
 panel says the bot cannot post and requests arrive by push and email.
