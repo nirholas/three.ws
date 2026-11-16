@@ -7338,6 +7338,14 @@
 					"added": "2026-11-11"
 				},
 				{
+					"path": "/docs/agent-guardrails",
+					"title": "Docs · Agent chat guardrails (NemoGuard)",
+					"description": "Owner opt-in checks on an agent's chat: jailbreak detection, content safety on the visitor's message and the streamed reply, and topic control with a polite redirect. The flow, budgets, fail-open posture, block counts and the owner API.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-16"
+				},
+				{
 					"path": "/docs/creation-descriptions",
 					"title": "Docs · Creation descriptions (Florence-2)",
 					"description": "How every 3D creation gets a caption, detailed caption and tags from Florence-2: the describe queue, the cron, tag rules, owner tag edits, search, page meta and alt text, the backfill script and measured cost.",

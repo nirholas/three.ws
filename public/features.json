@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T17:39:37.114Z",
+	"generated_at": "2026-11-16T18:33:46.304Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -11252,6 +11252,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/agent-guardrails",
+					"title": "Docs · Agent chat guardrails (NemoGuard)",
+					"description": "Owner opt-in checks on an agent's chat: jailbreak detection, content safety on the visitor's message and the streamed reply, and topic control with a polite redirect. The flow, budgets, fail-open posture, block counts and the owner API.",
+					"added": "2026-11-16",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
 					"job": null
 				},
 				{

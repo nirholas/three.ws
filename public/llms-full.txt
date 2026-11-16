@@ -5671,6 +5671,12 @@ URL: https://three.ws/docs/agent-knowledge
 
 Teach an agent from Word, PowerPoint, Excel, PDF and Outlook files: supported formats and how each is chunked, limits, how chat cites the source, privacy, deletion, and the upload, search and delete API.
 
+### Docs · Agent chat guardrails (NemoGuard)
+
+URL: https://three.ws/docs/agent-guardrails
+
+Owner opt-in checks on an agent's chat: jailbreak detection, content safety on the visitor's message and the streamed reply, and topic control with a polite redirect. The flow, budgets, fail-open posture, block counts and the owner API.
+
 ### Docs · Creation descriptions (Florence-2)
 
 URL: https://three.ws/docs/creation-descriptions

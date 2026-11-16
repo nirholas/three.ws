@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T18:32:09.939Z",
+	"generated_at": "2026-11-16T18:33:46.326Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Admin consent (Microsoft Entra)",
 			"summary": "What the three.ws sign-in app asks for in plain language, and the tenant-wide admin consent link for a Microsoft Entra administrator, with clear success and error results.",
 			"link": "/enterprise/admin-consent",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "launch",
+			"title": "Docs · Agent chat guardrails (NemoGuard)",
+			"summary": "Owner opt-in checks on an agent's chat: jailbreak detection, content safety on the visitor's message and the streamed reply, and topic control with a polite redirect. The flow, budgets, fail-open posture, block counts and the owner API.",
+			"link": "/docs/agent-guardrails",
 			"tags": [
 				"launch"
 			]
@@ -130,7 +140,7 @@
 			"date": "2026-11-16",
 			"type": "update",
 			"title": "Agent memory and knowledge search find the right passage more often",
-			"summary": "Agent memories, agent knowledge bases and site-widget knowledge now embed with NVIDIA's nemotron-3.5-embed-8b. On our labelled docs set it ranks the right passage in the top five every time (up from 92%) and raises nDCG@10 from 81.3 to 91.3, with gains on two public benchmarks as well. Existing vectors were moved over in place with no gap in search, and the old ones are kept until the new space is verified on production data.",
+			"summary": "Agent memories, agent knowledge bases and site-widget knowledge now embed with NVIDIA's nemotron-3.5-embed-8b. On our labelled docs set it ranks the right passage in the top five every time (up from 92%) and raises nDCG@10 from 81.3 to 91.3, with gains on two public benchmarks as well. Existing vectors move over in place after the deploy, with no gap in search (a re-embed run refuses to start until production can read the new space), and the old ones are kept until the new space is verified on production data.",
 			"link": null,
 			"tags": [
 				"improvement",
