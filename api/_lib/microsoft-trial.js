@@ -98,7 +98,10 @@ export function nextTrialState(prev, next, now = new Date()) {
 	// The trial starts at activation: a PendingFulfillmentStart subscription on a
 	// trial plan has not started anything yet.
 	if (!startedAt && inTrial && next.saas_status !== 'PendingFulfillmentStart') {
-		startedAt = iso(next.term_start) ?? nowIso;
+		// A trial cannot start after the moment it is first seen running; clamp a
+		// future term start (Microsoft's emulator reports start == end) to now.
+		const termStart = iso(next.term_start);
+		startedAt = termStart && termStart <= nowIso ? termStart : nowIso;
 		events.push('trial_started');
 	}
 

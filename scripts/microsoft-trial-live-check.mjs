@@ -279,7 +279,7 @@ say(`  trial audit entries: ${audits.map((a) => a.action).join(', ') || 'none'}`
 
 // 5. The real reminder cron, twice.
 const counts = async () => {
-	const [{ n }] = await sql`select count(*)::int as n from notifications where user_id = ${row.user_id} and type = 'microsoft_trial_ending'`;
+	const [{ n }] = await sql`select count(*)::int as n from user_notifications where user_id = ${row.user_id} and type = 'microsoft_trial_ending'`;
 	return n;
 };
 for (const pass of [1, 2]) {
