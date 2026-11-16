@@ -80,7 +80,7 @@ async function generate(steps, tool, args) {
 			steps.push(step(result));
 		}
 		const glb = find(result.sc, 'glb_url');
-		if (!result.isError && glb) return { jobId, glb, viewer: find(result.sc, 'viewer_url'), poster: find(result.sc, 'poster_png_url'), attempts: attempt };
+		if (!result.isError && glb) return { jobId, glb, viewer: find(result.sc, 'viewer_url'), poster: find(result.sc, 'poster_png_url'), rigged: find(result.sc, 'rigged') === true, attempts: attempt };
 		log(`${tool} attempt ${attempt} (job ${jobId}) ended ${find(result.sc, 'status') || 'without a model'}: ${(result.sc.message || result.text).split('\n')[0]}`);
 		await sleep(30_000 * attempt);
 	}
@@ -91,11 +91,13 @@ function step(r) {
 	return { tool: r.name, ms: r.ms, status: find(r.sc, 'status') || (r.isError ? 'error' : 'ok'), job_id: find(r.sc, 'job_id') || find(r.sc, 'jobId') || null };
 }
 
+/** Fetch a GLB, confirm the glTF magic, and return its skeleton size (0 for a static mesh). */
 async function confirmGlb(url) {
-	const res = await fetch(url, { headers: { range: 'bytes=0-11' }, signal: AbortSignal.timeout(60_000) });
+	const res = await fetch(url, { signal: AbortSignal.timeout(120_000) });
 	const buf = Buffer.from(await res.arrayBuffer());
 	if (!res.ok || buf.subarray(0, 4).toString('latin1') !== 'glTF') throw new Error(`${url} is not a glTF binary (HTTP ${res.status})`);
-	return true;
+	const json = JSON.parse(buf.subarray(20, 20 + buf.readUInt32LE(12)).toString('utf8'));
+	return { bytes: buf.length, joints: json.skins?.[0]?.joints?.length ?? 0 };
 }
 
 /** The tool sequence for each starter, keyed by starter title, mirroring the agent instructions. */
@@ -106,9 +108,13 @@ export const STARTER_SEQUENCES = {
 		return { job_id: m.jobId, glb_url: m.glb, viewer_url: m.viewer, poster_png_url: m.poster, attempts: m.attempts };
 	},
 	'Rigged mascot': async (steps) => {
-		const m = await generate(steps, 'forge_avatar', { prompt: 'a friendly round robot mascot in bright blue, standing upright with two arms and two legs' });
-		await confirmGlb(m.glb);
-		return { job_id: m.jobId, glb_url: m.glb, viewer_url: m.viewer, poster_png_url: m.poster, attempts: m.attempts };
+		const mesh = await generate(steps, 'forge_avatar', { prompt: 'a friendly round robot mascot in bright blue, standing upright with two arms and two legs' });
+		// A forge_avatar that went pending hands back the unrigged mesh; the
+		// instructions then call rig_mesh on it.
+		const m = mesh.rigged ? mesh : await generate(steps, 'rig_mesh', { glb_url: mesh.glb });
+		const { joints } = await confirmGlb(m.glb);
+		if (!joints) throw new Error(`${m.glb} has no skeleton`);
+		return { job_id: mesh.jobId, mesh_glb_url: mesh.glb, rig_job_id: m === mesh ? null : m.jobId, glb_url: m.glb, viewer_url: m.viewer, joints, attempts: mesh.attempts };
 	},
 	'Find a ready-made asset': async (steps) => {
 		const search = await call('search_catalog', { q: 'office chair', limit: 5 });
