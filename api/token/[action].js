@@ -13,7 +13,8 @@
 
 import { z } from 'zod';
 import { getSessionUser } from '../_lib/auth.js';
-import { isAdminUser } from '../_lib/admin.js';
+import { isAdminUser, isVerifiedAdmin } from '../_lib/admin.js';
+import { respondMfaRequired } from '../_lib/admin-mfa.js';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parse } from '../_lib/validate.js';
@@ -375,6 +376,7 @@ async function handlePayments(req, res) {
 	const user = await getSessionUser(req, res);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
 	if (!(await isAdminUser(user))) return error(res, 403, 'forbidden', 'admin access required');
+	if (!(await isVerifiedAdmin(user))) return respondMfaRequired(res);
 
 	const url = new URL(req.url, 'http://x');
 	const page = await listPayments({

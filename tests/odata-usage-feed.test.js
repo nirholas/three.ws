@@ -379,6 +379,18 @@ describe('OData usage feed over the full schema', () => {
 		expect((await get('/Secrets', keys.member)).status).toBe(404);
 	});
 
+	it('reads a row whose key holds a slash, sent unencoded as OData clients do', async () => {
+		await holder.db.sql`insert into usage_events (user_id, kind, provider, model, created_at)
+			values (${U.member}, 'llm', 'cloudflare', '@cf/meta/llama-3.3-70b-instruct', '2026-11-06T08:00:00Z')`;
+		const row = (await get(`/LlmUsage?$filter=Provider eq 'cloudflare'`, keys.member)).json.value[0];
+		expect(row.Id).toContain('/');
+		const raw = await get(`/LlmUsage('${row.Id}')`, keys.member);
+		expect(raw.status, JSON.stringify(raw.json)).toBe(200);
+		expect(raw.json.Model).toBe('@cf/meta/llama-3.3-70b-instruct');
+		const encoded = await get(`/LlmUsage('${encodeURIComponent(row.Id)}')`, keys.member);
+		expect(encoded.json.Id).toBe(row.Id);
+	});
+
 	it('answers bad queries with OData errors, not 500s', async () => {
 		const r = await get('/UsageDaily?$filter=Nope eq 1', keys.member);
 		expect(r.status).toBe(400);

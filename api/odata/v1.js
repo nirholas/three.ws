@@ -35,11 +35,28 @@ export function feedBase() {
 	return `${env.APP_ORIGIN}/api/odata/v1/`;
 }
 
-/** The resource path after /api/odata/v1, as decoded segments. */
+const KEY_SEGMENT = /^([A-Za-z_][A-Za-z0-9_]*)\('((?:[^']|'')*)'\)$/;
+
+function decode(s) {
+	try {
+		return decodeURIComponent(s);
+	} catch {
+		return s;
+	}
+}
+
+/**
+ * The resource path after /api/odata/v1, as decoded segments. A key predicate
+ * stays one segment even when its key holds a slash: Ids carry model names
+ * such as @cf/meta/llama-3.3-70b, and OData clients (Power Query included)
+ * send that slash unencoded.
+ */
 export function odataSegments(pathname) {
 	const m = String(pathname || '').match(/^\/api\/odata\/v1(?:\/(.*))?$/i);
 	if (!m || !m[1]) return [];
-	return m[1].split('/').filter(Boolean).map((s) => decodeURIComponent(s));
+	const whole = decode(m[1]).replace(/\/$/, '');
+	if (KEY_SEGMENT.test(whole)) return [whole];
+	return m[1].split('/').filter(Boolean).map(decode);
 }
 
 function baseHeaders(extra = {}) {
@@ -65,8 +82,6 @@ function nextLink(url, skipToken) {
 	// literal form keeps links readable in Power Query diagnostics.
 	return next.toString().replace(/%24/g, '$');
 }
-
-const KEY_SEGMENT = /^([A-Za-z_][A-Za-z0-9_]*)\('((?:[^']|'')*)'\)$/;
 
 async function authenticate(req, res) {
 	const token = feedKeyFromAuthorization(req.headers.authorization);

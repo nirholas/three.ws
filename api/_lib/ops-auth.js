@@ -7,10 +7,12 @@
 // addresses, tx signatures, key-rotation hints, and stack traces. So the gate
 // is strict and FAILS CLOSED in production. Two ways in:
 //
-//   1. A signed-in platform admin — session + admin wallet (the requireAdmin
-//      model: wallet ∈ ADMIN_ADDRESSES, the built-in owner address, or
-//      is_admin in the DB). The strongest path and the only one that yields a
-//      real per-user identity for audit trails.
+//   1. A signed-in platform admin: session + admin wallet (the requireAdmin
+//      model: wallet in ADMIN_ADDRESSES, the built-in owner address, or
+//      is_admin in the DB) whose session passed a second factor
+//      (admin-mfa.js). The strongest path and the only one that yields a real
+//      per-user identity for audit trails. An admin session without one
+//      falls through to the secret path below.
 //
 //   2. A dedicated OPS_SECRET presented as `x-ops-secret` (or `Authorization:
 //      Bearer`). This is intentionally NOT CRON_SECRET: the ops dashboard must
@@ -25,6 +27,7 @@
 import { constantTimeEquals } from './crypto.js';
 import { getSessionUser } from './auth.js';
 import { isAdminUser } from './admin.js';
+import { mfaEnforced, sessionPassedMfa } from './admin-mfa.js';
 import { logAudit } from './audit.js';
 import { sendOpsAlert } from './alerts.js';
 
@@ -52,15 +55,22 @@ function recordRejectedSecret(req) {
 
 /**
  * @param {import('http').IncomingMessage & { headers: Record<string,string|undefined> }} req
- * @returns {Promise<{ ok: boolean, actor: string }>} actor identifies who was
- *   authorized (admin wallet, `ops-secret`, or `dev`) for attribution.
+ * @returns {Promise<{ ok: boolean, actor: string, mfaRequired?: boolean }>} actor
+ *   identifies who was authorized (admin wallet, `ops-secret`, or `dev`) for
+ *   attribution. mfaRequired is true on a denial when the caller is a signed-in
+ *   admin whose session has not passed a second factor; answer it with
+ *   respondMfaRequired (admin-mfa.js) so the UI can send them to /login/verify.
  */
 export async function authorizeOps(req) {
+	let mfaRequired = false;
 	// 1. Signed-in platform admin — preferred, carries a real identity.
 	try {
 		const user = await getSessionUser(req);
 		if (user && (await isAdminUser(user))) {
-			return { ok: true, actor: user.wallet_address || `user:${user.id}` };
+			if (!mfaEnforced() || (await sessionPassedMfa(user.sid))) {
+				return { ok: true, actor: user.wallet_address || `user:${user.id}` };
+			}
+			mfaRequired = true;
 		}
 	} catch {
 		/* no / invalid session — fall through to the secret path */
@@ -80,5 +90,6 @@ export async function authorizeOps(req) {
 	}
 
 	// 3. No secret configured: dev-only open, production denies.
-	return { ok: !isProd(), actor: 'dev' };
+	if (isProd()) return { ok: false, actor: 'dev', mfaRequired };
+	return { ok: true, actor: 'dev' };
 }

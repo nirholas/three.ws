@@ -6,7 +6,7 @@ import { sql } from './db.js';
 import { error } from './http.js';
 import { logAudit } from './audit.js';
 import { sendOpsAlert } from './alerts.js';
-import { mfaEnforced, sessionHasFreshMfa } from './admin-mfa.js';
+import { mfaEnforced, sessionPassedMfa, respondMfaRequired } from './admin-mfa.js';
 
 // Mirrors BUILT_IN_ADMIN_ADDRESSES in env.js (public platform-owner addresses,
 // safe to commit). env.js's ADMIN_ADDRESSES getter lower-cases every entry —
@@ -62,6 +62,16 @@ export async function isAdminUser(user) {
 }
 
 /**
+ * An admin whose session passed a second factor (or the admin MFA rule is
+ * switched off). The predicate for privileged writes that gate on the session
+ * user directly instead of through requireAdmin.
+ */
+export async function isVerifiedAdmin(user) {
+	if (!(await isAdminUser(user))) return false;
+	return !mfaEnforced() || sessionPassedMfa(user.sid);
+}
+
+/**
  * Every live platform admin account: is_admin users plus accounts whose
  * primary or linked wallet is an admin address (EVM compared without case,
  * Solana exactly). Used to reach the platform owner with operator events such
@@ -107,11 +117,10 @@ function requestPath(req) {
  * (deduplicated per path). Query strings are dropped so no token in a URL
  * lands in the log.
  *
- * An admin session must also have passed a TOTP check within MFA_FRESH_SEC
- * (admin-mfa.js); otherwise the answer is 403 mfa_required with the page that
- * enrols or verifies. Only the MFA endpoint itself passes { mfa: false }.
+ * An admin session must also have passed a second factor (admin-mfa.js);
+ * otherwise the answer is 403 mfa_required pointing at /login/verify.
  */
-export async function requireAdmin(req, res, { mfa = true } = {}) {
+export async function requireAdmin(req, res) {
 	const user = await getSessionUser(req);
 	if (!user) {
 		error(res, 401, 'unauthorized', 'sign in required');
@@ -120,8 +129,8 @@ export async function requireAdmin(req, res, { mfa = true } = {}) {
 	const method = String(req?.method || 'GET').toUpperCase();
 	const path = requestPath(req);
 	if (await isAdminUser(user)) {
-		if (mfa && mfaEnforced() && !(await sessionHasFreshMfa(user.sid))) {
-			error(res, 403, 'mfa_required', 'admin two-factor verification required', { verify_url: '/admin/mfa' });
+		if (mfaEnforced() && !(await sessionPassedMfa(user.sid))) {
+			respondMfaRequired(res);
 			return null;
 		}
 		if (!READ_ONLY_METHODS.has(method)) {

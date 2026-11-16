@@ -152,10 +152,15 @@ function errorHtml(e) {
 	const signIn = e.status === 401
 		? ` <a href="/login?next=${encodeURIComponent(location.pathname)}">Sign in again</a>.`
 		: '';
+	const mfa = e.code === 'mfa_required'
+		? `<p style="margin:10px 0 0"><a class="tm-btn sm primary" href="/login/verify?next=${encodeURIComponent(location.pathname + location.search)}">Verify with your authenticator app</a></p>`
+		: e.code === 'owner_needs_mfa'
+			? `<p style="margin:10px 0 0"><a class="tm-btn sm primary" href="/settings#security">Turn on two-step verification</a></p>`
+			: '';
 	const agree = e.code === 'agreement_required'
 		? `<p style="margin:10px 0 0"><a class="tm-btn sm primary" href="/legal/agreements?next=${encodeURIComponent(location.pathname)}">Sign the real-funds agreement</a></p>`
 		: '';
-	return `<div class="tm-err" role="alert">${esc(e.message)}${signIn}${agree}</div>`;
+	return `<div class="tm-err" role="alert">${esc(e.message)}${signIn}${agree}${mfa}</div>`;
 }
 
 function busy(btn, text) {
@@ -451,7 +456,16 @@ async function renderDetail(id) {
 					<a class="tm-btn" href="/teams">Specialist teams</a>
 				</div>
 			</div>`
-			: `<div class="tm-state">
+			: res.code === 'mfa_required'
+				? `<div class="tm-state">
+				<h2>This team requires two-step verification</h2>
+				<p>Its owner asks everyone the team admitted to confirm with an authenticator code (or Microsoft Entra MFA) before opening it. Turn on two-step under Settings, Security if you have not yet.</p>
+				<div class="tm-actions" style="justify-content:center">
+					<a class="tm-btn primary" href="/login/verify?next=${encodeURIComponent(location.pathname)}">Verify now</a>
+					<a class="tm-btn" href="/settings#security">Security settings</a>
+				</div>
+			</div>`
+				: `<div class="tm-state">
 				<h2>The team did not load</h2>
 				<p>${esc(res.message)}</p>
 				<button class="tm-btn" type="button" id="tmRetry">Try again</button>
@@ -1316,6 +1330,7 @@ function settingsHtml() {
 					<label class="tm-check"><input type="checkbox" name="require_smart_money" ${g.require_smart_money ? 'checked' : ''} /> Require smart-money wallets in the early holders.</label>
 				</fieldset>
 				<label class="tm-check"><input type="checkbox" name="is_public" ${t.is_public ? 'checked' : ''} /> Public: anyone with the link can watch the squad and its board. Policy and wallet balances stay private.</label>
+				<label class="tm-check"><input type="checkbox" name="require_mfa" ${t.require_mfa ? 'checked' : ''} /> Require two-step verification: people this team admitted (tenant join or SCIM) open it only from a browser session that passed an authenticator code or Microsoft Entra MFA. Your own account needs two-step on first.</label>
 				<div id="tmSetErr"></div>
 				<div class="tm-actions"><button class="tm-btn primary" type="submit">Save settings</button></div>
 			</form>
@@ -1448,6 +1463,7 @@ function wireSettings() {
 			name: String(fd.get('name') || '').trim(),
 			description: String(fd.get('description') || '').trim(),
 			is_public: fd.get('is_public') === 'on',
+			require_mfa: fd.get('require_mfa') === 'on',
 			policy: {
 				per_trade_sol: Number(fd.get('per_trade_sol')),
 				daily_budget_sol: Number(fd.get('daily_budget_sol')),
@@ -1534,6 +1550,8 @@ const EVENT_TEXT = {
 	scim_token_generated: 'SCIM token generated',
 	scim_token_rotated: 'SCIM token rotated',
 	scim_token_revoked: 'SCIM token revoked',
+	scim_client_created: 'SCIM client secret created',
+	scim_client_revoked: 'SCIM client secret revoked',
 	member_joined: 'Joined the team',
 	offer_declined: 'Declined the offer',
 	person_bound: 'Signed in and was matched',
@@ -1549,6 +1567,7 @@ const EVENT_TEXT = {
 	group_deleted: 'Group deleted',
 	team_created: 'Team created',
 	team_updated: 'Team settings changed',
+	team_mfa_required_changed: 'Two-step requirement changed',
 	team_archived: 'Team archived',
 	team_repaired: 'Missing specialists created',
 	member_added: 'Specialist added',
@@ -1558,7 +1577,7 @@ const EVENT_TEXT = {
 const ACTOR_TEXT = { owner: 'Owner', scim: 'Entra SCIM', member: 'Member', system: 'three.ws' };
 const PERSON_TONE = { active: 'good', declined: '', deactivated: 'bad', deleted: 'bad' };
 
-const ent = { data: null, issued: null };
+const ent = { data: null, issued: null, issuedClient: null };
 
 async function loadEnterprise() {
 	const box = $('#tmEnterprise');
@@ -1629,20 +1648,74 @@ function joinHint(mode) {
 		: 'They see an invitation to this team after signing in and choose whether to join.';
 }
 
+function copyField(value, label, { primary = false, id = '' } = {}) {
+	return `<div class="tm-copy"><input class="tm-input tm-mono" readonly value="${esc(value)}" aria-label="${esc(label)}"${id ? ` id="${id}"` : ''} />
+		<button class="tm-btn sm${primary ? ' primary' : ''}" type="button" data-copy="${esc(value)}">Copy</button></div>`;
+}
+
+function scimClientsHtml(d) {
+	const s = d.scim;
+	const made = ent.issuedClient;
+	const rows = s.clients.map((c) => `
+		<tr>
+			<td><span class="tm-mono">${esc(c.client_id)}</span><br><span class="tm-hint">Secret <span class="tm-mono">${esc(c.secret_prefix)}…</span></span></td>
+			<td>${c.expired ? '<span class="tm-chip bad">Expired</span>' : esc(new Date(c.expires_at).toLocaleDateString())}</td>
+			<td>${c.last_used_at ? esc(ago(c.last_used_at)) : 'Not used yet'}</td>
+			<td class="tm-cell-act">
+				<button class="tm-btn sm" type="button" data-copy="${esc(c.client_id)}" aria-label="Copy client ID ${esc(c.client_id)}">Copy ID</button>
+				<button class="tm-btn sm danger" type="button" data-scim-client-revoke="${esc(c.client_id)}" aria-label="Revoke client ${esc(c.client_id)}">Revoke</button>
+			</td>
+		</tr>`).join('');
+	return `
+		<div class="tm-field">
+			<span class="tm-label">OAuth 2.0 client credentials (the three.ws gallery app in Microsoft Entra ID)</span>
+			<p class="tm-hint" style="margin:0">In the enterprise app's Provisioning page choose <b>OAuth2 Client Credentials Grant</b>, then paste the Tenant URL, this token endpoint, a client ID and its secret. Entra exchanges them for one-hour access tokens.</p>
+			${copyField(d.scim_token_url, 'SCIM OAuth token endpoint')}
+		</div>
+		${made ? `
+			<div class="tm-note warn tm-ent-secret" role="status">
+				<b>Copy this client secret now. It is shown only once.</b>
+				<span class="tm-label">Client identifier</span>
+				${copyField(made.client_id, 'SCIM client identifier')}
+				<span class="tm-label">Client secret</span>
+				${copyField(made.client_secret, 'SCIM client secret', { primary: true, id: 'tmScimClientSecret' })}
+				<span>It expires ${esc(new Date(made.expires_at).toLocaleDateString())}. Create the next one before then and add it in Entra, then revoke this one.</span>
+			</div>` : ''}
+		${s.clients.length ? `
+			<div class="tm-table-wrap">
+				<table class="tm-table">
+					<caption class="tm-sr">SCIM OAuth clients</caption>
+					<thead><tr><th scope="col">Client</th><th scope="col">Expires</th><th scope="col">Last used</th><th scope="col"><span class="tm-sr">Actions</span></th></tr></thead>
+					<tbody>${rows}</tbody>
+				</table>
+			</div>` : '<p class="tm-hint" style="margin:0">No client credentials yet. Create one to connect the three.ws app from the Microsoft Entra gallery.</p>'}
+		<div class="tm-actions">
+			<label><span class="tm-sr">Client secret lifetime</span>
+				<select class="tm-input" id="tmScimClientYears">
+					<option value="1">Expires in 1 year</option>
+					<option value="2" selected>Expires in 2 years</option>
+					<option value="3">Expires in 3 years</option>
+				</select>
+			</label>
+			<button class="tm-btn sm ${s.clients.length ? '' : 'primary'}" type="button" id="tmScimClientCreate"${s.clients.length >= 5 ? ' disabled title="Five active secrets is the limit. Revoke one first."' : ''}>Create client secret</button>
+		</div>`;
+}
+
 function scimHtml(d) {
 	const s = d.scim;
 	const issued = ent.issued;
 	const status = s.has_token
 		? `Token <span class="tm-mono">${esc(s.token_prefix)}…</span> · ${s.rotated_at ? `rotated ${esc(ago(s.rotated_at))}` : `created ${esc(ago(s.created_at))}`} · ${s.last_used_at ? `last used ${esc(ago(s.last_used_at))}` : 'not used yet'}`
-		: 'No token yet. Generate one, then paste it into the Microsoft Entra admin center as the Secret Token.';
+		: 'No secret token. Use one for a non-gallery Entra app (the Secret Token field) or for Microsoft provisioning validation runs.';
 	return `
 		<fieldset class="tm-fieldset">
 			<legend>SCIM provisioning</legend>
 			<div class="tm-field">
 				<span class="tm-label">Tenant URL</span>
-				<div class="tm-copy"><input class="tm-input tm-mono" readonly value="${esc(d.scim_base_url)}" aria-label="SCIM tenant URL" />
-					<button class="tm-btn sm" type="button" data-copy="${esc(d.scim_base_url)}">Copy</button></div>
+				${copyField(d.scim_base_url, 'SCIM tenant URL')}
 			</div>
+			${scimClientsHtml(d)}
+			<span class="tm-label">Long-lived secret token</span>
 			${issued ? `
 				<div class="tm-note warn tm-ent-secret" role="status">
 					<b>Copy this token now. It is shown only once.</b>
@@ -1655,7 +1728,7 @@ function scimHtml(d) {
 			<div class="tm-actions">
 				<button class="tm-btn sm ${s.has_token ? '' : 'primary'}" type="button" id="tmScimIssue">${s.has_token ? 'Rotate token' : 'Generate token'}</button>
 				${s.has_token ? '<button class="tm-btn sm danger" type="button" id="tmScimRevoke">Revoke token</button>' : ''}
-				<a class="tm-btn sm" href="/docs/enterprise-sso#scim-setup" target="_blank" rel="noopener">Entra setup guide</a>
+				<a class="tm-btn sm" href="/docs/entra-gallery-tutorial#configure-automatic-user-provisioning" target="_blank" rel="noopener">Entra setup guide</a>
 			</div>
 		</fieldset>`;
 }
@@ -1709,6 +1782,7 @@ function eventSummary(e) {
 	if (e.action === 'join_mode_changed' && d.join_mode) bits.push(d.join_mode === 'auto' ? 'join automatically' : 'offer the team');
 	if (e.action === 'team_updated' && Array.isArray(d.fields)) bits.push(d.fields.join(', '));
 	if (e.action === 'team_created' && d.name) bits.push(d.name);
+	if (e.action === 'team_mfa_required_changed') bits.push(d.require_mfa ? 'now required' : 'no longer required');
 	if (e.action === 'member_permissions_changed' && Array.isArray(d.permissions)) bits.push(`${d.permissions.length} permissions`);
 	const who = e.person_name || e.person_user_name;
 	return `${esc(EVENT_TEXT[e.action] || label(e.action))}${who ? `: <b>${esc(who)}</b>` : ''}${bits.length ? ` <span class="tm-hint">(${esc(bits.join('; '))})</span>` : ''}`;
@@ -1809,7 +1883,7 @@ function wireEnterprise() {
 		const btn = e.currentTarget;
 		const ok = await confirmDialog({
 			title: 'Unclaim this tenant?',
-			html: `<p><b>${esc(ent.data.claim.tenant_name || ent.data.claim.tenant_id)}</b> stops being linked to this team. Nobody new can join through it, and the SCIM token is revoked, so provisioning stops. People already on the team keep their access until you remove them.</p>`,
+			html: `<p><b>${esc(ent.data.claim.tenant_name || ent.data.claim.tenant_id)}</b> stops being linked to this team. Nobody new can join through it, and the SCIM token and client secrets are revoked, so provisioning stops. People already on the team keep their access until you remove them.</p>`,
 			okLabel: 'Unclaim tenant',
 			tone: 'live',
 		});
@@ -1822,6 +1896,7 @@ function wireEnterprise() {
 		}
 		ent.data = res.data;
 		ent.issued = null;
+		ent.issuedClient = null;
 		paintEnterprise();
 		toast('Tenant unclaimed. SCIM provisioning is off.');
 	});
@@ -1849,6 +1924,44 @@ function wireEnterprise() {
 		paintEnterprise();
 		$('#tmScimToken')?.select();
 	});
+
+	$('#tmScimClientCreate')?.addEventListener('click', async (e) => {
+		const btn = e.currentTarget;
+		const years = Number($('#tmScimClientYears').value);
+		const restore = busy(btn, 'Creating…');
+		const res = await api(`/api/teams/${state.id}/enterprise/scim-clients`, { method: 'POST', body: { years } });
+		if (!res.ok) {
+			restore();
+			return toast(res.message);
+		}
+		ent.data = res.data.state;
+		ent.issuedClient = { client_id: res.data.client_id, client_secret: res.data.client_secret, expires_at: res.data.expires_at };
+		paintEnterprise();
+		$('#tmScimClientSecret')?.select();
+	});
+
+	for (const b of $$('[data-scim-client-revoke]', box)) {
+		b.addEventListener('click', async () => {
+			const clientId = b.dataset.scimClientRevoke;
+			const ok = await confirmDialog({
+				title: 'Revoke this client secret?',
+				html: `<p>Client <span class="tm-mono">${esc(clientId)}</span> and every access token it holds stop working now. If Microsoft Entra ID still uses it, provisioning fails until you enter another client's ID and secret.</p>`,
+				okLabel: 'Revoke secret',
+				tone: 'live',
+			});
+			if (!ok) return;
+			const restore = busy(b, 'Revoking…');
+			const res = await api(`/api/teams/${state.id}/enterprise/scim-clients/${encodeURIComponent(clientId)}`, { method: 'DELETE' });
+			if (!res.ok) {
+				restore();
+				return toast(res.message);
+			}
+			ent.data = res.data;
+			if (ent.issuedClient?.client_id === clientId) ent.issuedClient = null;
+			paintEnterprise();
+			toast('Client secret revoked.');
+		});
+	}
 
 	$('#tmScimRevoke')?.addEventListener('click', async (e) => {
 		const btn = e.currentTarget;

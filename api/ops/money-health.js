@@ -18,6 +18,7 @@ import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { authorizeOps } from '../_lib/ops-auth.js';
+import { respondMfaRequired } from '../_lib/admin-mfa.js';
 import { getAuditDeadLetterStats } from '../_lib/x402/audit-log.js';
 
 // A dead-letter that has been non-empty this long means the drain is not keeping up.
@@ -65,6 +66,7 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const auth = await authorizeOps(req);
+	if (auth.mfaRequired) return respondMfaRequired(res);
 	if (!auth.ok) return error(res, 401, 'unauthorized', 'ops secret or admin session required');
 
 	// One grouped query for all open (unreconciled) verdicts by source + severity.

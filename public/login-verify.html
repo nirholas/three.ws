@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Two-step verification · three.ws</title>
+		<meta name="description" content="Enter the code from your authenticator app to finish signing in to three.ws." />
+		<meta name="robots" content="noindex, nofollow" />
+		<link rel="canonical" href="https://three.ws/login/verify" />
+		<link rel="icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/auth.css" />
+		<style>
+			:root { color-scheme: dark; }
+			body { background: #000; color: #f0f0f0; min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
+			a { color: #c8d0e0; text-decoration: none; }
+			a:hover { color: #fff; text-decoration: underline; }
+			a:focus-visible, button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+			.shell {
+				background: #0c0c0c;
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				border-radius: 16px;
+				box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 30px 80px rgba(0, 0, 0, 0.85), 0 0 120px rgba(200, 210, 255, 0.04);
+				width: min(440px, calc(100vw - 32px));
+				margin: 32px 16px;
+			}
+			.card { padding: 44px 40px; display: flex; flex-direction: column; }
+			@media (max-width: 480px) { .card { padding: 28px 22px; } }
+			.brand { margin: 0 0 18px; display: inline-block; opacity: 0.85; transition: opacity 0.15s; align-self: flex-start; }
+			.brand img { height: 36px; width: auto; display: block; }
+			.brand:hover { opacity: 1; }
+			h1 { font-size: 22px; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.02em; color: #fff; }
+			.sub { color: #9a9a9a; margin: 0 0 20px; font-size: 14px; line-height: 1.5; }
+			label { display: block; font-size: 12px; font-weight: 500; letter-spacing: 0.02em; color: #8a8a8a; margin: 8px 0 6px; text-transform: uppercase; }
+			input {
+				width: 100%; box-sizing: border-box; padding: 12px 14px; background: #060606;
+				border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; color: #f0f0f0;
+				font-size: 20px; letter-spacing: 0.25em; font-variant-numeric: tabular-nums; text-align: center;
+				transition: border-color 0.08s ease, box-shadow 0.08s ease;
+			}
+			input.recovery { font-size: 17px; letter-spacing: 0.12em; }
+			input:hover { border-color: rgba(255, 255, 255, 0.2); }
+			input:focus { outline: none; border-color: rgba(255, 255, 255, 0.45); box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06); }
+			.hint { font-size: 12px; margin-top: 6px; color: #808080; }
+			button.primary {
+				width: 100%; margin-top: 18px; padding: 12px 16px; border: 0; border-radius: 10px; background: #fff; color: #000;
+				font-weight: 600; font-size: 15px; cursor: pointer; transition: background 0.15s, opacity 0.15s, transform 0.12s;
+			}
+			button.primary:hover:not(:disabled) { background: #e8ecf4; }
+			button.primary:active:not(:disabled) { transform: scale(0.97); }
+			button.primary:disabled { opacity: 0.4; cursor: default; }
+			button.link {
+				background: none; border: 0; padding: 0; margin-top: 14px; color: #c8d0e0; font-size: 13px; cursor: pointer; align-self: center;
+			}
+			button.link:hover { color: #fff; text-decoration: underline; }
+			button.link:active { opacity: 0.7; }
+			.msg { margin-top: 14px; padding: 10px 12px; border-radius: 8px; font-size: 13px; line-height: 1.45; }
+			.msg.err { background: rgba(255, 90, 90, 0.07); border: 1px solid rgba(255, 90, 90, 0.3); color: #f2b8b8; }
+			.msg.ok { background: rgba(92, 200, 130, 0.08); border: 1px solid rgba(92, 200, 130, 0.3); color: #b3e6c4; }
+			.foot { margin-top: 22px; text-align: center; font-size: 13px; color: #808080; }
+			.skeleton { height: 48px; border-radius: 10px; background: linear-gradient(90deg, #111 0%, #1b1b1b 50%, #111 100%); background-size: 200% 100%; animation: sk 1.2s linear infinite; }
+			@keyframes sk { to { background-position: -200% 0; } }
+			@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+		</style>
+	</head>
+	<body>
+		<main class="shell">
+			<form class="card" id="verify-form" novalidate>
+				<a href="/" class="brand"><img src="/three.svg" alt="three.ws" /></a>
+				<h1 id="title">Two-step verification</h1>
+				<p class="sub" id="sub">Checking your sign-in…</p>
+				<div class="skeleton" id="loading" aria-hidden="true"></div>
+				<div id="fields" hidden>
+					<label for="code" id="code-label">Authenticator code</label>
+					<input id="code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" aria-describedby="code-hint" required />
+					<p class="hint" id="code-hint">The 6-digit code in your authenticator app for three.ws.</p>
+					<button type="submit" class="primary" id="submit">Verify</button>
+					<button type="button" class="link" id="toggle">Use a recovery code instead</button>
+				</div>
+				<div class="msg err" id="err" role="alert" hidden></div>
+				<div class="msg ok" id="ok" role="status" hidden></div>
+				<p class="foot"><a href="/login" id="back">Back to sign in</a></p>
+			</form>
+		</main>
+		<script type="module" src="/login-verify.js"></script>
+	</body>
+</html>

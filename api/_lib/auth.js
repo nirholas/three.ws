@@ -12,6 +12,9 @@ import { effectiveKeyScope, withImpliedScopes } from './key-scopes.js';
 import { getCachedKeyRow, rememberKeyRow, keyRevokedSinceCached, shouldTouchLastUsed, invalidateApiKey } from './api-key-cache.js';
 import { ipAllowed } from './ip-allowlist.js';
 import { currentRequest } from './request-context.js';
+import {
+	userHasMfa, isPendingToken as isPendingMfaToken, PENDING_PREFIX as MFA_PENDING_PREFIX, PENDING_TTL_SEC as MFA_PENDING_TTL_SEC,
+} from './account-mfa.js';
 
 const ACCESS_TTL_SEC = 60 * 60; // 1h access tokens
 const REFRESH_TTL_SEC = 60 * 60 * 24 * 30; // 30d refresh tokens
@@ -147,7 +150,7 @@ const SESSION_COOKIE = '__Host-sid';
 // browsers drop it.
 const LEGACY_COOKIE = 'sid';
 
-function readSessionCookie(req) {
+export function readSessionCookie(req) {
 	const cookie = req.headers.cookie || '';
 	const m = cookie.match(/(?:^|;\s*)__Host-sid=([^;]+)/);
 	return m ? decodeURIComponent(m[1]) : null;
@@ -163,30 +166,55 @@ export function hasSessionCookie(req) {
  */
 export async function rotateSession({ currentSid, userId, userAgent, ip }) {
 	// The replacement keeps the Entra tenant the session signed in through, so a
-	// rotated session is still revoked when SCIM deprovisions its person.
-	const [cur] = await sql`select entra_tenant_id from sessions where id = ${currentSid} limit 1`;
-	const newSecret = await createSession({ userId, userAgent, ip, entraTenantId: cur?.entra_tenant_id || null });
+	// rotated session is still revoked when SCIM deprovisions its person, and
+	// keeps its second-factor state: rotating a signed-in session is not a new
+	// sign-in, so it never asks for a code again.
+	const [cur] = await sql`select entra_tenant_id, mfa_verified_at from sessions where id = ${currentSid} limit 1`;
+	const newSecret = await createSession({
+		userId,
+		userAgent,
+		ip,
+		entraTenantId: cur?.entra_tenant_id || null,
+		inheritMfa: { verifiedAt: cur?.mfa_verified_at ?? null },
+	});
 	await sql`update sessions set revoked_at = now() where id = ${currentSid}`;
 	return newSecret;
 }
 
-export async function createSession({ userId, userAgent, ip, recordActivity = true, entraTenantId = null }) {
-	const secret = randomToken(32);
+/**
+ * Create a browser session and return its plaintext token.
+ *
+ * Second factor (api/_lib/account-mfa.js): when the account has two-step
+ * verification on, the session is created pending (short-lived, ignored by
+ * getSessionUser, token prefixed PENDING_PREFIX) unless the caller says the
+ * second factor already passed:
+ *   mfaVerified: true   this sign-in verified a second factor (an authenticator
+ *                       or recovery code, or Entra MFA in the id_token's amr).
+ *   inheritMfa: {verifiedAt}  a rotation or hand-over of a session that was
+ *                       already signed in; it keeps that session's state.
+ *   machine: true       a server job acting for the owner, never a person.
+ */
+export async function createSession({
+	userId, userAgent, ip, recordActivity = true, entraTenantId = null,
+	mfaVerified = false, inheritMfa = null, machine = false,
+}) {
+	const verifiedAt = mfaVerified ? new Date().toISOString() : (inheritMfa?.verifiedAt ?? null);
+	const pending = !mfaVerified && !inheritMfa && !machine && (await userHasMfa(userId));
+	const secret = pending ? `${MFA_PENDING_PREFIX}${randomToken(32)}` : randomToken(32);
 	const hash = await sha256(secret);
+	const ttl = pending ? MFA_PENDING_TTL_SEC : SESSION_TTL_SEC;
 	// entraTenantId: the Entra tenant of the Microsoft identity this session
 	// signed in with, so SCIM deprovisioning from a team that claimed that
 	// tenant revokes exactly these sessions (api/_lib/team-enterprise.js).
-	if (entraTenantId) {
-		await sql`
-			insert into sessions (user_id, token_hash, user_agent, ip, expires_at, entra_tenant_id)
-			values (${userId}, ${hash}, ${userAgent ?? null}, ${ip ?? null}, now() + ${`${SESSION_TTL_SEC} seconds`}::interval, ${entraTenantId})
-		`;
-	} else {
-		await sql`
-			insert into sessions (user_id, token_hash, user_agent, ip, expires_at)
-			values (${userId}, ${hash}, ${userAgent ?? null}, ${ip ?? null}, now() + ${`${SESSION_TTL_SEC} seconds`}::interval)
-		`;
-	}
+	await sql`
+		insert into sessions (user_id, token_hash, user_agent, ip, expires_at, entra_tenant_id, mfa_pending, mfa_verified_at)
+		values (
+			${userId}, ${hash}, ${userAgent ?? null}, ${ip ?? null}, now() + ${`${ttl} seconds`}::interval,
+			${entraTenantId || null}, ${pending}, ${verifiedAt}
+		)
+	`;
+	// Half a sign-in is not activity; the streak counts once the code passes.
+	if (pending) return secret;
 	// A login (or the once-a-day silent session rotation in getSessionUser)
 	// is a qualifying activity for the cross-surface streak. Fire-and-forget —
 	// a streak-tracking hiccup must never block sign-in.
@@ -233,14 +261,16 @@ export function sessionCookie(token, { clear = false } = {}) {
  */
 export async function getSessionUser(req, res) {
 	const token = readSessionCookie(req);
-	if (!token) return null;
+	// A pending session has passed only the first factor: it is not signed in.
+	if (!token || isPendingMfaToken(token)) return null;
 	const hash = await sha256(token);
 	const rows = await sql`
-		select s.id as sid, s.last_seen_at, s.expires_at,
+		select s.id as sid, s.last_seen_at, s.expires_at, s.mfa_verified_at,
 		       u.id, u.email, u.display_name, u.username, u.plan, u.avatar_url, u.wallet_address, u.is_admin, u.referral_code
 		from sessions s join users u on u.id = s.user_id
 		where s.token_hash = ${hash}
 		  and s.revoked_at is null
+		  and s.mfa_pending = false
 		  and s.expires_at > now()
 		  and u.deleted_at is null
 		limit 1

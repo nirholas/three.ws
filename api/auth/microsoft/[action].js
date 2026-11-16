@@ -53,7 +53,7 @@ import {
 	unlinkIdentity, IdentityError, REAUTH_TTL_SEC, cookie, clearCookie, readCookie, signIdentityPayload, unsignIdentityPayload,
 } from '../../_lib/identities.js';
 import {
-	entraConfigured, buildAuthorize, exchangeCode, verifyIdToken, directoryRoles, tenantAdminRole, EntraError,
+	entraConfigured, buildAuthorize, exchangeCode, verifyIdToken, directoryRoles, tenantAdminRole, EntraError, entraMfaPassed,
 } from '../../_lib/entra-oidc.js';
 import { loadTeamFor } from '../../_lib/teams/runtime.js';
 import { TeamError } from '../../_lib/teams/roles.js';
@@ -103,8 +103,10 @@ export async function readFlow(req, state) {
 	};
 }
 
-async function signIn(req, res, userId, { isNew = false, tenantId = null } = {}) {
-	const token = await createSession({ userId, userAgent: req.headers['user-agent'], ip: clientIp(req), entraTenantId: tenantId });
+async function signIn(req, res, userId, { isNew = false, tenantId = null, mfa = false } = {}) {
+	// mfa: Entra ran its own second factor for this sign-in (entraMfaPassed), so
+	// an account with three.ws two-step verification is not asked again.
+	const token = await createSession({ userId, userAgent: req.headers['user-agent'], ip: clientIp(req), entraTenantId: tenantId, mfaVerified: mfa });
 	res.setHeader('set-cookie', [sessionCookie(token), clearCookie(FLOW_COOKIE), clearCookie(LINK_COOKIE)]);
 	logAudit({ userId, action: isNew ? 'register:microsoft' : 'login:microsoft', meta: tenantId ? { tenant_id: tenantId } : null, req });
 	if (isNew) queueMicrotask(() => seedDefaultAgent(userId));
@@ -282,6 +284,7 @@ async function handleCallback(req, res) {
 		if (err instanceof EntraError) return back(`microsoft_${err.code}`);
 		throw err;
 	}
+	claims.mfa = entraMfaPassed(claims, accessToken);
 
 	if (flow.intent === 'link') return completeLink(req, res, flow, claims);
 	if (flow.intent === 'reauth') return completeReauth(req, res, flow, claims);
@@ -296,7 +299,7 @@ async function completeLogin(req, res, flow, claims) {
 	const decision = await decideIdentityLogin({ provider: PROVIDER, claims, allowUnverifiedSignup: true });
 	if (decision.kind === 'signin') {
 		await touchIdentity(decision.identityId);
-		await signIn(req, res, decision.userId, { tenantId: claims.tenant_id });
+		await signIn(req, res, decision.userId, { tenantId: claims.tenant_id, mfa: claims.mfa });
 		return redirect(res, await landing(decision.userId, claims, flow.next));
 	}
 	if (decision.kind === 'error') {
@@ -316,7 +319,7 @@ async function completeLogin(req, res, flow, claims) {
 	const userId = await createMicrosoftUser(claims, decision);
 	queueMicrotask(() => recordConversion(req, 'signup', userId));
 	await linkIdentity({ userId, provider: PROVIDER, claims });
-	await signIn(req, res, userId, { isNew: true, tenantId: claims.tenant_id });
+	await signIn(req, res, userId, { isNew: true, tenantId: claims.tenant_id, mfa: claims.mfa });
 	return redirect(res, await landing(userId, claims, flow.next));
 }
 
@@ -432,7 +435,7 @@ async function handleConfirm(req, res) {
 		throw err;
 	}
 	logAudit({ userId: user.id, action: 'identity:link', meta: { provider: PROVIDER, via: 'login_confirm' }, req });
-	await signIn(req, res, user.id, { tenantId: pending.c.tenant_id });
+	await signIn(req, res, user.id, { tenantId: pending.c.tenant_id, mfa: Boolean(pending.c.mfa) });
 	return redirect(res, await landing(user.id, pending.c, next));
 }
 

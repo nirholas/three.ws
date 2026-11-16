@@ -15,6 +15,7 @@ import { cacheGet } from '../_lib/cache.js';
 import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
 import { authorizeOps } from '../_lib/ops-auth.js';
+import { respondMfaRequired } from '../_lib/admin-mfa.js';
 
 const PROBE_TIMEOUT_MS = 8_000;
 const ORIGIN = env.APP_ORIGIN || 'https://three.ws';
@@ -219,6 +220,7 @@ export default wrap(async (req, res) => {
 	// Hardened ops gate: admin session or a dedicated
 	// OPS_SECRET, fail-closed in production, never CRON_SECRET.
 	const auth = await authorizeOps(req);
+	if (auth.mfaRequired) return respondMfaRequired(res);
 	if (!auth.ok) return error(res, 401, 'unauthorized', 'admin session or x-ops-secret required');
 
 	const t0 = Date.now();

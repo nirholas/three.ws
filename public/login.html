@@ -1193,12 +1193,14 @@ function safeNext(raw, fallback = '/dashboard') {
 					fetch('/api/auth/me', { credentials: 'include' })
 						.then((r) => {
 							if (r.ok) return r.json();
-							// 401 = not signed in: expected, stay on the form silently.
-							if (r.status === 401) return null;
+							// 401 = not signed in: expected, stay on the form silently,
+							// unless the sign-in is only waiting for its two-step code.
+							if (r.status === 401) return r.json().catch(() => null).then((d) => (d?.error === 'mfa_required' ? { mfa: true } : null));
 							throw new Error('session-check-failed');
 						})
 						.then((data) => {
-							if (data?.user) location.replace(next);
+							if (data?.mfa) location.replace('/login/verify?next=' + encodeURIComponent(next));
+							else if (data?.user) location.replace(next);
 						})
 						.catch(() => {
 							// Network/transport failure while checking an existing
@@ -1410,6 +1412,13 @@ function safeNext(raw, fallback = '/dashboard') {
 								60;
 							startCooldown(retryAfter);
 						}
+						return;
+					}
+
+					if (res.ok && data.mfa_required) {
+						// Password accepted; two-step verification is on for this account.
+						btn.textContent = 'Enter your code…';
+						location.replace('/login/verify?next=' + encodeURIComponent(next));
 						return;
 					}
 

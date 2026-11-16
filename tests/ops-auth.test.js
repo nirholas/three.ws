@@ -5,6 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const getSessionUser = vi.fn(async () => null);
 const isAdminUser = vi.fn(async () => false);
+const sessionPassedMfa = vi.fn(async () => true);
 
 vi.mock('../api/_lib/auth.js', () => ({ getSessionUser }));
 const logAudit = vi.fn();
@@ -12,6 +13,10 @@ const sendOpsAlert = vi.fn(async () => {});
 vi.mock('../api/_lib/admin.js', () => ({ isAdminUser }));
 vi.mock('../api/_lib/audit.js', () => ({ logAudit }));
 vi.mock('../api/_lib/alerts.js', () => ({ sendOpsAlert }));
+vi.mock('../api/_lib/admin-mfa.js', () => ({
+	mfaEnforced: () => process.env.ADMIN_MFA_ENFORCE !== '0',
+	sessionPassedMfa,
+}));
 
 let authorizeOps;
 
@@ -24,6 +29,8 @@ beforeEach(() => {
 	vi.clearAllMocks();
 	getSessionUser.mockResolvedValue(null);
 	isAdminUser.mockResolvedValue(false);
+	sessionPassedMfa.mockResolvedValue(true);
+	delete process.env.ADMIN_MFA_ENFORCE;
 	delete process.env.OPS_SECRET;
 	delete process.env.CRON_SECRET;
 	delete process.env.NODE_ENV;
@@ -40,6 +47,26 @@ describe('authorizeOps', () => {
 		const r = await authorizeOps(reqWith());
 		expect(r.ok).toBe(true);
 		expect(r.actor).toBe('Wa11etAdmin');
+	});
+
+	it('does not let an admin session that skipped two-step verification through in production', async () => {
+		process.env.VERCEL_ENV = 'production';
+		getSessionUser.mockResolvedValue({ id: 7, sid: 's-7', wallet_address: 'Wa11etAdmin' });
+		isAdminUser.mockResolvedValue(true);
+		sessionPassedMfa.mockResolvedValue(false);
+		await loadFresh();
+		expect(await authorizeOps(reqWith())).toEqual({ ok: false, actor: 'dev', mfaRequired: true });
+		expect(sessionPassedMfa).toHaveBeenCalledWith('s-7');
+	});
+
+	it('an unverified admin can still use the dedicated OPS_SECRET', async () => {
+		process.env.OPS_SECRET = 'super-secret-value';
+		getSessionUser.mockResolvedValue({ id: 7, sid: 's-7', wallet_address: 'Wa11etAdmin' });
+		isAdminUser.mockResolvedValue(true);
+		sessionPassedMfa.mockResolvedValue(false);
+		await loadFresh();
+		const r = await authorizeOps(reqWith({ 'x-ops-secret': 'super-secret-value' }));
+		expect(r).toEqual({ ok: true, actor: 'ops-secret' });
 	});
 
 	it('rejects a signed-in NON-admin (falls through, no secret) in production', async () => {

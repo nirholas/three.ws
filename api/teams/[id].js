@@ -120,13 +120,18 @@ async function gate(req, res, ctx) {
 async function teamRoot(req, res, id) {
 	if (req.method === 'GET') {
 		const auth = await viewer(req, res);
-		const { team, isOwner } = await loadTeamFor(id, auth?.userId || null);
+		const { team, isOwner } = await loadTeamFor(id, auth?.userId || null, { viewer: auth });
 		return json(res, 200, { data: await getTeamView(team, { isOwner }) }, { 'cache-control': 'no-store' });
 	}
 	if (req.method === 'POST') return error(res, 405, 'method_not_allowed', 'use PATCH to edit or DELETE to archive');
 
 	const ctx = await ownerWrite(req, res, id, { readBody: req.method === 'PATCH' });
 	if (!ctx || !(await gate(req, res, ctx))) return;
+	if (req.method === 'PATCH' && ctx.auth.source !== 'session' && 'require_mfa' in ctx.body) {
+		// Who must pass two-step verification is a security setting: only the
+		// owner, signed in through the browser, changes it.
+		return error(res, 403, 'session_required', 'change two-step verification requirements from the team page while signed in');
+	}
 	if (req.method === 'PATCH' && ctx.auth.source !== 'session') {
 		// The spend caps live on the Trader agent's trade limits, so a bearer may
 		// only move them with the same scope that guards those limits elsewhere.
@@ -147,7 +152,7 @@ async function teamRoot(req, res, id) {
 async function findings(req, res, id, url) {
 	if (req.method !== 'GET') return error(res, 405, 'method_not_allowed', 'GET only');
 	const auth = await viewer(req, res);
-	const { team } = await loadTeamFor(id, auth?.userId || null);
+	const { team } = await loadTeamFor(id, auth?.userId || null, { viewer: auth });
 	const kind = url.searchParams.get('kind');
 	if (kind && !KINDS.includes(kind)) return error(res, 400, 'bad_kind', `kind must be one of ${KINDS.join(', ')}`);
 	const before = url.searchParams.get('before');
@@ -170,7 +175,7 @@ async function findings(req, res, id, url) {
 async function stream(req, res, id, url, { headOnly }) {
 	if (req.method !== 'GET') return error(res, 405, 'method_not_allowed', 'GET only');
 	const auth = await viewer(req, res);
-	const { team } = await loadTeamFor(id, auth?.userId || null);
+	const { team } = await loadTeamFor(id, auth?.userId || null, { viewer: auth });
 
 	let release = null;
 	if (!headOnly) {
@@ -219,7 +224,7 @@ async function stream(req, res, id, url, { headOnly }) {
 				send('finding', f, at);
 			}
 			if (sent.size > 500) for (const key of [...sent].slice(0, 250)) sent.delete(key);
-			const { team: cur } = await loadTeamFor(id, auth?.userId || null);
+			const { team: cur } = await loadTeamFor(id, auth?.userId || null, { viewer: auth });
 			if (cur.status !== lastStatus) {
 				lastStatus = cur.status;
 				send('status', { status: cur.status });

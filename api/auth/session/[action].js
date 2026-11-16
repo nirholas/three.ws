@@ -29,7 +29,7 @@ export default wrap(async (req, res) => {
 		const rows = await sql`
 			select id, created_at, last_seen_at, user_agent, ip, token_hash
 			from sessions
-			where user_id = ${user.id} and revoked_at is null and expires_at > now()
+			where user_id = ${user.id} and revoked_at is null and expires_at > now() and mfa_pending = false
 			order by created_at desc
 		`;
 
@@ -65,6 +65,9 @@ export default wrap(async (req, res) => {
 			userId: user.id,
 			userAgent: req.headers['user-agent'] || null,
 			ip: clientIp(req),
+			// A rotation of a signed-in session, not a new sign-in: it keeps the
+			// second-factor state of the session it replaces.
+			inheritMfa: { verifiedAt: user.mfa_verified_at ?? null },
 		});
 
 		res.setHeader('set-cookie', sessionCookie(newSecret));

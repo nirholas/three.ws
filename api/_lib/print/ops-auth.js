@@ -28,7 +28,7 @@
 
 import { constantTimeEquals } from '../crypto.js';
 import { getSessionUser } from '../auth.js';
-import { isAdminUser } from '../admin.js';
+import { isVerifiedAdmin } from '../admin.js';
 import { error } from '../http.js';
 
 /** Entries of PRINT_OPERATORS, trimmed. User ids or wallet addresses. */
@@ -73,7 +73,9 @@ export async function authorizeOperator(req) {
 	try {
 		const user = await getSessionUser(req);
 		if (user) {
-			if (await isAdminUser(user)) {
+			// An admin counts as one only once the session passed two-step
+			// verification (admin-mfa.js); otherwise the other doors still apply.
+			if (await isVerifiedAdmin(user)) {
 				return { ok: true, actor: user.wallet_address || `user:${user.id}`, actorId: user.id, via: 'admin' };
 			}
 			if (isAllowlistedOperator(user)) {

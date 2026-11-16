@@ -11,6 +11,7 @@
 import { error, json, method, rateLimited, wrap } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { authorizeOps } from '../_lib/ops-auth.js';
+import { respondMfaRequired } from '../_lib/admin-mfa.js';
 import { missingConfig, publisherConfig } from '../_lib/microsoft-marketplace.js';
 import { loadMicrosoftDashboard } from '../_lib/microsoft-dashboard.js';
 
@@ -22,6 +23,7 @@ export default wrap(async (req, res) => {
 	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 	const auth = await authorizeOps(req);
+	if (auth.mfaRequired) return respondMfaRequired(res);
 	if (!auth.ok) return error(res, 401, 'unauthorized', 'admin session or ops secret required');
 	const board = await loadMicrosoftDashboard({
 		config: { missing: missingConfig(), partnerCenterConfigured: Boolean(publisherConfig()) },

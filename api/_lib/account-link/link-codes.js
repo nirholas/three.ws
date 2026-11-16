@@ -268,7 +268,10 @@ async function issueCredential({ row, userId, scopes, req }) {
 	const c = row.claim || {};
 	switch (row.device_kind) {
 		case 'phone': {
-			const secret = await createSession({ userId, userAgent: c.user_agent || null, ip: c.ip || null });
+			// The signed-in owner approved this phone, so it is not asked for a
+			// second factor; it is not marked verified either, so a team that
+			// requires two-step sends the phone to /login/verify for a code.
+			const secret = await createSession({ userId, userAgent: c.user_agent || null, ip: c.ip || null, inheritMfa: { verifiedAt: null } });
 			const [s] = await sql`select id from sessions where token_hash = ${await sha256(secret)} limit 1`;
 			return { kind: 'session', id: s.id, secret };
 		}

@@ -78,6 +78,7 @@ async function api(path, init = {}) {
 function gateNote(err) {
 	const next = encodeURIComponent(location.pathname + location.search);
 	if (err.status === 401) return ['Sign in required', `This page takes a platform admin session. <a href="/login?next=${next}">Sign in</a>, then come back.`];
+	if (err.code === 'mfa_required') return ['Two-step verification required', `Admin pages need a session that passed two-step verification. <a href="/login/verify?next=${next}">Verify now</a>, then come back.`];
 	if (err.status === 403) return ['Admins only', `This account is not a platform admin. <a href="/login?next=${next}">Switch account</a>.`];
 	if (err.status === 429) return ['Rate limited', `Retry in ${esc(err.retryAfter || 'a few')} seconds.`];
 	if (err.code === 'migration_pending') return ['Migration pending', esc(err.message)];

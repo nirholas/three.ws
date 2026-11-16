@@ -7,7 +7,8 @@
 
 import { apiError, created, strParam, intParam } from '../agents-v1/http.js';
 import { sql } from '../db.js';
-import { isAdminUser } from '../admin.js';
+import { isAdminUser, isVerifiedAdmin } from '../admin.js';
+import { MFA_VERIFY_URL } from '../admin-mfa.js';
 import { limits } from '../rate-limit.js';
 import {
 	EventMarketError, SOURCE_KINDS, createMarket, getMarket, getPicks, listMarkets, lockMarket, marketHistory, placePick, resolveMarket,
@@ -64,10 +65,17 @@ async function throttleWrite(principal, ip) {
 	}
 }
 
-/** Admin gate: the principal must be a signed-in admin. */
+/**
+ * Admin gate: the principal must be an admin. A browser session must also have
+ * passed two-step verification (admin-mfa.js); an admin API key is its own
+ * credential and is not a session.
+ */
 async function requireAdminPrincipal(principal) {
 	const [user] = await sql`select * from users where id = ${principal.userId} and deleted_at is null`;
 	if (!user || !(await isAdminUser(user))) throw apiError(403, 'forbidden', 'Only a three.ws admin can create or change markets.');
+	if (principal.source === 'session' && !(await isVerifiedAdmin({ ...user, sid: principal.sid }))) {
+		throw apiError(403, 'mfa_required', 'admin access needs a session that passed two-step verification', { verify_url: MFA_VERIFY_URL });
+	}
 }
 
 const pickRoute = ({ params, body, principal, ip }) =>

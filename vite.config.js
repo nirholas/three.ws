@@ -31,6 +31,7 @@ import {
 	liveRouteTable,
 } from './server/dev-api-pages.mjs';
 import { devSecurityHeadersMiddleware } from './server/security-headers.mjs';
+import { mfaGateMiddleware } from './server/mfa-gate.mjs';
 
 // The production route table (vercel.json), re-read when it changes, for the
 // dev middleware's HTML-page fallback.
@@ -639,6 +640,9 @@ const appConfig = {
 			'three/addons/controls/OrbitControls.js',
 			'three/addons/environments/RoomEnvironment.js',
 			'three/addons/libs/meshopt_decoder.module.js',
+			// Loaded lazily by src/microsoft-graph/onedrive-client.js on the first
+			// OneDrive click. Discovering it then reloads the page mid sign-in.
+			'@azure/msal-browser',
 			// Loaded lazily by src/shared/cinematic-render.js. Without it here the
 			// dev optimizer discovers it mid-session and restarts the page under
 			// whichever viewer just asked for an HDRI.
@@ -1325,6 +1329,8 @@ const appConfig = {
 			apply: 'serve',
 			configureServer(server) {
 				server.middlewares.use(devSecurityHeadersMiddleware(devRouteTable));
+				// Half-finished sign-ins go to /login/verify, as in production.
+				server.middlewares.use(mfaGateMiddleware());
 			},
 		},
 		// Page URLs production answers with an api/ handler (sitemaps, crawler
@@ -1694,6 +1700,7 @@ const appConfig = {
 					'/widget/': resolve(root, 'pages/widget.html'),
 					'/drive': resolve(root, 'pages/drive.html'),
 					'/drive/': resolve(root, 'pages/drive.html'),
+					'/login/verify': resolve(root, 'public/login-verify.html'),
 					'/login': resolve(root, 'public/login.html'),
 					'/deploy': resolve(root, 'pages/app.html'),
 					'/showcase': resolve(root, 'pages/app.html'),

@@ -12,6 +12,7 @@
 
 import { cors, error, json, method, wrap } from './_lib/http.js';
 import { authorizeOps } from './_lib/ops-auth.js';
+import { respondMfaRequired } from './_lib/admin-mfa.js';
 import { likenessDistribution, likenessStoreEnabled, recentLikenessScores } from './_lib/likeness-store.js';
 import { SCORER_VERSION, SFACE_SAME_IDENTITY_COSINE, LIKENESS_VIEWS } from './_lib/likeness-score.js';
 import { MODELS } from './_lib/face-embed.js';
@@ -21,6 +22,7 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 
 	const auth = await authorizeOps(req);
+	if (auth.mfaRequired) return respondMfaRequired(res);
 	if (!auth.ok) {
 		return error(res, 401, 'unauthorized', 'likeness scores are internal: sign in as a platform admin or present x-ops-secret');
 	}

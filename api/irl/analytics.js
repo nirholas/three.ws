@@ -11,6 +11,7 @@ import { wrap, cors, json, error } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { rateLimited } from '../_lib/http.js';
 import { authorizeOps } from '../_lib/ops-auth.js';
+import { respondMfaRequired } from '../_lib/admin-mfa.js';
 import { getIrlAnalyticsSummary } from '../_lib/irl-analytics.js';
 
 export default wrap(async (req, res) => {
@@ -26,6 +27,7 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const auth = await authorizeOps(req);
+	if (auth.mfaRequired) return respondMfaRequired(res);
 	if (!auth.ok) return error(res, 401, 'unauthorized', 'admin session or x-ops-secret required');
 
 	try {

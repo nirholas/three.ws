@@ -32,6 +32,7 @@
 import { cors, error, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { authorizeOps } from '../_lib/ops-auth.js';
+import { respondMfaRequired } from '../_lib/admin-mfa.js';
 import { attestFleet, summarizeFleet } from '../_lib/agent-vitals/sniper-probe.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
@@ -49,6 +50,7 @@ export default wrap(async (req, res) => {
 	// Hardened ops gate: admin session or a dedicated OPS_SECRET, fail-closed in
 	// production, never CRON_SECRET.
 	const auth = await authorizeOps(req);
+	if (auth.mfaRequired) return respondMfaRequired(res);
 	if (!auth.ok) return error(res, 401, 'unauthorized', 'admin session or x-ops-secret required');
 
 	const url = new URL(req.url, 'http://localhost');

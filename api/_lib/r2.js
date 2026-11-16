@@ -539,13 +539,26 @@ export function isLegacyOgThumbnailKey(thumbnailKey) {
 // not bare publicUrl(). See docs/avatar-thumbnails.md.
 export function thumbnailUrl(thumbnailKey) {
 	if (!thumbnailKey || isLegacyOgThumbnailKey(thumbnailKey)) return null;
+	return storedObjectUrl(thumbnailKey);
+}
+
+// The ONE way to turn a stored object reference (an avatar storage_key, a
+// thumbnail_key, a legacy absolute bucket URL) into a URL a browser loads.
+//
+// The bucket's raw public *.r2.dev domain no longer serves objects (Cloudflare
+// answers 404 "Public access" for every key), so read paths must never hand it
+// out. Bucket keys and legacy raw-domain URLs both resolve to /cdn/<key>;
+// external absolute URLs (first-party /avatars/*.glb, a caller's own model)
+// pass through untouched. Null when there is nothing to render, so a list
+// response degrades to its designed placeholder instead of throwing.
+export function storedObjectUrl(keyOrUrl) {
+	if (!keyOrUrl) return null;
 	// keyFromPublicUrl() reads S3_PUBLIC_DOMAIN, which throws when object
-	// storage isn't configured. cdnUrlOrNull() below needs no bucket domain
-	// at all, so a thrown lookup here must not stop this read path from
-	// still resolving the key through /cdn/.
-	let key = thumbnailKey;
+	// storage isn't configured. cdnUrlOrNull() needs no bucket domain at all,
+	// so a thrown lookup must not stop this read path from resolving /cdn/.
+	let key = keyOrUrl;
 	try {
-		key = keyFromPublicUrl(thumbnailKey) || thumbnailKey;
+		key = keyFromPublicUrl(keyOrUrl) || keyOrUrl;
 	} catch {
 		// object storage unconfigured: fall through with the raw key.
 	}

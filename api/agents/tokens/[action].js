@@ -52,6 +52,7 @@ import {
 
 import { recordFunnelStep, gatherLaunchFunnel, CLIENT_FUNNEL_STEPS } from '../../_lib/launch-funnel.js';
 import { authorizeOps } from '../../_lib/ops-auth.js';
+import { respondMfaRequired } from '../../_lib/admin-mfa.js';
 import { pinToIPFS, ipfsPinningConfigured } from '../../_lib/ipfs-pin.js';
 // Heavy SDKs (Solana web3, Pump.fun, AWS S3 commands) are dynamic-imported
 // inside the handlers that need them. Loading them at module top-level was
@@ -1057,6 +1058,7 @@ async function handleFunnelReport(req, res) {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const auth = await authorizeOps(req);
+	if (auth.mfaRequired) return respondMfaRequired(res);
 	if (!auth.ok) return error(res, 401, 'unauthorized', 'ops secret or admin session required');
 
 	const url = new URL(req.url, 'http://x');

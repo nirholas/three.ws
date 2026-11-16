@@ -7,8 +7,9 @@
 import { sql } from '../_lib/db.js';
 import {
 	verifyPassword, hashPassword, createSession, destroySession, sessionCookie,
-	getSessionUser, hasSessionCookie, revokeRefreshToken, revokeAccountCredentials,
+	getSessionUser, hasSessionCookie, revokeRefreshToken, revokeAccountCredentials, readSessionCookie,
 } from '../_lib/auth.js';
+import { isPendingToken } from '../_lib/account-mfa.js';
 import { randomToken, randomDigits, sha256 } from '../_lib/crypto.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
@@ -83,6 +84,12 @@ async function handleLogin(req, res) {
 	await destroySession(req);
 	const token = await createSession({ userId: user.id, userAgent: req.headers['user-agent'], ip });
 	res.setHeader('set-cookie', sessionCookie(token));
+	if (isPendingToken(token)) {
+		// The password was right; two-step verification is on, so the session
+		// stays pending until a code passes at /login/verify.
+		logAudit({ userId: user.id, action: 'login_mfa_challenge', meta: { method: 'password' }, req });
+		return json(res, 200, { mfa_required: true, verify_url: '/login/verify' });
+	}
 	logAudit({ userId: user.id, action: 'login', req });
 	// The login form carries a "By signing in you agree…" notice, so each
 	// sign-in re-affirms the current Terms: this is how pre-clickwrap
@@ -249,6 +256,11 @@ async function handleMe(req, res) {
 	if (!method(req, res, ['GET', 'DELETE'])) return;
 	if (req.method === 'DELETE') return handleDeleteAccount(req, res);
 	if (!hasSessionCookie(req)) return json(res, 200, { user: null });
+	// Half a sign-in: the first factor passed, the code has not. Keep the cookie
+	// so /login/verify can finish it.
+	if (isPendingToken(readSessionCookie(req))) {
+		return error(res, 401, 'mfa_required', 'enter your two-step verification code', { verify_url: '/login/verify' });
+	}
 	const user = await getSessionUser(req);
 	if (!user) {
 		res.setHeader('Set-Cookie', sessionCookie('', { clear: true }));

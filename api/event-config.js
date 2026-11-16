@@ -17,6 +17,7 @@
 import { cors, json, method, wrap, error, readJson, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { authorizeOps } from './_lib/ops-auth.js';
+import { respondMfaRequired } from './_lib/admin-mfa.js';
 import { logAuditNow } from './_lib/audit.js';
 import { staticEventDoc, effectiveEventDoc, refreshEventOverride, invalidateEventOverride } from './_lib/event-config.js';
 import {
@@ -42,6 +43,7 @@ export default wrap(async (req, res) => {
 	}
 
 	const auth = await authorizeOps(req);
+	if (auth.mfaRequired) return respondMfaRequired(res);
 	if (!auth.ok || auth.actor === 'dev') {
 		return error(res, 401, 'unauthorized', 'an admin session or the ops secret is required');
 	}

@@ -193,7 +193,30 @@ export function claimsFromPayload(payload, { clientId, nonce = null, expectedTen
 		display_name: typeof payload.name === 'string' ? payload.name.slice(0, 120) : null,
 		avatar_url: null,
 		roles: Array.isArray(payload.wids) ? payload.wids.filter(isGuid).map((r) => r.toLowerCase()) : [],
+		// Entra reports how the person authenticated in `amr`; "mfa" means its
+		// own second factor (Authenticator, FIDO2, SMS, Conditional Access) ran.
+		mfa: Array.isArray(payload.amr) && payload.amr.includes('mfa'),
 	};
+}
+
+/**
+ * True when Entra ran multi-factor authentication for this sign-in. v2 ID
+ * tokens usually omit `amr`; the Microsoft Graph access token from the same
+ * back-channel exchange carries it. It is trusted on the same grounds as
+ * directoryRoles below (TLS from the token endpoint, answering our own client
+ * secret and code), and only when its tenant and object id match the ID token.
+ */
+export function entraMfaPassed(claims, accessToken) {
+	if (claims?.mfa) return true;
+	if (!accessToken) return false;
+	try {
+		const at = decodeJwt(accessToken);
+		return String(at.tid || '').toLowerCase() === claims.tenant_id
+			&& String(at.oid || '').toLowerCase() === claims.object_id
+			&& Array.isArray(at.amr) && at.amr.includes('mfa');
+	} catch {
+		return false;
+	}
 }
 
 let jwks = null;

@@ -15,7 +15,7 @@
 
 import { sql } from '../db.js';
 import { validateSolanaAddress, getTradeLimits, setTradeLimits } from '../agent-trade-guards.js';
-import { publicUrlOrNull, thumbnailUrl } from '../r2.js';
+import { storedObjectUrl, thumbnailUrl } from '../r2.js';
 import { laneInfo, configKeyFor } from '../native-launch/config.js';
 import { getSmartMoneyForMint } from '../smart-money.js';
 import { getConnection } from '../pump.js';
@@ -29,6 +29,7 @@ import {
 } from './findings.js';
 import { researchMint, loadIntelRow } from './research.js';
 import { isActivePerson, logEvent } from '../team-enterprise.js';
+import { viewerPassesTeamMfa, userHasMfa } from '../account-mfa.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const MAX_TEAMS_PER_USER = 12;
@@ -98,7 +99,7 @@ export function memberBudgetLamports(role, policy) {
 
 const TEAM_COLUMNS = sql`
 	id, owner_user_id, name, description, network, status, policy_agent_id, policy,
-	is_public, last_error, created_at, updated_at, archived_at
+	is_public, last_error, created_at, updated_at, archived_at, require_mfa
 `;
 
 export async function getTeamRow(teamId) {
@@ -110,13 +111,25 @@ export async function getTeamRow(teamId) {
  * Load a team for a viewer. Owners see everything; anyone else sees only a
  * public, non-archived team. A team the viewer may not see is a 404 (never a
  * 403), so private team ids do not leak.
+ *
+ * `viewer` is the resolveAccount result ({ userId, source, mfaVerified }).
+ * When the owner turned on "Require two-step verification", an admitted
+ * person gets in only through a browser session that passed a second factor;
+ * otherwise a private team answers 403 mfa_required (the person is admitted,
+ * so nothing leaks) and a public one falls back to its public view.
  */
-export async function loadTeamFor(teamId, userId, { write = false } = {}) {
+export async function loadTeamFor(teamId, userId, { write = false, viewer = null } = {}) {
 	const team = await getTeamRow(teamId);
 	const isOwner = Boolean(team && userId && team.owner_user_id === userId);
 	// A person the team admitted (tenant join or SCIM, team_people) reads a
 	// private team; writes stay with the owner. Deactivating the person ends it.
-	const isMember = Boolean(team && !isOwner && !write && userId && team.status !== 'archived' && (await isActivePerson(team.id, userId)));
+	let isMember = Boolean(team && !isOwner && !write && userId && team.status !== 'archived' && (await isActivePerson(team.id, userId)));
+	if (isMember && !viewerPassesTeamMfa(team, viewer)) {
+		if (!team.is_public) {
+			throw new TeamError(403, 'mfa_required', 'This team requires two-step verification. Verify with your authenticator app to open it.', { verify_url: `/login/verify?next=${encodeURIComponent(`/teams/${team.id}`)}` });
+		}
+		isMember = false;
+	}
 	if (!team || (!isOwner && !isMember && (write || !team.is_public || team.status === 'archived'))) {
 		throw new TeamError(404, 'not_found', 'team not found');
 	}
@@ -154,7 +167,7 @@ function memberView(m, { isOwner }) {
 			description: m.agent_description,
 			page_url: `/agents/${m.agent_id}`,
 			avatar_id: m.avatar_id || null,
-			model_url: m.storage_key ? publicUrlOrNull(m.storage_key) : null,
+			model_url: m.storage_key ? storedObjectUrl(m.storage_key) : null,
 			thumbnail_url: m.thumbnail_key ? thumbnailUrl(m.thumbnail_key) : null,
 			wallet: meta.solana_address || null,
 			...(isOwner && m.role === 'trader' ? { trade_limits: getTradeLimits(meta) } : {}),
@@ -194,6 +207,7 @@ export async function getTeamView(team, { isOwner }) {
 		network: team.network,
 		status: team.status,
 		is_public: team.is_public,
+		require_mfa: Boolean(team.require_mfa),
 		is_owner: isOwner,
 		policy: isOwner ? team.policy : { finding_ttl_seconds: team.policy.finding_ttl_seconds },
 		policy_agent_id: team.policy_agent_id,
@@ -334,6 +348,12 @@ export async function updateTeam(team, userId, patch, { req = null } = {}) {
 	if (!name) throw new TeamError(400, 'bad_name', 'Give the team a name.');
 	const description = p.description !== undefined ? cleanText(p.description, 500) || null : team.description;
 	const isPublic = p.is_public !== undefined ? p.is_public === true : team.is_public;
+	const requireMfa = p.require_mfa !== undefined ? p.require_mfa === true : Boolean(team.require_mfa);
+	if (requireMfa && !team.require_mfa && !(await userHasMfa(userId))) {
+		// The owner cannot demand of others what their own account skips, and
+		// disableMfa refuses while a team they own requires it.
+		throw new TeamError(409, 'owner_needs_mfa', 'Turn on two-step verification for your own account (Settings, Security) before requiring it of the team.');
+	}
 
 	let status = team.status;
 	if (p.status !== undefined) {
@@ -361,7 +381,7 @@ export async function updateTeam(team, userId, patch, { req = null } = {}) {
 
 	await sql`
 		update teams set name = ${name}, description = ${description}, is_public = ${isPublic},
-		       status = ${status}, policy = ${JSON.stringify(policy)}::jsonb, updated_at = now()
+		       status = ${status}, policy = ${JSON.stringify(policy)}::jsonb, require_mfa = ${requireMfa}, updated_at = now()
 		where id = ${team.id}
 	`;
 	const changed = [];
@@ -370,6 +390,9 @@ export async function updateTeam(team, userId, patch, { req = null } = {}) {
 	if (isPublic !== team.is_public) changed.push('visibility');
 	if (status !== team.status) changed.push('status');
 	if (JSON.stringify(policy) !== JSON.stringify(team.policy)) changed.push('policy');
+	if (requireMfa !== Boolean(team.require_mfa)) {
+		await logEvent(team.id, { actor: 'owner', actorUserId: userId, action: 'team_mfa_required_changed', detail: { require_mfa: requireMfa } });
+	}
 	if (changed.length) {
 		const detail = { fields: changed };
 		if (changed.includes('name')) detail.name = name;
@@ -386,6 +409,14 @@ export async function archiveTeam(team, userId = null) {
 		update teams set status = 'archived', archived_at = now(), is_public = false, updated_at = now()
 		where id = ${team.id}
 	`;
+	// Members of an archived team stop qualifying for Microsoft seats it shared.
+	// Loaded lazily to keep the Microsoft billing graph out of every team import.
+	try {
+		const { reconcileTeamSeats } = await import('../microsoft-billing.js');
+		await reconcileTeamSeats(team.id);
+	} catch (err) {
+		console.error('[teams] Microsoft seat reconcile after archive failed', { teamId: team.id, error: err?.message || String(err) });
+	}
 	await logEvent(team.id, { actor: 'owner', actorUserId: userId, action: 'team_archived', detail: { name: team.name } });
 }
 

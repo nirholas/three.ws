@@ -32,7 +32,8 @@ import { authenticateBearer, extractBearer, getSessionUser, hasScope } from '../
 import { requireCsrf } from '../_lib/csrf.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { assertBearerMaySpend } from '../_lib/spend-scope.js';
-import { isAdminUser } from '../_lib/admin.js';
+import { isAdminUser, isVerifiedAdmin } from '../_lib/admin.js';
+import { respondMfaRequired } from '../_lib/admin-mfa.js';
 import { webhookAdapter } from '../_lib/human-tasks/external.js';
 import * as svc from '../_lib/human-tasks/service.js';
 import * as S from '../_lib/human-tasks/schemas.js';
@@ -59,6 +60,10 @@ async function authorize(req, res, { scope, write, spend, admin }) {
 	if (write && user.source === 'session' && !(await requireCsrf(req, res, user.id))) return null;
 	if (admin && !(user.source === 'session' && (await isAdminUser(user.record)))) {
 		error(res, 403, 'forbidden', 'admin access required');
+		return null;
+	}
+	if (admin && !(await isVerifiedAdmin(user.record))) {
+		respondMfaRequired(res);
 		return null;
 	}
 	return user;

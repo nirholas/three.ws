@@ -35,6 +35,7 @@ import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { authorizeOps } from '../_lib/ops-auth.js';
+import { respondMfaRequired } from '../_lib/admin-mfa.js';
 import { gatherX402SettleHealth } from '../_lib/ops/x402-settle-health.js';
 import { checkRingWallets } from '../_lib/x402/wallet-balance-monitor.js';
 import { strandedCustodyPanel } from '../_lib/custodial-key-health.js';
@@ -216,6 +217,7 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const auth = await authorizeOps(req);
+	if (auth.mfaRequired) return respondMfaRequired(res);
 	if (!auth.ok) return error(res, 401, 'unauthorized', 'ops secret or admin session required');
 
 	// The panels are independent reads; one failing must not blank the others

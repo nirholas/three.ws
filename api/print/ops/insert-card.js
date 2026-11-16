@@ -13,6 +13,7 @@
 
 import { cors, json, method, wrap } from '../../_lib/http.js';
 import { authorizeOps } from '../../_lib/ops-auth.js';
+import { respondMfaRequired } from '../../_lib/admin-mfa.js';
 import { sql } from '../../_lib/db.js';
 import { isUuid } from '../../_lib/validate.js';
 import {
@@ -27,6 +28,7 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 
 	const auth = await authorizeOps(req);
+	if (auth.mfaRequired) return respondMfaRequired(res);
 	if (!auth.ok) return json(res, 403, { error: 'operator authorization required' });
 
 	const url = new URL(req.url, 'http://localhost');

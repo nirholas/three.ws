@@ -47,6 +47,7 @@ import { isMissingShellPage } from './shell-pages.mjs';
 import { hardenHeaderBag, hardenOnEnd } from './csp-hashes.mjs';
 import { cronEdgeAuth } from './cron-edge-auth.mjs';
 import { frameOptionsMiddleware } from './security-headers.mjs';
+import { mfaGateMiddleware } from './mfa-gate.mjs';
 import { setBounded, touchBounded } from './bounded-cache.mjs';
 import { runWithRequestContext } from '../api/_lib/request-context.js';
 import { tracingMiddleware, flushSpans } from '../api/_lib/tracing.js';
@@ -403,6 +404,10 @@ app.disable('x-powered-by');
 // X-Frame-Options has to agree with the CSP's frame-ancestors on every
 // response, embeds included: server/security-headers.mjs.
 app.use(frameOptionsMiddleware());
+
+// A page load carrying a half-finished sign-in (two-step verification still
+// owed) goes to /login/verify first: server/mfa-gate.mjs.
+app.use(mfaGateMiddleware());
 
 // The default filter skips non-compressible types (text/event-stream, images,
 // GLB); shouldCompress also passes through any response that marked itself

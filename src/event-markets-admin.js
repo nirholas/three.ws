@@ -115,6 +115,9 @@ async function load() {
 		try {
 			const res = await fetch('/api/ops/event-markets', { credentials: 'include', headers: { accept: 'application/json' } });
 			if (res.status === 401) return note('Sign in required', 'This page takes a platform admin session. <a href="/login?next=/admin/event-markets">Sign in</a>, then come back.');
+			if (res.status === 403 && (await res.clone().json().catch(() => ({}))).error === 'mfa_required') {
+				return note('Two-step verification required', 'Admin pages need a session that passed two-step verification. <a href="/login/verify?next=/admin/event-markets">Verify now</a>, then come back.');
+			}
 			if (res.status === 403) return note('Admins only', 'This account is not a platform admin. <a href="/login?next=/admin/event-markets">Switch account</a>.');
 			if (res.status === 429) return note('Rate limited', `Retry in ${esc(res.headers.get('retry-after') || 'a moment')} seconds.`, true);
 			if (res.status === 503) {

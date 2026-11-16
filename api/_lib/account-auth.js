@@ -7,7 +7,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from './auth.js';
 
 export async function resolveAccount(req, res) {
 	const session = await getSessionUser(req, res);
-	if (session) return { userId: session.id, source: 'session' };
+	if (session) return { userId: session.id, source: 'session', mfaVerified: Boolean(session.mfa_verified_at) };
 	const bearer = await authenticateBearer(extractBearer(req));
 	if (bearer) return { userId: bearer.userId, source: bearer.source, scope: bearer.scope || '' };
 	return null;

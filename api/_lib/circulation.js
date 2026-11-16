@@ -957,7 +957,7 @@ async function actionTrade(ctx) {
 // passes it as the host session cookie). Used for the launcher endpoints, which
 // authenticate via the session cookie.
 async function postAs(origin, ownerUserId, path, body, timeoutMs = 55_000) {
-	const token = await createSession({ userId: ownerUserId, userAgent: 'circulation', ip: null });
+	const token = await createSession({ userId: ownerUserId, userAgent: 'circulation', ip: null, machine: true });
 	let res;
 	try {
 		res = await fetch(`${origin}${path}`, {

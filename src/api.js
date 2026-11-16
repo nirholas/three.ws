@@ -202,5 +202,32 @@ export async function apiFetch(path, options = {}) {
 		err.redirected = true;
 		throw err;
 	}
+	if (res.status === 403 && (await isMfaStepUp(res))) {
+		redirectToMfa();
+		const err = new Error('admin two-factor verification required');
+		err.status = 403;
+		err.code = 'mfa_required';
+		err.redirected = true;
+		throw err;
+	}
 	return res;
+}
+
+// An admin endpoint answers 403 mfa_required when the session has not passed
+// two-step verification (api/_lib/admin-mfa.js), either as the flat
+// { error: 'mfa_required' } or the /v1 envelope { error: { code } }. Read a
+// clone so the caller can still consume the original body.
+async function isMfaStepUp(res) {
+	const body = await res.clone().json().catch(() => null);
+	const code = typeof body?.error === 'string' ? body.error : body?.error?.code;
+	return code === 'mfa_required';
+}
+
+// /login/verify steps the session up, or sends an account without two-step
+// to Settings, Security to turn it on, then returns to `next`.
+export function redirectToMfa() {
+	if (typeof location === 'undefined') return;
+	if (/^\/login(\/|$|\?)/.test(location.pathname)) return;
+	const next = location.pathname + location.search + location.hash;
+	location.href = '/login/verify?next=' + encodeURIComponent(next);
 }
