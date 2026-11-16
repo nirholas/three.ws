@@ -35,7 +35,7 @@ Because it is one key for everything, a deployment either has the whole NVIDIA l
 | **LLM (default lane)** | `nvidia/nemotron-3-super-120b-a12b`, then `nvidia/nemotron-3-ultra-550b-a55b` (step-down rung: `nvidia/nemotron-3.5-lightning-30b-a3b`) | `api/_lib/llm.js`, `api/_lib/chat-models.js` | ✅ |
 | **LLM (model garden)** | Three Nemotron picks (Ultra 550B and 3.5 Lightning 30B behind them), plus DeepSeek V4.1 Flash on the NIM lane via the open-model roster | `api/brain/chat.js`, `api/_lib/model-roster.js` | ✅ |
 | **Vision / VLM** | `meta/llama-3.2-11b-vision-instruct`, then free OpenRouter `:free` VLM rungs | `api/_lib/vision.js` | ✅ |
-| **Embeddings** | `nvidia/nemotron-3.5-embed-8b` (fallback `nvidia/nemotron-3-embed-1b`) | `api/_lib/embeddings.js` (and `api/agents/_id/embed.js`, which delegates to it) | ✅ |
+| **Embeddings** | `nvidia/nemotron-3-embed-1b` in production; `nvidia/nemotron-3.5-embed-8b` under evaluation until the next `three-ws-api` deploy, then primary | `api/_lib/embeddings.js` (and `api/agents/_id/embed.js`, which delegates to it) | ✅ |
 | **Reranking** | `nvidia/nemotron-3.5-rerank-8b` (under evaluation, opt-in) | `api/_lib/rerank.js` | ✅ |
 | **Content safety** | `nvidia/llama-3.1-nemotron-safety-guard-8b-v3`, `meta/llama-guard-4-12b` | `api/_lib/publish-safety.js` | ✅ |
 | **Chat guardrails** (owner opt-in) | `nvidia/nemoguard-jailbreak-detect`, `nvidia/llama-3.1-nemotron-safety-guard-8b-v3`, topic control on `nvidia/nemotron-3.5-lightning-30b-a3b` | `api/_lib/chat-guardrails.js` | Under evaluation |
@@ -136,6 +136,7 @@ The chain is budgeted and remembers what hurt. Each attempt takes whatever remai
 
 **Primary:** `nvidia/nemotron-3.5-embed-8b` (2048-dim, Matryoshka `dimensions: 2048`) · **Endpoint:** `integrate.api.nvidia.com/v1/embeddings`
 **Source:** [api/_lib/embeddings.js](../api/_lib/embeddings.js) (tag `NIM_EMBED_TAG` = `nvidia/nemotron-3.5-embed-8b@2048`).
+**Status (2026-11-16):** committed, not yet deployed. Production still embeds with `nvidia/nemotron-3-embed-1b`; 8b counts as in production once `three-ws-api` is deployed and `npm run nvidia:reembed -- --verify` passes.
 **Fallback / previous:** `nvidia/nemotron-3-embed-1b@2048` (`NIM_EMBED_TAG_PREVIOUS`), still live.
 
 **Why 8b (2026-11-16 eval, [docs/nvidia/evals/embeddings-2026-11-16.md](nvidia/evals/embeddings-2026-11-16.md)):** on the labelled three.ws docs set nDCG@10 went from 81.3 to 91.3 and recall@5 from 92.0 to 100; BEIR SciFact +7.0 nDCG@10, NFCorpus +4.7. The hosted `nemotron-3.5-embed-1b` only tied the old model and was not adopted. 2048 keeps 99% of the 4096 quality at the same stored size as the model it replaced. Reproduce with `npm run nvidia:embed-eval`.

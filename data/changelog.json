@@ -24,7 +24,7 @@
 		{
 			"date": "2026-11-16",
 			"title": "Agent memory and knowledge search find the right passage more often",
-			"summary": "Agent memories, agent knowledge bases and site-widget knowledge now embed with NVIDIA's nemotron-3.5-embed-8b. On our labelled docs set it ranks the right passage in the top five every time (up from 92%) and raises nDCG@10 from 81.3 to 91.3, with gains on two public benchmarks as well. Existing vectors were moved over in place with no gap in search, and the old ones are kept until the new space is verified on production data.",
+			"summary": "Agent memories, agent knowledge bases and site-widget knowledge now embed with NVIDIA's nemotron-3.5-embed-8b. On our labelled docs set it ranks the right passage in the top five every time (up from 92%) and raises nDCG@10 from 81.3 to 91.3, with gains on two public benchmarks as well. Existing vectors move over in place after the deploy, with no gap in search (a re-embed run refuses to start until production can read the new space), and the old ones are kept until the new space is verified on production data.",
 			"tags": [
 				"improvement",
 				"infra"
