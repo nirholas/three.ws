@@ -2,10 +2,15 @@
 //
 //   GET   ?view=disagree|cosmos_reject|unlabelled|all  &source=forge|eval|all
 //         &issue=<cosmos issue>  &limit=40  &before=<id>
-//         shadow rows (forge_judge_shadow), newest first, with presigned links to
-//         the four judging views, both verdicts and the human label; plus the
+//         shadow rows (forge_judge_shadow), newest first, with links to the
+//         four judging views, both verdicts and the human label; plus the
 //         running totals the board header shows (rows, disagreements, agreement
 //         of each judge with the human label where one exists).
+//   GET   ?render=<key>
+//         the PNG of one judging view. Served here rather than as a presigned
+//         R2 link because a view written during an R2 outage lives only in the
+//         GCS fallback bucket, where an R2 link 404s; getObjectBuffer reads
+//         either. Same-origin, so the admin session cookie authorizes the <img>.
 //   POST  { id, label: 'accepted'|'rejected'|null }
 //         record (or clear) an operator's label on a row, for tuning the judge
 //         and the promotion rule.
@@ -20,7 +25,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { authorizeOps } from '../_lib/ops-auth.js';
 import { respondMfaRequired } from '../_lib/admin-mfa.js';
 import { sql } from '../_lib/db.js';
-import { presignGet } from '../_lib/r2.js';
+import { getObjectBuffer } from '../_lib/r2.js';
 import { COSMOS_ISSUE_KEYS, cosmosJudgeMode, cosmosJudgeConfigured } from '../_lib/cosmos-reason-judge.js';
 
 const NO_STORE = { 'cache-control': 'no-store', 'x-robots-tag': 'noindex' };
@@ -28,14 +33,34 @@ const VIEWS = ['disagree', 'cosmos_reject', 'unlabelled', 'all'];
 const SOURCES = ['forge', 'eval', 'all'];
 const LABELS = ['accepted', 'rejected'];
 
-async function signKeys(keys) {
-	return Promise.all((keys || []).map(async (key) => {
-		try {
-			return { key, url: await presignGet({ key, expiresIn: 3600 }) };
-		} catch {
-			return { key, url: null };
+// Only keys recordJudgeShadow writes (forge/judge-shadow/<source>/<date>/<id>/<view>.png).
+const RENDER_KEY = /^forge\/judge-shadow\/(?:[A-Za-z0-9_.-]+\/)+[A-Za-z0-9_-]+\.png$/;
+const isRenderKey = (key) => RENDER_KEY.test(key) && !key.split('/').some((seg) => seg === '.' || seg === '..');
+const renderLinks = (keys) => (keys || []).map((key) => ({
+	key,
+	url: isRenderKey(key) ? `/api/admin/forge-judge?render=${encodeURIComponent(key)}` : null,
+}));
+
+async function serveRender(res, key) {
+	if (!isRenderKey(key)) return error(res, 400, 'validation_error', 'render must be a judge view key');
+	let png;
+	try {
+		png = await getObjectBuffer(key);
+	} catch (e) {
+		const code = e?.Code || e?.name;
+		if (code === 'NoSuchKey' || code === 'NotFound' || e?.$metadata?.httpStatusCode === 404) {
+			return error(res, 404, 'not_found', 'that view is not stored');
 		}
-	}));
+		throw e;
+	}
+	res.writeHead(200, {
+		'content-type': 'image/png',
+		'content-length': png.length,
+		'cache-control': 'private, max-age=3600',
+		'x-robots-tag': 'noindex',
+		'x-content-type-options': 'nosniff',
+	});
+	res.end(png);
 }
 
 async function listRows({ view, source, issue, limit, before }) {
@@ -56,8 +81,7 @@ async function listRows({ view, source, issue, limit, before }) {
 		order by id desc
 		limit ${limit + 1}`;
 	const page = rows.slice(0, limit);
-	const signed = await Promise.all(page.map(async (r) => ({ ...r, renders: await signKeys(r.render_keys) })));
-	return { rows: signed, nextBefore: rows.length > limit ? page[page.length - 1].id : null };
+	return { rows: page.map((r) => ({ ...r, renders: renderLinks(r.render_keys) })), nextBefore: rows.length > limit ? page[page.length - 1].id : null };
 }
 
 async function totals(source) {
@@ -81,7 +105,10 @@ async function totals(source) {
 
 export default wrap(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;
-	const rl = await limits.authedReadIp(clientIp(req));
+	// A board page loads up to 160 views; they draw on the image budget so a
+	// couple of page loads cannot exhaust the read budget the JSON calls use.
+	const isRender = req.method === 'GET' && /[?&]render=/.test(req.url || '');
+	const rl = await (isRender ? limits.imgProxyIp : limits.authedReadIp)(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 	const auth = await authorizeOps(req);
 	if (auth.mfaRequired) return respondMfaRequired(res);
@@ -89,6 +116,7 @@ export default wrap(async (req, res) => {
 
 	if (req.method === 'GET') {
 		const url = new URL(req.url, 'http://local');
+		if (url.searchParams.has('render')) return serveRender(res, url.searchParams.get('render') || '');
 		const view = url.searchParams.get('view') || 'disagree';
 		const source = url.searchParams.get('source') || 'all';
 		const issue = url.searchParams.get('issue') || null;

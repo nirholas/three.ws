@@ -9,7 +9,7 @@ import { createPgliteSql } from './_helpers/pglite-sql.js';
 
 process.env.DATABASE_URL ||= 'postgres://pglite.test/db';
 
-const holder = vi.hoisted(() => ({ db: null, auth: { ok: true, actor: 'ops-test' }, puts: [] }));
+const holder = vi.hoisted(() => ({ db: null, auth: { ok: true, actor: 'ops-test' }, puts: [], objects: new Map() }));
 
 vi.mock('../api/_lib/db.js', async (importActual) => {
 	const actual = await importActual();
@@ -17,11 +17,18 @@ vi.mock('../api/_lib/db.js', async (importActual) => {
 });
 vi.mock('../api/_lib/ops-auth.js', () => ({ authorizeOps: async () => holder.auth }));
 vi.mock('../api/_lib/rate-limit.js', () => ({
-	limits: { authedReadIp: async () => ({ success: true }) },
+	limits: { authedReadIp: async () => ({ success: true }), imgProxyIp: async () => ({ success: true }) },
 	clientIp: () => '127.0.0.1',
 }));
+// Storage as it behaves during an R2 outage: putObject lands the bytes in the
+// GCS fallback bucket, getObjectBuffer reads them back through its fallback
+// retry, and a presigned R2 link points at an object R2 does not have.
 vi.mock('../api/_lib/r2.js', () => ({
-	putObject: async ({ key }) => { holder.puts.push(key); },
+	putObject: async ({ key, body }) => { holder.puts.push(key); holder.objects.set(key, Buffer.from(body)); },
+	getObjectBuffer: async (key) => {
+		if (!holder.objects.has(key)) throw Object.assign(new Error('NoSuchKey'), { name: 'NoSuchKey' });
+		return holder.objects.get(key);
+	},
 	presignGet: async ({ key }) => `https://r2.example/${key}?sig=1`,
 }));
 
@@ -45,19 +52,21 @@ beforeEach(async () => {
 	await holder.db.exec(migration);
 	holder.auth = { ok: true, actor: 'ops-test' };
 	holder.puts = [];
+	holder.objects = new Map();
 });
 
-function call({ method = 'GET', query = '', body } = {}) {
+function call({ method = 'GET', query = '', body, url } = {}) {
 	const req = Readable.from(body ? [Buffer.from(JSON.stringify(body))] : []);
-	Object.assign(req, { method, url: `/api/admin/forge-judge${query}`, headers: body ? { 'content-type': 'application/json' } : {} });
+	Object.assign(req, { method, url: url || `/api/admin/forge-judge${query}`, headers: body ? { 'content-type': 'application/json' } : {} });
 	const res = {
 		statusCode: 200, headers: {}, body: '',
 		setHeader(k, v) { this.headers[k.toLowerCase()] = v; },
 		getHeader(k) { return this.headers[k.toLowerCase()]; },
 		writeHead(code, h) { this.statusCode = code; Object.assign(this.headers, h || {}); return this; },
-		end(b) { this.body = b ? String(b) : ''; this.writableEnded = true; },
+		end(b) { this.raw = b ? Buffer.from(b) : Buffer.alloc(0); this.body = b ? String(b) : ''; this.writableEnded = true; },
 	};
-	return handler(req, res).then(() => ({ status: res.statusCode, json: res.body ? JSON.parse(res.body) : null }));
+	const isJson = () => String(res.headers['content-type'] || 'application/json').includes('json');
+	return handler(req, res).then(() => ({ status: res.statusCode, headers: res.headers, raw: res.raw, json: res.body && isJson() ? JSON.parse(res.body) : null }));
 }
 
 describe('recordJudgeShadow', () => {
@@ -101,14 +110,34 @@ describe('/api/admin/forge-judge', () => {
 		expect((await call()).status).toBe(401);
 	});
 
-	it('lists disagreements first by default, with signed view links and totals', async () => {
+	it('lists disagreements first by default, with view links and totals', async () => {
 		const { status, json } = await call();
 		expect(status).toBe(200);
 		expect(json.rows).toHaveLength(1);
 		expect(json.rows[0].creation_id).toBe('d1');
-		expect(json.rows[0].renders[0].url).toMatch(/^https:\/\/r2\.example\/forge\/judge-shadow\/forge\//);
+		expect(json.rows[0].renders).toHaveLength(4);
 		expect(json.totals).toMatchObject({ rows: 2, disagree: 1, both_answered: 2, labelled: 1, current_agrees: 1, cosmos_agrees: 1 });
 		expect(json.issues).toContain('floating_parts');
+	});
+
+	it('serves every view a row links to, even when the view only reached the fallback bucket', async () => {
+		const { json } = await call();
+		for (const { url } of json.rows[0].renders) {
+			const view = await call({ url });
+			expect(view.status, url).toBe(200);
+			expect(view.headers['content-type']).toBe('image/png');
+			expect(view.raw.equals(PNG)).toBe(true);
+		}
+	});
+
+	it('serves only judge views, and only behind the admin gate', async () => {
+		holder.objects.set('avatars/private/secret.png', PNG);
+		expect((await call({ query: '?render=avatars/private/secret.png' })).status).toBe(400);
+		expect((await call({ query: '?render=forge/judge-shadow/../../avatars/private/secret.png' })).status).toBe(400);
+		expect((await call({ query: '?render=forge/judge-shadow/eval/missing/front.png' })).status).toBe(404);
+		const [{ render_keys: [key] }] = await holder.db.sql`select render_keys from forge_judge_shadow where creation_id = 'd1'`;
+		holder.auth = { ok: false };
+		expect((await call({ query: `?render=${encodeURIComponent(key)}` })).status).toBe(401);
 	});
 
 	it('filters by source and by Cosmos issue', async () => {
