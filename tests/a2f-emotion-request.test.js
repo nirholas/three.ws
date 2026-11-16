@@ -145,3 +145,67 @@ describe('StreamSpeechPlayer lays streamed emotion onto the turn clock', async (
 		expect(calls.at(-1)).not.toBe(track);
 	});
 });
+
+describe('createDigitalHumanClient sends the emotion choice with every spoken line', async () => {
+	const { createDigitalHumanClient } = await import('../src/voice/digital-human-pipeline.js');
+	function recorder() {
+		const bodies = [];
+		const f = async (url, init) => {
+			bodies.push({ url, body: JSON.parse(init.body) });
+			const sse = 'event: done\ndata: {"ok":true}\n\n';
+			return new Response(url.includes('stream') || bodies.at(-1).body.stream ? sse : '{"animation":null}', {
+				status: 200,
+				headers: { 'content-type': bodies.at(-1).body.stream ? 'text/event-stream' : 'application/json' },
+			});
+		};
+		return { bodies, f };
+	}
+
+	it('reads the current choice per line, so a change applies to the next sentence', async () => {
+		const { bodies, f } = recorder();
+		let choice = { emotion: 'joy', emotionStrength: 0.8 };
+		const client = createDigitalHumanClient({ fetch: f, emotion: () => choice });
+		await client.speakLine({ text: 'One.', voice: 'v', turn: 't' });
+		choice = { emotion: 'off' };
+		await client.speakLine({ text: 'Two.', voice: 'v', turn: 't' });
+		await client.speakBlocking({ text: 'Three.', voice: 'v' });
+		expect(bodies[0].body).toMatchObject({ text: 'One.', stream: true, emotion: 'joy', emotionStrength: 0.8 });
+		expect(bodies[1].body).toMatchObject({ text: 'Two.', emotion: 'off' });
+		expect(bodies[1].body.emotionStrength).toBeUndefined();
+		expect(bodies[2].body).toMatchObject({ text: 'Three.', emotion: 'off' });
+	});
+
+	it('sends no emotion fields without a choice, leaving the server default (read the text)', async () => {
+		const { bodies, f } = recorder();
+		await createDigitalHumanClient({ fetch: f }).speakLine({ text: 'Hi.', voice: 'v', turn: 't' });
+		expect('emotion' in bodies[0].body).toBe(false);
+	});
+});
+
+describe('emotion panel choice', async () => {
+	const { emotionChoiceFromParams, emotionRequestFields, describeEmotion } = await import('../src/voice/emotion-panel.js');
+	const p = (q) => new URLSearchParams(q);
+
+	it('reads ?emotion and ?emotionStrength, ignoring unknown intents', () => {
+		expect(emotionChoiceFromParams(p(''))).toEqual({ enabled: true, intent: 'auto', strength: 60 });
+		expect(emotionChoiceFromParams(p('emotion=sad&emotionStrength=0.9'))).toEqual({ enabled: true, intent: 'sad', strength: 90 });
+		expect(emotionChoiceFromParams(p('emotion=hack')).intent).toBe('auto');
+		expect(emotionChoiceFromParams(p('emotion=off')).enabled).toBe(false);
+		expect(emotionChoiceFromParams(p('emotionStrength=0')).enabled).toBe(false);
+	});
+
+	it('turns the choice into /api/a2f fields that resolveEmotionRequest accepts', () => {
+		const on = emotionRequestFields({ enabled: true, intent: 'joy', strength: 75 });
+		expect(on).toEqual({ emotion: 'joy', emotionStrength: 0.75 });
+		expect(resolveEmotionRequest(on).a2f).toMatchObject({ enabled: true, strength: 0.75, input: { joy: expect.any(Number) } });
+		const off = emotionRequestFields({ enabled: false, intent: 'joy', strength: 75 });
+		expect(resolveEmotionRequest(off).a2f).toEqual({ enabled: false });
+		const auto = emotionRequestFields({ enabled: true, intent: 'auto', strength: 60 });
+		expect(resolveEmotionRequest({ ...auto, text: 'I am so sorry for your loss.' }).intent.source).toBe('text');
+	});
+
+	it('describes what the face did', () => {
+		expect(describeEmotion({ label: 'off' })).toBe('emotion off: neutral face');
+		expect(describeEmotion({ label: 'joy', source: 'text' }, 'joy')).toBe('intent joy (read from the words), face shows joy');
+	});
+});

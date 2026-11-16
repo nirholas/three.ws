@@ -303,14 +303,20 @@ export function newTurnId() {
 /**
  * HTTP client for the four endpoints a turn touches. `origin` is '' in the
  * browser (same-origin) and the deployment URL in the bench and the monitor.
+ * `emotion` is an optional getter returning the facial-emotion fields for
+ * /api/a2f ({ emotion, emotionStrength }); it is read per spoken line, so a
+ * change lands on the next sentence. Without it the server reads each line's
+ * intent from its words.
  */
 export function createDigitalHumanClient({
 	origin = '',
 	fetch: f = globalThis.fetch.bind(globalThis),
 	headers = {},
+	emotion = null,
 } = {}) {
 	const url = (p) => `${origin}${p}`;
 	const h = (extra = {}) => ({ ...headers, ...extra });
+	const emo = () => (typeof emotion === 'function' ? emotion() || {} : {});
 
 	return {
 		/** WAV bytes (16 kHz mono) -> transcript. */
@@ -371,7 +377,7 @@ export function createDigitalHumanClient({
 			const res = await f(url('/api/a2f'), {
 				method: 'POST',
 				headers: h({ 'content-type': 'application/json', accept: 'text/event-stream' }),
-				body: JSON.stringify({ text, voice, stream: true, turn, animate }),
+				body: JSON.stringify({ text, voice, stream: true, turn, animate, ...emo() }),
 				signal,
 			});
 			if (!res.ok) throw await errorFrom(res, 'tts');
@@ -419,7 +425,7 @@ export function createDigitalHumanClient({
 			const res = await f(url('/api/a2f'), {
 				method: 'POST',
 				headers: h({ 'content-type': 'application/json' }),
-				body: JSON.stringify({ text, voice }),
+				body: JSON.stringify({ text, voice, ...emo() }),
 				signal,
 			});
 			if (!res.ok) throw await errorFrom(res, 'a2f');
@@ -510,8 +516,8 @@ export async function runTurn({
 				failedStage: 'asr',
 			};
 		}
+		at('asrText');
 	}
-	at('asrText');
 	if (!transcript) {
 		return {
 			transcript: '',
