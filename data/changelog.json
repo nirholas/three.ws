@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-11-16",
+			"title": "Every NVIDIA lane, live on /nvidia",
+			"summary": "The /nvidia page now shows whether each NVIDIA lane we run (NIM chat, vision and embeddings, NemoGuard, Riva speech, Audio2Face and the TRELLIS, Hunyuan3D, TripoSG and Pixal3D GPU workers) answered its most recent scheduled probe, with median and p95 latency over 7 days. A new /nvidia/benchmarks page publishes the full probe, job and GPU fleet tables, measured from real generation jobs, with a CSV download and the method behind every number. The first full run caught a retired NVIDIA model still pinned in the chat chain, which now leads with Nemotron Ultra.",
+			"tags": [
+				"feature",
+				"infra"
+			],
+			"link": "/nvidia/benchmarks"
+		},
+		{
+			"date": "2026-11-16",
+			"title": "Agent memory and knowledge search find the right passage more often",
+			"summary": "Agent memories, agent knowledge bases and site-widget knowledge now embed with NVIDIA's nemotron-3.5-embed-8b. On our labelled docs set it ranks the right passage in the top five every time (up from 92%) and raises nDCG@10 from 81.3 to 91.3, with gains on two public benchmarks as well. Existing vectors were moved over in place with no gap in search, and the old ones are kept until the new space is verified on production data.",
+			"tags": [
+				"improvement",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-16",
 			"title": "New NVIDIA models are evaluated the day they appear",
 			"summary": "Every model newly listed in the NVIDIA NIM catalog is now sorted into a lane by live probes, scored on that lane's eval set next to the model the lane runs today, and turned into a verdict with the exact config change and a measured number, so a strong release can be live on three.ws the same day. A person still reviews and ships every switch.",
 			"tags": [

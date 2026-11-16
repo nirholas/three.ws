@@ -51,6 +51,32 @@ speaking/poster route and should not be described as a Pavilion application.
 - The **NVIDIA Inception member badge** in the site footer, linking to [NVIDIA's startup program](https://www.nvidia.com/en-us/startups/).
 - The [membership overview deck](/docs/nvidia-inception/index.html): the platform, the numbers, the team, and what we're doing with the program.
 - The [changelog](https://three.ws/changelog), where membership was announced on 2026-07-21.
+- The **Live right now** section of [/nvidia](https://three.ws/nvidia#live) and the full tables on [/nvidia/benchmarks](https://three.ws/nvidia/benchmarks) (see below).
+
+## Live lane health and measured GPU numbers
+
+Every NVIDIA lane the product depends on is probed on a schedule, and every GPU number comes from real generation jobs. Nothing on these pages is estimated: a lane or window without data says "no probes in the last N days" or "no jobs in the last N days".
+
+| Lane | Technology | What the probe sends | Cadence |
+|---|---|---|---|
+| Chat, default NIM rung | NVIDIA NIM | 4-token chat completion on the model the LLM free chain leads with | hourly |
+| Vision | NVIDIA NIM | one-word description of a 32x32 image | every 3 h |
+| Embeddings | NVIDIA NIM | one-word embedding on the model `api/_lib/embeddings.js` pins | hourly |
+| Content safety | NemoGuard | one-sentence safety classification | hourly |
+| Text to speech | Riva (Magpie TTS) | "Hi." synthesized over NVCF gRPC | hourly |
+| Speech to facial animation | Audio2Face-3D | one spoken phrase animated over NVCF gRPC (only the A2F call is timed) | every 3 h |
+| Text to 3D, hosted TRELLIS | NVCF | authenticated status lookup, so no generation is consumed | hourly |
+| TRELLIS, TRELLIS.2, Hunyuan3D, TripoSG, Pixal3D workers | NVIDIA GPU on Cloud Run | `GET /health`, which reports the GPU name and the loaded model | every 6 h |
+
+**Pieces.** Lane registry and aggregation: [api/_lib/nvidia-lanes.js](../api/_lib/nvidia-lanes.js). Cron: [api/cron/nvidia-lane-probes.js](../api/cron/nvidia-lane-probes.js) at minute 23 every hour; each run probes only the lanes whose cadence is due (`?force=1` probes all, `?lane=a,b` picks lanes). Rows land in `nvidia_lane_probes`. Public read: `GET /api/nvidia/stats` (JSON, or `?format=csv`), CDN-cached for five minutes, with no keys, internal hostnames, user ids or prompts in the payload. Front end: [src/nvidia-live.js](../src/nvidia-live.js), shared by both pages. Local check against real endpoints on an isolated database: `node scripts/nvidia-lane-probes-check.mjs [lane...]`. Screenshot check: `node scripts/nvidia-live-shots.mjs http://localhost:3251`.
+
+**Rate limits.** At most nine hosted requests an hour, against an NVIDIA free tier of about 40 requests per minute, so the probes never compete with product traffic. A probe that answers HTTP 429 is recorded as `degraded` with the limit in its detail; the response for that lane is to lengthen its `everyMinutes` in the registry. None hit a limit at the cadences above.
+
+**GPU attribution.** Each completed forge job now records the worker host that served it (`forge_creations.worker_host`), and each GPU probe records the GPU that host reports. The fleet chart joins the two, so a job is split into L4 or RTX PRO 6000 only when both are known. Attribution started 2026-11-16; earlier jobs count in the lane totals but are never assigned a GPU.
+
+**Methodology.** Probe latency is wall-clock time from our server in us-central1 to the full response, network included. Job latency is created-to-completed wall-clock time of real generations. All percentiles are nearest-rank (`percentile_disc`) over successful probes or completed jobs in the 7 or 30 day window.
+
+**First findings (2026-11-16).** The first full run found the free chain's lead NIM rung still pinned to `nvidia/nemotron-3-super-120b-a12b`, which NVIDIA retired on 2026-10-03 (every call answered HTTP 410). The rung now leads with `nvidia/nemotron-3-ultra-550b-a55b`, and [tests/api/llm-nim-retired-pins.test.js](../tests/api/llm-nim-retired-pins.test.js) fails if any retired id is pinned again. The same run measured all seven hosted lanes live; the TRELLIS and TripoSG workers on NVIDIA L4 and Hunyuan3D on RTX PRO 6000 Blackwell answered in under 100 ms; the Pixal3D worker did not answer within the 4 s probe timeout from cold; TRELLIS.2 is not deployed on the production service and is shown as such.
 
 ## Related
 

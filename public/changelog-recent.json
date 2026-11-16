@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-16T17:34:59.367Z",
+	"generated_at": "2026-11-16T17:39:37.260Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4625,
+	"total": 4628,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -121,6 +121,27 @@
 		},
 		{
 			"date": "2026-11-16",
+			"type": "launch",
+			"title": "NVIDIA lane benchmarks",
+			"summary": "Measured health and latency for every NVIDIA lane three.ws runs: NIM chat, vision, embeddings, NemoGuard, Magpie TTS, Audio2Face-3D, hosted TRELLIS and the self-hosted L4 and RTX PRO 6000 GPU workers. 7 and 30 day tables from real probes and real jobs, with a CSV download.",
+			"link": "/nvidia/benchmarks",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Agent memory and knowledge search find the right passage more often",
+			"summary": "Agent memories, agent knowledge bases and site-widget knowledge now embed with NVIDIA's nemotron-3.5-embed-8b. On our labelled docs set it ranks the right passage in the top five every time (up from 92%) and raises nDCG@10 from 81.3 to 91.3, with gains on two public benchmarks as well. Existing vectors were moved over in place with no gap in search, and the old ones are kept until the new space is verified on production data.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-16",
 			"type": "update",
 			"title": "Analyze your three.ws usage in Power BI and Excel",
 			"summary": "Settings now has a Connect to Power BI or Excel panel. Create a read-only key for your own usage or for a team you own, paste the feed URL into Power BI or Excel, and report on MCP tool calls, LLM tokens and cost, Forge 3D generations and metered billing. It is a standard OData feed, so the Power BI Service refreshes it on a schedule without a gateway, and filters you set in Power Query are applied on the server. Keys can be revoked at any time, every key creation and refresh is in your audit log, and typed Power Query scripts with a starter report are in the repository.",
@@ -168,6 +189,17 @@
 			"tags": [
 				"feature",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Every NVIDIA lane, live on /nvidia",
+			"summary": "The /nvidia page now shows whether each NVIDIA lane we run (NIM chat, vision and embeddings, NemoGuard, Riva speech, Audio2Face and the TRELLIS, Hunyuan3D, TripoSG and Pixal3D GPU workers) answered its most recent scheduled probe, with median and p95 latency over 7 days. A new /nvidia/benchmarks page publishes the full probe, job and GPU fleet tables, measured from real generation jobs, with a CSV download and the method behind every number. The first full run caught a retired NVIDIA model still pinned in the chat chain, which now leads with Nemotron Ultra.",
+			"link": "/nvidia/benchmarks",
+			"tags": [
+				"feature",
+				"infra"
 			]
 		},
 		{
@@ -1511,36 +1543,6 @@
 			"link": "/forge",
 			"tags": [
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-10",
-			"type": "update",
-			"title": "Multiplayer worlds hold together across several servers",
-			"summary": "Players who land on a different server than the one hosting their world are now bridged to it, so a crowd can be spread over several servers without anyone being cut off. Measured on a two-server test fleet backed by a dedicated shared Redis: 200 players across 4 coin worlds joined with no failures or dropped connections, and every one of 186000 chat deliveries arrived. The live world server is unchanged until its next deploy.",
-			"link": null,
-			"tags": [
-				"infra"
-			]
-		},
-		{
-			"date": "2026-11-10",
-			"type": "update",
-			"title": "One button style across Brain, Flow, Home, Avatar Studio and agent pages",
-			"summary": "Buttons on the Brain, Flow map, First Meet, Home studio cards, Avatar Studio and agent detail pages now use the shared button component, so hover, pressed, keyboard focus and disabled states look and behave the same everywhere.",
-			"link": "/brain",
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-10",
-			"type": "update",
-			"title": "Places search keeps answering when the public map servers stall",
-			"summary": "The paid and free places search returned an error for every caller when the public OpenStreetMap servers it reads were overloaded at the same time. It now asks several map servers in parallel and takes the first answer, remembers recent results so repeat searches return instantly, and if every server is down it serves the last real answer it saw, clearly marked as stale with the time it was fetched.",
-			"link": null,
-			"tags": [
-				"fix"
 			]
 		}
 	]

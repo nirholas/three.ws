@@ -95,6 +95,22 @@
 			<description>Buy three.ws for your company through Microsoft Marketplace or by invoice, and clear vendor review in one visit: Microsoft sign-in, Entra tenant claim, SCIM, hosting, encryption, subprocessors and a printable procurement packet.</description>
 		</item>
 		<item>
+			<title>NVIDIA lane benchmarks</title>
+			<link>https://three.ws/nvidia/benchmarks</link>
+			<guid isPermaLink="false">2026-11-16:NVIDIA lane benchmarks</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Measured health and latency for every NVIDIA lane three.ws runs: NIM chat, vision, embeddings, NemoGuard, Magpie TTS, Audio2Face-3D, hosted TRELLIS and the self-hosted L4 and RTX PRO 6000 GPU workers. 7 and 30 day tables from real probes and real jobs, with a CSV download.</description>
+		</item>
+		<item>
+			<title>Agent memory and knowledge search find the right passage more often</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-16:Agent memory and knowledge search find the right passage more often</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Agent memories, agent knowledge bases and site-widget knowledge now embed with NVIDIA's nemotron-3.5-embed-8b. On our labelled docs set it ranks the right passage in the top five every time (up from 92%) and raises nDCG@10 from 81.3 to 91.3, with gains on two public benchmarks as well. Existing vectors were moved over in place with no gap in search, and the old ones are kept until the new space is verified on production data.</description>
+		</item>
+		<item>
 			<title>Analyze your three.ws usage in Power BI and Excel</title>
 			<link>https://three.ws/dashboard/settings</link>
 			<guid isPermaLink="false">2026-11-16:Analyze your three.ws usage in Power BI and Excel</guid>
@@ -133,6 +149,14 @@
 			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The three.ws A2A endpoint now streams over SSE, lets you cancel a running generation, and accepts an X-API-Key header or OAuth 2.0 as well as bearer tokens, all declared in the agent card. Responses are checked against the A2A schema in the test suite, and a builder guide covers adding three.ws in Copilot Studio and Foundry plus a Microsoft Agent Framework sample.</description>
+		</item>
+		<item>
+			<title>Every NVIDIA lane, live on /nvidia</title>
+			<link>https://three.ws/nvidia/benchmarks</link>
+			<guid isPermaLink="false">2026-11-16:Every NVIDIA lane, live on /nvidia</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The /nvidia page now shows whether each NVIDIA lane we run (NIM chat, vision and embeddings, NemoGuard, Riva speech, Audio2Face and the TRELLIS, Hunyuan3D, TripoSG and Pixal3D GPU workers) answered its most recent scheduled probe, with median and p95 latency over 7 days. A new /nvidia/benchmarks page publishes the full probe, job and GPU fleet tables, measured from real generation jobs, with a CSV download and the method behind every number. The first full run caught a retired NVIDIA model still pinned in the chat chain, which now leads with Nemotron Ultra.</description>
 		</item>
 		<item>
 			<title>Forge results and agent 3D bodies load again</title>
