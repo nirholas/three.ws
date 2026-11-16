@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-16",
+			"title": "Microsoft Phi joins the self-hosted model fleet",
+			"summary": "Microsoft's open Phi-4-mini model is built and tested on three.ws's own GPU fleet, with streaming and tool calling, ready to switch on as a brain an agent can pick by name. We tested it against the current default on 91 real platform tasks and published the results: it trails on every one, so it does not take over any internal work by default yet. If the Phi lane is slow or down, requests move to the next model automatically.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/phi-brain-lane"
+		},
+		{
+			"date": "2026-11-16",
 			"title": "Repeat prompts download again",
 			"summary": "A prompt someone had already generated in the past week could come back with a Download GLB link that went nowhere, on Forge and in the Teams \"Create a 3D model\" card. Cached results now always point at the working download address.",
 			"tags": [

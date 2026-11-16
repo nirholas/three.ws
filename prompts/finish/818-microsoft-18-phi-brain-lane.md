@@ -1,5 +1,7 @@
 # microsoft 18: self-host Microsoft Phi on the GCP GPU fleet as a fast, low-cost agent brain lane
 
+Status 2026-11-16: everything built, verified on a GCP L4 (job run 20261112T174111Z) and evaluated (docs/phi-brain-lane.md: Phi trails the default chain on all five task types, so PHI_ROUTED_TASKS stays empty). Remaining owner step: deploy the `model-phi` service and set `PHI_WORKER_URL` on `three-ws-api` (commands in workers/model-phi/README.md), then `git rm` this file.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3118.
 
 ## Operating clause (binding)

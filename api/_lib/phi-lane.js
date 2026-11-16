@@ -23,7 +23,9 @@ export const PHI_STALL_COOLDOWN_MS = 90_000;
 // Internal task types routed to Phi when the worker is configured: the types
 // that met the bar in the evaluation (docs/phi-brain-lane.md, within 5 points
 // of the default chain and at least 95% parseable output). PHI_ROUTED_TASKS
-// (comma-separated) overrides this list without a deploy.
+// (comma-separated) overrides this list without a deploy. The 2026-11-16
+// evaluation passed no type (Phi trailed by 8 to 38 points on every one), so
+// the lane serves only callers that pick it by name or set preferPhi.
 export const PHI_ROUTED_TASKS = Object.freeze([]);
 
 /**

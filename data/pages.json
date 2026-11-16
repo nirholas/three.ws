@@ -7338,6 +7338,14 @@
 					"added": "2026-11-11"
 				},
 				{
+					"path": "/docs/phi-brain-lane",
+					"title": "Docs · Phi brain lane (self-hosted Phi-4-mini)",
+					"description": "Microsoft Phi-4-mini self-hosted on a Cloud Run L4: the vLLM worker, tool calling, fallback, measured cold start, latency, throughput and cost, and the 91-task evaluation that sets its routing.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-16"
+				},
+				{
 					"path": "/mcp",
 					"title": "Connect to every three.ws tool",
 					"description": "One MCP endpoint and one sign-in for every three.ws tool. Copy-paste config for Claude Code, Claude Desktop and the @three-ws/mcp stdio proxy, with the live tool count and tool groups read from the same registry the endpoint serves.",
