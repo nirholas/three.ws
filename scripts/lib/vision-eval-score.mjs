@@ -9,7 +9,12 @@
 //
 // The rules mirror how each consumer acts on a reply, not a looser reading of
 // it: the quality gate passes at the production pass score, the X review bots
-// branch on safe first and usable second, and so on. PURE.
+// branch on safe first and usable second, and so on. Boxes are read by the
+// consumers' own parsers, so a reply is scored on exactly the objects production
+// would keep. PURE.
+
+import { normalizeDetectedBoxes } from '../../api/_lib/forge-objects.js';
+import { planFromPhotoAnalysis } from '../../src/diorama/photo-layout.js';
 
 export const QUALITY_GATE_PASS_SCORE = 60;
 export const SEED_MATCH_MIN = 6;
@@ -110,39 +115,35 @@ function scoreSeedJudge(exp, { json }) {
 	return result(true, ok, ok ? '' : `promptAdherence ${adherence}`);
 }
 
-function validBox(b) {
-	if (!Array.isArray(b) || b.length !== 4 || b.some((n) => !Number.isFinite(Number(n)) || n < 0 || n > 1000)) return false;
-	return b[0] < b[2] && b[1] < b[3];
-}
-
-function validEdgeBox(b) {
-	if (!b || typeof b !== 'object') return false;
-	const v = [b.left, b.top, b.right, b.bottom].map(Number);
-	if (v.some((n) => !Number.isFinite(n) || n < 0 || n > 1000)) return false;
-	return v[0] < v[2] && v[1] < v[3];
-}
-
 function recall(labels, groups) {
 	const text = labels.join(' | ');
 	return groupsHit(text, groups).length / groups.length;
 }
 
+// forge-objects.js keeps only boxes it can place and drops the rest, so a label
+// counts only when its box survives normalizeDetectedBoxes.
 function scoreDetect(exp, { json }) {
-	const objs = json?.objects;
-	if (!Array.isArray(objs) || !objs.length) return result(false, false, 'no objects array');
-	if (objs.some((o) => typeof o?.label !== 'string' || !validBox(o.box_2d))) return result(false, false, 'a label or box_2d is malformed');
-	const r = recall(objs.map((o) => o.label), exp.labels);
-	return result(true, r >= DETECT_MIN_RECALL, `recall ${r.toFixed(2)}`);
+	if (!Array.isArray(json?.objects) || !json.objects.length) return result(false, false, 'no objects array');
+	const kept = normalizeDetectedBoxes(json);
+	if (!kept.length) return result(false, false, 'no box production can use');
+	const r = recall(kept.map((o) => o.label), exp.labels);
+	const dropped = json.objects.length - kept.length;
+	return result(true, r >= DETECT_MIN_RECALL, [`recall ${r.toFixed(2)}`, dropped ? `${dropped} box(es) dropped` : ''].filter(Boolean).join('; '));
 }
 
+// diorama-photo.js runs planFromPhotoAnalysis: named-edge or Gemini-order array
+// boxes, bad boxes and duplicates dropped, an off-schema mood or ground replaced
+// by its default. The plan fails only when no object survives.
 export function scoreDiorama(exp, { json }, { moods, grounds }) {
-	const objs = json?.objects;
-	if (!Array.isArray(objs) || !objs.length) return result(false, false, 'no objects array');
-	if (!moods.includes(json.mood)) return result(false, false, `mood "${json.mood}" not in schema`);
-	if (!grounds.includes(json.ground)) return result(false, false, `ground "${json.ground}" not in schema`);
-	if (objs.some((o) => typeof o?.label !== 'string' || !validEdgeBox(o.box))) return result(false, false, 'a label or box is malformed');
-	const r = recall(objs.map((o) => `${o.label} ${o.prompt || ''}`), exp.labels);
-	return result(true, r >= DIORAMA_MIN_RECALL, `recall ${r.toFixed(2)}`);
+	if (!Array.isArray(json?.objects) || !json.objects.length) return result(false, false, 'no objects array');
+	const { plan, dropped } = planFromPhotoAnalysis(json);
+	if (!plan.objects.length) return result(false, false, 'no object production can place');
+	const notes = [];
+	if (!moods.includes(json.mood)) notes.push(`mood "${json.mood}" not in schema`);
+	if (!grounds.includes(json.ground)) notes.push(`ground "${json.ground}" not in schema`);
+	if (dropped) notes.push(`${dropped} object(s) dropped`);
+	const r = recall(plan.objects.map((o) => `${o.label} ${o.prompt || ''}`), exp.labels);
+	return result(true, r >= DIORAMA_MIN_RECALL, [`recall ${r.toFixed(2)}`, ...notes].join('; '));
 }
 
 export const SCORERS = {

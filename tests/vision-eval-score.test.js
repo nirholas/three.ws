@@ -73,22 +73,47 @@ describe('seed_judge', () => {
 
 describe('object_detect', () => {
 	const exp = { labels: [['chair'], ['table', 'desk']] };
-	it('requires valid 0-1000 boxes and label recall', () => {
-		const objs = [{ label: 'wooden chair', box_2d: [100, 100, 500, 400] }, { label: 'desk', box_2d: [500, 0, 900, 1000] }];
+	const objs = [{ label: 'wooden chair', box_2d: [100, 100, 500, 400] }, { label: 'desk', box_2d: [500, 0, 900, 1000] }];
+	it('requires a usable 0-1000 box and label recall', () => {
 		expect(SCORERS.object_detect(exp, { json: { objects: objs } }).correct).toBe(true);
 		expect(SCORERS.object_detect(exp, { json: { objects: [{ label: 'chair', box_2d: [500, 0, 100, 10] }] } }).schemaOk).toBe(false);
-		expect(SCORERS.object_detect(exp, { json: { objects: [{ label: 'lamp', box_2d: [0, 0, 10, 10] }] } }).correct).toBe(false);
+		expect(SCORERS.object_detect(exp, { json: { objects: [{ label: 'lamp', box_2d: [0, 0, 300, 300] }] } }).correct).toBe(false);
+	});
+	it('drops a bad box and scores the boxes production keeps', () => {
+		const out = SCORERS.object_detect(exp, { json: { objects: [...objs, { label: 'chair', box_2d: [500, 0, 100, 10] }] } });
+		expect(out).toMatchObject({ schemaOk: true, correct: true });
+	});
+	it('does not credit a label whose box production drops', () => {
+		const out = SCORERS.object_detect(exp, { json: { objects: [objs[0], { label: 'desk', box_2d: [900, 0, 100, 1000] }] } });
+		expect(out.correct).toBe(false);
 	});
 });
 
 describe('diorama', () => {
 	const exp = { labels: [['tree'], ['house', 'cabin']] };
 	const box = { left: 0, top: 0, right: 500, bottom: 500 };
-	it('checks mood and ground against the schema, edge boxes and recall', () => {
-		const good = { mood: 'dusk', ground: 'grass', objects: [{ label: 'pine', prompt: 'a tall pine tree', box }, { label: 'cabin', box }] };
-		expect(scoreDiorama(exp, { json: good }, { moods: MOODS, grounds: GROUNDS }).correct).toBe(true);
-		expect(scoreDiorama(exp, { json: { ...good, mood: 'sunset' } }, { moods: MOODS, grounds: GROUNDS }).schemaOk).toBe(false);
-		expect(scoreDiorama(exp, { json: { ...good, objects: [{ label: 'tree', box: { left: 9, top: 0, right: 1, bottom: 5 } }] } }, { moods: MOODS, grounds: GROUNDS }).schemaOk).toBe(false);
+	const opts = { moods: MOODS, grounds: GROUNDS };
+	const good = { mood: 'dusk', ground: 'grass', objects: [{ label: 'pine', prompt: 'a tall pine tree', box }, { label: 'cabin', box: { left: 500, top: 0, right: 1000, bottom: 500 } }] };
+
+	it('scores named-edge boxes and label recall', () => {
+		expect(scoreDiorama(exp, { json: good }, opts).correct).toBe(true);
+		expect(scoreDiorama(exp, { json: { ...good, objects: [{ label: 'tree', box: { left: 9, top: 0, right: 1, bottom: 5 } }] } }, opts).schemaOk).toBe(false);
+	});
+
+	it('accepts the Gemini-order array box production also reads', () => {
+		const arr = { ...good, objects: [{ label: 'pine', box: [0, 0, 500, 500] }, { label: 'cabin', box: [0, 500, 500, 1000] }] };
+		expect(scoreDiorama(exp, { json: arr }, opts)).toMatchObject({ schemaOk: true, correct: true });
+	});
+
+	it('drops one bad box and keeps the plan, like production', () => {
+		const one = { ...good, objects: [...good.objects, { label: 'rock', box: { left: 9, top: 0, right: 1, bottom: 5 } }] };
+		expect(scoreDiorama(exp, { json: one }, opts)).toMatchObject({ schemaOk: true, correct: true });
+	});
+
+	it('notes an off-schema mood or ground, which production replaces with its default', () => {
+		const out = scoreDiorama(exp, { json: { ...good, mood: 'sunset' } }, opts);
+		expect(out).toMatchObject({ schemaOk: true, correct: true });
+		expect(out.detail).toMatch(/mood "sunset"/);
 	});
 });
 
