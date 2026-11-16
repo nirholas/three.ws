@@ -183,6 +183,8 @@ const TYPE_CATEGORY = {
 
 	withdrawal_completed: 'account',
 	withdrawal_failed: 'account',
+	// Microsoft Marketplace free trial about to convert (api/cron/microsoft-trial-reminders.js).
+	microsoft_trial_ending: 'account',
 	// Labor-market escrow lifecycle (api/_lib/labor-evaluation.js).
 	labor_escrow_update: 'account',
 	labor_deadline_soon: 'account',
@@ -399,6 +401,7 @@ const PUSH_COPY = {
 	labor_deadline_soon:      (p) => [p.title || 'Deadline approaching', p.message || 'A bounty deadline is close'],
 	labor_payout_delayed:     (p) => [p.title || 'Payout delayed', p.message || 'An escrow payout is delayed and will retry'],
 	withdrawal_failed:        ()  => ['Withdrawal failed ⚠️', 'A withdrawal could not be completed — tap to review'],
+	microsoft_trial_ending:   (p) => [p.days_left <= 1 ? 'Your free trial ends tomorrow' : `Your free trial ends in ${p.days_left} days`, p.price_label ? `Then ${p.plan_name} at ${p.price_label}, billed by Microsoft` : `Then the paid ${p.plan_name} plan, billed by Microsoft`],
 	payment_mismatch:         ()  => ['Payment mismatch ⚠️', 'Check your agent payment settings'],
 	asset_payment_mismatch:   ()  => ['Payment mismatch ⚠️', 'Check your agent payment settings'],
 	skill_payment_mismatch:   ()  => ['Payment mismatch ⚠️', 'Check your agent payment settings'],

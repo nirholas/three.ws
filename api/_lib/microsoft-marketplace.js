@@ -40,6 +40,7 @@ import { env } from './env.js';
 import { fetchUpstream } from './upstream-fetch.js';
 import { randomToken, sha256Base64Url } from './crypto.js';
 import { assertEmulatorModeAllowed, emulatorMode, emulatorLoginBase } from './microsoft-marketplace-emulator.js';
+import { syncTrialState, publicTrial } from './microsoft-trial.js';
 
 assertEmulatorModeAllowed();
 
@@ -243,6 +244,12 @@ export async function activateSubscription(subscriptionId, { planId, quantity = 
 	const body = { planId };
 	if (quantity != null) body.quantity = quantity;
 	return marketplaceCall(`/saas/subscriptions/${encodeURIComponent(subscriptionId)}/activate`, { method: 'POST', body, okStatuses: [200, 202] });
+}
+
+/** Plans the subscription can move to, with Partner Center prices and free trial flags. */
+export async function listAvailablePlans(subscriptionId, planId = null) {
+	const query = planId ? `?planId=${encodeURIComponent(planId)}` : '';
+	return marketplaceCall(`/saas/subscriptions/${encodeURIComponent(subscriptionId)}/listAvailablePlans${query}`);
 }
 
 export async function getOperation(subscriptionId, operationId) {
@@ -483,9 +490,15 @@ export function subscriptionColumns(sub) {
 	};
 }
 
-/** Insert or refresh a subscription from Microsoft's authoritative copy. Never touches user_id. */
+/**
+ * Insert or refresh a subscription from Microsoft's authoritative copy. Never
+ * touches user_id. Every resolve, webhook and refresh goes through here, so the
+ * free trial columns (api/_lib/microsoft-trial.js) are recomputed from
+ * Microsoft's isFreeTrial flag on each call.
+ */
 export async function upsertSubscription(sub) {
 	const c = subscriptionColumns(sub);
+	const prev = await findSubscription(c.id);
 	const [row] = await sql`
 		insert into microsoft_saas_subscriptions
 			(id, name, offer_id, plan_id, quantity, saas_status, purchaser_email, purchaser_oid, purchaser_tenant_id,
@@ -505,7 +518,7 @@ export async function upsertSubscription(sub) {
 			is_test = excluded.is_test, raw = excluded.raw, updated_at = now()
 		returning *
 	`;
-	return row;
+	return syncTrialState(prev, row, sub, { listAvailablePlans });
 }
 
 export async function findSubscription(id) {
@@ -547,6 +560,7 @@ export function publicSubscription(row) {
 		auto_renew: row.auto_renew,
 		is_test: row.is_test,
 		activated_at: row.activated_at,
+		...publicTrial(row),
 	};
 }
 

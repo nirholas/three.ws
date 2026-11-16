@@ -265,6 +265,32 @@ export function renderApprovalRequest({ agentName, summary, table, riskNotes = [
 	};
 }
 
+// Microsoft Marketplace free trial reminder, 7 days and 1 day before the trial
+// converts. Sent by api/cron/microsoft-trial-reminders.js beside the in-app
+// notification. Microsoft bills the customer, so the email says what converts
+// and links to the Microsoft surface where the trial is managed or cancelled.
+export function renderMicrosoftTrialEnding({ days_left, trial_ends_at, plan_name, price_label, auto_renew, manage_url, link }) {
+	const ends = new Date(trial_ends_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+	const when = days_left <= 1 ? 'tomorrow' : `in ${days_left} days`;
+	const then = price_label ? `${plan_name} at ${price_label}` : `the paid ${plan_name} plan`;
+	const outcome = auto_renew
+		? `When it ends, Microsoft starts billing ${then} on your Microsoft invoice. Nothing changes in three.ws: your agents, avatars and plan features keep working.`
+		: `Auto-renew is off on this subscription, so it will not convert: three.ws access ends with the trial unless you turn auto-renew back on in Microsoft.`;
+	const url = `${APP_URL}${link}`;
+	return {
+		subject: `Your three.ws free trial ends ${when}`,
+		html: layout('Your free trial is ending', `
+    <p class="brand">three.ws</p>
+    <h1>Your free trial ends ${esc(when)}</h1>
+    <p>Your three.ws ${esc(plan_name)} free trial through Microsoft Marketplace runs until the end of ${esc(ends)} (UTC).</p>
+    <p>${esc(outcome)}</p>
+    <a class="btn" href="${esc(manage_url)}">Manage in Microsoft</a>
+    <p class="muted">To keep the plan, do nothing. To cancel or change plans, use the Azure portal (SaaS) or the Microsoft 365 admin center; three.ws picks the change up automatically. Subscription details: <a href="${esc(url)}" style="color:#6a5cff">${esc(url)}</a></p>
+  `),
+		text: `Your three.ws free trial ends ${when}\n\nYour ${plan_name} free trial through Microsoft Marketplace runs until the end of ${ends} (UTC).\n\n${outcome}\n\nManage in Microsoft: ${manage_url}\nSubscription details: ${url}`,
+	};
+}
+
 // Destination-allowlist alert. Sent beside the in-app, push, Telegram and Discord
 // notices so an owner who is away from their phone still sees a new payout
 // address arrive. The cancel link works without a session so one tap stops it.

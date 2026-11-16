@@ -107,6 +107,7 @@ export const TYPE_ICON = {
 	order_update:             '📊',
 	knock_received:           '🚪',
 	marketplace_lead:         '🤝',
+	microsoft_trial_ending:   '⏳',
 	mail_received:            '✉️',
 	event_market_entrant:     '🎟️',
 };
@@ -226,6 +227,13 @@ export function notifLabel(n) {
 				: p.sol
 					? `${p.actor || 'A fork of your avatar'} paid you ${Number(p.sol).toFixed(4)} SOL in royalties`
 					: `${p.actor || 'A fork of your avatar'} paid you a royalty`;
+		case 'microsoft_trial_ending': {
+			const when = p.days_left <= 1 ? 'tomorrow' : `in ${p.days_left} days`;
+			const then = p.price_label ? `${p.plan_name} at ${p.price_label}` : `the paid ${p.plan_name} plan`;
+			return p.auto_renew === false
+				? `Your ${p.plan_name} free trial ends ${when}. Auto-renew is off, so access ends with it.`
+				: `Your ${p.plan_name} free trial ends ${when}, then ${then} through Microsoft`;
+		}
 		case 'marketplace_lead':
 			return p.summary ? `${p.title || 'Microsoft Marketplace lead'}: ${p.summary}` : p.title || 'New Microsoft Marketplace lead';
 		case 'knock_received':
