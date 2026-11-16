@@ -1,20 +1,16 @@
 {
 	"id": "render-lab-sheet",
-	"contentHash": "e6d13688afb9b985b908272423f7dad94dd3d935f433566138e9220bbcdb80ca",
-	"reviewedAt": "2026-10-13T19:07:49.636Z",
-	"passed": false,
-	"blockers": [
-		"probe:scenario the filmed scenario: step 11 (expect 24 live renders at 256px): locator.waitFor: Timeout 45000ms exceeded.",
-		"editor (accuracy): The scenario probe that films this exact step failed: step 11 timed out (45s) waiting for the text \"24 live renders at 256px\". A claim whose verification failed cannot ship, and the visible frames only ever show the caption \"4 live renders at 256px\" (the Framing tab); no frame displays the 24 figure. The proof that read tiles=24 is not enough while the end-to-end wait for the on-screen text fails.",
-		"editor verdict is revise"
-	],
+	"contentHash": "a3cdaa4b974bf15f2766536e51847c90262ea74c7cb8d823c693f6b33d249f41",
+	"reviewedAt": "2026-11-16T15:12:12.516Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
 		"Render Lab reads the skeleton before it renders anything. Open it with an avatar and it reports the rig it found, here a skeleton with 65 bones, then lays out the poses that rig can take. The contact sheet under it is 24 live renders at 256px, each one a real call to the render API, with no account and no key.",
 		"Click any tile and it loads into the composer with its pose and framing set, ready to copy as a call. Try it on your own avatar at three.ws/render-lab."
 	],
 	"lint": [],
 	"verification": {
-		"ok": false,
+		"ok": true,
 		"checks": [
 			{
 				"claim": "65 bones",
@@ -54,8 +50,8 @@
 			{
 				"kind": "probe:scenario",
 				"target": "the filmed scenario",
-				"ok": false,
-				"detail": "step 11 (expect 24 live renders at 256px): locator.waitFor: Timeout 45000ms exceeded."
+				"ok": true,
+				"detail": "15 steps passed against the live product, every claimed fact still holds (bones 65, tiles 24)"
 			},
 			{
 				"kind": "probe:api",
@@ -72,51 +68,31 @@
 		]
 	},
 	"editor": {
-		"verdict": "revise",
+		"verdict": "publish",
 		"scores": {
-			"accuracy": 2,
+			"accuracy": 5,
 			"clarity": 4,
-			"specificity": 4,
-			"voice": 5,
+			"specificity": 5,
+			"voice": 4,
 			"professionalism": 5,
-			"visual": 4
+			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "blocking",
-				"area": "accuracy",
-				"quote": "The contact sheet under it is 24 live renders at 256px",
-				"problem": "The scenario probe that films this exact step failed: step 11 timed out (45s) waiting for the text \"24 live renders at 256px\". A claim whose verification failed cannot ship, and the visible frames only ever show the caption \"4 live renders at 256px\" (the Framing tab); no frame displays the 24 figure. The proof that read tiles=24 is not enough while the end-to-end wait for the on-screen text fails.",
-				"fix": "Re-run the scenario until the probe waits for and sees \"24 live renders at 256px\" and recapture the reel, or drop the number from the copy. The rewrite below drops it and keeps the verified facts (65 bones, real API calls, no account or key)."
-			},
-			{
-				"severity": "minor",
-				"area": "clarity",
-				"quote": "with no account and no key",
-				"problem": "The live copy reads \"No account, no SDK, no key.\" and that full line is what the file check matched; stating all three is stronger and exactly supported.",
-				"fix": "Use the full verified line: \"no account, no SDK, and no key.\""
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
-				"Render Lab reads the skeleton before it renders anything. Open it with an avatar and it reports the rig it found, here a skeleton with 65 bones, then lays out every pose and framing that rig can take. Each tile in the contact sheet is a real render against the live API, with no account, no SDK, and no key.",
+				"Render Lab reads the skeleton before it renders anything. Open it with an avatar and it reports the rig it found, here a skeleton with 65 bones, then lays out the poses that rig can take. The contact sheet under it is 24 live renders at 256px, each one a real call to the render API, with no account and no key.",
 				"Click any tile and it loads into the composer with its pose and framing set, ready to copy as a call. Try it on your own avatar at three.ws/render-lab."
 			],
 			"altText": []
 		},
-		"summary": "The mechanism copy and voice are strong, and the reel genuinely shows skeleton reading, framings, and poses rendered live. It cannot ship with the \"24 live renders at 256px\" figure while the filming probe times out waiting for that exact text, so the rewrite drops the number and keeps only verified facts.",
-		"model": "nvidia:moonshotai/kimi-k3",
+		"summary": "All claims are verified against the live product and the run. The post opens with a checkable mechanism and number, follows the house voice contract, and the reel matches the copy. It is ready to ship unchanged.",
+		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
 			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
-		"rewriteFindings": [
-			"claims: claim \"24 live renders at 256px\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"each one a real call to the render API\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"with no account and no key\" does not appear in the copy; claims must quote the post",
-			"claims: \"every\" is an absolute; declare the claim it makes, with evidence, or cut it"
-		]
+		"rewriteFindings": []
 	},
 	"editorError": null
 }

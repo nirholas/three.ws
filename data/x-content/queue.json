@@ -22369,12 +22369,12 @@
 		},
 		{
 			"id": "render-lab-sheet",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 3,
 			"lane": "developer",
 			"pattern": "mechanism",
-			"notBefore": "2026-10-14T00:00:00Z",
+			"notBefore": "2026-11-16T17:12:12.662Z",
 			"covers": [
 				"/render-lab",
 				"api/avatar/render"
@@ -22524,7 +22524,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "skill-md",
@@ -24062,7 +24063,7 @@
 		},
 		{
 			"id": "gtc-2027-poster",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",

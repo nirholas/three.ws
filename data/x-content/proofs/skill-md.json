@@ -1,10 +1,10 @@
 {
 	"id": "skill-md",
 	"scenarioHash": "100cabda78823990932302e1520de1b752e43eb845826ecf24a286647f198bc3",
-	"ranAt": "2026-11-02T23:43:17.386Z",
+	"ranAt": "2026-11-16T15:12:12.814Z",
 	"target": {
-		"commit": "3e0b6b405",
-		"revision": "three-ws-api-00509-m45"
+		"commit": "559f73663",
+		"revision": "three-ws-api-00545-cbr"
 	},
 	"passed": false,
 	"steps": [
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/docs/agent-skills",
 			"detail": "loaded https://three.ws/docs/agent-skills",
 			"ok": true,
-			"ms": 6976,
+			"ms": 12284,
 			"frames": 0
 		},
 		{
@@ -23,7 +23,7 @@
 			"target": "2000",
 			"detail": "2000 ms",
 			"ok": true,
-			"ms": 9941,
+			"ms": 62470,
 			"frames": 60
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "files",
 			"ok": false,
 			"detail": "the page shows nothing matching /None of the (\\d+) source files this page documents/",
-			"ms": 121,
+			"ms": 312,
 			"frames": 0
 		}
 	],

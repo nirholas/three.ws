@@ -1,0 +1,128 @@
+{
+	"id": "gtc-2027-poster",
+	"contentHash": "a3a4b16aa4347c5d03896e1939a727f98fe47b14e045511200de2f7887d4e279",
+	"reviewedAt": "2026-11-16T15:23:26.583Z",
+	"passed": false,
+	"blockers": [
+		"spelling blendshape: not a known word; add it to the queue glossary if it is correct"
+	],
+	"texts": [
+		"We measured our Audio2Face-3D rig mapping on 468 real user avatars for a GTC 2027 poster submission: 98.1% of rigs with any face morphs are driven from one blendshape track, with no per-rig code, and text to synchronized speech and animation takes a median 3.8 s. Poster, data and build scripts: github.com/nirholas/three.ws/tree/main/docs/nvidia-gtc-2027",
+		"The derived path runs the viseme-to-ARKit tables backwards, so a VRM or Oculus rig gets a usable mouth from the same track. It stays off any mesh that already has a direct jaw or mouth shape: with that rule off, the mouth saturates in 23% of voiced frames."
+	],
+	"lint": [],
+	"verification": {
+		"ok": false,
+		"checks": [
+			{
+				"claim": "468 real user avatars",
+				"kind": "evidence:file",
+				"target": "docs/nvidia-gtc-2027/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "468 real user avatars",
+				"kind": "evidence:file",
+				"target": "docs/nvidia-gtc-2027/data/coverage-2026-11-04.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "98.1% of rigs with any face morphs are driven from one blendshape track",
+				"kind": "evidence:file",
+				"target": "docs/nvidia-gtc-2027/data/derived-figures.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "with no per-rig code",
+				"kind": "evidence:file",
+				"target": "docs/nvidia-gtc-2027/poster.template.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "text to synchronized speech and animation takes a median 3.8 s",
+				"kind": "evidence:file",
+				"target": "docs/nvidia-gtc-2027/data/derived-figures.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "GTC 2027 poster submission",
+				"kind": "evidence:file",
+				"target": "docs/nvidia-gtc-2027/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the mouth saturates in 23% of voiced frames",
+				"kind": "evidence:file",
+				"target": "docs/nvidia-gtc-2027/data/derived-figures.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the live Audio2Face demo the poster cites answers",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the production endpoint the latency run measured still answers a text request",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the poster PDF is published in the repository",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://github.com/nirholas/three.ws/tree/main/docs/nvidia-gtc-2027",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "spelling",
+				"target": "blendshape",
+				"ok": false,
+				"detail": "not a known word; add it to the queue glossary if it is correct"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 4,
+			"specificity": 5,
+			"voice": 4,
+			"professionalism": 4,
+			"visual": 4
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"We measured our Audio2Face-3D rig mapping on 468 real user avatars for a GTC 2027 poster submission: 98.1% of rigs with any face morphs are driven from one blendshape track, with no per-rig code, and text to synchronized speech and animation takes a median 3.8 s. Poster, data and build scripts: github.com/nirholas/three.ws/tree/main/docs/nvidia-gtc-2027",
+				"The derived path runs the viseme-to-ARKit tables backwards, so a VRM or Oculus rig gets a usable mouth from the same track. It stays off any mesh that already has a direct jaw or mouth shape: with that rule off, the mouth saturates in 23% of voiced frames."
+			],
+			"altText": [
+				"The GTC 2027 poster sheet, white with seven numbered sections in four columns: the problem, the Riva, Nemotron, Magpie and Audio2Face-3D pipeline, the direct and derived blendshape mapping with three avatar faces at the same frame, the coverage chart by avatar source, the latency chart, and the overshoot ablation"
+			]
+		},
+		"summary": "Every claim in the post is backed by a passing verification result, including the 468 avatar count, 98.1% driven-from-one-track figure, 3.8 s median latency, no-per-rig-code statement, GTC 2027 submission context, and the 23% saturation figure. The post follows the house voice contract: no hashtags, emoji, dashes, banned openers, or rhetorical structures, and it leads with the strongest checkable statement.",
+		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

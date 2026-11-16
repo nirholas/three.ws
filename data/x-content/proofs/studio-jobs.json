@@ -1,10 +1,10 @@
 {
 	"id": "studio-jobs",
 	"scenarioHash": "c9752c45628c6da52360e3cd4e308816ba00fc11d243bad2fe8b6e6130412d03",
-	"ranAt": "2026-11-02T23:43:35.088Z",
+	"ranAt": "2026-11-16T15:13:34.208Z",
 	"target": {
-		"commit": "3e0b6b405",
-		"revision": "three-ws-api-00509-m45"
+		"commit": "559f73663",
+		"revision": "three-ws-api-00545-cbr"
 	},
 	"passed": false,
 	"steps": [
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/docs/mcp-studio#long-jobs-and-safe-retries-get_job-idempotency_key-progress",
 			"detail": "loaded https://three.ws/docs/mcp-studio#long-jobs-and-safe-retries-get_job-idempotency_key-progress",
 			"ok": true,
-			"ms": 6187,
+			"ms": 7839,
 			"frames": 0
 		},
 		{
@@ -23,7 +23,7 @@
 			"target": "2600",
 			"detail": "2600 ms",
 			"ok": true,
-			"ms": 12962,
+			"ms": 39408,
 			"frames": 78
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "620",
 			"detail": "scrolled 620 px",
 			"ok": true,
-			"ms": 10036,
+			"ms": 40902,
 			"frames": 60
 		},
 		{
@@ -41,7 +41,7 @@
 			"target": "2200",
 			"detail": "2200 ms",
 			"ok": true,
-			"ms": 10845,
+			"ms": 92086,
 			"frames": 66
 		},
 		{
@@ -50,7 +50,7 @@
 			"target": "700",
 			"detail": "scrolled 700 px",
 			"ok": true,
-			"ms": 10585,
+			"ms": 83070,
 			"frames": 60
 		},
 		{
@@ -59,7 +59,7 @@
 			"target": "2200",
 			"detail": "2200 ms",
 			"ok": true,
-			"ms": 11369,
+			"ms": 95318,
 			"frames": 66
 		},
 		{
@@ -68,7 +68,7 @@
 			"target": "https://three.ws/docs/mcp-studio#any-mcp-client",
 			"detail": "loaded https://three.ws/docs/mcp-studio#any-mcp-client",
 			"ok": true,
-			"ms": 3058,
+			"ms": 3373,
 			"frames": 0
 		},
 		{
@@ -77,26 +77,55 @@
 			"target": "1200",
 			"detail": "1200 ms",
 			"ok": true,
-			"ms": 5319,
+			"ms": 57021,
 			"frames": 36
 		},
 		{
 			"index": 9,
 			"kind": "click",
 			"target": "Send POST",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 39374,
+			"frames": 21
+		},
+		{
+			"index": 10,
+			"kind": "click",
+			"target": "Confirm POST",
+			"detail": "clicked; POST /api/mcp-studio answered 200 in 0.4 s",
+			"ok": true,
+			"ms": 34732,
+			"frames": 21
+		},
+		{
+			"index": 11,
+			"kind": "expect",
+			"target": "200 OK",
 			"ok": false,
-			"detail": "nothing visible matches \"Send POST\"",
-			"ms": 12468,
-			"frames": 61
+			"detail": "locator.waitFor: Timeout 20000ms exceeded.",
+			"ms": 21318,
+			"frames": 0
 		}
 	],
 	"facts": {},
 	"saw": [],
-	"responses": [],
+	"responses": [
+		{
+			"method": "POST",
+			"path": "/api/mcp-studio",
+			"status": 200,
+			"seconds": 0.4
+		}
+	],
 	"cuts": [
 		{
 			"afterStep": 7,
-			"seconds": 3
+			"seconds": 3.1
+		},
+		{
+			"afterStep": 11,
+			"seconds": 20
 		}
 	],
 	"video": null

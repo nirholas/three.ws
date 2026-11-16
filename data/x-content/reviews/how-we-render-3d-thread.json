@@ -1,15 +1,18 @@
 {
 	"id": "how-we-render-3d-thread",
-	"contentHash": "8ee373e95496484c7878878f701957d2b54ef5725320afa5c76d85cb1d353da2",
-	"reviewedAt": "2026-11-02T23:41:25.710Z",
+	"contentHash": "cb7d23bc65431d696156b4dc4b03a37aa829c16b2efc33a47e5097817f9413b0",
+	"reviewedAt": "2026-11-16T15:09:40.526Z",
 	"passed": false,
 	"blockers": [
 		"reply 3: public/x-media/how-we-render-3d-article/holo-live.png is 760px wide; X renders it soft below 1200px",
 		"reply 5: public/x-media/how-we-render-3d-article/rig-doctor.png is 840px wide; X renders it soft below 1200px",
-		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"Request had insufficient authentication scopes.\",; \"status\": \"PERMISSION_DENIED\",; \"details\": [; {; \"@type\": \"type.googleapis.com/goog; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"};"
+		"editor (visual): The Holo Sticker image attached to post 4 is below the 1200px minimum width for sharp timeline rendering on X.",
+		"editor (visual): The Rig Doctor image attached to post 6 is below the 1200px minimum width for sharp timeline rendering on X.",
+		"editor (voice): The first post is a teaser that withholds the detail for later replies. The house contract bans the thread that withholds; the head must lead with the strongest true statement and stand on its own.",
+		"editor verdict is revise"
 	],
 	"texts": [
-		"A glTF file, Three.js and WebGL on the viewer's own GPU. No plugin, no video stream, no server drawing frames. Here is the full path of one rigged character, from a sentence to a lit, animated model in a browser tab, in six stages.",
+		"A three.ws model is drawn by the viewer's own GPU, from a glTF file, with Three.js and WebGL. This thread follows one rigged character from a sentence to a lit, animated model in a browser tab, in six stages.",
 		"To start, make. The Forge turns text or an image into a mesh with open models running on our own Cloud Run GPUs: TRELLIS, Hunyuan3D and TripoSG. Draft is about 12,000 polygons, Standard about 30,000 with 2K textures, High up to 200,000 polygons with full PBR.",
 		"Next, pack and load. The file is compressed for the wire, then the browser decodes it with Draco, KTX2 and meshopt through GLTFLoader, using same-origin decoders loaded on demand. The free validator checks the result against the Khronos suite, in your browser.",
 		"Then light. Lighting from a PMREM environment map, a three-point rig and Khronos PBR-Neutral tone mapping, so colours stay true to the material. Holo Sticker turns the same lit model into a shareable card.",
@@ -81,12 +84,85 @@
 			},
 			{
 				"kind": "link",
+				"target": "https://three.ws",
+				"ok": true,
+				"detail": "HTTP 200 via https://three.ws/"
+			},
+			{
+				"kind": "link",
 				"target": "https://three.ws/viewer",
 				"ok": true,
 				"detail": "HTTP 200"
 			}
 		]
 	},
-	"editor": null,
-	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"}\n"
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 4,
+			"clarity": 4,
+			"specificity": 4,
+			"voice": 3,
+			"professionalism": 4,
+			"visual": 2
+		},
+		"issues": [
+			{
+				"severity": "blocking",
+				"area": "visual",
+				"quote": "public/x-media/how-we-render-3d-article/holo-live.png is 760px wide; X renders it soft below 1200px",
+				"problem": "The Holo Sticker image attached to post 4 is below the 1200px minimum width for sharp timeline rendering on X.",
+				"fix": "Recapture holo-live.png at 1200px or wider, showing the live Holo Sticker page with the lit 3D character, and re-attach it to post 4."
+			},
+			{
+				"severity": "blocking",
+				"area": "visual",
+				"quote": "public/x-media/how-we-render-3d-article/rig-doctor.png is 840px wide; X renders it soft below 1200px",
+				"problem": "The Rig Doctor image attached to post 6 is below the 1200px minimum width for sharp timeline rendering on X.",
+				"fix": "Recapture rig-doctor.png at 1200px or wider, showing the Rig Doctor drop zone and diagnostic readout, and re-attach it to post 6."
+			},
+			{
+				"severity": "blocking",
+				"area": "voice",
+				"quote": "This thread follows one rigged character from a sentence to a lit, animated model in a browser tab, in six stages.",
+				"problem": "The first post is a teaser that withholds the detail for later replies. The house contract bans the thread that withholds; the head must lead with the strongest true statement and stand on its own.",
+				"fix": "Delete the teaser sentence from post 1. Keep the mechanism lead and replace the second sentence with a short stage outline: 'Six stages: draft, pack, light, motion, embed.'"
+			},
+			{
+				"severity": "major",
+				"area": "visual",
+				"quote": "public/x-media/how-we-render-3d-article/validator.png is 2.31:1; X crops a single image outside 3:4 to 2:1 in the timeline",
+				"problem": "The validator image attached to post 3 is wider than 2:1, so X will crop it hard in the timeline and hide part of the UI.",
+				"fix": "Recapture validator.png with an aspect ratio between 3:4 and 2:1 (ideally square or 4:5), showing the glTF Validator page with the drop zone and sample files visible, and re-attach it to post 3."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"A three.ws model is drawn by the viewer's own GPU, from a glTF file, with Three.js and WebGL. Six stages: draft, pack, light, motion, embed.",
+				"To start, make. The Forge turns text or an image into a mesh with open models running on our own Cloud Run GPUs: TRELLIS, Hunyuan3D and TripoSG. Draft is about 12,000 polygons, Standard about 30,000 with 2K textures, High up to 200,000 polygons with full PBR.",
+				"Next, pack and load. The file is compressed for the wire, then the browser decodes it with Draco, KTX2 and meshopt through GLTFLoader, using same-origin decoders loaded on demand. The free validator checks the result against the Khronos suite, in your browser.",
+				"Then light. Lighting from a PMREM environment map, a three-point rig and Khronos PBR-Neutral tone mapping, so colours stay true to the material. Holo Sticker turns the same lit model into a shareable card.",
+				"Then motion. A canonicalizer maps the bone names of Mixamo, VRM, Unreal, Rigify, Daz and more to one set, so a single clip library drives any humanoid. Faces move through ARKit morph targets with nine-viseme lip sync. Pose Studio lets you keyframe your own.",
+				"Last, embed. One script tag and one element put the character on any website. Rig Doctor, free and in your browser, tells you before you start whether your own avatar will animate.",
+				"The long version has the embed code, the decoder and boot-phase tables, all partners by exact designation, how changes ship, and what is next: three.ws/viewer"
+			],
+			"altText": [
+				"The lighthouse keeper, a rigged three.ws character in a long yellow oilskin coat, navy knitted cap and black rubber boots, standing in the live glTF viewer under studio lighting",
+				"The three.ws glTF validator page reporting the result of a Khronos validation run in the browser",
+				"The three.ws Holo Sticker page showing a lit 3D character rendered live in the browser",
+				"The three.ws Animation Studio with a posable mannequin, bone list, pose presets and a keyframe timeline",
+				"Rig Doctor: a page that diagnoses whether a GLB will animate, with a drop zone and sample rigs"
+			]
+		},
+		"summary": "The post has verified claims and a solid mechanism lead, but the first post teases the thread instead of standing alone, and two attached images are below X's 1200px width minimum while a third is too wide and will be cropped. Recapture the three images and drop the teaser sentence before shipping.",
+		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi",
+			"nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b answered but its reply did not parse (Unexpected non-whitespace character after JSON at position 5222 (line 89 column 1)); asked again"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
 }
