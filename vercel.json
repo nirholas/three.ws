@@ -201,6 +201,8 @@
 			"headers": {
 				"strict-transport-security": "max-age=63072000; includeSubDomains; preload",
 				"x-content-type-options": "nosniff",
+				"x-frame-options": "SAMEORIGIN",
+				"x-xss-protection": "0",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"permissions-policy": "accelerometer=(), autoplay=(self), camera=(), display-capture=(), encrypted-media=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(self), serial=(), usb=(), xr-spatial-tracking=(self)",
 				"content-security-policy": "base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; frame-ancestors 'self' https://ibm.com https://*.ibm.com https://*.seismic.com; report-uri /api/client-errors"
@@ -4078,6 +4080,10 @@
 			"dest": "/api/agents/identity-check"
 		},
 		{
+			"src": "/api/agents/a2a-paid/\\.well-known/(?:agent-card|agent)\\.json",
+			"dest": "/.well-known/agent-card.json"
+		},
+		{
 			"src": "/api/agents/a2a-paid",
 			"dest": "/api/agents/a2a-paid"
 		},
@@ -4128,6 +4134,14 @@
 		{
 			"src": "/api/auth/microsoft/start",
 			"dest": "/api/auth/microsoft/[action]?action=start"
+		},
+		{
+			"src": "/api/auth/microsoft/launch",
+			"dest": "/api/auth/microsoft/[action]?action=launch"
+		},
+		{
+			"src": "/sso/microsoft",
+			"dest": "/api/auth/microsoft/[action]?action=launch"
 		},
 		{
 			"src": "/api/auth/microsoft/callback",
@@ -6477,7 +6491,7 @@
 			"dest": "/api/teams/[id]"
 		},
 		{
-			"src": "/api/teams/([^/]+)/(findings|run|repair|members)",
+			"src": "/api/teams/([^/]+)/(findings|run|repair|members|events)",
 			"dest": "/api/teams/[id]"
 		},
 		{
@@ -6917,6 +6931,10 @@
 		{
 			"src": "/legal/tos/?",
 			"dest": "/legal/tos.html"
+		},
+		{
+			"src": "/enterprise/?",
+			"dest": "/enterprise.html"
 		},
 		{
 			"src": "/trust/?",

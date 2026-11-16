@@ -120,6 +120,11 @@ function failClosedLimiter({ limit, window }) {
 	};
 }
 
+// SCIM provisioning per team (one team holds one Entra tenant). The Entra app
+// gallery requires at least 25 requests per second per tenant; 50 leaves room
+// for a first sync of a large directory without leaning on Entra's backoff.
+export const SCIM_TEAM_LIMIT = Object.freeze({ limit: 3000, window: '1 m' });
+
 /**
  * @param {string} name
  * @param {{ limit: number, window: string, critical?: boolean, local?: boolean }} opts
@@ -620,6 +625,12 @@ export const limits = {
 	// ceiling holds across Cloud Run instances.
 	msMarketplaceLeadIp: (ip) =>
 		getLimiter('ms-marketplace:lead:ip', { limit: 60, window: '10 m' }).limit(ip),
+	// The /enterprise contact form (/api/enterprise/contact). A buyer sends one
+	// or two messages; 5 per 10 min per IP lets a procurement team behind one
+	// office NAT each write in while stopping a script from flooding the leads
+	// table and the owner's notifications.
+	enterpriseContactIp: (ip) =>
+		getLimiter('enterprise:contact:ip', { limit: 5, window: '10 m' }).limit(ip),
 	// First-party campaign touch (/api/growth/touch). A real visitor records one
 	// touch per browser; 20 per 10 min per IP leaves shared NAT (an office, a
 	// conference hall) headroom while stopping a script from flooding the ledger.
@@ -1820,8 +1831,14 @@ export const limits = {
 	// a few requests each, so the per-team ceiling is generous; it exists to stop
 	// a leaked token from hammering the database. Failed bearer checks get their
 	// own strict per-IP bucket so token guessing stalls fast.
-	scimTeam: (teamId) => getLimiter('scim:team', { limit: 1200, window: '1 m' }).limit(teamId),
+	scimTeam: (teamId) => getLimiter('scim:team', SCIM_TEAM_LIMIT).limit(teamId),
 	scimAuthFail: (ip) => getLimiter('scim:auth-fail', { limit: 20, window: '10 m' }).limit(ip),
+	// OData usage feed (api/odata/v1.js). A Power BI refresh pages through
+	// every entity set in parallel, so the per-key bucket is generous; failed
+	// key checks get a strict per-IP bucket; key minting is a settings action.
+	usageFeedKey: (keyId) => getLimiter('usage-feed:key', { limit: 600, window: '1 m' }).limit(keyId),
+	usageFeedAuthFail: (ip) => getLimiter('usage-feed:auth-fail', { limit: 30, window: '10 m' }).limit(ip),
+	usageFeedKeyWrite: (userId) => getLimiter('usage-feed:key-write', { limit: 20, window: '1 h' }).limit(userId),
 	// Team enterprise settings and tenant join (claim, token rotation, join).
 	teamEnterprise: (userId) => getLimiter('team:enterprise', { limit: 60, window: '10 m' }).limit(userId),
 	// local: embedded-widget read fetch — flood protection only, no side effects.
