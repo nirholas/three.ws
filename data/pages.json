@@ -8474,6 +8474,14 @@
 					"added": "2026-11-16"
 				},
 				{
+					"path": "/docs/microsoft-a2a",
+					"title": "Docs · Call three.ws agents from Copilot Studio and Foundry over A2A",
+					"description": "Add the three.ws A2A agent in Copilot Studio and Azure AI Foundry: endpoint, agent card, API key and OAuth setup, streaming, cancel, and an Agent Framework client sample.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-16"
+				},
+				{
 					"path": "/trust",
 					"title": "Trust center",
 					"description": "How three.ws hosts, encrypts, retains and deletes data, which AI providers see prompts, and an honest compliance status, each answer linked to the code that proves it.",
