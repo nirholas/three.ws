@@ -35,6 +35,7 @@ import {
 	forgeFormCard,
 	formTaskResponse,
 } from './teams-forge-cards.js';
+import { HELP_TEXT, conversationalIntent, greetingText, unknownCommandText } from './teams-bot-welcome.js';
 import { cardFor, claimJob, claimOnce, depsWith, forgeKey, loadJob, patchJob, refreshStatus } from './teams-forge.js';
 
 export const CREATE_COMMAND_ID = 'createModel';
@@ -42,7 +43,7 @@ export const BOT_COMMAND = 'forge';
 const SEED_MAX = 4_294_967_295;
 const MESSAGE_TYPE = 'application/vnd.microsoft.activity.message';
 
-const HELP_TEXT =
+const FORGE_USAGE =
 	`Type **${BOT_COMMAND}** followed by a description to generate a 3D model, for example: ` +
 	`${BOT_COMMAND} a weathered brass ship compass. ` +
 	'You can also use Create a 3D model from the message extension menu.';
@@ -281,11 +282,19 @@ async function onCardAction(activity, ctx, deps) {
 	return cardInvokeResponse(cardFor(next, { now: deps.now() }));
 }
 
+// hi, hello and help get their own answers; anything else unrecognised is
+// named back with what does work (Teams Store bot rules).
+function conversationalReply(activity) {
+	const intent = conversationalIntent(activity.text);
+	const text = intent === 'help' ? HELP_TEXT : intent === 'greeting' ? greetingText(activity.from?.name) : unknownCommandText(activity.text);
+	return { type: 'message', textFormat: 'markdown', text };
+}
+
 async function onMessage(activity, ctx, deps) {
 	const prompt = commandPrompt(activity.text);
 	const fallbackVerb = activity.value?.verb;
 	if (prompt === null && !FORGE_VERBS.includes(fallbackVerb)) {
-		if (deps.connectorOn() && plainText(activity.text)) await reply(activity, { type: 'message', text: HELP_TEXT }, deps);
+		if (deps.connectorOn() && plainText(activity.text)) await reply(activity, conversationalReply(activity), deps);
 		return null;
 	}
 	if (!deps.connectorOn()) {
@@ -300,7 +309,7 @@ async function onMessage(activity, ctx, deps) {
 		return null;
 	}
 	if (!prompt) {
-		await reply(activity, { type: 'message', text: HELP_TEXT }, deps);
+		await reply(activity, { type: 'message', text: FORGE_USAGE }, deps);
 		return null;
 	}
 	const problem = promptProblem(prompt);

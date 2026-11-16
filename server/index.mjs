@@ -51,6 +51,7 @@ import { runWithRequestContext } from '../api/_lib/request-context.js';
 import { tracingMiddleware, flushSpans } from '../api/_lib/tracing.js';
 import { rpcCallerTag } from './rpc-caller-tag.mjs';
 import { acquisitionMiddleware } from '../api/_lib/acquisition.js';
+import { assertEmulatorModeAllowed } from '../api/_lib/microsoft-marketplace-emulator.js';
 // Route resolution lives in its own module so the audit scripts
 // (scripts/audit-cron-liveness.mjs) exercise the SAME resolver production runs,
 // instead of a copy that can silently drift from it.
@@ -62,6 +63,10 @@ import {
 	isRoutable,
 	resolveApi,
 } from './route-resolve.mjs';
+
+// Microsoft Marketplace emulator mode accepts unsigned webhooks, so a revision
+// that carries the flag in production must crash before it listens.
+assertEmulatorModeAllowed();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');

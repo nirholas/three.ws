@@ -30,6 +30,7 @@ import { sql } from './db.js';
 import { loadGlanceCard } from './glance-card.js';
 import { adaptiveCardFor } from './glance-adaptive.js';
 import { handleForgeActivity, isForgeActivity } from './teams-forge-bot.js';
+import { handleConversationUpdate } from './teams-bot-welcome.js';
 
 export const BOTFRAMEWORK_ISSUER = 'https://api.botframework.com';
 export const BOTFRAMEWORK_JWKS_URL = 'https://login.botframework.com/v1/.well-known/keys';
@@ -159,6 +160,7 @@ export async function searchAgents(text) {
  */
 export async function handleActivity(activity, ctx = {}) {
 	if (isForgeActivity(activity)) return handleForgeActivity(activity, ctx);
+	if (activity?.type === 'conversationUpdate') return handleConversationUpdate(activity, ctx);
 	if (activity?.type !== 'invoke') return null;
 	switch (activity.name) {
 		case 'composeExtension/query': {
