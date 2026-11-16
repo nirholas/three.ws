@@ -1,5 +1,7 @@
 # nvidia 19: Audio2Face-3D emotion drives the whole face and head, and the agent can choose how a line should feel
 
+Status 2026-11-16: code complete and verified locally (all three rig kinds, emotion on and off, one pass, 0 console errors; clips in docs/media/). Not archived: full `npm test` and `npm run audit:docs` fail only in other orders' files, and the feature stays under evaluation until the owner runs `git push threews main` and `npm run deploy:gcp:full`.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `nvidia-` order, so it can run in parallel with all of them. Dev port: 3269.
 
 ## Operating clause (binding)
