@@ -3470,6 +3470,12 @@ URL: https://three.ws/docs/share-and-embed
 
 Three ways to put your agent in front of people: share a link, embed an iframe, or use the web component.
 
+### Docs · Sharing and link previews
+
+URL: https://three.ws/docs/sharing
+
+Share creations and agents to Teams and LinkedIn, the link-preview rules both enforce, and how to refresh a stale LinkedIn card.
+
 ### Docs · Sketchfab Showcase
 
 URL: https://three.ws/docs/sketchfab
@@ -6474,6 +6480,24 @@ three.ws is now listed on Anthropic's official Model Context Protocol Registry, 
 URL: https://three.ws/legal
 
 Every three.ws policy in one place, plus which address to use to report copyright, abuse, or privacy issues.
+
+### Admin consent (Microsoft Entra)
+
+URL: https://three.ws/enterprise/admin-consent
+
+What the three.ws sign-in app asks for in plain language, and the tenant-wide admin consent link for a Microsoft Entra administrator, with clear success and error results.
+
+### Docs · Microsoft IT admin deployment guide
+
+URL: https://three.ws/docs/microsoft-admin-deployment
+
+Roll three.ws out to every seat: Teams setup policy, Edge WebAppInstallForceList and ExtensionInstallForcelist through Intune or Group Policy, tenant-wide admin consent, verification, rollback and FAQ.
+
+### Docs · Call three.ws agents from Copilot Studio and Foundry over A2A
+
+URL: https://three.ws/docs/microsoft-a2a
+
+Add the three.ws A2A agent in Copilot Studio and Azure AI Foundry: endpoint, agent card, API key and OAuth setup, streaming, cancel, and an Agent Framework client sample.
 
 ### Trust center
 

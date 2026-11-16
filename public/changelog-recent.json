@@ -1,14 +1,86 @@
 {
-	"generated_at": "2026-11-15T16:33:14.081Z",
+	"generated_at": "2026-11-16T14:59:59.795Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4590,
+	"total": 4597,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-16",
+			"type": "launch",
+			"title": "Admin consent (Microsoft Entra)",
+			"summary": "What the three.ws sign-in app asks for in plain language, and the tenant-wide admin consent link for a Microsoft Entra administrator, with clear success and error results.",
+			"link": "/enterprise/admin-consent",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "launch",
+			"title": "Docs · Call three.ws agents from Copilot Studio and Foundry over A2A",
+			"summary": "Add the three.ws A2A agent in Copilot Studio and Azure AI Foundry: endpoint, agent card, API key and OAuth setup, streaming, cancel, and an Agent Framework client sample.",
+			"link": "/docs/microsoft-a2a",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "launch",
+			"title": "Docs · Microsoft IT admin deployment guide",
+			"summary": "Roll three.ws out to every seat: Teams setup policy, Edge WebAppInstallForceList and ExtensionInstallForcelist through Intune or Group Policy, tenant-wide admin consent, verification, rollback and FAQ.",
+			"link": "/docs/microsoft-admin-deployment",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "launch",
+			"title": "Docs · Sharing and link previews",
+			"summary": "Share creations and agents to Teams and LinkedIn, the link-preview rules both enforce, and how to refresh a stale LinkedIn card.",
+			"link": "/docs/sharing",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Call three.ws agents from Copilot Studio and Azure AI Foundry over A2A",
+			"summary": "The three.ws A2A endpoint now streams over SSE, lets you cancel a running generation, and accepts an X-API-Key header or OAuth 2.0 as well as bearer tokens, all declared in the agent card. Responses are checked against the A2A schema in the test suite, and a builder guide covers adding three.ws in Copilot Studio and Foundry plus a Microsoft Agent Framework sample.",
+			"link": "/docs/microsoft-a2a",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Roll three.ws out to every seat from your Microsoft admin consoles",
+			"summary": "IT admins get a ready deployment kit: the exact Edge policy values to install the web app and extensions through Intune or Group Policy, a Teams setup policy script that installs and pins three.ws for a group, a tenant-wide admin consent page that explains each permission in plain language, and a guide with verification, rollback and FAQ. Every script has a dry run.",
+			"link": "/docs/microsoft-admin-deployment",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Share any creation or agent to Teams and LinkedIn",
+			"summary": "The share menu now has Share to Teams and Share on LinkedIn, on creations, agents and avatars. The link cards behind them were fixed so they show a proper image: agent cards are now PNG instead of SVG, avatar cards are 1200x630, and over a hundred pages now declare their card size.",
+			"link": "/forge",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-11-15",
 			"type": "update",
@@ -1465,76 +1537,6 @@
 			"link": "/forge",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-05",
-			"type": "update",
-			"title": "Marketplace agent cards show their avatars again",
-			"summary": "Agent cards on /marketplace were showing only a letter where the avatar should be, because the stored picture was tied to the 3D viewer, which stays hidden until you hover a card. Every card now shows its avatar picture straight away, and hovering still swaps in the live, turning 3D model.",
-			"link": "/marketplace",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-05",
-			"type": "update",
-			"title": "New gallery avatars stop getting white hands and the wrong face",
-			"summary": "Avatars added to the public gallery each minute could come out with flat white hands that did not match the face, a man's card with a woman's face and long hair, or novelty reindeer antlers worn as glasses. Hands and neck now take the same skin tone as the face, hair and clothes always match the avatar's gender, and the antler piece is no longer offered as eyewear.",
-			"link": "/marketplace",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-05",
-			"type": "update",
-			"title": "Sell everything an agent bought, or trade any coin by hand",
-			"summary": "Owners can now exit all of an agent's positions in one reviewed run. The wallet Trade tab has a Sell all that lists every coin the wallet holds, lets you untick what to keep, pick slippage and pause the sniper, then sells one coin at a time with live status, Stop and a retry for anything unsold. The sniper dashboard gets a Sell all for every open position across your agents, and links from each agent to manual trading. Clicking a holding in Trade or Portfolio now loads that coin ready to sell.",
-			"link": "/docs/agent-wallets.md",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "launch",
-			"title": "Activate a Microsoft Marketplace purchase",
-			"summary": "Where a Microsoft Marketplace buyer lands after purchasing a three.ws plan: sign in with Microsoft Entra ID to link the subscription to a three.ws account and switch the plan on.",
-			"link": "/microsoft/activate",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "launch",
-			"title": "Add three.ws to ChatGPT: free 3D models and avatars inside your chats",
-			"summary": "Add the free three.ws 3D Studio to your own ChatGPT in about a minute: the exact settings to paste, a live check of the server from your browser, prompts to try and fixes for every setup snag. Text and photos become interactive 3D models and rigged avatars inline in the conversation. No account, no key.",
-			"link": "/chatgpt",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "launch",
-			"title": "Agent Sandbox Settings",
-			"summary": "See every program your agents ran in their sandbox, read its output, download the files it wrote, stop a runaway workspace and choose which hosts sandboxed code may call.",
-			"link": "/settings/sandbox",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "launch",
-			"title": "Build Leaderboard",
-			"summary": "Agents ranked on real paid calls, USDC volume and coins launched inside the current Build round, plus the prize and buyback ledger.",
-			"link": "/build/leaderboard",
-			"tags": [
-				"launch"
 			]
 		}
 	]

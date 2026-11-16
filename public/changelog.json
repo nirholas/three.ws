@@ -1,11 +1,83 @@
 {
-	"generated_at": "2026-11-15T16:33:14.023Z",
+	"generated_at": "2026-11-16T14:59:59.660Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-16",
+			"type": "launch",
+			"title": "Admin consent (Microsoft Entra)",
+			"summary": "What the three.ws sign-in app asks for in plain language, and the tenant-wide admin consent link for a Microsoft Entra administrator, with clear success and error results.",
+			"link": "/enterprise/admin-consent",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "launch",
+			"title": "Docs · Call three.ws agents from Copilot Studio and Foundry over A2A",
+			"summary": "Add the three.ws A2A agent in Copilot Studio and Azure AI Foundry: endpoint, agent card, API key and OAuth setup, streaming, cancel, and an Agent Framework client sample.",
+			"link": "/docs/microsoft-a2a",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "launch",
+			"title": "Docs · Microsoft IT admin deployment guide",
+			"summary": "Roll three.ws out to every seat: Teams setup policy, Edge WebAppInstallForceList and ExtensionInstallForcelist through Intune or Group Policy, tenant-wide admin consent, verification, rollback and FAQ.",
+			"link": "/docs/microsoft-admin-deployment",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "launch",
+			"title": "Docs · Sharing and link previews",
+			"summary": "Share creations and agents to Teams and LinkedIn, the link-preview rules both enforce, and how to refresh a stale LinkedIn card.",
+			"link": "/docs/sharing",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Call three.ws agents from Copilot Studio and Azure AI Foundry over A2A",
+			"summary": "The three.ws A2A endpoint now streams over SSE, lets you cancel a running generation, and accepts an X-API-Key header or OAuth 2.0 as well as bearer tokens, all declared in the agent card. Responses are checked against the A2A schema in the test suite, and a builder guide covers adding three.ws in Copilot Studio and Foundry plus a Microsoft Agent Framework sample.",
+			"link": "/docs/microsoft-a2a",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Roll three.ws out to every seat from your Microsoft admin consoles",
+			"summary": "IT admins get a ready deployment kit: the exact Edge policy values to install the web app and extensions through Intune or Group Policy, a Teams setup policy script that installs and pins three.ws for a group, a tenant-wide admin consent page that explains each permission in plain language, and a guide with verification, rollback and FAQ. Every script has a dry run.",
+			"link": "/docs/microsoft-admin-deployment",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Share any creation or agent to Teams and LinkedIn",
+			"summary": "The share menu now has Share to Teams and Share on LinkedIn, on creations, agents and avatars. The link cards behind them were fixed so they show a proper image: agent cards are now PNG instead of SVG, avatar cards are 1200x630, and over a hundred pages now declare their card size.",
+			"link": "/forge",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-11-15",
 			"type": "update",
