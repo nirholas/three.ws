@@ -35,6 +35,12 @@ const urlFor = (surface, theme = 'default') => `${BASE}${surface.path.replace('{
 
 test.describe.configure({ mode: 'serial', timeout: 180_000 });
 
+// The teams.microsoft.com host page framing http://localhost trips Chrome's local
+// network access checks, which never apply to the real host framing https://three.ws.
+test.use({
+	launchOptions: { args: ['--disable-features=LocalNetworkAccessChecks,BlockInsecurePrivateNetworkRequests,PrivateNetworkAccessSendPreflights'] },
+});
+
 function loadDotEnv() {
 	for (const file of ['.env.local', '.env']) {
 		const full = path.join(process.cwd(), file);
@@ -73,6 +79,44 @@ async function openFramed(page, surface, theme = 'default') {
 	return frame;
 }
 
+/**
+ * A Teams meeting host: frames the stage at the contentUrl its config view saves and
+ * answers TeamsJS initialize and getContext as Teams does for that frame context.
+ * The ids are the fixed synthetic ones scripts/microsoft-365-tab-hosts-check.mjs uses.
+ */
+function meetingHost(frameContext, theme) {
+	const runtime = JSON.stringify({ apiVersion: 4, supports: { app: {}, pages: {}, meeting: {}, sharing: {} } });
+	const context = JSON.stringify({
+		hostName: 'Teams',
+		hostClientType: 'web',
+		frameContext,
+		theme,
+		locale: 'en-us',
+		meetingId: 'store-review-meeting',
+		userObjectId: '00000000-0000-4000-8000-0000000000a1',
+		tid: '00000000-0000-4000-8000-0000000000f1',
+		appSessionId: '00000000-0000-4000-8000-0000000000c1',
+	});
+	return `<!doctype html><html><head><meta charset="utf-8"><title>Teams meeting host</title>
+<style>html,body{margin:0;height:100%;background:#1f1f1f}iframe{border:0;width:320px;height:100%;display:block}</style></head>
+<body><iframe id="app" title="three.ws" src="${BASE}/microsoft/teams-stage?theme=${theme}"></iframe>
+<script>
+const frame = document.getElementById('app');
+window.addEventListener('message', (e) => {
+	if (e.source !== frame.contentWindow) return;
+	const m = e.data || {};
+	if (typeof m.func !== 'string') return;
+	let args = [];
+	if (m.func === 'initialize') args = [${JSON.stringify(frameContext)}, 'web', ${JSON.stringify(runtime)}, '2.59.0'];
+	else if (m.func === 'getContext') args = [${context}];
+	const reply = { id: m.id, args };
+	if (m.uuid !== undefined) reply.uuid = m.uuid;
+	if (m.uuidAsString !== undefined) reply.uuidAsString = m.uuidAsString;
+	e.source.postMessage(reply, e.origin);
+});
+</script></body></html>`;
+}
+
 test.describe('Teams tabs as a Store reviewer sees them', () => {
 	test.use({ viewport: DESKTOP });
 
@@ -107,14 +151,16 @@ test.describe('Teams tabs as a Store reviewer sees them', () => {
 		expect(seen.contrast).toMatchObject({ theme: 'dark', contrast: true, bg: 'rgb(0, 0, 0)', ink: 'rgb(255, 255, 255)' });
 		expect(new Set(Object.values(seen).map((s) => s.bg)).size).toBe(3);
 
-		// The meeting stage and side panel are dark whatever the Teams theme is.
-		for (const surface of SURFACES.slice(1)) {
-			await page.goto(urlFor(surface, 'default'));
-			await expect(surface.ready(page)).toBeVisible({ timeout: 90_000 });
-			if (surface.key === 'side-panel') {
-				await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe('dark');
-			}
-		}
+		// In a meeting the side panel is dark whatever the Teams theme is: open it at the
+		// contentUrl the config view saves, framed by a host that answers TeamsJS the
+		// way a Teams meeting side panel does, with Teams itself in the light theme.
+		await page.route(`${HOST_ORIGIN}/meeting-host`, (route) => route.fulfill({ contentType: 'text/html', body: meetingHost('sidePanel', 'default') }));
+		await page.goto(`${HOST_ORIGIN}/meeting-host`);
+		const panel = page.frameLocator('#app');
+		await expect(SURFACES[2].ready(panel)).toBeVisible({ timeout: 90_000 });
+		const panelFrame = page.frames().find((f) => f.url().includes('/microsoft/teams-stage'));
+		await expect.poll(() => panelFrame.evaluate(() => document.documentElement.dataset.theme)).toBe('dark');
+		await page.screenshot({ path: path.join(SHOTS, 'side-panel-desktop-meeting.png') });
 		expect(errors).toEqual([]);
 	});
 

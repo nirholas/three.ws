@@ -67,6 +67,16 @@
 .rs-brand { font-family: var(--font-display); font-weight: var(--weight-semibold); color: var(--ink-bright); text-decoration: none; white-space: nowrap; border-radius: 4px; transition: color var(--duration-fast); }
 .rs-brand:hover { color: var(--accent); }
 .rs-brand:active { opacity: 0.8; }
+/* Teams Store rule: a link that leaves Teams carries a pop-out icon, with the same
+   spoken hint the agents tab uses. */
+a[target='_blank']::after {
+	content: '' / ' (opens in a new window)';
+	display: inline-block; width: 0.85em; height: 0.85em; margin-left: 0.3em; vertical-align: -0.05em;
+	background: currentColor;
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 2.5h4.5V7M13.5 2.5 7 9M11.5 9.5v3a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3'/%3E%3C/svg%3E") center / contain no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 2.5h4.5V7M13.5 2.5 7 9M11.5 9.5v3a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+@media (forced-colors: active) { a[target='_blank']::after { background: LinkText; } }
 kbd { font: var(--text-xs) / 1 var(--font-mono, monospace); padding: 2px 5px; border: 1px solid var(--stroke-strong); border-bottom-width: 2px; border-radius: 4px; background: var(--surface-2); color: var(--ink-bright); }
 
 /* ── Stage ─────────────────────────────────────────────────────────────── */
