@@ -250,7 +250,7 @@ describe('team enforcement', () => {
 		const { secret, token } = await enrol(ownerId);
 		const updated = await runtime.updateTeam(loaded, ownerId, { require_mfa: true });
 		expect(updated.require_mfa).toBe(true);
-		const events = await holder.db.sql`select action, detail from team_events where team_id = ${team.id}`;
+		const events = await holder.db.sql`select action, detail from team_enterprise_events where team_id = ${team.id}`;
 		expect(events).toEqual(expect.arrayContaining([expect.objectContaining({ action: 'team_mfa_required_changed' })]));
 
 		const off = await call('disable', { token, body: { code: codeFor(secret) } });
