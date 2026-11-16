@@ -46,6 +46,7 @@ async function sessionFor(ownerUserId, cache) {
 			userAgent: 'launcher-claimer',
 			ip: null,
 			recordActivity: false,
+			machine: true,
 		});
 		cache.set(ownerUserId, token);
 	}

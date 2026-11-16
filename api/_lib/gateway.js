@@ -99,7 +99,7 @@ export function defineEndpoint(spec) {
 			const session = await getSessionUser(req);
 			if (session) {
 				// A signed-in owner acting on their own account holds every scope.
-				principal = { userId: session.id, source: 'session', scope: 'all' };
+				principal = { userId: session.id, source: 'session', scope: 'all', sid: session.sid };
 			} else {
 				const bearer = await authenticateBearer(extractBearer(req), { ip });
 				if (bearer) {

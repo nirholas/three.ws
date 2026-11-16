@@ -283,7 +283,7 @@ async function pickAgent(cfg) {
 
 // ── the real launch (metadata → agent-signed create) ─────────────────────────────
 async function postAs(ownerUserId, path, body, timeoutMs = 55_000) {
-	const token = await createSession({ userId: ownerUserId, userAgent: 'launcher', ip: null });
+	const token = await createSession({ userId: ownerUserId, userAgent: 'launcher', ip: null, machine: true });
 	let res;
 	try {
 		res = await fetch(`${ORIGIN}${path}`, {
