@@ -1,0 +1,9 @@
+{
+  "name": "deepmerge",
+  "description": "deepmerge 4.3.1 with the GHSA-gcqx-w48m-w2h4 prototype-poisoning fix, vendored for the SPFx build toolchain",
+  "version": "4.3.1-threews.1",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "license": "MIT",
+  "private": true
+}
