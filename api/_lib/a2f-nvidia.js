@@ -383,7 +383,15 @@ export async function warmA2fChannel({ timeoutMs = 8000, functionId, apiKey } = 
 	}
 }
 
-function buildHeader({ blendshapeMultipliers, faceParams }) {
+function buildHeader({ blendshapeMultipliers, faceParams, emotion }) {
+	const keyframes = toEmotionKeyframes(emotion?.input);
+	const emotionFields = emotionHeaderFields({
+		enabled: emotion?.enabled !== false,
+		strength: emotion?.strength,
+		preferredStrength: emotion?.preferredStrength,
+		hasInput: keyframes.length > 0,
+		beginning: keyframes[0]?.emotion,
+	});
 	return {
 		audio_stream_header: {
 			audio_header: {
