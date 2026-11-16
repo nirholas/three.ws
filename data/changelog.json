@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-16",
+			"title": "New NVIDIA models are evaluated the day they appear",
+			"summary": "Every model newly listed in the NVIDIA NIM catalog is now sorted into a lane by live probes, scored on that lane's eval set next to the model the lane runs today, and turned into a verdict with the exact config change and a measured number, so a strong release can be live on three.ws the same day. A person still reviews and ships every switch.",
+			"tags": [
+				"infra",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-16",
 			"title": "three.ws 3D for SharePoint and Viva Connections",
 			"summary": "A SharePoint Framework solution adds an Agent web part, a 3D Model web part and a Viva Connections Agent card. Tenant admins upload one package and allow one script source; site owners pick agents and models from a live directory. Public agent reads now answer third-party origins with CORS so embeds on SharePoint and other sites work.",
 			"tags": [

@@ -183,6 +183,14 @@
 			<description>Microsoft's open Phi-4-mini model is built and tested on three.ws's own GPU fleet, with streaming and tool calling, ready to switch on as a brain an agent can pick by name. We tested it against the current default on 91 real platform tasks and published the results: it trails on every one, so it does not take over any internal work by default yet. If the Phi lane is slow or down, requests move to the next model automatically.</description>
 		</item>
 		<item>
+			<title>New NVIDIA models are evaluated the day they appear</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-16:New NVIDIA models are evaluated the day they appear</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>Every model newly listed in the NVIDIA NIM catalog is now sorted into a lane by live probes, scored on that lane's eval set next to the model the lane runs today, and turned into a verdict with the exact config change and a measured number, so a strong release can be live on three.ws the same day. A person still reviews and ships every switch.</description>
+		</item>
+		<item>
 			<title>Rate, report and trace the AI answers in the three.ws Teams app</title>
 			<link>https://three.ws/docs/microsoft-teams-forge</link>
 			<guid isPermaLink="false">2026-11-16:Rate, report and trace the AI answers in the three.ws Teams app</guid>
@@ -229,6 +237,14 @@
 			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>When our primary model storage rejects a write, generated reference images are saved to the backup store, but the 3D engines were still being pointed at the primary copy and every one of those generations failed. They now read the image through three.ws itself, which finds it wherever it was saved, so text to 3D carries on through a storage outage.</description>
+		</item>
+		<item>
+			<title>three.ws 3D for SharePoint and Viva Connections</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-16:three.ws 3D for SharePoint and Viva Connections</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A SharePoint Framework solution adds an Agent web part, a 3D Model web part and a Viva Connections Agent card. Tenant admins upload one package and allow one script source; site owners pick agents and models from a live directory. Public agent reads now answer third-party origins with CORS so embeds on SharePoint and other sites work.</description>
 		</item>
 		<item>
 			<title>three.ws 3D Studio agent for Microsoft 365 Copilot</title>

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-16T17:23:55.031Z",
+	"generated_at": "2026-11-16T17:34:59.367Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4623,
+	"total": 4625,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -235,6 +235,17 @@
 		{
 			"date": "2026-11-16",
 			"type": "update",
+			"title": "New NVIDIA models are evaluated the day they appear",
+			"summary": "Every model newly listed in the NVIDIA NIM catalog is now sorted into a lane by live probes, scored on that lane's eval set next to the model the lane runs today, and turned into a verdict with the exact config change and a measured number, so a strong release can be live on three.ws the same day. A person still reviews and ships every switch.",
+			"link": null,
+			"tags": [
+				"infra",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
 			"title": "Rate, report and trace the AI answers in the three.ws Teams app",
 			"summary": "Every answer an agent writes and every 3D model the three.ws app makes in Microsoft Teams now carries the AI generated label. Each one has thumbs up and down buttons with an optional comment, plus a Report option: on a model card, or in any bot message's menu. A report asks for a reason, goes to a three.ws reviewer (usually within one business day) and the person gets a confirmation. In a personal chat, agent answers stream in as they are written. When an answer draws on the agent's knowledge files, it shows numbered citations that link back to the agent on three.ws. Conversation and person ids are hashed and message text is never kept, except the short excerpt a reviewer needs to judge a report.",
 			"link": "/docs/microsoft-teams-forge",
@@ -293,6 +304,17 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "three.ws 3D for SharePoint and Viva Connections",
+			"summary": "A SharePoint Framework solution adds an Agent web part, a 3D Model web part and a Viva Connections Agent card. Tenant admins upload one package and allow one script source; site owners pick agents and models from a live directory. Public agent reads now answer third-party origins with CORS so embeds on SharePoint and other sites work.",
+			"link": null,
+			"tags": [
+				"feature",
+				"docs"
 			]
 		},
 		{
@@ -1519,26 +1541,6 @@
 			"link": null,
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-10",
-			"type": "update",
-			"title": "Pump.fun claim lookups stop draining the shared Solana RPC budget",
-			"summary": "The pump.fun MCP tools that list a creator's fee claims were the largest single consumer of the platform's Solana RPC quota, because a busy poller rescanned every transaction on every call and retried each one when the providers were throttling. A claims scan now skips transactions that failed on-chain, stops at the first throttled read, reads a bounded number of new transactions per call, and shares a fresh answer between rapid repeat polls. Results cut short say so with an incomplete flag and fill in on the next call, so payments and balance reads keep their RPC headroom.",
-			"link": null,
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-10",
-			"type": "update",
-			"title": "Restyle Studio states its 18 material presets on the page",
-			"summary": "The preset count now sits above the preset grid in Restyle Studio, so visitors see how many PBR looks are on offer without reading the page metadata.",
-			"link": "/restyle",
-			"tags": [
-				"improvement"
 			]
 		}
 	]
