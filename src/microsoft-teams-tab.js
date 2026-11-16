@@ -17,6 +17,7 @@
 import './microsoft-teams-tab.css';
 import { resolveDevR2Url } from './shared/dev-r2-proxy.js';
 import { parseSub } from './microsoft-teams-deeplink.js';
+import { applyTheme, detectHost, hostLabel, onHostThemeChange, shareActionFor } from './microsoft-365-host.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const STORE_KEY = 'twx_teams_tab_agent';
@@ -38,7 +39,7 @@ const els = {
 	empty: $('tt-empty'),
 };
 
-const state = { agentId: null, agents: [], query: '', searchSeq: 0, cardSeq: 0 };
+const state = { agentId: null, agents: [], query: '', searchSeq: 0, cardSeq: 0, host: { family: 'standalone' }, share: null, shownName: '' };
 
 function esc(s) {
 	return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -226,14 +227,49 @@ async function loadCard(id) {
 		</div>
 		${card.description ? `<p class="tt-desc">${esc(card.description)}</p>` : ''}
 		${statsHtml(card)}`;
+	state.shownName = card.name || '';
+	renderShare();
 	announce(`Showing ${card.name}.`);
+}
+
+// ── Host share action ────────────────────────────────────────────────────────
+
+// One share button, chosen for the host the tab runs in (the Teams share
+// dialog, a new Outlook email, or the browser), never a Teams-only call in a
+// host that does not support it.
+function renderShare() {
+	const actions = els.card.querySelector('.tt-card-actions');
+	if (!actions) return;
+	actions.querySelector('[data-share]')?.remove();
+	if (!state.share || !state.agentId) return;
+	const btn = document.createElement('button');
+	btn.type = 'button';
+	btn.className = 'tt-btn is-ghost';
+	btn.dataset.share = '';
+	btn.textContent = state.share.label;
+	actions.firstElementChild?.after(btn);
+}
+
+async function runShare(btn) {
+	const url = `https://three.ws/agents/${encodeURIComponent(state.agentId)}`;
+	const title = state.shownName || 'A three.ws agent';
+	btn.disabled = true;
+	try {
+		await state.share.run({ url, title });
+		if (state.share.kind === 'copy-link') announce('Link copied.');
+	} catch (err) {
+		// Closing the share sheet rejects with AbortError: not a failure to report.
+		if (err?.name !== 'AbortError') announce(`Sharing did not work here. Copy the link instead: ${url}`);
+	} finally {
+		btn.disabled = false;
+	}
 }
 
 // Agents are made by three.ws users, so every one shown here can be reported
 // to the trust and safety inbox the support page lists (abuse@three.ws).
 function reportHref(id, name) {
 	const subject = `Report agent ${id}`;
-	const body = `Agent: ${name || id}\nLink: https://three.ws/agents/${id}\nSeen in: Microsoft Teams Agents tab\n\nWhat is wrong with this agent?\n`;
+	const body = `Agent: ${name || id}\nLink: https://three.ws/agents/${id}\nSeen in: ${hostLabel(state.host.family)} Agents tab\n\nWhat is wrong with this agent?\n`;
 	return `mailto:abuse@three.ws?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
@@ -262,6 +298,8 @@ els.empty.addEventListener('click', (e) => {
 
 els.card.addEventListener('click', (e) => {
 	if (e.target.closest('[data-card-retry]') && state.agentId) loadCard(state.agentId);
+	const share = e.target.closest('[data-share]');
+	if (share && state.share) runShare(share);
 });
 
 let debounce = 0;
@@ -326,7 +364,22 @@ els.card.addEventListener('click', (e) => {
 	if (e.target.closest('[data-job-retry]') && els.card.dataset.job) showJob(els.card.dataset.job);
 });
 
+// The host answers in the background; the tab renders its standalone version
+// first and adapts when (and if) a Microsoft 365 host replies.
+async function adaptToHost() {
+	const host = await detectHost();
+	state.host = host;
+	document.documentElement.dataset.host = host.family;
+	if (host.sdk) {
+		applyTheme(host.theme);
+		onHostThemeChange(host, applyTheme);
+	}
+	state.share = shareActionFor(host);
+	renderShare();
+}
+
 async function boot() {
+	adaptToHost();
 	const params = new URLSearchParams(location.search);
 	const sub = parseSub(params.get('sub'));
 	const fromUrl = sub?.kind === 'agent' ? sub.id : params.get('agent');
