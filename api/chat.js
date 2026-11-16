@@ -79,6 +79,16 @@ import { retrieveForChat, knowledgePromptBlock } from './_lib/agent-knowledge.js
 import { holdSkillOriginatedSpend } from './_lib/skill-import-gate.js';
 import { suggestionsInstruction, splitSuggestions, createReplyFilter } from './_lib/chat-suggestions.js';
 import {
+	createOutputGate,
+	guardKey,
+	guardSummary,
+	guardrailsActive,
+	normalizeGuardrails,
+	outputClassifier,
+	refusalFor,
+	runInputChecks,
+} from './_lib/chat-guardrails.js';
+import {
 	vertexClaudeEnabled,
 	vertexClaudePrimary,
 	vertexMessagesUrl,
@@ -534,10 +544,12 @@ export default wrap(async (req, res) => {
 	}
 
 	// No platform-side content filter runs here. Whatever safety judgment the
-	// serving model makes is the only one this route applies; we do not add a
-	// classifier in front of it. Abuse is handled by attribution and metering
-	// (the rate-limit buckets above), not by pre-screening what a visitor may
-	// ask. Owner directive 2026-08-07.
+	// serving model makes is the only one this route applies by default; abuse
+	// is handled by attribution and metering (the rate-limit buckets above), not
+	// by pre-screening what a visitor may ask. Owner directive 2026-08-07. The
+	// one exception is an agent whose OWNER turned on guardrails in the agent
+	// editor (api/_lib/chat-guardrails.js): those NemoGuard checks run below,
+	// for that agent only, because the business that embeds it asked for them.
 
 	let userProviderKeys = {};
 	if (auth?.userId) {
@@ -553,7 +565,7 @@ export default wrap(async (req, res) => {
 	let agentRow = null;
 	if (body.agentId) {
 		[agentRow] = await sql`
-			SELECT persona_prompt, user_id, meta FROM agent_identities
+			SELECT name, persona_prompt, user_id, meta FROM agent_identities
 			WHERE id = ${body.agentId} AND deleted_at IS NULL
 			  AND (is_published = true OR user_id = ${auth?.userId ?? null})
 			LIMIT 1
@@ -748,6 +760,14 @@ export default wrap(async (req, res) => {
 	history.push({ role: 'user', content: body.message });
 
 	const started = Date.now();
+	// Owner-enabled guardrails. The input checks start now, in parallel with the
+	// model call below, and are awaited only before the first byte of the reply
+	// is written, so a check that answers before the model's first token costs
+	// the visitor no time at all.
+	const guardSettings = normalizeGuardrails(agentRow?.meta?.guardrails);
+	const inputGuard = guardrailsActive(guardSettings)
+		? runInputChecks(guardSettings, { message: body.message, history: body.history, agentName: agentRow?.name })
+		: null;
 	// Provider/model failover chain. The first entry is the picked route; if it
 	// returns 429 (rate-limit) or 5xx (provider down) we cycle through a
 	// pre-built fallback list before surfacing an error.
@@ -1009,6 +1029,20 @@ export default wrap(async (req, res) => {
 		break;
 	}
 
+	const inputVerdict = inputGuard ? await inputGuard : null;
+	if (inputVerdict?.blocked) {
+		// The turn is answered with the guard's reply instead of the model's. The
+		// model call already in flight is cancelled unread.
+		upstream.body?.cancel().catch(() => {});
+		return sendGuardRefusal(res, {
+			verdict: inputVerdict,
+			settings: guardSettings,
+			auth,
+			agentId: body.agentId,
+			latencyMs: Date.now() - started,
+		});
+	}
+
 	if (!upstream.ok) {
 		const text = await upstream.text().catch(() => '');
 		captureException(new Error(`${route.name} upstream ${upstream.status}`), {
@@ -1101,25 +1135,47 @@ export default wrap(async (req, res) => {
 		'X-Accel-Buffering': 'no',
 	});
 
+	const writeSSE = (obj) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
+	// Output screening (owner guardrail): every chunk and event passes through a
+	// gate that releases text sentence by sentence once NemoGuard has judged it,
+	// in order. On an unsafe verdict the gate stops, the upstream read is
+	// cancelled, and the reply is replaced. See createOutputGate.
+	const streamStop = new AbortController();
+	const outputGate =
+		guardSettings.safety && guardKey()
+			? createOutputGate({
+					userMessage: body.message,
+					emitText: (text) => writeSSE({ type: 'chunk', text }),
+					emitRaw: writeSSE,
+					onBlock: () => streamStop.abort(),
+					classify: outputClassifier({ key: guardKey() }),
+				})
+			: null;
+
 	function sendSSE(obj) {
 		if (replyFilter && obj.type === 'chunk') {
 			const text = replyFilter.push(obj.text);
 			if (!text) return;
 			obj = { ...obj, text };
 		}
-		res.write(`data: ${JSON.stringify(obj)}\n\n`);
+		if (outputGate) {
+			if (obj.type === 'chunk') outputGate.text(obj.text);
+			else outputGate.raw(obj);
+			return;
+		}
+		writeSSE(obj);
 	}
 
 	// watsonx streams OpenAI-shaped chat completion chunks, so the OpenAI reader
 	// parses its deltas and usage verbatim; only Anthropic needs its own reader.
 	const result =
 		route.style === 'anthropic'
-			? await streamAnthropic(upstream, sendSSE)
-			: await streamOpenAI(upstream, sendSSE);
+			? await streamAnthropic(upstream, sendSSE, { signal: streamStop.signal })
+			: await streamOpenAI(upstream, sendSSE, { signal: streamStop.signal });
 
-	if (result.error) {
+	if (result.error && !outputGate?.blocked) {
 		captureException(result.error, { route: 'chat', stage: 'stream', provider: route.name });
-		sendSSE({ type: 'error', code: 'stream_error', message: 'stream interrupted' });
+		writeSSE({ type: 'error', code: 'stream_error', message: 'stream interrupted' });
 		res.end();
 		return;
 	}
@@ -1151,7 +1207,7 @@ export default wrap(async (req, res) => {
 	 * key. See api/_lib/home/usage.js.
 	 */
 	let homeTouched = null;
-	if (auth?.userId && homeCallsToRun(result.toolCalls, homeOffered).length) {
+	if (auth?.userId && !outputGate?.blocked && homeCallsToRun(result.toolCalls, homeOffered).length) {
 		let pass = result;
 		let workingHistory = history;
 		for (let round = 0; round < HOME_TOOL_ROUNDS; round++) {
@@ -1223,8 +1279,26 @@ export default wrap(async (req, res) => {
 	let suggestions = [];
 	if (replyFilter) {
 		const held = replyFilter.flush();
-		if (held) res.write(`data: ${JSON.stringify({ type: 'chunk', text: held })}\n\n`);
+		if (held) {
+			if (outputGate) outputGate.text(held);
+			else writeSSE({ type: 'chunk', text: held });
+		}
 		({ reply, suggestions } = splitSuggestions(reply, suggestCount));
+	}
+	// Every buffered sentence must be judged before the turn can close.
+	const outputVerdict = outputGate ? await outputGate.finish() : null;
+	let replyActions = guardedActions;
+	if (outputVerdict?.blocked) {
+		// Replace, not truncate: the visitor sees the guard's reply in place of
+		// whatever was shown so far, and nothing the unsafe reply asked for runs.
+		reply = refusalFor('output_safety', guardSettings);
+		suggestions = [];
+		replyActions = [];
+		// Two frames: a chunk so a client that only knows `chunk` still ends on
+		// the guard's words after the safe text it already showed, then `guard`
+		// so a client that knows it swaps the whole bubble for the replacement.
+		writeSSE({ type: 'chunk', text: outputVerdict.released ? `\n\n${reply}` : reply });
+		writeSSE({ type: 'guard', action: 'replace', check: 'output_safety', text: reply });
 	}
 	if (governance?.decision === 'block') {
 		const why = governance.reasons?.[0]?.label || 'platform policy';
@@ -1233,19 +1307,23 @@ export default wrap(async (req, res) => {
 	// Spend gate for imported skills (api/_lib/skill-import-gate.js): while a
 	// gated external skill is in the prompt, a send the owner did not ask for in
 	// this message is held, whatever Guardian decided.
-	const skillGate = holdSkillOriginatedSpend(guardedActions, {
+	const skillGate = holdSkillOriginatedSpend(replyActions, {
 		userMessage: body.message,
 		gatedSkills: agentSkills.gated || [],
 	});
 	const governedActions = skillGate.actions;
 	if (skillGate.held) reply = `${reply}${reply ? '\n\n' : ''}${skillGate.held.note}`;
 
-	sendSSE({
+	const guard = guardSummary(guardSettings, { input: inputVerdict, output: outputVerdict });
+	writeSSE({
 		type: 'done',
 		reply,
 		...(replyFilter ? { suggestions } : {}),
 		actions: governedActions,
 		governance,
+		// Owner guardrails on this turn: which checks ran and which one, if any,
+		// replaced the reply. Absent when the agent has none on.
+		...(guard ? { guard: { on: guard.on, blocked: guard.blocked } } : {}),
 		// What the home tools did this turn, for a client that only reads `done`.
 		// Empty on every turn that did not touch a house.
 		home: homeResults.map((entry) => ({
@@ -1328,6 +1406,9 @@ export default wrap(async (req, res) => {
 			// key, so the number on the quota page and the number an invoice would
 			// charge for come from one row rather than from two counters.
 			...(homeTouched ? { home_id: homeTouched } : {}),
+			// Guardrail outcome, ids only (no message text): the owner's block
+			// counts in the agent editor are read from this key.
+			...(guard ? { guard } : {}),
 			// `route.via` records the Vertex transport ('vertex-anthropic') distinctly
 			// from the first-party 'anthropic' provider so spend/usage reporting can
 			// attribute GCP-credit traffic; falls back to the provider name otherwise.
@@ -1542,6 +1623,51 @@ async function runFollowUpPass({ route, systemPrompt, sys, history, maxTokens, a
 // a governance summary for the done event. Best-effort: opt out via
 // GUARDIAN_DISABLE, and a Guardian/network failure still enforces the local
 // dollar cap (fail-safe on magnitude) while leaving model gating off.
+/**
+ * Answer a turn an owner guardrail blocked at the input: the guard's reply as
+ * one chunk plus the usual `done` frame, and a usage row carrying the guard
+ * summary (ids only) so the owner's block counts see it. No model output was
+ * read, so the row records no tokens.
+ */
+export function sendGuardRefusal(res, { verdict, settings, auth, agentId, latencyMs }) {
+	const reply = verdict.blocked.reply;
+	const guard = guardSummary(settings, { input: verdict });
+	res.writeHead(200, {
+		'Content-Type': 'text/event-stream; charset=utf-8',
+		'Cache-Control': 'no-cache, no-transform',
+		'X-Accel-Buffering': 'no',
+	});
+	res.write(`data: ${JSON.stringify({ type: 'chunk', text: reply })}\n\n`);
+	res.write(
+		`data: ${JSON.stringify({
+			type: 'done',
+			reply,
+			actions: [],
+			governance: null,
+			home: [],
+			model: null,
+			provider: null,
+			recalled: [],
+			knowledge: [],
+			guard: { on: guard.on, blocked: guard.blocked },
+		})}\n\n`,
+	);
+	res.end();
+	recordEvent({
+		userId: auth?.userId ?? null,
+		apiKeyId: auth?.apiKeyId,
+		clientId: auth?.clientId,
+		agentId: agentId ?? null,
+		kind: 'chat',
+		tool: 'guardrails',
+		latencyMs,
+		inputTokens: 0,
+		outputTokens: 0,
+		costMicroUsd: 0,
+		meta: { guard },
+	});
+}
+
 export async function governActions(actions, userMessage) {
 	const sendIdxs = [];
 	actions.forEach((a, i) => {
@@ -2060,8 +2186,11 @@ function makeRoute(name, cfg, apiKey, model) {
 
 // ── Stream readers ───────────────────────────────────────────────────────────
 
-async function streamAnthropic(upstream, sendSSE) {
+// `signal` stops the read early (an output guardrail hit): the upstream body is
+// cancelled and the reader returns what it had.
+async function streamAnthropic(upstream, sendSSE, { signal } = {}) {
 	const reader = upstream.body.getReader();
+	signal?.addEventListener('abort', () => reader.cancel().catch(() => {}), { once: true });
 	const decoder = new TextDecoder();
 	let buf = '';
 	let reply = '';
@@ -2133,8 +2262,9 @@ async function streamAnthropic(upstream, sendSSE) {
 	return { reply, actions, toolCalls, inputTokens, outputTokens, cacheWriteTokens, cacheReadTokens };
 }
 
-async function streamOpenAI(upstream, sendSSE) {
+async function streamOpenAI(upstream, sendSSE, { signal } = {}) {
 	const reader = upstream.body.getReader();
+	signal?.addEventListener('abort', () => reader.cancel().catch(() => {}), { once: true });
 	const decoder = new TextDecoder();
 	let buf = '';
 	let reply = '';

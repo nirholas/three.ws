@@ -26,6 +26,23 @@ import {
 	defaultEmbedPolicy,
 } from '../_lib/embed-policy.js';
 import { getAvatar } from '../_lib/avatars.js';
+import { sql } from '../_lib/db.js';
+import {
+	guardKey,
+	guardSummary,
+	guardrailsActive,
+	loadAgentGuardrails,
+	outputClassifier,
+	refusalFor,
+	runInputChecks,
+} from '../_lib/chat-guardrails.js';
+import {
+	createAnthropicSseGuard,
+	lastVisitorText,
+	syntheticJsonMessage,
+	syntheticSseMessage,
+	textHistory,
+} from '../_lib/anthropic-sse-guard.js';
 import {
 	modelRejectsSampling,
 	modelThinksByDefault,
@@ -625,6 +642,24 @@ export default wrap(async (req, res) => {
 	const isStreaming = body.stream === true;
 	const t0 = Date.now();
 
+	// Owner guardrails (api/_lib/chat-guardrails.js), off unless the agent's
+	// owner turned them on. Input checks run on a visitor's own turn only (not
+	// on a tool-result round of the agent loop), in parallel with the model
+	// call below; the reply is held only until they answer.
+	const guardAgent = await loadAgentGuardrails(sql, agentId).catch((err) => {
+		log.warn('guardrails_load_failed', { agentId, msg: err?.message });
+		return null;
+	});
+	const guardSettings = guardAgent?.settings || null;
+	const visitorText = lastVisitorText(body.messages);
+	const inputGuard =
+		guardSettings && guardrailsActive(guardSettings) && visitorText.trim()
+			? runInputChecks(guardSettings, { message: visitorText, history: textHistory(body.messages), agentName: guardAgent.name })
+			: null;
+	// Usage rows key on the agent's own id even when the embed addressed it by
+	// avatar id, so the owner's per-agent numbers include embed traffic.
+	const usageAgentId = guardAgent?.agentId || agentId;
+
 	// Vertex Claude transport: when VERTEX_CLAUDE_ENABLED, `provider: anthropic`
 	// models stream from Google Vertex (GCP credits) with first-party Anthropic as
 	// the fallback. Vertex SSE is byte-identical to first-party, so the streaming
@@ -857,6 +892,36 @@ export default wrap(async (req, res) => {
 		});
 	}
 
+	const inputVerdict = inputGuard ? await inputGuard : null;
+	if (inputVerdict?.blocked) {
+		upstream.body?.cancel().catch(() => {});
+		const reply = inputVerdict.blocked.reply;
+		recordEvent({
+			kind: 'llm',
+			tool: 'guardrails',
+			agentId: usageAgentId,
+			latencyMs: Date.now() - t0,
+			status: 'ok',
+			inputTokens: 0,
+			outputTokens: 0,
+			costMicroUsd: 0,
+			meta: { guard: guardSummary(guardSettings, { input: inputVerdict }) },
+		});
+		res.statusCode = 200;
+		if (isStreaming) {
+			res.setHeader('content-type', 'text/event-stream');
+			res.setHeader('cache-control', 'no-cache');
+			res.setHeader('x-accel-buffering', 'no');
+			return res.end(syntheticSseMessage(reply, usedModel));
+		}
+		res.setHeader('content-type', 'application/json');
+		return res.end(JSON.stringify(syntheticJsonMessage(reply, usedModel)));
+	}
+	// Output screening: the reply streams through a sentence-buffer gate that
+	// releases text only once NemoGuard has judged it.
+	const screenOutput = Boolean(guardSettings?.safety && guardKey());
+	const streamStop = new AbortController();
+
 	const route = usedRoute;
 	// Provider attribution for the spend ledger. `usedVia` distinguishes the
 	// Vertex transport ('vertex-anthropic') from first-party Anthropic so prompt
@@ -893,18 +958,34 @@ export default wrap(async (req, res) => {
 		// the true prompt size and costMicroUsd can price each at its own rate.
 		let cacheWriteTokens = 0;
 		let cacheReadTokens = 0;
+		// With output screening on, frames go through the guard instead of
+		// straight to the socket; it ends the response itself in close().
+		const guardSink = screenOutput
+			? createAnthropicSseGuard({
+					res,
+					userMessage: visitorText,
+					replacement: refusalFor('output_safety', guardSettings),
+					classify: outputClassifier({ key: guardKey() }),
+					onBlock: () => streamStop.abort(),
+				})
+			: null;
+		const out = guardSink ? { write: (s) => guardSink.write(s), end: () => {} } : res;
+		let outputVerdict = null;
 
 		if (route.kind === 'anthropic') {
 			// Pass upstream Anthropic SSE through verbatim; sniff usage events
 			// for token accounting.
 			const reader = upstream.body.getReader();
+			streamStop.signal.addEventListener('abort', () => reader.cancel().catch(() => {}), { once: true });
 			const decoder = new TextDecoder();
+			const frameDecoder = guardSink ? new TextDecoder() : null;
 			let sseBuffer = '';
 			try {
 				while (true) {
 					const { done, value } = await reader.read();
 					if (done) break;
-					res.write(value);
+					if (guardSink) guardSink.write(frameDecoder.decode(value, { stream: true }));
+					else res.write(value);
 					sseBuffer += decoder.decode(value, { stream: true });
 					const lines = sseBuffer.split('\n');
 					sseBuffer = lines.pop();
@@ -925,14 +1006,17 @@ export default wrap(async (req, res) => {
 					}
 				}
 			} finally {
-				res.end();
+				if (guardSink) outputVerdict = await guardSink.close();
+				else res.end();
 			}
 		} else {
 			// OpenAI-shape upstream → translate to Anthropic SSE shape on the fly.
-			const usage = await pipeOpenAIAsAnthropic(upstream, res, { model: usedModel });
+			const usage = await pipeOpenAIAsAnthropic(upstream, out, { model: usedModel, signal: streamStop.signal });
+			if (guardSink) outputVerdict = await guardSink.close();
 			inputTokens = usage.inputTokens;
 			outputTokens = usage.outputTokens;
 		}
+		const guard = guardSettings ? guardSummary(guardSettings, { input: inputVerdict, output: outputVerdict }) : null;
 
 		const latencyMs = Date.now() - t0;
 		// Cache tokens are part of the prompt the agent actually sent, so they
@@ -948,7 +1032,7 @@ export default wrap(async (req, res) => {
 		recordEvent({
 			kind: 'llm',
 			tool: toolLabel,
-			agentId,
+			agentId: usageAgentId,
 			bytes: 0,
 			latencyMs,
 			status: 'ok',
@@ -972,6 +1056,7 @@ export default wrap(async (req, res) => {
 				cache_write_tokens: cacheWriteTokens,
 				cache_read_tokens: cacheReadTokens,
 				upstream_status: upstream.status,
+				...(guard ? { guard } : {}),
 			},
 		});
 		return;
@@ -1010,6 +1095,28 @@ export default wrap(async (req, res) => {
 		outContentType = 'application/json';
 	}
 
+	// Output screening, whole reply at once (nothing was sent yet).
+	let outputVerdict = null;
+	if (screenOutput) {
+		const message = JSON.parse(outBody);
+		const replyText = (message?.content || []).filter((b) => b?.type === 'text').map((b) => b.text).join('');
+		if (replyText.trim()) {
+			const gate = { checks: 1, unchecked: 0, blocked: null };
+			try {
+				const v = await outputClassifier({ key: guardKey() })({ user: visitorText, assistant: replyText });
+				if (v.flagged) gate.blocked = { check: 'output_safety', categories: v.categories, model: v.model };
+			} catch {
+				gate.unchecked = 1;
+			}
+			outputVerdict = gate;
+			if (gate.blocked) {
+				outBody = JSON.stringify(syntheticJsonMessage(refusalFor('output_safety', guardSettings), usedModel));
+				outContentType = 'application/json';
+			}
+		}
+	}
+	const guard = guardSettings ? guardSummary(guardSettings, { input: inputVerdict, output: outputVerdict }) : null;
+
 	const promptTokens = inputTokens + cacheWriteTokens + cacheReadTokens;
 	if (promptTokens || outputTokens) {
 		try {
@@ -1022,7 +1129,7 @@ export default wrap(async (req, res) => {
 	recordEvent({
 		kind: 'llm',
 		tool: toolLabel,
-		agentId,
+		agentId: usageAgentId,
 		bytes: upstreamText.length,
 		latencyMs,
 		status: 'ok',
@@ -1046,6 +1153,7 @@ export default wrap(async (req, res) => {
 			cache_write_tokens: cacheWriteTokens,
 			cache_read_tokens: cacheReadTokens,
 			upstream_status: upstream.status,
+			...(guard ? { guard } : {}),
 		},
 	});
 
@@ -1195,8 +1303,11 @@ function openAIResponseToAnthropic(resp, { model }) {
 
 // Stream an OpenAI-shape SSE upstream into the client as Anthropic-shape SSE.
 // Returns { inputTokens, outputTokens } extracted from the final usage event.
-async function pipeOpenAIAsAnthropic(upstream, res, { model }) {
+// `signal` stops the translation early (an output guardrail hit): the upstream
+// read is cancelled and the message is closed normally.
+async function pipeOpenAIAsAnthropic(upstream, res, { model, signal }) {
 	const reader = upstream.body.getReader();
+	signal?.addEventListener('abort', () => reader.cancel().catch(() => {}), { once: true });
 	const decoder = new TextDecoder();
 	let buf = '';
 

@@ -2681,6 +2681,11 @@ async function sendChatMessage(text) {
 					assistantNode.textContent = acc;
 					logEl.scrollTop = logEl.scrollHeight;
 					streamThoughtText(acc);
+				} else if (evt.type === 'guard' && evt.action === 'replace' && typeof evt.text === 'string') {
+					// The agent owner's output guardrail stopped this reply; show the
+					// replacement in place of the partial text.
+					acc = evt.text;
+					assistantNode.textContent = acc;
 				} else if (evt.type === 'home_tool') {
 					// The agent touched the connected house. A guarded action arrives
 					// here as a pending confirmation and is rendered as a card the

@@ -28,9 +28,7 @@
 // once so it can be wired on day 0. NVIDIA's social and DevRel accounts
 // amplify partners who ship its launches on release day; that is the only
 // reliable route from Inception membership to an NVIDIA repost
-// (docs/nvidia-visibility-map.md, "Day-0 adoption"). Each new id is also
-// queued in nim_release_evals; /api/cron/nim-release-eval then classifies and
-// evaluates it out of band, so this request stays a cheap listing diff.
+// (docs/nvidia-visibility-map.md, "Day-0 adoption").
 
 import { json, method, wrapCron } from '../_lib/http.js';
 import { cacheGet, cacheSet } from '../_lib/cache.js';
@@ -40,7 +38,6 @@ import { sendOpsAlert } from '../_lib/alerts.js';
 import { requireCron } from '../_lib/cron-auth.js';
 import { env } from '../_lib/env.js';
 import { NVIDIA_PINNED_MODELS, KILO_FREE_MODELS } from '../_lib/llm.js';
-import { enqueueReleaseEvals } from '../_lib/nim-release-store.js';
 
 const NIM_BASE = 'https://integrate.api.nvidia.com/v1';
 const KILO_BASE = 'https://api.kilo.ai/api/gateway';
@@ -104,16 +101,6 @@ export function diffFreeModels(hardcodedIds, liveIds) {
  * @returns {Promise<string[]>}
  */
 async function listCatalogIds(base, key) {
-	return (await listCatalog(base, key)).map((m) => m.id);
-}
-
-/**
- * The `/models` listing as `{ id, ownedBy }` entries ([] when unreachable).
- * @param {string} base
- * @param {string|null} key
- * @returns {Promise<Array<{ id: string, ownedBy: string|null }>>}
- */
-export async function listCatalog(base, key) {
 	try {
 		const r = await fetch(`${base}/models`, {
 			headers: key ? { authorization: `Bearer ${key}` } : {},
@@ -121,10 +108,7 @@ export async function listCatalog(base, key) {
 		});
 		if (!r.ok) return [];
 		const body = await r.json();
-		if (!Array.isArray(body?.data)) return [];
-		return body.data
-			.filter((m) => typeof m?.id === 'string')
-			.map((m) => ({ id: m.id, ownedBy: typeof m.owned_by === 'string' ? m.owned_by : null }));
+		return Array.isArray(body?.data) ? body.data.map((m) => m?.id).filter((id) => typeof id === 'string') : [];
 	} catch {
 		return [];
 	}
@@ -200,16 +184,12 @@ export function diffNvidiaReleases(previous, liveIds) {
 }
 
 /**
- * Diff the live NIM catalog against the stored snapshot, queue an evaluation
- * for every new id, page ops once, and persist the union. The snapshot is
- * untouched when the catalog is unreachable. The evaluation itself never runs
- * here: it is only enqueued (an idempotent insert), and
- * /api/cron/nim-release-eval works the queue.
+ * Diff the live NIM catalog against the stored snapshot, page ops once per new
+ * id, and persist the union. The snapshot is untouched when the catalog is
+ * unreachable.
  * @param {{ base: string, key: string|null, cacheKey?: string,
  *   get?: (k: string) => Promise<any>, set?: (k: string, v: any, ttl: number) => Promise<any>,
- *   alert?: typeof sendOpsAlert,
- *   list?: (base: string, key: string|null) => Promise<Array<{ id: string, ownedBy: string|null }>>,
- *   enqueue?: typeof enqueueReleaseEvals }} opts
+ *   alert?: typeof sendOpsAlert }} opts
  */
 export async function watchNvidiaReleases({
 	base,
@@ -218,43 +198,25 @@ export async function watchNvidiaReleases({
 	get = cacheGet,
 	set = cacheSet,
 	alert = sendOpsAlert,
-	list = listCatalog,
-	enqueue = enqueueReleaseEvals,
 }) {
 	const previous = await get(cacheKey);
-	const catalog = await list(base, key);
-	const result = diffNvidiaReleases(previous, catalog.map((m) => m.id));
+	const result = diffNvidiaReleases(previous, await listCatalogIds(base, key));
 	if (result.status === 'unknown') return result;
 	await set(cacheKey, result.seen, RELEASE_SNAPSHOT_TTL_S);
-	if (result.status !== 'new') return result;
-
-	const owners = new Map(catalog.map((m) => [m.id, m.ownedBy]));
-	/** @type {{ queued: string[], error: string|null }} */
-	const evals = { queued: [], error: null };
-	try {
-		const rows = await enqueue(result.added.map((id) => ({ id, ownedBy: owners.get(id) ?? null })));
-		evals.queued = rows.map((r) => r.model_id);
-	} catch (err) {
-		// The page still goes out: a queue outage must not swallow a release.
-		evals.error = String(/** @type {Error} */ (err)?.message || err).slice(0, 200);
-		console.warn(`[free-model-audit] could not queue NIM release evals: ${evals.error}`);
+	if (result.status === 'new') {
+		const others = result.added.filter((id) => !result.nvidiaAdded.includes(id));
+		const lines = [
+			...(result.nvidiaAdded.length ? ['NVIDIA releases:', ...result.nvidiaAdded.map((id) => `  ${id}`)] : []),
+			...(others.length ? ['Partner models newly hosted on NIM:', ...others.map((id) => `  ${id}`)] : []),
+		];
+		console.log(`[free-model-audit] new NIM catalog id(s): ${result.added.join(', ')}`);
+		await alert(
+			`🆕 ${result.added.length} new model(s) on NVIDIA NIM`,
+			`${lines.join('\n')}\nWire the relevant one today and post it tagging @NVIDIAAIDev: day-0 adoption is what NVIDIA reshares. Runbook: docs/nvidia-visibility-map.md#day-0-adoption-the-route-to-an-nvidia-repost`,
+			{ signature: 'llm:nim-new-release' },
+		);
 	}
-
-	const others = result.added.filter((id) => !result.nvidiaAdded.includes(id));
-	const lines = [
-		...(result.nvidiaAdded.length ? ['NVIDIA releases:', ...result.nvidiaAdded.map((id) => `  ${id}`)] : []),
-		...(others.length ? ['Partner models newly hosted on NIM:', ...others.map((id) => `  ${id}`)] : []),
-	];
-	const evalLine = evals.error
-		? `Evaluation could not be queued (${evals.error}); run: node scripts/nvidia-lane-eval.mjs --model <id>`
-		: `Queued ${evals.queued.length} lane evaluation(s); the verdict, report, config diff and post draft follow in a separate alert per model.`;
-	console.log(`[free-model-audit] new NIM catalog id(s): ${result.added.join(', ')}`);
-	await alert(
-		`🆕 ${result.added.length} new model(s) on NVIDIA NIM`,
-		`${lines.join('\n')}\n${evalLine}\nWire the relevant one today and post it tagging @NVIDIAAIDev: day-0 adoption is what NVIDIA reshares. Runbook: docs/nvidia-visibility-map.md#day-0-adoption-the-route-to-an-nvidia-repost`,
-		{ signature: 'llm:nim-new-release' },
-	);
-	return { ...result, evals };
+	return result;
 }
 
 export default wrapCron(async (req, res) => {
@@ -314,11 +276,6 @@ export default wrapCron(async (req, res) => {
 		dead,
 		status: result.status,
 		lanes,
-		nimReleases: {
-			status: releases.status,
-			added: releases.added,
-			nvidiaAdded: releases.nvidiaAdded,
-			evalsQueued: 'evals' in releases ? releases.evals.queued : [],
-		},
+		nimReleases: { status: releases.status, added: releases.added, nvidiaAdded: releases.nvidiaAdded },
 	});
 });

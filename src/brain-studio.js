@@ -270,6 +270,10 @@ async function streamPersona({ agentId, personaOverride, message, signal, onChun
 			if (evt.type === 'chunk' && evt.text) {
 				full += evt.text;
 				onChunk?.(evt.text, full);
+			} else if (evt.type === 'guard' && evt.action === 'replace' && typeof evt.text === 'string') {
+				// An output guardrail on this agent replaced the reply.
+				full = evt.text;
+				onChunk?.('', full);
 			} else if (evt.type === 'error') {
 				throw new Error(evt.message || 'stream error');
 			}

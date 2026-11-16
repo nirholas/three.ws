@@ -636,6 +636,7 @@ export class TalkController {
 					continue;
 				}
 				if (evt.type === 'chunk' && evt.text) acc += evt.text;
+				else if (evt.type === 'guard' && evt.action === 'replace' && typeof evt.text === 'string') acc = evt.text;
 				else if (evt.type === 'home_tool') this.onHomeEvent?.(evt);
 				else if (evt.type === 'done' && Array.isArray(evt.home) && evt.home.length) {
 					// The terminal frame repeats the turn's home results, which is the
