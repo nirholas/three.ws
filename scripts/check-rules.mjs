@@ -91,6 +91,11 @@ const SKIP = [
 	// sources (content/, src/, build scripts) are still scanned.
 	/^robinhood\/learn-robinhood-chain\/docs\//,
 	/^robinhood\/hood-connect\/docs\//,
+	// Eval datasets and recorded run output. They hold text captured verbatim
+	// from PDFs and model responses, which is the evidence being scored; editing
+	// the typography would change what the eval measures. The scripts that
+	// write and read them are still scanned.
+	/^data\/evals\//,
 	// Third-party bundles we vendor to serve from our own origin (e.g. the
 	// meshopt decoder). The bytes are upstream's, license header included, so
 	// holding them to house prose rules reports the vendor's copyright line as
