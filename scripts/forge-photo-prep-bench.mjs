@@ -172,7 +172,21 @@ async function generate(name, key, laneUrl) {
 	const dataUri = `data:${v.type};base64,${readFileSync(file).toString('base64')}`;
 	// Re-attach to a job a previous run submitted but did not see finish (stopped
 	// mid-poll, or gave up on it as orphaned); it may have finished since.
-	const resumed = v.task?.id && (v.task.status === 'queued' || isFalseOrphan(v.task)) ? v.task.id : null;
+	let resumed = v.task?.id && (v.task.status === 'queued' || isFalseOrphan(v.task)) ? v.task.id : null;
+	if (resumed) {
+		// A task the worker still reports as orphaned on a fresh look is dead (its
+		// runner stopped and no instance holds it): queue the job again.
+		try {
+			let orphaned = 0;
+			for (let i = 0; i < 3; i++) {
+				if (isFalseOrphan(await api(workerUrl, `/tasks/${resumed}`))) orphaned++;
+				if (i < 2) await new Promise((r) => setTimeout(r, POLL_MS));
+			}
+			if (orphaned === 3) resumed = null;
+		} catch {
+			resumed = null;
+		}
+	}
 	const t0 = resumed ? (v.submittedAt ?? null) : Date.now();
 	let task_id = resumed;
 	if (!resumed) {

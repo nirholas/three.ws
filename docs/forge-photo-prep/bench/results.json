@@ -229,9 +229,9 @@
 				"original": {
 					"bytes": 589031,
 					"type": "image/jpeg",
-					"submittedAt": 1794849222725,
+					"submittedAt": 1794856853552,
 					"task": {
-						"id": "6dd1314e-b1b7-4961-84fe-62417de69c09",
+						"id": "3f019b4e-36f8-47d9-8bc2-d53f32086475",
 						"status": "queued",
 						"worker": "https://model-trellis2-bench-1-lp642k3kpa-ez.a.run.app"
 					}
@@ -259,9 +259,9 @@
 				"cutout": {
 					"bytes": 71714,
 					"type": "image/webp",
-					"submittedAt": 1794849451059,
+					"submittedAt": 1794856854306,
 					"task": {
-						"id": "85f6a883-1914-4bc4-8ad1-e93ae3e5e6dc",
+						"id": "c54c6b02-c80c-4e44-a2f7-e384e0b65cec",
 						"status": "queued",
 						"worker": "https://model-trellis2-bench-3-lp642k3kpa-ez.a.run.app"
 					}
@@ -304,16 +304,32 @@
 				"original": {
 					"bytes": 486633,
 					"type": "image/jpeg",
-					"submittedAt": 1794849559523,
+					"submittedAt": 1794856852934,
 					"task": {
-						"id": "bf35deb7-8f9e-4fa5-8148-58fa62400bfe",
-						"status": "queued",
+						"id": "9799f6df-e983-4fe3-932f-39a9dacfa543",
+						"status": "done",
+						"resolution_served": 1024,
+						"alpha_mode": "OPAQUE",
+						"queue_ms": 0,
+						"gpu_ms": 263801,
+						"elapsed_ms": 265647,
+						"error": null,
 						"worker": "https://model-trellis2-bench-2-lp642k3kpa-ez.a.run.app"
-					}
+					},
+					"endToEndMs": 268593,
+					"glb": "original.glb",
+					"glbBytes": 7925172,
+					"render": "original-render.webp"
 				},
 				"prepared": {
 					"bytes": 291507,
-					"type": "image/jpeg"
+					"type": "image/jpeg",
+					"submittedAt": 1794857146933,
+					"task": {
+						"id": "dc629bb6-ce85-487d-8b04-8b0f037e5e68",
+						"status": "queued",
+						"worker": "https://model-trellis2-bench-3-lp642k3kpa-ez.a.run.app"
+					}
 				},
 				"cutout": {
 					"bytes": 114828,
