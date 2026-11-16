@@ -20,7 +20,7 @@
 // Vertex Imagen and Gemini return PNG, and the Livepeer gateway can serve
 // either. Unknown bytes keep the PNG label (the historical default).
 
-import { putObject, publicUrl, isStorageInfrastructureError } from './r2.js';
+import { putObject, cdnUrl, isStorageInfrastructureError } from './r2.js';
 
 // 'jpg' | 'png' - sniffed from magic bytes. JPEG: FF D8 FF. Anything else is
 // labeled png, matching the legacy behavior of every prior copy of this code.
@@ -86,7 +86,11 @@ export async function persistImageBytes(body) {
 		);
 		return `data:${contentType};base64,${Buffer.from(body).toString('base64')}`;
 	}
-	return publicUrl(key);
+	// The /cdn/ proxy, not the raw public bucket domain: putObject resolves after
+	// diverting the write to the GCS fallback bucket when R2 rejects it, and only
+	// /cdn/ reads through that fallback. On 2026-11-16 the r2.dev URL handed to
+	// TRELLIS 404'd for exactly that reason and every fallback generation failed.
+	return cdnUrl(key);
 }
 
 // Persist a base64-encoded image. Same behavior as persistImageBytes; kept as

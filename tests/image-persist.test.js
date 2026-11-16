@@ -12,7 +12,7 @@ import {
 	persistImageBytes,
 	isInlineImageRef,
 } from '../api/_lib/image-persist.js';
-import { putObject, publicUrl } from '../api/_lib/r2.js';
+import { putObject } from '../api/_lib/r2.js';
 
 // The real classifier, not a stub: the fallback is only correct if it fires on
 // the exact error shapes S3 actually throws, and that mapping lives in r2.js.
@@ -21,7 +21,8 @@ const STORAGE_ERROR_RE =
 
 vi.mock('../api/_lib/r2.js', () => ({
 	putObject: vi.fn(async () => ({})),
-	publicUrl: vi.fn((key) => `https://cdn.example.com/${key}`),
+	publicUrl: vi.fn((key) => `https://pub-bucket.r2.dev/${key}`),
+	cdnUrl: vi.fn((key) => `https://cdn.example.com/${key}`),
 	isStorageInfrastructureError: vi.fn((err) =>
 		STORAGE_ERROR_RE.test([err?.name, err?.Code, err?.message].filter(Boolean).join(' ')),
 	),
@@ -142,6 +143,19 @@ describe('persistImageBytes when object storage is down', () => {
 		const url = await persistImageBytes(PNG);
 		expect(url).toMatch(/^https:\/\/cdn\.example\.com\/forge\/refs\//);
 		expect(isInlineImageRef(url)).toBe(false);
+	});
+});
+
+// 2026-11-16: the R2 credential answered Unauthorized, putObject diverted every
+// reference view to the GCS fallback bucket and resolved, and this module handed
+// the reconstructor the raw *.r2.dev URL, where the object never landed. TRELLIS
+// fetched a 404 and every fallback generation failed. The /cdn/ proxy reads
+// through the same GCS fallback, so the reference must be on that form.
+describe('persistImageBytes hands on a URL that reads through the storage fallback', () => {
+	it('returns the /cdn/ proxy URL, never the raw public bucket domain', async () => {
+		const url = await persistImageBytes(Buffer.from([...JPEG_SIG, 3, 3, 3]));
+		expect(url).toMatch(/^https:\/\/cdn\.example\.com\/forge\/refs\/[0-9a-f-]+\.jpg$/);
+		expect(url).not.toContain('r2.dev');
 	});
 });
 
