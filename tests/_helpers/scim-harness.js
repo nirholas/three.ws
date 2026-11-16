@@ -33,7 +33,7 @@ export const PRE_DDL = `
 	);
 `;
 
-const MIGRATIONS = ['20261010120000_teams.sql', '20261111160232_enterprise_sso_scim.sql', '20261116160500_scim_oauth_clients.sql'];
+const MIGRATIONS = ['20261010120000_teams.sql', '20261111160232_enterprise_sso_scim.sql', '20261116150441_account_mfa.sql', '20261116160500_scim_oauth_clients.sql'];
 
 /** Create the schema the SCIM code runs against on a fresh PGlite wrapper. */
 export async function buildScimSchema(db) {

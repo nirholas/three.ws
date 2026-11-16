@@ -186,6 +186,20 @@
 			}
 			.btn.sec:hover { background: #2a2a2a; filter: none; }
 			.btn.danger { background: #cc4040; color: #fff; }
+			.btn:active:not(:disabled) { transform: translateY(1px); filter: brightness(0.95); }
+			.mfa-state { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; font-size: 14px; color: #ddd; }
+			.mfa-dot { width: 9px; height: 9px; border-radius: 50%; background: #555; flex-shrink: 0; }
+			.mfa-dot.on { background: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,0.15); }
+			.mfa-qr { background: #fff; border-radius: 10px; padding: 10px; width: 196px; height: 196px; box-sizing: border-box; margin: 6px 0 12px; }
+			.mfa-qr svg { width: 100%; height: 100%; display: block; }
+			.mfa-secret { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; letter-spacing: 0.08em; color: #ddd; background: #0f0f0f; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; display: inline-block; word-break: break-all; user-select: all; }
+			.mfa-codes { display: grid; grid-template-columns: repeat(2, minmax(0, max-content)); gap: 6px 22px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; color: #eee; background: #0f0f0f; border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin: 8px 0 12px; }
+			.mfa-panel { border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin: 0 0 16px; max-width: 560px; }
+			.mfa-panel h3 { margin: 0 0 6px; font-size: 15px; color: #eee; }
+			.mfa-code-input { max-width: 180px; letter-spacing: 0.2em; font-variant-numeric: tabular-nums; }
+			.mfa-skeleton { height: 20px; max-width: 320px; border-radius: 6px; background: linear-gradient(90deg, #141414 0%, #1f1f1f 50%, #141414 100%); background-size: 200% 100%; animation: mfa-sk 1.2s linear infinite; }
+			@keyframes mfa-sk { to { background-position: -200% 0; } }
+			@media (prefers-reduced-motion: reduce) { .mfa-skeleton { animation: none; } }
 			.divider {
 				border: none;
 				border-top: 1px solid var(--border);
@@ -496,6 +510,7 @@
 				<a href="#account" data-tab="account" data-i18n="settings_index.account">Account</a>
 				<a href="#connected-accounts" data-tab="connected-accounts" data-i18n="settings_index.connected_accounts">Connected Accounts</a>
 				<a href="#privacy" data-tab="privacy" data-i18n="settings_index.privacy">Privacy</a>
+				<a href="#security" data-tab="security">Security</a>
 				<a href="#sessions" data-tab="sessions" data-i18n="settings_index.sessions">Sessions</a>
 				<a href="#connections" data-tab="connections">Connections</a>
 				<a href="#gifts" data-tab="gifts">Gifts</a>
@@ -653,6 +668,77 @@
 								<div class="val">Your profile page is always public. Only public avatars and agents appear on it.</div>
 							</div>
 						</div>
+					</div>
+				</div>
+
+				<!-- ── Security (two-step verification) ─────────────────── -->
+				<div class="page" id="tab-security">
+					<h2>Security</h2>
+					<p class="sub">Two-step verification asks for a code from an authenticator app every time you sign in, whichever way you sign in.</p>
+
+					<div id="mfa-loading" aria-hidden="true"><div class="mfa-skeleton"></div></div>
+					<div class="load-error" id="mfa-error" style="display:none" role="alert">
+						<p id="mfa-error-body">Could not load your two-step verification status.</p>
+						<button class="btn sec" id="mfa-retry">Try again</button>
+					</div>
+
+					<div id="mfa-body" hidden>
+						<div class="mfa-state"><span class="mfa-dot" id="mfa-dot"></span><span id="mfa-state-text"></span></div>
+
+						<!-- Off: explain and start. -->
+						<div id="mfa-off" hidden>
+							<p class="muted" style="max-width:560px;margin:0 0 14px">Works with any TOTP authenticator app: Microsoft Authenticator, Google Authenticator, 1Password, Bitwarden, Authy and others. Sign-ins through Microsoft Entra that already passed your organization's MFA are not asked twice.</p>
+							<button class="btn" id="mfa-start">Turn on two-step verification</button>
+						</div>
+
+						<!-- Setup: scan, then confirm with the first code. -->
+						<div id="mfa-setup" class="mfa-panel" hidden>
+							<h3>1. Add three.ws to your authenticator app</h3>
+							<p class="muted">Scan this code, or type the key below into the app.</p>
+							<div class="mfa-qr" id="mfa-qr" role="img" aria-label="QR code for your authenticator app"></div>
+							<div class="field">
+								<label>Setup key</label>
+								<span class="mfa-secret" id="mfa-secret"></span>
+							</div>
+							<h3>2. Enter the 6-digit code the app shows</h3>
+							<form id="mfa-enable-form" class="row" novalidate>
+								<input id="mfa-enable-code" class="mfa-code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="6-digit code" placeholder="123456" />
+								<button class="btn" type="submit" id="mfa-enable-btn">Turn on</button>
+								<button class="btn sec" type="button" id="mfa-cancel">Cancel</button>
+							</form>
+							<span class="inline-msg" id="mfa-setup-msg" style="display:none"></span>
+						</div>
+
+						<!-- Recovery codes, shown once after enable or regenerate. -->
+						<div id="mfa-codes-panel" class="mfa-panel" hidden>
+							<h3>Save your recovery codes</h3>
+							<p class="muted">If you lose your phone, each of these signs you in once. This is the only time they are shown. Store them in a password manager.</p>
+							<div class="mfa-codes" id="mfa-codes"></div>
+							<div class="row">
+								<button class="btn sec" id="mfa-copy">Copy codes</button>
+								<button class="btn" id="mfa-codes-done">I saved them</button>
+								<span class="inline-msg" id="mfa-copy-msg" style="display:none"></span>
+							</div>
+						</div>
+
+						<!-- On: manage. -->
+						<div id="mfa-on" hidden>
+							<p class="muted" id="mfa-codes-left" style="margin:0 0 6px"></p>
+							<p class="muted" id="mfa-teams" style="margin:0 0 6px" hidden></p>
+							<div class="field" style="margin-top:14px">
+								<label for="mfa-manage-code">Code from your app, or a recovery code</label>
+								<input id="mfa-manage-code" class="mfa-code-input" autocomplete="one-time-code" maxlength="11" placeholder="123456" />
+								<div class="hint">Both actions below need a fresh code, so a stolen session alone cannot change them.</div>
+							</div>
+							<div class="row">
+								<button class="btn sec" id="mfa-regen">Make new recovery codes</button>
+								<button class="btn danger" id="mfa-disable">Turn off two-step verification</button>
+							</div>
+							<span class="inline-msg" id="mfa-manage-msg" style="display:none"></span>
+						</div>
+
+						<hr class="divider" />
+						<p class="muted" style="max-width:560px">Team owners can require two-step verification for everyone in a team from the team's settings. Account actions, including these, appear in your audit history. How we protect accounts: <a href="/trust#account-security" style="color:#ddd">Trust Center</a>.</p>
 					</div>
 				</div>
 
@@ -1044,6 +1130,147 @@
 				} finally {
 					btn.disabled = false;
 				}
+			});
+
+			// ── Security: two-step verification (api/auth/mfa/[action].js) ─
+			const mfaEl = (id) => document.getElementById(id);
+			let mfaCodes = [];
+
+			function mfaShow(section) {
+				for (const id of ['mfa-off', 'mfa-setup', 'mfa-codes-panel', 'mfa-on']) mfaEl(id).hidden = id !== section;
+			}
+
+			async function loadSecurity() {
+				mfaEl('mfa-loading').hidden = false;
+				mfaEl('mfa-error').style.display = 'none';
+				mfaEl('mfa-body').hidden = true;
+				let st;
+				try {
+					st = await apiJson('/api/auth/mfa/status');
+				} catch (e) {
+					mfaEl('mfa-loading').hidden = true;
+					mfaEl('mfa-error-body').textContent = e.data?.error_description || 'Could not load your two-step verification status. Check your connection and try again.';
+					mfaEl('mfa-error').style.display = '';
+					return;
+				}
+				mfaEl('mfa-loading').hidden = true;
+				mfaEl('mfa-body').hidden = false;
+				renderSecurity(st);
+			}
+
+			function renderSecurity(st) {
+				mfaEl('mfa-dot').classList.toggle('on', st.enabled);
+				if (!st.enabled) {
+					mfaEl('mfa-state-text').textContent = 'Two-step verification is off.';
+					return mfaShow('mfa-off');
+				}
+				const since = new Date(st.enabled_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+				mfaEl('mfa-state-text').textContent = `Two-step verification is on (since ${since}).`;
+				const left = st.recovery_codes_remaining;
+				mfaEl('mfa-codes-left').textContent = left === 0
+					? 'You have no recovery codes left. Make new ones now so a lost phone does not lock you out.'
+					: `${left} of 10 recovery codes left.${left <= 3 ? ' Make new ones soon.' : ''}`;
+				const teams = st.teams_requiring || [];
+				mfaEl('mfa-teams').hidden = !teams.length;
+				mfaEl('mfa-teams').textContent = teams.length
+					? `Your team${teams.length > 1 ? 's' : ''} ${teams.map((t) => t.name).join(', ')} require${teams.length > 1 ? '' : 's'} two-step verification, so it cannot be turned off until that setting is off.`
+					: '';
+				mfaEl('mfa-disable').disabled = teams.length > 0;
+				mfaEl('mfa-manage-code').value = '';
+				mfaShow('mfa-on');
+			}
+
+			function showRecoveryCodes(codes) {
+				mfaCodes = codes;
+				mfaEl('mfa-codes').replaceChildren(...codes.map((c) => Object.assign(document.createElement('span'), { textContent: c })));
+				mfaEl('mfa-state-text').textContent = 'Two-step verification is on.';
+				mfaEl('mfa-dot').classList.add('on');
+				mfaShow('mfa-codes-panel');
+			}
+
+			async function withBusy(btn, label, fn) {
+				const before = btn.textContent;
+				btn.disabled = true;
+				btn.textContent = label;
+				try { await fn(); } finally { btn.disabled = false; btn.textContent = before; }
+			}
+
+			mfaEl('mfa-retry').addEventListener('click', loadSecurity);
+
+			mfaEl('mfa-start').addEventListener('click', () => withBusy(mfaEl('mfa-start'), 'Preparing…', async () => {
+				try {
+					const out = await apiJson('/api/auth/mfa/setup', { method: 'POST' });
+					mfaEl('mfa-qr').innerHTML = out.qr_svg;
+					mfaEl('mfa-secret').textContent = out.secret.replace(/(.{4})/g, '$1 ').trim();
+					mfaEl('mfa-enable-code').value = '';
+					mfaShow('mfa-setup');
+					mfaEl('mfa-enable-code').focus();
+				} catch (e) {
+					if (e.data?.error === 'already_enabled') return loadSecurity();
+					showMsg(mfaEl('mfa-manage-msg'), 'err', e.data?.error_description || 'Could not start setup. Try again.');
+				}
+			}));
+
+			mfaEl('mfa-cancel').addEventListener('click', () => mfaShow('mfa-off'));
+
+			mfaEl('mfa-enable-form').addEventListener('submit', (e) => {
+				e.preventDefault();
+				const code = mfaEl('mfa-enable-code').value.trim();
+				if (!/^\d{6}$/.test(code)) return showMsg(mfaEl('mfa-setup-msg'), 'err', 'Enter the 6 digits your app shows for three.ws.');
+				withBusy(mfaEl('mfa-enable-btn'), 'Checking…', async () => {
+					try {
+						const out = await apiJson('/api/auth/mfa/enable', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code }) });
+						showRecoveryCodes(out.recovery_codes);
+					} catch (err) {
+						showMsg(mfaEl('mfa-setup-msg'), 'err', err.data?.error_description || 'That code did not match. Check the time on your phone is set automatically, then try the newest code.');
+					}
+				});
+			});
+
+			mfaEl('mfa-copy').addEventListener('click', async () => {
+				try {
+					await navigator.clipboard.writeText(mfaCodes.join('\n'));
+					showMsg(mfaEl('mfa-copy-msg'), 'ok', 'Copied.');
+				} catch {
+					showMsg(mfaEl('mfa-copy-msg'), 'err', 'Copy was blocked. Select the codes and copy them by hand.');
+				}
+			});
+			mfaEl('mfa-codes-done').addEventListener('click', () => { mfaCodes = []; loadSecurity(); });
+
+			function manageCode() {
+				const code = mfaEl('mfa-manage-code').value.trim();
+				if (!/^\d{6}$/.test(code) && code.replace(/[\s-]/g, '').length !== 10) {
+					showMsg(mfaEl('mfa-manage-msg'), 'err', 'Enter the 6-digit code from your app, or a recovery code.');
+					mfaEl('mfa-manage-code').focus();
+					return null;
+				}
+				return code;
+			}
+
+			mfaEl('mfa-regen').addEventListener('click', () => {
+				const code = manageCode();
+				if (!code) return;
+				withBusy(mfaEl('mfa-regen'), 'Making codes…', async () => {
+					try {
+						const out = await apiJson('/api/auth/mfa/recovery-codes', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code }) });
+						showRecoveryCodes(out.recovery_codes);
+					} catch (e) {
+						showMsg(mfaEl('mfa-manage-msg'), 'err', e.data?.error_description || 'Could not make new codes. Try again.');
+					}
+				});
+			});
+
+			mfaEl('mfa-disable').addEventListener('click', () => {
+				const code = manageCode();
+				if (!code) return;
+				withBusy(mfaEl('mfa-disable'), 'Turning off…', async () => {
+					try {
+						await apiJson('/api/auth/mfa/disable', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code }) });
+						await loadSecurity();
+					} catch (e) {
+						showMsg(mfaEl('mfa-manage-msg'), 'err', e.data?.error_description || 'Could not turn it off. Try again.');
+					}
+				});
 			});
 
 			// ── Sessions ─────────────────────────────────────────────────
@@ -2221,6 +2448,7 @@
 				const link = document.querySelector(`aside a[data-tab="${tab}"]`);
 				if (link) link.classList.add('active');
 				if (tab === 'sessions') loadSessions();
+				if (tab === 'security') loadSecurity();
 				if (tab === 'connected-accounts') loadConnectedAccounts();
 				if (tab === 'connections') loadConnections();
 				if (tab === 'gifts') loadGifts();

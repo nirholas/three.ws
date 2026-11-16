@@ -57,6 +57,7 @@ vi.mock('../api/_lib/email.js', () => email);
 const executor = vi.hoisted(() => ({ executeApprovedIntentAction: vi.fn(async () => ({ status: 'ok', signature: 'SIGtest1111', usd: 12 })) }));
 vi.mock('../api/_lib/wallet-intents.js', () => executor);
 
+await import('../api/_lib/agent-knowledge.js');
 const A = await import('../api/_lib/approvals.js');
 const T = await import('../api/_lib/teams-approvals.js');
 const C = await import('../api/_lib/teams-approval-cards.js');

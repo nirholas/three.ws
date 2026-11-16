@@ -251,6 +251,7 @@ describe('findings board and Trader on Postgres', () => {
 		await holder.db.exec(PRE_DDL);
 		await holder.db.exec(readFileSync(new URL('../api/_lib/migrations/20261010120000_teams.sql', import.meta.url), 'utf8'));
 		await holder.db.exec(readFileSync(new URL('../api/_lib/migrations/20261111160232_enterprise_sso_scim.sql', import.meta.url), 'utf8'));
+		await holder.db.exec(readFileSync(new URL('../api/_lib/migrations/20261116150441_account_mfa.sql', import.meta.url), 'utf8'));
 		runtime = await import('../api/_lib/teams/runtime.js');
 		findings = await import('../api/_lib/teams/findings.js');
 	});
