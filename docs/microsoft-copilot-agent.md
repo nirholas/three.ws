@@ -7,7 +7,7 @@ Built and operated by three.ws. Approved claims only: three.ws and Microsoft hav
 ## What users see
 
 - **Name and description.** "three.ws 3D Studio", described as turning a plain-language request into a textured GLB 3D model or a rigged avatar, finding free CC0 assets with embed code, and opening every result in a 3D viewer.
-- **Six conversation starters.** Each was run end to end in production through the exact tool sequence the agent uses (see [Production proof](#production-proof)):
+- **Six conversation starters.** Each has a production proof that runs the exact tool sequence the agent uses (see [Production proof](#production-proof) for which have passed and which wait on a deploy):
 
   | Starter | Prompt | Tool sequence |
   |---|---|---|
@@ -69,21 +69,24 @@ The agent is part of the same app package and the same Partner Center offer as t
 
 `node scripts/microsoft-copilot-agent-proof.mjs [--only "Starter title"] [--json out.json]` runs each starter's tool sequence anonymously against the URL in `ai-plugin.json` (override with `MCP_STUDIO_URL`), follows generations through `check_job`, and fetches every GLB to confirm it is a real glTF binary (and, for the mascot, that it carries a skeleton). Nothing is staged: every id below came back from production.
 
-Run of 2026-11-16 against `https://three.ws/api/mcp-studio`:
+Runs of 2026-11-16 against `https://three.ws/api/mcp-studio` (15:00 to 15:25 UTC, 16:22 to 16:38 UTC and 16:48 to 17:04 UTC):
 
 | Starter | Result | Production output |
 |---|---|---|
 | Find a ready-made asset | Pass | `search_catalog` returned `object:modern_arm_chair_01` ("Modern Arm Chair 01", CC0); `get_catalog_item` gave the GLB `https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/modern_arm_chair_01.glb` (glTF magic confirmed). |
 | Put 3D on our website | Pass | `search_catalog` returned `object:chinese_armchair`; `get_item_source` returned `<model-viewer>` embed code with `src` `https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/chinese_armchair.glb`. |
 | How auto-rigging works | Pass | `search_docs` returned the "One-click auto-rigging" section of "What a three.ws agent can do" at `https://three.ws/docs#agent-abilities/FULL-ARTICLE@one-click-auto-rigging--bring-static-models-to-life`. |
-| Rigged mascot | Mesh only | `forge_avatar` job `t1.mwje3sbz-1c43427d-f677-445f-9c7e-8138226c6753` finished through `check_job` with `https://three.ws/cdn/forge/nvidia/02e96e05-322e-4292-9ef3-e78ea18716b5.glb` (1.5 MB), but that file has no skin: a `forge_avatar` that goes pending returns the unrigged mesh. That run is why the agent instructions and the proof now call `rig_mesh` on such a mesh. |
-| Product model for a deck, Inspect a model | Failing in production | Every `forge_free` attempt from 15:00 to 15:25 UTC failed, for example jobs `t1.mwje3sa3-84c51396-4fa5-4215-8638-3c48b30da52c` and `t1.mwje9ytg-4d70714e-3023-4920-b33c-2a2ab8cbd9da`. |
+| Product model for a deck | Pass (attempt 4) | `forge_free` job `t1.mwjh93lk-0e34482e-c603-4ec5-970e-3f51e2ea10c7` finished through `check_job` on the free NVIDIA lane with `https://three.ws/cdn/forge/nvidia/56f8c2fb-07ee-492c-9b4e-edbef7dac5b8.glb` (glTF magic confirmed), a viewer URL and a poster. Attempts 1 to 3 failed on the lane problem below, for example job `t1.mwjh39g9-b0929df0-42e7-484e-af6a-6bf82d8e38ce`. |
+| Inspect a model | Blocked by production | On 16:22 the mug generated, then `look_at_model` hit the shared per-IP limit because all six starters ran at once; the proof now waits out a rate limit instead (`retryAfterSeconds`, tested). The 16:48 rerun failed all 6 `forge_free` attempts, for example jobs `t1.mwji1xhx-cce6eb15-b4d8-4a72-9650-7223e119cb2f` and `t1.mwji5647-7bc20d6e-af47-40d1-9ebd-edb1c27a4fbd`. |
+| Rigged mascot | Blocked by production | An earlier `forge_avatar` job, `t1.mwje3sbz-1c43427d-f677-445f-9c7e-8138226c6753`, returned the unrigged mesh `https://three.ws/cdn/forge/nvidia/02e96e05-322e-4292-9ef3-e78ea18716b5.glb`. That run is why the instructions and the proof now call `rig_mesh` on such a mesh. Since then all 6 attempts at 16:22 failed (for example jobs `t1.mwjh1ub1-b93f3b40-cd14-4ea8-8154-2653ab4a1f1d` and `t1.mwjhhci9-307ad732-e3ce-4cb3-b797-ad565f36f25f`), and the 17:02 rerun failed twice before it hit the hourly IP limit. |
 
-Why the generation starters failed on 2026-11-16, from the production logs:
+Why generation fails in production on 2026-11-16, from the production logs:
 
-1. The free NVIDIA lane answered `504` ("free NVIDIA NIM lane unavailable").
-2. The fallback is our own TRELLIS worker. It received the reference image as a raw `*.r2.dev` URL that returned `404`, because the R2 credential is rejected (`401`). The write had gone to the GCS fallback bucket, but the URL still pointed at R2. Fixed in `api/_lib/image-persist.js` (the reference is now handed on as a `/cdn/` URL, which reads through the fallback), with a regression test in `tests/image-persist.test.js`. The fix needs a production deploy.
-3. `model-triposg` in us-central1 cannot start: the region's L4 GPU quota is exhausted.
+1. The free NVIDIA lane often answers `504` ("free NVIDIA NIM lane unavailable"). When it does answer, generation succeeds (the deck starter above).
+2. Every other lane (our TRELLIS worker, then the `triposg` failover) is handed the reference image as a raw `pub-....r2.dev/forge/refs/*.jpg` URL, which answers `404` because the R2 credential is rejected (`401`) and the write went to the GCS fallback bucket. Logged at 16:35 and 16:38 UTC as `image source ... r2.dev returned HTTP 404` from `model-trellis` and `model-triposg`. Commit `c3ec82891` fixes this (the reference is handed on as a `/cdn/` URL that reads through the fallback; regression test in `tests/image-persist.test.js`). It is on `main` but not yet deployed.
+3. `model-triposg` in us-central1 often cannot start a second instance, because the region's L4 GPU quota is exhausted.
+
+After the deploy, rerun `node scripts/microsoft-copilot-agent-proof.mjs --only "Rigged mascot"` and `--only "Inspect a model"` (an hour apart from other free generations from the same IP), and replace the two blocked rows with the job ids it prints.
 
 ## Known limits
 
