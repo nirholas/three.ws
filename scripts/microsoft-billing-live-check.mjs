@@ -322,10 +322,9 @@ say(`metering cron: ${r.status} ${await r.text()}`);
 // The owner links the team and gives Jordan a seat through the real seats API,
 // as the page does; Sam is left without one to assign from the UI.
 const { issueCsrf } = await import('../api/_lib/csrf.js');
-const csrf = await issueCsrf(ownerId);
 for (const op of [{ op: 'link_team', team_id: teamId }, { op: 'assign', user_id: members[0].id }]) {
 	r = await buyer.fetch(`${API}/api/microsoft-marketplace/seats`, {
-		method: 'POST', headers: { 'content-type': 'application/json', 'x-csrf-token': csrf }, body: JSON.stringify({ subscription_id: subId, ...op }),
+		method: 'POST', headers: { 'content-type': 'application/json', 'x-csrf-token': (await issueCsrf(ownerId)).token }, body: JSON.stringify({ subscription_id: subId, ...op }),
 	});
 	if (!r.ok) fail(`seats ${op.op} answered ${r.status}: ${await r.text()}`);
 }

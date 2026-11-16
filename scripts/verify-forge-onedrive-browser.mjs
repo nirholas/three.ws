@@ -117,6 +117,9 @@ check('api/config.js reports oneDrive enabled with the client id', parsed.oneDri
 for (const width of [1280, 400]) {
 	console.log(`Enabled, ${width}px:`);
 	const ctx = await browser.newContext({ viewport: { width, height: 860 } });
+	// Keep Vite's HMR socket open but silent: other agents' file writes in the
+	// shared tree would otherwise full-reload the page mid-check.
+	await ctx.routeWebSocket(/.*/, () => {});
 	const page = await ctx.newPage();
 	const consoleProblems = [];
 	page.on('console', (m) => {
@@ -169,7 +172,7 @@ for (const width of [1280, 400]) {
 		check('request carries the configured client id and the SPA redirect', url.includes(CLIENT_ID) && url.includes(encodeURIComponent(`${BASE}/auth/microsoft/redirect`)));
 		check('request asks for Files.ReadWrite only (plus OIDC basics)', /scope=[^&]*Files\.ReadWrite/.test(url));
 		const aadsts = (text.match(/AADSTS\d+/) || [])[0] || '';
-		check('Microsoft answers at the auth boundary', Boolean(aadsts) || /sign in|pick an account|microsoft/i.test(text), aadsts || text.slice(0, 80).replace(/\s+/g, ' '));
+		check('Microsoft serves its sign-in page for the request', Boolean(aadsts) || /sign in|pick an account/i.test(text), aadsts || text.slice(0, 60).replace(/\s+/g, ' '));
 		await popup.screenshot({ path: join(SHOTS, 'microsoft-signin.png') }).catch(() => {});
 		await popup.close();
 		const status = page.locator('#od-photo-status');
