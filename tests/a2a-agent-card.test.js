@@ -45,11 +45,16 @@ describe('public A2A agent card', () => {
 		expect(publicCard.documentationUrl).toMatch(/^https:\/\/three\.ws\//);
 	});
 
-	it('declares only the auth the endpoint enforces: anonymous, or an optional bearer key', () => {
-		expect(Object.keys(publicCard.securitySchemes)).toEqual(['bearer']);
+	it('declares only the auth the endpoint accepts: anonymous, bearer, X-API-Key or OAuth 2.0', () => {
+		expect(Object.keys(publicCard.securitySchemes)).toEqual(['bearer', 'apiKey', 'oauth2']);
 		expect(publicCard.securitySchemes.bearer).toMatchObject({ type: 'http', scheme: 'bearer' });
-		expect(publicCard.security).toEqual([{}, { bearer: [] }]);
-		expect(publicCard.securityRequirements).toEqual([{ schemes: {} }, { schemes: { bearer: { list: [] } } }]);
+		expect(publicCard.securitySchemes.apiKey).toMatchObject({ type: 'apiKey', in: 'header', name: 'X-API-Key' });
+		expect(publicCard.securitySchemes.oauth2.flows.authorizationCode).toMatchObject({
+			authorizationUrl: 'https://three.ws/oauth/authorize',
+			tokenUrl: 'https://three.ws/api/oauth/token',
+		});
+		expect(publicCard.security).toEqual([{}, { bearer: [] }, { apiKey: [] }, { oauth2: ['avatars:read'] }]);
+		expect(publicCard.capabilities.streaming).toBe(true);
 	});
 
 	it('keeps the a2a-x402 payment extension, optional', () => {
