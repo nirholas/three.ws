@@ -79,6 +79,14 @@
 			<description>How the three.ws enterprise page is built: purchase paths, identity, security answers, Microsoft surface statuses from data, the printable procurement packet and the contact form that files a lead.</description>
 		</item>
 		<item>
+			<title>Docs · three.ws 3D for SharePoint and Viva Connections</title>
+			<link>https://three.ws/docs/microsoft-sharepoint</link>
+			<guid isPermaLink="false">2026-11-16:Docs · three.ws 3D for SharePoint and Viva Connections</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Admin and site-owner guide for the SharePoint Framework solution: upload the package, allow one script source, then add the Agent web part, the 3D Model web part or the Viva Connections Agent card.</description>
+		</item>
+		<item>
 			<title>Docs · three.ws 3D Studio agent for Microsoft 365 Copilot</title>
 			<link>https://three.ws/docs/microsoft-copilot-agent</link>
 			<guid isPermaLink="false">2026-11-16:Docs · three.ws 3D Studio agent for Microsoft 365 Copilot</guid>
@@ -173,6 +181,14 @@
 			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The /nvidia page now shows whether each NVIDIA lane we run (NIM chat, vision and embeddings, NemoGuard, Riva speech, Audio2Face and the TRELLIS, Hunyuan3D, TripoSG and Pixal3D GPU workers) answered its most recent scheduled probe, with median and p95 latency over 7 days. A new /nvidia/benchmarks page publishes the full probe, job and GPU fleet tables, measured from real generation jobs, with a CSV download and the method behind every number. The first full run caught a retired NVIDIA model still pinned in the chat chain, which now leads with Nemotron Ultra.</description>
+		</item>
+		<item>
+			<title>Forge reads photos from and saves models to OneDrive and SharePoint</title>
+			<link>https://three.ws/docs/onedrive</link>
+			<guid isPermaLink="false">2026-11-16:Forge reads photos from and saves models to OneDrive and SharePoint</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>In Forge image mode, From OneDrive or SharePoint opens Microsoft's file picker so you can bring in up to six photos from a personal or work OneDrive or a SharePoint library, and Save to OneDrive in the Download menu writes the GLB, a poster image and, for a stored model, a one-slide PowerPoint deck into the folder you choose. Microsoft sign-in is asked for on that click only, existing files are never overwritten, large uploads resume after throttling, and closing the picker simply cancels. The buttons appear once the three.ws Microsoft app is connected on the server.</description>
 		</item>
 		<item>
 			<title>Forge results and agent 3D bodies load again</title>

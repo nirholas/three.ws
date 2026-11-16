@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-16T18:51:59.505Z",
+	"generated_at": "2026-11-16T19:08:22.383Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4631,
+	"total": 4633,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -95,6 +95,16 @@
 			"title": "Docs · The /enterprise procurement page",
 			"summary": "How the three.ws enterprise page is built: purchase paths, identity, security answers, Microsoft surface statuses from data, the printable procurement packet and the contact form that files a lead.",
 			"link": "/docs/enterprise",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "launch",
+			"title": "Docs · three.ws 3D for SharePoint and Viva Connections",
+			"summary": "Admin and site-owner guide for the SharePoint Framework solution: upload the package, allow one script source, then add the Agent web part, the 3D Model web part or the Viva Connections Agent card.",
+			"link": "/docs/microsoft-sharepoint",
 			"tags": [
 				"launch"
 			]
@@ -222,6 +232,16 @@
 			"tags": [
 				"feature",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Forge reads photos from and saves models to OneDrive and SharePoint",
+			"summary": "In Forge image mode, From OneDrive or SharePoint opens Microsoft's file picker so you can bring in up to six photos from a personal or work OneDrive or a SharePoint library, and Save to OneDrive in the Download menu writes the GLB, a poster image and, for a stored model, a one-slide PowerPoint deck into the folder you choose. Microsoft sign-in is asked for on that click only, existing files are never overwritten, large uploads resume after throttling, and closing the picker simply cancels. The buttons appear once the three.ws Microsoft app is connected on the server.",
+			"link": "/docs/onedrive",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1525,27 +1545,6 @@
 			"link": "/settings/robinhood",
 			"tags": [
 				"launch"
-			]
-		},
-		{
-			"date": "2026-11-10",
-			"type": "update",
-			"title": "Agent run replays show the code your agent ran",
-			"summary": "On an agent's Runs tab, each execute_code, terminal and file step now shows the program, what it printed, its exit code and duration, and download links for the files it wrote, right in the step instead of behind a Details fold. The sandbox settings page empty state now tells you to ask your agent to run code.",
-			"link": null,
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-10",
-			"type": "update",
-			"title": "Buy a skill bundle straight from an agent's marketplace page",
-			"summary": "An agent's Capabilities tab now shows its published skill bundles above the individual skills: what is included, the bundle price in $THREE or USDC, and how much you save against buying each skill alone (computed from the agent's real list prices, never estimated). Buy opens the usual payment modal with wallet or Solana Pay QR checkout, and once the payment is verified on-chain every skill in the bundle shows as owned. This also fixes bundle checkout itself, which failed with a server error whenever no platform fee applied and quoted the wrong split when one did, and now answers 'already owned' instead of opening a second purchase.",
-			"link": "/marketplace",
-			"tags": [
-				"feature",
-				"fix"
 			]
 		}
 	]

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-16",
+			"title": "Forge reads photos from and saves models to OneDrive and SharePoint",
+			"summary": "In Forge image mode, From OneDrive or SharePoint opens Microsoft's file picker so you can bring in up to six photos from a personal or work OneDrive or a SharePoint library, and Save to OneDrive in the Download menu writes the GLB, a poster image and, for a stored model, a one-slide PowerPoint deck into the folder you choose. Microsoft sign-in is asked for on that click only, existing files are never overwritten, large uploads resume after throttling, and closing the picker simply cancels. The buttons appear once the three.ws Microsoft app is connected on the server.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/onedrive"
+		},
+		{
+			"date": "2026-11-16",
 			"title": "The Audio2Face digital human now shows how a line feels",
 			"summary": "On /audio2face the face carries the feeling of each line, not only the words: NVIDIA Audio2Face-3D drives brows, eyes and cheeks from the emotion of the reply, and the head nods, tilts and shifts its gaze with it. The agent picks the feeling for what it says, or Auto reads it from the words, and a new Facial emotion panel lets you choose an intent, set the strength or switch it off, with live meters showing what the face is actually doing. It works on ARKit, VRM and viseme-only avatars, including a .glb or .vrm you upload, and embeds get the same control through ?emotion= and the v1.avatar bridge. On the same audio, a joy intent lifts the smile about 9 times over a neutral read. The viewer on the page is also larger, and stays in view while you scroll the controls.",
 			"tags": [
