@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T16:57:15.044Z",
+	"generated_at": "2026-11-16T17:39:37.114Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1095,6 +1095,18 @@
 					"showcase": false,
 					"priority": 0.8,
 					"job": "dev"
+				},
+				{
+					"path": "/nvidia/benchmarks",
+					"title": "NVIDIA lane benchmarks",
+					"description": "Measured health and latency for every NVIDIA lane three.ws runs: NIM chat, vision, embeddings, NemoGuard, Magpie TTS, Audio2Face-3D, hosted TRELLIS and the self-hosted L4 and RTX PRO 6000 GPU workers. 7 and 30 day tables from real probes and real jobs, with a CSV download.",
+					"added": "2026-11-16",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": "explore"
 				},
 				{
 					"path": "/microsoft",
@@ -12964,6 +12976,18 @@
 					"path": "/docs/microsoft-copilot-agent",
 					"title": "Docs · three.ws 3D Studio agent for Microsoft 365 Copilot",
 					"description": "The three.ws declarative agent for Microsoft 365 Copilot: what users see, its six conversation starters, how it is validated, sideloading in a developer tenant, and production proof for every starter.",
+					"added": "2026-11-16",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/enterprise",
+					"title": "Docs · The /enterprise procurement page",
+					"description": "How the three.ws enterprise page is built: purchase paths, identity, security answers, Microsoft surface statuses from data, the printable procurement packet and the contact form that files a lead.",
 					"added": "2026-11-16",
 					"auth": null,
 					"indexable": true,

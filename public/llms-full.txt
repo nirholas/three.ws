@@ -535,6 +535,12 @@ URL: https://three.ws/nvidia
 
 three.ws is a member of the NVIDIA Inception program. Every 3D model, avatar, and voice on the platform runs on NVIDIA: a free hosted lane behind one API key covering text-to-3D, chat, vision, embeddings, safety and speech, plus a self-hosted fleet of Cloud Run GPU workers on L4 and RTX PRO 6000.
 
+### NVIDIA lane benchmarks
+
+URL: https://three.ws/nvidia/benchmarks
+
+Measured health and latency for every NVIDIA lane three.ws runs: NIM chat, vision, embeddings, NemoGuard, Magpie TTS, Audio2Face-3D, hosted TRELLIS and the self-hosted L4 and RTX PRO 6000 GPU workers. 7 and 30 day tables from real probes and real jobs, with a CSV download.
+
 ### three.ws and Microsoft
 
 URL: https://three.ws/microsoft
@@ -6528,6 +6534,12 @@ Add the three.ws A2A agent in Copilot Studio and Azure AI Foundry: endpoint, age
 URL: https://three.ws/docs/microsoft-copilot-agent
 
 The three.ws declarative agent for Microsoft 365 Copilot: what users see, its six conversation starters, how it is validated, sideloading in a developer tenant, and production proof for every starter.
+
+### Docs · The /enterprise procurement page
+
+URL: https://three.ws/docs/enterprise
+
+How the three.ws enterprise page is built: purchase paths, identity, security answers, Microsoft surface statuses from data, the printable procurement packet and the contact form that files a lead.
 
 ### Enterprise: buy and review three.ws
 
