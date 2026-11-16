@@ -1,5 +1,7 @@
 # microsoft 14: three.ws plugins for Semantic Kernel and Microsoft Agent Framework, plus a Foundry quickstart
 
+Status 2026-11-16: re-verified. Push and deploy are done (production 559f73663 contains every commit above, and /api/mcp-studio now advertises only spec-conformant _meta keys). .NET SK 18/18 live; Python SK 16 passed 1 skipped, the one failure is a production Forge GPU outage (default trellis and failover triposg jobs both end "hit a snag"), not the plugin. Waits on the owner: PyPI and NuGet publish, run the Foundry quickstart, refresh copilot-teams mcptools.json with --refresh-tools.
+
 Status 2026-11-11: built and verified (commits cea955c6f, 43ea7ff1d, 8b2d8c99d, 077428ee9, 4371a4b63, d4e057fa4, 2e4e2a1a8, 0a670d97a, 58a0e08be, 42060ab63, cb56fdcb9, 3b37f68c6; STRUCTURE row swept into 9b08be2e2). Both SK suites pass live, both Agent Framework samples returned real GLBs, wheel and nupkg install clean. Waits on the owner: PyPI and NuGet publish, push, deploy (carries the two mcp-studio fixes), run the Foundry quickstart.
 
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3114.
