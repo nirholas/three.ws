@@ -37,7 +37,8 @@ Because it is one key for everything, a deployment either has the whole NVIDIA l
 | **Vision / VLM** | `meta/llama-3.2-11b-vision-instruct`, then free OpenRouter `:free` VLM rungs | `api/_lib/vision.js` | ✅ |
 | **Embeddings** | `nvidia/nemotron-3.5-embed-8b` (fallback `nvidia/nemotron-3-embed-1b`) | `api/_lib/embeddings.js` (and `api/agents/_id/embed.js`, which delegates to it) | ✅ |
 | **Reranking** | `nvidia/nemotron-3.5-rerank-8b` (under evaluation, opt-in) | `api/_lib/rerank.js` | ✅ |
-| **Content safety** | `nvidia/llama-3.1-nemoguard-8b-content-safety`, `meta/llama-guard-4-12b` | `api/_lib/publish-safety.js` | ✅ |
+| **Content safety** | `nvidia/llama-3.1-nemotron-safety-guard-8b-v3`, `meta/llama-guard-4-12b` | `api/_lib/publish-safety.js` | ✅ |
+| **Chat guardrails** (owner opt-in) | `nvidia/nemoguard-jailbreak-detect`, `nvidia/llama-3.1-nemotron-safety-guard-8b-v3`, topic control on `nvidia/nemotron-3.5-lightning-30b-a3b` | `api/_lib/chat-guardrails.js` | Under evaluation |
 | **Text-to-speech** | `magpie-tts-multilingual` (Riva) | `api/_lib/tts-nvidia.js` | ✅ |
 
 ---
@@ -168,14 +169,20 @@ Cosine-over-embeddings recall is cheap but coarse. This **cross-encoder reranker
 
 ---
 
-## 7. Content safety — NemoGuard
+## 7. Content safety and chat guardrails: NemoGuard
 
-**Primary:** `nvidia/llama-3.1-nemoguard-8b-content-safety` · **Drop-in alt:** `meta/llama-guard-4-12b`
-**Endpoint:** `integrate.api.nvidia.com/v1/chat/completions` · **Source:** [api/_lib/publish-safety.js](../api/_lib/publish-safety.js).
+**Primary:** `nvidia/llama-3.1-nemotron-safety-guard-8b-v3` · **Drop-in alt:** `meta/llama-guard-4-12b`
+**Endpoint:** `integrate.api.nvidia.com/v1/chat/completions` · **Sources:** [api/_lib/publish-safety.js](../api/_lib/publish-safety.js), [api/_lib/chat-guardrails.js](../api/_lib/chat-guardrails.js).
 
-A free content-safety classifier for what the platform publishes outward. Its only caller is the Sketchfab showcase cron, which uploads visitor-generated models to our own official account on a third party's platform. NemoGuard classifies the source prompt and returns a **JSON verdict plus named risk categories** (harm, self-harm, weapons, sexual content, …); the parser also accepts Llama Guard's `unsafe\nS#` text form, which is why the two are interchangeable. Median ~340 ms on the free tier.
+The previous pin, `nvidia/llama-3.1-nemoguard-8b-content-safety`, was retired on 2026-11-16 (HTTP 410); Safety Guard v3 answers the same JSON verdict.
 
-**Scope and posture:** it screens OUTBOUND publishing only. No three.ws chat surface filters what a user may ask (owner directive 2026-08-07): whatever safety judgment the serving model makes is the only one those routes apply. It is also a *content*-safety classifier, **not** a jailbreak / prompt-injection detector, and it is **fail-open**: anything it can't parse returns "not flagged", so a classifier outage never stops a publish. Only a clean parsed "unsafe" verdict blocks an upload.
+**Outbound publishing.** The Sketchfab showcase cron, which uploads visitor-generated models to our own official account on a third party's platform, classifies each source prompt first. The guard returns a **JSON verdict plus named risk categories** (harm, self-harm, weapons, sexual content and so on); the parser also accepts Llama Guard's `unsafe\nS#` text form, which is why the two are interchangeable.
+
+**Agent chat guardrails (owner opt-in, under evaluation).** No three.ws chat surface screens visitors by default (owner directive 2026-08-07). An agent's owner can turn on, per agent, any of: jailbreak detection (`nvidia/nemoguard-jailbreak-detect`), content safety on the visitor's message and on the streamed reply (Safety Guard v3), and topic control with a polite redirect (`nvidia/llama-3.1-nemoguard-8b-topic-control`, currently answering 500, so `nvidia/nemotron-3.5-lightning-30b-a3b` judges with the same prompt). Input checks run in parallel with the model call inside a 2 s budget; the reply is screened sentence by sentence and replaced if a sentence is flagged. Covers `/api/chat` and the `<agent-3d>` embed proxy. Owners see block counts per check; no message text is stored. Setup and protocol: [docs/agent-guardrails.md](agent-guardrails.md).
+
+Measured on 2026-11-16 ([eval report](nvidia/evals/guardrails-2026-11-16.md)): jailbreak detection 95.0% TPR at 0% FPR on 350 benign prompts (p50 455 ms); input safety 91% TPR on Aegis harmful prompts with 18.3% FPR on benign (25.6% on XSTest's deliberate traps, 0% on everyday requests); output safety 94% TPR on harmful replies; topic control 65% of off-topic turns caught at 1.8% FPR (p50 410 ms).
+
+**Posture:** every check, on both surfaces, is **fail-open**: a timeout, error, rate limit or unparseable verdict lets the content through and is recorded as unchecked, so an NVIDIA outage never stops a publish or takes a guarded agent offline. Only a clean parsed flag blocks. Content safety is not a jailbreak detector; that is the separate jailbreak check.
 
 ---
 
