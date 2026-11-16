@@ -48,6 +48,10 @@ export default wrap(async (req, res) => {
 	// multitenant app the Microsoft Marketplace landing page signs buyers in
 	// with. Drives the Microsoft button on /login.
 	const microsoftEnabled = Boolean(process.env.MS_ENTRA_SSO_CLIENT_ID && process.env.MS_ENTRA_SSO_CLIENT_SECRET);
+	// OneDrive and SharePoint in Forge (src/forge-onedrive.js): the same Entra
+	// app, used as a public SPA client, so only its id is needed (no secret).
+	// The id is public by design; an empty string hides the OneDrive actions.
+	const oneDriveClientId = (process.env.MS_ENTRA_SSO_CLIENT_ID || '').trim();
 	// Sign in with Telegram (api/auth/telegram/[action].js) rides on the
 	// gateway bot: it is offered as soon as a bot token is configured.
 	const telegramEnabled = /^\d+:/.test(process.env.TELEGRAM_BOT_TOKEN || '');
@@ -60,6 +64,7 @@ export default wrap(async (req, res) => {
 		googleEnabled,
 		microsoftEnabled,
 		telegramEnabled,
+		oneDrive: { enabled: Boolean(oneDriveClientId), clientId: oneDriveClientId },
 		// Web Push: the client needs the VAPID public key to subscribe. Empty
 		// string when push isn't configured, which the client reads as "hide the
 		// enable-push affordance".

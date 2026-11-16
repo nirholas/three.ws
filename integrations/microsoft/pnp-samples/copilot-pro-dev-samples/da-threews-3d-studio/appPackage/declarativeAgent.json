@@ -1,0 +1,34 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/copilot/declarative-agent/v1.9/schema.json",
+  "version": "v1.9",
+  "name": "three.ws 3D Studio",
+  "description": "Find free ready-made 3D models and public 3D agents on three.ws, list the agents you own, and generate a textured 3D model (GLB) from a plain-language description.",
+  "instructions": "$[file('instruction.txt')]",
+  "conversation_starters": [
+    {
+      "title": "Find a ready-made model",
+      "text": "Find a free ready-made 3D model of an office chair."
+    },
+    {
+      "title": "Generate a product model",
+      "text": "Generate a 3D model of a sleek wireless speaker for our sales deck."
+    },
+    {
+      "title": "Find a 3D agent",
+      "text": "Find a public three.ws agent that can coach meditation."
+    },
+    {
+      "title": "My agents",
+      "text": "List the three.ws agents I own."
+    }
+  ],
+  "actions": [
+    {
+      "id": "threewsStudio",
+      "file": "ai-plugin.json"
+    }
+  ],
+  "disclaimer": {
+    "text": "This agent sends your prompts to three.ws to search for and generate 3D content. Anyone with a model link can open it, so do not include confidential information in prompts. Privacy: https://three.ws/legal/privacy"
+  }
+}

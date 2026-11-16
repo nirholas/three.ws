@@ -1,0 +1,306 @@
+openapi: 3.0.3
+info:
+  title: three.ws 3D Studio API
+  description: >-
+    Search ready-made 3D models and public 3D agents on three.ws, list the
+    agents you own, and generate a textured 3D model (GLB) from a text prompt.
+  version: 1.0.0
+servers:
+  - url: https://three.ws
+security:
+  - bearerAuth: []
+paths:
+  /api/catalog:
+    get:
+      operationId: searchModels
+      summary: Search ready-made 3D models
+      description: >-
+        Searches the free three.ws catalog of ready-made 3D assets (CC0
+        objects, rigged characters and animation clips). Use it before
+        generating, because a ready-made model is instant.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Plain words that describe the model, for example "office chair".
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+        - name: kind
+          in: query
+          required: false
+          description: Restrict results to one kind of asset.
+          schema:
+            type: string
+            enum: [object, character, animation]
+        - name: limit
+          in: query
+          required: false
+          description: How many results to return (1 to 10, default 5).
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 5
+      responses:
+        "200":
+          description: Matching catalog items.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  matched:
+                    type: integer
+                    description: How many items matched the query in total.
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CatalogItem"
+  /api/v1/marketplace/agents/public:
+    get:
+      operationId: searchAgents
+      summary: Search public 3D agents
+      description: >-
+        Searches the public directory of three.ws agents. Each agent has a 3D
+        body, a persona and a public page anyone can open and chat with.
+      parameters:
+        - name: q
+          in: query
+          required: false
+          description: Words to match against the agent name, description and skills.
+          schema:
+            type: string
+            maxLength: 120
+        - name: limit
+          in: query
+          required: false
+          description: How many agents to return (1 to 10, default 5).
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 5
+      responses:
+        "200":
+          description: Matching public agents.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/PublicAgent"
+                      next_cursor:
+                        type: string
+                        nullable: true
+                        description: Cursor for the next page, or null on the last page.
+  /api/v1/marketplace/agents/my-agents:
+    get:
+      operationId: listMyAgents
+      summary: List the agents I own
+      description: >-
+        Lists the three.ws agents owned by the account that issued the API
+        key. Requires the key; the other operations work without one.
+      responses:
+        "200":
+          description: The caller's own agents.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/OwnedAgent"
+        "401":
+          description: The API key is missing, expired or revoked.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /api/3d/studio:
+    post:
+      operationId: generate3DModel
+      summary: Generate a 3D model from a text prompt
+      description: >-
+        Starts a text-to-3D generation of ONE subject. Returns status "done"
+        with glbUrl and viewerUrl, or status "pending" with a job handle to
+        pass to checkModelJob and a watchUrl the user can open right away.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prompt]
+              properties:
+                prompt:
+                  type: string
+                  minLength: 3
+                  maxLength: 1000
+                  description: >-
+                    A concrete description of one subject, for example "a
+                    small ceramic robot figurine with round eyes".
+                tier:
+                  type: string
+                  enum: [draft, standard, high]
+                  description: >-
+                    Quality tier. draft is fastest, standard is the default,
+                    high takes several minutes.
+      responses:
+        "200":
+          description: Finished inline, or queued with a job handle.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerationState"
+        "400":
+          description: The prompt was too short, too long or refused by the safety check.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "429":
+          description: The free generation limit was reached. Try again later.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    get:
+      operationId: checkModelJob
+      summary: Check a pending 3D generation
+      description: >-
+        Polls a generation started by generate3DModel. Pass the job handle
+        from the pending response. Stop when status is "done" or "error".
+      parameters:
+        - name: job
+          in: query
+          required: true
+          description: The job handle returned by generate3DModel.
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 1024
+        - name: title
+          in: query
+          required: false
+          description: Short label for the finished model, usually the prompt.
+          schema:
+            type: string
+            maxLength: 120
+      responses:
+        "200":
+          description: Current job state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerationState"
+        "400":
+          description: Missing or malformed job handle.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: A three.ws API key (sk_live_...) created at https://three.ws/dashboard/api.
+  schemas:
+    CatalogItem:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Catalog id, for example "object:ArmChair_01".
+        kind:
+          type: string
+          description: object, character or animation.
+        title:
+          type: string
+        categories:
+          type: array
+          items:
+            type: string
+        license:
+          type: string
+          description: Licence of the asset. CC0 means free for any use.
+        url:
+          type: string
+          description: Direct GLB download URL.
+        thumb:
+          type: string
+          description: Thumbnail image URL.
+    PublicAgent:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        url:
+          type: string
+          description: Path of the agent's public page on https://three.ws, for example "/agents/<id>".
+    OwnedAgent:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        listed:
+          type: boolean
+          description: Whether the agent is listed in the public directory.
+    GenerationState:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [done, pending, error]
+        job:
+          type: string
+          description: Job handle to pass to checkModelJob while pending.
+        glbUrl:
+          type: string
+          description: Download URL of the finished GLB.
+        viewerUrl:
+          type: string
+          description: Interactive 3D viewer page for the finished model.
+        arUrl:
+          type: string
+          description: Augmented reality page for the finished model.
+        watchUrl:
+          type: string
+          description: Live progress page for a pending generation.
+        previewImageUrl:
+          type: string
+          description: Preview image while the model is still being made, when available.
+        error:
+          type: string
+          description: Reason the generation failed, when status is error.
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        error_description:
+          type: string

@@ -1,0 +1,9 @@
+# Agents Toolkit
+env/.env.*.user
+env/.env.local
+.env
+appPackage/build
+.deployment
+
+# OS
+.DS_Store

@@ -66,6 +66,19 @@ export function saveBlob(blob, filename) {
  * @returns {Promise<{ filename: string, bytes: number, poster: string|null }>}
  */
 export async function downloadPptx(creationId) {
+	const { blob, filename, poster } = await fetchPptx(creationId);
+	saveBlob(blob, filename);
+	return { filename, bytes: blob.size, poster };
+}
+
+/**
+ * Fetch the deck for a creation as a Blob (the download above, and Save to
+ * OneDrive in src/forge-onedrive.js). Throws PptxExportError.
+ *
+ * @param {string} creationId
+ * @returns {Promise<{ blob: Blob, filename: string, poster: string|null }>}
+ */
+export async function fetchPptx(creationId) {
 	if (!creationId) throw new PptxExportError('Save the model first, then export it.', 'no_creation');
 	let res;
 	try {
@@ -81,8 +94,7 @@ export async function downloadPptx(creationId) {
 	}
 	const blob = await res.blob();
 	const filename = filenameFromDisposition(res.headers.get('content-disposition')) || 'three-ws-model.pptx';
-	saveBlob(blob, filename);
-	return { filename, bytes: blob.size, poster: res.headers.get('x-pptx-poster') };
+	return { blob, filename, poster: res.headers.get('x-pptx-poster') };
 }
 
 /**

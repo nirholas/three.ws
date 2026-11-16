@@ -95,6 +95,7 @@ These are in the repo and validated. Each one goes live when the owner completes
 
 - [.NET SDK (NuGet, Unity)](./dotnet-sdk.md)
 - [three.ws on the Microsoft agent stack](./microsoft-agent-stack.md): Semantic Kernel, Agent Framework and Foundry
+- [Call three.ws agents over A2A from Copilot Studio and Foundry](./microsoft-a2a.md)
 - [Partner ecosystem](./partners.md)
 - [Partner benefits](./partner-benefits.md)
 - [Microsoft distribution and offer plan](./microsoft-marketplace-offer-plan.md)

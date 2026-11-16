@@ -68,7 +68,7 @@
 			"name": "Copilot Studio and Foundry",
 			"kind": "MCP server",
 			"status": "built, awaiting publish",
-			"today": "Add the server URL below as a custom MCP server in Copilot Studio or Azure AI Foundry today. No key needed. The certified Microsoft listing is not submitted yet.",
+			"today": "Add the server URL below as a custom MCP server in Copilot Studio or Azure AI Foundry today. No key needed. It is not yet submitted for Microsoft certification.",
 			"built": "A keyless streamable HTTP MCP server for 3D generation, rigging, the asset catalog and agent personas.",
 			"probe": "mcp",
 			"copy": "https://three.ws/api/mcp-studio",

@@ -1,0 +1,296 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json",
+  "schema_version": "v2.4",
+  "namespace": "threews3dstudio",
+  "name_for_human": "three.ws 3D Studio",
+  "description_for_human": "Find ready-made 3D models and 3D agents, list your own agents, and generate a 3D model from a description.",
+  "description_for_model": "Plugin for 3D content from three.ws. searchModels finds free ready-made 3D assets. searchAgents finds public three.ws agents. listMyAgents lists the agents owned by the signed-in three.ws account. generate3DModel makes a new textured GLB 3D model from a text prompt and checkModelJob collects a pending generation.",
+  "logo_url": "https://three.ws/logo.png",
+  "contact_email": "support@three.ws",
+  "legal_info_url": "https://three.ws/legal/tos",
+  "privacy_policy_url": "https://three.ws/legal/privacy",
+  "functions": [
+    {
+      "name": "searchModels",
+      "description": "Search the free catalog of ready-made 3D models. Call it first for common objects; only generate when nothing fits.",
+      "capabilities": {
+        "confirmation": {
+          "type": "None",
+          "isNonConsequential": true
+        },
+        "response_semantics": {
+          "data_path": "$.items",
+          "properties": {
+            "title": "$.title",
+            "subtitle": "$.license",
+            "url": "$.url",
+            "thumbnail_url": "$.thumb"
+          },
+          "static_template": {
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "type": "AdaptiveCard",
+            "version": "1.5",
+            "body": [
+              {
+                "type": "ColumnSet",
+                "columns": [
+                  {
+                    "type": "Column",
+                    "width": "auto",
+                    "items": [
+                      {
+                        "type": "Image",
+                        "url": "${thumb}",
+                        "altText": "${title}",
+                        "size": "Medium"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Column",
+                    "width": "stretch",
+                    "items": [
+                      {
+                        "type": "TextBlock",
+                        "text": "${title}",
+                        "weight": "Bolder",
+                        "wrap": true
+                      },
+                      {
+                        "type": "TextBlock",
+                        "text": "${kind} · ${license}",
+                        "isSubtle": true,
+                        "spacing": "None",
+                        "wrap": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "actions": [
+              {
+                "type": "Action.OpenUrl",
+                "title": "Open in 3D viewer",
+                "url": "https://three.ws/viewer?src=${encodeUriComponent(url)}&title=${encodeUriComponent(title)}"
+              },
+              {
+                "type": "Action.OpenUrl",
+                "title": "Download GLB",
+                "url": "${url}"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "searchAgents",
+      "description": "Search the public directory of three.ws agents by topic, name or skill.",
+      "capabilities": {
+        "confirmation": {
+          "type": "None",
+          "isNonConsequential": true
+        },
+        "response_semantics": {
+          "data_path": "$.data.items",
+          "properties": {
+            "title": "$.name",
+            "subtitle": "$.category",
+            "url": "$.url"
+          },
+          "static_template": {
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "type": "AdaptiveCard",
+            "version": "1.5",
+            "body": [
+              {
+                "type": "TextBlock",
+                "text": "${name}",
+                "weight": "Bolder",
+                "size": "Medium",
+                "wrap": true
+              },
+              {
+                "type": "TextBlock",
+                "text": "${category}",
+                "isSubtle": true,
+                "spacing": "None"
+              },
+              {
+                "type": "TextBlock",
+                "text": "${description}",
+                "wrap": true,
+                "maxLines": 3
+              }
+            ],
+            "actions": [
+              {
+                "type": "Action.OpenUrl",
+                "title": "Open agent",
+                "url": "https://three.ws${url}"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "listMyAgents",
+      "description": "List the three.ws agents owned by the account behind the configured API key.",
+      "capabilities": {
+        "confirmation": {
+          "type": "None",
+          "isNonConsequential": true
+        },
+        "response_semantics": {
+          "data_path": "$.data",
+          "properties": {
+            "title": "$.name"
+          },
+          "static_template": {
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "type": "AdaptiveCard",
+            "version": "1.5",
+            "body": [
+              {
+                "type": "TextBlock",
+                "text": "${name}",
+                "weight": "Bolder",
+                "wrap": true
+              },
+              {
+                "type": "TextBlock",
+                "text": "${if(listed, 'Listed in the public directory', 'Private')}",
+                "isSubtle": true,
+                "spacing": "None"
+              }
+            ],
+            "actions": [
+              {
+                "type": "Action.OpenUrl",
+                "title": "Open agent",
+                "url": "https://three.ws/agents/${id}"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "generate3DModel",
+      "description": "Generate a new textured 3D model (GLB) of one subject from a text prompt. Free and rate limited.",
+      "capabilities": {
+        "confirmation": {
+          "type": "AdaptiveCard",
+          "title": "Generate a 3D model",
+          "body": "three.ws will generate a 3D model from this prompt: **{{function.parameters.prompt}}**. Anyone with the model link can open it."
+        },
+        "response_semantics": {
+          "data_path": "$",
+          "properties": {
+            "title": "$.status",
+            "url": "$.viewerUrl"
+          },
+          "static_template": {
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "type": "AdaptiveCard",
+            "version": "1.5",
+            "body": [
+              {
+                "type": "TextBlock",
+                "text": "${if(status == 'done', 'Your 3D model is ready', if(status == 'pending', 'Your 3D model is being made', 'The generation did not finish'))}",
+                "weight": "Bolder",
+                "size": "Medium",
+                "wrap": true
+              },
+              {
+                "type": "TextBlock",
+                "text": "${if(status == 'pending', 'This usually takes 1 to 5 minutes. The progress page opens the model by itself when it is ready.', if(status == 'error', error, 'Open it in the 3D viewer or download the GLB.'))}",
+                "wrap": true
+              }
+            ],
+            "actions": [
+              {
+                "type": "Action.OpenUrl",
+                "title": "${if(status == 'pending', 'Watch progress', 'Open in 3D viewer')}",
+                "url": "${if(status == 'pending', watchUrl, viewerUrl)}"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "checkModelJob",
+      "description": "Check a pending 3D generation with the job handle generate3DModel returned.",
+      "capabilities": {
+        "confirmation": {
+          "type": "None",
+          "isNonConsequential": true
+        },
+        "response_semantics": {
+          "data_path": "$",
+          "properties": {
+            "title": "$.status",
+            "url": "$.viewerUrl"
+          },
+          "static_template": {
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "type": "AdaptiveCard",
+            "version": "1.5",
+            "body": [
+              {
+                "type": "TextBlock",
+                "text": "${if(status == 'done', 'Your 3D model is ready', if(status == 'pending', 'Still being made', 'The generation did not finish'))}",
+                "weight": "Bolder",
+                "size": "Medium",
+                "wrap": true
+              },
+              {
+                "type": "Image",
+                "url": "${previewImageUrl}",
+                "altText": "Preview of the model",
+                "$when": "${previewImageUrl != null}"
+              }
+            ],
+            "actions": [
+              {
+                "type": "Action.OpenUrl",
+                "title": "Open in 3D viewer",
+                "url": "${viewerUrl}",
+                "$when": "${status == 'done'}"
+              },
+              {
+                "type": "Action.OpenUrl",
+                "title": "Download GLB",
+                "url": "${glbUrl}",
+                "$when": "${status == 'done'}"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "runtimes": [
+    {
+      "type": "OpenApi",
+      "auth": {
+        "type": "ApiKeyPluginVault",
+        "reference_id": "${{THREEWS_APIKEY_REGISTRATION_ID}}"
+      },
+      "spec": {
+        "url": "apiSpecificationFile/threews.yml",
+        "progress_style": "ShowUsageWithInputAndOutput"
+      },
+      "run_for_functions": [
+        "searchModels",
+        "searchAgents",
+        "listMyAgents",
+        "generate3DModel",
+        "checkModelJob"
+      ]
+    }
+  ]
+}

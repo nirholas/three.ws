@@ -1,0 +1,39 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.30/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.30",
+  "id": "${{TEAMS_APP_ID}}",
+  "version": "1.0.0",
+  "developer": {
+    "name": "three.ws",
+    "websiteUrl": "https://three.ws",
+    "privacyUrl": "https://three.ws/legal/privacy",
+    "termsOfUseUrl": "https://three.ws/legal/tos"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "name": {
+    "short": "three.ws 3D Studio${{APP_NAME_SUFFIX}}",
+    "full": "three.ws 3D Studio: find and generate 3D models"
+  },
+  "description": {
+    "short": "Find ready-made 3D models and 3D agents, and generate a 3D model from a description.",
+    "full": "A declarative agent that searches the free three.ws catalog of ready-made 3D models, searches the public directory of three.ws agents, lists the agents you own, and generates a textured GLB 3D model from a plain-language description. Results open in the three.ws 3D viewer or download as GLB files for PowerPoint, websites and 3D tools."
+  },
+  "accentColor": "#080814",
+  "copilotAgents": {
+    "declarativeAgents": [
+      {
+        "id": "threews3dStudio",
+        "file": "declarativeAgent.json"
+      }
+    ]
+  },
+  "permissions": [
+    "identity"
+  ],
+  "validDomains": [
+    "three.ws"
+  ]
+}
