@@ -2,8 +2,8 @@
 
 Values live under ``/persistent/exts/threews.forge/`` in carb settings, so Kit
 writes them to the user's ``user.config.json`` and they survive restarts. The
-API key is read through ``api_key()`` and is never written to the Kit log: every
-log line that mentions it goes through ``redact()``.
+API key is read through ``api_key()`` and no part of it is ever written to the Kit
+log. ``redact()`` gives the masked form the panel shows the user.
 
 A farm or CI node can supply the key through the ``THREEWS_API_KEY``
 environment variable instead; the stored setting wins when both are present.

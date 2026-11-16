@@ -58,12 +58,13 @@ does the whole GPU run on a spot L4 VM and deletes it afterwards.
 
 | Run | Result |
 | --- | --- |
-| Headless (`--no-window`, Kit 110.4.1) | 62 tests, OK (10 GPU or live tests skip), 0 `[Error]` lines in kit.log |
+| Headless (`--no-window`, Kit 110.4.1) | 63 tests, OK (10 GPU or live tests skip), 0 `[Error]` lines in kit.log |
 | GPU, windowed RTX, live (NVIDIA L4, driver 580.178.04) | 62 tests in 206 s, OK (1 skipped: live text to 3D), 0 `[Error]` lines in kit.log |
 | Live image to 3D through the controller | 78.5 s from submit to referenced in the stage: 78.36 s generation (triposg), 0.12 s USD conversion, 32 progress events, 217 KB GLB, 1.30 x 1.11 x 1.87 m on a Z-up centimeter stage |
 | Live image to 3D from the panel | "Imported at /World/threews/lantern in 64s (draft)", recorded as the screen capture above |
 | Library import | A saved model (meshopt and WebP compressed) imported through the decoder and the asset converter |
 | Invalid key | 401 `invalid_api_key`, shown as "three.ws did not accept this key" |
+| `scripts/gce_gpu_run.sh` end to end (fresh spot L4 VM, deleted afterwards) | 62 tests in 772 s, OK (1 skipped: live text to 3D), 0 `[Error]` lines; live image to 3D 55.4 s total on TRELLIS, 0.72 x 0.56 x 1.00 m |
 
 An earlier run the same day landed on the TRELLIS backend at 57.4 s total
 (0.72 x 0.56 x 1.00 m). The size is the generator's; the import preserves it.

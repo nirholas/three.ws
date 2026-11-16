@@ -282,6 +282,27 @@ class TestControllerTasks(omni.kit.test.AsyncTestCase):
         self.fast.__exit__()
         self.server.stop()
 
+    async def test_accepted_key_log_line_carries_no_part_of_the_key(self):
+        saved = settings.api_key() if settings.key_source() == "settings" else ""
+        buffer = io.StringIO()
+        handler = logging.StreamHandler(buffer)
+        logger = logging.getLogger("threews.forge")
+        logger.addHandler(handler)
+        logger.setLevel(logging.DEBUG)
+        try:
+            settings.set_api_key(GOOD_KEY)
+            controller = ForgeController()
+            await controller.refresh_account()
+        finally:
+            logger.removeHandler(handler)
+            if saved:
+                settings.set_api_key(saved)
+            else:
+                settings.clear_api_key()
+        text = buffer.getvalue()
+        self.assertIn("accepted", text)
+        self.assertNotIn(GOOD_KEY[len("sk_live_"):len("sk_live_") + 4], text)
+
     async def test_cancel_from_the_panel_leaves_no_unretrieved_task_error(self):
         self.server.polls_until_done = 10_000
         loop = asyncio.get_event_loop()

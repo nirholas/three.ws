@@ -113,7 +113,7 @@ class ForgeController:
             self.account = None
             self._emit("account_error", exc)
             raise
-        log.info("three.ws key %s accepted", settings.redact(settings.api_key()))
+        log.info("three.ws accepted the API key (%s)", settings.key_source())
         self._emit("account", self.account)
         return self.account
 
