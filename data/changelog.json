@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-16",
+			"title": "Use the three.ws app in Outlook and the Microsoft 365 app, not only Teams",
+			"summary": "The same three.ws Microsoft 365 app now runs in Outlook and the Microsoft 365 app. In a new Outlook email you can search agents and paste an agent link to get a card, built to the Adaptive Card version and limits Outlook supports. The Agents tab opens in Outlook's app bar and in the Microsoft 365 app, follows the host's light, dark and high contrast themes, and offers the right share action in each place: the Teams share dialog in Teams, a ready email in Outlook, and copy link in a plain browser. Creating a 3D model from chat stays in Teams, where its live card can run.",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-16",
 			"title": "Get a Teams notification when your 3D model finishes or an agent needs you",
 			"summary": "Link your three.ws account to Microsoft Teams by sending the bot a one-time code, and finished or failed 3D models, mentions, messages and (if you choose) agent task reports appear in your Teams activity feed and on your phone. Each event has its own switch in Settings, Notifications, with a button that sends a real test notification. Tapping a notification opens the three.ws tab on that model or agent. Uninstalling the app removes the link. A tenant admin approves notifications once with the TeamsActivity.Send permission, and settings shows the consent link if that is still missing.",
 			"tags": [

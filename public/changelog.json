@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T15:11:18.564Z",
+	"generated_at": "2026-11-16T15:17:42.093Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -70,6 +70,17 @@
 		{
 			"date": "2026-11-16",
 			"type": "update",
+			"title": "Get a Teams notification when your 3D model finishes or an agent needs you",
+			"summary": "Link your three.ws account to Microsoft Teams by sending the bot a one-time code, and finished or failed 3D models, mentions, messages and (if you choose) agent task reports appear in your Teams activity feed and on your phone. Each event has its own switch in Settings, Notifications, with a button that sends a real test notification. Tapping a notification opens the three.ws tab on that model or agent. Uninstalling the app removes the link. A tenant admin approves notifications once with the TeamsActivity.Send permission, and settings shows the consent link if that is still missing.",
+			"link": null,
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
 			"title": "Roll three.ws out to every seat from your Microsoft admin consoles",
 			"summary": "IT admins get a ready deployment kit: the exact Edge policy values to install the web app and extensions through Intune or Group Policy, a Teams setup policy script that installs and pins three.ws for a group, a tenant-wide admin consent page that explains each permission in plain language, and a guide with verification, rollback and FAQ. Every script has a dry run.",
 			"link": "/docs/microsoft-admin-deployment",
@@ -94,6 +105,17 @@
 			"title": "Share any creation or agent to Teams and LinkedIn",
 			"summary": "The share menu now has Share to Teams and Share on LinkedIn, on creations, agents and avatars. The link cards behind them were fixed so they show a proper image: agent cards are now PNG instead of SVG, avatar cards are 1200x630, and over a hundred pages now declare their card size.",
 			"link": "/forge",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Use the three.ws app in Outlook and the Microsoft 365 app, not only Teams",
+			"summary": "The same three.ws Microsoft 365 app now runs in Outlook and the Microsoft 365 app. In a new Outlook email you can search agents and paste an agent link to get a card, built to the Adaptive Card version and limits Outlook supports. The Agents tab opens in Outlook's app bar and in the Microsoft 365 app, follows the host's light, dark and high contrast themes, and offers the right share action in each place: the Teams share dialog in Teams, a ready email in Outlook, and copy link in a plain browser. Creating a 3D model from chat stays in Teams, where its live card can run.",
+			"link": null,
 			"tags": [
 				"feature",
 				"improvement"
