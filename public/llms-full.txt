@@ -5671,6 +5671,12 @@ URL: https://three.ws/docs/creation-descriptions
 
 How every 3D creation gets a caption, detailed caption and tags from Florence-2: the describe queue, the cron, tag rules, owner tag edits, search, page meta and alt text, the backfill script and measured cost.
 
+### Docs · Phi brain lane (self-hosted Phi-4-mini)
+
+URL: https://three.ws/docs/phi-brain-lane
+
+Microsoft Phi-4-mini self-hosted on a Cloud Run L4: the vLLM worker, tool calling, fallback, measured cold start, latency, throughput and cost, and the 91-task evaluation that sets its routing.
+
 ### Connect to every three.ws tool
 
 URL: https://three.ws/mcp

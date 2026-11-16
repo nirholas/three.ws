@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T16:29:37.824Z",
+	"generated_at": "2026-11-16T16:57:15.044Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -11247,6 +11247,18 @@
 					"title": "Docs · Creation descriptions (Florence-2)",
 					"description": "How every 3D creation gets a caption, detailed caption and tags from Florence-2: the describe queue, the cron, tag rules, owner tag edits, search, page meta and alt text, the backfill script and measured cost.",
 					"added": "2026-11-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/phi-brain-lane",
+					"title": "Docs · Phi brain lane (self-hosted Phi-4-mini)",
+					"description": "Microsoft Phi-4-mini self-hosted on a Cloud Run L4: the vLLM worker, tool calling, fallback, measured cold start, latency, throughput and cost, and the 91-task evaluation that sets its routing.",
+					"added": "2026-11-16",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

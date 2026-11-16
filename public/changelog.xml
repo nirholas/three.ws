@@ -47,6 +47,14 @@
 			<description>Pick source photos from OneDrive or SharePoint in Forge and save finished 3D models back to your Microsoft files.</description>
 		</item>
 		<item>
+			<title>Docs · Phi brain lane (self-hosted Phi-4-mini)</title>
+			<link>https://three.ws/docs/phi-brain-lane</link>
+			<guid isPermaLink="false">2026-11-16:Docs · Phi brain lane (self-hosted Phi-4-mini)</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Microsoft Phi-4-mini self-hosted on a Cloud Run L4: the vLLM worker, tool calling, fallback, measured cold start, latency, throughput and cost, and the 91-task evaluation that sets its routing.</description>
+		</item>
+		<item>
 			<title>Docs · Sharing and link previews</title>
 			<link>https://three.ws/docs/sharing</link>
 			<guid isPermaLink="false">2026-11-16:Docs · Sharing and link previews</guid>
@@ -151,12 +159,28 @@
 			<description>We ran the full Microsoft Marketplace subscription lifecycle against Microsoft's SaaS API emulator and fixed what it caught. When a Microsoft-billed subscription moves to a per-seat plan, the buyer who owns it now keeps their access instead of dropping to the free plan. Usage that Microsoft already counted is now recorded as settled when it is sent again, instead of staying pending, and webhook replies now follow Microsoft's documented contract, so a plan three.ws does not sell is refused cleanly. Developers can rerun the same check locally with one command.</description>
 		</item>
 		<item>
+			<title>Microsoft Phi joins the self-hosted model fleet</title>
+			<link>https://three.ws/docs/phi-brain-lane</link>
+			<guid isPermaLink="false">2026-11-16:Microsoft Phi joins the self-hosted model fleet</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Microsoft's open Phi-4-mini model is built and tested on three.ws's own GPU fleet, with streaming and tool calling, ready to switch on as a brain an agent can pick by name. We tested it against the current default on 91 real platform tasks and published the results: it trails on every one, so it does not take over any internal work by default yet. If the Phi lane is slow or down, requests move to the next model automatically.</description>
+		</item>
+		<item>
 			<title>Rate, report and trace the AI answers in the three.ws Teams app</title>
 			<link>https://three.ws/docs/microsoft-teams-forge</link>
 			<guid isPermaLink="false">2026-11-16:Rate, report and trace the AI answers in the three.ws Teams app</guid>
 			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Every answer an agent writes and every 3D model the three.ws app makes in Microsoft Teams now carries the AI generated label. Each one has thumbs up and down buttons with an optional comment, plus a Report option: on a model card, or in any bot message's menu. A report asks for a reason, goes to a three.ws reviewer (usually within one business day) and the person gets a confirmation. In a personal chat, agent answers stream in as they are written. When an answer draws on the agent's knowledge files, it shows numbered citations that link back to the agent on three.ws. Conversation and person ids are hashed and message text is never kept, except the short excerpt a reviewer needs to judge a report.</description>
+		</item>
+		<item>
+			<title>Repeat prompts download again</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-16:Repeat prompts download again</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A prompt someone had already generated in the past week could come back with a Download GLB link that went nowhere, on Forge and in the Teams &quot;Create a 3D model&quot; card. Cached results now always point at the working download address.</description>
 		</item>
 		<item>
 			<title>Roll three.ws out to every seat from your Microsoft admin consoles</title>
@@ -197,6 +221,14 @@
 			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The three.ws Microsoft 365 app now includes a declarative agent, three.ws 3D Studio, which shows up by name in the Microsoft 365 Copilot and Copilot in Teams agent list. Pick it and ask for a product model for a deck, a rigged mascot, a free ready-made asset or paste-ready embed code for a website. It does the work through the free three.ws studio tools, so nobody needs an account. A generation answers right away with a 3D viewer link that opens the model as soon as it is ready, and the finished model comes with a GLB download that drops into PowerPoint. The agent uses a fixed list of 13 reviewed tools rather than finding new ones at run time, and every app package build checks it against Microsoft's published schemas and limits. It ships in app version 1.1.0 inside the existing Microsoft 365 app offer.</description>
+		</item>
+		<item>
+			<title>Two-step verification and a published security trail</title>
+			<link>https://three.ws/trust</link>
+			<guid isPermaLink="false">2026-11-16:Two-step verification and a published security trail</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Turn on two-step verification in Settings (Security tab) with any authenticator app and ten single-use recovery codes; it applies whichever way you sign in. Your action log records sensitive account actions and exports as CSV, and team owners export their team's admin activity. The trust center now states exactly what is in place and what is not held, with a link to the code behind each answer.</description>
 		</item>
 		<item>
 			<title>Use the three.ws app in Outlook and the Microsoft 365 app, not only Teams</title>
