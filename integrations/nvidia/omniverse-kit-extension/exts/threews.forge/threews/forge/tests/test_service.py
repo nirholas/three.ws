@@ -3,6 +3,8 @@ retries, cancellation, error mapping and where the API key travels."""
 
 from __future__ import annotations
 
+import asyncio
+import gc
 import io
 import logging
 import os
@@ -14,6 +16,7 @@ import omni.kit.test
 
 from .. import service as svc
 from .. import settings
+from ..controller import ForgeController
 from ..service import ForgeError, ForgeService, GenerationRequest, LibraryModel
 from ..three_ws_client import ThreeWSError, is_glb
 from .forge_server import BROKE_KEY, GOOD_KEY, ForgeStandIn
@@ -263,6 +266,44 @@ class TestForgeService(omni.kit.test.AsyncTestCase):
         with self.assertRaises(ThreeWSError):
             svc.with_retries(boom)
         self.assertEqual(len(calls), 1)
+
+
+class TestControllerTasks(omni.kit.test.AsyncTestCase):
+    """The panel starts jobs and never awaits them; outcomes travel as events."""
+
+    async def setUp(self):
+        self.server = ForgeStandIn().start()
+        self.fast = _Fast().__enter__()
+        self._base = settings.base_url()
+        settings.set_base_url(self.server.base_url)
+
+    async def tearDown(self):
+        settings.set_base_url(self._base)
+        self.fast.__exit__()
+        self.server.stop()
+
+    async def test_cancel_from_the_panel_leaves_no_unretrieved_task_error(self):
+        self.server.polls_until_done = 10_000
+        loop = asyncio.get_event_loop()
+        reported = []
+        previous = loop.get_exception_handler()
+        loop.set_exception_handler(lambda _loop, context: reported.append(context.get("message", "")))
+        try:
+            controller = ForgeController()
+            events = []
+            controller.subscribe(lambda name, _payload: events.append(name))
+            controller.start(GenerationRequest(prompt="a ship in a bottle", lane="draft"), import_into_stage=False)
+            await asyncio.sleep(0.3)
+            controller.cancel()
+            while controller.busy:
+                await asyncio.sleep(0.05)
+            controller._task = None
+            gc.collect()
+            await asyncio.sleep(0)
+        finally:
+            loop.set_exception_handler(previous)
+        self.assertIn("cancelled", events)
+        self.assertEqual(reported, [], "a cancelled or failed job must not log an asyncio error in Kit")
 
 
 class TestSettings(omni.kit.test.AsyncTestCase):

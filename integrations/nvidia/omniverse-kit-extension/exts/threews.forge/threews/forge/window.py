@@ -113,8 +113,8 @@ class ForgeWindow(ui.Window):
             with ui.VStack(spacing=6, height=0):
                 with ui.HStack(height=24, spacing=4):
                     ui.Label("Input", width=80)
-                    combo = ui.ComboBox(self._mode.as_int, "Text prompt", "Reference image")
-                    combo.model.get_item_value_model().add_value_changed_fn(lambda m: self._set_mode(m.as_int))
+                    self._mode_combo = ui.ComboBox(self._mode.as_int, "Text prompt", "Reference image")
+                    self._mode_combo.model.get_item_value_model().add_value_changed_fn(lambda m: self._set_mode(m.as_int))
                 self._prompt_stack = ui.VStack(spacing=4, height=0)
                 with self._prompt_stack:
                     ui.Label("Describe one subject", name="muted")
@@ -217,6 +217,7 @@ class ForgeWindow(ui.Window):
     # -- generate ---------------------------------------------------------
 
     def _set_mode(self, mode: int) -> None:
+        self._mode.set_value(mode)
         self._prompt_stack.visible = mode == 0
         self._image_stack.visible = mode == 1
 

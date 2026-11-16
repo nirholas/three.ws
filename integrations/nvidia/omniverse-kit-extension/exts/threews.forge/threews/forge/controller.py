@@ -148,6 +148,7 @@ class ForgeController:
         if self.busy:
             raise ForgeError("A generation is already running.", code="busy", hint="Wait for it or press Cancel.")
         self._task = asyncio.ensure_future(self.generate(request, placement=placement, import_into_stage=import_into_stage))
+        self._task.add_done_callback(_mark_retrieved)
         return self._task
 
     async def generate(self, request: GenerationRequest, *, placement: Optional[str] = None, import_into_stage: bool = True) -> Outcome:
@@ -195,3 +196,11 @@ class ForgeController:
     def shutdown(self) -> None:
         self.cancel()
         self._listeners.clear()
+
+
+def _mark_retrieved(task: asyncio.Future) -> None:
+    """A started job reports its failure through the "error" or "cancelled" event,
+    so reading the exception here keeps asyncio from logging it a second time as
+    an unretrieved task error. A caller awaiting the future still receives it."""
+    if not task.cancelled():
+        task.exception()

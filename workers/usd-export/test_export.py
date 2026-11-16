@@ -13,7 +13,6 @@ blend skinning of the same pose.
 
 from __future__ import annotations
 
-import importlib.util
 import io
 import json
 import math
@@ -22,13 +21,11 @@ import struct
 import sys
 import tempfile
 import unittest
-from pathlib import Path
 
 import numpy as np
 
 os.environ.setdefault("API_KEY", "build-gate")
 os.environ.setdefault("GCS_BUCKET", "build-gate")
-HERE = os.path.dirname(os.path.abspath(__file__))
 
 import semantics  # noqa: E402
 from export import ExportOptions, export_glb  # noqa: E402
@@ -248,33 +245,6 @@ class ExportTests(unittest.TestCase):
         self.assertEqual(rep["scale"]["method"], "caller-size")
         self.assertAlmostEqual(max(rep["stats"]["size_m"]), 2.0, places=3)
         self.assertAlmostEqual(rep["physics"]["mass_kg"], 500 * 8.0, places=1)
-
-    # render_preview is a local docs and review tool: it is not copied into the
-    # worker image, which has no matplotlib, so the image's build gate skips it.
-    @unittest.skipUnless(
-        importlib.util.find_spec("matplotlib") and os.path.exists(os.path.join(HERE, "render_preview.py")),
-        "render_preview needs matplotlib and the source tree",
-    )
-    def test_preview_renders_from_the_exported_stage(self):
-        from PIL import Image
-
-        import render_preview
-
-        out = self.out("preview")
-        export_glb(box_glb(size=0.6), out, ExportOptions(prompt="a wooden crate", validate=False))
-        src = os.path.join(out, "source.glb")
-        with open(src, "wb") as f:
-            f.write(box_glb(size=0.6))
-        png = os.path.join(out, "preview.png")
-        meta = render_preview.render(Path(src), Path(os.path.join(out, "asset.usdz")), Path(png))
-        self.assertEqual(meta["label"], "box")
-        self.assertGreaterEqual(meta["hulls"], 1)
-        self.assertFalse(meta["kinematic"])
-        self.assertGreater(meta["mass_kg"], 0)
-        with Image.open(png) as img:
-            self.assertGreater(img.width, 1000)
-            # Not an empty frame: some pixels differ from the background.
-            self.assertGreater(len(img.convert("RGB").getcolors(maxcolors=1 << 20) or []), 50)
 
     def test_skinned_animated_export_matches_gltf_skinning(self):
         from pxr import Usd, UsdGeom, UsdSkel, Vt

@@ -4,7 +4,9 @@
 # Usage: scripts/run_tests.sh [test filter]
 #   KIT_PYTHON  python that has the omniverse-kit wheel installed (default: python3)
 #   THREEWS_LIVE=1, THREEWS_API_KEY, THREEWS_LIVE_REPORT, THREEWS_CAPTURE_DIR: see tests/test_live.py, tests/test_ui.py
-#   KIT_WINDOW=1  open a real window (GPU only) so the panel tests run instead of skipping
+#   KIT_WINDOW=1  open a real window with an RTX viewport (GPU and an X display) so the
+#                 panel tests run instead of skipping
+#   KIT_RENDERER  Hydra renderer for KIT_WINDOW=1 (default: omni.hydra.rtx)
 #
 # Exit code is the Kit test runner's: non-zero on any failure.
 set -euo pipefail
@@ -17,7 +19,14 @@ export OMNI_KIT_ACCEPT_EULA=yes
 
 window_args=(--no-window)
 if [[ "${KIT_WINDOW:-0}" == "1" ]]; then
-  window_args=(--enable omni.ui --enable omni.kit.menu.utils --enable omni.kit.viewport.utility --enable omni.renderer_capture)
+  renderer="${KIT_RENDERER:-omni.hydra.rtx}"
+  window_args=(
+    --enable omni.ui --enable omni.kit.menu.utils --enable omni.kit.renderer.capture
+    --enable omni.kit.viewport.window --enable omni.kit.viewport.utility --enable omni.kit.manipulator.camera
+    --enable "$renderer"
+    --/app/window/width=1920 --/app/window/height=1080
+    --/renderer/enabled="${renderer#omni.hydra.}" --/renderer/active="${renderer#omni.hydra.}"
+  )
 fi
 
 filter_args=()
