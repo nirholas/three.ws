@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-16T18:33:46.355Z",
+	"generated_at": "2026-11-16T18:50:23.446Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4630,
+	"total": 4631,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -357,6 +357,17 @@
 			"summary": "When our primary model storage rejects a write, generated reference images are saved to the backup store, but the 3D engines were still being pointed at the primary copy and every one of those generations failed. They now read the image through three.ws itself, which finds it wherever it was saved, so text to 3D carries on through a storage outage.",
 			"link": null,
 			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "The Audio2Face digital human now shows how a line feels",
+			"summary": "On /audio2face the face carries the feeling of each line, not only the words: NVIDIA Audio2Face-3D drives brows, eyes and cheeks from the emotion of the reply, and the head nods, tilts and shifts its gaze with it. The agent picks the feeling for what it says, or Auto reads it from the words, and a new Facial emotion panel lets you choose an intent, set the strength or switch it off, with live meters showing what the face is actually doing. It works on ARKit, VRM and viseme-only avatars, including a .glb or .vrm you upload, and embeds get the same control through ?emotion= and the v1.avatar bridge. On the same audio, a joy intent lifts the smile about 9 times over a neutral read. The viewer on the page is also larger, and stays in view while you scroll the controls.",
+			"link": "/audio2face",
+			"tags": [
+				"feature",
 				"fix"
 			]
 		},
@@ -1535,16 +1546,6 @@
 			"tags": [
 				"feature",
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-10",
-			"type": "update",
-			"title": "Connect your Robinhood Crypto account and let agents trade inside your caps",
-			"summary": "You can now connect your own Robinhood Crypto account to three.ws with a Crypto Trading API key, generating the key pair right in your browser. Set a per-order and a daily spend cap, and your agents can read holdings, quote pairs and preview orders. An order is only placed after you approve its confirm table, every buy is checked against your caps on the server before it reaches Robinhood, and you can pause trading or disconnect at any time. Crypto pairs only.",
-			"link": "/settings/robinhood",
-			"tags": [
-				"feature"
 			]
 		}
 	]
