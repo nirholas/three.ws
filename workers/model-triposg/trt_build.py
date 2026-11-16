@@ -12,8 +12,15 @@ Steps:
      signature (CFG batch 2, float32 timestep, DINOv2 condition).
   2. Export the DiT to ONNX (opset 17, FP16 weights, external data) with those
      static shapes.
-  3. Build a strongly typed TensorRT engine: precision follows the exported
-     graph, so the checkpoint's FP32 layer norms stay FP32 and the rest is FP16.
+  3. Apply the precision policy to the graph, then build a strongly typed
+     TensorRT engine (precision follows the graph exactly). "fp16" leaves the
+     export as is; "fp32-norm" runs every FP16 LayerNormalization in FP32, the
+     way PyTorch's fused layer_norm accumulates; "fp32-norm-softmax" also runs
+     the attention softmax in FP32.
+  3b. Numerics: on real denoiser calls captured from sampling runs, measure the
+     engine's relative error against an FP32 PyTorch reference next to PyTorch
+     FP16's own error against the same reference (--numerics-only stops here,
+     for comparing policies before the long gate).
   4. Parity gate: run bench_trt.py for the PyTorch and TensorRT variants on
      every input with the same seed and score them against the thresholds in
      trt_policy.py. A failure exits 1 and publishes nothing.
@@ -103,6 +110,156 @@ def export_onnx(pipe, image_path: Path, onnx_path: Path) -> dict:
     }
 
 
+POLICIES = ("fp16", "fp32-norm", "fp32-norm-softmax")
+
+
+def apply_precision_policy(onnx_path: Path, out_path: Path, policy: str) -> dict:
+    """Rewrite the FP16 graph so the chosen ops compute in FP32: Cast their
+    FP16 inputs up and their first output back down. Element types come from
+    ONNX shape inference on the weight-free graph, so a node that already runs
+    in FP32 is left alone."""
+    import onnx
+    from onnx import TensorProto, helper
+
+    if policy not in POLICIES:
+        raise ValueError(f"unknown precision policy {policy!r}")
+    if policy == "fp16":
+        return {"policy": policy, "nodes": 0, "onnx": str(onnx_path)}
+    ops = {"LayerNormalization"} | ({"Softmax"} if policy == "fp32-norm-softmax" else set())
+
+    skeleton = onnx.shape_inference.infer_shapes(onnx.load(str(onnx_path), load_external_data=False))
+    elem = {}
+    for v in list(skeleton.graph.input) + list(skeleton.graph.value_info) + list(skeleton.graph.output):
+        elem[v.name] = v.type.tensor_type.elem_type
+    for init in skeleton.graph.initializer:
+        elem[init.name] = init.data_type
+
+    model = onnx.load(str(onnx_path))
+    nodes, changed = [], 0
+    for index, node in enumerate(model.graph.node):
+        if node.op_type not in ops or elem.get(node.input[0]) != TensorProto.FLOAT16:
+            nodes.append(node)
+            continue
+        tag = f"{node.name or node.op_type}_{index}_fp32"
+        inputs = []
+        for i, name in enumerate(node.input):
+            if name and elem.get(name) == TensorProto.FLOAT16:
+                cast = f"{tag}_in{i}"
+                nodes.append(helper.make_node("Cast", [name], [cast], to=TensorProto.FLOAT, name=cast))
+                inputs.append(cast)
+            else:
+                inputs.append(name)
+        outputs = list(node.output)
+        wide = f"{tag}_out0"
+        final = outputs[0]
+        outputs[0] = wide
+        del node.input[:]
+        node.input.extend(inputs)
+        del node.output[:]
+        node.output.extend(outputs)
+        nodes.append(node)
+        nodes.append(helper.make_node("Cast", [wide], [final], to=TensorProto.FLOAT16, name=f"{tag}_down"))
+        changed += 1
+    del model.graph.node[:]
+    model.graph.node.extend(nodes)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    onnx.save(
+        model, str(out_path), save_as_external_data=True,
+        all_tensors_to_one_file=True, location=out_path.name + ".data",
+    )
+    return {"policy": policy, "nodes": changed, "onnx": str(out_path)}
+
+
+def capture_denoiser_calls(pipe, image_paths, steps=(0, 12, 25, 37, 49)) -> list:
+    """Record the DiT's real inputs at the given sampling steps for each image
+    (same seed and settings as production), stopping each run after the last
+    step so geometry extraction is not paid for."""
+    import numpy as np
+    import torch
+    from image_process import prepare_image
+    from request_policy import IMAGE_MODE, pipeline_settings
+
+    class _Done(Exception):
+        pass
+
+    captured = []
+    original = pipe.transformer.forward
+    for path in image_paths:
+        image = prepare_image(str(path), bg_color=np.array([1.0, 1.0, 1.0]), rmbg_net=None)
+        counter = {"step": 0}
+
+        def hook(hidden_states, timestep, encoder_hidden_states=None, **kwargs):
+            step = counter["step"]
+            counter["step"] += 1
+            if step in steps:
+                captured.append({
+                    "input": path.name, "step": step,
+                    "hidden_states": hidden_states.detach().clone(),
+                    "timestep": timestep.detach().clone(),
+                    "encoder_hidden_states": encoder_hidden_states.detach().clone(),
+                })
+            result = original(hidden_states, timestep, encoder_hidden_states=encoder_hidden_states, **kwargs)
+            if step >= max(steps):
+                raise _Done
+            return result
+
+        pipe.transformer.forward = hook
+        try:
+            with torch.no_grad():
+                pipe(image=image, generator=torch.Generator(device="cuda").manual_seed(0), **pipeline_settings(IMAGE_MODE))
+        except _Done:
+            pass
+        finally:
+            pipe.transformer.forward = original
+    return captured
+
+
+def numerics(pipe, plans: dict, calls: list) -> dict:
+    """Relative L2 error of each engine's denoiser output, and of PyTorch FP16's,
+    against an FP32 PyTorch reference on the same captured calls. The FP32
+    reference runs first and is freed before any engine is loaded, so the
+    comparison fits on one 24 GB card."""
+    import copy
+    import statistics
+
+    import torch
+
+    from trt_runtime import TRTEngine
+
+    def feed(call):
+        return call["hidden_states"], call["timestep"], call["encoder_hidden_states"]
+
+    with torch.no_grad():
+        reference = copy.deepcopy(pipe.transformer).float()
+        refs = []
+        for call in calls:
+            h, t, c = feed(call)
+            refs.append(reference(h.float(), t.float(), encoder_hidden_states=c.float(), return_dict=False)[0].float())
+        del reference
+        torch.cuda.empty_cache()
+
+        rows = [{"input": call["input"], "step": call["step"]} for call in calls]
+
+        def score(name, run):
+            for row, call, ref in zip(rows, calls, refs):
+                row[name] = (run(*feed(call)).float() - ref).norm().item() / ref.norm().item()
+
+        score("pytorch_fp16", lambda h, t, c: pipe.transformer(h, t, encoder_hidden_states=c, return_dict=False)[0])
+        for name, path in plans.items():
+            engine = TRTEngine(path.read_bytes())
+            score(name, lambda h, t, c: next(iter(engine({
+                "hidden_states": h, "timestep": t, "encoder_hidden_states": c,
+            }).values())))
+            del engine
+            torch.cuda.empty_cache()
+    names = ["pytorch_fp16", *plans]
+    return {
+        "rows": rows,
+        "median": {n: statistics.median(r[n] for r in rows) for n in names},
+        "max": {n: max(r[n] for r in rows) for n in names},
+    }
+
+
 def build_engine(onnx_path: Path, plan_path: Path, opt_level: int, workspace_gib: int) -> dict:
     import tensorrt as trt
 
@@ -168,6 +325,9 @@ def main(argv=None) -> int:
     parser.add_argument("--workspace-gib", type=int, default=8)
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--reuse-baseline", action="store_true", help="keep an existing pytorch run in --work")
+    parser.add_argument("--policy", choices=POLICIES, default="fp32-norm")
+    parser.add_argument("--numerics-only", action="store_true", help="build every policy, report numerics, stop")
+    parser.add_argument("--numerics-inputs", type=int, default=3)
     args = parser.parse_args(argv)
 
     import tensorrt as trt
@@ -197,26 +357,47 @@ def main(argv=None) -> int:
     print(f"engine key: {key}", flush=True)
 
     onnx_path = work / "onnx" / "triposg_dit.onnx"
-    manifest["export"] = export_onnx(pipe, inputs[0], onnx_path)
-    del pipe
+    if args.reuse_baseline and onnx_path.exists():
+        manifest["export"] = {"reused": str(onnx_path)}
+    else:
+        manifest["export"] = export_onnx(pipe, inputs[0], onnx_path)
+
+    policies = POLICIES if args.numerics_only else (args.policy,)
+    plans = {}
+    for policy in policies:
+        graph = apply_precision_policy(onnx_path, work / f"onnx-{policy}" / "triposg_dit.onnx", policy)
+        target = plan_path if policy == args.policy else work / f"{policy}.plan"
+        info = build_engine(Path(graph["onnx"]), target, args.opt_level, args.workspace_gib)
+        manifest.setdefault("builds", {})[policy] = {**graph, **info}
+        plans[policy] = target
+        print(json.dumps({policy: manifest["builds"][policy]}), flush=True)
+    manifest["policy"] = args.policy
+    manifest["build"] = manifest["builds"][args.policy] if args.policy in manifest["builds"] else None
+
+    calls = capture_denoiser_calls(pipe, inputs[: args.numerics_inputs])
+    manifest["numerics"] = numerics(pipe, plans, calls)
+    del calls, pipe
     torch.cuda.empty_cache()
-    manifest["build"] = build_engine(onnx_path, plan_path, args.opt_level, args.workspace_gib)
-    print(json.dumps(manifest, indent=2), flush=True)
+    print(json.dumps({"numerics": {k: manifest["numerics"][k] for k in ("median", "max")}}, indent=2), flush=True)
+    (work / "manifest.json").write_text(json.dumps(manifest, indent=2))
+    if args.numerics_only:
+        return 0
 
     baseline = work / "bench-pytorch"
     if not (args.reuse_baseline and (baseline / "report.json").exists()):
         _bench("pytorch", args, baseline, None)
-    _bench("trt", args, work / "bench-trt", plan_path)
-    parity_report = work / "parity-trt.json"
+    candidate = work / f"bench-trt-{args.policy}"
+    _bench("trt", args, candidate, plan_path)
+    parity_report = work / f"parity-trt-{args.policy}.json"
     gate = subprocess.run([
         sys.executable, str(HERE / "bench_trt.py"), "compare",
-        "--a", str(baseline), "--b", str(work / "bench-trt"),
+        "--a", str(baseline), "--b", str(candidate),
         "--report", str(parity_report), "--floor", "4",
     ])
     parity = json.loads(parity_report.read_text())
     speed = {
-        name: json.loads((work / f"bench-{name}" / "report.json").read_text())["summary"]
-        for name in ("pytorch", "trt")
+        name: json.loads((path / "report.json").read_text())["summary"]
+        for name, path in (("pytorch", baseline), (f"trt-{args.policy}", candidate))
     }
     manifest["speed"] = speed
     manifest["parity"] = {k: parity[k] for k in ("passed", "worst", "median", "thresholds", "failures")}
