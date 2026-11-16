@@ -470,6 +470,7 @@ export async function runTurn({
 	client,
 	audio = null,
 	text = null,
+	say = null,
 	history = [],
 	systemPrompt,
 	voice = 'nova',
@@ -492,7 +493,7 @@ export async function runTurn({
 	let degraded = null;
 
 	// 1. Speech -> text.
-	let transcript = text;
+	let transcript = text ?? say;
 	if (audio) {
 		try {
 			transcript = (await client.transcribe(audio, { language, signal })).text;
@@ -540,21 +541,26 @@ export async function runTurn({
 	let replaced = null;
 	const llm = (async () => {
 		try {
-			const res = await client.chat({
-				message: transcript,
-				history,
-				systemPrompt,
-				signal,
-				onToken: (tok) => {
-					at('llmFirstToken');
-					sink.token?.(tok);
-					if (strategy === 'pipelined' && !replaced)
-						for (const seg of chunker.push(tok)) enqueue(seg);
-				},
-				onGuard: (t) => {
-					replaced = t;
-				},
-			});
+			// "Say this line": the reply is given, so it is voiced through the
+			// same chunking and lanes with no LLM in the way.
+			const res = say
+				? { reply: String(say) }
+				: await client.chat({
+						message: transcript,
+						history,
+						systemPrompt,
+						signal,
+						onToken: (tok) => {
+							at('llmFirstToken');
+							sink.token?.(tok);
+							if (strategy === 'pipelined' && !replaced)
+								for (const seg of chunker.push(tok)) enqueue(seg);
+						},
+						onGuard: (t) => {
+							replaced = t;
+						},
+					});
+			if (say && strategy === 'pipelined') for (const seg of chunker.push(say)) enqueue(seg);
 			reply = res.reply;
 		} catch (e) {
 			if (signal?.aborted) throw e;
