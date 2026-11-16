@@ -6,6 +6,9 @@
 //   createModel   message-extension action "Create a 3D model", plus the bot
 //                 command `forge <prompt>`: a real free-lane 3D generation with
 //                 a card that updates itself (api/_lib/teams-forge.js)
+//   approvals     the owner's agent approval requests as Universal Actions
+//                 cards in the 1:1 chat, decided with Approve/Deny, plus the
+//                 bot command `approvals` (api/_lib/teams-approvals.js)
 //
 // Teams calls POST /api/microsoft-teams/messages with a Bot Framework activity.
 // Every call, whatever its invoke name (composeExtension/*, adaptiveCard/action,
@@ -29,8 +32,11 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { sql } from './db.js';
 import { loadGlanceCard } from './glance-card.js';
 import { adaptiveCardFor } from './glance-adaptive.js';
-import { CREATE_COMMAND_ID, handleForgeActivity, isForgeActivity } from './teams-forge-bot.js';
+import { CREATE_COMMAND_ID, handleForgeActivity, isForgeActivity, plainText } from './teams-forge-bot.js';
+import { captureConversation, handleApprovalAction, isApprovalAction, isApprovalsCommand, replyWithPendingApprovals } from './teams-approvals.js';
 import { handleConversationUpdate } from './teams-bot-welcome.js';
+import * as defaultConnector from './teams-connector.js';
+import { identityOf, linkCommandCode, markInstalled, markUninstalled, redeemLinkCode } from './teams-identity.js';
 
 export const BOTFRAMEWORK_ISSUER = 'https://api.botframework.com';
 export const BOTFRAMEWORK_JWKS_URL = 'https://login.botframework.com/v1/.well-known/keys';
@@ -176,12 +182,59 @@ export async function searchAgents(text) {
 	return cards.filter(Boolean);
 }
 
+const LINK_HELP =
+	'To get Teams notifications from three.ws, open Settings, Notifications on three.ws, choose "Link Teams", ' +
+	'then send me the code it shows: link ABCD-EFGH';
+
+/**
+ * Install state and account linking, from the same verified activities:
+ * installationUpdate add/remove, any message from a person (proof the app is
+ * installed for them), and the `link <code>` command. Resolves to true when the
+ * activity was a link command and is fully answered.
+ */
+async function handleIdentityActivity(activity, ctx) {
+	const identity = identityOf(activity);
+	if (!identity) return false;
+	const connector = ctx.deps?.connector || defaultConnector;
+	try {
+		if (activity.type === 'installationUpdate') {
+			if (String(activity.action || '').startsWith('remove')) await markUninstalled(identity);
+			else await markInstalled(identity);
+			return false;
+		}
+		if (activity.type !== 'message') return false;
+		await markInstalled(identity);
+		const code = linkCommandCode(activity.text);
+		if (code === null) return false;
+		const text = code === ''
+			? LINK_HELP
+			: (await redeemLinkCode(code, identity))
+				? 'Linked. Finished 3D models and agent events from your three.ws account will now appear in your Teams activity feed. Choose which ones in Settings, Notifications on three.ws.'
+				: 'That code is not valid. Codes expire after ten minutes and work once. Create a new one in Settings, Notifications on three.ws.';
+		if (connector.connectorConfigured()) {
+			await connector.replyToActivity({ serviceUrl: activity.serviceUrl, conversationId: activity.conversation.id, activityId: activity.id, activity: { type: 'message', text } });
+		}
+		return true;
+	} catch (err) {
+		console.error(`[teams-bot] identity activity failed: ${err?.message || err}`);
+		return isLinkCommand(activity);
+	}
+}
+
+function isLinkCommand(activity) {
+	return activity.type === 'message' && linkCommandCode(activity.text) !== null;
+}
+
 /**
  * Handle one verified activity; returns the invoke response body (or null for
  * 200 with no body). `ctx.origin` is the base the forge runs against and the
  * cards link to; `ctx.selfBase` is this service, where a job run is dispatched.
  */
 export async function handleActivity(activity, ctx = {}) {
+	if (await handleIdentityActivity(activity, ctx)) return null;
+	await captureConversation(activity).catch((err) => console.error(`[teams-bot] conversation capture failed: ${err?.message || err}`));
+	if (isApprovalAction(activity)) return handleApprovalAction(activity, ctx);
+	if (isApprovalsCommand(activity, plainText)) return replyWithPendingApprovals(activity, ctx);
 	const host = channelHostOf(activity);
 	if (host !== 'teams' && isCreateInvoke(activity)) return teamsOnlyCreateResponse(activity);
 	if (isForgeActivity(activity)) return handleForgeActivity(activity, ctx);

@@ -39,7 +39,7 @@ import { X_POST_ACTION, previewOf, xPostTable } from './x-content/owner-approval
 
 export const APPROVAL_STATUSES = Object.freeze(['pending', 'approved', 'executing', 'executed', 'failed', 'denied', 'expired']);
 export const DECISIONS = Object.freeze(['approve', 'deny']);
-export const DECISION_VIAS = Object.freeze(['web', 'push', 'telegram', 'mobile', 'email', 'discord']);
+export const DECISION_VIAS = Object.freeze(['web', 'push', 'telegram', 'mobile', 'email', 'discord', 'teams']);
 
 // Status groups the inbox filters by.
 export const STATUS_GROUPS = Object.freeze({
@@ -95,6 +95,9 @@ export const VENUES = Object.freeze({
 	// (api/_lib/x-content/owner-approval.js). It moves no funds, but it speaks
 	// for the platform in public, so it is never auto-approved.
 	x_post: { label: 'Posts to @trythreews', auto: false },
+	// A test card the owner sends themself from the Microsoft Teams panel on
+	// /approvals (api/_lib/teams-approvals.js). Its executor runs nothing.
+	approval_test: { label: 'Test approvals (nothing runs)', auto: false },
 });
 
 // Ceiling on a single auto-approve policy. Anything bigger is a decision the
@@ -210,6 +213,12 @@ export function confirmationTable(row) {
 	if (row.action_type === 'token_budget_extend') return tokenBudgetTable(row);
 	if (row.action_type === 'payout_wallet_set') return payoutWalletTable(row);
 	if (row.action_type === X_POST_ACTION) return xPostTable(row);
+	if (row.action_type === 'approval_test') {
+		return [
+			{ key: 'action', label: 'Action', value: 'Test approval: nothing runs when you approve or deny it' },
+			{ key: 'spend', label: 'Spend', value: 'None' },
+		];
+	}
 	const usd = row.amount_usd != null && Number.isFinite(Number(row.amount_usd)) ? ` (~$${Number(row.amount_usd).toFixed(2)})` : '';
 	return [
 		{ key: 'recipient', label: 'Recipient', value: row.recipient_label ? `${row.recipient_label} (${shortAddr(row.recipient)})` : (row.recipient || 'n/a'), full: row.recipient || null },
@@ -390,6 +399,9 @@ const EXECUTORS = {
 	agent_trade: async () => (await import('../agents/agent-trade.js')).executeApprovedAgentTrade,
 	// A reviewed X post the owner released (api/_lib/x-content/owner-approval.js).
 	x_post: async () => (await import('./x-content/owner-approval.js')).executeApprovedXPost,
+	// A test approval (api/_lib/teams-approvals.js sendTestApproval): approving it
+	// proves the channel end to end and does nothing else.
+	approval_test: async () => async () => ({ status: 'ok', note: 'Test approval: nothing ran.' }),
 };
 
 export function hasExecutor(source) {
@@ -648,8 +660,9 @@ async function burnerFor({ agentId, amountUsd, gated = false }) {
 
 /**
  * Fan the request out: bell, web push (with Approve/Deny actions), the iOS app,
- * paired Telegram/Discord chats, all through insertNotification, then email
- * when none of the out-of-app channels reached the owner.
+ * paired Telegram/Discord chats, all through insertNotification, the owner's
+ * Microsoft Teams chat, then email when none of the out-of-app channels
+ * reached the owner.
  */
 export async function deliverApproval(row) {
 	const { insertNotification, emailAllowedForType } = await import('./notify.js');
@@ -668,8 +681,14 @@ export async function deliverApproval(row) {
 		amount_usd: row.amount_usd != null ? Number(row.amount_usd) : null,
 		expires_at: row.expires_at,
 	});
-	const reached = out?.delivered || {};
-	const outOfApp = (reached.push || 0) + (reached.telegram || 0) + (reached.discord || 0);
+	// Microsoft Teams: a Universal Actions card in the owner's 1:1 chat with the
+	// bot, behind the Teams switch on /approvals. It never throws, and a failure
+	// there leaves every other channel untouched.
+	const teams = await import('./teams-approvals.js')
+		.then((m) => m.deliverApprovalToTeams(row))
+		.catch((e) => ({ sent: 0, reason: 'error', errors: [e?.message] }));
+	const reached = { ...(out?.delivered || {}), teams: teams.sent || 0 };
+	const outOfApp = (reached.push || 0) + (reached.telegram || 0) + (reached.discord || 0) + reached.teams;
 	if (outOfApp > 0) return { ...reached, email: 0 };
 	if (!(await emailAllowedForType(row.user_id, 'approval_requested'))) return { ...reached, email: 0 };
 	const [u] = await sql`SELECT email FROM users WHERE id = ${row.user_id}`;

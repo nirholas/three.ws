@@ -35,6 +35,7 @@ import {
 	forgeFormCard,
 	formTaskResponse,
 } from './teams-forge-cards.js';
+import { identityOf } from './teams-identity.js';
 import { HELP_TEXT, conversationalIntent, greetingText, unknownCommandText } from './teams-bot-welcome.js';
 import { cardFor, claimJob, claimOnce, depsWith, forgeKey, loadJob, patchJob, refreshStatus } from './teams-forge.js';
 
@@ -99,7 +100,11 @@ export function commandPrompt(text) {
 
 function requester(activity) {
 	const from = activity?.from || {};
-	return from.id ? { id: String(from.id), name: String(from.name || activity.imdisplayname || '') } : null;
+	if (!from.id) return null;
+	const who = identityOf(activity);
+	// The Entra identity rides along so a settled job can notify the person in
+	// their Teams activity feed if they linked their three.ws account.
+	return { id: String(from.id), name: String(from.name || activity.imdisplayname || ''), ...(who ? { tenantId: who.tenantId, aadObjectId: who.aadObjectId } : {}) };
 }
 
 function conversationOf(activity) {

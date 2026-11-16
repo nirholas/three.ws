@@ -28,7 +28,7 @@ import {
 	insertFinding, findLiveResearch, listFindings,
 } from './findings.js';
 import { researchMint, loadIntelRow } from './research.js';
-import { isActivePerson } from '../team-enterprise.js';
+import { isActivePerson, logEvent } from '../team-enterprise.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const MAX_TEAMS_PER_USER = 12;
@@ -318,6 +318,10 @@ export async function createTeam({ userId, name, description = null, network = '
 		        ${JSON.stringify(normalized)}::jsonb, ${isPublic === true})
 		returning ${TEAM_COLUMNS}
 	`;
+	await logEvent(team.id, {
+		actor: 'owner', actorUserId: userId, action: 'team_created',
+		detail: { name: cleanName, network: net, is_public: isPublic === true },
+	});
 	await provisionMissingRoles({ ...team, policy: normalized }, userId);
 	return getTeamRow(team.id);
 }
@@ -360,15 +364,29 @@ export async function updateTeam(team, userId, patch, { req = null } = {}) {
 		       status = ${status}, policy = ${JSON.stringify(policy)}::jsonb, updated_at = now()
 		where id = ${team.id}
 	`;
+	const changed = [];
+	if (name !== team.name) changed.push('name');
+	if (description !== team.description) changed.push('description');
+	if (isPublic !== team.is_public) changed.push('visibility');
+	if (status !== team.status) changed.push('status');
+	if (JSON.stringify(policy) !== JSON.stringify(team.policy)) changed.push('policy');
+	if (changed.length) {
+		const detail = { fields: changed };
+		if (changed.includes('name')) detail.name = name;
+		if (changed.includes('visibility')) detail.is_public = isPublic;
+		if (changed.includes('status')) detail.status = status;
+		await logEvent(team.id, { actor: 'owner', actorUserId: userId, action: 'team_updated', detail });
+	}
 	return getTeamRow(team.id);
 }
 
 /** Archive keeps every agent (they are ordinary agents the owner still owns). */
-export async function archiveTeam(team) {
+export async function archiveTeam(team, userId = null) {
 	await sql`
 		update teams set status = 'archived', archived_at = now(), is_public = false, updated_at = now()
 		where id = ${team.id}
 	`;
+	await logEvent(team.id, { actor: 'owner', actorUserId: userId, action: 'team_archived', detail: { name: team.name } });
 }
 
 // ── custom members ───────────────────────────────────────────────────────────
@@ -393,27 +411,39 @@ export async function addCustomMember(team, userId, { agentId, permissions }) {
 		returning id
 	`;
 	if (!row) throw new TeamError(409, 'already_member', 'That agent already holds a fixed role on this team.');
+	await logEvent(team.id, {
+		actor: 'owner', actorUserId: userId, action: 'member_added',
+		detail: { agent_id: agentId, member_id: row.id, permissions: grant },
+	});
 	return row.id;
 }
 
 /** Narrow (or restore) a member's grant. Never above its role's ceiling. */
-export async function setMemberPermissions(team, memberId, permissions) {
+export async function setMemberPermissions(team, memberId, permissions, userId = null) {
 	const [member] = await sql`
 		select id, role from team_members where id = ${memberId} and team_id = ${team.id} and status = 'active' limit 1
 	`;
 	if (!member) throw new TeamError(404, 'member_not_found', 'member not found');
 	const grant = normalizeGrant(member.role, permissions);
 	await sql`update team_members set permissions = ${grant}::text[] where id = ${memberId}`;
+	await logEvent(team.id, {
+		actor: 'owner', actorUserId: userId, action: 'member_permissions_changed',
+		detail: { member_id: memberId, role: member.role, permissions: grant },
+	});
 	return grant;
 }
 
-export async function removeCustomMember(team, memberId) {
+export async function removeCustomMember(team, memberId, userId = null) {
 	const [row] = await sql`
 		update team_members set status = 'removed'
 		where id = ${memberId} and team_id = ${team.id} and role = 'custom' and status = 'active'
-		returning id
+		returning id, agent_id
 	`;
 	if (!row) throw new TeamError(404, 'member_not_found', 'Only an active custom specialist can be removed. The four core roles stay with the team.');
+	await logEvent(team.id, {
+		actor: 'owner', actorUserId: userId, action: 'member_removed',
+		detail: { member_id: memberId, agent_id: row.agent_id },
+	});
 }
 
 // ── running roles ────────────────────────────────────────────────────────────

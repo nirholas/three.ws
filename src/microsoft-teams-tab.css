@@ -123,3 +123,15 @@
 @media (forced-colors: active) {
 	:is(a, button, input, select, textarea):focus-visible { outline: 2px solid CanvasText; }
 }
+
+/* Teams Store rule: links that leave Teams carry a pop-out icon, and screen
+   readers hear that they open a new window. */
+.tt-body a[target='_blank']::after {
+	content: '' / ' (opens in a new window)';
+	display: inline-block; width: 0.85em; height: 0.85em; margin-left: 0.3em; vertical-align: -0.05em;
+	background: currentColor;
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 2.5h4.5V7M13.5 2.5 7 9M11.5 9.5v3a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3'/%3E%3C/svg%3E") center / contain no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 2.5h4.5V7M13.5 2.5 7 9M11.5 9.5v3a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.tt-card-actions { display: flex; flex-wrap: wrap; gap: var(--space-xs, 8px); }
+@media (forced-colors: active) { .tt-body a[target='_blank']::after { background: LinkText; } }

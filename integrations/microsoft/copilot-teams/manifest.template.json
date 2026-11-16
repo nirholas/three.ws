@@ -55,7 +55,7 @@
     {
       "entityId": "threews-agents",
       "name": "Agents",
-      "contentUrl": "https://three.ws/microsoft/teams-tab?theme={theme}",
+      "contentUrl": "https://three.ws/microsoft/teams-tab?theme={theme}&sub={subPageId}",
       "websiteUrl": "https://three.ws/agents",
       "scopes": [
         "personal"
@@ -92,6 +92,39 @@
   "validDomains": [
     "three.ws"
   ],
+  "webApplicationInfo": {
+    "id": "${MS_TEAMS_BOT_APP_ID}",
+    "resource": "https://three.ws"
+  },
+  "activities": {
+    "activityTypes": [
+      {
+        "type": "forgeJobCompleted",
+        "description": "A 3D model you generated is ready",
+        "templateText": "3D model ready: {prompt}"
+      },
+      {
+        "type": "forgeJobFailed",
+        "description": "A 3D model you generated could not be finished",
+        "templateText": "3D model failed: {prompt}"
+      },
+      {
+        "type": "agentTaskCompleted",
+        "description": "One of your agents finished a task",
+        "templateText": "{agent}: {summary}"
+      },
+      {
+        "type": "agentMentioned",
+        "description": "One of your agents was mentioned",
+        "templateText": "{actor} mentioned {agent}"
+      },
+      {
+        "type": "agentMessageReceived",
+        "description": "One of your agents received a message",
+        "templateText": "{agent} got a message from {from}"
+      }
+    ]
+  },
   "authorization": {
     "permissions": {
       "resourceSpecific": [
@@ -135,6 +168,10 @@
             {
               "title": "forge",
               "description": "forge <prompt>: generate a 3D model and post it as a live card"
+            },
+            {
+              "title": "link",
+              "description": "link <code>: connect your three.ws account for Teams notifications"
             }
           ]
         }

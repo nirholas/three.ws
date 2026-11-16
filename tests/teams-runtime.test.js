@@ -226,6 +226,7 @@ describe('research scoring', () => {
 
 const PRE_DDL = `
 	create table users (id uuid primary key);
+	create table sessions (id uuid primary key default gen_random_uuid(), user_id uuid not null references users(id) on delete cascade, created_at timestamptz not null default now(), revoked_at timestamptz);
 	create table avatars (id uuid primary key default gen_random_uuid(), storage_key text, thumbnail_key text, deleted_at timestamptz);
 	create table agent_identities (
 		id uuid primary key default gen_random_uuid(), user_id uuid, name text, description text,
@@ -249,6 +250,7 @@ describe('findings board and Trader on Postgres', () => {
 	beforeAll(async () => {
 		await holder.db.exec(PRE_DDL);
 		await holder.db.exec(readFileSync(new URL('../api/_lib/migrations/20261010120000_teams.sql', import.meta.url), 'utf8'));
+		await holder.db.exec(readFileSync(new URL('../api/_lib/migrations/20261111160232_enterprise_sso_scim.sql', import.meta.url), 'utf8'));
 		runtime = await import('../api/_lib/teams/runtime.js');
 		findings = await import('../api/_lib/teams/findings.js');
 	});

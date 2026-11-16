@@ -24,6 +24,8 @@ import { TOOLS, collectJob } from '../_mcp-studio/tools.js';
 import { jobFields } from '../_mcp-studio/jobs.js';
 import { coldStartState } from '../../src/shared/forge-frames.js';
 import * as connector from './teams-connector.js';
+import { insertNotification } from './notify.js';
+import { userForIdentity } from './teams-identity.js';
 import { cardAttachment, forgeErrorCard, forgeFinishedCard, forgeProgressCard } from './teams-forge-cards.js';
 
 export const RECORD_TTL_S = 3 * 24 * 3600;
@@ -74,6 +76,7 @@ const defaultDeps = {
 	collect: (origin, jobId, shape) => collectJob(origin, jobId, shape),
 	connector,
 	dispatch: (key, origin) => dispatchRun(key, origin),
+	notify: insertNotification,
 };
 
 /** The dependencies a caller passed, over the real ones. */
@@ -131,7 +134,7 @@ export async function claimJob({ key, prompt, tier, by, conversation, origin, pa
 		key,
 		prompt,
 		tier,
-		by: by?.id ? { id: String(by.id), name: String(by.name || '') } : null,
+		by: by?.id ? { id: String(by.id), name: String(by.name || ''), ...(by.aadObjectId && by.tenantId ? { tenantId: String(by.tenantId), aadObjectId: String(by.aadObjectId) } : {}) } : null,
 		conversation: conversation?.id ? { id: String(conversation.id), serviceUrl: String(conversation.serviceUrl || '') } : null,
 		origin,
 		activityId: null,
@@ -212,11 +215,39 @@ export function cardFor(record, { now = Date.now() } = {}) {
 }
 
 /**
+ * Tell the person who asked, through the standard notification fan-out, that
+ * their job settled: the bell, push and (when they linked their Teams account
+ * and left the event on) their Teams activity feed. Runs once per job, only for
+ * a requester whose Teams identity is linked to a three.ws account, and never
+ * fails the job.
+ */
+export async function announceSettled(record, deps = defaultDeps) {
+	const by = record?.by;
+	if (!settled(record) || !by?.tenantId || !by?.aadObjectId) return;
+	if (!(await cacheSetIfAbsent(`teams-forge:announce:${record.key}`, 1, RECORD_TTL_S))) return;
+	try {
+		const userId = await userForIdentity({ tenantId: by.tenantId, aadObjectId: by.aadObjectId });
+		if (!userId) return;
+		const done = record.state === 'done';
+		await (deps.notify || insertNotification)(userId, done ? 'forge_complete' : 'forge_failed', {
+			prompt: record.prompt,
+			teams_job_key: record.key,
+			preview_image_url: record.result?.posterUrl || null,
+			error: done ? null : String(record.error || '').slice(0, 200),
+			link: (done && record.result?.viewerUrl) || '/forge',
+		});
+	} catch (err) {
+		console.warn(`[teams-forge] notify of ${record.key} failed: ${err?.message || err}`);
+	}
+}
+
+/**
  * Replace the bot's message with the settled card for everyone in the chat.
  * Runs once per job; a no-op when the message was inserted by the user (the
  * bot can only update activities it posted) or the connector is not set up.
  */
 export async function broadcastSettled(record, deps = defaultDeps) {
+	await announceSettled(record, deps);
 	if (!settled(record) || record.broadcast || !record.activityId || !record.conversation?.id) return record;
 	if (!deps.connector.connectorConfigured()) return record;
 	if (!(await cacheSetIfAbsent(broadcastKey(record.key), 1, RECORD_TTL_S))) return record;
