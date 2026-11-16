@@ -9,6 +9,7 @@ generated without leaving the DCC.
 | Blender extension | [`blender/three_ws/`](blender/three_ws/) | Blender 4.2+ |
 | ComfyUI nodes | [`comfyui/three_ws_nodes/`](comfyui/three_ws_nodes/) | ComfyUI |
 | Modly extensions | [`modly/`](modly/) (`three-ws/` cloud nodes, `three-ws-publish/` publish node) | [Modly](https://github.com/lightningpixel/modly) |
+| Omniverse Kit extension (`threews.forge`: generate or import into the open USD stage, axes and units corrected) | [`nvidia/omniverse-kit-extension/`](nvidia/omniverse-kit-extension/) (Exchange steps in its `PUBLISHING.md`) | NVIDIA Omniverse Kit 110 apps (USD Composer, kit-app-template) |
 
 Agent harnesses get plugin folders of their own, which connect a hosted MCP
 server and bundle skills rather than calling `/api/forge` directly:
@@ -78,6 +79,7 @@ cp integrations/_pyclient/three_ws_client.py integrations/modly/three-ws/three_w
 cp integrations/_pyclient/three_ws_client.py integrations/modly/three-ws-publish/three_ws_client.py
 cp integrations/_pyclient/three_ws_client.py integrations/huggingface-space/three_ws_client.py
 cp integrations/_pyclient/three_ws_client.py integrations/poe/three_ws_client.py
+cp integrations/_pyclient/three_ws_client.py integrations/nvidia/omniverse-kit-extension/exts/threews.forge/threews/forge/three_ws_client.py
 ```
 
 ## Tests
@@ -93,6 +95,9 @@ python -m unittest discover -s integrations/_pyclient -p 'test_*.py'
 
 # modly extensions (loads generator.py the way Modly does)
 python -m unittest discover -s integrations/modly/tests -p 'test_*.py'
+
+# Omniverse Kit extension (omni.kit.test in a headless Kit; see its README for the GPU and live runs)
+integrations/nvidia/omniverse-kit-extension/scripts/run_tests.sh
 ```
 
 The Blender add-on is import-guarded on `bpy` (only present inside Blender); its

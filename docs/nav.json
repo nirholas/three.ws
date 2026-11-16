@@ -146,6 +146,10 @@
 					"path": "openusd-export"
 				},
 				{
+					"label": "Omniverse Kit extension",
+					"path": "omniverse-extension"
+				},
+				{
 					"label": "Pocket Console",
 					"path": "pocket"
 				},

@@ -6743,6 +6743,14 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/omniverse-extension",
+					"title": "Docs · Omniverse Kit extension",
+					"description": "The threews.forge Kit extension: generate a textured model from a prompt or image and reference it into the open USD stage upright and to scale, or import a saved model from your three.ws library. Install, API key handling, import details and the measured GPU test run.",
+					"added": "2026-11-16",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/engine-qa",
 					"title": "Docs · Engine QA",
 					"description": "A free real-time-engine fitness grade for any 3D model: draw calls, material count, texel density, a per-level LOD triangle budget, and whether the mesh is cheap and closed enough to use as its own physics collider.",

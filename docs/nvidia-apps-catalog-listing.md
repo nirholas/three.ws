@@ -139,7 +139,7 @@ Remove and leave unchecked:
 
 - **DeepVariant NIM** is genomics variant calling. It has nothing to do with this product and it weakens category fit. Uncheck it.
 - **TensorRT** and **Triton Inference Server** stay under "Considering": the GPU workers are PyTorch + CUDA today. Do not claim them.
-- **Omniverse Kit** stays under "Considering" (OpenUSD interop is roadmap, not shipping).
+- **Omniverse Kit** stays under "Considering": the `threews.forge` Kit extension is built and tested ([docs/omniverse-extension.md](./omniverse-extension.md)) but runs in users' Kit apps, not in our production stack, so it does not meet the "used" bar. Revisit once it is listed on Omniverse Exchange.
 
 ### Portal requirement matrix
 
