@@ -13,6 +13,10 @@
 //   MS_KEYVAULT_URL    the Azure Key Vault URL that holds the OAuth client details
 //   MS_TEAMS_BOT_APP_ID  the Azure Bot registration app id behind the Agents search command
 //                        (the same value the API reads to verify Bot Framework tokens)
+// The package also carries the "three.ws 3D Studio" declarative agent for Microsoft 365
+// Copilot (declarativeAgent.json) and its plugin (ai-plugin.json, a RemoteMCPServer runtime
+// pinned to the free studio tools in mcptools.json). Both are validated against the
+// vendored schemas in schema/ (see schema/README.md) and Microsoft's documented limits.
 // --check substitutes clearly marked check-only values so the structure, the schema,
 // the icons and the tool file are still validated, and writes no zip.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -37,7 +41,9 @@ const CHECK_ONLY = {
 	MS_TEAMS_BOT_APP_ID: '00000000-0000-4000-8000-0000000000b0',
 };
 const GUID_RE = /^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$/;
-const PACKAGE_FILES = ['manifest.json', 'mcptools.json', 'intro.md', 'color.png', 'outline.png'];
+const PACKAGE_FILES = ['manifest.json', 'declarativeAgent.json', 'ai-plugin.json', 'mcptools.json', 'intro.md', 'color.png', 'outline.png'];
+const AGENT_FILE = 'declarativeAgent.json';
+const PLUGIN_FILE = 'ai-plugin.json';
 
 const read = (name) => readFileSync(join(srcDir, name));
 const readText = (name) => readFileSync(join(srcDir, name), 'utf8');
@@ -82,12 +88,30 @@ export function resolveOwnerValues(env, { check }) {
 	return { values: Object.fromEntries(OWNER_VARS.map((k) => [k, String(env[k] ?? '').trim()])), missing };
 }
 
-export function loadSchema() {
-	const schema = JSON.parse(readFileSync(join(srcDir, 'schema', 'MicrosoftTeams.schema.v1.30.json'), 'utf8'));
-	// The published schema declares draft-04. Ajv 8 validates the same keywords under its
+function loadVendoredSchema(file) {
+	const schema = JSON.parse(readFileSync(join(srcDir, 'schema', file), 'utf8'));
+	// The published schemas declare draft-04. Ajv 8 validates the same keywords under its
 	// default dialect once the draft-04 meta-schema reference is dropped.
 	delete schema.$schema;
 	return schema;
+}
+
+export const loadSchema = () => loadVendoredSchema('MicrosoftTeams.schema.v1.30.json');
+
+const compiled = new Map();
+function validatorFor(file) {
+	if (!compiled.has(file)) {
+		const ajv = new Ajv({ strict: false, allErrors: true });
+		addFormats(ajv);
+		compiled.set(file, ajv.compile(loadVendoredSchema(file)));
+	}
+	return compiled.get(file);
+}
+
+function schemaProblems(file, doc, label) {
+	const validate = validatorFor(file);
+	if (validate(doc)) return [];
+	return validate.errors.map((e) => `${label} schema: ${e.instancePath || '/'} ${e.message}`);
 }
 
 /** Build the filled manifest object and return it with every problem found. */
@@ -105,13 +129,9 @@ export function buildManifest(values) {
 	if (!GUID_RE.test(values.MS_TEAMS_BOT_APP_ID || '')) problems.push(`MS_TEAMS_BOT_APP_ID must be a GUID, got "${values.MS_TEAMS_BOT_APP_ID}"`);
 	if (values.MS_KEYVAULT_URL.length > 128) problems.push('MS_KEYVAULT_URL must be 128 characters or fewer (schema limit on referenceId)');
 
-	const ajv = new Ajv({ strict: false, allErrors: true });
-	addFormats(ajv);
-	const validate = ajv.compile(loadSchema());
-	if (!validate(manifest)) {
-		for (const e of validate.errors) problems.push(`manifest schema: ${e.instancePath || '/'} ${e.message}`);
-	}
+	problems.push(...schemaProblems('MicrosoftTeams.schema.v1.30.json', manifest, 'manifest'));
 	problems.push(...checkMeetingStage(manifest));
+	problems.push(...checkAgentReference(manifest));
 	const bad = nonAscii(JSON.stringify(manifest));
 	if (bad) problems.push(`manifest.json contains a non-ASCII character (${bad})`);
 	return { manifest, problems };
@@ -152,6 +172,120 @@ export function checkMeetingStage(manifest) {
 		if (!rsc.some((p) => p.name === name && p.type === 'Delegated')) problems.push(`authorization.permissions.resourceSpecific needs ${name} (Delegated)`);
 	}
 	return problems;
+}
+
+// Microsoft's documented limits for the declarative agent (schema 1.9) and its plugin
+// (schema 2.4). The schemas encode some of them; the rest are "characters beyond N MAY be
+// ignored" notes that would silently truncate copy, so they are enforced here as errors.
+// https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/declarative-agent-manifest-1.9
+// https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/plugin-manifest-2.4
+export const AGENT_LIMITS = {
+	version: 'v1.9',
+	name: 100,
+	description: 1000,
+	instructions: 8000,
+	starters: 12,
+	disclaimer: 500,
+	actions: 10,
+};
+export const PLUGIN_LIMITS = {
+	version: 'v2.4',
+	nameForHuman: 20,
+	descriptionForHuman: 100,
+	descriptionForModel: 2048,
+};
+export const AGENT_ID = 'threews-3d-studio';
+export const STUDIO_TOOLS_FILE = 'mcptools.json';
+
+const blank = (v) => typeof v !== 'string' || !v.trim();
+
+function lengthProblem(label, value, max) {
+	if (blank(value)) return [`${label} is required and must contain a non-whitespace character`];
+	return value.length > max ? [`${label} is ${value.length} characters; Microsoft allows at most ${max}`] : [];
+}
+
+/** The app manifest must reference exactly the one declarative agent this package ships. */
+export function checkAgentReference(manifest) {
+	const agents = manifest.copilotAgents?.declarativeAgents;
+	if (!Array.isArray(agents) || agents.length !== 1) return ['copilotAgents.declarativeAgents must reference the three.ws declarative agent'];
+	const [ref] = agents;
+	const problems = [];
+	if (ref.id !== AGENT_ID) problems.push(`copilotAgents.declarativeAgents[0].id must be "${AGENT_ID}"`);
+	if (ref.file !== AGENT_FILE) problems.push(`copilotAgents.declarativeAgents[0].file must be "${AGENT_FILE}"`);
+	return problems;
+}
+
+/**
+ * Validate a parsed declarative agent manifest against schema 1.9 and the documented limits.
+ * `exists(file)` answers whether a file referenced by an action is in the package.
+ */
+export function checkDeclarativeAgent(agent, { exists = (f) => existsSync(join(srcDir, f)) } = {}) {
+	const problems = schemaProblems('declarative-agent.schema.v1.9.json', agent, AGENT_FILE);
+	if (agent.version !== AGENT_LIMITS.version) problems.push(`${AGENT_FILE} version must be "${AGENT_LIMITS.version}"`);
+	problems.push(...lengthProblem(`${AGENT_FILE} name`, agent.name, AGENT_LIMITS.name));
+	problems.push(...lengthProblem(`${AGENT_FILE} description`, agent.description, AGENT_LIMITS.description));
+	problems.push(...lengthProblem(`${AGENT_FILE} instructions`, agent.instructions, AGENT_LIMITS.instructions));
+	const starters = agent.conversation_starters ?? [];
+	if (starters.length === 0) problems.push(`${AGENT_FILE} needs at least one conversation starter`);
+	if (starters.length > AGENT_LIMITS.starters) problems.push(`${AGENT_FILE} has ${starters.length} conversation starters; Microsoft allows at most ${AGENT_LIMITS.starters}`);
+	const titles = new Set();
+	for (const [i, s] of starters.entries()) {
+		if (blank(s.text)) problems.push(`${AGENT_FILE} conversation_starters[${i}] needs text`);
+		if (blank(s.title)) problems.push(`${AGENT_FILE} conversation_starters[${i}] needs a title (shown on the starter card)`);
+		else if (titles.has(s.title)) problems.push(`${AGENT_FILE} conversation starter title "${s.title}" is not unique`);
+		titles.add(s.title);
+	}
+	if (agent.disclaimer) problems.push(...lengthProblem(`${AGENT_FILE} disclaimer.text`, agent.disclaimer.text, AGENT_LIMITS.disclaimer));
+	const actions = agent.actions ?? [];
+	if (actions.length === 0 || actions.length > AGENT_LIMITS.actions) problems.push(`${AGENT_FILE} needs 1 to ${AGENT_LIMITS.actions} actions`);
+	for (const a of actions) {
+		if (a.file && !exists(a.file)) problems.push(`${AGENT_FILE} action ${a.id} references ${a.file}, which is not in the source directory`);
+	}
+	const bad = nonAscii(JSON.stringify(agent));
+	if (bad) problems.push(`${AGENT_FILE} contains a non-ASCII character (${bad})`);
+	return problems;
+}
+
+/**
+ * Validate a parsed plugin manifest against schema 2.4 and the documented limits, and
+ * check that every pinned function is a real tool in the MCP tool description file.
+ */
+export function checkPlugin(plugin, toolNames, { exists = (f) => existsSync(join(srcDir, f)) } = {}) {
+	const problems = schemaProblems('api-plugin.schema.v2.4.json', plugin, PLUGIN_FILE);
+	if (plugin.schema_version !== PLUGIN_LIMITS.version) problems.push(`${PLUGIN_FILE} schema_version must be "${PLUGIN_LIMITS.version}"`);
+	problems.push(...lengthProblem(`${PLUGIN_FILE} name_for_human`, plugin.name_for_human, PLUGIN_LIMITS.nameForHuman));
+	problems.push(...lengthProblem(`${PLUGIN_FILE} description_for_human`, plugin.description_for_human, PLUGIN_LIMITS.descriptionForHuman));
+	problems.push(...lengthProblem(`${PLUGIN_FILE} description_for_model`, plugin.description_for_model, PLUGIN_LIMITS.descriptionForModel));
+	const runtimes = plugin.runtimes ?? [];
+	const mcp = runtimes.filter((r) => r.type === 'RemoteMCPServer');
+	if (mcp.length !== 1 || runtimes.length !== 1) return [...problems, `${PLUGIN_FILE} needs exactly one runtime, of type RemoteMCPServer`];
+	const [runtime] = mcp;
+	if (runtime.spec?.url !== MCP_URL) problems.push(`${PLUGIN_FILE} runtime url must be ${MCP_URL}`);
+	const file = runtime.spec?.mcp_tool_description?.file;
+	if (file !== STUDIO_TOOLS_FILE) problems.push(`${PLUGIN_FILE} runtime must pin tools from ${STUDIO_TOOLS_FILE}`);
+	else if (!exists(file)) problems.push(`${PLUGIN_FILE} references ${file}, which is not in the source directory`);
+	const functions = (plugin.functions ?? []).map((f) => f.name);
+	const pinned = runtime.run_for_functions ?? [];
+	if (functions.length === 0) problems.push(`${PLUGIN_FILE} must pin its tools (functions is empty, which means dynamic discovery)`);
+	if (pinned.includes('*')) problems.push(`${PLUGIN_FILE} run_for_functions must list the pinned tools, not "*"`);
+	if (new Set(functions).size !== functions.length) problems.push(`${PLUGIN_FILE} functions has a duplicate name`);
+	const fnSet = new Set(functions);
+	const pinSet = new Set(pinned);
+	for (const f of functions) if (!pinSet.has(f)) problems.push(`${PLUGIN_FILE} function ${f} is missing from run_for_functions`);
+	for (const f of pinned) if (f !== '*' && !fnSet.has(f)) problems.push(`${PLUGIN_FILE} run_for_functions names ${f}, which is not in functions`);
+	for (const f of functions) if (!toolNames.has(f)) problems.push(`${PLUGIN_FILE} pins ${f}, which ${STUDIO_TOOLS_FILE} does not describe; run --refresh-tools or fix the name`);
+	const bad = nonAscii(JSON.stringify(plugin));
+	if (bad) problems.push(`${PLUGIN_FILE} contains a non-ASCII character (${bad})`);
+	return problems;
+}
+
+function parseJsonFile(name, problems) {
+	try {
+		return JSON.parse(readText(name));
+	} catch (err) {
+		problems.push(`${name} is not valid JSON: ${err.message}`);
+		return null;
+	}
 }
 
 export function checkTools(text) {
@@ -206,7 +340,20 @@ async function checkIcons() {
 /** Validate everything and return { problems, files } without touching the disk. */
 export async function assemble(values) {
 	const { manifest, problems } = buildManifest(values);
-	problems.push(...checkTools(readText('mcptools.json')));
+	const toolsText = readText('mcptools.json');
+	problems.push(...checkTools(toolsText));
+	const agent = parseJsonFile(AGENT_FILE, problems);
+	if (agent) problems.push(...checkDeclarativeAgent(agent));
+	const plugin = parseJsonFile(PLUGIN_FILE, problems);
+	if (plugin) {
+		let toolNames = new Set();
+		try {
+			toolNames = new Set(JSON.parse(toolsText).tools.map((t) => t.name));
+		} catch {
+			// checkTools has already reported the broken tool file.
+		}
+		problems.push(...checkPlugin(plugin, toolNames));
+	}
 	problems.push(...(await checkIcons()));
 	for (const ref of [manifest.icons?.color, manifest.icons?.outline, manifest.agentConnectors?.[0]?.toolSource?.remoteMcpServer?.mcpToolDescription?.file]) {
 		if (ref && !existsSync(join(srcDir, ref))) problems.push(`manifest references ${ref}, which is not in the source directory`);
@@ -215,6 +362,8 @@ export async function assemble(values) {
 	if (bad) problems.push(`intro.md contains a non-ASCII character (${bad})`);
 	const files = {
 		'manifest.json': Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`),
+		'declarativeAgent.json': read(AGENT_FILE),
+		'ai-plugin.json': read(PLUGIN_FILE),
 		'mcptools.json': read('mcptools.json'),
 		'intro.md': read('intro.md'),
 		'color.png': existsSync(join(srcDir, 'color.png')) ? read('color.png') : Buffer.alloc(0),
@@ -309,7 +458,14 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
 		return 1;
 	}
 	if (check) {
-		console.log(`OK: manifest, schema v1.30, ${JSON.parse(files['mcptools.json']).tools.length} tools, meeting stage tab and RSC, icons and ASCII checks pass (owner values not checked).`);
+		const agent = JSON.parse(files[AGENT_FILE]);
+		const plugin = JSON.parse(files[PLUGIN_FILE]);
+		console.log(
+			`OK: manifest, schema v1.30, ${JSON.parse(files['mcptools.json']).tools.length} tools, meeting stage tab and RSC, ` +
+				`declarative agent "${agent.name}" (schema ${agent.version}, ${agent.instructions.length}/${AGENT_LIMITS.instructions} instruction characters, ` +
+				`${agent.conversation_starters.length} starters), plugin schema ${plugin.schema_version} pinning ${plugin.functions.length} tools, ` +
+				'icons and ASCII checks pass (owner values not checked).',
+		);
 		return 0;
 	}
 	mkdirSync(dirname(outFile), { recursive: true });

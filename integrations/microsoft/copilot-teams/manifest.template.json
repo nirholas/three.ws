@@ -1,7 +1,7 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.30/MicrosoftTeams.schema.json",
   "manifestVersion": "1.30",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "id": "${MS_APP_ID}",
   "developer": {
     "name": "${MS_DEVELOPER_NAME}",
@@ -81,6 +81,14 @@
       }
     }
   ],
+  "copilotAgents": {
+    "declarativeAgents": [
+      {
+        "id": "threews-3d-studio",
+        "file": "declarativeAgent.json"
+      }
+    ]
+  },
   "validDomains": [
     "three.ws"
   ],

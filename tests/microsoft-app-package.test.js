@@ -1,8 +1,15 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { unzipSync } from 'fflate';
 import {
+	AGENT_ID,
+	AGENT_LIMITS,
+	PLUGIN_LIMITS,
 	assemble,
 	buildManifest,
+	checkAgentReference,
+	checkDeclarativeAgent,
+	checkPlugin,
 	checkMeetingStage,
 	checkTools,
 	STAGE_RSC,
@@ -101,11 +108,11 @@ describe('microsoft app package', () => {
 		expect(resolveOwnerValues({}, { check: true }).missing).toHaveLength(0);
 	});
 
-	it('assembles a zip with the five package files and white-on-transparent icons', async () => {
+	it('assembles a zip with the seven package files and white-on-transparent icons', async () => {
 		const { problems, files } = await assemble(OWNER);
 		expect(problems).toEqual([]);
 		const entries = unzipSync(new Uint8Array(zipFiles(files)));
-		expect(Object.keys(entries).sort()).toEqual(['color.png', 'intro.md', 'manifest.json', 'mcptools.json', 'outline.png']);
+		expect(Object.keys(entries).sort()).toEqual(['ai-plugin.json', 'color.png', 'declarativeAgent.json', 'intro.md', 'manifest.json', 'mcptools.json', 'outline.png']);
 		const manifest = JSON.parse(Buffer.from(entries['manifest.json']).toString('utf8'));
 		expect(manifest.id).toBe(OWNER.MS_APP_ID);
 	});
@@ -125,5 +132,95 @@ describe('microsoft app package', () => {
 		expect(parseRpcReply(JSON.stringify(msg))).toEqual(msg);
 		expect(parseRpcReply(`event: message\ndata: ${JSON.stringify(msg)}\n\n`)).toEqual(msg);
 		expect(() => parseRpcReply('event: ping\n\n')).toThrow();
+	});
+});
+
+const SRC = new URL('../integrations/microsoft/copilot-teams/', import.meta.url);
+const readJson = (name) => JSON.parse(readFileSync(new URL(name, SRC), 'utf8'));
+const TOOL_NAMES = new Set(readJson('mcptools.json').tools.map((t) => t.name));
+const inPackage = () => true;
+
+describe('microsoft 365 copilot declarative agent', () => {
+	const agent = readJson('declarativeAgent.json');
+	const plugin = readJson('ai-plugin.json');
+
+	it('the app manifest references the declarative agent', () => {
+		const { manifest, problems } = buildManifest(OWNER);
+		expect(problems).toEqual([]);
+		expect(manifest.copilotAgents.declarativeAgents).toEqual([{ id: AGENT_ID, file: 'declarativeAgent.json' }]);
+		expect(checkAgentReference({ ...manifest, copilotAgents: undefined })).toEqual(['copilotAgents.declarativeAgents must reference the three.ws declarative agent']);
+	});
+
+	it('the shipped agent and plugin pass schema 1.9, schema 2.4 and every documented limit', () => {
+		expect(checkDeclarativeAgent(agent)).toEqual([]);
+		expect(checkPlugin(plugin, TOOL_NAMES)).toEqual([]);
+		expect(agent.conversation_starters.length).toBeLessThanOrEqual(AGENT_LIMITS.starters);
+	});
+
+	it('fails an instruction over 8000 characters', () => {
+		const long = { ...agent, instructions: 'x'.repeat(AGENT_LIMITS.instructions + 1) };
+		const text = checkDeclarativeAgent(long, { exists: inPackage }).join('\n');
+		expect(text).toContain(`instructions is ${AGENT_LIMITS.instructions + 1} characters; Microsoft allows at most ${AGENT_LIMITS.instructions}`);
+		expect(text).toContain('declarativeAgent.json schema: /instructions');
+	});
+
+	it('fails more than 12 starters, a duplicate starter title and over-long name, description and disclaimer', () => {
+		const starters = Array.from({ length: AGENT_LIMITS.starters + 1 }, (_, i) => ({ title: i === 1 ? 'S0' : `S${i}`, text: 'Make a chair' }));
+		const bad = {
+			...agent,
+			name: 'n'.repeat(AGENT_LIMITS.name + 1),
+			description: 'd'.repeat(AGENT_LIMITS.description + 1),
+			disclaimer: { text: 'z'.repeat(AGENT_LIMITS.disclaimer + 1) },
+			conversation_starters: starters,
+		};
+		const text = checkDeclarativeAgent(bad, { exists: inPackage }).join('\n');
+		expect(text).toContain(`${AGENT_LIMITS.starters + 1} conversation starters; Microsoft allows at most ${AGENT_LIMITS.starters}`);
+		expect(text).toContain('title "S0" is not unique');
+		expect(text).toContain(`name is ${AGENT_LIMITS.name + 1} characters`);
+		expect(text).toContain(`description is ${AGENT_LIMITS.description + 1} characters`);
+		expect(text).toContain(`disclaimer.text is ${AGENT_LIMITS.disclaimer + 1} characters`);
+	});
+
+	it('fails a missing action file, a wrong schema version, an unknown property and non-ASCII text', () => {
+		const bad = { ...agent, version: 'v1.6', extra: true, description: 'caf\u00e9', actions: [{ id: 'a', file: 'missing.json' }] };
+		const text = checkDeclarativeAgent(bad, { exists: (f) => f !== 'missing.json' }).join('\n');
+		expect(text).toContain('version must be "v1.9"');
+		expect(text).toContain('action a references missing.json');
+		expect(text).toContain('non-ASCII character (U+00E9)');
+		expect(text).toMatch(/declarativeAgent\.json schema: \/ must NOT have additional properties|declarativeAgent\.json schema: \/ property name must be valid/);
+	});
+
+	it('pins only real studio tools on one RemoteMCPServer runtime', () => {
+		const runtime = plugin.runtimes[0];
+		expect(runtime.type).toBe('RemoteMCPServer');
+		expect(runtime.auth).toEqual({ type: 'None' });
+		expect(runtime.spec).toEqual({ url: 'https://three.ws/api/mcp-studio', mcp_tool_description: { file: 'mcptools.json' } });
+		expect(runtime.run_for_functions).toEqual(plugin.functions.map((f) => f.name));
+		for (const name of runtime.run_for_functions) expect(TOOL_NAMES.has(name)).toBe(true);
+	});
+
+	it('fails an unknown pinned tool, dynamic discovery, a mismatched run_for_functions and over-long plugin copy', () => {
+		const runtime = plugin.runtimes[0];
+		const unknown = { ...plugin, functions: [...plugin.functions, { name: 'no_such_tool' }], runtimes: [{ ...runtime, run_for_functions: [...runtime.run_for_functions, 'no_such_tool'] }] };
+		expect(checkPlugin(unknown, TOOL_NAMES, { exists: inPackage }).join('\n')).toContain('pins no_such_tool, which mcptools.json does not describe');
+		const dynamic = { ...plugin, functions: [], runtimes: [{ ...runtime, run_for_functions: ['*'] }] };
+		const dynText = checkPlugin(dynamic, TOOL_NAMES, { exists: inPackage }).join('\n');
+		expect(dynText).toContain('must pin its tools');
+		expect(dynText).toContain('not "*"');
+		const mismatch = { ...plugin, runtimes: [{ ...runtime, run_for_functions: runtime.run_for_functions.slice(1) }] };
+		expect(checkPlugin(mismatch, TOOL_NAMES, { exists: inPackage }).join('\n')).toContain(`function ${plugin.functions[0].name} is missing from run_for_functions`);
+		const wordy = { ...plugin, name_for_human: 'n'.repeat(PLUGIN_LIMITS.nameForHuman + 1), description_for_human: 'd'.repeat(PLUGIN_LIMITS.descriptionForHuman + 1), description_for_model: 'm'.repeat(PLUGIN_LIMITS.descriptionForModel + 1) };
+		const wordyText = checkPlugin(wordy, TOOL_NAMES, { exists: inPackage }).join('\n');
+		expect(wordyText).toContain(`name_for_human is ${PLUGIN_LIMITS.nameForHuman + 1} characters`);
+		expect(wordyText).toContain(`description_for_human is ${PLUGIN_LIMITS.descriptionForHuman + 1} characters`);
+		expect(wordyText).toContain(`description_for_model is ${PLUGIN_LIMITS.descriptionForModel + 1} characters`);
+	});
+
+	it('fails a runtime that points at another server or an OpenAPI runtime', () => {
+		const runtime = plugin.runtimes[0];
+		const elsewhere = { ...plugin, runtimes: [{ ...runtime, spec: { ...runtime.spec, url: 'https://example.com/mcp' } }] };
+		expect(checkPlugin(elsewhere, TOOL_NAMES, { exists: inPackage }).join('\n')).toContain('runtime url must be https://three.ws/api/mcp-studio');
+		const openapi = { ...plugin, runtimes: [{ type: 'OpenApi', auth: { type: 'None' }, spec: { url: 'https://three.ws/openapi.json' } }] };
+		expect(checkPlugin(openapi, TOOL_NAMES, { exists: inPackage }).join('\n')).toContain('exactly one runtime, of type RemoteMCPServer');
 	});
 });

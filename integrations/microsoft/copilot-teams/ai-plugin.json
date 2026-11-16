@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json",
+  "schema_version": "v2.4",
+  "name_for_human": "three.ws 3D Studio",
+  "namespace": "threewsstudio",
+  "description_for_human": "Generate, rig, find and inspect 3D models and avatars (GLB) from a text description.",
+  "description_for_model": "Tools from the three.ws 3D Studio remote MCP server. Use them to turn a text description into a textured, downloadable GLB 3D model or a rigged avatar, to auto-rig an existing GLB, to refine a generated model by describing a change, to look at a model from several angles, to search the catalog of ready-made CC0 3D assets and get paste-ready embed code, and to search the three.ws documentation. Generation is asynchronous: generation tools may return status pending with a job_id and a viewer_url, and check_job collects the finished model.",
+  "logo_url": "https://three.ws/logo.png",
+  "contact_email": "support@three.ws",
+  "legal_info_url": "https://three.ws/legal/tos",
+  "privacy_policy_url": "https://three.ws/legal/privacy",
+  "functions": [
+    { "name": "forge_free" },
+    { "name": "text_to_avatar" },
+    { "name": "mesh_forge" },
+    { "name": "forge_avatar" },
+    { "name": "rig_mesh" },
+    { "name": "refine_model" },
+    { "name": "check_job" },
+    { "name": "get_job" },
+    { "name": "look_at_model" },
+    { "name": "search_catalog" },
+    { "name": "get_catalog_item" },
+    { "name": "get_item_source" },
+    { "name": "search_docs" }
+  ],
+  "runtimes": [
+    {
+      "type": "RemoteMCPServer",
+      "auth": { "type": "None" },
+      "spec": {
+        "url": "https://three.ws/api/mcp-studio",
+        "mcp_tool_description": { "file": "mcptools.json" }
+      },
+      "run_for_functions": [
+        "forge_free",
+        "text_to_avatar",
+        "mesh_forge",
+        "forge_avatar",
+        "rig_mesh",
+        "refine_model",
+        "check_job",
+        "get_job",
+        "look_at_model",
+        "search_catalog",
+        "get_catalog_item",
+        "get_item_source",
+        "search_docs"
+      ]
+    }
+  ]
+}
