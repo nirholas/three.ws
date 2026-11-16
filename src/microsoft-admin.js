@@ -311,6 +311,128 @@ function incidentsPanel(inc, installs) {
 		<h3 class="msa-h3">Store and Edge installs</h3><p class="msa-note">${esc(installs.note)}</p>`);
 }
 
+// ── responsible AI ──────────────────────────────────────────────────────────
+
+const raiBody = document.getElementById('msa-rai-body');
+const raiStatus = document.getElementById('msa-rai-status');
+const SUBJECT = { agent_reply: 'Agent reply', forge_model: '3D model', bot_message: 'Bot message' };
+
+function raiSubject(r) {
+	const what = esc(SUBJECT[r.subject_kind] || r.subject_kind);
+	const agent = r.agent_id
+		? `<br><a class="msa-link" href="/agents/${encodeURIComponent(r.agent_id)}" target="_blank" rel="noopener">${esc(r.agent_name || 'Agent')}</a>`
+		: '';
+	const model = r.model_url ? `<br><a class="msa-link" href="${esc(r.model_url)}" target="_blank" rel="noopener noreferrer">Open model</a>` : '';
+	return `${what}${agent}${model}`;
+}
+
+function raiExcerpt(r) {
+	if (!r.excerpt) return '<span class="msa-dim">none</span>';
+	return `<details class="msa-details"><summary>${esc(r.excerpt.slice(0, 60))}${r.excerpt.length > 60 ? '...' : ''}</summary><p class="msa-rai-excerpt">${esc(r.excerpt)}</p></details>`;
+}
+
+function raiAction(r) {
+	if (r.status === 'open') {
+		return `<form class="msa-rai-form" data-id="${esc(r.id)}">
+			<label class="msa-sr" for="msa-res-${esc(r.id)}">What was done about this report</label>
+			<input class="msa-input" id="msa-res-${esc(r.id)}" name="resolution" maxlength="1000" required placeholder="What was done">
+			<button type="submit" class="msa-btn" value="actioned">Actioned</button>
+			<button type="submit" class="msa-btn msa-btn-ghost" value="dismissed">Dismiss</button>
+			<p class="msa-rai-error" role="alert" hidden></p>
+		</form>`;
+	}
+	return `<span class="msa-rai-done"><strong>${esc(r.status === 'actioned' ? 'Actioned' : 'Dismissed')}</strong> ${esc(fmtDate(r.reviewed_at))}${r.reviewed_by ? ` by ${esc(r.reviewed_by)}` : ''}${r.resolution ? `: ${esc(r.resolution)}` : ''}</span>
+		<form class="msa-rai-form" data-id="${esc(r.id)}"><button type="submit" class="msa-btn msa-btn-ghost" value="open">Reopen</button><p class="msa-rai-error" role="alert" hidden></p></form>`;
+}
+
+function renderRai(d) {
+	const fb = d.feedback || {};
+	const votes = Number(fb.likes || 0) + Number(fb.dislikes || 0);
+	const statusLabel = raiStatus.selectedOptions[0]?.textContent.toLowerCase() || 'reports';
+	const reports = table([
+		{ label: 'Reported', value: (r) => fmtDate(r.created_at) },
+		{ label: 'Content', value: raiSubject, html: true },
+		{ label: 'Reason', value: (r) => r.reason_title },
+		{ label: 'Comment', value: (r) => r.comment || 'none' },
+		{ label: 'Excerpt', value: raiExcerpt, html: true },
+		{ label: 'Tenant', value: (r) => r.tenant_id || 'unknown', mono: true },
+		{ label: 'Review', value: raiAction, html: true },
+	], d.reports, {
+		empty: d.status === 'open'
+			? 'No open reports. People report AI content with the Report button on a 3D model card or Report in the message menu of a bot reply; each report alerts ops and lands here.'
+			: `No ${statusLabel}.`,
+	});
+	const comments = table([
+		{ label: 'When', value: (r) => fmtDate(r.updated_at) },
+		{ label: 'Vote', value: (r) => (r.reaction === 'like' ? 'Thumbs up' : 'Thumbs down') },
+		{ label: 'On', value: (r) => (r.agent_name ? `${SUBJECT[r.kind] || 'Reply'} from ${r.agent_name}` : SUBJECT[r.kind] || 'Bot message') },
+		{ label: 'Comment', value: (r) => r.comment },
+	], d.recentComments || [], { empty: `No feedback comments in ${d.days} days. People add one after the thumbs buttons on any AI-labelled reply or model.` });
+	raiBody.innerHTML = `${stats([
+		['Open reports', num(d.reports_open), Number(d.reports_open) ? 'warn' : null],
+		[`Reports, ${d.days}d`, num(d.reports_recent)],
+		[`Thumbs up, ${d.days}d`, num(fb.likes)],
+		[`Thumbs down, ${d.days}d`, num(fb.dislikes), Number(fb.dislikes) > Number(fb.likes) ? 'warn' : null],
+		['Approval', votes ? pct(Number(fb.likes) / votes) : 'no votes'],
+		['Comments', num(fb.comments)],
+	])}
+	<h3 class="msa-h3">Reports</h3>${reports}
+	<h3 class="msa-h3">Feedback comments, ${esc(d.days)} days</h3>${comments}`;
+}
+
+let raiLoading = false;
+async function loadRai() {
+	if (raiLoading) return;
+	raiLoading = true;
+	raiBody.setAttribute('aria-busy', 'true');
+	try {
+		const res = await apiFetch(`/api/admin/content-reports?status=${encodeURIComponent(raiStatus.value)}`, { cache: 'no-store' });
+		const data = await res.json().catch(() => ({}));
+		if (!res.ok) {
+			const e = new Error(data.error_description || data.error || `HTTP ${res.status}`);
+			e.status = res.status;
+			throw e;
+		}
+		renderRai({ ...data, reports_open: data.reports_summary?.open, reports_recent: data.reports_summary?.recent });
+	} catch (err) {
+		const hint = err.status === 401 || err.status === 403 ? 'Sign in with a platform admin account, then retry.' : 'Retry, and if it persists check the API logs for <code>/api/admin/content-reports</code>.';
+		raiBody.innerHTML = `<div class="msa-state" role="alert"><strong>Could not load reports</strong>${esc(err.message)}. ${hint}<button type="button" class="msa-btn" data-rai-retry>Retry</button></div>`;
+	} finally {
+		raiLoading = false;
+		raiBody.setAttribute('aria-busy', 'false');
+	}
+}
+
+async function reviewSubmit(e) {
+	const form = e.target.closest('.msa-rai-form');
+	if (!form) return;
+	e.preventDefault();
+	const status = e.submitter?.value;
+	const resolution = form.elements.resolution?.value.trim() || '';
+	const errEl = form.querySelector('.msa-rai-error');
+	const buttons = [...form.querySelectorAll('button')];
+	buttons.forEach((b) => { b.disabled = true; });
+	errEl.hidden = true;
+	try {
+		const res = await apiFetch('/api/admin/content-reports', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ id: form.dataset.id, status, resolution }),
+		});
+		const data = await res.json().catch(() => ({}));
+		if (!res.ok) throw new Error(data.error_description || data.error || `HTTP ${res.status}`);
+		await loadRai();
+	} catch (err) {
+		errEl.textContent = `Not saved: ${err.message}`;
+		errEl.hidden = false;
+		buttons.forEach((b) => { b.disabled = false; });
+	}
+}
+
+raiBody.addEventListener('submit', reviewSubmit);
+raiBody.addEventListener('click', (e) => { if (e.target.closest('[data-rai-retry]')) loadRai(); });
+raiStatus.addEventListener('change', loadRai);
+
 // ── load ────────────────────────────────────────────────────────────────────
 
 function render(board) {
@@ -352,6 +474,7 @@ async function load() {
 	app.setAttribute('aria-busy', 'true');
 	refreshBtn.disabled = true;
 	updatedEl.textContent = 'Loading live data';
+	loadRai();
 	try {
 		const res = await apiFetch('/api/admin/microsoft', { cache: 'no-store' });
 		const data = await res.json().catch(() => ({}));

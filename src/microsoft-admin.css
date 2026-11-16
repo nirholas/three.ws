@@ -511,6 +511,86 @@ code {
 	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
+/* ── responsible AI review queue ─────────────────────────────────────────── */
+
+.msa-rai { margin-top: var(--space-4, 16px); }
+
+.msa-rai-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--space-3, 12px);
+}
+
+.msa-filter {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2, 8px);
+	font-size: var(--text-xs, 12px);
+	color: var(--color-text-dim);
+}
+
+.msa-select,
+.msa-input {
+	min-height: 34px;
+	padding: 0 10px;
+	border: 1px solid var(--color-border-strong);
+	border-radius: var(--radius-md, 10px);
+	background: var(--color-bg);
+	color: var(--color-text-bright);
+	font: inherit;
+	font-size: var(--text-xs, 12px);
+	transition: border-color 120ms ease;
+}
+
+.msa-select:hover,
+.msa-input:hover { border-color: var(--color-text-dim); }
+
+.msa-select:focus-visible,
+.msa-input:focus-visible {
+	outline: 2px solid var(--msa-series);
+	outline-offset: 1px;
+	border-color: var(--msa-series);
+}
+
+.msa-rai-form {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	min-width: 240px;
+}
+
+.msa-rai-form .msa-input { flex: 1 1 140px; min-width: 0; }
+
+.msa-rai-error {
+	flex-basis: 100%;
+	margin: 0;
+	font-size: var(--text-xs, 12px);
+	color: var(--color-danger, #ef4444);
+}
+
+.msa-rai-done {
+	display: block;
+	margin-bottom: 6px;
+	font-size: var(--text-xs, 12px);
+	color: var(--color-text-dim);
+}
+
+.msa-rai-done strong { color: var(--color-text-bright); }
+
+.msa-rai-excerpt {
+	max-width: 48ch;
+	margin: 6px 0 0;
+	font-size: var(--text-xs, 12px);
+	line-height: 1.5;
+	white-space: pre-wrap;
+	color: var(--color-text);
+}
+
+.msa-dim { color: var(--color-text-dim); }
+
 /* ── skeletons ───────────────────────────────────────────────────────────── */
 
 .msa-skel {
@@ -530,7 +610,9 @@ code {
 
 @media (prefers-reduced-motion: reduce) {
 	.msa-skel { animation: none; }
-	.msa-btn { transition: none; }
+	.msa-btn,
+	.msa-select,
+	.msa-input { transition: none; }
 }
 
 .msa-foot {

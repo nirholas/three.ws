@@ -130,7 +130,7 @@ export async function listReports({ status = 'open', limit = 50 } = {}) {
 			where r.status = ${status}
 			order by r.created_at desc limit ${n}
 		`;
-	return rows.map(({ conversation_hash, reporter_hash, ...r }) => r);
+	return rows.map(({ conversation_hash, reporter_hash, ...r }) => ({ ...r, reason_title: reasonTitle(r.reason) }));
 }
 
 /** Close or reopen a report; returns the row, or null for an unknown id. */

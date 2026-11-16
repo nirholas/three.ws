@@ -51,6 +51,24 @@
 				<div class="msa-panel msa-skel msa-skel-panel"></div>
 			</div>
 
+			<section class="msa-panel msa-rai" id="responsible-ai" aria-labelledby="msa-rai-title">
+				<header class="msa-panel-head msa-rai-head">
+					<div>
+						<h2 class="msa-h2" id="msa-rai-title">Responsible AI</h2>
+						<p class="msa-sub">Reports and feedback on AI-generated replies and 3D models in the Teams bot, from <code>content_reports</code> and <code>teams_ai_feedback</code></p>
+					</div>
+					<label class="msa-filter">Show
+						<select class="msa-select" id="msa-rai-status">
+							<option value="open" selected>Open reports</option>
+							<option value="actioned">Actioned</option>
+							<option value="dismissed">Dismissed</option>
+							<option value="all">All reports</option>
+						</select>
+					</label>
+				</header>
+				<div id="msa-rai-body" aria-live="polite"><div class="msa-skel msa-skel-panel"></div></div>
+			</section>
+
 			<p class="msa-foot">Microsoft, Microsoft Teams, Power Platform, Power Automate, Microsoft Edge and Partner Center are trademarks of the Microsoft group of companies.</p>
 		</main>
 
