@@ -60,10 +60,14 @@ COPY worker_security.py /app/worker_security.py
 COPY request_policy.py /app/request_policy.py
 COPY matte.py /app/matte.py
 COPY main.py /app/main.py
+# NVIDIA TensorRT denoiser path (TRT_MODE=on), the decoder KV memo, and the
+# offline engine builder plus its speed/parity harness, so this exact image is
+# also the image every engine is built and gated in.
+COPY trt_policy.py trt_runtime.py decode_cache.py parity.py trt_build.py bench_trt.py /app/
 # The tests ship in the image so the served contract can be smoke-tested against
 # the exact dependency set that will run in production:
 #   docker run --rm model-triposg python3 test_app_contract.py
-COPY test_request_policy.py test_matte.py test_app_contract.py /app/
+COPY test_request_policy.py test_matte.py test_app_contract.py test_trt_policy.py /app/
 
 EXPOSE 8080
 

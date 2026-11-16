@@ -38,6 +38,12 @@ def _install_triposg_stub(loaded):
         def to(self, *_args):
             return self
 
+    # main._load_models also attaches the decoder KV memo to the loaded
+    # pipeline (decode_cache.py), which wraps vae.decoder.forward.
+    _Pipe.vae = types.SimpleNamespace(
+        decoder=types.SimpleNamespace(forward=lambda sample, queries, kv_cache=None: None)
+    )
+
     pkg = types.ModuleType("triposg")
     pipes = types.ModuleType("triposg.pipelines")
     mod = types.ModuleType("triposg.pipelines.pipeline_triposg")

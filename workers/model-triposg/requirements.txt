@@ -36,6 +36,14 @@ Pillow==13.0.0  # clears every 11.x/12.x decoder advisory; needs Python 3.11 (se
 pybind11==2.13.6
 ninja==1.11.1.1
 
+# ── NVIDIA TensorRT ──────────────────────────────────────────────────────────
+# Serves the image pipeline's DiT denoiser from a prebuilt FP16 engine
+# (trt_runtime.py; engines built offline by trt_build.py, keyed by this exact
+# version in trt_policy.engine_key). Bundles its own libs and links the CUDA 12
+# runtime torch already ships. onnx is the export format trt_build.py writes.
+tensorrt-cu12==10.13.3.9
+onnx==1.17.0
+
 # ── Server ────────────────────────────────────────────────────────────────────
 fastapi==0.115.0
 uvicorn[standard]==0.32.0
