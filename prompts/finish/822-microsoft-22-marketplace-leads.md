@@ -1,6 +1,6 @@
 # microsoft 22: receive Microsoft Marketplace leads, store them, notify the owner and draft replies
 
-Status 2026-11-14: live in production, paused on one owner step: in Partner Center, point each offer's Customer leads at the HTTPS endpoint URL and select Validate. Code is on threews/main and deployed, MS_MARKETPLACE_LEADS_TOKEN is set on three-ws-api (revision 00536), the cron is synced and passing. See the 822 entries in the progress log.
+Status 2026-11-16: live in production (re-checked today), paused on one owner step: in Partner Center, point each offer's Customer leads at the HTTPS endpoint URL and select Validate. Code is on threews/main and deployed, MS_MARKETPLACE_LEADS_TOKEN is set on three-ws-api (now revision 00545), the cron is synced and passing. See the 822 entries in the progress log.
 
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3122.
 
