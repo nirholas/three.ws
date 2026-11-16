@@ -1,5 +1,7 @@
 # nvidia 01: the /nvidia page proves every NVIDIA lane is live, with measured GPU numbers from real job telemetry
 
+> Status 2026-11-16: code complete and committed (72b323d0d, f01b9d114, 95d3dd512, e647d25ad). Waiting on the owner: `git push threews main`, `npm run deploy:gcp:full`, and the Cloud Scheduler sync for /api/cron/nvidia-lane-probes. Archive this file once production shows /nvidia#live.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `nvidia-` order, so it can run in parallel with all of them. Dev port: 3251.
 
 ## Operating clause (binding)
