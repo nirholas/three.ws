@@ -223,6 +223,24 @@ describe('devApiPagesMiddleware', () => {
 		expect(Buffer.from(res.body).toString()).toBe('<form>consent</form>');
 	});
 
+	it('forwards the bearer token and returns the auth challenge, so a SCIM read through the dev server authenticates', async () => {
+		// /scim/v2 is a vercel.json route to api/scim/v2.js. Microsoft Entra sends
+		// its access token as a bearer, so dropping the authorization header made
+		// every GET through the dev server answer 401 with no challenge.
+		const fetchImpl = vi.fn(async () => new Response('{"totalResults":0}', {
+			status: 200,
+			headers: { 'content-type': 'application/scim+json', 'www-authenticate': 'Bearer realm="three.ws SCIM"' },
+		}));
+		const mw = devApiPagesMiddleware({ root, upstream: 'http://localhost:3147', table: () => table, load: vi.fn(), hasDatabase: () => false, fetchImpl });
+		const res = fakeRes();
+		await mw({ method: 'GET', url: '/scim/v2/Users?count=1', headers: { authorization: 'Bearer tws_scat_abc', 'user-agent': BROWSER } }, res, vi.fn());
+		const [url, init] = fetchImpl.mock.calls[0];
+		expect(url).toBe('http://localhost:3147/scim/v2/Users?count=1');
+		expect(init.headers.authorization).toBe('Bearer tws_scat_abc');
+		expect(res.headers['www-authenticate']).toBe('Bearer realm="three.ws SCIM"');
+		expect(res.statusCode).toBe(200);
+	});
+
 	it('passes everything else, and non-GET methods, to the next middleware', async () => {
 		const mw = devApiPagesMiddleware({ root, upstream: 'https://up.example', table: () => table, load: vi.fn(), hasDatabase: () => true });
 		const next = vi.fn();

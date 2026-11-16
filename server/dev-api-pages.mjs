@@ -296,12 +296,15 @@ export function devApiPagesMiddleware({
 					accept: req.headers.accept || '*/*',
 					'user-agent': req.headers['user-agent'] || 'three.ws-dev',
 					...(req.headers.cookie ? { cookie: req.headers.cookie } : {}),
+					// Bearer-authenticated page routes (/scim/v2, which Microsoft Entra
+					// calls with its access token) need the credential too.
+					...(req.headers.authorization ? { authorization: req.headers.authorization } : {}),
 				},
 				redirect: 'manual',
 				signal: AbortSignal.timeout(60_000),
 			});
 			res.statusCode = r.status;
-			for (const h of ['content-type', 'location', 'cache-control']) {
+			for (const h of ['content-type', 'location', 'cache-control', 'www-authenticate']) {
 				const v = r.headers.get(h);
 				if (v) res.setHeader(h, v);
 			}

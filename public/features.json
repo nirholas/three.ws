@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T15:40:21.547Z",
+	"generated_at": "2026-11-16T15:42:17.067Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -8463,6 +8463,18 @@
 					"title": "Docs · Microsoft Marketplace SaaS offer",
 					"description": "How a Microsoft Marketplace purchase becomes a three.ws plan: the landing page, Entra sign-in, the fulfilment webhook, hourly metered billing and its retry rules, the env vars, and how to test against a preview offer.",
 					"added": "2026-11-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/usage-odata",
+					"title": "Docs · Usage feed for Power BI and Excel",
+					"description": "The three.ws OData v4 usage feed: MCP tool calls, LLM tokens and cost, Forge generations and billing for you or your team, read-only keys, query options, paging, limits, and typed Power Query scripts for Power BI and Excel.",
+					"added": "2026-11-16",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

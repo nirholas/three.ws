@@ -4274,6 +4274,12 @@ URL: https://three.ws/docs/microsoft-marketplace-saas
 
 How a Microsoft Marketplace purchase becomes a three.ws plan: the landing page, Entra sign-in, the fulfilment webhook, hourly metered billing and its retry rules, the env vars, and how to test against a preview offer.
 
+### Docs · Usage feed for Power BI and Excel
+
+URL: https://three.ws/docs/usage-odata
+
+The three.ws OData v4 usage feed: MCP tool calls, LLM tokens and cost, Forge generations and billing for you or your team, read-only keys, query options, paging, limits, and typed Power Query scripts for Power BI and Excel.
+
 ### Docs · three.ws on the Microsoft agent stack
 
 URL: https://three.ws/docs/microsoft-agent-stack
