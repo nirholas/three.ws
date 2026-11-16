@@ -115,7 +115,7 @@ describe('summarizeOperations', () => {
 	it('flags a non-ack row stuck at received and an ack that landed after the deadline', () => {
 		const s = summarizeOperations([
 			op({ id: 'stuck', action: 'Unsubscribe', outcome: 'received', processed_at: null, received_at: at(5 * 60_000) }),
-			op({ id: 'slow', action: 'Reinstate', status: 'InProgress', outcome: 'acknowledged_success', received_at: at(H), processed_at: at(H - 14_000) }),
+			op({ id: 'slow', action: 'ChangeQuantity', status: 'InProgress', outcome: 'acknowledged_success', received_at: at(H), processed_at: at(H - 14_000) }),
 		], NOW);
 		expect(s.unacknowledged.map((o) => [o.id, o.reason])).toEqual([['stuck', 'stuck_received']]);
 		expect(s.late_acks).toHaveLength(1);

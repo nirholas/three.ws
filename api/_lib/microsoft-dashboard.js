@@ -24,7 +24,7 @@ const PRICE_BY_PLAN = Object.fromEntries((PLANS.plans || []).map((p) => [p.id, N
 export const RUNBOOK_URL = 'https://github.com/nirholas/three.ws/blob/main/docs/ops/microsoft-dashboard.md';
 export const runbook = (anchor) => `${RUNBOOK_URL}#${anchor}`;
 
-/** Microsoft auto-accepts an InProgress ChangePlan/ChangeQuantity/Reinstate it has not heard back on in this window. */
+/** Microsoft auto-accepts an InProgress ChangePlan/ChangeQuantity it has not heard back on in this window. */
 export const ACK_DEADLINE_MS = 10_000;
 /** A webhook row still 'received' after this long means the handler died before recording an outcome. */
 export const STUCK_RECEIVED_MS = 60_000;

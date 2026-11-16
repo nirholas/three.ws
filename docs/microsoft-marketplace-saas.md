@@ -60,9 +60,10 @@ Microsoft sign-in on `/login` uses the same Entra app. It only signs in an ident
 `POST /api/microsoft-marketplace/webhook` is the connection webhook entered in Partner Center.
 
 - **Caller check.** The `Authorization` bearer is an Entra token. It is verified against Microsoft's keys, and must carry the Marketplace app as the caller, the publisher tenant and the publisher app as the audience. Anything else gets 401.
-- **Idempotency.** Each operation id is stored once in `microsoft_saas_operations`. A redelivery of a finished operation answers 200 without re-applying it. One that failed part-way is retried.
-- **ChangePlan, ChangeQuantity and Reinstate** arrive `InProgress` and wait for the publisher's verdict. three.ws acknowledges `Success` when it can serve the target plan and `Failure` for a plan id it does not know, so the buyer is never billed for something that is not delivered.
-- **Renew, Suspend, Unsubscribe** and the `Succeeded` follow-ups are already applied by Microsoft. three.ws re-reads the subscription from the Fulfillment API (it never trusts the body), mirrors it, recomputes the plan and writes an audit entry.
+- **Get Operation first.** Microsoft requires the publisher to confirm every call before acting on it. three.ws reads the operation back from the Fulfillment API and refuses with 400 when Microsoft has no such operation (`operation_not_found`) or its id, subscription or action differ from the body (`operation_mismatch`). Everything after this uses Microsoft's copy of the operation, never the body.
+- **Idempotency.** Each operation id is stored once in `microsoft_saas_operations`. A redelivery of a finished operation gets the same answer without re-applying it. One that failed part-way is retried.
+- **ChangePlan and ChangeQuantity** arrive `InProgress` and wait for the publisher's verdict, which is the HTTP response. A 200 accepts (Microsoft completes the change on its own after 10 seconds) and three.ws grants the new plan or seat count at once. A 400 refuses: `unknown_plan` for a Partner Center plan three.ws has no plan for, `invalid_quantity` for a seat count that is not a positive whole number, so the buyer is never billed for something that is not delivered. three.ws never PATCHes the operation.
+- **Renew, Suspend, Unsubscribe and Reinstate** need only a 200. Reinstate arrives `InProgress` while the Fulfillment API still reports `Suspended`, so three.ws applies the operation on top of the subscription it reads back and restores the plan straight away. The same overlay covers the `Succeeded` follow-ups. three.ws then recomputes the plan and writes an audit entry.
 - A failure while applying returns 502, so Microsoft redelivers.
 
 ## Metering

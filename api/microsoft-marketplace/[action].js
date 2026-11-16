@@ -14,9 +14,11 @@
 //   GET  /api/microsoft-marketplace/subscriptions  The signed-in user's Microsoft subscriptions.
 //   GET  /api/microsoft-marketplace/status         Whether this deployment can take purchases.
 //   POST /api/microsoft-marketplace/webhook        Microsoft's connection webhook. Verifies the
-//        Entra bearer token, applies each operation once (by operation id),
-//        re-reads the subscription from Microsoft rather than trusting the
-//        body, and acknowledges ChangePlan / ChangeQuantity / Reinstate.
+//        Entra bearer token, confirms the call with Get Operation (Microsoft
+//        requires it before acting), applies each operation once (by operation
+//        id) from Microsoft's copy rather than the body, and gives its verdict
+//        on an InProgress ChangePlan / ChangeQuantity in the response: 200
+//        accepts, 400 refuses. Nothing is PATCHed back.
 //
 // Every browser-facing failure lands on /microsoft/activate?error=<code>, which
 // the page explains; the API never leaves raw JSON in the address bar.
@@ -28,6 +30,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { logAudit } from '../_lib/audit.js';
 import { seedDefaultAgent } from '../_lib/seed-default-agent.js';
 import { safeNext } from '../../src/safe-next.js';
+import { emulatorMode } from '../_lib/microsoft-marketplace-emulator.js';
 import {
 	findUserByIdentity, touchIdentity, linkIdentity, IdentityError,
 	signIdentityPayload, unsignIdentityPayload, readCookie, cookie, clearCookie,
@@ -35,7 +38,8 @@ import {
 import {
 	MarketplaceError, LANDING_PATH, ACK_ACTIONS,
 	publisherConfig, ssoConfig, missingConfig,
-	resolvePurchaseToken, getSubscription, activateSubscription, acknowledgeOperation,
+	resolvePurchaseToken, getSubscription, activateSubscription, getOperation,
+	checkWebhookOperation, subscriptionAfterOperation, operationVerdict,
 	verifyWebhookToken, buildSsoAuthorize, exchangeSsoCode, verifySsoIdToken,
 	identityMatchesSubscription, upsertSubscription, findSubscription, recomputeUserPlan,
 	publicSubscription, planForMicrosoftPlan,
@@ -281,7 +285,10 @@ async function handleSubscriptions(req, res) {
 async function handleWebhook(req, res) {
 	if (!method(req, res, ['POST'])) return;
 	try {
-		await verifyWebhookToken(req.headers.authorization);
+		// Microsoft's SaaS API emulator cannot mint Entra tokens; emulator mode
+		// (refused in any production runtime) relies on Get Operation below,
+		// which every call has to pass either way.
+		if (!emulatorMode()) await verifyWebhookToken(req.headers.authorization);
 	} catch (err) {
 		if (err instanceof MarketplaceError) return error(res, err.status, err.code, err.message);
 		throw err;
@@ -292,24 +299,44 @@ async function handleWebhook(req, res) {
 	const action = typeof body?.action === 'string' ? body.action : null;
 	if (!operationId || !subscriptionId || !action) return error(res, 400, 'validation_error', 'id, subscriptionId and action are required');
 
+	let op;
+	try {
+		op = await getOperation(subscriptionId, operationId);
+		checkWebhookOperation(body, op);
+	} catch (err) {
+		if (!(err instanceof MarketplaceError)) throw err;
+		if (err.extra?.upstreamStatus === 404) return error(res, 400, 'operation_not_found', 'Microsoft has no record of this operation');
+		if (err.code === 'operation_mismatch') return error(res, 400, err.code, err.message);
+		// Microsoft could not be reached: a non-2xx makes it redeliver.
+		return error(res, 502, err.code, err.message);
+	}
+
+	const quantity = Number.isFinite(Number(op.quantity)) && op.quantity != null ? Number(op.quantity) : null;
 	const [fresh] = await sql`
 		insert into microsoft_saas_operations (id, subscription_id, action, plan_id, quantity, status, raw)
-		values (${operationId}, ${subscriptionId}, ${action}, ${body.planId ?? null},
-		        ${Number.isFinite(Number(body.quantity)) ? Number(body.quantity) : null}, ${body.status ?? null},
+		values (${operationId}, ${subscriptionId}, ${action}, ${op.planId ?? null}, ${quantity}, ${op.status ?? null},
 		        ${JSON.stringify(body)}::jsonb)
 		on conflict (id) do nothing
 		returning id
 	`;
 	if (!fresh) {
 		const [prior] = await sql`select outcome from microsoft_saas_operations where id = ${operationId} limit 1`;
-		// A redelivery of an operation we already finished is answered without
-		// re-applying it. One that failed mid-way is retried below.
+		// A redelivery of an operation we already finished is answered the same
+		// way without re-applying it. One that failed mid-way is retried below.
+		if (prior?.outcome === 'acknowledged_failure') {
+			const verdict = operationVerdict(op);
+			return error(res, 400, verdict.code || 'operation_refused', verdict.message || 'three.ws refused this operation');
+		}
 		if (prior && prior.outcome !== 'received' && prior.outcome !== 'failed') return json(res, 200, { ok: true, duplicate: true });
+		await sql`update microsoft_saas_operations set plan_id = ${op.planId ?? null}, quantity = ${quantity}, status = ${op.status ?? null} where id = ${operationId}`;
 	}
 
 	try {
-		const outcome = await applyOperation({ operationId, subscriptionId, action, body });
-		await sql`update microsoft_saas_operations set outcome = ${outcome}, error = null, processed_at = now() where id = ${operationId}`;
+		const { outcome, verdict } = await applyOperation(op);
+		await sql`update microsoft_saas_operations set outcome = ${outcome}, error = ${verdict?.ok === false ? verdict.message : null}, processed_at = now() where id = ${operationId}`;
+		// A 4xx is Microsoft's documented way for the publisher to refuse an
+		// InProgress ChangePlan / ChangeQuantity; the buyer is not charged for it.
+		if (verdict?.ok === false) return error(res, 400, verdict.code, verdict.message);
 		return json(res, 200, { ok: true, outcome });
 	} catch (err) {
 		await sql`update microsoft_saas_operations set outcome = 'failed', error = ${String(err?.message || err).slice(0, 500)}, processed_at = now() where id = ${operationId}`;
@@ -319,25 +346,30 @@ async function handleWebhook(req, res) {
 	}
 }
 
-async function applyOperation({ operationId, subscriptionId, action, body }) {
-	if (ACK_ACTIONS.includes(action) && body.status === 'InProgress') {
-		// Microsoft waits for our verdict. Accept a plan or quantity we can
-		// serve; refuse an unknown plan so the buyer is not billed for nothing.
-		const targetPlan = action === 'ChangePlan' ? body.planId : null;
-		const ok = targetPlan == null || Boolean(planForMicrosoftPlan(targetPlan));
-		await acknowledgeOperation(subscriptionId, operationId, ok ? 'Success' : 'Failure');
-		const row = await upsertSubscription(await getSubscription(subscriptionId));
-		if (row.user_id) await recomputeUserPlan(row.user_id);
-		return ok ? 'acknowledged_success' : 'acknowledged_failure';
+async function applyOperation(op) {
+	const { action, subscriptionId } = op;
+	if (ACK_ACTIONS.includes(action) && op.status === 'InProgress') {
+		// Microsoft waits for our verdict and auto-accepts a 200 after 10
+		// seconds. Accept a plan or seat count we can serve; refuse anything
+		// else so the buyer is not billed for nothing.
+		const verdict = operationVerdict(op);
+		if (!verdict.ok) return { outcome: 'acknowledged_failure', verdict };
+		await mirror(op, subscriptionId);
+		return { outcome: 'acknowledged_success', verdict };
 	}
-	// Renew, Suspend, Unsubscribe, and the Succeeded follow-ups: Microsoft has
-	// already applied it. Re-read the authoritative state and mirror it.
-	const row = await upsertSubscription(await getSubscription(subscriptionId));
+	// Renew, Suspend, Unsubscribe, Reinstate and the Succeeded follow-ups.
+	await mirror(op, subscriptionId);
+	return { outcome: 'applied' };
+}
+
+// The Fulfillment API GET lags an operation, so its change is applied on top.
+async function mirror(op, subscriptionId) {
+	const row = await upsertSubscription(subscriptionAfterOperation(await getSubscription(subscriptionId), op));
 	if (row.user_id) {
 		const plan = await recomputeUserPlan(row.user_id);
-		logAudit({ userId: row.user_id, action: `microsoft_marketplace:${action.toLowerCase()}`, resourceId: subscriptionId, meta: { status: row.saas_status, plan } });
+		logAudit({ userId: row.user_id, action: `microsoft_marketplace:${op.action.toLowerCase()}`, resourceId: subscriptionId, meta: { status: row.saas_status, plan, operationStatus: op.status } });
 	}
-	return 'applied';
+	return row;
 }
 
 // ── dispatch ────────────────────────────────────────────────────────────────

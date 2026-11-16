@@ -23,6 +23,15 @@
 //   MS_MARKETPLACE_CLIENT_SECRET  that app's client secret
 //   MS_ENTRA_SSO_CLIENT_ID        multitenant app for buyer sign-in on the landing page
 //   MS_ENTRA_SSO_CLIENT_SECRET    that app's client secret
+//
+// Endpoint overrides, unset in production (each defaults to Microsoft's host):
+//   MS_MARKETPLACE_API_BASE       Fulfillment API base (default https://marketplaceapi.microsoft.com/api)
+//   MS_MARKETPLACE_METERING_BASE  Metering API base (same default)
+//   MS_MARKETPLACE_TOKEN_URL      publisher token endpoint (default the tenant's
+//                                 login.microsoftonline.com v2.0 token endpoint)
+// MS_MARKETPLACE_EMULATOR=1 selects Microsoft's SaaS API emulator for local
+// lifecycle runs; see microsoft-marketplace-emulator.js, which refuses it in a
+// production runtime.
 
 import { readFileSync } from 'node:fs';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
@@ -30,15 +39,19 @@ import { sql } from './db.js';
 import { env } from './env.js';
 import { fetchUpstream } from './upstream-fetch.js';
 import { randomToken, sha256Base64Url } from './crypto.js';
+import { assertEmulatorModeAllowed, emulatorMode, emulatorLoginBase } from './microsoft-marketplace-emulator.js';
+
+assertEmulatorModeAllowed();
 
 const CONFIG = JSON.parse(readFileSync(new URL('../../data/microsoft-marketplace.json', import.meta.url), 'utf8'));
 
 /** The Microsoft Marketplace first-party app: the resource both APIs are called on, and the caller of every webhook. */
 export const MARKETPLACE_APP_ID = '20e940b3-4c77-4b0b-9a53-9e16a1b010a7';
 export const FULFILLMENT_BASE = 'https://marketplaceapi.microsoft.com/api';
+export const METERING_BASE = 'https://marketplaceapi.microsoft.com/api';
 export const API_VERSION = '2018-08-31';
 const LOGIN_BASE = 'https://login.microsoftonline.com';
-const JWKS_URL = `${LOGIN_BASE}/common/discovery/v2.0/keys`;
+const JWKS_PATH = '/common/discovery/v2.0/keys';
 
 export const OFFER_ID = CONFIG.offer_id;
 export const LANDING_PATH = CONFIG.landing_path;
@@ -47,10 +60,13 @@ export const DIMENSIONS = Object.freeze(CONFIG.dimensions.map((d) => Object.free
 /** Statuses Microsoft reports on a SaaS subscription (saasSubscriptionStatus). */
 export const SAAS_STATUSES = Object.freeze(['PendingFulfillmentStart', 'Subscribed', 'Suspended', 'Unsubscribed']);
 
-/** Webhook actions that wait for the publisher's PATCH before Microsoft completes them. */
-export const ACK_ACTIONS = Object.freeze(['ChangePlan', 'ChangeQuantity', 'Reinstate']);
-/** Webhook actions Microsoft has already applied; the publisher only reflects them. */
-export const NOTIFY_ACTIONS = Object.freeze(['Renew', 'Suspend', 'Unsubscribe']);
+/**
+ * Webhook actions Microsoft holds InProgress for the publisher's verdict: a 200
+ * accepts (Microsoft auto-accepts after 10 seconds), a 4xx refuses.
+ */
+export const ACK_ACTIONS = Object.freeze(['ChangePlan', 'ChangeQuantity']);
+/** Webhook actions that only need a 200; the publisher reflects them. Reinstate arrives InProgress. */
+export const NOTIFY_ACTIONS = Object.freeze(['Renew', 'Suspend', 'Unsubscribe', 'Reinstate']);
 
 export class MarketplaceError extends Error {
 	constructor(code, message, status = 400, extra = undefined) {
@@ -87,6 +103,24 @@ export function ssoConfig() {
 
 export function ssoRedirectUri() {
 	return `${env.APP_ORIGIN}/api/microsoft-marketplace/sso/callback`;
+}
+
+function baseUrl(name, fallback) {
+	return (envValue(name) || fallback).replace(/\/+$/, '');
+}
+
+/**
+ * Where each Microsoft API lives. Every value defaults to Microsoft's
+ * production host; the overrides exist so the full lifecycle can run against
+ * Microsoft's SaaS API emulator (scripts/microsoft-saas-e2e.mjs).
+ */
+export function marketplaceEndpoints() {
+	const tokenOverride = envValue('MS_MARKETPLACE_TOKEN_URL');
+	return {
+		fulfillmentBase: baseUrl('MS_MARKETPLACE_API_BASE', FULFILLMENT_BASE),
+		meteringBase: baseUrl('MS_MARKETPLACE_METERING_BASE', METERING_BASE),
+		tokenUrl: (tenantId) => tokenOverride || `${LOGIN_BASE}/${encodeURIComponent(tenantId)}/oauth2/v2.0/token`,
+	};
 }
 
 /** Names of the env vars a deployment still needs, for an honest 501. */
@@ -127,9 +161,12 @@ let cachedToken = null;
 export async function publisherToken() {
 	const cfg = publisherConfig();
 	if (!cfg) throw new MarketplaceError('not_configured', 'the Microsoft Marketplace publisher app is not configured', 501);
-	if (cachedToken && cachedToken.expiresAt - 60_000 > Date.now()) return cachedToken.value;
+	const tokenUrl = marketplaceEndpoints().tokenUrl(cfg.tenantId);
+	// Keyed by endpoint and app so a rotated client id never reuses the old app's token.
+	const key = `${tokenUrl} ${cfg.clientId}`;
+	if (cachedToken && cachedToken.key === key && cachedToken.expiresAt - 60_000 > Date.now()) return cachedToken.value;
 	const res = await fetchUpstream(
-		`${LOGIN_BASE}/${encodeURIComponent(cfg.tenantId)}/oauth2/v2.0/token`,
+		tokenUrl,
 		{
 			method: 'POST',
 			headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
@@ -146,15 +183,15 @@ export async function publisherToken() {
 	if (!res.ok || !body.access_token) {
 		throw new MarketplaceError('publisher_auth_failed', body.error_description || body.error || `Entra answered ${res.status}`, 502);
 	}
-	cachedToken = { value: body.access_token, expiresAt: Date.now() + Number(body.expires_in || 3600) * 1000 };
+	cachedToken = { key, value: body.access_token, expiresAt: Date.now() + Number(body.expires_in || 3600) * 1000 };
 	return cachedToken.value;
 }
 
 // ── Fulfillment API v2 ──────────────────────────────────────────────────────
 
-async function marketplaceCall(path, { method = 'GET', body = null, headers = {}, okStatuses = [200] } = {}) {
+async function marketplaceCall(path, { method = 'GET', body = null, headers = {}, okStatuses = [200], base = marketplaceEndpoints().fulfillmentBase } = {}) {
 	const token = await publisherToken();
-	const url = `${FULFILLMENT_BASE}${path}${path.includes('?') ? '&' : '?'}api-version=${API_VERSION}`;
+	const url = `${base}${path}${path.includes('?') ? '&' : '?'}api-version=${API_VERSION}`;
 	const res = await fetchUpstream(
 		url,
 		{
@@ -178,7 +215,7 @@ async function marketplaceCall(path, { method = 'GET', body = null, headers = {}
 	}
 	if (!okStatuses.includes(res.status)) {
 		const message = data?.message || data?.error?.message || `Microsoft Marketplace answered ${res.status}`;
-		const code = res.status === 400 && path.includes('/resolve') ? 'invalid_token'
+		const code = res.status === 400 && path.endsWith('/resolve') ? 'invalid_token'
 			: res.status === 404 ? 'subscription_not_found'
 			: res.status === 403 ? 'publisher_forbidden'
 			: 'marketplace_error';
@@ -212,21 +249,81 @@ export async function getOperation(subscriptionId, operationId) {
 	return marketplaceCall(`/saas/subscriptions/${encodeURIComponent(subscriptionId)}/operations/${encodeURIComponent(operationId)}`);
 }
 
-/** Tell Microsoft whether a ChangePlan / ChangeQuantity / Reinstate succeeded on our side. */
-export async function acknowledgeOperation(subscriptionId, operationId, status) {
-	if (status !== 'Success' && status !== 'Failure') throw new Error(`invalid operation status ${status}`);
-	return marketplaceCall(
-		`/saas/subscriptions/${encodeURIComponent(subscriptionId)}/operations/${encodeURIComponent(operationId)}`,
-		{ method: 'PATCH', body: { status }, okStatuses: [200, 202] },
-	);
+/**
+ * Check a webhook body against Microsoft's own copy of the operation (Get
+ * Operation). Microsoft requires this before the publisher acts on a call, and
+ * it is what authenticates a call in emulator mode. Pure.
+ */
+export function checkWebhookOperation(body, op) {
+	for (const field of ['id', 'subscriptionId', 'action']) {
+		if (!op || op[field] !== body?.[field]) {
+			throw new MarketplaceError('operation_mismatch', `the webhook ${field} does not match Microsoft's record of the operation`, 400);
+		}
+	}
+	return true;
+}
+
+/**
+ * The subscription as it stands once an operation lands. While an operation is
+ * InProgress, and briefly after it succeeds, the Fulfillment API GET still
+ * returns the earlier copy, so the operation's own change is applied on top.
+ * A failed operation changes nothing, and Unsubscribed is final. Pure.
+ */
+export function subscriptionAfterOperation(sub, op) {
+	if (!op || (op.status !== 'InProgress' && op.status !== 'Succeeded')) return sub;
+	const status = sub.saasSubscriptionStatus;
+	if (status === 'Unsubscribed') return sub;
+	switch (op.action) {
+		case 'ChangePlan':
+			return op.planId ? { ...sub, planId: op.planId } : sub;
+		case 'ChangeQuantity':
+			return Number(op.quantity) > 0 ? { ...sub, quantity: Number(op.quantity) } : sub;
+		case 'Reinstate':
+			return status === 'Suspended' ? { ...sub, saasSubscriptionStatus: 'Subscribed' } : sub;
+		case 'Suspend':
+			return op.status === 'Succeeded' && status === 'Subscribed' ? { ...sub, saasSubscriptionStatus: 'Suspended' } : sub;
+		case 'Unsubscribe':
+			return op.status === 'Succeeded' ? { ...sub, saasSubscriptionStatus: 'Unsubscribed' } : sub;
+		default:
+			return sub;
+	}
+}
+
+/**
+ * Whether three.ws accepts an InProgress ChangePlan / ChangeQuantity, and why
+ * not when it refuses. Pure.
+ */
+export function operationVerdict(op) {
+	if (op.action === 'ChangePlan' && !planForMicrosoftPlan(op.planId)) {
+		return { ok: false, code: 'unknown_plan', message: `three.ws has no plan for Partner Center plan ${op.planId}` };
+	}
+	if (op.action === 'ChangeQuantity') {
+		const q = Number(op.quantity);
+		if (!Number.isInteger(q) || q <= 0) return { ok: false, code: 'invalid_quantity', message: `seat count ${op.quantity} is not a positive whole number` };
+	}
+	return { ok: true };
 }
 
 // ── Webhook authentication ──────────────────────────────────────────────────
 
 let jwks = null;
 function microsoftJwks() {
-	if (!jwks) jwks = createRemoteJWKSet(new URL(JWKS_URL));
+	if (!jwks) jwks = createRemoteJWKSet(new URL(`${LOGIN_BASE}${JWKS_PATH}`));
 	return jwks;
+}
+
+// Buyer sign-in only: the authority is Microsoft's unless emulator mode names a
+// local one. Webhook tokens always verify against Microsoft's keys.
+function ssoAuthority() {
+	return emulatorLoginBase() || LOGIN_BASE;
+}
+
+const emulatorJwksByAuthority = new Map();
+function ssoJwks() {
+	const authority = emulatorLoginBase();
+	if (!authority) return microsoftJwks();
+	if (!emulatorJwksByAuthority.has(authority)) emulatorJwksByAuthority.set(authority, createRemoteJWKSet(new URL(`${authority}${JWKS_PATH}`)));
+	return emulatorJwksByAuthority.get(authority);
 }
 
 /**
@@ -272,7 +369,7 @@ export async function buildSsoAuthorize({ loginHint = null } = {}) {
 	const state = randomToken(16);
 	const nonce = randomToken(16);
 	const verifier = randomToken(32);
-	const url = new URL(`${LOGIN_BASE}/organizations/oauth2/v2.0/authorize`);
+	const url = new URL(`${ssoAuthority()}/organizations/oauth2/v2.0/authorize`);
 	url.searchParams.set('client_id', cfg.clientId);
 	url.searchParams.set('redirect_uri', ssoRedirectUri());
 	url.searchParams.set('response_type', 'code');
@@ -291,7 +388,7 @@ export async function exchangeSsoCode({ code, verifier }) {
 	const cfg = ssoConfig();
 	if (!cfg) throw new MarketplaceError('not_configured', 'Microsoft sign-in is not configured', 501);
 	const res = await fetchUpstream(
-		`${LOGIN_BASE}/organizations/oauth2/v2.0/token`,
+		`${ssoAuthority()}/organizations/oauth2/v2.0/token`,
 		{
 			method: 'POST',
 			headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
@@ -344,7 +441,7 @@ export async function verifySsoIdToken(idToken, { nonce }) {
 	if (!cfg) throw new MarketplaceError('not_configured', 'Microsoft sign-in is not configured', 501);
 	let payload;
 	try {
-		({ payload } = await jwtVerify(idToken, microsoftJwks(), { audience: cfg.clientId, clockTolerance: 300 }));
+		({ payload } = await jwtVerify(idToken, ssoJwks(), { audience: cfg.clientId, clockTolerance: 300 }));
 	} catch (err) {
 		throw new MarketplaceError('sso_invalid_token', `the Microsoft token did not verify: ${err?.code || err?.message}`, 401);
 	}
@@ -504,5 +601,5 @@ export function chunk(list, size) {
 export async function postUsageBatch(events) {
 	if (!events.length) return { result: [] };
 	if (events.length > METERING_BATCH_MAX) throw new Error(`metering batch over ${METERING_BATCH_MAX}`);
-	return marketplaceCall('/batchUsageEvent', { method: 'POST', body: { request: events } });
+	return marketplaceCall('/batchUsageEvent', { method: 'POST', body: { request: events }, base: marketplaceEndpoints().meteringBase });
 }

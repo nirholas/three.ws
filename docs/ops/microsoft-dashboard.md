@@ -19,7 +19,7 @@ Both crons are in the `vercel.json` `crons` array. Run `node scripts/create-gcp-
 | MRR | `microsoft_saas_subscriptions` x `data/plans.json` `price_usd` | now | For each non-test `Subscribed` row: the list price of the three.ws plan its Microsoft plan maps to (`data/microsoft-marketplace.json`), times `max(quantity, 1)`. |
 | Subscriptions by status and plan | `microsoft_saas_subscriptions` | all time | Counted by `saas_status` and `plan_id`. Rows with `is_test` are excluded and counted separately. |
 | Webhook operations, failures | `microsoft_saas_operations` | 7 days | Counted by action and outcome. A failure is `outcome = 'failed'`. The series shows a daily total with failures stacked on top. |
-| Unacknowledged / late acks | `microsoft_saas_operations` | 7 days | An `InProgress` ChangePlan, ChangeQuantity or Reinstate not acknowledged within 10 s, or any row still at `received` after 60 s. A late ack is one acknowledged after 10 s. |
+| Unacknowledged / late acks | `microsoft_saas_operations` | 7 days | An `InProgress` ChangePlan or ChangeQuantity without a recorded verdict within 10 s, or any row still at `received` after 60 s. A late ack is one acknowledged after 10 s. |
 | Metering verdicts | `microsoft_saas_usage_events` | 7 days by `effective_start_time`, plus any rejected/expired row updated in 7 days | `accepted` / `duplicate` (Microsoft answered Duplicate, stored as accepted with message `Duplicate`) / `expired` / `rejected` / `pending`. The last error is the newest rejected, expired or retried-pending row. |
 | Teams conversations, tenants | `microsoft_surface_events` (`surface = 'teams_bot'`) | 30 days (tenants active in 7 days) | Distinct `conversation_id` and `tenant_id`. |
 | Message extension and card actions | `microsoft_surface_events` (`teams_bot`) | 7 days | `composeExtension/query` counts as a search. `queryLink` / `anonymousQueryLink` count as unfurls. `adaptiveCard/action`, `submitAction`, `selectItem` and `fetchTask` count as card actions. 401/403 count as unverified. |
@@ -51,12 +51,12 @@ Each section below is linked from the board's "What to do" button and from the a
 
 ### Webhook unacknowledged
 
-Microsoft sent an `InProgress` ChangePlan, ChangeQuantity or Reinstate, and three.ws did not PATCH the operation back within 10 s. Microsoft then decides on its own (typically accepting the change), which can leave the plan in three.ws out of step. A row stuck at `received` means the handler died before recording an outcome.
+Microsoft sent an `InProgress` ChangePlan or ChangeQuantity, and three.ws did not answer the webhook (the answer is the verdict: 200 accepts, 400 refuses) within 10 s. Microsoft then decides on its own (typically accepting the change), which can leave the plan in three.ws out of step. A row stuck at `received` means the handler died before recording an outcome.
 
 1. Open the record on the board. Note `operation`, `subscription_id` and `received_at`.
 2. Check the API logs around `received_at` for `/api/microsoft-marketplace/webhook` (`npm run logs`).
 3. Read Microsoft's view with the helpers in [api/_lib/microsoft-marketplace.js](../../api/_lib/microsoft-marketplace.js), using the production env: `getSubscription(subscriptionId)` and `getOperation(subscriptionId, operationId)`. Compare plan and quantity with `microsoft_saas_subscriptions`. If they differ, apply Microsoft's values to the row and to the account's plan.
-4. If the operation is still `InProgress` at Microsoft, call `acknowledgeOperation(subscriptionId, operationId, 'Success')` (or `'Failure'` to refuse the change). If it is already settled, set the row's `outcome` to match what Microsoft applied, so the incident clears.
+4. Microsoft settles an unanswered operation itself after 10 s, so there is nothing to send back. Once `getOperation` shows it settled, set the row's `outcome` to match what Microsoft applied (`acknowledged_success` or `acknowledged_failure`), so the incident clears.
 
 ### Webhook failed
 
