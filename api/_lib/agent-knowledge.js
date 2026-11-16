@@ -3,15 +3,19 @@
 //
 //   ingestDocument   raw file -> workers/markitdown (POST /convert) -> Markdown
 //                    -> knowledge-chunker (slides, sheets, pages, sections)
-//                    -> embeddings (the platform's free-first lane walk)
-//                    -> agent_knowledge_docs + agent_knowledge_chunks
+//                    -> storeDocument: embeddings (the platform's free-first
+//                    lane walk) -> agent_knowledge_docs + agent_knowledge_chunks
+//   PDFs             go through api/_lib/knowledge-pdf-jobs.js instead: NVIDIA
+//                    NeMo Retriever layout extraction as a stepped job, which
+//                    ends in storeDocument too and falls back to text
+//                    extraction on any failure
 //   listDocuments    the source list with chunk counts
 //   deleteDocument   removes the doc; the FK cascade removes every chunk
 //   searchKnowledge  top chunks for a query (cosine in pgvector, same-space only,
 //                    optional NIM rerank), used by the test box and by chat
 //   retrieveForChat  + knowledgePromptBlock: what api/chat.js injects
 //
-// The original file is never stored. Routes: api/agents/[id]/knowledge.js.
+// The original file is never kept (a PDF job holds it only while it runs). Routes: api/agents/[id]/knowledge.js.
 // Docs: docs/agent-knowledge.md. Worker: workers/markitdown/README.md.
 
 import { createHash } from 'node:crypto';
@@ -158,34 +162,68 @@ export async function deleteDocument(agentId, docId) {
 }
 
 /**
- * Convert, chunk, embed and store one uploaded file.
- * @returns {{ doc: object, duplicate: boolean }}
+ * Gate an upload before any expensive work: an identical file already on the
+ * agent comes back as `existing`; a full agent or a server with no embedder
+ * throws. `pending` counts in-flight PDF jobs against the document cap.
+ * @returns {Promise<{ sha256: string, existing: object|null }>}
  */
-export async function ingestDocument({ agentId, userId, name, bytes }) {
-	const format = formatForFileName(name);
-	if (!format) throw unsupported();
+export async function preflightUpload({ agentId, bytes, pending = 0 }) {
 	if (!bytes?.length) throw new KnowledgeError(400, 'empty_file', 'The file is empty.');
 	if (bytes.length > MAX_UPLOAD_BYTES) throw tooLarge();
-
 	const sha256 = createHash('sha256').update(bytes).digest('hex');
 	const [existing] = await sql`
 		SELECT ${DOC_COLUMNS} FROM agent_knowledge_docs WHERE agent_id = ${agentId} AND sha256 = ${sha256}
 	`;
-	if (existing) return { doc: presentDoc(existing), duplicate: true };
+	if (existing) return { sha256, existing: presentDoc(existing) };
 
 	const [{ n }] = await sql`SELECT count(*)::int AS n FROM agent_knowledge_docs WHERE agent_id = ${agentId}`;
-	if (n >= MAX_DOCS_PER_AGENT) {
+	if (n + pending >= MAX_DOCS_PER_AGENT) {
 		throw new KnowledgeError(409, 'too_many_docs', `An agent can hold up to ${MAX_DOCS_PER_AGENT} documents. Delete one to add another.`);
 	}
 	if (!defaultIngestEmbedderTag()) {
 		throw new KnowledgeError(503, 'embedder_unavailable', 'No embedding provider is configured on this server.');
 	}
+	return { sha256, existing: null };
+}
+
+/**
+ * Convert, chunk, embed and store one uploaded file through MarkItDown.
+ * PDFs normally go through the layout-aware job instead
+ * (api/_lib/knowledge-pdf-jobs.js), which falls back here.
+ * @returns {{ doc: object, duplicate: boolean }}
+ */
+export async function ingestDocument({ agentId, userId, name, bytes }) {
+	const format = formatForFileName(name);
+	if (!format) throw unsupported();
+	const { sha256, existing } = await preflightUpload({ agentId, bytes });
+	if (existing) return { doc: existing, duplicate: true };
 
 	const converted = await convertWithMarkItDown({ bytes, name, mime: format.mime });
 	const meta = converted.metadata || {};
 	const title = typeof meta.title === 'string' && meta.title.trim() ? meta.title.trim().slice(0, 300) : null;
 	const chunks = chunkDocument(converted.markdown, { kind: format.kind, title: title || name });
 	if (!chunks.length) throw new KnowledgeError(422, 'no_text', `No readable text was found in this ${format.label} file.`);
+	const doc = await storeDocument({
+		agentId,
+		userId,
+		name,
+		format,
+		byteSize: bytes.length,
+		sha256,
+		title,
+		meta: { ...pickMeta(meta), extractor: 'markitdown' },
+		chunks,
+	});
+	return { doc, duplicate: false };
+}
+
+/**
+ * Embed and persist a chunked document. Chunks may carry `embed_text` (what to
+ * embed when the content is longer than the embedder's window) and `source`
+ * (where on the page the chunk came from).
+ * @returns {Promise<object>} the stored doc, presented
+ */
+export async function storeDocument({ agentId, userId, name, format, byteSize, sha256, title, meta = {}, chunks }) {
 	const kept = chunks.slice(0, MAX_CHUNKS_PER_DOC);
 
 	// Embed everything before writing anything, so a provider failure leaves no
@@ -195,9 +233,10 @@ export async function ingestDocument({ agentId, userId, name, bytes }) {
 	// the rest stay in the default space. Search scores every chunk only against
 	// a query embedded by its own model, so a mixed document retrieves cleanly.
 	const tag = defaultIngestEmbedderTag();
+	if (!tag) throw new KnowledgeError(503, 'embedder_unavailable', 'No embedding provider is configured on this server.');
 	const embedded = [];
 	for (let i = 0; i < kept.length; i += EMBED_BATCH) {
-		const slice = kept.slice(i, i + EMBED_BATCH).map((c) => c.content);
+		const slice = kept.slice(i, i + EMBED_BATCH).map((c) => c.embed_text || c.content);
 		try {
 			embedded.push(...(await embedPassagesEach(tag, slice)));
 		} catch (err) {
@@ -210,7 +249,7 @@ export async function ingestDocument({ agentId, userId, name, bytes }) {
 	const docId = shortId('akd');
 	const tokenCount = kept.reduce((s, c) => s + c.token_count, 0);
 	const storedMeta = {
-		...pickMeta(meta),
+		...meta,
 		...(chunks.length > kept.length ? { chunks_dropped: chunks.length - kept.length } : {}),
 	};
 
@@ -220,7 +259,7 @@ export async function ingestDocument({ agentId, userId, name, bytes }) {
 			 chunk_count, token_count, embedder)
 		VALUES
 			(${docId}, ${agentId}, ${userId}, ${name.slice(0, 255)}, ${format.kind}, ${format.mime},
-			 ${bytes.length}, ${sha256}, ${title}, ${JSON.stringify(storedMeta)},
+			 ${byteSize}, ${sha256}, ${title}, ${JSON.stringify(storedMeta)},
 			 ${kept.length}, ${tokenCount}, ${docTag})
 		RETURNING ${DOC_COLUMNS}
 	`;
@@ -235,14 +274,15 @@ export async function ingestDocument({ agentId, userId, name, bytes }) {
 				token_count: c.token_count,
 				embedder: embedded[i + j].tag,
 				embedding: JSON.stringify(Array.from(embedded[i + j].vector)),
+				source: c.source || null,
 			}));
 			await sql`
 				INSERT INTO agent_knowledge_chunks
-					(doc_id, agent_id, embedder, chunk_index, heading, locator, content, token_count, embedding)
+					(doc_id, agent_id, embedder, chunk_index, heading, locator, content, token_count, embedding, source)
 				SELECT ${docId}, ${agentId}, r.embedder, r.chunk_index, r.heading, r.locator, r.content,
-				       r.token_count, r.embedding::vector
+				       r.token_count, r.embedding::vector, r.source
 				FROM jsonb_to_recordset(${JSON.stringify(payload)}::jsonb)
-					AS r(chunk_index int, heading text, locator text, content text, token_count int, embedder text, embedding text)
+					AS r(chunk_index int, heading text, locator text, content text, token_count int, embedder text, embedding text, source jsonb)
 			`;
 		}
 	} catch (err) {
@@ -250,7 +290,28 @@ export async function ingestDocument({ agentId, userId, name, bytes }) {
 		throw err;
 	}
 
-	return { doc: presentDoc(row), duplicate: false };
+	return presentDoc(row);
+}
+
+/**
+ * The tables extracted from a PDF, for the "View extracted tables" panel:
+ * every chunk whose source element is a table, in page order.
+ */
+export async function listDocumentTables(agentId, docId) {
+	const rows = await sql`
+		SELECT c.chunk_index, c.heading, c.locator, c.content, c.source
+		FROM agent_knowledge_chunks c
+		WHERE c.agent_id = ${agentId} AND c.doc_id = ${docId} AND c.source->>'element' = 'table'
+		ORDER BY c.chunk_index
+	`;
+	return rows.map((r) => ({
+		chunk_index: Number(r.chunk_index),
+		heading: r.heading || null,
+		page: Number(r.source?.page) || null,
+		part: r.source?.part || null,
+		parts: r.source?.parts || null,
+		content: String(r.content),
+	}));
 }
 
 // The space most of a document's chunks live in, recorded on the doc row.
@@ -289,7 +350,7 @@ export async function searchKnowledge(agentId, query, { topK = 5, minScore = 0 }
 		}
 		const vec = JSON.stringify(Array.from(await embedQuery(embedder, q)));
 		const rows = await sql`
-			SELECT c.id, c.doc_id, c.chunk_index, c.heading, c.locator, c.content, c.token_count,
+			SELECT c.id, c.doc_id, c.chunk_index, c.heading, c.locator, c.content, c.token_count, c.source,
 			       d.name, d.title, d.kind, 1 - (c.embedding <=> ${vec}::vector) AS score
 			FROM agent_knowledge_chunks c
 			JOIN agent_knowledge_docs d ON d.id = c.doc_id
@@ -321,6 +382,7 @@ export async function searchKnowledge(agentId, query, { topK = 5, minScore = 0 }
 			heading: r.heading || null,
 			locator: r.locator || null,
 			chunk_index: Number(r.chunk_index),
+			source: r.source || null,
 			score: Math.round(r.score * 1000) / 1000,
 			content: String(r.content),
 			excerpt: excerpt(String(r.content), 320),

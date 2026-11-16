@@ -115,3 +115,28 @@
 	.kd-drop, .kd-doc, .kd-up, .kd-match, .kd-bar > span { transition: none; animation: none; }
 	.kd-skel, .kd-typing i, .kd-bar.indeterminate > span { animation: none; }
 }
+
+/* PDF jobs: per-page progress notes, live table preview, extracted tables. */
+.kd-doc-wrap { display: flex; flex-direction: column; gap: 0.4rem; }
+.kd-doc-note { font-size: 0.68rem; color: rgba(253, 224, 71, 0.75); margin-top: 0.2rem; }
+.kd-tables-btn { white-space: nowrap; }
+.kd-tables-btn:focus-visible, .kd-up-tables:focus-visible, .kd-tbl-scroll:focus-visible { outline: 2px solid #7aa2ff; outline-offset: 2px; }
+.kd-tables-btn:active, .kd-up-tables:active { transform: scale(0.97); }
+.kd-tables { display: flex; flex-direction: column; gap: 0.75rem; padding: 0.25rem 0 0.5rem 0.75rem; border-left: 2px solid rgba(122, 162, 255, 0.25); margin-left: 1.3rem; animation: kd-in 0.2s ease-out; }
+.kd-up-note { font-size: 0.7rem; color: rgba(255, 255, 255, 0.55); margin-top: 0.4rem; }
+.kd-up-tables {
+	margin-top: 0.5rem; background: none; border: 1px solid rgba(122, 162, 255, 0.3); border-radius: 999px; color: #9ad0ff;
+	font-size: 0.7rem; padding: 0.2rem 0.65rem; cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease;
+}
+.kd-up-tables:hover { background: rgba(122, 162, 255, 0.1); border-color: rgba(122, 162, 255, 0.55); }
+.kd-up-preview { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.6rem; max-height: 24rem; overflow-y: auto; animation: kd-in 0.2s ease-out; }
+.kd-tbl-fig { margin: 0; }
+.kd-tbl-fig figcaption { font-size: 0.72rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 0.35rem; line-height: 1.45; }
+.kd-page { display: inline-block; font: 600 0.62rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: #9ad0ff; background: rgba(122, 162, 255, 0.12); border-radius: 4px; padding: 0.15rem 0.3rem; margin-right: 0.3rem; }
+.kd-part { color: rgba(255, 255, 255, 0.45); }
+.kd-tbl-scroll { overflow-x: auto; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; }
+.kd-tbl { border-collapse: collapse; width: 100%; font-size: 0.7rem; font-variant-numeric: tabular-nums; }
+.kd-tbl th, .kd-tbl td { padding: 0.3rem 0.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.06); text-align: left; white-space: nowrap; color: rgba(255, 255, 255, 0.82); }
+.kd-tbl th { background: rgba(255, 255, 255, 0.05); font-weight: 600; color: rgba(255, 255, 255, 0.92); position: sticky; top: 0; }
+.kd-tbl tbody tr:hover td { background: rgba(122, 162, 255, 0.06); }
+.kd-tbl-raw { margin: 0; font-size: 0.7rem; white-space: pre-wrap; color: rgba(255, 255, 255, 0.75); }

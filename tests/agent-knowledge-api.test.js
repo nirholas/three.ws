@@ -73,6 +73,11 @@ function query(q, values) {
 			})
 			.sort((a, b) => b.score - a.score);
 	}
+	if (q.startsWith('SELECT ? FROM agent_knowledge_jobs WHERE agent_id = ?')) {
+		// PDF jobs have their own suite (tests/knowledge-pdf-jobs.test.js); the
+		// formats exercised here never create one.
+		return [];
+	}
 	throw new Error(`unexpected query in test: ${q.slice(0, 120)}`);
 }
 
@@ -82,6 +87,7 @@ vi.mock('../api/_lib/db.js', () => ({
 	sql: vi.fn((strings, ...values) => {
 		const q = strings.join('?').replace(/\s+/g, ' ').trim();
 		if (q.startsWith('id, agent_id, uploaded_by')) return { __fragment: 'doc-columns' };
+		if (q.startsWith('id, agent_id, user_id, name, sha256')) return { __fragment: 'job-columns' };
 		return Promise.resolve().then(() => query(q, values));
 	}),
 }));
@@ -93,7 +99,7 @@ vi.mock('../api/_lib/auth.js', () => ({
 }));
 vi.mock('../api/_lib/csrf.js', () => ({ requireCsrf: vi.fn(async () => true) }));
 vi.mock('../api/_lib/rate-limit.js', () => ({
-	limits: { authIp: vi.fn(async () => ({ success: true })) },
+	limits: { authIp: vi.fn(async () => ({ success: true })), authedReadIp: vi.fn(async () => ({ success: true })) },
 	clientIp: () => '127.0.0.1',
 }));
 

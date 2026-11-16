@@ -948,6 +948,22 @@
 			"dest": "/api/agents/[id]/knowledge?id=$1&action=search"
 		},
 		{
+			"src": "/api/agents/([^/]+)/knowledge/jobs/([^/]+)/step",
+			"dest": "/api/agents/[id]/knowledge?id=$1&job_id=$2&action=step"
+		},
+		{
+			"src": "/api/agents/([^/]+)/knowledge/jobs/([^/]+)",
+			"dest": "/api/agents/[id]/knowledge?id=$1&job_id=$2"
+		},
+		{
+			"src": "/api/agents/([^/]+)/knowledge/jobs",
+			"dest": "/api/agents/[id]/knowledge?id=$1&action=jobs"
+		},
+		{
+			"src": "/api/agents/([^/]+)/knowledge/([^/]+)/tables",
+			"dest": "/api/agents/[id]/knowledge?id=$1&doc_id=$2&action=tables"
+		},
+		{
 			"src": "/api/agents/([^/]+)/knowledge/([^/]+)",
 			"dest": "/api/agents/[id]/knowledge?id=$1&doc_id=$2"
 		},
@@ -7593,6 +7609,10 @@
 		}
 	],
 	"crons": [
+		{
+			"path": "/api/cron/knowledge-pdf-jobs",
+			"schedule": "* * * * *"
+		},
 		{
 			"path": "/api/cron/indexnow-reconcile",
 			"schedule": "*/10 * * * *"

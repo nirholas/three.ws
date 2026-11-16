@@ -239,3 +239,115 @@ function sectionUnits(text, title) {
 		return fitOrSplit(heading, locator, s.body, TARGET_TOKENS);
 	});
 }
+
+/**
+ * Chunk the layout blocks api/_lib/pdf-extract.js produces from a PDF.
+ *
+ *   tables  one chunk per table, caption included, never split unless the
+ *           table passes MAX_UNIT_TOKENS (then on row boundaries with the
+ *           header row repeated, like an oversized sheet);
+ *   charts  one chunk per chart: caption, detected labels and the values read
+ *           from it;
+ *   prose   per page, labelled with the page and the nearest section title,
+ *           packed to TARGET_TOKENS on paragraph boundaries.
+ *
+ * Every chunk carries `source` ({ page, element, bbox }) linking it back to the
+ * page region it came from, and `embed_text` when the full content is too long
+ * for the embedder: a digest of caption, header row and row labels, so a
+ * question about any row still finds the table.
+ *
+ * @param {{ page: number, type: string, text: string, caption?: string, markdown?: string, bbox?: object, cells?: string[][] }[]} blocks
+ * @param {{ title?: string }} [opts]
+ */
+export function chunkPdfBlocks(blocks, { title } = {}) {
+	const units = [];
+	const pages = new Map();
+	for (const b of blocks || []) {
+		if (!b || !String(b.text || '').trim()) continue;
+		if (!pages.has(b.page)) pages.set(b.page, []);
+		pages.get(b.page).push(b);
+	}
+	let section = title ? clip(title, 120) : '';
+	for (const page of [...pages.keys()].sort((a, b) => a - b)) {
+		const locator = `Page ${page}`;
+		let prose = [];
+		let proseSection = section;
+		const flushProse = () => {
+			const body = prose.join('\n\n').trim();
+			if (body) {
+				const heading = proseSection ? `${locator} · ${proseSection}` : locator;
+				for (const u of fitOrSplit(heading, locator, body, TARGET_TOKENS)) units.push({ ...u, source: { page, element: 'text' } });
+			}
+			prose = [];
+			proseSection = section;
+		};
+		for (const b of pages.get(page)) {
+			if (b.type === 'title') {
+				flushProse();
+				section = clip(b.text, 120);
+				proseSection = section;
+				continue;
+			}
+			if (b.type === 'table' || b.type === 'chart') {
+				flushProse();
+				units.push(...visualUnits(b, locator, page));
+				continue;
+			}
+			prose.push(b.text.trim());
+		}
+		flushProse();
+	}
+	return units
+		.filter((u) => u.content.trim())
+		.map((u, i) => ({ ...u, chunk_index: i, token_count: estimateTokens(u.content) }));
+}
+
+const EMBED_CHARS = 1500;
+
+function visualUnits(block, locator, page) {
+	const kind = block.type === 'table' ? 'Table' : 'Figure';
+	const caption = String(block.caption || '').trim();
+	const heading = `${locator} · ${caption ? clip(caption, 140) : kind}`;
+	const body = [caption, block.type === 'table' ? block.markdown || block.text : block.text].filter(Boolean).join('\n\n');
+	const source = { page, element: block.type, ...(block.bbox ? { bbox: block.bbox } : {}) };
+	const whole = unit(heading, locator, body);
+	const parts =
+		estimateTokens(whole.content) <= MAX_UNIT_TOKENS
+			? [whole]
+			: block.type === 'table' && block.markdown
+				? tableChunks(heading, body)
+				: proseChunks(heading, locator, body);
+	return parts.map((u, i) => {
+		const out = { ...u, locator, source: parts.length > 1 ? { ...source, part: i + 1, parts: parts.length } : source };
+		if (u.content.length > EMBED_CHARS) out.embed_text = embedDigest(u.content, heading, caption, block);
+		return out;
+	});
+}
+
+// What a long table or chart chunk is about, within the embedder's window:
+// heading, caption, the header row and the first cell of every row (the row
+// labels people ask about), then as much of the content as still fits.
+function embedDigest(content, heading, caption, block) {
+	const lines = [heading];
+	if (caption) lines.push(clip(caption, 300));
+	if (block.cells?.length) {
+		lines.push(block.cells[0].filter(Boolean).join(', '));
+		lines.push(
+			block.cells
+				.slice(1)
+				.map((r) => r[0])
+				.filter(Boolean)
+				.join('; '),
+		);
+	}
+	let digest = lines.filter(Boolean).join('\n');
+	if (digest.length < EMBED_CHARS) digest += `\n${content.slice(heading.length).trim()}`;
+	return digest.slice(0, EMBED_CHARS);
+}
+
+function clip(text, max) {
+	const t = String(text || '').replace(/\s+/g, ' ').trim();
+	if (t.length <= max) return t;
+	const cut = t.lastIndexOf(' ', max);
+	return `${t.slice(0, cut > max * 0.6 ? cut : max).trim()}…`;
+}
