@@ -6511,6 +6511,12 @@ URL: https://three.ws/docs/microsoft-a2a
 
 Add the three.ws A2A agent in Copilot Studio and Azure AI Foundry: endpoint, agent card, API key and OAuth setup, streaming, cancel, and an Agent Framework client sample.
 
+### Docs · three.ws 3D Studio agent for Microsoft 365 Copilot
+
+URL: https://three.ws/docs/microsoft-copilot-agent
+
+The three.ws declarative agent for Microsoft 365 Copilot: what users see, its six conversation starters, how it is validated, sideloading in a developer tenant, and production proof for every starter.
+
 ### Trust center
 
 URL: https://three.ws/trust

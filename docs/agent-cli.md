@@ -37,6 +37,33 @@ The package directory also ships:
 - a `flake.nix` for Nix (`nix run ./packages/agent-cli -- --help`);
 - an `install.ps1` that checks the Node version on Windows and links the command.
 
+### Windows with winget
+
+On Windows 10 1809 / Server 2019 or later (x64 or arm64) you do not need Node.js at all:
+`three-ws-agent` also ships as one self-contained executable with Node.js built in, packaged
+for winget as `ThreeWs.Agent`. winget puts `three-ws-agent` on your PATH.
+
+```powershell
+winget install ThreeWs.Agent
+three-ws-agent doctor
+three-ws-agent login
+```
+
+Until the package is merged into the community winget repository, install it from the
+manifests in this repository instead. Enable local manifests once from an admin terminal,
+then install:
+
+```powershell
+winget settings --enable LocalManifestFiles
+winget install --manifest distributions\winget\manifests\t\ThreeWs\Agent\0.2.0
+```
+
+You can also download the zip for your architecture (the URLs and SHA256 hashes are in
+`data/agent-cli-releases.json`) and run `three-ws-agent.exe` from wherever you unzip it.
+The executable is not code-signed yet, so SmartScreen may ask for confirmation the first time
+you run it from a zip downloaded in a browser. Remove it with `winget uninstall ThreeWs.Agent`.
+Release steps: [distributions/winget/README.md](../distributions/winget/README.md).
+
 Run `three-ws-agent doctor` after installing. It checks Node, the config file, the credential,
 the model endpoint (and lists its models), the MCP tools, SQLite with full-text search and the
 shell sandbox, and tells you how to fix anything that fails.

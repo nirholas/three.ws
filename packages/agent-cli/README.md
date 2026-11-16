@@ -53,6 +53,26 @@ Other ways to run it: [Dockerfile](Dockerfile) and [docker-compose.yml](docker-c
 (the gateway as a service), [flake.nix](flake.nix) (`nix run`), and
 [install.ps1](install.ps1) for Windows. Every command's `--help` prints its flags.
 
+### Windows: one executable, no Node.js needed
+
+Windows x64 and arm64 get a single self-contained `three-ws-agent.exe` with
+Node.js 26 LTS built in, packaged for winget as `ThreeWs.Agent`:
+
+```powershell
+winget install ThreeWs.Agent        # once the package is merged into winget-pkgs
+# until then, from a checkout (admin, once: winget settings --enable LocalManifestFiles)
+winget install --manifest distributions\winget\manifests\t\ThreeWs\Agent\0.2.0
+three-ws-agent --version
+```
+
+The zips (exe, LICENSE, README) are in the write-once archive listed in
+[data/agent-cli-releases.json](../../data/agent-cli-releases.json) with their
+SHA256. [scripts/build-windows.mjs](scripts/build-windows.mjs) builds them
+(esbuild bundle, `node --build-sea` into the official SHASUMS-checked
+`node.exe`), [scripts/release-windows.mjs](scripts/release-windows.mjs)
+archives them, and [distributions/winget](../../distributions/winget/README.md)
+holds the manifests and the release steps.
+
 ## Example
 
 Save as `agent-check.mjs` at the repo root and run `node agent-check.mjs`. It
