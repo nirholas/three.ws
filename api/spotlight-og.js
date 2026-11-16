@@ -55,7 +55,7 @@ export default wrap(async (req, res) => {
 			: `${entry.agent_name} on three.ws${builder ? `, by ${builder}` : ''}.`;
 
 	const pageUrl = `${origin}/spotlight/${entry.id}`;
-	const ogImage = `${origin}/api/og/agent?id=${encodeURIComponent(entry.agent_id)}`;
+	const ogImage = `${origin}/api/og/agent?id=${encodeURIComponent(entry.agent_id)}&format=png`;
 
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/html; charset=utf-8');

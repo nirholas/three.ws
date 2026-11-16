@@ -222,10 +222,32 @@ export default wrap(async (req, res) => {
 	const svg = renderCard({ id, row, solAddress, balances, rep, pnl, tipsCount, achievements, avatarData });
 
 	res.statusCode = 200;
-	res.setHeader('content-type', 'image/svg+xml; charset=utf-8');
 	res.setHeader('cache-control', CACHE);
+	if (wantsPng(req.url)) {
+		// LinkedIn and others do not render SVG og:images; heads ask for format=png.
+		try {
+			const png = await svgToPng(svg);
+			res.setHeader('content-type', 'image/png');
+			res.end(png);
+			return;
+		} catch (err) {
+			console.warn('[og/agent] png rasterize failed, serving svg:', String(err?.message || err).slice(0, 160));
+		}
+	}
+	res.setHeader('content-type', 'image/svg+xml; charset=utf-8');
 	res.end(svg);
 });
+
+/** True when the request asks for the rasterized card (?format=png). */
+function wantsPng(reqUrl) {
+	return new URL(reqUrl || '/', 'http://x').searchParams.get('format') === 'png';
+}
+
+/** Rasterize the 1200x630 card SVG to a PNG. */
+async function svgToPng(svg) {
+	const { default: sharp } = await import('sharp');
+	return sharp(Buffer.from(svg), { density: 72 }).resize(1200, 630).png({ compressionLevel: 9 }).toBuffer();
+}
 
 /**
  * The card itself, pure: given the agent row and its already-resolved (possibly
@@ -400,5 +422,5 @@ function fallback(res) {
 
 // Exposed for unit tests: renders the card from fixed rows and enrichments.
 export const __testInternals = {
-	renderCard, fmtUsd, headlineAchievement, gradientForName, trunc, imageMime, avatarImageUrl,
+	renderCard, svgToPng, wantsPng, fmtUsd, headlineAchievement, gradientForName, trunc, imageMime, avatarImageUrl,
 };

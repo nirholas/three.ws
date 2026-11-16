@@ -26,6 +26,32 @@ import { putObject } from './_lib/r2.js';
 import { renderGlbToPng } from './_lib/render-glb.js';
 import { thumbBackdropFor } from './_lib/avatar-thumbs.js';
 
+const CARD_W = 1200;
+const CARD_H = 630;
+const THUMB_FETCH_MS = 4000;
+const THUMB_MAX_BYTES = 8 * 1024 * 1024;
+
+/** Letterbox any raster thumbnail into the 1200x630 PNG unfurlers expect. */
+export async function thumbnailToCard(bytes) {
+	const { default: sharp } = await import('sharp');
+	return sharp(bytes, { animated: false })
+		.resize(CARD_W, CARD_H, { fit: 'contain', background: '#0a0a0f' })
+		.png({ compressionLevel: 9 })
+		.toBuffer();
+}
+
+async function fetchThumbnailCard(url) {
+	try {
+		const r = await fetch(url, { headers: { accept: 'image/*' }, signal: AbortSignal.timeout(THUMB_FETCH_MS) });
+		if (r.status !== 200 || !(r.headers.get('content-type') || '').startsWith('image/')) return null;
+		const bytes = Buffer.from(await r.arrayBuffer());
+		if (!bytes.length || bytes.length > THUMB_MAX_BYTES) return null;
+		return await thumbnailToCard(bytes);
+	} catch {
+		return null;
+	}
+}
+
 const CACHE_CARD_OK = 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800';
 const CACHE_CARD_404 = 'public, max-age=60';
 const CACHE_REDIR = 'public, max-age=3600';
@@ -81,6 +107,16 @@ export default wrap(async (req, res) => {
 	// on every crawl. The healing write for a genuinely poisoned key lives in
 	// renderAndCache's write-back guard instead.
 	if (avatar.thumbnail_url) {
+		// Thumbnails are usually square webp. LinkedIn wants a 1200x630 PNG/JPEG,
+		// so normalize; any failure keeps the plain redirect.
+		const card = await fetchThumbnailCard(avatar.thumbnail_url);
+		if (card) {
+			res.statusCode = 200;
+			res.setHeader('content-type', 'image/png');
+			res.setHeader('cache-control', CACHE_RENDERED);
+			res.end(card);
+			return;
+		}
 		res.statusCode = 302;
 		res.setHeader('location', avatar.thumbnail_url);
 		res.setHeader('cache-control', CACHE_REDIR);

@@ -87,7 +87,7 @@ export default wrap(async (req, res) => {
 	// pay-and-hire card from it, while everything else gets this share card.
 	const hireShare = !walletShare && url.searchParams.get('hire') === '1';
 
-	const ogImage  = `${origin}/api/og/agent?id=${encodeURIComponent(id)}`;
+	const ogImage  = `${origin}/api/og/agent?id=${encodeURIComponent(id)}&format=png`;
 	const pageUrl  = hireShare
 		? `${origin}/agents/${encodeURIComponent(id)}/hire`
 		: `${origin}/agents/${encodeURIComponent(id)}/share${walletShare ? '?wallet=1' : ''}`;

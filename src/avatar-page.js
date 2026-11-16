@@ -22,6 +22,7 @@ import { fbxFromUrl } from './remesh-convert.js';
 import { safeUrl } from './safe-url.js';
 import { apiFetch } from './api.js';
 import { log } from './shared/log.js';
+import { teamsShareUrl, linkedinShareUrl, wireShareAnchor } from './shared/share-targets.js';
 import { toast } from './shared/toast.js';
 import { emptyStateHTML, errorStateHTML } from './shared/state-kit.js';
 import { mountViewSwitcher } from './view-switcher.js';
@@ -1796,9 +1797,22 @@ async function bindHireShare(agentId) {
 }
 
 function setShareXHref(text) {
+	setMicrosoftShareHrefs(text);
 	const twBtn = $('share-twitter');
 	if (!twBtn) return;
 	twBtn.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.href)}`;
+}
+
+let microsoftShareWired = false;
+function setMicrosoftShareHrefs(text) {
+	const teams = $('share-teams');
+	const linkedin = $('share-linkedin');
+	if (teams) teams.href = teamsShareUrl(location.href, text);
+	if (linkedin) linkedin.href = linkedinShareUrl(location.href);
+	if (microsoftShareWired) return;
+	microsoftShareWired = true;
+	if (teams) wireShareAnchor(teams, 'teams');
+	if (linkedin) wireShareAnchor(linkedin, 'linkedin');
 }
 
 // ── Owner actions (Edit / Deploy on-chain / Launch Pump.fun) ─────────

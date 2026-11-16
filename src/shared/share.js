@@ -20,6 +20,7 @@
  */
 
 import { Modal } from './modal.js';
+import { teamsShareUrl, linkedinShareUrl, wireShareAnchor } from './share-targets.js';
 
 const STYLE_ID = 'tws-share-styles';
 const FARCASTER_COMPOSE = 'https://warpcast.com/~/compose';
@@ -39,6 +40,10 @@ export function showSharePanel(entity, triggerEl = null) {
 	const fcText = encodeURIComponent(shareText ? `${shareText}: ` : `${title} on three.ws; `);
 	const fcEmbed = encodeURIComponent(shareUrl || location.href);
 	const fcHref = `${FARCASTER_COMPOSE}?text=${fcText}&embeds[]=${fcEmbed}`;
+
+	const canonical = shareUrl || location.href;
+	const teamsHref = teamsShareUrl(canonical, shareText || `${title} on three.ws`);
+	const linkedinHref = linkedinShareUrl(canonical);
 
 	const descHtml = description
 		? `<p class="tws-sp-desc">${esc(description)}</p>`
@@ -76,6 +81,14 @@ export function showSharePanel(entity, triggerEl = null) {
 				${farcasterIcon()}
 				Share on Farcaster
 			</a>
+			<a class="tws-sp-btn tws-sp-teams" data-share-target="teams" href="${esc(teamsHref)}" target="_blank" rel="noopener noreferrer">
+				${teamsIcon()}
+				Share to Teams
+			</a>
+			<a class="tws-sp-btn tws-sp-li" data-share-target="linkedin" href="${esc(linkedinHref)}" target="_blank" rel="noopener noreferrer">
+				${linkedinIcon()}
+				Share on LinkedIn
+			</a>
 			${remixHtml}
 		</div>
 	`;
@@ -85,6 +98,8 @@ export function showSharePanel(entity, triggerEl = null) {
 		body,
 		dismissible: true,
 	}, triggerEl);
+
+	modal.bodyEl.querySelectorAll('[data-share-target]').forEach((a) => wireShareAnchor(a, a.dataset.shareTarget));
 
 	// Wire copy-link button inside the modal body
 	modal.bodyEl.addEventListener('click', async (e) => {
@@ -142,6 +157,14 @@ function xIcon() {
 
 function farcasterIcon() {
 	return `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.927 2C6.428 2 2 6.42 2 11.908s4.428 9.908 9.927 9.908c5.5 0 9.927-4.42 9.927-9.908C21.854 6.42 17.427 2 11.927 2zM8.5 7.5h7l.5 2h-1.5v5.5h-1.5V9.5h-1.5v5.5H10V9.5H8.5L8.5 7.5z"/></svg>`;
+}
+
+function teamsIcon() {
+	return `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 8.5h-4.2v6.3a3.4 3.4 0 0 0 3.4 3.4h.2a3.4 3.4 0 0 0 3.4-3.4V9.9a1.4 1.4 0 0 0-1.4-1.4zM18.6 7.4a2.2 2.2 0 1 0 0-4.4 2.2 2.2 0 0 0 0 4.4zM13 7.2a3.1 3.1 0 1 0 0-6.2 3.1 3.1 0 0 0 0 6.2zM1 9.5v7.2A1.3 1.3 0 0 0 2.3 18h5.1v3.2a1 1 0 0 0 1 1h3.2a1 1 0 0 0 1-1V18h.1a1.3 1.3 0 0 0 1.3-1.3V9.5a1.3 1.3 0 0 0-1.3-1.3H2.3A1.3 1.3 0 0 0 1 9.5z" transform="translate(0 0.4) scale(.96)"/></svg>`;
+}
+
+function linkedinIcon() {
+	return `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45z"/></svg>`;
 }
 
 function sparkleIcon() {

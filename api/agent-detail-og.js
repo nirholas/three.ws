@@ -112,7 +112,7 @@ export default wrap(async (req, res) => {
 	// reputation tier, finish), rendered from real data. The card embeds the
 	// avatar itself, so a shared link previews with identity + wallet, not a bare
 	// thumbnail. The card endpoint falls back to the brand image if it can't render.
-	const ogImage = `${origin}/api/og/agent?id=${encodeURIComponent(agentId)}`;
+	const ogImage = `${origin}/api/og/agent?id=${encodeURIComponent(agentId)}&format=png`;
 	const pageUrl = `${origin}/agents/${agentId}`;
 
 	const facts = [];
