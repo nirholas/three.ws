@@ -46,8 +46,29 @@ STYLE = {
     "Label::status": {"color": MUTED},
     "Label::status_error": {"color": ERROR},
     "Label::status_ok": {"color": OK},
-    "ProgressBar": {"color": ACCENT, "border_radius": 3, "secondary_color": 0xFF2A2A2A},
+    # color fills the bar, secondary_color is the percentage label over it.
+    "ProgressBar": {"color": ACCENT, "border_radius": 3, "background_color": 0xFF2A2A2A, "secondary_color": 0xFFF2F2F2},
 }
+
+
+class _PercentModel(ui.AbstractValueModel):
+    """Job progress as a 0..1 float that the bar labels as a whole percentage."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._value = 0.0
+
+    def get_value_as_float(self) -> float:
+        return self._value
+
+    def get_value_as_string(self) -> str:
+        return f"{round(self._value * 100)}%"
+
+    def set_value(self, value) -> None:
+        value = min(1.0, max(0.0, float(value)))
+        if value != self._value:
+            self._value = value
+            self._value_changed()
 
 
 class ForgeWindow(ui.Window):
@@ -93,7 +114,8 @@ class ForgeWindow(ui.Window):
         self._render_library()
 
     def _build_account(self) -> None:
-        with ui.CollapsableFrame("Account", collapsed=False, height=0):
+        self._account_frame = ui.CollapsableFrame("Account", collapsed=False, height=0)
+        with self._account_frame:
             with ui.VStack(spacing=6, height=0):
                 ui.Label(
                     "Draft and Standard need no account. A three.ws API key adds High, My models and saving to your account.",
@@ -147,7 +169,7 @@ class ForgeWindow(ui.Window):
                 with ui.HStack(height=32, spacing=6):
                     self._generate_btn = ui.Button("Generate", name="primary", clicked_fn=self._generate, tooltip="Generate and import into the stage")
                     self._cancel_btn = ui.Button("Cancel", width=90, clicked_fn=self.controller.cancel, enabled=False)
-                self._progress_model = ui.SimpleFloatModel(0.0)
+                self._progress_model = _PercentModel()
                 self._progress = ui.ProgressBar(self._progress_model, height=8, visible=False)
                 self._status = ui.Label("Ready. Type a prompt and press Generate.", name="status", word_wrap=True)
                 with ui.HStack(height=22, spacing=6):

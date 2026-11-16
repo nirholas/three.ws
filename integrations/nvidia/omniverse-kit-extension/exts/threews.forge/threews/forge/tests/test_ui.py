@@ -44,16 +44,17 @@ async def _capture(name: str) -> str:
     out_dir = os.environ.get("THREEWS_CAPTURE_DIR", "")
     if not out_dir:
         return ""
-    try:
-        import omni.renderer_capture
-    except ImportError:
-        return ""
+    # Asking for captures and getting none is a failed run, not a skipped step.
+    import omni.kit.renderer_capture
+
     path = os.path.join(out_dir, name)
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    capture = omni.renderer_capture.acquire_renderer_capture_interface()
+    capture = omni.kit.renderer_capture.acquire_renderer_capture_interface()
     capture.capture_next_frame_swapchain(path)
     await _frames(6)
     capture.wait_async_capture()
+    if not os.path.isfile(path):
+        raise AssertionError(f"THREEWS_CAPTURE_DIR is set but no screenshot was written to {path}")
     return path
 
 
@@ -111,6 +112,12 @@ class TestForgePanel(omni.kit.test.AsyncTestCase):
         self.assertTrue(stage.GetPrimAtPath("/World/threews/panel_lantern").IsValid())
         await _capture("panel-after-import.png")
 
+    async def test_progress_bar_reads_as_a_percentage(self):
+        w = self.window
+        w._progress_model.set_value(0.516667)
+        self.assertEqual(w._progress_model.get_value_as_string(), "52%")
+        self.assertAlmostEqual(w._progress_model.get_value_as_float(), 0.516667, places=5)
+
     async def test_reference_image_mode_sends_the_image(self):
         w = self.window
         url = "https://three.ws/cdn/forge/refs/panel-lantern.jpg"
@@ -143,11 +150,47 @@ class TestForgePanel(omni.kit.test.AsyncTestCase):
         self.assertIn("Cancelled", w._status.text)
 
 
-def _dock_beside_viewport(window) -> None:
-    """Dock the panel to the right of the viewport, the way a user lays it out."""
+async def _lay_out_beside_viewport(window) -> None:
+    """Size the app window and tile the viewport and panel side by side, the way
+    a user lays them out (a bare Kit app has no saved layout to dock into)."""
+    import omni.appwindow
+
+    app_window = omni.appwindow.get_default_app_window()
+    app_window.resize(1920, 1080)
+    await _frames(10)
+    width, height = app_window.get_width(), app_window.get_height()
+    panel_width = 560
     viewport = ui.Workspace.get_window("Viewport")
     if viewport is not None:
-        window.dock_in(viewport, ui.DockPosition.RIGHT, 0.26)
+        viewport.position_x, viewport.position_y = 0, 0
+        viewport.width, viewport.height = width - panel_width, height
+    window.position_x, window.position_y = width - panel_width, 0
+    window.width, window.height = panel_width, height
+
+
+def _light_stage(stage) -> None:
+    """A new stage in a bare Kit app has no lights. Add a neutral gray dome for
+    fill and a key light, so the imported model reads against the background."""
+    from pxr import Gf, UsdLux
+
+    dome = UsdLux.DomeLight.Define(stage, "/Environment/DomeLight")
+    dome.CreateIntensityAttr(1000.0)
+    dome.CreateColorAttr(Gf.Vec3f(0.22, 0.23, 0.25))
+    sun = UsdLux.DistantLight.Define(stage, "/Environment/DistantLight")
+    sun.CreateIntensityAttr(3000.0)
+    sun.CreateAngleAttr(1.0)
+    UsdGeom.Xformable(sun.GetPrim()).AddRotateXYZOp().Set(Gf.Vec3f(-50.0, 0.0, 30.0))
+
+
+def _aim_camera() -> None:
+    """Look at the origin from a raised three-quarter view in the stage's up axis
+    (the viewport camera was built for the Y-up stage that new_stage_async made)."""
+    from omni.kit.viewport.utility.camera_state import ViewportCameraState
+    from pxr import Gf
+
+    state = ViewportCameraState()
+    state.set_position_world(Gf.Vec3d(420.0, -420.0, 300.0), False)
+    state.set_target_world(Gf.Vec3d(0.0, 0.0, 40.0), True)
 
 
 def _frame_in_viewport(prim_path: str) -> None:
@@ -177,15 +220,24 @@ class TestLivePanel(omni.kit.test.AsyncTestCase):
         UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.z)
         UsdGeom.SetStageMetersPerUnit(stage, 0.01)
         stage.SetDefaultPrim(UsdGeom.Xform.Define(stage, "/World").GetPrim())
+        _light_stage(stage)
         self.window = get_window()
         self.window.visible = True
-        _dock_beside_viewport(self.window)
+        self.window._set_status("Ready. Type a prompt and press Generate.")
+        await _lay_out_beside_viewport(self.window)
+        _aim_camera()
         await _frames(10)
+
+    async def tearDown(self):
+        self.window._account_frame.collapsed = False
 
     async def test_real_generation_from_the_panel(self):
         w = self.window
         await w._refresh_account()
+        self.assertIn("accepted", w._account_label.text)
         await w._load_library(reset=True)
+        # Signed in; fold the Account section away the way a user tidies the panel.
+        w._account_frame.collapsed = True
         url = DEFAULT_IMAGE + "?kit=" + uuid.uuid4().hex[:8]
         w._mode_combo.model.get_item_value_model().set_value(1)
         w._image_model.set_value(url)
