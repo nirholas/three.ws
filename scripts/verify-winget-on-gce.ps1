@@ -204,7 +204,20 @@ if (-not $cmd) {
 $threats = Get-MpThreatDetection -ErrorAction SilentlyContinue
 Say 'INFO' 'defender' ("Defender detections: " + @($threats).Count)
 
-$null = Run 'uninstall' $winget @('uninstall', '--id', 'ThreeWs.Agent', '--exact', '--scope', 'machine', '--accept-source-agreements', '--disable-interactivity')
+$null = (Run 'list' $winget @('list', '--id', 'ThreeWs.Agent', '--source', 'winget', '--accept-source-agreements', '--disable-interactivity') -Optional)
+# A package installed from a local manifest is matched by id only through the
+# winget source, and only when no scope filter hides the machine-scope entry.
+$uninstallAttempts = @(
+	@('uninstall', '--id', 'ThreeWs.Agent', '--exact', '--source', 'winget', '--accept-source-agreements', '--disable-interactivity'),
+	@('uninstall', '--id', 'ThreeWs.Agent', '--exact', '--scope', 'machine', '--accept-source-agreements', '--disable-interactivity'),
+	@('uninstall', '--manifest', $dir, '--accept-source-agreements', '--disable-interactivity')
+)
+$n = 0
+foreach ($attempt in $uninstallAttempts) {
+	$n++
+	if ((Run "uninstall-$n" $winget $attempt -Optional) -eq 0) { break }
+}
+Say 'INFO' 'removed' 'uninstall attempts finished, checking PATH'
 Refresh-Path
 if (Get-Command three-ws-agent -ErrorAction SilentlyContinue) {
 	Say 'EXIT' 'removed' '1'
