@@ -1,5 +1,7 @@
 # microsoft 27: turn the owner's Entra and Azure click-work into one idempotent provisioning command
 
+> Status 2026-11-16: code, tests and docs landed (91c978f5d, f9d78c79d, 0aa1b95d3, d9ba024c4). `npm run microsoft:provision` plans live with no login (27 creates, 4 owner steps). Remaining owner step: `az login` to the publisher tenant, then `npm run microsoft:provision -- --apply --subscription <id>` and the gcloud line it prints.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3127.
 
 ## Operating clause (binding)
