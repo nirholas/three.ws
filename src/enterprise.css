@@ -192,7 +192,10 @@ button.tr-btn { cursor: pointer; }
 /* Print: only the procurement packet, black on white. */
 @media print {
 	@page { margin: 16mm 14mm; }
+	:root { color-scheme: light !important; }
 	html, body { background: #fff !important; color: #000 !important; }
+	.ent-packet .tws-tt { text-decoration: none; }
+	.ent-packet .tws-tt::after { content: none; }
 	body > *:not(main) { display: none !important; }
 	.ent-wrap > *:not(#packet) { display: none !important; }
 	.ent-wrap { max-width: none; padding: 0; }
