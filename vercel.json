@@ -16,7 +16,7 @@
 		"api/cron/{economy-tick,copy-fanout,mirror-fanout,signal-fanout,three-holders-snapshot,x402-autonomous-loop,pulse-tick,coin-intel-observe,launcher-tick,reflect-sweep,solana-autodeploy,db-retention,purge-deleted-accounts,custody-attest,sniper-optimize,sniper-evolve,oracle-realized-labels,oracle-calibrate,arena-tick}.js": {
 			"maxDuration": 120
 		},
-		"api/cron/{strategy-fanout,gmgn-seed,nim-release-eval}.js": {
+		"api/cron/{strategy-fanout,gmgn-seed,nvidia-lane-probes,nim-release-eval}.js": {
 			"maxDuration": 300
 		},
 		"api/cron/treasury-topup.js": {
@@ -452,6 +452,14 @@
 		{
 			"src": "/nvidia/",
 			"dest": "/nvidia/index.html"
+		},
+		{
+			"src": "/nvidia/benchmarks",
+			"dest": "/nvidia/benchmarks.html"
+		},
+		{
+			"src": "/nvidia/benchmarks/",
+			"dest": "/nvidia/benchmarks.html"
 		},
 		{
 			"src": "/press",
@@ -8076,6 +8084,10 @@
 		{
 			"path": "/api/cron/nim-release-eval",
 			"schedule": "*/15 * * * *"
+		},
+		{
+			"path": "/api/cron/nvidia-lane-probes",
+			"schedule": "23 * * * *"
 		},
 		{
 			"path": "/api/cron/economy-reconcile",

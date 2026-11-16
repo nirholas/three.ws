@@ -298,6 +298,40 @@ curl -s -X POST <span class="s">https://three.ws/api/forge</span> \
 		</div>
 	</section>
 
+	<section id="live" data-nvl-root aria-labelledby="nv-live-title">
+		<h2 id="nv-live-title">Live right now.</h2>
+		<p class="sub">
+			Every NVIDIA lane we use is probed on a schedule with a small real request against the exact model
+			the product pins. GPU numbers come from real generation jobs, attributed to the GPU that served them.
+		</p>
+		<p class="nvl-summary" data-nvl="summary" aria-live="polite"><span class="nvl-skel nvl-skel-line" style="display:block"></span></p>
+		<div class="nvl-error" data-nvl="error" role="alert" hidden></div>
+		<div data-nvl="grid" aria-busy="true">
+			<div class="nvl-cards">
+				<div class="nvl-skel nvl-skel-card"></div><div class="nvl-skel nvl-skel-card"></div><div class="nvl-skel nvl-skel-card"></div>
+				<div class="nvl-skel nvl-skel-card"></div><div class="nvl-skel nvl-skel-card"></div><div class="nvl-skel nvl-skel-card"></div>
+			</div>
+		</div>
+
+		<h3 style="margin:34px 0 6px">GPU fleet by the numbers</h3>
+		<p class="sub">Median and p95 end-to-end job time per lane, split by the GPU that ran it: L4 against RTX PRO 6000.</p>
+		<div data-nvl="fleet" aria-busy="true"><div class="nvl-skel nvl-skel-chart"></div></div>
+
+		<details class="nvl-details">
+			<summary>How these numbers are measured</summary>
+			<div data-nvl="method"><p class="nvl-muted">Loading the methodology with the data.</p></div>
+		</details>
+
+		<div class="reads" style="margin-top:18px">
+			<a class="read" href="/nvidia/benchmarks">
+				<span class="kind">Benchmarks</span>
+				<h3>Every lane, every number</h3>
+				<p>7 and 30 day probe tables per lane, real job telemetry, the GPU split and a CSV download.</p>
+				<span class="more">Open the benchmarks &rarr;</span>
+			</a>
+		</div>
+	</section>
+
 	<section>
 		<h2 data-i18n="nvidia_index.the_gpu_fleet">The GPU fleet.</h2>
 		<p class="sub" data-i18n="nvidia_index.what_we_run_ourselves_and_on_which">
@@ -432,6 +466,7 @@ curl -s -X POST <span class="s">https://three.ws/api/forge</span> \
 <div id="footer-container"></div>
 
 <script type="module" src="/src/inception-perk.js"></script>
+<script type="module" src="/src/nvidia-live.js"></script>
 <script src="/brand.js" defer></script>
 <script src="/footer.js"></script>
 <!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->

@@ -1,0 +1,404 @@
+/* Live NVIDIA lane health (src/nvidia-live.js). Reads the host page's tokens:
+   --panel --panel2 --border --text --muted --nv, plus the GPU-family and
+   status slots below, which each page may redefine per theme. */
+
+:where([data-nvl-root]) {
+	--gpu-l4: #3987e5;
+	--gpu-rtx: #d95926;
+	--gpu-other: #8b9382;
+	--st-ok: #0ca30c;
+	--st-warn: #fab219;
+	--st-bad: #d03b3b;
+	--st-off: var(--muted);
+}
+
+.nvl-summary {
+	margin: 0 0 18px;
+	color: var(--muted);
+	font-size: 15px;
+	min-height: 1.5em;
+}
+.nvl-summary strong { color: var(--text); }
+
+.nvl-group {
+	margin: 22px 0 10px;
+	font-size: 12px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--muted);
+	font-weight: 600;
+}
+.nvl-group:first-child { margin-top: 0; }
+
+.nvl-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+	gap: 12px;
+}
+
+.nvl-card {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	min-width: 0;
+	padding: 14px 16px;
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	background: var(--panel);
+	transition: border-color 0.15s ease, transform 0.15s ease;
+	animation: nvl-in 0.25s ease both;
+}
+.nvl-card:hover { border-color: color-mix(in srgb, var(--nv) 45%, var(--border)); }
+.nvl-card-alert { border-color: color-mix(in srgb, var(--st-bad) 55%, var(--border)); }
+
+@keyframes nvl-in {
+	from { opacity: 0; transform: translateY(4px); }
+	to { opacity: 1; transform: none; }
+}
+
+.nvl-card-head {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 10px;
+}
+.nvl-card-head h3 {
+	margin: 2px 0 0;
+	font-size: 15px;
+	line-height: 1.3;
+	color: var(--text);
+}
+.nvl-tech {
+	font-size: 11px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--nv);
+	font-weight: 600;
+}
+
+.nvl-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	flex-shrink: 0;
+	padding: 3px 9px 3px 4px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 600;
+	white-space: nowrap;
+	color: var(--text);
+	background: var(--panel2);
+	border: 1px solid var(--border);
+}
+.nvl-glyph {
+	display: inline-grid;
+	place-items: center;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	font-size: 11px;
+	line-height: 1;
+	color: #fff;
+	background: var(--st-off);
+}
+.nvl-ok .nvl-glyph { background: var(--st-ok); }
+.nvl-warn .nvl-glyph { background: var(--st-warn); color: #1a1400; }
+.nvl-bad .nvl-glyph { background: var(--st-bad); }
+
+.nvl-model {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 12px;
+	color: var(--muted);
+}
+
+.nvl-metrics {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 6px;
+	margin: 0;
+}
+.nvl-metrics dt {
+	font-size: 11px;
+	color: var(--muted);
+}
+.nvl-metrics dd {
+	margin: 2px 0 0;
+	font-size: 16px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	color: var(--text);
+}
+
+.nvl-card-foot {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-top: auto;
+	font-size: 12px;
+	color: var(--muted);
+}
+.nvl-when { margin-left: auto; }
+
+.nvl-detail,
+.nvl-empty-note {
+	margin: 0;
+	font-size: 12px;
+	line-height: 1.45;
+	color: var(--muted);
+}
+.nvl-detail { color: var(--text); }
+
+.nvl-gpu {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--text);
+	white-space: nowrap;
+}
+.nvl-swatch {
+	width: 10px;
+	height: 10px;
+	border-radius: 3px;
+	background: var(--gpu-other);
+}
+.nvl-gpu-l4 .nvl-swatch, .nvl-bar.nvl-gpu-l4 { background: var(--gpu-l4); }
+.nvl-gpu-rtx .nvl-swatch, .nvl-bar.nvl-gpu-rtx { background: var(--gpu-rtx); }
+.nvl-gpu-other .nvl-swatch, .nvl-bar.nvl-gpu-other { background: var(--gpu-other); }
+
+/* Skeletons: real placeholders while the one fetch is in flight. */
+.nvl-skel {
+	border-radius: 12px;
+	background: linear-gradient(90deg, var(--panel) 25%, var(--panel2) 50%, var(--panel) 75%);
+	background-size: 200% 100%;
+	animation: nvl-shimmer 1.4s linear infinite;
+	border: 1px solid var(--border);
+}
+.nvl-skel-card { height: 168px; }
+.nvl-skel-chart { height: 220px; }
+.nvl-skel-line { height: 18px; width: min(420px, 80%); border-radius: 6px; border: 0; }
+@keyframes nvl-shimmer {
+	from { background-position: 200% 0; }
+	to { background-position: -200% 0; }
+}
+
+/* Error and empty states */
+.nvl-error {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 12px;
+	margin: 0 0 16px;
+	padding: 14px 16px;
+	border-radius: 12px;
+	border: 1px solid color-mix(in srgb, var(--st-bad) 55%, var(--border));
+	background: color-mix(in srgb, var(--st-bad) 8%, var(--panel));
+	color: var(--text);
+	font-size: 14px;
+	line-height: 1.5;
+}
+.nvl-error span { flex: 1 1 260px; color: var(--muted); }
+.nvl-error .btn { margin-left: auto; }
+
+.nvl-empty {
+	padding: 18px;
+	border: 1px dashed var(--border);
+	border-radius: 12px;
+	background: var(--panel);
+	color: var(--text);
+}
+.nvl-empty p { margin: 6px 0 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+
+/* Fleet chart: horizontal bars of median job time, p95 tick, one axis. */
+.nvl-chart {
+	position: relative;
+	margin: 0;
+	padding: 16px;
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	background: var(--panel);
+}
+.nvl-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 14px;
+	margin-bottom: 14px;
+}
+.nvl-plot {
+	position: relative;
+	padding-top: 20px;
+}
+.nvl-grid-lines {
+	position: absolute;
+	inset: 0 calc(var(--nvl-value-w, 96px) + 10px) 0 calc(var(--nvl-label-w, 150px) + 10px);
+	pointer-events: none;
+}
+.nvl-grid-lines span {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	border-left: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+.nvl-grid-lines em {
+	position: absolute;
+	top: 0;
+	transform: translateX(-50%);
+	font-style: normal;
+	font-size: 11px;
+	color: var(--muted);
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
+.nvl-grid-lines span:first-child em { transform: none; }
+.nvl-grid-lines span:last-child em { transform: translateX(-100%); }
+.nvl-row {
+	display: grid;
+	grid-template-columns: var(--nvl-label-w, 150px) 1fr var(--nvl-value-w, 96px);
+	align-items: center;
+	gap: 10px;
+	min-height: 40px;
+}
+.nvl-row + .nvl-row { margin-top: 2px; }
+.nvl-row-label {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	font-size: 13px;
+	color: var(--text);
+}
+.nvl-row-label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nvl-row-label small { font-size: 11px; color: var(--muted); }
+.nvl-track {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	height: 24px;
+}
+.nvl-bar {
+	height: 14px;
+	padding: 0;
+	border: 0;
+	border-radius: 0 4px 4px 0;
+	cursor: pointer;
+	flex-shrink: 0;
+	transition: filter 0.15s ease, transform 0.15s ease;
+}
+.nvl-bar:hover { filter: brightness(1.12); }
+.nvl-bar:active { transform: scaleY(0.9); }
+.nvl-bar:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+.nvl-p95 {
+	position: absolute;
+	top: 3px;
+	bottom: 3px;
+	width: 2px;
+	margin-left: -1px;
+	border-radius: 1px;
+	background: var(--text);
+	box-shadow: 0 0 0 2px var(--panel);
+}
+.nvl-bar-value {
+	display: flex;
+	flex-direction: column;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--text);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+	text-align: right;
+}
+.nvl-bar-value small { font-size: 11px; font-weight: 400; color: var(--muted); }
+.nvl-tip {
+	position: absolute;
+	z-index: 3;
+	max-width: 260px;
+	padding: 8px 10px;
+	border-radius: 8px;
+	border: 1px solid var(--border);
+	background: var(--panel2);
+	color: var(--text);
+	font-size: 12px;
+	line-height: 1.45;
+	box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+	pointer-events: none;
+}
+.nvl-chart figcaption {
+	margin-top: 12px;
+	font-size: 12px;
+	color: var(--muted);
+	line-height: 1.5;
+}
+
+.nvl-today {
+	margin-top: 14px;
+	padding: 14px 16px;
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	background: var(--panel);
+}
+.nvl-today h4 { margin: 0 0 10px; font-size: 13px; color: var(--text); }
+.nvl-today ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.nvl-today li {
+	display: grid;
+	grid-template-columns: minmax(110px, 180px) auto 1fr;
+	align-items: center;
+	gap: 10px;
+	font-size: 13px;
+	color: var(--text);
+}
+.nvl-today-name { color: var(--muted); font-size: 12px; }
+
+.nvl-method {
+	display: grid;
+	gap: 12px;
+	margin: 12px 0 0;
+}
+.nvl-method dt { font-weight: 600; font-size: 13px; color: var(--text); }
+.nvl-method dd { margin: 3px 0 0; font-size: 13px; line-height: 1.6; color: var(--muted); }
+
+.nvl-details {
+	margin-top: 18px;
+	padding: 12px 16px;
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	background: var(--panel);
+}
+.nvl-details summary {
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 14px;
+	color: var(--text);
+	border-radius: 6px;
+}
+.nvl-details summary:hover { color: var(--nv); }
+.nvl-details summary:focus-visible { outline: 2px solid var(--nv); outline-offset: 3px; }
+
+.nvl-muted { color: var(--muted); }
+.nvl-sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+	[data-nvl-root] { --nvl-value-w: 76px; }
+	.nvl-row { grid-template-columns: 1fr var(--nvl-value-w); row-gap: 2px; padding-top: 6px; }
+	.nvl-row-label { grid-column: 1 / -1; flex-direction: row; align-items: baseline; gap: 8px; }
+	.nvl-grid-lines { left: 0; }
+	.nvl-grid-lines span:nth-child(2n) em { display: none; }
+	.nvl-today li { grid-template-columns: 1fr auto; }
+	.nvl-today-name { grid-column: 1 / -1; }
+	.nvl-metrics dd { font-size: 15px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.nvl-card, .nvl-skel { animation: none; }
+}

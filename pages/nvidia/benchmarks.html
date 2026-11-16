@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>NVIDIA lane benchmarks: measured latency and GPU job times | three.ws</title>
+	<meta name="description" content="Measured health and latency for every NVIDIA lane three.ws runs: NIM chat, vision, embeddings, NemoGuard, Magpie TTS, Audio2Face-3D, hosted TRELLIS and the self-hosted L4 and RTX PRO 6000 GPU workers. 7 and 30 day tables from real probes and real jobs, with a CSV download." />
+	<link rel="canonical" href="https://three.ws/nvidia/benchmarks" />
+
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="NVIDIA lane benchmarks on three.ws" />
+	<meta property="og:description" content="Real probe latency and real GPU job times for every NVIDIA lane three.ws runs, split by L4 and RTX PRO 6000. Updated hourly, downloadable as CSV." />
+	<meta property="og:url" content="https://three.ws/nvidia/benchmarks" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=NVIDIA+lane+benchmarks&amp;d=Real+probe+latency+and+real+GPU+job+times+for+every+NVIDIA+lane+three.ws+runs%2C+split+by+L4+and+RTX+PRO+6000.&amp;p=%2Fnvidia%2Fbenchmarks" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta property="og:image:alt" content="NVIDIA lane benchmarks on three.ws." />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:locale" content="en_US" />
+
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="NVIDIA lane benchmarks on three.ws" />
+	<meta name="twitter:description" content="Real probe latency and real GPU job times for every NVIDIA lane, split by L4 and RTX PRO 6000." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=NVIDIA+lane+benchmarks&amp;d=Real+probe+latency+and+real+GPU+job+times+for+every+NVIDIA+lane+three.ws+runs%2C+split+by+L4+and+RTX+PRO+6000.&amp;p=%2Fnvidia%2Fbenchmarks" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+
+	<link rel="icon" href="/favicon.ico" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/footer.css" />
+	<script src="/nav.js" defer></script>
+	<style>
+		:root {
+			color-scheme: light;
+			--bg: #f6f7f3;
+			--panel: #ffffff;
+			--panel2: #eef1ea;
+			--border: #dce1d5;
+			--text: #12160f;
+			--muted: #566050;
+			--nv: #4c7a00;
+			--nv-soft: #3f6600;
+		}
+		[data-nvl-root] { --gpu-l4: #2a78d6; --gpu-rtx: #eb6834; --gpu-other: #7a8471; }
+		@media (prefers-color-scheme: dark) {
+			:root:not([data-theme="light"]) {
+				color-scheme: dark;
+				--bg: #05070a; --panel: #10140f; --panel2: #161b13; --border: #1e2318;
+				--text: #e8e8f0; --muted: #8b9382; --nv: #76b900; --nv-soft: #a6e34d;
+			}
+			:root:not([data-theme="light"]) [data-nvl-root] { --gpu-l4: #3987e5; --gpu-rtx: #d95926; --gpu-other: #8b9382; }
+		}
+		:root[data-theme="dark"] {
+			color-scheme: dark;
+			--bg: #05070a; --panel: #10140f; --panel2: #161b13; --border: #1e2318;
+			--text: #e8e8f0; --muted: #8b9382; --nv: #76b900; --nv-soft: #a6e34d;
+		}
+		:root[data-theme="dark"] [data-nvl-root] { --gpu-l4: #3987e5; --gpu-rtx: #d95926; --gpu-other: #8b9382; }
+
+		* { box-sizing: border-box; }
+		body { margin: 0; font: 16px/1.6 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; color: var(--text); background: var(--bg); min-height: 100vh; }
+		a { color: inherit; }
+		:focus-visible { outline: 2px solid var(--nv); outline-offset: 3px; border-radius: 6px; }
+		main { max-width: 1040px; margin: 0 auto; padding: 56px 24px 110px; }
+
+		.crumbs { font-size: 13px; color: var(--muted); margin: 0 0 18px; }
+		.crumbs a { text-decoration: none; color: var(--nv-soft); }
+		.crumbs a:hover { text-decoration: underline; }
+		h1 { font-size: clamp(30px, 5vw, 44px); letter-spacing: -0.025em; line-height: 1.1; font-weight: 650; margin: 0 0 14px; }
+		.lede { font-size: 17px; color: var(--muted); max-width: 720px; margin: 0 0 22px; }
+		h2 { font-size: 22px; letter-spacing: -0.015em; margin: 52px 0 8px; }
+		.sub { color: var(--muted); max-width: 720px; margin: 0 0 18px; font-size: 15px; }
+
+		.actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 30px; }
+		.btn { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 10px; font: inherit; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; border: 1px solid var(--border); background: var(--panel); color: var(--text); transition: background .15s ease, border-color .15s ease, transform .15s ease; }
+		.btn:hover { border-color: var(--nv); background: var(--panel2); }
+		.btn:active { transform: translateY(1px); }
+		.btn-primary { background: var(--nv); border-color: var(--nv); color: #fff; }
+		:root[data-theme="dark"] .btn-primary { color: #071000; }
+		@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn-primary { color: #071000; } }
+		.btn-primary:hover { background: var(--nv-soft); border-color: var(--nv-soft); }
+
+		.table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--panel); }
+		table { width: 100%; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+		th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+		thead th { font-size: 12px; font-weight: 600; color: var(--muted); background: var(--panel2); white-space: nowrap; }
+		tbody tr:last-child > * { border-bottom: 0; }
+		tbody tr:hover { background: color-mix(in srgb, var(--panel2) 60%, transparent); }
+		tbody th { font-weight: 600; min-width: 180px; }
+		tbody th code { font-weight: 400; font-size: 12px; color: var(--muted); word-break: break-all; }
+		code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+		.table-skel { height: 260px; }
+		.foot { margin-top: 40px; font-size: 13px; color: var(--muted); }
+		.foot a { color: var(--nv-soft); }
+	</style>
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"NVIDIA lane benchmarks","description":"Measured health and latency for every NVIDIA lane three.ws runs, from real probes and real jobs.","url":"https://three.ws/nvidia/benchmarks","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}},{"@type":"Dataset","name":"three.ws NVIDIA lane benchmarks","description":"Hourly probe latency and real generation job times per NVIDIA lane, 7 and 30 day windows, split by GPU.","url":"https://three.ws/nvidia/benchmarks","distribution":[{"@type":"DataDownload","encodingFormat":"text/csv","contentUrl":"https://three.ws/api/nvidia/stats?format=csv"},{"@type":"DataDownload","encodingFormat":"application/json","contentUrl":"https://three.ws/api/nvidia/stats"}]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"NVIDIA","item":"https://three.ws/nvidia"},{"@type":"ListItem","position":3,"name":"Benchmarks","item":"https://three.ws/nvidia/benchmarks"}]}]}</script>
+</head>
+<body>
+
+<header><div id="nav-container"></div></header>
+
+<main data-nvl-root>
+	<nav class="crumbs" aria-label="Breadcrumb"><a href="/nvidia">NVIDIA</a> / Benchmarks</nav>
+	<h1>NVIDIA lane benchmarks</h1>
+	<p class="lede">
+		Measured, not quoted. Each NVIDIA lane three.ws runs is probed on a schedule with a small real request,
+		and every number for the GPU workers comes from real generation jobs. Nothing here is estimated.
+	</p>
+	<p class="nvl-summary" data-nvl="summary" aria-live="polite"><span class="nvl-skel nvl-skel-line" style="display:block"></span></p>
+	<div class="actions">
+		<a class="btn btn-primary" data-nvl="csv" href="/api/nvidia/stats?format=csv" download="three-ws-nvidia-benchmarks.csv">Download CSV</a>
+		<a class="btn" href="/api/nvidia/stats" target="_blank" rel="noopener">Raw JSON</a>
+		<a class="btn" href="/nvidia#live">Back to the NVIDIA page</a>
+	</div>
+	<div class="nvl-error" data-nvl="error" role="alert" hidden></div>
+
+	<h2>Lane status</h2>
+	<p class="sub">The last probe of each lane, with its 7 day availability and median latency.</p>
+	<div data-nvl="grid" aria-busy="true">
+		<div class="nvl-cards">
+			<div class="nvl-skel nvl-skel-card"></div><div class="nvl-skel nvl-skel-card"></div><div class="nvl-skel nvl-skel-card"></div>
+		</div>
+	</div>
+
+	<h2>Probe latency, 7 and 30 days</h2>
+	<p class="sub">Availability is successful probes over all probes. Latency is p50 / p95 over successful probes, from our server in us-central1.</p>
+	<div data-nvl="probe-table"><div class="nvl-skel table-skel"></div></div>
+
+	<h2>Real job telemetry</h2>
+	<p class="sub">End-to-end time of real 3D generations per lane (created to completed), and worker-measured GPU time where the worker reports it. Counts in brackets are the jobs that reported GPU time.</p>
+	<div data-nvl="job-table"><div class="nvl-skel table-skel"></div></div>
+
+	<h2>GPU fleet by the numbers</h2>
+	<p class="sub">The same jobs, split by the GPU that served them: NVIDIA L4 against RTX PRO 6000 Blackwell.</p>
+	<div data-nvl="fleet" aria-busy="true"><div class="nvl-skel nvl-skel-chart"></div></div>
+	<div style="margin-top:14px" data-nvl="fleet-table"></div>
+
+	<h2>Methodology</h2>
+	<div data-nvl="method"><p class="nvl-muted">Loading the methodology with the data.</p></div>
+
+	<p class="foot">
+		Data source: <a href="/api/nvidia/stats">/api/nvidia/stats</a>, cached for five minutes.
+		The lanes and models behind each row are described on the <a href="/nvidia">NVIDIA page</a>.
+	</p>
+</main>
+
+<div id="footer-container"></div>
+
+<script type="module" src="/src/nvidia-live.js"></script>
+<script src="/brand.js" defer></script>
+<script src="/footer.js"></script>
+</body>
+</html>
