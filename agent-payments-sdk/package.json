@@ -94,7 +94,7 @@
     "eslint-config-prettier": "^10.1.8",
     "tsup": "^9.0.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.72.1",
+    "typescript-eslint": "^8.72.2",
     "vitest": "^5.0.1",
     "zod": "^4.6.7"
   },
