@@ -1,8 +1,8 @@
 # microsoft campaign: shared context
 
-Every `prompts/finish/8NN-microsoft-*.md` work order (801 to 825) names this file in its first lines. Read it before step 0. CLAUDE.md overrides everything here.
+Every `prompts/finish/8NN-microsoft-*.md` work order (801 to 847) names this file in its first lines. Read it before step 0. CLAUDE.md overrides everything here.
 
-The campaign builds on the three.ws and Microsoft partnership (announced October 2026, publisher profile live on Microsoft Marketplace). Its 25 orders span internal tooling, user-facing product, developer ecosystem and partnership growth. **They are independent by design: all 25 can run at the same time in separate chats.** No order waits on another, and no order may assume another has landed. If you notice work from a sibling order on disk, reuse it when it fits, but never require it.
+The campaign builds on the three.ws and Microsoft partnership (announced October 2026, publisher profile live on Microsoft Marketplace). Its 47 orders (801 to 825 filed 2026-11-11, 826 to 847 filed 2026-11-16) span internal tooling, user-facing product, developer ecosystem, enterprise distribution and partnership growth. **They are independent by design: all of them can run at the same time in separate chats.** No order waits on another, and no order may assume another has landed. If you notice work from a sibling order on disk, reuse it when it fits, but never require it.
 
 ## Facts every order needs
 
@@ -30,7 +30,7 @@ The campaign builds on the three.ws and Microsoft partnership (announced October
 - Never imply Microsoft endorses a feature, a coin or a trading surface. $THREE and the Solana agent economy are three.ws's own. Keep Microsoft-facing listing copy enterprise-focused.
 - Use Microsoft product names only nominatively and add the trademark line from docs/microsoft.md where a page names several Microsoft products. Follow each product's brand rules (for example, never use "Minecraft", "Teams" or "Copilot" as part of a three.ws product name).
 
-## Rules for running 25 orders at once in one worktree
+## Rules for running every order at once in one worktree
 
 1. **Dev server port.** Never take port 3000. Run `npm run dev -- --port <3100 + NN> --strictPort` where `NN` is your order's last two digits (order 807 uses 3107).
 2. **Shared hot files** (`data/changelog.json`, `data/pages.json`, `STRUCTURE.md`, `vercel.json`, `vite.config.js`, `docs/microsoft.md`, `integrations/microsoft/copilot-teams/manifest.template.json`, `package.json`): edit them LAST, re-read the file immediately before each edit, make small anchored `Edit` calls (never rewrite the whole file), and commit right after. If an edit fails because the file moved, re-read and redo it.
