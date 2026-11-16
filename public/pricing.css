@@ -1631,3 +1631,42 @@
 .pc-retry:hover { background: rgba(var(--pr-fg), 0.14); border-color: rgba(var(--pr-fg), 0.5); }
 .pc-retry:active { background: rgba(var(--pr-fg), 0.2); }
 .pc-retry:focus-visible { outline: 2px solid rgb(var(--pr-fg)); outline-offset: 2px; }
+
+/* ── Buying for a company? (links /enterprise or the Marketplace offer) ── */
+
+.pricing-company {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px 28px;
+	max-width: 1100px;
+	margin: 16px auto 0;
+	padding: 22px 28px;
+	box-sizing: border-box;
+	background: var(--pr-card);
+	border: 1px solid rgba(var(--pr-fg), 0.06);
+	border-radius: 18px;
+	transition: border-color var(--duration-fast);
+}
+.pricing-company:hover { border-color: rgba(var(--pr-fg), 0.14); }
+.pricing-company-text { flex: 1 1 320px; min-width: 0; }
+.pricing-company-title { margin: 0 0 4px; font-size: 16px; font-weight: 600; color: rgb(var(--pr-fg)); }
+.pricing-company-sub { margin: 0; font-size: 14px; line-height: 1.55; color: rgba(var(--pr-fg), 0.62); max-width: 62ch; }
+.pricing-company-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
+.pricing-company-actions .pricing-cta { width: auto; white-space: nowrap; }
+.pricing-company-link { font-size: 14px; color: rgba(var(--pr-fg), 0.78); text-underline-offset: 3px; }
+.pricing-company-link:hover { color: rgb(var(--pr-fg)); }
+.pricing-company-link:active { opacity: 0.8; }
+.pricing-company a:focus-visible {
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #3b82f6);
+	outline-offset: 3px;
+	border-radius: 6px;
+}
+@media (max-width: 860px) {
+	.pricing-company { margin: 16px 24px 0; }
+}
+@media (max-width: 560px) {
+	.pricing-company { padding: 18px; }
+	.pricing-company-actions, .pricing-company-actions .pricing-cta { width: 100%; }
+}
