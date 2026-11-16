@@ -352,7 +352,7 @@ function withRetry(browsers, viewport, label, run, attempts = 3) {
 		run,
 		attempts,
 		close: (page) => page.context().close(),
-		onRetry: (attempt, err) => log(`${label} attempt ${attempt} failed (${err.message.split('\n')[0]}); retrying in a fresh page`),
+		onRetry: (attempt, err) => log(`${label} attempt ${attempt} failed (${err.message.split('\n')[0]}); retrying on a relaunched browser`),
 	});
 }
 

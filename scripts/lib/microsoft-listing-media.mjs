@@ -490,7 +490,9 @@ export function trailerProblems({ probe, x264, keyframes, frames }) {
 /**
  * Hold one browser and launch a new one whenever the old process has died. On a
  * machine short of memory the OOM killer can take the whole Chromium process,
- * after which every newContext() on it fails with "Target crashed".
+ * after which every newContext() on it fails with "Target crashed". A browser can
+ * also stay connected after its GPU process dies while every new renderer crashes,
+ * so reset() drops it outright and the next get() launches a new one.
  */
 export function relaunchingBrowser(launch) {
 	let current = null;
@@ -505,13 +507,16 @@ export function relaunchingBrowser(launch) {
 			if (current) await current.close().catch(() => {});
 			current = null;
 		},
+		reset() {
+			return this.close();
+		},
 	};
 }
 
 /**
  * Run one scene in a fresh page, retrying on a renderer crash, a dead browser or a
- * timeout. Opening the page is part of the attempt, so a browser that died between
- * attempts is relaunched instead of failing the run.
+ * timeout. Opening the page is part of the attempt, and every failed attempt drops
+ * the browser, so the retry always runs on a freshly launched one.
  */
 export async function retryInFreshPage({ browsers, open, run, attempts = 3, onRetry, close = (page) => page.close() }) {
 	for (let attempt = 1; ; attempt++) {
@@ -520,8 +525,11 @@ export async function retryInFreshPage({ browsers, open, run, attempts = 3, onRe
 			page = await open(await browsers.get());
 			return await run(page);
 		} catch (err) {
+			if (page) await Promise.resolve().then(() => close(page)).catch(() => {});
+			page = null;
 			if (attempt >= attempts) throw err;
 			onRetry(attempt, err);
+			await browsers.reset();
 		} finally {
 			if (page) await Promise.resolve().then(() => close(page)).catch(() => {});
 		}

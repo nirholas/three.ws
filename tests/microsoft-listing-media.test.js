@@ -319,6 +319,26 @@ describe('recovering from a crashed browser', () => {
 		expect(retries).toEqual(['1: page.waitForSelector: Target crashed']);
 	});
 
+	it('relaunches after a failed attempt even when the old browser still reports connected', async () => {
+		// A browser whose GPU process died stays connected, but every new renderer crashes.
+		let launches = 0;
+		const browsers = relaunchingBrowser(async () => fakeBrowser(++launches));
+		const used = [];
+		const result = await retryInFreshPage({
+			browsers,
+			open: async (browser) => {
+				used.push(browser.id);
+				if (browser.id === 1) throw new Error('browserContext.newPage: Target crashed');
+				return { browser, close: async () => {} };
+			},
+			run: async () => 'shot',
+			attempts: 3,
+			onRetry: () => {},
+		});
+		expect(result).toBe('shot');
+		expect(used).toEqual([1, 2]);
+	});
+
 	it('counts a failure to open the page as an attempt and gives up after the last one', async () => {
 		const browsers = relaunchingBrowser(async () => fakeBrowser(1));
 		let opens = 0;
