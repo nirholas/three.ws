@@ -292,8 +292,9 @@ export async function classifyTopic({ user, history, allowed, agentName }, opts)
 
 /**
  * Run every input check the settings turn on, in parallel, inside one budget.
- * Resolves as soon as any check flags (the rest are aborted) or when all have
- * answered. Never rejects: a failed check is recorded and fails open.
+ * Resolves once a check flags and every higher-priority check has answered
+ * (the rest are aborted), or when all have answered. Never rejects: a failed
+ * check is recorded and fails open.
  *
  * @returns {Promise<{
  *   blocked: null | { check: string, reply: string, categories?: string[], model?: string },
@@ -327,31 +328,35 @@ export async function runInputChecks(settings, { message, history = [], agentNam
 	};
 
 	const results = [];
-	let firstFlag = null;
+	const pending = new Set(wanted);
+	// The block to report: the highest-priority flag so far. A turn resolves on
+	// it only once no higher-priority check is still out, so a fast topic flag
+	// cannot pre-empt (and mislabel) a slower jailbreak or safety verdict. The
+	// wait is bounded by the same budget, and only blocked turns pay it.
+	const bestFlag = () => CHECK_IDS.find((id) => results.some((r) => r.check === id && r.flagged)) || null;
+	const settled = () => {
+		if (!pending.size) return true;
+		const best = bestFlag();
+		return Boolean(best) && CHECK_IDS.slice(0, CHECK_IDS.indexOf(best)).every((id) => !pending.has(id));
+	};
 	await new Promise((resolve) => {
-		let remaining = wanted.length;
 		for (const check of wanted) {
 			runners[check]()
 				.then((r) => {
 					results.push({ check, ok: true, ...r });
-					if (r.flagged && !firstFlag) {
-						firstFlag = check;
-						resolve();
-					}
 				})
 				.catch((err) => {
 					results.push({ check, ok: false, flagged: false, latencyMs: Date.now() - started, error: err?.message || String(err) });
 				})
 				.finally(() => {
-					if (--remaining === 0) resolve();
+					pending.delete(check);
+					if (settled()) resolve();
 				});
 		}
 	});
 	abort.abort();
 
-	// Several checks can flag in the same tick; report the highest-priority one.
-	const flaggedIds = results.filter((r) => r.flagged).map((r) => r.check);
-	const check = CHECK_IDS.find((id) => flaggedIds.includes(id)) || null;
+	const check = bestFlag();
 	// Checks still in flight when a block resolved were cut short, not failed.
 	for (const id of wanted) {
 		if (!results.some((r) => r.check === id)) results.push({ check: id, ok: false, flagged: false, latencyMs: Date.now() - started, error: 'skipped' });

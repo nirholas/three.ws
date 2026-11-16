@@ -160,6 +160,34 @@ describe('runInputChecks', () => {
 		expect(r.results.filter((x) => x.error === 'skipped').map((x) => x.check).sort()).toEqual(['input_safety', 'topic']);
 	});
 
+	it('waits for a pending higher-priority check before blocking on a lower one', async () => {
+		// Live 2026-11-16: a DAN prompt was flagged by topic in ~400 ms and the
+		// still-pending jailbreak check was aborted, so the owner's stats counted
+		// a jailbreak attempt as an off-topic redirect.
+		const { impl } = routedFetch({
+			jailbreak: { delay: 120, res: () => jsonRes({ jailbreak: true, score: 0.7 }) },
+			[GUARD_MODELS.contentSafety]: { delay: 1000, res: () => nim('{"User Safety": "safe"}') },
+			[GUARD_MODELS.topicControl]: { delay: 5, res: () => nim('off-topic') },
+		});
+		const t = Date.now();
+		const r = await runInputChecks(ALL_ON, ctx, { key: 'k', fetchImpl: impl });
+		expect(r.blocked.check).toBe('jailbreak');
+		// The jailbreak flag outranks safety, so the slow safety check is not awaited.
+		expect(Date.now() - t).toBeLessThan(500);
+		expect(r.results.find((x) => x.check === 'input_safety').error).toBe('skipped');
+	});
+
+	it('blocks on a lower-priority flag once the higher checks pass', async () => {
+		const { impl } = routedFetch({
+			jailbreak: { delay: 60, res: () => jsonRes({ jailbreak: false, score: -0.9 }) },
+			[GUARD_MODELS.contentSafety]: { delay: 80, res: () => nim('{"User Safety": "safe"}') },
+			[GUARD_MODELS.topicControl]: { delay: 5, res: () => nim('off-topic') },
+		});
+		const r = await runInputChecks(ALL_ON, ctx, { key: 'k', fetchImpl: impl });
+		expect(r.blocked.check).toBe('topic');
+		expect(r.results.every((x) => x.ok)).toBe(true);
+	});
+
 	it('reports the highest-priority check when several flag together', async () => {
 		const { impl } = routedFetch({
 			jailbreak: { res: () => jsonRes({ jailbreak: true, score: 0.5 }) },
