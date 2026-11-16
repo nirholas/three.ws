@@ -55,6 +55,14 @@
 			<description>IT admins get a ready deployment kit: the exact Edge policy values to install the web app and extensions through Intune or Group Policy, a Teams setup policy script that installs and pins three.ws for a group, a tenant-wide admin consent page that explains each permission in plain language, and a guide with verification, rollback and FAQ. Every script has a dry run.</description>
 		</item>
 		<item>
+			<title>Set up every Microsoft resource three.ws needs with one command</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-16:Set up every Microsoft resource three.ws needs with one command</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>npm run microsoft:provision creates or reconciles the Entra apps for Marketplace fulfillment, Microsoft sign-in and the Microsoft 365 connector, and the Teams bot. It also sets up their redirect URIs, Graph permissions and 365-day client secrets, the Azure Bot with its Teams and Microsoft 365 channels, and the Key Vaults, all from the operator's own Azure login. It shows a plan before it changes anything, never removes what an admin added by hand, and changes nothing on a rerun. Secrets go only to Key Vault and a private local file, never to the terminal, and it prints the exact production env update. A test now fails whenever code asks Microsoft for a permission or redirect the provisioner does not set up.</description>
+		</item>
+		<item>
 			<title>Share any creation or agent to Teams and LinkedIn</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-11-16:Share any creation or agent to Teams and LinkedIn</guid>

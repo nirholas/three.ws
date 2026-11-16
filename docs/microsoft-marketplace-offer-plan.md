@@ -169,7 +169,7 @@ Package the agent runtime and, separately, a GPU worker image. Needs a versioned
 
 ## Owner checklist (in order)
 
-Every remaining step needs Partner Center, the Azure portal or a production approval, and none can be done from the repo. Do them in this order, because later steps take values from earlier ones. Set production env vars with `gcloud run services update three-ws-api --region us-central1 --update-env-vars KEY=VALUE`, never `--set-env-vars`.
+Every remaining step needs Partner Center, the owner's own Azure login or a production approval, and none can be done from the repo. Do them in this order, because later steps take values from earlier ones. Set production env vars with `gcloud run services update three-ws-api --region us-central1 --update-env-vars KEY=VALUE`, never `--set-env-vars`.
 
 **Account and programmes**
 
@@ -179,12 +179,32 @@ Every remaining step needs Partner Center, the Azure portal or a production appr
 
 **Entra and Azure (the values every later step uses)**
 
-4. Entra admin center, publisher tenant: register a **single-tenant** app for the Fulfillment and Metering APIs and create a client secret. Production env: `MS_MARKETPLACE_TENANT_ID`, `MS_MARKETPLACE_CLIENT_ID`, `MS_MARKETPLACE_CLIENT_SECRET`.
-5. Entra admin center: register a **multitenant** app for buyer sign-in with the redirect URI `https://three.ws/api/microsoft-marketplace/sso/callback`, the `openid profile email` scopes and a client secret. Production env: `MS_ENTRA_SSO_CLIENT_ID`, `MS_ENTRA_SSO_CLIENT_SECRET`. This also shows the "Continue with Microsoft" button on `/login`, which signs in accounts a Marketplace purchase linked (it never creates accounts).
-6. Azure portal: create an **Azure Bot** (app type single tenant; the bot answers in the HTTP response, so it never uses a client secret), set the messaging endpoint to `https://three.ws/api/microsoft-teams/messages` and enable the Microsoft Teams channel. Production env: `MS_TEAMS_BOT_APP_ID`.
-7. Azure portal: create a Key Vault and store the OAuth client Microsoft uses for the MCP plugin (the confidential client from step 8). Note its URL for `MS_KEYVAULT_URL`.
-8. Register the three.ws OAuth client for Copilot at `https://three.ws/oauth/register` as described in [`microsoft-copilot-mcp-certification.md`](../marketing/growth/submissions/programs/microsoft-copilot-mcp-certification.md), and put its values in the vault from step 7.
-9. Apply the migration and deploy: `npm run db:status`, then `npm run db:migrate` (creates `microsoft_saas_subscriptions`, `microsoft_saas_operations` and `microsoft_saas_usage_events`), then `npm run deploy:gcp:full` so the landing page, webhook, Teams endpoints, metering cron and the corrected manifest go live. Confirm `https://three.ws/api/microsoft-marketplace/status` reports `"ready": true` and `"sso": true`. Verified 2026-11-10: the migration is applied and the deploy is live (`/microsoft/activate` returns 200, `npm run package:microsoft-store -- --check` passes against production with 0 warnings); `/status` still reports `"ready": false` only because the five `MS_*` values from steps 4 and 5 are not set yet, so once they are set this step needs no new deploy.
+4. Run the provisioner with your own Azure login (Global Administrator or Application Administrator of the publisher tenant, and Owner on the subscription). It creates or reconciles all three Entra apps (Marketplace fulfillment, multitenant sign-in and Microsoft 365 connector, Teams bot) with every redirect URI and Graph permission the code uses, client secrets valid for 365 days, the Azure Bot with its Microsoft Teams and Microsoft 365 channels, and two Key Vaults (ops secrets, and the Copilot OAuth client Microsoft reads). Rerunning it changes nothing. Details: [provisioning README](../integrations/microsoft/provisioning/README.md).
+
+   ```bash
+   az login --tenant <publisher tenant>
+   npm run microsoft:provision                                   # plan, changes nothing
+   npm run microsoft:provision -- --apply --subscription <id>    # create or reconcile
+   ```
+
+   It never prints a secret. It writes the secrets to the ops Key Vault and to `~/.config/three-ws/microsoft-provision/` (mode 600), then prints the `gcloud run services update three-ws-api --region us-central1 --update-env-vars "$(cat '<file>')"` line that sets all eight production values (`MS_MARKETPLACE_TENANT_ID`, `MS_MARKETPLACE_CLIENT_ID`, `MS_MARKETPLACE_CLIENT_SECRET`, `MS_ENTRA_SSO_CLIENT_ID`, `MS_ENTRA_SSO_CLIENT_SECRET`, `MS_TEAMS_BOT_APP_ID`, `MS_TEAMS_BOT_APP_PASSWORD`, `MS_TEAMS_BOT_TENANT_ID`). It also prints the `npm run package:microsoft-app` line for step 15 and the admin consent URL. Run the gcloud line, then `npm run microsoft:provision -- --verify` to confirm production reports `"ready": true` and `"sso": true`. The Microsoft 365 sign-in app also shows the "Continue with Microsoft" button on `/login`, which signs in accounts a Marketplace purchase linked (it never creates accounts).
+
+   When Microsoft issues the redirect URI for the MCP agent connector, rerun with `--apply --copilot-redirect-uri <uri>` to register the three.ws OAuth client for Copilot (described in [`microsoft-copilot-mcp-certification.md`](../marketing/growth/submissions/programs/microsoft-copilot-mcp-certification.md)) and store it in the Copilot vault.
+
+   Steps 5 to 8 used to be separate portal steps. Step 4 now does them. The manual path stays below as a fallback for a tenant where the CLI cannot run.
+
+   <details>
+   <summary>Manual fallback: the Entra admin center and Azure portal click path</summary>
+
+   1. Entra admin center, publisher tenant: register a **single-tenant** app for the Fulfillment and Metering APIs and create a client secret. Production env: `MS_MARKETPLACE_TENANT_ID`, `MS_MARKETPLACE_CLIENT_ID`, `MS_MARKETPLACE_CLIENT_SECRET`.
+   2. Entra admin center: register a **multitenant** app for buyer sign-in with the redirect URIs `https://three.ws/api/microsoft-marketplace/sso/callback`, `https://three.ws/api/auth/microsoft/callback` and `https://three.ws/api/microsoft-365/connect/callback`, the delegated `openid profile email offline_access User.Read` and application `ExternalConnection.ReadWrite.OwnedBy` and `ExternalItem.ReadWrite.OwnedBy` Graph permissions and a client secret. Production env: `MS_ENTRA_SSO_CLIENT_ID`, `MS_ENTRA_SSO_CLIENT_SECRET`. This also shows the "Continue with Microsoft" button on `/login`, which signs in accounts a Marketplace purchase linked (it never creates accounts).
+   3. Azure portal: create an **Azure Bot** (app type single tenant), create a client secret for its app registration (`MS_TEAMS_BOT_APP_PASSWORD`, used to call the Bot Connector API), set the messaging endpoint to `https://three.ws/api/microsoft-teams/messages` and enable the Microsoft Teams and Microsoft 365 channels. Production env: `MS_TEAMS_BOT_APP_ID`, `MS_TEAMS_BOT_APP_PASSWORD`, `MS_TEAMS_BOT_TENANT_ID`.
+   4. Azure portal: create a Key Vault and store the OAuth client Microsoft uses for the MCP plugin (the confidential client from step 5). Note its URL for `MS_KEYVAULT_URL`.
+   5. Register the three.ws OAuth client for Copilot at `https://three.ws/oauth/register` as described in [`microsoft-copilot-mcp-certification.md`](../marketing/growth/submissions/programs/microsoft-copilot-mcp-certification.md), and put its values in the vault from step 4.
+
+   </details>
+
+9. Apply the migration and deploy: `npm run db:status`, then `npm run db:migrate` (creates `microsoft_saas_subscriptions`, `microsoft_saas_operations` and `microsoft_saas_usage_events`), then `npm run deploy:gcp:full` so the landing page, webhook, Teams endpoints, metering cron and the corrected manifest go live. Confirm `https://three.ws/api/microsoft-marketplace/status` reports `"ready": true` and `"sso": true`. Verified 2026-11-10: the migration is applied and the deploy is live (`/microsoft/activate` returns 200, `npm run package:microsoft-store -- --check` passes against production with 0 warnings); `/status` still reports `"ready": false` only because the five `MS_*` values from step 4 are not set yet, so once they are set this step needs no new deploy.
 
 **#1 SaaS offer**
 
@@ -196,7 +216,7 @@ Every remaining step needs Partner Center, the Azure portal or a production appr
 **#2 and #5 Copilot and Teams app**
 
 14. Partner Center, Apps and Agents for Microsoft 365 and Copilot: create the offer and note its app GUID.
-15. Build the package with the values from steps 6, 7 and 14: `MS_APP_ID=... MS_DEVELOPER_NAME=... MS_KEYVAULT_URL=... MS_TEAMS_BOT_APP_ID=... npm run package:microsoft-app`, sideload it in Teams to test, then upload the zip to the offer and submit for MCP certification.
+15. Build the package with the line step 4 printed (it fills in `MS_KEYVAULT_URL` and `MS_TEAMS_BOT_APP_ID`) and the app GUID from step 14: `MS_APP_ID=... MS_DEVELOPER_NAME=... MS_KEYVAULT_URL=... MS_TEAMS_BOT_APP_ID=... npm run package:microsoft-app`, sideload it in Teams to test, then upload the zip to the offer and submit for MCP certification.
 16. Microsoft 365 App Compliance: submit Publisher Attestation with the answers in [`microsoft-365-publisher-attestation.md`](../marketing/growth/submissions/programs/microsoft-365-publisher-attestation.md).
 
 **#4 Power Platform connector**

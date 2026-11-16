@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-16",
+			"title": "Set up every Microsoft resource three.ws needs with one command",
+			"summary": "npm run microsoft:provision creates or reconciles the Entra apps for Marketplace fulfillment, Microsoft sign-in and the Microsoft 365 connector, and the Teams bot. It also sets up their redirect URIs, Graph permissions and 365-day client secrets, the Azure Bot with its Teams and Microsoft 365 channels, and the Key Vaults, all from the operator's own Azure login. It shows a plan before it changes anything, never removes what an admin added by hand, and changes nothing on a rerun. Secrets go only to Key Vault and a private local file, never to the terminal, and it prints the exact production env update. A test now fails whenever code asks Microsoft for a permission or redirect the provisioner does not set up.",
+			"tags": ["infra", "feature"]
+		},
+		{
+			"date": "2026-11-16",
 			"title": "Call three.ws agents from Copilot Studio and Azure AI Foundry over A2A",
 			"summary": "The three.ws A2A endpoint now streams over SSE, lets you cancel a running generation, and accepts an X-API-Key header or OAuth 2.0 as well as bearer tokens, all declared in the agent card. Responses are checked against the A2A schema in the test suite, and a builder guide covers adding three.ws in Copilot Studio and Foundry plus a Microsoft Agent Framework sample.",
 			"tags": ["feature", "docs"],

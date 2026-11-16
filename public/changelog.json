@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T14:59:59.660Z",
+	"generated_at": "2026-11-16T15:02:58.259Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -64,6 +64,17 @@
 			"summary": "IT admins get a ready deployment kit: the exact Edge policy values to install the web app and extensions through Intune or Group Policy, a Teams setup policy script that installs and pins three.ws for a group, a tenant-wide admin consent page that explains each permission in plain language, and a guide with verification, rollback and FAQ. Every script has a dry run.",
 			"link": "/docs/microsoft-admin-deployment",
 			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Set up every Microsoft resource three.ws needs with one command",
+			"summary": "npm run microsoft:provision creates or reconciles the Entra apps for Marketplace fulfillment, Microsoft sign-in and the Microsoft 365 connector, and the Teams bot. It also sets up their redirect URIs, Graph permissions and 365-day client secrets, the Azure Bot with its Teams and Microsoft 365 channels, and the Key Vaults, all from the operator's own Azure login. It shows a plan before it changes anything, never removes what an admin added by hand, and changes nothing on a rerun. Secrets go only to Key Vault and a private local file, never to the terminal, and it prints the exact production env update. A test now fails whenever code asks Microsoft for a permission or redirect the provisioner does not set up.",
+			"link": null,
+			"tags": [
+				"infra",
 				"feature"
 			]
 		},

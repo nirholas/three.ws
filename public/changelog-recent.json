@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-16T14:59:59.795Z",
+	"generated_at": "2026-11-16T15:02:58.418Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4597,
+	"total": 4598,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -67,6 +67,17 @@
 			"summary": "IT admins get a ready deployment kit: the exact Edge policy values to install the web app and extensions through Intune or Group Policy, a Teams setup policy script that installs and pins three.ws for a group, a tenant-wide admin consent page that explains each permission in plain language, and a guide with verification, rollback and FAQ. Every script has a dry run.",
 			"link": "/docs/microsoft-admin-deployment",
 			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Set up every Microsoft resource three.ws needs with one command",
+			"summary": "npm run microsoft:provision creates or reconciles the Entra apps for Marketplace fulfillment, Microsoft sign-in and the Microsoft 365 connector, and the Teams bot. It also sets up their redirect URIs, Graph permissions and 365-day client secrets, the Azure Bot with its Teams and Microsoft 365 channels, and the Key Vaults, all from the operator's own Azure login. It shows a plan before it changes anything, never removes what an admin added by hand, and changes nothing on a rerun. Secrets go only to Key Vault and a private local file, never to the terminal, and it prints the exact production env update. A test now fails whenever code asks Microsoft for a permission or redirect the provisioner does not set up.",
+			"link": null,
+			"tags": [
+				"infra",
 				"feature"
 			]
 		},
@@ -1525,16 +1536,6 @@
 			"title": "Every animation in the gallery plays again",
 			"summary": "Opening any of the 469 community clips on /animations showed \"Couldn't load this clip's preview\", and clips that did load froze in a T-pose at 0.0s once the detail view opened. Community clips now load in the gallery, the Animation Studio and every embed, and the detail view plays each clip from start to finish with a working scrubber.",
 			"link": "/animations",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-05",
-			"type": "update",
-			"title": "Forge stops dead-ending on engines your region can't use",
-			"summary": "Picking Hunyuan3D or the free Hunyuan3D / TRELLIS lane on /forge could fail with a bare error, and every retry hit the same wall, because those engines' model licence excludes some regions. Forge now greys those engines out up front with the reason, and if one is still picked it switches to an engine that can take your prompt and says so, with no action needed.",
-			"link": "/forge",
 			"tags": [
 				"fix"
 			]
