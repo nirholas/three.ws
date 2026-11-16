@@ -70,13 +70,18 @@ for (const rig of rigs) {
 		await page.evaluate((l) => {
 			window.__digitalHuman.say(l);
 		}, line);
-		await page.waitForFunction(() => window.__digitalHuman.state().speaking, null, { timeout: 60_000 });
+		// A refused /api/a2f call (rate limit, upstream error) means the line is
+		// never voiced; record that run as a failure and move on to the next one.
+		const spoke = await page
+			.waitForFunction(() => window.__digitalHuman.state().speaking, null, { timeout: 60_000 })
+			.then(() => true, () => false);
+		if (!spoke) errors.push('digital human never started speaking');
 
 		const speakAtMs = Date.now() - recordStart;
 		const samples = [];
 		let shot = false;
 		const t0 = Date.now();
-		while (Date.now() - t0 < 30_000) {
+		while (spoke && Date.now() - t0 < 30_000) {
 			const s = await page.evaluate(() => {
 				const st = window.__digitalHuman.state();
 				const emo = {};
