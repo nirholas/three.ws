@@ -4,6 +4,8 @@
 import { getSessionUser } from './auth.js';
 import { sql } from './db.js';
 import { error } from './http.js';
+import { logAudit } from './audit.js';
+import { sendOpsAlert } from './alerts.js';
 
 // Mirrors BUILT_IN_ADMIN_ADDRESSES in env.js (public platform-owner addresses,
 // safe to commit). env.js's ADMIN_ADDRESSES getter lower-cases every entry —
@@ -89,13 +91,39 @@ export async function isAdminRequest(req) {
 	return isAdminUser(await getSessionUser(req));
 }
 
+const READ_ONLY_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+function requestPath(req) {
+	const url = String(req?.url || '');
+	const q = url.indexOf('?');
+	return q === -1 ? url : url.slice(0, q);
+}
+
+/**
+ * Gate an admin endpoint. Every state-changing admin request is written to
+ * audit_log as `admin_action`; a signed-in non-admin who reaches an admin
+ * endpoint is written as `admin_access_denied` and raises an operator alert
+ * (deduplicated per path). Query strings are dropped so no token in a URL
+ * lands in the log.
+ */
 export async function requireAdmin(req, res) {
 	const user = await getSessionUser(req);
 	if (!user) {
 		error(res, 401, 'unauthorized', 'sign in required');
 		return null;
 	}
-	if (await isAdminUser(user)) return user;
+	const method = String(req?.method || 'GET').toUpperCase();
+	const path = requestPath(req);
+	if (await isAdminUser(user)) {
+		if (!READ_ONLY_METHODS.has(method)) {
+			logAudit({ userId: user.id, action: 'admin_action', meta: { method, path }, req });
+		}
+		return user;
+	}
+	logAudit({ userId: user.id, action: 'admin_access_denied', meta: { method, path }, req });
+	sendOpsAlert('Denied admin access attempt', `user ${user.id} sent ${method} ${path}`, {
+		signature: `admin-access-denied:${path}`,
+	});
 	error(res, 403, 'forbidden', 'admin access required');
 	return null;
 }
