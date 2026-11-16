@@ -97,6 +97,9 @@ async function openForge(viewport) {
 	await page.goto(`${base}/forge`, { waitUntil: 'domcontentloaded', timeout: 180_000 });
 	await page.waitForSelector('#views-counter', { state: 'attached', timeout: 120_000 });
 	await configSeen;
+	// The photo source lives in the From photos pane, which is hidden until that tab is chosen.
+	await page.locator('#tab-image').click({ timeout: 60_000 });
+	await page.waitForSelector('#image-pane:not(.is-hidden)', { timeout: 30_000 });
 	return page;
 }
 

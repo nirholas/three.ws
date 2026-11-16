@@ -53,11 +53,43 @@
 				},
 				"prepared": {
 					"bytes": 423066,
-					"type": "image/jpeg"
+					"type": "image/jpeg",
+					"submittedAt": 1794848789388,
+					"task": {
+						"id": "aeb3b59e-5f8d-4bd7-bff4-2ab4fba472ba",
+						"status": "done",
+						"resolution_served": 1024,
+						"alpha_mode": "OPAQUE",
+						"queue_ms": 0,
+						"gpu_ms": 387501,
+						"elapsed_ms": 390212,
+						"error": null,
+						"worker": "https://model-trellis2-bench-1-lp642k3kpa-ez.a.run.app"
+					},
+					"endToEndMs": 396521,
+					"glb": "prepared.glb",
+					"glbBytes": 8517132,
+					"render": "prepared-render.webp"
 				},
 				"cutout": {
 					"bytes": 321588,
-					"type": "image/webp"
+					"type": "image/webp",
+					"submittedAt": 1794848789395,
+					"task": {
+						"id": "456ca5e4-95dd-45e0-8112-9583d1034022",
+						"status": "done",
+						"resolution_served": 1024,
+						"alpha_mode": "OPAQUE",
+						"queue_ms": 0,
+						"gpu_ms": 287334,
+						"elapsed_ms": 289555,
+						"error": null,
+						"worker": "https://model-trellis2-bench-2-lp642k3kpa-ez.a.run.app"
+					},
+					"endToEndMs": 293189,
+					"glb": "cutout.glb",
+					"glbBytes": 9337756,
+					"render": "cutout-render.webp"
 				}
 			}
 		},
@@ -98,15 +130,63 @@
 			"variants": {
 				"original": {
 					"bytes": 278291,
-					"type": "image/jpeg"
+					"type": "image/jpeg",
+					"submittedAt": 1794848789399,
+					"task": {
+						"id": "0192dd3c-2af3-408c-a907-76ed026bbce0",
+						"status": "done",
+						"resolution_served": 1024,
+						"alpha_mode": "OPAQUE",
+						"queue_ms": 0,
+						"gpu_ms": 340827,
+						"elapsed_ms": 343568,
+						"error": null,
+						"worker": "https://model-trellis2-bench-3-lp642k3kpa-ez.a.run.app"
+					},
+					"endToEndMs": 345369,
+					"glb": "original.glb",
+					"glbBytes": 8498432,
+					"render": "original-render.webp"
 				},
 				"prepared": {
 					"bytes": 210502,
-					"type": "image/jpeg"
+					"type": "image/jpeg",
+					"submittedAt": 1794849099258,
+					"task": {
+						"id": "8c64e93e-ce0a-4176-837b-9281ea193123",
+						"status": "done",
+						"resolution_served": 1024,
+						"alpha_mode": "OPAQUE",
+						"queue_ms": 0,
+						"gpu_ms": 190034,
+						"elapsed_ms": 192917,
+						"error": null,
+						"worker": "https://model-trellis2-bench-2-lp642k3kpa-ez.a.run.app"
+					},
+					"endToEndMs": 196619,
+					"glb": "prepared.glb",
+					"glbBytes": 8759040,
+					"render": "prepared-render.webp"
 				},
 				"cutout": {
 					"bytes": 179352,
-					"type": "image/webp"
+					"type": "image/webp",
+					"submittedAt": 1794849149524,
+					"task": {
+						"id": "77281c0a-474c-4479-9df1-fe050906c19b",
+						"status": "done",
+						"resolution_served": 1024,
+						"alpha_mode": "OPAQUE",
+						"queue_ms": 0,
+						"gpu_ms": 257614,
+						"elapsed_ms": 260009,
+						"error": null,
+						"worker": "https://model-trellis2-bench-3-lp642k3kpa-ez.a.run.app"
+					},
+					"endToEndMs": 261298,
+					"glb": "cutout.glb",
+					"glbBytes": 8765692,
+					"render": "cutout-render.webp"
 				}
 			}
 		},
@@ -148,15 +228,43 @@
 			"variants": {
 				"original": {
 					"bytes": 589031,
-					"type": "image/jpeg"
+					"type": "image/jpeg",
+					"submittedAt": 1794849222725,
+					"task": {
+						"id": "6dd1314e-b1b7-4961-84fe-62417de69c09",
+						"status": "queued",
+						"worker": "https://model-trellis2-bench-1-lp642k3kpa-ez.a.run.app"
+					}
 				},
 				"prepared": {
 					"bytes": 63861,
-					"type": "image/jpeg"
+					"type": "image/jpeg",
+					"submittedAt": 1794849322175,
+					"task": {
+						"id": "b27a629b-a24b-40db-93ba-9dc0f6261dbb",
+						"status": "done",
+						"resolution_served": 1024,
+						"alpha_mode": "OPAQUE",
+						"queue_ms": 0,
+						"gpu_ms": 214918,
+						"elapsed_ms": 217531,
+						"error": null,
+						"worker": "https://model-trellis2-bench-2-lp642k3kpa-ez.a.run.app"
+					},
+					"endToEndMs": 221708,
+					"glb": "prepared.glb",
+					"glbBytes": 8452316,
+					"render": "prepared-render.webp"
 				},
 				"cutout": {
 					"bytes": 71714,
-					"type": "image/webp"
+					"type": "image/webp",
+					"submittedAt": 1794849451059,
+					"task": {
+						"id": "85f6a883-1914-4bc4-8ad1-e93ae3e5e6dc",
+						"status": "queued",
+						"worker": "https://model-trellis2-bench-3-lp642k3kpa-ez.a.run.app"
+					}
 				}
 			}
 		},
@@ -195,7 +303,13 @@
 			"variants": {
 				"original": {
 					"bytes": 486633,
-					"type": "image/jpeg"
+					"type": "image/jpeg",
+					"submittedAt": 1794849559523,
+					"task": {
+						"id": "bf35deb7-8f9e-4fa5-8148-58fa62400bfe",
+						"status": "queued",
+						"worker": "https://model-trellis2-bench-2-lp642k3kpa-ez.a.run.app"
+					}
 				},
 				"prepared": {
 					"bytes": 291507,
