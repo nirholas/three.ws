@@ -103,6 +103,58 @@ export function sanitizeDescribeResult(result) {
 	};
 }
 
+/**
+ * Marker on a row whose stored preview came back blank: the next claim
+ * describes it from the GLB render instead of the preview.
+ */
+export const BLANK_POSTER_ERROR = 'blank poster';
+
+const RENDER_PATH = '/api/render/glb';
+
+/**
+ * True when Florence-2 says the image has nothing in it. Some stored previews
+ * are an all-black or all-white image; the model then answers "unanswerable"
+ * or "The image is blank ...", and that text must never become a creation's
+ * meta description or alt text. A dark render that still names a subject
+ * ("The image is completely black. There is a small model of ...") is a real
+ * description and is kept.
+ */
+export function isBlankDescribeResult(result) {
+	if (!result || typeof result !== 'object') return false;
+	const caption = typeof result.caption === 'string' ? result.caption.trim() : '';
+	const detailed = typeof result.detailed === 'string' ? result.detailed.trim() : '';
+	if (/^unanswerable\W*$/i.test(caption)) return true;
+	if (/^an? (blank|empty)\b.*\bno (image|picture|content)\b/i.test(caption)) return true;
+	return /^the (image|picture) is (completely |entirely |totally )?(blank|empty)\b/i.test(detailed);
+}
+
+/**
+ * A blank result is never stored as 'done'. From the stored preview, the row
+ * goes back to the queue marked BLANK_POSTER_ERROR so the next claim uses the
+ * GLB render; from the render itself, there is nothing better to describe and
+ * the row is skipped. Generated text is cleared; owner-edited tags are kept.
+ */
+async function markBlankPoster({ creationId, sourceImageUrl }) {
+	const fromRender = typeof sourceImageUrl === 'string' && sourceImageUrl.includes(RENDER_PATH);
+	const status = fromRender ? 'skipped' : 'queued';
+	const error = fromRender ? 'blank poster and blank GLB render' : BLANK_POSTER_ERROR;
+	await sql`
+		insert into forge_creation_descriptions (creation_id, status, error, attempts, updated_at)
+		select id, ${status}, ${error}, 1, now() from forge_creations where id = ${creationId}
+		on conflict (creation_id) do update set
+			status = excluded.status,
+			error = excluded.error,
+			caption = null,
+			detailed = null,
+			generated_tags = '{}',
+			tags = case when forge_creation_descriptions.tags_edited_at is null
+				then '{}'::text[] else forge_creation_descriptions.tags end,
+			objects = '[]'::jsonb,
+			source_image_url = ${sourceImageUrl},
+			updated_at = now()
+	`;
+}
+
 /** Queue a creation for describing. Idempotent; never throws. */
 export async function enqueueCreationDescription(creationId) {
 	if (!creationId) return false;
@@ -158,15 +210,21 @@ export async function claimDescribeBatch({ limit = 8, backfill = true, origin = 
 	if (!ids.length) return { items: [], skipped: [] };
 
 	const rows = await sql`
-		select id, preview_image_url, glb_url, web_glb_url, size_bytes, web_size_bytes, created_at
-		from forge_creations where id = any(${ids}::uuid[])
-		order by created_at desc
+		select fc.id, fc.preview_image_url, fc.glb_url, fc.web_glb_url, fc.size_bytes, fc.web_size_bytes,
+			fc.created_at, d.error as d_error
+		from forge_creations fc
+		left join forge_creation_descriptions d on d.creation_id = fc.id
+		where fc.id = any(${ids}::uuid[])
+		order by fc.created_at desc
 	`;
 	const items = [];
 	const skipped = [];
 	try {
 		for (const row of rows) {
-			const imageUrl = posterUrlFor(row, origin);
+			// A preview that already came back blank is not worth a second look:
+			// describe the GLB render instead.
+			const source = row.d_error === BLANK_POSTER_ERROR ? { ...row, preview_image_url: null } : row;
+			const imageUrl = posterUrlFor(source, origin);
 			if (imageUrl) items.push({ id: row.id, imageUrl });
 			else skipped.push(row.id);
 		}
@@ -200,6 +258,10 @@ export async function claimDescribeBatch({ limit = 8, backfill = true, origin = 
  */
 export async function storeDescription({ creationId, result, sourceImageUrl = null }) {
 	const r = sanitizeDescribeResult(result);
+	if (isBlankDescribeResult(r)) {
+		await markBlankPoster({ creationId, sourceImageUrl });
+		return false;
+	}
 	if (!r.caption && !r.detailed && !r.tags.length) {
 		await markDescribeFailed({ creationId, error: 'empty describe result' });
 		return false;
@@ -366,6 +428,52 @@ export async function renormalizeStoredTags({ pageSize = 500, dryRun = false } =
 		after = rows[rows.length - 1].creation_id;
 	}
 	return { scanned, changed };
+}
+
+/**
+ * Send descriptions stored from a blank poster (before isBlankDescribeResult
+ * existed) back to the queue, to be described from the GLB render. Clears the
+ * generated text so the page falls back to the prompt meanwhile, keeps
+ * owner-edited tags, and resets attempts so the render gets a full budget.
+ * Walks the table in creation_id order. Returns counts.
+ */
+export async function requeueBlankDescriptions({ pageSize = 500, dryRun = false } = {}) {
+	let after = '00000000-0000-0000-0000-000000000000';
+	let scanned = 0;
+	let requeued = 0;
+	for (;;) {
+		const rows = await sql`
+			select creation_id, caption, detailed
+			from forge_creation_descriptions
+			where status = 'done' and creation_id > ${after}::uuid
+			order by creation_id
+			limit ${pageSize}
+		`;
+		if (!rows.length) break;
+		const blank = [];
+		for (const r of rows) {
+			scanned += 1;
+			if (isBlankDescribeResult(r)) blank.push(r.creation_id);
+		}
+		requeued += blank.length;
+		if (blank.length && !dryRun) {
+			await sql`
+				update forge_creation_descriptions set
+					status = 'queued',
+					error = ${BLANK_POSTER_ERROR},
+					attempts = 0,
+					caption = null,
+					detailed = null,
+					generated_tags = '{}',
+					tags = case when tags_edited_at is null then '{}'::text[] else tags end,
+					objects = '[]'::jsonb,
+					updated_at = now()
+				where creation_id = any(${blank}::uuid[]) and status = 'done'
+			`;
+		}
+		after = rows[rows.length - 1].creation_id;
+	}
+	return { scanned, requeued };
 }
 
 /** Coverage numbers for the cron's dry run and the backfill script's progress. */
