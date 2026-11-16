@@ -11,7 +11,9 @@
  *      user left enabled,
  *   5. records a `sent` event per push delivery,
  *   6. queues Telegram and Discord delivery into the chats the owner paired
- *      through the chat gateways (api/_lib/gateway/notify.js).
+ *      through the chat gateways (api/_lib/gateway/notify.js),
+ *   7. sends the Teams activity feed notification when the owner linked a Teams
+ *      account and left that event on (api/_lib/teams-activity.js).
  *
  * Every channel is gated by the user's preference center (api/_lib/notify-prefs)
  * so there is no notification a user can't turn off, including the bell itself:
@@ -36,6 +38,7 @@ import {
 import { sendPushToUser } from './web-push.js';
 import { sendApnsToUser } from './apns.js';
 import { queueChatNotifications } from './gateway/notify.js';
+import { deliverTeamsNotification } from './teams-activity.js';
 
 export function insertNotification(userId, type, payload = {}) {
 	return deliver(userId, type, payload).catch((err) => {
@@ -111,6 +114,11 @@ async function deliver(userId, type, payload) {
 	} catch (err) {
 		console.error('[notify] chat fan-out failed:', err.message);
 	}
+
+	// 7: Teams activity feed. Gated by its own per-event preference (the Teams row
+	// in notification settings) and by a linked, installed Teams identity.
+	const teams = await deliverTeamsNotification({ userId, type, payload });
+	if (teams > 0) delivered.teams = teams;
 
 	return { id, in_app: wantsInApp, delivered };
 }

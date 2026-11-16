@@ -105,7 +105,7 @@ export default wrap(async (req, res) => {
 // category matrix alone, which used to wipe a connected Telegram chat id on
 // every save and silently stop those alerts. Merge instead: each category the
 // caller sent overlays the stored one, and a key nobody sent survives untouched.
-function mergeStored(stored, clean, body) {
+export function mergeStored(stored, clean, body) {
 	const categories = { ...(stored?.categories || {}) };
 	for (const [category, channels] of Object.entries(clean.categories)) {
 		categories[category] = { ...(categories[category] || {}), ...channels };
@@ -114,5 +114,7 @@ function mergeStored(stored, clean, body) {
 		body.telegram_chat_id === undefined
 			? stored?.telegram_chat_id ?? null
 			: clean.telegram_chat_id ?? null;
-	return { categories, telegram_chat_id: telegram };
+	// The Teams row has its own endpoint (api/notifications/teams.js); this save
+	// must carry it through untouched like any other key nobody sent.
+	return { categories, telegram_chat_id: telegram, ...(stored?.teams ? { teams: stored.teams } : {}) };
 }

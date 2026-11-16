@@ -38,6 +38,7 @@ import { requireUser, get, post, put, del, patch, esc, relTime, ApiError } from 
 import { emptyStateHTML, errorStateHTML, ensureStateKitStyles, attachRetry } from '../../shared/state-kit.js';
 import { toast } from '../../shared/toast.js';
 import { renderAccountStatus, renderXPosting } from './settings-account-status.js';
+import { renderTeamsNotifications } from './settings-teams.js';
 import { IPFS_GATEWAYS } from '../../ipfs.js';
 
 const MONO = `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
@@ -122,7 +123,7 @@ async function loadContent(host) {
 
 	const retry = () => loadContent(host);
 
-	const [sessionsResp, grantsResp, googleResp, telegramResp, microsoftResp, notifResp, notifPrefsResp, avatarsResp, summaryResp, usageResp, prefsResp, versionResp, statusResp, xResp] =
+	const [sessionsResp, grantsResp, googleResp, telegramResp, microsoftResp, notifResp, notifPrefsResp, teamsResp, avatarsResp, summaryResp, usageResp, prefsResp, versionResp, statusResp, xResp] =
 		await Promise.all([
 			safeGet('/api/auth/sessions'),
 			safeGet('/api/oauth/grants'),
@@ -131,6 +132,7 @@ async function loadContent(host) {
 			safeGet('/api/auth/microsoft/status'),
 			safeGet('/api/notifications?limit=20'),
 			safeGet('/api/notifications/preferences'),
+			safeGet('/api/notifications/teams'),
 			safeGet('/api/avatars/mine?limit=24'),
 			safeGet('/api/billing/summary'),
 			safeGet('/api/usage/summary'),
@@ -164,6 +166,7 @@ async function loadContent(host) {
 	host.appendChild(renderXPosting(xResp, retry));
 	host.appendChild(renderNotifications(notifResp, retry));
 	host.appendChild(renderNotificationPrefs(notifPrefsResp, retry));
+	host.appendChild(renderTeamsNotifications(teamsResp, retry));
 	host.appendChild(renderDefaultNetwork(prefs));
 	host.appendChild(renderAvatarStorage(avatarsResp, retry));
 	host.appendChild(renderStorage(summaryResp, retry));
@@ -340,6 +343,9 @@ const MICROSOFT_OUTCOMES = {
 	exchange_failed: 'Microsoft did not accept the request. Try again in a moment.',
 	invalid_token: 'Microsoft returned something we could not verify. Try again.',
 	admin_consent_required: 'Your organisation has to approve three.ws first. Ask your Microsoft Entra administrator.',
+	not_assigned: 'Your organisation has not assigned you to three.ws in Microsoft Entra. Ask your IT admin.',
+	app_disabled: 'three.ws is turned off in your organisation\'s Microsoft Entra directory. Ask your IT admin to enable it.',
+	conditional_access: 'Your organisation\'s sign-in policy blocked this. Try from a managed device or ask your IT admin.',
 	reauth_stale: 'Microsoft did not ask for your password again. Try once more.',
 };
 
