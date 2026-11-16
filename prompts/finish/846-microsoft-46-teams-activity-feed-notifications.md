@@ -54,3 +54,6 @@ Read Microsoft's current docs on Teams activity feed notifications: `sendActivit
 2. Commit with explicit paths and a `type(scope): ...` subject that describes the diff.
 3. All lines pass: `git mv` this file to `prompts/archive/` in its own closing commit and repoint inbound links. If an owner step is last: leave the file, put a dated status line under the title naming what remains, and add it to the owner message. Either way append to [_context/microsoft-PROGRESS.md](_context/microsoft-PROGRESS.md).
 4. Report: what step 0 measured; files and SHAs; evidence per Definition of done line; the one batched owner message; one-line judgment calls. No trailing questions.
+
+
+Status 2026-11-16: code, tests, docs and changelog complete. Remaining owner steps (migration, MS_APP_ID, TeamsActivity.Send consent, Partner Center package, push and deploy) are listed in prompts/finish/_context/microsoft-PROGRESS.md.
