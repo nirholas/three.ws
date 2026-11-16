@@ -25,7 +25,7 @@ vi.mock('../../api/_lib/r2.js', () => ({
 	putObject: async (args) => {
 		r2State.puts.push(args);
 	},
-	publicUrl: (key) => `https://cdn.example/${key}`,
+	cdnUrl: (key) => `https://three.ws/cdn/${key}`,
 }));
 
 // The Replicate text→image submit is paced through forge-scale's rate gate. The
@@ -191,7 +191,7 @@ describe('textToImage: NIM FLUX free lane (legacy NIM-first order)', () => {
 		expect(result.model).toBe('black-forest-labs/flux.1-dev');
 		// NIM output is JPEG, persisted bytes, key extension, and Content-Type
 		// must all say jpeg, not png (regression cover for the probe finding).
-		expect(result.imageUrl).toMatch(/^https:\/\/cdn\.example\/forge\/refs\/.+\.jpg$/);
+		expect(result.imageUrl).toMatch(/^https:\/\/three\.ws\/cdn\/forge\/refs\/.+\.jpg$/);
 		// NIM artifact persisted to R2; Vertex and Replicate left untouched.
 		expect(r2State.puts).toHaveLength(1);
 		expect(r2State.puts[0].contentType).toBe('image/jpeg');
@@ -439,7 +439,7 @@ describe('textToImage: Livepeer federation lane counts as a real fallback', () =
 
 		// The verified artifact is persisted to our own storage, so the lane
 		// returns the durable CDN URL, never the gateway's ephemeral one.
-		expect(result.imageUrl).toMatch(/^https:\/\/cdn\.example\/forge\/refs\/.+\.png$/);
+		expect(result.imageUrl).toMatch(/^https:\/\/three\.ws\/cdn\/forge\/refs\/.+\.png$/);
 		expect(result.lane).toBe('livepeer');
 		expect(calls.some((c) => c.url.includes('gateway.test/images/'))).toBe(true);
 	});
@@ -455,7 +455,7 @@ describe('textToImage: Livepeer federation lane counts as a real fallback', () =
 		const textToImage = await freshTextToImage();
 		const result = await textToImage('a red teapot');
 
-		expect(result.imageUrl).toMatch(/^https:\/\/cdn\.example\/forge\/refs\/.+\.png$/);
+		expect(result.imageUrl).toMatch(/^https:\/\/three\.ws\/cdn\/forge\/refs\/.+\.png$/);
 		expect(result.lane).toBe('livepeer');
 		expect(calls.some((c) => c.url.includes('gateway.test/images/'))).toBe(true);
 	});
@@ -759,7 +759,7 @@ describe('textToImage: Vertex → Replicate fallback', () => {
 		const textToImage = await freshTextToImage();
 		const result = await textToImage('a red teapot');
 
-		expect(result.imageUrl).toMatch(/^https:\/\/cdn\.example\/forge\/refs\/.+\.png$/);
+		expect(result.imageUrl).toMatch(/^https:\/\/three\.ws\/cdn\/forge\/refs\/.+\.png$/);
 		expect(result.model).toBe('vertex-ai/imagen-3.0-generate-001');
 		expect(r2State.puts).toHaveLength(1);
 		expect(r2State.puts[0].contentType).toBe('image/png');
