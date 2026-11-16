@@ -7,7 +7,11 @@ const getSessionUser = vi.fn(async () => null);
 const isAdminUser = vi.fn(async () => false);
 
 vi.mock('../api/_lib/auth.js', () => ({ getSessionUser }));
+const logAudit = vi.fn();
+const sendOpsAlert = vi.fn(async () => {});
 vi.mock('../api/_lib/admin.js', () => ({ isAdminUser }));
+vi.mock('../api/_lib/audit.js', () => ({ logAudit }));
+vi.mock('../api/_lib/alerts.js', () => ({ sendOpsAlert }));
 
 let authorizeOps;
 
@@ -58,6 +62,29 @@ describe('authorizeOps', () => {
 		process.env.OPS_SECRET = 'sek';
 		await loadFresh();
 		expect((await authorizeOps(reqWith({ authorization: 'Bearer sek' }))).ok).toBe(true);
+	});
+
+	it('audits and alerts on a presented but wrong OPS_SECRET, never logging the value', async () => {
+		process.env.OPS_SECRET = 'right-value';
+		await loadFresh();
+		const req = { headers: { 'x-ops-secret': 'guess-123' }, method: 'GET', url: '/api/ops/health?x=1' };
+		expect((await authorizeOps(req)).ok).toBe(false);
+		expect(logAudit).toHaveBeenCalledTimes(1);
+		const entry = logAudit.mock.calls[0][0];
+		expect(entry.action).toBe('ops_secret_rejected');
+		expect(entry.userId).toBeNull();
+		expect(entry.meta).toEqual({ method: 'GET', path: '/api/ops/health' });
+		expect(JSON.stringify(entry.meta)).not.toContain('guess-123');
+		expect(sendOpsAlert).toHaveBeenCalledTimes(1);
+		expect(JSON.stringify(sendOpsAlert.mock.calls[0])).not.toContain('guess-123');
+		expect(sendOpsAlert.mock.calls[0][2].signature).toBe('ops-secret-rejected:/api/ops/health');
+	});
+
+	it('does not audit an anonymous request that presents no secret', async () => {
+		process.env.OPS_SECRET = 'right-value';
+		await loadFresh();
+		expect((await authorizeOps(reqWith())).ok).toBe(false);
+		expect(logAudit).not.toHaveBeenCalled();
 	});
 
 	it('does NOT accept CRON_SECRET (decoupled from the cron credential)', async () => {

@@ -25,6 +25,8 @@
 import { constantTimeEquals } from './crypto.js';
 import { getSessionUser } from './auth.js';
 import { isAdminUser } from './admin.js';
+import { logAudit } from './audit.js';
+import { sendOpsAlert } from './alerts.js';
 
 // Read process.env directly, not the `env` façade: OPS_SECRET has no getter on
 // `env`, so `env.OPS_SECRET` is always undefined (the pre-existing bug that made
@@ -32,6 +34,20 @@ import { isAdminUser } from './admin.js';
 // CRON_SECRET). Evaluated per-call so a test or a runtime env change is honoured.
 function isProd() {
 	return process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
+}
+
+/**
+ * A wrong OPS_SECRET is a failed privileged-access attempt: audit it and alert
+ * the operator (deduplicated per path). The presented value is never logged.
+ * @param {{ method?: string, url?: string }} req
+ */
+function recordRejectedSecret(req) {
+	const method = String(req.method || 'GET').toUpperCase();
+	const path = String(req.url || '').split('?')[0];
+	logAudit({ userId: null, action: 'ops_secret_rejected', meta: { method, path }, req });
+	sendOpsAlert('Rejected OPS_SECRET attempt', `${method} ${path}`, {
+		signature: `ops-secret-rejected:${path}`,
+	});
 }
 
 /**
@@ -59,6 +75,7 @@ export async function authorizeOps(req) {
 				? req.headers['authorization'].replace(/^Bearer\s+/i, '')
 				: '');
 		if (header && constantTimeEquals(header, secret)) return { ok: true, actor: 'ops-secret' };
+		if (header) recordRejectedSecret(req);
 		return { ok: false, actor: '' };
 	}
 
