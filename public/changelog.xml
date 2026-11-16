@@ -63,6 +63,14 @@
 			<description>Share creations and agents to Teams and LinkedIn, the link-preview rules both enforce, and how to refresh a stale LinkedIn card.</description>
 		</item>
 		<item>
+			<title>Docs · The /enterprise procurement page</title>
+			<link>https://three.ws/docs/enterprise</link>
+			<guid isPermaLink="false">2026-11-16:Docs · The /enterprise procurement page</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the three.ws enterprise page is built: purchase paths, identity, security answers, Microsoft surface statuses from data, the printable procurement packet and the contact form that files a lead.</description>
+		</item>
+		<item>
 			<title>Docs · three.ws 3D Studio agent for Microsoft 365 Copilot</title>
 			<link>https://three.ws/docs/microsoft-copilot-agent</link>
 			<guid isPermaLink="false">2026-11-16:Docs · three.ws 3D Studio agent for Microsoft 365 Copilot</guid>
@@ -237,6 +245,14 @@
 			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The same three.ws Microsoft 365 app now runs in Outlook and the Microsoft 365 app. In a new Outlook email you can search agents and paste an agent link to get a card, built to the Adaptive Card version and limits Outlook supports. The Agents tab opens in Outlook's app bar and in the Microsoft 365 app, follows the host's light, dark and high contrast themes, and offers the right share action in each place: the Teams share dialog in Teams, a ready email in Outlook, and copy link in a plain browser. Creating a 3D model from chat stays in Teams, where its live card can run.</description>
+		</item>
+		<item>
+			<title>Written security policies and an evidence collector</title>
+			<link>https://three.ws/trust</link>
+			<guid isPermaLink="false">2026-11-16:Written security policies and an evidence collector</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>The trust center now links the full set of written security policies (information security, access control, change management, patching, logging, backup and recovery, retention, secure development, suppliers) and a risk register that lists the gaps we have not closed. The off-provider backup row is now marked in place, with the measured 215 second recovery time.</description>
 		</item>
 		<item>
 			<title>@trythreews posts in more formats, for more readers, five times a day</title>

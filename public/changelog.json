@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T16:57:15.078Z",
+	"generated_at": "2026-11-16T17:18:39.575Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -72,6 +72,16 @@
 			"title": "Docs · Sharing and link previews",
 			"summary": "Share creations and agents to Teams and LinkedIn, the link-preview rules both enforce, and how to refresh a stale LinkedIn card.",
 			"link": "/docs/sharing",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "launch",
+			"title": "Docs · The /enterprise procurement page",
+			"summary": "How the three.ws enterprise page is built: purchase paths, identity, security answers, Microsoft surface statuses from data, the printable procurement packet and the contact form that files a lead.",
+			"link": "/docs/enterprise",
 			"tags": [
 				"launch"
 			]
@@ -301,6 +311,17 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Written security policies and an evidence collector",
+			"summary": "The trust center now links the full set of written security policies (information security, access control, change management, patching, logging, backup and recovery, retention, secure development, suppliers) and a risk register that lists the gaps we have not closed. The off-provider backup row is now marked in place, with the measured 215 second recovery time.",
+			"link": "/trust",
+			"tags": [
+				"security",
+				"docs"
 			]
 		},
 		{
