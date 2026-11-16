@@ -1,5 +1,7 @@
 # microsoft 38: Share to Teams and Share on LinkedIn for every creation and agent, with link previews that render correctly in both
 
+Status 2026-11-16: code, tests, docs and changelog landed (7e0da777b, 3eee5d850). Remaining: owner deploy, then `npm run audit:share-previews` against production and a LinkedIn Post Inspector visual check.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3138.
 
 ## Operating clause (binding)
