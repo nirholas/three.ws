@@ -52,6 +52,7 @@
 import { env } from './env.js';
 import { parseWav } from './asr-nvidia.js';
 import a2fDescriptor from './a2f-protos/descriptor.js';
+import { emotionHeaderFields, toEmotionKeyframes, EmotionTrackBuilder } from './a2f-emotion-wire.js';
 
 export const NVIDIA_A2F_HOST = 'grpc.nvcf.nvidia.com:443';
 
@@ -399,8 +400,18 @@ function buildHeader({ blendshapeMultipliers, faceParams }) {
 				...(blendshapeMultipliers ? { bs_weight_multipliers: blendshapeMultipliers } : {}),
 			},
 			...(faceParams ? { face_params: { float_params: faceParams } } : {}),
+			...emotionFields,
 		},
+		keyframes,
 	};
+}
+
+// The intended emotion rides on the first audio message of each call (a healed
+// retry replays the audio, so it re-sends the keyframes too).
+function audioMessage(int16, keyframes) {
+	const m = { audio_buffer: int16ToBuffer(int16) };
+	if (keyframes?.length) m.emotions = keyframes;
+	return { audio_with_emotion: m };
 }
 
 function int16ToBuffer(arr) {
@@ -431,8 +442,10 @@ export async function openA2fSession(
 		timeoutMs = DEFAULT_TIMEOUT_MS,
 		blendshapeMultipliers,
 		faceParams,
+		emotion,
 		onHeader,
 		onFrames,
+		onAnimationData,
 	} = {},
 	deps = {},
 ) {
@@ -445,7 +458,8 @@ export async function openA2fSession(
 	const healer = deps.healer || a2fHealer;
 	const { grpc, client } = await (deps.getClient || getClient)();
 	const base = resolveA2fFunctionId(functionId);
-	const header = buildHeader({ blendshapeMultipliers, faceParams });
+	const { keyframes, ...header } = buildHeader({ blendshapeMultipliers, faceParams, emotion });
+	let emotionSentOn = null; // the call whose first audio message carried the keyframes
 	const deadline = Date.now() + timeoutMs;
 
 	const buffered = [];
@@ -493,6 +507,7 @@ export async function openA2fSession(
 					onHeader?.(n);
 				}
 			} else if (msg.animation_data) {
+				onAnimationData?.(msg.animation_data);
 				const weights = msg.animation_data.skel_animation?.blend_shape_weights;
 				if (Array.isArray(weights) && weights.length) {
 					const frames = weights.map((frame) => ({
@@ -546,8 +561,10 @@ export async function openA2fSession(
 		});
 		try {
 			thisCall.write(header);
-			for (const chunk of buffered)
-				thisCall.write({ audio_with_emotion: { audio_buffer: int16ToBuffer(chunk) } });
+			for (const chunk of buffered) {
+				thisCall.write(audioMessage(chunk, emotionSentOn === thisCall ? null : keyframes));
+				emotionSentOn = thisCall;
+			}
 			if (ended) {
 				thisCall.write({ end_of_audio: {} });
 				thisCall.end();
@@ -581,7 +598,8 @@ export async function openA2fSession(
 			if (!framesSeen) buffered.push(owned);
 			if (call) {
 				try {
-					call.write({ audio_with_emotion: { audio_buffer: int16ToBuffer(owned) } });
+					call.write(audioMessage(owned, emotionSentOn === call ? null : keyframes));
+					emotionSentOn = call;
 				} catch (e) {
 					onFailure(normalizeGrpcError(e), call);
 				}
@@ -614,9 +632,15 @@ export async function openA2fSession(
 // Generate a facial-animation track from spoken audio on the free NIM lane.
 //
 //   { wav?: Buffer, pcm?: Buffer, sampleRateHz?, channels?, functionId?,
-//     faceParams?, blendshapeMultipliers?, timeoutMs?, apiKey? }
+//     faceParams?, blendshapeMultipliers?, emotion?, timeoutMs?, apiKey? }
 //     → { fps, blendShapeNames, frames: [{ t, w }], frameCount, durationSec,
-//         sampleRateHz, model, functionId, healedFrom }
+//         sampleRateHz, model, functionId, healedFrom, emotion }
+//
+// `emotion` (optional): { enabled?: boolean (false = neutral face),
+// strength?: 0..1 (A2F emotion_strength, default 0.6), preferredStrength?: 0..1,
+// input?: { joy: 0.8, ... } | [{ t, emotion }] } (the intended feeling). The
+// returned `emotion` is the track A2F reports it applied (see
+// a2f-emotion-wire.js EmotionTrackBuilder), or null when emotion is off.
 //
 // Provide EITHER `wav` (a RIFF/WAVE buffer: the Magpie output is passed straight
 // through; its header is parsed for rate + channels) OR raw `pcm` (header-less
@@ -637,6 +661,7 @@ export async function animateNvidiaA2F(
 		functionId,
 		faceParams,
 		blendshapeMultipliers,
+		emotion,
 		timeoutMs = DEFAULT_TIMEOUT_MS,
 		apiKey,
 	} = {},
@@ -677,6 +702,8 @@ export async function animateNvidiaA2F(
 	const mono16k = resampleInt16(monoSrc, srcRate, A2F_SAMPLE_RATE_HZ);
 	let blendShapeNames = [];
 	const frames = [];
+	const emotionTrack = new EmotionTrackBuilder();
+	let emotionDecodeError = null;
 	const session = await openA2fSession(
 		{
 			functionId,
@@ -684,10 +711,20 @@ export async function animateNvidiaA2F(
 			timeoutMs,
 			faceParams,
 			blendshapeMultipliers,
+			emotion,
 			onHeader: (names) => {
 				blendShapeNames = names;
 			},
 			onFrames: (f) => frames.push(...f),
+			onAnimationData: (data) => {
+				// Emotion metadata is a bonus on top of the blendshapes: a payload we
+				// cannot decode must never cost the caller the animation itself.
+				try {
+					emotionTrack.addAnimationData(data);
+				} catch (e) {
+					emotionDecodeError = e?.message || String(e);
+				}
+			},
 		},
 		deps,
 	);
@@ -710,6 +747,8 @@ export async function animateNvidiaA2F(
 		model: 'audio2face-3d',
 		functionId: result.functionId,
 		healedFrom: result.healedFrom,
+		emotion: emotion?.enabled === false ? null : emotionTrack.build(),
+		...(emotionDecodeError ? { emotionError: emotionDecodeError } : {}),
 	};
 }
 

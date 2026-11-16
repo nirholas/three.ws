@@ -25,6 +25,14 @@
  * frames for smooth motion at display refresh), so the lips track the real
  * voice. No rig allowlist: an unknown convention degrades to "no coverage", and
  * the caller falls back to amplitude lipsync — never a frozen face.
+ *
+ * Emotion: when the track carries A2F's emotion output (`track.emotion`, see
+ * api/_lib/a2f-emotion-wire.js), an EmotionLayer (./a2f-emotion.js) carries it
+ * past the mouth: upper-face accents merged into the frame with max(), VRM
+ * expression presets, and a subtle head nod/tilt plus eye gaze layered on top of
+ * the idle clip. `setEmotionOptions({ enabled, strength })` is the off switch
+ * and dial. VRMs whose mouth exists only as expression presets (VRoid's
+ * Fcl_MTH_* morphs behind aa/ih/ou/ee/oh) are driven through expressionManager.
  */
 
 import {
@@ -33,6 +41,7 @@ import {
 	OCULUS_TO_ARKIT,
 	ARKIT_GROUPS,
 } from './arkit-blendshapes.js';
+import { EmotionLayer } from './a2f-emotion.js';
 
 // Canonical ARKit shapes that move the mouth/jaw — used to decide whether a mesh
 // already has DIRECT mouth coverage (so we don't also drive its vowel morphs and
@@ -64,6 +73,7 @@ export class A2FPlayer {
 		this._cursor = 0;
 		this._lastTime = -1;
 		this._attached = false;
+		this._emotion = new EmotionLayer();
 	}
 
 	/**
@@ -105,12 +115,34 @@ export class A2FPlayer {
 			}
 		}
 
+		this._emotion.attach(root);
 		this._attached = true;
 	}
 
-	/** True when at least one morph is wired and a track is loaded. */
+	/** True when at least one morph (or VRM expression preset) is wired. */
 	hasCoverage() {
-		return this._attached && (this._direct.length > 0 || this._expression.length > 0);
+		return (
+			this._attached &&
+			(this._direct.length > 0 || this._expression.length > 0 || this._emotion.vrmDrivesVisemes())
+		);
+	}
+
+	/**
+	 * Emotion layer controls: `enabled` false is the off switch (the face falls
+	 * back to A2F's mouth-only track), `strength` 0..1 scales every channel.
+	 */
+	setEmotionOptions(opts) {
+		this._emotion.setOptions(opts);
+	}
+
+	/** Eased A2F emotion frame currently applied (channel → 0..1), for meters. */
+	currentEmotion() {
+		return this._emotion.current();
+	}
+
+	/** Rig kind the emotion layer tuned for: 'arkit' | 'vrm' | 'viseme' | 'bones'. */
+	get rigKind() {
+		return this._emotion.kind;
 	}
 
 	/** Diagnostics: which morphs are wired and by which path. */
@@ -120,6 +152,9 @@ export class A2FPlayer {
 			expression: this._expression.map((b) => `${b.mesh.name}:#${b.index}`),
 			frames: this._track?.frames.length ?? 0,
 			fps: this._track?.fps ?? 0,
+			rig: this._emotion.kind,
+			vrmExpressions: this._emotion.vrmDrivesVisemes(),
+			emotionFrames: this._emotion.hasTrack ? this._track?.emotionFrames ?? 0 : 0,
 		};
 	}
 
@@ -131,6 +166,7 @@ export class A2FPlayer {
 	setTrack(track) {
 		if (!track || !Array.isArray(track.frames) || !track.frames.length) {
 			this._track = null;
+			this._emotion.setTrack(null);
 			return;
 		}
 		const names = Array.isArray(track.blendShapeNames) ? track.blendShapeNames : [];
@@ -139,7 +175,9 @@ export class A2FPlayer {
 			names,
 			frames: track.frames,
 			canonForName: names.map((n) => canonicalARKitName(n)),
+			emotionFrames: track.emotion?.frames?.length ?? 0,
 		};
+		this._emotion.setTrack(track.emotion || null);
 		this._cursor = 0;
 		this._lastTime = -1;
 	}
@@ -162,6 +200,7 @@ export class A2FPlayer {
 		const t = Number(timeSec) || 0;
 
 		// Forward playback advances the cursor; a backward seek (replay) rewinds it.
+		const dt = this._lastTime >= 0 && t >= this._lastTime ? Math.min(0.1, t - this._lastTime) : 1 / 60;
 		if (t < this._lastTime) this._cursor = 0;
 		this._lastTime = t;
 		let i = this._cursor;
@@ -187,6 +226,10 @@ export class A2FPlayer {
 			const b = nw ? (nw[c] || 0) : a;
 			arkit[canon] = a + (b - a) * blend;
 		}
+		// Upper-face emotion accents: max(), never add, so a brow A2F already
+		// raised for this emotion is not raised twice.
+		const face = this._emotion.sample(t, dt);
+		for (const k in face) if (face[k] > (arkit[k] || 0)) arkit[k] = face[k];
 
 		for (const bind of this._direct) {
 			bind.mesh.morphTargetInfluences[bind.index] = arkit[bind.canonical] || 0;
@@ -196,6 +239,7 @@ export class A2FPlayer {
 			for (const name in bind.components) sum += (arkit[name] || 0) * bind.components[name];
 			bind.mesh.morphTargetInfluences[bind.index] = clamp01(sum / bind.denom);
 		}
+		this._emotion.applyRig(arkit, dt);
 	}
 
 	/**
@@ -215,6 +259,7 @@ export class A2FPlayer {
 		for (const bind of this._expression) {
 			if (bind.mesh.morphTargetInfluences) bind.mesh.morphTargetInfluences[bind.index] = 0;
 		}
+		this._emotion.release();
 		this._cursor = 0;
 		this._lastTime = -1;
 	}
