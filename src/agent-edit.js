@@ -185,6 +185,7 @@ function initAllSections() {
   ensureOutfitTab();
   ensureVoiceTab();
   ensureKnowledgeTab();
+  ensureGuardrailsTab();
   ensureBrainTab();
   ensureMindTab();
   ensureOwnershipTab();
@@ -1889,6 +1890,21 @@ async function ensureKnowledgeTab() {
   await loadMemories();
 }
 
+// Owner guardrails (NemoGuard checks on this agent's chat): src/agent-guardrails.js.
+let guardrailsTabMounted = false;
+
+function ensureGuardrailsTab() {
+  if (guardrailsTabMounted) return;
+  const host = $('guardrails-host');
+  if (!host) return;
+  guardrailsTabMounted = true;
+  import('./agent-guardrails.js')
+    .then(({ mountGuardrails }) => mountGuardrails(host, { agentId }))
+    .catch((err) => {
+      host.innerHTML = `<div class="muted">Could not load the guardrails panel: ${escapeHtml(err.message)}</div>`;
+    });
+}
+
 async function loadMemories() {
   const container = $('mem-list');
   try {
@@ -3518,6 +3534,7 @@ function scrollToSection(tabId) {
     voice: 'section-identity',
     brain: 'section-brain',
     knowledge: 'section-brain',
+    guardrails: 'section-brain',
     mind: 'section-brain',
     ownership: 'section-brain',
     dreams: 'section-brain',

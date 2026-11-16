@@ -34,6 +34,9 @@
 // the chat usage row: which checks ran, which one blocked, which failed open.
 
 import { z } from 'zod';
+import { LIMITS, refusalFor, topicRedirect } from './guardrail-copy.js';
+
+export { LIMITS, refusalFor, topicRedirect };
 
 const NIM_CHAT_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 export const JAILBREAK_URL = 'https://ai.api.nvidia.com/v1/security/nvidia/nemoguard-jailbreak-detect';
@@ -62,7 +65,6 @@ export const JAILBREAK_THRESHOLD = 0;
 const MAX_CHECK_CHARS = 4000;
 const TOPIC_HISTORY_TURNS = 4;
 
-export const LIMITS = Object.freeze({ topics: 12, topicChars: 120, redirectChars: 280 });
 
 // ── Settings ─────────────────────────────────────────────────────────────────
 
@@ -109,34 +111,7 @@ export function enabledChecks(settings) {
 	return out;
 }
 
-// ── What the visitor sees ────────────────────────────────────────────────────
-
-const REFUSALS = {
-	jailbreak: "I can't change how I work or set aside my instructions, but I'm glad to help with anything else.",
-	input_safety: "I can't help with that request. If there's something else you need, just ask.",
-	output_safety: "I can't share that answer. Could you ask in a different way, or ask about something else?",
-};
-
-/** A readable list: "a", "a and b", "a, b and c". */
-function humanList(items) {
-	if (items.length <= 1) return items[0] || '';
-	return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
-}
-
-/** The polite redirect an off-topic turn gets: the owner's own words, or one built from the topic list. */
-export function topicRedirect(settings) {
-	const custom = settings?.topics?.redirect?.trim();
-	if (custom) return custom;
-	const topics = (settings?.topics?.allowed || []).slice(0, 4).map((t) => t.replace(/[.\s]+$/, ''));
-	if (!topics.length) return REFUSALS.input_safety;
-	return `That's outside what I can help with here. I'm set up to help with ${humanList(topics)}. What would you like to know about those?`;
-}
-
-/** The reply the visitor gets when `check` blocks the turn. */
-export function refusalFor(check, settings) {
-	if (check === 'topic') return topicRedirect(settings);
-	return REFUSALS[check] || REFUSALS.input_safety;
-}
+// ── What the visitor sees: api/_lib/guardrail-copy.js ──────────────────────
 
 // ── Classifier calls ─────────────────────────────────────────────────────────
 
