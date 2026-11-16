@@ -2,6 +2,8 @@
 
 > Status 2026-11-11: built and committed (a866d6bc5, 658760381, 0108c1ce9, 2f079eb5a, 3db76d90f; routes in 6276bcb84, changelog and STRUCTURE row in 9c9c66912). Waits on the owner: Graph application permissions and redirect URIs on the Entra app, MS_ENTRA_SSO_CLIENT_ID/SECRET on Cloud Run, a developer-tenant check, push and deploy.
 
+> Status 2026-11-16: re-verified. Pushed and deployed (content on threews/main as a866d6bc5, 658760381, 0108c1ce9, a2cef120c; the 2026-11-11 SHAs 2f079eb5a, 3db76d90f, 9c9c66912 were rewritten). Production /settings/microsoft-365 and its docs page 200, cron--api-cron-m365-connector-sync ENABLED */15, migration applied, 39/39 tests (vitest), live Graph 401 InvalidAuthenticationToken. Remaining owner steps: `npm run microsoft:provision -- --apply` (grants ExternalConnection.ReadWrite.OwnedBy and ExternalItem.ReadWrite.OwnedBy plus the callback redirect, hands off MS_ENTRA_SSO_CLIENT_ID/SECRET), then connect a Microsoft 365 developer tenant and run a sync.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3116.
 
 ## Operating clause (binding)
