@@ -131,10 +131,11 @@ const VERTEX_GEMINI_MODEL = process.env.VERTEX_GEMINI_MODEL || 'google/gemini-2.
 // Same Llama 3.3 70B family on NVIDIA NIM (build.nvidia.com) — one free nvapi
 // key, OpenAI-compatible, so the chain degrades across providers without
 // changing model behavior.
-// meta/llama-3.x on NIM reached end of life 2026-08-26 (HTTP 410). The
-// nemotron-3 family is what serves now; it is a reasoning family, so the
-// provider entries below disable thinking to keep content clean.
-const NVIDIA_MODEL = 'nvidia/nemotron-3-super-120b-a12b';
+// meta/llama-3.x on NIM reached end of life 2026-08-26 (HTTP 410), and
+// nemotron-3-super-120b-a12b followed on 2026-10-03 (HTTP 410, caught by the
+// /api/cron/nvidia-lane-probes probe 2026-11-16). The nemotron-3 family is a
+// reasoning family, so the provider entries below disable thinking to keep
+// content clean.
 // Compact, reasoning-tuned Nemotron a caller can opt into when it wants the
 // NVIDIA-native model to lead (see `preferNvidia`/`nvidiaModel` below). Fast
 // enough for a single prompt-refine turn; the rest of the free chain still
@@ -146,15 +147,17 @@ const NVIDIA_MODEL = 'nvidia/nemotron-3-super-120b-a12b';
 // hand went red for a reason that had nothing to do with the code.
 export const NVIDIA_NEMOTRON_MODEL = 'nvidia/nemotron-3.5-lightning-30b-a3b';
 // Nemotron 3 Ultra 550B on the same nvapi key: the largest free model in the
-// chain (1.6s, clean content with thinking off, measured 2026-10-08). Every NIM
-// model is its own NVCF function with its own queue and retirement date, and
-// NVIDIA sizes the free rate limit by model, so a second model id behind the
-// Super rung survives the Super function 429ing, 410ing, or queueing. The
-// third-party models NIM also lists (DeepSeek, Kimi, GLM, Gemma) queued past
-// 60s on the free tier the same day, so they are deliberately not rungs.
+// chain (1.6s, clean content with thinking off, measured 2026-10-08). It leads
+// the NIM rungs since Super was retired. Every NIM model is its own NVCF
+// function with its own queue and retirement date, so the Lightning rung in
+// the step-down group still answers when the Ultra function 429s, 410s, or
+// queues. The third-party models NIM also lists (DeepSeek, Kimi, GLM, Gemma)
+// queued past 60s on the free tier the same day, so they are deliberately not
+// rungs.
 export const NVIDIA_ULTRA_MODEL = 'nvidia/nemotron-3-ultra-550b-a55b';
-// Every NIM id the free chain pins, for /api/cron/free-model-audit.
-export const NVIDIA_PINNED_MODELS = Object.freeze([NVIDIA_MODEL, NVIDIA_ULTRA_MODEL, NVIDIA_NEMOTRON_MODEL]);
+// Every NIM id the free chain pins, for /api/cron/free-model-audit. The first
+// entry is the default rung that /api/cron/nvidia-lane-probes probes.
+export const NVIDIA_PINNED_MODELS = Object.freeze([NVIDIA_ULTRA_MODEL, NVIDIA_NEMOTRON_MODEL]);
 // Kilo Code's gateway (api.kilo.ai) serves a free model pool with NO key and no
 // signup, about 200 req/hr. Its free Nemotron routes run on Kilo's own NVIDIA
 // capacity, so they are a quota pool independent of our nvapi key. Only
@@ -747,24 +750,12 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 			name: i === 0 ? 'nvidia' : `nvidia#${i + 1}`,
 			key,
 			url: 'https://integrate.api.nvidia.com/v1/chat/completions',
-			model: NVIDIA_MODEL,
+			model: NVIDIA_ULTRA_MODEL,
 			extraBody: NVIDIA_NO_THINK,
 			// NIM free tier queues under load (observed hanging 25s on a 900-token
 			// prompt while every other free lane failed fast), so the lane stays
 			// bounded. See nvidiaLaneTimeoutMs for why that bound is no longer a
 			// hardcoded 6s.
-			timeoutMs: nvidiaLaneTimeoutMs(),
-		}));
-	});
-	// Then Ultra on each key: a different NIM function, so it still answers when
-	// the Super function above is throttled or retired.
-	nvidiaKeys.forEach((key, i) => {
-		chain.push(openaiCompatProvider({
-			name: `${i === 0 ? 'nvidia' : `nvidia#${i + 1}`}:ultra`,
-			key,
-			url: 'https://integrate.api.nvidia.com/v1/chat/completions',
-			model: NVIDIA_ULTRA_MODEL,
-			extraBody: NVIDIA_NO_THINK,
 			timeoutMs: nvidiaLaneTimeoutMs(),
 		}));
 	});

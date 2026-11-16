@@ -54,12 +54,9 @@ const FREE_CHAIN = [
 	{ provider: 'openrouter:nemotron-3-super-120b-a12b', host: HOSTS.openrouter, model: 'nvidia/nemotron-3-super-120b-a12b:free' },
 	{ provider: 'openrouter:qwen3.8-27b', host: HOSTS.openrouter, model: 'qwen/qwen3.8-27b:free' },
 	// One NIM rung per nvapi key; same host and model, told apart by the key.
-	{ provider: 'nvidia', host: HOSTS.nvidia, model: 'nvidia/nemotron-3-super-120b-a12b', auth: 'nvapi-x' },
-	{ provider: 'nvidia#2', host: HOSTS.nvidia, model: 'nvidia/nemotron-3-super-120b-a12b', auth: 'nvapi-y' },
-	// Then Ultra on each key: a separate NIM function, so it answers while the
-	// Super function is throttled or retired.
-	{ provider: 'nvidia:ultra', host: HOSTS.nvidia, model: 'nvidia/nemotron-3-ultra-550b-a55b', auth: 'nvapi-x' },
-	{ provider: 'nvidia#2:ultra', host: HOSTS.nvidia, model: 'nvidia/nemotron-3-ultra-550b-a55b', auth: 'nvapi-y' },
+	// Ultra leads since NVIDIA retired Super on 2026-10-03.
+	{ provider: 'nvidia', host: HOSTS.nvidia, model: 'nvidia/nemotron-3-ultra-550b-a55b', auth: 'nvapi-x' },
+	{ provider: 'nvidia#2', host: HOSTS.nvidia, model: 'nvidia/nemotron-3-ultra-550b-a55b', auth: 'nvapi-y' },
 	{ provider: 'sambanova', host: HOSTS.sambanova, model: 'Meta-Llama-3.3-70B-Instruct' },
 	{ provider: 'mistral', host: HOSTS.mistral, model: 'mistral-small-latest' },
 	{ provider: 'zai', host: HOSTS.zai, model: 'glm-4.7-flash' },
