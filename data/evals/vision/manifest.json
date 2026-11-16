@@ -1,0 +1,1654 @@
+{
+	"version": 1,
+	"items": [
+		{
+			"id": "r-alarm-clock",
+			"source": {
+				"kind": "render",
+				"name": "alarm_clock_01"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"clock"
+						]
+					]
+				},
+				"forge_precheck": {
+					"usable": true
+				},
+				"image3d_review": {
+					"verdict": "ok"
+				},
+				"quality_gate": {
+					"prompt": "a vintage twin bell alarm clock",
+					"expect": "pass"
+				}
+			}
+		},
+		{
+			"id": "r-apple",
+			"source": {
+				"kind": "render",
+				"name": "food_apple_01"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"apple"
+						]
+					]
+				},
+				"forge_precheck": {
+					"usable": true
+				},
+				"quality_gate": {
+					"prompt": "a red apple",
+					"expect": "pass"
+				}
+			}
+		},
+		{
+			"id": "r-rubber-duck",
+			"source": {
+				"kind": "render",
+				"name": "rubber_duck_toy"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"duck"
+						]
+					]
+				},
+				"forge_precheck": {
+					"usable": true
+				},
+				"image3d_review": {
+					"verdict": "ok"
+				},
+				"quality_gate": {
+					"prompt": "a rubber duck toy",
+					"expect": "pass"
+				}
+			}
+		},
+		{
+			"id": "r-camera",
+			"source": {
+				"kind": "render",
+				"name": "Camera_01"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"camera"
+						]
+					]
+				},
+				"forge_precheck": {
+					"usable": true
+				},
+				"image3d_review": {
+					"verdict": "ok"
+				},
+				"quality_gate": {
+					"prompt": "a vintage rangefinder camera with a leather strap",
+					"expect": "pass"
+				}
+			}
+		},
+		{
+			"id": "r-axe",
+			"source": {
+				"kind": "render",
+				"name": "wooden_axe"
+			},
+			"tasks": {
+				"forge_precheck": {
+					"usable": true
+				},
+				"quality_gate": {
+					"prompt": "a wooden axe",
+					"expect": "pass"
+				}
+			}
+		},
+		{
+			"id": "r-fire-hydrant",
+			"source": {
+				"kind": "render",
+				"name": "fire_hydrant"
+			},
+			"tasks": {
+				"object_detect": {
+					"labels": [
+						[
+							"hydrant"
+						]
+					]
+				}
+			}
+		},
+		{
+			"id": "r-ukulele",
+			"source": {
+				"kind": "render",
+				"name": "Ukulele_01"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"ukulele",
+							"guitar"
+						]
+					]
+				},
+				"forge_precheck": {
+					"usable": true
+				},
+				"image3d_review": {
+					"verdict": "ok"
+				},
+				"quality_gate": {
+					"prompt": "a wooden ukulele",
+					"expect": "pass"
+				}
+			}
+		},
+		{
+			"id": "r-chess",
+			"source": {
+				"kind": "render",
+				"name": "chess_set"
+			},
+			"tasks": {
+				"quality_gate": {
+					"prompt": "a chess set on a board",
+					"expect": "pass"
+				},
+				"object_detect": {
+					"labels": [
+						[
+							"chess",
+							"board"
+						],
+						[
+							"king",
+							"queen",
+							"pawn",
+							"piece",
+							"rook",
+							"knight",
+							"bishop"
+						]
+					]
+				}
+			}
+		},
+		{
+			"id": "r-gnome",
+			"source": {
+				"kind": "render",
+				"name": "garden_gnome"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"gnome"
+						],
+						[
+							"lantern",
+							"hat",
+							"beard"
+						]
+					]
+				},
+				"forge_precheck": {
+					"usable": true
+				},
+				"image3d_review": {
+					"verdict": "ok"
+				},
+				"avatar_review": {
+					"verdict": "ok"
+				},
+				"quality_gate": {
+					"prompt": "a garden gnome holding a lantern",
+					"expect": "pass"
+				}
+			}
+		},
+		{
+			"id": "r-boombox",
+			"source": {
+				"kind": "render",
+				"name": "boombox"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"boombox",
+							"radio",
+							"stereo",
+							"cassette"
+						]
+					]
+				},
+				"forge_precheck": {
+					"usable": true
+				},
+				"quality_gate": {
+					"prompt": "a retro boombox",
+					"expect": "pass"
+				}
+			}
+		},
+		{
+			"id": "r-television",
+			"source": {
+				"kind": "render",
+				"name": "Television_01"
+			},
+			"tasks": {
+				"describe": {
+					"mention": [
+						[
+							"television",
+							"tv"
+						]
+					],
+					"transcribe": [
+						"VTECH"
+					]
+				},
+				"quality_gate": {
+					"prompt": "a golden retriever dog",
+					"expect": "reject"
+				}
+			}
+		},
+		{
+			"id": "r-lemon",
+			"source": {
+				"kind": "render",
+				"name": "lemon"
+			},
+			"tasks": {
+				"forge_precheck": {
+					"usable": true
+				},
+				"image3d_review": {
+					"verdict": "ok"
+				},
+				"quality_gate": {
+					"prompt": "a red sports car",
+					"expect": "reject"
+				}
+			}
+		},
+		{
+			"id": "r-wooden-chair",
+			"source": {
+				"kind": "render",
+				"name": "WoodenChair_01"
+			},
+			"tasks": {
+				"quality_gate": {
+					"prompt": "a medieval knight in full armor",
+					"expect": "reject"
+				}
+			}
+		},
+		{
+			"id": "r-potted-plant",
+			"source": {
+				"kind": "render",
+				"name": "potted_plant_01"
+			},
+			"tasks": {
+				"forge_precheck": {
+					"usable": true
+				},
+				"quality_gate": {
+					"prompt": "a slice of pepperoni pizza",
+					"expect": "reject"
+				}
+			}
+		},
+		{
+			"id": "r-suitcase",
+			"source": {
+				"kind": "render",
+				"name": "vintage_suitcase"
+			},
+			"tasks": {
+				"quality_gate": {
+					"prompt": "a bald eagle with spread wings",
+					"expect": "reject"
+				},
+				"object_detect": {
+					"labels": [
+						[
+							"suitcase",
+							"luggage",
+							"case"
+						]
+					]
+				}
+			}
+		},
+		{
+			"id": "r-binoculars",
+			"source": {
+				"kind": "render",
+				"name": "binoculars"
+			},
+			"tasks": {
+				"seed_judge": {
+					"prompt": "a pair of binoculars",
+					"expect": "match"
+				}
+			}
+		},
+		{
+			"id": "r-baseball-bat",
+			"source": {
+				"kind": "render",
+				"name": "baseball_bat"
+			},
+			"tasks": {
+				"seed_judge": {
+					"prompt": "a wooden baseball bat",
+					"expect": "match"
+				}
+			}
+		},
+		{
+			"id": "r-watering-can",
+			"source": {
+				"kind": "render",
+				"name": "watering_can_metal_01"
+			},
+			"tasks": {
+				"forge_precheck": {
+					"usable": true
+				},
+				"seed_judge": {
+					"prompt": "a metal watering can",
+					"expect": "match"
+				}
+			}
+		},
+		{
+			"id": "r-desk-lamp",
+			"source": {
+				"kind": "render",
+				"name": "desk_lamp_arm_01"
+			},
+			"tasks": {
+				"forge_precheck": {
+					"usable": true
+				},
+				"seed_judge": {
+					"prompt": "an orange desk lamp",
+					"expect": "match"
+				}
+			}
+		},
+		{
+			"id": "r-pocket-watch",
+			"source": {
+				"kind": "render",
+				"name": "pocket_watch"
+			},
+			"tasks": {
+				"forge_precheck": {
+					"usable": true
+				},
+				"image3d_review": {
+					"verdict": "ok"
+				},
+				"seed_judge": {
+					"prompt": "a brass pocket watch",
+					"expect": "match"
+				}
+			}
+		},
+		{
+			"id": "r-treasure-chest",
+			"source": {
+				"kind": "render",
+				"name": "treasure_chest"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"chest",
+							"trunk"
+						]
+					]
+				},
+				"forge_precheck": {
+					"usable": true
+				},
+				"seed_judge": {
+					"prompt": "a wooden treasure chest",
+					"expect": "match"
+				}
+			}
+		},
+		{
+			"id": "r-rifle",
+			"source": {
+				"kind": "render",
+				"name": "bolt_action_rifle_7_62",
+				"view": "three-quarter"
+			},
+			"tasks": {
+				"forge_precheck": {
+					"usable": true
+				},
+				"image3d_review": {
+					"verdict": "unsafe"
+				}
+			}
+		},
+		{
+			"id": "r-pistol",
+			"source": {
+				"kind": "render",
+				"name": "service_pistol",
+				"view": "three-quarter"
+			},
+			"tasks": {
+				"image3d_review": {
+					"verdict": "unsafe"
+				},
+				"avatar_review": {
+					"verdict": "unsafe"
+				}
+			}
+		},
+		{
+			"id": "r-grenade",
+			"source": {
+				"kind": "render",
+				"name": "stick_grenade"
+			},
+			"tasks": {
+				"image3d_review": {
+					"verdict": "unsafe"
+				}
+			}
+		},
+		{
+			"id": "r-croissant",
+			"source": {
+				"kind": "render",
+				"name": "croissant"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"croissant",
+							"pastry"
+						]
+					]
+				},
+				"forge_precheck": {
+					"usable": true
+				},
+				"image3d_review": {
+					"verdict": "ok"
+				},
+				"quality_gate": {
+					"prompt": "a croissant",
+					"expect": "pass"
+				}
+			}
+		},
+		{
+			"id": "r-gamepad",
+			"source": {
+				"kind": "render",
+				"name": "gamepad"
+			},
+			"tasks": {
+				"seed_judge": {
+					"prompt": "a retro game controller",
+					"expect": "match"
+				}
+			}
+		},
+		{
+			"id": "r-rubber-boots",
+			"source": {
+				"kind": "render",
+				"name": "rubber_boots"
+			},
+			"tasks": {
+				"object_detect": {
+					"labels": [
+						[
+							"boot"
+						]
+					]
+				}
+			}
+		},
+		{
+			"id": "r-marble-bust",
+			"source": {
+				"kind": "render",
+				"name": "marble_bust_01",
+				"view": "front"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"bust",
+							"statue",
+							"sculpture"
+						]
+					]
+				},
+				"forge_precheck": {
+					"usable": true
+				},
+				"image3d_review": {
+					"verdict": "ok"
+				},
+				"avatar_review": {
+					"verdict": "ok"
+				},
+				"seed_judge": {
+					"prompt": "a wooden rowing boat",
+					"expect": "mismatch"
+				}
+			}
+		},
+		{
+			"id": "r-horse-statue",
+			"source": {
+				"kind": "render",
+				"name": "horse_statue_01"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"horse"
+						]
+					]
+				},
+				"avatar_review": {
+					"verdict": "ok"
+				},
+				"seed_judge": {
+					"prompt": "a red pickup truck",
+					"expect": "mismatch"
+				}
+			}
+		},
+		{
+			"id": "r-gothic-statue",
+			"source": {
+				"kind": "render",
+				"name": "gothic_statue",
+				"view": "front"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"statue",
+							"sculpture",
+							"figure",
+							"figurine"
+						]
+					]
+				},
+				"avatar_review": {
+					"verdict": "ok"
+				}
+			}
+		},
+		{
+			"id": "r-whale-statue",
+			"source": {
+				"kind": "render",
+				"name": "bronze_whale_statue"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"whale"
+						]
+					]
+				},
+				"avatar_review": {
+					"verdict": "ok"
+				},
+				"seed_judge": {
+					"prompt": "a bronze whale statue",
+					"expect": "match"
+				}
+			}
+		},
+		{
+			"id": "r-cat-statue",
+			"source": {
+				"kind": "render",
+				"name": "concrete_cat_statue"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"cat"
+						]
+					]
+				},
+				"avatar_review": {
+					"verdict": "ok"
+				},
+				"seed_judge": {
+					"prompt": "a bowl of ramen noodles",
+					"expect": "mismatch"
+				}
+			}
+		},
+		{
+			"id": "r-lion-head",
+			"source": {
+				"kind": "render",
+				"name": "lion_head",
+				"view": "front"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"lion"
+						]
+					]
+				},
+				"avatar_review": {
+					"verdict": "ok"
+				},
+				"seed_judge": {
+					"prompt": "a pink flamingo",
+					"expect": "mismatch"
+				}
+			}
+		},
+		{
+			"id": "c-desk-books",
+			"source": {
+				"kind": "commons",
+				"title": "File:Books, pencils, laptop, and iphone on a desk (Unsplash).jpg"
+			},
+			"tasks": {
+				"describe": {
+					"mention": [
+						[
+							"laptop",
+							"computer"
+						],
+						[
+							"book"
+						]
+					],
+					"transcribe": []
+				},
+				"object_detect": {
+					"labels": [
+						[
+							"laptop",
+							"computer"
+						],
+						[
+							"book"
+						],
+						[
+							"notepad",
+							"notebook",
+							"sketch",
+							"pad"
+						],
+						[
+							"phone",
+							"iphone"
+						],
+						[
+							"pencil",
+							"pen"
+						]
+					]
+				},
+				"diorama": {
+					"labels": [
+						[
+							"laptop",
+							"computer"
+						],
+						[
+							"book"
+						],
+						[
+							"notepad",
+							"notebook",
+							"sketch",
+							"pad"
+						],
+						[
+							"phone",
+							"iphone"
+						],
+						[
+							"pencil",
+							"pen"
+						]
+					]
+				}
+			}
+		},
+		{
+			"id": "c-desk-calculator",
+			"source": {
+				"kind": "commons",
+				"title": "File:Desktop with laptop and calculator (Unsplash).jpg"
+			},
+			"tasks": {
+				"object_detect": {
+					"labels": [
+						[
+							"calculator"
+						],
+						[
+							"laptop",
+							"computer"
+						],
+						[
+							"notebook",
+							"notepad"
+						],
+						[
+							"chair"
+						],
+						[
+							"mouse"
+						]
+					]
+				},
+				"diorama": {
+					"labels": [
+						[
+							"calculator"
+						],
+						[
+							"laptop",
+							"computer"
+						],
+						[
+							"notebook",
+							"notepad"
+						],
+						[
+							"chair"
+						],
+						[
+							"mouse"
+						]
+					]
+				}
+			}
+		},
+		{
+			"id": "c-home-office",
+			"source": {
+				"kind": "commons",
+				"title": "File:Home-office-336377.jpg"
+			},
+			"tasks": {
+				"describe": {
+					"mention": [
+						[
+							"laptop",
+							"macbook",
+							"computer"
+						],
+						[
+							"coffee",
+							"espresso",
+							"cup"
+						]
+					],
+					"transcribe": []
+				},
+				"object_detect": {
+					"labels": [
+						[
+							"laptop",
+							"macbook",
+							"computer"
+						],
+						[
+							"notebook",
+							"notepad"
+						],
+						[
+							"cup",
+							"espresso",
+							"coffee",
+							"mug"
+						],
+						[
+							"phone"
+						],
+						[
+							"pen"
+						]
+					]
+				},
+				"diorama": {
+					"labels": [
+						[
+							"laptop",
+							"macbook",
+							"computer"
+						],
+						[
+							"notebook",
+							"notepad"
+						],
+						[
+							"cup",
+							"espresso",
+							"coffee",
+							"mug"
+						],
+						[
+							"phone"
+						],
+						[
+							"pen"
+						]
+					]
+				}
+			}
+		},
+		{
+			"id": "c-living-room",
+			"source": {
+				"kind": "commons",
+				"title": "File:Spacious Living Room Interior Design in Kolkata by Estate Lookup Interiors.png"
+			},
+			"tasks": {
+				"forge_precheck": {
+					"usable": false,
+					"issue": [
+						"multiple_subjects",
+						"no_clear_subject"
+					]
+				},
+				"object_detect": {
+					"labels": [
+						[
+							"sofa",
+							"couch"
+						],
+						[
+							"table"
+						],
+						[
+							"plant"
+						],
+						[
+							"fan"
+						]
+					]
+				},
+				"diorama": {
+					"labels": [
+						[
+							"sofa",
+							"couch"
+						],
+						[
+							"table"
+						],
+						[
+							"plant"
+						],
+						[
+							"fan"
+						]
+					]
+				}
+			}
+		},
+		{
+			"id": "c-apartment-granada",
+			"source": {
+				"kind": "commons",
+				"title": "File:Artchapiz1 artchapiz.es apartment rental granada 01.jpg"
+			},
+			"tasks": {
+				"object_detect": {
+					"labels": [
+						[
+							"sofa",
+							"couch"
+						],
+						[
+							"table"
+						],
+						[
+							"chair"
+						],
+						[
+							"pillow",
+							"cushion"
+						],
+						[
+							"painting",
+							"picture",
+							"art",
+							"frame"
+						]
+					]
+				},
+				"diorama": {
+					"labels": [
+						[
+							"sofa",
+							"couch"
+						],
+						[
+							"table"
+						],
+						[
+							"chair"
+						],
+						[
+							"pillow",
+							"cushion"
+						],
+						[
+							"painting",
+							"picture",
+							"art",
+							"frame"
+						]
+					]
+				}
+			}
+		},
+		{
+			"id": "c-mountain-lake",
+			"source": {
+				"kind": "commons",
+				"title": "File:Lake Mountain Landscape.jpg"
+			},
+			"tasks": {
+				"forge_precheck": {
+					"usable": false,
+					"issue": [
+						"multiple_subjects",
+						"no_clear_subject"
+					]
+				},
+				"avatar_review": {
+					"verdict": "unusable"
+				}
+			}
+		},
+		{
+			"id": "c-flag-japan",
+			"source": {
+				"kind": "commons",
+				"title": "File:Japan flag square.png"
+			},
+			"tasks": {
+				"describe": {
+					"mention": [
+						[
+							"flag"
+						],
+						[
+							"japan",
+							"red circle",
+							"red disc",
+							"red dot"
+						]
+					],
+					"transcribe": []
+				},
+				"avatar_review": {
+					"verdict": "unusable"
+				}
+			}
+		},
+		{
+			"id": "c-crowd-festival",
+			"source": {
+				"kind": "commons",
+				"title": "File:People-crowd-social-love-human-festival-1198211.jpg"
+			},
+			"tasks": {
+				"forge_precheck": {
+					"usable": false,
+					"issue": [
+						"multiple_subjects",
+						"no_clear_subject"
+					]
+				},
+				"image3d_review": {
+					"verdict": "unusable"
+				},
+				"avatar_review": {
+					"verdict": "unusable"
+				}
+			}
+		},
+		{
+			"id": "c-street-crowd",
+			"source": {
+				"kind": "commons",
+				"title": "File:Street Crowd.jpg"
+			},
+			"tasks": {
+				"forge_precheck": {
+					"usable": false,
+					"issue": [
+						"multiple_subjects",
+						"no_clear_subject"
+					]
+				},
+				"image3d_review": {
+					"verdict": "unusable"
+				},
+				"avatar_review": {
+					"verdict": "unusable"
+				}
+			}
+		},
+		{
+			"id": "c-ipcc-bar-graph",
+			"source": {
+				"kind": "commons",
+				"title": "File:Ipcc 2014 bar graph.png"
+			},
+			"tasks": {
+				"describe": {
+					"mention": [
+						[
+							"chart",
+							"graph"
+						]
+					],
+					"transcribe": [
+						"IPCC"
+					]
+				},
+				"forge_precheck": {
+					"usable": false,
+					"issue": [
+						"abstract_or_diagram"
+					]
+				},
+				"image3d_review": {
+					"verdict": "unusable"
+				},
+				"avatar_review": {
+					"verdict": "unusable"
+				}
+			}
+		},
+		{
+			"id": "c-book-production-chart",
+			"source": {
+				"kind": "commons",
+				"title": "File:Bar chart, historical book production.png"
+			},
+			"tasks": {
+				"describe": {
+					"mention": [
+						[
+							"chart",
+							"graph"
+						]
+					],
+					"transcribe": []
+				},
+				"forge_precheck": {
+					"usable": false,
+					"issue": [
+						"abstract_or_diagram"
+					]
+				}
+			}
+		},
+		{
+			"id": "c-circuit-diagram",
+			"source": {
+				"kind": "commons",
+				"title": "File:Circuit diagram with resistor and lamp.jpg"
+			},
+			"tasks": {
+				"describe": {
+					"mention": [
+						[
+							"circuit",
+							"diagram"
+						]
+					],
+					"transcribe": []
+				},
+				"forge_precheck": {
+					"usable": false,
+					"issue": [
+						"abstract_or_diagram"
+					]
+				},
+				"image3d_review": {
+					"verdict": "unusable"
+				}
+			}
+		},
+		{
+			"id": "c-stop-sign-us",
+			"source": {
+				"kind": "commons",
+				"title": "File:Stop sign us.jpg"
+			},
+			"tasks": {
+				"describe": {
+					"mention": [
+						[
+							"sign"
+						]
+					],
+					"transcribe": [
+						"STOP"
+					]
+				},
+				"avatar_review": {
+					"verdict": "unusable"
+				}
+			}
+		},
+		{
+			"id": "c-park-stop-sign",
+			"source": {
+				"kind": "commons",
+				"title": "File:Park stop sign.jpg"
+			},
+			"tasks": {
+				"forge_precheck": {
+					"usable": false,
+					"issue": [
+						"multiple_subjects",
+						"no_clear_subject"
+					]
+				}
+			}
+		},
+		{
+			"id": "c-street-sign-parliament",
+			"source": {
+				"kind": "commons",
+				"title": "File:Street name sign Parliament Street.png"
+			},
+			"tasks": {
+				"describe": {
+					"mention": [
+						[
+							"sign",
+							"street"
+						]
+					],
+					"transcribe": [
+						"PARLIAMENT"
+					]
+				}
+			}
+		},
+		{
+			"id": "c-street-sign-watergate",
+			"source": {
+				"kind": "commons",
+				"title": "File:Street name sign Watergate.png"
+			},
+			"tasks": {
+				"describe": {
+					"mention": [
+						[
+							"sign"
+						]
+					],
+					"transcribe": [
+						"WATERGATE"
+					]
+				}
+			}
+		},
+		{
+			"id": "c-exit-sign",
+			"source": {
+				"kind": "commons",
+				"title": "File:Red Emergency Exit Sign.jpg"
+			},
+			"tasks": {
+				"describe": {
+					"mention": [
+						[
+							"sign"
+						]
+					],
+					"transcribe": [
+						"EXIT"
+					]
+				},
+				"avatar_review": {
+					"verdict": "unusable"
+				}
+			}
+		},
+		{
+			"id": "c-seized-marijuana",
+			"source": {
+				"kind": "commons",
+				"title": "File:7 Tons of seized Marijuana.jpg"
+			},
+			"tasks": {
+				"describe": {
+					"mention": [
+						[
+							"marijuana",
+							"cannabis",
+							"drug",
+							"bale",
+							"seiz"
+						],
+						[
+							"customs",
+							"border",
+							"cbp",
+							"officer",
+							"agent"
+						]
+					],
+					"transcribe": []
+				}
+			}
+		},
+		{
+			"id": "c-cbp-cannabis",
+			"source": {
+				"kind": "commons",
+				"title": "File:CBP cannabis seizures Florida 2016.jpg"
+			},
+			"tasks": {
+				"forge_precheck": {
+					"usable": false,
+					"issue": [
+						"abstract_or_diagram",
+						"multiple_subjects",
+						"text_screenshot"
+					]
+				}
+			}
+		},
+		{
+			"id": "c-drug-pack",
+			"source": {
+				"kind": "commons",
+				"title": "File:Drugpackscorpion.png"
+			},
+			"tasks": {
+				"image3d_review": {
+					"verdict": "unsafe"
+				},
+				"avatar_review": {
+					"verdict": "unsafe"
+				}
+			}
+		},
+		{
+			"id": "c-plain-mug",
+			"source": {
+				"kind": "commons",
+				"title": "File:PlainMug.jpg"
+			},
+			"tasks": {
+				"forge_precheck": {
+					"usable": true
+				},
+				"image3d_review": {
+					"verdict": "ok"
+				}
+			}
+		},
+		{
+			"id": "c-avia-shoes",
+			"source": {
+				"kind": "commons",
+				"title": "File:Avia Shoes.jpg"
+			},
+			"tasks": {
+				"describe": {
+					"mention": [
+						[
+							"shoe",
+							"sneaker",
+							"trainer"
+						]
+					],
+					"transcribe": [
+						"AVIA"
+					]
+				},
+				"forge_precheck": {
+					"usable": true
+				},
+				"image3d_review": {
+					"verdict": "ok"
+				}
+			}
+		},
+		{
+			"id": "c-astronaut-baker",
+			"source": {
+				"kind": "commons",
+				"title": "File:Official Portrait - Astronaut Michael A. Baker.jpg"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"man",
+							"person",
+							"astronaut",
+							"pilot"
+						],
+						[
+							"model",
+							"shuttle",
+							"flag",
+							"jacket"
+						]
+					]
+				},
+				"avatar_review": {
+					"verdict": "ok"
+				}
+			}
+		},
+		{
+			"id": "c-astronaut-cristoforetti",
+			"source": {
+				"kind": "commons",
+				"title": "File:Samantha Cristoforetti official portrait in an EMU spacesuit.jpg"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"astronaut",
+							"spacesuit",
+							"space suit"
+						]
+					]
+				},
+				"forge_precheck": {
+					"usable": true
+				},
+				"avatar_review": {
+					"verdict": "ok"
+				}
+			}
+		},
+		{
+			"id": "c-astronaut-cockrell",
+			"source": {
+				"kind": "commons",
+				"title": "File:Kenneth Cockrell - Official portrait of astronaut candidate.jpg"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"man",
+							"person",
+							"astronaut"
+						],
+						[
+							"shuttle",
+							"model",
+							"flag"
+						]
+					]
+				},
+				"avatar_review": {
+					"verdict": "ok"
+				}
+			}
+		},
+		{
+			"id": "c-samoyed-teddy",
+			"source": {
+				"kind": "commons",
+				"title": "File:Samoyed-and-teddy-bear.jpg"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"dog",
+							"samoyed"
+						],
+						[
+							"teddy",
+							"bear",
+							"plush",
+							"stuffed"
+						]
+					]
+				},
+				"avatar_review": {
+					"verdict": "ok"
+				}
+			}
+		},
+		{
+			"id": "c-tabby-cat",
+			"source": {
+				"kind": "commons",
+				"title": "File:Tabby cat with blue eyes-3336579.jpg"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"cat",
+							"kitten"
+						]
+					]
+				},
+				"forge_precheck": {
+					"usable": true
+				},
+				"image3d_review": {
+					"verdict": "ok"
+				},
+				"avatar_review": {
+					"verdict": "ok"
+				}
+			}
+		},
+		{
+			"id": "c-buddy-dog",
+			"source": {
+				"kind": "commons",
+				"title": "File:Official Portrait of Buddy the Dog - DPLA - 8bb24feae78ce1f060addb5682fc48e6.jpg"
+			},
+			"tasks": {
+				"caption": {
+					"mention": [
+						[
+							"dog",
+							"labrador",
+							"lab "
+						]
+					]
+				},
+				"forge_precheck": {
+					"usable": true
+				},
+				"avatar_review": {
+					"verdict": "ok"
+				}
+			}
+		},
+		{
+			"id": "s-home",
+			"source": {
+				"kind": "screenshot",
+				"url": "https://three.ws/"
+			},
+			"tasks": {
+				"describe": {
+					"mention": [
+						[
+							"three.ws"
+						]
+					],
+					"transcribe": [
+						"Welcome to three.ws"
+					]
+				},
+				"forge_precheck": {
+					"usable": false,
+					"issue": [
+						"text_screenshot"
+					]
+				}
+			}
+		},
+		{
+			"id": "s-pricing",
+			"source": {
+				"kind": "screenshot",
+				"url": "https://three.ws/pricing"
+			},
+			"tasks": {
+				"describe": {
+					"mention": [
+						[
+							"pricing",
+							"price",
+							"plan"
+						]
+					],
+					"transcribe": [
+						"Free to start",
+						"$49"
+					]
+				},
+				"forge_precheck": {
+					"usable": false,
+					"issue": [
+						"text_screenshot"
+					]
+				},
+				"image3d_review": {
+					"verdict": "unusable"
+				}
+			}
+		},
+		{
+			"id": "s-changelog",
+			"source": {
+				"kind": "screenshot",
+				"url": "https://three.ws/changelog"
+			},
+			"tasks": {
+				"describe": {
+					"mention": [
+						[
+							"changelog"
+						]
+					],
+					"transcribe": [
+						"Changelog"
+					]
+				},
+				"forge_precheck": {
+					"usable": false,
+					"issue": [
+						"text_screenshot"
+					]
+				},
+				"image3d_review": {
+					"verdict": "unusable"
+				}
+			}
+		},
+		{
+			"id": "d-mug-dark",
+			"source": {
+				"kind": "derived",
+				"from": "c-plain-mug"
+			},
+			"tasks": {
+				"forge_precheck": {
+					"usable": false,
+					"issue": [
+						"too_dark_or_blurry"
+					]
+				},
+				"image3d_review": {
+					"verdict": "unusable"
+				},
+				"avatar_review": {
+					"verdict": "unusable"
+				}
+			}
+		},
+		{
+			"id": "d-shoes-dark",
+			"source": {
+				"kind": "derived",
+				"from": "c-avia-shoes"
+			},
+			"tasks": {
+				"forge_precheck": {
+					"usable": false,
+					"issue": [
+						"too_dark_or_blurry"
+					]
+				},
+				"image3d_review": {
+					"verdict": "unusable"
+				},
+				"avatar_review": {
+					"verdict": "unusable"
+				}
+			}
+		}
+	]
+}
