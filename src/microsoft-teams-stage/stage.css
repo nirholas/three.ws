@@ -347,3 +347,8 @@ kbd { font: var(--text-xs) / 1 var(--font-mono, monospace); padding: 2px 5px; bo
 @media (forced-colors: active) {
 	:is(a, button, input, select, textarea):focus-visible { outline: 2px solid CanvasText; }
 }
+
+/* Signed-in bar above "Your models": who is signed in, and the way out. */
+.rs-session { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs); margin-bottom: var(--space-sm); padding: 8px 10px; font-size: var(--text-sm); color: var(--ink-dim); background: var(--surface-1); border: 1px solid var(--stroke); border-radius: var(--radius-control, 8px); }
+.rs-session-who strong { color: var(--ink-bright); }
+.rs-session .rs-form-error { flex-basis: 100%; }

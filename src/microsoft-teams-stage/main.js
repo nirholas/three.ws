@@ -249,6 +249,30 @@ function mountPicker(slot, { onPick }) {
 		panel.querySelector('button').addEventListener('click', retry);
 	}
 
+	// Teams Store rule for meeting apps: anywhere you can sign in, you can sign
+	// out. The bar names the account so a shared meeting screen shows whose
+	// models these are.
+	function sessionBar(user) {
+		const bar = document.createElement('div');
+		bar.className = 'rs-session';
+		bar.innerHTML = `<span class="rs-session-who">Signed in as <strong>${esc(cleanName(user.display_name || user.username) || 'you')}</strong></span>
+			<button class="rs-btn is-small is-ghost" type="button" data-signout>Sign out</button>
+			<span class="rs-form-error" role="alert" hidden></span>`;
+		const btn = bar.querySelector('[data-signout]');
+		btn.addEventListener('click', async () => {
+			btn.disabled = true;
+			btn.textContent = 'Signing out';
+			const res = await fetch('/api/auth/logout', { method: 'POST', credentials: 'include', signal: AbortSignal.timeout(TIMEOUT_MS) }).catch(() => null);
+			if (res?.ok) return loadMine();
+			btn.disabled = false;
+			btn.textContent = 'Sign out';
+			const err = bar.querySelector('.rs-form-error');
+			err.hidden = false;
+			err.textContent = 'Sign out did not finish. Check your connection and try again.';
+		});
+		return bar;
+	}
+
 	async function loadMine() {
 		const panel = panels.mine;
 		panel.innerHTML = skeletonRows();
@@ -275,6 +299,7 @@ function mountPicker(slot, { onPick }) {
 			renderItems(panel, body?.avatars || [], {
 				emptyHtml: `<div class="rs-note"><p><strong>You have no models yet.</strong></p><p>Create one in <a href="/studio" target="_blank" rel="noopener">three.ws Studio</a>, pick one from the library, or paste a link to a .glb file.</p></div>`,
 			});
+			panel.prepend(sessionBar(me.user));
 		} catch (err) {
 			renderError(panel, err, loadMine);
 		}
