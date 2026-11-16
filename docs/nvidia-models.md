@@ -18,7 +18,7 @@ NVIDIA exposes its catalog over a few distinct surfaces. three.ws uses four:
 | --- | --- | --- | --- |
 | **NIM (OpenAI-compatible)** | `https://integrate.api.nvidia.com/v1` | `chat/completions`, `embeddings` | LLM chat, vision (VLM), embeddings, content-safety |
 | **GenAI invoke** | `https://ai.api.nvidia.com/v1/genai/…` | Async (202 + poll) or sync | TRELLIS text→3D, FLUX text→image |
-| **Retrieval** | `https://ai.api.nvidia.com/v1/retrieval/nvidia/reranking` | Sync rerank | Cross-encoder reranking |
+| **Retrieval** | `https://ai.api.nvidia.com/v1/retrieval/<publisher>/<model>/reranking` (one URL per model) | Sync rerank | Cross-encoder reranking |
 | **NVCF gRPC** | `grpc.nvcf.nvidia.com:443` | Riva gRPC | Magpie text-to-speech |
 | **NVCF status** | `https://api.nvcf.nvidia.com/v2/nvcf/pexec/status/{id}` | Poll | Async job status (TRELLIS) |
 
@@ -36,7 +36,7 @@ Because it is one key for everything, a deployment either has the whole NVIDIA l
 | **LLM (model garden)** | Three Nemotron picks (Ultra 550B and 3.5 Lightning 30B behind them), plus DeepSeek V4.1 Flash on the NIM lane via the open-model roster | `api/brain/chat.js`, `api/_lib/model-roster.js` | ✅ |
 | **Vision / VLM** | `meta/llama-3.2-11b-vision-instruct`, then free OpenRouter `:free` VLM rungs | `api/_lib/vision.js` | ✅ |
 | **Embeddings** | `nvidia/nemotron-3.5-embed-8b` (fallback `nvidia/nemotron-3-embed-1b`) | `api/_lib/embeddings.js` (and `api/agents/_id/embed.js`, which delegates to it) | ✅ |
-| **Reranking** | `nvidia/rerank-qa-mistral-4b` (pin verified dead, stage off by default) | `api/_lib/rerank.js` | ✅ |
+| **Reranking** | `nvidia/nemotron-3.5-rerank-8b` (under evaluation, opt-in) | `api/_lib/rerank.js` | ✅ |
 | **Content safety** | `nvidia/llama-3.1-nemoguard-8b-content-safety`, `meta/llama-guard-4-12b` | `api/_lib/publish-safety.js` | ✅ |
 | **Text-to-speech** | `magpie-tts-multilingual` (Riva) | `api/_lib/tts-nvidia.js` | ✅ |
 
@@ -153,10 +153,18 @@ The default embedder for new vectors: **free with the one key, 2048 dimensions**
 
 ## 6. Reranking — sharpening retrieval
 
-**Model:** `nvidia/rerank-qa-mistral-4b` · **Endpoint:** `ai.api.nvidia.com/v1/retrieval/nvidia/reranking`
-**Source:** [api/_lib/rerank.js](../api/_lib/rerank.js).
+<a id="reranking"></a>
 
-Cosine-over-embeddings recall is cheap but coarse. This **cross-encoder reranker** re-scores the top passages so the most relevant context leads. It is **opt-in** (`KNOWLEDGE_RERANK_ENABLED=1` plus the NVIDIA key) and **strictly fail-open**: any rerank error keeps the original cosine ordering. The 2026-09-10 catalog sweep found this model dead on the account and it is deliberately left pinned: the stage is off in production and fails open by contract, so a pin verified dead beats an unverified guess. Turning the stage on means re-pinning it against a live catalog first. Reranking may improve retrieval but may never break it. Used to refine knowledge-widget answers.
+**Model:** `nvidia/nemotron-3.5-rerank-8b` (probed live 2026-11-16) · **Endpoint:** `ai.api.nvidia.com/v1/retrieval/nvidia/nemotron-3.5-rerank-8b/reranking`
+**Source:** [api/_lib/rerank.js](../api/_lib/rerank.js) · **Eval:** [docs/nvidia/evals/rerank-2026-11-16.md](nvidia/evals/rerank-2026-11-16.md) · **Status:** under evaluation, opt-in.
+
+Cosine-over-embeddings recall is cheap but coarse. This **cross-encoder reranker** re-scores the cosine pool (top 12) so the most relevant context leads the 4 chunks a chat turn is grounded in. It serves agent knowledge (`searchKnowledge`) and widget knowledge (chat and the studio's retrieval debugger).
+
+- **Opt-in.** `KNOWLEDGE_RERANK_ENABLED=1` plus `NVIDIA_API_KEY`. The 2026-11-16 eval measured nDCG@5 1.000 against 0.860 for cosine when the model answers, but hosted queue latency failed the enable rule (served gain at least +0.05 and added p95 at most 1500 ms at the production timeout): at 2.5 s only 21 of 96 calls answered, and with no practical timeout the added p95 was 5.2 s.
+- **Hard timeout, hedged, fail-open.** 2.5 s bounds the whole stage (`RERANK_TIMEOUT_MS`). A second request fires after 1 s, or at once on a 5xx/429/network error, and the loser is aborted. Any failure keeps the cosine order.
+- **Content-safety split.** The hosted endpoint rejects a whole batch (422) when one passage trips its safety screen. The stage then scores each passage alone and merges by logit; a flagged passage keeps its cosine slot.
+- **Retirement guard.** Hosted rerankers retire on a schedule and are never listed by `GET /v1/models`, so a 404/410 pauses the stage for 6 hours across instances (shared cache), records it once and pages ops (`sendOpsAlert`, signature `rerank:model-retired:<model>`). Re-pin with `KNOWLEDGE_RERANK_MODEL` after probing a replacement; the eval report lists the probe table and the URL shape.
+- **Re-measure** with `node scripts/nvidia-rerank-eval.mjs run --timeout 2500` against the labelled set in `data/evals/rerank/questions.json`; `node scripts/rerank-live-check.mjs` runs one real retrieval through the dev server (:3254) with the stage off and on.
 
 ---
 
@@ -214,6 +222,7 @@ Run it by hand: `node scripts/nvidia-lane-eval.mjs --model <id>` (one model, wri
 | --- | --- |
 | `NVIDIA_API_KEY` | Every model on this page (`nvapi-…` from build.nvidia.com) |
 | `KNOWLEDGE_RERANK_ENABLED=1` | Turns on the rerank stage (§6) |
+| `KNOWLEDGE_RERANK_MODEL` | Re-pins the reranker after a retirement (§6) |
 | `FORGE_PREFER_FREE` | Free-first reconstruct ordering (default on) |
 | `TEXT_TO_IMAGE_BUDGET_MS` | Shared deadline for the whole text-to-image ladder (§2), default 60000 |
 | `VERTEX_IMAGEN_FIRST=0` | Puts the free NIM FLUX lane ahead of Vertex Imagen again (§2) |
