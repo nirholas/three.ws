@@ -9,12 +9,10 @@
 // ?emotionStrength=0..1.
 //
 // Self-contained (markup plus scoped styles), so any page that owns an
-// A2FPlayer can host it with one call:
-//
-//   const panel = mountEmotionPanel(container, { player });
-//   client = createDigitalHumanClient({ emotion: () => panel.requestFields() });
-//   panel.noteIntent(intentEventData.emotion);      // per 'intent' SSE event
-//   panel.paint(player.currentEmotion());            // per animation frame
+// A2FPlayer hosts it with mountEmotionPanel(container, { player }), hands
+// panel.requestFields as the `emotion` getter of createDigitalHumanClient,
+// calls panel.noteIntent with each 'intent' SSE event's emotion, and calls
+// panel.paint with player.currentEmotion() every animation frame.
 
 export const EMOTION_INTENTS = [
 	['auto', 'Auto: read it from the words'],
