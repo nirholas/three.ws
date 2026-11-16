@@ -1,0 +1,327 @@
+{
+  "$comment": "Every Microsoft-side resource three.ws needs, derived from the code that uses it. scripts/microsoft-provision.mjs reconciles a tenant and subscription to this file; tests/microsoft-provision.test.js fails when code asks Microsoft for a scope, redirect URI, token audience or MS_* identity variable that is not listed here. Docs: integrations/microsoft/provisioning/README.md.",
+  "version": 1,
+  "origin": "https://three.ws",
+  "graph": {
+    "appId": "00000003-0000-0000-c000-000000000000",
+    "permissionIdSource": "Microsoft Graph service principal servicePrincipals(appId='00000003-0000-0000-c000-000000000000'): oauth2PermissionScopes for delegated (Scope), appRoles for application (Role). Cross-checked 2026-11-16 against the Identifier column of microsoftgraph/microsoft-graph-docs-contrib concepts/permissions-reference.md. The provisioner re-resolves every id live from the service principal on each run and refuses to apply when one differs."
+  },
+  "apps": [
+    {
+      "key": "marketplace",
+      "displayName": "three.ws Marketplace Fulfillment",
+      "uniqueName": "threews-marketplace-fulfillment",
+      "signInAudience": "AzureADMyOrg",
+      "purpose": "Publisher app for the SaaS Fulfillment API v2, the Marketplace Metering API and Partner Center insights. Its tenant id and app id go into Partner Center technical configuration.",
+      "redirectUris": [],
+      "permissions": [],
+      "tokenAudiences": [
+        {
+          "resource": "20e940b3-4c77-4b0b-9a53-9e16a1b010a7",
+          "via": "client_credentials scope <resource>/.default",
+          "usedBy": "api/_lib/microsoft-marketplace.js",
+          "note": "Microsoft Marketplace first-party app (MARKETPLACE_APP_ID). Needs no API permission on the app registration."
+        },
+        {
+          "resource": "https://api.partnercenter.microsoft.com",
+          "via": "client_credentials v1 resource parameter",
+          "usedBy": "api/_lib/microsoft-partner-center.js",
+          "note": "Authorized in Partner Center (Account settings > User management > Microsoft Entra applications, Manager role), not by an API permission."
+        }
+      ],
+      "secret": {
+        "displayName": "three.ws provisioner",
+        "expiryDays": 365,
+        "vault": "ops",
+        "vaultSecretName": "ms-marketplace-client-secret",
+        "env": "MS_MARKETPLACE_CLIENT_SECRET"
+      },
+      "env": {
+        "clientId": "MS_MARKETPLACE_CLIENT_ID",
+        "tenantId": "MS_MARKETPLACE_TENANT_ID"
+      },
+      "usedBy": [
+        "api/_lib/microsoft-marketplace.js",
+        "api/_lib/microsoft-partner-center.js",
+        "api/cron/microsoft-metering.js"
+      ],
+      "manualSteps": [
+        "Partner Center > Marketplace offers > three-ws > Technical configuration: Microsoft Entra tenant ID = MS_MARKETPLACE_TENANT_ID, Microsoft Entra application ID = MS_MARKETPLACE_CLIENT_ID.",
+        "Partner Center > Account settings > User management > Microsoft Entra applications: add MS_MARKETPLACE_CLIENT_ID with the Manager role (Partner Center insights)."
+      ]
+    },
+    {
+      "key": "sso",
+      "displayName": "three.ws",
+      "uniqueName": "threews-entra-sso",
+      "signInAudience": "AzureADandPersonalMicrosoftAccount",
+      "purpose": "Multitenant app: Marketplace buyer sign-in, Sign in with Microsoft on /login (work, school and personal accounts through the common authority), tenant claim for teams, and the Microsoft 365 Copilot connector after a tenant admin consents.",
+      "redirectUris": [
+        {
+          "path": "/api/microsoft-marketplace/sso/callback",
+          "usedBy": "api/_lib/microsoft-marketplace.js"
+        },
+        {
+          "path": "/api/auth/microsoft/callback",
+          "usedBy": "api/_lib/entra-oidc.js"
+        },
+        {
+          "path": "/api/microsoft-365/connect/callback",
+          "usedBy": "api/_lib/m365-connector.js"
+        }
+      ],
+      "permissions": [
+        {
+          "name": "openid",
+          "type": "Scope",
+          "id": "37f7f235-527c-4136-accd-4a02d197296e",
+          "usedBy": [
+            "api/_lib/entra-oidc.js",
+            "api/_lib/microsoft-marketplace.js"
+          ]
+        },
+        {
+          "name": "profile",
+          "type": "Scope",
+          "id": "14dad69e-099b-42c9-810b-d002981feec1",
+          "usedBy": [
+            "api/_lib/entra-oidc.js",
+            "api/_lib/microsoft-marketplace.js"
+          ]
+        },
+        {
+          "name": "email",
+          "type": "Scope",
+          "id": "64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0",
+          "usedBy": [
+            "api/_lib/entra-oidc.js",
+            "api/_lib/microsoft-marketplace.js"
+          ]
+        },
+        {
+          "name": "offline_access",
+          "type": "Scope",
+          "id": "7427e0e9-2fba-42fe-b0c0-848c9e6a8182",
+          "usedBy": [
+            "api/_lib/entra-oidc.js"
+          ]
+        },
+        {
+          "name": "User.Read",
+          "type": "Scope",
+          "id": "e1fe6dd8-ba31-4d61-89e7-88639da4683d",
+          "usedBy": [
+            "api/_lib/entra-oidc.js"
+          ]
+        },
+        {
+          "name": "ExternalConnection.ReadWrite.OwnedBy",
+          "type": "Role",
+          "id": "f431331c-49a6-499f-be1c-62af19c34a9d",
+          "usedBy": [
+            "api/_lib/m365-connector.js"
+          ]
+        },
+        {
+          "name": "ExternalItem.ReadWrite.OwnedBy",
+          "type": "Role",
+          "id": "8116ae0f-55c2-452d-9944-d18420f5b2c8",
+          "usedBy": [
+            "api/_lib/m365-connector.js"
+          ]
+        }
+      ],
+      "tokenAudiences": [
+        {
+          "resource": "https://graph.microsoft.com",
+          "via": "client_credentials scope https://graph.microsoft.com/.default in each consenting tenant",
+          "usedBy": "api/_lib/m365-connector.js",
+          "note": "Grants the two Role permissions above once a tenant admin consents."
+        }
+      ],
+      "optionalClaims": {
+        "idToken": [
+          "email",
+          "xms_edov"
+        ]
+      },
+      "groupMembershipClaims": "DirectoryRole",
+      "requestedAccessTokenVersion": 2,
+      "secret": {
+        "displayName": "three.ws provisioner",
+        "expiryDays": 365,
+        "vault": "ops",
+        "vaultSecretName": "ms-entra-sso-client-secret",
+        "env": "MS_ENTRA_SSO_CLIENT_SECRET"
+      },
+      "env": {
+        "clientId": "MS_ENTRA_SSO_CLIENT_ID"
+      },
+      "usedBy": [
+        "api/_lib/microsoft-marketplace.js",
+        "api/_lib/entra-oidc.js",
+        "api/_lib/m365-connector.js",
+        "api/config.js"
+      ],
+      "adminConsent": {
+        "redirectPath": "/api/microsoft-365/connect/callback",
+        "note": "Customer tenants consent through Settings > Microsoft 365 (GET /api/microsoft-365/connect/start), which adds the state the callback checks. The printed URL is for a tenant admin who wants to pre-consent outside that flow."
+      },
+      "manualSteps": []
+    },
+    {
+      "key": "bot",
+      "displayName": "three.ws Bot",
+      "uniqueName": "threews-teams-bot",
+      "signInAudience": "AzureADMyOrg",
+      "purpose": "Identity of the Azure Bot. Inbound Teams and Microsoft 365 activities carry a Bot Framework token whose audience is this app id; proactive sends (Adaptive Card universal actions, Teams notifications) mint a Bot Framework token with this app's secret.",
+      "redirectUris": [],
+      "permissions": [],
+      "tokenAudiences": [
+        {
+          "resource": "https://api.botframework.com",
+          "via": "client_credentials scope https://api.botframework.com/.default from the bot's tenant",
+          "usedBy": "api/_lib/teams-connector.js",
+          "note": "Bot Framework connector; no API permission on the app registration."
+        }
+      ],
+      "secret": {
+        "displayName": "three.ws provisioner",
+        "expiryDays": 365,
+        "vault": "ops",
+        "vaultSecretName": "ms-teams-bot-app-password",
+        "env": "MS_TEAMS_BOT_APP_PASSWORD"
+      },
+      "env": {
+        "clientId": "MS_TEAMS_BOT_APP_ID",
+        "tenantId": "MS_TEAMS_BOT_TENANT_ID"
+      },
+      "usedBy": [
+        "api/_lib/teams-bot.js",
+        "api/_lib/teams-connector.js",
+        "scripts/build-microsoft-app-package.mjs"
+      ],
+      "manualSteps": []
+    }
+  ],
+  "azure": {
+    "resourceGroup": {
+      "default": "three-ws-microsoft",
+      "location": "eastus"
+    },
+    "bot": {
+      "name": "three-ws-bot",
+      "app": "bot",
+      "kind": "azurebot",
+      "sku": "F0",
+      "location": "global",
+      "msaAppType": "SingleTenant",
+      "messagingEndpointPath": "/api/microsoft-teams/messages",
+      "usedBy": "api/microsoft-teams/messages.js",
+      "channels": [
+        {
+          "name": "MsTeamsChannel",
+          "purpose": "Microsoft Teams personal, group chat and channel scopes plus the Agents message extension."
+        },
+        {
+          "name": "M365Extensions",
+          "purpose": "Microsoft 365 channel: the message extension and agent in Outlook and the Microsoft 365 app."
+        }
+      ]
+    },
+    "vaults": [
+      {
+        "key": "ops",
+        "namePrefix": "threews-ops",
+        "purpose": "three.ws's own Microsoft client secrets, mirrored from the env vars. Only the signed-in operator can read it.",
+        "secrets": [
+          "ms-marketplace-client-secret",
+          "ms-entra-sso-client-secret",
+          "ms-teams-bot-app-password"
+        ],
+        "readers": []
+      },
+      {
+        "key": "copilot",
+        "namePrefix": "threews-copilot",
+        "purpose": "The pre-registered three.ws OAuth client Microsoft 365 Copilot uses for the remote MCP agent connector. A separate vault so Microsoft's reader role never reaches the ops secrets.",
+        "env": "MS_KEYVAULT_URL",
+        "envTarget": "package",
+        "usedBy": "integrations/microsoft/copilot-teams/manifest.template.json",
+        "secrets": [
+          "ClientId",
+          "ClientSecret",
+          "AuthorizationUrl",
+          "TokenUrl",
+          "RefreshUrl",
+          "Scopes"
+        ],
+        "staticSecrets": {
+          "AuthorizationUrl": "/oauth/authorize",
+          "TokenUrl": "/oauth/token",
+          "RefreshUrl": "/oauth/token",
+          "Scopes": "avatars:read profile"
+        },
+        "oauthClient": {
+          "script": "scripts/oauth-register-client.mjs",
+          "name": "Microsoft Copilot",
+          "redirectUriFlag": "--copilot-redirect-uri"
+        },
+        "readers": [
+          {
+            "appId": "8e91e74f-afe9-41cd-8c3f-17a9562a74ea",
+            "role": "Key Vault Secrets User",
+            "source": "marketing/growth/submissions/programs/microsoft-copilot-mcp-certification.md"
+          }
+        ]
+      }
+    ],
+    "roles": {
+      "Key Vault Secrets User": "4633458b-17de-408a-b874-0445c86b69e6",
+      "Key Vault Secrets Officer": "b86a8fe4-44ce-4948-aee5-eccb2c155cd7"
+    }
+  },
+  "env": {
+    "cloudRun": [
+      "MS_MARKETPLACE_TENANT_ID",
+      "MS_MARKETPLACE_CLIENT_ID",
+      "MS_MARKETPLACE_CLIENT_SECRET",
+      "MS_ENTRA_SSO_CLIENT_ID",
+      "MS_ENTRA_SSO_CLIENT_SECRET",
+      "MS_TEAMS_BOT_APP_ID",
+      "MS_TEAMS_BOT_APP_PASSWORD",
+      "MS_TEAMS_BOT_TENANT_ID"
+    ],
+    "package": [
+      "MS_KEYVAULT_URL",
+      "MS_TEAMS_BOT_APP_ID"
+    ],
+    "unmanaged": {
+      "MS_MARKETPLACE_LEADS_TOKEN": "three.ws-generated shared secret for the Partner Center leads webhook; not a Microsoft resource.",
+      "MS_MARKETPLACE_API_BASE": "Fulfillment API base override for the local SaaS emulator; production uses the Microsoft default.",
+      "MS_MARKETPLACE_METERING_BASE": "Metering API base override for the local SaaS emulator; production uses the Microsoft default.",
+      "MS_MARKETPLACE_TOKEN_URL": "Publisher token endpoint override for the local SaaS emulator; production derives it from MS_MARKETPLACE_TENANT_ID.",
+      "MS_MARKETPLACE_EMULATOR": "Local development flag that points the Marketplace integration at Microsoft's SaaS API emulator.",
+      "MS_MARKETPLACE_EMULATOR_LOGIN_BASE": "Sign-in base for the local SaaS emulator.",
+      "MS_APP_ID": "App GUID Partner Center assigns to the Microsoft 365 app offer; created in Partner Center, not Entra.",
+      "MS_DEVELOPER_NAME": "Legal entity name for the app package.",
+      "MS_ALERT_CONNECTOR_ERROR_RATE": "Alert threshold tuning.",
+      "MS_ALERT_CONNECTOR_MIN_CALLS": "Alert threshold tuning.",
+      "MS_STORE_APP_NAME": "Microsoft Store product identity from Partner Center.",
+      "MS_STORE_PACKAGE_ID": "Microsoft Store product identity from Partner Center.",
+      "MS_STORE_PUBLISHER_CN": "Microsoft Store product identity from Partner Center.",
+      "MS_STORE_PUBLISHER_DISPLAY_NAME": "Microsoft Store product identity from Partner Center.",
+      "MS_STORE_VERSION": "Microsoft Store package version."
+    }
+  },
+  "excluded": [
+    {
+      "surface": "Power Platform connector",
+      "reason": "Signs users in with three.ws's own OAuth server (integrations/microsoft/power-platform-connector/apiProperties.template.json, identityProvider oauth2generic), so it needs a three.ws public PKCE client, not an Entra app."
+    },
+    {
+      "surface": "Teams tab and meeting stage",
+      "reason": "No Teams SSO: the manifest has no webApplicationInfo and the tab uses three.ws sessions. Resource-specific consent permissions live in the Teams app manifest, not on an app registration."
+    }
+  ]
+}

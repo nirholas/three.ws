@@ -1,0 +1,87 @@
+{
+	"@odata.context": "https://graph.microsoft.com/v1.0/$metadata#servicePrincipals(id,appId,displayName,appRoles,oauth2PermissionScopes)/$entity",
+	"id": "a0f1c3d2-5b6e-4f78-9a01-23456789abcd",
+	"appId": "00000003-0000-0000-c000-000000000000",
+	"displayName": "Microsoft Graph",
+	"appRoles": [
+		{
+			"allowedMemberTypes": ["Application"],
+			"description": "Allows the app to read and write external connections without a signed-in user. The app can only read and write external connections that it is authorized to, or it can create new external connections.",
+			"displayName": "Read and write external connections",
+			"id": "f431331c-49a6-499f-be1c-62af19c34a9d",
+			"isEnabled": true,
+			"origin": "Application",
+			"value": "ExternalConnection.ReadWrite.OwnedBy"
+		},
+		{
+			"allowedMemberTypes": ["Application"],
+			"description": "Allow the app to read or write items in all external datasets that the app is authorized to access",
+			"displayName": "Read and write external items",
+			"id": "8116ae0f-55c2-452d-9944-d18420f5b2c8",
+			"isEnabled": true,
+			"origin": "Application",
+			"value": "ExternalItem.ReadWrite.OwnedBy"
+		},
+		{
+			"allowedMemberTypes": ["Application"],
+			"description": "Allows the app to read user profiles without a signed in user.",
+			"displayName": "Read all users' full profiles",
+			"id": "df021288-bdef-4463-88db-98f22de89214",
+			"isEnabled": true,
+			"origin": "Application",
+			"value": "User.Read.All"
+		}
+	],
+	"oauth2PermissionScopes": [
+		{
+			"adminConsentDescription": "Allows users to sign in to the app with their work or school accounts and allows the app to see basic user profile information.",
+			"adminConsentDisplayName": "Sign users in",
+			"id": "37f7f235-527c-4136-accd-4a02d197296e",
+			"isEnabled": true,
+			"type": "User",
+			"userConsentDescription": "Allows you to sign in to the app with your work or school account and allows the app to read your basic profile information.",
+			"userConsentDisplayName": "Sign in as you",
+			"value": "openid"
+		},
+		{
+			"adminConsentDescription": "Allows the app to see your users' basic profile (e.g., name, picture, user name, email address)",
+			"adminConsentDisplayName": "View users' basic profile",
+			"id": "14dad69e-099b-42c9-810b-d002981feec1",
+			"isEnabled": true,
+			"type": "User",
+			"userConsentDescription": "Allows the app to see your basic profile (e.g., name, picture, user name, email address)",
+			"userConsentDisplayName": "View your basic profile",
+			"value": "profile"
+		},
+		{
+			"adminConsentDescription": "Allows the app to read your users' primary email address",
+			"adminConsentDisplayName": "View users' email address",
+			"id": "64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0",
+			"isEnabled": true,
+			"type": "User",
+			"userConsentDescription": "Allows the app to read your primary email address",
+			"userConsentDisplayName": "View your email address",
+			"value": "email"
+		},
+		{
+			"adminConsentDescription": "Allows the app to see and update the data you gave it access to, even when users are not currently using the app. This does not give the app any additional permissions.",
+			"adminConsentDisplayName": "Maintain access to data you have given it access to",
+			"id": "7427e0e9-2fba-42fe-b0c0-848c9e6a8182",
+			"isEnabled": true,
+			"type": "User",
+			"userConsentDescription": "Allows the app to see and update the data you gave it access to, even when you are not currently using the app. This does not give the app any additional permissions.",
+			"userConsentDisplayName": "Maintain access to data you have given it access to",
+			"value": "offline_access"
+		},
+		{
+			"adminConsentDescription": "Allows users to sign-in to the app, and allows the app to read the profile of signed-in users. It also allows the app to read basic company information of signed-in users.",
+			"adminConsentDisplayName": "Sign in and read user profile",
+			"id": "e1fe6dd8-ba31-4d61-89e7-88639da4683d",
+			"isEnabled": true,
+			"type": "User",
+			"userConsentDescription": "Allows you to sign in to the app with your organizational account and let the app read your profile. It also allows the app to read basic company information.",
+			"userConsentDisplayName": "Sign you in and read your profile",
+			"value": "User.Read"
+		}
+	]
+}
