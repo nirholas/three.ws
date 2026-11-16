@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-16",
+			"title": "three.ws 3D for SharePoint and Viva Connections",
+			"summary": "A SharePoint Framework solution adds an Agent web part, a 3D Model web part and a Viva Connections Agent card. Tenant admins upload one package and allow one script source; site owners pick agents and models from a live directory. Public agent reads now answer third-party origins with CORS so embeds on SharePoint and other sites work.",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-11-16",
 			"title": "Microsoft community gallery samples",
 			"summary": "Three ready-to-submit samples for the Microsoft PnP galleries: a Copilot declarative agent, a Teams message extension with link unfurl and a SharePoint 3D viewer web part, each built to its gallery's rules and checked against production.",
 			"tags": [

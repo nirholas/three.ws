@@ -1,77 +1,50 @@
-# sharepoint-spfx
+# three.ws 3D for SharePoint and Viva Connections
 
-## Summary
+A SharePoint Framework (SPFx 1.24.1) solution that puts three.ws on modern SharePoint pages, Teams tabs and the Viva Connections dashboard. Site owners add it from the page toolbox and pick what to show with a search box. No code, no custom script.
 
-Short summary on functionality and used technologies.
+| Component | What it shows |
+| --- | --- |
+| three.ws Agent web part | A live, animated three.ws agent a visitor can watch and talk to (`<agent-3d agent-id>`). |
+| three.ws 3D Model web part | An interactive Forge model, or any https GLB file, rendered with the three.ws viewer. |
+| three.ws Agent card (Adaptive Card Extension) | An agent card for Viva Connections: avatar poster, name, live status, a quick view and a link to the agent page. |
 
-[picture of the solution in action, if possible]
+Admin and site-owner steps live in [docs/microsoft-sharepoint.md](../../../docs/microsoft-sharepoint.md). The store listing material is in [marketing/growth/submissions/programs/microsoft-sharepoint-spfx.md](../../../marketing/growth/submissions/programs/microsoft-sharepoint-spfx.md).
 
-## Used SharePoint Framework Version
+## Build
 
-![version](https://img.shields.io/badge/version-1.24.1-green.svg)
+SPFx 1.24 needs Node 22.14+ (or 24+), which the package `engines` field enforces. The toolchain is installed inside this folder and never touches the root lockfile.
 
-## Applies to
+    cd integrations/microsoft/sharepoint-spfx
+    npm ci
+    npm run package:sharepoint       # heft test + production build + .sppkg + package validation
+    # or, from the repository root:
+    npm run package:sharepoint
 
-- [SharePoint Framework](https://aka.ms/spfx)
-- [Microsoft 365 tenant](https://docs.microsoft.com/sharepoint/dev/spfx/set-up-your-developer-tenant)
+The package lands in `sharepoint/solution/three-ws-3d.sppkg` (`includeClientSideAssets: true`, so every bundle ships inside it).
 
-> Get your own free development tenant by subscribing to [Microsoft 365 developer program](http://aka.ms/o365devprogram)
+| Script | Purpose |
+| --- | --- |
+| `npm test` | Unit tests for the property pane data layer (`src/lib/threeWsApi.test.ts`). |
+| `npm run validate` | Opens the built `.sppkg` and checks manifest ids, versions, bundled assets, theme variants, branding rules and the runtime pin (53 checks). |
+| `npm run harness` | Mounts the compiled web parts and the card in Chromium under SharePoint Online's script CSP against live three.ws data. Screenshots land in `harness-output/`. `--serve` only serves `http://localhost:3135`. |
+| `npm start` | `heft start` for the SharePoint hosted workbench. |
 
-## Prerequisites
+## How the runtime loads
 
-> Any special pre-requisites?
+The bundles load one script, `https://three.ws/agent-3d/1.5.2/agent-3d.js`, with a pinned Subresource Integrity hash (`src/lib/runtime.ts`, mirrored in `scripts/validate-package.mjs` and checked for agreement). SharePoint's script CSP needs one Trusted script sources entry, `https://three.ws/agent-3d/1.5.2/`. When it is missing, the web part names that exact entry in its message. Nothing else leaves three.ws: the agent and Forge lookups are public, credential-less reads of `https://three.ws/api`.
 
-## Solution
+## Layout
 
-| Solution    | Author(s)                                               |
-| ----------- | ------------------------------------------------------- |
-| folder name | Author details (name, company, twitter alias with link) |
+| Path | Contents |
+| --- | --- |
+| `src/webparts/` | The two web parts. |
+| `src/adaptiveCardExtensions/threeWsAgentCard/` | The Viva Connections card and quick view. |
+| `src/lib/` | Stage (mounts `<agent-3d>`), runtime loader, API client and debounced search picker, theme variants. |
+| `scripts/` | `validate-package.mjs`, `harness.mjs` and its SPFx host stand-in. |
+| `config/` | SPFx build configuration, including `package-solution.json`. |
 
-## Version history
+## Owner steps
 
-| Version | Date             | Comments        |
-| ------- | ---------------- | --------------- |
-| 1.1     | March 10, 2021   | Update comment  |
-| 1.0     | January 29, 2021 | Initial release |
+Uploading to a tenant App Catalog, adding the Trusted script sources entry and submitting to AppSource are owner actions, listed with the exact click path in the admin guide.
 
-## Disclaimer
-
-**THIS CODE IS PROVIDED _AS IS_ WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.**
-
----
-
-## Minimal Path to Awesome
-
-- Clone this repository
-- Ensure that you are at the solution folder
-- in the command-line run:
-  - `npm install -g @rushstack/heft`
-  - `npm install`
-  - `heft start`
-
-> Include any additional steps as needed.
-
-Other build commands can be listed using `heft --help`.
-
-## Features
-
-Description of the extension that expands upon high-level summary above.
-
-This extension illustrates the following concepts:
-
-- topic 1
-- topic 2
-- topic 3
-
-> Notice that better pictures and documentation will increase the sample usage and the value you are providing for others. Thanks for your submissions advance.
-
-> Share your web part with others through Microsoft 365 Patterns and Practices program to get visibility and exposure. More details on the community, open-source projects and other activities from http://aka.ms/m365pnp.
-
-## References
-
-- [Getting started with SharePoint Framework](https://docs.microsoft.com/sharepoint/dev/spfx/set-up-your-developer-tenant)
-- [Building for Microsoft teams](https://docs.microsoft.com/sharepoint/dev/spfx/build-for-teams-overview)
-- [Use Microsoft Graph in your solution](https://docs.microsoft.com/sharepoint/dev/spfx/web-parts/get-started/using-microsoft-graph-apis)
-- [Publish SharePoint Framework applications to the Marketplace](https://docs.microsoft.com/sharepoint/dev/spfx/publish-to-marketplace-overview)
-- [Microsoft 365 Patterns and Practices](https://aka.ms/m365pnp) - Guidance, tooling, samples and open-source controls for your Microsoft 365 development
-- [Heft Documentation](https://heft.rushstack.io/)
+Microsoft, SharePoint, Viva and Microsoft Teams are trademarks of the Microsoft group of companies. three.ws and Microsoft have announced a partnership. This package is not endorsed by Microsoft.
