@@ -69,7 +69,7 @@ export const NAV = [
 	{ path: '/dashboard/referrals',   label: 'Referrals',       icon: 'gift',      group: 'Account',    tags: ['referral', 'invite', 'membership', 'card', 'refer a friend', 'share', 'rewards', 'position', 'score'] },
 	{ path: '/dashboard/wallet-grinder', label: 'Wallet Grinder', icon: 'sparkle',  group: 'Account',    tags: ['vanity', 'grind', 'keypair', 'wallet', 'solana', 'evm', 'ethereum', 'base', 'polygon', 'address', 'prefix', 'suffix'] },
 	{ path: '/dashboard/billing',     label: 'Billing & Passes', icon: 'receipt',  group: 'Account',    tags: ['billing', 'premium', 'pass', 'subscription', 'payments', 'invoices', 'paid services', 'renew', 'api keys'] },
-	{ path: '/dashboard/settings',    label: 'Settings',        icon: 'settings',  group: 'Account',    tags: ['sessions', 'notifications', 'preferences', 'storage', 'llm usage', 'vanity'] },
+	{ path: '/dashboard/settings',    label: 'Settings',        icon: 'settings',  group: 'Account',    tags: ['sessions', 'notifications', 'preferences', 'storage', 'llm usage', 'vanity', 'power bi', 'excel', 'odata', 'usage feed'] },
 	{ path: '/features/deploy',       label: 'On-chain (ERC-8004)', icon: 'chain', group: 'Account',    tags: ['erc8004', 'registry', 'onchain', 'identity'], external: true },
 ];
 

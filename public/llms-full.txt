@@ -6517,6 +6517,12 @@ URL: https://three.ws/docs/microsoft-copilot-agent
 
 The three.ws declarative agent for Microsoft 365 Copilot: what users see, its six conversation starters, how it is validated, sideloading in a developer tenant, and production proof for every starter.
 
+### Enterprise: buy and review three.ws
+
+URL: https://three.ws/enterprise
+
+Buy three.ws for your company through Microsoft Marketplace or by invoice, and clear vendor review in one visit: Microsoft sign-in, Entra tenant claim, SCIM, hosting, encryption, subprocessors and a printable procurement packet.
+
 ### Trust center
 
 URL: https://three.ws/trust

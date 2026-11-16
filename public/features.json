@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T15:37:09.791Z",
+	"generated_at": "2026-11-16T15:40:21.547Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -12946,6 +12946,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/enterprise",
+					"title": "Enterprise: buy and review three.ws",
+					"description": "Buy three.ws for your company through Microsoft Marketplace or by invoice, and clear vendor review in one visit: Microsoft sign-in, Entra tenant claim, SCIM, hosting, encryption, subprocessors and a printable procurement packet.",
+					"added": "2026-11-16",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
 					"job": null
 				},
 				{

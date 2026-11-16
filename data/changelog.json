@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-16",
+			"title": "Analyze your three.ws usage in Power BI and Excel",
+			"summary": "Settings now has a Connect to Power BI or Excel panel. Create a read-only key for your own usage or for a team you own, paste the feed URL into Power BI or Excel, and report on MCP tool calls, LLM tokens and cost, Forge 3D generations and metered billing. It is a standard OData feed, so the Power BI Service refreshes it on a schedule without a gateway, and filters you set in Power Query are applied on the server. Keys can be revoked at any time, every key creation and refresh is in your audit log, and typed Power Query scripts with a starter report are in the repository.",
+			"tags": [
+				"feature"
+			],
+			"link": "/dashboard/settings"
+		},
+		{
+			"date": "2026-11-16",
 			"title": "Microsoft Marketplace subscriptions keep their access through plan and seat changes",
 			"summary": "We ran the full Microsoft Marketplace subscription lifecycle against Microsoft's SaaS API emulator and fixed what it caught. When a Microsoft-billed subscription moves to a per-seat plan, the buyer who owns it now keeps their access instead of dropping to the free plan. Usage that Microsoft already counted is now recorded as settled when it is sent again, instead of staying pending, and webhook replies now follow Microsoft's documented contract, so a plan three.ws does not sell is refused cleanly. Developers can rerun the same check locally with one command.",
 			"tags": [

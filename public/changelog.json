@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T15:37:09.864Z",
+	"generated_at": "2026-11-16T15:40:21.639Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -74,6 +74,26 @@
 			"link": "/docs/microsoft-copilot-agent",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "launch",
+			"title": "Enterprise: buy and review three.ws",
+			"summary": "Buy three.ws for your company through Microsoft Marketplace or by invoice, and clear vendor review in one visit: Microsoft sign-in, Entra tenant claim, SCIM, hosting, encryption, subprocessors and a printable procurement packet.",
+			"link": "/enterprise",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Analyze your three.ws usage in Power BI and Excel",
+			"summary": "Settings now has a Connect to Power BI or Excel panel. Create a read-only key for your own usage or for a team you own, paste the feed URL into Power BI or Excel, and report on MCP tool calls, LLM tokens and cost, Forge 3D generations and metered billing. It is a standard OData feed, so the Power BI Service refreshes it on a schedule without a gateway, and filters you set in Power Query are applied on the server. Keys can be revoked at any time, every key creation and refresh is in your audit log, and typed Power Query scripts with a starter report are in the repository.",
+			"link": "/dashboard/settings",
+			"tags": [
+				"feature"
 			]
 		},
 		{

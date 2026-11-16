@@ -78,6 +78,7 @@ These are in the repo and validated. Each one goes live when the owner completes
 | [`/press`](https://three.ws/press) and [press kit](./press-kit.md) | Programmes row and coverage |
 | [`/timeline`](https://three.ws/timeline) | Partnership and Marketplace events |
 | [Listings](./listings.md) and the [listings registry](./listings-registry.md) | Microsoft Marketplace: Live |
+| Dashboard **Settings, Connect to Power BI or Excel** (`/dashboard/settings#usage-feed`) | Read-only keys for the OData usage feed, with the steps for Power BI Desktop, Power BI Service scheduled refresh and Excel. See [Usage feed for Power BI and Excel](./usage-odata.md) |
 
 ## Coverage
 
@@ -89,11 +90,12 @@ These are in the repo and validated. Each one goes live when the owner completes
 - Write it as "three.ws and Microsoft have announced a partnership" and "three.ws is live on Microsoft Marketplace". Both are true and sourced above.
 - Do not attach a named Microsoft partner tier or programme (for example a Solutions Partner designation or a co-sell status) unless the owner confirms it. The `/partners` chip reads "Marketplace" because that is the verifiable part.
 - Do not imply Microsoft endorses a specific feature, coin, or trading surface. Microsoft is a distribution and technology partner; [$THREE](https://three.ws/three) and the Solana agent economy are three.ws's own.
-- Microsoft, Azure, Microsoft Marketplace, Microsoft AppSource, Power BI, Microsoft Teams, Live Share, TRELLIS, Florence, ONNX Runtime, Adaptive Cards, TypeScript, and Playwright are trademarks of the Microsoft group of companies.
+- Microsoft, Azure, Microsoft Marketplace, Microsoft AppSource, Power BI, Power Query, Excel, Microsoft Teams, Live Share, TRELLIS, Florence, ONNX Runtime, Adaptive Cards, TypeScript, and Playwright are trademarks of the Microsoft group of companies.
 
 ## Related
 
 - [.NET SDK (NuGet, Unity)](./dotnet-sdk.md)
+- [Usage feed for Power BI and Excel](./usage-odata.md): OData v4 feed of MCP tool calls, LLM tokens and cost, Forge generations and billing, with typed Power Query scripts in [`integrations/microsoft/power-bi-usage/`](../integrations/microsoft/power-bi-usage/README.md)
 - [three.ws on the Microsoft agent stack](./microsoft-agent-stack.md): Semantic Kernel, Agent Framework and Foundry
 - [Call three.ws agents over A2A from Copilot Studio and Foundry](./microsoft-a2a.md)
 - [three.ws 3D Studio agent for Microsoft 365 Copilot](./microsoft-copilot-agent.md): the declarative agent, its starters, sideloading and production proof

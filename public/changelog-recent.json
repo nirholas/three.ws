@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-16T15:37:09.999Z",
+	"generated_at": "2026-11-16T15:40:21.773Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4609,
+	"total": 4611,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -77,6 +77,26 @@
 			"link": "/docs/microsoft-copilot-agent",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "launch",
+			"title": "Enterprise: buy and review three.ws",
+			"summary": "Buy three.ws for your company through Microsoft Marketplace or by invoice, and clear vendor review in one visit: Microsoft sign-in, Entra tenant claim, SCIM, hosting, encryption, subprocessors and a printable procurement packet.",
+			"link": "/enterprise",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Analyze your three.ws usage in Power BI and Excel",
+			"summary": "Settings now has a Connect to Power BI or Excel panel. Create a read-only key for your own usage or for a team you own, paste the feed URL into Power BI or Excel, and report on MCP tool calls, LLM tokens and cost, Forge 3D generations and metered billing. It is a standard OData feed, so the Power BI Service refreshes it on a schedule without a gateway, and filters you set in Power Query are applied on the server. Keys can be revoked at any time, every key creation and refresh is in your audit log, and typed Power Query scripts with a starter report are in the repository.",
+			"link": "/dashboard/settings",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1515,27 +1535,6 @@
 			"title": "Large avatars and forge props load again when the edge cache misses",
 			"summary": "Models over 32 MB (several mixamo avatars and forge props are 38 to 42 MB) failed with an empty server error on a full download whenever the CDN edge did not already hold them, because Cloud Run rejects a buffered response that large. Those downloads now stream, so an avatar or prop in /play no longer depends on the cache being warm.",
 			"link": "/play",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-06",
-			"type": "update",
-			"title": "Pages keep working right after a site update",
-			"summary": "Right after an update, /play could stop on \"Couldn't load the world\" and other pages could fail the same way, because our network edge kept handing out an old copy of the page that pointed at files the update had removed. Reloading fetched the same old copy, so Try again could not help. Pages now always come fresh from the site, so an update can no longer strand visitors on a dead copy.",
-			"link": null,
-			"tags": [
-				"fix",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-11-06",
-			"type": "update",
-			"title": "Paid 3D generation keeps working when outside engines are down",
-			"summary": "When the outside 3D engines were busy, a paid Forge request could wait over a minute and then fail with a message saying generation was not configured. No one was charged, but no model came back either. Paid requests now fall through to our own GPU worker, the same one that powers the free Forge, and get a job to follow within seconds.",
-			"link": "/forge",
 			"tags": [
 				"fix"
 			]

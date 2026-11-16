@@ -63,6 +63,22 @@
 			<description>The three.ws declarative agent for Microsoft 365 Copilot: what users see, its six conversation starters, how it is validated, sideloading in a developer tenant, and production proof for every starter.</description>
 		</item>
 		<item>
+			<title>Enterprise: buy and review three.ws</title>
+			<link>https://three.ws/enterprise</link>
+			<guid isPermaLink="false">2026-11-16:Enterprise: buy and review three.ws</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Buy three.ws for your company through Microsoft Marketplace or by invoice, and clear vendor review in one visit: Microsoft sign-in, Entra tenant claim, SCIM, hosting, encryption, subprocessors and a printable procurement packet.</description>
+		</item>
+		<item>
+			<title>Analyze your three.ws usage in Power BI and Excel</title>
+			<link>https://three.ws/dashboard/settings</link>
+			<guid isPermaLink="false">2026-11-16:Analyze your three.ws usage in Power BI and Excel</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Settings now has a Connect to Power BI or Excel panel. Create a read-only key for your own usage or for a team you own, paste the feed URL into Power BI or Excel, and report on MCP tool calls, LLM tokens and cost, Forge 3D generations and metered billing. It is a standard OData feed, so the Power BI Service refreshes it on a schedule without a gateway, and filters you set in Power Query are applied on the server. Keys can be revoked at any time, every key creation and refresh is in your audit log, and typed Power Query scripts with a starter report are in the repository.</description>
+		</item>
+		<item>
 			<title>Approve or deny your agents' actions from a Microsoft Teams card</title>
 			<link>https://three.ws/approvals</link>
 			<guid isPermaLink="false">2026-11-16:Approve or deny your agents' actions from a Microsoft Teams card</guid>
