@@ -1,6 +1,6 @@
 # microsoft 01: the /microsoft partner hub, with live demos of Microsoft tech running in three.ws
 
-Status 2026-11-11: built and verified locally (commits 60bf0fba8, e7d208609, 072f53106, 2deabb964, eea39e580). Waits on the owner: push, deploy, route TRELLIS.2 and set MODEL_TRELLIS2_URL, Marketplace env vars. npm test has 3 failures from sibling work (audit-a11y guard registry, sitemap index after dd2b311d2/e58e6a2b1), none in this order's files.
+Status 2026-11-16: live in production (https://three.ws/microsoft serves the hub; push and deploy done). Production feed /api/forge-gallery?backend=trellis2 returns 2 real creations, Glance Adaptive Card and Marketplace status calls answer with real data. Remaining, owner only: route model-trellis2 traffic and set MODEL_TRELLIS2_URL on three-ws-api (health reports trellis2 unconfigured), and set MS_MARKETPLACE_TENANT_ID/CLIENT_ID/CLIENT_SECRET and MS_ENTRA_SSO_CLIENT_ID/CLIENT_SECRET. Order tests 33/33; full npm test has 24 failures in 18 sibling files (engine bridges, lockfiles, robinhood i18n, cdn host refs, pump MCP), none in this order's files.
 
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3101.
 
