@@ -1,0 +1,78 @@
+# The Triton GPU lane of rembg-service (Dockerfile.triton):
+#
+#   TMPDIR=/home/user/.cache/gcloud-tmp gcloud builds submit workers/rembg \
+#     --config workers/rembg/cloudbuild.triton.yaml --region us-central1 \
+#     --project aerial-vehicle-466722-p5 --substitutions=SHORT_SHA=manual$(date +%s)
+#
+# europe-west1 because Cloud Run L4 quota there is free, while us-central1 is
+# fully held by model-trellis and model-rig and us-east4 is oversubscribed by
+# on-demand GPU services. Callers never see this URL: the CPU rembg-service
+# forwards TRITON_FORWARD_PERCENT of submits here and answers every poll from
+# the shared task records in the bucket (see README "Triton GPU lane").
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+substitutions:
+  _REGION: europe-west1
+  _REPO_REGION: us-central1
+  _RUN_SA: avatar-reconstruction-sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+  _SERVICE: rembg-triton
+  _REPO: rembg-service
+  _GCS_BUCKET: three-ws-avatar-reconstructions
+  # One warm L4 instance: the lane takes live traffic from the CPU front door,
+  # and a GPU cold start (image pull plus model load) is minutes, not seconds.
+  _MIN_INSTANCES: "1"
+  _MAX_INSTANCES: "2"
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file=Dockerfile.triton
+      - --tag=${_REPO_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/triton:$SHORT_SHA
+      - --tag=${_REPO_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/triton:latest
+      - .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REPO_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/triton
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REPO_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/triton:$SHORT_SHA
+      - --region=${_REGION}
+      - --service-account=${_RUN_SA}
+      - --platform=managed
+      - --port=8080
+      - --gpu=1
+      - --gpu-type=nvidia-l4
+      - --no-gpu-zonal-redundancy
+      - --cpu=8
+      - --memory=32Gi
+      - --no-cpu-throttling
+      - --concurrency=32
+      - --min-instances=${_MIN_INSTANCES}
+      - --max-instances=${_MAX_INSTANCES}
+      - --timeout=60
+      - --startup-probe=tcpSocket.port=8080,periodSeconds=10,timeoutSeconds=5,failureThreshold=60
+      - --allow-unauthenticated
+      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},MODEL=rmbg2,MAX_CONCURRENT=16,INFERENCE_BACKEND=triton,METRICS_PROJECT=$PROJECT_ID,METRICS_LOCATION=${_REGION}
+      - --set-secrets=API_KEY=avatar-reconstruction-key:latest
+
+images:
+  - ${_REPO_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/triton:$SHORT_SHA
+  - ${_REPO_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/triton:latest
+
+options:
+  machineType: E2_HIGHCPU_32
+  diskSizeGb: 200
+  logging: CLOUD_LOGGING_ONLY
+timeout: 5400s

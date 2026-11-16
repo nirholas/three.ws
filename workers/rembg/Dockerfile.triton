@@ -1,0 +1,45 @@
+# rembg on NVIDIA Triton Inference Server: the GPU lane of rembg-service.
+#
+# Same HTTP contract and same main.py as the CPU image (Dockerfile); the
+# difference is INFERENCE_BACKEND=triton, which sends every forward pass to the
+# tritonserver process started beside the adapter (entrypoint-triton.sh).
+# 25.10 is the newest release whose CUDA 13.0 runtime matches the Cloud Run L4
+# driver (580.x, measured with a one-shot GPU job before choosing it).
+FROM nvcr.io/nvidia/tritonserver:25.10-py3
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    U2NET_HOME=/opt/u2net \
+    PATH=/opt/venv/bin:$PATH
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3-venv libgl1 libglib2.0-0 libgomp1 curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && python3 -m venv /opt/venv
+
+# requirements.triton.lock is compiled from requirements.triton.txt with
+#   uv pip compile requirements.triton.txt --python-version 3.12 \
+#     --python-platform x86_64-manylinux_2_28 -o requirements.triton.lock
+# so the grpcio/protobuf pins tritonclient needs never send pip backtracking.
+COPY requirements.triton.lock /app/requirements.triton.lock
+RUN pip install -r /app/requirements.triton.lock
+
+WORKDIR /app
+COPY worker_security.py rembg_policy.py main.py \
+     task_store.py forwarder.py triton_backend.py \
+     tracing.py export_triton_models.py \
+     entrypoint-triton.sh build_gate_triton.sh /app/
+COPY test_rembg_policy.py test_task_store.py \
+     test_forwarder.py test_triton_metrics.py \
+     test_triton_parity.py /app/
+COPY model_repository /app/model_repository
+
+# Build gate (see the script): export with a drift check, unit suites, then a
+# CPU tritonserver cutting real photos out with ONNX Runtime parity and a
+# dynamic-batching check. Nothing ships unless it passes.
+RUN ./build_gate_triton.sh
+
+ENV INFERENCE_BACKEND=triton
+EXPOSE 8080
+CMD ["/app/entrypoint-triton.sh"]

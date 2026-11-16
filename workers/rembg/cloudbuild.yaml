@@ -17,6 +17,11 @@ substitutions:
   # restyle_material; that lane is api/material-studio.js).
   _MIN_INSTANCES: "1"
   _MAX_INSTANCES: "4"
+  # Traffic split to the Triton GPU lane (cloudbuild.triton.yaml). Kept here
+  # because --set-env-vars replaces the whole env: a redeploy of this CPU
+  # front door must carry the split forward, never silently reset it.
+  _TRITON_FORWARD_URL: ""
+  _TRITON_FORWARD_PERCENT: "0"
 
 steps:
   - id: build
@@ -57,7 +62,7 @@ steps:
       - --max-instances=${_MAX_INSTANCES}
       - --timeout=60
       - --allow-unauthenticated
-      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},MODEL=rmbg2,MAX_CONCURRENT=4
+      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},MODEL=rmbg2,MAX_CONCURRENT=4,TRITON_FORWARD_URL=${_TRITON_FORWARD_URL},TRITON_FORWARD_PERCENT=${_TRITON_FORWARD_PERCENT}
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest
 
 images:

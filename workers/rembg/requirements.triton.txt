@@ -1,0 +1,15 @@
+# Adapter process of the Triton GPU lane (Dockerfile.triton). The forward pass
+# runs in tritonserver; onnxruntime (CPU) is here only because rembg imports it
+# and the build gate uses it as the parity reference.
+rembg==2.0.86
+onnxruntime==1.28.0
+onnx==1.17.0
+Pillow==13.0.0
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+google-cloud-storage==2.19.0
+google-cloud-monitoring==2.27.2
+httpx==0.27.2
+pydantic==2.10.3
+tritonclient[grpc]==2.62.0
+prometheus-client==0.23.1

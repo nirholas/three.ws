@@ -20,15 +20,18 @@ RUN python -c "import rembg; rembg.new_session('u2net')" && \
     python -c "import rembg; rembg.new_session('isnet-general-use')"
 
 WORKDIR /app
-COPY worker_security.py rembg_policy.py main.py /app/
+COPY worker_security.py rembg_policy.py main.py task_store.py forwarder.py /app/
 COPY tracing.py test_tracing.py /app/
-COPY test_rembg_policy.py test_rembg_smoke.py /app/
+COPY test_rembg_policy.py test_rembg_smoke.py test_task_store.py test_forwarder.py \
+     test_task_routes.py /app/
 
-# Build gate: the image does not ship unless the request policy holds and a real
-# cutout comes out of both baked-in models. API_KEY/GCS_BUCKET are import-time
+# Build gate: the image does not ship unless the request policy holds, task
+# records survive a cross-instance poll, the traffic split falls back safely,
+# and a real cutout comes out of both baked-in models. API_KEY/GCS_BUCKET are import-time
 # requirements of main.py; nothing here touches GCS or the network.
-RUN python test_rembg_policy.py && \
-    API_KEY=build-gate GCS_BUCKET=build-gate python test_rembg_smoke.py
+RUN python test_rembg_policy.py && python test_task_store.py && python test_forwarder.py && \
+    API_KEY=build-gate GCS_BUCKET=build-gate python test_rembg_smoke.py && \
+    API_KEY=build-gate GCS_BUCKET=build-gate python test_task_routes.py
 
 EXPOSE 8080
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]

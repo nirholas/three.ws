@@ -14,17 +14,31 @@ API contract:
   GET  /health    → { ok, models_loaded, models_available, default_model,
                       gpu_available, execution_providers }
 
-No GPU required: the models run on ONNX Runtime's CPU provider in ~1-2 s for the
-inference step, except birefnet-general-lite, which trades about 6 s per image
-for a markedly cleaner edge. Only the default model is loaded at startup (the
-rest load lazily on first use) so cold starts stay fast and /remove returns
-instantly.
+Two inference backends share this one codebase and contract:
+
+  onnxruntime (default)  the models run in-process on ONNX Runtime's CPU
+                         provider, ~1-2 s per inference except
+                         birefnet-general-lite (~6 s for a cleaner edge). Only
+                         the default model loads at startup.
+  triton                 the forward pass runs on NVIDIA Triton Inference
+                         Server beside this process (Dockerfile.triton), on the
+                         GPU, with dynamic batching across concurrent jobs.
+                         rembg's own pre/post-processing is unchanged.
+
+Task records are written to GCS (task_store.py), so a poll can land on any
+instance, revision or lane. The CPU service can hand a share of submits to the
+GPU lane (forwarder.py) while remaining the single URL callers use.
 
 Environment variables:
-  API_KEY           shared bearer secret (required)
-  GCS_BUCKET        Cloud Storage bucket for output PNGs (required)
-  MODEL             default model name (default: isnet-general-use)
-  MAX_CONCURRENT    in-flight removals allowed at once (default: 4)
+  API_KEY                 shared bearer secret (required)
+  GCS_BUCKET              Cloud Storage bucket for output PNGs (required)
+  MODEL                   default model name (default: isnet-general-use)
+  MAX_CONCURRENT          in-flight removals allowed at once (default: 4)
+  INFERENCE_BACKEND       onnxruntime | triton (default: onnxruntime)
+  TRITON_FORWARD_URL      GPU lane base URL to split traffic to (optional)
+  TRITON_FORWARD_PERCENT  share of submits forwarded there, 0-100 (default: 0)
+  METRICS_PROJECT         with METRICS_LOCATION, enables the Triton metrics
+                          export to Cloud Monitoring (triton backend only)
 """
 
 from __future__ import annotations
@@ -35,6 +49,7 @@ import binascii
 import io
 import logging
 import os
+import random
 import threading
 import time
 import uuid
@@ -43,6 +58,7 @@ from typing import Optional
 
 import httpx
 from fastapi import FastAPI, HTTPException, Header, BackgroundTasks
+from google.api_core import exceptions as gcs_errors
 from google.cloud import storage
 from PIL import Image, UnidentifiedImageError
 from pydantic import BaseModel, Field
@@ -56,6 +72,8 @@ from rembg_policy import (
     gpu_providers,
     prune_tasks,
 )
+from forwarder import ForwardError, forward_percent, forward_submit, should_forward
+from task_store import TaskNotFound, load_task, persist_task, public_view
 from tracing import install_tracing
 from worker_security import (
     UnsafeUrlError,
@@ -85,14 +103,23 @@ USER_AGENT = "three.ws-rembg/1.0 (background removal worker; +https://three.ws)"
 FETCH_TIMEOUT_S = 30.0
 MAX_SOURCE_BYTES = 16 * 1024 * 1024
 
-# Timestamps prune_tasks() reads; never part of the wire response.
-_INTERNAL_TASK_FIELDS = ("created_at", "finished_at")
+INFERENCE_BACKEND = os.environ.get("INFERENCE_BACKEND", "onnxruntime").strip().lower()
+if INFERENCE_BACKEND not in ("onnxruntime", "triton"):
+    raise RuntimeError(f"INFERENCE_BACKEND must be onnxruntime or triton, got {INFERENCE_BACKEND!r}")
+TRITON_FORWARD_URL = os.environ.get("TRITON_FORWARD_URL", "").strip()
+TRITON_FORWARD_PERCENT = forward_percent(os.environ.get("TRITON_FORWARD_PERCENT"))
+METRICS_PROJECT = os.environ.get("METRICS_PROJECT", "").strip()
+METRICS_LOCATION = os.environ.get("METRICS_LOCATION", "").strip()
 
 _sessions: dict[str, object] = {}
 _sessions_lock = threading.Lock()
 _bucket: Optional[storage.Bucket] = None
 _sem: Optional[asyncio.Semaphore] = None
 _tasks: dict[str, dict] = {}
+_triton_client = None
+_metrics_exporter = None
+_forward_client: Optional[httpx.AsyncClient] = None
+_forward_stats = {"forwarded": 0, "fallbacks": 0}
 
 
 def _get_session(model_name: str):
@@ -107,10 +134,14 @@ def _get_session(model_name: str):
     with _sessions_lock:
         session = _sessions.get(canon)
         if session is None:
-            import rembg
-            session = rembg.new_session(canon)
+            if INFERENCE_BACKEND == "triton":
+                import triton_backend
+                session = triton_backend.build_session(_triton_client, canon)
+            else:
+                import rembg
+                session = rembg.new_session(canon)
             _sessions[canon] = session
-            log.info("Loaded rembg session: %s", canon)
+            log.info("Loaded rembg session: %s (%s)", canon, INFERENCE_BACKEND)
         return session
 
 
@@ -122,15 +153,33 @@ def _execution_providers() -> list:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _bucket, _sem
+    global _bucket, _sem, _triton_client, _metrics_exporter, _forward_client
     _bucket = storage.Client().bucket(GCS_BUCKET)
     _sem = asyncio.Semaphore(MAX_CONCURRENT)
     loop = asyncio.get_event_loop()
-    # Warm only the default model so the container becomes ready in seconds; the
-    # other models are loaded lazily on first request.
+    if INFERENCE_BACKEND == "triton":
+        import triton_backend
+        _triton_client = triton_backend.make_client()
+        # Triton loads and warms every model in the repository at boot; the
+        # startup probe holds traffic until all of them answer ready.
+        await loop.run_in_executor(
+            None, triton_backend.wait_until_ready, _triton_client, list(CANONICAL_MODELS)
+        )
+        if METRICS_PROJECT and METRICS_LOCATION:
+            _metrics_exporter = triton_backend.MetricsExporter(
+                METRICS_PROJECT, METRICS_LOCATION, os.environ.get("K_SERVICE", "rembg-triton")
+            )
+            _metrics_exporter.start()
+    # Warm the default model so the first job pays no load cost; on the
+    # onnxruntime backend the other models load lazily on first request.
     await loop.run_in_executor(None, _get_session, DEFAULT_MODEL)
-    log.info("rembg service ready, default model: %s", DEFAULT_MODEL)
+    if TRITON_FORWARD_URL and TRITON_FORWARD_PERCENT > 0:
+        _forward_client = httpx.AsyncClient()
+        log.info("forwarding %.1f%% of submits to %s", TRITON_FORWARD_PERCENT, TRITON_FORWARD_URL)
+    log.info("rembg service ready (%s), default model: %s", INFERENCE_BACKEND, DEFAULT_MODEL)
     yield
+    if _forward_client is not None:
+        await _forward_client.aclose()
 
 
 app = FastAPI(title="rembg-service", lifespan=lifespan)
@@ -205,7 +254,26 @@ def _run_removal(img: Image.Image, model_name: str) -> Image.Image:
     return rembg.remove(img, session=session)
 
 
+async def _persist(task: dict) -> None:
+    """Publish the task record for other instances and lanes. A storage hiccup
+    is logged, not raised: this instance still answers from memory, and the
+    next state change writes the record again."""
+    loop = asyncio.get_event_loop()
+    snapshot = dict(task)
+    try:
+        await loop.run_in_executor(None, persist_task, _bucket, snapshot)
+    except Exception as exc:
+        log.warning("[%s] could not persist task record: %s", task.get("task_id"), exc)
+
+
 async def _process(task_id: str, image_src: str, model_name: str) -> None:
+    try:
+        await _process_inner(task_id, image_src, model_name)
+    finally:
+        await _persist(_tasks[task_id])
+
+
+async def _process_inner(task_id: str, image_src: str, model_name: str) -> None:
     async with _sem:
         _tasks[task_id]["status"] = "running"
         loop = asyncio.get_event_loop()
@@ -269,6 +337,19 @@ async def remove_background(
     authorization: Optional[str] = Header(default=None),
 ) -> dict:
     _require_api_key(authorization)
+    if _forward_client is not None and should_forward(
+        TRITON_FORWARD_URL, TRITON_FORWARD_PERCENT, random.random()
+    ):
+        try:
+            forwarded = await forward_submit(
+                _forward_client, TRITON_FORWARD_URL, API_KEY, body.model_dump()
+            )
+            _forward_stats["forwarded"] += 1
+            log.info("[%s] forwarded to triton lane", forwarded["task_id"])
+            return forwarded
+        except ForwardError as exc:
+            _forward_stats["fallbacks"] += 1
+            log.warning("triton lane refused a job, processing locally: %s", exc)
     model_name = canonical_model(body.model, fallback=DEFAULT_MODEL)
     task_id = str(uuid.uuid4())
     now = time.time()
@@ -281,6 +362,9 @@ async def remove_background(
         "model": model_name,
         "created_at": now,
     }
+    # Written before the 202 so a poll that lands on another instance (or the
+    # front door, when this is the GPU lane) finds the job straight away.
+    await _persist(_tasks[task_id])
     background_tasks.add_task(_process, task_id, body.image, model_name)
     return {"task_id": task_id, "status": "queued", "model": model_name}
 
@@ -289,20 +373,64 @@ async def remove_background(
 async def get_task(task_id: str, authorization: Optional[str] = Header(default=None)) -> dict:
     _require_api_key(authorization)
     task = _tasks.get(task_id)
-    if task is None:
+    if task is not None:
+        # Retention bookkeeping stays server-side: the documented response
+        # shape is what callers get, whatever the eviction policy tracks.
+        return public_view(task)
+    # Accepted by another instance, an earlier revision, or the GPU lane.
+    loop = asyncio.get_event_loop()
+    try:
+        return await loop.run_in_executor(
+            None, lambda: load_task(_bucket, task_id, not_found=(gcs_errors.NotFound,))
+        )
+    except TaskNotFound:
         raise HTTPException(status_code=404, detail="task not found")
-    # Retention bookkeeping stays server-side: the documented response shape is
-    # what callers get, whatever the eviction policy needs to track.
-    return {key: value for key, value in task.items() if key not in _INTERNAL_TASK_FIELDS}
+    except gcs_errors.GoogleAPIError as exc:
+        log.warning("[%s] task store read failed: %s", task_id, exc)
+        raise HTTPException(status_code=503, detail="task store temporarily unavailable; retry")
+
+
+def _triton_health() -> dict:
+    import triton_backend
+    states = triton_backend.model_ready_states(_triton_client, CANONICAL_MODELS)
+    try:
+        gpu = triton_backend.scrape_gpu_gauges()
+    except Exception as exc:
+        log.warning("triton metrics scrape failed: %s", exc)
+        gpu = {}
+    return {
+        "triton_models_ready": states,
+        "triton_gpu": gpu,
+        "metrics_export": None if _metrics_exporter is None else {
+            "project": METRICS_PROJECT,
+            "last_error": _metrics_exporter.last_error,
+            "last_summary": _metrics_exporter.last_summary,
+        },
+    }
 
 
 @app.get("/health")
 async def health() -> dict:
-    providers = _execution_providers()
+    if INFERENCE_BACKEND == "triton":
+        providers = ["TritonInferenceServer"]
+        backend = await asyncio.get_event_loop().run_in_executor(None, _triton_health)
+        # Triton only exports nv_gpu_* gauges when it owns a GPU.
+        gpu = "gpu_utilization" in backend["triton_gpu"]
+    else:
+        providers = _execution_providers()
+        backend = {}
+        gpu = bool(gpu_providers(providers))
     return {
         "ok": True,
         "service": "rembg",
-        "gpu_available": bool(gpu_providers(providers)),
+        "inference_backend": INFERENCE_BACKEND,
+        **backend,
+        "triton_forward": {
+            "url": TRITON_FORWARD_URL or None,
+            "percent": TRITON_FORWARD_PERCENT,
+            **_forward_stats,
+        },
+        "gpu_available": gpu,
         "execution_providers": providers,
         "models_loaded": list(_sessions),
         "models_available": list(CANONICAL_MODELS),

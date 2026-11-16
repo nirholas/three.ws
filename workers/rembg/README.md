@@ -108,9 +108,14 @@ can fix their input. Anything else returns an opaque
 `internal error (ref <id>)`, with the full traceback and matching id in this
 service's logs.
 
-Task state is in-memory: it does not survive a restart or scale-to-zero, a
-finished task stays pollable for an hour, and the map is capped at 2000 entries
-(oldest finished evicted first, never one still queued or running).
+Every task is also written to `gs://$GCS_BUCKET/rembg/tasks/{task_id}.json`
+([`task_store.py`](task_store.py)) when it is queued and again when it finishes.
+A poll that lands on an instance that does not hold the task in memory (another
+instance after scale-out, a fresh revision after a deploy, or the instance that
+forwarded the job to the Triton GPU lane) is answered from that record, so a job
+never 404s just because the poll was routed elsewhere. In memory a finished task
+stays for an hour and the map is capped at 2000 entries (oldest finished evicted
+first, never one still queued or running); the GCS record outlives both.
 
 ### `GET /health`
 
@@ -141,6 +146,11 @@ finished task stays pollable for an hour, and the map is capped at 2000 entries
 | `GCS_BUCKET` | yes | none | Cloud Storage bucket for output PNGs (`three-ws-avatar-reconstructions`) |
 | `MODEL` | no | `isnet-general-use` | Startup default model, resolved through the alias table (prod sets `rmbg2`, which resolves to `isnet-general-use`) |
 | `MAX_CONCURRENT` | no | `4` | In-flight removals allowed at once (CPU-bound, so several fit) |
+| `INFERENCE_BACKEND` | no | `onnxruntime` | `onnxruntime` runs the model in-process; `triton` sends every model call to the local Triton server (set by `Dockerfile.triton`) |
+| `TRITON_FORWARD_URL` | no | none | Base URL of the Triton GPU lane (`rembg-triton`). Only read by the CPU front door |
+| `TRITON_FORWARD_PERCENT` | no | `0` | Share of `POST /remove` calls (0 to 100) the front door hands to the GPU lane. A failed hand-off runs the job locally |
+| `TRITON_GRPC_URL` | no | `127.0.0.1:8001` | Triton gRPC endpoint (triton backend only) |
+| `METRICS_PROJECT`, `METRICS_LOCATION` | no | none | When both are set, the triton backend exports Triton's counters to Cloud Monitoring every 60 s |
 
 Weights for the two startup-capable models are **baked into the image** at build
 time (the Dockerfile pre-caches `u2net` and `isnet-general-use` into
@@ -148,6 +158,48 @@ time (the Dockerfile pre-caches `u2net` and `isnet-general-use` into
 the network. `u2net_human_seg`, `silueta` and `birefnet-general-lite` download on
 first request; BiRefNet's weights are 214 MB, so its very first call on a fresh
 instance pays that download once before it answers.
+
+## Triton GPU lane
+
+The same app also ships as a second image, [`Dockerfile.triton`](Dockerfile.triton),
+built on NVIDIA Triton Inference Server (`nvcr.io/nvidia/tritonserver:25.10-py3`).
+It serves all five models from [`model_repository/`](model_repository/) on one
+L4 with **dynamic batching**: concurrent jobs on the default model are stacked
+into one GPU execution instead of queueing behind each other. rembg's own pre-
+and post-processing is untouched; only the ONNX session is swapped for
+[`triton_backend.TritonInnerSession`](triton_backend.py), which speaks the same
+two calls rembg makes (`get_inputs()` and `run()`). Callers see the identical
+HTTP contract.
+
+| Model | Batch dim | `max_batch_size` | Preferred batches | Instances |
+|---|---|---|---|---|
+| `isnet-general-use` | dynamic | 8 | 2, 4, 8 | 2 |
+| `u2net`, `u2net_human_seg` | dynamic | 16 | 2, 4, 8, 16 | 1 |
+| `silueta`, `birefnet-general-lite` | static (exported at batch 1) | 0 | none | 1 |
+
+All run `KIND_GPU` with a 4 ms batching window and a warmup request so the
+first real job does not pay CUDA graph and cuDNN autotune setup.
+[`export_triton_models.py`](export_triton_models.py) rewrites the upstream
+weights for Triton (single output, symbolic batch dimension) and refuses to
+write a model whose output drifts more than 1e-4 from the upstream file.
+
+**Routing.** `rembg-service` (CPU, us-central1) stays the only front door.
+`TRITON_FORWARD_URL` + `TRITON_FORWARD_PERCENT` decide which share of submits it
+hands to `rembg-triton` ([`forwarder.py`](forwarder.py)); the GPU lane writes
+the result and the task record to the same bucket, so the caller's poll
+against the front door finds it. Any hand-off failure (timeout, 5xx, a bad
+reply) runs the job on the local CPU path instead, so the GPU lane can never
+fail a job the CPU lane would have finished. `/health` reports the split and
+the forwarded and fallback counters.
+
+**Metrics.** On the GPU lane a background thread scrapes Triton's Prometheus
+endpoint every minute and writes `custom.googleapis.com/triton/*` to Cloud
+Monitoring (resource `generic_task`, namespace `rembg-triton`): per model
+`requests_per_min`, `executions_per_min`, `avg_batch_size`, `avg_queue_ms`,
+`avg_compute_ms`, `failures_per_min`, plus `gpu_utilization` and GPU memory.
+
+Measured throughput, latency and parity against the CPU lane are in
+[`docs/nvidia-triton-serving.md`](../../docs/nvidia-triton-serving.md).
 
 ## Run locally
 
@@ -176,8 +228,18 @@ docker run --rm -p 8080:8080 \
 
 ```bash
 python3 workers/rembg/test_rembg_policy.py    # request policy, stdlib only
+python3 workers/rembg/test_task_store.py      # GCS task records
+python3 workers/rembg/test_forwarder.py       # GPU-lane hand-off and fallback
 API_KEY=x GCS_BUCKET=x python3 workers/rembg/test_rembg_smoke.py   # real cutout
+API_KEY=x GCS_BUCKET=x python3 workers/rembg/test_task_routes.py   # routes, polls across instances
+python3 workers/rembg/test_triton_metrics.py  # Triton metrics math
 ```
+
+[`test_triton_parity.py`](test_triton_parity.py) is the GPU image's gate: the
+`Dockerfile.triton` build starts a real Triton server on CPU, cuts real
+portraits out through it and through rembg's own ONNX Runtime session, requires
+matching masks for every model, then fires 8 concurrent jobs and requires the
+dynamic batcher to have stacked them without changing any output.
 
 [`test_rembg_policy.py`](test_rembg_policy.py) covers the pure rules in
 [`rembg_policy.py`](rembg_policy.py): model-alias resolution and the task
@@ -188,7 +250,7 @@ transparent and the subject opaque, plus that bad input is rejected with a
 caller-readable reason. It needs `requirements.txt` and the weights, but no GPU,
 no network and no GCP credentials.
 
-Both run inside `docker build` as a gate, so an image that cannot remove a
+The CPU image runs these inside `docker build` as a gate, so an image that cannot remove a
 background does not get pushed.
 
 ## Deploy
@@ -208,6 +270,25 @@ rationale in [`cloudbuild.yaml`](cloudbuild.yaml)), `max-instances=4`. Env is se
 to `MODEL=rmbg2`, `MAX_CONCURRENT=4`; `API_KEY` comes from the
 `avatar-reconstruction-key` secret. `SHORT_SHA` is only substituted automatically
 for trigger builds, hence the explicit value on a manual submit.
+
+The Triton GPU lane builds from the worker directory:
+
+```bash
+TMPDIR=/home/user/.cache/gcloud-tmp gcloud builds submit workers/rembg \
+	--config workers/rembg/cloudbuild.triton.yaml \
+	--region us-central1 --project aerial-vehicle-466722-p5 \
+	--substitutions=SHORT_SHA=manual$(date +%s)
+```
+
+It deploys **`rembg-triton`** in `europe-west1` (1x NVIDIA L4, 8 vCPU, 32 GiB,
+min 1, max 2). europe-west1 because the us-central1 and us-east4 L4 quota is
+held by the 3D model lanes. Point the front door at it with a config-only
+update (`--update-env-vars`, never `--set-env-vars`):
+
+```bash
+gcloud run services update rembg-service --region us-central1 \
+	--update-env-vars TRITON_FORWARD_URL=https://rembg-triton-93741856042.europe-west1.run.app,TRITON_FORWARD_PERCENT=100
+```
 
 ## Example: submit, poll, fetch
 

@@ -1,0 +1,41 @@
+name: "isnet-general-use"
+backend: "onnxruntime"
+max_batch_size: 8
+input [
+  {
+    name: "input_image"
+    data_type: TYPE_FP32
+    dims: [ 3, 1024, 1024 ]
+  }
+]
+output [
+  {
+    name: "output_image"
+    data_type: TYPE_FP32
+    dims: [ 1, 1024, 1024 ]
+  }
+]
+dynamic_batching {
+  preferred_batch_size: [ 2, 4, 8 ]
+  max_queue_delay_microseconds: 4000
+}
+instance_group [
+  {
+    count: 2
+    kind: KIND_GPU
+  }
+]
+model_warmup [
+  {
+    name: "zeros"
+    batch_size: 1
+    inputs {
+      key: "input_image"
+      value {
+        data_type: TYPE_FP32
+        dims: [ 3, 1024, 1024 ]
+        zero_data: true
+      }
+    }
+  }
+]

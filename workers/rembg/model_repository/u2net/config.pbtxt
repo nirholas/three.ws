@@ -1,0 +1,41 @@
+name: "u2net"
+backend: "onnxruntime"
+max_batch_size: 16
+input [
+  {
+    name: "input.1"
+    data_type: TYPE_FP32
+    dims: [ 3, 320, 320 ]
+  }
+]
+output [
+  {
+    name: "1959"
+    data_type: TYPE_FP32
+    dims: [ 1, 320, 320 ]
+  }
+]
+dynamic_batching {
+  preferred_batch_size: [ 2, 4, 8, 16 ]
+  max_queue_delay_microseconds: 4000
+}
+instance_group [
+  {
+    count: 1
+    kind: KIND_GPU
+  }
+]
+model_warmup [
+  {
+    name: "zeros"
+    batch_size: 1
+    inputs {
+      key: "input.1"
+      value {
+        data_type: TYPE_FP32
+        dims: [ 3, 320, 320 ]
+        zero_data: true
+      }
+    }
+  }
+]
