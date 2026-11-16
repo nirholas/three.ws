@@ -1,5 +1,7 @@
 # nvidia 06: NemoGuard guards agent chat: jailbreak detection, content safety on input and output, and per-agent topic control
 
+Status 2026-11-16: code, editor panel, owner endpoint, eval report (docs/nvidia/evals/guardrails-2026-11-16.md), dev-server live check, docs, STRUCTURE row, changelog and pages entry committed. Measured: jailbreak detection 95.0% TPR at 0% FPR on 350 benign prompts, p50 455 ms. Live: jailbreak blocked, benign streamed, off-topic redirected; guardrails suites 151/151 and `npm run audit:docs` has no finding in this order's files. Not archived: full `npm test` exits 1 (41 failures in 21 files, all in other orders' in-flight work: vision, Cosmos i18n, OAuth, audit scripts, Dockerfiles) and `npm run audit:docs` reports 11 findings in other orders' files. Waiting on the owner: git push, deploy:gcp:full (three-ws-api), then the Inception portal product record.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `nvidia-` order, so it can run in parallel with all of them. Dev port: 3256.
 
 ## Operating clause (binding)
