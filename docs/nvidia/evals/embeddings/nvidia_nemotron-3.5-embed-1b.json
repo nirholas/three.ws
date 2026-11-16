@@ -1,0 +1,357 @@
+{
+	"modelId": "nvidia/nemotron-3.5-embed-1b",
+	"classification": {
+		"lane": "embeddings",
+		"availability": "live",
+		"dim": 2048,
+		"reason": "/v1/embeddings returned a 2048-dim vector",
+		"ownedBy": "nvidia",
+		"probes": {
+			"embeddings": {
+				"status": 200,
+				"ms": 220,
+				"ok": true,
+				"error": null,
+				"sample": "2048-dim vector"
+			}
+		}
+	},
+	"lane": "embeddings",
+	"verdict": "adopt",
+	"reasons": [
+		"recall@1 100% vs 92% today (+8 pts)",
+		"p50 120 ms vs 124 ms"
+	],
+	"candidate": {
+		"model": "nvidia/nemotron-3.5-embed-1b",
+		"wallMs": 1389,
+		"items": 12,
+		"calls": 36,
+		"errors": 0,
+		"errorRate": 0,
+		"quality": 1,
+		"formatAdherence": 1,
+		"latencyMs": {
+			"p50": 120,
+			"p95": 230
+		},
+		"results": [
+			{
+				"id": "q-rig",
+				"ok": true,
+				"ms": 129,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-rig)",
+				"error": null
+			},
+			{
+				"id": "q-glb",
+				"ok": true,
+				"ms": 117,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-glb)",
+				"error": null
+			},
+			{
+				"id": "q-lipsync",
+				"ok": true,
+				"ms": 140,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-lipsync)",
+				"error": null
+			},
+			{
+				"id": "q-wallet",
+				"ok": true,
+				"ms": 131,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-wallet)",
+				"error": null
+			},
+			{
+				"id": "q-ratelimit",
+				"ok": true,
+				"ms": 114,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-ratelimit)",
+				"error": null
+			},
+			{
+				"id": "q-embed",
+				"ok": true,
+				"ms": 230,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-embed)",
+				"error": null
+			},
+			{
+				"id": "q-coldstart",
+				"ok": true,
+				"ms": 127,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-coldstart)",
+				"error": null
+			},
+			{
+				"id": "q-photo",
+				"ok": true,
+				"ms": 116,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-photo)",
+				"error": null
+			},
+			{
+				"id": "q-lod",
+				"ok": true,
+				"ms": 115,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-lod)",
+				"error": null
+			},
+			{
+				"id": "q-usd",
+				"ok": true,
+				"ms": 115,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-usd)",
+				"error": null
+			},
+			{
+				"id": "q-tts",
+				"ok": true,
+				"ms": 115,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-tts)",
+				"error": null
+			},
+			{
+				"id": "q-rerank",
+				"ok": true,
+				"ms": 120,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-rerank)",
+				"error": null
+			}
+		],
+		"mrr": 1,
+		"dim": 2048
+	},
+	"incumbent": {
+		"model": "nvidia/nemotron-3.5-embed-8b",
+		"callOpts": {
+			"dimensions": 2048
+		},
+		"wallMs": 1265,
+		"items": 12,
+		"calls": 36,
+		"errors": 0,
+		"errorRate": 0,
+		"quality": 0.917,
+		"formatAdherence": 1,
+		"latencyMs": {
+			"p50": 124,
+			"p95": 201
+		},
+		"results": [
+			{
+				"id": "q-rig",
+				"ok": true,
+				"ms": 123,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-rig)",
+				"error": null
+			},
+			{
+				"id": "q-glb",
+				"ok": true,
+				"ms": 136,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-glb)",
+				"error": null
+			},
+			{
+				"id": "q-lipsync",
+				"ok": true,
+				"ms": 127,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-lipsync)",
+				"error": null
+			},
+			{
+				"id": "q-wallet",
+				"ok": true,
+				"ms": 131,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-wallet)",
+				"error": null
+			},
+			{
+				"id": "q-ratelimit",
+				"ok": true,
+				"ms": 124,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-ratelimit)",
+				"error": null
+			},
+			{
+				"id": "q-embed",
+				"ok": true,
+				"ms": 120,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-embed)",
+				"error": null
+			},
+			{
+				"id": "q-coldstart",
+				"ok": true,
+				"ms": 122,
+				"pass": false,
+				"format": true,
+				"output": "rank 2 (top: p-coldstart-d)",
+				"error": null
+			},
+			{
+				"id": "q-photo",
+				"ok": true,
+				"ms": 123,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-photo)",
+				"error": null
+			},
+			{
+				"id": "q-lod",
+				"ok": true,
+				"ms": 124,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-lod)",
+				"error": null
+			},
+			{
+				"id": "q-usd",
+				"ok": true,
+				"ms": 121,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-usd)",
+				"error": null
+			},
+			{
+				"id": "q-tts",
+				"ok": true,
+				"ms": 130,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-tts)",
+				"error": null
+			},
+			{
+				"id": "q-rerank",
+				"ok": true,
+				"ms": 120,
+				"pass": true,
+				"format": true,
+				"output": "rank 1 (top: p-rerank)",
+				"error": null
+			}
+		],
+		"mrr": 0.958,
+		"dim": 2048
+	},
+	"set": {
+		"path": "data/evals/embeddings/v1.json",
+		"version": 1,
+		"licence": "CC0-1.0",
+		"items": [
+			{
+				"id": "q-rig",
+				"query": "how do I make a still character model poseable without painting weights",
+				"relevant": "p-rig"
+			},
+			{
+				"id": "q-glb",
+				"query": "what is inside a single-file binary glTF",
+				"relevant": "p-glb"
+			},
+			{
+				"id": "q-lipsync",
+				"query": "make the avatar's lips follow the audio automatically",
+				"relevant": "p-lipsync"
+			},
+			{
+				"id": "q-wallet",
+				"query": "wallet where the service keeps the keys for me",
+				"relevant": "p-wallet"
+			},
+			{
+				"id": "q-ratelimit",
+				"query": "what to do when the free model API says too many requests",
+				"relevant": "p-ratelimit"
+			},
+			{
+				"id": "q-embed",
+				"query": "why can't I mix vectors from different embedding models",
+				"relevant": "p-embed"
+			},
+			{
+				"id": "q-coldstart",
+				"query": "why is the first request to a GPU server so slow after idle",
+				"relevant": "p-coldstart"
+			},
+			{
+				"id": "q-photo",
+				"query": "checking a user's picture is usable before generating",
+				"relevant": "p-photo"
+			},
+			{
+				"id": "q-lod",
+				"query": "keep frame rate up by simplifying distant meshes",
+				"relevant": "p-lod"
+			},
+			{
+				"id": "q-usd",
+				"query": "scene format where multiple apps can edit layers without clobbering",
+				"relevant": "p-usd"
+			},
+			{
+				"id": "q-tts",
+				"query": "give my character a voice in several languages",
+				"relevant": "p-tts"
+			},
+			{
+				"id": "q-rerank",
+				"query": "re-score retrieved passages so the best context leads",
+				"relevant": "p-rerank"
+			}
+		],
+		"sources": [
+			"Authored in-house for three.ws on 2026-11-16. Queries and passages are original text written for this set; no dataset, documentation or third-party text was copied."
+		]
+	},
+	"diff": {
+		"file": "api/_lib/embeddings.js",
+		"patch": null,
+		"note": "Could not build the diff automatically (a previous re-pin is still in flight (NIM_EMBED_TAG_PREVIOUS is set); finish its re-embed and retire that tag first); wire nvidia/nemotron-3.5-embed-1b by hand in api/_lib/embeddings.js."
+	},
+	"postDraft": "Now live on three.ws: NVIDIA nemotron-3.5-embed-1b now embeds agent memory and knowledge-widget retrieval on three.ws.\n\n100% recall@1 on our 12-task embeddings eval vs 92% for nemotron-3.5-embed-8b, which ran first until now, p50 120 ms on the free NIM endpoint.\n\n[10 to 15 second clip: a knowledge widget answering from an uploaded document]\n\n@NVIDIAAI @NVIDIAAIDev #NVIDIAInception",
+	"evaluatedAt": "2026-11-16T17:21:30.039Z"
+}
