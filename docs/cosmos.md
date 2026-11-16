@@ -46,7 +46,7 @@ The progress bar reads the worker's real state, never a timer:
 
 | Worker status | What the page shows |
 |---|---|
-| `queued` with `model loading` | Warming the GPU (the first world after an idle period pays a checkpoint load of about 7 minutes) |
+| `queued` with `model loading` | Warming the GPU (the first world after an idle period pays a checkpoint load, measured at 17 minutes on 2026-11-16) |
 | `queued` | the queue position |
 | `upsampling` | Writing the shot (prompt upsampling) |
 | `generating` | step x of y and the worker's ETA |

@@ -12,10 +12,15 @@ WEIGHTS_DIR="${WEIGHTS_DIR:-/weights/cosmos-reason2-8b}"
 COSMOS_REVISION="${COSMOS_REVISION:?COSMOS_REVISION must name the pinned NGC version}"
 SERVED_MODEL_NAME="${SERVED_MODEL_NAME:-nvidia/cosmos-reason2-8b}"
 PORT="${PORT:-8080}"
-# Four 512 px views plus the rubric and a reasoning trace fit well inside 16k.
-MAX_MODEL_LEN="${MAX_MODEL_LEN:-16384}"
-GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-0.92}"
-MAX_NUM_SEQS="${MAX_NUM_SEQS:-16}"
+# Sized for one L4 (24 GB) holding 16.7 GiB of bf16 weights. A judge request is
+# four 448 px views (about 196 visual tokens each), the rubric, and at most
+# 2048 output tokens with reasoning on, so 8k of context is ample. At 16k the
+# vision-encoder profile left 1.15 GiB of KV cache, under the 2.25 GiB one
+# full-length request needs, and the engine refused to start (2026-11-16).
+# MAX_NUM_SEQS matches the Cloud Run concurrency (8).
+MAX_MODEL_LEN="${MAX_MODEL_LEN:-8192}"
+GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-0.95}"
+MAX_NUM_SEQS="${MAX_NUM_SEQS:-8}"
 
 python3 - "$WEIGHTS_DIR" "$COSMOS_REVISION" <<'PY'
 import json, os, sys

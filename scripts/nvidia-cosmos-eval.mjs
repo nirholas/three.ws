@@ -168,7 +168,7 @@ function renderReport(run) {
 	if (cold) lines.push(`Cold start (first world after the instance scaled to zero): ${f1(cold.new.wall_s)} s wall time including the checkpoint load.`);
 	lines.push(`Old lane: ${rows.every((r) => r.old.every((o) => !o.ok)) ? 'no hosted predict1 route served a single request on this account; every submit was refused before generation, so there is no old-model clip or time to measure.' : 'see the per-route columns.'}`);
 	lines.push('');
-	lines.push('Clips (R2):');
+	lines.push('Clips (served from /cdn):');
 	lines.push('');
 	rows.forEach((r, i) => {
 		if (r.new.ok) lines.push(`${i + 1}. [${r.prompt}](${r.new.video_url}) (${r.frame?.video?.width}x${r.frame?.video?.height}, ${r.frame?.video?.frames ?? '?'} frames, ${f1((r.frame?.video?.bytes || 0) / 1e6)} MB)`);
