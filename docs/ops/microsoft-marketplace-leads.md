@@ -73,7 +73,7 @@ The action is the part of `LeadSource` before the pipe (`AzureMarketplace-PLT|..
 | `Create` | Free trial or subscription created | Check that the subscription activated on three.ws (see [docs/microsoft-marketplace-saas.md](../microsoft-marketplace-saas.md)). Send an onboarding note with the first steps. Mark contacted. |
 | `DNC` | Do not contact | Do not reply or add them to any list. Close the lead. Drafting is disabled for it, and its personal details are deleted after 30 days. |
 
-Sources: `AzureMarketplace` (marketplace.microsoft.com), `AzurePortal` (Azure portal search) and `AppSource (SPZA)` (the business apps store and Teams listings). The handling is the same for each source.
+Sources: `AzureMarketplace` (marketplace.microsoft.com), `AzurePortal` (Azure portal search) and `AppSource (SPZA)` (the business apps store and Teams listings), plus `Website` for the contact form on [/enterprise](../enterprise.md) (`POST /api/enterprise/contact`, always `PLT`, labelled "Enterprise page" in the admin view). The handling is the same for each source.
 
 ## Retention
 
