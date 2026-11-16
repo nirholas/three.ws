@@ -4173,6 +4173,10 @@
 			"dest": "/api/scim/v2"
 		},
 		{
+			"src": "/api/odata/v1(?:/.*)?",
+			"dest": "/api/odata/v1"
+		},
+		{
 			"src": "/api/auth/google/start",
 			"dest": "/api/auth/google/[action]?action=start"
 		},
