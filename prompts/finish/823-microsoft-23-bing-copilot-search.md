@@ -1,6 +1,6 @@
 # microsoft 23: make three.ws fully visible to Bing and Copilot answers (IndexNow, sitemaps, structured data)
 
-Status 2026-11-14: pushed, deployed and live (key file, sitemap index, robots.txt, ten-minute cron all serving; the held catalog pages are announced, HTTP 200). Waiting on owner steps: verify three.ws in Bing Webmaster Tools and submit https://three.ws/sitemap.xml, and approve FAQ markup alignment on /features/deploy, /features/agent-exchange and /features/play (their answers name other crypto projects).
+Status 2026-11-16: re-verified live (key file, sitemap index with 9 child sitemaps, robots.txt, and the */10 cron, which last ran 14:40Z; 341 submissions since launch, all HTTP 200; 0 queued URLs past the 24-hour resubmit floor). Owner steps still waiting: verify three.ws in Bing Webmaster Tools and submit https://three.ws/sitemap.xml, and approve FAQ markup alignment on /features/deploy, /features/agent-exchange and /features/play (their answers name other crypto projects).
 
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `microsoft-` order, so it can run in parallel with all of them. Dev port: 3123.
 
