@@ -120,6 +120,11 @@
 	--skeleton-base: #000000; --skeleton-sheen: #333333;
 }
 :root[data-contrast] a { color: #ffff00; }
+/* The filled button keeps black text on the yellow accent in every host theme. */
+:root[data-contrast] .tt-btn:not(.is-ghost) { color: #000000; background: #ffff00; border-color: #ffff00; }
+:root[data-contrast] .tt-btn:not(.is-ghost):hover { background: #ffffff; border-color: #ffffff; filter: none; }
+:root[data-contrast] .tt-btn.is-ghost:hover { background: #000000; border-color: #ffff00; color: #ffff00; }
+:root[data-contrast] .tt-btn:disabled { color: #ffffff; background: #000000; border-color: #ffffff; opacity: 1; }
 @media (forced-colors: active) {
 	:is(a, button, input, select, textarea):focus-visible { outline: 2px solid CanvasText; }
 }

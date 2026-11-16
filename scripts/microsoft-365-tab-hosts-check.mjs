@@ -6,6 +6,8 @@
 //               Outlook does: host Outlook, dark theme, mail supported, no sharing
 //   teams       framed by https://teams.microsoft.com: host Teams, high
 //               contrast, sharing supported
+// Each host frames the tab with ?theme=default, so a dark or contrast result
+// can only come from the host context TeamsJS reads.
 // The host pages are served by Playwright's router on the real Microsoft
 // origins, so TeamsJS's own origin check runs unchanged. The simulated host
 // speaks the TeamsJS postMessage protocol (initialize, getContext, then any
@@ -45,7 +47,7 @@ function hostPage({ hostName, theme, supports }) {
 	});
 	return `<!doctype html><html><head><meta charset="utf-8"><title>${hostName} host</title>
 <style>html,body{margin:0;height:100%;background:#111}iframe{border:0;width:100%;height:100%}</style></head>
-<body><iframe id="app" src="${TAB}?theme=${theme}" allow="clipboard-write"></iframe>
+<body><iframe id="app" src="${TAB}?theme=default" allow="clipboard-write"></iframe>
 <script>
 const frame = document.getElementById('app');
 window.__calls = [];
@@ -81,7 +83,12 @@ const HOSTS = [
 	},
 ];
 
-const browser = await chromium.launch();
+// The simulated host is a public origin framing a localhost dev server; Chrome's
+// local network access check would block that frame (a real host frames the
+// public https://three.ws), so the check is off for this run only.
+const browser = await chromium.launch({
+	args: ['--disable-features=LocalNetworkAccessChecks,BlockInsecurePrivateNetworkRequests,PrivateNetworkAccessSendPreflights'],
+});
 let failed = false;
 const fail = (msg) => {
 	failed = true;
