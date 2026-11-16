@@ -9,7 +9,9 @@
 //                 without even touching the network.
 //
 // It also pins the boundary that motivated the module's rename: no chat surface
-// imports it. Input a user sends to a model is never screened by us.
+// imports it. The platform never screens what a user sends to a model by default;
+// an owner's per-agent chat guardrails live in api/_lib/chat-guardrails.js, off
+// unless the owner turns them on, and do not go through this module.
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -202,11 +204,16 @@ describe('classifyPublishSafety', () => {
 });
 
 // Owner directive 2026-08-07: the platform screens what it publishes, never what
-// a user asks. This walks the real api/ tree so a future edit that reintroduces
+// a user asks unless the agent's owner opted in (api/_lib/chat-guardrails.js). This walks the real api/ tree so a future edit that reintroduces
 // an input filter on a chat surface fails here instead of in production.
 describe('no chat surface imports a content classifier', () => {
 	const API_DIR = new URL('../../api/', import.meta.url).pathname;
-	const ALLOWED = ['cron/sketchfab-showcase.js'];
+	// The outbound publishing cron, plus the NVIDIA lane probe and release-eval
+	// modules, which classify fixed probe prompts to measure the guard model and
+	// never see a user's message. The test below keeps them off the chat routes.
+	const ALLOWED = ['cron/sketchfab-showcase.js', '_lib/nim-lane-eval.js', '_lib/nim-lanes.js', '_lib/nvidia-lanes.js'];
+	const LANE_TOOLING = /from\s+['"][^'"]*(nim-lane-eval|nim-lanes|nvidia-lanes|publish-safety)\.js['"]/;
+	const CHAT_ROUTES = ['chat.js', 'llm/anthropic.js', 'concierge.js', '_lib/chat-guardrails.js'];
 
 	function walk(dir, prefix = '') {
 		const out = [];
@@ -225,6 +232,11 @@ describe('no chat surface imports a content classifier', () => {
 			.filter(({ full }) => /from\s+['"][^'"]*publish-safety\.js['"]/.test(readFileSync(full, 'utf8')))
 			.map(({ rel }) => rel);
 		expect(importers.sort()).toEqual([...ALLOWED].sort());
+	});
+
+	it('no chat route imports the publish classifier or the lane probe tooling', () => {
+		const offenders = CHAT_ROUTES.filter((rel) => LANE_TOOLING.test(readFileSync(join(API_DIR, rel), 'utf8')));
+		expect(offenders).toEqual([]);
 	});
 
 	it('the retired moderation module is gone, not merely unused', () => {
