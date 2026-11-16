@@ -45,6 +45,8 @@ We sample with the published defaults: 35 steps at 24 fps for text and image, an
 All numbers come from real runs on 2026-11-16 at 720p and 121 frames.
 
 - **Warm text world:** 244.1 s worker total. That splits into 10.8 s prompt upsampling, 231.1 s sampling (about 6.6 s per step) and 1.8 s encode. The output is 1280x720 H.264, 121 frames, about 1.5 MB.
+- **Five-prompt warm run:** median 245.7 s from submit to a playable URL, with sampling flat between 228.5 and 230.2 s.
+- **Scene-conditioned worlds:** a still-conditioned world took 4m 05s. A depth-conditioned world took 17m 44s: 50 control-guided steps at about 21 s each, roughly 4.3x a text world.
 - **Cold start:** 1041.5 s (17.4 minutes) to load the 34.9 GB checkpoint over a gcsfuse mount: transformer, VAE, Qwen3-VL vision encoder, sound tokenizer and text tokenizer. Cold start is the cost of scaling to zero, and it is the number we most want to bring down.
 - **Old versus new, five prompts:** the hosted Predict1 routes refused every submit before generation, so there is no old clip or old time to compare. The side-by-side table, with per-prompt sampling times and mid-clip frames, is in docs/nvidia/evals/cosmos-2026-11-16.md in the repo.
 
