@@ -184,6 +184,25 @@
 			.ap-form-foot{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
 			.ap-form-msg{font-size:12px;color:var(--muted);}
 			.ap-form-msg.err{color:var(--red);}
+			/* Microsoft Teams channel */
+			.ap-teams{margin-top:14px;padding:16px;background:var(--card);border:1px solid var(--line-2);border-radius:var(--radius);display:flex;flex-direction:column;gap:14px;}
+			.ap-teams-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+			.ap-teams-label{font-size:14px;font-weight:500;}
+			.ap-teams-meta{font-size:12px;color:var(--dim);margin-top:3px;line-height:1.5;}
+			.ap-teams-steps{display:flex;flex-wrap:wrap;gap:8px;}
+			.ap-teams-step{font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line-2);color:var(--muted);}
+			.ap-teams-step.ok{border-color:color-mix(in srgb,var(--green) 45%,transparent);color:var(--green);}
+			.ap-teams-step.warn{border-color:color-mix(in srgb,var(--amber) 45%,transparent);color:var(--amber);}
+			.ap-switch{position:relative;display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--muted);}
+			.ap-switch input{position:absolute;opacity:0;width:1px;height:1px;}
+			.ap-switch-track{width:38px;height:22px;border-radius:999px;background:var(--line-3);border:1px solid var(--line-2);position:relative;transition:background .15s,border-color .15s;}
+			.ap-switch-track::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--text);transition:transform .15s;}
+			.ap-switch:hover .ap-switch-track{border-color:var(--line-3);}
+			.ap-switch:active .ap-switch-track::after{width:19px;}
+			.ap-switch input:checked + .ap-switch-track{background:var(--green);border-color:var(--green);}
+			.ap-switch input:checked + .ap-switch-track::after{transform:translateX(16px);}
+			.ap-switch input:focus-visible + .ap-switch-track{outline:2px solid var(--blue);outline-offset:2px;}
+			.ap-switch input:disabled + .ap-switch-track{opacity:.45;}
 			.ap-audit{margin-top:14px;border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;background:var(--card);}
 			.ap-audit-row{display:grid;grid-template-columns:150px 1fr auto;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;align-items:baseline;}
 			.ap-audit-row:last-child{border-bottom:0;}
@@ -287,6 +306,12 @@
 				<div id="ap-more" class="ap-more" hidden>
 					<button type="button" id="ap-more-btn" class="btn">Load more</button>
 				</div>
+
+				<section class="ap-panel" aria-labelledby="ap-teams-h">
+					<h2 id="ap-teams-h">Microsoft Teams</h2>
+					<p>Get each approval request as a card in your 1:1 chat with the three.ws app in Teams, and approve or deny it there. The card shows the same agent, action, amounts and deadline as this inbox, and updates to show who decided and what happened.</p>
+					<div id="ap-teams" class="ap-teams" aria-busy="true"></div>
+				</section>
 
 				<section class="ap-panel" aria-labelledby="ap-policies-h">
 					<h2 id="ap-policies-h">Auto-approve rules</h2>

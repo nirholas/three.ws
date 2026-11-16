@@ -7,7 +7,8 @@
 // email or chat message carries a signed token (?t=) that the server verifies
 // against the request on file before the card is trusted.
 //
-// Also hosts the per-account auto-approve rules and the approval audit log.
+// Also hosts the Microsoft Teams channel switch and test card, the per-account
+// auto-approve rules and the approval audit log.
 // API: api/approvals/*.js, api/audit-log.js. Doc: docs/approvals.md.
 
 import { apiFetch } from './api.js';
@@ -32,8 +33,8 @@ const STATUS_LABEL = {
 };
 
 const VIA_LABEL = {
-	web: 'on the web', push: 'from a push notification', telegram: 'in Telegram', mobile: 'in the app',
-	email: 'from email', auto_policy: 'by an auto-approve rule', bulk: 'in a bulk deny',
+	web: 'on the web', push: 'from a push notification', telegram: 'in Telegram', discord: 'in Discord',
+	teams: 'in Microsoft Teams', mobile: 'in the app', email: 'from email', auto_policy: 'by an auto-approve rule', bulk: 'in a bulk deny',
 };
 
 const LINK_PROBLEM = {
@@ -78,6 +79,7 @@ const state = {
 	venues: [],
 	maxCap: 0,
 	ownAgents: [],
+	teams: null,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -671,6 +673,119 @@ async function revokePolicy(btn) {
 	}
 }
 
+// ── Microsoft Teams ─────────────────────────────────────────────────────────────
+
+function teamsStep(ok, okText, todoText, warn = false) {
+	return `<span class="ap-teams-step ${ok ? 'ok' : warn ? 'warn' : ''}">${esc(ok ? okText : todoText)}</span>`;
+}
+
+function renderTeams(t) {
+	els.teams.setAttribute('aria-busy', 'false');
+	if (!t.linked) {
+		els.teams.innerHTML = `<div class="ap-teams-row">
+			<div>
+				<div class="ap-teams-label">Link your Microsoft account first</div>
+				<div class="ap-teams-meta">Cards go to the Teams account you sign in to three.ws with. Add Microsoft as a sign-in method, then add the three.ws app in Teams and open its chat once.</div>
+			</div>
+			<a class="btn" href="/dashboard/settings#sign-in-methods">Link Microsoft</a>
+		</div>`;
+		return;
+	}
+	const who = t.identity?.label ? ` as ${esc(t.identity.label)}` : '';
+	const ready = t.installed && t.bot_configured;
+	const steps = [
+		teamsStep(true, `Linked${t.identity?.label ? `: ${t.identity.label}` : ''}`, ''),
+		teamsStep(t.installed, t.chats > 1 ? `App installed in ${t.chats} chats` : 'App installed in your 1:1 chat', 'App not installed yet', true),
+		teamsStep(t.bot_configured, 'Bot can post', 'Bot cannot post right now', true),
+	].join('');
+	let hint = '';
+	if (!t.installed) {
+		hint = t.install_url
+			? `Open <a href="${esc(t.install_url)}" target="_blank" rel="noopener">three.ws in Teams</a>, add it, and send it any message so it knows where to reach you.`
+			: 'In Teams, open Apps, find three.ws, add it, and send it any message so it knows where to reach you.';
+	} else if (!t.bot_configured) {
+		hint = 'three.ws cannot post to Teams at the moment, so requests reach you by push and email instead. Nothing is lost.';
+	}
+	els.teams.innerHTML = `<div class="ap-teams-row">
+			<div>
+				<div class="ap-teams-label">Send approval requests to Teams</div>
+				<div class="ap-teams-meta">Signed in${who}. Push, chat and email keep working either way; a request answered in one place updates everywhere.</div>
+			</div>
+			<label class="ap-switch">
+				<input type="checkbox" id="ap-teams-toggle" role="switch"${t.enabled ? ' checked' : ''} aria-describedby="ap-teams-h" />
+				<span class="ap-switch-track" aria-hidden="true"></span>
+				<span id="ap-teams-state">${t.enabled ? 'On' : 'Off'}</span>
+			</label>
+		</div>
+		<div class="ap-teams-steps">${steps}</div>
+		${hint ? `<div class="ap-teams-meta">${hint}</div>` : ''}
+		<div class="ap-teams-row">
+			<div class="ap-teams-meta">Send yourself a test card. It is labelled as a test, expires in 15 minutes, and does nothing when you approve or deny it.</div>
+			<button type="button" class="btn btn-sm" id="ap-teams-test"${ready ? '' : ' disabled'}>Send a test card</button>
+		</div>
+		<span id="ap-teams-msg" class="ap-form-msg" role="status"></span>`;
+}
+
+async function loadTeams() {
+	els.teams.setAttribute('aria-busy', 'true');
+	els.teams.innerHTML = '<div class="skeleton" style="height:18px;width:55%"></div><div class="skeleton" style="height:14px;width:80%"></div>';
+	try {
+		const r = await call('/api/approvals/teams');
+		if (!r.ok) throw new Error(errText(r, 'unavailable'));
+		state.teams = r.data;
+		renderTeams(r.data);
+	} catch {
+		els.teams.setAttribute('aria-busy', 'false');
+		els.teams.innerHTML = '<div class="notice notice-error">Could not load your Microsoft Teams settings. <button type="button" class="btn btn-sm" data-reload-teams>Try again</button></div>';
+	}
+}
+
+function teamsMsg(text, err = false) {
+	const el = document.getElementById('ap-teams-msg');
+	if (!el) return;
+	el.textContent = text;
+	el.className = `ap-form-msg${err ? ' err' : ''}`;
+}
+
+async function toggleTeams(input) {
+	const enabled = input.checked;
+	input.disabled = true;
+	teamsMsg('Saving…');
+	try {
+		const r = await call('/api/approvals/teams', { method: 'PUT', body: { enabled } });
+		if (!r.ok) throw new Error(errText(r, 'Could not save.'));
+		state.teams = r.data;
+		renderTeams(r.data);
+		teamsMsg(enabled ? 'On. New requests arrive in Teams too.' : 'Off. New requests skip Teams; push, chat and email are unchanged.');
+		announce(enabled ? 'Teams approval cards on.' : 'Teams approval cards off.');
+	} catch (e) {
+		input.checked = !enabled;
+		input.disabled = false;
+		teamsMsg(`${e.message || 'Could not reach three.ws.'} The setting did not change.`, true);
+	}
+}
+
+async function sendTeamsTest(btn) {
+	btn.disabled = true;
+	btn.textContent = 'Sending…';
+	teamsMsg('');
+	try {
+		const r = await call('/api/approvals/teams', { method: 'POST', body: { action: 'test' } });
+		if (!r.ok) {
+			teamsMsg(errText(r, 'Could not send the test card.'), true);
+			return;
+		}
+		teamsMsg('Sent. Check your three.ws chat in Teams and press Approve or Deny. It also appears in the list above.');
+		announce('Test card sent to Teams.');
+		loadList();
+	} catch {
+		teamsMsg('Could not reach three.ws. No test card was sent.', true);
+	} finally {
+		btn.disabled = false;
+		btn.textContent = 'Send a test card';
+	}
+}
+
 // ── audit log ───────────────────────────────────────────────────────────────────
 
 function auditDetail(ev) {
@@ -810,6 +925,7 @@ function bind() {
 		renderToolbar();
 	});
 	els.main.addEventListener('change', (e) => {
+		if (e.target.id === 'ap-teams-toggle') { toggleTeams(e.target); return; }
 		const cb = e.target.closest('[data-select]');
 		if (!cb) return;
 		if (cb.checked) state.selected.add(cb.dataset.select);
@@ -831,6 +947,9 @@ function bind() {
 		if (revoke) return revokePolicy(revoke);
 		if (t.closest('[data-clear-agent]')) { state.agent = ''; loadList(); return; }
 		if (t.closest('[data-reload-policies]')) { loadPolicies(); return; }
+		if (t.closest('[data-reload-teams]')) { loadTeams(); return; }
+		const teamsTest = t.closest('#ap-teams-test');
+		if (teamsTest) return sendTeamsTest(teamsTest);
 		if (!t.closest('.btn-approve')) disarmAll();
 	});
 	document.addEventListener('keydown', (e) => { if (e.key === 'Escape') disarmAll(); });
@@ -861,7 +980,7 @@ async function boot() {
 		agent: $('ap-agent'), bulk: $('ap-bulk-deny'), selectAll: $('ap-select-all'), selectAllWrap: $('ap-select-all-wrap'),
 		policies: $('ap-policies'), form: $('ap-policy-form'), venues: $('ap-venues'), max: $('ap-max'), maxHint: $('ap-max-hint'),
 		policyAgent: $('ap-policy-agent'), policyExpiry: $('ap-policy-expiry'), policySubmit: $('ap-policy-submit'), formMsg: $('ap-form-msg'),
-		audit: $('ap-audit'), auditMore: $('ap-audit-more'), auditMoreBtn: $('ap-audit-more-btn'), push: $('ap-push'),
+		teams: $('ap-teams'), audit: $('ap-audit'), auditMore: $('ap-audit-more'), auditMoreBtn: $('ap-audit-more-btn'), push: $('ap-push'),
 	});
 	bind();
 
@@ -878,6 +997,7 @@ async function boot() {
 	renderList();
 	// The log names venues by the labels the policies call returns.
 	loadPolicies().finally(() => loadAudit());
+	loadTeams();
 	initPush();
 }
 
