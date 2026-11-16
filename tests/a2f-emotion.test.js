@@ -391,6 +391,31 @@ describe('A2FPlayer · VRM expression rig', () => {
 		expect(values.happy).toBe(0);
 	});
 
+	it('nods the normalized head when vrm.update copies the normalized pose onto the raw bones', () => {
+		// three-vrm 1.x/2.x/3.x: with autoUpdateHumanBones every vrm.update()
+		// overwrites the raw head with the normalized one, so an offset written to
+		// the raw bone never reaches the screen.
+		const { root, head: rawHead } = vrmRig();
+		const normHead = new Object3D();
+		root.add(normHead);
+		root.userData.vrm.humanoid = {
+			autoUpdateHumanBones: true,
+			getRawBoneNode: (b) => (b === 'head' ? rawHead : null),
+			getNormalizedBoneNode: (b) => (b === 'head' ? normHead : null),
+		};
+		const p = new A2FPlayer();
+		p.attach(root);
+		p.setEmotionOptions({ enabled: true, strength: 1 });
+		p.setTrack(FIXTURE.joy);
+		const rawRest = rawHead.quaternion.clone();
+		const normRest = normHead.quaternion.clone();
+		for (let t = 0; t <= 2.5; t += 1 / 60) p.update(t);
+		expect(normHead.quaternion.angleTo(normRest)).toBeGreaterThan(0.005);
+		expect(rawHead.quaternion.angleTo(rawRest)).toBe(0);
+		p.reset();
+		expect(normHead.quaternion.angleTo(normRest)).toBeLessThan(1e-6);
+	});
+
 	it('keeps the emotion presets at zero with emotion off', () => {
 		const { root, values } = vrmRig();
 		const p = new A2FPlayer();

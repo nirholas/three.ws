@@ -338,9 +338,14 @@ export class EmotionLayer {
 		if (!root?.traverse) return;
 		this.kind = detectRigKind(root);
 		const humanoid = this._vrm?.humanoid;
-		const vrmHead = humanoid?.getRawBoneNode?.('head');
+		// With autoUpdateHumanBones, vrm.update() copies the normalized rig onto
+		// the raw bones every frame, so the offset goes on the normalized bone and
+		// survives whichever order the page calls vrm.update and this layer in.
+		const vrmBone = (name) =>
+			(humanoid?.autoUpdateHumanBones && humanoid.getNormalizedBoneNode?.(name)) || humanoid?.getRawBoneNode?.(name) || null;
+		const vrmHead = vrmBone('head');
 		if (vrmHead) this._head = new BoneOffset(vrmHead);
-		const vrmEyes = ['leftEye', 'rightEye'].map((b) => humanoid?.getRawBoneNode?.(b)).filter(Boolean);
+		const vrmEyes = ['leftEye', 'rightEye'].map(vrmBone).filter(Boolean);
 		for (const e of vrmEyes) this._eyes.push(new BoneOffset(e));
 		root.traverse((n) => {
 			if (!n.isMesh) {
