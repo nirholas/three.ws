@@ -2144,6 +2144,14 @@ export const limits = {
 		getLimiter('a2f:user', { limit: 40, window: '1 h', critical: true }).limit(userId),
 	a2fIp: (ip) =>
 		getLimiter('a2f:ip', { limit: 10, window: '1 h', critical: true }).limit(ip),
+	// Talking-avatar clips (api/clips/voice): a Magpie synthesis plus an
+	// Audio2Face-3D track per clip. The per-day ceiling comes from the caller's
+	// plan (api/_lib/clip-policy.js), so the bucket name carries the plan and a
+	// plan change starts a fresh window at the new ceiling. Critical: fail closed.
+	clipUser: (userId, plan, perDay) =>
+		getLimiter(`clip:user:${plan}`, { limit: perDay, window: '1 d', critical: true }).limit(userId),
+	clipIp: (ip, perDay) =>
+		getLimiter('clip:ip', { limit: perDay, window: '1 d', critical: true }).limit(ip),
 	// NVIDIA NIM vision (api/vision) — free upstream but credit-metered, and each
 	// call carries an image the server may relay to the NVCF asset store. Meter
 	// per principal like the other free NVIDIA lanes; critical so it fails closed
