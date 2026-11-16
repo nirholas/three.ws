@@ -12,6 +12,22 @@
 		},
 		{
 			"date": "2026-11-16",
+			"title": "Ask Microsoft 365 Copilot for a 3D model with the three.ws 3D Studio agent",
+			"summary": "The three.ws Microsoft 365 app now includes a Copilot agent. Pick three.ws 3D Studio in Microsoft 365 Copilot or Copilot in Teams and ask for a product model for a deck, a rigged mascot, a free ready-made asset, paste-ready embed code for a website, or a look at a model from every side. It uses the free three.ws studio tools, so there is no account to create. A generation gives you a viewer link at once that opens the model the moment it is ready, then the GLB download, the poster and how to drop it into PowerPoint.",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"title": "Text to 3D keeps working when model storage is having trouble",
+			"summary": "When our primary model storage rejects a write, generated reference images are saved to the backup store, but the 3D engines were still being pointed at the primary copy and every one of those generations failed. They now read the image through three.ws itself, which finds it wherever it was saved, so text to 3D carries on through a storage outage.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-16",
 			"title": "Use the three.ws app in Outlook and the Microsoft 365 app, not only Teams",
 			"summary": "The same three.ws Microsoft 365 app now runs in Outlook and the Microsoft 365 app. In a new Outlook email you can search agents and paste an agent link to get a card, built to the Adaptive Card version and limits Outlook supports. The Agents tab opens in Outlook's app bar and in the Microsoft 365 app, follows the host's light, dark and high contrast themes, and offers the right share action in each place: the Teams share dialog in Teams, a ready email in Outlook, and copy link in a plain browser. Creating a 3D model from chat stays in Teams, where its live card can run.",
 			"tags": [

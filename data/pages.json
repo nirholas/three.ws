@@ -8498,6 +8498,14 @@
 					"added": "2026-11-16"
 				},
 				{
+					"path": "/docs/microsoft-copilot-agent",
+					"title": "Docs · three.ws 3D Studio agent for Microsoft 365 Copilot",
+					"description": "The three.ws declarative agent for Microsoft 365 Copilot: what users see, its six conversation starters, how it is validated, sideloading in a developer tenant, and production proof for every starter.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-16"
+				},
+				{
 					"path": "/trust",
 					"title": "Trust center",
 					"description": "How three.ws hosts, encrypts, retains and deletes data, which AI providers see prompts, and an honest compliance status, each answer linked to the code that proves it.",
