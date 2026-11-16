@@ -29,13 +29,33 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { sql } from './db.js';
 import { loadGlanceCard } from './glance-card.js';
 import { adaptiveCardFor } from './glance-adaptive.js';
-import { handleForgeActivity, isForgeActivity } from './teams-forge-bot.js';
+import { CREATE_COMMAND_ID, handleForgeActivity, isForgeActivity } from './teams-forge-bot.js';
 import { handleConversationUpdate } from './teams-bot-welcome.js';
 
 export const BOTFRAMEWORK_ISSUER = 'https://api.botframework.com';
 export const BOTFRAMEWORK_JWKS_URL = 'https://login.botframework.com/v1/.well-known/keys';
 export const SEARCH_COMMAND_ID = 'searchAgents';
 export const MAX_RESULTS = 10;
+
+// The Bot Framework channel an activity arrived on. Teams sends `msteams`;
+// Outlook and the Microsoft 365 app send `m365extensions` (the Azure Bot's
+// Microsoft 365 channel). Both carry the same Bot Framework token.
+// https://learn.microsoft.com/en-us/microsoftteams/platform/m365-apps/extend-m365-teams-message-extension
+export const TEAMS_CHANNEL = 'msteams';
+export const M365_EXTENSIONS_CHANNEL = 'm365extensions';
+
+/**
+ * Which card family a host renders: 'teams' for the Teams channel, 'outlook'
+ * for Outlook, the Microsoft 365 app and any channel not known to be Teams (the
+ * conservative card renders everywhere).
+ */
+export function channelHostOf(activity) {
+	return String(activity?.channelId || '').toLowerCase() === TEAMS_CHANNEL ? 'teams' : 'outlook';
+}
+
+const TEAMS_ONLY_CREATE =
+	'Create a 3D model runs in Microsoft Teams, where its card updates live while the model generates. ' +
+	'Here you can search three.ws agents and paste three.ws agent links to insert their cards.';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const AGENT_LINK = /^https:\/\/(?:www\.)?three\.ws\/agents\/([0-9a-f-]{36})(?:[/?#]|$)/i;
@@ -106,11 +126,14 @@ export function agentIdFromUrl(url) {
 	return m && UUID.test(m[1]) ? m[1].toLowerCase() : null;
 }
 
-/** One result: the bound Glance card plus the compact preview Teams lists. */
-export function attachmentFor(card) {
+/**
+ * One result: the bound Glance card plus the compact preview the host lists.
+ * `host` comes from channelHostOf; Outlook gets the 1.4 card it renders.
+ */
+export function attachmentFor(card, { host = 'teams' } = {}) {
 	return {
 		contentType: 'application/vnd.microsoft.card.adaptive',
-		content: adaptiveCardFor(card),
+		content: adaptiveCardFor(card, { host }),
 		preview: {
 			contentType: 'application/vnd.microsoft.card.thumbnail',
 			content: {
@@ -159,9 +182,12 @@ export async function searchAgents(text) {
  * cards link to; `ctx.selfBase` is this service, where a job run is dispatched.
  */
 export async function handleActivity(activity, ctx = {}) {
+	const host = channelHostOf(activity);
+	if (host !== 'teams' && isCreateInvoke(activity)) return teamsOnlyCreateResponse(activity);
 	if (isForgeActivity(activity)) return handleForgeActivity(activity, ctx);
 	if (activity?.type === 'conversationUpdate') return handleConversationUpdate(activity, ctx);
 	if (activity?.type !== 'invoke') return null;
+	const attach = (card) => attachmentFor(card, { host });
 	switch (activity.name) {
 		case 'composeExtension/query': {
 			if (activity.value?.commandId && activity.value.commandId !== SEARCH_COMMAND_ID) {
@@ -174,16 +200,30 @@ export async function handleActivity(activity, ctx = {}) {
 					? `No three.ws agents match "${text}". Try a shorter name, or create one at https://three.ws/create`
 					: 'No agents were active this week. Type a name to search every three.ws agent.');
 			}
-			return resultResponse(cards.map(attachmentFor));
+			return resultResponse(cards.map(attach));
 		}
 		case 'composeExtension/queryLink':
 		case 'composeExtension/anonymousQueryLink': {
 			const id = agentIdFromUrl(activity.value?.url);
 			const card = id ? await loadGlanceCard(id) : null;
 			if (!card) return messageResponse('This three.ws link is not an agent page.');
-			return resultResponse([attachmentFor(card)]);
+			return resultResponse([attach(card)]);
 		}
 		default:
 			return {};
 	}
+}
+
+function isCreateInvoke(activity) {
+	return activity?.type === 'invoke'
+		&& (activity.name === 'composeExtension/fetchTask' || activity.name === 'composeExtension/submitAction')
+		&& activity.value?.commandId === CREATE_COMMAND_ID;
+}
+
+// The live 3D card refreshes itself with Action.Execute and is posted by the
+// bot; Outlook supports neither, so the command answers with a message there.
+// The manifest also scopes the command to hosts that run the bot.
+function teamsOnlyCreateResponse(activity) {
+	if (activity.name === 'composeExtension/fetchTask') return { task: { type: 'message', value: TEAMS_ONLY_CREATE } };
+	return messageResponse(TEAMS_ONLY_CREATE);
 }

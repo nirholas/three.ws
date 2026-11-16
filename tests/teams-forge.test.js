@@ -170,7 +170,7 @@ describe('fetchTask: the Create a 3D model form', () => {
 	it('opens a task module with a valid 1.5 form card', async () => {
 		const { ctx } = harness();
 		const r = await handleActivity(
-			{ type: 'invoke', name: 'composeExtension/fetchTask', id: nextId(), from: USER, serviceUrl: SERVICE, conversation: { id: CONVERSATION }, value: { commandId: 'createModel', commandContext: 'compose', context: { theme: 'default' } } },
+			{ type: 'invoke', name: 'composeExtension/fetchTask', channelId: 'msteams', id: nextId(), from: USER, serviceUrl: SERVICE, conversation: { id: CONVERSATION }, value: { commandId: 'createModel', commandContext: 'compose', context: { theme: 'default' } } },
 			ctx,
 		);
 		expect(r.task.type).toBe('continue');
@@ -187,6 +187,7 @@ describe('fetchTask: the Create a 3D model form', () => {
 			{
 				type: 'invoke',
 				name: 'composeExtension/fetchTask',
+				channelId: 'msteams',
 				id: nextId(),
 				from: USER,
 				value: { commandId: 'createModel', commandContext: 'message', messagePayload: { body: { contentType: 'html', content: '<p>a <b>red</b> vintage rotary phone</p>' } } },

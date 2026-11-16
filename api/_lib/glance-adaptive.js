@@ -14,11 +14,22 @@ const FALLBACK_IMAGE = 'https://three.ws/pwa-192x192.png';
 
 export const ADAPTIVE_VERSION = '1.6';
 
-function layout(field) {
+// Outlook renders Adaptive Cards up to 1.4 (it moved from 1.0 straight to 1.4)
+// and has no RoundedCorners image style, a 1.6 addition. Outlook and the
+// Microsoft 365 app get the same layout at that version.
+// https://learn.microsoft.com/en-us/microsoftteams/platform/m365-apps/extend-m365-teams-message-extension
+export const OUTLOOK_ADAPTIVE_VERSION = '1.4';
+
+const HOSTS = {
+	teams: { version: ADAPTIVE_VERSION, imageStyle: 'RoundedCorners' },
+	outlook: { version: OUTLOOK_ADAPTIVE_VERSION, imageStyle: null },
+};
+
+function layout(field, host = HOSTS.teams) {
 	return {
 		type: 'AdaptiveCard',
 		$schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
-		version: ADAPTIVE_VERSION,
+		version: host.version,
 		body: [
 			{
 				type: 'ColumnSet',
@@ -31,7 +42,7 @@ function layout(field) {
 								type: 'Image',
 								url: field('image', FALLBACK_IMAGE),
 								size: 'Small',
-								style: 'RoundedCorners',
+								...(host.imageStyle ? { style: host.imageStyle } : {}),
 								altText: field('name'),
 							},
 						],
@@ -123,11 +134,15 @@ export function adaptiveTemplate() {
 	});
 }
 
-/** The same card with this agent's values already in it. */
-export function adaptiveCardFor(card) {
+/**
+ * The same card with this agent's values already in it. `host` is 'teams' (the
+ * default, also the Windows and web surfaces) or 'outlook' for Outlook and the
+ * Microsoft 365 app.
+ */
+export function adaptiveCardFor(card, { host = 'teams' } = {}) {
 	return layout((path, fallback) => {
 		const value = path.split('.').reduce((acc, key) => (acc == null ? acc : acc[key]), card);
 		if (value === null || value === undefined || value === '') return fallback ?? '';
 		return typeof value === 'number' ? String(value) : value;
-	});
+	}, HOSTS[host] || HOSTS.outlook);
 }
