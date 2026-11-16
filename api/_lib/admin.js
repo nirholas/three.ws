@@ -6,6 +6,7 @@ import { sql } from './db.js';
 import { error } from './http.js';
 import { logAudit } from './audit.js';
 import { sendOpsAlert } from './alerts.js';
+import { mfaEnforced, sessionHasFreshMfa } from './admin-mfa.js';
 
 // Mirrors BUILT_IN_ADMIN_ADDRESSES in env.js (public platform-owner addresses,
 // safe to commit). env.js's ADMIN_ADDRESSES getter lower-cases every entry —
@@ -105,8 +106,12 @@ function requestPath(req) {
  * endpoint is written as `admin_access_denied` and raises an operator alert
  * (deduplicated per path). Query strings are dropped so no token in a URL
  * lands in the log.
+ *
+ * An admin session must also have passed a TOTP check within MFA_FRESH_SEC
+ * (admin-mfa.js); otherwise the answer is 403 mfa_required with the page that
+ * enrols or verifies. Only the MFA endpoint itself passes { mfa: false }.
  */
-export async function requireAdmin(req, res) {
+export async function requireAdmin(req, res, { mfa = true } = {}) {
 	const user = await getSessionUser(req);
 	if (!user) {
 		error(res, 401, 'unauthorized', 'sign in required');
@@ -115,6 +120,10 @@ export async function requireAdmin(req, res) {
 	const method = String(req?.method || 'GET').toUpperCase();
 	const path = requestPath(req);
 	if (await isAdminUser(user)) {
+		if (mfa && mfaEnforced() && !(await sessionHasFreshMfa(user.sid))) {
+			error(res, 403, 'mfa_required', 'admin two-factor verification required', { verify_url: '/admin/mfa' });
+			return null;
+		}
 		if (!READ_ONLY_METHODS.has(method)) {
 			logAudit({ userId: user.id, action: 'admin_action', meta: { method, path }, req });
 		}

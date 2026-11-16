@@ -13,6 +13,7 @@ vi.mock('../api/_lib/auth.js', () => ({ getSessionUser }));
 vi.mock('../api/_lib/db.js', () => ({ sql }));
 vi.mock('../api/_lib/audit.js', () => ({ logAudit }));
 vi.mock('../api/_lib/alerts.js', () => ({ sendOpsAlert }));
+vi.mock('../api/_lib/admin-mfa.js', () => ({ mfaEnforced: () => true, sessionHasFreshMfa: async () => true }));
 
 let requireAdmin;
 
