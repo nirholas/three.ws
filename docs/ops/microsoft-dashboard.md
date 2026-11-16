@@ -45,6 +45,8 @@ The alert cron checks four conditions. Each active condition is an incident with
 
 Read unacknowledged alert rows with `select * from ops_alerts where acknowledged_at is null order by last_seen desc;`.
 
+**Check it end to end:** `npm run microsoft:dashboard-check` writes a failing connector window to an isolated database (PGlite with the production schema), runs the real cron twice (one incident and one `ops_alerts` row, then nothing more), calls the real admin endpoint, renders `/admin/microsoft` in Chromium on port 3121 with no console errors, and confirms the incident resolves when the traffic leaves the window. Nothing reaches the production database or any outside channel.
+
 ## Runbook
 
 Each section below is linked from the board's "What to do" button and from the alert message.
