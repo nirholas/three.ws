@@ -5714,6 +5714,7 @@
 		"speak": "Speak",
 		"stop": "Stop",
 		"text_to_speak": "Text to speak",
+		"use_your_own_avatar": "Use your own .glb or .vrm",
 		"three_ws_audio2face_amplitude_lipsync": "<a href=\"/\">three.ws</a> · audio2face · <a href=\"/lipsync\">amplitude lipsync</a>",
 		"two_nvidia_models_on_one_face": "Two NVIDIA models on one face",
 		"type_a_line_it_s_spoken_in": "Type a line. It's spoken in <strong>NVIDIA Magpie</strong>'s voice, and that exact audio is sent to <strong>NVIDIA Audio2Face-3D</strong>, which returns a per-frame ARKit blendshape track. The avatar's mouth and face animate frame-for-frame with the real voice — mapped onto whatever morph-target convention the loaded GLB ships (ARKit, common avatar-platform, VRM, Oculus visemes). If Audio2Face is unavailable, the avatar still speaks and falls back to amplitude lipsync — never a frozen face.",
