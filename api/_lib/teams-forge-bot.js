@@ -37,7 +37,8 @@ import {
 } from './teams-forge-cards.js';
 import { identityOf } from './teams-identity.js';
 import { HELP_TEXT, conversationalIntent, greetingText, unknownCommandText } from './teams-bot-welcome.js';
-import { cardFor, claimJob, claimOnce, depsWith, forgeKey, loadJob, patchJob, refreshStatus } from './teams-forge.js';
+import { cardActivity, cardFor, claimJob, claimOnce, depsWith, forgeKey, loadJob, patchJob, recordForgeMessage, refreshStatus } from './teams-forge.js';
+import { createReplyStream } from './teams-stream.js';
 
 export const CREATE_COMMAND_ID = 'createModel';
 export const BOT_COMMAND = 'forge';
@@ -116,8 +117,10 @@ function onBehalfOf(by) {
 	return by?.id ? { onBehalfOf: [{ itemId: 0, mentionType: 'person', mri: by.id, displayName: by.name || '' }] } : {};
 }
 
+// A finished model is generated content, so its card carries the AI label and
+// the feedback buttons (teams-forge.js cardActivity).
 function cardMessage(record, deps, extra = {}) {
-	return { type: 'message', attachments: [cardAttachment(cardFor(record, { now: deps.now() }))], ...extra };
+	return cardActivity(record, { now: deps.now(), extra });
 }
 
 // The same quota the free studio charges its MCP callers, keyed per Teams
@@ -330,10 +333,23 @@ async function onMessage(activity, ctx, deps) {
 		await reply(activity, { type: 'message', text: limited }, deps);
 		return null;
 	}
+	// In a personal chat the reply streams: a status line shows at once while
+	// the job is claimed, and the card closes the stream (its id becomes the
+	// message the job keeps updating). Live progress then rides on the card,
+	// which refreshes itself, because a Teams stream must close in 10 minutes.
+	// Group chats and channels get the card as one reply.
+	const stream = createReplyStream(activity, { connector: deps.connector, now: deps.now, sleep: deps.sleep });
+	await stream.informative('Starting the 3D generator for your model');
 	const { record, created } = await startJob({ key, prompt, tier: 'standard', by, conversation: conversationOf(activity) }, ctx, deps);
-	if (!created) return null;
-	const posted = await reply(activity, cardMessage(record, deps), deps);
-	if (posted?.id) await patchJob(key, { activityId: posted.id });
+	if (!created) {
+		if (stream.streaming) await stream.finish({ type: 'message', text: 'This model is already on its way. Its card updates when it is ready.' });
+		return null;
+	}
+	const posted = await stream.finish(cardMessage(record, deps));
+	if (posted?.id) {
+		await patchJob(key, { activityId: posted.id });
+		if (record.state === 'done') await recordForgeMessage(record, posted.id);
+	}
 	await dispatch(key, ctx, deps);
 	return null;
 }

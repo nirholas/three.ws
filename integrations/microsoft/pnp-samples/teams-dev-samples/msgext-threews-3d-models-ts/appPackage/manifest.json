@@ -1,0 +1,103 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.30/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.30",
+  "version": "1.0.0",
+  "id": "${{TEAMS_APP_ID}}",
+  "developer": {
+    "name": "three.ws",
+    "websiteUrl": "https://three.ws",
+    "privacyUrl": "https://three.ws/legal/privacy",
+    "termsOfUseUrl": "https://three.ws/legal/tos"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "name": {
+    "short": "three.ws 3D models${{APP_NAME_SUFFIX}}",
+    "full": "three.ws 3D models and agents"
+  },
+  "description": {
+    "short": "Share ready-made 3D models and three.ws agents as cards with a 3D stage view.",
+    "full": "Search the free three.ws catalog of ready-made 3D models or the public directory of three.ws agents from the compose box and share the result as an Adaptive Card. Paste a three.ws model or agent link and it unfurls into the same card. View in 3D opens the interactive three.ws viewer in a stage view without leaving the conversation, and Download GLB gives you the file for PowerPoint, a website or any 3D tool."
+  },
+  "accentColor": "#080814",
+  "bots": [
+    {
+      "botId": "${{BOT_ID}}",
+      "scopes": [
+        "personal",
+        "team",
+        "groupChat"
+      ],
+      "isNotificationOnly": false,
+      "supportsCalling": false,
+      "supportsVideo": false,
+      "supportsFiles": false
+    }
+  ],
+  "composeExtensions": [
+    {
+      "botId": "${{BOT_ID}}",
+      "commands": [
+        {
+          "id": "searchModels",
+          "type": "query",
+          "context": [
+            "compose",
+            "commandBox"
+          ],
+          "title": "3D models",
+          "description": "Search free ready-made 3D models",
+          "initialRun": true,
+          "parameters": [
+            {
+              "name": "query",
+              "title": "Model",
+              "description": "What to look for, for example chair, lamp or plant",
+              "inputType": "text"
+            }
+          ]
+        },
+        {
+          "id": "searchAgents",
+          "type": "query",
+          "context": [
+            "compose",
+            "commandBox"
+          ],
+          "title": "Agents",
+          "description": "Search public three.ws agents",
+          "initialRun": true,
+          "parameters": [
+            {
+              "name": "query",
+              "title": "Agent",
+              "description": "A topic, name or skill, for example coach or tutor",
+              "inputType": "text"
+            }
+          ]
+        }
+      ],
+      "messageHandlers": [
+        {
+          "type": "link",
+          "value": {
+            "domains": [
+              "three.ws",
+              "*.three.ws"
+            ],
+            "supportsAnonymizedPayloads": true
+          }
+        }
+      ]
+    }
+  ],
+  "permissions": [
+    "identity"
+  ],
+  "validDomains": [
+    "${{BOT_DOMAIN}}",
+    "three.ws"
+  ]
+}

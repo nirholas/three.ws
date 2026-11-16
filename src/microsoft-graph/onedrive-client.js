@@ -15,6 +15,7 @@
 import { PublicClientApplication } from '@azure/msal-browser';
 
 import {
+	AUTHORITY,
 	CONSUMER_PICKER_BASE,
 	GRAPH_BASE,
 	GRAPH_SCOPES,
@@ -29,10 +30,9 @@ import {
 	needsInteraction,
 	pickerActionUrl,
 	pickerTokenScopes,
+	REDIRECT_PATH,
 } from './onedrive-core.js';
 
-export const REDIRECT_PATH = '/auth/microsoft/redirect';
-const AUTHORITY = 'https://login.microsoftonline.com/common';
 /** How long the picker page may take to say hello before we call it broken. */
 const PICKER_INIT_TIMEOUT_MS = 45_000;
 
@@ -82,6 +82,8 @@ export function createOneDriveSession({ clientId, askToContinue }) {
 	}
 
 	return {
+		/** Load MSAL's cache ahead of a click, so the click can open the popup straight away. */
+		warm: () => init(),
 		/**
 		 * Make sure someone is signed in. Call straight from a click handler:
 		 * the sign-in popup needs that click's user activation.

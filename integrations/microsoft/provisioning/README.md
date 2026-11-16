@@ -18,7 +18,7 @@ The desired state is [`resources.json`](./resources.json). Every entry names the
 | Resource | Details | Feeds |
 | --- | --- | --- |
 | Entra app `threews-marketplace-fulfillment` | Single tenant. Client secret. | `MS_MARKETPLACE_TENANT_ID`, `MS_MARKETPLACE_CLIENT_ID`, `MS_MARKETPLACE_CLIENT_SECRET` ([microsoft-marketplace.js](../../../api/_lib/microsoft-marketplace.js), [microsoft-partner-center.js](../../../api/_lib/microsoft-partner-center.js)) |
-| Entra app `threews-entra-sso` | Multitenant plus personal accounts. Redirects for Sign in with Microsoft, Marketplace landing sign-in and Microsoft 365 admin consent. Delegated `openid profile email offline_access User.Read`, application `ExternalConnection.ReadWrite.OwnedBy` and `ExternalItem.ReadWrite.OwnedBy`. `email` and `xms_edov` ID token claims, `DirectoryRole` group claims, v2 access tokens. Client secret. | `MS_ENTRA_SSO_CLIENT_ID`, `MS_ENTRA_SSO_CLIENT_SECRET` ([entra-oidc.js](../../../api/_lib/entra-oidc.js), [m365-connector.js](../../../api/_lib/m365-connector.js)) |
+| Entra app `threews-entra-sso` | Multitenant plus personal accounts. Web redirects for Sign in with Microsoft, Marketplace landing sign-in and Microsoft 365 admin consent; single-page-application redirect `/auth/microsoft/redirect` for OneDrive in Forge ([docs/onedrive.md](../../../docs/onedrive.md)). Delegated `openid profile email offline_access User.Read Files.ReadWrite`, application `ExternalConnection.ReadWrite.OwnedBy` and `ExternalItem.ReadWrite.OwnedBy`. `email` and `xms_edov` ID token claims, `DirectoryRole` group claims, v2 access tokens. Client secret. | `MS_ENTRA_SSO_CLIENT_ID`, `MS_ENTRA_SSO_CLIENT_SECRET` ([entra-oidc.js](../../../api/_lib/entra-oidc.js), [m365-connector.js](../../../api/_lib/m365-connector.js)) |
 | Entra app `threews-teams-bot` | Single tenant. Client secret, used to call the Bot Connector API. | `MS_TEAMS_BOT_APP_ID`, `MS_TEAMS_BOT_APP_PASSWORD`, `MS_TEAMS_BOT_TENANT_ID` ([teams-connector.js](../../../api/_lib/teams-connector.js)) |
 | Resource group `three-ws-microsoft` | `eastus` by default. | |
 | Key Vault `threews-ops-<suffix>` | RBAC authorization, soft delete. Holds a copy of the three client secrets, tagged with their Graph `keyId`. Only the operator gets Secrets Officer. | Recovery when the local copy is lost |
@@ -26,6 +26,8 @@ The desired state is [`resources.json`](./resources.json). Every entry names the
 | Azure Bot `three-ws-bot-<suffix>` | F0, single tenant, bound to the bot app, messaging endpoint `https://three.ws/api/microsoft-teams/messages`, Microsoft Teams and Microsoft 365 channels. | |
 
 `<suffix>` is six hex characters derived from the tenant and subscription, so the globally unique names stay stable across reruns. Override any name with `--resource-group`, `--location`, `--bot-name`, `--ops-vault-name` or `--copilot-vault-name`.
+
+Only Microsoft Graph permissions are managed, so the SharePoint delegated permissions the work-account OneDrive picker needs are printed as an owner step. Scopes a sign-in grants without an app-registration entry (the personal-account picker's `OneDrive.ReadWrite`) are listed under `implicitScopes` so the drift check still covers them.
 
 Not managed here (they need no Entra app): the Power Platform connector uses three.ws's own OAuth server, and the Teams tab has no SSO. Partner Center steps (technical configuration, the Manager role for Partner Center insights) are printed as owner steps because Partner Center has no API for them.
 

@@ -110,6 +110,7 @@ export class FakeMicrosoftCloud {
 			uniqueName: null,
 			signInAudience: 'AzureADMyOrg',
 			web: { redirectUris: [], homePageUrl: null, logoutUrl: null, implicitGrantSettings: { enableAccessTokenIssuance: false, enableIdTokenIssuance: false } },
+			spa: { redirectUris: [] },
 			requiredResourceAccess: [],
 			optionalClaims: null,
 			groupMembershipClaims: null,

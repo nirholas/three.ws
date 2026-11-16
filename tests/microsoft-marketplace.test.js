@@ -4,14 +4,14 @@
 // to column mapping, and the hourly metering window.
 
 import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { Readable } from 'node:stream';
 import { createPgliteSql } from './_helpers/pglite-sql.js';
 
 // The webhook and client tests below run the real handler and client against
 // an in-process Postgres and a stubbed fetch that answers as Microsoft's hosts
 // do. jose is stubbed only for the bearer signature (the claims rule still runs
-// through checkWebhookClaims); audit writes are not under test.
+// through checkWebhookClaims); audit writes and ops alerts are not under test.
 const holder = vi.hoisted(() => ({ db: null, jwtPayload: null }));
 vi.mock('../api/_lib/db.js', async (importActual) => {
 	const actual = await importActual();
@@ -25,6 +25,7 @@ vi.mock('jose', async (importActual) => {
 	};
 });
 vi.mock('../api/_lib/audit.js', () => ({ logAudit: () => {} }));
+vi.mock('../api/_lib/alerts.js', () => ({ sendOpsAlert: async () => {} }));
 
 import {
 	MARKETPLACE_APP_ID, MarketplaceError, DIMENSIONS,
@@ -369,13 +370,20 @@ describe('emulator mode', () => {
 
 const SUB_ID = 'a1b2c3d4-0000-4000-8000-000000000001';
 const BUYER_TENANT = '2694e9dc-29a5-4017-958d-68314a91f2d2';
-const MIGRATION = readFileSync('api/_lib/migrations/20261104180000_microsoft_marketplace_saas.sql', 'utf8');
+// Every migration that shapes the SaaS tables, in order, so the fixture keeps up as the schema grows.
+const MIGRATION = readdirSync('api/_lib/migrations')
+	.filter((f) => /^\d+_microsoft_(marketplace_saas|saas_[a-z_]+)\.sql$/.test(f))
+	.sort()
+	.map((f) => readFileSync(`api/_lib/migrations/${f}`, 'utf8'))
+	.join('\n');
 const BASE_TABLES = `
 create table users (id uuid primary key default gen_random_uuid(), email text, display_name text,
   plan text not null default 'free', email_verified boolean default false, deleted_at timestamptz);
 create table user_identities (id uuid primary key default gen_random_uuid(), user_id uuid, provider text not null,
   subject text, constraint user_identities_provider_check check (provider in ('google')));
-create table subscriptions (user_id uuid, plan text, status text, active_until timestamptz);`;
+create table subscriptions (user_id uuid, plan text, status text, active_until timestamptz);
+create table teams (id uuid primary key default gen_random_uuid(), owner_user_id uuid, archived_at timestamptz);
+create table team_people (team_id uuid, user_id uuid, status text, scim_deleted_at timestamptz);`;
 
 function microsoftSub(over = {}) {
 	return {
@@ -419,13 +427,21 @@ function operation(over = {}) {
 async function callWebhook(body, { authorization = 'Bearer signed.by.entra' } = {}) {
 	const { default: handler } = await import('../api/microsoft-marketplace/[action].js');
 	const raw = Buffer.from(JSON.stringify(body));
-	const req = Object.assign(Readable.from([raw]), {
+	return invoke(handler, {
 		method: 'POST',
 		url: '/api/microsoft-marketplace/webhook?action=webhook',
 		headers: { 'content-type': 'application/json', ...(authorization ? { authorization } : {}) },
-		rawBody: raw,
-		socket: { remoteAddress: '127.0.0.1' },
+		raw,
 	});
+}
+
+async function callMeteringCron() {
+	const { default: handler } = await import('../api/cron/microsoft-metering.js');
+	return invoke(handler, { method: 'GET', url: '/api/cron/microsoft-metering', headers: { authorization: `Bearer ${process.env.CRON_SECRET}` }, raw: Buffer.alloc(0) });
+}
+
+async function invoke(handler, { method, url, headers, raw }) {
+	const req = Object.assign(Readable.from([raw]), { method, url, headers, rawBody: raw, socket: { remoteAddress: '127.0.0.1' } });
 	const out = { status: 0, headers: {}, body: '' };
 	const res = {
 		statusCode: 200,
@@ -464,7 +480,7 @@ describe('connection webhook', () => {
 		Object.assign(process.env, PUBLISHER_ENV);
 		holder.jwtPayload = webhookPayload();
 		holder.db = db;
-		await db.exec('truncate microsoft_saas_usage_events, microsoft_saas_operations, microsoft_saas_subscriptions, user_identities, subscriptions, users cascade');
+		await db.exec('truncate microsoft_saas_seats, microsoft_saas_usage_events, microsoft_saas_operations, microsoft_saas_subscriptions, user_identities, subscriptions, team_people, teams, users cascade');
 		[{ id: userId }] = await holder.db.sql`insert into users (email, plan) values ('buyer@contoso.example', 'pro') returning id`;
 		await holder.db.sql`insert into microsoft_saas_subscriptions (id, user_id, offer_id, plan_id, saas_status, beneficiary_tenant_id, activated_at)
 			values (${SUB_ID}, ${userId}, 'three-ws', 'pro', 'Subscribed', ${BUYER_TENANT}, now())`;
@@ -575,5 +591,94 @@ describe('connection webhook', () => {
 		const forged = await callWebhook(operation({ id: 'op-11', planId: 'enterprise' }), { authorization: null });
 		expect(forged.status).toBe(400);
 		expect(await userPlan()).toBe('team');
+	});
+
+	it('keeps the owner entitled when a flat-rate subscription first gains a seat count', async () => {
+		ms.ops['op-12'] = operation({ id: 'op-12', action: 'ChangeQuantity', quantity: 5 });
+		expect((await callWebhook(ms.ops['op-12'])).status).toBe(200);
+		expect((await stored()).quantity).toBe(5);
+		const seats = await holder.db.sql`select user_id from microsoft_saas_seats where subscription_id = ${SUB_ID}`;
+		expect(seats.map((r) => r.user_id)).toEqual([userId]);
+		expect(await userPlan()).toBe('pro');
+	});
+});
+
+// ── Metering cron against the Metering API's documented response ────────────
+
+describe('metering cron settlement', () => {
+	let saved;
+	let db;
+	let userId;
+	let answer;
+	const HOUR_START = new Date(Math.floor(Date.now() / H) * H - 2 * H);
+
+	beforeAll(async () => {
+		db = createPgliteSql();
+		await db.exec(BASE_TABLES);
+		await db.exec(MIGRATION);
+	});
+
+	beforeEach(async () => {
+		saved = Object.fromEntries(['TZ', 'CRON_SECRET', ...ENDPOINT_ENV, ...Object.keys(PUBLISHER_ENV)].map((k) => [k, process.env[k]]));
+		for (const k of ENDPOINT_ENV) delete process.env[k];
+		Object.assign(process.env, PUBLISHER_ENV, { CRON_SECRET: 'cron-secret-for-tests' });
+		holder.db = db;
+		await db.exec('truncate microsoft_saas_seats, microsoft_saas_usage_events, microsoft_saas_operations, microsoft_saas_subscriptions, user_identities, subscriptions, team_people, teams, users cascade');
+		[{ id: userId }] = await db.sql`insert into users (email, plan) values ('buyer@contoso.example', 'pro') returning id`;
+		// metered_through is current, so the tick only posts the pending row below.
+		await db.sql`insert into microsoft_saas_subscriptions (id, user_id, offer_id, plan_id, saas_status, beneficiary_tenant_id, activated_at, metered_through)
+			values (${SUB_ID}, ${userId}, 'three-ws', 'pro', 'Subscribed', ${BUYER_TENANT}, now() - interval '3 hours', ${new Date(Math.floor(Date.now() / H) * H - H)})`;
+		await db.sql`insert into microsoft_saas_usage_events (subscription_id, plan_id, dimension, effective_start_time, quantity)
+			values (${SUB_ID}, 'pro', 'mcp_tool_calls', ${HOUR_START}, 7)`;
+		captureFetch((c) => tokenAnswer(c) || answer(JSON.parse(c.body).request));
+	});
+	afterEach(() => {
+		for (const [k, v] of Object.entries(saved)) {
+			if (v === undefined) delete process.env[k];
+			else process.env[k] = v;
+		}
+		vi.unstubAllGlobals();
+	});
+
+	// Microsoft echoes effectiveStartTime without an offset ("2018-12-01T08:30:14").
+	const echo = (iso) => new Date(iso).toISOString().replace(/\.\d{3}Z$/, '');
+	const row = async () => (await db.sql`select status, usage_event_id, message from microsoft_saas_usage_events where subscription_id = ${SUB_ID}`)[0];
+
+	it('keeps the id Microsoft accepted the event under when it answers Duplicate', async () => {
+		const acceptedId = '0f8fad5b-d9cb-469f-a165-70867728950e';
+		answer = (events) => ({
+			body: {
+				count: events.length,
+				result: events.map((e) => ({
+					status: 'Duplicate', messageTime: '0001-01-01T00:00:00',
+					error: {
+						additionalInfo: { acceptedMessage: { usageEventId: acceptedId, status: 'Duplicate', messageTime: '2026-11-16T09:01:02Z', ...e } },
+						message: 'This usage event already exist.', code: 'Conflict',
+					},
+					resourceId: e.resourceId, quantity: e.quantity, dimension: e.dimension, effectiveStartTime: echo(e.effectiveStartTime), planId: e.planId,
+				})),
+			},
+		});
+		const r = await callMeteringCron();
+		expect(r.status).toBe(200);
+		expect(r.json).toMatchObject({ posted: 1, accepted: 1, rejected: 0 });
+		expect(await row()).toMatchObject({ status: 'accepted', usage_event_id: acceptedId });
+	});
+
+	it('matches an offset-less effectiveStartTime as UTC whatever the server time zone', async () => {
+		process.env.TZ = 'America/Los_Angeles';
+		answer = (events) => ({
+			body: {
+				count: events.length,
+				result: events.map((e) => ({
+					usageEventId: '7c9e6679-7425-40de-944b-e07fc1f90ae7', status: 'Accepted', messageTime: new Date().toISOString(),
+					resourceId: e.resourceId, quantity: e.quantity, dimension: e.dimension, effectiveStartTime: echo(e.effectiveStartTime), planId: e.planId,
+				})),
+			},
+		});
+		const r = await callMeteringCron();
+		expect(r.status).toBe(200);
+		expect(r.json).toMatchObject({ posted: 1, accepted: 1, rejected: 0 });
+		expect(await row()).toMatchObject({ status: 'accepted', usage_event_id: '7c9e6679-7425-40de-944b-e07fc1f90ae7' });
 	});
 });

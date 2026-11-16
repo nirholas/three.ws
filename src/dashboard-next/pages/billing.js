@@ -12,6 +12,7 @@
 
 import { mountShell } from '../shell.js';
 import { requireUser, get, esc, relTime } from '../api.js';
+import { mountMicrosoftBilling } from './billing-microsoft.js';
 import {
 	skeletonHTML,
 	emptyStateHTML,
@@ -261,7 +262,7 @@ function injectStyles() {
 
 (async function boot() {
 	const main = await mountShell();
-	await requireUser();
+	const me = await requireUser();
 	injectStyles();
 
 	main.innerHTML = `
@@ -272,6 +273,7 @@ function injectStyles() {
 		<div class="bl-root">
 			<div id="bl-premium"><div class="dn-panel">${skeletonHTML(3, 'row')}</div></div>
 			<div id="bl-subs"><div class="dn-panel">${skeletonHTML(2, 'row')}</div></div>
+			<div id="bl-microsoft"><div class="dn-panel">${skeletonHTML(3, 'row')}</div></div>
 			<div id="bl-links"></div>
 		</div>`;
 
@@ -287,7 +289,8 @@ function injectStyles() {
 	};
 	attachRetry($('bl-premium'), loadPremium);
 	attachRetry($('bl-subs'), loadSubs);
-	await Promise.all([loadPremium(), loadSubs()]);
+	await Promise.all([loadPremium(), loadSubs(), mountMicrosoftBilling($('bl-microsoft'), { userId: me.id })]);
+	if (location.hash === '#bl-microsoft') $('bl-microsoft').scrollIntoView({ block: 'start' });
 })().catch((err) => {
 	const main = document.querySelector('.dn-main-inner') || document.body;
 	main.innerHTML = `<h1 class="dn-h1">Billing &amp; Passes</h1><div class="dn-panel"><div class="dn-panel-title" style="color:var(--nxt-danger)">Failed to load</div><div class="dn-panel-sub">${String(err?.message || 'unknown').replace(/</g, '&lt;')}</div></div>`;

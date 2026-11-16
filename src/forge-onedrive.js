@@ -209,6 +209,9 @@ const dialog = (() => {
 			continueWaiter = null;
 			parts.panel.hidden = true;
 			w.resolve();
+			// Opened only to collect this click (a token refresh after the picker
+			// closed): nothing else to show, so get out of the way.
+			if (w.standalone) close();
 		});
 		parts.switchBtn.addEventListener('click', () => el.dispatchEvent(new CustomEvent('od:switch')));
 		// Esc: close the dialog through the same path as the close button.
@@ -254,7 +257,8 @@ const dialog = (() => {
 		/** Show a message with a Continue button and wait for the click (a fresh user activation for MSAL's popup). */
 		askToContinue(message) {
 			if (!el) build();
-			if (!el.open) {
+			const standalone = !el.open;
+			if (standalone) {
 				returnFocus = document.activeElement;
 				parts.title.textContent = 'OneDrive and SharePoint';
 				abort = new AbortController();
@@ -264,7 +268,7 @@ const dialog = (() => {
 			parts.panel.hidden = false;
 			parts.continueBtn.focus();
 			return new Promise((resolve, reject) => {
-				continueWaiter = { resolve, reject };
+				continueWaiter = { resolve, reject, standalone };
 			});
 		},
 		/** Show an error inside the dialog with a Close action. */
@@ -293,7 +297,20 @@ const dialog = (() => {
  */
 async function pickWithDialog({ title, mode, maximumCount }) {
 	const s = await getSession();
-	await s.signIn();
+	try {
+		await s.signIn();
+	} catch (err) {
+		// The click's user activation ran out while MSAL loaded (slow network,
+		// touch with no hover to prefetch on): ask for one more click.
+		if (err?.code !== 'popup_blocked') throw err;
+		try {
+			await dialog.askToContinue('Sign in to Microsoft to choose your files.');
+			await s.signIn();
+		} catch (again) {
+			dialog.close();
+			throw again;
+		}
+	}
 	const { runPicker } = await loadClient();
 	for (;;) {
 		const view = dialog.open(title);
@@ -331,8 +348,12 @@ async function pickWithDialog({ title, mode, maximumCount }) {
 	}
 }
 
+/** Hover or focus: load MSAL and its cache now, so the click opens sign-in at once. */
 function prefetchClient() {
-	loadClient().catch(() => {});
+	oneDriveConfig()
+		.then((c) => (c.enabled ? getSession() : null))
+		.then((s) => s?.warm())
+		.catch(() => {});
 }
 
 // ---- photo source: From OneDrive or SharePoint -------------------------------

@@ -1,0 +1,6 @@
+{
+  // The data layer tests call the real three.ws APIs, which needs Node's fetch;
+  // the rig default (jsdom) does not provide one.
+  "extends": "@microsoft/spfx-web-build-rig/profiles/default/config/jest.config.json",
+  "testEnvironment": "node"
+}

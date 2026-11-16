@@ -38,8 +38,7 @@ export class CardView extends BaseComponentsCardView<
 		if (status === 'ready' && agent) {
 			return ImageCardView({
 				cardBar,
-				header: { componentName: 'text', text: agent.name },
-				body: { componentName: 'text', text: agentStatus(agent) },
+				header: { componentName: 'text', text: `${agent.name} · ${agentStatus(agent)}` },
 				image: { url: agent.thumbnailUrl || FALLBACK_POSTER, altText: `${strings.PosterAlt} ${agent.name}` },
 				footer: {
 					componentName: 'cardButton',
@@ -65,6 +64,11 @@ export class CardView extends BaseComponentsCardView<
 			return BasicCardView({
 				cardBar,
 				header: { componentName: 'text', text: this.properties.agentName ? `${strings.LoadingNamed} ${this.properties.agentName}` : strings.LoadingText },
+				footer: {
+					componentName: 'cardButton',
+					title: strings.OpenOnThreeWs,
+					action: { type: 'ExternalLink', parameters: { target: `https://three.ws/agents/${encodeURIComponent(this.properties.agentId)}` } },
+				},
 			});
 		}
 

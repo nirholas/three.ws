@@ -91,6 +91,16 @@
 			"userConsentDescription": "Allows you to sign in to the app with your organizational account and let the app read your profile. It also allows the app to read basic company information.",
 			"userConsentDisplayName": "Sign you in and read your profile",
 			"value": "User.Read"
+		},
+		{
+			"adminConsentDescription": "Allows the app to read, create, update and delete all files the signed-in user can access.",
+			"adminConsentDisplayName": "Have full access to user files",
+			"id": "5c28f0bf-8a70-41f1-8ab2-9032436ddb65",
+			"isEnabled": true,
+			"type": "User",
+			"userConsentDescription": "Allows the app to read, create, update, and delete all files that you can access.",
+			"userConsentDisplayName": "Have full access to all files you have access to",
+			"value": "Files.ReadWrite"
 		}
 	]
 }

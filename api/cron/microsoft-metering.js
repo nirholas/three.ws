@@ -146,7 +146,7 @@ async function postPending(now) {
 		for (const row of batch) {
 			const hit = results.find((r) =>
 				r.resourceId === row.subscription_id && r.dimension === row.dimension &&
-				new Date(r.effectiveStartTime).getTime() === new Date(row.effective_start_time).getTime());
+				utcMillis(r.effectiveStartTime) === new Date(row.effective_start_time).getTime());
 			const settled = hit ? settleUsageStatus(hit.status) : 'rejected';
 			const message = hit ? (hit.error?.message || hit.status) : 'Microsoft returned no result for this event';
 			if (settled === 'accepted') tally.accepted += 1;
@@ -158,11 +158,30 @@ async function postPending(now) {
 			}
 			await sql`
 				update microsoft_saas_usage_events
-				set status = ${settled}, usage_event_id = ${hit?.usageEventId ?? null}, message = ${message},
+				set status = ${settled}, usage_event_id = ${acceptedEventId(hit)}, message = ${message},
 				    attempts = attempts + 1, updated_at = now()
 				where id = ${row.id}
 			`;
 		}
 	}
 	return tally;
+}
+
+/**
+ * Microsoft echoes effectiveStartTime without an offset ("2018-12-01T08:30:14").
+ * It is UTC, so it is read as UTC rather than in the server's time zone.
+ */
+function utcMillis(value) {
+	if (typeof value !== 'string') return NaN;
+	const hasOffset = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value.trim());
+	return new Date(hasOffset ? value : `${value.trim()}Z`).getTime();
+}
+
+/**
+ * The Metering API id for an event. A Duplicate result carries no top-level
+ * usageEventId; the id Microsoft first accepted the event under is in
+ * error.additionalInfo.acceptedMessage.
+ */
+function acceptedEventId(hit) {
+	return hit?.usageEventId ?? hit?.error?.additionalInfo?.acceptedMessage?.usageEventId ?? null;
 }

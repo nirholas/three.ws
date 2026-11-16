@@ -27,6 +27,8 @@ import * as connector from './teams-connector.js';
 import { insertNotification } from './notify.js';
 import { userForIdentity } from './teams-identity.js';
 import { cardAttachment, forgeErrorCard, forgeFinishedCard, forgeProgressCard } from './teams-forge-cards.js';
+import { withAiContent } from './teams-ai.js';
+import { recordAiMessage } from './teams-ai-store.js';
 
 export const RECORD_TTL_S = 3 * 24 * 3600;
 // forge_free waits inline for the model up to this long, then hands back a job
@@ -256,14 +258,37 @@ export async function broadcastSettled(record, deps = defaultDeps) {
 			serviceUrl: record.conversation.serviceUrl,
 			conversationId: record.conversation.id,
 			activityId: record.activityId,
-			activity: { type: 'message', attachments: [cardAttachment(cardFor(record, { now: deps.now() }))] },
+			activity: cardActivity(record, { now: deps.now() }),
 		});
 	} catch (err) {
 		await cacheDel(broadcastKey(record.key)).catch(() => {});
 		console.warn(`[teams-forge] update of ${record.key} failed: ${err?.message || err}`);
 		return record;
 	}
+	if (record.state === 'done') await recordForgeMessage(record, record.activityId);
 	return (await patchJob(record.key, { broadcast: true })) || { ...record, broadcast: true };
+}
+
+/**
+ * The bot message for a record: the card, and for a finished model the AI
+ * label and feedback buttons (a generated asset, so Teams labels it).
+ */
+export function cardActivity(record, { now = Date.now(), extra = {} } = {}) {
+	const activity = { type: 'message', attachments: [cardAttachment(cardFor(record, { now }))], ...extra };
+	return record?.state === 'done' ? withAiContent(activity) : activity;
+}
+
+/** Link a posted finished-model message to its job, for feedback and reports. */
+export function recordForgeMessage(record, activityId) {
+	if (!record?.conversation?.id || !activityId) return Promise.resolve(false);
+	return recordAiMessage({
+		conversationId: record.conversation.id,
+		activityId,
+		tenantId: record.by?.tenantId || null,
+		kind: 'forge_model',
+		forgeKey: record.key,
+		model: record.tier ? `forge:${record.tier}` : 'forge',
+	});
 }
 
 /**

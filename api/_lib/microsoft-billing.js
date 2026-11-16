@@ -34,8 +34,9 @@ import { insertNotification } from './notify.js';
 import { logAudit } from './audit.js';
 import {
 	DIMENSIONS, entitles, planForMicrosoftPlan, publisherConfig, getSubscription, upsertSubscription,
-	recomputeUserPlan, isSeatBased,
+	recomputeUserPlan, isSeatBased, eligibleSeatSql,
 } from './microsoft-marketplace.js';
+import { publicTrial } from './microsoft-trial.js';
 
 const CONFIG = JSON.parse(readFileSync(new URL('../../data/microsoft-marketplace.json', import.meta.url), 'utf8'));
 const PLANS = JSON.parse(readFileSync(new URL('../../data/plans.json', import.meta.url), 'utf8'));
@@ -56,13 +57,13 @@ export const MANAGE_LINKS = Object.freeze([
 		id: 'm365_admin_center',
 		label: 'Microsoft 365 admin center',
 		url: 'https://admin.microsoft.com/Adminportal/Home?#/subscriptions',
-		hint: 'Change seats, turn recurring billing on or off, see invoices under Bills & payments, or cancel.',
+		hint: 'See the subscription and its seats, and find invoices under Bills & payments.',
 	}),
 	Object.freeze({
 		id: 'azure_portal',
 		label: 'Azure portal',
 		url: 'https://portal.azure.com/#home',
-		hint: 'For purchases made in Azure: search "SaaS", open the subscription, then change plan or cancel.',
+		hint: 'Search "SaaS", open the subscription, then change plan or seats, edit recurring billing, or cancel.',
 	}),
 ]);
 
@@ -230,13 +231,6 @@ export function seatsToRevoke(seats, quantity) {
 
 // Seat holders who may still hold a seat on `s`: the owner, the linked team's
 // owner, or an active member of the linked team.
-const ELIGIBLE_SEAT = (s, seat) => sql`(
-	${seat}.user_id = ${s}.user_id
-	or exists (select 1 from teams et where et.id = ${s}.team_id and et.archived_at is null and et.owner_user_id = ${seat}.user_id)
-	or exists (select 1 from team_people ep where ep.team_id = ${s}.team_id and ep.user_id = ${seat}.user_id
-	           and ep.status = 'active' and ep.scim_deleted_at is null)
-)`;
-
 async function visibleRows(userId) {
 	return sql`
 		select s.*, t.name as team_name, t.owner_user_id as team_owner_id,
@@ -382,6 +376,8 @@ function shape(row, viewerId, { usage, seats, period, freshness }) {
 		period: { start: period.start.toISOString(), end: period.end.toISOString() },
 		usage,
 		freshness,
+		// Free trial state and the Partner Center price (the trial banner reads these).
+		...publicTrial(row),
 	};
 }
 
@@ -440,7 +436,7 @@ export async function assignSeat(viewerId, subscriptionId, targetUserId) {
 	const row = await loadForManager(subscriptionId, viewerId);
 	const [eligible] = await sql`
 		select 1 as ok from (select ${targetUserId}::uuid as user_id) seat, microsoft_saas_subscriptions s
-		where s.id = ${row.id} and ${ELIGIBLE_SEAT(sql`s`, sql`seat`)}
+		where s.id = ${row.id} and ${eligibleSeatSql(sql`s`, sql`seat`)}
 	`;
 	if (!eligible) throw new BillingError('not_eligible', 'seats go to the subscription owner and active members of its linked team', 409);
 	let inserted;
@@ -526,7 +522,7 @@ export async function reconcileSeats(subscriptionId) {
 		const ineligible = await sql`
 			delete from microsoft_saas_seats seat
 			using microsoft_saas_subscriptions s
-			where s.id = ${row.id} and seat.subscription_id = s.id and not ${ELIGIBLE_SEAT(sql`s`, sql`seat`)}
+			where s.id = ${row.id} and seat.subscription_id = s.id and not ${eligibleSeatSql(sql`s`, sql`seat`)}
 			returning seat.user_id
 		`;
 		for (const g of ineligible) revoked.push({ user_id: g.user_id, reason: 'team' });
@@ -576,6 +572,15 @@ export async function releaseTeamSeat(teamId, userId) {
 	`;
 	const revoked = [];
 	for (const s of subs) revoked.push(...await reconcileSeats(s.subscription_id));
+	return revoked;
+}
+
+/** A team was archived: its members no longer qualify for seats it shared. */
+export async function reconcileTeamSeats(teamId) {
+	if (!teamId) return [];
+	const subs = await sql`select id from microsoft_saas_subscriptions where team_id = ${teamId}`;
+	const revoked = [];
+	for (const s of subs) revoked.push(...await reconcileSeats(s.id));
 	return revoked;
 }
 

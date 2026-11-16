@@ -90,7 +90,7 @@ export default class ThreeWsAgentCardAdaptiveCardExtension extends BaseAdaptiveC
 		return this.deferredPropertyPane?.getPropertyPaneConfiguration(this.properties) ?? super.getPropertyPaneConfiguration();
 	}
 
-	protected onDispose(): void {
+	public onDispose(): void {
 		this.request?.abort();
 	}
 }

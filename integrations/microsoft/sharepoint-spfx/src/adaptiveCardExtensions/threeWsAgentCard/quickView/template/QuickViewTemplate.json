@@ -32,6 +32,7 @@
   "actions": [
     {
       "type": "Action.OpenUrl",
+      "id": "open-agent",
       "title": "${openLabel}",
       "url": "${pageUrl}"
     }

@@ -154,6 +154,37 @@ export function entitles(saasStatus) {
 	return saasStatus === 'Subscribed';
 }
 
+/**
+ * A per-user plan carries a quantity (the seats bought). Flat-rate plans send
+ * none, and grant the plan to the account that activated the subscription.
+ */
+export function isSeatBased(row) {
+	return Number(row?.quantity) > 0;
+}
+
+/**
+ * Whether a stored subscription grants its plan to `userId`. A per-user plan
+ * grants only seat holders (`row.holds_seat`, computed with eligibleSeatSql);
+ * a flat-rate plan grants its owner.
+ */
+export function grantsMicrosoftPlan(row, userId) {
+	if (!row || !entitles(row.saas_status) || !planForMicrosoftPlan(row.plan_id)) return false;
+	if (isSeatBased(row)) return row.holds_seat === true;
+	return Boolean(userId) && row.user_id === userId;
+}
+
+/**
+ * SQL condition: the seat holder `seat.user_id` may still use subscription `s`.
+ * Holders are the owner, the owner of the linked team, or an active member of it.
+ */
+export const eligibleSeatSql = (s, seat) => sql`(
+	${seat}.user_id = ${s}.user_id
+	or exists (select 1 from teams et where et.id = ${s}.team_id and et.archived_at is null and et.owner_user_id = ${seat}.user_id)
+	or exists (select 1 from team_people ep join teams et on et.id = ep.team_id and et.archived_at is null
+	           where ep.team_id = ${s}.team_id and ep.user_id = ${seat}.user_id
+	           and ep.status = 'active' and ep.scim_deleted_at is null)
+)`;
+
 // ── Publisher token ─────────────────────────────────────────────────────────
 
 let cachedToken = null;
@@ -528,16 +559,24 @@ export async function findSubscription(id) {
 
 /**
  * Recompute users.plan from every entitlement the user holds: active on-chain
- * subscriptions and Subscribed Microsoft subscriptions. Returns the new plan.
+ * subscriptions, Subscribed flat-rate Microsoft subscriptions they own, and
+ * Subscribed per-user Microsoft subscriptions they hold an eligible seat on.
+ * Returns the new plan.
  */
 export async function recomputeUserPlan(userId) {
 	const [chain, ms] = await Promise.all([
 		sql`select plan from subscriptions where user_id = ${userId} and status = 'active' and active_until > now()`,
-		sql`select plan_id, saas_status from microsoft_saas_subscriptions where user_id = ${userId}`,
+		sql`
+			select s.plan_id, s.saas_status, s.quantity, s.user_id,
+			       (seat.user_id is not null and ${eligibleSeatSql(sql`s`, sql`seat`)}) as holds_seat
+			from microsoft_saas_subscriptions s
+			left join microsoft_saas_seats seat on seat.subscription_id = s.id and seat.user_id = ${userId}
+			where s.user_id = ${userId} or seat.user_id = ${userId}
+		`,
 	]);
 	const plan = highestPlan([
 		...chain.map((r) => r.plan),
-		...ms.filter((r) => entitles(r.saas_status)).map((r) => planForMicrosoftPlan(r.plan_id)),
+		...ms.filter((r) => grantsMicrosoftPlan(r, userId)).map((r) => planForMicrosoftPlan(r.plan_id)),
 	]);
 	await sql`update users set plan = ${plan} where id = ${userId} and plan is distinct from ${plan}`;
 	return plan;

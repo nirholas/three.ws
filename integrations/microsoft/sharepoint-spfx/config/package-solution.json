@@ -1,24 +1,24 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
   "solution": {
-    "name": "sharepoint-spfx-client-side-solution",
+    "name": "three.ws 3D",
     "id": "498157c3-9cd8-48d9-998c-5e13373e05b7",
     "version": "1.0.0.0",
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "developer": {
-      "name": "",
-      "websiteUrl": "",
-      "privacyUrl": "",
-      "termsOfUseUrl": "",
-      "mpnId": "Undefined-1.24.1"
+      "name": "three.ws",
+      "websiteUrl": "https://three.ws",
+      "privacyUrl": "https://three.ws/legal/privacy",
+      "termsOfUseUrl": "https://three.ws/legal/tos",
+      "mpnId": "d11c4453-6e12-499d-8dfe-48fcbaa22e2f"
     },
     "metadata": {
       "shortDescription": {
-        "default": "sharepoint-spfx description"
+        "default": "Live 3D agents and interactive 3D models from three.ws for modern pages and dashboards."
       },
       "longDescription": {
-        "default": "sharepoint-spfx description"
+        "default": "three.ws 3D adds two web parts and one Adaptive Card Extension. The three.ws Agent web part shows a live, animated three.ws agent that visitors can watch and talk to. The three.ws 3D Model web part shows an interactive 3D model from the three.ws Forge gallery, or any https GLB file. The three.ws Agent card is an Adaptive Card Extension for Viva Connections dashboards with the agent's avatar, name and live status. Site owners pick agents and models with a search box in the property pane. The web parts follow section theme variants and the reduced motion setting. Code is bundled in the package; the 3D runtime loads from https://three.ws/agent-3d/1.5.2/, which an administrator adds to Trusted script sources once."
       },
       "screenshotPaths": [],
       "videoUrl": "",
@@ -26,14 +26,14 @@
     },
     "features": [
       {
-        "title": "sharepoint-spfx Feature",
-        "description": "The feature that activates elements of the sharepoint-spfx solution.",
+        "title": "three.ws 3D",
+        "description": "Adds the three.ws Agent and three.ws 3D Model web parts and the three.ws Agent card.",
         "id": "5d2b6287-36ad-4acc-869e-de511eaf1263",
         "version": "1.0.0.0"
       }
     ]
   },
   "paths": {
-    "zippedPackage": "solution/sharepoint-spfx.sppkg"
+    "zippedPackage": "solution/three-ws-3d.sppkg"
   }
 }

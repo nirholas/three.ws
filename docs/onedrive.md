@@ -56,23 +56,24 @@ Notes on the implementation:
 
 ## Owner setup (Entra app registration)
 
-The feature uses the existing multitenant three.ws Entra app (the one behind `MS_ENTRA_SSO_CLIENT_ID`). In the Azure portal, under that app registration:
+The feature uses the existing multitenant three.ws Entra app (the one behind `MS_ENTRA_SSO_CLIENT_ID`).
 
-1. **Authentication → Add a platform → Single-page application.** Add these redirect URIs:
-   - `https://three.ws/auth/microsoft/redirect`
-   - `http://localhost:3000/auth/microsoft/redirect` (local dev, optional)
-   - `http://localhost:3136/auth/microsoft/redirect` (local dev, optional)
+**Automated.** `npm run microsoft:provision -- --apply` ([provisioning README](../integrations/microsoft/provisioning/README.md)) reconciles the `sso` app from [resources.json](../integrations/microsoft/provisioning/resources.json). It adds:
 
-   Leave the existing Web platform redirect for Marketplace sign-in as it is.
-2. **Supported account types** must stay "Accounts in any organizational directory and personal Microsoft accounts".
-3. **API permissions → Add a permission**, all *delegated*:
-   - Microsoft Graph, `Files.ReadWrite`: read the photo you pick, write the model files you save. It also covers the personal-account picker page (`OneDrive.ReadWrite`).
-   - SharePoint, `MyFiles.Write` and `AllSites.Read`: the work-account picker page, which authenticates to the tenant's SharePoint host with `<host>/.default`.
+- the Single-page application redirect URI `https://three.ws/auth/microsoft/redirect` (`spaRedirectUris`; the existing Web platform redirects are untouched),
+- the delegated Microsoft Graph permission `Files.ReadWrite`: read the photo you pick, write the model files you save. Personal accounts get the picker page's own `OneDrive.ReadWrite` scope with this consent (listed under `implicitScopes`).
 
-   None of these need admin consent by default. Tenants that restrict user consent can grant them once for everyone through the existing `/enterprise/admin-consent` page.
-4. **Set `MS_ENTRA_SSO_CLIENT_ID` on the Cloud Run service** (it is already set wherever Microsoft sign-in is live). `/api/config` then returns `oneDrive.enabled: true` and the actions appear.
+It is additive: a redirect or permission someone added by hand is kept and reported. `npm test` fails if the code asks for a redirect or scope that resources.json does not list (tests/microsoft-provision.test.js).
 
-The same steps are recorded as manual steps of the `sso` app in [integrations/microsoft/provisioning/resources.json](../integrations/microsoft/provisioning/resources.json).
+**By hand, once** (the provisioner manages Microsoft Graph permissions only). In the Entra admin center, under App registrations > three.ws:
+
+1. **API permissions > Add a permission > SharePoint > Delegated:** `MyFiles.Write` and `AllSites.Read`. The work-account picker page authenticates to the tenant's SharePoint host with `<host>/.default` and needs these.
+2. **Optional, for local dev:** under Authentication > Single-page application, add `http://localhost:3000/auth/microsoft/redirect` and `http://localhost:3136/auth/microsoft/redirect`.
+3. **Supported account types** must stay "Accounts in any organizational directory and personal Microsoft accounts".
+
+None of these permissions need admin consent by default. Tenants that restrict user consent can grant them once for everyone through the existing `/enterprise/admin-consent` page.
+
+**Turn it on:** `MS_ENTRA_SSO_CLIENT_ID` on the Cloud Run service (it is already set wherever Sign in with Microsoft is live). `/api/config` then returns `oneDrive.enabled: true`, and both actions appear in Forge.
 
 ## Privacy
 

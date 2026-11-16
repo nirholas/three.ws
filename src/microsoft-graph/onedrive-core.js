@@ -16,6 +16,10 @@ export const GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
 /** Personal Microsoft accounts all live in this one Entra tenant. */
 export const MSA_TENANT_ID = '9188040d-6c67-4c5b-b112-36a304b66dad';
 export const CONSUMER_PICKER_BASE = 'https://onedrive.live.com/picker';
+/** `common` so both work or school and personal Microsoft accounts can sign in. */
+export const AUTHORITY = 'https://login.microsoftonline.com/common';
+/** MSAL popup bridge (pages/microsoft-auth-redirect.html), registered as an SPA redirect URI. */
+export const REDIRECT_PATH = '/auth/microsoft/redirect';
 
 /** Graph delegated scope for reading picked photos and saving exports. */
 export const GRAPH_SCOPES = ['Files.ReadWrite'];

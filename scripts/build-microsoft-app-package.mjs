@@ -4,6 +4,9 @@
 //
 //   npm run package:microsoft-app                   build dist/microsoft/three-ws-m365-app.zip
 //   npm run package:microsoft-app -- --check        validate everything except the owner values
+//   npm run package:microsoft-app -- --check --store  add the Teams Store and Copilot preflight
+//                                                    (validation/rules.json, atk validate, live URLs);
+//                                                    --offline skips the live checks
 //   npm run package:microsoft-app -- --refresh-tools  rewrite mcptools.json from the live MCP endpoint
 //   npm run package:microsoft-app -- --regen-icons    rewrite color.png and outline.png from public/logo.png
 //
@@ -516,6 +519,56 @@ async function regenIcons() {
 	console.log('color.png (192x192) and outline.png (32x32) rewritten from public/logo.png');
 }
 
+/**
+ * The Teams Store and Copilot validation preflight (--store): every preflight rule in
+ * validation/rules.json, Microsoft's CLI validator, and (unless --offline) the live URL,
+ * TLS, frame-ancestors, MCP and response-time checks. Prints one line per rule.
+ */
+async function storePreflight(files, env, { check, offline }) {
+	const store = await import('./lib/microsoft-store-validation.mjs');
+	const { APP_NAME } = await import('../api/_lib/teams-bot-welcome.js');
+	const manifest = JSON.parse(files['manifest.json']);
+	const intro = files['intro.md'].toString('utf8');
+	const tools = JSON.parse(files['mcptools.json']);
+	const agent = JSON.parse(files[AGENT_FILE]);
+	const plugin = JSON.parse(files[PLUGIN_FILE]);
+	const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+	const problems = [
+		...store.checkName(manifest, intro, { botName: APP_NAME }),
+		...store.checkDescriptions(manifest, intro),
+		...store.checkCopilotText({ manifest, tools, agent, plugin }),
+		...store.checkTeamsJs(pkg),
+		...(await store.checkColorIcon(files['color.png'])),
+		...store.checkListingLinks(manifest, intro),
+		...store.checkValidDomains(manifest),
+		...store.checkBot(manifest),
+	];
+	const notes = [];
+	const developer = store.checkDeveloperName(manifest, env, { check });
+	problems.push(...developer.problems);
+	const skipped = [];
+	if (developer.note) {
+		notes.push(developer.note);
+		skipped.push('developer.publisher-name');
+	}
+	const cli = store.atkValidate(files, { env });
+	problems.push(...cli.problems);
+	if (!cli.problems.length) notes.push(`atk validate: ${cli.output.split('\n').filter(Boolean).pop() ?? 'passed'}`);
+	if (offline) {
+		skipped.push('copilot.https-no-redirect', 'copilot.frame-ancestors', 'links.https-200', 'response.time');
+		notes.push('live checks skipped (--offline)');
+	} else {
+		const live = await store.checkLive(manifest, intro);
+		problems.push(...live.problems);
+		notes.push(...live.notes.map((n) => `response time ${n}`));
+	}
+	const { rules } = store.loadRules();
+	console.log(`Store preflight (${rules.filter((r) => r.check.type === 'preflight').length} preflight rules of ${rules.length}):`);
+	for (const line of store.summarize(rules, problems, { skipped })) console.log(`  ${line}`);
+	for (const n of notes) console.log(`  note: ${n}`);
+	return problems.length === 0;
+}
+
 export async function main(argv = process.argv.slice(2), env = process.env) {
 	if (argv.includes('--refresh-tools')) return refreshTools();
 	if (argv.includes('--regen-icons')) return regenIcons();
@@ -532,6 +585,10 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
 	if (problems.length) {
 		console.error(`Package is not valid:\n- ${problems.join('\n- ')}`);
 		return 1;
+	}
+	if (argv.includes('--store')) {
+		const ok = await storePreflight(files, env, { check, offline: argv.includes('--offline') });
+		if (!ok) return 1;
 	}
 	if (check) {
 		const agent = JSON.parse(files[AGENT_FILE]);

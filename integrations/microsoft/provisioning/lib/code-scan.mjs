@@ -5,6 +5,7 @@
 // A "Microsoft auth file" is any source file that talks to the Microsoft
 // identity platform (it names login.microsoftonline.com). Inside those files:
 //   redirect paths  every /api/.../callback path
+//                   and every quoted '/auth/.../redirect' SPA path
 //   permissions     Graph scope and permission names in string literals on
 //                   lines that build a scope or permission list
 //   audiences       the resource behind every `<resource>/.default` scope and
@@ -16,12 +17,13 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-export const SCAN_ROOTS = ['api', 'scripts', 'server', 'integrations/microsoft'];
+export const SCAN_ROOTS = ['api', 'scripts', 'server', 'integrations/microsoft', 'src/microsoft-graph'];
 const SOURCE_EXT = /\.(?:m?js|json)$/;
 const SKIP_DIRS = new Set(['node_modules', 'schema', 'dist', '.git', 'provisioning']);
 const OIDC_SCOPES = new Set(['openid', 'profile', 'email', 'offline_access']);
 const GRAPH_PERMISSION = /^[A-Z][A-Za-z]*(?:\.[A-Z][A-Za-z]*){1,3}$/;
 const REDIRECT_PATH = /\/api\/[a-z0-9\-/]+\/callback\b/g;
+const SPA_REDIRECT_PATH = /['"`](\/auth\/[a-z0-9\-/]+\/redirect)['"`]/g;
 const ENV_REF = /(?:process\.env\.|\benv\.|envValue\(\s*['"`]|['"`]|\$\{)(MS_[A-Z][A-Z0-9_]*[A-Z0-9])\b/g;
 
 function walk(root, dir, out) {
@@ -82,6 +84,7 @@ export function scanMicrosoftAuthText(text) {
 	if (!text.includes('login.microsoftonline.com')) return result;
 	const constants = stringConstants(text);
 	for (const m of text.matchAll(REDIRECT_PATH)) result.redirects.add(m[0]);
+	for (const m of text.matchAll(SPA_REDIRECT_PATH)) result.redirects.add(m[1]);
 	for (const line of text.split('\n')) {
 		if (isCommentLine(line)) continue;
 		const scopeLine = /scope/i.test(line) || /PERMISSIONS/.test(line);
@@ -133,8 +136,8 @@ export function scanRepo(repoRoot, { files = listSourceFiles(repoRoot), read = (
  */
 export function driftProblems(manifest, scan) {
 	const problems = [];
-	const redirects = new Set(manifest.apps.flatMap((a) => a.redirectUris.map((r) => r.path)));
-	const permissions = new Set(manifest.apps.flatMap((a) => a.permissions.map((p) => p.name)));
+	const redirects = new Set(manifest.apps.flatMap((a) => [...a.redirectUris, ...(a.spaRedirectUris || [])].map((r) => r.path)));
+	const permissions = new Set(manifest.apps.flatMap((a) => [...a.permissions, ...(a.implicitScopes || [])].map((p) => p.name)));
 	const audiences = new Set(manifest.apps.flatMap((a) => a.tokenAudiences.map((t) => normalizeAudience(t.resource))));
 	const env = new Set([...manifest.env.cloudRun, ...manifest.env.package, ...Object.keys(manifest.env.unmanaged)]);
 	const where = (set) => [...set].join(', ');
@@ -152,7 +155,8 @@ export function driftProblems(manifest, scan) {
 export function staleEntries(manifest, scan) {
 	const stale = [];
 	for (const app of manifest.apps) {
-		for (const r of app.redirectUris) if (!scan.redirects.get(r.path)?.has(r.usedBy)) stale.push(`${app.key}: redirect ${r.path} is no longer requested by ${r.usedBy}`);
+		for (const r of [...app.redirectUris, ...(app.spaRedirectUris || [])]) if (!scan.redirects.get(r.path)?.has(r.usedBy)) stale.push(`${app.key}: redirect ${r.path} is no longer requested by ${r.usedBy}`);
+		for (const p of app.implicitScopes || []) for (const f of p.usedBy) if (!scan.permissions.get(p.name)?.has(f)) stale.push(`${app.key}: ${p.name} is no longer requested by ${f}`);
 		for (const p of app.permissions) for (const f of p.usedBy) if (!scan.permissions.get(p.name)?.has(f)) stale.push(`${app.key}: ${p.name} is no longer requested by ${f}`);
 		for (const t of app.tokenAudiences) if (!scan.audiences.get(normalizeAudience(t.resource))?.has(t.usedBy)) stale.push(`${app.key}: audience ${t.resource} is no longer used by ${t.usedBy}`);
 	}

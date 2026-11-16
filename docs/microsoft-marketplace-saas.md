@@ -14,7 +14,10 @@ Production stays on Google Cloud. The offer uses Microsoft's SaaS Fulfillment AP
 | Landing page | `/microsoft/activate`: [`pages/microsoft-activate.html`](../pages/microsoft-activate.html), [`src/microsoft-activate.js`](../src/microsoft-activate.js) |
 | Offer id, plan map, metered dimensions | [`data/microsoft-marketplace.json`](../data/microsoft-marketplace.json) |
 | Tables | [`api/_lib/migrations/20261104180000_microsoft_marketplace_saas.sql`](../api/_lib/migrations/20261104180000_microsoft_marketplace_saas.sql): `microsoft_saas_subscriptions`, `microsoft_saas_operations`, `microsoft_saas_usage_events` |
-| Tests | [`tests/microsoft-marketplace.test.js`](../tests/microsoft-marketplace.test.js) |
+| Billing page API, seats, refresh | [`api/_lib/microsoft-billing.js`](../api/_lib/microsoft-billing.js) |
+| "Billed through Microsoft" section on `/dashboard/billing` | [`src/dashboard-next/pages/billing-microsoft.js`](../src/dashboard-next/pages/billing-microsoft.js) |
+| Seats table | [`api/_lib/migrations/20261116151500_microsoft_saas_seats.sql`](../api/_lib/migrations/20261116151500_microsoft_saas_seats.sql): `microsoft_saas_seats`, plus `team_id` and `refreshed_at` on `microsoft_saas_subscriptions` |
+| Tests | [`tests/microsoft-marketplace.test.js`](../tests/microsoft-marketplace.test.js), [`tests/microsoft-billing.test.js`](../tests/microsoft-billing.test.js) |
 
 ## Configuration
 
@@ -53,7 +56,7 @@ Microsoft sign-in on `/login` uses the same Entra app. It only signs in an ident
 
 ## Entitlement
 
-`users.plan` is the highest plan across every active entitlement the account holds: on-chain subscriptions that are `active` and unexpired, and Microsoft subscriptions in status `Subscribed`. A suspended or cancelled Microsoft subscription stops counting, and the plan falls back to whatever else the account holds, else `free`. Nothing about quotas forks for this channel.
+`users.plan` is the highest plan across every active entitlement the account holds: on-chain subscriptions that are `active` and unexpired, and Microsoft subscriptions in status `Subscribed`. A flat-rate Microsoft plan grants the account that activated it. A per-user plan (Microsoft sends a seat quantity) grants only the people holding a seat on it, see [Seats](#seats). A suspended or cancelled Microsoft subscription stops counting, and the plan falls back to whatever else the account holds, else `free`. Nothing about quotas forks for this channel.
 
 ## Webhook
 
@@ -83,6 +86,50 @@ Every hour the cron meters each `Subscribed`, linked subscription:
 | anything else (`InvalidDimension`, `InvalidQuantity`, ...) | `rejected` | Needs a fix in Partner Center or the dimension map. An ops alert names the first reason |
 
 A batch that fails to post (a network error or a 5xx) also stays pending and is retried. A pending row that is still unaccepted after the window is settled `expired`. Microsoft subtracts each plan's included quantity itself, so the raw hourly count is what gets reported.
+
+## Managing a Microsoft-billed subscription
+
+Customers see every Microsoft purchase on `/dashboard/billing`, in the **Billed through Microsoft** section (deep link `/dashboard/billing#bl-microsoft`, which seat notifications use). An account with no Microsoft subscription sees one line pointing to the [`/microsoft`](../pages/microsoft/index.html) hub.
+
+### What the page shows
+
+Each subscription card has:
+
+- the three.ws plan the Partner Center plan grants, and the Microsoft status in plain language: `PendingFulfillmentStart` is *Waiting for activation*, `Subscribed` is *Active*, `Suspended` is *Suspended*, `Unsubscribed` is *Cancelled*, each with a sentence on what it means for the account;
+- the renewal date (the term end when recurring billing is on), or the end date when it is off;
+- this billing period's metered usage per dimension against the amount the plan includes. The period is the monthly window anchored on the term start, so it lines up with Microsoft's invoice. Each meter counts rows Microsoft accepted, rows still being reported, and rows it rejected or let expire (not billed);
+- for per-user plans, the seat roster (see below);
+- **Manage in Microsoft** links to the [Microsoft 365 admin center](https://admin.microsoft.com/Adminportal/Home?#/subscriptions) and the [Azure portal](https://portal.azure.com/#home). Microsoft's [SaaS lifecycle guide](https://learn.microsoft.com/en-us/marketplace/saas-subscription-lifecycle-management) documents both: in the Azure portal, search **SaaS** and open the subscription to change the plan or seat count, edit recurring billing, or cancel; invoices are in the admin center under **Bills & payments**;
+- what suspension and cancellation do. three.ws never changes or cancels a purchase itself: plan, seat count, payment and cancellation stay with Microsoft.
+
+The owner of the subscription sees the purchaser and beneficiary emails in full. A team admin or seat holder sees them masked (`b***r@contoso.com`).
+
+### API
+
+`GET /api/microsoft-marketplace/subscriptions` (session auth, `cache-control: private, no-store`) returns `{ plan, subscriptions, teams, manage_links }`. `subscriptions` holds every Microsoft subscription the user owns, holds a seat on, or administers through a linked team they own. Each entry carries the offer, plan and display name, the status and its label, tone and explanation, term dates, auto-renew, quantity, the masked or full emails, `role` (`owner`, `team_admin` or `seat_holder`), `seats` (`purchased`, `used`, and for admins `holders` and `candidates`), `period`, `usage` and `freshness`.
+
+A row older than 10 minutes (and not cancelled) is refreshed from the Fulfillment API first. The call is capped at 5 seconds; on a timeout or error the stored row is returned with `freshness.source = "stored"` and the error, and the page says so. A change in plan, status or quantity found this way reconciles seats exactly as the webhook would.
+
+`POST /api/microsoft-marketplace/seats` (session auth, CSRF token, rate limited) takes `{ op, subscription_id, user_id | team_id }`:
+
+| `op` | Who | Effect |
+|---|---|---|
+| `assign` | owner or team admin | Gives `user_id` a seat. 409 `no_seats_left` when every purchased seat is used, 409 when the person holds a seat on another Microsoft subscription |
+| `unassign` | owner or team admin, or the holder for their own seat | Frees the seat |
+| `link_team` | owner | Lets members of a team the owner owns hold seats |
+| `unlink_team` | owner | Removes the team; seats held only through it are freed |
+
+### Seats
+
+Seats exist only when Microsoft sends a quantity (a per-user plan). Flat-rate plans show no seat UI and grant the owner.
+
+- The buyer takes the first seat at activation. Existing per-user rows were backfilled with the owner's seat by the migration.
+- Eligible holders are the owner, the owner of the linked team, and its active members (`team_people`, not deactivated or SCIM-deleted). A team that is archived stops qualifying.
+- A person holds at most one Microsoft seat, so each usage event belongs to one subscription.
+- The quantity is enforced in the same statement that inserts the seat, so two admins cannot overfill it.
+- When Microsoft lowers the quantity (a `ChangeQuantity` webhook or a refresh), the most recently assigned seats are freed first. Each person who loses a seat gets an in-app `microsoft_seat` notification (account category, always on) and their plan is recomputed. Deactivating someone in the team, a SCIM delete, or archiving the team frees their seat the same way.
+
+Before deploying this code, apply `20261116151500_microsoft_saas_seats.sql` in production: plan recomputation reads `microsoft_saas_seats`.
 
 ## Free trials
 

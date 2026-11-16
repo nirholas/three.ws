@@ -31,6 +31,7 @@ import { logAudit } from '../_lib/audit.js';
 import { seedDefaultAgent } from '../_lib/seed-default-agent.js';
 import { safeNext } from '../../src/safe-next.js';
 import { emulatorMode } from '../_lib/microsoft-marketplace-emulator.js';
+import { handleBillingSubscriptions, handleSeats, ensureOwnerSeat, reconcileSeats } from '../_lib/microsoft-billing.js';
 import {
 	findUserByIdentity, touchIdentity, linkIdentity, IdentityError,
 	signIdentityPayload, unsignIdentityPayload, readCookie, cookie, clearCookie,
@@ -42,7 +43,7 @@ import {
 	checkWebhookOperation, subscriptionAfterOperation, operationVerdict,
 	verifyWebhookToken, buildSsoAuthorize, exchangeSsoCode, verifySsoIdToken,
 	identityMatchesSubscription, upsertSubscription, findSubscription, recomputeUserPlan,
-	publicSubscription, planForMicrosoftPlan,
+	publicSubscription, planForMicrosoftPlan, isSeatBased,
 } from '../_lib/microsoft-marketplace.js';
 
 const PROVIDER = 'microsoft';
@@ -260,24 +261,12 @@ async function completePurchase(req, res, flow, claims, back) {
 	}
 	const fresh = await upsertSubscription(await getSubscription(row.id));
 	await sql`update microsoft_saas_subscriptions set activated_at = coalesce(activated_at, now()) where id = ${row.id} and saas_status = 'Subscribed'`;
+	// A per-user plan grants only seat holders; the buyer takes the first seat.
+	await ensureOwnerSeat(row.id);
 	const plan = await recomputeUserPlan(account.userId);
 	logAudit({ userId: account.userId, action: 'microsoft_marketplace:activate', resourceId: row.id, meta: { plan_id: fresh.plan_id, plan, status: fresh.saas_status }, req });
 	await signIn(req, res, account.userId, { isNew: account.isNew, extraCookies: [clearCookie(PURCHASE_COOKIE)] });
 	return redirect(res, landing({ subscription: row.id }));
-}
-
-// ── subscriptions ───────────────────────────────────────────────────────────
-
-async function handleSubscriptions(req, res) {
-	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
-	if (!method(req, res, ['GET'])) return;
-	const user = await getSessionUser(req, res);
-	if (!user) return error(res, 401, 'unauthorized', 'sign in to see your Microsoft subscriptions');
-	const rows = await sql`
-		select * from microsoft_saas_subscriptions where user_id = ${user.id} order by created_at desc limit 50
-	`;
-	const [{ plan } = {}] = await sql`select plan from users where id = ${user.id} limit 1`;
-	return json(res, 200, { plan: plan || 'free', subscriptions: rows.map(publicSubscription) });
 }
 
 // ── webhook ─────────────────────────────────────────────────────────────────
@@ -364,7 +353,13 @@ async function applyOperation(op) {
 
 // The Fulfillment API GET lags an operation, so its change is applied on top.
 async function mirror(op, subscriptionId) {
+	const before = await findSubscription(subscriptionId);
 	const row = await upsertSubscription(subscriptionAfterOperation(await getSubscription(subscriptionId), op));
+	// A subscription that first gains a seat count grants only seat holders from
+	// now on, so its owner takes the first seat, as at activation.
+	if (!isSeatBased(before) && isSeatBased(row)) await ensureOwnerSeat(subscriptionId);
+	// A lower seat count or a move to a flat-rate plan frees seats, newest first.
+	await reconcileSeats(subscriptionId);
 	if (row.user_id) {
 		const plan = await recomputeUserPlan(row.user_id);
 		logAudit({ userId: row.user_id, action: `microsoft_marketplace:${op.action.toLowerCase()}`, resourceId: subscriptionId, meta: { status: row.saas_status, plan, operationStatus: op.status } });
@@ -379,7 +374,8 @@ const ACTIONS = {
 	resolve: handleResolve,
 	'sso-start': handleSsoStart,
 	'sso-callback': handleSsoCallback,
-	subscriptions: handleSubscriptions,
+	subscriptions: handleBillingSubscriptions,
+	seats: handleSeats,
 	webhook: handleWebhook,
 };
 

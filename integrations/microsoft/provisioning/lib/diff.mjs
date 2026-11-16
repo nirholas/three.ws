@@ -24,6 +24,11 @@ export function redirectUrls(manifest, spec) {
 	return spec.redirectUris.map((r) => `${manifest.origin}${r.path}`);
 }
 
+/** Single-page-app platform redirect URIs (MSAL in the browser, auth code + PKCE without a secret). */
+export function spaRedirectUrls(manifest, spec) {
+	return (spec.spaRedirectUris || []).map((r) => `${manifest.origin}${r.path}`);
+}
+
 /** The Graph `application` body that creates the app from its manifest entry. */
 export function desiredApplication(manifest, spec) {
 	const body = {
@@ -32,6 +37,8 @@ export function desiredApplication(manifest, spec) {
 		notes: `Managed by scripts/microsoft-provision.mjs from integrations/microsoft/provisioning/resources.json (${spec.key}). ${spec.purpose}`.slice(0, 1024),
 		web: { redirectUris: redirectUrls(manifest, spec) },
 	};
+	const spa = spaRedirectUrls(manifest, spec);
+	if (spa.length) body.spa = { redirectUris: spa };
 	if (spec.permissions.length) {
 		body.requiredResourceAccess = [{ resourceAppId: manifest.graph.appId, resourceAccess: spec.permissions.map((p) => ({ id: p.id, type: p.type })) }];
 	}
@@ -66,7 +73,7 @@ function mergeResourceAccess(live = [], desired = []) {
  */
 export function diffApplication(manifest, spec, live) {
 	const desired = desiredApplication(manifest, spec);
-	if (!live) return { op: OP.CREATE, changes: [`create app "${spec.displayName}" (${spec.signInAudience})`, ...desired.web.redirectUris.map((u) => `redirect ${u}`), ...spec.permissions.map((p) => `permission ${p.name} (${p.type === 'Role' ? 'application' : 'delegated'})`)], patch: { ...desired, uniqueName: spec.uniqueName }, extras: [] };
+	if (!live) return { op: OP.CREATE, changes: [`create app "${spec.displayName}" (${spec.signInAudience})`, ...desired.web.redirectUris.map((u) => `redirect ${u}`), ...(desired.spa?.redirectUris || []).map((u) => `spa redirect ${u}`), ...spec.permissions.map((p) => `permission ${p.name} (${p.type === 'Role' ? 'application' : 'delegated'})`)], patch: { ...desired, uniqueName: spec.uniqueName }, extras: [] };
 	const changes = [];
 	const patch = {};
 	const extras = [];
@@ -87,6 +94,15 @@ export function diffApplication(manifest, spec, live) {
 		patch.web = { redirectUris: [...liveUris, ...missingUris] };
 	}
 	for (const u of liveUris) if (!desired.web.redirectUris.includes(u)) extras.push(`redirect ${u}`);
+
+	const desiredSpa = desired.spa?.redirectUris || [];
+	const liveSpa = live.spa?.redirectUris || [];
+	const missingSpa = desiredSpa.filter((u) => !liveSpa.includes(u));
+	if (missingSpa.length) {
+		for (const u of missingSpa) changes.push(`add spa redirect ${u}`);
+		patch.spa = { redirectUris: [...liveSpa, ...missingSpa] };
+	}
+	for (const u of liveSpa) if (!desiredSpa.includes(u)) extras.push(`spa redirect ${u}`);
 
 	const liveAccess = live.requiredResourceAccess || [];
 	const liveKeys = new Set(liveAccess.flatMap((e) => (e.resourceAccess || []).map((a) => accessKey(e.resourceAppId, a))));

@@ -22,6 +22,8 @@
 // Everyone else gets the "Check progress" button, and the bot replaces the
 // message for the whole chat once the job settles (updateActivity).
 
+import { reportAction } from './teams-ai.js';
+
 export const FORGE_CARD_VERSION = '1.5';
 export const CARD_CONTENT_TYPE = 'application/vnd.microsoft.card.adaptive';
 export const VERB_REFRESH = 'forge.refresh';
@@ -253,6 +255,7 @@ export function forgeFinishedCard(record, { origin = 'https://three.ws' } = {}) 
 		{ type: 'Action.OpenUrl', title: 'Download GLB', url: r.glbUrl },
 		execute('Make a variation', VERB_VARIATION, { key: record.key }),
 		...(r.viewerUrl ? [{ type: 'Action.OpenUrl', title: 'Model page', url: r.viewerUrl }] : []),
+		reportAction({ kind: 'forge_model', key: record.key }),
 	];
 	return card(body, { actions });
 }

@@ -15,6 +15,7 @@ declare interface IThreeWsAgentCardAdaptiveCardExtensionStrings {
   LoadingNamed: string;
   ErrorText: string;
   RetryButton: string;
+  OpenOnThreeWs: string;
   QuickViewButton: string;
   OpenButton: string;
   PosterAlt: string;

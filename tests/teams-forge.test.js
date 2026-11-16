@@ -308,7 +308,7 @@ describe('adaptiveCard/action: refresh', () => {
 		expectValidCard(card);
 		expect(card.refresh).toBeUndefined();
 		expect(card.body.find((b) => b.type === 'Image')).toMatchObject({ url: POSTER, size: 'stretch' });
-		expect(card.actions.map((a) => a.title)).toEqual(['Open in 3D', 'Download GLB', 'Make a variation', 'Model page']);
+		expect(card.actions.map((a) => a.title)).toEqual(['Open in 3D', 'Download GLB', 'Make a variation', 'Model page', 'Report']);
 		expect(card.actions[0].data.msteams.value).toMatchObject({
 			type: 'tab/tabInfoAction',
 			tabInfo: { contentUrl: `${ORIGIN}/viewer?src=${encodeURIComponent(GLB)}`, name: 'a weathered brass ship compass' },
@@ -318,6 +318,11 @@ describe('adaptiveCard/action: refresh', () => {
 		expect(calls.update).toHaveLength(1);
 		expect(calls.update[0]).toMatchObject({ serviceUrl: SERVICE, conversationId: CONVERSATION, activityId: '1:posted' });
 		expectValidCard(calls.update[0].activity.attachments[0].content);
+		// A generated model is AI content: the replaced message carries the AI
+		// label and the feedback buttons, and the card offers Report.
+		expect(calls.update[0].activity.entities[0]).toMatchObject({ type: 'https://schema.org/Message', additionalType: ['AIGeneratedContent'] });
+		expect(calls.update[0].activity.channelData).toMatchObject({ feedbackLoopEnabled: true });
+		expect(card.actions[4]).toMatchObject({ type: 'Action.Submit', title: 'Report', data: { msteams: { type: 'task/fetch' }, verb: 'threews.report', kind: 'forge_model', key } });
 		const record = await loadJob(key);
 		expect(record).toMatchObject({ state: 'done', broadcast: true, result: { glbUrl: GLB, posterUrl: POSTER } });
 		await handleActivity(cardAction('forge.refresh', { key }), ctx);

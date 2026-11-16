@@ -16,6 +16,7 @@ define([], function () {
     LoadingNamed: 'Loading',
     ErrorText: 'Could not load the agent.',
     RetryButton: 'Try again',
+    OpenOnThreeWs: 'Open on three.ws',
     QuickViewButton: 'About this agent',
     OpenButton: 'Talk to',
     PosterAlt: 'Avatar of',

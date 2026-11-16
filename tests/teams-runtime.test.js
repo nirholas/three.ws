@@ -28,7 +28,7 @@ vi.mock('../api/_lib/rate-limit.js', () => ({
 	limits: new Proxy({}, { get: () => async () => ({ success: true }) }),
 	clientIp: () => '127.0.0.1',
 }));
-vi.mock('../api/_lib/r2.js', () => ({ publicUrlOrNull: () => null, thumbnailUrl: () => null }));
+vi.mock('../api/_lib/r2.js', () => ({ storedObjectUrl: () => null, thumbnailUrl: () => null }));
 vi.mock('../api/_lib/teams/research.js', async (importActual) => {
 	const actual = await importActual();
 	return {

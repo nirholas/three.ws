@@ -76,6 +76,19 @@ describe('drift: code vs resources.json', () => {
 		expect(driftProblems(MANIFEST, s)).toEqual(['redirect URI /api/outlook/connect/callback (in api/_lib/new-feature.js) is not in resources.json', 'Microsoft scope or permission Mail.Read (in api/_lib/new-feature.js) is not in resources.json']);
 	});
 
+	it('finds the OneDrive SPA redirect and scopes, and covers the personal-account picker scope as implicit', () => {
+		const found = scanMicrosoftAuthText(readFileSync(join(REPO, 'src/microsoft-graph/onedrive-core.js'), 'utf8'));
+		expect([...found.redirects]).toEqual(['/auth/microsoft/redirect']);
+		expect([...found.permissions].sort()).toEqual(['Files.ReadWrite', 'OneDrive.ReadWrite']);
+		// A /api/.../callback path never doubles as an SPA redirect.
+		expect([...scanMicrosoftAuthText("// login.microsoftonline.com\nconst r = '/api/auth/microsoft/callback';").redirects]).toEqual(['/api/auth/microsoft/callback']);
+		const dropped = structuredClone(MANIFEST);
+		delete appSpec(dropped, 'sso').implicitScopes;
+		delete appSpec(dropped, 'sso').spaRedirectUris;
+		const s = scanRepo(REPO, { files: ['src/microsoft-graph/onedrive-core.js'] });
+		expect(driftProblems(dropped, s)).toEqual(['redirect URI /auth/microsoft/redirect (in src/microsoft-graph/onedrive-core.js) is not in resources.json', 'Microsoft scope or permission OneDrive.ReadWrite (in src/microsoft-graph/onedrive-core.js) is not in resources.json']);
+	});
+
 	it('ignores scopes that only appear in comments and files that never talk to Microsoft identity', () => {
 		expect(scanMicrosoftAuthText("// login.microsoftonline.com\n// scope: 'Mail.Read'\n").permissions.size).toBe(0);
 		expect(scanMicrosoftAuthText("const scope = 'Mail.Read';").permissions.size).toBe(0);
@@ -88,8 +101,20 @@ describe('diffApplication', () => {
 		expect(d.op).toBe(OP.CREATE);
 		expect(d.patch.uniqueName).toBe('threews-entra-sso');
 		expect(d.patch.web.redirectUris).toEqual(['https://three.ws/api/microsoft-marketplace/sso/callback', 'https://three.ws/api/auth/microsoft/callback', 'https://three.ws/api/microsoft-365/connect/callback']);
-		expect(d.patch.requiredResourceAccess[0].resourceAccess).toHaveLength(7);
+		expect(d.patch.requiredResourceAccess[0].resourceAccess).toHaveLength(8);
 		expect(d.changes).toContain('permission ExternalItem.ReadWrite.OwnedBy (application)');
+		expect(d.patch.spa).toEqual({ redirectUris: ['https://three.ws/auth/microsoft/redirect'] });
+		expect(d.changes).toContain('spa redirect https://three.ws/auth/microsoft/redirect');
+		expect(d.changes).toContain('permission Files.ReadWrite (delegated)');
+	});
+
+	it('adds the SPA redirect beside an operator-added one and leaves the web platform alone', () => {
+		const live = liveFromDesired(sso, { spa: { redirectUris: ['http://localhost:3136/auth/microsoft/redirect'] } });
+		const d = diffApplication(MANIFEST, sso, live);
+		expect(d.op).toBe(OP.UPDATE);
+		expect(d.changes).toEqual(['add spa redirect https://three.ws/auth/microsoft/redirect']);
+		expect(d.patch).toEqual({ spa: { redirectUris: ['http://localhost:3136/auth/microsoft/redirect', 'https://three.ws/auth/microsoft/redirect'] } });
+		expect(d.extras).toEqual(['spa redirect http://localhost:3136/auth/microsoft/redirect']);
 	});
 
 	it('is ok when the live app already matches', () => {
@@ -108,7 +133,7 @@ describe('diffApplication', () => {
 		expect(d.patch.web.redirectUris).toEqual(['https://three.ws/api/auth/microsoft/callback', 'http://localhost:3127/api/auth/microsoft/callback', 'https://three.ws/api/microsoft-marketplace/sso/callback', 'https://three.ws/api/microsoft-365/connect/callback']);
 		const access = d.patch.requiredResourceAccess[0].resourceAccess.map((a) => a.id);
 		expect(access).toContain('df021288-bdef-4463-88db-98f22de89214');
-		expect(access).toHaveLength(8);
+		expect(access).toHaveLength(9);
 		expect(d.extras).toEqual(['redirect http://localhost:3127/api/auth/microsoft/callback', `permission ${MANIFEST.graph.appId}|df021288-bdef-4463-88db-98f22de89214|Role`]);
 		expect(d.patch.displayName).toBeUndefined();
 	});
@@ -224,7 +249,7 @@ describe('apply against a Microsoft tenant (FakeMicrosoftCloud at the HTTP bound
 	it('plans everything in an empty tenant', async () => {
 		const { actions } = await plan(ctx);
 		const s = summarize(actions);
-		expect(s).toEqual({ create: 27, update: 0, ok: 0, blocked: 0, manual: 4 });
+		expect(s).toEqual({ create: 27, update: 0, ok: 0, blocked: 0, manual: 5 });
 		const text = formatPlan(actions);
 		expect(text).toContain('+ create  three.ws (threews-entra-sso)');
 		expect(text).toContain('waits on the redirect URI Microsoft issues');
@@ -241,6 +266,7 @@ describe('apply against a Microsoft tenant (FakeMicrosoftCloud at the HTTP bound
 		expect(apps.map((a) => a.uniqueName).sort()).toEqual(['threews-entra-sso', 'threews-marketplace-fulfillment', 'threews-teams-bot']);
 		const ssoApp = apps.find((a) => a.uniqueName === 'threews-entra-sso');
 		expect(ssoApp.web.redirectUris).toHaveLength(3);
+		expect(ssoApp.spa.redirectUris).toEqual(['https://three.ws/auth/microsoft/redirect']);
 		expect(ssoApp.signInAudience).toBe('AzureADandPersonalMicrosoftAccount');
 		expect(apps.every((a) => a.passwordCredentials.length === 1 && a.passwordCredentials[0].endDateTime === new Date(NOW + 365 * DAY).toISOString())).toBe(true);
 		expect(cloud.issuedSecrets).toHaveLength(3);
@@ -275,7 +301,7 @@ describe('apply against a Microsoft tenant (FakeMicrosoftCloud at the HTTP bound
 		// The apply already re-planned; a fresh plan with a fresh store proves idempotency.
 		expect(output).toContain('Re-plan after apply: 0 to create, 0 to change, 0 blocked');
 		const again = await plan(makeCtx());
-		expect(summarize(again.actions)).toMatchObject({ create: 0, update: 0, blocked: 0, manual: 2 });
+		expect(summarize(again.actions)).toMatchObject({ create: 0, update: 0, blocked: 0, manual: 3 });
 
 		// A second apply issues no new secrets and writes nothing new.
 		const writesBefore = cloud.calls.filter((c) => c.method !== 'GET').length;

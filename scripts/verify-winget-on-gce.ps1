@@ -16,14 +16,18 @@ $script:failed = @()
 function Say([string]$kind, [string]$step, [string]$text) {
 	foreach ($line in ($text -split "`r?`n")) {
 		if ($line.Trim().Length -eq 0) { continue }
-		Write-Output "THREEWS|$kind|$step|$line"
+		# Straight to stdout, so callers piping or discarding a function's output never swallow a report line.
+		[Console]::Out.WriteLine("THREEWS|$kind|$step|$line")
 	}
 }
 
 function Meta([string]$key) {
 	try {
-		$r = Invoke-WebRequest -UseBasicParsing -Headers @{ 'Metadata-Flavor' = 'Google' } -Uri "http://metadata.google.internal/computeMetadata/v1/instance/attributes/$key"
-		return [string]$r.Content
+		# WebClient returns text; Invoke-WebRequest under PowerShell 5.1 hands back bytes for non-text content types.
+		$wc = New-Object System.Net.WebClient
+		$wc.Headers.Add('Metadata-Flavor', 'Google')
+		$wc.Encoding = [System.Text.Encoding]::UTF8
+		return $wc.DownloadString("http://metadata.google.internal/computeMetadata/v1/instance/attributes/$key")
 	} catch {
 		return $null
 	}
@@ -40,8 +44,11 @@ function Run([string]$step, [string]$exe, [string[]]$argv, [switch]$Optional) {
 	return $code
 }
 
+# Reload PATH from the registry (to see what winget registered), keeping the
+# VCLibs runtime winget.exe itself needs under SYSTEM.
+$script:runtimePath = ''
 function Refresh-Path {
-	$env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
+	$env:Path = $script:runtimePath + [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
 }
 
 function Newest-AppxDir([string]$pattern) {
@@ -54,57 +61,64 @@ function Newest-AppxDir([string]$pattern) {
 # per-user app execution alias, so call the exe inside the package directly and
 # put its VCLibs runtime on PATH.
 function Find-Winget {
-	$cmd = Get-Command winget.exe -ErrorAction SilentlyContinue
-	if ($cmd) { return $cmd.Source }
 	$dir = Newest-AppxDir 'Microsoft.DesktopAppInstaller_*_x64__8wekyb3d8bbwe'
 	if ($dir -and (Test-Path (Join-Path $dir.FullName 'winget.exe'))) {
 		$vclibs = Newest-AppxDir 'Microsoft.VCLibs.140.00.UWPDesktop_*_x64__8wekyb3d8bbwe'
-		if ($vclibs) { $env:Path = $vclibs.FullName + ';' + $env:Path }
+		if ($vclibs) {
+			$script:runtimePath = $vclibs.FullName + ';'
+			$env:Path = $script:runtimePath + $env:Path
+		}
 		return (Join-Path $dir.FullName 'winget.exe')
 	}
+	$cmd = Get-Command winget.exe -ErrorAction SilentlyContinue
+	if ($cmd) { return $cmd.Source }
 	return $null
 }
 
 Say 'INFO' 'os' ((Get-CimInstance Win32_OperatingSystem | Select-Object Caption, Version, OSArchitecture | Format-List | Out-String))
 
-# 1. winget itself.
-$winget = Find-Winget
-if (-not $winget) {
-	Say 'INFO' 'winget' 'winget not present; installing App Installer with Microsoft.WinGet.Client'
-	try {
-		[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-		Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope AllUsers | Out-Null
-		Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-		Install-Module -Name Microsoft.WinGet.Client -Force -Scope AllUsers -Repository PSGallery | Out-Null
-		Import-Module Microsoft.WinGet.Client
-		Repair-WinGetPackageManager -AllUsers -Latest -Force | Out-String | ForEach-Object { Say 'OUT' 'winget-install' $_ }
-	} catch {
-		Say 'OUT' 'winget-install' ("Microsoft.WinGet.Client route failed: " + $_.Exception.Message)
-	}
-	$winget = Find-Winget
+# 1. winget itself, at least the client version that reads the manifest schema
+# under test. Desktop Windows keeps App Installer current through the Store;
+# Server images ship whatever was current when they were built, so upgrade it
+# here the way a maintained machine already has: provision the latest App
+# Installer bundle with its dependencies. (Microsoft.WinGet.Client's
+# Repair-WinGetPackageManager refuses to run under Windows PowerShell 5.1,
+# which is what a startup script gets.)
+$minWinget = [version]'1.28.0'
+
+function Winget-Version([string]$exe) {
+	if (-not $exe) { return $null }
+	$v = (& $exe --version 2>$null | Out-String).Trim().TrimStart('v')
+	try { return [version]($v -replace '[^0-9.].*$', '') } catch { return $null }
 }
-if (-not $winget) {
-	Say 'INFO' 'winget' 'installing App Installer and its dependencies from their release packages'
+
+$winget = Find-Winget
+$have = Winget-Version $winget
+Say 'INFO' 'winget' ("found: " + $(if ($winget) { "$winget ($have)" } else { 'none' }))
+if (-not $have -or $have -lt $minWinget) {
+	Say 'INFO' 'winget' 'installing the latest App Installer and its dependencies from their release packages'
 	$tmp = Join-Path $env:TEMP 'winget-bootstrap'
 	New-Item -ItemType Directory -Force -Path $tmp | Out-Null
 	try {
 		Invoke-WebRequest -UseBasicParsing -Uri 'https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx' -OutFile "$tmp\vclibs.appx"
 		Invoke-WebRequest -UseBasicParsing -Uri 'https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx' -OutFile "$tmp\xaml.appx"
 		Invoke-WebRequest -UseBasicParsing -Uri 'https://aka.ms/getwinget' -OutFile "$tmp\appinstaller.msixbundle"
-		Add-AppxProvisionedPackage -Online -PackagePath "$tmp\appinstaller.msixbundle" -DependencyPackagePath "$tmp\vclibs.appx", "$tmp\xaml.appx" -SkipLicense | Out-String | ForEach-Object { Say 'OUT' 'winget-install' $_ }
+		Say 'OUT' 'winget-install' (Add-AppxProvisionedPackage -Online -PackagePath "$tmp\appinstaller.msixbundle" -DependencyPackagePath "$tmp\vclibs.appx", "$tmp\xaml.appx" -SkipLicense | Out-String)
 	} catch {
 		Say 'OUT' 'winget-install' ("release package route failed: " + $_.Exception.Message)
 	}
 	$winget = Find-Winget
+	$have = Winget-Version $winget
 }
-if (-not $winget) {
+if (-not $have -or $have -lt $minWinget) {
+	Say 'INFO' 'winget' ("could not get winget $minWinget or newer; have " + $(if ($have) { $have } else { 'none' }))
 	Say 'EXIT' 'winget' '1'
 	$script:failed += 'winget'
 	Say 'DONE' 'summary' ('failed: ' + ($script:failed -join ','))
 	exit 1
 }
-Say 'INFO' 'winget' "using $winget"
-Run 'winget-version' $winget @('--version') | Out-Null
+Say 'INFO' 'winget' "using $winget ($have)"
+Say 'EXIT' 'winget' '0'
 
 # 2. The manifests under test.
 $dir = 'C:\threews-winget\manifest'
@@ -116,9 +130,37 @@ foreach ($p in $manifests.PSObject.Properties) {
 	Say 'INFO' 'manifest' "wrote $($p.Name)"
 }
 
-Run 'settings-local-manifests' $winget @('settings', '--enable', 'LocalManifestFiles') | Out-Null
-Run 'validate' $winget @('validate', '--manifest', $dir, '--disable-interactivity') | Out-Null
-Run 'install' $winget @('install', '--manifest', $dir, '--scope', 'machine', '--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity') | Out-Null
+$null = Run 'settings-local-manifests' $winget @('settings', '--enable', 'LocalManifestFiles')
+$null = Run 'validate' $winget @('validate', '--manifest', $dir, '--disable-interactivity')
+$installArgs = @('install', '--manifest', $dir, '--scope', 'machine', '--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity')
+$code = Run 'install-shellapi' $winget $installArgs -Optional
+if ($code -ne 0) {
+	# winget's default extractor is the Windows Shell zip API, which fails under
+	# SYSTEM with no interactive desktop. Show the archive itself is sound, then
+	# use winget's documented tar extraction method, as unattended installs do.
+	$installer = [regex]::Match([IO.File]::ReadAllText((Join-Path $dir 'ThreeWs.Agent.installer.yaml')), 'Architecture: x64\s+InstallerUrl: (\S+)').Groups[1].Value
+	$zip = 'C:\threews-winget\x64.zip'
+	(New-Object System.Net.WebClient).DownloadFile($installer, $zip)
+	Say 'INFO' 'archive' ("downloaded $installer, sha256 " + (Get-FileHash $zip -Algorithm SHA256).Hash)
+	$null = Run 'archive-tar-list' "$env:SystemRoot\System32\tar.exe" @('-tvf', $zip)
+	try {
+		Expand-Archive -Path $zip -DestinationPath 'C:\threews-winget\expanded' -Force
+		Say 'INFO' 'archive' ('Expand-Archive: ' + ((Get-ChildItem 'C:\threews-winget\expanded' | ForEach-Object { "$($_.Name) $($_.Length)" }) -join ', '))
+		Say 'EXIT' 'archive-expand' '0'
+	} catch {
+		Say 'INFO' 'archive' ('Expand-Archive failed: ' + $_.Exception.Message)
+		Say 'EXIT' 'archive-expand' '1'
+		$script:failed += 'archive-expand'
+	}
+	$export = (& $winget settings export 2>$null | Out-String) | ConvertFrom-Json
+	$settingsFile = [Environment]::ExpandEnvironmentVariables([string]$export.userSettingsFile)
+	New-Item -ItemType Directory -Force -Path (Split-Path $settingsFile) | Out-Null
+	[IO.File]::WriteAllText($settingsFile, '{ "installBehavior": { "archiveExtractionMethod": "tar" } }', $utf8)
+	Say 'INFO' 'install' "set installBehavior.archiveExtractionMethod = tar in $settingsFile"
+	$null = Run 'install' $winget $installArgs
+} else {
+	Say 'EXIT' 'install' '0'
+}
 
 # 3. The installed command, through PATH exactly as a user would get it.
 Refresh-Path
@@ -144,15 +186,15 @@ if (-not $cmd) {
 	$origin = Meta 'three-ws-origin'
 	if ($origin) { $env:THREE_WS_ORIGIN = $origin }
 
-	Run 'version' 'three-ws-agent' @('--version') | Out-Null
-	Run 'help' 'three-ws-agent' @('--help') | Out-Null
-	Run 'sessions' 'three-ws-agent' @('sessions') | Out-Null
+	$null = Run 'version' 'three-ws-agent' @('--version')
+	$null = Run 'help' 'three-ws-agent' @('--help')
+	$null = Run 'sessions' 'three-ws-agent' @('sessions')
 
 	$key = Meta 'three-ws-api-key'
 	if ($key) {
 		$env:THREE_WS_API_KEY = $key.Trim()
-		Run 'whoami' 'three-ws-agent' @('whoami') | Out-Null
-		Run 'doctor' 'three-ws-agent' @('doctor') | Out-Null
+		$null = Run 'whoami' 'three-ws-agent' @('whoami')
+		$null = Run 'doctor' 'three-ws-agent' @('doctor')
 		Remove-Item Env:\THREE_WS_API_KEY
 	} else {
 		Say 'INFO' 'whoami' 'no API key in metadata; production checks skipped'
@@ -162,7 +204,7 @@ if (-not $cmd) {
 $threats = Get-MpThreatDetection -ErrorAction SilentlyContinue
 Say 'INFO' 'defender' ("Defender detections: " + @($threats).Count)
 
-Run 'uninstall' $winget @('uninstall', '--manifest', $dir, '--scope', 'machine', '--disable-interactivity') | Out-Null
+$null = Run 'uninstall' $winget @('uninstall', '--manifest', $dir, '--scope', 'machine', '--disable-interactivity')
 Refresh-Path
 if (Get-Command three-ws-agent -ErrorAction SilentlyContinue) {
 	Say 'EXIT' 'removed' '1'

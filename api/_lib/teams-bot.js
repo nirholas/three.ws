@@ -35,6 +35,7 @@ import { adaptiveCardFor } from './glance-adaptive.js';
 import { CREATE_COMMAND_ID, handleForgeActivity, isForgeActivity, plainText } from './teams-forge-bot.js';
 import { captureConversation, handleApprovalAction, isApprovalAction, isApprovalsCommand, replyWithPendingApprovals } from './teams-approvals.js';
 import { handleConversationUpdate } from './teams-bot-welcome.js';
+import { handleResponsibleAiActivity } from './teams-responsible-ai.js';
 import * as defaultConnector from './teams-connector.js';
 import { identityOf, linkCommandCode, markInstalled, markUninstalled, redeemLinkCode } from './teams-identity.js';
 
@@ -237,6 +238,8 @@ export async function handleActivity(activity, ctx = {}) {
 	if (isApprovalsCommand(activity, plainText)) return replyWithPendingApprovals(activity, ctx);
 	const host = channelHostOf(activity);
 	if (host !== 'teams' && isCreateInvoke(activity)) return teamsOnlyCreateResponse(activity);
+	const rai = await handleResponsibleAiActivity(activity, ctx);
+	if (rai.handled) return rai.body;
 	if (isForgeActivity(activity)) return handleForgeActivity(activity, ctx);
 	if (activity?.type === 'conversationUpdate') return handleConversationUpdate(activity, ctx);
 	if (activity?.type !== 'invoke') return null;
