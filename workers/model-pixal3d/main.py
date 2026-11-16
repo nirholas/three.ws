@@ -50,6 +50,11 @@ Environment variables (README.md carries the full table):
   WEIGHTS_GCS_URI       optional gs:// tree; each sub-model streams to local disk,
                         loads, and is deleted, so peak disk is one checkpoint
   WEIGHTS_LOCAL_DIR     scratch for that streaming (default: /tmp/pixal3d-weights)
+  WEIGHTS_LOADER        "runai" (default) reads each checkpoint from WEIGHTS_GCS_URI
+                        with NVIDIA Run:ai Model Streamer (concurrent range reads,
+                        no disk); "stage" forces the single-stream download. A
+                        streamer failure falls back to the download per model.
+  RUNAI_STREAMER_CONCURRENCY  streamer range-read concurrency (default: 32)
   PIXAL3D_SRC           vendored Pixal3D repo checkout (default: /opt/pixal3d-src)
   MVADAPTER_SRC         vendored MV-Adapter repo checkout (default: /opt/mvadapter-src)
   LOW_VRAM              "1" moves each stage's weights to the GPU only while it
@@ -99,6 +104,12 @@ from pydantic import BaseModel, Field
 import camera_rig
 import glb_pack
 import pipeline_config
+from runai_weights import (
+    choose_loader,
+    load_with_fallback,
+    stream_into_module,
+    streamer_available,
+)
 from request_policy import (
     DEFAULT_RESOLUTION,
     FETCH_ATTEMPTS,
@@ -157,6 +168,7 @@ LOW_VRAM = os.environ.get("LOW_VRAM", "1") != "0"
 WEIGHTS_GCS_URI = os.environ.get("WEIGHTS_GCS_URI", "").rstrip("/")
 WEIGHTS_LOCAL_DIR = os.environ.get("WEIGHTS_LOCAL_DIR", "/tmp/pixal3d-weights")
 CONFIG_DIR = os.path.join(WEIGHTS_LOCAL_DIR, "config")
+WEIGHTS_LOADER = os.environ.get("WEIGHTS_LOADER", "")
 AUX_DIR = os.path.join(WEIGHTS_LOCAL_DIR, "aux")
 MODEL_LOAD_ATTEMPTS = int(os.environ.get("MODEL_LOAD_ATTEMPTS", "4"))
 MODEL_LOAD_RETRY_BASE_S = float(os.environ.get("MODEL_LOAD_RETRY_BASE_S", "15"))
@@ -165,6 +177,10 @@ MODEL_LOAD_RETRY_CAP_S = float(os.environ.get("MODEL_LOAD_RETRY_CAP_S", "120"))
 _weights_ready: Optional[asyncio.Event] = None
 _load_error: Optional[str] = None
 _load_attempts = 0
+# Which loader read the checkpoints, and the last streamer failure that fell
+# back, for /health and the cold-start bench (docs/nvidia-runai-model-streamer.md).
+_weights_loader: Optional[str] = None
+_streamer_error: Optional[str] = None
 _bucket: Optional[storage.Bucket] = None
 _local_storage: Optional[LocalStorage] = None
 _sem: Optional[asyncio.Semaphore] = None
@@ -219,34 +235,67 @@ def _stage_aux_weights(client: storage.Client, bucket_name: str, prefix: str) ->
 
 
 def _install_streaming_loader(client: storage.Client, bucket_name: str, prefix: str) -> None:
-    """Make Pixal3D's per-model loader stream each checkpoint from GCS.
+    """Make Pixal3D's per-model loader read each checkpoint straight from GCS.
 
     `pixal3d.models.from_pretrained` resolves every model as
-    `<CONFIG_DIR>/<name>`; the wrapper fetches `<name>.json` and
-    `<name>.safetensors` from the weights prefix, loads them, and removes
-    them, so disk and RAM never hold more than a couple checkpoints at once.
+    `<CONFIG_DIR>/<name>`. With the Run:ai streamer (default) the wrapper reads
+    `<name>.json`, builds the model exactly as upstream does, and streams
+    `<name>.safetensors` into it with concurrent range reads and nothing on
+    disk. The previous path, used with WEIGHTS_LOADER=stage or when a streamer
+    read fails, downloads both files single-stream to scratch, calls the
+    original loader, and removes them, so disk and RAM never hold more than a
+    couple checkpoints at once.
     """
+    global _weights_loader
     import pixal3d.models as p3d_models
 
     original = p3d_models.from_pretrained
     bucket = client.bucket(bucket_name)
+    gcs_uri = f"gs://{bucket_name}/{prefix}"
+    loader, reason = choose_loader(WEIGHTS_LOADER, gcs_uri, streamer_available())
+    _weights_loader = loader
+    log.info("Pixal3D weights loader: %s (%s)", loader, reason)
 
-    def streaming(path: str, **kwargs):
-        if not path.startswith(CONFIG_DIR + "/"):
-            return original(path, **kwargs)
-        name = path[len(CONFIG_DIR) + 1:]
+    def blob_for(name: str, ext: str):
+        blob = bucket.get_blob(f"{prefix}/{name}{ext}")
+        if blob is None:
+            raise FileNotFoundError(f"gs://{bucket_name}/{prefix}/{name}{ext} is not staged")
+        return blob
+
+    def stream(name: str, kwargs: dict):
+        t0 = time.time()
+        config = json.loads(blob_for(name, ".json").download_as_text())
+        model = getattr(p3d_models, config["name"])(**config["args"], **kwargs)
+        size, seconds = stream_into_module(model, [f"{gcs_uri}/{name}.safetensors"], strict=False)
+        log.info(
+            "Pixal3D %s streamed %.2f GiB in %.1fs (%.2f GiB/s), loaded in %.1fs (Run:ai Model Streamer)",
+            name, size / 2**30, seconds, size / 2**30 / max(seconds, 1e-6), time.time() - t0,
+        )
+        return model
+
+    def download(name: str, kwargs: dict):
         scratch = os.path.join(WEIGHTS_LOCAL_DIR, "stream")
         local = os.path.join(scratch, name)
         os.makedirs(os.path.dirname(local), exist_ok=True)
         try:
             for ext in (".json", ".safetensors"):
-                blob = bucket.get_blob(f"{prefix}/{name}{ext}")
-                if blob is None:
-                    raise FileNotFoundError(f"gs://{bucket_name}/{prefix}/{name}{ext} is not staged")
-                blob.download_to_filename(local + ext)
+                blob_for(name, ext).download_to_filename(local + ext)
             return original(local, **kwargs)
         finally:
             shutil.rmtree(scratch, ignore_errors=True)
+
+    def streaming(path: str, **kwargs):
+        global _streamer_error, _weights_loader
+        if not path.startswith(CONFIG_DIR + "/"):
+            return original(path, **kwargs)
+        name = path[len(CONFIG_DIR) + 1:]
+        model, used, err = load_with_fallback(
+            loader, lambda: stream(name, kwargs), lambda: download(name, kwargs), f"Pixal3D {name}"
+        )
+        if err is not None:
+            _streamer_error = err
+            _weights_loader = used
+        return model
 
     p3d_models.from_pretrained = streaming
 
@@ -978,6 +1027,8 @@ async def health(response: Response) -> dict:
         "weights_ready": bool(_weights_ready and _weights_ready.is_set()),
         "load_error": _load_error,
         "load_attempts": _load_attempts,
+        "weights_loader": _weights_loader,
+        "streamer_error": _streamer_error,
         "draining": _draining,
         "resolutions": [r for r in RESOLUTIONS if r <= MAX_RESOLUTION],
         "default_resolution": DEFAULT_RESOLUTION,

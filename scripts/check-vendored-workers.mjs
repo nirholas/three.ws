@@ -31,6 +31,8 @@ const VENDORED = [
 	'test_tracing.py',
 	'bake_raster.py',
 	'test_bake_raster.py',
+	'runai_weights.py',
+	'test_runai_weights.py',
 ];
 
 const WORKERS_DIR = 'workers';
