@@ -93,7 +93,7 @@ for (const p of prompts) results.push({ ...p, ...(await chat(p.message, agentId)
 const streaming = [];
 for (const [label, id] of [['guarded', agentId], ['unguarded', baselineId], ['guarded', agentId], ['unguarded', baselineId]]) {
 	const r = await chat(LONG, id);
-	streaming.push({ label, status: r.status, firstTextMs: r.firstTextMs, chunks: r.chunks, chunkTimesMs: r.chunkTimesMs, totalMs: r.totalMs, chars: r.reply.length, reply: r.reply, guard: r.done?.guard || null, error: r.error || null });
+	streaming.push({ label, status: r.status, firstTextMs: r.firstTextMs, chunks: r.chunks, chunkTimesMs: r.chunkTimesMs, totalMs: r.totalMs, chars: r.reply.length, guard: r.done?.guard || null, error: r.error || null });
 }
 
 const { guardStats } = await import('../api/_lib/chat-guardrails.js');

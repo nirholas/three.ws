@@ -116,7 +116,6 @@
       ],
       "totalMs": 1706,
       "chars": 616,
-      "reply": "1. Import your glTF model into the three.ws editor; the platform auto-detects armature and skin data.  \n2. Assign the root bone as the avatar’s pivot point so animations drive the whole rig.  \n3. Verify that mesh‑bone weights are clean; use the built‑in weight painter to fix any popping vertices.  \n4. Open the animation mixer and import a .mixamo or .fbx wave clip, matching its skeleton to the avatar’s bone names.  \n5. Set the clip to loop if you want a continuous wave, otherwise play it once on trigger.  \n6. Publish the avatar; the wave animation will play via the `<agent-3d>` tag or in the three.ws console.",
       "guard": {
         "on": [
           "jailbreak",
@@ -198,7 +197,6 @@
       ],
       "totalMs": 1367,
       "chars": 479,
-      "reply": "1. Import a glTF avatar (or generate one from a selfie via three.ws Create). 2. Ensure the model has a valid armature with named bones (head, spine, limbs). 3. Upload or assign an animation clip—wave is built‑in—then apply it via the playAnimation tool. 4. Set the camera to target a bone like \"head\" for natural motion. 5. Toggle the skeleton helper on with setSkeleton if you need to inspect rigging. 6. Save or embed the scene; the wave animation will play whenever triggered.",
       "guard": null,
       "error": null
     },
@@ -214,7 +212,6 @@
       ],
       "totalMs": 2157,
       "chars": 682,
-      "reply": "1. Import a glTF avatar model into the three.ws viewer via the `loadModel` tool with a valid URL.  \n2. Verify the model has a compatible skeleton; if not, re‑export with a standard armature from your 3D software.  \n3. Run `runValidation` to check that the glTF joints and skin weights are correct and free of errors.  \n4. Open the material editor with `showMaterialEditor` if you need to tweak skin shaders or assign texture sets.  \n5. Trigger the wave motion by calling `playAnimation` with `\"wave\"` and `loop: false` so the avatar waves once.  \n6. Adjust the animation timing or blend using the viewer’s UI sliders, or keyframe the `mixamorig` joints directly in your source file.",
       "guard": {
         "on": [
           "jailbreak",
@@ -323,7 +320,6 @@
       ],
       "totalMs": 1759,
       "chars": 704,
-      "reply": "1. Prepare your glTF model with a Skeleton node hierarchy that matches a standard bone layout (root, hips, spine, limbs).  \n2. Upload the model via the three.ws console; the platform auto-detects the skeleton and binds the mesh.  \n3. Assign skin weights so each vertex influences its nearest bones, using a tool like Blender or the web editor.  \n4. Add an Animation Clip that triggers the “wave” action on the right arm, exporting it in the same glTF file.  \n5. In the three.ws editor, link the animation clip to a trigger event (e.g., user gesture or script call).  \n6. Test the avatar in the viewer; the wave should play when triggered, and you can toggle skeleton visibility with the setSkeleton tool.",
       "guard": null,
       "error": null
     }
