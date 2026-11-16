@@ -35,6 +35,29 @@ export const PRIVACY_RETENTION = [
 		predicate: `created_at < now() - $1 * interval '1 hour'`,
 		promise: 'Widget view events (no personal data) are retained for 12 months.',
 	},
+	// Teams bot Responsible AI records (migration 20261116145416). Conversation
+	// and person ids are hashed; none of these rows holds a message's text,
+	// except a report's capped excerpt of the bot output being reported.
+	{
+		table: 'teams_ai_messages',
+		hours: 24 * 90,
+		predicate: `created_at < now() - $1 * interval '1 hour'`,
+		promise: 'Links between a Teams bot message and the agent or 3D job that wrote it are kept for 90 days.',
+	},
+	{
+		table: 'teams_ai_feedback',
+		hours: 24 * 365,
+		predicate: `updated_at < now() - $1 * interval '1 hour'`,
+		promise: 'Thumbs up or down feedback and its optional comment on Teams bot replies is kept for 12 months.',
+	},
+	{
+		table: 'content_reports',
+		hours: 24 * 365,
+		// An open report is never purged: it is deleted 12 months after a
+		// reviewer closes it.
+		predicate: `status <> 'open' AND reviewed_at < now() - $1 * interval '1 hour'`,
+		promise: 'Content reports, with the reported excerpt, are kept for 12 months after a reviewer closes them.',
+	},
 ];
 
 /**

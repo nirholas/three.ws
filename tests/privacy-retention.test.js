@@ -28,6 +28,11 @@ describe('privacy retention inventory', () => {
 		expect(byTable.sessions.hours).toBe(24 * 30);
 		// Widget views: 12 months.
 		expect(byTable.widget_views.hours).toBe(24 * 365);
+		// Teams bot Responsible AI records (pages/trust.html retention table).
+		expect(byTable.teams_ai_messages.hours).toBe(24 * 90);
+		expect(byTable.teams_ai_feedback.hours).toBe(24 * 365);
+		expect(byTable.content_reports.hours).toBe(24 * 365);
+		expect(byTable.content_reports.predicate).toMatch(/status <> 'open'/);
 	});
 
 	it('quotes the policy promise and the column it keys on for each rule', () => {

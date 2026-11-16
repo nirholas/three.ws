@@ -23,6 +23,8 @@ const CAPABILITIES = [
 	'The **3D Viewer** and **Agents** tabs in your app bar open models and agents without leaving Teams.',
 	'In a meeting, add the **3D review stage** tab to share a model to the stage and pin comments on it together.',
 	'**link** followed by the code from three.ws notification settings sends your finished models to your Teams activity feed.',
+	'**chat** followed by an agent name or link lets you talk to that published agent here, with answers drawn from its documents and cited; type **chat stop** to end it.',
+	'Answers and models written by AI carry an **AI generated** label. Rate them with the thumbs buttons, and use **Report** (on a model card, or in the message menu) to flag anything harmful; a person reviews every report.',
 ];
 
 const LIMITS =

@@ -98,6 +98,96 @@ conversation reference the approval cards are posted to, and uninstalling
 clears it. The full flow, who may decide and the failure cases are in
 [docs/approvals.md, Approving from Microsoft Teams](approvals.md#approving-from-microsoft-teams).
 
+## Responsible AI
+
+The bot meets Microsoft's requirements for AI apps in Teams: generated
+content is labelled, people can rate it and report it, long answers stream,
+and grounded answers cite their sources. The router is
+[`api/_lib/teams-responsible-ai.js`](../api/_lib/teams-responsible-ai.js),
+called by `handleActivity` before the 3D Studio handler.
+
+### AI label
+
+Every bot message that carries model-generated text or a generated 3D model
+has one root `https://schema.org/Message` entity with
+`additionalType: ["AIGeneratedContent"]`, which Teams renders as the
+**AI generated** label (`withAiContent` in
+[`api/_lib/teams-ai.js`](../api/_lib/teams-ai.js)). That covers agent replies
+and the finished model card (the posted card is replaced by a labelled one
+when the job settles). Deterministic messages carry no label: help, the
+welcome, usage hints, rate-limit notices, errors, and the progress card.
+
+### Feedback
+
+Labelled messages set `channelData.feedbackLoop: { type: "default" }`, so
+Teams shows thumbs up and down with an optional comment. The vote arrives as
+a `message/submitAction` invoke with `actionName: "feedback"`; the bot stores
+it in `teams_ai_feedback` (one row per person per message, a second vote
+replaces the first) and answers an empty 200. The row links to the agent or
+3D job through `teams_ai_messages`, which records which agent or job wrote
+each labelled message.
+
+### Report
+
+- **On a 3D model card**: the finished card has a **Report** button
+  (`Action.Submit` with `msteams.type: "task/fetch"`, verb `threews.report`).
+  It opens a dialog with a reason and an optional comment.
+- **On any bot message**: the **Report** message action (command
+  `reportContent`, context `message`) in the message's (...) menu opens the
+  same dialog. Only messages the bot posted can be reported here; a person's
+  message gets a pointer to Teams' own reporting.
+
+A submission is stored in `content_reports` (reason, comment, a capped excerpt
+of the reported bot output, the agent or job), alerts ops once through
+`sendOpsAlert` (signature `content_report:<id>`), and the person sees a
+confirmation. A second report from the same person on the same message keeps
+the first. Reviewers work the queue in the **Responsible AI** panel of
+[/admin/microsoft](https://three.ws/admin/microsoft#responsible-ai)
+(`GET`/`POST /api/admin/content-reports`): mark a report actioned or dismissed
+with what was done, or reopen it.
+
+### Streaming
+
+In a personal chat, replies stream with the documented protocol
+([`api/_lib/teams-stream.js`](../api/_lib/teams-stream.js)): a `typing`
+activity with a `streaminfo` entity opens the stream (informative status such
+as "Searching Atlas's documents"), cumulative `streaming` updates follow at
+most once a second, and a `message` with `streamType: "final"` closes it with
+the label, citations and feedback buttons. Group chats and channels get one
+message when the answer is complete, and any refusal from Teams degrades to
+that single reply.
+
+For a 3D job, the personal-chat reply opens with "Starting the 3D generator"
+and the progress card closes the stream. Live progress then stays on the card,
+which refreshes itself, because a Teams stream must close within 10 minutes.
+
+### Agent chat and citations
+
+`chat <agent name or link>` binds the conversation to a published three.ws
+agent for 7 days (`chat stop` ends it). Each turn is dispatched to
+`/api/microsoft-teams/agent-reply` with the `CRON_SECRET` bearer, like the
+forge run, and answered by
+[`api/_lib/teams-agent-chat.js`](../api/_lib/teams-agent-chat.js): the agent's
+persona, its knowledge documents (`retrieveForChat`), and the agent's model
+chain with failover before the first token. Passages are numbered in the
+prompt; the reply's `[n]` markers become `citation` claims on the AI entity,
+each naming the document and linking back to the agent's page on three.ws.
+Cited document ids are recorded in `teams_ai_messages.cited_docs`.
+
+### What is stored
+
+Conversation and person ids are stored as sha256 hashes. No message text is
+stored, except the capped excerpt (2,000 characters) of bot output a person
+chose to report, which a reviewer needs to judge it. Agent-chat history lives
+in the cache for 30 minutes and is never written to the database. Retention
+([`api/_lib/privacy-retention.js`](../api/_lib/privacy-retention.js), listed
+on [the trust page](https://three.ws/trust#retention)): message links 90 days,
+feedback 12 months, reports 12 months after a reviewer closes them. The tables
+come from migration `20261116145416_teams_responsible_ai.sql`.
+
+Microsoft and Microsoft Teams are trademarks of the Microsoft group of
+companies.
+
 ## Configuration
 
 | Variable | Needed for | Without it |
@@ -105,7 +195,7 @@ clears it. The full flow, who may decide and the failure cases are in
 | `MS_TEAMS_BOT_APP_ID` | Every Teams feature. It is the JWT audience every activity is verified against. | The bot rejects all activities. |
 | `MS_TEAMS_BOT_APP_PASSWORD` | Posting cards: Send on the preview, the `forge` reply, the finished-card update for the whole chat, and approval cards in the owner's 1:1 chat | The action inserts the card into the compose box for the user to send, and the requester's refreshes keep it current. `forge <prompt>` cannot reply, and logs a warning. |
 | `MS_TEAMS_BOT_TENANT_ID` | Single-tenant bot registrations | Tokens are minted from `botframework.com` (multi-tenant). |
-| `CRON_SECRET` | Dispatching runs to `/api/microsoft-teams/forge-run` | Runs happen in the bot's process (CPU-throttled after the response on Cloud Run). |
+| `CRON_SECRET` | Dispatching runs to `/api/microsoft-teams/forge-run` and agent replies to `/api/microsoft-teams/agent-reply` | Runs and replies happen in the bot's process (CPU-throttled after the response on Cloud Run). |
 
 The Azure Bot's messaging endpoint is `https://three.ws/api/microsoft-teams/messages`.
 Every activity, including `composeExtension/fetchTask`, `composeExtension/submitAction`
@@ -304,6 +394,13 @@ throwaway database and asserts the Graph request. Tests:
 | [`api/_lib/teams-forge-cards.js`](../api/_lib/teams-forge-cards.js) | Form, progress, finished and error cards (AC 1.5) |
 | [`api/_lib/teams-connector.js`](../api/_lib/teams-connector.js) | Bot Connector token, send, reply and update, with a host allowlist |
 | [`api/microsoft-teams/forge-run.js`](../api/microsoft-teams/forge-run.js) | Internal run endpoint |
+| [`api/_lib/teams-responsible-ai.js`](../api/_lib/teams-responsible-ai.js) | Routes feedback, Report and agent chat activities |
+| [`api/_lib/teams-ai.js`](../api/_lib/teams-ai.js) | AI label, citations, feedback and report builders |
+| [`api/_lib/teams-ai-store.js`](../api/_lib/teams-ai-store.js) | Feedback, report and labelled-message storage, admin queries |
+| [`api/_lib/teams-stream.js`](../api/_lib/teams-stream.js) | Streaming replies in personal chat |
+| [`api/_lib/teams-agent-chat.js`](../api/_lib/teams-agent-chat.js) | `chat <agent>`, grounded and cited agent replies |
+| [`api/microsoft-teams/agent-reply.js`](../api/microsoft-teams/agent-reply.js) | Internal agent reply endpoint |
+| [`api/admin/content-reports.js`](../api/admin/content-reports.js) | Report review queue for /admin/microsoft |
 | [`integrations/microsoft/copilot-teams/manifest.template.json`](../integrations/microsoft/copilot-teams/manifest.template.json) | The `createModel` action command and the bot's `forge` command list |
 | [`api/_lib/teams-activity.js`](../api/_lib/teams-activity.js) | Graph sender: per-tenant token cache, deep links, retry, permanent-failure handling |
 | [`api/_lib/teams-identity.js`](../api/_lib/teams-identity.js) | Teams person to three.ws account mapping, link codes, install state |
