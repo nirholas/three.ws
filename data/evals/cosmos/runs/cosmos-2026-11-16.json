@@ -1,0 +1,266 @@
+{
+  "date": "2026-11-16",
+  "seed": 42,
+  "resolution": "720",
+  "num_frames": 121,
+  "worker": {
+    "gpu_name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "revision": "45666784803b3a7ad577e0def405f9afcc3bddb2",
+    "load_seconds": 1041.5,
+    "ready": true,
+    "upsampler": {
+      "configured": true,
+      "models": [
+        "nvidia/nemotron-3.5-super-vl-120b-a12b",
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+      ]
+    }
+  },
+  "results": [
+    {
+      "prompt": "a neon Tokyo street in the rain at night",
+      "old": [
+        {
+          "model": "cosmos-predict1-7b",
+          "ok": false,
+          "submit_ms": 136,
+          "code": "lane_unavailable",
+          "http_status": 404,
+          "detail": "Function '01327741-a1cb-4bdb-a31e-5391c8ca48c2': Not found for account '<redacted>'"
+        },
+        {
+          "model": "cosmos-predict1-5b",
+          "ok": false,
+          "submit_ms": 152,
+          "code": "lane_unavailable",
+          "http_status": 404,
+          "detail": "Function 'eef816a3-3940-413b-93c9-513ae29f34f9': Not found for account '<redacted>'"
+        }
+      ],
+      "new": {
+        "model": "cosmos3-nano",
+        "ok": true,
+        "job_id": "cw_c8eb39430cb24936806bb455f4774bf4",
+        "wall_s": 246.891,
+        "cold_start": false,
+        "video_url": "https://three.ws/cdn/forge/cosmos/cw_c8eb39430cb24936806bb455f4774bf4.mp4",
+        "timings": {
+          "upsample_s": 9.16,
+          "sample_s": 229.32,
+          "encode_s": 0.61,
+          "total_s": 239.39
+        },
+        "upsampler": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+        "fps": 24,
+        "num_frames": 121,
+        "resolution": "720"
+      },
+      "frame": {
+        "frame": "cosmos/2026-11-16/1.jpg",
+        "video": {
+          "width": 1280,
+          "height": 720,
+          "frames": 121,
+          "duration_s": 5.04,
+          "bytes": 1591590
+        }
+      }
+    },
+    {
+      "prompt": "a windswept desert canyon at golden hour",
+      "old": [
+        {
+          "model": "cosmos-predict1-7b",
+          "ok": false,
+          "submit_ms": 177,
+          "code": "lane_unavailable",
+          "http_status": 404,
+          "detail": "Function '01327741-a1cb-4bdb-a31e-5391c8ca48c2': Not found for account '<redacted>'"
+        },
+        {
+          "model": "cosmos-predict1-5b",
+          "ok": false,
+          "submit_ms": 142,
+          "code": "lane_unavailable",
+          "http_status": 404,
+          "detail": "Function 'eef816a3-3940-413b-93c9-513ae29f34f9': Not found for account '<redacted>'"
+        }
+      ],
+      "new": {
+        "model": "cosmos3-nano",
+        "ok": true,
+        "job_id": "cw_61ce74a9acb347f1ba7f7be08246e7b7",
+        "wall_s": 243.078,
+        "cold_start": false,
+        "video_url": "https://three.ws/cdn/forge/cosmos/cw_61ce74a9acb347f1ba7f7be08246e7b7.mp4",
+        "timings": {
+          "upsample_s": 10.6,
+          "sample_s": 228.54,
+          "encode_s": 0.6,
+          "total_s": 240.05
+        },
+        "upsampler": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+        "fps": 24,
+        "num_frames": 121,
+        "resolution": "720"
+      },
+      "frame": {
+        "frame": "cosmos/2026-11-16/2.jpg",
+        "video": {
+          "width": 1280,
+          "height": 720,
+          "frames": 121,
+          "duration_s": 5.04,
+          "bytes": 1441540
+        }
+      }
+    },
+    {
+      "prompt": "a bioluminescent forest at midnight",
+      "old": [
+        {
+          "model": "cosmos-predict1-7b",
+          "ok": false,
+          "submit_ms": 187,
+          "code": "lane_unavailable",
+          "http_status": 404,
+          "detail": "Function '01327741-a1cb-4bdb-a31e-5391c8ca48c2': Not found for account '<redacted>'"
+        },
+        {
+          "model": "cosmos-predict1-5b",
+          "ok": false,
+          "submit_ms": 131,
+          "code": "lane_unavailable",
+          "http_status": 404,
+          "detail": "Function 'eef816a3-3940-413b-93c9-513ae29f34f9': Not found for account '<redacted>'"
+        }
+      ],
+      "new": {
+        "model": "cosmos3-nano",
+        "ok": true,
+        "job_id": "cw_cd6416a2f18b456a95175c1e29b23f83",
+        "wall_s": 268.01,
+        "cold_start": false,
+        "video_url": "https://three.ws/cdn/forge/cosmos/cw_cd6416a2f18b456a95175c1e29b23f83.mp4",
+        "timings": {
+          "upsample_s": 34.92,
+          "sample_s": 228.65,
+          "encode_s": 0.54,
+          "total_s": 264.4
+        },
+        "upsampler": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+        "fps": 24,
+        "num_frames": 121,
+        "resolution": "720"
+      },
+      "frame": {
+        "frame": "cosmos/2026-11-16/3.jpg",
+        "video": {
+          "width": 1280,
+          "height": 720,
+          "frames": 121,
+          "duration_s": 5.04,
+          "bytes": 763351
+        }
+      }
+    },
+    {
+      "prompt": "a rooftop garden above a foggy city skyline",
+      "old": [
+        {
+          "model": "cosmos-predict1-7b",
+          "ok": false,
+          "submit_ms": 153,
+          "code": "lane_unavailable",
+          "http_status": 404,
+          "detail": "Function '01327741-a1cb-4bdb-a31e-5391c8ca48c2': Not found for account '<redacted>'"
+        },
+        {
+          "model": "cosmos-predict1-5b",
+          "ok": false,
+          "submit_ms": 136,
+          "code": "lane_unavailable",
+          "http_status": 404,
+          "detail": "Function 'eef816a3-3940-413b-93c9-513ae29f34f9': Not found for account '<redacted>'"
+        }
+      ],
+      "new": {
+        "model": "cosmos3-nano",
+        "ok": true,
+        "job_id": "cw_77fb116442ce4efe9f5e217e14b0bd69",
+        "wall_s": 245.659,
+        "cold_start": false,
+        "video_url": "https://three.ws/cdn/forge/cosmos/cw_77fb116442ce4efe9f5e217e14b0bd69.mp4",
+        "timings": {
+          "upsample_s": 10.72,
+          "sample_s": 229.13,
+          "encode_s": 0.59,
+          "total_s": 240.76
+        },
+        "upsampler": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+        "fps": 24,
+        "num_frames": 121,
+        "resolution": "720"
+      },
+      "frame": {
+        "frame": "cosmos/2026-11-16/4.jpg",
+        "video": {
+          "width": 1280,
+          "height": 720,
+          "frames": 121,
+          "duration_s": 5.04,
+          "bytes": 1919543
+        }
+      }
+    },
+    {
+      "prompt": "a snowy mountain pass under aurora",
+      "old": [
+        {
+          "model": "cosmos-predict1-7b",
+          "ok": false,
+          "submit_ms": 169,
+          "code": "lane_unavailable",
+          "http_status": 404,
+          "detail": "Function '01327741-a1cb-4bdb-a31e-5391c8ca48c2': Not found for account '<redacted>'"
+        },
+        {
+          "model": "cosmos-predict1-5b",
+          "ok": false,
+          "submit_ms": 148,
+          "code": "lane_unavailable",
+          "http_status": 404,
+          "detail": "Function 'eef816a3-3940-413b-93c9-513ae29f34f9': Not found for account '<redacted>'"
+        }
+      ],
+      "new": {
+        "model": "cosmos3-nano",
+        "ok": true,
+        "job_id": "cw_ca18760a5dee4f2dad34fe35c9421165",
+        "wall_s": 244.396,
+        "cold_start": false,
+        "video_url": "https://three.ws/cdn/forge/cosmos/cw_ca18760a5dee4f2dad34fe35c9421165.mp4",
+        "timings": {
+          "upsample_s": 11.01,
+          "sample_s": 230.24,
+          "encode_s": 0.48,
+          "total_s": 241.99
+        },
+        "upsampler": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+        "fps": 24,
+        "num_frames": 121,
+        "resolution": "720"
+      },
+      "frame": {
+        "frame": "cosmos/2026-11-16/5.jpg",
+        "video": {
+          "width": 1280,
+          "height": 720,
+          "frames": 121,
+          "duration_s": 5.04,
+          "bytes": 370675
+        }
+      }
+    }
+  ]
+}
