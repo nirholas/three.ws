@@ -107,8 +107,30 @@ function facts(sub) {
 		<dt>Plan</dt><dd>${esc(plan)}${sub.quantity ? ` · ${esc(sub.quantity)} seats` : ''}</dd>
 		<dt>Status</dt><dd>${statusBadge(sub.status)}${sub.is_test ? ' <span class="ma-badge">Test purchase</span>' : ''}</dd>
 		<dt>For</dt><dd>${esc(sub.beneficiary_email || 'Your organisation')}</dd>
-		<dt>Renews</dt><dd>${sub.term_end ? `${esc(date(sub.term_end))}${sub.auto_renew ? '' : ' (auto-renew off)'}` : 'After activation'}</dd>
+		${sub.is_free_trial
+		? `<dt>Billing</dt><dd><span class="ma-badge is-trial">Free trial</span> ${esc(trialLine(sub, plan))}</dd>`
+		: `<dt>Renews</dt><dd>${sub.term_end ? `${esc(date(sub.term_end))}${sub.auto_renew ? '' : ' (auto-renew off)'}` : 'After activation'}</dd>`}
 	</dl>`;
+}
+
+// Microsoft's term endDate is the last day of the trial, stored as midnight
+// UTC, so it is shown in UTC to keep the calendar day Microsoft means.
+function trialDate(v) {
+	const d = new Date(v);
+	return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+}
+
+/**
+ * "Free trial, ends <date>, then <price> through Microsoft". The price is the
+ * one Partner Center publishes for the plan (listAvailablePlans); without it
+ * the plan name stands in, never an invented number.
+ */
+function trialLine(sub, plan) {
+	const then = sub.plan_price_label ? `then ${sub.plan_price_label}` : `then the ${plan} plan`;
+	const ends = sub.trial_ends_at ? trialDate(sub.trial_ends_at) : null;
+	if (!ends) return `Starts when you activate, ${then} through Microsoft.`;
+	if (sub.auto_renew === false) return `Ends ${ends}. Auto-renew is off, so it will not convert to a paid plan.`;
+	return `Ends ${ends}, ${then} through Microsoft.`;
 }
 
 // ── States ──────────────────────────────────────────────────────────────────
@@ -181,7 +203,7 @@ async function renderResolve(token) {
 	render(`${header('Microsoft Marketplace', 'Activate your three.ws subscription', 'Microsoft confirmed this purchase. One step left.')}
 		<section class="ma-card">${facts(sub)}${who}
 			<div class="ma-actions">${signInButton()}</div>
-			<p class="ma-hint">Microsoft starts billing once activation completes. The purchase stays pinned to this browser for one hour.</p>
+			<p class="ma-hint">${sub.is_free_trial ? 'Your free trial starts once activation completes; Microsoft bills nothing until it ends.' : 'Microsoft starts billing once activation completes.'} The purchase stays pinned to this browser for one hour.</p>
 		</section>`, 'Purchase found. Continue with Microsoft to activate it.');
 }
 
@@ -213,7 +235,7 @@ async function renderDone(subscriptionId) {
 		const plan = PLAN_LABEL[body.plan] || body.plan;
 		return render(`${header('Microsoft Marketplace', `You are on ${plan}`, 'Your Microsoft purchase is linked and active.')}
 			<section class="ma-card is-good">${facts(sub)}
-				<p>Plan changes, seat changes and cancellation are managed in the Azure portal or Microsoft 365 admin center; three.ws picks them up automatically.</p>
+				<p>${sub.is_free_trial ? 'Your free trial is running. Keep the plan by doing nothing; cancel before it ends in the Azure portal or Microsoft 365 admin center and you are not charged.' : 'Plan changes, seat changes and cancellation are managed in the Azure portal or Microsoft 365 admin center; three.ws picks them up automatically.'}</p>
 				<div class="ma-actions"><a class="ma-btn ma-btn-primary" href="/dashboard" data-autofocus>Open dashboard</a><a class="ma-btn" href="/create">Create an agent</a><a class="ma-btn" href="/billing">Billing</a></div>
 			</section>`, `Activation complete. You are on ${plan}.`);
 	}

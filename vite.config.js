@@ -979,6 +979,7 @@ const appConfig = {
 				'microsoft-teams-stage': resolve(__dirname, 'pages/microsoft-teams-stage.html'),
 				'office-powerpoint': resolve(__dirname, 'pages/office-powerpoint.html'),
 				'office-powerpoint-auth': resolve(__dirname, 'pages/office-powerpoint-auth.html'),
+				'microsoft-auth-redirect': resolve(__dirname, 'pages/microsoft-auth-redirect.html'),
 				sidebar: resolve(__dirname, 'pages/sidebar.html'),
 				open: resolve(__dirname, 'pages/open.html'),
 				spend: resolve(__dirname, 'pages/spend.html'),
@@ -2654,6 +2655,9 @@ const appConfig = {
 					// Mirrors vercel.json.
 					else if (!filePath && /^\/microsoft\/activate\/?$/.test(path))
 						filePath = resolve(root, 'pages/microsoft-activate.html');
+					// /auth/microsoft/redirect → MSAL popup bridge for OneDrive in Forge. Mirrors vercel.json.
+					else if (!filePath && /^\/auth\/microsoft\/redirect\/?$/.test(path))
+						filePath = resolve(root, 'pages/microsoft-auth-redirect.html');
 					// /office/powerpoint → the PowerPoint add-in task pane; /auth is its sign-in callback.
 					else if (!filePath && /^\/office\/powerpoint\/auth\/?$/.test(path))
 						filePath = resolve(root, 'pages/office-powerpoint-auth.html');

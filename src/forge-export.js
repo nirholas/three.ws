@@ -31,6 +31,7 @@ import { creationIdFromGlbUrl, mountSlicerMenuItems } from './slicer-handoff.js'
 import { mountCraftcloudMenuItem } from './craftcloud-print.js';
 import { mountMinecraftMenuItem } from './forge-minecraft.js';
 import { mountPowerPointMenuItem } from './forge-powerpoint.js';
+import { mountOneDriveMenuItem } from './forge-onedrive.js';
 
 const log = createLogger('forge-export');
 
@@ -237,6 +238,14 @@ if (download && resultPanel) {
 	// PowerPoint: the stored model as an interactive 3D slide, built on the
 	// server from the creation (api/forge/export-pptx.js).
 	const powerPointItem = mountPowerPointMenuItem(menu, {
+		isLocalEdit: () => (download.getAttribute('href') || '').startsWith('blob:'),
+	});
+
+	// OneDrive: GLB, poster and slide into a OneDrive or SharePoint folder the
+	// person picks (src/forge-onedrive.js). Hidden unless the server has the
+	// Entra client id configured.
+	const oneDriveItem = mountOneDriveMenuItem(menu, {
+		getGlbUrl: () => download.getAttribute('href') || '',
 		isLocalEdit: () => (download.getAttribute('href') || '').startsWith('blob:'),
 	});
 
@@ -522,6 +531,11 @@ if (download && resultPanel) {
 		craftcloudItem.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl), e.detail?.glbUrl || null);
 		minecraftItem.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl), e.detail?.glbUrl || null);
 		powerPointItem.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl));
+		oneDriveItem.setModel({
+			glbUrl: e.detail?.glbUrl || null,
+			label: e.detail?.label || '',
+			creationId: e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl),
+		});
 		// Retire any conversion still polling for the previous model.
 		convertEpoch += 1;
 		for (const status of itemStatus.values()) {

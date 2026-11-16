@@ -41,6 +41,7 @@
 .ma-badge.is-good { color: var(--success, #22c55e); border-color: currentColor; }
 .ma-badge.is-warn { color: var(--warning, #f59e0b); border-color: currentColor; }
 .ma-badge.is-bad { color: var(--danger); border-color: currentColor; }
+.ma-badge.is-trial { color: var(--accent, #7c6cff); border-color: currentColor; font-weight: 600; }
 
 .ma-steps { margin: var(--space-md) 0 0; padding-left: 1.2em; color: var(--ink); line-height: 1.6; }
 .ma-steps li { margin-bottom: 4px; }

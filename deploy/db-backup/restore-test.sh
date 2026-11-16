@@ -10,25 +10,31 @@ OUT=/workspace/out
 SRC="$OUT/source.json"
 CRITICAL="users user_wallets sessions api_keys agent_identities avatars subscriptions audit_log economy_master_ledger pump_agent_mints"
 export PGDATA=/workspace/pgdata
+PGLOG=/workspace/pglog
 
 download_seconds=$(cat "$OUT/download_seconds")
 upload_seconds=$(cat "$OUT/upload_seconds")
 object=$(cat "$OUT/object")
 want_sha=$(sed -E 's/.*"archive_sha256":"([0-9a-f]+)".*/\1/' "$SRC")
 got_sha=$(sha256sum "$OUT/restore/neondb.tar" | cut -d' ' -f1)
-if [ "$want_sha" != "$got_sha" ]; then
-	echo "checksum mismatch after download: $want_sha vs $got_sha"
-	printf '{"kind":"three-ws-db-backup","object":"%s","finished_at":"%s","source":%s,"error":"checksum mismatch after download","ok":false}\n' \
-		"$object" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(cat "$SRC")" > "$OUT/report.json"
+
+fail() {
+	echo "$1"
+	printf '{"kind":"three-ws-db-backup","object":"%s","finished_at":"%s","source":%s,"error":"%s","ok":false}\n' \
+		"$object" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(cat "$SRC")" "$1" > "$OUT/report.json"
+	[ -f "$PGLOG/server.log" ] && tail -40 "$PGLOG/server.log"
 	exit 0
-fi
+}
+
+[ "$want_sha" = "$got_sha" ] || fail "checksum mismatch after download"
 
 t0=$(date +%s)
-tar -xf "$OUT/restore/neondb.tar" -C "$OUT/restore"
-mkdir -p "$PGDATA" && chown postgres:postgres "$PGDATA"
-gosu postgres initdb -D "$PGDATA" -A trust -U postgres >/dev/null
-gosu postgres pg_ctl -D "$PGDATA" -l /workspace/pg.log -o "-c max_wal_size=8GB -c maintenance_work_mem=1GB -c listen_addresses=''" -w start >/dev/null
-createdb -h /var/run/postgresql -U postgres neondb
+tar -xf "$OUT/restore/neondb.tar" -C "$OUT/restore" || fail "archive extraction failed"
+mkdir -p "$PGDATA" "$PGLOG" && chown postgres:postgres "$PGDATA" "$PGLOG"
+gosu postgres initdb -D "$PGDATA" -A trust -U postgres >/dev/null || fail "initdb failed"
+gosu postgres pg_ctl -D "$PGDATA" -l "$PGLOG/server.log" -o "-c max_wal_size=8GB -c maintenance_work_mem=1GB -c listen_addresses=''" -w start >/dev/null \
+	|| fail "local postgres did not start"
+createdb -h /var/run/postgresql -U postgres neondb || fail "createdb failed"
 restore_log=/workspace/pg_restore.log
 set +e
 pg_restore -h /var/run/postgresql -U postgres -d neondb --jobs=8 --no-owner --no-privileges "$OUT/restore/dump" 2> "$restore_log"
