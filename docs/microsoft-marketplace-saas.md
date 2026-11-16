@@ -84,6 +84,41 @@ Every hour the cron meters each `Subscribed`, linked subscription:
 
 A batch that fails to post (a network error or a 5xx) also stays pending and is retried. A pending row that is still unaccepted after the window is settled `expired`. Microsoft subtracts each plan's included quantity itself, so the raw hourly count is what gets reported.
 
+## Free trials
+
+A plan can carry a Microsoft-run free trial. Nothing about the purchase flow changes: the buyer lands on `/microsoft/activate`, signs in, and gets the plan. Microsoft bills nothing until the trial ends, then starts the paid plan on its own unless the buyer cancelled or turned recurring billing off.
+
+### Turning a trial on (Partner Center)
+
+In Partner Center, open the SaaS offer, then **Plan overview**, the plan, **Pricing and availability**, and tick **Free trial**. Set its length (Microsoft allows 1 to 180 days). Each plan has its own setting; publish the offer for the change to reach buyers. Microsoft's reference is [Plan a SaaS offer](https://learn.microsoft.com/en-us/partner-center/marketplace-offers/plan-saas-offer). The price the trial converts to is the plan's normal price on the same page, and three.ws reads it from Microsoft, so there is no price to configure on our side.
+
+### How three.ws tracks a trial
+
+Microsoft's subscription object carries `isFreeTrial: true` while the trial runs and its `term` covers the trial window. Every resolve, webhook and refresh (`upsertSubscription` in [`api/_lib/microsoft-marketplace.js`](../api/_lib/microsoft-marketplace.js)) passes Microsoft's copy through [`api/_lib/microsoft-trial.js`](../api/_lib/microsoft-trial.js), which keeps these columns on `microsoft_saas_subscriptions` ([`20261116152500_microsoft_saas_free_trial.sql`](../api/_lib/migrations/20261116152500_microsoft_saas_free_trial.sql)):
+
+| Column | Meaning |
+|---|---|
+| `is_free_trial` | Microsoft's current `isFreeTrial` |
+| `trial_started_at` | First time the activated subscription was seen in trial (the term start). A purchase still waiting for activation has not started its trial |
+| `trial_ends_at` | Last day of the trial (`term.endDate`). Kept after the trial so reporting can show it |
+| `trial_converted_at` | Set once when `isFreeTrial` flips to false on a `Subscribed` row: the trial ended, or the buyer upgraded early |
+| `trial_cancelled_at` | Set once when the subscription goes `Unsubscribed` during the trial. A cancelled trial never converts |
+| `plan_price`, `plan_currency`, `plan_term_unit`, `plan_price_plan_id` | The plan's recurring price from Microsoft's `listAvailablePlans`, fetched while in trial whenever the plan changes. Null when Microsoft returns no price, and a lookup failure never blocks the resolve; the next refresh tries again |
+
+Each transition writes one audit entry: `microsoft_marketplace:trial_started`, `trial_converted` or `trial_cancelled`.
+
+### What the buyer sees
+
+- **Activation page.** For a trial plan, the summary shows *Free trial, ends <date>, then <price> through Microsoft*. With no published price it names the plan instead (*then the Pro plan through Microsoft*) and never invents a figure. With recurring billing off it says the trial will not convert.
+- **Banner.** On every page with the site header, a signed-in user with a running trial sees a slim notice under the header: days left, what the trial converts to, a **Manage in Microsoft** link (Azure portal SaaS list, opens in a new tab) and a link to the activation page details. It never takes focus, sits in normal flow, and the dismiss button hides it for the rest of the browser session. The code is [`src/microsoft-trial-banner.js`](../src/microsoft-trial-banner.js), loaded lazily by the nav's notifications entry only for signed-in visitors, and it reads `GET /api/microsoft-marketplace/subscriptions` (each entry carries `is_free_trial`, `trial_ends_at`, `trial_days_left`, `trial_converts_at`, `plan_price_label` and `manage_url`), cached for ten minutes in `sessionStorage`.
+- **Reminders.** [`api/cron/microsoft-trial-reminders.js`](../api/cron/microsoft-trial-reminders.js) (`15 * * * *` in `vercel.json`) refreshes each running trial from Microsoft, then sends one in-app notification (`microsoft_trial_ending`, account category, also fans out to push and paired chats) and one email when seven days are left and again when one day is left. `microsoft_saas_trial_reminders` has one row per subscription and milestone, and its unique key is what makes the cron idempotent: a rerun or two overlapping ticks claim nothing new. A trial that converted or was cancelled since the last webhook is caught by the refresh and gets no reminder. An email that could not go out (email not configured, or a transport error) stays `pending` or `failed` and is retried on later ticks, at most three attempts, while the trial runs; the in-app notification is never repeated. Turning off email for account notifications skips the email and records `skipped`.
+
+### Reporting
+
+The internal Microsoft board (`/admin/microsoft`, [`api/_lib/microsoft-dashboard.js`](../api/_lib/microsoft-dashboard.js) `summarizeTrials`) shows trial starts, trials running and ending within seven days, conversions, cancellations during trial, and the conversion rate. The rate is conversions over trials that are decided (converted or cancelled), so trials still running do not count against it. Test subscriptions are excluded, and seats still in trial are left out of MRR.
+
+Before deploying this code, apply `20261116152500_microsoft_saas_free_trial.sql` in production: the board and the subscriptions query read the trial columns.
+
 ## Testing against preview
 
 Partner Center's preview audience lets an allow-listed tenant buy the offer without being charged. Microsoft marks such subscriptions `isTest`, and three.ws stores that flag. Run the test plan in the [plan doc](./microsoft-marketplace-offer-plan.md#test-plan):
