@@ -43,15 +43,18 @@ beforeAll(async () => {
 	({ runTeamsAgentReply } = await import('../api/_lib/teams-agent-chat.js'));
 	({ recordAiMessage } = await import('../api/_lib/teams-ai-store.js'));
 	({ hashId } = await import('../api/_lib/teams-ai.js'));
-});
-
-beforeEach(async () => {
+	// One database for the file (booting PGlite is the slow part); every test
+	// starts from empty tables.
 	holder.db = createPgliteSql();
 	await holder.db.exec(`
 		create table agent_identities (id uuid primary key, name text, meta jsonb, user_id uuid, deleted_at timestamptz);
 		insert into agent_identities (id, name) values ('${AGENT}', 'Atlas');
 	`);
 	await holder.db.exec(MIGRATION);
+});
+
+beforeEach(async () => {
+	await holder.db.exec('truncate teams_ai_messages, teams_ai_feedback, content_reports');
 });
 
 let seq = 0;
