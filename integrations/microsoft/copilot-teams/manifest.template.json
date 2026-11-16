@@ -173,6 +173,10 @@
             {
               "title": "link",
               "description": "link <code>: connect your three.ws account for Teams notifications"
+            },
+            {
+              "title": "approvals",
+              "description": "In your 1:1 chat: the agent approval requests waiting for you, as cards to approve or deny"
             }
           ]
         }
