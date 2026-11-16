@@ -3,26 +3,28 @@
   "id": "5632f1b7-42f3-45fb-b0d8-f1443d7ee17a",
   "alias": "ThreeWsModelWebPart",
   "componentType": "WebPart",
-
-  // The "*" signifies that the version should be taken from the package.json
   "version": "*",
   "manifestVersion": 2,
-
-  // If true, the component can only be installed on sites where Custom Script is allowed.
-  // Components that allow authors to embed arbitrary script code should set this to true.
-  // https://support.office.com/en-us/article/Turn-scripting-capabilities-on-or-off-1f2c515f-5d7e-448a-9fd7-835da935584f
   "requiresCustomScript": false,
-  "supportedHosts": ["SharePointWebPart", "TeamsPersonalApp", "TeamsTab", "SharePointFullPage"],
+  "supportedHosts": ["SharePointWebPart", "SharePointFullPage", "TeamsTab", "TeamsPersonalApp"],
   "supportsThemeVariants": true,
-
+  "supportsFullBleed": true,
   "preconfiguredEntries": [{
-    "groupId": "5c03119e-3074-46fd-976b-c60198311f70", // Advanced
-    "group": { "default": "Advanced" },
-    "title": { "default": "ThreeWsModel" },
-    "description": { "default": "Show a three.ws Forge model or any GLB in an interactive 3D viewer." },
-    "officeFabricIconFontName": "Page",
+    "groupId": "cf066440-0614-43d6-98ae-0b31cf14c7c3",
+    "group": { "default": "Media and content" },
+    "title": { "default": "three.ws 3D Model" },
+    "description": { "default": "An interactive 3D model from three.ws, or any GLB file, that visitors can turn and zoom." },
+    "officeFabricIconFontName": "CubeShape",
+    "searchablePropertyNames": ["title", "modelName"],
     "properties": {
-      "description": "ThreeWsModel"
+      "modelRef": "",
+      "modelName": "",
+      "title": "",
+      "height": 520,
+      "background": "transparent",
+      "framing": "full",
+      "autoplay": true,
+      "namePlate": false
     }
   }]
 }

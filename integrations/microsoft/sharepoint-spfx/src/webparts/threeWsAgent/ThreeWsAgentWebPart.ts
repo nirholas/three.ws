@@ -1,130 +1,97 @@
-import { Version } from '@microsoft/sp-core-library';
-import {
-  type IPropertyPaneConfiguration,
-  PropertyPaneTextField
-} from '@microsoft/sp-property-pane';
-import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
-import type { IReadonlyTheme } from '@microsoft/sp-component-base';
-import { escape } from '@microsoft/sp-lodash-subset';
-
-import styles from './ThreeWsAgentWebPart.module.scss';
+/**
+ * three.ws Agent web part: a live, animated three.ws agent on a modern
+ * SharePoint page (and in Teams tabs), with its own voice and chat.
+ */
+import { IPropertyPaneField, PropertyPaneToggle } from '@microsoft/sp-property-pane';
+import { ThemeChangedEventArgs, ThemeProvider } from '@microsoft/sp-component-base';
 import * as strings from 'ThreeWsAgentWebPartStrings';
-import welcomeDark from './assets/welcome-dark.png';
-import welcomeLight from './assets/welcome-light.png';
 
-export interface IThreeWsAgentWebPartProps {
-  description: string;
+import { PropertyPaneSearchPicker } from '../../lib/SearchPickerField';
+import { IStageWebPartProps, PaneCopy, StageWebPart } from '../../lib/StageWebPart';
+import { resolveTypedAgent, searchAgentItems } from '../../lib/pickers';
+import type { StageCopy, StageSubject } from '../../lib/stage';
+import { getAgent, isThreeWsId } from '../../lib/threeWsApi';
+
+export interface IThreeWsAgentWebPartProps extends IStageWebPartProps {
+	agentId: string;
+	agentName: string;
 }
 
-export default class ThreeWsAgentWebPart extends BaseClientSideWebPart<IThreeWsAgentWebPartProps> {
+export default class ThreeWsAgentWebPart extends StageWebPart<IThreeWsAgentWebPartProps> {
+	private themeProvider: ThemeProvider | undefined;
 
-  private _isDarkTheme: boolean = false;
-  private _environmentMessage: string = '';
+	protected async onInit(): Promise<void> {
+		this.themeProvider = this.context.serviceScope.consume(ThemeProvider.serviceKey);
+		this.onThemeChanged(this.themeProvider.tryGetTheme());
+		this.themeProvider.themeChangedEvent.add(this, this.handleThemeChanged);
+		await super.onInit();
+	}
 
-  public render(): void {
-    this.domElement.innerHTML = `
-    <section class="${styles.threeWsAgent}">
-      <div class="${styles.welcome}">
-        <img alt="" src="${this._isDarkTheme ? welcomeDark : welcomeLight}" class="${styles.welcomeImage}" />
-        <h2>Well done, ${escape(this.context.pageContext.user.displayName)}!</h2>
-        <div>${this._environmentMessage}</div>
-        <div>Web part property value: <strong>${escape(this.properties.description)}</strong></div>
-      </div>
-      <div>
-        <h3>Welcome to SharePoint Framework!</h3>
-        <p>
-        The SharePoint Framework (SPFx) is a extensibility model for Microsoft Viva, Microsoft Teams and SharePoint. It's the easiest way to extend Microsoft 365 with automatic Single Sign On, automatic hosting and industry standard tooling.
-        </p>
-        <h4>Learn more about SPFx development:</h4>
-          <ul class="${styles.links}">
-            <li><a href="https://aka.ms/spfx" target="_blank">SharePoint Framework Overview</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-graph" target="_blank">Use Microsoft Graph in your solution</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-teams" target="_blank">Build for Microsoft Teams using SharePoint Framework</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-viva" target="_blank">Build for Microsoft Viva Connections using SharePoint Framework</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-store" target="_blank">Publish SharePoint Framework applications to the marketplace</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-api" target="_blank">SharePoint Framework API reference</a></li>
-            <li><a href="https://aka.ms/m365pnp" target="_blank">Microsoft 365 Developer Community</a></li>
-          </ul>
-      </div>
-    </section>`;
-  }
+	private handleThemeChanged(args: ThemeChangedEventArgs): void {
+		this.onThemeChanged(args.theme);
+	}
 
-  protected onInit(): Promise<void> {
-    return this._getEnvironmentMessage().then(message => {
-      this._environmentMessage = message;
-    });
-  }
+	protected subjectKey(): string {
+		const id = (this.properties.agentId || '').trim();
+		return isThreeWsId(id) ? id : '';
+	}
 
+	protected async resolveSubject(key: string): Promise<StageSubject> {
+		const agent = await getAgent(key);
+		if (agent.name && agent.name !== this.properties.agentName) this.properties.agentName = agent.name;
+		return { agentId: agent.id, name: agent.name, posterUrl: agent.thumbnailUrl, pageUrl: agent.pageUrl };
+	}
 
+	protected stageCopy(): StageCopy {
+		return {
+			setupHeading: strings.SetupHeading,
+			setupBody: strings.SetupBody,
+			setupButton: strings.SetupButton,
+			notSetUp: strings.NotSetUp,
+			viewIn3d: strings.ViewIn3d,
+			loading: strings.Loading,
+			retry: strings.Retry,
+			openOnThreeWs: strings.OpenOnThreeWs,
+		};
+	}
 
-  private _getEnvironmentMessage(): Promise<string> {
-    if (!!this.context.sdks.microsoftTeams) { // running in Teams, office.com or Outlook
-      return this.context.sdks.microsoftTeams.teamsJs.app.getContext()
-        .then(context => {
-          let environmentMessage: string = '';
-          switch (context.app.host.name) {
-            case 'Office': // running in Office
-              environmentMessage = this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentOffice : strings.AppOfficeEnvironment;
-              break;
-            case 'Outlook': // running in Outlook
-              environmentMessage = this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentOutlook : strings.AppOutlookEnvironment;
-              break;
-            case 'Teams': // running in Teams
-            case 'TeamsModern':
-              environmentMessage = this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentTeams : strings.AppTeamsTabEnvironment;
-              break;
-            default:
-              environmentMessage = strings.UnknownEnvironment;
-          }
+	protected paneCopy(): PaneCopy {
+		return strings;
+	}
 
-          return environmentMessage;
-        });
-    }
+	protected contentFields(): IPropertyPaneField<unknown>[] {
+		return [
+			PropertyPaneSearchPicker(
+				'agentId',
+				{
+					key: 'agentPicker',
+					label: strings.AgentLabel,
+					placeholder: strings.AgentPlaceholder,
+					selectedLabel: this.properties.agentName || '',
+					selectedValue: this.properties.agentId || '',
+					search: searchAgentItems,
+					resolveTyped: resolveTypedAgent,
+					copy: {
+						searching: strings.Searching,
+						empty: strings.SearchEmpty,
+						noneSelected: strings.NoneSelected,
+						selected: strings.Selected,
+						error: strings.SearchError,
+					},
+				},
+				(item) => {
+					this.properties.agentName = item.value === item.subtitle ? '' : item.title;
+				},
+			),
+		];
+	}
 
-    return Promise.resolve(this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentSharePoint : strings.AppSharePointEnvironment);
-  }
+	protected showChatToggle(): IPropertyPaneField<unknown>[] {
+		return [PropertyPaneToggle('chat', { label: strings.ChatLabel, onText: strings.ChatOn, offText: strings.ChatOff })];
+	}
 
-  protected onThemeChanged(currentTheme: IReadonlyTheme | undefined): void {
-    if (!currentTheme) {
-      return;
-    }
-
-    this._isDarkTheme = !!currentTheme.isInverted;
-    const {
-      semanticColors
-    } = currentTheme;
-
-    if (semanticColors) {
-      this.domElement.style.setProperty('--bodyText', semanticColors.bodyText || null);
-      this.domElement.style.setProperty('--link', semanticColors.link || null);
-      this.domElement.style.setProperty('--linkHovered', semanticColors.linkHovered || null);
-    }
-
-  }
-
-  protected get dataVersion(): Version {
-    return Version.parse('1.0');
-  }
-
-  protected getPropertyPaneConfiguration(): IPropertyPaneConfiguration {
-    return {
-      pages: [
-        {
-          header: {
-            description: strings.PropertyPaneDescription
-          },
-          groups: [
-            {
-              groupName: strings.BasicGroupName,
-              groupFields: [
-                PropertyPaneTextField('description', {
-                  label: strings.DescriptionFieldLabel
-                })
-              ]
-            }
-          ]
-        }
-      ]
-    };
-  }
+	protected onDispose(): void {
+		this.themeProvider?.themeChangedEvent.remove(this, this.handleThemeChanged);
+		super.onDispose();
+	}
 }

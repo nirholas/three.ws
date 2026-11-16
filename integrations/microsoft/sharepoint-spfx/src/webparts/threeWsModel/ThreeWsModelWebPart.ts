@@ -1,130 +1,116 @@
-import { Version } from '@microsoft/sp-core-library';
-import {
-  type IPropertyPaneConfiguration,
-  PropertyPaneTextField
-} from '@microsoft/sp-property-pane';
-import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
-import type { IReadonlyTheme } from '@microsoft/sp-component-base';
-import { escape } from '@microsoft/sp-lodash-subset';
-
-import styles from './ThreeWsModelWebPart.module.scss';
+/**
+ * three.ws 3D Model web part: an interactive 3D model on a modern SharePoint
+ * page, picked from the three.ws Forge gallery or given as any https GLB URL.
+ */
+import { IPropertyPaneField } from '@microsoft/sp-property-pane';
+import { ThemeChangedEventArgs, ThemeProvider } from '@microsoft/sp-component-base';
 import * as strings from 'ThreeWsModelWebPartStrings';
-import welcomeDark from './assets/welcome-dark.png';
-import welcomeLight from './assets/welcome-light.png';
 
-export interface IThreeWsModelWebPartProps {
-  description: string;
+import { PropertyPaneSearchPicker } from '../../lib/SearchPickerField';
+import { IStageWebPartProps, PaneCopy, StageWebPart } from '../../lib/StageWebPart';
+import { resolveTypedModel, searchModelItems } from '../../lib/pickers';
+import type { StageCopy, StageSubject } from '../../lib/stage';
+import { extractThreeWsId, getModel, normalizeModelUrl } from '../../lib/threeWsApi';
+
+export interface IThreeWsModelWebPartProps extends IStageWebPartProps {
+	/** A three.ws model id, or an https URL to a .glb/.gltf file. */
+	modelRef: string;
+	modelName: string;
 }
 
-export default class ThreeWsModelWebPart extends BaseClientSideWebPart<IThreeWsModelWebPartProps> {
+/** A readable name for a bare GLB URL: its file name without the extension. */
+export function nameFromUrl(url: string): string {
+	try {
+		const file = decodeURIComponent(new URL(url).pathname.split('/').pop() || '');
+		return file.replace(/\.(glb|gltf)$/i, '').replace(/[-_]+/g, ' ').trim();
+	} catch {
+		return '';
+	}
+}
 
-  private _isDarkTheme: boolean = false;
-  private _environmentMessage: string = '';
+export default class ThreeWsModelWebPart extends StageWebPart<IThreeWsModelWebPartProps> {
+	private themeProvider: ThemeProvider | undefined;
 
-  public render(): void {
-    this.domElement.innerHTML = `
-    <section class="${styles.threeWsModel}">
-      <div class="${styles.welcome}">
-        <img alt="" src="${this._isDarkTheme ? welcomeDark : welcomeLight}" class="${styles.welcomeImage}" />
-        <h2>Well done, ${escape(this.context.pageContext.user.displayName)}!</h2>
-        <div>${this._environmentMessage}</div>
-        <div>Web part property value: <strong>${escape(this.properties.description)}</strong></div>
-      </div>
-      <div>
-        <h3>Welcome to SharePoint Framework!</h3>
-        <p>
-        The SharePoint Framework (SPFx) is a extensibility model for Microsoft Viva, Microsoft Teams and SharePoint. It's the easiest way to extend Microsoft 365 with automatic Single Sign On, automatic hosting and industry standard tooling.
-        </p>
-        <h4>Learn more about SPFx development:</h4>
-          <ul class="${styles.links}">
-            <li><a href="https://aka.ms/spfx" target="_blank">SharePoint Framework Overview</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-graph" target="_blank">Use Microsoft Graph in your solution</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-teams" target="_blank">Build for Microsoft Teams using SharePoint Framework</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-viva" target="_blank">Build for Microsoft Viva Connections using SharePoint Framework</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-store" target="_blank">Publish SharePoint Framework applications to the marketplace</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-api" target="_blank">SharePoint Framework API reference</a></li>
-            <li><a href="https://aka.ms/m365pnp" target="_blank">Microsoft 365 Developer Community</a></li>
-          </ul>
-      </div>
-    </section>`;
-  }
+	protected async onInit(): Promise<void> {
+		this.themeProvider = this.context.serviceScope.consume(ThemeProvider.serviceKey);
+		this.onThemeChanged(this.themeProvider.tryGetTheme());
+		this.themeProvider.themeChangedEvent.add(this, this.handleThemeChanged);
+		await super.onInit();
+	}
 
-  protected onInit(): Promise<void> {
-    return this._getEnvironmentMessage().then(message => {
-      this._environmentMessage = message;
-    });
-  }
+	private handleThemeChanged(args: ThemeChangedEventArgs): void {
+		this.onThemeChanged(args.theme);
+	}
 
+	protected subjectKey(): string {
+		const ref = (this.properties.modelRef || '').trim();
+		return normalizeModelUrl(ref) || extractThreeWsId(ref);
+	}
 
+	protected async resolveSubject(key: string): Promise<StageSubject> {
+		if (/^https:/i.test(key)) {
+			return {
+				modelUrl: key,
+				name: this.properties.modelName || nameFromUrl(key) || strings.SetupHeading,
+				posterUrl: '',
+				pageUrl: '',
+			};
+		}
+		const model = await getModel(key);
+		if (model.title && model.title !== this.properties.modelName) this.properties.modelName = model.title;
+		return { modelUrl: model.glbUrl, name: model.title, posterUrl: model.thumbnailUrl, pageUrl: model.pageUrl };
+	}
 
-  private _getEnvironmentMessage(): Promise<string> {
-    if (!!this.context.sdks.microsoftTeams) { // running in Teams, office.com or Outlook
-      return this.context.sdks.microsoftTeams.teamsJs.app.getContext()
-        .then(context => {
-          let environmentMessage: string = '';
-          switch (context.app.host.name) {
-            case 'Office': // running in Office
-              environmentMessage = this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentOffice : strings.AppOfficeEnvironment;
-              break;
-            case 'Outlook': // running in Outlook
-              environmentMessage = this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentOutlook : strings.AppOutlookEnvironment;
-              break;
-            case 'Teams': // running in Teams
-            case 'TeamsModern':
-              environmentMessage = this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentTeams : strings.AppTeamsTabEnvironment;
-              break;
-            default:
-              environmentMessage = strings.UnknownEnvironment;
-          }
+	protected stageCopy(): StageCopy {
+		return {
+			setupHeading: strings.SetupHeading,
+			setupBody: strings.SetupBody,
+			setupButton: strings.SetupButton,
+			notSetUp: strings.NotSetUp,
+			viewIn3d: strings.ViewIn3d,
+			loading: strings.Loading,
+			retry: strings.Retry,
+			openOnThreeWs: strings.OpenOnThreeWs,
+		};
+	}
 
-          return environmentMessage;
-        });
-    }
+	protected paneCopy(): PaneCopy {
+		return strings;
+	}
 
-    return Promise.resolve(this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentSharePoint : strings.AppSharePointEnvironment);
-  }
+	protected contentFields(): IPropertyPaneField<unknown>[] {
+		return [
+			PropertyPaneSearchPicker(
+				'modelRef',
+				{
+					key: 'modelPicker',
+					label: strings.ModelLabel,
+					placeholder: strings.ModelPlaceholder,
+					selectedLabel: this.properties.modelName || '',
+					selectedValue: this.properties.modelRef || '',
+					search: searchModelItems,
+					resolveTyped: resolveTypedModel,
+					copy: {
+						searching: strings.Searching,
+						empty: strings.SearchEmpty,
+						noneSelected: strings.NoneSelected,
+						selected: strings.Selected,
+						error: strings.SearchError,
+					},
+				},
+				(item) => {
+					this.properties.modelName = item.value === item.subtitle ? '' : item.title;
+				},
+			),
+		];
+	}
 
-  protected onThemeChanged(currentTheme: IReadonlyTheme | undefined): void {
-    if (!currentTheme) {
-      return;
-    }
+	protected showChatToggle(): IPropertyPaneField<unknown>[] {
+		return [];
+	}
 
-    this._isDarkTheme = !!currentTheme.isInverted;
-    const {
-      semanticColors
-    } = currentTheme;
-
-    if (semanticColors) {
-      this.domElement.style.setProperty('--bodyText', semanticColors.bodyText || null);
-      this.domElement.style.setProperty('--link', semanticColors.link || null);
-      this.domElement.style.setProperty('--linkHovered', semanticColors.linkHovered || null);
-    }
-
-  }
-
-  protected get dataVersion(): Version {
-    return Version.parse('1.0');
-  }
-
-  protected getPropertyPaneConfiguration(): IPropertyPaneConfiguration {
-    return {
-      pages: [
-        {
-          header: {
-            description: strings.PropertyPaneDescription
-          },
-          groups: [
-            {
-              groupName: strings.BasicGroupName,
-              groupFields: [
-                PropertyPaneTextField('description', {
-                  label: strings.DescriptionFieldLabel
-                })
-              ]
-            }
-          ]
-        }
-      ]
-    };
-  }
+	protected onDispose(): void {
+		this.themeProvider?.themeChangedEvent.remove(this, this.handleThemeChanged);
+		super.onDispose();
+	}
 }

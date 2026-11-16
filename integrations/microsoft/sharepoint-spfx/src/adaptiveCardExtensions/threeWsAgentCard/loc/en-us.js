@@ -1,11 +1,24 @@
-define([], function() {
+define([], function () {
   return {
-    "PropertyPaneDescription": "Write 1-3 sentences describing the functionality of this component.",
-    "TitleFieldLabel": "Card title",
-    "Title": "Adaptive Card Extension",
-    "SubTitle": "Quick view",
-    "PrimaryText": "SPFx Adaptive Card Extension",
-    "Description": "Create your SPFx Adaptive Card Extension solution!",
-    "QuickViewButton": "Quick view"
-  }
+    PropertyPaneDescription: 'Show a three.ws agent on the dashboard. People see its avatar and status and can open it to talk to it.',
+    TitleFieldLabel: 'Card title',
+    DefaultCardTitle: 'three.ws Agent',
+    AgentLabel: 'Agent',
+    AgentPlaceholder: 'Search agents by name, or paste an agent id or link',
+    Searching: 'Searching three.ws...',
+    SearchEmpty: 'No agents match. Try another name, or paste an agent link from three.ws.',
+    SearchError: 'Could not search three.ws.',
+    NoneSelected: 'No agent chosen yet.',
+    Selected: 'Showing',
+    SetupText: 'Choose an agent in the card settings to show it here.',
+    BrowseButton: 'Browse agents',
+    LoadingText: 'Loading the agent from three.ws',
+    LoadingNamed: 'Loading',
+    ErrorText: 'Could not load the agent.',
+    RetryButton: 'Try again',
+    QuickViewButton: 'About this agent',
+    OpenButton: 'Talk to',
+    PosterAlt: 'Avatar of',
+    NoDescription: 'Open the agent on three.ws to talk to it.'
+  };
 });

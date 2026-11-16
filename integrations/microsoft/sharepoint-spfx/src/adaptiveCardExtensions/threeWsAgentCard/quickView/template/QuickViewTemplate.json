@@ -4,25 +4,36 @@
   "version": "1.5",
   "body": [
     {
-      "type": "TextBlock",
-      "weight": "Bolder",
-      "text": "${title}"
+      "type": "Image",
+      "url": "${posterUrl}",
+      "altText": "${posterAlt}",
+      "size": "Stretch"
     },
     {
-      "type": "ColumnSet",
-      "columns": [
-        {
-          "type": "Column",
-          "items": [
-            {
-              "type": "TextBlock",
-              "weight": "Bolder",
-              "text": "${subTitle}",
-              "wrap": true
-            }
-          ]
-        }
-      ]
+      "type": "TextBlock",
+      "text": "${name}",
+      "weight": "Bolder",
+      "size": "Large",
+      "wrap": true
+    },
+    {
+      "type": "TextBlock",
+      "text": "${status}",
+      "isSubtle": true,
+      "spacing": "None",
+      "wrap": true
+    },
+    {
+      "type": "TextBlock",
+      "text": "${description}",
+      "wrap": true
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.OpenUrl",
+      "title": "${openLabel}",
+      "url": "${pageUrl}"
     }
   ]
 }

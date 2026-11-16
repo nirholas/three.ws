@@ -3,24 +3,20 @@
   "id": "d2763815-eac8-4db4-a63f-f44650e0c509",
   "alias": "ThreeWsAgentCardAdaptiveCardExtension",
   "componentType": "AdaptiveCardExtension",
-
-  // The "*" signifies that the version should be taken from the package.json
   "version": "*",
   "manifestVersion": 2,
-
-  // If true, the component can only be installed on sites where Custom Script is allowed.
-  // Components that allow authors to embed arbitrary script code should set this to true.
-  // https://support.office.com/en-us/article/Turn-scripting-capabilities-on-or-off-1f2c515f-5d7e-448a-9fd7-835da935584f
   "requiresCustomScript": false,
   "supportedHosts": ["Dashboard"],
   "preconfiguredEntries": [{
-    "groupId": "bd067b1e-3ad5-4d5d-a5fe-505f07d7f59c", // Dashboard
+    "groupId": "bd067b1e-3ad5-4d5d-a5fe-505f07d7f59c",
     "group": { "default": "Dashboard" },
-    "title": { "default": "ThreeWsAgentCard" },
-    "description": { "default": "A Viva Connections card for a three.ws agent." },
-    "iconImageUrl": "https://res.cdn.office.net/files/fabric-cdn-prod_20240610.001/assets/brand-icons/product-monoline/svg/vivaconnections_32x1.svg",
+    "title": { "default": "three.ws Agent card" },
+    "description": { "default": "A three.ws agent's avatar, name and live status, with a button to talk to it." },
+    "iconImageUrl": "https://three.ws/apple-touch-icon.png",
     "properties": {
-      "title": "ThreeWsAgentCard"
+      "title": "three.ws Agent",
+      "agentId": "",
+      "agentName": ""
     },
     "cardSize": "Medium"
   }]
