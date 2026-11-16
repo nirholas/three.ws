@@ -219,11 +219,22 @@ async function loadCard(id) {
 				<h1>${esc(card.name)}</h1>
 				${card.headline ? `<p class="tt-headline">${esc(card.headline)}${card.lastAction?.relative ? ` Last move ${esc(card.lastAction.relative)}.` : ''}</p>` : ''}
 			</div>
-			<a class="tt-btn" href="${esc(url)}" target="_blank" rel="noopener">Open on three.ws</a>
+			<div class="tt-card-actions">
+				<a class="tt-btn" href="${esc(url)}" target="_blank" rel="noopener">Open on three.ws</a>
+				<a class="tt-btn is-ghost" href="${esc(reportHref(id, card.name))}" target="_blank" rel="noopener" title="Report this agent to the three.ws trust and safety team">Report</a>
+			</div>
 		</div>
 		${card.description ? `<p class="tt-desc">${esc(card.description)}</p>` : ''}
 		${statsHtml(card)}`;
 	announce(`Showing ${card.name}.`);
+}
+
+// Agents are made by three.ws users, so every one shown here can be reported
+// to the trust and safety inbox the support page lists (abuse@three.ws).
+function reportHref(id, name) {
+	const subject = `Report agent ${id}`;
+	const body = `Agent: ${name || id}\nLink: https://three.ws/agents/${id}\nSeen in: Microsoft Teams Agents tab\n\nWhat is wrong with this agent?\n`;
+	return `mailto:abuse@three.ws?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 function select(id, { remember = true } = {}) {
