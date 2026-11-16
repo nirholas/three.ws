@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-16",
+			"title": "Microsoft Marketplace free trials, from activation to the first paid month",
+			"summary": "Plans bought on Microsoft Marketplace can now start with a free trial. The activation page says when the trial ends and what it becomes afterwards, using the price Microsoft publishes for the plan. While the trial runs, a slim banner under the site header shows the days left, what it converts to and a Manage in Microsoft link, and you can dismiss it for the session. You get one notification and one email a week before the trial ends and again the day before, never more. Microsoft bills nothing until the trial is over, and cancelling in Microsoft before then means no charge.",
+			"tags": [
+				"feature"
+			],
+			"link": "/microsoft/activate"
+		},
+		{
+			"date": "2026-11-16",
 			"title": "Use the three.ws app in Outlook and the Microsoft 365 app, not only Teams",
 			"summary": "The same three.ws Microsoft 365 app now runs in Outlook and the Microsoft 365 app. In a new Outlook email you can search agents and paste an agent link to get a card, built to the Adaptive Card version and limits Outlook supports. The Agents tab opens in Outlook's app bar and in the Microsoft 365 app, follows the host's light, dark and high contrast themes, and offers the right share action in each place: the Teams share dialog in Teams, a ready email in Outlook, and copy link in a plain browser. Creating a 3D model from chat stays in Teams, where its live card can run.",
 			"tags": [
