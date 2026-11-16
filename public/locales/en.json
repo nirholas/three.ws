@@ -5701,7 +5701,7 @@
 		"fable": "Fable",
 		"live_blendshapes": "Live blendshapes",
 		"magpie_tts_voice": "<span class=\"dot\"></span>Magpie TTS · voice",
-		"meta_description": "Type text, hear it in NVIDIA Magpie's voice, and watch the 3D avatar's face animate in real time — driven frame-for-frame by NVIDIA Audio2Face-3D. Real ARKit blendshapes, mapped onto any rig.",
+		"meta_description": "Talk to a 3D digital human. NVIDIA Riva hears you, each sentence of the reply is voiced by NVIDIA Magpie while the next is still being written, and NVIDIA Audio2Face-3D animates the face from that audio in real time.",
 		"meta_og_description": "NVIDIA Magpie voice + NVIDIA Audio2Face-3D facial animation, in sync, in the browser. The avatar's lips track the real audio.",
 		"meta_og_title": "Audio2Face · two NVIDIA models on one face · three.ws",
 		"meta_title": "Audio2Face · two NVIDIA models on one face · three.ws",
