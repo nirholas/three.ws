@@ -116,3 +116,23 @@ describe('/.well-known/security.txt (RFC 9116)', () => {
 		for (const k of Object.keys(fields)) expect(known.has(k), k).toBe(true);
 	});
 });
+
+describe('trust page authentication claims match the shipped code', () => {
+	const html = read('pages/trust.html');
+	it('states that two-step verification exists, not that it is missing', () => {
+		expect(html).not.toMatch(/no built-in second factor/i);
+		expect(html).toMatch(/two-step verification/i);
+		expect(existsSync(resolve(ROOT, 'api/_lib/account-mfa.js'))).toBe(true);
+	});
+	it('documents the audit trail, its export and its retention', () => {
+		expect(html).toMatch(/Audit trail/);
+		expect(html).toMatch(/\/dashboard\/account/);
+		expect(existsSync(resolve(ROOT, 'api/audit-log.js'))).toBe(true);
+	});
+});
+
+describe('trust compliance table', () => {
+	it('does not list built-in multi-factor sign-in as not pursued', () => {
+		expect(read('pages/trust.html')).not.toMatch(/Built-in multi-factor sign-in<\/td><td><span class="tr-badge is-off">/);
+	});
+});

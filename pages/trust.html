@@ -111,7 +111,7 @@
 					<li><b>Microsoft Marketplace buyers</b> sign in with their Microsoft Entra ID work account to activate a purchase.</li>
 					<li><b>Rolling out to a Microsoft organisation:</b> an Entra administrator approves the sign-in app once on the <a href="/enterprise/admin-consent">admin consent page</a> (delegated sign-in and own-profile permissions only), and the <a href="/docs/microsoft-admin-deployment">IT admin deployment guide</a> covers pushing the Teams app, the web app and the Edge extensions through Intune, Group Policy and Teams policies.</li>
 					<li><b>Enterprise SSO:</b> SAML 2.0 service-provider support is built and can be enabled for a deployment with that organisation's identity provider. It is not enabled on three.ws today.</li>
-					<li><b>Multi-factor:</b> three.ws has no built-in second factor today. Wallet sign-in is passwordless, and SSO sign-in inherits the identity provider's MFA policy. Passkeys are not supported yet.</li>
+					<li><b>Multi-factor:</b> any account can turn on two-step verification in <a href="/settings">Settings</a> (Security tab) with an authenticator app (TOTP, RFC 6238) and ten single-use recovery codes. It applies to every sign-in path: password, Google, GitHub, X, wallet and Telegram sign-in, and SSO. Secrets are encrypted before storage, recovery codes are stored only as hashes, and a code works once. It is opt-in per account; sign-ins through Microsoft Entra inherit the organisation's Conditional Access MFA policy and are not asked twice. Passkeys are not supported yet.</li>
 				</ul>
 				<p class="tr-evidence"><span>Evidence</span>
 					<a href="https://github.com/nirholas/three.ws/blob/main/api/oauth/%5Baction%5D.js">api/oauth/[action].js</a>
@@ -124,6 +124,7 @@
 			<section class="tr-section" id="access" aria-labelledby="h-access">
 				<h2 id="h-access">Access control and admin access</h2>
 				<p>Every API request is checked against the caller's scopes. Records belong to the user or agent that owns them, and generated files stay private to their owner until the owner publishes them. Agent skills declare the permissions they need, and the user grants them.</p>
+				<p><b>Roles.</b> A team has an owner and fixed-ceiling specialist roles (Researcher, Entry, Trader, Launcher). A grant can be narrowed but never widened past its role, and the server enforces it. See the <a href="https://github.com/nirholas/three.ws/blob/main/docs/teams.md">Teams documentation</a>.</p>
 				<p>Admin endpoints require a signed-in session whose wallet is on a short allowlist or whose account is flagged as an admin in the database. Production infrastructure is reached through Google Cloud IAM, and secrets are held in Google Secret Manager rather than in the repository.</p>
 				<p class="tr-evidence"><span>Evidence</span>
 					<a href="https://github.com/nirholas/three.ws/blob/main/api/_lib/admin.js">api/_lib/admin.js</a>
@@ -135,7 +136,7 @@
 			<section class="tr-section" id="logging" aria-labelledby="h-logging">
 				<h2 id="h-logging">Logging and monitoring</h2>
 				<p>Request and error logs go to Google Cloud Logging. Every server fault and every reported browser error becomes an alert, deduplicated by signature. Critical alerts reach the operator by private Telegram chat and email immediately; warnings arrive in an hourly digest. A probe checks the platform, API and payment surfaces every 5 minutes and publishes the results on the <a href="/status">status page</a>. Signer keys are scanned for leaks every 15 minutes.</p>
-				<p>Chat message content is not logged. Security audit logs are kept for 365 days.</p>
+				<p>Chat message content is not logged. <b>Audit trail:</b> sensitive account actions (API key creation and revocation, two-step verification changes, deletions, legal acceptances, failed sign-ins) are recorded with time, IP address and user agent. Account holders read their own trail in the <a href="/dashboard/account">action log</a> and export it as CSV, and a team owner exports the team's admin activity as CSV or JSON from the team page. Security audit logs are kept for 365 days.</p>
 				<p class="tr-evidence"><span>Evidence</span>
 					<a href="https://github.com/nirholas/three.ws/blob/main/api/_lib/alerts.js">api/_lib/alerts.js</a>
 					<a href="https://github.com/nirholas/three.ws/blob/main/api/status.js">api/status.js</a>
@@ -259,7 +260,7 @@
 							<tr><td>Written incident response plan</td><td><span class="tr-badge is-warn">In progress</span></td><td>Drafted from the running system and awaiting owner sign-off.</td></tr>
 							<tr><td>Automated off-provider database backups</td><td><span class="tr-badge is-warn">In progress</span></td><td>Neon point-in-time restore today; scheduled external dumps not yet automated.</td></tr>
 							<tr><td>Archived usage records expiry</td><td><span class="tr-badge is-warn">In progress</span></td><td>Archived usage events do not yet expire. Adding an expiry rule that matches the privacy policy's 90-day window.</td></tr>
-							<tr><td>Built-in multi-factor sign-in</td><td><span class="tr-badge is-off">Not pursued</span></td><td>Use wallet or SSO sign-in, which inherit the wallet's or identity provider's protections.</td></tr>
+							<tr><td>Two-step verification (authenticator app, recovery codes)</td><td><span class="tr-badge is-good">In place</span></td><td>Opt-in per account and applied to every sign-in path. Passkeys are not supported yet.</td></tr>
 							<tr><td>SOC 2 Type II, ISO/IEC 27001</td><td><span class="tr-badge is-off">Not pursued</span></td><td>Not held, and no audit is under way.</td></tr>
 							<tr><td>Third-party penetration test</td><td><span class="tr-badge is-off">Not pursued</span></td><td>Not yet commissioned. An internal source-level security review was completed in October 2026.</td></tr>
 							<tr><td>Data residency outside the US</td><td><span class="tr-badge is-off">Not pursued</span></td><td>All customer data is processed in the United States.</td></tr>
