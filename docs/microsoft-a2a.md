@@ -47,14 +47,17 @@ Set `THREE_WS_API_KEY` to call as an account and `THREE_WS_BASE_URL` to aim at a
 
 ## Live interop transcript
 
-Recorded 2026-11-16 with Agent Framework `agent-framework-a2a` 1.0.0b261112 and `a2a-sdk` 1.3.0 against a local build of this branch (production gains streaming and the new card when this branch is deployed):
+Recorded 2026-11-16 with Agent Framework `agent-framework-a2a` 1.0.0b261112 and `a2a-sdk` 1.3.0 against a local build of this branch running with the production lane configuration (production gains streaming and the new card when this branch is deployed). `a2a_client.py` exited 0: all three calls behaved.
 
 ```
 [card] three.ws, streaming=True, skills=['generate-3d-model', 'validate-model', 'search-avatars', 'inspect-glb-a2a', 'x402-service-catalog']
-[question] {"total": 96.0, "discovery": "https://three.ws/.well-known/x402.json", "services": [...]}
+[question] {"discovery": "https://three.ws/.well-known/x402.json", "services": [...]}
 [stream] asking for 'a small ceramic robot figurine'
-[stream] Generating "Generate a 3D model of a small ceramic robot figurine". Poll this task with GetTask ... or stream it with SendStreamingMessage ...
-[stream] no reconstruct lane configured. Start a new generation.
+[stream] Generating "Generate a 3D model of a small ceramic robot figurine". Poll this task with GetTask (tasks/get on 0.3) or stream it with SendStreamingMessage (message/stream on 0.3); about 60s left. ...
+[stream] Generated "Generate a 3D model of a small ceramic robot figurine". GLB: https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/65c8e1d2-8b9d-4ad2-b3e0-eefc495ca831.glb ...
+[stream] 3 updates, GLB: https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/65c8e1d2-8b9d-4ad2-b3e0-eefc495ca831.glb
+[cancel] task cbebc199-aa19-488e-90a7-b4b1d566af03 -> TASK_STATE_CANCELED
+[cancel] read back -> TASK_STATE_CANCELED
 ```
 
-The card, the plain question and the streamed task lifecycle (message, `working`, terminal status over SSE) completed. The generation itself ended `failed` in that run because the upstream GPU lanes were unavailable to the local server at that moment (NVIDIA NIM returned 504 and the HuggingFace inference credits were exhausted), so the GLB artifact and the cancel of a live job were **not** observed end to end with the Agent Framework client. The server-side stream, artifact and cancel paths are covered by the conformance tests. Re-run `a2a_client.py` once a lane is healthy to capture the GLB transcript.
+The plain question, the streamed generation (message, `working`, terminal status with the GLB as a file part) and the cancel of a running task all completed. Re-run `a2a_client.py` against `https://three.ws` once this branch is deployed to repeat the proof on production.
