@@ -32,6 +32,11 @@ Every step below needs the owner (push, deploy, Partner Center, Entra, store sub
 | 829 SaaS free trial | Deploy; turn on the free trial for the Pro plan in Partner Center. |
 | 830 /enterprise | Deploy; fill the offer URL in data/enterprise.json once the Marketplace offer is live. |
 | 831 Copilot declarative agent | Deploy; rerun `scripts/microsoft-copilot-agent-proof.mjs` for the forge starters; sideload in a Copilot-licensed tenant; upload to the Partner Center offer. |
+| 832 Outlook and M365 hosts | Enable the Azure Bot Outlook (m365extensions) channel; sideload-test the app in Outlook on the web. |
+| 833 Teams Store validation | Deploy (so copilot.frame-ancestors passes on production); create the reviewer demo account; complete Publisher Verification and set MS_PARTNER_CENTER_PUBLISHER_NAME; submit in Partner Center (reviewer pack: marketing/growth/submissions/programs/microsoft-teams-store-review.md). |
+| 834 Teams Responsible AI | Deploy. |
+| 835 SharePoint web part | Deploy (ships the CORS fix on GET /api/agents/:id); upload the .sppkg to the App Catalog; add `https://three.ws/agent-3d/1.5.2/` to Trusted script sources; take real-tenant screenshots; submit to AppSource. |
+| 836 OneDrive picker | Add Entra redirect URI `https://three.ws/auth/microsoft/redirect` with Files.ReadWrite; set MS_ENTRA_SSO_CLIENT_ID (step 3); run one real pick-and-save with a Microsoft account (`node scripts/verify-forge-onedrive.mjs --expect enabled` reaches the sign-in boundary today). |
 | 842 A2A | Deploy; Copilot Studio and Foundry click-through; rerun the Agent Framework client against https://three.ws. |
 | 843 PnP samples | Fork the three galleries and open the three PRs (steps in `integrations/microsoft/pnp-samples/README.md`); run `THREEWS_API_KEY=<key> node integrations/microsoft/pnp-samples/scripts/verify-live.mjs` with a real key (22 of 23 checks pass without one). |
 | 844 IT admin kit | Step 3 (the consent page shows "not configured" until MS_ENTRA_SSO_* is set). PSScriptAnalyzer 1.25.0 already passed with 0 findings. |
