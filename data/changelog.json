@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-16",
+			"title": "Forge results and agent 3D bodies load again",
+			"summary": "Storage's old public download domain stopped serving files, so some forge results opened to a blank viewer with a broken Download button, and many agents in the directory, the Teams tab and search showed no 3D body. Every one of those links now goes through three.ws's own file proxy, which serves the same files reliably. Older links saved before the change are rewritten when they are read, so nothing has to be regenerated.",
+			"tags": [
+				"fix"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-16",
 			"title": "Buying three.ws for a company now takes one page",
 			"summary": "The new enterprise page gives a company buyer and their security team everything in one visit: how to buy through Microsoft Marketplace or by invoice and purchase order, Sign in with Microsoft, Entra tenant claim and SCIM provisioning, hosting, encryption, retention, every subprocessor, which Microsoft surfaces are live today, and what support is offered. Every status is read from data and states what is true now, so nothing claims a certification three.ws does not hold. A print button turns the page into a procurement packet for vendor review, and the contact form reaches the team directly. Pricing now has a Buying for a company row that leads here.",
 			"tags": [
