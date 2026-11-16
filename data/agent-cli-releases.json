@@ -1,0 +1,5 @@
+{
+	"$comment": "Released standalone Windows builds of three-ws-agent (packages/agent-cli) and the exact bytes each one is. Written only by packages/agent-cli/scripts/release-windows.mjs; distributions/winget/scripts/generate-manifests.mjs builds the ThreeWs.Agent winget manifests from it, and tests/winget-manifests.test.js checks the manifests against it. See distributions/winget/README.md.",
+	"archive": "https://storage.googleapis.com/three-ws-lib-releases/agent-cli",
+	"releases": {}
+}
