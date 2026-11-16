@@ -143,6 +143,14 @@
 			<description>Edit agent &gt; Brain &gt; Guardrails lets an owner switch on, per agent, jailbreak detection, content safety on the visitor's message and on the agent's streamed reply, and topic control that politely redirects off-topic questions to the topics the owner lists. Everything is off by default. The checks run on NVIDIA NemoGuard models alongside the reply, so a clean turn barely waits, and the panel shows how many turns each check stopped over 30 days without storing any message text. In our eval, jailbreak detection caught 95% of jailbreak prompts and flagged none of 350 ordinary ones. Agents on the NVIDIA chat lane also no longer return empty or cut-off replies.</description>
 		</item>
 		<item>
+			<title>Agents read the tables, charts and scanned pages in your PDFs</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-16:Agents read the tables, charts and scanned pages in your PDFs</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A PDF added to an agent's Knowledge tab is now read page by page with NVIDIA NeMo Retriever models, so tables keep their rows and columns, charts are turned into values, and scanned pages and pasted screenshots of tables are read with OCR. The panel shows each page as it is read and previews the tables it finds, and a View tables button shows every extracted table. On a test of 44 questions over three research papers and a scanned copy, agents answered 90.9% correctly, up from 38.6%. If the models are unavailable, the file is still read as plain text. Arrives with the next deploy.</description>
+		</item>
+		<item>
 			<title>Analyze your three.ws usage in Power BI and Excel</title>
 			<link>https://three.ws/dashboard/settings</link>
 			<guid isPermaLink="false">2026-11-16:Analyze your three.ws usage in Power BI and Excel</guid>

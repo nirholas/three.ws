@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T19:17:27.217Z",
+	"generated_at": "2026-11-16T19:21:25.723Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -177,6 +177,16 @@
 				"feature",
 				"security",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "Agents read the tables, charts and scanned pages in your PDFs",
+			"summary": "A PDF added to an agent's Knowledge tab is now read page by page with NVIDIA NeMo Retriever models, so tables keep their rows and columns, charts are turned into values, and scanned pages and pasted screenshots of tables are read with OCR. The panel shows each page as it is read and previews the tables it finds, and a View tables button shows every extracted table. On a test of 44 questions over three research papers and a scanned copy, agents answered 90.9% correctly, up from 38.6%. If the models are unavailable, the file is still read as plain text. Arrives with the next deploy.",
+			"link": null,
+			"tags": [
+				"feature"
 			]
 		},
 		{
