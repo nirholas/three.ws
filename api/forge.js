@@ -116,6 +116,7 @@ import {
 import { isStorageInfrastructureError } from './_lib/r2.js';
 import { normalizeTraceId, recordForgeProgress, readForgeProgress } from './_lib/forge-progress.js';
 import { getSessionUser } from './_lib/auth.js';
+import { resolveForgeCreditPayer } from './_lib/forge-credit-payer.js';
 import { constantTimeEquals } from './_lib/crypto.js';
 import {
 	forgeRequestHash,
@@ -1380,16 +1381,18 @@ async function startJobWithBody(req, res, body) {
 			// Prepaid-credit lane: a signed-in user spends their balance instead of
 			// holding $THREE or paying per-call. Affordability is checked here; the
 			// single-use debit happens just before dispatch and is refunded if the
-			// job fails (see creditsCharge in the try/finally below).
-			const creditUser = await getSessionUser(req).catch(() => null);
-			if (!creditUser) {
-				return json(res, 401, {
-					error: 'unauthorized',
+			// job fails (see creditsCharge in the try/finally below). A machine
+			// client pays with an API key carrying avatars:write (forge-credit-payer.js).
+			const payer = await resolveForgeCreditPayer(req);
+			if (!payer.ok) {
+				return json(res, payer.status, {
+					error: payer.error,
 					feature: 'forge.high',
 					top_up_url: '/credits',
-					message: 'Sign in to pay with credits.',
+					message: payer.message,
 				});
 			}
+			const creditUser = payer.user;
 			let priceUsd;
 			try {
 				priceUsd = (await quoteCreditsForAction({ user: creditUser, action: 'forge.high' })).usd;
