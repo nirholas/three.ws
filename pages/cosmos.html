@@ -673,6 +673,179 @@
 				opacity: 1;
 				transform: translateX(-50%) translateY(0);
 			}
+			/* Scene worlds already contain the avatar: the live overlay steps back
+			   until the user brings it in front again. */
+			.cz-stage.is-scene-result model-viewer.cz-avatar {
+				opacity: 0;
+				pointer-events: none;
+			}
+			model-viewer.cz-avatar {
+				transition: opacity var(--duration-base) var(--ease-standard);
+			}
+			.cz-iconbtn[aria-pressed='true'] {
+				border-color: var(--cz-accent);
+				color: var(--cz-accent);
+			}
+			.cz-wrap [hidden] {
+				display: none !important;
+			}
+
+			/* Mode picker */
+			.cz-seg {
+				display: grid;
+				grid-auto-flow: column;
+				grid-auto-columns: 1fr;
+				gap: 4px;
+				padding: 4px;
+				border-radius: 12px;
+				background: rgba(0, 0, 0, 0.28);
+				border: 1px solid var(--cz-border);
+			}
+			.cz-seg button {
+				appearance: none;
+				border: 0;
+				border-radius: 9px;
+				padding: 9px 10px;
+				font: inherit;
+				font-size: 13px;
+				font-weight: 600;
+				color: var(--cz-dim);
+				background: transparent;
+				cursor: pointer;
+				transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+			}
+			.cz-seg button:hover:not(:disabled) {
+				color: var(--cz-text);
+				background: rgba(255, 255, 255, 0.06);
+			}
+			.cz-seg button:active:not(:disabled) {
+				transform: translateY(1px);
+			}
+			.cz-seg button[aria-pressed='true'] {
+				color: #06110d;
+				background: linear-gradient(120deg, var(--cz-accent), #a8f0dc);
+			}
+			.cz-seg button:focus-visible {
+				outline: 2px solid var(--cz-accent);
+				outline-offset: 2px;
+			}
+			.cz-seg button:disabled {
+				opacity: 0.45;
+				cursor: not-allowed;
+			}
+			.cz-seg-sm button {
+				padding: 7px 8px;
+				font-size: 12.5px;
+			}
+			.cz-hint {
+				margin: 8px 0 0;
+				font-size: 12.5px;
+				line-height: 1.5;
+				color: var(--cz-dim);
+			}
+			.cz-scene {
+				margin-top: 12px;
+				display: grid;
+				gap: 10px;
+			}
+			.cz-scene-card {
+				border: 1px dashed var(--cz-border);
+				border-radius: 12px;
+				padding: 10px;
+				display: grid;
+				gap: 8px;
+				background: rgba(0, 0, 0, 0.18);
+			}
+			.cz-scene-thumb:empty {
+				display: none;
+			}
+			.cz-scene-thumb img,
+			.cz-scene-thumb video {
+				display: block;
+				width: 100%;
+				aspect-ratio: 16 / 9;
+				object-fit: cover;
+				border-radius: 8px;
+				background: #000;
+			}
+			.cz-scene-empty {
+				margin: 0;
+				font-size: 12.5px;
+				line-height: 1.5;
+				color: var(--cz-dim);
+			}
+			.cz-scene-row {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 10px;
+			}
+			.cz-scene-meta {
+				font-size: 11.5px;
+				color: var(--cz-dim);
+				font-variant-numeric: tabular-nums;
+			}
+			.cz-btn-ghost.cz-btn-sm {
+				flex: 0 0 auto;
+				padding: 7px 12px;
+				font-size: 12.5px;
+			}
+			.cz-btn-ghost:disabled {
+				opacity: 0.5;
+				cursor: progress;
+			}
+			.cz-label-row {
+				display: flex;
+				align-items: baseline;
+				justify-content: space-between;
+			}
+			.cz-count {
+				font-size: 11.5px;
+				color: var(--cz-dim);
+				font-variant-numeric: tabular-nums;
+			}
+			.cz-phases .is-past {
+				color: var(--cz-accent);
+			}
+			.cz-phases > * + *::before {
+				content: '· ';
+				color: var(--cz-dim);
+			}
+			.cz-result {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px 10px;
+				align-items: center;
+				font-size: 12px;
+				color: var(--cz-dim);
+			}
+			.cz-result-model {
+				font-weight: 700;
+				color: var(--cz-accent);
+				border: 1px solid rgba(118, 224, 194, 0.4);
+				border-radius: 999px;
+				padding: 3px 9px;
+			}
+			.cz-result-times {
+				font-variant-numeric: tabular-nums;
+			}
+			.cz-row select {
+				flex: 1;
+				background: rgba(0, 0, 0, 0.28);
+				border: 1px solid var(--cz-border);
+				border-radius: 10px;
+				color: var(--cz-text);
+				font: inherit;
+				padding: 9px 11px;
+			}
+			.cz-row select:focus-visible,
+			.cz-row input:focus-visible {
+				outline: 2px solid var(--cz-accent);
+				outline-offset: 1px;
+			}
+			.cz-row select:disabled {
+				opacity: 0.5;
+			}
 		</style>
 	
 	<link rel="canonical" href="https://three.ws/cosmos">
@@ -725,6 +898,13 @@
 				></model-viewer>
 
 				<div class="cz-stage-tools">
+					<button class="cz-iconbtn" id="cz-overlay" type="button" aria-pressed="false" hidden title="Show the live avatar in front of the generated world">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+							<circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.8" />
+							<path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+						</svg>
+						Avatar
+					</button>
 					<button class="cz-iconbtn" id="cz-download" type="button" title="Download the world clip (MP4)" data-i18n-attr="title:cosmos.download_the_world_clip_mp4_title">
 						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
 							<path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -745,10 +925,8 @@
 							<span id="cz-prog-label" data-i18n="cosmos.summoning_the_world">Summoning the world…</span>
 							<span id="cz-prog-time" data-i18n="cosmos.0s">0s</span>
 						</div>
-						<div class="cz-prog-bar"><i id="cz-prog-fill"></i></div>
-						<div class="cz-phases" id="cz-phases">
-							<b data-i18n="cosmos.submitting">Submitting</b><span data-i18n="cosmos.rendering_frames">· Rendering frames</span><span data-i18n="cosmos.finalizing">· Finalizing</span>
-						</div>
+						<div class="cz-prog-bar" id="cz-prog-bar" role="progressbar" aria-label="World render progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="cz-prog-fill"></i></div>
+						<div class="cz-phases" id="cz-phases"></div>
 					</div>
 				</div>
 			</section>
@@ -764,11 +942,38 @@
 				</div>
 
 				<div>
-					<label class="cz-label" for="cz-prompt" data-i18n="cosmos.describe_the_world">Describe the world</label>
+					<span class="cz-label" id="cz-mode-label" data-i18n="cosmos.build_the_world_from">Build the world from</span>
+					<div class="cz-seg" role="group" aria-labelledby="cz-mode-label">
+						<button type="button" id="cz-mode-text" aria-pressed="true" data-i18n="cosmos.mode_text">Text</button>
+						<button type="button" id="cz-mode-scene" aria-pressed="false" data-i18n="cosmos.mode_from_my_scene">From my scene</button>
+					</div>
+					<p class="cz-hint" id="cz-mode-hint"></p>
+					<div class="cz-scene" id="cz-scene" hidden>
+						<div class="cz-seg cz-seg-sm" id="cz-scene-kinds" role="group" aria-label="How the scene steers the world">
+							<button type="button" data-kind="image" aria-pressed="true" data-i18n="cosmos.scene_still">Still</button>
+							<button type="button" data-kind="depth" aria-pressed="false" data-i18n="cosmos.scene_depth">Depth</button>
+							<button type="button" data-kind="edge" aria-pressed="false" data-i18n="cosmos.scene_edge">Edge</button>
+						</div>
+						<div class="cz-scene-card">
+							<div class="cz-scene-thumb" id="cz-scene-thumb"></div>
+							<p class="cz-scene-empty" id="cz-scene-empty"></p>
+							<div class="cz-scene-row">
+								<span class="cz-scene-meta" id="cz-scene-meta"></span>
+								<button class="cz-btn-ghost cz-btn-sm" id="cz-scene-capture" type="button">Capture scene</button>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div>
+					<div class="cz-label-row">
+						<label class="cz-label" for="cz-prompt" data-i18n="cosmos.describe_the_world">Describe the world</label>
+						<span class="cz-count" id="cz-prompt-count" aria-live="off">0 / 600</span>
+					</div>
 					<textarea
 						id="cz-prompt"
 						class="cz-textarea"
-						maxlength="300"
+						maxlength="600"
 						placeholder="a neon Tokyo street in the rain at night, reflections shimmering on the pavement"
 					></textarea>
 					<div class="cz-chips" id="cz-chips" role="group" aria-label="Prompt ideas"></div>
@@ -778,9 +983,14 @@
 					<span class="spin" aria-hidden="true"></span>
 					<span class="label-go">Generate world</span>
 				</button>
-				<div class="cz-secondary" id="cz-secondary" style="display: none">
-					<button class="cz-btn-ghost" id="cz-cancel" type="button" data-i18n="cosmos.cancel">Cancel</button>
-					<button class="cz-btn-ghost" id="cz-regen" type="button" style="display: none" data-i18n="cosmos.new_world">New world</button>
+				<div class="cz-secondary" id="cz-secondary" hidden>
+					<button class="cz-btn-ghost" id="cz-cancel" type="button" hidden data-i18n="cosmos.cancel">Cancel</button>
+					<button class="cz-btn-ghost" id="cz-regen" type="button" hidden data-i18n="cosmos.new_world">New world</button>
+				</div>
+
+				<div class="cz-result" id="cz-result" hidden>
+					<span class="cz-result-model" id="cz-result-model"></span>
+					<span class="cz-result-times" id="cz-result-times"></span>
 				</div>
 
 				<div class="cz-note" id="cz-note" role="alert"></div>
@@ -794,13 +1004,26 @@
 					<summary data-i18n="cosmos.advanced">Advanced</summary>
 					<div class="cz-row">
 						<label class="cz-label" for="cz-seed" style="margin: 0" data-i18n="cosmos.seed">Seed</label>
-						<input id="cz-seed" type="number" min="0" max="4294967295" placeholder="random" />
+						<input id="cz-seed" type="number" min="0" max="2147483647" placeholder="random" />
+					</div>
+					<div class="cz-row">
+						<label class="cz-label" for="cz-resolution" style="margin: 0" data-i18n="cosmos.resolution">Resolution</label>
+						<select id="cz-resolution">
+							<option value="720" selected>720p (1280×720)</option>
+							<option value="480">480p (832×480), faster</option>
+						</select>
+					</div>
+					<div class="cz-row">
+						<label class="cz-label" for="cz-frames" style="margin: 0" data-i18n="cosmos.length">Length</label>
+						<select id="cz-frames">
+							<option value="121" data-label="5 s" selected>121 frames (about 5 s)</option>
+							<option value="61" data-label="2.5 s">61 frames (about 2.5 s)</option>
+							<option value="33" data-label="1.5 s">33 frames (about 1.5 s), fastest</option>
+						</select>
 					</div>
 				</details>
 
-				<p class="cz-foot" data-i18n="cosmos.each_world_is_a_5_second_1280">
-					Each world is a ~5-second 1280×704 clip from NVIDIA Cosmos. Free, on the NVIDIA NIM tier.
-				</p>
+				<p class="cz-foot" id="cz-foot">World generation runs on NVIDIA Cosmos world models.</p>
 			</aside>
 		</main>
 

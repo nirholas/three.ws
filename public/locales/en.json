@@ -4032,8 +4032,6 @@
 		"cosmos_living_worlds": "Cosmos · Living Worlds",
 		"describe_the_world": "Describe the world",
 		"download_the_world_clip_mp4_title": "Download the world clip (MP4)",
-		"each_world_is_a_5_second_1280": "Each world is a ~5-second 1280×704 clip from NVIDIA Cosmos. Free, on the NVIDIA NIM tier.",
-		"finalizing": "· Finalizing",
 		"generate_world": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"label-go\">Generate world</span>",
 		"meta_description": "Bring your 3D avatar to life with NVIDIA Cosmos. Generate a living, photoreal world from a text prompt and watch your avatar stand inside a cinematic, animated scene.",
 		"meta_og_description": "Type a world, watch it come alive behind your avatar, powered by NVIDIA Cosmos world models.",
@@ -4045,10 +4043,16 @@
 		"nvidia_cosmos": "NVIDIA Cosmos",
 		"nvidia_cosmos_renders_a_living_photoreal_wor": "NVIDIA Cosmos renders a living, photoreal world from your words. Describe a place, and your avatar steps straight into it.",
 		"nvidia_world_models_type_a_world_watch": "NVIDIA world models: type a world, watch your avatar live in it",
-		"rendering_frames": "· Rendering frames",
 		"seed": "Seed",
-		"submitting": "Submitting",
-		"summoning_the_world": "Summoning the world…"
+		"summoning_the_world": "Summoning the world…",
+		"build_the_world_from": "Build the world from",
+		"mode_text": "Text",
+		"mode_from_my_scene": "From my scene",
+		"scene_still": "Still",
+		"scene_depth": "Depth",
+		"scene_edge": "Edge",
+		"resolution": "Resolution",
+		"length": "Length"
 	},
 	"create": {
 		"15_sec": "~15 sec",
