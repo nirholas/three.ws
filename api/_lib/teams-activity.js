@@ -21,6 +21,9 @@ export const GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
 export const LOGIN_BASE = 'https://login.microsoftonline.com';
 export const GRAPH_SCOPE = 'https://graph.microsoft.com/.default';
 export const TAB_ENTITY_ID = 'threews-agents';
+// The Graph application permission a tenant admin consents to (provisioned in
+// integrations/microsoft/provisioning/resources.json).
+export const REQUIRED_PERMISSIONS = ['TeamsActivity.Send'];
 export const PREVIEW_MAX = 150;
 const MAX_ATTEMPTS = 3;
 const MAX_WAIT_S = 20;

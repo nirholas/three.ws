@@ -127,6 +127,77 @@ and `adaptiveCard/action`, is verified with `verifyBotToken`
   success, variation, failure and retry, and real RS256-signed tokens for
   each invoke type.
 
+## Activity feed notifications
+
+A finished (or failed) 3D model, and agent events, reach a linked person's Teams
+bell, feed and phone through Microsoft Graph
+[sendActivityNotification](https://learn.microsoft.com/en-us/graph/api/userteamwork-sendactivitynotification).
+It is the `teams` leg of the standard notification fan-out
+([`api/_lib/notify.js`](../api/_lib/notify.js)), so any event that already rings
+the three.ws bell can reach Teams. Delivery never blocks the job that raised it.
+
+### Linking a Teams account
+
+1. Install the three.ws app in Teams. The bot records the install from the
+   `installationUpdate` event and from any message.
+2. On three.ws open Settings, Notifications, Microsoft Teams, and choose
+   **Create a link code**.
+3. Send the bot `link ABCD-EFGH` with that code. The code works once and expires
+   after ten minutes.
+
+Uninstalling the app clears the link. **Unlink Teams** in settings clears it
+from the three.ws side. The mapping lives in `teams_identities`
+([migration](../api/_lib/migrations/20261116120000_teams_identities.sql)).
+
+### Events
+
+| Activity type | Raised by | Default |
+|---|---|---|
+| `forgeJobCompleted` | A 3D model finished | On |
+| `forgeJobFailed` | A 3D model failed | On |
+| `agentTaskCompleted` | An agent loop reported a finished task | Off |
+| `agentMentioned` | An agent was mentioned | On |
+| `agentMessageReceived` | A reply, direct message or agent mail arrived | On |
+
+Each is a switch in settings (`PUT /api/notifications/teams`). The activity types
+are declared in `activities.activityTypes` of the manifest, and a test fails if
+the manifest and [`api/_lib/teams-activity.js`](../api/_lib/teams-activity.js)
+disagree. Tapping a notification opens the Agents tab through a deep link whose
+`subEntityId` is `job:<id>` (the model) or `agent:<id>`; Teams passes it to the
+tab as `?sub=` (the tab URL maps `{subPageId}`).
+
+A Forge job started in a Teams chat has no three.ws session, so it is announced
+to whoever linked the requesting Teams identity, once per job.
+
+### Admin consent and configuration
+
+Sending needs the Graph **application** permission `TeamsActivity.Send` on the
+bot's Entra app (`MS_TEAMS_BOT_APP_ID`), consented by an admin of each tenant
+whose people should be notified. The provisioner declares the permission
+([`resources.json`](../integrations/microsoft/provisioning/resources.json)); the
+admin grants it at
+`https://login.microsoftonline.com/<tenant-id>/adminconsent?client_id=<MS_TEAMS_BOT_APP_ID>`
+(settings shows this link when Graph answers 403). Set `MS_APP_ID` (the Teams
+app id from Partner Center, used to build the deep link) next to
+`MS_TEAMS_BOT_APP_ID` and `MS_TEAMS_BOT_APP_PASSWORD`, with
+`gcloud run services update --update-env-vars`, never `--set-env-vars`.
+The manifest's `webApplicationInfo` names the bot app; submit the updated
+package to Partner Center.
+
+### Troubleshooting
+
+| Symptom in settings | Cause | Fix |
+|---|---|---|
+| "Your Microsoft 365 admin has not approved notifications" | Graph 403 or token refused | Send the admin the consent link |
+| "three.ws is not installed for you" | Graph 404 | Reinstall the app in Teams, then send the bot any message |
+| Nothing arrives, no error | Event switched off, account not linked, or `MS_APP_ID` unset | Check the switches, relink, check the env vars |
+| Test notification fails with 502 | Any of the above | The message under the button names the cause |
+
+Verify the whole path without a tenant:
+`node scripts/teams-activity-live-check.mjs` settles a Teams-started job on a
+throwaway database and asserts the Graph request. Tests:
+`npx vitest run tests/teams-activity.test.js tests/teams-identity.test.js`.
+
 ## Files
 
 | File | Role |
@@ -137,3 +208,7 @@ and `adaptiveCard/action`, is verified with `verifyBotToken`
 | [`api/_lib/teams-connector.js`](../api/_lib/teams-connector.js) | Bot Connector token, send, reply and update, with a host allowlist |
 | [`api/microsoft-teams/forge-run.js`](../api/microsoft-teams/forge-run.js) | Internal run endpoint |
 | [`integrations/microsoft/copilot-teams/manifest.template.json`](../integrations/microsoft/copilot-teams/manifest.template.json) | The `createModel` action command and the bot's `forge` command list |
+| [`api/_lib/teams-activity.js`](../api/_lib/teams-activity.js) | Graph sender: per-tenant token cache, deep links, retry, permanent-failure handling |
+| [`api/_lib/teams-identity.js`](../api/_lib/teams-identity.js) | Teams person to three.ws account mapping, link codes, install state |
+| [`api/notifications/teams.js`](../api/notifications/teams.js) | Settings endpoint: link code, per-event switches, test notification, unlink |
+| [`api/microsoft-teams/job.js`](../api/microsoft-teams/job.js) | What the tab shows when a notification opens a job |

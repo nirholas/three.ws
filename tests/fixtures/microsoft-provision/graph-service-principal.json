@@ -24,6 +24,15 @@
 		},
 		{
 			"allowedMemberTypes": ["Application"],
+			"description": "Allows the app to send activity feed notifications to users in Microsoft Teams without a signed in user.",
+			"displayName": "Send a teamwork activity to any user",
+			"id": "a267235f-af13-44dc-8385-c1dc93023186",
+			"isEnabled": true,
+			"origin": "Application",
+			"value": "TeamsActivity.Send"
+		},
+		{
+			"allowedMemberTypes": ["Application"],
 			"description": "Allows the app to read user profiles without a signed in user.",
 			"displayName": "Read all users' full profiles",
 			"id": "df021288-bdef-4463-88db-98f22de89214",
