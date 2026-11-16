@@ -1,5 +1,7 @@
 # nvidia 05: a new NVIDIA model goes from catalog appearance to an evaluated, ready-to-apply proposal automatically
 
+Status 2026-11-16: pipeline, admin board (/admin/nim-releases), tests (19) and docs shipped and the migration is applied; bolt-e4b ran end to end (adopt, stored verdict, report, diff, draft) and the 3 backlog reports are committed. Not archived: `npm run audit:docs` still reports 13 findings, all in other orders' files (brev, guardrails, i18n, cosmos workers). Waiting on the owner: push, deploy, cron sync.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `nvidia-` order, so it can run in parallel with all of them. Dev port: 3255.
 
 ## Operating clause (binding)
