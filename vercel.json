@@ -1085,6 +1085,10 @@
 			"dest": "/api/oauth/[action]?action=introspect"
 		},
 		{
+			"src": "/login/verify/?",
+			"dest": "/login-verify.html"
+		},
+		{
 			"src": "/login/?",
 			"dest": "/login.html"
 		},
@@ -6240,7 +6244,7 @@
 			"dest": "/api/microsoft-marketplace/[action]?action=sso-callback"
 		},
 		{
-			"src": "/api/microsoft-marketplace/(status|resolve|subscriptions|webhook)/?",
+			"src": "/api/microsoft-marketplace/(status|resolve|subscriptions|seats|webhook)/?",
 			"dest": "/api/microsoft-marketplace/[action]?action=$1"
 		},
 		{

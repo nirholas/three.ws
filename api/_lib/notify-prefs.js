@@ -135,6 +135,9 @@ const TYPE_CATEGORY = {
 	revenue_reconcile_drift: 'alerts',
 	// A Microsoft Marketplace lead reached the platform owner (api/_lib/microsoft-leads.js).
 	marketplace_lead: 'sales',
+	// A Microsoft Marketplace seat was assigned or freed (api/_lib/microsoft-billing.js).
+	// Losing a seat changes the plan, so it rides the always-on account channel.
+	microsoft_seat: 'account',
 
 	skill_purchase_confirmed: 'purchases',
 	asset_purchase_confirmed: 'purchases',
@@ -389,6 +392,7 @@ const PUSH_COPY = {
 	companion_delivery:       (p) => [p.sender ? `${p.sender} 👋` : 'Your companion 👋', p.line || p.title || 'Something worth your attention just came in'],
 	mail_received:            (p) => [`${p.agent_name || 'Your agent'} got an email ✉️`, `${p.from_name || p.from || 'Someone'}: ${p.subject || '(no subject)'}`],
 	marketplace_lead:         (p) => [p.title || 'New Microsoft Marketplace lead', p.summary || 'Open the lead to see the drafted reply'],
+	microsoft_seat:           (p) => [p.title || 'Microsoft seat update', p.summary || 'Open billing to see your plan'],
 	knock_received:           (p) => [p.sender ? `${p.sender} is at your door 🚪` : 'Someone is at your door 🚪', p.title || p.body || 'Someone paid to reach you'],
 	order_update:             (p) => [p.title || 'Order update', p.message || 'An order on your agent changed state'],
 	forge_complete:           (p) => ['Your 3D model is ready ✨', p.prompt ? `"${String(p.prompt).slice(0, 80)}" finished generating` : 'Your generation finished. Tap to view it'],

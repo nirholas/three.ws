@@ -107,6 +107,7 @@ export const TYPE_ICON = {
 	order_update:             '📊',
 	knock_received:           '🚪',
 	marketplace_lead:         '🤝',
+	microsoft_seat:           '💺',
 	microsoft_trial_ending:   '⏳',
 	mail_received:            '✉️',
 	event_market_entrant:     '🎟️',
@@ -234,6 +235,8 @@ export function notifLabel(n) {
 				? `Your ${p.plan_name} free trial ends ${when}. Auto-renew is off, so access ends with it.`
 				: `Your ${p.plan_name} free trial ends ${when}, then ${then} through Microsoft`;
 		}
+		case 'microsoft_seat':
+			return p.summary ? `${p.title || 'Microsoft seat update'}: ${p.summary}` : p.title || 'Microsoft seat update';
 		case 'marketplace_lead':
 			return p.summary ? `${p.title || 'Microsoft Marketplace lead'}: ${p.summary}` : p.title || 'New Microsoft Marketplace lead';
 		case 'knock_received':
