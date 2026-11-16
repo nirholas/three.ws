@@ -30,6 +30,7 @@ import {
 	devHtmlPageFile,
 	liveRouteTable,
 } from './server/dev-api-pages.mjs';
+import { devSecurityHeadersMiddleware } from './server/security-headers.mjs';
 
 // The production route table (vercel.json), re-read when it changes, for the
 // dev middleware's HTML-page fallback.
@@ -962,8 +963,8 @@ const appConfig = {
 				'coin-control': resolve(__dirname, 'pages/coin-control.html'),
 				'agent-invoice': resolve(__dirname, 'pages/agent-invoice.html'),
 				'microsoft-activate': resolve(__dirname, 'pages/microsoft-activate.html'),
-				trust: resolve(__dirname, 'pages/trust.html'),
 				'enterprise-admin-consent': resolve(__dirname, 'pages/enterprise-admin-consent.html'),
+				trust: resolve(__dirname, 'pages/trust.html'),
 				accessibility: resolve(__dirname, 'pages/accessibility.html'),
 				'trust-subprocessors': resolve(__dirname, 'pages/trust-subprocessors.html'),
 				'microsoft-teams-tab': resolve(__dirname, 'pages/microsoft-teams-tab.html'),
@@ -1307,6 +1308,16 @@ const appConfig = {
 		},
 	},
 	plugins: [
+		// The security headers production sends (HSTS, CSP, X-Frame-Options and
+		// the rest, from vercel.json), on every dev response too, so a header
+		// regression shows up before a deploy: server/security-headers.mjs.
+		{
+			name: 'dev-security-headers',
+			apply: 'serve',
+			configureServer(server) {
+				server.middlewares.use(devSecurityHeadersMiddleware(devRouteTable));
+			},
+		},
 		// Page URLs production answers with an api/ handler (sitemaps, crawler
 		// agent and avatar pages, widgets, news stories; server/dev-api-pages.mjs):
 		// local handlers when DATABASE_URL is set, the upstream otherwise. Any
@@ -2626,6 +2637,9 @@ const appConfig = {
 						filePath = resolve(root, 'pages/trust-subprocessors.html');
 					// /accessibility → the accessibility statement. Mirrors vercel.json.
 					else if (!filePath && /^\/accessibility\/?$/.test(path)) filePath = resolve(root, 'pages/accessibility.html');
+					// /enterprise/admin-consent → tenant-wide admin consent page. Mirrors vercel.json.
+					else if (!filePath && /^\/enterprise\/admin-consent\/?$/.test(path))
+						filePath = resolve(root, 'pages/enterprise-admin-consent.html');
 					// /microsoft/activate → the Microsoft Marketplace SaaS landing page.
 					// Mirrors vercel.json.
 					else if (!filePath && /^\/microsoft\/activate\/?$/.test(path))
@@ -2637,9 +2651,6 @@ const appConfig = {
 						filePath = resolve(root, 'pages/office-powerpoint.html');
 					// /microsoft/teams-tab → the Agents tab of the three.ws Teams app.
 					else if (!filePath && /^\/microsoft\/teams-tab\/?$/.test(path))
-					// /enterprise/admin-consent → tenant-wide admin consent page. Mirrors vercel.json.
-					else if (!filePath && /^\/enterprise\/admin-consent\/?$/.test(path))
-						filePath = resolve(root, 'pages/enterprise-admin-consent.html');
 						filePath = resolve(root, 'pages/microsoft-teams-tab.html');
 					// /microsoft/teams-stage → the Live Share review stage (meeting stage, side panel, config).
 					else if (!filePath && /^\/microsoft\/teams-stage\/?$/.test(path))

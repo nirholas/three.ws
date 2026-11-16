@@ -46,6 +46,7 @@ import { renderCrawlerBody } from './crawler-body.mjs';
 import { isMissingShellPage } from './shell-pages.mjs';
 import { hardenHeaderBag, hardenOnEnd } from './csp-hashes.mjs';
 import { cronEdgeAuth } from './cron-edge-auth.mjs';
+import { frameOptionsMiddleware } from './security-headers.mjs';
 import { setBounded, touchBounded } from './bounded-cache.mjs';
 import { runWithRequestContext } from '../api/_lib/request-context.js';
 import { tracingMiddleware, flushSpans } from '../api/_lib/tracing.js';
@@ -398,6 +399,10 @@ function serveFile(req, res, file, headers, status) {
 const app = express();
 app.set('trust proxy', true); // Cloud Run sits behind Google front ends
 app.disable('x-powered-by');
+
+// X-Frame-Options has to agree with the CSP's frame-ancestors on every
+// response, embeds included: server/security-headers.mjs.
+app.use(frameOptionsMiddleware());
 
 // The default filter skips non-compressible types (text/event-stream, images,
 // GLB); shouldCompress also passes through any response that marked itself
