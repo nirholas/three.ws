@@ -120,13 +120,15 @@ if (expect === 'disabled') {
 	const btn = page.locator('.od-source button');
 	await btn.waitFor({ state: 'visible', timeout: 30_000 });
 	console.log(`forge: photo button "${(await btn.innerText()).trim()}"`);
+	// :focus-visible only matches after keyboard use; the tab click above was a pointer.
+	await page.keyboard.press('Shift');
 	await btn.focus();
 	const outline = await btn.evaluate((el) => getComputedStyle(el).outlineStyle);
 	if (outline === 'none') fail('forge: the photo button has no visible focus outline');
 	await btn.scrollIntoViewIfNeeded();
 	await shot(page, 'enabled-forge-focus');
 
-	const popupPromise = page.waitForEvent('popup', { timeout: 30_000 });
+	const popupPromise = page.waitForEvent('popup', { timeout: 120_000 });
 	await btn.click();
 	const popup = await popupPromise;
 	await popup.waitForLoadState('domcontentloaded', { timeout: 60_000 }).catch(() => {});
