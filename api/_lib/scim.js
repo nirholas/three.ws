@@ -528,7 +528,9 @@ export function resourceTypes({ baseUrl }) {
 			endpoint: '/Users',
 			description: 'A person with access to the team',
 			schema: SCHEMA_USER,
-			schemaExtensions: [{ schema: SCHEMA_ENTERPRISE_USER, required: false }],
+			// No schemaExtensions: the enterprise extension is accepted on writes
+			// and not stored, so advertising it would send Entra's schema
+			// discovery (and the validator) after attributes that never come back.
 			meta: { resourceType: 'ResourceType', location: `${baseUrl}/ResourceTypes/User` },
 		},
 		{

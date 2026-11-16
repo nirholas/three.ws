@@ -275,6 +275,9 @@ dialog.tm-dialog[open] { animation: tm-in var(--tm-base) ease both; }
 .tm-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .tm-ent-events { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .tm-ent-events li { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; font-size: 13.5px; }
+.tm-log-actions { justify-content: flex-end; margin-bottom: 12px; }
+.tm-ent-events li { padding: 4px 6px; border-radius: 6px; }
+.tm-ent-events li:hover { background: var(--tm-panel-2); }
 .tm-join { max-width: 640px; margin: 24px auto 0; }
 @media (max-width: 560px) {
 	.tm-ent-events li { grid-template-columns: 1fr; gap: 4px; }

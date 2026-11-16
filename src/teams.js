@@ -689,6 +689,9 @@ const TENANT_OUTCOMES = {
 	invalid_token: 'Microsoft returned something we could not verify. Try again.',
 	reauth_stale: 'Microsoft did not ask for your password again. Try once more.',
 	admin_consent_required: 'Your organisation has to approve three.ws in Microsoft Entra first.',
+	not_assigned: 'Your organisation has not assigned you to three.ws in Microsoft Entra. Ask your IT admin.',
+	app_disabled: 'three.ws is turned off in your organisation\'s Microsoft Entra directory. Ask your IT admin to enable it.',
+	conditional_access: 'Your organisation\'s sign-in policy blocked this. Try from a managed device or ask your IT admin.',
 	unavailable: 'Sign in with Microsoft is not configured on this deployment.',
 	rate_limited: 'Too many attempts. Try again in a few minutes.',
 };
@@ -1331,6 +1334,9 @@ function settingsHtml() {
 			<h3 class="tm-h2 tm-section" id="enterprise">Your organisation <small>Microsoft Entra ID sign-in and SCIM provisioning</small></h3>
 			<div id="tmEnterprise" class="tm-stack" aria-live="polite"></div>
 
+			<h3 class="tm-h2 tm-section" id="admin-activity">Admin activity <small>Every change made to this team, for audits</small></h3>
+			<div id="tmAdminLog" class="tm-stack" aria-live="polite"></div>
+
 			<h3 class="tm-h2 tm-section">Archive</h3>
 			<div class="tm-note bad tm-banner"><span>Archiving stops the team and hides its page. The four agents stay in your account with their wallets.</span>
 				<button class="tm-btn sm danger" type="button" id="tmArchive">Archive team</button></div>
@@ -1431,6 +1437,7 @@ function wireSettings() {
 	paintMembers();
 	fillAddForm();
 	loadEnterprise();
+	loadAdminLog();
 
 	$('#tmSetForm').addEventListener('submit', async (e) => {
 		e.preventDefault();
@@ -1540,6 +1547,13 @@ const EVENT_TEXT = {
 	group_created: 'Group created',
 	group_updated: 'Group updated',
 	group_deleted: 'Group deleted',
+	team_created: 'Team created',
+	team_updated: 'Team settings changed',
+	team_archived: 'Team archived',
+	team_repaired: 'Missing specialists created',
+	member_added: 'Specialist added',
+	member_permissions_changed: 'Specialist permissions changed',
+	member_removed: 'Specialist removed',
 };
 const ACTOR_TEXT = { owner: 'Owner', scim: 'Entra SCIM', member: 'Member', system: 'three.ws' };
 const PERSON_TONE = { active: 'good', declined: '', deactivated: 'bad', deleted: 'bad' };
@@ -1683,6 +1697,76 @@ function eventsHtml(events) {
 					<span>${esc(EVENT_TEXT[e.action] || label(e.action))}${e.person_name || e.person_user_name ? `: <b>${esc(e.person_name || e.person_user_name)}</b>` : ''}${e.action === 'join_mode_changed' && e.detail?.join_mode ? ` to ${esc(e.detail.join_mode === 'auto' ? 'join automatically' : 'offer the team')}` : ''}</span>
 					<time class="tm-hint" datetime="${esc(e.created_at)}" title="${esc(new Date(e.created_at).toLocaleString())}">${esc(ago(e.created_at))}</time></li>`).join('')}</ol>
 		</fieldset>`;
+}
+
+// ── admin activity: full history, paged, with downloads ──────────────────────
+
+const adminLog = { items: [], cursor: null, loading: false };
+
+function eventSummary(e) {
+	const d = e.detail || {};
+	const bits = [];
+	if (e.action === 'join_mode_changed' && d.join_mode) bits.push(d.join_mode === 'auto' ? 'join automatically' : 'offer the team');
+	if (e.action === 'team_updated' && Array.isArray(d.fields)) bits.push(d.fields.join(', '));
+	if (e.action === 'team_created' && d.name) bits.push(d.name);
+	if (e.action === 'member_permissions_changed' && Array.isArray(d.permissions)) bits.push(`${d.permissions.length} permissions`);
+	const who = e.person_name || e.person_user_name;
+	return `${esc(EVENT_TEXT[e.action] || label(e.action))}${who ? `: <b>${esc(who)}</b>` : ''}${bits.length ? ` <span class="tm-hint">(${esc(bits.join('; '))})</span>` : ''}`;
+}
+
+function adminLogRows(items) {
+	return items.map((e) => `
+		<li><span class="tm-chip ${e.actor === 'scim' ? 'info' : ''}">${esc(ACTOR_TEXT[e.actor] || label(e.actor))}</span>
+			<span>${eventSummary(e)}</span>
+			<time class="tm-hint" datetime="${esc(e.created_at)}">${esc(new Date(e.created_at).toLocaleString())}</time></li>`).join('');
+}
+
+function paintAdminLog() {
+	const box = $('#tmAdminLog');
+	if (!box) return;
+	const base = `/api/teams/${encodeURIComponent(state.id)}/events`;
+	box.innerHTML = `
+		<div class="tm-fieldset">
+			<div class="tm-actions tm-log-actions">
+				<a class="tm-btn sm" href="${base}?format=csv" download>Download CSV</a>
+				<a class="tm-btn sm" href="${base}?format=json" download>Download JSON</a>
+			</div>
+			${adminLog.items.length
+				? `<ol class="tm-ent-events" id="tmLogList">${adminLogRows(adminLog.items)}</ol>`
+				: '<div class="tm-state"><p>No admin actions yet. Changes you make to this team will be recorded here.</p></div>'}
+			${adminLog.cursor ? '<div class="tm-actions" style="justify-content:center"><button class="tm-btn sm" type="button" id="tmLogMore">Load more</button></div>' : ''}
+		</div>`;
+	$('#tmLogMore')?.addEventListener('click', () => loadAdminLog({ more: true }));
+}
+
+async function loadAdminLog({ more = false } = {}) {
+	const box = $('#tmAdminLog');
+	if (!box || adminLog.loading) return;
+	adminLog.loading = true;
+	const moreBtn = $('#tmLogMore');
+	if (more && moreBtn) { moreBtn.disabled = true; moreBtn.textContent = 'Loading...'; }
+	if (!more) {
+		adminLog.items = [];
+		adminLog.cursor = null;
+		box.innerHTML = '<div class="tm-skel" style="height:44px"></div><div class="tm-skel" style="height:44px"></div><div class="tm-skel" style="height:44px"></div>';
+	}
+	const qs = new URLSearchParams({ limit: '50' });
+	if (more && adminLog.cursor) qs.set('cursor', adminLog.cursor);
+	const res = await api(`/api/teams/${encodeURIComponent(state.id)}/events?${qs}`);
+	adminLog.loading = false;
+	if (!res.ok) {
+		if (more) paintAdminLog();
+		const err = document.createElement('div');
+		err.className = 'tm-err';
+		err.setAttribute('role', 'alert');
+		err.innerHTML = `Admin activity did not load. ${esc(res.message)} <button class="tm-btn sm" type="button">Try again</button>`;
+		if (more) box.appendChild(err); else box.replaceChildren(err);
+		$('button', err).addEventListener('click', () => loadAdminLog({ more }));
+		return;
+	}
+	adminLog.items = adminLog.items.concat(res.data || []);
+	adminLog.cursor = res.body?.next_cursor || null;
+	paintAdminLog();
 }
 
 async function copyText(text) {

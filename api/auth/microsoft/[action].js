@@ -188,13 +188,18 @@ async function handleStart(req, res) {
 	}
 
 	const auth = await buildAuthorize({ prompt, maxAge, loginHint });
+	return beginFlow(res, auth, { intent, userId, teamId: flowFor.teamId, next });
+}
+
+/** Seal the PKCE verifier, state and nonce in the flow cookie and hand off to Microsoft. */
+async function beginFlow(res, auth, { intent, userId = null, teamId = null, next }) {
 	const flow = await signIdentityPayload({
 		s: auth.state,
 		n: auth.nonce,
 		v: auth.verifier,
 		i: intent,
 		u: userId,
-		t: flowFor.teamId,
+		t: teamId,
 		x: next,
 		e: Math.floor(Date.now() / 1000) + FLOW_TTL_SEC,
 	});
@@ -202,10 +207,47 @@ async function handleStart(req, res) {
 	return redirect(res, auth.url);
 }
 
+// ── launch (My Apps sign-on URL) ──────────────────────────────────────────────
+
+const DOMAIN_HINT_RE = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
+const LOGIN_HINT_RE = /^[^\s<>"']{1,254}$/;
+
+/**
+ * The sign-on URL an Entra gallery app launches from My Apps and the Microsoft
+ * 365 app launcher. It always starts a login flow on the common authority and
+ * never forces the account picker, so a person already signed in to Microsoft
+ * lands in three.ws without another prompt. `domain_hint` (or `tenant`) and
+ * `login_hint` are passed through when well formed; `next` deep-links inside
+ * the app and falls back to the dashboard.
+ */
+async function handleLaunch(req, res) {
+	if (!method(req, res, ['GET'])) return;
+	const url = new URL(req.url, 'http://x');
+	const next = safeNext(url.searchParams.get('next'), '/dashboard');
+	const deepLink = next === '/dashboard' ? null : next;
+	if (!entraConfigured()) return redirect(res, loginUrl('microsoft_unavailable', deepLink));
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return redirect(res, loginUrl('rate_limited', deepLink));
+
+	const domain = (url.searchParams.get('domain_hint') || url.searchParams.get('tenant') || '').trim();
+	const hint = (url.searchParams.get('login_hint') || '').trim();
+	const auth = await buildAuthorize({
+		prompt: null,
+		domainHint: DOMAIN_HINT_RE.test(domain) ? domain.toLowerCase() : null,
+		loginHint: LOGIN_HINT_RE.test(hint) ? hint : null,
+	});
+	return beginFlow(res, auth, { intent: 'login', next });
+}
+
 // ── callback ──────────────────────────────────────────────────────────────────
 
 /** Microsoft's error answer, mapped onto codes the pages explain. */
 export function deniedCode(err, description = '') {
+	// Tenant-side blocks first: the person's own directory said no, and
+	// only their admin can change that.
+	if (/AADSTS50105\b/.test(description)) return 'microsoft_not_assigned';
+	if (/AADSTS(?:7000112|700016|7000222)\b/.test(description)) return 'microsoft_app_disabled';
+	if (/AADSTS5300[0-4]\b/.test(description)) return 'microsoft_conditional_access';
 	if (err === 'access_denied' && /AADSTS65004|declined/i.test(description)) return 'microsoft_cancelled';
 	if (/AADSTS65001|AADSTS90094|consent/i.test(description)) return 'microsoft_admin_consent_required';
 	if (err === 'access_denied' || err === 'interaction_required' || err === 'login_required') return 'microsoft_cancelled';
@@ -439,6 +481,7 @@ async function handleUnlink(req, res) {
 
 const DISPATCH = {
 	start: handleStart,
+	launch: handleLaunch,
 	callback: handleCallback,
 	confirm: handleConfirm,
 	status: handleStatus,

@@ -16,6 +16,7 @@
 // POST   /api/teams/:id/enterprise/scim-token   generate or rotate; the plaintext is in this answer only
 // DELETE /api/teams/:id/enterprise/scim-token   revoke
 // PATCH  /api/teams/:id/enterprise/people/:pid  { status: 'active'|'deactivated' }
+// GET    /api/teams/:id/events                  admin activity (owner): ?limit=&cursor=, or ?format=csv|json to download
 // GET    /api/teams/:id/join                    the join offer for a member of the claimed tenant
 // POST   /api/teams/:id/join                    { decision: 'join'|'decline' }
 //
@@ -47,9 +48,10 @@ import {
 } from '../_lib/teams/runtime.js';
 import {
 	EnterpriseError, enterpriseView, setJoinMode, unclaimTenant, issueScimToken, revokeScimToken, setPersonStatus,
-	joinOffer, decideJoin,
+	joinOffer, decideJoin, logEvent, pageEvents,
 } from '../_lib/team-enterprise.js';
 import { env } from '../_lib/env.js';
+import { csvCellJson, toCsv } from '../_lib/csv.js';
 
 const isUuid = (s) => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
 
@@ -84,6 +86,7 @@ export default wrap(async (req, res) => {
 		if (sub === 'repair' && subId === null) return await repair(req, res, id);
 		if (sub === 'members') return await members(req, res, id, subId);
 		if (sub === 'enterprise') return await enterprise(req, res, id, parts.slice(4));
+		if (sub === 'events' && subId === null) return await events(req, res, id, url);
 		if (sub === 'join' && subId === null) return await join(req, res, id);
 		return error(res, 404, 'not_found', 'not found');
 	} catch (e) {
@@ -130,7 +133,7 @@ async function teamRoot(req, res, id) {
 		}
 	}
 	if (req.method === 'DELETE') {
-		await archiveTeam(ctx.team);
+		await archiveTeam(ctx.team, ctx.auth.userId);
 		return json(res, 200, { data: { id, status: 'archived' } });
 	}
 	await updateTeam(ctx.team, ctx.auth.userId, ctx.body, { req });
@@ -268,6 +271,9 @@ async function repair(req, res, id) {
 	if (!ctx || !(await gate(req, res, ctx))) return;
 	if (ctx.team.status === 'archived') return error(res, 409, 'archived', 'This team is archived.');
 	const created = await provisionMissingRoles(ctx.team, ctx.auth.userId);
+	if (created.length) {
+		await logEvent(id, { actor: 'owner', actorUserId: ctx.auth.userId, action: 'team_repaired', detail: { roles_created: created.length } });
+	}
 	const { team } = await loadTeamFor(id, ctx.auth.userId);
 	return json(res, 200, { data: { created, team: await getTeamView(team, { isOwner: true }) } });
 }
@@ -287,10 +293,10 @@ async function members(req, res, id, memberId) {
 		return json(res, 201, { data: { member_id: added } });
 	}
 	if (req.method === 'PATCH') {
-		const permissions = await setMemberPermissions(ctx.team, memberId, ctx.body.permissions);
+		const permissions = await setMemberPermissions(ctx.team, memberId, ctx.body.permissions, ctx.auth.userId);
 		return json(res, 200, { data: { member_id: memberId, permissions } });
 	}
-	await removeCustomMember(ctx.team, memberId);
+	await removeCustomMember(ctx.team, memberId, ctx.auth.userId);
 	return json(res, 200, { data: { member_id: memberId, status: 'removed' } });
 }
 
@@ -342,6 +348,54 @@ async function enterprise(req, res, id, rest) {
 		return json(res, 200, { data: { ...result, state: await enterpriseState(id) } });
 	}
 	return error(res, 404, 'not_found', 'not found');
+}
+
+const EVENT_CSV_HEADER = ['time', 'actor', 'action', 'person', 'detail', 'event_id'];
+const EVENT_EXPORT_MAX = 50_000;
+
+/** Owner-only admin activity: a cursor page as JSON, or the whole history as a download. */
+async function events(req, res, id, url) {
+	if (req.method !== 'GET') return error(res, 405, 'method_not_allowed', 'GET /events only');
+	const auth = await resolveAccount(req, res);
+	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+	const { team } = await loadTeamFor(id, auth.userId, { write: true });
+	const rl = await limits.teamEnterprise(auth.userId);
+	if (!rl.success) return rateLimited(res, rl, 'too many requests: slow down');
+
+	const format = (url.searchParams.get('format') || '').toLowerCase();
+	if (format && format !== 'csv' && format !== 'json') return error(res, 400, 'bad_format', 'format must be csv or json');
+
+	if (format) {
+		const items = [];
+		let cursor = null;
+		let truncated = false;
+		for (;;) {
+			const page = await pageEvents(id, { cursor, limit: 500 });
+			items.push(...page.items);
+			cursor = page.nextCursor;
+			if (!cursor) break;
+			if (items.length >= EVENT_EXPORT_MAX) { truncated = true; break; }
+		}
+		const stamp = new Date().toISOString().slice(0, 10);
+		const slug = String(team.name || 'team').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'team';
+		res.setHeader('cache-control', 'no-store');
+		res.setHeader('content-disposition', `attachment; filename="team-${slug}-admin-activity-${stamp}.${format}"`);
+		res.setHeader('x-export-truncated', truncated ? '1' : '0');
+		res.statusCode = 200;
+		if (format === 'json') {
+			res.setHeader('content-type', 'application/json; charset=utf-8');
+			return res.end(JSON.stringify({ team_id: id, truncated, events: items }, null, 2));
+		}
+		res.setHeader('content-type', 'text/csv; charset=utf-8');
+		return res.end(toCsv(EVENT_CSV_HEADER, items.map((e) => [
+			new Date(e.created_at).toISOString(), e.actor, e.action, e.person_name || e.person_user_name || '', e.detail, e.id,
+		]), csvCellJson));
+	}
+
+	const limit = parseLimit(url.searchParams, { fallback: 50, max: 200 });
+	const page = await pageEvents(id, { cursor: url.searchParams.get('cursor'), limit });
+	if (page.error) return error(res, 400, 'bad_cursor', 'cursor is not valid');
+	return json(res, 200, { data: page.items, next_cursor: page.nextCursor, has_more: Boolean(page.nextCursor) }, { 'cache-control': 'no-store' });
 }
 
 async function join(req, res, id) {

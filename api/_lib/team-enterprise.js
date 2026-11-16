@@ -57,6 +57,33 @@ export async function listEvents(teamId, { limit = 25 } = {}) {
 	`;
 }
 
+/**
+ * One page of a team's full admin history, newest first. The cursor is the id
+ * of the last row returned (ids are monotonic), so paging is stable while new
+ * events arrive. Returns { error: true } for a malformed cursor.
+ */
+export async function pageEvents(teamId, { cursor = null, limit = 50 } = {}) {
+	let before = null;
+	if (cursor) {
+		if (!/^[0-9]{1,18}$/.test(String(cursor))) return { error: true };
+		before = String(cursor);
+	}
+	const size = Math.min(Math.max(Number(limit) || 50, 1), 500);
+	const rows = await sql`
+		select e.id, e.actor, e.action, e.person_id, e.detail, e.created_at,
+		       p.display_name as person_name, p.user_name as person_user_name
+		from team_enterprise_events e
+		left join team_people p on p.id = e.person_id
+		where e.team_id = ${teamId}
+		  and (${before}::bigint is null or e.id < ${before}::bigint)
+		order by e.id desc
+		limit ${size + 1}
+	`;
+	const more = rows.length > size;
+	const items = (more ? rows.slice(0, size) : rows).map((r) => ({ ...r, id: String(r.id) }));
+	return { items, nextCursor: more ? items[items.length - 1].id : null };
+}
+
 // ── tenant claims ────────────────────────────────────────────────────────────
 
 export async function getClaim(teamId) {

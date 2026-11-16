@@ -120,8 +120,19 @@ All endpoints are under `https://three.ws/scim/v2` and answer `application/scim+
 - **Paging.** `startIndex` (1-based) and `count`, up to 200 per page.
 - **PATCH.** The shapes Entra sends: capitalised op names, `"False"` and `"True"` as strings, no-path replace with dotted keys (`name.givenName`), value-filtered paths (`emails[type eq "work"].value`, `members[value eq "<id>"]`), and member removal by filter or by value list. Up to 100 operations per request.
 - **Errors.** RFC 7644 error bodies with `scimType` where one applies (`uniqueness` on a duplicate `userName`, `invalidFilter`, `invalidValue`).
-- **Limits.** 1,200 requests per minute per team, and 20 failed authentications per 10 minutes per IP address. Over the limit the answer is `429` with `Retry-After`; Entra backs off and retries on its own.
+- **Limits.** 3,000 requests per minute per team (50 per second, twice the 25 the Entra app gallery requires), and 20 failed authentications per 10 minutes per IP address. Over the limit the answer is `429` with `Retry-After`; Entra backs off and retries on its own.
 - **Audit.** Every provisioning change is written to the team's activity log and to the account audit log.
+
+## Admin activity and export
+
+Every change an owner makes to a team is recorded: creating, renaming, changing visibility, status or policy, archiving, repairing, adding, narrowing and removing specialists, and everything on the organisation settings (tenant claim and unclaim, join mode, SCIM token generation, rotation and revocation, deactivating or restoring a person). Entra SCIM calls and member sign-ins land in the same history. Records carry the actor, the action, a small detail payload (never a secret) and a timestamp.
+
+Owners see the full history under **Admin activity** in the team settings, with Load more, **Download CSV** and **Download JSON**. The same data is available over the API, owner only:
+
+- `GET /api/teams/:id/events?limit=50&cursor=` returns `{ data, next_cursor, has_more }`, newest first. `limit` is 1 to 200; pass `next_cursor` back as `cursor`.
+- `GET /api/teams/:id/events?format=csv` or `?format=json` downloads the whole history (up to 50,000 events, flagged by the `x-export-truncated` header) as an attachment. CSV cells that begin with `=`, `+`, `-` or `@` are prefixed with a single quote so spreadsheets never evaluate them.
+
+Event types the owner can trigger: `team_created`, `team_updated`, `team_archived`, `team_repaired`, `member_added`, `member_permissions_changed`, `member_removed`, plus the organisation events listed above.
 
 ## Troubleshooting
 
