@@ -299,6 +299,73 @@
 
 			body.overlay-mode #anim-toggle,
 			body.overlay-mode #anim-picker { display: none !important; }
+
+			/* ── Facial emotion control (shown once Audio2Face drives the face) ── */
+			#emotion-ctl {
+				position: absolute;
+				left: 10px;
+				bottom: 32px; /* clears the name plate */
+				z-index: 5;
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+				padding: 4px 10px 4px 4px;
+				border-radius: 999px;
+				background: rgba(0, 0, 0, 0.55);
+				border: 1px solid rgba(255, 255, 255, 0.18);
+				color: #fff;
+				font: 11px/1 system-ui, sans-serif;
+				letter-spacing: 0.04em;
+				backdrop-filter: blur(6px);
+				-webkit-backdrop-filter: blur(6px);
+			}
+			#emotion-ctl .emotion-toggle {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				padding: 4px 8px;
+				border-radius: 999px;
+				border: 1px solid transparent;
+				background: rgba(255, 255, 255, 0.08);
+				color: inherit;
+				font: inherit;
+				cursor: pointer;
+				transition: background 0.15s, border-color 0.15s;
+			}
+			#emotion-ctl .emotion-toggle:hover { background: rgba(255, 255, 255, 0.16); }
+			#emotion-ctl .emotion-toggle:active { background: rgba(255, 255, 255, 0.24); }
+			#emotion-ctl .emotion-toggle:focus-visible,
+			#emotion-ctl .emotion-strength:focus-visible {
+				outline: 2px solid #4a9eff;
+				outline-offset: 2px;
+			}
+			#emotion-ctl .dot {
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: #5fce6a;
+				transition: background 0.15s;
+			}
+			#emotion-ctl.off .dot { background: rgba(255, 255, 255, 0.35); }
+			#emotion-ctl .emotion-strength {
+				width: 84px;
+				accent-color: #4a9eff;
+				cursor: pointer;
+			}
+			#emotion-ctl .emotion-strength:disabled { opacity: 0.4; cursor: default; }
+			#emotion-ctl .emotion-value {
+				min-width: 3ch;
+				font-variant-numeric: tabular-nums;
+				color: rgba(255, 255, 255, 0.75);
+			}
+			body.bg-light #emotion-ctl {
+				background: rgba(255, 255, 255, 0.85);
+				color: #111;
+				border-color: rgba(0, 0, 0, 0.12);
+			}
+			body.bg-light #emotion-ctl .emotion-toggle { background: rgba(0, 0, 0, 0.06); }
+			body.bg-light #emotion-ctl .emotion-value { color: rgba(0, 0, 0, 0.6); }
+			body.overlay-mode #emotion-ctl { display: none !important; }
 		</style>
 	</head>
 	<!-- No floating language picker: this shell is a chrome-less widget that

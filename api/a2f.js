@@ -34,7 +34,8 @@
 //   with an emotion, and the response carries the emotion it applied
 //   (animation.emotion, or `emotion` events when streamed). Pass
 //      • emotion: an intent label ('joy', 'sad', 'concern', ...), an A2F channel
-//        map ({ joy: 0.8 }), 'auto' (default: read the text), or 'off'
+//        map ({ joy: 0.8 }), 'auto' (default: read `text`, or `emotionText`
+//        alongside audio), or 'off'
 //      • emotionStrength: 0..1 (0 is off; default 0.6)
 //   in the JSON body, or ?emotion= / ?emotionStrength= on a raw-audio body. The
 //   resolved intent is echoed back as `emotionIntent` (an `intent` event first
@@ -299,7 +300,9 @@ export default wrap(async function handler(req, res) {
 				emotion: body.emotion,
 				emotionStrength: body.emotionStrength,
 				intensity: body.emotionIntensity,
-				text,
+				// emotionText: the line's words when the caller sends audio, so
+				// 'auto' can still read the intent.
+				text: text || (typeof body.emotionText === 'string' ? body.emotionText.slice(0, 4096) : ''),
 			});
 			const b64 =
 				typeof body.audio === 'string' ? body.audio.replace(/^data:[^,]*,/, '') : '';

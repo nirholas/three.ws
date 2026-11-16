@@ -11,9 +11,18 @@
 //   { type: 'v1.avatar.hello' }
 //        Handshake. Iframe replies with v1.avatar.ready (now or when init
 //        finishes).
-//   { type: 'v1.avatar.speak', text?, audioUrl? }
+//   { type: 'v1.avatar.speak', text?, audioUrl?, emotion?, emotionText? }
 //        Speak `text` (browser TTS) and/or play `audioUrl` — both routes
-//        drive audio-based lipsync onto the avatar's mouth morphs.
+//        drive audio-based lipsync onto the avatar's mouth morphs. When the
+//        Audio2Face lane animates `audioUrl`, `emotion` sets how the line
+//        should feel: an intent ('joy', 'sad', 'angry', 'surprised',
+//        'concern', 'empathy', 'celebration', 'curiosity', 'neutral'), an
+//        A2F channel map ({ joy: 0.8 }), 'auto' (read it from `emotionText`,
+//        else `text`) or 'off'. Default: the embed's emotion setting.
+//   { type: 'v1.avatar.emotion', enabled?, strength?, emotion? }
+//        Embed-wide emotion setting: on/off, strength 0..1 (how strongly
+//        emotion reaches brows, eyes, cheeks and head; default 0.6) and the
+//        default intent. Replies v1.avatar.emotion:state.
 //   { type: 'v1.avatar.emote', name, weight }
 //        Apply weight (0..1) to any ARKit-52 canonical morph by name.
 //   { type: 'v1.avatar.morphs', weights: { name: weight, ... } }
@@ -41,6 +50,10 @@
 //        implements — hosts can warn users when the body is incomplete.
 //   { type: 'v1.avatar.speak:start', source: 'tts'|'audio' }
 //   { type: 'v1.avatar.speak:end' }
+//   { type: 'v1.avatar.speak:a2f', frames, fps, emotion }
+//        Audio2Face took over the face for this line. `emotion` is
+//        { intent, dominant } (intent as resolved, dominant as applied) or null.
+//   { type: 'v1.avatar.emotion:state', enabled, strength, emotion }
 //   { type: 'v1.avatar.frame', blendshapes: {...}, headPose: {yaw,pitch,roll} }
 //        Per-frame mocap output, when mocap is active. Hosts can record
 //        this for replay (the recording format is identical to face-mocap's
@@ -59,6 +72,9 @@
 //   ?textureSize=128..2048  default: 2048
 //   ?morphs=arkit52|all     default: all
 //   ?draco=1                opt-in mesh compression
+//   ?emotion=auto|off|<intent>      default: auto (read from the line's text)
+//   ?emotionStrength=0..1   default: 0.6
+//   ?emotionUi=0            hide the on-face emotion control
 
 import { Viewer } from './viewer.js';
 import { IdleAnimation } from './idle-animation.js';
@@ -91,6 +107,7 @@ const CAPABILITIES = [
 	'mic',
 	'gesture',
 	'animation',
+	'emotion',
 ];
 
 const HEAD_BONE_NAMES = ['head', 'neck'];
@@ -239,6 +256,26 @@ async function main() {
 	const a2fPlayer = new A2FPlayer();
 	a2fPlayer.attach(root);
 	let a2fAudio = null; // the <audio> element currently driven by an A2F track
+	// Emotion: A2F animates brows, eyes and cheeks with the line's intended
+	// feeling, and the player carries it on to head and gaze. One setting for
+	// the whole embed (URL params, v1.avatar.emotion, the on-face control);
+	// v1.avatar.speak can override the intent per line.
+	const emotionSetting = {
+		enabled: (params.get('emotion') || 'auto').toLowerCase() !== 'off',
+		strength: emotionStrengthParam(params.get('emotionStrength')),
+		emotion: emotionIntentParam(params.get('emotion')),
+	};
+	const emotionUi = createEmotionControl({
+		enabled: !overlayMode && !hideChrome && params.get('emotionUi') !== '0',
+		setting: emotionSetting,
+		onChange: () => applyEmotionSetting(),
+	});
+	const applyEmotionSetting = () => {
+		a2fPlayer.setEmotionOptions({ enabled: emotionSetting.enabled, strength: emotionSetting.strength });
+		emotionUi.sync();
+		postToParent({ type: 'v1.avatar.emotion:state', ...emotionSetting });
+	};
+	a2fPlayer.setEmotionOptions({ enabled: emotionSetting.enabled, strength: emotionSetting.strength });
 	// One-time capability probe so we never do the (non-trivial) decode→resample
 	// work on deployments where the A2F lane is unconfigured — there it stays pure
 	// amplitude lipsync with zero added cost.
@@ -420,7 +457,7 @@ async function main() {
 	// the format Audio2Face-3D expects. Done in-browser via the Web Audio decoder
 	// the page already uses for playback, so the embed's A2F path is codec-agnostic
 	// and we never round-trip the bytes through a server transcode.
-	const fetchA2FTrack = async (url) => {
+	const fetchA2FTrack = async (url, line = {}) => {
 		const resp = await fetch(url);
 		if (!resp.ok) return null;
 		const encoded = await resp.arrayBuffer();
@@ -450,17 +487,23 @@ async function main() {
 		const r = await fetch('/api/a2f', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ audio: btoa(bin), format: 'pcm', sampleRate: 16000 }),
+			body: JSON.stringify({
+				audio: btoa(bin),
+				format: 'pcm',
+				sampleRate: 16000,
+				...emotionRequest(emotionSetting, line),
+			}),
 		});
 		if (!r.ok) {
 			if (r.status >= 500) a2fLaneBroken = true; // provider down/misconfigured — stop retrying
 			return null;
 		}
 		const data = await r.json();
-		return data?.animation?.frames?.length ? data.animation : null;
+		if (!data?.animation?.frames?.length) return null;
+		return { ...data.animation, intent: data.emotionIntent || null };
 	};
 
-	const playAudio = async (url) => {
+	const playAudio = async (url, line = {}) => {
 		const ctx = ensureAudio();
 		const audio = new Audio();
 		audio.crossOrigin = 'anonymous';
@@ -472,7 +515,7 @@ async function main() {
 		let a2fUpgraded = false;
 		const a2fPromise = (a2fEnabled && !a2fLaneBroken)
 			? a2fAvailable()
-					.then((ok) => (ok ? fetchA2FTrack(url) : null))
+					.then((ok) => (ok ? fetchA2FTrack(url, line) : null))
 					.then((track) => {
 						if (!track || audio.ended) return;
 						a2fPlayer.setTrack(track);
@@ -482,7 +525,15 @@ async function main() {
 						activeLipsync = null;
 						a2fAudio = audio;
 						a2fUpgraded = true;
-						postToParent({ type: 'v1.avatar.speak:a2f', frames: track.frameCount, fps: track.fps });
+						emotionUi.reveal();
+						postToParent({
+							type: 'v1.avatar.speak:a2f',
+							frames: track.frameCount,
+							fps: track.fps,
+							emotion: track.emotion
+								? { intent: track.intent?.label || null, dominant: track.emotion.dominant || null }
+								: null,
+						});
 					})
 					.catch(() => {})
 			: Promise.resolve();
@@ -805,12 +856,25 @@ async function main() {
 			case 'v1.avatar.speak': {
 				const tasks = [];
 				if (msg.text) tasks.push(speakText(String(msg.text)));
-				if (msg.audioUrl) tasks.push(playAudio(String(msg.audioUrl)));
+				if (msg.audioUrl) {
+					tasks.push(
+						playAudio(String(msg.audioUrl), {
+							emotion: msg.emotion,
+							text: typeof msg.emotionText === 'string' ? msg.emotionText : msg.text,
+						}),
+					);
+				}
 				Promise.all(tasks).catch((err) =>
 					postToParent({ type: 'v1.avatar.error', message: err?.message || 'speak failed' }),
 				);
 				return;
 			}
+			case 'v1.avatar.emotion':
+				if (typeof msg.enabled === 'boolean') emotionSetting.enabled = msg.enabled;
+				if (msg.strength != null) emotionSetting.strength = emotionStrengthParam(msg.strength);
+				if (msg.emotion !== undefined) emotionSetting.emotion = emotionIntentParam(msg.emotion);
+				applyEmotionSetting();
+				return;
 			case 'v1.avatar.emote':
 				if (msg.name) setMorph(String(msg.name), Number(msg.weight) || 0);
 				return;
@@ -1200,6 +1264,92 @@ function buildAnimPicker(defs, animMgr) {
 		const open = document.body.classList.toggle('anim-picker-open');
 		toggle.setAttribute('aria-expanded', String(open));
 	});
+}
+
+// ── Emotion ─────────────────────────────────────────────────────────────────
+
+const EMOTION_STRENGTH_DEFAULT = 0.6;
+
+function emotionStrengthParam(v) {
+	if (v == null || v === '') return EMOTION_STRENGTH_DEFAULT;
+	const n = Number(v);
+	return Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : EMOTION_STRENGTH_DEFAULT;
+}
+
+// A default intent: 'auto' (read the text), an intent label, or a channel map.
+function emotionIntentParam(v) {
+	if (v && typeof v === 'object') return v;
+	const s = String(v ?? '').trim().toLowerCase();
+	return !s || s === 'off' ? 'auto' : s;
+}
+
+// The /api/a2f emotion fields for one line (server resolves label/map/auto).
+function emotionRequest(setting, line) {
+	if (!setting.enabled) return { emotion: 'off' };
+	const emotion = line.emotion ?? setting.emotion;
+	return {
+		emotion,
+		emotionStrength: setting.strength,
+		...(line.text ? { emotionText: String(line.text).slice(0, 4096) } : {}),
+	};
+}
+
+// On-face control: an on/off switch and a strength slider. Hidden until
+// Audio2Face actually drives the face (emotion has no effect before that).
+function createEmotionControl({ enabled, setting, onChange }) {
+	const noop = { reveal() {}, sync() {} };
+	if (!enabled) return noop;
+	const wrap = document.createElement('div');
+	wrap.id = 'emotion-ctl';
+	wrap.setAttribute('role', 'group');
+	wrap.setAttribute('aria-label', 'Facial emotion');
+	wrap.hidden = true;
+
+	const toggle = document.createElement('button');
+	toggle.type = 'button';
+	toggle.className = 'emotion-toggle';
+	toggle.setAttribute('aria-pressed', 'true');
+	toggle.innerHTML = '<span class="dot" aria-hidden="true"></span><span class="label">Emotion</span>';
+	toggle.title = 'Turn facial emotion on or off';
+
+	const range = document.createElement('input');
+	range.type = 'range';
+	range.min = '0';
+	range.max = '100';
+	range.step = '5';
+	range.className = 'emotion-strength';
+	range.setAttribute('aria-label', 'Emotion strength');
+
+	const value = document.createElement('output');
+	value.className = 'emotion-value';
+
+	toggle.addEventListener('click', () => {
+		setting.enabled = !setting.enabled;
+		onChange();
+	});
+	range.addEventListener('input', () => {
+		setting.strength = Number(range.value) / 100;
+		if (setting.strength > 0 && !setting.enabled) setting.enabled = true;
+		onChange();
+	});
+
+	wrap.append(toggle, range, value);
+	document.body.appendChild(wrap);
+
+	const sync = () => {
+		toggle.setAttribute('aria-pressed', String(setting.enabled));
+		wrap.classList.toggle('off', !setting.enabled);
+		range.value = String(Math.round(setting.strength * 100));
+		range.disabled = !setting.enabled;
+		value.textContent = setting.enabled ? `${Math.round(setting.strength * 100)}%` : 'off';
+	};
+	sync();
+	return {
+		reveal() {
+			wrap.hidden = false;
+		},
+		sync,
+	};
 }
 
 // ── Error ───────────────────────────────────────────────────────────────────
