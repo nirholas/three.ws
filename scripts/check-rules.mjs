@@ -84,6 +84,13 @@ const SKIP = [
 	// not-implemented throw) that no edit of ours can reach. The sources in
 	// site/ are still scanned.
 	/^packages\/metaplex-agent-mcp\/docs\//,
+	// The Robinhood sites' build output. learn-robinhood-chain/build.mjs renders
+	// content/*.md into docs/, and hood-connect esbuilds its bundle into docs/
+	// (GitHub Pages serves them from main). The bundle carries upstream library
+	// strings, and the rendered HTML repeats typography from the sources. The
+	// sources (content/, src/, build scripts) are still scanned.
+	/^robinhood\/learn-robinhood-chain\/docs\//,
+	/^robinhood\/hood-connect\/docs\//,
 	// Third-party bundles we vendor to serve from our own origin (e.g. the
 	// meshopt decoder). The bytes are upstream's, license header included, so
 	// holding them to house prose rules reports the vendor's copyright line as
