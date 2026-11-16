@@ -443,6 +443,31 @@ describe('team enterprise settings API', () => {
 		expect(noClaimToken.status).toBe(409);
 	});
 
+	it('the owner creates and revokes OAuth client credentials for Entra', async () => {
+		holder.auth = { userId: OWNER, source: 'session' };
+		const json = { 'content-type': 'application/json' };
+		const bad = await invoke(teamsHandler, { method: 'POST', url: `/api/teams/${teamId}/enterprise/scim-clients`, body: { years: 5 }, headers: json });
+		expect(bad.status).toBe(400);
+		expect(bad.json.error).toBe('invalid_expiry');
+		const created = await invoke(teamsHandler, { method: 'POST', url: `/api/teams/${teamId}/enterprise/scim-clients`, body: { years: 1 }, headers: json });
+		expect(created.status).toBe(201);
+		expect(created.headers['cache-control']).toBe('no-store');
+		expect(created.json.data.client_secret).toMatch(/^tws_scs_/);
+		expect(created.json.data.state.scim_token_url).toMatch(/\/scim\/oauth\/token$/);
+		expect(created.json.data.state.scim.clients.map((c) => c.client_id)).toEqual([created.json.data.client_id]);
+		expect(JSON.stringify(created.json.data.state)).not.toContain(created.json.data.client_secret);
+
+		const revoked = await invoke(teamsHandler, { method: 'DELETE', url: `/api/teams/${teamId}/enterprise/scim-clients/${created.json.data.client_id}` });
+		expect(revoked.status).toBe(200);
+		expect(revoked.json.data.scim.clients).toEqual([]);
+		expect(revoked.json.data.events.map((e) => e.action)).toEqual(expect.arrayContaining(['scim_client_created', 'scim_client_revoked']));
+		const again = await invoke(teamsHandler, { method: 'DELETE', url: `/api/teams/${teamId}/enterprise/scim-clients/${created.json.data.client_id}` });
+		expect(again.status).toBe(404);
+
+		holder.auth = { userId: ALICE, source: 'session' };
+		expect((await invoke(teamsHandler, { method: 'POST', url: `/api/teams/${teamId}/enterprise/scim-clients`, body: { years: 1 }, headers: json })).status).toBe(404);
+	});
+
 	it('a non-owner cannot read or change the enterprise settings', async () => {
 		holder.auth = { userId: ALICE, source: 'session' };
 		expect((await invoke(teamsHandler, { url: `/api/teams/${teamId}/enterprise` })).status).toBe(404);

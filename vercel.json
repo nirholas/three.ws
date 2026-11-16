@@ -2825,7 +2825,7 @@
 		{
 			"src": "/microsoft/teams-tab/?",
 			"headers": {
-				"content-security-policy": "frame-ancestors 'self' https://teams.microsoft.com https://*.teams.microsoft.com https://teams.cloud.microsoft https://*.cloud.microsoft https://*.office.com https://outlook.office.com https://outlook.office365.com https://outlook-sdf.office.com https://outlook-sdf.office365.com https://outlook.live.com https://outlook-sdf.live.com https://*.microsoft365.com https://*.officeapps.live.com; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors 'self' https://teams.microsoft.com https://*.teams.microsoft.com https://teams.cloud.microsoft https://*.cloud.microsoft https://*.office.com https://outlook.office.com https://outlook.office365.com https://outlook-sdf.office.com https://outlook-sdf.office365.com https://outlook.live.com https://outlook-sdf.live.com https://*.microsoft365.com https://*.officeapps.live.com https://copilot.microsoft.com https://edgeservices.bing.com https://www.bing.com https://fa000000124.resources.office.net https://fa000000125.resources.office.net https://fa000000128.resources.office.net https://fa000000129.resources.office.net; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin"
 			},
@@ -2865,7 +2865,7 @@
 		{
 			"src": "/microsoft/teams-stage/?",
 			"headers": {
-				"content-security-policy": "frame-ancestors 'self' https://teams.microsoft.com https://*.teams.microsoft.com https://teams.cloud.microsoft https://*.cloud.microsoft https://*.office.com https://outlook.office.com https://outlook.office365.com https://outlook-sdf.office.com https://outlook-sdf.office365.com https://outlook.live.com https://outlook-sdf.live.com https://*.microsoft365.com https://*.officeapps.live.com; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors 'self' https://teams.microsoft.com https://*.teams.microsoft.com https://teams.cloud.microsoft https://*.cloud.microsoft https://*.office.com https://outlook.office.com https://outlook.office365.com https://outlook-sdf.office.com https://outlook-sdf.office365.com https://outlook.live.com https://outlook-sdf.live.com https://*.microsoft365.com https://*.officeapps.live.com https://copilot.microsoft.com https://edgeservices.bing.com https://www.bing.com https://fa000000124.resources.office.net https://fa000000125.resources.office.net https://fa000000128.resources.office.net https://fa000000129.resources.office.net; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin"
 			},
@@ -4171,6 +4171,10 @@
 		{
 			"src": "/scim/v2(?:/.*)?",
 			"dest": "/api/scim/v2"
+		},
+		{
+			"src": "/scim/oauth/token",
+			"dest": "/api/scim/token"
 		},
 		{
 			"src": "/api/odata/v1(?:/.*)?",

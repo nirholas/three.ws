@@ -15,6 +15,8 @@
 // DELETE /api/teams/:id/enterprise              unclaim the Microsoft tenant (revokes the SCIM token)
 // POST   /api/teams/:id/enterprise/scim-token   generate or rotate; the plaintext is in this answer only
 // DELETE /api/teams/:id/enterprise/scim-token   revoke
+// POST   /api/teams/:id/enterprise/scim-clients { years: 1|2|3 } OAuth client id + secret (secret in this answer only)
+// DELETE /api/teams/:id/enterprise/scim-clients/:clientId  revoke a client and its access tokens
 // PATCH  /api/teams/:id/enterprise/people/:pid  { status: 'active'|'deactivated' }
 // GET    /api/teams/:id/events                  admin activity (owner): ?limit=&cursor=, or ?format=csv|json to download
 // GET    /api/teams/:id/join                    the join offer for a member of the claimed tenant
@@ -48,6 +50,7 @@ import {
 } from '../_lib/teams/runtime.js';
 import {
 	EnterpriseError, enterpriseView, setJoinMode, unclaimTenant, issueScimToken, revokeScimToken, setPersonStatus,
+	createScimClient, revokeScimClient,
 	joinOffer, decideJoin, logEvent, pageEvents,
 } from '../_lib/team-enterprise.js';
 import { env } from '../_lib/env.js';
@@ -301,7 +304,11 @@ async function members(req, res, id, memberId) {
 }
 
 async function enterpriseState(teamId) {
-	return { ...(await enterpriseView(teamId)), scim_base_url: `${env.APP_ORIGIN}/scim/v2` };
+	return {
+		...(await enterpriseView(teamId)),
+		scim_base_url: `${env.APP_ORIGIN}/scim/v2`,
+		scim_token_url: `${env.APP_ORIGIN}/scim/oauth/token`,
+	};
 }
 
 async function enterprise(req, res, id, rest) {
@@ -315,7 +322,7 @@ async function enterprise(req, res, id, rest) {
 		return json(res, 200, { data: await enterpriseState(id) }, { 'cache-control': 'no-store' });
 	}
 
-	const readBody = req.method === 'PATCH';
+	const readBody = req.method === 'PATCH' || (req.method === 'POST' && kind === 'scim-clients');
 	const ctx = await ownerWrite(req, res, id, { limiter: 'teamEnterprise', readBody });
 	if (!ctx || !(await gate(req, res, ctx))) return;
 	const who = { teamId: id, userId: ctx.auth.userId, req };
@@ -341,6 +348,17 @@ async function enterprise(req, res, id, rest) {
 			return json(res, 200, { data: await enterpriseState(id) });
 		}
 		return error(res, 405, 'method_not_allowed', 'POST or DELETE /enterprise/scim-token');
+	}
+	if (kind === 'scim-clients') {
+		if (req.method === 'POST' && personId === undefined) {
+			const created = await createScimClient({ ...who, years: ctx.body.years });
+			return json(res, 201, { data: { ...created, state: await enterpriseState(id) } }, { 'cache-control': 'no-store' });
+		}
+		if (req.method === 'DELETE' && personId !== undefined) {
+			await revokeScimClient({ ...who, clientId: personId });
+			return json(res, 200, { data: await enterpriseState(id) });
+		}
+		return error(res, 405, 'method_not_allowed', 'POST /enterprise/scim-clients or DELETE /enterprise/scim-clients/:clientId');
 	}
 	if (kind === 'people' && personId !== undefined) {
 		if (req.method !== 'PATCH') return error(res, 405, 'method_not_allowed', 'PATCH a person');

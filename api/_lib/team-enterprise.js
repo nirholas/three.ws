@@ -9,8 +9,9 @@
 //   - A person signing in with Microsoft from a claimed tenant is offered the
 //     team or added to it, as the owner configured (join_mode).
 //   - The tenant's SCIM client (Entra provisioning) manages the people with
-//     the team's bearer token. Deactivating a person ends their team access at
-//     once and revokes every session they signed in to through that tenant.
+//     an OAuth 2.0 client-credentials access token or the team's bearer
+//     token. Deactivating a person ends their team access at once and
+//     revokes every session they signed in to through that tenant.
 //   - People read the team; every write on the team stays owner-only.
 //
 // Every change lands in team_enterprise_events (the settings feed) and the
@@ -24,6 +25,13 @@ import {
 } from './scim.js';
 
 export const TOKEN_PREFIX = 'tws_scim_';
+export const CLIENT_SECRET_PREFIX = 'tws_scs_';
+export const ACCESS_TOKEN_PREFIX = 'tws_scat_';
+/** Lifetime of an access token from the SCIM token endpoint (Entra: 60 minutes to 6 hours). */
+export const ACCESS_TOKEN_TTL_SECONDS = 3600;
+/** Client secret lifetimes the owner may choose (Entra: one to three years). */
+export const CLIENT_SECRET_YEARS = Object.freeze([1, 2, 3]);
+export const MAX_ACTIVE_CLIENTS = 5;
 export const JOIN_MODES = Object.freeze(['offer', 'auto']);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (s) => typeof s === 'string' && UUID.test(s);
@@ -171,6 +179,7 @@ export async function unclaimTenant({ teamId, userId, req = null }) {
 	const claim = await getClaim(teamId);
 	if (!claim) throw new EnterpriseError(404, 'not_claimed', 'this team has not claimed a Microsoft tenant');
 	await sql`delete from team_scim_tokens where team_id = ${teamId}`;
+	await sql`delete from team_scim_clients where team_id = ${teamId}`;
 	await sql`delete from team_tenant_claims where team_id = ${teamId}`;
 	await logEvent(teamId, { actor: 'owner', actorUserId: userId, action: 'tenant_unclaimed', detail: { tenant_id: claim.tenant_id, tenant_name: claim.tenant_name } });
 	logAudit({ userId, action: 'team:tenant_unclaim', resourceId: teamId, meta: { tenant_id: claim.tenant_id }, req });
@@ -225,12 +234,27 @@ async function tenantOf(teamId) {
 	return row?.tenant_id || null;
 }
 
+// A person who leaves a team loses any Microsoft seat they held through it.
+// Loaded lazily: microsoft-billing pulls in auth.js, which imports this module.
+async function releaseMicrosoftSeat(teamId, userId) {
+	if (!teamId || !userId) return;
+	try {
+		const { releaseTeamSeat } = await import('./microsoft-billing.js');
+		await releaseTeamSeat(teamId, userId);
+	} catch (err) {
+		// Ending access (sessions, status) matters more than the seat; the next
+		// subscription refresh or webhook reconciles the seat again.
+		console.error('[team-enterprise] Microsoft seat release failed', { teamId, userId, error: err?.message || String(err) });
+	}
+}
+
 /** End a person's access: status, timestamp, and their tenant sessions. */
 async function deactivatePersonRow(person, { tenantId }) {
 	await sql`
 		update team_people set status = 'deactivated', deactivated_at = now(), updated_at = now()
 		where id = ${person.id}
 	`;
+	await releaseMicrosoftSeat(person.team_id, person.user_id);
 	const revoked = await revokeTenantSessions({ userId: person.user_id, tenantId: tenantId || person.entra_tenant_id });
 	return revoked;
 }
@@ -403,12 +427,108 @@ export async function revokeScimToken({ teamId, userId, req = null }) {
 	return { revoked: true };
 }
 
+// ── OAuth 2.0 client credentials (RFC 6749 4.4) ─────────────────────────────
+
 /**
- * The team a SCIM bearer belongs to, or null. A token only works while its
+ * Create a SCIM client: the row id is the client id, the secret is returned
+ * once and only its hash is stored. Up to MAX_ACTIVE_CLIENTS live at once so a
+ * customer adds the new secret in Entra before revoking the old one.
+ */
+export async function createScimClient({ teamId, userId, years, req = null }) {
+	if (!CLIENT_SECRET_YEARS.includes(years)) {
+		throw new EnterpriseError(400, 'invalid_expiry', `choose a client secret lifetime of ${CLIENT_SECRET_YEARS.join(', ')} years`);
+	}
+	const claim = await getClaim(teamId);
+	if (!claim) throw new EnterpriseError(409, 'tenant_claim_required', 'claim your Microsoft tenant before creating SCIM client credentials');
+	const [{ n }] = await sql`
+		select count(*)::int as n from team_scim_clients
+		where team_id = ${teamId} and revoked_at is null and expires_at > now()
+	`;
+	if (n >= MAX_ACTIVE_CLIENTS) {
+		throw new EnterpriseError(409, 'too_many_clients', `a team holds at most ${MAX_ACTIVE_CLIENTS} active SCIM client secrets; revoke one first`);
+	}
+	const secret = `${CLIENT_SECRET_PREFIX}${randomToken(32)}`;
+	const hash = await sha256(secret);
+	const prefix = secret.slice(0, CLIENT_SECRET_PREFIX.length + 6);
+	const [row] = await sql`
+		insert into team_scim_clients (team_id, secret_hash, secret_prefix, created_by_user_id, expires_at)
+		values (${teamId}, ${hash}, ${prefix}, ${userId}, now() + make_interval(years => ${years}))
+		returning id, created_at, expires_at
+	`;
+	await logEvent(teamId, { actor: 'owner', actorUserId: userId, action: 'scim_client_created', detail: { client_id: row.id, prefix, expires_at: row.expires_at } });
+	logAudit({ userId, action: 'team:scim_client_create', resourceId: teamId, meta: { client_id: row.id, prefix }, req });
+	return { client_id: row.id, client_secret: secret, secret_prefix: prefix, created_at: row.created_at, expires_at: row.expires_at };
+}
+
+/** Revoke a SCIM client; every access token it issued stops working at once. */
+export async function revokeScimClient({ teamId, userId, clientId, req = null }) {
+	if (!isUuid(clientId)) throw new EnterpriseError(404, 'no_client', 'no such SCIM client');
+	const rows = await sql`
+		update team_scim_clients set revoked_at = now()
+		where id = ${clientId} and team_id = ${teamId} and revoked_at is null
+		returning secret_prefix
+	`;
+	if (!rows.length) throw new EnterpriseError(404, 'no_client', 'no such SCIM client');
+	await sql`delete from team_scim_access_tokens where client_id = ${clientId}`;
+	await logEvent(teamId, { actor: 'owner', actorUserId: userId, action: 'scim_client_revoked', detail: { client_id: clientId, prefix: rows[0].secret_prefix } });
+	logAudit({ userId, action: 'team:scim_client_revoke', resourceId: teamId, meta: { client_id: clientId }, req });
+	return { revoked: true, client_id: clientId };
+}
+
+/**
+ * Exchange a client id and secret for a short-lived SCIM bearer, or null when
+ * the credentials are wrong, revoked, expired, or the team no longer holds a
+ * tenant claim. The caller answers RFC 6749 invalid_client on null.
+ */
+export async function issueScimAccessToken({ clientId, clientSecret }) {
+	if (!isUuid(clientId) || typeof clientSecret !== 'string' || !clientSecret.startsWith(CLIENT_SECRET_PREFIX) || clientSecret.length > 200) return null;
+	const hash = await sha256(clientSecret);
+	const [row] = await sql`
+		select k.id, k.team_id, k.secret_hash
+		from team_scim_clients k
+		join team_tenant_claims c on c.team_id = k.team_id
+		join teams t on t.id = k.team_id and t.archived_at is null
+		where k.id = ${clientId} and k.revoked_at is null and k.expires_at > now()
+		limit 1
+	`;
+	if (!row || !constantTimeEquals(row.secret_hash, hash)) return null;
+	const accessToken = `${ACCESS_TOKEN_PREFIX}${randomToken(32)}`;
+	await sql`delete from team_scim_access_tokens where expires_at < now() - interval '1 day'`;
+	await sql`
+		insert into team_scim_access_tokens (token_hash, client_id, team_id, expires_at)
+		values (${await sha256(accessToken)}, ${row.id}, ${row.team_id}, now() + make_interval(secs => ${ACCESS_TOKEN_TTL_SECONDS}))
+	`;
+	return { accessToken, expiresIn: ACCESS_TOKEN_TTL_SECONDS, teamId: row.team_id };
+}
+
+async function authenticateAccessToken(token) {
+	const hash = await sha256(token);
+	const [row] = await sql`
+		select a.token_hash, a.client_id, a.team_id, c.tenant_id
+		from team_scim_access_tokens a
+		join team_scim_clients k on k.id = a.client_id and k.revoked_at is null and k.expires_at > now()
+		join team_tenant_claims c on c.team_id = a.team_id
+		join teams t on t.id = a.team_id and t.archived_at is null
+		where a.token_hash = ${hash} and a.expires_at > now()
+		limit 1
+	`;
+	if (!row || !constantTimeEquals(row.token_hash, hash)) return null;
+	await sql`
+		update team_scim_clients set last_used_at = now()
+		where id = ${row.client_id} and (last_used_at is null or last_used_at < now() - interval '30 seconds')
+	`;
+	return { teamId: row.team_id, tenantId: row.tenant_id };
+}
+
+/**
+ * The team a SCIM bearer belongs to, or null. Accepts an access token from the
+ * token endpoint or the team's long-lived bearer. Either only works while its
  * team is live and still holds a tenant claim.
  */
 export async function authenticateScimToken(token) {
-	if (typeof token !== 'string' || !token.startsWith(TOKEN_PREFIX) || token.length > 200) return null;
+	if (typeof token !== 'string' || token.length > 200) return null;
+	if (token.startsWith(ACCESS_TOKEN_PREFIX)) return authenticateAccessToken(token);
+	if (!token.startsWith(TOKEN_PREFIX)) return null;
 	const hash = await sha256(token);
 	const [row] = await sql`
 		select k.team_id, k.token_hash, c.tenant_id
@@ -429,9 +549,14 @@ export async function authenticateScimToken(token) {
 // ── settings view ────────────────────────────────────────────────────────────
 
 export async function enterpriseView(teamId) {
-	const [claim, [token], people, events, [lastScim]] = await Promise.all([
+	const [claim, [token], clients, people, events, [lastScim]] = await Promise.all([
 		getClaim(teamId),
 		sql`select token_prefix, created_at, rotated_at, last_used_at from team_scim_tokens where team_id = ${teamId} limit 1`,
+		sql`
+			select id, secret_prefix, created_at, expires_at, last_used_at
+			from team_scim_clients where team_id = ${teamId} and revoked_at is null
+			order by created_at desc
+		`,
 		sql`
 			select p.id, p.user_id, p.status, p.source, p.user_name, p.display_name, p.email, p.created_at,
 			       p.deactivated_at, p.last_provisioned_at, (p.scim_deleted_at is not null) as scim_deleted
@@ -442,7 +567,7 @@ export async function enterpriseView(teamId) {
 		listEvents(teamId, { limit: 25 }),
 		sql`select max(created_at) as at from team_enterprise_events where team_id = ${teamId} and actor = 'scim'`,
 	]);
-	const lastSync = [token?.last_used_at, lastScim?.at].filter(Boolean).map((d) => new Date(d).getTime());
+	const lastSync = [token?.last_used_at, lastScim?.at, ...clients.map((c) => c.last_used_at)].filter(Boolean).map((d) => new Date(d).getTime());
 	return {
 		claim: claim && {
 			tenant_id: claim.tenant_id,
@@ -458,6 +583,14 @@ export async function enterpriseView(teamId) {
 			created_at: token?.created_at || null,
 			rotated_at: token?.rotated_at || null,
 			last_used_at: token?.last_used_at || null,
+			clients: clients.map((c) => ({
+				client_id: c.id,
+				secret_prefix: c.secret_prefix,
+				created_at: c.created_at,
+				expires_at: c.expires_at,
+				expired: new Date(c.expires_at).getTime() <= Date.now(),
+				last_used_at: c.last_used_at,
+			})),
 			last_sync_at: lastSync.length ? new Date(Math.max(...lastSync)).toISOString() : null,
 		},
 		people: people.map((p) => ({
@@ -587,6 +720,7 @@ async function writeUserState(ctx, row, state, { revive = false } = {}) {
 		returning ${PERSON_COLUMNS}
 	`;
 	if (wasActive && !state.active) {
+		await releaseMicrosoftSeat(ctx.teamId, updated.user_id);
 		const revoked = await revokeTenantSessions({ userId: updated.user_id, tenantId: ctx.tenantId });
 		await logEvent(ctx.teamId, { actor: 'scim', action: 'user_deactivated', personId: row.id, detail: { sessions_revoked: revoked } });
 	} else if (!wasActive && state.active && !revive) {
@@ -665,6 +799,7 @@ export async function scimDeleteUser(ctx, id) {
 		where id = ${row.id}
 	`;
 	await sql`delete from team_scim_group_members where person_id = ${row.id}`;
+	await releaseMicrosoftSeat(ctx.teamId, row.user_id);
 	const revoked = await revokeTenantSessions({ userId: row.user_id, tenantId: ctx.tenantId });
 	await logEvent(ctx.teamId, { actor: 'scim', action: 'user_deleted', personId: row.id, detail: { sessions_revoked: revoked } });
 }

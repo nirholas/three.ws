@@ -33,7 +33,7 @@ export const PRE_DDL = `
 	);
 `;
 
-const MIGRATIONS = ['20261010120000_teams.sql', '20261111160232_enterprise_sso_scim.sql'];
+const MIGRATIONS = ['20261010120000_teams.sql', '20261111160232_enterprise_sso_scim.sql', '20261116160500_scim_oauth_clients.sql'];
 
 /** Create the schema the SCIM code runs against on a fresh PGlite wrapper. */
 export async function buildScimSchema(db) {
@@ -47,6 +47,7 @@ export async function buildScimSchema(db) {
 export async function resetScimTables(db) {
 	await db.exec(`
 		delete from team_enterprise_events; delete from team_scim_group_members; delete from team_scim_groups;
+		delete from team_scim_access_tokens; delete from team_scim_clients;
 		delete from team_scim_tokens; delete from team_people; delete from team_tenant_claims;
 		delete from team_findings; delete from team_members; delete from teams;
 		delete from sessions; delete from user_identities; delete from users;
