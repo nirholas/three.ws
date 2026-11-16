@@ -11,6 +11,19 @@
 				"calls": 47,
 				"failed": 0,
 				"ms": [
+					2218,
+					2707,
+					2077,
+					569,
+					730,
+					1290,
+					1307,
+					670,
+					570,
+					571,
+					385,
+					970,
+					408,
 					2256,
 					1807,
 					2389,
@@ -20,19 +33,6 @@
 					519,
 					737,
 					570,
-					1336,
-					1291,
-					1310,
-					581,
-					588,
-					1256,
-					933,
-					592,
-					1107,
-					421,
-					398,
-					404,
-					927,
 					1362,
 					1075,
 					1508,
@@ -64,19 +64,19 @@
 				"calls": 24,
 				"failed": 0,
 				"ms": [
+					1297,
+					1025,
+					579,
+					758,
+					723,
+					781,
+					590,
+					1044,
 					956,
 					3189,
 					805,
 					926,
 					1113,
-					601,
-					931,
-					745,
-					756,
-					760,
-					978,
-					914,
-					1348,
 					716,
 					1106,
 					915,
@@ -94,15 +94,15 @@
 				"calls": 19,
 				"failed": 0,
 				"ms": [
+					1268,
+					1241,
+					591,
+					1100,
+					1082,
+					419,
 					947,
 					1114,
 					1362,
-					793,
-					820,
-					442,
-					1129,
-					1148,
-					966,
 					615,
 					1322,
 					832,
@@ -115,41 +115,17 @@
 					1100
 				]
 			},
-			"nvidia/nemotron-3.5-super-vl-120b-a12b": {
-				"calls": 20,
-				"failed": 1,
-				"ms": [
-					1487,
-					1910,
-					2091,
-					2666,
-					2539,
-					6905,
-					5672,
-					17567,
-					5844,
-					4131,
-					1496,
-					3164,
-					2638,
-					4107,
-					1888,
-					4555,
-					5708,
-					9442,
-					4550,
-					7146
-				]
-			},
 			"nvidia/nemotron-ocr-v2": {
-				"calls": 36,
+				"calls": 38,
 				"failed": 0,
 				"ms": [
+					1330,
+					1359,
+					618,
+					964,
+					1344,
 					1949,
 					1896,
-					817,
-					649,
-					661,
 					676,
 					1171,
 					775,
@@ -181,6 +157,32 @@
 					429,
 					560,
 					602
+				]
+			},
+			"nvidia/nemotron-3.5-super-vl-120b-a12b": {
+				"calls": 20,
+				"failed": 1,
+				"ms": [
+					3080,
+					3917,
+					3511,
+					6513,
+					4705,
+					7455,
+					1487,
+					1910,
+					2091,
+					2666,
+					1496,
+					3164,
+					2638,
+					4107,
+					1888,
+					4555,
+					5708,
+					9442,
+					4550,
+					7146
 				]
 			}
 		}
@@ -219,6 +221,110 @@
 		}
 	],
 	"extraction": {
+		"mixtral": {
+			"nemotron": {
+				"pages": 13,
+				"scanned_pages": 0,
+				"tables": 8,
+				"charts": 6,
+				"chart_reads_failed": 0,
+				"page_ms": [
+					2616,
+					4757,
+					9012,
+					5971,
+					5177,
+					2749,
+					9173,
+					2554,
+					737,
+					730,
+					1051,
+					9174,
+					5863
+				],
+				"model_calls": {
+					"nvidia/nemotron-page-elements-v3": {
+						"calls": 13,
+						"failed": 0,
+						"ms": [
+							2218,
+							2707,
+							2077,
+							569,
+							730,
+							1290,
+							1307,
+							670,
+							570,
+							571,
+							385,
+							970,
+							408
+						]
+					},
+					"nvidia/nemotron-table-structure-v1": {
+						"calls": 8,
+						"failed": 0,
+						"ms": [
+							1297,
+							1025,
+							579,
+							758,
+							723,
+							781,
+							590,
+							1044
+						]
+					},
+					"nvidia/nemotron-graphic-elements-v1": {
+						"calls": 6,
+						"failed": 0,
+						"ms": [
+							1268,
+							1241,
+							591,
+							1100,
+							1082,
+							419
+						]
+					},
+					"nvidia/nemotron-ocr-v2": {
+						"calls": 5,
+						"failed": 0,
+						"ms": [
+							1330,
+							1359,
+							618,
+							964,
+							1344
+						]
+					},
+					"nvidia/nemotron-3.5-super-vl-120b-a12b": {
+						"calls": 6,
+						"failed": 0,
+						"ms": [
+							3080,
+							3917,
+							3511,
+							6513,
+							4705,
+							7455
+						]
+					}
+				},
+				"extract_ms": 22122,
+				"chunks": 42
+			},
+			"markitdown": {
+				"extract_ms": 12616,
+				"chunks": 22
+			},
+			"text-layer": {
+				"extract_ms": 229,
+				"chunks": 25
+			}
+		},
 		"mistral7b": {
 			"markitdown": {
 				"extract_ms": 6777,
@@ -302,108 +408,6 @@
 				},
 				"extract_ms": 26625,
 				"chunks": 28
-			}
-		},
-		"mixtral": {
-			"markitdown": {
-				"extract_ms": 12616,
-				"chunks": 22
-			},
-			"text-layer": {
-				"extract_ms": 229,
-				"chunks": 25
-			},
-			"nemotron": {
-				"pages": 13,
-				"scanned_pages": 0,
-				"tables": 8,
-				"charts": 6,
-				"chart_reads_failed": 0,
-				"page_ms": [
-					1627,
-					2379,
-					10021,
-					19597,
-					4063,
-					2512,
-					7948,
-					2398,
-					1237,
-					543,
-					482,
-					7614,
-					6217
-				],
-				"model_calls": {
-					"nvidia/nemotron-page-elements-v3": {
-						"calls": 13,
-						"failed": 0,
-						"ms": [
-							1336,
-							1291,
-							1310,
-							581,
-							588,
-							1256,
-							933,
-							592,
-							1107,
-							421,
-							398,
-							404,
-							927
-						]
-					},
-					"nvidia/nemotron-table-structure-v1": {
-						"calls": 8,
-						"failed": 0,
-						"ms": [
-							601,
-							931,
-							745,
-							756,
-							760,
-							978,
-							914,
-							1348
-						]
-					},
-					"nvidia/nemotron-graphic-elements-v1": {
-						"calls": 6,
-						"failed": 0,
-						"ms": [
-							793,
-							820,
-							442,
-							1129,
-							1148,
-							966
-						]
-					},
-					"nvidia/nemotron-3.5-super-vl-120b-a12b": {
-						"calls": 6,
-						"failed": 0,
-						"ms": [
-							2539,
-							6905,
-							5672,
-							17567,
-							5844,
-							4131
-						]
-					},
-					"nvidia/nemotron-ocr-v2": {
-						"calls": 3,
-						"failed": 0,
-						"ms": [
-							817,
-							649,
-							661
-						]
-					}
-				},
-				"extract_ms": 23126,
-				"chunks": 39
 			}
 		},
 		"phi3": {
@@ -659,303 +663,6 @@
 			"doc": "mistral7b",
 			"kind": "table",
 			"page": 4,
-			"q": "What HumanEval score does Code-Llama 7B get?",
-			"number": 31.1,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "31.1%",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.473
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.471
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.383
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.372
-				}
-			]
-		},
-		{
-			"doc": "mistral7b",
-			"kind": "table",
-			"page": 4,
-			"q": "What MATH score does Mistral 7B reach?",
-			"number": 13.1,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "13.1%",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.53
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.512
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.504
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.472
-				}
-			]
-		},
-		{
-			"doc": "mistral7b",
-			"kind": "table",
-			"page": 5,
-			"q": "What MT Bench score does Llama 2 7B Chat get?",
-			"number": 6.27,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "6.27",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.501
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.472
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.456
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.429
-				}
-			]
-		},
-		{
-			"doc": "mistral7b",
-			"kind": "table",
-			"page": 5,
-			"q": "What Chatbot Arena ELO rating does Vicuna 13B have?",
-			"number": 1041,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "1041",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.435
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.278
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.262
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.257
-				}
-			]
-		},
-		{
-			"doc": "mistral7b",
-			"kind": "table",
-			"page": 6,
-			"q": "What MT Bench score does Mistral 7B get when the Llama 2 system prompt is used?",
-			"number": 6.38,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "6.38±0.07",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.598
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.52
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.478
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.469
-				}
-			]
-		},
-		{
-			"doc": "mistral7b",
-			"kind": "chart",
-			"page": 4,
-			"q": "In Figure 4, which model scores lowest on Math?",
-			"match": "llama\\s*2\\s*7b",
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": null,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.357
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.324
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.269
-				}
-			]
-		},
-		{
-			"doc": "mistral7b",
-			"kind": "chart",
-			"page": 4,
-			"q": "In Figure 4, which model scores highest on BBH?",
-			"match": "llama\\s*1\\s*34b",
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": null,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.395
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.341
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.289
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.287
-				}
-			]
-		},
-		{
-			"doc": "mistral7b",
-			"kind": "chart",
-			"page": 5,
-			"q": "In Figure 5, what effective LLaMA 2 model size (in billions of parameters) does Mistral 7B match on MMLU?",
-			"number": 23,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.594
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.488
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.464
-				}
-			]
-		},
-		{
-			"doc": "mistral7b",
-			"kind": "chart",
-			"page": 5,
-			"q": "In Figure 5, roughly what reading comprehension score (percent) does LLaMA 2 13B reach?",
-			"number": 63.3,
-			"tol": 1,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": null,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.479
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.454
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.381
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.352
-				}
-			]
-		},
-		{
-			"doc": "mistral7b",
-			"kind": "table",
-			"page": 4,
 			"q": "What GSM8K score does LLaMA 2 13B get?",
 			"number": 34.3,
 			"scanned": false,
@@ -983,268 +690,6 @@
 					"heading": "Page 1",
 					"locator": "Page 1",
 					"score": 0.353
-				}
-			]
-		},
-		{
-			"doc": "mistral7b",
-			"kind": "table",
-			"page": 4,
-			"q": "What HumanEval score does Code-Llama 7B get?",
-			"number": 31.1,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "31.1%",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 3",
-					"locator": "Page 3",
-					"score": 0.476
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.474
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.415
-				}
-			]
-		},
-		{
-			"doc": "mistral7b",
-			"kind": "table",
-			"page": 4,
-			"q": "What MATH score does Mistral 7B reach?",
-			"number": 13.1,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "13.1%",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.543
-				},
-				{
-					"heading": "Page 3",
-					"locator": "Page 3",
-					"score": 0.522
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.502
-				}
-			]
-		},
-		{
-			"doc": "mistral7b",
-			"kind": "table",
-			"page": 5,
-			"q": "What MT Bench score does Llama 2 7B Chat get?",
-			"number": 6.27,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "6.27",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.543
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.478
-				},
-				{
-					"heading": "Page 3",
-					"locator": "Page 3",
-					"score": 0.473
-				}
-			]
-		},
-		{
-			"doc": "mistral7b",
-			"kind": "table",
-			"page": 5,
-			"q": "What Chatbot Arena ELO rating does Vicuna 13B have?",
-			"number": 1041,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "1041",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.433
-				},
-				{
-					"heading": "Page 3",
-					"locator": "Page 3",
-					"score": 0.285
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.264
-				}
-			]
-		},
-		{
-			"doc": "mistral7b",
-			"kind": "table",
-			"page": 6,
-			"q": "What MT Bench score does Mistral 7B get when the Llama 2 system prompt is used?",
-			"number": 6.38,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "6.38 ± 0.07",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.628
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.541
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.527
-				}
-			]
-		},
-		{
-			"doc": "mistral7b",
-			"kind": "chart",
-			"page": 4,
-			"q": "In Figure 4, which model scores lowest on Math?",
-			"match": "llama\\s*2\\s*7b",
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "Code-Llama 7B",
-			"pass": false,
-			"context_has_value": null,
-			"retrieved": [
-				{
-					"heading": "Page 3",
-					"locator": "Page 3",
-					"score": 0.361
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.354
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.268
-				}
-			]
-		},
-		{
-			"doc": "mistral7b",
-			"kind": "chart",
-			"page": 4,
-			"q": "In Figure 4, which model scores highest on BBH?",
-			"match": "llama\\s*1\\s*34b",
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": null,
-			"retrieved": [
-				{
-					"heading": "Page 3",
-					"locator": "Page 3",
-					"score": 0.392
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.35
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.316
-				}
-			]
-		},
-		{
-			"doc": "mistral7b",
-			"kind": "chart",
-			"page": 5,
-			"q": "In Figure 5, what effective LLaMA 2 model size (in billions of parameters) does Mistral 7B match on MMLU?",
-			"number": 23,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.614
-				},
-				{
-					"heading": "Page 3",
-					"locator": "Page 3",
-					"score": 0.508
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.471
-				}
-			]
-		},
-		{
-			"doc": "mistral7b",
-			"kind": "chart",
-			"page": 5,
-			"q": "In Figure 5, roughly what reading comprehension score (percent) does LLaMA 2 13B reach?",
-			"number": 63.3,
-			"tol": 1,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": null,
-			"retrieved": [
-				{
-					"heading": "Page 3",
-					"locator": "Page 3",
-					"score": 0.487
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.478
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.386
 				}
 			]
 		},
@@ -1289,6 +734,69 @@
 			"q": "What HumanEval score does Code-Llama 7B get?",
 			"number": 31.1,
 			"scanned": false,
+			"condition": "markitdown",
+			"reply": "31.1%",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.473
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.471
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.383
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.372
+				}
+			]
+		},
+		{
+			"doc": "mistral7b",
+			"kind": "table",
+			"page": 4,
+			"q": "What HumanEval score does Code-Llama 7B get?",
+			"number": 31.1,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "31.1%",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 3",
+					"locator": "Page 3",
+					"score": 0.476
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.474
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.415
+				}
+			]
+		},
+		{
+			"doc": "mistral7b",
+			"kind": "table",
+			"page": 4,
+			"q": "What HumanEval score does Code-Llama 7B get?",
+			"number": 31.1,
+			"scanned": false,
 			"condition": "nemotron",
 			"reply": "31.1%",
 			"pass": true,
@@ -1313,6 +821,69 @@
 					"heading": "Page 5 · Figure 5: Results on MMLU, commonsense reasoning, world knowledge and reading comprehension for Mistral 7B and Llama 2 (7B/13B/70B). Mistral…",
 					"locator": "Page 5",
 					"score": 0.384
+				}
+			]
+		},
+		{
+			"doc": "mistral7b",
+			"kind": "table",
+			"page": 4,
+			"q": "What MATH score does Mistral 7B reach?",
+			"number": 13.1,
+			"scanned": false,
+			"condition": "markitdown",
+			"reply": "13.1%",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.53
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.512
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.504
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.472
+				}
+			]
+		},
+		{
+			"doc": "mistral7b",
+			"kind": "table",
+			"page": 4,
+			"q": "What MATH score does Mistral 7B reach?",
+			"number": 13.1,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "13.1%",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.543
+				},
+				{
+					"heading": "Page 3",
+					"locator": "Page 3",
+					"score": 0.522
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.502
 				}
 			]
 		},
@@ -1357,6 +928,69 @@
 			"q": "What MT Bench score does Llama 2 7B Chat get?",
 			"number": 6.27,
 			"scanned": false,
+			"condition": "markitdown",
+			"reply": "6.27",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.501
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.472
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.456
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.429
+				}
+			]
+		},
+		{
+			"doc": "mistral7b",
+			"kind": "table",
+			"page": 5,
+			"q": "What MT Bench score does Llama 2 7B Chat get?",
+			"number": 6.27,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "6.27",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.543
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.478
+				},
+				{
+					"heading": "Page 3",
+					"locator": "Page 3",
+					"score": 0.473
+				}
+			]
+		},
+		{
+			"doc": "mistral7b",
+			"kind": "table",
+			"page": 5,
+			"q": "What MT Bench score does Llama 2 7B Chat get?",
+			"number": 6.27,
+			"scanned": false,
 			"condition": "nemotron",
 			"reply": "6.27",
 			"pass": true,
@@ -1381,6 +1015,69 @@
 					"heading": "Page 4 · Figure 4: Performance of Mistral 7B and different Llama models on a wide range of benchmarks. All models were re-evaluated on all metrics…",
 					"locator": "Page 4",
 					"score": 0.5
+				}
+			]
+		},
+		{
+			"doc": "mistral7b",
+			"kind": "table",
+			"page": 5,
+			"q": "What Chatbot Arena ELO rating does Vicuna 13B have?",
+			"number": 1041,
+			"scanned": false,
+			"condition": "markitdown",
+			"reply": "1041",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.435
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.278
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.262
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.257
+				}
+			]
+		},
+		{
+			"doc": "mistral7b",
+			"kind": "table",
+			"page": 5,
+			"q": "What Chatbot Arena ELO rating does Vicuna 13B have?",
+			"number": 1041,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "1041",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.433
+				},
+				{
+					"heading": "Page 3",
+					"locator": "Page 3",
+					"score": 0.285
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.264
 				}
 			]
 		},
@@ -1425,6 +1122,69 @@
 			"q": "What MT Bench score does Mistral 7B get when the Llama 2 system prompt is used?",
 			"number": 6.38,
 			"scanned": false,
+			"condition": "markitdown",
+			"reply": "6.38±0.07",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.598
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.52
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.478
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.469
+				}
+			]
+		},
+		{
+			"doc": "mistral7b",
+			"kind": "table",
+			"page": 6,
+			"q": "What MT Bench score does Mistral 7B get when the Llama 2 system prompt is used?",
+			"number": 6.38,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "6.38 ± 0.07",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.628
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.541
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.527
+				}
+			]
+		},
+		{
+			"doc": "mistral7b",
+			"kind": "table",
+			"page": 6,
+			"q": "What MT Bench score does Mistral 7B get when the Llama 2 system prompt is used?",
+			"number": 6.38,
+			"scanned": false,
 			"condition": "nemotron",
 			"reply": "6.38",
 			"pass": true,
@@ -1449,6 +1209,64 @@
 					"heading": "Page 4 · Table 3: Comparison of Chat models. Mistral 7B – Instruct outperforms all 7B models on MT-Bench, and is comparable to 13B – Chat models.",
 					"locator": "Page 4",
 					"score": 0.52
+				}
+			]
+		},
+		{
+			"doc": "mistral7b",
+			"kind": "chart",
+			"page": 4,
+			"q": "In Figure 4, which model scores lowest on Math?",
+			"match": "llama\\s*2\\s*7b",
+			"scanned": false,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": null,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.357
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.324
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.269
+				}
+			]
+		},
+		{
+			"doc": "mistral7b",
+			"kind": "chart",
+			"page": 4,
+			"q": "In Figure 4, which model scores lowest on Math?",
+			"match": "llama\\s*2\\s*7b",
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "Code-Llama 7B",
+			"pass": false,
+			"context_has_value": null,
+			"retrieved": [
+				{
+					"heading": "Page 3",
+					"locator": "Page 3",
+					"score": 0.361
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.354
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.268
 				}
 			]
 		},
@@ -1493,6 +1311,69 @@
 			"q": "In Figure 4, which model scores highest on BBH?",
 			"match": "llama\\s*1\\s*34b",
 			"scanned": false,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": null,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.395
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.341
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.289
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.287
+				}
+			]
+		},
+		{
+			"doc": "mistral7b",
+			"kind": "chart",
+			"page": 4,
+			"q": "In Figure 4, which model scores highest on BBH?",
+			"match": "llama\\s*1\\s*34b",
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": null,
+			"retrieved": [
+				{
+					"heading": "Page 3",
+					"locator": "Page 3",
+					"score": 0.392
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.35
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.316
+				}
+			]
+		},
+		{
+			"doc": "mistral7b",
+			"kind": "chart",
+			"page": 4,
+			"q": "In Figure 4, which model scores highest on BBH?",
+			"match": "llama\\s*1\\s*34b",
+			"scanned": false,
 			"condition": "nemotron",
 			"reply": "LLaMA 1 34B",
 			"pass": true,
@@ -1527,6 +1408,64 @@
 			"q": "In Figure 5, what effective LLaMA 2 model size (in billions of parameters) does Mistral 7B match on MMLU?",
 			"number": 23,
 			"scanned": false,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.594
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.488
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.464
+				}
+			]
+		},
+		{
+			"doc": "mistral7b",
+			"kind": "chart",
+			"page": 5,
+			"q": "In Figure 5, what effective LLaMA 2 model size (in billions of parameters) does Mistral 7B match on MMLU?",
+			"number": 23,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.614
+				},
+				{
+					"heading": "Page 3",
+					"locator": "Page 3",
+					"score": 0.508
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.471
+				}
+			]
+		},
+		{
+			"doc": "mistral7b",
+			"kind": "chart",
+			"page": 5,
+			"q": "In Figure 5, what effective LLaMA 2 model size (in billions of parameters) does Mistral 7B match on MMLU?",
+			"number": 23,
+			"scanned": false,
 			"condition": "nemotron",
 			"reply": "34",
 			"pass": false,
@@ -1551,6 +1490,71 @@
 					"heading": "Page 4 · Figure 4: Performance of Mistral 7B and different Llama models on a wide range of benchmarks. All models were re-evaluated on all metrics…",
 					"locator": "Page 4",
 					"score": 0.543
+				}
+			]
+		},
+		{
+			"doc": "mistral7b",
+			"kind": "chart",
+			"page": 5,
+			"q": "In Figure 5, roughly what reading comprehension score (percent) does LLaMA 2 13B reach?",
+			"number": 63.3,
+			"tol": 1,
+			"scanned": false,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": null,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.479
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.454
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.381
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.352
+				}
+			]
+		},
+		{
+			"doc": "mistral7b",
+			"kind": "chart",
+			"page": 5,
+			"q": "In Figure 5, roughly what reading comprehension score (percent) does LLaMA 2 13B reach?",
+			"number": 63.3,
+			"tol": 1,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": null,
+			"retrieved": [
+				{
+					"heading": "Page 3",
+					"locator": "Page 3",
+					"score": 0.487
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.478
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.386
 				}
 			]
 		},
@@ -1622,336 +1626,6 @@
 			"doc": "mixtral",
 			"kind": "table",
 			"page": 4,
-			"q": "What Math score does Mixtral 8x7B get?",
-			"number": 28.4,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "28.4%",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.503
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.497
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.484
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "table",
-			"page": 4,
-			"q": "What GSM-8K score does GPT-3.5 get?",
-			"number": 57.1,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "57.1%",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.42
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.399
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.385
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.363
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "table",
-			"page": 4,
-			"q": "What MT Bench score does LLaMA 2 70B get?",
-			"number": 6.86,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "6.86",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.46
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.441
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.433
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.407
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "table",
-			"page": 5,
-			"q": "What Arc-c score does Mixtral 8x7B get in German?",
-			"number": 54.3,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "54.3%",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.408
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.335
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.321
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.315
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "table",
-			"page": 5,
-			"q": "What HellaSwag score does LLaMA 2 70B get in Italian?",
-			"number": 70.9,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "74.5%",
-			"pass": false,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.391
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.323
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.294
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.261
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "table",
-			"page": 6,
-			"q": "What average BOLD sentiment score does Llama 2 70B get for religious_ideology?",
-			"number": 0.188,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "0.188±0.133",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.466
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.259
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.202
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "table",
-			"page": 8,
-			"q": "In Table 5, what share of tokens on Github get the same expert as first or second choice at Layer 0?",
-			"number": 49.9,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "49.9%",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.557
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.554
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.506
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.432
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "image",
-			"page": 6,
-			"q": "On the LMSys leaderboard screenshot (Figure 6), what Arena Elo rating does GPT-4-0613 have?",
-			"number": 1158,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.42
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.276
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.27
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.264
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "image",
-			"page": 6,
-			"q": "On the LMSys leaderboard screenshot (Figure 6), what MT-bench score does GPT-4-Turbo have?",
-			"number": 9.32,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.463
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.327
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.301
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.287
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "image",
-			"page": 6,
-			"q": "On the LMSys leaderboard screenshot (Figure 6), what Arena Elo rating does Claude-1 have?",
-			"number": 1149,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.43
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.24
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.232
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.227
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "table",
-			"page": 4,
 			"q": "What TriviaQA score does LLaMA 1 33B get?",
 			"number": 68.5,
 			"scanned": false,
@@ -1979,341 +1653,6 @@
 					"heading": "Page 4",
 					"locator": "Page 4",
 					"score": 0.33
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "table",
-			"page": 4,
-			"q": "What Math score does Mixtral 8x7B get?",
-			"number": 28.4,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "28.4%",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.513
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.5
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.498
-				},
-				{
-					"heading": "Page 6",
-					"locator": "Page 6",
-					"score": 0.498
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "table",
-			"page": 4,
-			"q": "What GSM-8K score does GPT-3.5 get?",
-			"number": 57.1,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "57.1%",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 6",
-					"locator": "Page 6",
-					"score": 0.434
-				},
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.404
-				},
-				{
-					"heading": "Page 3",
-					"locator": "Page 3",
-					"score": 0.359
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.355
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "table",
-			"page": 4,
-			"q": "What MT Bench score does LLaMA 2 70B get?",
-			"number": 6.86,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "6.86",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.502
-				},
-				{
-					"heading": "Page 6",
-					"locator": "Page 6",
-					"score": 0.486
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.481
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.435
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "table",
-			"page": 5,
-			"q": "What Arc-c score does Mixtral 8x7B get in German?",
-			"number": 54.3,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "54.3%",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.428
-				},
-				{
-					"heading": "Page 6",
-					"locator": "Page 6",
-					"score": 0.366
-				},
-				{
-					"heading": "Page 8",
-					"locator": "Page 8",
-					"score": 0.33
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.31
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "table",
-			"page": 5,
-			"q": "What HellaSwag score does LLaMA 2 70B get in Italian?",
-			"number": 70.9,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "74.5%",
-			"pass": false,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.442
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.322
-				},
-				{
-					"heading": "Page 10",
-					"locator": "Page 10",
-					"score": 0.305
-				},
-				{
-					"heading": "Page 3",
-					"locator": "Page 3",
-					"score": 0.301
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "table",
-			"page": 6,
-			"q": "What average BOLD sentiment score does Llama 2 70B get for religious_ideology?",
-			"number": 0.188,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "0.188",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 6",
-					"locator": "Page 6",
-					"score": 0.395
-				},
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.225
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.203
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "table",
-			"page": 8,
-			"q": "In Table 5, what share of tokens on Github get the same expert as first or second choice at Layer 0?",
-			"number": 49.9,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "49.9%",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 12",
-					"locator": "Page 12",
-					"score": 0.555
-				},
-				{
-					"heading": "Page 8",
-					"locator": "Page 8",
-					"score": 0.55
-				},
-				{
-					"heading": "Page 7",
-					"locator": "Page 7",
-					"score": 0.546
-				},
-				{
-					"heading": "Page 7",
-					"locator": "Page 7",
-					"score": 0.434
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "image",
-			"page": 6,
-			"q": "On the LMSys leaderboard screenshot (Figure 6), what Arena Elo rating does GPT-4-0613 have?",
-			"number": 1158,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": [
-				{
-					"heading": "Page 6",
-					"locator": "Page 6",
-					"score": 0.497
-				},
-				{
-					"heading": "Page 10",
-					"locator": "Page 10",
-					"score": 0.278
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.267
-				},
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.261
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "image",
-			"page": 6,
-			"q": "On the LMSys leaderboard screenshot (Figure 6), what MT-bench score does GPT-4-Turbo have?",
-			"number": 9.32,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": [
-				{
-					"heading": "Page 6",
-					"locator": "Page 6",
-					"score": 0.512
-				},
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.33
-				},
-				{
-					"heading": "Page 2",
-					"locator": "Page 2",
-					"score": 0.303
-				},
-				{
-					"heading": "Page 8",
-					"locator": "Page 8",
-					"score": 0.297
-				}
-			]
-		},
-		{
-			"doc": "mixtral",
-			"kind": "image",
-			"page": 6,
-			"q": "On the LMSys leaderboard screenshot (Figure 6), what Arena Elo rating does Claude-1 have?",
-			"number": 1149,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": [
-				{
-					"heading": "Page 6",
-					"locator": "Page 6",
-					"score": 0.512
-				},
-				{
-					"heading": "Page 10",
-					"locator": "Page 10",
-					"score": 0.241
-				},
-				{
-					"heading": "Page 2",
-					"locator": "Page 2",
-					"score": 0.236
-				},
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.216
 				}
 			]
 		},
@@ -2358,6 +1697,69 @@
 			"q": "What Math score does Mixtral 8x7B get?",
 			"number": 28.4,
 			"scanned": false,
+			"condition": "markitdown",
+			"reply": "28.4%",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.503
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.497
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.484
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "table",
+			"page": 4,
+			"q": "What Math score does Mixtral 8x7B get?",
+			"number": 28.4,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "28.4%",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.513
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.5
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.498
+				},
+				{
+					"heading": "Page 6",
+					"locator": "Page 6",
+					"score": 0.498
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "table",
+			"page": 4,
+			"q": "What Math score does Mixtral 8x7B get?",
+			"number": 28.4,
+			"scanned": false,
 			"condition": "nemotron",
 			"reply": "28.4%",
 			"pass": true,
@@ -2392,6 +1794,74 @@
 			"q": "What GSM-8K score does GPT-3.5 get?",
 			"number": 57.1,
 			"scanned": false,
+			"condition": "markitdown",
+			"reply": "57.1%",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.42
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.399
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.385
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.363
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "table",
+			"page": 4,
+			"q": "What GSM-8K score does GPT-3.5 get?",
+			"number": 57.1,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "57.1%",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 6",
+					"locator": "Page 6",
+					"score": 0.434
+				},
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.404
+				},
+				{
+					"heading": "Page 3",
+					"locator": "Page 3",
+					"score": 0.359
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.355
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "table",
+			"page": 4,
+			"q": "What GSM-8K score does GPT-3.5 get?",
+			"number": 57.1,
+			"scanned": false,
 			"condition": "nemotron",
 			"reply": "57.1%",
 			"pass": true,
@@ -2403,19 +1873,87 @@
 					"score": 0.512
 				},
 				{
+					"heading": "Page 6 · Figure 6: LMSys Leaderboard. (Screenshot from Dec 22, 2023) Mixtral 8x7B Instruct v0.1 achieves an Arena Elo rating of 1121 outperforming…",
+					"locator": "Page 6",
+					"score": 0.438
+				},
+				{
 					"heading": "Page 6 · 4 Instruction Fine-tuning",
 					"locator": "Page 6",
-					"score": 0.396
+					"score": 0.388
 				},
 				{
 					"heading": "Page 4 · Table 2: Comparison of Mixtral with Llama. Mixtral outperforms or matches Llama 2 70B performance on almost all popular benchmarks while…",
 					"locator": "Page 4",
 					"score": 0.371
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "table",
+			"page": 4,
+			"q": "What MT Bench score does LLaMA 2 70B get?",
+			"number": 6.86,
+			"scanned": false,
+			"condition": "markitdown",
+			"reply": "6.86",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.46
 				},
 				{
-					"heading": "Page 1 · Abstract",
+					"heading": "Page 1",
 					"locator": "Page 1",
-					"score": 0.362
+					"score": 0.441
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.433
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.407
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "table",
+			"page": 4,
+			"q": "What MT Bench score does LLaMA 2 70B get?",
+			"number": 6.86,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "6.86",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.502
+				},
+				{
+					"heading": "Page 6",
+					"locator": "Page 6",
+					"score": 0.486
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.481
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.435
 				}
 			]
 		},
@@ -2449,7 +1987,75 @@
 				{
 					"heading": "Page 4 · Figure 3: Results on MMLU, commonsense reasoning, world knowledge and reading comprehension, math and code for Mistral (7B/8x7B) vs Llama 2…",
 					"locator": "Page 4",
-					"score": 0.489
+					"score": 0.488
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "table",
+			"page": 5,
+			"q": "What Arc-c score does Mixtral 8x7B get in German?",
+			"number": 54.3,
+			"scanned": false,
+			"condition": "markitdown",
+			"reply": "54.3%",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.408
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.335
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.321
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.315
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "table",
+			"page": 5,
+			"q": "What Arc-c score does Mixtral 8x7B get in German?",
+			"number": 54.3,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "54.3%",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.428
+				},
+				{
+					"heading": "Page 6",
+					"locator": "Page 6",
+					"score": 0.366
+				},
+				{
+					"heading": "Page 8",
+					"locator": "Page 8",
+					"score": 0.33
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.31
 				}
 			]
 		},
@@ -2476,14 +2082,82 @@
 					"score": 0.396
 				},
 				{
+					"heading": "Page 6 · Figure 6: LMSys Leaderboard. (Screenshot from Dec 22, 2023) Mixtral 8x7B Instruct v0.1 achieves an Arena Elo rating of 1121 outperforming…",
+					"locator": "Page 6",
+					"score": 0.359
+				},
+				{
 					"heading": "Page 5 · 3.1 Multilingual benchmarks",
 					"locator": "Page 5",
 					"score": 0.343
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "table",
+			"page": 5,
+			"q": "What HellaSwag score does LLaMA 2 70B get in Italian?",
+			"number": 70.9,
+			"scanned": false,
+			"condition": "markitdown",
+			"reply": "74.5%",
+			"pass": false,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.391
 				},
 				{
-					"heading": "Page 3 · Figure 2: Performance of Mixtral and different Llama models on a wide range of benchmarks. All models were re-evaluated on all metrics with…",
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.323
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.294
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.261
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "table",
+			"page": 5,
+			"q": "What HellaSwag score does LLaMA 2 70B get in Italian?",
+			"number": 70.9,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "74.5%",
+			"pass": false,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.442
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.322
+				},
+				{
+					"heading": "Page 10",
+					"locator": "Page 10",
+					"score": 0.305
+				},
+				{
+					"heading": "Page 3",
 					"locator": "Page 3",
-					"score": 0.338
+					"score": 0.301
 				}
 			]
 		},
@@ -2528,6 +2202,64 @@
 			"q": "What average BOLD sentiment score does Llama 2 70B get for religious_ideology?",
 			"number": 0.188,
 			"scanned": false,
+			"condition": "markitdown",
+			"reply": "0.188±0.133",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.466
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.259
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.202
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "table",
+			"page": 6,
+			"q": "What average BOLD sentiment score does Llama 2 70B get for religious_ideology?",
+			"number": 0.188,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "0.188",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 6",
+					"locator": "Page 6",
+					"score": 0.395
+				},
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.225
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.203
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "table",
+			"page": 6,
+			"q": "What average BOLD sentiment score does Llama 2 70B get for religious_ideology?",
+			"number": 0.188,
+			"scanned": false,
 			"condition": "nemotron",
 			"reply": "0.188",
 			"pass": true,
@@ -2562,20 +2294,156 @@
 			"q": "In Table 5, what share of tokens on Github get the same expert as first or second choice at Layer 0?",
 			"number": 49.9,
 			"scanned": false,
+			"condition": "markitdown",
+			"reply": "49.9%",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.557
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.554
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.506
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.432
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "table",
+			"page": 8,
+			"q": "In Table 5, what share of tokens on Github get the same expert as first or second choice at Layer 0?",
+			"number": 49.9,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "49.9%",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 12",
+					"locator": "Page 12",
+					"score": 0.555
+				},
+				{
+					"heading": "Page 8",
+					"locator": "Page 8",
+					"score": 0.55
+				},
+				{
+					"heading": "Page 7",
+					"locator": "Page 7",
+					"score": 0.546
+				},
+				{
+					"heading": "Page 7",
+					"locator": "Page 7",
+					"score": 0.434
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "table",
+			"page": 8,
+			"q": "In Table 5, what share of tokens on Github get the same expert as first or second choice at Layer 0?",
+			"number": 49.9,
+			"scanned": false,
 			"condition": "nemotron",
 			"reply": "49.9%",
 			"pass": true,
 			"context_has_value": true,
 			"retrieved": [
 				{
-					"heading": "Page 12 · Figure 9: Proportion of tokens assigned to each expert on different subsets from The Pile dataset, separated by whether the expert was…",
-					"locator": "Page 12",
-					"score": 0.599
-				},
-				{
 					"heading": "Page 8 · Table 5: Percentage of expert assignment repetitions. We evaluate the proportion of times the same expert is assigned to a token i and its…",
 					"locator": "Page 8",
 					"score": 0.592
+				},
+				{
+					"heading": "Page 12 · Figure 9: Proportion of tokens assigned to each expert on different subsets from The Pile dataset, separated by whether the expert was…",
+					"locator": "Page 12",
+					"score": 0.591
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "image",
+			"page": 6,
+			"q": "On the LMSys leaderboard screenshot (Figure 6), what Arena Elo rating does GPT-4-0613 have?",
+			"number": 1158,
+			"scanned": false,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.42
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.276
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.27
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.264
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "image",
+			"page": 6,
+			"q": "On the LMSys leaderboard screenshot (Figure 6), what Arena Elo rating does GPT-4-0613 have?",
+			"number": 1158,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": [
+				{
+					"heading": "Page 6",
+					"locator": "Page 6",
+					"score": 0.497
+				},
+				{
+					"heading": "Page 10",
+					"locator": "Page 10",
+					"score": 0.278
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.267
+				},
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.261
 				}
 			]
 		},
@@ -2587,29 +2455,97 @@
 			"number": 1158,
 			"scanned": false,
 			"condition": "nemotron",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
+			"reply": "1158",
+			"pass": true,
+			"context_has_value": true,
 			"retrieved": [
+				{
+					"heading": "Page 6 · Figure 6: LMSys Leaderboard. (Screenshot from Dec 22, 2023) Mixtral 8x7B Instruct v0.1 achieves an Arena Elo rating of 1121 outperforming…",
+					"locator": "Page 6",
+					"score": 0.578
+				},
 				{
 					"heading": "Page 6 · 4 Instruction Fine-tuning",
 					"locator": "Page 6",
-					"score": 0.358
+					"score": 0.359
+				},
+				{
+					"heading": "Page 6 · 4 Instruction Fine-tuning",
+					"locator": "Page 6",
+					"score": 0.316
 				},
 				{
 					"heading": "Page 5 · Table 3: Comparison of Mixtral with Llama 2 70B and GPT-3.5. Mixtral outperforms or matches Llama 2 70B and GPT-3.5 performance on most…",
 					"locator": "Page 5",
 					"score": 0.286
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "image",
+			"page": 6,
+			"q": "On the LMSys leaderboard screenshot (Figure 6), what MT-bench score does GPT-4-Turbo have?",
+			"number": 9.32,
+			"scanned": false,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.463
 				},
 				{
-					"heading": "Page 10 · References",
-					"locator": "Page 10",
-					"score": 0.274
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.327
 				},
 				{
-					"heading": "Page 3 · Figure 2: Performance of Mixtral and different Llama models on a wide range of benchmarks. All models were re-evaluated on all metrics with…",
-					"locator": "Page 3",
-					"score": 0.267
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.301
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.287
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "image",
+			"page": 6,
+			"q": "On the LMSys leaderboard screenshot (Figure 6), what MT-bench score does GPT-4-Turbo have?",
+			"number": 9.32,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": [
+				{
+					"heading": "Page 6",
+					"locator": "Page 6",
+					"score": 0.512
+				},
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.33
+				},
+				{
+					"heading": "Page 2",
+					"locator": "Page 2",
+					"score": 0.303
+				},
+				{
+					"heading": "Page 8",
+					"locator": "Page 8",
+					"score": 0.297
 				}
 			]
 		},
@@ -2621,14 +2557,19 @@
 			"number": 9.32,
 			"scanned": false,
 			"condition": "nemotron",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
+			"reply": "9.32",
+			"pass": true,
+			"context_has_value": true,
 			"retrieved": [
+				{
+					"heading": "Page 6 · Figure 6: LMSys Leaderboard. (Screenshot from Dec 22, 2023) Mixtral 8x7B Instruct v0.1 achieves an Arena Elo rating of 1121 outperforming…",
+					"locator": "Page 6",
+					"score": 0.53
+				},
 				{
 					"heading": "Page 6 · 4 Instruction Fine-tuning",
 					"locator": "Page 6",
-					"score": 0.475
+					"score": 0.454
 				},
 				{
 					"heading": "Page 5 · Table 3: Comparison of Mixtral with Llama 2 70B and GPT-3.5. Mixtral outperforms or matches Llama 2 70B and GPT-3.5 performance on most…",
@@ -2636,14 +2577,77 @@
 					"score": 0.375
 				},
 				{
-					"heading": "Page 2 · Abstract",
-					"locator": "Page 2",
-					"score": 0.309
+					"heading": "Page 6 · 4 Instruction Fine-tuning",
+					"locator": "Page 6",
+					"score": 0.36
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "image",
+			"page": 6,
+			"q": "On the LMSys leaderboard screenshot (Figure 6), what Arena Elo rating does Claude-1 have?",
+			"number": 1149,
+			"scanned": false,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.43
 				},
 				{
-					"heading": "Page 3 · Figure 2: Performance of Mixtral and different Llama models on a wide range of benchmarks. All models were re-evaluated on all metrics with…",
-					"locator": "Page 3",
-					"score": 0.296
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.24
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.232
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.227
+				}
+			]
+		},
+		{
+			"doc": "mixtral",
+			"kind": "image",
+			"page": 6,
+			"q": "On the LMSys leaderboard screenshot (Figure 6), what Arena Elo rating does Claude-1 have?",
+			"number": 1149,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": [
+				{
+					"heading": "Page 6",
+					"locator": "Page 6",
+					"score": 0.512
+				},
+				{
+					"heading": "Page 10",
+					"locator": "Page 10",
+					"score": 0.241
+				},
+				{
+					"heading": "Page 2",
+					"locator": "Page 2",
+					"score": 0.236
+				},
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.216
 				}
 			]
 		},
@@ -2655,29 +2659,29 @@
 			"number": 1149,
 			"scanned": false,
 			"condition": "nemotron",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
+			"reply": "1149",
+			"pass": true,
+			"context_has_value": true,
 			"retrieved": [
+				{
+					"heading": "Page 6 · Figure 6: LMSys Leaderboard. (Screenshot from Dec 22, 2023) Mixtral 8x7B Instruct v0.1 achieves an Arena Elo rating of 1121 outperforming…",
+					"locator": "Page 6",
+					"score": 0.579
+				},
 				{
 					"heading": "Page 6 · 4 Instruction Fine-tuning",
 					"locator": "Page 6",
-					"score": 0.35
+					"score": 0.36
+				},
+				{
+					"heading": "Page 6 · 4 Instruction Fine-tuning",
+					"locator": "Page 6",
+					"score": 0.306
 				},
 				{
 					"heading": "Page 5 · Table 3: Comparison of Mixtral with Llama 2 70B and GPT-3.5. Mixtral outperforms or matches Llama 2 70B and GPT-3.5 performance on most…",
 					"locator": "Page 5",
 					"score": 0.254
-				},
-				{
-					"heading": "Page 3 · Figure 2: Performance of Mixtral and different Llama models on a wide range of benchmarks. All models were re-evaluated on all metrics with…",
-					"locator": "Page 3",
-					"score": 0.24
-				},
-				{
-					"heading": "Page 2 · Abstract",
-					"locator": "Page 2",
-					"score": 0.239
 				}
 			]
 		},
@@ -2714,337 +2718,6 @@
 			"doc": "phi3",
 			"kind": "table",
 			"page": 5,
-			"q": "What HumanEval score does Phi-3-small get?",
-			"number": 59.1,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.546
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.478
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.426
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "table",
-			"page": 5,
-			"q": "What TriviaQA score does Mixtral 8x7b get?",
-			"number": 82.2,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "82.2",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.48
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.442
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.426
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "table",
-			"page": 5,
-			"q": "What GSM-8K score does Llama-3-Instruct 8b get?",
-			"number": 77.4,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "77.4",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.501
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.363
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.358
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "table",
-			"page": 5,
-			"q": "What MT Bench score does Phi-3-medium get?",
-			"number": 8.91,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "8.9",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.56
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.521
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.5
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "table",
-			"page": 5,
-			"q": "What BigBench-Hard score does Phi-2 get?",
-			"number": 59.4,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "59.4",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.509
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.445
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.418
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "table",
-			"page": 6,
-			"q": "In Table 1, what Intellectual Property DR-1 defect rate does Gemma have?",
-			"number": 38.33,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "38.33%",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.379
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.282
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.247
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.207
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "table",
-			"page": 6,
-			"q": "In Table 1, what Harmful Content Summarization defect rate does Mistral have?",
-			"number": 22.33,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "14.35%",
-			"pass": false,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.482
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.345
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.331
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "chart",
-			"page": 6,
-			"q": "In Figure 3, which harm category had the highest score before safety post-training?",
-			"match": "political",
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": null,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.397
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.323
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.204
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "chart",
-			"page": 6,
-			"q": "In Figure 3, which harm category had the lowest score after safety post-training?",
-			"match": "model[\\s_-]*identity",
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": null,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.437
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.349
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.227
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "chart",
-			"page": 6,
-			"q": "In Figure 3, roughly what was the model_identity score before safety post-training?",
-			"number": 21,
-			"tol": 3,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": null,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.393
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.348
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.307
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.27
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "chart",
-			"page": 6,
-			"q": "In Figure 3, roughly what was the cyber score before safety post-training?",
-			"number": 44,
-			"tol": 3,
-			"scanned": false,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": null,
-			"retrieved": [
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.338
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.269
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.22
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "table",
-			"page": 5,
 			"q": "What MedQA score does Gemma 7b get?",
 			"number": 50,
 			"scanned": false,
@@ -3067,357 +2740,6 @@
 					"heading": "Page 10",
 					"locator": "Page 10",
 					"score": 0.312
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "table",
-			"page": 5,
-			"q": "What HumanEval score does Phi-3-small get?",
-			"number": 59.1,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "59.1",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.549
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.478
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.435
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "table",
-			"page": 5,
-			"q": "What TriviaQA score does Mixtral 8x7b get?",
-			"number": 82.2,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "82.2",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 9",
-					"locator": "Page 9",
-					"score": 0.454
-				},
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.421
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.31
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "table",
-			"page": 5,
-			"q": "What GSM-8K score does Llama-3-Instruct 8b get?",
-			"number": 77.4,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "77.4",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.453
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.36
-				},
-				{
-					"heading": "Page 6",
-					"locator": "Page 6",
-					"score": 0.343
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "table",
-			"page": 5,
-			"q": "What MT Bench score does Phi-3-medium get?",
-			"number": 8.91,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "8.91",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.562
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.517
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.5
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "table",
-			"page": 5,
-			"q": "What BigBench-Hard score does Phi-2 get?",
-			"number": 59.4,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "59.4",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.499
-				},
-				{
-					"heading": "Page 1",
-					"locator": "Page 1",
-					"score": 0.443
-				},
-				{
-					"heading": "Page 3",
-					"locator": "Page 3",
-					"score": 0.415
-				},
-				{
-					"heading": "Page 2",
-					"locator": "Page 2",
-					"score": 0.405
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "table",
-			"page": 6,
-			"q": "In Table 1, what Intellectual Property DR-1 defect rate does Gemma have?",
-			"number": 38.33,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "38.33%",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 6",
-					"locator": "Page 6",
-					"score": 0.379
-				},
-				{
-					"heading": "Page 10",
-					"locator": "Page 10",
-					"score": 0.231
-				},
-				{
-					"heading": "Page 3",
-					"locator": "Page 3",
-					"score": 0.229
-				},
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.214
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "table",
-			"page": 6,
-			"q": "In Table 1, what Harmful Content Summarization defect rate does Mistral have?",
-			"number": 22.33,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "22.33%",
-			"pass": true,
-			"context_has_value": true,
-			"retrieved": [
-				{
-					"heading": "Page 6",
-					"locator": "Page 6",
-					"score": 0.491
-				},
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.359
-				},
-				{
-					"heading": "Page 9",
-					"locator": "Page 9",
-					"score": 0.321
-				},
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.281
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "chart",
-			"page": 6,
-			"q": "In Figure 3, which harm category had the highest score before safety post-training?",
-			"match": "political",
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": null,
-			"retrieved": [
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.374
-				},
-				{
-					"heading": "Page 6",
-					"locator": "Page 6",
-					"score": 0.32
-				},
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.257
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "chart",
-			"page": 6,
-			"q": "In Figure 3, which harm category had the lowest score after safety post-training?",
-			"match": "model[\\s_-]*identity",
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": null,
-			"retrieved": [
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.411
-				},
-				{
-					"heading": "Page 6",
-					"locator": "Page 6",
-					"score": 0.346
-				},
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.283
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.22
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "chart",
-			"page": 6,
-			"q": "In Figure 3, roughly what was the model_identity score before safety post-training?",
-			"number": 21,
-			"tol": 3,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": null,
-			"retrieved": [
-				{
-					"heading": "Page 6",
-					"locator": "Page 6",
-					"score": 0.349
-				},
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.348
-				},
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.334
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.294
-				}
-			]
-		},
-		{
-			"doc": "phi3",
-			"kind": "chart",
-			"page": 6,
-			"q": "In Figure 3, roughly what was the cyber score before safety post-training?",
-			"number": 44,
-			"tol": 3,
-			"scanned": false,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": null,
-			"retrieved": [
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.29
-				},
-				{
-					"heading": "Page 6",
-					"locator": "Page 6",
-					"score": 0.269
-				},
-				{
-					"heading": "Page 5",
-					"locator": "Page 5",
-					"score": 0.263
-				},
-				{
-					"heading": "Page 4",
-					"locator": "Page 4",
-					"score": 0.208
 				}
 			]
 		},
@@ -3457,6 +2779,64 @@
 			"q": "What HumanEval score does Phi-3-small get?",
 			"number": 59.1,
 			"scanned": false,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.546
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.478
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.426
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "table",
+			"page": 5,
+			"q": "What HumanEval score does Phi-3-small get?",
+			"number": 59.1,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "59.1",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.549
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.478
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.435
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "table",
+			"page": 5,
+			"q": "What HumanEval score does Phi-3-small get?",
+			"number": 59.1,
+			"scanned": false,
 			"condition": "nemotron",
 			"reply": "59.1",
 			"pass": true,
@@ -3476,6 +2856,64 @@
 					"heading": "Page 2 · <|user|> / n Question <|end|> / n <|assistant|>",
 					"locator": "Page 2",
 					"score": 0.459
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "table",
+			"page": 5,
+			"q": "What TriviaQA score does Mixtral 8x7b get?",
+			"number": 82.2,
+			"scanned": false,
+			"condition": "markitdown",
+			"reply": "82.2",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.48
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.442
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.426
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "table",
+			"page": 5,
+			"q": "What TriviaQA score does Mixtral 8x7b get?",
+			"number": 82.2,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "82.2",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 9",
+					"locator": "Page 9",
+					"score": 0.454
+				},
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.421
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.31
 				}
 			]
 		},
@@ -3520,6 +2958,64 @@
 			"q": "What GSM-8K score does Llama-3-Instruct 8b get?",
 			"number": 77.4,
 			"scanned": false,
+			"condition": "markitdown",
+			"reply": "77.4",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.501
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.363
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.358
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "table",
+			"page": 5,
+			"q": "What GSM-8K score does Llama-3-Instruct 8b get?",
+			"number": 77.4,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "77.4",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.453
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.36
+				},
+				{
+					"heading": "Page 6",
+					"locator": "Page 6",
+					"score": 0.343
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "table",
+			"page": 5,
+			"q": "What GSM-8K score does Llama-3-Instruct 8b get?",
+			"number": 77.4,
+			"scanned": false,
 			"condition": "nemotron",
 			"reply": "77.4",
 			"pass": true,
@@ -3544,6 +3040,64 @@
 					"heading": "Page 4 · 3 Academic benchmarks",
 					"locator": "Page 4",
 					"score": 0.348
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "table",
+			"page": 5,
+			"q": "What MT Bench score does Phi-3-medium get?",
+			"number": 8.91,
+			"scanned": false,
+			"condition": "markitdown",
+			"reply": "8.9",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.56
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.521
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.5
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "table",
+			"page": 5,
+			"q": "What MT Bench score does Phi-3-medium get?",
+			"number": 8.91,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "8.91",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.562
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.517
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.5
 				}
 			]
 		},
@@ -3588,6 +3142,69 @@
 			"q": "What BigBench-Hard score does Phi-2 get?",
 			"number": 59.4,
 			"scanned": false,
+			"condition": "markitdown",
+			"reply": "59.4",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.509
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.445
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.418
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "table",
+			"page": 5,
+			"q": "What BigBench-Hard score does Phi-2 get?",
+			"number": 59.4,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "59.4",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.499
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.443
+				},
+				{
+					"heading": "Page 3",
+					"locator": "Page 3",
+					"score": 0.415
+				},
+				{
+					"heading": "Page 2",
+					"locator": "Page 2",
+					"score": 0.405
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "table",
+			"page": 5,
+			"q": "What BigBench-Hard score does Phi-2 get?",
+			"number": 59.4,
+			"scanned": false,
 			"condition": "nemotron",
 			"reply": "59.4",
 			"pass": true,
@@ -3612,6 +3229,74 @@
 					"heading": "Page 3 · Figure 2: Scaling law close to the “Data Optimal Regime” (from left to right: phi-1.5, phi-2, phi-3-mini, phi-3- small) versus Llama-2…",
 					"locator": "Page 3",
 					"score": 0.404
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "table",
+			"page": 6,
+			"q": "In Table 1, what Intellectual Property DR-1 defect rate does Gemma have?",
+			"number": 38.33,
+			"scanned": false,
+			"condition": "markitdown",
+			"reply": "38.33%",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.379
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.282
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.247
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.207
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "table",
+			"page": 6,
+			"q": "In Table 1, what Intellectual Property DR-1 defect rate does Gemma have?",
+			"number": 38.33,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "38.33%",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 6",
+					"locator": "Page 6",
+					"score": 0.379
+				},
+				{
+					"heading": "Page 10",
+					"locator": "Page 10",
+					"score": 0.231
+				},
+				{
+					"heading": "Page 3",
+					"locator": "Page 3",
+					"score": 0.229
+				},
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.214
 				}
 			]
 		},
@@ -3656,6 +3341,69 @@
 			"q": "In Table 1, what Harmful Content Summarization defect rate does Mistral have?",
 			"number": 22.33,
 			"scanned": false,
+			"condition": "markitdown",
+			"reply": "14.35%",
+			"pass": false,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.482
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.345
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.331
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "table",
+			"page": 6,
+			"q": "In Table 1, what Harmful Content Summarization defect rate does Mistral have?",
+			"number": 22.33,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "22.33%",
+			"pass": true,
+			"context_has_value": true,
+			"retrieved": [
+				{
+					"heading": "Page 6",
+					"locator": "Page 6",
+					"score": 0.491
+				},
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.359
+				},
+				{
+					"heading": "Page 9",
+					"locator": "Page 9",
+					"score": 0.321
+				},
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.281
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "table",
+			"page": 6,
+			"q": "In Table 1, what Harmful Content Summarization defect rate does Mistral have?",
+			"number": 22.33,
+			"scanned": false,
 			"condition": "nemotron",
 			"reply": "22.33%",
 			"pass": true,
@@ -3690,6 +3438,64 @@
 			"q": "In Figure 3, which harm category had the highest score before safety post-training?",
 			"match": "political",
 			"scanned": false,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": null,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.397
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.323
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.204
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "chart",
+			"page": 6,
+			"q": "In Figure 3, which harm category had the highest score before safety post-training?",
+			"match": "political",
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": null,
+			"retrieved": [
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.374
+				},
+				{
+					"heading": "Page 6",
+					"locator": "Page 6",
+					"score": 0.32
+				},
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.257
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "chart",
+			"page": 6,
+			"q": "In Figure 3, which harm category had the highest score before safety post-training?",
+			"match": "political",
+			"scanned": false,
 			"condition": "nemotron",
 			"reply": "political_misinfo",
 			"pass": true,
@@ -3714,6 +3520,69 @@
 					"heading": "Page 6 · 4 Safety",
 					"locator": "Page 6",
 					"score": 0.255
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "chart",
+			"page": 6,
+			"q": "In Figure 3, which harm category had the lowest score after safety post-training?",
+			"match": "model[\\s_-]*identity",
+			"scanned": false,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": null,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.437
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.349
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.227
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "chart",
+			"page": 6,
+			"q": "In Figure 3, which harm category had the lowest score after safety post-training?",
+			"match": "model[\\s_-]*identity",
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": null,
+			"retrieved": [
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.411
+				},
+				{
+					"heading": "Page 6",
+					"locator": "Page 6",
+					"score": 0.346
+				},
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.283
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.22
 				}
 			]
 		},
@@ -3759,6 +3628,76 @@
 			"number": 21,
 			"tol": 3,
 			"scanned": false,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": null,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.393
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.348
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.307
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.27
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "chart",
+			"page": 6,
+			"q": "In Figure 3, roughly what was the model_identity score before safety post-training?",
+			"number": 21,
+			"tol": 3,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": null,
+			"retrieved": [
+				{
+					"heading": "Page 6",
+					"locator": "Page 6",
+					"score": 0.349
+				},
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.348
+				},
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.334
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.294
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "chart",
+			"page": 6,
+			"q": "In Figure 3, roughly what was the model_identity score before safety post-training?",
+			"number": 21,
+			"tol": 3,
+			"scanned": false,
 			"condition": "nemotron",
 			"reply": "21",
 			"pass": true,
@@ -3783,6 +3722,71 @@
 					"heading": "Page 4 · <|user|> / n Question <|end|> / n <|assistant|>",
 					"locator": "Page 4",
 					"score": 0.317
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "chart",
+			"page": 6,
+			"q": "In Figure 3, roughly what was the cyber score before safety post-training?",
+			"number": 44,
+			"tol": 3,
+			"scanned": false,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": null,
+			"retrieved": [
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.338
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.269
+				},
+				{
+					"heading": "Page 1",
+					"locator": "Page 1",
+					"score": 0.22
+				}
+			]
+		},
+		{
+			"doc": "phi3",
+			"kind": "chart",
+			"page": 6,
+			"q": "In Figure 3, roughly what was the cyber score before safety post-training?",
+			"number": 44,
+			"tol": 3,
+			"scanned": false,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": null,
+			"retrieved": [
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.29
+				},
+				{
+					"heading": "Page 6",
+					"locator": "Page 6",
+					"score": 0.269
+				},
+				{
+					"heading": "Page 5",
+					"locator": "Page 5",
+					"score": 0.263
+				},
+				{
+					"heading": "Page 4",
+					"locator": "Page 4",
+					"score": 0.208
 				}
 			]
 		},
@@ -3838,268 +3842,8 @@
 			"doc": "mixtral-scan",
 			"kind": "table",
 			"page": 4,
-			"q": "What Math score does Mixtral 8x7B get?",
-			"number": 28.4,
-			"scanned": true,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "table",
-			"page": 4,
-			"q": "What GSM-8K score does GPT-3.5 get?",
-			"number": 57.1,
-			"scanned": true,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "table",
-			"page": 4,
-			"q": "What MT Bench score does LLaMA 2 70B get?",
-			"number": 6.86,
-			"scanned": true,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "table",
-			"page": 5,
-			"q": "What Arc-c score does Mixtral 8x7B get in German?",
-			"number": 54.3,
-			"scanned": true,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "table",
-			"page": 5,
-			"q": "What HellaSwag score does LLaMA 2 70B get in Italian?",
-			"number": 70.9,
-			"scanned": true,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "table",
-			"page": 6,
-			"q": "What average BOLD sentiment score does Llama 2 70B get for religious_ideology?",
-			"number": 0.188,
-			"scanned": true,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "table",
-			"page": 8,
-			"q": "In Table 5, what share of tokens on Github get the same expert as first or second choice at Layer 0?",
-			"number": 49.9,
-			"scanned": true,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "image",
-			"page": 6,
-			"q": "On the LMSys leaderboard screenshot (Figure 6), what Arena Elo rating does GPT-4-0613 have?",
-			"number": 1158,
-			"scanned": true,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "image",
-			"page": 6,
-			"q": "On the LMSys leaderboard screenshot (Figure 6), what MT-bench score does GPT-4-Turbo have?",
-			"number": 9.32,
-			"scanned": true,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "image",
-			"page": 6,
-			"q": "On the LMSys leaderboard screenshot (Figure 6), what Arena Elo rating does Claude-1 have?",
-			"number": 1149,
-			"scanned": true,
-			"condition": "markitdown",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "table",
-			"page": 4,
 			"q": "What TriviaQA score does LLaMA 1 33B get?",
 			"number": 68.5,
-			"scanned": true,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "table",
-			"page": 4,
-			"q": "What Math score does Mixtral 8x7B get?",
-			"number": 28.4,
-			"scanned": true,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "table",
-			"page": 4,
-			"q": "What GSM-8K score does GPT-3.5 get?",
-			"number": 57.1,
-			"scanned": true,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "table",
-			"page": 4,
-			"q": "What MT Bench score does LLaMA 2 70B get?",
-			"number": 6.86,
-			"scanned": true,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "table",
-			"page": 5,
-			"q": "What Arc-c score does Mixtral 8x7B get in German?",
-			"number": 54.3,
-			"scanned": true,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "table",
-			"page": 5,
-			"q": "What HellaSwag score does LLaMA 2 70B get in Italian?",
-			"number": 70.9,
-			"scanned": true,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "table",
-			"page": 6,
-			"q": "What average BOLD sentiment score does Llama 2 70B get for religious_ideology?",
-			"number": 0.188,
-			"scanned": true,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "table",
-			"page": 8,
-			"q": "In Table 5, what share of tokens on Github get the same expert as first or second choice at Layer 0?",
-			"number": 49.9,
-			"scanned": true,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "image",
-			"page": 6,
-			"q": "On the LMSys leaderboard screenshot (Figure 6), what Arena Elo rating does GPT-4-0613 have?",
-			"number": 1158,
-			"scanned": true,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "image",
-			"page": 6,
-			"q": "On the LMSys leaderboard screenshot (Figure 6), what MT-bench score does GPT-4-Turbo have?",
-			"number": 9.32,
-			"scanned": true,
-			"condition": "text-layer",
-			"reply": "not found",
-			"pass": false,
-			"context_has_value": false,
-			"retrieved": []
-		},
-		{
-			"doc": "mixtral-scan",
-			"kind": "image",
-			"page": 6,
-			"q": "On the LMSys leaderboard screenshot (Figure 6), what Arena Elo rating does Claude-1 have?",
-			"number": 1149,
 			"scanned": true,
 			"condition": "text-layer",
 			"reply": "not found",
@@ -4148,6 +3892,32 @@
 			"q": "What Math score does Mixtral 8x7B get?",
 			"number": 28.4,
 			"scanned": true,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "table",
+			"page": 4,
+			"q": "What Math score does Mixtral 8x7B get?",
+			"number": 28.4,
+			"scanned": true,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "table",
+			"page": 4,
+			"q": "What Math score does Mixtral 8x7B get?",
+			"number": 28.4,
+			"scanned": true,
 			"condition": "nemotron",
 			"reply": "28.4%",
 			"pass": true,
@@ -4174,6 +3944,32 @@
 					"score": 0.514
 				}
 			]
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "table",
+			"page": 4,
+			"q": "What GSM-8K score does GPT-3.5 get?",
+			"number": 57.1,
+			"scanned": true,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "table",
+			"page": 4,
+			"q": "What GSM-8K score does GPT-3.5 get?",
+			"number": 57.1,
+			"scanned": true,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
 		},
 		{
 			"doc": "mixtral-scan",
@@ -4216,6 +4012,32 @@
 			"q": "What MT Bench score does LLaMA 2 70B get?",
 			"number": 6.86,
 			"scanned": true,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "table",
+			"page": 4,
+			"q": "What MT Bench score does LLaMA 2 70B get?",
+			"number": 6.86,
+			"scanned": true,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "table",
+			"page": 4,
+			"q": "What MT Bench score does LLaMA 2 70B get?",
+			"number": 6.86,
+			"scanned": true,
 			"condition": "nemotron",
 			"reply": "6.86",
 			"pass": true,
@@ -4242,6 +4064,32 @@
 					"score": 0.499
 				}
 			]
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "table",
+			"page": 5,
+			"q": "What Arc-c score does Mixtral 8x7B get in German?",
+			"number": 54.3,
+			"scanned": true,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "table",
+			"page": 5,
+			"q": "What Arc-c score does Mixtral 8x7B get in German?",
+			"number": 54.3,
+			"scanned": true,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
 		},
 		{
 			"doc": "mixtral-scan",
@@ -4284,6 +4132,32 @@
 			"q": "What HellaSwag score does LLaMA 2 70B get in Italian?",
 			"number": 70.9,
 			"scanned": true,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "table",
+			"page": 5,
+			"q": "What HellaSwag score does LLaMA 2 70B get in Italian?",
+			"number": 70.9,
+			"scanned": true,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "table",
+			"page": 5,
+			"q": "What HellaSwag score does LLaMA 2 70B get in Italian?",
+			"number": 70.9,
+			"scanned": true,
 			"condition": "nemotron",
 			"reply": "not found",
 			"pass": false,
@@ -4310,6 +4184,32 @@
 					"score": 0.359
 				}
 			]
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "table",
+			"page": 6,
+			"q": "What average BOLD sentiment score does Llama 2 70B get for religious_ideology?",
+			"number": 0.188,
+			"scanned": true,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "table",
+			"page": 6,
+			"q": "What average BOLD sentiment score does Llama 2 70B get for religious_ideology?",
+			"number": 0.188,
+			"scanned": true,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
 		},
 		{
 			"doc": "mixtral-scan",
@@ -4352,6 +4252,32 @@
 			"q": "In Table 5, what share of tokens on Github get the same expert as first or second choice at Layer 0?",
 			"number": 49.9,
 			"scanned": true,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "table",
+			"page": 8,
+			"q": "In Table 5, what share of tokens on Github get the same expert as first or second choice at Layer 0?",
+			"number": 49.9,
+			"scanned": true,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "table",
+			"page": 8,
+			"q": "In Table 5, what share of tokens on Github get the same expert as first or second choice at Layer 0?",
+			"number": 49.9,
+			"scanned": true,
 			"condition": "nemotron",
 			"reply": "49.9%",
 			"pass": true,
@@ -4368,6 +4294,32 @@
 					"score": 0.548
 				}
 			]
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "image",
+			"page": 6,
+			"q": "On the LMSys leaderboard screenshot (Figure 6), what Arena Elo rating does GPT-4-0613 have?",
+			"number": 1158,
+			"scanned": true,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "image",
+			"page": 6,
+			"q": "On the LMSys leaderboard screenshot (Figure 6), what Arena Elo rating does GPT-4-0613 have?",
+			"number": 1158,
+			"scanned": true,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
 		},
 		{
 			"doc": "mixtral-scan",
@@ -4410,6 +4362,32 @@
 			"q": "On the LMSys leaderboard screenshot (Figure 6), what MT-bench score does GPT-4-Turbo have?",
 			"number": 9.32,
 			"scanned": true,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "image",
+			"page": 6,
+			"q": "On the LMSys leaderboard screenshot (Figure 6), what MT-bench score does GPT-4-Turbo have?",
+			"number": 9.32,
+			"scanned": true,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "image",
+			"page": 6,
+			"q": "On the LMSys leaderboard screenshot (Figure 6), what MT-bench score does GPT-4-Turbo have?",
+			"number": 9.32,
+			"scanned": true,
 			"condition": "nemotron",
 			"reply": "not found",
 			"pass": false,
@@ -4436,6 +4414,32 @@
 					"score": 0.423
 				}
 			]
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "image",
+			"page": 6,
+			"q": "On the LMSys leaderboard screenshot (Figure 6), what Arena Elo rating does Claude-1 have?",
+			"number": 1149,
+			"scanned": true,
+			"condition": "markitdown",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
+		},
+		{
+			"doc": "mixtral-scan",
+			"kind": "image",
+			"page": 6,
+			"q": "On the LMSys leaderboard screenshot (Figure 6), what Arena Elo rating does Claude-1 have?",
+			"number": 1149,
+			"scanned": true,
+			"condition": "text-layer",
+			"reply": "not found",
+			"pass": false,
+			"context_has_value": false,
+			"retrieved": []
 		},
 		{
 			"doc": "mixtral-scan",
