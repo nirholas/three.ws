@@ -18,7 +18,7 @@
     "full": "three.ws 3D Studio: find and generate 3D models"
   },
   "description": {
-    "short": "Find ready-made 3D models and 3D agents, and generate a 3D model from a description.",
+    "short": "Find ready-made 3D models and 3D agents, or generate a 3D model from text.",
     "full": "A declarative agent that searches the free three.ws catalog of ready-made 3D models, searches the public directory of three.ws agents, lists the agents you own, and generates a textured GLB 3D model from a plain-language description. Results open in the three.ws 3D viewer or download as GLB files for PowerPoint, websites and 3D tools."
   },
   "accentColor": "#080814",

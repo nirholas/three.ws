@@ -47,6 +47,7 @@ import { appOrigin } from './gateway/format.js';
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const TEST_TTL_MS = 15 * 60 * 1000;
 export const MAX_PENDING_LISTED = 5;
+export const MAX_TESTS_PER_10_MIN = 5;
 
 // ── who is this Teams person ────────────────────────────────────────────────────
 
@@ -427,6 +428,12 @@ export async function sendTestApproval(userId, overrides = {}) {
 	if (!status.linked) throw new ApprovalError(409, 'teams_not_linked', 'Link your Microsoft account in Settings, Sign-in methods first, then send a test.');
 	if (!status.installed) throw new ApprovalError(409, 'teams_not_installed', 'Add the three.ws app in Teams and open its chat once, then send a test.');
 	if (!status.bot_configured) throw new ApprovalError(503, 'teams_unavailable', 'The three.ws Teams bot cannot post messages right now. Try again later.');
+	const [recent] = await sql`
+		select count(*)::int as n from approval_requests
+		where user_id = ${userId} and source = 'approval_test' and created_at > now() - interval '10 minutes'`;
+	if ((recent?.n || 0) >= MAX_TESTS_PER_10_MIN) {
+		throw new ApprovalError(429, 'teams_test_limit', `You sent ${MAX_TESTS_PER_10_MIN} test cards in the last 10 minutes. Answer one of those, or try again shortly.`);
+	}
 	const nonce = randomUUID();
 	const { request } = await createApprovalRequest({
 		userId,
@@ -437,8 +444,6 @@ export async function sendTestApproval(userId, overrides = {}) {
 		venue: 'approval_test',
 		payload: { v: 1, source: 'approval_test', test: true, nonce },
 		summary: 'Test approval from three.ws. Approving or denying it does nothing.',
-		chain: null,
-		network: null,
 		gateReason: 'You asked for a test card from the Teams panel on /approvals.',
 		idempotencyKey: `approval_test:${userId}:${nonce}`,
 		ttlMs: TEST_TTL_MS,

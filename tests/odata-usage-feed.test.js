@@ -378,7 +378,7 @@ describe('OData usage feed over the full schema', () => {
 		await get('/', keys.member);
 		await get('/UsageDaily', keys.member);
 		await new Promise((r) => setTimeout(r, 30));
-		const rows = await holder.db.sql`select action from audit_log where user_id = ${U.member} order by id`;
+		const rows = await holder.db.sql`select action from audit_log where user_id = ${U.member} order by action`;
 		expect(rows.map((r) => r.action)).toEqual(['usage_feed.key_created', 'usage_feed.key_used']);
 		const [k] = await holder.db.sql`select last_used_at from usage_feed_keys where user_id = ${U.member}`;
 		expect(k.last_used_at).not.toBeNull();

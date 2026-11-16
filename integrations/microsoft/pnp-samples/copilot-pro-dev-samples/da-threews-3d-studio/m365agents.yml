@@ -1,0 +1,75 @@
+# yaml-language-server: $schema=https://aka.ms/m365-agents-toolkits/v1.13/yaml.schema.json
+# Visit https://aka.ms/teamsfx-v5.0-guide for details on this file
+# Visit https://aka.ms/teamsfx-actions for details on actions
+version: v1.13
+
+additionalMetadata:
+  sampleTag: pnp-copilot-pro-dev:da-threews-3d-studio
+
+environmentFolderPath: ./env
+
+# Triggered when 'atk provision' is executed
+provision:
+  # Creates the app registration in the Teams Developer Portal
+  - uses: teamsApp/create
+    with:
+      name: da-threews-3d-studio${{APP_NAME_SUFFIX}}
+    writeToEnvironmentFile:
+      teamsAppId: TEAMS_APP_ID
+
+  # Stores the three.ws API key in the Teams Developer Portal key vault.
+  # The key is read from SECRET_THREEWS_API_KEY in env/.env.dev.user and is
+  # never written into the app package.
+  - uses: apiKey/register
+    with:
+      name: threewsApiKey
+      appId: ${{TEAMS_APP_ID}}
+      primaryClientSecret: ${{SECRET_THREEWS_API_KEY}}
+      apiSpecPath: ./appPackage/apiSpecificationFile/threews.yml
+    writeToEnvironmentFile:
+      registrationId: THREEWS_APIKEY_REGISTRATION_ID
+
+  # Builds the app package with the latest env values
+  - uses: teamsApp/zipAppPackage
+    with:
+      manifestPath: ./appPackage/manifest.json
+      outputZipPath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
+      outputFolder: ./appPackage/build
+
+  # Validates the app package
+  - uses: teamsApp/validateAppPackage
+    with:
+      appPackagePath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
+
+  # Applies the manifest to the app in the Teams Developer Portal
+  - uses: teamsApp/update
+    with:
+      appPackagePath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
+
+  # Makes the agent available in Microsoft 365 Copilot
+  - uses: teamsApp/extendToM365
+    with:
+      appPackagePath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
+    writeToEnvironmentFile:
+      titleId: M365_TITLE_ID
+      appId: M365_APP_ID
+
+# Triggered when 'atk publish' is executed
+publish:
+  - uses: teamsApp/zipAppPackage
+    with:
+      manifestPath: ./appPackage/manifest.json
+      outputZipPath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
+      outputFolder: ./appPackage/build
+  - uses: teamsApp/validateAppPackage
+    with:
+      appPackagePath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
+  - uses: teamsApp/update
+    with:
+      appPackagePath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
+  # Submits the app to the Teams admin center for review and approval
+  - uses: teamsApp/publishAppPackage
+    with:
+      appPackagePath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
+    writeToEnvironmentFile:
+      publishedAppId: TEAMS_APP_PUBLISHED_APP_ID

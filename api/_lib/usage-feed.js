@@ -217,7 +217,9 @@ export async function queryEntitySet(set, scope, options, pageSize) {
 		const lim = p.add(limit + 1, 'int');
 		const off = p.add(offset, 'int');
 		const raw = await sql(`select ${select} from (${base}) e where ${where} order by ${order.join(', ')} limit ${lim} offset ${off}`, p.values);
-		more = raw.length > limit;
+		// Stop at $top: a page that reaches it carries no nextLink, even when
+		// more rows exist beyond it.
+		more = raw.length > limit && (options.top == null || options.skipToken + limit < options.top);
 		rows = raw.slice(0, limit).map((r) => {
 			const out = {};
 			for (const n of names) out[n] = toJsonValue(r[n], set.props[n].type);
