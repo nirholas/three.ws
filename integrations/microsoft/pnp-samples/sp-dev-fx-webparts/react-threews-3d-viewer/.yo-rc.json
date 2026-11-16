@@ -1,0 +1,22 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "whichFolder": "subdir",
+    "solutionName": "react-threews-3d-viewer",
+    "environment": "spo",
+    "packageManager": "npm",
+    "skipFeatureDeployment": true,
+    "useGulp": false,
+    "componentType": "webpart",
+    "template": "react",
+    "componentName": "three.ws 3D Viewer",
+    "componentDescription": "Shows an interactive three.ws 3D model on a SharePoint page.",
+    "plusBeta": false,
+    "isCreatingSolution": true,
+    "nodeVersion": "24.22.2",
+    "sdksVersions": {},
+    "version": "1.24.1",
+    "libraryName": "react-threews-3d-viewer",
+    "libraryId": "14821a8c-824b-4193-8ed8-4e620f2657ea",
+    "solutionShortDescription": "react-threews-3d-viewer description"
+  }
+}

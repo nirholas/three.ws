@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "threews-3d-viewer-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/threeWs3DViewer/ThreeWs3DViewerWebPart.js",
+          "manifest": "./src/webparts/threeWs3DViewer/ThreeWs3DViewerWebPart.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {
+    "ThreeWs3DViewerWebPartStrings": "lib/webparts/threeWs3DViewer/loc/{locale}.js"
+  }
+}

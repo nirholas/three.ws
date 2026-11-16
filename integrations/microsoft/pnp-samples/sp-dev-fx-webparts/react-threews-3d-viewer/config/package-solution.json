@@ -1,0 +1,41 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "react-threews-3d-viewer-client-side-solution",
+    "id": "14821a8c-824b-4193-8ed8-4e620f2657ea",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "developer": {
+      "name": "three.ws",
+      "websiteUrl": "https://three.ws",
+      "privacyUrl": "https://three.ws/legal/privacy",
+      "termsOfUseUrl": "https://three.ws/legal/tos",
+      "mpnId": "Undefined-1.24.1"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "Interactive three.ws 3D model viewer web part"
+      },
+      "longDescription": {
+        "default": "Shows an interactive 3D model on a SharePoint page, rendered by the hosted three.ws viewer or by the <agent-3d> web component. Page authors set the model URL, title, render mode and height in the property pane."
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": [
+        "Content"
+      ]
+    },
+    "features": [
+      {
+        "title": "three.ws 3D viewer",
+        "description": "Adds the three.ws 3D Viewer web part to the site.",
+        "id": "49120006-63ba-4498-9973-b14a29cab30a",
+        "version": "1.0.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/react-threews-3d-viewer.sppkg"
+  }
+}

@@ -1,0 +1,32 @@
+define([], function() {
+  return {
+    "PropertyPaneDescription": "Show an interactive 3D model from three.ws or any https link to a .glb or .gltf file.",
+    "ModelGroupName": "Model",
+    "ModelUrlFieldLabel": "Model URL",
+    "ModelUrlFieldDescription": "A .glb or .gltf link, or a three.ws viewer link. The file must allow cross-origin requests.",
+    "CatalogLinkText": "Browse free ready-made models on three.ws",
+    "TitleFieldLabel": "Title",
+    "TitleFieldDescription": "Shown above the model and read by screen readers.",
+    "DisplayGroupName": "Display",
+    "DisplayModeFieldLabel": "Render with",
+    "DisplayModeViewer": "Hosted three.ws viewer (works on every site, no admin step)",
+    "DisplayModeComponent": "<agent-3d> web component on the page (needs a trusted script source)",
+    "TrustedSourceHelp": "Component mode: a SharePoint admin adds",
+    "HeightFieldLabel": "Height (px)",
+    "DefaultTitle": "3D model",
+    "EmptyTitle": "Add a 3D model",
+    "EmptyBody": "Paste a link to a .glb or .gltf file, or pick a free model from the three.ws catalog and paste its link.",
+    "EmptyReaderBody": "This 3D viewer has no model yet. Edit the page to add one.",
+    "InvalidUrlBody": "The model link must start with https:// so it can load on a secure SharePoint page.",
+    "ConfigureButton": "Choose a model",
+    "Loading": "Loading the 3D model",
+    "BlockedTitle": "This site blocks the three.ws 3D component",
+    "BlockedBody": "SharePoint only runs scripts from trusted sources. Ask a SharePoint admin to add this value under SharePoint admin center, Advanced, Script sources:",
+    "BlockedHint": "Or switch Render with to Hosted three.ws viewer, which needs no admin step.",
+    "LoadFailedTitle": "The 3D model could not load",
+    "RetryButton": "Try again",
+    "OpenInThreews": "Open in three.ws",
+    "DownloadModel": "Download model",
+    "ViewerFrameTitle": "Interactive 3D view of"
+  }
+});
