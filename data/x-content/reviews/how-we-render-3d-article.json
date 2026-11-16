@@ -1,16 +1,17 @@
 {
 	"id": "how-we-render-3d-article",
-	"contentHash": "dd17283335ac63b0ffaeca67a6f31a3e2546c3e2bfd4279e6228d93b8dae56eb",
-	"reviewedAt": "2026-11-02T23:41:25.107Z",
+	"contentHash": "02d2541769ee505e9c74437f643a13251669adb7f2db2c784b48819b7e9926a7",
+	"reviewedAt": "2026-11-16T15:02:13.677Z",
 	"passed": false,
 	"blockers": [
 		"evidence:file docs/page-performance.md: file does not contain \"nearly every three.ws GLB is meshopt-compressed\"",
 		"evidence:file package.json: file does not contain \"\"three\": \"^0.184.0\"\"",
-		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"Request had insufficient authentication scopes.\",; \"status\": \"PERMISSION_DENIED\",; \"details\": [; {; \"@type\": \"type.googleapis.com/goog; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"};"
+		"evidence:file src/animation-retarget.js: file does not contain \"export const MIN_COVERAGE = 0.5;\"",
+		"editor verdict is revise"
 	],
 	"texts": [
 		"How a three.ws model is rendered, from a sentence to a lit, rigged character in your browser tab",
-		"A glTF file, Three.js and WebGL on the viewer's own GPU: no plugin, no video, no server drawing frames. That is how three.ws renders 3D, and the Article follows one rigged character through making, packing, loading, lighting and animating, with the embed code, the free checking tools, our partners and the roadmap."
+		"three.ws renders 3D with a glTF file, Three.js and WebGL on the viewer's own GPU, so the frames are drawn in the browser rather than streamed from a server. The Article follows one rigged character through making, packing, loading, lighting and animating, with the embed code, the free checking tools, our partners and the roadmap."
 	],
 	"lint": [],
 	"verification": {
@@ -209,8 +210,8 @@
 				"claim": "It is a pure module, so the same code runs in the browser and in Node",
 				"kind": "evidence:file",
 				"target": "src/animation-retarget.js",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"export const MIN_COVERAGE = 0.5;\""
 			},
 			{
 				"claim": "nine visemes",
@@ -394,6 +395,97 @@
 			}
 		]
 	},
-	"editor": null,
-	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"}\n"
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 4,
+			"clarity": 4,
+			"specificity": 4,
+			"voice": 4,
+			"professionalism": 4,
+			"visual": 5
+		},
+		"issues": [
+			{
+				"severity": "major",
+				"area": "clarity",
+				"quote": "The Article follows one rigged character through making, packing, loading, lighting and animating, with the embed code, the free checking tools, our partners and the roadmap.",
+				"problem": "The post names \"The Article\" and previews its contents but contains no link, so a reader cannot reach the surface being announced and the post violates the standing rule to link the surface once.",
+				"fix": "Append one verified link to the live viewer (the subject of the cover image) so the post stands alone: https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fa9694760-e134-4c5c-b334-59129a2d42c9.glb"
+			},
+			{
+				"severity": "minor",
+				"area": "voice",
+				"quote": "The Article follows one rigged character...",
+				"problem": "The second sentence defers to another publication rather than carrying the detail itself, reading as a teaser; the house contract says to lead with the strongest true statement and not withhold the payoff behind a second surface.",
+				"fix": "Keep the mechanism lead and fold the article's promise into the post itself via the live viewer link, removing the standalone reference to \"The Article.\""
+			},
+			{
+				"severity": "minor",
+				"area": "accuracy",
+				"quote": "on the viewer's own GPU",
+				"problem": "This phrase does not appear word for word in any passing verification result; the article body says \"on the visitor's own graphics chip.\"",
+				"fix": "Use \"in the browser\" or \"on the visitor's own graphics chip\" to match the live page text."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"three.ws renders 3D with a glTF file, Three.js and WebGL in the browser, so frames are drawn on the visitor's own graphics chip rather than streamed from a server. The rigged lighthouse keeper loads lit and animated in the live viewer: https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fa9694760-e134-4c5c-b334-59129a2d42c9.glb"
+			],
+			"altText": [
+				"The lighthouse keeper, a rigged three.ws character in a long yellow oilskin coat, navy knitted cap and black rubber boots, standing in the live glTF viewer under studio lighting"
+			]
+		},
+		"summary": "The post is accurate in its mechanism lead but ships without a link to the announced surface, making it a teaser rather than a standalone post. Add the verified live-viewer link and drop the deferred reference to \"The Article\" so it complies with the link-once rule and house voice.",
+		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi",
+			"nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b answered but its reply did not parse (Unexpected non-whitespace character after JSON at position 3174 (line 1 column 3175)); asked again"
+		],
+		"rewriteFindings": [
+			"head: 2 links (three.ws, https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fa9694760-e134-4c5c-b334-59129a2d42c9.glb); one post links one surface, and X reads a bare three.ws as a link",
+			"claims: claim \"A 3D model has to come from somewhere. On three.ws it comes from the Forge, which turns a sentence or a photo into a textured mesh\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"RTX PRO 6000\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Hunyuan3D 2.1\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"about 12,000 polygons\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Standard about 30,000 with 2K textures\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"2K textures\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"up to 200,000 polygons\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"reports progress and finally hands back a storage URL\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Raw output lands in Google Cloud Storage and is mirrored to Cloudflare R2\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Make-It-Animatable, an open model released under the MIT licence and published at CVPR 2025\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"most three.ws GLB files are meshopt-compressed\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The script's own documentation puts a typical saving at 90 percent of the file size\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"runs lossless passes (deduplicate, prune, weld, resample) through glTF-Transform and re-encodes textures as WebP\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the decoders are loaded lazily\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The renderer itself is a WebGL renderer on the Three.js 0.184 line\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"(2.0 by default, 1.5 in embeds, 1.0 on low-power phones)\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"BVH-accelerated raycasting\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the Khronos PBR Neutral tone mapper\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Draco and Basis transcoder binaries are served from the same origin as the site\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the official Khronos glTF 2.0 validator in WebAssembly\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"built once with Three.js's PMREM generator\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a render pass, a normal and depth pass, ambient occlusion, depth of field, bloom and a colour grade\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the die-cut outline vectorised from a canvas by a marching-squares tracer\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a vertex-shader cylinder roll injected into the material\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"recognises roughly two dozen of these naming families\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Thirty of the 53 tracks in each clip address a finger\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It is a pure module, so the same code runs in the browser and in Node\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"nine visemes\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"25 observed attributes\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"four layout modes: inline, floating, section and fullscreen\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"within 300 pixels of the viewport\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the element keeps at most eight viewers live\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It scores 52 canonical joints against 16 recognised rig conventions\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a nine-hour meetup inside a persistent three.ws 3D world that reached 3,145 avatars at its peak\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is an OpenAI Select Partner in the OpenAI Partner Network\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is a member of NVIDIA Inception\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is a member of Google Cloud for Web3 Startups\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is an IBM Business Partner\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"three.ws is an AWS Partner\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
 }
