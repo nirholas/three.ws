@@ -110,7 +110,7 @@ describe('refundLimit', () => {
 		// find the row the counter wrote: same bucket key, same window start.
 		const ms = 3600_000;
 		const windowStart = Math.floor(Date.now() / ms) * ms;
-		const key = `test:single\u0000user-1\u0000${windowStart}`;
+		const key = `test:single\u001fuser-1\u0000${windowStart}`;
 		stub.rows.set(key, 1);
 
 		expect(

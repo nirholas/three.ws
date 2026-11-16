@@ -505,6 +505,11 @@ function prunePgCounters(now) {
 	sql`DELETE FROM rate_limit_counters WHERE window_start < ${cutoff}`.catch(() => {});
 }
 
+// Limiter name and identity joined with the ASCII unit separator: it never
+// occurs in either, so two buckets cannot collide, and unlike NUL it is a byte
+// Postgres text accepts.
+const pgBucket = (name, id) => `${name}\u001f${id}`;
+
 function pgLimiter(name, { limit, window }) {
 	const ms = parseWindowMs(window);
 	if (ms > maxMemoryWindowMs) maxMemoryWindowMs = ms;
@@ -518,7 +523,7 @@ function pgLimiter(name, { limit, window }) {
 			// read-modify-write window for concurrent instances to race through.
 			const [row] = await sql`
 				INSERT INTO rate_limit_counters (bucket, window_start, hits)
-				VALUES (${`${name}\0${id}`}, ${windowStart}, 1)
+				VALUES (${pgBucket(name, id)}, ${windowStart}, 1)
 				ON CONFLICT (bucket, window_start)
 				DO UPDATE SET hits = rate_limit_counters.hits + 1
 				RETURNING hits
@@ -536,7 +541,7 @@ function pgLimiter(name, { limit, window }) {
 			const windowStart = Math.floor(Date.now() / ms) * ms;
 			const [row] = await sql`
 				UPDATE rate_limit_counters SET hits = greatest(0, hits - 1)
-				WHERE bucket = ${`${name}\0${id}`} AND window_start = ${windowStart}
+				WHERE bucket = ${pgBucket(name, id)} AND window_start = ${windowStart}
 				RETURNING hits
 			`;
 			return Boolean(row);

@@ -17,6 +17,8 @@
 // second module instance) is covered separately by the deploy-time check.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { createPgliteSql } from './_helpers/pglite-sql.js';
 
 const QUOTA_ERROR = 'ERR max requests limit exceeded. Limit: 500000, Usage: 500000';
 
@@ -155,6 +157,25 @@ describe('durable Postgres fallback (no Redis configured)', () => {
 		expect(seen[5].success).toBe(false);
 		expect(seen[6].success).toBe(false);
 		expect(stub.calls.inserts).toBe(7);
+	});
+
+	it('stores its counters in a real rate_limit_counters table (no byte Postgres text refuses in the key)', async () => {
+		// The stub above accepts any string; Postgres refuses a NUL byte in text
+		// ("invalid byte sequence for encoding UTF8: 0x00"), which once made every
+		// fallback write fail and the money buckets deny everything.
+		const db = createPgliteSql();
+		await db.exec(readFileSync('api/_lib/migrations/20260710120000_rate_limit_counters.sql', 'utf8'));
+		const { limits } = await loadRateLimit({ redis: null, sqlStub: { sql: db.sql } });
+
+		const seen = [];
+		for (let i = 0; i < 7; i++) seen.push(await limits.withdrawalPerUser('user-1'));
+
+		expect(seen[0]).toMatchObject({ success: true, reason: 'rate_limiter_degraded_postgres' });
+		expect(seen.filter((r) => r.success)).toHaveLength(5);
+		const rows = await db.sql`select bucket, hits from rate_limit_counters`;
+		expect(rows).toHaveLength(1);
+		expect(rows[0].hits).toBe(7);
+		expect(rows[0].bucket).toContain('user-1');
 	});
 
 	it('counts each identity in its own bucket', async () => {
