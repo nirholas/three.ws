@@ -54,6 +54,7 @@ export default wrapCron(async (req, res) => {
 export async function runTrialReminders({ now = new Date(), refresh = refreshFromMicrosoft } = {}) {
 	const out = { trials: 0, refreshed: 0, refresh_failed: 0, ended: 0, not_due: 0, already_sent: 0, notified: 0, emails: { sent: 0, pending: 0, skipped: 0, failed: 0, retried: 0 } };
 	const trials = await listActiveTrials();
+	const handled = new Set();
 	out.trials = trials.length;
 
 	for (const stored of trials) {
@@ -86,11 +87,13 @@ export async function runTrialReminders({ now = new Date(), refresh = refreshFro
 		out.notified += 1;
 		const email = await deliverEmail(row.user_id, details);
 		out.emails[email.status] += 1;
+		handled.add(claim.id);
 		await recordTrialReminder(claim.id, { notificationId: notification?.id ?? null, emailTo: email.to, emailStatus: email.status, emailError: email.error });
 	}
 
 	for (const r of await listRetryableTrialEmails({ maxAttempts: EMAIL_MAX_ATTEMPTS })) {
-		if (!trialMilestone(r.sub_trial_ends_at, now)) continue;
+		// A reminder first tried this tick waits for the next one.
+		if (handled.has(r.id) || !trialMilestone(r.sub_trial_ends_at, now)) continue;
 		const row = { id: r.subscription_id, plan_id: r.plan_id, name: r.name, trial_ends_at: r.sub_trial_ends_at, is_free_trial: r.is_free_trial, plan_price: r.plan_price, plan_currency: r.plan_currency, plan_term_unit: r.plan_term_unit, plan_price_plan_id: r.plan_price_plan_id, auto_renew: r.auto_renew };
 		const email = await deliverEmail(r.user_id, reminderDetails(row, r.milestone, now));
 		out.emails.retried += 1;

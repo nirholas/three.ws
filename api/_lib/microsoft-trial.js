@@ -305,14 +305,18 @@ export async function recordTrialReminder(id, { notificationId = null, emailTo =
 	`;
 }
 
-/** Reminders whose email failed transiently, for a bounded retry on later ticks. */
+/**
+ * Reminders whose email has not gone out yet (a transport failure, or email
+ * not configured when the reminder fired), for a bounded retry on later ticks
+ * while the trial is still running.
+ */
 export async function listRetryableTrialEmails({ maxAttempts = 3, limit = 50 } = {}) {
 	return sql`
 		select r.*, s.plan_id, s.name, s.trial_ends_at as sub_trial_ends_at, s.is_free_trial, s.saas_status,
 			s.plan_price, s.plan_currency, s.plan_term_unit, s.plan_price_plan_id, s.auto_renew
 		from microsoft_saas_trial_reminders r
 		join microsoft_saas_subscriptions s on s.id = r.subscription_id
-		where r.email_status = 'failed' and r.email_attempts < ${maxAttempts}
+		where r.email_status in ('pending', 'failed') and r.email_attempts < ${maxAttempts}
 			and s.is_free_trial and s.saas_status = 'Subscribed'
 		order by r.updated_at asc
 		limit ${limit}
