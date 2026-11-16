@@ -145,7 +145,7 @@ On 2026-11-03 every tracked markdown file in this repository (2969 of them) was 
 | 769 | [Let embedders supply the skill-trust allowlist on the agent-3d element](../769-plan-agent-skill-trust-allowlist-attributes.md) | agent | 30 |
 | 770 | [Agora citizens work as cartographers again, with diorama compose running inside the job budget](../770-plan-agora-cartographer-profession-reactivation.md) | agora | 30 |
 | 771 | [Forge-Off themed event boards with daily windows and a landing page](../771-plan-forge-off-themed-event-boards-landing.md) | forge | 30 |
-| 772 | [Ship the free credibility files and crawlable-locale fixes that funding and listing programs check for](../772-plan-growth-credibility-files-translations-credits.md) | growth | 30 |
+| 772 | [Ship the free credibility files and crawlable-locale fixes that funding and listing programs check for](../../archive/772-plan-growth-credibility-files-translations-credits.md) | growth | 30 |
 | 773 | [Sign outbound agent HTTP requests with Web Bot Auth and publish the key directory](../773-plan-identity-web-bot-auth-signed-requests.md) | identity | 30 |
 | 774 | [Avatar surprise composer produces body-shape variety and bone accessories on the parametric base](../774-plan-avatar-composer-parametric-variety.md) | avatar | 28 |
 | 775 | [Avatars carry a saved animation identity (idle, walk, gesture intensity, emote loadout) honored everywhere](../775-plan-avatar-animation-identity.md) | avatar | 26 |

@@ -252,7 +252,7 @@ Rows `docs/x-posts/3d-ar-studio-launch.md` to `packages/clash-mcp/README.md` of 
 | `marketing/growth/submissions/slicer-trusted-hosts.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
 | `marketing/growth/submissions/tripo-launch-post.md` | covered-by-existing:936-partners-13-tripo-reply-and-house-key.md | Tripo launch post and reply |
 | `marketing/growth/submissions/vroid-hub-app.md` | covered-by-existing:production-100-OWNER-ACTIONS.md row 55 | VRoid Hub app submission |
-| `marketing/growth/sweep-2026-09-18.md` | order | [772](../772-plan-growth-credibility-files-translations-credits.md), [762](../762-plan-growth-zed-raycast-gradio-poe-listing-packages.md), [729](../729-plan-a2a-agent-card-compliance-marketplace.md). code-change rows X2/X3, credibility files, locale gaps, unbuilt store packages; OpenRouter attribution and CITATION.cff already shipped |
+| `marketing/growth/sweep-2026-09-18.md` | order | [772](../../archive/772-plan-growth-credibility-files-translations-credits.md), [762](../762-plan-growth-zed-raycast-gradio-poe-listing-packages.md), [729](../729-plan-a2a-agent-card-compliance-marketplace.md). code-change rows X2/X3, credibility files, locale gaps, unbuilt store packages; OpenRouter attribution and CITATION.cff already shipped |
 | `marketing/growth/templates.md` | not-a-plan | outreach message templates |
 | `marketing/huggingface-article/post.md` | not-a-plan | published article copy |
 | `marketing/ibm-partner-plus/agent-connect-listing.md` | not-a-plan | campaign copy, press or asset notes |
