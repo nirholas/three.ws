@@ -32,6 +32,39 @@ export function respondMfaRequired(res) {
 	});
 }
 
+const DEFAULT_ADMIN_IDLE_MIN = 60;
+
+/**
+ * Minutes of inactivity after which an admin session stops working. Default 60;
+ * ADMIN_IDLE_TIMEOUT_MIN=0 switches the rule off (an env change recorded in
+ * Cloud Audit Logs). A bad value falls back to the default, never to "off".
+ */
+export function adminIdleTimeoutMs() {
+	const raw = process.env.ADMIN_IDLE_TIMEOUT_MIN;
+	if (raw === undefined || raw === '') return DEFAULT_ADMIN_IDLE_MIN * 60_000;
+	const n = Number(raw);
+	if (!Number.isFinite(n) || n < 0) return DEFAULT_ADMIN_IDLE_MIN * 60_000;
+	return n * 60_000;
+}
+
+/**
+ * True when an admin's session sat unused past the idle limit. `idle_ms` is set
+ * by getSessionUser from the session's last_seen_at before this request
+ * refreshed it; a user object without it (a non-session caller) is not idle.
+ */
+export function adminSessionIdle(user) {
+	const limit = adminIdleTimeoutMs();
+	if (limit === 0) return false;
+	return Number(user?.idle_ms) > limit;
+}
+
+/** The one answer every admin gate gives a session left idle too long. */
+export function respondAdminIdle(res) {
+	return error(res, 401, 'admin_session_idle', 'admin session timed out after inactivity, sign in again', {
+		login_url: '/login',
+	});
+}
+
 /** True when the session passed a second factor (sessions.mfa_verified_at). */
 export async function sessionPassedMfa(sid) {
 	if (!sid) return false;

@@ -278,6 +278,8 @@ export async function getSessionUser(req, res) {
 	if (!rows[0]) return null;
 
 	const { last_seen_at, expires_at, ...userFields } = rows[0];
+	// Inactivity before this request, for the admin idle timeout (admin-mfa.js).
+	userFields.idle_ms = last_seen_at ? Math.max(0, Date.now() - new Date(last_seen_at).getTime()) : 0;
 
 	// Touch last_seen best-effort; don't block the request on a write.
 	sql`update sessions set last_seen_at = now() where id = ${userFields.sid}`.catch(() => {});

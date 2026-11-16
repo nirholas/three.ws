@@ -27,7 +27,7 @@
 import { constantTimeEquals } from './crypto.js';
 import { getSessionUser } from './auth.js';
 import { isAdminUser } from './admin.js';
-import { mfaEnforced, sessionPassedMfa } from './admin-mfa.js';
+import { mfaEnforced, sessionPassedMfa, adminSessionIdle } from './admin-mfa.js';
 import { logAudit } from './audit.js';
 import { sendOpsAlert } from './alerts.js';
 
@@ -66,7 +66,7 @@ export async function authorizeOps(req) {
 	// 1. Signed-in platform admin — preferred, carries a real identity.
 	try {
 		const user = await getSessionUser(req);
-		if (user && (await isAdminUser(user))) {
+		if (user && (await isAdminUser(user)) && !adminSessionIdle(user)) {
 			if (!mfaEnforced() || (await sessionPassedMfa(user.sid))) {
 				return { ok: true, actor: user.wallet_address || `user:${user.id}` };
 			}

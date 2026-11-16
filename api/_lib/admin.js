@@ -6,7 +6,13 @@ import { sql } from './db.js';
 import { error } from './http.js';
 import { logAudit } from './audit.js';
 import { sendOpsAlert } from './alerts.js';
-import { mfaEnforced, sessionPassedMfa, respondMfaRequired } from './admin-mfa.js';
+import {
+	mfaEnforced,
+	sessionPassedMfa,
+	respondMfaRequired,
+	adminSessionIdle,
+	respondAdminIdle,
+} from './admin-mfa.js';
 
 // Mirrors BUILT_IN_ADMIN_ADDRESSES in env.js (public platform-owner addresses,
 // safe to commit). env.js's ADMIN_ADDRESSES getter lower-cases every entry —
@@ -68,6 +74,7 @@ export async function isAdminUser(user) {
  */
 export async function isVerifiedAdmin(user) {
 	if (!(await isAdminUser(user))) return false;
+	if (adminSessionIdle(user)) return false;
 	return !mfaEnforced() || sessionPassedMfa(user.sid);
 }
 
@@ -129,6 +136,10 @@ export async function requireAdmin(req, res) {
 	const method = String(req?.method || 'GET').toUpperCase();
 	const path = requestPath(req);
 	if (await isAdminUser(user)) {
+		if (adminSessionIdle(user)) {
+			respondAdminIdle(res);
+			return null;
+		}
 		if (mfaEnforced() && !(await sessionPassedMfa(user.sid))) {
 			respondMfaRequired(res);
 			return null;
