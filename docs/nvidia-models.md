@@ -42,6 +42,7 @@ Because it is one key for everything, a deployment either has the whole NVIDIA l
 | **Chat guardrails** (owner opt-in) | `nvidia/nemoguard-jailbreak-detect`, `nvidia/llama-3.1-nemotron-safety-guard-8b-v3`, topic control on `nvidia/nemotron-3.5-lightning-30b-a3b` | `api/_lib/chat-guardrails.js` | Under evaluation |
 | **Text-to-speech** | `magpie-tts-multilingual` (Riva) | `api/_lib/tts-nvidia.js` | ✅ |
 | **Document extraction** (PDF knowledge) | `nvidia/nemotron-page-elements-v3`, `nvidia/nemotron-table-structure-v1`, `nvidia/nemotron-graphic-elements-v1`, `nvidia/nemotron-ocr-v2`, charts read by `nvidia/nemotron-3.5-super-vl-120b-a12b` | `api/_lib/pdf-extract.js`, `api/_lib/nvidia-doc-extract.js` | Under evaluation |
+| **World video** (text or avatar scene to world) | `nvidia/Cosmos3-Nano` (open weights, self-hosted on one RTX PRO 6000), prompt upsampling on `nvidia/nemotron-3.5-super-vl-120b-a12b`; hosted `cosmos-predict1-7b` and `-5b` kept as fallback rungs (404 for this account) | `api/_lib/cosmos-ladder.js`, `api/_providers/cosmos-worker.js`, `workers/model-cosmos/` | Under evaluation |
 
 ---
 
@@ -215,6 +216,22 @@ A PDF uploaded to an agent's knowledge is read page by page as layout: page elem
 
 ---
 
+## 10. World video: Cosmos 3 Nano
+
+<a id="world-video"></a>
+
+**Model:** `nvidia/Cosmos3-Nano` through diffusers, self-hosted on a Cloud Run RTX PRO 6000 Blackwell (`model-cosmos`, europe-west4) · **Prompt upsampler:** `nvidia/nemotron-3.5-super-vl-120b-a12b` on NIM
+**Source:** [api/_lib/cosmos-ladder.js](../api/_lib/cosmos-ladder.js) (rungs), [api/_providers/cosmos-worker.js](../api/_providers/cosmos-worker.js) (worker client), [api/_providers/nvidia-cosmos.js](../api/_providers/nvidia-cosmos.js) (hosted predict1), [workers/model-cosmos](../workers/model-cosmos/README.md) · **Eval:** [docs/nvidia/evals/cosmos-2026-11-16.md](nvidia/evals/cosmos-2026-11-16.md) · **Status:** under evaluation until the `three-ws-api` deploy that ships the ladder (the worker is live).
+
+[/cosmos](https://three.ws/cosmos) renders a short world video that plays behind a transparent 3D avatar. One checkpoint serves four modes: text, image (a still of the avatar's scene becomes frame 0), and depth or edge (a three.js render of the avatar on a 4-second orbit steers the layout). Before sampling, the worker expands the prompt into Cosmos 3's structured caption with the Nemotron model above; if that call fails it samples on the plain prompt and records `upsampler: "none"`. Feature doc: [docs/cosmos.md](cosmos.md).
+
+- **Measured.** Five prompts at 720p and 121 frames: median 245.7 s from submit to a playable URL on a warm worker, with sampling flat at about 229 s. A still-conditioned world took 4m 05s and a depth-conditioned one 17m 44s. The first world after scale-to-zero adds a 1041.5 s checkpoint load.
+- **Ladder.** Cosmos 3 Nano leads. The hosted `cosmos-predict1-7b` and `cosmos-predict1-5b` Text2World rungs follow for text mode only. Both answer 404 "Not found for account" as of 2026-11-16, and the ladder steps past them.
+- **Jobs.** Submit answers `202` with a job id. The worker keeps every task in GCS, so a reload, another API instance or a worker restart resumes the same job. Progress is the worker's real step count and ETA.
+- **Re-measure** with `node scripts/nvidia-cosmos-eval.mjs`. `node scripts/verify-nvidia-cosmos.mjs --probe-only` checks each rung.
+
+---
+
 ## Day-0 release pipeline
 
 **Source:** [api/cron/nim-release-eval.js](../api/cron/nim-release-eval.js), [api/_lib/nim-lanes.js](../api/_lib/nim-lanes.js), [api/_lib/nim-lane-eval.js](../api/_lib/nim-lane-eval.js), [api/_lib/nim-release-store.js](../api/_lib/nim-release-store.js), eval sets in [data/evals/](../data/evals/).
@@ -255,6 +272,8 @@ Run it by hand: `node scripts/nvidia-lane-eval.mjs --model <id>` (one model, wri
 | `TEXT_TO_IMAGE_BUDGET_MS` | Shared deadline for the whole text-to-image ladder (§2), default 60000 |
 | `VERTEX_IMAGEN_FIRST=0` | Puts the free NIM FLUX lane ahead of Vertex Imagen again (§2) |
 | `HF_TOKEN` | Unlocks the Hugging Face router rungs (fal-ai, nscale) in the text-to-image ladder (§2) |
+| `COSMOS_WORKER_URL`, `COSMOS_WORKER_KEY` | The self-hosted Cosmos 3 Nano world rung (§10) |
+| `NVIDIA_COSMOS_INVOKE_URL` | Pins the hosted Cosmos predict1 rungs to one endpoint (§10) |
 
 ---
 
