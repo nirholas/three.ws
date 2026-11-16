@@ -51,6 +51,7 @@ for (const rig of rigs) {
 		const errors = [];
 		page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
 		page.on('pageerror', (e) => errors.push(String(e)));
+		page.on('response', (r) => r.status() >= 400 && errors.push(`HTTP ${r.status()} ${r.url()}`));
 		const q = new URLSearchParams(setting === 'off' ? { emotion: 'off' } : { emotion: setting, emotionStrength: '1' });
 		if (!rig.src.startsWith('file:')) q.set('avatar', rig.src);
 		await page.goto(`${base}/audio2face?${q}`, { waitUntil: 'domcontentloaded' });
