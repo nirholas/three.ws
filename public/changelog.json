@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-16T15:42:17.271Z",
+	"generated_at": "2026-11-16T16:23:13.521Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -228,6 +228,16 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "three.ws 3D Studio agent for Microsoft 365 Copilot",
+			"summary": "The three.ws Microsoft 365 app now includes a declarative agent, three.ws 3D Studio, which shows up by name in the Microsoft 365 Copilot and Copilot in Teams agent list. Pick it and ask for a product model for a deck, a rigged mascot, a free ready-made asset or paste-ready embed code for a website. It does the work through the free three.ws studio tools, so nobody needs an account. A generation answers right away with a 3D viewer link that opens the model as soon as it is ready, and the finished model comes with a GLB download that drops into PowerPoint. The agent uses a fixed list of 13 reviewed tools rather than finding new ones at run time, and every app package build checks it against Microsoft's published schemas and limits. It ships in app version 1.1.0 inside the existing Microsoft 365 app offer.",
+			"link": "/docs/microsoft-copilot-agent",
+			"tags": [
+				"feature"
 			]
 		},
 		{

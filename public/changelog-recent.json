@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-16T15:42:17.565Z",
+	"generated_at": "2026-11-16T16:23:13.791Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4614,
+	"total": 4615,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -231,6 +231,16 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "update",
+			"title": "three.ws 3D Studio agent for Microsoft 365 Copilot",
+			"summary": "The three.ws Microsoft 365 app now includes a declarative agent, three.ws 3D Studio, which shows up by name in the Microsoft 365 Copilot and Copilot in Teams agent list. Pick it and ask for a product model for a deck, a rigged mascot, a free ready-made asset or paste-ready embed code for a website. It does the work through the free three.ws studio tools, so nobody needs an account. A generation answers right away with a 3D viewer link that opens the model as soon as it is ready, and the finished model comes with a GLB download that drops into PowerPoint. The agent uses a fixed list of 13 reviewed tools rather than finding new ones at run time, and every app package build checks it against Microsoft's published schemas and limits. It ships in app version 1.1.0 inside the existing Microsoft 365 app offer.",
+			"link": "/docs/microsoft-copilot-agent",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1524,16 +1534,6 @@
 			"type": "update",
 			"title": "Agent payments on Solana stop stalling on a starved RPC",
 			"summary": "The background leak scanner was spending a quarter of the platform's daily Solana RPC calls rechecking wallets that never move money, which used up the paid RPC lanes and left agent-to-agent x402 payments waiting on slow public ones. Idle wallets are now checked in a steady rotation while every wallet that actually paid is still checked within ten minutes, so payments at the Agent Exchange settle on the fast lanes again.",
-			"link": "/play",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-06",
-			"type": "update",
-			"title": "Card gacha pulls work from wallets that hold SOL",
-			"summary": "Pulling a card in /play failed with \"could not verify\" for any wallet holding SOL, and nothing was charged. Collector Crypt has those wallets pay their own network fee, about 0.00001 SOL, and our safety check only allowed the case where Collector Crypt pays it. The check now accepts both while keeping every other rule, adds a cap so the fee can never be inflated, and the confirmation table shows who pays the fee and exactly how much.",
 			"link": "/play",
 			"tags": [
 				"fix"
