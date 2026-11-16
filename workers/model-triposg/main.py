@@ -48,6 +48,14 @@ Environment variables:
   REMBG_MODEL           : matting model (default: birefnet-general-lite)
   REMBG_TIMEOUT_S       : matte budget in seconds (default: 120)
   MAX_CONCURRENT        — max parallel inferences (default: 1)
+  WEIGHTS_GCS_URI       : gs:// tree of the image pipeline weights
+  SCRIBBLE_WEIGHTS_GCS_URI : gs:// tree of the scribble pipeline weights
+  WEIGHTS_LOADER        : "runai" (default) streams the safetensors from
+                          WEIGHTS_GCS_URI straight onto the GPU with NVIDIA
+                          Run:ai Model Streamer; "stage" forces the previous
+                          download-to-/tmp loader. A streamer failure always
+                          falls back to the staged loader (runai_weights.py).
+  RUNAI_STREAMER_CONCURRENCY : streamer range-read concurrency (default: 32)
 """
 
 from __future__ import annotations
@@ -75,6 +83,15 @@ from google.cloud import storage
 from PIL import Image
 from pydantic import BaseModel, Field
 
+from runai_weights import (
+    choose_loader,
+    gcs_split,
+    load_diffusers_pipeline,
+    load_with_fallback,
+    select_tree_objects,
+    streamer_available,
+    tree_prefix,
+)
 from request_policy import (
     DEFAULT_SCRIBBLE_CONFIDENCE,
     MODES,
@@ -125,6 +142,7 @@ MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "1"))
 WEIGHTS_GCS_URI = os.environ.get("WEIGHTS_GCS_URI", "")
 SCRIBBLE_WEIGHTS_GCS_URI = os.environ.get("SCRIBBLE_WEIGHTS_GCS_URI", "")
 WEIGHTS_LOCAL_ROOT = os.environ.get("WEIGHTS_LOCAL_ROOT", "/tmp/triposg-weights")
+WEIGHTS_LOADER = os.environ.get("WEIGHTS_LOADER", "")
 
 DTYPE = torch.float16
 
@@ -143,6 +161,10 @@ _ready: Optional[asyncio.Event] = None
 # full 600s _ready wait before failing with a misleading "timed out". Recording
 # the real reason fails those tasks immediately and surfaces it on /health.
 _load_error: Optional[str] = None
+# Which loader produced the resident pipeline, and why a streamer attempt fell
+# back, for /health and the cold-start bench (docs/nvidia-runai-model-streamer.md).
+_weights_loader: Optional[str] = None
+_streamer_error: Optional[str] = None
 # In-memory cache only. Cloud Run runs this service across up to max-instances
 # containers with no session affinity, so a POST /infer and a later GET
 # /tasks/:id can land on different containers. The durable source of truth is
@@ -161,16 +183,20 @@ def _stage_tree(gcs_uri: str, name: str, fuse_dir: str) -> str:
     try:
         from concurrent.futures import ThreadPoolExecutor
 
-        bucket_name, _, prefix = gcs_uri[len("gs://"):].partition("/")
+        bucket_name, prefix = gcs_split(gcs_uri)
         client = storage.Client()
-        blobs = [b for b in client.list_blobs(bucket_name, prefix=prefix) if not b.name.endswith("/")]
+        # tree_prefix ends in "/": a bare "triposg" prefix also listed the
+        # 4.4 GiB triposg-scribble tree into this RAM-backed /tmp on every boot.
+        listed = {b.name: b for b in client.list_blobs(bucket_name, prefix=tree_prefix(prefix))}
+        rels = select_tree_objects(prefix, list(listed))
+        blobs = [(rel, listed[f"{prefix}/{rel}"]) for rel in rels]
         if not blobs:
             log.warning("weights staging: no objects under %s; using FUSE mount", gcs_uri)
             return fuse_dir
         local_dir = os.path.join(WEIGHTS_LOCAL_ROOT, name)
 
-        def _download(blob) -> int:
-            rel = blob.name[len(prefix):].lstrip("/")
+        def _download(item) -> int:
+            rel, blob = item
             dest = os.path.join(local_dir, rel)
             os.makedirs(os.path.dirname(dest), exist_ok=True)
             # Reuse an already-staged object (same-instance warm restart) when
@@ -194,17 +220,42 @@ def _stage_tree(gcs_uri: str, name: str, fuse_dir: str) -> str:
         return fuse_dir
 
 
+def _load_pipeline(pipeline_cls, gcs_uri: str, name: str, fuse_dir: str):
+    """Load one pipeline with the chosen weight loader, falling back to the
+    staged loader if the Run:ai streamer path fails for any reason."""
+    loader, reason = choose_loader(WEIGHTS_LOADER, gcs_uri, streamer_available())
+    log.info("%s weights loader: %s (%s)", name, loader, reason)
+
+    def stream():
+        t0 = time.time()
+        pipe, stats = load_diffusers_pipeline(
+            pipeline_cls, gcs_uri, os.path.join(WEIGHTS_LOCAL_ROOT, f"{name}-config"), "cuda", DTYPE
+        )
+        log.info(
+            "%s weights streamed in %.1fs (%.2f GiB, %.2f GiB/s streaming, Run:ai Model Streamer)",
+            name, time.time() - t0, stats["bytes"] / (1024 ** 3), stats["gib_per_s"],
+        )
+        return pipe
+
+    def stage():
+        weights_path = _stage_tree(gcs_uri, name, fuse_dir)
+        log.info("Loading %s pipeline from %s", name, weights_path)
+        return pipeline_cls.from_pretrained(weights_path).to("cuda", DTYPE)
+
+    return load_with_fallback(loader, stream, stage, name)
+
+
 def _load_models():
     """Load the image pipeline at startup. The scribble pipeline is loaded
     lazily on the first scribble task so cold start pays for one model. No
     background remover is loaded: image mode mattes through rembg-service."""
-    global _pipe
+    global _pipe, _weights_loader, _streamer_error
     from triposg.pipelines.pipeline_triposg import TripoSGPipeline
 
-    weights_path = _stage_tree(WEIGHTS_GCS_URI, "triposg", WEIGHTS_DIR)
-    log.info("Loading TripoSG pipeline from %s", weights_path)
-    _pipe = TripoSGPipeline.from_pretrained(weights_path).to("cuda", DTYPE)
-    log.info("TripoSG ready")
+    _pipe, _weights_loader, _streamer_error = _load_pipeline(
+        TripoSGPipeline, WEIGHTS_GCS_URI, "triposg", WEIGHTS_DIR
+    )
+    log.info("TripoSG ready (weights loader: %s)", _weights_loader)
 
 
 def _ensure_scribble_pipe():
@@ -217,14 +268,13 @@ def _ensure_scribble_pipe():
                 TripoSGScribblePipeline,
             )
 
-            scribble_path = _stage_tree(
-                SCRIBBLE_WEIGHTS_GCS_URI, "triposg-scribble", SCRIBBLE_WEIGHTS_DIR
+            _scribble_pipe, used, _ = _load_pipeline(
+                TripoSGScribblePipeline,
+                SCRIBBLE_WEIGHTS_GCS_URI,
+                "triposg-scribble",
+                SCRIBBLE_WEIGHTS_DIR,
             )
-            log.info("Loading TripoSG-scribble pipeline from %s", scribble_path)
-            _scribble_pipe = TripoSGScribblePipeline.from_pretrained(
-                scribble_path
-            ).to("cuda", DTYPE)
-            log.info("TripoSG-scribble ready")
+            log.info("TripoSG-scribble ready (weights loader: %s)", used)
     return _scribble_pipe
 
 
@@ -618,6 +668,8 @@ async def health() -> dict:
         "scribble_loaded": _scribble_pipe is not None,
         "ready": bool(_ready and _ready.is_set()),
         "load_error": _load_error,
+        "weights_loader": _weights_loader,
+        "streamer_error": _streamer_error,
     }
 
 

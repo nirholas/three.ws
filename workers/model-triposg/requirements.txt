@@ -52,3 +52,10 @@ httpx>=0.27.0
 
 # ── GCP ───────────────────────────────────────────────────────────────────────
 google-cloud-storage==2.18.0
+
+# ── NVIDIA Run:ai Model Streamer (Apache-2.0) ─────────────────────────────────
+# Streams the safetensors trees from gs:// straight onto the GPU at cold start
+# (runai_weights.py). The gcs extra authenticates with the runtime service
+# account through ADC.
+runai-model-streamer==0.17.0
+runai-model-streamer-gcs==0.17.0
