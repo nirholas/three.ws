@@ -229,9 +229,9 @@
 				"original": {
 					"bytes": 589031,
 					"type": "image/jpeg",
-					"submittedAt": 1794856853552,
+					"submittedAt": 1794859814255,
 					"task": {
-						"id": "3f019b4e-36f8-47d9-8bc2-d53f32086475",
+						"id": "a35ca329-102b-4258-9cf0-41fd5536e7dc",
 						"status": "queued",
 						"worker": "https://model-trellis2-bench-1-lp642k3kpa-ez.a.run.app"
 					}
@@ -259,9 +259,9 @@
 				"cutout": {
 					"bytes": 71714,
 					"type": "image/webp",
-					"submittedAt": 1794856854306,
+					"submittedAt": 1794859814259,
 					"task": {
-						"id": "c54c6b02-c80c-4e44-a2f7-e384e0b65cec",
+						"id": "ac443c9e-1bd8-4af7-8736-712d3404ba2e",
 						"status": "queued",
 						"worker": "https://model-trellis2-bench-3-lp642k3kpa-ez.a.run.app"
 					}
@@ -324,9 +324,9 @@
 				"prepared": {
 					"bytes": 291507,
 					"type": "image/jpeg",
-					"submittedAt": 1794857146933,
+					"submittedAt": 1794859814260,
 					"task": {
-						"id": "dc629bb6-ce85-487d-8b04-8b0f037e5e68",
+						"id": "aebbd26c-8af5-4fd9-bf08-029f98b97100",
 						"status": "queued",
 						"worker": "https://model-trellis2-bench-3-lp642k3kpa-ez.a.run.app"
 					}
