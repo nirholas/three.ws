@@ -128,7 +128,7 @@
     "jsdom": "^31.0.0",
     "prettier": "^3.10.1",
     "rollup-plugin-inject": "^3.0.2",
-    "sass": "^1.108.1",
+    "sass": "^1.108.2",
     "vite": "^8.3.7",
     "vite-plugin-node-polyfills": "^0.28.0",
     "vitest": "^5.0.1"
