@@ -42,7 +42,7 @@ ninja==1.11.1.1
 # version in trt_policy.engine_key). Bundles its own libs and links the CUDA 12
 # runtime torch already ships. onnx is the export format trt_build.py writes.
 tensorrt-cu12==10.13.3.9
-onnx==1.17.0
+onnx==1.22.0
 
 # ── Server ────────────────────────────────────────────────────────────────────
 fastapi==0.115.0
