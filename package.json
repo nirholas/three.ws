@@ -855,7 +855,7 @@
 		"lodash.set": "file:vendor/lodash.set",
 		"lru-cache": "^11.5.3",
 		"mammoth": "^1.12.0",
-		"manifold-3d": "^3.5.4",
+		"manifold-3d": "^3.5.5",
 		"marked": "^18.1.2",
 		"mediabunny": "^1.66.0",
 		"meshoptimizer": "^1.2.0",
