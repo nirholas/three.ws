@@ -15,7 +15,7 @@ rembg[gpu]==2.0.86
 # Studio server
 fastapi==0.115.0
 uvicorn[standard]==0.32.0
-python-multipart==0.0.20
+python-multipart==0.0.31
 
 # Notebook
 jupyterlab==4.5.11
