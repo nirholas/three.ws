@@ -272,6 +272,16 @@ describe('nvidia provider — 202-then-poll loop', () => {
 		expect(await provider.status({ taskId: 'r' })).toMatchObject({ status: 'running' });
 	});
 
+	// Production 2026-11-15..18: NVIDIA's hosted TRELLIS errored every job, and
+	// NVCF's status endpoint answered 410 Gone for each one. Treating 410 as
+	// "still running" held 93 jobs at "generating" until the 45-minute reaper.
+	it('treats a 410 Gone poll as the expired request id it is, not a running job', async () => {
+		globalThis.fetch = vi.fn(async () => new Response('', { status: 410 }));
+		const provider = createNvidiaProvider();
+		const res = await provider.status({ taskId: 'req-1' });
+		expect(res).toMatchObject({ status: 'failed', code: 'nvcf_expired' });
+	});
+
 	it('keeps the job alive on a poll timeout / network throw', async () => {
 		globalThis.fetch = vi.fn(async () => {
 			throw Object.assign(new Error('The operation was aborted'), { name: 'TimeoutError' });

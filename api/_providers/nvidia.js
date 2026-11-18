@@ -519,9 +519,12 @@ export function createNvidiaProvider() {
 			if (res.status === 401 || res.status === 403) {
 				return { status: 'failed', error: 'NVIDIA rejected the API key' };
 			}
-			if (res.status === 404) {
+			if (res.status === 404 || res.status === 410) {
 				// The request id is gone: either the consume-once result was taken by a
-				// racing/aborted poll, or NVCF's retention window lapsed. Tagged with a
+				// racing/aborted poll, or NVCF's retention window lapsed. NVCF answers
+				// 410 Gone for a request that ended in an upstream error (observed
+				// 2026-11-18 on every errored TRELLIS job); polling that as "running"
+				// held each user for the full 45-minute reap. Tagged with a
 				// machine-readable code so the forge poll layer can attempt recovery
 				// (re-check the store for a racing completion, then resubmit) instead of
 				// dead-ending the user's generation.
