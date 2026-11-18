@@ -750,7 +750,7 @@
 		"@microsoft/live-share": "^1.4.2",
 		"@microsoft/teams-js": "^2.59.0",
 		"@modelcontextprotocol/sdk": "^1.29.0",
-		"@napi-rs/canvas": "1.1.0",
+		"@napi-rs/canvas": "1.1.1",
 		"@neondatabase/serverless": "^1.1.0",
 		"@neynar/nodejs-sdk": "^3.177.0",
 		"@nirholas/pump-sdk": "^3.0.0",
