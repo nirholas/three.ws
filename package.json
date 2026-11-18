@@ -755,7 +755,7 @@
 		"@neynar/nodejs-sdk": "^3.177.0",
 		"@nirholas/pump-sdk": "^3.0.0",
 		"@noble/curves": "^2.2.0",
-		"@noble/hashes": "^1.8.0",
+		"@noble/hashes": "^2.4.0",
 		"@node-saml/node-saml": "^5.2.0",
 		"@octokit/rest": "^22.0.1",
 		"@okxweb3/app-x402-core": "^0.2.2",
