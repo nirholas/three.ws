@@ -1,14 +1,25 @@
 {
-	"generated_at": "2026-11-18T16:47:17.039Z",
+	"generated_at": "2026-11-18T17:54:17.602Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4641,
+	"total": 4642,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-18",
+			"type": "update",
+			"title": "A Solana RPC burst limit no longer benches the paid lane for six hours",
+			"summary": "Token due diligence, holder lists and agent net worth stopped returning 503 during traffic bursts. Our primary Solana RPC answers a short burst limit with the same message it uses for a spent plan, and two bursts in a row used to park it for six hours while it was serving fine. Repeat bursts now widen the retry window gradually, up to one hour, so the paid lane comes back within minutes.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
 		{
 			"date": "2026-11-18",
 			"type": "update",
@@ -1534,17 +1545,6 @@
 			"link": "/microsoft",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "update",
-			"title": "Sign in with Microsoft, and let Microsoft Entra ID manage your team",
-			"summary": "Anyone can now sign in with a work, school or personal Microsoft account, and link it to an existing account from Settings. Team owners can claim their organisation's Microsoft Entra tenant with an admin sign-in, so colleagues are offered the team (or join automatically) the first time they sign in. Entra ID can provision people and groups over SCIM: when someone leaves or is unassigned, their team access ends and their sessions from that organisation are signed out. Setup takes a few minutes and every change is logged on the team page.",
-			"link": "/docs/enterprise-sso",
-			"tags": [
-				"feature",
-				"security"
 			]
 		}
 	]

@@ -200,9 +200,13 @@ const ATTEMPT_TIMEOUT_MS = 10_000;
 const QUOTA_COOLDOWN_MS = 6 * 3_600_000; // 6h: daily/monthly quota exhausted
 const RATE_LIMIT_COOLDOWN_MS = 10 * 60_000; // 10m, transient 429
 // Helius words a per-second burst and a spent plan identically (429 "max usage
-// reached"). The first sighting is therefore a short probe; only a lane that fails
-// again straight after the probe is treated as out of credits.
-const AMBIGUOUS_QUOTA_PROBE_MS = 30_000;
+// reached"). The first sighting is therefore a short probe, and each repeat with
+// no success in between widens the window one rung. The ladder tops out at 1h,
+// never the 6h quota window: on 2026-11-18 two back-to-back bursts under load
+// benched Helius for 6h while it answered getSlot 200, and every Solana-backed
+// endpoint 503'd on the throttled free pool. A plan that really is spent costs
+// one re-probe an hour on this ladder, which is nothing next to that outage.
+const AMBIGUOUS_QUOTA_LADDER_MS = [30_000, 2 * 60_000, 10 * 60_000, 30 * 60_000, 3_600_000];
 const AMBIGUOUS_QUOTA_RE = /^\s*max usage reached\s*$/i;
 const AUTH_COOLDOWN_MS = 30 * 60_000; // 30m: bad/expired key on this provider only
 const SERVER_COOLDOWN_MS = 2 * 60_000; // 2m: provider 5xx
@@ -676,8 +680,8 @@ function cooldownMsFor(status, bodyText) {
 }
 
 // Lanes whose last failure was the ambiguous "max usage reached" 429 and that have
-// not served a request since. A second failure while a url is in here is a spent plan.
-const _ambiguousQuotaStreak = new Set();
+// not served a request since, mapped to how many times in a row it has happened.
+const _ambiguousQuotaStreak = new Map();
 
 /** Forget an ambiguous-quota streak: the lane just served a request, so it is not out of credits. */
 export function clearEndpointStreak(url) {
@@ -826,9 +830,9 @@ export function markEndpointCooldown(url, status, bodyText) {
 	const now = Date.now();
 	let ms = cooldownMsFor(status, bodyText);
 	if (status === 429 && AMBIGUOUS_QUOTA_RE.test(bodyText || '')) {
-		const repeated = _ambiguousQuotaStreak.has(url);
-		_ambiguousQuotaStreak.add(url);
-		ms = repeated ? QUOTA_COOLDOWN_MS : AMBIGUOUS_QUOTA_PROBE_MS;
+		const trips = _ambiguousQuotaStreak.get(url) || 0;
+		_ambiguousQuotaStreak.set(url, trips + 1);
+		ms = AMBIGUOUS_QUOTA_LADDER_MS[Math.min(trips, AMBIGUOUS_QUOTA_LADDER_MS.length - 1)];
 	}
 	_endpointCooldown.set(url, now + ms);
 	// Only quota/auth-class parks are worth telling the fleet about. A 30s network

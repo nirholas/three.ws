@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>A Solana RPC burst limit no longer benches the paid lane for six hours</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-18:A Solana RPC burst limit no longer benches the paid lane for six hours</guid>
+			<pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Token due diligence, holder lists and agent net worth stopped returning 503 during traffic bursts. Our primary Solana RPC answers a short burst limit with the same message it uses for a spent plan, and two bursts in a row used to park it for six hours while it was serving fine. Repeat bursts now widen the retry window gradually, up to one hour, so the paid lane comes back within minutes.</description>
+		</item>
+		<item>
 			<title>The NVIDIA Brev GPU quickstart ships a patched JupyterLab and upload parser</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-18:The NVIDIA Brev GPU quickstart ships a patched JupyterLab and upload parser</guid>

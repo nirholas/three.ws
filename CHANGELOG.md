@@ -6,6 +6,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-11-18
 
+- **A Solana RPC burst limit no longer benches the paid lane for six hours**: Token due diligence, holder lists and agent net worth stopped returning 503 during traffic bursts. Our primary Solana RPC answers a short burst limit with the same message it uses for a spent plan, and two bursts in a row used to park it for six hours while it was serving fine. Repeat bursts now widen the retry window gradually, up to one hour, so the paid lane comes back within minutes. `[fix, infra]`
 - **The NVIDIA Brev GPU quickstart ships a patched JupyterLab and upload parser**: The Brev quickstart image now runs JupyterLab 4.6.5 and python-multipart 0.0.33 behind FastAPI 0.162. That closes the JupyterLab extension-manager, CommandLinker and XSS advisories and the python-multipart file-write, denial-of-service and parameter-smuggling advisories published this year. The studio's image upload, sample picker and resolution checks behave exactly as before. `[security, infra]`
 
 ## 2026-11-16
