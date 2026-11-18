@@ -595,6 +595,27 @@ export function cdnUrl(key) {
 	return `${env.APP_ORIGIN}/cdn/${encodeR2Key(key)}`;
 }
 
+// The URL a GPU worker (or any other off-box reader) should fetch for a stored
+// object. A raw public-bucket URL (S3_PUBLIC_DOMAIN/<key>) only resolves while
+// the object lives in R2; anything written during an R2 credential outage sits
+// in the GCS fallback bucket, where only the first-party /cdn/<key> proxy can
+// read it. So our own bucket URLs are rewritten to /cdn/ (query and fragment
+// dropped, they are not part of the key) and every other URL, including inline
+// data URIs and third-party hosts, passes through untouched. Never throws: a
+// deployment with no object storage configured has no bucket URLs to rewrite.
+export function workerReadableUrl(url) {
+	if (typeof url !== 'string') return url;
+	const domain = String(process.env.S3_PUBLIC_DOMAIN || '').trim().replace(/\/+$/, '');
+	if (!domain || !url.startsWith(`${domain}/`)) return url;
+	const path = url.slice(domain.length + 1).split(/[?#]/)[0];
+	if (!path) return url;
+	try {
+		return cdnUrl(path.split('/').map(decodeURIComponent).join('/'));
+	} catch {
+		return url;
+	}
+}
+
 // cdnUrl() for a READ path, same null-degrades-gracefully contract as
 // publicUrlOrNull(): a missing key is a designed empty state, not a thrown
 // error that takes down the rest of a list response.

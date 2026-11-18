@@ -67,6 +67,7 @@
 
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
 import { withSpan } from '../_lib/tracing.js';
+import { workerReadableUrl } from '../_lib/r2.js';
 
 function readEnv(name) {
 	if (typeof process !== 'undefined' && process.env?.[name]) return process.env[name];
@@ -217,6 +218,23 @@ function serviceUrlForMode(mode) {
 		default:
 			return null;
 	}
+}
+
+// Rewrite every string in a worker request body through workerReadableUrl, so
+// no lane is ever handed a raw public-bucket URL that 404s while R2 is down and
+// the object lives in the GCS fallback (model-rig, TripoSG and TRELLIS all
+// failed that way on 2026-11-18). Walking the built body, not the inputs, covers
+// every field name each worker uses (images, image_url, mesh, mesh_gcs_url,
+// video_url, ...) and any added later.
+function rewriteBucketUrls(value) {
+	if (typeof value === 'string') return workerReadableUrl(value);
+	if (Array.isArray(value)) return value.map(rewriteBucketUrls);
+	if (value && typeof value === 'object') {
+		const out = {};
+		for (const [k, v] of Object.entries(value)) out[k] = rewriteBucketUrls(v);
+		return out;
+	}
+	return value;
 }
 
 // Build the request body and path suffix for each worker's API shape.
@@ -809,7 +827,7 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 				response = await fetchUpstream(url, {
 					method: 'POST',
 					headers: authHeaders,
-					body: JSON.stringify(workerReq.body),
+					body: JSON.stringify(rewriteBucketUrls(workerReq.body)),
 				}, { name: breakerName('submit', baseUrl), timeoutMs: 60_000, attempts: 2, okWhen: () => true });
 			} catch (err) {
 				throw Object.assign(
