@@ -81,6 +81,11 @@ ACE adoption. That is the one co-marketing motion fully in our hands, because
 three.ws already runs on NIM with one key and a fallback chain, so wiring a new
 model is hours of work.
 
+The infra-side version of the same pattern, a measured inference result on named
+NVIDIA hardware (how `@NVIDIAAIInfra` amplified Baseten on 2026-11-18), is written
+up in [nvidia-ai-infra-benchmark-play.md](./nvidia-ai-infra-benchmark-play.md),
+along with the production numbers that block it today.
+
 **The trigger is automated.** [api/cron/free-model-audit.js](../api/cron/free-model-audit.js)
 diffs the NIM catalog against its last snapshot every 6 hours and pages ops
 (`llm:nim-new-release`) the first time a model id appears, NVIDIA's own
