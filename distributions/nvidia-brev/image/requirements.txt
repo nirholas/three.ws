@@ -13,9 +13,9 @@ Pillow==13.0.0
 rembg[gpu]==2.0.86
 
 # Studio server
-fastapi==0.115.0
+fastapi==0.162.0  # Starlette 1.x; 0.115 capped Starlette below its multipart DoS fixes
 uvicorn[standard]==0.32.0
-python-multipart==0.0.31
+python-multipart==0.0.33  # >= 0.0.31 clears GHSA-wp53-j4wj-2cfg (file write) and the 2026 DoS/smuggling advisories
 
 # Notebook
-jupyterlab==4.5.11
+jupyterlab==4.6.5  # >= 4.5.11 clears the 2026 extension-manager, CommandLinker and XSS advisories

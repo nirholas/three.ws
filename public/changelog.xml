@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>The NVIDIA Brev GPU quickstart ships a patched JupyterLab and upload parser</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-18:The NVIDIA Brev GPU quickstart ships a patched JupyterLab and upload parser</guid>
+			<pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>The Brev quickstart image now runs JupyterLab 4.6.5 and python-multipart 0.0.33 behind FastAPI 0.162. That closes the JupyterLab extension-manager, CommandLinker and XSS advisories and the python-multipart file-write, denial-of-service and parameter-smuggling advisories published this year. The studio's image upload, sample picker and resolution checks behave exactly as before.</description>
+		</item>
+		<item>
 			<title>Admin consent (Microsoft Entra)</title>
 			<link>https://three.ws/enterprise/admin-consent</link>
 			<guid isPermaLink="false">2026-11-16:Admin consent (Microsoft Entra)</guid>

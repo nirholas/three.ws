@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-11-16T19:55:27.645Z",
+	"generated_at": "2026-11-18T16:47:16.998Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-18",
+			"type": "update",
+			"title": "The NVIDIA Brev GPU quickstart ships a patched JupyterLab and upload parser",
+			"summary": "The Brev quickstart image now runs JupyterLab 4.6.5 and python-multipart 0.0.33 behind FastAPI 0.162. That closes the JupyterLab extension-manager, CommandLinker and XSS advisories and the python-multipart file-write, denial-of-service and parameter-smuggling advisories published this year. The studio's image upload, sample picker and resolution checks behave exactly as before.",
+			"link": null,
+			"tags": [
+				"security",
+				"infra"
+			]
+		},
 		{
 			"date": "2026-11-16",
 			"type": "launch",

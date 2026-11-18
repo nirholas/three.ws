@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-11-18
+
+- **The NVIDIA Brev GPU quickstart ships a patched JupyterLab and upload parser**: The Brev quickstart image now runs JupyterLab 4.6.5 and python-multipart 0.0.33 behind FastAPI 0.162. That closes the JupyterLab extension-manager, CommandLinker and XSS advisories and the python-multipart file-write, denial-of-service and parameter-smuggling advisories published this year. The studio's image upload, sample picker and resolution checks behave exactly as before. `[security, infra]`
+
 ## 2026-11-16
 
 - **Admin consent (Microsoft Entra)** (`/enterprise/admin-consent`): What the three.ws sign-in app asks for in plain language, and the tenant-wide admin consent link for a Microsoft Entra administrator, with clear success and error results.
