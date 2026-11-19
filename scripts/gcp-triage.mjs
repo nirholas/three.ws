@@ -83,6 +83,19 @@ const KNOWN_SIGNATURES = [
 		action: `Worker-side symptom of the same Cloudflare R2 outage the HTTP r2-downstream-5xx family tracks (production-100-OWNER-ACTIONS.md row 36): a caller-supplied model URL lives on R2's public .r2.dev domain, which is edge-blocked during the flap. The worker already handles this cleanly (task marked failed, opaque error to the caller); nothing to fix in code. Confirm with: curl -s https://three.ws/api/healthz | jq '.subsystems.subsystems[] | select(.name=="object_storage")'. ${RUNBOOK} §r2-downstream.`,
 	},
 	{
+		// 2026-11-19: model-rig logged this traceback twice in 6h (16:21 and 20:47
+		// UTC). The rerig request carried a raw https://pub-*.r2.dev/<key> URL for
+		// an object that lives in the GCS fallback bucket (R2 credential rejected),
+		// or on a public domain that no longer serves objects, so the worker's
+		// fetch 404s. Fixed at 4513b59b2 (api/_providers/gcp.js rewrites bucket URLs
+		// to /cdn/<key> before every worker call); production ran 559f73663, which
+		// predates it. The worker catches the exception cleanly (task marked failed).
+		id: 'worker-r2-public-404',
+		match: /HTTPStatusError: Client error '404 Not Found' for url 'https:\/\/pub-[^']*\.r2\.dev\//,
+		class: 'owner',
+		action: `A GPU worker was handed a raw public-bucket (.r2.dev) URL that 404s because the object lives in the GCS fallback bucket while R2 rejects our credential. Fixed in code at 4513b59b2 (workerReadableUrl rewrites bucket URLs to /cdn/<key> in api/_providers/gcp.js); production needs that commit deployed, and the R2 credential restored (see r2-credential-rejected). If it recurs AFTER a deploy containing 4513b59b2, it is a regression: find the caller that bypasses the gcp.js provider. ${RUNBOOK} §worker-r2-public-404.`,
+	},
+	{
 		id: 'db-storage-cap',
 		match: /db at storage cap/i,
 		class: 'env-action',
@@ -413,6 +426,29 @@ const KNOWN_HTTP_SIGNATURES = [
 		test: (g) => g.service === 'three-ws-api' && g.status === 503 && g.path === '/api/crypto/bonding',
 		class: 'self-healing',
 		action: `The free bonding-curve status route found the pump.fun feed temporarily unreachable and answered its designed 503 upstream_unavailable + Retry-After rather than a stale guess (api/crypto/bonding.js, api/_lib/pump-bonding.js). Investigate only if it persists for the same mint after the pump.fun public frontend itself is reachable again. ${RUNBOOK} §solana-rpc.`,
+	},
+	{
+		// 2026-11-19: 18 hits from one paper-trading client (memedesk-paper-sim) with
+		// zero matching app log lines. api/crypto/due-diligence.js answers its designed
+		// 503 upstream_unavailable + Retry-After when getTokenDueDiligence() cannot
+		// read the chain at all, which is exactly what happens while every paid Solana
+		// RPC lane is exhausted (healthz rpc_lanes), same family as holders and bonding.
+		id: 'due-diligence-rpc-exhausted-503',
+		test: (g) => g.service === 'three-ws-api' && g.status === 503 && g.path === '/api/crypto/due-diligence',
+		class: 'self-healing',
+		action: `The free token due-diligence route could not read chain data (mint, holders, authorities) and answered its designed 503 upstream_unavailable + Retry-After instead of a partial report. Check healthz rpc_lanes: this fires in bursts while every paid Solana RPC lane is cooling down (see ${RUNBOOK} "Every paid Solana RPC lane exhausted at once"). Investigate only if it persists after rpc_lanes reads ok. ${RUNBOOK} §due-diligence-503.`,
+	},
+	{
+		id: 'sdp-unconfigured-503',
+		test: (g) => g.service === 'three-ws-api' && g.status === 503 && (g.path === '/api/sdp' || g.path.startsWith('/api/sdp/')),
+		class: 'owner',
+		action: `The Solana Developer Platform proxy fails closed with 503 not_configured because SDP_API_KEY is not set on three-ws-api. Admin-only surface, nothing user-facing breaks. Owner provisions the key, then: gcloud run services update three-ws-api --region us-central1 --update-env-vars SDP_API_KEY=<key>. ${RUNBOOK} §sdp-unconfigured.`,
+	},
+	{
+		id: 'cad-unconfigured-503',
+		test: (g) => g.service === 'three-ws-api' && g.status === 503 && g.path === '/api/cad',
+		class: 'owner',
+		action: `CAD Forge answers its designed 503 cad_unavailable: GCP_CAD_FORGE_URL (plus CAD_FORGE_KEY or GCP_RECONSTRUCTION_KEY) is not set on three-ws-api, or database/object storage is unconfigured (cadStoreEnabled), so the part builder is off. The /cad page shows the unavailable state. Deploy workers/cad-forge, then set the env with --update-env-vars. ${RUNBOOK} §cad-unconfigured.`,
 	},
 	{
 		id: 'watsonx-unconfigured-503',

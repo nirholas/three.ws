@@ -118,7 +118,18 @@ export default wrap(async (req, res) => {
 		if (hasRequestBody(req)) body = await readJson(req);
 	}
 
-	const upstream = await sdpRequest(path, { method: req.method, query, body, headers });
+	let upstream;
+	try {
+		upstream = await sdpRequest(path, { method: req.method, query, body, headers });
+	} catch (err) {
+		// A deployment without SDP_API_KEY is a configuration gap, not a code
+		// fault: answer a designed 503 instead of letting wrap() log it as an
+		// unhandled 5xx with a stack trace and a Sentry event per request.
+		if (err?.status === 503 && /not configured/i.test(err.message || '')) {
+			return error(res, 503, 'not_configured', 'Solana Developer Platform is not configured on this deployment');
+		}
+		throw err;
+	}
 
 	// Relay the upstream status + body verbatim so SDP's own error envelope
 	// ({ error: { code, message }, meta }) and success shapes reach the client

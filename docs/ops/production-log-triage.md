@@ -1865,3 +1865,92 @@ gcloud run services update three-ws-api --region us-central1 \
   --project aerial-vehicle-466722-p5 --update-env-vars CACHE_REDIS_CMD_TIMEOUT_MS=5000
 # Helius 429s: raise the plan/quota in the Helius dashboard (public-RPC fallback covers the gap).
 ```
+
+---
+
+## 🟢 HTTP 503 `/api/crypto/due-diligence` - `due-diligence-rpc-exhausted-503` (§due-diligence-503)
+
+```
+HTTP 503 GET /api/crypto/due-diligence?address=<mint>   body: {"error":"upstream_unavailable","retry_after":15}
+```
+
+- **Source:** [api/crypto/due-diligence.js](../../api/crypto/due-diligence.js) answers
+  its designed `503 upstream_unavailable` + `Retry-After: 15` when
+  `getTokenDueDiligence()` returns a non-`ok` status, meaning the chain reads
+  failed outright. It never returns a partial or invented report.
+- **What it means:** every paid Solana RPC lane is cooling (healthz `rpc_lanes`
+  degraded; see "Every paid Solana RPC lane exhausted at once" above). Seen
+  2026-11-19, 18 hits over 44 minutes from one paper-trading client
+  (`memedesk-paper-sim/1.0`), with no matching app log line because the handler
+  answers it deliberately instead of throwing. Same family as the holders and
+  bonding routes.
+- **Resolve:** 🟢 nothing in code. Investigate only if it persists after
+  `rpc_lanes` reads ok.
+- **Monitor signature:** `due-diligence-rpc-exhausted-503` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `self-healing`.
+
+---
+
+## 🟢 HTTP 503 `/api/sdp/*` - `sdp-unconfigured-503` (§sdp-unconfigured)
+
+```
+HTTP 503 GET /api/sdp/v1/wallets   body: {"error":"not_configured"}
+```
+
+- **Source:** [api/_lib/sdp.js](../../api/_lib/sdp.js) `sdpRequest()` fails closed
+  with a 503 when `SDP_API_KEY` is unset (never a fake success), and
+  [api/sdp/[...path].js](../../api/sdp/%5B...path%5D.js) turns it into a designed
+  `503 not_configured`. Before 2026-11-19 it escaped as an `[api] unhandled`
+  stack trace and a Sentry event per request.
+- **What it means:** the key was never provisioned on `three-ws-api`. The surface is
+  admin-only (`requireAdmin`), so no user path is broken. Seen 2026-11-19 20:33 UTC
+  from an admin curl probe of `/wallets`, `/wallets/configs`, `/wallets/aggregate`
+  and `/projects`.
+- **Resolve (owner, credential):** provision an SDP key, then
+  `gcloud run services update three-ws-api --region us-central1 --update-env-vars SDP_API_KEY=<key>`.
+- **Monitor signature:** `sdp-unconfigured-503`, classified `owner`.
+
+---
+
+## 🟢 HTTP 503 `/api/cad` - `cad-unconfigured-503` (§cad-unconfigured)
+
+```
+HTTP 503 POST /api/cad   body: {"error":"cad_unavailable"}
+```
+
+- **Source:** [api/cad.js](../../api/cad.js) `handleGenerate` throws the designed
+  `CadForgeError('cad_unavailable', ..., 503)` when `cadAvailable()` is false:
+  `GCP_CAD_FORGE_URL` plus a worker key (`CAD_FORGE_KEY` or
+  `GCP_RECONSTRUCTION_KEY`), and database plus object storage, must all be
+  configured. `GCP_CAD_FORGE_URL` is not set on the Cloud Run service (checked
+  2026-11-19), so the builder is off by deployment, not by fault. A design is
+  never fabricated.
+- **Resolve (owner):** deploy `workers/cad-forge`, then set `GCP_CAD_FORGE_URL` and
+  its key with `--update-env-vars`.
+- **Monitor signature:** `cad-unconfigured-503`, classified `owner`.
+
+---
+
+## 🔴 model-rig `HTTPStatusError: Client error '404 Not Found' for url 'https://pub-*.r2.dev/...'` - `worker-r2-public-404` (§worker-r2-public-404)
+
+```
+File "/app/main.py", line 212, in _run_task
+    mesh_bytes = await fetch_remote_bytes_async(client, mesh_gcs_url)
+httpx.HTTPStatusError: Client error '404 Not Found' for url 'https://pub-<account>.r2.dev/u/<owner>/draft-<slug>/<file>.glb'
+```
+
+- **Source:** the rerig request handed the worker a raw public-bucket URL. While
+  the R2 credential is rejected, writes divert to the GCS fallback bucket, where
+  that URL does not exist (and the raw `.r2.dev` domain no longer serves objects
+  anyway), so the worker's fetch 404s and the task is marked failed cleanly.
+  Seen 2026-11-19 16:21 and 20:47 UTC.
+- **Code fix (done):** `4513b59b2` adds `workerReadableUrl()` in
+  [api/_lib/r2.js](../../api/_lib/r2.js) and applies it to every worker request
+  body in [api/_providers/gcp.js](../../api/_providers/gcp.js), rewriting bucket
+  URLs to the first-party `/cdn/<key>` proxy that reads the fallback. Production
+  ran `559f73663`, which predates it.
+- **Resolve:** deploy a build containing `4513b59b2`, and restore the R2
+  credential (see the r2-credential section). A recurrence after that deploy is a
+  regression: find the caller that bypasses the gcp.js provider.
+- **Monitor signature:** `worker-r2-public-404` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `owner`.

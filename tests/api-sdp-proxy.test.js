@@ -255,3 +255,18 @@ describe('response relay', () => {
 		expect(r.headers['content-type']).toBe('text/plain; charset=utf-8');
 	});
 });
+
+describe('SDP key not configured', () => {
+	it('answers a designed 503 not_configured without logging an unhandled 5xx', async () => {
+		sdpRequest.mockRejectedValueOnce(
+			Object.assign(new Error('Solana Developer Platform is not configured (set SDP_API_KEY)'), { status: 503 }),
+		);
+		const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const r = await call('v1/wallets');
+		const unhandled = errSpy.mock.calls.some((c) => String(c[0]).includes('unhandled'));
+		errSpy.mockRestore();
+		expect(r.status).toBe(503);
+		expect(r.body.error).toBe('not_configured');
+		expect(unhandled).toBe(false);
+	});
+});

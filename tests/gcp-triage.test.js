@@ -14,6 +14,12 @@ describe('gcp-triage classify', () => {
 		expect(sig?.class).toBe('self-healing');
 	});
 
+	it('classifies the model-rig r2.dev 404 traceback and keeps other 404s unclassified', () => {
+		const line = "httpx.HTTPStatusError: Client error '404 Not Found' for url 'https://pub-abc123.r2.dev/u/x/draft-a/b.glb'";
+		expect(classify(line, ['model-rig'])?.id).toBe('worker-r2-public-404');
+		expect(classify("httpx.HTTPStatusError: Client error '404 Not Found' for url 'https://example.com/a.glb'", ['model-rig'])).toBeNull();
+	});
+
 	it('classifies the SRH abort only on three-ws-redis-proxy', () => {
 		const line = 'Uncaught signal: 10, pid=54, tid=54, fault_addr=0.';
 		const onProxy = classify(line, ['three-ws-redis-proxy']);
@@ -112,6 +118,19 @@ describe('gcp-triage HTTP classification', () => {
 			requestUrl: `https://three.ws${path}`,
 			userAgent: 'browser',
 		},
+	});
+
+	it('classifies the unconfigured and upstream-exhausted 503 families seen 2026-11-19', () => {
+		const ids = [
+			['/api/crypto/due-diligence', 'due-diligence-rpc-exhausted-503', 'self-healing'],
+			['/api/sdp/v1/wallets', 'sdp-unconfigured-503', 'owner'],
+			['/api/cad', 'cad-unconfigured-503', 'owner'],
+		];
+		for (const [path, id, cls] of ids) {
+			const [finding] = buildFindings([request({ status: 503, path })]);
+			expect(finding.signature).toBe(id);
+			expect(finding.class).toBe(cls);
+		}
 	});
 
 	it('classifies Forge upload storage rejection as owner-gated', () => {
