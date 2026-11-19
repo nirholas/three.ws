@@ -252,6 +252,7 @@ describe('/api/oauth/token — authorization_code grant', () => {
 
 	it('rejects when required fields missing', async () => {
 		sqlState.queue.push([PUBLIC_CLIENT]);
+		sqlState.queue.push([AUTH_CODE_ROW]); // issued with a challenge, so the verifier is mandatory
 		const { code_verifier: _drop, ...withoutVerifier } = baseForm;
 		const { status, body } = await invoke({ formBody: withoutVerifier });
 		expect(status).toBe(400);

@@ -153,6 +153,7 @@ describe('GET /api/oauth/authorize — request validation', () => {
 	it('rejects missing code_challenge (PKCE mandatory)', async () => {
 		const params = new URLSearchParams(VALID_QS);
 		params.delete('code_challenge');
+		sqlState.queue.push([VALID_CLIENT]);
 		const { status, body } = await invoke({ url: `/api/oauth/authorize?${params}` });
 		expect(status).toBe(400);
 		expect(tryParseJson(body).error_description).toMatch(/code_challenge required/);

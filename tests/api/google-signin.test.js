@@ -71,6 +71,7 @@ const sqlMock = vi.fn(async (strings, ...values) => {
 		else { u = { id: `user-${nextId++}`, email, display_name, email_verified: true, deleted_at: null, password_hash: null, privy_did: null }; db.users.push(u); }
 		return [{ id: u.id, deleted_at: u.deleted_at }];
 	}
+	if (text.startsWith('select 1 from user_mfa where user_id')) return [];
 	if (text.startsWith('insert into sessions')) {
 		const [user_id, token_hash] = values;
 		db.sessions.push({ user_id, token_hash });

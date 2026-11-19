@@ -33,6 +33,10 @@ vi.mock('@solana/web3.js', () => ({
 		toBuffer() {
 			return Buffer.alloc(32);
 		}
+		// api/_lib/pump-fee-global.js derives a PDA at module load.
+		static findProgramAddressSync() {
+			return [new this('mocked-pda'), 255];
+		}
 	},
 }));
 vi.mock('../../src/solana/sns.js', () => ({

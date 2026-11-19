@@ -49,12 +49,12 @@ describe('uploadPhoto', () => {
 	it('presigns, PUTs the bytes, and returns the public URL', async () => {
 		const fetchImpl = vi.fn(async (url) =>
 			url === '/api/forge-upload'
-				? json(200, { upload_url: 'https://r2.example/put', public_url: 'https://cdn.three.ws/forge/uploads/a.jpg', method: 'PUT', headers: { 'content-type': 'image/jpeg' } })
+				? json(200, { upload_url: 'https://r2.example/put', public_url: 'https://three.ws/cdn/forge/uploads/a.jpg', method: 'PUT', headers: { 'content-type': 'image/jpeg' } })
 				: new Response(null, { status: 200 }),
 		);
 		const b = blob();
 		const url = await uploadPhoto(b, { clientId: 'cid-1', fetchImpl });
-		expect(url).toBe('https://cdn.three.ws/forge/uploads/a.jpg');
+		expect(url).toBe('https://three.ws/cdn/forge/uploads/a.jpg');
 		const presign = fetchImpl.mock.calls[0][1];
 		expect(presign.headers['x-forge-client']).toBe('cid-1');
 		expect(JSON.parse(presign.body)).toEqual({ content_type: 'image/jpeg', size_bytes: 1000 });

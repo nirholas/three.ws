@@ -36,7 +36,7 @@ beforeAll(() => {
 describe('gpt-forge-client — endpoint isolation', () => {
 	it('every fetch targets /api/gpt-forge, never /api/forge', () => {
 		const src = read('api/_mcp-studio/gpt-forge-client.js');
-		const fetches = src.match(/fetch\(`[^`]+`/g) || [];
+		const fetches = src.match(/tracedFetch\('[^']+', `[^`]+`/g) || [];
 		expect(fetches.length).toBeGreaterThanOrEqual(3); // submit, rig, poll
 		for (const f of fetches) {
 			expect(f).toContain('/api/gpt-forge');

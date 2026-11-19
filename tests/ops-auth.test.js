@@ -16,6 +16,7 @@ vi.mock('../api/_lib/alerts.js', () => ({ sendOpsAlert }));
 vi.mock('../api/_lib/admin-mfa.js', () => ({
 	mfaEnforced: () => process.env.ADMIN_MFA_ENFORCE !== '0',
 	sessionPassedMfa,
+	adminSessionIdle: () => false,
 }));
 
 let authorizeOps;
