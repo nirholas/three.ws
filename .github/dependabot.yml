@@ -75,3 +75,11 @@ updates:
       - dependency-name: "@fluidframework/test-client-utils"
         versions:
           - ">=2.0.0"
+      # @noble/hashes 2.x drops the extensionless `./sha3` export that
+      # @metaplex-foundation/mpl-core imports, and legacy-peer-deps hoists the
+      # root version over the peer range. The 2.4.0 root bump (#668) failed the
+      # production vite build on 2026-11-19. Packages that need 2.x get it
+      # nested. audit:deploy (findBrokenPeerSubpaths) fails on any repeat.
+      - dependency-name: "@noble/hashes"
+        versions:
+          - ">=2.0.0"
