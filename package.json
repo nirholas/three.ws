@@ -870,7 +870,7 @@
 		"p-limit": "^7.3.2",
 		"papaparse": "^5.7.0",
 		"postprocessing": "^6.39.5",
-		"puppeteer-core": "^25.1.0",
+		"puppeteer-core": "^25.17.0",
 		"qrcode": "^1.5.4",
 		"qwen-ai-provider": "^1.0.0",
 		"resend": "^6.38.1",
