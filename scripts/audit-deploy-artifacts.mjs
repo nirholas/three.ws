@@ -18,6 +18,12 @@
  *      at module load with ERR_MODULE_NOT_FOUND. Two checks close that gap:
  *        a. every non-optional peerDependency in the production lock tree
  *           resolves (with a documented allowlist of known-unused peers);
+ *        c. every "<peer>/<subpath>" a production package imports is still
+ *           exported by the peer version actually installed. legacy-peer-deps
+ *           also lets npm hoist a peer at an incompatible major: the
+ *           2026-11-18 @noble/hashes 2.4.0 bump left @metaplex-foundation/mpl-core
+ *           importing "@noble/hashes/sha3", which 2.x dropped, and the
+ *           production vite build died on it;
  *        b. every bare import in api/**∕*.js is declared in package.json —
  *           phantom deps that only exist via hoisting disappear on dedupe.
  *
@@ -50,9 +56,9 @@
  * scripts/build-vercel.mjs, and via tests/deploy-artifacts.test.js.
  */
 import { execFileSync } from 'node:child_process';
-import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { builtinModules } from 'node:module';
-import { resolve, dirname } from 'node:path';
+import { resolve, dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { globSync } from 'glob';
 import { init, parse } from 'es-module-lexer';
@@ -185,6 +191,135 @@ export function findUnsatisfiedPeers({ lock } = {}) {
 				const key = `${packageNameFromLockPath(path)}|${peer}`;
 				if (!KNOWN_UNUSED_PEERS.has(key)) {
 					problems.push({ importer: path, peer });
+				}
+			}
+		}
+	}
+	return problems;
+}
+
+/**
+ * True when a package.json `exports` value publishes `subpath` (e.g. "./sha3")
+ * under any condition. A string or a conditions-only object publishes only
+ * ".". Keys may use a single "*" pattern; a null target withholds the path.
+ */
+export function exportsHasSubpath(exports, subpath) {
+	if (!exports || typeof exports !== 'object' || Array.isArray(exports)) return subpath === '.';
+	const keys = Object.keys(exports);
+	if (!keys.some((k) => k.startsWith('.'))) return subpath === '.';
+	if (Object.hasOwn(exports, subpath)) return exports[subpath] !== null;
+	return keys.some((key) => {
+		const star = key.indexOf('*');
+		if (star === -1 || exports[key] === null) return false;
+		const head = key.slice(0, star);
+		const tail = key.slice(star + 1);
+		return subpath.length > head.length + tail.length - 1 && subpath.startsWith(head) && subpath.endsWith(tail);
+	});
+}
+
+// Peer subpath imports verified unreachable at runtime, keyed
+// "<importer package name>|<specifier>". Anything not listed fails the audit.
+const KNOWN_UNREACHABLE_PEER_SUBPATHS = new Set([
+	// live-share 1.4.2 ships stale bin/cjs and bin/esm trees built against Fluid 2.x;
+	// its main entry bin/index.js (all src/microsoft-teams-stage loads) never requires them.
+	'@microsoft/live-share|fluid-framework/legacy',
+]);
+
+const PEER_SOURCE_EXT = /\.(?:c|m)?js$/;
+
+function walkPackageSources(dir, out = []) {
+	let entries;
+	try {
+		entries = readdirSync(dir, { withFileTypes: true });
+	} catch {
+		return out;
+	}
+	for (const entry of entries) {
+		if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
+		const full = join(dir, entry.name);
+		if (entry.isDirectory()) walkPackageSources(full, out);
+		else if (entry.isFile() && PEER_SOURCE_EXT.test(entry.name) && !entry.name.endsWith('.d.js')) out.push(full);
+	}
+	return out;
+}
+
+function escapeRegExp(text) {
+	return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * For every production package with non-optional peers, scans its installed
+ * JS for `require`/`import`/`from` of "<peer>/<subpath>" and checks that the
+ * peer copy it resolves to (nearest node_modules on the ancestor chain, as in
+ * findUnsatisfiedPeers) still publishes that subpath: through its `exports`
+ * map when it has one, otherwise as a file on disk. Peers that are absent are
+ * findUnsatisfiedPeers' job and are skipped here.
+ */
+export function findBrokenPeerSubpaths({ lock, root = ROOT } = {}) {
+	if (!lock) {
+		lock = JSON.parse(readFileSync(resolve(root, 'package-lock.json'), 'utf8'));
+	}
+	const pkgs = lock.packages || {};
+	const manifests = new Map();
+	const readManifest = (lockPath) => {
+		if (!manifests.has(lockPath)) {
+			try {
+				manifests.set(lockPath, JSON.parse(readFileSync(join(root, lockPath, 'package.json'), 'utf8')));
+			} catch {
+				manifests.set(lockPath, null);
+			}
+		}
+		return manifests.get(lockPath);
+	};
+	const problems = [];
+	for (const [path, info] of Object.entries(pkgs)) {
+		if (!path || info.link || info.dev || info.devOptional) continue;
+		const meta = info.peerDependenciesMeta || {};
+		const peers = Object.keys(info.peerDependencies || {}).filter((peer) => !meta[peer]?.optional);
+		if (!peers.length) continue;
+		const resolved = new Map();
+		for (const peer of peers) {
+			let base = path;
+			for (;;) {
+				const candidate = `${base ? `${base}/` : ''}node_modules/${peer}`;
+				if (pkgs[candidate]) {
+					resolved.set(peer, candidate);
+					break;
+				}
+				const idx = base.lastIndexOf('node_modules/');
+				if (idx === -1) break;
+				base = base.slice(0, idx).replace(/\/$/, '');
+			}
+		}
+		if (!resolved.size) continue;
+		const pattern = new RegExp(
+			`(?:require\\s*\\(\\s*|import\\s*\\(\\s*|from\\s*|import\\s+)['"]((?:${[...resolved.keys()].map(escapeRegExp).join('|')})/[^'"\\s]+)['"]`,
+			'g',
+		);
+		const seen = new Set();
+		for (const file of walkPackageSources(join(root, path))) {
+			let source;
+			try {
+				if (statSync(file).size > 8 * 1024 * 1024) continue;
+				source = readFileSync(file, 'utf8');
+			} catch {
+				continue;
+			}
+			for (const match of source.matchAll(pattern)) {
+				const specifier = match[1];
+				if (seen.has(specifier)) continue;
+				seen.add(specifier);
+				const peer = [...resolved.keys()].find((name) => specifier.startsWith(`${name}/`));
+				const peerPath = resolved.get(peer);
+				const manifest = readManifest(peerPath);
+				if (!manifest) continue;
+				const subpath = `.${specifier.slice(peer.length)}`;
+				const ok =
+					manifest.exports !== undefined
+						? exportsHasSubpath(manifest.exports, subpath)
+						: ['', '.js', '.cjs', '.mjs', '.json', '/index.js'].some((ext) => existsSync(join(root, peerPath, subpath + ext)));
+				if (!ok && !KNOWN_UNREACHABLE_PEER_SUBPATHS.has(`${packageNameFromLockPath(path)}|${specifier}`)) {
+					problems.push({ importer: path, specifier, file: relative(root, file) });
 				}
 			}
 		}
@@ -446,6 +581,17 @@ if (isMain) {
 			console.error(
 				`  ${importer} requires ${peer}  → add "${peer}" to package.json dependencies (or allowlist in scripts/audit-deploy-artifacts.mjs after verifying it is unused)`,
 			);
+		}
+	}
+
+	const brokenSubpaths = findBrokenPeerSubpaths();
+	if (brokenSubpaths.length) {
+		failed = true;
+		console.error(
+			`[audit:deploy] FAIL: ${brokenSubpaths.length} peer subpath import(s) the installed peer version no longer exports; the build or the import fails (the @noble/hashes/sha3 break of 2026-11-18):`,
+		);
+		for (const { importer, specifier, file } of brokenSubpaths) {
+			console.error(`  ${file} imports ${specifier} (peer of ${importer})  → pin the peer back to a major that exports it, or upgrade the importer`);
 		}
 	}
 

@@ -8,6 +8,11 @@
 //      silently vanished and every /api/cron/* died with ERR_MODULE_NOT_FOUND.
 //   3. Undeclared (phantom) bare imports in api/ — they resolve today only via
 //      hoisting from some transitive dep, and disappear on the next dedupe.
+//   2b. A peer resolved at an incompatible major that dropped a subpath the
+//      importer reaches for. legacy-peer-deps lets npm hoist any version, so
+//      the 2026-11-18 @noble/hashes 1.8.0 -> 2.4.0 bump left
+//      @metaplex-foundation/mpl-core importing "@noble/hashes/sha3", which
+//      2.x no longer exports, and the production build could not bundle it.
 //   4. An install tree that drifted from package-lock.json. The image installs
 //      from the lockfile while local tests run whatever is on disk, so a bump
 //      nobody reinstalled ships untested (@x402/extensions 2.25.0, 2026-09-17:
@@ -23,6 +28,8 @@ import { describe, it, expect, afterEach } from 'vitest';
 import {
 	findCommittedSymlinks,
 	findUnsatisfiedPeers,
+	findBrokenPeerSubpaths,
+	exportsHasSubpath,
 	findUndeclaredApiImports,
 	findLockDrift,
 	findMissingDistAssets,
@@ -48,6 +55,10 @@ describe('deploy artifacts', () => {
 
 	it('has no unsatisfied non-optional peer dependencies in the production lock tree', () => {
 		expect(findUnsatisfiedPeers()).toEqual([]);
+	});
+
+	it('resolves every peer subpath a production package imports against the peer version installed', () => {
+		expect(findBrokenPeerSubpaths()).toEqual([]);
 	});
 
 	it('has no undeclared bare imports in api/', async () => {
@@ -265,6 +276,76 @@ describe('findUnsatisfiedPeers logic', () => {
 			},
 		};
 		expect(findUnsatisfiedPeers({ lock })).toEqual([]);
+	});
+});
+
+describe('exportsHasSubpath', () => {
+	it('matches exact keys, patterns and the bare entry', () => {
+		const exports = { '.': './index.js', './sha2.js': './sha2.js', './utils/*': './u/*.js', './legacy': null };
+		expect(exportsHasSubpath(exports, './sha2.js')).toBe(true);
+		expect(exportsHasSubpath(exports, './sha3')).toBe(false);
+		expect(exportsHasSubpath(exports, './utils/hex')).toBe(true);
+		expect(exportsHasSubpath(exports, './legacy')).toBe(false);
+		expect(exportsHasSubpath('./index.js', './sha3')).toBe(false);
+		expect(exportsHasSubpath({ import: './i.js', require: './r.js' }, './sha3')).toBe(false);
+	});
+
+	it('accepts a subpath exported only under one condition', () => {
+		expect(exportsHasSubpath({ './sha3': { import: './sha3.mjs' } }, './sha3')).toBe(true);
+	});
+});
+
+describe('findBrokenPeerSubpaths logic', () => {
+	function fixture({ peerExports, peerFiles = {}, importerSource }) {
+		const root = scratchDir();
+		const importer = join(root, 'node_modules/importer');
+		const peer = join(root, 'node_modules/@scope/peer');
+		mkdirSync(join(importer, 'dist'), { recursive: true });
+		mkdirSync(peer, { recursive: true });
+		writeFileSync(join(importer, 'package.json'), JSON.stringify({ name: 'importer', version: '1.0.0' }));
+		writeFileSync(join(importer, 'dist/index.js'), importerSource);
+		writeFileSync(
+			join(peer, 'package.json'),
+			JSON.stringify({ name: '@scope/peer', version: '2.0.0', ...(peerExports === undefined ? {} : { exports: peerExports }) }),
+		);
+		for (const [name, body] of Object.entries(peerFiles)) writeFileSync(join(peer, name), body);
+		const lock = {
+			packages: {
+				'': {},
+				'node_modules/importer': { version: '1.0.0', peerDependencies: { '@scope/peer': '^1.0.0' } },
+				'node_modules/@scope/peer': { version: '2.0.0' },
+			},
+		};
+		return { root, lock };
+	}
+
+	it('flags a subpath the installed peer major no longer exports (the @noble/hashes/sha3 class)', () => {
+		const { root, lock } = fixture({
+			peerExports: { '.': './index.js', './sha3.js': './sha3.js' },
+			importerSource: "const { keccak_256 } = require('@scope/peer/sha3');\nimport x from '@scope/peer/sha3.js';\n",
+		});
+		expect(findBrokenPeerSubpaths({ lock, root })).toEqual([
+			{ importer: 'node_modules/importer', specifier: '@scope/peer/sha3', file: 'node_modules/importer/dist/index.js' },
+		]);
+	});
+
+	it('flags a missing file when the peer has no exports map', () => {
+		const { root, lock } = fixture({
+			peerFiles: { 'sha2.js': '' },
+			importerSource: "import a from '@scope/peer/sha2';\nimport b from \"@scope/peer/gone\";\n",
+		});
+		expect(findBrokenPeerSubpaths({ lock, root })).toEqual([
+			{ importer: 'node_modules/importer', specifier: '@scope/peer/gone', file: 'node_modules/importer/dist/index.js' },
+		]);
+	});
+
+	it('ignores dev packages and optional peers', () => {
+		const { root, lock } = fixture({ peerExports: { '.': './index.js' }, importerSource: "require('@scope/peer/sha3')" });
+		lock.packages['node_modules/importer'].dev = true;
+		expect(findBrokenPeerSubpaths({ lock, root })).toEqual([]);
+		delete lock.packages['node_modules/importer'].dev;
+		lock.packages['node_modules/importer'].peerDependenciesMeta = { '@scope/peer': { optional: true } };
+		expect(findBrokenPeerSubpaths({ lock, root })).toEqual([]);
 	});
 });
 
