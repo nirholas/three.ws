@@ -26,8 +26,25 @@ async function expectAuthedLinks(page, { visible }) {
 	const count = await links.count();
 	expect(count, 'the nav declares at least one signed-in entry point').toBeGreaterThan(0);
 	for (let i = 0; i < count; i++) {
-		if (visible) await expect(links.nth(i)).toBeVisible();
-		else await expect(links.nth(i)).toBeHidden();
+		const link = links.nth(i);
+		if (!visible) {
+			await expect(link).toBeHidden();
+			continue;
+		}
+		// At <=1440px the named console pill links to the same /dashboard, so
+		// public/nav.css hides the standalone Dashboard link as redundant. The
+		// entry point must still be reachable: the pill has to be visible and
+		// point at the same place.
+		const redundant = await link.evaluate(
+			(el) => el.getAttribute('href') === '/dashboard' && getComputedStyle(el).display === 'none',
+		);
+		if (redundant) {
+			const pill = page.locator(CONSOLE_PILL);
+			await expect(pill).toBeVisible();
+			await expect(pill).toHaveAttribute('href', '/dashboard');
+		} else {
+			await expect(link).toBeVisible();
+		}
 	}
 }
 

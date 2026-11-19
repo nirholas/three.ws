@@ -54,24 +54,20 @@ function bindPoseDeviationInPage(root) {
 	return bones ? max : null;
 }
 
-async function deviation(page, rootExpr) {
-	return page.evaluate(
-		({ fn, expr }) => {
-			// eslint-disable-next-line no-new-func
-			const measure = new Function(`return (${fn})`)();
-			// eslint-disable-next-line no-new-func
-			const root = new Function(`return (${expr})`)();
-			return measure(root);
-		},
-		{ fn: bindPoseDeviationInPage.toString(), expr: rootExpr },
-	);
+// The pages enforce a CSP without 'unsafe-eval', and Playwright evaluates a
+// string expression with eval inside the page. So every page-side step here is a
+// real function: getRoot resolves the scene root, and the measure runs on a
+// handle to it.
+async function deviation(page, getRoot) {
+	const root = await page.evaluateHandle(getRoot);
+	return page.evaluate(bindPoseDeviationInPage, root);
 }
 
 // The idle has to have run for a moment before the pose is sampled.
-async function settledDeviation(page, rootExpr) {
-	await page.waitForFunction(`!!(${rootExpr})`, null, { timeout: LOAD_TIMEOUT });
+async function settledDeviation(page, getRoot) {
+	await page.waitForFunction(getRoot, null, { timeout: LOAD_TIMEOUT });
 	await page.waitForTimeout(800);
-	return deviation(page, rootExpr);
+	return deviation(page, getRoot);
 }
 
 test.describe('the default avatar is never in bind pose', () => {
@@ -79,11 +75,18 @@ test.describe('the default avatar is never in bind pose', () => {
 
 	test('/playground (model-viewer)', async ({ page }) => {
 		await page.goto('/playground');
-		const mv = 'document.querySelector("model-viewer")';
-		await page.waitForFunction(`${mv} && ${mv}.loaded`, null, { timeout: LOAD_TIMEOUT });
-		expect(await page.evaluate(`${mv}.availableAnimations`)).toContain('idle');
+		const mvLoaded = () => {
+			const el = document.querySelector('model-viewer');
+			return !!el && el.loaded;
+		};
+		await page.waitForFunction(mvLoaded, null, { timeout: LOAD_TIMEOUT });
+		expect(await page.evaluate(() => document.querySelector('model-viewer').availableAnimations)).toContain('idle');
 		// model-viewer keeps its three.js scene behind a symbol; it is a THREE.Scene.
-		const scene = `(() => { const el = ${mv}; const s = Object.getOwnPropertySymbols(el).find((k) => k.description === 'scene'); return s ? el[s] : null; })()`;
+		const scene = () => {
+			const el = document.querySelector('model-viewer');
+			const sym = Object.getOwnPropertySymbols(el).find((k) => k.description === 'scene');
+			return sym ? el[sym] : null;
+		};
 		const deg = await settledDeviation(page, scene);
 		expect(deg).toBeGreaterThan(MIN_DEVIATION_DEG);
 	});
@@ -92,23 +95,23 @@ test.describe('the default avatar is never in bind pose', () => {
 		await page.goto('/avatar-sdk');
 		const viewers = await page.locator('three-ws-viewer[src="/avatars/default-idle.glb"]').count();
 		expect(viewers).toBeGreaterThan(0);
-		const root = 'document.querySelector(\'three-ws-viewer[src="/avatars/default-idle.glb"]\')?._model';
+		const root = () => document.querySelector('three-ws-viewer[src="/avatars/default-idle.glb"]')?._model;
 		await page.locator('three-ws-viewer[src="/avatars/default-idle.glb"]').first().scrollIntoViewIfNeeded();
 		const deg = await settledDeviation(page, root);
 		expect(deg).toBeGreaterThan(MIN_DEVIATION_DEG);
-		expect(await page.evaluate('document.querySelector(\'three-ws-viewer[src="/avatars/default-idle.glb"]\').availableAnimations')).toContain('idle');
+		expect(await page.evaluate(() => document.querySelector('three-ws-viewer[src="/avatars/default-idle.glb"]').availableAnimations)).toContain('idle');
 	});
 
 	test('/restyle', async ({ page }) => {
 		await page.goto('/restyle?bench');
-		const deg = await settledDeviation(page, 'window.__restyleBench?.root');
+		const deg = await settledDeviation(page, () => window.__restyleBench?.root);
 		expect(deg).toBeGreaterThan(MIN_DEVIATION_DEG);
 	});
 
 	test('/walk-embed (the /pocket screen), default body', async ({ page }) => {
 		await page.goto('/walk-embed?controls=none&autoplay=false');
-		await page.waitForFunction('window.__walkEmbed?.getReady()', null, { timeout: LOAD_TIMEOUT });
-		const deg = await settledDeviation(page, 'window.__walkEmbed.getAvatar()');
+		await page.waitForFunction(() => window.__walkEmbed?.getReady(), null, { timeout: LOAD_TIMEOUT });
+		const deg = await settledDeviation(page, () => window.__walkEmbed.getAvatar());
 		expect(deg).toBeGreaterThan(MIN_DEVIATION_DEG);
 	});
 
@@ -146,7 +149,7 @@ test.describe('the default avatar is never in bind pose', () => {
 			return found;
 		});
 		expect(hasHips).toBe(true);
-		const deg = await settledDeviation(embed, 'window.__walkEmbed.getAvatar()');
+		const deg = await settledDeviation(embed, () => window.__walkEmbed.getAvatar());
 		expect(deg).toBeGreaterThan(MIN_DEVIATION_DEG);
 
 		// A wave on the stand-in body really plays, and the echo says so.
