@@ -616,6 +616,9 @@ async function mountFloatingSwitcher() {
 	// the auto-mounted switcher. A named region puts it on the landmark list.
 	host.setAttribute('role', 'region');
 	host.setAttribute('aria-label', 'Language');
+	// No resting opacity on the host: dimming the chip blends the page's text
+	// token into its own background, and a token that passes on its own (#888
+	// on #1c1c21 is 4.77:1 on /irl) dropped to 4.21:1 at .92 and failed axe.
 	const style = document.createElement('style');
 	style.textContent = `
 		.twx-i18n-fab {
@@ -624,9 +627,7 @@ async function mountFloatingSwitcher() {
 			inset-inline-end: max(16px, env(safe-area-inset-right));
 			display: inline-flex;
 			filter: drop-shadow(0 4px 14px rgba(0,0,0,.35));
-			opacity: .92; transition: opacity .15s ease;
 		}
-		.twx-i18n-fab:hover { opacity: 1; }
 		@media print { .twx-i18n-fab { display: none; } }`;
 	document.head.appendChild(style);
 	host.appendChild(document.createElement('lang-switcher'));
