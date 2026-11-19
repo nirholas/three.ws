@@ -36,58 +36,7 @@ Repos whose subject is another crypto project are held back by default, because 
 
 ### The profile catalog
 
-```bash
-node scripts/build-github-profile.mjs --out /tmp/profile             # generate only
-node scripts/build-github-profile.mjs --out /tmp/profile --publish   # create the repo if missing, commit, push
-```
-
-The catalog is built from the live GitHub listing, so it cannot drift from what is actually public. It also rebuilds itself: Cloud Scheduler job `github-profile-refresh` runs it with `--publish` every day at 09:17 UTC through Cloud Build ([deploy/github-profile/](../deploy/github-profile/README.md), setup `node scripts/schedule-github-profile.mjs`). A rebuild where only the "Pulled from" date changed is not committed. Never edit the profile README on github.com; the next run overwrites it.
-
-It is the owner's personal profile, so the copy stays personal: three.ws appears as one section and in its own repo listings, never as the header, badges, contact or author. The boost sweep skips the profile repo for the same reason (its generic block plugs the platform). The generator owns `README.md`, `assets/`, `llms.txt`, `llms-full.txt`, `CITATION.cff`, `AGENTS.md` and `repos.json` there.
-
-The README carries animated charts rendered by `scripts/lib/profile-visuals.mjs` into `assets/`, one SVG per theme picked with `<picture>` and `prefers-color-scheme`:
-
-| Asset | What it shows |
-|---|---|
-| `stats` | Odometer strip: repos, stars, forks, topics, languages, repos created this year |
-| `planet` | A 3D sphere spinning in real time, one dot per repo sized by stars and colored by section, with a section legend |
-| `top-stars` | Lollipops on a log axis for the 12 most-starred repos |
-| `city` | Isometric city, one tower per repo (height is log stars), one district per section, towers rise on load |
-| `growth` | Cumulative repos by creation month, stacked by section, drawn on left to right |
-| `languages` | Extruded donut of primary languages that spins in 3D |
-| `punchcard` | Repo creation by weekday and hour (UTC) |
-
-The README header also carries a star-history "Top Committer 2026" badge on its own centered row under the follower badges.
-
-The same run adds an **About** section (the owner's background, first person; it links the owner's Entrepreneur, HackerNoon, Medium and Amazon author pages and the Business Insider coverage from the `ABOUT_LINKS` table in the script, and names PhotoVogue without a link because vogue.com returns 404 for every PhotoVogue page) and a **How I build** section of coding analytics, rendered by `scripts/lib/profile-visuals.mjs` from numbers computed in `scripts/lib/profile-activity.mjs`:
-
-| Asset | What it shows |
-|---|---|
-| `activity-volume` | Odometer: commits, lines added and lines removed over the last 12 months |
-| `activity-habit` | Odometer: hours with a push, active days, longest streak |
-| `activity-calendar` | A year of daily commit counts as a calendar heatmap |
-| `activity-lines` | Lines added above the axis and removed below it, by month |
-| `activity-hours` | Hours of the day with a push, for each of the last 90 days, with the average |
-| `activity-rhythm` | Commits by weekday and hour (UTC) |
-
-Where the numbers come from, and what they leave out:
-
-- **Commits, active days and streaks** come from the GraphQL contribution calendar, so private repositories count (as counts only; no private name or content is ever read or printed).
-- **Lines and hours** come from each public, non-fork repo's default-branch history filtered to the owner (`history(author:)`, paged by an `until` date because cursor paging 502s deep into large repos). Private repos do not contribute.
-- **Bulk commits** over `BULK_LINES` (20,000) changed lines are left out of line totals as imports or generated output. A commit GitHub cannot diff comes back as a null node and is skipped.
-- **Hours are not a stopwatch.** A day counts each UTC clock hour in which a commit landed, so it can never exceed 24 and a single push never counts as more than its hour.
-- The README only ever names repos that survive the same gating as the catalog; gated repos still count toward totals.
-
-```bash
-node scripts/build-github-profile.mjs --out /tmp/profile                  # includes activity (cached 6h in $TMPDIR)
-node scripts/build-github-profile.mjs --out /tmp/profile --no-activity    # catalog only, no history crawl
-```
-
-A cold run reads about 430 repos and takes a few minutes; the API quota cost is a few hundred GraphQL points.
-
-An **Open-source contributions** section follows How I build: every public repository owned by someone else where a maintainer merged a pull request the owner authored, most-starred first, each with links to its merged pull requests. It comes from one GraphQL search (`is:pr is:merged author:nirholas -user:nirholas`) on every run, so a newly merged PR shows up at the next daily refresh with no hand edit. It lists every such repo regardless of the catalog's crypto gating, because the owner asked for the full record of accepted contributions. `llms.txt` carries the same list. If the search fails, the run throws before `--publish` pushes, so the live README never loses the section.
-
-GitHub shows README images through `<img>`, so there is no script or web font. The 3D is real anyway: a ring drawn in a group rotated by `animateTransform` and squashed by `scale(1, k)` is the exact projection of a ring spinning about a vertical axis, and dots and labels ride inside a counter-rotated group so they stay round and upright. The donut wall is the same rotating ring stacked every 1.5px. Section colors follow the fixed category order, so a section keeps its color in every chart.
+The profile repository [nirholas/nirholas](https://github.com/nirholas/nirholas) generates itself. Its generator (`scripts/build-profile.mjs`, with the chart and activity libraries), its tests and its daily Google Cloud Build job (`github-profile-refresh`, 09:17 UTC) all live in that repo; see its [scripts/README.md](https://github.com/nirholas/nirholas/blob/main/scripts/README.md). Nothing in three.ws builds or publishes it, and the boost sweep above skips it. Never edit the profile README on github.com; change the generator there.
 
 ## What GitHub's API cannot do
 
@@ -95,7 +44,7 @@ The repository social preview image can only be uploaded in the web UI (Settings
 
 ## Tests
 
-`tests/github-profile.test.js` covers the profile: every chart renders well formed in both themes, headline numbers match the repo list, section colors are stable, and the header stays personal. `tests/repo-growth-kit.test.js` covers the block (idempotence, no duplicate sections, links only to files that exist), badges, the file set (never overwrites, never invents a license), topic merging and the mirror README decoration.
+The profile has its own `node:test` suite in the profile repo (`npm test` there). `tests/repo-growth-kit.test.js` covers the block (idempotence, no duplicate sections, links only to files that exist), badges, the file set (never overwrites, never invents a license), topic merging and the mirror README decoration.
 
 ## Related
 

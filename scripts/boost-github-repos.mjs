@@ -93,7 +93,7 @@ function git(cwd, ...a) {
 function listRepos() {
 	const rows = ghJson(['repo', 'list', OWNER, '--limit', '1000', '--json', 'name,stargazerCount,isPrivate,isFork,isArchived']);
 	return rows
-		// The profile repo (OWNER/OWNER) is owned end to end by build-github-profile.mjs.
+		// The profile repo (OWNER/OWNER) generates itself (scripts/build-profile.mjs in that repo).
 		.filter((r) => !r.isPrivate && !r.isFork && !r.isArchived && r.name !== OWNER)
 		.sort((a, b) => a.stargazerCount - b.stargazerCount || a.name.localeCompare(b.name));
 }
