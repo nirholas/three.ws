@@ -15,7 +15,7 @@
 		"node": ">=20"
 	},
 	"dependencies": {
-		"@neondatabase/serverless": "^1.1.0",
+		"@neondatabase/serverless": "^1.2.1",
 		"@nirholas/pump-sdk": "^3.0.0",
 		"@solana/web3.js": "^1.99.0",
 		"bs58": "^6.0.0",

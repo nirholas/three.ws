@@ -751,7 +751,7 @@
 		"@microsoft/teams-js": "^2.59.0",
 		"@modelcontextprotocol/sdk": "^1.29.0",
 		"@napi-rs/canvas": "1.1.1",
-		"@neondatabase/serverless": "^1.1.0",
+		"@neondatabase/serverless": "^1.2.1",
 		"@neynar/nodejs-sdk": "^3.177.0",
 		"@nirholas/pump-sdk": "^3.0.0",
 		"@noble/curves": "^2.2.0",
