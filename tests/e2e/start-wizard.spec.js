@@ -63,7 +63,7 @@ async function installFixtures(page, { signedIn = true, failFirstCreate = false 
 }
 
 /** Start from scratch, skip the avatar, name the agent, pick a model, reach step 4. */
-async function reachDeploy(page, { model = 'llama-3.3-70b-versatile' } = {}) {
+async function reachDeploy(page, { model = 'qwen/qwen3.8-27b' } = {}) {
 	await page.goto('/start');
 	await page.locator('#btn-blank-start').click();
 	await expect(page.locator('#step-1')).toHaveClass(/active/);
@@ -97,12 +97,12 @@ test.describe('/start wizard', () => {
 		const snippet = await page.locator('#embed-code').textContent();
 		expect(snippet).toContain('/embed.js');
 		expect(snippet).toContain(`data-widget="${WIDGET_ID}"`);
-		await expect(page.locator('#deploy-brain')).toContainText('Llama 3.3 70B');
+		await expect(page.locator('#deploy-brain')).toContainText('Qwen3 27B');
 
 		expect(calls.agents).toHaveLength(1);
 		expect(calls.agents[0].name).toBe('E2E Wizard Agent');
 		expect(calls.agents[0].skills).toEqual(expect.arrayContaining(['greet', 'remember', 'think']));
-		expect(calls.policies).toEqual([{ brain: { model: 'llama-3.3-70b-versatile' } }]);
+		expect(calls.policies).toEqual([{ brain: { model: 'qwen/qwen3.8-27b' } }]);
 		expect(calls.widgets).toHaveLength(1);
 		expect(calls.widgets[0]).toMatchObject({ type: 'talking-agent', config: { agent_id: AGENT_ID }, is_public: true });
 
