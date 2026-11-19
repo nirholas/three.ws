@@ -201,6 +201,8 @@ describe('github profile', () => {
 			pr('secret/internal', 1, '2026-01-01T00:00:00Z', { isPrivate: true }),
 			pr('Nirholas/own-repo', 2, '2026-01-01T00:00:00Z'),
 		];
+		const commit = (repo, count, extra = {}) => ({ count, repository: { ...pr(repo, 0, null, extra).repository } });
+		const commits = [commit('team/engine', 1200, { stargazerCount: 40 }), commit('team/engine', 586, { stargazerCount: 40 }), commit('acme/list', 2), commit('secret/internal', 9, { isPrivate: true })];
 
 		it('groups merged pull requests per outside public repo, most-starred first, oldest PR number first', () => {
 			const list = groupContributions(prs);
@@ -208,15 +210,24 @@ describe('github profile', () => {
 			expect(list[1].prs.map((p) => p.number)).toEqual([3, 12]);
 		});
 
-		it('lists each repo with links to its merged pull requests and summarizes the totals', () => {
-			const contributions = groupContributions(prs);
+		it('adds repos with only direct commits and sums each repo\'s commits across years', () => {
+			const list = groupContributions(prs, commits);
+			expect(list.map((c) => c.name)).toEqual(['bigorg/protocol', 'team/engine', 'acme/list']);
+			expect(list.find((c) => c.name === 'team/engine')).toMatchObject({ commits: 1786, prs: [] });
+			expect(list.find((c) => c.name === 'acme/list').commits).toBe(2);
+		});
+
+		it('lists each repo with links to its merged pull requests, its commit count and the totals', () => {
+			const contributions = groupContributions(prs, commits);
 			const { readme, llms } = buildProfile(repos, { contributions });
 			const section = readme.slice(readme.indexOf('## Open-source contributions'), readme.indexOf('## Find your way'));
-			expect(section).toContain('3 merged pull requests in 2 repositories maintained by other people and teams, since 2024.');
+			expect(section).toContain('3 repositories maintained by other people and teams, with 3 merged pull requests and 1,788 commits on their default branches.');
+			expect(section).toContain('- [team/engine](https://github.com/team/engine) ★40, 1,786 commits: team/engine description');
 			expect(section).toContain('- [bigorg/protocol](https://github.com/bigorg/protocol) ★5000, merged [#7](https://github.com/bigorg/protocol/pull/7): bigorg/protocol description');
-			expect(section).toContain('merged [#3](https://github.com/acme/list/pull/3), [#12](https://github.com/acme/list/pull/12)');
+			expect(section).toContain('merged [#3](https://github.com/acme/list/pull/3), [#12](https://github.com/acme/list/pull/12), 2 commits');
 			expect(section).not.toMatch(/secret\/internal|own-repo|[\u2013\u2014]/);
-			expect(llms).toContain('- [acme/list](https://github.com/acme/list): 2 merged');
+			expect(llms).toContain('- [acme/list](https://github.com/acme/list): 2 merged pull requests, 2 commits');
+			expect(llms).toContain('- [team/engine](https://github.com/team/engine): 1786 commits');
 		});
 
 		it('leaves the section out when there is nothing to list', () => {

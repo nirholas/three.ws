@@ -84,48 +84,77 @@ function load() {
 }
 
 
-// Merged pull requests the owner authored in repositories someone else owns:
-// the contributions maintainers accepted. Read live from GitHub search so the
-// list grows on its own. A failed fetch throws, which stops a --publish run
-// before it can push a README with the section missing.
-const CONTRIBUTIONS_QUERY = `query($q: String!, $endCursor: String) {
+// Accepted work in repositories someone else owns: pull requests a maintainer
+// merged (GitHub search) plus commits pushed straight to a default branch (the
+// contribution graph, one query per year since the account opened). Both are
+// read live so the list grows on its own. A failed fetch throws, which stops a
+// --publish run before it can push a README with the section missing.
+const MERGED_PRS_QUERY = `query($q: String!, $endCursor: String) {
 	search(query: $q, type: ISSUE, first: 100, after: $endCursor) {
 		pageInfo { hasNextPage endCursor }
 		nodes { ... on PullRequest { number url mergedAt repository { nameWithOwner url description stargazerCount isPrivate } } }
 	}
 }`;
+const YEAR_COMMITS_QUERY = `query($login: String!, $from: DateTime!, $to: DateTime!) {
+	user(login: $login) {
+		contributionsCollection(from: $from, to: $to) {
+			commitContributionsByRepository(maxRepositories: 100) { repository { nameWithOwner url description stargazerCount isPrivate } contributions { totalCount } }
+		}
+	}
+}`;
 
-function loadContributions() {
-	const out = gh(['api', 'graphql', '--paginate', '-f', `query=${CONTRIBUTIONS_QUERY}`, '-f', `q=is:pr is:merged author:${OWNER} -user:${OWNER}`, '--jq', '.data.search.nodes[]']);
-	return groupContributions(out.split('\n').filter(Boolean).map((l) => JSON.parse(l)));
+function loadContributions(now = new Date()) {
+	const prs = gh(['api', 'graphql', '--paginate', '-f', `query=${MERGED_PRS_QUERY}`, '-f', `q=is:pr is:merged author:${OWNER} -user:${OWNER}`, '--jq', '.data.search.nodes[]'])
+		.split('\n')
+		.filter(Boolean)
+		.map((l) => JSON.parse(l));
+	const first = Number(JSON.parse(gh(['api', `users/${OWNER}`])).created_at.slice(0, 4));
+	const commits = [];
+	for (let y = first; y <= now.getUTCFullYear(); y++) {
+		const out = gh(['api', 'graphql', '-f', `query=${YEAR_COMMITS_QUERY}`, '-f', `login=${OWNER}`, '-f', `from=${y}-01-01T00:00:00Z`, '-f', `to=${y}-12-31T23:59:59Z`, '--jq', '.data.user.contributionsCollection.commitContributionsByRepository[] | {repository, count: .contributions.totalCount}']);
+		commits.push(...out.split('\n').filter(Boolean).map((l) => JSON.parse(l)));
+	}
+	return groupContributions(prs, commits);
 }
 
-/** Merged pull requests, one entry per public repository, most-starred first. */
-export function groupContributions(prs) {
+/**
+ * One entry per public repository owned by someone else, most-starred first:
+ * its merged pull requests and the owner's commits on its default branch
+ * (`commits` rows are { repository, count }, one per repo per year).
+ */
+export function groupContributions(prs, commits = []) {
 	const byRepo = new Map();
-	for (const pr of prs) {
-		const r = pr.repository;
-		if (!r || r.isPrivate || r.nameWithOwner.toLowerCase().startsWith(`${OWNER.toLowerCase()}/`)) continue;
-		if (!byRepo.has(r.nameWithOwner)) byRepo.set(r.nameWithOwner, { name: r.nameWithOwner, url: r.url, description: r.description || '', stargazerCount: r.stargazerCount, prs: [] });
-		byRepo.get(r.nameWithOwner).prs.push({ number: pr.number, url: pr.url, mergedAt: pr.mergedAt });
+	const entry = (r) => {
+		if (!r || r.isPrivate || r.nameWithOwner.toLowerCase().startsWith(`${OWNER.toLowerCase()}/`)) return null;
+		if (!byRepo.has(r.nameWithOwner)) byRepo.set(r.nameWithOwner, { name: r.nameWithOwner, url: r.url, description: r.description || '', stargazerCount: r.stargazerCount, prs: [], commits: 0 });
+		return byRepo.get(r.nameWithOwner);
+	};
+	for (const pr of prs) entry(pr.repository)?.prs.push({ number: pr.number, url: pr.url, mergedAt: pr.mergedAt });
+	for (const c of commits) {
+		const e = entry(c.repository);
+		if (e) e.commits += c.count;
 	}
 	const list = [...byRepo.values()];
 	for (const c of list) c.prs.sort((a, b) => a.number - b.number);
 	return list.sort((a, b) => b.stargazerCount - a.stargazerCount || a.name.localeCompare(b.name));
 }
 
-/** The "open-source contributions" README section: every outside repo with an accepted pull request. */
+const count = (n, one, many) => `${lines(n)} ${n === 1 ? one : many}`;
+
+/** The "open-source contributions" README section: every outside repo with accepted work. */
 function contributionsSection(list) {
 	const prCount = list.reduce((n, c) => n + c.prs.length, 0);
-	const firstYear = list.flatMap((c) => c.prs.map((p) => p.mergedAt)).sort()[0].slice(0, 4);
-	const row = (c) => `- [${c.name}](${c.url})${stars(c.stargazerCount)}, merged ${c.prs.map((p) => `[#${p.number}](${p.url})`).join(', ')}${c.description ? `: ${clip(c.description)}` : ''}`;
+	const commitCount = list.reduce((n, c) => n + c.commits, 0);
+	const work = (c) =>
+		[c.prs.length ? `merged ${c.prs.map((p) => `[#${p.number}](${p.url})`).join(', ')}` : '', c.commits ? count(c.commits, 'commit', 'commits') : ''].filter(Boolean).join(', ');
+	const row = (c) => `- [${c.name}](${c.url})${stars(c.stargazerCount)}, ${work(c)}${c.description ? `: ${clip(c.description)}` : ''}`;
 	return `
 ## Open-source contributions
 
-${lines(prCount)} merged pull ${prCount === 1 ? 'request' : 'requests'} in ${list.length} ${list.length === 1 ? 'repository' : 'repositories'} maintained by other people and teams, since ${firstYear}. Every pull request I authored that a maintainer merged outside my own account, read live from GitHub.
+${count(list.length, 'repository', 'repositories')} maintained by other people and teams, with ${count(prCount, 'merged pull request', 'merged pull requests')} and ${count(commitCount, 'commit', 'commits')} on their default branches. Every pull request I authored that a maintainer merged, plus the commits I pushed directly as a collaborator, read live from GitHub.
 
 <details open>
-<summary>${list.length} ${list.length === 1 ? 'repository' : 'repositories'}</summary>
+<summary>${count(list.length, 'repository', 'repositories')}</summary>
 
 ${list.map(row).join('\n')}
 
@@ -282,9 +311,9 @@ ${
 		? `
 ## Contributions
 
-Repositories owned by others where ${OWNER} has merged pull requests:
+Repositories owned by others where ${OWNER} has merged pull requests or commits on the default branch:
 
-${contributions.map((c) => `- [${c.name}](${c.url}): ${c.prs.length} merged`).join('\n')}
+${contributions.map((c) => `- [${c.name}](${c.url}): ${[c.prs.length ? `${c.prs.length} merged pull requests` : '', c.commits ? `${c.commits} commits` : ''].filter(Boolean).join(', ')}`).join('\n')}
 `
 		: ''
 }`;
