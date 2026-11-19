@@ -40,6 +40,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve, basename, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
+import { parseImageDigest, resolveRolloutImage } from './lib/sniper-rollout-image.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..');
@@ -271,8 +272,17 @@ function deploy() {
 	const existing = gcloud(['run', 'services', 'describe', SERVICE, `--region=${REGION}`,
 		'--format=value(spec.template.spec.containers[0].image)'], { mutating: false, capture: true });
 	if (existing.status === 0 && existing.stdout.trim()) {
-		const image = existing.stdout.trim();
-		log(`service exists: rolling a new revision of ${image} (running env preserved, incl. any live cutover)…`);
+		// Roll the image the build just pushed (or, with --skip-build, the current
+		// :latest), never the service's own running image: re-rolling that shipped
+		// a stale broken digest after a green build on 2026-11-19.
+		const imageRepo = `${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/${SERVICE}`;
+		const described = gcloud(['artifacts', 'docker', 'images', 'describe', `${imageRepo}:latest`,
+			'--format=value(image_summary.digest)'], { mutating: false, capture: true });
+		if (described.status !== 0) die(`could not resolve the digest of ${imageRepo}:latest`);
+		let image;
+		try { image = resolveRolloutImage({ imageRepo, latestDigest: parseImageDigest(described.stdout) || described.stdout.trim() }); }
+		catch (e) { die(e.message); }
+		log(`service exists (was ${existing.stdout.trim()}): rolling a new revision of ${image} (running env preserved, incl. any live cutover)…`);
 		const r = gcloud(['run', 'services', 'update', SERVICE, `--region=${REGION}`, `--image=${image}`]);
 		if (r.status !== 0) die('gcloud run services update failed');
 		ok('new revision rolled out with the running config intact');
