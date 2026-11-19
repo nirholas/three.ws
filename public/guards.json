@@ -2193,6 +2193,38 @@
 				"kind": "live",
 				"reason": "Runs the smoke tasks through the real agent loop against a live model and scores the answers, so it needs a model key. A static fixture cannot show that a model completes a task."
 			}
+		},
+		{
+			"id": "audit-security-headers",
+			"script": "scripts/audit-security-headers.mjs",
+			"npm": "audit:security-headers",
+			"title": "Security header sweep",
+			"protects": "Every swept response (pages, auth pages, embeddable pages, API JSON, .well-known text) carries each required HTTP security header unweakened, and /.well-known/security.txt satisfies RFC 9116.",
+			"why": "A missing or loosened CSP, HSTS or framing header is invisible in the UI and in every unit test. This fetches real responses from a running server and applies the policy in scripts/lib/security-header-policy.mjs, so a route-table change that drops a header fails here instead of shipping.",
+			"stages": [
+				"manual"
+			],
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "Fetches real HTTP responses from a running server or production, and the headers under test are produced by the route table and server middleware at serve time, so there is no offline input to mutate."
+			}
+		},
+		{
+			"id": "audit-share-previews",
+			"script": "scripts/audit-share-previews.mjs",
+			"npm": "audit:share-previews",
+			"title": "Share preview sweep",
+			"protects": "A sample of real URLs per page type serves og tags and an og:image that pass the LinkedIn and Teams preview rules.",
+			"why": "A preview that LinkedIn or Teams rejects shows up as a blank card only after someone shares the link. This fetches the live pages and their images the way those crawlers do, and prints the exact offending tag per URL.",
+			"stages": [
+				"manual"
+			],
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "Fetches live pages and their og:image bytes from the deployed site with a crawler user agent, and the sampled URLs come from live API data, so there is no offline input to mutate."
+			}
 		}
 	],
 	"exempt": [
