@@ -6,6 +6,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-11-18
 
+- **A failed free text-to-3D job now says so in minutes, not 45**: When NVIDIA's hosted TRELLIS lane errors, its status endpoint answers 410 Gone. We treated that as a job still in progress, so every errored generation sat at "generating" until the 45-minute cleanup. A 410 now goes down the expired-request path: we check whether the model already landed, retry once, and otherwise fail honestly so the request moves to the next lane. `[fix]`
 - **A Solana RPC burst limit no longer benches the paid lane for six hours**: Token due diligence, holder lists and agent net worth stopped returning 503 during traffic bursts. Our primary Solana RPC answers a short burst limit with the same message it uses for a spent plan, and two bursts in a row used to park it for six hours while it was serving fine. Repeat bursts now widen the retry window gradually, up to one hour, so the paid lane comes back within minutes. `[fix, infra]`
 - **The NVIDIA Brev GPU quickstart ships a patched JupyterLab and upload parser**: The Brev quickstart image now runs JupyterLab 4.6.5 and python-multipart 0.0.33 behind FastAPI 0.162. That closes the JupyterLab extension-manager, CommandLinker and XSS advisories and the python-multipart file-write, denial-of-service and parameter-smuggling advisories published this year. The studio's image upload, sample picker and resolution checks behave exactly as before. `[security, infra]`
 

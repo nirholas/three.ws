@@ -30,6 +30,7 @@ import { execFileSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadExperiments } from './lib/experiments-index.mjs';
+import { validateChangelogEntries } from './lib/changelog-entries.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '..');
@@ -74,32 +75,7 @@ const sections = [...data.sections];
 // Validated hard: a malformed entry should fail the build, not ship garbage
 // to holders.
 const changelogFile = resolve(root, 'data/changelog.json');
-// `desktop` marks entries that ship in the desktop app: apps/desktop/scripts/bump-version.mjs
-// collects them into each release's notes.
-const CHANGELOG_TAGS = new Set(['feature', 'improvement', 'fix', 'sdk', 'infra', 'docs', 'security', 'desktop']);
-const curatedEntries = plainDeep(JSON.parse(readFileSync(changelogFile, 'utf8')).entries, 'data/changelog.json');
-// Community delivery keys an entry by date + title (api/_lib/changelog-push.js),
-// so a repeated entry is a repeated Telegram announcement to every subscriber.
-// Concurrent agents editing this file have produced that byte-for-byte three
-// times. An identical repeat carries no information, so it fails the build here
-// rather than being caught downstream. Entries that merely share a date and
-// title while saying different things are left alone: that is a wording call on
-// published copy, and the delivery layer collapses them either way.
-const identicalEntries = new Map();
-for (const [index, e] of curatedEntries.entries()) {
-	const ctx = `data/changelog.json entry "${e.title || '?'}" (${e.date || 'no date'})`;
-	if (!/^\d{4}-\d{2}-\d{2}$/.test(e.date || '')) throw new Error(`${ctx}: date must be YYYY-MM-DD`);
-	if (!e.title || !e.summary) throw new Error(`${ctx}: title and summary are required`);
-	if (!Array.isArray(e.tags) || e.tags.length === 0) throw new Error(`${ctx}: at least one tag required`);
-	for (const t of e.tags) {
-		if (!CHANGELOG_TAGS.has(t)) throw new Error(`${ctx}: unknown tag "${t}" (allowed: ${[...CHANGELOG_TAGS].join(', ')})`);
-	}
-	const fingerprint = JSON.stringify(e);
-	if (identicalEntries.has(fingerprint)) {
-		throw new Error(`${ctx}: duplicated verbatim (also at index ${identicalEntries.get(fingerprint)}); delete one copy`);
-	}
-	identicalEntries.set(fingerprint, index);
-}
+const curatedEntries = validateChangelogEntries(plainDeep(JSON.parse(readFileSync(changelogFile, 'utf8')).entries, 'data/changelog.json'));
 
 // The public experiment log (/experiments). Validated as hard as the changelog:
 // a missing field, an unknown status or a write-up without the six template

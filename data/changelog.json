@@ -6,8 +6,7 @@
 			"title": "A failed free text-to-3D job now says so in minutes, not 45",
 			"summary": "When NVIDIA's hosted TRELLIS lane errors, its status endpoint answers 410 Gone. We treated that as a job still in progress, so every errored generation sat at \"generating\" until the 45-minute cleanup. A 410 now goes down the expired-request path: we check whether the model already landed, retry once, and otherwise fail honestly so the request moves to the next lane.",
 			"tags": [
-				"fix",
-				"forge"
+				"fix"
 			]
 		},
 		{
