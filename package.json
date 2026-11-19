@@ -842,7 +842,7 @@
 		"fluid-framework": "^1.4.0",
 		"gltf-validator": "^2.0.0-dev.3.10",
 		"halloween.js": "^1.0.3",
-		"helius-sdk": "^3.4.0",
+		"helius-sdk": "^3.5.0",
 		"hood402": "0.1.1",
 		"hyparquet": "^1.33.0",
 		"hyparquet-compressors": "^1.1.2",
