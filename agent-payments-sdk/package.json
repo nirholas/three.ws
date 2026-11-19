@@ -89,7 +89,7 @@
     "@pump-fun/agent-payments-sdk-legacy": "npm:@pump-fun/agent-payments-sdk@1.0.7",
     "@types/bn.js": "^5.2.0",
     "@types/express": "^5.0.6",
-    "@types/node": "^22.0.0",
+    "@types/node": "^26.6.6",
     "eslint": "^10.14.0",
     "eslint-config-prettier": "^10.1.8",
     "tsup": "^9.0.0",
