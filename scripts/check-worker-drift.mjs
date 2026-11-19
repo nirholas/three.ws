@@ -38,6 +38,7 @@ import {
 	parseImageRef,
 	formatTable,
 	hexTokens,
+	rebuildCommand,
 } from './lib/worker-drift.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -182,13 +183,14 @@ function discoverTargets(filter) {
 		const wdir = path.join(ROOT, 'workers', dir);
 		const configs = readdirSync(wdir).filter((f) => /^cloudbuild.*\.ya?ml$/.test(f)).sort();
 		for (const file of configs) {
-			const { targets } = parseCloudbuildTargets(readFileSync(path.join(wdir, file), 'utf8'), { projectId: PROJECT });
+			const configText = readFileSync(path.join(wdir, file), 'utf8');
+			const { targets } = parseCloudbuildTargets(configText, { projectId: PROJECT });
 			if (!targets.length) {
 				skipped.push(`workers/${dir}/${file}`);
 				continue;
 			}
 			for (const t of targets) {
-				const entry = byService.get(t.service) || { worker: dir, config: `workers/${dir}/${file}`, service: t.service, regions: new Set(), via: t.via };
+				const entry = byService.get(t.service) || { worker: dir, config: `workers/${dir}/${file}`, service: t.service, regions: new Set(), via: t.via, configText };
 				entry.regions.add(t.region);
 				byService.set(t.service, entry);
 			}
@@ -230,7 +232,7 @@ async function inspectServing(api, svc) {
 
 function redeployCommand(t) {
 	if (t.via === 'comment') return `see the header of ${t.config} (build, then roll with gcloud run services update)`;
-	return `gcloud builds submit --config ${t.config} --region ${BUILD_REGION} --project ${PROJECT} --substitutions=SHORT_SHA=$(git rev-parse --short=9 HEAD) .`;
+	return rebuildCommand({ config: t.config, configText: t.configText, region: BUILD_REGION, project: PROJECT });
 }
 
 // The extra copy runs the same registry image, so after the declared region is

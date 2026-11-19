@@ -252,3 +252,19 @@ export function formatTable(rows) {
 	const line = (cells) => cells.map((c, i) => pad(c, widths[i])).join('  ').trimEnd();
 	return [line(head), line(widths.map((w) => '-'.repeat(w))), ...body.map(line)].join('\n');
 }
+
+/** True when a cloudbuild config references the $SHORT_SHA / ${SHORT_SHA} substitution. */
+export function usesShortSha(configText) {
+	return /\$\{?SHORT_SHA\b/.test(String(configText || ''));
+}
+
+/**
+ * The manual rebuild command for one config. Cloud Build rejects a submit that
+ * passes a substitution the template never references ("key SHORT_SHA in the
+ * substitution data is not matched in the template"), so SHORT_SHA is only
+ * passed to configs that actually use it.
+ */
+export function rebuildCommand({ config, configText, region, project }) {
+	const sub = usesShortSha(configText) ? ' --substitutions=SHORT_SHA=$(git rev-parse --short=9 HEAD)' : '';
+	return `gcloud builds submit --config ${config} --region ${region} --project ${project}${sub} .`;
+}

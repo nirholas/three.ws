@@ -22,6 +22,8 @@ import {
 	servingRevisions,
 	parseImageRef,
 	formatTable,
+	rebuildCommand,
+	usesShortSha,
 } from '../scripts/lib/worker-drift.mjs';
 
 const root = join(import.meta.dirname, '..');
@@ -173,5 +175,25 @@ describe('drift classification', () => {
 		]).split('\n');
 		expect(out).toHaveLength(3);
 		expect(out[2]).toMatch(/^remesh\s+remesh-service@us-central1\s+remesh-service-00005-8rr\s+2026-06-13 \(registry build\)\s+1756bc516\s+2026-11-03\s+24\s+109d\s+DRIFTED$/);
+	});
+});
+
+describe('rebuildCommand', () => {
+	const base = { config: 'workers/x/cloudbuild.yaml', region: 'us-central1', project: 'p' };
+
+	it('omits the SHORT_SHA substitution for a config that never references it (Cloud Build rejects unmatched keys)', () => {
+		const cmd = rebuildCommand({ ...base, configText: config('granite-guardian/cloudbuild.yaml') });
+		expect(cmd).not.toContain('SHORT_SHA');
+		expect(cmd).toBe('gcloud builds submit --config workers/x/cloudbuild.yaml --region us-central1 --project p .');
+	});
+
+	it('passes SHORT_SHA when the config tags images with it', () => {
+		const cmd = rebuildCommand({ ...base, configText: 'images:\n  - "gcr.io/p/x:$SHORT_SHA"\n' });
+		expect(cmd).toContain('--substitutions=SHORT_SHA=$(git rev-parse --short=9 HEAD)');
+	});
+
+	it('treats the braced ${SHORT_SHA} form as a reference too', () => {
+		expect(usesShortSha('tag: x:${SHORT_SHA}')).toBe(true);
+		expect(usesShortSha('tag: x:latest # no sha')).toBe(false);
 	});
 });
