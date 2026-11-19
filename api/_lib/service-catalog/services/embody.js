@@ -5,6 +5,8 @@
 // Contract: specs/service-catalog.md. Do not re-add a hand-written mirror
 // for this route in api/wk.js — edit this descriptor instead.
 
+import { TTS_VOICE_IDS, DEFAULT_VOICE } from '../../tts-voices.js';
+
 export default {
 	slug: 'embody',
 	title: 'Embodiment',
@@ -40,7 +42,13 @@ export default {
 			prompt: { type: 'string', minLength: 1, maxLength: 600 },
 			image_url: { type: 'string', format: 'uri' },
 			personality: { type: 'string', maxLength: 600 },
-			voice: { type: 'string' },
+			// The voice set the handler validates against (api/x402/embody.js).
+			voice: {
+				type: 'string',
+				description: `TTS voice id. Default ${DEFAULT_VOICE}.`,
+				enum: [...TTS_VOICE_IDS],
+				default: DEFAULT_VOICE,
+			},
 		},
 	},
 	// Mirrors buildBundle()'s settled 200 in api/x402/embody.js — the durable

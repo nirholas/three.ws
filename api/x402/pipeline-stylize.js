@@ -26,18 +26,10 @@ import {
 	stageObjectKey,
 } from '../_lib/pipeline-stage.js';
 import pipelineStylizeListing from '../_lib/service-catalog/services/pipeline-stylize.js';
+import { STYLE_BOUNDS } from '../_lib/stylize-bounds.js';
 
 const ROUTE = '/api/x402/pipeline-stylize';
 const SLUG = 'pipeline-stylize';
-
-// Density bounds per filter — kept in lockstep with workers/stylize STYLE_CATALOG
-// and api/forge-stylize.js.
-const STYLE_BOUNDS = {
-	voxel: { def: 32, min: 8, max: 96 },
-	brick: { def: 24, min: 8, max: 64 },
-	voronoi: { def: 48, min: 12, max: 120 },
-	lowpoly: { def: 40, min: 8, max: 120 },
-};
 
 // Single source of truth: api/_lib/service-catalog/services/pipeline-stylize.js
 // is the storefront listing copy — importing it here keeps the live 402

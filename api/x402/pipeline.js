@@ -58,7 +58,6 @@ import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { assertSafePublicUrl } from '../_lib/ssrf-guard.js';
 import { encodeJobToken } from '../_lib/forge-job-token.js';
 import {
-	CANONICAL_ORDER,
 	validateChain,
 	priceForChain,
 	stageGrammar,
@@ -66,6 +65,7 @@ import {
 	availableStages,
 } from '../_lib/pipeline.js';
 import { createPipelineJob, savePipelineJob, publicView } from '../_lib/pipeline-store.js';
+import { PIPELINE_INPUT_EXAMPLE, PIPELINE_INPUT_SCHEMA } from '../_lib/pipeline-listing.js';
 
 const ROUTE = '/api/x402/pipeline';
 const REQUIRED_SCOPE = 'x402:bypass';
@@ -83,43 +83,10 @@ const ROUTE_DESCRIPTION =
 	'quoted EXACTLY in the 402 challenge (the sum of the requested stages). Pay ' +
 	'autonomously in USDC on Solana mainnet — no API key, no account.';
 
-const INPUT_EXAMPLE = {
-	stages: ['generate', 'rig'],
-	prompt: 'a brass steampunk owl, full body',
-	options: { tier: 'draft', rig: { rig_type: 'biped' } },
-};
-
-const INPUT_SCHEMA = {
-	$schema: 'https://json-schema.org/draft/2020-12/schema',
-	type: 'object',
-	required: ['stages'],
-	properties: {
-		stages: {
-			type: 'array',
-			minItems: 1,
-			maxItems: CANONICAL_ORDER.length,
-			items: { type: 'string', enum: [...CANONICAL_ORDER] },
-			description:
-				'Ordered subsequence of ' + JSON.stringify(CANONICAL_ORDER) +
-				'. generate must be first and requires prompt; without generate, glb_url is required.',
-		},
-		prompt: {
-			type: 'string',
-			minLength: 3,
-			maxLength: 1000,
-			description: 'Subject for the generate stage. Required when stages starts with generate.',
-		},
-		glb_url: {
-			type: 'string',
-			format: 'uri',
-			description: 'Public https GLB to feed the first stage when the chain does not start with generate.',
-		},
-		options: {
-			type: 'object',
-			description: 'Per-stage options: { tier, aspect_ratio, rig:{rig_type}, remesh:{...}, gameready:{topology,poly_budget,texture_size}, stylize:{style,resolution} }.',
-		},
-	},
-};
+// The input contract (stage grammar, per-stage options with their ranges and
+// defaults) is shared with the service-catalog descriptor and the stage engine.
+const INPUT_EXAMPLE = PIPELINE_INPUT_EXAMPLE;
+const INPUT_SCHEMA = PIPELINE_INPUT_SCHEMA;
 
 const OUTPUT_EXAMPLE = {
 	job_id: 'f1.eyJwIjoicGlwZWxpbmUifQ.sig',

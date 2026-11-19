@@ -13,8 +13,8 @@
 //   - Prices come from the same functions the live 402 challenges quote from:
 //     the descriptor's priceAtomics, forge-tiers.js for Forge's three tiers,
 //     and pipeline.js for the per-stage pipeline sum.
-//   - Summaries, descriptions and a few parameter descriptions are written
-//     here, because the registry enforces its own copy rules that our other
+//   - Summaries, descriptions, 200-response descriptions and a few parameter
+//     descriptions are written here, because the registry enforces its own copy rules that our other
 //     storefront text does not meet: verb-first operation summaries of 24-64
 //     ASCII characters (the summary becomes the reason line on the payer's
 //     biometric prompt), no marketing language, and every parameter described.
@@ -28,7 +28,8 @@
 
 import { PAID_SERVICES } from './services/index.js';
 import { TIERS } from '../forge-tiers.js';
-import { STAGE_IDS, priceAtomicsForStage } from '../pipeline.js';
+import { STAGE_IDS, priceAtomicsForStage, priceUsdcForStage } from '../pipeline.js';
+import { DEFAULT_VOICE } from '../tts-voices.js';
 import { FREE_DAILY_LIMIT as FACT_CHECK_FREE_DAILY } from '../../x402/fact-check.js';
 
 export const ORIGIN = 'https://three.ws';
@@ -77,12 +78,37 @@ function pipelinePrice() {
 	return dynamicPrice(Math.min(...atomics), atomics.reduce((a, b) => a + b, 0));
 }
 
+// "generate $0.05, rig $0.10, ..." from the same per-stage prices the
+// pipeline's 402 sums, so the listed figures move with any price override.
+function pipelineStagePricesText() {
+	return STAGE_IDS.map((id) => `${id} $${priceUsdcForStage(id)}`).join(', ');
+}
+
+// The 3d copy tells payers that the pipeline's post-generate stages cost more
+// than the matching single-stage endpoints, so calling those directly is the
+// cheaper path. Refuse to build if the prices stop making that true.
+function assertPipelineStagesCostMore() {
+	const problems = [];
+	for (const id of STAGE_IDS.filter((stage) => stage !== 'generate')) {
+		const standalone = serviceBySlug(`pipeline-${id}`);
+		if (BigInt(priceAtomicsForStage(id)) <= BigInt(standalone.priceAtomics)) {
+			problems.push(
+				`pipeline stage ${id} (${priceAtomicsForStage(id)}) no longer costs more than ` +
+					`${standalone.path} (${standalone.priceAtomics}); rewrite the 3d spend-aware copy`,
+			);
+		}
+	}
+	return problems;
+}
+
 // ── Providers ────────────────────────────────────────────────────────────────
 //
 // Each operation is either `slug` (a paid service in the catalog) or `free`
 // (an unpaid companion route an agent needs to finish a paid flow, such as
 // polling a job). `params` overrides or fills a parameter's description and
-// example; `example` replaces the descriptor's example input wholesale.
+// example; `example` replaces the descriptor's example input wholesale;
+// `response` describes the 200 body, so a payer knows before paying whether it
+// gets a job handle to poll, a GLB URL, inline GLB bytes, a PNG, or a report.
 
 export const PAY_PROVIDERS = Object.freeze([
 	{
@@ -97,25 +123,37 @@ export const PAY_PROVIDERS = Object.freeze([
 endpoints: generation (text or up to six photos in, textured GLB out), the
 asset pipeline that turns any public GLB into a rigged, retopologized, or
 restyled one, structural inspection of a GLB before you use it, remixes of
-published models with on-chain creator royalties, and \`embody\`, which returns
-a rigged, talking avatar plus a one-tag web embed for an agent.
+published models with on-chain creator royalties, \`embody\`, which returns a
+rigged, talking avatar plus a one-tag web embed for an agent, and
+\`mint-to-mesh\`, which renders a Solana token mint as a themed GLB.
 
-Generation and pipeline calls are asynchronous. The paid response carries a
-job token; poll \`GET /api/forge?job=<token>\` (free, no payment) until
-\`status\` is \`done\` and read the GLB URL from the result. Draft-tier prompts
-often finish inline and return the GLB URL directly.
+\`/api/x402/forge\` and \`/api/x402/pipeline\` are asynchronous. The paid response
+carries a job token; poll \`GET /api/forge?job=<token>\` (free, no payment) until
+\`status\` is \`done\`, then read \`glb_url\` (generation) or \`result_glb_url\`
+(pipeline). Draft-tier prompts often finish inline and return \`glb_url\`
+directly. The single-stage \`pipeline-*\` endpoints, \`remix-asset\`, and \`embody\`
+wait for the result and return it in the paid response.
 
-Every output is a durable HTTPS URL to a binary glTF (GLB) that loads in
-Three.js, Babylon.js, Unity, Unreal, Blender, and \`<model-viewer>\`.
+Output formats differ by endpoint:
+
+- Generation, pipeline, rig, remesh, gameready, stylize, remix, and embody
+  return a durable HTTPS URL to a binary glTF (GLB).
+- \`pipeline-rembg\` returns a URL to a transparent PNG.
+- \`model-check\` returns a JSON report and no model file.
+- \`mint-to-mesh\` and \`mint-to-mesh-batch\` return the GLB bytes base64-encoded
+  inside the JSON response instead of a URL.
 
 ## Spend-aware usage
 
 - Generate at the \`draft\` tier while iterating on a prompt, then rerun the
   winner at \`standard\` or \`high\`.
-- Chain stages in one \`/api/x402/pipeline\` call instead of paying for each
-  stage separately; the 402 quotes the exact sum of the stages requested.
+- \`/api/x402/pipeline\` trades price for convenience: one payment and one job
+  for the whole chain, but its rig, remesh, gameready, and stylize stages cost
+  more than the matching single-stage endpoints. Call those endpoints directly
+  when cost matters. \`GET /api/x402/pipeline\` (free) lists the live per-stage
+  prices.
 - Run \`/api/x402/model-check\` on a third-party GLB before paying to rig or
-  remesh it; it reports triangle counts, materials, and problems first.
+  remesh it; it reports triangle counts, materials, and optimization tips first.
 - Polling a job is free. Never resubmit a paid generation to check progress.
 - Browse remix sources with the free \`GET /api/remix-feed\` before paying for a
   remix, and reuse the returned creation ids.`,
@@ -125,6 +163,8 @@ Three.js, Babylon.js, Unity, Unreal, Blender, and \`<model-viewer>\`.
 				summary: 'Generate a 3D model (GLB) from a text prompt or photos',
 				description:
 					'Generate a textured GLB mesh from one text prompt or up to six reference photos of one object. Tiers: draft (fast, low-poly), standard (default), high (PBR textures). Returns a job token to poll for free.',
+				response:
+					'JSON job handle: job_id, status (queued, or done when a draft finishes inline), poll_url, mode, tier, and price_usdc. When status is done the response also carries glb_url.',
 				price: forgePrice,
 			},
 			{
@@ -142,25 +182,23 @@ Three.js, Babylon.js, Unity, Unreal, Blender, and \`<model-viewer>\`.
 				summary: 'Fetch the status and GLB URL of a 3D generation job',
 				description:
 					'Poll a generation or pipeline job without payment. Returns status (queued, running, done, failed), per-stage progress for pipelines, and the GLB URL once the job is done.',
+				response:
+					'JSON job state: status (queued, running, done, failed). Generation jobs return glb_url when done; pipeline jobs return per-stage progress in stages and the final GLB in result_glb_url. No payment required.',
 			},
 			{
 				slug: 'pipeline',
 				summary: 'Submit a chained 3D job: generate, rig, remesh, stylize',
-				description:
-					'Run an ordered chain of 3D stages (generate, rig, remesh, gameready, stylize) in one paid call. The 402 quotes the sum of the requested stages. Returns a job token to poll for free.',
+				description: `Run an ordered chain of 3D stages in one paid call. Per-stage prices: ${pipelineStagePricesText()}; the 402 quotes their sum. These are not the standalone endpoint prices. GET this path for free to read the live stage list and prices.`,
+				response:
+					'JSON job handle: job_id, status, poll_url, price_usdc, and stages (id, status, output_url per stage). Poll GET /api/forge?job=<job_id> for free until status is done.',
 				price: pipelinePrice,
-				params: {
-					options: {
-						description:
-							'Per-stage options keyed by stage: tier and aspect_ratio for generate, rig_type for rig, remesh settings, gameready topology and poly_budget, stylize style and resolution.',
-					},
-				},
 			},
 			{
 				slug: 'pipeline-rig',
 				summary: 'Convert a static GLB mesh into a rigged, animatable model',
 				description:
 					'Infer a skeleton for a static GLB and bind it with skin weights so the model can walk, wave, and emote. Returns a durable URL to the rigged GLB.',
+				response: 'JSON: stage, input_url, and output_url, a durable URL to the rigged GLB.',
 				params: {
 					rig_type: { description: 'Skeleton to infer: biped (humanoid, the default) or quadruped.' },
 				},
@@ -170,6 +208,7 @@ Three.js, Babylon.js, Unity, Unreal, Blender, and \`<model-viewer>\`.
 				summary: 'Convert a GLB mesh to a new topology and face count',
 				description:
 					'Retopologize a GLB as triangles, quads, or low-poly, with repair and decimation to a target face count, and re-bake the texture onto the new mesh. Returns a durable GLB URL.',
+				response: 'JSON: stage, input_url, output_url (durable GLB URL), and the settings applied.',
 				params: {
 					remesh_mode: { description: 'Output topology: triangle (default), quad, or lowpoly.' },
 					operation: {
@@ -184,6 +223,7 @@ Three.js, Babylon.js, Unity, Unreal, Blender, and \`<model-viewer>\`.
 				summary: 'Convert a GLB into a game-ready mesh under a poly budget',
 				description:
 					'Retopologize a GLB to a fixed polygon budget (quad or silhouette-preserving triangles) with PBR textures re-baked onto the new topology, ready for a game engine. Returns a durable GLB URL.',
+				response: 'JSON: stage, input_url, output_url (durable GLB URL), and the settings applied.',
 				params: {
 					topology: { description: 'Output topology: quad (default) or tri.' },
 					poly_budget: { description: 'Maximum polygon count of the output mesh, 1,000 to 500,000.' },
@@ -195,6 +235,7 @@ Three.js, Babylon.js, Unity, Unreal, Blender, and \`<model-viewer>\`.
 				summary: 'Convert a GLB mesh into voxel, brick, shatter, or low-poly',
 				description:
 					'Rebuild a GLB geometrically in a voxel, brick, Voronoi-shatter, or faceted low-poly style. The style lives in the mesh, not a shader, so it survives export to any engine.',
+				response: 'JSON: stage, input_url, output_url (durable GLB URL), style, resolution, and face_count.',
 				params: {
 					style: { description: 'Geometric style: voxel (default), brick, voronoi, or lowpoly.' },
 				},
@@ -204,6 +245,7 @@ Three.js, Babylon.js, Unity, Unreal, Blender, and \`<model-viewer>\`.
 				summary: 'Remove the background from an image for image-to-3D',
 				description:
 					'Strip the background from an image and return a transparent PNG, the clean reference view image-to-3D reconstruction needs. Returns a durable PNG URL.',
+				response: 'JSON: stage, input_url, and output_url, a durable URL to a transparent PNG (not a GLB).',
 				params: {
 					model: { description: 'Segmentation model to use; rmbg2 (default) suits most objects.' },
 				},
@@ -213,12 +255,15 @@ Three.js, Babylon.js, Unity, Unreal, Blender, and \`<model-viewer>\`.
 				summary: 'Analyze a GLB model and return stats and optimization tips',
 				description:
 					'Fetch a public glTF or GLB and return structural stats (vertices, triangles, materials, textures, animations, extensions) with a prioritized list of optimization recommendations.',
+				response:
+					'JSON report: url, fetchedBytes, model (vertex, triangle, material, texture, animation, and extension stats), and suggestions. Returns no model file.',
 			},
 			{
 				slug: 'remix-asset',
 				summary: 'Create a remix of a published 3D model from an instruction',
 				description:
 					'Generate a new 3D model from a published remixable source and a plain-language change. Records parent-to-child provenance and routes the creator royalty on-chain.',
+				response: 'JSON: remix (glbUrl and viewerUrl of the new model), source, royalty, and fee details.',
 				example: { source_creation_id: EXAMPLE_REMIX_SOURCE, instruction: 'make it matte black with gold trim' },
 			},
 			{
@@ -227,28 +272,37 @@ Three.js, Babylon.js, Unity, Unreal, Blender, and \`<model-viewer>\`.
 					path: '/api/remix-feed',
 					operationId: 'remix_feed',
 					params: {
+						// Range and default as clamped by api/remix-feed.js.
 						limit: {
 							type: 'integer',
+							minimum: 1,
+							maximum: 48,
+							default: 24,
 							example: 12,
-							description: 'Number of remixable models to return.',
+							description: 'Number of remixable models to return, 1 to 48. Default 24.',
 						},
 					},
 				},
 				summary: 'Browse remixable 3D models and their royalty terms',
 				description:
 					'List published 3D models that accept remixes, with their GLB and preview URLs, royalty percentage, and remix count. Use a returned id as source_creation_id for a paid remix.',
+				response:
+					'JSON: items, each with id, prompt, glbUrl, preview URL, royalty percentage, and remix count. No payment required.',
 			},
 			{
 				slug: 'embody',
 				summary: 'Create a rigged, talking 3D avatar body for an AI agent',
 				description:
 					'Create a rigged, animated, voiced 3D avatar from a prompt or a photo. Returns the agent id, GLB URL, viewer and profile URLs, and an HTML embed. Failed generations are not charged.',
+				response: 'JSON: agent_id, glb_url, viewer_url, profile_url, embed_html, voice, and rigged.',
 				params: {
 					name: { description: 'Display name for the avatar and its agent profile.' },
-					prompt: { description: 'Appearance of the avatar in plain language. Give this or image_url.' },
-					image_url: { description: 'Public photo of the subject to build the avatar from. Give this or prompt.' },
+					prompt: { description: 'Appearance of the avatar in plain language. Give this or image_url, not both.' },
+					image_url: {
+						description: 'Public http(s) photo of the subject to build the avatar from. Give this or prompt, not both.',
+					},
 					personality: { description: 'Optional persona text the avatar speaks and behaves from.' },
-					voice: { description: 'Optional voice id for the avatar\'s speech.' },
+					voice: { description: `Optional voice id for the avatar's speech. Default ${DEFAULT_VOICE}.` },
 				},
 			},
 			{
@@ -256,12 +310,16 @@ Three.js, Babylon.js, Unity, Unreal, Blender, and \`<model-viewer>\`.
 				summary: 'Render a Solana token mint as a themed GLB 3D object',
 				description:
 					'Turn any Solana SPL token mint into a GLB object themed from its on-chain metadata, with the token image as a texture when one exists and the metadata attached to the model.',
+				response:
+					'JSON: mint, theme (name, symbol, color, image), and glb with the model bytes base64-encoded (mimeType model/gltf-binary). The GLB is inline, not a URL.',
 			},
 			{
 				slug: 'mint-to-mesh-batch',
 				summary: 'Render up to 10 Solana token mints as themed GLB objects',
 				description:
 					'Resolve one to ten Solana SPL mints to themed GLB objects in one call. Each mint succeeds or fails on its own; GLB bytes come back base64-encoded in JSON.',
+				response:
+					'JSON: count and results, one per mint, each either ok with the GLB base64-encoded inline or an error code for that mint.',
 				example: { mints: [THREE_MINT] },
 				params: {
 					mints: { description: 'One to ten base58 SPL mint addresses on Solana mainnet.' },
@@ -343,7 +401,7 @@ then drill down with the narrow endpoints.
 				summary: 'Fetch the historical price series for one coin',
 				description:
 					'Return [timestamp_ms, price_usd] pairs for one coin over 1, 7, 30, 90, or 365 days, 5-minutely for one day, hourly up to 90 days, and daily beyond.',
-				example: { id: 'solana', days: '30' },
+				example: { id: 'solana', days: 30 },
 				params: {
 					id: { description: 'Coin id: the lowercase slug from market-coins, for example solana.' },
 				},
@@ -553,7 +611,7 @@ verdict carries the evidence behind it.
 				description: `Check a claim against live web sources and return supported, contradicted, mixed, or insufficient with cited sources, a confidence score, and a SHA-256 attestation. The first ${FACT_CHECK_FREE_DAILY} checks per day per IP are free.`,
 				params: {
 					claim: { description: 'One factual statement to check, 5 to 1,000 characters.' },
-					strictness: { description: 'How hard low-authority sources are downweighted: high, medium, or low.' },
+					strictness: { description: 'How hard low-authority sources are downweighted: high, medium (default), or low.' },
 					imageUrl: { description: 'Optional public image URL to check alongside the claim.' },
 				},
 			},
@@ -591,6 +649,13 @@ function asciiDeep(value) {
 
 const SUMMARY_MIN = 24;
 const SUMMARY_MAX = 64;
+// The registry bounds provider frontmatter and inline `endpoints:` entries at
+// 255 characters, but `pay catalog check` (verified on @solana/pay 1.0.26) does not
+// bound an OpenAPI operation's description. That text is what `pay skills`
+// shows a payer before a spend, so a house cap still keeps it to a short
+// paragraph while leaving room to state per-stage prices and output types.
+const OP_DESCRIPTION_MIN = 32;
+const OP_DESCRIPTION_MAX = 320;
 const isAscii = (s) => /^[\x20-\x7e\n]*$/.test(s);
 
 export function listingProblems(provider, openapi) {
@@ -614,8 +679,10 @@ export function listingProblems(provider, openapi) {
 			if (len(op.summary) < SUMMARY_MIN || len(op.summary) > SUMMARY_MAX) {
 				problems.push(`${at}: summary must be ${SUMMARY_MIN}-${SUMMARY_MAX} chars (got ${len(op.summary)})`);
 			}
-			if (len(op.description) < 32 || len(op.description) > 255) {
-				problems.push(`${at}: description must be 32-255 chars (got ${len(op.description)})`);
+			if (len(op.description) < OP_DESCRIPTION_MIN || len(op.description) > OP_DESCRIPTION_MAX) {
+				problems.push(
+					`${at}: description must be ${OP_DESCRIPTION_MIN}-${OP_DESCRIPTION_MAX} chars (got ${len(op.description)})`,
+				);
 			}
 			const text = JSON.stringify(op);
 			if (!isAscii(text.replace(/\\n/g, ''))) problems.push(`${at}: operation has non-ASCII characters`);
@@ -706,7 +773,7 @@ function paidOperation(op) {
 				: { requestBody: requestBody(s.inputSchema, example, op.params) }),
 			'x-payment-info': { price, protocols: [{ x402: {} }] },
 			responses: {
-				200: { description: 'Paid result as JSON.' },
+				200: { description: op.response ?? 'Paid result as JSON.' },
 				400: { description: 'Missing or invalid input. Refused before any payment settles.' },
 				402: { description: 'Payment Required: an x402 challenge payable in USDC on Solana mainnet.' },
 			},
@@ -725,7 +792,7 @@ function freeOperation(op) {
 			description: op.description,
 			security: [],
 			parameters: queryParameters({ properties: {} }, null, f.params),
-			responses: { 200: { description: 'Result as JSON. No payment required.' } },
+			responses: { 200: { description: op.response ?? 'Result as JSON. No payment required.' } },
 		},
 	];
 }
@@ -777,7 +844,7 @@ export function buildPayMd(provider) {
 // relative to the registry root. Throws with every rule violation at once.
 export function buildPaySkills() {
 	const files = {};
-	const problems = [];
+	const problems = assertPipelineStagesCostMore();
 	for (const provider of PAY_PROVIDERS) {
 		const openapi = buildOpenApi(provider);
 		problems.push(...listingProblems(provider, openapi));

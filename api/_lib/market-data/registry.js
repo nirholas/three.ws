@@ -29,6 +29,10 @@ const LIST_PRICE = '1000';
 const PULSE_PRICE = '5000';
 
 const str = (description) => ({ type: 'string', description });
+// A typed field carrying the bounds, enum and default the handler in fetch.js
+// clamps or validates against, so the discovery schema states the real contract.
+// Key order is the projection order (pay registry openapi.json reads it).
+const field = (type, constraints, description) => ({ type, ...constraints, description });
 
 export const MARKET_CATEGORIES = Object.freeze([
 	{
@@ -41,14 +45,14 @@ export const MARKET_CATEGORIES = Object.freeze([
 		tags: ['crypto', 'market-data', 'prices', 'coins'],
 		useCases: ['portfolio pricing', 'market screening', 'coin id resolution'],
 		priceAtomics: LIST_PRICE,
-		inputExample: { page: '1', per_page: '100' },
+		inputExample: { page: 1, per_page: 100 },
 		inputSchema: {
 			type: 'object',
 			properties: {
-				page: str('Page number, 1–20. Default 1.'),
-				per_page: str('Rows per page, 10–250. Default 100.'),
+				page: field('integer', { minimum: 1, maximum: 20, default: 1 }, 'Page number, 1 to 20. Default 1.'),
+				per_page: field('integer', { minimum: 10, maximum: 250, default: 100 }, 'Rows per page, 10 to 250. Default 100.'),
 				category: str('Optional CoinGecko category id (e.g. artificial-intelligence) to scope the table to one sector.'),
-				q: str('Search mode: resolve a name/ticker to CoinGecko coin ids (returns top-10 matches instead of the table).'),
+				q: field('string', { maxLength: 64 }, 'Search mode: resolve a name/ticker to CoinGecko coin ids (returns top-10 matches instead of the table).'),
 			},
 		},
 		outputExample: {
@@ -99,13 +103,13 @@ export const MARKET_CATEGORIES = Object.freeze([
 		tags: ['crypto', 'market-data', 'chart', 'history'],
 		useCases: ['backtesting', 'trend analysis', 'chart rendering'],
 		priceAtomics: LIST_PRICE,
-		inputExample: { id: 'bitcoin', days: '30' },
+		inputExample: { id: 'bitcoin', days: 30 },
 		inputSchema: {
 			type: 'object',
 			required: ['id'],
 			properties: {
 				id: str('CoinGecko coin id (lowercase slug, e.g. bitcoin).'),
-				days: str('Window: 1, 7, 30, 90, or 365. Default 30.'),
+				days: field('integer', { enum: [1, 7, 30, 90, 365], default: 30 }, 'Window: 1, 7, 30, 90, or 365. Default 30.'),
 			},
 		},
 		outputExample: { data: [[1751846400000, 107544.8], [1751932800000, 108234.12]], days: 30 },
@@ -161,7 +165,7 @@ export const MARKET_CATEGORIES = Object.freeze([
 		inputSchema: {
 			type: 'object',
 			properties: {
-				view: str("Set to 'exchanges' for the derivatives-venue leaderboard; omit for perp tickers."),
+				view: field('string', { enum: ['exchanges'] }, "Set to 'exchanges' for the derivatives-venue leaderboard; omit for perp tickers."),
 			},
 		},
 		outputExample: {
@@ -268,18 +272,18 @@ export const MARKET_CATEGORIES = Object.freeze([
 		tags: ['defi', 'yield', 'apy', 'pools'],
 		useCases: ['yield hunting', 'stablecoin farming', 'APY history'],
 		priceAtomics: LIST_PRICE,
-		inputExample: { chain: 'solana', stablecoin: 'true', sort: 'apy' },
+		inputExample: { chain: 'solana', stablecoin: true, sort: 'apy' },
 		inputSchema: {
 			type: 'object',
 			properties: {
 				chain: str('Filter to one chain (case-insensitive, e.g. solana).'),
 				project: str('Filter to one protocol slug (e.g. aave-v3).'),
-				stablecoin: str("'true' for stablecoin pools only, 'false' to exclude them."),
+				stablecoin: field('boolean', {}, 'true for stablecoin pools only, false to exclude them; omit for both.'),
 				search: str('Substring match over symbol, project, and chain.'),
-				minTvl: str('Minimum pool TVL in USD.'),
-				sort: str("'tvl' (default) or 'apy' (dust-guarded to pools ≥ $10k TVL)."),
-				limit: str('Rows per page, 1–200. Default 100.'),
-				offset: str('Pagination offset. Default 0.'),
+				minTvl: field('number', { minimum: 0, default: 0 }, 'Minimum pool TVL in USD.'),
+				sort: field('string', { enum: ['tvl', 'apy'], default: 'tvl' }, "'tvl' (default) or 'apy' (dust-guarded to pools ≥ $10k TVL)."),
+				limit: field('integer', { minimum: 1, maximum: 200, default: 100 }, 'Rows per page, 1 to 200. Default 100.'),
+				offset: field('integer', { minimum: 0, default: 0, maximum: 1_000_000 }, 'Pagination offset. Default 0.'),
 				pool: str('Chart mode: a DeFiLlama pool uuid — returns that pool\'s APY/TVL history instead of the list.'),
 			},
 		},
@@ -321,7 +325,7 @@ export const MARKET_CATEGORIES = Object.freeze([
 		inputSchema: {
 			type: 'object',
 			properties: {
-				type: str("'fees' (default — what users pay) or 'revenue' (what the protocol keeps)."),
+				type: field('string', { enum: ['fees', 'revenue'], default: 'fees' }, "'fees' (default: what users pay) or 'revenue' (what the protocol keeps)."),
 			},
 		},
 		outputExample: {
@@ -361,8 +365,8 @@ export const MARKET_CATEGORIES = Object.freeze([
 			type: 'object',
 			properties: {
 				search: str('Case-insensitive match over incident name, technique, and classification.'),
-				limit: str('Rows per page, 1–200. Default 100.'),
-				offset: str('Pagination offset. Default 0.'),
+				limit: field('integer', { minimum: 1, maximum: 200, default: 100 }, 'Rows per page, 1 to 200. Default 100.'),
+				offset: field('integer', { minimum: 0, default: 0 }, 'Pagination offset. Default 0.'),
 			},
 		},
 		outputExample: {

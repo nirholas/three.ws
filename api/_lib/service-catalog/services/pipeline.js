@@ -10,6 +10,12 @@
 // advertises the example chain's price — generate (draft, $0.05) + rig
 // ($0.10) = $0.15 — so facilitators can index the route; per-stage prices are
 // env-overridable via X402_PRICE_PIPELINE_STAGE_*.
+//
+// The input example and schema (stage grammar plus every stage's options with
+// the ranges and defaults the engine applies) come from api/_lib/pipeline-listing.js,
+// shared with the live 402 challenge and the stage engine.
+
+import { PIPELINE_INPUT_EXAMPLE, PIPELINE_INPUT_SCHEMA } from '../../pipeline-listing.js';
 
 export default {
 	slug: 'pipeline',
@@ -33,43 +39,8 @@ export default {
 		'per-stage progress until the final GLB is delivered. Priced per stage and ' +
 		'quoted EXACTLY in the 402 challenge (the sum of the requested stages). Pay ' +
 		'autonomously in USDC on Solana mainnet — no API key, no account.',
-	input: {
-		stages: ['generate', 'rig'],
-		prompt: 'a brass steampunk owl, full body',
-		options: { tier: 'draft', rig: { rig_type: 'biped' } },
-	},
-	inputSchema: {
-		type: 'object',
-		required: ['stages'],
-		properties: {
-			stages: {
-				type: 'array',
-				minItems: 1,
-				maxItems: 5,
-				items: { type: 'string', enum: ['generate', 'rig', 'remesh', 'gameready', 'stylize'] },
-				description:
-					'Ordered subsequence of ["generate","rig","remesh","gameready","stylize"]. ' +
-					'generate must be first and requires prompt; without generate, glb_url is required.',
-			},
-			prompt: {
-				type: 'string',
-				minLength: 3,
-				maxLength: 1000,
-				description: 'Subject for the generate stage. Required when stages starts with generate.',
-			},
-			glb_url: {
-				type: 'string',
-				format: 'uri',
-				description:
-					'Public https GLB to feed the first stage when the chain does not start with generate.',
-			},
-			options: {
-				type: 'object',
-				description:
-					'Per-stage options: { tier, aspect_ratio, rig:{rig_type}, remesh:{...}, gameready:{topology,poly_budget,texture_size}, stylize:{style,resolution} }.',
-			},
-		},
-	},
+	input: PIPELINE_INPUT_EXAMPLE,
+	inputSchema: PIPELINE_INPUT_SCHEMA,
 	outputExample: {
 		job_id: 'f1.eyJwIjoicGlwZWxpbmUifQ.sig',
 		status: 'running',

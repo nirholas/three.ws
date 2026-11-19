@@ -28,7 +28,19 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "description": "Provide exactly one of prompt (text->3D) or image_urls (image->3D). tier and aspect_ratio are optional; tier defaults to \"standard\".",
+                "description": "Provide exactly one of prompt (text to 3D) or image_urls (image to 3D). tier and aspect_ratio are optional; tier defaults to \"standard\".",
+                "oneOf": [
+                  {
+                    "required": [
+                      "prompt"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "image_urls"
+                    ]
+                  }
+                ],
                 "properties": {
                   "prompt": {
                     "type": "string",
@@ -40,7 +52,8 @@
                     "type": "array",
                     "items": {
                       "type": "string",
-                      "format": "uri"
+                      "format": "uri",
+                      "pattern": "^https://"
                     },
                     "minItems": 1,
                     "maxItems": 6,
@@ -66,7 +79,7 @@
                       "9:16"
                     ],
                     "default": "1:1",
-                    "description": "Aspect ratio of the synthesized reference view for text->3D."
+                    "description": "Aspect ratio of the reference view synthesized from the prompt for text to 3D. Ignored for image to 3D."
                   }
                 }
               },
@@ -93,7 +106,7 @@
         },
         "responses": {
           "200": {
-            "description": "Paid result as JSON."
+            "description": "JSON job handle: job_id, status (queued, or done when a draft finishes inline), poll_url, mode, tier, and price_usdc. When status is done the response also carries glb_url."
           },
           "400": {
             "description": "Missing or invalid input. Refused before any payment settles."
@@ -123,7 +136,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Result as JSON. No payment required."
+            "description": "JSON job state: status (queued, running, done, failed). Generation jobs return glb_url when done; pipeline jobs return per-stage progress in stages and the final GLB in result_glb_url. No payment required."
           }
         }
       }
@@ -132,7 +145,7 @@
       "post": {
         "operationId": "pipeline",
         "summary": "Submit a chained 3D job: generate, rig, remesh, stylize",
-        "description": "Run an ordered chain of 3D stages (generate, rig, remesh, gameready, stylize) in one paid call. The 402 quotes the sum of the requested stages. Returns a job token to poll for free.",
+        "description": "Run an ordered chain of 3D stages in one paid call. Per-stage prices: generate $0.05, rig $0.10, remesh $0.08, gameready $0.12, stylize $0.06; the 402 quotes their sum. These are not the standalone endpoint prices. GET this path for free to read the live stage list and prices.",
         "security": [],
         "requestBody": {
           "required": true,
@@ -143,6 +156,25 @@
                 "required": [
                   "stages"
                 ],
+                "if": {
+                  "properties": {
+                    "stages": {
+                      "contains": {
+                        "const": "generate"
+                      }
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "prompt"
+                  ]
+                },
+                "else": {
+                  "required": [
+                    "glb_url"
+                  ]
+                },
                 "properties": {
                   "stages": {
                     "type": "array",
@@ -173,7 +205,142 @@
                   },
                   "options": {
                     "type": "object",
-                    "description": "Per-stage options keyed by stage: tier and aspect_ratio for generate, rig_type for rig, remesh settings, gameready topology and poly_budget, stylize style and resolution."
+                    "description": "Optional stage settings. tier and aspect_ratio sit directly in options and apply to the generate stage; the other stages each read their own nested object.",
+                    "properties": {
+                      "tier": {
+                        "type": "string",
+                        "enum": [
+                          "draft",
+                          "standard",
+                          "high"
+                        ],
+                        "default": "standard",
+                        "description": "Generate stage quality tier."
+                      },
+                      "aspect_ratio": {
+                        "type": "string",
+                        "enum": [
+                          "1:1",
+                          "4:3",
+                          "3:4",
+                          "16:9",
+                          "9:16"
+                        ],
+                        "default": "1:1",
+                        "description": "Generate stage reference view aspect ratio."
+                      },
+                      "rig": {
+                        "type": "object",
+                        "description": "Rig stage settings.",
+                        "properties": {
+                          "rig_type": {
+                            "type": "string",
+                            "enum": [
+                              "biped",
+                              "quadruped"
+                            ],
+                            "default": "biped",
+                            "description": "Skeleton to infer."
+                          }
+                        }
+                      },
+                      "remesh": {
+                        "type": "object",
+                        "description": "Remesh stage settings.",
+                        "properties": {
+                          "remesh_mode": {
+                            "type": "string",
+                            "enum": [
+                              "triangle",
+                              "quad",
+                              "lowpoly"
+                            ],
+                            "default": "triangle",
+                            "description": "Output topology."
+                          },
+                          "operation": {
+                            "type": "string",
+                            "enum": [
+                              "full",
+                              "simplify",
+                              "repair",
+                              "convert"
+                            ],
+                            "default": "full",
+                            "description": "full remeshes and re-bakes; the others run one step only."
+                          },
+                          "target_faces": {
+                            "type": "integer",
+                            "minimum": 1000,
+                            "maximum": 500000,
+                            "default": 50000,
+                            "description": "Target face count."
+                          },
+                          "texture_size": {
+                            "type": "integer",
+                            "enum": [
+                              512,
+                              1024,
+                              2048
+                            ],
+                            "default": 1024,
+                            "description": "Re-baked texture edge length in pixels."
+                          }
+                        }
+                      },
+                      "gameready": {
+                        "type": "object",
+                        "description": "Gameready stage settings.",
+                        "properties": {
+                          "topology": {
+                            "type": "string",
+                            "enum": [
+                              "quad",
+                              "tri"
+                            ],
+                            "default": "quad",
+                            "description": "Output topology."
+                          },
+                          "poly_budget": {
+                            "type": "integer",
+                            "minimum": 1000,
+                            "maximum": 500000,
+                            "default": 15000,
+                            "description": "Maximum polygon count."
+                          },
+                          "texture_size": {
+                            "type": "integer",
+                            "enum": [
+                              1024,
+                              2048
+                            ],
+                            "default": 2048,
+                            "description": "Re-baked PBR texture edge length in pixels."
+                          }
+                        }
+                      },
+                      "stylize": {
+                        "type": "object",
+                        "description": "Stylize stage settings.",
+                        "properties": {
+                          "style": {
+                            "type": "string",
+                            "enum": [
+                              "voxel",
+                              "brick",
+                              "voronoi",
+                              "lowpoly"
+                            ],
+                            "default": "voxel",
+                            "description": "Geometric style."
+                          },
+                          "resolution": {
+                            "type": "integer",
+                            "description": "Style density, clamped to the range of the chosen style (voxel 8-96, brick 8-64, voronoi 12-120, lowpoly 8-120)."
+                          }
+                        }
+                      }
+                    }
                   }
                 }
               },
@@ -208,7 +375,7 @@
         },
         "responses": {
           "200": {
-            "description": "Paid result as JSON."
+            "description": "JSON job handle: job_id, status, poll_url, price_usdc, and stages (id, status, output_url per stage). Poll GET /api/forge?job=<job_id> for free until status is done."
           },
           "400": {
             "description": "Missing or invalid input. Refused before any payment settles."
@@ -272,7 +439,7 @@
         },
         "responses": {
           "200": {
-            "description": "Paid result as JSON."
+            "description": "JSON: stage, input_url, and output_url, a durable URL to the rigged GLB."
           },
           "400": {
             "description": "Missing or invalid input. Refused before any payment settles."
@@ -366,7 +533,7 @@
         },
         "responses": {
           "200": {
-            "description": "Paid result as JSON."
+            "description": "JSON: stage, input_url, output_url (durable GLB URL), and the settings applied."
           },
           "400": {
             "description": "Missing or invalid input. Refused before any payment settles."
@@ -447,7 +614,7 @@
         },
         "responses": {
           "200": {
-            "description": "Paid result as JSON."
+            "description": "JSON: stage, input_url, output_url (durable GLB URL), and the settings applied."
           },
           "400": {
             "description": "Missing or invalid input. Refused before any payment settles."
@@ -492,7 +659,9 @@
                   },
                   "resolution": {
                     "type": "integer",
-                    "description": "Style density, clamped per filter."
+                    "minimum": 8,
+                    "maximum": 120,
+                    "description": "Style density, clamped to the range of the chosen style: voxel 8-96 (default 32), brick 8-64 (default 24), voronoi 12-120 (default 48), lowpoly 8-120 (default 40)."
                   }
                 }
               },
@@ -518,7 +687,7 @@
         },
         "responses": {
           "200": {
-            "description": "Paid result as JSON."
+            "description": "JSON: stage, input_url, output_url (durable GLB URL), style, resolution, and face_count."
           },
           "400": {
             "description": "Missing or invalid input. Refused before any payment settles."
@@ -586,7 +755,7 @@
         },
         "responses": {
           "200": {
-            "description": "Paid result as JSON."
+            "description": "JSON: stage, input_url, and output_url, a durable URL to a transparent PNG (not a GLB)."
           },
           "400": {
             "description": "Missing or invalid input. Refused before any payment settles."
@@ -630,7 +799,7 @@
         },
         "responses": {
           "200": {
-            "description": "Paid result as JSON."
+            "description": "JSON report: url, fetchedBytes, model (vertex, triangle, material, texture, animation, and extension stats), and suggestions. Returns no model file."
           },
           "400": {
             "description": "Missing or invalid input. Refused before any payment settles."
@@ -693,7 +862,7 @@
         },
         "responses": {
           "200": {
-            "description": "Paid result as JSON."
+            "description": "JSON: remix (glbUrl and viewerUrl of the new model), source, royalty, and fee details."
           },
           "400": {
             "description": "Missing or invalid input. Refused before any payment settles."
@@ -715,16 +884,19 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "description": "Number of remixable models to return.",
+            "description": "Number of remixable models to return, 1 to 48. Default 24.",
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 48,
+              "default": 24
             },
             "example": 12
           }
         ],
         "responses": {
           "200": {
-            "description": "Result as JSON. No payment required."
+            "description": "JSON: items, each with id, prompt, glbUrl, preview URL, royalty percentage, and remix count. No payment required."
           }
         }
       }
@@ -767,12 +939,12 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 600,
-                    "description": "Appearance of the avatar in plain language. Give this or image_url."
+                    "description": "Appearance of the avatar in plain language. Give this or image_url, not both."
                   },
                   "image_url": {
                     "type": "string",
                     "format": "uri",
-                    "description": "Public photo of the subject to build the avatar from. Give this or prompt."
+                    "description": "Public http(s) photo of the subject to build the avatar from. Give this or prompt, not both."
                   },
                   "personality": {
                     "type": "string",
@@ -781,7 +953,21 @@
                   },
                   "voice": {
                     "type": "string",
-                    "description": "Optional voice id for the avatar's speech."
+                    "description": "Optional voice id for the avatar's speech. Default nova.",
+                    "enum": [
+                      "nova",
+                      "alloy",
+                      "ash",
+                      "ballad",
+                      "coral",
+                      "echo",
+                      "fable",
+                      "onyx",
+                      "sage",
+                      "shimmer",
+                      "verse"
+                    ],
+                    "default": "nova"
                   }
                 }
               },
@@ -807,7 +993,7 @@
         },
         "responses": {
           "200": {
-            "description": "Paid result as JSON."
+            "description": "JSON: agent_id, glb_url, viewer_url, profile_url, embed_html, voice, and rigged."
           },
           "400": {
             "description": "Missing or invalid input. Refused before any payment settles."
@@ -852,7 +1038,7 @@
         },
         "responses": {
           "200": {
-            "description": "Paid result as JSON."
+            "description": "JSON: mint, theme (name, symbol, color, image), and glb with the model bytes base64-encoded (mimeType model/gltf-binary). The GLB is inline, not a URL."
           },
           "400": {
             "description": "Missing or invalid input. Refused before any payment settles."
@@ -914,7 +1100,7 @@
         },
         "responses": {
           "200": {
-            "description": "Paid result as JSON."
+            "description": "JSON: count and results, one per mint, each either ok with the GLB base64-encoded inline or an error code for that mint."
           },
           "400": {
             "description": "Missing or invalid input. Refused before any payment settles."

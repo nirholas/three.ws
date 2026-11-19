@@ -72,8 +72,9 @@ export const FORGE_INPUT_SCHEMA = Object.freeze({
 	$schema: 'https://json-schema.org/draft/2020-12/schema',
 	type: 'object',
 	description:
-		'Provide exactly one of prompt (text→3D) or image_urls (image→3D). tier and ' +
+		'Provide exactly one of prompt (text to 3D) or image_urls (image to 3D). tier and ' +
 		'aspect_ratio are optional; tier defaults to "standard".',
+	oneOf: [{ required: ['prompt'] }, { required: ['image_urls'] }],
 	properties: {
 		prompt: {
 			type: 'string',
@@ -83,7 +84,8 @@ export const FORGE_INPUT_SCHEMA = Object.freeze({
 		},
 		image_urls: {
 			type: 'array',
-			items: { type: 'string', format: 'uri' },
+			// The handler refuses anything but https (invalid_image_urls).
+			items: { type: 'string', format: 'uri', pattern: '^https://' },
 			minItems: 1,
 			maxItems: FORGE_MAX_VIEWS,
 			description:
@@ -103,7 +105,9 @@ export const FORGE_INPUT_SCHEMA = Object.freeze({
 			type: 'string',
 			enum: [...FORGE_ASPECT_RATIOS],
 			default: '1:1',
-			description: 'Aspect ratio of the synthesized reference view for text→3D.',
+			description:
+				'Aspect ratio of the reference view synthesized from the prompt for text to 3D. ' +
+				'Ignored for image to 3D.',
 		},
 	},
 });

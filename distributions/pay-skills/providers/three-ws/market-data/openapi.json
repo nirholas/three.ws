@@ -102,21 +102,27 @@
             "name": "page",
             "in": "query",
             "required": false,
-            "description": "Page number, 1-20. Default 1.",
+            "description": "Page number, 1 to 20. Default 1.",
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20,
+              "default": 1
             },
-            "example": "1"
+            "example": 1
           },
           {
             "name": "per_page",
             "in": "query",
             "required": false,
-            "description": "Rows per page, 10-250. Default 100.",
+            "description": "Rows per page, 10 to 250. Default 100.",
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 250,
+              "default": 100
             },
-            "example": "100"
+            "example": 100
           },
           {
             "name": "category",
@@ -133,7 +139,8 @@
             "required": false,
             "description": "Search mode: resolve a name or ticker to coin ids and return the top 10 matches.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 64
             }
           }
         ],
@@ -237,9 +244,17 @@
             "required": false,
             "description": "Window: 1, 7, 30, 90, or 365. Default 30.",
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "enum": [
+                1,
+                7,
+                30,
+                90,
+                365
+              ],
+              "default": 30
             },
-            "example": "30"
+            "example": 30
           }
         ],
         "x-payment-info": {
@@ -344,7 +359,10 @@
             "required": false,
             "description": "Set to 'exchanges' for the derivatives-venue leaderboard; omit for perp tickers.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "exchanges"
+              ]
             }
           }
         ],
@@ -531,11 +549,11 @@
             "name": "stablecoin",
             "in": "query",
             "required": false,
-            "description": "'true' for stablecoin pools only, 'false' to exclude them.",
+            "description": "true for stablecoin pools only, false to exclude them; omit for both.",
             "schema": {
-              "type": "string"
+              "type": "boolean"
             },
-            "example": "true"
+            "example": true
           },
           {
             "name": "search",
@@ -552,7 +570,9 @@
             "required": false,
             "description": "Minimum pool TVL in USD.",
             "schema": {
-              "type": "string"
+              "type": "number",
+              "minimum": 0,
+              "default": 0
             }
           },
           {
@@ -561,7 +581,12 @@
             "required": false,
             "description": "'tvl' (default) or 'apy' (dust-guarded to pools >= $10k TVL).",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "tvl",
+                "apy"
+              ],
+              "default": "tvl"
             },
             "example": "apy"
           },
@@ -569,9 +594,12 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "description": "Rows per page, 1-200. Default 100.",
+            "description": "Rows per page, 1 to 200. Default 100.",
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 100
             }
           },
           {
@@ -580,7 +608,10 @@
             "required": false,
             "description": "Pagination offset. Default 0.",
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "maximum": 1000000
             }
           },
           {
@@ -661,9 +692,14 @@
             "name": "type",
             "in": "query",
             "required": false,
-            "description": "'fees' (default, what users pay) or 'revenue' (what the protocol keeps).",
+            "description": "'fees' (default: what users pay) or 'revenue' (what the protocol keeps).",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "fees",
+                "revenue"
+              ],
+              "default": "fees"
             },
             "example": "fees"
           }
@@ -746,9 +782,12 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "description": "Rows per page, 1-200. Default 100.",
+            "description": "Rows per page, 1 to 200. Default 100.",
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 100
             }
           },
           {
@@ -757,7 +796,9 @@
             "required": false,
             "description": "Pagination offset. Default 0.",
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
             }
           }
         ],

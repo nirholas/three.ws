@@ -95,7 +95,8 @@
             "required": false,
             "description": "Minimum confirmed on-chain payments the agent must have received.",
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "minimum": 0
             },
             "example": 10
           },
@@ -105,7 +106,8 @@
             "required": false,
             "description": "Minimum number of distinct wallets that have paid the agent.",
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "minimum": 0
             },
             "example": 3
           },
@@ -115,7 +117,10 @@
             "required": false,
             "description": "Highest acceptable payment failure rate, from 0 to 1.",
             "schema": {
-              "type": "number"
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 1
             },
             "example": 0.2
           },
@@ -125,7 +130,8 @@
             "required": false,
             "description": "Minimum signed Solana attestations the agent must hold.",
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "minimum": 0
             }
           },
           {
@@ -134,7 +140,8 @@
             "required": false,
             "description": "Admit agents with no history yet instead of refusing them.",
             "schema": {
-              "type": "boolean"
+              "type": "boolean",
+              "default": true
             }
           }
         ],
@@ -254,7 +261,8 @@
                       "medium",
                       "low"
                     ],
-                    "description": "How hard low-authority sources are downweighted: high, medium, or low."
+                    "description": "How hard low-authority sources are downweighted: high, medium (default), or low.",
+                    "default": "medium"
                   },
                   "imageUrl": {
                     "type": "string",

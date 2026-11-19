@@ -39,6 +39,8 @@ export default {
 			strictness: {
 				type: 'string',
 				enum: ['high', 'medium', 'low'],
+				description: 'How aggressively low-authority sources are downweighted.',
+				default: 'medium',
 			},
 			imageUrl: {
 				type: 'string',

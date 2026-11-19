@@ -4,6 +4,17 @@
 // the OKX storefront projection reads the same record (toOkxCatalog).
 // Contract: specs/service-catalog.md. Do not re-add a hand-written mirror
 // for this route in api/wk.js — edit this descriptor instead.
+//
+// The style enum and the density range come from api/_lib/stylize-bounds.js,
+// the table the handler clamps with, so the advertised range is the real one.
+
+import {
+	STYLE_IDS,
+	DEFAULT_STYLE,
+	RESOLUTION_MIN,
+	RESOLUTION_MAX,
+	styleRangesText,
+} from '../../stylize-bounds.js';
 
 export default {
 	slug: 'pipeline-stylize',
@@ -35,12 +46,14 @@ export default {
 			},
 			style: {
 				type: 'string',
-				enum: ['voxel', 'brick', 'voronoi', 'lowpoly'],
-				default: 'voxel',
+				enum: [...STYLE_IDS],
+				default: DEFAULT_STYLE,
 			},
 			resolution: {
 				type: 'integer',
-				description: 'Style density, clamped per filter.',
+				minimum: RESOLUTION_MIN,
+				maximum: RESOLUTION_MAX,
+				description: `Style density, clamped to the range of the chosen style: ${styleRangesText({ withDefaults: true })}.`,
 			},
 		},
 	},

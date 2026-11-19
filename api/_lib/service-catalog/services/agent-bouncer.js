@@ -33,20 +33,29 @@ export default {
 				type: 'string',
 				format: 'uuid',
 			},
+			// Defaults are the permissive policy the handler applies when a
+			// threshold is omitted (api/x402/agent-bouncer.js parseCount / parseRate).
 			min_payments: {
 				type: 'integer',
+				minimum: 0,
 			},
 			min_distinct_payers: {
 				type: 'integer',
+				minimum: 0,
 			},
 			max_failure_rate: {
 				type: 'number',
+				minimum: 0,
+				maximum: 1,
+				default: 1,
 			},
 			min_attestations: {
 				type: 'integer',
+				minimum: 0,
 			},
 			allow_newcomers: {
 				type: 'boolean',
+				default: true,
 			},
 		},
 	},

@@ -21,21 +21,16 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { assertPublicHttpsUrl, SsrfError } from './_lib/ssrf.js';
 import { createRegenProvider } from './_providers/gcp.js';
 import { isFbxMeshUrl, STYLIZE_FBX_MESSAGE } from './_lib/mesh-input.js';
+// Density bounds per filter (shared with the paid pipeline-stylize stage). The
+// worker re-clamps server-side; clamping here too keeps the API honest and
+// avoids a pointless round-trip on bad input.
+import { STYLE_BOUNDS } from './_lib/stylize-bounds.js';
 
 // Provider job ids are base64url JSON envelopes (packJobId in _providers/gcp.js)
 // and run several hundred chars — a 64-char cap 400s every poll.
 const JOB_ID_RE = /^[A-Za-z0-9_-]{20,600}$/;
 const VALID_FORMATS = new Set(['glb', 'obj', 'stl', 'ply']);
 
-// Density bounds per filter — kept in lockstep with workers/stylize STYLE_CATALOG
-// and src/shared/stylize-filters.js. The worker re-clamps server-side; clamping
-// here too keeps the API honest and avoids a pointless round-trip on bad input.
-const STYLE_BOUNDS = {
-	voxel: { def: 32, min: 8, max: 96 },
-	brick: { def: 24, min: 8, max: 64 },
-	voronoi: { def: 48, min: 12, max: 120 },
-	lowpoly: { def: 40, min: 8, max: 120 },
-};
 
 function unconfigured(res) {
 	return json(res, 503, {

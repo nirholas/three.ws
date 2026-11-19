@@ -27,6 +27,7 @@
 import { json } from './http.js';
 import { priceFor } from './x402-prices.js';
 import { resolveTier } from './forge-tiers.js';
+import { CANONICAL_ORDER, PIPELINE_OPTIONS_SCHEMA, optionValue } from './pipeline-listing.js';
 import { decodeJobToken } from './forge-job-token.js';
 import { sanitizeJobError } from './provider-job-error.js';
 import { createRegenProvider as createGcpProvider } from '../_providers/gcp.js';
@@ -39,12 +40,16 @@ import {
 	publicView,
 } from './pipeline-store.js';
 
-// Canonical stage order. A requested chain must be a SUBSEQUENCE of this list —
-// that single rule enforces "generate is first" and rejects nonsensical orders
-// (e.g. rig before generate, stylize before rig) without a bespoke check per pair.
-export const CANONICAL_ORDER = ['generate', 'rig', 'remesh', 'gameready', 'stylize'];
+// Canonical stage order (defined in pipeline-listing.js). A requested chain
+// must be a SUBSEQUENCE of this list, and that single rule enforces "generate is
+// first" and rejects nonsensical orders (e.g. rig before generate, stylize
+// before rig) without a bespoke check per pair.
+export { CANONICAL_ORDER };
 
-const VALID_ASPECT = new Set(['1:1', '4:3', '3:4', '16:9', '9:16']);
+// Each stage's option leaves (enum or range plus default), shared with the
+// published input schema so the listing cannot advertise a range the engine
+// does not apply.
+const OPT = PIPELINE_OPTIONS_SCHEMA.properties;
 
 function envSet(name) {
 	const v = process.env?.[name];
@@ -53,12 +58,6 @@ function envSet(name) {
 
 function nowIso() {
 	return new Date().toISOString();
-}
-
-function clamp(n, min, max, fallback) {
-	const v = Number(n);
-	if (!Number.isFinite(v)) return fallback;
-	return Math.max(min, Math.min(max, Math.round(v)));
 }
 
 // Normalize a submitGeneration() response (which may be inline-done or a forge
@@ -102,7 +101,7 @@ export const STAGES = {
 		},
 		async submit({ prompt, options }) {
 			const tier = resolveTier(options?.tier).id;
-			const aspect = VALID_ASPECT.has(options?.aspect_ratio) ? options.aspect_ratio : '1:1';
+			const aspect = optionValue(OPT.aspect_ratio, options?.aspect_ratio);
 			// Lazy import: the generate lane reuses the paid forge route's free-first
 			// multi-lane submit, which transitively pulls in the payment SDK. Loading
 			// it on demand keeps the engine module (grammar/pricing/rig/optimize) free
@@ -160,7 +159,7 @@ export const STAGES = {
 			const job = await provider.submit({
 				mode: 'rerig',
 				sourceUrl: glbUrl,
-				params: { rig_type: options?.rig?.rig_type || 'biped' },
+				params: { rig_type: options?.rig?.rig_type || OPT.rig.properties.rig_type.default },
 			});
 			return { done: false, provider: providerName, extJobId: job.extJobId };
 		},
@@ -181,14 +180,15 @@ export const STAGES = {
 		async submit({ glbUrl, options }) {
 			const gcp = createGcpProvider();
 			const o = options?.remesh || {};
+			const spec = OPT.remesh.properties;
 			const job = await gcp.submit({
 				mode: 'remesh',
 				sourceUrl: glbUrl,
 				params: {
-					remesh_mode: ['triangle', 'quad', 'lowpoly'].includes(o.remesh_mode) ? o.remesh_mode : 'triangle',
-					operation: ['full', 'simplify', 'repair', 'convert'].includes(o.operation) ? o.operation : 'full',
-					target_faces: clamp(o.target_faces, 1000, 500000, 50000),
-					texture_size: [512, 1024, 2048].includes(o.texture_size) ? o.texture_size : 1024,
+					remesh_mode: optionValue(spec.remesh_mode, o.remesh_mode),
+					operation: optionValue(spec.operation, o.operation),
+					target_faces: optionValue(spec.target_faces, o.target_faces),
+					texture_size: optionValue(spec.texture_size, o.texture_size),
 					output_format: 'glb',
 				},
 			});
@@ -213,15 +213,16 @@ export const STAGES = {
 			// quad → field-aligned QuadriFlow retopo, tri → silhouette low-poly.
 			const gcp = createGcpProvider();
 			const o = options?.gameready || {};
-			const remeshMode = o.topology === 'tri' ? 'lowpoly' : 'quad';
+			const spec = OPT.gameready.properties;
+			const remeshMode = optionValue(spec.topology, o.topology) === 'tri' ? 'lowpoly' : 'quad';
 			const job = await gcp.submit({
 				mode: 'remesh',
 				sourceUrl: glbUrl,
 				params: {
 					remesh_mode: remeshMode,
 					operation: 'full',
-					target_faces: clamp(o.poly_budget, 1000, 500000, 15000),
-					texture_size: [1024, 2048].includes(o.texture_size) ? o.texture_size : 2048,
+					target_faces: optionValue(spec.poly_budget, o.poly_budget),
+					texture_size: optionValue(spec.texture_size, o.texture_size),
 					output_format: 'glb',
 				},
 			});
@@ -248,7 +249,7 @@ export const STAGES = {
 				mode: 'stylize',
 				sourceUrl: glbUrl,
 				params: {
-					style: ['voxel', 'brick', 'voronoi', 'lowpoly'].includes(o.style) ? o.style : 'voxel',
+					style: optionValue(OPT.stylize.properties.style, o.style),
 					resolution: Number.isFinite(Number(o.resolution)) ? Number(o.resolution) : null,
 					output_format: 'glb',
 				},
