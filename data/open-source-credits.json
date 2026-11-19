@@ -249,7 +249,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/elalish/manifold",
 			"funding": null,
-			"version": "3.5.4",
+			"version": "3.5.5",
 			"powers": "Boolean mesh operations (union, difference, intersection) in the mesh-ops pipeline."
 		},
 		{
@@ -473,7 +473,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/vercel/ai",
 			"funding": null,
-			"version": "4.0.99",
+			"version": "4.0.105",
 			"powers": null
 		},
 		{
@@ -484,7 +484,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/vercel/ai",
 			"funding": null,
-			"version": "4.0.111",
+			"version": "4.0.118",
 			"powers": null
 		},
 		{
@@ -506,7 +506,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1165.0",
+			"version": "3.1169.0",
 			"powers": null
 		},
 		{
@@ -517,7 +517,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1166.0",
+			"version": "3.1169.0",
 			"powers": null
 		},
 		{
@@ -540,6 +540,17 @@
 			"repo": "https://github.com/dequelabs/axe-core-npm",
 			"funding": null,
 			"version": "4.14.0",
+			"powers": null
+		},
+		{
+			"id": "npm:@azure/msal-browser",
+			"kind": "npm",
+			"name": "@azure/msal-browser",
+			"area": "infrastructure",
+			"license": "MIT",
+			"repo": "https://github.com/AzureAD/microsoft-authentication-library-for-js",
+			"funding": null,
+			"version": "5.27.0",
 			"powers": null
 		},
 		{
@@ -858,7 +869,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/metaplex-foundation/genesis",
 			"funding": null,
-			"version": "0.43.6",
+			"version": "0.44.0",
 			"powers": null
 		},
 		{
@@ -948,6 +959,17 @@
 			"funding": null,
 			"version": "1.32.2",
 			"powers": "The MCP server and tool definitions three.ws exposes to agent clients."
+		},
+		{
+			"id": "npm:@napi-rs/canvas",
+			"kind": "npm",
+			"name": "@napi-rs/canvas",
+			"area": "infrastructure",
+			"license": "MIT",
+			"repo": "https://github.com/Brooooooklyn/canvas",
+			"funding": "https://github.com/sponsors/Brooooooklyn",
+			"version": "1.1.1",
+			"powers": null
 		},
 		{
 			"id": "npm:@neondatabase/serverless",
@@ -1122,7 +1144,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/solana-mobile/mobile-wallet-adapter",
 			"funding": null,
-			"version": "3.0.1",
+			"version": "3.0.2",
 			"powers": null
 		},
 		{
@@ -1342,7 +1364,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/upstash/qstash-js",
 			"funding": null,
-			"version": "2.12.1",
+			"version": "2.12.2",
 			"powers": null
 		},
 		{
@@ -1397,7 +1419,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/x402-foundation/x402",
 			"funding": null,
-			"version": "2.30.0",
+			"version": "2.31.0",
 			"powers": null
 		},
 		{
@@ -1419,7 +1441,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/x402-foundation/x402",
 			"funding": null,
-			"version": "2.30.0",
+			"version": "2.31.0",
 			"powers": null
 		},
 		{
@@ -1441,7 +1463,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/x402-foundation/x402",
 			"funding": null,
-			"version": "2.30.0",
+			"version": "2.31.0",
 			"powers": null
 		},
 		{
@@ -1463,7 +1485,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/x402-foundation/x402",
 			"funding": null,
-			"version": "2.30.0",
+			"version": "2.31.0",
 			"powers": null
 		},
 		{
@@ -1551,7 +1573,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/vercel/ai",
 			"funding": null,
-			"version": "7.0.166",
+			"version": "7.0.173",
 			"powers": "The Vercel AI SDK powering agent chat streaming and tool calls."
 		},
 		{
@@ -1716,7 +1738,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/harrisiirak/cron-parser",
 			"funding": null,
-			"version": "5.10.4",
+			"version": "5.10.6",
 			"powers": null
 		},
 		{
@@ -1727,7 +1749,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/streetsidesoftware/cspell",
 			"funding": null,
-			"version": "10.4.0",
+			"version": "10.5.1",
 			"powers": null
 		},
 		{
@@ -1760,7 +1782,7 @@
 			"license": "(MPL-2.0 OR Apache-2.0)",
 			"repo": "https://github.com/cure53/DOMPurify",
 			"funding": null,
-			"version": "3.4.17",
+			"version": "3.4.18",
 			"powers": null
 		},
 		{
@@ -1903,7 +1925,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/helius-labs/helius-sdk",
 			"funding": null,
-			"version": "3.4.0",
+			"version": "3.5.0",
 			"powers": null
 		},
 		{
@@ -1958,7 +1980,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/panva/jose",
 			"funding": "https://github.com/sponsors/panva",
-			"version": "6.2.15",
+			"version": "6.2.17",
 			"powers": null
 		},
 		{
@@ -1969,7 +1991,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/jsdom/jsdom",
 			"funding": null,
-			"version": "31.0.0",
+			"version": "31.0.1",
 			"powers": null
 		},
 		{
@@ -2083,6 +2105,17 @@
 			"powers": null
 		},
 		{
+			"id": "npm:mediabunny",
+			"kind": "npm",
+			"name": "mediabunny",
+			"area": "infrastructure",
+			"license": "MPL-2.0",
+			"repo": "https://github.com/Vanilagy/mediabunny",
+			"funding": "https://github.com/sponsors/Vanilagy",
+			"version": "1.66.0",
+			"powers": null
+		},
+		{
 			"id": "vendor:modly",
 			"kind": "vendored",
 			"name": "Modly",
@@ -2101,7 +2134,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/wevm/mppx",
 			"funding": null,
-			"version": "0.17.6",
+			"version": "0.19.0",
 			"powers": null
 		},
 		{
@@ -2123,7 +2156,7 @@
 			"license": "ISC",
 			"repo": "https://github.com/N8python/n8ao",
 			"funding": null,
-			"version": "2.0.1",
+			"version": "2.0.2",
 			"powers": null
 		},
 		{
@@ -2156,7 +2189,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/jens-maus/node-ical",
 			"funding": null,
-			"version": "0.27.3",
+			"version": "0.27.6",
 			"powers": null
 		},
 		{
@@ -2222,7 +2255,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/prettier/prettier",
 			"funding": "https://github.com/prettier/prettier?sponsor=1",
-			"version": "3.9.10",
+			"version": "3.10.1",
 			"powers": null
 		},
 		{
@@ -2255,7 +2288,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/puppeteer/puppeteer/tree/main/packages/puppeteer-core",
 			"funding": null,
-			"version": "25.16.0",
+			"version": "25.17.0",
 			"powers": "Headless Chromium automation for server-side rendering and screenshots."
 		},
 		{
@@ -2288,7 +2321,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/resend/resend-node",
 			"funding": null,
-			"version": "6.37.0",
+			"version": "6.38.1",
 			"powers": null
 		},
 		{
@@ -2365,7 +2398,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/bennycode/trading-signals",
 			"funding": null,
-			"version": "8.3.0",
+			"version": "8.4.0",
 			"powers": null
 		},
 		{
@@ -2453,7 +2486,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/wevm/viem",
 			"funding": "https://github.com/sponsors/wevm",
-			"version": "2.57.16",
+			"version": "2.57.20",
 			"powers": "Typed EVM client used alongside ethers for EVM-chain integrations."
 		},
 		{
@@ -2464,7 +2497,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/vitejs/vite",
 			"funding": "https://github.com/vitejs/vite?sponsor=1",
-			"version": "8.3.7",
+			"version": "8.3.8",
 			"powers": null
 		},
 		{
@@ -2607,7 +2640,7 @@
 			"license": "Apache-2.0",
 			"repo": "http://mediapipe.dev",
 			"funding": null,
-			"version": "1.2.2",
+			"version": "1.2.3",
 			"powers": "Pose, hand, and face landmark detection behind video-to-motion capture and the home voice camera lane."
 		},
 		{
@@ -2978,7 +3011,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/elevenlabs/elevenlabs-js",
 			"funding": null,
-			"version": "2.77.0",
+			"version": "2.78.0",
 			"powers": "The agent's text-to-speech voice in chat, calls, and the home voice loop."
 		},
 		{
