@@ -84,6 +84,55 @@ function load() {
 }
 
 
+// Merged pull requests the owner authored in repositories someone else owns:
+// the contributions maintainers accepted. Read live from GitHub search so the
+// list grows on its own. A failed fetch throws, which stops a --publish run
+// before it can push a README with the section missing.
+const CONTRIBUTIONS_QUERY = `query($q: String!, $endCursor: String) {
+	search(query: $q, type: ISSUE, first: 100, after: $endCursor) {
+		pageInfo { hasNextPage endCursor }
+		nodes { ... on PullRequest { number url mergedAt repository { nameWithOwner url description stargazerCount isPrivate } } }
+	}
+}`;
+
+function loadContributions() {
+	const out = gh(['api', 'graphql', '--paginate', '-f', `query=${CONTRIBUTIONS_QUERY}`, '-f', `q=is:pr is:merged author:${OWNER} -user:${OWNER}`, '--jq', '.data.search.nodes[]']);
+	return groupContributions(out.split('\n').filter(Boolean).map((l) => JSON.parse(l)));
+}
+
+/** Merged pull requests, one entry per public repository, most-starred first. */
+export function groupContributions(prs) {
+	const byRepo = new Map();
+	for (const pr of prs) {
+		const r = pr.repository;
+		if (!r || r.isPrivate || r.nameWithOwner.toLowerCase().startsWith(`${OWNER.toLowerCase()}/`)) continue;
+		if (!byRepo.has(r.nameWithOwner)) byRepo.set(r.nameWithOwner, { name: r.nameWithOwner, url: r.url, description: r.description || '', stargazerCount: r.stargazerCount, prs: [] });
+		byRepo.get(r.nameWithOwner).prs.push({ number: pr.number, url: pr.url, mergedAt: pr.mergedAt });
+	}
+	const list = [...byRepo.values()];
+	for (const c of list) c.prs.sort((a, b) => a.number - b.number);
+	return list.sort((a, b) => b.stargazerCount - a.stargazerCount || a.name.localeCompare(b.name));
+}
+
+/** The "open-source contributions" README section: every outside repo with an accepted pull request. */
+function contributionsSection(list) {
+	const prCount = list.reduce((n, c) => n + c.prs.length, 0);
+	const firstYear = list.flatMap((c) => c.prs.map((p) => p.mergedAt)).sort()[0].slice(0, 4);
+	const row = (c) => `- [${c.name}](${c.url})${stars(c.stargazerCount)}, merged ${c.prs.map((p) => `[#${p.number}](${p.url})`).join(', ')}${c.description ? `: ${clip(c.description)}` : ''}`;
+	return `
+## Open-source contributions
+
+${lines(prCount)} merged pull ${prCount === 1 ? 'request' : 'requests'} in ${list.length} ${list.length === 1 ? 'repository' : 'repositories'} maintained by other people and teams, since ${firstYear}. Every pull request I authored that a maintainer merged outside my own account, read live from GitHub.
+
+<details open>
+<summary>${list.length} ${list.length === 1 ? 'repository' : 'repositories'}</summary>
+
+${list.map(row).join('\n')}
+
+</details>
+`;
+}
+
 const hours = (h) => `${Math.round(h).toLocaleString('en-US')}`;
 const lines = (n) => n.toLocaleString('en-US');
 const longDate = (d) => new Date(`${d}T00:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
@@ -120,7 +169,7 @@ ${rows.join('\n')}
 `;
 }
 
-export function buildProfile(allRepos, { includeGated = false, activityData = null, now = new Date() } = {}) {
+export function buildProfile(allRepos, { includeGated = false, activityData = null, contributions = null, now = new Date() } = {}) {
 	const repos = includeGated ? allRepos : allRepos.filter((r) => !GATED.test(r.name) && !GATED.test(r.description || ''));
 	const totalStars = repos.reduce((n, r) => n + r.stargazerCount, 0);
 	const featured = repos.slice(0, 6);
@@ -181,7 +230,7 @@ ${pic('growth', 'Cumulative repositories over time, stacked by section')}
 ${pic('languages', 'A spinning 3D donut of primary languages')}
 
 ${pic('punchcard', 'Punchcard of when repositories were created, by weekday and hour')}
-${activity ? activitySection(activity, pic) : ''}
+${activity ? activitySection(activity, pic) : ''}${contributions?.length ? contributionsSection(contributions) : ''}
 ## Find your way
 
 Use the repository topics on the left of any repo, or jump to a section below. Every repo ships a README, an [AGENTS.md](https://agents.md) and an [llms.txt](https://llmstxt.org) so a coding agent can pick it up cold. The full machine-readable list is [repos.json](./repos.json).
@@ -228,7 +277,17 @@ ${groups.map((g) => `- ${g.title}: ${g.items.length} repositories`).join('\n')}
 ## Featured
 
 ${featured.map((r) => `- [${r.name}](https://github.com/${OWNER}/${r.name}): ${clip(r.description, 120)}`).join('\n')}
-`;
+${
+	contributions?.length
+		? `
+## Contributions
+
+Repositories owned by others where ${OWNER} has merged pull requests:
+
+${contributions.map((c) => `- [${c.name}](${c.url}): ${c.prs.length} merged`).join('\n')}
+`
+		: ''
+}`;
 
 	const agents = `# AGENTS.md
 
@@ -279,7 +338,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 				cacheFile: join(process.env.TMPDIR || '/tmp', 'profile-activity-cache.json'),
 				log: console.log,
 			});
-	const out = buildProfile(all, { includeGated: flag('include-gated'), activityData });
+	const contributions = loadContributions();
+	const out = buildProfile(all, { includeGated: flag('include-gated'), activityData, contributions });
 	rmSync(OUT, { recursive: true, force: true });
 	mkdirSync(OUT, { recursive: true });
 	writeFileSync(join(OUT, 'README.md'), out.readme);

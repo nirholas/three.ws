@@ -85,6 +85,8 @@ node scripts/build-github-profile.mjs --out /tmp/profile --no-activity    # cata
 
 A cold run reads about 430 repos and takes a few minutes; the API quota cost is a few hundred GraphQL points.
 
+An **Open-source contributions** section follows How I build: every public repository owned by someone else where a maintainer merged a pull request the owner authored, most-starred first, each with links to its merged pull requests. It comes from one GraphQL search (`is:pr is:merged author:nirholas -user:nirholas`) on every run, so a newly merged PR shows up at the next daily refresh with no hand edit. It lists every such repo regardless of the catalog's crypto gating, because the owner asked for the full record of accepted contributions. `llms.txt` carries the same list. If the search fails, the run throws before `--publish` pushes, so the live README never loses the section.
+
 GitHub shows README images through `<img>`, so there is no script or web font. The 3D is real anyway: a ring drawn in a group rotated by `animateTransform` and squashed by `scale(1, k)` is the exact projection of a ring spinning about a vertical axis, and dots and labels ride inside a counter-rotated group so they stay round and upright. The donut wall is the same rotating ring stacked every 1.5px. Section colors follow the fixed category order, so a section keeps its color in every chart.
 
 ## What GitHub's API cannot do

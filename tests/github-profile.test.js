@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ABOUT_LINKS, buildProfile, onlyStampChanged } from '../scripts/build-github-profile.mjs';
+import { ABOUT_LINKS, buildProfile, groupContributions, onlyStampChanged } from '../scripts/build-github-profile.mjs';
 import { renderVisuals, renderActivityVisuals, shortTitle } from '../scripts/lib/profile-visuals.mjs';
 import { summarizeActivity, BULK_LINES } from '../scripts/lib/profile-activity.mjs';
 
@@ -184,6 +184,44 @@ describe('github profile', () => {
 
 		it('reports identical text as no stamp change so the caller sees no diff at all', () => {
 			expect(onlyStampChanged(page('November 3, 2026', 15), page('November 3, 2026', 15))).toBe(false);
+		});
+	});
+
+	describe('open-source contributions', () => {
+		const pr = (repo, number, mergedAt, extra = {}) => ({
+			number,
+			url: `https://github.com/${repo}/pull/${number}`,
+			mergedAt,
+			repository: { nameWithOwner: repo, url: `https://github.com/${repo}`, description: `${repo} description`, stargazerCount: repo.length, isPrivate: false, ...extra },
+		});
+		const prs = [
+			pr('acme/list', 12, '2026-10-11T00:00:00Z'),
+			pr('acme/list', 3, '2026-10-12T00:00:00Z'),
+			pr('bigorg/protocol', 7, '2024-06-26T00:00:00Z', { stargazerCount: 5000 }),
+			pr('secret/internal', 1, '2026-01-01T00:00:00Z', { isPrivate: true }),
+			pr('Nirholas/own-repo', 2, '2026-01-01T00:00:00Z'),
+		];
+
+		it('groups merged pull requests per outside public repo, most-starred first, oldest PR number first', () => {
+			const list = groupContributions(prs);
+			expect(list.map((c) => c.name)).toEqual(['bigorg/protocol', 'acme/list']);
+			expect(list[1].prs.map((p) => p.number)).toEqual([3, 12]);
+		});
+
+		it('lists each repo with links to its merged pull requests and summarizes the totals', () => {
+			const contributions = groupContributions(prs);
+			const { readme, llms } = buildProfile(repos, { contributions });
+			const section = readme.slice(readme.indexOf('## Open-source contributions'), readme.indexOf('## Find your way'));
+			expect(section).toContain('3 merged pull requests in 2 repositories maintained by other people and teams, since 2024.');
+			expect(section).toContain('- [bigorg/protocol](https://github.com/bigorg/protocol) ★5000, merged [#7](https://github.com/bigorg/protocol/pull/7): bigorg/protocol description');
+			expect(section).toContain('merged [#3](https://github.com/acme/list/pull/3), [#12](https://github.com/acme/list/pull/12)');
+			expect(section).not.toMatch(/secret\/internal|own-repo|[\u2013\u2014]/);
+			expect(llms).toContain('- [acme/list](https://github.com/acme/list): 2 merged');
+		});
+
+		it('leaves the section out when there is nothing to list', () => {
+			expect(buildProfile(repos).readme).not.toContain('## Open-source contributions');
+			expect(buildProfile(repos, { contributions: [] }).llms).not.toContain('## Contributions');
 		});
 	});
 
