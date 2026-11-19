@@ -4,6 +4,13 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-11-19
+
+- **A busy multi-view lane asks you to retry instead of quietly downgrading your model**: When the Pixal3D multi-view lane was at capacity, Forge silently handed the job to single-view TRELLIS, which ignored the extra angles you uploaded. Forge now tells you the lane is busy and to retry in about 30 seconds, instead of switching lanes behind your back. `[improvement]`
+- **Image to 3D from a reference photo works again**: Since our object storage credential was rejected, uploaded reference images were saved to the backup bucket but the GPU lanes were still sent the old storage address, which answered 404. For most of today, nearly every image-to-3D request failed with "input image unusable". Reference images now reach TRELLIS and TripoSG through three.ws/cdn, which serves from whichever bucket holds the file, and generations from a photo complete again. `[fix]`
+- **The x402 VS Code extension shows real $THREE prices**: Endpoints priced in $THREE showed Infinity in the payment summary and the confirm prompt. Amounts now use the token's declared decimals, so you see the actual price, for example 10.000000 $THREE, before you approve a payment. `[fix, sdk]`
+- **Two-factor setup and sign-in challenges stop returning 404**: Enrolling an authenticator app and answering a two-factor challenge called /api/auth/mfa/..., a path production had no route for, so both failed with Not Found. The route now reaches the MFA handler, so you can turn on two-factor protection and sign in with it. `[fix, security]`
+
 ## 2026-11-18
 
 - **A failed free text-to-3D job now says so in minutes, not 45**: When NVIDIA's hosted TRELLIS lane errors, its status endpoint answers 410 Gone. We treated that as a job still in progress, so every errored generation sat at "generating" until the 45-minute cleanup. A 410 now goes down the expired-request path: we check whether the model already landed, retry once, and otherwise fail honestly so the request moves to the next lane. `[fix]`

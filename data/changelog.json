@@ -2,6 +2,40 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-11-19",
+			"title": "Image to 3D from a reference photo works again",
+			"summary": "Since our object storage credential was rejected, uploaded reference images were saved to the backup bucket but the GPU lanes were still sent the old storage address, which answered 404. For most of today, nearly every image-to-3D request failed with \"input image unusable\". Reference images now reach TRELLIS and TripoSG through three.ws/cdn, which serves from whichever bucket holds the file, and generations from a photo complete again.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-19",
+			"title": "Two-factor setup and sign-in challenges stop returning 404",
+			"summary": "Enrolling an authenticator app and answering a two-factor challenge called /api/auth/mfa/..., a path production had no route for, so both failed with Not Found. The route now reaches the MFA handler, so you can turn on two-factor protection and sign in with it.",
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-11-19",
+			"title": "A busy multi-view lane asks you to retry instead of quietly downgrading your model",
+			"summary": "When the Pixal3D multi-view lane was at capacity, Forge silently handed the job to single-view TRELLIS, which ignored the extra angles you uploaded. Forge now tells you the lane is busy and to retry in about 30 seconds, instead of switching lanes behind your back.",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-19",
+			"title": "The x402 VS Code extension shows real $THREE prices",
+			"summary": "Endpoints priced in $THREE showed Infinity in the payment summary and the confirm prompt. Amounts now use the token's declared decimals, so you see the actual price, for example 10.000000 $THREE, before you approve a payment.",
+			"tags": [
+				"fix",
+				"sdk"
+			]
+		},
+		{
 			"date": "2026-11-18",
 			"title": "A failed free text-to-3D job now says so in minutes, not 45",
 			"summary": "When NVIDIA's hosted TRELLIS lane errors, its status endpoint answers 410 Gone. We treated that as a job still in progress, so every errored generation sat at \"generating\" until the 45-minute cleanup. A 410 now goes down the expired-request path: we check whether the model already landed, retry once, and otherwise fail honestly so the request moves to the next lane.",

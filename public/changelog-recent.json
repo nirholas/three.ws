@@ -1,14 +1,56 @@
 {
-	"generated_at": "2026-11-19T21:54:27.388Z",
+	"generated_at": "2026-11-19T23:00:32.193Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4643,
+	"total": 4647,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-19",
+			"type": "update",
+			"title": "A busy multi-view lane asks you to retry instead of quietly downgrading your model",
+			"summary": "When the Pixal3D multi-view lane was at capacity, Forge silently handed the job to single-view TRELLIS, which ignored the extra angles you uploaded. Forge now tells you the lane is busy and to retry in about 30 seconds, instead of switching lanes behind your back.",
+			"link": null,
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-19",
+			"type": "update",
+			"title": "Image to 3D from a reference photo works again",
+			"summary": "Since our object storage credential was rejected, uploaded reference images were saved to the backup bucket but the GPU lanes were still sent the old storage address, which answered 404. For most of today, nearly every image-to-3D request failed with \"input image unusable\". Reference images now reach TRELLIS and TripoSG through three.ws/cdn, which serves from whichever bucket holds the file, and generations from a photo complete again.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-19",
+			"type": "update",
+			"title": "The x402 VS Code extension shows real $THREE prices",
+			"summary": "Endpoints priced in $THREE showed Infinity in the payment summary and the confirm prompt. Amounts now use the token's declared decimals, so you see the actual price, for example 10.000000 $THREE, before you approve a payment.",
+			"link": null,
+			"tags": [
+				"fix",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-19",
+			"type": "update",
+			"title": "Two-factor setup and sign-in challenges stop returning 404",
+			"summary": "Enrolling an authenticator app and answering a two-factor challenge called /api/auth/mfa/..., a path production had no route for, so both failed with Not Found. The route now reaches the MFA handler, so you can turn on two-factor protection and sign in with it.",
+			"link": null,
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
 		{
 			"date": "2026-11-18",
 			"type": "update",
@@ -1505,46 +1547,6 @@
 			"tags": [
 				"feature",
 				"desktop"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "update",
-			"title": "Put an interactive 3D model on a PowerPoint slide in one click",
-			"summary": "Choose PowerPoint in the Forge export menu, in Forge Studio or on any model page and you get a ready slide: the prompt as the title and the model as a real PowerPoint 3D object you can drag to rotate in a slideshow, animate with Morph and resize like a picture. Every model is prepared for Office first: compressed geometry is decoded, textures become PNG or JPEG at up to 2048 px, rigs and animation are kept, and a rendered poster shows in viewers without 3D. The new three.ws 3D Models add-in for PowerPoint does the same from inside your presentation: sign in with your three.ws account to insert one of your models, or describe one and generate it free. The add-in can be sideloaded today and its AppSource listing is pending review.",
-			"link": "/docs/powerpoint",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "update",
-			"title": "Put interactive 3D models in a Power BI report",
-			"summary": "three.ws 3D Models is a custom visual for Power BI reports. Bind a column of three.ws model ids or GLB links and it shows one model you can orbit, a grid, or a turntable gallery for larger sets. Measures can colour and size each model, a click cross-filters the rest of the report, selections elsewhere highlight the matching models, and tooltips show any fields you add. The format pane covers background, lighting, layout, auto-rotate, colour mode and labels, and the visual supports the keyboard, high-contrast themes and the context menu. It downloads models only from three.ws. The package is built and tested against real production models, and the AppSource submission is next.",
-			"link": null,
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "update",
-			"title": "Ready-made Power Automate flows for the three.ws connector",
-			"summary": "The three.ws Power Platform connector now comes with four flow templates: turn a new SharePoint list item into a 3D model and post it to Teams, email a model to whoever fills in a Microsoft Forms request, send a daily digest of your agents and the newest public ones, and let a Teams channel ask your three.ws agent questions. A Copilot Studio agent sample uses the same five actions. Every action now declares the exact response it returns, checked against the live service, and the connector is packaged for Microsoft certification (pending review).",
-			"link": null,
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "update",
-			"title": "Review a 3D model together in a Microsoft Teams meeting",
-			"summary": "Add three.ws to a Teams meeting and share a model to the meeting stage, and everyone in the call looks at the same mesh. Press Present and your camera drives everyone's view; anyone who orbits away gets a one-click jump back to the presenter. Each person's initials show who is watching, and their pointer appears on everyone else's screen as a coloured laser on the exact spot of the model. Click the mesh to pin a comment, and the pin appears for the whole meeting; export every pin as markdown when you are done. Clip, play state and playhead stay in sync, so everyone sees the same frame. Pick from your own models, the featured library or a pasted link. Opened outside a meeting, the stage works for one person and explains how to review together. three.ws keeps no meeting content unless you export the pins.",
-			"link": "/microsoft/teams-stage",
-			"tags": [
-				"feature"
 			]
 		}
 	]
