@@ -2402,6 +2402,24 @@ async function startJobWithBody(req, res, body) {
 					// the next lane reconstructs from exactly the same input.
 					if (!isUpstreamUnavailable(err)) throw err;
 					await markLaneUnhealthy(backendId);
+					// Pixal3D is the opt-in "match my photo" fidelity lane and never a
+					// failover target: TRELLIS reads only the first photo, so quietly
+					// handing the job to it would return a single-view model while the
+					// response still claimed multi-view. Surface the busy state instead
+					// and let the caller choose another engine.
+					if (backendId === 'pixal3d') {
+						console.warn(`[forge] self-host pixal3d lane unavailable (${err?.providerStatus || err?.code}); not failing over, it is opt-in`);
+						res.setHeader('retry-after', '30');
+						return json(res, 503, {
+							error: 'lane_unavailable',
+							backend: backendId,
+							message:
+								'Match my photo (Pixal3D) is busy or warming up right now. Try again in a moment, or switch to another engine.',
+							retry_after: 30,
+							retryable: true,
+							retry_backends: retryBackendSuggestions({ attempted: [backendId], hasImage: true, country }),
+						});
+					}
 					console.warn(
 						`[forge] self-host ${backendId} lane unavailable (${err?.providerStatus || err?.code}); failing over to the next image lane`,
 					);
