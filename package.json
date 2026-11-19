@@ -794,7 +794,7 @@
 		"@three-ws/skill-import": "*",
 		"@three-ws/solana-agent": "file:solana-agent-sdk",
 		"@three.ez/instanced-mesh": "^0.3.16",
-		"@upstash/qstash": "^2.12.0",
+		"@upstash/qstash": "^2.12.2",
 		"@upstash/ratelimit": "2.0.8",
 		"@upstash/redis": "^1.40.0",
 		"@wallet-standard/app": "^1.1.1",
