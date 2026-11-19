@@ -1,3 +1,4 @@
+// Copyright 2026 nirholas. Licensed under the Apache License, Version 2.0.
 // Slate dock tab: a prompt field, a tier dropdown, and a Generate button
 // that runs a real text-to-3D generation and drops the imported mesh into
 // the active editor level.

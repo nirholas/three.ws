@@ -8,7 +8,6 @@
 	"CreatedBy": "three.ws",
 	"CreatedByURL": "https://three.ws",
 	"DocsURL": "https://three.ws/docs/engine-bridges",
-	"MarketplaceURL": "",
 	"SupportURL": "https://three.ws",
 	"EngineVersion": "5.3.0",
 	"CanContainContent": false,
@@ -19,12 +18,28 @@
 		{
 			"Name": "ThreeWsBridge",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"PlatformAllowList": [
+				"Win64",
+				"Mac",
+				"Linux"
+			]
 		},
 		{
 			"Name": "ThreeWsBridgeEditor",
 			"Type": "Editor",
-			"LoadingPhase": "PostEngineInit"
+			"LoadingPhase": "PostEngineInit",
+			"PlatformAllowList": [
+				"Win64",
+				"Mac",
+				"Linux"
+			]
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "Interchange",
+			"Enabled": true
 		}
 	]
 }

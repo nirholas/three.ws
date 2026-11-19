@@ -1,3 +1,4 @@
+// Copyright 2026 nirholas. Licensed under the Apache License, Version 2.0.
 // Hands a downloaded Forge GLB to Unreal's own Interchange glTF pipeline.
 // No glTF parsing lives here, per specs/ENGINE_BRIDGE.md section 6/7.
 // Requires Interchange glTF import enabled: Project Settings > Editor >

@@ -1,3 +1,4 @@
+// Copyright 2026 nirholas. Licensed under the Apache License, Version 2.0.
 // Real HTTP client for the public three.ws Forge pipeline (/api/forge).
 // Implements specs/ENGINE_BRIDGE.md: auth-free generation, catalog browse,
 // text/image submit, poll-to-completion, and GLB download. No glTF parsing
