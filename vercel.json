@@ -4344,6 +4344,10 @@
 			"dest": "/api/auth/sessions/[action]?action=$1"
 		},
 		{
+			"src": "/api/auth/mfa/([^/]+)",
+			"dest": "/api/auth/mfa/[action]?action=$1"
+		},
+		{
 			"src": "/api/auth/siwe/([^/]+)",
 			"dest": "/api/auth/siwe/[action]?action=$1"
 		},
