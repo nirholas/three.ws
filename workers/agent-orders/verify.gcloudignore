@@ -26,6 +26,7 @@
 /data/*
 !/data/plans.json
 !/data/mcp-catalog.json
+!/data/microsoft-marketplace.json
 !/community-skills/
 /community-skills/*
 !/community-skills/tools/

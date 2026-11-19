@@ -21,7 +21,7 @@ RUN python -c "import rembg; rembg.new_session('u2net')" && \
 
 WORKDIR /app
 COPY worker_security.py rembg_policy.py main.py task_store.py forwarder.py /app/
-COPY tracing.py test_tracing.py /app/
+COPY tracing.py test_tracing.py triton_backend.py /app/
 COPY test_rembg_policy.py test_rembg_smoke.py test_task_store.py test_forwarder.py \
      test_task_routes.py /app/
 
