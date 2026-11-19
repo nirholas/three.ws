@@ -406,7 +406,9 @@ cut and attribute quota spend before a lane is ever picked:
   every source is down. Never route a balance a settle, send or verify acts on through it.
 - **Spend accounting.** Every upstream call is counted under (caller, method, lane) in
   hourly buckets in the shared cache (`rpcspend:v1`). The caller is the API route template
-  or cron path (`script:<name>` outside the API server); `cache` and `coalesced` are
+  or cron path (`script:<name>` outside the API server). Pump.fun MCP tool calls append
+  the tool name (`/api/pump-fun-mcp#get_token_trades`, or `/mcp#<tool>` when the unified
+  server runs it), so the board names the tool, not only the route; `cache` and `coalesced` are
   pseudo-lanes reported as saved, never as calls. Readers that POST to a lane URL
   directly instead of going through the rotating fetch (the Helius DAS walk in
   `balances.js`, `getSplTokenBalance` in `embed-gate.js`) call `noteRpcSpend(url, body)`

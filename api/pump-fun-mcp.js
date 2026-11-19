@@ -41,6 +41,8 @@ import { reservePaymentProof } from './_lib/x402/payment-identifier-server.js';
 import { getPumpSdk, getConnection, solanaPubkey, getAmmPoolState } from './_lib/pump.js';
 import { solPriceUsd } from './_lib/sol-price.js';
 import { cacheGet, cacheSet } from './_lib/cache.js';
+import { runWithRpcCaller } from './_lib/request-context.js';
+import { currentRpcCaller } from './_lib/solana/rpc-spend.js';
 import { pumpfunMcp, pumpfunBotEnabled } from './_lib/pumpfun-mcp.js';
 import { getTrendingSlim, getNewSlim } from './_lib/pump-trending.js';
 import { TOOLS, resolveToolName, rpcError, rpcEnvelope } from '../src/pump/mcp-tools.js';
@@ -1588,7 +1590,17 @@ export async function callPumpFunTool(requestedName, args = {}) {
 	if (AUTH_REQUIRED_TOOLS.has(name)) {
 		throw rpcError(-32001, `tool "${name}" needs a bearer or x402 payment: call it over HTTP`);
 	}
-	return handler(args && typeof args === 'object' ? args : {});
+	return runToolAttributed(name, handler, args && typeof args === 'object' ? args : {});
+}
+
+// Run one tool with its Solana RPC reads attributed to `<route>#<tool>` on the
+// spend board (api/ops/rpc-spend.js). The board ranks callers by route, and on
+// 2026-11-19 this route was the top Solana RPC caller again (26,222
+// getTransaction calls in 6h with both paid lanes over quota) without saying
+// which of its tools spent them. The route part is kept, so a server that
+// mounts these tools in-process (the unified /mcp) is still credited.
+function runToolAttributed(name, handler, args) {
+	return runWithRpcCaller(`${currentRpcCaller()}#${name}`, () => handler(args));
 }
 
 /**
@@ -1620,7 +1632,8 @@ export function listAllPumpFunTools() {
 export function pumpFunToolEntry(requestedName) {
 	const name = resolveToolName(requestedName);
 	if (typeof name !== 'string' || !Object.hasOwn(HANDLERS, name)) return null;
-	return { handler: HANDLERS[name], gated: AUTH_REQUIRED_TOOLS.has(name) };
+	const handler = HANDLERS[name];
+	return { handler: (args) => runToolAttributed(name, handler, args), gated: AUTH_REQUIRED_TOOLS.has(name) };
 }
 
 // ── HTTP entrypoint ────────────────────────────────────────────────────────
@@ -1883,7 +1896,7 @@ async function dispatchRpc(msg, ctx) {
 				});
 			}
 			try {
-				const data = await handler(params?.arguments || {});
+				const data = await runToolAttributed(name, handler, params?.arguments || {});
 				ctx.gatedSuccess = true;
 				ctx.gatedId = id;
 				return rpcEnvelope(id, {
@@ -1898,7 +1911,7 @@ async function dispatchRpc(msg, ctx) {
 			}
 		}
 		try {
-			const data = await handler(params?.arguments || {});
+			const data = await runToolAttributed(name, handler, params?.arguments || {});
 			// Mirror MCP content shape so existing skill clients can unwrap text.
 			return rpcEnvelope(id, {
 				content: [{ type: 'text', text: JSON.stringify(data) }],
