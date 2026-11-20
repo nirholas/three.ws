@@ -100,7 +100,7 @@ renderer.setAnimationLoop(() => renderer.render(scene, camera));
 ```
 
 What to notice: the top row (metalness 0 with a texture) keeps its colors under AgX; the
-middle row (metalness 1) is pure reflection, so it is only as interesting as the environment;
+bottom row is the same gold as a dielectric (colored diffuse, white highlights); the middle row (metalness 1) is pure reflection, so it is only as interesting as the environment;
 roughness 0 spheres show a sharp room, roughness 1 shows a soft gradient. If your model's
 metal looks black, it is the middle row without an environment.
 
@@ -211,8 +211,18 @@ const box = new THREE.Box3().setFromObject(gltf.scene);
 const center = box.getCenter(new THREE.Vector3());
 const radius = box.getBoundingSphere(new THREE.Sphere()).radius;
 const camera = new THREE.PerspectiveCamera(30, 1, radius / 50, radius * 50);
-camera.position.copy(center).add(new THREE.Vector3(0.6, 0.3, 1).normalize().multiplyScalar(radius * 3.2));
-camera.lookAt(center);
+const viewDir = new THREE.Vector3(0.6, 0.3, 1).normalize();
+
+// Each quarter is tall and narrow, so fit the model to the horizontal field of view.
+function fitToQuarter(aspect) {
+	camera.aspect = aspect;
+	const halfV = THREE.MathUtils.degToRad(camera.fov / 2);
+	const halfH = Math.atan(Math.tan(halfV) * aspect);
+	const distance = (radius * 1.05) / Math.sin(Math.min(halfV, halfH));
+	camera.position.copy(center).addScaledVector(viewDir, distance);
+	camera.lookAt(center);
+	camera.updateProjectionMatrix();
+}
 
 for (const [i, [name]] of MODES.entries()) {
 	const label = document.createElement('div');
@@ -224,8 +234,7 @@ for (const [i, [name]] of MODES.entries()) {
 renderer.setAnimationLoop(() => {
 	const width = window.innerWidth / MODES.length;
 	const height = window.innerHeight;
-	camera.aspect = width / height;
-	camera.updateProjectionMatrix();
+	fitToQuarter(width / height);
 	for (const [i, [, mode]] of MODES.entries()) {
 		renderer.toneMapping = mode;
 		renderer.setViewport(i * width, 0, width, height);
@@ -290,4 +299,5 @@ no reflections, so metals still look dead under it.
 - Box3: https://threejs.org/docs/pages/Box3.html
 - Sphere: https://threejs.org/docs/pages/Sphere.html
 - Vector3: https://threejs.org/docs/pages/Vector3.html
+- MathUtils: https://threejs.org/docs/pages/MathUtils.html
 - Poly Haven studio_small_09 HDRI (CC0): https://polyhaven.com/a/studio_small_09
