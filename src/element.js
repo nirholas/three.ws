@@ -3835,6 +3835,7 @@ class Agent3DElement extends HTMLElement {
 		// A second call supersedes the first: stop the old clip and drop its
 		// analyser before the new one claims the avatar's mouth.
 		this._stopSpokenAudio();
+		this._lipSyncOwner = null;
 
 		const analyser = this._analyserFor(el);
 		if (analyser) this._avatar?.connectLipSync?.(analyser);
@@ -3849,6 +3850,38 @@ class Agent3DElement extends HTMLElement {
 		} finally {
 			if (this._spokenAudio === el) this._stopSpokenAudio();
 		}
+	}
+
+	/**
+	 * Drive the avatar's visemes from an AnalyserNode you already own: a realtime
+	 * voice session, a WebRTC track, your own Web Audio player. The node should
+	 * read the audio the listener hears (delay it by the context's output latency
+	 * for tight sync). Supersedes a clip playing through speakAudio(). Waits for
+	 * the avatar when it is still loading.
+	 *
+	 *   const release = el.lipSyncFrom(analyser);
+	 *   // ...when the voice ends:
+	 *   release();
+	 *
+	 * @param {AnalyserNode} analyser
+	 * @returns {() => void} Releases the mouth back to neutral. A later
+	 *   lipSyncFrom() or speakAudio() call makes an older release a no-op.
+	 */
+	lipSyncFrom(analyser) {
+		this._stopSpokenAudio();
+		const owner = {};
+		this._lipSyncOwner = owner;
+		if (!analyser) return () => {};
+		const attach = () => {
+			if (this._lipSyncOwner === owner) this._avatar?.connectLipSync?.(analyser);
+		};
+		if (this._avatar) attach();
+		else this._waitForReady().then(attach, () => {});
+		return () => {
+			if (this._lipSyncOwner !== owner) return;
+			this._lipSyncOwner = null;
+			this._avatar?.disconnectLipSync?.();
+		};
 	}
 
 	/** @private Stop caller-supplied audio and return the mouth to neutral. */

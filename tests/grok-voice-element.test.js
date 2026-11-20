@@ -147,3 +147,39 @@ describe('without the attribute', () => {
 		expect(el._runtime.listen).toHaveBeenCalledTimes(1);
 	});
 });
+
+describe('lipSyncFrom(analyser)', () => {
+	it('drives the visemes from a caller-owned analyser and releases them', () => {
+		const { el } = makeEl({ provider: null });
+		const analyser = { kind: 'page-analyser' };
+		const release = el.lipSyncFrom(analyser);
+		expect(el._avatar.connectLipSync).toHaveBeenCalledWith(analyser);
+		release();
+		expect(el._avatar.disconnectLipSync).toHaveBeenCalled();
+	});
+
+	it('makes an older release a no-op once a newer source owns the mouth', () => {
+		const { el } = makeEl({ provider: null });
+		const first = el.lipSyncFrom({ kind: 'first' });
+		el.lipSyncFrom({ kind: 'second' });
+		const disconnectsBefore = el._avatar.disconnectLipSync.mock.calls.length;
+		first();
+		expect(el._avatar.disconnectLipSync.mock.calls.length).toBe(disconnectsBefore);
+	});
+
+	it('waits for the avatar when it is still loading', async () => {
+		const { el } = makeEl({ provider: null });
+		const avatar = el._avatar;
+		el._avatar = null;
+		el._mounted = false;
+		el._booting = true;
+		const analyser = { kind: 'late' };
+		el.lipSyncFrom(analyser);
+		expect(avatar.connectLipSync).not.toHaveBeenCalled();
+		el._avatar = avatar;
+		el._mounted = true;
+		el.dispatchEvent(new CustomEvent('agent:ready'));
+		await Promise.resolve();
+		expect(avatar.connectLipSync).toHaveBeenCalledWith(analyser);
+	});
+});

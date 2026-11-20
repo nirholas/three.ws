@@ -390,6 +390,30 @@ Resolves when playback finishes. The mouth returns to neutral on end, on error, 
 
 ---
 
+### `lipSyncFrom(analyser)`
+
+Drives the avatar's visemes from a Web Audio `AnalyserNode` you already own, for audio that never passes through an `<audio>` element: a realtime speech-to-speech session, a WebRTC track, your own streaming player. Feed it a node that reads what the listener actually hears; delaying the tap by the context's output latency keeps the mouth on the sound rather than ahead of it. [Grok Voice](/docs/voice-grok) does exactly this.
+
+```js
+// src/voice/grok-realtime.js in the three.ws repository
+import { GrokRealtime } from './voice/grok-realtime.js';
+
+const voice = new GrokRealtime({ agentId });
+await voice.connect();
+const release = el.lipSyncFrom(voice.analyser);
+voice.addEventListener('state', (e) => {
+	if (e.detail.state === 'closed') release();
+});
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `analyser` | AnalyserNode | The node to read. Passing `null` just releases the mouth. |
+
+Returns a function that releases the mouth back to neutral. A later `lipSyncFrom()` or `speakAudio()` call takes the mouth over, which turns an older release function into a no-op. Called while the avatar is still loading, it attaches as soon as the avatar is ready.
+
+---
+
 ### `speak(text, opts?)`
 
 Triggers a speak animation on the avatar (lip-sync / talking gesture) without sending the text to the LLM. Use this to drive the avatar from your own logic.
