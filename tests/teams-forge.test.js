@@ -437,6 +437,52 @@ describe('runTeamsForge', () => {
 		await runTeamsForge(key, ctx.deps);
 		expect(calls.forge[0].ctx.seed).toBe(12345);
 	});
+
+	// /api/gpt-forge refuses a creation with no accountable caller
+	// (api/_lib/creator-account.js). The bot calls the forge_free handler
+	// directly, past the studio's dispatch gate, so it must carry the platform's
+	// on-behalf headers itself, naming the linked three.ws account when the
+	// Teams identity has one so the model is owned by that person.
+	describe('the accountable caller', () => {
+		const saved = process.env.CRON_SECRET;
+		beforeEach(() => {
+			process.env.CRON_SECRET = 'teams-forge-test-secret';
+		});
+		afterEach(() => {
+			if (saved === undefined) delete process.env.CRON_SECRET;
+			else process.env.CRON_SECRET = saved;
+		});
+		const TENANT_USER = { ...USER, tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47' };
+
+		it('runs on behalf of the linked three.ws account', async () => {
+			const key = forgeKey(CONVERSATION, nextId());
+			await claimJob({ key, prompt: 'a ceramic teapot', tier: 'draft', by: TENANT_USER, conversation: { id: CONVERSATION, serviceUrl: SERVICE }, origin: ORIGIN });
+			const { ctx, calls } = harness({ forge: async () => done('job-owner') });
+			const asked = [];
+			ctx.deps.userFor = async (identity) => {
+				asked.push(identity);
+				return 'user-42';
+			};
+			await runTeamsForge(key, ctx.deps);
+			expect(asked).toEqual([{ tenantId: TENANT_USER.tenantId, aadObjectId: TENANT_USER.aadObjectId }]);
+			expect(calls.forge[0].ctx.creatorAuth).toEqual({
+				'x-forge-seed': 'teams-forge-test-secret',
+				'x-forge-on-behalf': '1',
+				'x-forge-on-behalf-user': 'user-42',
+			});
+		});
+
+		it('runs on behalf of the Teams person, born unlisted, when no account is linked', async () => {
+			const key = forgeKey(CONVERSATION, nextId());
+			await claimJob({ key, prompt: 'a ceramic teapot', tier: 'draft', by: USER, conversation: { id: CONVERSATION, serviceUrl: SERVICE }, origin: ORIGIN });
+			const { ctx, calls } = harness({ forge: async () => done('job-unlinked') });
+			ctx.deps.userFor = async () => {
+				throw new Error('database unreachable');
+			};
+			await runTeamsForge(key, ctx.deps);
+			expect(calls.forge[0].ctx.creatorAuth).toEqual({ 'x-forge-seed': 'teams-forge-test-secret', 'x-forge-on-behalf': '1' });
+		});
+	});
 });
 
 describe('the variation seed reaches /api/gpt-forge', () => {

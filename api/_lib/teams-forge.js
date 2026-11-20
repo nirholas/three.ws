@@ -26,6 +26,7 @@ import { coldStartState } from '../../src/shared/forge-frames.js';
 import * as connector from './teams-connector.js';
 import { insertNotification } from './notify.js';
 import { userForIdentity } from './teams-identity.js';
+import { platformAuthHeaders } from './creator-account.js';
 import { cardAttachment, forgeErrorCard, forgeFinishedCard, forgeProgressCard } from './teams-forge-cards.js';
 import { withAiContent } from './teams-ai.js';
 import { recordAiMessage } from './teams-ai-store.js';
@@ -217,6 +218,26 @@ export function cardFor(record, { now = Date.now() } = {}) {
 }
 
 /**
+ * The accountable caller for a Teams generation. /api/gpt-forge refuses a
+ * creation nobody answers for, and the bot runs forge_free past the studio's
+ * dispatch gate, so it sends the platform's on-behalf headers itself: the
+ * person is a Microsoft-authenticated Teams user, their model is born unlisted,
+ * and when their Teams identity is linked to a three.ws account the model is
+ * owned by that account. A failed lookup only loses the owner, never the job.
+ */
+async function teamsCreatorAuth(by, deps) {
+	let userId = null;
+	if (by?.tenantId && by?.aadObjectId) {
+		try {
+			userId = await (deps.userFor || userForIdentity)({ tenantId: by.tenantId, aadObjectId: by.aadObjectId });
+		} catch (err) {
+			console.warn(`[teams-forge] account lookup failed: ${err?.message || err}`);
+		}
+	}
+	return platformAuthHeaders({ onBehalf: true, userId });
+}
+
+/**
  * Tell the person who asked, through the standard notification fan-out, that
  * their job settled: the bell, push and (when they linked their Teams account
  * and left the event on) their Teams activity feed. Runs once per job, only for
@@ -317,6 +338,7 @@ export async function runTeamsForge(key, overrides = {}) {
 		};
 		const ctx = {
 			caller: `teams:${record.by?.id || record.conversation?.id || key}`,
+			creatorAuth: await teamsCreatorAuth(record.by, deps),
 			deadline: started + INLINE_WAIT_MS,
 			onProgress,
 			...(record.seed != null ? { seed: record.seed } : {}),
