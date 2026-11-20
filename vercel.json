@@ -1877,6 +1877,10 @@
 			"dest": "/model.html"
 		},
 		{
+			"src": "/hero-clip/([A-Za-z0-9-]{8,80})/?",
+			"dest": "/api/hero-clip-page?id=$1"
+		},
+		{
 			"src": "/drop/([0-9a-f]{24})/?",
 			"dest": "/drop.html"
 		},

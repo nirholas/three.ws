@@ -300,6 +300,7 @@ function renderInfo() {
 			<button class="mp-action" id="mp-share" type="button">↗ Share</button>
 			<button class="mp-action" id="mp-slicer" type="button" aria-controls="mp-print-tools" title="Open this model in OrcaSlicer or Bambu Studio, or download a print-ready STL">⎙ 3D print</button>
 			<button class="mp-action" id="mp-craftcloud" type="button" aria-controls="mp-craftcloud-tools" title="Get live prices from Craftcloud's print network and buy directly from them">🖨 Get it printed</button>
+			<button class="mp-action" id="mp-heroclip" type="button" aria-controls="mp-heroclip-tools" title="Turn this model into a short video made from real renders of it, ready to share">▶ Make a hero clip</button>
 			${c.remixable ? `<button class="mp-action" id="mp-remix" type="button">Remix · $0.25</button>` : ''}
 		</div>
 		<div class="mp-geo" id="mp-geo"><span>Reading geometry…</span></div>
@@ -317,6 +318,10 @@ function renderInfo() {
 			<details class="mp-tool" id="mp-craftcloud-tools">
 				<summary>Get it printed <span>live prices from Craftcloud's print network, buy direct</span></summary>
 				<div class="mp-tool-body" id="mp-craftcloud-host"></div>
+			</details>
+			<details class="mp-tool" id="mp-heroclip-tools">
+				<summary>Hero clip <span>a short video of this model for a post, made from real renders of it</span></summary>
+				<div class="mp-tool-body" id="mp-heroclip-host"></div>
 			</details>
 		</section>
 		<p class="mp-desc">${esc(c.prompt)}</p>
@@ -833,6 +838,7 @@ function wireTools() {
 	const meshTools = $('mp-mesh-tools');
 	const printTools = $('mp-print-tools');
 	const craftcloudTools = $('mp-craftcloud-tools');
+	const heroClipTools = $('mp-heroclip-tools');
 
 	meshTools?.addEventListener('toggle', async () => {
 		if (!meshTools.open || meshTools.dataset.mounted) return;
@@ -884,6 +890,29 @@ function wireTools() {
 			host.textContent = 'Craftcloud prices could not load. Close and reopen this section to try again.';
 		}
 	});
+
+	heroClipTools?.addEventListener('toggle', async () => {
+		if (!heroClipTools.open || heroClipTools.dataset.mounted) return;
+		heroClipTools.dataset.mounted = '1';
+		const host = $('mp-heroclip-host');
+		try {
+			const { mountHeroClip } = await import('./hero-clip-panel.js');
+			mountHeroClip(host, { modelId: c.id, title: creationName(c), sourcePage: `/m/${c.id}` });
+		} catch (err) {
+			log.error('hero clip panel failed to load', err);
+			delete heroClipTools.dataset.mounted;
+			host.textContent = 'The hero clip panel could not load. Close and reopen this section to try again.';
+		}
+	});
+
+	const openHeroClip = () => {
+		if (!heroClipTools) return;
+		heroClipTools.open = true;
+		heroClipTools.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		heroClipTools.querySelector('summary')?.focus({ preventScroll: true });
+	};
+	$('mp-heroclip')?.addEventListener('click', openHeroClip);
+	if (location.hash === '#hero-clip') openHeroClip();
 
 	$('mp-slicer')?.addEventListener('click', () => {
 		if (!printTools) return;
