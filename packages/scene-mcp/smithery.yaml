@@ -4,7 +4,15 @@ startCommand:
   type: stdio
   configSchema:
     type: object
-    properties: {}
+    properties:
+      threeWsApiKey:
+        type: string
+        title: three.ws API key
+        description: Needed by compose_scene, build_world and export_scene, because making a world needs a free account. Create one at https://three.ws/dashboard/api-keys. get_scene and list_scenes work without it.
     required: []
   commandFunction: |
-    (config) => ({ command: "npx", args: ["-y", "@three-ws/scene-mcp"], env: {} })
+    (config) => ({
+      command: "npx",
+      args: ["-y", "@three-ws/scene-mcp"],
+      env: config.threeWsApiKey ? { THREE_WS_API_KEY: config.threeWsApiKey } : {}
+    })

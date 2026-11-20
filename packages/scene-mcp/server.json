@@ -18,17 +18,24 @@
 		"source": "github",
 		"subfolder": "packages/scene-mcp"
 	},
-	"version": "0.2.2",
+	"version": "0.3.0",
 	"packages": [
 		{
 			"registryType": "npm",
 			"identifier": "@three-ws/scene-mcp",
-			"version": "0.2.2",
+			"version": "0.3.0",
 			"runtimeHint": "npx",
 			"transport": {
 				"type": "stdio"
 			},
 			"environmentVariables": [
+				{
+					"name": "THREE_WS_API_KEY",
+					"description": "three.ws account API key, sent as a bearer by compose_scene, build_world and export_scene, because making a world needs a free account. Create one at https://three.ws/dashboard/api-keys. get_scene and list_scenes work without it.",
+					"format": "string",
+					"isRequired": false,
+					"isSecret": true
+				},
 				{
 					"name": "THREE_WS_BASE",
 					"description": "Base URL of the three.ws API that serves /api/diorama. Override only when self-hosting or targeting a preview deployment.",

@@ -8,8 +8,8 @@
 //   • export_scene:  merge an already-forged diorama into one GLB scene
 //   • build_world:   one sentence → a fully forged, exported world (no browser)
 //
-// A thin wrapper over the PUBLIC three.ws API (/api/diorama). No keys, no
-// signer, no payment: point THREE_WS_BASE at a deployment and go.
+// A thin wrapper over the three.ws API (/api/diorama). Making a world needs a
+// free account (THREE_WS_API_KEY); reads need nothing. No signer, no payment.
 //
 // Run standalone:
 //   node packages/scene-mcp/src/index.js
@@ -55,7 +55,8 @@ export function buildServer() {
 				'disc and mood-tuned lighting), ready to open in Scene Studio. build_world runs the whole ' +
 				'pipeline (compose → forge every object → export) server-side from one sentence, for callers ' +
 				'with no browser to drive the progressive flow; it can take a couple of minutes. All data comes ' +
-				'live from the public three.ws /api/diorama endpoint; no API key, signer, or payment required.',
+				'live from the three.ws /api/diorama endpoint. compose_scene, build_world and export_scene need a ' +
+				'free three.ws account (THREE_WS_API_KEY); get_scene and list_scenes need no key. No signer or payment.',
 		},
 	);
 

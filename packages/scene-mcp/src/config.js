@@ -1,9 +1,10 @@
 // Centralized env + HTTP base for the scene MCP.
 //
-// This server is a thin, read-mostly wrapper over the PUBLIC three.ws HTTP
-// API (/api/diorama). It signs nothing and holds no secret; the only knobs
-// are which deployment to talk to and how long to wait. Nothing about how a
-// world is composed is baked in here; it all comes from the live endpoint.
+// This server is a thin wrapper over the three.ws HTTP API (/api/diorama). It
+// signs nothing; its knobs are which deployment to talk to, how long to wait,
+// and the account API key that composing, building and exporting a world need.
+// Nothing about how a world is composed is baked in here; it all comes from the
+// live endpoint.
 
 export function env(key, fallback) {
 	const v = process.env[key];
@@ -13,6 +14,13 @@ export function env(key, fallback) {
 // Base URL of the three.ws API that serves /api/diorama. Override only when
 // self-hosting or pointing at a preview deployment.
 export const THREE_WS_BASE = env('THREE_WS_BASE', 'https://three.ws').replace(/\/+$/, '');
+
+// The three.ws account API key (sk_live_...), sent as a bearer on every action
+// that makes something. Reading saved worlds needs none. A free account makes one.
+export const THREE_WS_API_KEY = env('THREE_WS_API_KEY', null);
+
+// Where to create a key, on the deployment this server talks to.
+export const KEYS_URL = `${THREE_WS_BASE}/dashboard/api-keys`;
 
 // Per-request timeout (ms). Composing a world runs a server-side LLM chain, so
 // the default is generous; reads are fast and finish well within it.

@@ -5,7 +5,7 @@ description: Turn one sentence into a placed 3D diorama and export it as a singl
 
 # Build a 3D world with scene-mcp
 
-This plugin mounts the `scene` MCP server (`npx -y @three-ws/scene-mcp`, stdio, Node). It needs no API key, signer or payment: every call hits the public three.ws `/api/diorama` endpoint. Optional env vars: `THREE_WS_BASE` (default `https://three.ws`) and `THREE_WS_TIMEOUT_MS` (default 45000).
+This plugin mounts the `scene` MCP server (`npx -y @three-ws/scene-mcp`, stdio, Node). Every call hits the three.ws `/api/diorama` endpoint. Composing, building and exporting a world needs a free three.ws account: `THREE_WS_API_KEY` must hold a key from https://three.ws/dashboard/api-keys, or those tools answer `sign_in_required` (tell the user to create a key and add it to the server env). `get_scene` and `list_scenes` need no key. No signer or payment. Optional env vars: `THREE_WS_BASE` (default `https://three.ws`) and `THREE_WS_TIMEOUT_MS` (default 45000).
 
 ## Tools
 

@@ -18,7 +18,7 @@
 
 > A [Model Context Protocol](https://modelcontextprotocol.io) server that gives any AI assistant the three.ws **diorama** pipeline over stdio. Describe a world in a sentence and `compose_scene` returns a placed plan (mood, palette, ground, and a set of single-object forge prompts), ready to build into an orbitable 3D scene. `build_world` collapses the whole pipeline (compose → forge every object → merge) into one call for agents with no browser to drive it. `export_scene` merges an already-forged diorama into one glTF 2.0 binary (every object a named, selectable node, plus ground and mood-tuned lighting), ready to open in Scene Studio. Browse saved worlds with `get_scene` and `list_scenes`.
 
-This is the companion to the three.ws avatar one-liner: avatars give you a *character*; scenes give you a *world*. No API key, no signer, no payment: every call hits the public `/api/diorama` endpoint.
+This is the companion to the three.ws avatar one-liner: avatars give you a *character*; scenes give you a *world*. Every call hits the three.ws `/api/diorama` endpoint. Composing, building and exporting a world needs a free three.ws account: set `THREE_WS_API_KEY` to a key from [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys). Browsing saved worlds (`get_scene`, `list_scenes`) needs no key. No signer, no payment.
 
 ## Install
 
@@ -37,7 +37,7 @@ npx @three-ws/scene-mcp
 **Claude Code**, one line:
 
 ```bash
-claude mcp add scene -- npx -y @three-ws/scene-mcp
+claude mcp add scene -e THREE_WS_API_KEY=sk_live_... -- npx -y @three-ws/scene-mcp
 ```
 
 **Claude Desktop / Cursor** (`claude_desktop_config.json` or `mcp.json`):
@@ -47,7 +47,8 @@ claude mcp add scene -- npx -y @three-ws/scene-mcp
 	"mcpServers": {
 		"scene": {
 			"command": "npx",
-			"args": ["-y", "@three-ws/scene-mcp"]
+			"args": ["-y", "@three-ws/scene-mcp"],
+			"env": { "THREE_WS_API_KEY": "sk_live_..." }
 		}
 	}
 }
@@ -124,11 +125,13 @@ npx -y @modelcontextprotocol/inspector npx @three-ws/scene-mcp
 
 - **Node.js >= 20.**
 - Network access to `https://three.ws` (or your own `THREE_WS_BASE`).
+- A free three.ws account's API key for `compose_scene`, `build_world` and `export_scene`. Without one they answer `sign_in_required` before sending anything.
 
 ### Environment variables
 
 | Variable              | Required | Default            |
 | --------------------- | -------- | ------------------ |
+| `THREE_WS_API_KEY`    | to make worlds | none. Create one at [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys). |
 | `THREE_WS_BASE`       | no       | `https://three.ws` |
 | `THREE_WS_TIMEOUT_MS` | no       | `45000`            |
 
