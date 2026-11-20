@@ -517,7 +517,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1169.0",
+			"version": "3.1173.0",
 			"powers": null
 		},
 		{
@@ -528,7 +528,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1165.0",
+			"version": "3.1173.0",
 			"powers": null
 		},
 		{
@@ -825,7 +825,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/Kamino-Finance/klend-sdk",
 			"funding": null,
-			"version": "13.0.6",
+			"version": "13.1.0",
 			"powers": null
 		},
 		{
@@ -979,7 +979,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/neondatabase/serverless",
 			"funding": null,
-			"version": "1.2.0",
+			"version": "1.2.1",
 			"powers": null
 		},
 		{
@@ -1793,7 +1793,7 @@
 			"license": "BSD-2-Clause",
 			"repo": "https://github.com/motdotla/dotenv",
 			"funding": "https://dotenvx.com",
-			"version": "18.0.9",
+			"version": "18.0.10",
 			"powers": null
 		},
 		{
@@ -2024,7 +2024,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/tradingview/lightweight-charts",
 			"funding": null,
-			"version": "5.2.1",
+			"version": "5.3.0",
 			"powers": null
 		},
 		{
@@ -2101,7 +2101,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/markedjs/marked",
 			"funding": null,
-			"version": "18.1.3",
+			"version": "18.2.1",
 			"powers": null
 		},
 		{
@@ -2233,7 +2233,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/mholt/PapaParse",
 			"funding": null,
-			"version": "5.7.0",
+			"version": "5.7.1",
 			"powers": null
 		},
 		{
