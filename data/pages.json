@@ -4490,6 +4490,14 @@
 					"added": "2026-07-18"
 				},
 				{
+					"path": "/docs/talking-avatar-clips",
+					"title": "Docs · Talking-avatar clips (Make a clip)",
+					"description": "Turn an avatar and a line of text, or an uploaded recording, into a shareable MP4 of that avatar saying it: NVIDIA Magpie voice, Audio2Face-3D lip sync, rendered and encoded in your browser.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-11-16"
+				},
+				{
 					"path": "/docs/talking-avatar-video",
 					"title": "Docs · Talking Avatar Video",
 					"description": "Pick an avatar, provide an audio track, and render a downloadable lip-synced talking-head MP4 on a server-side worker.",

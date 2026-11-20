@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-20T04:07:38.253Z",
+	"generated_at": "2026-11-20T19:11:11.584Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4655,
+	"total": 4656,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -263,6 +263,16 @@
 			"title": "Docs · Sharing and link previews",
 			"summary": "Share creations and agents to Teams and LinkedIn, the link-preview rules both enforce, and how to refresh a stale LinkedIn card.",
 			"link": "/docs/sharing",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-16",
+			"type": "launch",
+			"title": "Docs · Talking-avatar clips (Make a clip)",
+			"summary": "Turn an avatar and a line of text, or an uploaded recording, into a shareable MP4 of that avatar saying it: NVIDIA Magpie voice, Audio2Face-3D lip sync, rendered and encoded in your browser.",
+			"link": "/docs/talking-avatar-clips",
 			"tags": [
 				"launch"
 			]
@@ -1539,16 +1549,6 @@
 			"tags": [
 				"feature",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "update",
-			"title": "An official .NET SDK for three.ws, ready for Unity",
-			"summary": "C# developers can now use three.ws from one typed library, ThreeWs.Sdk. It generates 3D models from text or images on every Forge lane and downloads the GLB. It also searches the free asset catalog, rigs meshes, streams agent chat and lists MCP tools. It runs on .NET 8 and .NET Standard 2.1, so it works in ASP.NET Core services and in Unity games, and a Unity sample spawns a generated model with glTFast. Every call can be cancelled. Failed requests retry safely, and errors carry the API's error code. The NuGet release is pending.",
-			"link": "/docs/dotnet-sdk",
-			"tags": [
-				"sdk"
 			]
 		}
 	]

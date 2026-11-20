@@ -3296,6 +3296,12 @@ URL: https://three.ws/docs/lipsync
 
 Two in-browser lipsync demos: TTS-driven mouth animation and live-mic viseme detection, both driving an avatar's viseme morph targets in real time.
 
+### Docs · Talking-avatar clips (Make a clip)
+
+URL: https://three.ws/docs/talking-avatar-clips
+
+Turn an avatar and a line of text, or an uploaded recording, into a shareable MP4 of that avatar saying it: NVIDIA Magpie voice, Audio2Face-3D lip sync, rendered and encoded in your browser.
+
 ### Docs · Talking Avatar Video
 
 URL: https://three.ws/docs/talking-avatar-video

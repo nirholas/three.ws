@@ -8,7 +8,7 @@ NVIDIA Cosmos Reason 2 8B, self-hosted on one Cloud Run L4 as the Forge physical
 - **Auth:** vLLM rejects any `/v1` request without `Authorization: Bearer <key>`. The key is the GPU fleet's shared `avatar-reconstruction-key` secret, which the API already holds as `GCP_RECONSTRUCTION_KEY` (or set `COSMOS_REASON_KEY`). `GET /health` stays open for the startup probe.
 - **Where:** Cloud Run service `model-cosmos-reason` in `europe-west4`, because us-central1's L4 quota is held by other lanes. It runs on one NVIDIA L4 with 8 vCPU and 32 GiB, scales to zero (min 0, max 2, concurrency 8) and serves at an 8k context.
 
-The judge code, the modes and the promotion rule are in [docs/forge-pipeline.md](../../docs/forge-pipeline.md#physical-plausibility-judge-nvidia-cosmos-reason). The eval is in [docs/nvidia/evals/cosmos-reason-judge-2026-11-16.md](../../docs/nvidia/evals/cosmos-reason-judge-2026-11-16.md).
+The judge code, the modes and the promotion rule are in [docs/forge-pipeline.md](../../docs/forge-pipeline.md#physical-plausibility-judge-nvidia-cosmos-reason). The eval is [scripts/cosmos-judge-eval.mjs](../../scripts/cosmos-judge-eval.mjs), which judges every kept or thrown-away Forge creation with both judges and applies that rule.
 
 ## Files
 

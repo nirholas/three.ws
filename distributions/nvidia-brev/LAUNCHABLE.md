@@ -104,5 +104,6 @@ script is what was verified on a clean VM.
 Brev returns a link of the form
 `https://brev.nvidia.com/launchable/deploy?launchableID=<id>` and a Markdown
 badge. Put the link in [README.md](README.md) (the "One click" section) and in
-[docs/nvidia-brev-launchable.md](../../docs/nvidia-brev-launchable.md), then add
+the "A ready GPU machine in one step" section of
+[docs/inference-node-operator.md](../../docs/inference-node-operator.md), then add
 the changelog entry.

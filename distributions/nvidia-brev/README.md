@@ -158,7 +158,7 @@ shipping). The repository-level checks are in
 | `LAUNCHABLE.md` | Exact Brev Launchable values |
 | `LICENSES.md` | Licence review of everything in the image |
 
-More: [docs/nvidia-brev-launchable.md](../../docs/nvidia-brev-launchable.md) and
+More: [LAUNCHABLE.md](LAUNCHABLE.md) and
 the [inference node operator guide](../../docs/inference-node-operator.md).
 
 three.ws is a member of the NVIDIA Inception program.

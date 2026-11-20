@@ -207,6 +207,14 @@
 			<description>Share creations and agents to Teams and LinkedIn, the link-preview rules both enforce, and how to refresh a stale LinkedIn card.</description>
 		</item>
 		<item>
+			<title>Docs · Talking-avatar clips (Make a clip)</title>
+			<link>https://three.ws/docs/talking-avatar-clips</link>
+			<guid isPermaLink="false">2026-11-16:Docs · Talking-avatar clips (Make a clip)</guid>
+			<pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Turn an avatar and a line of text, or an uploaded recording, into a shareable MP4 of that avatar saying it: NVIDIA Magpie voice, Audio2Face-3D lip sync, rendered and encoded in your browser.</description>
+		</item>
+		<item>
 			<title>Docs · The /enterprise procurement page</title>
 			<link>https://three.ws/docs/enterprise</link>
 			<guid isPermaLink="false">2026-11-16:Docs · The /enterprise procurement page</guid>

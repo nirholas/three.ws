@@ -294,6 +294,7 @@ if (!explicitFiles.length) {
 //               CLAUDE.md requires explicit owner approval before that lands in
 //               a commit, so registering one is a decision, never a default.
 const UNPUBLISHED_DOCS = new Map([
+	['nvidia-ai-infra-benchmark-play', 'internal: owner-gated partner outreach plan (nothing in it is posted), like the other visibility maps'],
 	['x-content-relaunch-checklist', 'internal: owner-gated relaunch steps for @trythreews auto-publishing, not a reader-facing doc'],
 	['orphaned-avatar-campaign', 'owner-gated: landing copy and post drafts awaiting owner wording approval before anything is published'],
 	['x402-server-facilitator-release', 'internal: owner-gated release checklist for the @three-ws/x402-server package, prepared but not executed'],

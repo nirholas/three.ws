@@ -198,8 +198,11 @@ Monitoring (resource `generic_task`, namespace `rembg-triton`): per model
 `requests_per_min`, `executions_per_min`, `avg_batch_size`, `avg_queue_ms`,
 `avg_compute_ms`, `failures_per_min`, plus `gpu_utilization` and GPU memory.
 
-Measured throughput, latency and parity against the CPU lane are in
-[`docs/nvidia-triton-serving.md`](../../docs/nvidia-triton-serving.md).
+Parity against the ONNX Runtime CPU lane is enforced at build time by
+[`build_gate_triton.sh`](./build_gate_triton.sh) and
+[`test_triton_parity.py`](./test_triton_parity.py): real photos are cut out
+through both and the masks must match. Live throughput and latency are the
+Cloud Monitoring metrics above.
 
 ## Run locally
 

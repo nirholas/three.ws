@@ -109,7 +109,7 @@ docker run --rm --gpus all three-ws-node:gpu node src/index.js --self-test
 
 ### A ready GPU machine in one step
 
-The [GPU quickstart](nvidia-brev-launchable.md) packages this node with a
+The [GPU quickstart](../distributions/nvidia-brev/README.md) packages this node with a
 TripoSR image-to-3D studio and a guided JupyterLab notebook in one image. Run
 it as an NVIDIA Brev Launchable, or with one script on any Ubuntu machine with
 an NVIDIA GPU. The node's GPU self-test runs from the notebook, and
