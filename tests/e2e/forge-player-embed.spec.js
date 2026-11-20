@@ -6,9 +6,11 @@ import { test, expect } from '@playwright/test';
 // unit suite (tests/api/forge-pipeline-endpoints.test.js) proves the meta tags
 // are correct strings; this proves the page the meta tag names actually boots
 // a real model-viewer and shows a model, which is what X's crawler and a
-// person tapping the card both need. Dev serves this at the real file path
-// (/forge-embed.html); the pretty /forge/embed rewrite is prod-only
-// (vercel.json), same as tests/e2e/forge-embed-panel.spec.js's live preview.
+// person tapping the card both need. Same-origin checks load the file path
+// (/forge-embed.html). The framed check must load /forge/embed, the URL the
+// card advertises: only that route carries `frame-ancestors *` (vercel.json),
+// and dev applies the same route headers (server/security-headers.mjs), so the
+// raw file path answers X-Frame-Options SAMEORIGIN and refuses a third-party frame.
 
 const FOX = '/avatars/fox.glb';
 
@@ -66,7 +68,7 @@ test.describe('forge player embed (X player card target)', () => {
 		page.on('console', (msg) => {
 			if (msg.type() === 'error' && !DEV_SERVER_NOISE.test(msg.text())) consoleErrors.push(msg.text());
 		});
-		const player = `${baseURL}/forge-embed.html?src=${encodeURIComponent(FOX)}&title=${encodeURIComponent('A fox, forged')}`;
+		const player = `${baseURL}/forge/embed?src=${encodeURIComponent(FOX)}&title=${encodeURIComponent('A fox, forged')}`;
 		// A real loopback server on 127.0.0.1 hosts the card: a different origin
 		// from the localhost player, and (unlike a page.route stub, which Chromium
 		// treats as public) it passes the local-network-access check for framing.
