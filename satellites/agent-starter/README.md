@@ -22,11 +22,14 @@ Open <http://localhost:4173>.
 Run this in the terminal:
 
 ```bash
+export THREE_WS_API_KEY=sk_live_...   # from https://three.ws/dashboard/api-keys
 npm create @three-ws/agent "a friendly robot guide"
 ```
 
-The command uses the public generation lane, downloads the finished GLB, and creates a working
-page. No three.ws account or API key is required. Replace the `body` URL in `index.html` with
+Making a model needs a three.ws account (a free one is enough), so set `THREE_WS_API_KEY` to a key
+from [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys) first. The command uses the
+free generation lane, downloads the finished GLB, and creates a working page. The model is saved to
+your account, unlisted until you share it. Replace the `body` URL in `index.html` with
 the generated model URL or a path to the downloaded `agent.glb`.
 
 ## The whole integration

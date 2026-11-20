@@ -1,7 +1,7 @@
 # three.ws integrations
 
 First-party plugins that drive the public **three.ws Forge** generation pipeline
-(`/api/forge`) from inside the tools artists already use — so a model can be
+(`/api/forge`) from inside the tools artists already use, so a model can be
 generated without leaving the DCC.
 
 | Plugin | Folder | Host |
@@ -45,26 +45,28 @@ inspect, convert, render, and script 3D files, and pull a Forge generation
 straight into a scene. The add-on below is the artist-facing surface; the two
 install side by side.
 
-All of them speak to the same auth-free endpoints:
+All of them speak to the same endpoints, with a three.ws API key
+(`THREE_WS_API_KEY`, from three.ws/dashboard/api-keys; a free account is
+enough) sent as a bearer, because making or uploading a model needs an account:
 
-- `POST /api/forge` — text→3D and image→3D
-- `GET /api/forge?job=<id>` — poll
-- `GET /api/forge?catalog` — tier/backend matrix
-- `POST /api/forge-upload`: presigned image upload (image→3D). Needs a three.ws API key (`THREE_WS_API_KEY`, from three.ws/dashboard/api-keys); every other generation call is keyless
+- `POST /api/forge`: text→3D and image→3D
+- `GET /api/forge?job=<id>`: poll
+- `GET /api/forge?catalog`: tier/backend matrix
+- `POST /api/forge-upload`: presigned image upload (image→3D)
 - `POST /api/scene-glb-upload`: presigned GLB upload, so a local mesh can be rigged or remeshed
 - `POST /api/forge?action=rig` and `POST /api/forge-remesh`: auto-rig and remesh a GLB by URL
 
-Publishing to an account (`POST /api/avatars`) is the one call that needs a
-three.ws API key.
+Publishing to an account (`POST /api/avatars`) uses the same key, with the
+`avatars:write` scope. Without a key these calls answer `sign_in_required`.
 
 The **image pipeline** (FLUX→TRELLIS) is free and platform-keyed. The
-**geometry pipeline** (Meshy/Tripo) is BYOK — supply your own provider key in
+**geometry pipeline** (Meshy/Tripo) is BYOK: supply your own provider key in
 the add-on preferences / node input and it travels as `x-forge-provider-key`.
 
 ## Single source of truth
 
 The Forge contract lives in exactly one file:
-[`_pyclient/three_ws_client.py`](_pyclient/three_ws_client.py) — stdlib-only
+[`_pyclient/three_ws_client.py`](_pyclient/three_ws_client.py): stdlib-only
 (`urllib`), so it runs unmodified in Blender's bundled Python and in ComfyUI with
 no `pip install`. Each plugin ships a **byte-identical vendored copy** so it stays
 self-contained and distributable (a Blender zip / a ComfyUI clone).
@@ -84,7 +86,7 @@ cp integrations/_pyclient/three_ws_client.py integrations/nvidia/omniverse-kit-e
 
 ## Tests
 
-No live network — every test runs an in-process stub of the Forge contract.
+No live network: every test runs an in-process stub of the Forge contract.
 
 ```bash
 # shared client + drift guard
