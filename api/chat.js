@@ -33,6 +33,7 @@ import { recordXaiUsage } from './_lib/xai-usage.js';
 import { trackAgentOwnerVisit } from './_lib/retention.js';
 import { OPENROUTER_ATTRIBUTION_HEADERS } from './_lib/openrouter-attribution.js';
 import { costMicroUsd } from './_lib/llm-pricing.js';
+import { llmRouteOverride } from './_lib/llm.js';
 import { captureException } from './_lib/sentry.js';
 import { sql } from './_lib/db.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
@@ -599,6 +600,18 @@ export default wrap(async (req, res) => {
 		}
 	}
 
+	// LLM_ROUTE_AGENT_CHAT: the evidence-based per-task Grok route
+	// (docs/evals/grok-4-7-on-three-ws.md), for signed-in turns that named no
+	// provider, model or agent brain. Grok becomes the requested provider, so a
+	// missing key or an xAI error falls through to the normal ladder.
+	const chatRoute = agentBrainDefault
+		? null
+		: agentChatRouteFor({ anonymous, requestedProvider: body.provider, requestedModel: body.model });
+	if (chatRoute) {
+		body.provider = chatRoute.provider;
+		body.model = chatRoute.model;
+	}
+
 	// Health cooldowns: a provider that recently 429'd / 5xx'd is skipped while it
 	// recovers, so a single throttle window doesn't cascade into request after
 	// request re-hitting the same dead provider. Best-effort — an unreadable
@@ -609,6 +622,7 @@ export default wrap(async (req, res) => {
 	if (!route) {
 		return error(res, 503, 'chat_unavailable', 'no chat provider is configured');
 	}
+	route = withRouteEffort(route, chatRoute);
 	if (anonymous && !ANON_PROVIDERS.has(route.name)) {
 		// Reaching here means an anon-eligible provider IS configured (the missing-key
 		// case already 401'd above) but pickProvider still landed outside the anon set.
@@ -1815,6 +1829,32 @@ export function agentBrainDefaultFor({ anonymous, requestedProvider, requestedMo
 	return { provider: providerName, model };
 }
 
+/**
+ * The agent-chat route flag (LLM_ROUTE_AGENT_CHAT, same grammar as every
+ * LLM_ROUTE_<TASK> in api/_lib/llm.js): a chat Grok id from GROK_MODELS,
+ * optionally `:<reasoning effort>`. Applies only to signed-in turns that named
+ * neither provider nor model (Grok is sign-in-only); unset, `off`, `default` or
+ * an invalid value returns null and the turn keeps the platform ladder.
+ * @param {{ anonymous: boolean, requestedProvider: unknown, requestedModel: unknown }} o
+ * @returns {{ provider: 'grok', model: string, effort: string|null } | null}
+ */
+export function agentChatRouteFor({ anonymous, requestedProvider, requestedModel }, env = process.env) {
+	if (anonymous || requestedProvider || requestedModel) return null;
+	const override = llmRouteOverride('agent_chat', env);
+	return override ? { provider: 'grok', model: override.model, effort: override.effort } : null;
+}
+
+/**
+ * The routed reasoning effort (`<id>:<effort>`) in the request body, only when
+ * the picked route is the routed Grok model: a fallen-through rung keeps its own
+ * body. Exported for tests.
+ */
+export function withRouteEffort(route, chatRoute) {
+	if (!chatRoute?.effort || route.name !== 'grok' || route.model !== chatRoute.model) return route;
+	const basePayload = route.buildPayload;
+	return { ...route, buildPayload: (opts) => ({ ...basePayload(opts), reasoning_effort: chatRoute.effort }) };
+}
+
 // Effective provider try-order. Vertex-served Claude is injected per flags:
 //   VERTEX_CLAUDE_PRIMARY  → Vertex leads the whole ladder (before the free
 //     lanes) — the platform's default brain becomes real Claude on GCP credits.
@@ -1842,7 +1882,8 @@ export function providerOrder() {
 	return withGeminiAnchor(DEFAULT_PROVIDER_ORDER);
 }
 
-function pickProvider(requested, model, userKeys = {}, cooldown = new Map()) {
+// Exported for tests (the agent-chat route's fall-through).
+export function pickProvider(requested, model, userKeys = {}, cooldown = new Map()) {
 	// Fall back in providerOrder() (free providers first, Vertex injected per
 	// flags), not the PROVIDERS object order — and never silently fall into
 	// watsonx/orchestrate, which are explicit-selection-only providers.
