@@ -22,12 +22,16 @@ Python 3.10 or newer and `semantic-kernel` 1.30 or newer.
 
 ## Auth
 
-Generation, asset search, the public agent directory, and messaging work with no
-account and no key. Only `list_my_agents` needs a key.
+Making a 3D model needs a free three.ws account, so every model has an owner who
+can publish or delete it (new models are unlisted until you publish them). Create
+an API key at [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys)
+and set `THREE_WS_API_KEY`. Asset search, job status, the public agent directory
+and messaging work without one. Without a key, `generate_3d_model` answers
+`{"ok": false, "code": "needs_key"}` with that link before any request is sent.
 
 | Variable | Needed for | Default |
 |---|---|---|
-| `THREE_WS_API_KEY` | `list_my_agents` (create one at [three.ws/dashboard/api](https://three.ws/dashboard/api)) | unset |
+| `THREE_WS_API_KEY` | `generate_3d_model`, `list_my_agents` and the MCP Studio tools that make or rig a model | unset |
 | `THREE_WS_BASE_URL` | pointing at another deployment | `https://three.ws` |
 
 You can also pass `api_key=` and `base_url=` to `ThreeWsPlugin(...)` or
@@ -37,7 +41,7 @@ You can also pass `api_key=` and `base_url=` to `ThreeWsPlugin(...)` or
 
 | Function | What it does | Key |
 |---|---|---|
-| `generate_3d_model(prompt, tier="draft")` | Text to a textured GLB. Waits up to 4 minutes and retries once on a transient GPU failure; if the model is still cooking it returns the `job_id` and a `next_step`. Tiers: `draft`, `standard`, `high`. | no |
+| `generate_3d_model(prompt, tier="draft")` | Text to a textured GLB. Waits up to 4 minutes and retries once on a transient GPU failure; if the model is still cooking it returns the `job_id` and a `next_step`. Tiers: `draft`, `standard`, `high`. | yes |
 | `get_3d_job_status(job_id)` | Status of a generation, with `glb_url` and a `viewer_url` when done. | no |
 | `find_3d_asset(query, kind=None, limit=5)` | Search thousands of ready-made CC0 props (`object`), rigged characters (`character`) and motion clips (`animation`). | no |
 | `list_my_agents()` | The agents on your account, with their public pages. | yes |
@@ -111,22 +115,28 @@ async with create_three_ws_mcp_plugin() as studio:   # plugin name "threews_stud
     ...
 ```
 
-It returns SK's `MCPStreamableHttpPlugin`, so every keyword SK accepts
-(`load_prompts`, `headers`, ...) passes through.
+The helper sends `THREE_WS_API_KEY` (or `api_key=`) as a bearer, which the
+studio's `forge_free`, `mesh_forge`, `forge_avatar` and `rig_mesh` tools need;
+without a key they answer `sign_in_required` and the catalog and docs tools
+still work. It returns SK's `MCPStreamableHttpPlugin`, so every keyword SK
+accepts (`load_prompts`, `headers`, ...) passes through.
 
 ## Use the client without Semantic Kernel
 
 ```python
+import os
+
 from threews_semantic_kernel import ThreeWsClient
 
-async with ThreeWsClient() as client:
+async with ThreeWsClient(api_key=os.environ["THREE_WS_API_KEY"]) as client:
     job = await client.generate_model("a carved wooden owl figurine", tier="draft")
     print(job["glb_url"], job["viewer_url"])
 ```
 
 ## Tests
 
-The tests call the real three.ws API; nothing is mocked.
+`tests/test_live.py` calls the real three.ws API; nothing is mocked.
+`tests/test_account.py` checks the key the client puts on the wire, offline.
 
 ```bash
 pip install -e ".[test]"
@@ -134,7 +144,8 @@ pytest -m "not slow"   # about 1 minute
 pytest                 # adds one real GPU generation (a few minutes)
 ```
 
-Set `THREE_WS_API_KEY` to also run the signed-in `list_my_agents` test.
+Set `THREE_WS_API_KEY` to also run the generation and `list_my_agents` tests;
+making a model needs an account, so they skip without one.
 
 ## Publish (maintainers)
 

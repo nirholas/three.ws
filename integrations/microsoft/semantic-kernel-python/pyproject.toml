@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "threews-semantic-kernel"
-version = "0.1.0"
+version = "0.2.0"
 description = "three.ws plugin for Microsoft Semantic Kernel: free text-to-3D generation, a 3D asset catalog and three.ws agent messaging"
 readme = "README.md"
 license = { text = "Apache-2.0" }

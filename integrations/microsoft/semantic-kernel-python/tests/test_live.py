@@ -23,11 +23,13 @@ from threews_semantic_kernel import (
 )
 
 BASE = os.environ.get("THREE_WS_BASE_URL", "https://three.ws")
+KEY = os.environ.get("THREE_WS_API_KEY") or None
+needs_key = pytest.mark.skipif(not KEY, reason="making a model needs an account: set THREE_WS_API_KEY")
 
 
 @pytest.fixture
 async def client():
-    async with ThreeWsClient(BASE) as c:
+    async with ThreeWsClient(BASE, api_key=KEY) as c:
         yield c
 
 
@@ -83,6 +85,7 @@ async def test_search_public_agents(kernel):
     assert agent["id"] and agent["page_url"].startswith(BASE + "/agents/")
 
 
+@pytest.mark.skipif(bool(KEY), reason="checks the keyless answer")
 async def test_list_my_agents_without_key_explains_how_to_get_one(kernel):
     out = await invoke(kernel, "list_my_agents")
     assert out["ok"] is False
@@ -125,6 +128,7 @@ async def test_generate_rejects_a_too_short_prompt(kernel):
     assert out["ok"] is False and out["code"] == "validation_error"
 
 
+@needs_key
 async def test_generation_submits_and_returns_a_pollable_job(client):
     job = await client.generate_model("a small carved wooden owl figurine", tier="draft", wait_seconds=0)
     assert job["job_id"] or job.get("glb_url")
@@ -134,6 +138,7 @@ async def test_generation_submits_and_returns_a_pollable_job(client):
 
 
 @pytest.mark.slow
+@needs_key
 async def test_generate_3d_model_end_to_end(kernel):
     out = await invoke(kernel, "generate_3d_model", prompt="a weathered bronze ship's lantern", tier="draft")
     assert out["ok"] is True, out

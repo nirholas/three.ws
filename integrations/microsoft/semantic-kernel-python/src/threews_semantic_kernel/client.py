@@ -95,6 +95,12 @@ def _retry_after_seconds(res: httpx.Response) -> float | None:
         return None
 
 
+_KEY_HINT = (
+    "Pass api_key or set THREE_WS_API_KEY with a key from https://three.ws/dashboard/api-keys "
+    "(a free account is enough)"
+)
+
+
 def _error_from_response(res: httpx.Response, what: str) -> ThreeWsError:
     code = "error"
     detail = ""
@@ -107,7 +113,7 @@ def _error_from_response(res: httpx.Response, what: str) -> ThreeWsError:
         detail = res.text[:300]
     if res.status_code == 401:
         code = "needs_key"
-        detail = detail or "this call needs a three.ws API key (create one at https://three.ws/dashboard/api)"
+        detail = f"{detail or 'this call needs a three.ws account'}. {_KEY_HINT}"
     elif res.status_code == 429:
         code = "rate_limited"
         retry = res.headers.get("retry-after")
@@ -122,10 +128,13 @@ class ThreeWsClient:
 
     Args:
         base_url: The three.ws origin. Override it for a self-hosted deployment.
-        api_key: A three.ws API key (``sk_live_...``). Only ``list_my_agents``
-            needs one; every other call is free and anonymous. A connector key
-            (read and generate, never spend) is the right key for an agent.
-        client_handle: The anonymous handle Forge scopes your creations to. A
+        api_key: A three.ws API key (``sk_live_...``). Generating a model and
+            ``list_my_agents`` need one, because making a model needs a free
+            three.ws account (new models are unlisted until you publish them).
+            Asset search, the public agent directory and messaging work without
+            it. A connector key (read and generate, never spend) is the right
+            key for an agent.
+        client_handle: The handle Forge groups this client's jobs under. A
             random one is made per client when omitted.
         timeout: Per-request timeout in seconds.
         http_client: Bring your own ``httpx.AsyncClient`` (for proxies, retries
@@ -148,7 +157,7 @@ class ThreeWsClient:
         self._owns_http = http_client is None
         self._http = http_client or httpx.AsyncClient(
             timeout=timeout,
-            headers={"user-agent": "threews-semantic-kernel/0.1 (+https://three.ws)"},
+            headers={"user-agent": "threews-semantic-kernel/0.2 (+https://three.ws)"},
             follow_redirects=True,
         )
 
@@ -170,6 +179,9 @@ class ThreeWsClient:
         """The free three.ws 3D Studio MCP endpoint (Streamable HTTP)."""
         return f"{self.base_url}{FREE_MCP_PATH}"
 
+    def _auth_headers(self) -> dict[str, str]:
+        return {"authorization": f"Bearer {self.api_key}"} if self.api_key else {}
+
     def _url(self, path: str) -> str:
         return f"{self.base_url}{path}"
 
@@ -177,12 +189,8 @@ class ThreeWsClient:
         headers = {}
         if auth:
             if not self.api_key:
-                raise ThreeWsError(
-                    f"three.ws {what} needs an API key: pass api_key or set THREE_WS_API_KEY "
-                    "(create one at https://three.ws/dashboard/api)",
-                    code="needs_key",
-                )
-            headers["authorization"] = f"Bearer {self.api_key}"
+                raise ThreeWsError(f"three.ws {what} needs an API key. {_KEY_HINT}", code="needs_key")
+            headers.update(self._auth_headers())
         try:
             res = await self._http.get(self._url(path), params=params, headers=headers)
         except httpx.HTTPError as err:
@@ -196,22 +204,25 @@ class ThreeWsClient:
     async def submit_generation(self, prompt: str, *, tier: str = "standard") -> dict[str, Any]:
         """Start a free text-to-3D job and return Forge's submit response.
 
-        The response carries ``job_id`` and ``status`` (usually ``queued``). A
-        prompt Forge already generated recently comes back ``done`` at once with
-        ``glb_url`` and no job to poll.
+        Needs ``api_key``: making a model needs a three.ws account. The response
+        carries ``job_id`` and ``status`` (usually ``queued``). A prompt Forge
+        already generated recently comes back ``done`` at once with ``glb_url``
+        and no job to poll.
         """
         prompt = (prompt or "").strip()
         if len(prompt) < 3:
             raise ThreeWsError("describe the model in at least 3 characters", code="validation_error")
         if tier not in TIERS:
             raise ThreeWsError(f"tier must be one of {', '.join(TIERS)}", code="validation_error")
+        if not self.api_key:
+            raise ThreeWsError(f"three.ws Forge generation needs an API key. {_KEY_HINT}", code="needs_key")
         rate_limit_waited = False
         for attempt in range(3):
             try:
                 res = await self._http.post(
                     self._url("/api/forge"),
                     json={"prompt": prompt, "tier": tier},
-                    headers={"x-forge-client": self.client_handle},
+                    headers={"x-forge-client": self.client_handle, **self._auth_headers()},
                     timeout=_SUBMIT_TIMEOUT,
                 )
             except httpx.HTTPError as err:
@@ -243,7 +254,9 @@ class ThreeWsClient:
         last: ThreeWsError | None = None
         for attempt in range(3):
             try:
-                res = await self._http.get(self._url("/api/forge"), params={"job": job_id})
+                res = await self._http.get(
+                    self._url("/api/forge"), params={"job": job_id}, headers=self._auth_headers()
+                )
             except httpx.HTTPError as err:
                 last = ThreeWsError(f"three.ws Forge is unreachable: {_describe(err)}", code="network")
             else:
@@ -430,8 +443,7 @@ class ThreeWsClient:
         if agent_id:
             payload["agentId"] = agent_id
         headers = {"accept": "text/event-stream"}
-        if self.api_key:
-            headers["authorization"] = f"Bearer {self.api_key}"
+        headers.update(self._auth_headers())
 
         chunks: list[str] = []
         done: dict[str, Any] | None = None

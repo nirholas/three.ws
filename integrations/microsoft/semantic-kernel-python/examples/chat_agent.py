@@ -3,6 +3,7 @@
 Run:
     pip install threews-semantic-kernel
     export OPENAI_API_KEY=...          # any OpenAI-compatible provider works
+    export THREE_WS_API_KEY=...        # free, from https://three.ws/dashboard/api-keys
     python examples/chat_agent.py "a weathered bronze ship's lantern"
 
 Optional:

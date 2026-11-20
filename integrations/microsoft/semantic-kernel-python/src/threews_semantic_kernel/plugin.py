@@ -34,8 +34,9 @@ class ThreeWsPlugin:
         client: An existing ``ThreeWsClient``. When omitted one is created from
             ``base_url`` and ``api_key``.
         base_url: The three.ws origin (``THREE_WS_BASE_URL`` or https://three.ws).
-        api_key: A three.ws API key (``THREE_WS_API_KEY``). Only
-            ``list_my_agents`` needs it.
+        api_key: A three.ws API key (``THREE_WS_API_KEY``). ``generate_3d_model``
+            and ``list_my_agents`` need it, because making a model needs a free
+            three.ws account.
         generation_wait_seconds: How long ``generate_3d_model`` waits for the
             model before handing back a job id to check later.
     """
