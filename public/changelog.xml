@@ -127,6 +127,14 @@
 			<description>Before a model appears in the public gallery, feeds, search or sitemaps, its prompt, its preview render and every photo it was made from are screened. Clean models publish automatically; if the screen cannot answer, the model stays unlisted and is retried, then reviewed by a person. Unsafe models are kept private. Three reports for harmful content or someone's likeness also take a model out of public view for review. Nothing you generate is refused, and your own link keeps working.</description>
 		</item>
 		<item>
+			<title>Rocket engine and launch stack cutaways, narrated by Grok</title>
+			<link>https://three.ws/anatomy</link>
+			<guid isPermaLink="false">2026-11-20:Rocket engine and launch stack cutaways, narrated by Grok</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Anatomy now opens with two featured cutaways. The first is a full-flow staged-combustion rocket engine: both preburners and turbopumps spin, six propellant flows are coloured by species, the methane cools the nozzle on its way to the preburner, and the plume shows shock diamonds. The second is a fully reusable two-stage launch system, toured from liftoff through hot staging and boostback to the tower catch. Every number on screen is listed with its public source and date on a Sources page, and anything that could not be sourced was cut. Press Listen in the tour to hear each step. The narration is built for Grok to write from that step's sourced facts only, and the page reads the written step text whenever Grok is not connected. Shared links unfurl as cards rendered from the real cutaway.</description>
+		</item>
+		<item>
 			<title>Signing in to the free 3D Studio connector works in MCP clients</title>
 			<link>https://three.ws/docs/mcp-studio</link>
 			<guid isPermaLink="false">2026-11-20:Signing in to the free 3D Studio connector works in MCP clients</guid>
@@ -141,6 +149,14 @@
 			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>A new examples pack shows Grok and three.ws working together six ways: Python with xai-sdk, Node with the Responses API, a single curl script, Grok's X search turning a trending topic into a 3D prop (it drafts a post and never posts), a talking 3D avatar with Grok as its brain, and a walk-through of the three.ws plugin for Grok Build that ends with the model loaded in a three.js starter. Every example has a README with the exact run command, output captured from a real run and what a run costs, and a no-key mode that runs the three.ws side live. One command, npm run grok:examples-smoke, sets each one up in a fresh folder and runs them all against production; the fastest goes from a fresh copy to a finished GLB in about two minutes.</description>
+		</item>
+		<item>
+			<title>Talk to a 3D avatar with Grok voice, speech to speech</title>
+			<link>https://three.ws/voice/grok</link>
+			<guid isPermaLink="false">2026-11-20:Talk to a 3D avatar with Grok voice, speech to speech</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new page at /voice/grok lets you talk to a 3D avatar through Grok Voice, xAI's speech-to-speech model. Your voice goes up and the spoken reply comes back over one connection instead of three separate steps, the avatar's lips move with the reply as you hear it, and you can talk over it to cut in. Every turn shows how long the reply took to start and how quickly the mouth followed. Any three.ws embed can switch its mic button to Grok Voice with one attribute, voice-provider=&quot;grok-realtime&quot;. The mouth waits for your speakers instead of running ahead of the sound, Bluetooth included. The LiveKit and Pipecat plugins gained Grok Voice examples and fixes so the avatar keeps the first words of a reply and the visitor's own words. Grok Voice needs a free three.ws account, and the page uses the standard voice chain whenever Grok Voice is not available.</description>
 		</item>
 		<item>
 			<title>The /glass lens gets past &quot;Location needed&quot;</title>

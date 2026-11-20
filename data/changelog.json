@@ -17,6 +17,20 @@
 		},
 		{
 			"date": "2026-11-20",
+			"title": "Talk to a 3D avatar with Grok voice, speech to speech",
+			"summary": "A new page at /voice/grok lets you talk to a 3D avatar through Grok Voice, xAI's speech-to-speech model. Your voice goes up and the spoken reply comes back over one connection instead of three separate steps, the avatar's lips move with the reply as you hear it, and you can talk over it to cut in. Every turn shows how long the reply took to start and how quickly the mouth followed. Any three.ws embed can switch its mic button to Grok Voice with one attribute, voice-provider=\"grok-realtime\". The mouth waits for your speakers instead of running ahead of the sound, Bluetooth included. The LiveKit and Pipecat plugins gained Grok Voice examples and fixes so the avatar keeps the first words of a reply and the visitor's own words. Grok Voice needs a free three.ws account, and the page uses the standard voice chain whenever Grok Voice is not available.",
+			"tags": ["feature", "fix", "sdk"],
+			"link": "/voice/grok"
+		},
+		{
+			"date": "2026-11-20",
+			"title": "Rocket engine and launch stack cutaways, narrated by Grok",
+			"summary": "Anatomy now opens with two featured cutaways. The first is a full-flow staged-combustion rocket engine: both preburners and turbopumps spin, six propellant flows are coloured by species, the methane cools the nozzle on its way to the preburner, and the plume shows shock diamonds. The second is a fully reusable two-stage launch system, toured from liftoff through hot staging and boostback to the tower catch. Every number on screen is listed with its public source and date on a Sources page, and anything that could not be sourced was cut. Press Listen in the tour to hear each step. The narration is built for Grok to write from that step's sourced facts only, and the page reads the written step text whenever Grok is not connected. Shared links unfurl as cards rendered from the real cutaway.",
+			"tags": ["feature"],
+			"link": "/anatomy"
+		},
+		{
+			"date": "2026-11-20",
 			"title": "The three.ws plugin for Cursor gets /make-3d, /rig and /embed",
 			"summary": "The Cursor plugin now has three commands. /make-3d checks the free catalog, generates a textured model, renders it so the agent can see whether it matches, and prints the GLB, a viewer link, the run receipt and paste-ready embed code. /rig turns a humanoid GLB into an animation-ready one, and /embed writes HTML for any website. Signing in from Cursor now always asks for the same four permissions (read and update your 3D models, see your name and email, stay connected) and nothing else, even when Cursor registers without naming them. The plugin ships a five-minute test plan with measured timings, and the privacy policy now spells out what the plugin's server can reach, how long models are kept, and that prompts and models are never used for training or sold.",
 			"tags": ["feature", "fix", "docs"],

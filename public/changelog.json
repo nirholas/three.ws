@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-20T22:42:00.400Z",
+	"generated_at": "2026-11-20T22:43:37.071Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -171,6 +171,16 @@
 		{
 			"date": "2026-11-20",
 			"type": "update",
+			"title": "Rocket engine and launch stack cutaways, narrated by Grok",
+			"summary": "Anatomy now opens with two featured cutaways. The first is a full-flow staged-combustion rocket engine: both preburners and turbopumps spin, six propellant flows are coloured by species, the methane cools the nozzle on its way to the preburner, and the plume shows shock diamonds. The second is a fully reusable two-stage launch system, toured from liftoff through hot staging and boostback to the tower catch. Every number on screen is listed with its public source and date on a Sources page, and anything that could not be sourced was cut. Press Listen in the tour to hear each step. The narration is built for Grok to write from that step's sourced facts only, and the page reads the written step text whenever Grok is not connected. Shared links unfurl as cards rendered from the real cutaway.",
+			"link": "/anatomy",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
 			"title": "Signing in to the free 3D Studio connector works in MCP clients",
 			"summary": "Making a model on the free 3D Studio MCP server (/api/mcp-studio) needs a free three.ws account, but its sign-in pointed MCP clients at the wrong protected resource, so clients built on the MCP SDK stopped before the sign-in page with \"Protected resource does not match expected\". The studio is now its own OAuth resource: its sign-in challenge, its protected-resource metadata and the tokens the authorization server mints all name /api/mcp-studio, so connectors such as Grok Bot and IBM Bob reach consent and come back signed in. Existing platform tokens keep working.",
 			"link": "/docs/mcp-studio",
@@ -186,6 +196,18 @@
 			"link": "/grok",
 			"tags": [
 				"docs",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "Talk to a 3D avatar with Grok voice, speech to speech",
+			"summary": "A new page at /voice/grok lets you talk to a 3D avatar through Grok Voice, xAI's speech-to-speech model. Your voice goes up and the spoken reply comes back over one connection instead of three separate steps, the avatar's lips move with the reply as you hear it, and you can talk over it to cut in. Every turn shows how long the reply took to start and how quickly the mouth followed. Any three.ws embed can switch its mic button to Grok Voice with one attribute, voice-provider=\"grok-realtime\". The mouth waits for your speakers instead of running ahead of the sound, Bluetooth included. The LiveKit and Pipecat plugins gained Grok Voice examples and fixes so the avatar keeps the first words of a reply and the visitor's own words. Grok Voice needs a free three.ws account, and the page uses the standard voice chain whenever Grok Voice is not available.",
+			"link": "/voice/grok",
+			"tags": [
+				"feature",
+				"fix",
 				"sdk"
 			]
 		},
