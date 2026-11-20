@@ -9,7 +9,7 @@
 		<meta name="author" content="nirholas" />
 		<meta
 			name="description"
-			content="Run the whole 3D asset pipeline in your browser: generate a pack of models from prompts, render each one, gate them against a triangle and size budget, then export the manifest and the exact commands to reproduce the run locally. Free, keyless, no install."
+			content="Run the whole 3D asset pipeline in your browser: generate a pack of models from prompts, render each one, gate them against a triangle and size budget, then export the manifest and the exact commands to reproduce the run locally. Free with a three.ws account, no install."
 		 data-i18n-attr="content:pipeline_studio.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 
@@ -18,7 +18,7 @@
 		<meta property="og:title" content="three.ws: Pipeline Studio"  data-i18n-attr="content:pipeline_studio.meta_og_title"/>
 		<meta
 			property="og:description"
-			content="Generate, render, and quality-gate a whole pack of 3D models in the browser. Free and keyless, and it exports the CLI commands that reproduce the run."
+			content="Generate, render, and quality-gate a whole pack of 3D models in the browser. Free with a three.ws account, and it exports the CLI commands that reproduce the run."
 		 data-i18n-attr="content:pipeline_studio.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/cookbook/pipeline" />
 		<meta
@@ -32,7 +32,7 @@
 		<meta name="twitter:title" content="three.ws: Pipeline Studio"  data-i18n-attr="content:pipeline_studio.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
-			content="Generate, render, and quality-gate a whole pack of 3D models in the browser. Free and keyless, and it exports the CLI commands that reproduce the run."
+			content="Generate, render, and quality-gate a whole pack of 3D models in the browser. Free with a three.ws account, and it exports the CLI commands that reproduce the run."
 		 data-i18n-attr="content:pipeline_studio.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
@@ -73,7 +73,7 @@
 							commands to reproduce the whole run locally.
 						</p>
 						<div class="cb-hero-meta">
-							<span data-i18n="pipeline_studio.no_api_key">No API key</span>
+							<span data-i18n="pipeline_studio.free_account">Free account</span>
 							<span data-i18n="pipeline_studio.no_install">No install</span>
 							<span data-i18n-html="pipeline_studio.real_3d_api_real_models">Real <a href="/docs/3d-api">3D API</a>, real models</span>
 						</div>
@@ -230,6 +230,9 @@
 								<button class="pl-btn" type="button" id="pl-stop" hidden data-i18n="pipeline_studio.stop">Stop</button>
 							</div>
 							<p class="pl-eta" id="pl-eta"></p>
+							<p class="pl-signin" id="pl-signin" role="status" hidden data-i18n-html="pipeline_studio.sign_in_to_make_3d_models">
+								<strong>Sign in to make 3D models.</strong> A three.ws account is free, and every model you make here stays private in your library until you publish it. <a href="/login">Sign in</a>
+							</p>
 						</section>
 
 						<section class="pl-panel pl-log-panel">
@@ -272,9 +275,9 @@
 								inspected against your budget, and the whole thing becomes a manifest you can
 								download.
 							</p>
-							<p class="pl-intro-time" data-i18n="pipeline_studio.a_pack_of_three_takes_roughly_two">
-								A pack of three takes roughly two minutes. Nothing is charged and nothing is
-								stored on your account, because there is no account.
+							<p class="pl-intro-time" data-i18n="pipeline_studio.a_pack_of_three_takes_two_minutes_account">
+								A pack of three takes roughly two minutes. Nothing is charged. You need a free
+								three.ws account, and the models stay private in your library until you publish them.
 							</p>
 						</div>
 

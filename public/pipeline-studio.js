@@ -1,8 +1,11 @@
 /*
  * Pipeline Studio (/cookbook/playground)
  *
- * The cookbook's four stages, executed in the browser against the real, free,
- * keyless API:
+ * The cookbook's four stages, executed in the browser against the real, free
+ * API. Generating needs a three.ws account: /api/3d/generate answers an
+ * anonymous POST with 401 `sign_in_required`, so a run starts by asking
+ * /api/auth/me and shows this page's own sign-in prompt instead of four
+ * failed jobs. Rendering and inspecting stay open.
  *
  *   1. generate   POST /api/3d/generate      (inline-done or queued + poll)
  *   2. render     GET  /api/render/glb       (headless chromium still)
@@ -176,6 +179,39 @@
 		return clamp(hint * 1000, MIN_POLL_MS, MAX_POLL_MS);
 	}
 
+	/* ── Account ───────────────────────────────────────────────────────── */
+
+	// This page answers a refused generate with its own prompt, so the site-wide
+	// banner (public/sign-in-watch.js) stands aside for that one endpoint.
+	document.documentElement.dataset.signInPrompt = '/api/3d/generate';
+
+	class SignInRequired extends Error {}
+
+	// /api/auth/me answers 200 for everyone with `{ user: null }` when signed
+	// out. When the answer is unknowable (offline, auth erroring) this says yes
+	// and lets the generate endpoint decide, so a flaky probe never blocks a
+	// signed-in visitor.
+	async function signedIn() {
+		try {
+			const res = await fetch('/api/auth/me', { credentials: 'same-origin', headers: { accept: 'application/json' } });
+			if (res.status === 401) return false;
+			if (!res.ok) return true;
+			const body = await res.json();
+			return Boolean(body && body.user);
+		} catch (err) {
+			return true;
+		}
+	}
+
+	function showSignIn(show) {
+		if (!els.signin) return;
+		els.signin.hidden = !show;
+		if (show) {
+			const link = els.signin.querySelector('a');
+			if (link) link.href = '/login?next=' + encodeURIComponent(location.pathname + location.search);
+		}
+	}
+
 	async function generate(prompt, signal, onQueued) {
 		const res = await fetch('/api/3d/generate', {
 			method: 'POST',
@@ -184,6 +220,9 @@
 			signal: signal,
 		});
 		const data = await readJson(res);
+		if (res.status === 401 && data && data.error === 'sign_in_required') {
+			throw new SignInRequired('sign in to make 3D models; a three.ws account is free');
+		}
 		if (!res.ok) throw new Error(apiMessage(data, 'the 3D lane refused the job'));
 		if (data.status === 'done' && data.glbUrl) return data;
 		if (data.status === 'error') throw new Error(apiMessage(data, 'generation failed'));
@@ -390,6 +429,7 @@
 			'pl-share',
 			'pl-copy-repro',
 			'pl-tip',
+			'pl-signin',
 		].forEach((id) => {
 			els[id.replace(/^pl-/, '').replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = $(id);
 		});
@@ -726,6 +766,14 @@
 					item.ms = Date.now() - item.startedAt;
 					if (err instanceof Cancelled || signal.aborted) {
 						item.status = 'cancelled';
+					} else if (err instanceof SignInRequired) {
+						// The session ended mid-run: every other job would be refused the
+						// same way, so stop the run and show the sign-in prompt once.
+						item.status = 'error';
+						item.error = err.message;
+						showSignIn(true);
+						log(err.message, 'fail');
+						if (state.controller) state.controller.abort();
 					} else {
 						item.status = 'error';
 						item.error = err.message || String(err);
@@ -746,6 +794,15 @@
 		if (!prompts.length) {
 			log('add at least one prompt before running', 'fail');
 			els.prompts.focus();
+			return;
+		}
+
+		els.run.disabled = true;
+		const canGenerate = await signedIn();
+		els.run.disabled = false;
+		showSignIn(!canGenerate);
+		if (!canGenerate) {
+			log('sign in to make 3D models; a three.ws account is free', 'fail');
 			return;
 		}
 
@@ -872,6 +929,10 @@
 		if (b.requireTextures) flags.push('--require-textures');
 		if (b.requireMaterials) flags.push('--require-materials');
 		return [
+			'# 0. making models needs a free three.ws account: create a key at',
+			'#    https://three.ws/dashboard/api-keys',
+			'export THREE_WS_API_KEY=<your three.ws API key>',
+			'',
 			'# 1. get the two recipes',
 			'curl -O https://three.ws/cookbook/recipes/text_to_3d.py',
 			'curl -O https://three.ws/cookbook/recipes/asset_pack.py',
