@@ -72,13 +72,6 @@ import { isFreeModelId } from './openrouter-free.js';
 export const XAI_API_BASE = 'https://api.x.ai/v1';
 export const XAI_CHAT_COMPLETIONS_URL = `${XAI_API_BASE}/chat/completions`;
 
-// Grok Imagine image generation (POST /v1/images/generations). Image 2.0 is the
-// current model and the redirect target of the retired grok-imagine-image-quality
-// slug (docs.x.ai/developers/migration/imagine-image-quality-nov-2). Read by
-// api/_lib/xai-image.js, the forge reference-image lane's xAI provider.
-export const XAI_IMAGE_GENERATIONS_URL = `${XAI_API_BASE}/images/generations`;
-export const XAI_IMAGINE_IMAGE_MODEL = 'grok-imagine-image-2.0';
-
 const EFFORTS_FLAGSHIP = Object.freeze(['low', 'medium', 'high', 'xhigh']);
 
 export const GROK_MODELS = Object.freeze([
@@ -211,6 +204,20 @@ export const GROK_MODELS = Object.freeze([
 ].map((m) => Object.freeze(m)));
 
 const GROK_BY_ID = new Map(GROK_MODELS.map((m) => [m.id, m]));
+
+/**
+ * Grok Imagine Video (POST /v1/videos/generations, poll GET /v1/videos/{id}).
+ * Read from https://docs.x.ai/developers/models/grok-imagine-video-1.5 and
+ * .../grok-imagine-video-1.5-lite on 2026-11-20. Only the full model takes
+ * reference images (up to 14, at most 720p); lite does text-to-video and
+ * image-to-video. Read by api/_lib/xai-video.js (hero clips).
+ */
+export const XAI_VIDEO_GENERATIONS_URL = `${XAI_API_BASE}/videos/generations`;
+export const XAI_VIDEO_STATUS_URL = `${XAI_API_BASE}/videos`;
+export const XAI_VIDEO_MODELS = Object.freeze({
+	full: Object.freeze({ id: 'grok-imagine-video-1.5', referenceImages: 14, maxSeconds: 15, resolution: '720p', pricePerSecond: 0.08 }),
+	lite: Object.freeze({ id: 'grok-imagine-video-1.5-lite', referenceImages: 0, maxSeconds: 15, resolution: '480p', pricePerSecond: 0.02 }),
+});
 
 /**
  * Grok slugs xAI retired, mapped to the successor xAI itself redirects them to
