@@ -7822,7 +7822,7 @@ downloadable 3D objects, and then turns the model's vision on its own output.
 That generate, render, inspect, repair loop is the shape you need any time a
 tool's output is generative and can silently miss: image generation, chart
 rendering, UI screenshots, 3D.</p>
-<p><img loading="lazy" decoding="async" alt="Pipeline architecture: a one-line brief goes to a gpt-5-mini art director, which issues parallel function calls to the keyless three.ws text-to-3D API; each GLB is rendered to a PNG and inspected by a vision critic returning a structured verdict; failed props are rebuilt once from the critic's revised prompt; passing props render in an interactive 3D gallery" src="/cookbook/pipeline.svg"/></p>
+<p><img loading="lazy" decoding="async" alt="Pipeline architecture: a one-line brief goes to a gpt-5-mini art director, which issues parallel function calls to the three.ws text-to-3D API; each GLB is rendered to a PNG and inspected by a vision critic returning a structured verdict; failed props are rebuilt once from the critic's revised prompt; passing props render in an interactive 3D gallery" src="/cookbook/pipeline.svg"/></p>
 <p data-i18n="cookbook_index.the_committed_run_below_turns_the_one">The committed run below turns the one-line brief "chunky potted houseplants
 for a sunny windowsill" into this set. Three of the six props failed vision QA
 and were each rebuilt once from the critic's own revised prompts; five of six
@@ -7840,12 +7840,13 @@ prompt, exactly once.</li>
 <li data-i18n-html="cookbook_index.turn_raw_tool_output_into_a_rich">Turn raw tool output into a rich, interactive result (a live
 <a href="https://modelviewer.dev/"><code>&lt;model-viewer&gt;</code></a> gallery).</li>
 </ol>
-<h2 id="The-tools" data-i18n-html="cookbook_index.the_tools">The tools<a class="anchor-link" href="#The-tools">¶</a></h2><p data-i18n-html="cookbook_index.the_3d_tool_is_the_free_keyless">The 3D tool is the free, keyless <a href="https://three.ws">three.ws</a> text-to-3D
+<h2 id="The-tools" data-i18n-html="cookbook_index.the_tools">The tools<a class="anchor-link" href="#The-tools">¶</a></h2><p data-i18n-html="cookbook_index.the_3d_tool_is_the_free_three_ws">The 3D tool is the free <a href="https://three.ws">three.ws</a> text-to-3D
 endpoint. It runs an open text-to-3D model (Microsoft
 <a href="https://github.com/microsoft/TRELLIS">TRELLIS</a> on NVIDIA NIM) and returns a
 standard <a href="https://www.khronos.org/gltf/">glTF 2.0</a> <code>.glb</code>. The QA step uses a
-second keyless endpoint from the same API, which renders any GLB to a PNG.
-Neither needs an account or API key, so both are free to run.</p>
+second endpoint from the same API, which renders any GLB to a PNG. Making a
+model needs a free three.ws account (send its API key); rendering is keyless.
+Neither costs anything to run.</p>
 <h2 id="Prerequisites" data-i18n-html="cookbook_index.prerequisites">Prerequisites<a class="anchor-link" href="#Prerequisites">¶</a></h2><table>
 <thead>
 <tr>
@@ -7876,9 +7877,9 @@ Neither needs an account or API key, so both are free to run.</p>
 <td data-i18n="cookbook_index.jupyter_jupyterlab_vs_code_or_colab_static">Jupyter, JupyterLab, VS Code, or Colab; static views like GitHub get a baked PNG contact sheet beneath each gallery</td>
 </tr>
 <tr>
-<td data-i18n="cookbook_index.a_three_ws_account">A three.ws account</td>
-<td data-i18n="cookbook_index.nothing">nothing</td>
-<td data-i18n="cookbook_index.both_3d_endpoints_are_keyless_and_free">both 3D endpoints are keyless and free; there is nothing to sign up for</td>
+<td data-i18n="cookbook_index.a_three_ws_api_key">A three.ws API key</td>
+<td data-i18n="cookbook_index.the_text_to_3d_calls">the text-to-3D calls</td>
+<td data-i18n-html="cookbook_index.free_sign_in_at_three_ws_create_a_key">free: sign in at <a href="https://three.ws/login">three.ws</a>, create a key at <a href="https://three.ws/dashboard/api-keys">/dashboard/api-keys</a>, and export it as <code>THREE_WS_API_KEY</code>; the renderer needs no key</td>
 </tr>
 </tbody>
 </table>
@@ -7963,10 +7964,14 @@ generation time (about 30 to 90 seconds per prop, run in parallel).</p>
 
 <span class="n">MODEL</span> <span class="o">=</span> <span class="s2">"gpt-5-mini"</span>            <span class="c1"># any vision-capable, tool-calling model works</span>
 <span class="n">THREE_WS_BASE</span> <span class="o">=</span> <span class="s2">"https://three.ws"</span>
+<span class="c1"># Making a model needs a free three.ws account: create a key at</span>
+<span class="c1"># https://three.ws/dashboard/api-keys and export it as THREE_WS_API_KEY.</span>
+<span class="n">THREE_WS_API_KEY</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"THREE_WS_API_KEY"</span><span class="p">,</span> <span class="s2">"&lt;your three.ws API key&gt;"</span><span class="p">)</span>
+<span class="n">THREE_WS_AUTH</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"Authorization"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"Bearer </span><span class="si">{</span><span class="n">THREE_WS_API_KEY</span><span class="si">}</span><span class="s2">"</span><span class="p">}</span>
 <span class="c1"># -- Live-calls switch --------------------------------------------------------</span>
-<span class="c1"># Running this notebook drives two live external services: the keyless three.ws</span>
-<span class="c1"># text-to-3D and render endpoints (free, no account) and the OpenAI API (your</span>
-<span class="c1"># OPENAI_API_KEY; a few cents with gpt-5-mini). The notebook ships fully</span>
+<span class="c1"># Running this notebook drives two live external services: the three.ws</span>
+<span class="c1"># text-to-3D and render endpoints (free; text-to-3D needs your THREE_WS_API_KEY)</span>
+<span class="c1"># and the OpenAI API (your OPENAI_API_KEY; a few cents with gpt-5-mini). The notebook ships fully</span>
 <span class="c1"># executed, so every result is readable below without running anything. Flip to</span>
 <span class="c1"># True to opt in and reproduce the whole pipeline yourself.</span>
 <span class="n">RUN_LIVE</span> <span class="o">=</span> <span class="kc">False</span>
@@ -7977,7 +7982,7 @@ generation time (about 30 to 90 seconds per prop, run in parallel).</p>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">show_committed</span><span class="p">(</span><span class="o">*</span><span class="n">receipts</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Replay the committed static contact sheets when a live cell is skipped,</span>
-<span class="sd">    so a keyless Run All still ends with every result visible. Looks for the</span>
+<span class="sd">    so a Run All with no keys still ends with every result visible. Looks for the</span>
 <span class="sd">    repo's images/ directory relative to common working directories; a</span>
 <span class="sd">    standalone copy of the notebook falls back to a pointer at the hosted run.</span>
 <span class="sd">    """</span>
@@ -8008,8 +8013,10 @@ generation time (about 30 to 90 seconds per prop, run in parallel).</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="1.-A-tool-that-makes-real-3D" data-i18n-html="cookbook_index.1_a_tool_that_makes_real_3d">1. A tool that makes real 3D<a class="anchor-link" href="#1.-A-tool-that-makes-real-3D">¶</a></h2><p data-i18n-html="cookbook_index.three_ws_exposes_a_small_keyless_endpoint">three.ws exposes a small, keyless endpoint that turns a prompt into a textured
-<code>.glb</code>:</p>
+<h2 id="1.-A-tool-that-makes-real-3D" data-i18n-html="cookbook_index.1_a_tool_that_makes_real_3d">1. A tool that makes real 3D<a class="anchor-link" href="#1.-A-tool-that-makes-real-3D">¶</a></h2><p data-i18n-html="cookbook_index.three_ws_exposes_a_small_endpoint_account">three.ws exposes a small endpoint that turns a prompt into a textured <code>.glb</code>.
+It needs a free three.ws account: every call sends your API key as
+<code>Authorization: Bearer &lt;key&gt;</code>, and a call without one gets <code>401</code>
+<code>sign_in_required</code>.</p>
 <ul>
 <li data-i18n-html="cookbook_index.submit_with"><strong>Submit:</strong> <code>POST https://three.ws/api/3d/generate</code> with <code>{"prompt": "..."}</code></li>
 <li data-i18n-html="cookbook_index.poll_while_is"><strong>Poll:</strong> <code>GET https://three.ws/api/3d/generate?job=&lt;id&gt;</code> while <code>status</code> is <code>pending</code></li>
@@ -8019,7 +8026,7 @@ generation time (about 30 to 90 seconds per prop, run in parallel).</p>
 A finished response looks like this:</p>
 <div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">  </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"done"</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"glbUrl"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://.../forge/anon/&lt;id&gt;.glb"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"glbUrl"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://.../forge/&lt;id&gt;.glb"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"viewerUrl"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://three.ws/viewer?src=..."</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"arUrl"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://three.ws/api/ar?src=..."</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"tier"</span><span class="p">:</span><span class="w"> </span><span class="s2">"draft"</span><span class="p">,</span>
@@ -8027,7 +8034,7 @@ A finished response looks like this:</p>
 <span class="p">}</span>
 </pre></div>
 <p data-i18n-html="cookbook_index.the_free_lane_is_the_draft_tier">The free lane is the <em>draft</em> tier: one subject, draft-fidelity geometry, no
-rigging. It has a generous per-IP rate limit protecting a shared GPU allocation;
+rigging. It has a generous per-account rate limit protecting a shared GPU allocation;
 over the limit it returns <code>429</code> with a <code>Retry-After</code> header.</p>
 <p data-i18n-html="cookbook_index.the_wrapper_below_submits_polls_if_needed">The wrapper below submits, polls if needed, retries transient failures, and
 backs off for the lane's <code>Retry-After</code> when it hits the rate limit (capped at
@@ -8082,6 +8089,7 @@ function the model will call, no mocking.</p>
         <span class="n">resp</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">THREE_WS_BASE</span><span class="si">}</span><span class="s2">/api/3d/generate"</span><span class="p">,</span>
             <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s2">"prompt"</span><span class="p">:</span> <span class="n">prompt</span><span class="p">},</span>
+            <span class="n">headers</span><span class="o">=</span><span class="n">THREE_WS_AUTH</span><span class="p">,</span>
             <span class="n">timeout</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">300</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="n">resp</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
@@ -8102,6 +8110,7 @@ function the model will call, no mocking.</p>
                 <span class="n">poll</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">THREE_WS_BASE</span><span class="si">}</span><span class="s2">/api/3d/generate"</span><span class="p">,</span>
                     <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">"job"</span><span class="p">:</span> <span class="n">job</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">:</span> <span class="n">prompt</span><span class="p">},</span>
+                    <span class="n">headers</span><span class="o">=</span><span class="n">THREE_WS_AUTH</span><span class="p">,</span>
                     <span class="n">timeout</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span>
                 <span class="p">)</span>
             <span class="k">except</span> <span class="p">(</span><span class="n">requests</span><span class="o">.</span><span class="n">Timeout</span><span class="p">,</span> <span class="n">requests</span><span class="o">.</span><span class="n">ConnectionError</span><span class="p">):</span>
@@ -8122,7 +8131,7 @@ function the model will call, no mocking.</p>
 
     <span class="c1"># The retry loop below only re-submits when the SUBMIT itself failed:</span>
     <span class="c1"># network errors before a job existed, brief lane saturation (502/503/504),</span>
-    <span class="c1"># or the per-IP rate limit (429, honoring Retry-After). Failures on the</span>
+    <span class="c1"># or the per-account rate limit (429, honoring Retry-After). Failures on the</span>
     <span class="c1"># poll leg are absorbed above so an in-flight job is never duplicated.</span>
     <span class="c1"># A bad prompt (other 4xx) is not retried.</span>
     <span class="n">last_exc</span> <span class="o">=</span> <span class="kc">None</span>
@@ -9565,7 +9574,7 @@ degrades instead of crashing. What that looks like in practice:</p>
 <tbody>
 <tr>
 <td data-i18n-html="cookbook_index.on_submit_or_poll"><code>429</code> on submit or poll</td>
-<td data-i18n="cookbook_index.per_ip_rate_limit_on_the_free">per-IP rate limit on the free lane</td>
+<td data-i18n="cookbook_index.per_account_rate_limit_on_the_free">per-account rate limit on the free lane</td>
 <td data-i18n-html="cookbook_index.honors_the_header_then_retries_mid_poll">honors the <code>Retry-After</code> header, then retries; mid-poll it keeps waiting on the <strong>same</strong> job rather than resubmitting it</td>
 </tr>
 <tr>
@@ -9638,7 +9647,7 @@ degrades instead of crashing. What that looks like in practice:</p>
 </tr>
 <tr>
 <td data-i18n="cookbook_index.concurrency">Concurrency</td>
-<td data-i18n-html="cookbook_index.the_free_draft_lane_is_per_ip">the free draft lane is per-IP rate-limited; keep <code>max_workers</code> modest (four here) or move to a keyed lane</td>
+<td data-i18n-html="cookbook_index.the_free_draft_lane_is_rate_limited_per_account">the free draft lane is rate-limited per account; keep <code>max_workers</code> modest (four here) or move to a keyed lane</td>
 </tr>
 <tr>
 <td data-i18n="cookbook_index.fidelity">Fidelity</td>

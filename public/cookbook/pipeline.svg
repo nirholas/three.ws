@@ -29,7 +29,7 @@
   <rect x="470" y="48" width="200" height="88" rx="10" fill="#ecfdf5" stroke="#10b981" stroke-width="1.5"/>
   <text x="570" y="76" text-anchor="middle" font-size="14" font-weight="bold" fill="#111827">Text-to-3D generation</text>
   <text x="570" y="94" text-anchor="middle" font-size="11" fill="#4b5563">three.ws /api/3d/generate</text>
-  <text x="570" y="112" text-anchor="middle" font-size="11" fill="#4b5563">free and keyless, one call</text>
+  <text x="570" y="112" text-anchor="middle" font-size="11" fill="#4b5563">free on an API key, one call</text>
   <text x="570" y="126" text-anchor="middle" font-size="11" fill="#4b5563">per prop, in parallel</text>
 
   <!-- Renderer -->
