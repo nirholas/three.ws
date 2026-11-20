@@ -1,0 +1,65 @@
+{
+	"rows": [
+		{
+			"step": "unauthenticated initialize answers 401 with a challenge",
+			"status": "PASS",
+			"ms": 374,
+			"detail": "https://three.ws/.well-known/oauth-protected-resource/api/mcp-grok"
+		},
+		{
+			"step": "protected-resource metadata names this server",
+			"status": "PASS",
+			"ms": 30,
+			"detail": "resource https://three.ws/api/mcp-grok, authorization server https://three.ws"
+		},
+		{
+			"step": "authorization-server metadata supports DCR, PKCE S256, public clients",
+			"status": "PASS",
+			"ms": 16,
+			"detail": "registration https://three.ws/api/oauth/register"
+		},
+		{
+			"step": "dynamic client registration issues a public client",
+			"status": "PASS",
+			"ms": 375,
+			"detail": "client_id mcp_JVgN…"
+		},
+		{
+			"step": "PKCE authorize lands on a sign-in page that renders the form",
+			"status": "PASS",
+			"ms": 455,
+			"detail": "/login renders the sign-in form, consent resumes after sign-in"
+		},
+		{
+			"step": "token endpoint refuses a forged code",
+			"status": "PASS",
+			"ms": 173,
+			"detail": "invalid_grant"
+		},
+		{
+			"step": "initialize with an API key issues a session",
+			"status": "PASS",
+			"ms": 498,
+			"detail": "three-ws-3d-studio-free 1.0.1, session grk_…"
+		},
+		{
+			"step": "tools/list serves the studio tools and nothing that spends",
+			"status": "PASS",
+			"ms": 507,
+			"detail": "56 tools, 0 financial-tier"
+		},
+		{
+			"step": "search_catalog returns a catalog hit",
+			"status": "PASS",
+			"ms": 181,
+			"detail": "3 hits, first \"Arm Chair 01\""
+		},
+		{
+			"step": "forge_free returns a finished GLB",
+			"status": "PASS",
+			"ms": 236123,
+			"detail": "done after 10 check_job polls, 1 retryable check retried"
+		}
+	],
+	"signedInToModelMs": 237309
+}

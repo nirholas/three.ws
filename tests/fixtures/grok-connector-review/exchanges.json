@@ -1,0 +1,304 @@
+[
+	{
+		"request": {
+			"method": "POST",
+			"url": "/api/mcp-grok"
+		},
+		"response": {
+			"status": 401,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"www-authenticate": "Bearer resource_metadata=\"https://three.ws/.well-known/oauth-protected-resource/api/mcp-grok\", resource=\"https://three.ws/api/mcp-grok\""
+			},
+			"body": "{\"error\":\"unauthorized\",\"error_description\":\"sign in to three.ws so this connector can make 3D models for your account\",\"setup\":{\"command\":\"npx three-ws setup\",\"message\":\"Run `npx three-ws setup` to sign in and wire three.ws into your MCP client in one step.\",\"docs\":\"https://three.ws/docs/cli\"}}"
+		}
+	},
+	{
+		"request": {
+			"method": "GET",
+			"url": "/.well-known/oauth-protected-resource/api/mcp-grok"
+		},
+		"response": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8"
+			},
+			"body": "{\"resource\":\"https://three.ws/api/mcp-grok\",\"authorization_servers\":[\"https://three.ws\"],\"bearer_methods_supported\":[\"header\"],\"resource_documentation\":\"https://three.ws/docs/mcp\",\"scopes_supported\":[\"avatars:read\",\"avatars:write\",\"avatars:delete\",\"profile\",\"offline_access\",\"memory:read\",\"memory:write\",\"agents:read\",\"agents:write\",\"feedback:read\",\"home:read\",\"home:act\",\"wallet:read\",\"wallet:write\",\"services:write\",\"wallet:trade\",\"wallet:launch\"]}"
+		}
+	},
+	{
+		"request": {
+			"method": "GET",
+			"url": "/.well-known/oauth-authorization-server"
+		},
+		"response": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8"
+			},
+			"body": "{\"issuer\":\"https://three.ws\",\"authorization_endpoint\":\"https://three.ws/oauth/authorize\",\"token_endpoint\":\"https://three.ws/api/oauth/token\",\"registration_endpoint\":\"https://three.ws/api/oauth/register\",\"revocation_endpoint\":\"https://three.ws/api/oauth/revoke\",\"introspection_endpoint\":\"https://three.ws/api/oauth/introspect\",\"response_types_supported\":[\"code\"],\"grant_types_supported\":[\"authorization_code\",\"refresh_token\"],\"code_challenge_methods_supported\":[\"S256\"],\"token_endpoint_auth_methods_supported\":[\"none\",\"client_secret_basic\",\"client_secret_post\"],\"scopes_supported\":[\"avatars:read\",\"avatars:write\",\"avatars:delete\",\"profile\",\"offline_access\",\"memory:read\",\"memory:write\",\"agents:read\",\"agents:write\",\"feedback:read\",\"home:read\",\"home:act\",\"wallet:read\",\"wallet:write\",\"services:write\",\"wallet:trade\",\"wallet:launch\",\"read:agent-reputation\",\"x402:bypass\"],\"service_documentation\":\"https://three.ws/docs/mcp\",\"ui_locales_supported\":[\"en\"]}"
+		}
+	},
+	{
+		"request": {
+			"method": "POST",
+			"url": "/api/oauth/register"
+		},
+		"response": {
+			"status": 201,
+			"headers": {
+				"content-type": "application/json; charset=utf-8"
+			},
+			"body": "{\"client_id\":\"mcp_JVgNGBXQXBNA8TjDnJ3OZd6k\",\"client_id_issued_at\":1795207602,\"token_endpoint_auth_method\":\"none\",\"redirect_uris\":[\"http://127.0.0.1:33418/callback\"],\"grant_types\":[\"authorization_code\",\"refresh_token\"],\"response_types\":[\"code\"],\"scope\":\"avatars:read avatars:write profile agents:read offline_access\",\"client_name\":\"three.ws review check\"}"
+		}
+	},
+	{
+		"request": {
+			"method": "GET",
+			"url": "/oauth/authorize"
+		},
+		"response": {
+			"status": 302,
+			"headers": {
+				"content-type": "text/html",
+				"location": "/login?next=%2Foauth%2Fconsent%3Fresponse_type%3Dcode%26client_id%3Dmcp_JVgNGBXQXBNA8TjDnJ3OZd6k%26redirect_uri%3Dhttp%253A%252F%252F127.0.0.1%253A33418%252Fcallback%26code_challenge%3DALtlagB9mQbX0EB_y079MrNA9p6S8Hf9c943PSflPFA%26code_challenge_method%3DS256%26scope%3Davatars%253Aread%2Bavatars%253Awrite%2Bprofile%2Bagents%253Aread%2Boffline_access%26state%3D1e08bb43481dbb78%26resource%3Dhttps%253A%252F%252Fthree.ws%252Fapi%252Fmcp-grok%26action%3Dauthorize"
+			},
+			"body": ""
+		}
+	},
+	{
+		"request": {
+			"method": "GET",
+			"url": "/login"
+		},
+		"response": {
+			"status": 200,
+			"headers": {
+				"content-type": "text/html; charset=utf-8"
+			},
+			"body": "<!doctype html><title>Sign in</title><form class=\"card\" id=\"f\" autocomplete=\"on\">\n<input id=\"privy-email-input\" type=\"email\" inputmode=\"email\" placeholder=\"Email address\" autocomplete=\"email\" autocapitalize=\"none\" autofocus />\n<input id=\"privy-code-input\" type=\"text\" inputmode=\"numeric\" placeholder=\"6-digit code\" maxlength=\"6\" autocomplete=\"one-time-code\" />\n<input id=\"email\" name=\"username\" type=\"text\" inputmode=\"email\" autocapitalize=\"none\" autocomplete=\"username\" required aria-describedby=\"email-err\" />\n<input\n\t\t\t\t\t\tid=\"password\"\n\t\t\t\t\t\tname=\"password\"\n\t\t\t\t\t\ttype=\"password\"\n\t\t\t\t\t\tautocomplete=\"current-password\"\n\t\t\t\t\t\trequired\n\t\t\t\t\t\tminlength=\"10\"\n\t\t\t\t\t\taria-describedby=\"password-err caps-warn\"\n\t\t\t\t\t/>\n<input type=\"checkbox\" id=\"remember\" />\n</form>"
+		}
+	},
+	{
+		"request": {
+			"method": "POST",
+			"url": "/api/oauth/token"
+		},
+		"response": {
+			"status": 400,
+			"headers": {
+				"content-type": "application/json; charset=utf-8"
+			},
+			"body": "{\"error\":\"invalid_grant\",\"error_description\":\"unknown code\"}"
+		}
+	},
+	{
+		"request": {
+			"method": "POST",
+			"url": "/api/mcp-grok"
+		},
+		"response": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"mcp-session-id": "grk_edb3c12a-6ff0-42ca-a021-c489057f0e0c"
+			},
+			"body": "{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"protocolVersion\":\"2025-06-18\",\"serverInfo\":{\"name\":\"three-ws-3d-studio-free\",\"version\":\"1.0.1\"},\"capabilities\":{\"tools\":{\"listChanged\":false},\"prompts\":{\"listChanged\":false},\"logging\":{}},\"recorded_note\":\"server instructions omitted\"}}"
+		}
+	},
+	{
+		"request": {
+			"method": "POST",
+			"url": "/api/mcp-grok"
+		},
+		"response": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8"
+			},
+			"body": "null"
+		}
+	},
+	{
+		"request": {
+			"method": "POST",
+			"url": "/api/mcp-grok"
+		},
+		"response": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8"
+			},
+			"body": "{\"jsonrpc\":\"2.0\",\"id\":10,\"result\":{\"tools\":[{\"name\":\"forge_free\"},{\"name\":\"text_to_avatar\"},{\"name\":\"mesh_forge\"},{\"name\":\"rig_mesh\"},{\"name\":\"forge_avatar\"},{\"name\":\"refine_model\"},{\"name\":\"check_job\"},{\"name\":\"look_at_model\"},{\"name\":\"get_job\"},{\"name\":\"search_catalog\"},{\"name\":\"get_catalog_item\"},{\"name\":\"get_item_source\"},{\"name\":\"search_docs\"},{\"name\":\"create_agent_persona\"},{\"name\":\"get_agent_persona\"},{\"name\":\"persona_say\"}],\"recorded_note\":\"0 signed-in account tools and all descriptions omitted\"}}"
+		}
+	},
+	{
+		"request": {
+			"method": "POST",
+			"url": "/api/mcp-grok"
+		},
+		"response": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8"
+			},
+			"body": "{\"jsonrpc\":\"2.0\",\"id\":11,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"24 matches for \\\"chair\\\" (showing 3 from offset 0):\\n\\n- `object:ArmChair_01` | Arm Chair 01 | CC0 | gothic, vintage, chair, furniture\\n  Viewer: https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2FArmChair_01.glb&title=Arm%20Chair%2001\\n  GLB: https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/ArmChair_01.glb\\n  Poster PNG: https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2FArmChair_01.glb&width=1024&height=1024\\n  Embed HTML: <script type=\\\"module\\\" src=\\\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\\\" integrity=\\\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\\\" crossorigin=\\\"anonymous\\\" ></script> <model-viewer src=\\\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/ArmChair_01.glb\\\" alt=\\\"Arm Chair 01\\\" camera-controls auto-rotate ar shadow-intensity=\\\"1\\\" style=\\\"width:100%;height:420px\\\" ></model-viewer>\\n- `object:bar_chair_round_01` | Bar Chair Round 01 | CC0 | bar, pub, stool, tall\\n  Viewer: https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fbar_chair_round_01.glb&title=Bar%20Chair%20Round%2001\\n  GLB: https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/bar_chair_round_01.glb\\n  Poster PNG: https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fbar_chair_round_01.glb&width=1024&height=1024\\n  Embed HTML: <script type=\\\"module\\\" src=\\\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\\\" integrity=\\\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\\\" crossorigin=\\\"anonymous\\\" ></script> <model-viewer src=\\\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/bar_chair_round_01.glb\\\" alt=\\\"Bar Chair Round 01\\\" camera-controls auto-rotate ar shadow-intensity=\\\"1\\\" style=\\\"width:100%;height:420px\\\" ></model-viewer>\\n- `object:BarberShopChair_01` | Barber Shop Chair 01 | CC0 | chair, vintage, wood, leather\\n  Viewer: https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2FBarberShopChair_01.glb&title=Barber%20Shop%20Chair%2001\\n  GLB: https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/BarberShopChair_01.glb\\n  Poster PNG: https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2FBarberShopChair_01.glb&width=1024&height=1024\\n  Embed HTML: <script type=\\\"module\\\" src=\\\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\\\" integrity=\\\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\\\" crossorigin=\\\"anonymous\\\" ></script> <model-viewer src=\\\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/BarberShopChair_01.glb\\\" alt=\\\"Barber Shop Chair 01\\\" camera-controls auto-rotate ar shadow-intensity=\\\"1\\\" style=\\\"width:100%;height:420px\\\" ></model-viewer>\\n\\nKinds: object 24\\nCategories: furniture (23), seating (23), office (1), props (1)\\nMore: call again with offset 3.\\n\\nNext: get_item_source with an id above returns code you can paste.\"}],\"structuredContent\":{\"ok\":true,\"items\":[{\"id\":\"object:ArmChair_01\",\"kind\":\"object\",\"name\":\"ArmChair_01\",\"title\":\"Arm Chair 01\",\"categories\":[\"furniture\",\"seating\"],\"tags\":[\"gothic\",\"vintage\",\"chair\",\"furniture\",\"victorian\",\"couch\",\"wood\",\"varnished\",\"classic\"],\"license\":\"CC0\",\"url\":\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/ArmChair_01.glb\",\"thumb\":\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/ArmChair_01.png\",\"bytes\":768216,\"format\":\"glb\",\"viewer_url\":\"https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2FArmChair_01.glb&title=Arm%20Chair%2001\",\"glb_url\":\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/ArmChair_01.glb\",\"poster_png_url\":\"https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2FArmChair_01.glb&width=1024&height=1024\",\"embed_html\":\"<script\\n  type=\\\"module\\\"\\n  src=\\\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\\\"\\n  integrity=\\\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\\\"\\n  crossorigin=\\\"anonymous\\\"\\n></script>\\n\\n<model-viewer\\n  src=\\\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/ArmChair_01.glb\\\"\\n  alt=\\\"Arm Chair 01\\\"\\n  camera-controls\\n  auto-rotate\\n  ar\\n  shadow-intensity=\\\"1\\\"\\n  style=\\\"width:100%;height:420px\\\"\\n></model-viewer>\"},{\"id\":\"object:bar_chair_round_01\",\"kind\":\"object\",\"name\":\"bar_chair_round_01\",\"title\":\"Bar Chair Round 01\",\"categories\":[\"seating\",\"furniture\"],\"tags\":[\"bar\",\"pub\",\"stool\",\"tall\",\"wooden\",\"classical\",\"old\",\"vintage\",\"cigar\"],\"license\":\"CC0\",\"url\":\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/bar_chair_round_01.glb\",\"thumb\":\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/bar_chair_round_01.png\",\"bytes\":2811332,\"format\":\"glb\",\"viewer_url\":\"https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fbar_chair_round_01.glb&title=Bar%20Chair%20Round%2001\",\"glb_url\":\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/bar_chair_round_01.glb\",\"poster_png_url\":\"https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fbar_chair_round_01.glb&width=1024&height=1024\",\"embed_html\":\"<script\\n  type=\\\"module\\\"\\n  src=\\\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\\\"\\n  integrity=\\\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\\\"\\n  crossorigin=\\\"anonymous\\\"\\n></script>\\n\\n<model-viewer\\n  src=\\\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/bar_chair_round_01.glb\\\"\\n  alt=\\\"Bar Chair Round 01\\\"\\n  camera-controls\\n  auto-rotate\\n  ar\\n  shadow-intensity=\\\"1\\\"\\n  style=\\\"width:100%;height:420px\\\"\\n></model-viewer>\"},{\"id\":\"object:BarberShopChair_01\",\"kind\":\"object\",\"name\":\"BarberShopChair_01\",\"title\":\"Barber Shop Chair 01\",\"categories\":[\"furniture\",\"seating\"],\"tags\":[\"chair\",\"vintage\",\"wood\",\"leather\",\"fancy\",\"upholstery\",\"barber\",\"salon\"],\"license\":\"CC0\",\"url\":\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/BarberShopChair_01.glb\",\"thumb\":\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/BarberShopChair_01.png\",\"bytes\":878232,\"format\":\"glb\",\"viewer_url\":\"https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2FBarberShopChair_01.glb&title=Barber%20Shop%20Chair%2001\",\"glb_url\":\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/BarberShopChair_01.glb\",\"poster_png_url\":\"https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2FBarberShopChair_01.glb&width=1024&height=1024\",\"embed_html\":\"<script\\n  type=\\\"module\\\"\\n  src=\\\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\\\"\\n  integrity=\\\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\\\"\\n  crossorigin=\\\"anonymous\\\"\\n></script>\\n\\n<model-viewer\\n  src=\\\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/BarberShopChair_01.glb\\\"\\n  alt=\\\"Barber Shop Chair 01\\\"\\n  camera-controls\\n  auto-rotate\\n  ar\\n  shadow-intensity=\\\"1\\\"\\n  style=\\\"width:100%;height:420px\\\"\\n></model-viewer>\"}],\"matched\":24,\"relaxed\":false,\"total\":1306,\"offset\":0,\"next_offset\":3,\"facets\":{\"kinds\":{\"object\":24},\"categories\":[{\"value\":\"furniture\",\"count\":23},{\"value\":\"seating\",\"count\":23},{\"value\":\"office\",\"count\":1},{\"value\":\"props\",\"count\":1}],\"tags\":[{\"value\":\"chair\",\"count\":17},{\"value\":\"vintage\",\"count\":13},{\"value\":\"wood\",\"count\":10},{\"value\":\"furniture\",\"count\":8},{\"value\":\"leather\",\"count\":7},{\"value\":\"wooden\",\"count\":7},{\"value\":\"couch\",\"count\":6},{\"value\":\"antique\",\"count\":5},{\"value\":\"old\",\"count\":5},{\"value\":\"prop\",\"count\":5},{\"value\":\"decorative\",\"count\":4},{\"value\":\"fancy\",\"count\":4}]},\"generated_at\":{\"object\":\"2026-07-21T13:16:14.305Z\",\"character\":\"2026-07-21T13:39:15.447Z\",\"animation\":\"2026-11-04T06:20:27.250Z\"},\"degraded\":false}}}"
+		}
+	},
+	{
+		"request": {
+			"method": "POST",
+			"url": "/api/mcp-grok"
+		},
+		"response": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8"
+			},
+			"body": "{\"jsonrpc\":\"2.0\",\"id\":12,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"The model is still rendering (heavier scenes take a few minutes) (roughly 52s to go). It keeps running: call the get_job tool with this job_id in ~52s to collect it, or poll https://three.ws/api/gpt-forge?job=f1.recorded-job until status is \\\"done\\\", then use its glb_url (view at https://three.ws/viewer?src=<glb_url>).\\nViewer (opens the model by itself the moment it is ready): https://three.ws/viewer?job=f1.recorded-job\\nRun receipt (what each stage was expected to do and what it did): https://three.ws/runs/rr_B8uzjv82Gut8SLidRmGKcu\"}],\"structuredContent\":{\"status\":\"pending\",\"jobId\":\"f1.recorded-job\",\"job_id\":\"f1.recorded-job\",\"phase\":\"running\",\"progress\":0.13,\"eta_seconds\":52,\"elapsed_seconds\":8,\"pollUrl\":\"https://three.ws/api/gpt-forge?job=f1.recorded-job\",\"viewer_url\":\"https://three.ws/viewer?job=f1.recorded-job\",\"stage\":\"mesh\",\"etaRemainingSeconds\":52,\"prompt\":\"a small wooden treasure chest with brass corners\",\"receipt\":{\"id\":\"rr_B8uzjv82Gut8SLidRmGKcu\",\"outcome\":\"pending\",\"summary\":\"Still running.\",\"issues\":[],\"url\":\"https://three.ws/runs/rr_B8uzjv82Gut8SLidRmGKcu\"}}}}"
+		}
+	},
+	{
+		"request": {
+			"method": "POST",
+			"url": "/api/mcp-grok"
+		},
+		"response": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8"
+			},
+			"body": "{\"jsonrpc\":\"2.0\",\"id\":13,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"The model is still rendering (heavier scenes take a few minutes) (roughly 21s to go). It keeps running: call the get_job tool with this job_id in ~21s to collect it, or poll https://three.ws/api/gpt-forge?job=f1.recorded-job until status is \\\"done\\\", then use its glb_url (view at https://three.ws/viewer?src=<glb_url>).\\nViewer (opens the model by itself the moment it is ready): https://three.ws/viewer?job=f1.recorded-job\"}],\"structuredContent\":{\"status\":\"pending\",\"jobId\":\"f1.recorded-job\",\"job_id\":\"f1.recorded-job\",\"phase\":\"running\",\"progress\":0.65,\"eta_seconds\":21,\"elapsed_seconds\":39,\"pollUrl\":\"https://three.ws/api/gpt-forge?job=f1.recorded-job\",\"viewer_url\":\"https://three.ws/viewer?job=f1.recorded-job\",\"stage\":\"mesh\",\"etaRemainingSeconds\":21,\"prompt\":\"Small wooden treasure chest with rounded lid, brass corners, and iron hinges, made of worn oak with visible grain, brass with subtle brush marks, in a photoreal style with soft studio lighting, shallow depth of field, and natural asymmetry, on a plain neutral background.\"}}}"
+		}
+	},
+	{
+		"request": {
+			"method": "POST",
+			"url": "/api/mcp-grok"
+		},
+		"response": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8"
+			},
+			"body": "{\"jsonrpc\":\"2.0\",\"id\":14,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"The model is still rendering (heavier scenes take a few minutes). It keeps running: call the get_job tool with this job_id shortly to collect it, or poll https://three.ws/api/gpt-forge?job=f1.recorded-job until status is \\\"done\\\", then use its glb_url (view at https://three.ws/viewer?src=<glb_url>).\\nViewer (opens the model by itself the moment it is ready): https://three.ws/viewer?job=f1.recorded-job\"}],\"structuredContent\":{\"status\":\"pending\",\"jobId\":\"f1.recorded-job\",\"job_id\":\"f1.recorded-job\",\"phase\":\"running\",\"progress\":0.95,\"eta_seconds\":null,\"elapsed_seconds\":90,\"pollUrl\":\"https://three.ws/api/gpt-forge?job=f1.recorded-job\",\"viewer_url\":\"https://three.ws/viewer?job=f1.recorded-job\",\"stage\":\"mesh\",\"prompt\":\"Small wooden treasure chest with rounded lid, brass corners, and iron hinges, made of worn oak with visible grain, brass with subtle brush marks, in a photoreal style with soft studio lighting, shallow depth of field, and natural asymmetry, on a plain neutral background.\"}}}"
+		}
+	},
+	{
+		"request": {
+			"method": "POST",
+			"url": "/api/mcp-grok"
+		},
+		"response": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8"
+			},
+			"body": "{\"jsonrpc\":\"2.0\",\"id\":15,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"The model is still rendering (heavier scenes take a few minutes). It keeps running: call the get_job tool with this job_id shortly to collect it, or poll https://three.ws/api/gpt-forge?job=f1.recorded-job until status is \\\"done\\\", then use its glb_url (view at https://three.ws/viewer?src=<glb_url>).\\nViewer (opens the model by itself the moment it is ready): https://three.ws/viewer?job=f1.recorded-job\"}],\"structuredContent\":{\"status\":\"pending\",\"jobId\":\"f1.recorded-job\",\"job_id\":\"f1.recorded-job\",\"phase\":\"running\",\"progress\":0.95,\"eta_seconds\":null,\"elapsed_seconds\":100,\"pollUrl\":\"https://three.ws/api/gpt-forge?job=f1.recorded-job\",\"viewer_url\":\"https://three.ws/viewer?job=f1.recorded-job\",\"stage\":\"mesh\",\"prompt\":\"Small wooden treasure chest with rounded lid, brass corners, and iron hinges, made of worn oak with visible grain, brass with subtle brush marks, in a photoreal style with soft studio lighting, shallow depth of field, and natural asymmetry, on a plain neutral background.\"}}}"
+		}
+	},
+	{
+		"request": {
+			"method": "POST",
+			"url": "/api/mcp-grok"
+		},
+		"response": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8"
+			},
+			"body": "{\"jsonrpc\":\"2.0\",\"id\":16,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"The model is still rendering (heavier scenes take a few minutes). It keeps running: call the get_job tool with this job_id shortly to collect it, or poll https://three.ws/api/gpt-forge?job=f1.recorded-job until status is \\\"done\\\", then use its glb_url (view at https://three.ws/viewer?src=<glb_url>).\\nViewer (opens the model by itself the moment it is ready): https://three.ws/viewer?job=f1.recorded-job\"}],\"structuredContent\":{\"status\":\"pending\",\"jobId\":\"f1.recorded-job\",\"job_id\":\"f1.recorded-job\",\"phase\":\"running\",\"progress\":0.95,\"eta_seconds\":null,\"elapsed_seconds\":111,\"pollUrl\":\"https://three.ws/api/gpt-forge?job=f1.recorded-job\",\"viewer_url\":\"https://three.ws/viewer?job=f1.recorded-job\",\"stage\":\"mesh\",\"prompt\":\"Small wooden treasure chest with rounded lid, brass corners, and iron hinges, made of worn oak with visible grain, brass with subtle brush marks, in a photoreal style with soft studio lighting, shallow depth of field, and natural asymmetry, on a plain neutral background.\"}}}"
+		}
+	},
+	{
+		"request": {
+			"method": "POST",
+			"url": "/api/mcp-grok"
+		},
+		"response": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8"
+			},
+			"body": "{\"jsonrpc\":\"2.0\",\"id\":17,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"The model is still rendering (heavier scenes take a few minutes). It keeps running: call the get_job tool with this job_id shortly to collect it, or poll https://three.ws/api/gpt-forge?job=f1.recorded-job until status is \\\"done\\\", then use its glb_url (view at https://three.ws/viewer?src=<glb_url>).\\nViewer (opens the model by itself the moment it is ready): https://three.ws/viewer?job=f1.recorded-job\"}],\"structuredContent\":{\"status\":\"pending\",\"jobId\":\"f1.recorded-job\",\"job_id\":\"f1.recorded-job\",\"phase\":\"running\",\"progress\":0.95,\"eta_seconds\":null,\"elapsed_seconds\":122,\"pollUrl\":\"https://three.ws/api/gpt-forge?job=f1.recorded-job\",\"viewer_url\":\"https://three.ws/viewer?job=f1.recorded-job\",\"stage\":\"mesh\",\"prompt\":\"Small wooden treasure chest with rounded lid, brass corners, and iron hinges, made of worn oak with visible grain, brass with subtle brush marks, in a photoreal style with soft studio lighting, shallow depth of field, and natural asymmetry, on a plain neutral background.\"}}}"
+		}
+	},
+	{
+		"request": {
+			"method": "POST",
+			"url": "/api/mcp-grok"
+		},
+		"response": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8"
+			},
+			"body": "{\"jsonrpc\":\"2.0\",\"id\":18,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"The model is still rendering (heavier scenes take a few minutes). It keeps running: call the get_job tool with this job_id shortly to collect it, or poll https://three.ws/api/gpt-forge?job=f1.recorded-job until status is \\\"done\\\", then use its glb_url (view at https://three.ws/viewer?src=<glb_url>).\\nViewer (opens the model by itself the moment it is ready): https://three.ws/viewer?job=f1.recorded-job\"}],\"structuredContent\":{\"status\":\"pending\",\"jobId\":\"f1.recorded-job\",\"job_id\":\"f1.recorded-job\",\"phase\":\"running\",\"progress\":0.95,\"eta_seconds\":null,\"elapsed_seconds\":132,\"pollUrl\":\"https://three.ws/api/gpt-forge?job=f1.recorded-job\",\"viewer_url\":\"https://three.ws/viewer?job=f1.recorded-job\",\"stage\":\"mesh\",\"prompt\":\"Small wooden treasure chest with rounded lid, brass corners, and iron hinges, made of worn oak with visible grain, brass with subtle brush marks, in a photoreal style with soft studio lighting, shallow depth of field, and natural asymmetry, on a plain neutral background.\"}}}"
+		}
+	},
+	{
+		"request": {
+			"method": "POST",
+			"url": "/api/mcp-grok"
+		},
+		"response": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8"
+			},
+			"body": "{\"jsonrpc\":\"2.0\",\"id\":19,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"The model is still rendering (heavier scenes take a few minutes). It keeps running: call the get_job tool with this job_id shortly to collect it, or poll https://three.ws/api/gpt-forge?job=f1.recorded-job until status is \\\"done\\\", then use its glb_url (view at https://three.ws/viewer?src=<glb_url>).\\nViewer (opens the model by itself the moment it is ready): https://three.ws/viewer?job=f1.recorded-job\"}],\"structuredContent\":{\"status\":\"pending\",\"jobId\":\"f1.recorded-job\",\"job_id\":\"f1.recorded-job\",\"phase\":\"running\",\"progress\":0.95,\"eta_seconds\":null,\"elapsed_seconds\":143,\"pollUrl\":\"https://three.ws/api/gpt-forge?job=f1.recorded-job\",\"viewer_url\":\"https://three.ws/viewer?job=f1.recorded-job\",\"stage\":\"mesh\",\"prompt\":\"Small wooden treasure chest with rounded lid, brass corners, and iron hinges, made of worn oak with visible grain, brass with subtle brush marks, in a photoreal style with soft studio lighting, shallow depth of field, and natural asymmetry, on a plain neutral background.\"}}}"
+		}
+	},
+	{
+		"request": {
+			"method": "POST",
+			"url": "/api/mcp-grok"
+		},
+		"response": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8"
+			},
+			"body": "{\"jsonrpc\":\"2.0\",\"id\":20,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"The model is still rendering (heavier scenes take a few minutes). It keeps running: call the get_job tool with this job_id shortly to collect it, or poll https://three.ws/api/gpt-forge?job=f1.recorded-job until status is \\\"done\\\", then use its glb_url (view at https://three.ws/viewer?src=<glb_url>).\\nViewer (opens the model by itself the moment it is ready): https://three.ws/viewer?job=f1.recorded-job\"}],\"structuredContent\":{\"status\":\"pending\",\"jobId\":\"f1.recorded-job\",\"job_id\":\"f1.recorded-job\",\"phase\":\"running\",\"progress\":0.95,\"eta_seconds\":null,\"elapsed_seconds\":153,\"pollUrl\":\"https://three.ws/api/gpt-forge?job=f1.recorded-job\",\"viewer_url\":\"https://three.ws/viewer?job=f1.recorded-job\",\"stage\":\"mesh\",\"prompt\":\"Small wooden treasure chest with rounded lid, brass corners, and iron hinges, made of worn oak with visible grain, brass with subtle brush marks, in a photoreal style with soft studio lighting, shallow depth of field, and natural asymmetry, on a plain neutral background.\"}}}"
+		}
+	},
+	{
+		"request": {
+			"method": "POST",
+			"url": "/api/mcp-grok"
+		},
+		"response": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8"
+			},
+			"body": "{\"jsonrpc\":\"2.0\",\"id\":21,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"Generation is taking longer than expected. Please try again. The job itself keeps running: call get_job again in about 10s.\"}],\"structuredContent\":{\"error\":true,\"message\":\"Generation is taking longer than expected. Please try again. The job itself keeps running: call get_job again in about 10s.\",\"status\":\"unknown\",\"job_id\":\"f1.recorded-job\",\"reason\":\"check_failed\",\"remedy\":\"The job itself keeps running: call get_job again in about 10s.\",\"retryable\":true,\"retry_after\":10},\"isError\":true}}"
+		}
+	},
+	{
+		"request": {
+			"method": "POST",
+			"url": "/api/mcp-grok"
+		},
+		"response": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8"
+			},
+			"body": "{\"jsonrpc\":\"2.0\",\"id\":22,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"Generated a 3D model (GLB).\\nViewer: https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F3ee04d45-c198-4442-a509-96b5d06cebba.glb&title=Small%20wooden%20treasure%20chest%20with%20rounded%20lid%2C%20brass%20corners%2C%20and%20iron%20hinges%2C%20m%E2%80%A6\\nGLB: https://three.ws/cdn/forge/anon/3ee04d45-c198-4442-a509-96b5d06cebba.glb\\nPoster PNG: https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F3ee04d45-c198-4442-a509-96b5d06cebba.glb&width=1024&height=1024\\nEmbed HTML: <script type=\\\"module\\\" src=\\\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\\\" integrity=\\\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\\\" crossorigin=\\\"anonymous\\\" ></script> <model-viewer src=\\\"https://three.ws/cdn/forge/anon/3ee04d45-c198-4442-a509-96b5d06cebba.glb\\\" alt=\\\"Small wooden treasure chest with rounded lid, brass corners, and iron hinges, m…\\\" camera-controls auto-rotate ar shadow-intensity=\\\"1\\\" style=\\\"width:100%;height:420px\\\" ></model-viewer>\\nPlace it in your room (AR, open on a phone): https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F3ee04d45-c198-4442-a509-96b5d06cebba.glb&title=Small%20wooden%20treasure%20chest%20with%20rounded%20lid%2C%20brass%20corners%2C%20and%20iron%20hinges%2C%20ma\\nConcept image it was sculpted from: https://three.ws/cdn/forge/refs/4815c75a-5550-4899-8c67-62daa065d835.jpg\\nRun receipt (what each stage was expected to do and what it did): https://three.ws/runs/rr_B8uzjv82Gut8SLidRmGKcu\"}],\"structuredContent\":{\"kind\":\"model\",\"glbUrl\":\"https://three.ws/cdn/forge/anon/3ee04d45-c198-4442-a509-96b5d06cebba.glb\",\"viewerUrl\":\"https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F3ee04d45-c198-4442-a509-96b5d06cebba.glb\",\"arUrl\":\"https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F3ee04d45-c198-4442-a509-96b5d06cebba.glb&title=Small%20wooden%20treasure%20chest%20with%20rounded%20lid%2C%20brass%20corners%2C%20and%20iron%20hinges%2C%20ma\",\"format\":\"glb\",\"viewer_url\":\"https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F3ee04d45-c198-4442-a509-96b5d06cebba.glb&title=Small%20wooden%20treasure%20chest%20with%20rounded%20lid%2C%20brass%20corners%2C%20and%20iron%20hinges%2C%20m%E2%80%A6\",\"glb_url\":\"https://three.ws/cdn/forge/anon/3ee04d45-c198-4442-a509-96b5d06cebba.glb\",\"poster_png_url\":\"https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F3ee04d45-c198-4442-a509-96b5d06cebba.glb&width=1024&height=1024\",\"embed_html\":\"<script\\n  type=\\\"module\\\"\\n  src=\\\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\\\"\\n  integrity=\\\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\\\"\\n  crossorigin=\\\"anonymous\\\"\\n></script>\\n\\n<model-viewer\\n  src=\\\"https://three.ws/cdn/forge/anon/3ee04d45-c198-4442-a509-96b5d06cebba.glb\\\"\\n  alt=\\\"Small wooden treasure chest with rounded lid, brass corners, and iron hinges, m…\\\"\\n  camera-controls\\n  auto-rotate\\n  ar\\n  shadow-intensity=\\\"1\\\"\\n  style=\\\"width:100%;height:420px\\\"\\n></model-viewer>\",\"prompt\":\"Small wooden treasure chest with rounded lid, brass corners, and iron hinges, made of worn oak with visible grain, brass with subtle brush marks, in a photoreal style with soft studio lighting, shallow depth of field, and natural asymmetry, on a plain neutral background.\",\"referenceImageUrl\":\"https://three.ws/cdn/forge/refs/4815c75a-5550-4899-8c67-62daa065d835.jpg\",\"spatial\":{\"spatialMcpVersion\":\"0.1\",\"kind\":\"model\",\"scene\":{\"glbUrl\":\"https://three.ws/cdn/forge/anon/3ee04d45-c198-4442-a509-96b5d06cebba.glb\",\"format\":\"glb\"},\"camera\":{\"autoRotate\":true},\"environment\":{\"image\":\"neutral\",\"exposure\":1,\"shadowIntensity\":1},\"affordances\":{\"orbit\":true,\"zoom\":true,\"fullscreen\":true,\"download\":true},\"ar\":{\"glbUrl\":\"https://three.ws/cdn/forge/anon/3ee04d45-c198-4442-a509-96b5d06cebba.glb\",\"launchUrl\":\"https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F3ee04d45-c198-4442-a509-96b5d06cebba.glb&title=Small%20wooden%20treasure%20chest%20with%20rounded%20lid%2C%20brass%20corners%2C%20and%20iron%20hinges%2C%20ma\",\"supported\":true},\"meta\":{\"prompt\":\"Small wooden treasure chest with rounded lid, brass corners, and iron hinges, made of worn oak with visible grain, brass with subtle brush marks, in a photoreal style with soft studio lighting, shallow depth of field, and natural asymmetry, on a plain neutral background.\",\"viewerUrl\":\"https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F3ee04d45-c198-4442-a509-96b5d06cebba.glb\"}},\"receipt\":{\"id\":\"rr_B8uzjv82Gut8SLidRmGKcu\",\"outcome\":\"delivered_with_issues\",\"summary\":\"Delivered, with issues noted. 1 stage missed (Visual check).\",\"issues\":[{\"stage\":\"visual\",\"label\":\"Visual check\",\"verdict\":\"missed\",\"expected\":\"A render of the model that reads as a complete, clean subject matching the prompt.\",\"observed\":\"Scored 55 and did not pass: plastic, low detail.\",\"cause\":\"The object is complete and correctly shaped, but the materials look more like plastic than worn oak and brass.\"}],\"url\":\"https://three.ws/runs/rr_B8uzjv82Gut8SLidRmGKcu\"},\"status\":\"done\",\"phase\":\"done\",\"progress\":1,\"eta_seconds\":0,\"elapsed_seconds\":null,\"job_id\":\"f1.recorded-job\"}}}"
+		}
+	},
+	{
+		"request": {
+			"method": "HEAD",
+			"url": "/cdn/forge/anon/3ee04d45-c198-4442-a509-96b5d06cebba.glb"
+		},
+		"response": {
+			"status": 200,
+			"headers": {
+				"content-type": "model/gltf-binary"
+			},
+			"body": ""
+		}
+	}
+]
