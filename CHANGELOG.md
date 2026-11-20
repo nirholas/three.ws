@@ -4,6 +4,12 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-11-20
+
+- **Hunyuan3D textured models load again**: A dependency security update made the Hunyuan3D 2.1 texture stage refuse to load its own bundled paint pipeline, so every Hunyuan3D job failed before it started. The worker now explicitly trusts that pipeline, which ships inside the image, and the build fails if the fix ever stops applying. `[fix]`
+- **PiXal3D image builds can ship their attention kernels**: The PiXal3D worker compiles its neighborhood attention kernels from source, but the build image had no CMake, so every rebuild since the kernel fix failed and production kept the older image without those kernels. CMake is now installed before the kernel build, and a test keeps it there. `[fix, infra]`
+- **The /glass lens gets past "Location needed"**: The site-wide permissions policy blocked location, compass sensors and the microphone on every page, so the smart-glasses lens at /glass stopped on its first screen for every visitor. /glass now grants exactly those three to itself (the camera stays off, and no other page changes), so the lens can find where you are, which way you face, and hear your reply. (`/glass`) `[fix]`
+
 ## 2026-11-19
 
 - **A busy multi-view lane asks you to retry instead of quietly downgrading your model**: When the Pixal3D multi-view lane was at capacity, Forge silently handed the job to single-view TRELLIS, which ignored the extra angles you uploaded. Forge now tells you the lane is busy and to retry in about 30 seconds, instead of switching lanes behind your back. `[improvement]`

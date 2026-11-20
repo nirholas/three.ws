@@ -7,6 +7,30 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Hunyuan3D textured models load again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-20:Hunyuan3D textured models load again</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A dependency security update made the Hunyuan3D 2.1 texture stage refuse to load its own bundled paint pipeline, so every Hunyuan3D job failed before it started. The worker now explicitly trusts that pipeline, which ships inside the image, and the build fails if the fix ever stops applying.</description>
+		</item>
+		<item>
+			<title>PiXal3D image builds can ship their attention kernels</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-20:PiXal3D image builds can ship their attention kernels</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The PiXal3D worker compiles its neighborhood attention kernels from source, but the build image had no CMake, so every rebuild since the kernel fix failed and production kept the older image without those kernels. CMake is now installed before the kernel build, and a test keeps it there.</description>
+		</item>
+		<item>
+			<title>The /glass lens gets past &quot;Location needed&quot;</title>
+			<link>https://three.ws/glass</link>
+			<guid isPermaLink="false">2026-11-20:The /glass lens gets past &quot;Location needed&quot;</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The site-wide permissions policy blocked location, compass sensors and the microphone on every page, so the smart-glasses lens at /glass stopped on its first screen for every visitor. /glass now grants exactly those three to itself (the camera stays off, and no other page changes), so the lens can find where you are, which way you face, and hear your reply.</description>
+		</item>
+		<item>
 			<title>A busy multi-view lane asks you to retry instead of quietly downgrading your model</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-19:A busy multi-view lane asks you to retry instead of quietly downgrading your model</guid>
