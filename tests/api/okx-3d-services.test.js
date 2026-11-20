@@ -405,6 +405,26 @@ describe('paid dispatch: verify → engine → settle', () => {
 		expect(settlePaymentMock).toHaveBeenCalledTimes(1);
 	});
 
+	// /api/forge needs an account. A paid buyer is accountable through the
+	// settled payment, so every engine call goes in as an on-behalf platform job:
+	// past the gate, and the model is born unlisted, never a public showcase seed.
+	it.each(['text-to-3d', 'text-to-3d-pro', 'image-to-3d', 'rig', 'avatar'])('%s calls the engine as an unlisted platform job', async (service) => {
+		vi.stubEnv('CRON_SECRET', 'svc-secret');
+		fetchRoutes.forgeSubmit = () => jsonResponse(200, { status: 'done', glb_url: 'https://cdn.test/mesh.glb' });
+		try {
+			const res = makeRes();
+			await handler(paidReq(service, VALID_INPUT[service]), res);
+			expect(res.statusCode).toBe(200);
+		} finally {
+			vi.unstubAllEnvs();
+		}
+		const engine = globalThis.fetch.mock.calls.filter(([u, init]) => String(u).includes('/api/forge') && init?.method === 'POST');
+		expect(engine.length).toBeGreaterThan(0);
+		for (const [, init] of engine) {
+			expect(init.headers).toMatchObject({ 'x-forge-seed': 'svc-secret', 'x-forge-on-behalf': '1' });
+		}
+	});
+
 	it('rig submits the auto-rig job and returns it pollable', async () => {
 		const res = makeRes();
 		await handler(paidReq('rig', VALID_INPUT.rig), res);

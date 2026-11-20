@@ -701,6 +701,26 @@ describe('pipeline state machine', () => {
 		expect(d.viewer_url).toContain('/viewer?src=');
 	}, 30_000);
 
+	// The generator needs an account. The paying buyer answers for the job, so
+	// both the mesh submit and the rig go in as on-behalf platform jobs: past the
+	// gate, and the identity's model is born unlisted rather than public.
+	it('submits the mesh and the rig as unlisted platform jobs', async () => {
+		vi.stubEnv('CRON_SECRET', 'svc-secret');
+		try {
+			const created = await call('create_identity', { agent_name: 'LedgerLynx', brief: 'a calm on-chain accounting agent' });
+			const jobId = created.result.structuredContent.job_id;
+			fetchRoutes.forgePoll = () => jsonResponse(200, { status: 'done', glb_url: 'https://cdn.test/mesh.glb' });
+			await call('identity_status', { job_id: jobId });
+		} finally {
+			vi.unstubAllEnvs();
+		}
+		const posts = globalThis.fetch.mock.calls.filter(([u, init]) => String(u).includes('/api/forge') && init?.method === 'POST');
+		expect(posts.map(([u]) => String(u).includes('action=rig'))).toEqual([false, true]);
+		for (const [, init] of posts) {
+			expect(init.headers).toMatchObject({ 'x-forge-seed': 'svc-secret', 'x-forge-on-behalf': '1' });
+		}
+	});
+
 	it('generation failure retries free, then fails honestly when attempts exhaust', async () => {
 		const created = await call('create_identity', { agent_name: 'X', brief: 'test agent brief' });
 		const jobId = created.result.structuredContent.job_id;

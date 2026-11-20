@@ -40,6 +40,7 @@ import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { X402_HEADER_ERROR } from '../_lib/x402-xlayer-okx.js';
 import { catalogEntry, FORGE_TOOL, FORGE_STATUS_TOOL } from '../_lib/okx-catalog.js';
 import { startForge, pollOnce, originFromReq } from '../_mcp-studio/gpt-forge-client.js';
+import { platformAuthHeaders } from '../_lib/creator-account.js';
 import { shapeSubmit, shapePoll, tierOf } from '../_mcp-studio/studio-shape.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
 import { objectStorageUsable } from '../_lib/r2.js';
@@ -241,6 +242,9 @@ function buildForgeTool(entry) {
 					...(entry.lane?.tier ? { tier: entry.lane.tier } : {}),
 					...(entry.lane?.path ? { path: entry.lane.path } : {}),
 					...(high ? { internal: true, strictTier: true } : {}),
+					// The generator needs an account; the paying buyer answers for the
+					// job, so it goes in as an on-behalf platform job and is born unlisted.
+					auth: platformAuthHeaders({ onBehalf: true }),
 				});
 			} catch (err) {
 				return laneError(err);

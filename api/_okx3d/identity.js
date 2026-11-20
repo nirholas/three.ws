@@ -28,6 +28,7 @@ import { encodeJobToken, decodeJobToken } from '../_lib/forge-job-token.js';
 import { assertSafePublicUrl, fetchSafePublicUrlPinned } from '../_lib/ssrf-guard.js';
 import { llmComplete } from '../_lib/llm.js';
 import { PRESETS } from '../../src/pose-presets.js';
+import { platformAuthHeaders } from '../_lib/creator-account.js';
 
 const BASE = 'https://three.ws';
 const JOB_PROVIDER = 'okxid';
@@ -194,6 +195,8 @@ export async function shapeIdentityPrompt({ agentName, brief, styleHints }) {
 // /api/forge client (submit / single poll / rig), adapted from the npx MCP
 // server's _studio-core.js, minus the internal polling loop: this pipeline
 // polls upstream once per identity_status call instead of blocking.
+// /api/forge needs an account. The paying buyer answers for the job, so the
+// submit and the rig go in as on-behalf platform jobs (born unlisted).
 // ---------------------------------------------------------------------------
 
 async function submitForge(base, payload) {
@@ -205,7 +208,7 @@ async function submitForge(base, payload) {
 		// enqueue ack. Async backends still return a job_id quickly.
 		res = await fetch(`${base}/api/forge`, {
 			method: 'POST',
-			headers: { 'content-type': 'application/json' },
+			headers: { 'content-type': 'application/json', ...platformAuthHeaders({ onBehalf: true }) },
 			body: JSON.stringify(payload),
 			signal: AbortSignal.timeout(150_000),
 		});
@@ -245,7 +248,7 @@ async function startRig(base, glbUrl) {
 	try {
 		res = await fetch(`${base}/api/forge?action=rig`, {
 			method: 'POST',
-			headers: { 'content-type': 'application/json' },
+			headers: { 'content-type': 'application/json', ...platformAuthHeaders({ onBehalf: true }) },
 			body: JSON.stringify({ glb_url: glbUrl }),
 			signal: AbortSignal.timeout(30_000),
 		});

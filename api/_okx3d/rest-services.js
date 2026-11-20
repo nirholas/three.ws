@@ -42,6 +42,7 @@ import {
 	directPrompt,
 } from '../_mcp-studio/forge-client.js';
 import { TOOLS as STUDIO_TOOLS } from '../_mcp3d/catalog.js';
+import { platformAuthHeaders } from '../_lib/creator-account.js';
 
 const ajv = new Ajv({ allErrors: true, useDefaults: true, coerceTypes: true, strict: false });
 addFormats(ajv);
@@ -127,6 +128,11 @@ async function callStudioTool(name, args, { req, payer }) {
 	return result;
 }
 
+// /api/forge needs an account. A paid buyer answers for the job through the
+// settled payment, so each engine call goes in as an on-behalf platform job:
+// trusted past the gate, and the model is born unlisted rather than public.
+const engineAuth = () => platformAuthHeaders({ onBehalf: true });
+
 const HANDLERS = {
 	// $0.01, the free draft-tier lane, submit-then-poll. No backend pin: the
 	// draft default now resolves to the photoreal image-intermediate pipeline
@@ -137,6 +143,7 @@ const HANDLERS = {
 			prompt: args.prompt,
 			aspect: args.aspect_ratio,
 			path: 'image',
+			auth: engineAuth(),
 		});
 		return queuedResponse(job, { mode: 'text_to_3d', tier: 'draft' });
 	},
@@ -157,6 +164,7 @@ const HANDLERS = {
 			prompt: effective,
 			imageUrls: knownMark?.imagePath ? [`${ctx.base}${knownMark.imagePath}`] : undefined,
 			aspect: args.aspect_ratio,
+			auth: engineAuth(),
 		});
 		return queuedResponse(job, { mode: 'text_to_3d', tier });
 	},
@@ -167,13 +175,14 @@ const HANDLERS = {
 			prompt: args.prompt || undefined,
 			imageUrls: args.image_urls,
 			aspect: '1:1',
+			auth: engineAuth(),
 		});
 		return queuedResponse(job, { mode: 'image_to_3d' });
 	},
 
 	// $0.25, Make-It-Animatable auto-rigging, submit-then-poll.
 	async rig(args, ctx) {
-		const job = await startRig(ctx.base, args.glb_url);
+		const job = await startRig(ctx.base, args.glb_url, { auth: engineAuth() });
 		return queuedResponse(job, { mode: 'rig' });
 	},
 
@@ -204,6 +213,7 @@ const HANDLERS = {
 				prompt: effectivePrompt || undefined,
 				imageUrls: args.image_url ? [args.image_url] : undefined,
 				aspect: '1:1',
+				auth: engineAuth(),
 			},
 			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS' },
 		);
@@ -213,7 +223,7 @@ const HANDLERS = {
 			e.code = 'generation_timeout';
 			throw e;
 		}
-		const rigJob = await startRig(ctx.base, gen.glb_url);
+		const rigJob = await startRig(ctx.base, gen.glb_url, { auth: engineAuth() });
 		return queuedResponse(rigJob, {
 			mode: 'avatar',
 			mesh_glb_url: gen.glb_url,

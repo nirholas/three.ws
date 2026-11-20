@@ -72,6 +72,7 @@ vi.mock('../../api/_lib/usage.js', () => ({
 // with a router so nothing here touches a GPU or the network.
 const lane = { submit: null, poll: null };
 const submitted = [];
+const submittedHeaders = [];
 function jsonResponse(status, body) {
 	return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 }
@@ -80,6 +81,7 @@ globalThis.fetch = vi.fn(async (input, init) => {
 	if (url.includes('/api/gpt-forge')) {
 		if (init?.method === 'POST') {
 			submitted.push(JSON.parse(init.body));
+			submittedHeaders.push(init.headers || {});
 			return lane.submit ? lane.submit() : jsonResponse(200, { job_id: 'f1.job.abc', eta_seconds: 45 });
 		}
 		return lane.poll ? lane.poll(url) : jsonResponse(200, { status: 'running' });
@@ -608,6 +610,19 @@ describe('each row drives its own lane', () => {
 		await callTool('forge-image', FORGE_TOOL, { image_urls: ['https://cdn.test/a.png'] });
 		expect(submitted.at(-1).image_urls).toEqual(['https://cdn.test/a.png']);
 		expect(submitted.at(-1).tier).toBeUndefined();
+	});
+
+	// The generator needs an account. A paid buyer answers for the job through
+	// the settled payment, so every row submits as an on-behalf platform job:
+	// past the gate, and the buyer's model is born unlisted, not public.
+	it.each(['forge-draft', 'forge-standard', 'forge-hd'])('%s submits as an unlisted platform job', async (row) => {
+		vi.stubEnv('CRON_SECRET', 'svc-secret');
+		try {
+			await callTool(row, FORGE_TOOL, { prompt: 'a fox' });
+		} finally {
+			vi.unstubAllEnvs();
+		}
+		expect(submittedHeaders.at(-1)).toMatchObject({ 'x-forge-seed': 'svc-secret', 'x-forge-on-behalf': '1' });
 	});
 
 	// The generator hold-gates its high tier. A buyer of the HD row has already
