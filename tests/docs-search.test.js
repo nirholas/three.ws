@@ -7,7 +7,7 @@
 // is never an exception: it is a search that quietly stops finding things.
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { readFileSync, cpSync, mkdtempSync, rmSync } from 'node:fs';
+import { readFileSync, cpSync, mkdtempSync, rmSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -196,7 +196,10 @@ describe('docs search: the real corpus', () => {
 	it('indexes the documentation and skips generated aggregates', () => {
 		expect(index.docCount).toBeGreaterThan(200);
 		expect(index.sectionCount).toBeGreaterThan(1000);
-		expect(index.skippedGenerated).toContain('ALL');
+		// docs/ALL.md is gitignored and only exists after a local aggregate build,
+		// so a fresh checkout has nothing to skip. When it is present it must be
+		// recognised as generated; either way it never lands in the index.
+		if (existsSync(join(DOCS_DIR, 'ALL.md'))) expect(index.skippedGenerated).toContain('ALL');
 		expect(index.docs.some(([slug]) => slug === 'ALL')).toBe(false);
 	});
 

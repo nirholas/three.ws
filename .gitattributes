@@ -8,6 +8,9 @@
 # Windows-only scripts keep CRLF.
 *.bat       text eol=crlf
 *.cmd       text eol=crlf
+# Registry files are CRLF by format; scripts/microsoft-admin-kit.mjs writes them that way.
+*.reg       text eol=crlf
+integrations/microsoft/admin-kit/*.ps1 text eol=crlf
 
 # --- Generated / vendored files: collapse in diffs and exclude from language stats ---
 package-lock.json   linguist-generated=true -diff
