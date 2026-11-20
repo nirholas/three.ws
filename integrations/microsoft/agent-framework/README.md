@@ -9,8 +9,12 @@ scene ("a lighthouse keeper's desk on a stormy night") each agent:
 3. generates a custom textured GLB with three.ws, waiting for the job,
 4. ends with real, downloadable `MODEL:` and `VIEWER:` URLs.
 
-Neither sample needs a three.ws account or key. Both need an OpenAI-compatible
-chat model that supports tool calling.
+Both samples need a three.ws API key, because making a model needs a three.ws
+account (a free one is enough, and generation costs nothing). Create a key at
+[three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys) and export it
+as `THREE_WS_API_KEY`; new models are saved to that account unlisted until you
+publish them. Both also need an OpenAI-compatible chat model that supports tool
+calling.
 
 | Sample | Tool source | Path |
 |---|---|---|
@@ -28,6 +32,7 @@ cd python
 python -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
 export OPENAI_API_KEY=...
+export THREE_WS_API_KEY=...
 python design_prop.py "a lighthouse keeper's desk on a stormy night"
 ```
 
@@ -39,6 +44,7 @@ imports it for MCP reconnects without declaring it.
 ```bash
 cd dotnet
 export OPENAI_API_KEY=...
+export THREE_WS_API_KEY=...
 dotnet run -- "an alchemist's workbench in a candlelit tower"
 ```
 
@@ -53,6 +59,7 @@ in the csproj comment.
 | `OPENAI_API_KEY` | key for the chat model provider | required |
 | `OPENAI_BASE_URL` | any OpenAI-compatible endpoint (Azure OpenAI v1, Groq, NVIDIA NIM, Ollama, llama.cpp, ...) | OpenAI |
 | `THREE_WS_MODEL` | chat model id; it must support tool calling | `gpt-5.4-mini` |
+| `THREE_WS_API_KEY` | three.ws API key, sent as a bearer on the MCP studio and the plugin's generation calls | required |
 | `THREE_WS_BASE_URL` | three.ws origin | `https://three.ws` |
 
 Each sample exits 0 only when the answer contains a real `MODEL: https://` line,
@@ -68,6 +75,7 @@ generation, and a cancel. Setup for Copilot Studio and Foundry is in
 ```bash
 cd python
 pip install -r requirements-a2a.txt
+export THREE_WS_API_KEY=...
 python a2a_client.py
 ```
 

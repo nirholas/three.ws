@@ -10,15 +10,15 @@ three.ws speaks the A2A protocol (1.0 and 0.3, JSON-RPC, SSE streaming), so a Mi
 | Methods | `SendMessage`, `SendStreamingMessage`, `GetTask`, `CancelTask`, `SubscribeToTask` (0.3 names in [a2a-agent.md](./a2a-agent.md)) |
 | Auth | None, `X-API-Key` header, or OAuth 2.0 authorization code. The card declares exactly these. |
 
-Anonymous calls work and are rate limited per IP. Keyed and OAuth callers are limited per account (120 requests per minute).
+Questions, model checks and the catalog work anonymously and are rate limited per IP. Generating a 3D model needs a three.ws account (a free one is enough): an anonymous generation is rejected with a message naming the API key page, so connect with an API key or OAuth to generate. Keyed and OAuth callers are limited per account (120 requests per minute).
 
 ## Copilot Studio
 
 1. Open your agent, then **Agents** > **Add agent** > **Connect to an external agent** > **Agent2Agent**.
 2. Paste the endpoint `https://three.ws/api/agents/a2a-paid`. Copilot Studio reads the card from the endpoint-relative path.
 3. Choose authentication:
-   - **None** for anonymous use.
-   - **API key**: location **Header**, name `X-API-Key`, value a three.ws API key from `https://three.ws/dashboard`.
+   - **None** for questions and model checks only. Generation is rejected without an account.
+   - **API key**: location **Header**, name `X-API-Key`, value a three.ws API key from `https://three.ws/dashboard/api-keys`.
    - **OAuth 2.0 (manual)**: authorization URL `https://three.ws/oauth/authorize`, token URL and refresh URL `https://three.ws/api/oauth/token`, scope `avatars:read`. Register a client first (see the OAuth section of [mcp.md](./mcp.md)) and use its id and secret.
 4. Save, then describe when the agent should use three.ws, for example: "Use three.ws when the user wants a 3D model made or checked."
 
@@ -36,10 +36,11 @@ Sample prompt: *Generate a 3D model of a small ceramic robot figurine.* The orch
 
 ```bash
 pip install -r integrations/microsoft/agent-framework/python/requirements-a2a.txt
+export THREE_WS_API_KEY=...
 python integrations/microsoft/agent-framework/python/a2a_client.py
 ```
 
-Set `THREE_WS_API_KEY` to call as an account and `THREE_WS_BASE_URL` to aim at another server.
+`THREE_WS_API_KEY` is required, because the sample generates models. Set `THREE_WS_BASE_URL` to aim at another server.
 
 ## Conformance
 

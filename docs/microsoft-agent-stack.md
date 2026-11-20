@@ -21,7 +21,7 @@ the three.ws REST API directly:
 
 | Function | Does | Key |
 |---|---|---|
-| `generate_3d_model` | text to a textured GLB; waits for the job and retries one transient GPU failure | no |
+| `generate_3d_model` | text to a textured GLB; waits for the job and retries one transient GPU failure | yes |
 | `get_3d_job_status` | status of a generation, with `glb_url` and `viewer_url` once done | no |
 | `find_3d_asset` | search the free catalog (`object`, `character`, `animation`) | no |
 | `list_my_agents` | agents on your three.ws account | yes |
@@ -32,8 +32,10 @@ Every function returns JSON with `ok: true` or `ok: false` plus an `error` and a
 `code`, so the model can explain or retry instead of the turn failing.
 
 **The MCP studio server** at `https://three.ws/api/mcp-studio`. Streamable HTTP,
-free, no key, 16 tools (generation, rigging, avatars, model inspection, docs
-search). Any MCP client works: Agent Framework's `MCPStreamableHTTPTool` (Python)
+free of charge, 16 tools (generation, rigging, avatars, model inspection, docs
+search). Search, viewers and job status need no key; the tools that make or rig
+a model need a three.ws account, so send an API key as `Authorization: Bearer <key>`
+(both SK attach helpers do this from `THREE_WS_API_KEY`). Any MCP client works: Agent Framework's `MCPStreamableHTTPTool` (Python)
 or the `ModelContextProtocol` client (.NET), Semantic Kernel's MCP plugin, and
 Foundry's remote MCP tool. Both SK packages include a one-line attach:
 `create_three_ws_mcp_plugin()` in Python, `kernel.AddThreeWsStudioMcpAsync()` in
@@ -45,10 +47,12 @@ what Foundry and Agent Framework's strict MCP validation require.
 
 ## Auth
 
-Generation, catalog search, the public directory and messaging need nothing. A
-three.ws API key (create one at [three.ws/dashboard/api](https://three.ws/dashboard/api))
-is only needed to list your own agents. Both packages read `THREE_WS_API_KEY`
-and `THREE_WS_BASE_URL` from the environment.
+Making a model needs a three.ws account, so generation and rigging need a
+three.ws API key (create one at [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys);
+a free account is enough). Listing your own agents needs one too. Catalog search,
+job status, the public directory and messaging need nothing. Both packages read
+`THREE_WS_API_KEY` and `THREE_WS_BASE_URL` from the environment, and new models
+are saved to the key's account unlisted until you publish them.
 
 ## Timing
 

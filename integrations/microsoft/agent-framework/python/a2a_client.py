@@ -7,10 +7,13 @@ agent-framework-a2a (which sits on the a2a-sdk client and speaks A2A 1.0):
   2. a Forge 3D generation, streamed (SSE) to its GLB,
   3. a second generation, canceled while it runs.
 
-No three.ws account or key is needed. Pass THREE_WS_API_KEY to call as an
-account (sent as the X-API-Key header the agent card declares).
+The two generations need THREE_WS_API_KEY, because making a model needs a
+three.ws account (a free one is enough; create a key at
+https://three.ws/dashboard/api-keys). It is sent as the X-API-Key header the
+agent card declares. The plain question needs no key.
 
     pip install -r requirements-a2a.txt
+    export THREE_WS_API_KEY=...
     python a2a_client.py                      # https://three.ws
     THREE_WS_BASE_URL=http://localhost:3142 python a2a_client.py
 
@@ -44,7 +47,13 @@ def user_message(text: str) -> Message:
 
 
 async def main() -> int:
-    headers = {"x-api-key": API_KEY} if API_KEY else {}
+    if not API_KEY:
+        print(
+            "Set THREE_WS_API_KEY to a three.ws API key (free account): https://three.ws/dashboard/api-keys",
+            file=sys.stderr,
+        )
+        return 2
+    headers = {"x-api-key": API_KEY}
     async with httpx.AsyncClient(timeout=httpx.Timeout(10, read=600), headers=headers) as http:
         # The card an A2A platform reads. The endpoint-relative path is the one
         # Copilot Studio probes after you paste the endpoint URL.

@@ -43,6 +43,16 @@ You are a prop designer for 3D scenes. For the scene the user describes:
 
 async def main(scene: str) -> int:
     base = os.environ.get("THREE_WS_BASE_URL", "https://three.ws").rstrip("/")
+    # Making a model needs a three.ws account: forge_free refuses a call that
+    # carries no key. Catalog search stays open, but the sample's job is to
+    # generate, so it stops here rather than fail mid-run.
+    three_ws_key = os.environ.get("THREE_WS_API_KEY", "").strip()
+    if not three_ws_key:
+        print(
+            "Set THREE_WS_API_KEY to a three.ws API key (free account): https://three.ws/dashboard/api-keys",
+            file=sys.stderr,
+        )
+        return 2
     client = OpenAIChatCompletionClient(
         model=os.environ.get("THREE_WS_MODEL", "gpt-5.4-mini"),
         api_key=os.environ["OPENAI_API_KEY"],
@@ -58,8 +68,9 @@ async def main(scene: str) -> int:
     studio = MCPStreamableHTTPTool(
         name="threews_studio",
         url=f"{base}/api/mcp-studio",
-        description="three.ws free 3D Studio: search ready-made assets and generate 3D models.",
+        description="three.ws 3D Studio: search ready-made assets and generate 3D models.",
         allowed_tools=["search_catalog", "forge_free", "get_job"],
+        static_headers={"Authorization": f"Bearer {three_ws_key}"},
         # A generation can hold the call open for a few minutes before it answers.
         request_timeout=300,
         load_prompts=False,
