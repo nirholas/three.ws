@@ -472,7 +472,7 @@ export class TalkController {
 		}
 		this.stopListening();
 		this._stopPlayback();
-		this._driver?.dispose();
+		this._driver?.stop();
 		this._driver = null;
 		this._setState('idle');
 	}
@@ -484,7 +484,7 @@ export class TalkController {
 	 */
 	hush() {
 		this._stopPlayback();
-		this._driver?.dispose();
+		this._driver?.stop();
 		this._driver = null;
 		this._setState('idle');
 	}
@@ -700,8 +700,10 @@ export class TalkController {
 		}
 		this._currentTap = tapAudioElement(audio, this._audioCtx);
 
-		// Drive the lipsync.
-		this._driver?.dispose();
+		// Drive the lipsync. stop(), never dispose(): LipsyncDriver.dispose()
+		// disposes its target, and the mouth target belongs to the caller, so
+		// disposing it here froze the avatar's face from the second reply on.
+		this._driver?.stop();
 		this._driver = new LipsyncDriver({
 			analyser: this._currentTap.analyser,
 			target: this.mouthTarget,
