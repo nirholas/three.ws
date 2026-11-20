@@ -19,7 +19,7 @@
 
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="three.ws on NVIDIA"  data-i18n-attr="content:nvidia_index.meta_twitter_title"/>
-	<meta name="twitter:description" content="Free text-to-3D on NVIDIA-hosted models, plus a self-hosted GPU fleet on L4 and Blackwell. One key, no account, no cost."  data-i18n-attr="content:nvidia_index.meta_twitter_description"/>
+	<meta name="twitter:description" content="Free text-to-3D on NVIDIA-hosted models, plus a self-hosted GPU fleet on L4 and Blackwell. A free account, no cost."  data-i18n-attr="content:nvidia_index.meta_twitter_description_account"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=three.ws+on+NVIDIA&amp;d=three.ws+is+a+member+of+the+NVIDIA+Inception+program.+Every+3D+model%2C+avatar%2C+and+voice+on+the+platform+runs+on+NVIDIA%3A+a+free+hosted+lane+behind+one+API+key&amp;p=%2Fnvidia" />
 	<meta name="twitter:site" content="@trythreews" />
 
@@ -177,9 +177,9 @@
 
 	<h1 data-i18n-html="nvidia_index.every_model_here_is_born_on_nvidia">Every model here is born on <span class="gradient">NVIDIA</span>.</h1>
 
-	<p class="lede" data-i18n-html="nvidia_index.type_a_sentence_get_a_textured_3d">
+	<p class="lede" data-i18n-html="nvidia_index.type_a_sentence_get_a_textured_3d_free">
 		Type a sentence, get a textured 3D model. That path runs end to end on NVIDIA silicon, and on
-		three.ws the first lane of it is <strong>free, keyless, and open source</strong>. This page is the
+		three.ws the first lane of it is <strong>free and open source</strong>. This page is the
 		honest map of how: which NVIDIA-hosted models do what, which GPUs we run ourselves, and what we
 		learned putting them into production.
 	</p>
@@ -218,7 +218,7 @@
 					exactly why we treat it as a free-first lane and always keep a fallback behind it.
 				</p>
 				<ul>
-					<li data-i18n-html="nvidia_index.text_to_3d_that_costs_a_visitor"><strong>Text to 3D</strong> that costs a visitor nothing and needs no account</li>
+					<li data-i18n-html="nvidia_index.text_to_3d_that_costs_nothing_free_account"><strong>Text to 3D</strong> that costs nothing on a free three.ws account</li>
 					<li data-i18n-html="nvidia_index.chat_vision_embeddings_reranking_safety_spee"><strong>Chat, vision, embeddings, reranking, safety, speech</strong> on the same key</li>
 					<li data-i18n="nvidia_index.every_call_has_a_documented_failover_so">Every call has a documented failover, so a rate limit degrades instead of breaking</li>
 				</ul>
@@ -255,7 +255,7 @@
 					<tr><th data-i18n="nvidia_index.capability">Capability</th><th data-i18n="nvidia_index.nvidia_model">NVIDIA model</th><th data-i18n="nvidia_index.what_it_powers">What it powers</th><th data-i18n="nvidia_index.free">Free</th></tr>
 				</thead>
 				<tbody>
-					<tr><td data-i18n="nvidia_index.text_to_3d">Text to 3D</td><td><code>microsoft/trellis</code></td><td data-i18n="nvidia_index.the_keyless_generate_lane_on_forge">The keyless generate lane on /forge</td><td class="free" data-i18n="nvidia_index.yes">Yes</td></tr>
+					<tr><td data-i18n="nvidia_index.text_to_3d">Text to 3D</td><td><code>microsoft/trellis</code></td><td data-i18n="nvidia_index.the_free_generate_lane_on_forge">The free generate lane on /forge</td><td class="free" data-i18n="nvidia_index.yes">Yes</td></tr>
 					<tr><td data-i18n="nvidia_index.text_to_image">Text to image</td><td><code>black-forest-labs/flux.1-schnell</code></td><td data-i18n="nvidia_index.reference_images_and_texture_inputs">Reference images and texture inputs</td><td class="free" data-i18n="nvidia_index.yes_2">Yes</td></tr>
 					<tr><td data-i18n="nvidia_index.llm_default_lane">LLM, default lane</td><td><code>meta/llama-3.3-70b-instruct</code></td><td data-i18n="nvidia_index.agent_chat_and_platform_reasoning">Agent chat and platform reasoning</td><td class="free" data-i18n="nvidia_index.yes_3">Yes</td></tr>
 					<tr><td data-i18n="nvidia_index.llm_model_garden">LLM, model garden</td><td data-i18n="nvidia_index.nemotron_120b_49b_nano_9b_and_peers">Nemotron 120B / 49B / Nano 9B and peers</td><td data-i18n="nvidia_index.the_brain_workbench_model_picker">The Brain workbench model picker</td><td class="free" data-i18n="nvidia_index.yes_4">Yes</td></tr>
@@ -277,18 +277,19 @@
 
 	<section>
 		<h2 data-i18n="nvidia_index.try_the_free_lane_right_now">Try the free lane right now.</h2>
-		<p class="sub" data-i18n="nvidia_index.no_key_no_account_no_wallet_one">
-			No key, no account, no wallet. One POST returns a real GLB you can open in any 3D viewer. This is the
-			same endpoint the browser UI calls.
+		<p class="sub" data-i18n-html="nvidia_index.a_free_api_key_no_wallet_one">
+			A free API key, no wallet. Sign in, create a key at <a href="/dashboard/api-keys">/dashboard/api-keys</a>, and one POST
+			returns a real GLB you can open in any 3D viewer. This is the same endpoint the browser UI calls.
 		</p>
 
 <pre><span class="c"># generate a textured 3D model on the free NVIDIA lane</span>
 curl -s -X POST <span class="s">https://three.ws/api/forge</span> \
+  -H <span class="s">"authorization: Bearer $THREE_WS_API_KEY"</span> \
   -H <span class="s">'content-type: application/json'</span> \
   -d <span class="s">'{"prompt":"a small brass compass","backend":"nvidia"}'</span>
 
 <span class="c"># → {"creation_id":"…","status":"done",
-#    "glb_url":"https://…/forge/anon/….glb",
+#    "glb_url":"https://…/forge/….glb",
 #    "quality":{"valid":true,"score":0.947,…}}</span></pre>
 
 		<div class="note">
@@ -366,7 +367,7 @@ curl -s -X POST <span class="s">https://three.ws/api/forge</span> \
 	<section id="inception-perk" aria-labelledby="perk-h">
 		<h2 id="perk-h">Free generation for NVIDIA Inception members.</h2>
 		<p class="sub">
-			The free lane above needs no account. If your startup is in NVIDIA Inception, apply here for prepaid
+			The free lane above needs only a free account. If your startup is in NVIDIA Inception, apply here for prepaid
 			credits on top of it, usable on the higher-quality and game-ready lanes.
 		</p>
 		<div class="perk">
