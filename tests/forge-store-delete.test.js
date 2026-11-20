@@ -7,8 +7,10 @@
  *
  *   1. deleteCreation removes every bucket object the row points at (key
  *      columns, URL-derived legacy keys, source_image_keys) and then the row.
- *   2. Object-storage failure aborts BEFORE the row delete, so the user can
- *      retry; bytes are never stranded without a handle.
+ *   2. A fault that is not the storage infrastructure aborts BEFORE the row
+ *      delete, so the user can retry; bytes are never stranded without a
+ *      handle. (An infrastructure outage queues the purge and still takes the
+ *      row down: tests/forge-creation-ownership.test.js pins that path.)
  *   3. createCreation resolves bucket-hosted reference URLs to object keys at
  *      insert time and drops provider-hosted ones (not ours to delete).
  *
@@ -41,7 +43,13 @@ vi.mock('../api/_lib/db.js', () => ({
 }));
 
 const deleteObjectMock = vi.fn(async () => {});
-vi.mock('../api/_lib/r2.js', () => ({
+vi.mock('../api/_lib/r2.js', async (importActual) => ({
+	// The real classifier decides which delete faults queue a purge and which
+	// abort, so the tests exercise the shipped rule rather than a copy.
+	isStorageInfrastructureError: (await importActual()).isStorageInfrastructureError,
+	// The creation-prefix sweep and the /cdn/ variant sweep list the bucket.
+	// Nothing extra is stored under those prefixes in these fixtures.
+	listObjectsPage: vi.fn(async () => ({ objects: [], nextToken: null })),
 	putObject: vi.fn(async () => {}),
 	// forgeStoreEnabled() reads the object-storage gate through r2.js, so this
 	// mock has to carry it or every store call throws before it runs.
@@ -143,7 +151,7 @@ describe('deleteCreation', () => {
 		expect(deleteStatements()).toHaveLength(0);
 	});
 
-	it('keeps the row when object storage refuses, so the user can retry', async () => {
+	it('keeps the row on a delete fault that is not a storage outage, so the user can retry', async () => {
 		selectRows = [
 			{
 				id: 'c-5',
