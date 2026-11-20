@@ -16,10 +16,11 @@ No tool in this plugin spends money or moves value, and nothing is billed. Model
 From xAI's plugin marketplace, once it is listed there:
 
 ```bash
+grok plugin marketplace add xai-org/plugin-marketplace   # once, if `grok plugin marketplace list` does not show it
 grok plugin install three-ws --trust
 ```
 
-Or open `/marketplace` in Grok Build, select `three-ws` and press `i`.
+Or open `/marketplace` in Grok Build, select `three-ws` and press `i`. The marketplace pins an exact commit, and Grok Build verifies that commit after the fetch.
 
 From a local checkout of this folder:
 
@@ -33,8 +34,10 @@ Without `--trust`, Grok Build shows the source, warns that the plugin brings an 
 Check the install:
 
 ```bash
-grok plugin details three-ws   # one MCP server, 5 commands, 1 agent, 6 skills
-grok inspect                   # three-ws listed with plugin: three-ws as its source
+grok plugin list   # three-ws and its source
+grok inspect       # Plugins: three-ws (user, enabled) 6 skills, 1 agents, 1 MCPs
+                   # Skills: the 6 skills and the 5 commands, each "plugin: three-ws"
+                   # Agents: three-ws:3d-art-director   MCP Servers: three-ws (http)
 ```
 
 ## Sign in
@@ -84,6 +87,7 @@ The plugin ships no hooks, no LSP servers, no install scripts and no executables
 | Symptom | Cause | Fix |
 |---|---|---|
 | A command answers `sign_in_required` | The `three-ws` server is connected but not signed in | `/mcps`, select `three-ws`, press `i`, finish the browser sign-in, run the command again. Or use the API key route above |
+| `grok mcp doctor three-ws` prints `handshake failed` with `Auth required` | Expected before the first sign-in: the OAuth entry asks the client to sign in | `/mcps`, select `three-ws`, press `i`. Or use the API key route above, after which the doctor reports `16 tools discovered` |
 | `three-ws` shows as `blocked` in `/mcps` or `/plugins` | The plugin was installed without trust | `grok plugin install three-ws --trust` again, or install it under `~/.grok/plugins/` (trusted automatically) |
 | The commands are missing from the `/` menu | The plugin is installed but disabled, or the session predates the install | `grok plugin enable three-ws`, then press `r` in the Plugins tab or start a new session |
 | `/rig` or `/embed` says it cannot load the URL | The GLB is not public, is a local path, or its host refuses cross-origin reads | Use a public `https://` URL ending in `.glb`. Files three.ws returns always work; for your own host, enable CORS for `.glb` |
