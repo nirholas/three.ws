@@ -221,7 +221,7 @@ export default wrap(async (req, res) => {
 			category: creation.model_category,
 			limit: relatedParam,
 		});
-		return json(res, 200, { enabled: true, creation, related });
+		return json(res, 200, { enabled: true, creation, related }, headers);
 	}
-	return json(res, 200, { enabled: true, creation });
+	return json(res, 200, { enabled: true, creation }, headers);
 });
