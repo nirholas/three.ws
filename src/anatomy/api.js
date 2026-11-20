@@ -81,3 +81,21 @@ export async function generateDesign({ prompt, onStage = () => {}, onText = () =
 	if (!result) throw new AnatomyApiError(502, { error: 'stream_ended', message: 'The connection closed before the machine finished. Try again.' });
 	return result;
 }
+
+/**
+ * Speak one tour step. Resolves with { text, source, src } for the explorer's
+ * narration: `src` is the cached clip URL, or a data: URL when the server
+ * answered inline (no object storage on this deployment).
+ */
+export async function requestNarration(id, step) {
+	const { narration } = await readJsonResponse(
+		await fetch('/api/anatomy', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ action: 'narrate', id, step }),
+		}),
+	);
+	const src = narration?.audioUrl || (narration?.audio?.base64 ? `data:${narration.audio.contentType || 'audio/mpeg'};base64,${narration.audio.base64}` : null);
+	if (!src) throw new AnatomyApiError(502, { error: 'no_audio', message: 'Narration came back without audio. The step text is above.' });
+	return { text: narration.text, source: narration.source, src };
+}

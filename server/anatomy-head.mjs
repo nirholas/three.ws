@@ -63,8 +63,9 @@ export function anatomyMeta(design, origin = ORIGIN) {
 	const lead = design.subtitle ? `${clip(design.subtitle, 140)}. ` : '';
 	const by = design.creatorUsername ? ` Built by @${design.creatorUsername}.` : '';
 	const description = `${lead}How a ${name} works, as an interactive 3D cutaway${counts ? ` with ${counts}` : ''}: rotate it, cut it open and explode it on three.ws.${by}`;
-	const image = anatomyOgImageUrl(id, origin);
-	const imageAlt = `Isometric line drawing of the ${name}, on three.ws Anatomy`;
+	// Featured designs ship a card rendered from the live cutaway itself.
+	const image = design.ogImage ? `${origin}${design.ogImage}` : anatomyOgImageUrl(id, origin);
+	const imageAlt = design.ogImage ? `Rendered 3D cutaway of the ${name}, on three.ws Anatomy` : `Isometric line drawing of the ${name}, on three.ws Anatomy`;
 	const jsonLd = {
 		'@type': 'LearningResource',
 		'@id': `${pageUrl}#design`,

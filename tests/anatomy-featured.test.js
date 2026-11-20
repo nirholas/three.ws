@@ -8,6 +8,8 @@ import { describe, it, expect } from 'vitest';
 
 import { featuredDesign, featuredList, isFeaturedId } from '../api/_lib/anatomy/featured/index.js';
 import { normalizeSpec } from '../src/anatomy/spec.js';
+import { anatomyMeta } from '../server/anatomy-head.mjs';
+import anatomyOg from '../api/anatomy-og.js';
 
 const ENGINE_ID = '85160213-4c15-4b00-ba96-5990b9385249';
 const STACK_ID = 'd72da3e9-8aae-47cd-a96c-45ccd33bf1a0';
@@ -133,8 +135,41 @@ describe('featured rocket cutaways', () => {
 			expect([...order].sort((a, b) => a - b)).toEqual(order);
 		});
 
-		it('moves the catch arms and grid fins', () => {
+		it('moves the catch arm carriages and the flaps', () => {
 			expect(spec.parts.filter((p) => p.motion?.length).length).toBeGreaterThanOrEqual(3);
 		});
+	});
+
+	describe('share cards', () => {
+		function mkRes() {
+			return {
+				statusCode: 200,
+				_h: {},
+				setHeader(k, v) { this._h[k.toLowerCase()] = v; },
+				getHeader(k) { return this._h[k.toLowerCase()]; },
+				end(b) { this._body = b; this.writableEnded = true; },
+			};
+		}
+
+		for (const { id, section } of designs) {
+			it(`${section}: the page head and /api/anatomy-og use the real cutaway render`, async () => {
+				const design = featuredDesign(id);
+				const meta = anatomyMeta(design, 'https://three.ws');
+				expect(meta.image).toBe(`https://three.ws${design.ogImage}`);
+				expect(meta.imageAlt).toMatch(/cutaway/i);
+				expect(meta.jsonLd.image).toBe(meta.image);
+
+				const res = mkRes();
+				await anatomyOg({ method: 'GET', url: `/api/anatomy-og?id=${id}`, headers: { host: 'three.ws', 'x-forwarded-proto': 'https' } }, res);
+				expect(res.statusCode).toBe(302);
+				expect(res._h.location).toMatch(new RegExp(`${design.ogImage.replace(/[.]/g, '\\.')}$`));
+			});
+
+			it(`${section}: ships a 1200x630 PNG at its OG path`, () => {
+				const png = readFileSync(new URL(`../public${featuredDesign(id).ogImage}`, import.meta.url));
+				expect(png.subarray(1, 4).toString()).toBe('PNG');
+				expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1200, 630]);
+			});
+		}
 	});
 });

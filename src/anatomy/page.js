@@ -2,7 +2,7 @@
 // (one machine). A new machine is drawn while Claude writes it: every part
 // that finishes streaming is added to the explorer immediately.
 
-import { AnatomyApiError, fetchDesign, fetchGallery, generateDesign } from './api.js';
+import { AnatomyApiError, fetchDesign, fetchGallery, generateDesign, requestNarration } from './api.js';
 import { mountAnatomy } from './runtime.js';
 import { mountExplorerOrStill } from './still.js';
 import { scanPartialSpec } from './stream.js';
@@ -167,6 +167,31 @@ function galleryCard(d) {
 	);
 }
 
+// Featured cutaways ship in the repo with every figure sourced; they lead the
+// home page with their real OG render as the thumbnail.
+function featuredCard(d) {
+	const s = d.stats || {};
+	const facts = [plural(s.instances || s.parts || 0, 'part'), s.moving ? `${s.moving} moving` : null, s.flows ? plural(s.flows, 'flow') : null, s.steps ? `${s.steps}-step tour` : null].filter(Boolean);
+	return el(
+		'a',
+		{ class: 'anp-feature', href: `/anatomy/${d.id}`, onclick: (e) => onInternalLink(e, `/anatomy/${d.id}`) },
+		el('span', { class: 'anp-feature__media' }, el('img', { src: d.ogImage, alt: '', width: '1200', height: '630', loading: 'lazy', decoding: 'async' })),
+		el(
+			'span',
+			{ class: 'anp-feature__body' },
+			el('span', { class: 'anp-feature__badge', text: 'Sourced cutaway' }),
+			el('span', { class: 'anp-card__title', text: d.title }),
+			d.subtitle ? el('span', { class: 'anp-card__subtitle', text: d.subtitle }) : null,
+			el('span', { class: 'anp-card__facts' }, ...facts.map((f) => el('span', { text: f }))),
+		),
+	);
+}
+
+function renderFeatured(featured = []) {
+	$('#anpFeatured').hidden = !featured.length;
+	$('#anpFeaturedGrid').replaceChildren(...featured.map(featuredCard));
+}
+
 async function loadGallery() {
 	const token = ++state.galleryToken;
 	const grid = $('#anpGallery');
@@ -175,8 +200,9 @@ async function loadGallery() {
 	grid.setAttribute('aria-busy', 'true');
 	grid.replaceChildren(...Array.from({ length: 6 }, () => el('div', { class: 'anp-card anp-card--skeleton', 'aria-hidden': 'true' }, el('span'), el('span'), el('span'))));
 	try {
-		const { designs, storage } = await fetchGallery({ q: state.galleryQuery });
+		const { designs, featured, storage } = await fetchGallery({ q: state.galleryQuery });
 		if (token !== state.galleryToken) return;
+		renderFeatured(featured);
 		grid.replaceChildren(...designs.map(galleryCard));
 		if (!designs.length) {
 			status.hidden = false;
@@ -215,6 +241,7 @@ function showDesignShell() {
 	$('#anpWarn').hidden = true;
 	$('#anpCopyLink').hidden = true;
 	$('#anpCopySpec').hidden = true;
+	$('#anpSources').hidden = true;
 	setShareState(null);
 	window.scrollTo(0, 0);
 }
@@ -252,8 +279,8 @@ function openShare() {
 			title: design.title || 'Machine',
 			description: design.subtitle || '',
 			shareUrl: design.url,
-			shareText: `How a ${design.title || 'machine'} works, as an interactive 3D cutaway on three.ws`,
-			previewImage: `${location.origin}/api/anatomy-og?id=${encodeURIComponent(design.id)}`,
+			shareText: design.shareText || `How a ${design.title || 'machine'} works, as an interactive 3D cutaway on three.ws`,
+			previewImage: `${location.origin}${design.ogImage || `/api/anatomy-og?id=${encodeURIComponent(design.id)}`}`,
 		},
 		btn,
 	);
@@ -278,8 +305,17 @@ function setStatus(text) {
 function ensureExplorer() {
 	if (state.app) return state.app;
 	const stage = $('#anpStage');
-	state.app = mountExplorerOrStill(stage, () => mountAnatomy(stage, null, { theme: 'auto' }));
+	state.app = mountExplorerOrStill(stage, () => mountAnatomy(stage, null, { theme: 'auto', narrate: narrateStep }));
 	return state.app;
+}
+
+// The explorer's Listen button. Featured designs are narrated by Grok from
+// their verified facts when the server has a key; every saved design can at
+// least be read aloud from its own tour text.
+function narrateStep(step) {
+	const id = state.design?.id;
+	if (!id) return Promise.reject(new Error('Narration needs a saved machine. The step text is above.'));
+	return requestNarration(id, step);
 }
 
 function showDesignError(err, { retry } = {}) {
@@ -313,6 +349,7 @@ function showDesign(design, warnings = []) {
 	app.update(design.spec);
 	$('#anpCopySpec').hidden = false;
 	$('#anpCopyLink').hidden = !design.url;
+	$('#anpSources').hidden = !design.featured;
 	setShareState(design);
 	const notes = [];
 	if (!design.id) notes.push('Saving is unavailable right now, so this machine has no shareable link. Copy the spec to keep it.');

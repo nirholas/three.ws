@@ -8,9 +8,11 @@
 // longer unfurl as the same generic Anatomy card on X, in Grok's reading of a
 // link, or in any chat unfurler.
 //
-// A malformed or unknown id, or a design with nothing drawable, redirects to
-// the brand card (/og-image.png) rather than serving a broken image. Rendered
-// with the shared satori renderer (api/_lib/og-image.js) on the Node runtime.
+// Featured designs redirect to the card rendered from their real cutaway
+// (public/anatomy/og/). A malformed or unknown id, or a design with nothing
+// drawable, redirects to the brand card (/og-image.png) rather than serving a
+// broken image. Rendered with the shared satori renderer (api/_lib/og-image.js)
+// on the Node runtime.
 
 import { ImageResponse } from './_lib/og-image.js';
 import { method } from './_lib/http.js';
@@ -122,6 +124,15 @@ export default async function handler(req, res) {
 	} catch (err) {
 		if (err?.status !== 404 && err?.status !== 400) console.error('[anatomy-og] design lookup failed:', err?.message || err);
 		return redirectToBrandCard(req, res);
+	}
+
+	// Featured designs carry a card rendered from the real cutaway in the
+	// explorer (public/anatomy/og/), which beats any line drawing.
+	if (design.ogImage) {
+		res.statusCode = 302;
+		res.setHeader('location', `${selfOrigin(req)}${design.ogImage}`);
+		res.setHeader('cache-control', 'public, max-age=3600');
+		return res.end();
 	}
 
 	try {
