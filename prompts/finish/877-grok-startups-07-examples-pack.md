@@ -1,5 +1,7 @@
 # grok-startups 07: a runnable examples pack for building 3D with Grok and three.ws
 
+Status 2026-11-20: built and verified (all six examples PASS in `npm run grok:examples-smoke`, fresh copy to first GLB 82.4 s); the live Grok-leg samples wait on order 927 installing the xAI key (owner).
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `grok-startups-` order, so it can run in parallel with all of them. Dev port: 3277.
 
 ## Operating clause (binding)
