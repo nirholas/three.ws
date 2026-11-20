@@ -6,8 +6,10 @@
 // uploads it directly to storage, then broadcasts the resulting public URL to the
 // room — so every peer (not just the uploader) renders the custom avatar.
 //
-// /play is anonymous, so a session is OPTIONAL. Authenticated users get a stable
-// per-user key namespace; anonymous players upload under a shared `anon` prefix.
+// Uploading a model needs an account. Everyone in the room downloads and renders
+// what is uploaded here, so each file needs an owner who answers for it; an
+// anonymous caller gets 401 `sign_in_required` (api/_lib/creator-account.js),
+// which /play shows as a sign-in link. Walking around /play stays open.
 //
 // Request body (JSON):
 //   filename      string? — original filename (only the .glb extension matters)
@@ -22,9 +24,9 @@
 //   }
 
 import { cors, error, json, wrap, rateLimited } from '../_lib/http.js';
-import { getSessionUser } from '../_lib/auth.js';
+import { requireCreator } from '../_lib/creator-account.js';
 import { presignUpload, publicUrl } from '../_lib/r2.js';
-import { limits, clientIp } from '../_lib/rate-limit.js';
+import { limits } from '../_lib/rate-limit.js';
 import { randomUUID } from 'crypto';
 
 // 16 MB — generous for a single-mesh avatar, tight enough to keep the scene's
@@ -40,19 +42,15 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (req.method !== 'POST') return error(res, 405, 'method_not_allowed', `method ${req.method} not allowed`);
 
-	let userId = 'anon';
-	try {
-		const session = await getSessionUser(req);
-		if (session) userId = session.id ?? session.userId ?? 'anon';
-	} catch { /* anonymous player — allowed */ }
+	// A platform job has no account to file the upload under, so only a person may
+	// take a grant here.
+	const who = await requireCreator(req, res, { action: 'upload a 3D model', allowPlatform: false });
+	if (!who) return;
+	const userId = who.user.id;
 
-	// Anonymous /play uploaders share the `anon` namespace, so rate-limit them
-	// per-IP to stop a single client minting unlimited presigned PUT URLs and
-	// using the bucket as free hosting. Authenticated users get the upload bucket
-	// keyed to their own id.
-	const rl = userId === 'anon'
-		? await limits.publicIp(clientIp(req))
-		: await limits.upload(userId);
+	// The upload bucket is keyed to the account, so one account cannot mint
+	// unlimited presigned PUT URLs and use the bucket as free hosting.
+	const rl = await limits.upload(userId);
 	if (!rl.success) return rateLimited(res, rl, 'too many upload requests');
 
 	const body = req.body || {};

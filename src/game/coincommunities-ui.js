@@ -788,8 +788,9 @@ export class CommunityUI {
 	// The complete in-lobby creation workflow. A method chooser opens over the
 	// lobby; each method ends with a real GLB the player can drop in with:
 	//   • Create     → the in-app avatar creator (design from scratch / from a
-	//                  photo). Anonymous, exports a GLB Blob we adopt instantly.
-	//   • Upload     → reuse the bar's validated .glb upload.
+	//                  photo). Exports a GLB Blob we adopt instantly; peers see
+	//                  it once it uploads, which needs an account.
+	//   • Upload     → reuse the bar's validated .glb upload (needs an account).
 	//   • Studio     → the full sculpt/outfit builder at /create/studio (richer,
 	//                  saves to your three.ws account). Opens in a new tab.
 	// Confine Tab/Shift+Tab focus to an open modal so keyboard focus can't walk
@@ -833,8 +834,8 @@ export class CommunityUI {
 		};
 
 		const cards = el('div', { class: 'cc-create-methods' }, [
-			card('✦', 'Design your avatar', 'Build a 3D character from scratch or from a selfie, then drop straight into the world. No sign-in needed.', 'Recommended', () => this._launchEditor()),
-			card('⬆', 'Upload a model', 'Already have a .glb or .vrm from Blender, Mixamo, VRoid, or any avatar tool? Bring it in.', '', () => { this._closeCreate(); this.uploadFile.click(); }),
+			card('✦', 'Design your avatar', 'Build a 3D character from scratch or from a selfie, then drop straight into the world. Sign in so other players see it too.', 'Recommended', () => this._launchEditor()),
+			card('⬆', 'Upload a model', 'Already have a .glb or .vrm from Blender, Mixamo, VRoid, or any avatar tool? Bring it in with a free account.', '', () => { this._closeCreate(); this.uploadFile.click(); }),
 			card('✨', 'Advanced studio', 'Sculpt face & body, layer outfits and accessories, and save it to your three.ws account.', 'Opens in a new tab', () => { window.open('/create/studio', '_blank', 'noopener'); this._closeCreate(); }),
 		]);
 
