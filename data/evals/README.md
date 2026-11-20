@@ -61,8 +61,11 @@ Briefs typed into the "describe your agent" box. `input`: `{ brief }`. Five rows
 ## Regenerating results
 
 ```bash
-npm run grok:eval-llm                 # current production lane, all five tasks
-npm run grok:eval-llm -- --report     # rebuild the doc from saved results
+npm run grok:eval-llm -- --prod-env                             # current production lane, all five tasks
+npm run grok:eval-llm -- --prod-env --lanes grok,grok_budget    # the Grok columns (needs GROK_API_KEY on Cloud Run)
+npm run grok:eval-llm -- --retry-failed --concurrency 1         # re-run rows that errored (NIM 429s)
+npm run grok:eval-llm -- --regrade                              # re-grade saved outputs after a grader change, no calls
+npm run grok:eval-llm -- --report                               # rebuild the doc from saved results
 ```
 
-Flags and the result file format are documented at the top of [scripts/grok-eval-llm.mjs](../../scripts/grok-eval-llm.mjs).
+`--prod-env` loads the provider keys from the Cloud Run service. Raw results land in [llm-results/](llm-results/) (`results.jsonl`, `judged.jsonl`, `runs.json`) and the report in [docs/evals/grok-4-7-on-three-ws.md](../../docs/evals/grok-4-7-on-three-ws.md). Flags and the result file format are documented at the top of [scripts/grok-eval-llm.mjs](../../scripts/grok-eval-llm.mjs).
