@@ -1,5 +1,7 @@
 # grok-startups 09: evaluate Grok 4.7 on real three.ws tasks and route by evidence
 
+Status 2026-11-20: built and baselined (task sets, graders, judge, harness, LLM_ROUTE_<TASK> flags incl. LLM_ROUTE_AGENT_CHAT, report at docs/evals/grok-4-7-on-three-ws.md with the Nemotron 3 Ultra baseline on all 250 inputs). Remaining: the Grok columns, which wait on order 927 (owner installs GROK_API_KEY on Cloud Run), then `npm run grok:eval-llm -- --prod-env --lanes grok,grok_budget`.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `grok-startups-` order, so it can run in parallel with all of them. Dev port: 3279.
 
 ## Operating clause (binding)
