@@ -10,7 +10,7 @@ The dance floor already syncs everyone to a server beat with rotating clips, and
 - Round-machine precedent: King of the Totem in `WalkRoom.js` (phase, timer, leaderboard, winner) and its HUD panel in `src/game/coincommunities-ui.js`; copy that shape, it is already proven
 - Crowd input: the reaction bar (6 emoji) in `src/game/coincommunities-ui.js` and the reaction relay in `WalkRoom.js`
 - Tips: `api/x402/dance-tip.js`
-- Winner reward: the cosmetics ownership path (`multiplayer/src/cosmetics-ownership.js`, `api/cosmetics/`); celebration feel: `src/game/hud/game-feel.js`; feed: `multiplayer/src/feed.js`
+- Winner reward: the cosmetics ownership path (`multiplayer/src/cosmetics-ownership.js`, `api/cosmetics/`); celebration feel: the shared `src/ui-juice.js` primitives; feed: `multiplayer/src/feed.js`
 
 ## What to build
 

@@ -7,7 +7,7 @@ Tomorrow there is a physical room with a big screen. The best thing that screen 
 ## Where the code lives
 
 - URL params: parsing in `src/game/coincommunities.js` and the canonicalisation in `enter()`, where the `history.replaceState` rewrite rebuilds the query from scratch with exactly `coin`, `name`, `symbol`, `image`, `tier` (holders worlds) and `ui`. Any new param MUST be added there or it is dropped on entry: this is the known trap
-- Cameras: `src/game/camera-modes.js` (cinematic mode exists) and `src/game/hud/camera-rig.js` (it now honors `prefers-reduced-motion`, suppressing shake and the speed FOV kick; the director rotation must respect the same switch, since a venue machine may have it set)
+- Cameras: `src/game/camera-modes.js` (cinematic mode exists). The director rotation must honor `prefers-reduced-motion`, since a venue machine may have it set
 - Zen and embed precedents: `ui=hidden` and `bg=transparent` handling in `src/game/coincommunities.js`
 - Server join: `multiplayer/src/rooms/WalkRoom.js` join options (the `spectator` option is now honored via `multiplayer/src/spectator.js`; every other join spawns a visible player); the client sends them from `src/game/community-net.js`
 - Event state: `public/event.json` via `src/game/event-countdown.js` and the shared `src/shared/event-config.js` reader (between events the file holds an explicit no-event state, `id: null`, which must render as the no-event overlay, not as an error); the go-live moments in `src/game/meetup-event.js` and `fireworks.js` are the shots worth cutting to; live activity if Feature 15 lands; invite QR if Feature 16 lands (`qrcode` is already a dependency)

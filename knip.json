@@ -3,21 +3,64 @@
 	"workspaces": {
 		".": {
 			"entry": [
+				"*.html",
 				"pages/**/*.html",
+				"blog/**/*.html",
+				"docs/**/*.html",
+				"examples/**/*.html",
+				"chat/**/*.html",
+				"marketing/**/*.html",
+				"public/**/*.html",
 				"api/**/*.{js,mjs}",
 				"server/index.mjs",
 				"src/main.js",
+				"src/lib.js",
+				"src/footer-bot.js",
+				"src/walk-companion.js",
+				"src/walk-playground.js",
+				"src/feature-tour.js",
+				"src/notifications.js",
+				"src/nav-tier-badge.js",
+				"src/i18n.js",
+				"src/agents/agent-bus.js",
+				"src/shared/chart-switcher-global.js",
+				"src/scene-studio/vendor/js/Sidebar.Geometry.*.js",
 				"scripts/**/*.{js,mjs}",
 				"tests/**/*.{test,spec}.{js,mjs}",
 				"vite.config*.js",
 				"vitest.config.js",
 				"playwright*.config.js"
 			],
-			"project": ["src/**/*.{js,mjs}", "api/**/*.{js,mjs}", "server/**/*.{js,mjs}", "scripts/**/*.{js,mjs}"],
-			"ignore": ["**/*.d.ts", "src/vendor/**"]
+			"project": [
+				"src/**/*.{js,mjs}",
+				"api/**/*.{js,mjs}",
+				"server/**/*.{js,mjs}",
+				"scripts/**/*.{js,mjs}"
+			],
+			"ignore": [
+				"**/*.d.ts",
+				"src/vendor/**"
+			]
 		}
 	},
-	"ignoreWorkspaces": ["agent-payments-sdk", "agent-ui-sdk", "avatar-sdk", "page-agent-sdk", "character-studio", "mcp-bridge", "mcp-server", "multiplayer", "services/*", "packages/*", "walk-sdk", "tour-sdk"],
+	"ignoreWorkspaces": [
+		"agent-payments-sdk",
+		"agent-ui-sdk",
+		"avatar-sdk",
+		"page-agent-sdk",
+		"character-studio",
+		"mcp-bridge",
+		"mcp-server",
+		"multiplayer",
+		"services/*",
+		"packages/*",
+		"walk-sdk",
+		"tour-sdk"
+	],
 	"ignoreExportsUsedInFile": true,
-	"include": ["files", "dependencies", "exports"]
+	"include": [
+		"files",
+		"dependencies",
+		"exports"
+	]
 }
