@@ -67,6 +67,7 @@ import {
 	GROK_BUDGET_MODEL,
 	GROK_BUDGET_EXTRA_BODY,
 	routableGrokModelId,
+	grokModel,
 } from './chat-models.js';
 
 // Llama 3.x left Groq's catalog in 2026-08 (404 on every call); qwen3.8-27b is
@@ -587,6 +588,53 @@ function openaiCompatProvider({ name, key = null, url, model, extraHeaders = {},
 	};
 }
 
+// Per-task routing by evidence. `LLM_ROUTE_<TASK>` (the task tag upper-cased,
+// non-alphanumerics as `_`, e.g. LLM_ROUTE_FORGE_DIRECTOR) names a Grok model,
+// optionally with a reasoning effort: `grok-4.7`, `grok-4.7:low`,
+// `grok-4.3:none`. The value must be a chat-completions id in GROK_MODELS and
+// the effort one that model lists; anything else is ignored with one warning,
+// so a typo can never take a task off its working chain. Unset, empty, `off` or
+// `default` leave the chain exactly as it is. The flag is only set for a task
+// whose eval (`npm run grok:eval-llm`, docs/evals/grok-4-7-on-three-ws.md)
+// showed Grok winning with a confidence interval that excludes a tie, and the
+// routed rung is a lead, not a replacement: an xAI error falls through to the
+// rest of the chain like any other rung.
+const ROUTE_WARNED = new Set();
+
+export function llmRouteEnvKey(task) {
+	return `LLM_ROUTE_${String(task).toUpperCase().replace(/[^A-Z0-9]+/g, '_')}`;
+}
+
+export function llmRouteOverride(task, source = process.env) {
+	if (!task) return null;
+	const envKey = llmRouteEnvKey(task);
+	const raw = String(source?.[envKey] ?? '').trim();
+	if (!raw || raw === 'off' || raw === 'default') return null;
+	const [id, effort, ...rest] = raw.split(':');
+	const model = grokModel(id);
+	const effortOk = effort === undefined || (model?.reasoningEfforts || []).includes(effort);
+	if (!model || !model.chatCompletions || model.id !== id || !effortOk || rest.length) {
+		if (!ROUTE_WARNED.has(`${envKey}=${raw}`)) {
+			ROUTE_WARNED.add(`${envKey}=${raw}`);
+			console.warn(`[llm] ignoring ${envKey}=${raw}: expected a chat Grok id from GROK_MODELS, optionally :<reasoning effort>`);
+		}
+		return null;
+	}
+	return { envKey, model: model.id, effort: effort ?? null };
+}
+
+// The xAI rung a route override (or the eval harness) sends: the routed model
+// with its reasoning effort in the body when one was named, else xAI's default.
+export function grokRouteRung({ model, effort = null }, key) {
+	return openaiCompatProvider({
+		name: 'grok',
+		key,
+		url: XAI_CHAT_COMPLETIONS_URL,
+		model,
+		extraBody: effort ? { reasoning_effort: effort } : null,
+	});
+}
+
 // One OpenRouter rung. Every OpenRouter request opts into usage accounting
 // (`usage: { include: true }`), so the response carries `usage.cost` in USD:
 // the exact amount the account was charged. That number is what the spend
@@ -672,6 +720,11 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 			model: routableGrokModelId(grokModel, GROK_DEFAULT_MODEL),
 		}));
 	}
+	// Per-task evidence routing (LLM_ROUTE_<TASK>, see llmRouteOverride): the
+	// server's Grok key leads this task's chain when its eval showed Grok winning.
+	// A caller's own Grok key above already chose the model, so it is not doubled.
+	const routed = grokKey ? null : llmRouteOverride(task);
+	if (routed && env.GROK_API_KEY) chain.push(grokRouteRung(routed, env.GROK_API_KEY));
 	// VERTEX_CLAUDE_PRIMARY: real Claude on GCP credits leads the chain, before
 	// the free lanes — the platform's default brain becomes Vertex Claude. It
 	// still sits behind a caller BYOK key (the caller's explicit billing choice)

@@ -195,7 +195,7 @@ async function chainFor(agent) {
 	const grokKey = await loadOwnerGrokKey(agent?.user_id);
 	const defaultModel = agentDefaultModel(agent?.meta);
 	const grokModel = defaultModel && MODEL_CATALOG[defaultModel]?.provider === 'grok' ? defaultModel : null;
-	return providerChain({ grokKey, grokModel });
+	return providerChain({ grokKey, grokModel, task: 'x_reply' });
 }
 
 /**

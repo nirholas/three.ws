@@ -32,7 +32,7 @@ const OPTIONAL_SKILLS = [
 	{ id: 'explain-gltf', desc: 'Narrates mesh, material, and animation info from the 3D scene.' },
 	{ id: 'web-search', desc: 'Looks things up on the live web when asked.' },
 ];
-const OPTIONAL_SKILL_IDS = new Set(OPTIONAL_SKILLS.map((s) => s.id));
+export const OPTIONAL_SKILL_IDS = new Set(OPTIONAL_SKILLS.map((s) => s.id));
 
 // Mirrors CATEGORIES in src/create-agent.js / api/marketplace/[action].js.
 const CATEGORIES = [
@@ -40,7 +40,7 @@ const CATEGORIES = [
 	'entertainment', 'finance', 'games', 'general', 'life', 'marketing', 'office',
 	'programming', 'translation',
 ];
-const CATEGORY_SET = new Set(CATEGORIES);
+export const CATEGORY_SET = new Set(CATEGORIES);
 
 // Mirrors STARTERS in src/create-agent.js — the real, shipped GLB bodies the
 // wizard can pre-select. The model picks the one that best fits the vibe.
@@ -50,13 +50,13 @@ const STARTERS = [
 	{ id: 'robot', vibe: 'a playful, expressive robot — tech, games, fun' },
 	{ id: 'soldier', vibe: 'a serious, disciplined, tactical character' },
 ];
-const STARTER_SET = new Set(STARTERS.map((s) => s.id));
+export const STARTER_SET = new Set(STARTERS.map((s) => s.id));
 
 // Field bounds — kept just inside the wizard's own input maxlengths so a
 // generated value never lands truncated in the form.
-const LIMITS = { name: 48, description: 240, greeting: 160, persona: 1800, tag: 24 };
+export const LIMITS = { name: 48, description: 240, greeting: 160, persona: 1800, tag: 24 };
 
-function buildSystem() {
+export function buildSystem() {
 	const skillLines = OPTIONAL_SKILLS.map((s) => `  - "${s.id}": ${s.desc}`).join('\n');
 	return [
 		'You are the agent-design copilot for three.ws, a platform where people deploy 3D AI agents with their own on-chain identity and wallet.',
@@ -83,9 +83,17 @@ function buildSystem() {
 	].join('\n');
 }
 
+// The user turn for one request: the owner's brief, or a "surprise me" ask when
+// the box was left empty. Exported so the eval harness sends the same turn.
+export function suggestSpecUserMessage(prompt) {
+	return prompt
+		? `Brief: ${prompt}`
+		: 'No brief given. Invent one distinctive, genuinely useful agent a person would be excited to deploy. Surprise me.';
+}
+
 // Pull the first balanced JSON object out of a model response, tolerating code
 // fences or stray prose around it. Returns the parsed object or null.
-function parseSpec(text) {
+export function parseSpec(text) {
 	if (!text) return null;
 	let s = String(text).trim();
 	const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/i);
@@ -106,7 +114,7 @@ const clampStr = (v, max) => (typeof v === 'string' ? v.trim().replace(/\s+/g, '
 // Validate + clamp the raw model object into a spec the wizard can trust. Every
 // field is defended: bad/missing values fall back to safe defaults so the user
 // always gets a usable result, never a broken form.
-function normalize(raw) {
+export function normalize(raw) {
 	const out = {};
 	out.name = clampStr(raw?.name, LIMITS.name).replace(/[^\p{L}\p{N} ]/gu, '').trim() || 'New Agent';
 	out.description = clampStr(raw?.description, LIMITS.description);
@@ -152,9 +160,7 @@ export default wrap(async (req, res) => {
 
 	const body = await readJson(req).catch(() => ({}));
 	const prompt = clampStr(body?.prompt, 600);
-	const userMsg = prompt
-		? `Brief: ${prompt}`
-		: 'No brief given — invent one distinctive, genuinely useful agent a person would be excited to deploy. Surprise me.';
+	const userMsg = suggestSpecUserMessage(prompt);
 
 	let completion;
 	try {
@@ -163,6 +169,7 @@ export default wrap(async (req, res) => {
 			user: userMsg,
 			maxTokens: 700,
 			timeoutMs: 30_000,
+			task: 'agent_spec',
 			track: { userId, tool: 'agent_suggest_spec' },
 		});
 	} catch (err) {

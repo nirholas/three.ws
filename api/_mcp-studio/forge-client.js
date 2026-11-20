@@ -381,6 +381,7 @@ export async function directPrompt(instruction, rawPrompt, { onFallback } = {}) 
 				user,
 				maxTokens: DIRECTOR_MAX_TOKENS,
 				timeoutMs: DIRECTOR_TIMEOUT_MS,
+				task: 'forge_director',
 				track: { tool: 'forge-director' },
 			});
 			text = result?.text || null;
