@@ -19,12 +19,12 @@ XAI_KEY="${XAI_API_KEY:-${GROK_API_KEY:-}}"
 MAX_ROUNDS=8
 POLL_BUDGET_S=300
 
-three_ws_only=0
+rest_only=0
 catalog_only=0
 words=()
 for arg in "$@"; do
 	case "$arg" in
-		--three-ws-only) three_ws_only=1 ;;
+		--three-ws-only) rest_only=1 ;;
 		--catalog-only) catalog_only=1 ;;
 		*) words+=("$arg") ;;
 	esac
@@ -55,7 +55,7 @@ render() {
 	echo "png      $OUT ($(wc -c <"$OUT" | tr -d ' ') bytes)"
 }
 
-if [ "$three_ws_only" = 1 ]; then
+if [ "$rest_only" = 1 ]; then
 	if [ "$catalog_only" = 1 ] || [ -z "${THREE_WS_API_KEY:-}" ]; then
 		[ "$catalog_only" = 1 ] || echo "note     THREE_WS_API_KEY is not set, so no model is made; rendering the catalog result (free key: https://three.ws/dashboard/api-keys)"
 		[ -n "$first_catalog_glb" ] || { echo "error    the catalog returned no chair" >&2; exit 1; }
@@ -74,7 +74,7 @@ if [ "$three_ws_only" = 1 ]; then
 	for attempt in 1 2 3 4 5; do
 		submit=$(curl -sS -X POST "$API/api/forge" \
 			-H 'content-type: application/json' \
-			-H "authorization: Bearer $THREE_WS_API_KEY" \
+			-H "authorization: Bearer ${THREE_WS_API_KEY}" \
 			-D "$headers" -d "$body" -w '\n%{http_code}')
 		code="${submit##*$'\n'}"
 		submit="${submit%$'\n'*}"
