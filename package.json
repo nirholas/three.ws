@@ -704,6 +704,7 @@
 		"grok:cursor-plugin-export": "node scripts/export-plugin-repo.mjs --src integrations/cursor/three-ws",
 		"grok:eval-ref-image": "node scripts/grok-eval-ref-image.mjs",
 		"grok:eval-llm": "node scripts/grok-eval-llm.mjs",
+		"grok:examples-smoke": "node scripts/grok-examples-smoke.mjs",
 		"stage:sam3d-objects": "node scripts/stage-sam3d-objects.mjs",
 		"rescan:skills": "node --env-file=.env.local scripts/rescan-marketplace-skills.mjs"
 	},
