@@ -10,9 +10,11 @@
 // work, which is why agentic 3D has been stuck at one shot and a shrug. Give
 // the agent frames and the loop closes: generate, look, judge, refine.
 //
-// Free and keyless, like the rest of /api/3d. Rendering holds a headless
-// browser for seconds, so it draws on the shared render bucket rather than
-// adding unmetered capacity.
+// Free, with a three.ws account: the frames are rendered from any caller's GLB
+// and hosted on our storage, so a POST needs a signed-in account or an API key
+// (anonymous callers get 401 sign_in_required) like every creation surface.
+// Rendering holds a headless browser for seconds, so it draws on the shared
+// render bucket, metered per account, rather than adding unmetered capacity.
 //
 //   POST { glb_url, views?, size?, stats? }
 //     → 200 { model_url, size, views:[{view,theta,phi,image_url}], missing_views?,
@@ -29,6 +31,7 @@
 
 import { cors, wrap, json, readJson } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { requireCreator } from '../_lib/creator-account.js';
 import { renderTurntable, describeGeometry, fetchGeometryStats, VIEW_ANGLES, DEFAULT_VIEWS, MAX_VIEWS, MIN_SIZE, MAX_SIZE, DEFAULT_SIZE } from '../_lib/3d-vision.js';
 import { persistImageBytes } from '../_lib/image-persist.js';
 import { originFromReq, viewerUrl, arLaunchUrl } from '../_mcp-studio/gpt-forge-client.js';
@@ -40,6 +43,7 @@ function discovery(base) {
 		route: '/api/3d/look',
 		summary: 'Render a 3D model from several angles so an AI agent can see and judge it.',
 		free: true,
+		account_required: 'POST needs a signed-in session or Authorization: Bearer <three.ws API key>.',
 		views: Object.fromEntries(Object.entries(VIEW_ANGLES).map(([k, v]) => [k, `theta ${v.theta}, phi ${v.phi}`])),
 		defaults: { views: DEFAULT_VIEWS, size: DEFAULT_SIZE },
 		limits: { max_views: MAX_VIEWS, min_size: MIN_SIZE, max_size: MAX_SIZE },
@@ -83,13 +87,15 @@ export default wrap(async (req, res) => {
 		return json(res, 400, { error: 'invalid_url', message: '"glb_url" must be a public https URL to a .glb file.' });
 	}
 
-	const rl = await limits.renderIp(clientIp(req));
+	const who = await requireCreator(req, res, { action: 'render a 3D model' });
+	if (!who) return;
+	const rl = await limits.renderIp(who.user ? `user:${who.user.id}` : clientIp(req));
 	if (!rl.success) {
 		const retryAfter = Math.max(1, Math.ceil((rl.reset - Date.now()) / 1000));
 		res.setHeader('retry-after', String(retryAfter));
 		return json(res, 429, {
 			error: 'rate_limited',
-			message: 'Too many renders from this address; try again shortly.',
+			message: 'Too many renders from this account; try again shortly.',
 			retry_after: retryAfter,
 		});
 	}

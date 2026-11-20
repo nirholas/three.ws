@@ -34,11 +34,19 @@ vi.mock('../api/_lib/rate-limit.js', () => ({
 	limits: { renderIp: vi.fn(async () => ({ success: true, reset: Date.now() + 1000 })) },
 	clientIp: () => '203.0.113.1',
 }));
+// /api/3d/look renders and hosts frames of any caller's GLB, so a POST needs an
+// account (api/_lib/creator-account.js). `account.user` null makes a test anonymous.
+const account = { user: { id: 'vision-user' } };
+vi.mock('../api/_lib/auth.js', async (orig) => ({
+	...(await orig()),
+	getRequestUser: async () => account.user,
+}));
 
 const vision = await import('../api/_lib/3d-vision.js');
 const { default: handler } = await import('../api/3d/look.js');
 
 beforeEach(() => {
+	account.user = { id: 'vision-user' };
 	render.calls.length = 0;
 	render.impl = null;
 	globalThis.fetch = vi.fn(async () => new Response(JSON.stringify({ stats: { triangles: 12400, materials: 2 } }), { status: 200, headers: { 'content-type': 'application/json' } }));
@@ -139,6 +147,14 @@ describe('the geometry reading turns numbers into judgement', () => {
 });
 
 describe('POST /api/3d/look', () => {
+	it('refuses an anonymous caller with sign_in_required before rendering anything', async () => {
+		account.user = null;
+		const res = await post({ glb_url: 'https://cdn.test/robot.glb' });
+		expect(res.statusCode).toBe(401);
+		expect(JSON.parse(res.body)).toMatchObject({ error: 'sign_in_required', api_keys_url: '/dashboard/api-keys' });
+		expect(render.calls).toHaveLength(0);
+	});
+
 	it('answers with a frame URL per angle, the stats and the reading', async () => {
 		const res = await post({ glb_url: 'https://cdn.test/robot.glb' });
 		expect(res.statusCode).toBe(200);
