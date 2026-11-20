@@ -49,7 +49,10 @@
  * lane are served from a short-lived result cache (api/_lib/forge-cache.js)
  * instead of re-running the GPU pipeline; the response carries `cached: true`.
  *
- * This is the public, auth-free twin of the 3D Studio MCP server (api/mcp-3d.js).
+ * Every POST needs an account (a session cookie, an API key or OAuth bearer) or
+ * a platform job's seed token, and answers 401 `sign_in_required` otherwise (see
+ * api/_lib/creator-account.js). Polling a job, the catalog and health stay open.
+ * This is the twin of the 3D Studio MCP server (api/mcp-3d.js).
  * No mock paths: if a selected backend isn't configured the endpoint returns a
  * clean 503/501 and the page renders a designed state, it never fabricates a
  * model.
@@ -117,7 +120,7 @@ import {
 } from './_lib/forge-store.js';
 import { isStorageInfrastructureError } from './_lib/r2.js';
 import { normalizeTraceId, recordForgeProgress, readForgeProgress } from './_lib/forge-progress.js';
-import { getSessionUser } from './_lib/auth.js';
+import { requireCreator, resolveCreator } from './_lib/creator-account.js';
 import { resolveForgeCreditPayer } from './_lib/forge-credit-payer.js';
 import { constantTimeEquals } from './_lib/crypto.js';
 import {
@@ -275,6 +278,14 @@ function isInternalSeedRequest(req) {
 	return !!secret && constantTimeEquals(token, secret);
 }
 
+// A platform job that acts for an outside person (a paid buyer, a merchant, an
+// X account) sends `x-forge-on-behalf` with the seed token. It is trusted like
+// any platform job, but what it makes belongs to that person, so it is not a
+// showcase seed and is born unlisted rather than public.
+function isShowcaseSeedRequest(req) {
+	return isInternalSeedRequest(req) && !req.headers['x-forge-on-behalf'];
+}
+
 // The free NVIDIA NIM (TRELLIS) provider is loaded lazily and dynamically: it
 // ships in T1.1, so importing it statically would couple this whole endpoint to
 // a module that may not exist yet. Dynamic import keeps every other backend
@@ -321,21 +332,14 @@ function clientKeyFrom(req) {
 	return hashClient(Array.isArray(raw) ? raw[0] : raw);
 }
 
-// /forge is auth-free and the overwhelming majority of calls are anonymous -
-// but when a caller DOES carry a session cookie (the browser /create/studio
-// flow while logged in), attach their user_id to the durable creation so it
-// surfaces on their public portfolio (/u/:username → "Models" tab). Resolved
-// at most once per request; failures (no db, bad cookie) degrade to null,
-// never block generation.
+// The account behind the request (session cookie, API key or OAuth bearer),
+// attached to the durable creation so it is owned by, and surfaces on the
+// portfolio of (/u/:username, "Models" tab), the person who made it. Making a
+// model needs an account (see the POST gate in the handler), so this is null
+// only for a platform job. Resolved at most once per request.
 async function sessionUserIdFromReq(req) {
-	if (Object.prototype.hasOwnProperty.call(req, '__twxSessionUserId')) return req.__twxSessionUserId;
-	try {
-		const user = await getSessionUser(req);
-		req.__twxSessionUserId = user?.id ?? null;
-	} catch {
-		req.__twxSessionUserId = null;
-	}
-	return req.__twxSessionUserId;
+	const who = await resolveCreator(req);
+	return who.user?.id ?? null;
 }
 
 // Resolve the requested generation path + quality tier from the body, falling
@@ -1160,7 +1164,7 @@ async function runHfImageLane({
 async function startJob(req, res) {
 	const body = await readJson(req, 8_000).catch(() => null);
 	return runWithCreationContext(
-		{ destination: body?.destination, internal: isInternalSeedRequest(req), source: body?.source, visibility: body?.visibility },
+		{ destination: body?.destination, internal: isShowcaseSeedRequest(req), source: body?.source, visibility: body?.visibility },
 		() => startJobWithBody(req, res, body),
 	);
 }
@@ -1454,9 +1458,14 @@ async function startJobWithBody(req, res, body) {
 	const backendMeta = BACKENDS[backendId];
 	const isFreeLane = backendMeta?.free === true;
 	if (!isInternalSeedRequest(req)) {
+		// Per account: a person keeps their allowance across networks, and a
+		// shared IP (an office, a campus, a mobile carrier) no longer pools
+		// strangers into one bucket.
+		const accountId = await sessionUserIdFromReq(req);
+		const rlKey = accountId ? `user:${accountId}` : ip;
 		const rl = isFreeLane
-			? await limits.mcp3dGenerateFreeTiered(ip, await freeLaneMultiplier(req, body))
-			: await limits.mcp3dGenerate(ip);
+			? await limits.mcp3dGenerateFreeTiered(rlKey, await freeLaneMultiplier(req, body))
+			: await limits.mcp3dGenerate(rlKey);
 		if (!rl.success) {
 			return rateLimited(res, rl, 'Generation limit reached. Try again shortly.');
 		}
@@ -3006,7 +3015,8 @@ async function startJobWithBody(req, res, body) {
 // mode-agnostic, so the rigged GLB surfaces exactly like a reconstruction.
 async function startRigJob(req, res) {
 	const ip = clientIp(req);
-	const rl = await limits.mcp3dGenerate(ip);
+	const accountId = await sessionUserIdFromReq(req);
+	const rl = await limits.mcp3dGenerate(accountId ? `user:${accountId}` : ip);
 	if (!rl.success) {
 		return rateLimited(res, rl, 'Rigging limit reached. Try again shortly.');
 	}
@@ -3618,13 +3628,19 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://localhost');
 
 	if (req.method === 'POST') {
+		const isRig = (url.searchParams.get('action') || '').trim() === 'rig';
+		// Making a model needs an account or a platform job (see
+		// _lib/creator-account.js). Checked before idempotency, rate limits and
+		// any provider spend, so an anonymous caller learns the one thing they
+		// can act on and costs nothing.
+		if (!(await requireCreator(req, res, { action: isRig ? 'rig a 3D model' : 'make a 3D model' }))) return;
 		// ?action=rig auto-rigs an existing GLB; the default POST reconstructs a
 		// mesh from a prompt (text→3D) or a reference image (image→3D).
 		const caller = async () => {
 			const userId = await sessionUserIdFromReq(req);
 			return userId ? `user:${userId}` : `ip:${clientIp(req)}`;
 		};
-		if ((url.searchParams.get('action') || '').trim() === 'rig') {
+		if (isRig) {
 			return withForgeIdempotency(req, res, { scope: 'rig', caller, run: () => startRigJob(req, res) });
 		}
 		await withForgeIdempotency(req, res, { scope: 'generate', caller, run: () => startJob(req, res) });

@@ -1,11 +1,12 @@
 // three.ws 3D Studio (free) — client over the production generation pipeline.
 //
-// Every studio tool is a thin client over /api/forge — the public, auth-free
-// twin of the paid 3D Studio MCP server (see api/forge.js). The platform's
-// server-side keys (NVIDIA NIM, FLUX, TRELLIS/Hunyuan3D, UniRig, IBM Granite)
-// cover the provider cost, so the ChatGPT user pays nothing and no wallet,
-// payment, or API key is ever involved. This module is the SAME submit/poll
-// logic the npm MCP tools use, factored once — not a fork and not a mock.
+// Every studio tool is a thin client over /api/forge, the twin of the paid 3D
+// Studio MCP server (see api/forge.js). The platform's server-side keys (NVIDIA
+// NIM, FLUX, TRELLIS/Hunyuan3D, UniRig, IBM Granite) cover the provider cost, so
+// a free-lane user pays nothing and needs no wallet. They do need a three.ws
+// account: every submit carries the caller's credential or a platform job's (see
+// submitHeaders below). This module is the SAME submit/poll logic the npm MCP
+// tools use, factored once, not a fork and not a mock.
 //
 // All work runs against the deployment's own origin (STUDIO_API_BASE, else the
 // configured PUBLIC_APP_ORIGIN; see api/_lib/self-origin.js), so the studio
@@ -70,9 +71,34 @@ function failure(code, message, extra = {}) {
 // High-tier access gate — the ChatGPT user stays anonymous and keyless while the
 // platform funds the premium tier. Absent secret → no header, and the tier
 // fallback in startForge keeps the surface working.
-function internalHeaders() {
+function internalHeaders({ onBehalf = false } = {}) {
 	const secret = process.env.CRON_SECRET;
-	return secret ? { 'x-forge-seed': secret } : {};
+	if (!secret) return {};
+	return { 'x-forge-seed': secret, ...(onBehalf ? { 'x-forge-on-behalf': '1' } : {}) };
+}
+
+// Making a model needs an accountable caller (api/_lib/creator-account.js), so
+// every submit carries one: `auth` is the end user's own credential forwarded
+// from the surface that authenticated them (forwardCreatorAuth: their cookie or
+// bearer), or the platform-job headers (platformAuthHeaders) for a surface that
+// answered for its caller another way. When a person's credential rides along
+// with the seed token (to fund a gated tier), the job is marked on-behalf so the
+// model stays theirs and unlisted instead of becoming a public showcase seed.
+function submitHeaders(auth, withInternal) {
+	const own = auth && typeof auth === 'object' ? auth : {};
+	const hasPerson = Boolean(own.cookie || own.authorization);
+	return { ...own, ...(withInternal ? internalHeaders({ onBehalf: hasPerson || Boolean(own['x-forge-on-behalf']) }) : {}) };
+}
+
+// /api/forge answers 401 sign_in_required to a caller with no account. Surface it
+// as a coded failure carrying the server's own wording, so each surface can show
+// a sign-in link (browser) or ask for an API key (agents, plugins).
+function signInFailure(data) {
+	return failure('sign_in_required', data?.message || 'Sign in to make a 3D model. A three.ws account is free.', {
+		status: 401,
+		signInUrl: data?.sign_in_url || '/login',
+		apiKeysUrl: data?.api_keys_url || '/dashboard/api-keys',
+	});
 }
 
 // Submit a generation job to /api/forge. Handles both the synchronous-done shape
@@ -99,7 +125,7 @@ function internalHeaders() {
 // the raw value never reaches the DB. Deliberately NOT the caller IP forwarded as
 // x-forwarded-for: that would collide with forge's own per-IP free-lane limiter and
 // halve the ceiling — identity attribution and rate limiting stay decoupled.
-export async function startForge(base, { prompt, imageUrls, aspect, backend, path, tier, internal, submitTimeoutMs, clientKey }) {
+export async function startForge(base, { prompt, imageUrls, aspect, backend, path, tier, internal, submitTimeoutMs, clientKey, auth }) {
 	const submitWindowMs = Number(submitTimeoutMs) > 0 ? Number(submitTimeoutMs) : 90_000;
 	const attempt = async (tierId, withInternal) => {
 		const payload = {
@@ -117,7 +143,7 @@ export async function startForge(base, { prompt, imageUrls, aspect, backend, pat
 				headers: {
 					'content-type': 'application/json',
 					...(clientKey ? { 'x-forge-client': clientKey } : {}),
-					...(withInternal ? internalHeaders() : {}),
+					...submitHeaders(auth, withInternal),
 				},
 				body: JSON.stringify(payload),
 				signal: AbortSignal.timeout(submitWindowMs),
@@ -140,6 +166,7 @@ export async function startForge(base, { prompt, imageUrls, aspect, backend, pat
 		({ res, data } = await attempt('standard', false));
 	}
 	if (res.status === 402 && tier === 'high') ({ res, data } = await attempt('standard', false));
+	if (res.status === 401) throw signInFailure(data);
 	if (res.status === 503) throw failure('not_configured', data?.message || '3D generation is not configured on this deployment');
 	if (res.status === 429) throw failure('busy', data?.message || 'the 3D generator is busy; try again shortly', { retryAfter: data?.retry_after });
 	const completedSync = data?.status === 'done' && data?.glb_url;
@@ -147,12 +174,12 @@ export async function startForge(base, { prompt, imageUrls, aspect, backend, pat
 	return data;
 }
 
-export async function startRig(base, glbUrl) {
+export async function startRig(base, glbUrl, { auth } = {}) {
 	let res;
 	try {
 		res = await fetch(`${base}/api/forge?action=rig`, {
 			method: 'POST',
-			headers: { 'content-type': 'application/json' },
+			headers: { 'content-type': 'application/json', ...submitHeaders(auth, false) },
 			body: JSON.stringify({ glb_url: glbUrl }),
 			signal: AbortSignal.timeout(30_000),
 		});
@@ -162,6 +189,7 @@ export async function startRig(base, glbUrl) {
 		throw failure('provider_error', `the rigger is unreachable: ${err?.message || err}`);
 	}
 	const data = await res.json().catch(() => ({}));
+	if (res.status === 401) throw signInFailure(data);
 	if (res.status === 503 || res.status === 501) throw failure('not_configured', data?.message || 'auto-rigging is not enabled on this deployment');
 	if (res.status === 429) throw failure('busy', data?.message || 'the rigger is busy; try again shortly', { retryAfter: data?.retry_after });
 	if (!res.ok || !data?.job_id) throw failure('provider_error', data?.message || `the rigger returned ${res.status}`);
@@ -212,8 +240,8 @@ export async function generate(base, submitArgs, { timeoutEnv } = {}) {
 	return out._timedOut ? { ...out, job_id: job.job_id } : out;
 }
 
-export async function rig(base, glbUrl, { timeoutEnv } = {}) {
-	const job = await startRig(base, glbUrl);
+export async function rig(base, glbUrl, { timeoutEnv, auth } = {}) {
+	const job = await startRig(base, glbUrl, { auth });
 	const out = await pollJob(base, job.job_id, {
 		timeoutMs: timeoutEnv ? envNum(timeoutEnv, DEFAULT_TIMEOUT_MS) : DEFAULT_TIMEOUT_MS,
 		intervalMs: envNum('STUDIO_POLL_MS', DEFAULT_POLL_MS),
