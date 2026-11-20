@@ -27,8 +27,8 @@
 > `@three-ws/forge` is the official client for the three.ws **Forge** — the
 > generation engine behind [three.ws/forge](https://three.ws/forge). It turns a
 > prompt, a photo, or a sketch into a watertight, textured GLB, and can
-> auto-rig that GLB into an animation-ready humanoid. It wraps the public,
-> auth-free `/api/forge` endpoint: a free [TRELLIS](https://github.com/microsoft/TRELLIS)
+> auto-rig that GLB into an animation-ready humanoid. It wraps the
+> `/api/forge` endpoint (a free three.ws account is all it needs): a free [TRELLIS](https://github.com/microsoft/TRELLIS)
 > lane on NVIDIA NIM, paid high-detail tiers billed in USDC over
 > [x402](https://x402.org), and bring-your-own-key geometry backends
 > (Meshy, Tripo, Rodin). It pairs with [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar)
@@ -43,8 +43,8 @@ pipeline, done once:
 
 - **One call, a real GLB.** `forge('a chrome robot')` resolves to a hosted,
   durable `.glb` URL plus a [three.ws viewer](https://three.ws/forge) link.
-- **Free first.** Text prompts default to the free NVIDIA NIM / TRELLIS lane —
-  no key, no wallet, no card.
+- **Free first.** Text prompts default to the free NVIDIA NIM / TRELLIS lane.
+  It needs a free three.ws account (an API key), but no wallet and no card.
 - **Scales with the asset.** Three quality tiers (draft → standard → high) map
   to real polygon budgets and PBR texturing. Pay per call in USDC only when you
   reach for the paid tiers.
@@ -65,7 +65,15 @@ For rendering the result, add [`@three-ws/avatar`](https://www.npmjs.com/package
 
 ## Quick start
 
-The free lane needs no key:
+Making a model needs a free three.ws account, so anonymous uploads and
+generations never happen. Create an API key at
+[three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys) and export it:
+
+```bash
+export THREE_WS_API_KEY=sk_live_...
+```
+
+The free lane costs nothing once the key is set:
 
 ```js
 import { forge } from '@three-ws/forge';
@@ -78,7 +86,7 @@ console.log(model.backend); // → which engine actually produced it
 
 `glbUrl` is a durable CDN URL you can hand straight to a viewer. `viewerUrl` is
 the shareable three.ws link, and it is `null` unless the API attached a creation
-id (the anonymous free lane usually does not).
+id.
 
 A fuller run — high tier, geometry-first, then auto-rig:
 
@@ -191,7 +199,7 @@ no options; reach for `createForge` when you need any of these:
 |---|---|---|
 | `baseUrl` | `string` | API origin. Defaults to `THREE_WS_BASE_URL`, then `https://three.ws`. |
 | `fetch` | `typeof fetch` | Bring your own, e.g. a payment-aware fetch that settles 402s. |
-| `apiKey` | `string` | Sent as `Authorization: Bearer …`, for the credits lane. |
+| `apiKey` | `string` | Your three.ws API key, sent as `Authorization: Bearer …`. Required to make or rig a model; defaults to `THREE_WS_API_KEY`. Not used by `payWith: 'x402'`. |
 | `providerKey` | `string` | Default BYOK key. A per-call `providerKey` wins. |
 | `headers` | `object` | Default headers on every request. |
 
@@ -247,8 +255,9 @@ fabricates a model.
 
 ## Pricing
 
-The browser-facing lane on `/api/forge` is free where the free engines can serve
-the request, and asks for an account (credits) where they cannot. There is also
+The account lane on `/api/forge` needs a free three.ws account (your API key).
+It is free where the free engines can serve the request, and spends account
+credits where they cannot. There is also
 a pay-per-call twin at `POST /api/x402/forge` for agents with a wallet and no
 account: one USDC payment, one generation, no signup. `payWith` picks between
 them.
@@ -294,7 +303,7 @@ Once paid, the job token is polled for free on the shared
 | `payment_required` | 402 | The x402 lane wants payment. `accepts` carries the challenge. | Settle it, or use a payment-aware `fetch`. |
 | `three_hold_required` | 402 | The paid gate wants a $THREE hold or a per-use payment. | Hold $THREE, or pay the quoted amount. |
 | `insufficient_credits` | 402 | The account's credit balance is too low. | Top up, or use `payWith: 'x402'`. |
-| `unauthorized` | 401 | The credits lane needs a signed-in account. | Authenticate, or use `payWith: 'x402'`. |
+| `sign_in_required` | 401 | No API key was set, or three.ws refused it. Thrown before any request when no key is set. | Create a key at three.ws/dashboard/api-keys and pass `apiKey` or set `THREE_WS_API_KEY`, or use `payWith: 'x402'`. |
 | `rate_limited` | 429 | Too many submissions from this IP. | Honour `retryAfter` on the error. |
 | `timeout` | n/a | The job did not finish within `timeoutMs`. | Raise `timeoutMs`, or resume with `getJob(jobId)`. |
 | `network_error` | n/a | The request never reached the API. | Check connectivity / `baseUrl`. |
@@ -318,8 +327,8 @@ try {
 
 ## Examples
 
-**Agent tool (free, zero-config)** — the same capability is exposed as the
-`forge_free` MCP tool, so an agent can generate 3D with no wallet:
+**Agent tool (free with an account)**: the same capability is exposed as the
+`forge_free` MCP tool, so an agent signed in to three.ws can generate 3D with no wallet:
 
 ```js
 const { glbUrl } = await forge('a low-poly treasure chest', { tier: 'draft' });

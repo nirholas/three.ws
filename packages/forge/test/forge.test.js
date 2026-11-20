@@ -27,7 +27,7 @@ test('forge() posts the prompt and shapes a synchronous done job', async () => {
 	const { fetch, calls } = stubFetch([
 		{ body: { job_id: null, creation_id: 'c1', status: 'done', glb_url: 'https://three.ws/cdn/a.glb', backend: 'nvidia', tier: 'standard', path: 'image', durable: true } },
 	]);
-	const client = createForge({ fetch, baseUrl: 'https://three.ws' });
+	const client = createForge({ apiKey: 'sk_test_synthetic', fetch, baseUrl: 'https://three.ws' });
 	const res = await client.forge('a chrome robot');
 
 	assert.equal(calls[0].url.pathname, '/api/forge');
@@ -48,7 +48,7 @@ test('forge() polls a queued job until done', async () => {
 		{ body: { job_id: 'j1', creation_id: 'c2', status: 'done', glb_url: 'https://three.ws/cdn/b.glb' } },
 	]);
 	const ticks = [];
-	const client = createForge({ fetch });
+	const client = createForge({ apiKey: 'sk_test_synthetic', fetch });
 	const res = await client.forge('a fox', { pollIntervalMs: 1, onProgress: (j) => ticks.push(j.status) });
 
 	assert.equal(res.glbUrl, 'https://three.ws/cdn/b.glb');
@@ -61,7 +61,7 @@ test('rig() targets action=rig with the glb_url', async () => {
 	const { fetch, calls } = stubFetch([
 		{ body: { job_id: null, creation_id: 'c3', status: 'done', glb_url: 'https://three.ws/cdn/rigged.glb' } },
 	]);
-	const client = createForge({ fetch });
+	const client = createForge({ apiKey: 'sk_test_synthetic', fetch });
 	const res = await client.rig('https://three.ws/cdn/raw.glb');
 	assert.equal(calls[0].url.searchParams.get('action'), 'rig');
 	assert.equal(JSON.parse(calls[0].init.body).glb_url, 'https://three.ws/cdn/raw.glb');
@@ -70,7 +70,7 @@ test('rig() targets action=rig with the glb_url', async () => {
 
 test('the geometry path attaches the BYOK provider key header', async () => {
 	const { fetch, calls } = stubFetch([{ body: { status: 'done', glb_url: 'x' } }]);
-	const client = createForge({ fetch, providerKey: 'meshy_test_key' });
+	const client = createForge({ apiKey: 'sk_test_synthetic', fetch, providerKey: 'meshy_test_key' });
 	await client.forge('a sword', { path: 'geometry' });
 	assert.equal(calls[0].init.headers['x-forge-provider-key'], 'meshy_test_key');
 });
@@ -80,7 +80,7 @@ test('a per-call providerKey overrides the client key and rides every poll', asy
 		{ body: { job_id: 'j9', status: 'queued' } },
 		{ body: { job_id: 'j9', status: 'done', glb_url: 'https://three.ws/cdn/c.glb' } },
 	]);
-	const client = createForge({ fetch, providerKey: 'client_key' });
+	const client = createForge({ apiKey: 'sk_test_synthetic', fetch, providerKey: 'client_key' });
 	const res = await client.forge('a sword', { path: 'geometry', providerKey: 'call_key', pollIntervalMs: 1 });
 
 	assert.equal(res.glbUrl, 'https://three.ws/cdn/c.glb');
@@ -141,7 +141,7 @@ test('an unpaid x402 call surfaces the challenge as PaymentRequiredError', async
 
 test('needs_key (501) surfaces as a typed ThreeWsError', async () => {
 	const { fetch } = stubFetch([{ status: 501, body: { error: 'needs_key', message: 'Add a Meshy key.' } }]);
-	const client = createForge({ fetch });
+	const client = createForge({ apiKey: 'sk_test_synthetic', fetch });
 	await assert.rejects(() => client.forge('x', { path: 'geometry' }), (e) => {
 		assert.ok(e instanceof ThreeWsError);
 		assert.equal(e.code, 'needs_key');
@@ -153,7 +153,7 @@ test('needs_key (501) surfaces as a typed ThreeWsError', async () => {
 test('402 surfaces as PaymentRequiredError carrying the x402 challenge', async () => {
 	const accepts = [{ scheme: 'exact', asset: 'USDC', network: 'eip155:8453', maxAmountRequired: '150000' }];
 	const { fetch } = stubFetch([{ status: 402, body: { error: 'payment_required', message: 'pay', accepts } }]);
-	const client = createForge({ fetch });
+	const client = createForge({ apiKey: 'sk_test_synthetic', fetch });
 	await assert.rejects(() => client.forge('x', { tier: 'high' }), (e) => {
 		assert.ok(e instanceof PaymentRequiredError);
 		assert.deepEqual(e.accepts, accepts);

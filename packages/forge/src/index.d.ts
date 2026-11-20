@@ -81,6 +81,11 @@ export interface Catalog {
 export interface ForgeClientOptions {
 	baseUrl?: string;
 	fetch?: typeof fetch;
+	/**
+	 * three.ws API key (`sk_live_…`), sent as `Authorization: Bearer`. Making or
+	 * rigging a model needs one (a free account); defaults to THREE_WS_API_KEY.
+	 * The `payWith: 'x402'` lane does not use it.
+	 */
 	apiKey?: string;
 	/** BYOK Meshy/Tripo key for the geometry path. */
 	providerKey?: string;

@@ -1,8 +1,9 @@
 // @three-ws/forge — text/image/sketch → textured, rig-ready 3D GLB.
-// Thin client over the public, auth-free /api/forge endpoint (the SDK twin of
-// the 3D Studio MCP server). See README.md for the full reference.
+// Thin client over /api/forge (the SDK twin of the 3D Studio MCP server).
+// Making or rigging a model needs a free three.ws account: pass its API key as
+// `apiKey` or set THREE_WS_API_KEY. See README.md for the full reference.
 
-import { createHttp, delay, ThreeWsError } from './http.js';
+import { createHttp, delay, resolveBaseUrl, ThreeWsError } from './http.js';
 
 export { ThreeWsError, PaymentRequiredError, DEFAULT_BASE_URL } from './http.js';
 
@@ -14,6 +15,11 @@ const PAY_LANES = ['credits', 'x402'];
 // twin. They are separate endpoints, not a flag on one endpoint.
 const FORGE_ROUTE = '/api/forge';
 const X402_ROUTE = '/api/x402/forge';
+const KEYS_PATH = '/dashboard/api-keys';
+
+function envApiKey() {
+	return typeof process !== 'undefined' && process.env ? process.env.THREE_WS_API_KEY || null : null;
+}
 
 /**
  * Create a Forge client bound to a base URL, fetch, and optional auth/provider key.
@@ -22,8 +28,38 @@ const X402_ROUTE = '/api/x402/forge';
  * a BYOK provider key) across many calls.
  */
 export function createForge(options = {}) {
-	const request = createHttp(options);
+	const apiKey = options.apiKey || envApiKey();
+	const http = createHttp({ ...options, apiKey });
+	const keysUrl = resolveBaseUrl(options.baseUrl) + KEYS_PATH;
 	const clientProviderKey = options.providerKey || null;
+
+	// The account lane answers 401 to a missing or refused key. Both become one
+	// `sign_in_required` error that says what to do, so callers branch on one code.
+	function signInRequired(refused) {
+		const message = refused
+			? `three.ws refused this API key. Create a new one at ${keysUrl} and pass it as \`apiKey\` or set THREE_WS_API_KEY.`
+			: `Making a 3D model on three.ws needs a free account. Create an API key at ${keysUrl} and pass it as \`apiKey\` or set THREE_WS_API_KEY. ` +
+				"To pay per call with a wallet instead, use { payWith: 'x402' }.";
+		return new ThreeWsError(message, { code: 'sign_in_required', status: 401 });
+	}
+
+	function requireApiKey() {
+		if (!apiKey) throw signInRequired(false);
+	}
+
+	async function request(path, init) {
+		try {
+			return await http(path, init);
+		} catch (err) {
+			if (err instanceof ThreeWsError && err.status === 401) {
+				const refused = apiKey && err.code !== 'sign_in_required';
+				const mapped = signInRequired(refused);
+				mapped.body = err.body;
+				throw mapped;
+			}
+			throw err;
+		}
+	}
 
 	// A BYOK key rides on every request that touches the job, submit AND poll:
 	// the API re-resolves it per poll and fails the job without it.
@@ -49,6 +85,7 @@ export function createForge(options = {}) {
 		}
 
 		if (payWith === 'x402') return forgeOverX402({ input, tier, path, opts });
+		requireApiKey();
 
 		const body = {
 			prompt: input.prompt,
@@ -72,9 +109,10 @@ export function createForge(options = {}) {
 	}
 
 	// The pay-per-call twin. One USDC payment buys one generation, with no
-	// account and no key, so the BYOK/backend/path knobs of the credits lane do
-	// not apply: the server picks the lane from the input. Without a payment-aware
-	// `fetch` the first call throws PaymentRequiredError carrying the challenge.
+	// account and no key (the paid call is the credential), so the
+	// BYOK/backend/path knobs of the credits lane do not apply: the server picks
+	// the lane from the input. Without a payment-aware `fetch` the first call
+	// throws PaymentRequiredError carrying the challenge.
 	async function forgeOverX402({ input, tier, path, opts }) {
 		const unsupported = [
 			opts.backend ? 'backend' : null,
@@ -110,6 +148,7 @@ export function createForge(options = {}) {
 		if (!glbUrl || typeof glbUrl !== 'string') {
 			throw new ThreeWsError('rig() needs a GLB url string.', { code: 'invalid_input' });
 		}
+		requireApiKey();
 		const headers = providerHeaders(opts.headers, opts.providerKey);
 		const submitted = await request(FORGE_ROUTE, {
 			method: 'POST',
