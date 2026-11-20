@@ -1,0 +1,50 @@
+{"id":"at-01","task":"agent_tools","source":"self-written","input":{"message":"dance for me!"},"expect":{"tool":"playAnimation","args":{"name":{"$in":["dance","rumba","capoeira","thriller"]}}}}
+{"id":"at-02","task":"agent_tools","source":"self-written","input":{"message":"can you wave hello to everyone?"},"expect":{"tool":"playAnimation","args":{"name":"wave"}}}
+{"id":"at-03","task":"agent_tools","source":"self-written","input":{"message":"do a jump"},"expect":{"tool":"playAnimation","args":{"name":"jump"}}}
+{"id":"at-04","task":"agent_tools","source":"self-written","input":{"message":"we just shipped our launch, celebrate with me"},"expect":{"tool":"playAnimation","args":{"name":"celebrate"}}}
+{"id":"at-05","task":"agent_tools","source":"self-written","input":{"message":"show me the thriller dance"},"expect":{"tool":"playAnimation","args":{"name":"thriller"}}}
+{"id":"at-06","task":"agent_tools","source":"self-written","input":{"message":"bust out some capoeira moves"},"expect":{"tool":"playAnimation","args":{"name":"capoeira"}}}
+{"id":"at-07","task":"agent_tools","source":"self-written","input":{"message":"can you do the prayer pose?"},"expect":{"tool":"playAnimation","args":{"name":"pray"}}}
+{"id":"at-08","task":"agent_tools","source":"self-written","input":{"message":"blow me a kiss"},"expect":{"tool":"playAnimation","args":{"name":"kiss"}}}
+{"id":"at-09","task":"agent_tools","source":"self-written","input":{"message":"go on, taunt me"},"expect":{"tool":"playAnimation","args":{"name":"taunt"}}}
+{"id":"at-10","task":"agent_tools","source":"self-written","input":{"message":"rumba time! put on a little rumba"},"expect":{"tool":"playAnimation","args":{"name":"rumba"}}}
+{"id":"at-11","task":"agent_tools","source":"self-written","input":{"message":"turn on wireframe mode"},"expect":{"tool":"setWireframe","args":{"value":true}}}
+{"id":"at-12","task":"agent_tools","source":"self-written","input":{"message":"switch the wireframe off please"},"expect":{"tool":"setWireframe","args":{"value":false}}}
+{"id":"at-13","task":"agent_tools","source":"self-written","input":{"message":"I want to see the mesh edges, show me the wireframe"},"expect":{"tool":"setWireframe","args":{"value":true}}}
+{"id":"at-14","task":"agent_tools","source":"self-written","input":{"message":"show the skeleton"},"expect":{"tool":"setSkeleton","args":{"value":true}}}
+{"id":"at-15","task":"agent_tools","source":"self-written","input":{"message":"hide the bones overlay"},"expect":{"tool":"setSkeleton","args":{"value":false}}}
+{"id":"at-16","task":"agent_tools","source":"self-written","input":{"message":"hide the grid please"},"expect":{"tool":"setGrid","args":{"value":false}}}
+{"id":"at-17","task":"agent_tools","source":"self-written","input":{"message":"bring the floor grid back"},"expect":{"tool":"setGrid","args":{"value":true}}}
+{"id":"at-18","task":"agent_tools","source":"self-written","input":{"message":"can you turn on the grid?"},"expect":{"tool":"setGrid","args":{"value":true}}}
+{"id":"at-19","task":"agent_tools","source":"self-written","input":{"message":"turn on auto rotate"},"expect":{"tool":"setAutoRotate","args":{"value":true}}}
+{"id":"at-20","task":"agent_tools","source":"self-written","input":{"message":"stop spinning the model"},"expect":{"tool":"setAutoRotate","args":{"value":false}}}
+{"id":"at-21","task":"agent_tools","source":"self-written","input":{"message":"slowly spin around so I can see every side"},"expect":{"tool":"setAutoRotate","args":{"value":true}}}
+{"id":"at-22","task":"agent_tools","source":"self-written","input":{"message":"make the background dark blue"},"expect":{"tool":"setBgColor","args":{"value":{"$hex":"blue"}}}}
+{"id":"at-23","task":"agent_tools","source":"self-written","input":{"message":"set the background to #ff8800"},"expect":{"tool":"setBgColor","args":{"value":{"$in":["#ff8800","#FF8800"]}}}}
+{"id":"at-24","task":"agent_tools","source":"self-written","input":{"message":"black background please"},"expect":{"tool":"setBgColor","args":{"value":{"$in":["#000","#000000"]}}}}
+{"id":"at-25","task":"agent_tools","source":"self-written","input":{"message":"change the backdrop to a deep red"},"expect":{"tool":"setBgColor","args":{"value":{"$hex":"red"}}}}
+{"id":"at-26","task":"agent_tools","source":"self-written","input":{"message":"give me a forest green background"},"expect":{"tool":"setBgColor","args":{"value":{"$hex":"green"}}}}
+{"id":"at-27","task":"agent_tools","source":"self-written","input":{"message":"make the background transparent"},"expect":{"tool":"setTransparentBg","args":{"value":true}}}
+{"id":"at-28","task":"agent_tools","source":"self-written","input":{"message":"turn transparency off, I want a solid background again"},"expect":{"tool":"setTransparentBg","args":{"value":false}}}
+{"id":"at-29","task":"agent_tools","source":"self-written","input":{"message":"switch to studio lighting"},"expect":{"tool":"setEnvironment","args":{"value":{"$nonempty":true}}}}
+{"id":"at-30","task":"agent_tools","source":"self-written","input":{"message":"change the lighting to a sunset environment"},"expect":{"tool":"setEnvironment","args":{"value":{"$nonempty":true}}}}
+{"id":"at-31","task":"agent_tools","source":"self-written","input":{"message":"can you make the lighting look like a neutral photo studio?"},"expect":{"tool":"setEnvironment","args":{"value":{"$nonempty":true}}}}
+{"id":"at-32","task":"agent_tools","source":"self-written","input":{"message":"take a screenshot"},"expect":{"tool":"takeScreenshot","args":{}}}
+{"id":"at-33","task":"agent_tools","source":"self-written","input":{"message":"grab a picture of the current view for me"},"expect":{"tool":"takeScreenshot","args":{}}}
+{"id":"at-34","task":"agent_tools","source":"self-written","input":{"message":"save a snapshot of this scene"},"expect":{"tool":"takeScreenshot","args":{}}}
+{"id":"at-35","task":"agent_tools","source":"self-written","input":{"message":"load this model: https://three.ws/avatars/brainstem.glb"},"expect":{"tool":"loadModel","args":{"url":"https://three.ws/avatars/brainstem.glb"}}}
+{"id":"at-36","task":"agent_tools","source":"self-written","input":{"message":"open https://three.ws/avatars/default.glb in the viewer"},"expect":{"tool":"loadModel","args":{"url":"https://three.ws/avatars/default.glb"}}}
+{"id":"at-37","task":"agent_tools","source":"self-written","input":{"message":"validate this glTF for me"},"expect":{"tool":"runValidation","args":{}}}
+{"id":"at-38","task":"agent_tools","source":"self-written","input":{"message":"are there any errors in this model file? run the validator"},"expect":{"tool":"runValidation","args":{}}}
+{"id":"at-39","task":"agent_tools","source":"self-written","input":{"message":"open the material editor"},"expect":{"tool":"showMaterialEditor","args":{}}}
+{"id":"at-40","task":"agent_tools","source":"self-written","input":{"message":"I want to tweak the materials, show me the editor"},"expect":{"tool":"showMaterialEditor","args":{}}}
+{"id":"at-41","task":"agent_tools","source":"self-written","input":{"message":"focus the camera on the head"},"expect":{"tool":"setCameraTarget","args":{"boneName":{"$match":"^head$"}}}}
+{"id":"at-42","task":"agent_tools","source":"self-written","input":{"message":"zoom the camera in on the left hand"},"expect":{"tool":"setCameraTarget","args":{"boneName":{"$match":"left.?hand"}}}}
+{"id":"at-43","task":"agent_tools","source":"self-written","input":{"message":"hi there!"},"expect":{"none":true}}
+{"id":"at-44","task":"agent_tools","source":"self-written","input":{"message":"what is three.ws?"},"expect":{"none":true}}
+{"id":"at-45","task":"agent_tools","source":"self-written","input":{"message":"how do I embed you on my own website?"},"expect":{"none":true}}
+{"id":"at-46","task":"agent_tools","source":"self-written","input":{"message":"tell me a short joke"},"expect":{"none":true}}
+{"id":"at-47","task":"agent_tools","source":"self-written","input":{"message":"what is your wallet address?"},"expect":{"none":true,"forbid":["sendSol"]}}
+{"id":"at-48","task":"agent_tools","source":"self-written","input":{"message":"how long does it take to make an avatar from a selfie?"},"expect":{"none":true}}
+{"id":"at-49","task":"agent_tools","source":"self-written","input":{"message":"can you explain what glTF is in one sentence?"},"expect":{"none":true}}
+{"id":"at-50","task":"agent_tools","source":"self-written","input":{"message":"do you hold your own wallet? just curious, do not send anything"},"expect":{"none":true,"forbid":["sendSol"]}}
