@@ -21,6 +21,7 @@ import { env } from './_lib/env.js';
 import { loadTradeCard } from './_lib/trade-card-store.js';
 import { loadTradeReceipt } from './_lib/trade-receipt.js';
 import { receiptHTML, RECEIPT_CSS } from '../src/shared/trade-receipt-view.js';
+import { xIntentUrl } from '../src/shared/share-targets.js';
 
 const CACHE = 'public, max-age=60, s-maxage=600, stale-while-revalidate=3600';
 
@@ -74,7 +75,7 @@ function stat(label, value, cls = '') {
 function renderHtml(card, origin, receipt = null) {
 	const t = esc(card.title);
 	const d = esc(card.description);
-	const xIntent = `https://x.com/intent/post?text=${encodeURIComponent(card.shareText)}&url=${encodeURIComponent(card.shareUrl)}`;
+	const xIntent = xIntentUrl({ text: card.shareText, url: card.shareUrl });
 
 	const chips = [
 		card.paper

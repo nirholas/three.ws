@@ -47,6 +47,7 @@ import { socialBoostCard } from './shared/dextools-boost.js';
 import { watchEmbed, embedFallbackNode, DEFAULT_EMBED_TIMEOUT_MS } from './shared/embed-guard.js';
 import { mountPriceChart } from './mission-control/chart.js';
 import { flashValue, rippleOnce, liveDot, setLiveDot } from './ui-juice.js';
+import { xIntentUrl } from './shared/share-targets.js';
 
 const GRADUATION_CAP_USD = 69_000; // pump.fun bonding-curve graduation threshold
 const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -2025,7 +2026,7 @@ function renderActions() {
 				btn.textContent = 'Link copied';
 				setTimeout(() => (btn.textContent = old), 1400);
 			} catch {
-				window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, '_blank', 'noopener');
+				window.open(xIntentUrl({ text: title, url }), '_blank', 'noopener');
 			}
 		},
 	});

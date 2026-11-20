@@ -17,6 +17,7 @@ import { CHAIN_META, switchChain } from '../../src/erc8004/chain-meta.js';
 import { REGISTRY_DEPLOYMENTS, IDENTITY_REGISTRY_ABI, REPUTATION_REGISTRY_ABI } from '../../src/erc8004/abi.js';
 import { getReputation } from '../../src/erc8004/reputation.js';
 import { Contract } from 'ethers';
+import { xIntentUrl } from '../../src/shared/share-targets.js';
 
 // ── EAS per-chain config ─────────────────────────────────────────────────────
 
@@ -802,10 +803,8 @@ async function renderProfile(appEl, { address, chainId }) {
 
 	// Share URL
 	const shareUrl = `${window.location.origin}/reputation?address=${encodeURIComponent(resolvedAddress)}&chain=${chainId}`;
-	const tweetText = encodeURIComponent(
-		`On-chain reputation for ${displayName} on @trythreews: ${attestations.length} attestation${attestations.length !== 1 ? 's' : ''}, ${stats.count} scored${hasScores ? `, avg ${stats.avgStars}/5 stars` : ''}\n${shareUrl}`
-	);
-	const tweetUrl = `https://x.com/intent/tweet?text=${tweetText}`;
+	const tweetText = `On-chain reputation for ${displayName} on @trythreews: ${attestations.length} attestation${attestations.length !== 1 ? 's' : ''}, ${stats.count} scored${hasScores ? `, avg ${stats.avgStars}/5 stars` : ''}\n${shareUrl}`;
+	const tweetUrl = xIntentUrl({ text: tweetText });
 
 	// Choose color for score bar
 	const barColor = hasScores ? scoreColor(stats.average) : 'rgba(255,255,255,0.1)';

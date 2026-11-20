@@ -15,6 +15,7 @@
 
 import { sql } from './db.js';
 import { creditAccount } from './credits.js';
+import { xIntentUrl } from '../../src/shared/share-targets.js';
 
 export const MAX_GRANT_USD = 500;
 
@@ -124,7 +125,7 @@ export function shoutoutDraft(programId) {
 	const program = resolveProgram(programId);
 	const label = program ? program.label : 'my startup program';
 	const text = `Just generated a textured 3D model from a text prompt on @trythreews, free through ${label}. ${program ? program.hashtag : ''}`.trim();
-	return { text, intent_url: `https://x.com/intent/post?text=${encodeURIComponent(text)}` };
+	return { text, intent_url: xIntentUrl({ text }) };
 }
 
 function isUniqueViolation(err) {

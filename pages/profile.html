@@ -1541,6 +1541,7 @@
 		<script type="module">
 			import { mountUserProfile } from '/src/erc8004/user-profile.js';
 			import { onchainBadgeHTML } from '/src/shared/onchain-badge.js';
+			import { xIntentUrl } from '/src/shared/share-targets.js';
 			import { apiFetch } from '/src/api.js';
 			import { mountProfileWalkHero } from '/src/profile-walk-hero.js';
 
@@ -3089,7 +3090,7 @@
 				const url = location.href;
 				const title = document.title.replace(/ — three\.ws$/, '');
 				const xText = `${title} on three.ws`;
-				const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(xText)}&url=${encodeURIComponent(url)}`;
+				const xUrl = xIntentUrl({ text: xText, url });
 				const canNativeShare = typeof navigator.share === 'function';
 				shareMenu.innerHTML = `
 					${

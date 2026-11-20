@@ -2,6 +2,7 @@
 
 import { getMe, readAuthHint, saveRemoteGlbToAccount } from './account.js';
 import { log } from './shared/log.js';
+import { xIntentUrl } from './shared/share-targets.js';
 
 const STORAGE_HINT_KEY = 'nxt:first-hint-dismissed';
 const CHIP_ROTATE_MS = 9000;
@@ -877,7 +878,7 @@ function wireShare() {
 	const shareUrl = () => urlEl?.value || location.href;
 
 	twitterBtn?.addEventListener('click', () => {
-		const url = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText())}&url=${encodeURIComponent(shareUrl())}`;
+		const url = xIntentUrl({ text: shareText(), url: shareUrl() });
 		window.open(url, '_blank', 'noopener,noreferrer,width=600,height=400');
 	});
 

@@ -435,6 +435,7 @@
 	<div class="cn-toast" id="cnToast" role="status" aria-live="polite"></div>
 
 	<script type="module">
+		import { xIntentUrl } from '/src/shared/share-targets.js';
 		const p = new URLSearchParams(location.search);
 		const avatarId = p.get('avatarId') || '';
 		const agentId  = p.get('agentId')  || '';
@@ -542,7 +543,7 @@
 
 			const update = (name) => {
 				const text = `I just built ${name ? name : 'a 3D AI agent'} on three.ws — a live, talking 3D agent you can embed anywhere.`;
-				xLink.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(publicUrl)}`;
+				xLink.href = xIntentUrl({ text, url: publicUrl });
 			};
 			update('');
 			return update;

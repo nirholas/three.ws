@@ -1,4 +1,5 @@
 import { log } from '../shared/log.js';
+import { xIntentUrl } from '../shared/share-targets.js';
 export class ScreenshotModal {
 	constructor(container) {
 		this.container = container;
@@ -23,9 +24,7 @@ export class ScreenshotModal {
 				</div>
 				<div class="screenshot-modal-footer">
 					<button class="btn screenshot-modal-copy">Copy</button>
-					<a href="https://x.com/intent/tweet?text=Check%20out%20my%203D%20Agent!&url=${encodeURIComponent(
-						window.location.href,
-					)}" target="_blank" rel="noopener noreferrer" class="btn screenshot-modal-share">Share on X</a>
+					<a href="${xIntentUrl({ text: 'Check out my 3D Agent!', url: window.location.href })}" target="_blank" rel="noopener noreferrer" class="btn screenshot-modal-share">Share on X</a>
 					<button class="btn btn--primary screenshot-modal-download">Download</button>
 				</div>
 			</div>

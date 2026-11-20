@@ -15,6 +15,7 @@
 // profile) are where a reader goes to act.
 
 import { initFork, forkButton } from './fork-trade.js';
+import { xIntentUrl } from './shared/share-targets.js';
 
 const viewEl = document.getElementById('wrView');
 const windowSeg = document.getElementById('wrWindowSeg');
@@ -164,10 +165,7 @@ async function doShare() {
 
 async function openOnX() {
 	const url = await shareUrl();
-	const intent = new URL('https://x.com/intent/tweet');
-	intent.searchParams.set('text', shareText());
-	intent.searchParams.set('url', url);
-	window.open(intent.toString(), '_blank', 'noopener,noreferrer');
+	window.open(xIntentUrl({ text: shareText(), url }), '_blank', 'noopener,noreferrer');
 }
 
 // ── data ────────────────────────────────────────────────────────────────────

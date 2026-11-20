@@ -179,6 +179,7 @@
 
 	<script type="module">
 		import { agentAvatarGlb } from '/src/shared/agent-3d.js';
+		import { xIntentUrl } from '/src/shared/share-targets.js';
 		import { CHAIN_META, txExplorerUrl } from '/src/erc8004/chain-meta.js';
 
 		const p = new URLSearchParams(location.search);
@@ -297,7 +298,7 @@
 					navigator.share({ title: `${name} — deployed on three.ws`, text, url }).catch(() => {});
 					return;
 				}
-				const tweet = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+				const tweet = xIntentUrl({ text });
 				window.open(tweet, '_blank', 'noopener');
 			});
 

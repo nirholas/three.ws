@@ -14,6 +14,7 @@ import { gmgnTokenUrl } from './shared/trading-terminals.js';
 import { shortAddress as shortAddr } from './shared/address.js';
 import { safeUrl } from './safe-url.js';
 import { loadTelegramChat, telegramLoginUrl, telegramActionError, TELEGRAM_LINK_URL } from './oracle-telegram.js';
+import { xIntentUrl } from './shared/share-targets.js';
 
 const NETWORK = 'mainnet';
 const $ = (s, r = document) => r.querySelector(s);
@@ -125,7 +126,7 @@ function winTweet(w) {
 	const score = w.score != null ? `${w.score}/100 ${w.tier}` : w.tier;
 	const shareUrl = coinShareUrl(w.mint);
 	const text = `Oracle called $${sym} (${score} conviction) — it went ${ath} 🔮\n\nproof.not.promises @trythreews\n${shareUrl}`;
-	return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+	return xIntentUrl({ text });
 }
 
 function coinShareUrl(mint) {
@@ -137,7 +138,7 @@ function tweetConviction(c) {
 	const symbol = c.symbol || '—';
 	const shareUrl = coinShareUrl(c.mint);
 	const text = `$${symbol} — ${score}/100 ${tier} conviction on @trythreews Oracle\n\nWho · How · What · Move all fused into one score.\n${shareUrl}`;
-	return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+	return xIntentUrl({ text });
 }
 
 const CATEGORIES = ['meme', 'tech', 'ai', 'culture', 'community', 'political', 'news', 'animal', 'celebrity', 'utility', 'unknown'];

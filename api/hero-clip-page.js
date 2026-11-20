@@ -14,6 +14,7 @@ import { env } from './_lib/env.js';
 import { headObject, cdnUrl } from './_lib/r2.js';
 import { clipKey } from './_lib/xai-video.js';
 import { heroClipPreset, clipPagePath, subjectHint } from './_lib/hero-clip.js';
+import { xIntentUrl } from '../src/shared/share-targets.js';
 
 const ID_RE = /^[A-Za-z0-9-]{8,80}$/;
 const SOURCE_PAGE_RE = /^\/(?:m|avatars)\/[A-Za-z0-9_-]{1,80}$/;
@@ -100,7 +101,7 @@ const STYLE = `
 export function renderClipPage(c) {
 	const title = `${c.title}: ${c.presetLabel}`;
 	const desc = `A ${c.duration ? `${c.duration} second ` : ''}hero clip made from real renders of this 3D model on three.ws.`;
-	const shareHref = `https://x.com/intent/post?${new URLSearchParams({ text: `${c.title}, a hero clip made from a 3D model on three.ws`, url: c.pageUrl })}`;
+	const shareHref = xIntentUrl({ text: `${c.title}, a hero clip made from a 3D model on three.ws`, url: c.pageUrl });
 	return `<!doctype html>
 <html lang="en">
 <head>

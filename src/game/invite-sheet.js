@@ -27,6 +27,7 @@ import { loadEventConfig } from '../shared/event-config.js';
 import { openModal } from './a11y.js';
 import { t } from './i18n-play.js';
 import { log } from '../shared/log.js';
+import { xIntentUrl } from '../shared/share-targets.js';
 
 const QR_PX = 216;
 
@@ -211,7 +212,7 @@ export function openInviteSheet({ coin, toast, onClose }) {
 		[el('span', { 'aria-hidden': 'true', text: '✈' }), el('span', { text: t('play.invite_send_tg', 'Telegram') })]);
 	const paintIntents = () => {
 		const text = shareTextFor(model);
-		xLink.href = 'https://x.com/intent/post?' + new URLSearchParams({ text, url: model.link });
+		xLink.href = xIntentUrl({ text, url: model.link });
 		tgLink.href = 'https://t.me/share/url?' + new URLSearchParams({ url: model.link, text });
 	};
 	paintIntents();

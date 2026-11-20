@@ -14,6 +14,7 @@ import { ensureRiskAck } from '../shared/risk-ack.js';
 import { THREE_WS_MARK } from '../solana/vanity/brand.js';
 import { solToUsd } from '../shared/usd-price.js';
 import { track, ANALYTICS_EVENTS } from '../analytics.js';
+import { xIntentUrl } from '../shared/share-targets.js';
 
 const _isDev =
 	typeof location !== 'undefined' &&
@@ -944,7 +945,7 @@ export class LaunchTokenModal {
 		});
 
 		ov.querySelector('#ltm-share-x')?.addEventListener('click', () => {
-			const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+			const intent = xIntentUrl({ text: shareText, url: shareUrl });
 			window.open(intent, '_blank', 'noopener,noreferrer');
 		});
 

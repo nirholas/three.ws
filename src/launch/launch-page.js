@@ -45,6 +45,7 @@ import {
 	waitForConfirmation,
 	walletInstalled,
 } from './launch-wallet.js';
+import { xIntentUrl } from '../shared/share-targets.js';
 
 const IMAGE_MAX_BYTES = 4 * 1024 * 1024;
 const IMAGE_MAX_DIM = 1024;
@@ -1191,7 +1192,7 @@ function showSuccess({ mint, signature, agent, fee }) {
 			<a class="lx-btn" href="${esc(dextoolsTokenUrl(mint, { from: 'launch-success' }))}" target="_blank" rel="noopener">DEXTools</a>
 			<a class="lx-btn" href="/agents/${esc(agent?.agent_id || agent?.id || '')}">Agent page</a>
 			<a class="lx-btn" href="https://solscan.io/tx/${esc(signature || '')}" target="_blank" rel="noopener">Transaction</a>
-			<a class="lx-btn is-primary is-wide" href="https://x.com/intent/post?text=${encodeURIComponent(post)}" target="_blank" rel="noopener">Share on X</a>
+			<a class="lx-btn is-primary is-wide" href="${esc(xIntentUrl({ text: post }))}" target="_blank" rel="noopener">Share on X</a>
 			<button type="button" class="lx-btn is-wide" id="ok-another">Launch another</button>
 		</div>
 		<div id="ok-boost"></div>

@@ -13,6 +13,7 @@
 //   - a badge row for READMEs that have none
 //   - the community and agent discovery files a repo is missing (never overwrites)
 //   - the repository topics and settings that make a repo findable
+import { xIntentUrl } from '../../src/shared/share-targets.js';
 
 export const OWNER = 'nirholas';
 const SITE = 'https://three.ws';
@@ -71,7 +72,7 @@ export function shareLinks({ name, description }) {
 	const pitch = pitchOf(description);
 	const text = pitch ? `${name}: ${pitch}` : name;
 	return [
-		['Post on X', `https://twitter.com/intent/tweet?text=${enc(text)}&url=${enc(url)}`],
+		['Post on X', xIntentUrl({ text, url })],
 		['Share on Bluesky', `https://bsky.app/intent/compose?text=${enc(`${text} ${url}`)}`],
 		['Share on LinkedIn', `https://www.linkedin.com/sharing/share-offsite/?url=${enc(url)}`],
 		['Submit to Hacker News', `https://news.ycombinator.com/submitlink?u=${enc(url)}&t=${enc(text)}`],

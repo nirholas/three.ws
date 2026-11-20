@@ -19,6 +19,7 @@ import { applyExplode, groupsOf, setGroupVisible } from './assembly/rig.js';
 import { disposeTree, ghostMaterial } from './assembly/materials.js';
 import { triangleCount } from './assembly/parts.js';
 import { track, ANALYTICS_EVENTS } from './analytics.js';
+import { xIntentUrl } from './shared/share-targets.js';
 
 const MACHINES = [radial, locomotive];
 const byId = new Map(MACHINES.map((m) => [m.spec.id, m]));
@@ -558,7 +559,7 @@ function saveFrame() {
 function share() {
 	const url = writeUrl();
 	const text = `${state.machine.spec.name}: no model file, generated in the browser from ${state.machine.spec.params.length} numbers.`;
-	const intent = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+	const intent = xIntentUrl({ text, url });
 	window.open(intent, '_blank', 'noopener');
 	track(ANALYTICS_EVENTS.CTA_CLICKED, { cta: 'assembly_share', location: 'assembly' });
 }

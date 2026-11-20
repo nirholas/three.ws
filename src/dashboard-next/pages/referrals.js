@@ -9,6 +9,7 @@ import { mountShell } from '../shell.js';
 import { requireUser, get, put, esc } from '../api.js';
 import { renderQRToSVG, renderQRToCanvas } from '../../erc8004/qr.js';
 import { toast } from '../../shared/toast.js';
+import { xIntentUrl } from '../../shared/share-targets.js';
 
 const MONO = `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
 
@@ -548,7 +549,7 @@ function roundRect(ctx, x, y, w, h, r) {
 function renderCard(host, card) {
 	const refUrl = `${location.origin}/register?ref=${encodeURIComponent(card.referral_code)}`;
 	const shareText = `Join me on three.ws — build, deploy, and monetize 3D AI agents.`;
-	const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(refUrl)}`;
+	const xUrl = xIntentUrl({ text: shareText, url: refUrl });
 	const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(refUrl)}&text=${encodeURIComponent(shareText)}`;
 
 	host.innerHTML = `

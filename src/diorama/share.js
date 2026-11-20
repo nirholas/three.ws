@@ -8,6 +8,7 @@
 
 import { beaconShareEvent } from '../shared/share-beacon.js';
 import { objectiveText } from './game-rules.js';
+import { xIntentUrl } from '../shared/share-targets.js';
 
 /** Resolve a possibly-relative permalink to an absolute URL for sharing/embedding. */
 function absolute(url) {
@@ -98,11 +99,7 @@ export function openShare({ diorama = {}, url, playable = false } = {}) {
 			beaconShareEvent('diorama_share', 'action');
 			const what = diorama.title || diorama.prompt || 'a little 3D world';
 			const text = `I spoke a little world into being on three.ws — “${what}”. Explore it in 3D:`;
-			const intent =
-				'https://twitter.com/intent/tweet?text=' +
-				encodeURIComponent(text) +
-				'&url=' +
-				encodeURIComponent(href);
+			const intent = xIntentUrl({ text, url: href });
 			window.open(intent, '_blank', 'noopener,noreferrer');
 		};
 	}
@@ -128,11 +125,7 @@ export function openShare({ diorama = {}, url, playable = false } = {}) {
 			beaconShareEvent('diorama_share', 'action');
 			const goal = objectiveText(diorama);
 			const text = `I made a tiny 3D game on three.ws${goal ? `: ${goal}` : ''}. Can you beat it?`;
-			const intent =
-				'https://twitter.com/intent/tweet?text=' +
-				encodeURIComponent(text) +
-				'&url=' +
-				encodeURIComponent(playLink(href));
+			const intent = xIntentUrl({ text, url: playLink(href) });
 			window.open(intent, '_blank', 'noopener,noreferrer');
 		};
 	}

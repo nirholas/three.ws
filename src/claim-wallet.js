@@ -13,6 +13,7 @@
  */
 
 import { shortAddress as shortAddr, addressHtml } from './shared/address.js';
+import { xIntentUrl } from './shared/share-targets.js';
 
 const WALLET_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -814,7 +815,7 @@ function shareCard(wallet, data) {
 	if (navigator.share) {
 		navigator.share({ title: 'three.ws Trader Card', text, url: traderUrl }).catch(() => {});
 	} else {
-		window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(traderUrl)}`, '_blank', 'noopener,width=550,height=420');
+		window.open(xIntentUrl({ text, url: traderUrl }), '_blank', 'noopener,width=550,height=420');
 	}
 }
 

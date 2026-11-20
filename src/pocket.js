@@ -23,6 +23,8 @@
 //   ?cart=play|stats|select
 //   ?chrome=off     device only, transparent background (this is the embed mode)
 
+import { xIntentUrl } from './shared/share-targets.js';
+
 const WALK_CHANNEL = 'three-walk';
 const ROSTER_URL = '/api/agents/public?limit=24';
 const ROSTER_LIMIT = 24;
@@ -977,7 +979,7 @@ document.getElementById('pk-post')?.addEventListener('click', () => {
 	const agent = currentAgent();
 	const who = agent ? agent.name : 'My agent';
 	const text = `${who} lives in a handheld now. Real 3D, the D-pad actually works, built on @trythreews`;
-	const url = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl())}`;
+	const url = xIntentUrl({ text, url: shareUrl() });
 	window.open(url, '_blank', 'noopener');
 });
 

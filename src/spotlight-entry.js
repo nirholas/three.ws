@@ -27,6 +27,7 @@ import {
 } from './spotlight-form.js';
 import { el, entryPath, errorMessage, monogram, relativeTime, stageFor, voteButton } from './spotlight-shared.js';
 import { verifiedBlock } from './spotlight-verified.js';
+import { xIntentUrl } from './shared/share-targets.js';
 
 const root = document.getElementById('sp-entry');
 const live = document.getElementById('sp-live');
@@ -211,7 +212,7 @@ function shareRow(e) {
 		copy,
 		el('a', {
 			class: 'sp-btn sp-btn-sm',
-			href: `https://x.com/intent/post?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(url)}`,
+			href: xIntentUrl({ text: shareText, url }),
 			target: '_blank',
 			rel: 'noopener',
 			text: 'Share on X',

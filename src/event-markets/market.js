@@ -4,6 +4,7 @@ import { attachLiveOdds } from './market-live.js';
 import { h, api, ApiError, SOURCE_LABELS, seriesColor, pct, countdown, when, initials, profileHref, statusLabel } from './common.js';
 import { agentsPanel } from './forecasting.js';
 import { stakingPanel } from './staking-panel.js';
+import { xIntentUrl } from '../shared/share-targets.js';
 
 const root = document.getElementById('em-root');
 const live = document.getElementById('em-live');
@@ -192,7 +193,7 @@ function sharePanel(m) {
 		h('h2', { id: 'em-h-share' }, 'Share'),
 		h('div', { class: 'em-share' },
 			h('button', { class: 'em-btn', type: 'button', onclick: () => copy(shareUrl()) }, 'Copy link'),
-			h('a', { class: 'em-btn', target: '_blank', rel: 'noopener noreferrer', href: `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl())}` }, 'Post on X'),
+			h('a', { class: 'em-btn', target: '_blank', rel: 'noopener noreferrer', href: xIntentUrl({ text, url: shareUrl() }) }, 'Post on X'),
 			S.viewer?.pick ? h('button', { class: 'em-btn', type: 'button', onclick: () => copy(shareUrl(S.viewer.pick.outcome_id)) }, 'Challenge a friend') : null),
 		S.viewer?.pick ? null : m.status === 'open' ? h('p', { class: 'em-note' }, 'Make a pick to challenge a friend with it.') : null);
 }

@@ -25,6 +25,7 @@ import {
 } from './signature-wall-data.js';
 import { assignSlots, diffSlots, pageCount, pageOrder, dwellMs, NEWEST_SHOWN, SIGNATURE_WALL } from './signature-wall-layout.js';
 import './signature-wall.css';
+import { xIntentUrl } from '../shared/share-targets.js';
 
 // The wall's placement lives in the three-free layout module so the 2D lite view
 // (play-lite-core.js) can map it without pulling in three. Re-exported for the
@@ -482,7 +483,7 @@ export class SignatureWall {
 		const text = sig.no ? `I signed the $THREE wall (signature No. ${sig.no}).` : 'I signed the $THREE wall.';
 		const post = el('a', {
 			class: 'sw-btn', target: '_blank', rel: 'noopener noreferrer', text: 'Post on X',
-			href: `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(`${location.origin}/play`)}`,
+			href: xIntentUrl({ text, url: `${location.origin}/play` }),
 		});
 		p.linkField = el('input', { class: 'sw-input sw-link', readonly: '', value: shareUrl, 'aria-label': 'Share link' });
 		const heading = fresh ? 'You are on the wall.' : (notice || 'You are already on the wall.');

@@ -24,6 +24,7 @@ import { terminalLinks } from '../src/shared/trading-terminals.js';
 import { hitRateFor } from './_lib/oracle/conviction.js';
 import { pumpFetchJson } from './_lib/pump-feed-fetch.js';
 import { fetchUpstreamJson } from './_lib/upstream-fetch.js';
+import { xIntentUrl } from '../src/shared/share-targets.js';
 
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const PUMP_V3 = 'https://frontend-api-v3.pump.fun';
@@ -444,10 +445,10 @@ function shareTweet(mint, row, pump, origin) {
 	const shareUrl = `${origin}/oracle/coin/${mint}`;
 	if (row) {
 		const text = `$${sym} — ${row.score ?? '—'}/100 ${row.tier || 'watch'} conviction on @trythreews Oracle\n\nWho · How · What · Move all fused into one score.\n${shareUrl}`;
-		return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+		return xIntentUrl({ text });
 	}
 	const text = `$${sym} on @trythreews Oracle — who's buying, how, what it is, and how it's moving, fused into one live conviction score.\n${shareUrl}`;
-	return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+	return xIntentUrl({ text });
 }
 
 // Safe JSON for inlining into a <script> — neutralize </script> and JS line

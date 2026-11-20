@@ -2,7 +2,7 @@
 //
 // Imported by browser bundles (launch flow, coin pages, coin3d, widgets) and by
 // the API layer (oracle market links, the $THREE link set), so it imports
-// nothing and touches no DOM.
+// only the pure X intent builder and touches no DOM.
 //
 // Why DEXTools gets its own module instead of one more line per surface:
 // DEXTools Social Boost ranks tokens by daily and weekly visits to their pair
@@ -22,6 +22,8 @@
 // graduated should link through dextoolsTokenUrl() in trading-terminals.js,
 // which resolves the top pool server-side and counts the visit.
 // The `/app/en/...` form 301s to this one, so the canonical form is used here.
+
+import { xIntentUrl } from './share-targets.js';
 
 const SOL_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const EVM_RE = /^0x[0-9a-fA-F]{40}$/;
@@ -69,5 +71,5 @@ export function socialBoostRallyText({ symbol, url }) {
 
 /** X compose URL for the rally post. */
 export function socialBoostRallyIntent(p) {
-	return `https://x.com/intent/post?text=${encodeURIComponent(socialBoostRallyText(p))}`;
+	return xIntentUrl({ text: socialBoostRallyText(p) });
 }

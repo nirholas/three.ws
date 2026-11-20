@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import {
 	xIntentUrl,
 	xWeightedLength,
@@ -116,5 +118,43 @@ describe('xIntentUrl', () => {
 	});
 	it('strips a leading @ from via', () => {
 		expect(read(xIntentUrl({ text: 't', via: '@trythreews' })).via).toBe('trythreews');
+	});
+});
+
+// Every X intent the app builds goes through xIntentUrl, so the weighted length
+// rule and the url-never-truncated rule hold everywhere. A hand-built
+// x.com/intent or twitter.com/intent string anywhere in shipped app code
+// fails here. The exceptions cannot import a Vite-bundled module: raw
+// publicDir copies served byte for byte, and code built and deployed outside
+// this app (apps/hq has its own TypeScript build, infra/lambda its own deploy).
+describe('no hand-built X intent outside share-targets.js', () => {
+	const ROOTS = ['src', 'pages', 'api', 'server', 'scripts', 'public'];
+	const BUILDER = 'src/shared/share-targets.js';
+	const RAW_COPIES = new Set([
+		'public/forever.js',
+		'public/changelog/entry/index.html',
+	]);
+	const INTENT_RE = /(?:x|twitter)\.com\/intent\//;
+
+	it('finds every intent built through xIntentUrl', () => {
+		const files = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', ...ROOTS], {
+			cwd: new URL('..', import.meta.url),
+			encoding: 'utf8',
+		})
+			.split('\n')
+			.filter((f) => /\.(m?js|html)$/.test(f) && f !== BUILDER && !RAW_COPIES.has(f) && !f.includes('/vendor/') && !/\.min\.js$/.test(f));
+		const offenders = [];
+		for (const f of files) {
+			let text;
+			try {
+				text = readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
+			} catch {
+				continue;
+			}
+			text.split('\n').forEach((line, i) => {
+				if (INTENT_RE.test(line)) offenders.push(`${f}:${i + 1}`);
+			});
+		}
+		expect(offenders).toEqual([]);
 	});
 });

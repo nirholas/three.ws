@@ -274,6 +274,7 @@
 
 	<script type="module">
 		import { appraiseAddress, RARITY_TIERS } from '/src/solana/vanity/rarity.js';
+		import { xIntentUrl } from '/src/shared/share-targets.js';
 
 		const $ = (id) => document.getElementById(id);
 		const API = '/api/vanity/gallery';
@@ -310,7 +311,7 @@
 			const text = `My Solana wallet ${address.slice(0, 6)}…${address.slice(-4)}: ground and verified on three.ws`;
 			const pageUrl = `${location.origin}/vanity/gallery#${encodeURIComponent(address)}`;
 			if (navigator.share) { try { await navigator.share({ title: 'Proof-of-Grind', text, url: pageUrl }); return; } catch {} }
-			const x = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(pageUrl)}`;
+			const x = xIntentUrl({ text, url: pageUrl });
 			window.open(x, '_blank', 'noopener');
 		}
 
