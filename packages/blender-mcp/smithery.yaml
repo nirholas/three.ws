@@ -12,10 +12,17 @@ startCommand:
         type: string
         title: Blender executable
         description: Absolute path to Blender 3.0+. Leave empty to discover it on PATH.
+      threeWsApiKey:
+        type: string
+        title: three.ws API key
+        description: Needed by blender_forge_import, because making a model on three.ws needs a free account. Create one at https://three.ws/dashboard/api-keys. The local Blender tools work without it.
     required: []
   commandFunction: |
     (config) => ({
       command: "npx",
       args: ["-y", "@three-ws/blender-mcp"],
-      env: config.blenderPath ? { BLENDER_PATH: config.blenderPath } : {}
+      env: {
+        ...(config.blenderPath ? { BLENDER_PATH: config.blenderPath } : {}),
+        ...(config.threeWsApiKey ? { THREE_WS_API_KEY: config.threeWsApiKey } : {})
+      }
     })

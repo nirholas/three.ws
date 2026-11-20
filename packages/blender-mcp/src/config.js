@@ -68,12 +68,12 @@ export const THREE_WS_BASE = env('THREE_WS_BASE', 'https://three.ws').replace(/\
 export const FORGE_TIMEOUT_MS = positiveNumber('THREE_WS_FORGE_TIMEOUT_MS', 600000);
 
 // Optional Meshy/Tripo key for the BYOK geometry lane. The default image lane
-// (FLUX to TRELLIS) is free and needs no key.
+// (FLUX to TRELLIS) needs no provider key.
 export const FORGE_PROVIDER_KEY = env('THREE_WS_FORGE_PROVIDER_KEY');
 
-// three.ws API key (https://three.ws/dashboard/api-keys). Only a reference
-// image upload sends it, because uploading a photo needs an account; text-to-3D
-// and image-to-3D from a public URL stay keyless.
+// three.ws API key (https://three.ws/dashboard/api-keys). Making a model needs
+// an account, so blender_forge_import sends it on every three.ws API call and
+// refuses without it. The other tools are local and never read it.
 export const THREE_WS_API_KEY = env('THREE_WS_API_KEY');
 
 export const USER_AGENT = '@three-ws/blender-mcp';

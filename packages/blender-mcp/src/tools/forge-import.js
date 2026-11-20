@@ -1,7 +1,8 @@
 // `blender_forge_import`: text prompt to a 3D model, open in Blender.
 //
-// Bridges the public three.ws Forge pipeline into the local Blender session: a
-// prompt is generated on the free image lane (FLUX to TRELLIS), the resulting
+// Bridges the three.ws Forge pipeline into the local Blender session: a prompt
+// is generated on the image lane (FLUX to TRELLIS) under the caller's three.ws
+// account (THREE_WS_API_KEY), the resulting
 // GLB is downloaded, and it is either kept as-is or converted into whatever the
 // output extension asks for, .blend included. That closes the loop between "an
 // agent needs an asset" and "the asset is in a scene it can edit".
@@ -33,7 +34,8 @@ export const def = {
 		'Generate a 3D model from a text prompt OR a reference image on the public three.ws Forge pipeline, then ' +
 		'bring it into Blender. Pass "prompt" to describe it, "image" for a local PNG/JPEG/WebP, or "image_url" for ' +
 		'one already public; an image plus a prompt uses the prompt to steer the reconstruction. ' +
-		'The default image lane (FLUX to TRELLIS) is free and needs no key, wallet, or account. The GLB is saved ' +
+		'Needs a free three.ws account: set THREE_WS_API_KEY in this server\'s env (key from three.ws/dashboard/api-keys). ' +
+		'The default image lane (FLUX to TRELLIS) costs nothing on a free account. The GLB is saved ' +
 		'locally, and if the output path asks for another format (.blend, .fbx, .obj, .usd) Blender converts it on ' +
 		'the way in. Returns the local path, the hosted GLB URL, and the geometry counts. Generation runs on a ' +
 		'shared GPU lane and typically takes tens of seconds to a couple of minutes. Describe ONE subject per call. ' +
@@ -60,7 +62,7 @@ export const def = {
 		lane: z
 			.enum(['image', 'geometry', 'sketch'])
 			.optional()
-			.describe('Pipeline lane. "image" (default) is free. "geometry" uses Meshy/Tripo and needs THREE_WS_FORGE_PROVIDER_KEY.'),
+			.describe('Pipeline lane. "image" (default) costs nothing on a free account. "geometry" uses Meshy/Tripo and also needs THREE_WS_FORGE_PROVIDER_KEY.'),
 		backend: z.string().optional().describe('Pin a specific backend. Omit to let the deployment choose for the tier.'),
 		aspect_ratio: z.enum(['1:1', '4:3', '3:4', '16:9', '9:16']).optional().describe('Reference image aspect ratio. Default "1:1".'),
 	},

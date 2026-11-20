@@ -15,7 +15,7 @@
 
 ---
 
-> A [Model Context Protocol](https://modelcontextprotocol.io) server that hands an AI assistant a real Blender over stdio. Inspect a 3D file, convert between GLB, glTF, FBX, OBJ, STL, PLY, Collada, Alembic, USD and `.blend`, render an auto-framed and auto-lit preview that comes back **inline** so the assistant can see it, run a `bpy` script against a scene, and generate a model from a text prompt on the free three.ws Forge lane.
+> A [Model Context Protocol](https://modelcontextprotocol.io) server that hands an AI assistant a real Blender over stdio. Inspect a 3D file, convert between GLB, glTF, FBX, OBJ, STL, PLY, Collada, Alembic, USD and `.blend`, render an auto-framed and auto-lit preview that comes back **inline** so the assistant can see it, run a `bpy` script against a scene, and generate a model from a text prompt on the three.ws Forge pipeline with a free three.ws account.
 
 Blender runs in background mode (`blender -b`), one process per call. That means it works on a server, in CI, and inside a container with no display, no GUI session to keep alive, and no add-on to install into Blender first. Everything is real: each tool drives the Blender installed on the machine, and `blender_forge_import` calls the live public three.ws generation pipeline.
 
@@ -59,7 +59,7 @@ Paste this into your MCP config (`~/Library/Application Support/Claude/claude_de
 }
 ```
 
-Add `"env": { "BLENDER_PATH": "/path/to/blender" }` if Blender is not on `PATH`.
+Add `"env": { "BLENDER_PATH": "/path/to/blender" }` if Blender is not on `PATH`. To generate models with `blender_forge_import`, also add `"THREE_WS_API_KEY": "sk_live_..."` to `env`: making a model on three.ws needs a free account, and the key comes from [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys).
 
 ## Tools
 
@@ -71,7 +71,7 @@ Add `"env": { "BLENDER_PATH": "/path/to/blender" }` if Blender is not on `PATH`.
 | `blender_optimize` | The delivery pass in one call: decimate to a triangle budget, scale oversized textures, purge unreferenced datablocks, and compress the mesh streams with meshopt or Draco. Reports before and after triangles, texture bytes and file size. |
 | `blender_render` | Renders a still PNG and returns it **inline**, so the assistant can actually see the model in one call even with no filesystem access. Ask for several views and it orbits the model, every angle in the same launch. If the file has no camera, one is created and framed to the model's bounding sphere; if it has no light, a key light and a lit world are added. A scene that already has its own camera and lighting renders as authored. |
 | `blender_run_python` | Runs a `bpy` script against a scene, optionally opening a file first and exporting the result afterwards. The escape hatch for anything the other tools do not cover. |
-| `blender_forge_import` | Generates a model from a text prompt **or a reference image** on the public three.ws Forge pipeline and brings it into Blender, converting on the way in if the output asks for another format. The default lane is free. |
+| `blender_forge_import` | Generates a model from a text prompt **or a reference image** on the public three.ws Forge pipeline and brings it into Blender, converting on the way in if the output asks for another format. Needs `THREE_WS_API_KEY` (a free account); the default lane costs nothing. |
 
 ### Examples
 
@@ -160,8 +160,8 @@ Failures come back as structured tool errors (`input_not_found`, `format_unsuppo
 | `BLENDER_MCP_INLINE_IMAGE_BYTES` | `1500000` | Past this the image stays on disk and the response says so. |
 | `THREE_WS_BASE` | `https://three.ws` | Deployment backing `blender_forge_import`. |
 | `THREE_WS_FORGE_TIMEOUT_MS` | `600000` | Ceiling for one text-to-3D generation. |
-| `THREE_WS_FORGE_PROVIDER_KEY` | unset | Meshy/Tripo key for the bring-your-own-key geometry lane. The default image lane is free and needs no key. |
-| `THREE_WS_API_KEY` | unset | three.ws API key from [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys). Needed only to upload a local reference image, because photo uploads need an account. Text-to-3D, and image-to-3D from a public `image_url`, work without it. |
+| `THREE_WS_FORGE_PROVIDER_KEY` | unset | Meshy/Tripo key for the bring-your-own-key geometry lane. The default image lane needs no provider key. |
+| `THREE_WS_API_KEY` | unset | three.ws API key from [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys). Required by `blender_forge_import`, because making a model on three.ws needs an account (free to create). Sent as a bearer on every three.ws API call, never to the CDN or a storage URL. The other tools are local and never use it. |
 
 ## Security
 

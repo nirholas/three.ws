@@ -1,7 +1,7 @@
 // Uploading a local reference image needs a three.ws account (api/forge-upload.js
 // answers 401 `sign_in_required` without one). The forge bridge must send
-// THREE_WS_API_KEY as a bearer on that call, and turn a refusal into an answer
-// that says how to get a key and how to go keyless (a public image_url).
+// THREE_WS_API_KEY as a bearer on that call, refuse before any request when the
+// key is unset, and turn a refusal into an answer that says how to get a key.
 //
 // Each case runs in its own child process with its own env, because config.js
 // reads env once at import. A local HTTP server stands in for three.ws; nothing
@@ -105,7 +105,7 @@ test('sends THREE_WS_API_KEY as a bearer and returns the public URL', async () =
 	assert.equal(put.authorization, null);
 });
 
-test('without a key, explains how to get one and the keyless route', async () => {
+test('without a key, explains how to get one and sends nothing', async () => {
 	seen.length = 0;
 	const err = await upload(undefined);
 	assert.equal(err.ok, false);
@@ -113,9 +113,7 @@ test('without a key, explains how to get one and the keyless route', async () =>
 	assert.equal(err.status, 401);
 	assert.match(err.message, /THREE_WS_API_KEY/);
 	assert.match(err.message, /dashboard\/api-keys/);
-	assert.match(err.message, /image_url/);
-	assert.equal(seen.find((r) => r.url === '/api/forge-upload').authorization, null);
-	assert.ok(!seen.some((r) => r.method === 'PUT'), 'nothing is uploaded without a key');
+	assert.deepEqual(seen, [], 'nothing is sent or uploaded without a key');
 });
 
 test('a refused key says the key was refused', async () => {

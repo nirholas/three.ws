@@ -1,10 +1,12 @@
 // Real HTTP access to the public three.ws Forge pipeline (/api/forge).
 //
-// Generation is auth-free and IP rate-limited, scoped to an anonymous client
-// handle. The default image lane (FLUX to TRELLIS) is free; the geometry lane
-// (Meshy/Tripo) is bring-your-own-key and the key travels as a request header,
-// never in a body or a URL. Uploading a local reference image is the one call
-// that needs a three.ws account: it sends THREE_WS_API_KEY as a bearer.
+// Making a model on three.ws needs an account, so every three.ws API call
+// (submit, poll, reference-image presign) sends THREE_WS_API_KEY as a bearer,
+// and generation refuses before any request when the key is unset. The key
+// never goes to the CDN that serves the GLB or to a presigned storage URL. The
+// default image lane (FLUX to TRELLIS) costs nothing on a free account; the
+// geometry lane (Meshy/Tripo) is bring-your-own-key and that key travels as a
+// request header, never in a body or a URL.
 //
 // The contract mirrored here is the same one the three.ws Blender add-on and
 // ComfyUI nodes speak (integrations/_pyclient/three_ws_client.py).
@@ -34,7 +36,25 @@ function headers(extra) {
 	};
 }
 
-async function forgeRequest(pathname, { method = 'GET', query, body, auth } = {}) {
+const KEYS_URL = `${THREE_WS_BASE}/dashboard/api-keys`;
+
+// The answer for a missing or refused key, with exactly what to set.
+function signInRequired() {
+	return Object.assign(
+		new Error(
+			THREE_WS_API_KEY
+				? `three.ws refused THREE_WS_API_KEY. Check the key, or create a new one, at ${KEYS_URL}.`
+				: `Making a model on three.ws needs a free account. Create an API key at ${KEYS_URL} and set THREE_WS_API_KEY in this server's env.`,
+		),
+		{ code: 'sign_in_required', status: 401 },
+	);
+}
+
+function requireApiKey() {
+	if (!THREE_WS_API_KEY) throw signInRequired();
+}
+
+async function forgeRequest(pathname, { method = 'GET', query, body, auth = THREE_WS_API_KEY } = {}) {
 	const url = new URL(`${THREE_WS_BASE}${pathname}`);
 	for (const [key, value] of Object.entries(query || {})) {
 		if (value === undefined || value === null || value === '') continue;
@@ -72,6 +92,7 @@ async function forgeRequest(pathname, { method = 'GET', query, body, auth } = {}
 	} catch {
 		data = { raw: text };
 	}
+	if (res.status === 401) throw signInRequired();
 	if (!res.ok) {
 		const message = data?.message || data?.error || `three.ws ${pathname} returned HTTP ${res.status}`;
 		throw Object.assign(new Error(message), { code: 'upstream_error', status: res.status, body: data });
@@ -112,36 +133,22 @@ export async function uploadReferenceImage(filePath) {
 		);
 	}
 
+	// Uploading a photo needs a three.ws account like every creation call; a
+	// missing key is refused here, before the file is read or anything is sent.
+	requireApiKey();
 	const bytes = await readFile(filePath);
 	if (bytes.length === 0) {
 		throw Object.assign(new Error(`${filePath} is empty.`), { code: 'invalid_size' });
 	}
 
-	// Uploading a photo needs a three.ws account, so this one call carries the
-	// API key. A missing or refused key gets an answer that says how to fix it,
-	// plus the keyless way around (a public image URL).
-	let presign;
-	try {
-		presign = await forgeRequest('/api/forge-upload', {
-			method: 'POST',
-			auth: THREE_WS_API_KEY,
-			body: {
-				content_type: contentType,
-				size_bytes: bytes.length,
-				checksum_sha256: createHash('sha256').update(bytes).digest('hex'),
-			},
-		});
-	} catch (err) {
-		if (err?.status !== 401) throw err;
-		throw Object.assign(
-			new Error(
-				THREE_WS_API_KEY
-					? `three.ws refused THREE_WS_API_KEY. Check the key at ${THREE_WS_BASE}/dashboard/api-keys, or pass a public https image as "image_url" instead.`
-					: `Uploading a local image needs a free three.ws account. Create an API key at ${THREE_WS_BASE}/dashboard/api-keys and set THREE_WS_API_KEY in this server's env, or pass a public https image as "image_url" instead.`,
-			),
-			{ code: 'sign_in_required', status: 401 },
-		);
-	}
+	const presign = await forgeRequest('/api/forge-upload', {
+		method: 'POST',
+		body: {
+			content_type: contentType,
+			size_bytes: bytes.length,
+			checksum_sha256: createHash('sha256').update(bytes).digest('hex'),
+		},
+	});
 	if (!presign.upload_url || !presign.public_url) {
 		throw Object.assign(
 			new Error(
@@ -178,6 +185,7 @@ export async function uploadReferenceImage(filePath) {
  * @returns {Promise<{job_id: string, backend?: string}>}
  */
 export async function submitImageTo3d({ imageUrls, prompt = '', tier = 'standard', backend, lane = 'image' }) {
+	requireApiKey();
 	const urls = imageUrls.filter((url) => typeof url === 'string' && url.startsWith('https://'));
 	if (urls.length === 0) {
 		throw Object.assign(new Error('Image-to-3D needs at least one public https image URL.'), {
@@ -195,6 +203,7 @@ export async function submitImageTo3d({ imageUrls, prompt = '', tier = 'standard
  * @returns {Promise<{job_id: string, backend?: string}>}
  */
 export async function submitTextTo3d({ prompt, tier = 'standard', backend, aspect_ratio = '1:1', lane = 'image' }) {
+	requireApiKey();
 	const body = { prompt, tier, path: lane, aspect_ratio };
 	if (backend) body.backend = backend;
 	return submitted(await forgeRequest('/api/forge', { method: 'POST', body }));

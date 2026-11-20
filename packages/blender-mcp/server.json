@@ -92,7 +92,14 @@
 				},
 				{
 					"name": "THREE_WS_FORGE_PROVIDER_KEY",
-					"description": "Meshy/Tripo API key for the bring-your-own-key geometry lane. The default image lane is free and needs no key.",
+					"description": "Meshy/Tripo API key for the bring-your-own-key geometry lane. The default image lane needs no provider key.",
+					"format": "string",
+					"isSecret": true,
+					"isRequired": false
+				},
+				{
+					"name": "THREE_WS_API_KEY",
+					"description": "three.ws API key from https://three.ws/dashboard/api-keys. blender_forge_import needs it, because making a model on three.ws needs a free account. The local Blender tools never use it.",
 					"format": "string",
 					"isSecret": true,
 					"isRequired": false
