@@ -82,6 +82,17 @@ describe('createGate', () => {
 		expect(peak).toBe(1);
 	});
 
+	// Pollinations' free tier answers 402 FREE_LIMIT ("1 image every 45 seconds
+	// per IP") to any call that starts sooner, so the gate spaces task starts.
+	it('spaces task starts by at least minIntervalMs', async () => {
+		const gate = createGate(1, { minIntervalMs: 60 });
+		const starts = [];
+		await Promise.all([0, 1, 2].map(() => gate(async () => { starts.push(Date.now()); })));
+		expect(starts).toHaveLength(3);
+		expect(starts[1] - starts[0]).toBeGreaterThanOrEqual(55);
+		expect(starts[2] - starts[1]).toBeGreaterThanOrEqual(55);
+	});
+
 	it('releases the slot when a task throws', async () => {
 		const gate = createGate(1);
 		await expect(gate(async () => { throw new Error('boom'); })).rejects.toThrow('boom');

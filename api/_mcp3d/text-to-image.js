@@ -333,6 +333,24 @@ async function hfRoutedImage(provider, prompt, aspectRatio, seed, { timeoutMs = 
 // so that a day when every keyed provider is down still produces a model
 // instead of a 429; the text chain already relies on the same service.
 const POLLINATIONS_TIMEOUT_MS = 40_000;
+
+// Pollinations explains a refusal in a JSON body, e.g. 402
+// {"error":{"code":"FREE_LIMIT","message":"Free limit reached: 1 image every
+// 45 seconds per IP..."}}. Surface it so a log says why, not just the status.
+async function pollinationsErrorDetail(res) {
+	const text = await res.text().catch(() => '');
+	if (!text) return '';
+	let detail = text;
+	try {
+		const body = JSON.parse(text);
+		const e = body?.error;
+		if (e && typeof e === 'object') detail = [e.code, e.message].filter(Boolean).join(' ');
+		else if (typeof e === 'string') detail = e;
+	} catch {
+		// not JSON: keep the raw text
+	}
+	return `: ${detail.replace(/\s+/g, ' ').trim().slice(0, 200)}`;
+}
 async function pollinationsImage(prompt, aspectRatio, seed, { timeoutMs = POLLINATIONS_TIMEOUT_MS } = {}) {
 	const [width, height] = NIM_DIMENSIONS[aspectRatio] || NIM_DIMENSIONS['1:1'];
 	const q = new URLSearchParams({
@@ -353,7 +371,7 @@ async function pollinationsImage(prompt, aspectRatio, seed, { timeoutMs = POLLIN
 		});
 	}
 	if (!res.ok) {
-		const err = new Error(`pollinations returned ${res.status}`);
+		const err = new Error(`pollinations returned ${res.status}${await pollinationsErrorDetail(res)}`);
 		err.providerStatus = res.status;
 		// 402 here is Pollinations' own free-tier throttle, not a platform billing
 		// state: tag it rate_limited (as the HF rung above already does for both

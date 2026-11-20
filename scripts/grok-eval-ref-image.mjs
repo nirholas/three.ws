@@ -34,10 +34,12 @@
 // --only          comma-separated prompt ids
 // --limit N       first N prompts after --only filtering
 // --concurrency N prompts in flight per provider (1 to 6, default 3)
-// --ref-concurrency N  reference images generated at once (1 to 6, default 1).
-//                 The keyless Pollinations rung answers 402 to a second
-//                 concurrent request from one IP, so the default serializes
-//                 the image step while TRELLIS and rendering stay parallel.
+// --ref-concurrency N  reference images generated at once (1 to 6, default 1)
+// --ref-interval S     seconds between reference-step starts (default 46 for
+//                 the baseline column, 0 for xai). The keyless Pollinations
+//                 rung allows one image every 45 s per IP and answers 402
+//                 FREE_LIMIT to anything sooner, so the baseline paces the
+//                 image step while TRELLIS and rendering stay parallel.
 // --force         rerun finished rows; --retry-failed reruns rows with an error
 // --no-judge      skip the pairwise judge
 // --report-only   do not generate anything, rebuild the report from results
@@ -89,7 +91,7 @@ const CLOSED_BOUNDARY_RATIO = 0.01;
 function usage(msg) {
 	if (msg) console.error(`grok-eval-ref-image: ${msg}`);
 	console.error(
-		'Usage: npm run grok:eval-ref-image -- [--prod-env] [--providers baseline,xai] [--only ids] [--limit N] [--concurrency N] [--ref-concurrency N] [--force] [--retry-failed] [--no-judge] [--report-only] [--render-base URL]',
+		'Usage: npm run grok:eval-ref-image -- [--prod-env] [--providers baseline,xai] [--only ids] [--limit N] [--concurrency N] [--ref-concurrency N] [--ref-interval S] [--force] [--retry-failed] [--no-judge] [--report-only] [--render-base URL]',
 	);
 	process.exit(2);
 }
@@ -102,6 +104,7 @@ function parseArgs(argv) {
 		limit: null,
 		concurrency: 3,
 		refConcurrency: 1,
+		refIntervalS: null,
 		force: false,
 		retryFailed: false,
 		judge: true,
@@ -117,6 +120,7 @@ function parseArgs(argv) {
 		else if (a === '--limit') out.limit = Number(next());
 		else if (a === '--concurrency') out.concurrency = Number(next());
 		else if (a === '--ref-concurrency') out.refConcurrency = Number(next());
+		else if (a === '--ref-interval') out.refIntervalS = Number(next());
 		else if (a === '--force') out.force = true;
 		else if (a === '--retry-failed') out.retryFailed = true;
 		else if (a === '--no-judge') out.judge = false;
@@ -128,6 +132,7 @@ function parseArgs(argv) {
 	if (out.limit !== null && (!Number.isInteger(out.limit) || out.limit < 1)) usage('--limit must be a positive integer');
 	if (!Number.isInteger(out.concurrency) || out.concurrency < 1 || out.concurrency > 6) usage('--concurrency must be 1 to 6');
 	if (!Number.isInteger(out.refConcurrency) || out.refConcurrency < 1 || out.refConcurrency > 6) usage('--ref-concurrency must be 1 to 6');
+	if (out.refIntervalS !== null && !(Number.isFinite(out.refIntervalS) && out.refIntervalS >= 0 && out.refIntervalS <= 600)) usage('--ref-interval must be 0 to 600 seconds');
 	if (!/^https?:\/\//.test(out.renderBase)) usage('--render-base must be an http(s) origin');
 	return out;
 }
@@ -428,9 +433,15 @@ function installXaiCostMeter(xaiUrl) {
 	};
 }
 
-// Counting semaphore: at most `n` holders at once, FIFO.
-export function createGate(n) {
+// Pollinations' keyless tier: "1 image every 45 seconds per IP" (402
+// FREE_LIMIT body, observed 2026-11-20), plus a second of slack.
+const POLLINATIONS_FREE_INTERVAL_S = 46;
+
+// Counting semaphore: at most `n` holders at once, FIFO, and successive starts
+// at least `minIntervalMs` apart.
+export function createGate(n, { minIntervalMs = 0 } = {}) {
 	let active = 0;
+	let lastStart = -Infinity;
 	const waiting = [];
 	const release = () => {
 		active--;
@@ -440,6 +451,9 @@ export function createGate(n) {
 	return async (fn) => {
 		if (active >= n) await new Promise((r) => waiting.push(r));
 		active++;
+		const wait = lastStart + minIntervalMs - Date.now();
+		if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+		lastStart = Date.now();
 		try {
 			return await fn();
 		} finally {
@@ -767,7 +781,16 @@ async function writeReport(prompts, results) {
 	L.push(`- **Render:** \`/api/render/glb\` at ${RENDER_SIZE}px on white.`);
 	L.push('- **Objective score (0 to 100):** ' + Object.entries(WEIGHTS).map(([k, w]) => `${k} ${w}`).join(', ') + '. Background clean: at least 90% of a 6px border within RGB distance 28 of the median border color. Single subject: the largest 4-connected foreground component holds at least 92% of foreground pixels. Centered: bounding-box center within 12% of the image center. Sane fill: subject extent between 45% and 95% of the frame. Closed: under 1% of welded mesh edges are open boundaries; strict watertightness (zero open and zero non-manifold edges) is reported separately.');
 	L.push('- **Blind pairwise judge:** for every prompt with both results, the two renders (or the two reference images when a render is missing) are composited side by side, sides shuffled per prompt by a hash, and sent to the repo\'s free vision chain led by NVIDIA Nemotron 3.5 Super VL (`describeImageJson`, the `seed_judge` lead). Grok never judges its own output; the harness refuses any answer from a Grok model.');
-	L.push('- **Cost and latency:** Grok Imagine cost is metered from the `usage.cost_in_usd_ticks` field of every xAI response, including best-of-2 retries. Latency is wall-clock time for the whole reference step (generation, QA scoring, persistence), as a user waits for it.');
+	L.push('- **Cost and latency:** Grok Imagine cost is metered from the `usage.cost_in_usd_ticks` field of every xAI response, including best-of-2 retries. Latency is wall-clock time for the whole reference step (generation, QA scoring, persistence), as a user waits for it. Baseline rows start the image step at most once every 46 seconds (`--ref-interval`), because the keyless Pollinations rung allows one image every 45 seconds per IP and answers 402 FREE_LIMIT to anything sooner; that queueing is excluded from the latency.');
+	L.push('');
+	L.push('## The Grok Imagine API as integrated');
+	L.push('');
+	L.push('Read from the xAI developer docs on 2026-11-20; `api/_lib/xai-image.js` cites the same pages.');
+	L.push('');
+	L.push('- **Endpoint:** `POST https://api.x.ai/v1/images/generations` with a Bearer key, `response_format: "b64_json"`, an `aspect_ratio`, and `n: 1`. Images come back inline, so nothing depends on a temporary xAI URL.');
+	L.push('- **Model:** `grok-imagine-image-2.0` (`XAI_IMAGINE_IMAGE_MODEL` in `api/_lib/chat-models.js`). Listed at $0.04 per image and 6 requests per second, served from us-east-1 and us-west-2, with a `quality` of low, medium or auto.');
+	L.push('- **Metering:** every response carries `usage.cost_in_usd_ticks` (1 USD = 10,000,000,000 ticks); the harness sums it per row, and production usage rows record the calls under client id `xai-imagine`.');
+	L.push('- **Sources:** https://docs.x.ai/developers/models/grok-imagine-image-2.0.md, https://docs.x.ai/developers/rest-api-reference/inference/images.md, https://docs.x.ai/developers/model-capabilities/images/generation.md');
 	L.push('');
 	L.push('## Results by provider');
 	L.push('');
@@ -878,7 +901,6 @@ async function main() {
 		selfhostQualityForTier: tiers.selfhostQualityForTier,
 		describeImageJson: vision.describeImageJson,
 		VISION_TASK_LEAD: vision.VISION_TASK_LEAD,
-		refGate: createGate(opts.refConcurrency),
 	};
 	installXaiCostMeter(chat.XAI_IMAGE_GENERATIONS_URL);
 
@@ -890,6 +912,8 @@ async function main() {
 	for (const provider of opts.providers) {
 		if (provider === 'xai') process.env.FORGE_REF_IMAGE_PROVIDER = 'xai';
 		else delete process.env.FORGE_REF_IMAGE_PROVIDER;
+		const refIntervalS = opts.refIntervalS ?? (provider === 'xai' ? 0 : POLLINATIONS_FREE_INTERVAL_S);
+		mods.refGate = createGate(opts.refConcurrency, { minIntervalMs: refIntervalS * 1000 });
 		const todo = prompts.filter((p) => {
 			const row = results.rows[`${provider}:${p.id}`];
 			return !row || opts.force || (opts.retryFailed && row.failed);

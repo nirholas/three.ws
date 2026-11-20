@@ -123,6 +123,16 @@ describe('the ladder reaches every rung in order', () => {
 		expect(err).toBeInstanceOf(Error);
 		expect(err.code).toBe('rate_limited');
 	});
+
+	// 2026-11-20: a 40-prompt eval logged 38 bare "pollinations returned 402"
+	// lines; the body said FREE_LIMIT (one image every 45 s per IP) and only a
+	// manual curl revealed it. The reason now rides on the error.
+	it('carries the Pollinations error code and message on a non-OK answer', async () => {
+		lane.pollinations = () => json(402, { error: { code: 'FREE_LIMIT', message: 'Free limit reached: 1 image every 45 seconds per IP. Retry after 39s' } });
+		const err = await textToImage('a fox', { budgetMs: 20_000 }).catch((e) => e);
+		expect(err.message).toMatch(/pollinations returned 402: FREE_LIMIT/);
+		expect(err.message).toMatch(/1 image every 45 seconds/);
+	});
 });
 
 // On 2026-10-08 NIM FLUX filtered a rocket-booster prompt: HTTP 200, a solid
