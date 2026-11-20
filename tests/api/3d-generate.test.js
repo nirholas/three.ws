@@ -1,5 +1,8 @@
-// Tests for POST /api/3d/generate + GET /api/3d/generate?job=<id> — the free,
-// keyless, agent-first text→3D front door that wraps the /api/forge draft lane.
+// Tests for POST /api/3d/generate + GET /api/3d/generate?job=<id>: the free,
+// agent-first text→3D front door that wraps the /api/forge draft lane. Making a
+// model needs a three.ws account (a free API key as a Bearer, or a session), so
+// an anonymous POST is refused with sign_in_required and a signed-in one forwards
+// its credential to /api/forge. Polling stays open.
 //
 // The rate limiter is mocked (switchable per test) and the network is stubbed via
 // global fetch, so the suite runs fully offline while exercising the real handler,
@@ -29,12 +32,22 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 	clientIp: () => '203.0.113.7',
 }));
 
+// Switchable account: signed in by default so the contract tests exercise the
+// lane; the gate tests flip it to anonymous.
+const auth = { user: { id: 'user-1' } };
+vi.mock('../../api/_lib/auth.js', async (orig) => ({
+	...(await orig()),
+	getRequestUser: async () => auth.user,
+	getSessionUser: async () => auth.user,
+}));
+
 const ORIGINAL_FETCH = globalThis.fetch;
 const ENV_KEYS = ['STUDIO_API_BASE', 'PUBLIC_APP_ORIGIN', 'APP_ORIGIN'];
 const saved = {};
 
 beforeEach(() => {
 	freeOk = true;
+	auth.user = { id: 'user-1' };
 	for (const k of ENV_KEYS) {
 		saved[k] = process.env[k];
 		delete process.env[k];
@@ -54,12 +67,13 @@ function makeReq({
 	url = '/api/3d/generate',
 	body = null,
 	host = 'three.ws',
+	headers = { authorization: 'Bearer tw_test_key' },
 } = {}) {
 	const raw = body == null ? '' : JSON.stringify(body);
 	const stream = Readable.from(raw ? [Buffer.from(raw)] : []);
 	stream.method = method;
 	stream.url = url;
-	stream.headers = { 'content-type': 'application/json', host };
+	stream.headers = { 'content-type': 'application/json', host, ...headers };
 	return stream;
 }
 
@@ -201,6 +215,51 @@ describe('shape helpers — lane boundary contract', () => {
 		expect(err.status).toBe('error');
 		expect(err.error).toBe(POLL_FAILED.error);
 		expect(err.free).toBe(true);
+	});
+});
+
+describe('POST /api/3d/generate needs an account', () => {
+	it('refuses an anonymous caller with sign_in_required before calling the lane', async () => {
+		auth.user = null;
+		globalThis.fetch = vi.fn(async () => {
+			throw new Error('lane should not be called for an anonymous caller');
+		});
+		const { res, body } = await dispatch(
+			makeReq({ body: { prompt: 'a small ceramic robot figurine' }, headers: {} }),
+			makeRes(),
+		);
+		expect(res.statusCode).toBe(401);
+		expect(body).toMatchObject({
+			error: 'sign_in_required',
+			sign_in_url: '/login',
+			api_keys_url: '/dashboard/api-keys',
+		});
+		expect(globalThis.fetch).not.toHaveBeenCalled();
+	});
+
+	it('forwards the caller credential to /api/forge', async () => {
+		globalThis.fetch = vi.fn(async () => jsonResponse(SUBMIT_DONE));
+		const { res } = await dispatch(
+			makeReq({ body: { prompt: 'a small ceramic robot figurine' } }),
+			makeRes(),
+		);
+		expect(res.statusCode).toBe(200);
+		const [url, opts] = globalThis.fetch.mock.calls[0];
+		expect(String(url)).toMatch(/\/api\/forge/);
+		expect(opts.headers.authorization).toBe('Bearer tw_test_key');
+	});
+
+	it('maps a sign_in_required from /api/forge into the same 401', async () => {
+		globalThis.fetch = vi.fn(async () =>
+			jsonResponse({ error: 'sign_in_required', message: 'Sign in to make a 3D model.' }, { status: 401 }),
+		);
+		const { res, body } = await dispatch(
+			makeReq({ body: { prompt: 'a small ceramic robot figurine' } }),
+			makeRes(),
+		);
+		expect(res.statusCode).toBe(401);
+		expect(body.error).toBe('sign_in_required');
+		expect(body.api_keys_url).toBe('/dashboard/api-keys');
 	});
 });
 

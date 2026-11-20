@@ -1,10 +1,12 @@
 // POST /api/3d/generate  +  GET /api/3d/generate?job=<id>
 //
-// The FREE, keyless, agent-first front door to three.ws text→3D. An autonomous
-// agent building a game, a scene, an NFT, or any visual can turn a text prompt
-// into a real textured GLB in one call — no key, no account, no wallet. No other
-// agent-payments platform gives away 3D generation; this is the magnet that
-// funnels to paid Forge Pro (quality tiers) and Rigged Avatars.
+// The FREE, agent-first front door to three.ws text→3D. An autonomous agent
+// building a game, a scene, an NFT, or any visual can turn a text prompt into a
+// real textured GLB in one call with a free three.ws API key and no wallet.
+// Making a model needs an account (api/_lib/creator-account.js): send the key as
+// `Authorization: Bearer <key>` (create one at /dashboard/api-keys). An
+// anonymous POST answers 401 sign_in_required. Polling stays open. This is the
+// magnet that funnels to paid Forge Pro (quality tiers) and Rigged Avatars.
 //
 // This route does NOT re-implement generation. It wraps the existing free draft
 // lane (NVIDIA NIM TRELLIS → self-host TRELLIS/Hunyuan3D → HuggingFace Spaces)
@@ -41,6 +43,7 @@
 import { cors, wrap, method, json, error, readJson, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { startForge, originFromReq, viewerUrl, arLaunchUrl } from '../_mcp-studio/forge-client.js';
+import { requireCreator, forwardCreatorAuth, SIGN_IN_REQUIRED, SIGN_IN_URL, API_KEYS_URL } from '../_lib/creator-account.js';
 
 const PROMPT_MIN = 3; // the draft lane needs a subject to condition on
 const PROMPT_MAX = 1000; // matches /api/forge's own prompt ceiling
@@ -196,6 +199,13 @@ export function shapePoll(data, base, jobId, title) {
 // prompt must NEVER 500: every code has a designed status + actionable message.
 function failFromLane(res, err) {
 	switch (err?.code) {
+		case SIGN_IN_REQUIRED:
+			return json(res, 401, {
+				error: SIGN_IN_REQUIRED,
+				message: err.message || 'Sign in to make a 3D model. A three.ws account is free.',
+				sign_in_url: err.signInUrl || SIGN_IN_URL,
+				api_keys_url: err.apiKeysUrl || API_KEYS_URL,
+			});
 		case 'not_configured':
 			return json(res, 503, {
 				error: 'not_configured',
@@ -232,6 +242,10 @@ function failFromLane(res, err) {
 
 async function generate(req, res) {
 	const ip = clientIp(req);
+	// Account first: before parsing, rate-limit spend or the self-call, so an
+	// anonymous agent learns the one thing it can act on (get a free key).
+	const who = await requireCreator(req, res, { action: 'make a 3D model' });
+	if (!who) return;
 
 	let body;
 	try {
@@ -270,13 +284,13 @@ async function generate(req, res) {
 		});
 	}
 
-	// Per-IP guard on the free GPU lane. Reuses the existing free-lane bucket
+	// Per-account guard on the free GPU lane. Reuses the existing free-lane bucket
 	// (mcp3d:generate:free) — the SAME counter /api/forge draws from — so this is a
 	// generous shared ceiling protecting one GPU allocation, and the check here
 	// rejects a flood before the self-call round-trip. The GLOBAL concurrency guard
 	// (HuggingFace slot lease + platform submit throttle) lives inside /api/forge and
 	// is inherited automatically by routing through it — no new limiter invented.
-	const rl = await limits.mcp3dGenerateFree(ip);
+	const rl = await limits.mcp3dGenerateFree(who.user?.id ? `user:${who.user.id}` : ip);
 	if (!rl.success) {
 		return rateLimited(
 			res,
@@ -307,6 +321,9 @@ async function generate(req, res) {
 			// Attribute the durable creation to this caller so the flywheel isn't
 			// blind on the free lane (and a repeat agent can later claim its work).
 			clientKey: agentClientId(req, ip),
+			// The caller's own key or session, so /api/forge owns the model to
+			// the same account and applies its own gate to the same person.
+			auth: forwardCreatorAuth(req),
 		});
 	} catch (err) {
 		return failFromLane(res, err);
