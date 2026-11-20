@@ -19,13 +19,13 @@ Five [`tool()`](https://js.langchain.com/docs/how_to/custom_tools/) definitions 
 
 | Tool | What it does | Auth |
 | --- | --- | --- |
-| `three_ws_forge` | Text prompt → textured GLB | Free |
-| `three_ws_rig` | Static GLB → humanoid-rigged GLB | Free |
-| `three_ws_render` | Any public GLB → turntable preview + geometry stats | Free |
+| `three_ws_forge` | Text prompt → textured GLB | Free, with a free account |
+| `three_ws_rig` | Static GLB → humanoid-rigged GLB | Free, with a free account |
+| `three_ws_render` | Any public GLB → turntable preview + geometry stats | Free, with a free account |
 | `three_ws_animate` | Text prompt → retargeted motion on a rigged GLB | Paid (x402) |
 | `three_ws_agent_chat` | Message → a three.ws agent's reply | Free |
 
-`three_ws_forge`, `three_ws_rig`, and `three_ws_render` call three.ws's free, no-key `/api/mcp-studio` server. `three_ws_agent_chat` calls the public `/api/chat` endpoint. `three_ws_animate` calls the paid, [x402](https://x402.org)-gated `/api/mcp` server: this package never signs a payment for you, it surfaces the real `PaymentRequired` challenge in the tool's artifact so your own x402 client (e.g. [`x402-fetch`](https://www.npmjs.com/package/x402-fetch)) can pay from your own wallet.
+`three_ws_forge`, `three_ws_rig`, and `three_ws_render` call three.ws's free `/api/mcp-studio` server, which needs a free three.ws account: pass its API key (from [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys)) as `apiKey`. Without one, those tools come back `ok: false` with `signInRequired: true` and a message naming where to get the key. Nothing to pay. `three_ws_agent_chat` calls the public `/api/chat` endpoint. `three_ws_animate` calls the paid, [x402](https://x402.org)-gated `/api/mcp` server: this package never signs a payment for you, it surfaces the real `PaymentRequired` challenge in the tool's artifact so your own x402 client (e.g. [`x402-fetch`](https://www.npmjs.com/package/x402-fetch)) can pay from your own wallet.
 
 Each tool uses `responseFormat: "content_and_artifact"`: the string `content` is what the model reads back, and `artifact` carries the structured result (`{ ok, raw }` or `{ ok: false, error }` / `{ ok: false, paymentRequired: true, challenge }`) for your application code.
 
@@ -41,7 +41,7 @@ npm install @three-ws/langchain @langchain/core zod
 import { ChatOpenAI } from '@langchain/openai';
 import { createThreeWsTools } from '@three-ws/langchain';
 
-const tools = createThreeWsTools();
+const tools = createThreeWsTools({ apiKey: process.env.THREE_WS_API_KEY });
 const model = new ChatOpenAI({ model: 'gpt-5.5' }).bindTools(tools);
 
 const response = await model.invoke('Forge a low-poly fox, then render a turntable of it so I can see it.');
@@ -53,7 +53,7 @@ Run a tool directly (no model needed) to see it call the live API:
 ```js
 import { createThreeWsTools } from '@three-ws/langchain';
 
-const [forge, rig, render] = createThreeWsTools();
+const [forge, rig, render] = createThreeWsTools({ apiKey: process.env.THREE_WS_API_KEY });
 
 const forged = await forge.invoke({ name: 'three_ws_forge', args: { prompt: 'a friendly round robot mascot', tier: 'draft' }, id: '1', type: 'tool_call' });
 console.log(forged.content, forged.artifact);
@@ -74,7 +74,7 @@ import { createThreeWsTools } from '@three-ws/langchain';
 
 // Resolve the x402 challenge with your own wallet, then pass the resulting
 // X-PAYMENT header value straight through. This package never spends for you.
-const [, , , animate] = createThreeWsTools();
+const [, , , animate] = createThreeWsTools({ apiKey: process.env.THREE_WS_API_KEY });
 const msg = await animate.invoke({ name: 'three_ws_animate', args: { glbUrl: myRiggedGlbUrl, prompt: 'wave hello' }, id: '3', type: 'tool_call' });
 if (msg.artifact.paymentRequired) {
 	// use your x402 client + wallet against msg.artifact.challenge, then retry with args.xPayment set
@@ -86,7 +86,7 @@ if (msg.artifact.paymentRequired) {
 ```js
 createThreeWsTools({
 	baseUrl: 'https://three.ws', // override for a self-hosted deployment
-	apiKey: process.env.THREE_WS_API_KEY, // only needed for three_ws_animate
+	apiKey: process.env.THREE_WS_API_KEY, // free account key: forge, rig and render need it; animate accepts it
 });
 ```
 

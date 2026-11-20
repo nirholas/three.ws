@@ -5,7 +5,7 @@ description: Generate a rigged, animated 3D character from a sentence and scaffo
 
 # Create a 3D agent
 
-`@three-ws/create-agent` (Node 18+) turns a description into a rigged humanoid GLB on the free three.ws lane, with no account and no API key, then writes a small project around it.
+`@three-ws/create-agent` (Node 18+) turns a description into a rigged humanoid GLB on the free three.ws lane, then writes a small project around it. Nothing to pay, but making a model needs a free three.ws account: export its API key (from https://three.ws/dashboard/api-keys) as `THREE_WS_API_KEY` before running. Without it the command stops and prints that link.
 
 ## Run
 
@@ -24,6 +24,7 @@ Options:
 --object             make an object or prop instead of a rigged character
 --no-download        skip writing agent.glb locally, keep the hosted URL only
 --json               print the result as JSON and nothing else
+--api-key <key>      three.ws API key (default: THREE_WS_API_KEY)
 --origin <url>       API origin (default https://three.ws)
 -h, --help
 ```

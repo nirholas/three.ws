@@ -3,7 +3,7 @@
  * npm create @three-ws/agent "a friendly cartoon astronaut"
  *
  * From a sentence to a rigged 3D character with a working demo page, in one
- * command, with no account and no API key.
+ * command. Free, with a free three.ws account's API key (THREE_WS_API_KEY).
  */
 
 import { relative } from 'node:path';

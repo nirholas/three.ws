@@ -3,12 +3,13 @@
 **One command from a sentence to a rigged 3D character you can put on your site.**
 
 ```bash
+export THREE_WS_API_KEY=<your key>   # free, from https://three.ws/dashboard/api-keys
 npm create @three-ws/agent "a friendly cartoon astronaut in a glossy white suit"
 ```
 
 ```
 three.ws building "a friendly cartoon astronaut in a glossy white suit"
-  a rigged humanoid, free lane, no account needed
+  a rigged humanoid, free lane
 
 · sent to the three.ws forge
 · generating the figure (15s)
@@ -36,7 +37,7 @@ Friendly Cartoon Astronaut is ready in 94s
   Open the demo:  npx serve a-friendly-cartoon-astronaut
 ```
 
-No account. No API key. No signup. The generation runs on the three.ws free lane, and the platform's own provider keys cover it.
+Nothing to pay: the generation runs on the three.ws free lane, and the platform's own provider keys cover it. Making a model does need a free three.ws account, so every model has an owner who can publish or delete it (new models are unlisted until you publish them). Create an API key at [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys) and export it as `THREE_WS_API_KEY`, or pass `--api-key`. Without one the command stops before generating and says where to get a key.
 
 ## What you get
 
@@ -63,6 +64,7 @@ npm create @three-ws/agent "a small ceramic frog figurine" --object
 | `--object` | An object or prop (mesh only, free lane) instead of a rigged character |
 | `--no-download` | Keep the hosted model URL, skip writing `agent.glb` |
 | `--json` | Print the result as JSON and nothing else |
+| `--api-key <key>` | three.ws API key (default: the `THREE_WS_API_KEY` env var). The env var keeps the key out of your shell history. |
 | `--origin <url>` | API origin (default `https://three.ws`) |
 
 Describe **one full-body humanoid in a neutral standing pose** for the best rig. Lead with the subject, then materials and colours: the free lane conditions on roughly the first 77 characters, so front-load what matters.
@@ -75,6 +77,7 @@ import { createAgent } from '@three-ws/create-agent';
 const made = await createAgent({
 	prompt: 'a friendly cartoon astronaut',
 	out: './astro',
+	apiKey: process.env.THREE_WS_API_KEY, // the default; shown for clarity
 	onProgress: ({ message }) => console.log(message),
 });
 

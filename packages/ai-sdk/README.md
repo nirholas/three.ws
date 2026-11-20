@@ -19,13 +19,13 @@ Five [`tool()`](https://ai-sdk.dev/docs/ai-sdk-core/tools-and-tool-calling) defi
 
 | Tool | What it does | Auth |
 | --- | --- | --- |
-| `forge` | Text prompt → textured GLB | Free |
-| `rig` | Static GLB → humanoid-rigged GLB | Free |
-| `render` | Any public GLB → turntable preview + geometry stats | Free |
+| `forge` | Text prompt → textured GLB | Free, with a free account |
+| `rig` | Static GLB → humanoid-rigged GLB | Free, with a free account |
+| `render` | Any public GLB → turntable preview + geometry stats | Free, with a free account |
 | `animate` | Text prompt → retargeted motion on a rigged GLB | Paid (x402) |
 | `agentChat` | Message → a three.ws agent's reply | Free |
 
-`forge`, `rig`, and `render` call three.ws's free, no-key `/api/mcp-studio` server. `agentChat` calls the public `/api/chat` endpoint. `animate` calls the paid, [x402](https://x402.org)-gated `/api/mcp` server: this package never signs a payment for you, it surfaces the real `PaymentRequired` challenge so your own x402 client (e.g. [`x402-fetch`](https://www.npmjs.com/package/x402-fetch)) can pay from your own wallet.
+`forge`, `rig`, and `render` call three.ws's free `/api/mcp-studio` server, which needs a free three.ws account: pass its API key (from [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys)) as `apiKey`. Without one, those tools come back `ok: false` with `signInRequired: true` and a message naming where to get the key. Nothing to pay. `agentChat` calls the public `/api/chat` endpoint. `animate` calls the paid, [x402](https://x402.org)-gated `/api/mcp` server: this package never signs a payment for you, it surfaces the real `PaymentRequired` challenge so your own x402 client (e.g. [`x402-fetch`](https://www.npmjs.com/package/x402-fetch)) can pay from your own wallet.
 
 ## Install
 
@@ -41,7 +41,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { createThreeWsTools } from '@three-ws/ai-sdk';
 
 const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const tools = createThreeWsTools();
+const tools = createThreeWsTools({ apiKey: process.env.THREE_WS_API_KEY });
 
 const { text, toolResults } = await generateText({
 	model: openai('gpt-5.5'),
@@ -58,7 +58,7 @@ Run it directly (no model needed) to see the tools call the live API:
 ```js
 import { createThreeWsTools } from '@three-ws/ai-sdk';
 
-const tools = createThreeWsTools();
+const tools = createThreeWsTools({ apiKey: process.env.THREE_WS_API_KEY });
 const forged = await tools.forge.execute({ prompt: 'a friendly round robot mascot', tier: 'draft' });
 console.log(forged);
 // { ok: true, text: 'Generated this model from your prompt...', raw: {...} }
@@ -77,7 +77,7 @@ import { createThreeWsTools } from '@three-ws/ai-sdk';
 
 // Resolve the x402 challenge with your own wallet, then pass the resulting
 // X-PAYMENT header value straight through. This package never spends for you.
-const tools = createThreeWsTools();
+const tools = createThreeWsTools({ apiKey: process.env.THREE_WS_API_KEY });
 const unpaid = await tools.animate.execute({ glbUrl: myRiggedGlbUrl, prompt: 'wave hello' });
 if (unpaid.paymentRequired) {
 	// use your x402 client + wallet against unpaid.challenge, then retry with xPayment set
@@ -89,7 +89,7 @@ if (unpaid.paymentRequired) {
 ```js
 createThreeWsTools({
 	baseUrl: 'https://three.ws', // override for a self-hosted deployment
-	apiKey: process.env.THREE_WS_API_KEY, // only needed for `animate`
+	apiKey: process.env.THREE_WS_API_KEY, // free account key: forge, rig and render need it; animate accepts it
 });
 ```
 

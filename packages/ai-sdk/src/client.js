@@ -17,12 +17,13 @@ const CHAT_PATH = '/api/chat';
  * @param {'free'|'paid'} [opts.surface] which server to call
  * @param {string} opts.tool the MCP tool name, e.g. "forge_free"
  * @param {object} opts.args the tool's arguments
- * @param {string} [opts.apiKey] bearer token for the paid server
+ * @param {string} [opts.apiKey] three.ws API key, sent as a Bearer token. The free
+ *   studio needs it to make, rig or render a model (a free account is enough).
  * @param {string} [opts.xPayment] a pre-signed X-PAYMENT header value for an
  *   x402-gated tool. three.ws never signs a payment on the caller's behalf;
  *   obtain this from an x402 client (e.g. the `x402-fetch` package) wired to
  *   the caller's own wallet, then pass the resulting header value through.
- * @returns {Promise<{ok: true, result: object} | {ok: false, paymentRequired: true, challenge: object} | {ok: false, error: string}>}
+ * @returns {Promise<{ok: true, result: object} | {ok: false, paymentRequired: true, challenge: object} | {ok: false, signInRequired: true, error: string} | {ok: false, error: string}>}
  */
 export async function callThreeWsTool({ baseUrl = DEFAULT_BASE_URL, surface = 'free', tool, args, apiKey, xPayment }) {
 	const path = surface === 'paid' ? PAID_MCP_PATH : FREE_MCP_PATH;
@@ -54,6 +55,9 @@ export async function callThreeWsTool({ baseUrl = DEFAULT_BASE_URL, surface = 'f
 	const result = body.result;
 	if (result?.isError) {
 		const text = result.content?.find((c) => c.type === 'text')?.text || 'tool call failed';
+		// The studio refuses an anonymous make/rig/render with this status; its
+		// text names where to create the API key this client sends as apiKey.
+		if (result.structuredContent?.status === 'sign_in_required') return { ok: false, signInRequired: true, error: text };
 		return { ok: false, error: text };
 	}
 	return { ok: true, result };

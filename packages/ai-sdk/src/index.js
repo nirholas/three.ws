@@ -1,7 +1,8 @@
 // Vercel AI SDK `tool()` definitions for three.ws's generative 3D pipeline:
 // forge a model from text, rig it for animation, render a turntable preview,
 // animate it from a text prompt, and chat with a three.ws agent persona.
-// forge/rig/render call the free, no-auth /api/mcp-studio server; animate
+// forge/rig/render call the free /api/mcp-studio server, which needs a free
+// three.ws account's API key (config.apiKey) to make, rig or render; animate
 // calls the paid, x402-gated /api/mcp server and never pays on the caller's
 // behalf (see `animateTool`'s doc comment); agentChat calls the public
 // /api/chat SSE endpoint.
@@ -15,7 +16,8 @@ import { callThreeWsTool, callThreeWsChat, toolResultText } from './client.js';
  * values straight into `generateText({ tools })` / `streamText({ tools })`.
  * @param {object} [config]
  * @param {string} [config.baseUrl] override for self-hosted / staging deployments
- * @param {string} [config.apiKey] three.ws API key, only needed for `animateTool`
+ * @param {string} [config.apiKey] three.ws API key (free account, from https://three.ws/dashboard/api-keys).
+ *   forge, rig and render need it; animate also accepts it
  */
 export function createThreeWsTools(config = {}) {
 	return {
@@ -27,44 +29,44 @@ export function createThreeWsTools(config = {}) {
 	};
 }
 
-export function forgeTool({ baseUrl } = {}) {
+export function forgeTool({ baseUrl, apiKey } = {}) {
 	return tool({
 		description:
-			'Generate a textured, downloadable 3D model (GLB) from a text prompt. Free, no API key required. ' +
+			'Generate a textured, downloadable 3D model (GLB) from a text prompt. Free, on the configured three.ws account. ' +
 			'Describe a single object, character, or creature.',
 		inputSchema: z.object({
 			prompt: z.string().min(3).max(1000).describe('What to model, e.g. "a friendly round robot mascot, glossy white plastic".'),
 			tier: z.enum(['draft', 'standard', 'high']).optional().describe('Detail level; standard is the default.'),
 		}),
 		execute: async ({ prompt, tier }) => {
-			const res = await callThreeWsTool({ baseUrl, surface: 'free', tool: 'forge_free', args: { prompt, ...(tier ? { tier } : {}) } });
-			if (!res.ok) return { ok: false, error: res.error || 'forge failed' };
+			const res = await callThreeWsTool({ baseUrl, apiKey, surface: 'free', tool: 'forge_free', args: { prompt, ...(tier ? { tier } : {}) } });
+			if (!res.ok) return { ok: false, ...(res.signInRequired ? { signInRequired: true } : {}), error: res.error || 'forge failed' };
 			return { ok: true, text: toolResultText(res.result), raw: res.result.structuredContent ?? null };
 		},
 	});
 }
 
-export function rigTool({ baseUrl } = {}) {
+export function rigTool({ baseUrl, apiKey } = {}) {
 	return tool({
 		description:
 			'Auto-rig a static 3D model (GLB) into an animation-ready model: adds a humanoid skeleton and skin ' +
-			'weights. Free, no API key required. Provide the GLB URL of a model (e.g. one `forge` just produced).',
+			'weights. Free, on the configured three.ws account. Provide the GLB URL of a model (e.g. one `forge` just produced).',
 		inputSchema: z.object({
 			glbUrl: z.string().url().describe('http(s) URL to the static GLB mesh to rig.'),
 		}),
 		execute: async ({ glbUrl }) => {
-			const res = await callThreeWsTool({ baseUrl, surface: 'free', tool: 'rig_mesh', args: { glb_url: glbUrl } });
-			if (!res.ok) return { ok: false, error: res.error || 'rig failed' };
+			const res = await callThreeWsTool({ baseUrl, apiKey, surface: 'free', tool: 'rig_mesh', args: { glb_url: glbUrl } });
+			if (!res.ok) return { ok: false, ...(res.signInRequired ? { signInRequired: true } : {}), error: res.error || 'rig failed' };
 			return { ok: true, text: toolResultText(res.result), raw: res.result.structuredContent ?? null };
 		},
 	});
 }
 
-export function renderTool({ baseUrl } = {}) {
+export function renderTool({ baseUrl, apiKey } = {}) {
 	return tool({
 		description:
 			'Render a turntable preview of any public .glb: several angles as images, plus its geometry stats and ' +
-			'a plain reading of what they mean. Free, no API key required, works on any public https .glb.',
+			'a plain reading of what they mean. Free, on the configured three.ws account, works on any public https .glb.',
 		inputSchema: z.object({
 			glbUrl: z.string().url().describe('Public https URL of the .glb to look at.'),
 			views: z
@@ -77,11 +79,12 @@ export function renderTool({ baseUrl } = {}) {
 		execute: async ({ glbUrl, views, size }) => {
 			const res = await callThreeWsTool({
 				baseUrl,
+				apiKey,
 				surface: 'free',
 				tool: 'look_at_model',
 				args: { glb_url: glbUrl, ...(views ? { views } : {}), ...(size ? { size } : {}) },
 			});
-			if (!res.ok) return { ok: false, error: res.error || 'render failed' };
+			if (!res.ok) return { ok: false, ...(res.signInRequired ? { signInRequired: true } : {}), error: res.error || 'render failed' };
 			return { ok: true, text: toolResultText(res.result), raw: res.result.structuredContent ?? null };
 		},
 	});

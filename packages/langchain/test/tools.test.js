@@ -6,14 +6,19 @@
 // either way, without fabricating success. `animate` is paid and x402-gated;
 // it asserts the real PaymentRequired challenge comes back unpaid, since this
 // package must never sign a payment itself.
+//
+// forge, rig and render need a free three.ws account: set THREE_WS_API_KEY to
+// run them signed in. Without it, render must come back as the studio's
+// sign_in_required refusal (signInRequired: true), never as a silent failure.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createThreeWsTools } from '../src/index.js';
 
+const API_KEY = process.env.THREE_WS_API_KEY || undefined;
 const DUCK_GLB = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb';
 
-const [forgeTool, rigTool, renderTool, animateTool, agentChatTool] = createThreeWsTools();
+const [forgeTool, rigTool, renderTool, animateTool, agentChatTool] = createThreeWsTools({ apiKey: API_KEY });
 
 // `tool.invoke(rawArgs)` returns only the string content; invoking with a
 // ToolCall shape (name/args/id/type) returns the full ToolMessage, whose
@@ -24,6 +29,11 @@ function asToolCall(name, args) {
 
 test('three_ws_render: turntable preview of a public GLB', async () => {
 	const msg = await renderTool.invoke(asToolCall('three_ws_render', { glbUrl: DUCK_GLB, views: ['front'], size: 256 }));
+	if (!API_KEY && !msg.artifact.ok) {
+		assert.equal(msg.artifact.signInRequired, true);
+		assert.match(msg.artifact.error, /api-keys/);
+		return;
+	}
 	assert.match(msg.content, /Rendered this model/);
 	assert.equal(msg.artifact.ok, true);
 });

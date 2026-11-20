@@ -6,6 +6,10 @@
 // shape either way, without fabricating success. `animate` is paid and
 // x402-gated; it asserts the real PaymentRequired challenge comes back
 // unpaid, since this package must never sign a payment itself.
+//
+// forge, rig and render need a free three.ws account: set THREE_WS_API_KEY to
+// run them signed in. Without it, render must come back as the studio's
+// sign_in_required refusal (signInRequired: true), never as a silent failure.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -13,10 +17,16 @@ import { createThreeWsTools } from '../src/index.js';
 
 const DUCK_GLB = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb';
 
-const tools = createThreeWsTools();
+const API_KEY = process.env.THREE_WS_API_KEY || undefined;
+const tools = createThreeWsTools({ apiKey: API_KEY });
 
 test('render: turntable preview of a public GLB', async () => {
 	const result = await tools.render.execute({ glbUrl: DUCK_GLB, views: ['front'], size: 256 });
+	if (!API_KEY && !result.ok) {
+		assert.equal(result.signInRequired, true);
+		assert.match(result.error, /api-keys/);
+		return;
+	}
 	assert.equal(result.ok, true);
 	assert.match(result.text, /Rendered this model/);
 });
