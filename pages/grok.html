@@ -124,6 +124,7 @@
 		.gk-tpl-meta dt { color: var(--ink-faint, var(--ink-dim)); font-weight: 600; }
 		.gk-tpl-meta dd { margin: 0; color: var(--ink-dim); min-width: 0; }
 		.gk-tpl-meta code { font-size: 0.74rem; padding: 1px 6px; border-radius: 6px; color: var(--ink-bright, var(--ink)); background: var(--surface-1, rgba(255,255,255,0.05)); border: 1px solid var(--stroke); }
+		.gk-tpl-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
 
 		/* ── skill file ─────────────────────────────────────────────────── */
 		.gk-skill { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px; align-items: start; }
@@ -615,7 +616,7 @@ mkdir -p ~/.grok/plugins &amp;&amp; cp -r three.ws-src/integrations/grok/three-w
 				<h2 id="gk-templates-h">Grok Bot task templates</h2>
 				<p>Four tasks to paste into Grok Bot as they stand. Each runs on the free studio tools of the three-ws-grok connector, signed in with a free account, and none can spend. Runtimes were measured against production; generation times move with the GPU queue.</p>
 			</div>
-			<div class="gk-recipes">
+			<div class="gk-recipes gk-tpl-grid">
 				<article class="gk-recipe">
 					<p class="gk-recipe-kind">Catalog only</p>
 					<h3>Home-office scene kit</h3>
