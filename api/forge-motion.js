@@ -23,6 +23,7 @@
 
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
+import { requireCreator } from './_lib/creator-account.js';
 import { createRegenProvider } from './_providers/gcp.js';
 import { fetchUpstream } from './_lib/upstream-fetch.js';
 import { libraryReadyClip } from './_lib/motion-seed.js';
@@ -43,7 +44,12 @@ function unconfigured(res) {
 }
 
 async function startJob(req, res) {
-	const ip = clientIp(req);
+	// Making something needs an account (api/_lib/creator-account.js), and the
+	// generation budget is metered per account so one person cannot spread a
+	// burst across addresses. A platform job without a named person keeps the IP.
+	const who = await requireCreator(req, res, { action: 'make an animation' });
+	if (!who) return;
+	const rateKey = who.user ? `user:${who.user.id}` : clientIp(req);
 	// The free-lane bucket, not the paid one. This endpoint has exactly one
 	// backend: the self-hosted text2motion worker behind GCP_TEXT2MOTION_URL,
 	// which is our own Cloud Run GPU service. There is no vendor fallback: with
@@ -51,7 +57,7 @@ async function startJob(req, res) {
 	// call here can never bill a third party, and metering it against the paid
 	// ceiling (30/h, fail-closed) throttled our own GPU fleet to a fifth of what
 	// it sustains and blocked bulk library seeding outright.
-	const rl = await limits.mcp3dGenerateFree(ip);
+	const rl = await limits.mcp3dGenerateFree(rateKey);
 	if (!rl.success) {
 		return rateLimited(res, rl);
 	}

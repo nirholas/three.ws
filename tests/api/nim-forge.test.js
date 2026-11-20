@@ -4,6 +4,14 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+// Making or uploading needs an account (api/_lib/creator-account.js). These
+// cases exercise what happens past that gate, so the caller is signed in. The
+// gate itself has its own suite in tests/creation-endpoints-auth.test.js.
+vi.mock('../../api/_lib/auth.js', async (orig) => ({
+	...(await orig()),
+	getRequestUser: async () => ({ id: 'creator-test-user' }),
+}));
+
 const ORIGINAL_FETCH = globalThis.fetch;
 process.env.NIM_TRELLIS_URL = 'https://nim.example.run.app';
 process.env.NIM_TRELLIS_KEY = 'nim-secret';

@@ -9,6 +9,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Readable } from 'node:stream';
 
+// Making or uploading needs an account (api/_lib/creator-account.js). These
+// cases exercise what happens past that gate, so the caller is signed in. The
+// gate itself has its own suite in tests/creation-endpoints-auth.test.js.
+vi.mock('../../api/_lib/auth.js', async (orig) => ({
+	...(await orig()),
+	getRequestUser: async () => ({ id: 'creator-test-user' }),
+}));
+
 const submit = vi.fn(async () => ({ extJobId: `task-triposplat-${'x'.repeat(20)}`, eta: 45 }));
 const status = vi.fn(async () => ({
 	status: 'done',

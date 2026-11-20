@@ -26,6 +26,7 @@
 
 import { cors, method, wrap, error, readJson, json } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
+import { requireCreator } from './_lib/creator-account.js';
 import { env } from './_lib/env.js';
 import { fetchSafePublicUrl, fetchSafePublicUrlPinned, SsrfBlockedError } from './_lib/ssrf-guard.js';
 
@@ -183,7 +184,7 @@ async function toImageDataUri(image) {
 		return image;
 	}
 	if (/^https?:\/\//i.test(image)) {
-		// SSRF guard: this is an unauthenticated, public endpoint and the fetched
+		// SSRF guard: the caller is signed in but untrusted, and the fetched
 		// bytes are forwarded to the NIM. Route through the SSRF guard so a caller
 		// can't point `image` at cloud-metadata (169.254.169.254), loopback, or any
 		// RFC1918 host — each redirect hop is re-validated and http:// is rejected.
@@ -320,7 +321,10 @@ function maskUrl(u) {
 }
 
 async function infer(req, res) {
-	const rl = await limits.forgeNim(clientIp(req));
+	// Each call is a real GPU reconstruction: it needs an account, metered per account.
+	const who = await requireCreator(req, res, { action: 'make a 3D model' });
+	if (!who) return;
+	const rl = await limits.forgeNim(who.user ? `user:${who.user.id}` : clientIp(req));
 	if (!rl.success) {
 		return error(res, 429, 'rate_limited', 'Too many NIM generations — wait a moment and try again.');
 	}

@@ -17,6 +17,7 @@
 import { wrap, cors, json, method, readJson, rateLimited } from './_lib/http.js';
 import { withRetry } from './_lib/resilience.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
+import { requireCreator } from './_lib/creator-account.js';
 
 // NIM_TRELLIS_URL only. MODEL_TRELLIS_URL points at our own Cloud Run TRELLIS
 // worker (workers/model-trellis/), whose async `/infer` + `/tasks/{id}` API is
@@ -90,11 +91,12 @@ export default wrap(async (req, res) => {
 	}
 	if (!method(req, res, ['GET', 'POST'])) return;
 
-	// Public endpoint that drives a real self-hosted GPU TRELLIS inference per call,
-	// so meter per IP before touching the upstream — otherwise an anonymous caller
-	// can spam reconstructions against the platform's NIM/key. Mirrors the sibling
-	// /api/forge-nim limiter (limits.forgeNim, 30/hr/IP).
-	const rl = await limits.forgeNim(clientIp(req));
+	// Each call drives a real self-hosted GPU TRELLIS inference, so it needs an
+	// account and is metered per account before touching the upstream. Mirrors the
+	// sibling /api/forge-nim gate and limiter (limits.forgeNim, 30/hr).
+	const who = await requireCreator(req, res, { action: 'make a 3D model' });
+	if (!who) return;
+	const rl = await limits.forgeNim(who.user ? `user:${who.user.id}` : clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	if (!NIM_URL) {

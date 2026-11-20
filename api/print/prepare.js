@@ -15,8 +15,10 @@
 // cannot inspect is a repair the buyer cannot trust, and /materialize renders
 // this response as the "what changed" list next to the model.
 //
-// Free and keyless like analyze: preparing a file costs CPU, not fulfillment,
-// and a buyer who can see the repaired result is a buyer who orders.
+// Free, but it needs an account (anonymous callers get 401 sign_in_required):
+// it writes three new files to our storage from any caller's model, so each
+// prepared set traces back to a person. Preparing a file costs CPU, not
+// fulfillment, and a buyer who can see the repaired result is a buyer who orders.
 
 import { createHash } from 'node:crypto';
 
@@ -24,6 +26,7 @@ import { Document, NodeIO } from '@gltf-transform/core';
 
 import { cors, error, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
+import { requireCreator } from '../_lib/creator-account.js';
 import { loadMeshFromUrl, MeshIoError, boundsOf } from '../_lib/print/mesh-io.js';
 import { analyzeMesh } from '../_lib/print/analyze.js';
 import { repairMesh, hollowSolid, scaleMesh, solidToArrays } from '../_lib/print/repair.js';
@@ -70,7 +73,9 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const rate = await limits.printQuoteIp(clientIp(req));
+	const who = await requireCreator(req, res, { action: 'prepare a model for printing' });
+	if (!who) return;
+	const rate = await limits.printQuoteIp(who.user ? `user:${who.user.id}` : clientIp(req));
 	if (!rate.success) return rateLimited(res, rate, 'too many prepare requests');
 
 	const body = await readJson(req, 8_000).catch(() => null);

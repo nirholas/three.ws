@@ -28,6 +28,7 @@
 import { createHash } from 'node:crypto';
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
+import { requireCreator, resolveCreator } from './_lib/creator-account.js';
 import { assertPublicHttpsUrl, SsrfError } from './_lib/ssrf.js';
 import { createRegenProvider } from './_providers/gcp.js';
 import { mirrorToR2 } from './_lib/mirror-r2.js';
@@ -122,13 +123,23 @@ function workerParamsForFormat(format, { mode, polyBudget, textureSize, preserve
 }
 
 async function startJob(req, res) {
-	const ip = clientIp(req);
-	const rl = await limits.mcp3dGenerate(ip);
+	const body = await readJson(req, 4_000).catch(() => null);
+	const paymentId = typeof body?.payment_id === 'string' ? body.payment_id.trim() : '';
+	const payRefId = typeof body?.ref_id === 'string' ? body.ref_id.trim() : '';
+
+	// Who answers for this export. A settled $THREE payment is already
+	// accountable (a wallet signed it), so it stays open to a caller without an
+	// account; the holder path (no payment) needs a signed-in account, like every
+	// other creation surface (api/_lib/creator-account.js). Either way the budget
+	// is metered per account when there is one.
+	const who = paymentId && payRefId
+		? await resolveCreator(req, res)
+		: await requireCreator(req, res, { action: 'make a game-ready model' });
+	if (!who) return;
+	const rl = await limits.mcp3dGenerate(who.user ? `user:${who.user.id}` : clientIp(req));
 	if (!rl.success) {
 		return rateLimited(res, rl);
 	}
-
-	const body = await readJson(req, 4_000).catch(() => null);
 
 	// $THREE hold-or-pay gate (Token Utility — consumption lever). The engine-ready
 	// export runs the remesh GPU worker (retopology + PBR re-bake), so it's a holder
@@ -138,8 +149,6 @@ async function startJob(req, res) {
 	// a non-holder presents a settled $THREE payment instead. The payment is validated
 	// here (read-only) and claimed atomically just before dispatch (paidExport below).
 	let paidExport = null;
-	const paymentId = typeof body?.payment_id === 'string' ? body.payment_id.trim() : '';
-	const payRefId = typeof body?.ref_id === 'string' ? body.ref_id.trim() : '';
 	if (paymentId && payRefId) {
 		try {
 			const proof = await assertForgePurchase({ action: GAMEREADY_ACTION, paymentId, refId: payRefId });

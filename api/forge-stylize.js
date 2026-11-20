@@ -18,6 +18,7 @@
 
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
+import { requireCreator } from './_lib/creator-account.js';
 import { assertPublicHttpsUrl, SsrfError } from './_lib/ssrf.js';
 import { createRegenProvider } from './_providers/gcp.js';
 import { isFbxMeshUrl, STYLIZE_FBX_MESSAGE } from './_lib/mesh-input.js';
@@ -42,8 +43,13 @@ function unconfigured(res) {
 }
 
 async function startJob(req, res) {
-	const ip = clientIp(req);
-	const rl = await limits.mcp3dGenerate(ip);
+	// Making something needs an account (api/_lib/creator-account.js), and the
+	// generation budget is metered per account so one person cannot spread a
+	// burst across addresses. A platform job without a named person keeps the IP.
+	const who = await requireCreator(req, res, { action: 'restyle a 3D model' });
+	if (!who) return;
+	const rateKey = who.user ? `user:${who.user.id}` : clientIp(req);
+	const rl = await limits.mcp3dGenerate(rateKey);
 	if (!rl.success) {
 		return rateLimited(res, rl);
 	}

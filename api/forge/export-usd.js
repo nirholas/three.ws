@@ -10,6 +10,7 @@
 
 import { cors, error, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
+import { requireCreator } from '../_lib/creator-account.js';
 import {
 	loadCreationForUsd,
 	pollUsdExport,
@@ -29,7 +30,11 @@ export function createExportUsdHandler({ loadCreation = loadCreationForUsd, conf
 	}
 
 	async function start(req, res) {
-		const rate = await limits.usdExportIp(clientIp(req));
+		// An export runs the OpenUSD worker and hosts the files it writes, for a
+		// Forge model or any public GLB: it needs an account, metered per account.
+		const who = await requireCreator(req, res, { action: 'export a model to OpenUSD' });
+		if (!who) return;
+		const rate = await limits.usdExportIp(who.user ? `user:${who.user.id}` : clientIp(req));
 		if (!rate.success) return rateLimited(res, rate, 'too many OpenUSD exports');
 		const body = await readJson(req, 16_384);
 		try {

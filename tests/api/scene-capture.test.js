@@ -13,6 +13,14 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+// Making or uploading needs an account (api/_lib/creator-account.js). These
+// cases exercise what happens past that gate, so the caller is signed in. The
+// gate itself has its own suite in tests/creation-endpoints-auth.test.js.
+vi.mock('../../api/_lib/auth.js', async (orig) => ({
+	...(await orig()),
+	getRequestUser: async () => ({ id: 'creator-test-user' }),
+}));
+
 const ORIGINAL_FETCH = globalThis.fetch;
 const ENV_KEYS = ['GCP_VIDEO2SCENE_URL', 'GCP_RECONSTRUCTION_KEY'];
 const ORIGINAL_ENV = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]));

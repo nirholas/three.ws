@@ -7,9 +7,17 @@
 
 import { createServer } from 'node:http';
 
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createExportUsdHandler, toJob } from '../api/forge/export-usd.js';
+
+// Making or uploading needs an account (api/_lib/creator-account.js). These
+// cases exercise what happens past that gate, so the caller is signed in. The
+// gate itself has its own suite in tests/creation-endpoints-auth.test.js.
+vi.mock('../api/_lib/auth.js', async (orig) => ({
+	...(await orig()),
+	getRequestUser: async () => ({ id: 'creator-test-user' }),
+}));
 
 const ID = '9b2e4c61-3a7d-4f10-8c55-1e2d3f4a5b6c';
 const PRIVATE = '9b2e4c61-3a7d-4f10-8c55-1e2d3f4a5b6d';

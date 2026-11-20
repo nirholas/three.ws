@@ -11,6 +11,14 @@
 import { describe, it, expect, vi } from 'vitest';
 import { Readable } from 'node:stream';
 
+// Making or uploading needs an account (api/_lib/creator-account.js). These
+// cases exercise what happens past that gate, so the caller is signed in. The
+// gate itself has its own suite in tests/creation-endpoints-auth.test.js.
+vi.mock('../../api/_lib/auth.js', async (orig) => ({
+	...(await orig()),
+	getRequestUser: async () => ({ id: 'creator-test-user' }),
+}));
+
 // Stub the GCP provider so no real Cloud Run service is needed.
 const submit = vi.fn(async () => ({ extJobId: 'a'.repeat(24), eta: 30 }));
 const status = vi.fn(async () => ({

@@ -24,6 +24,7 @@
 
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
+import { requireCreator } from './_lib/creator-account.js';
 import { fetchUpstream } from './_lib/upstream-fetch.js';
 
 // The worker is a Cloud Run service reached over public HTTPS: a submit is
@@ -59,7 +60,13 @@ function unconfigured(res) {
 }
 
 async function startJob(req, res, cfg) {
-	const rl = await limits.mcp3dGenerate(clientIp(req));
+	// Making something needs an account (api/_lib/creator-account.js), and the
+	// generation budget is metered per account so one person cannot spread a
+	// burst across addresses. A platform job without a named person keeps the IP.
+	const who = await requireCreator(req, res, { action: 'make a garment' });
+	if (!who) return;
+	const rateKey = who.user ? `user:${who.user.id}` : clientIp(req);
+	const rl = await limits.mcp3dGenerate(rateKey);
 	if (!rl.success) return rateLimited(res, rl);
 
 	const body = await readJson(req, 4_000).catch(() => null);

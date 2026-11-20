@@ -16,12 +16,14 @@
  * set; otherwise returns a clean 503 so the page degrades to its sample renderer.
  *
  * The result is a binary .ply point cloud the /capture page renders client-side
- * with a WebGL point-cloud viewer. No auth — rate-limited by client IP on the
- * same mcp3d buckets the rest of the forge surface uses.
+ * with a WebGL point-cloud viewer. Needs an account (anonymous callers get 401
+ * sign_in_required); rate-limited per account on the same mcp3d buckets the
+ * rest of the forge surface uses.
  */
 
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
+import { requireCreator } from './_lib/creator-account.js';
 import { assertPublicHttpsUrl, SsrfError } from './_lib/ssrf.js';
 import { createRegenProvider } from './_providers/gcp.js';
 
@@ -48,8 +50,13 @@ function unconfigured(res) {
 }
 
 async function startJob(req, res) {
-	const ip = clientIp(req);
-	const rl = await limits.mcp3dGenerate(ip);
+	// Making something needs an account (api/_lib/creator-account.js), and the
+	// generation budget is metered per account so one person cannot spread a
+	// burst across addresses. A platform job without a named person keeps the IP.
+	const who = await requireCreator(req, res, { action: 'reconstruct a scene' });
+	if (!who) return;
+	const rateKey = who.user ? `user:${who.user.id}` : clientIp(req);
+	const rl = await limits.mcp3dGenerate(rateKey);
 	if (!rl.success) return rateLimited(res, rl, 'Reconstruction limit reached. Try again shortly.');
 
 	const body = await readJson(req, 8_000).catch(() => null);

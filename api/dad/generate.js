@@ -12,13 +12,16 @@
  * getRegenProvider(), which returns an image→textured-GLB on a humanoid rig.
  * No forge routing, tiers, or providers are touched.
  *
- * No auth — this is a public, shareable feature. Spend is bounded by a per-IP
- * limiter PLUS the platform-wide cost circuit breaker whenever the resolved
- * lane bills real money (the same breaker the forge endpoint uses).
+ * Making an avatar needs an account (api/_lib/creator-account.js): anonymous
+ * callers get 401 sign_in_required. The page stays public and shareable; only
+ * the generate call asks. Spend is bounded by a per-account limiter PLUS the
+ * platform-wide cost circuit breaker whenever the resolved lane bills real
+ * money (the same breaker the forge endpoint uses). Polling stays open.
  */
 
 import { cors, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { requireCreator } from '../_lib/creator-account.js';
 import { assertPublicHttpsUrl, SsrfError } from '../_lib/ssrf.js';
 import { getRegenProvider } from '../_lib/regen-provider.js';
 
@@ -38,8 +41,9 @@ function unconfigured(res) {
 }
 
 async function startJob(req, res) {
-	const ip = clientIp(req);
-	const rl = await limits.mcp3dGenerate(ip);
+	const who = await requireCreator(req, res, { action: 'make a 3D avatar' });
+	if (!who) return;
+	const rl = await limits.mcp3dGenerate(who.user ? `user:${who.user.id}` : clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	// Let wrap() surface a genuine 413 (too large) / 415 (not JSON) instead of

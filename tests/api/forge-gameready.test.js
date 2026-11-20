@@ -13,6 +13,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Readable } from 'node:stream';
 import { signTierPass } from '../../api/_lib/three-tier.js';
 
+// Making or uploading needs an account (api/_lib/creator-account.js). These
+// cases exercise what happens past that gate, so the caller is signed in. The
+// gate itself has its own suite in tests/creation-endpoints-auth.test.js.
+vi.mock('../../api/_lib/auth.js', async (orig) => ({
+	...(await orig()),
+	getRequestUser: async () => ({ id: 'creator-test-user' }),
+}));
+
 // Stub the GCP provider — each submit returns a distinct upstream task id so the
 // composite job id packs both formats; status() returns a done remesh result.
 const submit = vi.fn(async (req) => ({
