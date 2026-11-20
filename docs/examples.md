@@ -753,24 +753,31 @@ genuinely invested in the user's progress.
 
 ## Every runnable example in the repo
 
-The repo ships 51 examples: 12 web component demos, 12 end-to-end projects, and 27 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
+The repo ships 61 examples: 12 web component demos, 19 end-to-end projects, and 30 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
 
 ### Example projects
 
 | Example | What it shows | Run it |
 |---|---|---|
+| [`examples/grok-agent-avatar`](../examples/grok-agent-avatar) | A page with a live three.ws 3D avatar named Nova that you can chat with. Grok writes each reply and picks the feeling behind it. The page shows that feeling on the avatar through the documented <agent-3d> API. | `node examples/grok-agent-avatar/server.mjs` |
 | [`examples/agenc-task-roundtrip`](../examples/agenc-task-roundtrip) | End-to-end demonstration of a three.ws agent participating in the AgenC coordination protocol on Solana devnet. A creator wallet posts a task; a worker wallet (the "three.ws agent") claims and completes it. | `node examples/agenc-task-roundtrip/run.mjs` |
 | [`examples/agent-native-3d`](../examples/agent-native-3d) | An agent given a goal ("get yourself a body") generates the 3D assets it needs and uses them - no browser, no mocks, no human in the loop. | `node examples/agent-native-3d/run.mjs` |
+| [`examples/grok`](../examples/grok) | Six runnable examples that pair xAI's Grok with the three.ws studio server: a free catalog of CC0 3D assets, free text-to-3D generation, rigging and rendering, all over MCP or plain HTTP. | Reference files, nothing to execute |
 | [`examples/coach-leo`](../examples/coach-leo) | A complete, minimal example of a three.ws agent defined entirely as files: a manifest pointing at a 3D body, a brain, a voice, a memory policy, and one installed skill. | Reference files, nothing to execute |
 | [`examples/skills`](../examples/skills) | Six installable skill bundles for the three.ws agent runtime. | Reference files, nothing to execute |
+| [`examples/grok-node-responses`](../examples/grok-node-responses) | Grok finds a chair in the free three.ws catalog and, if none fits, makes a low-poly wooden chair. Then the script renders the GLB to a PNG through the three.ws renderer. | `node examples/grok-node-responses/index.mjs` |
+| [`examples/grok-python-mcp`](../examples/grok-python-mcp) | Grok finds a chair in the free three.ws catalog and, if none fits, makes a low-poly wooden chair. It uses the official xAI Python SDK (xai-sdk) with the three.ws studio server attached as a remote MCP tool. | `cd examples/grok-python-mcp && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/python main.py` |
+| [`examples/grok-curl`](../examples/grok-curl) | The whole flow in one shell script with no SDK: search the three.ws catalog, ask Grok (xAI Responses API with three.ws as a remote MCP tool) to find or make a chair, then render the GLB to a PNG. | `bash examples/grok-curl/run.sh` |
+| [`examples/grok-build-workflow`](../examples/grok-build-workflow) | A walk-through of the three.ws plugin for Grok Build, xAI's coding agent for the terminal. It covers installing the plugin, taking the guided tour, making a model from one sentence, and loading the result into a three.js scene. | `cd examples/grok-build-workflow/starter && npm install && npm run dev` |
 | [`examples/grok-remote-mcp`](../examples/grok-remote-mcp) | Grok generates a real, downloadable 3D model (GLB) by calling the free three.ws MCP server through xAI's Responses API. xAI connects to the server and runs the tool calls on its side; this script only talks to api.x.ai. Zero dependencies, Node 20 or newer. | `node examples/grok-remote-mcp/index.mjs` |
 | [`examples/metamask-agent-wallet`](../examples/metamask-agent-wallet) | A single-page demo that gives a three.ws agent a real server-side wallet through the MetaMask Agentic CLI (mm). | `node examples/metamask-agent-wallet/server.mjs` |
 | [`examples/monicas-apartment`](../examples/monicas-apartment) | A single, self-contained HTML file that rebuilds the iconic Monica Geller apartment set from Friends as a walkable first-person 3D scene: purple walls, the purple front door with the yellow peephole frame, teal kitchen cabinets, the mismatched dining chairs, | `npm run dev, then open /examples/monicas-apartment/index.html` |
 | [`examples/paid-mcp-server`](../examples/paid-mcp-server) | A complete, runnable MCP server whose tools charge per call in USDC on Solana over x402. It ships two tools on purpose: | `cd examples/paid-mcp-server && npm install && npm run start` |
 | [`examples/pump-fun-agent`](../examples/pump-fun-agent) | An example agent manifest that composes all four production pump.fun skills into one 3D trading agent: swap, coin creation, creator-fee collection, and token payments. | Reference files, nothing to execute |
-| [`examples/google-adk`](../examples/google-adk) | A Google Agent Development Kit agent that calls the free three.ws MCP server through MCPToolset. Zero three.ws credentials: the server is https://three.ws/api/mcp-studio, the free studio surface (no account, no key). | `node examples/google-adk/index.mjs` |
+| [`examples/google-adk`](../examples/google-adk) | A Google Agent Development Kit agent that calls the free three.ws MCP server through MCPToolset. The server is https://three.ws/api/mcp-studio, the free studio surface: nothing to pay, and listing its tools needs no key. | `node examples/google-adk/index.mjs` |
 | [`examples/three-concierge`](../examples/three-concierge) | The reference agent for manifest spec agent-manifest/0.2. Trinity welcomes users to three.ws, explains the platform, and launches and trades $three on pump.fun through the real pump.fun skills in pump-fun-skills/. | Reference files, nothing to execute |
 | [`examples/wallet-sign-in`](../examples/wallet-sign-in) | A single-page, no-build demo of the two wallet authentication rails three.ws runs itself: Sign-In with Solana (SIWS) and Sign-In with Ethereum (SIWE). | `npm run dev, then open /examples/wallet-sign-in/index.html` |
+| [`examples/grok-x-search-to-3d`](../examples/grok-x-search-to-3d) | Grok searches X for a topic from the last seven days and summarizes the conversation. It designs one physical prop that captures the conversation and drafts a short post introducing it. | `node examples/grok-x-search-to-3d/index.mjs` |
 
 ### Package examples
 
@@ -803,6 +810,9 @@ The repo ships 51 examples: 12 web component demos, 12 end-to-end projects, and 
 | [`packages/x402-server/examples`](../packages/x402-server/examples) | Runnable examples for the seller half of x402. Each is a standalone .mjs file. | `node packages/x402-server/examples/express-metered-api.mjs` |
 | [`examples`](../examples) | Runnable demos for the three.ws SDKs and agent runtime. Two kinds live here: | `npm run dev, then open /examples/agent-presence.html` |
 | [`agent-payments-sdk/src/solana/examples`](../agent-payments-sdk/src/solana/examples) | Runnable examples for the Solana half of @three-ws/agent-payments. They read live mainnet data and never sign or send a transaction, so nothing here can spend. | Reference files, nothing to execute |
+| [`integrations/livekit/livekit-plugins-threews/examples`](../integrations/livekit/livekit-plugins-threews/examples) | Agent Framework avatar plugin for three.ws 3D avatars. | `cd integrations/livekit/livekit-plugins-threews/examples && python3 avatar_agent.py` |
+| [`integrations/microsoft/semantic-kernel-python/examples`](../integrations/microsoft/semantic-kernel-python/examples) | A Semantic Kernel plugin for three.ws. | `cd integrations/microsoft/semantic-kernel-python/examples && python3 chat_agent.py` |
+| [`integrations/pipecat/pipecat-threews/examples`](../integrations/pipecat/pipecat-threews/examples) | A Pipecat frame processor that publishes three.ws 3D avatar motion data from any Pipecat pipeline. | `cd integrations/pipecat/pipecat-threews/examples && python3 avatar_bot.py` |
 
 ### Web component demos
 

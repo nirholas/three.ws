@@ -77,6 +77,16 @@ describe('examples index generator', () => {
 		}
 	});
 
+	it('gives Python examples and projects that live in a subfolder a real run command', () => {
+		run();
+		const { examples } = JSON.parse(readFileSync(JSON_OUT, 'utf8'));
+		const byId = Object.fromEntries(examples.map((e) => [e.id, e]));
+		const python = byId['project:grok-python-mcp'];
+		expect(python.files).toContain('main.py');
+		expect(python.run).toBe('cd examples/grok-python-mcp && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/python main.py');
+		expect(byId['project:grok-build-workflow'].run).toBe('cd examples/grok-build-workflow/starter && npm install && npm run dev');
+	});
+
 	it('is idempotent: running it repeatedly does not grow or shrink the doc', () => {
 		run();
 		const afterFirst = readFileSync(DOC, 'utf8');

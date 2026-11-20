@@ -135,7 +135,7 @@ function listFiles(dir) {
 }
 
 function runnableFiles(dir) {
-	return listFiles(dir).filter((f) => /\.(mjs|js|ts|html|sh|json)$/.test(f) && f !== 'package.json');
+	return listFiles(dir).filter((f) => /\.(mjs|js|ts|py|html|sh|json)$/.test(f) && f !== 'package.json');
 }
 
 // How a reader actually runs this example, stated concretely.
@@ -148,17 +148,38 @@ function runHint(dirRel, files) {
 	if (script) return `node ${dirRel}/${script}`;
 	if (shell) return `bash ${dirRel}/${shell}`;
 	if (html) return `npm run dev, then open /${dirRel}/${html}`;
-	// A project with its own package.json runs through its declared script.
+	const python = files.find((f) => f.endsWith('.py'));
+	if (python) {
+		const install = existsSync(join(root, dirRel, 'requirements.txt'))
+			? ' && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/python'
+			: ' && python3';
+		return `cd ${dirRel}${install} ${python}`;
+	}
+	// A project with its own package.json runs through its declared script; a
+	// walk-through whose runnable project sits one folder down runs from there.
+	return npmScriptHint(dirRel) ?? subfolderHint(dirRel);
+}
+
+function npmScriptHint(dirRel) {
 	const pkgPath = join(root, dirRel, 'package.json');
-	if (existsSync(pkgPath)) {
-		try {
-			const scripts = JSON.parse(read(pkgPath)).scripts || {};
-			for (const name of ['start', 'dev', 'demo', 'run']) {
-				if (scripts[name]) return `cd ${dirRel} && npm install && npm run ${name}`;
-			}
-		} catch {
-			/* a malformed package.json just means no hint */
+	if (!existsSync(pkgPath)) return null;
+	try {
+		const scripts = JSON.parse(read(pkgPath)).scripts || {};
+		for (const name of ['start', 'dev', 'demo', 'run']) {
+			if (scripts[name]) return `cd ${dirRel} && npm install && npm run ${name}`;
 		}
+	} catch {
+		/* a malformed package.json just means no hint */
+	}
+	return null;
+}
+
+function subfolderHint(dirRel) {
+	const abs = join(root, dirRel);
+	for (const sub of readdirSync(abs).sort()) {
+		if (sub.startsWith('.') || sub === 'node_modules' || !statSync(join(abs, sub)).isDirectory()) continue;
+		const hint = npmScriptHint(`${dirRel}/${sub}`);
+		if (hint) return hint;
 	}
 	return null;
 }
