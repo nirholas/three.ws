@@ -63,7 +63,8 @@ Suggested description for the pull request:
 > GPU: image, text and sketch to 3D, a humanoid auto-rigger, a quad remesher and
 > publishing to a shareable page. It is a direct-mode extension (no setup.py,
 > no venv, no weights; stdlib-only Python), so installing it runs no install
-> scripts. Generation is free and needs no account. Source and tests:
+> scripts. Generation is free with a three.ws account (an API key in
+> THREE_WS_API_KEY). Source and tests:
 > https://github.com/nirholas/three.ws/tree/main/integrations/modly
 
 Merging that is Lightning Pixel's decision; until then the extension installs

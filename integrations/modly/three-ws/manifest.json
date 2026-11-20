@@ -3,7 +3,7 @@
   "name": "three.ws Cloud",
   "type": "model",
   "source": "https://github.com/nirholas/three.ws/tree/main/integrations/modly",
-  "description": "Cloud 3D generation, auto-rigging and retopology from three.ws Forge. No GPU, no weights, no setup: image, text and sketch to 3D on hosted TRELLIS and Hunyuan3D lanes, a humanoid auto-rigger, a quad remesher, and one-click publishing to a shareable three.ws page.",
+  "description": "Cloud 3D generation, auto-rigging and retopology from three.ws Forge. No GPU, no weights, just a free three.ws account: image, text and sketch to 3D on hosted TRELLIS and Hunyuan3D lanes, a humanoid auto-rigger, a quad remesher, and one-click publishing to a shareable three.ws page.",
   "version": "1.0.0",
   "author": "three.ws",
   "generator_class": "ThreeWSGenerator",
@@ -61,6 +61,13 @@
           "type": "string",
           "default": "",
           "tooltip": "Only for engines marked (your key). Prefer the THREE_WS_PROVIDER_KEY environment variable so the key is not saved into workflow files."
+        },
+        {
+          "id": "api_key",
+          "label": "three.ws API key",
+          "type": "string",
+          "default": "",
+          "tooltip": "Making a model needs a free three.ws account: a key from three.ws/dashboard/api-keys. Prefer the THREE_WS_API_KEY environment variable so the key is not saved into workflow files."
         }
       ]
     },
@@ -127,6 +134,13 @@
           "type": "string",
           "default": "",
           "tooltip": "Needed for the native route. Prefer the THREE_WS_PROVIDER_KEY environment variable."
+        },
+        {
+          "id": "api_key",
+          "label": "three.ws API key",
+          "type": "string",
+          "default": "",
+          "tooltip": "Making a model needs a free three.ws account: a key from three.ws/dashboard/api-keys. Prefer the THREE_WS_API_KEY environment variable so the key is not saved into workflow files."
         }
       ]
     },
@@ -153,6 +167,13 @@
             { "value": "standard", "label": "Standard" },
             { "value": "high", "label": "High" }
           ]
+        },
+        {
+          "id": "api_key",
+          "label": "three.ws API key",
+          "type": "string",
+          "default": "",
+          "tooltip": "Making a model needs a free three.ws account: a key from three.ws/dashboard/api-keys. Prefer the THREE_WS_API_KEY environment variable so the key is not saved into workflow files."
         }
       ]
     },
@@ -161,7 +182,15 @@
       "name": "three.ws Auto-Rig",
       "input": "mesh",
       "output": "mesh",
-      "params_schema": []
+      "params_schema": [
+        {
+          "id": "api_key",
+          "label": "three.ws API key",
+          "type": "string",
+          "default": "",
+          "tooltip": "Making a model needs a free three.ws account: a key from three.ws/dashboard/api-keys. Prefer the THREE_WS_API_KEY environment variable so the key is not saved into workflow files."
+        }
+      ]
     },
     {
       "id": "remesh",
@@ -212,6 +241,13 @@
             { "value": 1024, "label": "1024" },
             { "value": 2048, "label": "2048" }
           ]
+        },
+        {
+          "id": "api_key",
+          "label": "three.ws API key",
+          "type": "string",
+          "default": "",
+          "tooltip": "Making a model needs a free three.ws account: a key from three.ws/dashboard/api-keys. Prefer the THREE_WS_API_KEY environment variable so the key is not saved into workflow files."
         }
       ]
     },
@@ -226,7 +262,7 @@
           "label": "three.ws API key",
           "type": "string",
           "default": "",
-          "tooltip": "A key with the avatars:write scope from three.ws/dashboard/api. Prefer the THREE_WS_API_KEY environment variable."
+          "tooltip": "A key with the avatars:write scope from three.ws/dashboard/api-keys. Prefer the THREE_WS_API_KEY environment variable."
         },
         {
           "id": "name",

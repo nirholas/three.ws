@@ -16,11 +16,14 @@ the SHA-256 of the GLB bytes), so chaining Image to 3D into Auto-Rig or Remesh
 never re-uploads the file. A mesh made by a local Modly model is uploaded once
 through the public GLB presign and then reused the same way.
 
-Configuration (all optional):
+Configuration:
 
-* ``THREE_WS_BASE_URL``      deployment origin, default ``https://three.ws``
-* ``THREE_WS_PROVIDER_KEY``  Meshy/Tripo/Rodin/Stability/Replicate key for BYOK engines
-* ``THREE_WS_API_KEY``       three.ws key with ``avatars:write`` for the Publish node
+* ``THREE_WS_API_KEY``       required: making a model needs a free three.ws
+                             account. A key from three.ws/dashboard/api-keys,
+                             sent as a bearer on every call (each node also has
+                             an ``api_key`` field). Publish needs ``avatars:write``.
+* ``THREE_WS_BASE_URL``      optional deployment origin, default ``https://three.ws``
+* ``THREE_WS_PROVIDER_KEY``  optional Meshy/Tripo/Rodin/Stability/Replicate key for BYOK engines
 """
 
 from __future__ import annotations
@@ -45,6 +48,11 @@ _STATE_FILE = "three-ws-state.json"
 _INDEX_LIMIT = 500
 
 ProgressCb = Optional[Callable[[int, str], None]]
+
+_NO_API_KEY = (
+    "three.ws needs a free account to make a model. Create an API key at "
+    "three.ws/dashboard/api-keys and set THREE_WS_API_KEY (or the node's three.ws API key field)."
+)
 
 
 class ThreeWSGenerator(BaseGenerator):
@@ -100,6 +108,8 @@ class ThreeWSGenerator(BaseGenerator):
         handler = handlers.get(node)
         if handler is None:
             raise ValueError(f"Unknown three.ws node '{node}'.")
+        if not self._client_for(params or {}).api_key:
+            raise RuntimeError(_NO_API_KEY)
         try:
             return handler(image_bytes or b"", params or {}, progress_cb, cancel_event)
         except ThreeWSError as exc:
@@ -337,9 +347,16 @@ class ThreeWSGenerator(BaseGenerator):
     def _client_for(self, params: dict) -> ThreeWSClient:
         base: ThreeWSClient = self._model
         key = str(params.get("provider_key") or os.environ.get("THREE_WS_PROVIDER_KEY") or "").strip()
-        if not key:
+        api_key = str(params.get("api_key") or "").strip()
+        if not key and not api_key:
             return base
-        return ThreeWSClient(base.base_url, provider_key=key, client_handle=base.client_handle, timeout=base.timeout)
+        return ThreeWSClient(
+            base.base_url,
+            provider_key=key or base.provider_key,
+            api_key=api_key or base.api_key or "",
+            client_handle=base.client_handle,
+            timeout=base.timeout,
+        )
 
     def _live_catalog(self, client: ThreeWSClient) -> dict:
         if self._catalog is None or time.monotonic() - self._catalog_at > 600:
@@ -461,6 +478,8 @@ def _ticker(gen: BaseGenerator, progress_cb, start: int, end: int, expected_s: f
 
 
 def _explain(exc: ThreeWSError) -> str:
+    if exc.status == 401 or exc.code == "sign_in_required":
+        return exc.message or _NO_API_KEY
     if exc.code == "rate_limited" or exc.status == 429:
         return "three.ws is rate limiting this machine. Wait a minute and run again."
     if exc.code == "unreachable":
@@ -468,5 +487,5 @@ def _explain(exc: ThreeWSError) -> str:
     if exc.code == "needs_key":
         return "That engine needs your provider key. Set it on the node or in THREE_WS_PROVIDER_KEY."
     if exc.code == "missing_api_key":
-        return "Publishing needs a three.ws API key with avatars:write. Create one at three.ws/dashboard/api."
+        return "Publishing needs a three.ws API key with avatars:write. Create one at three.ws/dashboard/api-keys."
     return exc.message

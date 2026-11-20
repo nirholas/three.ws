@@ -7,7 +7,7 @@ editor. This folder holds the two Modly extensions three.ws ships:
 
 | Extension | Folder | Type | What it adds to Modly |
 |---|---|---|---|
-| three.ws Cloud | [`three-ws/`](three-ws/) | model | Six nodes that run on three.ws GPUs: image, text and sketch to 3D, auto-rig, remesh, publish. No GPU, no weights, no setup. |
+| three.ws Cloud | [`three-ws/`](three-ws/) | model | Six nodes that run on three.ws GPUs: image, text and sketch to 3D, auto-rig, remesh, publish. No GPU, no weights, just a free three.ws account. |
 | Publish to three.ws | [`three-ws-publish/`](three-ws-publish/) | process | One node that saves any mesh, from any generator, to your three.ws account. See its [README](three-ws-publish/README.md). |
 
 The other direction (three.ws using a Modly install) lives outside this folder;
@@ -19,7 +19,10 @@ platform.
 Every node talks to the public Forge API (`https://three.ws/api/forge` and
 friends) through the shared, stdlib-only
 [`three_ws_client.py`](../_pyclient/three_ws_client.py). Generation is free and
-needs no account.
+needs a free three.ws account: set `THREE_WS_API_KEY` to a key from
+[three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys) (or fill the
+node's **three.ws API key** field). Without one, a node stops with that
+instruction instead of sending an anonymous request.
 
 | Node | Input | Parameters | Output |
 |---|---|---|---|
@@ -69,12 +72,13 @@ Instead of linking you can copy the folder into Modly's extensions directory
 
 ### Configuration
 
-All optional. Set them in the environment Modly starts from.
+Set them in the environment Modly starts from. `THREE_WS_API_KEY` is required;
+the rest are optional.
 
 | Variable | Used by | Meaning |
 |---|---|---|
 | `THREE_WS_PROVIDER_KEY` | Image, Text | Your own Meshy, Tripo, Rodin, Stability or Replicate key, for the engines marked "your key". The node's field wins over the variable. It travels only as the `x-forge-provider-key` header. |
-| `THREE_WS_API_KEY` | Publish | A three.ws API key with the `avatars:write` scope, from [three.ws/dashboard/api](https://three.ws/dashboard/api). Prefer this over the node field so the key never ends up in a shared workflow. |
+| `THREE_WS_API_KEY` | all | A three.ws API key from [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys), sent as a bearer on every call: making a model needs an account. Publish also needs the key's `avatars:write` scope. Prefer this over the node field so the key never ends up in a shared workflow. |
 | `THREE_WS_BASE_URL` | all | Point the extension at another three.ws deployment. Default `https://three.ws`. |
 
 The extension keeps one small file next to Modly's models folder,
