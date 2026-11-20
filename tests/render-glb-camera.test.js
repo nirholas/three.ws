@@ -11,7 +11,7 @@
 // the rasterizer fails here.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Document, NodeIO } from '@gltf-transform/core';
+import { buildAsymmetricGlb } from './_helpers/asymmetric-glb.js';
 
 let glbBytes = null;
 
@@ -28,36 +28,6 @@ vi.mock('../api/_lib/ssrf-guard.js', async (orig) => {
 	const real = await orig();
 	return { ...real, assertSafePublicUrl: async () => {} };
 });
-
-// An L-shaped pair of boxes in two colours: every azimuth shows a different
-// silhouette, so two camera angles can never render the same picture.
-async function buildAsymmetricGlb() {
-	const doc = new Document();
-	const buffer = doc.createBuffer();
-	const scene = doc.createScene('s');
-	const box = (sx, sy, sz, ox, oy, oz, color) => {
-		const p = [];
-		const idx = [];
-		const corners = [
-			[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0],
-			[0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1],
-		];
-		for (const [x, y, z] of corners) p.push(ox + x * sx, oy + y * sy, oz + z * sz);
-		const faces = [
-			[0, 2, 1], [0, 3, 2], [4, 5, 6], [4, 6, 7], [0, 1, 5], [0, 5, 4],
-			[2, 3, 7], [2, 7, 6], [1, 2, 6], [1, 6, 5], [0, 4, 7], [0, 7, 3],
-		];
-		for (const f of faces) idx.push(...f);
-		const pos = doc.createAccessor().setType('VEC3').setArray(new Float32Array(p)).setBuffer(buffer);
-		const ind = doc.createAccessor().setType('SCALAR').setArray(new Uint16Array(idx)).setBuffer(buffer);
-		const mat = doc.createMaterial().setBaseColorFactor(color).setRoughnessFactor(0.6);
-		const prim = doc.createPrimitive().setAttribute('POSITION', pos).setIndices(ind).setMaterial(mat);
-		scene.addChild(doc.createNode().setMesh(doc.createMesh().addPrimitive(prim)));
-	};
-	box(1.6, 0.4, 0.4, -0.8, 0, -0.2, [0.9, 0.2, 0.1, 1]);
-	box(0.4, 1.4, 0.4, 0.4, 0.4, -0.2, [0.1, 0.4, 0.9, 1]);
-	return new NodeIO().writeBinary(doc);
-}
 
 function makeRes() {
 	return {
