@@ -370,8 +370,9 @@ function summarize(args) {
 	return o;
 }
 
-// `opts.caller` is who the studio's limits charge on this request (./handler.js
-// studioCaller), and an idempotency_key belongs to it; `opts.onProgress`
+// `opts.caller` is who the studio's limits charge on this request, the
+// `{ key, kind }` that ./handler.js studioCaller returns: an idempotency_key
+// belongs to its key and usage_events labels the call by both; `opts.onProgress`
 // receives status frames when the client asked for progress notifications;
 // `opts.account` is the verified caller, which a creator tool requires.
 async function onToolCall(params, auth, started, req, surface, opts = {}) {
@@ -399,7 +400,7 @@ async function onToolCall(params, auth, started, req, surface, opts = {}) {
 		const ctx = {
 			...(budgetMs ? { deadline: started + budgetMs } : {}),
 			jobTool: surface.jobTool || 'check_job',
-			...(opts.caller ? { caller: opts.caller } : {}),
+			...(opts.caller?.key ? { caller: opts.caller.key } : {}),
 			...(opts.onProgress ? { onProgress: opts.onProgress } : {}),
 			...(creates ? { account: opts.account, creatorAuth: creatorForgeAuth(opts.account, req) } : {}),
 		};

@@ -94,7 +94,7 @@ async function call(name, args, { caller = 'inst:caller-a', surface = 'grok' } =
 		{ jsonrpc: '2.0', id: ++rpcId, method: 'tools/call', params: { name, arguments: args } },
 		{ userId: null, rateKey: '203.0.113.9', scope: '' },
 		req,
-		{ surface, caller, account: STUDIO_TEST_ACCOUNT },
+		{ surface, caller: { key: caller, kind: 'install' }, account: STUDIO_TEST_ACCOUNT },
 	);
 	return r.result;
 }

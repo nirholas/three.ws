@@ -427,12 +427,12 @@ export function studioHandler({ surface = 'full' } = {}) {
 		const token = progressTokenOf(body);
 		if (token !== null && acceptsEventStream(req)) {
 			track();
-			return streamToolCall(res, body, auth, req, { surface, caller: caller.key, token, account });
+			return streamToolCall(res, body, auth, req, { surface, caller, token, account });
 		}
 
 		const responses = [];
 		for (const msg of batch) {
-			const r = await dispatch(msg, auth, req, { surface, caller: caller.key, account });
+			const r = await dispatch(msg, auth, req, { surface, caller, account });
 			if (r !== null) responses.push(r);
 		}
 

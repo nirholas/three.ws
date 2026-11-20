@@ -96,12 +96,12 @@ const anon = rpcClient();
 await anon('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'grok-stats-live-check', version: '1' } });
 await anon('tools/list');
 await anon('tools/call', { name: 'search_docs', arguments: { query: 'rig a model' } });
-await anon('tools/call', { name: 'search_catalog', arguments: { query: 'chair' } });
+await anon('tools/call', { name: 'search_catalog', arguments: { q: 'chair', limit: 1 } });
 const refused = await anon('tools/call', { name: 'forge_free', arguments: { prompt: 'a brass telescope' } });
 
 const signedIn = rpcClient({ bearer: apiKey });
 await signedIn('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'grok-stats-live-check', version: '1' } });
-await signedIn('tools/call', { name: 'search_catalog', arguments: { query: 'lamp' } });
+await signedIn('tools/call', { name: 'search_catalog', arguments: { q: 'lamp', limit: 1 } });
 const forge = await signedIn('tools/call', { name: 'forge_free', arguments: { prompt: 'a brass telescope' } });
 
 await settle(sql, 5);

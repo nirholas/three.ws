@@ -28,6 +28,20 @@ vi.mock('../api/_lib/redis.js', async (importActual) => {
 
 vi.mock('../api/_lib/qstash.js', () => ({ qstashEnabled: () => false, publishJob: async () => {} }));
 
+// The handler path signs a caller in from its bearer token. A `test-acct:<id>`
+// bearer stands for an account the database really holds; every other bearer
+// goes through the real check.
+vi.mock('../api/_lib/auth.js', async (importOriginal) => {
+	const real = await importOriginal();
+	return {
+		...real,
+		authenticateBearer: async (bearer, ...rest) =>
+			typeof bearer === 'string' && bearer.startsWith('test-acct:')
+				? { userId: bearer.slice('test-acct:'.length), source: 'apikey', scope: 'avatars:read avatars:write' }
+				: real.authenticateBearer(bearer, ...rest),
+	};
+});
+
 vi.mock('../api/_lib/rate-limit.js', async (importOriginal) => {
 	const real = await importOriginal();
 	const pass = async () => ({ success: true, limit: 1, remaining: 1, reset: Date.now() + 1000 });
@@ -55,6 +69,7 @@ const { dispatch } = await import('../api/_mcp-studio/dispatch.js');
 const { usageClientLabel, madeModelUrl } = await import('../api/_mcp-studio/usage-tags.js');
 const { buildGrokStats } = await import('../api/_lib/grok-stats.js');
 const { default: statsHandler, STATS_CACHE } = await import('../api/grok/stats.js');
+const { default: grokHandler } = await import('../api/mcp-grok.js');
 
 const PROMPT = 'a brass telescope on a walnut tripod';
 const IP = '203.0.113.77';
@@ -100,6 +115,54 @@ describe('usage_events.client_id is a free-text attribution label', () => {
 		const row = rows.find((e) => e.tool === 'probe_label');
 		expect(row).toBeTruthy();
 		expect(row.client_id).toBe('mcp-grok:session:0123456789abcdef');
+	});
+});
+
+describe('a tools/call through the real /api/mcp-grok handler', () => {
+	let sql;
+	let user;
+
+	beforeAll(async () => {
+		const { pg } = await createFullSchemaDb();
+		holder.db = createPgliteSql({ pg });
+		sql = holder.db.sql;
+		[user] = await sql`insert into users (email, display_name) values ('grok.handler@contoso.example', 'Grok Handler') returning id`;
+	}, 180_000);
+
+	async function post(body, headers = {}) {
+		return invoke(grokHandler, {
+			method: 'POST',
+			url: '/api/mcp-grok',
+			headers: { host: 'three.ws', 'x-forwarded-proto': 'https', 'x-forwarded-for': IP, ...headers },
+			body,
+		});
+	}
+
+	it('records a signed-in call with the account label, so it counts as a client', async () => {
+		const realFetch = globalThis.fetch;
+		globalThis.fetch = doneForge();
+		try {
+			const { status, body } = await post(call('forge_free', { prompt: PROMPT }), { authorization: `Bearer test-acct:${user.id}` });
+			expect(status).toBe(200);
+			expect(body.result.isError).toBeFalsy();
+		} finally {
+			globalThis.fetch = realFetch;
+		}
+		const rows = await waitForRows(sql, (r) => r.some((e) => e.tool === 'forge_free' && e.user_id === user.id));
+		const row = rows.find((e) => e.tool === 'forge_free' && e.user_id === user.id);
+		expect(row.client_id).toMatch(/^mcp-grok:account:[0-9a-f]{16}$/);
+		expect(row.client_id).toBe(usageClientLabel('mcp-grok', { key: `acct:${user.id}`, kind: 'account' }));
+		const stats = await buildGrokStats({ sql });
+		expect(stats.clients['30d']).toBe(1);
+		expect(stats.counting_since).not.toBeNull();
+	});
+
+	it('records an anonymous call with a hashed IP label, never the IP', async () => {
+		await post(call('forge_free', { prompt: PROMPT }, 2));
+		const rows = await waitForRows(sql, (r) => r.some((e) => e.status === 'sign_in_required'));
+		const row = rows.find((e) => e.status === 'sign_in_required');
+		expect(row.client_id).toMatch(/^mcp-grok:ip:[0-9a-f]{16}$/);
+		expect(row.client_id).not.toContain(IP);
 	});
 });
 
