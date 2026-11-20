@@ -16,10 +16,12 @@
  * this function avoids proxying a multi-MB scene export through a serverless
  * handler.
  *
- * Auth-free, matching the rest of the anonymous creation surface: rate-limited
- * by client IP. When object storage isn't configured the endpoint returns a
- * clean 503 and the Share panel explains the deployment can't host the export
- * (the user can still use File ▸ Export in the editor to save locally).
+ * Needs an account, like every creation surface: anonymous callers get 401
+ * sign_in_required (api/_lib/creator-account.js). Rate-limited and stored per
+ * account, so a hosted scene traces back to the person who shared it. When
+ * object storage isn't configured the endpoint returns a clean 503 and the
+ * Share panel explains the deployment can't host the export (the user can
+ * still use File ▸ Export in the editor to save locally).
  */
 
 import { randomUUID } from 'node:crypto';
@@ -27,6 +29,8 @@ import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js'
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { presignUpload, publicUrl } from './_lib/r2.js';
 import { ANON_UPLOAD_LIMITS } from './_lib/anon-upload-limits.js';
+import { requireCreator } from './_lib/creator-account.js';
+import { hashClient } from './_lib/forge-store.js';
 
 // Accepted export types → file extension for the storage key. Binary glTF is
 // the only format Scene Studio's Share action produces; the vendored editor's
@@ -63,8 +67,9 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	const ip = clientIp(req);
-	const rl = await limits.upload(`scene-share:${ip}`);
+	const who = await requireCreator(req, res, { action: 'share a scene' });
+	if (!who) return;
+	const rl = await limits.upload(`scene-share:${who.user ? `user:${who.user.id}` : clientIp(req)}`);
 	if (!rl.success) return rateLimited(res, rl, 'Upload limit reached. Try again shortly.');
 
 	const body = await readJson(req, 2_000).catch(() => null);
@@ -87,7 +92,8 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	const key = `scene/shares/${randomUUID()}.${ext}`;
+	const owner = hashClient(who.user ? `user:${who.user.id}` : 'platform').slice(0, 12);
+	const key = `scene/shares/${owner}/${randomUUID()}.${ext}`;
 
 	let uploadUrl;
 	try {

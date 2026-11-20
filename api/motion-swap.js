@@ -27,6 +27,8 @@ import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js'
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { presignUpload, publicUrl } from './_lib/r2.js';
 import { ANON_UPLOAD_LIMITS } from './_lib/anon-upload-limits.js';
+import { requireCreator } from './_lib/creator-account.js';
+import { hashClient } from './_lib/forge-store.js';
 import { createRegenProvider } from './_providers/gcp.js';
 
 // Provider job ids are base64url JSON envelopes (mode + task id + worker base
@@ -69,7 +71,11 @@ async function presignVideo(req, res, body) {
 				'Pass a public video URL to /api/motion-swap instead.',
 		});
 	}
-	const rl = await limits.upload(`motion-swap:${clientIp(req)}`);
+	// Uploading a video needs an account, metered and stored per account so a
+	// stray upload traces back to the person who made it.
+	const who = await requireCreator(req, res, { action: 'upload a video' });
+	if (!who) return;
+	const rl = await limits.upload(`motion-swap:${who.user ? `user:${who.user.id}` : clientIp(req)}`);
 	if (!rl.success) {
 		return rateLimited(res, rl, 'Upload limit reached. Try again shortly.');
 	}
@@ -93,7 +99,8 @@ async function presignVideo(req, res, body) {
 		});
 	}
 
-	const key = `motion-swap/uploads/${randomUUID()}.${ext}`;
+	const owner = hashClient(who.user ? `user:${who.user.id}` : 'platform').slice(0, 12);
+	const key = `motion-swap/uploads/${owner}/${randomUUID()}.${ext}`;
 	let uploadUrl;
 	try {
 		uploadUrl = await presignUpload({ key, contentType });
@@ -116,7 +123,9 @@ async function presignVideo(req, res, body) {
 }
 
 async function startJob(req, res, body) {
-	const rl = await limits.mcp3dGenerate(clientIp(req));
+	const who = await requireCreator(req, res, { action: 'capture motion from a video' });
+	if (!who) return;
+	const rl = await limits.mcp3dGenerate(who.user ? `user:${who.user.id}` : clientIp(req));
 	if (!rl.success) {
 		return rateLimited(res, rl);
 	}

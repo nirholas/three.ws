@@ -1,7 +1,7 @@
 // @ts-check
-// GET /api/cron/anon-upload-sweep: enforces the declared size on anonymous
-// presigned PUT uploads. presignUpload() cannot sign ContentLength (it breaks the
-// CORS preflight), so this hourly sweep lists each anonymous prefix, HEAD-checks
+// GET /api/cron/anon-upload-sweep: enforces the declared size on presigned PUT
+// uploads. presignUpload() cannot sign ContentLength (it breaks the CORS
+// preflight), so this hourly sweep lists each upload prefix, HEAD-checks
 // anything over its ceiling (api/_lib/anon-upload-limits.js) and deletes it.
 
 import { json, method, wrapCron } from '../_lib/http.js';

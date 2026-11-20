@@ -1,8 +1,9 @@
-// Enforces the declared size ceiling on anonymous presigned PUT uploads.
+// Enforces the declared size ceiling on presigned PUT uploads.
 //
 // A presigned PUT does not bind Content-Length, so a caller can declare 1 MB at
-// presign time and PUT far more. This walks each anonymous prefix, confirms any
-// object over its ceiling with a HEAD, and deletes it.
+// presign time and PUT far more, signed in or not. This walks each upload prefix
+// (per-account folders included), confirms any object over its ceiling with a
+// HEAD, and deletes it.
 //
 // Presigned URLs live 300s, so an object can only appear within minutes of its
 // presign; the sweep therefore only needs to look at recently modified keys

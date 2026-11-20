@@ -28,6 +28,15 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 	clientIp: vi.fn(() => '203.0.113.7'),
 }));
 
+// Uploads need an account (api/_lib/creator-account.js); these cases are about
+// the presign itself, so the caller is signed in. The gate has its own suite in
+// tests/creation-endpoints-auth.test.js.
+vi.mock('../../api/_lib/auth.js', async (orig) => ({
+	...(await orig()),
+	getRequestUser: async () => ({ id: 'user-motion' }),
+	getSessionUser: async () => ({ id: 'user-motion' }),
+}));
+
 const { default: handler } = await import('../../api/motion-swap.js');
 
 function makeRes() {

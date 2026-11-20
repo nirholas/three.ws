@@ -1,4 +1,7 @@
-// Per-prefix maximum object size for the anonymous presigned PUT handlers.
+// Per-prefix maximum object size for the presigned PUT upload handlers. The
+// handlers now require an account and key each object under a per-account
+// folder inside its prefix (`<prefix><owner hash>/<uuid>.<ext>`); the names keep
+// the historical "anon" wording because the size problem is the same either way.
 //
 // presignUpload() cannot sign ContentLength (it would add content-length to the
 // signed headers and break the browser CORS preflight), so the size a caller

@@ -9,10 +9,11 @@
  * Keeping multi-hundred-MB video off this serverless function is the whole point
  * — mirrors /api/forge-upload, but for video content types and a larger cap.
  *
- * Auth-free, matching the rest of the capture surface: rate-limited by client IP
- * and scoped to the anonymous browser handle (x-forge-client). When object
- * storage isn't configured the endpoint returns a clean 503 and the page falls
- * back to accepting a public video URL directly.
+ * Needs an account, like the rest of the capture surface: anonymous callers get
+ * 401 sign_in_required (api/_lib/creator-account.js). Rate-limited and stored per
+ * account, so every uploaded video traces back to the person who made it. When
+ * object storage isn't configured the endpoint returns a clean 503 and the page
+ * falls back to accepting a public video URL directly.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -21,6 +22,7 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { presignUpload, publicUrl } from './_lib/r2.js';
 import { ANON_UPLOAD_LIMITS } from './_lib/anon-upload-limits.js';
 import { hashClient } from './_lib/forge-store.js';
+import { requireCreator } from './_lib/creator-account.js';
 
 // Accepted source-video types → file extension for the storage key.
 const CONTENT_TYPE_EXT = Object.freeze({
@@ -43,11 +45,6 @@ function storageConfigured() {
 	);
 }
 
-function clientKeyFrom(req) {
-	const raw = req.headers['x-forge-client'];
-	return hashClient(Array.isArray(raw) ? raw[0] : raw);
-}
-
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
@@ -61,8 +58,9 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	const ip = clientIp(req);
-	const rl = await limits.upload(`scene:${ip}`);
+	const who = await requireCreator(req, res, { action: 'upload a video' });
+	if (!who) return;
+	const rl = await limits.upload(`scene:${who.user ? `user:${who.user.id}` : clientIp(req)}`);
 	if (!rl.success) return rateLimited(res, rl, 'Upload limit reached. Try again shortly.');
 
 	const body = await readJson(req, 2_000).catch(() => null);
@@ -85,8 +83,8 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	const clientKey = clientKeyFrom(req);
-	const key = `capture/uploads/${clientKey.slice(0, 12)}/${randomUUID()}.${ext}`;
+	const owner = hashClient(who.user ? `user:${who.user.id}` : 'platform').slice(0, 12);
+	const key = `capture/uploads/${owner}/${randomUUID()}.${ext}`;
 
 	let uploadUrl;
 	try {

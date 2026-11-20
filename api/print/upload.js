@@ -8,9 +8,10 @@
 //
 // Mirrors api/forge-upload.js, which does the same for /forge reference images:
 // same presign helper, same degrade-to-503 when storage is unconfigured, same
-// anonymous client scoping so uploads land under a stable prefix without an
-// account. The difference is the accepted type (a glTF binary, not an image) and
-// the size ceiling, which matches what the analyzer will agree to read.
+// account requirement (anonymous callers get 401 sign_in_required) and the same
+// per-account storage prefix, so every uploaded model traces back to a person.
+// The difference is the accepted type (a glTF binary, not an image) and the size
+// ceiling, which matches what the analyzer will agree to read.
 
 import { randomUUID } from 'node:crypto';
 
@@ -18,6 +19,7 @@ import { cors, json, method, rateLimited, readJson, wrap } from '../_lib/http.js
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { objectStorageUsable, presignUpload, publicUrl } from '../_lib/r2.js';
 import { hashClient } from '../_lib/forge-store.js';
+import { requireCreator } from '../_lib/creator-account.js';
 import { MAX_INPUT_BYTES } from '../_lib/print/mesh-io.js';
 
 // The one type a print pipeline can read. A .gltf with external buffers would
@@ -58,7 +60,9 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	const rl = await limits.upload(`print:${clientIp(req)}`);
+	const who = await requireCreator(req, res, { action: 'upload a model to print' });
+	if (!who) return;
+	const rl = await limits.upload(`print:${who.user ? `user:${who.user.id}` : clientIp(req)}`);
 	if (!rl.success) return rateLimited(res, rl, 'Upload limit reached. Try again shortly.');
 
 	const body = await readJson(req, 2_000).catch(() => null);
@@ -86,9 +90,8 @@ export default wrap(async (req, res) => {
 			? body.checksum_sha256
 			: undefined;
 
-	const rawClient = req.headers['x-forge-client'];
-	const clientKey = hashClient(Array.isArray(rawClient) ? rawClient[0] : rawClient);
-	const key = `print/uploads/${clientKey.slice(0, 12)}/${randomUUID()}.${ext}`;
+	const owner = hashClient(who.user ? `user:${who.user.id}` : 'platform').slice(0, 12);
+	const key = `print/uploads/${owner}/${randomUUID()}.${ext}`;
 
 	let uploadUrl;
 	try {
