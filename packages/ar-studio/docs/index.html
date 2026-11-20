@@ -159,7 +159,7 @@ footer.site a { color: var(--dim); }
 <section class="wrap" id="quickstart">
 	<div class="eyebrow">Quick start</div>
 	<h2>One line, and you have AR.</h2>
-	<p class="lead">No build step, no API key, no account. The models and the text-to-3D lane are free and keyless.</p>
+	<p class="lead">No build step, no API key, no account. The model library is free and keyless. Text-to-3D runs on the free three.ws lane, which makes models for a three.ws account: pass a key as <code>generate: { apiKey }</code> to turn it on.</p>
 	<h3>Plain HTML</h3>
 <pre><code>&lt;script type="module" src="https://unpkg.com/3d-ar-studio/dist/ar-studio.min.js"&gt;&lt;/script&gt;
 &lt;ar-studio&gt;&lt;/ar-studio&gt;</code></pre>
@@ -187,7 +187,7 @@ npx 3d-ar-studio deploy                 # push it and turn on GitHub Pages</code
 			<p>Place, drag, pinch-resize, twist-rotate and duplicate as many models as you want in a single live camera view. Every other web-AR drop-in stops at one.</p></div>
 		<div class="card"><span class="ico" aria-hidden="true">✍️</span>
 			<h3>Generate without leaving the camera</h3>
-			<p>Type "a brass desk lamp" into the dock. The generation runs behind the live view and the finished model drops into the room. Free, keyless, no account.</p></div>
+			<p>Type "a brass desk lamp" into the dock. The generation runs behind the live view and the finished model drops into the room. Free, with a three.ws API key.</p></div>
 		<div class="card"><span class="ico" aria-hidden="true">✦</span>
 			<h3>Real WebXR, not a fallback</h3>
 			<p>An always-armed hit-test reticle, one XRAnchor per model, real-world light estimation, and depth occlusion so models hide behind your furniture.</p></div>
@@ -250,7 +250,7 @@ createArStudio(el, { assets: {
 		<thead><tr><th>Option</th><th>Default</th><th>What it does</th></tr></thead>
 		<tbody>
 			<tr><td><code>assets</code></td><td><code>'three.ws'</code></td><td>Where models come from: a preset, a manifest URL, a source object, or an array of them.</td></tr>
-			<tr><td><code>generate</code></td><td>enabled, free three.ws lane</td><td><code>{ enabled, endpoint, kind, tier }</code>. <code>endpoint</code> is any MCP server exposing a compatible generate tool.</td></tr>
+			<tr><td><code>generate</code></td><td>hidden until a key is set</td><td><code>{ enabled, endpoint, apiKey, headers, kind, tier }</code>. The free three.ws lane makes models for a three.ws account, so Generate appears once <code>apiKey</code> or an <code>Authorization</code> header is set. A key in a public page is readable, so on a public site point <code>endpoint</code> at your own server route that adds it; any MCP server exposing a compatible generate tool works.</td></tr>
 			<tr><td><code>rooms</code></td><td>enabled</td><td><code>{ enabled, server }</code>. Point <code>server</code> at your own Colyseus deployment to host shared rooms yourself.</td></tr>
 			<tr><td><code>animations</code></td><td>three.ws idle clip</td><td><code>{ enabled, manifestUrl, clip }</code>. The clip retargeted onto humanoid models that ship no animation.</td></tr>
 			<tr><td><code>lighting</code></td><td><code>'studio'</code> HDRI</td><td><code>{ preset, urls }</code>. Set <code>preset: null</code> for procedural lighting only and zero HDRI download.</td></tr>

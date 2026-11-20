@@ -13,7 +13,7 @@ const BOOL = (v, fallback) => (v === null || v === undefined ? fallback : v !== 
 
 export class ArStudioElement extends HTMLElement {
 	static get observedAttributes() {
-		return ['assets', 'title', 'accent', 'back-href', 'generate', 'rooms', 'room-server', 'origin', 'share-base'];
+		return ['assets', 'title', 'accent', 'back-href', 'generate', 'api-key', 'rooms', 'room-server', 'origin', 'share-base'];
 	}
 
 	connectedCallback() {
@@ -43,7 +43,7 @@ export class ArStudioElement extends HTMLElement {
 				accent: attr('accent') || undefined,
 				backHref: attr('back-href') || null,
 			},
-			generate: { enabled: BOOL(attr('generate'), true) },
+			generate: { enabled: BOOL(attr('generate'), true), ...(attr('api-key') ? { apiKey: attr('api-key') } : {}) },
 			rooms: {
 				enabled: BOOL(attr('rooms'), true),
 				...(attr('room-server') ? { server: attr('room-server') } : {}),

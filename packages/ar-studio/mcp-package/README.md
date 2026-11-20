@@ -10,13 +10,14 @@ phone.
   "mcpServers": {
     "3d-ar-studio": {
       "command": "npx",
-      "args": ["-y", "3d-ar-studio-mcp"]
+      "args": ["-y", "3d-ar-studio-mcp"],
+      "env": { "THREE_WS_API_KEY": "sk_live_..." }
     }
   }
 }
 ```
 
-No API key. Every tool is free and keyless.
+Searching, composing and AR links need no key. `generate_3d_model` makes the model on three.ws, which needs a free three.ws account: create an API key at [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys) and set it as `THREE_WS_API_KEY` in the server's `env`.
 
 | Tool | What it does |
 | --- | --- |

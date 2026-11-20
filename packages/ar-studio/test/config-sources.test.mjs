@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { DEFAULTS, mergeConfig, resolveConfig, safeUrl } from '../src/config.js';
+import { DEFAULTS, THREE_WS, generationConfigured, mergeConfig, resolveConfig, safeUrl } from '../src/config.js';
 import { resolveSources } from '../src/sources/index.js';
 import { catalogueItems, filenameTitle, normalizeCatalogue } from '../src/sources/manifest.js';
 import { staticSource } from '../src/sources/static.js';
@@ -99,4 +99,14 @@ test('filenames become readable labels when a catalogue has no titles', () => {
 test('staticSource normalizes what it is given, once', async () => {
 	const source = staticSource({ items: [{ src: 'https://a.com/x.glb', title: 'X' }, { src: 'ftp://nope' }] });
 	assert.deepEqual(await source.list(), [{ src: 'https://a.com/x.glb', title: 'X', poster: '', keywords: 'x' }]);
+});
+
+test('Generate stays hidden on the default three.ws connector until a key is set up', () => {
+	assert.equal(resolveConfig({}, '').generate.enabled, false);
+	assert.equal(resolveConfig({ generate: { apiKey: 'sk_live_x' } }, '').generate.enabled, true);
+	assert.equal(resolveConfig({ generate: { headers: { Authorization: 'Bearer k' } } }, '').generate.enabled, true);
+	// The host's own endpoint handles its own auth.
+	assert.equal(resolveConfig({ generate: { endpoint: 'https://acme.example/api/forge-mcp' } }, '').generate.enabled, true);
+	assert.equal(resolveConfig({ generate: { enabled: false, apiKey: 'sk_live_x' } }, '').generate.enabled, false);
+	assert.equal(generationConfigured({ endpoint: THREE_WS.studioMcp, apiKey: '  ' }), false);
 });

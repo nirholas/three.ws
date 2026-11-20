@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+- **Text-to-3D carries a three.ws API key, because the three.ws lane now makes models only for
+  an account.** The studio connector answers an anonymous `forge_free` with `sign_in_required`,
+  so a studio with no key would show a Generate box that failed on every prompt. Pass a key from
+  [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys) as `generate: { apiKey }`
+  (or the `api-key` attribute) and it is sent as `Authorization: Bearer <key>`. Without a key,
+  an `Authorization` header or your own `endpoint`, Generate stays hidden and the studio offers
+  the model library only. A refused generation rejects with a `ForgeError` whose code is
+  `sign_in_required` and whose `apiKeysUrl` names where to get a key.
+- **The MCP server reads `THREE_WS_API_KEY`.** `generate_3d_model` sends it on every
+  generation and, without one, answers with how to set it up instead of failing opaquely.
+  Searching, composing and AR links still need no key. `server.json` declares the variable.
+
 ## 0.3.2
 
 - **A model placed through Quick Look now rests on your floor instead of hanging in the air.**

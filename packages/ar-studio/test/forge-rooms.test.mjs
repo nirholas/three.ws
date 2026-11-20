@@ -152,3 +152,43 @@ test('pinch scaling composes across gestures and clamps at both ends', () => {
 	assert.equal(clampPinScale(99), PINCH_SCALE_MAX);
 	assert.ok(PINCH_DEADZONE_PX > 0);
 });
+
+// Making a model on three.ws needs an account: the studio connector answers an
+// anonymous forge_free with an isError result whose status is
+// sign_in_required. The client carries a three.ws API key when it has one, and
+// says plainly what to do when it does not.
+const SIGN_IN_RESULT = {
+	isError: true,
+	content: [{ type: 'text', text: 'Sign in to make a 3D model. A three.ws account is free.' }],
+	structuredContent: { error: true, status: 'sign_in_required', api_keys_url: 'https://three.ws/dashboard/api-keys' },
+};
+
+function rpcFetch(result, seen = []) {
+	return async (_url, init) => {
+		seen.push(init);
+		return {
+			ok: true,
+			headers: new Map([['content-type', 'application/json']]),
+			json: async () => ({ jsonrpc: '2.0', id: JSON.parse(init.body).id, result }),
+		};
+	};
+}
+
+test('the forge client sends a three.ws API key as a bearer when given one', async () => {
+	const seen = [];
+	const fetchImpl = rpcFetch({ structuredContent: { glbUrl: 'https://three.ws/cdn/forge/a.glb' }, content: [] }, seen);
+	const client = createForgeClient({ apiKey: 'sk_live_test', fetchImpl });
+	await client.generate('a brass desk lamp');
+	assert.equal(seen[0].headers.authorization, 'Bearer sk_live_test');
+});
+
+test('a refused anonymous generation is a sign_in_required ForgeError that says how to fix it', async () => {
+	const client = createForgeClient({ fetchImpl: rpcFetch(SIGN_IN_RESULT) });
+	await assert.rejects(client.generate('a brass desk lamp'), (err) => {
+		assert.ok(err instanceof ForgeError);
+		assert.equal(err.code, 'sign_in_required');
+		assert.match(err.message, /three\.ws account/);
+		assert.equal(err.apiKeysUrl, 'https://three.ws/dashboard/api-keys');
+		return true;
+	});
+});

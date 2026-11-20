@@ -237,6 +237,7 @@ export class ArStudio {
 			tier: this.config.generate.tier,
 			timeoutMs: this.config.generate.timeoutMs,
 			pollMs: this.config.generate.pollMs,
+			apiKey: this.config.generate.apiKey,
 			headers: this.config.generate.headers,
 		});
 		this._forgeSeq = 0;

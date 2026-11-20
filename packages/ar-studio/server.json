@@ -20,6 +20,13 @@
 			},
 			"environmentVariables": [
 				{
+					"name": "THREE_WS_API_KEY",
+					"description": "A three.ws API key (free account, https://three.ws/dashboard/api-keys). generate_3d_model needs it; searching, composing and AR links do not.",
+					"isRequired": false,
+					"isSecret": true,
+					"format": "string"
+				},
+				{
 					"name": "AR_STUDIO_PAGE_URL",
 					"description": "The page that composed AR scenes link to. Defaults to the hosted demo; set it to your own deployment of the studio.",
 					"isRequired": false,
@@ -33,7 +40,7 @@
 				},
 				{
 					"name": "AR_STUDIO_MCP_ENDPOINT",
-					"description": "MCP endpoint used for text-to-3D generation. Defaults to the free, keyless three.ws 3D Studio connector.",
+					"description": "MCP endpoint used for text-to-3D generation. Defaults to the free three.ws 3D Studio connector, which makes models for a three.ws account (see THREE_WS_API_KEY).",
 					"isRequired": false,
 					"format": "string"
 				},

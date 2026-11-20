@@ -145,11 +145,12 @@ footer.site a { color: var(--dim); }
   "mcpServers": {
     "3d-ar-studio": {
       "command": "npx",
-      "args": ["-y", "3d-ar-studio-mcp"]
+      "args": ["-y", "3d-ar-studio-mcp"],
+      "env": { "THREE_WS_API_KEY": "sk_live_..." }
     }
   }
 }</code></pre>
-	<p>No API key. Every tool below is free and keyless.</p>
+	<p>Searching, composing and AR links need no key. <code>generate_3d_model</code> makes the model on three.ws, which needs a free three.ws account: create an API key at <a href="https://three.ws/dashboard/api-keys">three.ws/dashboard/api-keys</a> and set it as <code>THREE_WS_API_KEY</code> in the server's <code>env</code>.</p>
 
 	<h2>Tools</h2>
 	<table>

@@ -5,7 +5,7 @@ description: Generate or find 3D models, arrange several into one scene and hand
 
 # Compose AR scenes with 3D AR Studio
 
-This plugin's `.mcp.json` starts `npx -y 3d-ar-studio-mcp` (server name `ar-studio`). It is free and keyless: no tool takes a credential. Requires Node.js.
+This plugin's `.mcp.json` starts `npx -y 3d-ar-studio-mcp` (server name `ar-studio`). It is free. Searching, composing and AR links take no credential; `generate_3d_model` needs a free three.ws account, so set `THREE_WS_API_KEY` (a key from https://three.ws/dashboard/api-keys) in the server's environment, or the tool answers with how to set one up. Requires Node.js.
 
 Optional env vars (exported in the shell before starting Claude Code): `AR_STUDIO_PAGE_URL` (studio page used in links, default the hosted demo), `AR_STUDIO_ASSETS` (model catalogue URL, default the free CC0 library), `AR_STUDIO_MCP_ENDPOINT` (text-to-3D endpoint) and `AR_STUDIO_ORIGIN` (origin used for AR launch links, default `https://three.ws`).
 

@@ -6,8 +6,10 @@
 // same AR link builder. Nothing here is a separate "agent version" that can
 // drift from what the page does.
 //
-// Everything is free and keyless. No tool takes a credential, and none is
-// required for the studio itself to work.
+// Everything is free. Composing scenes, searching the catalogue and building AR
+// links need no credential. Generating a model runs on the three.ws studio
+// connector, which needs a free three.ws account: set THREE_WS_API_KEY to a key
+// from https://three.ws/dashboard/api-keys and the server sends it as a bearer.
 
 import { z } from 'zod';
 
@@ -29,6 +31,7 @@ export function readEnv(env = process.env) {
 		assets: env.AR_STUDIO_ASSETS || THREE_WS.objectsManifest,
 		endpoint: env.AR_STUDIO_MCP_ENDPOINT || THREE_WS.studioMcp,
 		origin: (env.AR_STUDIO_ORIGIN || THREE_WS.origin).replace(/\/$/, ''),
+		apiKey: (env.THREE_WS_API_KEY || '').trim(),
 	};
 }
 
@@ -48,7 +51,18 @@ const MODEL_SHAPE = z.object({
  * @param {ReturnType<typeof createForgeClient>} [opts.forge] Injectable for tests.
  */
 export function createTools({ env = readEnv(), forge } = {}) {
-	const client = forge || createForgeClient({ endpoint: env.endpoint });
+	const client = forge || createForgeClient({ endpoint: env.endpoint, apiKey: env.apiKey });
+
+	/** Tell the agent how to set up the key instead of surfacing a bare refusal. */
+	const generateFailure = (err) => {
+		if (err?.code !== 'sign_in_required') throw err;
+		const keys = err.apiKeysUrl || `${THREE_WS.origin}/dashboard/api-keys`;
+		return fail(
+			`${err.message} Making a model needs a free three.ws account: create an API key at ${keys}, `
+			+ 'set it as THREE_WS_API_KEY in this MCP server\'s environment, and restart the server. '
+			+ 'search_models works without one.',
+		);
+	};
 
 	/** Every link that matters for one finished model. */
 	const linksFor = (glbUrl, title, live = false) => ({
@@ -64,7 +78,8 @@ export function createTools({ env = readEnv(), forge } = {}) {
 			name: 'generate_3d_model',
 			title: 'Generate a 3D model from text',
 			description:
-				'Turn a text prompt into a textured, downloadable 3D model (GLB). Free and keyless. Describe a '
+				'Turn a text prompt into a textured, downloadable 3D model (GLB). Free, with a three.ws account '
+				+ '(set THREE_WS_API_KEY). Describe a '
 				+ 'SINGLE object, character, or creature: "a brass mid-century desk lamp", not a whole scene. '
 				+ 'Returns the model URL plus links that open it in the viewer, in the user\'s room through their '
 				+ 'phone camera, and in the AR studio. Use kind:"avatar" for a character: it comes back rigged, so '
@@ -79,7 +94,12 @@ export function createTools({ env = readEnv(), forge } = {}) {
 			async run({ prompt, kind = 'model', tier }) {
 				const check = validatePrompt(prompt);
 				if (!check.ok) return fail(check.reason);
-				const model = await client.generate(check.prompt, { kind, tier });
+				let model;
+				try {
+					model = await client.generate(check.prompt, { kind, tier });
+				} catch (err) {
+					return generateFailure(err);
+				}
 				const live = kind === 'avatar' || model.rigged;
 				const links = linksFor(model.src, model.title, live);
 				return ok(

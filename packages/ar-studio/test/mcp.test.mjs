@@ -106,6 +106,28 @@ test('generate_3d_model hands back links, not just a file', async () => {
 	assert.match(res.content[0].text, /Open it in your room/);
 });
 
+test('the MCP server reads a three.ws API key from THREE_WS_API_KEY', () => {
+	assert.equal(readEnv({ THREE_WS_API_KEY: 'sk_live_env' }).apiKey, 'sk_live_env');
+	assert.equal(readEnv({}).apiKey, '');
+});
+
+test('generate_3d_model answers a missing account with the fix, not a stack trace', async () => {
+	const { ForgeError } = await import('../src/forge/client.js');
+	const forge = {
+		generate: async () => {
+			throw Object.assign(new ForgeError('Making a 3D model needs a free three.ws account.', 'sign_in_required'), {
+				apiKeysUrl: 'https://three.ws/dashboard/api-keys',
+			});
+		},
+		mcp: {},
+	};
+	const tool = byName(createTools({ env: ENV, forge }), 'generate_3d_model');
+	const res = await tool.run({ prompt: 'a brass desk lamp' });
+	assert.equal(res.isError, true);
+	assert.match(res.content[0].text, /THREE_WS_API_KEY/);
+	assert.match(res.content[0].text, /https:\/\/three\.ws\/dashboard\/api-keys/);
+});
+
 test('search_models filters a real catalogue payload', async (t) => {
 	const catalogue = {
 		objects: [

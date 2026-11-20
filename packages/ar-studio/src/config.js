@@ -19,12 +19,17 @@
 // it can reach the loader, so a hostile link can add a catalogue but can never
 // smuggle a `javascript:` or `data:` model into the scene.
 
-/** The public three.ws surfaces this package uses by default. All keyless, all CORS-open. */
+import { log } from './log.js';
+
+/**
+ * The public three.ws surfaces this package uses by default, all CORS-open. Every
+ * read is keyless; making a model on the studio connector needs a three.ws account.
+ */
 export const THREE_WS = {
 	origin: 'https://three.ws',
 	/** CC0 prop library (Poly Haven), served first-party with open CORS. */
 	objectsManifest: 'https://three.ws/cdn/objects/library/manifest.json',
-	/** The free, keyless 3D Studio MCP endpoint: the ChatGPT 3D Studio pipeline. */
+	/** The free 3D Studio MCP endpoint (the ChatGPT 3D Studio pipeline). Making a model needs a three.ws API key. */
 	studioMcp: 'https://three.ws/api/mcp-studio',
 	/** Pre-baked animation clips used to idle any humanoid rig. */
 	animationManifest: 'https://three.ws/animations/manifest.json',
@@ -49,6 +54,15 @@ export const DEFAULTS = {
 	generate: {
 		enabled: true,
 		endpoint: THREE_WS.studioMcp,
+		/**
+		 * A three.ws API key from https://three.ws/dashboard/api-keys, sent as a bearer.
+		 * The default connector makes models only for a three.ws account, so without
+		 * a key (or an Authorization header in `headers`, or your own `endpoint`)
+		 * the Generate control stays hidden. A key in a public page is readable by
+		 * anyone who views its source: on a public site, prefer an `endpoint` on your
+		 * own server that adds the key.
+		 */
+		apiKey: '',
 		/** 'model' (forge_free) or 'avatar' (text_to_avatar: rigged, walks and idles). */
 		kind: 'model',
 		tier: 'standard',
@@ -128,6 +142,18 @@ export function safeUrl(raw) {
  * @param {URLSearchParams|string} [search] Page query string (defaults to location.search).
  * @returns {object} config, plus `urlModels` / `urlRoom` / `urlPrompt` read from the URL.
  */
+/**
+ * Whether generation can work as configured: the default three.ws connector
+ * makes models only for an account, so it needs a key or an Authorization
+ * header; any other endpoint is the host's own and is trusted to handle auth.
+ * @param {object} gen  The resolved `generate` block.
+ */
+export function generationConfigured(gen = {}) {
+	if (String(gen.endpoint || '') !== THREE_WS.studioMcp) return true;
+	if (typeof gen.apiKey === 'string' && gen.apiKey.trim()) return true;
+	return Object.keys(gen.headers || {}).some((k) => k.toLowerCase() === 'authorization');
+}
+
 export function resolveConfig(options = {}, search) {
 	const cfg = mergeConfig(DEFAULTS, options);
 	const params = search instanceof URLSearchParams
@@ -155,6 +181,11 @@ export function resolveConfig(options = {}, search) {
 		}
 		urlRoom = String(params.get('room') || '').trim();
 		urlPrompt = String(params.get('forge') || params.get('prompt') || '').trim();
+	}
+
+	if (cfg.generate && cfg.generate.enabled !== false && !generationConfigured(cfg.generate)) {
+		cfg.generate = { ...cfg.generate, enabled: false };
+		log.warn('[ar-studio] Generate is hidden: making a model on three.ws needs a three.ws API key. Set generate.apiKey (https://three.ws/dashboard/api-keys) or point generate.endpoint at your own server.');
 	}
 
 	if (!cfg.shareBaseUrl && typeof location !== 'undefined') {

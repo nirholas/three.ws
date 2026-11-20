@@ -1,7 +1,11 @@
 // Text-to-3D generation for the studio.
 //
-// Wraps the three.ws 3D Studio MCP connector: the free, keyless pipeline behind
-// the ChatGPT 3D Studio) into one promise-shaped call with live progress.
+// Wraps the three.ws 3D Studio MCP connector (the free pipeline behind the
+// ChatGPT 3D Studio) into one promise-shaped call with live progress. Making a
+// model there needs a free three.ws account: pass a three.ws API key as
+// `apiKey` (sent as `Authorization: Bearer <key>`), or point `endpoint` at your
+// own server route that adds it. Without one the connector refuses the call and
+// generate() rejects with a ForgeError whose code is `sign_in_required`.
 // Create a client with createForgeClient(), then await its generate(prompt,
 // { onProgress }) method; onProgress receives each status update.
 //   // → { src, title, viewerUrl, arUrl, kind, prompt }
@@ -34,9 +38,42 @@ export class ForgeError extends Error {
 	}
 }
 
+const API_KEYS_URL = `${THREE_WS.origin}/dashboard/api-keys`;
+
+/** The ForgeError for a tool result, naming the fix when the connector wants an account. */
+function resultError(result, fallback) {
+	const data = result.structured || {};
+	if (data.status === 'sign_in_required') {
+		const err = new ForgeError(
+			'Making a 3D model needs a free three.ws account, and this studio has no three.ws API key set up. '
+			+ 'Pick a ready-made model from Add instead.',
+			'sign_in_required',
+		);
+		err.apiKeysUrl = typeof data.api_keys_url === 'string' && data.api_keys_url ? data.api_keys_url : API_KEYS_URL;
+		return err;
+	}
+	return new ForgeError(data.message || result.text || fallback);
+}
+
+/** Call a tool, turning a refused key (HTTP 401) into the same actionable error. */
+async function callTool(mcp, name, args, signal) {
+	try {
+		return unwrapToolResult(await mcp.callTool(name, args, { signal }));
+	} catch (err) {
+		if (err?.status !== 401) throw err;
+		const refused = new ForgeError(
+			'This studio\'s three.ws API key was refused. Making a 3D model needs a valid key from a free three.ws account.',
+			'sign_in_required',
+		);
+		refused.apiKeysUrl = API_KEYS_URL;
+		throw refused;
+	}
+}
+
 /**
  * @param {object} [opts]
  * @param {string} [opts.endpoint]  MCP endpoint. Defaults to the free three.ws connector.
+ * @param {string} [opts.apiKey]    A three.ws API key, sent as a bearer. Making a model there needs one.
  * @param {'model'|'avatar'|'mesh'} [opts.kind]
  * @param {'draft'|'standard'|'high'} [opts.tier]
  * @param {number} [opts.timeoutMs]  Give up after this long (default 5 min).
@@ -50,11 +87,17 @@ export function createForgeClient({
 	tier = 'standard',
 	timeoutMs = 300000,
 	pollMs = 3000,
+	apiKey = '',
 	headers,
 	tools = GENERATE_TOOLS,
 	fetchImpl,
 } = {}) {
-	const mcp = createMcpClient({ endpoint, headers, fetchImpl });
+	const key = typeof apiKey === 'string' ? apiKey.trim() : '';
+	const mcp = createMcpClient({
+		endpoint,
+		headers: { ...(key ? { authorization: `Bearer ${key}` } : {}), ...(headers || {}) },
+		fetchImpl,
+	});
 
 	/**
 	 * Generate one model.
@@ -93,8 +136,8 @@ export function createForgeClient({
 			? { prompt: text, ...(tierOverride || tier ? { tier: tierOverride || tier } : {}) }
 			: { prompt: text, ...(imageUrl ? { image_url: imageUrl } : {}) };
 
-		let result = unwrapToolResult(await mcp.callTool(tool, args, { signal }));
-		if (result.isError) throw new ForgeError(result.structured?.message || result.text || 'Generation failed.');
+		let result = await callTool(mcp, tool, args, signal);
+		if (result.isError) throw resultError(result, 'Generation failed.');
 
 		// A job that outlives the connector's inline wait budget hands back a poll
 		// handle; collect it through the server's own check_job tool.
@@ -106,8 +149,8 @@ export function createForgeClient({
 			etaSeconds = Number(data.etaRemainingSeconds) > 0 ? Number(data.etaRemainingSeconds) : null;
 			report('queued');
 			await delay(pollMs, signal);
-			result = unwrapToolResult(await mcp.callTool('check_job', { job_id: data.jobId }, { signal }));
-			if (result.isError) throw new ForgeError(result.structured?.message || result.text || 'Generation failed.');
+			result = await callTool(mcp, 'check_job', { job_id: data.jobId }, signal);
+			if (result.isError) throw resultError(result, 'Generation failed.');
 			data = result.structured || {};
 		}
 

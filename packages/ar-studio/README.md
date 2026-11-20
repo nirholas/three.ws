@@ -19,8 +19,10 @@ code, or a live room someone else can build in with you.
 ```
 
 That is a working AR studio. No build step, no API key, no account. It comes wired to a free
-library of a few hundred public-domain models and a free, keyless text-to-3D lane; point it at
-your own catalogue with one option when you are ready.
+library of a few hundred public-domain models; point it at your own catalogue with one option
+when you are ready. Text-to-3D runs on the free three.ws lane, which makes models for a three.ws
+account: pass a key as `generate: { apiKey }` (or the `api-key` attribute) to turn Generate on,
+see [`generate`](#options) below.
 
 ---
 
@@ -187,7 +189,7 @@ almost always why, and the studio says so in the status line rather than failing
 | Option | Default | What it does |
 | --- | --- | --- |
 | `assets` | `'three.ws'` | Where models come from: a preset key, a manifest URL, a source object, or an array of them. |
-| `generate` | enabled | `{ enabled, endpoint, kind, tier, timeoutMs, pollMs }`. `endpoint` is any MCP server exposing a compatible generate tool. |
+| `generate` | hidden until set up | `{ enabled, endpoint, apiKey, headers, kind, tier, timeoutMs, pollMs }`. The default three.ws connector makes models only for a three.ws account, so Generate appears once `apiKey` (a key from [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys)) or an `Authorization` header is set. A key in a public page is readable by anyone, so on a public site point `endpoint` at a route on your own server that adds the key; any MCP server exposing a compatible generate tool works. |
 | `rooms` | enabled | `{ enabled, server }`. Point `server` at your own Colyseus deployment to host shared rooms yourself. |
 | `animations` | three.ws idle clip | `{ enabled, manifestUrl, clip }`. The clip retargeted onto humanoid models that ship no animation. |
 | `lighting` | `'studio'` HDRI | `{ preset, urls }`. `preset: null` uses procedural lighting only and downloads no HDRI. |
@@ -262,9 +264,13 @@ studio.destroy()                             // releases camera, socket and GPU 
   title="Acme AR"
   accent="#00b894"
   generate="true"
+  api-key="sk_live_..."
   rooms="true"
 ></ar-studio>
 ```
+
+`api-key` turns Generate on against the three.ws lane; leave it out to offer only the model
+library. It is readable in the page source, so prefer your own `endpoint` on a public site.
 
 `element.studio` is the live instance. Importing `3d-ar-studio/auto` (what the CDN bundle
 does) registers the element for you.
@@ -299,13 +305,14 @@ npx 3d-ar-studio-mcp
   "mcpServers": {
     "3d-ar-studio": {
       "command": "npx",
-      "args": ["-y", "3d-ar-studio-mcp"]
+      "args": ["-y", "3d-ar-studio-mcp"],
+      "env": { "THREE_WS_API_KEY": "sk_live_..." }
     }
   }
 }
 ```
 
-No API key. Every tool is free and keyless.
+Searching, composing and AR links need no key. `generate_3d_model` makes the model on three.ws, which needs a free three.ws account: create an API key at [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys) and set it as `THREE_WS_API_KEY` in the server's `env`.
 
 | Tool | What it does |
 | --- | --- |
@@ -320,6 +327,7 @@ No API key. Every tool is free and keyless.
 | --- | --- | --- |
 | `AR_STUDIO_PAGE_URL` | the hosted demo | The page `compose_ar_scene` links to. Set it to your own deployment. |
 | `AR_STUDIO_ASSETS` | the free CC0 library | Catalogue `search_models` searches. |
+| `THREE_WS_API_KEY` | none | A three.ws API key, sent as a bearer on generation. Making a model on three.ws needs one. |
 | `AR_STUDIO_MCP_ENDPOINT` | three.ws 3D Studio | The MCP endpoint used for generation. |
 | `AR_STUDIO_ORIGIN` | `https://three.ws` | Origin for hosted AR launch and viewer links. |
 
