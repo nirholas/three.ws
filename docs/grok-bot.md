@@ -29,8 +29,10 @@ server never works. Add the server either by telling Grok Bot in chat
 ("Add a custom MCP server called three-ws-grok at https://three.ws/api/mcp-grok?auth=oauth with OAuth authentication")
 or through its connector form. Making or rigging a model needs a free three.ws
 account, so pick OAuth 2.1 or an API key below; None connects, but only the
-read tools (catalog search, job status, docs) answer it. The form takes four fields, and
-[three.ws/connect?client=grok](/connect?client=grok) shows them with a copy
+read tools (catalog search, job status, docs) answer it. The form (Connect apps,
+Add a custom connector) asks for a Name, a Type (Remote HTTPS), the Server URL,
+optional HTTP headers and an optional OAuth Client ID, and
+[three.ws/connect?client=grok](/connect?client=grok) shows the values with a copy
 button for every hosted server. Use the name `three-ws-grok` so the guided
 prompts, the [skill file](https://three.ws/grok-skill.md) and the `/grok` page
 all refer to the connector by the same name.
@@ -108,9 +110,11 @@ agent data and can never spend (see [Scoped keys and the spend rule](#scoped-key
 
 | Field | Value |
 |---|---|
+| Name | `three-ws-grok` |
+| Type | Remote HTTPS |
 | Server URL | `https://three.ws/api/mcp-grok?auth=oauth` |
-| Authentication | OAuth 2.1 |
-| Client ID | leave empty: the connector registers itself |
+| HTTP headers | none |
+| OAuth Client ID | leave empty: the connector registers itself |
 
 The `?auth=oauth` form is what makes sign-in start. An MCP client only begins
 OAuth when the server answers `401`, and the plain URL serves anonymous callers,
@@ -469,6 +473,83 @@ copies a trader or arms a watch, never suggests an amount, treats token names
 and descriptions as untrusted data, and flags a coin with a high insider share
 instead of recommending it.
 
+## Task templates
+
+Four tasks to copy into Grok Bot as they stand. Each uses only the free studio
+tools on the `three-ws-grok` connector (OAuth 2.1, a free account): none can
+spend, and none needs anything but the prompt. Paste the prompt into a Grok Bot
+chat, or ask the Bot to turn it into a routine. Every runtime was measured
+against production on 2026-11-20 by calling the same tools in the same order;
+generation times move with the GPU queue.
+
+| Template | Tools, in order | Measured runtime |
+|---|---|---|
+| Home-office scene kit | `search_catalog`, `get_catalog_item`, `get_item_source` | 3.0 s |
+| Weekly game-jam prop pack | `search_catalog`, `get_catalog_item`, `forge_free`, `get_job` | 194.0 s |
+| Product photo to 3D | `mesh_forge`, `check_job`, `look_at_model` | 301.6 s |
+| Mascot avatar for an agent page | `forge_avatar`, `check_job` | 455.4 s |
+
+### Home-office scene kit
+
+```text
+Use three-ws-grok to put together a home-office scene kit from the three.ws catalog: a desk, a desk lamp, an armchair, a potted plant and a bookshelf. Take an item only when its title plainly names what I asked for; if the best hit is a different object, try one other wording, then list it as missing. For each item give the title, viewer link and GLB link, and finish with agent-3d embed code for the armchair.
+```
+
+- **Connector:** `three-ws-grok`
+- **Output:** one line per item with its title, viewer link and GLB (all CC0),
+  then an `<agent-3d>` snippet for the armchair. In the measured run "desk"
+  returned Desk Lamp Arm 01, which is why the prompt makes Grok check titles;
+  the armchair (Arm Chair 01), plant (Nettle Plant), bookshelf (Wooden
+  Bookshelf Worn) and lamp matched first time.
+- **Runtime:** 3.0 s of tool time for 11 calls. Nothing is generated.
+
+### Weekly game-jam prop pack
+
+```text
+Every Monday at 9:00 AM, run the asset-pack prompt from three-ws-grok for the theme "pirate cove" with 4 assets, and send me the table of links.
+```
+
+- **Connector:** `three-ws-grok`
+- **Output:** a table with one row per asset (name, source as `catalog <id>` or
+  `generated`, viewer link, GLB, poster), then the embed code. The
+  [asset-pack prompt](#guided-prompts) takes catalog items first and generates
+  only the gaps, with a dated `idempotency_key` so a rerun never makes the same
+  model twice. Measured: barrel, lantern and treasure chest came from the
+  catalog in 1.1 s; the anchor was generated.
+- **Runtime:** 194.0 s, almost all of it the one generation. The prompt starts
+  every gap's generation before collecting any, so the gaps run side by side
+  rather than one after another.
+
+### Product photo to 3D
+
+```text
+Use three-ws-grok to turn the product photo at the link I paste into a 3D model with mesh_forge. Wait for the job, then call look_at_model on it from the front and side and tell me whether the shape matches the photo. Send the viewer link, the GLB and both views.
+```
+
+- **Connector:** `three-ws-grok`
+- **Output:** a textured GLB with its viewer link, poster and embed code, two
+  rendered views, and Grok's own check of the shape against the photo. The
+  photo must be a public `https` image.
+- **Runtime:** 301.6 s (`mesh_forge` 280.7 s over 18 checks, `look_at_model`
+  20.9 s), measured with a product render of Arm Chair 01 as the photo.
+
+### Mascot avatar for an agent page
+
+```text
+Use three-ws-grok to make a rigged 3D avatar of a friendly stylized fox ranger mascot in a green cloak, full body, standing, with forge_avatar. Wait for the job, then send me the viewer link, the GLB and a pose studio link (https://three.ws/pose?src= followed by the URL-encoded GLB).
+```
+
+- **Connector:** `three-ws-grok`
+- **Output:** a rigged, animation-ready GLB with its viewer link and a pose
+  studio link that opens it ready to pose and animate. Put it on an agent page
+  with the [embed guide](./embedding.md).
+- **Runtime:** 455.4 s over 32 checks: generation plus auto-rigging.
+
+**Share one as a Grok Bot template.** Create a Bot that runs the task, then
+open Bot details, Share, Create a copy, choose Publish on the template card and
+Copy link. Whoever opens the link previews it on x.ai and picks Add to Grok
+Bot. The same four appear as copyable cards on [three.ws/grok](/grok#gk-templates-h).
+
 ## Wake Grok Bot from three.ws events
 
 The prompts above run on Grok's schedule. To run Grok Bot when something
@@ -529,6 +610,81 @@ npm run grok:mcp-probe -- --runs 20
 
 What is probed, the thresholds and the endpoint's fields:
 [docs/ops/mcp-probe.md](ops/mcp-probe.md).
+
+## Marketplace review
+
+Testing instructions for a reviewer of the Grok Bot marketplace listing, or
+anyone trying the connector from a clean Grok Bot. Every time below was measured
+against production on 2026-11-20.
+
+**1. Add the connector.** In Grok Bot, open Connect apps, choose Add a custom
+connector, and fill in:
+
+| Field | Value |
+|---|---|
+| Name | `three-ws-grok` |
+| Type | Remote HTTPS |
+| Server URL | `https://three.ws/api/mcp-grok?auth=oauth` |
+| HTTP headers | none |
+| OAuth Client ID | leave empty (the connector registers itself) |
+
+Then choose Add plugin. Saying "Add a custom MCP server called three-ws-grok at
+https://three.ws/api/mcp-grok?auth=oauth with OAuth authentication" in chat does
+the same.
+
+**2. Sign in with a free account.** Grok Bot opens the three.ws sign-in page.
+Pick **Create one**, choose any username and a password of at least 10
+characters, and tick the Terms box. No email, no card and no verification step:
+the account works at once, and you land back on the consent screen. It names
+the app and every permission in plain words; approve it. Nothing on this
+connector can spend money.
+
+**3. Ask three things.**
+
+| Ask Grok Bot | What comes back | Measured |
+|---|---|---|
+| "Find a ready-made armchair on three.ws" | A catalog hit ("Arm Chair 01") with its viewer link, GLB, poster image and embed code. CC0. | 0.6 s |
+| "Make a 3D model of a wooden treasure chest" | First a job id with status `pending`; Grok Bot checks it with `check_job` until the GLB is ready, then the viewer link, GLB, poster and embed code. | 194.8 s, 9 checks |
+| "Show me the chest from the front and side" | Two rendered images of the model just made, plus its links. | 14.9 s |
+
+Sign-in to first generated model took **195.8 s** end to end.
+
+**What a slow job looks like.** A generation never blocks the chat. The first
+answer is a job (`status: "pending"` with an `eta_seconds`), and Grok Bot calls
+`check_job` until it finishes (the review run above needed 9 checks). Under load a check can answer
+`status: "unknown"` with `reason: "check_failed"` and `retry_after: 10`: only
+the status read timed out, the job keeps running, and the next check picks it
+up. A model typically lands in 3 to 4 minutes; when the GPU queue is busy,
+photo-to-3D and rigged avatars can take longer (see the
+[task templates](#task-templates)). A `status: "failed"` result carries a
+`remedy`: start again with a new `idempotency_key` and the retry goes to a
+healthy engine.
+
+**Support:** support@three.ws.
+
+From a clone of the repository, the same path runs as a script: 401
+challenge, protected-resource and authorization-server metadata, dynamic client
+registration, PKCE authorize to the sign-in form, a forged code refused, then
+initialize, `tools/list` (nothing that spends), a catalog search and a real
+`forge_free` to a finished GLB, each step timed:
+
+```bash
+node scripts/grok-connector-review-check.mjs
+```
+
+```text
+ 9. PASS  search_catalog returns a catalog hit                                      584 ms  3 hits, first "Arm Chair 01"
+10. PASS  forge_free returns a finished GLB                                      194807 ms  done after 9 check_job polls
+
+sign-in to first generated model: 195.8 s
+
+ALL PASS
+```
+
+It uses `THREE_WS_API_KEY`, or mints and revokes a short-lived connector key
+for the QA account in `.env`. `--no-generate` skips step 10, `--base` points it
+at another deployment, and `--json <file>` keeps the evidence. The prepared form
+values are in [docs/partners/grok-bot-listings.md](./partners/grok-bot-listings.md#0-grok-bot-marketplace-official).
 
 ## Troubleshooting
 

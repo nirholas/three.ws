@@ -120,6 +120,10 @@
 		.gk-recipe-link { margin-top: auto; align-self: flex-start; font-size: 0.84rem; font-weight: 600; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; transition: color var(--duration-fast) var(--ease-standard); }
 		.gk-recipe-link:hover { color: var(--accent); }
 		.gk-recipe-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+		.gk-tpl-meta { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 0.8rem; line-height: 1.5; }
+		.gk-tpl-meta dt { color: var(--ink-faint, var(--ink-dim)); font-weight: 600; }
+		.gk-tpl-meta dd { margin: 0; color: var(--ink-dim); min-width: 0; }
+		.gk-tpl-meta code { font-size: 0.74rem; padding: 1px 6px; border-radius: 6px; color: var(--ink-bright, var(--ink)); background: var(--surface-1, rgba(255,255,255,0.05)); border: 1px solid var(--stroke); }
 
 		/* ── skill file ─────────────────────────────────────────────────── */
 		.gk-skill { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px; align-items: start; }
@@ -604,6 +608,63 @@ mkdir -p ~/.grok/plugins &amp;&amp; cp -r three.ws-src/integrations/grok/three-w
 				</article>
 			</div>
 			<p><a href="/docs/tutorials/grok-bot-recipes">Six Grok Bot recipes, run against production</a> walks through these three plus three more (an X post's image turned into a 3D model, a weekly agent report, a $THREE market brief) with the real output each one returned.</p>
+		</section>
+
+		<section class="gk-sec" aria-labelledby="gk-templates-h">
+			<div class="gk-sec-head">
+				<h2 id="gk-templates-h">Grok Bot task templates</h2>
+				<p>Four tasks to paste into Grok Bot as they stand. Each runs on the free studio tools of the three-ws-grok connector, signed in with a free account, and none can spend. Runtimes were measured against production; generation times move with the GPU queue.</p>
+			</div>
+			<div class="gk-recipes">
+				<article class="gk-recipe">
+					<p class="gk-recipe-kind">Catalog only</p>
+					<h3>Home-office scene kit</h3>
+					<p>Pulls five ready-made CC0 pieces for a scene, checks every title against the ask, and ends with embed code for one of them.</p>
+					<button type="button" class="gk-ask" data-ask="Use three-ws-grok to put together a home-office scene kit from the three.ws catalog: a desk, a desk lamp, an armchair, a potted plant and a bookshelf. Take an item only when its title plainly names what I asked for; if the best hit is a different object, try one other wording, then list it as missing. For each item give the title, viewer link and GLB link, and finish with agent-3d embed code for the armchair.">
+						<span class="gk-ask-kind"><span>Prompt</span><span>Copy</span></span>
+						<span class="gk-ask-text">Use three-ws-grok to put together a home-office scene kit from the three.ws catalog: a desk, a desk lamp, an armchair, a potted plant and a bookshelf. Take an item only when its title plainly names what I asked for; if the best hit is a different object, try one other wording, then list it as missing. For each item give the title, viewer link and GLB link, and finish with agent-3d embed code for the armchair.</span>
+					</button>
+					<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="search_catalog">search_catalog</code></li><li><code data-tool="get_catalog_item">get_catalog_item</code></li><li><code data-tool="get_item_source">get_item_source</code></li></ol>
+					<dl class="gk-tpl-meta"><dt>Connector</dt><dd><code>three-ws-grok</code></dd><dt>Output</dt><dd>One line per item with viewer and GLB links, then an agent-3d snippet</dd><dt>Runtime</dt><dd>3.0 s, nothing generated</dd></dl>
+					<a class="gk-recipe-link" href="/docs/grok-bot#task-templates">What it returned when measured</a>
+				</article>
+				<article class="gk-recipe">
+					<p class="gk-recipe-kind">Every Monday</p>
+					<h3>Weekly game-jam prop pack</h3>
+					<p>Takes catalog items first, generates only the gaps with a dated key so a rerun never duplicates a model, and returns a table of links.</p>
+					<button type="button" class="gk-ask" data-ask="Every Monday at 9:00 AM, run the asset-pack prompt from three-ws-grok for the theme &quot;pirate cove&quot; with 4 assets, and send me the table of links.">
+						<span class="gk-ask-kind"><span>Prompt</span><span>Copy</span></span>
+						<span class="gk-ask-text">Every Monday at 9:00 AM, run the asset-pack prompt from three-ws-grok for the theme "pirate cove" with 4 assets, and send me the table of links.</span>
+					</button>
+					<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="search_catalog">search_catalog</code></li><li><code data-tool="get_catalog_item">get_catalog_item</code></li><li><code data-tool="forge_free">forge_free</code></li><li><code data-tool="get_job">get_job</code></li></ol>
+					<dl class="gk-tpl-meta"><dt>Connector</dt><dd><code>three-ws-grok</code></dd><dt>Output</dt><dd>A table of 4 assets: source, viewer, GLB and poster for each</dd><dt>Runtime</dt><dd>194.0 s (3 from the catalog, 1 generated)</dd></dl>
+					<a class="gk-recipe-link" href="/docs/grok-bot#task-templates">What it returned when measured</a>
+				</article>
+				<article class="gk-recipe">
+					<p class="gk-recipe-kind">From a photo</p>
+					<h3>Product photo to 3D</h3>
+					<p>Turns a public product photo into a textured model, renders it from two angles and has Grok judge the shape against the photo.</p>
+					<button type="button" class="gk-ask" data-ask="Use three-ws-grok to turn the product photo at the link I paste into a 3D model with mesh_forge. Wait for the job, then call look_at_model on it from the front and side and tell me whether the shape matches the photo. Send the viewer link, the GLB and both views.">
+						<span class="gk-ask-kind"><span>Prompt</span><span>Copy</span></span>
+						<span class="gk-ask-text">Use three-ws-grok to turn the product photo at the link I paste into a 3D model with mesh_forge. Wait for the job, then call look_at_model on it from the front and side and tell me whether the shape matches the photo. Send the viewer link, the GLB and both views.</span>
+					</button>
+					<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="mesh_forge">mesh_forge</code></li><li><code data-tool="check_job">check_job</code></li><li><code data-tool="look_at_model">look_at_model</code></li></ol>
+					<dl class="gk-tpl-meta"><dt>Connector</dt><dd><code>three-ws-grok</code></dd><dt>Output</dt><dd>A textured GLB, two rendered views and a shape check</dd><dt>Runtime</dt><dd>301.6 s (model 280.7 s, views 20.9 s)</dd></dl>
+					<a class="gk-recipe-link" href="/docs/grok-bot#task-templates">What it returned when measured</a>
+				</article>
+				<article class="gk-recipe">
+					<p class="gk-recipe-kind">Rigged</p>
+					<h3>Mascot avatar for an agent page</h3>
+					<p>Generates and rigs an animation-ready mascot in one call, then hands back a pose studio link to animate it in the browser.</p>
+					<button type="button" class="gk-ask" data-ask="Use three-ws-grok to make a rigged 3D avatar of a friendly stylized fox ranger mascot in a green cloak, full body, standing, with forge_avatar. Wait for the job, then send me the viewer link, the GLB and a pose studio link (https://three.ws/pose?src= followed by the URL-encoded GLB).">
+						<span class="gk-ask-kind"><span>Prompt</span><span>Copy</span></span>
+						<span class="gk-ask-text">Use three-ws-grok to make a rigged 3D avatar of a friendly stylized fox ranger mascot in a green cloak, full body, standing, with forge_avatar. Wait for the job, then send me the viewer link, the GLB and a pose studio link (https://three.ws/pose?src= followed by the URL-encoded GLB).</span>
+					</button>
+					<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="forge_avatar">forge_avatar</code></li><li><code data-tool="check_job">check_job</code></li></ol>
+					<dl class="gk-tpl-meta"><dt>Connector</dt><dd><code>three-ws-grok</code></dd><dt>Output</dt><dd>A rigged GLB, its viewer link and a pose studio link</dd><dt>Runtime</dt><dd>455.4 s, generation plus rigging</dd></dl>
+					<a class="gk-recipe-link" href="/docs/grok-bot#task-templates">What it returned when measured</a>
+				</article>
+			</div>
 		</section>
 
 		<section class="gk-sec" aria-labelledby="gk-skill-h">

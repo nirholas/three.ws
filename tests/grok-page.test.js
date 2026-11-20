@@ -96,3 +96,43 @@ describe('grokAuthFor', () => {
 		);
 	});
 });
+
+describe('Grok Bot task templates', () => {
+	const section = html.match(/<section class="gk-sec" aria-labelledby="gk-templates-h">([\s\S]*?)<\/section>/)?.[1] ?? '';
+	const cards = [...section.matchAll(/<article class="gk-recipe">([\s\S]*?)<\/article>/g)].map((m) => m[1]);
+	const guide = fs.readFileSync(path.join(ROOT, 'docs/grok-bot.md'), 'utf8');
+	const templates = guide.split('\n## Task templates\n')[1]?.split('\n## ')[0] ?? '';
+	const FREE_TOOLS = new Set(toolCatalogFor('grok').map((t) => t.name));
+
+	it('the page shows the templates docs/grok-bot.md publishes, each with its exact prompt', () => {
+		expect(cards.length).toBeGreaterThanOrEqual(4);
+		expect(cards.length).toBeLessThanOrEqual(5);
+		for (const card of cards) {
+			const ask = decode(card.match(/data-ask="([^"]+)"/)[1]);
+			expect(ask).toContain(`three-ws-grok`);
+			expect(templates).toContain(ask);
+		}
+	});
+
+	it('every card states its connector, expected output and measured runtime', () => {
+		for (const card of cards) {
+			const labels = [...card.matchAll(/<dt>([^<]+)<\/dt>/g)].map((m) => m[1]);
+			expect(labels).toEqual(['Connector', 'Output', 'Runtime']);
+			expect(card).toMatch(/<dd><code>three-ws-grok<\/code><\/dd>/);
+			expect(card).toMatch(/<dt>Runtime<\/dt><dd>[^<]*\d[^<]*<\/dd>/);
+		}
+	});
+
+	it('templates call only free studio tools, never an account or spending tool', () => {
+		const steps = cards.flatMap((card) => [...card.matchAll(/data-tool="([^"]+)"/g)].map((m) => m[1]));
+		expect(steps.length).toBeGreaterThan(0);
+		expect(steps.filter((name) => !FREE_TOOLS.has(name))).toEqual([]);
+	});
+
+	it('the card link lands on the Task templates heading of docs/grok-bot.md', () => {
+		const links = [...section.matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
+		expect(links.length).toBe(cards.length);
+		expect([...new Set(links)]).toEqual(['/docs/grok-bot#task-templates']);
+		expect(templates.length).toBeGreaterThan(0);
+	});
+});
