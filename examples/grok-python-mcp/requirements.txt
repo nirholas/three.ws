@@ -1,0 +1,74 @@
+aiohappyeyeballs==2.7.1
+    # via aiohttp
+aiohttp==3.14.5
+    # via xai-sdk
+aiosignal==1.4.0
+    # via aiohttp
+annotated-types==0.8.0
+    # via pydantic
+attrs==26.1.0
+    # via aiohttp
+certifi==2026.10.23
+    # via requests
+charset-normalizer==3.5.2
+    # via requests
+frozenlist==1.8.0
+    # via
+    #   aiohttp
+    #   aiosignal
+googleapis-common-protos==1.76.0
+    # via xai-sdk
+grpcio==1.85.3
+    # via xai-sdk
+idna==3.20
+    # via
+    #   requests
+    #   yarl
+multidict==7.2.1
+    # via
+    #   aiohttp
+    #   yarl
+opentelemetry-api==1.45.2
+    # via
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+opentelemetry-sdk==1.45.2
+    # via xai-sdk
+opentelemetry-semantic-conventions==0.66b2
+    # via opentelemetry-sdk
+packaging==25.0
+    # via xai-sdk
+propcache==0.5.4
+    # via
+    #   aiohttp
+    #   yarl
+protobuf==7.36.2
+    # via
+    #   googleapis-common-protos
+    #   xai-sdk
+pydantic==2.14.4
+    # via xai-sdk
+pydantic-core==2.50.5
+    # via pydantic
+requests==2.34.2
+    # via xai-sdk
+typing-extensions==4.16.0
+    # via
+    #   aiohttp
+    #   aiosignal
+    #   grpcio
+    #   opentelemetry-api
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+    #   pydantic
+    #   pydantic-core
+    #   typing-inspection
+    #   xai-sdk
+typing-inspection==0.4.5
+    # via pydantic
+urllib3==2.8.0
+    # via requests
+xai-sdk==1.21.0
+    # via -r requirements.in
+yarl==1.25.1
+    # via aiohttp

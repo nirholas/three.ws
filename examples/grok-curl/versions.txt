@@ -1,0 +1,4 @@
+# Tested with these versions. The script uses no flag newer than curl 7.76 (--fail-with-body) or jq 1.6 (@uri).
+curl 8.5.0
+jq 1.7
+bash 5.2.21

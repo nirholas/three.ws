@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Nova: a 3D avatar with Grok as its brain</title>
+		<link rel="stylesheet" href="/style.css" />
+		<script
+			type="module"
+			src="https://three.ws/agent-3d/1.5.2/agent-3d.js"
+			integrity="sha384-KdAiFRsdcCbQMu4O5rkoL8hOEYLkmrdpf9ELd7jro+9NTNipWis3oqqFLll7v20Q"
+			crossorigin="anonymous"
+		></script>
+		<script type="module" src="/app.js"></script>
+	</head>
+	<body>
+		<main class="layout">
+			<section class="stage" aria-label="Nova, the 3D avatar">
+				<agent-3d
+					id="avatar"
+					body="https://three.ws/avatars/default.glb"
+					brain="none"
+					mode="section"
+					background="transparent"
+					name-plate="off"
+					framing="full"
+					eager
+				></agent-3d>
+				<div class="stage-loading" id="stage-loading" role="status">
+					<div class="skeleton-figure" aria-hidden="true"></div>
+					<p>Loading Nova <span id="load-pct"></span></p>
+				</div>
+				<div class="stage-error" id="stage-error" role="alert" hidden>
+					<p><strong>The avatar did not load.</strong> <span id="stage-error-text"></span></p>
+					<button type="button" id="reload">Reload the page</button>
+				</div>
+				<p class="mood" id="mood" aria-live="polite" hidden></p>
+			</section>
+
+			<section class="chat" aria-label="Chat with Nova">
+				<header class="chat-head">
+					<h1>Nova</h1>
+					<p>A <a href="https://three.ws/docs/web-component" target="_blank" rel="noopener">three.ws avatar</a> with Grok as its brain.</p>
+				</header>
+				<div class="banner" id="banner" role="alert" hidden></div>
+				<ol class="log" id="log" aria-live="polite">
+					<li class="empty" id="empty">
+						<p>Say hello. Nova answers in a sentence or two and shows how it feels: a nod, a cheer, a think, a shrug.</p>
+						<div class="chips">
+							<button type="button" class="chip">Tell me something that made you happy today</button>
+							<button type="button" class="chip">What is the strangest thing about being 3D?</button>
+							<button type="button" class="chip">I lost my keys again</button>
+						</div>
+					</li>
+				</ol>
+				<form class="composer" id="composer">
+					<label class="sr-only" for="input">Message Nova</label>
+					<input id="input" name="message" autocomplete="off" maxlength="2000" placeholder="Message Nova" required />
+					<button type="submit" id="send">Send</button>
+				</form>
+			</section>
+		</main>
+	</body>
+</html>

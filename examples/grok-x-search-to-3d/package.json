@@ -1,0 +1,17 @@
+{
+	"name": "@three-ws/example-grok-x-search-to-3d",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Grok searches X for a topic, three.ws makes a 3D prop from it, and the script prints a draft post. It never posts.",
+	"type": "module",
+	"scripts": {
+		"start": "node index.mjs",
+		"check": "node index.mjs --check",
+		"dry-run": "node index.mjs --dry-run",
+		"test": "node --test test.mjs"
+	},
+	"dependencies": {},
+	"engines": {
+		"node": ">=22"
+	}
+}
