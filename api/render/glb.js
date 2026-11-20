@@ -8,8 +8,17 @@
 //     width: 1024,                               // default 1024, max 2048
 //     height: 1024,                              // default 1024, max 2048
 //     background: "#0a0a0a" | "transparent",     // default #0a0a0a
-//     pose: "rest" | "bind"                      // default rest
+//     pose: "rest" | "bind",                     // default rest
+//     azimuth: 0,     // degrees around the model, 0 = front (default: 3/4 view)
+//     elevation: 10,  // degrees above the horizon, -80..80
+//     fov: 30         // vertical field of view in degrees, 10..90
 //   }
+//
+// The camera fields are optional and independent: leave all three out and the
+// render is byte-identical to the default framing every share card uses. Hero
+// clips (api/_lib/glb-turntable-refs.js) use them to shoot one model from
+// several distinct angles. x-render-azimuth/-elevation/-fov echo the camera
+// back when one was given.
 //
 // `pose: "rest"` stands a humanoid in the thumbnail rest pose (arms down,
 // src/thumbnail-pose.js) instead of its raw bind pose; `"bind"` renders the
@@ -39,6 +48,7 @@ import { renderGlbToPng } from '../_lib/render-glb.js';
 import { assertSafePublicUrl, SsrfBlockedError } from '../_lib/ssrf-guard.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { safeCssColor } from '../_lib/render-safe.js';
+import { parseRenderCamera } from '../_lib/render-camera.js';
 
 export const maxDuration = 30;
 
@@ -67,6 +77,9 @@ export default wrap(async function handler(req, res) {
 			height: q.get('height'),
 			background: q.get('background') || undefined,
 			pose: q.get('pose') || undefined,
+			azimuth: q.get('azimuth') ?? undefined,
+			elevation: q.get('elevation') ?? undefined,
+			fov: q.get('fov') ?? undefined,
 		};
 	} else {
 		try {
@@ -109,6 +122,10 @@ export default wrap(async function handler(req, res) {
 		return error(res, 400, 'bad_request', 'pose must be "rest" or "bind"');
 	}
 
+	const parsedCamera = parseRenderCamera(body);
+	if (parsedCamera.error) return error(res, 400, 'bad_request', parsedCamera.error);
+	const { camera } = parsedCamera;
+
 	let png;
 	let posed = { posed: false, mode: pose };
 	try {
@@ -119,6 +136,7 @@ export default wrap(async function handler(req, res) {
 			background,
 			pose,
 			maxBytes: MAX_GLB_BYTES,
+			...camera,
 			onPose: (r) => {
 				posed = r;
 			},
@@ -135,6 +153,9 @@ export default wrap(async function handler(req, res) {
 	res.setHeader('x-render-width', String(width));
 	res.setHeader('x-render-height', String(height));
 	res.setHeader('x-render-background', background);
+	if (camera.yaw !== undefined) res.setHeader('x-render-azimuth', String(camera.yaw));
+	if (camera.pitch !== undefined) res.setHeader('x-render-elevation', String(camera.pitch));
+	if (camera.fov !== undefined) res.setHeader('x-render-fov', String(camera.fov));
 	res.setHeader('x-render-pose', posed.posed ? 'rest' : posed.mode === 'bind' ? 'bind' : 'authored');
 	res.end(png);
 });

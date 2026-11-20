@@ -177,6 +177,9 @@ async function ensureClip(model, clipJson) {
  * @param {string} [opts.background='#0a0a0a'] 'transparent' or a hex colour
  * @param {{inner:string,outer:string}} [opts.backdrop] radial stage, wins over background
  * @param {'full'|'bust'|'head'} [opts.focus='full']
+ * @param {number} [opts.yaw=26] camera degrees around the model, 0 = front
+ * @param {number} [opts.pitch=6] camera degrees above the horizon
+ * @param {number} [opts.fov] vertical field of view; the renderer's 30 when omitted
  * @param {string} [opts.animationUrl] GLB of clips to retarget onto the rig
  * @param {string|number} [opts.clip] clip to pose, by name or index
  * @param {number} [opts.time=0] seconds into the clip
@@ -198,6 +201,7 @@ export async function renderGlbToPngCpu({
 	preset = 'studio',
 	yaw = CAMERA_YAW_DEG,
 	pitch = 6,
+	fov,
 	supersample = 2,
 	animationUrl = null,
 	clip = null,
@@ -218,6 +222,7 @@ export async function renderGlbToPngCpu({
 		focus,
 		yaw,
 		pitch,
+		fov,
 		margin: FRAME_MARGIN,
 		background: backdropToBackground(background, backdrop),
 	};

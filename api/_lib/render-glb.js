@@ -159,11 +159,21 @@ function releaseRenderSlot() {
 	else _activeRenders -= 1;
 }
 
+// Keep only finite camera numbers: the object is interpolated into the render
+// page, so anything else is dropped rather than escaped.
+function cameraFields(camera = {}) {
+	const out = {};
+	for (const key of ['yaw', 'pitch', 'fov']) {
+		if (Number.isFinite(camera?.[key])) out[key] = camera[key];
+	}
+	return out;
+}
+
 // Inline viewer HTML — bundled into the function so the renderer needs no
 // extra static assets. three.js + GLTFLoader load from whichever CDN
 // resolveThreeCdn() found alive, pinned to THREE_VERSION.
 // window.__renderDone signals readiness to puppeteer.
-function viewerHtml({ glbBase64, width, height, background, backdrop, poseClip = null, threeBase = DEFAULT_THREE_BASE }) {
+function viewerHtml({ glbBase64, width, height, background, backdrop, poseClip = null, camera = {}, threeBase = DEFAULT_THREE_BASE }) {
 	// A gradient backdrop renders as page CSS behind a transparent canvas: the
 	// screenshot composites the two, so the scene itself stays background-free.
 	// `background` reaches here straight from a public handler, and both slots
@@ -203,6 +213,9 @@ window.__renderDone = false;
 window.__renderError = null;
 window.__poseResult = null;
 const POSE_CLIP = ${poseClip ? scriptJson(poseClip) : 'null'};
+// Caller camera (validated numbers from render-camera.js); empty means the
+// default 3/4 framing every share card has always used.
+const CAMERA = ${scriptJson(cameraFields(camera))};
 
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
@@ -225,7 +238,7 @@ const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 if ('environmentIntensity' in scene) scene.environmentIntensity = 1.15;
 
-const camera = new THREE.PerspectiveCamera(28, ${width}/${height}, 0.01, 100);
+const camera = new THREE.PerspectiveCamera(CAMERA.fov ?? 28, ${width}/${height}, 0.01, 100);
 
 // Studio three-light rig: key from front-right, fill from front-left, rim from
 // behind to carve the silhouette out of dark backdrops.
@@ -293,8 +306,18 @@ async function onLoaded(gltf) {
 			(maxDim / 2) / Math.tan(fovV / 2),
 			(maxDim / 2) / Math.tan(fovH / 2),
 		) * ${JSON.stringify(FRAME_MARGIN)};
-		const yaw = THREE.MathUtils.degToRad(${JSON.stringify(CAMERA_YAW_DEG)});
-		camera.position.set(Math.sin(yaw) * dist, size.y * 0.08, Math.cos(yaw) * dist);
+		const yaw = THREE.MathUtils.degToRad(CAMERA.yaw ?? ${JSON.stringify(CAMERA_YAW_DEG)});
+		if (CAMERA.pitch === undefined) {
+			camera.position.set(Math.sin(yaw) * dist, size.y * 0.08, Math.cos(yaw) * dist);
+		} else {
+			// An explicit elevation orbits the camera on a sphere around the model.
+			const pitch = THREE.MathUtils.degToRad(CAMERA.pitch);
+			camera.position.set(
+				Math.sin(yaw) * Math.cos(pitch) * dist,
+				Math.sin(pitch) * dist,
+				Math.cos(yaw) * Math.cos(pitch) * dist,
+			);
+		}
 		camera.lookAt(0, 0, 0);
 		// Two paints guard against partial first-frame artifacts (textures
 		// still uploading, skinned meshes pre-bind). Cheap on a single GLB.
@@ -379,9 +402,13 @@ export async function renderGlbToPng(opts = {}) {
  *   authored. Non-humanoid models render as authored either way.
  * @param {(r:{posed:boolean,mode:string}) => void} [opts.onPose] - told how the
  *   model was posed
+ * @param {number} [opts.yaw] camera degrees around the model (default 26)
+ * @param {number} [opts.pitch] camera degrees above the horizon (default: the
+ *   gentle lift the share cards use)
+ * @param {number} [opts.fov] vertical field of view (default 28)
  * @returns {Promise<Buffer>} PNG buffer
  */
-export async function renderGlbToPngBrowser({ glbUrl, width = 1200, height = 630, background = '#0a0a0a', backdrop = null, maxBytes = DEFAULT_MAX_GLB_BYTES, pose = 'rest', onPose = null } = {}) {
+export async function renderGlbToPngBrowser({ glbUrl, width = 1200, height = 630, background = '#0a0a0a', backdrop = null, maxBytes = DEFAULT_MAX_GLB_BYTES, pose = 'rest', onPose = null, yaw, pitch, fov } = {}) {
 	if (!glbUrl || typeof glbUrl !== 'string') {
 		throw Object.assign(new Error('glbUrl required'), { status: 400, code: 'invalid_args' });
 	}
@@ -400,10 +427,11 @@ export async function renderGlbToPngBrowser({ glbUrl, width = 1200, height = 630
 		});
 	}
 	const poseClip = pose === 'bind' ? null : await thumbnailPoseClip();
+	const camera = { yaw, pitch, fov };
 	await acquireRenderSlot();
 	try {
 		try {
-			return await renderOnce({ glbBase64, width, height, background, backdrop, poseClip, onPose });
+			return await renderOnce({ glbBase64, width, height, background, backdrop, poseClip, camera, onPose });
 		} catch (err) {
 			// The shared browser can die mid-render (an OOM-reaped chromium takes
 			// every in-flight page with it). That says nothing about this GLB: the
@@ -411,7 +439,7 @@ export async function renderGlbToPngBrowser({ glbUrl, width = 1200, height = 630
 			// a freshly launched browser instead of surfacing an infra blip as a
 			// render failure.
 			if (!isBrowserInfrastructureError(err)) throw err;
-			return await renderOnce({ glbBase64, width, height, background, backdrop, poseClip, onPose });
+			return await renderOnce({ glbBase64, width, height, background, backdrop, poseClip, camera, onPose });
 		}
 	} finally {
 		releaseRenderSlot();
@@ -465,7 +493,7 @@ export async function lockDownPageRequests(page, threeBase) {
 
 // One page lifecycle on the shared browser: boot page, load the inline viewer,
 // wait for the first clean frame, screenshot.
-async function renderOnce({ glbBase64, width, height, background, backdrop, poseClip, onPose }) {
+async function renderOnce({ glbBase64, width, height, background, backdrop, poseClip, camera, onPose }) {
 	// getBrowser()'s cold-launch path (chromium binary download on a fresh
 	// container) had no cap before this; a stalled download hung the whole
 	// request until Cloud Run's own timeout.
@@ -478,7 +506,7 @@ async function renderOnce({ glbBase64, width, height, background, backdrop, pose
 		// watchdog below fires and every poster comes back blank.
 		const { base: threeBase } = await resolveThreeCdn(THREE_VERSION);
 		await lockDownPageRequests(page, threeBase);
-		const html = viewerHtml({ glbBase64, width, height, background, backdrop, poseClip, threeBase });
+		const html = viewerHtml({ glbBase64, width, height, background, backdrop, poseClip, camera, threeBase });
 		// data: URL avoids needing a network fetch for the bootstrap page itself.
 		// importmap dependencies (three, GLTFLoader) still come from the CDN.
 		await withStageTimeout(
