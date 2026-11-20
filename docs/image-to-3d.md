@@ -1,6 +1,6 @@
 # Image to 3D: turn a photo into a downloadable 3D model
 
-Image to 3D is Forge's photo lane, opened directly. Drop in one to six photos of an object, taken from different angles, and get back a textured, downloadable GLB you can orbit, view in AR, and take into any engine. It is the fastest way to go from a real thing on your desk, or a single reference image, to a real 3D model, with no account and no key on the free lane.
+Image to 3D is Forge's photo lane, opened directly. Drop in one to six photos of an object, taken from different angles, and get back a textured, downloadable GLB you can orbit, view in AR, and take into any engine. It is the fastest way to go from a real thing on your desk, or a single reference image, to a real 3D model, free of charge on the free lane with a free three.ws account.
 
 Page: [/image-to-3d](https://three.ws/image-to-3d) · API: `/api/forge`
 
@@ -12,7 +12,7 @@ Text-to-3D is great when you can describe a thing. But often you already have th
 
 ## How it works
 
-When you add photos, the app switches to the `image` (image-intermediate) generation path. Each photo is uploaded straight to object storage through a presigned URL (`/api/forge-upload`). Adding a photo needs a free account: a signed-out visitor sees a sign-in prompt under the photo slots, and a script or plugin sends an API key from [/dashboard/api-keys](https://three.ws/dashboard/api-keys) as `Authorization: Bearer <key>` (anonymous calls get `401 sign_in_required`). Text-to-3D needs no account. The resulting public URLs are POSTed to `/api/forge` as `image_urls`. With more than one view the backend fuses them with multi-view conditioning, so the reconstructed mesh honors detail from every angle you supplied rather than guessing the unseen sides from a single frame.
+When you add photos, the app switches to the `image` (image-intermediate) generation path. Each photo is uploaded straight to object storage through a presigned URL (`/api/forge-upload`). Adding a photo needs a free account: a signed-out visitor sees a sign-in prompt under the photo slots, and a script or plugin sends an API key from [/dashboard/api-keys](https://three.ws/dashboard/api-keys) as `Authorization: Bearer <key>` (anonymous calls get `401 sign_in_required`). Generating needs the same account, from text or photos, and the model is saved to it unlisted until you publish it. The resulting public URLs are POSTed to `/api/forge` as `image_urls`. With more than one view the backend fuses them with multi-view conditioning, so the reconstructed mesh honors detail from every angle you supplied rather than guessing the unseen sides from a single frame.
 
 Routing is free-first and health-aware, exactly as in Forge. Because the free NVIDIA NIM TRELLIS lane is text-only (it rejects user images), photo submissions filter it out and fall to the free reconstruction chain in `api/_lib/forge-tiers.js`, most preferred first:
 
@@ -42,7 +42,7 @@ Image to 3D reconstructs whole objects: a prop, a product, a toy, a sculpture, a
 
 ## Examples
 
-Send public image URLs to the same `/api/forge` endpoint. No key is required on the free lane.
+Send public image URLs to the same `/api/forge` endpoint. The free lane costs nothing but needs a three.ws API key from [/dashboard/api-keys](https://three.ws/dashboard/api-keys), sent as `Authorization: Bearer <key>`; without one the POST answers `401 sign_in_required`. Polling needs no key.
 
 ```bash
 # Multi-view reconstruction from three angles, standard tier, then poll. A lane
@@ -50,6 +50,7 @@ Send public image URLs to the same `/api/forge` endpoint. No key is required on 
 # null job_id; otherwise you get a job_id to poll until "done" or "failed".
 RESP=$(curl -s -X POST 'https://three.ws/api/forge' \
   -H 'content-type: application/json' \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
   -d '{"image_urls":["https://…/front.jpg","https://…/side.jpg","https://…/back.jpg"],"tier":"standard"}')
 echo "$RESP" | python3 -c 'import sys,json;j=json.load(sys.stdin);print(j.get("glb_url") or j["job_id"])'
 
@@ -61,6 +62,7 @@ Single-image reconstruction is just one URL:
 ```bash
 curl -X POST 'https://three.ws/api/forge' \
   -H 'content-type: application/json' \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
   -d '{"image_urls":["https://…/sneaker.jpg"],"tier":"draft"}'
 ```
 
@@ -69,7 +71,7 @@ Poll until the GLB is ready in JavaScript:
 ```javascript
 const start = await fetch('https://three.ws/api/forge', {
   method: 'POST',
-  headers: { 'content-type': 'application/json' },
+  headers: { 'content-type': 'application/json', authorization: `Bearer ${process.env.THREE_WS_API_KEY}` },
   body: JSON.stringify({ image_urls: ['https://…/chair.jpg'], tier: 'standard' }),
 }).then((r) => r.json());
 
@@ -84,7 +86,7 @@ console.log(job.glb_url);
 ## States and limits
 
 - **Up to six views** per generation (`MAX_VIEWS` in `api/forge.js`); more views mean tighter multi-view fusion.
-- **Free lane** requires no account. The **High tier** is $THREE hold-or-pay gated (quality gate, not vendor-cost recovery); a verified $THREE pass also lifts the free-lane quota.
+- **Free lane** costs nothing and needs a free account (signed in, or a Bearer API key). The **High tier** is $THREE hold-or-pay gated (quality gate, not vendor-cost recovery); a verified $THREE pass also lifts the free-lane quota.
 - **Loading**: real elapsed counter; cold GPU workers surface an honest spin-up estimate.
 - **Down or unconfigured engine**: disabled with the real reason, or a clean `backend_unconfigured` error. No mock output, ever.
 - **Resume**: an interrupted job is pollable again for 30 minutes from the same browser.

@@ -1,7 +1,11 @@
 # three.ws 3D API
 
-Free, keyless 3D for AI agents. No key, no account, no wallet — an autonomous
-agent can turn a text prompt into a real textured GLB model in one call. This is
+Free 3D for AI agents. No wallet and no charge — an autonomous agent can turn a
+text prompt into a real textured GLB model in one call. Making a model needs a free
+three.ws account, so every model has an owner who can find, publish or delete it:
+create an API key at [/dashboard/api-keys](https://three.ws/dashboard/api-keys) and
+send it as `Authorization: Bearer <key>`. Reading (discovery, polling, inspect,
+diff, quotes) needs no key. This is
 the only text→3D lane in the x402 / agent-payments ecosystem that gives draft
 generation away for free, and it funnels into the paid quality tiers when an
 agent needs production output.
@@ -64,7 +68,9 @@ Send `Accept: text/html` for a browsable version of the same data; anything else
 
 `GET /api/3d/openapi.json` is a real OpenAPI 3.1 document generated from the same
 catalog — point any toolchain (LangChain's `OpenAPIToolkit`, `openapi-generator`,
-Swagger UI) at it for typed clients and callable tools. No key, no account.
+Swagger UI) at it for typed clients and callable tools. Reading the spec needs no
+key; calling `POST /api/3d/generate` from it needs your API key as
+`Authorization: Bearer <key>`.
 
 ```bash
 curl https://three.ws/api/3d/openapi.json
@@ -84,11 +90,15 @@ from one catalog, they can never drift.
 ### Who uses this, and why
 
 An agent building a **game**, a **scene**, an **NFT**, or any visual needs a 3D
-model from a text prompt — instantly, with no signup and no key to manage. It
-calls `POST /api/3d/generate`, gets back a GLB (or a job token to poll), drops the
-model into its world, and keeps going. When it needs denser geometry, PBR
-textures, or a rigged, animatable character, it upgrades to Forge Pro / Rigged
-Avatars — same platform, same auth-free base.
+model from a text prompt — instantly, with one free API key and no wallet. It
+calls `POST /api/3d/generate` with `Authorization: Bearer <key>`, gets back a GLB
+(or a job token to poll), drops the model into its world, and keeps going. When it
+needs denser geometry, PBR textures, or a rigged, animatable character, it upgrades
+to Forge Pro / Rigged Avatars on the same platform.
+
+New models are born **unlisted**: the `viewerUrl` and `glbUrl` work for anyone you
+hand them to, but the model stays out of the public showcase, feeds and search until
+its signed-in owner publishes it, which runs a content check first.
 
 ### Free-tier limits (stated honestly)
 
@@ -214,6 +224,7 @@ GET /api/3d/generate?job=f1.eyJwIjoibnZpZGlh...&title=a%20small%20ceramic%20robo
 
 | Situation                     | Response                                                        |
 |-------------------------------|----------------------------------------------------------------|
+| No API key or session on the `POST` | `401 { error: "sign_in_required", sign_in_url, api_keys_url }` |
 | Empty / too-short / oversized prompt | `400 invalid_prompt`                                    |
 | Unsupported `format`          | `400 unsupported_format`                                       |
 | Queued                        | `200 { status: "pending", job, poll, retryAfter, etaSeconds?, creationId? }` |
@@ -227,9 +238,10 @@ A well-formed prompt never returns `500`.
 ### curl — end to end
 
 ```bash
-# 1. Submit a prompt
+# 1. Submit a prompt (key from https://three.ws/dashboard/api-keys)
 curl -s -X POST https://three.ws/api/3d/generate \
   -H 'content-type: application/json' \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
   -d '{"prompt":"a small ceramic robot figurine"}'
 
 # → { "status": "pending", "job": "f1...", "poll": "/api/3d/generate?job=f1..." }
@@ -583,8 +595,9 @@ Two further catalog entries turn a model into a physical object.
 `POST /api/print/quote` returns a printability report (closed solid, wall
 thickness, volume, a 0-100 score) and, when you pass a `materialId`, an
 itemized quote with a signed token. `POST /api/print/prepare` repairs the mesh
-and writes an STL, a 3MF and the repaired GLB. Both are free and keyless;
-ordering is paid. See [Materialize](/docs/materialize).
+and writes an STL, a 3MF and the repaired GLB. Both are free. The quote needs no
+key; preparing writes new files, so it needs an account (`Authorization: Bearer
+<key>`). Ordering is paid. See [Materialize](/docs/materialize).
 
 ---
 

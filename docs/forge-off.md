@@ -6,7 +6,8 @@ can be re-sorted from newest to most-voted, and the top model each week is
 crowned into a permanent hall of fame that feeds the [Sketchfab
 showcase](/docs/sketchfab).
 
-It is **auth-free**, like the rest of the Forge: one vote per browser, no login.
+Voting is **auth-free**: one vote per browser, no login. (Making a model on the
+Forge needs a free account; browsing and voting on what others made does not.)
 A vote is keyed to the same anonymous browser id (`forge:cid`) the Forge already
 uses to scope "Your creations", so a visitor's own upvotes light up across the
 strip without an account.

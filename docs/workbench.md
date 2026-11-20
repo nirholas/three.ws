@@ -90,7 +90,7 @@ Viewport defaults (grid, environment light, turntable after a generation), the s
 
 ## Scripts and agents
 
-Everything the Workbench does is a public HTTP call, so a script or an agent can run the same pipeline. Generate from a photo:
+Everything the Workbench does is a public HTTP call, so a script or an agent can run the same pipeline. Uploading, generating, background removal, remeshing and rigging all make something new, so each needs a free three.ws account: send an API key from [/dashboard/api-keys](https://three.ws/dashboard/api-keys) as `Authorization: Bearer <key>` (an anonymous call answers `401 sign_in_required`). Polling needs no key. Generate from a photo:
 
 ```bash
 # 1. Ask for an upload slot (uploads need your API key from /dashboard/api-keys), then PUT the image to upload_url
@@ -101,6 +101,7 @@ curl -X PUT "$UPLOAD_URL" -H 'content-type: image/png' --data-binary @photo.png
 
 # 2. Submit the public_url
 curl -s https://three.ws/api/forge -H 'content-type: application/json' \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
   -d '{"path":"image","tier":"standard","image_urls":["'"$PUBLIC_URL"'"]}'
 
 # 3. Poll every few seconds until status is "done", then fetch glb_url

@@ -52,19 +52,27 @@ settles the USDC payment (Solana or Base) and retries the call with the payment 
 `_meta`. Generation tools quote by quality tier so the 402 quote, the verified
 payment, and the settled charge all match the work requested.
 
-A few tools are **free** (no payment, wallet, or key) — notably `forge_free` and
-the read-only studio helpers below.
+A few tools are **free** (no payment or wallet) — notably `forge_free` and the
+read-only studio helpers below. Free tools that make or rig a model still need a
+free three.ws account (a Bearer API key or OAuth sign-in); the read-only helpers
+need nothing.
 
 ## Free 3D Studio — `/api/mcp-studio`
 
 A free, non-crypto MCP server for the ChatGPT App Directory and any MCP client. It
-exposes **only** 3D generation/inspection — no account, no payment, no token. See
-[3D Studio MCP](mcp-studio.md).
+exposes **only** 3D generation/inspection — no payment, no token. Making, rigging,
+refining or rendering a model needs a free three.ws account: send a three.ws API key
+from [/dashboard/api-keys](https://three.ws/dashboard/api-keys) as
+`Authorization: Bearer <key>`, or connect with OAuth at
+`https://three.ws/api/mcp-studio?auth=oauth`. Search, job status and docs stay open.
+See [3D Studio MCP](mcp-studio.md).
 
 ### Quickstart: attach the studio to a Foundry agent
 
-Foundry Agent Service accepts any public remote MCP server as an agent tool, so
-the studio works there with no account, key, or connection secret. These steps
+Foundry Agent Service accepts any public remote MCP server as an agent tool. The
+studio's search and job tools need no credentials; `forge_free` needs a three.ws
+API key from [/dashboard/api-keys](https://three.ws/dashboard/api-keys), sent as an
+`Authorization` header. These steps
 follow Microsoft's current guides,
 [Connect agents to MCP server endpoints](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/model-context-protocol)
 and the unauthenticated path in
@@ -88,7 +96,7 @@ role on it.
    |---|---|
    | Name | `threews_studio` |
    | Remote MCP Server endpoint | `https://three.ws/api/mcp-studio` |
-   | Authentication | `Unauthenticated` |
+   | Authentication | `Key-based`: header `Authorization`, value `Bearer <your three.ws API key>` |
 
 6. Select **Connect**. `threews_studio` appears under **Tools**. Select **Save**.
 7. In the playground chat, try `Find a ready-made lantern, then generate a
@@ -99,6 +107,8 @@ role on it.
 `az login`)
 
 ```python
+import os
+
 from azure.ai.projects import AIProjectClient
 from azure.ai.projects.models import MCPTool, PromptAgentDefinition
 from azure.identity import DefaultAzureCredential
@@ -114,6 +124,8 @@ with AIProjectClient(endpoint=PROJECT_ENDPOINT, credential=DefaultAzureCredentia
         # so this sample skips approvals. Use "always" to review every call.
         require_approval="never",
         allowed_tools=["search_catalog", "forge_free", "get_job"],
+        # forge_free makes a model, which needs a three.ws account.
+        headers={"Authorization": f"Bearer {os.environ['THREE_WS_API_KEY']}"},
     )
     agent = project.agents.create_version(
         agent_name="prop-designer",
@@ -139,7 +151,7 @@ with AIProjectClient(endpoint=PROJECT_ENDPOINT, credential=DefaultAzureCredentia
 ```
 
 The same tool definition in REST or another SDK is
-`{"type": "mcp", "server_label": "threews_studio", "server_url": "https://three.ws/api/mcp-studio", "require_approval": "never", "allowed_tools": ["search_catalog", "forge_free", "get_job"]}`.
+`{"type": "mcp", "server_label": "threews_studio", "server_url": "https://three.ws/api/mcp-studio", "require_approval": "never", "allowed_tools": ["search_catalog", "forge_free", "get_job"], "headers": {"Authorization": "Bearer <your three.ws API key>"}}`.
 
 Things to know:
 
@@ -151,8 +163,9 @@ Things to know:
 - **Name tools explicitly.** An empty `allowed_tools` list (`[]`) allows every
   tool the server lists, not none.
 - **Toolboxes work too.** To share the studio across agents, register it once
-  with `azd ai connection create threews-studio --kind remote-tool --target https://three.ws/api/mcp-studio --auth-type none`
-  and reference that connection from a Foundry toolbox.
+  with `azd ai connection create threews-studio --kind remote-tool --target https://three.ws/api/mcp-studio`
+  with key-based auth carrying the same `Authorization: Bearer` header, and
+  reference that connection from a Foundry toolbox.
 - **Code-first alternatives.** For Semantic Kernel or Microsoft Agent Framework
   in your own process, use the packages in
   [three.ws on the Microsoft agent stack](microsoft-agent-stack.md).
@@ -177,7 +190,7 @@ tools beside the extension's own five.
   "servers": {
     "threews-studio": {
       "type": "http",
-      "url": "https://three.ws/api/mcp-studio"
+      "url": "https://three.ws/api/mcp-studio?auth=oauth"
     },
     "threews": {
       "type": "http",
@@ -187,11 +200,13 @@ tools beside the extension's own five.
 }
 ```
 
-The studio needs no credentials. For `threews`, VS Code reads the server's
-authorization metadata and runs the browser sign-in itself the first time the
-server starts. To use an API key from
-[three.ws/dashboard/api](https://three.ws/dashboard/api) instead, prompt for it
-so it never lands in the file:
+VS Code reads each server's authorization metadata and runs the browser sign-in
+itself the first time the server starts. The studio's `?auth=oauth` asks for that
+sign-in, since making or rigging a model needs a free three.ws account (without it,
+search and job status still work and the create tools answer with a sign-in
+message). To use an API key from
+[three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys) instead, prompt
+for it so it never lands in the file:
 
 ```json
 {
@@ -199,6 +214,11 @@ so it never lands in the file:
     { "type": "promptString", "id": "threews-key", "description": "three.ws API key (sk_live_...)", "password": true }
   ],
   "servers": {
+    "threews-studio": {
+      "type": "http",
+      "url": "https://three.ws/api/mcp-studio",
+      "headers": { "Authorization": "Bearer ${input:threews-key}" }
+    },
     "threews": {
       "type": "http",
       "url": "https://three.ws/api/mcp",
@@ -217,18 +237,20 @@ so it never lands in the file:
     "threews-studio": {
       "type": "http",
       "url": "https://three.ws/api/mcp-studio",
+      "headers": { "Authorization": "Bearer $COPILOT_MCP_THREEWS_API_KEY" },
       "tools": ["*"]
     }
   }
 }
 ```
 
-The coding agent runs tools without asking, so list tool names instead of
-`"*"` to keep it to read-only ones (`search_catalog`, `get_catalog_item`, `search_docs`) if you do
-not want it starting GPU jobs. For the account server the coding agent cannot
-run a browser sign-in: add the key as the secret `COPILOT_MCP_THREEWS_API_KEY`
-in the repository's `copilot` environment (**Settings > Environments**) and
-reference it by name:
+The coding agent cannot run a browser sign-in, and making a model needs a three.ws
+account, so add an API key as the secret `COPILOT_MCP_THREEWS_API_KEY` in the
+repository's `copilot` environment (**Settings > Environments**); the config
+references it by name. Without the header the read-only tools still work. The
+coding agent runs tools without asking, so list tool names instead of `"*"` to
+keep it to read-only ones (`search_catalog`, `get_catalog_item`, `search_docs`) if
+you do not want it starting GPU jobs. The account server takes the same secret:
 
 ```json
 {

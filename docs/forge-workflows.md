@@ -23,10 +23,10 @@ You can also link straight to a template: `/forge/workflows?template=text-rig-ex
 
 | Template | Id | Chain | Needs |
 |---|---|---|---|
-| Photo to 3D | `image-preview` | Image → Generate 3D → Preview | A photo |
-| Text to rigged character | `text-rig-export` | Text prompt → Generate 3D → Auto-rig → Preview and Export | A prompt |
+| Photo to 3D | `image-preview` | Image → Generate 3D → Preview | A photo and a sign-in |
+| Text to rigged character | `text-rig-export` | Text prompt → Generate 3D → Auto-rig → Preview and Export | A prompt and a sign-in |
 | Batch photos to library | `batch-save` | For Each (photos) → Generate 3D → Preview and Save | Photos and a sign-in |
-| Photo to game asset | `image-gameready` | Image → Generate 3D → Remesh → Game-ready → Preview and Export | A photo and $THREE |
+| Photo to game asset | `image-gameready` | Image → Generate 3D → Remesh → Game-ready → Preview and Export | A photo, a sign-in and $THREE |
 
 A template is a starting point. Loading one replaces the canvas (undo brings the previous graph back), and every node stays editable.
 
@@ -49,6 +49,8 @@ Ports are typed: **text**, **image** and **mesh**. A link can only join an outpu
 | Preview | mesh | | Nothing (local) | An inline 3D viewer on the card. Generate 3D and Auto-rig cards also link to the model page when the engine saved one. |
 | Export | mesh | | Nothing for GLB; the browser converts STL, OBJ and PLY | Downloads the model as GLB, FBX (from Game-ready), STL, OBJ or PLY. |
 | Save | mesh | | `POST /api/avatars/from-forge` or `POST /api/creations` | Saves to your library (sign-in required) or publishes to the public creations gallery. |
+
+Making or changing a model needs a free three.ws account, so Image, Generate 3D, Remesh, Auto-rig, Segment, Stylize, Game-ready and a Load 3D file upload all need you signed in; a signed-out run stops at the first of them with a sign-in action. Text prompt, For Each, Load 3D from a link, Preview and Export run without one. New models are saved unlisted until you publish them.
 
 Processing workers download the model themselves, so a model that only exists in the browser (made on your GPU, or behind an over-long link) is uploaded to three.ws storage first. The card shows "Uploading the model" while that happens.
 
