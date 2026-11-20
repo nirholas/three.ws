@@ -1,0 +1,15 @@
+{
+	"name": "@three-ws/example-grok-agent-avatar",
+	"version": "1.0.0",
+	"private": true,
+	"description": "A talking three.ws 3D avatar with Grok as its brain: the server keeps the xAI key, the page maps each reply's mood to emotes.",
+	"type": "module",
+	"scripts": {
+		"start": "node server.mjs",
+		"test": "node --test test.mjs"
+	},
+	"dependencies": {},
+	"engines": {
+		"node": ">=22"
+	}
+}
