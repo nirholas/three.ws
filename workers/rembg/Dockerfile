@@ -11,13 +11,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 
-# rembg downloads ONNX model weights on first use; pre-cache the two the service
-# can warm at startup so cold starts never hit the network. Models live in
-# /root/.u2net/. u2net_human_seg, silueta and birefnet-general-lite stay lazy:
-# they are rarely asked for, and baking all five would add ~570 MB to every
-# pull. The first birefnet request therefore pays a one-time 214 MB download.
+# rembg downloads ONNX model weights on first use; pre-cache every model a
+# caller asks for so cold starts never hit the network. Models live in
+# /root/.u2net/. u2net and isnet-general-use are the warm defaults.
+# birefnet-general-lite is what TripoSG mattes every image with
+# (REMBG_MODEL in workers/model-triposg): left lazy, each fresh instance
+# spent about two minutes downloading its 224 MB on the first TripoSG job,
+# past TripoSG's 120 s matte budget, so that job failed (2026-11-20).
+# tests/worker-rembg-baked-models.test.js keeps this list in step with the
+# callers. u2net_human_seg and silueta stay lazy: no worker requests them.
 RUN python -c "import rembg; rembg.new_session('u2net')" && \
     python -c "import rembg; rembg.new_session('isnet-general-use')"
+RUN python -c "import rembg; rembg.new_session('birefnet-general-lite')"
 
 WORKDIR /app
 COPY worker_security.py rembg_policy.py main.py task_store.py forwarder.py /app/

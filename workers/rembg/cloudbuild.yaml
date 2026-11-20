@@ -57,7 +57,11 @@ steps:
       - --platform=managed
       - --port=8080
       - --cpu=4
-      - --memory=8Gi
+      # birefnet-general-lite runs on CPU here; up to MAX_CONCURRENT (4) of its
+      # inferences beside the resident u2net and isnet sessions overran 8Gi and
+      # the instance was OOM-killed mid-matte (revision 00007, 2026-11-20).
+      # 16Gi is the ceiling for 4 vCPU.
+      - --memory=16Gi
       - --min-instances=${_MIN_INSTANCES}
       - --max-instances=${_MAX_INSTANCES}
       - --timeout=60
