@@ -175,6 +175,9 @@ Add `allowed_tools` (`allowed_tool_names` in the Python SDK) to expose only the
 tools a task needs, for example `["search_catalog", "forge_free", "get_job"]`.
 A complete, zero-dependency Node script that also collects slow renders lives in
 [examples/grok-remote-mcp](../examples/grok-remote-mcp/README.md).
+Six more, in Python, Node, curl, X search, a talking avatar and Grok Build, are
+indexed in [examples/grok](../examples/grok/README.md), with one command
+(`npm run grok:examples-smoke`) that runs them all against production.
 
 ### Grok on the platform's own LLM calls
 

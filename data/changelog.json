@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-20",
+			"title": "Six runnable examples for building 3D with Grok",
+			"summary": "A new examples pack shows Grok and three.ws working together six ways: Python with xai-sdk, Node with the Responses API, a single curl script, Grok's X search turning a trending topic into a 3D prop (it drafts a post and never posts), a talking 3D avatar with Grok as its brain, and a walk-through of the three.ws plugin for Grok Build that ends with the model loaded in a three.js starter. Every example has a README with the exact run command, output captured from a real run and what a run costs, and a no-key mode that runs the three.ws side live. One command, npm run grok:examples-smoke, sets each one up in a fresh folder and runs them all against production; the fastest goes from a fresh copy to a finished GLB in about two minutes.",
+			"tags": ["docs", "sdk"],
+			"link": "/grok"
+		},
+		{
+			"date": "2026-11-20",
 			"title": "The three.ws plugin for Grok Build gets /make-3d, /rig, /embed and an art director agent",
 			"summary": "The three.ws plugin for Grok Build, xAI's coding agent, now does the whole 3D job from the terminal. /make-3d checks the free catalog first and otherwise generates a textured model, /rig turns a humanoid GLB into an animation-ready avatar, /embed writes paste-ready HTML for any model, and /three-ws-init teaches a project's AGENTS.md how to load and embed GLBs safely. A 3d-art-director agent makes a model to a brief, renders it from four sides, fixes the one thing that is wrong and stops after two rounds. Catalog search, render checks and embed code are free with no account; making or rigging a model needs a free three.ws account, signed in once from Grok Build with OAuth or with an API key. The plugin installs in under a second and is ready for xAI's plugin marketplace.",
 			"tags": ["feature", "docs"],

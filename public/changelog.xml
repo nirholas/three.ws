@@ -135,6 +135,14 @@
 			<description>Making a model on the free 3D Studio MCP server (/api/mcp-studio) needs a free three.ws account, but its sign-in pointed MCP clients at the wrong protected resource, so clients built on the MCP SDK stopped before the sign-in page with &quot;Protected resource does not match expected&quot;. The studio is now its own OAuth resource: its sign-in challenge, its protected-resource metadata and the tokens the authorization server mints all name /api/mcp-studio, so connectors such as Grok Bot and IBM Bob reach consent and come back signed in. Existing platform tokens keep working.</description>
 		</item>
 		<item>
+			<title>Six runnable examples for building 3D with Grok</title>
+			<link>https://three.ws/grok</link>
+			<guid isPermaLink="false">2026-11-20:Six runnable examples for building 3D with Grok</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>A new examples pack shows Grok and three.ws working together six ways: Python with xai-sdk, Node with the Responses API, a single curl script, Grok's X search turning a trending topic into a 3D prop (it drafts a post and never posts), a talking 3D avatar with Grok as its brain, and a walk-through of the three.ws plugin for Grok Build that ends with the model loaded in a three.js starter. Every example has a README with the exact run command, output captured from a real run and what a run costs, and a no-key mode that runs the three.ws side live. One command, npm run grok:examples-smoke, sets each one up in a fresh folder and runs them all against production; the fastest goes from a fresh copy to a finished GLB in about two minutes.</description>
+		</item>
+		<item>
 			<title>The /glass lens gets past &quot;Location needed&quot;</title>
 			<link>https://three.ws/glass</link>
 			<guid isPermaLink="false">2026-11-20:The /glass lens gets past &quot;Location needed&quot;</guid>

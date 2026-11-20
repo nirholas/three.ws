@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-20T22:40:01.972Z",
+	"generated_at": "2026-11-20T22:42:00.953Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4673,
+	"total": 4674,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -179,6 +179,17 @@
 			"link": "/docs/mcp-studio",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "Six runnable examples for building 3D with Grok",
+			"summary": "A new examples pack shows Grok and three.ws working together six ways: Python with xai-sdk, Node with the Responses API, a single curl script, Grok's X search turning a trending topic into a 3D prop (it drafts a post and never posts), a talking 3D avatar with Grok as its brain, and a walk-through of the three.ws plugin for Grok Build that ends with the model loaded in a three.js starter. Every example has a README with the exact run command, output captured from a real run and what a run costs, and a no-key mode that runs the three.ws side live. One command, npm run grok:examples-smoke, sets each one up in a fresh folder and runs them all against production; the fastest goes from a fresh copy to a finished GLB in about two minutes.",
+			"link": "/grok",
+			"tags": [
+				"docs",
+				"sdk"
 			]
 		},
 		{
@@ -1548,16 +1559,6 @@
 			"title": "Docs · Microsoft 365 Copilot connector",
 			"summary": "Admin guide for the three.ws Graph connector: consent and its two permissions, who can see indexed agents, models and avatars, what is indexed, sync and throttling, disconnect, errors and their fixes, data handling, the API and the schema.",
 			"link": "/docs/microsoft-365-copilot-connector",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "launch",
-			"title": "Docs · Review a 3D model together in a meeting (Live Share)",
-			"summary": "The three.ws review stage for Teams meetings: follow the presenter's camera, presence, laser pointers, synced comment pins with markdown export and animation sync over Live Share, plus the sideload path, privacy and bundle size.",
-			"link": "/docs/teams-live-share",
 			"tags": [
 				"launch"
 			]
