@@ -7,15 +7,26 @@ There is no payment. Making or rigging a model needs a free three.ws account,
 so every model has an owner who can publish or delete it (new models stay
 unlisted until you publish them).
 
-This is a Cursor plugin in the [Open Plugins](https://open-plugins.com) layout
-(`.cursor-plugin/plugin.json`, `mcp.json`, `skills/`). It has no local code. It
-points Cursor at the hosted three.ws studio MCP server and bundles four workflow
-skills that teach the agent when to use which tool.
+![The three.ws viewer showing a carved armchair the plugin generated from one sentence](assets/screenshot-viewer.png)
+
+This is a plugin in the [Cursor plugin format](https://cursor.com/docs/reference/plugins)
+(`.cursor-plugin/plugin.json`, `mcp.json`, `rules/`, `skills/`, `commands/`). It
+has no local code. It points Cursor at the hosted three.ws studio MCP server and
+bundles rules, skills and commands that teach the agent when to use which tool.
+
+Marketplace reviewers: [REVIEWING.md](REVIEWING.md) is a five-minute test plan.
 
 ## Install
 
-From [cursor.directory](https://cursor.directory/plugins), or connect the server
-by hand in `~/.cursor/mcp.json` (or a project's `.cursor/mcp.json`):
+**From the Cursor Marketplace** (once the listing is approved): open the
+Marketplace, search for three.ws, and click Add to Cursor.
+
+**From a local copy:** put this directory at `~/.cursor/plugins/local/three-ws`
+(copy it; Cursor skips symlinks that point outside that folder), then run
+**Developer: Reload Window**.
+
+**Server only, without the rules, skills and commands:** add this to
+`~/.cursor/mcp.json` (or a project's `.cursor/mcp.json`):
 
 ```json
 {
@@ -27,15 +38,19 @@ by hand in `~/.cursor/mcp.json` (or a project's `.cursor/mcp.json`):
 }
 ```
 
-Cursor shows a **Needs login** button on the server the first time; it opens
-the free three.ws sign-in and stores the token. To use an API key instead
-(from <https://three.ws/dashboard/api-keys>), drop `?auth=oauth` and add
+On first connect Cursor asks you to sign in to the `three-ws` server (in
+**Customize** in the sidebar). That opens the free three.ws sign-in, which can
+create an account, and Cursor stores the token. The consent screen asks for
+your profile and your 3D models only (`profile`, `avatars:read`,
+`avatars:write`, `offline_access`) and nothing else. To
+use an API key instead (from <https://three.ws/dashboard/api>), drop
+`?auth=oauth` and add
 `"headers": { "Authorization": "Bearer ${env:THREE_WS_API_KEY}" }`.
 
 ## What the agent gets
 
 The server's tool list comes from `https://three.ws/api/mcp-studio` at run time.
-These are the 17 tools it lists today:
+These are the 16 tools it lists today:
 
 | Tool | What it does |
 | --- | --- |
@@ -50,6 +65,30 @@ These are the 17 tools it lists today:
 | `search_catalog`, `get_catalog_item`, `get_item_source` | Searches thousands of ready-made CC0 props, rigged characters and motion clips, and returns embed code |
 | `search_docs` | Searches the three.ws documentation |
 | `create_agent_persona`, `get_agent_persona`, `persona_say` | Turns a generated GLB into a named, reusable talking 3D persona |
+
+Every generation links a run receipt: a signed, stage-by-stage record of what
+was expected, what was observed and whether it passed, so a weak draft is named
+as one instead of being presented as finished.
+
+![The run receipt for that armchair: every stage met its contract](assets/screenshot-result-card.png)
+
+## Rules
+
+| Rule | What it does |
+| --- | --- |
+| `search-catalog-before-generating` | Checks the free CC0 catalog before generating, and reuses a match. Attached when you work with `.glb` or `.gltf` files. |
+| `look-at-the-model` | After a generation, renders the model with `look_at_model` and checks it before calling it done. |
+
+Both rules are agent-requested (`alwaysApply: false`): Cursor pulls them in when
+their description matches the task, so they add nothing to unrelated chats.
+
+## Commands
+
+| Command | What it does |
+| --- | --- |
+| `/make-3d <description>` | Catalog check, `forge_free`, a render check, then the GLB, viewer link, receipt and embed code |
+| `/rig <GLB URL>` | Checks the model is a humanoid, rigs it with `rig_mesh`, and prints the rigged GLB and pose-studio link |
+| `/embed <GLB URL>` | Paste-ready HTML: an animated `<agent-3d>` for a character or a `<model-viewer>` for anything else |
 
 ## Bundled skills
 
@@ -75,27 +114,33 @@ Read this before you install.
 - **Models belong to your account.** Each model is filed under your three.ws
   account and kept out of the public gallery until you publish it. The GLB is
   stored on the three.ws CDN at an unguessable URL that anyone with the link can
-  open. A persona
-  copies its model into durable storage. Do not put private or confidential
-  details in a prompt.
+  open, and it stays until you delete it from the model page or ask for removal.
+  A persona copies its model into durable storage. Do not put private or
+  confidential details in a prompt.
+- **No training, no sale.** three.ws does not use your prompts, tool inputs or
+  generated files to train AI models, and does not sell them.
 - **What reaches your model provider.** Tool results (URLs, metadata, and the
   rendered frames from `look_at_model`) enter the session context, and so reach
   your model provider.
 - **Credentials.** The server URL ends in `?auth=oauth`, so the first connect
   answers with a standard MCP OAuth challenge and Cursor runs the three.ws
   sign-in. The plugin itself stores no keys or tokens.
-- **No local processes.** There are no shell commands, background processes, or
-  telemetry. The plugin is configuration plus Markdown.
+- **No local processes.** There are no shell commands, hooks, background
+  processes, or telemetry. The plugin is configuration plus Markdown.
 - **Rate limits.** The free studio caps generations per account per hour. When a
   call is refused, the response says when the quota resets.
-- **No payments.** The studio server has no payment, wallet, or trading path.
+- **No payments.** Nothing on the studio server costs money or charges you.
 - **Tool list is server-side.** The tool list is served by three.ws at run time,
   so installing a fixed version of this plugin does not pin it.
+
+Privacy policy: <https://three.ws/legal/privacy> (section 10 covers MCP
+connectors). Terms of service: <https://three.ws/legal/tos>. Questions or
+removal requests: privacy@three.ws.
 
 ## Links
 
 - Server: `https://three.ws/api/mcp-studio?auth=oauth` (Streamable HTTP, MCP OAuth; an `Authorization: Bearer <API key>` header also works)
-- Docs: <https://three.ws/docs>
+- Docs: <https://three.ws/docs/mcp>
 - Source: <https://github.com/nirholas/three.ws>
 
 ## License

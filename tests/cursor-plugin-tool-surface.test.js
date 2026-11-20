@@ -10,6 +10,7 @@
 //   node --env-file=.env node_modules/vitest/vitest.mjs run tests/cursor-plugin-tool-surface.test.js
 // The offline half (the matcher itself) always runs.
 
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -18,6 +19,27 @@ import { openSession, pluginMcpConfig, readMcpServers, spendSurfaceHits } from '
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const PLUGINS = ['integrations/cursor/three-ws', 'integrations/grok/three-ws'];
 const KEY = process.env.THREE_WS_API_KEY;
+const CURSOR = join(ROOT, 'integrations/cursor/three-ws');
+
+/** Tool names in the first column of the README's "What the agent gets" table. */
+export function readmeToolTable(markdown) {
+	const section = markdown.split(/^## What the agent gets$/m)[1]?.split(/^## /m)[0] || '';
+	const names = [];
+	for (const line of section.split('\n')) {
+		const cell = line.match(/^\|([^|]+)\|/)?.[1];
+		if (cell) for (const m of cell.matchAll(/`([a-z_]+)`/g)) names.push(m[1]);
+	}
+	return names;
+}
+
+/** Tool names a rule or command tells the agent to call ("Call `x`", "call the three-ws `x` tool"). */
+export function calledTools(markdown) {
+	return [...markdown.matchAll(/\b[Cc]all (?:the three-ws )?`([a-z_]+)`/g)].map((m) => m[1]);
+}
+
+const cursorDocs = ['rules', 'commands'].flatMap((dir) =>
+	readdirSync(join(CURSOR, dir)).map((f) => ({ file: `${dir}/${f}`, text: readFileSync(join(CURSOR, dir, f), 'utf8') })),
+);
 
 const servers = [];
 for (const plugin of PLUGINS) {
@@ -49,6 +71,18 @@ describe('spend-surface matcher', () => {
 	});
 });
 
+describe('plugin text parsers', () => {
+	it('reads the README tool table and the tools a command calls', () => {
+		expect(readmeToolTable('## What the agent gets\n\n| Tool | x |\n| --- | --- |\n| `a_b`, `c_d` | y |\n\n## Rules\n| `not_a_tool` | z |')).toEqual(['a_b', 'c_d']);
+		expect(calledTools('1. Call `search_catalog` first. Then call the three-ws `look_at_model` tool. Print `embed_html`.')).toEqual(['search_catalog', 'look_at_model']);
+	});
+
+	it('finds tool references in the shipped Cursor plugin', () => {
+		expect(readmeToolTable(readFileSync(join(CURSOR, 'README.md'), 'utf8')).length).toBeGreaterThan(10);
+		expect(cursorDocs.flatMap((d) => calledTools(d.text))).toContain('forge_free');
+	});
+});
+
 describe.skipIf(!KEY)('live plugin tool surface (production)', () => {
 	it('every plugin config names at least one server', () => {
 		expect(servers.length).toBeGreaterThan(0);
@@ -67,4 +101,16 @@ describe.skipIf(!KEY)('live plugin tool surface (production)', () => {
 			}
 		}, 60_000);
 	}
+
+	it('the Cursor README lists exactly the live tools, and every tool a rule or command calls exists', async () => {
+		const [server] = readMcpServers(pluginMcpConfig(CURSOR));
+		const session = await openSession(server.url, KEY);
+		try {
+			const live = (await session.client.listTools()).tools.map((t) => t.name).sort();
+			expect(readmeToolTable(readFileSync(join(CURSOR, 'README.md'), 'utf8')).sort()).toEqual(live);
+			for (const d of cursorDocs) for (const tool of calledTools(d.text)) expect(live, `${d.file} calls ${tool}`).toContain(tool);
+		} finally {
+			await session.close();
+		}
+	}, 60_000);
 });
