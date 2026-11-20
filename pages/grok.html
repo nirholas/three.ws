@@ -4,8 +4,8 @@
 	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title>three.ws for Grok Bot: a free 3D studio and a body for Grok · three.ws</title>
-	<meta name="description" content="One sentence gives Grok Bot a 3D studio. Text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear. Signed in, Grok Bot also runs your agents, reads Solana market intel and wakes on your three.ws events. Works in Grok Bot, Grok connectors, Grok Build and the xAI API." />
+	<title>three.ws for Grok: a free 3D studio and a body for Grok · three.ws</title>
+	<meta name="description" content="One connector gives Grok a free 3D studio: text and photos become textured 3D models, rigged avatars and a talking 3D body. Install it in Grok Bot, grok.com, Grok Build, Cursor or any MCP client, or call it from the xAI API." />
 	<link rel="canonical" href="https://three.ws/grok" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -15,19 +15,22 @@
 	<link rel="stylesheet" href="/nav.css" />
 	<link rel="stylesheet" href="/mobile.css" />
 	<meta property="og:type" content="website" />
-	<meta property="og:title" content="Give Grok a 3D studio, and a body" />
-	<meta property="og:description" content="One sentence adds three.ws to Grok Bot: text to 3D models, rigged avatars, and a talking 3D body. Free with a three.ws account." />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:title" content="Give Grok a 3D studio and a body" />
+	<meta property="og:description" content="One connector for Grok Bot, grok.com, Grok Build, Cursor and the xAI API. Text and photos become textured 3D models, rigged avatars and a talking 3D body. Free with a three.ws account." />
 	<meta property="og:url" content="https://three.ws/grok" />
-	<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=three.ws+for+Grok+Bot%3A+a+free+3D+studio+and+a+body+for+Grok&amp;d=Everything+Grok+Bot+can+do+with+three.ws+on+one+page%3A+generate+textured+3D+models%2C+rig+avatars%2C+find+ready-made+CC0+assets+and+run+your+agents+through+one&amp;p=%2Fgrok" />
+	<meta property="og:image" content="https://three.ws/og/grok.png" />
+	<meta property="og:image:type" content="image/png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
-	<meta property="og:image:alt" content="Give Grok a 3D studio, and a body" />
+	<meta property="og:image:alt" content="three.ws for Grok: give Grok a 3D studio and a body. Four 3D models made on three.ws: a fox, a film camera, a robot and a chair." />
 	<meta property="og:locale" content="en_US" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Give Grok a 3D studio, and a body" />
-	<meta name="twitter:description" content="One sentence adds three.ws to Grok Bot: text to 3D models, rigged avatars, and a talking 3D body. Free with a three.ws account." />
-	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=three.ws+for+Grok+Bot%3A+a+free+3D+studio+and+a+body+for+Grok&amp;d=Everything+Grok+Bot+can+do+with+three.ws+on+one+page%3A+generate+textured+3D+models%2C+rig+avatars%2C+find+ready-made+CC0+assets+and+run+your+agents+through+one&amp;p=%2Fgrok" />
+	<meta name="twitter:title" content="Give Grok a 3D studio and a body" />
+	<meta name="twitter:description" content="One connector for Grok Bot, grok.com, Grok Build, Cursor and the xAI API. Text and photos become textured 3D models, rigged avatars and a talking 3D body." />
+	<meta name="twitter:image" content="https://three.ws/og/grok.png" />
+	<meta name="twitter:image:alt" content="three.ws for Grok: give Grok a 3D studio and a body. Four 3D models made on three.ws: a fox, a film camera, a robot and a chair." />
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 	<style>
 		:root { --gk-maxw: 1080px; }
@@ -267,25 +270,140 @@
 			.gk-made, .gk-cap, .gk-recipe, .gk-recipe-link { transition: none; }
 			.gk-btn, .gk-tab, .gk-ask, .gk-progress span { transition: none; }
 		}
-	</style>
-	<script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"Add three.ws to Grok Bot","description":"Give Grok Bot a free 3D studio: text and images to textured 3D models, rigged avatars and a talking 3D body, through one custom MCP server.","url":"https://three.ws/grok","step":[{"@type":"HowToStep","name":"Add the server","text":"Tell Grok Bot: Add a custom MCP server called three-ws-grok at https://three.ws/api/mcp-grok?auth=oauth with OAuth authentication"},{"@type":"HowToStep","name":"Confirm","text":"Grok Bot shows the name and URL. Accept, then approve three.ws sign-in once with your free account."},{"@type":"HowToStep","name":"Ask for 3D","text":"Ask for a model, an avatar, or a body. Grok returns a viewer link and a downloadable GLB."}]}</script>
 
-	<meta property="og:site_name" content="three.ws">
+		/* ── hub layout: credential, actions, on-page nav ─────────────────── */
+		@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+		.gk-sec, .gk-panel, .gk-sub { scroll-margin-top: 84px; }
+		.gk-cred { display: inline-flex; align-items: center; gap: 8px; margin: 18px 0 0; padding: 6px 12px; font-size: 0.84rem; color: var(--ink-bright, var(--ink)); border: 1px solid var(--stroke-strong); border-radius: 999px; background: var(--surface-1, rgba(255,255,255,0.04)); }
+		.gk-cred::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; }
+		.gk-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+		.gk-actions .gk-btn { font-size: 0.95rem; padding: 12px 20px; }
+		.gk-toc { display: flex; flex-wrap: wrap; gap: 6px; margin: 26px 0 0; padding: 0; list-style: none; }
+		.gk-toc a { display: inline-block; padding: 6px 12px; font-size: 0.82rem; font-weight: 600; text-decoration: none; color: var(--ink-dim); border: 1px solid var(--stroke); border-radius: 999px; transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); }
+		.gk-toc a:hover { color: var(--ink); border-color: var(--stroke-strong); background: var(--surface-1, rgba(255,255,255,0.04)); }
+		.gk-toc a:active { background: var(--surface-2, rgba(255,255,255,0.08)); }
+		.gk-toc a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.gk-sec > .gk-sec-head h2 { font-size: 1.55rem; }
+		.gk-sub { margin-top: 34px; }
+		.gk-sub-head { margin: 0 0 12px; }
+		.gk-sub-head h3 { margin: 0 0 4px; font-size: 1.08rem; color: var(--ink-bright, var(--ink)); }
+		.gk-sub-head p { margin: 0; font-size: 0.88rem; color: var(--ink-dim); line-height: 1.55; max-width: 72ch; }
+		.gk-sub-head p code { font-size: 0.82rem; }
+		.gk-asks { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+		.gk-recipe h4 { margin: -4px 0 0; font-size: 1rem; color: var(--ink-bright, var(--ink)); }
+
+		/* ── install panels ─────────────────────────────────────────────── */
+		.gk-install-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 16px; }
+		.gk-install-cta span { font-size: 0.8rem; color: var(--ink-faint, var(--ink-dim)); }
+		.gk-value { display: flex; align-items: stretch; margin: 0 0 14px; border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); background: var(--bg-1, rgba(0,0,0,0.3)); overflow: hidden; }
+		.gk-value code { flex: 1; min-width: 0; padding: 12px 14px; font-size: 0.86rem; color: var(--ink-bright, var(--ink)); overflow-x: auto; white-space: nowrap; }
+		.gk-value .gk-btn { border-radius: 0; border-width: 0 0 0 1px; }
+		.gk-panel h3 { margin: 18px 0 8px; font-size: 0.98rem; color: var(--ink-bright, var(--ink)); }
+		.gk-panel h3:first-child { margin-top: 0; }
+
+		/* ── showcase ───────────────────────────────────────────────────── */
+		.gk-show { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+		.gk-show a { display: flex; flex-direction: column; text-decoration: none; border: 1px solid var(--stroke); border-radius: var(--radius-lg, 14px); overflow: hidden; background: var(--surface-1, rgba(255,255,255,0.03)); transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
+		.gk-show a:hover { border-color: var(--stroke-strong); transform: translateY(-2px); }
+		.gk-show a:active { transform: translateY(0); }
+		.gk-show a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.gk-show img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; background: var(--surface-2, rgba(255,255,255,0.05)); }
+		.gk-show-cap { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px 12px; }
+		.gk-show-cap strong { font-size: 0.9rem; color: var(--ink-bright, var(--ink)); font-weight: 650; }
+		.gk-show-cap span { font-size: 0.78rem; color: var(--ink-dim); }
+		@media (max-width: 640px) { .gk-show { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+		/* ── examples and docs ──────────────────────────────────────────── */
+		.gk-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; }
+		.gk-link { display: flex; flex-direction: column; gap: 5px; padding: 14px 16px; text-decoration: none; border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); background: var(--surface-1, rgba(255,255,255,0.03)); transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard); }
+		.gk-link:hover { border-color: var(--stroke-strong); background: var(--surface-2, rgba(255,255,255,0.06)); }
+		.gk-link:active { transform: translateY(1px); }
+		.gk-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.gk-link-kind { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--accent); }
+		.gk-link strong { font-size: 0.94rem; color: var(--ink-bright, var(--ink)); font-weight: 650; }
+		.gk-link span:last-child { font-size: 0.82rem; line-height: 1.5; color: var(--ink-dim); }
+
+		/* ── live numbers ───────────────────────────────────────────────── */
+		.gk-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+		.gk-stat { padding: 18px; border: 1px solid var(--stroke); border-radius: var(--radius-lg, 14px); background: linear-gradient(180deg, var(--surface-2, rgba(255,255,255,0.05)), transparent 80%); }
+		.gk-stat-label { margin: 0 0 8px; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-dim); }
+		.gk-stat-value { margin: 0; font-size: 2.2rem; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; color: var(--ink-bright, var(--ink)); font-variant-numeric: tabular-nums; }
+		.gk-stat-detail { margin: 8px 0 0; font-size: 0.82rem; line-height: 1.5; color: var(--ink-dim); }
+		.gk-stats .gk-skel { height: 128px; }
+		.gk-method { margin-top: 12px; font-size: 0.84rem; color: var(--ink-dim); }
+		.gk-method summary, .gk-faq summary { cursor: pointer; border-radius: 6px; transition: color var(--duration-fast) var(--ease-standard); }
+		.gk-method summary:hover { color: var(--ink); }
+		.gk-method summary:focus-visible, .gk-faq summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.gk-method ul { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 4px; line-height: 1.5; max-width: 80ch; }
+
+		/* ── reliability ────────────────────────────────────────────────── */
+		.gk-uptime { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; margin-bottom: 14px; }
+		.gk-up { padding: 18px; border: 1px solid var(--stroke); border-radius: var(--radius-lg, 14px); background: var(--surface-1, rgba(255,255,255,0.03)); }
+		.gk-up-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+		.gk-up-head h3 { margin: 0; font-size: 0.98rem; color: var(--ink-bright, var(--ink)); }
+		.gk-up-head code { font-size: 0.78rem; color: var(--ink-dim); }
+		.gk-up-rate { margin: 12px 0 2px; font-size: 2rem; font-weight: 700; line-height: 1.1; color: var(--ink-bright, var(--ink)); font-variant-numeric: tabular-nums; }
+		.gk-up-sub { margin: 0; font-size: 0.8rem; color: var(--ink-dim); }
+		.gk-up dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; margin: 14px 0 0; }
+		.gk-up dt { font-size: 0.72rem; color: var(--ink-dim); }
+		.gk-up dd { margin: 2px 0 0; font-size: 0.9rem; font-weight: 600; color: var(--ink-bright, var(--ink)); font-variant-numeric: tabular-nums; }
+		.gk-up-last { display: inline-flex; align-items: center; gap: 6px; }
+		.gk-up-last::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--ink-dim); }
+		.gk-up-last[data-ok="true"]::before { background: var(--success); }
+		.gk-up-last[data-ok="false"]::before { background: var(--danger); }
+		.gk-uptime .gk-skel { height: 196px; }
+		.gk-note a { text-decoration: underline; text-underline-offset: 3px; }
+		.gk-note a:hover { color: var(--ink); }
+
+		/* ── FAQ ────────────────────────────────────────────────────────── */
+		.gk-faq { display: grid; gap: 8px; }
+		.gk-faq details { border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); background: var(--surface-1, rgba(255,255,255,0.03)); transition: border-color var(--duration-fast) var(--ease-standard); }
+		.gk-faq details:hover, .gk-faq details[open] { border-color: var(--stroke-strong); }
+		.gk-faq summary { padding: 14px 16px; font-weight: 650; font-size: 0.96rem; color: var(--ink-bright, var(--ink)); list-style-position: inside; }
+		.gk-faq summary:hover { color: var(--accent); }
+		.gk-faq summary:active { opacity: 0.8; }
+		.gk-faq details > div { padding: 0 16px 16px; font-size: 0.9rem; line-height: 1.6; color: var(--ink-dim); max-width: 78ch; }
+		.gk-faq details > div p { margin: 0 0 8px; }
+		.gk-faq details > div p:last-child { margin-bottom: 0; }
+		.gk-faq a { text-decoration: underline; text-underline-offset: 3px; }
+		.gk-faq a:hover { color: var(--ink); }
+		.gk-src-note a:focus-visible, .gk-panel-lede a:focus-visible, .gk-faq a:focus-visible, .gk-note a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+		.gk-faq code { font-size: 0.84rem; }
+		@media (max-width: 640px) {
+			.gk-actions .gk-btn { flex: 1 1 100%; }
+			.gk-value { flex-direction: column; }
+			.gk-value .gk-btn { border-width: 1px 0 0 0; padding: 10px; }
+			.gk-stat-value { font-size: 1.9rem; }
+		}
+		@media (prefers-reduced-motion: reduce) {
+			.gk-show a, .gk-link, .gk-toc a, .gk-faq details, .gk-faq summary, .gk-method summary { transition: none; }
+			.gk-show a:hover { transform: none; }
+		}
+		#build .gk-sec { margin-top: 34px; }
+	</style>
+	<noscript><style>#live, #gk-uptime { display: none !important; }</style></noscript>
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"Add three.ws to Grok","description":"Give Grok a free 3D studio: text and photos become textured 3D models, rigged avatars and a talking 3D body, through one remote MCP server.","url":"https://three.ws/grok","step":[{"@type":"HowToStep","name":"Add the server","text":"Tell Grok Bot: Add a custom MCP server called three-ws-grok at https://three.ws/api/mcp-grok?auth=oauth with OAuth authentication. In Grok Build, run: grok mcp add --transport http three-ws-grok https://three.ws/api/mcp-grok?auth=oauth"},{"@type":"HowToStep","name":"Sign in once","text":"Approve three.ws sign-in with your free account the first time Grok connects."},{"@type":"HowToStep","name":"Ask for 3D","text":"Ask for a model, an avatar, or a body. Grok returns a viewer link and a downloadable GLB."}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Do I need a three.ws account?","acceptedAnswer":{"@type":"Answer","text":"Searching the catalog of ready-made assets needs no account. Making or rigging a model needs a free three.ws account: approve sign-in once when the connector asks, or create a connector key on the API keys page."}},{"@type":"Question","name":"What does it cost?","acceptedAnswer":{"@type":"Answer","text":"Nothing. The studio is free with a three.ws account, inside per-session limits. Your Grok usage stays on your own Grok plan or xAI API key. No tool on this connector can pay for anything."}},{"@type":"Question","name":"What data does three.ws receive?","acceptedAnswer":{"@type":"Answer","text":"Only the arguments of each tool call Grok makes, such as a prompt, a photo URL or a model id. Models you make stay unlisted until you publish them. The usage counts store a salted one-way hash of the client, never an account id, key or IP address."}},{"@type":"Question","name":"Is three.ws made by xAI?","acceptedAnswer":{"@type":"Answer","text":"No. three.ws is an independent company building on the Grok API. three.ws is a member of xAI's Grok for Startups program."}}]}</script>
 </head>
 <body>
 	<script src="/nav.js"></script>
 	<main class="gk-wrap" id="main">
-		<section class="gk-hero">
-			<p class="gk-eyebrow">For Grok Bot, Grok and the xAI API</p>
-			<h1>Give Grok a 3D studio, a body, and the Solana market.</h1>
+		<section class="gk-hero" aria-labelledby="gk-hero-h">
+			<p class="gk-eyebrow">three.ws for Grok</p>
+			<h1 id="gk-hero-h">Give Grok a 3D studio and a body.</h1>
 			<p>
-				Grok Bot routes every task to the best tool for it. One sentence connects all of three.ws:
-				<strong>text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear.</strong>
-				Free with a three.ws account: sign in once and every model is yours, unlisted until you publish it. The same sign-in lets Grok Bot run your agents, reads live pump.fun and Oracle market intel, and gets woken by your three.ws events. It never gets a tool that spends.
+				<strong>three.ws gives Grok one connector that turns text and photos into textured 3D models, rigged avatars and a talking 3D body</strong>, in Grok Bot, grok.com, Grok Build, Cursor and the xAI API.
+				Free with a three.ws account: sign in once and every model is yours, unlisted until you publish it.
 			</p>
+			<p class="gk-cred">three.ws is a member of xAI's Grok for Startups program.</p>
+
+			<div class="gk-actions">
+				<a class="gk-btn" data-variant="primary" href="#install-bot" data-install="bot">Add the connector</a>
+				<a class="gk-btn" href="#install-build" data-install="build">Install a plugin</a>
+			</div>
 
 			<div class="gk-say" role="group" aria-labelledby="gk-say-label">
-				<div class="gk-say-label"><span id="gk-say-label">Say this to Grok Bot</span><span>Free account, nothing to pay</span></div>
+				<div class="gk-say-label"><span id="gk-say-label">Or say this to Grok Bot</span><span>Free account, nothing to pay</span></div>
 				<div class="gk-say-row">
 					<p class="gk-say-text" id="gk-say-text">Add a custom MCP server called three-ws-grok at <code>https://three.ws/api/mcp-grok?auth=oauth</code> with OAuth authentication</p>
 					<button type="button" class="gk-btn" data-variant="primary" data-copy-target="gk-say-text" aria-label="Copy the sentence for Grok Bot">
@@ -295,186 +413,146 @@
 				</div>
 			</div>
 
+			<nav aria-label="On this page">
+				<ul class="gk-toc">
+					<li><a href="#install">Install</a></li>
+					<li><a href="#make">What you can make</a></li>
+					<li><a href="#build">Build with it</a></li>
+					<li data-toc="live"><a href="#live">Live</a></li>
+					<li><a href="#reliability">Reliability</a></li>
+					<li><a href="#faq">FAQ</a></li>
+				</ul>
+			</nav>
 		</section>
 
-		<section class="gk-sec" aria-labelledby="gk-caps-h">
+		<!-- ── Install ─────────────────────────────────────────────────────── -->
+		<section class="gk-sec" id="install" aria-labelledby="gk-install-h">
 			<div class="gk-sec-head">
-				<h2 id="gk-caps-h">What Grok Bot can do with three.ws</h2>
-				<p>Five jobs, one connector. Each card names the tools Grok Bot calls for it. Click an ask to copy it, then paste it into any Grok Bot task.</p>
-			</div>
-			<div class="gk-caps">
-				<article class="gk-cap">
-					<h3>Generate</h3>
-					<p>Text or a photo becomes a textured 3D model with a viewer link, a GLB, a rendered poster and embed code. Grok can look at what it made and fix it in words.</p>
-					<p class="gk-chips" aria-label="Tools"><code data-tool="forge_free">forge_free</code><code data-tool="mesh_forge">mesh_forge</code><code data-tool="look_at_model">look_at_model</code><code data-tool="refine_model">refine_model</code></p>
-					<button type="button" class="gk-ask" data-ask="Use three-ws-grok to make a 3D model of a reusable rocket booster with grid fins, then send me the viewer link and the GLB.">
-						<span class="gk-ask-kind"><span>Ask</span><span>Copy</span></span>
-						<span class="gk-ask-text">Make a 3D model of a reusable rocket booster with grid fins, then send me the viewer link and the GLB.</span>
-					</button>
-				</article>
-				<article class="gk-cap">
-					<h3>Rig</h3>
-					<p>Any humanoid becomes an animation-ready avatar with a skeleton, from text, a photo or a GLB you already have. Save it as a body that speaks with lip-sync.</p>
-					<p class="gk-chips" aria-label="Tools"><code data-tool="forge_avatar">forge_avatar</code><code data-tool="rig_mesh">rig_mesh</code><code data-tool="create_agent_persona">create_agent_persona</code><code data-tool="persona_say">persona_say</code></p>
-					<button type="button" class="gk-ask" data-ask="Use three-ws-grok to turn this photo into a rigged, animation-ready 3D avatar and save the GLB to my files.">
-						<span class="gk-ask-kind"><span>Ask</span><span>Copy</span></span>
-						<span class="gk-ask-text">Turn this photo into a rigged, animation-ready 3D avatar and save the GLB to my files.</span>
-					</button>
-				</article>
-				<article class="gk-cap">
-					<h3>Find assets</h3>
-					<p>Thousands of ready-made CC0 props, rigged characters and motion clips. Grok searches them before generating, so common asks come back instantly with paste-ready code.</p>
-					<p class="gk-chips" aria-label="Tools"><code data-tool="search_catalog">search_catalog</code><code data-tool="get_catalog_item">get_catalog_item</code><code data-tool="get_item_source">get_item_source</code></p>
-					<button type="button" class="gk-ask" data-ask="Use three-ws-grok to find a ready-made 3D armchair in the catalog and give me the code to put it on a web page.">
-						<span class="gk-ask-kind"><span>Ask</span><span>Copy</span></span>
-						<span class="gk-ask-text">Find a ready-made 3D armchair in the catalog and give me the code to put it on a web page.</span>
-					</button>
-				</article>
-				<article class="gk-cap">
-					<h3>Run your agents <span class="gk-tag">Signed in</span></h3>
-					<p>Sign the same URL in with OAuth or a connector key and Grok Bot works with your three.ws agents: create and call them, give them memory and skills, report on them. It never gets a tool that spends.</p>
-					<p class="gk-chips" aria-label="Tools"><code data-tool="create_agent">create_agent</code><code data-tool="call_agent">call_agent</code><code data-tool="remember">remember</code><code data-tool="create_custom_skill">create_custom_skill</code><code data-tool="read_resource">read_resource</code></p>
-					<button type="button" class="gk-ask" data-ask="Use three-ws-grok to run the agent-report prompt for all my agents and tell me what needs attention.">
-						<span class="gk-ask-kind"><span>Ask</span><span>Copy</span></span>
-						<span class="gk-ask-text">Run the agent-report prompt for all my agents and tell me what needs attention.</span>
-					</button>
-				</article>
-				<article class="gk-cap">
-					<h3>Read the Solana market <span class="gk-tag">Signed in</span></h3>
-					<p>Fresh pump.fun graduations, Oracle conviction plays, the Sentiment Scout, token due diligence with insider and holder checks, and the verified trader leaderboard. Read only: Grok reports, it never buys, sells or copies a trade.</p>
-					<p class="gk-chips" aria-label="Tools"><code data-tool="pumpfun_recent_graduations">pumpfun_recent_graduations</code><code data-tool="oracle_top_plays">oracle_top_plays</code><code data-tool="token_due_diligence">token_due_diligence</code><code data-tool="trader_leaderboard">trader_leaderboard</code><code data-tool="solana_agent_passport">solana_agent_passport</code></p>
-					<button type="button" class="gk-ask" data-ask="Run the market-brief prompt from three-ws-grok with 3 coins and give me the brief with every link.">
-						<span class="gk-ask-kind"><span>Ask</span><span>Copy</span></span>
-						<span class="gk-ask-text">Run the market-brief prompt from three-ws-grok with 3 coins and give me the brief with every link.</span>
-					</button>
-				</article>
-			</div>
-		</section>
-
-		<section class="gk-sec" aria-labelledby="gk-made-h">
-			<div class="gk-sec-head">
-				<h2 id="gk-made-h">Made on three.ws, just now</h2>
-				<p>The latest models anyone generated on the free studio, the same pipeline Grok calls. Open one to spin it, download it, or put it on a page.</p>
-			</div>
-			<div class="gk-strip" id="gk-strip" aria-busy="true">
-				<div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div>
-			</div>
-			<p class="gk-note" id="gk-strip-note" hidden></p>
-		</section>
-
-		<section class="gk-sec" aria-labelledby="gk-demo-h">
-			<div class="gk-sec-head">
-				<h2 id="gk-demo-h">Run exactly what Grok runs</h2>
-				<p>This box is an MCP client talking to <code>/api/mcp-grok</code>, the same server and the same calls Grok Bot makes. Every request and answer is logged as it happens. A cold GPU can take a few minutes; the job keeps running and the page collects it.</p>
-			</div>
-			<div class="gk-demo">
-				<div class="gk-card">
-					<form class="gk-form" id="gk-form" novalidate>
-						<label for="gk-prompt">Describe one object or character</label>
-						<textarea id="gk-prompt" name="prompt" maxlength="600" required placeholder="a small reusable rocket booster with grid fins"></textarea>
-						<div class="gk-form-row">
-							<button type="submit" class="gk-btn" data-variant="primary" id="gk-go">Generate in 3D</button>
-							<button type="button" class="gk-btn" id="gk-stop" hidden>Stop collecting</button>
-							<span class="gk-form-hint">Free. Counts toward this session's hourly quota.</span>
-						</div>
-					</form>
-					<ol class="gk-log" id="gk-log" aria-live="polite" aria-label="MCP transcript">
-						<li class="gk-log-empty">The JSON-RPC transcript appears here: initialize, tools/call, then check_job until the model lands.</li>
-					</ol>
-				</div>
-				<div class="gk-card gk-stage" id="gk-stage" aria-live="polite">
-					<div class="gk-stage-empty" id="gk-empty">
-						<div>
-							<div class="gk-orb" aria-hidden="true"></div>
-							<h3>Your model lands here</h3>
-							<p>Write a prompt and press Generate. You get an interactive model you can spin, plus the same viewer link and GLB Grok hands back.</p>
-						</div>
-					</div>
-					<div class="gk-stage-wait" id="gk-wait" hidden>
-						<div>
-							<div class="gk-orb" aria-hidden="true"></div>
-							<h3 id="gk-wait-h">Submitting the job</h3>
-							<p id="gk-wait-p">Asking the studio to start rendering.</p>
-							<div class="gk-progress" role="progressbar" aria-label="Elapsed against the estimate" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="gk-bar"></span></div>
-						</div>
-					</div>
-					<div class="gk-stage-error" id="gk-error" hidden>
-						<div>
-							<h3 id="gk-error-h">That did not work</h3>
-							<p id="gk-error-p"></p>
-							<p><button type="button" class="gk-btn gk-btn-sm" id="gk-retry">Try again</button></p>
-						</div>
-					</div>
-					<model-viewer id="gk-mv" hidden camera-controls auto-rotate touch-action="pan-y" shadow-intensity="0.8" exposure="1.05" alt="The generated 3D model"></model-viewer>
-					<div class="gk-stage-bar" id="gk-bar-actions" hidden>
-						<a class="gk-btn gk-btn-sm" id="gk-open" href="/viewer" target="_blank" rel="noopener">Open viewer</a>
-						<a class="gk-btn gk-btn-sm" id="gk-dl" href="/viewer" download>Download GLB</a>
-						<button type="button" class="gk-btn gk-btn-sm" id="gk-embed" hidden><span>Copy embed code</span></button>
-						<span class="gk-src" id="gk-took"></span>
-					</div>
-				</div>
-			</div>
-		</section>
-
-		<section class="gk-sec" aria-labelledby="gk-recipes-h">
-			<div class="gk-sec-head">
-				<h2 id="gk-recipes-h">Three jobs to hand Grok</h2>
-				<p>Each one names the tools Grok calls, in order. Click one to copy the instruction.</p>
-			</div>
-			<div class="gk-asks">
-				<button type="button" class="gk-ask" data-ask="Use three-ws-grok to build an asset pack for my game jam: search_catalog for ten low-poly props that fit a forest campsite, then list the viewer link and GLB for each.">
-					<span class="gk-ask-kind"><span>Asset pack</span><span>Copy</span></span>
-					<span class="gk-ask-text">Ten ready-made props for a game jam.</span>
-					<span class="gk-ask-text"><code>search_catalog</code>, then <code>get_catalog_item</code> per pick.</span>
-				</button>
-				<button type="button" class="gk-ask" data-ask="Use three-ws-grok to forge_free a 3D model of a brass telescope, wait with check_job until it is done, then send me the viewer link, the GLB and the embed code.">
-					<span class="gk-ask-kind"><span>Model and embed</span><span>Copy</span></span>
-					<span class="gk-ask-text">A textured model with a link and a page-ready embed.</span>
-					<span class="gk-ask-text"><code>forge_free</code>, <code>check_job</code> until done.</span>
-				</button>
-				<button type="button" class="gk-ask" data-ask="Use three-ws-grok to forge_avatar a friendly lighthouse keeper, then create_agent_persona from it named Keeper, and persona_say a one-line greeting with it.">
-					<span class="gk-ask-kind"><span>Talking persona</span><span>Copy</span></span>
-					<span class="gk-ask-text">A rigged character that lip-syncs a greeting.</span>
-					<span class="gk-ask-text"><code>forge_avatar</code>, <code>create_agent_persona</code>, <code>persona_say</code>.</span>
-				</button>
-			</div>
-			<div class="gk-next">
-				<a class="gk-btn" href="/grok-skill.md">Read the Grok skill file</a>
-				<a class="gk-btn" href="/tutorials/grok-bot-recipes">Six tested recipes</a>
-				<a class="gk-btn" href="/docs/grok">Full Grok guide</a>
-				<a class="gk-btn" href="/voice/grok">Talk to an avatar by voice</a>
-			</div>
-			<p class="gk-note">The skill file teaches Grok and Grok Bot the connector URL, runnable calls, the links every result returns, and the free limits. Upload it to Grok Skills, or tell Grok Bot to read <code>https://three.ws/grok-skill.md</code>.</p>
-		</section>
-
-		<section class="gk-sec" aria-labelledby="gk-setup-h">
-			<div class="gk-sec-head">
-				<h2 id="gk-setup-h">Set it up anywhere Grok runs</h2>
-				<p>One URL, <code>https://three.ws/api/mcp-grok</code>. Streamable HTTP. Searching the catalog needs no sign-in; making a model needs a free account, so add <code>?auth=oauth</code> to sign in (that also adds your agents).</p>
+				<h2 id="gk-install-h">Install</h2>
+				<p>One URL, <code>https://three.ws/api/mcp-grok</code>, over Streamable HTTP. Searching the catalog needs no sign-in. Making a model needs a free account, so every value below adds <code>?auth=oauth</code> to sign in, which also adds your agents.</p>
 			</div>
 			<div class="gk-tabs" role="tablist" aria-label="Where you use Grok">
-				<button type="button" class="gk-tab" role="tab" id="tab-bot" aria-controls="panel-bot" aria-selected="true" data-tab="bot">Grok Bot</button>
-				<button type="button" class="gk-tab" role="tab" id="tab-app" aria-controls="panel-app" aria-selected="false" tabindex="-1" data-tab="app">Grok connectors</button>
-				<button type="button" class="gk-tab" role="tab" id="tab-api" aria-controls="panel-api" aria-selected="false" tabindex="-1" data-tab="api">xAI API</button>
-				<button type="button" class="gk-tab" role="tab" id="tab-build" aria-controls="panel-build" aria-selected="false" tabindex="-1" data-tab="build">Grok Build</button>
+				<button type="button" class="gk-tab" role="tab" id="tab-bot" aria-controls="install-bot" aria-selected="true" data-tab="bot">Grok Bot</button>
+				<button type="button" class="gk-tab" role="tab" id="tab-grokcom" aria-controls="install-grokcom" aria-selected="false" tabindex="-1" data-tab="grokcom">grok.com</button>
+				<button type="button" class="gk-tab" role="tab" id="tab-build" aria-controls="install-build" aria-selected="false" tabindex="-1" data-tab="build">Grok Build</button>
+				<button type="button" class="gk-tab" role="tab" id="tab-cursor" aria-controls="install-cursor" aria-selected="false" tabindex="-1" data-tab="cursor">Cursor</button>
+				<button type="button" class="gk-tab" role="tab" id="tab-any" aria-controls="install-any" aria-selected="false" tabindex="-1" data-tab="any">Any MCP client</button>
+				<button type="button" class="gk-tab" role="tab" id="tab-api" aria-controls="install-api" aria-selected="false" tabindex="-1" data-tab="api">xAI API</button>
 			</div>
 
-			<div class="gk-panel" role="tabpanel" id="panel-bot" aria-labelledby="tab-bot">
-				<div id="gk-grok-card"></div>
-			</div>
-
-			<div class="gk-panel" role="tabpanel" id="panel-app" aria-labelledby="tab-app" hidden>
-				<p class="gk-panel-lede">On paid Grok plans, custom connectors take a remote MCP URL. Only remote servers work there, which is exactly what this is.</p>
+			<div class="gk-panel" role="tabpanel" id="install-bot" aria-labelledby="tab-bot">
+				<h3>In the Grok Bot desktop app</h3>
 				<ol class="gk-list">
-					<li>In Grok, open <strong>Connectors</strong> and add a <strong>custom</strong> connector.</li>
-					<li>Paste <code>https://three.ws/api/mcp-grok?auth=oauth</code>, choose OAuth, and approve three.ws sign-in with your free account.</li>
+					<li>Open <strong>Connect apps</strong> and choose <strong>Add a custom connector</strong>.</li>
+					<li>Name it <code>three-ws-grok</code>, set Type to <strong>Remote HTTPS</strong>, and paste the server URL below.</li>
+					<li>Press <strong>Add plugin</strong>, then approve three.ws sign-in once with your free account.</li>
+				</ol>
+				<div class="gk-value">
+					<code id="gk-url-bot">https://three.ws/api/mcp-grok?auth=oauth</code>
+					<button type="button" class="gk-btn gk-btn-sm" data-copy-target="gk-url-bot" aria-label="Copy the server URL for Grok Bot"><span>Copy</span></button>
+				</div>
+				<h3>Or let Grok Bot add it</h3>
+				<div id="gk-grok-card"></div>
+				<p class="gk-src-note">Grok Bot has no install link, so this tab gives the exact values to paste. Steps from <a href="https://docs.x.ai/grok-bot/computer-and-apps" target="_blank" rel="noopener">xAI's Grok Bot docs</a>.</p>
+			</div>
+
+			<div class="gk-panel" role="tabpanel" id="install-grokcom" aria-labelledby="tab-grokcom" hidden>
+				<p class="gk-panel-lede">Every Grok user can add a custom connector on grok.com, and it takes any public MCP URL, which is exactly what this is.</p>
+				<ol class="gk-list">
+					<li>On grok.com, open <strong>Connectors</strong> and add a <strong>custom</strong> connector.</li>
+					<li>Paste the URL below, choose OAuth, and approve three.ws sign-in with your free account.</li>
 					<li>Ask Grok for a 3D model in any chat. It answers with a viewer link and a GLB.</li>
 				</ol>
-				<p class="gk-src-note">Business and Enterprise workspaces may need an admin to allow custom connectors first.</p>
+				<div class="gk-value">
+					<code id="gk-url-web">https://three.ws/api/mcp-grok?auth=oauth</code>
+					<button type="button" class="gk-btn gk-btn-sm" data-copy-target="gk-url-web" aria-label="Copy the connector URL for grok.com"><span>Copy</span></button>
+				</div>
+				<p class="gk-src-note">grok.com documents no install link for connectors, so this tab ships the URL only. On Grok Business and Enterprise, a team admin provisions the connector first.</p>
 			</div>
 
-			<div class="gk-panel" role="tabpanel" id="panel-api" aria-labelledby="tab-api" hidden>
-				<p class="gk-panel-lede">The xAI Responses API connects remote MCP servers for you: pass the URL as a tool and Grok calls it server side. Making a model needs a free three.ws account, so set <code>XAI_API_KEY</code> and a three.ws key from <a href="/dashboard/api-keys">API keys</a> as <code>THREE_WS_API_KEY</code>, then run.</p>
+			<div class="gk-panel" role="tabpanel" id="install-build" aria-labelledby="tab-build" hidden>
+				<p class="gk-panel-lede">Grok Build is xAI's coding agent for the terminal. One command adds the server; the plugin adds 3D skills, commands and an agent on top.</p>
+				<div class="gk-snippet">
+					<div class="gk-snippet-head"><span>Add the server</span><button type="button" class="gk-btn gk-btn-sm" data-copy-target="gk-build-add">Copy</button></div>
+					<pre id="gk-build-add">grok mcp add --transport http three-ws-grok "https://three.ws/api/mcp-grok?auth=oauth"</pre>
+				</div>
+				<ol class="gk-list">
+					<li>Install Grok Build: <code>curl -fsSL https://x.ai/cli/install.sh | bash</code>, then <code>grok --version</code>.</li>
+					<li>Run the command above. Add <code>--scope project</code> to share it with a repository instead of keeping it to yourself.</li>
+					<li>Run <code>grok mcp doctor</code> to check the connection, or type <code>/mcps</code> inside <code>grok</code> to see <strong>three-ws-grok</strong> connected.</li>
+				</ol>
+				<h3 id="gk-plugin-h">Install the plugin</h3>
+				<p class="gk-panel-lede">The <a href="https://github.com/nirholas/three.ws/tree/main/integrations/grok/three-ws" target="_blank" rel="noopener">three.ws plugin for Grok Build</a> bundles the studio server (<code>/api/mcp-studio</code>), six 3D skills, five commands (<code>/make-3d</code>, <code>/rig</code>, <code>/embed</code>, <code>/three-ws-init</code>, <code>/three-ws-tour</code>) and a 3D art director agent, with no hooks or scripts. Copy its folder into <code>~/.grok/plugins/</code>:</p>
+				<div class="gk-snippet">
+					<div class="gk-snippet-head"><span>Install the plugin</span><button type="button" class="gk-btn gk-btn-sm" data-copy-target="gk-build-plugin">Copy</button></div>
+					<pre id="gk-build-plugin">git clone --depth 1 --filter=blob:none --sparse https://github.com/nirholas/three.ws three.ws-src
+git -C three.ws-src sparse-checkout set integrations/grok/three-ws
+mkdir -p ~/.grok/plugins &amp;&amp; cp -r three.ws-src/integrations/grok/three-ws ~/.grok/plugins/three-ws</pre>
+				</div>
+				<p class="gk-panel-lede">Grok Build also reads a project's <code>.mcp.json</code>, so this file gives everyone who opens the repository the same server:</p>
+				<div class="gk-snippet">
+					<div class="gk-snippet-head"><span>.mcp.json in your project</span><button type="button" class="gk-btn gk-btn-sm" data-copy-target="gk-build-mcp">Copy</button></div>
+					<pre id="gk-build-mcp">{
+  "mcpServers": {
+    "three-ws-grok": {
+      "type": "http",
+      "url": "https://three.ws/api/mcp-grok?auth=oauth"
+    }
+  }
+}</pre>
+				</div>
+				<p class="gk-src-note">Commands from xAI's <a href="https://docs.x.ai/build/features/mcp-servers" target="_blank" rel="noopener">Grok Build MCP docs</a> and <a href="https://docs.x.ai/build/features/skills-plugins-marketplaces" target="_blank" rel="noopener">Skills, Plugins and Marketplaces docs</a>. Grok Build has no install link, so the command is the install.</p>
+			</div>
+
+			<div class="gk-panel" role="tabpanel" id="install-cursor" aria-labelledby="tab-cursor" hidden>
+				<div class="gk-install-cta">
+					<a class="gk-btn" data-variant="primary" id="gk-cursor-link" href="cursor://anysphere.cursor-deeplink/mcp/install?name=three-ws-grok&amp;config=eyJ1cmwiOiJodHRwczovL3RocmVlLndzL2FwaS9tY3AtZ3Jvaz9hdXRoPW9hdXRoIn0%3D">Add to Cursor</a>
+					<span>Opens Cursor and asks you to confirm the server.</span>
+				</div>
+				<p class="gk-panel-lede">Or add it by hand to <code>~/.cursor/mcp.json</code>, or to a project's <code>.cursor/mcp.json</code>. Cursor shows a <strong>Needs login</strong> button the first time; it opens three.ws sign-in.</p>
+				<div class="gk-snippet">
+					<div class="gk-snippet-head"><span>mcp.json</span><button type="button" class="gk-btn gk-btn-sm" data-copy-target="gk-cursor-json">Copy</button></div>
+					<pre id="gk-cursor-json">{
+  "mcpServers": {
+    "three-ws-grok": {
+      "url": "https://three.ws/api/mcp-grok?auth=oauth"
+    }
+  }
+}</pre>
+				</div>
+				<p class="gk-src-note">The link follows Cursor's documented <a href="https://cursor.com/docs/context/mcp/install-links" target="_blank" rel="noopener">MCP install link</a> format: the server config as base64 JSON. Pick Grok models in Cursor's model menu. For skills as well, the <a href="https://github.com/nirholas/three.ws/tree/main/integrations/cursor/three-ws" target="_blank" rel="noopener">three.ws plugin for Cursor</a> bundles the studio server and four workflow skills.</p>
+			</div>
+
+			<div class="gk-panel" role="tabpanel" id="install-any" aria-labelledby="tab-any" hidden>
+				<p class="gk-panel-lede">Any client that speaks remote MCP over Streamable HTTP with OAuth works. The server URL:</p>
+				<div class="gk-value">
+					<code id="gk-url-any">https://three.ws/api/mcp-grok?auth=oauth</code>
+					<button type="button" class="gk-btn gk-btn-sm" data-copy-target="gk-url-any" aria-label="Copy the server URL"><span>Copy</span></button>
+				</div>
+				<div class="gk-snippet">
+					<div class="gk-snippet-head"><span>Claude Code</span><button type="button" class="gk-btn gk-btn-sm" data-copy-target="gk-any-claude">Copy</button></div>
+					<pre id="gk-any-claude">claude mcp add --transport http three-ws-grok "https://three.ws/api/mcp-grok?auth=oauth"</pre>
+				</div>
+				<div class="gk-snippet">
+					<div class="gk-snippet-head"><span>VS Code</span><button type="button" class="gk-btn gk-btn-sm" data-copy-target="gk-any-code">Copy</button></div>
+					<pre id="gk-any-code">code --add-mcp '{"name":"three-ws-grok","type":"http","url":"https://three.ws/api/mcp-grok?auth=oauth"}'</pre>
+				</div>
+				<div class="gk-snippet">
+					<div class="gk-snippet-head"><span>.mcp.json (Claude Code, VS Code, Grok Build)</span><button type="button" class="gk-btn gk-btn-sm" data-copy-target="gk-any-json">Copy</button></div>
+					<pre id="gk-any-json">{
+  "mcpServers": {
+    "three-ws-grok": {
+      "type": "http",
+      "url": "https://three.ws/api/mcp-grok?auth=oauth"
+    }
+  }
+}</pre>
+				</div>
+				<p class="gk-src-note">VS Code's current MCP docs describe the <code>code --add-mcp</code> command and the <code>.mcp.json</code> file but no install link, so this tab ships those values only. Every other client, with its own steps: <a href="/connect">Connect AI clients</a>.</p>
+			</div>
+
+			<div class="gk-panel" role="tabpanel" id="install-api" aria-labelledby="tab-api" hidden>
+				<p class="gk-panel-lede">The xAI Responses API connects remote MCP servers for you: pass the URL as a tool and Grok calls it server side. Making a model needs a free three.ws account, so set <code>XAI_API_KEY</code> and a three.ws key from <a href="/dashboard/api">API keys</a> as <code>THREE_WS_API_KEY</code>, then run.</p>
 				<div class="gk-snippet">
 					<div class="gk-snippet-head"><span>curl</span><button type="button" class="gk-btn gk-btn-sm" data-copy-target="gk-curl">Copy</button></div>
 					<pre id="gk-curl">curl https://api.x.ai/v1/responses \
@@ -487,7 +565,7 @@
       "type": "mcp",
       "server_url": "https://three.ws/api/mcp-grok",
       "server_label": "three-ws-grok",
-      "authorization": "'"$THREE_WS_API_KEY"'"
+      "authorization": "'"${THREE_WS_API_KEY}"'"
     }]
   }'</pre>
 				</div>
@@ -512,204 +590,370 @@ chat = client.chat.create(
 chat.append(user("Make a 3D model of a lunar lander and give me the viewer link."))
 print(chat.sample().content)</pre>
 				</div>
-				<p class="gk-src-note">A full Node example, with the pending-job loop and an <code>allowed_tools</code> list, lives in <a href="https://github.com/nirholas/three.ws/tree/main/examples/grok-remote-mcp" target="_blank" rel="noopener">examples/grok-remote-mcp</a>. Request shape from <a href="https://docs.x.ai/developers/tools/remote-mcp" target="_blank" rel="noopener">xAI's Remote MCP docs</a>.</p>
+				<p class="gk-src-note">Full runnable versions are under <a href="#build-examples">Build with it</a>. Request shape from <a href="https://docs.x.ai/developers/tools/remote-mcp" target="_blank" rel="noopener">xAI's Remote MCP docs</a>.</p>
+			</div>
+		</section>
+
+		<!-- ── What you can make ───────────────────────────────────────────── -->
+		<section class="gk-sec" id="make" aria-labelledby="gk-make-h">
+			<div class="gk-sec-head">
+				<h2 id="gk-make-h">What you can make</h2>
+				<p>Real models from the same free pipeline Grok calls. Open one to spin it, download the GLB, or put it on a page.</p>
+			</div>
+			<div class="gk-show">
+				<a href="/m/84bacb12-ddc0-42a2-8264-d7fc0f1a1404"><img src="/grok/showcase/84bacb12-ddc0-42a2-8264-d7fc0f1a1404.webp" width="480" height="480" loading="lazy" decoding="async" alt="A 3D model of a friendly orange fox character"><span class="gk-show-cap"><strong>Orange fox</strong><span>"a friendly orange fox character"</span></span></a>
+				<a href="/m/48ad85f1-6130-45df-9876-add9dda38d1e"><img src="/grok/showcase/48ad85f1-6130-45df-9876-add9dda38d1e.webp" width="480" height="480" loading="lazy" decoding="async" alt="A 3D model of a friendly cartoon robot helper"><span class="gk-show-cap"><strong>Robot helper</strong><span>"a friendly cartoon robot helper, full body"</span></span></a>
+				<a href="/m/c714cfc4-cdd5-492f-a91f-9929afa2618b"><img src="/grok/showcase/c714cfc4-cdd5-492f-a91f-9929afa2618b.webp" width="480" height="480" loading="lazy" decoding="async" alt="A 3D model of a vintage film camera"><span class="gk-show-cap"><strong>Film camera</strong><span>"a vintage film camera"</span></span></a>
+				<a href="/m/fb550385-e59e-4943-bb4d-b99f60866437"><img src="/grok/showcase/fb550385-e59e-4943-bb4d-b99f60866437.webp" width="480" height="480" loading="lazy" decoding="async" alt="A 3D model of a red chair"><span class="gk-show-cap"><strong>Red chair</strong><span>"a red chair"</span></span></a>
+				<a href="/m/518ea3c1-f31f-43ea-aa43-ef21e36b2d39"><img src="/grok/showcase/518ea3c1-f31f-43ea-aa43-ef21e36b2d39.webp" width="480" height="480" loading="lazy" decoding="async" alt="A 3D model of a yellow mid-engine hypercar body"><span class="gk-show-cap"><strong>Hypercar body</strong><span>A long photoreal prompt for a yellow mid-engine car</span></span></a>
+				<a href="/m/ff8b50b3-d172-404e-a95d-abf32cda041d"><img src="/grok/showcase/ff8b50b3-d172-404e-a95d-abf32cda041d.webp" width="480" height="480" loading="lazy" decoding="async" alt="A 3D model of a red sports coupe body"><span class="gk-show-cap"><strong>Sports coupe</strong><span>A photoreal prompt for a red coupe chassis</span></span></a>
 			</div>
 
-			<div class="gk-panel" role="tabpanel" id="panel-build" aria-labelledby="tab-build" hidden>
-				<p class="gk-panel-lede">Grok Build, xAI's coding agent for the terminal, reads Claude Code's MCP servers, plugins, skills and marketplaces with no extra setup. So a project <code>.mcp.json</code> gives Grok Build the same tools, and the three.ws plugin adds the skills.</p>
-				<div class="gk-snippet">
-					<div class="gk-snippet-head"><span>.mcp.json in your project</span><button type="button" class="gk-btn gk-btn-sm" data-copy-target="gk-build-mcp">Copy</button></div>
-					<pre id="gk-build-mcp">{
-  "mcpServers": {
-    "three-ws-grok": {
-      "type": "http",
-      "url": "https://three.ws/api/mcp-grok?auth=oauth"
-    }
-  }
-}</pre>
+			<div class="gk-sub">
+				<div class="gk-sub-head">
+					<h3>Four jobs, one connector</h3>
+					<p>Each card names the tools Grok calls for it. Click an ask to copy it, then paste it into any Grok chat or task.</p>
+				</div>
+				<div class="gk-caps">
+					<article class="gk-cap">
+						<h4>Generate</h4>
+						<p>Text or a photo becomes a textured 3D model with a viewer link, a GLB, a rendered poster and embed code. Grok can look at what it made and fix it in words.</p>
+						<p class="gk-chips" aria-label="Tools"><code data-tool="forge_free">forge_free</code><code data-tool="mesh_forge">mesh_forge</code><code data-tool="look_at_model">look_at_model</code><code data-tool="refine_model">refine_model</code></p>
+						<button type="button" class="gk-ask" data-ask="Use three-ws-grok to make a 3D model of a reusable rocket booster with grid fins, then send me the viewer link and the GLB.">
+							<span class="gk-ask-kind"><span>Ask</span><span>Copy</span></span>
+							<span class="gk-ask-text">Make a 3D model of a reusable rocket booster with grid fins, then send me the viewer link and the GLB.</span>
+						</button>
+					</article>
+					<article class="gk-cap">
+						<h4>Rig</h4>
+						<p>Any humanoid becomes an animation-ready avatar with a skeleton, from text, a photo or a GLB you already have. Save it as a body that speaks with lip-sync.</p>
+						<p class="gk-chips" aria-label="Tools"><code data-tool="forge_avatar">forge_avatar</code><code data-tool="rig_mesh">rig_mesh</code><code data-tool="create_agent_persona">create_agent_persona</code><code data-tool="persona_say">persona_say</code></p>
+						<button type="button" class="gk-ask" data-ask="Use three-ws-grok to turn this photo into a rigged, animation-ready 3D avatar and save the GLB to my files.">
+							<span class="gk-ask-kind"><span>Ask</span><span>Copy</span></span>
+							<span class="gk-ask-text">Turn this photo into a rigged, animation-ready 3D avatar and save the GLB to my files.</span>
+						</button>
+					</article>
+					<article class="gk-cap">
+						<h4>Find assets</h4>
+						<p>Thousands of ready-made CC0 props, rigged characters and motion clips. Grok searches them before generating, so common asks come back instantly with paste-ready code.</p>
+						<p class="gk-chips" aria-label="Tools"><code data-tool="search_catalog">search_catalog</code><code data-tool="get_catalog_item">get_catalog_item</code><code data-tool="get_item_source">get_item_source</code></p>
+						<button type="button" class="gk-ask" data-ask="Use three-ws-grok to find a ready-made 3D armchair in the catalog and give me the code to put it on a web page.">
+							<span class="gk-ask-kind"><span>Ask</span><span>Copy</span></span>
+							<span class="gk-ask-text">Find a ready-made 3D armchair in the catalog and give me the code to put it on a web page.</span>
+						</button>
+					</article>
+					<article class="gk-cap">
+						<h4>Run your agents <span class="gk-tag">Signed in</span></h4>
+						<p>Sign the same URL in with OAuth or a connector key and Grok works with your three.ws agents: create and call them, give them memory and skills, report on them. It never gets a tool that spends.</p>
+						<p class="gk-chips" aria-label="Tools"><code data-tool="create_agent">create_agent</code><code data-tool="call_agent">call_agent</code><code data-tool="remember">remember</code><code data-tool="create_custom_skill">create_custom_skill</code><code data-tool="read_resource">read_resource</code></p>
+						<button type="button" class="gk-ask" data-ask="Use three-ws-grok to run the agent-report prompt for all my agents and tell me what needs attention.">
+							<span class="gk-ask-kind"><span>Ask</span><span>Copy</span></span>
+							<span class="gk-ask-text">Run the agent-report prompt for all my agents and tell me what needs attention.</span>
+						</button>
+					</article>
+				</div>
+			</div>
+
+			<div class="gk-sub" id="try">
+				<div class="gk-sub-head">
+					<h3 id="gk-demo-h">Run exactly what Grok runs</h3>
+					<p>This box is an MCP client talking to <code>/api/mcp-grok</code>, the same server and the same calls Grok makes. Every request and answer is logged as it happens. A cold GPU can take a few minutes; the job keeps running and the page collects it.</p>
+				</div>
+				<div class="gk-demo">
+					<div class="gk-card">
+						<form class="gk-form" id="gk-form" novalidate>
+							<label for="gk-prompt">Describe one object or character</label>
+							<textarea id="gk-prompt" name="prompt" maxlength="600" required placeholder="a small reusable rocket booster with grid fins"></textarea>
+							<div class="gk-form-row">
+								<button type="submit" class="gk-btn" data-variant="primary" id="gk-go">Generate in 3D</button>
+								<button type="button" class="gk-btn" id="gk-stop" hidden>Stop collecting</button>
+								<span class="gk-form-hint">Free. Counts toward this session's hourly quota.</span>
+							</div>
+						</form>
+						<ol class="gk-log" id="gk-log" aria-live="polite" aria-label="MCP transcript">
+							<li class="gk-log-empty">The JSON-RPC transcript appears here: initialize, tools/call, then check_job until the model lands.</li>
+						</ol>
+					</div>
+					<div class="gk-card gk-stage" id="gk-stage" aria-live="polite">
+						<div class="gk-stage-empty" id="gk-empty">
+							<div>
+								<div class="gk-orb" aria-hidden="true"></div>
+								<h4>Your model lands here</h4>
+								<p>Write a prompt and press Generate. You get an interactive model you can spin, plus the same viewer link and GLB Grok hands back.</p>
+							</div>
+						</div>
+						<div class="gk-stage-wait" id="gk-wait" hidden>
+							<div>
+								<div class="gk-orb" aria-hidden="true"></div>
+								<h4 id="gk-wait-h">Submitting the job</h4>
+								<p id="gk-wait-p">Asking the studio to start rendering.</p>
+								<div class="gk-progress" role="progressbar" aria-label="Elapsed against the estimate" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="gk-bar"></span></div>
+							</div>
+						</div>
+						<div class="gk-stage-error" id="gk-error" hidden>
+							<div>
+								<h4 id="gk-error-h">That did not work</h4>
+								<p id="gk-error-p"></p>
+								<p><button type="button" class="gk-btn gk-btn-sm" id="gk-retry">Try again</button></p>
+							</div>
+						</div>
+						<model-viewer id="gk-mv" hidden camera-controls auto-rotate touch-action="pan-y" shadow-intensity="0.8" exposure="1.05" alt="The generated 3D model"></model-viewer>
+						<div class="gk-stage-bar" id="gk-bar-actions" hidden>
+							<a class="gk-btn gk-btn-sm" id="gk-open" href="/viewer" target="_blank" rel="noopener">Open viewer</a>
+							<a class="gk-btn gk-btn-sm" id="gk-dl" href="/viewer" download>Download GLB</a>
+							<button type="button" class="gk-btn gk-btn-sm" id="gk-embed" hidden><span>Copy embed code</span></button>
+							<span class="gk-src" id="gk-took"></span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="gk-sub">
+				<div class="gk-sub-head">
+					<h3 id="gk-made-h">Made on three.ws, just now</h3>
+					<p>The latest public models anyone generated on the free studio. Open one to spin it, download it, or put it on a page.</p>
+				</div>
+				<div class="gk-strip" id="gk-strip" aria-busy="true">
+					<div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div>
+				</div>
+				<p class="gk-note" id="gk-strip-note" hidden></p>
+			</div>
+		</section>
+
+		<!-- ── Build with it ───────────────────────────────────────────────── -->
+		<section class="gk-sec" id="build" aria-labelledby="gk-build-h">
+			<div class="gk-sec-head">
+				<h2 id="gk-build-h">Build with it</h2>
+				<p>Jobs to hand Grok, recipes to schedule, the skill file, runnable examples and the full tool list.</p>
+			</div>
+
+			<div class="gk-sub">
+				<div class="gk-sub-head">
+					<h3 id="gk-recipes-h">Three jobs to hand Grok</h3>
+					<p>Each one names the tools Grok calls, in order. Click one to copy the instruction.</p>
+				</div>
+				<div class="gk-asks">
+					<button type="button" class="gk-ask" data-ask="Use three-ws-grok to build an asset pack for my game jam: search_catalog for ten low-poly props that fit a forest campsite, then list the viewer link and GLB for each.">
+						<span class="gk-ask-kind"><span>Asset pack</span><span>Copy</span></span>
+						<span class="gk-ask-text">Ten ready-made props for a game jam.</span>
+						<span class="gk-ask-text"><code>search_catalog</code>, then <code>get_catalog_item</code> per pick.</span>
+					</button>
+					<button type="button" class="gk-ask" data-ask="Use three-ws-grok to forge_free a 3D model of a brass telescope, wait with check_job until it is done, then send me the viewer link, the GLB and the embed code.">
+						<span class="gk-ask-kind"><span>Model and embed</span><span>Copy</span></span>
+						<span class="gk-ask-text">A textured model with a link and a page-ready embed.</span>
+						<span class="gk-ask-text"><code>forge_free</code>, <code>check_job</code> until done.</span>
+					</button>
+					<button type="button" class="gk-ask" data-ask="Use three-ws-grok to forge_avatar a friendly lighthouse keeper, then create_agent_persona from it named Keeper, and persona_say a one-line greeting with it.">
+						<span class="gk-ask-kind"><span>Talking persona</span><span>Copy</span></span>
+						<span class="gk-ask-text">A rigged character that lip-syncs a greeting.</span>
+						<span class="gk-ask-text"><code>forge_avatar</code>, <code>create_agent_persona</code>, <code>persona_say</code>.</span>
+					</button>
+				</div>
+			</div>
+
+			<div class="gk-sub">
+				<div class="gk-sub-head">
+					<h3 id="gk-schedule-h">Four recipes to schedule</h3>
+					<p>Grok Bot runs tasks on a schedule with nobody watching. Each recipe is a guided MCP prompt the connector serves: it names the calls, never stops to ask, and ends with plain links. Copy the instruction into a Grok Bot task and set how often it runs.</p>
+				</div>
+				<div class="gk-recipes">
+					<article class="gk-recipe">
+						<p class="gk-recipe-kind">Every morning</p>
+						<h4>Daily 3D brief</h4>
+						<p>Picks the day's top topic, or yours, turns it into a model, checks it from two angles and hands back the viewer, GLB, poster and embed.</p>
+						<button type="button" class="gk-ask" data-ask="Every morning at 9, run the daily-3d-brief prompt from three-ws-grok with the topic &quot;trending&quot; and send me the viewer link, the GLB and the poster.">
+							<span class="gk-ask-kind"><span>Instruction</span><span>Copy</span></span>
+							<span class="gk-ask-text">Every morning at 9, run the daily-3d-brief prompt from three-ws-grok with the topic "trending" and send me the viewer link, the GLB and the poster.</span>
+						</button>
+						<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="forge_free">forge_free</code></li><li><code data-tool="get_job">get_job</code></li><li><code data-tool="look_at_model">look_at_model</code></li></ol>
+						<a class="gk-recipe-link" href="/docs/grok#scheduled-tasks-guided-prompts" data-prompt="daily-3d-brief">How the daily-3d-brief prompt runs</a>
+					</article>
+					<article class="gk-recipe">
+						<p class="gk-recipe-kind">Game jam</p>
+						<h4>Themed asset pack</h4>
+						<p>Lists what a theme needs, takes ready-made CC0 catalog items first, generates only the gaps and returns one row of links per asset.</p>
+						<button type="button" class="gk-ask" data-ask="Run the asset-pack prompt from three-ws-grok for the theme &quot;cozy cabin interior&quot; with 6 assets, and put every link in a table.">
+							<span class="gk-ask-kind"><span>Instruction</span><span>Copy</span></span>
+							<span class="gk-ask-text">Run the asset-pack prompt from three-ws-grok for the theme "cozy cabin interior" with 6 assets, and put every link in a table.</span>
+						</button>
+						<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="search_catalog">search_catalog</code></li><li><code data-tool="get_catalog_item">get_catalog_item</code></li><li><code data-tool="forge_free">forge_free</code></li><li><code data-tool="get_job">get_job</code></li></ol>
+						<a class="gk-recipe-link" href="/docs/grok#scheduled-tasks-guided-prompts" data-prompt="asset-pack">How the asset-pack prompt runs</a>
+					</article>
+					<article class="gk-recipe">
+						<p class="gk-recipe-kind">From a photo</p>
+						<h4>Avatar from a photo</h4>
+						<p>Builds and rigs an animation-ready avatar from a photo you own, checks the limbs and face, and adds a pose studio link to animate it.</p>
+						<button type="button" class="gk-ask" data-ask="Run the avatar-from-photo prompt from three-ws-grok with the photo I attach, then send me the GLB and the pose studio link.">
+							<span class="gk-ask-kind"><span>Instruction</span><span>Copy</span></span>
+							<span class="gk-ask-text">Run the avatar-from-photo prompt from three-ws-grok with the photo I attach, then send me the GLB and the pose studio link.</span>
+						</button>
+						<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="forge_avatar">forge_avatar</code></li><li><code data-tool="get_job">get_job</code></li><li><code data-tool="look_at_model">look_at_model</code></li></ol>
+						<a class="gk-recipe-link" href="/docs/grok#scheduled-tasks-guided-prompts" data-prompt="avatar-from-photo">How the avatar-from-photo prompt runs</a>
+					</article>
+					<article class="gk-recipe">
+						<p class="gk-recipe-kind">Every Monday <span class="gk-tag">Signed in</span></p>
+						<h4>Agent status report</h4>
+						<p>Reads every agent on your account, its recent runs, usage and skills, and ends with a short list of what needs attention: failed runs, low credits, a quota near its limit. Read only.</p>
+						<button type="button" class="gk-ask" data-ask="Every Monday at 8, run the agent-report prompt from three-ws-grok for all my agents and send me the report with the needs-attention list first.">
+							<span class="gk-ask-kind"><span>Instruction</span><span>Copy</span></span>
+							<span class="gk-ask-text">Every Monday at 8, run the agent-report prompt from three-ws-grok for all my agents and send me the report with the needs-attention list first.</span>
+						</button>
+						<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="read_resource">read_resource</code></li><li><code data-tool="list_custom_skills">list_custom_skills</code></li></ol>
+						<a class="gk-recipe-link" href="/docs/grok#scheduled-tasks-guided-prompts" data-prompt="agent-report">How the agent-report prompt runs</a>
+					</article>
+				</div>
+				<p class="gk-note"><a href="/docs/tutorials/grok-bot-recipes">Grok Bot recipes, run against production</a> walks through tested recipes with the real output each one returned.</p>
+			</div>
+
+			<section class="gk-sec" aria-labelledby="gk-templates-h">
+				<div class="gk-sub-head">
+					<h3 id="gk-templates-h">Grok Bot task templates</h3>
+					<p>Four tasks to paste into Grok Bot as they stand. Each runs on the free studio tools of the three-ws-grok connector, signed in with a free account, and none can spend. Runtimes were measured against production; generation times move with the GPU queue.</p>
+				</div>
+				<div class="gk-recipes gk-tpl-grid">
+					<article class="gk-recipe">
+						<p class="gk-recipe-kind">Catalog only</p>
+						<h4>Home-office scene kit</h4>
+						<p>Pulls five ready-made CC0 pieces for a scene, checks every title against the ask, and ends with embed code for one of them.</p>
+						<button type="button" class="gk-ask" data-ask="Use three-ws-grok to put together a home-office scene kit from the three.ws catalog: a desk, a desk lamp, an armchair, a potted plant and a bookshelf. Take an item only when its title plainly names what I asked for; if the best hit is a different object, try one other wording, then list it as missing. For each item give the title, viewer link and GLB link, and finish with agent-3d embed code for the armchair.">
+							<span class="gk-ask-kind"><span>Prompt</span><span>Copy</span></span>
+							<span class="gk-ask-text">Use three-ws-grok to put together a home-office scene kit from the three.ws catalog: a desk, a desk lamp, an armchair, a potted plant and a bookshelf. Take an item only when its title plainly names what I asked for; if the best hit is a different object, try one other wording, then list it as missing. For each item give the title, viewer link and GLB link, and finish with agent-3d embed code for the armchair.</span>
+						</button>
+						<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="search_catalog">search_catalog</code></li><li><code data-tool="get_catalog_item">get_catalog_item</code></li><li><code data-tool="get_item_source">get_item_source</code></li></ol>
+						<dl class="gk-tpl-meta"><dt>Connector</dt><dd><code>three-ws-grok</code></dd><dt>Output</dt><dd>One line per item with viewer and GLB links, then an agent-3d snippet</dd><dt>Runtime</dt><dd>3.0 s, nothing generated</dd></dl>
+						<a class="gk-recipe-link" href="/docs/grok-bot#task-templates">What it returned when measured</a>
+					</article>
+					<article class="gk-recipe">
+						<p class="gk-recipe-kind">Every Monday</p>
+						<h4>Weekly game-jam prop pack</h4>
+						<p>Takes catalog items first, generates only the gaps with a dated key so a rerun never duplicates a model, and returns a table of links.</p>
+						<button type="button" class="gk-ask" data-ask="Every Monday at 9:00 AM, run the asset-pack prompt from three-ws-grok for the theme &quot;pirate cove&quot; with 4 assets, and send me the table of links.">
+							<span class="gk-ask-kind"><span>Prompt</span><span>Copy</span></span>
+							<span class="gk-ask-text">Every Monday at 9:00 AM, run the asset-pack prompt from three-ws-grok for the theme "pirate cove" with 4 assets, and send me the table of links.</span>
+						</button>
+						<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="search_catalog">search_catalog</code></li><li><code data-tool="get_catalog_item">get_catalog_item</code></li><li><code data-tool="forge_free">forge_free</code></li><li><code data-tool="get_job">get_job</code></li></ol>
+						<dl class="gk-tpl-meta"><dt>Connector</dt><dd><code>three-ws-grok</code></dd><dt>Output</dt><dd>A table of 4 assets: source, viewer, GLB and poster for each</dd><dt>Runtime</dt><dd>194.0 s (3 from the catalog, 1 generated)</dd></dl>
+						<a class="gk-recipe-link" href="/docs/grok-bot#task-templates">What it returned when measured</a>
+					</article>
+					<article class="gk-recipe">
+						<p class="gk-recipe-kind">From a photo</p>
+						<h4>Product photo to 3D</h4>
+						<p>Turns a public product photo into a textured model, renders it from two angles and has Grok judge the shape against the photo.</p>
+						<button type="button" class="gk-ask" data-ask="Use three-ws-grok to turn the product photo at the link I paste into a 3D model with mesh_forge. Wait for the job, then call look_at_model on it from the front and side and tell me whether the shape matches the photo. Send the viewer link, the GLB and both views.">
+							<span class="gk-ask-kind"><span>Prompt</span><span>Copy</span></span>
+							<span class="gk-ask-text">Use three-ws-grok to turn the product photo at the link I paste into a 3D model with mesh_forge. Wait for the job, then call look_at_model on it from the front and side and tell me whether the shape matches the photo. Send the viewer link, the GLB and both views.</span>
+						</button>
+						<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="mesh_forge">mesh_forge</code></li><li><code data-tool="check_job">check_job</code></li><li><code data-tool="look_at_model">look_at_model</code></li></ol>
+						<dl class="gk-tpl-meta"><dt>Connector</dt><dd><code>three-ws-grok</code></dd><dt>Output</dt><dd>A textured GLB, two rendered views and a shape check</dd><dt>Runtime</dt><dd>301.6 s (model 280.7 s, views 20.9 s)</dd></dl>
+						<a class="gk-recipe-link" href="/docs/grok-bot#task-templates">What it returned when measured</a>
+					</article>
+					<article class="gk-recipe">
+						<p class="gk-recipe-kind">Rigged</p>
+						<h4>Mascot avatar for an agent page</h4>
+						<p>Generates and rigs an animation-ready mascot in one call, then hands back a pose studio link to animate it in the browser.</p>
+						<button type="button" class="gk-ask" data-ask="Use three-ws-grok to make a rigged 3D avatar of a friendly stylized fox ranger mascot in a green cloak, full body, standing, with forge_avatar. Wait for the job, then send me the viewer link, the GLB and a pose studio link (https://three.ws/pose?src= followed by the URL-encoded GLB).">
+							<span class="gk-ask-kind"><span>Prompt</span><span>Copy</span></span>
+							<span class="gk-ask-text">Use three-ws-grok to make a rigged 3D avatar of a friendly stylized fox ranger mascot in a green cloak, full body, standing, with forge_avatar. Wait for the job, then send me the viewer link, the GLB and a pose studio link (https://three.ws/pose?src= followed by the URL-encoded GLB).</span>
+						</button>
+						<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="forge_avatar">forge_avatar</code></li><li><code data-tool="check_job">check_job</code></li></ol>
+						<dl class="gk-tpl-meta"><dt>Connector</dt><dd><code>three-ws-grok</code></dd><dt>Output</dt><dd>A rigged GLB, its viewer link and a pose studio link</dd><dt>Runtime</dt><dd>455.4 s, generation plus rigging</dd></dl>
+						<a class="gk-recipe-link" href="/docs/grok-bot#task-templates">What it returned when measured</a>
+					</article>
+				</div>
+		</section>
+
+			<div class="gk-sub">
+				<div class="gk-sub-head">
+					<h3 id="gk-wake-h">Let three.ws wake your Grok Bot</h3>
+					<p>A Grok Bot routine can start from a webhook. Point a three.ws webhook at it and Grok Bot gets to work the moment something happens on your account: an agent run finishes, an automation fires, a message arrives, an approval is waiting, a model is forged. The event's JSON reaches the run as context.</p>
 				</div>
 				<ol class="gk-list">
-					<li>Install Grok Build: <code>curl -fsSL https://x.ai/cli/install.sh | bash</code>, then <code>grok --version</code>.</li>
-					<li>Save the file above as <code>.mcp.json</code> at the root of your project, and start <code>grok</code> there.</li>
-					<li>Type <code>/mcps</code> to see <strong>three-ws-grok</strong> connected, then ask for a model, a rig or a catalog search.</li>
-					<li>For the skills too, install the <a href="https://github.com/nirholas/three.ws/tree/main/integrations/grok/three-ws" target="_blank" rel="noopener">three.ws plugin for Grok Build</a>: the same server plus six 3D skills and a <code>three-ws-tour</code> command, with no hooks or scripts. Copy its folder into <code>~/.grok/plugins/</code>; the commands are below.</li>
+					<li>In Grok Bot, create a routine with a <strong>webhook trigger</strong> and an instruction, for example: <em>"Read the three.ws event in the body. If it is approval.needed, summarize what the agent wants to do and message me."</em> Grok gives you a URL and a key.</li>
+					<li>On <a href="/dashboard/developers#webhooks">Developers, Webhooks</a>, create a webhook with that URL, pick the events, and paste the key into <strong>Bearer token</strong>. It is stored encrypted and never shown again.</li>
+					<li>Press <strong>Send test</strong>. Every delivery carries <code>Authorization: Bearer &lt;key&gt;</code> plus the usual signature headers, retries with backoff, and shows up in the delivery log.</li>
 				</ol>
-				<div class="gk-snippet">
-					<div class="gk-snippet-head"><span>Install the plugin</span><button type="button" class="gk-btn gk-btn-sm" data-copy-target="gk-build-plugin">Copy</button></div>
-					<pre id="gk-build-plugin">git clone --depth 1 --filter=blob:none --sparse https://github.com/nirholas/three.ws three.ws-src
-git -C three.ws-src sparse-checkout set integrations/grok/three-ws
-mkdir -p ~/.grok/plugins &amp;&amp; cp -r three.ws-src/integrations/grok/three-ws ~/.grok/plugins/three-ws</pre>
+				<p class="gk-src-note">Grok Bot allows up to 200 runs an hour per routine, so pick the events you actually want a run for. Trigger format from <a href="https://docs.x.ai/grok-bot/overview" target="_blank" rel="noopener">xAI's Grok Bot docs</a>. Full reference: <a href="/docs/grok-bot#wake-grok-bot-from-threews-events">docs/grok-bot.md</a>.</p>
+			</div>
+
+			<div class="gk-sub">
+				<div class="gk-sub-head">
+					<h3 id="gk-skill-h">The Grok skill file</h3>
+					<p>One Markdown file teaches Grok the whole toolbox: the connector, a curl fallback when no connector is attached, the free limits and the rule that it never spends. It is generated from the same code that serves the tools, so it never names one that does not exist.</p>
 				</div>
-				<p class="gk-src-note">Compatibility per xAI's <a href="https://docs.x.ai/build/features/skills-plugins-marketplaces" target="_blank" rel="noopener">Skills, Plugins and Marketplaces docs</a>. Source: <a href="https://github.com/xai-org/grok-build" target="_blank" rel="noopener">xai-org/grok-build</a>.</p>
-			</div>
-		</section>
-
-		<section class="gk-sec" aria-labelledby="gk-wake-h">
-			<div class="gk-sec-head">
-				<h2 id="gk-wake-h">Let three.ws wake your Grok Bot</h2>
-				<p>A Grok Bot routine can start from a webhook. Point a three.ws webhook at it and Grok Bot gets to work the moment something happens on your account: an agent run finishes, an automation fires, a message arrives, an approval is waiting, a model is forged. The event's JSON reaches the run as context.</p>
-			</div>
-			<ol class="gk-list">
-				<li>In Grok Bot, create a routine with a <strong>webhook trigger</strong> and an instruction, for example: <em>"Read the three.ws event in the body. If it is approval.needed, summarize what the agent wants to do and message me."</em> Grok gives you a URL and a key.</li>
-				<li>On <a href="/dashboard/developers#webhooks">Developers, Webhooks</a>, create a webhook with that URL, pick the events, and paste the key into <strong>Bearer token</strong>. It is stored encrypted and never shown again.</li>
-				<li>Press <strong>Send test</strong>. Every delivery carries <code>Authorization: Bearer &lt;key&gt;</code> plus the usual signature headers, retries with backoff, and shows up in the delivery log.</li>
-			</ol>
-			<p class="gk-src-note">Grok Bot allows up to 200 runs an hour per routine, so pick the events you actually want a run for. Trigger format from <a href="https://docs.x.ai/grok-bot/overview" target="_blank" rel="noopener">xAI's Grok Bot docs</a>. Full reference: <a href="/docs/grok-bot#wake-grok-bot-from-threews-events">docs/grok-bot.md</a>.</p>
-		</section>
-
-		<section class="gk-sec" aria-labelledby="gk-schedule-h">
-			<div class="gk-sec-head">
-				<h2 id="gk-schedule-h">Four recipes to schedule</h2>
-				<p>Grok Bot runs tasks on a schedule with nobody watching. Each recipe is a guided MCP prompt the connector serves: it names the calls, never stops to ask, and ends with plain links. Copy the instruction into a Grok Bot task and set how often it runs.</p>
-			</div>
-			<div class="gk-recipes">
-				<article class="gk-recipe">
-					<p class="gk-recipe-kind">Every morning</p>
-					<h3>Daily 3D brief</h3>
-					<p>Picks the day's top topic, or yours, turns it into a model, checks it from two angles and hands back the viewer, GLB, poster and embed.</p>
-					<button type="button" class="gk-ask" data-ask="Every morning at 9, run the daily-3d-brief prompt from three-ws-grok with the topic &quot;trending&quot; and send me the viewer link, the GLB and the poster.">
-						<span class="gk-ask-kind"><span>Instruction</span><span>Copy</span></span>
-						<span class="gk-ask-text">Every morning at 9, run the daily-3d-brief prompt from three-ws-grok with the topic "trending" and send me the viewer link, the GLB and the poster.</span>
-					</button>
-					<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="forge_free">forge_free</code></li><li><code data-tool="get_job">get_job</code></li><li><code data-tool="look_at_model">look_at_model</code></li></ol>
-					<a class="gk-recipe-link" href="/docs/grok#scheduled-tasks-guided-prompts" data-prompt="daily-3d-brief">How the daily-3d-brief prompt runs</a>
-				</article>
-				<article class="gk-recipe">
-					<p class="gk-recipe-kind">Game jam</p>
-					<h3>Themed asset pack</h3>
-					<p>Lists what a theme needs, takes ready-made CC0 catalog items first, generates only the gaps and returns one row of links per asset.</p>
-					<button type="button" class="gk-ask" data-ask="Run the asset-pack prompt from three-ws-grok for the theme &quot;cozy cabin interior&quot; with 6 assets, and put every link in a table.">
-						<span class="gk-ask-kind"><span>Instruction</span><span>Copy</span></span>
-						<span class="gk-ask-text">Run the asset-pack prompt from three-ws-grok for the theme "cozy cabin interior" with 6 assets, and put every link in a table.</span>
-					</button>
-					<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="search_catalog">search_catalog</code></li><li><code data-tool="get_catalog_item">get_catalog_item</code></li><li><code data-tool="forge_free">forge_free</code></li><li><code data-tool="get_job">get_job</code></li></ol>
-					<a class="gk-recipe-link" href="/docs/grok#scheduled-tasks-guided-prompts" data-prompt="asset-pack">How the asset-pack prompt runs</a>
-				</article>
-				<article class="gk-recipe">
-					<p class="gk-recipe-kind">From a photo</p>
-					<h3>Avatar from a photo</h3>
-					<p>Builds and rigs an animation-ready avatar from a photo you own, checks the limbs and face, and adds a pose studio link to animate it.</p>
-					<button type="button" class="gk-ask" data-ask="Run the avatar-from-photo prompt from three-ws-grok with the photo I attach, then send me the GLB and the pose studio link.">
-						<span class="gk-ask-kind"><span>Instruction</span><span>Copy</span></span>
-						<span class="gk-ask-text">Run the avatar-from-photo prompt from three-ws-grok with the photo I attach, then send me the GLB and the pose studio link.</span>
-					</button>
-					<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="forge_avatar">forge_avatar</code></li><li><code data-tool="get_job">get_job</code></li><li><code data-tool="look_at_model">look_at_model</code></li></ol>
-					<a class="gk-recipe-link" href="/docs/grok#scheduled-tasks-guided-prompts" data-prompt="avatar-from-photo">How the avatar-from-photo prompt runs</a>
-				</article>
-				<article class="gk-recipe">
-					<p class="gk-recipe-kind">Every hour <span class="gk-tag">Signed in</span></p>
-					<h3>Solana market brief</h3>
-					<p>Reads fresh pump.fun graduations, Oracle's top plays and the Sentiment Scout, runs due diligence on the strongest coins, flags insider-heavy ones, and lists the verified traders worth watching. Never trades.</p>
-					<button type="button" class="gk-ask" data-ask="Every hour, run the market-brief prompt from three-ws-grok with 3 coins and send me the brief only if a coin passes due diligence.">
-						<span class="gk-ask-kind"><span>Instruction</span><span>Copy</span></span>
-						<span class="gk-ask-text">Every hour, run the market-brief prompt from three-ws-grok with 3 coins and send me the brief only if a coin passes due diligence.</span>
-					</button>
-					<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="pumpfun_recent_graduations">pumpfun_recent_graduations</code></li><li><code data-tool="oracle_top_plays">oracle_top_plays</code></li><li><code data-tool="sentiment_scout">sentiment_scout</code></li><li><code data-tool="token_due_diligence">token_due_diligence</code></li><li><code data-tool="trader_leaderboard">trader_leaderboard</code></li></ol>
-					<a class="gk-recipe-link" href="/docs/grok#scheduled-tasks-guided-prompts" data-prompt="market-brief">How the market-brief prompt runs</a>
-				</article>
-			</div>
-			<p><a href="/docs/tutorials/grok-bot-recipes">Six Grok Bot recipes, run against production</a> walks through these three plus three more (an X post's image turned into a 3D model, a weekly agent report, a $THREE market brief) with the real output each one returned.</p>
-		</section>
-
-		<section class="gk-sec" aria-labelledby="gk-templates-h">
-			<div class="gk-sec-head">
-				<h2 id="gk-templates-h">Grok Bot task templates</h2>
-				<p>Four tasks to paste into Grok Bot as they stand. Each runs on the free studio tools of the three-ws-grok connector, signed in with a free account, and none can spend. Runtimes were measured against production; generation times move with the GPU queue.</p>
-			</div>
-			<div class="gk-recipes gk-tpl-grid">
-				<article class="gk-recipe">
-					<p class="gk-recipe-kind">Catalog only</p>
-					<h3>Home-office scene kit</h3>
-					<p>Pulls five ready-made CC0 pieces for a scene, checks every title against the ask, and ends with embed code for one of them.</p>
-					<button type="button" class="gk-ask" data-ask="Use three-ws-grok to put together a home-office scene kit from the three.ws catalog: a desk, a desk lamp, an armchair, a potted plant and a bookshelf. Take an item only when its title plainly names what I asked for; if the best hit is a different object, try one other wording, then list it as missing. For each item give the title, viewer link and GLB link, and finish with agent-3d embed code for the armchair.">
-						<span class="gk-ask-kind"><span>Prompt</span><span>Copy</span></span>
-						<span class="gk-ask-text">Use three-ws-grok to put together a home-office scene kit from the three.ws catalog: a desk, a desk lamp, an armchair, a potted plant and a bookshelf. Take an item only when its title plainly names what I asked for; if the best hit is a different object, try one other wording, then list it as missing. For each item give the title, viewer link and GLB link, and finish with agent-3d embed code for the armchair.</span>
-					</button>
-					<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="search_catalog">search_catalog</code></li><li><code data-tool="get_catalog_item">get_catalog_item</code></li><li><code data-tool="get_item_source">get_item_source</code></li></ol>
-					<dl class="gk-tpl-meta"><dt>Connector</dt><dd><code>three-ws-grok</code></dd><dt>Output</dt><dd>One line per item with viewer and GLB links, then an agent-3d snippet</dd><dt>Runtime</dt><dd>3.0 s, nothing generated</dd></dl>
-					<a class="gk-recipe-link" href="/docs/grok-bot#task-templates">What it returned when measured</a>
-				</article>
-				<article class="gk-recipe">
-					<p class="gk-recipe-kind">Every Monday</p>
-					<h3>Weekly game-jam prop pack</h3>
-					<p>Takes catalog items first, generates only the gaps with a dated key so a rerun never duplicates a model, and returns a table of links.</p>
-					<button type="button" class="gk-ask" data-ask="Every Monday at 9:00 AM, run the asset-pack prompt from three-ws-grok for the theme &quot;pirate cove&quot; with 4 assets, and send me the table of links.">
-						<span class="gk-ask-kind"><span>Prompt</span><span>Copy</span></span>
-						<span class="gk-ask-text">Every Monday at 9:00 AM, run the asset-pack prompt from three-ws-grok for the theme "pirate cove" with 4 assets, and send me the table of links.</span>
-					</button>
-					<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="search_catalog">search_catalog</code></li><li><code data-tool="get_catalog_item">get_catalog_item</code></li><li><code data-tool="forge_free">forge_free</code></li><li><code data-tool="get_job">get_job</code></li></ol>
-					<dl class="gk-tpl-meta"><dt>Connector</dt><dd><code>three-ws-grok</code></dd><dt>Output</dt><dd>A table of 4 assets: source, viewer, GLB and poster for each</dd><dt>Runtime</dt><dd>194.0 s (3 from the catalog, 1 generated)</dd></dl>
-					<a class="gk-recipe-link" href="/docs/grok-bot#task-templates">What it returned when measured</a>
-				</article>
-				<article class="gk-recipe">
-					<p class="gk-recipe-kind">From a photo</p>
-					<h3>Product photo to 3D</h3>
-					<p>Turns a public product photo into a textured model, renders it from two angles and has Grok judge the shape against the photo.</p>
-					<button type="button" class="gk-ask" data-ask="Use three-ws-grok to turn the product photo at the link I paste into a 3D model with mesh_forge. Wait for the job, then call look_at_model on it from the front and side and tell me whether the shape matches the photo. Send the viewer link, the GLB and both views.">
-						<span class="gk-ask-kind"><span>Prompt</span><span>Copy</span></span>
-						<span class="gk-ask-text">Use three-ws-grok to turn the product photo at the link I paste into a 3D model with mesh_forge. Wait for the job, then call look_at_model on it from the front and side and tell me whether the shape matches the photo. Send the viewer link, the GLB and both views.</span>
-					</button>
-					<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="mesh_forge">mesh_forge</code></li><li><code data-tool="check_job">check_job</code></li><li><code data-tool="look_at_model">look_at_model</code></li></ol>
-					<dl class="gk-tpl-meta"><dt>Connector</dt><dd><code>three-ws-grok</code></dd><dt>Output</dt><dd>A textured GLB, two rendered views and a shape check</dd><dt>Runtime</dt><dd>301.6 s (model 280.7 s, views 20.9 s)</dd></dl>
-					<a class="gk-recipe-link" href="/docs/grok-bot#task-templates">What it returned when measured</a>
-				</article>
-				<article class="gk-recipe">
-					<p class="gk-recipe-kind">Rigged</p>
-					<h3>Mascot avatar for an agent page</h3>
-					<p>Generates and rigs an animation-ready mascot in one call, then hands back a pose studio link to animate it in the browser.</p>
-					<button type="button" class="gk-ask" data-ask="Use three-ws-grok to make a rigged 3D avatar of a friendly stylized fox ranger mascot in a green cloak, full body, standing, with forge_avatar. Wait for the job, then send me the viewer link, the GLB and a pose studio link (https://three.ws/pose?src= followed by the URL-encoded GLB).">
-						<span class="gk-ask-kind"><span>Prompt</span><span>Copy</span></span>
-						<span class="gk-ask-text">Use three-ws-grok to make a rigged 3D avatar of a friendly stylized fox ranger mascot in a green cloak, full body, standing, with forge_avatar. Wait for the job, then send me the viewer link, the GLB and a pose studio link (https://three.ws/pose?src= followed by the URL-encoded GLB).</span>
-					</button>
-					<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="forge_avatar">forge_avatar</code></li><li><code data-tool="check_job">check_job</code></li></ol>
-					<dl class="gk-tpl-meta"><dt>Connector</dt><dd><code>three-ws-grok</code></dd><dt>Output</dt><dd>A rigged GLB, its viewer link and a pose studio link</dd><dt>Runtime</dt><dd>455.4 s, generation plus rigging</dd></dl>
-					<a class="gk-recipe-link" href="/docs/grok-bot#task-templates">What it returned when measured</a>
-				</article>
-			</div>
-		</section>
-
-		<section class="gk-sec" aria-labelledby="gk-skill-h">
-			<div class="gk-sec-head">
-				<h2 id="gk-skill-h">The Grok skill file</h2>
-				<p>One Markdown file teaches Grok the whole toolbox: the connector, a curl fallback when no connector is attached, the free limits and the rule that it never spends. It is generated from the same code that serves the tools, so it never names one that does not exist.</p>
-			</div>
-			<div class="gk-skill">
-				<div class="gk-say" role="group" aria-labelledby="gk-skill-say-label">
-					<div class="gk-say-label"><span id="gk-skill-say-label">Say this to Grok Bot</span><span>Saved to its files</span></div>
-					<div class="gk-say-row">
-						<p class="gk-say-text" id="gk-skill-say">Download https://three.ws/grok-skill.md to your files and follow it whenever I ask for 3D.</p>
-						<button type="button" class="gk-btn" data-copy-target="gk-skill-say" aria-label="Copy the skill sentence for Grok Bot">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
-							<span>Copy</span>
-						</button>
+				<div class="gk-skill">
+					<div class="gk-say" role="group" aria-labelledby="gk-skill-say-label">
+						<div class="gk-say-label"><span id="gk-skill-say-label">Say this to Grok Bot</span><span>Saved to its files</span></div>
+						<div class="gk-say-row">
+							<p class="gk-say-text" id="gk-skill-say">Download https://three.ws/grok-skill.md to your files and follow it whenever I ask for 3D.</p>
+							<button type="button" class="gk-btn" data-copy-target="gk-skill-say" aria-label="Copy the skill sentence for Grok Bot">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+								<span>Copy</span>
+							</button>
+						</div>
 					</div>
-				</div>
-				<div class="gk-skill-toc">
-					<p class="gk-skill-toc-h">Inside <code>grok-skill.md</code></p>
-					<ol class="gk-skill-list" id="gk-skill-list" aria-busy="true">
-						<li class="gk-skel gk-skel-line"></li><li class="gk-skel gk-skel-line"></li><li class="gk-skel gk-skel-line"></li><li class="gk-skel gk-skel-line"></li>
-					</ol>
-					<p class="gk-note" id="gk-skill-note" hidden></p>
-					<div class="gk-skill-actions">
-						<a class="gk-btn gk-btn-sm" href="/grok-skill.md" target="_blank" rel="noopener">Open the file</a>
-						<a class="gk-btn gk-btn-sm" href="/grok-skill.md" download="three-ws-grok-skill.md">Download</a>
+					<div class="gk-skill-toc">
+						<p class="gk-skill-toc-h">Inside <code>grok-skill.md</code></p>
+						<ol class="gk-skill-list" id="gk-skill-list" aria-busy="true">
+							<li class="gk-skel gk-skel-line"></li><li class="gk-skel gk-skel-line"></li><li class="gk-skel gk-skel-line"></li><li class="gk-skel gk-skel-line"></li>
+						</ol>
+						<p class="gk-note" id="gk-skill-note" hidden></p>
+						<div class="gk-skill-actions">
+							<a class="gk-btn gk-btn-sm" href="/grok-skill.md" target="_blank" rel="noopener">Open the file</a>
+							<a class="gk-btn gk-btn-sm" href="/grok-skill.md" download="three-ws-grok-skill.md">Download</a>
+						</div>
 					</div>
 				</div>
 			</div>
+
+			<div class="gk-sub" id="build-examples">
+				<div class="gk-sub-head">
+					<h3 id="gk-examples-h">Examples and docs</h3>
+					<p>Runnable code in the repository, each with a README, and the guides behind this page.</p>
+				</div>
+				<div class="gk-links">
+					<a class="gk-link" href="https://github.com/nirholas/three.ws/tree/main/examples/grok" target="_blank" rel="noopener"><span class="gk-link-kind">Index</span><strong>All six Grok examples</strong><span>Python, Node, curl, X search, a talking avatar and Grok Build, with one command that runs them all.</span></a>
+					<a class="gk-link" href="https://github.com/nirholas/three.ws/tree/main/examples/grok-remote-mcp" target="_blank" rel="noopener"><span class="gk-link-kind">Example, Node</span><strong>Grok makes a 3D model</strong><span>The Responses API with remote MCP, the pending-job loop and an allowed_tools list.</span></a>
+					<a class="gk-link" href="https://github.com/nirholas/three.ws/tree/main/examples/grok-python-mcp" target="_blank" rel="noopener"><span class="gk-link-kind">Example, Python</span><strong>xai-sdk with remote MCP</strong><span>Grok searches the catalog for a chair and makes one if none fits.</span></a>
+					<a class="gk-link" href="https://github.com/nirholas/three.ws/tree/main/examples/grok-node-responses" target="_blank" rel="noopener"><span class="gk-link-kind">Example, Node</span><strong>OpenAI-compatible client</strong><span>The same flow through the Responses API with the openai package.</span></a>
+					<a class="gk-link" href="https://github.com/nirholas/three.ws/tree/main/examples/grok-curl" target="_blank" rel="noopener"><span class="gk-link-kind">Example, shell</span><strong>curl and jq</strong><span>The whole flow in one script, no SDK.</span></a>
+					<a class="gk-link" href="https://github.com/nirholas/three.ws/tree/main/examples/grok-agent-avatar" target="_blank" rel="noopener"><span class="gk-link-kind">Example, web</span><strong>A talking avatar with Grok as its brain</strong><span>A 3D avatar that answers with Grok and lip-syncs the reply.</span></a>
+					<a class="gk-link" href="https://github.com/nirholas/three.ws/tree/main/examples/grok-x-search-to-3d" target="_blank" rel="noopener"><span class="gk-link-kind">Example, Node</span><strong>What X is talking about, as a 3D prop</strong><span>Grok's X search picks a topic and the studio makes a prop for it. Drafts a post, never posts.</span></a>
+					<a class="gk-link" href="https://github.com/nirholas/three.ws/tree/main/examples/grok-build-workflow" target="_blank" rel="noopener"><span class="gk-link-kind">Walk-through, three.js</span><strong>Grok Build to a three.js scene</strong><span>Install the plugin, run /make-3d, and load the GLB in a Vite starter.</span></a>
+					<a class="gk-link" href="/docs/grok"><span class="gk-link-kind">Guide</span><strong>The Grok guide</strong><span>Every setup path, the guided prompts and how the server behaves under Grok.</span></a>
+					<a class="gk-link" href="/docs/grok-bot"><span class="gk-link-kind">Reference</span><strong>Grok Bot connector</strong><span>The connector settings, your account on the same URL, and webhooks.</span></a>
+					<a class="gk-link" href="/voice/grok"><span class="gk-link-kind">Demo</span><strong>Talk to an avatar by voice</strong><span>Speech to speech with a lip-synced 3D avatar.</span></a>
+				</div>
+			</div>
+
+			<div class="gk-sub">
+				<div class="gk-sub-head">
+					<h3 id="gk-tools-h">What Grok gets</h3>
+					<p>Read live from the server's <code>tools/list</code>, so this is always the real catalog.</p>
+				</div>
+				<div class="gk-tools" id="gk-tools" aria-busy="true">
+					<div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div>
+				</div>
+				<p class="gk-note" id="gk-tools-note" hidden></p>
+			</div>
 		</section>
 
-		<section class="gk-sec" aria-labelledby="gk-tools-h">
+		<!-- ── Live ────────────────────────────────────────────────────────── -->
+		<section class="gk-sec" id="live" aria-labelledby="gk-live-h">
 			<div class="gk-sec-head">
-				<h2 id="gk-tools-h">What Grok gets</h2>
-				<p>Read live from the server's <code>tools/list</code>, so this is always the real catalog.</p>
+				<h2 id="gk-live-h">Live</h2>
+				<p>Counted from the usage log of <code>/api/mcp-grok</code>, the Grok endpoint only, and refreshed every few minutes.</p>
 			</div>
-			<div class="gk-tools" id="gk-tools" aria-busy="true">
-				<div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div>
+			<div class="gk-stats" id="gk-stats" aria-busy="true">
+				<div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div>
 			</div>
-			<p class="gk-note" id="gk-tools-note" hidden></p>
+			<p class="gk-note" id="gk-stats-since" hidden></p>
+			<details class="gk-method" id="gk-stats-method" hidden>
+				<summary>How these are counted</summary>
+				<ul id="gk-stats-method-list"></ul>
+			</details>
 		</section>
 
-		<section class="gk-sec" aria-labelledby="gk-bot-h">
+		<section class="gk-sec" id="bot" aria-labelledby="gk-bot-h">
 			<div class="gk-sec-head">
 				<h2 id="gk-bot-h">The @-mention reply bot, live</h2>
 				<p>Mention an agent on X and it can reply through the same tools Grok uses. Aggregate activity only, read live from the bot's own ledger.</p>
@@ -720,8 +964,16 @@ mkdir -p ~/.grok/plugins &amp;&amp; cp -r three.ws-src/integrations/grok/three-w
 			<p class="gk-note" id="gk-bot-note" hidden></p>
 		</section>
 
-		<section class="gk-sec" aria-labelledby="gk-facts-h">
-			<div class="gk-sec-head"><h2 id="gk-facts-h">Built for an agent that works while you sleep</h2></div>
+		<!-- ── Reliability ─────────────────────────────────────────────────── -->
+		<section class="gk-sec" id="reliability" aria-labelledby="gk-rel-h">
+			<div class="gk-sec-head">
+				<h2 id="gk-rel-h">Reliability</h2>
+				<p>A probe connects to each server every five minutes, runs the MCP handshake and calls one real tool. These are its results.</p>
+			</div>
+			<div class="gk-uptime" id="gk-uptime" aria-busy="true">
+				<div class="gk-skel"></div><div class="gk-skel"></div>
+			</div>
+			<p class="gk-note" id="gk-uptime-note" hidden></p>
 			<div class="gk-facts">
 				<div class="gk-fact">
 					<h3>Never hangs a task</h3>
@@ -740,11 +992,54 @@ mkdir -p ~/.grok/plugins &amp;&amp; cp -r three.ws-src/integrations/grok/three-w
 					<p>Thousands of ready-made CC0 props, rigged characters and motion clips. Grok searches them before generating, so common asks come back instantly.</p>
 				</div>
 			</div>
+		</section>
+
+		<!-- ── FAQ ─────────────────────────────────────────────────────────── -->
+		<section class="gk-sec" id="faq" aria-labelledby="gk-faq-h">
+			<div class="gk-sec-head">
+				<h2 id="gk-faq-h">FAQ</h2>
+			</div>
+			<div class="gk-faq">
+				<details>
+					<summary>Do I need a three.ws account?</summary>
+					<div>
+						<p>Searching the catalog of ready-made assets needs no account. Making or rigging a model needs a free three.ws account, so every model has an owner who can publish or delete it.</p>
+						<p>With <code>?auth=oauth</code> on the URL, Grok asks you to approve three.ws sign-in once. Clients that cannot do OAuth take a connector key from <a href="/dashboard/api">API keys</a> instead. Signing in also lets Grok work with your three.ws agents.</p>
+					</div>
+				</details>
+				<details>
+					<summary>What does it cost?</summary>
+					<div>
+						<p>Nothing. The studio is free with a three.ws account, inside limits that follow your MCP session. When a limit is reached, the tool answers with which limit it was and when it resets.</p>
+						<p>Your Grok usage stays on your own Grok plan or xAI API key; three.ws never bills it. No tool on this connector can pay for anything.</p>
+					</div>
+				</details>
+				<details>
+					<summary>What data does three.ws receive?</summary>
+					<div>
+						<p>Only the arguments of each tool call Grok makes, such as a prompt, a photo URL or a model id. The rest of your conversation stays with Grok.</p>
+						<p>Models you make are saved to your account and stay unlisted until you publish them. The usage counts behind the Live numbers store a salted one-way hash of the client, never your account id, key or IP address. Details in the <a href="/legal/privacy">privacy policy</a>.</p>
+					</div>
+				</details>
+				<details>
+					<summary>Which URL should I use?</summary>
+					<div>
+						<p><code>https://three.ws/api/mcp-grok</code> is the server built for Grok: every call answers inside Grok's time limit, and the signed-in tools for your agents ride on the same URL. Use it in every Grok surface.</p>
+						<p>The plugins for Grok Build and Cursor connect the studio server, <code>https://three.ws/api/mcp-studio</code>, which serves the same 3D tools to any MCP client.</p>
+					</div>
+				</details>
+				<details>
+					<summary>Is three.ws made by xAI?</summary>
+					<div>
+						<p>No. three.ws is an independent company building on the Grok API. three.ws is a member of xAI's Grok for Startups program.</p>
+					</div>
+				</details>
+			</div>
 			<div class="gk-next">
 				<a class="gk-btn" href="/docs/grok">Read the Grok guide</a>
 				<a class="gk-btn" href="https://github.com/nirholas/three.ws/tree/main/examples/grok" target="_blank" rel="noopener">Runnable examples</a>
-				<a class="gk-btn" href="/docs/grok-bot">Connector reference</a>
 				<a class="gk-btn" href="/connect">Connect other AI clients</a>
+				<a class="gk-btn" href="/status">Status of every server</a>
 				<a class="gk-btn" href="/forge">Open the 3D studio</a>
 			</div>
 		</section>

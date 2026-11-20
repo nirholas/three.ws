@@ -10,6 +10,7 @@
 // the same component /connect shows in its Grok Bot tab.
 
 import { GROK_ENDPOINT, mountGrokConnector } from './grok-connector.js';
+import { formatAgo, statsTiles, uptimeRows } from './grok-hub-live.js';
 
 const ENDPOINT = '/api/mcp-grok';
 const POLL_MIN_S = 5;
@@ -58,32 +59,52 @@ function wireCopy() {
 	}
 }
 
-// ── setup tabs (WAI-ARIA tabs pattern, roving tabindex) ──────────────────
+// ── install tabs (WAI-ARIA tabs pattern, roving tabindex) ────────────────
+//
+// Each panel's id is install-<key>, so /grok#install-cursor opens the Cursor
+// tab, and the hero's "Add the connector" link (#install-bot) lands on it.
+// A hash that points inside a panel (#gk-plugin-h) opens that panel too.
 
 function wireTabs() {
 	const tabs = [...document.querySelectorAll('.gk-tab')];
+	const panelOf = (tab) => $(tab.getAttribute('aria-controls'));
 	const select = (tab, focus) => {
 		for (const t of tabs) {
 			const on = t === tab;
 			t.setAttribute('aria-selected', String(on));
 			t.tabIndex = on ? 0 : -1;
-			$(t.getAttribute('aria-controls')).hidden = !on;
+			panelOf(t).hidden = !on;
 		}
 		if (focus) tab.focus();
 	};
+	const choose = (tab) => {
+		select(tab, false);
+		history.replaceState(null, '', `#${tab.getAttribute('aria-controls')}`);
+	};
 	tabs.forEach((tab, i) => {
-		tab.addEventListener('click', () => select(tab, false));
+		tab.addEventListener('click', () => choose(tab));
 		tab.addEventListener('keydown', (e) => {
 			const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
-			if (step) {
-				e.preventDefault();
-				select(tabs[(i + step + tabs.length) % tabs.length], true);
-			} else if (e.key === 'Home' || e.key === 'End') {
-				e.preventDefault();
-				select(tabs[e.key === 'Home' ? 0 : tabs.length - 1], true);
-			}
+			let next = null;
+			if (step) next = tabs[(i + step + tabs.length) % tabs.length];
+			else if (e.key === 'Home') next = tabs[0];
+			else if (e.key === 'End') next = tabs[tabs.length - 1];
+			if (!next) return;
+			e.preventDefault();
+			choose(next);
+			next.focus();
 		});
 	});
+	const openFromHash = () => {
+		const target = location.hash.length > 1 ? document.getElementById(decodeURIComponent(location.hash.slice(1))) : null;
+		const panel = target?.closest('[role="tabpanel"]');
+		const tab = panel && tabs.find((t) => panelOf(t) === panel);
+		if (!tab) return;
+		select(tab, false);
+		target.scrollIntoView({ block: 'start' });
+	};
+	window.addEventListener('hashchange', openFromHash);
+	openFromHash();
 }
 
 // ── the MCP client ───────────────────────────────────────────────────────
@@ -590,11 +611,137 @@ async function loadMentionBotStatus() {
 	}
 }
 
+// ── Live numbers (GET /api/grok/stats) ───────────────────────────────────
+//
+// Skeletons while loading. On any failure the whole section and its link in
+// the on-page nav go away: a number we cannot show is not replaced by a guess.
+
+function textEl(tag, className, text) {
+	const el = document.createElement(tag);
+	if (className) el.className = className;
+	el.textContent = text;
+	return el;
+}
+
+async function loadStats() {
+	const section = $('live');
+	const drop = () => {
+		section.remove();
+		document.querySelector('[data-toc="live"]')?.remove();
+	};
+	let view = null;
+	try {
+		const res = await fetch('/api/grok/stats', { headers: { accept: 'application/json' } });
+		if (res.ok) view = statsTiles(await res.json());
+	} catch {
+		view = null;
+	}
+	if (!view) return drop();
+	const grid = $('gk-stats');
+	grid.replaceChildren(
+		...view.tiles.map((tile) => {
+			const card = document.createElement('div');
+			card.className = 'gk-stat';
+			card.dataset.stat = tile.key;
+			card.append(textEl('p', 'gk-stat-label', tile.label), textEl('p', 'gk-stat-value', tile.value), textEl('p', 'gk-stat-detail', tile.detail));
+			return card;
+		}),
+	);
+	grid.setAttribute('aria-busy', 'false');
+	const since = $('gk-stats-since');
+	since.textContent = view.since;
+	since.hidden = false;
+	if (view.methodology.length) {
+		$('gk-stats-method-list').replaceChildren(...view.methodology.map((line) => textEl('li', '', line)));
+		$('gk-stats-method').hidden = false;
+	}
+}
+
+// ── Reliability (GET /api/status/mcp) ────────────────────────────────────
+
+function uptimeCard(row) {
+	const card = document.createElement('article');
+	card.className = 'gk-up';
+	const head = document.createElement('div');
+	head.className = 'gk-up-head';
+	head.append(textEl('h3', '', row.name), textEl('code', '', row.path));
+	const facts = document.createElement('dl');
+	const last = textEl('span', 'gk-up-last', row.lastAt ? `${row.lastOk ? 'Passed' : 'Failed'}, ${formatAgo(row.lastAt)}` : 'Not probed yet');
+	if (row.lastOk != null) last.dataset.ok = String(row.lastOk);
+	for (const [term, value] of [
+		['Last 24 hours', row.up24h],
+		['Last probe', last],
+		['Handshake, median', row.handshakeP50],
+		['Tool call, median', row.toolCallP50],
+	]) {
+		const dd = document.createElement('dd');
+		dd.append(value);
+		facts.append(textEl('dt', '', term), dd);
+	}
+	card.append(head, textEl('p', 'gk-up-rate', row.up30d), textEl('p', 'gk-up-sub', `Probes passed over 30 days, out of ${row.probes30d}`), facts);
+	return card;
+}
+
+async function loadUptime() {
+	const grid = $('gk-uptime');
+	const note = $('gk-uptime-note');
+	let rows = null;
+	try {
+		const res = await fetch('/api/status/mcp', { headers: { accept: 'application/json' } });
+		if (res.ok) rows = uptimeRows(await res.json());
+	} catch {
+		rows = null;
+	}
+	note.replaceChildren();
+	if (rows) {
+		grid.replaceChildren(...rows.map(uptimeCard));
+		grid.setAttribute('aria-busy', 'false');
+		note.append('Every server three.ws runs, with its own history, is on the ', statusLink(), '.');
+	} else {
+		grid.hidden = true;
+		note.append('Probe results are not available right now. The ', statusLink(), ' shows the live state of every server.');
+	}
+	note.hidden = false;
+}
+
+function statusLink() {
+	const a = document.createElement('a');
+	a.href = '/status';
+	a.textContent = 'status page';
+	return a;
+}
+
 wireCopy();
+// ── keep a deep link on its target while the page fills in ───────────────
+//
+// /grok#reliability scrolls before the tool grid, the gallery strip and the
+// live numbers arrive above it, and each one changes the page height. Until
+// those loads settle, every resize re-aligns the target; the reader's first
+// scroll, key or touch hands control back at once.
+
+const READER_INPUT = ['wheel', 'touchstart', 'keydown', 'pointerdown'];
+
+function holdHashTarget(settled) {
+	const id = location.hash.length > 1 ? decodeURIComponent(location.hash.slice(1)) : '';
+	if (!id || !document.getElementById(id)) return;
+	let held = true;
+	const align = () => {
+		if (held) document.getElementById(id)?.scrollIntoView({ block: 'start', behavior: 'instant' });
+	};
+	const observer = new ResizeObserver(align);
+	const release = () => {
+		held = false;
+		observer.disconnect();
+		for (const type of READER_INPUT) removeEventListener(type, release, true);
+	};
+	for (const type of READER_INPUT) addEventListener(type, release, { capture: true, passive: true });
+	observer.observe(document.body);
+	settled.then(() => requestAnimationFrame(() => {
+		align();
+		release();
+	}));
+}
+
 wireTabs();
-mountConnector();
-loadStrip();
 startDemo();
-loadSkill();
-loadTools();
-loadMentionBotStatus();
+holdHashTarget(Promise.allSettled([mountConnector(), loadStrip(), loadSkill(), loadTools(), loadMentionBotStatus(), loadStats(), loadUptime()]));
