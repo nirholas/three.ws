@@ -53,7 +53,10 @@
  * lane are served from a short-lived result cache (api/_lib/forge-cache.js)
  * instead of re-running the GPU pipeline; the response carries `cached: true`.
  *
- * This is the public, auth-free twin of the 3D Studio MCP server (api/mcp-3d.js).
+ * Every POST needs an account (a session cookie, an API key or OAuth bearer) or
+ * a platform job's seed token, and answers 401 `sign_in_required` otherwise (see
+ * api/_lib/creator-account.js). Polling a job, the catalog and health stay open.
+ * This is the twin of the 3D Studio MCP server (api/mcp-3d.js).
  * No mock paths: if a selected backend isn't configured the endpoint returns a
  * clean 503/501 and the page renders a designed state, it never fabricates a
  * model.
@@ -112,6 +115,7 @@ import {
 } from './_lib/forge-store.js';
 import { isStorageInfrastructureError } from './_lib/r2.js';
 import { getSessionUser } from './_lib/auth.js';
+import { requireCreator, resolveCreator } from './_lib/creator-account.js';
 import { constantTimeEquals } from './_lib/crypto.js';
 import {
 	forgeRequestHash,
@@ -247,10 +251,10 @@ export function nimCooldownSeconds(err) {
 
 // Holder perk (Lever 2): a presented, verified $THREE tier pass lifts the free
 // generation ceiling by that tier's multiplier. The pass is pure-HMAC verifiable
-// (no RPC/price feed), so this adds zero latency to the anonymous free lane. An
+// (no RPC/price feed), so this adds zero latency to the free lane. An
 // absent or invalid pass simply leaves the multiplier at 1 (the base 60/h).
 // A comped account (api/_lib/comp-access.js) gets the top multiplier without a
-// pass. Its lookup is cookie-guarded, so the anonymous path stays query-free.
+// pass. Its lookup is cookie-guarded, so a bearer-only call stays query-free.
 async function freeLaneMultiplier(req, body) {
 	const token = req.headers?.['x-three-tier-pass'] || body?.tier_pass || null;
 	let fromPass = 1;
@@ -305,10 +309,6 @@ const HTTP_URL_RE = /^https?:\/\/[^\s]+$/i;
 // poll parameter to that shape so we never forward arbitrary strings upstream.
 const JOB_ID_RE = /^[a-z0-9]{16,64}$/;
 
-// Stable anonymous handle for the browser making the request (/forge has no
-// login). Used to scope durable creations + the gallery to one client without
-// trusting any of its other input.
-
 // Every response that names a creation also carries its `manage_token` (issue
 // #639), so the maker can delete it or change its visibility later without the
 // client id it was forged under. The status poll opts out where the frame could
@@ -317,26 +317,23 @@ function json(res, status, body, headers) {
 	return sendJson(res, status, withManageToken(body), headers);
 }
 
+// Stable opaque handle for the browser making the request (x-forge-client),
+// kept beside the owning account to scope the gallery to one client without
+// trusting any of its other input.
 function clientKeyFrom(req) {
 	const raw = req.headers['x-forge-client'];
 	return hashClient(Array.isArray(raw) ? raw[0] : raw);
 }
 
-// /forge is auth-free and the overwhelming majority of calls are anonymous -
-// but when a caller DOES carry a session cookie (the browser /create/studio
-// flow while logged in), attach their user_id to the durable creation so it
-// surfaces on their public portfolio (/u/:username → "Models" tab). Resolved
-// at most once per request; failures (no db, bad cookie) degrade to null,
-// never block generation.
+// The account behind the request (session cookie, API key or OAuth bearer, or
+// the account a platform job names on-behalf), attached to the durable creation
+// so it is owned by, and surfaces on the portfolio of (/u/:username, "Models"
+// tab), the person who made it. Making a model needs an account (see the POST
+// gate in the handler), so this is null only for a platform job that acts for
+// nobody in particular. Resolved at most once per request.
 async function sessionUserIdFromReq(req) {
-	if (Object.prototype.hasOwnProperty.call(req, '__twxSessionUserId')) return req.__twxSessionUserId;
-	try {
-		const user = await getSessionUser(req);
-		req.__twxSessionUserId = user?.id ?? null;
-	} catch {
-		req.__twxSessionUserId = null;
-	}
-	return req.__twxSessionUserId;
+	const who = await resolveCreator(req);
+	return who.user?.id ?? null;
 }
 
 // Resolve the requested generation path + quality tier from the body, falling
@@ -1401,9 +1398,14 @@ async function startJob(req, res) {
 	const backendMeta = BACKENDS[backendId];
 	const isFreeLane = backendMeta?.free === true;
 	if (!isInternalSeedRequest(req)) {
+		// Per account: a person keeps their allowance across networks, and a
+		// shared IP (an office, a campus, a mobile carrier) no longer pools
+		// strangers into one bucket.
+		const accountId = await sessionUserIdFromReq(req);
+		const rlKey = accountId ? `user:${accountId}` : ip;
 		const rl = isFreeLane
-			? await limits.mcp3dGenerateFreeTiered(ip, await freeLaneMultiplier(req, body))
-			: await limits.mcp3dGenerate(ip);
+			? await limits.mcp3dGenerateFreeTiered(rlKey, await freeLaneMultiplier(req, body))
+			: await limits.mcp3dGenerate(rlKey);
 		if (!rl.success) {
 			return rateLimited(res, rl, 'Generation limit reached. Try again shortly.');
 		}
@@ -2733,7 +2735,8 @@ async function startJob(req, res) {
 // mode-agnostic, so the rigged GLB surfaces exactly like a reconstruction.
 async function startRigJob(req, res) {
 	const ip = clientIp(req);
-	const rl = await limits.mcp3dGenerate(ip);
+	const accountId = await sessionUserIdFromReq(req);
+	const rl = await limits.mcp3dGenerate(accountId ? `user:${accountId}` : ip);
 	if (!rl.success) {
 		return rateLimited(res, rl, 'Rigging limit reached. Try again shortly.');
 	}
@@ -3328,6 +3331,12 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://localhost');
 
 	if (req.method === 'POST') {
+		const isRig = (url.searchParams.get('action') || '').trim() === 'rig';
+		// Making a model needs an account or a platform job (see
+		// _lib/creator-account.js). Checked before the submit ticket, rate limits
+		// and any provider spend, so an anonymous caller learns the one thing they
+		// can act on and costs nothing.
+		if (!(await requireCreator(req, res, { action: isRig ? 'rig a 3D model' : 'make a 3D model' }))) return;
 		// ?action=rig auto-rigs an existing GLB; the default POST reconstructs a
 		// mesh from a prompt (text→3D) or a reference image (image→3D).
 		// A bounded caller (the ChatGPT surface) or one retrying under an
@@ -3340,7 +3349,7 @@ export default wrap(async (req, res) => {
 			await markTicketSubmitting(ticket).catch((err) => console.warn(`[forge] submit ticket mark failed: ${err?.message || err}`));
 			captureTicketOutcome(res, ticket);
 		}
-		if ((url.searchParams.get('action') || '').trim() === 'rig') {
+		if (isRig) {
 			return startRigJob(req, res);
 		}
 		return startJob(req, res);

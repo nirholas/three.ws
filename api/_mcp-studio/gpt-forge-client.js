@@ -4,12 +4,14 @@
 // api/3d/studio) can evolve independently of /api/forge and the surfaces that
 // ride it (api/3d/generate, api/v1/ai/text-to-3d stay on ./forge-client.js).
 //
-// Every studio tool is a thin client over /api/gpt-forge — the public, auth-free
-// twin of the paid 3D Studio MCP server (see api/gpt-forge.js). The platform's
-// server-side keys (NVIDIA NIM, FLUX, TRELLIS/Hunyuan3D, UniRig, IBM Granite)
-// cover the provider cost, so the ChatGPT user pays nothing and no wallet,
-// payment, or API key is ever involved. This module is the SAME submit/poll
-// logic the npm MCP tools use, factored once — not a fork and not a mock.
+// Every studio tool is a thin client over /api/gpt-forge, the free twin of the
+// paid 3D Studio MCP server (see api/gpt-forge.js). The platform's server-side
+// keys (NVIDIA NIM, FLUX, TRELLIS/Hunyuan3D, UniRig, IBM Granite) cover the
+// provider cost, so the user pays nothing and no wallet or payment is involved.
+// Making a model does need an accountable caller: every submit carries `auth`,
+// the person's own credential or a platform job's headers (submitHeaders
+// below). This module is the SAME submit/poll logic the npm MCP tools use,
+// factored once, not a fork and not a mock.
 //
 // All work runs against the deployment's own origin (STUDIO_API_BASE, else the
 // configured PUBLIC_APP_ORIGIN; see api/_lib/self-origin.js), so the studio
@@ -96,12 +98,37 @@ function failure(code, message, extra = {}) {
 // The studio surfaces run server→server against the deployment's own /api/gpt-forge,
 // so they may carry the internal seed token (the same one forge-seed-cron uses).
 // Forge accepts it as proof the call is platform-originated, which clears the
-// High-tier access gate — the ChatGPT user stays anonymous and keyless while the
-// platform funds the premium tier. Absent secret → no header, and the tier
-// fallback in startForge keeps the surface working.
-function internalHeaders() {
+// High-tier access gate, so the platform funds the premium tier. Absent secret →
+// no header, and the tier fallback in startForge keeps the surface working.
+function internalHeaders({ onBehalf = false } = {}) {
 	const secret = process.env.CRON_SECRET;
-	return secret ? { 'x-forge-seed': secret } : {};
+	if (!secret) return {};
+	return { 'x-forge-seed': secret, ...(onBehalf ? { 'x-forge-on-behalf': '1' } : {}) };
+}
+
+// Making a model needs an accountable caller (api/_lib/creator-account.js), so
+// every submit carries one: `auth` is the end user's own credential forwarded
+// from the surface that authenticated them (forwardCreatorAuth: their cookie or
+// bearer), or the platform-job headers (platformAuthHeaders) for a surface that
+// answered for its caller another way. When a person's credential rides along
+// with the seed token (to fund a gated tier), the job is marked on-behalf so the
+// model stays theirs and unlisted instead of becoming a public showcase seed.
+// Kept in step with the same helper in ./forge-client.js.
+function submitHeaders(auth, withInternal) {
+	const own = auth && typeof auth === 'object' ? auth : {};
+	const hasPerson = Boolean(own.cookie || own.authorization);
+	return { ...own, ...(withInternal ? internalHeaders({ onBehalf: hasPerson || Boolean(own['x-forge-on-behalf']) }) : {}) };
+}
+
+// /api/gpt-forge answers 401 sign_in_required to a caller with no account.
+// Surface it as a coded failure carrying the server's own wording, so each
+// surface can show a sign-in link (browser) or ask for an API key (agents).
+function signInFailure(data) {
+	return failure('sign_in_required', data?.message || 'Sign in to make a 3D model. A three.ws account is free.', {
+		status: 401,
+		signInUrl: data?.sign_in_url || '/login',
+		apiKeysUrl: data?.api_keys_url || '/dashboard/api-keys',
+	});
 }
 
 // Submit a generation job to /api/gpt-forge. Handles both the synchronous-done shape
@@ -134,7 +161,8 @@ function internalHeaders() {
 // ticket when it lands, and polling that handle collects it. A caller that
 // needs the handle before the submit leaves (an idempotent call records it
 // first) passes its own `ticket`; a ticketed submit is never sent twice.
-export async function startForge(base, { prompt, imageUrls, aspect, backend, path, tier, internal, director, seed, strictTier = false }, { deadline, ticket: givenTicket } = {}) {
+// `auth` is the caller's credential or platform-job headers (see submitHeaders).
+export async function startForge(base, { prompt, imageUrls, aspect, backend, path, tier, internal, director, seed, strictTier = false, auth }, { deadline, ticket: givenTicket } = {}) {
 	const ticket = givenTicket || (deadline ? newTicket() : null);
 	const attempt = async (tierId, withInternal) => {
 		const payload = {
@@ -155,7 +183,7 @@ export async function startForge(base, { prompt, imageUrls, aspect, backend, pat
 				method: 'POST',
 				headers: {
 					'content-type': 'application/json',
-					...(withInternal ? internalHeaders() : {}),
+					...submitHeaders(auth, withInternal),
 					...(ticket ? { [TICKET_HEADER]: ticket } : {}),
 				},
 				body: JSON.stringify(payload),
@@ -209,6 +237,7 @@ export async function startForge(base, { prompt, imageUrls, aspect, backend, pat
 	if (highLaneDown && strictTier)
 		throw failure('tier_unavailable', 'the high-detail lane is unavailable right now; try again shortly', { retryAfter: 60 });
 	if (highLaneDown) ({ res, data } = await attempt('standard', false));
+	if (res.status === 401) throw signInFailure(data);
 	if (res.status === 503) throw failure('not_configured', data?.message || '3D generation is not configured on this deployment');
 	if (res.status === 429) throw failure('busy', data?.message || 'the 3D generator is busy; try again shortly', { retryAfter: data?.retry_after });
 	const completedSync = data?.status === 'done' && data?.glb_url;
@@ -218,12 +247,12 @@ export async function startForge(base, { prompt, imageUrls, aspect, backend, pat
 
 // `ticket` works as it does for startForge: a rig submit that outlives its
 // window resolves to the ticket's handle instead of a timeout.
-export async function startRig(base, glbUrl, { deadline, ticket } = {}) {
+export async function startRig(base, glbUrl, { deadline, ticket, auth } = {}) {
 	let res;
 	try {
 		res = await tracedFetch('studio gpt-forge rig', `${base}/api/gpt-forge?action=rig`, {
 			method: 'POST',
-			headers: { 'content-type': 'application/json', ...(ticket ? { [TICKET_HEADER]: ticket } : {}) },
+			headers: { 'content-type': 'application/json', ...submitHeaders(auth, false), ...(ticket ? { [TICKET_HEADER]: ticket } : {}) },
 			body: JSON.stringify({ glb_url: glbUrl }),
 			signal: AbortSignal.timeout(submitWindow(deadline, RIG_SUBMIT_TIMEOUT_MS, ticket ? TICKET_SUBMIT_FLOOR_MS : SUBMIT_FLOOR_MS)),
 		});
@@ -234,6 +263,7 @@ export async function startRig(base, glbUrl, { deadline, ticket } = {}) {
 		throw failure('provider_error', `the rigger is unreachable: ${err?.message || err}`);
 	}
 	const data = await res.json().catch(() => ({}));
+	if (res.status === 401) throw signInFailure(data);
 	if (res.status === 503 || res.status === 501) throw failure('not_configured', data?.message || 'auto-rigging is not enabled on this deployment');
 	if (res.status === 429) throw failure('busy', data?.message || 'the rigger is busy; try again shortly', { retryAfter: data?.retry_after });
 	if (!res.ok || !data?.job_id) throw failure('provider_error', data?.message || `the rigger returned ${res.status}`);
@@ -352,8 +382,8 @@ export async function generate(base, submitArgs, { timeoutEnv, deadline, ticket,
 	return out._timedOut ? { ...out, job_id: job.job_id } : out;
 }
 
-export async function rig(base, glbUrl, { timeoutEnv, deadline, ticket, onSubmitted, onFrame } = {}) {
-	const job = await startRig(base, glbUrl, { deadline, ticket });
+export async function rig(base, glbUrl, { timeoutEnv, deadline, ticket, onSubmitted, onFrame, auth } = {}) {
+	const job = await startRig(base, glbUrl, { deadline, ticket, auth });
 	await onSubmitted?.(job.job_id);
 	if (job.status === 'submitting') return { _timedOut: true, job_id: job.job_id, status: 'queued', stage: 'submit' };
 	onFrame?.(job);
