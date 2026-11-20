@@ -214,7 +214,7 @@ The platform's signature set, safe to reuse anywhere:
   ways off one catalog (the `search_catalog` / `get_catalog_item` /
   `get_item_source` MCP tools, `GET /api/catalog`, or `npx @three-ws/assets`).
 - **`generate-3d-model`**: text → textured GLB on the free `forge_free` lane
-  (NVIDIA NIM / TRELLIS; no key, no account). Returns `glbUrl` + viewer link.
+  (NVIDIA NIM / TRELLIS; free of charge, needs a free three.ws account or API key). Returns `glbUrl` + viewer link.
 - **`create-3d-avatar`**: text/image → **rigged** avatar via `forge_avatar`
   (generate + auto-rig in one call, humanoid gate). Returns rigged `glbUrl` +
   pose-studio link.

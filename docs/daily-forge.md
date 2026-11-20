@@ -1,6 +1,6 @@
 # Daily Forge: a new 3D creative challenge every day
 
-Daily Forge gives you one 3D creative challenge a day. The theme is deterministic, hashed from the UTC date so everyone in the world gets the same prompt on the same day, forge it into a real, textured 3D model for free with no sign-up, build a streak, and place your creation in AR on your phone. It is the platform's anonymous-first retention loop: a reason to come back tomorrow that costs nothing to start.
+Daily Forge gives you one 3D creative challenge a day. The theme is deterministic, hashed from the UTC date so everyone in the world gets the same prompt on the same day, forge it into a real, textured 3D model for free with a free three.ws account, build a streak, and place your creation in AR on your phone. It is the platform's daily retention loop: a reason to come back tomorrow that costs nothing to start.
 
 Page: [/daily](https://three.ws/daily) (`pages/daily.html`, `src/daily.js`)
 
@@ -31,7 +31,7 @@ function hashKey(key) {
 
 The "Day N" counter is anchored at 2026-07-17 (launch day is Day 1; earlier dates clamp to 1). A deterministic starter prompt is chosen the same way from the theme's seeds and pre-filled into the input; the idea chips are the theme's three seeds, and clicking one forges it immediately.
 
-**Free forge.** `forge(prompt)` sends `POST /api/forge` with `{ prompt, backend: 'nvidia' }` and an `x-forge-client` header carrying an anonymous client id (`localStorage['forge:cid']`, generated with `crypto.randomUUID()` and shared with `/forge`, `/ar`, and AR Studio). This is the free NVIDIA NIM (Microsoft TRELLIS) text-to-3D lane: no key, no account. If the response is already `{ status: 'done', glb_url }` it renders immediately; otherwise it polls `GET /api/forge?job=<id>` every 3 seconds up to a 5-minute ceiling until the job is `done` (with a GLB) or `failed`.
+**Free forge.** `forge(prompt)` sends `POST /api/forge` with `{ prompt, backend: 'nvidia' }` and an `x-forge-client` header carrying an anonymous client id (`localStorage['forge:cid']`, generated with `crypto.randomUUID()` and shared with `/forge`, `/ar`, and AR Studio). This is the free NVIDIA NIM (Microsoft TRELLIS) text-to-3D lane: free of charge, but it needs a signed-in account. Before forging, the page checks the session and, when signed out, shows a sign-in prompt with a link back to `/daily` instead of submitting; a `401 sign_in_required` from the forge gets the same prompt. The model is saved to the account, unlisted until its owner publishes it. If the response is already `{ status: 'done', glb_url }` it renders immediately; otherwise it polls `GET /api/forge?job=<id>` every 3 seconds up to a 5-minute ceiling until the job is `done` (with a GLB) or `failed`.
 
 **Streak state machine.** `src/daily/creator-streak.js` is a pure state machine over `{ current, best, lastDay, total }`, keyed to the UTC day and persisted at `localStorage['twx_daily_streak_v1']`. The streak bumps once per UTC day (idempotent: forging five times today counts once), on the model-viewer `load` event, since a completed creation is the qualifying action. A gap of exactly one day increments the streak; a larger gap resets `current` to 1 while preserving `best`. Milestones fire when `current` exactly hits one of `[3, 7, 14, 30, 50, 100, 365]`, with escalating celebration emoji and a haptic buzz.
 
@@ -49,15 +49,16 @@ The "Day N" counter is anchored at 2026-07-17 (launch day is Day 1; earlier date
 
 ## Examples
 
-The free forge lane is public and unauthenticated; the same contract powers `/daily`, `/forge`, and `/ar`.
+The free forge lane costs nothing but needs a three.ws account; the same contract powers `/daily`, `/forge`, and `/ar`. A script sends `Authorization: Bearer <key>` with a key from [/dashboard/api-keys](https://three.ws/dashboard/api-keys); polling and the gallery need no key.
 
 ```bash
 # Start a free text-to-3D job on the NVIDIA lane
 curl -X POST 'https://three.ws/api/forge' \
   -H 'content-type: application/json' \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
   -H 'x-forge-client: my-anonymous-id' \
   -d '{"prompt":"a tiny brass robot with glowing eyes","backend":"nvidia"}'
-# → { "job_id": "..." }  (or { "status":"done", "glb_url":"..." })
+# → { "job_id": "..." }  (or { "status":"done", "glb_url":"..." }); 401 sign_in_required without a key
 
 # Poll the job until it is done
 curl -H 'x-forge-client: my-anonymous-id' \
@@ -84,7 +85,7 @@ console.log(themeIndex(new Date().toISOString().slice(0, 10), 24));
 
 ## States and limits
 
-- **No sign-up, no key.** The whole loop is anonymous: an in-browser client id, a free NVIDIA generation lane, and a local streak. Nothing is stored server-side about you.
+- **Free, with an account.** Forging needs a free three.ws account; the theme, the streak and the community strip do not. The streak stays local to the browser, and the model is saved to your account, unlisted until you publish it.
 - **Per day.** The theme, the starter seed, and the streak all key on the UTC day. The streak counts at most once per day.
 - **Prompt limits.** 3 to 600 characters (enforced in JS and on the input).
 - **Empty and error states.** The stage has idle, working (with an elapsed timer), and failed (with retry) overlays. The forge lane surfaces offline (503), rate-limited (429 with a retry-after), unreachable (a connection failure, phrased for a human rather than as "Failed to fetch"), and timeout (over 5 minutes of polling) states, plus a "generated but couldn't display" path that still offers a download and still counts the streak. The action bar sits above the overlays, so the Download button that copy points at is actually clickable. The community strip hides itself when empty or when the gallery is down. WebGL-unsupported browsers never load model-viewer, and still see the day's theme.
