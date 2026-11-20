@@ -134,7 +134,7 @@ OPENROUTER_API_KEY=sk-or-xxxxx
 ANTHROPIC_API_KEY=sk-ant-api03-xxxxx
 ```
 
-Get from [console.anthropic.com](https://console.anthropic.com). `OPENAI_API_KEY` fills the same paid-backstop role for OpenAI, and `GROK_API_KEY` (alias `XAI_API_KEY`) adds xAI Grok as the last paid rung; when it is unset the Grok rungs are skipped and only a user's own BYOK Grok key works. watsonx (`WATSONX_API_KEY` plus a project scope) is served only on explicit request, never as a silent default.
+Get from [console.anthropic.com](https://console.anthropic.com). `OPENAI_API_KEY` fills the same paid-backstop role for OpenAI, and `GROK_API_KEY` (alias `XAI_API_KEY`) adds xAI Grok as the last paid rung; when it is unset the Grok rungs are skipped and only a user's own BYOK Grok key works. The xAI credit ledger reads `XAI_CREDIT_GRANT_USD`, `XAI_CREDIT_ISSUED_AT`, `XAI_CREDIT_SECOND_TRANCHE_AT`, `XAI_DAILY_SPEND_CAP_USD`, `XAI_MANAGEMENT_KEY` and `XAI_TEAM_ID`; see [docs/ops/xai-credits.md](ops/xai-credits.md). watsonx (`WATSONX_API_KEY` plus a project scope) is served only on explicit request, never as a silent default.
 
 #### `CHAT_MODEL`
 **Optional.** Pin a default chat model by id. It only applies when the provider that serves that model id (per the model catalog) is the one routed to; every other provider keeps its own default, so an Anthropic-style model id never leaks into a Groq request.

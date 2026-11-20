@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-20",
+			"title": "xAI credit ledger with burn-rate and expiry alerts",
+			"summary": "Every platform-key call to xAI now records tokens and cost, so a new report and an advisory health check show where the Grok credits go and warn before they run out or expire unused.",
+			"tags": [
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-20",
 			"title": "The Hunyuan3D-2 image-to-3D lane loads again, and fails fast when it cannot",
 			"summary": "The Hunyuan3D-2 worker, a backup lane for photo-to-3D, had stopped loading its texture model after a dependency upgrade: newer diffusers refused its bundled paint pipeline, and newer transformers refused its weights on the older torch it ran. It now trusts its own pinned pipeline and runs torch 2.6 on CUDA 12.4, so the lane generates textured models again. Separately, a job that arrived while either Hunyuan worker was still loading used to wait 15 minutes and report a timeout when the load failed; it now fails at once with the real reason, so the forge moves to the next lane straight away.",
 			"tags": [
