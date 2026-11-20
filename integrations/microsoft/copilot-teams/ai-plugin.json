@@ -27,7 +27,10 @@
   "runtimes": [
     {
       "type": "RemoteMCPServer",
-      "auth": { "type": "None" },
+      "auth": {
+        "type": "OAuthPluginVault",
+        "reference_id": "${MS_COPILOT_OAUTH_REFERENCE_ID}"
+      },
       "spec": {
         "url": "https://three.ws/api/mcp-studio",
         "mcp_tool_description": { "file": "mcptools.json" }

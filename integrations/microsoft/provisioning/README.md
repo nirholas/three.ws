@@ -63,6 +63,10 @@ npm run microsoft:provision -- --apply --copilot-redirect-uri <uri from Microsof
 
 This runs [`scripts/oauth-register-client.mjs`](../../../scripts/oauth-register-client.mjs) against the production database (it reads `DATABASE_URL` from Cloud Run when it is not set) and stores the client in the vault.
 
+### The Copilot plugin sign-in
+
+The declarative agent's plugin (`ai-plugin.json`) signs each Copilot user in to three.ws, because making or rigging a model needs an account. It uses a separate OAuth client registration in the Teams Developer Portal, whose id is `MS_COPILOT_OAUTH_REFERENCE_ID` for `npm run package:microsoft-app`. The steps are in [docs/microsoft-copilot-agent.md](../../../docs/microsoft-copilot-agent.md#register-the-sign-in-owner-step).
+
 ## Drift check
 
 [`lib/code-scan.mjs`](./lib/code-scan.mjs) reads every source file under `api/`, `scripts/`, `server/` and `integrations/microsoft/` that talks to `login.microsoftonline.com`. It collects:

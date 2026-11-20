@@ -1,6 +1,6 @@
 # three.ws 3D Studio agent for Microsoft 365 Copilot
 
-A declarative agent that ships inside the three.ws Microsoft 365 app package. In Microsoft 365 Copilot (and Copilot in Teams) it shows up as **three.ws 3D Studio** in the agent list. Ask it for a 3D model, a rigged mascot, a ready-made asset or embed code, and it does the work through the same studio MCP tools that every other three.ws Microsoft surface uses (`https://three.ws/api/mcp-studio`). The free tools need no account and no sign-in.
+A declarative agent that ships inside the three.ws Microsoft 365 app package. In Microsoft 365 Copilot (and Copilot in Teams) it shows up as **three.ws 3D Studio** in the agent list. Ask it for a 3D model, a rigged mascot, a ready-made asset or embed code, and it does the work through the same studio MCP tools that every other three.ws Microsoft surface uses (`https://three.ws/api/mcp-studio`). Searching the catalog and the docs needs no account. Making or rigging a model needs a three.ws account (free): the plugin signs each Copilot user in to three.ws with OAuth the first time they ask for a model, and the model is saved to that account unlisted until they share it.
 
 Built and operated by three.ws. Approved claims only: three.ws and Microsoft have announced a partnership, and three.ws is live on Microsoft Marketplace. Neither the agent nor this doc says or implies that Microsoft built, endorses or reviews it.
 
@@ -31,7 +31,7 @@ All files live in [`integrations/microsoft/copilot-teams/`](../integrations/micr
 |---|---|
 | `manifest.template.json` | The unified app manifest (v1.30). `copilotAgents.declarativeAgents` points at the agent: `{ "id": "threews-3d-studio", "file": "declarativeAgent.json" }`. App version 1.1.0. |
 | `declarativeAgent.json` | Declarative agent manifest, schema v1.9: name, description, instructions, starters, disclaimer, one action. No capabilities (web search, OneDrive, Graph connectors and so on) are declared, because the agent only needs its own tools. |
-| `ai-plugin.json` | Plugin manifest, schema v2.4, with a single `RemoteMCPServer` runtime at `https://three.ws/api/mcp-studio`. Tools are **pinned**: 13 named `functions` and a matching `run_for_functions`, described by `mcp_tool_description.file: "mcptools.json"`, so Copilot sees exactly the vetted tool descriptions instead of discovering them at run time. The persona tools are left out. Auth is `None`, because the studio's free tools serve anonymous callers. |
+| `ai-plugin.json` | Plugin manifest, schema v2.4, with a single `RemoteMCPServer` runtime at `https://three.ws/api/mcp-studio`. Tools are **pinned**: 13 named `functions` and a matching `run_for_functions`, described by `mcp_tool_description.file: "mcptools.json"`, so Copilot sees exactly the vetted tool descriptions instead of discovering them at run time. The persona tools are left out. Auth is `OAuthPluginVault`: the studio answers an anonymous `forge_free` or `rig_mesh` with `sign_in_required`, so each user signs in to three.ws. The committed `reference_id` is the slot `${MS_COPILOT_OAUTH_REFERENCE_ID}`, filled at build time with the id of the OAuth client registration below. |
 | `mcptools.json` | The studio tool descriptions, shared with the `agentConnectors` entry the Copilot Studio and Agent 365 surfaces read. |
 | `schema/` | Vendored copies of Microsoft's published schemas (Teams v1.30, declarative agent v1.9, plugin v2.4) so validation runs offline. See [`schema/README.md`](../integrations/microsoft/copilot-teams/schema/README.md). |
 
@@ -51,12 +51,20 @@ OK: manifest, schema v1.30, 16 tools, meeting stage tab and RSC, declarative age
 
 [`tests/microsoft-app-package.test.js`](../tests/microsoft-app-package.test.js) fails on every violation above (over-long instructions, a 13th starter, a duplicate title, a missing action file, a wrong schema version, an unknown or dynamically discovered tool, a wrong runtime URL, and more) and on any starter without a production proof sequence.
 
+## Register the sign-in (owner step)
+
+The plugin's `OAuthPluginVault` auth points at an OAuth client registration in the Teams Developer Portal. Do this once, before building the package:
+
+1. Register a three.ws OAuth client whose redirect URI is the Developer Portal's: `node scripts/oauth-register-client.mjs --name "Microsoft 365 Copilot 3D Studio" --redirect-uri https://teams.microsoft.com/api/platform/v1.0/oAuthRedirect --scope "avatars:write" --apply` (it reads `DATABASE_URL`; see the script header). Record the client id and secret it prints once.
+2. In the [Teams Developer Portal](https://dev.teams.microsoft.com/), open **Tools** > **OAuth client registration** > **Register client** and enter: base URL `https://three.ws/api/mcp-studio`, client id and secret from step 1, authorization endpoint `https://three.ws/oauth/authorize`, token endpoint `https://three.ws/api/oauth/token`, refresh endpoint `https://three.ws/api/oauth/token`, scope `avatars:write`. Restrict it to the app's Microsoft 365 app id.
+3. Save it and copy the **OAuth client registration ID** it shows. That is `MS_COPILOT_OAUTH_REFERENCE_ID`. The build refuses to package without it, and `--check` uses a marked check-only value.
+
 ## Sideload it in a developer tenant
 
 You need a Microsoft 365 tenant with a Microsoft 365 Copilot licence on the test account and custom app upload allowed ([upload your app](https://learn.microsoft.com/en-us/microsoftteams/platform/concepts/deploy-and-publish/apps-upload)). A Microsoft 365 developer tenant works.
 
 1. Build the package with the owner values set (see the [plan's owner checklist](./microsoft-marketplace-offer-plan.md#owner-checklist-in-order), step 15):
-   `MS_APP_ID=... MS_DEVELOPER_NAME=... MS_KEYVAULT_URL=... MS_TEAMS_BOT_APP_ID=... npm run package:microsoft-app`
+   `MS_APP_ID=... MS_DEVELOPER_NAME=... MS_KEYVAULT_URL=... MS_TEAMS_BOT_APP_ID=... MS_COPILOT_OAUTH_REFERENCE_ID=... npm run package:microsoft-app`
 2. In Teams: **Apps** > **Manage your apps** > **Upload an app** > **Upload a custom app**, and pick the zip. The Microsoft 365 Agents Toolkit's preview command or the Teams Developer Portal (**Apps** > **Import app**) upload the same zip.
 3. Open Microsoft 365 Copilot (or Copilot in Teams). **three.ws 3D Studio** appears in the agents list. Open it, read the disclaimer, and pick a starter.
 4. Check each starter returns what the [proof table](#production-proof) shows: a viewer link and GLB for the generation starters, a CC0 chair with its GLB for the catalog starter, `<model-viewer>` code for the website starter, and a cited docs section for the auto-rigging question.
@@ -67,7 +75,7 @@ The agent is part of the same app package and the same Partner Center offer as t
 
 ## Production proof
 
-`node scripts/microsoft-copilot-agent-proof.mjs [--only "Starter title"] [--json out.json]` runs each starter's tool sequence anonymously against the URL in `ai-plugin.json` (override with `MCP_STUDIO_URL`), follows generations through `check_job`, and fetches every GLB to confirm it is a real glTF binary (and, for the mascot, that it carries a skeleton). Nothing is staged: every id below came back from production.
+`THREE_WS_API_KEY=... node scripts/microsoft-copilot-agent-proof.mjs [--only "Starter title"] [--json out.json]` runs each starter's tool sequence as a signed-in account (the key stands in for the Copilot user's OAuth token; the generation starters refuse to start without it) against the URL in `ai-plugin.json` (override with `MCP_STUDIO_URL`), follows generations through `check_job`, and fetches every GLB to confirm it is a real glTF binary (and, for the mascot, that it carries a skeleton). Nothing is staged: every id below came back from production.
 
 Runs of 2026-11-16 against `https://three.ws/api/mcp-studio` (15:00 to 15:25 UTC, 16:22 to 16:38 UTC and 16:48 to 17:04 UTC):
 
@@ -90,5 +98,5 @@ After the deploy, rerun `node scripts/microsoft-copilot-agent-proof.mjs --only "
 
 ## Known limits
 
-- **Free quota is per client IP** (4 generations a minute, 30 an hour; `STUDIO_LIMITS` in `api/_lib/rate-limit.js`). Copilot calls the plugin from Microsoft's egress, and `auth: None` carries no per-user identity, so heavy use across many tenants shares that quota. When the limit is hit the tool says when it resets and the agent passes that on.
+- **Generation quota is per account** (`STUDIO_LIMITS` in `api/_lib/rate-limit.js`). Each Copilot user signs in, so one tenant's heavy use does not spend another's quota. When the limit is hit the tool says when it resets and the agent passes that on.
 - **Inline wait.** A generation tool answers within roughly 40 seconds, either done or pending with a viewer link. The agent never blocks a turn for the full generation.

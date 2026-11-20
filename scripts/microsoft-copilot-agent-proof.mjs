@@ -4,13 +4,15 @@
 //
 // For each starter this runs the exact tool sequence the agent's instructions tell
 // Copilot to use, over JSON-RPC against the studio MCP server the plugin points at
-// (https://three.ws/api/mcp-studio by default), anonymously, as the plugin's
-// `auth: None` runtime does. Generations are followed with check_job until the job
+// (https://three.ws/api/mcp-studio by default), signed in as a three.ws account,
+// as the plugin's OAuthPluginVault runtime is: THREE_WS_API_KEY stands in for the
+// Copilot user's OAuth token, and the starters that make a model need it (the
+// studio answers an anonymous forge_free or rig_mesh with sign_in_required). Generations are followed with check_job until the job
 // is done; a failed or busy generation is retried with a new idempotency_key, as
 // the instructions say. Nothing is staged: every id and URL printed came back from
 // the server, and every GLB is fetched to confirm it is a real glTF binary.
 //
-//   node scripts/microsoft-copilot-agent-proof.mjs [--only "Starter title"] [--json out.json]
+//   THREE_WS_API_KEY=sk_live_... node scripts/microsoft-copilot-agent-proof.mjs [--only "Starter title"] [--json out.json]
 //   MCP_STUDIO_URL=http://localhost:3131/api/mcp-studio node scripts/microsoft-copilot-agent-proof.mjs
 
 import { randomUUID } from 'node:crypto';
@@ -33,6 +35,24 @@ export function retryAfterSeconds(text) {
 
 const RATE_LIMITED = /^Rate limited:/;
 
+/** Starters whose sequence makes or rigs a model, which needs a signed-in account. */
+const GENERATION_STARTERS = new Set(['Product model for a deck', 'Rigged mascot', 'Inspect a model']);
+
+/** The auth header for the studio, or an error when a selected starter cannot pass without a key. */
+export function proofAuth(env, titles) {
+	const key = String(env.THREE_WS_API_KEY ?? '').trim();
+	if (key) return { headers: { authorization: `Bearer ${key}` } };
+	const needKey = titles.filter((t) => GENERATION_STARTERS.has(t));
+	if (needKey.length) {
+		return {
+			error: `Set THREE_WS_API_KEY to a three.ws API key (https://three.ws/dashboard/api-keys): making a model needs an account, so ${needKey.join(', ')} cannot pass without one. Use --only to run a catalog or docs starter anonymously.`,
+		};
+	}
+	return { headers: {} };
+}
+
+let AUTH_HEADERS = {};
+
 /** One tools/call. The starters share one IP quota, so a rate limit is waited out, never counted as a failure. */
 async function call(name, args) {
 	for (let attempt = 1; ; attempt++) {
@@ -48,7 +68,7 @@ async function callOnce(name, args) {
 	const started = Date.now();
 	const res = await fetch(MCP_URL, {
 		method: 'POST',
-		headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+		headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', ...AUTH_HEADERS },
 		body: JSON.stringify({ jsonrpc: '2.0', id: randomUUID(), method: 'tools/call', params: { name, arguments: args } }),
 		signal: AbortSignal.timeout(180_000),
 	});
@@ -179,7 +199,10 @@ async function main(argv) {
 	const missing = missingSequences();
 	if (missing.length) throw new Error(`No tool sequence for starter(s): ${missing.join(', ')}`);
 	const starters = AGENT.conversation_starters.filter((s) => onlyAt < 0 || s.title === argv[onlyAt + 1]);
-	log(`${starters.length} starter(s) against ${MCP_URL}`);
+	const auth = proofAuth(process.env, starters.map((s) => s.title));
+	if (auth.error) throw new Error(auth.error);
+	AUTH_HEADERS = auth.headers;
+	log(`${starters.length} starter(s) against ${MCP_URL}${AUTH_HEADERS.authorization ? ' as a signed-in account' : ' anonymously'}`);
 	const report = await Promise.all(
 		starters.map(async (s) => {
 			const steps = [];

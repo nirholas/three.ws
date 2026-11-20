@@ -347,6 +347,7 @@
       "MS_MARKETPLACE_EMULATOR_LOGIN_BASE": "Sign-in base for the local SaaS emulator.",
       "MS_APP_ID": "App GUID Partner Center assigns to the Microsoft 365 app offer; created in Partner Center, not Entra.",
       "MS_DEVELOPER_NAME": "Legal entity name for the app package.",
+    "MS_COPILOT_OAUTH_REFERENCE_ID": "OAuth client registration ID from the Teams Developer Portal that the Copilot plugin signs users in with; created in the Developer Portal, which has no API for it.",
       "MS_ALERT_CONNECTOR_ERROR_RATE": "Alert threshold tuning.",
       "MS_ALERT_CONNECTOR_MIN_CALLS": "Alert threshold tuning.",
       "MS_STORE_APP_NAME": "Microsoft Store product identity from Partner Center.",

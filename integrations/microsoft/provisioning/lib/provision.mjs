@@ -124,7 +124,7 @@ export function formatHandoff(ctx, state, { envFile }) {
 	const sso = state.apps.sso?.app?.appId;
 	const bot = state.apps.bot?.app?.appId;
 	const kv = values[vaultSpec(manifest, 'copilot')?.env];
-	if (kv && bot) lines.push('', 'Teams and Copilot app package (MS_APP_ID comes from the Partner Center offer):', `  MS_APP_ID=<Partner Center app GUID> MS_DEVELOPER_NAME="<legal entity, 32 chars max>" MS_KEYVAULT_URL=${kv} MS_TEAMS_BOT_APP_ID=${bot} npm run package:microsoft-app`);
+	if (kv && bot) lines.push('', 'Teams and Copilot app package (MS_APP_ID comes from the Partner Center offer):', `  MS_APP_ID=<Partner Center app GUID> MS_DEVELOPER_NAME="<legal entity, 32 chars max>" MS_KEYVAULT_URL=${kv} MS_TEAMS_BOT_APP_ID=${bot} MS_COPILOT_OAUTH_REFERENCE_ID=<Teams Developer Portal OAuth client registration ID> npm run package:microsoft-app`);
 	if (sso) {
 		const spec = appSpec(manifest, 'sso');
 		const redirect = `${manifest.origin}${spec.adminConsent.redirectPath}`;

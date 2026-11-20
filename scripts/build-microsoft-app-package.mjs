@@ -16,6 +16,9 @@
 //   MS_KEYVAULT_URL    the Azure Key Vault URL that holds the OAuth client details
 //   MS_TEAMS_BOT_APP_ID  the Azure Bot registration app id behind the Agents search command
 //                        (the same value the API reads to verify Bot Framework tokens)
+//   MS_COPILOT_OAUTH_REFERENCE_ID  the OAuth client registration id from the Teams Developer
+//                        Portal, so the Copilot plugin signs each user in to three.ws
+//                        (making or rigging a model on the studio needs an account)
 // The package also carries the "three.ws 3D Studio" declarative agent for Microsoft 365
 // Copilot (declarativeAgent.json) and its plugin (ai-plugin.json, a RemoteMCPServer runtime
 // pinned to the free studio tools in mcptools.json). Both are validated against the
@@ -36,13 +39,18 @@ const outFile = join(root, 'dist', 'microsoft', 'three-ws-m365-app.zip');
 const MCP_URL = 'https://three.ws/api/mcp-studio';
 const LOGO = join(root, 'public', 'logo.png');
 
-const OWNER_VARS = ['MS_APP_ID', 'MS_DEVELOPER_NAME', 'MS_KEYVAULT_URL', 'MS_TEAMS_BOT_APP_ID'];
+const OWNER_VARS = ['MS_APP_ID', 'MS_DEVELOPER_NAME', 'MS_KEYVAULT_URL', 'MS_TEAMS_BOT_APP_ID', 'MS_COPILOT_OAUTH_REFERENCE_ID'];
 const CHECK_ONLY = {
 	MS_APP_ID: '00000000-0000-4000-8000-000000000000',
 	MS_DEVELOPER_NAME: 'Check Only Developer',
 	MS_KEYVAULT_URL: 'https://check-only.vault.azure.net/',
 	MS_TEAMS_BOT_APP_ID: '00000000-0000-4000-8000-0000000000b0',
+	MS_COPILOT_OAUTH_REFERENCE_ID: 'Q2hlY2tPbmx5T0F1dGhSZWZlcmVuY2VJZA==',
 };
+// The Developer Portal hands out an opaque base64 string. Anything outside that
+// alphabet would break the JSON it is substituted into or is a pasted mistake.
+const OAUTH_REFERENCE_RE = /^[A-Za-z0-9+/=_-]{8,512}$/;
+const OAUTH_REFERENCE_SLOT = '${MS_COPILOT_OAUTH_REFERENCE_ID}';
 const GUID_RE = /^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$/;
 const PACKAGE_FILES = ['manifest.json', 'declarativeAgent.json', 'ai-plugin.json', 'mcptools.json', 'intro.md', 'color.png', 'outline.png'];
 const AGENT_FILE = 'declarativeAgent.json';
@@ -264,6 +272,12 @@ export function checkPlugin(plugin, toolNames, { exists = (f) => existsSync(join
 	const mcp = runtimes.filter((r) => r.type === 'RemoteMCPServer');
 	if (mcp.length !== 1 || runtimes.length !== 1) return [...problems, `${PLUGIN_FILE} needs exactly one runtime, of type RemoteMCPServer`];
 	const [runtime] = mcp;
+	// The studio answers an anonymous forge_free or rig_mesh with
+	// sign_in_required, so an anonymous runtime would ship creation tools that
+	// can never succeed. Each Copilot user signs in to three.ws with OAuth.
+	if (runtime.auth?.type !== 'OAuthPluginVault' || !String(runtime.auth?.reference_id ?? '').trim()) {
+		problems.push(`${PLUGIN_FILE} runtime auth must be OAuthPluginVault with a reference_id (the studio's creation tools need a three.ws account)`);
+	}
 	if (runtime.spec?.url !== MCP_URL) problems.push(`${PLUGIN_FILE} runtime url must be ${MCP_URL}`);
 	const file = runtime.spec?.mcp_tool_description?.file;
 	if (file !== STUDIO_TOOLS_FILE) problems.push(`${PLUGIN_FILE} runtime must pin tools from ${STUDIO_TOOLS_FILE}`);
@@ -283,9 +297,9 @@ export function checkPlugin(plugin, toolNames, { exists = (f) => existsSync(join
 	return problems;
 }
 
-function parseJsonFile(name, problems) {
+function parseJsonFile(name, problems, text = readText(name)) {
 	try {
-		return JSON.parse(readText(name));
+		return JSON.parse(text);
 	} catch (err) {
 		problems.push(`${name} is not valid JSON: ${err.message}`);
 		return null;
@@ -416,6 +430,20 @@ async function checkIcons() {
 	return problems;
 }
 
+/**
+ * Put the owner's OAuth client reference id into the plugin text. The committed
+ * file carries the ${MS_COPILOT_OAUTH_REFERENCE_ID} slot, never a real id.
+ */
+function fillPluginAuth(text, values, problems) {
+	const ref = String(values.MS_COPILOT_OAUTH_REFERENCE_ID ?? '');
+	if (!OAUTH_REFERENCE_RE.test(ref)) {
+		problems.push('MS_COPILOT_OAUTH_REFERENCE_ID must be the reference id the Teams Developer Portal shows for the three.ws OAuth client registration');
+		return text;
+	}
+	if (!text.includes(OAUTH_REFERENCE_SLOT)) problems.push(`${PLUGIN_FILE} must carry ${OAUTH_REFERENCE_SLOT} as its runtime auth reference_id`);
+	return text.split(OAUTH_REFERENCE_SLOT).join(ref);
+}
+
 /** Validate everything and return { problems, files } without touching the disk. */
 export async function assemble(values) {
 	const { manifest, problems } = buildManifest(values);
@@ -423,7 +451,8 @@ export async function assemble(values) {
 	problems.push(...checkTools(toolsText));
 	const agent = parseJsonFile(AGENT_FILE, problems);
 	if (agent) problems.push(...checkDeclarativeAgent(agent));
-	const plugin = parseJsonFile(PLUGIN_FILE, problems);
+	const pluginText = fillPluginAuth(readText(PLUGIN_FILE), values, problems);
+	const plugin = parseJsonFile(PLUGIN_FILE, problems, pluginText);
 	if (plugin) {
 		let toolNames = new Set();
 		try {
@@ -442,7 +471,7 @@ export async function assemble(values) {
 	const files = {
 		'manifest.json': Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`),
 		'declarativeAgent.json': read(AGENT_FILE),
-		'ai-plugin.json': read(PLUGIN_FILE),
+		'ai-plugin.json': Buffer.from(pluginText),
 		'mcptools.json': read('mcptools.json'),
 		'intro.md': read('intro.md'),
 		'color.png': existsSync(join(srcDir, 'color.png')) ? read('color.png') : Buffer.alloc(0),
@@ -583,7 +612,8 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
 	if (missing.length) {
 		console.error(`Missing owner-only environment variable${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}.`);
 		console.error('MS_APP_ID is the app GUID from Partner Center, MS_DEVELOPER_NAME the legal entity name (32 characters or fewer),');
-		console.error('MS_KEYVAULT_URL the Azure Key Vault URL, MS_TEAMS_BOT_APP_ID the Azure Bot app id. Run with --check to validate everything else without them.');
+		console.error('MS_KEYVAULT_URL the Azure Key Vault URL, MS_TEAMS_BOT_APP_ID the Azure Bot app id, MS_COPILOT_OAUTH_REFERENCE_ID the reference id of');
+		console.error('the three.ws OAuth client registered in the Teams Developer Portal. Run with --check to validate everything else without them.');
 		return 2;
 	}
 	const { problems, files } = await assemble(values);

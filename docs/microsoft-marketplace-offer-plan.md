@@ -217,7 +217,7 @@ Every remaining step needs Partner Center, the owner's own Azure login or a prod
 **#2 and #5 Copilot and Teams app**
 
 14. Partner Center, Apps and Agents for Microsoft 365 and Copilot: create the offer and note its app GUID.
-15. Build the package with the line step 4 printed (it fills in `MS_KEYVAULT_URL` and `MS_TEAMS_BOT_APP_ID`) and the app GUID from step 14: `MS_APP_ID=... MS_DEVELOPER_NAME=... MS_KEYVAULT_URL=... MS_TEAMS_BOT_APP_ID=... npm run package:microsoft-app`, sideload it in Teams to test, then upload the zip to the offer and submit for MCP certification.
+15. Build the package with the line step 4 printed (it fills in `MS_KEYVAULT_URL` and `MS_TEAMS_BOT_APP_ID`) the app GUID from step 14, and the Copilot plugin's OAuth client registration id ([register the sign-in](./microsoft-copilot-agent.md#register-the-sign-in-owner-step)): `MS_APP_ID=... MS_DEVELOPER_NAME=... MS_KEYVAULT_URL=... MS_TEAMS_BOT_APP_ID=... MS_COPILOT_OAUTH_REFERENCE_ID=... npm run package:microsoft-app`, sideload it in Teams to test, then upload the zip to the offer and submit for MCP certification.
 16. Microsoft 365 App Compliance: submit Publisher Attestation with the answers in [`microsoft-365-publisher-attestation.md`](../marketing/growth/submissions/programs/microsoft-365-publisher-attestation.md).
 
 **#4 Power Platform connector**

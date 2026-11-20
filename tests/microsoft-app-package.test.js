@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { unzipSync } from 'fflate';
-import { missingSequences, retryAfterSeconds } from '../scripts/microsoft-copilot-agent-proof.mjs';
+import { missingSequences, proofAuth, retryAfterSeconds } from '../scripts/microsoft-copilot-agent-proof.mjs';
 import { REPORT_COMMAND_ID } from '../api/_lib/teams-ai.js';
 import {
 	AGENT_ID,
@@ -30,6 +30,7 @@ const OWNER = {
 	MS_DEVELOPER_NAME: 'Test Co',
 	MS_KEYVAULT_URL: 'https://kv-test.vault.azure.net/',
 	MS_TEAMS_BOT_APP_ID: '22222222-2222-4222-8222-222222222222',
+	MS_COPILOT_OAUTH_REFERENCE_ID: 'ZGQ5NjQ3YjMtMjE3Yi00MWYwLWJmMmYtZGFiMWVkNTJkNDE0IyNjNGJlMzM2Zi1mNDcxLTQ0ZDUtYmM2YS1kYWZjZjYzZDkzYmI=',
 };
 
 describe('microsoft app package', () => {
@@ -93,7 +94,7 @@ describe('microsoft app package', () => {
 		} finally {
 			console.error = err;
 		}
-		expect(lines[0]).toContain('MS_DEVELOPER_NAME, MS_KEYVAULT_URL, MS_TEAMS_BOT_APP_ID');
+		expect(lines[0]).toContain('MS_DEVELOPER_NAME, MS_KEYVAULT_URL, MS_TEAMS_BOT_APP_ID, MS_COPILOT_OAUTH_REFERENCE_ID');
 		expect(lines[0]).not.toContain('MS_APP_ID,');
 	});
 
@@ -149,7 +150,7 @@ describe('microsoft app package', () => {
 	});
 
 	it('resolveOwnerValues reports missing variables outside check mode only', () => {
-		expect(resolveOwnerValues({}, { check: false }).missing).toHaveLength(4);
+		expect(resolveOwnerValues({}, { check: false }).missing).toHaveLength(5);
 		expect(resolveOwnerValues({}, { check: true }).missing).toHaveLength(0);
 	});
 
@@ -235,10 +236,14 @@ describe('microsoft 365 copilot declarative agent', () => {
 		expect(text).toMatch(/declarativeAgent\.json schema: \/ must NOT have additional properties|declarativeAgent\.json schema: \/ property name must be valid/);
 	});
 
-	it('pins only real studio tools on one RemoteMCPServer runtime', () => {
+	// Making or rigging a model on the studio needs a three.ws account, so the
+	// plugin signs each Copilot user in with OAuth. The reference id comes from
+	// the OAuth client registration in the Teams Developer Portal and is filled
+	// in at build time, never committed.
+	it('pins only real studio tools on one RemoteMCPServer runtime that signs in with OAuth', () => {
 		const runtime = plugin.runtimes[0];
 		expect(runtime.type).toBe('RemoteMCPServer');
-		expect(runtime.auth).toEqual({ type: 'None' });
+		expect(runtime.auth).toEqual({ type: 'OAuthPluginVault', reference_id: '${MS_COPILOT_OAUTH_REFERENCE_ID}' });
 		expect(runtime.spec).toEqual({ url: 'https://three.ws/api/mcp-studio', mcp_tool_description: { file: 'mcptools.json' } });
 		expect(runtime.run_for_functions).toEqual(plugin.functions.map((f) => f.name));
 		for (const name of runtime.run_for_functions) expect(TOOL_NAMES.has(name)).toBe(true);
@@ -261,6 +266,21 @@ describe('microsoft 365 copilot declarative agent', () => {
 		expect(wordyText).toContain(`description_for_model is ${PLUGIN_LIMITS.descriptionForModel + 1} characters`);
 	});
 
+	it('fails an anonymous runtime, since the creation tools need an account', () => {
+		const runtime = plugin.runtimes[0];
+		const anonymous = { ...plugin, runtimes: [{ ...runtime, auth: { type: 'None' } }] };
+		expect(checkPlugin(anonymous, TOOL_NAMES, { exists: inPackage }).join('\n')).toContain('runtime auth must be OAuthPluginVault');
+	});
+
+	it('packages the plugin with the OAuth reference id filled in and refuses a malformed one', async () => {
+		const { problems, files } = await assemble(OWNER);
+		expect(problems.filter((p) => /OAUTH|ai-plugin/.test(p))).toEqual([]);
+		const packaged = JSON.parse(files['ai-plugin.json'].toString('utf8'));
+		expect(packaged.runtimes[0].auth).toEqual({ type: 'OAuthPluginVault', reference_id: OWNER.MS_COPILOT_OAUTH_REFERENCE_ID });
+		const bad = await assemble({ ...OWNER, MS_COPILOT_OAUTH_REFERENCE_ID: 'has spaces "and quotes"' });
+		expect(bad.problems.join('\n')).toContain('MS_COPILOT_OAUTH_REFERENCE_ID must be the reference id');
+	});
+
 	it('fails a runtime that points at another server or an OpenAPI runtime', () => {
 		const runtime = plugin.runtimes[0];
 		const elsewhere = { ...plugin, runtimes: [{ ...runtime, spec: { ...runtime.spec, url: 'https://example.com/mcp' } }] };
@@ -272,6 +292,19 @@ describe('microsoft 365 copilot declarative agent', () => {
 	it('has a production proof sequence for every conversation starter', () => {
 		expect(missingSequences()).toEqual([]);
 		expect(missingSequences({ conversation_starters: [{ title: 'Unproven starter' }] })).toEqual(['Unproven starter']);
+	});
+
+	// The plugin signs each Copilot user in, so the proof calls the studio as a
+	// signed-in account too: a three.ws API key stands in for the user's token.
+	// The generation starters cannot pass without one, so the proof says so
+	// before it spends minutes failing them.
+	it('the proof sends a three.ws API key and refuses generation starters without one', () => {
+		expect(proofAuth({ THREE_WS_API_KEY: ' sk_live_abc ' }, ['Product model for a deck'])).toEqual({ headers: { authorization: 'Bearer sk_live_abc' } });
+		expect(proofAuth({}, ['Find a ready-made asset', 'How auto-rigging works'])).toEqual({ headers: {} });
+		const refused = proofAuth({}, ['Find a ready-made asset', 'Rigged mascot', 'Inspect a model']);
+		expect(refused.error).toContain('THREE_WS_API_KEY');
+		expect(refused.error).toContain('Rigged mascot, Inspect a model');
+		expect(refused.error).toContain('https://three.ws/dashboard/api-keys');
 	});
 
 	it('the proof waits out the studio rate limit instead of failing a starter on it', () => {
