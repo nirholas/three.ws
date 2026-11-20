@@ -126,6 +126,17 @@ describe('gatePublish', () => {
 		expect((await reviews(id))).toHaveLength(1);
 	});
 
+	it('hands the screen every source photo the model was made from', async () => {
+		const id = await seed();
+		await holder.db.sql`update forge_creations set source_image_urls = ${JSON.stringify(['https://x.test/p.png', 'https://x.test/side.png'])}::jsonb where id = ${id}`;
+		const screen = stub(clear);
+		await store.gatePublish(id, { screen });
+		expect(screen.mock.calls[0][0]).toMatchObject({
+			previewImageUrl: 'https://x.test/p.png',
+			sourceImageUrls: ['https://x.test/p.png', 'https://x.test/side.png'],
+		});
+	});
+
 	it('forces a blocked model private, drops the request, and alerts', async () => {
 		const id = await seed({ visibility: 'public', publish_requested_at: new Date().toISOString() });
 		const out = await store.gatePublish(id, { screen: stub(blocked) });

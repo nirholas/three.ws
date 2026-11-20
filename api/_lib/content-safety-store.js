@@ -53,13 +53,13 @@ async function alertBlocked(row, result) {
 /**
  * Screen a creation and move it to the state the verdict dictates.
  * Never throws; returns { verdict: 'clear' | 'blocked' | 'undecided', ... }.
- * @param {{ id: string, prompt?: string | null, preview_image_url?: string | null }} row
+ * @param {{ id: string, prompt?: string | null, preview_image_url?: string | null, source_image_urls?: string[] | null }} row
  * @param {{ screen?: typeof screenCreation, requested?: boolean }} [opts]
  */
 export async function screenAndRecord(row, { screen = screenCreation, requested = false } = {}) {
 	let result;
 	try {
-		result = await screen({ prompt: row.prompt, previewImageUrl: row.preview_image_url });
+		result = await screen({ prompt: row.prompt, previewImageUrl: row.preview_image_url, sourceImageUrls: row.source_image_urls });
 	} catch (err) {
 		result = { verdict: 'undecided', categories: [], csam: false, reasons: [String(err?.message || err)], models: [], signals: null };
 	}
@@ -101,7 +101,7 @@ export async function gatePublish(id, { screen = screenCreation } = {}) {
 	let row;
 	try {
 		[row] = await sql`
-			select id, prompt, preview_image_url, safety_status, safety_checked_at
+			select id, prompt, preview_image_url, source_image_urls, safety_status, safety_checked_at
 			from forge_creations where id = ${id} and status = 'done'
 		`;
 	} catch (err) {

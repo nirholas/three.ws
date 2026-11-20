@@ -25,7 +25,9 @@
 //
 // Signals
 //   text   NemoGuard content safety on the prompt (publish-safety.js)
-//   image  the platform vision chain on the preview render, asked for a strict
+//   image  the platform vision chain on the preview render and on every source
+//          photo a photo-to-3D run was conditioned on (each view shapes the
+//          texture, and the preview is only the first), asked for a strict
 //          boolean rubric. A lane whose reply is not the full rubric fails that
 //          lane and the chain moves on (the `accept` hook), so a chatty model
 //          cannot produce a false "clear" by omission.
@@ -136,12 +138,13 @@ export async function screenText(text, { classify = classifyPublishSafety, confi
 /**
  * Combine the signals into one verdict. Pure, so the fail-closed rule is
  * unit-tested without a network.
- * @param {{ text: object, image: object | null }} signals image is null when the
- *        model has no preview render to judge (text decides alone).
+ * @param {{ text: object, image: object | null, sources?: object[] }} signals
+ *        image is null when the model has no preview render to judge (text
+ *        decides alone); sources are the extra source photos, one signal each.
  * @returns {{ verdict: 'clear' | 'blocked' | 'undecided', categories: string[], csam: boolean, reasons: string[] }}
  */
-export function combineSignals({ text, image }) {
-	const parts = [text, image].filter(Boolean);
+export function combineSignals({ text, image, sources = [] }) {
+	const parts = [text, image, ...sources].filter(Boolean);
 	const categories = [...new Set(parts.flatMap((p) => (p.flagged ? p.categories : [])))];
 	const csam =
 		categories.includes('sexual_minors') || categories.some((c) => /minor|child/i.test(c) && c !== 'sexual_minors');
@@ -156,16 +159,38 @@ export function combineSignals({ text, image }) {
 }
 
 /**
+ * Most images one model's screen judges: the preview plus source photos. A
+ * photo-to-3D run takes at most six views, so this covers every real run while
+ * keeping a crafted row from spending unbounded vision calls.
+ */
+export const MAX_SCREENED_IMAGES = 6;
+
+/**
  * Screen a creation for public listing.
- * @param {{ prompt?: string | null, previewImageUrl?: string | null }} creation
+ * @param {{ prompt?: string | null, previewImageUrl?: string | null, sourceImageUrls?: unknown }} creation
+ *        sourceImageUrls: every reference view the run consumed (forge_creations.source_image_urls).
  * @param {object} [deps] test seams: screenTextFn, screenImageFn
  */
-export async function screenCreation({ prompt, previewImageUrl }, deps = {}) {
+export async function screenCreation({ prompt, previewImageUrl, sourceImageUrls }, deps = {}) {
 	const textFn = deps.screenTextFn || screenText;
 	const imageFn = deps.screenImageFn || screenImage;
-	const hasImage = absolutePreviewUrl(previewImageUrl) !== null;
-	const [text, image] = await Promise.all([textFn(prompt), hasImage ? imageFn(previewImageUrl) : Promise.resolve(null)]);
-	const combined = combineSignals({ text, image });
-	const models = [text?.model, image?.model].filter(Boolean);
-	return { ...combined, models, signals: { text, image } };
+	const preview = absolutePreviewUrl(previewImageUrl);
+	// Each distinct https image once, preview first. A source entry that is not an
+	// https URL (a data: URI, plain http) cannot be fetched by the vision lane and
+	// was never served from a three.ws page, so it is not a listing signal.
+	const extra = [];
+	for (const raw of Array.isArray(sourceImageUrls) ? sourceImageUrls : []) {
+		const url = absolutePreviewUrl(raw);
+		if (!url || url === preview || extra.includes(url)) continue;
+		if (extra.length + (preview ? 1 : 0) >= MAX_SCREENED_IMAGES) break;
+		extra.push(url);
+	}
+	const [text, image, ...sources] = await Promise.all([
+		textFn(prompt),
+		preview ? imageFn(preview) : Promise.resolve(null),
+		...extra.map((url) => imageFn(url)),
+	]);
+	const combined = combineSignals({ text, image, sources });
+	const models = [...new Set([text?.model, image?.model, ...sources.map((s) => s?.model)].filter(Boolean))];
+	return { ...combined, models, signals: { text, image, ...(sources.length ? { sources } : {}) } };
 }

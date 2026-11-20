@@ -54,7 +54,7 @@ export async function sweepContentSafety({ promoteLimit = 20, backfillLimit = 10
 	const stats = { promoted: 0, blocked: 0, held: 0, cleared: 0, undecided: 0, backfilled: 0, errors: 0 };
 
 	const requested = await sql`
-		select id, prompt, preview_image_url, safety_status, publish_requested_at
+		select id, prompt, preview_image_url, source_image_urls, safety_status, publish_requested_at
 		from forge_creations
 		where publish_requested_at is not null and status = 'done'
 			and visibility is distinct from 'public'
@@ -87,7 +87,7 @@ export async function sweepContentSafety({ promoteLimit = 20, backfillLimit = 10
 	});
 
 	const unscreened = await sql`
-		select id, prompt, preview_image_url
+		select id, prompt, preview_image_url, source_image_urls
 		from forge_creations
 		where safety_status is null and status = 'done'
 			and (visibility is null or visibility = 'public')

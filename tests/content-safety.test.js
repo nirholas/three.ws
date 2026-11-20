@@ -131,6 +131,45 @@ describe('screenCreation', () => {
 		expect(out.verdict).toBe('clear');
 		expect(imageFn).not.toHaveBeenCalled();
 	});
+	// A photo-to-3D run is conditioned on up to six views, and every one of them
+	// shapes the model's texture. The preview is only the first, so listing a
+	// model publicly screens every source photo, not just the one on its page.
+	it('screens every source photo and blocks when a later view is flagged', async () => {
+		const imageFn = vi.fn(async (url) => (url.endsWith('/v3.png') ? { checked: true, flagged: true, categories: ['sexual_explicit'] } : clean));
+		const out = await cs.screenCreation(
+			{
+				prompt: 'a figurine',
+				previewImageUrl: 'https://x.test/v1.png',
+				sourceImageUrls: ['https://x.test/v1.png', 'https://x.test/v2.png', 'https://x.test/v3.png'],
+			},
+			{ screenTextFn: async () => clean, screenImageFn: imageFn },
+		);
+		expect(out.verdict).toBe('blocked');
+		expect(out.categories).toEqual(['sexual_explicit']);
+		// The preview is the first view: screened once, not twice.
+		expect(imageFn.mock.calls.map((c) => c[0])).toEqual(['https://x.test/v1.png', 'https://x.test/v2.png', 'https://x.test/v3.png']);
+	});
+	it('stays undecided while any source photo cannot be screened', async () => {
+		const out = await cs.screenCreation(
+			{ prompt: 'a figurine', previewImageUrl: 'https://x.test/v1.png', sourceImageUrls: ['https://x.test/v2.png'] },
+			{
+				screenTextFn: async () => clean,
+				screenImageFn: async (url) => (url.endsWith('/v2.png') ? { checked: false, flagged: false, categories: [], error: 'timeout' } : clean),
+			},
+		);
+		expect(out.verdict).toBe('undecided');
+	});
+	it('ignores non-https source entries and caps how many photos one model can spend', async () => {
+		const imageFn = vi.fn(async () => clean);
+		const many = Array.from({ length: 10 }, (_, i) => `https://x.test/s${i}.png`);
+		const out = await cs.screenCreation(
+			{ prompt: 'x', previewImageUrl: null, sourceImageUrls: ['data:image/png;base64,AAAA', 'http://x.test/plain.png', ...many, null] },
+			{ screenTextFn: async () => clean, screenImageFn: imageFn },
+		);
+		expect(out.verdict).toBe('clear');
+		expect(imageFn).toHaveBeenCalledTimes(cs.MAX_SCREENED_IMAGES);
+		expect(imageFn.mock.calls[0][0]).toBe('https://x.test/s0.png');
+	});
 	it('is undecided when the image lane is down, however clean the text is', async () => {
 		const out = await cs.screenCreation(
 			{ prompt: 'a lamp', previewImageUrl: 'https://x.test/a.png' },
