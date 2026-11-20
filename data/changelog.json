@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-20",
+			"title": "The three.ws plugin for Cursor gets /make-3d, /rig and /embed",
+			"summary": "The Cursor plugin now has three commands. /make-3d checks the free catalog, generates a textured model, renders it so the agent can see whether it matches, and prints the GLB, a viewer link, the run receipt and paste-ready embed code. /rig turns a humanoid GLB into an animation-ready one, and /embed writes HTML for any website. Signing in from Cursor now always asks for the same four permissions (read and update your 3D models, see your name and email, stay connected) and nothing else, even when Cursor registers without naming them. The plugin ships a five-minute test plan with measured timings, and the privacy policy now spells out what the plugin's server can reach, how long models are kept, and that prompts and models are never used for training or sold.",
+			"tags": ["feature", "fix", "docs"],
+			"link": "/docs/mcp"
+		},
+		{
+			"date": "2026-11-20",
 			"title": "Four Grok Bot task templates you can paste as they stand",
 			"summary": "The Grok page now has four ready task templates for Grok Bot: a home-office scene kit pulled from the free catalog, a weekly game-jam prop pack that only generates what the catalog is missing, a product photo turned into a 3D model and checked from two angles, and a rigged mascot avatar with a pose studio link. Each card has a one-click copy of the exact prompt, the tools it calls, what it returns and how long it took when we ran it against production, from 3 seconds for the catalog kit to about 7.5 minutes for the rigged mascot. The Grok Bot guide gains the same templates, how to share one as a Grok Bot template link, and a step-by-step test path for anyone reviewing the connector: create a free account, then three asks that finished in under a second, about three minutes and about fifteen seconds.",
 			"tags": ["feature", "docs"],
