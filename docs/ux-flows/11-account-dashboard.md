@@ -205,6 +205,6 @@ Shared auth concepts:
 
 ## Notes on routing edge cases
 
-- **No login/register modal:** auth is full-page (`/login`, `/register`). Other surfaces trigger it by redirect (`requireAuth()` in `src/auth/email-auth.js`, `requireUser()` in `src/dashboard-next/api.js`), preserving the origin via `?return=`/`?next=`. The dashboard chrome itself is gated, not the marketing pages.
+- **No login/register modal:** auth is full-page (`/login`, `/register`). Other surfaces trigger it by redirect (`requireUser()` in `src/dashboard-next/api.js`), preserving the origin via `?return=`/`?next=`. The dashboard chrome itself is gated, not the marketing pages.
 - **Two settings surfaces, intentionally separate:** `/settings` = identity/security/connections/danger (profile hub); `/dashboard/settings` = app/dashboard preferences (theme, sessions, notifications, network, storage/LLM meters, export). They share only the concept of "sessions" (each with its own UI and revoke calls).
 - **Heavy 301 consolidation:** `/dashboard-classic/*` and many legacy `/dashboard/*` slugs (wallets, sessions, actions, memory, strategy, voice, sns, delegation, storage, usage, agent-pumpfun) redirect to the canonical `/dashboard/*` pages in `vercel.json`. `/dashboard/x402` is not one of them: it is its own page, served from `public/dashboard/x402.html`. The Vite dev middleware mirrors only the `/dashboard-classic/*` family; the bare legacy slugs 301 in prod but have no dev equivalent.

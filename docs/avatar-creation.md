@@ -185,7 +185,9 @@ Gesture clips are triggered by name. The system does a case-insensitive partial 
 
 After saving an avatar you can trigger a regeneration — a new pass over the mesh, textures, rig, or appearance — without starting from scratch.
 
-Open the editor for your avatar and click the **Regenerate** button. The regeneration panel ([src/editor/regenerate-panel.js](../src/editor/regenerate-panel.js)) offers four modes:
+> **Status:** the regeneration panel ([src/editor/regenerate-panel.js](../src/editor/regenerate-panel.js)) is built, but no editor surface mounts it yet, so there is no Regenerate button to click today. This section describes the panel for the surface that wires it.
+
+The panel offers four modes:
 
 | Mode | What it does |
 |------|-------------|
@@ -229,7 +231,9 @@ The accessory library is served from `/accessories/presets.json`.
 
 After the avatar is created, set the agent's name. The name appears on the identity card, embed headers, and Open Graph metadata when the agent is shared.
 
-The naming UI ([src/agent-naming.js](../src/agent-naming.js)) validates your input as you type:
+> **Status:** the naming UI ([src/agent-naming.js](../src/agent-naming.js)) and its availability endpoint (`/api/agents/check-name`) are built, but no creation flow mounts the UI yet. The rules below are what it enforces once wired.
+
+The naming UI validates your input as you type:
 
 - **3–32 characters**
 - Letters, numbers, underscores (`_`), and hyphens (`-`) only

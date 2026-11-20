@@ -69,7 +69,7 @@ const txHash = await submitReputation({
 
 ### Reputation panel (embedded UI)
 
-The `ReputationPanel` class ([src/erc8004/reputation-panel.js](../src/erc8004/reputation-panel.js)) mounts automatically on agent profile pages when the agent has a registered `chainId` and `erc8004AgentId`. It shows:
+The `ReputationPanel` class ([src/erc8004/reputation-panel.js](../src/erc8004/reputation-panel.js)) is a self-contained embeddable panel for an agent with a registered `chainId` and `erc8004AgentId`. No page mounts it today: agent profiles show reputation in the Agent Wallet hub's Reputation tab ([src/agent-wallet-hub/tabs/reputation.js](../src/agent-wallet-hub/tabs/reputation.js)) and /reputation is the standalone explorer. When mounted, it shows:
 
 - Average score (formatted as `X.X / 5` or `X / 100` depending on scale)
 - Total vouch count

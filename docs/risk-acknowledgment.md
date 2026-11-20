@@ -251,7 +251,7 @@ keeps the sign-in clickwrap record in step with the Terms version.
 | Master wallet: deposit, send, fund agent | `src/master-wallet.js` | `deposit`, `master-send`, `fund-agent` |
 | Oracle arm (live mode only) | `src/arm.js` | `oracle-arm` |
 | Strategy panel: equip or run a strategy with a real-funds leg | `src/shared/agent-strategy-panel.js` | `strategy` |
-| Prediction markets | `src/shared/predictions-core.js` | `prediction` |
+| Prediction markets (module built, not yet mounted by any page) | `src/shared/predictions-core.js` | `prediction` |
 | Jupiter swap modal | `src/swap-jupiter.js` | `swap` |
 | pump.fun token launch | `src/pump/launch-token-modal.js` | `launch` |
 | The `/launch` launchpad: launch a coin, claim creator rewards | `src/launch/launch-page.js` | `launch`, `claim` |
