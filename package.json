@@ -881,7 +881,7 @@
 		"trading-signals": "^8.4.0",
 		"twitter-api-v2": "^1.31.0",
 		"undici": "^8.12.4",
-		"unpdf": "^2.1.0",
+		"unpdf": "^2.2.1",
 		"uuid": "^14.0.2",
 		"vhtml": "^2.2.0",
 		"viem": "2.57.20",
