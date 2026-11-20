@@ -183,6 +183,8 @@ export async function runSessionCheck({ plugin = DEFAULT_PLUGIN, prompt = DEFAUL
 			const glb = glbOf(payload);
 			facts.glbUrl = glb;
 			facts.viewerUrl = viewerOf(payload);
+			facts.receiptUrl = payload?.receipt?.url || null;
+			facts.receiptOutcome = payload?.receipt?.outcome || null;
 			facts.generationPolls = polls;
 			return {
 				pass: !res.isError && /^https:\/\/.+/.test(glb || ''),
