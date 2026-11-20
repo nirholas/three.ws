@@ -1,0 +1,28 @@
+---
+description: Before generating a 3D model, prop, character or animation with three.ws, search the free three.ws CC0 catalog first and reuse a match.
+alwaysApply: false
+globs:
+  - "**/*.glb"
+  - "**/*.gltf"
+---
+
+# Search the catalog before generating
+
+When the user needs a 3D asset (a prop, an object, a humanoid character, or a
+motion clip) and the three.ws MCP server is connected:
+
+1. Call `search_catalog` first with a short noun phrase (`q: "wooden chair"`), and
+   `kind: "object"`, `"character"` or `"animation"` when the request makes it clear.
+   Ask for `limit: 5`.
+2. If a result fits, call `get_catalog_item` (or `get_item_source` for the file and
+   paste-ready embed code) and use it. Catalog assets are CC0, ready immediately, and
+   cost nothing, so a good match beats a new generation.
+3. Generate only when nothing in the catalog fits, or the user asked for something
+   custom: `forge_free` for an object, `forge_avatar` for a rigged character,
+   `rig_mesh` to rig a GLB they already have.
+
+Tell the user which path you took: "found a CC0 chair in the catalog" or "nothing in
+the catalog matched, so I generated one".
+
+Do not paste a catalog or generated asset into the project as a local copy unless the
+user asked for a file; reference the GLB URL the tool returned.

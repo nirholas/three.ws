@@ -1,0 +1,24 @@
+---
+description: After generating, refining or rigging a 3D model with three.ws, render it with look_at_model and check it before telling the user it is done.
+alwaysApply: false
+---
+
+# Look at the model before you hand it over
+
+A generation that returned a GLB URL has not necessarily produced the right model.
+After `forge_free`, `mesh_forge`, `text_to_avatar`, `forge_avatar`, `refine_model` or
+`rig_mesh` returns a model:
+
+1. Call `look_at_model` with the returned `glb_url`. It renders the model from several
+   angles and returns the frames as images you can see.
+2. Compare the frames with what the user asked for: the right object, the right
+   colors and materials, nothing missing or fused, a humanoid standing upright when a
+   rigged character was requested.
+3. If it is wrong, say what is wrong and fix it with `refine_model` ("make the handle
+   longer", "brass, not silver"), then look again. Do not claim a model matches the
+   request without having rendered it.
+4. Hand over the GLB URL and the viewer link together with one sentence on what the
+   render shows.
+
+If a generation answered `pending`, collect it with `check_job` (or `get_job`) first;
+only a finished job has a GLB to look at.
