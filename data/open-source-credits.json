@@ -693,7 +693,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/Ellipsis-Labs/rise-public",
 			"funding": null,
-			"version": "0.7.9",
+			"version": "0.8.2",
 			"powers": null
 		},
 		{
@@ -804,17 +804,6 @@
 			"repo": "https://github.com/jup-ag/jupiter-quote-api-node",
 			"funding": null,
 			"version": "6.0.48",
-			"powers": null
-		},
-		{
-			"id": "npm:@kamino-finance/farms-sdk",
-			"kind": "npm",
-			"name": "@kamino-finance/farms-sdk",
-			"area": "infrastructure",
-			"license": "Apache-2.0",
-			"repo": "https://github.com/Kamino-Finance/farms-sdk",
-			"funding": null,
-			"version": "5.0.0",
 			"powers": null
 		},
 		{
@@ -1078,7 +1067,7 @@
 			"license": "Apache-2.0",
 			"repo": null,
 			"funding": null,
-			"version": "0.79.4",
+			"version": "0.79.5",
 			"powers": null
 		},
 		{
@@ -1302,17 +1291,6 @@
 			"powers": null
 		},
 		{
-			"id": "npm:@solana/wallet-standard-features",
-			"kind": "npm",
-			"name": "@solana/wallet-standard-features",
-			"area": "infrastructure",
-			"license": "Apache-2.0",
-			"repo": "https://github.com/anza-xyz/wallet-standard",
-			"funding": null,
-			"version": "1.5.0",
-			"powers": null
-		},
-		{
 			"id": "npm:@solana/web3.js",
 			"kind": "npm",
 			"name": "@solana/web3.js",
@@ -1452,7 +1430,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/x402-foundation/x402",
 			"funding": null,
-			"version": "2.30.0",
+			"version": "2.31.0",
 			"powers": null
 		},
 		{
@@ -1951,17 +1929,6 @@
 			"powers": null
 		},
 		{
-			"id": "npm:idb-keyval",
-			"kind": "npm",
-			"name": "idb-keyval",
-			"area": "infrastructure",
-			"license": "Apache-2.0",
-			"repo": "https://github.com/jakearchibald/idb-keyval",
-			"funding": null,
-			"version": "6.3.0",
-			"powers": "Lightweight IndexedDB storage for client-side caches."
-		},
-		{
 			"id": "npm:imapflow",
 			"kind": "npm",
 			"name": "imapflow",
@@ -1969,7 +1936,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/postalsys/imapflow",
 			"funding": null,
-			"version": "2.11.0",
+			"version": "2.12.1",
 			"powers": null
 		},
 		{
@@ -2244,7 +2211,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/microsoft/playwright",
 			"funding": null,
-			"version": "1.65.0",
+			"version": "1.65.1",
 			"powers": null
 		},
 		{
@@ -2277,7 +2244,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/puppeteer/puppeteer/tree/main/packages/puppeteer",
 			"funding": null,
-			"version": "25.16.0",
+			"version": "25.17.0",
 			"powers": null
 		},
 		{
@@ -2300,17 +2267,6 @@
 			"repo": "https://github.com/soldair/node-qrcode",
 			"funding": null,
 			"version": "1.5.4",
-			"powers": null
-		},
-		{
-			"id": "npm:qwen-ai-provider",
-			"kind": "npm",
-			"name": "qwen-ai-provider",
-			"area": "infrastructure",
-			"license": "Apache-2.0",
-			"repo": "https://github.com/Younis-Ahmed/qwen-ai-provider",
-			"funding": null,
-			"version": "1.0.0",
 			"powers": null
 		},
 		{
@@ -2355,17 +2311,6 @@
 			"repo": "https://github.com/squirrelchat/smol-toml",
 			"funding": "https://github.com/sponsors/cyyynthia",
 			"version": "1.9.1",
-			"powers": null
-		},
-		{
-			"id": "npm:ssh2",
-			"kind": "npm",
-			"name": "ssh2",
-			"area": "infrastructure",
-			"license": "MIT",
-			"repo": "http://github.com/mscdex/ssh2",
-			"funding": null,
-			"version": "1.17.0",
 			"powers": null
 		},
 		{
@@ -2453,7 +2398,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/unjs/unpdf",
 			"funding": null,
-			"version": "2.1.0",
+			"version": "2.2.1",
 			"powers": null
 		},
 		{
@@ -2486,7 +2431,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/wevm/viem",
 			"funding": "https://github.com/sponsors/wevm",
-			"version": "2.57.20",
+			"version": "2.58.0",
 			"powers": "Typed EVM client used alongside ethers for EVM-chain integrations."
 		},
 		{
