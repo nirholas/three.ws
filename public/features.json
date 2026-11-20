@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-20T20:57:02.618Z",
+	"generated_at": "2026-11-20T22:13:48.352Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2062,6 +2062,18 @@
 					"showcase": false,
 					"priority": 0.6,
 					"job": "account"
+				},
+				{
+					"path": "/voice/grok",
+					"title": "Talk to a 3D avatar with Grok voice",
+					"description": "Speech to speech with a lip-synced 3D avatar: pick an avatar, hold to talk or leave the mic open, and watch the measured reply and mouth latency for every turn.",
+					"added": "2026-11-20",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.7,
+					"job": "embed"
 				},
 				{
 					"path": "/voice/home",

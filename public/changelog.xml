@@ -23,6 +23,14 @@
 			<description>The account requirement for making or uploading a 3D model now reaches every place that can do it, and everything that described it is accurate. The Material Studio restyle and colorway tools, GLB uploads in /play, the PowerPoint add-in and Pipeline Studio ask you to sign in, and Microsoft Teams generates on behalf of the signed-in user. The SDKs and plugins (create-agent, the AI SDK and LangChain tools, Google ADK, Dify, n8n, Raycast, Semantic Kernel for Python and .NET, the MCP server package, the 3D AR Studio and its MCP server) send your API key, and Hermes, Cursor, Grok Build, Copilot and ChatGPT sign in with OAuth. A missing or refused key gets a clear message linking to the API keys page instead of a bare error. The cookbook, the docs, the agent card and the partner pages stop promising text to 3D with no account. Browsing, inspecting and viewing models still need none.</description>
 		</item>
 		<item>
+			<title>Four Grok Bot task templates you can paste as they stand</title>
+			<link>https://three.ws/grok</link>
+			<guid isPermaLink="false">2026-11-20:Four Grok Bot task templates you can paste as they stand</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Grok page now has four ready task templates for Grok Bot: a home-office scene kit pulled from the free catalog, a weekly game-jam prop pack that only generates what the catalog is missing, a product photo turned into a 3D model and checked from two angles, and a rigged mascot avatar with a pose studio link. Each card has a one-click copy of the exact prompt, the tools it calls, what it returns and how long it took when we ran it against production, from 3 seconds for the catalog kit to about 7.5 minutes for the rigged mascot. The Grok Bot guide gains the same templates, how to share one as a Grok Bot template link, and a step-by-step test path for anyone reviewing the connector: create a free account, then three asks that finished in under a second, about three minutes and about fifteen seconds.</description>
+		</item>
+		<item>
 			<title>Free text to 3D tells the truth about its lane and its wait</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-20:Free text to 3D tells the truth about its lane and its wait</guid>

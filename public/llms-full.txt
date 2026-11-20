@@ -1029,6 +1029,12 @@ URL: https://three.ws/threews/claim
 
 Claim your own <name>.threews.sol subdomain and get a Brave-resolvable personal showcase page.
 
+### Talk to a 3D avatar with Grok voice
+
+URL: https://three.ws/voice/grok
+
+Speech to speech with a lip-synced 3D avatar: pick an avatar, hold to talk or leave the mic open, and watch the measured reply and mouth latency for every turn.
+
 ### Hands-free voice for your home
 
 URL: https://three.ws/voice/home

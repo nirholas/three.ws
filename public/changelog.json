@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-20T22:02:57.739Z",
+	"generated_at": "2026-11-20T22:13:48.418Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -25,6 +25,17 @@
 			"tags": [
 				"security",
 				"sdk",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "Four Grok Bot task templates you can paste as they stand",
+			"summary": "The Grok page now has four ready task templates for Grok Bot: a home-office scene kit pulled from the free catalog, a weekly game-jam prop pack that only generates what the catalog is missing, a product photo turned into a 3D model and checked from two angles, and a rigged mascot avatar with a pose studio link. Each card has a one-click copy of the exact prompt, the tools it calls, what it returns and how long it took when we ran it against production, from 3 seconds for the catalog kit to about 7.5 minutes for the rigged mascot. The Grok Bot guide gains the same templates, how to share one as a Grok Bot template link, and a step-by-step test path for anyone reviewing the connector: create a free account, then three asks that finished in under a second, about three minutes and about fifteen seconds.",
+			"link": "/grok",
+			"tags": [
+				"feature",
 				"docs"
 			]
 		},

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-20T22:02:57.944Z",
+	"generated_at": "2026-11-20T22:13:48.545Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4668,
+	"total": 4669,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -28,6 +28,17 @@
 			"tags": [
 				"security",
 				"sdk",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "Four Grok Bot task templates you can paste as they stand",
+			"summary": "The Grok page now has four ready task templates for Grok Bot: a home-office scene kit pulled from the free catalog, a weekly game-jam prop pack that only generates what the catalog is missing, a product photo turned into a 3D model and checked from two angles, and a rigged mascot avatar with a pose studio link. Each card has a one-click copy of the exact prompt, the tools it calls, what it returns and how long it took when we ran it against production, from 3 seconds for the catalog kit to about 7.5 minutes for the rigged mascot. The Grok Bot guide gains the same templates, how to share one as a Grok Bot template link, and a step-by-step test path for anyone reviewing the connector: create a free account, then three asks that finished in under a second, about three minutes and about fifteen seconds.",
+			"link": "/grok",
+			"tags": [
+				"feature",
 				"docs"
 			]
 		},
@@ -1543,16 +1554,6 @@
 			"title": "Docs · Trust center",
 			"summary": "How the three.ws trust center, subprocessor list and security.txt are sourced from the code, and the rules for keeping every claim cited.",
 			"link": "/docs/trust",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "launch",
-			"title": "Docs: Minecraft: Bedrock export",
-			"summary": "Turn any Forge model into blocks and download a Bedrock structure pack: height, block palettes, solid or hollow, texture-sampled colors, loading it with a structure block or /function, limits, the API and the CLI. Not an official Minecraft product.",
-			"link": "/docs/minecraft-export",
 			"tags": [
 				"launch"
 			]
