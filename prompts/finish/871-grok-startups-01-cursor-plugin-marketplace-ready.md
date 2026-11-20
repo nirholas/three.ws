@@ -1,5 +1,7 @@
 # grok-startups 01: make the Cursor plugin pass Cursor Marketplace review on the first try
 
+Status 2026-11-20: built and committed (f4888fd24 to 4e496d293). Validator 0 errors, 0 warnings; live tool surface 16 tools, none can move money. Owner steps remain: push, deploy, create the public plugin repo, then submit (order 929 rows 1 and 2, then order 873).
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `grok-startups-` order, so it can run in parallel with all of them. Dev port: 3271.
 
 ## Operating clause (binding)
