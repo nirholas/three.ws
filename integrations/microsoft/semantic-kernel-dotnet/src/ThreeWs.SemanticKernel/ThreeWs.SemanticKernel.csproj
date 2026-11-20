@@ -9,7 +9,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 
     <PackageId>ThreeWs.SemanticKernel</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>three.ws</Authors>
     <Company>three.ws</Company>
     <Description>three.ws plugin for Microsoft Semantic Kernel and Microsoft Agent Framework: free text-to-3D generation, a catalog of ready-made 3D assets, three.ws agent messaging, and a one-line attach for the three.ws MCP server.</Description>

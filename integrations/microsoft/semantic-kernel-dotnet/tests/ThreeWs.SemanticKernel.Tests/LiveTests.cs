@@ -5,12 +5,14 @@ using Xunit;
 namespace ThreeWs.SemanticKernel.Tests;
 
 // Every call goes to the real three.ws API; nothing is mocked. Set
-// THREE_WS_BASE_URL to test another deployment. The generation test runs a real
+// THREE_WS_BASE_URL to test another deployment, and THREE_WS_API_KEY to run the
+// generation test (making a model needs an account). The generation test runs a real
 // GPU job (a few minutes); filter it out with --filter "Category!=Slow".
 public sealed class LiveTests : IDisposable
 {
     private static readonly string Base = (Environment.GetEnvironmentVariable("THREE_WS_BASE_URL") ?? ThreeWsClient.DefaultBaseUrl).TrimEnd('/');
-    private readonly ThreeWsClient _client = new(Base);
+    private static readonly string? Key = Environment.GetEnvironmentVariable("THREE_WS_API_KEY") is { Length: > 0 } k ? k : null;
+    private readonly ThreeWsClient _client = new(Base, Key);
     private readonly Kernel _kernel;
 
     public LiveTests()
@@ -77,6 +79,7 @@ public sealed class LiveTests : IDisposable
     [Fact]
     public async Task ListMyAgentsWithoutKeyExplainsHowToGetOne()
     {
+        if (Key is not null) return; // checks the keyless answer
         var output = await Invoke("list_my_agents");
         Assert.False(output.GetProperty("ok").GetBoolean());
         Assert.Equal("needs_key", output.GetProperty("code").GetString());
@@ -138,6 +141,7 @@ public sealed class LiveTests : IDisposable
     [Trait("Category", "Slow")]
     public async Task GenerateModelEndToEnd()
     {
+        if (Key is null) return; // making a model needs an account
         var output = await Invoke("generate_3d_model", new() { ["prompt"] = "a carved wooden ship's wheel", ["tier"] = "draft" });
         Assert.True(output.GetProperty("ok").GetBoolean(), output.ToString());
         if (output.GetProperty("status").GetString() != "done")

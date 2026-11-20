@@ -87,12 +87,14 @@ public sealed class ThreeWsClient : IDisposable
     public static bool IsRetryableJobError(string? message) =>
         message is not null && RetryableJobErrors.Any(t => message.Contains(t, StringComparison.OrdinalIgnoreCase));
 
+    private const string KeyHint = "Set THREE_WS_API_KEY (or pass apiKey) with a key from https://three.ws/dashboard/api-keys; a free account is enough.";
+
     private readonly HttpClient _http;
     private readonly bool _ownsHttp;
 
     /// <summary>Creates a client.</summary>
     /// <param name="baseUrl">The three.ws origin; override for a self-hosted deployment.</param>
-    /// <param name="apiKey">A three.ws API key (<c>sk_live_...</c>). Only <see cref="ListMyAgentsAsync"/> needs one.</param>
+    /// <param name="apiKey">A three.ws API key (<c>sk_live_...</c>). Making a model (<see cref="SubmitGenerationAsync"/>) and <see cref="ListMyAgentsAsync"/> need one, because making a model needs a free three.ws account.</param>
     /// <param name="httpClient">Bring your own HttpClient; it is not disposed by this client.</param>
     public ThreeWsClient(string? baseUrl = null, string? apiKey = null, HttpClient? httpClient = null)
     {
@@ -103,7 +105,7 @@ public sealed class ThreeWsClient : IDisposable
         _http = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(150) };
         if (_ownsHttp)
         {
-            _http.DefaultRequestHeaders.UserAgent.ParseAdd("ThreeWs.SemanticKernel/0.1 (+https://three.ws)");
+            _http.DefaultRequestHeaders.UserAgent.ParseAdd("ThreeWs.SemanticKernel/0.2 (+https://three.ws)");
         }
     }
 
@@ -117,21 +119,25 @@ public sealed class ThreeWsClient : IDisposable
     /// <summary>The configured API key, if any.</summary>
     public string? ApiKey { get; }
 
-    /// <summary>The anonymous handle Forge scopes this client's creations to.</summary>
+    /// <summary>The handle Forge groups this client's jobs under.</summary>
     public string ClientHandle { get; }
 
-    /// <summary>The free 3D Studio MCP endpoint.</summary>
+    /// <summary>The 3D Studio MCP endpoint (making or rigging a model there needs an account).</summary>
     public Uri StudioMcpUri => new($"{BaseUrl}{StudioMcpPath}");
 
     /// <summary>The three.ws browser viewer link for a public GLB URL.</summary>
     public string ViewerUrl(string glbUrl) => $"{BaseUrl}/viewer?src={Uri.EscapeDataString(glbUrl)}";
 
-    /// <summary>Starts a free text-to-3D job. A recently generated prompt can come back done at once.</summary>
+    /// <summary>
+    /// Starts a free text-to-3D job. Needs <see cref="ApiKey"/>: making a model needs a three.ws account.
+    /// A recently generated prompt can come back done at once.
+    /// </summary>
     public async Task<ForgeJob> SubmitGenerationAsync(string prompt, string tier = "standard", CancellationToken ct = default)
     {
         prompt = (prompt ?? string.Empty).Trim();
         if (prompt.Length < 3) throw new ThreeWsException("describe the model in at least 3 characters", "validation_error");
         if (!Tiers.Contains(tier)) throw new ThreeWsException($"tier must be one of {string.Join(", ", Tiers)}", "validation_error");
+        if (ApiKey is null) throw new ThreeWsException($"three.ws Forge generation needs an API key. {KeyHint}", "needs_key");
 
         var waitedForRateLimit = false;
         for (var attempt = 0; ; attempt++)
@@ -141,6 +147,7 @@ public sealed class ThreeWsClient : IDisposable
                 Content = JsonContent.Create(new { prompt, tier }),
             };
             req.Headers.Add("x-forge-client", ClientHandle);
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey);
             using var res = await SendAsync(req, "Forge", ct).ConfigureAwait(false);
             if (Transient.Contains(res.StatusCode) && attempt < 2)
             {
@@ -269,7 +276,7 @@ public sealed class ThreeWsClient : IDisposable
     {
         if (ApiKey is null)
         {
-            throw new ThreeWsException("listing your agents needs a three.ws API key: set THREE_WS_API_KEY (create one at https://three.ws/dashboard/api)", "needs_key");
+            throw new ThreeWsException($"listing your agents needs a three.ws API key. {KeyHint}", "needs_key");
         }
         using var req = new HttpRequestMessage(HttpMethod.Get, $"{BaseUrl}/api/agents");
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey);
@@ -388,7 +395,7 @@ public sealed class ThreeWsClient : IDisposable
         if (status == 401)
         {
             code = "needs_key";
-            if (detail.Length == 0) detail = "this call needs a three.ws API key (create one at https://three.ws/dashboard/api)";
+            detail = $"{(detail.Length == 0 ? "this call needs a three.ws account" : detail.TrimEnd('.'))}. {KeyHint}";
         }
         else if (status == 429)
         {

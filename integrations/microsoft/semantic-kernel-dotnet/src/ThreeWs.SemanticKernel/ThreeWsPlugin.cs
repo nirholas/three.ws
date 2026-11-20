@@ -56,7 +56,7 @@ public sealed class ThreeWsPlugin
 
     /// <summary>Generates a GLB from text and returns its URLs, or a job id when it is still running.</summary>
     [KernelFunction("generate_3d_model")]
-    [Description("Generate a textured, downloadable 3D model (GLB) from a text description of one object, character or creature. Free. Waits for the model and returns glb_url and viewer_url; if it is still running, returns a job_id to pass to get_3d_job_status.")]
+    [Description("Generate a textured, downloadable 3D model (GLB) from a text description of one object, character or creature. Free, needs a three.ws API key (a free account). Waits for the model and returns glb_url and viewer_url; if it is still running, returns a job_id to pass to get_3d_job_status.")]
     public async Task<string> GenerateModelAsync(
         [Description("Description of the single object to model, e.g. 'a weathered bronze lantern'.")] string prompt,
         [Description("Detail level: draft (fastest), standard (default) or high (slowest, best).")] string tier = "standard",

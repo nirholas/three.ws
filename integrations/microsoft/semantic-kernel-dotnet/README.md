@@ -22,12 +22,16 @@ official `ModelContextProtocol` 2.4 SDK.
 
 ## Auth
 
-Generation, asset search, the public agent directory and messaging work with no
-account and no key. Only `list_my_agents` needs a key.
+Making a 3D model needs a free three.ws account, so every model has an owner who
+can publish or delete it (new models are unlisted until you publish them). Create
+an API key at [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys)
+and set `THREE_WS_API_KEY`. Asset search, job status, the public agent directory
+and messaging work without one. Without a key, `generate_3d_model` answers
+`{"ok": false, "code": "needs_key"}` with that link before any request is sent.
 
 | Variable | Needed for | Default |
 |---|---|---|
-| `THREE_WS_API_KEY` | `list_my_agents` (create one at [three.ws/dashboard/api](https://three.ws/dashboard/api)) | unset |
+| `THREE_WS_API_KEY` | `generate_3d_model`, `list_my_agents` and the MCP Studio tools that make or rig a model | unset |
 | `THREE_WS_BASE_URL` | pointing at another deployment | `https://three.ws` |
 
 `ThreeWsClient.FromEnvironment()` reads both. You can also pass them to
@@ -37,7 +41,7 @@ account and no key. Only `list_my_agents` needs a key.
 
 | Function | What it does | Key |
 |---|---|---|
-| `generate_3d_model(prompt, tier = "standard")` | Text to a textured GLB. Waits up to 4 minutes (configurable) and retries once on a transient GPU failure; if the model is still cooking it returns the `job_id`. Tiers: `draft`, `standard`, `high`. | no |
+| `generate_3d_model(prompt, tier = "standard")` | Text to a textured GLB. Waits up to 4 minutes (configurable) and retries once on a transient GPU failure; if the model is still cooking it returns the `job_id`. Tiers: `draft`, `standard`, `high`. | yes |
 | `get_3d_job_status(job_id)` | Status of a generation, with `glb_url` and `viewer_url` once done. | no |
 | `find_3d_asset(query, kind = "", limit = 5)` | Search thousands of ready-made CC0 props (`object`), rigged characters (`character`) and motion clips (`animation`). | no |
 | `list_my_agents()` | The agents on your account, with their public pages. | yes |
@@ -101,6 +105,9 @@ await using var studio = await kernel.AddThreeWsStudioMcpAsync();   // plugin "t
 It connects to `https://three.ws/api/mcp-studio` over Streamable HTTP and adds
 all 16 studio tools (generation, rigging, avatars, model inspection, docs search)
 as one plugin. Keep the returned client alive while the kernel uses the tools.
+It sends `THREE_WS_API_KEY` (or the `apiKey:` argument) as a bearer, which
+`forge_free`, `mesh_forge`, `forge_avatar` and `rig_mesh` need; without a key
+they answer `sign_in_required` and the catalog and docs tools still work.
 
 ## Use the client directly
 
@@ -112,14 +119,16 @@ Console.WriteLine($"{job.GlbUrl}\n{job.ViewerUrl}");
 
 ## Tests
 
-The xUnit tests call the real three.ws API; nothing is mocked.
+`LiveTests` call the real three.ws API; nothing is mocked. `AccountTests` check
+the key the client puts on the wire, offline.
 
 ```bash
 dotnet test tests/ThreeWs.SemanticKernel.Tests --filter "Category!=Slow"   # about 1 minute
 dotnet test tests/ThreeWs.SemanticKernel.Tests                             # adds one real GPU generation
 ```
 
-Set `THREE_WS_API_KEY` to also run the signed-in `list_my_agents` test.
+Set `THREE_WS_API_KEY` to also run the generation and `list_my_agents` tests;
+making a model needs an account, so they return early without one.
 
 ## Publish (maintainers)
 
