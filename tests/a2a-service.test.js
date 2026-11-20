@@ -202,7 +202,7 @@ describe('A2A service: 1.0 dialect', () => {
 			startForge.mockClear();
 			const res = await rpc('SendMessage', { message: v1Msg([{ text: 'Generate a 3D model of a brass lantern' }]) }, headers);
 			expect(res.json.result.task.status.state).toBe('TASK_STATE_WORKING');
-			expect(startForge.mock.calls[0][2].auth).toEqual({ authorization: `Bearer ${TEST_KEY}` });
+			expect(startForge.mock.calls[0][1].auth).toEqual({ authorization: `Bearer ${TEST_KEY}` });
 		}
 	});
 

@@ -445,9 +445,9 @@ async function runGenerate({ message, auth, creatorAuth, ip, base }) {
 		job = await startForge(
 			base,
 			knownMark?.imagePath
-				? { prompt: subject, imageUrls: [`${base}${knownMark.imagePath}`], tier }
-				: { prompt: subject, path: 'image', tier, ...(tier === 'high' ? { internal: true } : {}) },
-			{ deadline: Date.now() + FORGE_SUBMIT_BUDGET_MS, auth: creatorAuth },
+				? { prompt: subject, imageUrls: [`${base}${knownMark.imagePath}`], tier, auth: creatorAuth }
+				: { prompt: subject, path: 'image', tier, auth: creatorAuth, ...(tier === 'high' ? { internal: true } : {}) },
+			{ deadline: Date.now() + FORGE_SUBMIT_BUDGET_MS },
 		);
 	} catch (err) {
 		return { state: 'failed', text: laneFailureText(err) };
