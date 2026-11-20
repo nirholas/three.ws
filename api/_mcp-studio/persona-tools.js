@@ -279,7 +279,8 @@ const DEFS = [
 			'inline: it idles between turns, and persona_say makes it lip-sync and emote a reply. The persona_id is ' +
 			'the handle: keep it and pass it to get_agent_persona or persona_say later to bring the exact same body ' +
 			'back. Use this once a rigged model should become a recurring character the assistant speaks through. ' +
-			'No sign-in required.',
+			'Saving a persona needs a free three.ws account (OAuth sign-in or an API key as the bearer); ' +
+			'get_agent_persona and persona_say work without one.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,

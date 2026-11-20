@@ -68,8 +68,8 @@ function failure(code, message, extra = {}) {
 // The studio surfaces run server→server against the deployment's own /api/forge,
 // so they may carry the internal seed token (the same one forge-seed-cron uses).
 // Forge accepts it as proof the call is platform-originated, which clears the
-// High-tier access gate — the ChatGPT user stays anonymous and keyless while the
-// platform funds the premium tier. Absent secret → no header, and the tier
+// High-tier access gate, so the platform funds the premium tier for the
+// signed-in user without asking them for a key of their own. Absent secret → no header, and the tier
 // fallback in startForge keeps the surface working.
 function internalHeaders({ onBehalf = false } = {}) {
 	const secret = process.env.CRON_SECRET;

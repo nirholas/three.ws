@@ -1,9 +1,15 @@
-// Install tokens: a free, anonymous identity for keyless studio callers.
+// Install tokens: a free, anonymous identity for studio callers with no account.
+//
+// Making a model needs a three.ws account (./dispatch.js CREATOR_TOOL_NAMES),
+// and the generation caps key on that account ahead of any token
+// (./handler.js studioCaller). A token still separates one installation's
+// account-free calls (job checks, the catalog, the docs) from everyone else on
+// its vendor's egress IP.
 //
 // A cloud agent (Grok Bot, the xAI Responses API, any hosted MCP client) reaches
-// the free studio from its vendor's shared egress, so keying the per-caller
-// generation caps on its IP rations every user of that agent as one caller. An
-// install token gives one installation its own budget without an account:
+// the free studio from its vendor's shared egress, so keying per-caller limits
+// on its IP would ration every user of that agent as one caller. An install
+// token gives one installation its own key without an account:
 // POST /api/mcp-studio/install mints one, and the connector URL carries it as
 // `?install=<token>` on any studio surface (./handler.js reads it).
 //
