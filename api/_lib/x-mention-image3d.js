@@ -33,6 +33,7 @@ import { withClaimNote } from './x-creation-claim.js';
 import { attributeCreation, creationLink, shortenPrompt, makeBudgetMs, makeGiveUpMs } from './x-mention-make.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
 import { startForge, pollJob, pollOnce } from '../_mcp-studio/gpt-forge-client.js';
+import { platformAuthHeaders } from './creator-account.js';
 import { posterPngUrl } from '../_mcp-studio/asset-links.js';
 
 const SUBJECT_MAX = 30;
@@ -233,7 +234,7 @@ export async function handleImage3d(event, deps = {}) {
 	let job;
 	try {
 		const imageUrl = await (deps.persist || persistImageBytes)(image.bytes);
-		job = await (deps.startForge || startForge)(base, { imageUrls: [imageUrl], aspect: '1:1', tier: 'standard', internal: true, director: false });
+		job = await (deps.startForge || startForge)(base, { imageUrls: [imageUrl], aspect: '1:1', tier: 'standard', internal: true, director: false, auth: platformAuthHeaders({ onBehalf: true }) });
 	} catch (err) {
 		return fail(`image3d_failed:${err?.code || 'submit'}`, err?.message, subject);
 	}

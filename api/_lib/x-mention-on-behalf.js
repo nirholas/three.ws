@@ -23,6 +23,7 @@ import { lookupPostAuthor } from './x-mentions.js';
 import { MIN_AUTHOR_AGE_SECONDS, CONVERSATION_MAX_REPLIES, loadBlocklist, ownIdentities } from './x-mention-guard.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
 import { startForge, pollJob, viewerUrl } from '../_mcp-studio/gpt-forge-client.js';
+import { platformAuthHeaders } from './creator-account.js';
 
 export const CONNECTOR_PATH = '/api/mcp-grok';
 export const BOT_LOOP_CAP = 1;
@@ -138,7 +139,7 @@ export async function generateMake({ prompt, base, env = process.env, deps = {} 
 		text: composeBotReply('failure', { base, prompt, forgeLink: `${base}/forge?prompt=${encodeURIComponent(prompt)}` }),
 	});
 	try {
-		let job = await submit(base, { prompt, path: 'image', tier: 'standard', internal: true, director: true });
+		let job = await submit(base, { prompt, path: 'image', tier: 'standard', internal: true, director: true, auth: platformAuthHeaders({ onBehalf: true }) });
 		if (!(job.status === 'done' && job.glb_url)) {
 			job = await poll(base, job.job_id, { timeoutMs: botMakeBudgetMs(env), intervalMs: Number(env.STUDIO_POLL_MS) || 3000 });
 		}

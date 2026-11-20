@@ -86,7 +86,10 @@ describe('own image', () => {
 		const { parsed, event } = await row({ via });
 		expect(parsed.intent).toBe('image3d');
 		const startForge = vi.fn(async () => doneJob);
+		vi.stubEnv('CRON_SECRET', 'xm-secret');
 		const res = await img.handleImage3d(event, deps({ startForge }));
+		vi.unstubAllEnvs();
+		expect(startForge).toHaveBeenCalledWith(BASE, expect.objectContaining({ auth: { 'x-forge-seed': 'xm-secret', 'x-forge-on-behalf': '1' } }));
 		expect(res).toMatchObject({ outcome: 'reply', reason: 'image3d_done', link: `${BASE}/m/${CREATION}` });
 		expect(res.text).toBe(`Here is your red sneaker in 3D. Spin it around: ${BASE}/m/${CREATION}`);
 		expect(res.mediaUrl).toContain('/api/render/glb');

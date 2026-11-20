@@ -92,7 +92,13 @@ describe('success path', () => {
 	it('replies with the rendered PNG and the creation link, and attributes the creation', async () => {
 		const ev = await mentionRow();
 		const deliver = vi.fn();
-		const res = await make.handleMake(ev, { ...noDirector, deliver, startForge: async () => doneJob });
+		// The model is made for the X author, so it goes in as an on-behalf
+		// platform job: past the account gate and born unlisted.
+		vi.stubEnv('CRON_SECRET', 'xm-secret');
+		const startForge = vi.fn(async () => doneJob);
+		const res = await make.handleMake(ev, { ...noDirector, deliver, startForge });
+		vi.unstubAllEnvs();
+		expect(startForge).toHaveBeenCalledWith(BASE, expect.objectContaining({ auth: { 'x-forge-seed': 'xm-secret', 'x-forge-on-behalf': '1' } }));
 		expect(res.outcome).toBe('reply');
 		expect(res.link).toBe(`${BASE}/m/${CREATION}`);
 		expect(res.mediaUrl).toBe(`${BASE}/api/render/glb?glbUrl=${encodeURIComponent(GLB)}&width=1024&height=1024`);

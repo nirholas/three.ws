@@ -34,6 +34,7 @@ import { describeImageJson, VISION_TASK_LEAD } from './vision.js';
 import { withClaimNote } from './x-creation-claim.js';
 import { attributeCreation, creationLink, makeBudgetMs, makeGiveUpMs } from './x-mention-make.js';
 import { startForge, startRig, pollJob, pollOnce } from '../_mcp-studio/gpt-forge-client.js';
+import { platformAuthHeaders } from './creator-account.js';
 import { posterPngUrl } from '../_mcp-studio/asset-links.js';
 
 const AVATAR_TIER = 'high';
@@ -208,7 +209,7 @@ export async function handleAvatar(event, deps = {}) {
 	let job;
 	try {
 		const imageUrl = await (deps.persist || persistImageBytes)(image.bytes);
-		job = await (deps.startForge || startForge)(base, { imageUrls: [imageUrl], aspect: '1:1', tier: AVATAR_TIER, internal: true, director: false });
+		job = await (deps.startForge || startForge)(base, { imageUrls: [imageUrl], aspect: '1:1', tier: AVATAR_TIER, internal: true, director: false, auth: platformAuthHeaders({ onBehalf: true }) });
 	} catch (err) {
 		return fail(`avatar_failed:${err?.code || 'submit'}`, err?.message);
 	}
@@ -231,7 +232,7 @@ export async function handleAvatar(event, deps = {}) {
 
 	let rigJob;
 	try {
-		rigJob = await (deps.startRig || startRig)(base, mesh.glb_url);
+		rigJob = await (deps.startRig || startRig)(base, mesh.glb_url, { auth: platformAuthHeaders({ onBehalf: true }) });
 	} catch (err) {
 		return answer(successReply({ base, glbUrl: mesh.glb_url, creationId: meshCreationId, rigged: false }), `avatar_done_unrigged:${err?.code || 'rig_submit'}`, { creationId: meshCreationId });
 	}
@@ -284,7 +285,7 @@ export async function finishPendingAvatars({ limit = 10 } = {}, deps = {}) {
 
 		if (status?.status === 'done' && status.glb_url && pending.stage === 'mesh') {
 			try {
-				const rigJob = await (deps.startRig || startRig)(base, status.glb_url);
+				const rigJob = await (deps.startRig || startRig)(base, status.glb_url, { auth: platformAuthHeaders({ onBehalf: true }) });
 				await markPending(row.tweet_id, { stage: 'rig', jobId: rigJob.job_id, meshGlbUrl: status.glb_url, creationId, startedAt: pending.started_at });
 				summary.advanced += 1;
 				continue;

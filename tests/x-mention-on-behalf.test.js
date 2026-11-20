@@ -270,7 +270,11 @@ describe('reply composer and generation', () => {
 	});
 
 	it('generateMake: success returns viewer and GLB links; timeout and failure return a prefilled forge link', async () => {
-		const done = await onBehalf.generateMake({ prompt: 'a fox', base: BASE, deps: { startForge: async () => ({ job_id: 'j1', status: 'queued' }), pollJob: async () => ({ glb_url: 'https://three.ws/cdn/g/f.glb', creation_id: 'c1' }) } });
+		const startForge = vi.fn(async () => ({ job_id: 'j1', status: 'queued' }));
+		vi.stubEnv('CRON_SECRET', 'xm-secret');
+		const done = await onBehalf.generateMake({ prompt: 'a fox', base: BASE, deps: { startForge, pollJob: async () => ({ glb_url: 'https://three.ws/cdn/g/f.glb', creation_id: 'c1' }) } });
+		vi.unstubAllEnvs();
+		expect(startForge).toHaveBeenCalledWith(BASE, expect.objectContaining({ auth: { 'x-forge-seed': 'xm-secret', 'x-forge-on-behalf': '1' } }));
 		expect(done).toMatchObject({ kind: 'success', glbUrl: 'https://three.ws/cdn/g/f.glb', creationId: 'c1' });
 		expect(done.text).toContain('GLB: https://three.ws/cdn/g/f.glb');
 

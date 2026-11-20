@@ -92,11 +92,17 @@ describe('own profile image', () => {
 		expect(parsed.intent).toBe('avatar');
 		const fetchImpl = cdn();
 		const startForge = vi.fn(async () => meshJob);
+		// Made for the X author: an on-behalf platform job on both the mesh and
+		// the rig, so each passes the account gate and the avatar is born unlisted.
+		vi.stubEnv('CRON_SECRET', 'xm-secret');
 		const res = await av.handleAvatar(event, deps({ fetchImpl, startForge }));
+		vi.unstubAllEnvs();
+		const platformJob = { 'x-forge-seed': 'xm-secret', 'x-forge-on-behalf': '1' };
+		expect(startForge).toHaveBeenCalledWith(BASE, expect.objectContaining({ auth: platformJob }));
+		expect(startRig).toHaveBeenCalledWith(BASE, MESH, { auth: platformJob });
 		expect(fetchImpl.mock.calls[0][0]).toBe('https://pbs.twimg.com/profile_images/1800000000000000001/AbCdEfGh_400x400.jpg');
 		expect(fetchImpl.mock.calls[0][1].redirect).toBe('manual');
 		expect(startForge).toHaveBeenCalledWith(BASE, expect.objectContaining({ imageUrls: ['https://cdn.three.test/forge/refs/pfp.png'], tier: 'high', internal: true }));
-		expect(startRig).toHaveBeenCalledWith(BASE, MESH);
 		expect(res).toMatchObject({ outcome: 'reply', reason: 'avatar_done', link: `${BASE}/pose?src=${encodeURIComponent(RIGGED)}` });
 		expect(res.text).toContain(`${BASE}/m/${CREATION}`);
 		expect(res.text).toContain(`${BASE}/pose?src=${encodeURIComponent(RIGGED)}`);

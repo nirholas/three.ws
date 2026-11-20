@@ -35,6 +35,7 @@ import { updateDecision } from './x-mention-store.js';
 import { claimForAuthor, withClaimNote } from './x-creation-claim.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
 import { startForge, pollJob, pollOnce, directPrompt } from '../_mcp-studio/gpt-forge-client.js';
+import { platformAuthHeaders } from './creator-account.js';
 import { posterPngUrl, RENDER_MAX_GLB_BYTES } from '../_mcp-studio/asset-links.js';
 import { meshDirectorFor, meshSubjectClass } from './forge-director-prompts.js';
 
@@ -240,7 +241,7 @@ export async function handleMake(event, deps = {}) {
 	let job;
 	try {
 		const effective = await directedPrompt(prompt, deps);
-		job = await submit(base, { prompt: effective, path: 'image', tier: 'standard', internal: true, director: false });
+		job = await submit(base, { prompt: effective, path: 'image', tier: 'standard', internal: true, director: false, auth: platformAuthHeaders({ onBehalf: true }) });
 	} catch (err) {
 		return settleFailure({ event, base, prompt, dryRun, deps, reason: `make_failed:${err?.code || 'submit'}`, error: err?.message });
 	}
