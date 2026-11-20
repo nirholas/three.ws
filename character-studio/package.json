@@ -121,7 +121,7 @@
     "@testing-library/react": "^16.3.3",
     "@vitejs/plugin-react-swc": "^4.3.3",
     "classnames": "^2.3.2",
-    "eslint": "^10.14.0",
+    "eslint": "^10.15.0",
     "eslint-plugin-react": "^7.37.0",
     "gh-pages": "^6.1.1",
     "globals": "^17.12.0",
