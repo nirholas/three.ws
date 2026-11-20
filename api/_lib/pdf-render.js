@@ -21,6 +21,10 @@ class NapiCanvasFactory {
 		const canvas = napi.createCanvas(Math.max(1, width | 0), Math.max(1, height | 0));
 		return { canvas, context: canvas.getContext('2d') };
 	}
+	// pdf.js 5.x paints opaque page backgrounds through this hook (unpdf >= 2.2).
+	getNoAlphaContext(canvas) {
+		return canvas.getContext('2d', { alpha: false });
+	}
 	reset(pair, width, height) {
 		pair.canvas.width = width;
 		pair.canvas.height = height;
