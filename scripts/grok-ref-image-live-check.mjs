@@ -43,7 +43,7 @@ if (!EXPECT_XAI) {
 	delete process.env.GROK_API_KEY;
 	delete process.env.XAI_API_KEY;
 }
-process.env.DATABASE_URL = 'postgres://isolated:isolated@isolated.invalid/isolated';
+process.env.DATABASE_URL = 'postgres://isolated.invalid/isolated';
 process.env.CRON_SECRET = randomBytes(24).toString('hex');
 process.env.FORGE_REF_IMAGE_PROVIDER = 'xai';
 process.env.PORT = String(PORT);
