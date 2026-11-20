@@ -7007,6 +7007,21 @@
 			"dest": "/agent-studio.html"
 		},
 		{
+			"src": "/privacy/?",
+			"status": 301,
+			"headers": { "Location": "/legal/privacy" }
+		},
+		{
+			"src": "/terms/?",
+			"status": 301,
+			"headers": { "Location": "/legal/tos" }
+		},
+		{
+			"src": "/tos/?",
+			"status": 301,
+			"headers": { "Location": "/legal/tos" }
+		},
+		{
 			"src": "/legal/?",
 			"dest": "/legal/index.html"
 		},
