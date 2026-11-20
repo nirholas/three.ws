@@ -15,6 +15,14 @@
 			<description>A dependency security update made the Hunyuan3D 2.1 texture stage refuse to load its own bundled paint pipeline, so every Hunyuan3D job failed before it started. The worker now explicitly trusts that pipeline, which ships inside the image, and the build fails if the fix ever stops applying.</description>
 		</item>
 		<item>
+			<title>Making or uploading a 3D model now needs a free account</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-20:Making or uploading a 3D model now needs a free account</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Anyone could generate a 3D model or upload a photo with no account behind it, and the result landed on a public three.ws link with nobody answerable for it. Generating from text, a photo or a sketch (the free lane included), uploading, refining, rigging and the other creation tools now ask you to sign in first. Forge asks the moment you press Generate or add a photo, so you never wait on a job that cannot start, and every other page shows a sign-in bar with a link straight back. What you make is saved to your account and stays unlisted until you publish it, and only a signed-in owner can make a model public. Browsing, viewing and sharing models still need no account, and the free lane is still free. Scripts, plugins and AI connectors (Blender, ComfyUI, Modly, Omniverse, the Hugging Face Space, the MCP servers and the custom GPT) sign in or send an API key from your dashboard.</description>
+		</item>
+		<item>
 			<title>Manage or report any 3D model from its page</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-20:Manage or report any 3D model from its page</guid>
@@ -44,7 +52,7 @@
 			<guid isPermaLink="false">2026-11-20:Public models are safety-checked before they are listed</guid>
 			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
 			<category>security</category>
-			<description>Before a model appears in the public gallery, feeds, search or sitemaps, its prompt and preview render are screened. Clean models publish automatically; if the screen cannot answer, the model stays unlisted and is retried, then reviewed by a person. Unsafe models are kept private. Three reports for harmful content or someone's likeness also take a model out of public view for review. Nothing you generate is refused, and your own link keeps working.</description>
+			<description>Before a model appears in the public gallery, feeds, search or sitemaps, its prompt, its preview render and every photo it was made from are screened. Clean models publish automatically; if the screen cannot answer, the model stays unlisted and is retried, then reviewed by a person. Unsafe models are kept private. Three reports for harmful content or someone's likeness also take a model out of public view for review. Nothing you generate is refused, and your own link keeps working.</description>
 		</item>
 		<item>
 			<title>The /glass lens gets past &quot;Location needed&quot;</title>
@@ -61,14 +69,6 @@
 			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>TripoSG cuts the subject out of your photo with our background-removal service before building the mesh. That service finished the cutout after answering the request, and Cloud Run gave it almost no CPU between requests, so a 20-second cutout dragged past the two minutes TripoSG waits. Its model was also downloaded on first use, and two cutouts at once could run it out of memory. The service now keeps its CPU, ships the model in its image, and has twice the memory, so photo-to-3D on TripoSG completes again. The segmentation service had the same CPU gap and is fixed too.</description>
-		</item>
-		<item>
-			<title>Uploading a photo now needs a free account</title>
-			<link>https://three.ws/forge</link>
-			<guid isPermaLink="false">2026-11-20:Uploading a photo now needs a free account</guid>
-			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
-			<category>security</category>
-			<description>Photos you upload for photo-to-3D used to be accepted from anyone, with no account behind them, and landed on a public three.ws link. Adding a photo now asks you to sign in first, and the prompt appears the moment you add one so you never wait on a file that cannot be sent. Making a model from a text prompt still needs no account. Scripts and plugins (Blender, ComfyUI, Modly, Omniverse, the Blender MCP server) send an API key from your dashboard, set as THREE_WS_API_KEY.</description>
 		</item>
 		<item>
 			<title>A busy multi-view lane asks you to retry instead of quietly downgrading your model</title>

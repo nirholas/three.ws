@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-20T03:33:55.973Z",
+	"generated_at": "2026-11-20T04:00:46.829Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,17 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "Making or uploading a 3D model now needs a free account",
+			"summary": "Anyone could generate a 3D model or upload a photo with no account behind it, and the result landed on a public three.ws link with nobody answerable for it. Generating from text, a photo or a sketch (the free lane included), uploading, refining, rigging and the other creation tools now ask you to sign in first. Forge asks the moment you press Generate or add a photo, so you never wait on a job that cannot start, and every other page shows a sign-in bar with a link straight back. What you make is saved to your account and stays unlisted until you publish it, and only a signed-in owner can make a model public. Browsing, viewing and sharing models still need no account, and the free lane is still free. Scripts, plugins and AI connectors (Blender, ComfyUI, Modly, Omniverse, the Hugging Face Space, the MCP servers and the custom GPT) sign in or send an API key from your dashboard.",
+			"link": "/forge",
+			"tags": [
+				"security",
+				"improvement"
 			]
 		},
 		{
@@ -52,7 +63,7 @@
 			"date": "2026-11-20",
 			"type": "update",
 			"title": "Public models are safety-checked before they are listed",
-			"summary": "Before a model appears in the public gallery, feeds, search or sitemaps, its prompt and preview render are screened. Clean models publish automatically; if the screen cannot answer, the model stays unlisted and is retried, then reviewed by a person. Unsafe models are kept private. Three reports for harmful content or someone's likeness also take a model out of public view for review. Nothing you generate is refused, and your own link keeps working.",
+			"summary": "Before a model appears in the public gallery, feeds, search or sitemaps, its prompt, its preview render and every photo it was made from are screened. Clean models publish automatically; if the screen cannot answer, the model stays unlisted and is retried, then reviewed by a person. Unsafe models are kept private. Three reports for harmful content or someone's likeness also take a model out of public view for review. Nothing you generate is refused, and your own link keeps working.",
 			"link": null,
 			"tags": [
 				"security",
@@ -77,17 +88,6 @@
 			"link": null,
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-20",
-			"type": "update",
-			"title": "Uploading a photo now needs a free account",
-			"summary": "Photos you upload for photo-to-3D used to be accepted from anyone, with no account behind them, and landed on a public three.ws link. Adding a photo now asks you to sign in first, and the prompt appears the moment you add one so you never wait on a file that cannot be sent. Making a model from a text prompt still needs no account. Scripts and plugins (Blender, ComfyUI, Modly, Omniverse, the Blender MCP server) send an API key from your dashboard, set as THREE_WS_API_KEY.",
-			"link": "/forge",
-			"tags": [
-				"security",
-				"improvement"
 			]
 		},
 		{
