@@ -1,13 +1,14 @@
 # three.ws 3D Studio
 
 **Author:** three-ws
-**Version:** 0.1.0
+**Version:** 0.2.0
 **Type:** tool
 **Source:** <https://github.com/nirholas/three.ws/tree/main/integrations/dify/three_ws>
 
 Free text-to-3D for Dify agents and workflows. Describe an object or a
 character and get back a real, downloadable GLB file plus a browser viewer link.
-No API key, no account, and no payment.
+No payment. It does need a free three.ws account, so every model has an owner
+who can publish or delete it (new models are unlisted until you publish them).
 
 ## Tools
 
@@ -28,8 +29,11 @@ Each generation tool returns:
 ## Setup
 
 1. Install the plugin from the Dify Marketplace.
-2. Add any of the four tools to an agent or a workflow. There is nothing to
-   configure: the service is anonymous.
+2. Sign in to three.ws (free) and create an API key at
+   <https://three.ws/dashboard/api-keys>.
+3. In Dify, open the three.ws plugin's authorization settings and paste the key.
+   Dify checks it against three.ws before saving it.
+4. Add any of the four tools to an agent or a workflow.
 
 ## Usage notes
 
@@ -38,8 +42,10 @@ Each generation tool returns:
   returns `status: "pending"` with a viewer link that opens the model by itself
   the moment it is ready.
 - Search the catalog first: a ready-made CC0 asset is instant.
-- The free service caps generations per IP per hour. When the cap is reached,
-  the tool says when to try again.
+- The free service caps generations per account per hour. When the cap is
+  reached, the tool says when to try again.
+- If the key is missing, revoked or mistyped, the tool says so and links to the
+  API keys page. Your models also appear at <https://three.ws/creations>.
 - Generated GLB files are public at unguessable URLs. Do not put private details
   in a prompt.
 

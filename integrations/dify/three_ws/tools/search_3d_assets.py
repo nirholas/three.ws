@@ -5,6 +5,7 @@ from dify_plugin import Tool
 from dify_plugin.entities.tool import ToolInvokeMessage
 
 from three_ws_client import ThreeWsError, call_tool
+from tools.model_output import api_key_of
 
 FIELDS = ("id", "kind", "title", "license", "categories", "tags", "glb_url", "viewer_url", "poster_png_url", "embed_html")
 
@@ -25,7 +26,7 @@ class Search3dAssetsTool(Tool):
         arguments["limit"] = min(max(limit, 1), 50)
 
         try:
-            result = call_tool("search_catalog", arguments)
+            result = call_tool("search_catalog", arguments, api_key_of(self))
         except ThreeWsError as error:
             yield self.create_text_message(f"Error: {error}")
             yield self.create_json_message({"items": [], "matched": 0, "error": str(error)})

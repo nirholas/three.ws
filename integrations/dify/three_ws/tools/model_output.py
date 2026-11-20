@@ -10,11 +10,17 @@ from dify_plugin.entities.tool import ToolInvokeMessage
 from three_ws_client import ThreeWsError, ThreeWsPending, download, model_urls, run_generation
 
 
+def api_key_of(tool: Tool) -> str:
+    """The three.ws API key the user saved in the plugin's authorization settings."""
+    credentials = getattr(tool.runtime, "credentials", None) or {}
+    return str(credentials.get("api_key") or "").strip()
+
+
 def generate(
     tool: Tool, name: str, arguments: dict[str, Any], label: str, attach_glb: bool
 ) -> Generator[ToolInvokeMessage, None, None]:
     try:
-        result = run_generation(name, arguments)
+        result = run_generation(name, arguments, api_key_of(tool))
     except ThreeWsPending as pending:
         yield tool.create_text_message(str(pending))
         yield tool.create_json_message({"status": "pending", "job_id": pending.job_id, "viewer_url": pending.viewer_url})

@@ -4,13 +4,24 @@ identity:
   label:
     en_US: three.ws 3D Studio
   description:
-    en_US: Free text-to-3D. Generate textured GLB models and rigged avatars, auto-rig a GLB, and search CC0 3D assets. No API key.
+    en_US: Free text-to-3D. Generate textured GLB models and rigged avatars, auto-rig a GLB, and search CC0 3D assets. Needs a free three.ws API key.
   icon: icon.svg
   icon_dark: icon-dark.svg
   tags:
     - image
     - design
     - utilities
+credentials_for_provider:
+  api_key:
+    type: secret-input
+    required: true
+    label:
+      en_US: three.ws API key
+    placeholder:
+      en_US: sk_live_...
+    help:
+      en_US: Making a 3D model needs a free three.ws account, so every model has an owner who can publish or delete it. Create a key on the API keys page.
+    url: https://three.ws/dashboard/api-keys
 tools:
   - tools/generate_3d_model.yaml
   - tools/create_3d_avatar.yaml
