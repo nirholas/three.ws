@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-20T19:13:34.472Z",
+	"generated_at": "2026-11-20T19:15:12.326Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4657,
+	"total": 4658,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -60,6 +60,17 @@
 			"link": null,
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "Paid-call caps and Fastify gating now hold, and the embed docs point at what works",
+			"summary": "The x402 buyer MCP now enforces the per-call spend cap (MAX_PAY_USD or max_usd) in session-token mode too, refusing before the platform wallet pays. The x402 merchant package now returns a real 402 on Fastify 5 routes instead of serving the paid output, and its README shows the working form. Package repository links point at their real repos, the MCP server README states its free-tool count exactly, and the embed docs load the hosted agent-3d module instead of telling readers to npm install a stale three.ws package.",
+			"link": null,
+			"tags": [
+				"fix",
+				"docs"
 			]
 		},
 		{
@@ -1538,17 +1549,6 @@
 			"link": null,
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "update",
-			"title": "A trust center with security answers that link to the code",
-			"summary": "three.ws/trust explains where three.ws runs, how data is encrypted, how people and apps sign in, who has admin access, what is logged, how long each kind of data is kept and the job that deletes it, how agent wallet custody works, which AI providers can see prompts (with each provider's own published terms quoted), and how incidents and vulnerability reports are handled. Every answer links to the file in the open-source code that proves it, and the compliance table says plainly what is in place, in progress and not pursued. three.ws/trust/subprocessors lists every third party that processes data, with a filter. Expired sessions, old sign-in nonces and year-old widget views are now actually deleted, as the privacy policy says.",
-			"link": "/trust",
-			"tags": [
-				"security",
-				"feature"
 			]
 		}
 	]

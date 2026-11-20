@@ -3,9 +3,30 @@
 	"entries": [
 		{
 			"date": "2026-11-20",
+			"title": "Model review moved off the website, and flagged evidence cannot be deleted by accident",
+			"summary": "The internal review boards for held 3D models and for the Forge quality judge are gone from the public server: there is no admin page or admin endpoint left that can approve, label or delete a model. Operators review from their own workstation with signed-in command line tools instead (npm run forge:safety and npm run forge:judge). The takedown tool now refuses to delete any model the safety screen flagged as possible child abuse material until the legal report has been filed and recorded, so the evidence is preserved.",
+			"tags": [
+				"security",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"title": "Paid-call caps and Fastify gating now hold, and the embed docs point at what works",
+			"summary": "The x402 buyer MCP now enforces the per-call spend cap (MAX_PAY_USD or max_usd) in session-token mode too, refusing before the platform wallet pays. The x402 merchant package now returns a real 402 on Fastify 5 routes instead of serving the paid output, and its README shows the working form. Package repository links point at their real repos, the MCP server README states its free-tool count exactly, and the embed docs load the hosted agent-3d module instead of telling readers to npm install a stale three.ws package.",
+			"tags": [
+				"fix",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-11-20",
 			"title": "Free text to 3D tells the truth about its lane and its wait",
 			"summary": "The free text to 3D draft lane now says which engine really runs your job (Microsoft TRELLIS on NVIDIA NIM when available, otherwise our own GPU worker) in the API, the MCP server instructions and the docs. The time estimate for a cold GPU worker now reflects the measured boot of several minutes instead of under a minute, and the docs no longer promise a 240 second inline wait: a job on our own GPU returns a queued handle within seconds, so poll it.",
-			"tags": ["fix", "docs"]
+			"tags": [
+				"fix",
+				"docs"
+			]
 		},
 		{
 			"date": "2026-11-20",
