@@ -916,7 +916,7 @@
 		"playwright": "^1.63.0",
 		"prettier": "^3.10.1",
 		"prismarine-nbt": "^2.8.0",
-		"puppeteer": "^25.14.0",
+		"puppeteer": "^25.17.0",
 		"smol-toml": "^1.9.1",
 		"topojson-client": "^3.1.0",
 		"turndown": "^7.2.4",
