@@ -84,13 +84,23 @@ describe('createGate', () => {
 
 	// Pollinations' free tier answers 402 FREE_LIMIT ("1 image every 45 seconds
 	// per IP") to any call that starts sooner, so the gate spaces task starts.
-	it('spaces task starts by at least minIntervalMs', async () => {
+	// The free rung is the LAST rung of the ladder, reached ~40 s into a step,
+	// so spacing must count from when the previous task finished, not started.
+	it('starts each task at least minIntervalMs after the previous one finished', async () => {
 		const gate = createGate(1, { minIntervalMs: 60 });
-		const starts = [];
-		await Promise.all([0, 1, 2].map(() => gate(async () => { starts.push(Date.now()); })));
-		expect(starts).toHaveLength(3);
-		expect(starts[1] - starts[0]).toBeGreaterThanOrEqual(55);
-		expect(starts[2] - starts[1]).toBeGreaterThanOrEqual(55);
+		const spans = [];
+		await Promise.all(
+			[0, 1, 2].map(() =>
+				gate(async () => {
+					const start = Date.now();
+					await new Promise((r) => setTimeout(r, 40));
+					spans.push([start, Date.now()]);
+				}),
+			),
+		);
+		expect(spans).toHaveLength(3);
+		expect(spans[1][0] - spans[0][1]).toBeGreaterThanOrEqual(55);
+		expect(spans[2][0] - spans[1][1]).toBeGreaterThanOrEqual(55);
 	});
 
 	it('releases the slot when a task throws', async () => {

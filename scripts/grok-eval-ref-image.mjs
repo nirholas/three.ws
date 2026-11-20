@@ -35,7 +35,8 @@
 // --limit N       first N prompts after --only filtering
 // --concurrency N prompts in flight per provider (1 to 6, default 3)
 // --ref-concurrency N  reference images generated at once (1 to 6, default 1)
-// --ref-interval S     seconds between reference-step starts (default 46 for
+// --ref-interval S     seconds from one reference step's end to the next one's
+//                 start (default 46 for
 //                 the baseline column, 0 for xai). The keyless Pollinations
 //                 rung allows one image every 45 s per IP and answers 402
 //                 FREE_LIMIT to anything sooner, so the baseline paces the
@@ -437,13 +438,14 @@ function installXaiCostMeter(xaiUrl) {
 // FREE_LIMIT body, observed 2026-11-20), plus a second of slack.
 const POLLINATIONS_FREE_INTERVAL_S = 46;
 
-// Counting semaphore: at most `n` holders at once, FIFO, and successive starts
-// at least `minIntervalMs` apart.
+// Counting semaphore: at most `n` holders at once, FIFO, and each start at
+// least `minIntervalMs` after the most recent finish.
 export function createGate(n, { minIntervalMs = 0 } = {}) {
 	let active = 0;
-	let lastStart = -Infinity;
+	let lastFinish = -Infinity;
 	const waiting = [];
 	const release = () => {
+		lastFinish = Date.now();
 		active--;
 		const nextUp = waiting.shift();
 		if (nextUp) nextUp();
@@ -451,9 +453,8 @@ export function createGate(n, { minIntervalMs = 0 } = {}) {
 	return async (fn) => {
 		if (active >= n) await new Promise((r) => waiting.push(r));
 		active++;
-		const wait = lastStart + minIntervalMs - Date.now();
+		const wait = lastFinish + minIntervalMs - Date.now();
 		if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-		lastStart = Date.now();
 		try {
 			return await fn();
 		} finally {
@@ -781,7 +782,7 @@ async function writeReport(prompts, results) {
 	L.push(`- **Render:** \`/api/render/glb\` at ${RENDER_SIZE}px on white.`);
 	L.push('- **Objective score (0 to 100):** ' + Object.entries(WEIGHTS).map(([k, w]) => `${k} ${w}`).join(', ') + '. Background clean: at least 90% of a 6px border within RGB distance 28 of the median border color. Single subject: the largest 4-connected foreground component holds at least 92% of foreground pixels. Centered: bounding-box center within 12% of the image center. Sane fill: subject extent between 45% and 95% of the frame. Closed: under 1% of welded mesh edges are open boundaries; strict watertightness (zero open and zero non-manifold edges) is reported separately.');
 	L.push('- **Blind pairwise judge:** for every prompt with both results, the two renders (or the two reference images when a render is missing) are composited side by side, sides shuffled per prompt by a hash, and sent to the repo\'s free vision chain led by NVIDIA Nemotron 3.5 Super VL (`describeImageJson`, the `seed_judge` lead). Grok never judges its own output; the harness refuses any answer from a Grok model.');
-	L.push('- **Cost and latency:** Grok Imagine cost is metered from the `usage.cost_in_usd_ticks` field of every xAI response, including best-of-2 retries. Latency is wall-clock time for the whole reference step (generation, QA scoring, persistence), as a user waits for it. Baseline rows start the image step at most once every 46 seconds (`--ref-interval`), because the keyless Pollinations rung allows one image every 45 seconds per IP and answers 402 FREE_LIMIT to anything sooner; that queueing is excluded from the latency.');
+	L.push('- **Cost and latency:** Grok Imagine cost is metered from the `usage.cost_in_usd_ticks` field of every xAI response, including best-of-2 retries. Latency is wall-clock time for the whole reference step (generation, QA scoring, persistence), as a user waits for it. A baseline row starts its image step no sooner than 46 seconds after the previous one finished (`--ref-interval`), because the keyless Pollinations rung allows one image every 45 seconds per IP and answers 402 FREE_LIMIT to anything sooner; that queueing is excluded from the latency.');
 	L.push('');
 	L.push('## The Grok Imagine API as integrated');
 	L.push('');
