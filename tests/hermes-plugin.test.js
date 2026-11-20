@@ -23,11 +23,11 @@ describe('Hermes plugin package', () => {
 		expect(read(join(PLUGIN, 'LICENSE'))).toBe(read(join(ROOT, 'LICENSE')));
 	});
 
-	it('points only at the free, anonymous studio server', () => {
+	it('points only at the free studio server, asking the client to sign in', () => {
 		const m = JSON.parse(read(join(PLUGIN, 'mcp.json')));
 		expect(m.$schema).toBe('https://agent-plugins.org/schemas/1.0.0/mcp.schema.json');
 		expect(m.mcpServers).toEqual({
-			'three-ws': { type: 'streamable-http', url: 'https://three.ws/api/mcp-studio' },
+			'three-ws': { type: 'streamable-http', url: 'https://three.ws/api/mcp-studio?auth=oauth' },
 		});
 	});
 

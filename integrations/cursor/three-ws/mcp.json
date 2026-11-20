@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "three-ws": {
-      "url": "https://three.ws/api/mcp-studio"
+      "url": "https://three.ws/api/mcp-studio?auth=oauth"
     }
   }
 }

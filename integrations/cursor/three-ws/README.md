@@ -3,7 +3,9 @@
 Free text-to-3D for [Cursor](https://cursor.com).
 Ask the agent for "a 3D model of a brass telescope" or "a rigged astronaut I can
 animate" and it returns a real, downloadable GLB plus a browser viewer link.
-It needs no account, no API key, and no payment.
+There is no payment. Making or rigging a model needs a free three.ws account,
+so every model has an owner who can publish or delete it (new models stay
+unlisted until you publish them).
 
 This is a Cursor plugin in the [Open Plugins](https://open-plugins.com) layout
 (`.cursor-plugin/plugin.json`, `mcp.json`, `skills/`). It has no local code. It
@@ -19,11 +21,16 @@ by hand in `~/.cursor/mcp.json` (or a project's `.cursor/mcp.json`):
 {
   "mcpServers": {
     "three-ws": {
-      "url": "https://three.ws/api/mcp-studio"
+      "url": "https://three.ws/api/mcp-studio?auth=oauth"
     }
   }
 }
 ```
+
+Cursor shows a **Needs login** button on the server the first time; it opens
+the free three.ws sign-in and stores the token. To use an API key instead
+(from <https://three.ws/dashboard/api-keys>), drop `?auth=oauth` and add
+`"headers": { "Authorization": "Bearer ${env:THREE_WS_API_KEY}" }`.
 
 ## What the agent gets
 
@@ -65,18 +72,21 @@ Read this before you install.
   third-party service run by the three.ws team. Prompts, reference image URLs,
   and GLB URLs you pass in are sent there. `look_at_model` and `rig_mesh` fetch
   the model URL you give them from three.ws's servers.
-- **Generated files are public.** Generated models are stored on the three.ws CDN
-  at unguessable URLs that are readable by anyone who has the link. A persona
+- **Models belong to your account.** Each model is filed under your three.ws
+  account and kept out of the public gallery until you publish it. The GLB is
+  stored on the three.ws CDN at an unguessable URL that anyone with the link can
+  open. A persona
   copies its model into durable storage. Do not put private or confidential
   details in a prompt.
 - **What reaches your model provider.** Tool results (URLs, metadata, and the
   rendered frames from `look_at_model`) enter the session context, and so reach
   your model provider.
-- **No credentials.** The server is anonymous. The plugin stores no keys or
-  tokens.
+- **Credentials.** The server URL ends in `?auth=oauth`, so the first connect
+  answers with a standard MCP OAuth challenge and Cursor runs the three.ws
+  sign-in. The plugin itself stores no keys or tokens.
 - **No local processes.** There are no shell commands, background processes, or
   telemetry. The plugin is configuration plus Markdown.
-- **Rate limits.** The free studio caps generations per IP per hour. When a
+- **Rate limits.** The free studio caps generations per account per hour. When a
   call is refused, the response says when the quota resets.
 - **No payments.** The studio server has no payment, wallet, or trading path.
 - **Tool list is server-side.** The tool list is served by three.ws at run time,
@@ -84,7 +94,7 @@ Read this before you install.
 
 ## Links
 
-- Server: `https://three.ws/api/mcp-studio` (Streamable HTTP, no auth)
+- Server: `https://three.ws/api/mcp-studio?auth=oauth` (Streamable HTTP, MCP OAuth; an `Authorization: Bearer <API key>` header also works)
 - Docs: <https://three.ws/docs>
 - Source: <https://github.com/nirholas/three.ws>
 

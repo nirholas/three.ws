@@ -3,7 +3,9 @@
 Free text-to-3D for [Hermes Agent](https://github.com/NousResearch/hermes-agent).
 Ask Hermes for "a 3D model of a brass telescope" or "a rigged astronaut I can
 animate" and it returns a real, downloadable GLB plus a browser viewer link.
-It needs no account, no API key, and no payment.
+There is no payment. Making or rigging a model needs a free three.ws account,
+so every model has an owner who can publish or delete it (new models stay
+unlisted until you publish them).
 
 This is a portable Agent Plugins v1 package (`plugin.json`, `mcp.json`,
 `skills/`). It has no local code. It points Hermes at the hosted three.ws studio
@@ -18,10 +20,27 @@ From the Hermes plugin catalog:
 hermes plugins install three-ws
 ```
 
-Or connect the server by hand:
+Hermes signs you in to three.ws (free) with OAuth the first time the server
+connects. If it does not open the sign-in, run `hermes mcp login three-ws`.
 
-```bash
-hermes mcp add three-ws --url https://three.ws/api/mcp-studio
+Or connect the server by hand in your Hermes config, with OAuth:
+
+```yaml
+mcp_servers:
+  three-ws:
+    url: "https://three.ws/api/mcp-studio"
+    auth: oauth
+```
+
+or with an API key from <https://three.ws/dashboard/api-keys>, saved as
+`THREE_WS_API_KEY` in `~/.hermes/.env`:
+
+```yaml
+mcp_servers:
+  three-ws:
+    url: "https://three.ws/api/mcp-studio"
+    headers:
+      Authorization: "Bearer ${THREE_WS_API_KEY}"
 ```
 
 ## What the agent gets
@@ -64,18 +83,22 @@ Read this before you install.
   third-party service run by the three.ws team. Prompts, reference image URLs,
   and GLB URLs you pass in are sent there. `look_at_model` and `rig_mesh` fetch
   the model URL you give them from three.ws's servers.
-- **Generated files are public.** Generated models are stored on the three.ws CDN
-  at unguessable URLs that are readable by anyone who has the link. A persona
+- **Models belong to your account.** Each model is filed under your three.ws
+  account and kept out of the public gallery until you publish it. The GLB is
+  stored on the three.ws CDN at an unguessable URL that anyone with the link can
+  open. A persona
   copies its model into durable storage. Do not put private or confidential
   details in a prompt.
 - **What reaches your model provider.** Tool results (URLs, metadata, and the
   rendered frames from `look_at_model`) enter the session context, and so reach
   your model provider.
-- **No credentials.** The server is anonymous. The plugin stores no keys or
-  tokens and reads no files outside its own package.
+- **Credentials.** The server URL ends in `?auth=oauth`, so the first connect
+  answers with a standard MCP OAuth challenge and Hermes runs the three.ws
+  sign-in. The plugin itself stores no keys or tokens (Hermes caches the OAuth
+  token in `~/.hermes/mcp-tokens/`) and reads no files outside its own package.
 - **No local processes.** There are no shell commands, background processes, or
   telemetry. The plugin is configuration plus Markdown.
-- **Rate limits.** The free studio caps generations per IP per hour. When a
+- **Rate limits.** The free studio caps generations per account per hour. When a
   call is refused, the response says when the quota resets.
 - **No payments.** The studio server has no payment, wallet, or trading path.
 - **Tool list is server-side.** The tool list is served by three.ws at run time,
@@ -83,7 +106,7 @@ Read this before you install.
 
 ## Links
 
-- Server: `https://three.ws/api/mcp-studio` (Streamable HTTP, no auth)
+- Server: `https://three.ws/api/mcp-studio?auth=oauth` (Streamable HTTP, MCP OAuth; an `Authorization: Bearer <API key>` header also works)
 - Docs: <https://three.ws/docs>
 - Source: <https://github.com/nirholas/three.ws>
 
