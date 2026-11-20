@@ -19,7 +19,7 @@ Page source: [`pages/partners.html`](../pages/partners.html). Partnership enquir
 | Google Cloud | Cloud | `/blog/three-ws-google-cloud-partnership` | [Production runbook](./ops/gcp-production.md), [credits plan](./ops/gcp-credits-plan.md), [model workers](./ops/gcp-model-workers.md) |
 | Alibaba Cloud | Cloud | `/blog/three-ws-alibaba-cloud-partnership` | [Listings and distribution](./listings.md), [the model router](./brain.md) |
 | NVIDIA | Inception | `/nvidia` | [NVIDIA Inception](./nvidia-inception.md), [NVIDIA models](./nvidia-models.md), [Nemotron spotlight](./nvidia-nemotron-spotlight.md) |
-| xAI | Grok for Startups | `/grok` | [three.ws for Grok](./grok.md), [Grok Bot connector reference](./grok-bot.md), [LLM lanes](./ops/llm-lanes.md) |
+| xAI | Grok for Startups | `/grok` | [three.ws for Grok](./grok.md), [Grok Bot connector reference](./grok-bot.md), [LLM lanes](./ops/llm-lanes.md), [Grok for Startups build and co-marketing plan](./partners/xai-grok-startups-plan.md) |
 | HackerNoon | Media | `/blog/three-ws-hackernoon-partnership` | [Syndication](./syndication.md), [Listings and distribution](./listings.md) |
 | Quicknode | Infrastructure | `/blog/three-ws-quicknode-startup-program` | [Solana integration](./solana.md), [Listings and distribution](./listings.md) |
 

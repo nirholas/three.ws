@@ -4128,7 +4128,7 @@
 			"fit": 2,
 			"reach": 3,
 			"access": 3,
-			"next": "Complete xAI onboarding to release the remaining 80% of credits, record the received amount and expiry with --benefit, and route the Grok lane through the credited team",
+			"next": "Complete xAI onboarding to release the remaining 80% of credits, record the expiry with --benefit (never the amount, which stays in the XAI_CREDIT_GRANT_USD env var on Cloud Run), and route the Grok lane through the credited team. Build and co-marketing plan: docs/partners/xai-grok-startups-plan.md (work orders 871 to 885)",
 			"why": "Admitted 2026-11-20 as a bootstrapped applicant. Grok is already one of our model lanes (docs/grok.md, docs/ops/llm-lanes.md) and three.ws ships a Grok connector, so the credits cut that lane cost directly. The program email signs as SpaceXSI, matching the branding seen in coverage.",
 			"source": "https://i10x.ai/news/grok-for-startups-xai-credit-program",
 			"checked": "2026-11-20",

@@ -54,7 +54,7 @@ Memberships we already have where a benefit sits unclaimed or a next step is ope
 | 7 | [NVIDIA Developer Program and forums](https://developer.nvidia.com/developer-program) | NVIDIA | 12 | Post forum post 3 (drafted in docs/nvidia-forum-browser-digital-human.md) once the owner approves the external post |
 | 8 | [Google for Startups Cloud Program (Web3 tier)](https://startup.google.com/cloud/) | Google | 11 | Ask the Google for Startups team whether the grant can move to the Scale AI tier (up to USD 350,000); keep spend inside the burn rules in docs/ops/gcp-credits-plan.md |
 | 9 | [IBM Partner Plus (Build track)](https://ibm.com/partnerplus/isv) | IBM | 11 | Request the My Digital Marketing benefit and complete the Partner Plus Directory listing |
-| 10 | [Grok for Startups](https://x.ai/startups) | xAI | 8 | Complete xAI onboarding to release the remaining 80% of credits, record the received amount and expiry with --benefit, and route the Grok lane through the credited team |
+| 10 | [Grok for Startups](https://x.ai/startups) | xAI | 8 | Complete xAI onboarding to release the remaining 80% of credits, record the expiry with --benefit (never the amount, which stays in the XAI_CREDIT_GRANT_USD env var on Cloud Run), and route the Grok lane through the credited team. Build and co-marketing plan: docs/partners/xai-grok-startups-plan.md (work orders 871 to 885) |
 
 ### Wave 1: finish what is built
 
@@ -963,7 +963,7 @@ Closed doors (do not re-research):
 
 | Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
 |---|---|---|---|---|---|---|---|
-| [Grok for Startups](https://x.ai/startups) | Startup credits | credits sized to stage and usage, no fixed tier (per i10x / vandatateam coverage); Credits sized to 6-12 months of usage across Grok, Grok Build and the Grok API; 20% on approval, 80% after onboarding |  | Checks for venture backing (disputed by one aggregator), live product, company email matching website; credits expire 6 months Cost: free. | Member / live | Complete xAI onboarding to release the remaining 80% of credits, record the received amount and expiry with --benefit, and route the Grok lane through the credited team Apply: Application at x.ai/startups. Cadence: rolling; launched late Oct 2026. | 2·3·3 = **8** |
+| [Grok for Startups](https://x.ai/startups) | Startup credits | credits sized to stage and usage, no fixed tier (per i10x / vandatateam coverage); Credits sized to 6-12 months of usage across Grok, Grok Build and the Grok API; 20% on approval, 80% after onboarding |  | Checks for venture backing (disputed by one aggregator), live product, company email matching website; credits expire 6 months Cost: free. | Member / live | Complete xAI onboarding to release the remaining 80% of credits, record the expiry with --benefit (never the amount, which stays in the XAI_CREDIT_GRANT_USD env var on Cloud Run), and route the Grok lane through the credited team. Build and co-marketing plan: docs/partners/xai-grok-startups-plan.md (work orders 871 to 885) Apply: Application at x.ai/startups. Cadence: rolling; launched late Oct 2026. | 2·3·3 = **8** |
 
 - **Grok for Startups.** Admitted 2026-11-20 as a bootstrapped applicant. Grok is already one of our model lanes (docs/grok.md, docs/ops/llm-lanes.md) and three.ws ships a Grok connector, so the credits cut that lane cost directly. The program email signs as SpaceXSI, matching the branding seen in coverage.
 
