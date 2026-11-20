@@ -224,6 +224,13 @@
 			"continue": true
 		},
 		{
+			"src": "/glass/?$",
+			"headers": {
+				"permissions-policy": "accelerometer=(self), autoplay=(self), camera=(), display-capture=(), encrypted-media=(self), geolocation=(self), gyroscope=(self), magnetometer=(self), microphone=(self), midi=(), payment=(self), serial=(), usb=(), xr-spatial-tracking=(self)"
+			},
+			"continue": true
+		},
+		{
 			"src": "/(audio2face|demos/audio2face\\.html)/?$",
 			"headers": {
 				"permissions-policy": "accelerometer=(), autoplay=(self), camera=(), display-capture=(), encrypted-media=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(self), midi=(), payment=(self), serial=(), usb=(), xr-spatial-tracking=(self), fullscreen=(self)"
