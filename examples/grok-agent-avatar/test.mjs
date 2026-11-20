@@ -77,3 +77,18 @@ test('a rejected key is reported with xAI\'s own message (live call to api.x.ai)
 		assert.match(body.message, /Incorrect API key/);
 	});
 });
+
+test('the load label reads agent:load-progress pct, a 0..1 fraction, as a percentage', async () => {
+	const { loadLabel } = await import('./public/moods.js');
+	assert.equal(loadLabel(0.45), '45%');
+	assert.equal(loadLabel(0.9), '90%');
+	assert.equal(loadLabel(1), '100%');
+	assert.equal(loadLabel(0), '');
+	assert.equal(loadLabel(undefined), '');
+});
+
+test('every mood maps to a known emote or to a spoken reply', async () => {
+	const { MOOD_MAP, moodFor } = await import('./public/moods.js');
+	assert.deepEqual(Object.keys(MOOD_MAP).sort(), [...MOODS].sort());
+	assert.equal(moodFor('grumpy'), MOOD_MAP.neutral);
+});

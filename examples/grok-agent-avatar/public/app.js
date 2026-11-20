@@ -1,16 +1,7 @@
 // The page side: chat with the server, then show each reply's mood on the
 // avatar through the documented <agent-3d> API (setMood, playClip, speak).
 
-// mood -> sustained expression (valence -1..1, arousal 0..1) and a one-shot emote
-// from https://three.ws/animations/manifest.json.
-const MOOD_MAP = {
-	happy: { valence: 0.7, arousal: 0.4, clip: 'nod', label: 'Happy' },
-	excited: { valence: 0.9, arousal: 0.85, clip: 'celebrate', label: 'Excited' },
-	thoughtful: { valence: 0.1, arousal: 0.3, clip: 'think', label: 'Thoughtful' },
-	sad: { valence: -0.6, arousal: 0.2, clip: 'defeated', label: 'Sad' },
-	surprised: { valence: 0.3, arousal: 0.9, clip: 'reaction', label: 'Surprised' },
-	neutral: { valence: 0, arousal: 0.3, clip: null, label: 'Calm' },
-};
+import { loadLabel, moodFor } from './moods.js';
 
 const $ = (id) => document.getElementById(id);
 const avatar = $('avatar');
@@ -22,8 +13,7 @@ const history = [];
 let avatarReady = false;
 
 avatar.addEventListener('agent:load-progress', (e) => {
-	const pct = Math.round(Number(e.detail?.pct) || 0);
-	$('load-pct').textContent = pct ? `${pct}%` : '';
+	$('load-pct').textContent = loadLabel(e.detail?.pct);
 });
 avatar.addEventListener('agent:ready', () => {
 	avatarReady = true;
@@ -38,7 +28,7 @@ avatar.addEventListener('agent:error', (e) => {
 $('reload').addEventListener('click', () => location.reload());
 
 function showMood(mood, reply) {
-	const m = MOOD_MAP[mood] || MOOD_MAP.neutral;
+	const m = moodFor(mood);
 	const tag = $('mood');
 	tag.textContent = m.label;
 	tag.dataset.mood = mood;

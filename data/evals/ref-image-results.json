@@ -1,0 +1,613 @@
+{
+	"description": "Per-prompt results of scripts/grok-eval-ref-image.mjs. Rows are keyed provider:promptId; judgments are keyed promptId. Written by the harness, do not edit by hand.",
+	"rows": {
+		"baseline:architecture-01": {
+			"provider": "baseline",
+			"id": "architecture-01",
+			"category": "architecture",
+			"prompt": "a small Japanese pagoda with three tiers",
+			"seed": 149039386,
+			"ranAt": "2026-11-20T21:42:55.214Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:architecture-02": {
+			"provider": "baseline",
+			"id": "architecture-02",
+			"category": "architecture",
+			"prompt": "a medieval stone watchtower",
+			"seed": 1340860849,
+			"ranAt": "2026-11-20T21:42:55.548Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:architecture-03": {
+			"provider": "baseline",
+			"id": "architecture-03",
+			"category": "architecture",
+			"prompt": "a cozy wooden cabin with a chimney",
+			"seed": 948467444,
+			"ranAt": "2026-11-20T21:42:55.558Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:architecture-04": {
+			"provider": "baseline",
+			"id": "architecture-04",
+			"category": "architecture",
+			"prompt": "a white lighthouse on a rocky base",
+			"seed": 1310453645,
+			"ranAt": "2026-11-20T21:42:55.907Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:architecture-05": {
+			"provider": "baseline",
+			"id": "architecture-05",
+			"category": "architecture",
+			"prompt": "a modern glass-and-concrete villa, isometric",
+			"seed": 9814227,
+			"ranAt": "2026-11-20T21:42:55.946Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:architecture-06": {
+			"provider": "baseline",
+			"id": "architecture-06",
+			"category": "architecture",
+			"prompt": "a classical Greek temple with columns",
+			"seed": 1636376505,
+			"ranAt": "2026-11-20T21:42:56.251Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:characters-01": {
+			"provider": "baseline",
+			"id": "characters-01",
+			"category": "characters",
+			"prompt": "a cartoon fox adventurer wearing a backpack, standing",
+			"seed": 1098417459,
+			"ranAt": "2026-11-20T21:42:51.688Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:characters-02": {
+			"provider": "baseline",
+			"id": "characters-02",
+			"category": "characters",
+			"prompt": "a friendly round robot with stubby arms and a screen face",
+			"seed": 224755238,
+			"ranAt": "2026-11-20T21:42:52.010Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:characters-03": {
+			"provider": "baseline",
+			"id": "characters-03",
+			"category": "characters",
+			"prompt": "an elderly wizard in a long blue robe holding a staff",
+			"seed": 1180568150,
+			"ranAt": "2026-11-20T21:42:52.030Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:characters-04": {
+			"provider": "baseline",
+			"id": "characters-04",
+			"category": "characters",
+			"prompt": "a stylized astronaut in a white suit, full body, T-pose",
+			"seed": 962106170,
+			"ranAt": "2026-11-20T21:42:52.356Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:characters-05": {
+			"provider": "baseline",
+			"id": "characters-05",
+			"category": "characters",
+			"prompt": "a chibi samurai girl with a katana on her back",
+			"seed": 1082316325,
+			"ranAt": "2026-11-20T21:42:52.373Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:characters-06": {
+			"provider": "baseline",
+			"id": "characters-06",
+			"category": "characters",
+			"prompt": "a green goblin merchant carrying a sack of goods",
+			"seed": 1155746689,
+			"ranAt": "2026-11-20T21:42:52.706Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:characters-07": {
+			"provider": "baseline",
+			"id": "characters-07",
+			"category": "characters",
+			"prompt": "a plush teddy bear sitting upright",
+			"seed": 828373564,
+			"ranAt": "2026-11-20T21:42:52.718Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:food-01": {
+			"provider": "baseline",
+			"id": "food-01",
+			"category": "food",
+			"prompt": "a cheeseburger with lettuce, tomato and sesame bun",
+			"seed": 1928366043,
+			"ranAt": "2026-11-20T21:42:54.141Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:food-02": {
+			"provider": "baseline",
+			"id": "food-02",
+			"category": "food",
+			"prompt": "a slice of strawberry layer cake on a plate",
+			"seed": 689298375,
+			"ranAt": "2026-11-20T21:42:54.480Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:food-03": {
+			"provider": "baseline",
+			"id": "food-03",
+			"category": "food",
+			"prompt": "a bowl of ramen with egg, nori and chopsticks",
+			"seed": 576258177,
+			"ranAt": "2026-11-20T21:42:54.498Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:food-04": {
+			"provider": "baseline",
+			"id": "food-04",
+			"category": "food",
+			"prompt": "a whole pineapple",
+			"seed": 388597635,
+			"ranAt": "2026-11-20T21:42:54.828Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:food-05": {
+			"provider": "baseline",
+			"id": "food-05",
+			"category": "food",
+			"prompt": "a stack of three pancakes with butter and syrup",
+			"seed": 1857880879,
+			"ranAt": "2026-11-20T21:42:54.859Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:food-06": {
+			"provider": "baseline",
+			"id": "food-06",
+			"category": "food",
+			"prompt": "a glazed donut with rainbow sprinkles",
+			"seed": 333960318,
+			"ranAt": "2026-11-20T21:42:55.198Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:hard-01": {
+			"provider": "baseline",
+			"id": "hard-01",
+			"category": "hard",
+			"prompt": "a bicycle with thin spokes",
+			"seed": 216931794,
+			"ranAt": "2026-11-20T21:42:56.272Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:hard-02": {
+			"provider": "baseline",
+			"id": "hard-02",
+			"category": "hard",
+			"prompt": "a wire birdcage with an open door",
+			"seed": 498055926,
+			"ranAt": "2026-11-20T21:42:56.611Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:hard-03": {
+			"provider": "baseline",
+			"id": "hard-03",
+			"category": "hard",
+			"prompt": "a dragonfly with transparent veined wings",
+			"seed": 1953490741,
+			"ranAt": "2026-11-20T21:42:56.625Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:hard-04": {
+			"provider": "baseline",
+			"id": "hard-04",
+			"category": "hard",
+			"prompt": "a wrought iron floor lamp with a thin curved stem",
+			"seed": 683648954,
+			"ranAt": "2026-11-20T21:42:56.958Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:hard-05": {
+			"provider": "baseline",
+			"id": "hard-05",
+			"category": "hard",
+			"prompt": "a clear glass wine bottle",
+			"seed": 1258575395,
+			"ranAt": "2026-11-20T21:42:56.976Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:hard-06": {
+			"provider": "baseline",
+			"id": "hard-06",
+			"category": "hard",
+			"prompt": "a crystal chandelier",
+			"seed": 2116853233,
+			"ranAt": "2026-11-20T21:42:57.291Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:hard-07": {
+			"provider": "baseline",
+			"id": "hard-07",
+			"category": "hard",
+			"prompt": "a glass jar half full of honey",
+			"seed": 9831318,
+			"ranAt": "2026-11-20T21:42:57.315Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:props-01": {
+			"provider": "baseline",
+			"id": "props-01",
+			"category": "props",
+			"prompt": "a brass ship's telescope with leather grip",
+			"seed": 1279258303,
+			"ranAt": "2026-11-20T21:39:17.529Z",
+			"reference": {
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 25116,
+				"imageUrl": "https://three.ws/cdn/forge/refs/e6595c7c-4ec5-4b60-9569-3a29d459fbfb.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/props-01.ref.png"
+			},
+			"image": {
+				"bgColor": [
+					149,
+					143,
+					135
+				],
+				"bgUniformity": 0.226,
+				"components": 1,
+				"mainShare": 1,
+				"centroidOffset": 0.163,
+				"bboxOffset": 0.006,
+				"fillArea": 0.73,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": true,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/d7eb163e-4466-497a-a13d-f1f0ac228621.glb",
+				"latencyMs": 107086,
+				"bytes": 4605128,
+				"metrics": {
+					"triangles": 39846,
+					"vertices": 19925,
+					"edges": 59769,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 2200,
+				"path": ".cache/grok-eval-ref-image/baseline/props-01.render.png"
+			},
+			"score": 70,
+			"failed": false
+		},
+		"baseline:props-03": {
+			"provider": "baseline",
+			"id": "props-03",
+			"category": "props",
+			"prompt": "a vintage rotary telephone in red bakelite",
+			"seed": 1755564410,
+			"ranAt": "2026-11-20T21:42:15.643Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:props-04": {
+			"provider": "baseline",
+			"id": "props-04",
+			"category": "props",
+			"prompt": "a ceramic teapot with a blue floral pattern",
+			"seed": 28454214,
+			"ranAt": "2026-11-20T21:42:15.645Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:props-05": {
+			"provider": "baseline",
+			"id": "props-05",
+			"category": "props",
+			"prompt": "a battered leather armchair",
+			"seed": 322730513,
+			"ranAt": "2026-11-20T21:42:27.174Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:props-06": {
+			"provider": "baseline",
+			"id": "props-06",
+			"category": "props",
+			"prompt": "a sci-fi energy cell canister with glowing cyan core",
+			"seed": 282078230,
+			"ranAt": "2026-11-20T21:42:27.227Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:props-07": {
+			"provider": "baseline",
+			"id": "props-07",
+			"category": "props",
+			"prompt": "a knight's steel helmet with a visor",
+			"seed": 459198047,
+			"ranAt": "2026-11-20T21:42:51.668Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:vehicles-01": {
+			"provider": "baseline",
+			"id": "vehicles-01",
+			"category": "vehicles",
+			"prompt": "a red vintage pickup truck",
+			"seed": 1963857808,
+			"ranAt": "2026-11-20T21:42:53.061Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:vehicles-02": {
+			"provider": "baseline",
+			"id": "vehicles-02",
+			"category": "vehicles",
+			"prompt": "a low-poly style yellow school bus",
+			"seed": 1021752576,
+			"ranAt": "2026-11-20T21:42:53.085Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:vehicles-03": {
+			"provider": "baseline",
+			"id": "vehicles-03",
+			"category": "vehicles",
+			"prompt": "a matte black sport motorcycle",
+			"seed": 2069057653,
+			"ranAt": "2026-11-20T21:42:53.397Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:vehicles-04": {
+			"provider": "baseline",
+			"id": "vehicles-04",
+			"category": "vehicles",
+			"prompt": "a small propeller seaplane with floats",
+			"seed": 929800351,
+			"ranAt": "2026-11-20T21:42:53.414Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:vehicles-05": {
+			"provider": "baseline",
+			"id": "vehicles-05",
+			"category": "vehicles",
+			"prompt": "a steampunk submarine with brass rivets",
+			"seed": 1570313402,
+			"ranAt": "2026-11-20T21:42:53.765Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:vehicles-06": {
+			"provider": "baseline",
+			"id": "vehicles-06",
+			"category": "vehicles",
+			"prompt": "a six-wheeled planetary rover",
+			"seed": 142051365,
+			"ranAt": "2026-11-20T21:42:53.782Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		},
+		"baseline:vehicles-07": {
+			"provider": "baseline",
+			"id": "vehicles-07",
+			"category": "vehicles",
+			"prompt": "a wooden rowing boat with two oars resting inside",
+			"seed": 997747800,
+			"ranAt": "2026-11-20T21:42:54.129Z",
+			"reference": {
+				"ok": false,
+				"error": "pollinations returned 402"
+			},
+			"score": 0,
+			"failed": true
+		}
+	},
+	"judgments": {},
+	"runs": [
+		{
+			"startedAt": "2026-11-20T21:39:17.514Z",
+			"commit": "7ca96e42e",
+			"providers": [
+				"baseline"
+			],
+			"prompts": 1,
+			"renderBase": "https://three.ws",
+			"finishedAt": "2026-11-20T21:41:33.422Z"
+		}
+	]
+}
