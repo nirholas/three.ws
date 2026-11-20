@@ -31,14 +31,25 @@ describe('Grok Build plugin package', () => {
 		expect(read(join(PLUGIN, 'LICENSE'))).toBe(read(join(ROOT, 'LICENSE')));
 	});
 
-	it('connects only the open Grok door, which serves no value-moving tool', () => {
+	// Making or rigging a model needs a three.ws account, and the bare Grok door
+	// answers an anonymous create with sign_in_required. Marketplace headers are
+	// literal and may not hold secrets, so ?auth=oauth makes the first connect
+	// answer 401 and Grok Build runs the three.ws sign-in.
+	it('connects only the Grok door, asking Grok Build to sign in, and it serves no value-moving tool', () => {
 		const m = JSON.parse(read(join(PLUGIN, '.mcp.json')));
 		expect(Object.keys(m.mcpServers)).toEqual(['three-ws']);
 		const s = m.mcpServers['three-ws'];
 		expect(s.type).toBe('http');
-		expect(s.url).toBe('https://three.ws/api/mcp-grok');
+		expect(s.url).toBe('https://three.ws/api/mcp-grok?auth=oauth');
+		expect(s.note).not.toMatch(/no account|anonymous/i);
 		expect(s.command).toBeUndefined();
 		expect(s.headers).toBeUndefined();
+	});
+
+	it('no longer tells anyone the plugin needs no account', () => {
+		for (const f of ['README.md', '.grok-plugin/plugin.json']) {
+			expect(read(join(PLUGIN, f)), f).not.toMatch(/no account|No account|no API key|without an account/);
+		}
 	});
 
 	it('ships no hooks, agents, install scripts or executables', () => {

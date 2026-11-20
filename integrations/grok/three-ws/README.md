@@ -2,7 +2,7 @@
 
 A [Grok Build](https://github.com/xai-org/grok-build) plugin that gives Grok a free 3D studio. From one sentence or one photo it makes a textured 3D model (GLB) or a rigged, animation-ready avatar, auto-rigs a GLB you already have, searches thousands of CC0 props, rigged characters and motion clips, renders a result so Grok can check it, explains a machine as an interactive 3D cutaway, and embeds any of it on a website.
 
-No account, no API key, no payment. No tool in this plugin spends money or moves value.
+No payment, and no tool in this plugin spends money or moves value. Making or rigging a model needs a three.ws account (free): the first time Grok Build connects, it opens the three.ws sign-in in your browser, and you can create an account there. Models you make are saved to your account, unlisted until you share them.
 
 ## Install
 
@@ -17,13 +17,13 @@ cp -r three.ws-src/integrations/grok/three-ws ~/.grok/plugins/three-ws
 
 Or point Grok Build at it for one session: `grok --plugin-dir ./three.ws-src/integrations/grok/three-ws`.
 
-Then type `/mcps` to see `three-ws` connected, and run the `three-ws-tour` command (it autocompletes after `/`) for a guided walkthrough.
+Then type `/mcps`, sign in to three.ws when Grok Build asks, and see `three-ws` connected. Run the `three-ws-tour` command (it autocompletes after `/`) for a guided walkthrough.
 
 ## What it ships
 
 | Component | Path | What it does |
 |---|---|---|
-| MCP server | [`.mcp.json`](.mcp.json) | `three-ws`, the hosted Streamable HTTP server at `https://three.ws/api/mcp-grok` |
+| MCP server | [`.mcp.json`](.mcp.json) | `three-ws`, the hosted Streamable HTTP server at `https://three.ws/api/mcp-grok?auth=oauth` (the query asks Grok Build to sign in) |
 | Skill | [`skills/generate-3d-model/`](skills/generate-3d-model/) | Text to a textured GLB |
 | Skill | [`skills/create-3d-avatar/`](skills/create-3d-avatar/) | Text or a photo to a rigged avatar |
 | Skill | [`skills/rig-a-model/`](skills/rig-a-model/) | Rig an existing GLB |
@@ -38,13 +38,14 @@ No hooks, no agents, no LSP servers, no install scripts and no local binaries.
 
 | Endpoint | Why |
 |---|---|
-| `https://three.ws/api/mcp-grok` | The MCP server: generation, rigging, catalog search, render checks, job polling |
+| `https://three.ws/api/mcp-grok?auth=oauth` | The MCP server: generation, rigging, catalog search, render checks, job polling |
 | `https://three.ws/api/*` (plain HTTPS) | The skills show the same calls over HTTP for a shell or script |
 | `https://three.ws/...` and its CDN | Links the tools return: GLB downloads, the viewer, pose studio and embed pages |
+| `https://three.ws/oauth/authorize`, `https://three.ws/api/oauth/token` | The OAuth 2.1 sign-in Grok Build runs in the browser |
 
-Credentials: none. The plugin reads no environment variables, tokens or local files and sends nothing about the user's machine. Generation is rate limited per MCP session.
+Credentials: a three.ws sign-in, done with OAuth 2.1 in the browser. No key is pasted into Grok Build, and the plugin reads no environment variables, tokens or local files and sends nothing about the user's machine. Grok Build keeps the access token and refreshes it. Generation is rate limited per account.
 
-Optional sign-in: adding a second server at `https://three.ws/api/mcp-grok?auth=oauth` and signing in with a free three.ws account adds the account's agents and read-only Solana market intelligence. Sign-in is OAuth 2.1 in the browser; no key is pasted into Grok Build. That server also never buys, sells, sends or spends. Reference: [three.ws/docs/grok-bot](https://three.ws/docs/grok-bot).
+Signing in also adds the account's agents and read-only Solana market intelligence. The server never buys, sells, sends or spends. Reference: [three.ws/docs/grok-bot](https://three.ws/docs/grok-bot).
 
 ## Maintenance
 

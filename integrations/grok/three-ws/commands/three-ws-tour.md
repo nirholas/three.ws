@@ -8,7 +8,7 @@ Walk the user through what the three.ws plugin does, one short step at a time. K
 
 ## Step 1: Check the connection
 
-Confirm the `three-ws` MCP server is connected. If it is not, tell the user to type `/mcps` and check that `three-ws` is enabled. The server is free and anonymous: no account, no API key and no payment.
+Confirm the `three-ws` MCP server is connected. If it is not, tell the user to type `/mcps`, check that `three-ws` is enabled, and finish the three.ws sign-in it opens in the browser. Making or rigging a model needs a three.ws account (free; the sign-in page can create one), and nothing on the server costs money. If a tool answers sign_in_required, the sign-in did not finish: send the user back to `/mcps`.
 
 ## Step 2: Find a ready-made asset
 
@@ -26,9 +26,9 @@ Explain that `forge_avatar` builds a humanoid character with a skeleton, ready t
 
 Explain that `look_at_model` renders the finished model so Grok can see it and catch a bad generation before the user does. Run it on the model from step 3 or 4 and describe what the render shows in one sentence.
 
-## Step 6: Go further (optional, needs a free three.ws account)
+## Step 6: Go further (optional)
 
-Tell the user that signing in adds their three.ws agents and read-only Solana market intel (pump.fun graduations, Oracle conviction, token due diligence, the trader leaderboard). To sign in, add a second MCP server named `three-ws-account` with the URL `https://three.ws/api/mcp-grok?auth=oauth`, then sign in from `/mcps` when Grok Build asks. Nothing on either server buys, sells, sends or spends.
+Tell the user that the same sign-in also gives Grok their three.ws agents and read-only Solana market intel. Offer to list their agents. Nothing on the server buys, sells, sends or spends.
 
 ## Step 7: Wrap up
 
