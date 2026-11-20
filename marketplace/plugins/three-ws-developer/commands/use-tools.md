@@ -8,7 +8,7 @@ You are producing a working code example for a specific three.ws MCP tool. `$ARG
 
 | Tool | Price | Input | Output |
 |------|-------|-------|--------|
-| `forge_free` | **Free** | `{ prompt: string, tier?: 'draft'\|'standard'\|'high' }` | Textured GLB `glbUrl` + viewer `preview` — free NVIDIA NIM (TRELLIS) text→3D, no payment |
+| `forge_free` | **Free** | `{ prompt: string, tier?: 'draft'\|'standard'\|'high' }` | Textured GLB `glbUrl` + viewer `preview`, free Microsoft TRELLIS text→3D, no payment |
 | `mesh_forge` | $0.25 | `{ prompt?: string, image_url?: string }` | Textured GLB `glbUrl`, viewer `preview`, `directedPrompt`, timing |
 | `rig_mesh` | $0.20 | `{ glb_url: string }` | `riggedGlbUrl` + pose-studio link |
 | `text_to_avatar` | $0.15 | `{ prompt?: string, image_urls?: string[] }` | Avatar GLB URL, model version, prediction id |
@@ -96,7 +96,7 @@ console.log(out.preview);  // three.ws viewer link that renders it in the browse
 await transport.close();
 ```
 
-Note for `forge_free`: it runs the free NVIDIA NIM (Microsoft TRELLIS) text→3D lane — the same engine `/forge` uses for drafts. Tiers `draft` (default), `standard`, and `high` are all free; higher tiers only take longer. It is text-only; for image/multi-view input or the Granite-directed chain, use `mesh_forge` (paid).
+Note for `forge_free`: it runs the free Microsoft TRELLIS text→3D lane (own GPU workers first, NIM last resort), the same engine `/forge` uses for drafts. Tiers `draft` (default), `standard`, and `high` are all free; higher tiers only take longer. It is text-only; for image/multi-view input or the Granite-directed chain, use `mesh_forge` (paid).
 
 Adapt the tool name, input, and any tool-specific notes (e.g., for `vanity_grinder` note that the returned secret key must be treated as a secret and stored securely; for `agent_reputation` note that `agentId` can be an EVM address and `chainId` defaults to Base).
 

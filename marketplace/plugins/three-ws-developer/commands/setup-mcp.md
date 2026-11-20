@@ -75,7 +75,7 @@ Once configured, these <!-- mcp-count:three-ws-mcp-server.tools -->26<!-- /mcp-c
 
 | Tool | Price | What it does |
 |------|-------|--------------|
-| `forge_free` | **Free** | Text → textured 3D GLB on the free NVIDIA NIM (TRELLIS) lane — no payment, no wallet, no key |
+| `forge_free` | **Free** | Text → textured 3D GLB on the free Microsoft TRELLIS lane (own GPU workers first, NIM last resort), no payment, no wallet, no key |
 | `mesh_forge` | $0.25 | Text or image → textured 3D GLB |
 | `rig_mesh` | $0.20 | Auto-rig a static GLB into an animation-ready model |
 | `text_to_avatar` | $0.15 | Text or image → textured 3D avatar GLB |

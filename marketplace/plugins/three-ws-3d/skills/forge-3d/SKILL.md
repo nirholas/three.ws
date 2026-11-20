@@ -12,7 +12,7 @@ Turn a sentence into a textured, downloadable 3D model at zero cost. This is the
 `forge_free` (three.ws MCP server, `@three-ws/mcp-server`).
 
 - **Lane:** FREE. No x402 payment, no API key, no wallet, no `$THREE` required.
-- **Backend:** the three.ws `POST /api/forge` pipeline on the free NVIDIA NIM lane (Microsoft TRELLIS text→3D preview).
+- **Backend:** the three.ws `POST /api/forge` pipeline on the free Microsoft TRELLIS lane (our own GPU workers first, NVIDIA NIM as the last resort).
 - **Mode:** text only. NVIDIA's hosted TRELLIS preview does not accept uploaded photos — for image or multi-view → 3D, use the `mesh-forge` skill instead.
 
 ## Inputs

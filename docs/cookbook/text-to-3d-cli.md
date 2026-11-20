@@ -114,7 +114,7 @@ instead of the stack trace you would otherwise get.
 
 ## What the free tier actually is
 
-The free lane is NVIDIA NIM TRELLIS. Be honest with yourself about what it
+The free lane is Microsoft TRELLIS (NVIDIA NIM first, our own GPU worker as the fallback). Be honest with yourself about what it
 produces:
 
 - **Single subject.** "a brass watering can" works. "a kitchen scene with a

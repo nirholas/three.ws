@@ -83,7 +83,7 @@ export const CATALOG = [
 		auth: 'public',
 		summary:
 			'Free text→3D: the only text-to-mesh lane in the agent-payments ecosystem; textured GLB ' +
-			'from a prompt, no key, no wallet. Draft tier runs on the NVIDIA NIM TRELLIS lane; free ' +
+			'from a prompt, no key, no wallet. Draft tier runs Microsoft TRELLIS (NVIDIA NIM when available, otherwise our own GPU worker); free ' +
 			'per-IP quota of 10/day, then 429 pointing at the paid /api/x402/forge tiers.',
 		params: { prompt: 'string: describe a single object or character (3-1000 chars, required)' },
 	},

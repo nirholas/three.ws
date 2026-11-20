@@ -2,8 +2,9 @@
 // three.ws AI package.
 //
 // three.ws runs the only text→mesh lane in the x402 / agent-payments ecosystem.
-// Its draft tier is genuinely free: a prompt goes to the NVIDIA NIM TRELLIS lane
-// (backend `nvidia`, path `image`, draft tier) via the SAME submit pipeline that
+// Its draft tier is genuinely free: a prompt goes to the free TRELLIS draft lane
+// (backend `nvidia`, path `image`, draft tier: NVIDIA NIM first, then our own GPU
+// TRELLIS worker and HuggingFace Spaces when NIM is cooling down or fails) via the SAME submit pipeline that
 // backs the `forge_free` MCP tool and /forge. It costs nothing and needs no
 // wallet, but it does need a three.ws account: a free API key sent as
 // `Authorization: Bearer <key>` (make one at /dashboard/api-keys) or a signed-in
@@ -11,7 +12,7 @@
 // call gets 401 sign_in_required with where to sign in and where to make a key.
 //
 // Semantics mirror the draft lane exactly (zero duplicated generation logic):
-//   • The NIM often finishes inside the submit window → { status:'done', glb_url,
+//   • A synchronous lane (NIM) can finish inside the submit window → { status:'done', glb_url,
 //     viewer_url }.
 //   • Otherwise the job is queued → { status:'pending', job:<token>, poll_url }
 //     and the caller polls the EXISTING endpoint GET /api/forge?job=<token>.
@@ -94,8 +95,8 @@ export default defineEndpoint({
 			fail(400, 'validation_error', `"prompt" must be ${PROMPT_MAX} characters or fewer`);
 		}
 
-		// The free draft lane pins the NVIDIA NIM TRELLIS backend. If its key isn't
-		// present the lane can't serve — surface the platform's clean 503
+		// The free draft lane pins the `nvidia` backend (NIM first, GPU worker as its
+		// fallback). This endpoint requires the NIM key to be present, or it can't serve, surface the platform's clean 503
 		// not_configured (the missing var is named to the operator, not the client).
 		if (!backendIsConfigured('nvidia')) {
 			throwNotConfigured();

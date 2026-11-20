@@ -29,7 +29,7 @@
 > prompt, a photo, or a sketch into a watertight, textured GLB, and can
 > auto-rig that GLB into an animation-ready humanoid. It wraps the
 > `/api/forge` endpoint (a free three.ws account is all it needs): a free [TRELLIS](https://github.com/microsoft/TRELLIS)
-> lane on NVIDIA NIM, paid high-detail tiers billed in USDC over
+> lane (NVIDIA NIM when available, otherwise our own GPU worker), paid high-detail tiers billed in USDC over
 > [x402](https://x402.org), and bring-your-own-key geometry backends
 > (Meshy, Tripo, Rodin). It pairs with [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar)
 > — Forge *makes* the model, `@three-ws/avatar` *renders* it.
@@ -43,7 +43,7 @@ pipeline, done once:
 
 - **One call, a real GLB.** `forge('a chrome robot')` resolves to a hosted,
   durable `.glb` URL plus a [three.ws viewer](https://three.ws/forge) link.
-- **Free first.** Text prompts default to the free NVIDIA NIM / TRELLIS lane.
+- **Free first.** Text prompts default to the free TRELLIS lane (NVIDIA NIM when available, otherwise our own GPU worker).
   It needs a free three.ws account (an API key), but no wallet and no card.
 - **Scales with the asset.** Three quality tiers (draft → standard → high) map
   to real polygon budgets and PBR texturing. Pay per call in USDC only when you

@@ -15,7 +15,7 @@ Then `/reload-plugins`. The plugin's skills appear under the `three-ws-3d:` name
 
 | Skill | Tool | Lane |
 | --- | --- | --- |
-| `three-ws-3d:forge-3d` | `forge_free` | **Free** text → 3D (NVIDIA NIM / TRELLIS) |
+| `three-ws-3d:forge-3d` | `forge_free` | **Free** text → 3D (Microsoft TRELLIS) |
 | `three-ws-3d:text-to-avatar` | `text_to_avatar` | Paid — $0.15 USDC |
 | `three-ws-3d:mesh-forge` | `mesh_forge` | Paid — $0.25 USDC |
 | `three-ws-3d:auto-rig` | `rig_mesh` / `forge_avatar` | Paid — $0.20 / $0.45 USDC |

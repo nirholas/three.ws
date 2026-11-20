@@ -331,7 +331,7 @@ generation lane**; the rest are paid and quote their price in the
 
 | Tool | Price | What it does |
 |---|---|---|
-| `forge_free` | **Free** | Text → textured GLB on the free NVIDIA NIM (Microsoft TRELLIS) lane; returns a GLB URL + viewer link. |
+| `forge_free` | **Free** | Text → textured GLB on the free Microsoft TRELLIS lane (our own GPU workers first, NVIDIA NIM as the last resort); returns a GLB URL + viewer link. |
 | `crypto_news` | **Free** | Live crypto headlines from every publisher feed in the registry (`api/_lib/news-sources.js`, 27 categories, 17 languages), filterable by category, source, language, or search. |
 | `crypto_news_digest` | **Free** | Clusters the last 1-72h of coverage into distinct narratives with stance, tickers, and covering outlets. |
 | `news_resolve` | **Free** | Resolves one article URL into a bounded excerpt, summary, tickers and a structured trading read (assets with exposure and direction, priced-in, horizon, counter-argument). Blocked or paywalled pages are recovered from the Internet Archive, SEC EDGAR or sibling coverage; `extraction` names the lane. |

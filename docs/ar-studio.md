@@ -39,7 +39,7 @@ Both gallery reads and the objects manifest answer with `Access-Control-Allow-Or
 - **GLB link**: paste any https `.glb`: a forge result, a viewer share link's `src`, or your own hosting.
 - **From a photo**: paste a public https photo link and `POST /api/forge-scene-objects` (SAM 3D Objects) finds the objects in it and rebuilds them as one GLB with a named node per object, laid out like the photo. The tab polls `GET /api/forge-scene-objects?job=<id>` every 4 seconds (up to 150 polls) and drops the finished scene in as a single model titled "Photo scene". The endpoint answers `503 backend_unconfigured` until the GPU worker ([`workers/model-sam3d-objects`](../workers/model-sam3d-objects/README.md), 32 GB+ GPU) is deployed and `MODEL_SAM3D_URL` is set, and the tab shows that message; requests from comprehensively sanctioned territories are refused before any work is queued.
 
-A seventh source is the **in-view forge**: the dock form calls `POST /api/forge` with `{ prompt, backend: 'nvidia' }` (the free NVIDIA NIM / TRELLIS lane), polls `GET /api/forge?job=<id>` until the GLB is ready, remembers it, and drops it into the scene. An eighth is deep links: repeatable `?src=` (paired with `?title=`) and `?forge=<prompt>` boot content on open.
+A seventh source is the **in-view forge**: the dock form calls `POST /api/forge` with `{ prompt, backend: 'nvidia' }` (the free TRELLIS draft lane: NVIDIA NIM first, our own GPU worker as the fallback), polls `GET /api/forge?job=<id>` until the GLB is ready, remembers it, and drops it into the scene. An eighth is deep links: repeatable `?src=` (paired with `?title=`) and `?forge=<prompt>` boot content on open.
 
 ### Device-capability ladder
 
@@ -77,7 +77,7 @@ The full arrangement (every model's source and transform) is serialized to JSON,
 The two HTTP endpoints AR Studio uses are the free, no-auth forge lanes. Your anonymous browser id goes in `x-forge-client`.
 
 ```bash
-# Forge a model from a prompt (the in-view forge; free NVIDIA NIM lane).
+# Forge a model from a prompt (the in-view forge; free TRELLIS draft lane).
 curl -X POST 'https://three.ws/api/forge' \
   -H 'content-type: application/json' \
   -H 'x-forge-client: <ANON_CLIENT_ID>' \

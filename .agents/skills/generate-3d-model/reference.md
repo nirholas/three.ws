@@ -10,7 +10,7 @@ differ in how the mesh is reconstructed and in fidelity.
 
 | Lane | Tool | Cost | Input | Notes |
 | --- | --- | --- | --- | --- |
-| Free text→3D | `forge_free` | Free | text only | NVIDIA NIM / TRELLIS. Default for this skill. |
+| Free text→3D | `forge_free` | Free | text only | Microsoft TRELLIS (own GPU workers first, NVIDIA NIM last resort). Default for this skill. |
 | Art-directed | `mesh_forge` | Paid | text, image, or 1-4 multi-view images | IBM Granite "prompt director" refines the prompt, FLUX renders a reference, then TRELLIS / Hunyuan3D reconstruct. Higher single-subject fidelity. |
 | Avatar | `text_to_avatar` | Paid (free on the hosted studio) | text or image | Tuned for figures/characters. |
 

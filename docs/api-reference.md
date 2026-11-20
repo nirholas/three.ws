@@ -1880,7 +1880,7 @@ Responses are cached in R2 by `sha256(voiceId + text + modelId)` for 30 days —
 
 The only text→mesh lane in the x402 / agent-payments ecosystem. Turn a text
 prompt into a textured, downloadable GLB — no key, no wallet. The draft tier runs
-free on the NVIDIA NIM TRELLIS lane (the same pipeline behind the `forge_free`
+free on the Microsoft TRELLIS draft lane (NVIDIA NIM first, our own GPU worker as the fallback) (the same free-lane family as the `forge_free`
 MCP tool and [/forge](https://three.ws/forge)). Higher quality/volume lives on
 the paid [x402 forge tiers](#x402-paid-endpoints--sign-in-with-x-siwx).
 
@@ -1997,7 +1997,7 @@ GET  /api/3d/studio?job=<id>
 Public, CORS-open, no auth. The REST contract behind the **"three.ws 3D Studio"**
 custom GPT (its OpenAPI Actions schema lives at
 `prompts/store-submissions/_generated/openai-actions.yaml`). It is a thin shaper
-over the same free NVIDIA NIM TRELLIS lane as `/api/v1/ai/text-to-3d` (same
+over the same free Microsoft TRELLIS draft lane (NVIDIA NIM first, our own GPU worker as the fallback) as `/api/v1/ai/text-to-3d` (same
 per-IP quota buckets, no extra capacity), with two store-specific rules:
 responses carry only model URLs and job state (no upsell block, no pricing
 paths, no internal identifiers), and every prompt passes an age-13+

@@ -1,8 +1,8 @@
 // `forge_free`: FREE MCP tool, text prompt to textured 3D GLB. No payment.
 //
 // The zero-cost counterpart to `mesh_forge` / `text_to_avatar`. It drives the
-// three.ws /api/forge pipeline pinned to the FREE NVIDIA NIM (Microsoft TRELLIS)
-// text to 3D lane, the same free engine the /forge web page uses for prompt
+// three.ws /api/forge pipeline on the FREE Microsoft TRELLIS text to 3D lane
+// (own GPU workers first, NVIDIA NIM last resort), the same free engine the /forge web page uses for prompt
 // drafts, so a text prompt becomes a downloadable, viewable 3D model with NO
 // x402 payment. Making a model needs a three.ws account, so the forge call
 // carries the operator's three.ws API key from THREE_WS_API_KEY (a free
@@ -31,7 +31,7 @@ const TOOL_NAME = 'forge_free';
 const TOOL_DESCRIPTION =
 	'Generate a textured 3D GLB model from a text prompt. FREE: no x402 payment and no wallet; it needs a free ' +
 	'three.ws account, whose API key this server sends from THREE_WS_API_KEY. ' +
-	'Drives the three.ws /api/forge pipeline on the free NVIDIA NIM (Microsoft TRELLIS) text→3D lane — ' +
+	'Drives the three.ws /api/forge pipeline on the free Microsoft TRELLIS text→3D lane (own GPU workers first, NVIDIA NIM as the last resort), ' +
 	'the same zero-cost engine the /forge web page uses for prompt drafts. Returns a durable GLB URL, a ' +
 	'three.ws viewer link that renders the model in the browser, the quality tier used, and the backend ' +
 	'that actually produced it. Choose tier draft (fast, default), standard, or high — all free; higher ' +

@@ -358,7 +358,7 @@ function avatarDirectorInstruction(prompt) {
 
 
 // ---------------------------------------------------------------------------
-// forge_free — text → textured 3D GLB on the FREE NVIDIA NIM (TRELLIS) lane.
+// forge_free, text → textured 3D GLB on the FREE Microsoft TRELLIS lane (own GPU workers first, NIM last resort).
 // ---------------------------------------------------------------------------
 export async function runForgeFree({ prompt, tier }) {
 	const trimmed = typeof prompt === 'string' ? prompt.trim() : '';

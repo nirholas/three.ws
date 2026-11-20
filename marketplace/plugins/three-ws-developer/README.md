@@ -27,7 +27,7 @@ Installing this plugin registers the `3d-agent` MCP server (`npx -y @three-ws/mc
 
 | Tool | Price | What it does |
 | :--- | :---- | :----------- |
-| `forge_free` | **Free** | Text → textured 3D GLB on the free NVIDIA NIM (TRELLIS) lane — no payment, no wallet, no API key |
+| `forge_free` | **Free** | Text → textured 3D GLB on the free Microsoft TRELLIS lane (own GPU workers first, NIM last resort), no payment, no wallet, no API key |
 | `mesh_forge` | $0.25 | Text or image → textured 3D GLB (Granite-directed model chain) |
 | `rig_mesh` | $0.20 | Auto-rig a static GLB into an animation-ready model |
 | `text_to_avatar` | $0.15 | Text or image → textured 3D avatar GLB |
