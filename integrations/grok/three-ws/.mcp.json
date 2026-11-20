@@ -2,8 +2,8 @@
   "mcpServers": {
     "three-ws": {
       "type": "http",
-      "url": "https://three.ws/api/mcp-grok?auth=oauth",
-      "note": "three.ws hosted MCP server for Grok. No payment, and no tool on this server moves value. Making or rigging a model needs a free three.ws account: Grok Build opens the three.ws sign-in on first connect. Tools: text or image to a textured GLB, a rigged avatar, auto-rigging, catalog search, render checks and job polling. Signing in also adds your three.ws agents and read-only Solana market intel."
+      "url": "https://three.ws/api/mcp-studio?auth=oauth",
+      "note": "three.ws 3D studio over MCP. Catalog search, docs search and model rendering are free with no account. Making, refining or rigging a model needs a free three.ws account: Grok Build opens the three.ws sign-in in your browser on first connect. Tools: text or image to a textured GLB, a rigged avatar, auto-rigging, refinement, render checks, job polling, catalog search and personas. No tool on this server moves money."
     }
   }
 }

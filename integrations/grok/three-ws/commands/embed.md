@@ -1,0 +1,68 @@
+---
+description: Turn a GLB into paste-ready HTML for any website, an animated three.ws <agent-3d> for a character or a <model-viewer> for an object
+argument-hint: <https URL of a .glb>
+---
+
+# /embed
+
+Write paste-ready embed code for this model: $ARGUMENTS
+
+Embedding needs no account and calls nothing that costs money.
+
+1. **Check the input.** The argument must be one public `https://` URL ending in `.glb` (a query string after it is fine). If it is empty or is not such a URL, ask the user for the GLB URL in one short line and stop.
+2. **See what it is.** Call the three-ws `look_at_model` tool on the URL with views `front` and `three-quarter`. If it cannot load the URL, show its message and stop. From the render, decide: a humanoid character (head, two arms, two legs) or anything else (a prop, a vehicle, a building, an animal).
+3. **Write the snippet.** Escape any `"` in the URL as `&quot;`. Use exactly these pinned script tags; the versions and integrity hashes are the published ones, so do not change them.
+
+   **Humanoid character:** the animated three.ws avatar element. It idles, looks around and plays animations when the GLB is rigged (run `/rig` first if it is not).
+
+   ```html
+   <script
+     type="module"
+     src="https://three.ws/agent-3d/1.5.2/agent-3d.js"
+     integrity="sha384-KdAiFRsdcCbQMu4O5rkoL8hOEYLkmrdpf9ELd7jro+9NTNipWis3oqqFLll7v20Q"
+     crossorigin="anonymous"
+   ></script>
+
+   <agent-3d
+     body="GLB_URL"
+     mode="section"
+     kiosk
+     style="width:100%;height:420px;display:block"
+   ></agent-3d>
+   ```
+
+   **Anything else:** Google's model viewer, with orbit controls and AR on phones.
+
+   ```html
+   <script
+     type="module"
+     src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js"
+     integrity="sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p"
+     crossorigin="anonymous"
+   ></script>
+
+   <model-viewer
+     src="GLB_URL"
+     alt="ONE_LINE_DESCRIPTION"
+     camera-controls
+     auto-rotate
+     ar
+     shadow-intensity="1"
+     style="width:100%;height:420px"
+   ></model-viewer>
+   ```
+
+   Replace `GLB_URL` with the URL and `ONE_LINE_DESCRIPTION` with a short description of what the render shows (it is the accessible name for screen readers).
+
+4. **Print the result:** the snippet in one `html` code block, then this line, with the GLB URL URL-encoded:
+
+   ```
+   Viewer: https://three.ws/viewer?src=<GLB URL, URL-encoded>
+   ```
+
+5. **If the user has a project open**, offer to paste the snippet into the page they name. Put the `<script>` tag once per page, in the `<head>` or before the element, and never twice. In React, Vue or Svelte, the custom element works as-is; load the script once from the root HTML file.
+
+## Notes
+
+- The GLB host must allow cross-origin reads (send `Access-Control-Allow-Origin`). Every GLB three.ws returns does. If the user's own host does not, the element shows an empty frame; tell them to enable CORS for `.glb` files or host the file on three.ws by generating or rigging it here.
+- `<agent-3d>` ignores `auto-rotate`; that attribute belongs to `<model-viewer>`.

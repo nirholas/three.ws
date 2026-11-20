@@ -26,9 +26,9 @@ Explain that `forge_avatar` builds a humanoid character with a skeleton, ready t
 
 Explain that `look_at_model` renders the finished model so Grok can see it and catch a bad generation before the user does. Run it on the model from step 3 or 4 and describe what the render shows in one sentence.
 
-## Step 6: Go further (optional)
+## Step 6: Put it on a page (optional)
 
-Tell the user that the same sign-in also gives Grok their three.ws agents and read-only Solana market intel. Offer to list their agents. Nothing on the server buys, sells, sends or spends.
+Explain that `/embed <glb url>` turns any model into paste-ready HTML: an animated `<agent-3d>` element for a rigged character, or a `<model-viewer>` element for a prop. Offer to run it on the model from step 3 or 4. Mention `/make-3d`, `/rig` and the `three-ws:3d-art-director` agent for next time. Nothing on the server buys, sells, sends or spends.
 
 ## Step 7: Wrap up
 
