@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-20T20:57:02.760Z",
+	"generated_at": "2026-11-20T22:02:57.944Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4665,
+	"total": 4668,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-20",
+			"type": "launch",
+			"title": "Talk to a 3D avatar with Grok voice",
+			"summary": "Speech to speech with a lip-synced 3D avatar: pick an avatar, hold to talk or leave the mic open, and watch the measured reply and mouth latency for every turn.",
+			"link": "/voice/grok",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-11-20",
 			"type": "update",
@@ -40,6 +50,17 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "Live uptime numbers for the Grok MCP connectors",
+			"summary": "Every five minutes a synthetic client now connects to the Grok-facing MCP connectors exactly the way Grok and Cursor do: it opens a session, lists the tools, makes one read-only tool call and checks the OAuth sign-in challenge, timing every step. The results appear on the status page under Connector uptime, with 24 hour, 7 day and 30 day success rates and how long a connector waits for the tool list, and the same numbers are published as a public feed at /api/status/mcp. A connector that fails twice in a row alerts the team.",
+			"link": "/status",
+			"tags": [
+				"feature",
+				"infra"
 			]
 		},
 		{
@@ -134,6 +155,16 @@
 			"title": "The /glass lens gets past \"Location needed\"",
 			"summary": "The site-wide permissions policy blocked location, compass sensors and the microphone on every page, so the smart-glasses lens at /glass stopped on its first screen for every visitor. /glass now grants exactly those three to itself (the camera stays off, and no other page changes), so the lens can find where you are, which way you face, and hear your reply.",
 			"link": "/glass",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "The free NVIDIA image step accepts requests again",
+			"summary": "When you make a 3D model from text, the first step draws a reference picture, and the free NVIDIA FLUX service is the first place it asks. That service changed its rules and began refusing any request that carried a random seed, so every attempt was turned away in under a second and the job had to wait for a backup service instead. Requests no longer carry the seed, so the free step can answer again whenever NVIDIA has capacity.",
+			"link": "/forge",
 			"tags": [
 				"fix"
 			]
@@ -1522,36 +1553,6 @@
 			"title": "Docs: Minecraft: Bedrock export",
 			"summary": "Turn any Forge model into blocks and download a Bedrock structure pack: height, block palettes, solid or hollow, texture-sampled colors, loading it with a structure block or /function, limits, the API and the CLI. Not an official Minecraft product.",
 			"link": "/docs/minecraft-export",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "launch",
-			"title": "Microsoft 365 Copilot Connector Settings",
-			"summary": "Connect a three.ws account to your organization's Microsoft 365 tenant with admin consent, index your agents, Forge models and avatars for Microsoft Search and Copilot, choose who can see them, watch sync status, run a full re-sync, and disconnect.",
-			"link": "/settings/microsoft-365",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "launch",
-			"title": "Open a web+threews link",
-			"summary": "Where web+threews: links from Windows, Teams, Outlook and documents land: a valid agent, model or forge link opens straight away, and anything else is explained.",
-			"link": "/open",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "launch",
-			"title": "Review stage (Microsoft Teams meetings)",
-			"summary": "Review a 3D model together in a Microsoft Teams meeting: follow the presenter's camera, point with live lasers, pin comments on the mesh, export them as markdown and keep animation in sync.",
-			"link": "/microsoft/teams-stage",
 			"tags": [
 				"launch"
 			]

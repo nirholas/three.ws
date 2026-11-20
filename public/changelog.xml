@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Talk to a 3D avatar with Grok voice</title>
+			<link>https://three.ws/voice/grok</link>
+			<guid isPermaLink="false">2026-11-20:Talk to a 3D avatar with Grok voice</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Speech to speech with a lip-synced 3D avatar: pick an avatar, hold to talk or leave the mic open, and watch the measured reply and mouth latency for every turn.</description>
+		</item>
+		<item>
 			<title>Every three.ws tool and integration asks for an account before it makes a model</title>
 			<link>https://three.ws/dashboard/api</link>
 			<guid isPermaLink="false">2026-11-20:Every three.ws tool and integration asks for an account before it makes a model</guid>
@@ -29,6 +37,14 @@
 			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>A dependency security update made the Hunyuan3D 2.1 texture stage refuse to load its own bundled paint pipeline, so every Hunyuan3D job failed before it started. The worker now explicitly trusts that pipeline, which ships inside the image, and the build fails if the fix ever stops applying.</description>
+		</item>
+		<item>
+			<title>Live uptime numbers for the Grok MCP connectors</title>
+			<link>https://three.ws/status</link>
+			<guid isPermaLink="false">2026-11-20:Live uptime numbers for the Grok MCP connectors</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every five minutes a synthetic client now connects to the Grok-facing MCP connectors exactly the way Grok and Cursor do: it opens a session, lists the tools, makes one read-only tool call and checks the OAuth sign-in challenge, timing every step. The results appear on the status page under Connector uptime, with 24 hour, 7 day and 30 day success rates and how long a connector waits for the tool list, and the same numbers are published as a public feed at /api/status/mcp. A connector that fails twice in a row alerts the team.</description>
 		</item>
 		<item>
 			<title>Making or uploading a 3D model now needs a free account</title>
@@ -101,6 +117,14 @@
 			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The site-wide permissions policy blocked location, compass sensors and the microphone on every page, so the smart-glasses lens at /glass stopped on its first screen for every visitor. /glass now grants exactly those three to itself (the camera stays off, and no other page changes), so the lens can find where you are, which way you face, and hear your reply.</description>
+		</item>
+		<item>
+			<title>The free NVIDIA image step accepts requests again</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-20:The free NVIDIA image step accepts requests again</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When you make a 3D model from text, the first step draws a reference picture, and the free NVIDIA FLUX service is the first place it asks. That service changed its rules and began refusing any request that carried a random seed, so every attempt was turned away in under a second and the job had to wait for a backup service instead. Requests no longer carry the seed, so the free step can answer again whenever NVIDIA has capacity.</description>
 		</item>
 		<item>
 			<title>The Hunyuan3D-2 image-to-3D lane loads again, and fails fast when it cannot</title>

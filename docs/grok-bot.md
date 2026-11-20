@@ -507,6 +507,29 @@ Grok Bot allows up to 200 runs an hour per routine and 300 across all of them,
 so subscribe to the events you actually want a run for; an endpoint scoped to
 one agent receives only that agent's runs, automations, messages and approvals.
 
+## Reliability
+
+A synthetic client connects to `/api/mcp-grok` and `/api/mcp-studio` every five
+minutes the way Grok Bot does (initialize, tools/list, one read-only tool call,
+and the `?auth=oauth` sign-in challenge) and records the result. The public
+uptime numbers, per server, over 24 hours, 7 days and 30 days, with handshake
+latency percentiles:
+
+```text
+https://three.ws/api/status/mcp
+```
+
+The same numbers render on [three.ws/status](https://three.ws/status) under
+"Connector uptime", and `/api/healthz` reports the `mcp_probe` subsystem. To run
+the identical probe from a clone (no credentials, no writes):
+
+```text
+npm run grok:mcp-probe -- --runs 20
+```
+
+What is probed, the thresholds and the endpoint's fields:
+[docs/ops/mcp-probe.md](ops/mcp-probe.md).
+
 ## Troubleshooting
 
 ### Check the connector the way Grok Bot does
