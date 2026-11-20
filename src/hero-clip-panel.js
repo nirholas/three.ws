@@ -18,6 +18,7 @@
 // and coming back picks the same job up instead of paying for a second clip.
 
 import { apiFetch } from './api.js';
+import { xIntentUrl } from './shared/share-targets.js';
 import './hero-clip.css';
 
 const ENDPOINT = '/api/v1/models/hero-clip';
@@ -279,7 +280,7 @@ export function mountHeroClip(host, source) {
 	}
 
 	function renderDone(d) {
-		const shareHref = `https://x.com/intent/post?${new URLSearchParams({ text: d.share_text || 'A hero clip made from my 3D model on three.ws', url: d.share_url })}`;
+		const shareHref = xIntentUrl({ text: d.share_text || 'A hero clip made from my 3D model on three.ws', url: d.share_url });
 		view(
 			'done',
 			`<div class="hc-stage">
