@@ -68,6 +68,7 @@ import {
 import { forgeSurface, isForgeService } from '../../_okx3d/forge.js';
 import { IDENTITY_CHALLENGE } from '../../_okx3d/discovery.js';
 import { invokeRestService, isRestPaidService } from '../../_okx3d/rest-services.js';
+import { sendRpcResponses } from '../../_lib/mcp-rpc-response.js';
 
 const BASE = 'https://three.ws';
 const HEALTH_PROBE_KEY = 'okx-identity/health-probe.txt';
@@ -638,10 +639,8 @@ async function handleA2mcp(req, res, cfg) {
 			}
 		}
 
-		res.statusCode = 200;
-		res.setHeader('content-type', 'application/json; charset=utf-8');
 		res.setHeader('mcp-protocol-version', PROTOCOL_VERSION);
-		res.end(JSON.stringify(Array.isArray(body) ? responses : (responses[0] ?? null)));
+		sendRpcResponses(res, body, responses);
 	} finally {
 		await releaseProof();
 	}

@@ -15,9 +15,10 @@ const WK_RE = /^\/\.well-known\/oauth-protected-resource(\/api\/[a-z0-9-]+)$/;
 /**
  * Start the server and point PUBLIC_APP_ORIGIN at it, so the challenge and the
  * metadata document name the loopback origin.
+ * @param {{ extraRoutes?: Record<string, Function> }} [opts] more path -> handler pairs
  * @returns {Promise<{ origin: string, close: () => Promise<void> }>}
  */
-export async function startMcpLoopback() {
+export async function startMcpLoopback({ extraRoutes = {} } = {}) {
 	/** @type {Map<string, Function>} */
 	const routes = new Map();
 	const server = createServer(async (req, res) => {
@@ -44,6 +45,7 @@ export async function startMcpLoopback() {
 	routes.set('/api/mcp-studio', (await import('../../api/mcp-studio.js')).default);
 	routes.set('/api/mcp', (await import('../../api/mcp.js')).default);
 	routes.set('wk', (await import('../../api/wk.js')).default);
+	for (const [path, handler] of Object.entries(extraRoutes)) routes.set(path, handler);
 
 	return {
 		origin,
