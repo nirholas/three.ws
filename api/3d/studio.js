@@ -8,10 +8,17 @@
 // pricing paths, no internal identifiers — and every prompt must pass the
 // age-13+ content-safety gate before any GPU work starts.
 //
+// Making a model needs a three.ws account: the GPT authenticates its user with
+// OAuth or a free API key (`Authorization: Bearer <key>`, from
+// /dashboard/api-keys), and an anonymous POST gets 401 sign_in_required with
+// sign_in_url and api_keys_url before any GPU work. The credential is forwarded
+// to /api/gpt-forge so the model is owned by, and rate-limited as, that person.
+// Polling stays open.
+//
 // It is a thin shaper, not a second pipeline: generation runs through the
 // gpt-forge-client → /api/gpt-forge free-first router (the ChatGPT-dedicated
-// clone of /api/forge) with no pinned backend, and draws from the SAME per-IP
-// quota buckets as /api/3d/generate, so adding this surface creates no new
+// clone of /api/forge) with no pinned backend, and draws from the SAME
+// per-account quota buckets as /api/3d/generate, so adding this surface creates no new
 // capacity and no new limiter. High tier rides the async self-host lanes
 // operator-funded (internal seed) through the pending/poll contract.
 //
@@ -19,6 +26,7 @@
 //     → 200 { status:'done',  glbUrl, viewerUrl, arUrl, format, previewImageUrl?, tier? }
 //     → 200 { status:'pending', job, poll, watchUrl, format, previewImageUrl?, tier?, etaSeconds? }
 //     → 400 { error:'prompt_rejected', message }                  (safety gate refusal)
+//     → 401 { error:'sign_in_required', message, sign_in_url, api_keys_url } (no account)
 //
 //   GET ?job=<id>&title=<prompt>   (title optional — labels the AR/viewer pages)
 //     → 200 { status:'pending', job, poll, watchUrl, previewImageUrl?, tier? }
@@ -55,6 +63,7 @@ import { shapeSubmit, shapePoll } from '../_mcp-studio/studio-shape.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
 import { resolveLogoPrompt } from '../_lib/forge-director-prompts.js';
 import { trackConnectorCall } from '../_lib/microsoft-surface-events.js';
+import { requireCreator, forwardCreatorAuth, SIGN_IN_REQUIRED, SIGN_IN_URL, API_KEYS_URL } from '../_lib/creator-account.js';
 
 export { shapeSubmit, shapePoll };
 
@@ -82,6 +91,13 @@ function limitReached(res, result, message) {
 // prompt must NEVER 500: every code has a designed status + actionable message.
 function failFromLane(res, err) {
 	switch (err?.code) {
+		case SIGN_IN_REQUIRED:
+			return json(res, 401, {
+				error: SIGN_IN_REQUIRED,
+				message: err.message || 'Sign in to make a 3D model. A three.ws account is free.',
+				sign_in_url: err.signInUrl || SIGN_IN_URL,
+				api_keys_url: err.apiKeysUrl || API_KEYS_URL,
+			});
 		case 'not_configured':
 			return json(res, 503, {
 				error: 'not_configured',
@@ -111,6 +127,10 @@ function failFromLane(res, err) {
 
 async function generate(req, res) {
 	const ip = clientIp(req);
+	// An account first: an anonymous caller learns the one thing it must fix
+	// before any body parsing, safety check, quota spend or GPU work.
+	const who = await requireCreator(req, res, { action: 'make a 3D model' });
+	if (!who) return;
 
 	let body;
 	try {
@@ -155,9 +175,9 @@ async function generate(req, res) {
 		return json(res, 400, { error: 'prompt_rejected', message: safety.message });
 	}
 
-	// Per-IP guard on the free GPU lane — the SAME bucket /api/3d/generate and
-	// /api/gpt-forge draw from, so this surface adds no new unmetered capacity.
-	const rl = await limits.mcp3dGenerateFree(ip);
+	// Per-account guard on the free GPU lane, the SAME bucket /api/3d/generate
+	// draws from, so this surface adds no new unmetered capacity.
+	const rl = await limits.mcp3dGenerateFree(who.user?.id ? `user:${who.user.id}` : ip);
 	if (!rl.success) {
 		return limitReached(res, rl, 'Free 3D generation limit reached. Try again in a little while.');
 	}
@@ -182,8 +202,8 @@ async function generate(req, res) {
 		job = await startForge(
 			base,
 			knownMark?.imagePath
-				? { prompt: subject, imageUrls: [`${base}${knownMark.imagePath}`], tier }
-				: { prompt: subject, path: 'image', tier, ...(tier === 'high' ? { internal: true } : {}) },
+				? { prompt: subject, imageUrls: [`${base}${knownMark.imagePath}`], tier, auth: forwardCreatorAuth(req) }
+				: { prompt: subject, path: 'image', tier, auth: forwardCreatorAuth(req), ...(tier === 'high' ? { internal: true } : {}) },
 		);
 	} catch (err) {
 		return failFromLane(res, err);

@@ -4,9 +4,10 @@
 // Two things matter for the OpenAI submission:
 //  1. The served copy must never drift from the custom-GPT Action file the
 //     builder pastes in (`prompts/store-submissions/_generated/openai-actions.yaml`).
-//  2. The app's discovery surface must stay keyless and free of any crypto /
-//     payment surface, so a reviewer who fetches it sees the same "free, no
-//     account, no payment" story the submission claims.
+//  2. The app's discovery surface must stay free of any crypto / payment
+//     surface, so a reviewer who fetches it sees the same "free, no payment"
+//     story the submission claims. Making a model needs a free three.ws
+//     account, sent as a bearer API key, and the schema must say so.
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -33,10 +34,17 @@ describe('3d-studio-openapi served schema', () => {
 		expect(doc.servers?.[0]?.url).toBe('https://three.ws');
 	});
 
-	it('declares no authentication (keyless)', () => {
-		// An explicit empty root security requirement = "no auth required".
-		expect(doc.security).toEqual([]);
-		expect(doc.components?.securitySchemes ?? {}).toEqual({});
+	it('requires a three.ws API key to generate, and nothing to poll or open AR', () => {
+		// api/3d/studio.js answers an anonymous POST with 401 sign_in_required, so
+		// the GPT must be configured with the user's key (API Key, Bearer).
+		expect(doc.components.securitySchemes).toEqual({
+			threeWsApiKey: expect.objectContaining({ type: 'http', scheme: 'bearer' }),
+		});
+		expect(doc.paths['/api/3d/studio'].post.security).toEqual([{ threeWsApiKey: [] }]);
+		expect(doc.paths['/api/3d/studio'].post.responses['401']).toBeTruthy();
+		expect(doc.paths['/api/3d/studio'].get.security ?? doc.security).toEqual([]);
+		expect(doc.paths['/api/ar'].get.security ?? doc.security).toEqual([]);
+		expect(servedRaw).not.toMatch(/no account|no api key/i);
 	});
 
 	it('exposes only the free studio surface (generate + poll + AR launch)', () => {
@@ -77,7 +85,7 @@ describe('3d-studio-openapi served schema', () => {
 
 	it('carries ZERO crypto / payment / settlement surface', () => {
 		// Deliberately excludes the bare word "payment": the schema says
-		// "No account, no API key, no payment" as reassurance, which is fine.
+		// "no payment" as reassurance, which is fine.
 		// This matches real crypto/settlement/collection indicators only.
 		const FORBIDDEN =
 			/x402|usdc|\bsolana\b|onchain|web3|\bwallet\b|crypto|\$three|pump\.?fun|checkout|invoice|\bprice\b|billing|paymentrequired|permit2/i;

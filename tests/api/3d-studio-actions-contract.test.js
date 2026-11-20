@@ -53,6 +53,13 @@ function expectValidError(body, label) {
 
 let freeOk = true;
 let statusOk = true;
+// Making a model needs an account (api/_lib/creator-account.js): the GPT sends
+// the user's three.ws API key as a bearer. `signedIn` flips one test anonymous.
+let signedIn = true;
+vi.mock('../../api/_lib/auth.js', async (orig) => ({
+	...(await orig()),
+	getRequestUser: async () => (signedIn ? { id: 'gpt-user' } : null),
+}));
 vi.mock('../../api/_lib/rate-limit.js', () => ({
 	limits: {
 		mcp3dGenerateFree: async () =>
@@ -72,6 +79,7 @@ const ORIGINAL_FETCH = globalThis.fetch;
 beforeEach(() => {
 	freeOk = true;
 	statusOk = true;
+	signedIn = true;
 });
 afterEach(() => {
 	globalThis.fetch = ORIGINAL_FETCH;
@@ -201,6 +209,16 @@ describe('GET /api/3d/studio?job= bodies validate against the served GenerationS
 
 describe('error bodies validate against the served ErrorResponse', () => {
 	// Each documented failure code in the schema, driven through the real handler.
+	it('401 sign_in_required when the GPT sends no three.ws API key', async () => {
+		signedIn = false;
+		stubForge(FORGE_DONE);
+		const { status, body } = await dispatch(makeReq({ body: { prompt: 'a low-poly fox' } }));
+		expect(status).toBe(401);
+		expect(body).toMatchObject({ error: 'sign_in_required', api_keys_url: '/dashboard/api-keys' });
+		expectValidError(body, 'sign_in_required');
+		expect(globalThis.fetch).not.toHaveBeenCalled();
+	});
+
 	it('400 invalid_prompt (too short)', async () => {
 		const { status, body } = await dispatch(makeReq({ body: { prompt: 'a' } }));
 		expect(status).toBe(400);

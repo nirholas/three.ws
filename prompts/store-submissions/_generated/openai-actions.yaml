@@ -5,13 +5,19 @@ info:
   description: |
     Free text-to-3D generation for the "three.ws 3D Studio" custom GPT.
     Turn a short text prompt into a real, textured, downloadable 3D model (GLB)
-    plus a browser viewer link. No account, no API key, no payment.
+    plus a browser viewer link. Free, with no payment. Making a model needs a
+    free three.ws account: the GPT sends the user's three.ws API key (from
+    https://three.ws/dashboard/api-keys) as a Bearer credential. Without one,
+    generate3DModel answers 401 "sign_in_required"; relay its message and
+    api_keys_url so the user can create a key. Polling and the AR link need
+    no key.
 
     Data handling: the prompt is forwarded to the generation provider solely to
     produce the model; the finished GLB is stored on a public CDN URL so the
     user can download and share it. No personal information is collected or
-    returned by these operations. Requests are rate-limited per IP for abuse
-    prevention. Full policy: https://three.ws/legal/privacy
+    returned by these operations. Each model belongs to, and is rate-limited
+    per, the three.ws account whose key made it, for abuse prevention.
+    Full policy: https://three.ws/legal/privacy
 
     Contract: POST /api/3d/studio either finishes inline (status "done" with
     glbUrl + viewerUrl + arUrl) or returns status "pending" with a "job"
@@ -36,14 +42,17 @@ info:
     url: https://three.ws/legal/tos
 servers:
   - url: https://three.ws
-# No authentication: the free text-to-3D lane needs no API key and no account.
-# An explicit empty root security requirement declares that plainly.
+# Polling and the AR launch need no authentication, so the root requirement is
+# empty. generate3DModel overrides it: making a model needs the user's three.ws
+# API key (GPT builder: Authentication "API Key", Auth Type "Bearer").
 security: []
 paths:
   /api/3d/studio:
     post:
       operationId: generate3DModel
       x-openai-isConsequential: false
+      security:
+        - threeWsApiKey: []
       summary: Generate a 3D model (GLB) from a text prompt
       description: >-
         Start a free text-to-3D generation. Describe ONE subject. Optional
@@ -107,6 +116,15 @@ paths:
           description: >-
             Invalid prompt (too short/long) or refused by the content-safety
             gate (error "prompt_rejected"). Relay the message to the user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: >-
+            No three.ws account (error "sign_in_required"). Relay the message
+            and ask the user to create a free API key at api_keys_url and add
+            it to this GPT's connection.
           content:
             application/json:
               schema:
@@ -265,6 +283,14 @@ paths:
               schema:
                 type: string
 components:
+  securitySchemes:
+    threeWsApiKey:
+      type: http
+      scheme: bearer
+      description: >-
+        The user's three.ws API key, created free at
+        https://three.ws/dashboard/api-keys and sent as
+        "Authorization: Bearer <key>".
   schemas:
     GenerationState:
       type: object
@@ -349,3 +375,9 @@ components:
         retry_after:
           type: integer
           description: Seconds to wait before retrying (rate-limit responses).
+        sign_in_url:
+          type: string
+          description: Where the user signs in or creates a free account (sign_in_required responses).
+        api_keys_url:
+          type: string
+          description: Where the user creates a three.ws API key for this GPT (sign_in_required responses).

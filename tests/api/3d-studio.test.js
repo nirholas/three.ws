@@ -4,7 +4,9 @@
 // Beyond the generate-lane lifecycle (mirrored from tests/api/3d-generate.test.js),
 // this suite pins the two properties that make the route submittable to the GPT
 // Store: every prompt passes the age-13+ safety gate before any lane work, and
-// every response body is free of upsell/pricing/crypto fields.
+// every response body is free of upsell/pricing/crypto fields. Making a model
+// needs a three.ws account: an anonymous POST gets 401 sign_in_required and a
+// signed-in one forwards its credential to /api/gpt-forge.
 //
 // The rate limiter is mocked (switchable per test) and the network is stubbed via
 // global fetch, so the suite runs fully offline while exercising the real handler,
@@ -25,12 +27,21 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 	clientIp: () => '203.0.113.7',
 }));
 
+// Switchable account: signed in by default so the lane tests reach the lane.
+const auth = { user: { id: 'user-1' } };
+vi.mock('../../api/_lib/auth.js', async (orig) => ({
+	...(await orig()),
+	getRequestUser: async () => auth.user,
+	getSessionUser: async () => auth.user,
+}));
+
 const ORIGINAL_FETCH = globalThis.fetch;
 const ENV_KEYS = ['STUDIO_API_BASE', 'PUBLIC_APP_ORIGIN', 'APP_ORIGIN'];
 const saved = {};
 
 beforeEach(() => {
 	freeOk = true;
+	auth.user = { id: 'user-1' };
 	for (const k of ENV_KEYS) {
 		saved[k] = process.env[k];
 		delete process.env[k];
@@ -45,12 +56,18 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-function makeReq({ method = 'POST', url = '/api/3d/studio', body = null, host = 'three.ws' } = {}) {
+function makeReq({
+	method = 'POST',
+	url = '/api/3d/studio',
+	body = null,
+	host = 'three.ws',
+	headers = { authorization: 'Bearer tw_test_key' },
+} = {}) {
 	const raw = body == null ? '' : JSON.stringify(body);
 	const stream = Readable.from(raw ? [Buffer.from(raw)] : []);
 	stream.method = method;
 	stream.url = url;
-	stream.headers = { 'content-type': 'application/json', host };
+	stream.headers = { 'content-type': 'application/json', host, ...headers };
 	return stream;
 }
 
@@ -288,6 +305,49 @@ describe('shape helpers — Actions wire contract', () => {
 		);
 		expect('etaSeconds' in done).toBe(false);
 		expect('elapsedSeconds' in done).toBe(false);
+	});
+});
+
+describe('POST /api/3d/studio needs an account', () => {
+	it('refuses an anonymous caller with sign_in_required before any lane work', async () => {
+		auth.user = null;
+		globalThis.fetch = vi.fn(async () => {
+			throw new Error('lane should not be called for an anonymous caller');
+		});
+		const { res, body } = await dispatch(
+			makeReq({ body: { prompt: 'a small ceramic robot figurine' }, headers: {} }),
+			makeRes(),
+		);
+		expect(res.statusCode).toBe(401);
+		expect(body).toMatchObject({ error: 'sign_in_required', sign_in_url: '/login', api_keys_url: '/dashboard/api-keys' });
+		expect(globalThis.fetch).not.toHaveBeenCalled();
+		expectCleanWire(body);
+	});
+
+	it('forwards the caller credential to /api/gpt-forge, and marks a seed-funded high submit on-behalf', async () => {
+		globalThis.fetch = vi.fn(async () => jsonResponse(SUBMIT_QUEUED));
+		process.env.CRON_SECRET = 'test-seed-secret';
+		const { res } = await dispatch(
+			makeReq({ body: { prompt: 'a small ceramic robot figurine', tier: 'high' } }),
+			makeRes(),
+		);
+		delete process.env.CRON_SECRET;
+		expect(res.statusCode).toBe(200);
+		const [url, opts] = globalThis.fetch.mock.calls[0];
+		expect(String(url)).toMatch(/\/api\/gpt-forge$/);
+		expect(opts.headers.authorization).toBe('Bearer tw_test_key');
+		expect(opts.headers['x-forge-on-behalf']).toBe('1');
+	});
+
+	it('maps an upstream sign_in_required into the same 401', async () => {
+		globalThis.fetch = vi.fn(async () => jsonResponse({ error: 'sign_in_required', message: 'Sign in to make a 3D model.' }, { status: 401 }));
+		const { res, body } = await dispatch(
+			makeReq({ body: { prompt: 'a small ceramic robot figurine' } }),
+			makeRes(),
+		);
+		expect(res.statusCode).toBe(401);
+		expect(body.error).toBe('sign_in_required');
+		expect(body.api_keys_url).toBe('/dashboard/api-keys');
 	});
 });
 
