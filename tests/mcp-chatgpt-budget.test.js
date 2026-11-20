@@ -20,9 +20,13 @@ vi.mock('../api/_mcp-studio/gpt-forge-client.js', async (importOriginal) => {
 });
 
 import { generate } from '../api/_mcp-studio/gpt-forge-client.js';
-import { dispatch, CHATGPT_CALL_BUDGET_MS, STUDIO_UNSTREAMED_CALL_BUDGET_MS } from '../api/_mcp-studio/dispatch.js';
+import { dispatch as rawDispatch, CHATGPT_CALL_BUDGET_MS, STUDIO_UNSTREAMED_CALL_BUDGET_MS } from '../api/_mcp-studio/dispatch.js';
+import { signedInDispatch } from './_helpers/studio-account.js';
 import { chatgptSubject } from '../api/_mcp-studio/handler.js';
 import { COMPONENT_HTML } from '../api/_mcp-studio/component.js';
+
+// The creator tools need an account; these cases run past that gate.
+const dispatch = signedInDispatch(rawDispatch);
 
 const req = { headers: { host: 'three.ws', 'x-forwarded-proto': 'https' } };
 const auth = { userId: null, rateKey: '127.0.0.1', scope: '' };

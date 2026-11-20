@@ -7,7 +7,11 @@ import {
 	isConformantSpatialArtifact,
 } from '../api/_lib/spatial-mcp.js';
 import { toolDefs as spatialDefs } from '../api/_mcp3d/tools/spatial.js';
-import { dispatch } from '../api/_mcp-studio/dispatch.js';
+import { dispatch as rawDispatch } from '../api/_mcp-studio/dispatch.js';
+import { signedInDispatch } from './_helpers/studio-account.js';
+
+// The creator tools need an account; these cases run past that gate.
+const dispatch = signedInDispatch(rawDispatch);
 
 const GLB = 'https://three.ws/cdn/creations/model.glb';
 

@@ -7,9 +7,11 @@
 // tools/list the endpoint serves. docs/mcp-studio.md splits the catalog the
 // same way, and tests/mcp-studio.test.js pins the total at eleven.
 //
-// All eight are FREE (no x402, no
-// wallet, no API key): the platform's server-side keys cover provider cost via
-// /api/forge (the public, auth-free twin of the paid pipeline). refine_model adds
+// All eight are free (no x402, no wallet): the platform's server-side keys
+// cover provider cost via /api/gpt-forge. Every tool that makes, rigs, refines
+// or renders a model needs a signed-in three.ws account; ./dispatch.js refuses
+// an anonymous call and hands the account to the handler as ctx.creatorAuth,
+// which every forge submit forwards. refine_model adds
 // conversational iteration — describe a change and it re-generates a new version
 // anchored to the prior model, returning a revertable/branchable version lineage.
 // Responses carry ONLY what a client needs
@@ -17,8 +19,8 @@
 // every internal identifier (creation id, prediction id, backend name, trace)
 // stripped, per OpenAI's data-minimization policy. One deliberate exception:
 // a job that outlives the inline wait budget returns its PUBLIC poll handle
-// (the same job token the auth-free /api/forge REST lane hands any anonymous
-// caller); without it the still-running work would be unreachable.
+// (the same job token the /api/forge REST lane hands its caller); without it
+// the still-running work would be unreachable.
 // Every model-bearing result also carries the four agent-first links from
 // ./asset-links.js (viewer_url, glb_url, poster_png_url, embed_html), stated in
 // the first lines of its text too, for clients that render no widget.
@@ -435,10 +437,18 @@ export function avatarFallbackBrief(prompt, subject) {
 // tells a later get_job how to render the finished job.
 function jobOpts(ctx, shape, { ticket = ctx.ticket } = {}) {
 	return {
+		...(ctx.creatorAuth ? { auth: ctx.creatorAuth } : {}),
 		...(ticket ? { ticket } : {}),
 		...(ctx.onJob ? { onSubmitted: (jobId) => ctx.onJob(jobId, shape) } : {}),
 		...(ctx.onProgress ? { onFrame: (frame) => ctx.onProgress(frame, shape.what) } : {}),
 	};
+}
+
+// A generate() submit carries the caller's account inside its arguments (the
+// rig submit takes it from jobOpts): ./dispatch.js resolves it for every
+// creator tool, as the platform's on-behalf headers or the caller's own bearer.
+function withCreator(submit, ctx) {
+	return ctx.creatorAuth ? { ...submit, auth: ctx.creatorAuth } : submit;
 }
 
 // The shared tail of every single-stage generator: submit the mesh, record on
@@ -451,7 +461,7 @@ async function finishMesh(run, { base, ctx, submit, jobOptsArgs, timeoutEnv = 'S
 	const t0 = Date.now();
 	let job;
 	try {
-		job = await generate(base, submit, { timeoutEnv, deadline: ctx.deadline, ...jobOptsArgs });
+		job = await generate(base, withCreator(submit, ctx), { timeoutEnv, deadline: ctx.deadline, ...jobOptsArgs });
 	} catch (err) {
 		run.mesh(null, { error: failureMessage(err), ms: Date.now() - t0 });
 		return closeRun(run, toolError(failureMessage(err)), { base });
@@ -719,7 +729,7 @@ async function handleForgeAvatar(args, _auth, req, ctx = {}) {
 	try {
 		gen = await generate(
 			base,
-			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: AVATAR_TIER, internal: true, director: false },
+			withCreator({ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: AVATAR_TIER, internal: true, director: false }, ctx),
 			{
 				timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS',
 				deadline: ctx.deadline,
@@ -867,9 +877,12 @@ async function handleRefineModel(args, _auth, req, ctx = {}) {
 	try {
 		job = await generate(
 			base,
-			refImageUrl
-				? { prompt: composed, imageUrls: [refImageUrl], aspect: '1:1', tier: 'standard', internal: true }
-				: { prompt: composed, tier: 'standard', internal: true },
+			withCreator(
+				refImageUrl
+					? { prompt: composed, imageUrls: [refImageUrl], aspect: '1:1', tier: 'standard', internal: true }
+					: { prompt: composed, tier: 'standard', internal: true },
+				ctx,
+			),
 			{
 				timeoutEnv: 'STUDIO_REFINE_TIMEOUT_MS',
 				deadline: ctx.deadline,

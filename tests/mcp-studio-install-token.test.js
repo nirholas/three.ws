@@ -5,12 +5,29 @@
 // (no Redis in the test env) and pin the order's three cases: two tokens from
 // one IP get independent budgets, no token keys exactly as before, and minting a
 // token is itself rate-limited. Only the GPU call (generate) is stubbed.
+//
+// Making a model now needs a three.ws account, so generation caps key on the
+// account first: an install token keys everything else (the transport cap) and
+// can no longer split one account's generation budget. Bearers here are
+// `test-acct:<id>`, resolved by the stubbed authenticateBearer below.
 
 import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest';
 
 vi.mock('../api/_mcp-studio/gpt-forge-client.js', async (importOriginal) => {
 	const real = await importOriginal();
 	return { ...real, generate: vi.fn(), rig: vi.fn(), directPrompt: vi.fn(async () => null) };
+});
+
+vi.mock('../api/_lib/auth.js', async (importOriginal) => {
+	const real = await importOriginal();
+	return {
+		...real,
+		authenticateBearer: vi.fn(async (bearer) =>
+			typeof bearer === 'string' && bearer.startsWith('test-acct:')
+				? { userId: bearer.slice('test-acct:'.length), source: 'apikey', scope: 'avatars:write' }
+				: null,
+		),
+	};
 });
 
 const SECRET = 'install-token-test-secret-0123456789abcdef';
@@ -78,22 +95,24 @@ async function mint(ip) {
 }
 
 let rpcId = 0;
-async function forge(ip, token) {
+// `account` is the signed-in user id, or null for an anonymous call.
+async function forge(ip, token, account) {
 	vi.mocked(generate).mockResolvedValue({ status: 'done', glb_url: 'https://three.ws/cdn/forge/fixture.glb' });
 	const url = token ? `/api/mcp-studio?install=${encodeURIComponent(token)}` : '/api/mcp-studio';
 	const body = { jsonrpc: '2.0', id: ++rpcId, method: 'tools/call', params: { name: 'forge_free', arguments: { prompt: 'a brass lantern' } } };
-	const { req, res, out } = httpPair({ url, body, ip });
+	const headers = account ? { authorization: `Bearer test-acct:${account}` } : {};
+	const { req, res, out } = httpPair({ url, body, ip, headers });
 	await studioHandlerFull(req, res);
 	return { status: out.status, headers: out.headers, json: JSON.parse(out.body) };
 }
 
 // The burst cap (4 a minute) is the first one a fast caller meets.
-async function exhaust(ip, token) {
+async function exhaust(ip, token, account) {
 	for (let i = 0; i < 4; i++) {
-		const r = await forge(ip, token);
+		const r = await forge(ip, token, account);
 		expect(r.json.error, `call ${i + 1} should pass`).toBeUndefined();
 	}
-	return forge(ip, token);
+	return forge(ip, token, account);
 }
 
 describe('install token format', () => {
@@ -154,35 +173,46 @@ describe('POST /api/mcp-studio/install', () => {
 	});
 });
 
-describe('generation caps keyed on the install token', () => {
-	it('gives two tokens from one IP independent budgets', async () => {
+describe('generation caps keyed on the account', () => {
+	it('keys generation on the account, so a second install token does not lift its cap', async () => {
 		const ip = '203.0.113.40';
 		const a = (await mint(ip)).json.token;
 		const b = (await mint(ip)).json.token;
 
-		const capped = await exhaust(ip, a);
+		const capped = await exhaust(ip, a, 'acct-install-1');
 		expect(capped.status).toBe(200);
 		expect(capped.json.error.code).toBe(handler.STUDIO_RATE_LIMITED);
 		expect(capped.json.error.data.limit).toBe('generation_burst');
-		expect(capped.json.error.data.keyed_on).toBe('install');
+		expect(capped.json.error.data.keyed_on).toBe('account');
 
-		const other = await forge(ip, b);
+		// The same account behind another token is still capped.
+		const sameAccount = await forge(ip, b, 'acct-install-1');
+		expect(sameAccount.json.error.data.keyed_on).toBe('account');
+
+		// Another account on the same IP has its own budget.
+		const other = await forge(ip, b, 'acct-install-2');
 		expect(other.json.error).toBeUndefined();
 		expect(other.json.result.isError).toBeFalsy();
 	});
 
-	it('keys a request with no token on the IP, exactly as before', async () => {
+	it('refuses an anonymous creation before it spends any quota or reaches the forge', async () => {
 		const ip = '203.0.113.41';
-		const capped = await exhaust(ip, null);
-		expect(capped.json.error.data.keyed_on).toBe('ip');
-		// A forged token is ignored, so it shares the exhausted IP budget.
-		const forged = await forge(ip, `tws_abc_${'0'.repeat(64)}`);
-		expect(forged.json.error.data.keyed_on).toBe('ip');
-		// A different IP with no token is untouched.
-		expect((await forge('203.0.113.42', null)).json.error).toBeUndefined();
-		// A real token from the exhausted IP gets its own budget.
-		const token = (await mint(ip)).json.token;
-		expect((await forge(ip, token)).json.error).toBeUndefined();
+		for (let i = 0; i < 6; i++) {
+			const r = await forge(ip, null, null);
+			expect(r.json.error).toBeUndefined();
+			expect(r.json.result.isError).toBe(true);
+			expect(r.json.result.structuredContent.status).toBe('sign_in_required');
+		}
+		expect(generate).not.toHaveBeenCalled();
+		// Signing in from that IP generates straight away: nothing was charged.
+		expect((await forge(ip, null, 'acct-install-3')).json.error).toBeUndefined();
+		expect(generate).toHaveBeenCalledTimes(1);
+	});
+
+	it('picks the account over an install token', () => {
+		const { token } = tokens.mintInstallToken();
+		const req = { url: `/api/mcp-studio?install=${token}`, headers: {} };
+		expect(handler.studioCaller('full', {}, req, '203.0.113.44', undefined, { userId: 'u-1' })).toEqual({ key: 'acct:u-1', kind: 'account' });
 	});
 
 	it('picks the install token over the surface subject and the IP', () => {
@@ -196,29 +226,35 @@ describe('generation caps keyed on the install token', () => {
 });
 
 describe('denials name the limit, the reset and the remedy', () => {
-	it('tells a per-IP caller how to get an install token', async () => {
-		const capped = await exhaust('203.0.113.50', null);
-		const { message, data } = capped.json.error;
-		expect(message).toContain('4 generations per minute for your IP address');
-		expect(message).toMatch(/resets at \d{4}-\d{2}-\d{2}T[\d:.]+Z \(in \d+ s\)/);
-		expect(message).toContain('POST https://three.ws/api/mcp-studio/install');
-		expect(message).toContain('https://three.ws/api/mcp-studio?install=<token>');
-		expect(data.remedy).toEqual({
+	it('tells a per-IP caller how to get an install token', () => {
+		const now = Date.now();
+		const d = handler.studioDenial({ bucket: 'burst', kind: 'ip', result: { reset: now + 55_000 }, surfacePath: '/api/mcp-studio', now });
+		expect(d.message).toContain('4 generations per minute for your IP address');
+		expect(d.message).toMatch(/resets at \d{4}-\d{2}-\d{2}T[\d:.]+Z \(in \d+ s\)/);
+		expect(d.message).toContain('POST https://three.ws/api/mcp-studio/install');
+		expect(d.message).toContain('https://three.ws/api/mcp-studio?install=<token>');
+		expect(d.data.remedy).toEqual({
 			kind: 'install_token',
 			install_endpoint: 'https://three.ws/api/mcp-studio/install',
 			connector_url: 'https://three.ws/api/mcp-studio?install=<token>',
 		});
+	});
+
+	it('tells a capped account when its budget resets', async () => {
+		const capped = await exhaust('203.0.113.50', null, 'acct-denial-1');
+		const { message, data } = capped.json.error;
+		expect(message).toContain('4 generations per minute for this three.ws account');
+		expect(message).toMatch(/resets at \d{4}-\d{2}-\d{2}T[\d:.]+Z \(in \d+ s\)/);
+		expect(data.remedy).toEqual({ kind: 'account', oauth_server: 'https://three.ws/api/mcp-3d' });
 		expect(Date.parse(data.reset_at)).toBeGreaterThan(Date.now());
 		expect(Number(capped.headers['retry-after'])).toBe(data.retry_after);
 		expect(capped.json.id).toBe(rpcId);
 	});
 
-	it('points a caller that already has a token at the account server', async () => {
-		const ip = '203.0.113.51';
-		const token = (await mint(ip)).json.token;
-		const capped = await exhaust(ip, token);
-		expect(capped.json.error.message).toContain('for this install token');
-		expect(capped.json.error.data.remedy).toEqual({ kind: 'account', oauth_server: 'https://three.ws/api/mcp-3d' });
+	it('points a caller that already has a token at the account server', () => {
+		const d = handler.studioDenial({ bucket: 'hourly', kind: 'install', result: { reset: Date.now() + 60_000 }, surfacePath: '/api/mcp-studio' });
+		expect(d.message).toContain('for this install token');
+		expect(d.data.remedy).toEqual({ kind: 'account', oauth_server: 'https://three.ws/api/mcp-3d' });
 	});
 
 	it('names the platform-wide breaker with no token remedy', () => {
@@ -230,10 +266,10 @@ describe('denials name the limit, the reset and the remedy', () => {
 
 	it('answers a batch with one denial per request id', async () => {
 		const ip = '203.0.113.52';
-		await exhaust(ip, null);
+		await exhaust(ip, null, 'acct-batch-1');
 		vi.mocked(generate).mockResolvedValue({ status: 'done', glb_url: 'https://three.ws/cdn/forge/fixture.glb' });
 		const call = (id) => ({ jsonrpc: '2.0', id, method: 'tools/call', params: { name: 'forge_free', arguments: { prompt: 'a kite' } } });
-		const { req, res, out } = httpPair({ url: '/api/mcp-studio', body: [call('a'), call('b')], ip });
+		const { req, res, out } = httpPair({ url: '/api/mcp-studio', body: [call('a'), call('b')], ip, headers: { authorization: 'Bearer test-acct:acct-batch-1' } });
 		await studioHandlerFull(req, res);
 		const parsed = JSON.parse(out.body);
 		expect(parsed.map((r) => r.id)).toEqual(['a', 'b']);

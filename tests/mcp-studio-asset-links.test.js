@@ -12,6 +12,7 @@
 
 import { readFileSync } from 'node:fs';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { signedInDispatch } from './_helpers/studio-account.js';
 
 vi.mock('../api/_mcp-studio/gpt-forge-client.js', async (importOriginal) => {
 	const real = await importOriginal();
@@ -108,7 +109,8 @@ const { renderTurntable } = await import('../api/_lib/3d-vision.js');
 const { fetchSafePublicUrlPinned } = await import('../api/_lib/ssrf-guard.js');
 const { createPersona, getPersona } = await import('../api/_lib/persona-store.js');
 const { resetCatalogCache } = await import('../api/_lib/asset-catalog.js');
-const { dispatch } = await import('../api/_mcp-studio/dispatch.js');
+const { dispatch: rawDispatch } = await import('../api/_mcp-studio/dispatch.js');
+const dispatch = signedInDispatch(rawDispatch);
 const { assetLinks, assetLinksText, posterPngUrl, RENDER_MAX_GLB_BYTES, POSTER_SIZE } = await import(
 	'../api/_mcp-studio/asset-links.js'
 );

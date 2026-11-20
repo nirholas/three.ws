@@ -20,6 +20,23 @@ vi.mock('../api/_mcp-studio/gpt-forge-client.js', async (importOriginal) => {
 	return { ...real, directPrompt: vi.fn(async () => null) };
 });
 
+// Making a model needs an account. The HTTP cases sign in with a
+// `test-acct:<id>` bearer, which this stub resolves; dispatch cases pass the
+// account directly.
+vi.mock('../api/_lib/auth.js', async (importOriginal) => {
+	const real = await importOriginal();
+	return {
+		...real,
+		authenticateBearer: vi.fn(async (bearer) =>
+			typeof bearer === 'string' && bearer.startsWith('test-acct:')
+				? { userId: bearer.slice('test-acct:'.length), source: 'apikey', scope: 'avatars:write' }
+				: null,
+		),
+	};
+});
+
+import { STUDIO_TEST_ACCOUNT } from './_helpers/studio-account.js';
+
 const FIXTURE_GLB = 'https://three.ws/cdn/forge/fixture-teapot.glb';
 const FIXTURE_FRAMES = {
 	running: { status: 'running', backend: 'trellis', tier: 'standard', elapsed_seconds: 30, eta_seconds: 120, eta_remaining_seconds: 90 },
@@ -77,7 +94,7 @@ async function call(name, args, { caller = 'inst:caller-a', surface = 'grok' } =
 		{ jsonrpc: '2.0', id: ++rpcId, method: 'tools/call', params: { name, arguments: args } },
 		{ userId: null, rateKey: '203.0.113.9', scope: '' },
 		req,
-		{ surface, caller },
+		{ surface, caller, account: STUDIO_TEST_ACCOUNT },
 	);
 	return r.result;
 }
@@ -282,7 +299,7 @@ function httpPair(body, headers = {}) {
 	const req = {
 		method: 'POST',
 		url: '/api/mcp-studio',
-		headers: { host: 'three.ws', 'content-type': 'application/json', 'x-forwarded-for': ip, ...headers },
+		headers: { host: 'three.ws', 'content-type': 'application/json', 'x-forwarded-for': ip, authorization: 'Bearer test-acct:jobs-user-1', ...headers },
 		socket: { remoteAddress: ip },
 		async *[Symbol.asyncIterator]() {
 			yield payload;

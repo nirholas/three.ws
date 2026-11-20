@@ -11,7 +11,10 @@
 //   persona_say(persona_id, text)         — perform a reply: the body lip-syncs
 //     the text and shows the matching expression + gesture for this turn.
 //
-// All FREE and unauthenticated — same posture as the generation tools. The body
+// All free. Saving a persona needs a signed-in three.ws account, the same as
+// making a model (./dispatch.js refuses an anonymous create_agent_persona and
+// passes the account in as ctx.account, recorded as the persona's owner);
+// reading one back or making it speak stays open to anyone with its id. The body
 // renders inline via the hosted embodiment embed (shared embodimentArtifact), so
 // the SAME living body appears in ChatGPT/Claude and on the site. There is NO
 // token, wallet, coin, or payment surface anywhere here — a persona is a name and
@@ -108,7 +111,7 @@ function personaLinks(persona, req) {
 
 // ── handlers ──────────────────────────────────────────────────────────────────
 
-async function handleCreatePersona(args, _auth, req) {
+async function handleCreatePersona(args, _auth, req, ctx = {}) {
 	if (!(await guardWrite(req))) return toolError('Too many requests. Slow down and try again shortly.');
 	const glbUrl = String(args.glb_url || '').trim();
 	const name = String(args.name || '').trim();
@@ -124,6 +127,7 @@ async function handleCreatePersona(args, _auth, req) {
 	let record;
 	try {
 		record = await createPersona({
+			...(ctx.account?.userId ? { ownerId: String(ctx.account.userId) } : {}),
 			name,
 			glbUrl,
 			glbBuffer: buf,

@@ -28,7 +28,11 @@ import {
 } from '../api/_lib/run-receipt.js';
 import { summarizeStats, inspectRiggedGlb, engineLabel, sealReceipt, resetSigningKeyCache } from '../api/_lib/run-receipt-store.js';
 import { attachReceipt } from '../api/_mcp-studio/receipts.js';
-import { dispatch } from '../api/_mcp-studio/dispatch.js';
+import { dispatch as rawDispatch } from '../api/_mcp-studio/dispatch.js';
+import { signedInDispatch } from './_helpers/studio-account.js';
+
+// The creator tools need an account; these cases run past that gate.
+const dispatch = signedInDispatch(rawDispatch);
 
 // rig_mesh takes a caller-supplied GLB URL, which tools.js checks with the real
 // SSRF guard before anything else; that guard does live DNS resolution, which a

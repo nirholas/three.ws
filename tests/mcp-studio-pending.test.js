@@ -25,7 +25,11 @@ vi.mock('../api/_mcp-studio/gpt-forge-client.js', async (importOriginal) => {
 	};
 });
 
-import { dispatch } from '../api/_mcp-studio/dispatch.js';
+import { dispatch as rawDispatch } from '../api/_mcp-studio/dispatch.js';
+import { signedInDispatch } from './_helpers/studio-account.js';
+
+// The creator tools need an account; these cases run past that gate.
+const dispatch = signedInDispatch(rawDispatch);
 
 const req = { headers: { host: 'three.ws', 'x-forwarded-proto': 'https' } };
 

@@ -4,9 +4,13 @@ import { TOOL_CATALOG, TOOL_NAMES } from '../api/_mcp-studio/tools.js';
 import { PERSONA_TOOL_CATALOG, PERSONA_TOOL_NAMES } from '../api/_mcp-studio/persona-tools.js';
 import { CATALOG_TOOL_CATALOG, CATALOG_TOOLS } from '../api/_mcp-studio/catalog-tools.js';
 import { toolDefs as LIBRARY_TOOLS } from '../api/_mcp/tools/library.js';
-import { dispatch, toolCatalogFor } from '../api/_mcp-studio/dispatch.js';
+import { dispatch as rawDispatch, toolCatalogFor } from '../api/_mcp-studio/dispatch.js';
+import { signedInDispatch } from './_helpers/studio-account.js';
 import { COMPONENT_HTML, COMPONENT_URI, PERSONA_COMPONENT_URI, componentCsp } from '../api/_mcp-studio/component.js';
 import { MODEL_VIEWER_CDN_ORIGIN } from '../api/_lib/model-viewer-cdn.js';
+
+// The creator tools need an account; these cases run past that gate.
+const dispatch = signedInDispatch(rawDispatch);
 
 // The eight tools in api/_mcp-studio/tools.js: six generators (which render the
 // model-viewer widget) + check_job (collects a pending generation) +

@@ -4,8 +4,12 @@
 // shared api/_lib/mcp-dispatch.js core (method routing, Ajv arg validation,
 // usage accounting, error sanitizing) but ALSO serves the Apps SDK UI resource
 // (resources/list + resources/read for the ui:// widget), which the shared core
-// stubs out. There is no scope check and no payment path here — every tool is
-// free and unauthenticated.
+// stubs out. There is no scope check and no payment path here: no tool costs
+// anything. Making or rigging a model needs a three.ws account (the forge
+// refuses anonymous creation, api/_lib/creator-account.js), so the tools in
+// CREATOR_TOOL_NAMES answer an anonymous call with a sign-in result
+// (../_mcp/creator-gate.js) and forward a signed-in caller's account to the
+// forge. Job status, the catalog, docs and persona playback stay open.
 
 import { recordEvent, logger } from '../_lib/usage.js';
 import { sanitizeToolError } from '../_lib/mcp-error-sanitize.js';
@@ -17,6 +21,12 @@ import { finishCall, gateCall, listForRequest } from '../_mcp/policy.js';
 import { accountToolCatalog, callAccountTool, isAccountTool } from './account-tools.js';
 import { studioOrigin } from './install-token.js';
 import { handlePromptMethod, PROMPT_CAPABILITIES } from '../_mcp/prompts.js';
+import {
+	CREATOR_SECURITY_SCHEMES,
+	OPEN_SECURITY_SCHEMES,
+	creatorForgeAuth,
+	signInToolResult,
+} from '../_mcp/creator-gate.js';
 
 // The @three-ws/mcp-policy server id for the free studio.
 const POLICY_SERVER = 'threews-3d-studio-free';
@@ -36,6 +46,9 @@ const SERVER_INFO = { name: 'three-ws-3d-studio-free', version: '1.0.1' };
 
 const BASE_INSTRUCTIONS = [
 	'three.ws 3D Studio turns a text prompt or an image into an interactive, downloadable 3D model (GLB), free.',
+	'Making, rigging, refining or rendering a model needs a free three.ws account: sign this connector in with OAuth,',
+	'or send a three.ws API key as the bearer. Called without one, those tools answer with a sign-in link to relay',
+	'to the user; job status, the catalog and the docs work without an account.',
 	'forge_free(prompt) generates a model from text; text_to_avatar and mesh_forge generate an avatar or art-directed',
 	'mesh from text or a reference image; rig_mesh(glb_url) makes a static model animation-ready; forge_avatar does',
 	'generate + rig in one step. Each result includes a glbUrl and a viewerUrl and renders inline in a 3D viewer widget.',
@@ -190,10 +203,36 @@ function withConformantMeta(catalog) {
 	});
 }
 
+// The tools that make, change or render a model, plus saving a persona: each
+// needs a signed-in account. The value is the action named in the sign-in
+// message ("Sign in to make a 3D model").
+const CREATOR_ACTIONS = Object.freeze({
+	forge_free: 'make a 3D model',
+	mesh_forge: 'make a 3D model',
+	text_to_avatar: 'make a 3D avatar',
+	forge_avatar: 'make a 3D avatar',
+	rig_mesh: 'rig a 3D model',
+	refine_model: 'refine a 3D model',
+	look_at_model: 'render views of a 3D model',
+	create_agent_persona: 'save an agent persona',
+});
+
+export const CREATOR_TOOL_NAMES = new Set(Object.keys(CREATOR_ACTIONS));
+
+// Declare up front (the Apps SDK `securitySchemes` field) which tools need an
+// account, so a host can offer sign-in before the first call instead of after
+// a refusal.
+function withSecuritySchemes(catalog) {
+	return catalog.map((tool) => ({
+		...tool,
+		securitySchemes: CREATOR_TOOL_NAMES.has(tool.name) ? CREATOR_SECURITY_SCHEMES : OPEN_SECURITY_SCHEMES,
+	}));
+}
+
 const SURFACES = {
 	full: {
 		server: 'mcp-studio',
-		catalog: withConformantMeta([...TOOL_CATALOG, ...JOB_TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG]),
+		catalog: withSecuritySchemes(withConformantMeta([...TOOL_CATALOG, ...JOB_TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG])),
 		tools: { ...TOOLS, ...JOB_TOOLS, ...CATALOG_TOOLS, ...PERSONA_TOOLS },
 		widgets: true,
 		personas: true,
@@ -204,7 +243,7 @@ const SURFACES = {
 	},
 	chatgpt: {
 		server: 'mcp-chatgpt',
-		catalog: [...TOOL_CATALOG],
+		catalog: withSecuritySchemes([...TOOL_CATALOG]),
 		tools: { ...TOOLS },
 		widgets: true,
 		personas: false,
@@ -213,7 +252,7 @@ const SURFACES = {
 	},
 	grok: {
 		server: 'mcp-grok',
-		catalog: withoutWidgetMeta([...TOOL_CATALOG, ...JOB_TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG]),
+		catalog: withSecuritySchemes(withoutWidgetMeta([...TOOL_CATALOG, ...JOB_TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG])),
 		tools: { ...TOOLS, ...JOB_TOOLS, ...CATALOG_TOOLS, ...PERSONA_TOOLS },
 		widgets: false,
 		personas: true,
@@ -332,11 +371,17 @@ function summarize(args) {
 
 // `opts.caller` is who the studio's limits charge on this request (./handler.js
 // studioCaller), and an idempotency_key belongs to it; `opts.onProgress`
-// receives status frames when the client asked for progress notifications.
+// receives status frames when the client asked for progress notifications;
+// `opts.account` is the verified caller, which a creator tool requires.
 async function onToolCall(params, auth, started, req, surface, opts = {}) {
 	const { name, arguments: args = {} } = params || {};
 	const tool = typeof name === 'string' && Object.hasOwn(surface.tools, name) ? surface.tools[name] : null;
 	if (!tool) throw rpcError(-32602, `unknown tool: ${name}`);
+	const creates = CREATOR_TOOL_NAMES.has(name);
+	if (creates && !opts.account?.userId) {
+		recordEvent({ kind: 'tool_call', tool: name, status: 'sign_in_required', latencyMs: Date.now() - started, meta: { server: surface.server } });
+		return signInToolResult(req, { action: CREATOR_ACTIONS[name] });
+	}
 	const sentArgs = { ...args };
 	const gate = await gateCall(POLICY_SERVER, name, sentArgs, auth, req);
 	if (!gate.ok) return gate.result;
@@ -352,6 +397,7 @@ async function onToolCall(params, auth, started, req, surface, opts = {}) {
 			jobTool: surface.jobTool || 'check_job',
 			...(opts.caller ? { caller: opts.caller } : {}),
 			...(opts.onProgress ? { onProgress: opts.onProgress } : {}),
+			...(creates ? { account: opts.account, creatorAuth: creatorForgeAuth(opts.account, req) } : {}),
 		};
 		const result = await tool.handler(args, auth, req, ctx);
 		recordEvent({ kind: 'tool_call', tool: name, latencyMs: Date.now() - started, meta: { args_summary: summarize(args), server: surface.server } });
@@ -374,9 +420,10 @@ async function listedTools(surface, signedIn, account, auth, req) {
 }
 
 // `opts.account` is the signed-in principal on a surface that serves accounts
-// (./handler.js), or null. Studio tools always run as the anonymous `auth`, so
-// signing in never changes what a free tool does; only the account tools see
-// the account.
+// (./handler.js), or null. Studio tools run as the per-IP `auth` for the
+// limits; the creator tools also need the account, which they forward to the
+// forge so the model belongs to it. The account tools appear only on a surface
+// that serves accounts.
 export async function dispatch(
 	msg,
 	auth,
@@ -429,7 +476,7 @@ export async function dispatch(
 					docs: `${studioOrigin()}/docs/mcp#api-key-scopes`,
 				});
 			}
-			return ok(id, await onToolCall(msg.params, auth, started, req, surface, { caller, onProgress }));
+			return ok(id, await onToolCall(msg.params, auth, started, req, surface, { caller, onProgress, account }));
 		}
 		if (method === 'resources/list') {
 			return ok(id, { resources: widgetResources(surface).map(({ text: _t, ...r }) => r) });

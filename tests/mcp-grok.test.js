@@ -3,7 +3,8 @@
 // shared egress pool for every Grok user. These tests pin the three answers to
 // that: every call is bounded and hands back a pending job instead of hanging,
 // the model is told to collect it and share links, and the generation caps key
-// on the Mcp-Session-Id this surface issues rather than on xAI's IP.
+// on the signed-in account (making a model needs one) rather than on xAI's IP.
+// Bearers here are `test-acct:<id>`, resolved by the stubbed authenticateBearer.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 
@@ -32,14 +33,29 @@ vi.mock('../api/_lib/rate-limit.js', async (importOriginal) => {
 	};
 });
 
+vi.mock('../api/_lib/auth.js', async (importOriginal) => {
+	const real = await importOriginal();
+	return {
+		...real,
+		authenticateBearer: vi.fn(async (bearer) =>
+			typeof bearer === 'string' && bearer.startsWith('test-acct:')
+				? { userId: bearer.slice('test-acct:'.length), source: 'apikey', scope: 'avatars:write' }
+				: null,
+		),
+	};
+});
+
 import { generate } from '../api/_mcp-studio/gpt-forge-client.js';
-import { dispatch, toolCatalogFor, GROK_CALL_BUDGET_MS } from '../api/_mcp-studio/dispatch.js';
+import { dispatch as rawDispatch, toolCatalogFor, GROK_CALL_BUDGET_MS } from '../api/_mcp-studio/dispatch.js';
+import { signedInDispatch } from './_helpers/studio-account.js';
 import { callerSubject, grokSession } from '../api/_mcp-studio/handler.js';
 import grokHandler from '../api/mcp-grok.js';
 
 const req = { headers: { host: 'three.ws', 'x-forwarded-proto': 'https' } };
 const auth = { userId: null, rateKey: '127.0.0.1', scope: '' };
 const SID = 'grk_0f8e2c1a-5b6d-4e7f-8a9b-0c1d2e3f4a5b';
+// The creator tools need an account; these cases run past that gate.
+const dispatch = signedInDispatch(rawDispatch);
 
 function callMsg(name, args) {
 	return { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } };
@@ -154,22 +170,30 @@ describe('grok per-session generation limits', () => {
 		expect(JSON.parse(out.body).result.serverInfo.name).toBe('three-ws-3d-studio-free');
 	});
 
-	it('charges a generation to the session, behind the per-IP pool cap', async () => {
+	it('charges a generation to the signed-in account, behind the per-IP pool cap', async () => {
 		vi.mocked(generate).mockResolvedValue({ status: 'done', glb_url: 'https://three.ws/cdn/a.glb' });
-		const { req: r, res } = httpPair(callMsg('forge_free', { prompt: 'a lunar lander' }), { 'mcp-session-id': SID });
+		const { req: r, res } = httpPair(callMsg('forge_free', { prompt: 'a lunar lander' }), {
+			'mcp-session-id': SID,
+			authorization: 'Bearer test-acct:grok-user-1',
+		});
 		await grokHandler(r, res);
 		const byName = Object.fromEntries(limitCalls.map(([n, k]) => [n, k]));
 		expect(byName.pool).toBeDefined();
-		expect(byName.burst).toBe(SID);
-		expect(byName.hourly).toBe(SID);
+		expect(byName.burst).toBe('acct:grok-user-1');
+		expect(byName.hourly).toBe('acct:grok-user-1');
+		expect(generate).toHaveBeenCalledTimes(1);
 	});
 
-	it('falls back to per-IP caps when the client never echoes a session', async () => {
+	it('refuses an anonymous session for sign-in without spending generation quota', async () => {
 		vi.mocked(generate).mockResolvedValue({ status: 'done', glb_url: 'https://three.ws/cdn/a.glb' });
-		const { req: r, res } = httpPair(callMsg('forge_free', { prompt: 'a lunar lander' }));
+		const { req: r, res, out } = httpPair(callMsg('forge_free', { prompt: 'a lunar lander' }), { 'mcp-session-id': SID });
 		await grokHandler(r, res);
 		const byName = Object.fromEntries(limitCalls.map(([n, k]) => [n, k]));
+		expect(byName.burst).toBeUndefined();
 		expect(byName.pool).toBeUndefined();
-		expect(byName.burst).not.toBe(SID);
+		expect(generate).not.toHaveBeenCalled();
+		const result = JSON.parse(out.body).result;
+		expect(result.isError).toBe(true);
+		expect(result.structuredContent).toMatchObject({ status: 'sign_in_required', sign_in_url: 'https://three.ws/api/mcp-grok?auth=oauth' });
 	});
 });

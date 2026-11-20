@@ -19,8 +19,11 @@
 //
 // There is no payment path anywhere in this server: generation runs
 // operator-funded over /api/forge, whose server-side keys cover provider cost.
-// Only the grok surface reads a credential (signedInAccount below), and only to
-// add the account's agent tools; the free tools never need one.
+// Every surface reads the caller's credential (signedInAccount below): making,
+// rigging or rendering a model needs a three.ws account, so the creator tools
+// answer an anonymous call with a sign-in result (./dispatch.js) and run for a
+// signed-in one as that account. The grok surface also adds the account's agent
+// tools. Job status, the catalog and the docs stay open to anyone.
 // Abuse protection is real: a per-caller transport cap plus a per-caller
 // generation burst and hourly quota (../_lib/rate-limit.js), enforced whenever
 // Redis is healthy. The caller is, in order: a verified install token on the
@@ -33,7 +36,7 @@
 
 import { cors, wrap, readJson, rateLimited, setRateLimitHeaders } from '../_lib/http.js';
 import { limits, clientIp, STUDIO_LIMITS } from '../_lib/rate-limit.js';
-import { dispatch, PROTOCOL_VERSION, surfaceServer, surfaceServesAccounts } from './dispatch.js';
+import { dispatch, PROTOCOL_VERSION, surfaceServer } from './dispatch.js';
 import { authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { acceptedAudiences, mcpResourceFor } from '../_lib/mcp-resources.js';
 import { send401 } from '../_mcp/auth.js';
@@ -157,15 +160,18 @@ export function callerSubject(surface, body, req) {
 }
 
 /**
- * Who the per-caller caps charge, on every surface: a verified install token
- * first, then a signed-in account, then the surface's own subject, then the IP.
+ * Who the per-caller caps charge, on every surface: a signed-in account first,
+ * then a verified install token, then the surface's own subject, then the IP.
+ * Generation always has an account (an anonymous creator call is refused), so
+ * its caps are per account and minting install tokens cannot multiply one
+ * account's budget; the token and the subject still key everything else.
  * An unknown or forged token is ignored, so the request keys exactly as it
  * would with no token at all.
  * @returns {{ key: string, kind: 'install'|'account'|'session'|'chatgpt_user'|'ip' }}
  */
 export function studioCaller(surface, body, req, ip, install = installTokenFrom(req), account = null) {
-	if (install) return { key: `inst:${install.id}`, kind: 'install' };
 	if (account?.userId) return { key: `acct:${account.userId}`, kind: 'account' };
+	if (install) return { key: `inst:${install.id}`, kind: 'install' };
 	const subject = callerSubject(surface, body, req);
 	if (subject) return { key: subject, kind: surface === 'chatgpt' ? 'chatgpt_user' : 'session' };
 	return { key: ip, kind: 'ip' };
@@ -202,8 +208,8 @@ function resetAt(result) {
 /**
  * The remedy for a capped caller. A per-IP caller is told to get an install
  * token (one URL of its own); a caller that already has its own budget (a token
- * or an account), or hit a cap no token lifts, is pointed at the signed-in
- * server, whose free lane is metered per account.
+ * or an account), or hit a cap no token lifts, is told when it resets and
+ * pointed at the signed-in server, which keeps a separate per-account budget.
  */
 export function studioRemedy(kind, bucket, surfacePath) {
 	const origin = studioOrigin();
@@ -215,7 +221,7 @@ export function studioRemedy(kind, bucket, surfacePath) {
 			install_endpoint: installEndpoint,
 			connector_url: `${origin}${surfacePath}?${INSTALL_PARAM}=<token>`,
 			text:
-				`Lift it with a free install token: POST ${installEndpoint} (no account, no key) and reconnect at ` +
+				`Lift it with a free install token: POST ${installEndpoint} and reconnect at ` +
 				`${origin}${surfacePath}?${INSTALL_PARAM}=<token>, which gets its own budget. Or sign in at ${accountServer} ` +
 				'(OAuth 2.1), metered per account.',
 		};
@@ -223,7 +229,7 @@ export function studioRemedy(kind, bucket, surfacePath) {
 	return {
 		kind: 'account',
 		oauth_server: accountServer,
-		text: `Wait for the reset, or sign in at ${accountServer} (OAuth 2.1), whose generation is metered per account instead.`,
+		text: `Wait for the reset, or sign in at ${accountServer} (OAuth 2.1), which meters generation on a separate per-account budget.`,
 	};
 }
 
@@ -292,11 +298,11 @@ function wantsSignIn(req) {
 }
 
 /**
- * The account a request on an account-serving surface signed in as. Returns
+ * The account a request signed in as, on any studio surface. Returns
  * { account } (null when anonymous) or { refused: true } after answering 401:
  * a bearer that does not verify (expired, revoked, wrong audience) is refused
  * rather than quietly served anonymously, so the client re-authenticates
- * instead of losing its account tools without a word.
+ * instead of having its model creation refused without a word.
  */
 export async function signedInAccount(req, res, surfacePath) {
 	const bearer = extractBearer(req);
@@ -309,7 +315,7 @@ export async function signedInAccount(req, res, surfacePath) {
 	};
 	if (!bearer) {
 		if (wantsSignIn(req)) {
-			return refuse('sign in to add your three.ws agent tools to this connector');
+			return refuse('sign in to three.ws so this connector can make 3D models for your account');
 		}
 		return { account: null };
 	}
@@ -319,7 +325,6 @@ export async function signedInAccount(req, res, surfacePath) {
 }
 
 export function studioHandler({ surface = 'full' } = {}) {
-	const servesAccounts = surfaceServesAccounts(surface);
 	return wrap(async (req, res) => {
 		if (cors(req, res, { methods: 'GET,HEAD,POST,OPTIONS', origins: '*', payments: false })) return;
 
@@ -362,20 +367,19 @@ export function studioHandler({ surface = 'full' } = {}) {
 		const batch = Array.isArray(body) ? body : [body];
 		if (batch.length > 16) return rpcError(res, 400, -32600, 'batch too large (max 16)');
 
-		let account = null;
-		if (servesAccounts) {
-			const signIn = await signedInAccount(req, res, surfacePath);
-			if (signIn.refused) return;
-			account = signIn.account;
-			// The same per-account flood guard /api/mcp applies to these tools.
-			if (account) {
-				const userRl = await limits.mcpUser(account.userId);
-				if (!userRl.success) {
-					const at = resetAt(userRl);
-					return rateLimited(res, userRl, `too many requests for this three.ws account, resets at ${at.toISOString()}`, {
-						reset_at: at.toISOString(),
-					});
-				}
+		// Every surface resolves the caller: the creator tools need an account. The
+		// account tools stay on the surface that serves them (./dispatch.js).
+		const signIn = await signedInAccount(req, res, surfacePath);
+		if (signIn.refused) return;
+		const account = signIn.account;
+		// The same per-account flood guard /api/mcp applies to these tools.
+		if (account) {
+			const userRl = await limits.mcpUser(account.userId);
+			if (!userRl.success) {
+				const at = resetAt(userRl);
+				return rateLimited(res, userRl, `too many requests for this three.ws account, resets at ${at.toISOString()}`, {
+					reset_at: at.toISOString(),
+				});
 			}
 		}
 
@@ -387,7 +391,9 @@ export function studioHandler({ surface = 'full' } = {}) {
 		// request actually calls a generation tool, so discovery is never throttled
 		// by it. A denial is a JSON-RPC error on HTTP 200: an MCP client hands that
 		// message to the model, where a 429 body is often dropped by the transport.
-		if (callsGenerationTool(body) && !(await onlyRepeats(body, caller.key))) {
+		// An anonymous caller is refused before any generation starts (./dispatch.js),
+		// so only a signed-in caller spends this quota.
+		if (account && callsGenerationTool(body) && !(await onlyRepeats(body, caller.key))) {
 			const deny = (bucket, result) =>
 				rpcDenial(res, body, studioDenial({ bucket, kind: caller.kind, result, surfacePath }), result);
 			// Any caller key other than the IP is one the client chose, so one source
