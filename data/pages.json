@@ -1460,6 +1460,14 @@
 					"added": "2026-05-25"
 				},
 				{
+					"path": "/voice/grok",
+					"title": "Talk to a 3D avatar with Grok voice",
+					"description": "Speech to speech with a lip-synced 3D avatar: pick an avatar, hold to talk or leave the mic open, and watch the measured reply and mouth latency for every turn.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-11-20"
+				},
+				{
 					"path": "/voice/home",
 					"title": "Hands-free voice for your home",
 					"description": "Talk to your house without finding a phone: a wake word matched on your own device, real barge-in mid-sentence, and a spoken confirmation that a background yes can never satisfy.",

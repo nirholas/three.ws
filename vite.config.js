@@ -754,6 +754,7 @@ const appConfig = {
 				concierge: resolve(__dirname, 'pages/concierge.html'),
 				drive: resolve(__dirname, 'pages/drive.html'),
 				'voice-home': resolve(__dirname, 'pages/voice-home.html'),
+				'voice-grok': resolve(__dirname, 'pages/voice-grok.html'),
 				'tour-builder': resolve(__dirname, 'pages/tour-builder.html'),
 				'agent-identities': resolve(__dirname, 'pages/agent-identities.html'),
 				mcp: resolve(__dirname, 'pages/mcp.html'),

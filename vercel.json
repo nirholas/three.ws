@@ -2422,6 +2422,14 @@
 			"dest": "/voice-home.html"
 		},
 		{
+			"src": "/voice/grok/?",
+			"dest": "/voice-grok.html"
+		},
+		{
+			"src": "/api/voice/grok/session/?",
+			"dest": "/api/voice/grok/session"
+		},
+		{
 			"src": "/voice/?",
 			"dest": "/voice.html"
 		},
