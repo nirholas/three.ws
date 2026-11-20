@@ -1,4 +1,4 @@
-// `restyle_material` core — thin HTTP client over the hosted, free
+// `restyle_material` core: thin HTTP client over the hosted, free
 // api/material-studio endpoint. Mirrors _studio-core.js: the real generation
 // logic (watsonx PBR proposal, @gltf-transform mutation, gltf-validator,
 // persistence) lives server-side in api/_lib/material-studio-store.js so the
@@ -6,8 +6,12 @@
 // code path and can never drift. This module stays dependency-free (only the
 // global `fetch`) so it loads in every runtime the repo bundles it into.
 //
-// Environment (optional — sensible prod default):
-//   MESH_FORGE_API_BASE — three.ws origin. Default https://three.ws (same env
+// Environment:
+//   THREE_WS_API_KEY    : a three.ws API key (a free account is enough). Every
+//   material-studio action persists a new model, so the endpoint answers an
+//   anonymous caller with 401 sign_in_required; this server restyles on behalf
+//   of whoever runs it and sends their key, like the forge tools.
+//   MESH_FORGE_API_BASE : three.ws origin. Default https://three.ws (same env
 //   key the other generation cores already read, so one override covers all).
 
 export function coreError(code, message, extra) {
@@ -23,13 +27,32 @@ function apiBase() {
 	return env('MESH_FORGE_API_BASE', 'https://three.ws').replace(/\/$/, '');
 }
 
+const API_KEYS_PATH = '/dashboard/api-keys';
+
+function requestHeaders() {
+	const key = env('THREE_WS_API_KEY');
+	const headers = { 'content-type': 'application/json' };
+	return key ? { ...headers, authorization: `Bearer ${key}` } : headers;
+}
+
+function signInError(base) {
+	const apiKeysUrl = `${base}${API_KEYS_PATH}`;
+	const e = new Error(
+		env('THREE_WS_API_KEY')
+			? `three.ws refused the API key in THREE_WS_API_KEY. Create a new key at ${apiKeysUrl} and set it in this MCP server's environment.`
+			: `Restyling a 3D model needs a three.ws account. Create a free account and an API key at ${apiKeysUrl}, then set THREE_WS_API_KEY in this MCP server's environment.`,
+	);
+	e.code = 'sign_in_required';
+	return e;
+}
+
 async function postJson(path, payload) {
 	const base = apiBase();
 	let res;
 	try {
 		res = await fetch(`${base}${path}`, {
 			method: 'POST',
-			headers: { 'content-type': 'application/json' },
+			headers: requestHeaders(),
 			body: JSON.stringify(payload),
 			signal: AbortSignal.timeout(60_000),
 		});
@@ -39,6 +62,7 @@ async function postJson(path, payload) {
 		throw e;
 	}
 	const data = await res.json().catch(() => ({}));
+	if (res.status === 401 || res.status === 403 || data?.error === 'sign_in_required') throw signInError(base);
 	if (res.status === 503) {
 		const e = new Error(data?.message || 'material restyle is not configured on the three.ws deployment');
 		e.code = 'not_configured';
@@ -58,7 +82,7 @@ async function postJson(path, payload) {
 }
 
 // ---------------------------------------------------------------------------
-// restyle_material — AI PBR restyle (instruction mode) OR seeded colorway
+// restyle_material: AI PBR restyle (instruction mode) OR seeded colorway
 // variant fan-out (preset/seed/count mode). Exactly one of `instruction` /
 // `preset` drives which server action runs.
 // ---------------------------------------------------------------------------

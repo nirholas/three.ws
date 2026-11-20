@@ -271,7 +271,10 @@ GitHub and GitHub Copilot are trademarks of GitHub, Inc.
 
 A free, rate-limited (not x402) REST endpoint backing the [Restyle Studio](/restyle)
 web page: live PBR material editing, AI restyle, seeded colorway variants, and
-texture swaps for any GLB. Not an MCP tool itself: the paid `restyle_material`
+texture swaps for any GLB. Every action stores a new model, so each one needs a
+three.ws account (a session, or an API key sent as `Authorization: Bearer <key>`;
+the stdio `restyle_material` tool sends `THREE_WS_API_KEY`). Without one it
+answers 401 `sign_in_required`, and limits apply per account. Not an MCP tool itself: the paid `restyle_material`
 tool (listed under the agent tools below) and the web page both call it as a thin
 client, so the free and paid surfaces share one implementation. See
 [`api/_lib/material-studio-store.js`](../api/_lib/material-studio-store.js) and the

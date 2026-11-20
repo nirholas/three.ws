@@ -140,3 +140,42 @@ describe('runRestyleMaterial — variant (preset/seed/count) mode', () => {
 		expect(out.activeIndex).toBe(0);
 	});
 });
+
+// api/material-studio answers an anonymous caller with 401 sign_in_required:
+// every action persists a new model, so it needs an account. This stdio server
+// restyles on behalf of whoever runs it, so it sends their key from
+// THREE_WS_API_KEY, like the forge tools in _studio-core.js.
+describe('runRestyleMaterial: three.ws account', () => {
+	let fetchMock;
+	beforeEach(() => {
+		fetchMock = vi.fn();
+		vi.stubGlobal('fetch', fetchMock);
+		vi.unstubAllEnvs();
+	});
+
+	it('sends THREE_WS_API_KEY as the bearer', async () => {
+		vi.stubEnv('THREE_WS_API_KEY', 'sk_live_test_key');
+		fetchMock.mockResolvedValueOnce(res(200, { ok: true, glbUrl: 'https://three.ws/cdn/b.glb', lineage: [], activeIndex: 0 }));
+		await runRestyleMaterial({ glb_url: 'https://three.ws/cdn/a.glb', instruction: 'make it chrome' });
+		expect(fetchMock.mock.calls[0][1].headers.authorization).toBe('Bearer sk_live_test_key');
+	});
+
+	it('says to create a key when there is none and the server asks for sign-in', async () => {
+		vi.stubEnv('THREE_WS_API_KEY', '');
+		fetchMock.mockResolvedValueOnce(res(401, { error: 'sign_in_required', message: 'Sign in to restyle a 3D model.' }));
+		const out = await runRestyleMaterial({ glb_url: 'https://three.ws/cdn/a.glb', preset: 'metal' });
+		expect(fetchMock.mock.calls[0][1].headers.authorization).toBeUndefined();
+		expect(out.ok).toBe(false);
+		expect(out.error).toBe('sign_in_required');
+		expect(out.message).toMatch(/set THREE_WS_API_KEY/);
+		expect(out.message).toContain('https://three.ws/dashboard/api-keys');
+	});
+
+	it('says the key was refused when one was sent', async () => {
+		vi.stubEnv('THREE_WS_API_KEY', 'sk_live_revoked');
+		fetchMock.mockResolvedValueOnce(res(401, { error: 'sign_in_required' }));
+		const out = await runRestyleMaterial({ glb_url: 'https://three.ws/cdn/a.glb', instruction: 'wood' });
+		expect(out.error).toBe('sign_in_required');
+		expect(out.message).toMatch(/refused the API key in THREE_WS_API_KEY/);
+	});
+});

@@ -1,14 +1,14 @@
-// POST /api/material-studio — Material Studio: AI PBR restyle + seeded
+// POST /api/material-studio: Material Studio: AI PBR restyle + seeded
 // colorway variants + durable checkpoint uploads for arbitrary GLBs.
 //
-// Free and hosted, like /api/mcp-studio: no wallet, no account, no x402 dance.
-// Abuse is bounded by server-side rate limits (api/_lib/rate-limit.js
-// materialStudioRestyle / materialStudioUpload) instead of payment — the same
-// "hosted FREE lane, bounded by rate limits" doctrine forge_free and the free
-// 3D Studio already use. The restyle_material MCP tool
+// Free and hosted, like /api/mcp-studio: no wallet and no x402 dance, but every
+// action needs a three.ws account (api/_lib/creator-account.js), because each
+// one persists a new 3D model: an anonymous caller gets 401 sign_in_required.
+// Abuse is bounded per account by server-side rate limits (api/_lib/rate-limit.js
+// materialStudioRestyle / materialStudioUpload) instead of payment. The restyle_material MCP tool
 // (mcp-server/src/tools/restyle-material.js) is a thin, PAID stdio client over
 // this SAME endpoint, so the free web page and the paid agent tool can never
-// drift — one implementation, two transports.
+// drift: one implementation, two transports.
 //
 //   GET  /api/material-studio                    → discovery doc
 //   POST /api/material-studio?action=upload       (body: raw GLB bytes)
@@ -21,7 +21,7 @@
 //   POST /api/material-studio?action=variants     { glb_url, preset?, seed?, count?, material_index? }
 //        → N reproducible colorway variants of one preset (seeded PRNG).
 //
-// Every failure throws BEFORE any object is persisted — a bad request never
+// Every failure throws BEFORE any object is persisted, so a bad request never
 // leaves a half-written asset in storage.
 
 import { cors, json, error, method, wrap, readBody, rateLimited } from './_lib/http.js';
@@ -33,7 +33,7 @@ import {
 	generateSeededVariants,
 	validateAndPersistGlb,
 } from './_lib/material-studio-store.js';
-import { getSessionUser } from './_lib/auth.js';
+import { requireCreator } from './_lib/creator-account.js';
 import { recordMaterialRestyle } from './_lib/material-restyle-store.js';
 
 const ROUTE = '/api/material-studio';
@@ -75,7 +75,11 @@ const discovery = wrap(async (req, res) => {
 		route: ROUTE,
 		description:
 			'Material Studio: free, rate-limited AI PBR restyle and seeded colorway ' +
-			'variant generation for arbitrary GLB models. No wallet or account required.',
+			'variant generation for arbitrary GLB models. No wallet; every action needs a ' +
+			'three.ws account (a session, or an API key as a bearer) and answers ' +
+			'401 sign_in_required without one.',
+		sign_in_url: 'https://three.ws/login',
+		api_keys_url: 'https://three.ws/dashboard/api-keys',
 		actions: {
 			upload: {
 				method: 'POST',
@@ -113,16 +117,16 @@ const discovery = wrap(async (req, res) => {
 	});
 });
 
-async function handleUpload(req, res, ip) {
-	const rl = await limits.materialStudioUpload(ip);
+async function handleUpload(req, res, { key }) {
+	const rl = await limits.materialStudioUpload(key);
 	if (!rl.success) return rateLimited(res, rl, 'Upload limit reached. Try again shortly.');
 	const bytes = await readBody(req, MAX_GLB_UPLOAD_BYTES);
 	const result = await validateAndPersistGlb(bytes, { keyPrefix: 'material-studio/checkpoints' });
 	return json(res, 200, { ok: true, url: result.url, bytes: result.bytes });
 }
 
-async function handleRestyle(req, res, ip) {
-	const rl = await limits.materialStudioRestyle(ip);
+async function handleRestyle(req, res, { key, userId }) {
+	const rl = await limits.materialStudioRestyle(key);
 	if (!rl.success) return rateLimited(res, rl, 'Restyle limit reached. Try again shortly.');
 	const body = await readJsonBody(req);
 	const glbUrl = typeof body.glb_url === 'string' ? body.glb_url.trim() : '';
@@ -139,9 +143,8 @@ async function handleRestyle(req, res, ip) {
 		parentLineage: parseParentLineage(body.parent_lineage),
 		parentIndex: parseParentIndex(body.parent_index),
 	});
-	// Best-effort: attribute to the signed-in caller so it shows up on their
+	// Best-effort: attribute to the caller's account so it shows up on their
 	// public portfolio's Creations tab. Never blocks or fails generation.
-	const userId = await getSessionUser(req).then((u) => u?.id || null).catch(() => null);
 	recordMaterialRestyle({
 		userId,
 		action: 'restyle',
@@ -153,8 +156,8 @@ async function handleRestyle(req, res, ip) {
 	return json(res, 200, { ok: true, ...result });
 }
 
-async function handleVariants(req, res, ip) {
-	const rl = await limits.materialStudioRestyle(ip);
+async function handleVariants(req, res, { key, userId }) {
+	const rl = await limits.materialStudioRestyle(key);
 	if (!rl.success) return rateLimited(res, rl, 'Variant generation limit reached. Try again shortly.');
 	const body = await readJsonBody(req);
 	const glbUrl = typeof body.glb_url === 'string' ? body.glb_url.trim() : '';
@@ -170,7 +173,6 @@ async function handleVariants(req, res, ip) {
 	});
 	// Best-effort: one row per generated variant so a prolific creator's whole
 	// colorway fan-out shows up on their portfolio, not just a single card.
-	const userId = await getSessionUser(req).then((u) => u?.id || null).catch(() => null);
 	if (userId && Array.isArray(result.variants)) {
 		Promise.all(
 			result.variants.map((v) =>
@@ -193,20 +195,25 @@ async function handleVariants(req, res, ip) {
 const post = wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
-	const ip = clientIp(req);
 	const url = new URL(req.url, 'http://localhost');
 	const action = url.searchParams.get('action');
+	const handle = { upload: handleUpload, restyle: handleRestyle, variants: handleVariants }[action];
+	if (!handle) return error(res, 400, 'unknown_action', 'Unknown ?action: use upload, restyle, or variants.');
+	// Each action persists a new model, so it needs someone answerable for it.
+	const who = await requireCreator(req, res, {
+		action: action === 'upload' ? 'upload a 3D model' : 'restyle a 3D model',
+	});
+	if (!who) return;
+	const userId = who.user?.id || null;
+	const caller = { userId, key: userId ? `user:${userId}` : clientIp(req) };
 	try {
-		if (action === 'upload') return await handleUpload(req, res, ip);
-		if (action === 'restyle') return await handleRestyle(req, res, ip);
-		if (action === 'variants') return await handleVariants(req, res, ip);
+		return await handle(req, res, caller);
 	} catch (err) {
 		if (err instanceof MaterialStudioError) {
 			return error(res, err.status, err.code, err.message);
 		}
 		throw err;
 	}
-	return error(res, 400, 'unknown_action', 'Unknown ?action — use upload, restyle, or variants.');
 });
 
 export default function handler(req, res) {

@@ -2899,9 +2899,16 @@ the Avatar Studio re-skin idea (`src/avatar-studio-colorpicker.js`,
 `src/avatar-wardrobe.js`) to arbitrary models: apply a curated PBR material
 preset live in the browser (see [Restyle Studio](https://three.ws/restyle)), ask
 an AI for a restyle from a plain-language instruction, or fan one preset out into
-N reproducible colorway variants. Free and hosted — rate-limited, not x402 — the
-same implementation the paid `restyle_material` [MCP tool](mcp-tools.md) calls as
-a thin client, so the free web page and the paid agent tool never drift.
+N reproducible colorway variants. Free and hosted (rate-limited per account, not
+x402), and the same implementation the paid `restyle_material` [MCP tool](mcp-tools.md)
+calls as a thin client, so the free web page and the paid agent tool never drift.
+
+**Needs a three.ws account.** Every action (`upload`, `restyle`, `variants`)
+stores a new model, so the caller must be signed in: a browser session, or an API
+key from [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys) sent
+as `Authorization: Bearer <key>`. An anonymous call answers 401
+`{"error":"sign_in_required","sign_in_url":"/login","api_keys_url":"/dashboard/api-keys"}`
+and stores nothing.
 
 Every mesh edit is **non-destructive**: geometry and UVs are never touched (only
 material factors), the source GLB is never mutated, and every restyle or variant
