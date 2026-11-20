@@ -43,7 +43,7 @@ import { send401 } from '../_mcp/auth.js';
 import { TOOL_NAMES } from './tools.js';
 import { isIdempotentRepeat, progressReporter } from './jobs.js';
 import { installTokenFrom, studioOrigin, INSTALL_PARAM } from './install-token.js';
-import { trackMcpRequest, authKindOf } from '../_lib/mcp-client-analytics.js';
+import { issueSession, trackMcp } from '../_lib/mcp-clients.js';
 import { sendRpcResponses } from '../_lib/mcp-rpc-response.js';
 
 // check_job collects a job that is already running rather than starting one: it
@@ -418,19 +418,15 @@ export function studioHandler({ surface = 'full' } = {}) {
 		const auth = { userId: null, rateKey: ip, scope: '' };
 
 		// Issues the Mcp-Session-Id on initialize (grk_ on the grok surface, where
-		// the per-caller caps key on it) and records which client opened the
-		// session and what it calls (../_lib/mcp-client-analytics.js).
-		trackMcpRequest({
-			body,
-			req,
-			res,
-			surface: surfaceServer(surface),
-			authKind: install ? 'install' : account ? authKindOf(account) : 'anonymous',
-			sessionPrefix: surface === 'grok' ? 'grk' : 'mcs',
-		});
+		// the per-caller caps key on it). trackMcp then records which client
+		// opened the session and what it calls (../_lib/mcp-clients.js).
+		const issuedSessionId = issueSession(res, body, surface === 'grok' ? 'grk' : 'mcs');
+		const track = (responses = []) =>
+			trackMcp({ surface: surfaceServer(surface), req, body, responses, auth: account, issuedSessionId, installToken: install });
 
 		const token = progressTokenOf(body);
 		if (token !== null && acceptsEventStream(req)) {
+			track();
 			return streamToolCall(res, body, auth, req, { surface, caller: caller.key, token, account });
 		}
 
@@ -442,5 +438,6 @@ export function studioHandler({ surface = 'full' } = {}) {
 
 		res.setHeader('mcp-protocol-version', PROTOCOL_VERSION);
 		sendRpcResponses(res, body, responses);
+		track(responses);
 	});
 }

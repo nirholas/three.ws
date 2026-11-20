@@ -446,7 +446,7 @@ describe('Protocol layer', () => {
 
 	it('DELETE with the Mcp-Session-Id initialize issued returns 204', async () => {
 		// The only ids this server issues attribute calls to a client
-		// (api/_lib/mcp-client-analytics.js) and hold no state, so ending one is
+		// (api/_lib/mcp-clients.js) and hold no state, so ending one is
 		// the polite teardown, not an unknown session.
 		const { status } = await invoke({
 			method: 'DELETE',
