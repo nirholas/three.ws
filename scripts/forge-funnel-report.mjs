@@ -124,6 +124,7 @@ if (sh.empty) {
 } else {
 	console.log(`  unfurls ${sh.unfurls}   creation page loads ${sh.page_loads}   AR launches ${sh.ar_launches}   share-sheet actions ${sh.share_actions}   "make your own" clicks ${sh.cta_clicks}`);
 	console.log(`  creations started from a share ${sh.from_share.started}   done ${sh.from_share.done}   useful ${sh.from_share.useful}`);
+	console.log(`  X share clicks ${sh.x_share.total} (model ${sh.x_share.model}, avatar ${sh.x_share.avatar}, anatomy ${sh.x_share.anatomy})   Ask @grok clicks ${sh.grok_ask.total} (model ${sh.grok_ask.model}, avatar ${sh.grok_ask.avatar}, anatomy ${sh.grok_ask.anatomy})`);
 	line('Useful rate (from a share)', sh.from_share.useful_output_rate);
 	line('Share to forge (starts per page load)', sh.share_to_forge);
 }

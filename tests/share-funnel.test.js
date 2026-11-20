@@ -24,7 +24,11 @@ beforeEach(() => {
 describe('share funnel allowlist', () => {
 	it('accepts every documented surface and kind', () => {
 		for (const s of SHARE_SURFACES) for (const k of SHARE_KINDS) expect(isShareEvent(s, k)).toBe(true);
-		expect(SHARE_SURFACES).toEqual(['ar', 'oembed_agent', 'oembed_play', 'creation_page', 'og_image', 'diorama_share']);
+		expect(SHARE_SURFACES).toEqual([
+			'ar', 'oembed_agent', 'oembed_play', 'creation_page', 'og_image', 'diorama_share',
+			'x_share_model', 'x_share_avatar', 'x_share_anatomy',
+			'grok_ask_model', 'grok_ask_avatar', 'grok_ask_anatomy',
+		]);
 		expect(SHARE_KINDS).toEqual(['view', 'action', 'cta_click']);
 	});
 

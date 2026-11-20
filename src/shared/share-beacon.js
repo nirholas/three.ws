@@ -9,7 +9,7 @@
 const URL_PATH = '/api/share-funnel';
 
 /**
- * @param {'ar'|'creation_page'|'diorama_share'} surface
+ * @param {'ar'|'creation_page'|'diorama_share'|`x_share_${'model'|'avatar'|'anatomy'}`|`grok_ask_${'model'|'avatar'|'anatomy'}`} surface
  * @param {'action'|'cta_click'} kind
  */
 export function beaconShareEvent(surface, kind) {

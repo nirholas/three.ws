@@ -5,6 +5,7 @@
 import { AnatomyApiError, fetchDesign, fetchGallery, generateDesign } from './api.js';
 import { mountAnatomy } from './runtime.js';
 import { scanPartialSpec } from './stream.js';
+import { showSharePanel } from '../shared/share.js';
 
 const EXAMPLES = [
 	'How a big airliner turbofan like the A380\'s makes thrust',
@@ -213,7 +214,48 @@ function showDesignShell() {
 	$('#anpWarn').hidden = true;
 	$('#anpCopyLink').hidden = true;
 	$('#anpCopySpec').hidden = true;
+	setShareState(null);
 	window.scrollTo(0, 0);
+}
+
+// Share (X, Ask @grok, Teams, LinkedIn) needs a saved design: a permalink to
+// unfurl and real metadata to ask about. Until then the button stays visible,
+// focusable and disabled, with the reason as its tooltip.
+const SHARE_WAIT = 'Still generating. Sharing unlocks once the machine is saved with its own link.';
+const SHARE_UNSAVED = 'Saving is unavailable right now, so this machine has no link to share.';
+
+function setShareState(design) {
+	const btn = $('#anpShare');
+	btn.hidden = false;
+	const ready = !!(design?.id && design.url);
+	if (ready) {
+		btn.removeAttribute('aria-disabled');
+		btn.title = 'Share this machine, or ask @grok about it on X';
+	} else {
+		btn.setAttribute('aria-disabled', 'true');
+		btn.title = design ? SHARE_UNSAVED : SHARE_WAIT;
+	}
+}
+
+function openShare() {
+	const btn = $('#anpShare');
+	const design = state.design;
+	if (btn.getAttribute('aria-disabled') === 'true' || !design?.id || !design.url) {
+		toast(btn.title || SHARE_WAIT);
+		return;
+	}
+	showSharePanel(
+		{
+			kind: 'anatomy',
+			id: design.id,
+			title: design.title || 'Machine',
+			description: design.subtitle || '',
+			shareUrl: design.url,
+			shareText: `How a ${design.title || 'machine'} works, as an interactive 3D cutaway on three.ws`,
+			previewImage: `${location.origin}/api/anatomy-og?id=${encodeURIComponent(design.id)}`,
+		},
+		btn,
+	);
 }
 
 function setHeader(title, subtitle, prompt) {
@@ -245,6 +287,7 @@ function showDesignError(err, { retry } = {}) {
 	state.app = null;
 	$('#anpStage').hidden = true;
 	$('#anpSkeleton').hidden = true;
+	$('#anpShare').hidden = true;
 	const box = $('#anpDesignError');
 	box.hidden = false;
 	const notFound = err instanceof AnatomyApiError && err.status === 404;
@@ -269,6 +312,7 @@ function showDesign(design, warnings = []) {
 	app.update(design.spec);
 	$('#anpCopySpec').hidden = false;
 	$('#anpCopyLink').hidden = !design.url;
+	setShareState(design);
 	const notes = [];
 	if (!design.id) notes.push('Saving is unavailable right now, so this machine has no shareable link. Copy the spec to keep it.');
 	if (warnings.some((w) => /ran out of room/.test(w))) notes.push('Claude ran out of room on this one, so a few parts may be missing.');
@@ -397,6 +441,7 @@ function init() {
 		}, 250);
 	});
 	$('#anpSearch').addEventListener('submit', (e) => e.preventDefault());
+	$('#anpShare').addEventListener('click', openShare);
 	$('#anpCopyLink').addEventListener('click', () => state.design?.url && copyText(state.design.url, 'Link copied'));
 	$('#anpCopySpec').addEventListener('click', () => state.app && copyText(JSON.stringify(state.app.spec, null, 2), 'Spec copied as JSON'));
 	for (const link of [$('#anpNew'), document.querySelector('.anp-back')]) {

@@ -168,6 +168,17 @@
 				transform: translateY(1px);
 				border-color: var(--text-2);
 			}
+			.av-share-btn[aria-disabled='true'] {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+			.av-share-btn[aria-disabled='true']:hover {
+				color: var(--text-2);
+				border-color: var(--border-2);
+			}
+			.av-share-btn[aria-disabled='true']:active {
+				transform: none;
+			}
 			.av-share-btn.copied {
 				color: var(--success);
 				border-color: var(--success);
@@ -2004,8 +2015,13 @@
 				<button class="av-share-btn" id="share-hire" type="button" hidden
 					title="Copy a link anyone can hire this agent from, right in their Solana wallet or feed"
 					data-i18n="avatar_page.share_hire_link">Share hire link</button>
-				<a class="av-share-btn" id="share-twitter" target="_blank" rel="noopener"
+				<a class="av-share-btn" id="share-twitter" target="_blank" rel="noopener noreferrer"
 					 data-i18n="avatar_page.share_on_x">Share on X</a
+				>
+				<a class="av-share-btn" id="share-grok" target="_blank" rel="noopener noreferrer"
+					role="link" tabindex="0" aria-disabled="true"
+					aria-label="Ask @grok about this avatar on X"
+					title="Still loading. Ask @grok unlocks once this avatar has a name and a permanent link.">Ask @grok</a
 				>
 				<a class="av-share-btn" id="share-teams" target="_blank" rel="noopener noreferrer"
 					 data-i18n="avatar_page.share_to_teams">Share to Teams</a

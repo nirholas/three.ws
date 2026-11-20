@@ -188,6 +188,18 @@ describe('summarizeShare', () => {
 		expect(sh.share_to_forge).toMatchObject({ value: 0.05, n: 10, of: 200 });
 	});
 
+	it('breaks the X share and Ask @grok clicks down by entity kind', () => {
+		const sh = summarizeShare([
+			{ surface: 'x_share_model', kind: 'action', count: 6 },
+			{ surface: 'x_share_avatar', kind: 'action', count: '2' },
+			{ surface: 'grok_ask_model', kind: 'action', count: 3 },
+			{ surface: 'grok_ask_anatomy', kind: 'action', count: 4 },
+		]);
+		expect(sh.empty).toBe(false);
+		expect(sh.x_share).toEqual({ model: 6, avatar: 2, anatomy: 0, total: 8 });
+		expect(sh.grok_ask).toEqual({ model: 3, avatar: 0, anatomy: 4, total: 7 });
+	});
+
 	it('is not empty when only forge starts from a share exist', () => {
 		expect(summarizeShare([], { started: 1, done: 0, useful: 0 }).empty).toBe(false);
 	});

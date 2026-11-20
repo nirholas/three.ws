@@ -5,7 +5,8 @@
 // creation page. Server-side surfaces (oEmbed unfurls, creation page head) are
 // counted where they are served and are NOT beaconable from here.
 //
-// Body: { "surface": "diorama_share" | "creation_page" | "ar", "kind": "action" | "cta_click" }
+// Body: { "surface": "diorama_share" | "creation_page" | "ar" | "x_share_<kind>" | "grok_ask_<kind>",
+//         "kind": "action" | "cta_click" }   (<kind> is model, avatar or anatomy)
 // Aggregate only: no identifier is read from the body or the request. Always
 // answers 204 for a valid event, whether or not the counter write succeeded,
 // so a counter outage is invisible to the visitor.
@@ -14,7 +15,17 @@ import { cors, error, method, readJson, rateLimited, wrap } from './_lib/http.js
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { isShareEvent, recordShareEvent } from './_lib/share-funnel.js';
 
-const BEACON_SURFACES = new Set(['ar', 'creation_page', 'diorama_share']);
+const BEACON_SURFACES = new Set([
+	'ar',
+	'creation_page',
+	'diorama_share',
+	'x_share_model',
+	'x_share_avatar',
+	'x_share_anatomy',
+	'grok_ask_model',
+	'grok_ask_avatar',
+	'grok_ask_anatomy',
+]);
 const BEACON_KINDS = new Set(['action', 'cta_click']);
 
 export default wrap(async (req, res) => {

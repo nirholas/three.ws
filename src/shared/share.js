@@ -1,30 +1,38 @@
 /**
- * Share panel — one-tap share for agents, forge creations, and scans.
+ * Share panel: one-tap share for agents, forge creations, avatars, anatomy
+ * designs and scans.
  *
  * Usage:
  *   import { showSharePanel } from './shared/share.js';
  *   showSharePanel(
  *     { kind: 'agent', id, title, description, shareUrl, remixUrl },
- *     triggerElement   // optional — focus returns here on close
+ *     triggerElement   // optional: focus returns here on close
  *   );
  *
  * entity shape:
- *   kind        'agent' | 'forge' | 'scan'
- *   id          string
+ *   kind        'agent' | 'forge' | 'avatar' | 'anatomy' | 'scan'
+ *   id          string  (empty while the entity is still generating)
  *   title       string
  *   description string  (optional)
- *   shareUrl    string  — canonical URL that has OG meta
- *   remixUrl    string  — deep-link back into the create flow
- *   previewImage string — optional OG/card image URL shown at the top of the panel
+ *   shareUrl    string: canonical URL that has OG meta
+ *   remixUrl    string: deep-link back into the create flow
+ *   previewImage string: optional OG/card image URL shown at the top of the panel
  *                         so the user sees exactly what their link will unfurl as
+ *   prompt      string: optional generation prompt (models), feeds Ask @grok
+ *   category    string: optional model_category (models), picks the question set
+ *
+ * X actions (docs/share-to-x.md): "Share on X" and, for models, avatars and
+ * anatomy designs, "Ask @grok about it". Both are built by xIntentUrl, tag the
+ * link with utm_campaign grok-share / grok-ask, and beacon the entity kind.
  */
 
 import { Modal } from './modal.js';
-import { teamsShareUrl, linkedinShareUrl, wireShareAnchor } from './share-targets.js';
+import { teamsShareUrl, linkedinShareUrl, wireShareAnchor, xIntentUrl, withShareUtm } from './share-targets.js';
+import { shareKindOf, grokAskState, grokAskText } from './grok-ask.js';
 
 const STYLE_ID = 'tws-share-styles';
 const FARCASTER_COMPOSE = 'https://warpcast.com/~/compose';
-const X_INTENT = 'https://x.com/intent/tweet';
+let grokHintSeq = 0;
 
 export function showSharePanel(entity, triggerEl = null) {
 	ensureShareStyles();
@@ -33,9 +41,12 @@ export function showSharePanel(entity, triggerEl = null) {
 
 	// Callers can supply a full per-entity share template (built from the
 	// entity's real facts); the generic "<title> on three.ws" stays the default.
-	const xText = encodeURIComponent(shareText ? `${shareText}\n` : `${title} on three.ws\n`);
-	const xUrl = encodeURIComponent(shareUrl || location.href);
-	const xHref = `${X_INTENT}?text=${xText}&url=${xUrl}`;
+	const askKind = shareKindOf(entity);
+	const xHref = xIntentUrl({
+		text: shareText ? `${shareText}\n` : `${title} on three.ws\n`,
+		url: withShareUtm(shareUrl || location.href, 'grok-share'),
+	});
+	const grokHtml = askKind ? grokActionHtml(entity) : '';
 
 	const fcText = encodeURIComponent(shareText ? `${shareText}: ` : `${title} on three.ws; `);
 	const fcEmbed = encodeURIComponent(shareUrl || location.href);
@@ -49,7 +60,7 @@ export function showSharePanel(entity, triggerEl = null) {
 		? `<p class="tws-sp-desc">${esc(description)}</p>`
 		: '';
 
-	// Live preview of exactly what the link unfurls as — the real OG/card image.
+	// Live preview of exactly what the link unfurls as: the real OG/card image.
 	// Lazy + graceful: if the image fails to load it simply removes itself.
 	const previewHtml = previewImage
 		? `<div class="tws-sp-preview">
@@ -77,6 +88,7 @@ export function showSharePanel(entity, triggerEl = null) {
 				${xIcon()}
 				Share on X
 			</a>
+			${grokHtml}
 			<a class="tws-sp-btn tws-sp-fc" href="${esc(fcHref)}" target="_blank" rel="noopener noreferrer">
 				${farcasterIcon()}
 				Share on Farcaster
@@ -100,6 +112,10 @@ export function showSharePanel(entity, triggerEl = null) {
 	}, triggerEl);
 
 	modal.bodyEl.querySelectorAll('[data-share-target]').forEach((a) => wireShareAnchor(a, a.dataset.shareTarget));
+	const xAnchor = modal.bodyEl.querySelector('.tws-sp-x');
+	if (xAnchor) wireShareAnchor(xAnchor, 'x', askKind ? `x_share_${askKind}` : 'creation_page');
+	const grokAnchor = modal.bodyEl.querySelector('.tws-sp-grok');
+	if (grokAnchor) wireShareAnchor(grokAnchor, 'x', `grok_ask_${askKind}`);
 
 	// Wire copy-link button inside the modal body
 	modal.bodyEl.addEventListener('click', async (e) => {
@@ -135,7 +151,7 @@ export function showSharePanel(entity, triggerEl = null) {
 			}
 		} catch {
 			if (label) {
-				label.textContent = 'Could not copy — try manually';
+				label.textContent = 'Could not copy. Select the link and copy it manually.';
 				setTimeout(() => { label.textContent = original; }, 2800);
 			}
 		}
@@ -144,7 +160,38 @@ export function showSharePanel(entity, triggerEl = null) {
 	return modal;
 }
 
+/**
+ * The Ask @grok action. Ready: an anchor to the X intent. Still generating: the
+ * same control marked aria-disabled, without an href, still focusable, with
+ * the reason as its tooltip and as visible text it is described by.
+ */
+function grokActionHtml(entity) {
+	const { ready, reason } = grokAskState(entity);
+	const label = `Ask @grok about ${entity.title ? `"${entity.title}"` : 'this'} on X`;
+	if (ready) {
+		const url = withShareUtm(entity.shareUrl || location.href, 'grok-ask');
+		const href = xIntentUrl({ text: grokAskText(entity, { url }), url });
+		return `<a class="tws-sp-btn tws-sp-grok" href="${esc(href)}" target="_blank" rel="noopener noreferrer"
+				aria-label="${esc(label)}" title="Opens X with an editable question for Grok. Nothing posts until you send it.">
+				${grokIcon()}
+				Ask @grok about it
+			</a>`;
+	}
+	const hintId = `tws-sp-grok-hint-${++grokHintSeq}`;
+	return `<a class="tws-sp-btn tws-sp-grok" role="link" tabindex="0" aria-disabled="true"
+			aria-label="${esc(label)}" aria-describedby="${hintId}" title="${esc(reason)}">
+			${grokIcon()}
+			Ask @grok about it
+		</a>
+		<p class="tws-sp-grok-hint" id="${hintId}">${esc(reason)}</p>`;
+}
+
 // ── Icon SVGs ──────────────────────────────────────────────────────────────
+
+function grokIcon() {
+	// A speech bubble with a question mark: a question asked in public.
+	return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/><path d="M10 9.5a2 2 0 1 1 2.6 1.9c-.4.2-.6.5-.6.9v.7"/><path d="M12 15.5h.01"/></svg>`;
+}
 
 function linkIcon() {
 	return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`;
@@ -189,7 +236,7 @@ function ensureShareStyles() {
 }
 
 const SHARE_CSS = `
-/* ── Share panel — tws-sp-* ─────────────────────────────────────────────── */
+/* ── Share panel: tws-sp-* ─────────────────────────────────────────────── */
 
 .tws-sp {
 	display: flex;
@@ -205,7 +252,7 @@ const SHARE_CSS = `
 	line-height: 1.5;
 }
 
-/* OG/card preview — what the shared link unfurls as */
+/* OG/card preview: what the shared link unfurls as */
 .tws-sp-preview {
 	margin: 0 0 10px;
 	border-radius: var(--radius-control, 10px);
@@ -247,13 +294,30 @@ const SHARE_CSS = `
 	outline-offset: 2px;
 }
 
+/* Ask @grok: disabled while the entity is still generating */
+.tws-sp-grok[aria-disabled="true"] {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+.tws-sp-grok[aria-disabled="true"]:hover {
+	background: var(--surface-2, rgba(255,255,255,0.04));
+	border-color: var(--stroke, rgba(255,255,255,0.08));
+}
+.tws-sp-grok[aria-disabled="true"]:active { transform: none; }
+.tws-sp-grok-hint {
+	margin: -2px 2px 2px;
+	font-size: 12px;
+	line-height: 1.4;
+	color: var(--ink-dim, #888);
+}
+
 /* Copy button */
 .tws-sp-copy--success {
 	border-color: var(--accent, rgba(255,255,255,0.3)) !important;
 	color: var(--ink, #e8e8e8);
 }
 
-/* Remix CTA — primary style */
+/* Remix CTA: primary style */
 .tws-sp-remix {
 	background: var(--btn-primary-bg, rgba(255,255,255,0.9));
 	color: var(--btn-primary-fg, #0a0a0f);

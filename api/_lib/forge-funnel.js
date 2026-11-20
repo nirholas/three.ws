@@ -241,8 +241,14 @@ export function summarizeShare(counters = [], from = {}) {
 	const arLaunches = get('ar', 'action');
 	const ctaClicks = get('creation_page', 'cta_click');
 	const shareActions = get('diorama_share', 'action');
+	const byKind = (prefix) => {
+		const out = { model: get(`${prefix}_model`, 'action'), avatar: get(`${prefix}_avatar`, 'action'), anatomy: get(`${prefix}_anatomy`, 'action') };
+		return { ...out, total: out.model + out.avatar + out.anatomy };
+	};
+	const xShare = byKind('x_share');
+	const grokAsk = byKind('grok_ask');
 	const started = int(from.started);
-	const total = unfurls + pageLoads + arLaunches + ctaClicks + shareActions + started;
+	const total = unfurls + pageLoads + arLaunches + ctaClicks + shareActions + xShare.total + grokAsk.total + started;
 	return {
 		empty: total === 0,
 		unfurls,
@@ -250,6 +256,9 @@ export function summarizeShare(counters = [], from = {}) {
 		ar_launches: arLaunches,
 		cta_clicks: ctaClicks,
 		share_actions: shareActions,
+		// Share panel X clicks (utm_campaign=grok-share / grok-ask on the link).
+		x_share: xShare,
+		grok_ask: grokAsk,
 		from_share: {
 			started,
 			done: int(from.done),

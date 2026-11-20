@@ -49,6 +49,15 @@ describe('share funnel beacon', () => {
 		expect(recordShareEvent).toHaveBeenCalledWith('diorama_share', 'action');
 	});
 
+	it('counts the X share and Ask @grok actions per entity kind', async () => {
+		for (const surface of ['x_share_model', 'x_share_avatar', 'x_share_anatomy', 'grok_ask_model', 'grok_ask_avatar', 'grok_ask_anatomy']) {
+			expect((await post({ surface, kind: 'action' })).status).toBe(204);
+			expect(recordShareEvent).toHaveBeenLastCalledWith(surface, 'action');
+		}
+		expect((await post({ surface: 'grok_ask_model', kind: 'view' })).status).toBe(400);
+		expect((await post({ surface: 'grok_ask_agent', kind: 'action' })).status).toBe(400);
+	});
+
 	it('refuses server-side surfaces and kinds a browser cannot witness', async () => {
 		for (const body of [
 			{ surface: 'oembed_agent', kind: 'view' },

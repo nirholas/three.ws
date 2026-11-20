@@ -223,9 +223,22 @@
 	transform: translateY(1px);
 }
 
-.anp-btn:disabled {
+.anp-btn:disabled,
+.anp-btn[aria-disabled='true'] {
 	opacity: 0.5;
 	cursor: not-allowed;
+}
+
+.anp-btn[aria-disabled='true']:hover {
+	background: var(--surface-2);
+}
+
+.anp-btn--ghost[aria-disabled='true']:hover {
+	background: transparent;
+}
+
+.anp-btn[aria-disabled='true']:active {
+	transform: none;
 }
 
 .anp-btn--primary {

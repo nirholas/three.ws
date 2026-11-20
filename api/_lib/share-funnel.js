@@ -20,6 +20,14 @@ export const SHARE_SURFACES = Object.freeze([
 	'creation_page',
 	'og_image',
 	'diorama_share',
+	// Share panel X actions per entity kind (docs/share-to-x.md): the plain
+	// "Share on X" intent and the "Ask @grok about it" intent.
+	'x_share_model',
+	'x_share_avatar',
+	'x_share_anatomy',
+	'grok_ask_model',
+	'grok_ask_avatar',
+	'grok_ask_anatomy',
 ]);
 export const SHARE_KINDS = Object.freeze(['view', 'action', 'cta_click']);
 

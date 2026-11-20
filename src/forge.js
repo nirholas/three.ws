@@ -4497,6 +4497,10 @@ if (els.forgeShareBtn) {
 				kind: 'forge',
 				id: id || '',
 				title: prompt || 'Forged creation',
+				// Real metadata for "Ask @grok about it" (src/shared/grok-ask.js):
+				// the prompt picks the question, and stays empty until it exists.
+				prompt,
+				category: els.categoryPicker?.querySelector('.forge-cat-btn.active')?.dataset.cat || '',
 				description: 'A 3D model generated with text / image → 3D on three.ws',
 				shareUrl,
 				remixUrl,

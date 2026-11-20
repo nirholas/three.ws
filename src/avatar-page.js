@@ -22,7 +22,8 @@ import { fbxFromUrl } from './remesh-convert.js';
 import { safeUrl } from './safe-url.js';
 import { apiFetch } from './api.js';
 import { log } from './shared/log.js';
-import { teamsShareUrl, linkedinShareUrl, wireShareAnchor } from './shared/share-targets.js';
+import { teamsShareUrl, linkedinShareUrl, wireShareAnchor, xIntentUrl, withShareUtm } from './shared/share-targets.js';
+import { grokAskState, grokAskText } from './shared/grok-ask.js';
 import { toast } from './shared/toast.js';
 import { emptyStateHTML, errorStateHTML } from './shared/state-kit.js';
 import { mountViewSwitcher } from './view-switcher.js';
@@ -1778,6 +1779,12 @@ function bindShareButtons() {
 				? `Meet "${avatar.name}", a 3D AI agent on three.ws`
 				: `Check out "${avatar.name}", a 3D avatar on three.ws`,
 		);
+		setGrokAskHref({
+			kind: 'avatar',
+			id: avatar.id || agent?.id || '',
+			title: avatar.name || '',
+			noun: mode === 'agent' ? 'a 3D AI agent' : 'a 3D avatar',
+		});
 	}
 	if (mode === 'agent' && agent?.id) bindHireShare(agent.id);
 }
@@ -1825,11 +1832,45 @@ async function bindHireShare(agentId) {
 	});
 }
 
+// The page's own permalink, without whatever query the visitor arrived with.
+function shareCanonical() {
+	return `${location.origin}${location.pathname}`;
+}
+
+let xShareWired = false;
 function setShareXHref(text) {
 	setMicrosoftShareHrefs(text);
 	const twBtn = $('share-twitter');
 	if (!twBtn) return;
-	twBtn.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.href)}`;
+	twBtn.href = xIntentUrl({ text, url: withShareUtm(shareCanonical(), 'grok-share') });
+	if (xShareWired) return;
+	xShareWired = true;
+	wireShareAnchor(twBtn, 'x', 'x_share_avatar');
+}
+
+// "Ask @grok": disabled (aria-disabled, no href, reason as tooltip) until the
+// avatar has resolved with a name and an id; then an X intent with an editable
+// question that ends with @grok. See docs/share-to-x.md.
+let grokAskWired = false;
+function setGrokAskHref(entity) {
+	const btn = $('share-grok');
+	if (!btn) return;
+	const { ready, reason } = grokAskState(entity);
+	if (ready) {
+		const url = withShareUtm(shareCanonical(), 'grok-ask');
+		btn.href = xIntentUrl({ text: grokAskText(entity, { url }), url });
+		btn.removeAttribute('aria-disabled');
+		btn.removeAttribute('role');
+		btn.title = 'Opens X with an editable question for Grok. Nothing posts until you send it.';
+		btn.setAttribute('aria-label', `Ask @grok about "${entity.title}" on X`);
+	} else {
+		btn.removeAttribute('href');
+		btn.setAttribute('aria-disabled', 'true');
+		btn.title = reason;
+	}
+	if (grokAskWired) return;
+	grokAskWired = true;
+	wireShareAnchor(btn, 'x', 'grok_ask_avatar');
 }
 
 let microsoftShareWired = false;
