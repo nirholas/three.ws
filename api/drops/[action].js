@@ -23,6 +23,7 @@ import { sql } from '../_lib/db.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { authenticateBearer, extractBearer, getSessionUser, hasScope } from '../_lib/auth.js';
 import { originFromReq, startForge } from '../_mcp-studio/forge-client.js';
+import { forwardCreatorAuth } from '../_lib/creator-account.js';
 import { getUserSolanaWallets } from '../_lib/nft-gate.js';
 import { DropMintError, createDropCollection, mintDropItem } from '../_lib/drop-mint.js';
 import { resolveNetwork, assetExplorerUrl } from '../_lib/tokenize-3d.js';
@@ -345,6 +346,8 @@ async function handleReveal(req, res) {
 			// One client key per drop keeps a collection's generations attributable
 			// to the drop rather than to whichever visitor happened to trigger them.
 			clientKey: `drop-${drop.id}`,
+			// /api/forge needs an accountable caller: the signed-in revealer.
+			auth: forwardCreatorAuth(req),
 		});
 	} catch (err) {
 		await markRevealFailed(drop.id, index, err?.message || 'the 3D generator refused the job');
