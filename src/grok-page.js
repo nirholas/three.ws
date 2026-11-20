@@ -405,7 +405,7 @@ async function loadStrip() {
 	strip.setAttribute('aria-busy', 'true');
 	note.hidden = true;
 	try {
-		const res = await fetch(`/api/forge-gallery?limit=${STRIP_COUNT}`);
+		const res = await fetch(`/api/forge-gallery?scope=community&limit=${STRIP_COUNT}`);
 		if (!res.ok) throw new Error(`gallery answered ${res.status}`);
 		const data = await res.json();
 		// The store is switched off on this deployment: there is no gallery to show,
