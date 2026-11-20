@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-20T22:27:06.844Z",
+	"generated_at": "2026-11-20T22:40:01.467Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -218,6 +218,17 @@
 			"tags": [
 				"feature",
 				"fix",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "The three.ws plugin for Grok Build gets /make-3d, /rig, /embed and an art director agent",
+			"summary": "The three.ws plugin for Grok Build, xAI's coding agent, now does the whole 3D job from the terminal. /make-3d checks the free catalog first and otherwise generates a textured model, /rig turns a humanoid GLB into an animation-ready avatar, /embed writes paste-ready HTML for any model, and /three-ws-init teaches a project's AGENTS.md how to load and embed GLBs safely. A 3d-art-director agent makes a model to a brief, renders it from four sides, fixes the one thing that is wrong and stops after two rounds. Catalog search, render checks and embed code are free with no account; making or rigging a model needs a free three.ws account, signed in once from Grok Build with OAuth or with an API key. The plugin installs in under a second and is ready for xAI's plugin marketplace.",
+			"link": "/grok",
+			"tags": [
+				"feature",
 				"docs"
 			]
 		},

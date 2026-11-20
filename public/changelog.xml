@@ -167,6 +167,14 @@
 			<description>The Cursor plugin now has three commands. /make-3d checks the free catalog, generates a textured model, renders it so the agent can see whether it matches, and prints the GLB, a viewer link, the run receipt and paste-ready embed code. /rig turns a humanoid GLB into an animation-ready one, and /embed writes HTML for any website. Signing in from Cursor now always asks for the same four permissions (read and update your 3D models, see your name and email, stay connected) and nothing else, even when Cursor registers without naming them. The plugin ships a five-minute test plan with measured timings, and the privacy policy now spells out what the plugin's server can reach, how long models are kept, and that prompts and models are never used for training or sold.</description>
 		</item>
 		<item>
+			<title>The three.ws plugin for Grok Build gets /make-3d, /rig, /embed and an art director agent</title>
+			<link>https://three.ws/grok</link>
+			<guid isPermaLink="false">2026-11-20:The three.ws plugin for Grok Build gets /make-3d, /rig, /embed and an art director agent</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The three.ws plugin for Grok Build, xAI's coding agent, now does the whole 3D job from the terminal. /make-3d checks the free catalog first and otherwise generates a textured model, /rig turns a humanoid GLB into an animation-ready avatar, /embed writes paste-ready HTML for any model, and /three-ws-init teaches a project's AGENTS.md how to load and embed GLBs safely. A 3d-art-director agent makes a model to a brief, renders it from four sides, fixes the one thing that is wrong and stops after two rounds. Catalog search, render checks and embed code are free with no account; making or rigging a model needs a free three.ws account, signed in once from Grok Build with OAuth or with an API key. The plugin installs in under a second and is ready for xAI's plugin marketplace.</description>
+		</item>
+		<item>
 			<title>three-ws setup offers sign-in for the Grok and free studio connectors again</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-20:three-ws setup offers sign-in for the Grok and free studio connectors again</guid>

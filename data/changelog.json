@@ -3,17 +3,10 @@
 	"entries": [
 		{
 			"date": "2026-11-20",
-			"title": "Talk to a 3D avatar with Grok voice, speech to speech",
-			"summary": "A new page at /voice/grok lets you talk to a 3D avatar through Grok Voice, xAI's speech-to-speech model. Your voice goes up and the spoken reply comes back over one connection instead of three separate steps, the avatar's lips move with the reply as you hear it, and you can talk over it to cut in. Every turn shows how long the reply took to start and how quickly the mouth followed. Any three.ws embed can switch its mic button to Grok Voice with one attribute, voice-provider=\"grok-realtime\". The mouth waits for your speakers instead of running ahead of the sound, Bluetooth included. The LiveKit and Pipecat plugins gained Grok Voice examples and fixes so the avatar keeps the first words of a reply and the visitor's own words. Grok Voice needs a free three.ws account, and the page uses the standard voice chain whenever Grok Voice is not available.",
-			"tags": ["feature", "fix", "sdk"],
-			"link": "/voice/grok"
-		},
-		{
-			"date": "2026-11-20",
-			"title": "Rocket engine and launch stack cutaways, narrated by Grok",
-			"summary": "Anatomy now opens with two featured cutaways. The first is a full-flow staged-combustion rocket engine: both preburners and turbopumps spin, six propellant flows are coloured by species, the methane cools the nozzle on its way to the preburner, and the plume shows shock diamonds. The second is a fully reusable two-stage launch system, toured from liftoff through hot staging and boostback to the tower catch. Every number on screen is listed with its public source and date on a Sources page, and anything that could not be sourced was cut. Press Listen in the tour to hear each step. The narration is built for Grok to write from that step's sourced facts only, and the page reads the written step text whenever Grok is not connected. Shared links unfurl as cards rendered from the real cutaway.",
-			"tags": ["feature"],
-			"link": "/anatomy"
+			"title": "The three.ws plugin for Grok Build gets /make-3d, /rig, /embed and an art director agent",
+			"summary": "The three.ws plugin for Grok Build, xAI's coding agent, now does the whole 3D job from the terminal. /make-3d checks the free catalog first and otherwise generates a textured model, /rig turns a humanoid GLB into an animation-ready avatar, /embed writes paste-ready HTML for any model, and /three-ws-init teaches a project's AGENTS.md how to load and embed GLBs safely. A 3d-art-director agent makes a model to a brief, renders it from four sides, fixes the one thing that is wrong and stops after two rounds. Catalog search, render checks and embed code are free with no account; making or rigging a model needs a free three.ws account, signed in once from Grok Build with OAuth or with an API key. The plugin installs in under a second and is ready for xAI's plugin marketplace.",
+			"tags": ["feature", "docs"],
+			"link": "/grok"
 		},
 		{
 			"date": "2026-11-20",
