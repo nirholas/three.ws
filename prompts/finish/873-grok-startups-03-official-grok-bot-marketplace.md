@@ -1,5 +1,7 @@
 # grok-startups 03: submit-ready package for the official Grok Bot marketplace, plus templates and the grok.com connector path
 
+Status 2026-11-20: package complete (6156ec071 logos, 205ff62ed review check, 8d5a249b4 listing row 0, 4ce69c2a0 templates and reviewer path, 048ba8874 grid, e3e7d6cfe changelog); review check ALL PASS against production, sign-in to first generated model 195.8 s. Remaining is the owner's: approve push and `npm run deploy:gcp:full` (puts the 1:1 logo and the sign-up consent fix live), create the `three-ws` org handle, add the connector in Grok Bot and run the three review asks, submit the form with the values in docs/partners/grok-bot-listings.md section 0, log the submission there.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `grok-startups-` order, so it can run in parallel with all of them. Dev port: 3273.
 
 ## Operating clause (binding)
