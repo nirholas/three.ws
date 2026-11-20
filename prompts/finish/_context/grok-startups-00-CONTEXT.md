@@ -1,6 +1,6 @@
 # grok-startups campaign: shared context
 
-Not a work order. Never run this file. Every `prompts/finish/8NN-grok-startups-*.md` order (871 to 885) names it in its first lines; read it before step 0. CLAUDE.md overrides everything here.
+Not a work order. Never run this file. Every `prompts/finish/8NN-grok-startups-*.md` order (871 to 886) names it in its first lines; read it before step 0. CLAUDE.md overrides everything here.
 
 The campaign builds on three.ws's admission to xAI's **Grok for Startups** program (admitted 2026-11-20). The opportunity map and the reasoning behind every order is [docs/partners/xai-grok-startups-plan.md](../../../docs/partners/xai-grok-startups-plan.md). Read its "Rules that bind every route" section before writing any copy.
 
@@ -51,6 +51,7 @@ The campaign builds on three.ws's admission to xAI's **Grok for Startups** progr
 6. **Generated files.** After appending to `data/changelog.json`, run `npm run build:pages` and stage what it regenerates.
 7. **package.json scripts.** Add one only if you need it, prefixed `grok:` (for example `grok:usage`), via a small anchored edit.
 8. **Model and endpoint ids.** New xAI ids go into `api/_lib/chat-models.js` next to `GROK_MODELS` (hot file, rule 2) and are read from there.
+9. **New files more than one order may create.** `scripts/export-plugin-repo.mjs` (orders 871, 872, 885) and `api/_lib/xai-pricing.js` (orders 878, 879) can be created by whichever order gets there first. Immediately before creating one, check both the disk and `git log -1 -- <path>`. If it exists in either place (committed, or uncommitted from a sibling still working), extend it with anchored edits and keep its existing CLI flags and exports backward compatible; never overwrite it. If it does not exist, create the smallest complete version your order needs, with its test, and commit those two paths on their own at once, before building on them, so the first commit wins and siblings find it.
 
 ## When there is no xAI key (the normal state until order 927 lands)
 

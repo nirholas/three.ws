@@ -27,10 +27,11 @@ How to run: paste this file's repo path into a fresh Claude Code chat in this re
 
 1. If a key exists in any of those places but not on the service: add it as a Secret Manager reference with `gcloud run services update three-ws-api --update-secrets` (never `--set-env-vars`), verify with one `GET /v1/models` call from a script that reads the service env, and run orders 039, 042 and 043's live checks.
 2. If no key exists: send the owner one message: where to create it (console.x.ai), the spending limit to set, the secret name to store it under, and that everything else is ready.
+3. The moment the key is live on the service, xAI becomes a provider that receives user prompts, so disclose it in the same change. Add an `xAI` row to [data/subprocessors.json](../../data/subprocessors.json) in the `ai` group, following that file's `$comment` and `method` exactly: the purpose and data it receives (from the code paths that call `api.x.ai`, for example [api/_lib/llm.js](../../api/_lib/llm.js) and [api/_lib/x-search.js](../../api/_lib/x-search.js)), those paths as `evidence`, xAI's published API data terms as `terms`, and a bumped `lastReviewed`. Add xAI to the AI-provider list in section 10 of [public/legal/privacy.html](../../public/legal/privacy.html) and Grok beside Claude and ChatGPT as a connector client, then update that string in every locale the page's `data-i18n-html` keys use (`node scripts/check-i18n-parity.mjs` must pass). `npx vitest run tests/trust-page.test.js` must pass.
 
 ## Definition of done
 
-- [ ] The service has the key as a secret reference, and `npm run e2e:xai-mcp` passes with it; then this file is deleted, and `prompts/finish/941-x-grok-17-xai-remote-mcp-e2e.md` is deleted in the same commit (owner instruction 2026-11-04: delete order 039 once its live run passes).
+- [ ] The service has the key as a secret reference, xAI is on `/trust/subprocessors` and in the privacy policy (task 3), and `npm run e2e:xai-mcp` passes with it; then this file is deleted, and `prompts/finish/941-x-grok-17-xai-remote-mcp-e2e.md` is deleted in the same commit (owner instruction 2026-11-04: delete order 039 once its live run passes).
 - [ ] Or: the owner message was sent and this file stays with that line open.
 
 ## Never blocked

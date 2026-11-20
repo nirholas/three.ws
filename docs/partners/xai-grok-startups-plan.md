@@ -3,7 +3,7 @@
 **Stage:** mapped 2026-11-20, the day three.ws was admitted to xAI's Grok for Startups program.
 **Tracker row:** `xai-grok-for-startups` in [data/partner-programs.json](../../data/partner-programs.json)
 (status `member`, credits `claimable`). **Work orders:** the `grok-startups-` campaign,
-`prompts/finish/871` to `885`, context in
+`prompts/finish/871` to `886`, context in
 [prompts/finish/_context/grok-startups-00-CONTEXT.md](../../prompts/finish/_context/grok-startups-00-CONTEXT.md).
 
 This page maps every surface where membership can turn into product, distribution or attention. It
@@ -78,6 +78,7 @@ behind, because "Grok did X in Y seconds for Z users" is the sentence that gets 
 | C3 | **Share to X with @grok** on every model, avatar and cutaway page, with the player card link | Users post their creations and tag @grok; Grok answers in the thread, in public, on X | 884 |
 | C4 | **Rocket engine anatomy**: an accurate interactive cutaway of a full-flow staged-combustion methalox engine and a two-stage super-heavy launch stack, narrated by Grok | Built for the space-engineering audience on X and timed to launch windows, the audience most likely to carry it to SpaceX and Elon Musk's account | 883 |
 | C5 | **Connector reliability**: synthetic probe of the Grok-facing MCP surfaces with a public status signal | Marketplace reviewers reject plugins they cannot connect to; uptime numbers make the case study credible | 880 |
+| C6 | **Grok 3D starter app**: a forkable, Codespaces-ready app where you chat with Grok, Grok calls three.ws over remote MCP, and the model appears on the page and changes on follow-ups; exported as its own repo like the other satellites | Developer relations reshares something a developer can fork and run in five minutes, not a snippet | 886 |
 
 ### D. Co-marketing and asks
 
@@ -92,7 +93,7 @@ behind, because "Grok did X in Y seconds for Z users" is the sentence that gets 
 
 ## Work orders
 
-All fifteen are independent and can run at the same time in separate chats. Each one names the
+All sixteen are independent and can run at the same time in separate chats. Each one names the
 shared context file in its first lines and ends with a batched owner message for the steps only the
 owner can take.
 
@@ -113,6 +114,7 @@ owner can take.
 | 883 | [Rocket engine and launch stack cutaways, Grok narration](../../prompts/finish/883-grok-startups-13-rocket-engine-anatomy.md) | C4, D4 |
 | 884 | [Ask @grok share intents on models, avatars, anatomy](../../prompts/finish/884-grok-startups-14-share-to-x-with-grok.md) | C3, D3 |
 | 885 | [Account-free three.js craft plugin for Grok Build](../../prompts/finish/885-grok-startups-15-threejs-craft-pack.md) | A5 |
+| 886 | [Forkable Grok 3D starter app](../../prompts/finish/886-grok-startups-16-grok-3d-starter-app.md) | C6 |
 
 ## Rules that bind every route
 
@@ -139,7 +141,7 @@ owner can take.
 | 1 | Complete xAI onboarding in the startups portal | The remaining 80% of credits | Acceptance email |
 | 2 | Create the production API key on the credited team and run `npm run setup:xai-key` | Every live Grok lane (874 to 879), orders 927 and 941 | [order 927](../../prompts/finish/927-x-grok-46-owner-grok-api-key.md) |
 | 3 | Record the credit amount and expiry privately: `node scripts/partner-programs.mjs --benefit xai-grok-for-startups --name "Grok API, Grok and Grok Build credits" --state received --note "<expiry only>"` and set the grant amount as a Cloud Run env var (order 878 names it) | Burn tracking | Tracker CLI |
-| 4 | Decide the public home for the plugin repos (a GitHub organization reads better to reviewers than a personal account) and push the exported trees | Cursor Marketplace, Grok Bot marketplace, Grok Build PR | Orders 871, 872, 885 |
+| 4 | Decide the public home for the plugin repos (a GitHub organization reads better to reviewers than a personal account) and push the exported trees | Cursor Marketplace, Grok Bot marketplace, Grok Build PR | Orders 871, 872, 885, 886 |
 | 5 | Approve and send the marketplace submissions | Listings | Orders 873, 929 |
 | 6 | Send the co-marketing email; approve the X posts | Amplification | Orders 882, 930 |
 | 7 | Deploy (`npm run deploy:gcp:full`) once the build orders land | Everything user-facing | Deploy runbook |

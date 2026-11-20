@@ -28,7 +28,7 @@ Proof that the method works. Each of these looked out of reach before the applic
 | [Alibaba Cloud Marketplace](https://marketplace.alibabacloud.com/) | Alibaba | Big tech | Nothing open; keep it current |
 | [IBM Community user group](https://community.ibm.com/) | IBM | Big tech | Nothing open; keep it current |
 | [Microsoft AI Cloud Partner Program (MAICPP)](https://learn.microsoft.com/en-us/partner-center/benefits/benefits-at-a-glance) | Microsoft | Big tech | Nothing open; keep it current |
-| [Grok for Startups](https://x.ai/startups) | xAI | Big tech | Complete xAI onboarding to release the remaining 80% of credits, record the expiry with --benefit (never the amount, which stays in the XAI_CREDIT_GRANT_USD env var on Cloud Run), and route the Grok lane through the credited team. Build and co-marketing plan: docs/partners/xai-grok-startups-plan.md (work orders 871 to 885) |
+| [Grok for Startups](https://x.ai/startups) | xAI | Big tech | Complete xAI onboarding to release the remaining 80% of credits, record the expiry with --benefit (never the amount, which stays in the XAI_CREDIT_GRANT_USD env var on Cloud Run), and route the Grok lane through the credited team. Build and co-marketing plan: docs/partners/xai-grok-startups-plan.md (work orders 871 to 886) |
 
 ## The easiest door into each household name
 
