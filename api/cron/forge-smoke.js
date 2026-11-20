@@ -36,6 +36,7 @@ import { sendOpsAlert } from '../_lib/alerts.js';
 import { llmComplete } from '../_lib/llm.js';
 import { fetchRedisDailyCommands, evaluateRedisBurn, redisBurnAlert } from '../_lib/redis-usage.js';
 import { requireCron } from '../_lib/cron-auth.js';
+import { platformAuthHeaders } from '../_lib/creator-account.js';
 
 const SMOKE_PROMPT = 'a small wooden toy boat with a striped sail';
 // One budget covers the submit and the poll together, because the draft lane
@@ -121,7 +122,9 @@ export async function runGeneration(origin) {
 		`${origin}/api/forge`,
 		{
 			method: 'POST',
-			headers: { 'content-type': 'application/json' },
+			// POST /api/forge needs an account; the smoke is a platform job, and
+			// on-behalf keeps its daily test model unlisted, out of the showcase.
+			headers: { 'content-type': 'application/json', ...platformAuthHeaders({ onBehalf: true }) },
 			body: JSON.stringify({ prompt: SMOKE_PROMPT, tier: 'draft', force_regenerate: true }),
 		},
 		GENERATION_BUDGET_MS,

@@ -136,16 +136,18 @@ export async function loadCatalog(baseUrl) {
 	return res.json();
 }
 
-// The bench is an internal sweep of our own deployment, so it submits as an
-// internal seed request when the deployment's CRON_SECRET is available locally
-// (api/forge.js: isInternalSeedRequest). Without it the High tier is unreachable —
-// forge.high is $THREE hold-or-pay gated and an anonymous submit gets a 402
-// three_hold_required, which would record every high-tier combo as a lane failure
-// and make the "standard vs high" comparison meaningless. Absent the secret the
-// bench still runs; only the ungated tiers produce scores.
+// The bench is an internal sweep of our own deployment, so it submits as a
+// platform job with the deployment's CRON_SECRET (api/forge.js:
+// isInternalSeedRequest). POST /api/forge needs an account, so an anonymous
+// submit is refused outright, and the secret also opens the High tier (forge.high
+// is $THREE hold-or-pay gated). `x-forge-on-behalf` marks the sweep's models as a
+// platform job's own work rather than showcase seeds, so they are born unlisted.
 export function forgeSeedHeaders() {
 	const secret = (process.env.QUALITY_BENCH_FORGE_SEED || process.env.CRON_SECRET || '').trim();
-	return secret ? { 'x-forge-seed': secret } : {};
+	if (!secret) {
+		throw new Error('the quality bench needs CRON_SECRET (or QUALITY_BENCH_FORGE_SEED) to submit to /api/forge, which refuses anonymous generation');
+	}
+	return { 'x-forge-seed': secret, 'x-forge-on-behalf': '1' };
 }
 
 export async function submitForge(baseUrl, { prompt, mode, referenceImageUrl, tier, backend }) {

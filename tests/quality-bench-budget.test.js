@@ -33,7 +33,7 @@ vi.mock('../api/_lib/vertex-gemini.js', () => ({
 	vertexGeminiHeaders: async () => ({}),
 }));
 
-import { pollForge, runOne } from '../api/_lib/quality-bench.js';
+import { pollForge, runOne, forgeSeedHeaders } from '../api/_lib/quality-bench.js';
 
 const BASE = 'https://three.ws';
 const PROMPT = { id: 'qb01', subjectClass: 'people', prompt: 'a stone bust', mode: 'text' };
@@ -130,6 +130,11 @@ describe('pollForge per-request ceiling', () => {
 });
 
 describe('runOne under a budget', () => {
+	// The bench submits as a platform job; give it the secret a real run has.
+	let prevSecret;
+	beforeEach(() => { prevSecret = process.env.CRON_SECRET; process.env.CRON_SECRET = 'bench-secret'; });
+	afterEach(() => { if (prevSecret === undefined) delete process.env.CRON_SECRET; else process.env.CRON_SECRET = prevSecret; });
+
 	it('reports an exhausted budget without scoring it as a zero', async () => {
 		globalThis.fetch = stubForge({ submitResponse: { job_id: 'j1' } });
 		const result = await runOne(BASE, PROMPT, 'lane-a', 'standard', { deadlineAt: Date.now() + 60 });
@@ -158,5 +163,27 @@ describe('runOne under a budget', () => {
 		expect(result.meanScore).toBeNull();
 		expect(result.views).toEqual([]);
 		expect(renderClip).not.toHaveBeenCalled();
+	});
+});
+
+// POST /api/forge needs an account. The bench submits as an on-behalf platform
+// job so its sweep models are born unlisted, never public showcase seeds, and
+// says so plainly when no secret is set instead of sending an anonymous submit.
+describe('forgeSeedHeaders', () => {
+	const saved = {};
+	beforeEach(() => {
+		for (const k of ['QUALITY_BENCH_FORGE_SEED', 'CRON_SECRET']) { saved[k] = process.env[k]; delete process.env[k]; }
+	});
+	afterEach(() => {
+		for (const [k, v] of Object.entries(saved)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
+	});
+
+	it('marks the bench submit as an on-behalf job so its models stay unlisted', () => {
+		process.env.CRON_SECRET = 'bench-secret';
+		expect(forgeSeedHeaders()).toEqual({ 'x-forge-seed': 'bench-secret', 'x-forge-on-behalf': '1' });
+	});
+
+	it('refuses to run without a secret, since an anonymous submit is rejected', () => {
+		expect(() => forgeSeedHeaders()).toThrow(/CRON_SECRET|QUALITY_BENCH_FORGE_SEED/);
 	});
 });

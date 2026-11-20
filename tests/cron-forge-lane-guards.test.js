@@ -75,6 +75,23 @@ test('the smoke submit asks the forge to bypass its result cache', async () => {
 	expect(JSON.parse(submit.options.body)).toMatchObject({ tier: 'draft', force_regenerate: true });
 });
 
+// POST /api/forge needs an account. The smoke is a platform job, so it submits
+// with the cron secret as an on-behalf job: trusted past the account gate, and
+// its daily test model is born unlisted instead of joining the public showcase.
+test('the smoke submit authenticates as an unlisted platform job', async () => {
+	const prev = process.env.CRON_SECRET;
+	process.env.CRON_SECRET = 'smoke-secret';
+	try {
+		const calls = stubForge({ status: 'done', job_id: null, glb_url: 'https://cdn.example/forge/probe.glb' });
+		await runGeneration('https://three.ws');
+		const submit = calls.find((c) => c.url === 'https://three.ws/api/forge');
+		expect(submit.options.headers).toMatchObject({ 'x-forge-seed': 'smoke-secret', 'x-forge-on-behalf': '1' });
+	} finally {
+		if (prev === undefined) delete process.env.CRON_SECRET;
+		else process.env.CRON_SECRET = prev;
+	}
+});
+
 // The regression itself: a cached response satisfied every later check, because
 // a cache hit carries a real, fetchable, glTF-magic GLB.
 test('a cached forge response fails the smoke instead of passing on a replay', async () => {
