@@ -10,13 +10,6 @@
 		},
 		{
 			"date": "2026-11-20",
-			"title": "The free NVIDIA image step accepts requests again",
-			"summary": "When you make a 3D model from text, the first step draws a reference picture, and the free NVIDIA FLUX service is the first place it asks. That service changed its rules and began refusing any request that carried a random seed, so every attempt was turned away in under a second and the job had to wait for a backup service instead. Requests no longer carry the seed, so the free step can answer again whenever NVIDIA has capacity.",
-			"tags": ["fix"],
-			"link": "/forge"
-		},
-		{
-			"date": "2026-11-20",
 			"title": "Live uptime numbers for the Grok MCP connectors",
 			"summary": "Every five minutes a synthetic client now connects to the Grok-facing MCP connectors exactly the way Grok and Cursor do: it opens a session, lists the tools, makes one read-only tool call and checks the OAuth sign-in challenge, timing every step. The results appear on the status page under Connector uptime, with 24 hour, 7 day and 30 day success rates and how long a connector waits for the tool list, and the same numbers are published as a public feed at /api/status/mcp. A connector that fails twice in a row alerts the team.",
 			"tags": ["feature", "infra"],
