@@ -219,6 +219,21 @@ throwaway database and no Redis, submits a forge job and passes only when the
 job finishes with a GLB and the fall-through line was logged (or, with
 `--expect-xai`, when Grok Imagine served the picture).
 
+### Grok Voice realtime on a lip-synced avatar
+
+[/voice/grok](/voice/grok) talks to a 3D avatar through xAI's speech-to-speech
+model (`grok-voice-latest`) instead of the speech recognition, chat and speech
+synthesis chain: the microphone streams up over one socket, the spoken reply
+streams back, the avatar's mouth follows the reply audio as it plays, and the
+visitor can talk over it. The xAI key stays on the server
+([api/voice/grok/session.js](../api/voice/grok/session.js) mints a short-lived
+client secret for signed-in visitors), each turn reports measured response and
+mouth latency, and a server without `GROK_API_KEY` answers `503
+grok_voice_not_configured` while the page runs the standard chain on the same
+avatar. Any embed opts in with `<agent-3d voice-provider="grok-realtime">`, and
+the LiveKit and Pipecat plugins have Grok Voice examples. The full guide,
+including the measured chain baseline, is [docs/voice-grok.md](voice-grok.md).
+
 ## Grok Build
 
 [Grok Build](https://github.com/xai-org/grok-build) is xAI's coding agent for
