@@ -12,20 +12,20 @@ https://github.com/user-attachments/assets/d52515d1-cb04-4dd6-98bd-fef233312dc4
 
 **Give your AI a body.** three.ws is an open source (Apache-2.0), browser-native 3D AI agent platform. Type a prompt and [**Forge**](https://three.ws/forge) generates a textured 3D model, or drop a GLB you already have. Add an LLM brain, register on-chain, and embed anywhere: no plugins, no server uploads, no installs required.
 
-> **Try it in 60 seconds:** open [three.ws/forge](https://three.ws/forge), type *"a brass steampunk owl, full body"*, and download the GLB. Text→3D, image→3D, and sketch→3D - free draft tier, no account. [Jump to the Forge section ↓](#forge-text--image-to-3d)
+> **Try it in 60 seconds:** open [three.ws/forge](https://three.ws/forge), type *"a brass steampunk owl, full body"*, and download the GLB. Text→3D, image→3D, and sketch→3D on a free draft tier with a free three.ws account. [Jump to the Forge section ↓](#forge-text--image-to-3d)
 
 ### Give your coding agent a 3D pipeline
 
-Free text to 3D and rigged avatars from inside your editor. No key, no account. Works with **Claude Code, Claude Desktop, Cursor, VS Code, Codex, Gemini CLI and OpenCode**.
+Free text to 3D and rigged avatars from inside your editor, on a free three.ws account (sign in once, or set an API key). Works with **Claude Code, Claude Desktop, Cursor, VS Code, Codex, Gemini CLI and OpenCode**.
 
-**Claude Code plugin** (skills plus the keyless 3D server, wired for you):
+**Claude Code plugin** (skills plus the free 3D server, wired for you):
 
 ```text
 /plugin marketplace add nirholas/three.ws
 /plugin install three-ws-3d@three-ws
 ```
 
-**Any MCP client:** add `https://three.ws/api/mcp-studio` (Streamable HTTP, keyless, <!-- mcp-count:mcp-studio.tools -->16<!-- /mcp-count --> tools: text to 3D, image to 3D, rigged avatars, talking personas). Then ask your agent for *"a low-poly treasure chest as a GLB"*.
+**Any MCP client:** add `https://three.ws/api/mcp-studio` (Streamable HTTP, free, <!-- mcp-count:mcp-studio.tools -->16<!-- /mcp-count --> tools: text to 3D, image to 3D, rigged avatars, talking personas). Searching ready-made assets needs no account; making or rigging a model needs a free three.ws account (OAuth sign-in with `?auth=oauth`, or an API key from three.ws/dashboard/api-keys sent as `Authorization: Bearer <key>`). Then ask your agent for *"a low-poly treasure chest as a GLB"*.
 
 <details>
 <summary>Copy-paste config for each client</summary>
@@ -8585,7 +8585,7 @@ three.ws is a full-stack system for creating, deploying, and embedding 3D AI age
 
 At its core, it does five things:
 
-1. **Generate**: turns a text prompt, up to 6 photos, or a sketch into a textured, downloadable GLB via [Forge](https://three.ws/forge). Free draft tier, no account required; auto-rigging, restyling, and retexturing in the same flow.
+1. **Generate**: turns a text prompt, up to 6 photos, or a sketch into a textured, downloadable GLB via [Forge](https://three.ws/forge). Free draft tier with a free account; auto-rigging, restyling, and retexturing in the same flow.
 
 2. **Render** - loads and validates glTF 2.0 / GLB models in WebGL 2.0 with zero server-side processing. Drag a file onto the browser and it renders instantly with full Draco, KTX2, and Meshopt decompression.
 
@@ -8614,7 +8614,7 @@ flowchart LR
 
 Straight answers, so you can judge it before you build on it:
 
-- **Free:** the viewer, Forge draft generation, the keyless MCP server, unlimited `<agent-3d>` embeds, one agent with a custom avatar, and self-hosting the whole stack under Apache-2.0.
+- **Free:** the viewer, Forge draft generation (with a free account), the free MCP server, unlimited `<agent-3d>` embeds, one agent with a custom avatar, and self-hosting the whole stack under Apache-2.0.
 - **Paid:** [Pro](https://three.ws/pricing) at $49/month (unlimited agents, voice cloning, priority GPU), higher-tier generation billed per call, and Enterprise. Agents that sell skills get paid per call over x402.
 - **$THREE** is the platform's own Solana coin. Pro costs 20% less when paid in $THREE, per-call generation settles in $THREE at the live rate, and skill authors can price their calls in $THREE. The open-source code needs no coin at all.
 
@@ -8755,7 +8755,7 @@ More captures appear inline in the sections below: [Widget Studio](#widget-syste
 
 ## Forge: Text & Image to 3D
 
-Type a sentence, get a 3D model. [**Forge**](https://three.ws/forge) turns a text prompt, one to six photos, or a rough sketch into a textured, downloadable GLB, in the browser, with a free draft tier and no account required.
+Type a sentence, get a 3D model. [**Forge**](https://three.ws/forge) turns a text prompt, one to six photos, or a rough sketch into a textured, downloadable GLB, in the browser, with a free draft tier on a free three.ws account. New models stay unlisted until you publish them.
 
 | Input | How it works | Typical time |
 | --- | --- | --- |
@@ -8763,7 +8763,7 @@ Type a sentence, get a 3D model. [**Forge**](https://three.ws/forge) turns a tex
 | **Image** | Upload 1 to 6 reference views (front/back/left/right/top/three-quarter); multi-view removes back-of-object hallucination | ~30 to 90 s |
 | **Sketch** | Draw it and name it - TripoSG-scribble reconstructs the geometry | ~30-90 s |
 
-Three quality tiers - `draft` (~12k polygons), `standard` (~30k, default), `high` (~200k + PBR textures) - and two generation paths: the platform-keyed image pipeline (FLUX → TRELLIS) that works with no key at all, and bring-your-own-key native geometry via **Meshy** or **Tripo** for the cleanest quad topology (your key stays in your browser).
+Three quality tiers - `draft` (~12k polygons), `standard` (~30k, default), `high` (~200k + PBR textures) - and two generation paths: the platform-keyed image pipeline (FLUX → TRELLIS) that needs no provider key of your own, and bring-your-own-key native geometry via **Meshy** or **Tripo** for the cleanest quad topology (your key stays in your browser).
 
 Forge is not a dead end. Every generated model carries straight into the rest of the platform: open it in **Scene Studio**, **auto-rig** it into an animatable character, restyle it (voxel / brick / voronoi / low-poly), retexture it from a prompt, embed it with `<agent-3d>`, give it an LLM brain, or deploy it on-chain. Prompt-to-avatar lives at [three.ws/create/prompt](https://three.ws/create/prompt) - a description becomes a rigged, animatable agent body.
 
@@ -10347,7 +10347,7 @@ Run `/reload-plugins` and the skills appear under each plugin's namespace (e.g. 
 
 ## Install the MCP server in any client
 
-One server, every MCP host. `forge_free` (text to 3D) and the crypto-news tools work with no key, no wallet and no account; paid tools settle per call in USDC over x402. The same `npx -y @three-ws/mcp-server` command runs everywhere, only the config file differs. Full tool list: [mcp-server/README.md](mcp-server/README.md).
+One server, every MCP host. The crypto-news tools work with no key, no wallet and no account; `forge_free` (text to 3D) needs only a free three.ws API key in `THREE_WS_API_KEY`; paid tools settle per call in USDC over x402. The same `npx -y @three-ws/mcp-server` command runs everywhere, only the config file differs. Full tool list: [mcp-server/README.md](mcp-server/README.md).
 
 **Claude Code**
 
