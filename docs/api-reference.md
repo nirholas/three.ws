@@ -2346,25 +2346,114 @@ creator attribution (`creatorUsername`, `creatorDisplayName`,
 first, newest, never the model itself. Geometry stats are not stored: the page
 reads triangles/vertices live from the free `GET /api/3d/inspect?url=<glb>`.
 
+When the caller sends an owner credential (below), `creation` also carries
+`is_owner` and `can_edit_tags`, which the model page uses to show its owner
+controls. A `private` model answers `404` to everyone except its owner; the
+owner gets it with `cache-control: private, no-store`, so the page can publish
+it again or delete it and no shared cache keeps a copy.
+
+### Owner credentials
+
+A creation belongs to whoever made it. The owner-only calls below (visibility,
+tags, delete) accept any one of:
+
+| Credential | Where it comes from |
+| --- | --- |
+| `x-forge-client: <id>` | The browser id the model was forged under (`forge:cid` in localStorage). The shared anonymous bucket never counts as an owner. |
+| `x-forge-manage-token: fm1.<id>.<mac>` | The per-creation `manage_token` every forge response that names a creation returns (`POST /api/forge`, `GET /api/forge?id=`, the GPT forge). It stays valid when the browser id is lost; the site keeps it in localStorage under `forge:manage`. Store it if you forge from a script. |
+| Session cookie or Bearer token | The signed-in account the model is attributed to. |
+
+Without any of them the model cannot be changed by API. Ask for removal with
+`POST /api/forge-removal-request` instead.
+
+### Change who can see a creation: `PATCH /api/forge-creation`
+
+```
+PATCH /api/forge-creation?id=<uuid>
+x-forge-client: <id>  or  x-forge-manage-token: <token>  or  a session
+{ "visibility": "public" | "unlisted" | "private" }
+→ 200 { "visibility": "unlisted" }
+```
+
+`public` lists the model in the gallery, feeds, search and sitemaps.
+`unlisted` (the default for new models) keeps the link working but out of
+every listing. `private` makes the link answer `404` to everyone but the
+owner. Making a model public runs the content-safety screen first:
+
+- `202 { visibility: "unlisted", pending: true, message }`: the screen has not
+  answered yet. The model stays unlisted and is listed automatically when it
+  passes.
+- `403 blocked_by_safety_review`: the model failed review and cannot be public
+  or shared by link.
+
+`400 invalid_visibility` for any other value, `404 not_found` when the caller
+is not the owner (same answer as a missing id), `503 update_failed` when
+nothing changed. The same endpoint edits tags with `{ "tags": [...] }`
+(see [creation-descriptions.md](./creation-descriptions.md)).
+
 ### Delete a creation: `DELETE /api/forge-creation`
 
 ```
 DELETE /api/forge-creation?id=<uuid>
-x-forge-client: <stable browser id>   # required: only the owner can delete
+x-forge-client: <id>  or  x-forge-manage-token: <token>  or  a session
 → { "deleted": true }
 ```
 
-Permanent deletion for the "Your creations" gallery, scoped to the browser
-that forged the model (the same `forge:cid` id that scopes the gallery read).
+Permanent deletion, from "Your creations" or the model page, for any
+[owner credential](#owner-credentials).
 It erases everything the platform stored for that creation: the durable GLB,
 the preview image, any uploaded reference photos the generation was
 conditioned on (the image-to-3D source pictures), the row itself, and with it
 the model's presence in the community showcase, share links, and embeds.
-Votes and comments cascade away with the row. A missing client id is
-`401 missing_client`; an id that doesn't exist or belongs to another browser
-is `404 not_found` (indistinguishable on purpose, so ids can't be probed).
-On a storage fault nothing is removed and the response is `503 delete_failed`;
-retry safely.
+Votes and comments cascade away with the row. Storage objects that cannot be
+deleted at that moment go to a purge queue that a cron retries every 15
+minutes, and `/cdn/` stops serving the model as soon as the row is gone.
+No credential at all is `401 missing_credentials`; an id that doesn't exist
+or belongs to someone else is `404 not_found` (indistinguishable on purpose,
+so ids can't be probed). On a database fault nothing is removed and the
+response is `503 delete_failed`; retry safely.
+
+### Request removal of a model: `POST /api/forge-removal-request`
+
+```
+POST /api/forge-removal-request
+{ "creation_id": "<uuid>", "reason": "copyright",
+  "details": "This is my character, published without permission.",
+  "contact": "you@example.com" }
+→ 201 { "ok": true, "id": "<request uuid>", "message": "..." }
+```
+
+For everyone an owner credential cannot cover: a maker who lost both the
+browser id and the manage token, a rights holder, a person whose likeness was
+turned into a model. Anonymous on purpose. "Request removal" on every model
+page calls it.
+
+| Field | Rules |
+| --- | --- |
+| `reason` | `my_content`, `copyright`, `likeness`, `harmful` or `other`. |
+| `details` | Required (10 to 2000 characters) for every reason except `my_content`. |
+| `contact` | Optional email for the reviewer's reply. Never shown publicly. |
+
+A repeat request from the same person on the same model answers
+`200 { duplicate: true }` and keeps the first. `404 not_found` when the model
+is already gone, `400 validation_error` with `field`, `429` past 10 requests
+an hour, `503 store_unavailable` on a database fault. Three open `harmful` or
+`likeness` requests from different people take the model out of public view
+(unlisted) until a reviewer decides.
+
+There is no admin endpoint for the queue, on purpose. Operators review it from
+a workstation with their own gcloud login:
+
+```
+npm run forge:removals -- --prod-env                  # open requests, with the commands to act on each
+npm run forge:removals -- --prod-env --status all
+npm run forge:removals -- --prod-env dismiss <request-id> --resolution "<why it stays up>"
+npm run forge:takedown -- <creation-id> --prod-env --apply --reason copyright --resolution "<why>"
+```
+
+`forge:takedown` deletes the row, GLB, preview and source uploads, queues any
+storage it cannot reach, and closes every open request on the model. Both
+CLIs load the production env into memory only (`scripts/lib/cloud-run-env.mjs`).
 
 ### Model comments: `GET/POST/DELETE /api/forge-comments`
 

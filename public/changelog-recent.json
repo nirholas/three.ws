@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-20T02:53:09.318Z",
+	"generated_at": "2026-11-20T03:33:56.186Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4654,
+	"total": 4655,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -17,6 +17,17 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "Manage or report any 3D model from its page",
+			"summary": "If you made a model, its page now lets you choose who sees it (public, unlisted or private) and delete it for good, even after switching browsers, because the site keeps a private key for every model you make. A private model still opens for you so you can publish it again. Anyone else can use Request removal on the page to report their own lost model, a copyright problem, their likeness or harmful content, and a person reviews every request.",
+			"link": null,
+			"tags": [
+				"feature",
+				"security"
 			]
 		},
 		{
@@ -1538,16 +1549,6 @@
 			"link": "/docs/dotnet-sdk",
 			"tags": [
 				"sdk"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "update",
-			"title": "Detailed 3D models no longer fall back to a plain mesh mid-generation",
-			"summary": "Some requests for a textured model finished as an untextured one. The job was still running on one server, but another server checking on it read an outdated status, decided the job was dead, and handed it to a faster lane without textures. Job status is now always read fresh, so the textured model you asked for is the one you get. The fix covers TRELLIS, TRELLIS.2, Modly, Hunyuan3D and TripoSG.",
-			"link": null,
-			"tags": [
-				"fix"
 			]
 		}
 	]

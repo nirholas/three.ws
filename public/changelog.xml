@@ -15,6 +15,14 @@
 			<description>A dependency security update made the Hunyuan3D 2.1 texture stage refuse to load its own bundled paint pipeline, so every Hunyuan3D job failed before it started. The worker now explicitly trusts that pipeline, which ships inside the image, and the build fails if the fix ever stops applying.</description>
 		</item>
 		<item>
+			<title>Manage or report any 3D model from its page</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-20:Manage or report any 3D model from its page</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>If you made a model, its page now lets you choose who sees it (public, unlisted or private) and delete it for good, even after switching browsers, because the site keeps a private key for every model you make. A private model still opens for you so you can publish it again. Anyone else can use Request removal on the page to report their own lost model, a copyright problem, their likeness or harmful content, and a person reviews every request.</description>
+		</item>
+		<item>
 			<title>New 3D models start unlisted until you publish them</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-20:New 3D models start unlisted until you publish them</guid>
