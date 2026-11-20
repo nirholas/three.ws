@@ -242,6 +242,26 @@ export const GROK_DEFAULT_MODEL = 'grok-4.7';
 export const GROK_BUDGET_MODEL = 'grok-4.3';
 export const GROK_BUDGET_EXTRA_BODY = Object.freeze({ reasoning_effort: 'none' });
 
+/**
+ * Grok Voice realtime speech-to-speech (docs.x.ai/developers/model-capabilities/
+ * audio/voice, read 2026-11-20). The browser opens GROK_VOICE_REALTIME_URL with
+ * a short-lived client secret minted server-side at GROK_VOICE_CLIENT_SECRETS_URL
+ * (api/voice/grok/session.js), so the server key never leaves the server.
+ * `grok-voice-latest` is xAI's alias for the current voice model (grok-voice-3.0,
+ * $0.08 per minute); `eve` is the documented default voice. Audio in both
+ * directions is 16-bit little-endian PCM; 16 kHz input matches MicCapture's
+ * PcmDownsampler and 24 kHz is the documented output default.
+ */
+export const GROK_VOICE_MODEL = 'grok-voice-latest';
+export const GROK_VOICE_PRICE_PER_MINUTE = 0.08;
+export const GROK_VOICE_DEFAULT_VOICE = 'eve';
+export const GROK_VOICE_REALTIME_URL = 'wss://api.x.ai/v1/realtime';
+export const GROK_VOICE_CLIENT_SECRETS_URL = `${XAI_API_BASE}/realtime/client_secrets`;
+export const GROK_VOICE_VOICES_URL = `${XAI_API_BASE}/tts/voices`;
+export const GROK_VOICE_TRANSCRIBE_MODEL = 'grok-transcribe';
+export const GROK_VOICE_INPUT_RATE = 16_000;
+export const GROK_VOICE_OUTPUT_RATE = 24_000;
+
 /** Grok models a chat-completions transport can route, in catalog order. */
 export const GROK_CHAT_MODELS = Object.freeze(GROK_MODELS.filter((m) => m.chatCompletions));
 

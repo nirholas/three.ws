@@ -2041,6 +2041,13 @@ export const limits = {
 		getLimiter('tts:speak:user', { limit: 40, window: '1 h', critical: true }).limit(userId),
 	ttsSpeakIp: (ip) =>
 		getLimiter('tts:speak:ip', { limit: 10, window: '1 h', critical: true }).limit(ip),
+	// Grok Voice realtime (api/voice/grok/session): each call mints an xAI client
+	// secret for a speech-to-speech session billed per minute against the server
+	// key. Signed-in users only; a session reconnecting inside its TTL reuses its
+	// secret, so 20 an hour covers real use. Critical so a missing Redis in prod
+	// fails closed instead of opening an unmetered voice drain.
+	grokVoiceSessionUser: (userId) =>
+		getLimiter('grok:voice:session:user', { limit: 20, window: '1 h', critical: true }).limit(userId),
 	// An agent's bound voice speaking to a visitor (api/tts/eleven agent_byok lane).
 	// The agent owner's own ElevenLabs account pays, so this bucket protects THEIR
 	// quota from a scripted visitor: generous enough for a real back-and-forth
