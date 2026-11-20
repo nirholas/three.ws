@@ -60,9 +60,8 @@ Long description (paste as is):
 > front of the camera. Jobs run asynchronously with live progress and cancel, so
 > Kit never blocks. A My models browser imports any model saved in your three.ws
 > account, decoding web-optimized GLBs (meshopt, quantized attributes, WebP
-> textures) locally so the Kit asset converter can read them. Draft and Standard
-> work without an account; an API key, stored in Kit settings and never logged,
-> adds the High lane and the library.
+> textures) locally so the Kit asset converter can read them. It signs in with a
+> three.ws API key from a free account, stored in Kit settings and never logged.
 
 Copy rules for anything sent to NVIDIA: describe what the extension does, never
 imply NVIDIA endorsement, and keep pricing and account billing out of the

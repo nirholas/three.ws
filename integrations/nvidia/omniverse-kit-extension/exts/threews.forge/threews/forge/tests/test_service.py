@@ -49,7 +49,7 @@ class TestForgeService(omni.kit.test.AsyncTestCase):
         self.fast.__exit__()
         self.server.stop()
 
-    def _service(self, key: str = "") -> ForgeService:
+    def _service(self, key: str = GOOD_KEY) -> ForgeService:
         return ForgeService(self.server.base_url, api_key=key, client_handle="kit-test-handle", cache_dir=self.tmp)
 
     async def test_standard_generation_reports_real_progress_and_downloads_a_glb(self):
@@ -143,12 +143,33 @@ class TestForgeService(omni.kit.test.AsyncTestCase):
         self.assertEqual(ctx.exception.code, "invalid_prompt")
         self.assertEqual(self.server.requests, [])
 
-    async def test_high_lane_without_key_says_where_to_get_one(self):
-        with self.assertRaises(ForgeError) as ctx:
-            self._service().generate(GenerationRequest(prompt="a ship", lane="high"))
-        self.assertEqual(ctx.exception.code, "missing_api_key")
-        self.assertTrue(ctx.exception.url.endswith("/dashboard/api"))
+    async def test_every_lane_without_key_says_where_to_get_one(self):
+        # Making a model needs a three.ws account on every lane, so the panel
+        # asks for a key before it sends or uploads anything.
+        path = os.path.join(self.tmp, "mug.png")
+        with open(path, "wb") as fh:
+            fh.write(b"\x89PNG\r\n\x1a\n" + b"\x00" * 64)
+        requests = [GenerationRequest(prompt="a ship", lane=lane) for lane in svc.LANES]
+        requests.append(GenerationRequest(image_path=path, lane="draft"))
+        for request in requests:
+            with self.assertRaises(ForgeError) as ctx:
+                self._service("").generate(request)
+            self.assertEqual(ctx.exception.code, "missing_api_key", request.lane)
+            self.assertTrue(ctx.exception.url.endswith("/dashboard/api"))
         self.assertEqual(self.server.requests, [])
+
+    async def test_refused_key_on_a_free_lane_is_named_as_such(self):
+        with self.assertRaises(ForgeError) as ctx:
+            self._service("sk_test_wrong").generate(GenerationRequest(prompt="a ship", lane="draft"))
+        self.assertEqual(ctx.exception.code, "invalid_api_key")
+        self.assertEqual(ctx.exception.status, 401)
+
+    async def test_sign_in_required_says_how_to_connect_an_account(self):
+        err = svc.friendly(ThreeWSError("Sign in to make a model.", code="sign_in_required", status=401), self.server.base_url)
+        self.assertEqual(err.code, "sign_in_required")
+        self.assertEqual(err.status, 401)
+        self.assertIn("Account section", err.hint)
+        self.assertTrue(err.url.endswith("/dashboard/api"))
 
     async def test_high_lane_sends_key_credits_and_an_idempotency_ref(self):
         self._service(GOOD_KEY).generate(GenerationRequest(prompt="a ship", lane="high"))
@@ -183,9 +204,17 @@ class TestForgeService(omni.kit.test.AsyncTestCase):
         self.assertTrue(account.can_afford_high())
         self.assertFalse(self._service(BROKE_KEY).account().can_afford_high())
 
-    async def test_key_never_reaches_anonymous_lanes_or_file_urls(self):
-        self._service(GOOD_KEY).generate(GenerationRequest(prompt="a desk", lane="standard"))
-        for req in self.server.requests:
+    async def test_key_reaches_the_forge_api_but_never_file_urls(self):
+        path = os.path.join(self.tmp, "desk.png")
+        with open(path, "wb") as fh:
+            fh.write(b"\x89PNG\r\n\x1a\n" + b"\x00" * 64)
+        self._service(GOOD_KEY).generate(GenerationRequest(image_path=path, lane="standard"))
+        api = [r for r in self.server.requests if r["path"].startswith("/api/")]
+        files = [r for r in self.server.requests if not r["path"].startswith("/api/")]
+        self.assertTrue(api and files)
+        for req in api:
+            self.assertEqual(req["headers"].get("authorization"), f"Bearer {GOOD_KEY}", req["path"])
+        for req in files:
             self.assertNotIn("authorization", req["headers"], req["path"])
 
     async def test_key_never_appears_in_logs_errors_or_repr(self):
@@ -214,7 +243,7 @@ class TestForgeService(omni.kit.test.AsyncTestCase):
 
     async def test_library_without_key_asks_for_one(self):
         with self.assertRaises(ForgeError) as ctx:
-            self._service().list_models()
+            self._service("").list_models()
         self.assertEqual(ctx.exception.code, "missing_api_key")
 
     async def test_non_glb_download_is_refused(self):
@@ -275,10 +304,16 @@ class TestControllerTasks(omni.kit.test.AsyncTestCase):
         self.server = ForgeStandIn().start()
         self.fast = _Fast().__enter__()
         self._base = settings.base_url()
+        self._saved_key = settings.api_key() if settings.key_source() == "settings" else ""
         settings.set_base_url(self.server.base_url)
+        settings.set_api_key(GOOD_KEY)
 
     async def tearDown(self):
         settings.set_base_url(self._base)
+        if self._saved_key:
+            settings.set_api_key(self._saved_key)
+        else:
+            settings.clear_api_key()
         self.fast.__exit__()
         self.server.stop()
 

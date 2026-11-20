@@ -118,7 +118,7 @@ class ForgeWindow(ui.Window):
         with self._account_frame:
             with ui.VStack(spacing=6, height=0):
                 ui.Label(
-                    "Draft and Standard need no account. A three.ws API key adds High, My models and saving to your account.",
+                    "Generating needs a free three.ws account: paste its API key here. Draft and Standard are free, High spends credits, and My models lists what you saved.",
                     name="muted",
                     word_wrap=True,
                 )
@@ -165,7 +165,7 @@ class ForgeWindow(ui.Window):
                 with ui.HStack(height=22, spacing=4):
                     ui.CheckBox(self._save_model, width=20)
                     self._save_model.add_value_changed_fn(lambda m: settings.set_save_to_account(m.as_bool))
-                    ui.Label("Also save to my three.ws models (needs a key)", name="muted")
+                    ui.Label("Also save to my three.ws models", name="muted")
                 with ui.HStack(height=32, spacing=6):
                     self._generate_btn = ui.Button("Generate", name="primary", clicked_fn=self._generate, tooltip="Generate and import into the stage")
                     self._cancel_btn = ui.Button("Cancel", width=90, clicked_fn=self.controller.cancel, enabled=False)
@@ -189,7 +189,7 @@ class ForgeWindow(ui.Window):
     def _account_text(self, account: Optional[Account] = None) -> str:
         source = settings.key_source()
         if source == "none":
-            return "No key. Free lanes only."
+            return "No key yet. Add one to start generating."
         redacted = settings.redact(settings.api_key())
         if account is None:
             return f"Key {redacted} ({source})"

@@ -1,8 +1,8 @@
 """End to end against the real three.ws API: a fresh GPU generation imported into
 the stage, the account library, and the real error for a bad key.
 
-Runs only when ``THREEWS_LIVE=1`` (it spends real GPU time). The account tests
-also need ``THREEWS_API_KEY``. ``THREEWS_LIVE_REPORT`` names a JSON file that
+Runs only when ``THREEWS_LIVE=1`` (it spends real GPU time). Generation and the
+account tests also need ``THREEWS_API_KEY``: making a model needs an account. ``THREEWS_LIVE_REPORT`` names a JSON file that
 receives the measured timings, so the GPU VM runner can publish them.
 
 Both generation routes run: image to 3D from a public image URL
@@ -63,6 +63,8 @@ class TestLive(omni.kit.test.AsyncTestCase):
         await self._generate_and_check("text_generation", GenerationRequest(prompt=prompt, lane="draft", name="live text lantern"))
 
     async def _generate_and_check(self, section: str, request: GenerationRequest) -> None:
+        if not settings.api_key():
+            self.skipTest("set THREEWS_API_KEY: making a model on three.ws needs an account")
         await omni.usd.get_context().new_stage_async()
         stage = omni.usd.get_context().get_stage()
         UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.z)

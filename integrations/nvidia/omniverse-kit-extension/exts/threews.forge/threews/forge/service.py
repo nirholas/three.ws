@@ -5,8 +5,8 @@ worker thread (see ``controller.py``) and can be exercised outside Kit. The vend
 ``three_ws_client`` speaks the Forge HTTP contract; this module adds what a
 long-running DCC session needs on top of it:
 
-* bearer auth for the account endpoints, without ever sending the key to the
-  anonymous lanes, the CDN or a presigned storage URL;
+* bearer auth on every three.ws API call (making a model needs an account on
+  every lane), without ever sending the key to the CDN or a presigned storage URL;
 * retries with exponential backoff on network errors and 429/502/503/504,
   including mid-poll, so a Wi-Fi blip does not lose a running job;
 * real progress from the job's own ``eta_seconds`` / ``eta_remaining_seconds``;
@@ -50,9 +50,9 @@ POLL_TIMEOUT = 900.0
 MAX_CONSECUTIVE_POLL_FAILURES = 30
 
 LANES = {
-    "draft": {"label": "Draft (fast, low poly)", "needs_key": False},
-    "standard": {"label": "Standard (textured)", "needs_key": False},
-    "high": {"label": "High (dense mesh, PBR, account)", "needs_key": True},
+    "draft": {"label": "Draft (fast, low poly)", "credits": False},
+    "standard": {"label": "Standard (textured)", "credits": False},
+    "high": {"label": "High (dense mesh, PBR, credits)", "credits": True},
 }
 
 ProgressFn = Callable[["Progress"], None]
@@ -144,10 +144,10 @@ class LibraryModel:
 
 
 class ForgeClient(ThreeWSClient):
-    """The vendored client with a Kit user agent and opt-in bearer auth."""
+    """The vendored client with a Kit user agent and the panel's API key as a bearer."""
 
     def __init__(self, base_url: str, *, api_key: str = "", client_handle: Optional[str] = None, timeout: float = 30.0):
-        # The base client sends the key on photo uploads, which need an account.
+        # The base client sends the key on every API call: making a model needs an account.
         super().__init__(base_url, api_key=api_key or "", client_handle=client_handle, timeout=timeout)
         self._api_key = (api_key or "").strip()
 
@@ -161,9 +161,9 @@ class ForgeClient(ThreeWSClient):
     def auth_headers(self) -> dict:
         if not self._api_key:
             raise ForgeError(
-                "This needs your three.ws API key.",
+                "Making a model on three.ws needs your API key (a free account).",
                 code="missing_api_key",
-                hint="Paste a key in the Account section of the three.ws Forge panel.",
+                hint="Create a key, then paste it in the Account section of the three.ws Forge panel.",
                 url=f"{self.base_url}/dashboard/api",
             )
         return {"authorization": f"Bearer {self._api_key}"}
@@ -253,6 +253,14 @@ def friendly(exc: Exception, base_url: str) -> ForgeError:
         return ForgeError(f"Unexpected error: {exc}", code="internal")
     code, status, msg = exc.code, exc.status, exc.message
     keys_url = f"{base_url}/dashboard/api"
+    if code == "sign_in_required":
+        return ForgeError(
+            "Making a model on three.ws needs a free account.",
+            code="sign_in_required",
+            status=status or 401,
+            hint="Create an API key and paste it in the Account section of the three.ws Forge panel.",
+            url=keys_url,
+        )
     if code == "invalid_api_key" or (status == 401 and code in ("unauthorized", "invalid_token", "")):
         return ForgeError(
             "three.ws did not accept that API key.",
@@ -418,8 +426,8 @@ class ForgeService:
         emit = _emitter(on_progress, started)
         lane = request.lane if request.lane in LANES else "standard"
         try:
-            if LANES[lane]["needs_key"]:
-                self.client.auth_headers()
+            # Every lane needs a three.ws account; ask before uploading anything.
+            self.client.auth_headers()
             emit("submitting", 0.02, "Sending the request to three.ws")
             body = self._build_body(request, lane, cancel, emit)
             submission = self._submit(body, lane, cancel, emit)
@@ -501,7 +509,7 @@ class ForgeService:
 
     def _submit(self, body: dict, lane: str, cancel: threading.Event, emit) -> dict:
         headers = None
-        if LANES[lane]["needs_key"]:
+        if LANES[lane]["credits"]:
             # One ref per request: the credit debit is idempotent on it, so a
             # retry after a dropped connection can never charge twice.
             body = {**body, "pay_with": "credits", "ref_id": f"kit-{uuid.uuid4().hex}"}

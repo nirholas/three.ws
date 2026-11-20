@@ -38,7 +38,9 @@ kit <your app>.kit --ext-folder <this folder>/exts --enable threews.forge
 | **Generate** | Text prompt or reference image (local PNG/JPEG/WebP, or a public `https://` URL); Draft, Standard or High lane; placement at the world origin, the selected prim, or in front of the camera; optional save to your three.ws models. Generate shows live job progress and Cancel stops at once. |
 | **My models** | Your three.ws library with paging. Import references a model into the stage with the same placement and unit handling. |
 
-Draft and Standard need no key. High, the library and saving need one.
+Every lane needs a key, because making a model on three.ws needs an account
+(free to create). Draft and Standard are free; High spends account credits. The
+key also unlocks the library and saving.
 
 ## How the import works
 

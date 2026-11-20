@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Every lane needs a three.ws API key, because making a model on three.ws now
+  needs an account. The panel asks for a key before it sends or uploads
+  anything, sends it on every three.ws API call (never to the CDN or a storage
+  URL), and explains a `sign_in_required` answer. Draft and Standard stay free.
+
 ## [1.0.0] - 2026-11-16
 
 ### Added

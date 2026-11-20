@@ -7,7 +7,7 @@
 #   --key-file  three.ws API key, either a JSON file from POST /api/keys (the
 #               secret at .key.secret) or a file holding only the key. Without it,
 #               THREEWS_API_KEY from the environment is used; with neither, the
-#               account and live panel tests skip. The key is copied to the VM
+#               generation, account and live panel tests skip. The key is copied to the VM
 #               with mode 600, read into the test process environment there, and
 #               never printed.
 #   --out       where the evidence lands (default: .test-output/gpu-<timestamp>)

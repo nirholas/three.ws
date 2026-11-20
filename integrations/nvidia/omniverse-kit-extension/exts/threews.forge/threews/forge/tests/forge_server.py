@@ -69,6 +69,13 @@ class ForgeStandIn:
                 length = int(self.headers.get("content-length") or 0)
                 body = json.loads(self.rfile.read(length) or b"{}")
                 self._record(body)
+                # Like production, every upload and generation needs an account.
+                if self.path in ("/api/forge-upload", "/api/forge"):
+                    key = self._bearer()
+                    if not key:
+                        return self._json(401, {"error": "sign_in_required", "message": "Sign in to make a model.", "api_keys_url": "/dashboard/api-keys"})
+                    if key not in (GOOD_KEY, BROKE_KEY):
+                        return self._json(401, {"error": "invalid_api_key", "message": "Invalid API key."})
                 if self.path == "/api/forge-upload":
                     if stand_in.storage_down:
                         return self._json(503, {"error": "storage_unavailable", "message": "Image storage is not configured."})
@@ -90,10 +97,7 @@ class ForgeStandIn:
                     stand_in.fail_submit -= 1
                     return self._json(503, {"error": "upstream_unavailable", "message": "GPU pool restarting"})
                 if body.get("tier") == "high":
-                    key = self._bearer()
-                    if key not in (GOOD_KEY, BROKE_KEY):
-                        return self._json(401, {"error": "invalid_api_key", "message": "Invalid API key."})
-                    if key == BROKE_KEY:
+                    if self._bearer() == BROKE_KEY:
                         return self._json(402, {"error": "insufficient_credits", "message": "Balance $0.00 is below the $0.40 High price."})
                 if stand_in.cache_hit:
                     return self._json(200, {"status": "done", "cached": True, "glb_url": stand_in.url("/files/box.glb")})

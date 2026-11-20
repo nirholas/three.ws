@@ -15,10 +15,10 @@ Enable `threews.forge` in the Extension Manager, then choose
 1. Pick **Text prompt** and describe one subject ("a brass ship lantern"), or
    pick **Reference image** and choose a PNG, JPEG or WebP file, or paste a
    public `https://` image URL.
-2. Pick a quality lane:
-   - **Draft**: fast, low poly. No account needed.
-   - **Standard**: textured. No account needed.
-   - **High**: dense mesh with PBR materials. Needs an API key.
+2. Pick a quality lane (every lane needs a three.ws API key, from a free account):
+   - **Draft**: fast, low poly. Free.
+   - **Standard**: textured. Free.
+   - **High**: dense mesh with PBR materials. Spends account credits.
 3. Pick where it lands: the world origin, the selected prim, or in front of the
    active camera.
 4. Press **Generate**. Progress shows the real job state from the server.
