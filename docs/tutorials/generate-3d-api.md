@@ -1,10 +1,10 @@
 # Generate 3D Models from Code
 
-Everything the [Forge](/forge) does in the browser is available as a plain HTTP API: send a prompt, poll a job, download a GLB. No API key, no SDK, no auth handshake — it's the same public endpoint the Forge UI calls, rate-limited per IP.
+Everything the [Forge](/forge) does in the browser is available as a plain HTTP API: send a prompt, poll a job, download a GLB. No SDK and no auth handshake: it's the same endpoint the Forge UI calls, rate-limited, and free on the free lane. Making a model needs a free three.ws account, so a script sends one API key as `Authorization: Bearer`.
 
 **What you'll build:** a script that turns any text prompt into a downloaded `.glb` file, then a batch version that generates a whole asset pack from a prompt list.
 
-**Prerequisites:** comfortable with `fetch` or `curl`. Examples use Node.js 18+ (built-in `fetch`), but any language with an HTTP client works the same way.
+**Prerequisites:** comfortable with `fetch` or `curl`, and a free three.ws API key from [/dashboard/api-keys](https://three.ws/dashboard/api-keys), exported as `THREE_WS_API_KEY`. Examples use Node.js 18+ (built-in `fetch`), but any language with an HTTP client works the same way.
 
 [![The Forge page showing text and image to 3D generation options](/docs/img/forge-hero.webp)](/forge)
 
@@ -30,6 +30,7 @@ Two wrinkles worth knowing up front. On the fast free lane the first response ca
 ```bash
 curl -s https://three.ws/api/forge \
   -H 'content-type: application/json' \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
   -d '{"prompt": "a glazed ceramic teapot", "tier": "draft"}'
 ```
 
@@ -56,6 +57,8 @@ The request body:
 | `aspect_ratio` | `"1:1"` \| `"4:3"` \| `"3:4"` \| `"16:9"` \| `"9:16"` | Shape of the intermediate reference image. Optional. |
 | `image_urls` | string[] | 1 to 6 public HTTPS image URLs for photo→3D (Step 4). Omit for text→3D. |
 | `backend` | string | Pin a specific engine from the catalog (Step 5). Optional — the Forge picks for you. |
+
+The model is saved to the account that owns the key, unlisted (its link works, but it stays out of the public gallery) until you publish it from its page.
 
 `draft` and `standard` are free. `high` on the platform engines is gated: it unlocks for $THREE holders (Bronze tier, $25 held), and a non-holder gets a `402` with hold-or-pay instructions (pay $THREE per generation, or sign in and spend prepaid credits via `pay_with: "credits"`). Bring-your-own-key engines skip the gate. Agents that would rather pay in USDC per call should use the x402 twin in Step 6, where `high` is a flat $0.50.
 
@@ -99,7 +102,10 @@ async function submitJob(body) {
   for (;;) {
     const res = await fetch(`${BASE}/api/forge`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${process.env.THREE_WS_API_KEY}`,
+      },
       body: JSON.stringify(body),
     });
     const job = await res.json();
@@ -148,7 +154,7 @@ node generate.js "a low-poly treasure chest, iron-banded wood"
 
 Two requests: get a presigned upload slot, `PUT` your image to it, then pass the returned public URL into the generate call. Images must be PNG, JPEG or WebP, up to 8 MB each; a `size_bytes` outside that range is refused.
 
-Uploading a photo needs a free three.ws account, so the presign call carries an API key from [/dashboard/api-keys](https://three.ws/dashboard/api-keys). Without one it answers `401` with `error: "sign_in_required"`. Text-to-3D (Step 3) and image-to-3D from an image that is already public (pass its URL straight to `image_urls`) need no key.
+Uploading a photo needs a free three.ws account, so the presign call carries an API key from [/dashboard/api-keys](https://three.ws/dashboard/api-keys). Without one it answers `401` with `error: "sign_in_required"`. The generate call needs the same key whether the image is uploaded here or already public (pass its URL straight to `image_urls`).
 
 ```js
 async function uploadImage(buffer, contentType = 'image/jpeg') {
@@ -170,7 +176,10 @@ const url = await uploadImage(await readFile('front.jpg'));
 // 1 to 6 views of the same object; more views = better reconstruction
 const submit = await fetch(`${BASE}/api/forge`, {
   method: 'POST',
-  headers: { 'content-type': 'application/json' },
+  headers: {
+    'content-type': 'application/json',
+    authorization: `Bearer ${process.env.THREE_WS_API_KEY}`,
+  },
   body: JSON.stringify({ image_urls: [url], tier: 'standard' }),
 });
 ```
@@ -195,7 +204,7 @@ Some engines run models whose licence excludes whole regions (the EU, the UK and
 
 ## Step 6 — For autonomous agents: pay per call with x402
 
-The public endpoint is rate-limited per IP, which is fine for scripts and prototyping. Agents that need guaranteed, metered capacity can use the paid twin at `POST /api/x402/forge`, same request body, billed per generation in USDC on Solana over the [x402 protocol](https://www.x402.org):
+The free endpoint is rate-limited, which is fine for scripts and prototyping. Agents that need guaranteed, metered capacity can use the paid twin at `POST /api/x402/forge`, same request body, billed per generation in USDC on Solana over the [x402 protocol](https://www.x402.org). It needs no account or API key: the payment is the credential.
 
 | Tier | Price per generation |
 |------|---------------------|
@@ -213,6 +222,7 @@ If you've never made an x402 call, start with [Build a paid x402 endpoint](/tuto
 
 | Response | Meaning | Fix |
 |----------|---------|-----|
+| `401 sign_in_required` | No API key, or one that was revoked | Create a key at [/dashboard/api-keys](https://three.ws/dashboard/api-keys) and send it as `Authorization: Bearer <key>`. Polling a job needs no key |
 | `429 rate_limited` | Two causes, same code: the shared GPU lane is busy right now (`queued: false`, and it can hit your first call), or your per-IP hourly window is exhausted (about 60 free generations an hour) | Sleep for `retry_after` seconds and resubmit, as `submitJob` does in Step 3. Neither is a ban; keep batches sequential |
 | `422 image_not_usable` | Photo failed the vision pre-check | Reshoot per the `message`, or send `skip_validation: true` |
 | `402` on `tier: "high"` | High tier is hold-or-pay on platform engines | Hold $THREE (Bronze), pay per generation, use credits, or use the x402 endpoint |

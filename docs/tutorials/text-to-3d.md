@@ -4,7 +4,7 @@ Type a sentence, get a downloadable 3D model. That's the whole tutorial. By the 
 
 **What you'll make:** a real, textured 3D model from a one-line description — in about a minute.
 
-**Prerequisites:** none. No account, no wallet, no code. Just a browser.
+**Prerequisites:** a browser and a free three.ws account (the Forge asks you to sign in when you press Generate). No wallet, no code.
 
 [![The three.ws prompt-to-3D page with the description field and quality tier picker](/docs/img/forge-prompt-panel.webp)](/create/prompt)
 
@@ -64,7 +64,7 @@ You can leave the **Engine** selector alone — the Forge picks a sensible defau
 
 ## Step 4 — Generate
 
-Click **Generate**.
+Click **Generate**. Signed out, the Forge asks you to sign in first and brings you straight back; your model is saved to your account, unlisted until you publish it.
 
 The Forge shows you each step as it happens:
 

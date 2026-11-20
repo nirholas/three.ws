@@ -1,10 +1,10 @@
 # Generate 3D Models Free, Powered by NVIDIA
 
-The free text-to-3D lane in the Forge is **Microsoft TRELLIS**, a GPU model that turns a description into real, textured geometry, and **NVIDIA NIM** is the hosted rung of it. The Forge runs TRELLIS on our own GPU workers first and hands your prompt to a TRELLIS NIM whenever those workers are cold or busy, which on a shared free lane is often. Either way there is no API key, no credits, and no cost to you. This tutorial shows what the free lane is, when the NVIDIA rung kicks in, how to pin it deliberately, and how to watch TRELLIS rebuild a mesh live.
+The free text-to-3D lane in the Forge is **Microsoft TRELLIS**, a GPU model that turns a description into real, textured geometry, and **NVIDIA NIM** is the hosted rung of it. The Forge runs TRELLIS on our own GPU workers first and hands your prompt to a TRELLIS NIM whenever those workers are cold or busy, which on a shared free lane is often. Either way there is no engine key, no credits, and no cost to you; you only need a free three.ws account. This tutorial shows what the free lane is, when the NVIDIA rung kicks in, how to pin it deliberately, and how to watch TRELLIS rebuild a mesh live.
 
 **What you'll make:** a 3D model generated for free on the NVIDIA NIM lane, downloaded as a GLB.
 
-**Prerequisites:** none. No account, no wallet, no code. Just a browser.
+**Prerequisites:** a browser and a free three.ws account (the Forge asks you to sign in when you press Generate). No wallet, no code.
 
 ---
 
@@ -65,7 +65,7 @@ The tier maps to TRELLIS **sampling steps**: more steps, more refinement, more t
 
 ## Step 4: Generate and inspect
 
-Click **Generate**. The Forge narrates each step (*painting reference image, reconstructing textured mesh, finalizing GLB*) and the preview image appears early, so you'll know within seconds whether it's on track.
+Click **Generate**. Signed out, the Forge asks you to sign in first and brings you straight back. The Forge narrates each step (*painting reference image, reconstructing textured mesh, finalizing GLB*) and the preview image appears early, so you'll know within seconds whether it's on track.
 
 When it finishes, the model loads in a live viewer:
 
