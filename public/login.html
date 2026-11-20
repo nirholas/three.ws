@@ -1182,12 +1182,25 @@ function safeNext(raw, fallback = '/dashboard') {
 	if (/[\u0000-\u001f]/.test(raw)) return fallback;
 	return raw;
 }
+function authPageHref(path, next, fallback) {
+	const safe = safeNext(next, fallback);
+	return safe === fallback ? path : `${path}?next=${encodeURIComponent(safe)}`;
+}
 				const next = safeNext(
 					params.get('next') || sessionStorage.getItem('login_redirect'),
 					'/dashboard',
 				);
 				sessionStorage.removeItem('login_redirect');
 				window.__loginNext = next;
+				// The "Create one" link keeps a sign-in that started elsewhere (an MCP
+				// connector's OAuth consent, the extension) alive across the hop. It is
+				// rewritten on click because the i18n pass re-renders the link's paragraph.
+				const carryNext = (e) => {
+					const link = e.target.closest?.('a[href^="/register"]');
+					if (link) link.href = authPageHref('/register', next, '/dashboard');
+				};
+				document.addEventListener('click', carryNext, true);
+				document.addEventListener('auxclick', carryNext, true);
 				const navType = performance.getEntriesByType('navigation')[0]?.type;
 				if (navType !== 'back_forward') {
 					fetch('/api/auth/me', { credentials: 'include' })

@@ -10,7 +10,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { safeNext, safeNavUrl } from '../src/safe-next.js';
+import { safeNext, safeNavUrl, authPageHref } from '../src/safe-next.js';
 
 describe('safeNext', () => {
 	it('allows same-origin relative paths', () => {
@@ -127,4 +127,38 @@ describe('safeNext with nested query strings (extension sign-in round trip)', ()
 		expect(safeNext(nested)).toBe(nested);
 		expect(new URL(safeNext(encoded), 'https://three.ws').searchParams.get('state')).toBe('ab12=&cd');
 	});
+});
+
+// A sign-in that started somewhere (an OAuth consent screen, the extension)
+// must survive the hop between /login and /register, or a brand new user who
+// clicks "Create one" on an MCP connector's sign-in page lands on /create and
+// the connector never gets its authorization code.
+describe('authPageHref carries next between the sign-in and sign-up pages', () => {
+	it('appends a non-default next', () => {
+		const consent = '/oauth/consent?client_id=mcp_abc&code_challenge=xyz&state=s1';
+		const href = authPageHref('/register', consent, '/dashboard');
+		expect(href).toBe(`/register?next=${encodeURIComponent(consent)}`);
+		expect(new URL(href, 'https://three.ws').searchParams.get('next')).toBe(consent);
+	});
+
+	it('leaves the link alone when next is the page default', () => {
+		expect(authPageHref('/register', '/dashboard', '/dashboard')).toBe('/register');
+		expect(authPageHref('/login', '/create', '/create')).toBe('/login');
+	});
+
+	it('never forwards an unsafe next', () => {
+		expect(authPageHref('/register', 'https://evil.com', '/dashboard')).toBe('/register');
+		expect(authPageHref('/register', '//evil.com', '/dashboard')).toBe('/register');
+	});
+
+	for (const [file, target] of [
+		['public/login.html', '/register'],
+		['public/register.html', '/login'],
+	]) {
+		it(`${file} carries the canonical authPageHref and applies it to its ${target} link`, () => {
+			const text = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+			expect(text.includes(canonicalSource('authPageHref'))).toBe(true);
+			expect(text).toMatch(new RegExp(`authPageHref\\('${target}', next,`));
+		});
+	}
 });

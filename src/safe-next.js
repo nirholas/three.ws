@@ -6,7 +6,7 @@
 // absolute http(s) URLs but blocks script-capable schemes (javascript:,
 // data:, vbscript:) and protocol-relative/backslash tricks.
 //
-// These functions are inlined into public pages that cannot import /src at
+// These functions (authPageHref too) are inlined into public pages that cannot import /src at
 // runtime (public/login.html, public/register.html, public/wallet-login.js,
 // public/wallet-connect-demo.html, public/paywall.js). The inline copies omit
 // the `export` keyword but are otherwise byte-identical;
@@ -22,6 +22,15 @@ export function safeNext(raw, fallback = '/dashboard') {
 	// Control characters can smuggle a scheme past naive prefix checks.
 	if (/[\u0000-\u001f]/.test(raw)) return fallback;
 	return raw;
+}
+
+// The sign-in and sign-up pages link to each other. A flow that started
+// somewhere else (an OAuth consent screen, the extension) has to survive that
+// hop, so the link carries the page's own next whenever it is not the page
+// default and passes safeNext.
+export function authPageHref(path, next, fallback) {
+	const safe = safeNext(next, fallback);
+	return safe === fallback ? path : `${path}?next=${encodeURIComponent(safe)}`;
 }
 
 export function safeNavUrl(raw, fallback = '/') {
