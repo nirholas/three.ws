@@ -48,6 +48,25 @@ export async function payUrl(url, args = {}) {
 	if (sessionToken) {
 		const ceiling = Math.min(MAX_PAY_USD, args.max_usd ?? Infinity);
 
+		// The platform wallet signs, but the per-call cap is still ours to enforce:
+		// probe the 402 and refuse before /api/pay/execute when the cheapest USDC
+		// option (Solana or Base) is over the cap. Sessions settle in USDC only.
+		const probe = await probeChallenge(url, { method, body: args.body });
+		if (probe.paid) {
+			const prices = (Array.isArray(probe.accepts) ? probe.accepts : [])
+				.filter(isUsdcAccept)
+				.map(usdFromAccept)
+				.filter((p) => p != null);
+			const priceUsd = prices.length ? Math.min(...prices) : null;
+			if (priceUsd != null && priceUsd > ceiling) {
+				throw Object.assign(new Error(`Price $${priceUsd} exceeds the cap $${ceiling}. Raise max_usd / MAX_PAY_USD to allow it.`), {
+					code: 'over_cap',
+					price_usd: priceUsd,
+					cap_usd: ceiling,
+				});
+			}
+		}
+
 		if (REQUIRE_CONFIRM && args.confirm !== true) {
 			return {
 				ok: false,
