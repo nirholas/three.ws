@@ -14,7 +14,8 @@
 //      the skills do not name, or a blank canvas (pixel check).
 //
 // Flags: --only <skill>[,<skill>]  --port <n> (default 3285)  --keep (save
-// every canvas screenshot under .cache/grok-craft/shots)  --json
+// every canvas screenshot under .cache/grok-craft/shots)  --json  --verbose (echo
+// every page console message, for debugging a block)
 
 import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
@@ -40,6 +41,7 @@ const ONLY = opt('only', '') ? new Set(opt('only', '').split(',')) : null;
 const PORT = Number(opt('port', 3285));
 const KEEP = flag('keep');
 const JSON_OUT = flag('json');
+const VERBOSE = flag('verbose');
 
 const log = (...a) => {
 	if (!JSON_OUT) console.log(...a);
@@ -269,6 +271,7 @@ async function runJsBlock(context, block, origin) {
 	page.on('pageerror', (e) => problems.push(`uncaught: ${e.message}`));
 	page.on('console', (msg) => {
 		const type = msg.type();
+		if (VERBOSE) console.log(`       [${block.id}] console.${type}: ${msg.text()}`);
 		if (type !== 'error' && type !== 'warning') return;
 		const text = msg.text();
 		if (ENV_NOISE.some((re) => re.test(text))) return;
@@ -289,6 +292,23 @@ async function runJsBlock(context, block, origin) {
 		return route.abort();
 	});
 
+	// Heavy passes (GTAO at full size) keep SwiftShader busy every frame, so a screenshot never
+	// gets a compositor slot. During capture the page's rAF callbacks are queued, the canvas keeps
+	// its last presented frame, and the queue is replayed afterwards.
+	await page.addInitScript(() => {
+		const native = window.requestAnimationFrame.bind(window);
+		let held = null;
+		window.requestAnimationFrame = (cb) => (held ? held.push(cb) : native(cb));
+		window.__craftHold = () => {
+			held = held || [];
+		};
+		window.__craftRelease = () => {
+			const queued = held || [];
+			held = null;
+			for (const cb of queued) native(cb);
+		};
+	});
+
 	let verdict = { blank: true, why: 'no canvas' };
 	let shot = null;
 	try {
@@ -305,7 +325,10 @@ async function runJsBlock(context, block, origin) {
 				verdict = { blank: true, why: 'no canvas in the page' };
 				continue;
 			}
+			await page.evaluate(() => window.__craftHold());
+			await page.waitForTimeout(500); // let the frame already in flight present
 			shot = await el.screenshot({ timeout: 60_000 });
+			await page.evaluate(() => window.__craftRelease());
 			verdict = await canvasVerdict(shot);
 			if (!verdict.blank) break;
 		}
