@@ -172,15 +172,40 @@ forum). The form is tied to the signed-in Cursor account, not a company.
 
 ### 3. xai-org/plugin-marketplace
 
-The plugin folder is already public and identical to local HEAD, so the SHA can be pinned now:
-`60226f15515e089f3675471b07f97a557973d11a` (`git ls-remote https://github.com/nirholas/three.ws.git HEAD`
-on 2026-11-14). On a fresh clone of the marketplace with this entry appended,
-`python3 scripts/validate-catalog.py` prints `Catalog OK (.grok-plugin/marketplace.json)`,
-`python3 scripts/generate-plugin-index.py` fetches our pinned commit and writes the index (exit 0),
-and `python3 scripts/generate-plugin-index.py --check` prints `Plugin index OK`. The generated
-`three-ws` record lists version 1.0.0, one command (`three-ws-tour`), one MCP server (`three-ws`,
-http) and six skills (anatomy, create-3d-avatar, embed-three-ws-avatar, find-3d-assets,
-generate-3d-model, rig-a-model).
+The entry points at a standalone export of [integrations/grok/three-ws](../../integrations/grok/three-ws/README.md),
+not at the monorepo: CONTRIBUTING.md questions personal-account sources for branded plugins, so the
+proposed source is a `three-ws` GitHub organization repo, `three-ws/three-ws-grok`. Both names
+were free on 2026-11-20 (`gh api orgs/three-ws` and `gh api repos/three-ws/three-ws-grok` answer
+404). Creating them is the first owner step.
+
+`scripts/export-plugin-repo.mjs` writes the plugin at the repository root with `LICENSE`, the
+README (links outside the folder rewritten to github.com/nirholas/three.ws), a `CHANGELOG.md` built
+from the folder's git history, runs `grok plugin validate`, and makes one commit authored by
+three.ws and dated by the last source commit, so two exports of the same source commit have the same
+SHA. Exported on 2026-11-20 from main at plugin 1.2.0, twice:
+`179da58ef0ed3eceae141b77292e683a2224b3da` both times.
+
+On a fresh clone of the marketplace (at `65eef14`) with this entry appended and git's `insteadOf`
+pointing the proposed URL at the local export (the scripts themselves unmodified):
+
+```text
+$ python3 scripts/validate-catalog.py
+Catalog OK (.grok-plugin/marketplace.json)
+$ python3 scripts/generate-plugin-index.py
+Wrote .grok-plugin/plugin-index.json
+$ python3 scripts/generate-plugin-index.py --check
+Plugin index OK (.grok-plugin/plugin-index.json)
+ .grok-plugin/marketplace.json  | 13 +++++++++
+ .grok-plugin/plugin-index.json | 66 ++++++++++++++++++++++++++++++++++++++++++
+```
+
+The generated `three-ws` record: version 1.2.0, agent `3d-art-director`, commands `embed`,
+`make-3d`, `rig`, `three-ws-init`, `three-ws-tour`, MCP server `three-ws` (http), skills
+`anatomy`, `create-3d-avatar`, `embed-three-ws-avatar`, `find-3d-assets`, `generate-3d-model`,
+`rig-a-model`. Grok Build 1.0.45 built from source then added that marketplace and ran
+`grok plugin install three-ws --trust` in 0.84 s, recording commit `179da58e…` from
+`https://github.com/three-ws/three-ws-grok.git`; `grok inspect` lists the five commands, the six
+skills, `three-ws:3d-art-director` and the `three-ws` server with source `plugin: three-ws`.
 
 Append to the `plugins` array in `.grok-plugin/marketplace.json`, matching the file's existing
 two-space style:
@@ -188,13 +213,12 @@ two-space style:
 ```json
 {
   "name": "three-ws",
-  "description": "Free 3D studio for Grok: turn a sentence or a photo into a textured 3D model (GLB) or a rigged, animation-ready avatar, auto-rig a GLB, search thousands of CC0 3D assets, and embed the result on a site. No account or API key.",
+  "description": "Turn a sentence or a photo into a textured 3D model (GLB) or a rigged, animation-ready avatar, auto-rig a GLB, search thousands of CC0 props, characters and motion clips, render a model to check it, and embed it on a site. Catalog search is free with no account; making or rigging a model needs a free three.ws account.",
   "category": "media",
   "source": {
     "source": "url",
-    "url": "https://github.com/nirholas/three.ws.git",
-    "sha": "60226f15515e089f3675471b07f97a557973d11a",
-    "path": "integrations/grok/three-ws"
+    "url": "https://github.com/three-ws/three-ws-grok.git",
+    "sha": "179da58ef0ed3eceae141b77292e683a2224b3da"
   },
   "homepage": "https://three.ws/grok",
   "keywords": ["three.ws", "three-ws", "threews", "three.ws 3d", "three.ws avatar"],
@@ -202,25 +226,41 @@ two-space style:
 }
 ```
 
-Steps: fork, append the entry, `python3 scripts/generate-plugin-index.py`,
-`python3 scripts/validate-catalog.py`, `python3 scripts/generate-plugin-index.py --check`, commit
-both files, open the PR. If `integrations/grok/three-ws` changes before submission, re-pin to the
-new public HEAD.
+Publish and pin (owner steps, in order):
 
-PR title: `Add three.ws (free text/photo to 3D, rigged avatars, CC0 asset search)`
+```bash
+OUT=$(mktemp -d)/three-ws-grok
+node scripts/export-plugin-repo.mjs --src integrations/grok/three-ws --out "$OUT" --grok-bin "$(command -v grok)"
+git -C "$OUT" rev-parse HEAD     # 179da58ef0ed3eceae141b77292e683a2224b3da while the folder is unchanged
+gh repo create three-ws/three-ws-grok --public \
+  --description "three.ws for Grok Build: text or photo to 3D models and rigged avatars, CC0 asset search, embed code" \
+  --homepage https://three.ws/grok --source "$OUT" --push
+git ls-remote https://github.com/three-ws/three-ws-grok.git HEAD   # must print the same SHA
+```
+
+If `integrations/grok/three-ws` changed since 2026-11-20 the export prints a new SHA: put that SHA
+in the entry. Then fork the marketplace, append the entry, run
+`python3 scripts/generate-plugin-index.py`, `python3 scripts/validate-catalog.py` and
+`python3 scripts/generate-plugin-index.py --check`, commit both files and open the PR. A later
+plugin change reaches Grok Build users only after a new export is pushed and the pin is bumped in a
+follow-up PR.
+
+PR title: `Add three.ws (text or photo to 3D models and rigged avatars, CC0 asset search)`
 
 ```markdown
 ## What this PR does
 
 - Plugin name: three-ws
 - Type: remote source
-- Source URL + pinned SHA: https://github.com/nirholas/three.ws.git @ 60226f15515e089f3675471b07f97a557973d11a, path integrations/grok/three-ws
+- Source URL + pinned SHA: https://github.com/three-ws/three-ws-grok.git @ 179da58ef0ed3eceae141b77292e683a2224b3da
 - Homepage: https://three.ws/grok
 
-Adds a free 3D studio to Grok: text or a photo to a textured GLB or a rigged avatar,
+Adds a 3D studio to Grok Build: text or a photo to a textured GLB or a rigged avatar,
 auto-rigging, a searchable CC0 catalog of props, characters and motion clips, render checks so
-Grok can see what it made, and embed code. One hosted MCP server plus six skills and a tour
-command. There is no 3D plugin in the catalog today.
+Grok can see what it made, and embed code. One hosted MCP server, five commands (`/make-3d`,
+`/rig`, `/embed`, `/three-ws-init`, `/three-ws-tour`), one agent (`three-ws:3d-art-director`,
+limited to the three-ws server and to two iterations) and six skills. There is no 3D plugin in
+the catalog today.
 
 ## Ownership
 
@@ -242,23 +282,27 @@ command. There is no 3D plugin in the catalog today.
 - [x] No `curl | bash`, remote-code download/exec, or `postinstall` RCE.
 - [x] No reading/exfiltration of secrets, tokens, `.env`, or env vars.
 - [x] Hooks and MCP scope are least-privilege: no hooks at all, one HTTP MCP server.
-- Network endpoints: `https://three.ws/api/mcp-grok` (the MCP server) and the `https://three.ws`
-  links its tools return (GLB downloads, viewer, pose studio). Nothing else.
-- Credentials: none. The server is anonymous; an optional OAuth 2.1 sign-in, documented in the
-  README but not configured by the plugin, adds the user's own three.ws agents. No tool on the
-  server moves money.
+- Network endpoints: `https://three.ws/api/mcp-studio?auth=oauth` (the MCP server), the OAuth 2.1
+  endpoints it advertises (`/oauth/authorize`, `/api/oauth/token`, `/api/oauth/register` on
+  three.ws), and the `https://three.ws` links its tools return (GLB downloads, viewer, pose
+  studio). Nothing else.
+- Credentials: catalog search, docs and render checks need none. Making or rigging a model needs a
+  free three.ws account: Grok Build runs the OAuth sign-in from `/mcps` and keeps the token, or the
+  user adds their own API key with `grok mcp add` (documented in the README). The plugin configures
+  no headers and reads no environment variables or files. No tool on the server moves money.
 
 ## Notes for reviewers
 
-github.com/nirholas/three.ws is the canonical source of three.ws (linked from three.ws itself),
-which is why the source sits under that account rather than a separate org. The plugin is a
-subfolder of the product monorepo, the same layout as the stripe and expo entries.
+The plugin is developed in github.com/nirholas/three.ws (the canonical three.ws source, linked from
+three.ws itself) under integrations/grok/three-ws and exported to this repository with one
+deterministic commit per release; CHANGELOG.md links every change back to its source commit.
+three.ws is a member of xAI's Grok for Startups program.
 ```
 
-CONTRIBUTING.md says a personal-account source for a branded plugin "will be questioned". If review
-pushes back, mirror the folder into a `three-ws` GitHub org repo the same way as rows 1 and 2,
-re-pin, and nothing else changes. `tests/grok-plugin.test.js` enforces that the plugin ships no
-hooks, agents, scripts or executables.
+`tests/grok-plugin.test.js` pins the plugin layout and keeps the skills byte-identical to
+`.agents/skills`, `tests/grok-build-plugin-copy.test.js` fails on any account claim that is not
+true, and `tests/grok-build-plugin-tools.test.js` lists the live server's tools and fails on any
+spend-capable one.
 
 ### 4. grokbot.tools
 
