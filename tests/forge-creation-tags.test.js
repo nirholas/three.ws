@@ -12,6 +12,9 @@ const session = vi.fn();
 vi.mock('../api/_lib/forge-store.js', () => ({
 	forgeStoreEnabled: () => true,
 	hashClient: (c) => `h:${c}`,
+	ownerClientKey: (k) => (k && k !== 'anon' ? k : null),
+	CREATION_VISIBILITIES: ['public', 'unlisted', 'private'],
+	setCreationVisibility: vi.fn(),
 	isCreationOwner: (args) => owner(args),
 	getPublicCreation: vi.fn(),
 	listRelated: vi.fn(),

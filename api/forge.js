@@ -57,7 +57,8 @@
 
 import { recordConversion } from './_lib/campaign-ledger.js';
 import { randomUUID } from 'node:crypto';
-import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
+import { cors, json as sendJson, method, readJson, wrap, rateLimited } from './_lib/http.js';
+import { withManageToken } from './_lib/forge-manage-token.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { admitWorldForge, parseWorldId } from './_lib/forge-world-limits.js';
 import { withForgeIdempotency } from './_lib/forge-idempotency.js';
@@ -108,6 +109,7 @@ import {
 	hashIp,
 	createCreation,
 	runWithCreationContext,
+	ownerClientKey,
 	materializeCreation,
 	markFailed,
 	markSupersededBy,
@@ -304,6 +306,16 @@ const JOB_ID_RE = /^[a-z0-9]{16,64}$/;
 // Stable anonymous handle for the browser making the request (/forge has no
 // login). Used to scope durable creations + the gallery to one client without
 // trusting any of its other input.
+
+// Every forge response that names a creation also carries its `manage_token`
+// (issue #639): the credential that lets the maker delete the model or change
+// its visibility later even without the x-forge-client id it was forged under.
+// Submit responses only ever go to the caller that created the row; the status
+// poll opts out for the shared anon bucket (see pollJob).
+function json(res, status, body, headers) {
+	return sendJson(res, status, withManageToken(body), headers);
+}
+
 function clientKeyFrom(req) {
 	const raw = req.headers['x-forge-client'];
 	return hashClient(Array.isArray(raw) ? raw[0] : raw);
@@ -1148,7 +1160,7 @@ async function runHfImageLane({
 async function startJob(req, res) {
 	const body = await readJson(req, 8_000).catch(() => null);
 	return runWithCreationContext(
-		{ destination: body?.destination, internal: isInternalSeedRequest(req), source: body?.source },
+		{ destination: body?.destination, internal: isInternalSeedRequest(req), source: body?.source, visibility: body?.visibility },
 		() => startJobWithBody(req, res, body),
 	);
 }
@@ -3444,7 +3456,12 @@ async function pollJob(req, res, jobId) {
 				referenceImageUrl: meta?.preview_image_url || null,
 			});
 		}
-		return json(res, 200, {
+		// `json` here is the raw sender, not the token-minting wrapper: a job
+		// coalesced across headerless callers is polled by all of them under the
+		// shared anon key, so findByJob would hand each one the first caller's
+		// row. Only a real client key scopes the lookup to the poller's own row;
+		// headerless callers already got their manage_token on submit.
+		return (ownerClientKey(clientKey) && meta ? json : sendJson)(res, 200, {
 			job_id: jobId,
 			creation_id: durable?.id ?? meta?.id ?? null,
 			status: 'done',
@@ -3524,6 +3541,7 @@ async function pollJob(req, res, jobId) {
 						// the original submit said it was for.
 						destination: meta.destination,
 						internal: meta.internal === true,
+						visibility: meta.visibility ?? null,
 					});
 					// Report "running" ONLY once the successor is durably chaseable -
 					// otherwise the client would poll a dead handle forever.

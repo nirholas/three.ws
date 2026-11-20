@@ -60,7 +60,8 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
+import { cors, json as sendJson, method, readJson, wrap, rateLimited } from './_lib/http.js';
+import { withManageToken } from './_lib/forge-manage-token.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { textToImage, synthesizeTurnaroundViews, ladderBudgetMs } from './_mcp3d/text-to-image.js';
 import { createRegenProvider } from './_providers/replicate.js';
@@ -107,6 +108,7 @@ import {
 	materializeCreation,
 	markFailed,
 	findByJob,
+	ownerClientKey,
 } from './_lib/forge-store.js';
 import { isStorageInfrastructureError } from './_lib/r2.js';
 import { getSessionUser } from './_lib/auth.js';
@@ -306,6 +308,15 @@ const JOB_ID_RE = /^[a-z0-9]{16,64}$/;
 // Stable anonymous handle for the browser making the request (/forge has no
 // login). Used to scope durable creations + the gallery to one client without
 // trusting any of its other input.
+
+// Every response that names a creation also carries its `manage_token` (issue
+// #639), so the maker can delete it or change its visibility later without the
+// client id it was forged under. The status poll opts out where the frame could
+// belong to another caller (see pollJob).
+function json(res, status, body, headers) {
+	return sendJson(res, status, withManageToken(body), headers);
+}
+
 function clientKeyFrom(req) {
 	const raw = req.headers['x-forge-client'];
 	return hashClient(Array.isArray(raw) ? raw[0] : raw);
@@ -2974,8 +2985,10 @@ async function pollJob(req, res, jobId) {
 	// A finished job is terminal: answer every later poll with the frame the
 	// first done poll built, instead of re-materializing and re-scoring it
 	// (13-33 s per poll, measured 2026-08-27). See _lib/forge-done-cache.js.
+	// Raw sender: the remembered frame is shared by every poller of the job,
+	// whatever client they are, so it must never mint a manage token.
 	const remembered = await recallDoneFrame(jobId);
-	if (remembered) return json(res, 200, remembered);
+	if (remembered) return sendJson(res, 200, remembered);
 
 	// Poll-time failover may have re-dispatched this generation onto another
 	// lane during an earlier poll (see _lib/forge-failover.js). The client keeps
@@ -3161,7 +3174,10 @@ async function pollJob(req, res, jobId) {
 			...metaFields,
 		};
 		await rememberDoneFrame(jobId, doneFrame);
-		return json(res, 200, doneFrame);
+		// Mint the manage token only when the row was found under the poller's
+		// own real client key. A coalesced job is polled by several callers, and
+		// headerless ones all share the anon key; they got the token on submit.
+		return (ownerClientKey(clientKey) && meta ? json : sendJson)(res, 200, doneFrame);
 	}
 	if (result.status === 'failed') {
 		// Persist the RAW provider error for operators, but never relay it: the

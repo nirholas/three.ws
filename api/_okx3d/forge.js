@@ -123,7 +123,27 @@ function pageUrlOf(base, data) {
 	return typeof id === 'string' && CREATION_ID_RE.test(id) ? `${base}/m/${id}` : null;
 }
 
+// The forge returns `manage_token` on submit (issue #639): the one credential
+// that lets the buyer delete the model or change its visibility later, since
+// this lane forges without a browser client id. Structured only, never in the
+// relayed text: it is the buyer's to keep, not something to paste into a chat.
+function manageFields(base, data) {
+	const id = data?.creation_id;
+	const token = data?.manage_token;
+	if (typeof id !== 'string' || !CREATION_ID_RE.test(id) || typeof token !== 'string') return null;
+	return {
+		creationId: id,
+		manageToken: token,
+		manage: {
+			delete: { method: 'DELETE', url: `${base}/api/forge-creation?id=${id}`, header: 'x-forge-manage-token' },
+			visibility: { method: 'PATCH', url: `${base}/api/forge-creation?id=${id}`, header: 'x-forge-manage-token', body: { visibility: 'public | unlisted | private' } },
+		},
+	};
+}
+
 function withPollTool(shaped, { base, data, title }) {
+	const manage = manageFields(base, data);
+	if (manage) shaped = { ...shaped, ...manage };
 	if (shaped.status === 'pending') {
 		return {
 			...shaped,

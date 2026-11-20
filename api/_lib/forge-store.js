@@ -18,7 +18,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import { sql, isDbUnavailableError } from './db.js';
 import { databaseConfigured } from './env.js';
-import { putObject, cdnUrl, deleteObject, keyFromPublicUrl, normalizeStoredUrl, objectStorageConfigured } from './r2.js';
+import { putObject, cdnUrl, deleteObject, listObjectsPage, keyFromPublicUrl, normalizeStoredUrl, objectStorageConfigured } from './r2.js';
 import { recordDailyActivity, maybeAwardFirstCreation } from './streaks.js';
 import { recordGenerationEvent } from './forge-events.js';
 import { backendWorkerHost } from './gpu-worker-host.js';
@@ -40,6 +40,7 @@ import { tagQueryVariants } from './creation-tags.js';
 import { enqueueCreationDescription, describedBlock } from './creation-descriptions.js';
 import { announceIndexNow } from './indexnow-queue.js';
 import { isIndexableCreation } from './seo-resources.js';
+import { verifyManageToken } from './forge-manage-token.js';
 
 // Stable, non-secret salt so a leaked DB row can't be trivially reversed to the
 // raw browser-local id. The id is anonymous to begin with; this is hygiene, not
@@ -58,12 +59,35 @@ export function forgeStoreEnabled() {
 	return Boolean(databaseConfigured() && objectStorageConfigured());
 }
 
-// Hash a caller-supplied anonymous client id. Empty / missing ids collapse to a
-// shared 'anon' bucket so the column is never null and gallery scoping is total.
+// The client_key every caller without an x-forge-client id hashes to. It keeps
+// the column non-null and lets a headerless Forge API caller poll its own job
+// (the job id is the capability there), but it is SHARED by every such caller,
+// so it is never an ownership credential: no list, no delete, no edit is ever
+// scoped to it (issue #639). Headerless callers manage their creations with the
+// per-creation manage token instead (forge-manage-token.js).
+export const ANON_CLIENT_KEY = 'anon';
+
+// Hash a caller-supplied anonymous client id. Empty / missing ids collapse to
+// the shared ANON_CLIENT_KEY bucket so the column is never null.
 export function hashClient(raw) {
 	const value = typeof raw === 'string' ? raw.trim() : '';
-	if (!value) return 'anon';
+	if (!value) return ANON_CLIENT_KEY;
 	return createHash('sha256').update(`${CLIENT_SALT}:${value}`).digest('hex');
+}
+
+// The client key, when it identifies exactly one browser; null for a missing
+// key or the shared anon bucket. Every owner-scoped read and write goes through
+// this, so a headerless caller can never act on another headerless caller's row.
+export function ownerClientKey(clientKey) {
+	return typeof clientKey === 'string' && clientKey && clientKey !== ANON_CLIENT_KEY ? clientKey : null;
+}
+
+// Who a creation can be shown to. null (legacy rows, and the default for a
+// text-to-3D generation) reads as public everywhere.
+export const CREATION_VISIBILITIES = ['public', 'unlisted', 'private'];
+
+export function validCreationVisibility(value) {
+	return typeof value === 'string' && CREATION_VISIBILITIES.includes(value) ? value : null;
 }
 
 export function hashIp(ip) {
@@ -172,17 +196,20 @@ const creationContext = new AsyncLocalStorage();
  * Run `fn` with request-scoped creation facts. `destination` is validated here,
  * so callers pass the raw request value. `internal` marks platform-generated
  * rows (catalog seeder, quality benchmark) so the funnel report can leave them out.
+ * `visibility` is the caller's explicit choice ('public' | 'unlisted' |
+ * 'private'); absent, createCreation applies the default described there.
  * @template T
- * @param {{ destination?: unknown, internal?: boolean, source?: unknown }} facts
+ * @param {{ destination?: unknown, internal?: boolean, source?: unknown, visibility?: unknown }} facts
  * @param {() => T} fn
  * @returns {T}
  */
-export function runWithCreationContext({ destination, internal = false, source } = {}, fn) {
+export function runWithCreationContext({ destination, internal = false, source, visibility } = {}, fn) {
 	return creationContext.run(
 		{
 			destination: validForgeDestination(destination),
 			internal: internal === true,
 			source: validCreationSource(source),
+			visibility: validCreationVisibility(visibility),
 		},
 		fn,
 	);
@@ -217,6 +244,9 @@ export async function createCreation({
 	// Platform-generated row (seeder, benchmark). Only failover successors pass
 	// it, to inherit the original's flag; a fresh submit takes it from the context.
 	internal,
+	// 'public' | 'unlisted' | 'private'. Failover successors pass the
+	// original's value; a fresh submit takes the request's from the context.
+	visibility,
 }) {
 	if (!forgeStoreEnabled()) return null;
 	const id = randomUUID();
@@ -231,13 +261,23 @@ export async function createCreation({
 		Array.isArray(sourceImageUrls) && sourceImageUrls.length ? sourceImageUrls : [previewImageUrl],
 	);
 	const sourceUrls = sourceImageUrlsFrom(sourceImageUrls);
+	// Visibility at birth. The caller's explicit choice wins. Otherwise a model
+	// conditioned on the maker's own uploaded photo (a forge/uploads/ key: a
+	// selfie, an original character, a product shot) is unlisted: viewable and
+	// shareable by link, but kept out of the public showcase, feeds, search and
+	// sitemaps until the maker chooses to publish it. Text-to-3D keeps the
+	// public default (null). Issue #639: an uploaded original character went
+	// straight into the public gallery without its maker meaning to publish it.
+	const hasUserUpload = Array.isArray(sourceKeys) && sourceKeys.some((k) => k.startsWith('forge/uploads/'));
+	const birthVisibility =
+		validCreationVisibility(visibility) ?? ctx?.visibility ?? (hasUserUpload ? 'unlisted' : null);
 	try {
 		await sql`
 			insert into forge_creations
 				(id, client_key, ip_hash, prompt, aspect, preview_image_url,
 				 replicate_job_id, text_to_image_model, views_requested, views_used,
 				 multiview, backend, tier, path, status, outcome, model_category, user_id,
-				 source_image_keys, destination, internal, source_image_urls, source)
+				 source_image_keys, destination, internal, source_image_urls, source, visibility)
 			values
 				(${id}, ${clientKey}, ${ipHash ?? null}, ${prompt}, ${aspect ?? null},
 				 ${previewImageUrl ?? null}, ${replicateJobId ?? null},
@@ -245,7 +285,7 @@ export async function createCreation({
 				 ${typeof multiview === 'boolean' ? multiview : null}, ${backend ?? null},
 				 ${tier ?? null}, ${path ?? null}, 'generating', 'generated', ${category}, ${userId ?? null},
 				 ${sourceKeys ? JSON.stringify(sourceKeys) : null}, ${nextDestination}, ${isInternal},
-				 ${sourceUrls ? JSON.stringify(sourceUrls) : null}, ${ctx?.source ?? null})
+				 ${sourceUrls ? JSON.stringify(sourceUrls) : null}, ${ctx?.source ?? null}, ${birthVisibility})
 		`;
 		// Funnel start — counts attempts so the health rollup can show how many
 		// generations began vs. completed. Best-effort; never blocks the insert.
@@ -970,7 +1010,7 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 // preview (the flux reference image — part of the training pair) is never
 // overwritten. Scoped to the owning client. Returns the durable URL or null.
 export async function attachPoster({ id, clientKey, body, contentType, ext }) {
-	if (!forgeStoreEnabled() || !id || !body) return null;
+	if (!forgeStoreEnabled() || !id || !body || !ownerClientKey(clientKey)) return null;
 	try {
 		const rows = await sql`
 			select id, preview_image_url
@@ -1060,23 +1100,69 @@ export async function markSupersededBy({ replicateJobId, clientKey, successorId 
 	}
 }
 
-// Permanently delete a creation: the stored mesh, the stored preview, every
-// recorded source upload (the user's reference photos), and the row itself.
-// Scoped to the owning client_key so one browser can never erase another's
-// work. Bucket objects go first: if storage refuses, the row survives and the
-// user can simply retry; deleting the row first would strand unreferenced
-// bytes with no handle left to retry from. The row delete then cascades
-// forge_votes and forge_comments; lineage children and forge_board_winners
-// null their reference (see the migrations that created those FKs).
-// Returns 'deleted' | 'not_found' | 'error' | 'unavailable'.
-export async function deleteCreation({ id, clientKey }) {
-	if (!forgeStoreEnabled() || !id || !clientKey) return 'unavailable';
+// Who is asking to manage a creation. Any one credential is enough:
+//   clientKey   the hashed x-forge-client the model was forged under (never the
+//               shared anon bucket, see ownerClientKey)
+//   userId      the signed-in account the model was forged under
+//   manageToken the signed per-creation token the forge returned (forge-manage-token.js)
+//   moderator   a platform admin acting on a removal request (callers gate this)
+// Returns the credential set to bind into SQL, or null when there is none.
+function managementCredentials({ id, clientKey = null, userId = null, manageToken = null, moderator = false }) {
+	const ck = ownerClientKey(clientKey);
+	const uid = typeof userId === 'string' && userId ? userId : null;
+	const tokenOk = Boolean(manageToken) && verifyManageToken(manageToken) === String(id).toLowerCase();
+	const mod = moderator === true;
+	if (!ck && !uid && !tokenOk && !mod) return null;
+	return { ck, uid, grant: tokenOk || mod };
+}
+
+// Every bucket object stored under a creation's own prefix
+// (forge/<client12>/<id>): the mesh, the preview, the .web.glb and .lod.glb
+// delivery variants and the browser-rendered -poster.*. Listing the prefix
+// catches every variant, including ones added after this code was written,
+// instead of trusting that each has a column. Paginated, bounded.
+async function creationPrefixKeys(row) {
+	const ck = typeof row.client_key === 'string' && row.client_key ? row.client_key : null;
+	if (!ck || !row.id) return [];
+	const prefix = `forge/${ck.slice(0, 12)}/${row.id}`;
+	const keys = [];
+	let token;
+	for (let page = 0; page < 10; page++) {
+		const out = await listObjectsPage({ prefix, continuationToken: token, maxKeys: 1000 });
+		for (const o of out?.objects || []) if (o?.key) keys.push(o.key);
+		token = out?.nextToken;
+		if (!token) break;
+	}
+	return keys;
+}
+
+// Permanently delete a creation: the stored mesh, the stored preview, the
+// delivery variants, every recorded source upload (the user's reference
+// photos), and the row itself. The caller must present one management
+// credential (see managementCredentials); the shared anon bucket is never one.
+// Bucket objects go first: if storage refuses, the row survives and the user
+// can simply retry; deleting the row first would strand unreferenced bytes with
+// no handle left to retry from. The row delete then cascades forge_votes and
+// forge_comments; lineage children and forge_board_winners null their
+// reference (see the migrations that created those FKs).
+// Returns 'deleted' | 'not_found' | 'error' | 'unavailable'; a successful
+// delete also reports the removed keys through `onDeleted` so a moderator
+// takedown can purge the CDN for exactly those paths.
+export async function deleteCreation({ id, clientKey = null, userId = null, manageToken = null, moderator = false, onDeleted = null }) {
+	if (!id) return 'not_found';
+	const cred = managementCredentials({ id, clientKey, userId, manageToken, moderator });
+	if (!cred) return 'not_found';
+	if (!forgeStoreEnabled()) return 'unavailable';
 	try {
 		const rows = await sql`
-			select id, glb_key, glb_url, preview_key, preview_image_url, source_image_keys,
+			select id, client_key, glb_key, glb_url, preview_key, preview_image_url,
+				web_glb_key, web_glb_url, lod_glb_key, lod_glb_url, source_image_keys,
 				status, visibility, outcome
 			from forge_creations
-			where id = ${id} and client_key = ${clientKey}
+			where id = ${id}
+				and (${cred.grant}
+					or (${cred.ck}::text is not null and client_key = ${cred.ck})
+					or (${cred.uid}::uuid is not null and user_id = ${cred.uid}::uuid))
 			limit 1
 		`;
 		const row = rows[0];
@@ -1088,19 +1174,22 @@ export async function deleteCreation({ id, clientKey }) {
 		// prefix guard keeps a corrupted row from ever deleting outside the
 		// forge namespace.
 		const keys = new Set();
-		for (const k of [row.glb_key, row.preview_key]) {
+		for (const k of [row.glb_key, row.preview_key, row.web_glb_key, row.lod_glb_key]) {
 			if (typeof k === 'string' && k.startsWith('forge/')) keys.add(k);
 		}
-		for (const u of [row.glb_url, row.preview_image_url]) {
+		for (const u of [row.glb_url, row.preview_image_url, row.web_glb_url, row.lod_glb_url]) {
 			const k = keyFromPublicUrl(u);
 			if (k && k.startsWith('forge/')) keys.add(k);
 		}
 		for (const k of Array.isArray(row.source_image_keys) ? row.source_image_keys : []) {
 			if (typeof k === 'string' && k.startsWith('forge/')) keys.add(k);
 		}
+		for (const k of await creationPrefixKeys(row)) {
+			if (k.startsWith('forge/')) keys.add(k);
+		}
 		await Promise.all([...keys].map((key) => deleteObject(key)));
 
-		await sql`delete from forge_creations where id = ${id} and client_key = ${clientKey}`;
+		await sql`delete from forge_creations where id = ${row.id}`;
 		// The row is gone, so the reconcile scan can never see this delete: tell
 		// IndexNow here, but only about a page that was public to begin with.
 		announceIndexNow('creation', row.id, {
@@ -1109,6 +1198,7 @@ export async function deleteCreation({ id, clientKey }) {
 			reason: 'delete',
 			source: 'forge',
 		});
+		if (typeof onDeleted === 'function') onDeleted({ id: row.id, keys: [...keys] });
 		return 'deleted';
 	} catch (err) {
 		if (isDbUnavailableError(err)) {
@@ -1120,12 +1210,52 @@ export async function deleteCreation({ id, clientKey }) {
 	}
 }
 
+// Change who a finished creation can be shown to. Same credentials as
+// deleteCreation. 'public' lists it in the showcase, feeds, search and
+// sitemaps; 'unlisted' keeps the /m/:id page and share links working but out
+// of every list; 'private' takes the page down for everyone but the owner's
+// own stores. IndexNow hears about the change either way so a search engine
+// drops (or picks up) the page promptly.
+// Returns { outcome: 'updated', visibility } | { outcome: 'not_found' |
+// 'invalid' | 'error' | 'unavailable' }.
+export async function setCreationVisibility({ id, clientKey = null, userId = null, manageToken = null, moderator = false, visibility }) {
+	const next = validCreationVisibility(visibility);
+	if (!next) return { outcome: 'invalid' };
+	if (!id) return { outcome: 'not_found' };
+	const cred = managementCredentials({ id, clientKey, userId, manageToken, moderator });
+	if (!cred) return { outcome: 'not_found' };
+	if (!forgeStoreEnabled()) return { outcome: 'unavailable' };
+	try {
+		const rows = await sql`
+			update forge_creations
+			set visibility = ${next}, updated_at = now()
+			where id = ${id} and status = 'done'
+				and (${cred.grant}
+					or (${cred.ck}::text is not null and client_key = ${cred.ck})
+					or (${cred.uid}::uuid is not null and user_id = ${cred.uid}::uuid))
+			returning id, visibility, status, glb_url, outcome
+		`;
+		const row = rows[0];
+		if (!row) return { outcome: 'not_found' };
+		announceIndexNow('creation', row.id, {
+			indexable: Boolean(row.glb_url) && isIndexableCreation(row),
+			reason: 'visibility',
+			source: 'forge',
+		});
+		return { outcome: 'updated', visibility: row.visibility };
+	} catch (err) {
+		if (isDbUnavailableError(err)) return { outcome: 'unavailable' };
+		console.error('[forge-store] setCreationVisibility failed:', err?.message);
+		return { outcome: 'error' };
+	}
+}
+
 const VALID_OUTCOMES = new Set(['accepted', 'rejected', 'generated']);
 
 // Capture the human verdict on a creation. Scoped to the owning client so a
 // verdict can't be forged for someone else's row. Returns true on a real write.
 export async function recordFeedback({ id, clientKey, outcome, downloaded, rating, note, destination }) {
-	if (!forgeStoreEnabled() || !id) return false;
+	if (!forgeStoreEnabled() || !id || !ownerClientKey(clientKey)) return false;
 	const nextDestination = validForgeDestination(destination);
 	const nextOutcome = VALID_OUTCOMES.has(outcome) ? outcome : null;
 	const nextRating =
@@ -1158,7 +1288,7 @@ export async function recordFeedback({ id, clientKey, outcome, downloaded, ratin
 
 // Update the model_category on a forge creation. Scoped to the owning client.
 export async function setForgeCategory({ id, clientKey, modelCategory }) {
-	if (!forgeStoreEnabled() || !id) return false;
+	if (!forgeStoreEnabled() || !id || !ownerClientKey(clientKey)) return false;
 	const category = validModelCategory(modelCategory);
 	if (!category) return false;
 	try {
@@ -1176,16 +1306,20 @@ export async function setForgeCategory({ id, clientKey, modelCategory }) {
 }
 
 // Whether the caller owns a creation: the browser that forged it (hashed
-// x-forge-client) or the signed-in account it was forged under. Powers owner
-// edits on the public model page (tag edits, work order 819).
-export async function isCreationOwner({ id, clientKey = null, userId = null }) {
-	if (!forgeStoreEnabled() || !id || (!clientKey && !userId)) return false;
+// x-forge-client, never the shared anon bucket), the signed-in account it was
+// forged under, or the holder of its manage token. Powers owner edits on the
+// public model page (tags, visibility, delete).
+export async function isCreationOwner({ id, clientKey = null, userId = null, manageToken = null }) {
+	if (!id) return false;
+	const cred = managementCredentials({ id, clientKey, userId, manageToken });
+	if (!cred || !forgeStoreEnabled()) return false;
 	try {
 		const rows = await sql`
 			select 1 from forge_creations
 			where id = ${id} and status = 'done'
-				and ((${clientKey}::text is not null and client_key = ${clientKey})
-					or (${userId}::uuid is not null and user_id = ${userId}::uuid))
+				and (${cred.grant}
+					or (${cred.ck}::text is not null and client_key = ${cred.ck})
+					or (${cred.uid}::uuid is not null and user_id = ${cred.uid}::uuid))
 			limit 1
 		`;
 		return rows.length > 0;
@@ -1429,8 +1563,10 @@ export async function getLineage({ rootCreationId, clientKey }) {
 }
 
 // Newest durable creations for one anonymous client — powers the gallery.
+// Never the shared anon bucket: that would list every headerless caller's
+// models, including unlisted and private ones, to anyone.
 export async function listCreations({ clientKey, limit = 24 }) {
-	if (!forgeStoreEnabled()) return [];
+	if (!forgeStoreEnabled() || !ownerClientKey(clientKey)) return [];
 	const capped = Math.min(Math.max(Number(limit) || 24, 1), 48);
 	try {
 		const rows = await sql`
@@ -1837,7 +1973,9 @@ const REMIX_LICENSES = new Set(['remix-cc', 'remix-nc', 'remix-royalty', 'all-ri
 // done row with a stored GLB can be made remixable. Royalty bps is clamped at
 // the DB check constraint (0–2000); we pre-clamp for a clean error path.
 export async function setRemixable({ creationId, clientKey, remixable, royaltyBps, creatorWallet, license }) {
-	if (!forgeStoreEnabled() || !creationId || !clientKey) return null;
+	// Never the shared anon bucket: anyone without a client id would otherwise
+	// be able to set the royalty wallet on every headerless caller's model.
+	if (!forgeStoreEnabled() || !creationId || !ownerClientKey(clientKey)) return null;
 	const bps = Math.max(0, Math.min(2000, Math.round(Number(royaltyBps ?? 1000)) || 0));
 	const lic = REMIX_LICENSES.has(license) ? license : null;
 	try {

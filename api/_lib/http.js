@@ -530,8 +530,8 @@ export function cors(
 	res.setHeader(
 		'access-control-allow-headers',
 		payments
-			? 'authorization, content-type, mcp-session-id, mcp-protocol-version, x-payment, payment-signature, x-payment-rail, x-ap2-mandate, x-ap2-cart, x-a2a-extensions, idempotency-key, x-irl-device, x-irl-fix, x-forge-client, x-agent-id, x-forge-seed'
-			: 'authorization, content-type, mcp-session-id, mcp-protocol-version, idempotency-key, x-irl-device, x-irl-fix, x-forge-client, x-agent-id, x-forge-seed',
+			? 'authorization, content-type, mcp-session-id, mcp-protocol-version, x-payment, payment-signature, x-payment-rail, x-ap2-mandate, x-ap2-cart, x-a2a-extensions, idempotency-key, x-irl-device, x-irl-fix, x-forge-client, x-forge-manage-token, x-agent-id, x-forge-seed'
+			: 'authorization, content-type, mcp-session-id, mcp-protocol-version, idempotency-key, x-irl-device, x-irl-fix, x-forge-client, x-forge-manage-token, x-agent-id, x-forge-seed',
 	);
 	// x402: clients (drop-in modal, x402-fetch) must read these to drive the
 	// 402-pay-retry flow and surface settlement receipts. Without `expose`,
