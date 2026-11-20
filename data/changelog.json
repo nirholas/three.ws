@@ -12,6 +12,15 @@
 		},
 		{
 			"date": "2026-11-20",
+			"title": "three-ws setup offers sign-in for the Grok and free studio connectors again",
+			"summary": "The directory now describes the Grok and free 3D Studio servers as \"none to connect, a free account to make a model\", and the CLI read that as no-sign-in-possible, so npx three-ws setup --client grok-bot only offered anonymous and install-token connections and refused --auth key or oauth. It now offers all four ways to connect on both servers, and its server lists stop calling the studio \"no account needed\".",
+			"tags": [
+				"fix",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-20",
 			"title": "Model review moved off the website, and flagged evidence cannot be deleted by accident",
 			"summary": "The internal review boards for held 3D models and for the Forge quality judge are gone from the public server: there is no admin page or admin endpoint left that can approve, label or delete a model. Operators review from their own workstation with signed-in command line tools instead (npm run forge:safety and npm run forge:judge). The takedown tool now refuses to delete any model the safety screen flagged as possible child abuse material until the legal report has been filed and recorded, so the evidence is preserved.",
 			"tags": [

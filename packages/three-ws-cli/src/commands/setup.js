@@ -73,7 +73,7 @@ export async function setup(ctx) {
 		if (interactive) {
 			const chosen = answer(await p.multiselect({
 				message: 'Which three.ws servers should your clients get?',
-				options: allServers.map((s) => ({ value: s.slug, label: `${s.name} ${c.dim(s.path)}`, hint: s.auth === 'none' ? 'no account needed' : s.description.slice(0, 70) })),
+				options: allServers.map((s) => ({ value: s.slug, label: `${s.name} ${c.dim(s.path)}`, hint: s.auth === 'none' && !s.signIn ? 'no account needed' : s.description.slice(0, 70) })),
 				initialValues: allServers.filter((s) => s.defaultSelected).map((s) => s.slug),
 				required: true,
 			}));

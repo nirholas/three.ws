@@ -64,8 +64,8 @@ export function recommendedServer(client, directory, servers) {
 
 /** The auth modes a server supports as a connector. */
 export function modesFor(server) {
+	if (server.keyless && (server.auth !== 'none' || server.signIn)) return ['none', 'install', 'key', 'oauth'];
 	if (server.auth === 'none') return ['none', 'install'];
-	if (server.keyless) return ['none', 'install', 'key', 'oauth'];
 	return ['key', 'oauth'];
 }
 

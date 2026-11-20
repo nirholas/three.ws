@@ -41,6 +41,15 @@ export function servesAnonymous(authText) {
 	return !authRequired(authText) || /\bnone needed\b/i.test(String(authText || ''));
 }
 
+/**
+ * True when the server also takes an account ("none to connect; a free three.ws
+ * account (OAuth 2.1 or an API key) to make a model"), so a connector can sign in
+ * even though anonymous callers are served.
+ */
+export function offersSignIn(authText) {
+	return /\b(oauth|api key|connector key|account)\b/i.test(String(authText || ''));
+}
+
 /** Normalize the live directory into the CLI's server records, rebased onto `origin`. */
 export function hostedServers(directory, origin) {
 	const list = Array.isArray(directory?.servers) ? directory.servers : [];
@@ -59,6 +68,7 @@ export function hostedServers(directory, origin) {
 				description: s.description || '',
 				auth: needsAuth ? 'required' : 'none',
 				keyless: servesAnonymous(s.auth),
+				signIn: offersSignIn(s.auth),
 				unified: pathname === UNIFIED_PATH,
 				defaultSelected,
 			};

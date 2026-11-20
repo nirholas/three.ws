@@ -45,7 +45,7 @@ async function listCmd(ctx) {
 	if (flags.available) {
 		const all = hostedServers(await loadDirectory(origin), origin);
 		if (flags.json) printJson(all);
-		else for (const s of all) line(`  ${s.slug.padEnd(22)} ${s.url} ${c.dim(s.auth === 'none' ? 'no account needed' : 'sign-in required')}`);
+		else for (const s of all) line(`  ${s.slug.padEnd(22)} ${s.url} ${c.dim(s.auth !== 'none' ? 'sign-in required' : s.signIn ? 'connects free; sign in to use everything' : 'no account needed')}`);
 		return 0;
 	}
 	const scan = scanClients(env, origin);

@@ -116,10 +116,22 @@ describe('the grok-bot client', () => {
 		const grokServer = all.find((s) => s.path === '/api/mcp-grok');
 		expect(grokServer.keyless).toBe(true);
 		expect(modesFor(grokServer)).toEqual(['none', 'install', 'key', 'oauth']);
-		expect(modesFor(all.find((s) => s.path === '/api/mcp-studio'))).toEqual(['none', 'install']);
+		// The free studio connects anonymously but makes models only for a signed-in
+		// account ("none to connect ...; a free three.ws account (OAuth 2.1 or an API
+		// key) to make or rig a model"), so it offers sign-in as well.
+		expect(modesFor(all.find((s) => s.path === '/api/mcp-studio'))).toEqual(['none', 'install', 'key', 'oauth']);
 		expect(modesFor(all.find((s) => s.path === '/api/mcp'))).toEqual(['key', 'oauth']);
 		expect(defaultMode(grok, DIRECTORY, grokServer)).toBe('none');
 		expect(defaultMode(grok, DIRECTORY, all.find((s) => s.path === '/api/mcp'))).toBe('key');
+	});
+
+	it('reads "none to connect; an account to ..." as keyless with sign-in, and a bare "none" as keyless only', () => {
+		const dir = (auth) => ({ servers: [{ name: 'x', endpoint: 'https://three.ws/api/mcp-x', transport: 'streamable-http', auth }] });
+		const one = (auth) => servers(dir(auth))[0];
+		expect(modesFor(one('none to connect; a free three.ws account (OAuth 2.1 or an API key) to make a model'))).toEqual(['none', 'install', 'key', 'oauth']);
+		expect(modesFor(one('OAuth 2.1 or a connector API key; none needed for the free 3D tools'))).toEqual(['none', 'install', 'key', 'oauth']);
+		expect(modesFor(one('none'))).toEqual(['none', 'install']);
+		expect(modesFor(one('OAuth 2.1 or x402 pay-per-call'))).toEqual(['key', 'oauth']);
 	});
 
 	it('parses --auth with the directory spelling too', () => {
@@ -279,9 +291,9 @@ describe('three-ws setup --client grok-bot', () => {
 
 	it('refuses a mode the server does not take', async () => {
 		vi.stubGlobal('fetch', platformFetch());
-		const { code, json } = await run(['setup', '--client', 'grok-bot', '--servers', 'three-ws-studio', '--auth', 'oauth', '--json', '--origin', ORIGIN], env);
+		const { code, json } = await run(['setup', '--client', 'grok-bot', '--servers', 'three-ws-3d', '--auth', 'none', '--json', '--origin', ORIGIN], env);
 		expect(code).toBe(1);
-		expect(json.remote[0].error).toBe('three-ws-studio does not take --auth oauth; it supports none, install');
+		expect(json.remote[0].error).toBe('three-ws-3d does not take --auth none; it supports key, oauth');
 	});
 
 	it('prints the fields and the live check for a person', async () => {
