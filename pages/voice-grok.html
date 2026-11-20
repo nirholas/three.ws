@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Grok voice: talk to a lip-synced 3D avatar · three.ws</title>
+	<meta name="description" content="Speech to speech with Grok Voice in realtime, driving a lip-synced 3D avatar. Push to talk or open mic, a live transcript, and latency measured from real timestamps on every turn." />
+	<link rel="canonical" href="https://three.ws/voice/grok" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Grok voice: talk to a lip-synced 3D avatar · three.ws" />
+	<meta property="og:description" content="Realtime speech to speech driving a 3D avatar's mouth, with the latency of every turn measured live." />
+	<meta property="og:url" content="https://three.ws/voice/grok" />
+	<meta property="og:site_name" content="three.ws">
+	<meta property="og:locale" content="en_US">
+	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Grok+voice+on+a+3D+avatar&amp;d=Realtime+speech+to+speech+driving+a+lip-synced+3D+avatar%2C+with+the+latency+of+every+turn+measured+live.&amp;p=%2Fvoice%2Fgrok">
+	<meta property="og:image:width" content="1200">
+	<meta property="og:image:height" content="630">
+	<meta property="og:image:type" content="image/png">
+	<meta property="og:image:alt" content="Grok voice on a 3D avatar - three.ws">
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Grok voice: talk to a lip-synced 3D avatar · three.ws" />
+	<meta name="twitter:description" content="Realtime speech to speech driving a 3D avatar's mouth, latency measured on every turn." />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Grok+voice+on+a+3D+avatar&amp;d=Realtime+speech+to+speech+driving+a+lip-synced+3D+avatar%2C+with+the+latency+of+every+turn+measured+live.&amp;p=%2Fvoice%2Fgrok">
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Grok voice: talk to a lip-synced 3D avatar","description":"Speech to speech with Grok Voice in realtime, driving a lip-synced 3D avatar, with latency measured from real timestamps on every turn.","url":"https://three.ws/voice/grok","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Voice","item":"https://three.ws/voice"},{"@type":"ListItem","position":3,"name":"Grok voice","item":"https://three.ws/voice/grok"}]}]}</script>
+	<style>
+		* { box-sizing: border-box; }
+		html, body { margin: 0; background: var(--bg-0); color: var(--ink); }
+		body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height: 100vh; }
+		.site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--bg-0) 82%, transparent); backdrop-filter: blur(10px); }
+		.vg-wrap { max-width: 1180px; margin: 0 auto; padding: 0 18px 96px; }
+		.vg-hero { padding: 36px 0 8px; }
+		.vg-kicker {
+			display: inline-flex; align-items: center; gap: 7px;
+			font-size: var(--text-2xs); letter-spacing: 0.09em; text-transform: uppercase;
+			color: var(--ink-dim); border: 1px solid var(--stroke); border-radius: var(--radius-pill);
+			padding: 5px 11px; margin-bottom: 14px; background: var(--surface-1);
+		}
+		.vg-kicker::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--vg-engine-dot, var(--ink-faint)); transition: background 0.2s ease; }
+		.vg-kicker[data-engine="grok"] { --vg-engine-dot: var(--success); }
+		.vg-kicker[data-engine="chain"] { --vg-engine-dot: var(--warn); }
+		.vg-hero h1 { font-size: clamp(1.8rem, 4.6vw, 2.7rem); line-height: 1.1; margin: 0 0 12px; letter-spacing: -0.025em; color: var(--ink-bright); }
+		.vg-hero p { margin: 0; max-width: 70ch; color: var(--ink-dim); line-height: 1.65; font-size: 1.02rem; }
+
+		.vg-banner {
+			margin-top: var(--space-lg); border: 1px solid var(--stroke); border-left: 3px solid var(--vg-banner-accent, var(--accent));
+			border-radius: var(--radius-lg); background: var(--surface-1); padding: var(--space-md) var(--space-lg);
+			display: flex; gap: var(--space-md); align-items: flex-start; flex-wrap: wrap;
+			animation: vg-in 0.25s ease both;
+		}
+		.vg-banner[data-tone="warn"] { --vg-banner-accent: var(--warn); }
+		.vg-banner[data-tone="error"] { --vg-banner-accent: var(--danger); }
+		.vg-banner-body { flex: 1 1 32ch; min-width: 0; }
+		.vg-banner h2 { margin: 0 0 4px; font: 600 var(--text-md, 1rem)/1.3 var(--font-display); color: var(--ink-bright); }
+		.vg-banner p { margin: 0; color: var(--ink-dim); line-height: 1.55; font-size: var(--text-ui); max-width: 72ch; }
+		.vg-banner code { font-family: var(--font-mono); font-size: 0.92em; color: var(--ink); }
+		.vg-banner-actions { display: flex; gap: var(--space-sm); flex-wrap: wrap; align-items: center; }
+
+		.vg-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-lg); margin-top: var(--space-lg); align-items: start; }
+		@media (max-width: 900px) { .vg-grid { grid-template-columns: 1fr; } }
+		.vg-aside { display: flex; flex-direction: column; gap: var(--space-md); }
+		.vg-card { border: 1px solid var(--stroke); border-radius: var(--radius-lg); background: var(--surface-1); padding: var(--space-lg); }
+		.vg-card h2 { margin: 0 0 var(--space-sm); font: 600 var(--text-lg)/1.25 var(--font-display); color: var(--ink-bright); }
+		.vg-card > p { color: var(--ink-dim); line-height: 1.6; font-size: var(--text-ui); margin: 0 0 var(--space-sm); }
+
+		.vg-stage-card { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+		.vg-stage { position: relative; aspect-ratio: 4 / 3.4; background: radial-gradient(120% 90% at 50% 18%, color-mix(in srgb, var(--accent) 10%, var(--surface-1)), var(--bg-0)); }
+		.vg-stage canvas { display: block; width: 100%; height: 100%; }
+		.vg-stage-msg {
+			position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: var(--space-lg);
+			color: var(--ink-dim); font-size: var(--text-ui); line-height: 1.55;
+		}
+		.vg-skeleton { width: 46%; aspect-ratio: 1 / 1.6; border-radius: 40% 40% 18% 18%; background: linear-gradient(100deg, var(--surface-1) 30%, color-mix(in srgb, var(--ink) 9%, var(--surface-1)) 50%, var(--surface-1) 70%); background-size: 220% 100%; animation: vg-shimmer 1.3s linear infinite; }
+		.vg-state {
+			position: absolute; top: 14px; left: 14px; display: inline-flex; align-items: center; gap: 8px;
+			padding: 6px 12px; border-radius: var(--radius-pill); font: 500 var(--text-xs)/1 var(--font-mono);
+			letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-bright);
+			background: color-mix(in srgb, var(--bg-0) 72%, transparent); border: 1px solid var(--stroke); backdrop-filter: blur(6px);
+		}
+		.vg-state::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--vg-state-dot, var(--ink-faint)); transition: background 0.2s ease, box-shadow 0.2s ease; }
+		.vg-state[data-state="listening"] { --vg-state-dot: var(--success); }
+		.vg-state[data-state="listening"]::before { box-shadow: 0 0 0 calc(var(--vg-level, 0) * 10px) color-mix(in srgb, var(--success) 35%, transparent); }
+		.vg-state[data-state="thinking"], .vg-state[data-state="transcribing"], .vg-state[data-state="connecting"], .vg-state[data-state="reconnecting"] { --vg-state-dot: var(--accent); }
+		.vg-state[data-state="speaking"] { --vg-state-dot: #7aa2ff; }
+		.vg-state[data-state="error"] { --vg-state-dot: var(--danger); }
+		.vg-stage-note { position: absolute; left: 14px; right: 14px; bottom: 14px; margin: 0; padding: 10px 14px; border-radius: var(--radius-md); font-size: var(--text-xs); line-height: 1.5; color: var(--ink); background: color-mix(in srgb, var(--bg-0) 80%, transparent); border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--stroke)); pointer-events: none; }
+		.vg-engine-tag { position: absolute; top: 14px; right: 14px; font: 500 var(--text-2xs)/1 var(--font-mono); color: var(--ink-dim); padding: 6px 10px; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--bg-0) 72%, transparent); border: 1px solid var(--stroke); }
+
+		.vg-controls { display: flex; flex-direction: column; gap: var(--space-md); padding: var(--space-lg); border-top: 1px solid var(--stroke); }
+		.vg-row { display: flex; gap: var(--space-sm); align-items: center; flex-wrap: wrap; }
+		.vg-seg { display: inline-flex; border: 1px solid var(--stroke); border-radius: var(--radius-pill); padding: 3px; background: var(--bg-0); }
+		.vg-seg button {
+			appearance: none; border: 0; background: transparent; color: var(--ink-dim); font: 500 var(--text-sm)/1 var(--font-body, inherit);
+			padding: 8px 14px; border-radius: var(--radius-pill); cursor: pointer; transition: background 0.15s ease, color 0.15s ease;
+		}
+		.vg-seg button:hover:not(:disabled) { color: var(--ink-bright); background: var(--surface-1); }
+		.vg-seg button:active:not(:disabled) { transform: translateY(1px); }
+		.vg-seg button[aria-pressed="true"] { background: var(--surface-1); color: var(--ink-bright); box-shadow: inset 0 0 0 1px var(--stroke-strong, var(--stroke)); }
+		.vg-seg button:disabled { opacity: 0.45; cursor: not-allowed; }
+		.vg-seg button:focus-visible, .vg-btn:focus-visible, .vg-talk:focus-visible, .vg-pick:focus-visible, .vg-links a:focus-visible {
+			outline: 2px solid var(--accent); outline-offset: 2px;
+		}
+		.vg-hint { font-size: var(--text-xs); color: var(--ink-faint); line-height: 1.5; }
+		.vg-hint kbd { font-family: var(--font-mono); border: 1px solid var(--stroke); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; color: var(--ink-dim); }
+
+		.vg-btn {
+			appearance: none; display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+			border: 1px solid var(--stroke); background: var(--surface-1); color: var(--ink-bright);
+			font: 500 var(--text-sm)/1 var(--font-body, inherit); padding: 10px 16px; border-radius: var(--radius-pill);
+			cursor: pointer; text-decoration: none; transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+		}
+		.vg-btn:hover:not(:disabled) { border-color: var(--stroke-strong, var(--ink-faint)); background: color-mix(in srgb, var(--ink) 6%, var(--surface-1)); }
+		.vg-btn:active:not(:disabled) { transform: translateY(1px); }
+		.vg-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+		.vg-btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+		.vg-btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 86%, white); border-color: var(--accent); }
+
+		.vg-talk {
+			appearance: none; position: relative; width: 100%; min-height: 64px; border-radius: var(--radius-lg);
+			border: 1px solid var(--stroke); background: var(--bg-0); color: var(--ink-bright);
+			font: 600 var(--text-md, 1rem)/1.2 var(--font-display); cursor: pointer; touch-action: none; user-select: none;
+			transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+			box-shadow: 0 0 0 calc(var(--vg-level, 0) * 8px) color-mix(in srgb, var(--success) 25%, transparent);
+		}
+		.vg-talk:hover:not(:disabled) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, var(--bg-0)); }
+		.vg-talk:active:not(:disabled), .vg-talk[data-held="true"] { transform: scale(0.99); background: color-mix(in srgb, var(--success) 14%, var(--bg-0)); border-color: var(--success); }
+		.vg-talk:disabled { opacity: 0.5; cursor: not-allowed; }
+		.vg-talk small { display: block; margin-top: 4px; font: 400 var(--text-xs)/1.3 var(--font-body, inherit); color: var(--ink-dim); }
+
+		.vg-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: var(--space-sm); }
+		.vg-pick {
+			appearance: none; border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); background: var(--bg-0);
+			padding: 0; cursor: pointer; overflow: hidden; display: flex; flex-direction: column; color: var(--ink-dim);
+			transition: border-color 0.15s ease, transform 0.1s ease;
+		}
+		.vg-pick:hover { border-color: var(--stroke-strong, var(--ink-faint)); color: var(--ink-bright); }
+		.vg-pick:active { transform: scale(0.98); }
+		.vg-pick[aria-pressed="true"] { border-color: var(--accent); color: var(--ink-bright); box-shadow: 0 0 0 1px var(--accent); }
+		.vg-pick img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: var(--surface-1); }
+		.vg-pick span { font-size: var(--text-2xs); padding: 5px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		.vg-pick-skel { aspect-ratio: 1 / 1.25; border-radius: var(--radius-md, 10px); background: linear-gradient(100deg, var(--surface-1) 30%, color-mix(in srgb, var(--ink) 9%, var(--surface-1)) 50%, var(--surface-1) 70%); background-size: 220% 100%; animation: vg-shimmer 1.3s linear infinite; }
+
+		.vg-latency { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm); }
+		.vg-metric { border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); padding: var(--space-sm) var(--space-md); background: var(--bg-0); }
+		.vg-metric b { display: block; font: 600 1.6rem/1.1 var(--font-mono); color: var(--ink-bright); font-variant-numeric: tabular-nums; }
+		.vg-metric b small { font-size: 0.55em; color: var(--ink-dim); font-weight: 500; margin-left: 2px; }
+		.vg-metric span { font-size: var(--text-xs); color: var(--ink-dim); line-height: 1.4; display: block; margin-top: 4px; }
+		.vg-turns { width: 100%; border-collapse: collapse; font-size: var(--text-xs); margin-top: var(--space-sm); font-variant-numeric: tabular-nums; }
+		.vg-turns th, .vg-turns td { text-align: right; padding: 5px 6px; border-bottom: 1px solid var(--stroke); }
+		.vg-turns th:first-child, .vg-turns td:first-child { text-align: left; }
+		.vg-turns th { color: var(--ink-dim); font-weight: 500; }
+		.vg-turns td { font-family: var(--font-mono); color: var(--ink); }
+		.vg-turns tfoot td { color: var(--ink-bright); font-weight: 600; border-bottom: 0; }
+		.vg-scroll { overflow-x: auto; max-height: 220px; overflow-y: auto; }
+
+		.vg-transcript { display: flex; flex-direction: column; gap: var(--space-xs); max-height: 340px; overflow-y: auto; scroll-behavior: smooth; }
+		.vg-msg { padding: 8px 12px; border-radius: 12px; line-height: 1.5; font-size: var(--text-ui); max-width: 92%; animation: vg-in 0.2s ease both; word-wrap: break-word; }
+		.vg-msg[data-role="user"] { align-self: flex-end; background: color-mix(in srgb, var(--accent) 16%, var(--bg-0)); color: var(--ink-bright); }
+		.vg-msg[data-role="assistant"] { align-self: flex-start; background: var(--bg-0); border: 1px solid var(--stroke); color: var(--ink); }
+		.vg-msg[data-final="false"] { opacity: 0.7; }
+		.vg-empty { color: var(--ink-faint); font-size: var(--text-ui); line-height: 1.55; margin: 0; }
+
+		.vg-links { margin-top: var(--space-2xl); display: flex; gap: var(--space-md); flex-wrap: wrap; }
+		.vg-links a { color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid var(--stroke-strong, var(--stroke)); padding-bottom: 2px; transition: color 0.15s ease, border-color 0.15s ease; }
+		.vg-links a:hover { color: var(--ink-bright); border-color: var(--accent); }
+		.vg-links a:active { color: var(--accent); }
+		.vg-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }
+
+		@keyframes vg-shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+		@keyframes vg-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+		@media (prefers-reduced-motion: reduce) { .vg-skeleton, .vg-pick-skel { animation: none; } .vg-msg, .vg-banner { animation: none; } }
+	</style>
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main id="main-content" class="vg-wrap">
+		<section class="vg-hero">
+			<span class="vg-kicker" id="vg-kicker" data-engine="checking">Checking voice engine</span>
+			<h1>Talk to a 3D avatar, speech to speech</h1>
+			<p>
+				Grok Voice in realtime: your microphone streams straight to the model and its reply streams straight back
+				into the avatar's mouth, with no transcribe, chat and synthesize hops in between. Every turn is timed from real
+				timestamps, so the numbers on the right are what you just experienced.
+			</p>
+		</section>
+
+		<div id="vg-banner" class="vg-banner" role="status" hidden></div>
+
+		<div class="vg-grid">
+			<section class="vg-card vg-stage-card" aria-label="Avatar">
+				<div class="vg-stage" id="vg-stage">
+					<div class="vg-stage-msg" id="vg-stage-msg"><div class="vg-skeleton" aria-hidden="true"></div></div>
+					<span class="vg-state" id="vg-state" data-state="idle">idle</span>
+					<span class="vg-engine-tag" id="vg-engine-tag" hidden></span>
+				</div>
+				<div class="vg-controls">
+					<div class="vg-row">
+						<div class="vg-seg" role="group" aria-label="Microphone mode" id="vg-mode">
+							<button type="button" data-mode="ptt" aria-pressed="true">Push to talk</button>
+							<button type="button" data-mode="open" aria-pressed="false">Open mic</button>
+						</div>
+						<button type="button" class="vg-btn vg-btn-primary" id="vg-connect" disabled>Start conversation</button>
+						<button type="button" class="vg-btn" id="vg-hangup" hidden>End</button>
+					</div>
+					<button type="button" class="vg-talk" id="vg-talk" disabled aria-describedby="vg-talk-hint">
+						<span id="vg-talk-label">Hold to talk</span>
+						<small id="vg-talk-sub">Pick an avatar to begin</small>
+					</button>
+					<p class="vg-hint" id="vg-talk-hint">Hold the button or <kbd>Space</kbd> while you speak and let go when you are done. Talking over the avatar interrupts it.</p>
+				</div>
+			</section>
+
+			<aside class="vg-aside">
+				<section class="vg-card" aria-labelledby="vg-pick-h">
+					<h2 id="vg-pick-h">Avatar</h2>
+					<div class="vg-picker" id="vg-picker" role="group" aria-label="Choose an avatar">
+						<div class="vg-pick-skel"></div><div class="vg-pick-skel"></div><div class="vg-pick-skel"></div><div class="vg-pick-skel"></div>
+					</div>
+				</section>
+
+				<section class="vg-card" aria-labelledby="vg-lat-h">
+					<h2 id="vg-lat-h">Latency, measured</h2>
+					<div class="vg-latency">
+						<div class="vg-metric"><b id="vg-lat-response">-</b><span>End of your speech to the first reply audio frame (median)</span></div>
+						<div class="vg-metric"><b id="vg-lat-mouth">-</b><span>First reply audio frame to the first mouth movement (median)</span></div>
+					</div>
+					<div class="vg-scroll">
+						<table class="vg-turns" id="vg-turns" hidden>
+							<thead><tr><th scope="col">Turn</th><th scope="col">Reply</th><th scope="col">Mouth</th><th scope="col">A/V offset</th></tr></thead>
+							<tbody></tbody>
+							<tfoot><tr><td>Median</td><td id="vg-med-r">-</td><td id="vg-med-m">-</td><td id="vg-med-o">-</td></tr></tfoot>
+						</table>
+					</div>
+					<p class="vg-empty" id="vg-lat-empty">Talk once and the first turn's timings land here. A/V offset is how far the mouth trails the moment you hear the first sample; near zero means the lip sync is aligned.</p>
+				</section>
+
+				<section class="vg-card" aria-labelledby="vg-tr-h">
+					<h2 id="vg-tr-h">Transcript</h2>
+					<div class="vg-transcript" id="vg-transcript" aria-live="polite">
+						<p class="vg-empty" id="vg-tr-empty">What you say and what the avatar answers appear here as it happens.</p>
+					</div>
+				</section>
+			</aside>
+		</div>
+
+		<nav class="vg-links" aria-label="Related">
+			<a href="/docs/voice-grok">How it works</a>
+			<a href="/grok">Grok on three.ws</a>
+			<a href="/lipsync/mic">Audio-driven lip sync</a>
+			<a href="/voice">Voice and cloning</a>
+		</nav>
+		<p class="vg-sr" aria-live="assertive" id="vg-announce"></p>
+	</main>
+
+	<div id="footer-container"></div>
+	<script src="/footer.js"></script>
+
+	<script type="module" src="/src/voice-grok-page.js"></script>
+</body>
+</html>
