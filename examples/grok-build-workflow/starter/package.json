@@ -1,0 +1,21 @@
+{
+	"name": "@three-ws/example-grok-build-starter",
+	"version": "1.0.0",
+	"private": true,
+	"description": "A three.js scene that loads a GLB Grok Build made with the three.ws plugin.",
+	"type": "module",
+	"scripts": {
+		"dev": "vite --port 3277 --strictPort",
+		"build": "vite build",
+		"test": "node --test fit.test.mjs"
+	},
+	"dependencies": {
+		"three": "0.187.0"
+	},
+	"devDependencies": {
+		"vite": "8.3.8"
+	},
+	"engines": {
+		"node": ">=22"
+	}
+}

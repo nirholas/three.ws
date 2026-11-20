@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>three.ws GLB in a three.js scene</title>
+		<link rel="stylesheet" href="./style.css" />
+	</head>
+	<body>
+		<canvas id="scene" aria-label="3D scene with the loaded model"></canvas>
+		<header class="panel">
+			<h1>Your Grok Build model, in a three.js scene</h1>
+			<form id="load" class="row">
+				<label class="sr-only" for="src">GLB URL</label>
+				<input
+					id="src"
+					name="src"
+					type="url"
+					required
+					placeholder="Paste a GLB URL from /make-3d, /rig or the catalog"
+					autocomplete="off"
+					spellcheck="false"
+				/>
+				<button type="submit">Load</button>
+			</form>
+			<p id="status" class="status" role="status" aria-live="polite"></p>
+		</header>
+		<script type="module" src="./main.js"></script>
+	</body>
+</html>
