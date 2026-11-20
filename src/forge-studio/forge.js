@@ -21,6 +21,7 @@ import { coldStartLabel } from '../shared/forge-frames.js';
 import { initForgeDestinationPicker, storedForgeDestination } from '../shared/forge-destination-picker.js';
 import { regionRestrictedError, fetchRestrictedEngines } from '../forge-region.js';
 import { rememberFromResponse } from '../shared/forge-manage-tokens.js';
+import { signedInForUploads, isSignInRequired, renderUploadSignIn, UPLOAD_SIGN_IN_SHORT } from '../shared/upload-sign-in.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -1145,6 +1146,10 @@ async function presignAndPut(file) {
 		};
 	}
 	if (presignRes.status === 429) return { ok: false, message: 'Rate limited. Retry shortly.' };
+	if (isSignInRequired(presignRes.status, presign)) {
+		showUploadSignIn();
+		return { ok: false, message: UPLOAD_SIGN_IN_SHORT };
+	}
 	if (!presignRes.ok || !presign.upload_url || !presign.public_url) {
 		return { ok: false, message: presign.message || 'Upload failed.' };
 	}
@@ -1178,6 +1183,10 @@ async function uploadToSlot(index, file) {
 		setSlotError(index, 'Too large (max 8 MB).');
 		return;
 	}
+	if (!(await requireUploadAccount())) {
+		setSlotError(index, UPLOAD_SIGN_IN_SHORT);
+		return;
+	}
 
 	const prev = slots[index];
 	if (prev.objectUrl) URL.revokeObjectURL(prev.objectUrl);
@@ -1193,6 +1202,23 @@ async function uploadToSlot(index, file) {
 	// Success — keep the local blob preview, remember the public URL.
 	slots[index] = { state: 'uploaded', url: up.url, objectUrl, errorMsg: '' };
 	renderSlot(index);
+}
+
+// Photos need an account (api/forge-upload.js); text prompts do not. The
+// prompt sits under the views counter, the same place /forge puts it.
+function showUploadSignIn() {
+	if (!els.uploadSignIn && els.viewsCounter) {
+		els.uploadSignIn = document.createElement('p');
+		els.uploadSignIn.setAttribute('role', 'status');
+		els.viewsCounter.after(els.uploadSignIn);
+	}
+	if (els.uploadSignIn) renderUploadSignIn(els.uploadSignIn);
+}
+
+async function requireUploadAccount() {
+	if (await signedInForUploads()) return true;
+	showUploadSignIn();
+	return false;
 }
 
 function setSlotError(index, message) {
@@ -1323,6 +1349,11 @@ async function uploadSketch(file) {
 	}
 	if (file.size > MAX_UPLOAD_BYTES) {
 		Object.assign(sketch, { state: 'error', url: null, errorMsg: 'Too large (max 8 MB).' });
+		renderSketchSlot();
+		return;
+	}
+	if (!(await requireUploadAccount())) {
+		Object.assign(sketch, { state: 'error', url: null, errorMsg: UPLOAD_SIGN_IN_SHORT });
 		renderSketchSlot();
 		return;
 	}

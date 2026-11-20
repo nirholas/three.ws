@@ -12,7 +12,7 @@ Text-to-3D is great when you can describe a thing. But often you already have th
 
 ## How it works
 
-When you add photos, the app switches to the `image` (image-intermediate) generation path. Each photo is uploaded straight to object storage through a presigned URL (`/api/forge-upload`), and the resulting public URLs are POSTed to `/api/forge` as `image_urls`. With more than one view the backend fuses them with multi-view conditioning, so the reconstructed mesh honors detail from every angle you supplied rather than guessing the unseen sides from a single frame.
+When you add photos, the app switches to the `image` (image-intermediate) generation path. Each photo is uploaded straight to object storage through a presigned URL (`/api/forge-upload`). Adding a photo needs a free account: a signed-out visitor sees a sign-in prompt under the photo slots, and a script or plugin sends an API key from [/dashboard/api-keys](https://three.ws/dashboard/api-keys) as `Authorization: Bearer <key>` (anonymous calls get `401 sign_in_required`). Text-to-3D needs no account. The resulting public URLs are POSTed to `/api/forge` as `image_urls`. With more than one view the backend fuses them with multi-view conditioning, so the reconstructed mesh honors detail from every angle you supplied rather than guessing the unseen sides from a single frame.
 
 Routing is free-first and health-aware, exactly as in Forge. Because the free NVIDIA NIM TRELLIS lane is text-only (it rejects user images), photo submissions filter it out and fall to the free reconstruction chain in `api/_lib/forge-tiers.js`, most preferred first:
 

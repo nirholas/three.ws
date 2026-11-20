@@ -1548,8 +1548,9 @@ function apiSnippet() {
 	if (gen.texture_size) body.texture_size = Number(gen.texture_size);
 	if (gen.target_polycount) body.target_polycount = Number(gen.target_polycount);
 	return [
-		'# 1. Ask for an upload slot, then PUT the image to upload_url',
+		'# 1. Ask for an upload slot (uploads need your API key from /dashboard/api-keys), then PUT the image to upload_url',
 		`curl -s ${origin}/api/forge-upload -H 'content-type: application/json' \\`,
+		`  -H "authorization: Bearer $THREE_WS_API_KEY" \\`,
 		`  -d '{"content_type":"image/png","size_bytes":'$(wc -c < photo.png)'}'`,
 		`curl -X PUT "$UPLOAD_URL" -H 'content-type: image/png' --data-binary @photo.png`,
 		'',

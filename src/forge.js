@@ -38,6 +38,7 @@ import { createModlyPanel, promoteModlyGlb, saveModlyResultToLibrary } from './f
 import { regionRestrictedError, fetchRestrictedEngines } from './forge-region.js';
 import { engineFromQuery } from './forge-engine-link.js';
 import { rememberFromResponse } from './shared/forge-manage-tokens.js';
+import { signedInForUploads, isSignInRequired, renderUploadSignIn, UPLOAD_SIGN_IN_SHORT } from './shared/upload-sign-in.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -1640,6 +1641,10 @@ async function presignAndPut(file) {
 		};
 	}
 	if (presignRes.status === 429) return { ok: false, message: 'Rate limited. Retry shortly.' };
+	if (isSignInRequired(presignRes.status, presign)) {
+		showUploadSignIn();
+		return { ok: false, message: UPLOAD_SIGN_IN_SHORT };
+	}
 	if (!presignRes.ok || !presign.upload_url || !presign.public_url) {
 		return { ok: false, message: presign.message || 'Upload failed.' };
 	}
@@ -1669,14 +1674,36 @@ function photoPrepProgress(p) {
 	return { text: 'Checking photo…', progress: null };
 }
 
-function setPhotoPrepNote(text) {
+function photoPrepNoteEl() {
 	if (!els.photoPrepNote && els.viewsCounter) {
 		els.photoPrepNote = document.createElement('p');
 		els.photoPrepNote.className = 'photo-prep-note';
 		els.photoPrepNote.setAttribute('role', 'status');
 		els.viewsCounter.after(els.photoPrepNote);
 	}
-	if (els.photoPrepNote) els.photoPrepNote.textContent = text;
+	return els.photoPrepNote || null;
+}
+
+function setPhotoPrepNote(text) {
+	const el = photoPrepNoteEl();
+	if (!el) return;
+	// The same line carries the sign-in prompt; a plain note drops its styling.
+	el.classList.remove('upload-sign-in');
+	el.textContent = text;
+}
+
+// Photos need an account (api/forge-upload.js); text prompts do not.
+function showUploadSignIn() {
+	const el = photoPrepNoteEl();
+	if (el) renderUploadSignIn(el);
+}
+
+// Asked before the on-device photo check, so a signed-out visitor is not walked
+// through background removal and review for a photo that cannot be uploaded.
+async function requireUploadAccount() {
+	if (await signedInForUploads()) return true;
+	showUploadSignIn();
+	return false;
 }
 
 // The on-device check (src/forge-photo-prep/): background removal, square crop
@@ -1720,6 +1747,10 @@ async function uploadToSlot(index, file) {
 	}
 	if (file.size === 0) {
 		setSlotError(index, 'File is empty.');
+		return;
+	}
+	if (!(await requireUploadAccount())) {
+		setSlotError(index, UPLOAD_SIGN_IN_SHORT);
 		return;
 	}
 
@@ -1880,6 +1911,11 @@ async function uploadSketch(file) {
 	}
 	if (file.size > MAX_UPLOAD_BYTES) {
 		Object.assign(sketch, { state: 'error', url: null, errorMsg: 'Too large (max 8 MB).' });
+		renderSketchSlot();
+		return;
+	}
+	if (!(await requireUploadAccount())) {
+		Object.assign(sketch, { state: 'error', url: null, errorMsg: UPLOAD_SIGN_IN_SHORT });
 		renderSketchSlot();
 		return;
 	}

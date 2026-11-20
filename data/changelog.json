@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-20",
+			"title": "Uploading a photo now needs a free account",
+			"summary": "Photos you upload for photo-to-3D used to be accepted from anyone, with no account behind them, and landed on a public three.ws link. Adding a photo now asks you to sign in first, and the prompt appears the moment you add one so you never wait on a file that cannot be sent. Making a model from a text prompt still needs no account. Scripts and plugins (Blender, ComfyUI, Modly, Omniverse, the Blender MCP server) send an API key from your dashboard, set as THREE_WS_API_KEY.",
+			"tags": [
+				"security",
+				"improvement"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-20",
 			"title": "Public models are safety-checked before they are listed",
 			"summary": "Before a model appears in the public gallery, feeds, search or sitemaps, its prompt and preview render are screened. Clean models publish automatically; if the screen cannot answer, the model stays unlisted and is retried, then reviewed by a person. Unsafe models are kept private. Three reports for harmful content or someone's likeness also take a model out of public view for review. Nothing you generate is refused, and your own link keeps working.",
 			"tags": [

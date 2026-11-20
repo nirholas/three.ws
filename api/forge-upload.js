@@ -1,5 +1,5 @@
 /**
- * /api/forge-upload — direct-to-storage upload for /forge reference views.
+ * /api/forge-upload: direct-to-storage upload for /forge reference views.
  *
  *   POST /api/forge-upload  { content_type, size_bytes, checksum_sha256? }
  *                         → 200 { storage_key, upload_url, public_url, method, headers, expires_in }
@@ -9,9 +9,14 @@
  * for multi-view reconstruction. Keeping the bytes off this function avoids
  * proxying multi-MB uploads through a serverless handler.
  *
- * Auth-free, matching the rest of /forge: rate-limited by client IP and scoped
- * to the anonymous browser handle (x-forge-client) so uploads land under that
- * client's key prefix.
+ * Requires an account (a session cookie, or an API key / OAuth bearer for
+ * machine callers). The rest of /forge stays open: anyone can make a model from
+ * a text prompt without signing in. Uploading is different because the bytes are
+ * the caller's own, nothing screens them, and the result is a public URL on our
+ * CDN. Anonymously, that made this endpoint a free image host on the three.ws
+ * domain with no one answerable for what landed on it. Uploads are rate-limited
+ * per account and land under a prefix derived from the account id, so every
+ * stored photo traces back to the person who put it there.
  *
  * Because the only thing this endpoint returns is a URL the BROWSER dereferences,
  * it verifies that storage will accept an upload rather than only that storage is
@@ -26,9 +31,10 @@
 import { ANON_UPLOAD_LIMITS } from './_lib/anon-upload-limits.js';
 import { randomUUID } from 'node:crypto';
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
-import { limits, clientIp } from './_lib/rate-limit.js';
+import { limits } from './_lib/rate-limit.js';
 import { presignUpload, publicUrl, objectStorageUsable } from './_lib/r2.js';
 import { hashClient } from './_lib/forge-store.js';
+import { getRequestUser } from './_lib/auth.js';
 
 // Accepted reference-image types → file extension for the storage key.
 const CONTENT_TYPE_EXT = Object.freeze({
@@ -39,14 +45,23 @@ const CONTENT_TYPE_EXT = Object.freeze({
 
 const MAX_IMAGE_BYTES = ANON_UPLOAD_LIMITS['forge/uploads/']; // matches forge-store's preview copy cap
 
-function clientKeyFrom(req) {
-	const raw = req.headers['x-forge-client'];
-	return hashClient(Array.isArray(raw) ? raw[0] : raw);
-}
-
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
+
+	// Account first, before any storage probe or rate-limit spend, so an
+	// anonymous caller learns the one thing they can act on.
+	const user = await getRequestUser(req, res);
+	if (!user?.id) {
+		return json(res, 401, {
+			error: 'sign_in_required',
+			message: 'Sign in to upload a photo. It is free, and you can still make a model from a text prompt without an account.',
+			// Browsers follow sign_in_url; scripts and plugins send a key from
+			// api_keys_url as `Authorization: Bearer <key>`.
+			sign_in_url: '/login',
+			api_keys_url: '/dashboard/api-keys',
+		});
+	}
 
 	// Ask whether storage will actually ACCEPT the bytes, not merely whether it
 	// is configured. This endpoint's whole output is a URL the browser uses
@@ -79,8 +94,7 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	const ip = clientIp(req);
-	const rl = await limits.upload(`forge:${ip}`);
+	const rl = await limits.upload(`forge:user:${user.id}`);
 	if (!rl.success) {
 		return rateLimited(res, rl, 'Upload limit reached. Try again shortly.');
 	}
@@ -114,8 +128,9 @@ export default wrap(async (req, res) => {
 			? body.checksum_sha256
 			: undefined;
 
-	const clientKey = clientKeyFrom(req);
-	const key = `forge/uploads/${clientKey.slice(0, 12)}/${randomUUID()}.${ext}`;
+	// Salted hash of the account id: stable per person (an admin answering a
+	// report can find every upload of an account), but no raw user id in a URL.
+	const key = `forge/uploads/${hashClient(`user:${user.id}`).slice(0, 12)}/${randomUUID()}.${ext}`;
 
 	let uploadUrl;
 	try {

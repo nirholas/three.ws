@@ -1,0 +1,34 @@
+/* Sign-in prompt shown under the photo slots when a signed-out visitor adds a
+   photo (src/shared/upload-sign-in.js). */
+.upload-sign-in {
+	margin: 0.35rem 0 0;
+	font-size: var(--text-xs, 0.75rem);
+	line-height: 1.5;
+	color: var(--ink-dim, #9aa0a6);
+	text-align: center;
+}
+.upload-sign-in:empty {
+	display: none;
+}
+.upload-sign-in strong {
+	color: var(--ink, #fff);
+	font-weight: 600;
+}
+.upload-sign-in a {
+	color: var(--accent, #fff);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	border-radius: 2px;
+	transition: color 0.15s;
+}
+.upload-sign-in a:hover {
+	color: var(--ink, #fff);
+	text-decoration-thickness: 2px;
+}
+.upload-sign-in a:active {
+	opacity: 0.75;
+}
+.upload-sign-in a:focus-visible {
+	outline: 2px solid var(--accent, #fff);
+	outline-offset: 2px;
+}

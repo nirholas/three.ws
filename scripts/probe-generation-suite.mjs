@@ -308,12 +308,18 @@ async function probeTextTo3d() {
 
 async function probeImageTo3d() {
 	if (!selected('image-to-3d')) return;
+	// Photo uploads need an account. With THREE_WS_API_KEY set the probe checks
+	// the full presign; without it, the expected 401 proves the gate is up.
+	const apiKey = process.env.THREE_WS_API_KEY?.trim();
 	const presign = await req('/api/forge-upload', {
 		method: 'POST',
 		body: { content_type: 'image/png', size_bytes: 4096 },
+		headers: apiKey ? { authorization: `Bearer ${apiKey}` } : {},
 	});
 	const presignOk = presign.status === 200 && Boolean(presign.json?.upload_url);
-	if (!presignOk && presign.status !== 503) {
+	if (!apiKey && presign.status === 401 && presign.json?.error === 'sign_in_required') {
+		record('image-upload', 'POST /api/forge-upload', true, 'anonymous upload refused (sign_in_required); set THREE_WS_API_KEY to probe the presign');
+	} else if (!presignOk && presign.status !== 503) {
 		record('image-upload', 'POST /api/forge-upload', false, `HTTP ${presign.status}: ${presign.text.slice(0, 140)}`);
 	} else {
 		record('image-upload', 'POST /api/forge-upload', presignOk, presignOk ? 'presigned R2 upload issued' : 'object storage unconfigured (URL path still open)');

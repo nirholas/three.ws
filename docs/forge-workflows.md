@@ -37,7 +37,7 @@ Ports are typed: **text**, **image** and **mesh**. A link can only join an outpu
 | Node | Takes | Gives | Calls | What it does |
 |---|---|---|---|---|
 | Text prompt | | text | Nothing (local) | A prompt of up to 1000 characters. |
-| Image | | image | `POST /api/forge-upload` | One PNG, JPEG or WebP photo up to 8 MB, uploaded once to three.ws storage so the workflow file stays portable. |
+| Image | | image | `POST /api/forge-upload` | One PNG, JPEG or WebP photo up to 8 MB, uploaded once to three.ws storage so the workflow file stays portable. Needs a signed-in account; a signed-out run gets a sign-in action. |
 | Load 3D | | mesh | `POST /api/scene-glb-upload` when you upload | A public https `.glb` link, or a GLB file you upload (up to 200 MB). |
 | For Each | | text or image | Nothing (local) | Repeats everything downstream once per item: up to 12 photos or 50 prompts (one per line). |
 | Generate 3D | text, or image plus an optional text hint | mesh | `POST /api/forge`, then `GET /api/forge?job=` and `?progress=` | Text or photo to a textured GLB. The **Engine** list comes from the live catalog (`/api/forge?catalog=1`) with health from `/api/forge?health=1`; **Auto** picks the best free engine. **Quality** is Draft, Standard, or High for $THREE holders. In photo mode the list also offers **Your GPU (Modly)**. |

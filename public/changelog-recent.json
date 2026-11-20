@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-20T01:19:40.677Z",
+	"generated_at": "2026-11-20T02:53:09.318Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4650,
+	"total": 4654,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -22,6 +22,16 @@
 		{
 			"date": "2026-11-20",
 			"type": "update",
+			"title": "New 3D models start unlisted until you publish them",
+			"summary": "A model made from a text prompt used to go straight into the public gallery, feeds, search and sitemaps. Every new model you make now starts unlisted: your link works and you can share it, but it stays out of the public showcase until you choose to make it public on the model page. Uploads from your own photo already worked this way.",
+			"link": null,
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
 			"title": "PiXal3D image builds can ship their attention kernels",
 			"summary": "The PiXal3D worker compiles its neighborhood attention kernels from source, but the build image had no CMake, so every rebuild since the kernel fix failed and production kept the older image without those kernels. CMake is now installed before the kernel build, and a test keeps it there.",
 			"link": null,
@@ -33,11 +43,43 @@
 		{
 			"date": "2026-11-20",
 			"type": "update",
+			"title": "Public models are safety-checked before they are listed",
+			"summary": "Before a model appears in the public gallery, feeds, search or sitemaps, its prompt and preview render are screened. Clean models publish automatically; if the screen cannot answer, the model stays unlisted and is retried, then reviewed by a person. Unsafe models are kept private. Three reports for harmful content or someone's likeness also take a model out of public view for review. Nothing you generate is refused, and your own link keeps working.",
+			"link": null,
+			"tags": [
+				"security",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
 			"title": "The /glass lens gets past \"Location needed\"",
 			"summary": "The site-wide permissions policy blocked location, compass sensors and the microphone on every page, so the smart-glasses lens at /glass stopped on its first screen for every visitor. /glass now grants exactly those three to itself (the camera stays off, and no other page changes), so the lens can find where you are, which way you face, and hear your reply.",
 			"link": "/glass",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "TripoSG photo-to-3D stops failing at the background cutout",
+			"summary": "TripoSG cuts the subject out of your photo with our background-removal service before building the mesh. That service finished the cutout after answering the request, and Cloud Run gave it almost no CPU between requests, so a 20-second cutout dragged past the two minutes TripoSG waits. Its model was also downloaded on first use, and two cutouts at once could run it out of memory. The service now keeps its CPU, ships the model in its image, and has twice the memory, so photo-to-3D on TripoSG completes again. The segmentation service had the same CPU gap and is fixed too.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "Uploading a photo now needs a free account",
+			"summary": "Photos you upload for photo-to-3D used to be accepted from anyone, with no account behind them, and landed on a public three.ws link. Adding a photo now asks you to sign in first, and the prompt appears the moment you add one so you never wait on a file that cannot be sent. Making a model from a text prompt still needs no account. Scripts and plugins (Blender, ComfyUI, Modly, Omniverse, the Blender MCP server) send an API key from your dashboard, set as THREE_WS_API_KEY.",
+			"link": "/forge",
+			"tags": [
+				"security",
+				"improvement"
 			]
 		},
 		{
@@ -1506,46 +1548,6 @@
 			"link": null,
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "update",
-			"title": "Export any Forge model as a Minecraft: Bedrock structure pack",
-			"summary": "The Forge download menu has a new Minecraft: Bedrock option. It turns your model into blocks, shows a live 3D block preview, and downloads a .mcpack you open in Bedrock and place with a structure block or one /function command. Pick the height (16 to 128 blocks), which blocks to use (all, concrete, wool, terracotta, builder or colorful), solid or hollow, and optional dithering. Colors come from the model's texture at every block, and dark textures are brightened automatically so a steel knight does not come out as coal. Builds wider than one structure block are split into tiles that the function places together. Not an official Minecraft product; not approved by or associated with Mojang or Microsoft.",
-			"link": "/docs/minecraft-export",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "update",
-			"title": "Find 3D models by what is in them",
-			"summary": "Every finished 3D creation is now described from its poster by Florence-2 on our own GPU: a short caption, a detailed caption and tags. Model search matches those captions and tags, so a model forged from a photo with no written prompt still turns up when you search for what it shows, like \"bicycle wheel\". Model pages use the detailed caption as their description and as alt text for the 3D viewer and share images, and list the tags as chips that open a search for similar models. Creators can add, remove or clear the tags on their own models.",
-			"link": "/search?type=model",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "update",
-			"title": "Find your three.ws agents and 3D models in Microsoft 365 Copilot",
-			"summary": "A Microsoft 365 administrator can now connect a three.ws account to their organization from Settings > Microsoft 365. Your public agents, Forge models and avatars are indexed into the tenant, so people in the organization find them in Microsoft Search and can ask Microsoft 365 Copilot about them, with links back to three.ws. You choose who sees them: everyone in the organization except guests, one Entra group, or only you. Changes reach Microsoft every 15 minutes, items you delete or make private are removed, Microsoft's throttling is respected, and a Full re-sync button resends everything at once. Disconnecting deletes the index from the tenant. It goes live once the three.ws Microsoft app is approved for the two Graph permissions it needs.",
-			"link": "/settings/microsoft-365",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "update",
-			"title": "Generate a 3D model without leaving a Teams chat",
-			"summary": "The three.ws Teams app can now make 3D models inside a conversation. Choose Create a 3D model from the compose box or a message's menu, or message the bot forge followed by a description. A card shows your prompt, who asked and where the job really is (GPU waking up, queued, rendering), and it turns into the finished model when it is ready: a rendered preview, Open in 3D in the three.ws viewer, Download GLB, and Make a variation for a new take on the same prompt. If a job fails, the card says what went wrong and offers Try again. It runs on the same free text-to-3D lane as the three.ws MCP tools.",
-			"link": "/docs/microsoft-teams-forge",
-			"tags": [
-				"feature"
 			]
 		}
 	]

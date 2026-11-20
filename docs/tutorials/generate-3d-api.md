@@ -148,11 +148,16 @@ node generate.js "a low-poly treasure chest, iron-banded wood"
 
 Two requests: get a presigned upload slot, `PUT` your image to it, then pass the returned public URL into the generate call. Images must be PNG, JPEG or WebP, up to 8 MB each; a `size_bytes` outside that range is refused.
 
+Uploading a photo needs a free three.ws account, so the presign call carries an API key from [/dashboard/api-keys](https://three.ws/dashboard/api-keys). Without one it answers `401` with `error: "sign_in_required"`. Text-to-3D (Step 3) and image-to-3D from an image that is already public (pass its URL straight to `image_urls`) need no key.
+
 ```js
 async function uploadImage(buffer, contentType = 'image/jpeg') {
   const presign = await fetch(`${BASE}/api/forge-upload`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${process.env.THREE_WS_API_KEY}`,
+    },
     body: JSON.stringify({ content_type: contentType, size_bytes: buffer.byteLength }),
   });
   const slot = await presign.json();

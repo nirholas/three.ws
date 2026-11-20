@@ -132,8 +132,13 @@ vi.mock('../../api/_lib/r2.js', () => ({
 	},
 }));
 
+// forge-upload needs an account (anonymous uploads were an unattributable public
+// host). Default signed in so the storage and validation cases below exercise
+// the route past the gate; the sign-in case flips it.
+const uploadAuth = { user: { id: 'user-1' } };
 vi.mock('../../api/_lib/auth.js', () => ({
 	getSessionUser: async () => null,
+	getRequestUser: async () => uploadAuth.user,
 	authenticateBearer: async () => null,
 	extractBearer: () => null,
 }));
@@ -333,6 +338,23 @@ describe('forge-rembg / forge-remesh / forge-segment', () => {
 });
 
 describe('forge-upload', () => {
+	it('refuses an anonymous caller before minting a URL', async () => {
+		uploadAuth.user = null;
+		try {
+			const res = await call(upload, {
+				method: 'POST',
+				url: '/api/forge-upload',
+				headers: { 'x-forge-client': 'browser-1' },
+				body: { content_type: 'image/png', size_bytes: 1_000 },
+			});
+			expect(res.statusCode).toBe(401);
+			expect(parse(res).error).toBe('sign_in_required');
+			expect(presignMock).not.toHaveBeenCalled();
+		} finally {
+			uploadAuth.user = { id: 'user-1' };
+		}
+	});
+
 	it('presigns an upload for an accepted image type', async () => {
 		const res = await call(upload, {
 			method: 'POST',

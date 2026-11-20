@@ -93,8 +93,9 @@ Viewport defaults (grid, environment light, turntable after a generation), the s
 Everything the Workbench does is a public HTTP call, so a script or an agent can run the same pipeline. Generate from a photo:
 
 ```bash
-# 1. Ask for an upload slot, then PUT the image to upload_url
+# 1. Ask for an upload slot (uploads need your API key from /dashboard/api-keys), then PUT the image to upload_url
 curl -s https://three.ws/api/forge-upload -H 'content-type: application/json' \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
   -d '{"content_type":"image/png","size_bytes":'$(wc -c < photo.png)'}'
 curl -X PUT "$UPLOAD_URL" -H 'content-type: image/png' --data-binary @photo.png
 

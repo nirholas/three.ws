@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-20T01:19:40.636Z",
+	"generated_at": "2026-11-20T02:53:09.275Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -19,6 +19,16 @@
 		{
 			"date": "2026-11-20",
 			"type": "update",
+			"title": "New 3D models start unlisted until you publish them",
+			"summary": "A model made from a text prompt used to go straight into the public gallery, feeds, search and sitemaps. Every new model you make now starts unlisted: your link works and you can share it, but it stays out of the public showcase until you choose to make it public on the model page. Uploads from your own photo already worked this way.",
+			"link": null,
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
 			"title": "PiXal3D image builds can ship their attention kernels",
 			"summary": "The PiXal3D worker compiles its neighborhood attention kernels from source, but the build image had no CMake, so every rebuild since the kernel fix failed and production kept the older image without those kernels. CMake is now installed before the kernel build, and a test keeps it there.",
 			"link": null,
@@ -30,11 +40,43 @@
 		{
 			"date": "2026-11-20",
 			"type": "update",
+			"title": "Public models are safety-checked before they are listed",
+			"summary": "Before a model appears in the public gallery, feeds, search or sitemaps, its prompt and preview render are screened. Clean models publish automatically; if the screen cannot answer, the model stays unlisted and is retried, then reviewed by a person. Unsafe models are kept private. Three reports for harmful content or someone's likeness also take a model out of public view for review. Nothing you generate is refused, and your own link keeps working.",
+			"link": null,
+			"tags": [
+				"security",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
 			"title": "The /glass lens gets past \"Location needed\"",
 			"summary": "The site-wide permissions policy blocked location, compass sensors and the microphone on every page, so the smart-glasses lens at /glass stopped on its first screen for every visitor. /glass now grants exactly those three to itself (the camera stays off, and no other page changes), so the lens can find where you are, which way you face, and hear your reply.",
 			"link": "/glass",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "TripoSG photo-to-3D stops failing at the background cutout",
+			"summary": "TripoSG cuts the subject out of your photo with our background-removal service before building the mesh. That service finished the cutout after answering the request, and Cloud Run gave it almost no CPU between requests, so a 20-second cutout dragged past the two minutes TripoSG waits. Its model was also downloaded on first use, and two cutouts at once could run it out of memory. The service now keeps its CPU, ships the model in its image, and has twice the memory, so photo-to-3D on TripoSG completes again. The segmentation service had the same CPU gap and is fixed too.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "Uploading a photo now needs a free account",
+			"summary": "Photos you upload for photo-to-3D used to be accepted from anyone, with no account behind them, and landed on a public three.ws link. Adding a photo now asks you to sign in first, and the prompt appears the moment you add one so you never wait on a file that cannot be sent. Making a model from a text prompt still needs no account. Scripts and plugins (Blender, ComfyUI, Modly, Omniverse, the Blender MCP server) send an API key from your dashboard, set as THREE_WS_API_KEY.",
+			"link": "/forge",
+			"tags": [
+				"security",
+				"improvement"
 			]
 		},
 		{
