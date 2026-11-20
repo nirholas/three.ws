@@ -11,7 +11,7 @@ import { mean, percentile, bootstrapMean, pairedBootstrapDiff, excludesTie, cost
 import { pickJudge, judgePair, parseVerdict, judgeMessages, JUDGES } from '../scripts/lib/llm-eval/judge.js';
 import { TASKS, TASK_INFO, buildRequest, judgeInput } from '../scripts/lib/llm-eval/tasks.js';
 import { LANES, laneBody, parseCompletion, laneCostMicro, laneKey, callLane } from '../scripts/lib/llm-eval/lanes.js';
-import { laneSummary, checkBreakdown, pairedComparison, recommend, flagsToSet, buildReport } from '../scripts/lib/llm-eval/report.js';
+import { laneSummary, failureReasons, checkBreakdown, pairedComparison, recommend, flagsToSet, buildReport } from '../scripts/lib/llm-eval/report.js';
 import { GROK_DEFAULT_MODEL, GROK_BUDGET_MODEL } from '../api/_lib/chat-models.js';
 import { LIMITS } from '../api/agents/suggest-spec.js';
 
@@ -250,6 +250,8 @@ describe('report and routing rule', () => {
 		expect(s.pass.mean).toBeCloseTo(0.8, 6);
 		expect(s.statuses).toEqual([429]);
 		expect(checkBreakdown(rs)[0]).toMatchObject({ name: 'postable', pass: 40, n: 49 });
+		rs[48] = { ...rs[48], reason: 'too_long' };
+		expect(failureReasons(rs)).toEqual([['failed', 8], ['error 429', 1], ['too_long', 1]]);
 	});
 
 	it('routes only on an interval that excludes a tie, within the latency budget', () => {

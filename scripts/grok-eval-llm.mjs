@@ -139,12 +139,17 @@ function readJsonl(file, keyOf) {
 	return map;
 }
 
+// One JSONL line. Model output is kept verbatim, but dash glyphs are written as
+// JSON \u escapes so the committed files carry none (house rule); parsing the
+// line gives back the exact text.
+const jsonLine = (r) => JSON.stringify(r).replace(/[\u2013\u2014]/g, (c) => `\\u${c.charCodeAt(0).toString(16)}`);
+
 // Rewrite a JSONL file from its map, deduplicated and in a stable order, so the
 // committed file only changes where results did.
 function compactJsonl(file, map) {
 	const lines = [...map.values()]
 		.sort((x, y) => `${x.task}:${x.lane ?? x.b}:${x.id}`.localeCompare(`${y.task}:${y.lane ?? y.b}:${y.id}`))
-		.map((r) => JSON.stringify(r));
+		.map(jsonLine);
 	const tmp = `${file}.tmp`;
 	writeFileSync(tmp, lines.length ? `${lines.join('\n')}\n` : '');
 	renameSync(tmp, file);
@@ -359,7 +364,7 @@ async function main() {
 			results.set(resultKey(rec), rec);
 			judged.delete(`${task}:${row.id}:${laneName}`);
 			for (const other of Object.keys(LANES)) if (laneName === 'current') judged.delete(`${task}:${row.id}:${other}`);
-			appendFileSync(RESULTS_FILE, `${JSON.stringify(rec)}\n`);
+			appendFileSync(RESULTS_FILE, `${jsonLine(rec)}\n`);
 			done++;
 			if (res.ok) okCount++;
 			run.rows++;
@@ -393,7 +398,7 @@ async function main() {
 					if (v.score === null) throw new Error(`no usable verdict (${v.verdicts.join(', ')})`);
 					const rec = { task: other.task, id: other.id, a: 'current', b: other.lane, judge: `${judge.name} ${judge.model}`, score: v.score, verdicts: v.verdicts, consistent: v.consistent, at: new Date().toISOString() };
 					judged.set(judgedKey(rec), rec);
-					appendFileSync(JUDGED_FILE, `${JSON.stringify(rec)}\n`);
+					appendFileSync(JUDGED_FILE, `${jsonLine(rec)}\n`);
 				} catch (err) {
 					console.warn(`  judge ${other.task} ${other.id} ${other.lane}: ${err.message}`);
 				}

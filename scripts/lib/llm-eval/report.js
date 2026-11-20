@@ -12,11 +12,30 @@ const ms = (v) => (Number.isFinite(v) ? `${Math.round(v).toLocaleString('en-US')
 const usd = (v) => (v === null || v === undefined ? 'unknown' : v === 0 ? '$0 (free tier)' : `$${v < 0.1 ? v.toFixed(3) : v.toFixed(2)}`);
 const ci = (c) => (Number.isFinite(c.lo) ? `${pct(c.mean)} (${pct(c.lo)} to ${pct(c.hi)})` : 'n/a');
 const signed = (v) => `${v >= 0 ? '+' : ''}${(v * 100).toFixed(0)} pts`;
-const cell = (s) => String(s ?? '').replace(/\|/g, '\\|').replace(/\s+/g, ' ').trim();
+// Model output is quoted verbatim; dash glyphs are written as HTML entities so
+// they still render but the page itself stays free of them.
+const cell = (s) =>
+	String(s ?? '')
+		.replace(/\|/g, '\\|')
+		.replace(/\u2014/g, '&mdash;')
+		.replace(/\u2013/g, '&ndash;')
+		.replace(/\s+/g, ' ')
+		.trim();
 const clip = (s, n = 180) => {
 	const t = cell(s);
 	return t.length > n ? `${t.slice(0, n - 3)}...` : t;
 };
+
+/** Failure reasons on a lane's rows, most frequent first: [[reason, count]]. */
+export function failureReasons(rows) {
+	const counts = new Map();
+	for (const r of rows) {
+		if (r.ok && r.pass) continue;
+		const reason = r.ok ? r.reason || 'failed' : `error ${r.status}`;
+		counts.set(reason, (counts.get(reason) || 0) + 1);
+	}
+	return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+}
 
 /**
  * Summary for one lane on one task: every row of the set counts, an errored
@@ -204,8 +223,10 @@ export function buildReport({ results, judged, sets, taskInfo, lanes, meta }) {
 		if (candidates.length) out.push('');
 		const breakdown = checkBreakdown(curRows).filter((c) => c.pass < c.n);
 		if (breakdown.length) {
-			out.push(`Checks the current lane fails most: ${breakdown.slice(0, 5).map((c) => `\`${c.name}\` ${c.pass}/${c.n}`).join(', ')}.`, '');
+			out.push(`Checks the current lane fails most (rows passing out of rows the check applies to): ${breakdown.slice(0, 5).map((c) => `\`${c.name}\` ${c.pass}/${c.n}`).join(', ')}.`, '');
 		}
+		const reasons = failureReasons(curRows);
+		if (reasons.length) out.push(`Why the current lane fails: ${reasons.map(([r, n]) => `\`${r}\` ${n}`).join(', ')}.`, '');
 		const advisory = ranLanes
 			.map((l) => {
 				const rows = rowsFor(l).filter((r) => r.ok && r.advisory && 'no_dash' in r.advisory);
@@ -226,7 +247,7 @@ export function buildReport({ results, judged, sets, taskInfo, lanes, meta }) {
 				const input = sets[task].find((r) => r.id === f.id)?.input;
 				const inputText = input?.prompt ?? input?.message ?? input?.post ?? input?.brief ?? '';
 				const failed = f.ok ? f.reason : `error ${f.status}: ${f.error}`;
-				out.push(`| ${f.laneLabel} | \`${f.id}\` ${clip(inputText || '(empty brief)', 70)} | ${cell(failed)} | ${clip(f.ok ? f.shipped || '(empty)' : '', 160)} |`);
+				out.push(`| ${f.laneLabel} | \`${f.id}\` ${clip(inputText || '(empty brief)', 70)} | ${cell(failed)} | ${clip(f.ok ? f.shipped || f.text || '(empty)' : '', 160)} |`);
 			}
 			out.push('', '</details>', '');
 		}

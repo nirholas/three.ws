@@ -1,0 +1,62 @@
+{
+  "runs": [
+    {
+      "startedAt": "2026-11-20T21:58:42.561Z",
+      "commit": "59dc9b426",
+      "lanes": [
+        "current",
+        "grok"
+      ],
+      "tasks": [
+        "forge_director",
+        "agent_tools",
+        "agent_chat",
+        "x_reply",
+        "agent_spec"
+      ],
+      "rows": 10,
+      "finishedAt": "2026-11-20T21:58:54.836Z"
+    },
+    {
+      "startedAt": "2026-11-20T22:00:47.444Z",
+      "commit": "82a484974",
+      "lanes": [
+        "current",
+        "grok",
+        "grok_budget"
+      ],
+      "tasks": [
+        "forge_director",
+        "agent_tools",
+        "agent_chat",
+        "x_reply",
+        "agent_spec"
+      ],
+      "rows": 240,
+      "finishedAt": "2026-11-20T22:06:52.952Z"
+    },
+    {
+      "startedAt": "2026-11-20T22:07:56.139Z",
+      "commit": "19e7be5ec",
+      "lanes": [
+        "current"
+      ],
+      "tasks": [
+        "forge_director",
+        "agent_tools",
+        "agent_chat",
+        "x_reply",
+        "agent_spec"
+      ],
+      "rows": 3,
+      "finishedAt": "2026-11-20T22:08:06.306Z"
+    }
+  ],
+  "keyProbe": {
+    "lane": "grok_budget",
+    "model": "grok-4.3",
+    "status": 401,
+    "error": "No credentials presented.",
+    "at": "2026-11-20T22:06:52.806Z"
+  }
+}
