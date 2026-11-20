@@ -30,11 +30,12 @@
 // Exit 0 when nothing failed, 1 otherwise.
 
 import { createHash, randomBytes } from 'node:crypto';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import { POLICY } from '@three-ws/mcp-policy';
+import { mintQaKey, revokeQaKey } from './lib/qa-api-key.mjs';
 
 const PROTOCOL = '2025-06-18';
 const SERVER_PATH = '/api/mcp-grok';
@@ -518,53 +519,6 @@ export function fixtureSafe(log, isAccountTool) {
 	});
 }
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-
-/** A short-lived connector key for the QA account, minted the way the dashboard does. */
-async function mintConnectorKey(origin) {
-	const envFile = join(ROOT, '.env');
-	if (existsSync(envFile)) process.loadEnvFile(envFile);
-	const { AUDIT_EMAIL: email, AUDIT_PASSWORD: password } = process.env;
-	if (!email || !password) return null;
-	const login = await fetch(`${origin}/api/auth/login`, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ email, password }),
-	});
-	if (!login.ok) throw new Error(`QA login answered ${login.status}`);
-	const cookie = login.headers
-		.getSetCookie()
-		.map((c) => c.split(';')[0])
-		.join('; ');
-	const csrf = await fetch(`${origin}/api/csrf-token`, { headers: { cookie } });
-	if (!csrf.ok) throw new Error(`csrf-token answered ${csrf.status}`);
-	const { token } = await csrf.json();
-	const res = await fetch(`${origin}/api/api-keys`, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json', cookie, 'x-csrf-token': token },
-		body: JSON.stringify({
-			name: 'grok marketplace review check',
-			preset: 'connector',
-			expires_at: new Date(Date.now() + 2 * 3600_000).toISOString(),
-		}),
-	});
-	if (!res.ok)
-		throw new Error(`api-keys answered ${res.status}: ${(await res.text()).slice(0, 200)}`);
-	const { data } = await res.json();
-	return { id: data.id, token: data.token };
-}
-
-async function revokeKey(origin, key) {
-	const res = await fetch(`${origin}/api/api-keys/${key.id}`, {
-		method: 'DELETE',
-		headers: { authorization: `Bearer ${key.token}` },
-	});
-	if (!res.ok)
-		console.error(
-			`could not revoke key ${key.id} (${res.status}); revoke it at ${origin}/settings/api-keys`,
-		);
-}
-
 async function main() {
 	const { values: opts } = parseArgs({
 		options: {
@@ -579,7 +533,7 @@ async function main() {
 	let apiKey = process.env.THREE_WS_API_KEY || null;
 	let minted = null;
 	if (!apiKey) {
-		minted = await mintConnectorKey(origin);
+		minted = await mintQaKey({ origin, name: 'grok marketplace review check' });
 		apiKey = minted?.token ?? null;
 		if (minted) console.log('using a short-lived connector key minted for the QA account\n');
 	}
@@ -596,7 +550,7 @@ async function main() {
 			fetchImpl,
 		});
 	} finally {
-		if (minted) await revokeKey(origin, minted);
+		if (minted) await revokeQaKey(minted);
 	}
 	console.log(formatTable(report.rows));
 	if (report.glbUrl) {
