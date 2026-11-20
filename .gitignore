@@ -125,6 +125,8 @@ id.json
 !public/locales/id.json
 scripts/x402-test-endpoints.mjs
 wallets/
+# wallets/ above targets local keypair dirs; this is the wallet-linking API source.
+!api/auth/wallets/
 .wallets/
 x402-test-wallets/
 3dagent-log-export-*
@@ -361,8 +363,11 @@ api/_lib/migrations/20260623170000_agent_bodies.sql
 # MCP registry publisher auth token (never commit)
 .mcp_publisher_token
 
-# NVIDIA TRELLIS demo outputs (local only)
+# NVIDIA TRELLIS demo outputs (local only); the tracked demo source dirs stay included.
 demo/
+!api/demo/
+!public/demo/
+!src/demo/
 three-ws-prod-log-export-2026-06-24T04-15-25.json
 pages/ibm/hello.html
 three-ws-prod-log-export-2026-06-24T13-33-58.json
