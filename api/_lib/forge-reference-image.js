@@ -52,18 +52,20 @@
 //
 // Output: { imageUrl, model, lane } where imageUrl is a durable public https URL
 // (persisted to R2, same as textToImage), model is a provider/model label, and
-// lane is 'vertex-reference' or the fallthrough provider's own label.
+// lane is 'vertex-reference', 'xai-reference' (FORGE_REF_IMAGE_PROVIDER=xai), or
+// the fallthrough provider's own label.
 
 import { createHash } from 'node:crypto';
 import { getGcpAccessToken } from './gcp-auth.js';
 import { imageModelChain, isModelNotFound } from './image-model.js';
-import { persistImageBase64 } from './image-persist.js';
+import { persistImageBase64, looksLikeImageBytes } from './image-persist.js';
 import { subjectNegativePrompt } from '../forge-enhance.js';
 import { isProviderRefusal } from './ai-image-lanes.js';
 import { textToImage, ladderBudgetMs, laneTimeoutMs, VERTEX_IMAGE_COOLDOWN_KEY } from '../_mcp3d/text-to-image.js';
 import { parseJsonLoose } from './vision.js';
 import { getRedis } from './redis.js';
 import { markProviderCooldown, providersInCooldown, AUTH_COOLDOWN_SECONDS } from './provider-health.js';
+import { generateXaiImage, xaiImageConfigured, XaiImageError } from './xai-image.js';
 
 // Reference-set cache: the SAME enhanced prompt (already director-rewritten,
 // so two users typing differently-worded ideas that converge on one directed
@@ -75,10 +77,15 @@ import { markProviderCooldown, providersInCooldown, AUTH_COOLDOWN_SECONDS } from
 const REF_CACHE_PREFIX = 'fr:ref:';
 const REF_CACHE_TTL_S = Math.max(0, Number(process.env.FORGE_REFERENCE_CACHE_TTL_S) || 24 * 3600);
 
-function referenceCacheKey(prompt, { aspectRatio, negativePrompt }) {
+function referenceCacheKey(prompt, { aspectRatio, negativePrompt, provider = 'vertex' }) {
 	const text = String(prompt || '').trim().toLowerCase();
 	if (!text) return null;
-	const basis = JSON.stringify([text, aspectRatio || '1:1', String(negativePrompt || '').trim().toLowerCase()]);
+	const parts = [text, aspectRatio || '1:1', String(negativePrompt || '').trim().toLowerCase()];
+	// The default provider keeps its historical key so existing cache entries stay
+	// warm; any other provider gets its own namespace so a flag flip never serves
+	// one provider's image as the other's.
+	if (provider !== 'vertex') parts.push(provider);
+	const basis = JSON.stringify(parts);
 	return createHash('sha256').update(basis).digest('hex').slice(0, 40);
 }
 
@@ -282,6 +289,54 @@ async function generateViaVertexModel({ instruction, aspectRatio, deadline, mode
 	}
 }
 
+// ── Provider selection (FORGE_REF_IMAGE_PROVIDER) ────────────────────────────
+// Which art-directed lane leads the reference step:
+//   vertex (default)  Vertex Gemini Flash Image, then the textToImage ladder.
+//   xai               Grok Imagine (api/_lib/xai-image.js) first, then the
+//                     Vertex lane, then the ladder. Same instruction, same QA
+//                     gate and best-of-2 retry; any xAI failure (no key, 401,
+//                     429, refusal, timeout) logs its reason and falls through,
+//                     so the flag can never fail a job.
+// Unknown values run the default. Measured comparison and the reason the
+// default is what it is: docs/evals/grok-imagine-ref-image.md.
+export const REF_IMAGE_PROVIDERS = Object.freeze(['vertex', 'xai']);
+export const XAI_IMAGE_COOLDOWN_KEY = 'forge-xai-image';
+// xAI documents 6 requests per second for Image 2.0: a 429 clears fast.
+const XAI_RATE_LIMIT_COOLDOWN_SECONDS = 30;
+const XAI_REQUEST_CEILING_MS = 60_000;
+
+export function referenceImageProvider() {
+	const raw = String(process.env.FORGE_REF_IMAGE_PROVIDER || '').trim().toLowerCase();
+	return REF_IMAGE_PROVIDERS.includes(raw) ? raw : 'vertex';
+}
+
+// The xAI lane's generate(): same contract as generateViaVertex ({ b64, mime,
+// model }). Image 2.0 can answer WebP; the persist step and every reconstructor
+// expect JPEG or PNG, so anything else is transcoded to PNG here.
+async function generateViaXai({ instruction, aspectRatio, deadline }) {
+	const timeoutMs = Math.max(1_000, Math.min(XAI_REQUEST_CEILING_MS, msLeft(deadline)));
+	const out = await generateXaiImage(instruction, { aspectRatio, timeoutMs });
+	let bytes = out.bytes;
+	let mime = out.mime;
+	if (!looksLikeImageBytes(bytes)) {
+		const { default: sharp } = await import('sharp');
+		bytes = await sharp(bytes).png().toBuffer();
+		mime = 'image/png';
+	}
+	if (out.revisedPrompt) console.log(`[forge-reference-image] xai revised prompt: ${out.revisedPrompt.slice(0, 200)}`);
+	return { b64: bytes.toString('base64'), mime, model: `xai/${out.model}` };
+}
+
+function xaiFailureReason(err) {
+	return err instanceof XaiImageError ? err.kind : 'error';
+}
+
+function coolXaiAfter(err) {
+	if (!(err instanceof XaiImageError)) return;
+	if (err.kind === 'auth') markProviderCooldown(XAI_IMAGE_COOLDOWN_KEY, AUTH_COOLDOWN_SECONDS, 'auth').catch(() => {});
+	if (err.kind === 'rate_limited') markProviderCooldown(XAI_IMAGE_COOLDOWN_KEY, XAI_RATE_LIMIT_COOLDOWN_SECONDS, 'health').catch(() => {});
+}
+
 // ── Reference-image QA gate ──────────────────────────────────────────────────
 // GPU reconstruction time (self-host TRELLIS/Hunyuan3D, or a paid vendor) is
 // far more expensive than one more Gemini vision call, so before handing a
@@ -353,6 +408,55 @@ async function scoreReferenceImage({ b64, mime, prompt }) {
 	}
 }
 
+// One art-directed lane end to end: generate from the reference instruction,
+// QA-score, one corrective retry when the score is low (best-of-2), persist.
+// `generate({ instruction, aspectRatio, deadline })` is the provider; it throws
+// on failure and the caller decides how to fall through.
+async function runArtDirectedLane({ generate, laneName, prompt, negatives, aspectRatio, budget, remaining, ceilingMs }) {
+	const instruction = buildReferenceInstruction(prompt, negatives);
+	const leaderMs = laneTimeoutMs(ceilingMs, { budgetMs: budget, remainingMs: remaining(), laneRemains: true });
+	let generated = await generate({ instruction, aspectRatio, deadline: Date.now() + leaderMs });
+	// Scoring is cheap insurance, not a gate: with the budget mostly spent
+	// the image ships unscored rather than blocking on one more call.
+	let verdict =
+		remaining() > budget * 0.25
+			? await scoreReferenceImage({ b64: generated.b64, mime: generated.mime, prompt })
+			: null;
+
+	// One retry with corrective feedback on a scoring failure: fold the
+	// vision model's own named issue into the instruction as an explicit
+	// "the previous attempt failed on X, fix it" line, then keep whichever
+	// of the two attempts scored higher (best-of-2). GPU reconstruction
+	// time dwarfs the cost of one extra vision call, so this is cheap
+	// insurance against a bad reference wasting the expensive step downstream.
+	if (verdict && verdict.score < QA_PASS_SCORE && remaining() > budget * 0.5) {
+		const issue = verdict.issue || 'the subject was incomplete, off-center, not photoreal, or the background was cluttered';
+		const retryInstruction = `${instruction} IMPORTANT: a previous attempt at this shot failed on: ${issue}. Fix that specifically this time.`;
+		try {
+			const retried = await generate({ instruction: retryInstruction, aspectRatio, deadline: Date.now() + Math.floor(remaining() * 0.6) });
+			const retryVerdict = await scoreReferenceImage({ b64: retried.b64, mime: retried.mime, prompt });
+			if (!verdict || (retryVerdict && retryVerdict.score > verdict.score)) {
+				generated = retried;
+				verdict = retryVerdict;
+			}
+		} catch (err) {
+			console.warn(`[forge-reference-image] QA retry generation failed, keeping first attempt: ${err?.message}`);
+		}
+	}
+
+	if (verdict) {
+		console.log(
+			`[forge-reference-image] qa score=${verdict.score} complete=${verdict.complete} ` +
+				`centered=${verdict.centered} photoreal=${verdict.photoreal} clean_bg=${verdict.cleanBackground}` +
+				(verdict.issue ? ` issue="${verdict.issue}"` : ''),
+		);
+	}
+
+	const imageUrl = await persistImageBase64(generated.b64);
+	console.log(`[forge-reference-image] served by ${generated.model} (${laneName} lane)`);
+	return { imageUrl, model: generated.model, qaScore: verdict?.score ?? null };
+}
+
 // Generate the reconstruction reference image for a directed text→3D prompt.
 //
 //   generateReferenceImage(directedPrompt, {
@@ -362,8 +466,9 @@ async function scoreReferenceImage({ b64, mime, prompt }) {
 //     skipNim = false,        // forwarded to the fallthrough textToImage lane
 //   })
 //
-// Vertex-first (high-res, reference-tuned), then automatic fallthrough to the
-// existing provider chain. Returns { imageUrl, model, lane }. Never throws for a
+// Vertex-first (high-res, reference-tuned; Grok Imagine first when
+// FORGE_REF_IMAGE_PROVIDER=xai), then automatic fallthrough to the existing
+// provider chain. Returns { imageUrl, model, lane }. Never throws for a
 // recoverable Vertex issue - only the fallthrough's terminal error surfaces when
 // every lane is exhausted, exactly as textToImage does today.
 export async function generateReferenceImage(
@@ -384,14 +489,39 @@ export async function generateReferenceImage(
 			? String(negativePrompt).trim()
 			: subjectNegativePrompt(prompt, { realistic: true });
 
+	const provider = referenceImageProvider();
+	const lane = { prompt, negatives, aspectRatio, budget, remaining };
+
 	// Same directed prompt (+aspect +negatives) within 24h reuses its reference
-	// set instead of re-spending a Vertex image generation + QA-scoring pass.
+	// set instead of re-spending an image generation + QA-scoring pass.
 	// Credits are approved, but latency is a UX cost this avoids for free.
-	const cacheKey = referenceCacheKey(prompt, { aspectRatio, negativePrompt: negatives });
+	const cacheKey = referenceCacheKey(prompt, { aspectRatio, negativePrompt: negatives, provider });
 	const cached = await getCachedReference(cacheKey);
 	if (cached) {
 		console.log(`[forge-reference-image] cache hit (24h) for key ${cacheKey}`);
-		return { ...cached, lane: 'vertex-reference-cached' };
+		return { ...cached, lane: provider === 'xai' && cached.model?.startsWith('xai/') ? 'xai-reference-cached' : 'vertex-reference-cached' };
+	}
+
+	// FORGE_REF_IMAGE_PROVIDER=xai: Grok Imagine leads. Every failure is logged
+	// with its typed reason and the step continues on the Vertex lane below.
+	if (provider === 'xai') {
+		const cooling = (await providersInCooldown([XAI_IMAGE_COOLDOWN_KEY])).has(XAI_IMAGE_COOLDOWN_KEY);
+		if (!xaiImageConfigured()) {
+			console.warn('[forge-reference-image] xai lane skipped (reason=no_key), falling through to the vertex lane');
+		} else if (cooling) {
+			console.warn('[forge-reference-image] xai lane skipped (reason=cooldown), falling through to the vertex lane');
+		} else {
+			try {
+				const result = await runArtDirectedLane({ ...lane, generate: generateViaXai, laneName: 'xai-reference', ceilingMs: XAI_REQUEST_CEILING_MS });
+				await putCachedReference(cacheKey, result);
+				return { ...result, lane: 'xai-reference' };
+			} catch (err) {
+				coolXaiAfter(err);
+				console.warn(
+					`[forge-reference-image] xai lane failed (reason=${xaiFailureReason(err)}), falling through to the vertex lane: ${err?.message}`,
+				);
+			}
+		}
 	}
 
 	// A project-wide billing hold or safety block fails this lane identically on
@@ -404,48 +534,7 @@ export async function generateReferenceImage(
 		vertexImageEnabled() && (await providersInCooldown([VERTEX_IMAGE_COOLDOWN_KEY])).has(VERTEX_IMAGE_COOLDOWN_KEY);
 	if (vertexImageEnabled() && !vertexCooling) {
 		try {
-			const instruction = buildReferenceInstruction(prompt, negatives);
-			const leaderMs = laneTimeoutMs(VERTEX_REQUEST_CEILING_MS, { budgetMs: budget, remainingMs: remaining(), laneRemains: true });
-			let generated = await generateViaVertex({ instruction, aspectRatio, deadline: Date.now() + leaderMs });
-			// Scoring is cheap insurance, not a gate: with the budget mostly spent
-			// the image ships unscored rather than blocking on one more call.
-			let verdict =
-				remaining() > budget * 0.25
-					? await scoreReferenceImage({ b64: generated.b64, mime: generated.mime, prompt })
-					: null;
-
-			// One retry with corrective feedback on a scoring failure: fold the
-			// vision model's own named issue into the instruction as an explicit
-			// "the previous attempt failed on X, fix it" line, then keep whichever
-			// of the two attempts scored higher (best-of-2). GPU reconstruction
-			// time dwarfs the cost of one extra vision call, so this is cheap
-			// insurance against a bad reference wasting the expensive step downstream.
-			if (verdict && verdict.score < QA_PASS_SCORE && remaining() > budget * 0.5) {
-				const issue = verdict.issue || 'the subject was incomplete, off-center, not photoreal, or the background was cluttered';
-				const retryInstruction = `${instruction} IMPORTANT: a previous attempt at this shot failed on: ${issue}. Fix that specifically this time.`;
-				try {
-					const retried = await generateViaVertex({ instruction: retryInstruction, aspectRatio, deadline: Date.now() + Math.floor(remaining() * 0.6) });
-					const retryVerdict = await scoreReferenceImage({ b64: retried.b64, mime: retried.mime, prompt });
-					if (!verdict || (retryVerdict && retryVerdict.score > verdict.score)) {
-						generated = retried;
-						verdict = retryVerdict;
-					}
-				} catch (err) {
-					console.warn(`[forge-reference-image] QA retry generation failed, keeping first attempt: ${err?.message}`);
-				}
-			}
-
-			if (verdict) {
-				console.log(
-					`[forge-reference-image] qa score=${verdict.score} complete=${verdict.complete} ` +
-						`centered=${verdict.centered} photoreal=${verdict.photoreal} clean_bg=${verdict.cleanBackground}` +
-						(verdict.issue ? ` issue="${verdict.issue}"` : ''),
-				);
-			}
-
-			const imageUrl = await persistImageBase64(generated.b64);
-			console.log(`[forge-reference-image] served by ${generated.model} (vertex-reference lane)`);
-			const result = { imageUrl, model: generated.model, qaScore: verdict?.score ?? null };
+			const result = await runArtDirectedLane({ ...lane, generate: generateViaVertex, laneName: 'vertex-reference', ceilingMs: VERTEX_REQUEST_CEILING_MS });
 			await putCachedReference(cacheKey, result);
 			return { ...result, lane: 'vertex-reference' };
 		} catch (err) {

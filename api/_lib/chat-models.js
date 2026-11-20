@@ -72,6 +72,13 @@ import { isFreeModelId } from './openrouter-free.js';
 export const XAI_API_BASE = 'https://api.x.ai/v1';
 export const XAI_CHAT_COMPLETIONS_URL = `${XAI_API_BASE}/chat/completions`;
 
+// Grok Imagine image generation (POST /v1/images/generations). Image 2.0 is the
+// current model and the redirect target of the retired grok-imagine-image-quality
+// slug (docs.x.ai/developers/migration/imagine-image-quality-nov-2). Read by
+// api/_lib/xai-image.js, the forge reference-image lane's xAI provider.
+export const XAI_IMAGE_GENERATIONS_URL = `${XAI_API_BASE}/images/generations`;
+export const XAI_IMAGINE_IMAGE_MODEL = 'grok-imagine-image-2.0';
+
 const EFFORTS_FLAGSHIP = Object.freeze(['low', 'medium', 'high', 'xhigh']);
 
 export const GROK_MODELS = Object.freeze([

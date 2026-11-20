@@ -18,6 +18,7 @@ import {
 	GROK_DEFAULT_MODEL,
 	GROK_BUDGET_MODEL,
 	GROK_BUDGET_EXTRA_BODY,
+	XAI_IMAGINE_IMAGE_MODEL,
 	MODEL_CATALOG,
 	PROVIDER_MODEL_DEFAULTS,
 	resolveModelId,
@@ -32,7 +33,7 @@ const SOURCE_OF_TRUTH = 'api/_lib/chat-models.js';
 const CODE_FILE = /\.(m?js|ts|svelte)$/;
 // A quoted Grok model slug, bare (`grok-4.3`) or OpenRouter-namespaced
 // (`x-ai/grok-4.3`). `grok:` menu ids and the word "grok" are not slugs.
-const GROK_LITERAL = /(['"`])(?:x-ai\/)?grok-(?:\d|build|code|beta|mini|vision)[^'"`\s]*\1/g;
+const GROK_LITERAL = /(['"`])(?:x-ai\/)?grok-(?:\d|build|code|beta|mini|vision|imagine|voice)[^'"`\s]*\1/g;
 
 function* codeFiles(dir) {
 	for (const name of readdirSync(dir)) {
@@ -79,6 +80,7 @@ describe('Grok model ids have one source of truth', () => {
 			"const a = 'grok-4.7';",
 			'const b = "x-ai/grok-4.3";',
 			'const c = `grok-build-0.1`;',
+			"const f = 'grok-imagine-image-2.0';",
 			'const d = `grok:${id}`;',
 			"// the old 'grok-4.1-fast' default",
 			"const e = 'grok';",
@@ -87,6 +89,7 @@ describe('Grok model ids have one source of truth', () => {
 			"'grok-4.7'",
 			'"x-ai/grok-4.3"',
 			'`grok-build-0.1`',
+			"'grok-imagine-image-2.0'",
 		]);
 	});
 });
@@ -151,6 +154,11 @@ describe('GROK_MODELS catalog invariants', () => {
 		expect(routableGrokModelId(responsesOnly.id, GROK_BUDGET_MODEL)).toBe(GROK_BUDGET_MODEL);
 		expect(routableGrokModelId(null)).toBe(GROK_DEFAULT_MODEL);
 		expect(routableGrokModelId('grok-99-preview')).toBe('grok-99-preview');
+	});
+
+	it('the Imagine image slug is a Grok Imagine id, not a chat model', () => {
+		expect(XAI_IMAGINE_IMAGE_MODEL).toMatch(/^grok-imagine-image/);
+		expect(MODEL_CATALOG[XAI_IMAGINE_IMAGE_MODEL]).toBeUndefined();
 	});
 
 	it('llm-pricing prices every live and retired Grok from the catalog', () => {
