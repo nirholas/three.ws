@@ -52,7 +52,7 @@ settles the USDC payment (Solana or Base) and retries the call with the payment 
 `_meta`. Generation tools quote by quality tier so the 402 quote, the verified
 payment, and the settled charge all match the work requested.
 
-A few tools are **free** (no payment or wallet) — notably `forge_free` and the
+A few tools are **free** (no payment or wallet), notably `forge_free` and the
 read-only studio helpers below. Free tools that make or rig a model still need a
 free three.ws account (a Bearer API key or OAuth sign-in); the read-only helpers
 need nothing.
@@ -60,7 +60,7 @@ need nothing.
 ## Free 3D Studio — `/api/mcp-studio`
 
 A free, non-crypto MCP server for the ChatGPT App Directory and any MCP client. It
-exposes **only** 3D generation/inspection — no payment, no token. Making, rigging,
+exposes **only** 3D generation/inspection: no payment, no token. Making, rigging,
 refining or rendering a model needs a free three.ws account: send a three.ws API key
 from [/dashboard/api-keys](https://three.ws/dashboard/api-keys) as
 `Authorization: Bearer <key>`, or connect with OAuth at

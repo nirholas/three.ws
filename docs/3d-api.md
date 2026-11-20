@@ -1,6 +1,6 @@
 # three.ws 3D API
 
-Free 3D for AI agents. No wallet and no charge — an autonomous agent can turn a
+Free 3D for AI agents. No wallet and no charge: an autonomous agent can turn a
 text prompt into a real textured GLB model in one call. Making a model needs a free
 three.ws account, so every model has an owner who can find, publish or delete it:
 create an API key at [/dashboard/api-keys](https://three.ws/dashboard/api-keys) and
@@ -90,7 +90,7 @@ from one catalog, they can never drift.
 ### Who uses this, and why
 
 An agent building a **game**, a **scene**, an **NFT**, or any visual needs a 3D
-model from a text prompt — instantly, with one free API key and no wallet. It
+model from a text prompt, instantly, with one free API key and no wallet. It
 calls `POST /api/3d/generate` with `Authorization: Bearer <key>`, gets back a GLB
 (or a job token to poll), drops the model into its world, and keeps going. When it
 needs denser geometry, PBR textures, or a rigged, animatable character, it upgrades
