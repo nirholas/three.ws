@@ -354,6 +354,10 @@ async def _load_pipeline_bg():
     except Exception as exc:  # noqa: BLE001 — surfaced via /health + task status
         _load_error = safe_error(exc, context="model load")
         log.error("%s pipeline load FAILED: %s", MODEL_LABEL, exc)
+        # Wake every task waiting on the load: they read _load_error and fail
+        # with the real cause now instead of sleeping out their 900 s budget.
+        # /health keeps reporting ready=false because load_error is set.
+        _ready.set()
 
 
 @asynccontextmanager
@@ -552,6 +556,6 @@ async def health() -> dict:
         "gpu_available": gpu if torch else None,
         "gpu_name": torch.cuda.get_device_name(0) if gpu else None,
         "pipeline_loaded": _pipeline is not None,
-        "ready": bool(_ready and _ready.is_set()),
+        "ready": bool(_ready and _ready.is_set() and not _load_error),
         "load_error": _load_error,
     }

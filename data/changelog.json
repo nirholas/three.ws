@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-20",
+			"title": "The Hunyuan3D-2 image-to-3D lane loads again, and fails fast when it cannot",
+			"summary": "The Hunyuan3D-2 worker, a backup lane for photo-to-3D, had stopped loading its texture model after a dependency upgrade: newer diffusers refused its bundled paint pipeline, and newer transformers refused its weights on the older torch it ran. It now trusts its own pinned pipeline and runs torch 2.6 on CUDA 12.4, so the lane generates textured models again. Separately, a job that arrived while either Hunyuan worker was still loading used to wait 15 minutes and report a timeout when the load failed; it now fails at once with the real reason, so the forge moves to the next lane straight away.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-20",
 			"title": "three.ws joins xAI's Grok for Startups program",
 			"summary": "three.ws has been admitted to Grok for Startups, xAI's program for startups building on Grok, with credits across the Grok API, Grok and Grok Build. xAI now has a card on /partners and /partners/benefits and a place in the site footer's partner row. The credits fund the Grok brain lane agents can think on and sit behind the three.ws Grok connector, which gives Grok Bot, Grok connectors and the xAI API a free 3D studio.",
 			"tags": [

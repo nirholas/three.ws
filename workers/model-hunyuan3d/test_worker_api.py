@@ -332,6 +332,51 @@ def test_inference_records_an_image_source_failure_verbatim():
         app21._tasks.clear()
 
 
+def test_a_failed_model_load_fails_waiting_tasks_at_once():
+    # A job that lands on a cold instance waits for the background model load.
+    # When that load FAILED, the waiter used to sleep out its whole 900 s budget
+    # (only success woke it) and then report "model load timed out", hiding the
+    # real cause behind a 15-minute stall (production, 2026-11-20). A failed load
+    # must wake every waiter with the load error, and /health must still say the
+    # worker is not ready.
+    bucket = RecordingBucket()
+    app21._bucket = bucket
+    app21._tasks.clear()
+    app21._sem = asyncio.Semaphore(1)
+    app21._load_error = None
+    original_load = app21._load_pipeline
+
+    def broken_load():
+        import time as _time
+        _time.sleep(0.2)
+        raise RuntimeError("weights refused to load")
+
+    app21._load_pipeline = broken_load
+
+    async def scenario():
+        app21._ready = asyncio.Event()
+        waiter = asyncio.create_task(app21._run_inference("task-cold", ["https://cdn.example/x.png"]))
+        await asyncio.sleep(0)
+        await app21._load_pipeline_bg()
+        await asyncio.wait_for(waiter, timeout=5)
+
+    try:
+        asyncio.run(scenario())
+        task = app21._tasks["task-cold"]
+        assert task["status"] == "failed", task
+        assert task["error"].startswith("pipeline unavailable: "), task["error"]
+        body = client.get("/health").json()
+        assert body["ready"] is False
+        assert body["load_error"]
+    finally:
+        app21._load_pipeline = original_load
+        app21._load_error = None
+        app21._bucket = None
+        app21._sem = None
+        app21._ready = None
+        app21._tasks.clear()
+
+
 def test_task_records_are_written_uncacheable():
     # Production, 2026-11-11 (seen on TRELLIS, same pattern here): the task
     # bucket is public, and GCS gives a public object with no Cache-Control

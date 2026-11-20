@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
+FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
 
 # devel (not runtime) base: hy3dgen's texture pipeline compiles CUDA extensions
 # (custom_rasterizer + differentiable_renderer) at install time and needs nvcc +
@@ -22,12 +22,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && ln -sf /usr/bin/python3.11 /usr/bin/python \
     && pip install --upgrade pip setuptools wheel
 
-# torch first (cached layer), matching the CUDA 12.1 base. torchvision is a hard
+# torch first (cached layer), matching the CUDA 12.4 base so custom_rasterizer
+# compiles with the same toolkit torch was built against. torchvision is a hard
 # dependency of hy3dgen's shape + paint pipelines (image backbones / transforms)
-# and is not pulled in transitively, so it's pinned alongside torch here. 2.5.1,
-# not 2.3.x: transformers 5 needs torch>=2.4 and rembg 2.0.86 needs numpy 2.3,
-# which torch builds before 2.4 cannot load (numpy-1 ABI).
-RUN pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu121
+# and is not pulled in transitively, so it's pinned alongside torch here. 2.6,
+# not 2.5.x: transformers 5 refuses torch.load on any .bin checkpoint below
+# torch 2.6 (CVE-2025-32434) and the multiview paint pipeline ships a .bin
+# submodel, so on 2.5.1 the whole worker never loaded. rembg 2.0.86 needs numpy
+# 2.3, which torch builds before 2.4 cannot load (numpy-1 ABI).
+RUN pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124
 
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt

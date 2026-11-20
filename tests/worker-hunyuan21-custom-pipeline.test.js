@@ -73,3 +73,30 @@ describe('Hunyuan3D 2.0 image trusts its own paint pipeline', () => {
 		expect(run).toMatch(/grep -q [^&]*trust_remote_code=True[^&]*hy3dgen\/texgen\/utils\/multiview_utils\.py/);
 	});
 });
+
+// transformers >= 4.50 refuses torch.load on any .bin checkpoint below torch 2.6
+// (CVE-2025-32434), and the Hunyuan3D-2 multiview paint pipeline ships a .bin
+// submodel. With torch 2.5.1 the paint pipeline died at model load with "we now
+// require users to upgrade torch to at least v2.6" (production, 2026-11-20).
+describe('Hunyuan3D 2.0 image runs a torch transformers will load .bin weights on', () => {
+	const DIR3 = join(import.meta.dirname, '..', 'workers', 'model-hunyuan3d');
+	const docker = readFileSync(join(DIR3, 'Dockerfile'), 'utf8');
+	const tf = readFileSync(join(DIR3, 'requirements.txt'), 'utf8').match(/^transformers==(\d+)\.(\d+)/m);
+	const torch = docker.match(/pip install torch==(\d+)\.(\d+)\.\d+ torchvision==[\d.]+ --index-url https:\/\/download\.pytorch\.org\/whl\/cu(\d+)/);
+	const base = docker.match(/^FROM nvidia\/cuda:(\d+)\.(\d+)\.\d+-[\w-]*devel/m);
+
+	it('pins a transformers that enforces the torch.load floor', () => {
+		expect(tf).not.toBeNull();
+		expect(Number(tf[1]) > 4 || Number(tf[2]) >= 50).toBe(true);
+	});
+
+	it('installs torch 2.6 or newer', () => {
+		expect(torch, 'Dockerfile must pin torch from the PyTorch CUDA index').not.toBeNull();
+		expect(Number(torch[1]) > 2 || Number(torch[2]) >= 6).toBe(true);
+	});
+
+	it('builds the CUDA extensions with the toolkit torch was built against', () => {
+		expect(base, 'base image must be a CUDA devel image (nvcc compiles custom_rasterizer)').not.toBeNull();
+		expect(`${base[1]}${base[2]}`).toBe(torch[3]);
+	});
+});
