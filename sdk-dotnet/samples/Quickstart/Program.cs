@@ -10,7 +10,8 @@ using ThreeWs.Sdk.Forge;
 
 // Usage: dotnet run --project samples/Quickstart -- "a brass desk lamp" [out.glb]
 // Generates a model on the free lane, saves the GLB, then shows the catalog, MCP and agent chat surfaces.
-// Set THREE_WS_API_KEY to also list the agents your key owns.
+// Making a model needs a free three.ws account: create a key at https://three.ws/dashboard/api-keys and
+// set THREE_WS_API_KEY. The same key also lists the agents it owns.
 internal static class Program
 {
     private static async Task<int> Main(string[] args)
@@ -20,9 +21,16 @@ internal static class Program
         using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
         Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 
+        var apiKey = Environment.GetEnvironmentVariable("THREE_WS_API_KEY");
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            Console.Error.WriteLine("Making a model needs a free three.ws account. Create an API key at https://three.ws/dashboard/api-keys, then set THREE_WS_API_KEY and run again.");
+            return 2;
+        }
+
         using var client = new ThreeWsClient(new ThreeWsClientOptions
         {
-            ApiKey = Environment.GetEnvironmentVariable("THREE_WS_API_KEY"),
+            ApiKey = apiKey,
             UserAgentSuffix = "quickstart",
         });
 

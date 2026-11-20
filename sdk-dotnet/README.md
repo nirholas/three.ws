@@ -20,13 +20,16 @@ dotnet add package ThreeWs.Sdk
 
 ## Quickstart
 
-Text to a GLB file on the free lane, with no account or key:
+Text to a GLB file on the free lane. Making a model needs a free three.ws account, so create an API key at [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys) and pass it in:
 
 ```csharp
 using ThreeWs.Sdk;
 using ThreeWs.Sdk.Forge;
 
-using var client = new ThreeWsClient();
+using var client = new ThreeWsClient(new ThreeWsClientOptions
+{
+    ApiKey = Environment.GetEnvironmentVariable("THREE_WS_API_KEY"),
+});
 var model = await client.Forge.StudioGenerateAndWaitAsync("a brass desk lamp", ForgeTiers.Draft);
 await using var file = File.Create("lamp.glb");
 var bytes = await client.Forge.DownloadAsync(model.GlbUrl!, file);
@@ -37,12 +40,13 @@ Console.WriteLine($"View it: {model.ViewerUrl}");
 A runnable version that also shows the catalog, MCP and agent chat is in [samples/Quickstart](https://github.com/nirholas/three.ws/blob/main/sdk-dotnet/samples/Quickstart/Program.cs):
 
 ```bash
+export THREE_WS_API_KEY=sk_live_...
 dotnet run --project samples/Quickstart -- "a brass desk lamp" lamp.glb
 ```
 
 ## Authentication
 
-Free surfaces (the Studio lane, the free Forge lanes, the catalog, public agents, agent chat and the free MCP server) need no credentials. Account surfaces (your own agents, `whoami`, the account MCP server, paid tiers) need one of these:
+Reading needs no credentials: the catalog, public agents, agent chat, job polls and the free MCP server's tool list. Making or rigging a model (the Studio lane and every Forge lane, free ones included) needs a free three.ws account, and so do the account surfaces (your own agents, `whoami`, the account MCP server, paid tiers). A call without one throws `ThreeWsApiException` with `StatusCode` 401 and `ErrorCode` `sign_in_required`. Pass one of these:
 
 ```csharp
 // An API key from https://three.ws/dashboard/api (starts with sk_live_). Keep it server-side.
@@ -118,7 +122,7 @@ catch (ThreeWsApiException ex) when (ex.ErrorCode == "invalid_glb_url")
 | `GenerateAsync(ForgeRequest, progress?, ct)` | create, then wait | The one-call form. |
 | `RigAsync(glbUrl, idempotencyKey?, ct)` | `POST /api/forge?action=rig` | Adds a humanoid skeleton to a public GLB. Returns a job for `WaitAsync`. |
 | `DownloadAsync(glbUrl, Stream, ct)` | the GLB URL | Streams the model into any `Stream` and returns the byte count. Checks the `glTF` magic so an error page is never saved as a model. Relative URLs resolve against `BaseUrl`. |
-| `StudioGenerateAsync(prompt, tier?, ct)` | `POST /api/3d/studio` | The free, keyless Studio lane: one call, viewer and AR links included. |
+| `StudioGenerateAsync(prompt, tier?, ct)` | `POST /api/3d/studio` | The free Studio lane (needs an account's `ApiKey` or `AccessToken`): one call, viewer and AR links included. |
 | `StudioGetJobAsync(jobOrPollPath, ct)` | `GET /api/3d/studio?job=` | One poll of a pending Studio job. |
 | `StudioGenerateAndWaitAsync(prompt, tier?, progress?, ct)` | both | Generate and poll until done. |
 | `ModelPageUrl(creationId)` | | The public model page, `https://three.ws/m/<id>`. |
