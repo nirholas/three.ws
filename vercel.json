@@ -241,6 +241,13 @@
 			"continue": true
 		},
 		{
+			"src": "/voice(/home|/grok)?/?$",
+			"headers": {
+				"permissions-policy": "accelerometer=(), autoplay=(self), camera=(), display-capture=(), encrypted-media=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(self), midi=(), payment=(self), serial=(), usb=(), xr-spatial-tracking=(self)"
+			},
+			"continue": true
+		},
+		{
 			"src": "/drive/?$",
 			"headers": {
 				"permissions-policy": "accelerometer=(self), autoplay=(self), camera=(), display-capture=(), encrypted-media=(self), geolocation=(self), gyroscope=(self), magnetometer=(self), microphone=(self), midi=(), payment=(), serial=(), usb=(), xr-spatial-tracking=()",
