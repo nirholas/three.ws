@@ -110,7 +110,7 @@ and [`src/office-powerpoint/`](../src/office-powerpoint) (task pane).
 |---|---|
 | Sign in | The existing three.ws OAuth server (the one MCP clients use): dynamic client registration as "three.ws for PowerPoint", authorization code with PKCE (S256), scopes `profile offline_access avatars:read`. Inside PowerPoint the sign-in runs in an Office dialog (`displayDialogAsync`), because the authorize page refuses to be framed. Refresh tokens rotate; Sign out revokes the refresh token. |
 | Your models | `GET /api/forge/mine` with the bearer token, 12 at a time with Load more. Private models are listed but say "make it unlisted to use it", linking to the model page, because the export serves public and unlisted models only. |
-| Generate | The free lane (`forge_free` on `/api/mcp-studio`), polled at `/api/gpt-forge?job=` with a real progress bar. No account needed. Finished models appear under "Just generated". |
+| Generate | The free lane (`forge_free` on `/api/mcp-studio`), polled at `/api/gpt-forge?job=` with a real progress bar. Needs a free three.ws account: signed out, the pane asks you to sign in first. Finished models appear under "Just generated". |
 | Insert | Fetches the deck from `/api/forge/export-pptx` and calls `insertSlidesFromBase64` with `KeepSourceFormatting`, after the selected slide when PowerPointApi 1.5 is available. |
 | Outside PowerPoint | Opened in a plain browser tab, the pane says so and downloads the deck instead of inserting it. |
 

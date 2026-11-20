@@ -102,6 +102,9 @@ function waitWords(seconds) {
 	return `${Math.round(minutes / 60)} hours`;
 }
 
+/** What the pane says when making a model needs an account it does not have. */
+export const SIGN_IN_TO_GENERATE = 'Sign in to generate a model. A three.ws account is free, and the model is saved to it unlisted until you share it.';
+
 /**
  * One forge_free JSON-RPC response (or a poll frame) read into what the pane
  * shows: a finished model, a job to keep polling, or an error sentence.
@@ -119,6 +122,7 @@ export function readGeneration(rpc) {
 		return { status: 'error', message: rpc.error.message || 'The generator did not answer. Try again.' };
 	}
 	const sc = rpc?.result?.structuredContent || {};
+	if (sc.status === 'sign_in_required') return { status: 'sign_in', message: SIGN_IN_TO_GENERATE };
 	if (rpc?.result?.isError || sc.error) {
 		const text = sc.message || rpc?.result?.content?.[0]?.text || 'The model could not be generated. Try again.';
 		return { status: 'error', message: text, ...(sc.retryAfter ? { retryAfter: Number(sc.retryAfter) } : {}) };

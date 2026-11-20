@@ -17,7 +17,7 @@ PowerPoint 3D object the audience can rotate in a slideshow.
 | Section | Behaviour |
 |---|---|
 | Account | Signed out: a Sign in button. Signed in: the account name from `/api/me` and Sign out (which revokes the refresh token). |
-| Generate a model | A prompt box (Ctrl+Enter submits) that calls the free lane, `forge_free` on `/api/mcp-studio`, then polls `/api/gpt-forge?job=` with a real progress bar. Works signed out. Rate limits are shown with the wait time. |
+| Generate a model | A prompt box (Ctrl+Enter submits) that calls the free lane, `forge_free` on `/api/mcp-studio`, then polls `/api/gpt-forge?job=` with a real progress bar. Needs sign-in: making a model needs a free three.ws account, so signed out the pane asks for sign-in instead of calling, and a refused token clears the session. Rate limits are shown with the wait time. |
 | Just generated | The last 6 generated models (kept in this browser), each with Insert slide and a link to the 3D viewer. |
 | Your models | `GET /api/forge/mine`, 12 at a time with Load more, with skeleton, empty, error and signed-out states. Private models link to their model page to be made unlisted, because only public and unlisted models export. |
 

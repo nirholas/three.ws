@@ -127,6 +127,24 @@ describe('readGeneration', () => {
 		expect(limited).toMatchObject({ status: 'error', retryAfter: 120 });
 		expect(limited.message).toMatch(/2 minutes/);
 	});
+
+	// Making a model needs a three.ws account: the studio answers an anonymous
+	// forge_free with an isError result whose status is sign_in_required, and
+	// its text is written for an MCP host (connector OAuth, Bearer header). The
+	// pane has its own Sign in button, so it says that instead.
+	it('reads sign_in_required as a prompt to sign in, not a generic failure', () => {
+		const rpc = {
+			result: {
+				isError: true,
+				content: [{ type: 'text', text: 'Sign in to make a 3D model. ... send it as "Authorization: Bearer <key>".' }],
+				structuredContent: { error: true, status: 'sign_in_required', api_keys_url: 'https://three.ws/dashboard/api-keys' },
+			},
+		};
+		const read = readGeneration(rpc);
+		expect(read.status).toBe('sign_in');
+		expect(read.message).toMatch(/^Sign in to generate a model\. A three\.ws account is free/);
+		expect(read.message).not.toMatch(/Bearer/);
+	});
 });
 
 describe('readPollFrame', () => {

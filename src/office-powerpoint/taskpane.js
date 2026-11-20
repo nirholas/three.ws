@@ -608,15 +608,29 @@ function promptTitle(prompt) {
 	return cut.charAt(0).toUpperCase() + cut.slice(1);
 }
 
+// The tool result the studio sends an anonymous caller, so the pane reads its
+// own signed-out state and a refused token the same way.
+const SIGNED_OUT_RPC = Object.freeze({ result: { isError: true, structuredContent: { error: true, status: 'sign_in_required' } } });
+
 async function callFreeLane(prompt) {
 	const body = JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'forge_free', arguments: { prompt, tier: 'standard' } } });
 	const headers = { 'content-type': 'application/json', accept: 'application/json, text/event-stream' };
 	const send = (extra) => fetch(`${ORIGIN}/api/mcp-studio`, { method: 'POST', headers: { ...headers, ...extra }, body });
-	// Signed in, the generation is metered to the account; a token the server
-	// will not take (expired, revoked) falls back to the anonymous free lane.
-	const token = await accessToken();
-	let res = await send(token ? { authorization: `Bearer ${token}` } : {});
-	if (res.status === 401 && token) res = await send({});
+	// Making a model needs a three.ws account, so a signed-out pane asks for
+	// sign-in instead of sending a call the server would refuse. A token the
+	// server will not take gets one forced refresh, then the pane is signed out.
+	let token = await accessToken();
+	if (!token) return SIGNED_OUT_RPC;
+	let res = await send({ authorization: `Bearer ${token}` });
+	if (res.status === 401) {
+		token = await accessToken({ force: true });
+		if (!token) return SIGNED_OUT_RPC;
+		res = await send({ authorization: `Bearer ${token}` });
+		if (res.status === 401) {
+			writeStore(localStorage, AUTH_KEY, null);
+			return SIGNED_OUT_RPC;
+		}
+	}
 	const text = await res.text();
 	const json = text.trimStart().startsWith('{') ? text : (text.split('\n').find((l) => l.startsWith('data:')) || '').slice(5);
 	try {
@@ -688,6 +702,18 @@ async function generate(event) {
 			result = await pollJob(result.pollUrl, run);
 		}
 		if (!result || run !== state.genRun) return;
+		if (result.status === 'sign_in') {
+			el.progress.hidden = true;
+			el.genError.textContent = result.message;
+			el.genError.hidden = false;
+			if (!readStore(localStorage, AUTH_KEY)) {
+				state.user = null;
+				renderAccount();
+				renderMineSignedOut();
+			}
+			el.signIn.focus();
+			return;
+		}
 		if (result.status === 'error') throw new Error(result.message);
 		const item = { glbUrl: result.glbUrl, prompt, title: promptTitle(prompt), at: Date.now() };
 		const recent = [item, ...(readStore(localStorage, RECENT_KEY) || []).filter((r) => r.glbUrl !== item.glbUrl)].slice(0, RECENT_MAX);
