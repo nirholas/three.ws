@@ -281,7 +281,7 @@ The editor never modifies the source GLB in memory. Instead, it maintains a set 
 When exporting, `glb-export.js` loads the original source bytes, applies all patches by name-matching against the gltf-transform document, and writes the result. This means:
 
 - **The original is always recoverable** — hit Revert at any time
-- **Edits are portable** — the same override set can be applied to an updated version of the base model (`apply-overrides.js`)
+- **Edits are portable**: the same override set can be applied to an updated version of the base model, because `glb-export.js` matches patches by material and node name
 - **Round-trips work** — if you publish, edit the server copy, and re-open, the patches from the server are applied on load
 
 > Name-based matching means that if a material or node is renamed in the source GLB, the patch won't apply. Keep names stable when iterating on your model.

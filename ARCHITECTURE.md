@@ -391,7 +391,7 @@ Beyond the page controllers above, `src/` holds ~60 subsystem directories. Map o
 |--------|------|---------|
 | Active Agent | `src/agents/` | Canonical "my agent" record + `agent-bus` event bus shared by every surface (with tests) |
 | Loaders | `src/loaders/` | Shared `GLTFLoader` wired with Draco + KTX2 + Meshopt against locally-served decoders |
-| Components | `src/components/` | Reusable UI: `ModelViewerElement`, `PriceBadge`, `animation-panel`, `bonding-curve` |
+| Components | `src/components/` | Reusable UI: `ModelViewerElement`, `animation-panel`, `bonding-curve` |
 | Widget RPC | `src/widget/` | JSON-RPC 2.0 server for the in-iframe embeddable widget surface |
 | Widgets | `src/widgets/` | Embeddable widget components (animation-gallery, bonding-curve, hotspot-tour) |
 | Plugins | `src/plugins/` | Plugin registry — loads LobeHub/pai-chat-compatible plugin manifests |
@@ -3079,7 +3079,7 @@ Two layers resolve paths: **`vercel.json`** (`routes` array, 932 entries — pro
 
 **3D Worlds:** `/worlds`, `/world-lines`, `/city`, `/agora`, `/club`, `/theater`, `/stage`, `/communities` (`/communities/:mint`, `/town`), `/community`, `/agenc/{embodied,room}`, `/embodiment/embed`, `/play` (+`/play/ufo`,`/play/agent-wallet`), `/game/*` 308→`/play`, `/scene-studio/app`.
 
-**Creation / Studio / Avatars:** `/start`, `/create` (+`/create/{selfie,prompt,character,video,next,studio}`, `/create-review`, `/creating`), `/genesis`, `/scan`, `/segment`, `/scene`, `/dad`, `/forge` (+`/forge/embed`,`/forge-studio`,`/forge-nim`,`/nim-forge`,`/forge-spark`), `/import/rpm`, `/avatar-studio` (dev serves `character-studio/build/`), `/avatar-studio-demo`, `/avatars/:id` (+`/edit`,`/ar`), `/avatar-sdk`, `/avatar-artifact`, `/avatar-wallet-chat`, `/embed/avatar` (`/:handle`), `/characters`, `/character/:id`, `/gallery`, `/gallery-picker`, `/pose` (+`/pose-mini`), `/animations`, `/mocap-studio`, `/overlay-control`, `/voice`, `/xr`, `/ar`, `/hydrate`, `/first-meet`, `/store/:slug`, `/internal/avaturn-forge.html`.
+**Creation / Studio / Avatars:** `/start`, `/create` (+`/create/{selfie,prompt,character,video,next,studio}`, `/create-review`, `/creating`), `/genesis`, `/scan`, `/segment`, `/scene`, `/dad`, `/forge` (+`/forge/embed`,`/forge-studio`,`/forge-nim`,`/nim-forge`,`/forge-spark`), `/import/rpm`, `/avatar-studio` (dev serves `character-studio/build/`), `/avatars/:id` (+`/edit`,`/ar`), `/avatar-sdk`, `/avatar-artifact`, `/avatar-wallet-chat`, `/embed/avatar` (`/:handle`), `/characters`, `/character/:id`, `/gallery`, `/gallery-picker`, `/pose` (+`/pose-mini`), `/animations`, `/mocap-studio`, `/overlay-control`, `/voice`, `/xr`, `/ar`, `/hydrate`, `/first-meet`, `/store/:slug`, `/internal/avaturn-forge.html`.
 
 **Launch / Token / $THREE:** `/launch`, `/launchpad`, `/launches` (+`/launches/:mint`), `/launch-week`, `/three`, `/three-live`, `/three-token`, `/threews/claim`, `/claim-wallet`, `/mint-success`, `/p/:slug`, `/demo/coin` (`/:mint`), `/bounties` (+`/bounty/:id`), `/go`.
 

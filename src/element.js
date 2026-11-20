@@ -4135,7 +4135,7 @@ class Agent3DElement extends HTMLElement {
 	/**
 	 * Combined animation list available to the loaded model.
 	 *
-	 * Mirrors the heuristic in `home-act2-viewer.listAvailableClips`:
+	 * Heuristic:
 	 *   • If the GLB ships with 3+ non-idle baked clips (e.g. RobotExpressive),
 	 *     show only those — manifest clips are Mixamo-retargeted to the canonical
 	 *     Avaturn skeleton and won't bind to a foreign rig.
