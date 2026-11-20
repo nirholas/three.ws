@@ -68,7 +68,9 @@ describe('runMcpProbe', () => {
 			expect(r.ok).toBe(true);
 			expect(r.failed_step).toBeNull();
 			expect(r.error).toBeNull();
-			expect(Object.keys(r.latency_ms)).toEqual(['initialize', 'notifications/initialized', 'tools/list', 'tools/call', 'oauth_challenge', 'oauth_metadata']);
+			// jsonb stores keys sorted (shortest first), so compare the set, not the order.
+			expect(Object.keys(r.latency_ms).sort()).toEqual(['initialize', 'notifications/initialized', 'oauth_challenge', 'oauth_metadata', 'tools/call', 'tools/list']);
+			for (const ms of Object.values(r.latency_ms)) expect(Number.isInteger(ms) && ms >= 0).toBe(true);
 			expect(r.detail.sessionIssued).toBe(true);
 			expect(r.detail.warnings).toEqual([]);
 		}
