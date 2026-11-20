@@ -4,6 +4,7 @@
 
 import { AnatomyApiError, fetchDesign, fetchGallery, generateDesign } from './api.js';
 import { mountAnatomy } from './runtime.js';
+import { mountExplorerOrStill } from './still.js';
 import { scanPartialSpec } from './stream.js';
 import { showSharePanel } from '../shared/share.js';
 
@@ -277,7 +278,7 @@ function setStatus(text) {
 function ensureExplorer() {
 	if (state.app) return state.app;
 	const stage = $('#anpStage');
-	state.app = mountAnatomy(stage, null, { theme: 'auto' });
+	state.app = mountExplorerOrStill(stage, () => mountAnatomy(stage, null, { theme: 'auto' }));
 	return state.app;
 }
 

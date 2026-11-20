@@ -657,6 +657,40 @@
 	border: 1px solid var(--stroke);
 }
 
+/* No WebGL: the still isometric drawing (src/anatomy/still.js). */
+.anp-still {
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 14px;
+	padding: 20px;
+	background:
+		linear-gradient(color-mix(in srgb, var(--anp-cyan) 5%, transparent) 1px, transparent 1px) 0 0 / 22px 22px,
+		linear-gradient(90deg, color-mix(in srgb, var(--anp-cyan) 5%, transparent) 1px, transparent 1px) 0 0 / 22px 22px;
+}
+.anp-still:focus-visible {
+	outline: 2px solid var(--anp-cyan);
+	outline-offset: -4px;
+}
+.anp-still__img {
+	flex: 1 1 auto;
+	min-height: 0;
+	max-width: 100%;
+	object-fit: contain;
+}
+.anp-still__note {
+	max-width: 62ch;
+	margin: 0;
+	font-size: 0.85rem;
+	line-height: 1.5;
+	text-align: center;
+	opacity: 0.75;
+}
+
 .anp-skeleton {
 	position: absolute;
 	inset: 0;
