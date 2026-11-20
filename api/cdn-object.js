@@ -26,6 +26,7 @@ import { fallbackBucket, fallbackFetch, fallbackHead, noteFallback } from './_li
 import { fetchUpstream } from './_lib/upstream-fetch.js';
 import { env } from './_lib/env.js';
 import { parseVariantKey, variantObjectKey } from '../src/shared/cdn-variant.js';
+import { isPurgePending } from './_lib/forge-storage-purges.js';
 
 // A flat #e2e2e2 64x64 PNG, served in place of a 502 when the whole storage
 // product is down (both the signed read and the public-domain fallback fail
@@ -320,6 +321,15 @@ export default wrap(async (req, res) => {
 	}
 
 	const variant = parseVariantKey(key);
+
+	// A deleted forge creation whose bytes storage could not remove yet (see
+	// api/_lib/forge-storage-purges.js): its row is gone, so stop serving it now
+	// rather than streaming it from the public bucket domain until the purge runs.
+	if (await isPurgePending(variant ? variant.source : key)) {
+		res.setHeader('cache-control', 'no-store');
+		return error(res, 410, 'gone', 'this object was removed');
+	}
+
 	if (variant) return serveVariant(req, res, variant);
 
 	const ifNoneMatch = req.headers['if-none-match'];

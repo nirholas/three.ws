@@ -48,7 +48,10 @@ vi.mock('../api/_lib/db.js', () => ({
 
 const deleteObjectMock = vi.fn(async () => {});
 let listedObjects = [];
-const listObjectsPageMock = vi.fn(async () => ({ objects: listedObjects.map((key) => ({ key, size: 1 })), nextToken: null }));
+const listObjectsPageMock = vi.fn(async ({ prefix }) => ({
+	objects: listedObjects.filter((key) => key.startsWith(prefix)).map((key) => ({ key, size: 1 })),
+	nextToken: null,
+}));
 vi.mock('../api/_lib/r2.js', () => ({
 	putObject: vi.fn(async () => {}),
 	objectStorageConfigured: () => true,
@@ -57,6 +60,7 @@ vi.mock('../api/_lib/r2.js', () => ({
 	deleteObject: (...args) => deleteObjectMock(...args),
 	listObjectsPage: (...args) => listObjectsPageMock(...args),
 	normalizeStoredUrl: (u) => u,
+	isStorageInfrastructureError: (err) => [401, 403].includes(err?.$metadata?.httpStatusCode),
 	keyFromPublicUrl: (url) =>
 		typeof url === 'string' && url.startsWith('https://cdn.example.com/')
 			? url.slice('https://cdn.example.com/'.length).split(/[?#]/)[0]
@@ -77,7 +81,8 @@ const OTHER_ID = '0b7f2a52-6a3e-4f1c-9d55-1f4f8a2b9c10';
 
 afterEach(() => {
 	sqlMock.mockClear();
-	deleteObjectMock.mockClear();
+	deleteObjectMock.mockReset();
+	deleteObjectMock.mockImplementation(async () => {});
 	listObjectsPageMock.mockClear();
 	selectRows = [];
 	updateRows = [];
@@ -113,7 +118,15 @@ describe('deleteCreation erases every stored variant', () => {
 		selectRows = [row({ lod_glb_key: `forge/678ab2f7d7cd/${ID}.lod.glb` })];
 		// A poster written by attachPoster lives under the same prefix but has no
 		// column of its own; the prefix sweep is what finds it.
-		listedObjects = [`forge/678ab2f7d7cd/${ID}.glb`, `forge/678ab2f7d7cd/${ID}-poster.webp`];
+		// The /cdn/_v/ resized copies of its images live outside the prefix and
+		// must go too.
+		listedObjects = [
+			`forge/678ab2f7d7cd/${ID}.glb`,
+			`forge/678ab2f7d7cd/${ID}-poster.webp`,
+			`variants/256/forge/678ab2f7d7cd/${ID}.png.abc123.webp`,
+			`variants/512/forge/uploads/678ab2f7d7cd/89224ed8.png.def456.webp`,
+			`variants/256/forge/678ab2f7d7cd/${OTHER_ID}.png.abc123.webp`,
+		];
 		const out = await deleteCreation({ id: ID, clientKey: '678ab2f7d7cd0123456789abcdef' });
 		expect(out).toBe('deleted');
 		expect(listObjectsPageMock).toHaveBeenCalledWith(expect.objectContaining({ prefix: `forge/678ab2f7d7cd/${ID}` }));
@@ -126,9 +139,42 @@ describe('deleteCreation erases every stored variant', () => {
 				`forge/678ab2f7d7cd/${ID}.png`,
 				`forge/678ab2f7d7cd/${ID}.web.glb`,
 				'forge/uploads/678ab2f7d7cd/89224ed8.png',
+				`variants/256/forge/678ab2f7d7cd/${ID}.png.abc123.webp`,
+				`variants/512/forge/uploads/678ab2f7d7cd/89224ed8.png.def456.webp`,
 			].sort(),
 		);
 		expect(statements('delete from forge_creations')).toHaveLength(1);
+	});
+});
+
+describe('deleteCreation during an object-storage outage', () => {
+	// From 2026-11-15 R2 rejected the production credential (401 Unauthorized) on
+	// every signed call. Deleting the bucket objects first meant every owner
+	// delete and every takedown failed with the row left public. A rejected
+	// credential says nothing about the request: the row must still come down,
+	// with each key it could not delete queued for a retry once storage answers.
+	const unauthorized = () => Object.assign(new Error('Unauthorized'), { name: 'Unauthorized', $metadata: { httpStatusCode: 401 } });
+
+	it('takes the row down and queues every key, plus the prefix sweep, for a later purge', async () => {
+		selectRows = [row()];
+		deleteObjectMock.mockRejectedValue(unauthorized());
+		listObjectsPageMock.mockRejectedValueOnce(unauthorized());
+		const out = await deleteCreation({ id: ID, moderator: true });
+		expect(out).toBe('deleted');
+		expect(statements('delete from forge_creations')).toHaveLength(1);
+		const queued = sqlMock.mock.calls.find(([s]) => Array.isArray(s) && s.join(' ').includes('insert into forge_storage_purges'));
+		expect(queued).toBeTruthy();
+		const flat = queued.slice(1).flat();
+		expect(flat).toEqual(expect.arrayContaining([`forge/678ab2f7d7cd/${ID}.glb`, 'forge/uploads/678ab2f7d7cd/89224ed8.png', `forge/678ab2f7d7cd/${ID}`]));
+	});
+
+	it('still aborts, row intact, on a fault that is not the storage infrastructure', async () => {
+		selectRows = [row()];
+		deleteObjectMock.mockRejectedValueOnce(new TypeError('bad key'));
+		const out = await deleteCreation({ id: ID, moderator: true });
+		expect(out).toBe('error');
+		expect(statements('delete from forge_creations')).toHaveLength(0);
+		expect(statements('insert into forge_storage_purges')).toHaveLength(0);
 	});
 });
 
@@ -265,13 +311,25 @@ describe('visibility at birth', () => {
 		expect(insertedVisibility()).toBe('unlisted');
 	});
 
-	it('keeps text-to-3D on the public default', async () => {
+	it('keeps a text-to-3D model out of the public feeds until its maker publishes it', async () => {
 		await createCreation({
 			clientKey: 'client-key',
 			prompt: 'a fox',
 			previewImageUrl: 'https://replicate.delivery/pbxt/flux.png',
 			backend: 'trellis',
 			path: 'text',
+		});
+		expect(insertedVisibility()).toBe('unlisted');
+	});
+
+	it('leaves platform seed models on the public default so the showcase stays populated', async () => {
+		await createCreation({
+			clientKey: 'seed',
+			prompt: 'a fox',
+			previewImageUrl: 'https://replicate.delivery/pbxt/flux.png',
+			backend: 'trellis',
+			path: 'text',
+			internal: true,
 		});
 		expect(insertedVisibility()).toBe(null);
 	});
@@ -293,11 +351,11 @@ describe('visibility at birth', () => {
 		expect(insertedVisibility()).toBe('private');
 	});
 
-	it('ignores an invalid request visibility', async () => {
+	it('ignores an invalid request visibility and falls back to unlisted', async () => {
 		await runWithCreationContext({ visibility: 'everyone' }, () =>
 			createCreation({ clientKey: 'client-key', prompt: 'a fox', path: 'text' }),
 		);
-		expect(insertedVisibility()).toBe(null);
+		expect(insertedVisibility()).toBe('unlisted');
 	});
 });
 

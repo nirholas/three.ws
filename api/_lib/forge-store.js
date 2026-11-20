@@ -18,7 +18,9 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import { sql, isDbUnavailableError } from './db.js';
 import { databaseConfigured } from './env.js';
-import { putObject, cdnUrl, deleteObject, listObjectsPage, keyFromPublicUrl, normalizeStoredUrl, objectStorageConfigured } from './r2.js';
+import { putObject, cdnUrl, deleteObject, listObjectsPage, keyFromPublicUrl, normalizeStoredUrl, objectStorageConfigured, isStorageInfrastructureError } from './r2.js';
+import { queueStoragePurges } from './forge-storage-purges.js';
+import { VARIANT_WIDTHS } from '../../src/shared/cdn-variant.js';
 import { recordDailyActivity, maybeAwardFirstCreation } from './streaks.js';
 import { recordGenerationEvent } from './forge-events.js';
 import { backendWorkerHost } from './gpu-worker-host.js';
@@ -265,12 +267,14 @@ export async function createCreation({
 	// conditioned on the maker's own uploaded photo (a forge/uploads/ key: a
 	// selfie, an original character, a product shot) is unlisted: viewable and
 	// shareable by link, but kept out of the public showcase, feeds, search and
-	// sitemaps until the maker chooses to publish it. Text-to-3D keeps the
-	// public default (null). Issue #639: an uploaded original character went
-	// straight into the public gallery without its maker meaning to publish it.
-	const hasUserUpload = Array.isArray(sourceKeys) && sourceKeys.some((k) => k.startsWith('forge/uploads/'));
+	// sitemaps until the maker chooses to publish it. The same now holds for
+	// text-to-3D: nothing a person makes is public until they publish it.
+	// Only platform seed models (`internal`) keep the public default (null),
+	// because they exist to populate the showcase. Issue #639: an uploaded
+	// original character went straight into the public gallery without its
+	// maker meaning to publish it.
 	const birthVisibility =
-		validCreationVisibility(visibility) ?? ctx?.visibility ?? (hasUserUpload ? 'unlisted' : null);
+		validCreationVisibility(visibility) ?? ctx?.visibility ?? (isInternal ? null : 'unlisted');
 	try {
 		await sql`
 			insert into forge_creations
@@ -1121,10 +1125,12 @@ function managementCredentials({ id, clientKey = null, userId = null, manageToke
 // delivery variants and the browser-rendered -poster.*. Listing the prefix
 // catches every variant, including ones added after this code was written,
 // instead of trusting that each has a column. Paginated, bounded.
-async function creationPrefixKeys(row) {
+function creationPrefix(row) {
 	const ck = typeof row.client_key === 'string' && row.client_key ? row.client_key : null;
-	if (!ck || !row.id) return [];
-	const prefix = `forge/${ck.slice(0, 12)}/${row.id}`;
+	return ck && row.id ? `forge/${ck.slice(0, 12)}/${row.id}` : null;
+}
+
+async function listPrefix(prefix) {
 	const keys = [];
 	let token;
 	for (let page = 0; page < 10; page++) {
@@ -1136,18 +1142,37 @@ async function creationPrefixKeys(row) {
 	return keys;
 }
 
+// The resized derivatives /cdn/_v/<width>/<key> persisted for an image key
+// (variants/<width>/<key>.<etag>.webp, see src/shared/cdn-variant.js). They
+// outlive the source unless removed with it.
+function variantPrefixes(keys) {
+	const out = [];
+	for (const k of keys) {
+		if (!RASTER_KEY_RE.test(k)) continue;
+		for (const w of VARIANT_WIDTHS) out.push(`variants/${w}/${k}.`);
+	}
+	return out;
+}
+const RASTER_KEY_RE = /\.(png|jpe?g|webp)$/i;
+
 // Permanently delete a creation: the stored mesh, the stored preview, the
 // delivery variants, every recorded source upload (the user's reference
-// photos), and the row itself. The caller must present one management
-// credential (see managementCredentials); the shared anon bucket is never one.
-// Bucket objects go first: if storage refuses, the row survives and the user
-// can simply retry; deleting the row first would strand unreferenced bytes with
-// no handle left to retry from. The row delete then cascades forge_votes and
-// forge_comments; lineage children and forge_board_winners null their
-// reference (see the migrations that created those FKs).
+// photos), the resized /cdn/ derivatives of its images, and the row itself. The
+// caller must present one management credential (see managementCredentials);
+// the shared anon bucket is never one.
+// Bucket objects go first. A fault in the request itself (anything but the
+// storage infrastructure) aborts with the row intact so the caller can retry.
+// When storage itself is down (a rejected credential, an unreachable endpoint)
+// the row still comes down: each object that could not be removed, and each
+// listing that could not run, is queued in forge_storage_purges first, so
+// nothing is left without a handle, /cdn/ stops serving it, and the purge cron
+// finishes the job once storage answers (issue #639). The row delete cascades
+// forge_votes and forge_comments; lineage children and forge_board_winners null
+// their reference (see the migrations that created those FKs).
 // Returns 'deleted' | 'not_found' | 'error' | 'unavailable'; a successful
-// delete also reports the removed keys through `onDeleted` so a moderator
-// takedown can purge the CDN for exactly those paths.
+// delete also reports `{ id, keys, pending }` through `onDeleted` (keys: every
+// object it covered; pending: the targets left queued) so a moderator takedown
+// can purge the CDN for exactly those paths.
 export async function deleteCreation({ id, clientKey = null, userId = null, manageToken = null, moderator = false, onDeleted = null }) {
 	if (!id) return 'not_found';
 	const cred = managementCredentials({ id, clientKey, userId, manageToken, moderator });
@@ -1184,10 +1209,37 @@ export async function deleteCreation({ id, clientKey = null, userId = null, mana
 		for (const k of Array.isArray(row.source_image_keys) ? row.source_image_keys : []) {
 			if (typeof k === 'string' && k.startsWith('forge/')) keys.add(k);
 		}
-		for (const k of await creationPrefixKeys(row)) {
-			if (k.startsWith('forge/')) keys.add(k);
+
+		// Listings: the creation's own prefix, then the /cdn/ derivatives of every
+		// image found. A listing storage cannot answer is queued whole.
+		const pending = [];
+		const listOrQueue = async (prefix) => {
+			try {
+				return await listPrefix(prefix);
+			} catch (err) {
+				if (!isStorageInfrastructureError(err)) throw err;
+				pending.push({ target: prefix, kind: 'prefix' });
+				return [];
+			}
+		};
+		const ownPrefix = creationPrefix(row);
+		if (ownPrefix) for (const k of await listOrQueue(ownPrefix)) if (k.startsWith('forge/')) keys.add(k);
+		const derived = new Set();
+		for (const prefix of variantPrefixes([...keys])) {
+			for (const k of await listOrQueue(prefix)) derived.add(k);
 		}
-		await Promise.all([...keys].map((key) => deleteObject(key)));
+
+		const targets = [...keys, ...derived];
+		const results = await Promise.allSettled(targets.map((key) => deleteObject(key)));
+		results.forEach((r, i) => {
+			if (r.status === 'fulfilled') return;
+			if (!isStorageInfrastructureError(r.reason)) throw r.reason;
+			pending.push({ target: targets[i], kind: 'object' });
+		});
+		if (pending.length) {
+			await queueStoragePurges({ creationId: row.id, entries: pending });
+			console.warn(`[forge-store] deleteCreation ${row.id}: storage unavailable, queued ${pending.length} purge(s)`);
+		}
 
 		await sql`delete from forge_creations where id = ${row.id}`;
 		// The row is gone, so the reconcile scan can never see this delete: tell
@@ -1198,7 +1250,7 @@ export async function deleteCreation({ id, clientKey = null, userId = null, mana
 			reason: 'delete',
 			source: 'forge',
 		});
-		if (typeof onDeleted === 'function') onDeleted({ id: row.id, keys: [...keys] });
+		if (typeof onDeleted === 'function') onDeleted({ id: row.id, keys: targets, pending: pending.map((p) => p.target) });
 		return 'deleted';
 	} catch (err) {
 		if (isDbUnavailableError(err)) {

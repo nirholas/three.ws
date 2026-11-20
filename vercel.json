@@ -7881,6 +7881,10 @@
 			"schedule": "* * * * *"
 		},
 		{
+			"path": "/api/cron/forge-storage-purge",
+			"schedule": "*/15 * * * *"
+		},
+		{
 			"path": "/api/llm/health",
 			"schedule": "0 * * * *"
 		},
