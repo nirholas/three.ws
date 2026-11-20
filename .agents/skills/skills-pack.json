@@ -57,7 +57,7 @@
 		},
 		{
 			"name": "generate-3d-model",
-			"description": "Turn a text prompt into a downloadable, textured 3D model (GLB). Use when you or the user want to generate, create, make, or forge a 3D model, asset, object, mesh, or prop from a text description, for example \"make a 3D model of a robot\", \"generate a GLB of a sword\", \"I need a 3D chair\". Runs on the FREE text→3D lane (no key, no account, free). Returns a GLB URL plus a browser viewer link.",
+			"description": "Turn a text prompt into a downloadable, textured 3D model (GLB). Use when you or the user want to generate, create, make, or forge a 3D model, asset, object, mesh, or prop from a text description, for example \"make a 3D model of a robot\", \"generate a GLB of a sword\", \"I need a 3D chair\". Runs on the FREE text→3D lane (free of charge; needs a free three.ws account or API key). Returns a GLB URL plus a browser viewer link.",
 			"whenToUse": "User wants a 3D object/asset/prop from text. For a posable character with a skeleton, use create-3d-avatar. To rig an existing GLB, use rig-a-model.",
 			"category": "3d/creative",
 			"origin": "three.ws",
@@ -198,7 +198,7 @@
 		{
 			"name": "connect-three-ws-mcp",
 			"description": "Connect any MCP client (Claude Code, Claude Desktop, the Agent SDK, or a custom one) to the three.ws MCP servers, so the model can generate 3D models and avatars, read and write agent data, and pay for services. Use when you or the user want to connect, add, install, configure, wire up, or debug three.ws MCP, an MCP server for 3D or avatars or agent wallets, a .mcp.json entry, or \"give Claude access to three.ws\". Also use to pick which of the hosted servers to add, and to test a connection that is not working.",
-			"whenToUse": "The user wants the tools available inside their client rather than shelling out to curl. Start with the free server when no account exists yet. For one-off calls over plain HTTP instead, the 3D skills already show the JSON-RPC form.",
+			"whenToUse": "The user wants the tools available inside their client rather than shelling out to curl. Start with the free studio server; making or rigging a model there needs a free three.ws account (OAuth sign-in or an API key). For one-off calls over plain HTTP instead, the 3D skills already show the JSON-RPC form.",
 			"category": "platform/agents",
 			"origin": "three.ws",
 			"crossPlatformSafe": false,

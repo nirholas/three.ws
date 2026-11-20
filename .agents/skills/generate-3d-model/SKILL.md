@@ -1,6 +1,6 @@
 ---
 name: generate-3d-model
-description: Turn a text prompt into a downloadable, textured 3D model (GLB). Use when you or the user want to generate, create, make, or forge a 3D model, asset, object, mesh, or prop from a text description, for example "make a 3D model of a robot", "generate a GLB of a sword", "I need a 3D chair". Runs on the FREE text→3D lane (no key, no account, free). Returns a GLB URL plus a browser viewer link.
+description: Turn a text prompt into a downloadable, textured 3D model (GLB). Use when you or the user want to generate, create, make, or forge a 3D model, asset, object, mesh, or prop from a text description, for example "make a 3D model of a robot", "generate a GLB of a sword", "I need a 3D chair". Runs on the FREE text→3D lane (free of charge; needs a free three.ws account or API key). Returns a GLB URL plus a browser viewer link.
 when_to_use: User wants a 3D object/asset/prop from text. For a posable character with a skeleton, use create-3d-avatar. To rig an existing GLB, use rig-a-model.
 license: MIT
 metadata:
@@ -12,8 +12,15 @@ metadata:
 # Generate a 3D model from text
 
 Turn a natural-language prompt into a textured, downloadable **GLB** model on the
-**free** three.ws text→3D lane (NVIDIA NIM / Microsoft TRELLIS). No API key and no
-account: the platform's server-side keys cover provider cost.
+**free** three.ws text→3D lane (NVIDIA NIM / Microsoft TRELLIS). The platform's
+server-side keys cover provider cost, so it costs nothing, but making a model needs
+a free three.ws account: every model has an owner who can find, publish or delete it
+later. Create an API key at `https://three.ws/dashboard/api-keys` and send it as
+`Authorization: Bearer <key>` (the examples below read it from `$THREE_WS_API_KEY`).
+
+New models are born **unlisted**: the viewer link works for anyone who has it, but
+the model stays out of the public showcase, feeds and search until its signed-in
+owner publishes it (publishing runs a content check first).
 
 The result is always two things: a durable **`glbUrl`** (download / import into any
 3D tool) and a **viewer link** that renders the model in the browser.
@@ -28,7 +35,8 @@ The result is always two things: a durable **`glbUrl`** (download / import into 
 
 ## Fastest path: the MCP tool
 
-If the three.ws MCP server is connected, call the free tool directly:
+If the three.ws MCP server is connected with your account (OAuth sign-in or a Bearer
+API key, see `connect-three-ws-mcp`), call the free tool directly:
 
 - **Tool:** `forge_free`
 - **Input:** `{ "prompt": "<description>", "tier": "draft" }`
@@ -46,11 +54,13 @@ image / multi-view → 3D, use the art-directed lanes described in
 ## Portable path: the hosted HTTP endpoint
 
 No MCP client required. The same free lane is a public JSON-RPC endpoint at
-`https://three.ws/api/mcp-studio` (no auth, no account):
+`https://three.ws/api/mcp-studio`. Reading tools (`tools/list`, job status) need no
+key; `forge_free` needs your API key:
 
 ```bash
 curl -s -X POST https://three.ws/api/mcp-studio \
   -H 'content-type: application/json' \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
   -d '{
     "jsonrpc": "2.0",
     "id": 1,
@@ -94,8 +104,12 @@ text→3D path above.
 ## Errors
 
 The free lane is shared and protected by per-IP rate limits and a global capacity
-breaker. Handle these and retry rather than failing:
+breaker. Handle these rather than failing:
 
+- `sign_in_required`: the call carried no account. Send
+  `Authorization: Bearer <key>` with a key from `https://three.ws/dashboard/api-keys`
+  (or connect the MCP client with OAuth sign-in), then call again. Do not retry
+  without one.
 - `rate_limited` / `busy`: honor `retryAfter` (seconds) and try again.
 - `not_configured`: the durable lane is momentarily cold; retry shortly.
 - `lane_degraded`: a result was produced but its URL was unreachable; retry.

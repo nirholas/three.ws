@@ -258,7 +258,7 @@ function readme() {
 
 The platform's 3D creation skills, packaged so any agent runtime can load them.
 Each folder is a self-contained skill: a \`SKILL.md\` whose frontmatter says when
-to trigger it, and instructions for driving the free, keyless 3D tools on
+to trigger it, and instructions for driving the free 3D tools on
 ${CONNECTOR}.
 
 | Skill | What it does |
@@ -281,8 +281,12 @@ curl https://three.ws/skills/3d-studio/${included[0].name}/SKILL.md
 
 Drop a folder into \`.claude/skills/\` for Claude Code or the Claude apps, upload
 the zip on the Skills tab of an OpenAI plugin submission, or point any other
-agent runtime at the same files. Nothing here needs an account, an API key, or a
-payment: the platform covers provider cost on the free lanes.
+agent runtime at the same files. Nothing here needs a payment: the platform covers
+provider cost on the free lanes. Making or rigging a model does need a free three.ws
+account, so every model has an owner: create an API key at
+https://three.ws/dashboard/api-keys and send it as \`Authorization: Bearer <key>\`,
+or connect with OAuth sign-in. New models are born unlisted until their owner
+publishes them.
 
 ## Generated, not hand-maintained
 

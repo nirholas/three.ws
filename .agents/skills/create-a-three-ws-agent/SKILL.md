@@ -68,9 +68,11 @@ Steps 1 and 2 are optional: an agent with no body is valid and its page renders 
 "create a body" state instead of an empty viewer. If the user already has an avatar,
 skip to step 3 with its `avatar_id`.
 
-### 1. Forge the body (free, no auth)
+### 1. Forge the body (free, with your key)
 
 Use the `generate-3d-model` or `create-3d-avatar` skill, or call the free lane directly.
+Making a model needs an account, so send the same `authorization: Bearer $THREE_WS_KEY`
+header; the model is saved to that account, unlisted until published.
 For an agent you want to animate, forge a **rigged** avatar (`forge_avatar`), not a prop.
 Keep the returned `glbUrl`.
 
