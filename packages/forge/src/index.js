@@ -43,8 +43,12 @@ export function createForge(options = {}) {
 		return new ThreeWsError(message, { code: 'sign_in_required', status: 401 });
 	}
 
-	function requireApiKey() {
-		if (!apiKey) throw signInRequired(false);
+	// A server-side caller may bring its own credential header in place of a key
+	// (a bearer it already holds, or a deployment's platform-job seed). The
+	// server judges that credential, so only a call carrying none is refused here.
+	function requireApiKey(headers) {
+		const h = headers || {};
+		if (!apiKey && !h.authorization && !h['x-forge-seed']) throw signInRequired(false);
 	}
 
 	async function request(path, init) {
@@ -85,7 +89,7 @@ export function createForge(options = {}) {
 		}
 
 		if (payWith === 'x402') return forgeOverX402({ input, tier, path, opts });
-		requireApiKey();
+		requireApiKey(opts.headers);
 
 		const body = {
 			prompt: input.prompt,
@@ -148,7 +152,7 @@ export function createForge(options = {}) {
 		if (!glbUrl || typeof glbUrl !== 'string') {
 			throw new ThreeWsError('rig() needs a GLB url string.', { code: 'invalid_input' });
 		}
-		requireApiKey();
+		requireApiKey(opts.headers);
 		const headers = providerHeaders(opts.headers, opts.providerKey);
 		const submitted = await request(FORGE_ROUTE, {
 			method: 'POST',

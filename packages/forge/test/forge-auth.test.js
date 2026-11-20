@@ -76,6 +76,23 @@ test('rig() without a key refuses before any request', async () => {
 	assert.equal(calls.length, 0);
 });
 
+// A server-side caller can bring its own credential header instead of an API
+// key: a bearer it already holds, or the deployment's platform-job seed (the
+// Agora citizen worker). The server judges that credential; the SDK must not
+// refuse the call client-side just because `apiKey` is unset.
+test('forge() and rig() send a caller-supplied credential header instead of refusing', async () => {
+	const { fetch, calls } = stubFetch([
+		{ body: { status: 'done', glb_url: 'https://three.ws/cdn/a.glb' } },
+		{ body: { status: 'done', glb_url: 'https://three.ws/cdn/b.glb' } },
+	]);
+	const client = createForge({ fetch });
+	await client.forge('a brass lantern', { headers: { 'x-forge-seed': 'synthetic-seed', 'x-forge-on-behalf': '1' } });
+	await client.rig('https://three.ws/cdn/a.glb', { headers: { authorization: 'Bearer sk_test_held' } });
+	assert.equal(calls.length, 2);
+	assert.equal(calls[0].init.headers['x-forge-seed'], 'synthetic-seed');
+	assert.equal(calls[1].init.headers.authorization, 'Bearer sk_test_held');
+});
+
 test('a key the server refuses is named as refused', async () => {
 	const { fetch } = stubFetch([{ status: 401, body: { error: 'invalid_api_key', message: 'Invalid API key.' } }]);
 	const client = createForge({ fetch, apiKey: 'sk_live_revoked' });

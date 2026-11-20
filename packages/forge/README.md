@@ -199,7 +199,7 @@ no options; reach for `createForge` when you need any of these:
 |---|---|---|
 | `baseUrl` | `string` | API origin. Defaults to `THREE_WS_BASE_URL`, then `https://three.ws`. |
 | `fetch` | `typeof fetch` | Bring your own, e.g. a payment-aware fetch that settles 402s. |
-| `apiKey` | `string` | Your three.ws API key, sent as `Authorization: Bearer …`. Required to make or rig a model; defaults to `THREE_WS_API_KEY`. Not used by `payWith: 'x402'`. |
+| `apiKey` | `string` | Your three.ws API key, sent as `Authorization: Bearer …`. Required to make or rig a model unless the call's `headers` already carry an `authorization` header; defaults to `THREE_WS_API_KEY`. Not used by `payWith: 'x402'`. |
 | `providerKey` | `string` | Default BYOK key. A per-call `providerKey` wins. |
 | `headers` | `object` | Default headers on every request. |
 
