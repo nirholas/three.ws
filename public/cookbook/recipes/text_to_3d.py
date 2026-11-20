@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Turn a text prompt into a downloadable GLB using the free three.ws 3D API.
 
-No API key, no account, no dependencies beyond the Python standard library.
+Free of charge, with no dependencies beyond the Python standard library. Making a
+model needs a free three.ws account: create an API key at
+https://three.ws/dashboard/api-keys and export it as THREE_WS_API_KEY.
 
+    export THREE_WS_API_KEY=...
     python3 text_to_3d.py "a small ceramic teapot with a bamboo handle"
     python3 text_to_3d.py "a wooden treasure chest" --out chest.glb
 
@@ -18,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 import urllib.error
@@ -26,6 +30,7 @@ import urllib.request
 
 API = "https://three.ws/api/3d/generate"
 USER_AGENT = "three.ws-cookbook/text_to_3d.py"
+API_KEYS_URL = "https://three.ws/dashboard/api-keys"
 
 # The free GPU lane is shared. Polling faster than the server's own retryAfter
 # hint trips the flood guard (HTTP 429) and helps nobody, so these bounds only
@@ -42,25 +47,31 @@ class ForgeError(RuntimeError):
 def _request(url: str, payload: dict | None = None, timeout: float = 180.0) -> dict:
     """POST JSON (or GET when payload is None) and decode the JSON response."""
     data = json.dumps(payload).encode() if payload is not None else None
-    req = urllib.request.Request(
-        url,
-        data=data,
-        method="POST" if data else "GET",
-        headers={
-            "content-type": "application/json",
-            "accept": "application/json",
-            "user-agent": USER_AGENT,
-        },
-    )
+    headers = {
+        "content-type": "application/json",
+        "accept": "application/json",
+        "user-agent": USER_AGENT,
+    }
+    api_key = os.environ.get("THREE_WS_API_KEY", "").strip()
+    if api_key:
+        headers["authorization"] = f"Bearer {api_key}"
+    req = urllib.request.Request(url, data=data, method="POST" if data else "GET", headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as res:
             return json.loads(res.read().decode())
     except urllib.error.HTTPError as exc:
         body = exc.read().decode(errors="replace")
         try:
-            detail = json.loads(body).get("error_description") or json.loads(body).get("error")
+            parsed = json.loads(body)
         except json.JSONDecodeError:
-            detail = body[:200]
+            parsed = {}
+        if exc.code == 401 and parsed.get("error") == "sign_in_required":
+            hint = "set" if not api_key else "check"
+            raise ForgeError(
+                f"making a model needs a free three.ws account. Create an API key at "
+                f"{API_KEYS_URL} and {hint} THREE_WS_API_KEY."
+            ) from exc
+        detail = parsed.get("error_description") or parsed.get("message") or parsed.get("error") or body[:200]
         raise ForgeError(f"HTTP {exc.code} from {url}: {detail}") from exc
     except urllib.error.URLError as exc:
         raise ForgeError(f"could not reach {url}: {exc.reason}") from exc
@@ -130,7 +141,7 @@ def slugify(text: str, limit: int = 48) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Text to 3D with the free, keyless three.ws API.",
+        description="Text to 3D with the free three.ws API (reads THREE_WS_API_KEY).",
         epilog="Docs: https://three.ws/docs/3d-api",
     )
     parser.add_argument("prompt", help="what to build, e.g. 'a wooden treasure chest'")

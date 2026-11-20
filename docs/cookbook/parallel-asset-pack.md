@@ -6,9 +6,11 @@ should take three minutes.
 
 **[Download `asset_pack.py`](/cookbook/recipes/asset_pack.py)** (it imports
 [`text_to_3d.py`](/cookbook/recipes/text_to_3d.py), so keep both in the same
-folder) and run:
+folder). With your free API key from [/dashboard/api-keys](/dashboard/api-keys)
+exported, run:
 
 ```bash
+export THREE_WS_API_KEY=...
 python3 asset_pack.py "a clay flower pot with a saucer" "a woven wicker basket" "a brass watering can" --out ./garden-pack
 ```
 

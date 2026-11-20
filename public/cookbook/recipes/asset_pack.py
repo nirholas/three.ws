@@ -15,7 +15,9 @@ Usage:
     python3 asset_pack.py "a clay flower pot" "a woven basket" "a brass watering can"
     python3 asset_pack.py --prompts-file prompts.txt --out ./garden-pack --workers 3
 
-Standard library only. No API key, no account.
+Standard library only. Making models needs a free three.ws account: create an
+API key at https://three.ws/dashboard/api-keys and export it as THREE_WS_API_KEY
+(text_to_3d.py sends it).
 
 Recipe: https://three.ws/cookbook/parallel-asset-pack
 API reference: https://three.ws/docs/3d-api

@@ -9,18 +9,23 @@ You will finish with a folder you can regenerate at any time, a manifest that
 records exactly what was built, and a CI check that refuses to let a broken model
 through.
 
-**Prerequisites:** Python 3.10 or newer. That is the whole list. The
-[3D API](/docs/3d-api) is free and keyless, so there is no account to make and no
-key to store.
+**Prerequisites:** Python 3.10 or newer, and a free three.ws API key. The
+[3D API](/docs/3d-api) costs nothing, but making a model needs a free account, so
+create a key at [/dashboard/api-keys](/dashboard/api-keys) and export it once;
+every recipe below reads it from there:
+
+```bash
+export THREE_WS_API_KEY=...
+```
 
 Every stage uses a file from the [Cookbook](/cookbook). Download them into one
 working directory as you go.
 
 **Want to see it before you build it?** The
 [Pipeline Studio](/cookbook/pipeline) runs all four stages in a browser tab, on
-the same free API, with no install at all. It is the fastest way to understand
-what you are about to write, and it hands you the exact commands below when it
-finishes.
+the same free API, with no install at all (sign in first, since it makes models).
+It is the fastest way to understand what you are about to write, and it hands you
+the exact commands below when it finishes.
 
 ![The Pipeline Studio after a real three-model run: prompts and a budget on the left, every model rendered and graded on the right](figure:img:/cookbook/media/pipeline-studio-run.png)
 
@@ -162,7 +167,7 @@ Protocol server exposing two tools: generate a model, and render one to an image
 
 ```bash
 npm install @modelcontextprotocol/sdk zod
-claude mcp add three-ws-3d -- node /absolute/path/to/mcp_3d_server.mjs
+claude mcp add three-ws-3d -e THREE_WS_API_KEY=$THREE_WS_API_KEY -- node /absolute/path/to/mcp_3d_server.mjs
 ```
 
 Now your assistant can build a model when you ask for one, and, because the
@@ -190,8 +195,8 @@ schema, and rebuilds anything that missed, once, from the critic's own revised
 prompt.
 
 That is the same pipeline you just built, with a vision model where your
-judgement used to be. It needs an OpenAI API key, and it is the natural next
-step once the mechanical stages are running.
+judgement used to be. It needs an OpenAI API key as well as your three.ws key,
+and it is the natural next step once the mechanical stages are running.
 
 ---
 

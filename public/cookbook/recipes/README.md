@@ -15,8 +15,11 @@ published. Nothing here is illustrative pseudocode.
 | [`asset_gate.py`](asset_gate.py) | Fails CI when a model busts a triangle, size, or material budget | Python 3.10+ |
 | [`mcp_3d_server.mjs`](mcp_3d_server.mjs) | An MCP server exposing text-to-3D and rendering as tools | Node 18+, `@modelcontextprotocol/sdk`, `zod` |
 
-None of them need an API key. They call the free, keyless
-[3D API](https://three.ws/docs/3d-api).
+They call the free [3D API](https://three.ws/docs/3d-api). Making a model needs a
+free three.ws account, so the three that generate (`text_to_3d.py`,
+`asset_pack.py`, `mcp_3d_server.mjs`) read an API key from `THREE_WS_API_KEY`;
+create one at https://three.ws/dashboard/api-keys. `asset_gate.py` only
+inspects models and needs no key.
 
 ## Run them
 

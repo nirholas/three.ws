@@ -2,21 +2,24 @@
 /**
  * An MCP server that gives any MCP client a text-to-3D tool.
  *
- * Wraps the free, keyless three.ws 3D API as two Model Context Protocol tools,
- * so Claude Code, Claude Desktop, Cursor, or any other MCP client can generate
- * real GLB models mid-conversation. No API key, no account.
+ * Wraps the free three.ws 3D API as two Model Context Protocol tools, so
+ * Claude Code, Claude Desktop, Cursor, or any other MCP client can generate
+ * real GLB models mid-conversation. Free of charge; making a model needs a
+ * free three.ws account, so create an API key at
+ * https://three.ws/dashboard/api-keys and pass it as THREE_WS_API_KEY.
  *
  *   npm install @modelcontextprotocol/sdk zod
- *   node mcp_3d_server.mjs            # speaks MCP over stdio
+ *   THREE_WS_API_KEY=... node mcp_3d_server.mjs   # speaks MCP over stdio
  *
  * Register it with Claude Code:
  *
- *   claude mcp add three-ws-3d -- node /absolute/path/to/mcp_3d_server.mjs
+ *   claude mcp add three-ws-3d -e THREE_WS_API_KEY=... -- node /absolute/path/to/mcp_3d_server.mjs
  *
  * Or add it to a client's config by hand:
  *
  *   { "mcpServers": { "three-ws-3d": { "command": "node",
- *       "args": ["/absolute/path/to/mcp_3d_server.mjs"] } } }
+ *       "args": ["/absolute/path/to/mcp_3d_server.mjs"],
+ *       "env": { "THREE_WS_API_KEY": "..." } } } }
  *
  * Recipe: https://three.ws/cookbook/mcp-3d-tool
  * API reference: https://three.ws/docs/3d-api
@@ -29,6 +32,8 @@ import { z } from 'zod';
 const GENERATE_API = 'https://three.ws/api/3d/generate';
 const RENDER_API = 'https://three.ws/api/render/glb';
 const USER_AGENT = 'three.ws-cookbook/mcp_3d_server';
+const API_KEYS_URL = 'https://three.ws/dashboard/api-keys';
+const API_KEY = (process.env.THREE_WS_API_KEY ?? '').trim();
 
 // The free lane is a shared GPU pool. These bounds only ever clamp a server
 // hint that is missing or absurd; the server's own retryAfter wins inside them.
@@ -51,6 +56,7 @@ async function callJson(url, body) {
 			'content-type': 'application/json',
 			accept: 'application/json',
 			'user-agent': USER_AGENT,
+			...(API_KEY ? { authorization: `Bearer ${API_KEY}` } : {}),
 		},
 		body: body ? JSON.stringify(body) : undefined,
 	});
@@ -61,9 +67,14 @@ async function callJson(url, body) {
 	} catch {
 		throw new Error(`${url} returned non-JSON (HTTP ${res.status}): ${text.slice(0, 200)}`);
 	}
+	if (res.status === 401 && payload.error === 'sign_in_required') {
+		throw new Error(
+			`Making a model needs a free three.ws account. Create an API key at ${API_KEYS_URL} and ${API_KEY ? 'check' : 'set'} THREE_WS_API_KEY in this server's environment.`,
+		);
+	}
 	if (!res.ok) {
 		throw new Error(
-			`HTTP ${res.status} from ${url}: ${payload.error_description || payload.error || text.slice(0, 200)}`,
+			`HTTP ${res.status} from ${url}: ${payload.error_description || payload.message || payload.error || text.slice(0, 200)}`,
 		);
 	}
 	return payload;
@@ -95,7 +106,7 @@ async function generate(prompt, { timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
 
 const server = new McpServer(
 	{ name: 'three-ws-3d', version: '1.0.0' },
-	{ instructions: 'Generate real 3D models (GLB) from text prompts. Free and keyless.' },
+	{ instructions: 'Generate real 3D models (GLB) from text prompts. Free of charge, with a three.ws API key in THREE_WS_API_KEY.' },
 );
 
 server.registerTool(

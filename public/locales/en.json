@@ -3736,7 +3736,7 @@
 		"filter_all": "All",
 		"filter_beginner": "Beginner",
 		"filter_intermediate": "Intermediate",
-		"hero_free": "Free, keyless <a href=\"/docs/3d-api\">3D API</a>",
+		"hero_free": "Free <a href=\"/docs/3d-api\">3D API</a>, one API key",
 		"hero_h1": "Recipes you can run.",
 		"hero_langs": "Python and Node",
 		"hero_p": "Not walkthroughs. Every recipe here is a real file that was executed against the live API before it was published: a command-line tool, a batch pipeline, an MCP server, a CI gate, a self-correcting agent loop. Copy one, run it, change it.",
@@ -3747,7 +3747,7 @@
 		"outro_read_docs": "Read the API docs",
 		"outro_tutorials": "Browse tutorials",
 		"page_title": "three.ws: Cookbook",
-		"share_desc": "Runnable recipes for building with three.ws. Every recipe ships a file you can run, against the free and keyless 3D API.",
+		"share_desc": "Runnable recipes for building with three.ws. Every recipe ships a file you can run, against the free 3D API.",
 		"share_title": "three.ws: Cookbook",
 		"toolbar_aria": "Filter recipes by level"
 	},

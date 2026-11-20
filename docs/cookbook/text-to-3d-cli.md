@@ -1,8 +1,10 @@
 # Text to 3D from the command line
 
-**[Download `text_to_3d.py`](/cookbook/recipes/text_to_3d.py)** and run it:
+**[Download `text_to_3d.py`](/cookbook/recipes/text_to_3d.py)**, create a free
+API key at [/dashboard/api-keys](/dashboard/api-keys), and run it:
 
 ```bash
+export THREE_WS_API_KEY=...
 python3 text_to_3d.py "a wooden treasure chest with iron bands"
 ```
 
@@ -16,7 +18,7 @@ saved 1651 KB to a-wooden-treasure-chest-with-iron-bands.glb
 
 ![The treasure chest that command produced, rendered by the platform renderer](figure:img:/cookbook/posters/text-to-3d-cli.png)
 
-That is the whole recipe. No API key, no account, no `pip install`. The file is
+That is the whole recipe. One free API key, no `pip install`. The file is
 about 170 lines of standard-library Python, and roughly a third of it is there
 to handle the two things that actually go wrong in production.
 
