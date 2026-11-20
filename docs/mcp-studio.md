@@ -2,8 +2,11 @@
 
 A free, non-crypto MCP server that turns a text prompt or an image into an
 interactive, downloadable 3D model (GLB). It exposes **only** 3D-generation
-tools — no account, no payment, no API key, no wallet, no token. Built for the
-OpenAI ChatGPT App Directory and any MCP client.
+tools: no payment, no wallet, no token. Making, rigging, refining or rendering a
+model needs a free three.ws account (OAuth sign-in or an API key); job status,
+the asset catalog and docs search stay open. New models are saved to that account
+unlisted until you publish them. Built for the OpenAI ChatGPT App Directory and
+any MCP client.
 
 > The paid, crypto-enabled studio (per-call USDC via x402) is a separate server
 > at `/api/mcp-3d`. This endpoint shares none of that surface.
@@ -14,7 +17,7 @@ OpenAI ChatGPT App Directory and any MCP client.
 |---|---|
 | **URL** | `https://three.ws/api/mcp-studio` |
 | **Transport** | Streamable HTTP (JSON-RPC over `POST`) |
-| **Auth** | None — open and free |
+| **Auth** | Free three.ws account for the tools that make, rig, refine or render a model, or save a persona: OAuth 2.1 at `https://three.ws/api/mcp-studio?auth=oauth`, or `Authorization: Bearer <API key>` with a key from [/dashboard/api-keys](https://three.ws/dashboard/api-keys). Every other tool is open. |
 | **Protocol** | MCP `2025-06-18` |
 | **Manifest** | [`server-studio.json`](../server-studio.json) |
 
@@ -23,7 +26,7 @@ answers every request synchronously over `POST`. `OPTIONS` is handled for CORS.
 
 ### ChatGPT (Apps SDK)
 
-To add the studio to your own ChatGPT, follow [three.ws/chatgpt](https://three.ws/chatgpt): turn on developer mode (Settings, Apps, Advanced settings), create an app with the URL `https://three.ws/api/mcp-chatgpt` and **No authentication**, then pick it from the **+** menu in a chat.
+To add the studio to your own ChatGPT, follow [three.ws/chatgpt](https://three.ws/chatgpt): turn on developer mode (Settings, Apps, Advanced settings), create an app with the URL `https://three.ws/api/mcp-chatgpt?auth=oauth` and **OAuth** authentication, sign in to your free three.ws account when ChatGPT asks, then pick it from the **+** menu in a chat.
 
 Three front doors serve the same tools over one handler
 ([`api/_mcp-studio/handler.js`](../api/_mcp-studio/handler.js)) and share one
@@ -43,7 +46,16 @@ framing our own page is not that case. `SURFACES` in
 [`api/_mcp-studio/dispatch.js`](../api/_mcp-studio/dispatch.js) is the single
 definition of what each door advertises.
 
-Add either connector with **No authentication**. Each generation tool renders its
+Add either connector with **OAuth** authentication on the `?auth=oauth` form of
+its URL (for example `https://three.ws/api/mcp-chatgpt?auth=oauth`), so the host
+signs you in before the first call. A connector added with **No authentication**
+still lists every tool, but a tool that makes a model answers with a sign-in
+result: its `structuredContent` carries `reason: "sign_in_required"`,
+`sign_in_url` and `api_keys_url`, and `_meta["mcp/www_authenticate"]` holds the
+challenge ChatGPT turns into a "Connect your account" prompt. Each tool declares
+this up front in `securitySchemes`: `oauth2` (scope `avatars:write`) on the tools
+that make, rig, refine or render a model and on `create_agent_persona`, `noauth`
+on the rest. Each generation tool renders its
 result inline in an interactive 3D viewer widget
 (`ui://widget/three-studio-model.html`); on `/api/mcp-studio` the persona tools
 also render a living agent body in their own widget
@@ -61,12 +73,19 @@ curl -s https://three.ws/api/mcp-studio \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
+Listing tools needs no key. To call a tool that makes a model, add
+`-H "authorization: Bearer $THREE_WS_API_KEY"` with a key from
+[/dashboard/api-keys](https://three.ws/dashboard/api-keys).
+
 ### Connector URL for cloud agents (install tokens)
 
 Grok Bot, the xAI Responses API and other hosted agents call MCP from their
 vendor's cloud, so every user of one agent reaches three.ws from the same few
 IPs. Keyed per IP, they would all share one free quota. An **install token**
-gives one installation its own quota, free and anonymous: no account, no key.
+gives one installation its own request quota, free and anonymous: no account,
+no key. A token is not a sign-in: the tools that make a model still need the
+connector signed in to an account (OAuth or an API key), and their generation
+caps then key on that account.
 
 1. Mint a token (or click **Generate my connector URL** on
    [/connect](/connect?server=three-ws-studio) with the free studio selected):
@@ -90,13 +109,15 @@ gives one installation its own quota, free and anonymous: no account, no key.
    }
    ```
 
-2. Add the connector with that URL and **No authentication**. The same token
-   works on every studio door; Grok Bot users want the `grok` URL.
+2. Add the connector with that URL, signed in with OAuth or an API key so its
+   generation tools work. The same token works on every studio door; Grok Bot
+   users want the `grok` URL.
 
 How it behaves:
 
-- The transport cap and the generation burst and hourly caps key on the token
-  instead of the IP. Two tokens from one IP have independent budgets.
+- The transport cap keys on the token instead of the IP. Two tokens from one
+  IP have independent request budgets. The generation caps key on the signed-in
+  account, never on a token.
 - A missing, malformed or forged token is ignored and the request keys exactly
   as it would without one (per IP, or per ChatGPT user / MCP session on those
   doors).
@@ -143,7 +164,9 @@ launcher, living avatars, link unfurls) is documented end to end in
 - **Three persona/embodiment tools** (`create_agent_persona`,
   `get_agent_persona`, `persona_say`), in the **Embodiment** section further down.
 
-All sixteen are free and keyless. `/api/mcp-chatgpt` lists eight of them: the
+All sixteen are free of charge. The six generation tools, `look_at_model` and
+`create_agent_persona` need a signed-in account (see **Auth** above); the rest
+need no key. `/api/mcp-chatgpt` lists eight of them: the
 six generation tools, `check_job` and `look_at_model`, without `get_job`, the
 catalog reads, `search_docs` or the persona tools.
 
@@ -188,7 +211,7 @@ the CC0 prop library, the ready-made rigged characters and the motion-clip libra
 release and its integrity hash, `<model-viewer>`, three.js or React). Schemas and
 example responses are in [docs/mcp.md](./mcp.md#search_catalog).
 
-They are here because this is the server an MCP client can use with no account.
+They are here because this server serves its reads with no account.
 The main server at `https://three.ws/api/mcp` lists the same three tools, but a
 protocol client that connects there is sent through three.ws sign-in first,
 because most of that server's tools act on an account. The catalog tools never
@@ -220,7 +243,7 @@ failing the conversation, so a default of `high` would sometimes mean serving
 standard while the docs promised more.
 
 Nothing here is ever billed to you. The high tier is platform-funded, so the
-caller stays anonymous and keyless at every tier. A generation can outlive one
+free account is all a caller needs at every tier. A generation can outlive one
 tool call at any tier; see [Pending generations](#pending-generations-check_job)
 for how it is collected rather than lost.
 
@@ -419,7 +442,7 @@ under the host's limit. `/api/mcp-studio` keeps the long inline wait (up to
 three minutes), because other MCP hosts wait for it.
 
 Any HTTP client can poll `pollUrl` directly instead; it is the same public,
-auth-free job handle the [3D API](/docs/3d-api) hands anonymous callers.
+auth-free job handle the [3D API](/docs/3d-api) hands back. Polling needs no key.
 
 ### Job status (`get_job`)
 
@@ -503,11 +526,10 @@ cannot rate-limit a task.
 The rules:
 
 - **The caller owns the key.** It is the identity the
-  [rate limits](#funding--limits) charge: an install token from the connector
-  URL, the ChatGPT user, the Grok MCP session, else the IP address. A different
-  caller using the same key gets its own job. An agent that reconnects (and so
-  gets a new Grok session) keeps its keys only on a
-  [connector URL with an install token](#connector-url-for-cloud-agents-install-tokens).
+  [rate limits](#funding--limits) charge, which for every generation call is the
+  signed-in three.ws account. A different caller using the same key gets its own
+  job, and an agent that reconnects keeps its keys as long as it signs in to the
+  same account.
 - **A key names one request.** The same key with different arguments, or on a
   different tool, is refused with `reason: "idempotency_key_reused"` and starts
   nothing.
@@ -670,23 +692,26 @@ image→3D), so in the normal case the platform's marginal cost per generation i
 zero. The platform-keyed Replicate lane stays in the chain as a failover rung
 rather than being excluded, so a free-lane outage degrades to a slower or
 costlier engine instead of failing the user's request. Either way the cost lands
-on the platform and never on the caller: no key, no account, no payment surface.
+on the platform and never on the caller: a free account, no payment surface.
 
 The endpoint still enforces real per-caller abuse protection
-(`api/_lib/rate-limit.js`, numbers in its `STUDIO_LIMITS`). The caller is a
-verified [install token](#connector-url-for-cloud-agents-install-tokens) when the
-connector URL carries one, else the door's own per-user identity, else the IP:
+(`api/_lib/rate-limit.js`, numbers in its `STUDIO_LIMITS`). The caller is the
+signed-in account when there is one, else a verified
+[install token](#connector-url-for-cloud-agents-install-tokens) when the
+connector URL carries one, else the door's own per-user identity, else the IP.
+Every generation call has an account (an anonymous one is refused before it
+reaches the quota), so the generation caps below are per account, and minting
+install tokens never multiplies one account's budget:
 
 - **Burst:** 4 generations / minute / caller
 - **Hourly:** 30 generations / hour / caller
-- **Install tokens:** on any door, `?install=<token>` keys the caps (and the
-  transport cap) on the token. Minting is capped at 10 / hour / IP.
-- **ChatGPT users:** every ChatGPT user reaches `/api/mcp-chatgpt` from OpenAI's
-  shared egress IPs, so there the burst and hourly caps key on the anonymized
-  per-user `openai/subject` ChatGPT sends with each tool call. On `/api/mcp-grok`
-  they key on the `Mcp-Session-Id` the server issues. Whenever the caller is not
-  the IP (token, subject or session), one IP is still held to 300 generations /
-  hour in total. Without any of them the caps key on the IP as above.
+- **Install tokens:** on any door, `?install=<token>` keys the transport cap on
+  the token instead of the IP. Minting is capped at 10 / hour / IP.
+- **Shared egress:** every ChatGPT user reaches `/api/mcp-chatgpt` from OpenAI's
+  shared egress IPs, and Grok users reach `/api/mcp-grok` from xAI's. Generation
+  caps key on the signed-in account, so that sharing costs no one their quota;
+  one IP is still held to 300 generations / hour in total across every account
+  on it.
 - **Persona writes:** 20 / minute / IP (`create_agent_persona`, `persona_say`;
   `get_agent_persona` is a read and rides the transport cap)
 - **Transport:** 300 requests / minute / IP (discovery, never throttled by the
@@ -711,19 +736,18 @@ and how to lift it:
   "id": 5,
   "error": {
     "code": -32000,
-    "message": "Rate limited: the free 3D studio allows 4 generations per minute for your IP address, and that limit is used up. It resets at 2026-10-08T19:30:38.140Z (in 55 s). Lift it with a free install token: POST https://three.ws/api/mcp-studio/install (no account, no key) and reconnect at https://three.ws/api/mcp-studio?install=<token>, which gets its own budget. Or sign in at https://three.ws/api/mcp-3d (OAuth 2.1), metered per account.",
+    "message": "Rate limited: the free 3D studio allows 4 generations per minute for this three.ws account, and that limit is used up. It resets at 2026-10-08T19:30:38.140Z (in 55 s). Wait for the reset, or sign in at https://three.ws/api/mcp-3d (OAuth 2.1), which meters generation on a separate per-account budget.",
     "data": {
       "reason": "rate_limited",
       "limit": "generation_burst",
       "max": 4,
       "window": "1 m",
-      "keyed_on": "ip",
+      "keyed_on": "account",
       "reset_at": "2026-10-08T19:30:38.140Z",
       "retry_after": 55,
       "remedy": {
-        "kind": "install_token",
-        "install_endpoint": "https://three.ws/api/mcp-studio/install",
-        "connector_url": "https://three.ws/api/mcp-studio?install=<token>"
+        "kind": "account",
+        "oauth_server": "https://three.ws/api/mcp-3d"
       }
     }
   }
@@ -731,11 +755,13 @@ and how to lift it:
 ```
 
 `data.limit` is one of `generation_burst`, `generation_hourly`,
-`generation_ip_pool` and `generation_global`; `data.keyed_on` is `install`,
-`session`, `chatgpt_user`, `ip` or `platform`. A caller that already holds a
-token, or hits the per-IP pool or the platform-wide breaker, gets
-`remedy.kind: "account"` with `oauth_server` instead, since a new token would
-not help. The transport cap (300 requests a minute) still answers HTTP 429 with
+`generation_ip_pool` and `generation_global`; `data.keyed_on` is `account` for
+the burst and hourly caps (every generation call is signed in), `ip` for the
+per-IP pool and `platform` for the breaker. The remedy is always
+`remedy.kind: "account"` with `oauth_server`: an install token never lifts a
+generation cap. The `install_token` remedy (an `install_endpoint` and a
+`connector_url`) appears only on the per-IP transport cap of a caller with no
+token. The transport cap (300 requests a minute) still answers HTTP 429 with
 the same `reset_at` and `remedy` fields.
 
 Because the lanes are zero-cost, the **per-IP** caps **fail open** if the
