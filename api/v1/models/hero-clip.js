@@ -10,6 +10,10 @@
 //   GET  ?job=<handle>   the job's status; once xAI finishes, the clip is copied
 //                        into our storage and the answer carries its URL and the
 //                        public clip page.
+//   GET  ?fallback=1&model_id=|glb_url=
+//                        the turntable and angle render URLs for a model, with
+//                        no render or xAI call: what a page shows instead of a
+//                        clip when the service has no key.
 //
 // Success answers use the v1 envelope ({ data }); failures carry
 // { error, error_description, message, retry } plus, where useful, a fallback.
@@ -295,6 +299,28 @@ function describe(principal) {
 	};
 }
 
+// The turntable and angle renders on their own, for a page that already knows
+// clips are off: the same model resolution as a create (private models only
+// for their owner), and no render or xAI call happens here.
+async function fallback({ req, query, principal }) {
+	const pick = (name) => (typeof query?.[name] === 'string' ? query[name] : undefined);
+	const source = await resolveSource(
+		req,
+		{
+			model_id: pick('model_id'),
+			glb_url: pick('glb_url'),
+			title: pick('title'),
+			source_page: pick('source_page'),
+		},
+		principal?.userId || null,
+	);
+	return {
+		available: xaiVideoConfigured(),
+		source: publicSource(source),
+		fallback: fallbackFor(source),
+	};
+}
+
 async function create({ req, res, body, principal }) {
 	if (!principal?.userId) return signInRequired(res);
 	const userId = principal.userId;
@@ -511,6 +537,7 @@ export default defineEndpoint({
 	handler: async (ctx) => {
 		if (ctx.req.method === 'POST') return create(ctx);
 		if (ctx.query?.job) return status(ctx);
+		if (ctx.query?.fallback) return fallback(ctx);
 		return describe(ctx.principal);
 	},
 });

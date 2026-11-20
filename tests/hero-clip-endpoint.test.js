@@ -323,6 +323,49 @@ describe('POST with no xAI key', () => {
 	});
 });
 
+// The panel reads the turntable this way once describe has said clips are off,
+// so a no-key page never sends a create it knows will answer 503.
+describe('GET ?fallback=1', () => {
+	it('answers 200 with the same turntable and angle renders as the no-key create', async () => {
+		const res = await call('GET', { user: USER, query: `?fallback=1&model_id=${CREATION}` });
+		expect(res.statusCode).toBe(200);
+		expect(res.body.data).toMatchObject({
+			available: false,
+			source: { kind: 'creation', id: CREATION, page: `/m/${CREATION}` },
+		});
+		const created = await call('POST', { user: USER, body: { model_id: CREATION } });
+		expect(res.body.data.fallback).toEqual(created.body.fallback);
+		expect(state.renders).toHaveLength(0);
+		expect(xaiCalls).toHaveLength(0);
+	});
+
+	it('takes a public glb_url with its title', async () => {
+		const res = await call('GET', { query: `?fallback=1&glb_url=${encodeURIComponent(GLB)}&title=Chrome%20toy%20rocket` });
+		expect(res.statusCode).toBe(200);
+		expect(res.body.data.source).toMatchObject({ kind: 'url', title: 'Chrome toy rocket' });
+		expect(new URL(res.body.data.fallback.turntable_url, 'https://three.ws').searchParams.get('src')).toBe(GLB);
+	});
+
+	it('reports availability once a key exists, so a stale page can offer the real clip', async () => {
+		process.env.GROK_API_KEY = 'xai-test';
+		const res = await call('GET', { user: USER, query: `?fallback=1&model_id=${CREATION}` });
+		expect(res.statusCode).toBe(200);
+		expect(res.body.data.available).toBe(true);
+		expect(xaiCalls).toHaveLength(0);
+	});
+
+	it.each([
+		[`?fallback=1&model_id=${PRIVATE_CREATION}`, 404, 'not_found'],
+		['?fallback=1&model_id=not-a-uuid', 400, 'validation_error'],
+		['?fallback=1', 400, 'validation_error'],
+		[`?fallback=1&glb_url=${encodeURIComponent('https://169.254.169.254/latest.glb')}`, 400, 'invalid_src'],
+	])('%s answers %i %s', async (query, status, error) => {
+		const res = await call('GET', { user: USER, query });
+		expect(res.statusCode).toBe(status);
+		expect(res.body.error).toBe(error);
+	});
+});
+
 describe('POST with a key', () => {
 	beforeEach(() => {
 		process.env.GROK_API_KEY = 'xai-test';

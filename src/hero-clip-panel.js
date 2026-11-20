@@ -67,18 +67,34 @@ async function readJson(res) {
 	}
 }
 
-function failureFrom(res, body) {
-	const message =
-		body?.message ||
-		body?.error_description ||
-		(res?.status ? `The clip service answered ${res.status}. Try again.` : 'The clip service could not be reached. Check your connection and try again.');
+function unreadableMessage(status) {
+	if (status >= 500) return `The clip service had a problem (HTTP ${status}). Try again in a moment.`;
+	return 'This page is older than the clip service. Reload the page and try again.';
+}
+
+export function failureFrom(res, body) {
+	if (!res) {
+		return {
+			status: 0,
+			code: 'network_error',
+			message: 'The clip service could not be reached. Check your connection and try again.',
+			retry: true,
+			retryAfter: null,
+		};
+	}
+	const readable = Boolean(body?.error);
 	return {
-		status: res?.status ?? 0,
-		code: body?.error || 'network_error',
-		message,
+		status: res.status,
+		code: readable ? body.error : 'unexpected_response',
+		message: body?.message || body?.error_description || unreadableMessage(res.status),
 		retry: body?.retry ?? true,
 		retryAfter: Number(body?.retry_after) || null,
 	};
+}
+
+// A 2xx or 4xx without the expected body: this page predates the service.
+function needsReload(f) {
+	return f.code === 'unexpected_response' && f.status < 500;
 }
 
 function loginHref() {
@@ -236,15 +252,15 @@ export function mountHeroClip(host, source) {
 		);
 		bindPicker();
 		root.querySelector('[data-act="make"]')?.addEventListener('click', submit);
-		root.querySelector('[data-act="turntable"]')?.addEventListener('click', submit);
+		root.querySelector('[data-act="turntable"]')?.addEventListener('click', showTurntable);
 	}
 
-	function renderSubmitting() {
+	function renderSubmitting(message = 'Rendering this model for the first frame.') {
 		view(
 			'submitting',
 			`<div class="hc-stage">
 				<div class="hc-frame hc-frame--loading" aria-hidden="true"></div>
-				<p class="hc-status" role="status"><span class="hc-dot" aria-hidden="true"></span>Rendering this model for the first frame.</p>
+				<p class="hc-status" role="status"><span class="hc-dot" aria-hidden="true"></span>${esc(message)}</p>
 			</div>`,
 		);
 	}
@@ -362,10 +378,13 @@ export function mountHeroClip(host, source) {
 				<p><strong>${esc(errorTitle(f))}</strong> ${esc(f.message)}${esc(wait)}</p>
 			</div>
 			<div class="hc-actions">
-				${f.retry && onRetry ? '<button type="button" class="hc-btn hc-btn--primary" data-act="retry">Try again</button>' : ''}
-				<button type="button" class="hc-btn${f.retry && onRetry ? ' hc-btn--ghost' : ''}" data-act="change">Change the style</button>
+				${needsReload(f)
+					? '<button type="button" class="hc-btn hc-btn--primary" data-act="reload">Reload the page</button>'
+					: f.retry && onRetry ? '<button type="button" class="hc-btn hc-btn--primary" data-act="retry">Try again</button>' : ''}
+				<button type="button" class="hc-btn${needsReload(f) || (f.retry && onRetry) ? ' hc-btn--ghost' : ''}" data-act="change">Change the style</button>
 			</div>`,
 		);
+		root.querySelector('[data-act="reload"]')?.addEventListener('click', () => location.reload());
 		root.querySelector('[data-act="retry"]')?.addEventListener('click', onRetry);
 		root.querySelector('[data-act="change"]').addEventListener('click', () => (s.describe ? renderIdle() : start()));
 	}
@@ -375,6 +394,7 @@ export function mountHeroClip(host, source) {
 		if (f.code === 'clip_refused') return 'This clip was declined.';
 		if (f.code === 'render_failed') return 'This model could not be rendered.';
 		if (f.code === 'network_error') return 'No connection to the clip service.';
+		if (needsReload(f)) return 'Reload this page.';
 		return 'The clip did not finish.';
 	}
 
@@ -456,6 +476,32 @@ export function mountHeroClip(host, source) {
 		s.pollFailures = 0;
 		renderGenerating();
 		poll(gen);
+	}
+
+	// Describe already said clips are off, so read the renders directly instead
+	// of sending a create that can only answer 503.
+	async function showTurntable() {
+		const gen = ++s.generation;
+		stopTimers();
+		renderSubmitting('Preparing the turntable for this model.');
+		const q = new URLSearchParams({ fallback: '1' });
+		for (const [k, v] of Object.entries(sourceBody())) if (v) q.set(k, v);
+		let res;
+		let body;
+		try {
+			res = await apiFetch(`${ENDPOINT}?${q}`, { allowAnonymous: true, headers: s.source.headers || {} });
+			body = await readJson(res);
+		} catch {
+			if (gen !== s.generation) return;
+			return renderError(failureFrom(null, null), { onRetry: showTurntable });
+		}
+		if (gen !== s.generation) return;
+		if (!res.ok || !body?.data?.fallback) return renderError(failureFrom(res, body), { onRetry: showTurntable });
+		if (body.data.available) {
+			s.describe = { ...s.describe, available: true };
+			return renderIdle();
+		}
+		renderUnavailable(body.data);
 	}
 
 	function schedulePoll(gen) {
