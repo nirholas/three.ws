@@ -25,6 +25,10 @@ dependencies = [
     "livekit-agents>=1.6.4",
 ]
 
+[project.optional-dependencies]
+grok = ["livekit-plugins-xai>=1.8"]
+dev = ["livekit-plugins-xai>=1.8", "pytest>=8", "pytest-asyncio>=0.23"]
+
 [project.urls]
 Documentation = "https://three.ws/docs"
 Website = "https://three.ws/"

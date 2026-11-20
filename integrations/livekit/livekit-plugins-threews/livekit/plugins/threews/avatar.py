@@ -164,11 +164,16 @@ class AvatarSession(BaseAvatarSession):
             self._publish({"type": "gesture", "name": gesture})
 
     def _on_user_input_transcribed(self, ev: UserInputTranscribedEvent) -> None:
-        if ev.is_final:
+        # Keep interim text too: realtime speech-to-speech models (Grok Voice,
+        # OpenAI Realtime) only mark the user's transcript final when the reply
+        # starts, after the user has already stopped speaking. The empty
+        # interim the session emits on speech end must not wipe the turn.
+        if ev.transcript:
             self._last_user_transcript = ev.transcript
 
     def _on_user_state_changed(self, ev: UserStateChangedEvent) -> None:
         if ev.new_state == "speaking":
+            self._last_user_transcript = ""
             self._publish({"type": "speech_started"})
         elif ev.old_state == "speaking":
             self._publish({"type": "speech_ended", "transcript": self._last_user_transcript})

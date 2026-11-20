@@ -59,6 +59,29 @@ agent is already in.
 - **Listening pose** comes from `user_state_changed`: the avatar gets
   `speech_started` / `speech_ended` events around the user's own turns.
 
+## Grok Voice realtime (speech to speech)
+
+[`examples/grok_realtime_agent.py`](examples/grok_realtime_agent.py) gives
+the `AgentSession` a single model, `livekit-plugins-xai`'s
+`xai.realtime.RealtimeModel` (xAI's Grok Voice realtime API). The caller's
+audio goes straight to the model and its spoken reply comes straight back,
+with no separate STT, LLM and TTS legs, and the avatar animates from the
+same session events as a cascade pipeline.
+
+```bash
+pip install "livekit-plugins-threews[grok]"
+export XAI_API_KEY=...   # GROK_VOICE picks the voice, default Ara
+python examples/grok_realtime_agent.py connect --room grok-avatar
+```
+
+Realtime models only mark the caller's transcript final once the reply
+starts, which is after the user has stopped speaking, so `speech_ended`
+carries the latest transcript of the turn (interim or final) and resets at
+the start of every user turn. Without `XAI_API_KEY` the session fails at
+setup with a message naming the variable. The browser path, token broker
+and measured latency are in
+[`docs/voice-grok.md`](../../../docs/voice-grok.md).
+
 See [`examples/avatar_agent.py`](examples/avatar_agent.py) for a complete
 voice agent wired to this plugin, and
 [`../../README.md`](../../README.md) for how to run it end to end against a
