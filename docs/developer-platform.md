@@ -281,9 +281,9 @@ job even if the caller disconnects (see
 push, the only way to learn the outcome is to keep polling
 `GET /api/forge?job=<job_id>`. These two events replace that poll loop.
 
-They are scoped to your account, so they fire for generations made while signed
-in (a session cookie or a bearer token on the submit). Anonymous browser
-generations have no account to deliver to.
+They are scoped to your account, and every generation belongs to one: making a
+model needs a signed-in account (a session cookie or a bearer token on the
+submit), so they fire for every model you make.
 
 `forge.completed` fires from the single completion writer every generation lane
 flows through, which makes it exactly-once per job and independent of how the

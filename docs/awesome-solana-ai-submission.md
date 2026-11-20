@@ -45,7 +45,7 @@ Primary is the skill line (it is our `skill.md` entry point). The MCP line goes 
 |---|---|---|
 | `https://three.ws/skill.md` is live | `curl -I` | 200, `text/markdown` |
 | `https://three.ws/connect` is live | `curl -I` | 200 |
-| Free 3D generation with no account | `POST /api/mcp-studio` `tools/list` with no auth | returns `forge_free` and the rest of the toolset |
+| Free 3D generation (a free account makes the model) | `POST /api/mcp-studio` `tools/list` with no auth | returns `forge_free` and the rest of the toolset; an anonymous `forge_free` call answers `sign_in_required` |
 | Hosted MCP directory | `GET /.well-known/mcp.json` | 200 |
 | Agents with a Solana wallet, x402 | `skill.md` documents both (7 matches for wallet, launch or x402) and the platform ships them | true |
 | Rigged avatars | `forge_avatar` and `rig_mesh` in the same `tools/list` | true |

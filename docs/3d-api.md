@@ -41,10 +41,10 @@ curl https://three.ws/api/3d
 {
   "name": "three.ws 3D API",
   "free": true,
-  "keyless": true,
+  "keyless": false,   // generate needs an account; inspect, diff and quotes are keyless
   "version": "1.0.0",
   "endpoints": [
-    { "slug": "generate", "methods": ["POST"], "path": "/api/3d/generate", "title": "Text → 3D (free draft)", "…": "…" },
+    { "slug": "generate", "methods": ["POST"], "path": "/api/3d/generate", "title": "Text → 3D (free draft)", "account": true, "…": "…" },
     { "slug": "inspect",  "methods": ["GET", "POST"], "path": "/api/3d/inspect", "title": "3D Model Inspect & Validate", "…": "…" },
     { "slug": "diff",     "methods": ["GET", "POST"], "path": "/api/3d/diff", "title": "3D Model Diff", "…": "…" },
     { "slug": "print-quote",   "methods": ["POST"], "path": "/api/print/quote", "title": "Printability Report & Print Quote", "…": "…" },

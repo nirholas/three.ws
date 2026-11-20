@@ -442,7 +442,7 @@ page also converts: it carries "Create your own" (into [/ar](/ar)) and "Open
 in 3D viewer" calls to action. See `GET|POST /api/render/glb` in the
 [API reference](./api-reference.md) for the renderer's parameters and limits.
 
-**For agents (MCP):** on the free, keyless connector at `/api/mcp-studio` every generation already returns `arUrl` in its result, so there is nothing extra to call. To build the link set for a GLB that connector did not generate, the read-only `export_ar` tool on the separate [`/api/mcp-3d` server](/docs/mcp-3d-studio) (account- or payment-gated) turns any public GLB into the AR launch link plus a conformant [Spatial MCP](/docs/spatial-mcp) artifact (with the `ar` handoff populated):
+**For agents (MCP):** on the free connector at `/api/mcp-studio` (making a model there needs a free three.ws account: OAuth sign-in or an API key) every generation already returns `arUrl` in its result, so there is nothing extra to call. To build the link set for a GLB that connector did not generate, the read-only `export_ar` tool on the separate [`/api/mcp-3d` server](/docs/mcp-3d-studio) (account- or payment-gated) turns any public GLB into the AR launch link plus a conformant [Spatial MCP](/docs/spatial-mcp) artifact (with the `ar` handoff populated):
 
 ```jsonc
 // tools/call → export_ar { "glb_url": "https://three.ws/avatars/xbot.glb", "title": "Robot" }
@@ -479,9 +479,11 @@ modules directly:
 - Hosted demo: [nirholas.github.io/3D-AR-Studio](https://nirholas.github.io/3D-AR-Studio/)
 - MCP server: `npx 3d-ar-studio-mcp` (registry name `io.github.nirholas/3d-ar-studio`)
 
-With no configuration it pulls models from our CC0 object library and generates new ones
-through the free, keyless `/api/mcp-studio` connector documented above, so an embedder needs
-no key and no account. One option repoints it at their own catalogue:
+With no configuration it pulls models from our CC0 object library, so an embedder needs no key
+and no account to offer it. Generating new models runs through the free `/api/mcp-studio`
+connector documented above, which makes models for a three.ws account: pass a key as
+`generate: { apiKey }` (or set `THREE_WS_API_KEY` for the MCP server) to turn it on; without one
+the studio hides Generate. One option repoints it at their own catalogue:
 
 ```js
 createArStudio('#stage', { assets: 'https://their.cdn/models.json' })

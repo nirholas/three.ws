@@ -4,7 +4,13 @@
 npm create @three-ws/agent "a friendly cartoon astronaut in a glossy white suit"
 ```
 
-That command generates a textured 3D figure, rigs it with a humanoid skeleton, downloads it, and writes a folder with a working demo page and the embed snippet for your own site. No account, no API key, no signup: it runs on the three.ws free lane and the platform's provider keys cover the cost.
+That command generates a textured 3D figure, rigs it with a humanoid skeleton, downloads it, and writes a folder with a working demo page and the embed snippet for your own site. It is free: it runs on the three.ws free lane and the platform's provider keys cover the cost. Making a model needs a free three.ws account, so create an API key at [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys) and export it first:
+
+```bash
+export THREE_WS_API_KEY=<your key>
+```
+
+The model is saved to that account and stays private (unlisted) until you publish it.
 
 It is the terminal-native version of [three.ws/create](https://three.ws/create), for people who would rather stay in a shell, and for scripts and CI that need a character without a browser.
 
@@ -13,10 +19,11 @@ It is the terminal-native version of [three.ws/create](https://three.ws/create),
 ## The 60-second version
 
 ```bash
+$ export THREE_WS_API_KEY=<your key>
 $ npm create @three-ws/agent "a knight in worn steel armor"
 
 three.ws building "a knight in worn steel armor"
-  a rigged humanoid, free lane, no account needed
+  a rigged humanoid, free lane
 
 · sent to the three.ws forge
 · generating the figure (15s)
@@ -63,6 +70,7 @@ The demo page renders the character with `<agent-3d>`; `agent.glb` is yours to d
 | `--object` | An object or prop (mesh only) instead of a rigged character |
 | `--no-download` | Keep the hosted model URL, skip writing `agent.glb` |
 | `--json` | Print the result as JSON and nothing else, for scripting |
+| `--api-key <key>` | three.ws API key (default: the `THREE_WS_API_KEY` env var) |
 | `--origin <url>` | API origin (default `https://three.ws`) |
 
 ### Writing a prompt that rigs well
@@ -82,6 +90,7 @@ The CLI is a thin client over one public endpoint:
 
 ```bash
 curl -s -X POST https://three.ws/api/mcp-studio \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
   -H 'content-type: application/json' \
   -d '{
     "jsonrpc": "2.0",
@@ -94,7 +103,7 @@ curl -s -X POST https://three.ws/api/mcp-studio \
   }'
 ```
 
-`forge_avatar` is generate-then-rig bundled; `--object` calls `forge_free` instead. Both are open, keyless JSON-RPC tools on the same endpoint the three.ws MCP server exposes, so anything that can speak HTTP can do what this CLI does. The MCP surface is documented in [mcp.md](mcp.md).
+`forge_avatar` is generate-then-rig bundled; `--object` calls `forge_free` instead. Both are JSON-RPC tools on the same endpoint the three.ws MCP server exposes, and both need the account's API key as a bearer (an anonymous call answers `sign_in_required`), so anything that can speak HTTP and send that header can do what this CLI does. The MCP surface is documented in [mcp.md](mcp.md).
 
 The job blocks server-side until the model exists, which is why the CLI reports **real elapsed seconds** rather than a progress bar it would have to invent. Every call carries a 10-minute deadline; on a timeout the job may still finish, and finished models land at [three.ws/creations](https://three.ws/creations).
 
@@ -112,7 +121,7 @@ const made = await createAgent({
 });
 ```
 
-`createAgent`, `callForge`, `downloadModel` and the scaffold builders are all exported, and each takes `{ fetchImpl, signal, origin }`, so the pipeline runs against a local three.ws or a test double. Errors are one class, `ForgeError`, carrying a `code`: `timeout`, `unreachable`, `no_model`, `rpc_error`, `http_<status>`.
+`createAgent`, `callForge`, `downloadModel` and the scaffold builders are all exported, and each takes `{ fetchImpl, signal, origin }`, so the pipeline runs against a local three.ws or a test double. Pass `apiKey` (default: the `THREE_WS_API_KEY` env var). Errors are one class, `ForgeError`, carrying a `code`: `sign_in_required` (no key, or a key that did not verify), `timeout`, `unreachable`, `no_model`, `rpc_error`, `tool_error`, `http_<status>`.
 
 Full reference: [packages/create-agent/README.md](https://github.com/nirholas/three.ws/blob/main/packages/create-agent/README.md).
 

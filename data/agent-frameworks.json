@@ -14,7 +14,7 @@
 			"title": "three.ws 3D Studio (free)",
 			"url": "https://three.ws/api/mcp-studio",
 			"auth": "none",
-			"description": "Free text-to-3D, image-to-3D, rigged avatars and talking personas. No account, no key."
+			"description": "Free text-to-3D, image-to-3D, rigged avatars and talking personas. Nothing to connect; making a model needs a free three.ws account (OAuth sign-in or an API key)."
 		},
 		"apiKeyEnv": "THREE_WS_API_KEY",
 		"apiKeyPage": "https://three.ws/dashboard/api"

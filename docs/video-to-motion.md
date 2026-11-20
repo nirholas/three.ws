@@ -51,8 +51,8 @@ want a video with your avatar performing the motion instead, see
    avatar is on screen, using the same rest offsets
    [src/animation-retarget.js](../src/animation-retarget.js) binds clips
    against. FBX has no browser-side writer available under a permissive
-   license, so the exported GLB is uploaded anonymously through
-   `POST /api/avatar/presign-glb` (a public URL is required because the
+   license, so the exported GLB is uploaded under the signed-in account through
+   `POST /api/avatar/presign-glb` (an anonymous visitor is asked to sign in first) (a public URL is required because the
    converter fetches the source itself, SSRF-guarded) and converted
    server-side by the Blender-based exporter behind
    `POST /api/forge-remesh` (`operation: "convert"`,

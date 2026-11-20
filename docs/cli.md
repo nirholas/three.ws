@@ -136,7 +136,7 @@ Grok Bot three-ws-grok · add it in Grok Bot's Connectors (custom MCP server); n
 | `--auth` | What Grok Bot gets | What setup does |
 |---|---|---|
 | `none` (default) | The free studio: text to 3D, image to 3D, rigging, the asset catalog, personas | Prints the URL and runs `initialize` + `tools/list` against it |
-| `install` | The same tools, with a generation budget that lasts across every scheduled run | Mints a free [install token](/docs/mcp-studio#connector-url-for-cloud-agents-install-tokens) (no account), puts it in the URL, and reuses it on later runs so the URL stays the same |
+| `install` | The same tools, with a rate budget that lasts across every scheduled run | Mints a free [install token](/docs/mcp-studio#connector-url-for-cloud-agents-install-tokens) (no account), puts it in the URL, and reuses it on later runs so the URL stays the same. The token sets the budget only: making a model still needs a three.ws account, so pair it with `key` or `oauth` |
 | `key` | Also your agents, memory and skills; a connector key reads, generates and edits but can never spend | Mints a connector key for the signed-in account (signing you in first when needed), or checks the one you pass with `--connector-key`, refuses a key that carries a spend scope, then runs `tools/list` with it |
 | `oauth` | The same as `key`, signed in once from Grok Bot and revocable any time | Prints the `?auth=oauth` URL and checks that an anonymous call is answered `401` with a protected-resource document that names the authorization server |
 

@@ -4,7 +4,7 @@ By the end of this tutorial you'll have composed a complete 3D scene in the brow
 
 Along the way you'll learn how the editor's panels fit together, why the scene autosaves to your browser, and when to reach for the lighter [Scene Composer](/compose) instead.
 
-**Prerequisites:** a desktop browser (the editor is keyboard- and gizmo-driven). At least one GLB or glTF model to import — generate one for free from text at [/forge](/forge), or use any GLB file you already have. No account required.
+**Prerequisites:** a desktop browser (the editor is keyboard- and gizmo-driven). At least one GLB or glTF model to import: generate one for free from text at [/forge](/forge) (making a model needs a free three.ws account), or use any GLB file you already have. Importing a file into the editor needs no account.
 
 [![Scene Studio with a 3D scene in the viewport and the object rail](/docs/img/scene-studio.webp)](/scene)
 

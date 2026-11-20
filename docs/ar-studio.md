@@ -7,7 +7,7 @@ API: `POST /api/forge` (in-view text-to-3D) · `GET /api/forge-gallery` (your an
 
 ## Why it exists
 
-The older "View in AR" flow (see [AR and WebXR](./ar.md)) shows one model at a time in a native viewer. AR Studio is the composition tool: a persistent, multi-model scene you arrange in real space and can build with other people at once. It is free, needs no account, and degrades gracefully so it works on a laptop, a phone browser, or a full AR headset. It is where a forge result, a marketplace avatar, and a prompt-conjured prop can all stand in your living room together.
+The older "View in AR" flow (see [AR and WebXR](./ar.md)) shows one model at a time in a native viewer. AR Studio is the composition tool: a persistent, multi-model scene you arrange in real space and can build with other people at once. It is free to use without an account (generating a model in place needs a free three.ws account), and it degrades gracefully so it works on a laptop, a phone browser, or a full AR headset. It is where a forge result, a marketplace avatar, and a prompt-conjured prop can all stand in your living room together.
 
 This doc covers what is unique to AR Studio. For the underlying `POST /api/forge` free lane, the `<agent-3d>` "View in AR" methods, the USDZ/Quick Look pipeline, and model-optimization limits, see [AR and WebXR](./ar.md).
 
@@ -74,11 +74,12 @@ The full arrangement (every model's source and transform) is serialized to JSON,
 
 ## Examples
 
-The two HTTP endpoints AR Studio uses are the free, no-auth forge lanes. Your anonymous browser id goes in `x-forge-client`.
+AR Studio uses two HTTP endpoints: the free forge lane and the gallery. Generating a model needs a three.ws account: the page sends your session cookie, and from a script you send an API key from [/dashboard/api-keys](https://three.ws/dashboard/api-keys) as a bearer (an anonymous `POST` answers `401 sign_in_required`). Polling and the gallery stay open. Your browser id goes in `x-forge-client`.
 
 ```bash
 # Forge a model from a prompt (the in-view forge; free TRELLIS draft lane).
 curl -X POST 'https://three.ws/api/forge' \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
   -H 'content-type: application/json' \
   -H 'x-forge-client: <ANON_CLIENT_ID>' \
   -d '{ "prompt": "a neon bonsai tree", "backend": "nvidia" }'
@@ -98,7 +99,7 @@ You can also hand-build a share link: append `?src=<https glb url>&title=<name>`
 
 ## States and limits
 
-- **No auth, fully free.** Identity is an anonymous per-browser id (`forge:cid`), shared with `/forge` and `/creations`; it scopes the Yours tab, attributes in-studio forges, and keys room ownership. No sign-in, no wallet, no payment.
+- **Free, and an account only to generate.** Arranging, rooms and the galleries need no sign-in, no wallet and no payment. Identity is a per-browser id (`forge:cid`), shared with `/forge` and `/creations`; it scopes the Yours tab and keys room ownership. Generating a model in the dock needs a free three.ws account: signed out, the forge chip shows "Sign in to make a 3D model" and the site-wide sign-in banner (`public/sign-in-watch.js`) links to `/login`. A model you generate is saved to your account and stays unlisted until you publish it.
 - **Placement caps.** 20 models per local scene; the shared room enforces its own per-room and per-owner caps and a per-client rate limit.
 - **Camera and motion.** Camera denial (`NotAllowedError`) shows "Camera permission is blocked... then try again"; no `getUserMedia` disables the camera button but keeps the 3D preview. Denied motion falls back to drag-look.
 - **XR unsupported.** With no immersive session the button becomes Place in AR (Quick Look or Scene Viewer) or stays hidden; a failed XR start shows "Camera mode still works." A failed native handoff shows "Could not open AR for this model" with a Try again action. Lost tracking prompts you to move to a brighter, more textured spot.
