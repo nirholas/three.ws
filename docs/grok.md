@@ -176,6 +176,16 @@ tools a task needs, for example `["search_catalog", "forge_free", "get_job"]`.
 A complete, zero-dependency Node script that also collects slow renders lives in
 [examples/grok-remote-mcp](../examples/grok-remote-mcp/README.md).
 
+### Grok on the platform's own LLM calls
+
+Whether Grok serves any of three.ws's own user-facing LLM calls (forge prompt
+director, agent chat, public X replies, agent specs) is decided by measurement,
+not by credits: [Grok on three.ws: five production LLM tasks, measured](evals/grok-4-7-on-three-ws.md)
+scores the current production model against Grok 4.7 and a cheaper Grok model
+on 50 real inputs per task (`npm run grok:eval-llm`). Each task has its own
+`LLM_ROUTE_<TASK>` flag, off by default; it is set only where that report
+recommends it, and an xAI error always falls through to the existing chain.
+
 ## Grok Build
 
 [Grok Build](https://github.com/xai-org/grok-build) is xAI's coding agent for
