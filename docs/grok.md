@@ -104,11 +104,26 @@ refusal: [API key scopes](./mcp.md#api-key-scopes).
 
 ## Grok connectors
 
-On paid Grok plans, custom connectors take a remote MCP URL (remote servers
-only, which this is). Open **Connectors**, add a **custom** connector, paste
-`https://three.ws/api/mcp-grok?auth=oauth`, and choose OAuth authentication so
-the connector can make models as your free account. Business and
-Enterprise workspaces may need an admin to allow custom connectors first.
+Connectors are available to every Grok user on grok.com, and a custom
+connector takes any public MCP server URL, which this is. To add three.ws:
+
+1. Go to [grok.com/connectors](https://grok.com/connectors).
+2. Click **New Connector**, then select **Custom**.
+3. Enter these values and finish the sign-in:
+
+| Field | Value |
+|---|---|
+| Name (when the form asks) | `three-ws-grok` |
+| MCP server URL | `https://three.ws/api/mcp-grok?auth=oauth` |
+| Authentication | OAuth: Grok opens three.ws sign-in and you approve once with a free account (email, or Telegram) |
+
+Grok then discovers the tools and uses them in any conversation: ask for a 3D
+model and it answers with a viewer link and a GLB. The `?auth=oauth` form is
+what starts sign-in (see [Your account on the same URL](#your-account-on-the-same-url)); without it the
+connector stays anonymous and cannot make models. On Grok Business and
+Enterprise, a team admin first provisions the connector in the xAI cloud
+console before members can use it. Steps verified against xAI's
+[Connectors docs](https://docs.x.ai/grok/connectors) on 2026-11-20.
 
 ## xAI API
 
