@@ -1,11 +1,23 @@
 {
-	"generated_at": "2026-11-20T20:04:10.049Z",
+	"generated_at": "2026-11-20T20:57:02.675Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "Every three.ws tool and integration asks for an account before it makes a model",
+			"summary": "The account requirement for making or uploading a 3D model now reaches every place that can do it, and everything that described it is accurate. The Material Studio restyle and colorway tools, GLB uploads in /play, the PowerPoint add-in and Pipeline Studio ask you to sign in, and Microsoft Teams generates on behalf of the signed-in user. The SDKs and plugins (create-agent, the AI SDK and LangChain tools, Google ADK, Dify, n8n, Raycast, Semantic Kernel for Python and .NET, the MCP server package, the 3D AR Studio and its MCP server) send your API key, and Hermes, Cursor, Grok Build, Copilot and ChatGPT sign in with OAuth. A missing or refused key gets a clear message linking to the API keys page instead of a bare error. The cookbook, the docs, the agent card and the partner pages stop promising text to 3D with no account. Browsing, inspecting and viewing models still need none.",
+			"link": "/dashboard/api",
+			"tags": [
+				"security",
+				"sdk",
+				"docs"
+			]
+		},
 		{
 			"date": "2026-11-20",
 			"type": "update",
@@ -126,6 +138,17 @@
 		{
 			"date": "2026-11-20",
 			"type": "update",
+			"title": "The Hunyuan3D-2 image-to-3D lane loads again, and fails fast when it cannot",
+			"summary": "The Hunyuan3D-2 worker, a backup lane for photo-to-3D, had stopped loading its texture model after a dependency upgrade: newer diffusers refused its bundled paint pipeline, and newer transformers refused its weights on the older torch it ran. It now trusts its own pinned pipeline and runs torch 2.6 on CUDA 12.4, so the lane generates textured models again. Separately, a job that arrived while either Hunyuan worker was still loading used to wait 15 minutes and report a timeout when the load failed; it now fails at once with the real reason, so the forge moves to the next lane straight away.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
 			"title": "three-ws setup offers sign-in for the Grok and free studio connectors again",
 			"summary": "The directory now describes the Grok and free 3D Studio servers as \"none to connect, a free account to make a model\", and the CLI read that as no-sign-in-possible, so npx three-ws setup --client grok-bot only offered anonymous and install-token connections and refused --auth key or oauth. It now offers all four ways to connect on both servers, and its server lists stop calling the studio \"no account needed\".",
 			"link": null,
@@ -152,6 +175,16 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "xAI credit ledger with burn-rate and expiry alerts",
+			"summary": "Every platform-key call to xAI now records tokens and cost, so a new report and an advisory health check show where the Grok credits go and warn before they run out or expire unused.",
+			"link": null,
+			"tags": [
+				"infra"
 			]
 		},
 		{

@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Every three.ws tool and integration asks for an account before it makes a model</title>
+			<link>https://three.ws/dashboard/api</link>
+			<guid isPermaLink="false">2026-11-20:Every three.ws tool and integration asks for an account before it makes a model</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>The account requirement for making or uploading a 3D model now reaches every place that can do it, and everything that described it is accurate. The Material Studio restyle and colorway tools, GLB uploads in /play, the PowerPoint add-in and Pipeline Studio ask you to sign in, and Microsoft Teams generates on behalf of the signed-in user. The SDKs and plugins (create-agent, the AI SDK and LangChain tools, Google ADK, Dify, n8n, Raycast, Semantic Kernel for Python and .NET, the MCP server package, the 3D AR Studio and its MCP server) send your API key, and Hermes, Cursor, Grok Build, Copilot and ChatGPT sign in with OAuth. A missing or refused key gets a clear message linking to the API keys page instead of a bare error. The cookbook, the docs, the agent card and the partner pages stop promising text to 3D with no account. Browsing, inspecting and viewing models still need none.</description>
+		</item>
+		<item>
 			<title>Free text to 3D tells the truth about its lane and its wait</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-20:Free text to 3D tells the truth about its lane and its wait</guid>
@@ -95,6 +103,14 @@
 			<description>The site-wide permissions policy blocked location, compass sensors and the microphone on every page, so the smart-glasses lens at /glass stopped on its first screen for every visitor. /glass now grants exactly those three to itself (the camera stays off, and no other page changes), so the lens can find where you are, which way you face, and hear your reply.</description>
 		</item>
 		<item>
+			<title>The Hunyuan3D-2 image-to-3D lane loads again, and fails fast when it cannot</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-20:The Hunyuan3D-2 image-to-3D lane loads again, and fails fast when it cannot</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Hunyuan3D-2 worker, a backup lane for photo-to-3D, had stopped loading its texture model after a dependency upgrade: newer diffusers refused its bundled paint pipeline, and newer transformers refused its weights on the older torch it ran. It now trusts its own pinned pipeline and runs torch 2.6 on CUDA 12.4, so the lane generates textured models again. Separately, a job that arrived while either Hunyuan worker was still loading used to wait 15 minutes and report a timeout when the load failed; it now fails at once with the real reason, so the forge moves to the next lane straight away.</description>
+		</item>
+		<item>
 			<title>three-ws setup offers sign-in for the Grok and free studio connectors again</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-20:three-ws setup offers sign-in for the Grok and free studio connectors again</guid>
@@ -117,6 +133,14 @@
 			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>TripoSG cuts the subject out of your photo with our background-removal service before building the mesh. That service finished the cutout after answering the request, and Cloud Run gave it almost no CPU between requests, so a 20-second cutout dragged past the two minutes TripoSG waits. Its model was also downloaded on first use, and two cutouts at once could run it out of memory. The service now keeps its CPU, ships the model in its image, and has twice the memory, so photo-to-3D on TripoSG completes again. The segmentation service had the same CPU gap and is fixed too.</description>
+		</item>
+		<item>
+			<title>xAI credit ledger with burn-rate and expiry alerts</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-20:xAI credit ledger with burn-rate and expiry alerts</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>Every platform-key call to xAI now records tokens and cost, so a new report and an advisory health check show where the Grok credits go and warn before they run out or expire unused.</description>
 		</item>
 		<item>
 			<title>A busy multi-view lane asks you to retry instead of quietly downgrading your model</title>
