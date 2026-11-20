@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Combine every markdown file under docs/ into a single navigable file (docs/ALL.md).
-// One-time snapshot generator: originals are never modified. Re-run manually to refresh.
+// Runs in `prebuild` so every build publishes a current /docs/ALL.md (the file is
+// git-ignored, never committed). Originals are never modified.
 //   node scripts/combine-docs.mjs
 import { readFileSync, writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
