@@ -69,7 +69,7 @@ function catchArm(side) {
 			name: 'Catch arm',
 			group: 'Launch tower',
 			description:
-				'Two arms on the launch tower close around a returning stage and hold it. The first booster catch was on the fifth flight test, on 13 October 2024; the first upper-stage catch followed on the fifteenth, on 14 November 2026.',
+				'Two arms on the launch tower close around a returning stage and hold it. The first booster catch was on the fifth flight test, on 13 October 2024; the first upper-stage catch followed on the fifteenth flight test, on 14 November 2026.',
 			parent: `arm-carriage-${side > 0 ? 'a' : 'b'}`,
 			shape: { type: 'box', size: [4.4, 0.28, 0.24], radius: 0.03 },
 			position: [2.2, 0, 0],
@@ -84,7 +84,7 @@ export const LAUNCH_STACK_SPEC = {
 	title: 'Fully reusable two-stage super-heavy launch system',
 	subtitle: 'Booster engine ring, hot staging, boostback and the tower catch, in proportion',
 	summary:
-		'A two-stage launch system where both stages come back to be caught and flown again. The booster carries 33 methane and oxygen engines; the upper stage carries six. The two separate by hot staging, and each returns to the launch tower.\n\nOuter proportions follow the publicly reported dimensions of the current reference vehicle. Interior layout is drawn from outlet reporting and shown as simple shapes.',
+		'A two-stage launch system where both stages come back to be caught and flown again. The booster carries 33 methane and oxygen engines; the upper stage carries six. The two separate by hot staging, and each returns to the launch tower.\n\nOuter proportions follow the publicly reported dimensions of the current reference vehicle. The interior is a simplified layout of the tanks and engines, drawn as simple shapes.',
 	view: { speed: 1, explode: 0, section: null },
 	parts: [
 		// Booster
@@ -92,7 +92,7 @@ export const LAUNCH_STACK_SPEC = {
 			id: 'booster-skin',
 			name: 'Booster',
 			group: 'Booster',
-			description: 'The first stage: 72 m tall and 9 m across in the reference vehicle, publicly reported in 2026. It is designed to return to the launch site and be caught.',
+			description: 'The first stage: 72 m tall and 9 m across in the reference vehicle, as listed on the maker\'s vehicle page (accessed November 2026). It is designed to return to the launch site and be caught.',
 			shape: { type: 'tube', axis: 'y', outerRadius: RADIUS, innerRadius: RADIUS - 0.03, length: BOOSTER_TOP },
 			position: [0, BOOSTER_TOP / 2, 0],
 			color: STEEL,
@@ -181,7 +181,7 @@ export const LAUNCH_STACK_SPEC = {
 			id: 'hot-stage-ring',
 			name: 'Hot-stage ring',
 			group: 'Staging',
-			description: 'The vented ring between the stages. During hot staging the upper stage fires into it before separation, and its exhaust escapes through the vents. The current version uses an integrated hot stage in place of the earlier single-use interstage.',
+			description: 'The vented ring between the stages. During hot staging the upper stage fires into it before separation, and its exhaust escapes through the vents. The current version uses an integrated hot stage, which exposes the forward dome of the booster\'s fuel tank during hot staging.',
 			shape: { type: 'tube', axis: 'y', outerRadius: RADIUS, innerRadius: RADIUS - 0.03, length: RING_TOP - BOOSTER_TOP },
 			position: [0, (BOOSTER_TOP + RING_TOP) / 2, 0],
 			color: '#9aa6b4',
@@ -203,7 +203,7 @@ export const LAUNCH_STACK_SPEC = {
 			id: 'ship-skin',
 			name: 'Upper stage',
 			group: 'Upper stage',
-			description: 'The second stage: 52 m tall in the reference vehicle, publicly reported in 2026. Like the booster, it is designed to come back and fly again.',
+			description: 'The second stage: 52 m tall in the reference vehicle, as listed on the maker\'s vehicle page (accessed November 2026). Like the booster, it is designed to come back and fly again.',
 			shape: { type: 'tube', axis: 'y', outerRadius: RADIUS, innerRadius: RADIUS - 0.03, length: SHIP_BODY_TOP - RING_TOP },
 			position: [0, (RING_TOP + SHIP_BODY_TOP) / 2, 0],
 			color: STEEL,
@@ -445,7 +445,7 @@ export const LAUNCH_STACK_SPEC = {
 	steps: [
 		{
 			title: 'Two stages, both reusable',
-			body: 'A booster with an upper stage on top. The reference vehicle, publicly reported in 2026, stands 124 m tall: a 72 m booster under a 52 m upper stage, both 9 m across. Both stages are designed to come back and fly again. The model keeps those proportions; the inside is drawn as simple shapes.',
+			body: 'A booster with an upper stage on top. The reference vehicle, as listed on the maker\'s vehicle page (accessed November 2026), stands 124 m tall: a 72 m booster under a 52 m upper stage, both 9 m across. Both stages are designed to come back and fly again. The model keeps those proportions; the inside is drawn as simple shapes.',
 			focus: ['booster-skin', 'ship-skin', 'nose-section'],
 		},
 		{
@@ -465,7 +465,7 @@ export const LAUNCH_STACK_SPEC = {
 		},
 		{
 			title: 'Hot staging',
-			body: 'Hot staging means the next stage fires its engines before separation instead of after. With most booster engines already shut down, the upper stage lights while still attached and its exhaust vents out through the ring. It was first done on the second flight test, on 18 November 2023. The current version, revealed on 12 May 2026, replaces the earlier single-use interstage with an integrated hot stage.',
+			body: 'Hot staging means the next stage fires its engines before separation instead of after. With most booster engines already shut down, the upper stage lights while still attached and its exhaust vents out through the ring. It was first done on the second flight test, on 18 November 2023. The current version, revealed on 12 May 2026, uses an integrated hot stage.',
 			focus: ['hot-stage-ring', 'hot-stage-vents', 'hot-stage-flame', 'hot-staging-gas-a', 'hot-staging-gas-b'],
 		},
 		{
@@ -485,12 +485,12 @@ export const LAUNCH_STACK_SPEC = {
 		},
 		{
 			title: 'The upper stage comes home',
-			body: 'The upper stage falls back through the atmosphere with hexagonal heat shield tiles facing the airflow, steering with two forward and two aft flaps. Two small header tanks sit in the nose, liquid oxygen at the tip and methane just below. On the fifteenth flight test, on 14 November 2026, the tower arms caught the upper stage for the first time.',
+			body: 'The upper stage falls back through the atmosphere with hexagonal heat shield tiles facing the airflow, steering with two forward and two aft flaps. Two small header tanks sit in the nose, liquid oxygen at the tip and methane just below. The fifteenth flight test launched on 13 November 2026, and on 14 November the tower arms caught the upper stage for the first time. The booster on that flight did not complete its catch and was diverted to a splashdown.',
 			focus: ['heat-shield', 'forward-flap-a', 'forward-flap-b', 'aft-flap-a', 'aft-flap-b', 'lox-header', 'ch4-header'],
 		},
 		{
 			title: 'Full reuse',
-			body: 'Both stages come back to the tower they left, so the whole vehicle can fly again. Booster: 33 engines and 3,650 tonnes of propellant. Upper stage: 6 engines and 1,600 tonnes. Every figure here is publicly reported and dated in the sources behind this model.',
+			body: 'Both stages come back to the tower they left, so the whole vehicle can fly again. Booster: 33 engines and 3,650 tonnes of propellant. Upper stage: 6 engines and 1,600 tonnes. Each figure is publicly reported, and the sources page for this model gives the source and date of every one.',
 			focus: ['booster-skin', 'ship-skin', 'catch-tower', 'arm-carriage-a', 'arm-carriage-b'],
 		},
 	],

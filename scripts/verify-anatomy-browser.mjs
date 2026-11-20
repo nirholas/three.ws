@@ -6,7 +6,10 @@
 // the light theme and a phone-sized viewport. Screenshots land in --out.
 //
 // Usage:
-//   node scripts/verify-anatomy-browser.mjs --base http://localhost:3000 --id <design uuid> [--out dir]
+//   node scripts/verify-anatomy-browser.mjs --base http://localhost:3000 --id <design uuid> [--out dir] [--timeout ms]
+//
+// --timeout raises every wait (default 30000 ms) for a cold dev server or a
+// heavily loaded machine.
 
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -19,6 +22,7 @@ const arg = (name, def = null) => {
 const base = arg('base', 'http://localhost:3000');
 const id = arg('id');
 const out = arg('out', 'anatomy-shots');
+const timeout = Number(arg('timeout', 30_000)) || 30_000;
 if (!id) {
 	console.error('Pass --id <design uuid> (a saved machine to open).');
 	process.exit(2);
@@ -30,6 +34,8 @@ const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--ena
 
 async function newPage(viewport) {
 	const page = await browser.newPage({ viewport });
+	page.setDefaultTimeout(timeout);
+	page.setDefaultNavigationTimeout(timeout);
 	page.on('console', (msg) => {
 		if (msg.type() === 'error' || msg.type() === 'warning') {
 			const text = msg.text();
@@ -48,7 +54,7 @@ const shot = (page, name) => page.screenshot({ path: join(out, `${name}.png`) })
 {
 	const page = await newPage({ width: 1360, height: 900 });
 	await page.goto(`${base}/anatomy`, { waitUntil: 'domcontentloaded' });
-	await page.waitForSelector('.anp-card:not(.anp-card--skeleton), .anp-empty:not([hidden])', { timeout: 30_000 });
+	await page.waitForSelector('.anp-card:not(.anp-card--skeleton), .anp-empty:not([hidden])', { timeout });
 	const cards = await page.locator('.anp-card:not(.anp-card--skeleton)').count();
 	console.log(`gallery: ${cards} card(s)`);
 	await shot(page, '01-home');
@@ -59,8 +65,8 @@ const shot = (page, name) => page.screenshot({ path: join(out, `${name}.png`) })
 {
 	const page = await newPage({ width: 1440, height: 900 });
 	await page.goto(`${base}/anatomy/${id}`, { waitUntil: 'domcontentloaded' });
-	await page.waitForSelector('.anx canvas', { timeout: 30_000 });
-	await page.waitForFunction(() => document.querySelectorAll('.anx-part, .anx-parts li, [data-part]').length > 0, null, { timeout: 30_000 }).catch(() => {});
+	await page.waitForSelector('.anx canvas', { timeout });
+	await page.waitForFunction(() => document.querySelectorAll('.anx-part, .anx-parts li, [data-part]').length > 0, null, { timeout }).catch(() => {});
 	await page.waitForTimeout(2500);
 	console.log('title:', await page.textContent('#anpTitle'));
 	await shot(page, '02-machine');
@@ -122,7 +128,7 @@ const shot = (page, name) => page.screenshot({ path: join(out, `${name}.png`) })
 {
 	const page = await newPage({ width: 390, height: 844 });
 	await page.goto(`${base}/anatomy/${id}`, { waitUntil: 'domcontentloaded' });
-	await page.waitForSelector('.anx canvas', { timeout: 30_000 });
+	await page.waitForSelector('.anx canvas', { timeout });
 	await page.waitForTimeout(2500);
 	const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
 	if (overflow > 1) problems.push(`[layout] phone page scrolls horizontally by ${overflow}px`);
@@ -134,7 +140,7 @@ const shot = (page, name) => page.screenshot({ path: join(out, `${name}.png`) })
 {
 	const page = await newPage({ width: 1200, height: 800 });
 	await page.goto(`${base}/anatomy/00000000-0000-4000-8000-000000000000`, { waitUntil: 'domcontentloaded' });
-	await page.waitForSelector('#anpDesignError:not([hidden])', { timeout: 30_000 });
+	await page.waitForSelector('#anpDesignError:not([hidden])', { timeout });
 	await shot(page, '11-not-found');
 	await page.close();
 }

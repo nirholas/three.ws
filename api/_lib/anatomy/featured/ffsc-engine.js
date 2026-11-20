@@ -251,7 +251,7 @@ export const FFSC_ENGINE_SPEC = {
 			id: 'main-chamber',
 			name: 'Main combustion chamber',
 			group: 'Thrust chamber',
-			description: 'The fuel-rich and oxygen-rich gases finish burning here at very high pressure. For reference, the Raptor engine was publicly reported in 2022 to operate routinely at 300 bar main chamber pressure.',
+			description: 'The fuel-rich and oxygen-rich gases finish burning here at very high pressure. For reference, the Raptor engine was publicly reported in January 2022 to operate routinely at 300 bar main chamber pressure.',
 			shape: { type: 'lathe', axis: 'y', profile: CHAMBER_PROFILE },
 			position: [0, 0, 0],
 			color: '#ff8a4c',
@@ -284,7 +284,7 @@ export const FFSC_ENGINE_SPEC = {
 			id: 'coolant-inlet-manifold',
 			name: 'Coolant inlet manifold',
 			group: 'Cooling',
-			description: 'A ring at the nozzle exit that spreads the incoming methane into the wall channels, where it flows back up toward the chamber.',
+			description: 'A ring at the nozzle exit that spreads the incoming methane into the wall channels, where it flows back up toward the chamber. This is the typical regenerative layout; the exact channel path inside Raptor is not publicly documented.',
 			shape: { type: 'torus', axis: 'y', radius: 1.97, tube: 0.08 },
 			position: [0, -3.55, 0],
 			color: CH4,
@@ -293,7 +293,7 @@ export const FFSC_ENGINE_SPEC = {
 			id: 'coolant-supply-line',
 			name: 'Coolant supply line',
 			group: 'Cooling',
-			description: 'Carries high-pressure liquid methane from the methane pump down to the nozzle exit, where it enters the cooling channels.',
+			description: 'Carries high-pressure liquid methane from the methane pump down to the nozzle exit, where it enters the cooling channels, as in a typical regeneratively cooled engine.',
 			shape: {
 				type: 'pipe',
 				radius: 0.07,
@@ -571,7 +571,7 @@ export const FFSC_ENGINE_SPEC = {
 		},
 		{
 			title: 'Methane cools the engine',
-			body: 'The methane pump sends its output down to the nozzle exit first. From there the methane runs up through channels in the nozzle and chamber walls, soaking up heat so the metal survives the exhaust. Regenerative cooling is built into the whole engine.',
+			body: 'The methane pump sends its output through cooling channels in the nozzle and chamber walls, soaking up heat so the metal survives the exhaust. Typically the coolant enters at the nozzle exit and flows up past the throat toward the injector, which is the path drawn here.',
 			focus: ['coolant-supply-line', 'coolant-inlet-manifold', 'regen-nozzle', 'ch4-coolant', 'coolant-outlet-manifold'],
 		},
 		{
@@ -596,7 +596,7 @@ export const FFSC_ENGINE_SPEC = {
 		},
 		{
 			title: 'The main chamber',
-			body: 'The two gases finish burning at very high pressure. For reference, the Raptor engine that uses this cycle was publicly reported in 2022 to run routinely at 300 bar main chamber pressure, and a 2023 test was reported at 350 bar.',
+			body: 'The two gases finish burning at very high pressure. For reference, the Raptor engine that uses this cycle was publicly reported in January 2022 to run routinely at 300 bar main chamber pressure, and a single Raptor 3 test in May 2023 was reported at 350 bar.',
 			focus: ['main-chamber', 'chamber-flame', 'combustion-gas'],
 		},
 		{
@@ -606,7 +606,7 @@ export const FFSC_ENGINE_SPEC = {
 		},
 		{
 			title: 'The whole loop',
-			body: 'Methane: pump, cooling channels, fuel-rich preburner, turbine, chamber. Oxygen: pump, oxygen-rich preburner, turbine, chamber. For reference, the current Raptor was publicly reported in 2026 at 250 tonnes-force of thrust at sea level and 275 in its vacuum version, and 33 of them power the booster of the launch system.',
+			body: 'Methane: pump, cooling channels, fuel-rich preburner, turbine, chamber. Oxygen: pump, oxygen-rich preburner, turbine, chamber. For reference, the current Raptor was publicly reported by its maker on 12 May 2026 at 250 tonnes-force of thrust at sea level and 275 in its vacuum version, and 33 of them power the booster of the launch system.',
 			focus: ['ch4-feed', 'ch4-coolant', 'lox-feed', 'fuel-rich-gas', 'ox-rich-gas', 'combustion-gas'],
 		},
 	],
