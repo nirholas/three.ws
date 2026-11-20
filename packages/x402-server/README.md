@@ -75,7 +75,7 @@ npm install @three-ws/x402-server
 ```
 
 Node 18+ (uses the global `fetch` and Web Crypto). Framework-agnostic: works as
-Express/Connect middleware, a Fastify hook, or a bare `(req, res)` handler on
+Express/Connect middleware, a Fastify route handler, or a bare `(req, res)` handler on
 Vercel / Node `http`. For the buyer side of a test, pair with
 [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch).
 
@@ -104,6 +104,27 @@ response carries the on-chain receipt.
 The Solana lane also needs the facilitator's sponsor account: set
 `X402_FEE_PAYER_SOLANA` in the environment (or pass `feePayer`), or the
 challenge throws `missing_fee_payer`. The EVM lane needs neither.
+
+### Fastify
+
+`paid()` is a drop-in Fastify 5 route handler. Fastify's `(request, reply)` pair
+is detected and the response is taken over with `reply.hijack()`, so an unpaid
+request gets the `402` and the work never runs. Your handler receives the
+Fastify `request`, the raw Node response, and the verified `payment`; return a
+value (serialised as JSON with the receipt header) or write to the raw response.
+
+```js
+import Fastify from 'fastify';
+import { paid } from '@three-ws/x402-server';
+
+const app = Fastify();
+app.get('/summary', paid({ price: '10000', payTo: { solana: 'THREEsynthetic1111…' } }, async (request) => {
+  return { summary: await summarize(request.query.text) };
+}));
+```
+
+Use it as the route handler, not as an `onRequest` hook: a hook cannot hold the
+response until settlement, and the route would run unpaid behind it.
 
 ### A fuller route — both lanes, a fee, a receipt
 

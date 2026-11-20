@@ -665,6 +665,13 @@ function buildPaidHandler({ buildChallenge, verifyPayment, settlePayment }, opts
 // wrapper serialises it. Streaming handlers opt out via `streaming: true`.
 const nodeAdapter = {
 	read(req, res) {
+		// Fastify passes its own (request, reply) wrappers. Take the response over
+		// with reply.hijack() so Fastify stops managing it, then drive the raw Node
+		// response; the handler still receives the Fastify request (body, params).
+		if (res && typeof res.hijack === 'function' && res.raw) {
+			res.hijack();
+			res = res.raw;
+		}
 		return {
 			req,
 			res,

@@ -53,8 +53,7 @@
   "homepage": "https://three.ws",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nirholas/three.ws.git",
-    "directory": "packages/x402-server"
+    "url": "git+https://github.com/nirholas/x402-server.git"
   },
   "bugs": {
     "url": "https://github.com/nirholas/three.ws/issues"
@@ -88,5 +87,8 @@
     "@noble/curves": {
       "optional": true
     }
+  },
+  "devDependencies": {
+    "fastify": "^5.0.0"
   }
 }
