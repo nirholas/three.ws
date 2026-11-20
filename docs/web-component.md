@@ -81,6 +81,7 @@ Lighting, camera orbit, and environment are managed by the built-in viewer; they
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `voice` | string | on if manifest configures voice | Voice mode. Set to `livekit` for the LiveKit realtime voice pipeline; TTS/STT providers otherwise come from the manifest. |
+| `voice-provider` | string | unset | Set to `grok-realtime` and the mic button opens a Grok Voice speech-to-speech session instead of the STT, brain and TTS chain: one socket carries the visitor's speech up and the agent's spoken reply down, with barge-in. The visitor must be signed in to three.ws; the browser only ever holds a short-lived client secret. If the server has no Grok voice configured, the click falls through to the standard voice chain. See [Grok Voice realtime](/docs/voice-grok). |
 
 ### Sign language (ASL)
 
@@ -552,6 +553,8 @@ All events bubble and are `composed: true`, meaning they cross shadow DOM bounda
 | `voice:speech-end` | `{}` | TTS playback ends. |
 | `voice:listen-start` | `{}` | Microphone opens. |
 | `voice:transcript` | `{ text, final }` | STT chunk received. `final: true` means the utterance is complete. |
+| `voice:latency` | `{ kind, ms, av_offset_ms?, output_latency_ms? }` | `voice-provider="grok-realtime"` only. `kind: 'response'` is end of the visitor's speech to the first reply audio frame; `kind: 'mouth'` is first audio frame to the first viseme, with the residual mouth-to-sound offset. |
+| `voice:error` | `{ code, message, fatal }` | `voice-provider="grok-realtime"` only. A session or server error; `fatal: true` means the session ended. |
 
 ### Hand control events
 

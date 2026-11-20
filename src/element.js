@@ -798,6 +798,8 @@ class Agent3DElement extends HTMLElement {
 		this._outsideTapHandler = null;
 		this._detachTradeReactions = null;
 		this._livekitVoice = null;
+		this._grokVoice = null; // voice-provider="grok-realtime" session
+		this._grokUnavailable = false; // the server answered grok_voice_not_configured
 		this._voiceClient = null;
 		this._notifier = null;
 		this._notifyWalkCleanup = null;
@@ -1439,6 +1441,7 @@ class Agent3DElement extends HTMLElement {
 	_speechInputAvailable() {
 		if (this.getAttribute('voice-server')) return true;
 		if (typeof window === 'undefined') return false;
+		if (this.getAttribute('voice-provider') === 'grok-realtime' && navigator.mediaDevices?.getUserMedia) return true;
 		return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
 	}
 
@@ -1853,7 +1856,7 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	_hasActiveSession() {
-		return !!(this._livekitVoice || this._voiceClient || this._listening || this._pillActive);
+		return !!(this._livekitVoice || this._voiceClient || this._grokVoice || this._listening || this._pillActive);
 	}
 
 	_releaseForBudget() {
@@ -3325,6 +3328,9 @@ class Agent3DElement extends HTMLElement {
 	async _toggleMic() {
 		// The mic only exists in chat mode, and only where speech input works.
 		if (!this._micEl) return;
+		if (this.getAttribute('voice-provider') === 'grok-realtime' && !this._grokUnavailable) {
+			if (await this._toggleGrokVoice()) return;
+		}
 		const voiceServer = this.getAttribute('voice-server');
 		if (voiceServer) {
 			await this._toggleVoiceClient(voiceServer);
@@ -3350,6 +3356,55 @@ class Agent3DElement extends HTMLElement {
 			this._micEl.dataset.listening = 'false';
 			this._renderSttStatus(null);
 		}
+	}
+
+	// voice-provider="grok-realtime": the mic opens a Grok Voice speech-to-speech
+	// session (src/voice/grok-realtime.js) instead of the STT, brain, TTS chain.
+	// The reply plays through an analyser delayed by the output latency, which
+	// drives the avatar's visemes. Resolves false when this server has no Grok
+	// voice configured, so the caller falls through to the standard chain.
+	async _toggleGrokVoice() {
+		if (this._grokVoice) {
+			this._grokVoice.close();
+			return true;
+		}
+		const { GrokRealtime } = await import('./voice/grok-realtime.js');
+		const agentId = this._manifest?.id?.agentId || this.getAttribute('agent-id') || '';
+		const voice = new GrokRealtime({
+			sessionUrl: `${this._apiBase()}/api/voice/grok/session`,
+			agentId: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(agentId) ? agentId : null,
+			credentials: this._apiCredentials(),
+		});
+		this._grokVoice = voice;
+		const ring = { connecting: 'thinking', reconnecting: 'thinking', thinking: 'thinking', listening: 'listening', speaking: 'speaking' };
+		voice.addEventListener('state', (e) => {
+			const { state } = e.detail;
+			this._emit('voiceStateChange', { state: ring[state] || 'idle', provider: 'grok-realtime', detail: state }, { bubbles: true, composed: true });
+			if (state === 'listening') this._emit('voice:listen-start', {});
+			if (state === 'closed' || state === 'error') {
+				if (this._grokVoice === voice) this._grokVoice = null;
+				this._avatar?.disconnectLipSync?.();
+			}
+		});
+		voice.addEventListener('transcript', (e) => {
+			const { role, text, final } = e.detail;
+			if (role === 'user') this._emit('voice:transcript', { text, final });
+			if (final && text) this._renderMessage({ role, content: text });
+		});
+		voice.addEventListener('latency', (e) => this._emit('voice:latency', e.detail));
+		voice.addEventListener('error', (e) => this._emit('voice:error', e.detail));
+		try {
+			await voice.connect();
+		} catch (err) {
+			if (err.code === 'grok_voice_not_configured') {
+				this._grokUnavailable = true;
+				return false;
+			}
+			this._renderMessage({ role: 'voice', content: err.message });
+			return true;
+		}
+		if (voice.analyser) this._avatar?.connectLipSync?.(voice.analyser);
+		return true;
 	}
 
 	async _toggleVoiceClient(serverUrl) {
@@ -3502,6 +3557,10 @@ class Agent3DElement extends HTMLElement {
 		if (this._voiceClient) {
 			this._voiceClient.stop();
 			this._voiceClient = null;
+		}
+		if (this._grokVoice) {
+			this._grokVoice.close();
+			this._grokVoice = null;
 		}
 		this._notifier?.detach();
 		this._notifier = null;
