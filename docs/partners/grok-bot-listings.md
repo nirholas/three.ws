@@ -145,12 +145,16 @@ The export was dry-run on 2026-11-14 from `threews/main`: the tree holds
 `.cursor-plugin/plugin.json`, `mcp.json`, `README.md`, `LICENSE`, `assets/logo.svg` and four
 skills; the logo path resolves; `mcp.json` declares no `${VAR}`; no file names another coin.
 
+Re-run on 2026-11-20 with `scripts/export-plugin-repo.mjs` (plugin 1.3.0): it validates the
+plugin against Cursor's reference first, then writes one commit holding 20 files, adding
+`REVIEWING.md`, the three commands, both rules, two listing screenshots and a `CHANGELOG.md` built
+from git history. Two exports of the same source commit are byte-identical. Point Cursor's reviewers at
+[REVIEWING.md](../../integrations/cursor/three-ws/REVIEWING.md), the five-minute test plan with
+measured timings and the data-handling notes.
+
 ```bash
 OUT=$(mktemp -d)
-git archive threews/main:integrations/cursor/three-ws | tar -x -C "$OUT"
-git -C "$OUT" init -q -b main
-git -C "$OUT" add -A
-git -C "$OUT" commit -q -m "three.ws 3D Studio plugin for Cursor, mirrored from nirholas/three.ws integrations/cursor/three-ws"
+npm run grok:cursor-plugin-export -- --out "$OUT"
 gh repo create nirholas/three-ws-cursor-plugin --public \
   --description "three.ws 3D Studio for Cursor and Grok Bot: free text or photo to 3D models and rigged avatars over MCP" \
   --homepage https://three.ws/docs --source "$OUT" --push
