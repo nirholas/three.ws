@@ -14,7 +14,7 @@
 //    playable clip.
 //
 // USAGE
-//   node scripts/hero-clip-e2e.mjs --glb https://three.ws/avatars/cz.glb
+//   node scripts/hero-clip-e2e.mjs --glb https://three.ws/cdn/forge/anon/3abac32f-ced2-4189-b822-d30c96dbc87e.glb --title "Chrome toy rocket"
 //   node scripts/hero-clip-e2e.mjs --glb <url> --out docs/img/hero-clips --angles 6
 //   node scripts/hero-clip-e2e.mjs --glb <url> --preset hero_push_in --duration 6 --tier lite
 //   node scripts/hero-clip-e2e.mjs --glb <url> --renders-only
