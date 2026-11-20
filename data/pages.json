@@ -5091,6 +5091,14 @@
 					"added": "2026-10-08"
 				},
 				{
+					"path": "/docs/voice-grok",
+					"title": "Docs · Grok Voice realtime on a lip-synced avatar",
+					"description": "How /voice/grok and the grok-realtime embed attribute talk to a 3D avatar through xAI's speech-to-speech model: the server-side session broker, lip sync delayed to match your speakers, measured reply and mouth latency, the honest fallback without a key, and the LiveKit and Pipecat examples.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-11-20"
+				},
+				{
 					"path": "/docs/grok-bot",
 					"title": "Docs · Grok Bot connector reference",
 					"description": "Connect Grok Bot to three.ws as a custom MCP connector: exact fields for each sign-in mode, which server to pick, the links every result carries, jobs and safe retries, free limits and install tokens, why a connector key can never spend, guided prompts, and a fix for every connection failure.",
