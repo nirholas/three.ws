@@ -1,5 +1,7 @@
 # grok-startups 10: a synthetic probe for the Grok-facing MCP connectors with real uptime numbers
 
+> Status 2026-11-20: built and committed (b4c86c4d8, 65982e7a0, 50d7ae37c, c8e49cb19, 6bea11649, 7f900b409); migration 20261120205747_mcp_probe_results.sql is applied in production. Remaining, owner: `git push threews main`, then `npm run deploy:gcp:full`, whose sync-crons step creates the `cron--api-cron-mcp-probe` Cloud Scheduler job. Archive this file once /api/status/mcp answers 200 in production.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `grok-startups-` order, so it can run in parallel with all of them. Dev port: 3280.
 
 ## Operating clause (binding)
