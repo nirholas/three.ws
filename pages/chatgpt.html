@@ -5,7 +5,7 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 	<title>Add three.ws to ChatGPT: free 3D models and avatars inside your chats · three.ws</title>
-	<meta name="description" content="Add the free three.ws 3D Studio to your own ChatGPT in about a minute. Text and photos become interactive, textured 3D models and rigged avatars that render right in the conversation. No account, no key." />
+	<meta name="description" content="Add the free three.ws 3D Studio to your own ChatGPT in about a minute. Text and photos become interactive, textured 3D models and rigged avatars that render right in the conversation. Free: sign in with a free three.ws account to make models." />
 	<link rel="canonical" href="https://three.ws/chatgpt" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -175,7 +175,7 @@
 			.cg-btn, .cg-ask, .cg-made, .cg-tool, .cg-faq details { transition: none; }
 		}
 	</style>
-	<script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"Add three.ws to ChatGPT","description":"Add the free three.ws 3D Studio to ChatGPT so text and photos become interactive 3D models and rigged avatars inside your conversations.","url":"https://three.ws/chatgpt","totalTime":"PT2M","step":[{"@type":"HowToStep","name":"Turn on developer mode","text":"In ChatGPT on the web, open Settings, then Apps & Connectors, then Advanced settings, and switch on Developer mode."},{"@type":"HowToStep","name":"Create the app","text":"Back in Apps & Connectors, select Create. Name it three.ws 3D Studio, paste https://three.ws/api/mcp-chatgpt as the MCP server URL, choose No authentication, and create it."},{"@type":"HowToStep","name":"Use it in a chat","text":"In a new chat, open the + menu, choose Developer mode, tick three.ws 3D Studio, and ask for a 3D model. It renders inline as an interactive viewer."}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"Add three.ws to ChatGPT","description":"Add the free three.ws 3D Studio to ChatGPT so text and photos become interactive 3D models and rigged avatars inside your conversations.","url":"https://three.ws/chatgpt","totalTime":"PT2M","step":[{"@type":"HowToStep","name":"Turn on developer mode","text":"In ChatGPT on the web, open Settings, then Apps & Connectors, then Advanced settings, and switch on Developer mode."},{"@type":"HowToStep","name":"Create the app","text":"Back in Apps & Connectors, select Create. Name it three.ws 3D Studio, paste https://three.ws/api/mcp-chatgpt?auth=oauth as the MCP server URL, choose OAuth, create it, and approve the three.ws sign-in."},{"@type":"HowToStep","name":"Use it in a chat","text":"In a new chat, open the + menu, choose Developer mode, tick three.ws 3D Studio, and ask for a 3D model. It renders inline as an interactive viewer."}]}</script>
 </head>
 <body>
 	<script src="/nav.js"></script>
@@ -187,13 +187,13 @@
 				Ask ChatGPT for a dragon, a chair or a version of you, and
 				<strong>an interactive, textured 3D model appears right in the conversation</strong>:
 				spin it, download the GLB, rig it for animation, place it in your room in AR.
-				Free, no three.ws account, no key. About a minute to set up.
+				Free with a three.ws account (sign-up is free and takes seconds). About a minute to set up.
 			</p>
 
 			<div class="cg-say" role="group" aria-labelledby="cg-url-label">
-				<div class="cg-say-label"><span id="cg-url-label">Your MCP server URL</span><span>No authentication</span></div>
+				<div class="cg-say-label"><span id="cg-url-label">Your MCP server URL</span><span>OAuth</span></div>
 				<div class="cg-say-row">
-					<p class="cg-say-text" id="cg-url">https://three.ws/api/mcp-chatgpt</p>
+					<p class="cg-say-text" id="cg-url">https://three.ws/api/mcp-chatgpt?auth=oauth</p>
 					<button type="button" class="cg-btn" data-variant="primary" data-copy-target="cg-url" aria-label="Copy the MCP server URL">
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
 						<span>Copy URL</span>
@@ -236,16 +236,16 @@
 						</div>
 						<div class="cg-field">
 							<span class="cg-field-k">MCP server URL</span>
-							<span class="cg-field-v"><code id="cg-f-url">https://three.ws/api/mcp-chatgpt</code></span>
+							<span class="cg-field-v"><code id="cg-f-url">https://three.ws/api/mcp-chatgpt?auth=oauth</code></span>
 							<button type="button" class="cg-btn cg-btn-sm" data-copy-target="cg-f-url" aria-label="Copy the MCP server URL"><span>Copy</span></button>
 						</div>
 						<div class="cg-field">
 							<span class="cg-field-k">Authentication</span>
-							<span class="cg-field-v">No authentication</span>
+							<span class="cg-field-v">OAuth</span>
 							<span></span>
 						</div>
 					</div>
-					<p class="cg-after">Tick the box that says you trust the app, then select <strong>Create</strong>. ChatGPT connects and lists the tools it found.</p>
+					<p class="cg-after">Tick the box that says you trust the app, then select <strong>Create</strong>. ChatGPT opens the three.ws sign-in: log in or create a free account, approve the connection, and ChatGPT lists the tools it found. Leave the client ID and secret empty; ChatGPT registers itself.</p>
 				</li>
 				<li class="cg-step">
 					<h3>Ask for something in 3D</h3>
@@ -310,7 +310,7 @@
 				</details>
 				<details>
 					<summary>ChatGPT says it could not connect to the server</summary>
-					<p>Check that the URL is exactly <code>https://three.ws/api/mcp-chatgpt</code> with no trailing space, and that Authentication is set to No authentication. The status line at the top of this page tests the same server from your browser. If it is green, delete the app and create it again.</p>
+					<p>Check that the URL is exactly <code>https://three.ws/api/mcp-chatgpt?auth=oauth</code> with no trailing space, that Authentication is set to OAuth, and that you approved the three.ws sign-in. The status line at the top of this page tests the same server from your browser. If it is green, delete the app and create it again.</p>
 				</details>
 				<details>
 					<summary>ChatGPT answered without using three.ws</summary>
@@ -322,7 +322,7 @@
 				</details>
 				<details>
 					<summary>Does it cost anything? Do I need an account?</summary>
-					<p>No and no. Every tool is free and operator-funded, with a fair hourly limit per ChatGPT user. Models are yours to download and use. Sign up at <a href="/forge">three.ws</a> only if you want a library, agents and higher limits.</p>
+					<p>It is free, and yes, you need a free three.ws account: making a model is tied to the account that asked for it, so nobody can generate anonymously. Every tool is operator-funded, with a fair hourly limit per account. New models stay private in your <a href="/forge">three.ws</a> library until you publish them, and they are yours to download and use.</p>
 				</details>
 				<details>
 					<summary>Can I use it in other AI apps?</summary>
