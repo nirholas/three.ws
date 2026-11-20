@@ -472,6 +472,20 @@
 				<div class="st-sublist" id="st-sublist"></div>
 			</section>
 
+			<!-- MCP connector uptime, from /api/status/mcp (the five-minute synthetic
+			     probe). Hidden until that feed answers. -->
+			<section id="st-connectors" aria-label="MCP connector uptime" hidden>
+				<h2 class="st-subhead">Connector uptime</h2>
+				<p class="st-subnote">
+					Every five minutes a synthetic client connects to each hosted MCP
+					connector the way Grok and Cursor do (initialize, tools/list, one
+					read-only tool call, the OAuth sign-in challenge) and records whether
+					it worked. Success rates and handshake latency from
+					<a href="/api/status/mcp">/api/status/mcp</a>.
+				</p>
+				<div class="st-sublist" id="st-connlist"></div>
+			</section>
+
 			<!-- Agent-economy heartbeat — hidden until the API returns an economy
 			     block (older deploys / pre-first-tick omit it). -->
 			<section id="st-economy" aria-label="Agent economy heartbeat" hidden>
@@ -807,10 +821,93 @@
 					wrap.hidden = true;
 				}
 			}
+			// MCP connector uptime (/api/status/mcp). A server whose newest probe is
+			// older than three missed runs is shown as stale, not as passing.
+			const CONN_STALE_MS = 15 * 60 * 1000;
+			const ratePct = (w) => {
+				if (!w || w.successRate == null) return 'n/a';
+				const pct = w.successRate * 100;
+				return `${pct === 100 ? '100' : pct.toFixed(pct >= 99 ? 2 : 1)}%`;
+			};
+			const msWord = (n) => (n == null ? 'n/a' : `${n}ms`);
+			const agoWord = (iso) => {
+				const min = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+				return min === 0 ? 'under a minute ago' : `${lagWord(min)} ago`;
+			};
+			function connectorRow(s) {
+				const stale = Date.now() - new Date(s.last.checkedAt).getTime() > CONN_STALE_MS;
+				const state = stale ? 'unknown' : s.last.ok ? 'ok' : 'down';
+				const word = stale ? 'stale' : s.last.ok ? 'operational' : 'failing';
+				const w = s.windows || {};
+				const day = w['24h'] || {};
+				const detail = `${s.path} · last probe ${agoWord(s.last.checkedAt)}${
+					!s.last.ok && s.last.failedStep ? ` · ${s.last.failedStep} failed` : ''
+				}`;
+				const pill = (k, v, title) =>
+					`<span class="st-metric" title="${esc(title)}"><span class="st-metric-k">${esc(k)}</span><b class="st-metric-v">${esc(v)}</b></span>`;
+				const probesTitle = (label, win) =>
+					win && win.probes ? `${win.passed} of ${win.probes} probes passed, ${label}` : `no probes ${label}`;
+				return `<div class="st-sub" data-state="${state}">
+					<span class="st-dot" data-state="${state}" aria-hidden="true"></span>
+					<span class="st-sub-name">${esc(s.name)}</span>
+					<span class="st-sub-state">${word}</span>
+					<span class="st-sub-detail">${esc(detail)}</span>
+					<span class="st-sub-metrics">
+						${pill('24h', ratePct(w['24h']), probesTitle('last 24 hours', w['24h']))}
+						${pill('7d', ratePct(w['7d']), probesTitle('last 7 days', w['7d']))}
+						${pill('30d', ratePct(w['30d']), probesTitle('last 30 days', w['30d']))}
+						${pill('Handshake p50', msWord(day.handshakeP50Ms), 'initialize to tools/list, median of passing probes, last 24 hours')}
+						${pill('p95', msWord(day.handshakeP95Ms), 'initialize to tools/list, 95th percentile of passing probes, last 24 hours')}
+						${pill('Tool call p95', msWord(day.toolCallP95Ms), 'one read-only tool call, 95th percentile, last 24 hours')}
+					</span>
+				</div>`;
+			}
+			async function loadConnectors() {
+				const wrap = document.getElementById('st-connectors');
+				const listEl = document.getElementById('st-connlist');
+				let res;
+				try {
+					res = await fetch('/api/status/mcp', { headers: { accept: 'application/json' } });
+				} catch {
+					wrap.hidden = true;
+					return;
+				}
+				// A deploy that predates the feed answers 404: keep the section out of the way.
+				if (res.status === 404) {
+					wrap.hidden = true;
+					return;
+				}
+				let body = null;
+				try {
+					body = await res.json();
+				} catch {
+					body = null;
+				}
+				wrap.hidden = false;
+				if (!res.ok || !body || !Array.isArray(body.servers)) {
+					listEl.innerHTML = `<div class="st-note st-error">${esc(
+						body?.message || `The connector uptime feed answered HTTP ${res.status}.`,
+					)} The connectors themselves may be fine: they are listed in
+						<a href="/.well-known/mcp.json">/.well-known/mcp.json</a>. This section retries every minute.</div>`;
+					return;
+				}
+				if (body.servers.length === 0) {
+					listEl.innerHTML = `<div class="st-note">No connector probe has been recorded yet. The probe runs
+						every five minutes, so the first results appear within minutes and the 24-hour rate fills in over
+						the first day. The connectors themselves are listed in
+						<a href="/.well-known/mcp.json">/.well-known/mcp.json</a>; to connect one to Grok, see
+						<a href="/grok">three.ws for Grok</a>.</div>`;
+					return;
+				}
+				listEl.innerHTML = body.servers.map(connectorRow).join('');
+			}
+
 			loadHealth();
 			loadStats();
+			loadConnectors();
 			setInterval(loadHealth, 60 * 1000);
 			setInterval(loadStats, 5 * 60 * 1000);
+			setInterval(loadConnectors, 60 * 1000);
 
 			// Build traceability: show the exact commit + Cloud Run revision that is
 			// serving this page right now. Static (never changes within a revision),

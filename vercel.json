@@ -7640,6 +7640,10 @@
 			"schedule": "* * * * *"
 		},
 		{
+			"path": "/api/cron/mcp-probe",
+			"schedule": "*/5 * * * *"
+		},
+		{
 			"path": "/api/cron/indexnow-reconcile",
 			"schedule": "*/10 * * * *"
 		},

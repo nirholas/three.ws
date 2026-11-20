@@ -697,6 +697,7 @@
 		"forge:safety": "node scripts/forge-safety.mjs",
 		"forge:judge": "node scripts/forge-judge.mjs",
 		"grok:usage": "node scripts/grok-usage.mjs",
+		"grok:mcp-probe": "node scripts/grok-mcp-probe.mjs",
 		"stage:sam3d-objects": "node scripts/stage-sam3d-objects.mjs",
 		"rescan:skills": "node --env-file=.env.local scripts/rescan-marketplace-skills.mjs"
 	},
