@@ -39,9 +39,13 @@ export interface ForgeResult {
 
 type Fetch = typeof fetch;
 
+export const API_KEYS_URL = 'https://three.ws/dashboard/api-keys';
+
 export interface ForgeClientOptions {
 	baseUrl?: string;
 	clientHandle: string;
+	/** three.ws API key. Making a model needs a free account; it is sent as a bearer. */
+	apiKey?: string;
 	fetchImpl?: Fetch;
 	sleep?: (ms: number) => Promise<void>;
 	now?: () => number;
@@ -56,6 +60,7 @@ export function viewerUrlFor(baseUrl: string, glbUrl: string): string {
 export class ForgeClient {
 	readonly baseUrl: string;
 	private readonly handle: string;
+	private readonly apiKey: string;
 	private readonly fetchImpl: Fetch;
 	private readonly sleep: (ms: number) => Promise<void>;
 	private readonly now: () => number;
@@ -63,6 +68,7 @@ export class ForgeClient {
 	constructor(options: ForgeClientOptions) {
 		this.baseUrl = (options.baseUrl?.trim() || DEFAULT_BASE_URL).replace(/\/+$/, '');
 		this.handle = options.clientHandle;
+		this.apiKey = options.apiKey?.trim() ?? '';
 		this.fetchImpl = options.fetchImpl ?? fetch;
 		this.sleep = options.sleep ?? defaultSleep;
 		this.now = options.now ?? Date.now;
@@ -76,6 +82,7 @@ export class ForgeClient {
 				headers: {
 					accept: 'application/json',
 					'x-forge-client': this.handle,
+					...(this.apiKey ? { authorization: `Bearer ${this.apiKey}` } : {}),
 					...(init?.body ? { 'content-type': 'application/json' } : {}),
 				},
 			});

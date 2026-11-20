@@ -9,16 +9,22 @@ import {
 	Toast,
 	getPreferenceValues,
 	open,
+	openExtensionPreferences,
 	showToast,
 	useNavigation,
 } from '@raycast/api';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { randomUUID } from 'node:crypto';
-import { ForgeClient, ForgeError, ForgeResult, Tier } from './forge-api';
+import { API_KEYS_URL, ForgeClient, ForgeError, ForgeResult, Tier } from './forge-api';
 
 interface Preferences {
+	apiKey?: string;
 	tier?: Tier;
 	baseUrl?: string;
+}
+
+function needsKey(error: Error): boolean {
+	return error instanceof ForgeError && (error.code === 'sign_in_required' || error.status === 401);
 }
 
 function describeStatus(status: string, elapsedMs: number): string {
@@ -29,6 +35,8 @@ function describeStatus(status: string, elapsedMs: number): string {
 
 function recoveryFor(error: ForgeError | Error): string {
 	const code = error instanceof ForgeError ? error.code : '';
+	if (needsKey(error))
+		return `Making a model needs a free three.ws account. Create an API key at ${API_KEYS_URL}, then paste it into the API Key field in the extension preferences.`;
 	if (code === 'unreachable')
 		return 'Check your connection, or the API Base URL in the extension preferences, then run the command again.';
 	if (code === 'timeout')
@@ -47,9 +55,10 @@ function Generating({ prompt, tier }: { prompt: string; tier: Tier }) {
 		() =>
 			new ForgeClient({
 				baseUrl: preferences.baseUrl,
+				apiKey: preferences.apiKey,
 				clientHandle: `raycast-${randomUUID()}`,
 			}),
-		[preferences.baseUrl],
+		[preferences.baseUrl, preferences.apiKey],
 	);
 	const [status, setStatus] = useState('Submitting to Forge');
 	const [result, setResult] = useState<ForgeResult | null>(null);
@@ -82,6 +91,12 @@ function Generating({ prompt, tier }: { prompt: string; tier: Tier }) {
 				markdown={`# Forge could not finish\n\n${error.message}\n\n${recoveryFor(error)}`}
 				actions={
 					<ActionPanel>
+						{needsKey(error) ? (
+							<>
+								<Action title="Open Extension Preferences" onAction={openExtensionPreferences} />
+								<Action.OpenInBrowser title="Create an API Key" url={API_KEYS_URL} />
+							</>
+						) : null}
 						<Action title="Back to Prompt" onAction={pop} />
 					</ActionPanel>
 				}

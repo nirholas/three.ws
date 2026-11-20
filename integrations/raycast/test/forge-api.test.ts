@@ -82,3 +82,52 @@ describe("ForgeClient on a cache hit", () => {
   });
 });
 
+
+describe("ForgeClient with a three.ws account", () => {
+  // Making a model needs a free three.ws account: /api/forge answers an
+  // anonymous POST with 401 sign_in_required (api/_lib/creator-account.js).
+  function recording(body: unknown, status = 200) {
+    const seen: Array<Record<string, string>> = [];
+    const fetchImpl = (async (_url: string, init?: RequestInit) => {
+      seen.push({ ...((init?.headers as Record<string, string>) ?? {}) });
+      return new Response(JSON.stringify(body), { status });
+    }) as unknown as typeof fetch;
+    return { fetchImpl, seen };
+  }
+
+  it("sends the API key as a bearer on submit and on every poll", async () => {
+    const submit = recording({ status: "queued", job_id: "j9" });
+    const client = new ForgeClient({ clientHandle: "t", apiKey: " sk_live_abc ", fetchImpl: submit.fetchImpl, sleep: noSleep });
+    await client.submit("a small wooden chair", "draft");
+    expect(submit.seen[0].authorization).toBe("Bearer sk_live_abc");
+
+    const poll = recording({ status: "done", glb_url: "https://example.test/m.glb" });
+    const c2 = new ForgeClient({ clientHandle: "t", apiKey: "sk_live_abc", fetchImpl: poll.fetchImpl, sleep: noSleep });
+    await c2.poll("j9");
+    expect(poll.seen[0].authorization).toBe("Bearer sk_live_abc");
+  });
+
+  it("sends no authorization header when no key is set", async () => {
+    const r = recording({ status: "queued", job_id: "j9" });
+    const client = new ForgeClient({ clientHandle: "t", fetchImpl: r.fetchImpl });
+    await client.submit("a small wooden chair", "draft");
+    expect(r.seen[0]).not.toHaveProperty("authorization");
+  });
+
+  it("surfaces sign_in_required with its code and status so the UI can point at the key", async () => {
+    const r = recording(
+      {
+        error: "sign_in_required",
+        message: "Sign in to make a 3D model. A three.ws account is free.",
+        sign_in_url: "/login",
+        api_keys_url: "/dashboard/api-keys",
+      },
+      401,
+    );
+    const client = new ForgeClient({ clientHandle: "t", fetchImpl: r.fetchImpl });
+    await expect(client.submit("a small wooden chair", "draft")).rejects.toMatchObject({
+      code: "sign_in_required",
+      status: 401,
+    });
+  });
+});

@@ -5,12 +5,23 @@
 //   node test/record-fixture.mjs [base-url]
 // A repeated prompt is answered from cache with no job id (recorded by hand in forge-draft-cached.json);
 // set FORGE_PROMPT to a fresh subject to record a real job. Set FORGE_BACKEND (for example nvidia) to pin an engine when the default lane is cold.
+// Making a model needs a three.ws account: export THREE_WS_API_KEY (https://three.ws/dashboard/api-keys) first.
 import { writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const base = (process.argv[2] || "https://three.ws").replace(/\/+$/, "");
-const headers = { accept: "application/json", "content-type": "application/json", "x-forge-client": "raycast-fixture-recorder" };
+const apiKey = (process.env.THREE_WS_API_KEY || "").trim();
+if (!apiKey) {
+  console.error("Set THREE_WS_API_KEY (https://three.ws/dashboard/api-keys): making a model needs a three.ws account.");
+  process.exit(1);
+}
+const headers = {
+  accept: "application/json",
+  "content-type": "application/json",
+  "x-forge-client": "raycast-fixture-recorder",
+  authorization: `Bearer ${apiKey}`,
+};
 const submit = await (await fetch(`${base}/api/forge`, {
   method: "POST",
   headers,
