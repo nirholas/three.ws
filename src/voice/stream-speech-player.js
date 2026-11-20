@@ -107,6 +107,7 @@ export class StreamSpeechPlayer {
 		this._sources = new Set();
 		this._origin = null; // ctx time of turn t=0
 		this._playhead = 0; // turn time where the next chunk goes
+		this._lastChunkStart = null; // ctx time the most recent chunk starts playing
 		this._segments = new Map(); // index -> { clock, rate, coverEnd }
 		this._frames = null; // the array handed to A2FPlayer (grows in place)
 		this._names = null;
@@ -122,6 +123,11 @@ export class StreamSpeechPlayer {
 	get pending() {
 		if (this._origin === null) return 0;
 		return Math.max(0, this._playhead - this._now());
+	}
+
+	/** AudioContext time the most recently scheduled chunk starts playing (null before any). */
+	get lastChunkStart() {
+		return this._lastChunkStart;
 	}
 
 	/** The amplitude-driven mouth shape last applied ({ open, wide, round }). */
@@ -161,6 +167,7 @@ export class StreamSpeechPlayer {
 		src.buffer = buffer;
 		src.connect(this.out);
 		src.start(this._origin + at);
+		this._lastChunkStart = this._origin + at;
 		this._sources.add(src);
 		src.onended = () => {
 			this._sources.delete(src);
@@ -344,7 +351,7 @@ export class StreamSpeechPlayer {
 		this._shape.wide += (s.wide - this._shape.wide) * k(this._shape.wide, s.wide);
 		this._shape.round += (s.round - this._shape.round) * k(this._shape.round, s.round);
 		try {
-			this.mouth.setMouthShape(this._shape);
+			this.mouth?.setMouthShape(this._shape);
 		} catch {}
 	}
 
