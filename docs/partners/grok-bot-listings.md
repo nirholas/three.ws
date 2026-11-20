@@ -7,6 +7,9 @@ site, so each one waits for the owner's yes (CLAUDE.md gate 2). Owner order:
 
 ## How Grok Bot users find connectors (2026-11-14)
 
+- **xAI opened an official listing form (seen 2026-11-20).** [x.ai/bot/marketplace/submit-a-plugin](https://x.ai/bot/marketplace/submit-a-plugin)
+  takes an MCP server URL or a public GitHub repo and lists it in Grok (coming soon), Grok Bot
+  and Cursor. It is row 0 below. The points that follow describe discovery before that form.
 - **Grok Bot has no connector list of its own.** Per [docs.x.ai](https://docs.x.ai/grok-bot/teams-and-enterprises),
   "Grok Bot inherits your team's Cursor connector policy. There is no separate Grok Bot connector
   list." Members find allowed connectors under **Connect apps**, and team admins enable them from
@@ -27,11 +30,11 @@ site, so each one waits for the owner's yes (CLAUDE.md gate 2). Owner order:
 | Field | Value |
 |---|---|
 | Name | three.ws |
-| One line | Free 3D studio for Grok: turn text or a photo into a textured 3D model or a rigged avatar, auto-rig a GLB, search thousands of CC0 3D assets, get viewer links back. No account. Never spends. |
+| One line | Free 3D studio for Grok: turn text or a photo into a textured 3D model or a rigged avatar, auto-rig a GLB, search thousands of CC0 3D assets, get viewer links back. Free account (OAuth sign-in) to generate; catalog search needs none. Never spends. |
 | Connector URL (Grok Bot, Grok) | `https://three.ws/api/mcp-grok` |
 | Connector URL (any MCP client) | `https://three.ws/api/mcp-studio` |
 | Transport | Streamable HTTP |
-| Auth | None (anonymous). Optional OAuth 2.1 at `https://three.ws/api/mcp-grok?auth=oauth` adds the user's own three.ws agents. |
+| Auth | OAuth 2.1 at `https://three.ws/api/mcp-grok?auth=oauth` (free account, dynamic client registration). The plain URL answers anonymous callers, who can search the catalog but must sign in to generate. |
 | Docs | https://three.ws/docs/grok-bot |
 | Website | https://three.ws/grok |
 | Logo, square | `public/three-ws-mcp-icon.svg` (64x64 SVG, 1.4 KB, served at https://three.ws/three-ws-mcp-icon.svg) |
@@ -53,6 +56,7 @@ catalog for `three.ws`, `threews`, `three-ws` and `nirholas`.
 
 | # | Directory | Method | Requirements | Cost | Listed | Recommendation |
 |---|---|---|---|---|---|---|
+| 0 | [Grok Bot marketplace (official)](https://x.ai/bot/marketplace/submit-a-plugin) | xAI web form taking an MCP server URL or a public GitHub repo; one form lists in Grok (coming soon), Grok Bot and Cursor | 1:1 logo with a background plate, organization handle, description and testing instructions up to 600 characters each, an in-app test, Cursor Marketplace Publisher Terms | Free | No | Submit first. xAI's own listing form, added 2026-11-20 (order 873). Prepared in section 0. |
 | 1 | [Cursor Marketplace](https://cursor.com/marketplace/publish) | Web form (signed-in Cursor account) taking a public Git repo link | Root `.cursor-plugin/plugin.json`, kebab-case unique name, README, committed logo, open source, manual security and quality review (also on every update) | Free | No | Submit. This is the catalog Grok Bot's Connect apps inherits. |
 | 2 | [cursor.directory](https://cursor.directory/plugins/new) | Web form taking a GitHub link; auto-detects MCP servers and skills | Public repo with the plugin at its root | Free | No | Submit, same repo as row 1. Cursor staff route most third-party plugins here first. |
 | 3 | [xai-org/plugin-marketplace](https://github.com/xai-org/plugin-marketplace) | Pull request | One entry in `.grok-plugin/marketplace.json` with a pinned 40-char SHA, regenerated `plugin-index.json`, both repo checks green; personal-account sources are questioned | Free | No (36 plugins, one in `media`, no 3D plugin) | Submit. xAI's own catalog, 329 stars, pin bumps daily. |
@@ -68,6 +72,67 @@ catalog for `three.ws`, `threews`, `three-ws` and `nirholas`.
 | 13 | [workinsiders.com](https://workinsiders.com/grok-bot-plugins-skills-mcp-servers/) and [grok-bots.com](https://grok-bots.com/grok-bot-connectors) | No Grok-list submission route (workinsiders rebuilds its page from the community GitHub list; grok-bots.com has no form) | n/a | n/a | No | Nothing to submit. Rows 7 and 9 feed workinsiders. |
 
 ## Prepared submissions (none opened)
+
+### 0. Grok Bot marketplace (official)
+
+Form: https://x.ai/bot/marketplace/submit-a-plugin, fetched 2026-11-20. Its intro reads "Distribute
+your plugin or MCP server to Grok (coming soon), Grok Bot, and Cursor users." Every field below is
+in form order, with the form's limit and where the value comes from. The two 600-character
+fields were counted by script (566 and 577 characters) and contain no em-dash.
+
+| Field (limit) | Value | Source |
+|---|---|---|
+| First Name, Last Name (40 each) | The owner's name | The owner submits; the form is a person's attestation |
+| Work Email (254) | The owner's work address | Owner. Never `support@three.ws`: xAI replies to the submitter |
+| Organization Name (100) | `three.ws` | Brand name used on every listing above |
+| Organization Handle (40, "no spaces or capitalization") | `three-ws` | Matches the plugin name in `integrations/grok/three-ws` and `integrations/cursor/three-ws`. It must equal the handle of the organization the owner creates; if xAI assigns or rejects it, use theirs and record it in the log |
+| Website URL (200, optional) | `https://three.ws/grok` | The Grok landing page (`pages/grok.html`) with the connector card and task templates |
+| Logotype URL (200, "1:1 SVG or PNG with a background plate") | `https://three.ws/brand/three-ws-app-icon-1024.png` | `public/brand/three-ws-app-icon-1024.png`, 1024x1024 opaque PNG rendered from `public/three-ws-mcp-icon.svg` (512 variant beside it). Live after the next deploy; until then `https://raw.githubusercontent.com/nirholas/three.ws/main/public/brand/three-ws-app-icon-1024.png` serves the same file |
+| Where do you want to be listed? | Grok (coming soon), Grok Bot, Cursor: tick all three | The server speaks Streamable HTTP with OAuth 2.1, which all three clients connect |
+| MCP Server URL or Public GitHub Repository (200) | `https://three.ws/api/mcp-grok?auth=oauth` | `docs/grok-bot.md` OAuth section; `node scripts/grok-connector-review-check.mjs` passes all ten steps against it |
+| Brief Description (600) | Block A below | `docs/mcp-studio.md` tool list |
+| Testing Instructions (600) | Block B below | Measured 2026-11-20, `docs/grok-bot.md#marketplace-review` |
+| "I've tested this plugin locally and in-app" | Tick only after the owner's own Grok Bot run | The owner adds the connector in Grok Bot and runs the three prompts in Block B |
+| Publisher Terms | https://cursor.com/marketplace-publisher-terms | Linked from the form; the owner reads and accepts |
+
+**Why the hosted URL and not a repo.** A reviewer can test a hosted OAuth server from Grok Bot
+with nothing to install: add the URL, create a free account, ask. A repo only becomes the better
+answer once orders 871 and 872 export a standalone plugin repository (a `.grok-plugin` or
+`.cursor-plugin` at its root); at that point the same form can take the repo for the Cursor
+listing, and the hosted URL stays the Grok Bot answer. The `?auth=oauth` form matters: the plain
+URL serves anonymous callers and never starts sign-in, so a reviewer would see generation tools
+answer "sign in required" with no way to sign in from Grok Bot.
+
+**Block A: Brief Description** (566 characters)
+
+```text
+three.ws is a 3D studio for Grok Bot. Ask in plain words and it turns text or a photo into a textured 3D model (GLB), builds rigged, animation-ready avatars, auto-rigs a GLB you already have, refines a model by instruction, and searches thousands of ready-made CC0 props, characters and motion clips. Every result comes back with a browser viewer link, a downloadable GLB, a poster image and embed code. Free with a free three.ws account (OAuth sign-in); catalog search needs no account. Long generations return a job Grok Bot checks, so scheduled tasks never stall.
+```
+
+**Block B: Testing Instructions** (577 characters)
+
+```text
+Add a custom connector: Remote HTTPS, https://three.ws/api/mcp-grok?auth=oauth, no headers, Client ID empty. At sign-in pick "Create one": any username, a 10+ character password, no email or card, usable at once. Approve. Then ask: 1) "Find a ready-made armchair on three.ws" (about 1 s, viewer link). 2) "Make a 3D model of a wooden treasure chest" (a job, about 3 to 4 min; Grok Bot checks it until the GLB link arrives). 3) "Show me the chest from the front and side" (about 15 s, two images). Full steps: three.ws/docs/grok-bot#marketplace-review. Support: support@three.ws
+```
+
+**Measured 2026-11-20** with `node scripts/grok-connector-review-check.mjs` against production (ALL PASS):
+401 challenge 239 ms, protected-resource metadata 24 ms, authorization-server metadata 16 ms,
+dynamic client registration 272 ms, PKCE authorize to the sign-in form 353 ms, forged code refused
+(`invalid_grant`) 168 ms, initialize 279 ms, tools/list 109 ms (45 tools, none that spend),
+`search_catalog` 584 ms, `forge_free` 194.8 s over 9 `check_job` polls. **Sign-in to first
+generated model: 195.8 s.** `look_at_model` on that model: 14.9 s for two views.
+
+**Before submitting.** Production must carry commit 4654a704e (sign-in carries a pending OAuth
+consent through to sign-up, so a reviewer who creates an account lands back on the consent screen)
+and the brand PNGs. `/api/version` on 2026-11-20 reported 35440977b, which has neither: deploy
+first, then rerun `node scripts/grok-connector-review-check.mjs`.
+
+**Templates.** xAI has no separate template submission form. A Grok Bot template is shared from the
+Bot itself (Bot details, Share, Create a copy, Publish on the template card, Copy link), and
+published Bots appear at `x.ai/bot/marketplace`. The four templates in
+[docs/grok-bot.md#task-templates](../grok-bot.md#task-templates) are written so the owner can
+create one Bot per template from that page, publish each, and paste the links into the
+submission log.
 
 ### 1 and 2. Cursor Marketplace and cursor.directory
 
@@ -257,7 +322,7 @@ No catalog file changes, so their `node scripts/lint.mjs` is not triggered. PR t
 |---|---|
 | Server Name | three.ws |
 | Category | Design |
-| Short Description | Free 3D studio for Grok: turn text or a photo into a textured 3D model or a rigged avatar, auto-rig a GLB, search thousands of CC0 3D assets, get viewer links back. No account. Never spends. |
+| Short Description | Free 3D studio for Grok: turn text or a photo into a textured 3D model or a rigged avatar, auto-rig a GLB, search thousands of CC0 3D assets, get viewer links back. Free account (OAuth sign-in) to generate; catalog search needs none. Never spends. |
 | Repository, Website or Documentation | https://three.ws/docs/grok-bot |
 | Official MCP Registry Name | io.github.nirholas/threews-grok |
 | Supports remote connections | checked |
@@ -281,7 +346,8 @@ catalog and give me its viewer link", and https://three.ws/docs/grok-bot.
 
 ## Owner approval
 
-One yes or no per row: (1+2) create `nirholas/three-ws-cursor-plugin` and submit it to the Cursor
+One yes or no per row: (0) the owner submits the official Grok Bot marketplace form in section 0,
+(1+2) create `nirholas/three-ws-cursor-plugin` and submit it to the Cursor
 Marketplace and cursor.directory, (3) xAI plugin marketplace PR, (4) grokbot.tools form,
 (5) punkpeye remote list PR, (6) jaw9c remote list PR, (7) majiayu000 awesome-grok-bot PR,
 (8) mcpservers.org free form, (9) ZeroPointRepo awesome-grok-bot PR.
