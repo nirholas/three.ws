@@ -10,11 +10,10 @@
  * proxying multi-MB uploads through a serverless handler.
  *
  * Requires an account (a session cookie, or an API key / OAuth bearer for
- * machine callers). The rest of /forge stays open: anyone can make a model from
- * a text prompt without signing in. Uploading is different because the bytes are
- * the caller's own, nothing screens them, and the result is a public URL on our
- * CDN. Anonymously, that made this endpoint a free image host on the three.ws
- * domain with no one answerable for what landed on it. Uploads are rate-limited
+ * machine callers), like every creation surface (api/_lib/creator-account.js).
+ * The bytes are the caller's own and the result is a public URL on our CDN.
+ * Anonymously, that made this endpoint a free image host on the three.ws domain
+ * with no one answerable for what landed on it. Uploads are rate-limited
  * per account and land under a prefix derived from the account id, so every
  * stored photo traces back to the person who put it there.
  *
@@ -35,6 +34,7 @@ import { limits } from './_lib/rate-limit.js';
 import { presignUpload, publicUrl, objectStorageUsable } from './_lib/r2.js';
 import { hashClient } from './_lib/forge-store.js';
 import { getRequestUser } from './_lib/auth.js';
+import { signInRequired } from './_lib/creator-account.js';
 
 // Accepted reference-image types → file extension for the storage key.
 const CONTENT_TYPE_EXT = Object.freeze({
@@ -52,16 +52,7 @@ export default wrap(async (req, res) => {
 	// Account first, before any storage probe or rate-limit spend, so an
 	// anonymous caller learns the one thing they can act on.
 	const user = await getRequestUser(req, res);
-	if (!user?.id) {
-		return json(res, 401, {
-			error: 'sign_in_required',
-			message: 'Sign in to upload a photo. It is free, and you can still make a model from a text prompt without an account.',
-			// Browsers follow sign_in_url; scripts and plugins send a key from
-			// api_keys_url as `Authorization: Bearer <key>`.
-			sign_in_url: '/login',
-			api_keys_url: '/dashboard/api-keys',
-		});
-	}
+	if (!user?.id) return signInRequired(res, { action: 'upload a photo' });
 
 	// Ask whether storage will actually ACCEPT the bytes, not merely whether it
 	// is configured. This endpoint's whole output is a URL the browser uses

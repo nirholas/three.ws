@@ -21,7 +21,7 @@ import { coldStartLabel } from '../shared/forge-frames.js';
 import { initForgeDestinationPicker, storedForgeDestination } from '../shared/forge-destination-picker.js';
 import { regionRestrictedError, fetchRestrictedEngines } from '../forge-region.js';
 import { rememberFromResponse } from '../shared/forge-manage-tokens.js';
-import { signedInForUploads, isSignInRequired, renderUploadSignIn, UPLOAD_SIGN_IN_SHORT } from '../shared/upload-sign-in.js';
+import { signedInForUploads, isSignInRequired, renderUploadSignIn, renderCreateSignIn, UPLOAD_SIGN_IN_SHORT } from '../shared/upload-sign-in.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -109,6 +109,7 @@ const els = {
 	generateAnyway: document.getElementById('generate-anyway'),
 	refineLocally: document.getElementById('refine-locally'),
 	errorMessage: document.getElementById('error-message'),
+	errorTitle: document.getElementById('error-title'),
 	forgeShareBtn: document.getElementById('forge-share-btn'),
 	segmentBtn: document.getElementById('forge-segment-btn'),
 	openInComposer: document.getElementById('open-in-composer'),
@@ -1426,6 +1427,12 @@ async function startJob({ prompt, imageUrls, skipValidation, payment }) {
 		body: JSON.stringify(body),
 	});
 	const data = await res.json().catch(() => ({}));
+	// Signed out (or the session expired mid-visit): the account gate refused it.
+	if (isSignInRequired(res.status, data)) {
+		const e = new Error(data.message || 'Sign in to make a 3D model.');
+		e.kind = 'sign_in';
+		throw e;
+	}
 	// The picked engine's model licence excludes this visitor's region (403
 	// region_restricted). Remember it so the picker disables it, and hand the
 	// catch the engines the server named so it hops instead of dead-ending.
@@ -2123,9 +2130,16 @@ async function openSharedCreation(shareId) {
 	}
 }
 
-function showError(message, { allowOverride = false } = {}) {
+function showError(message, { allowOverride = false, title = null } = {}) {
 	stopElapsed();
 	stopRateLimitCountdown();
+	// The heading is translated in the page; keep that text to restore it after a
+	// state that set its own.
+	if (els.errorTitle) {
+		els.errorTitle.dataset.defaultText ??= els.errorTitle.textContent;
+		els.errorTitle.textContent = title || els.errorTitle.dataset.defaultText;
+	}
+	els.errorMessage.classList.remove('upload-sign-in', 'upload-sign-in--panel');
 	els.errorMessage.textContent = message;
 	// The "Generate anyway" affordance only exists for the vision pre-check
 	// rejection; every other error hides it so it can't leak across states.
@@ -2140,6 +2154,25 @@ function showError(message, { allowOverride = false } = {}) {
 	}
 	if (els.retry) els.retry.disabled = false;
 	showState('error');
+}
+
+// Making a model needs an account (api/forge.js answers 401 sign_in_required).
+// The stage shows why and a sign-in link that returns here, in place of Retry,
+// which could only be refused again.
+function showCreateSignIn() {
+	showError('', { title: 'Sign in to make a 3D model' });
+	if (els.retry) els.retry.disabled = true;
+	const link = renderCreateSignIn(els.errorMessage);
+	const ax = document.activeElement;
+	if (!ax || ax === document.body || ax === els.generate || ax === els.retry) link.focus({ preventScroll: true });
+}
+
+// Asked before the generating panel opens, so a signed-out visitor is never
+// shown progress for a job the server will refuse.
+async function requireCreateAccount() {
+	if (await signedInForUploads()) return true;
+	showCreateSignIn();
+	return false;
 }
 
 // Every automatic backup lane is exhausted — the one moment the user may see
@@ -2226,6 +2259,7 @@ function showRateLimited({ retryAfter = 10, unavailable = false, busy = false })
 
 // Run a job (text or image/multi-view). `cfg` = { prompt, imageUrls }.
 async function run(cfg) {
+	if (!(await requireCreateAccount())) return;
 	// Captured before the single-use payment proof is stripped — tells the upgrade
 	// funnel conversion which path (pay-per-use vs. hold) closed the loop.
 	const wasPaidGeneration = !!cfg.payment;
@@ -2354,6 +2388,10 @@ async function run(cfg) {
 		}
 	} catch (err) {
 		if (pollAbort) return;
+		if (err.kind === 'sign_in') {
+			showCreateSignIn();
+			return;
+		}
 		if (err.kind === 'unconfigured') {
 			stopElapsed();
 			showState('unconfigured');

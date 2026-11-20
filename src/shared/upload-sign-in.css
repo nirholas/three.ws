@@ -1,11 +1,16 @@
 /* Sign-in prompt shown under the photo slots when a signed-out visitor adds a
-   photo (src/shared/upload-sign-in.js). */
+   photo, and in the stage panel when they press Generate
+   (src/shared/upload-sign-in.js). */
 .upload-sign-in {
 	margin: 0.35rem 0 0;
 	font-size: var(--text-xs, 0.75rem);
 	line-height: 1.5;
 	color: var(--ink-dim, #9aa0a6);
 	text-align: center;
+}
+.upload-sign-in--panel {
+	margin: 0;
+	font-size: inherit;
 }
 .upload-sign-in:empty {
 	display: none;
