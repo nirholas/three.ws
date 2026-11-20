@@ -1,0 +1,15 @@
+{
+	"name": "threejs-craft",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Grok Build skills for three.js craft: loading and optimizing glTF, PBR, shadows, post-processing, mobile performance, WebXR and blank-canvas debugging.",
+	"type": "module",
+	"license": "Apache-2.0",
+	"scripts": {
+		"test": "node --test tests/",
+		"audit": "node scripts/three-audit.mjs"
+	},
+	"devDependencies": {
+		"three": "0.187.0"
+	}
+}
