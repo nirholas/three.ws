@@ -78,9 +78,6 @@ intact on purpose — they are what the published video reports.
   natively-generated 9:16 footage (not a center crop of the horizontal).
 - `stats-snapshot.json` - the pinned figures both cuts were rendered from, so
   the two formats cannot disagree and the published numbers stay reproducible.
-- `other-session-*.mp4` - a different cut of this asset that a concurrent agent
-  session wrote to the same paths mid-render. Kept rather than deleted; it uses
-  the on-chain figure and different copy. Delete once its owner has landed.
 
 Source clips are kept in `gs://three-ws-veo/x402-milestone*/` so a re-cut does
 not require re-paying for generation.

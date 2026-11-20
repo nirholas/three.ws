@@ -727,3 +727,6 @@ docs/forge-photo-prep/bench/**/*.glb
 
 # Kit extension test runner output (kit.log, captures)
 integrations/nvidia/omniverse-kit-extension/.test-output/
+
+# Generated aggregate of docs/ (scripts/combine-docs.mjs); regenerate on demand
+/docs/ALL.md
