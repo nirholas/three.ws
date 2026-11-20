@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-20",
+			"title": "TripoSG photo-to-3D stops failing at the background cutout",
+			"summary": "TripoSG cuts the subject out of your photo with our background-removal service before building the mesh. That service finished the cutout after answering the request, and Cloud Run gave it almost no CPU between requests, so a 20-second cutout dragged past the two minutes TripoSG waits. Its model was also downloaded on first use, and two cutouts at once could run it out of memory. The service now keeps its CPU, ships the model in its image, and has twice the memory, so photo-to-3D on TripoSG completes again. The segmentation service had the same CPU gap and is fixed too.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-20",
 			"title": "The /glass lens gets past \"Location needed\"",
 			"summary": "The site-wide permissions policy blocked location, compass sensors and the microphone on every page, so the smart-glasses lens at /glass stopped on its first screen for every visitor. /glass now grants exactly those three to itself (the camera stays off, and no other page changes), so the lens can find where you are, which way you face, and hear your reply.",
 			"tags": [
