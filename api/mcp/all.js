@@ -27,6 +27,7 @@ import {
 import { sendX402Error, reservePaymentProof } from '../_mcp/payments.js';
 import { PROTOCOL_VERSION, dispatch, priceOptions } from '../_mcpall/server.js';
 import { UNIFIED_RESOURCE_SERVER } from '../_mcpall/registry.js';
+import { sendRpcResponses } from '../_lib/mcp-rpc-response.js';
 
 // The OAuth protected resource and x402 resource URL this server is known by.
 const RESOURCE_PATH = '/mcp';
@@ -98,11 +99,9 @@ export default wrap(async (req, res) => {
 			}
 		}
 
-		res.statusCode = 200;
-		res.setHeader('content-type', 'application/json; charset=utf-8');
 		res.setHeader('mcp-protocol-version', PROTOCOL_VERSION);
 		const issuedSessionId = issueSession(res, body);
-		res.end(JSON.stringify(Array.isArray(body) ? responses : (responses[0] ?? null)));
+		sendRpcResponses(res, body, responses);
 		trackMcp({ surface: 'mcp-all', req, body, responses, auth, issuedSessionId });
 	} finally {
 		await releaseProof();

@@ -16,6 +16,7 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { PROTOCOL_VERSION, dispatch, isPublicTool } from './_mcporacle/dispatch.js';
 import { ORACLE_CHALLENGE } from './_mcporacle/discovery.js';
 import { send401, sendJsonRpcError, authenticateRequest, handleSse, handleTerminate } from './_mcp/auth.js';
+import { sendRpcResponses } from './_lib/mcp-rpc-response.js';
 
 // Every challenge this server issues is scoped to its OWN resource.
 const RESOURCE_PATH = '/api/mcp-oracle';
@@ -63,10 +64,8 @@ export default wrap(async (req, res) => {
 		if (r !== null) responses.push(r);
 	}
 
-	res.statusCode = 200;
-	res.setHeader('content-type', 'application/json; charset=utf-8');
 	res.setHeader('mcp-protocol-version', PROTOCOL_VERSION);
 	const issuedSessionId = issueSession(res, body);
-	res.end(JSON.stringify(Array.isArray(body) ? responses : (responses[0] ?? null)));
+	sendRpcResponses(res, body, responses);
 	trackMcp({ surface: 'mcp-oracle', req, body, responses, auth, issuedSessionId });
 });

@@ -45,6 +45,10 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { checkResourceAllowed, resourceUrlFromServerUrl } from '@modelcontextprotocol/sdk/shared/auth-utils.js';
 import { LATEST_PROTOCOL_VERSION, SUPPORTED_PROTOCOL_VERSIONS } from '@modelcontextprotocol/sdk/types.js';
+import { parseRpcBody, parseWwwAuthenticate } from '../api/_lib/mcp-probe.js';
+
+// One implementation of each parser, shared with the five-minute probe cron.
+export { parseRpcBody, parseWwwAuthenticate };
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const CLIENT_INFO = { name: 'probe', version: '1.0.0' };
@@ -110,18 +114,6 @@ export function serverUrlFor(endpoint, base) {
 	return new URL(u.pathname + u.search, `${base}/`).href;
 }
 
-// RFC 9110 auth-param parsing, enough for `Bearer k="v", k2="v2"`.
-export function parseWwwAuthenticate(header) {
-	if (!header) return null;
-	const m = /^\s*(\S+)\s*(.*)$/.exec(header);
-	if (!m) return null;
-	const params = {};
-	const re = /([a-zA-Z0-9_-]+)\s*=\s*(?:"((?:[^"\\]|\\.)*)"|([^\s,]+))/g;
-	let p;
-	while ((p = re.exec(m[2]))) params[p[1].toLowerCase()] = p[2] !== undefined ? p[2].replace(/\\(.)/g, '$1') : p[3];
-	return { scheme: m[1], params };
-}
-
 async function timedFetch(url, init, timeout) {
 	return fetch(url, { ...init, signal: AbortSignal.timeout(timeout) });
 }
@@ -136,28 +128,6 @@ function initBody(protocolVersion, id = 1) {
 }
 
 const PROTOCOL_HEADERS = { 'content-type': 'application/json', accept: 'application/json, text/event-stream' };
-
-// A Streamable HTTP response body is either one JSON object or an SSE stream
-// whose `data:` lines carry the JSON-RPC messages.
-export function parseRpcBody(text, contentType) {
-	if (String(contentType || '').includes('text/event-stream')) {
-		for (const line of text.split(/\r?\n/)) {
-			if (!line.startsWith('data:')) continue;
-			try {
-				const msg = JSON.parse(line.slice(5).trim());
-				if (msg && (msg.result || msg.error)) return msg;
-			} catch {
-				continue;
-			}
-		}
-		return null;
-	}
-	try {
-		return JSON.parse(text);
-	} catch {
-		return null;
-	}
-}
 
 async function rawInitialize(url, { headers = {}, protocolVersion = LATEST_PROTOCOL_VERSION, timeout }) {
 	const res = await timedFetch(url, { method: 'POST', headers: { ...PROTOCOL_HEADERS, ...headers }, body: initBody(protocolVersion) }, timeout);

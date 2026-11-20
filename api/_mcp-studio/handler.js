@@ -44,6 +44,7 @@ import { TOOL_NAMES } from './tools.js';
 import { isIdempotentRepeat, progressReporter } from './jobs.js';
 import { installTokenFrom, studioOrigin, INSTALL_PARAM } from './install-token.js';
 import { trackMcpRequest, authKindOf } from '../_lib/mcp-client-analytics.js';
+import { sendRpcResponses } from '../_lib/mcp-rpc-response.js';
 
 // check_job collects a job that is already running rather than starting one: it
 // must never burn the caller's generation quota, or collecting a pending job
@@ -439,9 +440,7 @@ export function studioHandler({ surface = 'full' } = {}) {
 			if (r !== null) responses.push(r);
 		}
 
-		res.statusCode = 200;
-		res.setHeader('content-type', 'application/json; charset=utf-8');
 		res.setHeader('mcp-protocol-version', PROTOCOL_VERSION);
-		res.end(JSON.stringify(Array.isArray(body) ? responses : (responses[0] ?? null)));
+		sendRpcResponses(res, body, responses);
 	});
 }

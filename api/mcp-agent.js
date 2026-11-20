@@ -20,6 +20,7 @@ import {
 	isMcpProtocolClient,
 } from './_mcp/auth.js';
 import { sendX402Error, reservePaymentProof } from './_mcp/payments.js';
+import { sendRpcResponses } from './_lib/mcp-rpc-response.js';
 
 // Every 402/401 challenge this server issues is scoped to its OWN resource.
 // Passing neither resourcePath nor challenge left the Agent wallet advertising
@@ -121,11 +122,9 @@ export default wrap(async (req, res) => {
 			}
 		}
 
-		res.statusCode = 200;
-		res.setHeader('content-type', 'application/json; charset=utf-8');
 		res.setHeader('mcp-protocol-version', PROTOCOL_VERSION);
 		const issuedSessionId = issueSession(res, body);
-		res.end(JSON.stringify(Array.isArray(body) ? responses : (responses[0] ?? null)));
+		sendRpcResponses(res, body, responses);
 		trackMcp({ surface: 'mcp-agent', req, body, responses, auth, issuedSessionId });
 	} finally {
 		await releaseProof();
