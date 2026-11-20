@@ -10,6 +10,7 @@ import { cors, method, wrap, error, json, readJson } from '../../_lib/http.js';
 import { authenticateEmbeddedRequest, RequestAuthError } from '../../_lib/shopify/auth-request.js';
 import { createMediaJob, setMediaJobForgeId, setMediaJobFailed } from '../../_lib/shopify/store.js';
 import { startForge, originFromReq } from '../../_mcp-studio/forge-client.js';
+import { platformAuthHeaders } from '../../_lib/creator-account.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
@@ -39,6 +40,10 @@ export default wrap(async (req, res) => {
 			path: 'image',
 			internal: true,
 			clientKey: `shopify:${shop}`,
+			// The merchant has no three.ws account; the installed app answers for
+			// the job, so it runs on the merchant's behalf: unlisted, never a public
+			// showcase seed.
+			auth: platformAuthHeaders({ onBehalf: true }),
 		});
 		if (job.job_id) await setMediaJobForgeId(id, job.job_id);
 		return json(res, 202, { jobId: id, forgeJobId: job.job_id || null, status: 'generating' });
