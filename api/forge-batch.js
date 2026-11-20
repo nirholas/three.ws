@@ -31,6 +31,11 @@
  * degrades to an un-grouped response (every item still carries a real job id
  * the caller can poll individually via GET /api/forge?job=); at poll time it
  * is a 404 for the group endpoint specifically, never a broken item result.
+ *
+ * Every item makes a model, so a batch needs a signed-in account (401
+ * sign_in_required otherwise, before anything is submitted). The caller's
+ * cookie or API-key bearer is forwarded on each item so /api/forge gates and
+ * attributes every model to the same person.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -40,6 +45,7 @@ import { getRedis } from './_lib/redis.js';
 import { selfOrigin } from './_lib/self-origin.js';
 import { TIERS, verifyTierPass } from './_lib/three-tier.js';
 import { resolveCompAccess, COMP_TIER } from './_lib/comp-access.js';
+import { requireCreator, forwardCreatorAuth } from './_lib/creator-account.js';
 
 const PREFIX = 'fr:batch:';
 const TTL_S = 3600;
@@ -181,6 +187,8 @@ async function loadBatch(batchId) {
 }
 
 async function startBatch(req, res) {
+	const who = await requireCreator(req, res, { action: 'make 3D models' });
+	if (!who) return;
 	const body = await readJson(req, 64_000).catch(() => null);
 	const rawItems = Array.isArray(body?.items) ? body.items : null;
 	if (!rawItems || !rawItems.length) {
@@ -207,21 +215,22 @@ async function startBatch(req, res) {
 
 	const ip = clientIp(req);
 	const { multiplier, concurrency } = await batchConcurrency(req, body);
-	const rl = await limits.forgeBatchSubmit(ip, multiplier);
+	const rl = await limits.forgeBatchSubmit(who.user ? `user:${who.user.id}` : ip, multiplier);
 	if (!rl.success) return rateLimited(res, rl);
 
 	const base = selfOrigin(req);
 	// Forward the real caller's IP as x-forwarded-for so /api/forge's own
 	// per-IP free-lane limiter and $THREE tier gate attribute to the actual
 	// caller rather than this server's own egress address; forward the
-	// session cookie and tier pass so the holder/comp perk this endpoint
-	// already resolved for the concurrency cap also applies inside each
-	// item's own /api/forge submission. Never the internal seed header: a
-	// batch submit is never platform-funded.
+	// caller's own credential (session cookie or API-key bearer) and tier pass
+	// so the account gate, attribution, and the holder/comp perk this endpoint
+	// already resolved for the concurrency cap also apply inside each item's
+	// own /api/forge submission. Never the internal seed header: a batch
+	// submit is never platform-funded.
 	const forwardHeaders = {
 		'content-type': 'application/json',
 		'x-forwarded-for': ip,
-		...(req.headers.cookie ? { cookie: req.headers.cookie } : {}),
+		...forwardCreatorAuth(req),
 		...(req.headers['x-three-tier-pass'] ? { 'x-three-tier-pass': req.headers['x-three-tier-pass'] } : {}),
 		...(req.headers['x-forge-client'] ? { 'x-forge-client': req.headers['x-forge-client'] } : {}),
 	};

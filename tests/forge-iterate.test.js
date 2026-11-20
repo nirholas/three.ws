@@ -13,6 +13,14 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
+// Iterating makes a new model, so it needs an account like every creation
+// surface. `signedIn` is the caller the auth layer resolves; null is anonymous.
+let signedIn = { id: 'user-iter' };
+vi.mock('../api/_lib/auth.js', async (orig) => ({
+	...(await orig()),
+	getRequestUser: async () => signedIn,
+}));
+
 vi.mock('../api/_lib/rate-limit.js', () => ({
 	limits: { forgeIterate: vi.fn(async () => ({ success: true })) },
 	clientIp: vi.fn(() => '127.0.0.1'),
@@ -127,7 +135,7 @@ describe('api/forge-iterate — handler', () => {
 		await handler(
 			mockReq({
 				body: { glb_url: 'https://three.ws/cdn/creations/abc123/mesh.glb', instruction: 'make it metallic', parent_prompt: 'a round robot mascot' },
-				headers: { 'x-forge-client': 'client-42' },
+				headers: { 'x-forge-client': 'client-42', cookie: '__Host-sid=abc' },
 			}),
 			res,
 		);
@@ -135,6 +143,9 @@ describe('api/forge-iterate — handler', () => {
 		const [url, init] = fetchMock.mock.calls[0];
 		expect(url).toBe('https://three.ws/api/forge');
 		expect(init.headers['x-forge-client']).toBe('client-42');
+		// The caller's own credential rides along so /api/forge's account gate
+		// sees the same person (and attributes the model to them).
+		expect(init.headers.cookie).toBe('__Host-sid=abc');
 		const payload = JSON.parse(init.body);
 		expect(payload.prompt).toBe('a round robot mascot, metallic');
 
@@ -262,6 +273,26 @@ describe('api/forge-iterate — handler', () => {
 		await handler(mockReq({ body: { glb_url: 'https://three.ws/cdn/a.glb', instruction: 'bigger' } }), res);
 		expect(res.statusCode).toBe(429);
 		expect(fetchMock).not.toHaveBeenCalled();
+	});
+
+	it('answers an anonymous caller 401 sign_in_required without calling /api/forge', async () => {
+		signedIn = null;
+		try {
+			const res = mockRes();
+			await handler(mockReq({ body: { glb_url: 'https://three.ws/cdn/a.glb', instruction: 'bigger' } }), res);
+			expect(res.statusCode).toBe(401);
+			expect(parsed(res)).toMatchObject({ error: 'sign_in_required', sign_in_url: '/login' });
+			expect(fetchMock).not.toHaveBeenCalled();
+		} finally {
+			signedIn = { id: 'user-iter' };
+		}
+	});
+
+	it('keys the rate limit on the account, not the shared IP', async () => {
+		fetchMock.mockResolvedValueOnce(forgeResponse(200, { status: 'done', glb_url: 'https://three.ws/cdn/z.glb' }));
+		const res = mockRes();
+		await handler(mockReq({ body: { glb_url: 'https://three.ws/cdn/a.glb', instruction: 'bigger' } }), res);
+		expect(limits.forgeIterate).toHaveBeenLastCalledWith('user:user-iter');
 	});
 
 	it('rejects non-POST methods', async () => {

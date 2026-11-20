@@ -22,12 +22,17 @@
  * `x-forge-client` straight through to /api/forge, so an iteration is a
  * normal, owned creation: it lands in the caller's gallery and can be
  * published as remixable exactly like any other forge result. No payment
- * surface — iteration is free on every track, same as the free studio.
+ * surface: iteration is free on every track, same as the free studio.
+ *
+ * Iterating makes a new model, so it needs a signed-in account (401
+ * sign_in_required otherwise), and the caller's cookie or bearer is forwarded
+ * to /api/forge so the inner call is gated and attributed to the same person.
  */
 
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { originFromReq, viewerUrl } from './_mcp-studio/forge-client.js';
+import { requireCreator, forwardCreatorAuth } from './_lib/creator-account.js';
 import {
 	composeRefinement,
 	seedLineage,
@@ -56,7 +61,7 @@ function clientIdFrom(req) {
 // as busy rather than as a bare gateway timeout.
 const SUBMIT_TIMEOUT_MS = Number(process.env.FORGE_ITERATE_SUBMIT_MS) || 60_000;
 
-async function submitForge(base, payload, clientId) {
+async function submitForge(base, payload, clientId, auth) {
 	let res;
 	try {
 		res = await fetch(`${base}/api/forge`, {
@@ -64,6 +69,7 @@ async function submitForge(base, payload, clientId) {
 			headers: {
 				'content-type': 'application/json',
 				...(clientId ? { 'x-forge-client': clientId } : {}),
+				...auth,
 			},
 			body: JSON.stringify(payload),
 			signal: AbortSignal.timeout(SUBMIT_TIMEOUT_MS),
@@ -86,6 +92,9 @@ async function submitForge(base, payload, clientId) {
 		return { error: 'provider_error', status: 502, message: `The 3D generator is unreachable: ${err?.message || err}` };
 	}
 	const data = await res.json().catch(() => ({}));
+	if (res.status === 401) {
+		return { error: 'sign_in_required', status: 401, message: data?.message || 'Sign in to refine a 3D model.' };
+	}
 	if (res.status === 503) {
 		return { error: 'not_configured', status: 503, message: data?.message || '3D generation is not configured on this deployment.' };
 	}
@@ -99,14 +108,14 @@ async function submitForge(base, payload, clientId) {
 	return { data };
 }
 
-async function pollForge(base, jobId, clientId, { timeoutMs, intervalMs }) {
+async function pollForge(base, jobId, clientId, auth, { timeoutMs, intervalMs }) {
 	const deadline = Date.now() + timeoutMs;
 	let last = null;
 	while (Date.now() < deadline) {
 		let res;
 		try {
 			res = await fetch(`${base}/api/forge?job=${encodeURIComponent(jobId)}`, {
-				headers: { accept: 'application/json', ...(clientId ? { 'x-forge-client': clientId } : {}) },
+				headers: { accept: 'application/json', ...(clientId ? { 'x-forge-client': clientId } : {}), ...auth },
 				signal: AbortSignal.timeout(Math.max(intervalMs * 3, 15_000)),
 			});
 		} catch (err) {
@@ -134,8 +143,12 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 
+	const who = await requireCreator(req, res, { action: 'refine a 3D model' });
+	if (!who) return;
+
 	const clientId = clientIdFrom(req);
-	const rl = await limits.forgeIterate(clientId || clientIp(req));
+	const auth = forwardCreatorAuth(req);
+	const rl = await limits.forgeIterate(who.user ? `user:${who.user.id}` : clientId || clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const body = await readJson(req, 200_000).catch(() => null);
@@ -189,7 +202,7 @@ export default wrap(async (req, res) => {
 	}
 
 	const base = originFromReq(req);
-	const submitted = await submitForge(base, { prompt: composed }, clientId);
+	const submitted = await submitForge(base, { prompt: composed }, clientId, auth);
 	if (submitted.error) {
 		return json(res, submitted.status, {
 			error: submitted.error,
@@ -203,7 +216,7 @@ export default wrap(async (req, res) => {
 	if (!(job.status === 'done' && job.glb_url)) {
 		const timeoutMs = Number(process.env.FORGE_ITERATE_TIMEOUT_MS) || 180_000;
 		const intervalMs = Number(process.env.FORGE_ITERATE_POLL_MS) || 3000;
-		const polled = await pollForge(base, job.job_id, clientId, { timeoutMs, intervalMs });
+		const polled = await pollForge(base, job.job_id, clientId, auth, { timeoutMs, intervalMs });
 		if (polled.error) {
 			return json(res, polled.status, { error: polled.error, message: polled.message });
 		}
