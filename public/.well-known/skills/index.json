@@ -20,7 +20,7 @@
 			"type": "skill-md",
 			"description": "Turn a text prompt (or reference image) into a rigged, animation-ready 3D avatar (GLB). Use when you or the user want to create, generate, or make a 3D avatar, character, or humanoid figure that can be posed and animated, for example \"make a 3D avatar of a knight\", \"generate a character I can animate\", \"create a rigged astronaut\". Generates the mesh and adds a humanoid skeleton in one step. Returns a GLB URL plus a pose-studio link.",
 			"url": "https://three.ws/.well-known/agent-skills/create-3d-avatar/SKILL.md",
-			"digest": "sha256:2eb74982a85bb4acf3c723473ec67476f1d4f27376d90a863cb23efb684fe71c",
+			"digest": "sha256:9b2994c8e38dcb514d21a6527ba804dd1aec4dcb7585549be3c604513ae7a7a9",
 			"license": "MIT",
 			"category": "3d/creative"
 		},
@@ -38,16 +38,16 @@
 			"type": "skill-md",
 			"description": "Search thousands of ready-made 3D assets on three.ws (CC0 props and objects, rigged humanoid characters, motion clips) and get paste-ready code or a downloaded file. Use when you or the user need a 3D model, prop, object, character, or animation for a scene, site, game, or app (\"I need a 3D chair\", \"find a rigged character\", \"is there a wave animation\", \"add a lamp model to my page\"). Free: no account, no API key, no payment. Check here BEFORE generating a model from scratch.",
 			"url": "https://three.ws/.well-known/agent-skills/find-3d-assets/SKILL.md",
-			"digest": "sha256:02ff790e10db03750b27ea0f9b79ee846a2175452e076f8f30e866ddab9f269c",
+			"digest": "sha256:2aa3a41f7959ecfaa6b806ace803a2c0289a151b8a0bdcefe1566913aa512172",
 			"license": "MIT",
 			"category": "3d/creative"
 		},
 		{
 			"name": "generate-3d-model",
 			"type": "skill-md",
-			"description": "Turn a text prompt into a downloadable, textured 3D model (GLB). Use when you or the user want to generate, create, make, or forge a 3D model, asset, object, mesh, or prop from a text description, for example \"make a 3D model of a robot\", \"generate a GLB of a sword\", \"I need a 3D chair\". Runs on the FREE text→3D lane (no key, no account, free). Returns a GLB URL plus a browser viewer link.",
+			"description": "Turn a text prompt into a downloadable, textured 3D model (GLB). Use when you or the user want to generate, create, make, or forge a 3D model, asset, object, mesh, or prop from a text description, for example \"make a 3D model of a robot\", \"generate a GLB of a sword\", \"I need a 3D chair\". Runs on the FREE text→3D lane (free of charge; needs a free three.ws account or API key). Returns a GLB URL plus a browser viewer link.",
 			"url": "https://three.ws/.well-known/agent-skills/generate-3d-model/SKILL.md",
-			"digest": "sha256:953aa9d307d97bdd0ee0b1e2aa888f0afc6e41c31c3803a1f008e86fdc7e39cb",
+			"digest": "sha256:76e3dab04ecdde25f3759e49adba0900a7db1456e58fbf1252ad43a80435fc2b",
 			"license": "MIT",
 			"category": "3d/creative"
 		},
@@ -56,7 +56,7 @@
 			"type": "skill-md",
 			"description": "Auto-rig a static 3D GLB model into an animation-ready one. Use when you or the user have an existing GLB and want to rig it, add a skeleton, add bones, make it posable, or make it animatable, for example \"rig this model\", \"add a skeleton to my GLB\", \"make this character animation-ready\". Takes a GLB URL, adds a humanoid skeleton plus skin weights, and returns the rigged GLB URL and a pose-studio link.",
 			"url": "https://three.ws/.well-known/agent-skills/rig-a-model/SKILL.md",
-			"digest": "sha256:e092d3a45dcb3584d090c16c7d136dd2dc8e53083019b5eb54db6a25ba6987ae",
+			"digest": "sha256:1a72ffc6cb8efdb83d4d4cb264dbceafe661ee156f5452ac320852d00b02add0",
 			"license": "MIT",
 			"category": "3d/creative"
 		},
@@ -74,7 +74,7 @@
 			"type": "skill-md",
 			"description": "Connect any MCP client (Claude Code, Claude Desktop, the Agent SDK, or a custom one) to the three.ws MCP servers, so the model can generate 3D models and avatars, read and write agent data, and pay for services. Use when you or the user want to connect, add, install, configure, wire up, or debug three.ws MCP, an MCP server for 3D or avatars or agent wallets, a .mcp.json entry, or \"give Claude access to three.ws\". Also use to pick which of the hosted servers to add, and to test a connection that is not working.",
 			"url": "https://three.ws/.well-known/agent-skills/connect-three-ws-mcp/SKILL.md",
-			"digest": "sha256:60b739152003a616ec661fa744faa93aa21fa7123c6d66604fb58b43b352928d",
+			"digest": "sha256:4c918733aeb6ad26b23232ee7e2ff9027c0d5612b6787bdf04ce42947dd6fd6a",
 			"license": "MIT",
 			"category": "platform/agents"
 		},
@@ -83,7 +83,7 @@
 			"type": "skill-md",
 			"description": "Create a real three.ws AI agent (identity, 3D body, custodial Solana wallet, persona) from the command line and get its live public page. Use when you or the user want to create, build, deploy, launch, or set up an AI agent, a 3D agent, an on-chain agent, or \"my own agent\" on three.ws, attach a 3D body to an existing agent, edit an agent's persona or brain, or list the agents an account already owns. Returns the agent id, its Solana wallet address, and the public URL anyone can visit and chat with.",
 			"url": "https://three.ws/.well-known/agent-skills/create-a-three-ws-agent/SKILL.md",
-			"digest": "sha256:bdc250bc2c40f882ad5d9f16fe8a7b2edd7bdf6f90930042612201bdedda4951",
+			"digest": "sha256:15ac199cc6f3b594e010056acd634a649ac2549e066ac45ccedb12b35ecdaf49",
 			"license": "MIT",
 			"category": "platform/agents"
 		},

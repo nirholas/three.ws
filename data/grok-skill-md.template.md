@@ -10,21 +10,21 @@ metadata:
 
 # three.ws for Grok
 
-three.ws is a free 3D studio and agent platform for Grok. From one sentence or one photo it makes a textured 3D model (GLB) or a rigged avatar that can be posed and animated, and it hands back plain links you can open, download, post or embed. It also searches thousands of ready-made CC0 props, rigged characters and motion clips, and it can save a model as a named body that lip-syncs your replies and, once signed in, manage the user's three.ws agents and read the Solana market (pump.fun, Oracle, due diligence, top traders) without ever trading. The 3D tools need no account, no payment and no API key.
+three.ws is a free 3D studio and agent platform for Grok. From one sentence or one photo it makes a textured 3D model (GLB) or a rigged avatar that can be posed and animated, and it hands back plain links you can open, download, post or embed. It also searches thousands of ready-made CC0 props, rigged characters and motion clips, and it can save a model as a named body that lip-syncs your replies and, once signed in, manage the user's three.ws agents and read the Solana market (pump.fun, Oracle, due diligence, top traders) without ever trading. The 3D tools cost nothing. Making or rigging a model needs a free three.ws account (OAuth sign-in or an API key); searching the catalog and checking a job need none. New models stay unlisted until their owner publishes them.
 
 ## Add the connector (Grok Bot)
 
 Tell Grok Bot, in chat:
 
 ```
-Add a custom MCP server called three-ws-grok at {{GROK_MCP}}
+Add a custom MCP server called three-ws-grok at {{GROK_MCP_SIGN_IN}} with OAuth authentication
 ```
 
-Say "custom MCP server" so it does not look for a marketplace plugin instead. Leave authentication off. Grok Bot shows the name and URL and asks you to confirm. Transport is Streamable HTTP, so no sign-in card appears. Once added, ask for 3D in any task, or attach the server with `@three-ws-grok`.
+Say "custom MCP server" so it does not look for a marketplace plugin instead. Grok Bot shows the name and URL and asks you to confirm, then opens three.ws sign-in once; approve it with a free account (or create one there). Transport is Streamable HTTP. Once added, ask for 3D in any task, or attach the server with `@three-ws-grok`. If a 3D tool answers `sign_in_required`, the connector is not signed in: relay the message and its `sign_in_url` to the user.
 
-On a paid Grok plan, a custom connector in **Connectors** takes the same URL with authentication off. The URL must be public HTTPS: Grok Bot connects from xAI's cloud, so `localhost` never works. In the xAI Responses API, pass it as a remote MCP tool: `{"type": "mcp", "server_url": "{{GROK_MCP}}", "server_label": "three-ws-grok"}`. Reference: {{SITE}}/docs/grok and the landing page {{SITE}}/grok.
+On a paid Grok plan, a custom connector in **Connectors** takes the same `?auth=oauth` URL with OAuth authentication. The URL must be public HTTPS: Grok Bot connects from xAI's cloud, so `localhost` never works. In the xAI Responses API, pass it as a remote MCP tool with a three.ws API key as its authorization token: `{"type": "mcp", "server_url": "{{GROK_MCP}}", "server_label": "three-ws-grok", "authorization": "<three.ws API key>"}`. Reference: {{SITE}}/docs/grok and the landing page {{SITE}}/grok.
 
-To let Grok also manage the user's own three.ws agents, memory, skills and avatar library, use `{{GROK_MCP_SIGN_IN}}` instead. It starts a standard OAuth 2.1 sign-in; there is no key to copy. An API key created at {{SITE}}/dashboard/api with the "AI agent" preset works as a bearer token on the same URL. Neither ever exposes a wallet or payment tool.
+The same sign-in also lets Grok manage the user's own three.ws agents, memory, skills and avatar library. The `?auth=oauth` URL starts a standard OAuth 2.1 sign-in; there is no key to copy. An API key created at {{SITE}}/dashboard/api with the "AI agent" preset works as a bearer token on the same URL. Neither ever exposes a wallet or payment tool.
 
 What the connector does:
 

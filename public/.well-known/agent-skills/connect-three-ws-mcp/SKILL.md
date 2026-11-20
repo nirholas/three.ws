@@ -1,7 +1,7 @@
 ---
 name: connect-three-ws-mcp
 description: Connect any MCP client (Claude Code, Claude Desktop, the Agent SDK, or a custom one) to the three.ws MCP servers, so the model can generate 3D models and avatars, read and write agent data, and pay for services. Use when you or the user want to connect, add, install, configure, wire up, or debug three.ws MCP, an MCP server for 3D or avatars or agent wallets, a .mcp.json entry, or "give Claude access to three.ws". Also use to pick which of the hosted servers to add, and to test a connection that is not working.
-when_to_use: The user wants the tools available inside their client rather than shelling out to curl. Start with the free server when no account exists yet. For one-off calls over plain HTTP instead, the 3D skills already show the JSON-RPC form.
+when_to_use: The user wants the tools available inside their client rather than shelling out to curl. Start with the free studio server; making or rigging a model there needs a free three.ws account (OAuth sign-in or an API key). For one-off calls over plain HTTP instead, the 3D skills already show the JSON-RPC form.
 license: MIT
 metadata:
   category: platform/agents
@@ -27,15 +27,21 @@ registered in the MCP registry (`https://registry.modelcontextprotocol.io/?q=io.
 
 | Goal | Server | Auth |
 | --- | --- | --- |
-| Free text or image to 3D, rigged avatars, talking personas | `https://three.ws/api/mcp-studio` | none |
+| Free text or image to 3D, rigged avatars, talking personas | `https://three.ws/api/mcp-studio` | Free account (API key or OAuth) to make or rig; reads open |
 | Avatars, glTF validation and inspection, agent data, memory | `https://three.ws/api/mcp` | API key or OAuth |
 | Paid 3D lanes: higher-tier generation, retexture, optimization | `https://three.ws/api/mcp-3d` | OAuth or x402 |
 | The agent's custodial wallet: balance, find and pay services, monetize an endpoint | `https://three.ws/api/mcp-agent` | OAuth |
 | Discover and price paid agent services across the network | `https://three.ws/api/mcp-bazaar` | OAuth or x402 |
 
-**Start with the free one.** `https://three.ws/api/mcp-studio` needs no account, no key,
-and no payment, and it already covers the whole generate-and-rig path. Add the
-authenticated server only when the user wants their own library, agents, or money.
+**Start with the free one.** `https://three.ws/api/mcp-studio` needs no payment and
+already covers the whole generate-and-rig path. Making or rigging a model needs a free
+three.ws account, so every model has an owner who can find, publish or delete it: send
+`Authorization: Bearer <API key>` (see "Get a key" below), or point an OAuth-capable
+client at `https://three.ws/api/mcp-studio?auth=oauth` to sign in. Without one,
+`tools/list`, job status and viewer links still work, and a create or rig call answers
+with a sign-in message instead of a model. New models are born unlisted until their
+owner publishes them. Add the other authenticated servers only when the user wants
+their own library, agents, or money.
 
 ## Claude Code
 
@@ -46,18 +52,9 @@ Project scope, in `.mcp.json` at the repo root (Claude Code auto-discovers it):
   "mcpServers": {
     "three-ws-studio": {
       "type": "http",
-      "url": "https://three.ws/api/mcp-studio"
-    }
-  }
-}
-```
-
-With an API key, reference an environment variable rather than pasting the secret into a
-file that gets committed:
-
-```json
-{
-  "mcpServers": {
+      "url": "https://three.ws/api/mcp-studio",
+      "headers": { "Authorization": "Bearer ${THREE_WS_MCP_TOKEN}" }
+    },
     "three-ws": {
       "type": "http",
       "url": "https://three.ws/api/mcp",
@@ -67,7 +64,8 @@ file that gets committed:
 }
 ```
 
-Then `export THREE_WS_MCP_TOKEN='sk_live_...'` in the shell that starts Claude Code, and
+Reference an environment variable rather than pasting the secret into a file that gets
+committed. Then `export THREE_WS_MCP_TOKEN='sk_live_...'` in the shell that starts Claude Code, and
 restart the session so the client re-reads the file. The same block works in
 `~/.claude/settings.json` under `mcpServers` when the user wants it on every project.
 
@@ -102,12 +100,15 @@ curl -s -X POST https://three.ws/api/mcp-studio \
 ```
 
 For the Agent SDK, register the same URL as an HTTP MCP server in the SDK's `mcpServers`
-option and pass the `Authorization` header if the server needs one.
+option and pass the `Authorization` header (required for any tool that makes or rigs a
+model).
 
-## Get a key when one is needed
+## Get a key
 
-1. Sign in at `https://three.ws/login`.
-2. Open [three.ws/dashboard/api](https://three.ws/dashboard/api), create a key, and copy
+Needed to make or rig a model on any server, the free studio included.
+
+1. Sign in at `https://three.ws/login` (the account is free).
+2. Open [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys), create a key, and copy
    the secret. It is shown **once**: the server stores only a SHA-256 hash and the
    12-character prefix.
 3. Scopes are fixed at creation. Pick from `avatars:read`, `avatars:write`,
@@ -132,6 +133,7 @@ Then prove the round trip with real work, not a ping:
 ```bash
 curl -s -X POST https://three.ws/api/mcp-studio \
   -H 'content-type: application/json' \
+  -H "authorization: Bearer $THREE_WS_MCP_TOKEN" \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/call",
        "params":{"name":"forge_free","arguments":{"prompt":"a small brass desk lamp"}}}'
 ```
@@ -141,6 +143,7 @@ curl -s -X POST https://three.ws/api/mcp-studio \
 | Symptom | Cause | Fix |
 | --- | --- | --- |
 | Client shows the server but no tools | Config added while the client was running | Restart the client session; `.mcp.json` is read at startup |
+| Tool result says "Sign in to make a 3D model" (`sign_in_required`) | A create or rig call with no account | Add the `Authorization: Bearer` header, or connect with OAuth at `https://three.ws/api/mcp-studio?auth=oauth` |
 | `401 unauthorized` | No header, a revoked key, or a typo in the variable name | Echo the variable in the same shell; mint a fresh key if needed |
 | `403 insufficient_scope` | The key lacks the scope the tool needs | Scopes cannot be edited: mint a new key with the right set |
 | `402 Payment Required` | A paid tool on `mcp-3d` or `mcp-bazaar` | Expected. Pay with the `pay-for-service` skill, or use the free studio server |
