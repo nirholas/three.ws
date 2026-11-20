@@ -79,6 +79,27 @@ export const SUPPORTED_SCOPES = Object.freeze([...REGISTERABLE_SCOPES, ...AUTH_H
 
 const REGISTERABLE = new Set(REGISTERABLE_SCOPES);
 
+// Hosted MCP servers that use less than the platform scope set. A
+// discovery-driven client requests exactly what a server's protected-resource
+// document lists, so a server listed here advertises (and is consented for)
+// only these. The free studio makes and reads 3D models for the signed-in
+// account and has no wallet, payment, memory or home tool, so a 3D plugin's
+// sign-in never asks for wallet:trade or wallet:launch. Every entry must be a
+// subset of REGISTERABLE_SCOPES (tests/api/oauth-scope-discovery.test.js).
+const RESOURCE_SCOPES = Object.freeze({
+	'/api/mcp-studio': Object.freeze(['avatars:read', 'avatars:write', 'profile', 'offline_access']),
+});
+
+/**
+ * The scopes a hosted MCP server's protected-resource document advertises.
+ * @param {string|null} path hosted path from hostedMcpPath(), or null for the platform resource
+ * @returns {{ scopes: readonly string[], narrowed: boolean }}
+ */
+export function scopesForResource(path) {
+	const own = path ? RESOURCE_SCOPES[path] : undefined;
+	return own ? { scopes: own, narrowed: true } : { scopes: REGISTERABLE_SCOPES, narrowed: false };
+}
+
 export function filterRegisterableScope(requested) {
 	const kept = String(requested || '')
 		.split(/\s+/)

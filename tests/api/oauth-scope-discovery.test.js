@@ -90,6 +90,48 @@ describe('OAuth discovery scope parity', () => {
 		}
 	});
 
+	// The free studio (/api/mcp-studio) makes and reads 3D models; its dispatcher
+	// has no wallet, payment or home tool. A discovery-driven client (Cursor,
+	// Grok Bot) asks for every scope the studio's own document lists, so listing
+	// the platform set put wallet:trade and wallet:launch on the consent screen
+	// of a 3D plugin. Its document and its 401 name only what it uses.
+	it('advertises only identity and avatar scopes for the free studio', async () => {
+		const res = makeRes();
+		const req = {
+			method: 'GET',
+			url: '/api/wk?name=oauth-protected-resource&path=/api/mcp-studio',
+			headers: {},
+			query: { name: 'oauth-protected-resource', path: '/api/mcp-studio' },
+		};
+		await wkHandler(req, res);
+		const doc = JSON.parse(res.body);
+		expect(doc.resource).toBe('https://three.ws/api/mcp-studio');
+		expect(doc.scopes_supported).toEqual(['avatars:read', 'avatars:write', 'profile', 'offline_access']);
+		for (const scope of doc.scopes_supported) expect(REGISTERABLE_SCOPES).toContain(scope);
+		expect(filterRegisterableScope(doc.scopes_supported.join(' ')).split(' ')).toEqual(doc.scopes_supported);
+	});
+
+	it('names the narrow studio scope in the studio 401 challenge only', async () => {
+		const { bearerChallenge } = await import('../../api/_mcp/auth.js');
+		expect(bearerChallenge('https://three.ws/api/mcp-studio')).toContain(
+			'scope="avatars:read avatars:write profile offline_access"',
+		);
+		expect(bearerChallenge('https://three.ws/api/mcp-agent')).not.toContain('scope=');
+		expect(bearerChallenge('https://three.ws/api/mcp')).not.toContain('scope=');
+	});
+
+	it('keeps the full registerable set on every other hosted server', async () => {
+		const res = makeRes();
+		const req = {
+			method: 'GET',
+			url: '/api/wk?name=oauth-protected-resource&path=/api/mcp-agent',
+			headers: {},
+			query: { name: 'oauth-protected-resource', path: '/api/mcp-agent' },
+		};
+		await wkHandler(req, res);
+		expect(JSON.parse(res.body).scopes_supported).toEqual([...REGISTERABLE_SCOPES]);
+	});
+
 	it('points the protected-resource document at the MCP resource', async () => {
 		const { doc } = await fetchWellKnown('oauth-protected-resource');
 		expect(doc.resource).toBe('https://three.ws/api/mcp');

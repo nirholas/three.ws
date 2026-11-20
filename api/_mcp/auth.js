@@ -9,7 +9,8 @@ import {
 } from '../_lib/x402-spec.js';
 import { sendX402Error } from './payments.js';
 import { streamSubscriptions, dropSubscriptions } from './resources.js';
-import { acceptedAudiences, mcpResourceFor, protectedResourceMetadataUrl } from '../_lib/mcp-resources.js';
+import { acceptedAudiences, hostedMcpPath, mcpResourceFor, protectedResourceMetadataUrl } from '../_lib/mcp-resources.js';
+import { scopesForResource } from '../_lib/oauth-scopes.js';
 import { sessionIdOf } from '../_lib/mcp-clients.js';
 
 function quoteString(s) {
@@ -37,8 +38,12 @@ function requestResource(req, resourcePath) {
 
 // RFC 9728 §5.1: the challenge names the metadata document for THIS resource,
 // whose `resource` an MCP client checks against the URL it connected to.
+// A server with its own narrow scope set also names it here (MCP authorization
+// spec: a client prefers the challenge's scope over scopes_supported).
 export function bearerChallenge(resource) {
-	return `Bearer resource_metadata=${quoteString(protectedResourceMetadataUrl(resource))}, resource=${quoteString(resource)}`;
+	const base = `Bearer resource_metadata=${quoteString(protectedResourceMetadataUrl(resource))}, resource=${quoteString(resource)}`;
+	const { scopes, narrowed } = scopesForResource(hostedMcpPath(resource));
+	return narrowed ? `${base}, scope=${quoteString(scopes.join(' '))}` : base;
 }
 
 export function send401(res, msg, { req, resourcePath } = {}) {

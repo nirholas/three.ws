@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { cors, json, method, wrap, error } from './_lib/http.js';
 import { env } from './_lib/env.js';
-import { REGISTERABLE_SCOPES, SUPPORTED_SCOPES } from './_lib/oauth-scopes.js';
+import { SUPPORTED_SCOPES, scopesForResource } from './_lib/oauth-scopes.js';
 import { hostedMcpPath, mcpResourceFor } from './_lib/mcp-resources.js';
 import {
 	paymentRequirements,
@@ -203,8 +203,10 @@ function handleOauthProtectedResource(req, res) {
 			// here, so a scope missing from this array is a scope it never asks
 			// for: publishing fewer than the endpoint grants left the whole
 			// agent-wallet server (wallet:read / wallet:write / services:write)
-			// unreachable through the documented flow.
-			scopes_supported: [...REGISTERABLE_SCOPES],
+			// unreachable through the documented flow. A server that uses less
+			// (the free studio) lists only its own subset, so its consent screen
+			// never asks for wallet scopes it has no tool for.
+			scopes_supported: [...scopesForResource(requestedPath ? hostedMcpPath(requestedPath) : null).scopes],
 		},
 		{ 'cache-control': 'public, max-age=300' },
 	);
