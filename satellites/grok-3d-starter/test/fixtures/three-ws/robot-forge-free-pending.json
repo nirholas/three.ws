@@ -1,0 +1,50 @@
+{
+	"_fixture": {
+		"source": "captured",
+		"from": "https://three.ws/api/mcp-grok tools/call forge_free",
+		"capturedAt": "2026-11-20T22:19:30.191Z",
+		"by": "scripts/live-three-ws.mjs",
+		"httpStatus": 200
+	},
+	"response": {
+		"jsonrpc": "2.0",
+		"id": 4,
+		"result": {
+			"content": [
+				{
+					"type": "text",
+					"text": "The model is still rendering (heavier scenes take a few minutes). It keeps running: call the get_job tool with this job_id shortly to collect it, or poll https://three.ws/api/gpt-forge?job=t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017 until status is \"done\", then use its glb_url (view at https://three.ws/viewer?src=<glb_url>).\nViewer (opens the model by itself the moment it is ready): https://three.ws/viewer?job=t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017\nRun receipt (what each stage was expected to do and what it did): https://three.ws/runs/rr_GggGEPfJo3zDW1sWJbzEry"
+				}
+			],
+			"structuredContent": {
+				"status": "pending",
+				"jobId": "t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017",
+				"job_id": "t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017",
+				"phase": "submitting",
+				"progress": null,
+				"eta_seconds": null,
+				"elapsed_seconds": null,
+				"pollUrl": "https://three.ws/api/gpt-forge?job=t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017",
+				"viewer_url": "https://three.ws/viewer?job=t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017",
+				"stage": "mesh",
+				"prompt": "A friendly round robot mascot in glossy white plastic",
+				"receipt": {
+					"id": "rr_GggGEPfJo3zDW1sWJbzEry",
+					"outcome": "pending",
+					"summary": "Still running. 1 carried by a fallback (Brief).",
+					"issues": [
+						{
+							"stage": "brief",
+							"label": "Brief",
+							"verdict": "recovered",
+							"expected": "A director-written brief that turns the idea into a single-subject 3D specification.",
+							"observed": "The prompt was used as written.",
+							"cause": "The director's brief ran to 1062 characters; the forge accepts at most 1000, so it was set aside."
+						}
+					],
+					"url": "https://three.ws/runs/rr_GggGEPfJo3zDW1sWJbzEry"
+				}
+			}
+		}
+	}
+}

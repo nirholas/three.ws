@@ -1,0 +1,50 @@
+{
+	"_fixture": {
+		"source": "captured",
+		"from": "https://three.ws/api/mcp-grok tools/call refine_model",
+		"capturedAt": "2026-11-20T22:22:44.956Z",
+		"by": "scripts/live-three-ws.mjs",
+		"httpStatus": 200
+	},
+	"response": {
+		"jsonrpc": "2.0",
+		"id": 18,
+		"result": {
+			"content": [
+				{
+					"type": "text",
+					"text": "The refined model is still rendering (heavier scenes take a few minutes) (roughly 57s to go). It keeps running: call the get_job tool with this job_id in ~57s to collect it, or poll https://three.ws/api/gpt-forge?job=f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqTTVPRGMyTjJFekxXRTRaV0l0TkdVelppMDRNVEF4TFRFNU5tRXdaakkyWmpFME9DSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.SbftKJg77_3-Gv0bWOzQacxso6gdsVLdVrakbnmNlOQ until status is \"done\", then use its glb_url (view at https://three.ws/viewer?src=<glb_url>).\nViewer (opens the model by itself the moment it is ready): https://three.ws/viewer?job=f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqTTVPRGMyTjJFekxXRTRaV0l0TkdVelppMDRNVEF4TFRFNU5tRXdaakkyWmpFME9DSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.SbftKJg77_3-Gv0bWOzQacxso6gdsVLdVrakbnmNlOQ"
+				}
+			],
+			"structuredContent": {
+				"status": "pending",
+				"jobId": "f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqTTVPRGMyTjJFekxXRTRaV0l0TkdVelppMDRNVEF4TFRFNU5tRXdaakkyWmpFME9DSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.SbftKJg77_3-Gv0bWOzQacxso6gdsVLdVrakbnmNlOQ",
+				"job_id": "f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqTTVPRGMyTjJFekxXRTRaV0l0TkdVelppMDRNVEF4TFRFNU5tRXdaakkyWmpFME9DSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.SbftKJg77_3-Gv0bWOzQacxso6gdsVLdVrakbnmNlOQ",
+				"phase": "queued",
+				"progress": 0.05,
+				"eta_seconds": 57,
+				"elapsed_seconds": 3,
+				"pollUrl": "https://three.ws/api/gpt-forge?job=f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqTTVPRGMyTjJFekxXRTRaV0l0TkdVelppMDRNVEF4TFRFNU5tRXdaakkyWmpFME9DSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.SbftKJg77_3-Gv0bWOzQacxso6gdsVLdVrakbnmNlOQ",
+				"viewer_url": "https://three.ws/viewer?job=f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqTTVPRGMyTjJFekxXRTRaV0l0TkdVelppMDRNVEF4TFRFNU5tRXdaakkyWmpFME9DSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.SbftKJg77_3-Gv0bWOzQacxso6gdsVLdVrakbnmNlOQ",
+				"stage": "mesh",
+				"etaRemainingSeconds": 57,
+				"prompt": "A friendly round robot mascot in glossy white plastic, chrome",
+				"refine": {
+					"lineage": [
+						{
+							"index": 0,
+							"parentIndex": null,
+							"glbUrl": "https://three.ws/cdn/forge/anon/e0fb27ab-1064-4237-bf6a-53fa58a83349.glb",
+							"viewerUrl": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fe0fb27ab-1064-4237-bf6a-53fa58a83349.glb",
+							"prompt": "A friendly round robot mascot in glossy white plastic",
+							"instruction": null,
+							"refKind": "origin"
+						}
+					],
+					"instruction": "make it chrome",
+					"refKind": "text"
+				}
+			}
+		}
+	}
+}

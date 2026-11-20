@@ -1,0 +1,135 @@
+{
+	"_fixture": {
+		"source": "documented",
+		"note": "Not a capture. No xAI key is available to this repository until the owner wires one, so this stream is assembled from the documented shapes: event names, the mcp_call item type, the server-label prefix on tool names and the output list on response.completed. Each round is sent as data-only server-sent events ending in data: [DONE]. The tool outputs inside the mcp_call items are real: they are the MCP results captured from three.ws for the same prompt (forge_free pending, then get_job done), embedded as JSON strings. Once XAI_API_KEY is set, npm run live:xai -- --capture DIR records a real stream in the same shape (responses-stream-live.json) to replace this file.",
+		"docs": [
+			"https://docs.x.ai/developers/rest-api-reference/inference/responses",
+			"https://docs.x.ai/developers/tools/streaming-and-sync",
+			"https://docs.x.ai/developers/tools/tool-usage-details",
+			"https://docs.x.ai/developers/tools/remote-mcp",
+			"https://docs.x.ai/cookbook/examples/database-over-mcp"
+		],
+		"toolOutputsFrom": [
+			"captured forge_free pending (scripts/live-three-ws.mjs, 2026-11-20)",
+			"captured get_job done for the same job (scripts/live-three-ws.mjs, 2026-11-20)"
+		]
+	},
+	"rounds": [
+		[
+			{
+				"type": "response.created",
+				"response": {
+					"id": "resp_doc_round1",
+					"status": "in_progress"
+				}
+			},
+			{
+				"type": "response.output_item.added",
+				"output_index": 0,
+				"item": {
+					"type": "mcp_call",
+					"id": "mcp_doc_1",
+					"server_label": "three-ws",
+					"name": "three-ws___forge_free",
+					"arguments": ""
+				}
+			},
+			{
+				"type": "response.output_item.done",
+				"output_index": 0,
+				"item": {
+					"type": "mcp_call",
+					"id": "mcp_doc_1",
+					"server_label": "three-ws",
+					"name": "three-ws___forge_free",
+					"arguments": "{\"prompt\":\"A friendly round robot mascot in glossy white plastic\",\"tier\":\"draft\"}",
+					"output": "{\"content\":[{\"type\":\"text\",\"text\":\"The model is still rendering (heavier scenes take a few minutes). It keeps running: call the get_job tool with this job_id shortly to collect it, or poll https://three.ws/api/gpt-forge?job=t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017 until status is \\\"done\\\", then use its glb_url (view at https://three.ws/viewer?src=<glb_url>).\\nViewer (opens the model by itself the moment it is ready): https://three.ws/viewer?job=t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017\\nRun receipt (what each stage was expected to do and what it did): https://three.ws/runs/rr_GggGEPfJo3zDW1sWJbzEry\"}],\"structuredContent\":{\"status\":\"pending\",\"jobId\":\"t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017\",\"job_id\":\"t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017\",\"phase\":\"submitting\",\"progress\":null,\"eta_seconds\":null,\"elapsed_seconds\":null,\"pollUrl\":\"https://three.ws/api/gpt-forge?job=t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017\",\"viewer_url\":\"https://three.ws/viewer?job=t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017\",\"stage\":\"mesh\",\"prompt\":\"A friendly round robot mascot in glossy white plastic\",\"receipt\":{\"id\":\"rr_GggGEPfJo3zDW1sWJbzEry\",\"outcome\":\"pending\",\"summary\":\"Still running. 1 carried by a fallback (Brief).\",\"issues\":[{\"stage\":\"brief\",\"label\":\"Brief\",\"verdict\":\"recovered\",\"expected\":\"A director-written brief that turns the idea into a single-subject 3D specification.\",\"observed\":\"The prompt was used as written.\",\"cause\":\"The director's brief ran to 1062 characters; the forge accepts at most 1000, so it was set aside.\"}],\"url\":\"https://three.ws/runs/rr_GggGEPfJo3zDW1sWJbzEry\"}}}"
+				}
+			},
+			{
+				"type": "response.output_text.delta",
+				"delta": "Your robot is rendering now; "
+			},
+			{
+				"type": "response.output_text.delta",
+				"delta": "the page will show it the moment it is done."
+			},
+			{
+				"type": "response.completed",
+				"response": {
+					"id": "resp_doc_round1",
+					"status": "completed",
+					"output": [
+						{
+							"type": "mcp_call",
+							"id": "mcp_doc_1",
+							"server_label": "three-ws",
+							"name": "three-ws___forge_free",
+							"arguments": "{\"prompt\":\"A friendly round robot mascot in glossy white plastic\",\"tier\":\"draft\"}",
+							"output": "{\"content\":[{\"type\":\"text\",\"text\":\"The model is still rendering (heavier scenes take a few minutes). It keeps running: call the get_job tool with this job_id shortly to collect it, or poll https://three.ws/api/gpt-forge?job=t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017 until status is \\\"done\\\", then use its glb_url (view at https://three.ws/viewer?src=<glb_url>).\\nViewer (opens the model by itself the moment it is ready): https://three.ws/viewer?job=t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017\\nRun receipt (what each stage was expected to do and what it did): https://three.ws/runs/rr_GggGEPfJo3zDW1sWJbzEry\"}],\"structuredContent\":{\"status\":\"pending\",\"jobId\":\"t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017\",\"job_id\":\"t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017\",\"phase\":\"submitting\",\"progress\":null,\"eta_seconds\":null,\"elapsed_seconds\":null,\"pollUrl\":\"https://three.ws/api/gpt-forge?job=t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017\",\"viewer_url\":\"https://three.ws/viewer?job=t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017\",\"stage\":\"mesh\",\"prompt\":\"A friendly round robot mascot in glossy white plastic\",\"receipt\":{\"id\":\"rr_GggGEPfJo3zDW1sWJbzEry\",\"outcome\":\"pending\",\"summary\":\"Still running. 1 carried by a fallback (Brief).\",\"issues\":[{\"stage\":\"brief\",\"label\":\"Brief\",\"verdict\":\"recovered\",\"expected\":\"A director-written brief that turns the idea into a single-subject 3D specification.\",\"observed\":\"The prompt was used as written.\",\"cause\":\"The director's brief ran to 1062 characters; the forge accepts at most 1000, so it was set aside.\"}],\"url\":\"https://three.ws/runs/rr_GggGEPfJo3zDW1sWJbzEry\"}}}"
+						},
+						{
+							"type": "message",
+							"id": "msg_doc_1",
+							"role": "assistant",
+							"content": [
+								{
+									"type": "output_text",
+									"text": "Your robot is rendering now; the page will show it the moment it is done."
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		[
+			{
+				"type": "response.created",
+				"response": {
+					"id": "resp_doc_round2",
+					"status": "in_progress"
+				}
+			},
+			{
+				"type": "response.output_item.added",
+				"output_index": 0,
+				"item": {
+					"type": "mcp_call",
+					"id": "mcp_doc_2",
+					"server_label": "three-ws",
+					"name": "three-ws___check_job",
+					"arguments": ""
+				}
+			},
+			{
+				"type": "response.completed",
+				"response": {
+					"id": "resp_doc_round2",
+					"status": "completed",
+					"output": [
+						{
+							"type": "mcp_call",
+							"id": "mcp_doc_2",
+							"server_label": "three-ws",
+							"name": "three-ws___check_job",
+							"arguments": "{\"job_id\":\"t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017\"}",
+							"output": "{\"content\":[{\"type\":\"text\",\"text\":\"Generated a 3D model (GLB).\\nViewer: https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fe0fb27ab-1064-4237-bf6a-53fa58a83349.glb&title=A%20friendly%20round%20robot%20mascot%20in%20glossy%20white%20plastic\\nGLB: https://three.ws/cdn/forge/anon/e0fb27ab-1064-4237-bf6a-53fa58a83349.glb\\nPoster PNG: https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fe0fb27ab-1064-4237-bf6a-53fa58a83349.glb&width=1024&height=1024\\nEmbed HTML: <script type=\\\"module\\\" src=\\\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\\\" integrity=\\\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\\\" crossorigin=\\\"anonymous\\\" ></script> <model-viewer src=\\\"https://three.ws/cdn/forge/anon/e0fb27ab-1064-4237-bf6a-53fa58a83349.glb\\\" alt=\\\"A friendly round robot mascot in glossy white plastic\\\" camera-controls auto-rotate ar shadow-intensity=\\\"1\\\" style=\\\"width:100%;height:420px\\\" ></model-viewer>\\nPlace it in your room (AR, open on a phone): https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fe0fb27ab-1064-4237-bf6a-53fa58a83349.glb&title=A%20friendly%20round%20robot%20mascot%20in%20glossy%20white%20plastic\\nConcept image it was sculpted from: https://three.ws/cdn/forge/refs/ed26084b-6ae1-4080-a770-a08865486e4b.jpg\\nRun receipt (what each stage was expected to do and what it did): https://three.ws/runs/rr_GggGEPfJo3zDW1sWJbzEry\"}],\"structuredContent\":{\"kind\":\"model\",\"glbUrl\":\"https://three.ws/cdn/forge/anon/e0fb27ab-1064-4237-bf6a-53fa58a83349.glb\",\"viewerUrl\":\"https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fe0fb27ab-1064-4237-bf6a-53fa58a83349.glb\",\"arUrl\":\"https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fe0fb27ab-1064-4237-bf6a-53fa58a83349.glb&title=A%20friendly%20round%20robot%20mascot%20in%20glossy%20white%20plastic\",\"format\":\"glb\",\"viewer_url\":\"https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fe0fb27ab-1064-4237-bf6a-53fa58a83349.glb&title=A%20friendly%20round%20robot%20mascot%20in%20glossy%20white%20plastic\",\"glb_url\":\"https://three.ws/cdn/forge/anon/e0fb27ab-1064-4237-bf6a-53fa58a83349.glb\",\"poster_png_url\":\"https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fe0fb27ab-1064-4237-bf6a-53fa58a83349.glb&width=1024&height=1024\",\"embed_html\":\"<script\\n  type=\\\"module\\\"\\n  src=\\\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\\\"\\n  integrity=\\\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\\\"\\n  crossorigin=\\\"anonymous\\\"\\n></script>\\n\\n<model-viewer\\n  src=\\\"https://three.ws/cdn/forge/anon/e0fb27ab-1064-4237-bf6a-53fa58a83349.glb\\\"\\n  alt=\\\"A friendly round robot mascot in glossy white plastic\\\"\\n  camera-controls\\n  auto-rotate\\n  ar\\n  shadow-intensity=\\\"1\\\"\\n  style=\\\"width:100%;height:420px\\\"\\n></model-viewer>\",\"prompt\":\"A friendly round robot mascot in glossy white plastic\",\"referenceImageUrl\":\"https://three.ws/cdn/forge/refs/ed26084b-6ae1-4080-a770-a08865486e4b.jpg\",\"spatial\":{\"spatialMcpVersion\":\"0.1\",\"kind\":\"model\",\"scene\":{\"glbUrl\":\"https://three.ws/cdn/forge/anon/e0fb27ab-1064-4237-bf6a-53fa58a83349.glb\",\"format\":\"glb\"},\"camera\":{\"autoRotate\":true},\"environment\":{\"image\":\"neutral\",\"exposure\":1,\"shadowIntensity\":1},\"affordances\":{\"orbit\":true,\"zoom\":true,\"fullscreen\":true,\"download\":true},\"ar\":{\"glbUrl\":\"https://three.ws/cdn/forge/anon/e0fb27ab-1064-4237-bf6a-53fa58a83349.glb\",\"launchUrl\":\"https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fe0fb27ab-1064-4237-bf6a-53fa58a83349.glb&title=A%20friendly%20round%20robot%20mascot%20in%20glossy%20white%20plastic\",\"supported\":true},\"meta\":{\"prompt\":\"A friendly round robot mascot in glossy white plastic\",\"viewerUrl\":\"https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fe0fb27ab-1064-4237-bf6a-53fa58a83349.glb\"}},\"receipt\":{\"id\":\"rr_GggGEPfJo3zDW1sWJbzEry\",\"outcome\":\"delivered\",\"summary\":\"Delivered as expected. 1 carried by a fallback (Brief).\",\"issues\":[{\"stage\":\"brief\",\"label\":\"Brief\",\"verdict\":\"recovered\",\"expected\":\"A director-written brief that turns the idea into a single-subject 3D specification.\",\"observed\":\"The prompt was used as written.\",\"cause\":\"The director's brief ran to 1062 characters; the forge accepts at most 1000, so it was set aside.\"}],\"url\":\"https://three.ws/runs/rr_GggGEPfJo3zDW1sWJbzEry\"},\"status\":\"done\",\"phase\":\"done\",\"progress\":1,\"eta_seconds\":0,\"elapsed_seconds\":null,\"job_id\":\"t1.mwpjjqvj-c9516e77-7b8a-466c-82bb-b6776622c017\"}}"
+						},
+						{
+							"type": "message",
+							"id": "msg_doc_2",
+							"role": "assistant",
+							"content": [
+								{
+									"type": "output_text",
+									"text": "Your robot mascot is ready."
+								}
+							]
+						}
+					]
+				}
+			}
+		]
+	]
+}

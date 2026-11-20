@@ -1,0 +1,36 @@
+{
+	"_fixture": {
+		"source": "captured",
+		"from": "https://three.ws/api/mcp-grok tools/call forge_free",
+		"capturedAt": "2026-11-20T22:18:49.783Z",
+		"by": "scripts/live-three-ws.mjs",
+		"httpStatus": 200,
+		"note": "sent with no Authorization header"
+	},
+	"response": {
+		"jsonrpc": "2.0",
+		"id": 3,
+		"result": {
+			"content": [
+				{
+					"type": "text",
+					"text": "Sign in to make a 3D model. A three.ws account is free. Connect this connector to your three.ws account (OAuth sign-in at https://three.ws/api/mcp-grok?auth=oauth), or create an API key at https://three.ws/dashboard/api-keys and send it as \"Authorization: Bearer <key>\"."
+				}
+			],
+			"structuredContent": {
+				"error": true,
+				"status": "sign_in_required",
+				"reason": "sign_in_required",
+				"message": "Sign in to make a 3D model. A three.ws account is free. Connect this connector to your three.ws account (OAuth sign-in at https://three.ws/api/mcp-grok?auth=oauth), or create an API key at https://three.ws/dashboard/api-keys and send it as \"Authorization: Bearer <key>\".",
+				"api_keys_url": "https://three.ws/dashboard/api-keys",
+				"sign_in_url": "https://three.ws/api/mcp-grok?auth=oauth"
+			},
+			"isError": true,
+			"_meta": {
+				"mcp/www_authenticate": [
+					"Bearer resource_metadata=\"https://three.ws/.well-known/oauth-protected-resource/api/mcp-grok\", resource=\"https://three.ws/api/mcp-grok\", error=\"insufficient_scope\", error_description=\"Sign in to three.ws to make a 3D model\""
+				]
+			}
+		}
+	}
+}

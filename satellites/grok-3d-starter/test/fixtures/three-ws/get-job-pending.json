@@ -1,0 +1,34 @@
+{
+	"_fixture": {
+		"source": "captured",
+		"from": "https://three.ws/api/mcp-grok tools/call get_job",
+		"capturedAt": "2026-11-20T21:52:05.438Z",
+		"by": "curl (JSON-RPC over HTTP, the same request lib/mcp.mjs sends)",
+		"httpStatus": 200
+	},
+	"response": {
+		"jsonrpc": "2.0",
+		"id": 3,
+		"result": {
+			"content": [
+				{
+					"type": "text",
+					"text": "The model is still rendering (heavier scenes take a few minutes). It keeps running: call the get_job tool with this job_id shortly to collect it, or poll https://three.ws/api/gpt-forge?job=f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqaGtaV1ZsWW1ZMkxXSm1PR1l0TkRSbVppMDRPVEkyTFRFeE1tRTRNbUk0TXpaaU1DSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.aOHT87YjIw8tIHxIrON-ytKAHE8WM7m8aQLyOvi42rw until status is \"done\", then use its glb_url (view at https://three.ws/viewer?src=<glb_url>).\nViewer (opens the model by itself the moment it is ready): https://three.ws/viewer?job=f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqaGtaV1ZsWW1ZMkxXSm1PR1l0TkRSbVppMDRPVEkyTFRFeE1tRTRNbUk0TXpaaU1DSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.aOHT87YjIw8tIHxIrON-ytKAHE8WM7m8aQLyOvi42rw"
+				}
+			],
+			"structuredContent": {
+				"status": "pending",
+				"jobId": "f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqaGtaV1ZsWW1ZMkxXSm1PR1l0TkRSbVppMDRPVEkyTFRFeE1tRTRNbUk0TXpaaU1DSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.aOHT87YjIw8tIHxIrON-ytKAHE8WM7m8aQLyOvi42rw",
+				"job_id": "f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqaGtaV1ZsWW1ZMkxXSm1PR1l0TkRSbVppMDRPVEkyTFRFeE1tRTRNbUk0TXpaaU1DSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.aOHT87YjIw8tIHxIrON-ytKAHE8WM7m8aQLyOvi42rw",
+				"phase": "queued",
+				"progress": 0.95,
+				"eta_seconds": null,
+				"elapsed_seconds": 387,
+				"pollUrl": "https://three.ws/api/gpt-forge?job=f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqaGtaV1ZsWW1ZMkxXSm1PR1l0TkRSbVppMDRPVEkyTFRFeE1tRTRNbUk0TXpaaU1DSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.aOHT87YjIw8tIHxIrON-ytKAHE8WM7m8aQLyOvi42rw",
+				"viewer_url": "https://three.ws/viewer?job=f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqaGtaV1ZsWW1ZMkxXSm1PR1l0TkRSbVppMDRPVEkyTFRFeE1tRTRNbUk0TXpaaU1DSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.aOHT87YjIw8tIHxIrON-ytKAHE8WM7m8aQLyOvi42rw",
+				"stage": "mesh",
+				"prompt": "A compact brass desk lamp, classic curved arm with a heavy round base, single swivel joint, symmetric silhouette, topped by a smooth spherical green glass shade; construction: solid brass stem, arm, and base cast as separate pieces with threaded collars and a knurled brass thumb-screw at the shade ring, all axis-aligned; materials: body \u2014 unlacquered yellow brass with fine longitudinal brush grain, subtle finger-oil patina on high edges, matte metalness 0.9 roughness 0.35; shade \u2014 transparent emerald-green soda-lime glass, faint mold seam at equator, slight surface waviness, IOR 1.5, zero metalness, roughness 0.02; photoreal studio shot, soft daylight key, gentle fill, shallow depth of field, visible brass brush marks, glass micro-ripples, dust motes; fine detail: knurled screw threads, threaded collar seams, faint casting flash lines, microscopic oxidation speckles; centered, isolated on neutral gray, single angle, even lighting, no text."
+			}
+		}
+	}
+}

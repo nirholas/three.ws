@@ -1,0 +1,28 @@
+{
+	"name": "Grok 3D starter",
+	"image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+	"forwardPorts": [8080],
+	"portsAttributes": {
+		"8080": {
+			"label": "Grok 3D starter",
+			"onAutoForward": "openBrowser"
+		}
+	},
+	"secrets": {
+		"XAI_API_KEY": {
+			"description": "xAI API key for Grok",
+			"documentationUrl": "https://console.x.ai"
+		},
+		"THREE_WS_API_KEY": {
+			"description": "three.ws API key (a free account is enough)",
+			"documentationUrl": "https://three.ws/dashboard/api-keys"
+		}
+	},
+	"postCreateCommand": "npm ci",
+	"postStartCommand": "nohup npm run dev > /tmp/grok-3d-starter.log 2>&1 &",
+	"customizations": {
+		"codespaces": {
+			"openFiles": ["README.md", "LEARN.md"]
+		}
+	}
+}

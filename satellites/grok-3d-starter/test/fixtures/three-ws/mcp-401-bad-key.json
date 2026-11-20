@@ -1,0 +1,19 @@
+{
+	"_fixture": {
+		"source": "captured",
+		"from": "https://three.ws/api/mcp-grok tools/call forge_free",
+		"capturedAt": "2026-11-20T21:53:36.750Z",
+		"by": "curl (JSON-RPC over HTTP, the same request lib/mcp.mjs sends)",
+		"httpStatus": 401,
+		"note": "sent with Authorization: Bearer and a made-up key"
+	},
+	"response": {
+		"error": "unauthorized",
+		"error_description": "missing or invalid access token",
+		"setup": {
+			"command": "npx three-ws setup",
+			"message": "Run `npx three-ws setup` to sign in and wire three.ws into your MCP client in one step.",
+			"docs": "https://three.ws/docs/cli"
+		}
+	}
+}

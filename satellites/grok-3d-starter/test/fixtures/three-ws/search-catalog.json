@@ -1,0 +1,285 @@
+{
+	"_fixture": {
+		"source": "captured",
+		"from": "https://three.ws/api/mcp-grok tools/call search_catalog",
+		"capturedAt": "2026-11-20T22:18:49.666Z",
+		"by": "scripts/live-three-ws.mjs",
+		"httpStatus": 200
+	},
+	"response": {
+		"jsonrpc": "2.0",
+		"id": 2,
+		"result": {
+			"content": [
+				{
+					"type": "text",
+					"text": "10 matches for \"wooden chair\" (showing 6 from offset 0):\n\n- `object:painted_wooden_chair_01` | Painted Wooden Chair 01 | CC0 | chair, wood, painted, farmhouse\n  Viewer: https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fpainted_wooden_chair_01.glb&title=Painted%20Wooden%20Chair%2001\n  GLB: https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_01.glb\n  Poster PNG: https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fpainted_wooden_chair_01.glb&width=1024&height=1024\n  Embed HTML: <script type=\"module\" src=\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\" integrity=\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\" crossorigin=\"anonymous\" ></script> <model-viewer src=\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_01.glb\" alt=\"Painted Wooden Chair 01\" camera-controls auto-rotate ar shadow-intensity=\"1\" style=\"width:100%;height:420px\" ></model-viewer>\n- `object:painted_wooden_chair_02` | Painted Wooden Chair 02 | CC0 | old, wooden, vintage, antique\n  Viewer: https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fpainted_wooden_chair_02.glb&title=Painted%20Wooden%20Chair%2002\n  GLB: https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_02.glb\n  Poster PNG: https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fpainted_wooden_chair_02.glb&width=1024&height=1024\n  Embed HTML: <script type=\"module\" src=\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\" integrity=\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\" crossorigin=\"anonymous\" ></script> <model-viewer src=\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_02.glb\" alt=\"Painted Wooden Chair 02\" camera-controls auto-rotate ar shadow-intensity=\"1\" style=\"width:100%;height:420px\" ></model-viewer>\n- `object:WoodenChair_01` | Wooden Chair 01 | CC0 | wood, prop, vintage, furniture\n  Viewer: https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2FWoodenChair_01.glb&title=Wooden%20Chair%2001\n  GLB: https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/WoodenChair_01.glb\n  Poster PNG: https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2FWoodenChair_01.glb&width=1024&height=1024\n  Embed HTML: <script type=\"module\" src=\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\" integrity=\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\" crossorigin=\"anonymous\" ></script> <model-viewer src=\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/WoodenChair_01.glb\" alt=\"Wooden Chair 01\" camera-controls auto-rotate ar shadow-intensity=\"1\" style=\"width:100%;height:420px\" ></model-viewer>\n- `object:bar_chair_round_01` | Bar Chair Round 01 | CC0 | bar, pub, stool, tall\n  Viewer: https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fbar_chair_round_01.glb&title=Bar%20Chair%20Round%2001\n  GLB: https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/bar_chair_round_01.glb\n  Poster PNG: https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fbar_chair_round_01.glb&width=1024&height=1024\n  Embed HTML: <script type=\"module\" src=\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\" integrity=\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\" crossorigin=\"anonymous\" ></script> <model-viewer src=\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/bar_chair_round_01.glb\" alt=\"Bar Chair Round 01\" camera-controls auto-rotate ar shadow-intensity=\"1\" style=\"width:100%;height:420px\" ></model-viewer>\n- `object:gallinera_chair` | Gallinera Chair | CC0 | vintage, antique, philippines, traditional\n  Viewer: https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fgallinera_chair.glb&title=Gallinera%20Chair\n  GLB: https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/gallinera_chair.glb\n  Poster PNG: https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fgallinera_chair.glb&width=1024&height=1024\n  Embed HTML: <script type=\"module\" src=\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\" integrity=\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\" crossorigin=\"anonymous\" ></script> <model-viewer src=\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/gallinera_chair.glb\" alt=\"Gallinera Chair\" camera-controls auto-rotate ar shadow-intensity=\"1\" style=\"width:100%;height:420px\" ></model-viewer>\n- `object:mid_century_lounge_chair` | Mid Century Lounge Chair | CC0 | wooden, leather, couch, lounge\n  Viewer: https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fmid_century_lounge_chair.glb&title=Mid%20Century%20Lounge%20Chair\n  GLB: https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/mid_century_lounge_chair.glb\n  Poster PNG: https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fmid_century_lounge_chair.glb&width=1024&height=1024\n  Embed HTML: <script type=\"module\" src=\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\" integrity=\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\" crossorigin=\"anonymous\" ></script> <model-viewer src=\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/mid_century_lounge_chair.glb\" alt=\"Mid Century Lounge Chair\" camera-controls auto-rotate ar shadow-intensity=\"1\" style=\"width:100%;height:420px\" ></model-viewer>\n\nKinds: object 10\nCategories: furniture (10), seating (10), office (1)\nMore: call again with offset 6.\n\nNext: get_item_source with an id above returns code you can paste."
+				}
+			],
+			"structuredContent": {
+				"ok": true,
+				"items": [
+					{
+						"id": "object:painted_wooden_chair_01",
+						"kind": "object",
+						"name": "painted_wooden_chair_01",
+						"title": "Painted Wooden Chair 01",
+						"categories": [
+							"furniture",
+							"seating"
+						],
+						"tags": [
+							"chair",
+							"wood",
+							"painted",
+							"farmhouse",
+							"dining",
+							"diner",
+							"american",
+							"kitchen"
+						],
+						"license": "CC0",
+						"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_01.glb",
+						"thumb": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/painted_wooden_chair_01.png",
+						"bytes": 491572,
+						"format": "glb",
+						"viewer_url": "https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fpainted_wooden_chair_01.glb&title=Painted%20Wooden%20Chair%2001",
+						"glb_url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_01.glb",
+						"poster_png_url": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fpainted_wooden_chair_01.glb&width=1024&height=1024",
+						"embed_html": "<script\n  type=\"module\"\n  src=\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\"\n  integrity=\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\"\n  crossorigin=\"anonymous\"\n></script>\n\n<model-viewer\n  src=\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_01.glb\"\n  alt=\"Painted Wooden Chair 01\"\n  camera-controls\n  auto-rotate\n  ar\n  shadow-intensity=\"1\"\n  style=\"width:100%;height:420px\"\n></model-viewer>"
+					},
+					{
+						"id": "object:painted_wooden_chair_02",
+						"kind": "object",
+						"name": "painted_wooden_chair_02",
+						"title": "Painted Wooden Chair 02",
+						"categories": [
+							"furniture",
+							"seating"
+						],
+						"tags": [
+							"old",
+							"wooden",
+							"vintage",
+							"antique",
+							"farmhouse",
+							"seat",
+							"dining",
+							"chair"
+						],
+						"license": "CC0",
+						"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_02.glb",
+						"thumb": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/painted_wooden_chair_02.png",
+						"bytes": 2395276,
+						"format": "glb",
+						"viewer_url": "https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fpainted_wooden_chair_02.glb&title=Painted%20Wooden%20Chair%2002",
+						"glb_url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_02.glb",
+						"poster_png_url": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fpainted_wooden_chair_02.glb&width=1024&height=1024",
+						"embed_html": "<script\n  type=\"module\"\n  src=\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\"\n  integrity=\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\"\n  crossorigin=\"anonymous\"\n></script>\n\n<model-viewer\n  src=\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_02.glb\"\n  alt=\"Painted Wooden Chair 02\"\n  camera-controls\n  auto-rotate\n  ar\n  shadow-intensity=\"1\"\n  style=\"width:100%;height:420px\"\n></model-viewer>"
+					},
+					{
+						"id": "object:WoodenChair_01",
+						"kind": "object",
+						"name": "WoodenChair_01",
+						"title": "Wooden Chair 01",
+						"categories": [
+							"furniture",
+							"seating"
+						],
+						"tags": [
+							"wood",
+							"prop",
+							"vintage",
+							"furniture",
+							"chair",
+							"gothic",
+							"victorian",
+							"decorative"
+						],
+						"license": "CC0",
+						"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/WoodenChair_01.glb",
+						"thumb": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/WoodenChair_01.png",
+						"bytes": 1078588,
+						"format": "glb",
+						"viewer_url": "https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2FWoodenChair_01.glb&title=Wooden%20Chair%2001",
+						"glb_url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/WoodenChair_01.glb",
+						"poster_png_url": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2FWoodenChair_01.glb&width=1024&height=1024",
+						"embed_html": "<script\n  type=\"module\"\n  src=\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\"\n  integrity=\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\"\n  crossorigin=\"anonymous\"\n></script>\n\n<model-viewer\n  src=\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/WoodenChair_01.glb\"\n  alt=\"Wooden Chair 01\"\n  camera-controls\n  auto-rotate\n  ar\n  shadow-intensity=\"1\"\n  style=\"width:100%;height:420px\"\n></model-viewer>"
+					},
+					{
+						"id": "object:bar_chair_round_01",
+						"kind": "object",
+						"name": "bar_chair_round_01",
+						"title": "Bar Chair Round 01",
+						"categories": [
+							"seating",
+							"furniture"
+						],
+						"tags": [
+							"bar",
+							"pub",
+							"stool",
+							"tall",
+							"wooden",
+							"classical",
+							"old",
+							"vintage",
+							"cigar"
+						],
+						"license": "CC0",
+						"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/bar_chair_round_01.glb",
+						"thumb": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/bar_chair_round_01.png",
+						"bytes": 2811332,
+						"format": "glb",
+						"viewer_url": "https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fbar_chair_round_01.glb&title=Bar%20Chair%20Round%2001",
+						"glb_url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/bar_chair_round_01.glb",
+						"poster_png_url": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fbar_chair_round_01.glb&width=1024&height=1024",
+						"embed_html": "<script\n  type=\"module\"\n  src=\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\"\n  integrity=\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\"\n  crossorigin=\"anonymous\"\n></script>\n\n<model-viewer\n  src=\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/bar_chair_round_01.glb\"\n  alt=\"Bar Chair Round 01\"\n  camera-controls\n  auto-rotate\n  ar\n  shadow-intensity=\"1\"\n  style=\"width:100%;height:420px\"\n></model-viewer>"
+					},
+					{
+						"id": "object:gallinera_chair",
+						"kind": "object",
+						"name": "gallinera_chair",
+						"title": "Gallinera Chair",
+						"categories": [
+							"furniture",
+							"seating"
+						],
+						"tags": [
+							"vintage",
+							"antique",
+							"philippines",
+							"traditional",
+							"old",
+							"wooden"
+						],
+						"license": "CC0",
+						"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/gallinera_chair.glb",
+						"thumb": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/gallinera_chair.png",
+						"bytes": 2357708,
+						"format": "glb",
+						"viewer_url": "https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fgallinera_chair.glb&title=Gallinera%20Chair",
+						"glb_url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/gallinera_chair.glb",
+						"poster_png_url": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fgallinera_chair.glb&width=1024&height=1024",
+						"embed_html": "<script\n  type=\"module\"\n  src=\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\"\n  integrity=\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\"\n  crossorigin=\"anonymous\"\n></script>\n\n<model-viewer\n  src=\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/gallinera_chair.glb\"\n  alt=\"Gallinera Chair\"\n  camera-controls\n  auto-rotate\n  ar\n  shadow-intensity=\"1\"\n  style=\"width:100%;height:420px\"\n></model-viewer>"
+					},
+					{
+						"id": "object:mid_century_lounge_chair",
+						"kind": "object",
+						"name": "mid_century_lounge_chair",
+						"title": "Mid Century Lounge Chair",
+						"categories": [
+							"furniture",
+							"seating"
+						],
+						"tags": [
+							"wooden",
+							"leather",
+							"couch",
+							"lounge",
+							"architecture",
+							"modern",
+							"interior design",
+							"home decor",
+							"living room",
+							"comfort",
+							"stylish",
+							"recliner",
+							"retro",
+							"classy"
+						],
+						"license": "CC0",
+						"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/mid_century_lounge_chair.glb",
+						"thumb": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/mid_century_lounge_chair.png",
+						"bytes": 2085952,
+						"format": "glb",
+						"viewer_url": "https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fmid_century_lounge_chair.glb&title=Mid%20Century%20Lounge%20Chair",
+						"glb_url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/mid_century_lounge_chair.glb",
+						"poster_png_url": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fmid_century_lounge_chair.glb&width=1024&height=1024",
+						"embed_html": "<script\n  type=\"module\"\n  src=\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\"\n  integrity=\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\"\n  crossorigin=\"anonymous\"\n></script>\n\n<model-viewer\n  src=\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/mid_century_lounge_chair.glb\"\n  alt=\"Mid Century Lounge Chair\"\n  camera-controls\n  auto-rotate\n  ar\n  shadow-intensity=\"1\"\n  style=\"width:100%;height:420px\"\n></model-viewer>"
+					}
+				],
+				"matched": 10,
+				"relaxed": false,
+				"total": 1306,
+				"offset": 0,
+				"next_offset": 6,
+				"facets": {
+					"kinds": {
+						"object": 10
+					},
+					"categories": [
+						{
+							"value": "furniture",
+							"count": 10
+						},
+						{
+							"value": "seating",
+							"count": 10
+						},
+						{
+							"value": "office",
+							"count": 1
+						}
+					],
+					"tags": [
+						{
+							"value": "vintage",
+							"count": 7
+						},
+						{
+							"value": "wooden",
+							"count": 7
+						},
+						{
+							"value": "chair",
+							"count": 6
+						},
+						{
+							"value": "antique",
+							"count": 4
+						},
+						{
+							"value": "old",
+							"count": 4
+						},
+						{
+							"value": "farmhouse",
+							"count": 3
+						},
+						{
+							"value": "wood",
+							"count": 3
+						},
+						{
+							"value": "aged",
+							"count": 2
+						},
+						{
+							"value": "couch",
+							"count": 2
+						},
+						{
+							"value": "dining",
+							"count": 2
+						},
+						{
+							"value": "leather",
+							"count": 2
+						},
+						{
+							"value": "lounge",
+							"count": 2
+						}
+					]
+				},
+				"generated_at": {
+					"object": "2026-07-21T13:16:14.305Z",
+					"character": "2026-07-21T13:39:15.447Z",
+					"animation": "2026-11-04T06:20:27.250Z"
+				},
+				"degraded": false
+			}
+		}
+	}
+}

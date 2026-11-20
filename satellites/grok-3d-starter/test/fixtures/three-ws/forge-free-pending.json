@@ -1,0 +1,43 @@
+{
+	"_fixture": {
+		"source": "captured",
+		"from": "https://three.ws/api/mcp-grok tools/call forge_free",
+		"capturedAt": "2026-11-20T21:45:42.526Z",
+		"by": "curl (JSON-RPC over HTTP, the same request lib/mcp.mjs sends)",
+		"httpStatus": 200,
+		"note": "QA account key; forge_free {prompt: \"a small brass desk lamp with a round green glass shade\", tier: \"draft\"}"
+	},
+	"response": {
+		"jsonrpc": "2.0",
+		"id": 2,
+		"result": {
+			"content": [
+				{
+					"type": "text",
+					"text": "The model is still rendering (heavier scenes take a few minutes) (roughly 32s to go). It keeps running: call the get_job tool with this job_id in ~32s to collect it, or poll https://three.ws/api/gpt-forge?job=f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqaGtaV1ZsWW1ZMkxXSm1PR1l0TkRSbVppMDRPVEkyTFRFeE1tRTRNbUk0TXpaaU1DSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.aOHT87YjIw8tIHxIrON-ytKAHE8WM7m8aQLyOvi42rw until status is \"done\", then use its glb_url (view at https://three.ws/viewer?src=<glb_url>).\nViewer (opens the model by itself the moment it is ready): https://three.ws/viewer?job=f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqaGtaV1ZsWW1ZMkxXSm1PR1l0TkRSbVppMDRPVEkyTFRFeE1tRTRNbUk0TXpaaU1DSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.aOHT87YjIw8tIHxIrON-ytKAHE8WM7m8aQLyOvi42rw\nRun receipt (what each stage was expected to do and what it did): https://three.ws/runs/rr_V9T7QwknhWLMtMy7pJFgkJ"
+				}
+			],
+			"structuredContent": {
+				"status": "pending",
+				"jobId": "f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqaGtaV1ZsWW1ZMkxXSm1PR1l0TkRSbVppMDRPVEkyTFRFeE1tRTRNbUk0TXpaaU1DSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.aOHT87YjIw8tIHxIrON-ytKAHE8WM7m8aQLyOvi42rw",
+				"job_id": "f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqaGtaV1ZsWW1ZMkxXSm1PR1l0TkRSbVppMDRPVEkyTFRFeE1tRTRNbUk0TXpaaU1DSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.aOHT87YjIw8tIHxIrON-ytKAHE8WM7m8aQLyOvi42rw",
+				"phase": "queued",
+				"progress": 0.11,
+				"eta_seconds": 32,
+				"elapsed_seconds": 4,
+				"pollUrl": "https://three.ws/api/gpt-forge?job=f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqaGtaV1ZsWW1ZMkxXSm1PR1l0TkRSbVppMDRPVEkyTFRFeE1tRTRNbUk0TXpaaU1DSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.aOHT87YjIw8tIHxIrON-ytKAHE8WM7m8aQLyOvi42rw",
+				"viewer_url": "https://three.ws/viewer?job=f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqaGtaV1ZsWW1ZMkxXSm1PR1l0TkRSbVppMDRPVEkyTFRFeE1tRTRNbUk0TXpaaU1DSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.aOHT87YjIw8tIHxIrON-ytKAHE8WM7m8aQLyOvi42rw",
+				"stage": "mesh",
+				"etaRemainingSeconds": 32,
+				"prompt": "a small brass desk lamp with a round green glass shade",
+				"receipt": {
+					"id": "rr_V9T7QwknhWLMtMy7pJFgkJ",
+					"outcome": "pending",
+					"summary": "Still running.",
+					"issues": [],
+					"url": "https://three.ws/runs/rr_V9T7QwknhWLMtMy7pJFgkJ"
+				}
+			}
+		}
+	}
+}

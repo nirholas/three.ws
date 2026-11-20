@@ -1,0 +1,14 @@
+{
+	"_fixture": {
+		"source": "captured",
+		"from": "POST https://api.x.ai/v1/responses with Authorization: Bearer and a made-up key (the server's request body from buildRequest)",
+		"capturedAt": "2026-11-20T22:24:34.240Z",
+		"by": "curl-equivalent fetch from Node, the same request lib/xai.mjs sends",
+		"httpStatus": 400,
+		"docs": "https://docs.x.ai/developers/debugging"
+	},
+	"response": {
+		"code": "invalid-argument",
+		"error": "Incorrect API key provided. You can obtain an API key from https://console.x.ai."
+	}
+}

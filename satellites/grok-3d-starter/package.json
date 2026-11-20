@@ -1,0 +1,28 @@
+{
+	"name": "grok-3d-starter",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Chat with Grok, get a real textured 3D model on the page. Grok calls the three.ws MCP server over the xAI Responses API.",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/grok-3d-starter.git"
+	},
+	"type": "module",
+	"main": "server.mjs",
+	"scripts": {
+		"dev": "node --watch-path=server.mjs --watch-path=lib --watch-path=shared server.mjs",
+		"start": "node server.mjs",
+		"check": "node scripts/check.mjs",
+		"test": "node --test",
+		"live:three-ws": "node scripts/live-three-ws.mjs",
+		"live:xai": "node scripts/live-xai.mjs",
+		"live:xai-401": "node scripts/live-xai-401.mjs"
+	},
+	"dependencies": {
+		"three": "0.187.0"
+	},
+	"engines": {
+		"node": ">=20.12"
+	},
+	"license": "Apache-2.0"
+}

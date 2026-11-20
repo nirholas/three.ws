@@ -1,0 +1,14 @@
+{
+	"_fixture": {
+		"source": "captured",
+		"from": "POST https://api.x.ai/v1/responses with no Authorization header (the server's request body from buildRequest)",
+		"capturedAt": "2026-11-20T22:19:17.672Z",
+		"by": "scripts/live-xai-401.mjs",
+		"httpStatus": 401,
+		"docs": "https://docs.x.ai/developers/debugging"
+	},
+	"response": {
+		"code": "unauthenticated:no-credentials",
+		"error": "No credentials presented."
+	}
+}
