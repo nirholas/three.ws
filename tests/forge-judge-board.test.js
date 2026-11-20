@@ -1,25 +1,20 @@
-// Forge judge shadow log and its admin board: the real migration and SQL on
-// PGlite, the recorder the live gate and the eval share, and the
-// /api/admin/forge-judge auth gate, filters and labelling.
+// Forge judge shadow log and its operator board: the real migration and SQL on
+// PGlite, the recorder the live gate and the eval share, and the board library
+// the forge:judge CLI reads and labels through. There is no admin page or admin
+// HTTP endpoint for the board; the last block pins that.
 
-import { readFileSync } from 'node:fs';
-import { Readable } from 'node:stream';
+import { existsSync, readFileSync } from 'node:fs';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPgliteSql } from './_helpers/pglite-sql.js';
 
 process.env.DATABASE_URL ||= 'postgres://pglite.test/db';
 
-const holder = vi.hoisted(() => ({ db: null, auth: { ok: true, actor: 'ops-test' }, puts: [], objects: new Map() }));
+const holder = vi.hoisted(() => ({ db: null, puts: [], objects: new Map() }));
 
 vi.mock('../api/_lib/db.js', async (importActual) => {
 	const actual = await importActual();
 	return { ...actual, sql: (...args) => holder.db.sql(...args) };
 });
-vi.mock('../api/_lib/ops-auth.js', () => ({ authorizeOps: async () => holder.auth }));
-vi.mock('../api/_lib/rate-limit.js', () => ({
-	limits: { authedReadIp: async () => ({ success: true }), imgProxyIp: async () => ({ success: true }) },
-	clientIp: () => '127.0.0.1',
-}));
 // Storage as it behaves during an R2 outage: putObject lands the bytes in the
 // GCS fallback bucket, getObjectBuffer reads them back through its fallback
 // retry, and a presigned R2 link points at an object R2 does not have.
@@ -42,32 +37,17 @@ const cosmosReject = { available: true, pass: false, plausible: false, issues: [
 const cosmosPass = { ...cosmosReject, pass: true, plausible: true, issues: [] };
 
 let recordJudgeShadow;
-let handler;
+let board;
 beforeAll(async () => {
 	({ recordJudgeShadow } = await import('../api/_lib/forge-judge-shadow.js'));
-	handler = (await import('../api/admin/forge-judge.js')).default;
+	board = await import('../api/_lib/forge-judge-board.js');
 });
 beforeEach(async () => {
 	holder.db = createPgliteSql();
 	await holder.db.exec(migration);
-	holder.auth = { ok: true, actor: 'ops-test' };
 	holder.puts = [];
 	holder.objects = new Map();
 });
-
-function call({ method = 'GET', query = '', body, url } = {}) {
-	const req = Readable.from(body ? [Buffer.from(JSON.stringify(body))] : []);
-	Object.assign(req, { method, url: url || `/api/admin/forge-judge${query}`, headers: body ? { 'content-type': 'application/json' } : {} });
-	const res = {
-		statusCode: 200, headers: {}, body: '',
-		setHeader(k, v) { this.headers[k.toLowerCase()] = v; },
-		getHeader(k) { return this.headers[k.toLowerCase()]; },
-		writeHead(code, h) { this.statusCode = code; Object.assign(this.headers, h || {}); return this; },
-		end(b) { this.raw = b ? Buffer.from(b) : Buffer.alloc(0); this.body = b ? String(b) : ''; this.writableEnded = true; },
-	};
-	const isJson = () => String(res.headers['content-type'] || 'application/json').includes('json');
-	return handler(req, res).then(() => ({ status: res.statusCode, headers: res.headers, raw: res.raw, json: res.body && isJson() ? JSON.parse(res.body) : null }));
-}
 
 describe('recordJudgeShadow', () => {
 	it('stores both verdicts, the views and the disagreement, without any reasoning field', async () => {
@@ -99,62 +79,86 @@ describe('recordJudgeShadow', () => {
 	});
 });
 
-describe('/api/admin/forge-judge', () => {
+describe('forge judge board', () => {
 	beforeEach(async () => {
 		await recordJudgeShadow({ source: 'forge', creationId: 'd1', glbUrl: 'https://three.ws/cdn/d1.glb', current: currentPass, cosmos: cosmosReject, views: VIEWS, mode: 'shadow' });
 		await recordJudgeShadow({ source: 'eval', creationId: 'a1', glbUrl: 'https://three.ws/cdn/a1.glb', current: currentPass, cosmos: cosmosPass, mode: 'shadow', humanLabel: 'accepted', labelledBy: 'forge-user' });
 	});
 
-	it('refuses without an admin session', async () => {
-		holder.auth = { ok: false };
-		expect((await call()).status).toBe(401);
+	it('lists disagreements by default, with totals', async () => {
+		const page = await board.listJudgeRows();
+		expect(page.rows.map((r) => r.creation_id)).toEqual(['d1']);
+		expect(page.rows[0].render_keys).toHaveLength(4);
+		expect(page.nextBefore).toBeNull();
+		expect(await board.judgeTotals()).toMatchObject({ rows: 2, disagree: 1, both_answered: 2, labelled: 1, current_agrees: 1, cosmos_agrees: 1 });
+		expect(await board.judgeTotals('eval')).toMatchObject({ rows: 1, disagree: 0 });
 	});
 
-	it('lists disagreements first by default, with view links and totals', async () => {
-		const { status, json } = await call();
-		expect(status).toBe(200);
-		expect(json.rows).toHaveLength(1);
-		expect(json.rows[0].creation_id).toBe('d1');
-		expect(json.rows[0].renders).toHaveLength(4);
-		expect(json.totals).toMatchObject({ rows: 2, disagree: 1, both_answered: 2, labelled: 1, current_agrees: 1, cosmos_agrees: 1 });
-		expect(json.issues).toContain('floating_parts');
+	it('pages newest first by row id', async () => {
+		const first = await board.listJudgeRows({ view: 'all', limit: 1 });
+		expect(first.rows.map((r) => r.creation_id)).toEqual(['a1']);
+		expect(first.nextBefore).toBe(String(first.rows[0].id));
+		const second = await board.listJudgeRows({ view: 'all', limit: 1, before: first.nextBefore });
+		expect(second.rows.map((r) => r.creation_id)).toEqual(['d1']);
+		expect(second.nextBefore).toBeNull();
 	});
 
-	it('serves every view a row links to, even when the view only reached the fallback bucket', async () => {
-		const { json } = await call();
-		for (const { url } of json.rows[0].renders) {
-			const view = await call({ url });
-			expect(view.status, url).toBe(200);
-			expect(view.headers['content-type']).toBe('image/png');
-			expect(view.raw.equals(PNG)).toBe(true);
+	it('reads every view a row stores, even when the view only reached the fallback bucket', async () => {
+		const [row] = (await board.listJudgeRows()).rows;
+		for (const key of row.render_keys) {
+			expect(board.isJudgeRenderKey(key), key).toBe(true);
+			expect((await board.readJudgeView(key)).equals(PNG)).toBe(true);
 		}
 	});
 
-	it('serves only judge views, and only behind the admin gate', async () => {
+	it('reads only judge views', async () => {
 		holder.objects.set('avatars/private/secret.png', PNG);
-		expect((await call({ query: '?render=avatars/private/secret.png' })).status).toBe(400);
-		expect((await call({ query: '?render=forge/judge-shadow/../../avatars/private/secret.png' })).status).toBe(400);
-		expect((await call({ query: '?render=forge/judge-shadow/eval/missing/front.png' })).status).toBe(404);
-		const [{ render_keys: [key] }] = await holder.db.sql`select render_keys from forge_judge_shadow where creation_id = 'd1'`;
-		holder.auth = { ok: false };
-		expect((await call({ query: `?render=${encodeURIComponent(key)}` })).status).toBe(401);
+		await expect(board.readJudgeView('avatars/private/secret.png')).rejects.toThrow(TypeError);
+		await expect(board.readJudgeView('forge/judge-shadow/../../avatars/private/secret.png')).rejects.toThrow(TypeError);
+		await expect(board.readJudgeView('forge/judge-shadow/eval/x/./front.png')).rejects.toThrow(TypeError);
+		await expect(board.readJudgeView('forge/judge-shadow/eval/missing/front.png')).rejects.toThrow('NoSuchKey');
 	});
 
-	it('filters by source and by Cosmos issue', async () => {
-		expect((await call({ query: '?view=all&source=eval' })).json.rows.map((r) => r.creation_id)).toEqual(['a1']);
-		expect((await call({ query: '?view=all&issue=floating_parts' })).json.rows.map((r) => r.creation_id)).toEqual(['d1']);
-		expect((await call({ query: '?view=all&issue=bogus' })).status).toBe(400);
+	it('filters by view, source and Cosmos issue', async () => {
+		const ids = async (o) => (await board.listJudgeRows(o)).rows.map((r) => r.creation_id);
+		expect(await ids({ view: 'all', source: 'eval' })).toEqual(['a1']);
+		expect(await ids({ view: 'all', issue: 'floating_parts' })).toEqual(['d1']);
+		expect(await ids({ view: 'cosmos_reject' })).toEqual(['d1']);
+		expect(await ids({ view: 'unlabelled' })).toEqual(['d1']);
 	});
 
 	it('records, then clears, an operator label', async () => {
 		const [{ id }] = await holder.db.sql`select id from forge_judge_shadow where creation_id = 'd1'`;
-		const set = await call({ method: 'POST', body: { id, label: 'rejected' } });
-		expect(set.status).toBe(200);
-		expect(set.json.row).toMatchObject({ human_label: 'rejected', labelled_by: 'admin:ops-test' });
-		expect((await call({ query: '?view=unlabelled' })).json.rows).toHaveLength(0);
-		const cleared = await call({ method: 'POST', body: { id, label: null } });
-		expect(cleared.json.row.human_label).toBeNull();
-		expect((await call({ method: 'POST', body: { id, label: 'maybe' } })).status).toBe(400);
-		expect((await call({ method: 'POST', body: { id: 999999, label: 'accepted' } })).status).toBe(404);
+		const set = await board.labelJudgeRow({ id, label: 'rejected', actor: 'cli:ops' });
+		expect(set).toMatchObject({ human_label: 'rejected', labelled_by: 'admin:cli:ops' });
+		expect(set.labelled_at).toBeTruthy();
+		expect((await board.listJudgeRows({ view: 'unlabelled' })).rows).toHaveLength(0);
+		const cleared = await board.labelJudgeRow({ id, label: null, actor: 'cli:ops' });
+		expect(cleared).toMatchObject({ human_label: null, labelled_by: null, labelled_at: null });
+		await expect(board.labelJudgeRow({ id, label: 'maybe', actor: 'cli:ops' })).rejects.toThrow(TypeError);
+		await expect(board.labelJudgeRow({ id: 'x; drop table', label: 'accepted' })).rejects.toThrow(TypeError);
+		expect(await board.labelJudgeRow({ id: 999999, label: 'accepted', actor: 'cli:ops' })).toBeNull();
+	});
+});
+
+describe('no admin surface for operator review', () => {
+	const routes = JSON.parse(readFileSync('vercel.json', 'utf8')).routes.map((r) => `${r.src || ''} ${r.dest || ''}`).join('\n');
+	const vite = readFileSync('vite.config.js', 'utf8');
+
+	it('serves no forge judge board page or endpoint', () => {
+		for (const f of ['api/admin/forge-judge.js', 'pages/forge-judge-admin.html', 'src/forge-judge-admin.js']) expect(existsSync(f), f).toBe(false);
+		expect(routes).not.toMatch(/forge-judge/);
+		expect(vite).not.toMatch(/forge-judge/);
+	});
+
+	it('serves no content-safety review endpoint', () => {
+		expect(existsSync('api/admin/content-safety.js')).toBe(false);
+		expect(routes).not.toMatch(/content-safety/);
+	});
+
+	it('keeps both reviews reachable from the CLIs', () => {
+		const scripts = JSON.parse(readFileSync('package.json', 'utf8')).scripts;
+		expect(scripts['forge:judge']).toBe('node scripts/forge-judge.mjs');
+		expect(scripts['forge:safety']).toBe('node scripts/forge-safety.mjs');
 	});
 });

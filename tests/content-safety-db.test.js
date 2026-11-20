@@ -280,6 +280,19 @@ describe('adminDecision and the attention queue', () => {
 		expect(r).toMatchObject({ verdict: 'clear', reviewer: 'admin:ops@test', note: 'reviewed, fine' });
 	});
 
+	it('puts an evidence hold on a model with any csam review, which the takedown CLI checks', async () => {
+		const hit = await seed({ visibility: 'private' });
+		await store.gatePublish(hit, { screen: stub(csam) });
+		const other = await seed({ visibility: 'private' });
+		await store.gatePublish(other, { screen: stub(blocked) });
+		expect(await store.hasEvidenceHold(hit)).toBe(true);
+		expect(await store.hasEvidenceHold(other)).toBe(false);
+		expect(await store.hasEvidenceHold(crypto.randomUUID())).toBe(false);
+		// A later clear verdict never lifts the hold: the evidence row is append-only.
+		await store.adminDecision({ id: hit, action: 'approve', note: 'mistaken approve', actor: 'ops@test' });
+		expect(await store.hasEvidenceHold(hit)).toBe(true);
+	});
+
 	it('approve of a missing model is not_found', async () => {
 		const out = await store.adminDecision({ id: crypto.randomUUID(), action: 'approve', note: 'x', actor: 'a' });
 		expect(out).toEqual({ ok: false, reason: 'not_found' });

@@ -2470,10 +2470,6 @@
 			"dest": "/microsoft-leads-admin.html"
 		},
 		{
-			"src": "/admin/forge-judge/?",
-			"dest": "/forge-judge-admin.html"
-		},
-		{
 			"src": "/admin/nim-releases/?",
 			"dest": "/nim-releases-admin.html"
 		},

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-20T19:15:12.326Z",
+	"generated_at": "2026-11-20T19:15:25.285Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4658,
+	"total": 4659,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -50,6 +50,17 @@
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "Model review moved off the website, and flagged evidence cannot be deleted by accident",
+			"summary": "The internal review boards for held 3D models and for the Forge quality judge are gone from the public server: there is no admin page or admin endpoint left that can approve, label or delete a model. Operators review from their own workstation with signed-in command line tools instead (npm run forge:safety and npm run forge:judge). The takedown tool now refuses to delete any model the safety screen flagged as possible child abuse material until the legal report has been filed and recorded, so the evidence is preserved.",
+			"link": null,
+			"tags": [
+				"security",
+				"infra"
 			]
 		},
 		{
@@ -1539,16 +1550,6 @@
 			"link": "/trust",
 			"tags": [
 				"launch"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "update",
-			"title": "3D generation no longer fails while our own GPU worker is busy",
-			"summary": "Text and photo to 3D in Forge, the GPT forge and the ChatGPT app could fail with Could not generate the model right now even though the three.ws TRELLIS GPU worker had room for the job. A busy worker answers its health check slowly, the router read that as down, and when the outside lanes were also unavailable nothing was left to try. Forge now gives every remaining engine a chance before it gives up, including a worker that only looked down because it was busy, so the job is queued instead of refused.",
-			"link": null,
-			"tags": [
-				"fix"
 			]
 		}
 	]

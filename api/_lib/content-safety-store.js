@@ -44,7 +44,7 @@ async function alertBlocked(row, result) {
 			`categories: ${(result.categories || []).join(', ') || 'unspecified'}`,
 			csam
 				? 'Forced private and PRESERVED. Do not delete. Follow docs/ops/content-safety.md (legal report, then removal).'
-				: 'Forced private. Review at /api/admin/content-safety (approve or remove).',
+				: 'Forced private. Review with npm run forge:safety -- --prod-env (approve, or remove with forge:takedown).',
 		].join('\n'),
 		{ signature: `content-safety:${csam ? 'csam' : 'blocked'}:${row.id}`, severity: csam ? 'critical' : 'warn' },
 	);
@@ -164,6 +164,17 @@ export async function safetyCounts() {
 		group by 1
 	`;
 	return Object.fromEntries(rows.map((r) => [r.status, r.n]));
+}
+
+/**
+ * Whether a model is under a CSAM evidence hold: any review row, automatic or
+ * human, with csam set. Such a model must not be deleted until the owner has
+ * filed the legal report (docs/ops/content-safety.md); the takedown CLI checks
+ * this before it touches anything.
+ */
+export async function hasEvidenceHold(id) {
+	const [row] = await sql`select 1 from content_safety_reviews where subject_id = ${id} and csam limit 1`;
+	return Boolean(row);
 }
 
 /**

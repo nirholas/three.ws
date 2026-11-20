@@ -4,7 +4,8 @@
 // NVIDIA Cosmos Reason gets one forge_judge_shadow row: both verdicts (structured
 // fields only, never a reasoning trace), the four judging views stored in R2,
 // whether the two disagreed, and which one decided. The eval script writes the
-// same rows with a human label attached; /admin/forge-judge reads them back.
+// same rows with a human label attached; `npm run forge:judge`
+// (scripts/forge-judge.mjs over api/_lib/forge-judge-board.js) reads them back.
 //
 // Best-effort by design: a failed upload or insert is logged and swallowed, so
 // the shadow log can never fail a generation.

@@ -63,7 +63,7 @@ Three properties define the design:
 | Rig | `POST /api/forge?action=rig` | Auto-rig a finished GLB (see post-processing). |
 | Paid x402 twin | `POST /api/x402/forge` (`api/x402/forge.js`) | Pay-per-call USDC on Solana, no account. Prices come from the tier table. |
 | Agent REST | `POST /api/3d/generate` (`api/3d/generate.js`) | Keyless agent shape wrapping the free draft lane. |
-| Flagship free API | `POST /api/v1/ai/text-to-3d` (`api/v1/ai/text-to-3d.js`) | NVIDIA NIM TRELLIS draft lane, 10 generations per IP per day, 429 + x402 upsell above quota. |
+| Flagship free API | `POST /api/v1/ai/text-to-3d` (`api/v1/ai/text-to-3d.js`) | TRELLIS draft lane (NVIDIA NIM first, own GPU worker fallback), 10 generations per IP per day, 429 + x402 upsell above quota. |
 | Refinement | `POST /api/forge-iterate` (`api/forge-iterate.js`) | Conversational refinement with version lineage for the signed-in Studio. |
 | MCP (paid stdio) | `mesh_forge`, `forge_avatar`, `forge_free`, `text_to_avatar`, `rig_mesh`, `refine_model`, `restyle_material` (`mcp-server/src/tools/`) | Shared cores in `mcp-server/src/tools/_studio-core.js`; thin clients over `/api/forge`. |
 | ChatGPT clone | `POST /api/gpt-forge` (`api/gpt-forge.js`) | Clone of the orchestrator dedicated to the ChatGPT surfaces (the Apps SDK MCP connector `api/mcp-studio` and the custom-GPT Actions endpoint `api/3d/studio`, via `api/_mcp-studio/gpt-forge-client.js`), so the ChatGPT pipeline can evolve without touching `/api/forge`. Same lanes, tiers, job tokens, and `forge_creations` rows. First divergence: its poll responses also carry `prompt`, `preview_image_url` (the painted concept view), and `text_to_image_model`, so the ChatGPT surfaces can show the concept image while the mesh generates. It also remembers a finished job's poll frame (`api/_lib/forge-done-cache.js`), so later polls of a done job answer in milliseconds without re-reading the provider. |
@@ -212,7 +212,7 @@ In shadow mode the gate waits at most `FORGE_COSMOS_SHADOW_GRACE_MS` (default 60
 
 The narrowest mode that passes wins; otherwise the judge stays in shadow. The worker is in [workers/model-cosmos-reason/](../workers/model-cosmos-reason/README.md).
 
-**Tuning board.** `/admin/forge-judge` (ops session) lists the disagreements with all four views and both verdicts. It can filter by issue, by source (live Forge traffic or the eval) and by unlabelled rows. An operator's Keep or Throw away label is stored on the row (`labelled_by = admin:<actor>`) and feeds the next eval run.
+**Tuning.** `npm run forge:judge -- --prod-env` ([scripts/forge-judge.mjs](../scripts/forge-judge.mjs)) lists the disagreements with both verdicts and running agreement totals; `--save-views <dir>` writes all four views per row to disk. It filters by `--issue`, by `--source` (live Forge traffic or the eval) and by `--view unlabelled`. `label <row-id> accepted|rejected|clear` stores the operator's label on the row (`labelled_by = admin:cli:<user>`), which feeds the next eval run. There is deliberately no admin page or HTTP endpoint for this.
 
 ## 6. Persistence and storage
 
@@ -339,7 +339,7 @@ The env vars that shape a deployment (production values live on the Cloud Run se
 
 | Var | Effect |
 | --- | --- |
-| `NVIDIA_API_KEY` | Enables the free NIM TRELLIS text lane. |
+| `NVIDIA_API_KEY` | Enables the NVIDIA NIM TRELLIS text lane (first choice of the pinned free draft lane; own GPU worker is the fallback). |
 | `HF_TOKEN` | Enables the HF Spaces lane. |
 | `MODEL_TRELLIS2_URL`, `MODEL_TRELLIS_URL`, `MODEL_MODLY_URL`, `MODEL_PIXAL3D_URL`, `MODEL_ANIGEN_URL`, `MODEL_PARTCRAFTER_URL`, `MODEL_TRIPOSPLAT_URL`, `MODEL_SAM3D_URL`, `GCP_HUNYUAN3D_URL`, `GCP_TRIPOSG_URL`, `GCP_UNIRIG_URL`, `GCP_RECONSTRUCTION_URL` | Self-host worker URLs (TRELLIS, Modly, Pixal3D, AniGen, PartCrafter, TripoSplat, SAM 3D Objects, Hunyuan3D, sketch, rig, avatar controller). |
 | `TRIPO_API_KEY`, `TRIPO_WEBHOOK_SECRET` | Optional. The key makes Tripo the High-tier default geometry engine (house lane); the secret enables the signed Tripo webhook receiver. |

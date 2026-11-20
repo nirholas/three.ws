@@ -39,12 +39,28 @@
 			<description>If you made a model, its page now lets you choose who sees it (public, unlisted or private) and delete it for good, even after switching browsers, because the site keeps a private key for every model you make. A private model still opens for you so you can publish it again. Anyone else can use Request removal on the page to report their own lost model, a copyright problem, their likeness or harmful content, and a person reviews every request.</description>
 		</item>
 		<item>
+			<title>Model review moved off the website, and flagged evidence cannot be deleted by accident</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-20:Model review moved off the website, and flagged evidence cannot be deleted by accident</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>The internal review boards for held 3D models and for the Forge quality judge are gone from the public server: there is no admin page or admin endpoint left that can approve, label or delete a model. Operators review from their own workstation with signed-in command line tools instead (npm run forge:safety and npm run forge:judge). The takedown tool now refuses to delete any model the safety screen flagged as possible child abuse material until the legal report has been filed and recorded, so the evidence is preserved.</description>
+		</item>
+		<item>
 			<title>New 3D models start unlisted until you publish them</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-20:New 3D models start unlisted until you publish them</guid>
 			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>A model made from a text prompt used to go straight into the public gallery, feeds, search and sitemaps. Every new model you make now starts unlisted: your link works and you can share it, but it stays out of the public showcase until you choose to make it public on the model page. Uploads from your own photo already worked this way.</description>
+		</item>
+		<item>
+			<title>Paid-call caps and Fastify gating now hold, and the embed docs point at what works</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-20:Paid-call caps and Fastify gating now hold, and the embed docs point at what works</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The x402 buyer MCP now enforces the per-call spend cap (MAX_PAY_USD or max_usd) in session-token mode too, refusing before the platform wallet pays. The x402 merchant package now returns a real 402 on Fastify 5 routes instead of serving the paid output, and its README shows the working form. Package repository links point at their real repos, the MCP server README states its free-tool count exactly, and the embed docs load the hosted agent-3d module instead of telling readers to npm install a stale three.ws package.</description>
 		</item>
 		<item>
 			<title>PiXal3D image builds can ship their attention kernels</title>

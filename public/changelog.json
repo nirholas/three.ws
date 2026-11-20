@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-20T19:15:12.274Z",
+	"generated_at": "2026-11-20T19:15:25.201Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -47,6 +47,17 @@
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "Model review moved off the website, and flagged evidence cannot be deleted by accident",
+			"summary": "The internal review boards for held 3D models and for the Forge quality judge are gone from the public server: there is no admin page or admin endpoint left that can approve, label or delete a model. Operators review from their own workstation with signed-in command line tools instead (npm run forge:safety and npm run forge:judge). The takedown tool now refuses to delete any model the safety screen flagged as possible child abuse material until the legal report has been filed and recorded, so the evidence is preserved.",
+			"link": null,
+			"tags": [
+				"security",
+				"infra"
 			]
 		},
 		{

@@ -19,6 +19,12 @@
 //             Without it the script uses the environment it was started with.
 // --extra-key a bucket key the row never recorded (an upload made before
 //             source_image_keys existed). Must sit under forge/.
+// --evidence-released "<report reference>"
+//             required to delete a model under a CSAM evidence hold (any
+//             content_safety_reviews row with csam set). Without it the
+//             takedown refuses and changes nothing. Pass it only after the
+//             owner has filed the legal report and retention is met
+//             (docs/ops/content-safety.md); the reference is recorded.
 //
 // The dry run prints the row and every object the delete will remove. --apply
 // deletes (forgeStore.deleteCreation with the moderator grant), records the
@@ -34,7 +40,7 @@
 // those keys are queued as well.
 //
 // Exit codes: 0 every URL is gone; 1 a three.ws URL still serves the model;
-// 2 usage error; 3 three.ws is clean but copies on the public bucket domain
+// 2 usage error; 4 refused: CSAM evidence hold; 3 three.ws is clean but copies on the public bucket domain
 // are still readable, waiting on the purge queue. Rerunning after a partial
 // failure is safe: a missing row still deletes the extra keys, records, purges
 // and verifies.
@@ -47,12 +53,12 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 function usage(msg) {
 	if (msg) console.error(`forge-takedown: ${msg}`);
-	console.error('Usage: npm run forge:takedown -- <creation-id> [--prod-env] [--apply] [--reason R] [--details D] [--resolution T] [--extra-key K]...');
+	console.error('Usage: npm run forge:takedown -- <creation-id> [--prod-env] [--apply] [--reason R] [--details D] [--resolution T] [--extra-key K]... [--evidence-released REF]');
 	process.exit(2);
 }
 
 function parseArgs(argv) {
-	const out = { id: null, apply: false, prodEnv: false, reason: 'other', details: null, resolution: null, extraKeys: [] };
+	const out = { id: null, apply: false, prodEnv: false, reason: 'other', details: null, resolution: null, extraKeys: [], evidenceReleased: null };
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i];
 		const next = () => {
@@ -66,6 +72,7 @@ function parseArgs(argv) {
 		else if (a === '--details') out.details = next();
 		else if (a === '--resolution') out.resolution = next();
 		else if (a === '--extra-key') out.extraKeys.push(next());
+		else if (a === '--evidence-released') out.evidenceReleased = next().trim() || usage('--evidence-released needs the report reference');
 		else if (a.startsWith('--')) usage(`unknown flag ${a}`);
 		else if (!out.id) out.id = a.trim().toLowerCase();
 		else usage(`unexpected argument ${a}`);
@@ -104,6 +111,7 @@ const { listObjectsPage, deleteObject, cdnUrl, keyFromPublicUrl, isStorageInfras
 const { recordTakedown, REMOVAL_REASONS } = await import('../api/_lib/forge-removal-requests.js');
 const { queueStoragePurges } = await import('../api/_lib/forge-storage-purges.js');
 const { VARIANT_WIDTHS } = await import('../src/shared/cdn-variant.js');
+const { hasEvidenceHold } = await import('../api/_lib/content-safety-store.js');
 
 if (!REMOVAL_REASONS.includes(opts.reason)) usage(`--reason must be one of ${REMOVAL_REASONS.join(', ')}`);
 if (!forgeStoreEnabled()) {
@@ -111,6 +119,17 @@ if (!forgeStoreEnabled()) {
 	process.exit(1);
 }
 const origin = String(process.env.APP_ORIGIN || 'https://three.ws').replace(/\/+$/, '');
+
+// A CSAM verdict means the model is evidence for a legal report. Check before
+// listing or deleting anything, dry run included, so the operator sees it first.
+const evidenceHold = await hasEvidenceHold(opts.id);
+if (evidenceHold && !opts.evidenceReleased) {
+	console.error(`\nforge-takedown: ${opts.id} is under a CSAM evidence hold. Nothing was changed.`);
+	console.error('Do not delete it, its files or its review rows until the owner has filed the report and retention');
+	console.error('is met (docs/ops/content-safety.md, CSAM runbook). Then rerun with --evidence-released "<report reference>".');
+	process.exit(4);
+}
+if (evidenceHold) console.log(`\nCSAM evidence hold released by the operator: ${opts.evidenceReleased}`);
 
 const [row] = await sql`
 	select id, client_key, status, visibility, outcome, prompt, created_at, user_id,
@@ -217,7 +236,7 @@ const ids = await recordTakedown({
 	creationId: opts.id,
 	reason: opts.reason,
 	details: opts.details,
-	resolution: opts.resolution,
+	resolution: evidenceHold ? `${opts.resolution} (evidence hold released: ${opts.evidenceReleased})` : opts.resolution,
 	reviewedBy: `ops-cli:${process.env.USER || 'unknown'}`,
 });
 console.log(`recorded in forge_removal_requests: ${ids.join(', ') || '(none)'}`);

@@ -129,7 +129,7 @@ async function hideIfReportedEnough(creationId, alert) {
 	if (!hidden.length) return false;
 	await alert(
 		'Forge model hidden by reports',
-		`${REPORT_HIDE_THRESHOLD}+ distinct reporters flagged https://three.ws/m/${creationId}. It is unlisted and held for review at /api/admin/content-safety (approve), or remove it with npm run forge:takedown.`,
+		`${REPORT_HIDE_THRESHOLD}+ distinct reporters flagged https://three.ws/m/${creationId}. It is unlisted and held for review: npm run forge:safety -- --prod-env (approve), or remove it with npm run forge:takedown.`,
 		{ signature: `forge_removal:hidden:${creationId}`, severity: 'warn' },
 	);
 	return true;

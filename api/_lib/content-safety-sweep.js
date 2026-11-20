@@ -78,7 +78,7 @@ export async function sweepContentSafety({ promoteLimit = 20, backfillLimit = 10
 				await sql`update forge_creations set safety_status = 'held', updated_at = now() where id = ${row.id} and safety_status = 'pending'`;
 				await d.alert(
 					'⚠️ Forge model held for manual safety review',
-					`creation ${row.id} could not be screened for ${Math.round(HOLD_AFTER_MS / 3_600_000)}h (${(result.reasons || []).join('; ') || 'screen unavailable'}). Review at /api/admin/content-safety.`,
+					`creation ${row.id} could not be screened for ${Math.round(HOLD_AFTER_MS / 3_600_000)}h (${(result.reasons || []).join('; ') || 'screen unavailable'}). Review with npm run forge:safety -- --prod-env.`,
 					{ signature: `content-safety:held:${row.id}`, severity: 'warn' },
 				);
 				stats.held++;

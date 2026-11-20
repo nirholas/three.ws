@@ -2,7 +2,7 @@
 
 Every Forge model that appears on a public page (gallery, feeds, search, sitemaps, `/m/:id` indexing) passes a screen first. The screen gates LISTING only. What a person asks for or generates is never refused here (owner directive 2026-08-07); a model stays viewable by its maker and shareable by link whatever the verdict.
 
-Code: `api/_lib/content-safety.js` (verdicts), `content-safety-store.js` (state changes and the publish gate), `content-safety-sweep.js` (recurring work), `api/cron/content-safety-sweep.js` (cron, every 5 minutes), `api/admin/content-safety.js` (admin queue). Schema: `api/_lib/migrations/20261120140000_content_safety.sql`.
+Code: `api/_lib/content-safety.js` (verdicts), `content-safety-store.js` (state changes and the publish gate), `content-safety-sweep.js` (recurring work), `api/cron/content-safety-sweep.js` (cron, every 5 minutes), `scripts/forge-safety.mjs` (the review CLI, `npm run forge:safety`). Schema: `api/_lib/migrations/20261120140000_content_safety.sql`.
 
 ## How it decides
 
@@ -26,22 +26,25 @@ The sweep also backfills models that were public before the screen existed. A bl
 
 ## Reports
 
-Three or more distinct reporters with reason `harmful` or `likeness` set the model to `unlisted` and `held`. It is never deleted and never made private, so a pile-on cannot erase someone's model. An admin approves it back or removes it.
+Three or more distinct reporters with reason `harmful` or `likeness` set the model to `unlisted` and `held`. It is never deleted and never made private, so a pile-on cannot erase someone's model. An operator approves it back or removes it.
 
 ## Reading the queue
 
+There is no admin page and no admin HTTP endpoint for this queue. An operator reviews it from a workstation with their own gcloud login, so the public server exposes nothing that can approve or delete a model.
+
 ```
-GET  /api/admin/content-safety?status=attention   held and blocked (default)
-GET  /api/admin/content-safety?status=held
-GET  /api/admin/content-safety?status=blocked
-POST /api/admin/content-safety  {"id": "...", "action": "approve" | "remove", "note": "why"}
+npm run forge:safety -- --prod-env                      held and blocked (default)
+npm run forge:safety -- --prod-env --status held
+npm run forge:safety -- --prod-env --status blocked
+npm run forge:safety -- --prod-env approve <id> --note "why it is fine"
+npm run forge:takedown -- <id> --prod-env --apply --reason harmful --resolution "why"
 ```
 
-Auth is an ops session with MFA (or the ops secret). Every decision writes an append-only row to `content_safety_reviews` with the actor and note. `approve` marks the model clear. `remove` deletes it through the takedown path, except when any review row has `csam: true`: that returns 409 `evidence_hold` (see below).
+`--prod-env` reads `DATABASE_URL` from the `three-ws-api` Cloud Run service into the process only; nothing is written to disk. The listing prints each model's link, prompt (as data, control characters stripped), preview, verdict and categories, followed by the command to approve or remove it. `approve` marks the model clear and writes an append-only row to `content_safety_reviews` with the operator (`admin:cli:<user>`) and the note. A held model then goes public on the next sweep; a blocked one stays private until its maker publishes it. Removal goes through `forge:takedown`, which refuses (exit 4) any model with a `csam: true` review row unless `--evidence-released` is passed (see below). Such models are marked `EVIDENCE HOLD` in the listing and get no remove command.
 
 ## Alerts
 
-- `Content screen blocked a Forge model` (warn): forced private, review in the queue.
+- `Content screen blocked a Forge model` (warn): forced private, review with `npm run forge:safety -- --prod-env`.
 - `CSAM screen hit on a public Forge model` (critical): see the runbook below.
 - `Forge model held for manual safety review` (warn): a publish waited 6 hours with no answer.
 - `Content safety screen is not answering` (warn): a sweep run screened 3 or more models and every one came back undecided. Nothing will publish until a screen answers. Check `NVIDIA_API_KEY` and the vision chain in `api/_lib/vision.js`; the usual causes are a retired model, an exhausted key, or a GCP billing lock (see the Vertex billing note in memory).
@@ -50,9 +53,9 @@ Auth is an ops session with MFA (or the ops secret). Every decision writes an ap
 
 A `sexual_minors` rubric hit or a NemoGuard minor category sets `csam: true`. The code forces the model private, keeps it, and pages critically. It never deletes it automatically, because the evidence must survive for the legal report.
 
-1. Do not delete the model, its files or its review rows. `remove` is refused with `evidence_hold` while any review row has `csam: true`.
+1. Do not delete the model, its files or its review rows. `npm run forge:takedown` refuses the model (exit 4, nothing changed) while any review row has `csam: true`.
 2. The owner files the report (NCMEC CyberTipline or the applicable authority) from an ESP account registered to the owner. This step cannot be automated from the code.
-3. Only after the report is filed and retention requirements are met, remove the model with the takedown CLI (`docs/ops/` forge takedown) and record the note.
+3. Only after the report is filed and retention requirements are met, remove the model with `npm run forge:takedown -- <id> --prod-env --apply --reason harmful --resolution "..." --evidence-released "<report reference>"`. The release reference is appended to the removal record.
 
 ## Configuration
 
