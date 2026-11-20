@@ -15,7 +15,7 @@ Every runtime call to `api.x.ai` made with the platform's own `GROK_API_KEY` wri
 | `cost_usd_micro` | cost in millionths of a dollar |
 | `cost_source` | `api` when xAI reports `cost_in_usd_ticks`, else `price_table` |
 
-Call sites instrumented: `api/_lib/llm.js`, `api/_lib/llm-tool-chain.js`, `api/chat.js`, `api/widgets/[id]/[action].js`, `api/_lib/x-search.js`. A new xAI call site calls `recordXaiUsage` with its lane; see the header of `xai-usage.js`.
+Call sites instrumented: `api/_lib/llm.js`, `api/_lib/llm-tool-chain.js`, `api/chat.js`, `api/widgets/[id]/[action].js`, `api/_lib/x-search.js`, `api/_lib/xai-image.js` (lane image) and `api/_lib/xai-video.js` (lane video, once per stored clip). A new xAI call site calls `recordXaiUsage` with its lane; see the header of `xai-usage.js`.
 
 Prices live in `api/_lib/chat-models.js` (`GROK_MODELS`, `XAI_MEDIA_MODELS`) and are applied by `api/_lib/xai-pricing.js`. A test fails when any listed model is unpriced. Prompts of 200k tokens or more are billed at 2x.
 

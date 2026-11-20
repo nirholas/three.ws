@@ -54,6 +54,14 @@ describe('buildXaiUsageRow cost', () => {
 		expect(row.cost_usd_micro).toBe(40_000);
 	});
 
+	it('keeps a uuid account id and moves anything else to meta so the insert never fails on the uuid column', () => {
+		const uuid = '7d1b5d1e-3a5c-4a7e-9a39-2f5b1b0c9e11';
+		expect(buildXaiUsageRow({ lane: 'chat', model, usage: {}, accountId: uuid }).account_id).toBe(uuid);
+		const row = buildXaiUsageRow({ lane: 'chat', model, usage: {}, accountId: 'wallet:abc' });
+		expect(row.account_id).toBeNull();
+		expect(row.meta.account).toBe('wallet:abc');
+	});
+
 	it('records 0 for an unpriced model with no reported cost', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		expect(buildXaiUsageRow({ lane: 'chat', model: 'unpriced-model', usage: { prompt_tokens: 5 } }).cost_usd_micro).toBe(0);

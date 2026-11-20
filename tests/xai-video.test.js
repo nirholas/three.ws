@@ -11,7 +11,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const r2 = vi.hoisted(() => ({ objects: new Map() }));
-const usage = vi.hoisted(() => ({ events: [] }));
+const usage = vi.hoisted(() => ({ events: [], ledger: [] }));
 
 vi.mock('../api/_lib/r2.js', () => ({
 	headObject: vi.fn(async (key) => (r2.objects.has(key) ? { ContentLength: r2.objects.get(key).body.length } : null)),
@@ -21,6 +21,7 @@ vi.mock('../api/_lib/r2.js', () => ({
 	cdnUrl: (key) => `https://three.ws/cdn/${key}`,
 }));
 vi.mock('../api/_lib/usage.js', () => ({ recordEvent: (evt) => usage.events.push(evt) }));
+vi.mock('../api/_lib/xai-usage.js', () => ({ recordXaiUsage: (row) => usage.ledger.push(row) }));
 vi.mock('../api/_lib/ssrf-guard.js', () => ({
 	fetchSafePublicUrl: (url, init) => globalThis.fetch(url, init),
 }));
@@ -56,6 +57,7 @@ function jsonResponse(status, body, headers = {}) {
 beforeEach(() => {
 	calls.length = 0;
 	usage.events.length = 0;
+	usage.ledger.length = 0;
 	r2.objects.clear();
 	process.env.GROK_API_KEY = 'xai-test-key';
 	vi.stubGlobal('fetch', vi.fn(async (url, init = {}) => {
@@ -314,10 +316,22 @@ describe('storeVideo', () => {
 			userId: 'u1',
 		});
 
+		expect(usage.ledger).toEqual([
+			{
+				lane: 'video',
+				model: 'grok-imagine-video-1.5-lite',
+				units: 6,
+				requestId: DOC_CREATE.request_id,
+				accountId: 'u1',
+				meta: { tool: 'hero_clip', preset: 'turntable' },
+			},
+		]);
+
 		const again = await storeVideo({ requestId: DOC_CREATE.request_id, videoUrl: DOC_DONE.video.url, tier: 'lite', seconds: 6 });
 		expect(again.stored).toBe(false);
 		expect(calls).toHaveLength(1);
 		expect(usage.events).toHaveLength(1);
+		expect(usage.ledger).toHaveLength(1);
 	});
 
 	it('refuses an empty download instead of storing a broken clip', async () => {

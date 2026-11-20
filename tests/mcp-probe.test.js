@@ -1,16 +1,17 @@
 // The synthetic MCP connector probe (api/_lib/mcp-probe.js) against the real
-// handlers, served over a real node:http server in this process: /api/mcp-grok,
-// /api/mcp-studio and /api/mcp, plus the protected-resource metadata route
-// (api/wk.js) the OAuth challenge points at. The probe speaks Streamable HTTP
-// over the loopback socket exactly as it does against production. The only
-// substitution is the database: api/_lib/db.js runs on PGlite with the
-// production schema, so the handlers' analytics writes never reach Neon.
+// handlers, served over a real node:http server in this process
+// (tests/_helpers/mcp-loopback.js): /api/mcp-grok, /api/mcp-studio and
+// /api/mcp, plus the protected-resource metadata route (api/wk.js) the OAuth
+// challenge points at. The probe speaks Streamable HTTP over the loopback
+// socket exactly as it does against production. The only substitution is the
+// database: api/_lib/db.js runs on PGlite with the production schema, so the
+// handlers' analytics writes never reach Neon.
 
-import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createPgliteSql } from './_helpers/pglite-sql.js';
 import { createFullSchemaDb } from './_helpers/pglite-full-schema.js';
+import { startMcpLoopback } from './_helpers/mcp-loopback.js';
 
 const holder = vi.hoisted(() => ({ db: null }));
 vi.mock('../api/_lib/db.js', async (importActual) => {
@@ -21,15 +22,10 @@ vi.mock('../api/_lib/db.js', async (importActual) => {
 process.env.DATABASE_URL ||= 'postgres://pglite.test/db';
 process.env.JWT_SECRET ||= 'vitest-ephemeral-jwt-secret-00000000000000';
 
-let server;
+let loopback;
 let origin;
 let probe;
-const routes = new Map();
 const API_KEY = 'sk_test_mcpprobe0000000000000000000000000000';
-
-// The vercel.json route the challenge's resource_metadata URL lands on:
-// /.well-known/oauth-protected-resource(/api/<name>) -> /api/wk?name=...&path=$1
-const WK_RE = /^\/\.well-known\/oauth-protected-resource(\/api\/[a-z0-9-]+)$/;
 
 beforeAll(async () => {
 	const { pg } = await createFullSchemaDb();
@@ -40,38 +36,13 @@ beforeAll(async () => {
 	const [{ id: userId }] = await holder.db.sql`insert into users (email) values ('probe@mcp-probe.test') returning id`;
 	await holder.db.sql`insert into api_keys (user_id, name, prefix, token_hash, scope) values (${userId}, 'probe', ${API_KEY.slice(0, 12)}, ${await sha256(API_KEY)}, 'avatars:read')`;
 
-	server = createServer(async (req, res) => {
-		const url = new URL(req.url, 'http://internal');
-		const wk = WK_RE.exec(url.pathname);
-		if (wk) {
-			req.query = { name: 'oauth-protected-resource', path: wk[1] };
-			return routes.get('wk')(req, res);
-		}
-		// A connector that accepts the connection and never answers: the timeout path.
-		if (url.pathname === '/api/hang') return;
-		req.query = Object.fromEntries(url.searchParams);
-		const handler = routes.get(url.pathname);
-		if (!handler) {
-			res.statusCode = 404;
-			return res.end('not found');
-		}
-		return handler(req, res);
-	});
-	await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-	origin = `http://127.0.0.1:${server.address().port}`;
-	// The challenge and the metadata document name this origin, so the probe's
-	// metadata fetch stays on the loopback server.
-	process.env.PUBLIC_APP_ORIGIN = origin;
-
-	routes.set('/api/mcp-grok', (await import('../api/mcp-grok.js')).default);
-	routes.set('/api/mcp-studio', (await import('../api/mcp-studio.js')).default);
-	routes.set('/api/mcp', (await import('../api/mcp.js')).default);
-	routes.set('wk', (await import('../api/wk.js')).default);
+	loopback = await startMcpLoopback();
+	origin = loopback.origin;
 	probe = await import('../api/_lib/mcp-probe.js');
 }, 300_000);
 
 afterAll(async () => {
-	await new Promise((resolve) => server?.close(resolve));
+	await loopback?.close();
 });
 
 const manifest = JSON.parse(readFileSync(new URL('../public/.well-known/mcp.json', import.meta.url), 'utf8'));
