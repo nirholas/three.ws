@@ -46,6 +46,13 @@ vi.mock('../../api/_lib/rate-limit.js', async (importActual) => {
 	};
 });
 
+// POST /api/forge-batch needs an account (api/_lib/creator-account.js). These tests pin what
+// happens past that gate, so the caller is a signed-in account.
+vi.mock('../../api/_lib/auth.js', async (orig) => ({
+	...(await orig()),
+	getRequestUser: async () => ({ id: 'acct-batch' }),
+}));
+
 const { default: handler } = await import('../../api/forge-batch.js');
 
 function makePostReq(body, { headers = {} } = {}) {

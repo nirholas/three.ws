@@ -70,8 +70,8 @@ function call(handler, { body, url = '/x', method = 'POST' } = {}) {
 	});
 }
 
-const MESH = 'https://cdn.three.ws/forge/a.glb';
-const IMAGE = 'https://cdn.three.ws/forge/a.png';
+const MESH = 'https://three.ws/cdn/forge/a.glb';
+const IMAGE = 'https://three.ws/cdn/forge/a.png';
 
 // [name, module, body, url?, action phrase in the 401 message]
 const CREATION = [
@@ -85,12 +85,12 @@ const CREATION = [
 	['forge-nim', '../api/forge-nim.js', { mode: 'text', prompt: 'a brass telescope' }, '/api/forge-nim', 'make a 3D model'],
 	['nim-forge', '../api/nim-forge.js', { prompt: 'a brass telescope' }, '/api/nim-forge', 'make a 3D model'],
 	['garment-forge', '../api/garment-forge.js', { prompt: 'a red hoodie' }, '/api/garment-forge', 'make a garment'],
-	['scene-capture', '../api/scene-capture.js', { video_url: 'https://cdn.three.ws/v.mp4' }, '/api/scene-capture', 'reconstruct a scene'],
+	['scene-capture', '../api/scene-capture.js', { video_url: 'https://three.ws/cdn/v.mp4' }, '/api/scene-capture', 'reconstruct a scene'],
 	['forge-gameready (holder path)', '../api/forge-gameready.js', { mesh_url: MESH, formats: ['glb'] }, '/api/forge-gameready', 'make a game-ready model'],
 	['export-usd', '../api/forge/export-usd.js', { glb_url: MESH }, '/api/forge/export-usd', 'export a model to OpenUSD'],
 	['print/prepare', '../api/print/prepare.js', { glb_url: MESH }, '/api/print/prepare', 'prepare a model for printing'],
 	['dad/generate', '../api/dad/generate.js', { image_url: IMAGE }, '/api/dad/generate', 'make a 3D avatar'],
-	['motion-swap job', '../api/motion-swap.js', { video_url: 'https://cdn.three.ws/v.mp4' }, '/api/motion-swap', 'capture motion from a video'],
+	['motion-swap job', '../api/motion-swap.js', { video_url: 'https://three.ws/cdn/v.mp4' }, '/api/motion-swap', 'capture motion from a video'],
 ];
 
 const UPLOADS = [
