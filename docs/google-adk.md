@@ -2,8 +2,9 @@
 
 Connect a [Google Agent Development Kit](https://google.github.io/adk-docs/)
 agent to the three.ws 3D studio over `MCPToolset`, ADK's built-in Model Context
-Protocol client. The free studio server needs no three.ws account: no API
-key, no payment, no wallet.
+Protocol client. The studio server is free (no payment, no wallet). Listing
+its tools needs no key; making, rigging or rendering a model needs a free
+three.ws account, sent as an API key in `Authorization: Bearer <key>`.
 
 **Runnable sample:** [examples/google-adk](../examples/google-adk/README.md)
 
@@ -13,7 +14,7 @@ key, no payment, no wallet.
 |---|---|
 | **URL** | `https://three.ws/api/mcp-studio` |
 | **Transport** | Streamable HTTP (JSON-RPC over `POST`) |
-| **Auth** | None for the studio tools |
+| **Auth** | None to connect and list tools; a free account's API key (Bearer) to make, rig or render a model |
 | **Protocol** | MCP `2025-06-18` |
 | **Tools** | The full free studio: the same sixteen tools as [`/api/mcp-studio`](./mcp-studio.md) |
 
@@ -25,6 +26,9 @@ import { LlmAgent, MCPToolset } from '@google/adk';
 const toolset = new MCPToolset({
   type: 'StreamableHTTPConnectionParams',
   url: 'https://three.ws/api/mcp-studio',
+  // Free account key from https://three.ws/dashboard/api-keys. ADK sends
+  // `header` on every MCP request.
+  header: { Authorization: `Bearer ${process.env.THREE_WS_API_KEY}` },
 });
 
 const agent = new LlmAgent({
@@ -45,15 +49,16 @@ during a conversation; ADK manages the MCP session underneath.
 A tool can also be invoked directly, without a model in the loop, by calling
 `runAsync({ args, toolContext })` on the `BaseTool` the toolset returns. That
 path needs no Gemini credential at all, which is how the sample proves the
-wiring: discover the catalog, then run a real `rig_mesh` call and print the
-viewer, GLB and embed links it returns.
+wiring: discover the catalog, then (with `THREE_WS_API_KEY` set) run a real
+`rig_mesh` call and print the viewer, GLB and embed links it returns. Without a
+key, a creator tool answers `sign_in_required` with the link to create one.
 
 ## Beyond the free lane
 
 The full MCP server (`/api/mcp`) also exposes paid, x402-gated tools
 (`text_to_animation` and others). Point `MCPToolset`'s `url` at it and add an
 x402 client to `transportOptions.requestInit` to pay for those calls; the
-free studio server above never needs one. See [docs/mcp.md](./mcp.md) for the
+free studio server above never needs a payment, only the free account key. See [docs/mcp.md](./mcp.md) for the
 full catalog, authentication and the x402 payment flow.
 
 ## See also

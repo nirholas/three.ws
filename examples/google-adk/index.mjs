@@ -1,13 +1,17 @@
 #!/usr/bin/env node
 // A Google ADK agent that calls the free three.ws MCP server over MCPToolset.
 //
-//   node index.mjs --check    discover the tool catalog and run one real tool
-//                             call against the live server (no model key needed)
+//   node index.mjs --check    discover the tool catalog and, with an API key, run
+//                             one real tool call against the live server (no
+//                             model key needed)
 //   node index.mjs            run a full LlmAgent conversation that picks the
 //                             tool itself (needs a Gemini credential, see below)
 //
-// The MCP connection itself needs no key: https://three.ws/api/mcp-studio is
-// the free, no-auth studio surface. Driving it through an actual LlmAgent
+// Connecting to https://three.ws/api/mcp-studio and listing its tools needs no
+// key. Making or rigging a model is free but needs a free three.ws account:
+// set THREE_WS_API_KEY (from https://three.ws/dashboard/api-keys) and it is sent
+// as "Authorization: Bearer <key>" on every MCP request. Without it those tools
+// answer sign_in_required. Driving it through an actual LlmAgent
 // conversation needs a Gemini credential, either GOOGLE_API_KEY (AI Studio) or
 // GOOGLE_GENAI_USE_VERTEXAI=true with GOOGLE_CLOUD_PROJECT/GOOGLE_CLOUD_LOCATION
 // and Application Default Credentials (Vertex AI). Without one, --check still
@@ -16,6 +20,7 @@
 import { LlmAgent, MCPToolset, InMemoryRunner } from '@google/adk';
 
 const MCP_URL = process.env.THREE_WS_MCP_URL || 'https://three.ws/api/mcp-studio';
+const API_KEY = process.env.THREE_WS_API_KEY || '';
 const args = process.argv.slice(2);
 const flags = new Set(args.filter((a) => a.startsWith('--')));
 const prompt = args.filter((a) => !a.startsWith('--')).join(' ') || 'rig this GLB: https://three.ws/avatars/cesium-man.glb';
@@ -47,6 +52,13 @@ async function check(toolset) {
 
 	const rig = tools.find((t) => t.name === 'rig_mesh');
 	if (!rig) throw new Error('the server does not offer rig_mesh');
+	if (!API_KEY) {
+		console.log(
+			'\nDiscovery works. Rigging a model needs a free three.ws account: create an API key at ' +
+				'https://three.ws/dashboard/api-keys and rerun with THREE_WS_API_KEY set to run a real rig_mesh call.',
+		);
+		return;
+	}
 
 	const result = await rig.runAsync({
 		args: { glb_url: 'https://three.ws/avatars/cesium-man.glb' },
@@ -83,7 +95,12 @@ async function converse(agent) {
 	console.log();
 }
 
-const toolset = new MCPToolset({ type: 'StreamableHTTPConnectionParams', url: MCP_URL });
+// ADK's StreamableHTTP params send `header` on every MCP request.
+const toolset = new MCPToolset({
+	type: 'StreamableHTTPConnectionParams',
+	url: MCP_URL,
+	...(API_KEY ? { header: { Authorization: `Bearer ${API_KEY}` } } : {}),
+});
 try {
 	if (flags.has('--check')) await check(toolset);
 	else await converse(buildAgent(toolset));
