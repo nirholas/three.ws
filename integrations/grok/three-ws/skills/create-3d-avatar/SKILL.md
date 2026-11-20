@@ -32,7 +32,13 @@ Auto-rigging assumes a **humanoid figure**. A clearly non-humanoid subject
 
 ## Fastest path: the MCP tool
 
-If the three.ws MCP server is connected, call the one-step avatar tool:
+Making an avatar needs a free three.ws account (it costs nothing on the free lane):
+create an API key at `https://three.ws/dashboard/api-keys` and send it as
+`Authorization: Bearer <key>`, or connect the MCP client with OAuth sign-in (see
+`connect-three-ws-mcp`). The avatar is saved to that account, unlisted until the owner
+publishes it.
+
+If the three.ws MCP server is connected with your account, call the one-step avatar tool:
 
 - **Tool:** `forge_avatar`
 - **Input:** `{ "prompt": "<character description>" }` or
@@ -50,11 +56,12 @@ inputs, mesh only.
 ## Portable path: the hosted HTTP endpoint
 
 No MCP client needed. The free hosted lane is a public JSON-RPC endpoint at
-`https://three.ws/api/mcp-studio`:
+`https://three.ws/api/mcp-studio` (send your API key):
 
 ```bash
 curl -s -X POST https://three.ws/api/mcp-studio \
   -H 'content-type: application/json' \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
   -d '{
     "jsonrpc": "2.0",
     "id": 1,
@@ -89,10 +96,12 @@ curl -s -X POST https://three.ws/api/mcp-studio \
 #    "tier": "high" matches what forge_avatar/text_to_avatar request automatically.
 #    It is the tier the router maps to the self-host Hunyuan3D lane for IRL realism.
 curl -s -X POST https://three.ws/api/forge -H 'content-type: application/json' \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
   -d '{ "prompt": "a friendly cartoon astronaut in a glossy white suit", "tier": "high" }'
 
 # 2. Rig the resulting GLB (see rig-a-model)
 curl -s -X POST "https://three.ws/api/forge?action=rig" -H 'content-type: application/json' \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
   -d '{ "glb_url": "<glbUrl from step 1>" }'
 ```
 
@@ -135,6 +144,9 @@ internals (skeleton convention, what makes a model riggable) live in the
 
 ## Errors
 
+- `sign_in_required` / `401`: the call carried no account. Send
+  `Authorization: Bearer <key>` (key from `https://three.ws/dashboard/api-keys`) or
+  connect with OAuth, then call again.
 - `rate_limited` / `busy`: honor `retryAfter` and retry.
 - `not_configured`: lane momentarily cold; retry shortly.
 - Generation succeeded but rigging failed: you still get the unrigged mesh URL;

@@ -52,8 +52,9 @@ search_catalog { "q": "wooden chair", "kind": "object", "limit": 5 }
 get_item_source { "id": "object:painted_wooden_chair_01" }
 ```
 
-Not connected? Add the keyless studio server. It needs no account and also carries the
-free generation tools the catalog falls through to:
+Not connected? Add the studio server. Its catalog tools need no account; it also carries
+the free generation tools the catalog falls through to, and those need a free three.ws
+account (add an `Authorization: Bearer <API key>` header, see `connect-three-ws-mcp`):
 
 ```json
 { "mcpServers": { "three-ws-studio": { "type": "http", "url": "https://three.ws/api/mcp-studio" } } }

@@ -31,7 +31,12 @@ standing). Props, furniture, and vehicles won't rig meaningfully.
 
 ## Fastest path: the MCP tool
 
-If the three.ws MCP server is connected, call the rig tool directly:
+Rigging makes a new model, so it needs a free three.ws account: create an API key at
+`https://three.ws/dashboard/api-keys` and send it as `Authorization: Bearer <key>`, or
+connect the MCP client with OAuth sign-in (see `connect-three-ws-mcp`). The rigged
+model is saved to that account, unlisted until the owner publishes it.
+
+If the three.ws MCP server is connected with your account, call the rig tool directly:
 
 - **Tool:** `rig_mesh`
 - **Input:** `{ "glb_url": "<https URL to the static GLB>" }`
@@ -43,11 +48,12 @@ If the three.ws MCP server is connected, call the rig tool directly:
 ## Portable path: the hosted HTTP endpoint
 
 No MCP client needed. `rig_mesh` is exposed free on the hosted studio JSON-RPC
-endpoint at `https://three.ws/api/mcp-studio` (no key, no account):
+endpoint at `https://three.ws/api/mcp-studio` (free of charge; send your API key):
 
 ```bash
 curl -s -X POST https://three.ws/api/mcp-studio \
   -H 'content-type: application/json' \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
   -d '{
     "jsonrpc": "2.0",
     "id": 1,
@@ -74,12 +80,14 @@ curl -s -X POST https://three.ws/api/mcp-studio \
 
 ## Raw REST pipeline
 
-The MCP tool is a thin client over the public rig endpoint. Submit, then poll:
+The MCP tool is a thin client over the public rig endpoint. Submit (with your API
+key), then poll (open, no key needed):
 
 ```bash
 # 1. Start the rig job
 curl -s -X POST "https://three.ws/api/forge?action=rig" \
   -H 'content-type: application/json' \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
   -d '{ "glb_url": "https://three.ws/avatars/cesium-man.glb" }'
 # → { "job_id": "r9k2m7x4", ... }
 
@@ -100,6 +108,9 @@ Build the pose-studio link yourself from any rigged GLB URL:
 
 ## Errors
 
+- `sign_in_required` / `401`: the call carried no account. Send
+  `Authorization: Bearer <key>` (key from `https://three.ws/dashboard/api-keys`) or
+  connect with OAuth, then call again.
 - `rate_limited` / `429`: the rigger is busy; honor `retryAfter` and retry.
 - `not_configured` / `503`: auto-rigging momentarily unavailable; retry shortly.
 - `rig_failed`: the model couldn't be rigged (usually not humanoid enough).

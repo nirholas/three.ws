@@ -42,8 +42,9 @@ describe('agent skills pack', () => {
 	it('keeps the cross-platform-safe subset free of coin and payment-rail content', () => {
 		// This subset is what ships to non-crypto tracks, so the markers that matter
 		// are the unambiguous ones. "no payment required" is fine; naming a token,
-		// a chain, or the payment protocol is not.
-		const banned = /(\$THREE|\bUSDC\b|\bx402\b|\bSolana\b|\bpump\.fun\b|\bmainnet\b|private key)/i;
+		// a chain, or the payment protocol is not. `\$THREE\b` names the coin but
+		// not the THREE_WS_API_KEY env var the account examples send.
+		const banned = /(\$THREE\b|\bUSDC\b|\bx402\b|\bSolana\b|\bpump\.fun\b|\bmainnet\b|private key)/i;
 		for (const skill of skills.filter((s) => s.crossPlatformSafe)) {
 			const body = fs.readFileSync(path.join(ROOT, skill.path, 'SKILL.md'), 'utf8');
 			const hit = body.split('\n').find((line) => banned.test(line));

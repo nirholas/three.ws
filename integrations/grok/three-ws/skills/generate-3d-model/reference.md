@@ -15,8 +15,12 @@ differ in how the mesh is reconstructed and in fidelity.
 | Avatar | `text_to_avatar` | Paid (free on the hosted studio) | text or image | Tuned for figures/characters. |
 
 The **hosted studio** at `https://three.ws/api/mcp-studio` exposes `forge_free`,
-`mesh_forge`, `text_to_avatar`, `rig_mesh`, and `forge_avatar` as a free,
-non-account JSON-RPC tool set (the platform covers provider cost). The full three.ws
+`mesh_forge`, `text_to_avatar`, `rig_mesh`, and `forge_avatar` as a free JSON-RPC
+tool set (the platform covers provider cost). Free of charge is not anonymous: the
+tools that make or rig a model need a free three.ws account, sent as
+`Authorization: Bearer <API key>` (keys at `https://three.ws/dashboard/api-keys`) or
+through OAuth sign-in at `https://three.ws/api/mcp-studio?auth=oauth`. Reads (job
+status, viewer links, `tools/list`) stay open. The full three.ws
 MCP server (`npx`-distributed) exposes the same tools with the art-directed and
 avatar lanes as paid, higher-fidelity options.
 
@@ -45,13 +49,16 @@ All three are free. Higher tiers cost only time.
 ## Raw REST pipeline (`/api/forge`)
 
 The MCP tools are thin clients over the public `POST /api/forge` endpoint. Use it
-directly when you want no MCP client at all.
+directly when you want no MCP client at all. Submitting needs an account on every
+lane, the free one included: send `Authorization: Bearer <API key>`. Polling a job
+and reading a finished model stay public.
 
 **Submit a job:**
 
 ```bash
 curl -s -X POST https://three.ws/api/forge \
   -H 'content-type: application/json' \
+  -H "authorization: Bearer $THREE_WS_API_KEY" \
   -d '{ "prompt": "a small glossy green ceramic frog figurine", "backend": "nvidia", "path": "image" }'
 ```
 
@@ -79,6 +86,7 @@ https://three.ws/viewer?src=<URL-encoded glbUrl>
 
 | Code / status | Meaning | Action |
 | --- | --- | --- |
+| `401` / `sign_in_required` | No account on the request (the body carries `sign_in_url` and `api_keys_url`) | Send `Authorization: Bearer <key>` from `https://three.ws/dashboard/api-keys`, then retry. |
 | `429` / `rate_limited` / `busy` | Per-IP or global rate limit | Honor `retryAfter` / `retry_after`, then retry. |
 | `503` / `not_configured` | Lane momentarily cold or disabled on this deployment | Retry shortly. |
 | `lane_degraded` | Produced a URL that was unreachable | Retry; never return the dead URL. |
