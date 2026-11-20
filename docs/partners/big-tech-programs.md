@@ -8,7 +8,7 @@ It is the wide net. The narrower docs stay authoritative for what they cover: [p
 
 Sibling pages: [ai company partner programs](./ai-programs.md), [motion partner programs](./motion-programs.md), [global brand partner programs](./brand-programs.md), [crypto ecosystem partner programs](./crypto-programs.md), plus [who promotes partners](./promotion-programs.md) and [moonshots](./moonshots.md) across every sector.
 
-**206 programs across 80 companies.** 13 member / live, 1 submitted, waiting, 10 in progress, 16 ready, one human step, 90 eligible, not started, 59 verify fit first, 2 decided not to pursue, 3 not eligible, 12 retired or closed. We hold at least one membership at 8 of the 80 companies, and 61 of the open programs offer some form of promotion. Last full research sweep: 2026-11-06.
+**206 programs across 80 companies.** 13 member / live, 2 submitted, waiting, 10 in progress, 16 ready, one human step, 90 eligible, not started, 58 verify fit first, 2 decided not to pursue, 3 not eligible, 12 retired or closed. We hold at least one membership at 8 of the 80 companies, and 61 of the open programs offer some form of promotion. Last full research sweep: 2026-11-06.
 
 ## Using this page
 
@@ -174,7 +174,7 @@ Open to us today but a weaker fit, a smaller audience, or more paperwork (score 
 
 ### Wave 5: watch and verify
 
-Invite-only, a window that is not open yet, or eligibility we have not confirmed. Re-check on the cadence listed. 85 programs.
+Invite-only, a window that is not open yet, or eligibility we have not confirmed. Re-check on the cadence listed. 84 programs.
 
 | # | Program | Company | Score | Next action |
 |---|---|---|---|---|
@@ -219,50 +219,49 @@ Invite-only, a window that is not open yet, or eligibility we have not confirmed
 | 39 | [SAP PartnerEdge Build + SAP Store](https://community.sap.com/t5/technology-blog-posts-by-sap/building-on-sap-business-ai-platform-what-isv-partners-need-to-know/ba-p/14497714) | SAP | 8 | Apply: Join PartnerEdge Build, pass Application Readiness Check |
 | 40 | [Shopify Editions](https://www.shopify.com/editions) | Shopify | 8 | Watch for the next window (twice yearly) and apply when it opens |
 | 41 | [Hunyuan 3D (HY 3D) global platform and partner integrations](https://3d.hunyuan.tencent.com/) | Tencent | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 42 | [Grok for Startups](https://x.ai/startups) | xAI | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 43 | [Claude Partner Network](https://anthropic.com/news/claude-partner-network) | Anthropic | 7 | Apply: See Anthropic announcement; tiers Select, Preferred, Global Premier (per search summary) |
-| 44 | [Arm Flexible Access for Startups](https://www.arm.com/resources/program-reg/flexible-access-startup) | Arm | 7 | Skip unless we ever design a chip. |
-| 45 | [Workers Launchpad](https://blog.cloudflare.com/expanding-startups-for-nonprofits/) | Cloudflare | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 46 | [Dell AI Ecosystem Program (ISV validation on Dell AI Factory)](https://www.dell.com/en-us/dt/corporate/newsroom/announcements/detailpage.press-releases~usa~2026~05~dell-technologies-closes-the-gap-between-ai-ambition-and-ai-outcomes.htm) | Dell | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 47 | [Android XR Developer Catalyst Program](https://developer.android.com/develop/xr/catalyst) | Google | 7 | Watch for the next window (Applications opened May 19, 2026, closed; notifications by Jul 15, 2026) and apply when it opens |
-| 48 | [Google Developer Experts (GDE)](https://developers.google.com/community/experts) | Google | 7 | Watch for the next window (rolling, no public dates) and apply when it opens |
-| 49 | [Grab Ventures Velocity](https://ventures.grab.com/) | Grab | 7 | Skip. |
-| 50 | [Intuit App Partner Program](https://developer.intuit.com/partners/benefits) | Intuit | 7 | Skip. |
-| 51 | [LinkedIn Marketing Developer Program](https://business.linkedin.com/marketing-solutions/marketing-partners/become-a-partner/marketing-developer-program) | LinkedIn | 7 | Skip. |
-| 52 | [Miro Marketplace app submission](https://developers.miro.com/docs/miro-marketplace) | Miro | 7 | Ship a private Miro app first to build the user base. |
-| 53 | [NVIDIA Partner Network (NPN) - ISV/Influencer partner type](https://www.nvidia.com/object/nvidia-partner-network.html) | NVIDIA | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 54 | [Palantir Startup Fellowship](https://www.palantir.events/startup-fellowship-003-apply) | Palantir | 7 | Skip. |
-| 55 | [Incubator and Jumpstart (successors to retired Accelerator); Creator Fund](https://about.roblox.com/newsroom/2026/03/roblox-announces-incubator-jumpstart-creator-programs) | Roblox | 7 | Apply: Jumpstart pitches rolling; Incubator for experienced small teams; Creator Fund rolling |
-| 56 | [Uber Developer Platform](https://developer.uber.com/docs/) | Uber | 7 | Skip. |
-| 57 | [Adobe Substance 3D partner program](https://www.adobe.com/products/substance3d.html) | Adobe | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 58 | [Booking.com Connectivity Partner Programme](https://developers.booking.com/connectivity/docs) | Booking.com | 6 | Skip. |
-| 59 | [BytePlus (ModelArk) free tier and AI Startups Accelerator](https://www.byteplus.com/en/) | ByteDance | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 60 | [Cisco DevNet / Month of Partner Innovation](https://blogs.cisco.com/developer/january-2026-month-of-partner-innovation) | Cisco | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 61 | [Cisco LaunchPad](https://startups.cisco.com/c/programs.html) | Cisco | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 62 | [GitHub Stars](https://stars.github.com/) | GitHub | 6 | Watch for the next window (rolling) and apply when it opens |
-| 63 | [HPE Partner Ready Vantage - Build Track / Unleash AI ISV program](https://www.hpe.com/us/en/newsroom/press-release/2026/06/hpe-fuels-partner-growth-with-new-incentives-partner-led-offers-and-unified-program.html) | HPE | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 64 | [Intel Partner Alliance (ISV role, 2-tier refresh)](https://www.intel.com/content/www/us/en/partner-alliance/overview.html) | Intel | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 65 | [Okta Integration Network (OIN)](https://developer.okta.com/docs/guides/submit-app-overview/) | Okta | 6 | Defer until enterprise SSO is on the roadmap. |
-| 66 | [Tencent Cloud Partner Ecosystem Program](https://www.tencentcloud.com/partners) | Tencent | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 67 | [Akamai Qualified Compute Partner Program](https://www.akamai.com/cloud/start-ups/partner) | Akamai | 5 | Skip for now. |
-| 68 | [Apple Design Awards / Swift Student Challenge / Entrepreneur Camp](https://www.apple.com/newsroom/2026/06/apple-reveals-winners-of-the-2026-apple-design-awards/) | Apple | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 69 | [Atlassian Ventures](https://www.atlassian.com/blog/developers/get-ready-to-grow-explore-a-world-of-possibility-in-the-atlassian-ecosystem) | Atlassian | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 70 | [Autodesk Technology Impact Program](https://www.autodesk.org/) | Autodesk | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 71 | [HubSpot for Startups](https://www.hubspot.com/startups) | HubSpot | 5 | Low priority; use only when we need a CRM. |
-| 72 | [Microsoft MVP Award](https://mvp.microsoft.com/) | Microsoft | 5 | Watch for the next window (annual) and apply when it opens |
-| 73 | [Salesforce Launchpad (startups)](https://www.salesforce.com/startups/) | Salesforce | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 74 | [Salesforce Ventures](https://salesforceventures.com/) | Salesforce | 5 | Watch for the next window (n/a) and apply when it opens |
-| 75 | [Snowflake Startup Accelerator / Powered by Snowflake](https://snowflake.com/en/product/features/native-apps/native-app-accelerator) | Snowflake | 5 | Apply on page |
-| 76 | [WeChat Mini-Program Growth Plan](https://www.ainspiro.com/en/news/wechat-miniprogram-10-billion-token-hunyuan-hy3-july-2026/) | Tencent | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 77 | [Visa Accelerator Program (Africa) and Visa Inclusive Fintech Accelerator (US/Canada, with Plug and Play)](https://africa.visa.com/en_MW/visa-everywhere/innovation/visa-accelerator.html) | Visa | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 78 | [Workday Ventures](https://blog.workday.com/en-us/workday-open-developer-platform-generally-available.html) | Workday | 5 | Skip. |
-| 79 | [Zoom Ventures / Zoom Apps Fund](https://www.zoom.com/en/zoom-ventures/) | Zoom | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 80 | [Baidu AI Cloud Qianfan / ERNIE international partner programs](https://intl.cloud.baidu.com/) | Baidu | 4 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 81 | [Cisco Investments](https://investments.cisco.com/) | Cisco | 4 | Watch for the next window (n/a) and apply when it opens |
-| 82 | [Databricks Ventures](https://www.databricks.com/databricks-ventures) | Databricks | 4 | Watch for the next window (n/a) and apply when it opens |
-| 83 | [Datadog for Startups](https://www.datadoghq.com/partner/datadog-for-startups/) | Datadog | 4 | Skip unless an accelerator referral arrives. |
-| 84 | [Huawei Cloud Spark startup program](https://www.huaweicloud.com/intl/en-us/news/20200903090816755.html) | Huawei | 4 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 85 | [Samsung NEXT / Samsung Catalyst Fund](https://samsungcatalyst.com/news/) | Samsung | 4 | Watch for the next window (rolling) and apply when it opens |
+| 42 | [Claude Partner Network](https://anthropic.com/news/claude-partner-network) | Anthropic | 7 | Apply: See Anthropic announcement; tiers Select, Preferred, Global Premier (per search summary) |
+| 43 | [Arm Flexible Access for Startups](https://www.arm.com/resources/program-reg/flexible-access-startup) | Arm | 7 | Skip unless we ever design a chip. |
+| 44 | [Workers Launchpad](https://blog.cloudflare.com/expanding-startups-for-nonprofits/) | Cloudflare | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 45 | [Dell AI Ecosystem Program (ISV validation on Dell AI Factory)](https://www.dell.com/en-us/dt/corporate/newsroom/announcements/detailpage.press-releases~usa~2026~05~dell-technologies-closes-the-gap-between-ai-ambition-and-ai-outcomes.htm) | Dell | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 46 | [Android XR Developer Catalyst Program](https://developer.android.com/develop/xr/catalyst) | Google | 7 | Watch for the next window (Applications opened May 19, 2026, closed; notifications by Jul 15, 2026) and apply when it opens |
+| 47 | [Google Developer Experts (GDE)](https://developers.google.com/community/experts) | Google | 7 | Watch for the next window (rolling, no public dates) and apply when it opens |
+| 48 | [Grab Ventures Velocity](https://ventures.grab.com/) | Grab | 7 | Skip. |
+| 49 | [Intuit App Partner Program](https://developer.intuit.com/partners/benefits) | Intuit | 7 | Skip. |
+| 50 | [LinkedIn Marketing Developer Program](https://business.linkedin.com/marketing-solutions/marketing-partners/become-a-partner/marketing-developer-program) | LinkedIn | 7 | Skip. |
+| 51 | [Miro Marketplace app submission](https://developers.miro.com/docs/miro-marketplace) | Miro | 7 | Ship a private Miro app first to build the user base. |
+| 52 | [NVIDIA Partner Network (NPN) - ISV/Influencer partner type](https://www.nvidia.com/object/nvidia-partner-network.html) | NVIDIA | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 53 | [Palantir Startup Fellowship](https://www.palantir.events/startup-fellowship-003-apply) | Palantir | 7 | Skip. |
+| 54 | [Incubator and Jumpstart (successors to retired Accelerator); Creator Fund](https://about.roblox.com/newsroom/2026/03/roblox-announces-incubator-jumpstart-creator-programs) | Roblox | 7 | Apply: Jumpstart pitches rolling; Incubator for experienced small teams; Creator Fund rolling |
+| 55 | [Uber Developer Platform](https://developer.uber.com/docs/) | Uber | 7 | Skip. |
+| 56 | [Adobe Substance 3D partner program](https://www.adobe.com/products/substance3d.html) | Adobe | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 57 | [Booking.com Connectivity Partner Programme](https://developers.booking.com/connectivity/docs) | Booking.com | 6 | Skip. |
+| 58 | [BytePlus (ModelArk) free tier and AI Startups Accelerator](https://www.byteplus.com/en/) | ByteDance | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 59 | [Cisco DevNet / Month of Partner Innovation](https://blogs.cisco.com/developer/january-2026-month-of-partner-innovation) | Cisco | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 60 | [Cisco LaunchPad](https://startups.cisco.com/c/programs.html) | Cisco | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 61 | [GitHub Stars](https://stars.github.com/) | GitHub | 6 | Watch for the next window (rolling) and apply when it opens |
+| 62 | [HPE Partner Ready Vantage - Build Track / Unleash AI ISV program](https://www.hpe.com/us/en/newsroom/press-release/2026/06/hpe-fuels-partner-growth-with-new-incentives-partner-led-offers-and-unified-program.html) | HPE | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 63 | [Intel Partner Alliance (ISV role, 2-tier refresh)](https://www.intel.com/content/www/us/en/partner-alliance/overview.html) | Intel | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 64 | [Okta Integration Network (OIN)](https://developer.okta.com/docs/guides/submit-app-overview/) | Okta | 6 | Defer until enterprise SSO is on the roadmap. |
+| 65 | [Tencent Cloud Partner Ecosystem Program](https://www.tencentcloud.com/partners) | Tencent | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 66 | [Akamai Qualified Compute Partner Program](https://www.akamai.com/cloud/start-ups/partner) | Akamai | 5 | Skip for now. |
+| 67 | [Apple Design Awards / Swift Student Challenge / Entrepreneur Camp](https://www.apple.com/newsroom/2026/06/apple-reveals-winners-of-the-2026-apple-design-awards/) | Apple | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 68 | [Atlassian Ventures](https://www.atlassian.com/blog/developers/get-ready-to-grow-explore-a-world-of-possibility-in-the-atlassian-ecosystem) | Atlassian | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 69 | [Autodesk Technology Impact Program](https://www.autodesk.org/) | Autodesk | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 70 | [HubSpot for Startups](https://www.hubspot.com/startups) | HubSpot | 5 | Low priority; use only when we need a CRM. |
+| 71 | [Microsoft MVP Award](https://mvp.microsoft.com/) | Microsoft | 5 | Watch for the next window (annual) and apply when it opens |
+| 72 | [Salesforce Launchpad (startups)](https://www.salesforce.com/startups/) | Salesforce | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 73 | [Salesforce Ventures](https://salesforceventures.com/) | Salesforce | 5 | Watch for the next window (n/a) and apply when it opens |
+| 74 | [Snowflake Startup Accelerator / Powered by Snowflake](https://snowflake.com/en/product/features/native-apps/native-app-accelerator) | Snowflake | 5 | Apply on page |
+| 75 | [WeChat Mini-Program Growth Plan](https://www.ainspiro.com/en/news/wechat-miniprogram-10-billion-token-hunyuan-hy3-july-2026/) | Tencent | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 76 | [Visa Accelerator Program (Africa) and Visa Inclusive Fintech Accelerator (US/Canada, with Plug and Play)](https://africa.visa.com/en_MW/visa-everywhere/innovation/visa-accelerator.html) | Visa | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 77 | [Workday Ventures](https://blog.workday.com/en-us/workday-open-developer-platform-generally-available.html) | Workday | 5 | Skip. |
+| 78 | [Zoom Ventures / Zoom Apps Fund](https://www.zoom.com/en/zoom-ventures/) | Zoom | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 79 | [Baidu AI Cloud Qianfan / ERNIE international partner programs](https://intl.cloud.baidu.com/) | Baidu | 4 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 80 | [Cisco Investments](https://investments.cisco.com/) | Cisco | 4 | Watch for the next window (n/a) and apply when it opens |
+| 81 | [Databricks Ventures](https://www.databricks.com/databricks-ventures) | Databricks | 4 | Watch for the next window (n/a) and apply when it opens |
+| 82 | [Datadog for Startups](https://www.datadoghq.com/partner/datadog-for-startups/) | Datadog | 4 | Skip unless an accelerator referral arrives. |
+| 83 | [Huawei Cloud Spark startup program](https://www.huaweicloud.com/intl/en-us/news/20200903090816755.html) | Huawei | 4 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 84 | [Samsung NEXT / Samsung Catalyst Fund](https://samsungcatalyst.com/news/) | Samsung | 4 | Watch for the next window (rolling) and apply when it opens |
 
 ### Waiting on them
 
@@ -271,6 +270,7 @@ Submitted. Nothing to do but chase on schedule: a submission with no movement fo
 | Program | Company | Last movement | Follow-up |
 |---|---|---|---|
 | [OpenAI Cookbook contribution](https://github.com/openai/openai-cookbook) | OpenAI | 2026-07-21 | Chase review on PR #2874 |
+| [Grok for Startups](https://x.ai/startups) | xAI | 2026-11-20 | Wait for the admission decision from the xAI startups team; on approval, record the credits with --benefit (20% lands on approval, 80% after onboarding) and put them on the Grok lane |
 
 ## Who promotes partners
 
@@ -358,6 +358,7 @@ Every application, form, email, and portal action, newest first. Add one with `n
 
 | Date | Program | Company | What happened | Reference |
 |---|---|---|---|---|
+| 2026-11-20 | [Grok for Startups](https://x.ai/startups) | xAI | Application in review: xAI startups team asked for a grok.com Team ID before admission; owner created the team and replied with the ID (now: Submitted, waiting) |  |
 | 2026-10-11 | [OpenAI Partner Network (Select Partner)](https://openai.com/index/introducing-openai-partner-network/) | OpenAI | Partner benefits provisioned; two invitations waiting to be accepted |  |
 | 2026-09-30 | [Official MCP Registry and GitHub MCP Registry](https://modelcontextprotocol.io/registry/quickstart) | GitHub | Published blender-mcp, herald-mcp, home-mcp and knock-mcp and updated agent-sniper with mcp-publisher v1.8.1 (now: Member / live) |  |
 | 2026-09-29 | [ChatGPT App Directory](https://developers.openai.com/apps-sdk) | OpenAI | Third rejection: every generation outlived the 60-second tool-call limit. v1.0.1 fix built, awaiting deploy (now: In progress) |  |
@@ -960,9 +961,9 @@ Closed doors (do not re-research):
 
 | Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
 |---|---|---|---|---|---|---|---|
-| [Grok for Startups](https://x.ai/startups) | Startup credits | credits sized to stage and usage, no fixed tier (per i10x / vandatateam coverage); Credits sized to 6-12 months of usage across Grok, Grok Build and the Grok API; 20% on approval, 80% after onboarding |  | Checks for venture backing (disputed by one aggregator), live product, company email matching website; credits expire 6 months Cost: free. | Verify fit first | Read the live program page, confirm eligibility and terms, then set eligible or skip Apply: Application at x.ai/startups. Cadence: rolling; launched late Oct 2026. | 2·3·3 = **8** |
+| [Grok for Startups](https://x.ai/startups) | Startup credits | credits sized to stage and usage, no fixed tier (per i10x / vandatateam coverage); Credits sized to 6-12 months of usage across Grok, Grok Build and the Grok API; 20% on approval, 80% after onboarding |  | Checks for venture backing (disputed by one aggregator), live product, company email matching website; credits expire 6 months Cost: free. | Submitted, waiting | Wait for the admission decision from the xAI startups team; on approval, record the credits with --benefit (20% lands on approval, 80% after onboarding) and put them on the Grok lane Apply: Application at x.ai/startups. Cadence: rolling; launched late Oct 2026. | 2·3·3 = **8** |
 
-- **Grok for Startups.** Venture backing likely needed, which we lack, but a bootstrapped application costs nothing; Grok integration is secondary to our stack. Company branding in sources is inconsistent (SpaceXAI/SpaceXSI), verify on x.ai.
+- **Grok for Startups.** Applied bootstrapped; xAI moved the application to admission review on 2026-11-20 and asked only for a grok.com Team ID. Grok is already one of our model lanes (docs/grok.md, docs/ops/llm-lanes.md), so credits cut its cost directly. The program email signs as SpaceXSI, matching the inconsistent branding seen in coverage.
 
 Closed doors (do not re-research):
 

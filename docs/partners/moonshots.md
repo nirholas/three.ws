@@ -134,7 +134,7 @@ One row per company: the most open door, then the best scored among equals. The 
 | 97 | PwC | [Brands](./brand-programs.md) | [PwC New Ventures Connect (Italy)](https://openinnovation.pwc.it/Connect) | 3 | 8 |  | Apply with an enterprise agent embed pitch. |
 | 98 | Replit | [AI](./ai-programs.md) | [Replit Community Ambassadors](https://community-hub.replit.app/ambassadors/) | 3 | 8 | 2 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
 | 99 | Tencent | [Big tech](./big-tech-programs.md) | [Hunyuan 3D (HY 3D) global platform and partner integrations](https://3d.hunyuan.tencent.com/) | 3 | 8 | 2 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 100 | xAI | [Big tech](./big-tech-programs.md) | [Grok for Startups](https://x.ai/startups) | 3 | 8 |  | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 100 | xAI | [Big tech](./big-tech-programs.md) | [Grok for Startups](https://x.ai/startups) | 3 | 8 |  | Wait for the admission decision from the xAI startups team; on approval, record the credits with --benefit (20% lands on approval, 80% after onboarding) and put them on the Grok lane |
 | 101 | Intuit | [Big tech](./big-tech-programs.md) | [Intuit App Partner Program](https://developer.intuit.com/partners/benefits) | 3 | 7 |  | Skip. |
 | 102 | Snowflake | [Big tech](./big-tech-programs.md) | [Snowflake Marketplace (Native Apps)](https://docs.snowflake.com/en/collaboration/guidelines-reqs-for-listing-apps) | 3 | 7 | 1 | Apply: Provider Studio in Snowsight |
 | 103 | Cohere | [AI](./ai-programs.md) | [Cohere Labs Catalyst Grants](https://cohere.com/research/grants) | 3 | 6 |  | Application on cohere.com/research/grants, rolling |

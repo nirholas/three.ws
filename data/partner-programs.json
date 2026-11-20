@@ -4114,7 +4114,7 @@
 			"company": "xAI",
 			"program": "Grok for Startups",
 			"kind": "credits",
-			"status": "research",
+			"status": "submitted",
 			"url": "https://x.ai/startups",
 			"apply": "Application at x.ai/startups",
 			"value": "credits sized to stage and usage, no fixed tier (per i10x / vandatateam coverage)",
@@ -4128,10 +4128,17 @@
 			"fit": 2,
 			"reach": 3,
 			"access": 3,
-			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
-			"why": "Venture backing likely needed, which we lack, but a bootstrapped application costs nothing; Grok integration is secondary to our stack. Company branding in sources is inconsistent (SpaceXAI/SpaceXSI), verify on x.ai.",
+			"next": "Wait for the admission decision from the xAI startups team; on approval, record the credits with --benefit (20% lands on approval, 80% after onboarding) and put them on the Grok lane",
+			"why": "Applied bootstrapped; xAI moved the application to admission review on 2026-11-20 and asked only for a grok.com Team ID. Grok is already one of our model lanes (docs/grok.md, docs/ops/llm-lanes.md), so credits cut its cost directly. The program email signs as SpaceXSI, matching the inconsistent branding seen in coverage.",
 			"source": "https://i10x.ai/news/grok-for-startups-xai-credit-program",
-			"checked": "2026-11-06"
+			"checked": "2026-11-20",
+			"log": [
+				{
+					"date": "2026-11-20",
+					"action": "Application in review: xAI startups team asked for a grok.com Team ID before admission; owner created the team and replied with the ID",
+					"status": "submitted"
+				}
+			]
 		},
 		{
 			"id": "xai-xai-api-data-sharing-credits",
