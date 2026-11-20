@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-three-ws",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "n8n community node for three.ws: free text-to-3D with Forge and a generic call into the three.ws MCP studio tools.",
   "keywords": ["n8n-community-node-package", "3d", "glb", "text-to-3d", "mcp", "three.ws"],
   "license": "MIT",
@@ -25,7 +25,7 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "strict": true,
-    "credentials": [],
+    "credentials": ["dist/credentials/ThreeWsApi.credentials.js"],
     "nodes": ["dist/nodes/ThreeWs/ThreeWs.node.js"]
   },
   "devDependencies": {

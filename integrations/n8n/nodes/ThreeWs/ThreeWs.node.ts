@@ -32,6 +32,7 @@ export class ThreeWs implements INodeType {
 		inputs: [NodeConnectionTypes.Main],
 		outputs: [NodeConnectionTypes.Main],
 		usableAsTool: true,
+		credentials: [{ name: 'threeWsApi', required: true }],
 		properties: [
 			{
 				displayName: 'Operation',
@@ -127,7 +128,7 @@ export class ThreeWs implements INodeType {
 		const out: INodeExecutionData[] = [];
 		const operation = this.getNodeParameter('operation', 0) as string;
 		const http: HttpRequest = async (options) =>
-			this.helpers.httpRequest({
+			this.helpers.httpRequestWithAuthentication.call(this, 'threeWsApi', {
 				method: options.method,
 				url: options.url,
 				headers: options.headers,

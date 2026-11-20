@@ -29,6 +29,10 @@ export interface HttpRequest {
 	}): Promise<unknown>;
 }
 
+export const API_KEYS_URL = 'https://three.ws/dashboard/api-keys';
+
+export const SIGN_IN_MESSAGE = `three.ws needs a signed-in account to make a 3D model, and this request had no valid API key. Create a free key at ${API_KEYS_URL} and save it in the node's three.ws API credential.`;
+
 export class ForgeFailure extends Error {
 	constructor(
 		message: string,
@@ -36,6 +40,35 @@ export class ForgeFailure extends Error {
 	) {
 		super(message);
 		this.name = 'ForgeFailure';
+	}
+}
+
+/** HTTP status of an error thrown by n8n's request helpers, whichever shape it takes. */
+export function httpStatusOf(error: unknown): number | undefined {
+	const e = error as {
+		httpCode?: string | number;
+		statusCode?: number;
+		status?: number;
+		response?: { status?: number; statusCode?: number };
+		cause?: { response?: { status?: number } };
+	} | null;
+	const raw =
+		e?.httpCode ?? e?.statusCode ?? e?.response?.status ?? e?.response?.statusCode ?? e?.cause?.response?.status ?? e?.status;
+	const status = Number(raw);
+	return Number.isFinite(status) && status > 0 ? status : undefined;
+}
+
+/** A 401 or 403 means the request carried no account; anything else is left to the caller. */
+function accountFailure(error: unknown): ForgeFailure | undefined {
+	const status = httpStatusOf(error);
+	return status === 401 || status === 403 ? new ForgeFailure(SIGN_IN_MESSAGE, 'sign_in_required') : undefined;
+}
+
+async function send(http: HttpRequest, options: Parameters<HttpRequest>[0]): Promise<unknown> {
+	try {
+		return await http(options);
+	} catch (error) {
+		throw accountFailure(error) ?? error;
 	}
 }
 
@@ -58,7 +91,7 @@ export async function submitForge(
 	if (trimmed.length < 3) {
 		throw new ForgeFailure('Describe one subject in at least 3 characters.', 'invalid_prompt');
 	}
-	const result = (await http({
+	const result = (await send(http, {
 		method: 'POST',
 		url: `${baseUrl}/api/forge`,
 		headers: { 'x-forge-client': handle },
@@ -66,6 +99,7 @@ export async function submitForge(
 		json: true,
 		timeout: 90000,
 	})) as ForgeSubmission & { error?: string; message?: string };
+	if (result.error === 'sign_in_required') throw new ForgeFailure(SIGN_IN_MESSAGE, 'sign_in_required');
 	if (result.error) throw new ForgeFailure(result.message || result.error, result.error);
 	const cached = result.status === 'done' && Boolean(result.glb_url);
 	if (!cached && !result.job_id) throw new ForgeFailure('Forge returned no job id.', 'no_job');
@@ -122,10 +156,10 @@ export async function pollForge(
 			failure = error;
 		}
 		if (!job) {
-			const status =
-				(failure as { httpCode?: string })?.httpCode ??
-				String((failure as { statusCode?: number })?.statusCode ?? '');
-			if (['502', '503', '504'].includes(status)) {
+			const account = accountFailure(failure);
+			if (account) throw account;
+			const status = httpStatusOf(failure);
+			if (status === 502 || status === 503 || status === 504) {
 				await sleep(POLL_INTERVAL_MS);
 				continue;
 			}
@@ -152,7 +186,7 @@ export async function callMcpTool(
 	tool: string,
 	args: Record<string, unknown>,
 ): Promise<McpCallResult> {
-	const response = (await http({
+	const response = (await send(http, {
 		method: 'POST',
 		url: `${baseUrl}/api/mcp-studio`,
 		headers: { accept: 'application/json, text/event-stream' },
@@ -162,5 +196,7 @@ export async function callMcpTool(
 	})) as { result?: McpCallResult; error?: { code: number; message: string } };
 	if (response.error) throw new ForgeFailure(response.error.message, `mcp_${response.error.code}`);
 	if (!response.result) throw new ForgeFailure('The MCP server returned no result.', 'mcp_empty');
+	const structured = response.result.structuredContent as { status?: string } | undefined;
+	if (structured?.status === 'sign_in_required') throw new ForgeFailure(SIGN_IN_MESSAGE, 'sign_in_required');
 	return response.result;
 }

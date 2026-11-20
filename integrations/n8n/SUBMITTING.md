@@ -6,6 +6,10 @@
 
 Live run of the built `dist/nodes/ThreeWs/forge.js` against production: submit then resolve for "a small wooden chair" returned `https://three.ws/cdn/forge/0f0944390b17/f65f5ace-26cc-4e42-97ef-f081fb7f49a5.glb`, and `search_catalog` on `/api/mcp-studio` returned `24 matches for "chair"`.
 
+## 0.2.0 (2026-11-20)
+
+Adds the required three.ws API credential (`credentials/ThreeWsApi.credentials.ts`), since making a model now needs an account. `npm test` 13 passed, `npm run build` successful, `npx eslint credentials nodes` 0 errors and the same 1 warning. The live sign_in_required answers are verified after the account gate is deployed to production.
+
 ## Owner decision
 
 Verified-node status needs publishing through a GitHub Actions workflow with npm provenance, and this repo does not use GitHub Actions (CLAUDE.md). Two paths:
