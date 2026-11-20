@@ -11,6 +11,9 @@ const SERVER_PATH: &str = "node_modules/@three-ws/mcp-server/src/index.js";
 
 #[derive(Debug, Deserialize, JsonSchema)]
 struct ThreeWsSettings {
+    /// three.ws API key from https://three.ws/dashboard/api-keys. Making or rigging a model needs one (a free account is enough).
+    #[serde(default)]
+    api_key: Option<String>,
     /// Base URL of the three.ws API the tools call. Leave empty for https://three.ws.
     #[serde(default)]
     base_url: Option<String>,
@@ -40,10 +43,13 @@ impl zed::Extension for ThreeWsExtension {
         let settings = ContextServerSettings::for_project("three-ws", project)?;
         let parsed: ThreeWsSettings = match settings.settings {
             Some(value) => serde_json::from_value(value).map_err(|e| e.to_string())?,
-            None => ThreeWsSettings { base_url: None, payment_address: None },
+            None => ThreeWsSettings { api_key: None, base_url: None, payment_address: None },
         };
 
         let mut server_env = Vec::new();
+        if let Some(key) = parsed.api_key.map(|v| v.trim().to_string()).filter(|v| !v.is_empty()) {
+            server_env.push(("THREE_WS_API_KEY".to_string(), key));
+        }
         if let Some(base) = parsed.base_url.filter(|v| !v.trim().is_empty()) {
             server_env.push(("THREEWS_BASE_URL".to_string(), base));
         }

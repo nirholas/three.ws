@@ -1,5 +1,8 @@
 {
-  // Optional. Leave both empty to use the free tools on https://three.ws.
+  // Needed to make or rig a model: a three.ws API key from
+  // https://three.ws/dashboard/api-keys (a free account is enough).
+  "api_key": "",
+  // Optional. Leave empty to use https://three.ws.
   "base_url": "",
   "payment_address": ""
 }
