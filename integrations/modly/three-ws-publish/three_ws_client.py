@@ -20,12 +20,15 @@ Public contract this wraps
 * ``POST /api/avatars/presign``  ``{size_bytes, content_type, checksum_sha256}``  → presigned PUT (large GLBs)
 * ``POST /api/avatars``          ``{name, storage_key, size_bytes, ...}``        → the saved avatar
 
-Text-to-3D generation is auth-free (IP rate-limited, scoped to an anonymous
-client handle). The geometry path (Meshy/Tripo) is BYOK: pass ``provider_key``
-and it travels as the ``x-forge-provider-key`` header. Two calls need a three.ws
-API key from three.ws/dashboard/api-keys: uploading a photo for image-to-3D
-(``upload_image``; pass ``api_key`` or set ``THREE_WS_API_KEY``), and publishing
-a GLB into an account (``publish_glb``, which needs the ``avatars:write`` scope).
+Making or uploading anything needs a free three.ws account: text-to-3D,
+image-to-3D, photo and mesh uploads, rigging and remeshing all answer 401
+``sign_in_required`` to an anonymous caller. Create an API key at
+three.ws/dashboard/api-keys and pass ``api_key`` or set ``THREE_WS_API_KEY``;
+the client then sends it as ``Authorization: Bearer <key>`` on every request.
+Publishing a GLB into the account (``publish_glb``) also needs the key's
+``avatars:write`` scope. Polling a job and reading the catalog stay open. The
+geometry path (Meshy/Tripo) is BYOK on top of that: pass ``provider_key`` and it
+travels as the ``x-forge-provider-key`` header.
 
 This file is vendored byte-for-byte into each plugin package; the canonical copy
 lives at ``integrations/_pyclient/three_ws_client.py`` and a drift test keeps the
@@ -138,9 +141,10 @@ class ThreeWSClient:
     ----------
     base_url:       deployment origin (default ``https://three.ws``).
     provider_key:   optional Meshy/Tripo key for the BYOK geometry path.
-    api_key:        three.ws API key, sent only on photo uploads (which need an
-                    account). Defaults to the ``THREE_WS_API_KEY`` environment
-                    variable; pass ``""`` to send none.
+    api_key:        three.ws API key, sent as a bearer on every request. Making
+                    or uploading anything needs one. Defaults to the
+                    ``THREE_WS_API_KEY`` environment variable; pass ``""`` to
+                    send none.
     client_handle:  anonymous handle that scopes creations; generated if omitted.
     timeout:        per-request timeout in seconds.
     """
@@ -172,9 +176,25 @@ class ThreeWSClient:
         }
         if self.provider_key:
             headers["x-forge-provider-key"] = self.provider_key
+        if self.api_key:
+            headers["authorization"] = f"Bearer {self.api_key}"
         if extra:
             headers.update(extra)
         return headers
+
+    def _sign_in_error(self, exc: ThreeWSError, sent_key: bool) -> ThreeWSError:
+        """Turn a 401 into a message that says exactly what to set."""
+        if sent_key:
+            message = (
+                "Your three.ws API key was refused. Check it at "
+                f"{self.base_url}/dashboard/api-keys."
+            )
+        else:
+            message = (
+                "Making or uploading on three.ws needs a free account. Create an API key at "
+                f"{self.base_url}/dashboard/api-keys and set THREE_WS_API_KEY (or pass api_key)."
+            )
+        return ThreeWSError(message, code=exc.code or "sign_in_required", status=401)
 
     def _request(
         self,
@@ -201,11 +221,14 @@ class ThreeWSClient:
         except urllib.error.HTTPError as exc:
             payload = exc.read()
             parsed = _safe_json(payload)
-            raise ThreeWSError(
+            err = ThreeWSError(
                 parsed.get("message") or parsed.get("error") or f"HTTP {exc.code}",
                 code=parsed.get("error", ""),
                 status=exc.code,
-            ) from exc
+            )
+            if exc.code == 401:
+                raise self._sign_in_error(err, "authorization" in merged) from exc
+            raise err from exc
         except urllib.error.URLError as exc:
             raise ThreeWSError(
                 f"Could not reach {self.base_url}: {exc.reason}",
@@ -224,42 +247,24 @@ class ThreeWSClient:
     def upload_image(self, image_bytes: bytes, content_type: str) -> str:
         """Presign + PUT an image, returning its public URL for image→3D.
 
-        Photo uploads need a three.ws account, so this sends ``api_key`` as a
-        bearer. Without one the server answers ``sign_in_required`` and this
-        raises with how to get a key. Also raises ThreeWSError with actionable
-        guidance if storage is not configured on the deployment (the caller may
-        pass a public URL instead).
+        Uploads need a three.ws account, like every creation call: without
+        ``api_key`` the server answers ``sign_in_required`` and this raises with
+        how to get a key. Also raises ThreeWSError with actionable guidance if
+        storage is not configured on the deployment (the caller may pass a
+        public URL instead).
         """
         if not image_bytes:
             raise ThreeWSError("Image is empty.", code="invalid_size")
         checksum = hashlib.sha256(image_bytes).hexdigest()
-        auth = {"authorization": f"Bearer {self.api_key}"} if self.api_key else None
-        try:
-            presign = self._request(
-                "POST",
-                "/api/forge-upload",
-                body={
-                    "content_type": content_type,
-                    "size_bytes": len(image_bytes),
-                    "checksum_sha256": checksum,
-                },
-                headers=auth,
-            )
-        except ThreeWSError as exc:
-            if exc.status == 401:
-                raise ThreeWSError(
-                    (
-                        "Your three.ws API key was refused. Check it at "
-                        f"{self.base_url}/dashboard/api-keys."
-                        if self.api_key
-                        else "Uploading a photo needs a free three.ws account. Create an API key at "
-                        f"{self.base_url}/dashboard/api-keys and set THREE_WS_API_KEY (or pass api_key). "
-                        "Text-to-3D works without one."
-                    ),
-                    code=exc.code or "sign_in_required",
-                    status=401,
-                ) from exc
-            raise
+        presign = self._request(
+            "POST",
+            "/api/forge-upload",
+            body={
+                "content_type": content_type,
+                "size_bytes": len(image_bytes),
+                "checksum_sha256": checksum,
+            },
+        )
         return self._put_presigned(presign, image_bytes, content_type, "Image")
 
     def upload_glb(self, glb_bytes: bytes) -> str:
@@ -577,7 +582,7 @@ class ThreeWSClient:
         self,
         glb_bytes: bytes,
         *,
-        api_key: str,
+        api_key: Optional[str] = None,
         name: str,
         description: str = "",
         visibility: str = "private",
@@ -589,9 +594,10 @@ class ThreeWSClient:
         The returned dict is the ``avatar`` object from ``POST /api/avatars``
         (``id``, ``name``, ``slug``, ``visibility``, ...). Its page lives at
         ``avatar_page_url(avatar)``. Static meshes are auto-rigged server-side
-        when they are humanoid, exactly like a dashboard upload.
+        when they are humanoid, exactly like a dashboard upload. ``api_key``
+        defaults to the client's own key.
         """
-        api_key = (api_key or "").strip()
+        api_key = (api_key or self.api_key or "").strip()
         if not api_key:
             raise ThreeWSError(
                 "Publishing needs a three.ws API key with the avatars:write scope. "

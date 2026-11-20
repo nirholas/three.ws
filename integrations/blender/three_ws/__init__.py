@@ -80,6 +80,14 @@ class ThreeWSPreferences(AddonPreferences):
         description="three.ws deployment origin",
         default=DEFAULT_BASE_URL,
     )
+    api_key: StringProperty(
+        name="three.ws API key",
+        description="Your three.ws API key. Making a model needs a free account: "
+        "create a key at three.ws/dashboard/api-keys. Leave blank to use the "
+        "THREE_WS_API_KEY environment variable.",
+        default="",
+        subtype="PASSWORD",
+    )
     provider_key: StringProperty(
         name="Provider API key",
         description="Optional Meshy/Tripo key for the geometry path (BYOK). "
@@ -91,16 +99,41 @@ class ThreeWSPreferences(AddonPreferences):
     def draw(self, context):
         layout = self.layout
         layout.prop(self, "api_url")
+        layout.prop(self, "api_key")
+        if not _api_key(self):
+            col = layout.column(align=True)
+            col.alert = True
+            col.label(text="Making a model needs a free three.ws account.", icon="ERROR")
+            col.label(text="Create an API key at three.ws/dashboard/api-keys and paste it above.")
         layout.prop(self, "provider_key")
         layout.label(
-            text="The image path is free. A provider key is only needed for the "
-            "Meshy/Tripo geometry backends.",
+            text="The image path costs nothing beyond your account. A provider key is "
+            "only needed for the Meshy/Tripo geometry backends.",
             icon="INFO",
         )
 
 
 def _prefs(context):
     return context.preferences.addons[__package__].preferences
+
+
+def _api_key(prefs):
+    """The key to send: the preference, else the THREE_WS_API_KEY environment variable."""
+    return (prefs.api_key or "").strip() or os.environ.get("THREE_WS_API_KEY", "").strip()
+
+
+def _client(prefs):
+    return ThreeWSClient(
+        prefs.api_url,
+        provider_key=prefs.provider_key or None,
+        api_key=_api_key(prefs),
+    )
+
+
+_NO_KEY = (
+    "Making a model needs a free three.ws account. Create an API key at "
+    "three.ws/dashboard/api-keys and paste it in Edit > Preferences > Add-ons > three.ws."
+)
 
 
 # -- scene properties ---------------------------------------------------------
@@ -244,7 +277,11 @@ class THREEWS_OT_generate(Operator):
                 self.report({"ERROR"}, str(exc))
                 return {"CANCELLED"}
 
-        client = ThreeWSClient(prefs.api_url, provider_key=prefs.provider_key or None)
+        if not _api_key(prefs):
+            self.report({"ERROR"}, f"three.ws: {_NO_KEY}")
+            return {"CANCELLED"}
+
+        client = _client(prefs)
         dest_path = os.path.join(tempfile.gettempdir(), f"three-ws-{os.getpid()}-{id(self)}.glb")
 
         self._events = queue.Queue()
@@ -367,7 +404,7 @@ class THREEWS_OT_check_catalog(Operator):
         if _refuse_if_offline(self):
             return {"CANCELLED"}
         prefs = _prefs(context)
-        client = ThreeWSClient(prefs.api_url, provider_key=prefs.provider_key or None)
+        client = _client(prefs)
         try:
             catalog = client.get_catalog()
         except ThreeWSError as exc:
@@ -402,6 +439,16 @@ class THREEWS_PT_panel(Panel):
             if not bpy.app.online_access_override:
                 op = box.operator("screen.userpref_show", text="Open Preferences", icon="PREFERENCES")
                 op.section = "SYSTEM"
+
+        if not _api_key(_prefs(context)):
+            box = layout.box()
+            box.alert = True
+            col = box.column(align=True)
+            col.label(text="Add your three.ws API key", icon="KEY_HLT")
+            for line in _wrap(_NO_KEY, 34):
+                col.label(text=line)
+            op = box.operator("preferences.addon_show", text="Open add-on preferences", icon="PREFERENCES")
+            op.module = __package__
 
         layout.prop(props, "mode", expand=True)
         if props.mode == "text":

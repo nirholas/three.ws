@@ -1,7 +1,7 @@
 """Tests for the shared three.ws Forge client.
 
-Runs a real in-process HTTP server that mimics the Forge contract — no live
-network — so the submit/upload/poll/download paths and error handling are all
+Runs a real in-process HTTP server that mimics the Forge contract (no live
+network), including its account gate, so the submit/upload/poll/download paths and error handling are all
 exercised end to end. Run with:  ``python -m pytest integrations/_pyclient``
 or directly:  ``python integrations/_pyclient/test_three_ws_client.py``.
 """
@@ -94,9 +94,17 @@ class _Handler(BaseHTTPRequestHandler):
                 "expires_in": 300,
             })
         if parsed.path == "/api/forge":
+            # Mirrors api/forge.js: making a model needs an account.
+            state["last_submit_auth"] = self.headers.get("authorization")
+            if state.get("refuse_keys") or not (state["last_submit_auth"] or "").startswith("Bearer "):
+                return self._send(401, {
+                    "error": "sign_in_required",
+                    "message": "Sign in to make a 3D model. A three.ws account is free.",
+                    "sign_in_url": "/login",
+                    "api_keys_url": "/dashboard/api-keys",
+                })
             state["last_submit"] = body
             state["last_provider_key"] = self.headers.get("x-forge-provider-key")
-            state["last_submit_auth"] = self.headers.get("authorization")
             forced = state.get("submit_error")
             if forced:
                 return self._send(200, forced)
@@ -185,12 +193,30 @@ class ForgeClientTest(unittest.TestCase):
                 os.environ["THREE_WS_API_KEY"] = old
         self.assertEqual(self.server.state["upload_auth"], "Bearer sk_from_env")
 
-    def test_text_to_3d_sends_no_key(self):
+    def test_text_to_3d_sends_the_api_key_as_a_bearer(self):
         self.client.generate_text_to_3d("a weathered bronze astrolabe", poll_timeout=10)
-        self.assertIsNone(self.server.state.get("last_submit_auth"))
+        self.assertEqual(self.server.state["last_submit_auth"], "Bearer sk_test_upload")
+
+    def test_text_to_3d_without_a_key_explains_how_to_get_one(self):
+        client = ThreeWSClient(self.base, client_handle="h", api_key="")
+        with self.assertRaises(ThreeWSError) as ctx:
+            client.submit_text_to_3d("a weathered bronze astrolabe")
+        self.assertEqual(ctx.exception.code, "sign_in_required")
+        self.assertEqual(ctx.exception.status, 401)
+        self.assertIn("THREE_WS_API_KEY", ctx.exception.message)
+        self.assertIn("/dashboard/api-keys", ctx.exception.message)
+        self.assertNotIn("without one", ctx.exception.message)
+        self.assertNotIn("last_submit", self.server.state)
+
+    def test_a_refused_key_says_so(self):
+        self.server.state["refuse_keys"] = True
+        with self.assertRaises(ThreeWSError) as ctx:
+            self.client.submit_text_to_3d("a weathered bronze astrolabe")
+        self.assertEqual(ctx.exception.status, 401)
+        self.assertIn("API key was refused", ctx.exception.message)
 
     def test_provider_key_header(self):
-        client = ThreeWSClient(self.base, provider_key="secret-key", client_handle="h")
+        client = ThreeWSClient(self.base, provider_key="secret-key", client_handle="h", api_key="sk_test_upload")
         client.submit_text_to_3d("a red ceramic teapot", backend="tripo")
         self.assertEqual(self.server.state["last_provider_key"], "secret-key")
 
@@ -324,6 +350,13 @@ class PublishTest(unittest.TestCase):
             self.client.publish_glb(_glb(), api_key="sk_live_wrong", name="x")
         self.assertEqual(ctx.exception.status, 401)
         self.assertEqual(ctx.exception.code, "unauthorized")
+        self.assertIn("API key was refused", ctx.exception.message)
+
+    def test_publish_defaults_to_the_client_key(self):
+        client = ThreeWSClient(self.base, client_handle="h", api_key="sk_live_test")
+        avatar = client.publish_glb(_glb(), name="Keyed")
+        self.assertEqual(avatar["id"], "av_1")
+        self.assertEqual(self.server.state["auth"], ["Bearer sk_live_test", "Bearer sk_live_test"])
 
     def test_helpers(self):
         self.assertTrue(is_glb(_glb()))
@@ -362,6 +395,10 @@ class _MeshOpsHandler(BaseHTTPRequestHandler):
         qs = urllib.parse.parse_qs(parsed.query)
         body = self._read_body()
         host = f"http://127.0.0.1:{self.server.server_address[1]}"
+        # Uploads, rigging and remeshing all need an account.
+        if not (self.headers.get("authorization") or "").startswith("Bearer "):
+            state["refused"] = parsed.path
+            return self._send(401, {"error": "sign_in_required", "message": "Sign in to rig a 3D model."})
         if parsed.path == "/api/scene-glb-upload":
             state["presign_body"] = body
             return self._send(200, {
@@ -419,7 +456,8 @@ class MeshOpsTest(unittest.TestCase):
         self.server.state = {}
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
-        self.client = ThreeWSClient(f"http://127.0.0.1:{self.server.server_address[1]}")
+        self.base = f"http://127.0.0.1:{self.server.server_address[1]}"
+        self.client = ThreeWSClient(self.base, api_key="sk_test_mesh")
         self.no_sleep = {"_sleep": lambda _s: None}
 
     def tearDown(self):
@@ -458,6 +496,14 @@ class MeshOpsTest(unittest.TestCase):
             self.client.rig("https://cdn.example/static.glb", **self.no_sleep)
         self.assertEqual(ctx.exception.code, "rig_unconfigured")
         self.assertEqual(ctx.exception.status, 501)
+
+    def test_rig_without_a_key_explains_how_to_get_one(self):
+        client = ThreeWSClient(self.base, api_key="")
+        with self.assertRaises(ThreeWSError) as ctx:
+            client.submit_rig("https://cdn.example/static.glb")
+        self.assertEqual(ctx.exception.code, "sign_in_required")
+        self.assertIn("THREE_WS_API_KEY", ctx.exception.message)
+        self.assertEqual(self.server.state["refused"], "/api/forge")
 
     def test_rig_requires_https_url(self):
         with self.assertRaises(ThreeWSError) as ctx:
@@ -522,7 +568,7 @@ class CachedSubmitTest(unittest.TestCase):
     def setUp(self):
         self.server = HTTPServer(("127.0.0.1", 0), _CachedHandler)
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
-        self.client = ThreeWSClient(f"http://127.0.0.1:{self.server.server_address[1]}", client_handle="t")
+        self.client = ThreeWSClient(f"http://127.0.0.1:{self.server.server_address[1]}", client_handle="t", api_key="sk_test_cache")
 
     def tearDown(self):
         self.server.shutdown()

@@ -7,9 +7,11 @@ Two nodes drive the public three.ws Forge pipeline:
 
 Each submits a real generation job, polls to completion, and downloads the GLB
 into ComfyUI's output directory. The ``glb_path`` STRING output can feed any 3D
-node (e.g. ComfyUI-3D-Pack viewers/savers). Generation is free on the image
-pipeline (FLUX→TRELLIS); the geometry pipeline (Meshy/Tripo) uses your own
-provider key.
+node (e.g. ComfyUI-3D-Pack viewers/savers). Making a model needs a free three.ws
+account: set the ``THREE_WS_API_KEY`` environment variable before starting
+ComfyUI (recommended), or fill the optional ``api_key`` input. The image pipeline
+(FLUX→TRELLIS) needs nothing more; the geometry pipeline (Meshy/Tripo) also uses
+your own provider key.
 
 Caching: ComfyUI re-runs a node only when its inputs change, so an identical
 prompt+settings returns the cached GLB instead of re-generating. Change any
@@ -56,10 +58,24 @@ def _progress_reporter():
         return lambda status, elapsed: None
 
 
-def _client(api_url, provider_key):
+# A widget value is saved into the workflow, and ComfyUI embeds the workflow in
+# every PNG it writes, so the environment variable is the safer home for a key.
+_API_KEY_INPUT = (
+    "STRING",
+    {
+        "default": "",
+        "tooltip": "three.ws API key from three.ws/dashboard/api-keys. Making a model "
+        "needs a free account. Leave blank to use the THREE_WS_API_KEY environment "
+        "variable, which keeps the key out of saved workflows and output images.",
+    },
+)
+
+
+def _client(api_url, provider_key, api_key=""):
     return ThreeWSClient(
         (api_url or DEFAULT_BASE_URL).strip(),
         provider_key=(provider_key or "").strip() or None,
+        api_key=(api_key or "").strip() or None,
     )
 
 
@@ -89,11 +105,12 @@ class ThreeWSTextTo3D:
             "optional": {
                 "api_url": ("STRING", {"default": DEFAULT_BASE_URL}),
                 "provider_key": ("STRING", {"default": ""}),
+                "api_key": _API_KEY_INPUT,
             },
         }
 
-    def generate(self, prompt, tier, pipeline, backend, aspect_ratio, api_url="", provider_key=""):
-        client = _client(api_url, provider_key)
+    def generate(self, prompt, tier, pipeline, backend, aspect_ratio, api_url="", provider_key="", api_key=""):
+        client = _client(api_url, provider_key, api_key)
         dest = _dest("text3d", f"{prompt}|{tier}|{pipeline}|{backend}|{aspect_ratio}|{api_url}")
         if os.path.isfile(dest):
             return (dest, "cached")
@@ -130,12 +147,13 @@ class ThreeWSImageTo3D:
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
                 "api_url": ("STRING", {"default": DEFAULT_BASE_URL}),
                 "provider_key": ("STRING", {"default": ""}),
+                "api_key": _API_KEY_INPUT,
             },
         }
 
-    def generate(self, image, tier, pipeline, backend, prompt="", api_url="", provider_key=""):
+    def generate(self, image, tier, pipeline, backend, prompt="", api_url="", provider_key="", api_key=""):
         png_bytes = _image_tensor_to_png(image)
-        client = _client(api_url, provider_key)
+        client = _client(api_url, provider_key, api_key)
         key = hashlib.sha256(png_bytes).hexdigest()[:12]
         dest = _dest("image3d", f"{key}|{prompt}|{tier}|{pipeline}|{backend}|{api_url}")
         if os.path.isfile(dest):
