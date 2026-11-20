@@ -30,6 +30,7 @@ export const OAUTH_MCP_PATHS = Object.freeze([
 	'/api/mcp-oracle',
 	'/api/ibm-mcp',
 	'/api/mcp-grok',
+	'/api/mcp-studio',
 ]);
 
 const PLATFORM_PATH = '/api/mcp';

@@ -168,7 +168,8 @@ describe('tokens are bound to the resource they were granted for', () => {
 		expect(canonicalMcpResource(undefined)).toBe(`${ORIGIN}/api/mcp`);
 		expect(canonicalMcpResource('https://evil.example/api/mcp-3d')).toBeNull();
 		expect(canonicalMcpResource('/api/mcp-3d')).toBeNull();
-		expect(canonicalMcpResource(`${ORIGIN}/api/mcp-studio`)).toBeNull();
+		// A path on this origin that names no hosted OAuth server is not a resource.
+		expect(canonicalMcpResource(`${ORIGIN}/api/mcp-not-a-server`)).toBeNull();
 		expect(acceptedAudiences(`${ORIGIN}/api/mcp-bazaar`)).toEqual([`${ORIGIN}/api/mcp-bazaar`, `${ORIGIN}/api/mcp`]);
 	});
 });

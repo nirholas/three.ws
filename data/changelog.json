@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-20",
+			"title": "Signing in to the free 3D Studio connector works in MCP clients",
+			"summary": "Making a model on the free 3D Studio MCP server (/api/mcp-studio) needs a free three.ws account, but its sign-in pointed MCP clients at the wrong protected resource, so clients built on the MCP SDK stopped before the sign-in page with \"Protected resource does not match expected\". The studio is now its own OAuth resource: its sign-in challenge, its protected-resource metadata and the tokens the authorization server mints all name /api/mcp-studio, so connectors such as Grok Bot and IBM Bob reach consent and come back signed in. Existing platform tokens keep working.",
+			"tags": [
+				"fix"
+			],
+			"link": "/docs/mcp-studio"
+		},
+		{
+			"date": "2026-11-20",
 			"title": "Model review moved off the website, and flagged evidence cannot be deleted by accident",
 			"summary": "The internal review boards for held 3D models and for the Forge quality judge are gone from the public server: there is no admin page or admin endpoint left that can approve, label or delete a model. Operators review from their own workstation with signed-in command line tools instead (npm run forge:safety and npm run forge:judge). The takedown tool now refuses to delete any model the safety screen flagged as possible child abuse material until the legal report has been filed and recorded, so the evidence is preserved.",
 			"tags": [
