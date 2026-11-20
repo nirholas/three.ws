@@ -65,6 +65,6 @@ describe('export-plugin-repo refuses a Cursor plugin the validator rejects', () 
 		unlinkSync(join(src, 'assets/logo.svg'));
 		const out = join(TMP, 'broken-out');
 		expect(() => exportPluginRepo({ src, out, log: quiet })).toThrow(/validate-cursor-plugin[\s\S]*logo "assets\/logo\.svg" does not exist/);
-		expect(existsSync(join(out, '.git'))).toBe(false);
+		expect(existsSync(out)).toBe(false);
 	});
 });

@@ -228,6 +228,10 @@ export function exportPluginRepo({ src, out, grokBin = null, log = console.log }
 
 	const srcProblems = validatePluginTree(SRC);
 	if (srcProblems.length) throw new Error(`plugin source is invalid:\n  ${srcProblems.join('\n  ')}`);
+	if (existsSync(join(SRC, '.cursor-plugin/plugin.json'))) {
+		const cursor = validateCursorPlugin(SRC);
+		if (!cursor.ok) throw new Error(`plugin source fails validate-cursor-plugin:\n  ${cursor.errors.join('\n  ')}`);
+	}
 	const { manifest, path: manifestPath } = findManifest(SRC);
 	const repoUrl = String(manifest.repository || 'https://github.com/nirholas/three.ws').replace(/\.git$/, '').replace(/\/$/, '');
 
