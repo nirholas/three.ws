@@ -102,9 +102,9 @@ its signed-in owner publishes it, which runs a content check first.
 
 ### Free-tier limits (stated honestly)
 
-The free lane is the **draft / NIM tier only**. Be realistic about what it is:
+The free lane is the **draft tier only**. Be realistic about what it is:
 
-- **Draft fidelity.** Geometry is a fast draft (NVIDIA NIM TRELLIS), not a
+- **Draft fidelity.** Geometry is a fast draft (Microsoft TRELLIS, served by NVIDIA NIM when available and otherwise by our own GPU worker), not a
   production, high-polygon, PBR-textured mesh. Good for prototyping, greyboxing,
   placeholders, and single objects.
 - **One subject per prompt.** Describe a single object (`"a small ceramic robot
@@ -418,8 +418,10 @@ tier at deploy time without touching settlement.
    # → { "status": "done", "glb_url": "https://<object-store>/forge/<hash>/<id>.glb", … }
    ```
 
-   A draft prompt often finishes inside the submit window and comes back inline with
-   `status: "done"` and the `glb_url` already set — no polling needed.
+   A synchronous lane can finish inside the submit call and return `status: "done"`
+   with the `glb_url` already set. Jobs on our own GPU worker return a queued handle
+   within seconds instead, so always be ready to poll. A cold worker boot can add
+   several minutes; honor `retry-after` and the `etaSeconds` hint.
 
 ### Payment & fairness
 

@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Free text to 3D tells the truth about its lane and its wait</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-20:Free text to 3D tells the truth about its lane and its wait</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The free text to 3D draft lane now says which engine really runs your job (Microsoft TRELLIS on NVIDIA NIM when available, otherwise our own GPU worker) in the API, the MCP server instructions and the docs. The time estimate for a cold GPU worker now reflects the measured boot of several minutes instead of under a minute, and the docs no longer promise a 240 second inline wait: a job on our own GPU returns a queued handle within seconds, so poll it.</description>
+		</item>
+		<item>
 			<title>Hunyuan3D textured models load again</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-20:Hunyuan3D textured models load again</guid>

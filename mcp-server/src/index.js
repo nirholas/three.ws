@@ -63,7 +63,7 @@ const SERVER_INSTRUCTIONS =
 	'MCP tools from three.ws. Most are paid: each quotes its USDC price in its description, and a call ' +
 	'without an x402 payment payload in _meta returns a PaymentRequired structuredContent (v2 MCP ' +
 	'transport spec). FOUR tools need no payment or wallet: forge_free generates a textured 3D GLB from a ' +
-	'text prompt on the free NVIDIA NIM (Microsoft TRELLIS) lane and returns a GLB URL plus a three.ws ' +
+	'text prompt on the free Microsoft TRELLIS lane (NVIDIA NIM when available, otherwise our own GPU worker) and returns a GLB URL plus a three.ws ' +
 	'viewer link, so use it for zero-cost text to 3D, and the crypto-news trio: ' +
 	'crypto_news (live headlines from 197 publisher feeds, filterable by category/source/language/search, ' +
 	'fully free), crypto_news_digest (the last 1–72h clustered into distinct narratives with stance, ' +

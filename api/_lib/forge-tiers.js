@@ -293,7 +293,10 @@ export const BACKENDS = Object.freeze({
 		// Cold-start budget for our own scale-to-zero Cloud Run GPU worker — added to
 		// the ETA only when the liveness probe reports the worker cold, so a user
 		// waiting on a spin-up sees an honest estimate rather than a stalled bar.
-		coldStartSeconds: 60,
+		// Measured 2026-11-20: a cold model-trellis boot (weights load from the
+		// gcsfuse bucket, then the first generation) took about 8.5 minutes, not the
+		// 60s this once claimed. The ETA widens by this only when the probe says cold.
+		coldStartSeconds: 510,
 		credits: null,
 		// Self-hosted on our own GPU — zero vendor credit cost, so it qualifies as a
 		// free lane and is the preferred free image→3D engine when configured.

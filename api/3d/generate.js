@@ -59,7 +59,7 @@ const JOB_HANDLE_RE = /^[A-Za-z0-9._-]{8,1024}$/;
 // quality tiers → rigged, animation-ready avatars. Not a paywall — a doorway.
 const UPGRADE = Object.freeze({
 	message:
-		'This is the free draft tier (NVIDIA NIM TRELLIS): single-subject, draft-fidelity geometry, no rigging. ' +
+		'This is the free draft tier (Microsoft TRELLIS, on NVIDIA NIM when available, otherwise on our own GPU worker): single-subject, draft-fidelity geometry, no rigging. ' +
 		'For higher polygon budgets + PBR textures use paid Forge Pro; for animation-ready rigged characters use Rigged Avatars.',
 	forgePro: '/api/x402/forge',
 	riggedAvatars: '/api/forge?action=rig',
@@ -305,10 +305,13 @@ async function generate(req, res) {
 	const base = originFromReq(req);
 	let job;
 	try {
-		// Pin the free draft lane exactly: NVIDIA NIM TRELLIS, image path, draft tier.
-		// Wide submit window (240s vs the 90s default): when NIM is degraded the
-		// draft falls to the blocking HF Spaces lane, whose queue + inference can
-		// legitimately run past 90s. Consumers of this endpoint poll anyway, so a
+		// Pin the free draft lane: backend 'nvidia' tries NVIDIA NIM TRELLIS first and,
+		// when NIM is cooling down or fails, /api/forge degrades to our own GPU TRELLIS
+		// worker (job token prefix p:gcp), then HuggingFace Spaces. Image path, draft tier.
+		// The 240s is the max time /api/forge may take to ACCEPT the job (vs the 90s
+		// default), not a promise to wait for completion: GPU-worker lanes hand back a
+		// queued handle within seconds, only blocking lanes (NIM, HF) finish inline, and
+		// the HF queue + inference can legitimately run past 90s. Consumers of this endpoint poll anyway, so a
 		// slower inline completion strictly beats aborting the self-call at 90s,
 		// 503ing the caller, and finishing the GPU work for nobody (the 2026-07-18
 		// lane_timeout window: every one of those 503s was exactly 90s old).
@@ -425,8 +428,8 @@ export default wrap(async (req, res) => {
 	return poll(req, res, jobId, title);
 });
 
-// The free NIM draft often finishes inside the submit window; startForge waits
-// up to 240s for that inline completion (wide enough for the blocking HF
-// fallback lane's queue). Give the function headroom beyond that window so a
+// A blocking free lane (NIM, HuggingFace) can finish inside the submit window,
+// which startForge holds open for up to 240s. GPU-worker lanes answer with a
+// queued handle in seconds instead, and the caller polls. Give the function headroom beyond that window so a
 // slow draft returns done in one call instead of a gateway timeout.
 export const config = { maxDuration: 300 };

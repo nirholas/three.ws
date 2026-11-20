@@ -1,14 +1,25 @@
 {
-	"generated_at": "2026-11-20T19:11:11.584Z",
+	"generated_at": "2026-11-20T19:13:34.472Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4656,
+	"total": 4657,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "Free text to 3D tells the truth about its lane and its wait",
+			"summary": "The free text to 3D draft lane now says which engine really runs your job (Microsoft TRELLIS on NVIDIA NIM when available, otherwise our own GPU worker) in the API, the MCP server instructions and the docs. The time estimate for a cold GPU worker now reflects the measured boot of several minutes instead of under a minute, and the docs no longer promise a 240 second inline wait: a job on our own GPU returns a queued handle within seconds, so poll it.",
+			"link": null,
+			"tags": [
+				"fix",
+				"docs"
+			]
+		},
 		{
 			"date": "2026-11-20",
 			"type": "update",
@@ -1538,17 +1549,6 @@
 			"tags": [
 				"security",
 				"feature"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "update",
-			"title": "An accessibility statement, a full WCAG 2.2 AA conformance report, and fixes for every serious barrier found",
-			"summary": "three.ws now publishes an accessibility statement at /accessibility. It sets out our commitment, rates the site against WCAG 2.2 Level AA, lists the known gaps with a workaround for each, and tells you how to report a barrier. Behind it is a conformance report in the VPAT 2.x format covering all 56 Level A and AA criteria. Every core page was checked with axe in both themes at desktop and phone width, walked with the keyboard alone, read with the Orca screen reader, zoomed to 400% and viewed in forced colours. All 104 serious or critical issues found are fixed. Among them: 3D views now have names and keyboard orbit, collapsed menus no longer swallow focus, every search field and sign-in field shows a clear focus ring, the home desktop and agent embeds have a main landmark, and invisible controls no longer take focus.",
-			"link": "/accessibility",
-			"tags": [
-				"feature",
-				"improvement"
 			]
 		}
 	]

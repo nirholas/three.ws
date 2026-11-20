@@ -344,6 +344,27 @@ describe('POST /api/3d/generate — response contract', () => {
 		});
 	});
 
+	it('upgrade note names the lane honestly: NIM only when available, own GPU worker otherwise', async () => {
+		globalThis.fetch = vi.fn(async () => jsonResponse(SUBMIT_DONE));
+		const { body } = await dispatch(
+			makeReq({ body: { prompt: 'a small ceramic robot figurine' } }),
+			makeRes(),
+		);
+		const note = JSON.stringify(body);
+		expect(note).not.toMatch(/\(NVIDIA NIM TRELLIS\)/);
+		expect(note).toMatch(/TRELLIS/);
+		expect(note).toMatch(/our own GPU/i);
+	});
+
+	it('cold-start ETA budget for the TRELLIS worker reflects the measured multi-minute boot', async () => {
+		const { estimateEtaSeconds, coldStartSecondsFor } = await import('../../api/_lib/forge-tiers.js');
+		expect(coldStartSecondsFor('trellis_selfhost')).toBeGreaterThanOrEqual(300);
+		const warm = estimateEtaSeconds({ backendId: 'trellis_selfhost', tier: 'draft' });
+		const cold = estimateEtaSeconds({ backendId: 'trellis_selfhost', tier: 'draft', cold: true });
+		expect(warm).toBe(36);
+		expect(cold).toBeGreaterThanOrEqual(300);
+	});
+
 	it('returns { status: pending, job, poll } when the lane queues the job, carrying the AR title', async () => {
 		globalThis.fetch = vi.fn(async () => jsonResponse(SUBMIT_QUEUED));
 		const { res, body } = await dispatch(
