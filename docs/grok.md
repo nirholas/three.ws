@@ -199,17 +199,26 @@ Save it as `.mcp.json` at the project root, start `grok` there, and type
 `/mcps` to see the server connected. The `?auth=oauth` URL signs it in to your
 free three.ws account on first connect, which making a model needs.
 
-For the skills too, install the three.ws plugin for Grok Build,
-[integrations/grok/three-ws](../integrations/grok/three-ws/README.md). It
-bundles the same server with six skills (text to 3D, avatars, rigging, the
-asset catalog, 3D cutaways, embedding) and a `three-ws-tour` command, and it
-ships no hooks or scripts. Grok Build loads plugins from `~/.grok/plugins/`:
+For commands, an agent and skills too, install the three.ws plugin for Grok
+Build, [integrations/grok/three-ws](../integrations/grok/three-ws/README.md).
+It connects the studio server (`https://three.ws/api/mcp-studio?auth=oauth`)
+and adds `/make-3d`, `/rig`, `/embed`, `/three-ws-init` (writes GLB loading and
+key-handling rules into the project's `AGENTS.md`) and `/three-ws-tour`, the
+`three-ws:3d-art-director` agent (generate, render, refine once, stop after two
+iterations), and six skills (text to 3D, avatars, rigging, the asset catalog,
+3D cutaways, embedding). It ships no hooks or scripts. Catalog search is free
+with no account; making or rigging a model needs a free three.ws account, signed
+in from `/mcps` (select `three-ws`, press `i`) or with an API key:
 
 ```bash
-git clone --depth 1 --filter=blob:none --sparse https://github.com/nirholas/three.ws three.ws-src
-git -C three.ws-src sparse-checkout set integrations/grok/three-ws
-mkdir -p ~/.grok/plugins && cp -r three.ws-src/integrations/grok/three-ws ~/.grok/plugins/three-ws
+git clone --depth 1 https://github.com/nirholas/three.ws three.ws-src
+grok plugin install ./three.ws-src/integrations/grok/three-ws --trust
+grok plugin details three-ws
 ```
+
+The plugin README covers sign-in, every command and a troubleshooting table.
+The marketplace listing pins a standalone export of the folder built by
+`scripts/export-plugin-repo.mjs`.
 
 A three.ws plugin installed in Claude Code (`/plugin marketplace add
 nirholas/three.ws`, then `three-ws-3d`) is also read by Grok Build, per the
