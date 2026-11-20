@@ -47,7 +47,7 @@ export const SHADOWED = Object.freeze([
 		tools: ['create_agent_persona', 'get_agent_persona', 'persona_say'],
 		reason:
 			'The paid 3D studio and the free studio each ship the persona tools over the same persona store. ' +
-			'The free copy is keyless and IP rate-limited, so it serves signed-in and anonymous callers alike.',
+			'The free copy reads anonymously, saves a persona for a signed-in account at no charge, and needs no payment.',
 	},
 ]);
 

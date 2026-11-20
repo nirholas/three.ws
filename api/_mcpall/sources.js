@@ -15,6 +15,8 @@
 //                 servers sharing one module share it), and run(args, auth, req)
 //                 executes it with that server's scope check and validation
 //   isPublic(n)   callable with no bearer and no payment on the legacy server
+//   requiresPrincipal(n)  optional: the tool needs a signed-in account, even
+//                 from a caller that paid
 //   x402Amount(n, args)  atomic USDC price for an anonymous paid call, or null
 //   before(n, ctx)       optional quota or rate gate; returns an MCP error
 //                        result (isError) to refuse, or null to proceed
@@ -34,7 +36,8 @@ import { TOOL_CATALOG as AGENT_CATALOG, TOOLS as AGENT_TOOLS } from '../_mcpagen
 import { TOOL_CATALOG as BAZAAR_CATALOG, TOOLS as BAZAAR_TOOLS } from '../_mcpbazaar/catalog.js';
 import { TOOL_CATALOG as IBM_CATALOG, TOOLS as IBM_TOOLS, isFreeTool as isIbmFree } from '../_mcpibm/catalog.js';
 import { graniteX402Amount } from '../_mcpibm/pricing.js';
-import { toolCatalogFor as studioCatalogFor, toolsFor as studioToolsFor } from '../_mcp-studio/dispatch.js';
+import { CREATOR_TOOL_NAMES as STUDIO_CREATOR_TOOLS, toolCatalogFor as studioCatalogFor, toolsFor as studioToolsFor } from '../_mcp-studio/dispatch.js';
+import { creatorForgeAuth, signInToolResult } from '../_mcp/creator-gate.js';
 import { isGenerationTool } from '../_mcp-studio/handler.js';
 import { listPumpFunTools, pumpFunToolEntry } from '../pump-fun-mcp.js';
 
@@ -55,7 +58,7 @@ function rpcError(code, message, data) {
  * scope check, then argument validation, then the handler.
  */
 function runner(entry, name) {
-	return async (args, auth, req) => {
+	return async (args, auth, req, ctx) => {
 		if (entry.scope && !hasScope(auth.scope, entry.scope)) {
 			throw rpcError(-32002, `insufficient scope, requires ${entry.scope}`, { scope: entry.scope });
 		}
@@ -64,7 +67,24 @@ function runner(entry, name) {
 			const detail = first ? `${first.instancePath || '(root)'} ${first.message || 'invalid'}` : 'invalid arguments';
 			throw rpcError(-32602, `invalid params for ${name}: ${detail}`);
 		}
-		return entry.handler(args, auth, req);
+		return entry.handler(args, auth, req, ctx);
+	};
+}
+
+/**
+ * The free studio's call path. Its handlers take a fourth `ctx` argument, and
+ * a tool that creates, rigs or renders a model needs the verified account in
+ * it, which it forwards to the forge so the model belongs to that account
+ * (api/_mcp-studio/dispatch.js onToolCall). A caller with no account (an x402
+ * payer is not one) is refused with the sign-in challenge for /mcp.
+ */
+function studioRunner(entry, name) {
+	const run = runner(entry, name);
+	if (!STUDIO_CREATOR_TOOLS.has(name)) return run;
+	return async (args, auth, req) => {
+		if (!auth?.userId) return signInToolResult(req, { resourcePath: '/mcp' });
+		const account = { userId: auth.userId };
+		return run(args, auth, req, { account, creatorAuth: creatorForgeAuth(account, req) });
 	};
 }
 
@@ -199,20 +219,26 @@ export const SOURCES = [
 				def,
 				scope: null,
 				impl: handlers[def.name]?.handler || null,
-				run: runner(handlers[def.name], def.name),
+				run: studioRunner(handlers[def.name], def.name),
 			}));
 		},
-		// Every free-studio tool is anonymous on its own endpoint.
-		isPublic: () => true,
+		// The studio's reads (job status, catalog, docs) are anonymous on its own
+		// endpoint. The tools that create, rig or render a model need an account
+		// there (api/_mcp-studio/dispatch.js CREATOR_TOOL_NAMES), and here too.
+		isPublic: (name) => !STUDIO_CREATOR_TOOLS.has(name),
+		requiresPrincipal: (name) => STUDIO_CREATOR_TOOLS.has(name),
 		x402Amount: () => null,
-		// The same per-IP generation quota and platform-wide breaker the free
-		// studio endpoint applies, so a second door never doubles the GPU budget.
-		async before(name, { req }) {
+		// The same generation quota and platform-wide breaker the free studio
+		// endpoint applies, keyed on the account (with the source IP pooled across
+		// accounts), so a second door never doubles the GPU budget.
+		async before(name, { req, auth }) {
 			if (!isGenerationTool(name)) return null;
 			const ip = clientIp(req);
+			const key = auth?.userId ? `acct:${auth.userId}` : ip;
 			const checks = [
-				[() => limits.studioGenBurst(ip), 'generation rate limit, slow down and try again shortly'],
-				[() => limits.studioGenHourly(ip), 'hourly generation limit reached, try again later'],
+				...(key !== ip ? [[() => limits.studioGenPoolHourly(ip), 'generation limit reached for this network, try again later']] : []),
+				[() => limits.studioGenBurst(key), 'generation rate limit, slow down and try again shortly'],
+				[() => limits.studioGenHourly(key), 'hourly generation limit reached, try again later'],
 				[() => limits.studioGenerateGlobal(), 'the free 3D studio is at capacity right now, please try again later'],
 			];
 			for (const [check, message] of checks) {

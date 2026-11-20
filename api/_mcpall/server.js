@@ -26,6 +26,7 @@ import { handlePromptMethod, PROMPT_CAPABILITIES } from '../_mcp/prompts.js';
 import { PROTOCOL_VERSION, ok, rpcError } from '../_mcp/dispatch.js';
 import { buildRegistry, bootProblems, makeRenamer, renameResult, UNIFIED_SERVER, UNIFIED_RESOURCE_SERVER, UNIFIED_ENDPOINT } from './registry.js';
 import { makeOwnTools } from './own-tools.js';
+import { creatorChallenge } from '../_mcp/creator-gate.js';
 
 export { PROTOCOL_VERSION };
 
@@ -153,10 +154,15 @@ export async function callTool(params, auth, req) {
 	const args = gate.args === sentArgs ? { ...rawArgs } : gate.args;
 
 	if (auth?.source === 'free' && !t.isPublic) {
-		return errorResult(
-			`${name} needs a three.ws account. Sign in through your MCP client (OAuth) or send an API key as a Bearer token. Create one at https://three.ws/settings/api-keys.`,
-			{ ok: false, reason: 'auth_required', tool: name },
-		);
+		// The Apps SDK auth hint rides along, so a host such as ChatGPT can offer
+		// "Connect your account", run OAuth for /mcp and retry the call.
+		return {
+			...errorResult(
+				`${name} needs a three.ws account. Sign in through your MCP client (OAuth) or send an API key as a Bearer token. Create one at https://three.ws/settings/api-keys.`,
+				{ ok: false, reason: 'auth_required', tool: name },
+			),
+			_meta: { 'mcp/www_authenticate': [creatorChallenge(req, { resourcePath: '/mcp', action: `use ${name}` })] },
+		};
 	}
 	if (t.requiresPrincipal && !auth?.userId && auth?.source !== 'x402') {
 		return errorResult(`${name} needs a signed-in account.`, { ok: false, reason: 'auth_required', tool: name });
