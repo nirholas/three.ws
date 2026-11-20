@@ -29,9 +29,11 @@ import {
 	creationAltText,
 	describedMetaDescription,
 	tagSearchHref,
+	modelShareEntity,
 } from './model-lib.js';
 import { markNoindex, setCanonical } from './seo-meta.js';
 import { beaconShareEvent } from './shared/share-beacon.js';
+import { showSharePanel } from './shared/share.js';
 import { manageHeaders, forgetManageToken } from './shared/forge-manage-tokens.js';
 
 const log = createLogger('model-page');
@@ -1132,19 +1134,11 @@ function wireActions() {
 		}
 	});
 
-	$('mp-share')?.addEventListener('click', async () => {
-		const url = `https://three.ws/m/${c.id}`;
-		const title = creationName(c);
-		if (navigator.share) {
-			navigator.share({ title, url }).catch(() => {});
-			return;
-		}
-		try {
-			await navigator.clipboard.writeText(url);
-			toast('Link copied to clipboard');
-		} catch {
-			window.prompt('Copy this link:', url);
-		}
+	// The share panel: copy link, Share on X, Ask @grok about it, Teams and
+	// LinkedIn. The preview is the card this page unfurls as (its og:image).
+	$('mp-share')?.addEventListener('click', (e) => {
+		const previewImage = document.querySelector('meta[property="og:image"]')?.getAttribute('content') || '';
+		showSharePanel(modelShareEntity(c, { previewImage }), e.currentTarget);
 	});
 
 	$('mp-remix')?.addEventListener('click', async () => {

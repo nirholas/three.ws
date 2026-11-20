@@ -46,6 +46,29 @@ export function creationName(creation) {
 	return short ? `${label} ${short}` : label;
 }
 
+// The share panel entity for a creation's page (src/shared/share.js): Share on
+// X and Ask @grok both point at the /m/:id permalink, whose head is a large
+// image card of the model itself. Ask @grok reads the prompt, else the caption
+// of a described pipeline creation; with neither, the key is left out so the
+// question is asked about the display name. See docs/share-to-x.md.
+export function modelShareEntity(creation, { previewImage } = {}) {
+	const id = String(creation?.id || '');
+	const subject =
+		String(creation?.prompt || '').trim() || String(creation?.described?.caption || '').trim();
+	const entity = {
+		kind: 'model',
+		id,
+		title: creationName(creation),
+		category: creation?.model_category || '',
+		description: 'A 3D model made on three.ws',
+		shareUrl: `https://three.ws/m/${id}`,
+		remixUrl: '/forge?from=share',
+	};
+	if (subject) entity.prompt = subject;
+	if (previewImage) entity.previewImage = previewImage;
+	return entity;
+}
+
 // The meta description for a pipeline creation nobody described, which has no
 // prompt to quote. '' for any other creation, so the caller keeps its own.
 export function creationPipelineDescription(creation) {
