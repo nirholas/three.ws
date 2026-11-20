@@ -401,13 +401,13 @@ The pump.fun article title ("Three Builds With Tech Giants") is earned. From `do
 - **Google Cloud Marketplace**: open to partnership; production already runs on Cloud Run, and three.ws is a Google Cloud for Web3 Startups member with a grant of up to $200k in credits over two years
 - **Microsoft Marketplace**: live (2026-10), alongside the partnership three.ws and Microsoft announced the same month
 
-**Infrastructure and credits:** Quicknode Startup Program (accepted 2026-07), Google Cloud for Web3 Startups, NVIDIA Inception.
+**Infrastructure and credits:** Quicknode Startup Program (accepted 2026-07), Google Cloud for Web3 Startups, NVIDIA Inception, xAI Grok for Startups (accepted 2026-11).
 
 **Directories and registries:** BNB Chain Dappbay (live, categories AI Agent Launchpad, AI Data, AI Infra); x402scan; the MCP Registry (`io.github.nirholas`); VS Code Marketplace and Open VSX (`threews.vscode-x402`); OpenAI Plugin Directory (gating requirement already met via the public OAuth 2.1 MCP server); OpenAI Cookbook PR #2874 submitted 2026-07-21 (unmerged).
 
 **Media:** IBM Community blog, HackerNoon (auto-imported from the three.ws announcements RSS), Alibaba Cloud Marketplace Blog, pump.fun coin-page article.
 
-**Partner cards on `/partners` (nine):** OpenAI, IBM, Microsoft, AWS, Google Cloud, Alibaba Cloud, NVIDIA, HackerNoon, Quicknode. The partner doc itself draws the boundary: no endorsement is claimed anywhere, and only the two program statuses above come from the partner side.
+**Partner cards on `/partners` (ten):** OpenAI, IBM, Microsoft, AWS, Google Cloud, Alibaba Cloud, NVIDIA, xAI, HackerNoon, Quicknode. The partner doc itself draws the boundary: no endorsement is claimed anywhere, and only three program statuses come from the partner side (OpenAI Select Partner, NVIDIA Inception, xAI Grok for Startups).
 
 **OKX:** three.ws is agent #2632 "three.ws 3D Studio" on OKX.AI with A2MCP endpoints. The listing was rejected in review on 2026-07-04 for not yet matching the OKX Agent Payments Protocol standard; resubmission is pending. The endpoints are reachable directly meanwhile.
 

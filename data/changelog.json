@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-20",
+			"title": "three.ws joins xAI's Grok for Startups program",
+			"summary": "three.ws has been admitted to Grok for Startups, xAI's program for startups building on Grok, with credits across the Grok API, Grok and Grok Build. xAI now has a card on /partners and /partners/benefits and a place in the site footer's partner row. The credits fund the Grok brain lane agents can think on and sit behind the three.ws Grok connector, which gives Grok Bot, Grok connectors and the xAI API a free 3D studio.",
+			"tags": [
+				"feature"
+			],
+			"link": "/partners/benefits#xai"
+		},
+		{
+			"date": "2026-11-20",
 			"title": "Signing in to the free 3D Studio connector works in MCP clients",
 			"summary": "Making a model on the free 3D Studio MCP server (/api/mcp-studio) needs a free three.ws account, but its sign-in pointed MCP clients at the wrong protected resource, so clients built on the MCP SDK stopped before the sign-in page with \"Protected resource does not match expected\". The studio is now its own OAuth resource: its sign-in challenge, its protected-resource metadata and the tokens the authorization server mints all name /api/mcp-studio, so connectors such as Grok Bot and IBM Bob reach consent and come back signed in. Existing platform tokens keep working.",
 			"tags": [

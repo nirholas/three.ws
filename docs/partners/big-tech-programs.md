@@ -8,7 +8,7 @@ It is the wide net. The narrower docs stay authoritative for what they cover: [p
 
 Sibling pages: [ai company partner programs](./ai-programs.md), [motion partner programs](./motion-programs.md), [global brand partner programs](./brand-programs.md), [crypto ecosystem partner programs](./crypto-programs.md), plus [who promotes partners](./promotion-programs.md) and [moonshots](./moonshots.md) across every sector.
 
-**206 programs across 80 companies.** 13 member / live, 2 submitted, waiting, 10 in progress, 16 ready, one human step, 90 eligible, not started, 58 verify fit first, 2 decided not to pursue, 3 not eligible, 12 retired or closed. We hold at least one membership at 8 of the 80 companies, and 61 of the open programs offer some form of promotion. Last full research sweep: 2026-11-06.
+**206 programs across 80 companies.** 14 member / live, 1 submitted, waiting, 10 in progress, 16 ready, one human step, 90 eligible, not started, 58 verify fit first, 2 decided not to pursue, 3 not eligible, 12 retired or closed. We hold at least one membership at 9 of the 80 companies, and 61 of the open programs offer some form of promotion. Last full research sweep: 2026-11-06.
 
 ## Using this page
 
@@ -41,7 +41,7 @@ Every active program sits in exactly one wave. Work the waves in order; inside a
 
 ### Wave 0: activate what we already hold
 
-Memberships we already have where a benefit sits unclaimed or a next step is open. Zero acquisition cost, so this always goes first. 9 programs.
+Memberships we already have where a benefit sits unclaimed or a next step is open. Zero acquisition cost, so this always goes first. 10 programs.
 
 | # | Program | Company | Score | Next action |
 |---|---|---|---|---|
@@ -54,6 +54,7 @@ Memberships we already have where a benefit sits unclaimed or a next step is ope
 | 7 | [NVIDIA Developer Program and forums](https://developer.nvidia.com/developer-program) | NVIDIA | 12 | Post forum post 3 (drafted in docs/nvidia-forum-browser-digital-human.md) once the owner approves the external post |
 | 8 | [Google for Startups Cloud Program (Web3 tier)](https://startup.google.com/cloud/) | Google | 11 | Ask the Google for Startups team whether the grant can move to the Scale AI tier (up to USD 350,000); keep spend inside the burn rules in docs/ops/gcp-credits-plan.md |
 | 9 | [IBM Partner Plus (Build track)](https://ibm.com/partnerplus/isv) | IBM | 11 | Request the My Digital Marketing benefit and complete the Partner Plus Directory listing |
+| 10 | [Grok for Startups](https://x.ai/startups) | xAI | 8 | Complete xAI onboarding to release the remaining 80% of credits, record the received amount and expiry with --benefit, and route the Grok lane through the credited team |
 
 ### Wave 1: finish what is built
 
@@ -270,7 +271,6 @@ Submitted. Nothing to do but chase on schedule: a submission with no movement fo
 | Program | Company | Last movement | Follow-up |
 |---|---|---|---|
 | [OpenAI Cookbook contribution](https://github.com/openai/openai-cookbook) | OpenAI | 2026-07-21 | Chase review on PR #2874 |
-| [Grok for Startups](https://x.ai/startups) | xAI | 2026-11-20 | Wait for the admission decision from the xAI startups team; on approval, record the credits with --benefit (20% lands on approval, 80% after onboarding) and put them on the Grok lane |
 
 ## Who promotes partners
 
@@ -350,6 +350,7 @@ What we hold, what we are entitled to and have not claimed, and when each expire
 | Entitled, not claimed | ChatGPT workspace credits | 300,000 ChatGPT and Codex credits | [OpenAI Partner Network (Select Partner)](https://openai.com/index/introducing-openai-partner-network/) | 2026-10-11 | **2027-06-30** | Invitation not yet accepted |
 | Entitled, not claimed | Inception co-brand kit access |  | [NVIDIA Inception](https://www.nvidia.com/en-us/startups/) | 2026-09-14 |  | Access restored; the kit has not been downloaded yet |
 | Entitled, not claimed | My Digital Marketing (co-branded campaigns) |  | [IBM Partner Plus (Build track)](https://ibm.com/partnerplus/isv) |  |  | Never requested |
+| Entitled, not claimed | Grok API, Grok and Grok Build credits |  | [Grok for Startups](https://x.ai/startups) |  |  | 20% of the grant on approval, 80% after onboarding; credits expire 6 months after issue |
 | Received, in use | Google Cloud credits (Web3 tier) | Up to USD 200,000 over 2 years, metered monthly, USD 10,000 initial | [Google for Startups Cloud Program (Web3 tier)](https://startup.google.com/cloud/) | 2026-08-04 | **2028-08-04** | Year 1 covers 100% up to USD 100,000; year 2 covers 20% up to another USD 100,000 |
 
 ## Submissions log
@@ -359,6 +360,7 @@ Every application, form, email, and portal action, newest first. Add one with `n
 | Date | Program | Company | What happened | Reference |
 |---|---|---|---|---|
 | 2026-11-20 | [Grok for Startups](https://x.ai/startups) | xAI | Application in review: xAI startups team asked for a grok.com Team ID before admission; owner created the team and replied with the ID (now: Submitted, waiting) |  |
+| 2026-11-20 | [Grok for Startups](https://x.ai/startups) | xAI | Admitted and accepted into Grok for Startups (acceptance email from the xAI startups team) (now: Member / live) |  |
 | 2026-10-11 | [OpenAI Partner Network (Select Partner)](https://openai.com/index/introducing-openai-partner-network/) | OpenAI | Partner benefits provisioned; two invitations waiting to be accepted |  |
 | 2026-09-30 | [Official MCP Registry and GitHub MCP Registry](https://modelcontextprotocol.io/registry/quickstart) | GitHub | Published blender-mcp, herald-mcp, home-mcp and knock-mcp and updated agent-sniper with mcp-publisher v1.8.1 (now: Member / live) |  |
 | 2026-09-29 | [ChatGPT App Directory](https://developers.openai.com/apps-sdk) | OpenAI | Third rejection: every generation outlived the 60-second tool-call limit. v1.0.1 fix built, awaiting deploy (now: In progress) |  |
@@ -961,9 +963,9 @@ Closed doors (do not re-research):
 
 | Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
 |---|---|---|---|---|---|---|---|
-| [Grok for Startups](https://x.ai/startups) | Startup credits | credits sized to stage and usage, no fixed tier (per i10x / vandatateam coverage); Credits sized to 6-12 months of usage across Grok, Grok Build and the Grok API; 20% on approval, 80% after onboarding |  | Checks for venture backing (disputed by one aggregator), live product, company email matching website; credits expire 6 months Cost: free. | Submitted, waiting | Wait for the admission decision from the xAI startups team; on approval, record the credits with --benefit (20% lands on approval, 80% after onboarding) and put them on the Grok lane Apply: Application at x.ai/startups. Cadence: rolling; launched late Oct 2026. | 2·3·3 = **8** |
+| [Grok for Startups](https://x.ai/startups) | Startup credits | credits sized to stage and usage, no fixed tier (per i10x / vandatateam coverage); Credits sized to 6-12 months of usage across Grok, Grok Build and the Grok API; 20% on approval, 80% after onboarding |  | Checks for venture backing (disputed by one aggregator), live product, company email matching website; credits expire 6 months Cost: free. | Member / live | Complete xAI onboarding to release the remaining 80% of credits, record the received amount and expiry with --benefit, and route the Grok lane through the credited team Apply: Application at x.ai/startups. Cadence: rolling; launched late Oct 2026. | 2·3·3 = **8** |
 
-- **Grok for Startups.** Applied bootstrapped; xAI moved the application to admission review on 2026-11-20 and asked only for a grok.com Team ID. Grok is already one of our model lanes (docs/grok.md, docs/ops/llm-lanes.md), so credits cut its cost directly. The program email signs as SpaceXSI, matching the inconsistent branding seen in coverage.
+- **Grok for Startups.** Admitted 2026-11-20 as a bootstrapped applicant. Grok is already one of our model lanes (docs/grok.md, docs/ops/llm-lanes.md) and three.ws ships a Grok connector, so the credits cut that lane cost directly. The program email signs as SpaceXSI, matching the branding seen in coverage.
 
 Closed doors (do not re-research):
 

@@ -766,7 +766,7 @@
 				{
 					"path": "/partners",
 					"title": "Partner Ecosystem",
-					"description": "three.ws partner ecosystem: OpenAI, IBM, AWS, Google Cloud, Alibaba Cloud, NVIDIA, Quicknode, HackerNoon. The AI, cloud, and infrastructure programs powering 3D AI agents at enterprise scale.",
+					"description": "three.ws partner ecosystem: OpenAI, Microsoft, IBM, AWS, Google Cloud, Alibaba Cloud, NVIDIA, xAI, Quicknode, HackerNoon. The AI, cloud, and infrastructure programs powering 3D AI agents at enterprise scale.",
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-06-27"
@@ -774,7 +774,7 @@
 				{
 					"path": "/partners/benefits",
 					"title": "Partner Benefits",
-					"description": "What each three.ws partnership brings to builders and the community: OpenAI, NVIDIA, IBM, Google Cloud, AWS, Alibaba Cloud, Quicknode and HackerNoon.",
+					"description": "What each three.ws partnership brings to builders and the community: OpenAI, NVIDIA, IBM, Microsoft, Google Cloud, AWS, Alibaba Cloud, xAI, Quicknode and HackerNoon.",
 					"priority": 0.7,
 					"changefreq": "monthly",
 					"added": "2026-10-11"

@@ -337,6 +337,12 @@ chose, not a rank. No endorsement is claimed by or for any partner.
     speech. Page: three.ws/nvidia. NGC Catalog submission and Accelerated Apps Catalog request in
     progress.
 
+  xAI (Grok for Startups)
+    Admitted to xAI's Grok for Startups program (November 2026), with credits across the Grok
+    API, Grok and Grok Build. Grok is a model lane in the agent brain router, and the three.ws
+    Grok connector (three.ws/api/mcp-grok) gives Grok Bot, Grok connectors and the xAI API a 3D
+    studio. Page: three.ws/grok.
+
   HackerNoon (Media)
     Publishing partnership. Every announcement auto-imports from the three.ws RSS feed into
     HackerNoon's drafts queue with canonical links back to three.ws. Author page:

@@ -4,11 +4,11 @@
 
 Page source: [`pages/partners.html`](../pages/partners.html). Partnership enquiries go to **partners@three.ws** (the page's "Become a partner" call to action). Press and brand requests go to **partnerships@three.ws**, covered in [Press kit](./press-kit.md).
 
-**Read the status labels literally.** Each card carries a one-word tier chip that is a category, not a rank: Select Partner, Strategic, Marketplace, Cloud, Inception, Media, Infrastructure. Nothing on the page grants an endorsement, and several of the docs below carry explicit "this is not an endorsement" language that must survive any rewrite.
+**Read the status labels literally.** Each card carries a short tier chip that is a category, not a rank: Select Partner, Strategic, Marketplace, Cloud, Inception, Grok for Startups, Media, Infrastructure. Nothing on the page grants an endorsement, and several of the docs below carry explicit "this is not an endorsement" language that must survive any rewrite.
 
 ---
 
-## The nine cards, in page order
+## The ten cards, in page order
 
 | Partner | Chip on the card | Card links to | Deeper docs |
 |---|---|---|---|
@@ -19,18 +19,20 @@ Page source: [`pages/partners.html`](../pages/partners.html). Partnership enquir
 | Google Cloud | Cloud | `/blog/three-ws-google-cloud-partnership` | [Production runbook](./ops/gcp-production.md), [credits plan](./ops/gcp-credits-plan.md), [model workers](./ops/gcp-model-workers.md) |
 | Alibaba Cloud | Cloud | `/blog/three-ws-alibaba-cloud-partnership` | [Listings and distribution](./listings.md), [the model router](./brain.md) |
 | NVIDIA | Inception | `/nvidia` | [NVIDIA Inception](./nvidia-inception.md), [NVIDIA models](./nvidia-models.md), [Nemotron spotlight](./nvidia-nemotron-spotlight.md) |
+| xAI | Grok for Startups | `/grok` | [three.ws for Grok](./grok.md), [Grok Bot connector reference](./grok-bot.md), [LLM lanes](./ops/llm-lanes.md) |
 | HackerNoon | Media | `/blog/three-ws-hackernoon-partnership` | [Syndication](./syndication.md), [Listings and distribution](./listings.md) |
 | Quicknode | Infrastructure | `/blog/three-ws-quicknode-startup-program` | [Solana integration](./solana.md), [Listings and distribution](./listings.md) |
 
-The page's stat bar reads 9 partners, 22 chains, and an infinity glyph for scale. It is a `<dl>` and is read out to screen readers like any other content, so the two numbers have to stay true: the partner count is reconciled against the number of cards in the DOM on load, and 22 is the number of chains in `REGISTRY_DEPLOYMENTS` in [`src/erc8004/abi.js`](../src/erc8004/abi.js). The infinity glyph is framing, not a metric; it is announced as "Unbounded".
+The page's stat bar reads 10 partners, 22 chains, and an infinity glyph for scale. It is a `<dl>` and is read out to screen readers like any other content, so the two numbers have to stay true: the partner count is reconciled against the number of cards in the DOM on load, and 22 is the number of chains in `REGISTRY_DEPLOYMENTS` in [`src/erc8004/abi.js`](../src/erc8004/abi.js). The infinity glyph is framing, not a metric; it is announced as "Unbounded".
 
 ## The footer row
 
-The shared site footer ([`public/footer.html`](../public/footer.html), styles in [`public/footer.css`](../public/footer.css)) carries a **Partners and programs** row with the same nine partners, in the same order, each linking to the same destination as its `/partners` card, plus an "All partners" link to `/partners`. Adding or removing a card means updating this row too.
+The shared site footer ([`public/footer.html`](../public/footer.html), styles in [`public/footer.css`](../public/footer.css)) carries a **Partners and programs** row with the same ten partners, in the same order, each linking to the same destination as its `/partners` card, plus an "All partners" link to `/partners`. Adding or removing a card means updating this row too.
 
 - **Marks are monochrome by design.** Each logo is a CSS mask filled solid `#fff`; only the text labels are muted at rest and brighten on hover. Never fade the marks themselves to a translucent grey: OpenAI's logomark may appear only in solid black or solid white, and every mark in the row shares one treatment. The footer is always dark, so white is the only fill.
 - **Where the files come from.** OpenAI uses the verbatim logomark at [`public/partners/openai/openai-logomark.svg`](../public/partners/openai/openai-logomark.svg) (see [badge usage](../marketing/openai-select-partner/badge-usage.md)). Quicknode's wordmark is the path Quicknode serves on its own site header. IBM and AWS come from Simple Icons 11.15.0 and 13.21.0 (both marks were later withdrawn from the set at the brands' request, so do not "update" them from a newer release). NVIDIA, Microsoft, Google Cloud, Alibaba Cloud and HackerNoon come from Simple Icons. All live in [`public/partners/logos/`](../public/partners/logos/) with the viewBox cropped to the painted glyph, so each mark's `--h` (optical height) and `--ar` (aspect ratio) in the markup size it correctly.
 - **Wordmarks carry no text label; glyph marks do.** IBM, AWS and Quicknode are wordmarks, so their links use `aria-label` instead of visible text.
+- **xAI is text only.** Simple Icons carries no xAI mark and x.ai serves no fetchable brand kit, so the xAI entry is the plain "xAI" label with no mask. Add a mark only from an official xAI asset, cropped like the others.
 - **The independence line is required.** The footer states that partner and program logos are trademarks of their owners and imply no endorsement. It sits beside the NVIDIA attribution line and must stay whenever the row is shown.
 - **NVIDIA appears twice on purpose.** The row shows the NVIDIA mark as a partner-map entry; the separate white-plate NVIDIA Inception badge in the brand column is the unmodified member badge the program supplies, with its own attribution line.
 - **The footer mascot stands on the row.** `.h-footer-avatar` lives inside `.h-footer-partners`, anchored to the row's top hairline, so it never drifts over the logos at any width.
@@ -132,6 +134,17 @@ Do not resolve that spread by picking the strongest claim. If you need one sente
 
 ---
 
+## xAI
+
+**What the page claims.** three.ws is in xAI's Grok for Startups program. Grok is one of the model lanes an agent can think on, and the three.ws Grok connector gives Grok Bot, Grok connectors, and the xAI API a 3D studio that turns text or an image into a textured, rigged model. Card tags: Grok API, MCP connector, Grok Build.
+
+**What the integration is.** Two distinct things, kept distinct the same way as NVIDIA:
+
+- **Grok for Startups membership**, admitted 2026-11-20. The program grants credits across the Grok API, Grok and Grok Build, released 20% on approval and 80% after onboarding, and they expire six months after issue. The tracker row (`xai-grok-for-startups` in [`data/partner-programs.json`](../data/partner-programs.json), rendered in [big-tech programs](./partners/big-tech-programs.md)) holds the dates and the benefit ledger. Do not publish the credit amount or the team ID.
+- **The Grok surfaces three.ws already ships.** The remote MCP server at `https://three.ws/api/mcp-grok`, the Grok Build plugin and the Grok skill file are documented in [three.ws for Grok](./grok.md) and the [Grok Bot connector reference](./grok-bot.md). The Grok brain rung and its key handling are in [LLM lanes](./ops/llm-lanes.md); membership credits are what fund the platform rung there, which a caller's or agent owner's own xAI key still leads.
+
+---
+
 ## HackerNoon
 
 **What the page claims.** A builder-focused publishing partnership: feature articles, tutorials, and developer guides for people shipping with AI, published to HackerNoon's developer audience. Card tags: Publishing, Developer content.
@@ -153,7 +166,7 @@ Do not resolve that spread by picking the strongest claim. If you need one sente
 Worth stating, because partner claims drift upward when nobody writes the boundary down:
 
 - **No Intel or Oracle programme appears on `/partners`.** Microsoft does, since the October 2026 partnership and Marketplace listing; see [three.ws and Microsoft](./microsoft.md). Third-party model or component names that appear in the stack (for example the image-to-3D backends listed in [3D Studio MCP](./mcp-3d-studio.md)) are technical dependencies, not partnerships.
-- **No tier is claimed beyond the chips on the cards.** "Strategic", "Cloud", "Media", and "Infrastructure" are groupings three.ws chose for its own page. Only two named programme statuses come from the partner: OpenAI Select Partner, and NVIDIA Inception member. The Microsoft card's "Marketplace" chip names the listing, not a Microsoft partner tier; do not attach a Microsoft programme name to it until the owner confirms one.
+- **No tier is claimed beyond the chips on the cards.** "Strategic", "Cloud", "Media", and "Infrastructure" are groupings three.ws chose for its own page. Only three named programme statuses come from the partner: OpenAI Select Partner, NVIDIA Inception member, and xAI Grok for Startups member. The Microsoft card's "Marketplace" chip names the listing, not a Microsoft partner tier; do not attach a Microsoft programme name to it until the owner confirms one.
 - **No endorsement is claimed anywhere.** OpenAI, IBM, and NVIDIA all carry explicit independence language in their docs. Reproduce it.
 
 ---

@@ -508,7 +508,7 @@
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
-	gap: 1rem 2rem;
+	gap: 1rem 1.75rem;
 }
 
 .h-footer-partner {
@@ -566,12 +566,12 @@
 	margin-top: 0.35rem;
 }
 
-/* Nine marks fit one row down to ~1024px once the minimum gap tightens. Below
-   that a free wrap strands Quicknode alone on a second line, so tablets get a
-   balanced 5 + 4 grid; phones go back to a natural left-aligned wrap. */
+/* Ten entries fit one row down to ~1024px once the minimum gap tightens. Below
+   that a free wrap strands the last entry alone on a second line, so tablets
+   get a balanced 5 + 5 grid; phones go back to a natural left-aligned wrap. */
 @media (max-width: 1120px) {
 	.h-footer-partners-list {
-		column-gap: 1.1rem;
+		column-gap: 1rem;
 	}
 }
 

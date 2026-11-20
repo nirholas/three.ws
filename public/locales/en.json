@@ -19047,7 +19047,7 @@
 		"mcp_2": "MCP",
 		"mcp_server_integration": "MCP server integration",
 		"media": "Media",
-		"meta_description": "three.ws partner ecosystem: OpenAI, Microsoft, IBM, AWS, Google Cloud, Alibaba Cloud, NVIDIA, Quicknode, HackerNoon. The AI, cloud, and infrastructure programs powering 3D AI agents at enterprise scale.",
+		"meta_description": "three.ws partner ecosystem: OpenAI, Microsoft, IBM, AWS, Google Cloud, Alibaba Cloud, NVIDIA, xAI, Quicknode, HackerNoon. The AI, cloud, and infrastructure programs powering 3D AI agents at enterprise scale.",
 		"meta_og_description": "The cloud and AI platforms powering 3D AI agents at enterprise scale.",
 		"meta_og_title": "Partner Ecosystem · three.ws",
 		"meta_title": "Partner Ecosystem · three.ws",
@@ -19089,7 +19089,14 @@
 		"what_membership_adds": "What membership adds",
 		"why_partner_with_three_ws": "Why partner with three.ws",
 		"x402": "x402",
-		"x402_payments": "x402 payments"
+		"x402_payments": "x402 payments",
+		"xai": "xAI",
+		"grok_for_startups": "Grok for Startups",
+		"three_ws_is_in_xai_s_grok": "three.ws is in xAI's Grok for Startups program. Grok is already one of the model lanes an agent can think on, and the three.ws Grok connector gives Grok Bot, Grok connectors, and the xAI API a 3D studio that turns text or an image into a textured, rigged model.",
+		"grok_api": "Grok API",
+		"mcp_connector": "MCP connector",
+		"grok_build": "Grok Build",
+		"see_the_grok_integration": "See the Grok integration"
 	},
 	"pay_c_index": {
 		"about": "about",

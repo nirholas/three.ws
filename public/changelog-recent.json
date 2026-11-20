@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-20T19:19:01.827Z",
+	"generated_at": "2026-11-20T20:04:10.093Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4659,
+	"total": 4662,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -109,11 +109,42 @@
 		{
 			"date": "2026-11-20",
 			"type": "update",
+			"title": "Signing in to the free 3D Studio connector works in MCP clients",
+			"summary": "Making a model on the free 3D Studio MCP server (/api/mcp-studio) needs a free three.ws account, but its sign-in pointed MCP clients at the wrong protected resource, so clients built on the MCP SDK stopped before the sign-in page with \"Protected resource does not match expected\". The studio is now its own OAuth resource: its sign-in challenge, its protected-resource metadata and the tokens the authorization server mints all name /api/mcp-studio, so connectors such as Grok Bot and IBM Bob reach consent and come back signed in. Existing platform tokens keep working.",
+			"link": "/docs/mcp-studio",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
 			"title": "The /glass lens gets past \"Location needed\"",
 			"summary": "The site-wide permissions policy blocked location, compass sensors and the microphone on every page, so the smart-glasses lens at /glass stopped on its first screen for every visitor. /glass now grants exactly those three to itself (the camera stays off, and no other page changes), so the lens can find where you are, which way you face, and hear your reply.",
 			"link": "/glass",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "three-ws setup offers sign-in for the Grok and free studio connectors again",
+			"summary": "The directory now describes the Grok and free 3D Studio servers as \"none to connect, a free account to make a model\", and the CLI read that as no-sign-in-possible, so npx three-ws setup --client grok-bot only offered anonymous and install-token connections and refused --auth key or oauth. It now offers all four ways to connect on both servers, and its server lists stop calling the studio \"no account needed\".",
+			"link": null,
+			"tags": [
+				"fix",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "three.ws joins xAI's Grok for Startups program",
+			"summary": "three.ws has been admitted to Grok for Startups, xAI's program for startups building on Grok, with credits across the Grok API, Grok and Grok Build. xAI now has a card on /partners and /partners/benefits and a place in the site footer's partner row. The credits fund the Grok brain lane agents can think on and sit behind the three.ws Grok connector, which gives Grok Bot, Grok connectors and the xAI API a free 3D studio.",
+			"link": "/partners/benefits#xai",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -802,7 +833,7 @@
 			"date": "2026-11-14",
 			"type": "launch",
 			"title": "Docs · Vercel AI SDK tools",
-			"summary": "@three-ws/ai-sdk: forge, rig, render and animate 3D models and chat with a three.ws agent from any Vercel AI SDK agent loop. Four of the five tools are free with no key.",
+			"summary": "@three-ws/ai-sdk: forge, rig, render and animate 3D models and chat with a three.ws agent from any Vercel AI SDK agent loop. Four of the five tools are free; forge, rig and render take a free account's API key.",
 			"link": "/docs/ai-sdk",
 			"tags": [
 				"launch"
@@ -1518,36 +1549,6 @@
 			"title": "three.ws and Microsoft",
 			"summary": "three.ws and Microsoft have announced a partnership, and three.ws is live on Microsoft Marketplace. Watch Microsoft open source run in the product: TRELLIS image-to-3D creations, on-device speech to text through ONNX Runtime Web, and a real agent card drawn with Adaptive Cards, plus the honest status of every Microsoft surface.",
 			"link": "/microsoft",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "launch",
-			"title": "three.ws in the Edge sidebar",
-			"summary": "A narrow layout for the browser sidebar: chat with your default agent, turn a prompt into a 3D model, and reopen your recent models next to any page.",
-			"link": "/sidebar",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "launch",
-			"title": "TRELLIS.2 Lab: Every Parameter of Microsoft Research's Image-to-3D Model",
-			"summary": "Run Microsoft Research's open TRELLIS.2 image-to-3D model with every parameter exposed: voxel resolution, seed, texture size, face budget and per-stage sampler steps and guidance. Inspect the GLB in texture, wireframe and normal views with real mesh stats, and compare it side by side with another engine on the same photo through a shareable link.",
-			"link": "/lab/trellis2",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "launch",
-			"title": "Trust center",
-			"summary": "How three.ws hosts, encrypts, retains and deletes data, which AI providers see prompts, and an honest compliance status, each answer linked to the code that proves it.",
-			"link": "/trust",
 			"tags": [
 				"launch"
 			]

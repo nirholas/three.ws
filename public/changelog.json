@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-20T19:19:01.763Z",
+	"generated_at": "2026-11-20T20:04:10.049Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -106,11 +106,42 @@
 		{
 			"date": "2026-11-20",
 			"type": "update",
+			"title": "Signing in to the free 3D Studio connector works in MCP clients",
+			"summary": "Making a model on the free 3D Studio MCP server (/api/mcp-studio) needs a free three.ws account, but its sign-in pointed MCP clients at the wrong protected resource, so clients built on the MCP SDK stopped before the sign-in page with \"Protected resource does not match expected\". The studio is now its own OAuth resource: its sign-in challenge, its protected-resource metadata and the tokens the authorization server mints all name /api/mcp-studio, so connectors such as Grok Bot and IBM Bob reach consent and come back signed in. Existing platform tokens keep working.",
+			"link": "/docs/mcp-studio",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
 			"title": "The /glass lens gets past \"Location needed\"",
 			"summary": "The site-wide permissions policy blocked location, compass sensors and the microphone on every page, so the smart-glasses lens at /glass stopped on its first screen for every visitor. /glass now grants exactly those three to itself (the camera stays off, and no other page changes), so the lens can find where you are, which way you face, and hear your reply.",
 			"link": "/glass",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "three-ws setup offers sign-in for the Grok and free studio connectors again",
+			"summary": "The directory now describes the Grok and free 3D Studio servers as \"none to connect, a free account to make a model\", and the CLI read that as no-sign-in-possible, so npx three-ws setup --client grok-bot only offered anonymous and install-token connections and refused --auth key or oauth. It now offers all four ways to connect on both servers, and its server lists stop calling the studio \"no account needed\".",
+			"link": null,
+			"tags": [
+				"fix",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "three.ws joins xAI's Grok for Startups program",
+			"summary": "three.ws has been admitted to Grok for Startups, xAI's program for startups building on Grok, with credits across the Grok API, Grok and Grok Build. xAI now has a card on /partners and /partners/benefits and a place in the site footer's partner row. The credits fund the Grok brain lane agents can think on and sit behind the three.ws Grok connector, which gives Grok Bot, Grok connectors and the xAI API a free 3D studio.",
+			"link": "/partners/benefits#xai",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -799,7 +830,7 @@
 			"date": "2026-11-14",
 			"type": "launch",
 			"title": "Docs · Vercel AI SDK tools",
-			"summary": "@three-ws/ai-sdk: forge, rig, render and animate 3D models and chat with a three.ws agent from any Vercel AI SDK agent loop. Four of the five tools are free with no key.",
+			"summary": "@three-ws/ai-sdk: forge, rig, render and animate 3D models and chat with a three.ws agent from any Vercel AI SDK agent loop. Four of the five tools are free; forge, rig and render take a free account's API key.",
 			"link": "/docs/ai-sdk",
 			"tags": [
 				"launch"
@@ -2215,7 +2246,7 @@
 			"date": "2026-11-04",
 			"type": "launch",
 			"title": "Add three.ws to ChatGPT: free 3D models and avatars inside your chats",
-			"summary": "Add the free three.ws 3D Studio to your own ChatGPT in about a minute: the exact settings to paste, a live check of the server from your browser, prompts to try and fixes for every setup snag. Text and photos become interactive 3D models and rigged avatars inline in the conversation. No account, no key.",
+			"summary": "Add the free three.ws 3D Studio to your own ChatGPT in about a minute: the exact settings to paste, a live check of the server from your browser, prompts to try and fixes for every setup snag. Text and photos become interactive 3D models and rigged avatars inline in the conversation. Free: sign in with a free three.ws account when ChatGPT asks.",
 			"link": "/chatgpt",
 			"tags": [
 				"launch"
@@ -2415,7 +2446,7 @@
 			"date": "2026-11-04",
 			"type": "launch",
 			"title": "Forge-Off: Daily Themed 3D Contest",
-			"summary": "A themed creation contest with no account: describe a thing, get a real textured 3D model, publish it, and vote. One board per day, an overall winner, and a standing weekly board between events.",
+			"summary": "A themed creation contest, free with a three.ws account: describe a thing, get a real textured 3D model, publish it, and vote. One board per day, an overall winner, and a standing weekly board between events.",
 			"link": "/forge-off",
 			"tags": [
 				"launch"
@@ -6047,7 +6078,7 @@
 			"date": "2026-10-13",
 			"type": "launch",
 			"title": "Docs · three.ws with Google ADK",
-			"summary": "Connect a Google Agent Development Kit agent to the free three.ws 3D studio over MCPToolset: discover the tool catalog, forge and rig models, and run a full LlmAgent conversation. No account, payment or API key for the studio tools.",
+			"summary": "Connect a Google Agent Development Kit agent to the free three.ws 3D studio over MCPToolset: discover the tool catalog, forge and rig models, and run a full LlmAgent conversation. Nothing to pay; making or rigging a model takes a free three.ws account's API key.",
 			"link": "/docs/google-adk",
 			"tags": [
 				"launch"
@@ -6569,7 +6600,7 @@
 			"date": "2026-10-11",
 			"type": "launch",
 			"title": "Partner Benefits",
-			"summary": "What each three.ws partnership brings to builders and the community: OpenAI, NVIDIA, IBM, Google Cloud, AWS, Alibaba Cloud, Quicknode and HackerNoon.",
+			"summary": "What each three.ws partnership brings to builders and the community: OpenAI, NVIDIA, IBM, Microsoft, Google Cloud, AWS, Alibaba Cloud, xAI, Quicknode and HackerNoon.",
 			"link": "/partners/benefits",
 			"tags": [
 				"launch"
@@ -7933,7 +7964,7 @@
 			"date": "2026-10-09",
 			"type": "launch",
 			"title": "three.ws for Grok Bot: a free 3D studio and a body for Grok",
-			"summary": "Everything Grok Bot can do with three.ws on one page: generate textured 3D models, rig avatars, find ready-made CC0 assets and run your agents through one custom MCP connector. Real models made minutes ago, the exact connector settings, three recipes to schedule and the Grok skill file. Free, no account, no key.",
+			"summary": "Everything Grok Bot can do with three.ws on one page: generate textured 3D models, rig avatars, find ready-made CC0 assets and run your agents through one custom MCP connector. Real models made minutes ago, the exact connector settings, three recipes to schedule and the Grok skill file. Free with a three.ws account.",
 			"link": "/grok",
 			"tags": [
 				"launch"
@@ -7953,7 +7984,7 @@
 			"date": "2026-10-09",
 			"type": "launch",
 			"title": "Workbench",
-			"summary": "A desktop-style image-to-3D workspace in the browser. Drop a photo, run it through a visual workflow of real GPU nodes (background removal, mesh generation, remeshing, auto-rigging, AI material restyle), then smooth, decimate and export GLB, OBJ, STL or PLY. Build and save your own workflows in a node editor. Free, no signup.",
+			"summary": "A desktop-style image-to-3D workspace in the browser. Drop a photo, run it through a visual workflow of real GPU nodes (background removal, mesh generation, remeshing, auto-rigging, AI material restyle), then smooth, decimate and export GLB, OBJ, STL or PLY. Build and save your own workflows in a node editor. Free with a three.ws account.",
 			"link": "/workbench",
 			"tags": [
 				"launch"
@@ -8376,7 +8407,7 @@
 			"date": "2026-10-08",
 			"type": "launch",
 			"title": "Docs · three.ws for Grok",
-			"summary": "Connect Grok Bot, Grok connectors and the xAI API to one free remote MCP server that turns text or an image into a textured 3D model, a rigged avatar, or a named 3D persona that lip-syncs its replies. No account, payment or API key.",
+			"summary": "Connect Grok Bot, Grok connectors and the xAI API to one free remote MCP server that turns text or an image into a textured 3D model, a rigged avatar, or a named 3D persona that lip-syncs its replies. Free with a three.ws account: sign in with OAuth or send an API key.",
 			"link": "/docs/grok",
 			"tags": [
 				"launch"
@@ -9533,7 +9564,7 @@
 			"date": "2026-09-20",
 			"type": "launch",
 			"title": "Prompt Library",
-			"summary": "Copy-paste prompts for Claude and any AI agent: generate a 3D model or a rigged avatar, embed one on a site, validate a GLB, find or sell a paid API in the agent economy. Most of them need no account, no key and no setup.",
+			"summary": "Copy-paste prompts for Claude and any AI agent: generate a 3D model or a rigged avatar, embed one on a site, validate a GLB, find or sell a paid API in the agent economy. Finding, embedding and validating need no account; generating needs a free one.",
 			"link": "/prompts",
 			"tags": [
 				"launch"
@@ -13926,7 +13957,7 @@
 			"date": "2026-08-28",
 			"type": "launch",
 			"title": "create-agent: one command, one 3D character",
-			"summary": "npm create @three-ws/agent turns a sentence into a rigged, downloadable 3D character with a working demo page. No account, no API key.",
+			"summary": "npm create @three-ws/agent turns a sentence into a rigged, downloadable 3D character with a working demo page. Free, with a free three.ws account's API key.",
 			"link": "/docs/create-agent",
 			"tags": [
 				"launch"
@@ -28249,7 +28280,7 @@
 			"date": "2026-07-17",
 			"type": "launch",
 			"title": "Daily Forge",
-			"summary": "A new 3D creative challenge every day. Forge today's theme into a real 3D model, free and no sign-up, build a daily streak, and place your creation in AR on your phone.",
+			"summary": "A new 3D creative challenge every day. Forge today's theme into a real 3D model, free with a three.ws account, build a daily streak, and place your creation in AR on your phone.",
 			"link": "/daily",
 			"tags": [
 				"launch"
@@ -31907,7 +31938,7 @@
 			"date": "2026-07-07",
 			"type": "launch",
 			"title": "3D API",
-			"summary": "Free, keyless 3D API for AI agents: turn a text prompt into a real GLB model and validate/optimize any glTF/GLB, all from one URL with a live OpenAPI 3.1 spec. Free draft generation and inspection graduate to paid Forge Pro quality tiers and animation-ready Rigged Avatars. No key, no account.",
+			"summary": "Free 3D API for AI agents: turn a text prompt into a real GLB model and validate/optimize any glTF/GLB, all from one URL with a live OpenAPI 3.1 spec. Free draft generation and inspection graduate to paid Forge Pro quality tiers and animation-ready Rigged Avatars. Inspecting needs no key; generating needs a free account's API key.",
 			"link": "/3d",
 			"tags": [
 				"launch"
@@ -35676,7 +35707,7 @@
 			"date": "2026-06-27",
 			"type": "launch",
 			"title": "Partner Ecosystem",
-			"summary": "three.ws partner ecosystem: OpenAI, IBM, AWS, Google Cloud, Alibaba Cloud, NVIDIA, Quicknode, HackerNoon. The AI, cloud, and infrastructure programs powering 3D AI agents at enterprise scale.",
+			"summary": "three.ws partner ecosystem: OpenAI, Microsoft, IBM, AWS, Google Cloud, Alibaba Cloud, NVIDIA, xAI, Quicknode, HackerNoon. The AI, cloud, and infrastructure programs powering 3D AI agents at enterprise scale.",
 			"link": "/partners",
 			"tags": [
 				"launch"
