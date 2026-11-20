@@ -22,6 +22,7 @@ import { rewriteCopiedSrc } from './scripts/vite/src-public-imports.mjs';
 import { vendorChunkFor } from './scripts/vite/vendor-chunks.mjs';
 import { isLensEntry } from './scripts/lib/lens-surfaces.mjs';
 import { createCreationHeadRenderer, creationIdFromPath, apiCreationLoader } from './server/creation-head.mjs';
+import { createAnatomyHeadRenderer, anatomyIdFromPath, apiDesignLoader } from './server/anatomy-head.mjs';
 import { isPlayPath, rewritePlayHead } from './server/play-head.mjs';
 import { presentDevRequestsAsSameSite } from './server/dev-proxy-origin.mjs';
 import {
@@ -191,6 +192,10 @@ const X402_PAY_DEV_URL = process.env.X402_PAY_DEV_URL ?? 'http://localhost:3032'
 // same rewrite, with the creation read from GET /api/forge-creation upstream.
 const renderDevCreationHead = createCreationHeadRenderer({
 	loadCreation: apiCreationLoader(DEV_API_PROXY),
+});
+// Dev parity for the per-design <head> on /anatomy/:id (server/anatomy-head.mjs).
+const renderDevAnatomyHead = createAnatomyHeadRenderer({
+	loadDesign: apiDesignLoader(DEV_API_PROXY),
 });
 
 // Auto-discover dashboard-next sub-pages so each agent can add an HTML file
@@ -3173,13 +3178,16 @@ const appConfig = {
 						const creationHtml = creationIdFromPath(path)
 							? await renderDevCreationHead(path, transformed)
 							: null;
+						const anatomyHtml = anatomyIdFromPath(path)
+							? await renderDevAnatomyHead(path, transformed)
+							: null;
 						// /play?coin=<mint> names the coin in its head too
 						// (server/play-head.mjs), so invite unfurls can be checked locally.
 						const playHtml = isPlayPath(path)
 							? rewritePlayHead(transformed, new URLSearchParams(url.slice(path.length)))
 							: null;
 						res.setHeader('Content-Type', 'text/html; charset=utf-8');
-						res.end(creationHtml || playHtml || rewriteSeoHead(path, transformed));
+						res.end(creationHtml || anatomyHtml || playHtml || rewriteSeoHead(path, transformed));
 					} catch {
 						next();
 					}

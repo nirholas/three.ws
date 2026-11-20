@@ -41,6 +41,7 @@ import { isSsrRoute, renderSsrPage } from './ssr-pages.mjs';
 import { hasSeoRoute, renderSeoHead, CANONICAL_ORIGIN } from './seo-head.mjs';
 import { rewriteLocaleHead } from './locale-head.mjs';
 import { createCreationHeadRenderer, creationIdFromPath, loadPublicCreation } from './creation-head.mjs';
+import { createAnatomyHeadRenderer, anatomyIdFromPath, loadPublicDesign } from './anatomy-head.mjs';
 import { isPlayPath, rewritePlayHead } from './play-head.mjs';
 import { renderCrawlerBody } from './crawler-body.mjs';
 import { isMissingShellPage } from './shell-pages.mjs';
@@ -86,6 +87,9 @@ const renderCreationHead = createCreationHeadRenderer({
 		import('../api/_lib/share-funnel.js').then((m) => m.recordShareEvent('creation_page', 'view'));
 	},
 });
+// Per-design head for /anatomy/:id: the machine's own title, description and
+// a large image card of its line drawing (server/anatomy-head.mjs).
+const renderAnatomyHead = createAnatomyHeadRenderer({ loadDesign: loadPublicDesign, origin: CANONICAL_ORIGIN });
 const PORT = Number(process.env.PORT) || 8080;
 // 8 MB fits the 6 M-char base64 token image build-metadata's schema accepts
 // (base64 inflates raw bytes by 4/3, so the old Vercel-era 4.5 MB limit
@@ -659,6 +663,21 @@ app.use(async (req, res) => {
 			// of server/creation-head.mjs. Any miss serves the plain shell.
 			if (req.method === 'GET' && file.endsWith('.html') && creationIdFromPath(url.pathname)) {
 				const html = await renderCreationHead(url.pathname, readFileSync(file, 'utf8'));
+				if (html) {
+					res.set(hardenHeaderBag(collected, html));
+					if (fileStatus) res.status(fileStatus);
+					res.set('content-type', 'text/html; charset=utf-8');
+					res.set('cache-control', HTML_CACHE_CONTROL);
+					res.send(html);
+					return;
+				}
+			}
+			// /anatomy/:id is one shell for every machine. Give each its own title,
+			// canonical, summary_large_image card (/api/anatomy-og, the design's
+			// line drawing) and LearningResource JSON-LD, for every User-Agent:
+			// see server/anatomy-head.mjs. Any miss serves the plain shell.
+			if (req.method === 'GET' && file.endsWith('.html') && anatomyIdFromPath(url.pathname)) {
+				const html = await renderAnatomyHead(url.pathname, readFileSync(file, 'utf8'));
 				if (html) {
 					res.set(hardenHeaderBag(collected, html));
 					if (fileStatus) res.status(fileStatus);

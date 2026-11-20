@@ -65,13 +65,20 @@ export default wrap(async (req, res) => {
 		: null;
 	const poster = posterGlb ? renderPosterUrl(origin, posterGlb) : null;
 	const previewImageUrl = normalizeStoredUrl(row.preview_image_url);
-	const ogImage = previewImageUrl || poster || `${origin}/api/forge-og?id=${id}`;
+	// The card image is a real 1200x630 render of the model (/api/render/glb),
+	// the same poster /m/:id uses; the stored square thumbnail is cropped badly
+	// by a large image card, so it is only the fallback for a model the
+	// renderer cannot take, ahead of the generic forge card.
+	const ogImage = poster || previewImageUrl || `${origin}/api/forge-og?id=${id}`;
 	// X player card: interactive embed when the GLB is ready, degrading to the
-	// summary_large_image tags below for crawlers (Discord, Slack, pre-approval
-	// X) that never fetch twitter:player. Reuses /forge/embed (pages/forge-embed.html),
-	// the same model-viewer runtime the Forge UI already serves, so there is no
-	// second embed implementation to keep in sync.
-	const embedUrl = posterGlb
+	// summary_large_image tags below for crawlers (Discord, Slack) that never
+	// fetch twitter:player. X shows a player card only for an approved domain,
+	// and an unapproved one renders nothing at all, so it is served only once
+	// order 931's approval is recorded as X_PLAYER_CARD_APPROVED=1. Reuses
+	// /forge/embed (pages/forge-embed.html), the model-viewer runtime the Forge
+	// UI already serves, so there is no second embed implementation.
+	const playerApproved = process.env.X_PLAYER_CARD_APPROVED === '1';
+	const embedUrl = playerApproved && posterGlb
 		? `${origin}/forge/embed?src=${encodeURIComponent(posterGlb)}&poster=${encodeURIComponent(ogImage)}&title=${encodeURIComponent(title)}`
 		: null;
 	// Machine-readable description of the creation: the GLB, its render, the
