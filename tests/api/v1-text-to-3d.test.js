@@ -1,4 +1,6 @@
-// POST /api/v1/ai/text-to-3d — the free, versioned text→3D endpoint.
+// POST /api/v1/ai/text-to-3d: the free, versioned text→3D endpoint. Free, but
+// it needs a three.ws account (API key or session): an anonymous call gets 401
+// sign_in_required and an authenticated one forwards its key to /api/forge.
 //
 // This is the flagship free lane of the AI package: a prompt goes to the NVIDIA
 // NIM TRELLIS draft lane (via the SAME /api/forge submit the forge_free MCP tool
@@ -6,7 +8,8 @@
 // token + the existing free poll URL. The tests pin the contract that matters:
 //   • validation (empty / too-short prompt → 400),
 //   • missing NVIDIA env → 503 not_configured naming the var,
-//   • per-IP daily quota → 429 with X-RateLimit-Reset + a paid-forge upsell,
+//   • the account gate (anonymous → 401 sign_in_required, key forwarded),
+//   • per-account daily quota → 429 with X-RateLimit-Reset + a paid-forge upsell,
 //   • the lane response contract for the inline-done and pending paths, against
 //     the REAL captured /api/forge draft-lane shapes.
 //
@@ -43,11 +46,17 @@ vi.mock('../../api/_lib/sentry.js', () => ({ captureException: () => {} }));
 vi.mock('../../api/_lib/alerts.js', () => ({ sendOpsAlert: () => {} }));
 vi.mock('../../api/_lib/zauth.js', () => ({ instrument: () => null, drain: async () => {} }));
 vi.mock('../../api/_lib/usage.js', () => ({ recordEvent: () => {} }));
+// Switchable bearer: an API key by default so the lane tests reach the lane;
+// the gate test sends none.
 vi.mock('../../api/_lib/auth.js', () => ({
-	authenticateBearer: async () => null,
-	extractBearer: () => null,
+	authenticateBearer: async (token) => (token ? { userId: 'user-1', source: 'apikey', scope: 'all', apiKeyId: 'key-1' } : null),
+	extractBearer: (req) => (req.headers.authorization || '').replace(/^Bearer\s+/i, '') || null,
 	getSessionUser: async () => null,
+	getRequestUser: async () => null,
 	hasScope: () => true,
+}));
+vi.mock('../../api/_lib/dev-plans/quota.js', () => ({
+	devPlanGate: async () => ({ ok: true, sub: { planId: 'free' }, release: () => {} }),
 }));
 
 const ORIGINAL_FETCH = globalThis.fetch;
@@ -70,12 +79,18 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-function makeReq({ method = 'POST', url = '/api/v1/ai/text-to-3d', body = null, host = 'three.ws' } = {}) {
+function makeReq({
+	method = 'POST',
+	url = '/api/v1/ai/text-to-3d',
+	body = null,
+	host = 'three.ws',
+	headers = { authorization: 'Bearer tw_test_key' },
+} = {}) {
 	const raw = body == null ? '' : JSON.stringify(body);
 	const stream = Readable.from(raw ? [Buffer.from(raw)] : []);
 	stream.method = method;
 	stream.url = url;
-	stream.headers = { 'content-type': 'application/json', host };
+	stream.headers = { 'content-type': 'application/json', host, ...headers };
 	return stream;
 }
 
@@ -159,6 +174,36 @@ describe('shapeResult — lane boundary contract', () => {
 			backend: 'nvidia',
 			tier: 'draft',
 		});
+	});
+});
+
+describe('POST /api/v1/ai/text-to-3d needs an account', () => {
+	it('refuses an anonymous caller with sign_in_required before calling the lane', async () => {
+		process.env.NVIDIA_API_KEY = 'nvapi-test';
+		globalThis.fetch = vi.fn(async () => {
+			throw new Error('lane should not be called for an anonymous caller');
+		});
+		const { res, body } = await dispatch(
+			makeReq({ body: { prompt: 'a small ceramic robot figurine' }, headers: {} }),
+			makeRes(),
+		);
+		expect(res.statusCode).toBe(401);
+		expect(body).toMatchObject({
+			error: 'sign_in_required',
+			sign_in_url: '/login',
+			api_keys_url: '/dashboard/api-keys',
+		});
+		expect(res.getHeader('www-authenticate')).toMatch(/^Bearer /);
+		expect(globalThis.fetch).not.toHaveBeenCalled();
+	});
+
+	it('forwards the caller API key to /api/forge', async () => {
+		process.env.NVIDIA_API_KEY = 'nvapi-test';
+		globalThis.fetch = vi.fn(async () => jsonResponse(DONE_FIXTURE));
+		const { res } = await dispatch(makeReq({ body: { prompt: 'a small ceramic robot figurine' } }), makeRes());
+		expect(res.statusCode).toBe(200);
+		const [, opts] = globalThis.fetch.mock.calls[0];
+		expect(opts.headers.authorization).toBe('Bearer tw_test_key');
 	});
 });
 
