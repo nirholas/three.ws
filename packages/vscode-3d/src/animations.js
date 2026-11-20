@@ -7,7 +7,7 @@
 // platform's own retargeter. Text to animation samples a motion model on the
 // three.ws GPU fleet and returns a clip in the same format.
 
-import { normalizeOrigin } from './studio.js';
+import { normalizeOrigin, apiKey, signInRequired } from './studio.js';
 import { slugFromPrompt } from './naming.js';
 
 const PAGE = 1000;
@@ -90,7 +90,9 @@ export function clipSlug(label) {
  * Generate an animation clip from a text prompt.
  *
  * POST /api/forge-motion starts the job; GET ?job= polls it. Resolves with the
- * finished clip JSON plus its URL.
+ * finished clip JSON plus its URL. Making an animation needs a free three.ws
+ * account, so the stored API key rides both calls as a bearer (never the clip
+ * download), and the call is refused before any request when none is stored.
  *
  * @param {string} origin
  * @param {string} prompt
@@ -99,15 +101,19 @@ export function clipSlug(label) {
  */
 export async function generateMotion(origin, prompt, { signal, durationSeconds = 4, onStatus, pollMs = MOTION_POLL_MS } = {}) {
 	const base = normalizeOrigin(origin);
+	const key = await apiKey();
+	if (!key) throw signInRequired(base);
+	const auth = { authorization: `Bearer ${key}` };
 	const start = await fetch(new URL('/api/forge-motion', base).href, {
 		method: 'POST',
-		headers: { 'content-type': 'application/json', accept: 'application/json' },
+		headers: { 'content-type': 'application/json', accept: 'application/json', ...auth },
 		body: JSON.stringify({ prompt, duration_seconds: durationSeconds }),
 		signal,
 	}).catch((err) => {
 		throw new Error(`could not reach the motion lane: ${err?.message || err}`);
 	});
 	const started = await start.json().catch(() => null);
+	if (start.status === 401) throw signInRequired(base, { refused: started?.error !== 'sign_in_required' });
 	if (start.status === 503) {
 		throw new Error(started?.message || 'text to animation is not available on this origin right now');
 	}
@@ -120,7 +126,7 @@ export async function generateMotion(origin, prompt, { signal, durationSeconds =
 	poll.searchParams.set('job', started.job_id);
 	while (Date.now() < deadline) {
 		await sleep(pollMs, signal);
-		const status = await getJson(poll.href, { signal, what: 'the motion job' });
+		const status = await getJson(poll.href, { signal, what: 'the motion job', headers: auth });
 		if (status?.status === 'failed') {
 			throw new Error(status.error || 'the motion model could not animate that prompt');
 		}
@@ -134,10 +140,10 @@ export async function generateMotion(origin, prompt, { signal, durationSeconds =
 	throw new Error('the motion job did not finish within six minutes');
 }
 
-async function getJson(url, { signal, what }) {
+async function getJson(url, { signal, what, headers = {} }) {
 	let res;
 	try {
-		res = await fetch(url, { headers: { accept: 'application/json' }, signal });
+		res = await fetch(url, { headers: { accept: 'application/json', ...headers }, signal });
 	} catch (err) {
 		if (signal?.aborted) throw new Error('cancelled');
 		throw new Error(`could not reach ${what}: ${err?.message || err}`);

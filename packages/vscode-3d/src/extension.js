@@ -764,6 +764,13 @@ function report(err, what) {
 	const message = err?.message || String(err);
 	if (message === 'cancelled') return;
 	output.appendLine(`${what} failed: ${message}`);
+	if (err?.code === 'sign_in_required') {
+		vscode.window.showErrorMessage(`three.ws 3D: ${message}`, 'Connect account', 'Get a key').then((pick) => {
+			if (pick === 'Connect account') vscode.commands.executeCommand('threews3d.signIn', { mode: 'key' });
+			else if (pick === 'Get a key' && err.keysUrl) vscode.env.openExternal(vscode.Uri.parse(err.keysUrl));
+		});
+		return;
+	}
 	vscode.window.showErrorMessage(`three.ws 3D: ${what} failed. ${message}`, 'Show log').then((pick) => {
 		if (pick === 'Show log') output.show(true);
 	});

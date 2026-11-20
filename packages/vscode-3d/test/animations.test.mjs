@@ -7,6 +7,12 @@ import { createServer } from 'node:http';
 import { clipSlug, fetchClip, generateMotion, listLibrary, normalizeClip } from '../src/animations.js';
 import { readRefineResult } from '../src/refine.js';
 import { checkQuality, qualityMarkdown } from '../src/quality.js';
+import { setApiKeyProvider } from '../src/studio.js';
+
+// Text to motion needs an account; these tests exercise the lane past that
+// gate, so a synthetic key is connected for the whole file.
+// test/account-key.test.mjs covers the gate itself.
+setApiKeyProvider(() => 'sk_test_synthetic123');
 
 function serve(handler) {
 	return new Promise((resolve) => {

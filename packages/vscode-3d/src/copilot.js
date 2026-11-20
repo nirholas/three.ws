@@ -10,7 +10,7 @@ import * as vscode from 'vscode';
 import { PARTICIPANT_ID, followupsFor, helpMarkdown, kindFromText, routeRequest, urlIn } from './chat-routing.js';
 import { TOOL_SPECS } from './copilot-tools.js';
 import { searchCatalog } from './catalog.js';
-import { TOOLS, callTool, describeStatus } from './studio.js';
+import { TOOLS, callTool, describeStatus, setApiKeyProvider } from './studio.js';
 import { buildEmbedSnippet, resolveEmbedRelease } from './embed.js';
 import { downloadModel } from './download.js';
 import { activeViewer } from './active-panel.js';
@@ -71,6 +71,11 @@ export async function handleChat(host, request, stream, token) {
 			return { metadata: { command: route.command, cancelled: true } };
 		}
 		host.output.appendLine(`@threews /${route.command} failed: ${message}`);
+		if (err?.code === 'sign_in_required') {
+			stream.markdown(message);
+			stream.button({ command: 'threews3d.signIn', title: 'Connect account', arguments: [{ mode: 'key' }] });
+			return { metadata: { command: route.command, subject: route.subject, failed: true, signInRequired: true } };
+		}
 		return { errorDetails: { message: explain(route.command, message) }, metadata: { command: route.command, subject: route.subject, failed: true } };
 	} finally {
 		sub?.dispose?.();
@@ -313,6 +318,11 @@ function registerMcp(context, host) {
 	const out = [changed];
 	const version = String(context.extension?.packageJSON?.version || '');
 
+	// The extension's own commands (generate, rig, refine, animate) read the
+	// stored key on every call, so connecting or removing it applies at once.
+	setApiKeyProvider(() => context.secrets?.get(SECRET_KEY));
+	out.push({ dispose: () => setApiKeyProvider(null) });
+
 	const account = async () => {
 		const mode = context.globalState?.get(ACCOUNT_KEY);
 		if (mode === 'oauth') return { mode: 'oauth' };
@@ -337,19 +347,25 @@ function registerMcp(context, host) {
 	}
 
 	out.push(
-		vscode.commands.registerCommand('threews3d.signIn', async () => {
-			const pick = await vscode.window.showQuickPick(
-				[
-					{ label: 'Sign in with your browser', description: 'VS Code runs the three.ws OAuth sign-in the first time a tool needs it', mode: 'oauth' },
-					{ label: 'Paste an API key', description: 'An sk_live_ key from three.ws/dashboard/api, kept in VS Code secret storage', mode: 'key' },
-				],
-				{ title: 'Connect your three.ws account to Copilot', placeHolder: 'How should VS Code authenticate to the three.ws account MCP server?' },
-			);
+		// `{ mode: 'key' }` skips the choice: the extension's own commands can
+		// only send a key (an OAuth token stays inside VS Code's MCP client).
+		vscode.commands.registerCommand('threews3d.signIn', async (opts) => {
+			const keyItem = { label: 'Paste an API key', description: 'Works everywhere: the generate, rig and animate commands, @threews, and Copilot agent mode', mode: 'key' };
+			const pick =
+				opts?.mode === 'key'
+					? keyItem
+					: await vscode.window.showQuickPick(
+							[
+								keyItem,
+								{ label: 'Sign in with your browser', description: 'Copilot agent mode only: VS Code runs the three.ws OAuth sign-in when a tool first needs it', mode: 'oauth' },
+							],
+							{ title: 'Connect your three.ws account', placeHolder: 'Making, rigging or animating a model needs a free three.ws account' },
+						);
 			if (!pick) return;
 			if (pick.mode === 'key') {
 				const key = await vscode.window.showInputBox({
 					title: 'three.ws API key',
-					prompt: 'Create one at three.ws/dashboard/api. It is checked against three.ws before it is stored.',
+					prompt: `Create one free at ${host.origin().replace(/\/+$/, '')}/dashboard/api-keys. It is checked against three.ws before it is stored.`,
 					password: true,
 					ignoreFocusOut: true,
 					placeHolder: 'sk_live_...',
@@ -362,11 +378,11 @@ function registerMcp(context, host) {
 				}
 				await context.secrets.store(SECRET_KEY, key.trim());
 				await context.globalState.update(ACCOUNT_KEY, 'key');
-				vscode.window.showInformationMessage(`three.ws 3D: ${check.message}. The "three.ws account" MCP server is now available in Copilot agent mode.`);
+				vscode.window.showInformationMessage(`three.ws 3D: ${check.message}. You can make, rig and animate models now, and the "three.ws account" MCP server is available in Copilot agent mode.`);
 			} else {
 				await context.secrets?.delete(SECRET_KEY);
 				await context.globalState.update(ACCOUNT_KEY, 'oauth');
-				vscode.window.showInformationMessage('three.ws 3D: the "three.ws account" MCP server is registered. VS Code opens the three.ws sign-in when it first connects.');
+				vscode.window.showInformationMessage('three.ws 3D: the three.ws MCP servers now ask for sign-in. VS Code opens the three.ws sign-in when Copilot first uses one. The generate, rig and animate commands still need an API key.');
 			}
 			changed.fire();
 		}),
@@ -374,7 +390,7 @@ function registerMcp(context, host) {
 			await context.secrets?.delete(SECRET_KEY);
 			await context.globalState.update(ACCOUNT_KEY, undefined);
 			changed.fire();
-			vscode.window.showInformationMessage('three.ws 3D: signed out. Only the free three.ws Studio MCP server stays registered.');
+			vscode.window.showInformationMessage('three.ws 3D: signed out. The catalog still works; making, rigging or animating a model needs you to connect again.');
 		}),
 		vscode.workspace.onDidChangeConfiguration((e) => {
 			if (e.affectsConfiguration('threews3d.origin')) changed.fire();

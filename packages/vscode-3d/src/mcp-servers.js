@@ -2,7 +2,11 @@
 //
 // Two hosted servers, both over Streamable HTTP:
 //   - /api/mcp-studio: the free 3D tools (text to 3D, rigging, the catalog,
-//     docs search). No key, no account, so it is always registered.
+//     docs search). It is always registered so the catalog and docs work
+//     signed out; making or rigging a model there needs a free account, so it
+//     carries the same credential as the account server: the API key header in
+//     key mode, and `?auth=oauth` in OAuth mode, which makes the studio answer
+//     401 with its authorization server so VS Code runs the browser sign-in.
 //   - /api/mcp: the account server (your agents, wallets, paid tools). It is
 //     registered once you sign in, either with VS Code's own OAuth flow (the
 //     server advertises its authorization server, so VS Code runs the browser
@@ -28,11 +32,14 @@ export const KEY_PATTERN = /^sk_(live|test)_[A-Za-z0-9_-]{8,}$/;
  */
 export function serverList({ origin, account, version }) {
 	const base = normalizeOrigin(origin);
-	const servers = [{ label: 'three.ws Studio (free)', uri: `${base}/api/mcp-studio`, headers: {}, version }];
+	const keyed = account?.mode === 'key' && account.key;
+	const auth = keyed ? { Authorization: `Bearer ${account.key}` } : {};
+	const studioUri = account?.mode === 'oauth' ? `${base}/api/mcp-studio?auth=oauth` : `${base}/api/mcp-studio`;
+	const servers = [{ label: 'three.ws Studio', uri: studioUri, headers: { ...auth }, version }];
 	if (account?.mode === 'oauth') {
 		servers.push({ label: 'three.ws account', uri: `${base}/api/mcp`, headers: {}, version });
-	} else if (account?.mode === 'key' && account.key) {
-		servers.push({ label: 'three.ws account', uri: `${base}/api/mcp`, headers: { Authorization: `Bearer ${account.key}` }, version });
+	} else if (keyed) {
+		servers.push({ label: 'three.ws account', uri: `${base}/api/mcp`, headers: { ...auth }, version });
 	}
 	return servers;
 }

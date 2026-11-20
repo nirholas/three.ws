@@ -1,9 +1,12 @@
 // The one place this extension talks to the three.ws studio.
 //
-// Everything goes through POST /api/mcp-studio, the public JSON-RPC endpoint
-// behind the free text to 3D lane: no API key, no account, no payment. The
-// origin is a setting so the same code drives a local dev server or a preview
-// deployment without a rebuild.
+// Everything goes through POST /api/mcp-studio, the JSON-RPC endpoint behind
+// the free text to 3D lane. Generation costs nothing, but making, rigging or
+// refining a model needs a free three.ws account: the extension sends the API
+// key the user stored with "three.ws: Connect account" as a bearer, and refuses
+// a creator call before any request when no key is stored. Reads (check_job,
+// the catalog) need no key. The origin is a setting so the same code drives a
+// local dev server or a preview deployment without a rebuild.
 
 /** Tools this extension calls, with the argument each one takes. */
 export const TOOLS = Object.freeze({
@@ -13,6 +16,77 @@ export const TOOLS = Object.freeze({
 	refine: 'refine_model',
 	check: 'check_job',
 });
+
+/**
+ * Studio tools that make, rig, render or describe a model. The server refuses
+ * these to an anonymous caller (api/_mcp/creator-gate.js), so the extension
+ * refuses them first and says how to connect, instead of spending a round trip.
+ */
+export const CREATOR_TOOLS = new Set([
+	'forge_free',
+	'mesh_forge',
+	'text_to_avatar',
+	'forge_avatar',
+	'rig_mesh',
+	'refine_model',
+	'look_at_model',
+	'create_agent_persona',
+]);
+
+/** Where a three.ws API key is made, relative to the configured origin. */
+export const API_KEYS_PATH = '/dashboard/api-keys';
+
+/** The call needs a three.ws account and none is connected (or the key was refused). */
+export class SignInRequiredError extends Error {
+	/**
+	 * @param {string} message
+	 * @param {{ refused?: boolean, origin?: string }} [opts]
+	 */
+	constructor(message, { refused = false, origin } = {}) {
+		super(message);
+		this.name = 'SignInRequiredError';
+		this.code = 'sign_in_required';
+		this.refused = refused;
+		this.keysUrl = keysUrl(origin);
+	}
+}
+
+function keysUrl(origin) {
+	try {
+		return new URL(API_KEYS_PATH, normalizeOrigin(origin || 'https://three.ws')).href;
+	} catch {
+		return `https://three.ws${API_KEYS_PATH}`;
+	}
+}
+
+/** The refusal for a creator call with no key, or with a key the server refused. */
+export function signInRequired(origin, { refused = false } = {}) {
+	const where = keysUrl(origin);
+	const message = refused
+		? `three.ws refused the stored API key. Make a new one at ${where}, then run "three.ws: Connect account" to replace it.`
+		: `Making, rigging or animating a model needs a free three.ws account. Make an API key at ${where}, then run "three.ws: Connect account" and paste it.`;
+	return new SignInRequiredError(message, { refused, origin });
+}
+
+let apiKeyProvider = null;
+
+/**
+ * Set where the stored API key comes from (the extension's SecretStorage).
+ * Pass null to clear it. The provider is asked on every call, so a key the
+ * user connects or removes takes effect without a reload.
+ *
+ * @param {(() => Promise<string|null|undefined> | string|null|undefined) | null} fn
+ */
+export function setApiKeyProvider(fn) {
+	apiKeyProvider = typeof fn === 'function' ? fn : null;
+}
+
+/** The stored API key, or null when none is connected. */
+export async function apiKey() {
+	if (!apiKeyProvider) return null;
+	const key = await apiKeyProvider();
+	return typeof key === 'string' && key.trim() ? key.trim() : null;
+}
 
 /**
  * Pull the model out of a tools/call result.
@@ -30,6 +104,11 @@ export function readModelResult(result) {
 		throw new Error('the studio returned an empty response');
 	}
 	const structured = result.structuredContent;
+	if (structured?.status === 'sign_in_required') {
+		const err = new SignInRequiredError(textOf(result) || structured.message || 'Sign in to make a 3D model. A three.ws account is free.');
+		if (typeof structured.api_keys_url === 'string') err.keysUrl = structured.api_keys_url;
+		throw err;
+	}
 	const glbUrl = structured?.glbUrl || structured?.glb_url;
 	if (typeof glbUrl === 'string' && /^https?:\/\//.test(glbUrl)) {
 		return {
@@ -179,9 +258,19 @@ export function sleep(ms, signal) {
 	});
 }
 
-/** Raw JSON-RPC call with a timeout, an abort hook, and readable errors. */
+/**
+ * Raw JSON-RPC call with a timeout, an abort hook, and readable errors.
+ *
+ * The stored API key rides every call as a bearer, so a key-holder's reads are
+ * attributed to their account too. A creator tool with no key never leaves.
+ */
 export async function rpc(origin, body, { signal, timeoutMs = SINGLE_CALL_TIMEOUT_MS } = {}) {
 	const url = new URL('/api/mcp-studio', normalizeOrigin(origin)).href;
+	const key = await apiKey();
+	const creating = body?.method === 'tools/call' && CREATOR_TOOLS.has(body?.params?.name);
+	if (creating && !key) throw signInRequired(origin);
+	const headers = { 'content-type': 'application/json', accept: 'application/json' };
+	if (key) headers.authorization = `Bearer ${key}`;
 	const controller = new AbortController();
 	const onAbort = () => controller.abort();
 	if (signal) {
@@ -193,7 +282,7 @@ export async function rpc(origin, body, { signal, timeoutMs = SINGLE_CALL_TIMEOU
 	try {
 		res = await fetch(url, {
 			method: 'POST',
-			headers: { 'content-type': 'application/json', accept: 'application/json' },
+			headers,
 			body: JSON.stringify(body),
 			signal: controller.signal,
 		});
@@ -208,6 +297,11 @@ export async function rpc(origin, body, { signal, timeoutMs = SINGLE_CALL_TIMEOU
 	}
 
 	const text = await res.text();
+	if (res.status === 401) {
+		// The studio only answers 401 to a key it does not accept (an anonymous
+		// creator call is a tool result, read above); name it so the user replaces it.
+		throw signInRequired(origin, { refused: Boolean(key) });
+	}
 	let payload;
 	try {
 		payload = JSON.parse(text);

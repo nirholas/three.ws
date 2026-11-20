@@ -17,9 +17,10 @@ This file is excluded from the `.vsix` by `.vscodeignore`.
   extension live under it), so no new publisher has to be created. The
   `threews` namespace also already exists on Open VSX.
 - **The package is ready.** `npm run package` builds a production bundle and
-  writes `vscode-3d-0.3.0.vsix`: 15 files, about 725 KB (2026-11-11). Version
-  0.3.0 adds the GitHub Copilot Chat surface (the `@threews` participant, five
-  agent-mode tools, the MCP server provider). `npm run test:vscode` runs it
+  writes `vscode-3d-0.4.0.vsix`: 15 files, about 727 KB (2026-11-20). Version
+  0.3.0 added the GitHub Copilot Chat surface (the `@threews` participant, five
+  agent-mode tools, the MCP server provider); 0.4.0 sends the user's three.ws
+  API key, because making a model now needs a free account. `npm run test:vscode` runs it
   inside real VS Code builds downloaded by `@vscode/test-electron`: it passes
   on 1.146.0 (stable) and on 1.101.0, the `engines.vscode` floor, where the
   tools are listed by `vscode.lm.tools` and one is invoked against the live
@@ -126,7 +127,7 @@ OVSX_PAT=<token> npm run publish:openvsx
 
 `publish:openvsx` runs `ovsx publish --no-dependencies`, which builds and
 packages the same way. To upload the exact file already published to the
-Marketplace instead: `npx --yes ovsx publish vscode-3d-0.3.0.vsix -p <token>`.
+Marketplace instead: `npx --yes ovsx publish vscode-3d-0.4.0.vsix -p <token>`.
 
 The namespace is currently unverified on Open VSX, so the listing shows a
 warning badge. To remove it, claim the namespace by opening an issue at

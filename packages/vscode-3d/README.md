@@ -48,11 +48,29 @@ platform's own inspectors, and generation calls the live studio API.
   "waving confidently with the right hand" to the text-to-motion worker on the
   three.ws GPU fleet and retargets the sampled clip the same way.
 
+### Connect your account
+
+Generation costs nothing, but making, rigging, refining or animating a model
+needs a free three.ws account, so every model has an owner who answers for it.
+Make an API key at [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys),
+run **3D: Connect my three.ws Account**, choose **Paste an API key**, and paste
+it. The key is checked against three.ws first, then kept in VS Code's secret
+storage and sent only to the three.ws API, never to the CDN that serves the
+finished files. Run a generate command with no key connected and the extension
+tells you this before it sends anything, with a **Connect account** button.
+Browsing the catalog, the motion library and the gallery needs no account.
+
+Browser sign-in (the other choice in the same command) connects Copilot agent
+mode only, because VS Code keeps that token inside its own MCP client; the
+extension's generate, rig and animate commands need the API key.
+
 ### Make it
 
 - **Text to 3D.** `3D: Generate a Model from Text` for an object or prop,
-  `3D: Generate an Avatar from Text` for a character. Both run on the free lane
-  (no key, no account), save the GLB into your workspace, and open it.
+  `3D: Generate an Avatar from Text` for a character. Both run on the free lane,
+  save the GLB into your workspace, and open it. Making, rigging, refining or
+  animating a model needs a free three.ws account: see
+  [Connect your account](#connect-your-account).
 - **Refine by describing a change.** `Refine` (or `3D: Refine this Model`) takes
   "make it metallic" or "bigger helmet" and generates a new version anchored to
   the current one, carrying its form and materials forward. Versions save as
@@ -102,7 +120,7 @@ newer), in three ways.
 
 | Command | What it does |
 |---|---|
-| `@threews /forge a brass lantern` | Free text to 3D. Streams the studio's real progress (queue position, stage, ETA) and ends with two buttons: **Open in the viewer** and **Save GLB to workspace**. |
+| `@threews /forge a brass lantern` | Free text to 3D (with your account connected; otherwise the reply says how, with a **Connect account** button). Streams the studio's real progress (queue position, stage, ETA) and ends with two buttons: **Open in the viewer** and **Save GLB to workspace**. |
 | `@threews /find wooden chair` | Searches the public catalog of CC0 props, rigged characters and motion clips, with view links and buttons for the first match. |
 | `@threews /rig` | Rigs a GLB: the URL in your message, a `#file` you attach, or the model open in the viewer. |
 | `@threews /embed` | Inserts a pinned, SRI-checked `<agent-3d>` snippet for that model into the open file. |
@@ -131,12 +149,11 @@ it for the web".
 
 **The three.ws MCP servers.** The extension registers the free three.ws Studio
 server (`https://three.ws/api/mcp-studio`: text to 3D, rigging, the catalog,
-docs search) with VS Code automatically; no key and no config file. Run
-**3D: Connect my three.ws Account to Copilot Agent Mode (MCP)** to add the
-account server (`https://three.ws/api/mcp`: your agents, wallets and paid
-tools), signing in either through VS Code's own browser sign-in or with an API
-key from [three.ws/dashboard/api](https://three.ws/dashboard/api), which is
-checked against the server and then kept in VS Code's secret storage.
+docs search) with VS Code automatically, with no config file. The catalog and
+docs work signed out; making or rigging a model there needs your account.
+**3D: Connect my three.ws Account** sends your credential to the studio and
+adds the account server (`https://three.ws/api/mcp`: your agents, wallets and
+paid tools), either through VS Code's own browser sign-in or with an API key.
 
 ![VS Code starting the three.ws Studio MCP server and discovering its tools](https://raw.githubusercontent.com/nirholas/three.ws/main/packages/vscode-3d/images/copilot-mcp-servers.png)
 
@@ -151,7 +168,7 @@ git clone https://github.com/nirholas/three.ws.git
 cd three.ws/packages/vscode-3d
 npm install
 npm run package
-code --install-extension vscode-3d-0.3.0.vsix
+code --install-extension vscode-3d-0.4.0.vsix
 ```
 
 For development, open `packages/vscode-3d` in VS Code and press <kbd>F5</kbd> to
@@ -163,6 +180,8 @@ covered in [PUBLISHING.md](https://github.com/nirholas/three.ws/blob/main/packag
 Open any `.glb` or `.gltf` in the explorer. That is the whole setup: the viewer
 is the default editor for those files, and the **three.ws 3D** icon in the
 activity bar lists every model in the workspace alongside the public gallery.
+To make, rig or animate models as well, run **3D: Connect my three.ws Account**
+once with a free API key.
 
 A typical loop: **3D: Generate an Avatar from Text**, describe a character, and
 the GLB lands in `models/` and opens. Press **Animate**, type `wave`, and watch
@@ -207,8 +226,8 @@ stale after a release), the editor underlines it and the quick fix repairs it.
 | `3D: Save a PNG Snapshot of the View` | Writes the current view beside the model. |
 | `3D: Save a Turntable GIF of the Model` | Writes a looping orbit beside the model. |
 | `3D: Toggle the Model Report` | Shows or hides the report panel. |
-| `3D: Connect my three.ws Account to Copilot Agent Mode (MCP)` | Registers the account MCP server, by browser sign-in or API key. |
-| `3D: Disconnect my three.ws Account from Copilot Agent Mode` | Removes it and deletes the stored key. |
+| `3D: Connect my three.ws Account` | Stores an API key for making, rigging and animating models, and connects the MCP servers (API key or browser sign-in). |
+| `3D: Disconnect my three.ws Account` | Deletes the stored key and disconnects the account MCP server. |
 
 ## Settings
 
@@ -227,16 +246,18 @@ stale after a release), the editor underlines it and the quick fix repairs it.
 
 ## How it works
 
-Generation, refinement, rigging, the library, and the gallery go through public,
-unauthenticated three.ws endpoints:
+Generation, refinement, rigging, the library, and the gallery go through
+three.ws endpoints. Nothing is paid; making a model needs your account:
 
 - `POST /api/mcp-studio` is the JSON-RPC studio. The extension calls the
   `forge_free`, `text_to_avatar`, `rig_mesh`, `refine_model`, and `check_job`
-  tools. No key, no account, no payment: the platform's server-side keys cover
-  provider cost.
+  tools, sending your stored API key as `Authorization: Bearer`. The first four
+  make a model and need the key; `check_job` and the catalog do not. No
+  payment: the platform's server-side keys cover provider cost.
 - `GET /api/animations/library` lists the motion library; each clip is fetched
   from the CDN as a three.js `AnimationClip` JSON when you pick it.
 - `POST /api/forge-motion` starts a text-to-motion job; `GET ?job=` polls it.
+  Both carry your API key.
 - `POST /api/forge-quality-check` scores a render you send as a PNG.
 - `GET /api/forge-gallery` is the public feed of recent creations.
 - `GET /agent-3d/versions.json` is the library release manifest the embed

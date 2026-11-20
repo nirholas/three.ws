@@ -2,7 +2,7 @@
 	"name": "vscode-3d",
 	"displayName": "three.ws 3D",
 	"description": "Preview GLB and glTF models inside VS Code, try 2,800 library animations or a text-described motion on any rig and bake the result, generate and refine models from a prompt on the free three.ws lane, optimize for the web, diff a model against git, AI quality-check a render, and get diagnostics and completions for <agent-3d> embeds. In GitHub Copilot Chat: @threews /forge, /find, /rig and /embed, five agent-mode tools, and the three.ws MCP servers. Powered by three.ws.",
-	"version": "0.3.0",
+	"version": "0.4.0",
 	"publisher": "threews",
 	"license": "Apache-2.0",
 	"pricing": "Free",
@@ -115,7 +115,7 @@
 		"viewsWelcome": [
 			{
 				"view": "threews3d.models",
-				"contents": "No .glb or .gltf files here yet.\n\nGenerate one from a text prompt on the free three.ws lane. No key, no account.\n[Generate a 3D model](command:threews3d.generateModel)\n[Generate an avatar](command:threews3d.generateAvatar)\n\nAlready have a model on a URL?\n[Preview a model URL](command:threews3d.previewUrl)\n\nEmbedding one? Open an HTML file with an <agent-3d> tag: the extension checks it and completes its attributes."
+				"contents": "No .glb or .gltf files here yet.\n\nGenerate one from a text prompt on the free three.ws lane. It needs a free three.ws account: [connect one](command:threews3d.signIn) with an API key.\n[Generate a 3D model](command:threews3d.generateModel)\n[Generate an avatar](command:threews3d.generateAvatar)\n\nAlready have a model on a URL?\n[Preview a model URL](command:threews3d.previewUrl)\n\nEmbedding one? Open an HTML file with an <agent-3d> tag: the extension checks it and completes its attributes."
 			}
 		],
 		"commands": [
@@ -210,12 +210,12 @@
 			},
 			{
 				"command": "threews3d.signIn",
-				"title": "3D: Connect my three.ws Account to Copilot Agent Mode (MCP)",
+				"title": "3D: Connect my three.ws Account",
 				"icon": "$(account)"
 			},
 			{
 				"command": "threews3d.signOut",
-				"title": "3D: Disconnect my three.ws Account from Copilot Agent Mode"
+				"title": "3D: Disconnect my three.ws Account"
 			}
 		],
 		"menus": {
@@ -438,7 +438,7 @@
 				"canBeReferencedInPrompt": true,
 				"icon": "$(sparkle)",
 				"userDescription": "Generate a textured 3D model (GLB) from a description on the free three.ws lane.",
-				"modelDescription": "Generate a textured, downloadable 3D model (GLB) from a text description using the free three.ws text to 3D lane (no key, no account). Describe ONE object, character or creature: lead with the subject, then materials and colours. Search for a ready-made asset with threews_find_asset first when a common object would do. Returns the GLB URL, a browser viewer URL and, when saveToWorkspace is true, the workspace path it was saved to. A render that takes longer than about 40 seconds returns status \"pending\" with a jobId: call threews_check_job with it to collect the model.",
+				"modelDescription": "Generate a textured, downloadable 3D model (GLB) from a text description using the free three.ws text to 3D lane (free of charge; needs the user's three.ws account, connected with \"3D: Connect my three.ws Account\"). Describe ONE object, character or creature: lead with the subject, then materials and colours. Search for a ready-made asset with threews_find_asset first when a common object would do. Returns the GLB URL, a browser viewer URL and, when saveToWorkspace is true, the workspace path it was saved to. A render that takes longer than about 40 seconds returns status \"pending\" with a jobId: call threews_check_job with it to collect the model.",
 				"tags": [
 					"3d",
 					"glb",

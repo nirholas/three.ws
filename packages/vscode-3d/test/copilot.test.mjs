@@ -28,6 +28,11 @@ Module._load = function (request, parent, isMain) {
 
 const ORIGIN = (process.env.THREEWS_ORIGIN || 'https://three.ws').replace(/\/+$/, '');
 const live = { skip: process.env.THREEWS_OFFLINE === '1' ? 'THREEWS_OFFLINE=1' : false };
+// Making a model needs a three.ws account, so the live generation tests run
+// with a real key from THREE_WS_API_KEY and are skipped without one.
+const LIVE_KEY = process.env.THREE_WS_API_KEY || '';
+const liveCreate = { skip: live.skip || (LIVE_KEY ? false : 'set THREE_WS_API_KEY: making a model needs a three.ws account') };
+const SECRET = 'threews3d.apiKey';
 const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const extension = require('../dist/extension.cjs');
 
@@ -215,7 +220,7 @@ test('the MCP provider always offers the free studio and adds the account server
 
 	let servers = await provider.provideMcpServerDefinitions(token());
 	assert.deepEqual(servers.map((s) => s.uri.toString()), [vscode.Uri.parse(`${ORIGIN}/api/mcp-studio`).toString()]);
-	assert.equal(servers[0].label, 'three.ws Studio (free)');
+	assert.equal(servers[0].label, 'three.ws Studio');
 	assert.equal(servers[0].version, manifest.version);
 
 	state.quickPick = (items) => items.find((i) => i.mode === 'oauth');
@@ -374,6 +379,7 @@ test('a studio refusal is explained with the studio words, not misread as a rate
 	});
 	await new Promise((r) => server.listen(0, '127.0.0.1', r));
 	state.config['origin'] = `http://127.0.0.1:${server.address().port}`;
+	secrets.set(SECRET, 'sk_test_synthetic123');
 	try {
 		const { run } = chat('a brass lantern', 'forge');
 		const result = await run;
@@ -382,11 +388,40 @@ test('a studio refusal is explained with the studio words, not misread as a rate
 		assert.match(result.errorDetails.message, /Try again in a moment/);
 	} finally {
 		state.config['origin'] = ORIGIN;
+		secrets.delete(SECRET);
 		server.close();
 	}
 });
 
-test('threews_generate_model and threews_check_job collect a real free generation', { ...live, timeout: 12 * 60_000 }, async () => {
+test('@threews /forge with no account connected says how to connect and offers the button, sending nothing', async () => {
+	const { createServer } = await import('node:http');
+	let requests = 0;
+	const server = createServer((req, res) => {
+		requests++;
+		res.end('{}');
+	});
+	await new Promise((r) => server.listen(0, '127.0.0.1', r));
+	state.config['origin'] = `http://127.0.0.1:${server.address().port}`;
+	try {
+		const { stream, run } = chat('a brass lantern', 'forge');
+		const result = await run;
+		assert.equal(result.metadata.signInRequired, true);
+		assert.equal(result.errorDetails, undefined);
+		assert.match(stream.text(), /free three\.ws account/);
+		assert.match(stream.text(), /\/dashboard\/api-keys/);
+		const [connect] = stream.buttons();
+		assert.equal(connect.command, 'threews3d.signIn');
+		assert.deepEqual(connect.arguments, [{ mode: 'key' }]);
+		assert.equal(requests, 0);
+	} finally {
+		state.config['origin'] = ORIGIN;
+		server.close();
+	}
+});
+
+test('threews_generate_model and threews_check_job collect a real free generation', { ...liveCreate, timeout: 12 * 60_000 }, async (t) => {
+	secrets.set(SECRET, LIVE_KEY);
+	t.after(() => secrets.delete(SECRET));
 	const prompt = 'a small wooden treasure chest with brass corners';
 	let text = textOf(await invoke('threews_generate_model', { prompt, tier: 'draft', saveToWorkspace: true }));
 	const seen = [text];
@@ -408,7 +443,9 @@ test('threews_generate_model and threews_check_job collect a real free generatio
 	assert.equal(new TextDecoder().decode(bytes.slice(0, 4)), 'glTF', `${saved} is not a GLB`);
 });
 
-test('@threews /forge streams honest status and ends with open and save buttons', { ...live, timeout: 12 * 60_000 }, async () => {
+test('@threews /forge streams honest status and ends with open and save buttons', { ...liveCreate, timeout: 12 * 60_000 }, async (t) => {
+	secrets.set(SECRET, LIVE_KEY);
+	t.after(() => secrets.delete(SECRET));
 	const { stream, run } = chat('make me a small wooden treasure chest with brass corners for my game', 'forge');
 	const result = await run;
 	assert.equal(result.errorDetails, undefined, result.errorDetails?.message);

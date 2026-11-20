@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.4.0
+
+Making a model on three.ws now needs a free account, so every model has an
+owner who answers for it. Generation is still free of charge.
+
+- **The extension sends your API key.** Generate, avatar, rig, refine and
+  text-to-motion calls carry the key stored by **3D: Connect my three.ws
+  Account** as `Authorization: Bearer`, to the three.ws API only (never to the
+  CDN that serves the finished files). The catalog, the motion library, the
+  gallery and job checks still work signed out.
+- **Told before anything is sent.** With no key connected, a generate command
+  says so at once with **Connect account** and **Get a key** buttons, and
+  `@threews /forge` answers with the same explanation and a **Connect
+  account** button. A key three.ws refuses is named as refused, so you know to
+  replace it.
+- **The Studio MCP server carries your credential too.** In API-key mode it
+  gets the key header; in browser sign-in mode VS Code runs the three.ws
+  sign-in for it, so Copilot agent mode can make models after connecting.
+- The connect and disconnect commands are now **3D: Connect my three.ws
+  Account** and **3D: Disconnect my three.ws Account**, and the README and the
+  agent-mode tool description no longer say generation needs no account.
+
 ## 0.3.0
 
 three.ws inside GitHub Copilot Chat. Requires VS Code 1.101 or newer (the

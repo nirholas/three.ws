@@ -4,7 +4,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { describeStatus, readModelResult, readToolResult, textOf, normalizeOrigin, rpc, callTool, TOOLS } from '../src/studio.js';
+import { describeStatus, readModelResult, readToolResult, textOf, normalizeOrigin, rpc, callTool, TOOLS, setApiKeyProvider } from '../src/studio.js';
+
+// These tests exercise what happens past the account gate, so a synthetic key
+// is connected for the whole file. test/account-key.test.mjs covers the gate.
+setApiKeyProvider(() => 'sk_test_synthetic123');
 
 test('a structured result yields the model', () => {
 	const model = readModelResult({
