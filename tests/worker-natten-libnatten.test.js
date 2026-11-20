@@ -37,6 +37,15 @@ describe('NATTEN images build libnatten', () => {
 			expect(archAt).toBeLessThanOrEqual(installAt);
 		});
 
+		// setup.py shells out to `cmake` to compile csrc/ (cmake_minimum_required 3.20).
+		// Without it the wheel build dies with "Cannot find CMake executable"
+		// (Cloud Build 5a1785a9, 2026-11-19), so the libnatten fix never shipped.
+		it(`${path.split('/workers/')[1]} installs CMake before building natten`, () => {
+			const cmakeAt = lines.findIndex((l) => /(apt-get install|pip install)[^\n]*\scmake(\s|$|[<>=])/.test(l));
+			expect(cmakeAt, 'cmake must be installed (apt-get or pip) for the natten source build').toBeGreaterThanOrEqual(0);
+			expect(cmakeAt).toBeLessThan(installAt);
+		});
+
 		it(`${path.split('/workers/')[1]} fails the build when libnatten is missing`, () => {
 			const gate = lines.slice(installAt).some((l) => /natten\.libnatten/.test(l));
 			expect(gate, 'a RUN step after the install must assert natten.libnatten exists').toBe(true);

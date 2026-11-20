@@ -47,7 +47,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         python3.10 python3.10-dev python3-pip \
-        git curl wget build-essential ninja-build \
+        git curl wget build-essential ninja-build cmake \
         libgl1 libglib2.0-0 libgomp1 libjpeg-dev \
         libusb-1.0-0 libegl1 \
     && rm -rf /var/lib/apt/lists/* \
@@ -105,7 +105,8 @@ RUN pip install --no-build-isolation /tmp/ext/TRELLIS.2/o-voxel
 # Python-only natten and every job failed with "Can't run CUTLASS FNA; NATTEN
 # was not built with libnatten". 8.9 is the L4. The find_spec gate fails the
 # build instead of the first request if the extension is ever missing again
-# (tests/worker-natten-libnatten.test.js).
+# (tests/worker-natten-libnatten.test.js). setup.py drives the compile through
+# `cmake` (>=3.20; jammy ships 3.22), installed in the apt layer above.
 RUN NATTEN_CUDA_ARCH="8.9" NATTEN_N_WORKERS=8 pip install natten==0.21.0 --no-build-isolation \
     && python -c "import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('natten.libnatten') else 'natten built without libnatten')"
 RUN rm -rf /tmp/ext
