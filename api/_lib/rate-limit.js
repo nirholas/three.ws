@@ -2318,6 +2318,11 @@ export const limits = {
 	// the account, else a hashed browser key, else the IP.
 	feedbackWrite: (id) =>
 		getLimiter('feedback:write', { limit: 20, window: '1 h' }).limit(id),
+	// Forge model removal requests (POST /api/forge-removal-request). Anyone can
+	// file one, signed in or not; this only stops a script from flooding the
+	// review queue. Keyed to the account, else the IP.
+	forgeRemovalWrite: (id) =>
+		getLimiter('forge:removal-write', { limit: 10, window: '1 h' }).limit(id),
 	// The admin review queue (/api/feedback). One admin refreshing a dashboard.
 	feedbackRead: (userId) =>
 		getLimiter('feedback:read', { limit: 240, window: '1 m', local: true }).limit(userId),
