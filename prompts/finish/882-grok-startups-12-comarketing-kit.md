@@ -1,5 +1,7 @@
 # grok-startups 12: the co-marketing kit that earns amplification from xAI, SpaceXSI and X
 
+Status 2026-11-20: kit written (docs/partners/xai-comarketing-kit.md), nine drafts queued, linked from the plan and docs/partners.md. Remaining: owner sends the emails and approves each post (gate 2), push and deploy of orders 871 to 884 so their links resolve, head media from the kit asset checklist once deployed, 874 results after order 927 installs the xAI key, a fresh --logs census after deploy.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `grok-startups-` order, so it can run in parallel with all of them. Dev port: 3282.
 
 ## Operating clause (binding)

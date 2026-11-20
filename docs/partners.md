@@ -19,7 +19,7 @@ Page source: [`pages/partners.html`](../pages/partners.html). Partnership enquir
 | Google Cloud | Cloud | `/blog/three-ws-google-cloud-partnership` | [Production runbook](./ops/gcp-production.md), [credits plan](./ops/gcp-credits-plan.md), [model workers](./ops/gcp-model-workers.md) |
 | Alibaba Cloud | Cloud | `/blog/three-ws-alibaba-cloud-partnership` | [Listings and distribution](./listings.md), [the model router](./brain.md) |
 | NVIDIA | Inception | `/nvidia` | [NVIDIA Inception](./nvidia-inception.md), [NVIDIA models](./nvidia-models.md), [Nemotron spotlight](./nvidia-nemotron-spotlight.md) |
-| xAI | Grok for Startups | `/grok` | [three.ws for Grok](./grok.md), [Grok Bot connector reference](./grok-bot.md), [LLM lanes](./ops/llm-lanes.md), [Grok for Startups build and co-marketing plan](./partners/xai-grok-startups-plan.md) |
+| xAI | Grok for Startups | `/grok` | [three.ws for Grok](./grok.md), [Grok Bot connector reference](./grok-bot.md), [LLM lanes](./ops/llm-lanes.md), [Grok for Startups build and co-marketing plan](./partners/xai-grok-startups-plan.md), [co-marketing kit](./partners/xai-comarketing-kit.md) |
 | HackerNoon | Media | `/blog/three-ws-hackernoon-partnership` | [Syndication](./syndication.md), [Listings and distribution](./listings.md) |
 | Quicknode | Infrastructure | `/blog/three-ws-quicknode-startup-program` | [Solana integration](./solana.md), [Listings and distribution](./listings.md) |
 
@@ -142,6 +142,7 @@ Do not resolve that spread by picking the strongest claim. If you need one sente
 
 - **Grok for Startups membership**, admitted 2026-11-20. The program grants credits across the Grok API, Grok and Grok Build, released 20% on approval and 80% after onboarding, and they expire six months after issue. The tracker row (`xai-grok-for-startups` in [`data/partner-programs.json`](../data/partner-programs.json), rendered in [big-tech programs](./partners/big-tech-programs.md)) holds the dates and the benefit ledger. Do not publish the credit amount or the team ID.
 - **The Grok surfaces three.ws already ships.** The remote MCP server at `https://three.ws/api/mcp-grok`, the Grok Build plugin and the Grok skill file are documented in [three.ws for Grok](./grok.md) and the [Grok Bot connector reference](./grok-bot.md). The Grok brain rung and its key handling are in [LLM lanes](./ops/llm-lanes.md); membership credits are what fund the platform rung there, which a caller's or agent owner's own xAI key still leads.
+- **Co-marketing.** Who on X amplifies third-party Grok builds, the startups-team emails, the case study and one post draft per build are in the [xAI co-marketing kit](./partners/xai-comarketing-kit.md).
 
 ---
 

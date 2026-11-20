@@ -82,6 +82,9 @@ behind, because "Grok did X in Y seconds for Z users" is the sentence that gets 
 
 ### D. Co-marketing and asks
 
+The emails, case study, post drafts, asset commands and tracking for this route are in the
+[xAI co-marketing kit](./xai-comarketing-kit.md).
+
 | # | Route | Ask | Owner step | Order |
 |---|---|---|---|---|
 | D1 | Grok for Startups team (direct line) | Reshare from xAI accounts at launch, inclusion in any startup story or showcase, marketplace featuring | Owner sends the prepared email | 882 |

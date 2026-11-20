@@ -24769,6 +24769,559 @@
 					]
 				}
 			]
+		},
+		{
+			"id": "grok-startups-871-cursor-plugin",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "mcp",
+			"pattern": "walkthrough",
+			"audience": "developer",
+			"notBefore": "2026-11-24T00:00:00Z",
+			"covers": [
+				"/docs/mcp",
+				"integrations/cursor/three-ws"
+			],
+			"posts": [
+				{
+					"text": "We ship a Cursor plugin. Ask the agent for a prop or a character and it makes a textured GLB, rigs it for animation, and renders the result so it can look at what it made before it uses it. https://three.ws/docs/mcp?utm_source=x&utm_campaign=grok-startups&utm_content=871"
+				},
+				{
+					"text": "A bundled rule tells the agent to search the free CC0 catalog before it generates anything, and to say which path it took: a match from the catalog or a new model."
+				},
+				{
+					"text": "Making a model needs a free three.ws account. Cursor signs you in the first time it connects, and the plugin also adds a make command and a rig command."
+				}
+			],
+			"claims": [
+				{
+					"says": "renders the result so it can look at what it made",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "integrations/cursor/three-ws/.cursor-plugin/plugin.json",
+							"contains": "render a model so the agent can see it"
+						}
+					]
+				},
+				{
+					"says": "search the free CC0 catalog before it generates anything",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "integrations/cursor/three-ws/rules/search-catalog-before-generating.mdc",
+							"contains": "search the free three.ws CC0 catalog first"
+						}
+					]
+				},
+				{
+					"says": "Cursor signs you in the first time it connects",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "integrations/cursor/three-ws/.cursor-plugin/plugin.json",
+							"contains": "Cursor signs you in on first connect"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the MCP docs page the post links is served",
+					"url": "https://three.ws/docs/mcp?utm_source=x&utm_campaign=grok-startups&utm_content=871",
+					"expect": {
+						"status": 200
+					}
+				}
+			],
+			"mentions": {},
+			"note": "order 871: needs the Cursor Marketplace listing approved and public (871 evidence: the listing URL), plus a production deploy of the plugin commit. No tag: the listing lives on Cursor's surface and no xAI account is involved. Head media: integrations/cursor/three-ws/assets screenshot from scripts/cursor-plugin-shots.mjs. Kit: docs/partners/xai-comarketing-kit.md."
+		},
+		{
+			"id": "grok-startups-872-grok-build-plugin",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "developer",
+			"pattern": "mechanism",
+			"audience": "developer",
+			"notBefore": "2026-11-25T00:00:00Z",
+			"covers": [
+				"/docs/grok",
+				"integrations/grok/three-ws"
+			],
+			"posts": [
+				{
+					"text": "Our plugin is listed in the Grok Build plugin marketplace @SpaceXSI announced. Install it from /marketplace and Grok Build can make textured 3D models, rig avatars and embed them in a page, checking each GLB with a render before it rigs or embeds it. https://three.ws/docs/grok?utm_source=x&utm_campaign=grok-startups&utm_content=872"
+				},
+				{
+					"text": "The plugin is one MCP server, 5 commands, 1 agent and 6 skills. It is built only from those parts, with no executables of its own, so the plugin details screen lists all it can do."
+				}
+			],
+			"claims": [
+				{
+					"says": "5 commands, 1 agent and 6 skills",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "integrations/grok/three-ws/README.md",
+							"contains": "5 commands, 1 agent, 6 skills"
+						}
+					]
+				},
+				{
+					"says": "with no executables of its own",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "integrations/grok/three-ws/README.md",
+							"contains": "no install scripts and no executables"
+						}
+					]
+				},
+				{
+					"says": "built only from those parts",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "integrations/grok/three-ws/README.md",
+							"contains": "The plugin ships no hooks, no LSP servers, no install scripts and no executables"
+						}
+					]
+				},
+				{
+					"says": "checking each GLB with a render before it rigs or embeds it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "integrations/grok/three-ws/README.md",
+							"contains": "before it rigs or embeds it"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the Grok docs page the post links is served",
+					"url": "https://three.ws/docs/grok?utm_source=x&utm_campaign=grok-startups&utm_content=872",
+					"expect": {
+						"status": 200,
+						"contains": "Grok Build"
+					}
+				}
+			],
+			"mentions": {
+				"@SpaceXSI": "announced the Grok Build plugin marketplace this listing sits in: https://x.com/xai/status/2065099299541893577"
+			},
+			"note": "order 872: needs the three-ws plugin live in the Grok Build marketplace (872 evidence: `grok plugin details three-ws` output from a clean machine) and a production deploy. Head media: terminal capture of `grok plugin details three-ws`. Kit: docs/partners/xai-comarketing-kit.md."
+		},
+		{
+			"id": "grok-startups-873-grok-bot-listing",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "developer",
+			"pattern": "number",
+			"audience": "developer",
+			"notBefore": "2026-11-26T00:00:00Z",
+			"covers": [
+				"/grok",
+				"docs/partners/grok-bot-listings.md"
+			],
+			"posts": [
+				{
+					"text": "We are listed in the Grok Bot marketplace that @ericzakariasson opened for submissions. We timed the path a reviewer takes, from sign in to a finished 3D model, against production: 195.8 s. https://three.ws/grok?utm_source=x&utm_campaign=grok-startups&utm_content=873"
+				},
+				{
+					"text": "Signed out, the connector searches the free catalog. Signed in with your free account, the same URL makes and rigs models that land in your own library, unlisted until you publish them."
+				}
+			],
+			"claims": [
+				{
+					"says": "195.8 s",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/partners/grok-bot-listings.md",
+							"contains": "195.8 s"
+						}
+					]
+				},
+				{
+					"says": "the same URL makes and rigs models",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/grok.md",
+							"contains": "Your account on the same URL"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the Grok page the post links is served",
+					"url": "https://three.ws/grok?utm_source=x&utm_campaign=grok-startups&utm_content=873",
+					"expect": {
+						"status": 200,
+						"contains": "api/mcp-grok"
+					}
+				}
+			],
+			"mentions": {
+				"@ericzakariasson": "opened Grok Bot marketplace submissions in public and runs the community directory: https://x.com/ericzakariasson/status/2110492929920053441"
+			},
+			"note": "order 873: needs the Grok Bot marketplace listing approved (873 evidence: the listing link in docs/partners/grok-bot-listings.md, submission row filled). Order 930 already covers the connector walkthrough (grok-bot-mention-bot, grok-bot-mention-bot-article); this item covers only the listing and the measured reviewer path, so it does not repeat them. Kit: docs/partners/xai-comarketing-kit.md."
+		},
+		{
+			"id": "grok-startups-874-ref-image-eval",
+			"status": "draft",
+			"kind": "post",
+			"tier": 3,
+			"lane": "labs",
+			"pattern": "proof",
+			"audience": "developer",
+			"notBefore": "2026-11-27T00:00:00Z",
+			"covers": [
+				"docs/evals/grok-imagine-ref-image.md"
+			],
+			"posts": [
+				{
+					"text": "We built a blind test for Grok Imagine as the reference image step of our text to 3D lane: 40 prompts across props, characters, vehicles, food, architecture and a hard set, the same seed and TRELLIS settings for both providers, and metered cost. https://three.ws/docs/evals/grok-imagine-ref-image?utm_source=x&utm_campaign=grok-startups&utm_content=874"
+				},
+				{
+					"text": "The hard set is thin structures and transparent objects: spokes, wire, wings, glass and crystal. The judge sees the two renders side by side with the sides shuffled, and a Grok model never judges its own output."
+				}
+			],
+			"claims": [
+				{
+					"says": "40 prompts",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/evals/grok-imagine-ref-image.md",
+							"contains": "40 of 40 prompts"
+						}
+					]
+				},
+				{
+					"says": "a Grok model never judges its own output",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/evals/grok-imagine-ref-image.md",
+							"contains": "Grok never judges its own output"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the eval page the post links is served",
+					"url": "https://three.ws/docs/evals/grok-imagine-ref-image?utm_source=x&utm_campaign=grok-startups&utm_content=874",
+					"expect": {
+						"status": 200
+					}
+				}
+			],
+			"mentions": {},
+			"note": "order 874: needs both columns run (order 927 sets GROK_API_KEY, then `npm run grok:eval-ref-image -- --prod-env --providers xai`) and the docs page deployed. Copy states the method only; add the measured result in a third post once the judge has run. No tag until the Grok column exists. Kit: docs/partners/xai-comarketing-kit.md."
+		},
+		{
+			"id": "grok-startups-875-hero-clips",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "creation",
+			"pattern": "clip",
+			"audience": "creator",
+			"notBefore": "2026-11-28T00:00:00Z",
+			"covers": [
+				"/hero-clip",
+				"docs/hero-clips.md"
+			],
+			"posts": [
+				{
+					"text": "Make a hero clip from your own 3D model. We render your mesh, then Grok Imagine Video animates that render, so the shape, materials and colors stay yours. Clips run 4, 6, 8 or 10 seconds. https://three.ws/docs/hero-clips?utm_source=x&utm_campaign=grok-startups&utm_content=875"
+				},
+				{
+					"text": "Press Make a hero clip on a model page or on the forge result card. Each finished clip gets its own public page that unfurls as the video when you share the link."
+				}
+			],
+			"claims": [
+				{
+					"says": "4, 6, 8 or 10 seconds",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/hero-clips.md",
+							"contains": "4, 6 (default), 8 or 10 seconds"
+						}
+					]
+				},
+				{
+					"says": "Each finished clip gets its own public page",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/hero-clips.md",
+							"contains": "every finished clip gets a public page"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the hero clip docs page the post links is served",
+					"url": "https://three.ws/docs/hero-clips?utm_source=x&utm_campaign=grok-startups&utm_content=875",
+					"expect": {
+						"status": 200
+					}
+				}
+			],
+			"mentions": {},
+			"note": "order 875: needs a production deploy of hero clips and one real clip from scripts/hero-clip-e2e.mjs as the head media (875 evidence: the /hero-clip/<id> page). No tag: the copy names Grok Imagine Video in plain text. Kit: docs/partners/xai-comarketing-kit.md."
+		},
+		{
+			"id": "grok-startups-876-voice-grok",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "labs",
+			"pattern": "walkthrough",
+			"audience": "creator",
+			"notBefore": "2026-11-29T00:00:00Z",
+			"covers": [
+				"/voice/grok",
+				"pages/voice-grok.html"
+			],
+			"posts": [
+				{
+					"text": "Talk to a 3D avatar that lip syncs as it answers. The voice is Grok Voice from @SpaceXSI, speech to speech in realtime, with push to talk or open mic, a live transcript, and latency measured from real timestamps on each turn. https://three.ws/voice/grok?utm_source=x&utm_campaign=grok-startups&utm_content=876"
+				},
+				{
+					"text": "If Grok voice is off, the page offers the standard voice chain instead of failing, and the chain runs as push to talk."
+				}
+			],
+			"claims": [
+				{
+					"says": "latency measured from real timestamps on each turn",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/voice-grok.html",
+							"contains": "latency measured from real timestamps on every turn"
+						}
+					]
+				},
+				{
+					"says": "the page offers the standard voice chain",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/voice-grok-page.js",
+							"contains": "Use the standard voice chain"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the Grok voice page the post links is served",
+					"url": "https://three.ws/voice/grok?utm_source=x&utm_campaign=grok-startups&utm_content=876",
+					"expect": {
+						"status": 200
+					}
+				}
+			],
+			"mentions": {
+				"@SpaceXSI": "announced the Grok Voice Agent API this page runs on: https://x.com/SpaceXSI/status/2001385958147752255"
+			},
+			"note": "order 876: needs /voice/grok deployed (it is 404 in production today) and the 876 latency evidence from scripts/verify-voice-grok.mjs. Head media: a recorded turn of the page. Kit: docs/partners/xai-comarketing-kit.md."
+		},
+		{
+			"id": "grok-startups-877-build-examples",
+			"status": "draft",
+			"kind": "post",
+			"tier": 3,
+			"lane": "developer",
+			"pattern": "list",
+			"audience": "developer",
+			"notBefore": "2026-11-30T00:00:00Z",
+			"covers": [
+				"/grok",
+				"examples/grok-curl",
+				"examples/grok-x-search-to-3d"
+			],
+			"posts": [
+				{
+					"text": "Six runnable examples for building 3D into Grok apps: plain curl, Node on the Responses API, Python over MCP, a remote MCP tool call, an agent with a 3D avatar, and X search turned into a 3D model. https://three.ws/grok?utm_source=x&utm_campaign=grok-startups&utm_content=877#build-examples"
+				},
+				{
+					"text": "Each example is a small folder you can copy and run with your own xAI key."
+				}
+			],
+			"claims": [
+				{
+					"says": "Six runnable examples",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "examples/grok-curl/README.md",
+							"contains": "Grok"
+						},
+						{
+							"type": "file",
+							"path": "examples/grok-node-responses/README.md",
+							"contains": "Grok"
+						},
+						{
+							"type": "file",
+							"path": "examples/grok-python-mcp/README.md",
+							"contains": "Grok"
+						},
+						{
+							"type": "file",
+							"path": "examples/grok-remote-mcp/README.md",
+							"contains": "Grok"
+						},
+						{
+							"type": "file",
+							"path": "examples/grok-agent-avatar/README.md",
+							"contains": "Grok"
+						},
+						{
+							"type": "file",
+							"path": "examples/grok-x-search-to-3d/index.mjs",
+							"contains": "x_search"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the Grok page section the post links is served",
+					"url": "https://three.ws/grok?utm_source=x&utm_campaign=grok-startups&utm_content=877#build-examples",
+					"expect": {
+						"status": 200,
+						"contains": "build-examples"
+					}
+				}
+			],
+			"mentions": {},
+			"note": "order 877: needs the examples section deployed and each example run once against production (877 evidence: the run log per example). No tag: no verified xAI developer relations account amplifies third party examples. Kit: docs/partners/xai-comarketing-kit.md."
+		},
+		{
+			"id": "grok-startups-883-rocket-cutaways",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "labs",
+			"pattern": "mechanism",
+			"audience": "student",
+			"notBefore": "2026-12-01T00:00:00Z",
+			"covers": [
+				"/anatomy",
+				"api/_lib/anatomy/featured"
+			],
+			"posts": [
+				{
+					"text": "How a full flow staged combustion rocket engine works, as an interactive cutaway: two preburners, two turbopumps, and all of the propellant driving a turbine before it burns. Spin it, explode it and slice it. https://three.ws/anatomy/85160213-4c15-4b00-ba96-5990b9385249?utm_source=x&utm_campaign=grok-startups&utm_content=883"
+				},
+				{
+					"text": "Each figure in the cutaway cites a source, and a test fails the build if a number has none. A second cutaway walks a fully reusable two stage launch system from the booster engine ring to the tower catch."
+				}
+			],
+			"claims": [
+				{
+					"says": "two preburners, two turbopumps",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/anatomy/featured/index.js",
+							"contains": "two preburners, two turbopumps"
+						}
+					]
+				},
+				{
+					"says": "a test fails the build if a number has none",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "tests/anatomy-featured.test.js",
+							"contains": "rocket-engines-sources.md"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the engine cutaway the post links is served",
+					"url": "https://three.ws/anatomy/85160213-4c15-4b00-ba96-5990b9385249?utm_source=x&utm_campaign=grok-startups&utm_content=883",
+					"expect": {
+						"status": 200
+					}
+				}
+			],
+			"mentions": {},
+			"note": "order 883: needs the featured cutaway design deployed (production serves the generic anatomy page for this id today) and the 883 browser screenshots from scripts/verify-anatomy-browser.mjs. No tag (plan D4). Kit: docs/partners/xai-comarketing-kit.md."
+		},
+		{
+			"id": "grok-startups-884-ask-grok",
+			"status": "draft",
+			"kind": "post",
+			"tier": 3,
+			"lane": "creation",
+			"pattern": "how-to",
+			"audience": "creator",
+			"notBefore": "2026-12-02T00:00:00Z",
+			"covers": [
+				"/forge",
+				"src/shared/grok-ask.js"
+			],
+			"posts": [
+				{
+					"text": "Models, avatars and cutaways now have an Ask @grok button beside Share on X. It writes a short description and one question about what you are looking at, opens it in the X composer, and posts nothing until you press post. https://three.ws/forge?utm_source=x&utm_campaign=grok-startups&utm_content=884"
+				},
+				{
+					"text": "The question comes from a template for the model's category, and you can edit all of it before it goes anywhere."
+				}
+			],
+			"claims": [
+				{
+					"says": "posts nothing until you press post",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/shared/grok-ask.js",
+							"contains": "Nothing posts"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the forge page the post links is served",
+					"url": "https://three.ws/forge?utm_source=x&utm_campaign=grok-startups&utm_content=884",
+					"expect": {
+						"status": 200
+					}
+				}
+			],
+			"mentions": {
+				"@grok": "the button ends the compose text with a question to @grok; the post names the exact action users take"
+			},
+			"note": "order 884: needs the Ask @grok share action deployed and the 884 browser evidence from scripts/verify-share-to-x-browser.mjs. Head media: a capture of the compose text the button opens. Kit: docs/partners/xai-comarketing-kit.md."
 		}
 	]
 }

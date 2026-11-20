@@ -6,7 +6,8 @@
  * command and any number can be traced back to its source.
  *
  * Sources, all read-only:
- *   Neon (SELECT only)        usage_events (tool calls on /api/mcp-grok),
+ *   Neon (SELECT only)        usage_events (tool calls on /api/mcp-grok, and
+ *                             the distinct prompts behind its generation calls),
  *                             oauth_clients and oauth_refresh_tokens (Grok and
  *                             Cursor sign-ins), forge_creations (platform
  *                             text-to-3D jobs), acquisition_touches (signups
@@ -124,6 +125,48 @@ async function grokEndpoint(sql) {
 	};
 }
 
+// Every tracked text file our own tests, demos and docs could have sent a prompt
+// from. A prompt whose opening words appear here is ours, not a caller's.
+const OWN_PROMPT_SOURCES = ['scripts', 'tests', 'docs', 'data/x-content', 'integrations', 'examples', 'packages', 'api', 'src', 'pages', 'prompts', 'public/grok-skill.md'];
+const OWN_PROMPT_PREFIX = 60;
+
+function ownPromptCorpus() {
+	const files = execFileSync('git', ['ls-files', ...OWN_PROMPT_SOURCES], { cwd: REPO_ROOT, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 })
+		.split('\n')
+		.filter((f) => /\.(m?js|json|md|html|ts|py|txt|sh|ya?ml)$/.test(f));
+	let corpus = '';
+	for (const f of files) {
+		try {
+			corpus += `${readFileSync(path.resolve(REPO_ROOT, f), 'utf8').toLowerCase()}\n`;
+		} catch {
+			// A file deleted in the working tree but still tracked is skipped.
+		}
+	}
+	return corpus;
+}
+
+// Distinct generation prompts, split into ours (found in the repo) and
+// everyone else's. Only counts leave this function: a prompt is a caller's
+// words and is never printed, logged or published.
+async function generationPrompts(sql) {
+	const rows = await sql.query(
+		`select lower(meta->'args_summary'->>'prompt') prompt, count(*) calls
+		   from usage_events
+		  where kind = 'tool_call' and meta->>'server' = 'mcp-grok' and created_at >= $1 and created_at < $2
+		    and tool = any($3::text[]) and coalesce(meta->'args_summary'->>'prompt', '') <> ''
+		  group by 1`,
+		[FROM, TO_EXCLUSIVE, GENERATION_TOOLS],
+	);
+	const corpus = ownPromptCorpus();
+	const external = rows.filter((r) => !corpus.includes(String(r.prompt).slice(0, OWN_PROMPT_PREFIX)));
+	return {
+		distinct: rows.length,
+		ours: rows.length - external.length,
+		external: external.length,
+		externalCalls: external.reduce((n, r) => n + Number(r.calls), 0),
+	};
+}
+
 async function signIns(sql) {
 	const registrations = await sql.query(
 		`select name, count(*) clients, min(created_at)::date first, max(created_at)::date last
@@ -236,6 +279,7 @@ const sql = await db();
 const report = {
 	window: { from: FROM_DAY, to: TO_DAY },
 	grokEndpoint: await grokEndpoint(sql),
+	prompts: await generationPrompts(sql),
 	signIns: await signIns(sql),
 	platformForge: await platformForge(sql),
 	xSignupsByLanding: await xSignups(sql),
@@ -258,6 +302,10 @@ console.log(`  ${fmt(g.catalogCalls)} catalog calls (${CATALOG_TOOLS.map((t) => 
 console.log(`  search_catalog latency p50 ${g.searchCatalogLatencyMs.p50} ms, p95 ${g.searchCatalogLatencyMs.p95} ms (n=${g.searchCatalogLatencyMs.n})`);
 console.log(`  weekly: ${g.weekly.map((w) => `${w.week} ${w.calls}`).join(' | ')}`);
 console.log(`  every tool: ${Object.entries(g.byTool).map(([t, n]) => `${t} ${n}`).join(', ')}\n`);
+const p = report.prompts;
+console.log('Generation prompts (distinct, case-folded; prompt text is never printed)');
+console.log(`  ${fmt(p.distinct)} distinct, ${fmt(p.ours)} found in this repo (our own tests and demos), ${fmt(p.external)} from callers`);
+console.log(`  ${fmt(p.externalCalls)} generation calls carried a caller's prompt\n`);
 console.log('OAuth sign-ins (all time to the end of the window)');
 for (const r of report.signIns.registrations) console.log(`  ${r.client}: ${r.count} client registrations (${r.first} to ${r.last})`);
 for (const r of report.signIns.refreshGrants) console.log(`  ${r.client}: ${r.grants} refresh-token grants from ${r.users} distinct accounts`);
