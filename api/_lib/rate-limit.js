@@ -1255,6 +1255,15 @@ export const limits = {
 	// /api/x402/forge tiers rather than paywalling silently. Non-critical: a Redis
 	// blip degrades to the per-instance memory limiter, never blocks generation.
 	aiTextTo3d: (ip) => getLimiter('ai:text-to-3d', { limit: 10, window: '24 h' }).limit(ip),
+	// Hero clips (api/v1/models/hero-clip): every clip is a billed Grok Imagine
+	// Video job plus a few seconds of CPU renders, so both buckets are critical
+	// (bounded by the durable counter during a Redis outage, never fail-open).
+	// The burst bucket gates the renders; the daily bucket, sized from
+	// HERO_CLIP_DAILY_CAP, is consumed only when the paid call is next.
+	heroClipBurst: (user) =>
+		getLimiter('hero-clip:burst', { limit: 3, window: '10 m', critical: true }).limit(user),
+	heroClipDaily: (user, cap) =>
+		getLimiter('hero-clip:daily', { limit: cap, window: '24 h', critical: true }).limit(user),
 	// Free token security check (api/v1/token/security) — reads getAccountInfo +
 	// getTokenLargestAccounts off the shared RPC and DexScreener, all cached 60s at
 	// the edge, so this only gates cache-miss origin hits. 20/min per IP is generous
