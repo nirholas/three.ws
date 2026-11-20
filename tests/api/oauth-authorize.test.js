@@ -430,3 +430,86 @@ describe('/api/oauth/authorize — HTTP method handling', () => {
 		expect(status).toBe(204);
 	});
 });
+
+// ── Hosted server scope sets ──────────────────────────────────────────────
+//
+// A client that registered without a `scope` is stored with the default
+// `avatars:read` (filterRegisterableScope). Cursor, Grok Build and other MCP
+// clients then ask at authorize time for the scopes the studio's 401 challenge
+// names. Those scopes are the studio's own narrow set (RESOURCE_SCOPES in
+// api/_lib/oauth-scopes.js), all of them registerable by anyone and shown on
+// the consent screen, so intersecting with the stored default silently cut the
+// grant to one scope: a one-permission consent screen and a read-only token.
+
+describe('/api/oauth/authorize: a hosted server\'s own scope set', () => {
+	const STUDIO = `${process.env.PUBLIC_APP_ORIGIN}/api/mcp-studio`;
+	const STUDIO_SCOPES = 'avatars:read avatars:write profile offline_access';
+	const DEFAULT_CLIENT = { ...VALID_CLIENT, scope: 'avatars:read' };
+
+	function studioForm(extra = {}) {
+		return {
+			response_type: 'code',
+			client_id: 'mcp_test',
+			redirect_uri: 'https://client.test/cb',
+			scope: STUDIO_SCOPES,
+			resource: STUDIO,
+			state: 'abc123',
+			code_challenge: 'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM',
+			code_challenge_method: 'S256',
+			csrf: 'csrf-token-fixed',
+			decision: 'allow',
+			grant_manage: '1',
+			...extra,
+		};
+	}
+
+	function storedScope() {
+		const insert = sqlState.calls.find((c) => /insert into oauth_auth_codes/i.test(c.query));
+		expect(insert).toBeTruthy();
+		return insert.values[4];
+	}
+
+	it('grants the studio scopes to a client registered with the default scope', async () => {
+		authState.session = { id: 'user-1', email: 'u@test', display_name: 'Alice' };
+		sqlState.queue.push([DEFAULT_CLIENT]);
+		sqlState.queue.push([]);
+		const { status } = await invoke({ method: 'POST', url: '/api/oauth/authorize', formBody: studioForm() });
+		expect(status).toBe(302);
+		expect(storedScope().split(' ').sort()).toEqual(STUDIO_SCOPES.split(' ').sort());
+	});
+
+	it('shows all four studio permissions on the consent screen', async () => {
+		authState.session = { id: 'user-1', email: 'u@test', display_name: 'Alice' };
+		sqlState.queue.push([DEFAULT_CLIENT]);
+		const qs = new URLSearchParams({ ...studioForm(), decision: '', csrf: '' }).toString();
+		const { status, body } = await invoke({ url: `/api/oauth/authorize?${qs}` });
+		expect(status).toBe(200);
+		for (const label of ['Read your avatars', 'Create and update avatars', 'See your name and email', 'Stay connected']) {
+			expect(body).toContain(label);
+		}
+	});
+
+	it('still drops a scope outside the studio set that the client did not register', async () => {
+		authState.session = { id: 'user-1', email: 'u@test', display_name: 'Alice' };
+		sqlState.queue.push([DEFAULT_CLIENT]);
+		sqlState.queue.push([]);
+		await invoke({
+			method: 'POST',
+			url: '/api/oauth/authorize',
+			formBody: studioForm({ scope: `${STUDIO_SCOPES} wallet:read wallet:write` }),
+		});
+		expect(storedScope()).not.toMatch(/wallet/);
+	});
+
+	it('keeps the registered-scope limit for the platform resource', async () => {
+		authState.session = { id: 'user-1', email: 'u@test', display_name: 'Alice' };
+		sqlState.queue.push([DEFAULT_CLIENT]);
+		sqlState.queue.push([]);
+		await invoke({
+			method: 'POST',
+			url: '/api/oauth/authorize',
+			formBody: studioForm({ resource: '' }),
+		});
+		expect(storedScope()).toBe('avatars:read');
+	});
+});

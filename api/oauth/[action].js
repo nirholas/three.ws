@@ -14,10 +14,10 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';
 import { z } from 'zod';
 import { parse } from '../_lib/validate.js';
-import { filterRegisterableScope, splitSpendScope } from '../_lib/oauth-scopes.js';
+import { filterRegisterableScope, splitSpendScope, scopesForResource } from '../_lib/oauth-scopes.js';
 import { SCOPE_LABELS, CONNECTION_SCOPES, groupsForScope, grantedScopeFromGroups } from '../_lib/oauth-grant-groups.js';
 import { requireCsrf } from '../_lib/csrf.js';
-import { canonicalMcpResource, allMcpAudiences } from '../_lib/mcp-resources.js';
+import { canonicalMcpResource, allMcpAudiences, hostedMcpPath } from '../_lib/mcp-resources.js';
 
 // ── authorize ─────────────────────────────────────────────────────────────────
 
@@ -49,6 +49,24 @@ function parseQuery(url) {
 function intersectScopes(requested, allowed) {
 	const a = new Set(allowed.split(/\s+/).filter(Boolean));
 	return requested.split(/\s+/).filter((s) => a.has(s)).join(' ') || allowed;
+}
+
+// The scopes a client may be granted for one resource: what it registered,
+// plus the narrow set a hosted MCP server names in its own 401 challenge and
+// protected-resource document (RESOURCE_SCOPES in ../_lib/oauth-scopes.js). A
+// client that registered without a `scope` is stored with the `avatars:read`
+// default, then asks at authorize time for the scopes the challenge named.
+// Every scope in a narrowed set is registerable by any client and is shown on
+// the consent screen, so honoring it grants nothing a re-registration could
+// not; refusing it showed Cursor and Grok Build users a one-permission consent
+// screen and minted a read-only token. The platform resource keeps the
+// registered-scope limit.
+function allowedScopesFor(client, resource) {
+	const { scopes, narrowed } = scopesForResource(hostedMcpPath(resource));
+	if (!narrowed) return client.scope;
+	const merged = new Set(String(client.scope || '').split(/\s+/).filter(Boolean));
+	for (const s of scopes) merged.add(s);
+	return [...merged].join(' ');
 }
 
 // RFC 8707 §2: an authorization server that does not recognize the requested
@@ -201,7 +219,7 @@ async function handleAuthorize(req, res) {
 		const next = encodeURIComponent(`/oauth/consent?${new URLSearchParams(params).toString()}`);
 		return redirect(res, `/login?next=${next}`);
 	}
-	const grantedScope = intersectScopes(scope || client.scope, client.scope);
+	const grantedScope = intersectScopes(scope || client.scope, allowedScopesFor(client, targetResource));
 	if (req.method === 'GET') {
 		const csrf = await csrfTokenFor(req);
 		return renderConsent(res, { client, user, params, csrf, grantedScope });
