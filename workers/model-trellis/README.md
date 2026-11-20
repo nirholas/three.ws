@@ -297,8 +297,11 @@ time by [`third_party_notices.py`](./third_party_notices.py) from what is really
 installed: each Python distribution's license files, each source-built
 component's license and pinned commit (saved in the builder stage), the baked
 DINOv2 checkpoint, every Ubuntu package, and the CUDA base image license. The
-index is `/licenses/THIRD_PARTY_NOTICES.md`; the committed copy from the last
-validated image is [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
+index is `/licenses/THIRD_PARTY_NOTICES.md`; the committed copy,
+[THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md), was copied out of the
+2026-11-19 build (`server@sha256:cd0deeda4728`, tag `2dff87f51`). The
+2026-11-10 NGC-validated image predates the generator and has no `/licenses/`
+index, so the next validation run should use a build from 2026-11-14 or later.
 
 Two components the inference path needs are licensed for **non-commercial
 research and evaluation only**, and the notices list them first:

@@ -206,8 +206,10 @@ at build time (every Python distribution, every source component, the baked
 checkpoint, every Ubuntu package, the CUDA base license). The in-image gate
 ([test_third_party_notices.py](../workers/model-trellis/test_third_party_notices.py))
 fails the build if any license text is missing or if diffoctreerast comes back.
-The committed copy is
-[THIRD_PARTY_NOTICES.md](../workers/model-trellis/THIRD_PARTY_NOTICES.md), and
+The committed copy,
+[THIRD_PARTY_NOTICES.md](../workers/model-trellis/THIRD_PARTY_NOTICES.md), comes
+from the 2026-11-19 build (the 2026-11-10 validated image predates the
+generator and must be revalidated on a newer build to carry it), and
 the EULA's section 4 names both restrictions.
 
 The two ways forward, for the owner:
