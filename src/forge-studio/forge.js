@@ -20,6 +20,7 @@ import { resolveDevR2Url } from '../shared/dev-r2-proxy.js';
 import { coldStartLabel } from '../shared/forge-frames.js';
 import { initForgeDestinationPicker, storedForgeDestination } from '../shared/forge-destination-picker.js';
 import { regionRestrictedError, fetchRestrictedEngines } from '../forge-region.js';
+import { rememberFromResponse } from '../shared/forge-manage-tokens.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -2259,6 +2260,7 @@ async function run(cfg) {
 
 	try {
 		const job = await startJob(cfg);
+		rememberFromResponse(job);
 		if (job.creation_id) currentCreationId = job.creation_id;
 
 		// Text→3D: the reference image resolved before the POST returned — show it.
@@ -2285,6 +2287,7 @@ async function run(cfg) {
 		// so a later Retry/Refine of this job never replays a spent payment.
 		if (lastJob) delete lastJob.payment;
 
+		rememberFromResponse(done);
 		if (done.creation_id) currentCreationId = done.creation_id;
 		setStep('mesh', 'done');
 		setStep('finish', 'done');

@@ -37,6 +37,7 @@ import { generateWithModly, defaultModlyParams } from './modly-local.js';
 import { createModlyPanel, promoteModlyGlb, saveModlyResultToLibrary } from './forge-modly.js';
 import { regionRestrictedError, fetchRestrictedEngines } from './forge-region.js';
 import { engineFromQuery } from './forge-engine-link.js';
+import { rememberFromResponse } from './shared/forge-manage-tokens.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -155,6 +156,7 @@ const els = {
 	destinationPicker: document.getElementById('forge-destination-picker'),
 	destinationStatus: document.getElementById('forge-destination-status'),
 	savedChip: document.getElementById('result-saved'),
+	resultVisibility: document.getElementById('result-visibility'),
 	creations: document.getElementById('creations'),
 	creationsGrid: document.getElementById('creations-grid'),
 	creationsCount: document.getElementById('creations-count'),
@@ -2580,6 +2582,15 @@ function showResult(glbUrl, label, meta, { autoSaved = false, downloadUrl = null
 	}
 	// Hide the saved chip by default; caller re-shows it for fresh generations.
 	if (els.savedChip) els.savedChip.classList.add('is-hidden');
+	// A fresh generation is this browser's own model: point at the model page,
+	// where its maker decides who sees it (new models start unlisted) or deletes
+	// it. Gallery reopens and share links never show it, since only the maker's
+	// own fresh result is known to be theirs here.
+	if (els.resultVisibility) {
+		const own = autoSaved && currentCreationId;
+		els.resultVisibility.classList.toggle('is-hidden', !own);
+		if (own) els.resultVisibility.href = `/m/${encodeURIComponent(currentCreationId)}#mp-owner`;
+	}
 	setViewsBadge(meta);
 	setQualityBadge(meta);
 	if (autoSaved && els.savedChip) {
@@ -3155,6 +3166,7 @@ async function run(cfg) {
 		// The POST answered, so it now carries every fact the crumbs were standing
 		// in for. Nothing left to watch.
 		stopProgressWatch();
+		rememberFromResponse(job);
 		if (job.creation_id) currentCreationId = job.creation_id;
 
 		// Fold every real signal the submit response carries into the timeline: the
@@ -3180,6 +3192,7 @@ async function run(cfg) {
 		// so a later Retry/Refine of this job never replays a spent payment.
 		if (lastJob) delete lastJob.payment;
 
+		rememberFromResponse(done);
 		if (done.creation_id) currentCreationId = done.creation_id;
 		// The mesh is delivered; the remaining work (durable copy already done
 		// server-side, viewer load here) is the finalizing stage.
@@ -3807,6 +3820,7 @@ async function resumeInflight() {
 		const done = await pollUntilDone(inflight.jobId);
 		if (pollAbort || !done) return true;
 		clearInflight();
+		rememberFromResponse(done);
 		if (done.creation_id) currentCreationId = done.creation_id;
 		timeline.finalizing();
 		markProgressDone();

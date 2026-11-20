@@ -11,6 +11,8 @@
 //   GET  /api/auth/me                              (composer + follow gating)
 //   GET/POST/DELETE /api/users/:username/follow    (follow graph)
 //   POST /api/x402/remix-asset                     (paid remix, via ensureX402)
+//   PATCH/DELETE /api/forge-creation               (owner: visibility, delete)
+//   POST /api/forge-removal-request                (anyone: ask for a takedown)
 
 import { apiFetch } from './api.js';
 import { ensureX402 } from './shared/x402-loader.js';
@@ -30,6 +32,7 @@ import {
 } from './model-lib.js';
 import { markNoindex, setCanonical } from './seo-meta.js';
 import { beaconShareEvent } from './shared/share-beacon.js';
+import { manageHeaders, forgetManageToken } from './shared/forge-manage-tokens.js';
 
 const log = createLogger('model-page');
 const $ = (id) => document.getElementById(id);
@@ -44,6 +47,8 @@ const state = {
 	commentsNext: null,
 	edition: null, // { limit, issued, remaining, soldOut } from /api/print/editions
 	tagEdit: null, // { tags, saving, error } while the owner edits tags, else null
+	owner: { saving: null, error: '', pending: '', confirmDelete: false, deleting: false },
+	report: { open: false, sending: false, error: '', field: '', done: '', reason: '', details: '', contact: '' },
 };
 
 function esc(s) {
@@ -94,7 +99,8 @@ async function boot() {
 
 	const [creationRes, me] = await Promise.all([
 		fetch(`/api/forge-creation?id=${encodeURIComponent(state.id)}&related=6&view=1`, {
-			headers: { 'x-forge-client': clientId() },
+			credentials: 'include',
+			headers: { 'x-forge-client': clientId(), ...manageHeaders(state.id) },
 		})
 			.then((r) => (r.ok ? r.json() : r.status === 404 ? { creation: null } : Promise.reject(new Error(`HTTP ${r.status}`))))
 			.catch((err) => ({ error: err })),
@@ -156,6 +162,9 @@ function patchMeta() {
 		set('meta[name="twitter:image:alt"]', creationAltText(c));
 	}
 	setCanonical(`/m/${c.id}`);
+	// Only public models belong in search. The server head already marks an
+	// unlisted one; a private one only ever loads for its owner, on the shell.
+	if (c.visibility === 'unlisted' || c.visibility === 'private') markNoindex();
 }
 
 // ── viewer hero ──────────────────────────────────────────────────────────────
@@ -315,9 +324,13 @@ function renderInfo() {
 		<div class="mp-published" title="${esc(publishedAbs)}">🕒 Published ${esc(timeAgo(c.created_at))}</div>
 		${chips ? `<div class="mp-chips">${chips}</div>` : ''}
 		<div class="mp-liked-line" id="mp-liked-line">${likeCount ? `${formatCount(likeCount)} ${likeCount === 1 ? 'person likes' : 'people like'} this model` : ''}</div>
-		<section class="mp-edition" id="mp-edition" hidden aria-label="Physical editions"></section>`;
+		<section class="mp-edition" id="mp-edition" hidden aria-label="Physical editions"></section>
+		<section class="mp-manage" id="mp-owner" hidden aria-labelledby="mp-owner-title"></section>
+		<section class="mp-report" id="mp-report" hidden aria-label="Request removal"></section>`;
 
 	wireActions();
+	renderOwner();
+	renderReport();
 	wireFollow();
 	renderEdition();
 	renderDescribed();
@@ -461,7 +474,7 @@ async function saveTags(host) {
 		const res = await fetch(`/api/forge-creation?id=${encodeURIComponent(state.creation.id)}`, {
 			method: 'PATCH',
 			credentials: 'include',
-			headers: { 'content-type': 'application/json', 'x-forge-client': clientId() },
+			headers: { 'content-type': 'application/json', 'x-forge-client': clientId(), ...manageHeaders(state.creation.id) },
 			body: JSON.stringify({ tags: ed.tags }),
 		});
 		const body = await res.json().catch(() => ({}));
@@ -477,6 +490,335 @@ async function saveTags(host) {
 		ed.saving = false;
 		ed.error = `${err?.message || 'Saving failed.'} Your edits are still here; try again.`;
 		renderTagEditor(host);
+	}
+}
+
+// ── owner controls: who sees it, and delete (issue #639) ────────────────────
+//
+// Shown when the API answers is_owner: the forging browser id, the signed-in
+// account it was made under, or the manage token /forge stored for it. New
+// models start unlisted, so this is where a maker publishes one.
+
+const VISIBILITY_OPTIONS = [
+	{ value: 'public', label: 'Public', help: 'Listed in the showcase, feeds, search and sitemaps.' },
+	{ value: 'unlisted', label: 'Unlisted', help: 'Anyone with the link can open it. Kept out of every list.' },
+	{ value: 'private', label: 'Private', help: 'Only you can open this page. Share links stop working for everyone else.' },
+];
+
+const VISIBILITY_TOASTS = {
+	public: 'Published: it is now in the showcase',
+	unlisted: 'Unlisted: only people with the link can open it',
+	private: 'Private: only you can open it',
+};
+
+function currentVisibility() {
+	const v = state.creation?.visibility;
+	return v === 'unlisted' || v === 'private' ? v : 'public';
+}
+
+function manageRequest(method, body) {
+	const id = state.creation.id;
+	return fetch(`/api/forge-creation?id=${encodeURIComponent(id)}`, {
+		method,
+		credentials: 'include',
+		headers: { 'content-type': 'application/json', 'x-forge-client': clientId(), ...manageHeaders(id) },
+		body: body ? JSON.stringify(body) : undefined,
+	});
+}
+
+function focusVisibilityOption(value) {
+	document.querySelector(`#mp-owner input[name="mp-vis"][value="${value}"]`)?.focus();
+}
+
+function renderOwner() {
+	const host = $('mp-owner');
+	const c = state.creation;
+	if (!host || !c) return;
+	if (c.is_owner !== true) {
+		host.hidden = true;
+		return;
+	}
+	const o = state.owner;
+	const cur = currentVisibility();
+	const busy = Boolean(o.saving) || o.deleting;
+	host.hidden = false;
+	host.innerHTML = `
+		<h2 class="mp-manage-title" id="mp-owner-title">Your model</h2>
+		<fieldset class="mp-vis" ${busy ? 'disabled' : ''}>
+			<legend class="mp-vis-legend">Who can see this</legend>
+			${VISIBILITY_OPTIONS.map(
+				(opt) => `
+				<label class="mp-vis-opt${cur === opt.value ? ' is-current' : ''}">
+					<input type="radio" name="mp-vis" value="${opt.value}" ${cur === opt.value ? 'checked' : ''} />
+					<span class="mp-vis-text">
+						<span class="mp-vis-label">${opt.label}${o.saving === opt.value ? ' <span class="mp-vis-saving">Saving…</span>' : ''}</span>
+						<span class="mp-vis-help">${opt.help}</span>
+					</span>
+				</label>`,
+			).join('')}
+		</fieldset>
+		<p class="mp-manage-note" role="status"${o.pending ? '' : ' hidden'}>${esc(o.pending)}</p>
+		<p class="mp-manage-error" role="alert"${o.error ? '' : ' hidden'}>${esc(o.error)}</p>
+		<div class="mp-manage-danger">
+			${
+				o.confirmDelete
+					? `<p class="mp-manage-warn" id="mp-delete-warn">This permanently deletes the model file, its preview and any photo it was made from, and takes down this page and every share link. It cannot be undone.</p>
+				<div class="mp-manage-row">
+					<button class="mp-action mp-action--danger" id="mp-delete-yes" type="button" aria-describedby="mp-delete-warn" ${o.deleting ? 'disabled' : ''}>${o.deleting ? 'Deleting…' : 'Delete permanently'}</button>
+					<button class="mp-action" id="mp-delete-no" type="button" ${o.deleting ? 'disabled' : ''}>Keep it</button>
+				</div>`
+					: `<button class="mp-action mp-action--danger-quiet" id="mp-delete" type="button" ${busy ? 'disabled' : ''}>Delete model…</button>`
+			}
+		</div>`;
+
+	host.querySelectorAll('input[name="mp-vis"]').forEach((input) =>
+		input.addEventListener('change', () => {
+			if (input.checked) saveVisibility(input.value);
+		}),
+	);
+	$('mp-delete')?.addEventListener('click', () => {
+		o.confirmDelete = true;
+		o.error = '';
+		renderOwner();
+		$('mp-delete-no')?.focus();
+	});
+	$('mp-delete-no')?.addEventListener('click', () => {
+		o.confirmDelete = false;
+		renderOwner();
+		$('mp-delete')?.focus();
+	});
+	$('mp-delete-yes')?.addEventListener('click', deleteModel);
+}
+
+async function saveVisibility(next) {
+	const o = state.owner;
+	if (o.saving || next === currentVisibility()) return;
+	o.saving = next;
+	o.error = '';
+	renderOwner();
+	try {
+		const res = await manageRequest('PATCH', { visibility: next });
+		const body = await res.json().catch(() => ({}));
+		if (!res.ok) {
+			// A model the content review refused stays down; retrying will not help,
+			// so the server's message (with where to appeal) stands on its own.
+			if (body?.error === 'blocked_by_safety_review') {
+				const blocked = new Error(body.message);
+				blocked.final = true;
+				throw blocked;
+			}
+			throw new Error(body?.message || `Could not change who sees it (HTTP ${res.status}).`);
+		}
+		state.creation.visibility = body.visibility || next;
+		// 202 pending: going public waits on the content review. It stays
+		// unlisted meanwhile and the sweep lists it once the check passes.
+		o.pending = body.pending === true ? body.message || 'Checking it before it goes public.' : '';
+		o.saving = null;
+		renderOwner();
+		toast(o.pending ? 'Checking it before it goes public' : VISIBILITY_TOASTS[state.creation.visibility] || 'Saved');
+		focusVisibilityOption(currentVisibility());
+	} catch (err) {
+		log.warn('visibility change failed', err);
+		o.saving = null;
+		o.error = err?.final ? err.message : `${err?.message || 'Could not change who sees it.'} Nothing changed; try again.`;
+		renderOwner();
+		focusVisibilityOption(currentVisibility());
+	}
+}
+
+async function deleteModel() {
+	const o = state.owner;
+	if (o.deleting) return;
+	o.deleting = true;
+	o.error = '';
+	renderOwner();
+	try {
+		const res = await manageRequest('DELETE');
+		const body = await res.json().catch(() => ({}));
+		if (!res.ok) {
+			throw new Error(
+				res.status === 404
+					? 'This browser is no longer recognised as the creator. Sign in to the account that made it, or ask for removal below.'
+					: body?.message || `Could not delete it (HTTP ${res.status}). Nothing was removed; try again.`,
+			);
+		}
+		forgetManageToken(state.creation.id);
+		renderDeleted();
+	} catch (err) {
+		log.warn('delete failed', err);
+		o.deleting = false;
+		o.error = err?.message || 'Could not delete it. Nothing was removed; try again.';
+		renderOwner();
+		$('mp-delete-yes')?.focus();
+	}
+}
+
+function renderDeleted() {
+	const shell = $('mp-shell');
+	if (!shell) return;
+	markNoindex();
+	document.title = 'Model deleted · three.ws';
+	shell.setAttribute('aria-busy', 'false');
+	shell.innerHTML = `
+		<div class="mp-empty mp-deleted" role="status" tabindex="-1" id="mp-deleted">
+			<h1>Model deleted</h1>
+			<p>The model, its preview and its source photo are gone, along with this page and every share link. Copies already cached in a browser or at the edge clear within a few minutes.</p>
+			<p><a href="/forge">Make another model</a> · <a href="/creations">Browse creations</a></p>
+		</div>`;
+	$('mp-deleted')?.focus();
+}
+
+// ── request removal: for anyone who cannot delete it directly ──────────────
+//
+// The person asking is often not the one who made the model: a maker who lost
+// this browser, a rights holder, someone whose likeness it shows. Requests go
+// to /admin/forge-removals for a platform admin to act on.
+
+const REMOVAL_REASONS = [
+	{ value: 'my_content', label: 'I made it and want it removed' },
+	{ value: 'copyright', label: 'It copies my character, artwork or brand' },
+	{ value: 'likeness', label: 'It depicts me or someone I represent' },
+	{ value: 'harmful', label: 'It is harmful or breaks the rules' },
+	{ value: 'other', label: 'Something else' },
+];
+const REPORT_FIELDS = ['reason', 'details', 'contact'];
+
+function focusReportField(field) {
+	const target = field === 'reason' ? document.querySelector('#mp-report input[name="mp-report-reason"]') : $(`mp-report-${field}`);
+	target?.focus();
+}
+
+function renderReport() {
+	const host = $('mp-report');
+	const c = state.creation;
+	if (!host || !c) return;
+	if (c.is_owner === true) {
+		host.hidden = true;
+		return;
+	}
+	const r = state.report;
+	host.hidden = false;
+	if (r.done) {
+		host.innerHTML = `<p class="mp-report-done" role="status" tabindex="-1" id="mp-report-done">${esc(r.done)}</p>`;
+		return;
+	}
+	if (!r.open) {
+		host.innerHTML = `<button class="mp-report-open" id="mp-report-open" type="button" aria-expanded="false">Request removal</button>`;
+		$('mp-report-open')?.addEventListener('click', () => {
+			r.open = true;
+			renderReport();
+			focusReportField('reason');
+		});
+		return;
+	}
+	const detailsRequired = r.reason && r.reason !== 'my_content';
+	const fieldError = (name) =>
+		r.field === name && r.error ? `<p class="mp-report-error" id="mp-report-err-${name}" role="alert">${esc(r.error)}</p>` : '';
+	const generalError = r.error && !REPORT_FIELDS.includes(r.field) ? `<p class="mp-report-error" role="alert">${esc(r.error)}</p>` : '';
+	const invalid = (name) => (r.field === name ? ` aria-invalid="true" aria-describedby="mp-report-err-${name}"` : '');
+	host.innerHTML = `
+		<form class="mp-report-form" id="mp-report-form" novalidate>
+			<h2 class="mp-manage-title">Request removal</h2>
+			<p class="mp-report-intro">Made this model and lost access to it, or it shows your work or your likeness without permission? Tell us and a reviewer will take it down if it should come down.</p>
+			<fieldset class="mp-report-reasons" ${r.sending ? 'disabled' : ''}${r.field === 'reason' ? ' aria-describedby="mp-report-err-reason"' : ''}>
+				<legend class="mp-vis-legend">Why should it come down?</legend>
+				${REMOVAL_REASONS.map(
+					(opt) => `
+					<label class="mp-report-reason">
+						<input type="radio" name="mp-report-reason" value="${opt.value}" ${r.reason === opt.value ? 'checked' : ''} />
+						<span>${opt.label}</span>
+					</label>`,
+				).join('')}
+				${fieldError('reason')}
+			</fieldset>
+			<label class="mp-report-label" for="mp-report-details">Details <span>${detailsRequired ? 'required' : 'optional'}</span></label>
+			<textarea class="mp-report-input" id="mp-report-details" rows="3" maxlength="2000" ${r.sending ? 'disabled' : ''}
+				placeholder="${r.reason === 'my_content' ? 'Anything that helps confirm it is yours: roughly when you made it, the image or prompt you used.' : 'What it copies or shows, and how you are connected to it.'}"${invalid('details')}>${esc(r.details)}</textarea>
+			${fieldError('details')}
+			<label class="mp-report-label" for="mp-report-contact">Email for our reply <span>optional, never shown</span></label>
+			<input class="mp-report-input" id="mp-report-contact" type="email" maxlength="200" autocomplete="email" value="${esc(r.contact)}" ${r.sending ? 'disabled' : ''}${invalid('contact')} />
+			${fieldError('contact')}
+			${generalError}
+			<div class="mp-manage-row">
+				<button class="mp-action mp-action--primary" type="submit" ${r.sending ? 'disabled' : ''}>${r.sending ? 'Sending…' : 'Send request'}</button>
+				<button class="mp-action" id="mp-report-cancel" type="button" ${r.sending ? 'disabled' : ''}>Cancel</button>
+			</div>
+		</form>`;
+
+	const form = $('mp-report-form');
+	const sync = () => {
+		r.reason = form.querySelector('input[name="mp-report-reason"]:checked')?.value || '';
+		r.details = $('mp-report-details')?.value || '';
+		r.contact = $('mp-report-contact')?.value || '';
+	};
+	form.querySelectorAll('input[name="mp-report-reason"]').forEach((input) =>
+		input.addEventListener('change', () => {
+			sync();
+			if (r.field === 'reason') r.error = r.field = '';
+			// Re-render so the details label and hint follow the reason, then put
+			// focus back on the option the user just chose.
+			renderReport();
+			document.querySelector(`#mp-report input[name="mp-report-reason"][value="${r.reason}"]`)?.focus();
+		}),
+	);
+	$('mp-report-cancel')?.addEventListener('click', () => {
+		Object.assign(r, { open: false, error: '', field: '' });
+		renderReport();
+		$('mp-report-open')?.focus();
+	});
+	form.addEventListener('submit', (e) => {
+		e.preventDefault();
+		sync();
+		sendRemovalRequest();
+	});
+}
+
+async function sendRemovalRequest() {
+	const r = state.report;
+	if (r.sending) return;
+	if (!r.reason) {
+		Object.assign(r, { field: 'reason', error: 'Pick the reason that fits best.' });
+		renderReport();
+		return focusReportField('reason');
+	}
+	if (r.reason !== 'my_content' && r.details.trim().length < 10) {
+		Object.assign(r, { field: 'details', error: 'Tell us in a sentence or two why this model should come down, so a reviewer can act on it.' });
+		renderReport();
+		return focusReportField('details');
+	}
+	Object.assign(r, { sending: true, error: '', field: '' });
+	renderReport();
+	try {
+		const res = await fetch('/api/forge-removal-request', {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({
+				creation_id: state.creation.id,
+				reason: r.reason,
+				details: r.details.trim() || undefined,
+				contact: r.contact.trim() || undefined,
+			}),
+		});
+		const body = await res.json().catch(() => ({}));
+		if (!res.ok) {
+			r.sending = false;
+			r.field = REPORT_FIELDS.includes(body?.field) ? body.field : '';
+			r.error =
+				res.status === 429
+					? body?.message || 'Too many requests from here. Try again in an hour.'
+					: body?.message || `We could not send that (HTTP ${res.status}). Try again in a moment.`;
+			renderReport();
+			if (r.field) focusReportField(r.field);
+			return;
+		}
+		Object.assign(r, { sending: false, done: body?.message || 'Request received. A reviewer will look at it soon.' });
+		renderReport();
+		$('mp-report-done')?.focus();
+	} catch (err) {
+		log.warn('removal request failed', err);
+		Object.assign(r, { sending: false, field: '', error: 'We could not reach three.ws. Check your connection and send it again.' });
+		renderReport();
 	}
 }
 

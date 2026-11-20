@@ -2017,6 +2017,28 @@
 				color: var(--ink);
 				text-decoration: underline;
 			}
+			.result-visibility {
+				font-size: var(--text-sm);
+				color: var(--ink-dim);
+				text-decoration: underline;
+				text-decoration-color: var(--stroke-strong, currentColor);
+				text-underline-offset: 3px;
+				white-space: nowrap;
+				border-radius: 4px;
+				transition: color var(--duration-fast, 120ms) ease;
+			}
+			.result-visibility:hover,
+			.result-visibility:focus-visible {
+				color: var(--ink);
+				text-decoration-color: currentColor;
+			}
+			.result-visibility:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+			.result-visibility:active {
+				opacity: 0.8;
+			}
 			/* Auto-save confirmation chip — shown briefly after generation completes */
 			@keyframes saved-pop {
 				0%   { opacity: 0; transform: translateY(3px); }
@@ -4348,6 +4370,7 @@
 					<div class="result-bar">
 						<span class="label" id="result-label" role="status" aria-live="polite"></span>
 						<a class="result-creator is-hidden" id="result-creator" data-i18n="forge.by">by @</a>
+						<a class="result-visibility is-hidden" id="result-visibility" href="/creations" title="Choose whether this model is public, unlisted or private, or delete it">Who can see this?</a>
 						<span class="saved-chip is-hidden" id="result-saved" aria-label="Auto-saved to gallery" data-i18n="forge.saved" data-i18n-attr="aria-label:forge.auto_saved_to_gallery_arialabel">Saved ✓</span>
 						<span
 							class="views-badge is-hidden"

@@ -736,3 +736,197 @@ a.mp-comment-author:hover { text-decoration: underline; }
 	color: var(--ink-bright);
 	text-decoration-thickness: 2px;
 }
+
+/* ── Owner controls and removal requests (issue #639) ──────────────────────
+   The maker's panel: who can see the model (new models start unlisted, so
+   this is where one gets published) and a two-step delete. Everyone else gets
+   a quiet "Request removal" link that opens a short form for a reviewer. */
+
+.mp-manage,
+.mp-report-form {
+	margin-top: var(--space-lg, 24px);
+	padding: var(--space-md, 16px);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-lg, 16px);
+	background: var(--surface-1);
+}
+
+.mp-manage-title {
+	margin: 0 0 var(--space-sm, 12px);
+	font-family: var(--font-mono);
+	font-size: var(--text-2xs, 11px);
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	font-weight: var(--weight-medium, 500);
+	color: var(--ink-dim);
+}
+
+.mp-vis,
+.mp-report-reasons {
+	display: grid;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	min-width: 0;
+}
+.mp-vis[disabled] { opacity: 0.7; }
+
+.mp-vis-legend {
+	padding: 0;
+	margin-bottom: 8px;
+	font-size: var(--text-sm, 13px);
+	font-weight: var(--weight-medium, 500);
+	color: var(--ink-bright);
+}
+
+.mp-vis-opt {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 10px 12px;
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-md, 10px);
+	cursor: pointer;
+	transition:
+		border-color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
+}
+.mp-vis-opt:hover { border-color: var(--stroke-strong); background: var(--surface-2); }
+.mp-vis-opt:active { background: var(--surface-1); }
+.mp-vis-opt:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mp-vis-opt.is-current {
+	border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+	background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.mp-vis[disabled] .mp-vis-opt { cursor: progress; }
+.mp-vis-opt input { margin: 3px 0 0; accent-color: var(--accent); }
+.mp-vis-opt input:focus-visible { outline: none; }
+
+.mp-vis-text { display: grid; gap: 2px; }
+.mp-vis-label { font-size: var(--text-sm, 13px); color: var(--ink-bright); font-weight: var(--weight-medium, 500); }
+.mp-vis-help { font-size: var(--text-xs, 12px); line-height: 1.5; color: var(--ink-dim); }
+.mp-vis-saving { margin-left: 6px; font-size: var(--text-xs, 12px); font-weight: 400; color: var(--accent); }
+
+.mp-manage-note {
+	margin: 10px 0 0;
+	font-size: var(--text-sm, 13px);
+	line-height: 1.55;
+	color: var(--ink);
+}
+
+.mp-manage-error,
+.mp-report-error {
+	margin: 10px 0 0;
+	font-size: var(--text-sm, 13px);
+	color: var(--danger);
+}
+
+.mp-manage-danger {
+	margin-top: var(--space-md, 16px);
+	padding-top: var(--space-md, 16px);
+	border-top: 1px solid var(--stroke);
+}
+.mp-manage-warn {
+	margin: 0 0 12px;
+	font-size: var(--text-sm, 13px);
+	line-height: 1.55;
+	color: var(--ink);
+}
+.mp-manage-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.mp-manage-danger .mp-manage-row { margin-top: 0; }
+
+.mp-action--danger {
+	background: var(--danger);
+	border-color: var(--danger);
+	color: var(--bg-0);
+}
+.mp-action--danger:hover,
+.mp-action--danger:focus-visible { color: var(--bg-0); border-color: var(--danger); filter: brightness(1.08); }
+.mp-action--danger:active { filter: brightness(0.95); }
+
+.mp-action--danger-quiet { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 36%, transparent); }
+.mp-action--danger-quiet:hover,
+.mp-action--danger-quiet:focus-visible {
+	color: var(--danger);
+	border-color: var(--danger);
+	background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+.mp-action--danger-quiet:active { background: color-mix(in srgb, var(--danger) 16%, transparent); }
+
+.mp-report { margin-top: var(--space-lg, 24px); }
+.mp-report-open {
+	padding: 4px 0;
+	border: 0;
+	background: none;
+	font: inherit;
+	font-size: var(--text-xs, 12px);
+	color: var(--ink-dim);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	cursor: pointer;
+	transition: color var(--duration-fast) var(--ease-standard);
+}
+.mp-report-open:hover { color: var(--ink-bright); }
+.mp-report-open:active { color: var(--ink); }
+.mp-report-open:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+.mp-report-form { margin-top: 0; }
+.mp-report-intro { margin: 0 0 14px; font-size: var(--text-sm, 13px); line-height: 1.55; color: var(--ink-dim); }
+
+.mp-report-reason {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 10px;
+	border-radius: var(--radius-md, 10px);
+	font-size: var(--text-sm, 13px);
+	color: var(--ink);
+	cursor: pointer;
+	transition: background var(--duration-fast) var(--ease-standard);
+}
+.mp-report-reason:hover { background: var(--surface-2); }
+.mp-report-reason:active { background: var(--surface-1); }
+.mp-report-reason:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+.mp-report-reason input { margin: 0; accent-color: var(--accent); }
+.mp-report-reason input:focus-visible { outline: none; }
+
+.mp-report-label {
+	display: block;
+	margin: 14px 0 6px;
+	font-size: var(--text-sm, 13px);
+	font-weight: var(--weight-medium, 500);
+	color: var(--ink-bright);
+}
+.mp-report-label span { margin-left: 6px; font-weight: 400; font-size: var(--text-xs, 12px); color: var(--ink-dim); }
+
+.mp-report-input {
+	box-sizing: border-box;
+	width: 100%;
+	padding: 9px 12px;
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-md, 10px);
+	background: var(--surface-2);
+	color: var(--ink-bright);
+	font: inherit;
+	font-size: var(--text-sm, 13px);
+	resize: vertical;
+	transition: border-color var(--duration-fast) var(--ease-standard);
+}
+.mp-report-input:hover { border-color: var(--stroke-strong); }
+.mp-report-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.mp-report-input[aria-invalid='true'] { border-color: var(--danger); }
+
+.mp-report-done {
+	margin: 0;
+	padding: 12px 14px;
+	border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+	border-radius: var(--radius-md, 10px);
+	background: color-mix(in srgb, var(--accent) 8%, transparent);
+	font-size: var(--text-sm, 13px);
+	color: var(--ink);
+}
+.mp-report-done:focus { outline: none; }
+
+.mp-deleted:focus { outline: none; }
+.mp-deleted p { margin: 0 0 10px; line-height: 1.6; }
