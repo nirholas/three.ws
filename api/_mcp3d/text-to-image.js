@@ -385,7 +385,9 @@ async function persistDataUriImage(result) {
 // comes back inline as base64, no poll. Caller guarantees NVIDIA_API_KEY is set.
 // Throws on any failure (timeout, throttle, malformed body) so the caller can
 // degrade to the paid lanes; never returns a half-result.
-async function nimFluxImage(prompt, aspectRatio, seed = 0, { timeoutMs = NIM_TIMEOUT_MS } = {}) {
+// No `seed`: the flux.1-dev schema forbids extra fields and seed is not one of
+// its inputs, so sending it turns every request into a 422 extra_forbidden.
+async function nimFluxImage(prompt, aspectRatio, { timeoutMs = NIM_TIMEOUT_MS } = {}) {
 	const key = readEnv('NVIDIA_API_KEY');
 	const [width, height] = NIM_DIMENSIONS[aspectRatio] || NIM_DIMENSIONS['1:1'];
 	const laneTimeout = Math.max(1_000, Math.min(NIM_TIMEOUT_MS, Number(timeoutMs) || NIM_TIMEOUT_MS));
@@ -408,7 +410,6 @@ async function nimFluxImage(prompt, aspectRatio, seed = 0, { timeoutMs = NIM_TIM
 					mode: 'base',
 					width,
 					height,
-					seed,
 					steps: NIM_FLUX_STEPS,
 					cfg_scale: NIM_FLUX_CFG_SCALE,
 				}),
@@ -574,9 +575,9 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 	const canTry = () => remaining() >= budget * 0.1;
 	const laneMs = (ownCeilingMs, laneRemains) =>
 		laneTimeoutMs(ownCeilingMs, { budgetMs: budget, remainingMs: remaining(), laneRemains });
-	// Optional deterministic seed. Honored on the lanes that expose one (NIM FLUX,
-	// Replicate flux); the Vertex/Gemini image API has no seed parameter, so a seed
-	// is silently ignored there. Undefined preserves the prior default (seed 0).
+	// Optional deterministic seed. Honored on the lanes that expose one (HF
+	// routed, Pollinations, Livepeer, Replicate flux); NIM flux.1-dev and the
+	// Vertex/Gemini image API have no seed input, so it is not sent there.
 	const hasSeed = Number.isInteger(seed) && seed >= 0;
 	const token = readEnv('REPLICATE_API_TOKEN');
 	const hasVertex = !!readEnv('GOOGLE_CLOUD_PROJECT') && vertexImagenEnabled();
@@ -656,7 +657,7 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 	if (nimWanted && canTry()) {
 		try {
 			return logImageProvider(
-				await nimFluxImage(prompt, aspectRatio, hasSeed ? seed : 0, {
+				await nimFluxImage(prompt, aspectRatio, {
 					timeoutMs: laneMs(NIM_TIMEOUT_MS, hasFallback),
 				}),
 			);

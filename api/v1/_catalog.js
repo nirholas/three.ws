@@ -98,7 +98,7 @@ export const CATALOG = [
 		params: {
 			prompt: 'string: image description (required, 3-2000 chars)',
 			aspect_ratio: 'string: 1:1 | 16:9 | 9:16 | 4:3 | 3:4 | 3:2 | 2:3 (default 1:1)',
-			seed: 'number: optional deterministic seed (honored on NIM/Replicate lanes)',
+			seed: 'number: optional deterministic seed (honored on the HF, Pollinations and Replicate flux lanes)',
 		},
 	},
 	{

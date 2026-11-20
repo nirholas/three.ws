@@ -3076,7 +3076,7 @@ outage never burns a free generation.
 | -------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `prompt`       | string  | Image description. 3–2000 characters. Required.                                                                                                     |
 | `aspect_ratio` | string  | One of `1:1`, `16:9`, `9:16`, `4:3`, `3:4`, `3:2`, `2:3`. Default `1:1`.                                                                            |
-| `seed`         | integer | Optional deterministic seed (0–4294967295). Honored on the NIM / Replicate flux lanes; the Vertex/Gemini lane has no seed parameter and ignores it. |
+| `seed`         | integer | Optional deterministic seed (0 to 4294967295). Honored on the HF, Pollinations and Replicate flux lanes; NIM flux.1-dev and the Vertex/Gemini lane have no seed input and ignore it. |
 
 **Response — 200**
 

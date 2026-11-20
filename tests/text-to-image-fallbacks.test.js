@@ -90,6 +90,19 @@ describe('the ladder reaches every rung in order', () => {
 		expect(hits[0]).toContain('flux.1-dev');
 	});
 
+	// 2026-11-20: the NIM flux.1-dev schema forbids extra fields and `seed` is not
+	// one of its inputs, so every request answered 422
+	// {"type":"extra_forbidden","loc":["body","seed"]} in under a second and the
+	// free rung never served an image. Probed live with and without the field.
+	it('never sends a seed field to NIM flux.1-dev (its schema rejects it with 422)', async () => {
+		const bodies = [];
+		lane.nim = (init) => { bodies.push(JSON.parse(init.body)); return json(200, { artifacts: [{ base64: Buffer.from(PNG).toString('base64') }] }); };
+		await textToImage('a fox', { budgetMs: 20_000 });
+		await textToImage('a fox', { budgetMs: 20_000, seed: 7 });
+		expect(bodies).toHaveLength(2);
+		for (const body of bodies) expect(body).not.toHaveProperty('seed');
+	});
+
 	it('refuses a non-image body from a rung instead of persisting garbage', async () => {
 		lane.pollinations = () => bytes(new Uint8Array([0x3c, 0x68, 0x74, 0x6d, 0x6c]), 'text/html');
 		await expect(textToImage('a fox', { budgetMs: 20_000 })).rejects.toThrow(/non-image/);

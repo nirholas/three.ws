@@ -79,7 +79,7 @@ const INPUT_SCHEMA = {
 			type: 'integer',
 			minimum: 0,
 			maximum: MAX_SEED,
-			description: 'Optional deterministic seed (honored on the NIM / Replicate flux lanes; ignored by Vertex/Gemini, which has no seed parameter).',
+			description: 'Optional deterministic seed (honored on the HF, Pollinations and Replicate flux lanes; ignored by NIM flux.1-dev and Vertex/Gemini, which have no seed input).',
 		},
 	},
 };
