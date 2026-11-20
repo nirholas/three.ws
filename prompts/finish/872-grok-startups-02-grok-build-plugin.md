@@ -1,5 +1,7 @@
 # grok-startups 02: a Grok Build plugin that is correct, complete and installable from xAI's marketplace
 
+Status 2026-11-20: built and verified in this repo (plugin, tests, export 179da58e, marketplace validator and index check passing, listings section 3). Owner steps remain: create the `three-ws` GitHub org and `three-ws/three-ws-grok` repo, push the export, open the xAI marketplace PR, approve `git push threews main`, run one Grok turn once GROK_API_KEY exists. See _context/grok-startups-PROGRESS.md, entry 02.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `grok-startups-` order, so it can run in parallel with all of them. Dev port: 3272.
 
 ## Operating clause (binding)
