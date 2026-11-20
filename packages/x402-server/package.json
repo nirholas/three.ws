@@ -89,6 +89,10 @@
     }
   },
   "devDependencies": {
+    "@noble/curves": "^1.9.0",
+    "@solana/spl-token": "^0.4.0",
+    "@solana/web3.js": "^1.95.0",
+    "bs58": "^6.0.0",
     "fastify": "^5.0.0"
   }
 }
