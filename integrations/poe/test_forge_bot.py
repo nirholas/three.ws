@@ -26,6 +26,7 @@ class _Forge(BaseHTTPRequestHandler):
     def do_POST(self):
         length = int(self.headers.get("content-length", 0))
         self.server.last_body = json.loads(self.rfile.read(length))
+        self.server.last_auth = self.headers.get("authorization")
         self._send({"job_id": "job-1", "status": "queued", "backend": "trellis_selfhost"})
 
     def do_GET(self):
@@ -67,10 +68,13 @@ class ChatTurnTest(unittest.TestCase):
         cls.server.polls = 0
         threading.Thread(target=cls.server.serve_forever, daemon=True).start()
         forge_bot.POLL_INTERVAL = 0.01
-        bot = forge_bot.ForgeBot(base_url=f"http://127.0.0.1:{cls.server.server_address[1]}")
+        base = f"http://127.0.0.1:{cls.server.server_address[1]}"
+        bot = forge_bot.ForgeBot(base_url=base, api_key="sk_test_operator")
         import fastapi_poe as fp
 
         cls.client = TestClient(fp.make_app(bot, access_key=KEY), headers={"Authorization": f"Bearer {KEY}"})
+        unconnected = forge_bot.ForgeBot(base_url=base, api_key="")
+        cls.unconnected = TestClient(fp.make_app(unconnected, access_key=KEY), headers={"Authorization": f"Bearer {KEY}"})
 
     @classmethod
     def tearDownClass(cls):
@@ -92,6 +96,14 @@ class ChatTurnTest(unittest.TestCase):
         self.assertIn("chair.png", text)
         self.assertEqual(self.server.last_body["tier"], "standard")
         self.assertEqual(self.server.last_body["prompt"], "a small wooden chair")
+        # Making a model needs an account: the operator's key rides every call.
+        self.assertEqual(self.server.last_auth, "Bearer sk_test_operator")
+
+    def test_without_an_operator_key_it_says_so_and_never_calls_forge(self):
+        before = getattr(self.server, "last_body", None)
+        resp = self.unconnected.post("/", json=_query("a small wooden chair"))
+        self.assertIn("THREE_WS_API_KEY", resp.text)
+        self.assertEqual(getattr(self.server, "last_body", None), before)
 
     def test_short_prompt_is_answered_without_calling_forge(self):
         before = getattr(self.server, "last_body", None)

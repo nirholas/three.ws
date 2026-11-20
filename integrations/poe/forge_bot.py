@@ -1,7 +1,11 @@
 """Poe server bot that turns a chat message into a textured 3D model (GLB).
 
-It wraps the free, auth-free three.ws Forge lane (``POST /api/forge``, polled on
-``GET /api/forge?job=``) through the shared stdlib client. Progress is streamed
+It wraps the free three.ws Forge lane (``POST /api/forge``, polled on
+``GET /api/forge?job=``) through the shared stdlib client. Making a model needs
+a three.ws account, and a Poe user cannot hand the bot one, so the bot runs
+under its operator's account: set ``THREE_WS_API_KEY`` to a key from
+https://three.ws/dashboard/api-keys. Every model the bot makes is then owned by,
+and rate limited as, that account. Progress is streamed
 as text while the job runs, and the final message carries the GLB link, a
 browser viewer link and, when Forge returns one, an inline preview image.
 """
@@ -40,7 +44,15 @@ def viewer_url(glb_url: str, base_url: str = BASE_URL) -> str:
     return f"{base_url.rstrip('/')}/viewer?src={quote(glb_url, safe='')}"
 
 
+NOT_CONNECTED = (
+    "This bot is not connected to a three.ws account yet, so it cannot make models. "
+    "Its operator needs to set THREE_WS_API_KEY to a key from https://three.ws/dashboard/api-keys."
+)
+
+
 def friendly_error(exc: ThreeWSError) -> str:
+    if exc.status == 401:
+        return "This bot's three.ws API key was refused. Its operator needs to check THREE_WS_API_KEY."
     if exc.code == "timeout":
         return "The free Forge lane is busy right now. Try again in a minute, or use `tier: draft`."
     if exc.status == 429:
@@ -51,9 +63,12 @@ def friendly_error(exc: ThreeWSError) -> str:
 
 
 class ForgeBot(fp.PoeBot):
-    def __init__(self, base_url: str = BASE_URL, **kwargs):
+    def __init__(self, base_url: str = BASE_URL, api_key: str | None = None, **kwargs):
         super().__init__(**kwargs)
         self.base_url = base_url
+        if api_key is None:
+            api_key = os.environ.get("THREE_WS_API_KEY", "")
+        self.api_key = (api_key or "").strip()
 
     async def get_response(self, request: fp.QueryRequest) -> AsyncIterable[fp.PartialResponse]:
         last = request.query[-1].content if request.query else ""
@@ -62,7 +77,15 @@ class ForgeBot(fp.PoeBot):
             yield fp.PartialResponse(text="Describe one subject in at least 3 characters, for example: a small wooden chair.")
             return
 
-        client = ThreeWSClient(self.base_url, timeout=90, client_handle=f"poe-{request.user_id or 'anon'}"[:60])
+        if not self.api_key:
+            yield fp.PartialResponse(text=f"**{NOT_CONNECTED}**")
+            return
+        client = ThreeWSClient(
+            self.base_url,
+            timeout=90,
+            api_key=self.api_key,
+            client_handle=f"poe-{request.user_id or 'anon'}"[:60],
+        )
         yield fp.PartialResponse(text=f"Forging **{prompt}** (tier: {tier}).\n\n")
         try:
             submission = await asyncio.to_thread(client.submit_text_to_3d, prompt, tier=tier)

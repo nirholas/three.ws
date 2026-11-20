@@ -9,9 +9,9 @@ Poe server bots are created in the creator dashboard (<https://poe.com/create_bo
 
 ## Owner steps
 
-1. Deploy `forge_bot.py` somewhere public. Cloud Run works: a Python 3.12 image, `pip install -r requirements.txt`, entrypoint `python forge_bot.py`, port 8080, env `POE_ACCESS_KEY`.
+1. Deploy `forge_bot.py` somewhere public. Cloud Run works: a Python 3.12 image, `pip install -r requirements.txt`, entrypoint `python forge_bot.py`, port 8080, env `POE_ACCESS_KEY` and `THREE_WS_API_KEY` (a key from the account that will own every model the bot makes; making a model needs an account).
 2. In the Poe dashboard choose "Server bot", enter the public URL, bot name `ThreeWsForge`, and copy the access key into `POE_ACCESS_KEY`.
-3. Set the bot description to: "Describe an object, get a textured 3D model (GLB) and a viewer link. Free, no key."
+3. Set the bot description to: "Describe an object, get a textured 3D model (GLB) and a viewer link. Free for Poe users."
 4. Set "Server bot settings" to allow no attachments; the bot does not read files.
 5. Send a test message in the Poe chat and confirm the GLB link opens.
 
