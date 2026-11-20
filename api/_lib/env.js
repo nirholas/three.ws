@@ -618,6 +618,12 @@ export const env = {
 		return opt('GROK_API_KEY') || opt('XAI_API_KEY');
 	},
 
+	// Hero clips per account per 24 h (docs/hero-clips.md), an integer from 1
+	// to 100. Unset or out of range means the default in api/_lib/hero-clip.js.
+	get HERO_CLIP_DAILY_CAP() {
+		return opt('HERO_CLIP_DAILY_CAP');
+	},
+
 	// xAI startups credit grant (see docs/ops/xai-credits.md). Values live on the
 	// Cloud Run service only, never in git. XAI_CREDIT_GRANT_USD is the total
 	// grant, XAI_CREDIT_ISSUED_AT the ISO date the first tranche landed (expiry is
