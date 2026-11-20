@@ -266,7 +266,7 @@ retargeter: three.ws ships one that maps Mixamo, Avaturn, Unreal, VRM/VRoid,
 Daz, MakeHuman and Blender conventions onto the same canonical set.
 
 ```html
-<script type="module" src="https://three.ws/agent-3d.js"></script>
+<script type="module" src="https://three.ws/agent-3d/1/agent-3d.js"></script>
 <agent-3d src="agent://base/42" clip="https://example.com/wave.json"></agent-3d>
 ```
 
