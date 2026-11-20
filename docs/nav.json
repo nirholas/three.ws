@@ -134,6 +134,14 @@
 					"path": "anatomy"
 				},
 				{
+					"label": "Anatomy: rocket cutaway sources",
+					"path": "anatomy/rocket-engines-sources"
+				},
+				{
+					"label": "Anatomy: rocket cutaway review",
+					"path": "anatomy/rocket-engines-review"
+				},
+				{
 					"label": "How the Forge works (plain language)",
 					"path": "how-forge-works"
 				},

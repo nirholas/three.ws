@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-20",
+			"title": "Rocket engine and launch stack cutaways, narrated by Grok",
+			"summary": "Anatomy now opens with two featured cutaways. The first is a full-flow staged-combustion rocket engine: both preburners and turbopumps spin, six propellant flows are coloured by species, the methane cools the nozzle on its way to the preburner, and the plume shows shock diamonds. The second is a fully reusable two-stage launch system, toured from liftoff through hot staging and boostback to the tower catch. Every number on screen is listed with its public source and date on a Sources page, and anything that could not be sourced was cut. Press Listen in the tour to hear each step. The narration is built for Grok to write from that step's sourced facts only, and the page reads the written step text whenever Grok is not connected. Shared links unfurl as cards rendered from the real cutaway.",
+			"tags": ["feature"],
+			"link": "/anatomy"
+		},
+		{
+			"date": "2026-11-20",
 			"title": "The three.ws plugin for Cursor gets /make-3d, /rig and /embed",
 			"summary": "The Cursor plugin now has three commands. /make-3d checks the free catalog, generates a textured model, renders it so the agent can see whether it matches, and prints the GLB, a viewer link, the run receipt and paste-ready embed code. /rig turns a humanoid GLB into an animation-ready one, and /embed writes HTML for any website. Signing in from Cursor now always asks for the same four permissions (read and update your 3D models, see your name and email, stay connected) and nothing else, even when Cursor registers without naming them. The plugin ships a five-minute test plan with measured timings, and the privacy policy now spells out what the plugin's server can reach, how long models are kept, and that prompts and models are never used for training or sold.",
 			"tags": ["feature", "fix", "docs"],
