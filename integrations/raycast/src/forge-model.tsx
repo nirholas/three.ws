@@ -24,7 +24,9 @@ interface Preferences {
 }
 
 function needsKey(error: Error): boolean {
-	return error instanceof ForgeError && (error.code === 'sign_in_required' || error.status === 401);
+	return (
+		error instanceof ForgeError && (error.code === 'sign_in_required' || error.status === 401)
+	);
 }
 
 function describeStatus(status: string, elapsedMs: number): string {
@@ -93,8 +95,14 @@ function Generating({ prompt, tier }: { prompt: string; tier: Tier }) {
 					<ActionPanel>
 						{needsKey(error) ? (
 							<>
-								<Action title="Open Extension Preferences" onAction={openExtensionPreferences} />
-								<Action.OpenInBrowser title="Create an API Key" url={API_KEYS_URL} />
+								<Action
+									title="Open Extension Preferences"
+									onAction={openExtensionPreferences}
+								/>
+								<Action.OpenInBrowser
+									title="Create an API Key"
+									url={API_KEYS_URL}
+								/>
 							</>
 						) : null}
 						<Action title="Back to Prompt" onAction={pop} />
