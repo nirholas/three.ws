@@ -34,6 +34,10 @@
 // --only          comma-separated prompt ids
 // --limit N       first N prompts after --only filtering
 // --concurrency N prompts in flight per provider (1 to 6, default 3)
+// --ref-concurrency N  reference images generated at once (1 to 6, default 1).
+//                 The keyless Pollinations rung answers 402 to a second
+//                 concurrent request from one IP, so the default serializes
+//                 the image step while TRELLIS and rendering stay parallel.
 // --force         rerun finished rows; --retry-failed reruns rows with an error
 // --no-judge      skip the pairwise judge
 // --report-only   do not generate anything, rebuild the report from results
@@ -85,7 +89,7 @@ const CLOSED_BOUNDARY_RATIO = 0.01;
 function usage(msg) {
 	if (msg) console.error(`grok-eval-ref-image: ${msg}`);
 	console.error(
-		'Usage: npm run grok:eval-ref-image -- [--prod-env] [--providers baseline,xai] [--only ids] [--limit N] [--concurrency N] [--force] [--retry-failed] [--no-judge] [--report-only] [--render-base URL]',
+		'Usage: npm run grok:eval-ref-image -- [--prod-env] [--providers baseline,xai] [--only ids] [--limit N] [--concurrency N] [--ref-concurrency N] [--force] [--retry-failed] [--no-judge] [--report-only] [--render-base URL]',
 	);
 	process.exit(2);
 }
@@ -97,6 +101,7 @@ function parseArgs(argv) {
 		only: null,
 		limit: null,
 		concurrency: 3,
+		refConcurrency: 1,
 		force: false,
 		retryFailed: false,
 		judge: true,
@@ -111,6 +116,7 @@ function parseArgs(argv) {
 		else if (a === '--only') out.only = new Set(next().split(',').map((s) => s.trim()).filter(Boolean));
 		else if (a === '--limit') out.limit = Number(next());
 		else if (a === '--concurrency') out.concurrency = Number(next());
+		else if (a === '--ref-concurrency') out.refConcurrency = Number(next());
 		else if (a === '--force') out.force = true;
 		else if (a === '--retry-failed') out.retryFailed = true;
 		else if (a === '--no-judge') out.judge = false;
@@ -121,6 +127,7 @@ function parseArgs(argv) {
 	for (const p of out.providers) if (!PROVIDERS.includes(p)) usage(`unknown provider ${p} (use ${PROVIDERS.join(', ')})`);
 	if (out.limit !== null && (!Number.isInteger(out.limit) || out.limit < 1)) usage('--limit must be a positive integer');
 	if (!Number.isInteger(out.concurrency) || out.concurrency < 1 || out.concurrency > 6) usage('--concurrency must be 1 to 6');
+	if (!Number.isInteger(out.refConcurrency) || out.refConcurrency < 1 || out.refConcurrency > 6) usage('--ref-concurrency must be 1 to 6');
 	if (!/^https?:\/\//.test(out.renderBase)) usage('--render-base must be an http(s) origin');
 	return out;
 }
@@ -421,15 +428,39 @@ function installXaiCostMeter(xaiUrl) {
 	};
 }
 
+// Counting semaphore: at most `n` holders at once, FIFO.
+export function createGate(n) {
+	let active = 0;
+	const waiting = [];
+	const release = () => {
+		active--;
+		const nextUp = waiting.shift();
+		if (nextUp) nextUp();
+	};
+	return async (fn) => {
+		if (active >= n) await new Promise((r) => waiting.push(r));
+		active++;
+		try {
+			return await fn();
+		} finally {
+			release();
+		}
+	};
+}
+
 async function stageReference(mods, provider, item) {
 	const scope = { xaiCalls: 0, xaiTicks: 0 };
-	const startedAt = Date.now();
-	const out = await costScope.run(scope, () =>
-		mods.generateReferenceImage(item.prompt, { aspectRatio: '1:1', seed: seedFor(item.id) }),
-	);
-	const latencyMs = Date.now() - startedAt;
-	const costUsd = provider === 'xai' ? scope.xaiTicks / TICKS_PER_USD : null;
-	return { out, latencyMs, xaiCalls: scope.xaiCalls, costUsd };
+	// Latency is timed inside the gate: queueing behind another prompt's image
+	// is a harness artifact, not time a user would wait.
+	return mods.refGate(async () => {
+		const startedAt = Date.now();
+		const out = await costScope.run(scope, () =>
+			mods.generateReferenceImage(item.prompt, { aspectRatio: '1:1', seed: seedFor(item.id) }),
+		);
+		const latencyMs = Date.now() - startedAt;
+		const costUsd = provider === 'xai' ? scope.xaiTicks / TICKS_PER_USD : null;
+		return { out, latencyMs, xaiCalls: scope.xaiCalls, costUsd };
+	});
 }
 
 async function stageMesh(mods, imageUrl, seed) {
@@ -619,8 +650,10 @@ function providerSummary(rows) {
 
 function costCell(provider, s) {
 	if (provider === 'xai') return s.costPerImage === null ? 'n/a' : `$${s.costPerImage.toFixed(4)} (metered, ${s.xaiCallsPerImage?.toFixed(2)} calls/image)`;
+	// NIM runs on the free NVIDIA tier and Pollinations is keyless and free, so
+	// a column served only by those rungs costs nothing per image.
 	const names = Object.keys(s.models);
-	if (names.length && names.every((m) => /^nim\//.test(m))) return '$0 (NVIDIA NIM free tier)';
+	if (names.length && names.every((m) => /^(nim|pollinations)\//.test(m))) return '$0 (free rungs only)';
 	return 'not metered per image (see served models)';
 }
 
@@ -845,6 +878,7 @@ async function main() {
 		selfhostQualityForTier: tiers.selfhostQualityForTier,
 		describeImageJson: vision.describeImageJson,
 		VISION_TASK_LEAD: vision.VISION_TASK_LEAD,
+		refGate: createGate(opts.refConcurrency),
 	};
 	installXaiCostMeter(chat.XAI_IMAGE_GENERATIONS_URL);
 
