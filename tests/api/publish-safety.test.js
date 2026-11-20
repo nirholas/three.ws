@@ -208,10 +208,18 @@ describe('classifyPublishSafety', () => {
 // an input filter on a chat surface fails here instead of in production.
 describe('no chat surface imports a content classifier', () => {
 	const API_DIR = new URL('../../api/', import.meta.url).pathname;
-	// The outbound publishing cron, plus the NVIDIA lane probe and release-eval
-	// modules, which classify fixed probe prompts to measure the guard model and
-	// never see a user's message. The test below keeps them off the chat routes.
-	const ALLOWED = ['cron/sketchfab-showcase.js', '_lib/nim-lane-eval.js', '_lib/nim-lanes.js', '_lib/nvidia-lanes.js'];
+	// The outbound publishing cron, the screen a model passes before it is listed
+	// publicly (_lib/content-safety.js, what the platform publishes, never a
+	// chat message), plus the NVIDIA lane probe and release-eval modules, which
+	// classify fixed probe prompts to measure the guard model and never see a
+	// user's message. The test below keeps them off the chat routes.
+	const ALLOWED = [
+		'cron/sketchfab-showcase.js',
+		'_lib/content-safety.js',
+		'_lib/nim-lane-eval.js',
+		'_lib/nim-lanes.js',
+		'_lib/nvidia-lanes.js',
+	];
 	const LANE_TOOLING = /from\s+['"][^'"]*(nim-lane-eval|nim-lanes|nvidia-lanes|publish-safety)\.js['"]/;
 	const CHAT_ROUTES = ['chat.js', 'llm/anthropic.js', 'concierge.js', '_lib/chat-guardrails.js'];
 
@@ -227,7 +235,7 @@ describe('no chat surface imports a content classifier', () => {
 		return out;
 	}
 
-	it('only the outbound publishing cron imports publish-safety.js', () => {
+	it('only outbound publishing and the lane tooling import publish-safety.js', () => {
 		const importers = walk(API_DIR)
 			.filter(({ full }) => /from\s+['"][^'"]*publish-safety\.js['"]/.test(readFileSync(full, 'utf8')))
 			.map(({ rel }) => rel);

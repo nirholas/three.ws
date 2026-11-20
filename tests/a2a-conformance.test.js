@@ -21,6 +21,19 @@ import { readFileSync } from 'node:fs';
 import { Readable } from 'node:stream';
 import Ajv from 'ajv';
 
+// Making a 3D model over A2A needs a three.ws account (an anonymous caller gets
+// a rejected task). A synthetic key stands in for a real one: the bearer check
+// resolves it to an account without a database, and every call below sends it.
+const TEST_KEY = 'sk_test_a2aconformance';
+vi.mock('../api/_lib/auth.js', async (importOriginal) => {
+	const real = await importOriginal();
+	return {
+		...real,
+		authenticateBearer: async (token, opts) =>
+			token === 'sk_test_a2aconformance' ? { userId: 'acct-a2a-conformance', scope: 'mcp' } : real.authenticateBearer(token, opts),
+	};
+});
+
 vi.mock('../api/_mcp-studio/gpt-forge-client.js', async (importOriginal) => {
 	const real = await importOriginal();
 	return {
@@ -72,7 +85,7 @@ function makeRes() {
 }
 
 let seq = 0;
-async function rpc(method, params, headers) {
+async function rpc(method, params, headers = { authorization: `Bearer ${TEST_KEY}` }) {
 	const res = makeRes();
 	await handler(makeReq({ jsonrpc: '2.0', id: ++seq, method, params }, headers), res);
 	return res;
@@ -208,7 +221,7 @@ describe('message/stream (0.3)', () => {
 describe('SendStreamingMessage (1.0)', () => {
 	it('wraps each frame in the StreamResponse oneof with TASK_STATE_* enums', async () => {
 		stubForgePolls(1);
-		const res = await rpc('SendStreamingMessage', { message: v1Msg(PROMPT) }, { 'a2a-version': '1.0' });
+		const res = await rpc('SendStreamingMessage', { message: v1Msg(PROMPT) }, { authorization: `Bearer ${TEST_KEY}`, 'a2a-version': '1.0' });
 		const frames = res.frames.map((f) => f.result);
 		expect(frames[0].task.status.state).toBe('TASK_STATE_WORKING');
 		expect(frames[0].task.kind).toBeUndefined();
@@ -224,7 +237,7 @@ describe('SendStreamingMessage (1.0)', () => {
 	it('SubscribeToTask resumes a working task', async () => {
 		const sent = await rpc('SendMessage', { message: v1Msg(PROMPT) });
 		stubForgePolls(0);
-		const res = await rpc('SubscribeToTask', { id: sent.json.result.task.id }, { 'a2a-version': '1.0' });
+		const res = await rpc('SubscribeToTask', { id: sent.json.result.task.id }, { authorization: `Bearer ${TEST_KEY}`, 'a2a-version': '1.0' });
 		expect(res.frames.at(-1).result.statusUpdate.status.state).toBe('TASK_STATE_COMPLETED');
 	});
 });

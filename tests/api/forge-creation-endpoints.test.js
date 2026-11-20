@@ -33,6 +33,9 @@ vi.mock('../../api/_lib/forge-store.js', () => ({
 	recordFeedback: (...a) => recordFeedback(...a),
 	hashClient: (...a) => hashClient(...a),
 	isCreationOwner: (...a) => isCreationOwner(...a),
+	ownerClientKey: (key) => (typeof key === 'string' && key && key !== 'hashed:anon' ? key : null),
+	setCreationVisibility: vi.fn(async () => ({ outcome: 'updated' })),
+	CREATION_VISIBILITIES: ['public', 'unlisted', 'private'],
 }));
 
 vi.mock('../../api/_lib/rate-limit.js', () => ({
@@ -46,7 +49,12 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 
 // forge-comments talks to Postgres and the session layer directly. Stub both so
 // the dispatch + auth contracts are the only thing under test.
-vi.mock('../../api/_lib/db.js', () => ({ sql: vi.fn(async () => []) }));
+vi.mock('../../api/_lib/db.js', () => ({
+	sql: vi.fn(async () => []),
+	isDbUnavailableError: () => false,
+	isDbCapacityError: () => false,
+	isStoragePressured: () => false,
+}));
 vi.mock('../../api/_lib/auth.js', () => ({
 	getSessionUser: vi.fn(async () => null),
 	authenticateBearer: vi.fn(async () => null),
@@ -165,11 +173,11 @@ describe('GET /api/forge-creation', () => {
 });
 
 describe('DELETE /api/forge-creation', () => {
-	it('refuses a delete with no client header rather than guessing an owner', async () => {
+	it('refuses a delete with no client id, manage token or session rather than guessing an owner', async () => {
 		const res = mkRes();
 		await creationHandler(mkReq({ method: 'DELETE', url: `/api/forge-creation?id=${UUID}` }), res);
 		expect(res.statusCode).toBe(401);
-		expect(parsed(res).error).toBe('missing_client');
+		expect(parsed(res).error).toBe('missing_credentials');
 		expect(deleteCreation).not.toHaveBeenCalled();
 	});
 
@@ -181,7 +189,7 @@ describe('DELETE /api/forge-creation', () => {
 		);
 		expect(res.statusCode).toBe(200);
 		expect(parsed(res)).toEqual({ deleted: true });
-		expect(deleteCreation).toHaveBeenCalledWith({ id: UUID, clientKey: 'hashed:cid-1' });
+		expect(deleteCreation).toHaveBeenCalledWith({ id: UUID, clientKey: 'hashed:cid-1', userId: null });
 	});
 
 	it("answers 404 for another client's row so ids cannot be probed for existence", async () => {
