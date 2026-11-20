@@ -54,6 +54,17 @@ vi.mock('../api/3d/inspect.js', () => ({
 	})),
 }));
 
+// Making a 3D model needs a three.ws account. A synthetic key stands in for a
+// real one: the bearer check resolves it to an account without a database.
+const TEST_KEY = 'sk_test_a2asynthetic';
+vi.mock('../api/_lib/auth.js', async (importOriginal) => {
+	const real = await importOriginal();
+	return {
+		...real,
+		authenticateBearer: async (token, opts) => (token === 'sk_test_a2asynthetic' ? { userId: 'acct-a2a', scope: 'mcp' } : real.authenticateBearer(token, opts)),
+	};
+});
+
 vi.mock('../api/_mcp-studio/gpt-forge-client.js', async (importOriginal) => {
 	const real = await importOriginal();
 	return {
@@ -174,10 +185,33 @@ describe('A2A service: 1.0 dialect', () => {
 		expect(got.json.result.history).toHaveLength(1);
 	});
 
-	it('generate-3d-model starts working and GetTask completes it with the GLB as a url part', async () => {
+	it('generate-3d-model with no account is rejected with a sign-in answer and starts no GPU work', async () => {
+		startForge.mockClear();
 		const res = await rpc('SendMessage', {
 			message: v1Msg([{ text: 'Generate a 3D model of a small ceramic robot figurine' }]),
 		});
+		const { task } = res.json.result;
+		expect(task.status.state).toBe('TASK_STATE_REJECTED');
+		expect(task.status.message.parts[0].text).toMatch(/free three\.ws account/);
+		expect(task.status.message.parts[0].text).toMatch(/\/dashboard\/api-keys/);
+		expect(startForge).not.toHaveBeenCalled();
+	});
+
+	it('generate-3d-model forwards the caller key to the forge, through Bearer or X-API-Key', async () => {
+		for (const headers of [{ authorization: `Bearer ${TEST_KEY}` }, { 'x-api-key': TEST_KEY }]) {
+			startForge.mockClear();
+			const res = await rpc('SendMessage', { message: v1Msg([{ text: 'Generate a 3D model of a brass lantern' }]) }, headers);
+			expect(res.json.result.task.status.state).toBe('TASK_STATE_WORKING');
+			expect(startForge.mock.calls[0][2].auth).toEqual({ authorization: `Bearer ${TEST_KEY}` });
+		}
+	});
+
+	it('generate-3d-model starts working and GetTask completes it with the GLB as a url part', async () => {
+		const res = await rpc(
+			'SendMessage',
+			{ message: v1Msg([{ text: 'Generate a 3D model of a small ceramic robot figurine' }]) },
+			{ authorization: `Bearer ${TEST_KEY}` },
+		);
 		const { task } = res.json.result;
 		expect(task.status.state).toBe('TASK_STATE_WORKING');
 		expect(startForge).toHaveBeenCalled();
@@ -203,10 +237,13 @@ describe('A2A service: 1.0 dialect', () => {
 
 	it('rejects an unsafe generation prompt before any GPU work', async () => {
 		startForge.mockClear();
-		const res = await rpc('SendMessage', {
-			message: v1Msg([{ data: { skillId: 'generate-3d-model', prompt: 'a nude figure' } }]),
-		});
+		const res = await rpc(
+			'SendMessage',
+			{ message: v1Msg([{ data: { skillId: 'generate-3d-model', prompt: 'a nude figure' } }]) },
+			{ authorization: `Bearer ${TEST_KEY}` },
+		);
 		expect(res.json.result.task.status.state).toBe('TASK_STATE_REJECTED');
+		expect(res.json.result.task.status.message.parts[0].text).not.toMatch(/account/);
 		expect(startForge).not.toHaveBeenCalled();
 	});
 
@@ -301,9 +338,12 @@ describe('A2A service: the paid skill', () => {
 describe('A2A service: every card skill is reachable', () => {
 	for (const skill of A2A_SKILLS) {
 		it(`routes ${skill.id}`, async () => {
-			const res = await rpc('message/send', {
-				message: textMsg(skill.examples[0], { metadata: { skillId: skill.id } }),
-			});
+			// Signed in, so a skill that needs an account runs past its gate.
+			const res = await rpc(
+				'message/send',
+				{ message: textMsg(skill.examples[0], { metadata: { skillId: skill.id } }) },
+				{ authorization: `Bearer ${TEST_KEY}` },
+			);
 			expect(res.json.error).toBeUndefined();
 			expect(res.json.result.kind).toBe('task');
 			expect(['completed', 'working', 'input-required', 'failed']).toContain(res.json.result.status.state);

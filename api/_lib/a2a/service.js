@@ -16,8 +16,9 @@
 //   tasks     ./task-store.js, so a GetTask lands on whatever instance serves it.
 //   auth      anonymous by default; a bearer API key (sk_live_/sk_test_ or an
 //             OAuth access token) raises the search cap and keys the limiter by
-//             account. A presented but invalid credential is a 401, never a
-//             silent downgrade to anonymous.
+//             account, and generate-3d-model needs one (the model is made under
+//             that account). A presented but invalid credential is a 401, never
+//             a silent downgrade to anonymous.
 
 import { randomUUID } from 'node:crypto';
 
@@ -401,7 +402,18 @@ function laneFailureText(err) {
 	}
 }
 
-async function runGenerate({ message, ip, base }) {
+async function runGenerate({ message, auth, creatorAuth, ip, base }) {
+	// A 3D model is made under an account that answers for it, as on /api/forge
+	// itself. Refused before any quota spend so an anonymous caller learns what to
+	// send instead of waiting on a job that can never start.
+	if (!auth?.userId) {
+		return {
+			state: 'rejected',
+			text:
+				'Making a 3D model needs a free three.ws account. Create an API key at https://three.ws/dashboard/api-keys ' +
+				'and send it as "Authorization: Bearer <key>" (or "X-API-Key: <key>"), then send this request again.',
+		};
+	}
 	const data = dataOf(message);
 	const prompt = (str(data.prompt) || textOf(message)).slice(0, PROMPT_MAX + 1);
 	if (prompt.length < PROMPT_MIN) {
@@ -435,7 +447,7 @@ async function runGenerate({ message, ip, base }) {
 			knownMark?.imagePath
 				? { prompt: subject, imageUrls: [`${base}${knownMark.imagePath}`], tier }
 				: { prompt: subject, path: 'image', tier, ...(tier === 'high' ? { internal: true } : {}) },
-			{ deadline: Date.now() + FORGE_SUBMIT_BUDGET_MS },
+			{ deadline: Date.now() + FORGE_SUBMIT_BUDGET_MS, auth: creatorAuth },
 		);
 	} catch (err) {
 		return { state: 'failed', text: laneFailureText(err) };
@@ -621,7 +633,7 @@ export function createA2AService(paid) {
 		const run = FREE_RUNNERS[picked.skill.id];
 		const task = record?.task ? structuredClone(record.task) : newTask(message);
 		withUserMessage(task, message);
-		const outcome = await run({ message, auth: ctx.auth, ip: ctx.ip, base: ctx.base, origin: ctx.base });
+		const outcome = await run({ message, auth: ctx.auth, creatorAuth: ctx.creatorAuth, ip: ctx.ip, base: ctx.base, origin: ctx.base });
 		applyOutcome(task, outcome);
 		await saveTask(route, { task, skillId: picked.skill.id, state: outcome.continuation || null });
 		return { task };
@@ -918,7 +930,10 @@ export function createA2AService(paid) {
 
 		const abort = new AbortController();
 		res.on?.('close', () => abort.abort());
-		const ctx = { extensions, auth, ip, base: originFromReq(req), signal: abort.signal };
+		// The verified key travels on to the forge so the model is made under the
+		// caller's own account (X-API-Key is normalised to the Bearer form it reads).
+		const creatorAuth = auth ? { authorization: `Bearer ${token}` } : undefined;
+		const ctx = { extensions, auth, creatorAuth, ip, base: originFromReq(req), signal: abort.signal };
 		let reply;
 		try {
 			reply = await dispatch(req, body, ctx);

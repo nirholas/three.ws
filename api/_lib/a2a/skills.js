@@ -24,7 +24,7 @@ export const A2A_SKILLS = [
 		description:
 			'Turn a short text description of one object or character into a textured 3D model (GLB). ' +
 			'The task is created in the working state and completes with the GLB, a browser viewer link ' +
-			'and an augmented-reality link; poll it with GetTask (tasks/get on 0.3). Free, no account needed.',
+			'and an augmented-reality link; poll it with GetTask (tasks/get on 0.3). Free with a free three.ws account: send your API key in the Authorization header.',
 		tags: ['3d', 'generation', 'text-to-3d', 'glb', 'gltf'],
 		examples: [
 			'Generate a 3D model of a small ceramic robot figurine',
