@@ -82,6 +82,12 @@ function staticOwner(relPath) {
 // The free studio's two sibling surfaces serve a subset of its catalog.
 const SURFACE_PARENT = { '/api/mcp-chatgpt': '/api/mcp-studio', '/api/mcp-grok': '/api/mcp-studio' };
 
+// The studio family connects anonymously (server auth "none"), but these tools
+// make, rig or render a model and refuse an anonymous call, so each carries
+// requiresAccount. The same set the studio enforces (api/_mcp-studio/dispatch.js).
+const STUDIO_SERVERS = new Set(['mcp-studio', 'mcp-chatgpt', 'mcp-grok']);
+const { CREATOR_TOOL_NAMES } = await import('../api/_mcp-studio/dispatch.js');
+
 /** Who may call a server without setting anything up. */
 const HOSTED_AUTH = {
 	mcp: 'oauth-or-x402',
@@ -340,6 +346,8 @@ async function build() {
 				openWorldHint: hints.openWorldHint ?? null,
 			};
 			const safety = safetyClass(hints);
+			// A tool that refuses an anonymous call cannot be tried from the page.
+			const needsAccount = STUDIO_SERVERS.has(server.id) && CREATOR_TOOL_NAMES.has(tool.name);
 			tools.push({
 				name: tool.name,
 				title: tool.title ?? hints.title ?? null,
@@ -361,9 +369,10 @@ async function build() {
 				inputSchema: normalizeSchema(tool.inputSchema) ?? { type: 'object', properties: {} },
 				...(read?.partial ? { inputSchemaIsPartial: true } : {}),
 				...(indexer.has(tool.name) ? { requiresIndexer: true } : {}),
+				...(needsAccount ? { requiresAccount: true } : {}),
 				// A keyless hosted read that costs nothing: the /mcp-tools page offers
 				// to run it in the browser against the live endpoint.
-				...(record.transport === 'remote' && record.auth === 'none' && safety === 'read' && !price ? { tryIt: true } : {}),
+				...(record.transport === 'remote' && record.auth === 'none' && safety === 'read' && !price && !needsAccount ? { tryIt: true } : {}),
 				page: `/mcp-tools/${server.id}/${tool.name}`,
 				source: read?.source ?? null,
 			});

@@ -3,9 +3,10 @@
 Give Grok a 3D studio and a body. One remote MCP server lets Grok Bot, Grok
 connectors and the xAI API turn text or an image into a textured 3D model, a
 rigged animation-ready avatar, or a named 3D persona that lip-syncs its replies.
-The studio is free: no account, no payment, no API key. Sign the same URL in
-to your three.ws account and it also manages your agents, their memory and
-skills, and reads the platform's Solana market intelligence (pump.fun,
+The studio is free: nothing to pay. Making or rigging a model needs a free
+three.ws account (OAuth sign-in or an API key), so every model has an owner and
+stays unlisted until that owner publishes it. Signed in, the same URL also
+manages your agents, their memory and skills, and reads the platform's Solana market intelligence (pump.fun,
 Oracle, token due diligence, the trader leaderboard), without ever being able
 to spend. A [three.ws webhook can start a Grok Bot routine](#wake-grok-bot-from-threews-events),
 and [Grok Build](#grok-build) picks the same server up from a project
@@ -19,7 +20,7 @@ and [Grok Build](#grok-build) picks the same server up from a project
 |---|---|
 | **URL** | `https://three.ws/api/mcp-grok` |
 | **Transport** | Streamable HTTP (JSON-RPC over `POST`) |
-| **Auth** | None for the studio. Optional: a connector API key, or OAuth 2.1 at `https://three.ws/api/mcp-grok?auth=oauth`, adds your agent tools |
+| **Auth** | A free three.ws account to make or rig a model: OAuth 2.1 at `https://three.ws/api/mcp-grok?auth=oauth`, or a connector API key. None needed to connect, search the catalog or check a job |
 | **Protocol** | MCP `2025-06-18` |
 | **Tools** | The full free studio: the same sixteen tools as [`/api/mcp-studio`](./mcp-studio.md). Signed in, also your [account's agent tools](#your-account-on-the-same-url) |
 
@@ -28,12 +29,13 @@ and [Grok Build](#grok-build) picks the same server up from a project
 Grok Bot adds a custom MCP server from chat. Send:
 
 ```
-Add a custom MCP server called three-ws-grok at https://three.ws/api/mcp-grok
+Add a custom MCP server called three-ws-grok at https://three.ws/api/mcp-grok?auth=oauth with OAuth authentication
 ```
 
 Say "custom server" (the sentence above does), or Grok Bot may look for a
-marketplace plugin instead. It shows the name and URL and asks you to confirm.
-No sign-in card appears, because there is nothing to sign in to. Then ask for 3D
+marketplace plugin instead. It shows the name and URL and asks you to confirm,
+then opens three.ws sign-in once: approve it with your free account (or create
+one there). Then ask for 3D
 in any task, or attach the server with `@three-ws-grok`:
 
 - "Make a 3D model of a reusable rocket booster with grid fins, then send me the viewer link and the GLB."
@@ -51,9 +53,9 @@ never works.
 
 ## Your account on the same URL
 
-The free studio needs no account. To let Grok Bot also work with **your**
-agents, their memory and skills, and your avatars (on a schedule, say), keep the
-same URL and give it a credential. Two ways:
+Making a model needs your free account, and the same credential lets Grok Bot
+also work with **your** agents, their memory and skills, and your avatars (on a
+schedule, say). Two ways to give it one:
 
 - **Connector key (recommended for Grok Bot).** At [three.ws/dashboard/api](/dashboard/api) choose **New key**, then **For an AI agent (Grok Bot, schedules, CI)**, name it, and copy the key it shows once. Ask Grok Bot to add a custom MCP server at `https://three.ws/api/mcp-grok` with API key authentication, and store the key as a Bot secret. It is sent as `Authorization: Bearer sk_live_…`.
 - **OAuth 2.1.** Use `https://three.ws/api/mcp-grok?auth=oauth` as the server URL with OAuth authentication. The `?auth=oauth` form answers an anonymous client with `401` and a `WWW-Authenticate` challenge, which is what makes an MCP client start sign-in; the plain URL serves anonymous clients and so never would. The connector registers itself, you approve the consent screen once, and every token it holds is refused the moment you revoke the app in [Connected apps](/dashboard/settings#connected-apps).
@@ -87,27 +89,33 @@ ever listed on this URL, whatever scopes the credential holds, and calling one b
 name answers `unknown tool`. Those actions happen in a browser at
 [three.ws/dashboard](/dashboard). The same tools run through the core server's
 policy, scope checks and spend gate exactly as on `/api/mcp`, and the free tools
-stay anonymous: signing in changes nothing about what they do, except that your
-generation caps key on your account instead of the MCP session.
+(catalog search, job status, docs) stay open to anonymous clients, and the
+creator tools run as your account, so a model you make is yours, unlisted until
+you publish it, and your generation caps key on your account.
 
 A credential that no longer verifies (expired, revoked, or minted for another
 server) is answered with `401` and the challenge rather than served anonymously,
 so a connector re-authenticates instead of quietly losing your tools. An account
 tool called without signing in answers JSON-RPC `-32002` with
-`data.reason: "sign_in_required"` and the OAuth URL. Scopes and the exact spend
+`data.reason: "sign_in_required"` and the OAuth URL; a creator tool (making or
+rigging a model) answers a tool result with `status: "sign_in_required"`, the
+OAuth URL and the API keys page. Scopes and the exact spend
 refusal: [API key scopes](./mcp.md#api-key-scopes).
 
 ## Grok connectors
 
 On paid Grok plans, custom connectors take a remote MCP URL (remote servers
 only, which this is). Open **Connectors**, add a **custom** connector, paste
-`https://three.ws/api/mcp-grok`, and leave authentication off. Business and
+`https://three.ws/api/mcp-grok?auth=oauth`, and choose OAuth authentication so
+the connector can make models as your free account. Business and
 Enterprise workspaces may need an admin to allow custom connectors first.
 
 ## xAI API
 
 The Responses API connects to remote MCP servers on xAI's side. Pass the server
-as a tool ([xAI's Remote MCP docs](https://docs.x.ai/developers/tools/remote-mcp)):
+as a tool ([xAI's Remote MCP docs](https://docs.x.ai/developers/tools/remote-mcp)),
+with a three.ws API key from [Dashboard → API keys](/dashboard/api-keys) as its
+authorization token, because making a model needs a free account:
 
 ```bash
 curl https://api.x.ai/v1/responses \
@@ -119,7 +127,8 @@ curl https://api.x.ai/v1/responses \
     "tools": [{
       "type": "mcp",
       "server_url": "https://three.ws/api/mcp-grok",
-      "server_label": "three-ws-grok"
+      "server_label": "three-ws-grok",
+      "authorization": "'"$THREE_WS_API_KEY"'"
     }]
   }'
 ```
@@ -135,7 +144,13 @@ from xai_sdk.tools import mcp
 client = Client(api_key=os.environ["XAI_API_KEY"])
 chat = client.chat.create(
     model="grok-4.7",
-    tools=[mcp(server_url="https://three.ws/api/mcp-grok", server_label="three-ws-grok")],
+    tools=[
+        mcp(
+            server_url="https://three.ws/api/mcp-grok",
+            server_label="three-ws-grok",
+            extra_headers={"Authorization": f"Bearer {os.environ['THREE_WS_API_KEY']}"},
+        )
+    ],
 )
 chat.append(user("Make a 3D model of a lunar lander and give me the viewer link."))
 print(chat.sample().content)
@@ -159,14 +174,15 @@ setup, so the standard project file is all it needs:
   "mcpServers": {
     "three-ws-grok": {
       "type": "http",
-      "url": "https://three.ws/api/mcp-grok"
+      "url": "https://three.ws/api/mcp-grok?auth=oauth"
     }
   }
 }
 ```
 
 Save it as `.mcp.json` at the project root, start `grok` there, and type
-`/mcps` to see the server connected.
+`/mcps` to see the server connected. The `?auth=oauth` URL signs it in to your
+free three.ws account on first connect, which making a model needs.
 
 For the skills too, install the three.ws plugin for Grok Build,
 [integrations/grok/three-ws](../integrations/grok/three-ws/README.md). It

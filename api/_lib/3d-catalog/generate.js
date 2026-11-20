@@ -12,13 +12,16 @@ export default {
 	path: '/api/3d/generate',
 	title: 'Text → 3D (free draft)',
 	summary:
-		'Turn a text prompt into a real textured GLB model. Free, keyless, no account. ' +
+		'Turn a text prompt into a real textured GLB model. Free with a three.ws account: send ' +
+		'`Authorization: Bearer <API key>` (make one at /dashboard/api-keys) or a signed-in session. ' +
+		'Unsigned callers get 401 sign_in_required. Models are saved unlisted to the account. ' +
 		'The draft/NIM tier (single-subject, draft-fidelity geometry, no rigging); ' +
 		'higher quality + rigging live behind paid Forge Pro and Rigged Avatars. ' +
 		'Returns the GLB inline when the draft finishes fast, otherwise a job token to poll ' +
 		'at GET /api/3d/generate?job=<id>.',
 	free: true,
-	keyless: true,
+	keyless: false,
+	account: true,
 	inputSchema: {
 		type: 'object',
 		required: ['prompt'],
@@ -125,6 +128,6 @@ export default {
 		},
 	],
 	useCase:
-		'An agent building a game, a scene, or an NFT needs a 3D model from a text prompt — free, no key, no account. ' +
+		'An agent building a game, a scene, or an NFT needs a 3D model from a text prompt, free on its three.ws account. ' +
 		'It calls this to draft geometry, then upgrades to Forge Pro / Rigged Avatars when it needs production quality.',
 };

@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 // Grok makes a 3D model through three.ws, over xAI's Responses API.
 //
-//   XAI_API_KEY=xai-... node index.mjs "a lunar lander with gold foil legs"
+//   XAI_API_KEY=xai-... THREE_WS_API_KEY=sk_live_... node index.mjs "a lunar lander with gold foil legs"
 //   node index.mjs --check      verify the three.ws MCP server answers (no key)
 //   node index.mjs --dry-run    print the exact xAI request (no key, no call)
 //
 // xAI connects to the remote MCP server and runs the tool calls on its side.
+// Making a model needs a free three.ws account, so the tool carries a three.ws
+// API key (https://three.ws/dashboard/api-keys) as its authorization token;
+// without one the server answers sign_in_required.
 // A render can outlast one response (a cold GPU boots for a minute or more), in
 // which case the three.ws server answers with a pending job instead of hanging.
 // Grok cannot wait inside a single response, so this script continues the same
@@ -38,6 +41,7 @@ function request(input, previousResponseId) {
 				server_label: 'three-ws',
 				server_description: 'Free 3D studio: text or image to textured 3D models, rigged avatars and talking personas.',
 				allowed_tools: ALLOWED_TOOLS,
+				...(process.env.THREE_WS_API_KEY ? { authorization: process.env.THREE_WS_API_KEY } : {}),
 			},
 		],
 	};
@@ -93,6 +97,9 @@ async function check() {
 
 async function run() {
 	if (!process.env.XAI_API_KEY) throw new Error('Set XAI_API_KEY (console.x.ai), or run with --check or --dry-run.');
+	if (!process.env.THREE_WS_API_KEY) {
+		throw new Error('Set THREE_WS_API_KEY: making a model needs a free three.ws account. Create a key at https://three.ws/dashboard/api-keys.');
+	}
 	const ask = `Use three-ws to make a 3D model of ${prompt}. When it is done, reply with the viewer link and the GLB link.`;
 	let response = await callXai(request([{ role: 'user', content: ask }]));
 	for (let round = 1; round <= MAX_ROUNDS; round++) {

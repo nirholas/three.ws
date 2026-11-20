@@ -84,7 +84,7 @@ Where: Connectors, add a custom MCP connector.
 
 The URL must be public: Grok Bot connects from xAI's cloud, so a localhost URL never works.
 
-Add sign-in later for the account's agent, memory, skill and avatar tools; never a wallet or payment tool: https://three.ws/api/mcp-grok?auth=oauth
+Add sign-in later for making and rigging 3D models as the free account, plus the account's agent, memory, skill and avatar tools; never a wallet or payment tool: https://three.ws/api/mcp-grok?auth=oauth
 
 ### IBM Bob
 
@@ -104,7 +104,7 @@ Where: .bob/mcp.json in the project, or ~/.bob/settings/mcp.json for every works
 
 Bob Shell reads the same files but names the URL key httpURL.
 
-Add sign-in later for the account's agents, memory, wallets and x402 tools, through Bob's built-in OAuth on first connect: https://three.ws/api/mcp
+Add sign-in later for making and rigging 3D models as your free three.ws account, through Bob's built-in OAuth on first connect: https://three.ws/api/mcp-studio?auth=oauth
 
 ## Hosted MCP servers
 
@@ -113,8 +113,8 @@ Add sign-in later for the account's agents, memory, wallets and x402 tools, thro
 | three.ws | https://three.ws/api/mcp | OAuth 2.1 (end-user), API key (server-to-server), or x402 pay-per-call |
 | three.ws (unified) | https://three.ws/mcp | OAuth 2.1 (one sign-in for every tool), API key (server-to-server), or x402 pay-per-call |
 | 3D Studio | https://three.ws/api/mcp-3d | OAuth 2.1 or x402 pay-per-call |
-| 3D Studio (free) | https://three.ws/api/mcp-studio | none |
-| Grok | https://three.ws/api/mcp-grok | OAuth 2.1 or a connector API key for the account's agent tools; none needed for the free 3D tools |
+| 3D Studio (free) | https://three.ws/api/mcp-studio | none to connect, search the catalog and check jobs; a free three.ws account (OAuth 2.1 or an API key) to make or rig a model |
+| Grok | https://three.ws/api/mcp-grok | none to connect and search the catalog; a free three.ws account (OAuth 2.1 or a connector API key) to make or rig a model and for the account's agent tools |
 | Agent wallet | https://three.ws/api/mcp-agent | OAuth 2.1 |
 | x402 Bazaar | https://three.ws/api/mcp-bazaar | OAuth 2.1 or x402 |
 | Oracle | https://three.ws/api/mcp-oracle | none for the read tools; OAuth 2.1 for oracle_arm_watch and oracle_watch_status |

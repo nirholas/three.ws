@@ -16,7 +16,7 @@
 	<link rel="stylesheet" href="/mobile.css" />
 	<meta property="og:type" content="website" />
 	<meta property="og:title" content="Give Grok a 3D studio, and a body" />
-	<meta property="og:description" content="One sentence adds three.ws to Grok Bot: text to 3D models, rigged avatars, and a talking 3D body. Free, no key." />
+	<meta property="og:description" content="One sentence adds three.ws to Grok Bot: text to 3D models, rigged avatars, and a talking 3D body. Free with a three.ws account." />
 	<meta property="og:url" content="https://three.ws/grok" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=three.ws+for+Grok+Bot%3A+a+free+3D+studio+and+a+body+for+Grok&amp;d=Everything+Grok+Bot+can+do+with+three.ws+on+one+page%3A+generate+textured+3D+models%2C+rig+avatars%2C+find+ready-made+CC0+assets+and+run+your+agents+through+one&amp;p=%2Fgrok" />
 	<meta property="og:image:width" content="1200" />
@@ -26,7 +26,7 @@
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
 	<meta name="twitter:title" content="Give Grok a 3D studio, and a body" />
-	<meta name="twitter:description" content="One sentence adds three.ws to Grok Bot: text to 3D models, rigged avatars, and a talking 3D body. Free, no key." />
+	<meta name="twitter:description" content="One sentence adds three.ws to Grok Bot: text to 3D models, rigged avatars, and a talking 3D body. Free with a three.ws account." />
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=three.ws+for+Grok+Bot%3A+a+free+3D+studio+and+a+body+for+Grok&amp;d=Everything+Grok+Bot+can+do+with+three.ws+on+one+page%3A+generate+textured+3D+models%2C+rig+avatars%2C+find+ready-made+CC0+assets+and+run+your+agents+through+one&amp;p=%2Fgrok" />
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 	<style>
@@ -263,7 +263,7 @@
 			.gk-btn, .gk-tab, .gk-ask, .gk-progress span { transition: none; }
 		}
 	</style>
-	<script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"Add three.ws to Grok Bot","description":"Give Grok Bot a free 3D studio: text and images to textured 3D models, rigged avatars and a talking 3D body, through one custom MCP server.","url":"https://three.ws/grok","step":[{"@type":"HowToStep","name":"Add the server","text":"Tell Grok Bot: Add a custom MCP server called three-ws-grok at https://three.ws/api/mcp-grok"},{"@type":"HowToStep","name":"Confirm","text":"Grok Bot shows the name and URL. Accept. There is no sign-in and no key."},{"@type":"HowToStep","name":"Ask for 3D","text":"Ask for a model, an avatar, or a body. Grok returns a viewer link and a downloadable GLB."}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"Add three.ws to Grok Bot","description":"Give Grok Bot a free 3D studio: text and images to textured 3D models, rigged avatars and a talking 3D body, through one custom MCP server.","url":"https://three.ws/grok","step":[{"@type":"HowToStep","name":"Add the server","text":"Tell Grok Bot: Add a custom MCP server called three-ws-grok at https://three.ws/api/mcp-grok?auth=oauth with OAuth authentication"},{"@type":"HowToStep","name":"Confirm","text":"Grok Bot shows the name and URL. Accept, then approve three.ws sign-in once with your free account."},{"@type":"HowToStep","name":"Ask for 3D","text":"Ask for a model, an avatar, or a body. Grok returns a viewer link and a downloadable GLB."}]}</script>
 
 	<meta property="og:site_name" content="three.ws">
 </head>
@@ -276,13 +276,13 @@
 			<p>
 				Grok Bot routes every task to the best tool for it. One sentence connects all of three.ws:
 				<strong>text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear.</strong>
-				Free, no account, no key. Sign the same URL in and Grok Bot also runs your agents, reads live pump.fun and Oracle market intel, and gets woken by your three.ws events. It never gets a tool that spends.
+				Free with a three.ws account: sign in once and every model is yours, unlisted until you publish it. The same sign-in lets Grok Bot run your agents, reads live pump.fun and Oracle market intel, and gets woken by your three.ws events. It never gets a tool that spends.
 			</p>
 
 			<div class="gk-say" role="group" aria-labelledby="gk-say-label">
-				<div class="gk-say-label"><span id="gk-say-label">Say this to Grok Bot</span><span>No sign-in, no key</span></div>
+				<div class="gk-say-label"><span id="gk-say-label">Say this to Grok Bot</span><span>Free account, nothing to pay</span></div>
 				<div class="gk-say-row">
-					<p class="gk-say-text" id="gk-say-text">Add a custom MCP server called three-ws-grok at <code>https://three.ws/api/mcp-grok</code></p>
+					<p class="gk-say-text" id="gk-say-text">Add a custom MCP server called three-ws-grok at <code>https://three.ws/api/mcp-grok?auth=oauth</code> with OAuth authentication</p>
 					<button type="button" class="gk-btn" data-variant="primary" data-copy-target="gk-say-text" aria-label="Copy the sentence for Grok Bot">
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
 						<span>Copy</span>
@@ -444,7 +444,7 @@
 		<section class="gk-sec" aria-labelledby="gk-setup-h">
 			<div class="gk-sec-head">
 				<h2 id="gk-setup-h">Set it up anywhere Grok runs</h2>
-				<p>One URL, <code>https://three.ws/api/mcp-grok</code>. Streamable HTTP. The free studio needs no sign-in; sign the same URL in to add your agents.</p>
+				<p>One URL, <code>https://three.ws/api/mcp-grok</code>. Streamable HTTP. Searching the catalog needs no sign-in; making a model needs a free account, so add <code>?auth=oauth</code> to sign in (that also adds your agents).</p>
 			</div>
 			<div class="gk-tabs" role="tablist" aria-label="Where you use Grok">
 				<button type="button" class="gk-tab" role="tab" id="tab-bot" aria-controls="panel-bot" aria-selected="true" data-tab="bot">Grok Bot</button>
@@ -461,14 +461,14 @@
 				<p class="gk-panel-lede">On paid Grok plans, custom connectors take a remote MCP URL. Only remote servers work there, which is exactly what this is.</p>
 				<ol class="gk-list">
 					<li>In Grok, open <strong>Connectors</strong> and add a <strong>custom</strong> connector.</li>
-					<li>Paste <code>https://three.ws/api/mcp-grok</code> and leave authentication off.</li>
+					<li>Paste <code>https://three.ws/api/mcp-grok?auth=oauth</code>, choose OAuth, and approve three.ws sign-in with your free account.</li>
 					<li>Ask Grok for a 3D model in any chat. It answers with a viewer link and a GLB.</li>
 				</ol>
 				<p class="gk-src-note">Business and Enterprise workspaces may need an admin to allow custom connectors first.</p>
 			</div>
 
 			<div class="gk-panel" role="tabpanel" id="panel-api" aria-labelledby="tab-api" hidden>
-				<p class="gk-panel-lede">The xAI Responses API connects remote MCP servers for you: pass the URL as a tool and Grok calls it server side. Set <code>XAI_API_KEY</code> and run.</p>
+				<p class="gk-panel-lede">The xAI Responses API connects remote MCP servers for you: pass the URL as a tool and Grok calls it server side. Making a model needs a free three.ws account, so set <code>XAI_API_KEY</code> and a three.ws key from <a href="/dashboard/api-keys">API keys</a> as <code>THREE_WS_API_KEY</code>, then run.</p>
 				<div class="gk-snippet">
 					<div class="gk-snippet-head"><span>curl</span><button type="button" class="gk-btn gk-btn-sm" data-copy-target="gk-curl">Copy</button></div>
 					<pre id="gk-curl">curl https://api.x.ai/v1/responses \
@@ -480,7 +480,8 @@
     "tools": [{
       "type": "mcp",
       "server_url": "https://three.ws/api/mcp-grok",
-      "server_label": "three-ws-grok"
+      "server_label": "three-ws-grok",
+      "authorization": "'"$THREE_WS_API_KEY"'"
     }]
   }'</pre>
 				</div>
@@ -494,7 +495,13 @@ from xai_sdk.tools import mcp
 client = Client(api_key=os.environ["XAI_API_KEY"])
 chat = client.chat.create(
     model="grok-4.7",
-    tools=[mcp(server_url="https://three.ws/api/mcp-grok", server_label="three-ws-grok")],
+    tools=[
+        mcp(
+            server_url="https://three.ws/api/mcp-grok",
+            server_label="three-ws-grok",
+            extra_headers={"Authorization": f"Bearer {os.environ['THREE_WS_API_KEY']}"},
+        )
+    ],
 )
 chat.append(user("Make a 3D model of a lunar lander and give me the viewer link."))
 print(chat.sample().content)</pre>
@@ -510,7 +517,7 @@ print(chat.sample().content)</pre>
   "mcpServers": {
     "three-ws-grok": {
       "type": "http",
-      "url": "https://three.ws/api/mcp-grok"
+      "url": "https://three.ws/api/mcp-grok?auth=oauth"
     }
   }
 }</pre>

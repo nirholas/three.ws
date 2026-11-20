@@ -78,6 +78,8 @@ describe('public/.well-known/mcp.json', () => {
 		expect(g.settings.fields.url).not.toMatch(/localhost|127\.0\.0\.1/);
 		expect(g.authUpgrade.mode).toBe('oauth2.1');
 		expect(g.authUpgrade.adds).toMatch(/never a wallet/);
+		// Making a model needs an account, so the upgrade is what unlocks it.
+		expect(g.authUpgrade.adds).toMatch(/mak(e|ing) and rig/i);
 		expect(g.skill).toBe('https://three.ws/grok-skill.md');
 		expect(existsSync(resolve(ROOT, 'public/grok-skill.md'))).toBe(true);
 	});
@@ -89,6 +91,22 @@ describe('public/.well-known/mcp.json', () => {
 		expect(b.settings.config.mcpServers['three-ws'].type).toBe('streamable-http');
 		expect(b.settings.where).toMatch(/\.bob\/mcp\.json/);
 		expect(b.authUpgrade.mode).toBe('oauth2.1');
-		expect(directory.servers.some((s) => s.endpoint === b.authUpgrade.url)).toBe(true);
+		// The upgrade signs in to the same studio Bob connects to, which is where
+		// a model gets made; the main server cannot make one for it.
+		const upgrade = new URL(b.authUpgrade.url);
+		expect(`${upgrade.origin}${upgrade.pathname}`).toBe(b.recommendedServer);
+		expect(directory.servers.some((s) => s.endpoint === `${upgrade.origin}${upgrade.pathname}`)).toBe(true);
+		expect(b.authUpgrade.adds).toMatch(/mak(e|ing) and rig/i);
+	});
+
+	it('never tells a client the free studio makes models without an account', () => {
+		for (const path of ['/api/mcp-studio', '/api/mcp-chatgpt', '/api/mcp-grok']) {
+			const s = directory.servers.find((x) => new URL(x.endpoint).pathname === path);
+			if (!s) continue;
+			expect(s.description, s.name).not.toMatch(/no account|no sign-in|keyless/i);
+			expect(s.auth, s.name).toMatch(/account/i);
+			// A sign-in URL lets a client start OAuth before its first creator call.
+			expect(s.signIn, s.name).toBe(`${s.endpoint}?auth=oauth`);
+		}
 	});
 });

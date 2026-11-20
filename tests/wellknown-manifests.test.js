@@ -3,8 +3,9 @@
 //
 // The failure this prevents: ai-plugin.json described the whole platform as
 // "pay-per-call via x402", so anything that read it came away believing the 3D
-// generation lane cost money. That lane is free and keyless, and it is the lane
-// the ChatGPT app and the custom GPT use. Two assertions keep the story honest:
+// generation lane cost money. That lane is free (it needs only a free account),
+// and it is the lane
+// that the ChatGPT app and the custom GPT use. Two assertions keep it honest:
 //
 //   1. The free 3D lane's own schema (3d-studio-openapi.yaml, the artifact the
 //      app points at) carries no crypto or payment surface at all. Same regex
@@ -58,7 +59,7 @@ describe("served 3D Studio schema (the app's discovery artifact)", () => {
 describe('platform ai-plugin.json', () => {
 	it('leads with the free lane and marks the paid catalog as separate and optional', () => {
 		const text = plugin.description_for_model;
-		const free = text.indexOf('FREE and keyless');
+		const free = text.indexOf('FREE, with a free three.ws account');
 		const paid = text.indexOf('PAID and entirely optional');
 		expect(free).toBeGreaterThan(-1);
 		expect(paid).toBeGreaterThan(free);
@@ -70,12 +71,16 @@ describe('platform ai-plugin.json', () => {
 			expect(at, `${endpoint} is described on the paid side`).toBeLessThan(paid);
 		}
 		expect(text.indexOf('/api/x402/')).toBeGreaterThan(paid);
-		expect(text).toMatch(/no account, no API key and nothing to pay/i);
+		expect(text).toMatch(/nothing to pay/i);
+		// Making a model needs an account, so the manifest must not promise otherwise.
+		expect(text).not.toMatch(/keyless|no account|no API key/i);
+		expect(text).toMatch(/Bearer/);
 	});
 
 	it('never advertises the free 3D lane as paid', () => {
-		expect(plugin.description_for_human).toMatch(/^Free, keyless 3D/);
-		expect(plugin.auth).toEqual({ type: 'none' });
+		expect(plugin.description_for_human).toMatch(/^Free 3D/);
+		expect(plugin.description_for_human).not.toMatch(/keyless/i);
+		expect(plugin.auth).toEqual({ type: 'user_http', authorization_type: 'bearer' });
 		// "3D ... pay-per-call" in one breath is the exact phrasing that made the
 		// old manifest read as "generation costs crypto".
 		expect(plugin.description_for_human).not.toMatch(/3D[^.]*pay-per-call/i);

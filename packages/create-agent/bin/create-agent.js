@@ -8,7 +8,7 @@
 
 import { relative } from 'node:path';
 
-import { createAgent, embedSnippet, ForgeError } from '../src/index.js';
+import { createAgent, embedSnippet, ForgeError, API_KEYS_URL } from '../src/index.js';
 import { parseArgs, USAGE } from '../src/args.js';
 
 
@@ -42,12 +42,21 @@ async function main() {
 		process.exit(opts.help ? 0 : 1);
 	}
 
+	// Making a model needs a free three.ws account. Say so before any network
+	// call rather than after a round trip the studio will refuse.
+	if (!opts.apiKey && !process.env.THREE_WS_API_KEY) {
+		console.error(
+			'\ncreate-agent: making a model is free but needs a free three.ws account.\n' +
+				`Create an API key at ${API_KEYS_URL}, then:\n\n` +
+				'  export THREE_WS_API_KEY=<your key>\n',
+		);
+		process.exit(1);
+	}
+
 	if (!opts.json) {
 		const what = opts.imageUrl ? `the character in ${opts.imageUrl}` : `"${opts.prompt}"`;
 		console.log(`\n${c('1', 'three.ws')} ${c('90', 'building')} ${what}`);
-		console.log(
-			c('90', opts.rig ? '  a rigged humanoid, free lane, no account needed' : '  an object, free lane, no account needed'),
-		);
+		console.log(c('90', opts.rig ? '  a rigged humanoid, free lane' : '  an object, free lane'));
 		console.log('');
 	}
 

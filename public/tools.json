@@ -476,7 +476,7 @@
 				"tier": "write",
 				"source": "mcp-studio",
 				"scope": null,
-				"public": true,
+				"public": false,
 				"title": "Save a rigged model as a living, persistent agent body"
 			},
 			{
@@ -816,7 +816,7 @@
 				"tier": "write",
 				"source": "mcp-studio",
 				"scope": null,
-				"public": true,
+				"public": false,
 				"title": "Generate a rigged, animation-ready avatar"
 			},
 			{
@@ -826,7 +826,7 @@
 				"tier": "write",
 				"source": "mcp-studio",
 				"scope": null,
-				"public": true,
+				"public": false,
 				"title": "Generate a 3D model from text"
 			},
 			{
@@ -996,7 +996,7 @@
 				"tier": "read",
 				"source": "mcp-studio",
 				"scope": null,
-				"public": true,
+				"public": false,
 				"title": "Look at a 3D model"
 			},
 			{
@@ -1006,7 +1006,7 @@
 				"tier": "write",
 				"source": "mcp-studio",
 				"scope": null,
-				"public": true,
+				"public": false,
 				"title": "Generate a 3D mesh (art-directed)"
 			},
 			{
@@ -1076,7 +1076,7 @@
 				"tier": "write",
 				"source": "mcp-studio",
 				"scope": null,
-				"public": true,
+				"public": false,
 				"title": "Refine a 3D model by describing a change"
 			},
 			{
@@ -1146,7 +1146,7 @@
 				"tier": "write",
 				"source": "mcp-studio",
 				"scope": null,
-				"public": true,
+				"public": false,
 				"title": "Rig a 3D model for animation"
 			},
 			{
@@ -1236,7 +1236,7 @@
 				"tier": "write",
 				"source": "mcp-studio",
 				"scope": null,
-				"public": true,
+				"public": false,
 				"title": "Generate a 3D avatar"
 			},
 			{

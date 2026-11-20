@@ -110,7 +110,9 @@ function normalizeEntry(raw, source) {
 		summary,
 		description: str(entry.description) || summary,
 		free: entry.free !== false, // free by default — this is the free bundle
-		keyless: entry.keyless !== false,
+		keyless: entry.keyless !== false && entry.account !== true,
+		// Needs a three.ws account (API key or session); see the OpenAPI bearerAuth scheme.
+		account: entry.account === true,
 		category: str(entry.category) || '3d',
 		useCase: str(entry.useCase) || str(entry.agentUseCase),
 		// Accept both the flat `params`/`requestBody` (OpenAPI-ish) and the nested

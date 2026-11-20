@@ -94,7 +94,7 @@
 			"authUpgrade": {
 				"mode": "oauth2.1",
 				"url": "https://three.ws/api/mcp-grok?auth=oauth",
-				"adds": "the account's agent, memory, skill and avatar tools; never a wallet or payment tool"
+				"adds": "making and rigging 3D models as the free account, plus the account's agent, memory, skill and avatar tools; never a wallet or payment tool"
 			},
 			"settings": {
 				"where": "Connectors, add a custom MCP connector",
@@ -114,8 +114,8 @@
 			"auth": "none",
 			"authUpgrade": {
 				"mode": "oauth2.1",
-				"url": "https://three.ws/api/mcp",
-				"adds": "the account's agents, memory, wallets and x402 tools, through Bob's built-in OAuth on first connect"
+				"url": "https://three.ws/api/mcp-studio?auth=oauth",
+				"adds": "making and rigging 3D models as your free three.ws account, through Bob's built-in OAuth on first connect"
 			},
 			"settings": {
 				"where": ".bob/mcp.json in the project, or ~/.bob/settings/mcp.json for every workspace (Bob panel, MCP tab, Edit Project MCP or Edit Global MCP)",
@@ -208,8 +208,9 @@
 			"name": "3D Studio (free)",
 			"endpoint": "https://three.ws/api/mcp-studio",
 			"transport": "streamable-http",
-			"auth": "none",
-			"description": "Free text-to-3D, image-to-3D, rigged avatars, persistent talking personas, and a search of the ready-made asset catalog. No account, no payment.",
+			"auth": "none to connect, search the catalog and check jobs; a free three.ws account (OAuth 2.1 or an API key) to make or rig a model",
+			"signIn": "https://three.ws/api/mcp-studio?auth=oauth",
+			"description": "Free text-to-3D, image-to-3D, rigged avatars, persistent talking personas, and a search of the ready-made asset catalog. Making a model needs a free three.ws account; nothing to pay, and new models stay unlisted until you publish them.",
 			"documentation": "https://three.ws/docs/mcp-studio",
 			"prompts": ["agent-get-started", "daily-3d-brief", "asset-pack", "avatar-from-photo"]
 		},
@@ -217,9 +218,9 @@
 			"name": "Grok",
 			"endpoint": "https://three.ws/api/mcp-grok",
 			"transport": "streamable-http",
-			"auth": "OAuth 2.1 or a connector API key for the account's agent tools; none needed for the free 3D tools",
+			"auth": "none to connect and search the catalog; a free three.ws account (OAuth 2.1 or a connector API key) to make or rig a model and for the account's agent tools",
 			"signIn": "https://three.ws/api/mcp-grok?auth=oauth",
-			"description": "One connector URL for Grok Bot and the xAI API: the free 3D studio with agent-ready links and no widgets, plus your agents, their memory and skills once signed in. Never lists a wallet or payment tool.",
+			"description": "One connector URL for Grok Bot and the xAI API: the free 3D studio with agent-ready links and no widgets (sign in with a free account to make models), plus your agents, their memory and skills once signed in. Never lists a wallet or payment tool.",
 			"documentation": "https://three.ws/docs/grok",
 			"prompts": [
 				"agent-get-started",

@@ -143,6 +143,7 @@ export function buildOpenApiDoc(entries, { origin = 'https://three.ws', version 
 							})),
 						}
 					: { parameters: toParameters(e.inputSchema, inPath) }),
+				...(e.account ? { security: [{ bearerAuth: [] }] } : {}),
 				responses: {
 					200: {
 						description: e.summary || `${e.title || e.slug} response`,
@@ -156,6 +157,9 @@ export function buildOpenApiDoc(entries, { origin = 'https://three.ws', version 
 						},
 					},
 					400: { description: 'Invalid or missing input.' },
+					...(e.account
+						? { 401: { description: 'sign_in_required: send a three.ws API key as a Bearer token, or sign in. Accounts are free.' } }
+						: {}),
 					429: { description: 'Rate limited — retry after the `Retry-After` header.' },
 					502: { description: 'Upstream fetch or generation backend failed.' },
 				},
@@ -170,16 +174,27 @@ export function buildOpenApiDoc(entries, { origin = 'https://three.ws', version 
 			title: 'three.ws 3D API',
 			version,
 			description:
-				'A free, keyless 3D API for AI agents — turn text into a real GLB model ' +
-				'and validate/optimize any glTF/GLB, all from one origin. No account, no ' +
-				'API key. Free draft generation and inspection funnel to paid Forge Pro ' +
-				'quality tiers and Rigged Avatars. See https://three.ws/docs/3d-api.',
+				'A free 3D API for AI agents: turn text into a real GLB model and ' +
+				'validate/optimize any glTF/GLB, all from one origin. Inspecting, diffing ' +
+				'and print prep need no key. Making a model needs a free three.ws account: ' +
+				'send its API key as a Bearer token (operations marked with bearerAuth). ' +
+				'Free draft generation and inspection funnel to paid Forge Pro quality ' +
+				'tiers and Rigged Avatars. See https://three.ws/docs/3d-api.',
 			contact: { name: 'three.ws', url: 'https://three.ws', email: 'support@three.ws' },
 			license: { name: 'Free to use', url: 'https://three.ws/docs/3d-api' },
 		},
 		servers: [{ url: origin, description: 'three.ws production' }],
-		tags: [{ name: '3d', description: 'Free, keyless text→3D and glTF/GLB inspection endpoints.' }],
+		tags: [{ name: '3d', description: 'Free text→3D (with an account) and keyless glTF/GLB inspection endpoints.' }],
 		paths,
+		components: {
+			securitySchemes: {
+				bearerAuth: {
+					type: 'http',
+					scheme: 'bearer',
+					description: 'A three.ws API key (free account, make one at https://three.ws/dashboard/api-keys).',
+				},
+			},
+		},
 	};
 }
 

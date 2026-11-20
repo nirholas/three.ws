@@ -1,10 +1,12 @@
 /**
  * The three.ws forge, over the public JSON-RPC endpoint.
  *
- * `https://three.ws/api/mcp-studio` is open: no key, no account, no signup. The
- * platform's own provider keys cover the cost, which is what makes
- * `npm create @three-ws/agent "a knight"` work on a machine that has never
- * heard of three.ws.
+ * `https://three.ws/api/mcp-studio` is free: the platform's own provider keys
+ * cover the cost. Making a model needs a free three.ws account, so every model
+ * has an owner who can publish or delete it (models are born unlisted). The
+ * CLI sends the account's API key (THREE_WS_API_KEY) as a Bearer token; without
+ * one the studio answers sign_in_required, which becomes a ForgeError that says
+ * where to create a key.
  *
  * Two tools are used here:
  *   forge_avatar  a humanoid character, generated and then rigged (a skeleton,
@@ -34,6 +36,15 @@ export class ForgeError extends Error {
 }
 
 /** The tool's human-readable line, when it sent one. */
+export const API_KEYS_URL = `${FORGE_ORIGIN}/dashboard/api-keys`;
+
+/** Request headers for one studio call, with the account's key when there is one. */
+function rpcHeaders(apiKey) {
+	const headers = { 'content-type': 'application/json', accept: 'application/json' };
+	if (apiKey) headers.authorization = `Bearer ${apiKey}`;
+	return headers;
+}
+
 function textOf(result) {
 	const text = result?.content?.find?.((c) => c?.type === 'text')?.text;
 	return typeof text === 'string' ? text.split('\n')[0] : '';
@@ -51,6 +62,14 @@ export function readForgeResult(body, { kind }) {
 	}
 	const result = body?.result;
 	const structured = result?.structuredContent || result;
+
+	if (structured?.status === 'sign_in_required') {
+		const keys = structured.api_keys_url || API_KEYS_URL;
+		throw new ForgeError(
+			`making a model needs a free three.ws account. Create an API key at ${keys}, then run again with THREE_WS_API_KEY set (or pass --api-key).`,
+			{ code: 'sign_in_required' },
+		);
+	}
 
 	// A generation that outlives the endpoint's inline wait hands back a public
 	// poll handle instead of a model. That is the NORMAL path for a rigged
@@ -96,6 +115,7 @@ export function readForgeResult(body, { kind }) {
  * @param {object} opts.args tool arguments
  * @param {(event:{phase:string, elapsedMs:number, message:string}) => void} [opts.onProgress]
  * @param {string} [opts.origin]
+ * @param {string} [opts.apiKey] the three.ws account's API key (sent as a Bearer token)
  * @param {number} [opts.timeoutMs]
  * @param {typeof fetch} [opts.fetchImpl]
  * @param {AbortSignal} [opts.signal]
@@ -103,6 +123,7 @@ export function readForgeResult(body, { kind }) {
 export async function callForge({
 	tool,
 	args,
+	apiKey,
 	onProgress = () => {},
 	origin = FORGE_ORIGIN,
 	timeoutMs = DEFAULT_TIMEOUT_MS,
@@ -134,7 +155,7 @@ export async function callForge({
 	try {
 		const res = await doFetch(new URL(RPC_PATH, origin), {
 			method: 'POST',
-			headers: { 'content-type': 'application/json', accept: 'application/json' },
+			headers: rpcHeaders(apiKey),
 			body: JSON.stringify({
 				jsonrpc: '2.0',
 				id: 1,
@@ -153,6 +174,7 @@ export async function callForge({
 			clearInterval(heartbeat);
 			result = await collectJob(result, {
 				kind,
+				apiKey,
 				doFetch,
 				origin,
 				signal: controller.signal,
@@ -200,7 +222,7 @@ const POLL_EVERY_MS = 5000;
  * rigged character would be the quiet kind of wrong, so the mesh case is rigged
  * here rather than reported as done.
  */
-async function collectJob(pending, { kind, doFetch, origin, signal, startedAt, onProgress }) {
+async function collectJob(pending, { kind, apiKey, doFetch, origin, signal, startedAt, onProgress }) {
 	let job = pending;
 	let glbUrl = await pollUntilDone(job, { doFetch, signal, startedAt, onProgress });
 
@@ -212,7 +234,7 @@ async function collectJob(pending, { kind, doFetch, origin, signal, startedAt, o
 		});
 		const res = await doFetch(new URL(RPC_PATH, origin), {
 			method: 'POST',
-			headers: { 'content-type': 'application/json', accept: 'application/json' },
+			headers: rpcHeaders(apiKey),
 			body: JSON.stringify({
 				jsonrpc: '2.0',
 				id: 2,

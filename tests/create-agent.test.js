@@ -45,6 +45,11 @@ describe('parseArgs', () => {
 		expect(parseArgs(['a', 'friendly', 'astronaut']).prompt).toBe('a friendly astronaut');
 	});
 
+	it('reads --api-key, and leaves it unset so THREE_WS_API_KEY applies otherwise', () => {
+		expect(parseArgs(['a knight', '--api-key', 'sk_test']).apiKey).toBe('sk_test');
+		expect('apiKey' in parseArgs(['a knight'])).toBe(false);
+	});
+
 	it('defaults to a rigged humanoid with a local model file', () => {
 		const opts = parseArgs(['a knight']);
 		expect(opts.rig).toBe(true);
@@ -149,6 +154,45 @@ describe('callForge', () => {
 			name: 'ForgeError',
 			code: 'http_503',
 		});
+	});
+
+	// Making a model needs a free three.ws account: the studio refuses an
+	// anonymous tools/call with a sign_in_required result.
+	it('sends the API key as a Bearer token', async () => {
+		const fetchImpl = vi.fn(async () => rpcOk());
+		await callForge({ tool: 'forge_free', args: { prompt: 'a lamp' }, apiKey: 'sk_live_test', fetchImpl });
+		expect(fetchImpl.mock.calls[0][1].headers.authorization).toBe('Bearer sk_live_test');
+	});
+
+	it('sends no authorization header when there is no key', async () => {
+		const fetchImpl = vi.fn(async () => rpcOk());
+		await callForge({ tool: 'forge_free', args: { prompt: 'a lamp' }, fetchImpl });
+		expect(fetchImpl.mock.calls[0][1].headers.authorization).toBeUndefined();
+	});
+
+	it('turns a sign_in_required refusal into a ForgeError that says how to get a key', async () => {
+		const fetchImpl = async () => ({
+			ok: true,
+			status: 200,
+			json: async () => ({
+				jsonrpc: '2.0',
+				id: 1,
+				result: {
+					isError: true,
+					content: [{ type: 'text', text: 'Sign in to make a 3D model.' }],
+					structuredContent: {
+						error: true,
+						status: 'sign_in_required',
+						api_keys_url: 'https://three.ws/dashboard/api-keys',
+					},
+				},
+			}),
+		});
+		const err = await callForge({ tool: 'forge_free', args: { prompt: 'a lamp' }, fetchImpl }).catch((e) => e);
+		expect(err).toBeInstanceOf(ForgeError);
+		expect(err.code).toBe('sign_in_required');
+		expect(err.message).toMatch(/THREE_WS_API_KEY/);
+		expect(err.message).toContain('https://three.ws/dashboard/api-keys');
 	});
 
 	it('explains an unreachable host instead of leaking a socket error', async () => {

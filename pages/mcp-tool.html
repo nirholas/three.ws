@@ -473,6 +473,7 @@
 				(category ? `<a class="tp-badge" href="/mcp-tools?category=${encodeURIComponent(category.id)}" title="${esc(category.summary)}">${esc(category.label)}</a>` : '') +
 				`<span class="tp-badge">${tool.server.transport === 'remote' ? 'Hosted' : 'npm package'}</span>` +
 				(tool.requiresIndexer ? '<span class="tp-badge" title="Needs the pump.fun indexer database on the server">Needs indexer</span>' : '') +
+				(tool.requiresAccount ? '<span class="tp-badge" title="Making or rigging a model needs a free three.ws account">Free account</span>' : '') +
 				'</div></header>' +
 				(tool.whenToUse ? `<div class="tp-when"><strong>When to use it</strong>${esc(tool.whenToUse)}</div>` : '') +
 				(description ? `<p class="tp-desc">${esc(description)}</p>` : '') +
@@ -486,7 +487,9 @@
 				'<div class="tp-tabs" role="tablist" aria-label="Snippet format"></div>' +
 				'<div class="tp-snippet"><pre><code></code></pre><button type="button" class="tp-btn small tp-copy">Copy</button></div>' +
 				`<p class="tp-note">${tool.server.transport === 'remote'
-					? `Auth: ${esc(tool.server.auth)}. ${tool.server.auth === 'none' ? 'No key or wallet needed.' : 'Connect a client from <a href="/connect">/connect</a>, or pay per call over x402.'}`
+					? tool.requiresAccount
+						? `Needs a free three.ws account: connect with OAuth at <code>${esc(tool.server.endpoint)}?auth=oauth</code>, or send an <a href="/dashboard/api-keys">API key</a> as a Bearer token. Nothing to pay.`
+						: `Auth: ${esc(tool.server.auth)}. ${tool.server.auth === 'none' ? 'No key or wallet needed.' : 'Connect a client from <a href="/connect">/connect</a>, or pay per call over x402.'}`
 					: `Runs on your machine as a stdio MCP server. Add the client config to Claude, Cursor or VS Code.${tool.price.free ? '' : ` Each call quotes ${esc(priceLabel(tool.price))} and runs once it is paid over x402.`}`} Values in angle brackets are yours to fill in.</p>` +
 				'</section>' +
 				'<section class="tp-section" aria-labelledby="tp-details-h"><h2 id="tp-details-h">Details</h2><table class="tp-kv"><tbody>' +

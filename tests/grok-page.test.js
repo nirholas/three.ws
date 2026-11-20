@@ -70,7 +70,9 @@ describe('one connector name everywhere', () => {
 
 	it('the hero sentence is the one the connector card generates', () => {
 		const hero = html.match(/id="gk-say-text">([\s\S]*?)<\/p>/)[1].replace(/<[^>]+>/g, '');
-		expect(hero).toBe(grokSentence({ endpoint: GROK_ENDPOINT, auth: 'none', signIn: `${GROK_ENDPOINT}?auth=oauth` }));
+		// Making a model needs a free account, so the sentence a visitor copies
+		// signs the connector in rather than leaving it anonymous.
+		expect(hero).toBe(grokSentence({ endpoint: `${GROK_ENDPOINT}?auth=oauth`, auth: 'OAuth 2.1' }));
 	});
 
 	it('the skill file and the guide use the same name', () => {

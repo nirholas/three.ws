@@ -1,5 +1,5 @@
 // @ts-check
-// GET /api/3d — the front door to the free, keyless three.ws 3D API.
+// GET /api/3d: the front door to the free three.ws 3D API.
 //
 // One URL an agent (or a human wiring one up) hits to discover the whole API:
 // every free endpoint, its inputs/outputs, and a live example — plus the paid
@@ -8,8 +8,9 @@
 // sibling endpoint appears here the moment it ships — nothing wired by hand.
 //
 // Content negotiation: `Accept: text/html` gets a browsable page; everything
-// else (the agent path) gets JSON. Free means free — keyless, no account, a
-// generous per-IP limit that only blunts abuse.
+// else (the agent path) gets JSON. Free means free: inspecting needs no key,
+// and making a model needs only a free account (an API key as a Bearer token),
+// so every model has an owner who can publish or delete it.
 
 import { wrap, cors, method, json, text, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -52,7 +53,13 @@ export default wrap(async (req, res) => {
 	const payload = {
 		name: 'three.ws 3D API',
 		free: true,
-		keyless: true,
+		keyless: endpoints.every((e) => e.keyless),
+		auth: {
+			scheme: 'bearer',
+			description: 'Endpoints marked account:true need a free three.ws account: send its API key as Authorization: Bearer <key>, or a signed-in session. Others need no key.',
+			apiKeys: '/dashboard/api-keys',
+			signIn: '/login',
+		},
 		version: VERSION,
 		endpoints,
 		count: endpoints.length,
@@ -111,14 +118,16 @@ function renderHtml(p, origin) {
 							: '';
 					const methods = (e.methods || ['GET']).join(' · ');
 					const isPost = (e.methods || []).includes('POST');
+					const key = e.account ? ` -H 'authorization: Bearer $THREE_WS_API_KEY'` : '';
 					const curl = isPost
-						? `curl -X POST ${esc(origin)}${esc(e.path)} -H 'content-type: application/json' -d '{ … }'`
-						: `curl ${esc(origin)}${esc(e.path)}`;
+						? `curl -X POST ${esc(origin)}${esc(e.path)}${key} -H 'content-type: application/json' -d '{ … }'`
+						: `curl ${esc(origin)}${esc(e.path)}${key}`;
 					return `
 			<article class="ep">
 				<header>
 					<span class="method">${esc(methods)}</span>
 					<code class="path">${esc(e.path)}</code>
+					${e.account ? '<span class="method">Free account</span>' : ''}
 				</header>
 				<h3>${esc(e.title)}</h3>
 				${e.summary ? `<p>${esc(e.summary)}</p>` : ''}
@@ -150,7 +159,7 @@ function renderHtml(p, origin) {
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>three.ws 3D API — free text→3D + inspection for agents</title>
-	<meta name="description" content="A free, keyless 3D API for AI agents: turn text into a GLB, inspect any glTF/GLB, and graduate to paid Forge Pro + Rigged Avatars. One URL to discover it all." />
+	<meta name="description" content="A free 3D API for AI agents: turn text into a GLB with a free account, inspect any glTF/GLB with no key, and graduate to paid Forge Pro + Rigged Avatars. One URL to discover it all." />
 	<style>
 		:root {
 			--bg: #ffffff; --fg: #0b0d12; --muted: #5b6472; --card: #f6f8fa;
@@ -218,10 +227,10 @@ function renderHtml(p, origin) {
 		<h1>${esc(p.name)}</h1>
 		<div class="badges">
 			<span class="badge">Free</span>
-			<span class="badge">Keyless</span>
+			<span class="badge">${p.keyless ? 'Keyless' : 'Free account for generation'}</span>
 			<span class="badge">v${esc(p.version)}</span>
 		</div>
-		<p class="lede">One URL to discover the whole API — every free endpoint, its inputs and outputs, a live example, and the paid tiers it graduates to. No account, no API key.</p>
+		<p class="lede">One URL to discover the whole API: every free endpoint, its inputs and outputs, a live example, and the paid tiers it graduates to. Inspecting needs no key; making a model needs a free account and its <a href="/dashboard/api-keys">API key</a>.</p>
 		<p class="meta">
 			${p.count} free endpoint${p.count === 1 ? '' : 's'} ·
 			<a href="/api/3d/openapi.json">OpenAPI 3.1</a> ·

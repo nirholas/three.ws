@@ -225,7 +225,7 @@ paths:
         desktop browser falls back to the interactive viewer. The response is a
         web page meant for a person to open, so the way to use this in a
         conversation is to hand the user the arUrl from generate3DModel or
-        checkModelJob. Free and keyless like the rest of this API.
+        checkModelJob. Free, and needs no key.
       parameters:
         - name: src
           in: query

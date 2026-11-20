@@ -103,7 +103,7 @@
 		.cn-url-label { flex: none; display: grid; place-items: center; padding: 0 12px; font-size: 0.72rem; font-weight: 650; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); border-right: 1px solid var(--stroke); }
 		.cn-url code { flex: 1; min-width: 0; padding: 13px 14px; font-size: 0.95rem; color: var(--ink-bright, var(--ink)); overflow-x: auto; white-space: nowrap; }
 
-		/* ── cloud-agent connector URL (keyless studio servers) ──────────── */
+		/* ── cloud-agent connector URL (free studio servers) ──────────── */
 		.cn-cloud {
 			margin-top: 14px; padding: 16px 16px 14px; border: 1px dashed var(--stroke-strong); border-radius: var(--radius-md, 10px);
 			background: var(--surface-1, rgba(255,255,255,0.03)); animation: cn-in var(--duration-base, 180ms) var(--ease-standard) both;
@@ -199,7 +199,7 @@
 			.cn-server, .cn-btn, .cn-tab { transition: none; }
 		}
 	</style>
-	<script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"Connect three.ws to an AI client","description":"Add the three.ws MCP server to Claude, ChatGPT, Grok Bot, Cursor, VS Code or Claude Code with one connector URL and a single sign-in.","url":"https://three.ws/connect","step":[{"@type":"HowToStep","name":"Pick a server","text":"Choose which hosted three.ws MCP server to connect. The default three.ws server carries the core tools."},{"@type":"HowToStep","name":"Add it to your client","text":"Use the one-click link for Claude, Cursor or VS Code, or paste the connector URL into ChatGPT, Grok Bot or any MCP client. Grok Bot takes it as a custom MCP connector with Streamable HTTP transport, and connects from xAI's cloud, so the URL must be public."},{"@type":"HowToStep","name":"Sign in","text":"Your client opens three.ws sign-in. Approve the permissions and the tools appear. No API key to copy. The free 3D servers need no sign-in at all, so Grok Bot can use them with authentication set to None."}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"Connect three.ws to an AI client","description":"Add the three.ws MCP server to Claude, ChatGPT, Grok Bot, Cursor, VS Code or Claude Code with one connector URL and a single sign-in.","url":"https://three.ws/connect","step":[{"@type":"HowToStep","name":"Pick a server","text":"Choose which hosted three.ws MCP server to connect. The default three.ws server carries the core tools."},{"@type":"HowToStep","name":"Add it to your client","text":"Use the one-click link for Claude, Cursor or VS Code, or paste the connector URL into ChatGPT, Grok Bot or any MCP client. Grok Bot takes it as a custom MCP connector with Streamable HTTP transport, and connects from xAI's cloud, so the URL must be public."},{"@type":"HowToStep","name":"Sign in","text":"Your client opens three.ws sign-in. Approve the permissions and the tools appear. No API key to copy. The free 3D servers connect with authentication set to None for catalog search; making a model needs a free three.ws account, through the same sign-in."}]}</script>
 
 	<meta property="og:site_name" content="three.ws">
 </head>
@@ -244,7 +244,7 @@
 
 			<div class="cn-cloud" id="cn-cloud" aria-labelledby="cn-cloud-title" hidden>
 				<h3 id="cn-cloud-title" data-i18n="connect.connector_url_for_cloud_agents">Connector URL for cloud agents</h3>
-				<p data-i18n-html="connect.cloud_agents_share_one_ip">Grok Bot and other hosted agents reach three.ws from one shared IP, so every user of that agent shares one free quota. A free <strong>install token</strong> gives your connector a quota of its own. No account, no key.</p>
+				<p data-i18n-html="connect.cloud_agents_share_one_ip">Grok Bot and other hosted agents reach three.ws from one shared IP, so every user of that agent shares one free quota. A free <strong>install token</strong> gives your connector a quota of its own. Making a model still needs a free three.ws account.</p>
 				<button type="button" class="cn-btn" data-variant="primary" id="cn-cloud-make">Generate my connector URL</button>
 				<div class="cn-url" id="cn-cloud-any-row" hidden>
 					<span class="cn-url-label" data-i18n="connect.any_client">Any client</span>
@@ -362,7 +362,7 @@
 			</div>
 
 			<div class="cn-panel" role="tabpanel" id="panel-bob" aria-labelledby="tab-bob" tabindex="0" hidden>
-				<p class="cn-panel-lede" data-i18n-html="connect.ibm_bob_reads_mcp_servers_from">IBM Bob reads MCP servers from <code>.bob/mcp.json</code> in your project, or <code>~/.bob/settings/mcp.json</code> for every workspace. Pick <strong>3D Studio (free)</strong> above to connect with no sign-in; a server that needs sign-in runs Bob's built-in OAuth flow on first connect.</p>
+				<p class="cn-panel-lede" data-i18n-html="connect.ibm_bob_reads_mcp_servers_from">IBM Bob reads MCP servers from <code>.bob/mcp.json</code> in your project, or <code>~/.bob/settings/mcp.json</code> for every workspace. Pick <strong>3D Studio (free)</strong> above. It connects with no sign-in for catalog search; to make models, add <code>?auth=oauth</code> to its URL and Bob's built-in OAuth flow signs you in to your free three.ws account on first connect.</p>
 				<div class="cn-snippet">
 					<div class="cn-snippet-head"><span data-i18n="connect.add_it_to_bob_mcp_json">Add it to .bob/mcp.json</span><button type="button" class="cn-btn" data-copy-target="cn-bob-json" data-i18n="connect.copy_bob">Copy</button></div>
 					<pre><code id="cn-bob-json">{
@@ -417,8 +417,8 @@
 					<p data-i18n-html="connect.each_tool_declares_whether_it_only_reads">Each tool declares whether it only reads, writes, or does something irreversible, so your client knows what to ask you about. The <a href="/mcp-tools">tool catalog</a> has a ready-made trust policy to paste in.</p>
 				</div>
 				<div class="cn-fact">
-					<h3 data-i18n="connect.try_it_without_an_account">Try it without an account</h3>
-					<p data-i18n-html="connect.the_3d_studio_free_server_needs_no">The <strong>3D Studio (free)</strong> server needs no sign-in: text to 3D, image to 3D and rigged avatars. Pick it above and connect in seconds.</p>
+					<h3 data-i18n="connect.free_with_an_account">Free with an account</h3>
+					<p data-i18n-html="connect.the_3d_studio_free_server_free_account">The <strong>3D Studio (free)</strong> server costs nothing: text to 3D, image to 3D and rigged avatars. Searching the catalog needs no sign-in; making a model needs a free three.ws account, so every model has an owner. New models stay unlisted until you publish them.</p>
 				</div>
 			</div>
 		</section>
@@ -453,9 +453,9 @@
 
 		function authPill(server) {
 			const auth = String(server.auth || '').toLowerCase();
-			// A server with a sign-in URL serves anonymous callers too; signing in
-			// only adds the caller's account tools (/api/mcp-grok).
-			if (server.signIn) return { text: 'Free, sign-in optional', tone: 'free' };
+			// A server with a sign-in URL serves anonymous callers too (catalog
+			// search, job status); making a model needs that sign-in.
+			if (server.signIn) return { text: 'Free, sign in to create', tone: 'free' };
 			if (auth === 'none' || auth.startsWith('none ')) return { text: 'No sign-in', tone: 'free' };
 			if (auth.startsWith('x402')) return { text: 'Pay per call', tone: 'x402' };
 			return { text: 'Sign in', tone: 'oauth' };
@@ -564,7 +564,7 @@
 		grokCard.update({ endpoint: DEFAULT_ENDPOINT, auth: 'oauth' });
 
 		// ── cloud-agent connector URL ───────────────────────────────────────
-		// Keyless studio servers accept ?install=<token>, which keys their free
+		// Free studio servers accept ?install=<token>, which keys their free
 		// quota on the token instead of the caller's IP. The token comes from the
 		// real mint endpoint and is kept in this browser, so a revisit shows the
 		// same URL instead of minting another (minting is rate-limited per IP).
@@ -608,9 +608,9 @@
 		}
 		function updateCloud(server) {
 			const path = new URL(server.endpoint).pathname;
-			const keyless = INSTALL_PATHS.has(path) && authPill(server).tone === 'free';
-			cloudEl.hidden = !keyless;
-			if (keyless) showInstall(readInstall());
+			const freeStudio = INSTALL_PATHS.has(path) && authPill(server).tone === 'free';
+			cloudEl.hidden = !freeStudio;
+			if (freeStudio) showInstall(readInstall());
 		}
 		cloudBtn.addEventListener('click', async () => {
 			cloudBtn.disabled = true;
@@ -747,7 +747,6 @@
 						auth: s.auth,
 						signIn: typeof s.signIn === 'string' && s.signIn.startsWith('https://') ? s.signIn : null,
 						description: s.description,
-						signIn: typeof s.signIn === 'string' && s.signIn.startsWith('https://') ? s.signIn : null,
 						tools: counts.get(s.endpoint),
 					}));
 				if (!state.servers.length) throw new Error('empty');

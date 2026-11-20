@@ -16,7 +16,7 @@ import { callForge, downloadModel, ForgeError, FORGE_ORIGIN } from './forge.js';
 import { projectFiles, slugify, titleFrom, embedSnippet } from './scaffold.js';
 
 export { ForgeError, FORGE_ORIGIN, embedSnippet, slugify, titleFrom };
-export { callForge, downloadModel } from './forge.js';
+export { callForge, downloadModel, API_KEYS_URL } from './forge.js';
 export { projectFiles, demoPage, agentRecord, readme, LOADER_URL } from './scaffold.js';
 
 /**
@@ -31,6 +31,7 @@ export { projectFiles, demoPage, agentRecord, readme, LOADER_URL } from './scaff
  * @param {boolean} [opts.download] write agent.glb locally (default true)
  * @param {(e:{phase:string,message:string,elapsedMs:number}) => void} [opts.onProgress]
  * @param {string} [opts.origin]
+ * @param {string} [opts.apiKey] three.ws API key (default: the THREE_WS_API_KEY env var)
  * @param {typeof fetch} [opts.fetchImpl]
  * @param {AbortSignal} [opts.signal]
  * @returns {Promise<{dir:string, files:string[], result:object, name:string, bytes:number}>}
@@ -44,6 +45,7 @@ export async function createAgent({
 	download = true,
 	onProgress = () => {},
 	origin = FORGE_ORIGIN,
+	apiKey = process.env.THREE_WS_API_KEY,
 	fetchImpl,
 	signal,
 } = {}) {
@@ -71,6 +73,7 @@ export async function createAgent({
 			: { prompt, tier: 'draft' },
 		onProgress,
 		origin,
+		apiKey,
 		fetchImpl,
 		signal,
 	});

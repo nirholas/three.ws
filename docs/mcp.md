@@ -275,7 +275,7 @@ The end-to-end proof is `tests/e2e/oauth-cloud-connector.spec.js`: it registers 
 
 Per-client steps for Claude, ChatGPT, Grok Bot, Claude Code, Cursor and VS Code are on [/connect](https://three.ws/connect), which also has the one URL to paste.
 
-This is also why an MCP client asks you to sign in as soon as you add `https://three.ws/api/mcp`, even if you only meant to use the free tools: the `401` arrives on `initialize`, before any tool is chosen. A client with no account belongs on `https://three.ws/api/mcp-studio`, which never challenges and serves the free 3D generation and asset catalog tools.
+This is also why an MCP client asks you to sign in as soon as you add `https://three.ws/api/mcp`, even if you only meant to use the free tools: the `401` arrives on `initialize`, before any tool is chosen. A client that should connect before signing in belongs on `https://three.ws/api/mcp-studio`, which never challenges on connect and serves the asset catalog anonymously; its free 3D generation tools need a free three.ws account (OAuth at `https://three.ws/api/mcp-studio?auth=oauth`, or an API key as a Bearer token).
 
 ### Cloud connectors and revocation
 

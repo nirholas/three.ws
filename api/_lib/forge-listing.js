@@ -39,8 +39,8 @@ const STANDARD_USD = priceUsdcForTier('standard'); // "0.15"
 const HIGH_USD = priceUsdcForTier('high'); // "0.50"
 
 // Leads with the agent use-case (what you build with it), then the tiers +
-// prices, the keyless/no-account pledge, the free poll, and the free draft
-// on-ramp — everything an autonomous buyer needs to decide and to call, in the
+// prices, the pay-per-call (no key, no account) pledge, the free poll, and the
+// free draft on-ramp (which needs a free account): everything an autonomous buyer needs to decide and to call, in the
 // order they need it. First sentence is the card headline; the rest is detail.
 export const FORGE_ROUTE_DESCRIPTION =
 	'three.ws Forge — pay-per-call text→3D and image→3D generation for autonomous ' +
@@ -52,9 +52,9 @@ export const FORGE_ROUTE_DESCRIPTION =
 	'(maximum geometry + PBR textures). Pay autonomously in USDC on Solana mainnet — ' +
 	'no API key, no account, no signup. Returns a job token you poll for FREE at ' +
 	'GET /api/forge?job=<id>; draft prompts often finish inline and hand back the GLB ' +
-	'url with status:"done". New here? Start on the free keyless draft lane at ' +
-	'POST /api/3d/generate, then upgrade to a paid tier for standard/high quality or ' +
-	'image→3D.';
+	'url with status:"done". New here? Start on the free draft lane at ' +
+	'POST /api/3d/generate (needs a free three.ws account and its API key), then ' +
+	'upgrade to a paid tier for standard/high quality or image→3D.';
 
 // Example request body surfaced in the discovery UI's "try it" panel.
 export const FORGE_INPUT_EXAMPLE = Object.freeze({

@@ -10,7 +10,7 @@
 		"read": 484,
 		"write": 203,
 		"irreversible": 112,
-		"tryIt": 50,
+		"tryIt": 47,
 		"withSchema": 799,
 		"withArguments": 755
 	},
@@ -5401,7 +5401,7 @@
 			"transport": "stdio",
 			"auth": "api-key",
 			"package": "@three-ws/scene-mcp",
-			"version": "0.2.2",
+			"version": "0.3.0",
 			"tools": 5,
 			"resources": 0,
 			"templates": 0,
@@ -5436,7 +5436,7 @@
 						"label": "Installable: npm package ready to publish, or hosted endpoint mounted",
 						"weight": 15,
 						"earned": 15,
-						"detail": "@three-ws/scene-mcp@0.2.2"
+						"detail": "@three-ws/scene-mcp@0.3.0"
 					},
 					{
 						"id": "registry",
@@ -30409,6 +30409,7 @@
 					"prompt"
 				]
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-studio/forge_free",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -30459,6 +30460,7 @@
 				},
 				"additionalProperties": false
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-studio/text_to_avatar",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -30509,6 +30511,7 @@
 				},
 				"additionalProperties": false
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-studio/mesh_forge",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -30557,6 +30560,7 @@
 					"glb_url"
 				]
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-studio/rig_mesh",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -30611,6 +30615,7 @@
 				},
 				"additionalProperties": false
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-studio/forge_avatar",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -30689,6 +30694,7 @@
 					"instruction"
 				]
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-studio/refine_model",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -30826,7 +30832,7 @@
 					"glb_url"
 				]
 			},
-			"tryIt": true,
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-studio/look_at_model",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -31100,7 +31106,7 @@
 		{
 			"name": "create_agent_persona",
 			"title": "Save a rigged model as a living, persistent agent body",
-			"description": "Turn a generated GLB into a NAMED, persistent agent body: a \"persona\" the assistant reuses across turns and across sessions. The model is copied into durable storage so the body survives the source URL expiring, then registered under a stable persona_id. The returned view renders the LIVING body inline: it idles between turns, and persona_say makes it lip-sync and emote a reply. The persona_id is the handle: keep it and pass it to get_agent_persona or persona_say later to bring the exact same body back. Use this once a rigged model should become a recurring character the assistant speaks through. No sign-in required.",
+			"description": "Turn a generated GLB into a NAMED, persistent agent body: a \"persona\" the assistant reuses across turns and across sessions. The model is copied into durable storage so the body survives the source URL expiring, then registered under a stable persona_id. The returned view renders the LIVING body inline: it idles between turns, and persona_say makes it lip-sync and emote a reply. The persona_id is the handle: keep it and pass it to get_agent_persona or persona_say later to bring the exact same body back. Use this once a rigged model should become a recurring character the assistant speaks through. Saving a persona needs a free three.ws account (OAuth sign-in or an API key as the bearer); get_agent_persona and persona_say work without one.",
 			"whenToUse": "Use this once a rigged model should become a recurring character the assistant speaks through.",
 			"server": {
 				"id": "mcp-studio",
@@ -31153,6 +31159,7 @@
 					"name"
 				]
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-studio/create_agent_persona",
 			"source": "api/_mcp-studio/persona-tools.js"
 		},
@@ -31317,6 +31324,7 @@
 					"prompt"
 				]
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-chatgpt/forge_free",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -31367,6 +31375,7 @@
 				},
 				"additionalProperties": false
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-chatgpt/text_to_avatar",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -31417,6 +31426,7 @@
 				},
 				"additionalProperties": false
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-chatgpt/mesh_forge",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -31465,6 +31475,7 @@
 					"glb_url"
 				]
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-chatgpt/rig_mesh",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -31519,6 +31530,7 @@
 				},
 				"additionalProperties": false
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-chatgpt/forge_avatar",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -31597,6 +31609,7 @@
 					"instruction"
 				]
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-chatgpt/refine_model",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -31734,7 +31747,7 @@
 					"glb_url"
 				]
 			},
-			"tryIt": true,
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-chatgpt/look_at_model",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -31793,6 +31806,7 @@
 					"prompt"
 				]
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-grok/forge_free",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -31843,6 +31857,7 @@
 				},
 				"additionalProperties": false
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-grok/text_to_avatar",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -31893,6 +31908,7 @@
 				},
 				"additionalProperties": false
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-grok/mesh_forge",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -31941,6 +31957,7 @@
 					"glb_url"
 				]
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-grok/rig_mesh",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -31995,6 +32012,7 @@
 				},
 				"additionalProperties": false
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-grok/forge_avatar",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -32073,6 +32091,7 @@
 					"instruction"
 				]
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-grok/refine_model",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -32210,7 +32229,7 @@
 					"glb_url"
 				]
 			},
-			"tryIt": true,
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-grok/look_at_model",
 			"source": "api/_mcp-studio/tools.js"
 		},
@@ -32484,7 +32503,7 @@
 		{
 			"name": "create_agent_persona",
 			"title": "Save a rigged model as a living, persistent agent body",
-			"description": "Turn a generated GLB into a NAMED, persistent agent body: a \"persona\" the assistant reuses across turns and across sessions. The model is copied into durable storage so the body survives the source URL expiring, then registered under a stable persona_id. The returned view renders the LIVING body inline: it idles between turns, and persona_say makes it lip-sync and emote a reply. The persona_id is the handle: keep it and pass it to get_agent_persona or persona_say later to bring the exact same body back. Use this once a rigged model should become a recurring character the assistant speaks through. No sign-in required.",
+			"description": "Turn a generated GLB into a NAMED, persistent agent body: a \"persona\" the assistant reuses across turns and across sessions. The model is copied into durable storage so the body survives the source URL expiring, then registered under a stable persona_id. The returned view renders the LIVING body inline: it idles between turns, and persona_say makes it lip-sync and emote a reply. The persona_id is the handle: keep it and pass it to get_agent_persona or persona_say later to bring the exact same body back. Use this once a rigged model should become a recurring character the assistant speaks through. Saving a persona needs a free three.ws account (OAuth sign-in or an API key as the bearer); get_agent_persona and persona_say work without one.",
 			"whenToUse": "Use this once a rigged model should become a recurring character the assistant speaks through.",
 			"server": {
 				"id": "mcp-grok",
@@ -32537,6 +32556,7 @@
 					"name"
 				]
 			},
+			"requiresAccount": true,
 			"page": "/mcp-tools/mcp-grok/create_agent_persona",
 			"source": "api/_mcp-studio/persona-tools.js"
 		},
@@ -34392,7 +34412,7 @@
 		{
 			"name": "forge_free",
 			"title": "Free text → 3D (TRELLIS)",
-			"description": "Generate a textured 3D GLB model from a text prompt - FREE: no x402 payment, no API key, no wallet. Drives the three.ws /api/forge pipeline on the free NVIDIA NIM (Microsoft TRELLIS) text→3D lane - the same zero-cost engine the /forge web page uses for prompt drafts. Returns a durable GLB URL, a three.ws viewer link that renders the model in the browser, the quality tier used, and the backend that actually produced it. Choose tier draft (fast, default), standard, or high - all free; higher tiers just take longer. Text-only (NVIDIA's hosted TRELLIS preview does not accept uploaded photos); for image/multi-view → 3D or the Granite-directed paid chain use mesh_forge. Feed the returned glbUrl to rig_mesh to make it animation-ready. Use this for a text-only model at no cost; switch to mesh_forge for photo input or forge_avatar for a rigged character in one call. Free: no payment required.",
+			"description": "Generate a textured 3D GLB model from a text prompt. FREE: no x402 payment and no wallet; it needs a free three.ws account, whose API key this server sends from THREE_WS_API_KEY. Drives the three.ws /api/forge pipeline on the free Microsoft TRELLIS text→3D lane (own GPU workers first, NVIDIA NIM as the last resort), the same zero-cost engine the /forge web page uses for prompt drafts. Returns a durable GLB URL, a three.ws viewer link that renders the model in the browser, the quality tier used, and the backend that actually produced it. Choose tier draft (fast, default), standard, or high - all free; higher tiers just take longer. Text-only (NVIDIA's hosted TRELLIS preview does not accept uploaded photos); for image/multi-view → 3D or the Granite-directed paid chain use mesh_forge. Feed the returned glbUrl to rig_mesh to make it animation-ready. Use this for a text-only model at no cost; switch to mesh_forge for photo input or forge_avatar for a rigged character in one call. Free: no payment required.",
 			"whenToUse": "Use this for a text-only model at no cost; switch to mesh_forge for photo input or forge_avatar for a rigged character in one call.",
 			"server": {
 				"id": "three-ws-mcp-server",
@@ -42031,7 +42051,7 @@
 		{
 			"name": "blender_forge_import",
 			"title": "Generate a 3D model with three.ws and open it in Blender",
-			"description": "Generate a 3D model from a text prompt OR a reference image on the public three.ws Forge pipeline, then bring it into Blender. Pass \"prompt\" to describe it, \"image\" for a local PNG/JPEG/WebP, or \"image_url\" for one already public; an image plus a prompt uses the prompt to steer the reconstruction. The default image lane (FLUX to TRELLIS) is free and needs no key, wallet, or account. The GLB is saved locally, and if the output path asks for another format (.blend, .fbx, .obj, .usd) Blender converts it on the way in. Returns the local path, the hosted GLB URL, and the geometry counts. Generation runs on a shared GPU lane and typically takes tens of seconds to a couple of minutes. Describe ONE subject per call. Use this when you need a new model that does not exist yet; to work on a file you already have, open it with blender_scene_info or blender_run_python instead.",
+			"description": "Generate a 3D model from a text prompt OR a reference image on the public three.ws Forge pipeline, then bring it into Blender. Pass \"prompt\" to describe it, \"image\" for a local PNG/JPEG/WebP, or \"image_url\" for one already public; an image plus a prompt uses the prompt to steer the reconstruction. Needs a free three.ws account: set THREE_WS_API_KEY in this server's env (key from three.ws/dashboard/api-keys). The default image lane (FLUX to TRELLIS) costs nothing on a free account. The GLB is saved locally, and if the output path asks for another format (.blend, .fbx, .obj, .usd) Blender converts it on the way in. Returns the local path, the hosted GLB URL, and the geometry counts. Generation runs on a shared GPU lane and typically takes tens of seconds to a couple of minutes. Describe ONE subject per call. Use this when you need a new model that does not exist yet; to work on a file you already have, open it with blender_scene_info or blender_run_python instead.",
 			"whenToUse": "Use this when you need a new model that does not exist yet; to work on a file you already have, open it with blender_scene_info or blender_run_python instead.",
 			"server": {
 				"id": "blender-mcp",
@@ -42083,7 +42103,7 @@
 						]
 					},
 					"lane": {
-						"description": "Pipeline lane. \"image\" (default) is free. \"geometry\" uses Meshy/Tripo and needs THREE_WS_FORGE_PROVIDER_KEY.",
+						"description": "Pipeline lane. \"image\" (default) costs nothing on a free account. \"geometry\" uses Meshy/Tripo and also needs THREE_WS_FORGE_PROVIDER_KEY.",
 						"type": "string",
 						"enum": [
 							"image",
@@ -50499,7 +50519,7 @@
 		{
 			"name": "compose_scene",
 			"title": "Compose a 3D diorama plan from one sentence",
-			"description": "Compose a tiny 3D diorama from one short sentence. Returns a PLAN: an evocative title, a mood (dawn/day/dusk/night), ground + island type, a color palette, and 2-8 placed objects, each with a single-object forge prompt, position, scale and rotation. No meshes are generated yet and nothing is saved; feed the plan to the three.ws diorama page (or /api/forge per object) to build the world. Read-mostly but runs live LLM inference. Use this when you want to review or edit the plan, or forge the objects yourself; to get a finished GLB world in one call, use build_world instead.",
+			"description": "Compose a tiny 3D diorama from one short sentence. Returns a PLAN: an evocative title, a mood (dawn/day/dusk/night), ground + island type, a color palette, and 2-8 placed objects, each with a single-object forge prompt, position, scale and rotation. No meshes are generated yet and nothing is saved; feed the plan to the three.ws diorama page (or /api/forge per object) to build the world. Read-mostly but runs live LLM inference. Use this when you want to review or edit the plan, or forge the objects yourself; to get a finished GLB world in one call, use build_world instead. Needs a free three.ws account (THREE_WS_API_KEY).",
 			"whenToUse": "Use this when you want to review or edit the plan, or forge the objects yourself; to get a finished GLB world in one call, use build_world instead.",
 			"server": {
 				"id": "scene-mcp",
@@ -50633,7 +50653,7 @@
 		{
 			"name": "export_scene",
 			"title": "Export a forged diorama as one GLB scene",
-			"description": "Merge an already-forged diorama (objects with real glbUrl values, e.g. from your own forging after compose_scene, or fetched via get_scene) into ONE glTF 2.0 binary: every object becomes a named, selectable node, plus a real ground disc and mood-tuned lighting. Returns the merged GLB URL and a ready-to-open three.ws Scene Studio link. Objects that never forged are skipped and reported rather than treated as a failure; a partial world still exports. Requires the target deployment to have object storage configured (three.ws does). Use this after every object in a diorama has a glbUrl and you want one downloadable GLB; to go from a sentence straight to the merged world, call build_world instead.",
+			"description": "Merge an already-forged diorama (objects with real glbUrl values, e.g. from your own forging after compose_scene, or fetched via get_scene) into ONE glTF 2.0 binary: every object becomes a named, selectable node, plus a real ground disc and mood-tuned lighting. Returns the merged GLB URL and a ready-to-open three.ws Scene Studio link. Objects that never forged are skipped and reported rather than treated as a failure; a partial world still exports. Requires the target deployment to have object storage configured (three.ws does). Use this after every object in a diorama has a glbUrl and you want one downloadable GLB; to go from a sentence straight to the merged world, call build_world instead. Needs a free three.ws account (THREE_WS_API_KEY).",
 			"whenToUse": "Use this after every object in a diorama has a glbUrl and you want one downloadable GLB; to go from a sentence straight to the merged world, call build_world instead.",
 			"server": {
 				"id": "scene-mcp",
@@ -50678,7 +50698,7 @@
 		{
 			"name": "build_world",
 			"title": "Build a complete 3D world from one sentence (no browser needed)",
-			"description": "One sentence → a fully forged, exported 3D world, entirely server-side: composes the scene plan, forges every object on the free text→3D lane, and merges the result into one GLB with named, selectable nodes plus ground and lighting. Returns the populated diorama, the merged GLB URL, and a ready-to-open Scene Studio link. This is the whole progressive /diorama browser flow collapsed into one call; it can take a couple of minutes for a full object set. Partial forges are not failures: whatever forged is exported, and `skipped` names anything that did not. Use this when you want a finished world from one sentence with no intermediate steps; to inspect or adjust the plan before anything is forged, call compose_scene instead.",
+			"description": "One sentence → a fully forged, exported 3D world, entirely server-side: composes the scene plan, forges every object on the free text→3D lane, and merges the result into one GLB with named, selectable nodes plus ground and lighting. Returns the populated diorama, the merged GLB URL, and a ready-to-open Scene Studio link. This is the whole progressive /diorama browser flow collapsed into one call; it can take a couple of minutes for a full object set. Partial forges are not failures: whatever forged is exported, and `skipped` names anything that did not. Use this when you want a finished world from one sentence with no intermediate steps; to inspect or adjust the plan before anything is forged, call compose_scene instead. Needs a free three.ws account (THREE_WS_API_KEY).",
 			"whenToUse": "Use this when you want a finished world from one sentence with no intermediate steps; to inspect or adjust the plan before anything is forged, call compose_scene instead.",
 			"server": {
 				"id": "scene-mcp",

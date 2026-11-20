@@ -24,6 +24,25 @@ describe('MCP tool catalog', () => {
 		expect(unknown.map((t) => t.source)).toEqual([]);
 	});
 
+	it('marks every studio tool that makes a model as needing an account', async () => {
+		// The studio servers connect anonymously, so their server-level auth is
+		// "none", but the creator tools refuse an anonymous call
+		// (api/_mcp-studio/dispatch.js). The catalog must say so per tool, or
+		// /mcp-tools tells a reader "no key needed" for forge_free.
+		const { CREATOR_TOOL_NAMES } = await import('../api/_mcp-studio/dispatch.js');
+		const studio = catalog.tools.filter((t) => ['mcp-studio', 'mcp-chatgpt', 'mcp-grok'].includes(t.server.id));
+		expect(studio.length).toBeGreaterThan(0);
+		const creators = studio.filter((t) => CREATOR_TOOL_NAMES.has(t.name));
+		expect(creators.length).toBeGreaterThan(0);
+		for (const t of creators) {
+			expect(t.requiresAccount, `${t.server.id}/${t.name}`).toBe(true);
+			expect(t.tryIt, `${t.server.id}/${t.name}`).toBeUndefined();
+		}
+		for (const t of studio.filter((x) => !CREATOR_TOOL_NAMES.has(x.name))) {
+			expect(t.requiresAccount, `${t.server.id}/${t.name}`).toBeUndefined();
+		}
+	});
+
 	it('derives the safety class from the annotations, consistently', () => {
 		for (const tool of catalog.tools) {
 			const { readOnlyHint, destructiveHint } = tool.annotations;

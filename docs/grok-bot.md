@@ -18,7 +18,7 @@ an in-browser demo, open [three.ws/grok](/grok).
 | **Authentication** | None, an API key (connector key), or OAuth 2.1 at `https://three.ws/api/mcp-grok?auth=oauth` |
 | **Protocol** | MCP `2025-06-18`, whatever version the client opens with |
 | **Session** | `initialize` issues an `Mcp-Session-Id` (`grk_…`); echo it on every later request |
-| **Tools** | 16 free studio tools anonymously; signed in, plus the account tools your scopes allow |
+| **Tools** | 16 free studio tools listed anonymously (the ones that make or rig a model need a signed-in account); signed in, plus the account tools your scopes allow |
 | **Prompts** | 4 anonymously, 6 signed in |
 | **Handler** | [`api/mcp-grok.js`](../api/mcp-grok.js) over [`api/_mcp-studio/handler.js`](../api/_mcp-studio/handler.js) |
 
@@ -26,14 +26,16 @@ an in-browser demo, open [three.ws/grok](/grok).
 
 Grok Bot connects from xAI's cloud, so the URL must be public: a `localhost`
 server never works. Add the server either by telling Grok Bot in chat
-("Add a custom MCP server called three-ws-grok at https://three.ws/api/mcp-grok")
-or through its connector form. The form takes four fields, and
+("Add a custom MCP server called three-ws-grok at https://three.ws/api/mcp-grok?auth=oauth with OAuth authentication")
+or through its connector form. Making or rigging a model needs a free three.ws
+account, so pick OAuth 2.1 or an API key below; None connects, but only the
+read tools (catalog search, job status, docs) answer it. The form takes four fields, and
 [three.ws/connect?client=grok](/connect?client=grok) shows them with a copy
 button for every hosted server. Use the name `three-ws-grok` so the guided
 prompts, the [skill file](https://three.ws/grok-skill.md) and the `/grok` page
 all refer to the connector by the same name.
 
-### None (free, no account)
+### None (catalog and job status only)
 
 | Field | Value |
 |---|---|
@@ -42,15 +44,17 @@ all refer to the connector by the same name.
 | Server URL | `https://three.ws/api/mcp-grok` |
 | Authentication | None |
 
-You get the free studio: text to 3D, image to 3D, rigging, refinement, the
-catalog of ready-made assets, and personas. The generation caps key on the MCP
-session, so they last one connection.
+The 16 studio tools are listed, but only the read tools run: searching the
+catalog of ready-made assets, checking a job, reading the docs. Making, rigging
+or refining a model answers `sign_in_required` with the OAuth URL and the API
+keys page, so use one of the signed-in modes below to create.
 
-### None, with an install token (free, a quota that survives reconnects)
+### None, with an install token (a quota that survives reconnects)
 
 A scheduled Grok Bot task opens a new connection, and so a new session, on
-every run. To keep one budget across all of them, mint a free install token and
-put it in the URL. No account and no key:
+every run. To keep one rate-limit budget across all of them, mint a free install
+token and put it in the URL (minting one needs no account; making a model still
+does):
 
 ```bash
 curl -s -X POST https://three.ws/api/mcp-studio/install | jq -r .connector_urls.grok
@@ -72,7 +76,7 @@ its budget, so keep it in the connector rather than in a shared prompt. On
 the same thing in the browser. Details:
 [install tokens](./mcp-studio.md#connector-url-for-cloud-agents-install-tokens).
 
-### API key (your agents, memory and skills)
+### API key (make models, plus your agents, memory and skills)
 
 1. At [three.ws/dashboard/api](/dashboard/api) choose **New key**, then
    **For an AI agent (Grok Bot, schedules, CI)**, name it, and copy the key it
@@ -100,7 +104,7 @@ curl -s https://three.ws/api/mcp-grok \
 A connector key is capped on every request: it can read, generate and edit
 agent data and can never spend (see [Scoped keys and the spend rule](#scoped-keys-and-the-spend-rule)).
 
-### OAuth 2.1 (sign in once, revoke any time)
+### OAuth 2.1 (make models; sign in once, revoke any time)
 
 | Field | Value |
 |---|---|

@@ -14,8 +14,12 @@ export const USAGE = `npm create @three-ws/agent "<what to make>" [options]
   --object             make an object or prop instead of a rigged character
   --no-download        skip writing agent.glb locally (keep the hosted URL only)
   --json               print the result as JSON and nothing else
+  --api-key <key>      three.ws API key (default: the THREE_WS_API_KEY env var)
   --origin <url>       API origin (default https://three.ws)
   -h, --help           this message
+
+Making a model is free but needs a free three.ws account: create an API key at
+https://three.ws/dashboard/api-keys and export it as THREE_WS_API_KEY.
 
 Examples
   npm create @three-ws/agent "a friendly cartoon astronaut in a glossy white suit"
@@ -36,6 +40,7 @@ export function parseArgs(argv) {
 		else if (arg === '--no-download') opts.download = false;
 		else if (arg === '--json') opts.json = true;
 		else if (arg === '--origin') opts.origin = argv[++i];
+		else if (arg === '--api-key') opts.apiKey = argv[++i];
 		else if (arg === '-h' || arg === '--help') opts.help = true;
 		else if (arg.startsWith('-')) opts.unknown = arg;
 		else words.push(arg);

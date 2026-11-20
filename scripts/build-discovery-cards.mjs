@@ -197,9 +197,11 @@ if (paid.length < 40) {
 // ── ai-plugin.json ───────────────────────────────────────────────────────────
 // Copy (and the brand/legal URLs) live in scripts/lib/discovery-copy.mjs so the
 // committed manifest and this generator can be pinned to each other by
-// tests/wellknown-manifests.test.js. The descriptions state the free, keyless
-// 3D lane first and the optional paid catalog second: readers used to come away
-// believing every three.ws capability, generation included, was pay-per-call.
+// tests/wellknown-manifests.test.js. The descriptions state the free 3D lane
+// (free account, Bearer API key) first and the optional paid catalog second:
+// readers used to come away believing every three.ws capability, generation
+// included, was pay-per-call. The bearer `auth` block is hand-set in the JSON
+// and survives regeneration because only the copy fields are assigned.
 {
 	const plugin = readJson('public/.well-known/ai-plugin.json');
 	Object.assign(plugin, pluginDescriptions(paid.length));

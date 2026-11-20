@@ -6,7 +6,8 @@ tool calls on its side; this script only talks to `api.x.ai`. Zero dependencies,
 Node 20 or newer.
 
 The server is `https://three.ws/api/mcp-grok`, the three.ws surface built for
-Grok: every free studio tool, no account, no key. See the [Grok guide](../../docs/grok.md)
+Grok: every free studio tool. Making a model needs a free three.ws account, so a
+real run sends its API key; nothing is ever charged. See the [Grok guide](../../docs/grok.md)
 for Grok Bot and Grok connectors, and [three.ws/grok](https://three.ws/grok) for a live demo.
 
 ## Run it
@@ -21,7 +22,7 @@ node index.mjs --check
 node index.mjs --dry-run
 
 # 3. The real thing
-XAI_API_KEY=xai-... node index.mjs "a lunar lander with gold foil legs"
+XAI_API_KEY=xai-... THREE_WS_API_KEY=sk_live_... node index.mjs "a lunar lander with gold foil legs"
 ```
 
 Get a key at [console.x.ai](https://console.x.ai). The run prints Grok's reply and
@@ -30,6 +31,7 @@ the viewer link, which opens an interactive 3D viewer in any browser.
 | Variable | Default | Purpose |
 |---|---|---|
 | `XAI_API_KEY` | none | Your xAI API key. Required for a real run. |
+| `THREE_WS_API_KEY` | none | A three.ws API key from [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys) (free account). Required for a real run: xAI sends it to the MCP server as the `authorization` token, and an anonymous call is answered `sign_in_required`. |
 | `XAI_MODEL` | `grok-4.7` | Any xAI model that supports remote MCP tools. |
 | `THREE_WS_MCP_URL` | `https://three.ws/api/mcp-grok` | Point at a local server (`http://localhost:8080/api/mcp-grok`) while developing. |
 
@@ -42,6 +44,7 @@ The request carries one remote MCP tool:
   "type": "mcp",
   "server_url": "https://three.ws/api/mcp-grok",
   "server_label": "three-ws",
+  "authorization": "<THREE_WS_API_KEY>",
   "allowed_tools": ["search_catalog", "forge_free", "forge_avatar", "check_job"]
 }
 ```

@@ -26,8 +26,9 @@ export function slugForEndpoint(endpoint) {
 
 // Which authentication the connector form takes for a directory entry
 // (/.well-known/mcp.json). A server with a sign-in URL also serves anonymous
-// callers, and signing in only adds the account's tools, so it connects with
-// None. An x402-first server takes a three.ws API key. The rest sign in with OAuth.
+// callers (catalog search, job status), so it connects with None; making a
+// model or using the account's tools needs that sign-in URL, which the card
+// shows beside it. An x402-first server takes a three.ws API key. The rest sign in with OAuth.
 export function grokAuthFor(server) {
 	if (server.signIn) return 'none';
 	const auth = String(server.auth || '').toLowerCase();
@@ -46,7 +47,7 @@ export function grokSentence(server) {
 const TEMPLATE = `
 	<p class="gc-lede" data-i18n-html="connect.grok_bot_adds_three_ws_as_a_custom">Grok Bot adds three.ws as a <strong>custom MCP</strong> connector. There is no pre-filled link, so enter these settings in its connector form, or send Grok Bot the sentence below and confirm what it shows.</p>
 	<p class="gc-note" id="gc-suggest" hidden>
-		<span data-i18n-html="connect.grok_server_is_built_for_grok_bot">The <strong>Grok</strong> server is built for Grok Bot: the free 3D studio with no sign-in, plus your own agents when you sign in, on one URL.</span>
+		<span data-i18n-html="connect.grok_server_is_built_for_grok_bot">The <strong>Grok</strong> server is built for Grok Bot: the free 3D studio (sign in with a free account to make models), plus your own agents, on one URL.</span>
 		<button type="button" class="gc-link" id="gc-use" data-i18n="connect.use_the_grok_server">Use the Grok server</button>
 	</p>
 	<dl class="gc-settings">
@@ -68,14 +69,14 @@ const TEMPLATE = `
 		<div>
 			<dt data-i18n="connect.authentication">Authentication</dt>
 			<dd>
-				<span data-grok-auth="none" hidden data-i18n-html="connect.grok_auth_none"><strong>None.</strong> These tools are free and need no account, so no sign-in card appears.</span>
+				<span data-grok-auth="none" hidden data-i18n-html="connect.grok_auth_none"><strong>None.</strong> No sign-in card appears, and the free read tools, such as catalog search, work right away.</span>
 				<span data-grok-auth="oauth" hidden data-i18n-html="connect.grok_auth_oauth"><strong>OAuth.</strong> Grok Bot opens three.ws sign-in once. Read the permissions before you approve.</span>
 				<span data-grok-auth="key" hidden data-i18n-html="connect.grok_auth_key"><strong>API key.</strong> Make a key at <a href="/dashboard/api">Dashboard → API</a> and store it as a Bot secret. Signed-in calls skip the per-call payment.</span>
 			</dd>
 		</div>
 	</dl>
 	<div class="gc-account" id="gc-account" hidden>
-		<p class="gc-note" data-i18n-html="connect.grok_account_on_the_same_server">To let Grok Bot also work with <strong>your</strong> agents, their memory and skills, connect this URL with <strong>OAuth</strong> instead. Or keep the URL above and give it a connector key from <a href="/dashboard/api">Dashboard → API</a> (choose <strong>For an AI agent</strong>), stored as a Bot secret. It never lists a tool that spends.</p>
+		<p class="gc-note" data-i18n-html="connect.grok_account_on_the_same_server">Making or rigging a 3D model needs a free three.ws account, and so do <strong>your</strong> agents, their memory and skills: connect this URL with <strong>OAuth</strong> instead. Or keep the URL above and give it a connector key from <a href="/dashboard/api">Dashboard → API</a> (choose <strong>For an AI agent</strong>), stored as a Bot secret. It never lists a tool that spends.</p>
 		<div class="gc-url">
 			<span class="gc-url-label" data-i18n="connect.oauth">OAuth</span>
 			<code id="gc-signin-url"></code>

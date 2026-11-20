@@ -164,7 +164,12 @@ describe('GET /api/3d content negotiation', () => {
 		const body = res.json;
 		expect(body.name).toBe('three.ws 3D API');
 		expect(body.free).toBe(true);
-		expect(body.keyless).toBe(true);
+		// Making a model needs a free account, so the bundle is not keyless as a
+		// whole; it says which endpoints need one and how to authenticate.
+		expect(body.keyless).toBe(false);
+		expect(body.auth).toMatchObject({ scheme: 'bearer', apiKeys: '/dashboard/api-keys' });
+		expect(body.endpoints.find((e) => e.slug === 'generate')).toMatchObject({ keyless: false, account: true });
+		expect(body.endpoints.find((e) => e.slug === 'inspect')).toMatchObject({ keyless: true, account: false });
 		expect(Array.isArray(body.endpoints)).toBe(true);
 		expect(Array.isArray(body.paidTiers)).toBe(true);
 		expect(body.paidTiers.map((t) => t.name)).toContain('Forge Pro');
@@ -196,6 +201,23 @@ describe('GET /api/3d content negotiation', () => {
 			expect(String(res.getHeader('cache-control'))).toContain('s-maxage=300');
 			expect(String(res.getHeader('vary')).toLowerCase()).toContain('accept');
 		}
+	});
+});
+
+describe('account-gated entries in the live catalog', () => {
+	it('marks text to 3D as needing an account and documents it in OpenAPI', async () => {
+		const entries = await loadCatalog({ fresh: true });
+		const gen = entries.find((e) => e.slug === 'generate');
+		expect(gen).toMatchObject({ keyless: false, account: true });
+		expect(gen.summary).not.toMatch(/keyless|no account/i);
+		const doc = buildOpenApiDoc(entries);
+		expect(validateOpenApiDoc(doc)).toEqual([]);
+		expect(doc.components.securitySchemes.bearerAuth).toMatchObject({ type: 'http', scheme: 'bearer' });
+		const post = doc.paths['/api/3d/generate'].post;
+		expect(post.security).toEqual([{ bearerAuth: [] }]);
+		expect(post.responses[401]).toBeDefined();
+		expect(doc.paths['/api/3d/inspect'].post?.security ?? doc.paths['/api/3d/inspect'].get?.security).toBeUndefined();
+		expect(doc.info.description).not.toMatch(/no account/i);
 	});
 });
 
