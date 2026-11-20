@@ -258,7 +258,7 @@
 			   rules too eager:
 
 			   1. An ad blocker or privacy extension blocks one of the optional
-			      extras (/brand.js, /i18n.js) or any third-party script. That is a
+			      extras (/brand.js, /i18n.js, /sign-in-watch.js) or any third-party script. That is a
 			      resource error on a SCRIPT tag, which used to fail instantly even
 			      though the game modules were downloading normally. Only a
 			      same-origin, non-optional script or stylesheet counts now.
@@ -268,7 +268,7 @@
 			      is a boot failure. Network-shaped rejections are ignored outright,
 			      and anything else gets a grace long enough for a slow but healthy
 			      boot to finish and disarm it (bootPending). */
-			var OPTIONAL_SCRIPTS = /\/(brand|i18n|theme-switcher)\.js(\?|$)/;
+			var OPTIONAL_SCRIPTS = /\/(brand|i18n|theme-switcher|sign-in-watch)\.js(\?|$)/;
 			function isNetworkNoise(v) {
 				var s = (v && (v.message || v.name)) || String(v || '');
 				return /Failed to fetch|NetworkError|Load failed|ERR_BLOCKED|ERR_FAILED|AbortError|network error|WebSocket/i.test(s);
@@ -315,6 +315,7 @@
 		<script type="module" src="/src/game/meetup-event.js"></script>
 		<script type="module" src="/src/game/world-pa.js"></script>
 		<script type="module" src="/src/game/gift-claim-play.js"></script>
+		<script src="/sign-in-watch.js" defer></script>
 		<script src="/brand.js" defer></script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<!-- Injected as its own module script so Vite does not fold it into the game's
