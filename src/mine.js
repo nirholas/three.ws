@@ -15,10 +15,10 @@
  *   GET /api/users/:username/creations     → models + worlds forged while signed
  *                                            in, from any browser
  *
- * The forge lanes are anonymous-by-design (a hashed browser key, no account), so
- * the browser-scoped feed is what rescues a creation made before signing up. The
- * username feed covers the other direction: signed in, different device. Both
- * are merged and de-duplicated by id.
+ * Making a model needs an account now, but models made before that were keyed
+ * only to a hashed browser id, so the browser-scoped feed is what rescues those.
+ * The username feed covers everything made signed in, from any device. Both are
+ * merged and de-duplicated by id.
  */
 
 import { createLogger } from './shared/log.js';

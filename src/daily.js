@@ -17,6 +17,7 @@ import {
 	loadStreak, milestoneFor, recordDay, saveStreak, streakStatus,
 } from './daily/creator-streak.js';
 import { createLogger } from './shared/log.js';
+import { isSignInRequired, renderCreateSignIn, signedInForUploads } from './shared/upload-sign-in.js';
 
 const log = createLogger('daily');
 const $ = (id) => document.getElementById(id);
@@ -158,6 +159,28 @@ function overlay(el) {
 	['idle', 'working', 'failed'].forEach((id) => $(id).classList.add('hidden'));
 	if (el) $(el).classList.remove('hidden');
 }
+// Every model has an owner who can find, publish or delete it, so making one
+// needs an account. Say so in the failure card with a link back to /daily,
+// instead of a message with nowhere to go.
+function showSignIn() {
+	stopElapsed();
+	setBusy(false);
+	$('failtitle').textContent = 'Sign in to forge today\u2019s theme';
+	const link = renderCreateSignIn($('failmsg'));
+	$('retry').hidden = true;
+	overlay('failed');
+	link.focus();
+}
+function resetFailCard() {
+	$('failtitle').textContent = 'That one didn\u2019t make it';
+	$('failmsg').className = 'muted';
+	$('retry').hidden = false;
+}
+function failWith(message) {
+	resetFailCard();
+	$('failmsg').textContent = message;
+	overlay('failed');
+}
 function setBusy(b) {
 	const go = own($('go'));
 	go.disabled = b;
@@ -184,6 +207,8 @@ async function forge(prompt) {
 	prompt = String(prompt || '').trim();
 	if (prompt.length < 3) { input.focus(); return; }
 	const seq = ++runSeq;
+	resetFailCard();
+	if (!(await signedInForUploads())) { if (seq === runSeq) showSignIn(); return; }
 	setBusy(true);
 	mv.classList.add('veiled');
 	$('actions').classList.add('hidden');
@@ -199,6 +224,7 @@ async function forge(prompt) {
 			body: JSON.stringify({ prompt, backend: 'nvidia' }),
 		});
 		const data = await res.json().catch(() => ({}));
+		if (isSignInRequired(res.status, data)) { if (seq === runSeq) showSignIn(); return; }
 		if (res.status === 503 || data.error === 'unconfigured') throw new Error('The generator is offline right now. Try again in a few minutes.');
 		if (res.status === 429 || data.error === 'rate_limited') {
 			const secs = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 15;
@@ -220,8 +246,7 @@ async function forge(prompt) {
 		if (seq !== runSeq) return;
 		stopElapsed();
 		setBusy(false);
-		$('failmsg').textContent = friendlyError(err);
-		overlay('failed');
+		failWith(friendlyError(err));
 	}
 }
 
@@ -254,7 +279,7 @@ async function pollUntilDone(jobId, seq) {
 
 function showResult(glbUrl, prompt, { forged = true } = {}) {
 	const src = safeModelUrl(glbUrl);
-	if (!src) { $('failmsg').textContent = 'That model link is not one we can open. Forge a new one to continue.'; overlay('failed'); setBusy(false); return; }
+	if (!src) { failWith('That model link is not one we can open. Forge a new one to continue.'); setBusy(false); return; }
 	current = { glb: src, prompt, forged };
 	overlay('working');
 	$('worktitle').textContent = 'Loading your creation…';
@@ -288,8 +313,7 @@ function wireActions() {
 // GLB, so hand over the links rather than stranding the visitor on a spinner.
 function previewUnavailable(msg) {
 	setBusy(false);
-	$('failmsg').textContent = msg;
-	overlay('failed');
+	failWith(msg);
 	wireActions();
 	if (current?.forged) bumpStreak();
 }
@@ -381,7 +405,7 @@ $('ask').addEventListener('submit', (e) => { e.preventDefault(); forge(input.val
 	const src = q.get('src') || '';
 	if (!src) return;
 	if (safeModelUrl(src)) showResult(src, q.get('title') || q.get('prompt') || 'Shared creation', { forged: false });
-	else { $('failmsg').textContent = 'That shared model link is not one we can open. Forge today’s theme instead.'; overlay('failed'); }
+	else { failWith('That shared model link is not one we can open. Forge today’s theme instead.'); }
 })();
 
 // Re-render the labels this module owns when the visitor switches locale: an

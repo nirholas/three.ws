@@ -258,9 +258,10 @@ let pickerTarget = null;
 // Sketch mode input — one drawing, same lifecycle as a view slot.
 const sketch = { state: 'empty', url: null, objectUrl: null, errorMsg: '' };
 
-// Stable anonymous handle for this browser. /forge has no login, so durable
-// creations + the gallery are scoped to this id (hashed server-side). Sent on
-// every request via the x-forge-client header.
+// Stable handle for this browser, sent on every request as the x-forge-client
+// header and hashed on the server. Making a model needs an account, which owns
+// it. This id also scopes the gallery, so models made in this browser before the
+// account requirement still show up here.
 const CLIENT_ID = (() => {
 	const KEY = 'forge:cid';
 	try {
