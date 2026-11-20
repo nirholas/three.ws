@@ -30,6 +30,13 @@
 			},
 			"environmentVariables": [
 				{
+					"name": "THREE_WS_API_KEY",
+					"description": "A three.ws API key (a free account is enough, create one at https://three.ws/dashboard/api-keys). Making or rigging a 3D model on the hosted forge needs it: forge_free, mesh_forge, forge_avatar and rig_mesh.",
+					"format": "string",
+					"isRequired": false,
+					"isSecret": true
+				},
+				{
 					"name": "MCP_SVM_PAYMENT_ADDRESS",
 					"description": "Solana address that receives USDC when a client pays for a tool call (falls back to X402_PAY_TO_SOLANA / X402_PAY_TO). Required to settle paid tools.",
 					"format": "string",

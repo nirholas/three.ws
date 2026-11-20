@@ -47,6 +47,30 @@ function apiBaseFrom(keys, def = 'https://three.ws') {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Making or rigging a model on the hosted forge needs a three.ws account (it
+// answers an anonymous submit with 401 sign_in_required). This server reaches
+// the forge on behalf of whoever runs it, so it sends that operator's three.ws
+// API key, from THREE_WS_API_KEY, as the bearer. A free account is enough; the
+// key is created on the API keys page.
+const API_KEYS_PATH = '/dashboard/api-keys';
+
+function forgeHeaders(headers) {
+	const key = env('THREE_WS_API_KEY');
+	return key ? { ...headers, authorization: `Bearer ${key}` } : headers;
+}
+
+function signInError(base) {
+	const apiKeysUrl = `${base}${API_KEYS_PATH}`;
+	const e = new Error(
+		env('THREE_WS_API_KEY')
+			? `three.ws refused the API key in THREE_WS_API_KEY. Create a new key at ${apiKeysUrl} and set it in this MCP server's environment.`
+			: `Making a 3D model needs a three.ws account. Create a free account and an API key at ${apiKeysUrl}, then set THREE_WS_API_KEY in this MCP server's environment.`,
+	);
+	e.code = 'sign_in_required';
+	e.extra = { apiKeysUrl };
+	return e;
+}
+
 const VALID_TIER = new Set(['draft', 'standard', 'high']);
 const VALID_ASPECT = new Set(['1:1', '4:3', '3:4', '16:9', '9:16']);
 
@@ -81,7 +105,7 @@ async function submitForge({ base, payload, submitTimeoutMs, allowSyncDone }) {
 	try {
 		res = await fetch(`${base}/api/forge`, {
 			method: 'POST',
-			headers: { 'content-type': 'application/json' },
+			headers: forgeHeaders({ 'content-type': 'application/json' }),
 			body: JSON.stringify(payload),
 			signal: AbortSignal.timeout(submitTimeoutMs),
 		});
@@ -96,6 +120,7 @@ async function submitForge({ base, payload, submitTimeoutMs, allowSyncDone }) {
 		throw e;
 	}
 	const data = await res.json().catch(() => ({}));
+	if (res.status === 401) throw signInError(base);
 	if (res.status === 503) {
 		const e = new Error(data?.message || 'text→3D is not configured on the three.ws deployment');
 		e.code = 'not_configured';
@@ -123,7 +148,7 @@ async function pollForge(jobId, { base, timeoutMs, intervalMs, failCode = 'gener
 		let res;
 		try {
 			res = await fetch(`${base}/api/forge?job=${encodeURIComponent(jobId)}`, {
-				headers: { accept: 'application/json' },
+				headers: forgeHeaders({ accept: 'application/json' }),
 				signal: AbortSignal.timeout(Math.max(intervalMs * 3, 15_000)),
 			});
 		} catch (err) {
@@ -136,6 +161,7 @@ async function pollForge(jobId, { base, timeoutMs, intervalMs, failCode = 'gener
 			throw e;
 		}
 		const data = await res.json().catch(() => ({}));
+		if (res.status === 401) throw signInError(base);
 		if (!res.ok) {
 			const e = new Error(data?.message || `forge poll returned ${res.status}`);
 			e.code = 'provider_error';
@@ -156,11 +182,12 @@ async function pollForge(jobId, { base, timeoutMs, intervalMs, failCode = 'gener
 async function startRig({ base, glbUrl }) {
 	const res = await fetch(`${base}/api/forge?action=rig`, {
 		method: 'POST',
-		headers: { 'content-type': 'application/json' },
+		headers: forgeHeaders({ 'content-type': 'application/json' }),
 		body: JSON.stringify({ glb_url: glbUrl }),
 		signal: AbortSignal.timeout(30_000),
 	});
 	const data = await res.json().catch(() => ({}));
+	if (res.status === 401) throw signInError(base);
 	if (res.status === 503 || res.status === 501) {
 		const e = new Error(data?.message || 'auto-rigging is not enabled on the three.ws deployment');
 		e.code = 'not_configured';

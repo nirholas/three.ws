@@ -1,17 +1,22 @@
-// `forge_free` — FREE MCP tool: text prompt → textured 3D GLB. No payment, no key.
+// `forge_free`: FREE MCP tool, text prompt to textured 3D GLB. No payment.
 //
 // The zero-cost counterpart to `mesh_forge` / `text_to_avatar`. It drives the
 // three.ws /api/forge pipeline pinned to the FREE NVIDIA NIM (Microsoft TRELLIS)
-// text→3D lane — the same free engine the /forge web page uses for prompt
-// drafts — so anyone can turn a text prompt into a downloadable, viewable 3D
-// model with NO x402 payment and NO API key.
+// text to 3D lane, the same free engine the /forge web page uses for prompt
+// drafts, so a text prompt becomes a downloadable, viewable 3D model with NO
+// x402 payment. Making a model needs a three.ws account, so the forge call
+// carries the operator's three.ws API key from THREE_WS_API_KEY (a free
+// account is enough; see _studio-core.js forgeHeaders).
 //
 // The generation logic lives in `_studio-core.js` (runForgeFree), the same core
 // the rest of the stdio server's generators are built on, so none of them drift.
 // The hosted FREE 3D Studio endpoint (/api/mcp-studio) pins the same free lane
 // over /api/forge through its own client, api/_mcp-studio/forge-client.js.
 //
-// Environment (all optional — sensible prod defaults):
+// Environment:
+//   THREE_WS_API_KEY      : a three.ws API key (free account). Needed to make
+//                           a model on the hosted forge.
+// Optional, with sensible prod defaults:
 //   FORGE_FREE_API_BASE   — three.ws origin. Default https://three.ws
 //   FORGE_FREE_TIMEOUT_MS — overall reconstruct poll budget. Default 180000.
 //   FORGE_FREE_POLL_MS    — poll interval. Default 3000.
@@ -24,7 +29,8 @@ import { runForgeFree } from './_studio-core.js';
 
 const TOOL_NAME = 'forge_free';
 const TOOL_DESCRIPTION =
-	'Generate a textured 3D GLB model from a text prompt — FREE: no x402 payment, no API key, no wallet. ' +
+	'Generate a textured 3D GLB model from a text prompt. FREE: no x402 payment and no wallet; it needs a free ' +
+	'three.ws account, whose API key this server sends from THREE_WS_API_KEY. ' +
 	'Drives the three.ws /api/forge pipeline on the free NVIDIA NIM (Microsoft TRELLIS) text→3D lane — ' +
 	'the same zero-cost engine the /forge web page uses for prompt drafts. Returns a durable GLB URL, a ' +
 	'three.ws viewer link that renders the model in the browser, the quality tier used, and the backend ' +

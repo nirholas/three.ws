@@ -38,6 +38,10 @@ describe('forge_free — descriptor', () => {
 		expect(tool.description).not.toMatch(/\$[0-9]/);
 		// Mentions the free engine so an LLM picks it for zero-cost text→3D.
 		expect(tool.description).toMatch(/TRELLIS|NVIDIA/i);
+		// Free of charge, but making a model needs a three.ws account: the
+		// description must not promise "no API key" and must name the key.
+		expect(tool.description).not.toMatch(/no (x402 payment, no )?api key/i);
+		expect(tool.description).toMatch(/THREE_WS_API_KEY/);
 
 		expect(tool.annotations).toEqual({
 			readOnlyHint: false,
@@ -72,6 +76,7 @@ describe('forge_free — handler', () => {
 		vi.restoreAllMocks();
 		delete process.env.FORGE_FREE_POLL_MS;
 		delete process.env.FORGE_FREE_RATE_RETRIES;
+		delete process.env.THREE_WS_API_KEY;
 	});
 
 	it('rejects a too-short prompt without hitting the network', async () => {
@@ -185,5 +190,43 @@ describe('forge_free — handler', () => {
 		const out = structured(await tool.handler({ prompt: 'a marble bust' }, {}));
 		expect(out.ok).toBe(false);
 		expect(out.error).toBe('generation_failed');
+	});
+
+	it('sends THREE_WS_API_KEY as the bearer on the submit and the poll', async () => {
+		process.env.THREE_WS_API_KEY = 'sk_live_fixture_forge_free_0123456789';
+		fetchMock
+			.mockResolvedValueOnce(res(200, { job_id: 'tok_auth', status: 'queued', backend: 'nvidia' }))
+			.mockResolvedValueOnce(
+				res(200, { job_id: 'tok_auth', status: 'done', glb_url: 'https://three.ws/cdn/forge/nvidia/a.glb', backend: 'nvidia', durable: true }),
+			);
+		const out = structured(await tool.handler({ prompt: 'a brass telescope' }, {}));
+		expect(out.ok).toBe(true);
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+		for (const [, opts] of fetchMock.mock.calls) {
+			expect(opts.headers.authorization).toBe('Bearer sk_live_fixture_forge_free_0123456789');
+		}
+	});
+
+	it('sends no authorization header when no key is configured', async () => {
+		fetchMock.mockResolvedValueOnce(
+			res(200, { status: 'done', glb_url: 'https://three.ws/cdn/forge/nvidia/b.glb', backend: 'nvidia', durable: true }),
+		);
+		await tool.handler({ prompt: 'a brass telescope' }, {});
+		expect(fetchMock.mock.calls[0][1].headers.authorization).toBeUndefined();
+	});
+
+	it('turns the forge sign-in refusal into a designed error that names the API key setting', async () => {
+		fetchMock.mockResolvedValueOnce(
+			res(401, { error: 'sign_in_required', message: 'Sign in to make a 3D model. A three.ws account is free.' }),
+		);
+		const envelope = await tool.handler({ prompt: 'a brass telescope' }, {});
+		expect(envelope.isError).toBe(true);
+		const out = structured(envelope);
+		expect(out.ok).toBe(false);
+		expect(out.error).toBe('sign_in_required');
+		expect(out.message).toMatch(/THREE_WS_API_KEY/);
+		expect(out.apiKeysUrl).toBe('https://three.ws/dashboard/api-keys');
+		// Terminal: a refused sign-in is not retried as if the lane were busy.
+		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
 });

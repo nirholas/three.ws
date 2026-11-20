@@ -62,15 +62,18 @@ import {
 const SERVER_INSTRUCTIONS =
 	'MCP tools from three.ws. Most are paid: each quotes its USDC price in its description, and a call ' +
 	'without an x402 payment payload in _meta returns a PaymentRequired structuredContent (v2 MCP ' +
-	'transport spec). FOUR tools need no payment, wallet, or API key to start: forge_free generates a ' +
-	'textured 3D GLB from a text prompt on the free NVIDIA NIM (Microsoft TRELLIS) lane and returns a ' +
-	'GLB URL + three.ws viewer link — use it for zero-cost text→3D — and the crypto-news trio: ' +
+	'transport spec). FOUR tools need no payment or wallet: forge_free generates a textured 3D GLB from a ' +
+	'text prompt on the free NVIDIA NIM (Microsoft TRELLIS) lane and returns a GLB URL plus a three.ws ' +
+	'viewer link, so use it for zero-cost text to 3D, and the crypto-news trio: ' +
 	'crypto_news (live headlines from 197 publisher feeds, filterable by category/source/language/search, ' +
 	'fully free), crypto_news_digest (the last 1–72h clustered into distinct narratives with stance, ' +
 	'tickers, and every covering outlet — the right first call for "what happened in crypto today", fully ' +
 	'free), and crypto_news_archive (search 660,000+ articles back to September 2017 by ' +
 	'keyword/ticker/date/sentiment/language — stats and trending modes free, search free up to a daily ' +
 	'quota then $0.001 USDC per search via x402). ' +
+	'Making or rigging a 3D model (forge_free, mesh_forge, forge_avatar, rig_mesh) runs on the hosted three.ws ' +
+	'forge, which needs a three.ws account: this server sends the API key set in THREE_WS_API_KEY (a free ' +
+	'account is enough). Without one, those tools answer sign_in_required with the link to create a key. ' +
 	'Tools cover: free text→3D generation (forge_free), 3D avatar generation (text_to_avatar), ' +
 	'text/image-to-3D mesh generation via a Granite-directed model chain (mesh_forge), ' +
 	'auto-rigging a GLB into an animation-ready model (rig_mesh), ' +

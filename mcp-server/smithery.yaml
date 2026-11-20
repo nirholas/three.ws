@@ -4,7 +4,10 @@ startCommand:
   type: stdio
   configSchema:
     type: object
-    properties: {}
+    properties:
+      threeWsApiKey:
+        type: string
+        description: "A three.ws API key (a free account is enough, create one at https://three.ws/dashboard/api-keys). Making or rigging a 3D model needs it."
     required: []
   commandFunction: |
-    (config) => ({ command: "npx", args: ["-y", "@three-ws/mcp-server"], env: {} })
+    (config) => ({ command: "npx", args: ["-y", "@three-ws/mcp-server"], env: config.threeWsApiKey ? { THREE_WS_API_KEY: config.threeWsApiKey } : {} })
