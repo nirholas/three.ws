@@ -24,6 +24,16 @@ dependencies = [
     "pipecat-ai>=1.0.0",
 ]
 
+[project.optional-dependencies]
+# Grok Voice realtime (pipecat.services.xai) over a LiveKit room, as in
+# examples/grok_realtime_bot.py.
+grok = ["pipecat-ai[livekit,xai]>=1.16.0"]
+dev = [
+    "pipecat-ai[livekit,xai]>=1.16.0",
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+]
+
 [project.urls]
 Documentation = "https://three.ws/docs"
 Website = "https://three.ws/"

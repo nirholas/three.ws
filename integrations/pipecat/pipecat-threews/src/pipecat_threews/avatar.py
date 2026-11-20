@@ -10,6 +10,7 @@ import re
 
 from pipecat.frames.frames import (
     Frame,
+    InterruptionFrame,
     OutputTransportMessageUrgentFrame,
     TranscriptionFrame,
     TTSStartedFrame,
@@ -135,10 +136,15 @@ class ThreeWsAvatarProcessor(FrameProcessor):
         """
         await super().process_frame(frame, direction)
 
+        # Text is buffered whether or not the turn has started: speech-to-speech
+        # services (Grok Voice realtime, OpenAI Realtime) stream the transcript
+        # ahead of the audio and only push TTSStartedFrame on the first audio
+        # chunk, so a reply's opening words arrive before its start frame. A
+        # reply that never finishes is discarded on the interruption or the
+        # next user turn instead, so it cannot prefix the following reply.
         if isinstance(frame, TTSStartedFrame):
             self._speaking_tts = True
-            self._tts_text_buffer = ""
-        elif isinstance(frame, TTSTextFrame) and self._speaking_tts:
+        elif isinstance(frame, TTSTextFrame):
             self._tts_text_buffer += frame.text
         elif isinstance(frame, TTSStoppedFrame) and self._speaking_tts:
             self._speaking_tts = False
@@ -151,7 +157,12 @@ class ThreeWsAvatarProcessor(FrameProcessor):
                     await self._publish({"type": "gesture", "name": gesture})
         elif isinstance(frame, TranscriptionFrame) and frame.finalized:
             self._last_user_transcript = frame.text
+        elif isinstance(frame, InterruptionFrame):
+            self._speaking_tts = False
+            self._tts_text_buffer = ""
         elif isinstance(frame, UserStartedSpeakingFrame):
+            self._speaking_tts = False
+            self._tts_text_buffer = ""
             self._last_user_transcript = ""
             await self._publish({"type": "speech_started"})
         elif isinstance(frame, UserStoppedSpeakingFrame):

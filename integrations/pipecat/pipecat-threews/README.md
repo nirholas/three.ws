@@ -127,6 +127,65 @@ to publish the matching transcript and gesture data.
    `<agent-3d voice="livekit">` pointed at the same server) to hear the bot
    speak and watch the avatar data arrive on the room's data channel.
 
+## Grok Voice realtime (speech to speech)
+
+Pipecat already ships a Grok Voice realtime service,
+`pipecat.services.xai.realtime.llm.GrokRealtimeLLMService`: the caller's
+audio goes straight to xAI's speech-to-speech model and its spoken reply
+comes straight back, with no STT or TTS service in the pipeline. Put
+`ThreeWsAvatarProcessor` right after it and the avatar gets the same
+transcript, gesture and listening data as with a cascade pipeline:
+
+```python
+from pipecat.processors.aggregators.llm_context import LLMContext
+from pipecat.processors.aggregators.llm_response_universal import LLMContextAggregatorPair
+from pipecat.services.xai.realtime import events
+from pipecat.services.xai.realtime.llm import GrokRealtimeLLMService
+from pipecat_threews import ThreeWsAvatarProcessor
+
+llm = GrokRealtimeLLMService(
+    api_key=os.environ["XAI_API_KEY"],
+    settings=GrokRealtimeLLMService.Settings(
+        session_properties=events.SessionProperties(voice="eve", instructions="..."),
+    ),
+)
+aggregators = LLMContextAggregatorPair(LLMContext())
+pipeline = Pipeline(
+    [
+        transport.input(),
+        aggregators.user(),
+        llm,
+        ThreeWsAvatarProcessor(),
+        transport.output(),
+        aggregators.assistant(),
+    ]
+)
+```
+
+No TTS flags to set here: the realtime service pushes its own
+`TTSStartedFrame` / `TTSStoppedFrame` around every spoken reply. It streams
+the transcript slightly ahead of the audio, so a reply's opening words arrive
+before `TTSStartedFrame`; the processor buffers them (and drops a reply cut
+off by a barge-in), so the published transcript is the whole reply.
+User turns come from Grok's server-side voice activity detection, which the
+user context aggregator resolves into `UserStartedSpeakingFrame` /
+`UserStoppedSpeakingFrame`.
+
+[`examples/grok_realtime_bot.py`](examples/grok_realtime_bot.py) is the
+runnable version over a LiveKit room. It needs `XAI_API_KEY` (Grok Voice is
+billed per minute by xAI) and the same LiveKit server as the example above:
+
+```bash
+pip install -e ".[grok]"
+XAI_API_KEY=... LIVEKIT_URL=ws://localhost:7880 LIVEKIT_API_KEY=devkey \
+  LIVEKIT_API_SECRET=devsecret LIVEKIT_ROOM_NAME=grok-avatar \
+  python examples/grok_realtime_bot.py
+```
+
+The browser side can also talk to Grok Voice directly, without a bot
+process: `<agent-3d voice-provider="grok-realtime">` (see
+[docs/voice-grok.md](../../../docs/voice-grok.md)).
+
 ## Pipecat version compatibility
 
 Tested with Pipecat v1.16.0.

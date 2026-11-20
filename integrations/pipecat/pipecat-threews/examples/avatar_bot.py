@@ -34,7 +34,7 @@ from loguru import logger
 from pipecat.frames.frames import EndFrame, ErrorFrame, Frame, TTSAudioRawFrame, TTSSpeakFrame
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
-from pipecat.pipeline.task import PipelineParams, PipelineTask
+from pipecat.pipeline.task import PipelineTask
 from pipecat.runner.livekit import configure
 from pipecat.services.tts_service import TTSService
 from pipecat.transports.livekit.transport import LiveKitParams, LiveKitTransport
@@ -144,7 +144,7 @@ async def main() -> None:
     avatar = ThreeWsAvatarProcessor()
 
     pipeline = Pipeline([tts, avatar, transport.output()])
-    task = PipelineTask(pipeline, params=PipelineParams(allow_interruptions=True))
+    task = PipelineTask(pipeline)
 
     async def speak_demo_lines() -> None:
         # Queuing every line at once would let the TTS service (near-instant
