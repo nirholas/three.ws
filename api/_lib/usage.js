@@ -57,13 +57,17 @@ function normalizeEvt(evt) {
 	};
 }
 
+// client_id is a free-text attribution label (an OAuth client id, a hashed
+// anonymous client, an MCP surface label); the oauth_clients foreign key was
+// dropped for exactly that (migration 20260611120000), so the value is stored
+// as given.
 async function insertEvent(evt, opts) {
 	await withDbRetry(() => sql`
 		insert into usage_events (user_id, api_key_id, client_id, avatar_id, agent_id, kind, tool, status, bytes, latency_ms, meta, provider, model, input_tokens, output_tokens, cost_micro_usd)
 		values (
 			${evt.userId},
 			${evt.apiKeyId},
-			(select client_id from oauth_clients where client_id = ${evt.clientId}),
+			${evt.clientId},
 			${evt.avatarId},
 			${evt.agentId},
 			${evt.kind},

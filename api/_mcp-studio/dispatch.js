@@ -12,6 +12,7 @@
 // forge. Job status, the catalog, docs and persona playback stay open.
 
 import { recordEvent, logger } from '../_lib/usage.js';
+import { madeModelUrl, usageClientLabel } from './usage-tags.js';
 import { sanitizeToolError } from '../_lib/mcp-error-sanitize.js';
 import { TOOL_CATALOG, TOOLS } from './tools.js';
 import { PERSONA_TOOL_CATALOG, PERSONA_TOOLS } from './persona-tools.js';
@@ -378,8 +379,11 @@ async function onToolCall(params, auth, started, req, surface, opts = {}) {
 	const tool = typeof name === 'string' && Object.hasOwn(surface.tools, name) ? surface.tools[name] : null;
 	if (!tool) throw rpcError(-32602, `unknown tool: ${name}`);
 	const creates = CREATOR_TOOL_NAMES.has(name);
+	// Who made the call, for usage_events (./usage-tags.js): the account when
+	// signed in, and a hashed label of the caller the limits charge.
+	const who = { userId: opts.account?.userId ?? null, clientId: usageClientLabel(surface.server, opts.caller) };
 	if (creates && !opts.account?.userId) {
-		recordEvent({ kind: 'tool_call', tool: name, status: 'sign_in_required', latencyMs: Date.now() - started, meta: { server: surface.server } });
+		recordEvent({ ...who, kind: 'tool_call', tool: name, status: 'sign_in_required', latencyMs: Date.now() - started, meta: { server: surface.server } });
 		return signInToolResult(req, { action: CREATOR_ACTIONS[name] });
 	}
 	const sentArgs = { ...args };
@@ -400,10 +404,17 @@ async function onToolCall(params, auth, started, req, surface, opts = {}) {
 			...(creates ? { account: opts.account, creatorAuth: creatorForgeAuth(opts.account, req) } : {}),
 		};
 		const result = await tool.handler(args, auth, req, ctx);
-		recordEvent({ kind: 'tool_call', tool: name, latencyMs: Date.now() - started, meta: { args_summary: summarize(args), server: surface.server } });
+		const glb = madeModelUrl(name, result, ctx.jobTool);
+		recordEvent({
+			...who,
+			kind: 'tool_call',
+			tool: name,
+			latencyMs: Date.now() - started,
+			meta: { args_summary: summarize(args), server: surface.server, ...(glb ? { glb } : {}) },
+		});
 		return await finishCall(POLICY_SERVER, name, sentArgs, auth, result, gate.preview);
 	} catch (err) {
-		recordEvent({ kind: 'tool_call', tool: name, status: 'error', latencyMs: Date.now() - started, meta: { error: err.message, server: surface.server } });
+		recordEvent({ ...who, kind: 'tool_call', tool: name, status: 'error', latencyMs: Date.now() - started, meta: { error: err.message, server: surface.server } });
 		if (err.code && typeof err.code === 'number') throw err;
 		const { message } = sanitizeToolError(err, { tool: name, server: surface.server, log });
 		return { content: [{ type: 'text', text: `Error: ${message}` }], isError: true };
