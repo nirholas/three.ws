@@ -13,6 +13,7 @@
 import { computeShape } from './lipsync-driver.js';
 
 const LEAD_S = 0.06; // scheduling headroom for the first chunk of a run
+const MAX_TAP_DELAY_S = 1; // ceiling for the lipsync tap delay (Bluetooth sinks reach ~0.3 s)
 const REST_GAP_S = 1 / 30;
 
 /**
@@ -72,11 +73,22 @@ export class StreamSpeechPlayer {
 		this.mouth = mouth;
 		this.onState = onState || (() => {});
 		this.out = ctx.createGain();
+		this.out.connect(ctx.destination);
+		// The amplitude mouth reads a tap delayed by the output latency: Web
+		// Audio renders a sample `outputLatency + baseLatency` before the
+		// listener hears it, so an undelayed analyser opens the mouth early.
+		// The tap is muted; only the direct path above is audible.
+		this._tapDelay = ctx.createDelay(MAX_TAP_DELAY_S);
 		this.analyser = ctx.createAnalyser();
 		this.analyser.fftSize = 256;
 		this.analyser.smoothingTimeConstant = 0.5;
-		this.out.connect(this.analyser);
-		this.analyser.connect(ctx.destination);
+		this._tapMute = ctx.createGain();
+		this._tapMute.gain.value = 0;
+		this.out.connect(this._tapDelay);
+		this._tapDelay.connect(this.analyser);
+		this.analyser.connect(this._tapMute);
+		this._tapMute.connect(ctx.destination);
+		this._syncTapDelay();
 		this._bins = new Uint8Array(this.analyser.frequencyBinCount);
 		this._shape = { open: 0, wide: 0, round: 0 };
 		this._raf = 0;
@@ -291,10 +303,29 @@ export class StreamSpeechPlayer {
 		this._raf = requestAnimationFrame(tick);
 	}
 
+	/** Seconds the amplitude analyser lags the render clock (the measured output latency). */
+	get lipsyncDelaySec() {
+		return this._tapDelaySec;
+	}
+
+	_outputLatency() {
+		return Math.min(MAX_TAP_DELAY_S, (this.ctx.outputLatency || 0) + (this.ctx.baseLatency || 0));
+	}
+
+	// Browsers report outputLatency late (often 0 until playback starts), so the
+	// tap delay is re-read every frame rather than fixed at construction.
+	_syncTapDelay() {
+		const latency = this._outputLatency();
+		if (latency === this._tapDelaySec) return latency;
+		this._tapDelaySec = latency;
+		this._tapDelay.delayTime.value = latency;
+		return latency;
+	}
+
 	_frame() {
 		if (this._external > 0) return; // the browser voice drives its own visemes
 		// Heard time lags scheduled time by the output latency.
-		const latency = (this.ctx.outputLatency || 0) + (this.ctx.baseLatency || 0);
+		const latency = this._syncTapDelay();
 		const t = this._now() - latency;
 		if (this.pending <= 0 && t > this._playhead) {
 			this._mouthRest();
@@ -352,8 +383,10 @@ export class StreamSpeechPlayer {
 		this.reset();
 		cancelAnimationFrame(this._raf);
 		try {
-			this.analyser.disconnect();
 			this.out.disconnect();
+			this._tapDelay.disconnect();
+			this.analyser.disconnect();
+			this._tapMute.disconnect();
 		} catch {}
 	}
 }

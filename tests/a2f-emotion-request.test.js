@@ -114,13 +114,14 @@ describe('streamSpeechAnimation forwards emotion', () => {
 
 describe('StreamSpeechPlayer lays streamed emotion onto the turn clock', async () => {
 	const { StreamSpeechPlayer } = await import('../src/voice/stream-speech-player.js');
-	const node = () => ({ connect() {}, getByteFrequencyData() {}, frequencyBinCount: 128 });
+	const node = () => ({ connect() {}, getByteFrequencyData() {}, frequencyBinCount: 128, gain: { value: 1 }, delayTime: { value: 0 } });
 	function ctx() {
 		return {
 			currentTime: 0,
 			destination: {},
 			createGain: node,
 			createAnalyser: node,
+			createDelay: node,
 			createBuffer: (ch, len, rate) => ({ duration: len / rate, copyToChannel() {} }),
 			createBufferSource: () => ({ connect() {}, start() {}, stop() {} }),
 		};
