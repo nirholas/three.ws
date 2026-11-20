@@ -1,6 +1,13 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { json } from '../api/_lib/http.js';
+
+// POST /api/forge needs an account (api/_lib/creator-account.js). These tests
+// exercise what happens past that gate, so the caller is a signed-in account.
+vi.mock('../api/_lib/auth.js', async (orig) => ({
+	...(await orig()),
+	getRequestUser: async () => ({ id: 'forge-test-user' }),
+}));
 
 // POST /api/forge (generate) and POST /api/forge?action=rig start GPU work. A
 // client that loses the response (a dropped connection, a timeout, a retry

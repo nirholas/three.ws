@@ -14,6 +14,13 @@
 
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 
+// POST /api/forge needs an account (api/_lib/creator-account.js). These tests
+// exercise what happens past that gate, so the caller is a signed-in account.
+vi.mock('../../api/_lib/auth.js', async (orig) => ({
+	...(await orig()),
+	getRequestUser: async () => ({ id: 'forge-test-user' }),
+}));
+
 beforeAll(() => {
 	Object.assign(process.env, {
 		APP_ORIGIN: 'https://three.ws',

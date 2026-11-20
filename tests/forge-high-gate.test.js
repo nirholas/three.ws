@@ -16,10 +16,17 @@
 // paths fall through to a designed downstream state (needs_key / unconfigured)
 // because no vendor key is configured — never a real upstream call.
 
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { Readable } from 'node:stream';
 import { signTierPass } from '../api/_lib/three-tier.js';
 import { TOKEN_MINT } from '../api/_lib/token/config.js';
+
+// POST /api/forge needs an account (api/_lib/creator-account.js). These tests
+// exercise what happens past that gate, so the caller is a signed-in account.
+vi.mock('../api/_lib/auth.js', async (orig) => ({
+	...(await orig()),
+	getRequestUser: async () => ({ id: 'forge-test-user' }),
+}));
 
 let forge;
 

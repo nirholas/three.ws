@@ -14,6 +14,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Readable } from 'node:stream';
 
+// POST /api/forge needs an account (api/_lib/creator-account.js). These tests
+// exercise what happens past that gate, so the caller is a signed-in account.
+vi.mock('../api/_lib/auth.js', async (orig) => ({
+	...(await orig()),
+	getRequestUser: async () => ({ id: 'forge-test-user' }),
+}));
+
 let forge;
 const ORIGINAL_FETCH = globalThis.fetch;
 const priorKey = process.env.TRIPO_API_KEY;

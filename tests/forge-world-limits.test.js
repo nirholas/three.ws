@@ -9,8 +9,16 @@
 // that tripped, so the client can say "wait N s" from the response instead of
 // inventing progress. A submit with no `world` (the /forge page) is untouched.
 
-import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import { Readable } from 'node:stream';
+
+// POST /api/forge needs an account (api/_lib/creator-account.js). These tests
+// exercise what happens past that gate, so each player is its own signed-in
+// account (the player cooldown is keyed by account once there is one).
+vi.mock('../api/_lib/auth.js', async (orig) => ({
+	...(await orig()),
+	getRequestUser: async (req) => ({ id: `acct-${req.headers['x-forge-client']}` }),
+}));
 
 let forge;
 let n = 0;
