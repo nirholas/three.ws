@@ -126,6 +126,27 @@ describe('PATCH /api/forge-creation visibility', () => {
 		const got = await call('PATCH', { body: { visibility: 'private' }, headers: { 'x-forge-client': 'someone-else' } });
 		expect(got.status).toBe(404);
 	});
+
+	// Listing a model publicly puts it in front of everyone, so someone has to
+	// answer for it: a browser id or a manage token alone can hide a model, but
+	// only a signed-in account can publish one.
+	it('refuses to make a model public without a signed-in account', async () => {
+		for (const headers of [{ 'x-forge-manage-token': 'fm1.abc.def' }, { 'x-forge-client': 'cid-1' }]) {
+			const got = await call('PATCH', { body: { visibility: 'public' }, headers });
+			expect(got.status).toBe(401);
+			expect(got.body).toMatchObject({ error: 'sign_in_required', sign_in_url: '/login' });
+			expect(got.body.message).toMatch(/Sign in to make a model public/);
+		}
+		expect(setVis).not.toHaveBeenCalled();
+	});
+
+	it('lets a signed-in owner make a model public', async () => {
+		session.mockResolvedValue({ id: 'user-1' });
+		setVis.mockResolvedValue({ outcome: 'pending' });
+		const got = await call('PATCH', { body: { visibility: 'public' }, headers: { cookie: 'sid=1' } });
+		expect(got.status).toBe(202);
+		expect(setVis).toHaveBeenCalledWith({ id: ID, clientKey: null, userId: 'user-1', visibility: 'public' });
+	});
 });
 
 describe('GET /api/forge-creation owner flag', () => {

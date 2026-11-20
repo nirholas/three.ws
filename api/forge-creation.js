@@ -25,6 +25,7 @@
  *
  *   PATCH /api/forge-creation?id=<uuid>  { tags: string[] } → { tags, generatedTags }
  *   PATCH /api/forge-creation?id=<uuid>  { visibility } → { visibility }
+ *     ('public' needs a signed-in account; 401 sign_in_required otherwise)
  *
  * Owner credentials (any one is enough, issue #639):
  *   x-forge-client        the browser id the model was forged under
@@ -70,6 +71,7 @@ import {
 import { setOwnerTags } from './_lib/creation-descriptions.js';
 import { MAX_TAGS } from './_lib/creation-tags.js';
 import { getSessionUser } from './_lib/auth.js';
+import { signInRequired } from './_lib/creator-account.js';
 import { isUuid } from './_lib/validate.js';
 
 function header(req, name) {
@@ -122,6 +124,12 @@ export default wrap(async (req, res) => {
 		if (body && Object.prototype.hasOwnProperty.call(body, 'visibility')) {
 			if (!CREATION_VISIBILITIES.includes(body.visibility)) {
 				return json(res, 400, { error: 'invalid_visibility', message: `visibility must be one of: ${CREATION_VISIBILITIES.join(', ')}.` });
+			}
+			// Listing a model publicly puts it in front of everyone, so it needs an
+			// account that answers for it. A browser id or manage token can still
+			// hide or unlist a model; only a signed-in owner can publish one.
+			if (body.visibility === 'public' && !creds.userId) {
+				return signInRequired(res, { action: 'make a model public' });
 			}
 			const out = await setCreationVisibility({ id, ...creds, visibility: body.visibility });
 			if (out.outcome === 'updated') return json(res, 200, { visibility: out.visibility });
