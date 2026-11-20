@@ -693,6 +693,7 @@
 		"vet:mcp-catalog": "node scripts/vet-mcp-integrations.mjs",
 		"forge:pay-to-keep": "node scripts/forge-pay-to-keep.mjs",
 		"forge:takedown": "node scripts/forge-takedown.mjs",
+		"forge:removals": "node scripts/forge-removals.mjs",
 		"stage:sam3d-objects": "node scripts/stage-sam3d-objects.mjs",
 		"rescan:skills": "node --env-file=.env.local scripts/rescan-marketplace-skills.mjs"
 	},

@@ -37,7 +37,7 @@ GET  /api/admin/content-safety?status=blocked
 POST /api/admin/content-safety  {"id": "...", "action": "approve" | "remove", "note": "why"}
 ```
 
-Auth is the same ops session with MFA as `/api/admin/forge-removals`. Every decision writes an append-only row to `content_safety_reviews` with the actor and note. `approve` marks the model clear. `remove` deletes it through the takedown path, except when any review row has `csam: true`: that returns 409 `evidence_hold` (see below).
+Auth is an ops session with MFA (or the ops secret). Every decision writes an append-only row to `content_safety_reviews` with the actor and note. `approve` marks the model clear. `remove` deletes it through the takedown path, except when any review row has `csam: true`: that returns 409 `evidence_hold` (see below).
 
 ## Alerts
 

@@ -13,10 +13,10 @@
  * credential delete directly with DELETE /api/forge-creation instead.
  *
  * Open to anonymous callers on purpose: the person asking is often not the one
- * who forged the model. A platform admin reviews every request at
- * /admin/forge-removals (api/admin/forge-removals.js). A second request from the
- * same person on the same model answers 200 { duplicate: true } and keeps the
- * first.
+ * who forged the model. An operator reviews every request from a workstation
+ * with `npm run forge:removals` (there is no admin endpoint to attack). A
+ * second request from the same person on the same model answers 200
+ * { duplicate: true } and keeps the first.
  */
 
 import { cors, error, json, method, rateLimited, readJson, wrap } from './_lib/http.js';

@@ -3,9 +3,9 @@
 // delivery variant under the creation's storage prefix, the source uploads, the
 // edge-cached copies, and an audit row in forge_removal_requests.
 //
-// For takedowns that arrive outside the in-app queue (a GitHub issue, an email).
-// Requests filed through POST /api/forge-removal-request are resolved at
-// /admin/forge-removals instead, which runs the same delete.
+// For any takedown: one filed through "Request removal" on the model page
+// (listed by `npm run forge:removals`), a GitHub issue, or an email. Every open
+// removal request on the model is closed with the resolution given here.
 //
 //   npm run forge:takedown -- <creation-id> --prod-env                 dry run
 //   npm run forge:takedown -- <creation-id> --prod-env --apply \
@@ -39,11 +39,8 @@
 // failure is safe: a missing row still deletes the extra keys, records, purges
 // and verifies.
 
-import { spawnSync } from 'node:child_process';
+import { SERVICE, gcloud, loadCloudRunEnv } from './lib/cloud-run-env.mjs';
 
-const PROJECT = 'aerial-vehicle-466722-p5';
-const SERVICE = 'three-ws-api';
-const REGION = 'us-central1';
 const URL_MAP = 'three-ws-lb';
 const ENV_WANTED = /^(DATABASE_URL|APP_ORIGIN|S3_[A-Z_]+|STORAGE_FALLBACK_[A-Z_]+)$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -78,26 +75,8 @@ function parseArgs(argv) {
 	return out;
 }
 
-function gcloud(args) {
-	const r = spawnSync('gcloud', [...args, '--project', PROJECT], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
-	if (r.status !== 0) throw new Error(`gcloud ${args.slice(0, 3).join(' ')} failed: ${(r.stderr || '').trim().split('\n').pop()}`);
-	return r.stdout;
-}
-
 function loadProdEnv() {
-	const svc = JSON.parse(gcloud(['run', 'services', 'describe', SERVICE, '--region', REGION, '--format', 'json']));
-	const vars = svc?.spec?.template?.spec?.containers?.[0]?.env || [];
-	let n = 0;
-	for (const v of vars) {
-		if (!ENV_WANTED.test(v.name)) continue;
-		if (typeof v.value === 'string') process.env[v.name] = v.value;
-		else if (v.valueFrom?.secretKeyRef?.name) {
-			const ref = v.valueFrom.secretKeyRef;
-			process.env[v.name] = gcloud(['secrets', 'versions', 'access', ref.key || 'latest', `--secret=${ref.name}`]).replace(/\r?\n$/, '');
-		} else continue;
-		n++;
-	}
-	if (!process.env.DATABASE_URL || !process.env.S3_BUCKET) throw new Error('Cloud Run env is missing DATABASE_URL or S3_BUCKET');
+	const n = loadCloudRunEnv({ wanted: ENV_WANTED, required: ['DATABASE_URL', 'S3_BUCKET'] });
 	console.log(`loaded ${n} production env vars from ${SERVICE} (in memory only)`);
 }
 

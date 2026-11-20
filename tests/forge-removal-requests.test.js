@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Forge removal requests (issue #639): anyone can ask for a published model to
-// come down; only a platform admin acts, and removing runs the full moderator
-// delete. Pins validation, duplicate folding, the audit row for an off-form
-// takedown, and the admin endpoint's gate.
+// come down; only an operator acts, from the forge:removals / forge:takedown
+// CLIs (there is no admin endpoint). Pins validation, duplicate folding, the
+// audit row for a takedown, and dismissing.
 
 const calls = [];
 let responder = () => [];
@@ -16,20 +16,14 @@ vi.mock('../api/_lib/db.js', () => ({ sql: (...a) => sqlMock(...a), isDbUnavaila
 const alertMock = vi.fn(async () => {});
 vi.mock('../api/_lib/alerts.js', () => ({ sendOpsAlert: (...a) => alertMock(...a) }));
 
-const auth = vi.fn();
-vi.mock('../api/_lib/ops-auth.js', () => ({ authorizeOps: () => auth() }));
-vi.mock('../api/_lib/admin-mfa.js', () => ({ respondMfaRequired: (res) => { res.statusCode = 403; res.end(JSON.stringify({ error: 'mfa_required' })); } }));
-const deleteCreation = vi.fn();
-vi.mock('../api/_lib/forge-store.js', () => ({ deleteCreation: (a) => deleteCreation(a) }));
 vi.mock('../api/_lib/auth.js', () => ({ getSessionUser: async () => null }));
 vi.mock('../api/_lib/rate-limit.js', () => ({
-	limits: { forgeRemovalWrite: async () => ({ success: true }), authedReadIp: async () => ({ success: true }) },
+	limits: { forgeRemovalWrite: async () => ({ success: true }) },
 	clientIp: () => '203.0.113.9',
 }));
 
 const lib = await import('../api/_lib/forge-removal-requests.js');
 const { default: publicHandler } = await import('../api/forge-removal-request.js');
-const { default: adminHandler } = await import('../api/admin/forge-removals.js');
 
 const CID = '301676f1-cddf-49f5-ab6e-351203c47d44';
 const RID = 'a1b2c3d4-0000-4000-8000-000000000001';
@@ -65,8 +59,6 @@ beforeEach(() => {
 	responder = () => [];
 	sqlMock.mockClear();
 	alertMock.mockClear();
-	auth.mockReset();
-	deleteCreation.mockReset();
 });
 
 describe('normalizeRemovalRequest', () => {
@@ -121,42 +113,27 @@ describe('POST /api/forge-removal-request', () => {
 	});
 });
 
-describe('/api/admin/forge-removals', () => {
-	it('refuses a caller who is not an admin', async () => {
-		auth.mockResolvedValue({ ok: false });
-		const got = await call(adminHandler, { method: 'GET', url: '/api/admin/forge-removals' });
-		expect(got.status).toBe(401);
-		expect(sqlMock).not.toHaveBeenCalled();
+describe('dismissRemovalRequest', () => {
+	it('closes an open request as dismissed with the reviewer and reason', async () => {
+		responder = (text) => (text.startsWith('update forge_removal_requests') ? [{ id: RID, creation_id: CID, status: 'dismissed' }] : []);
+		const row = await lib.dismissRemovalRequest({ id: RID, resolution: 'not a likeness', reviewedBy: 'cli:ops' });
+		expect(row.status).toBe('dismissed');
+		const update = calls.find((c) => c.text.startsWith('update forge_removal_requests'));
+		expect(update.text).toContain("status = 'dismissed'");
+		expect(update.text).toContain("status = 'open'");
+		expect(update.values).toEqual(['not a likeness', 'cli:ops', RID]);
 	});
 
-	it('removes the model with the moderator grant and closes the request', async () => {
-		auth.mockResolvedValue({ ok: true, actor: 'user:admin' });
-		deleteCreation.mockResolvedValue('deleted');
-		responder = (text) => {
-			if (text.startsWith('select id, creation_id, status')) return [{ id: RID, creation_id: CID, status: 'open' }];
-			if (text.startsWith('select * from forge_removal_requests')) return [{ id: RID, creation_id: CID, status: 'removed' }];
-			return [];
-		};
-		const got = await call(adminHandler, { body: { id: RID, action: 'remove', resolution: 'maker confirmed' } });
-		expect(got.status).toBe(200);
-		expect(deleteCreation).toHaveBeenCalledWith({ id: CID, moderator: true });
-		expect(got.body.request.status).toBe('removed');
-		expect(calls.some((c) => c.text.startsWith("update forge_removal_requests set status = 'removed'"))).toBe(true);
+	it('answers null for a request that is already closed or does not exist', async () => {
+		responder = () => [];
+		expect(await lib.dismissRemovalRequest({ id: RID, resolution: 'x', reviewedBy: 'cli:ops' })).toBeNull();
 	});
+});
 
-	it('keeps the request open when the delete fails', async () => {
-		auth.mockResolvedValue({ ok: true, actor: 'user:admin' });
-		deleteCreation.mockResolvedValue('error');
-		responder = (text) => (text.startsWith('select id, creation_id, status') ? [{ id: RID, creation_id: CID, status: 'open' }] : []);
-		const got = await call(adminHandler, { body: { id: RID, action: 'remove', resolution: 'maker confirmed' } });
-		expect(got.status).toBe(503);
-		expect(calls.some((c) => c.text.startsWith('update forge_removal_requests'))).toBe(false);
-	});
-
-	it('requires a resolution before closing', async () => {
-		auth.mockResolvedValue({ ok: true, actor: 'user:admin' });
-		const got = await call(adminHandler, { body: { id: RID, action: 'dismiss' } });
-		expect(got.status).toBe(400);
+describe('no admin HTTP surface', () => {
+	it('ships no admin endpoint that can act on removal requests', async () => {
+		const { existsSync } = await import('node:fs');
+		expect(existsSync(new URL('../api/admin/forge-removals.js', import.meta.url))).toBe(false);
 	});
 });
 

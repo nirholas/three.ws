@@ -671,8 +671,8 @@ function renderDeleted() {
 // ── request removal: for anyone who cannot delete it directly ──────────────
 //
 // The person asking is often not the one who made the model: a maker who lost
-// this browser, a rights holder, someone whose likeness it shows. Requests go
-// to /admin/forge-removals for a platform admin to act on.
+// this browser, a rights holder, someone whose likeness it shows. Operators
+// review them with `npm run forge:removals`; there is no admin page.
 
 const REMOVAL_REASONS = [
 	{ value: 'my_content', label: 'I made it and want it removed' },

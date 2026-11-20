@@ -5,11 +5,13 @@
 // owner credential). This queue is for the cases a credential cannot cover: a
 // maker who lost every credential, a rights holder whose character or artwork
 // someone else uploaded, a person whose likeness became a model. Anyone may
-// file; only a platform admin acts. Removing runs the same full delete an owner
-// gets (forgeStore.deleteCreation with the moderator grant), and the request row
-// stays behind as the audit record.
+// file. Only an operator acts, from a workstation, never through an HTTP admin
+// endpoint (there is none to attack): `npm run forge:removals` lists and
+// dismisses, `npm run forge:takedown` removes. A removal runs the same full
+// delete an owner gets (forgeStore.deleteCreation with the moderator grant), and
+// the request row stays behind as the audit record.
 //
-// Request text is stored and shown to an admin. It is never executed, never
+// Request text is stored and shown to an operator. It is never executed, never
 // fed to a model, and never treated as an instruction.
 
 import { createHash } from 'node:crypto';
@@ -101,7 +103,7 @@ export async function fileRemovalRequest({ creationId, reason, details = null, c
 		details ? `Details: ${details.slice(0, 500)}` : null,
 		creation.prompt ? `Prompt: ${String(creation.prompt).slice(0, 200)}` : null,
 		`Model: https://three.ws/m/${creationId}`,
-		'Review: https://three.ws/admin/forge-removals',
+		'Review: npm run forge:removals -- --prod-env',
 	]
 		.filter(Boolean)
 		.join('\n');
@@ -127,7 +129,7 @@ async function hideIfReportedEnough(creationId, alert) {
 	if (!hidden.length) return false;
 	await alert(
 		'Forge model hidden by reports',
-		`${REPORT_HIDE_THRESHOLD}+ distinct reporters flagged https://three.ws/m/${creationId}. It is unlisted and held for review at /api/admin/content-safety (approve) or /api/admin/forge-removals (remove).`,
+		`${REPORT_HIDE_THRESHOLD}+ distinct reporters flagged https://three.ws/m/${creationId}. It is unlisted and held for review at /api/admin/content-safety (approve), or remove it with npm run forge:takedown.`,
 		{ signature: `forge_removal:hidden:${creationId}`, severity: 'warn' },
 	);
 	return true;
@@ -188,31 +190,17 @@ export async function recordTakedown({ creationId, reason = 'other', details = n
 }
 
 /**
- * Act on a request. 'remove' deletes the model (moderator grant) and closes
- * every open request on it; a model that is already gone still closes as
- * removed. 'dismiss' closes only this request.
- * Resolves { request, outcome } or null when no such request exists.
- * `outcome` is the deleteCreation result for 'remove', 'dismissed' otherwise.
+ * Close one request without removing the model. A removal goes through
+ * `npm run forge:takedown`, which closes every open request on the model via
+ * recordTakedown. Only an open request can be dismissed.
+ * Resolves the closed row, or null when no open request has that id.
  */
-export async function resolveRemovalRequest({ id, action, resolution, reviewedBy, deleteCreation }) {
-	const [req] = await sql`select id, creation_id, status from forge_removal_requests where id = ${id} limit 1`;
-	if (!req) return null;
-	if (action === 'dismiss') {
-		const [row] = await sql`
-			update forge_removal_requests
-			set status = 'dismissed', resolution = ${resolution}, reviewed_by = ${reviewedBy}, reviewed_at = now()
-			where id = ${id}
-			returning *
-		`;
-		return { request: row, outcome: 'dismissed' };
-	}
-	const outcome = await deleteCreation({ id: req.creation_id, moderator: true });
-	if (outcome !== 'deleted' && outcome !== 'not_found') return { request: req, outcome };
-	await sql`
+export async function dismissRemovalRequest({ id, resolution, reviewedBy }) {
+	const [row] = await sql`
 		update forge_removal_requests
-		set status = 'removed', resolution = ${resolution}, reviewed_by = ${reviewedBy}, reviewed_at = now()
-		where creation_id = ${req.creation_id} and (status = 'open' or id = ${id})
+		set status = 'dismissed', resolution = ${resolution}, reviewed_by = ${reviewedBy}, reviewed_at = now()
+		where id = ${id} and status = 'open'
+		returning *
 	`;
-	const [row] = await sql`select * from forge_removal_requests where id = ${id} limit 1`;
-	return { request: row, outcome };
+	return row ?? null;
 }
