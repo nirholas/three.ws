@@ -19,18 +19,17 @@ import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { buildShape } from './shapes.js';
 import { buildEffect, buildFlow } from './effects.js';
+import { ISO_DIR as ISO_DIR_XYZ, partColor } from './plot.js';
 
 const DEG = Math.PI / 180;
 const TAU = Math.PI * 2;
 const AXIS_VEC = { x: new THREE.Vector3(1, 0, 0), y: new THREE.Vector3(0, 1, 0), z: new THREE.Vector3(0, 0, 1) };
-const ISO_DIR = new THREE.Vector3(1, 0.82, 1).normalize();
+const ISO_DIR = new THREE.Vector3(...ISO_DIR_XYZ).normalize();
 // A spec can ask for 220 parts x 96 repeats; the viewer stops building
 // instances past this so a pathological spec cannot freeze the tab.
 const MAX_INSTANCES = 2400;
 const MAX_EFFECT_INSTANCES = 96;
 const DIM = 0.12;
-
-const PALETTE = ['#4f8dff', '#ff8a3d', '#2fbf9b', '#c46cff', '#f2c14e', '#ff5d73', '#5cc8ff', '#8fd14f', '#b08968', '#9aa5b1'];
 
 const THEMES = {
 	dark: { bg: '#0b0e14', grid: '#1d2433', gridCenter: '#2a3448', accent: '#5eb0ff', ink: '#ffffff', inkMix: 0.4, fillMix: 0.42 },
@@ -50,12 +49,6 @@ export function openingSection(axis, size) {
 	const others = ['x', 'y', 'z'].filter((a) => a !== axis);
 	if (!(len > 0) || others.some((a) => !(len >= size[a] * 1.6))) return axis;
 	return ['z', 'x', 'y'].find((a) => a !== axis);
-}
-
-function hashIndex(s, n) {
-	let h = 0;
-	for (const ch of String(s)) h = (Math.imul(h, 31) + ch.charCodeAt(0)) | 0;
-	return Math.abs(h) % n;
 }
 
 function resolveTheme(pref) {
@@ -200,7 +193,7 @@ export class AnatomyViewer {
 		this.childrenOf = childrenOf;
 		const groups = [...new Set(spec.parts.map((p) => p.group).filter(Boolean))];
 		for (const p of spec.parts) {
-			const base = p.color || PALETTE[(p.group ? groups.indexOf(p.group) : hashIndex(p.id, PALETTE.length)) % PALETTE.length];
+			const base = partColor(p, groups);
 			this.parts.set(p.id, { spec: p, color: new THREE.Color(base), mats: this.makeMaterials(p), instances: [], effectAnchors: [] });
 		}
 		for (const p of childrenOf.get(null) || []) this.buildPart(p, this.root);

@@ -27,6 +27,8 @@ const ICONS = {
 	next: '<path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
 	close: '<path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
 	spin: '<path d="M20 12a8 8 0 1 1-3-6.2" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M18 3v4h-4" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+	sound: '<path d="M4 9h4l5-4v14l-5-4H4z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>',
+	soundOff: '<path d="M4 9h4l5-4v14l-5-4H4z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M17 9.5l5 5M22 9.5l-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
 	panel: '<rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M15 4v16" stroke="currentColor" stroke-width="1.6"/>',
 };
 
@@ -86,6 +88,12 @@ function paragraphs(text) {
  *   compact    start with the side panel collapsed (embeds, narrow screens)
  *   header     render the title block inside the explorer (standalone pages)
  *   onSelect   (partId|null) => void
+ *   narrate    optional async (stepIndex) => { text, source, src } that speaks
+ *              one tour step. When given, the tour gets a Listen control:
+ *              each step's clip plays, the tour advances when it ends, and
+ *              the next step is prepared while the current one plays.
+ *              source is 'grok' (shown as narrated by Grok) or 'authored'
+ *              (the step text read aloud).
  */
 export function mountAnatomy(el, specIn, opts = {}) {
 	const root = h('div', { class: 'anx', tabindex: '0', role: 'application', 'aria-label': 'Machine explorer' });
@@ -384,19 +392,23 @@ export function mountAnatomy(el, specIn, opts = {}) {
 		}
 		tourTab.hidden = false;
 		const start = h('button', { type: 'button', class: 'anx-cta', html: `${icon('tour')}<span>Start the tour</span>`, onclick: () => setStep(0) });
+		const listen = narration
+			? h('button', { type: 'button', class: 'anx-cta anx-cta-quiet', html: `${icon('sound')}<span>Listen to the tour</span>`, onclick: () => { narration.enable(true); setStep(0); } })
+			: null;
 		const ol = h('ol', { class: 'anx-steps' });
 		spec.steps.forEach((s, i) => {
 			const b = h('button', { type: 'button', class: 'anx-step', onclick: () => setStep(i) }, [h('span', { class: 'anx-stepn', text: String(i + 1) }), h('span', { text: s.title })]);
 			if (i === step) b.classList.add('is-active');
 			ol.append(h('li', {}, [b]));
 		});
-		tourPane.replaceChildren(h('div', { class: 'anx-pad' }, [spec.summary ? h('div', { class: 'anx-summary' }, [paragraphs(spec.summary)]) : null, start]), ol);
+		tourPane.replaceChildren(h('div', { class: 'anx-pad' }, [spec.summary ? h('div', { class: 'anx-summary' }, [paragraphs(spec.summary)]) : null, h('div', { class: 'anx-ctas' }, [start, listen])]), ol);
 	}
 
 	function setStep(i) {
 		if (!spec?.steps.length) return;
 		if (i < 0 || i >= spec.steps.length) {
 			step = -1;
+			narration?.stop();
 			tourCard.hidden = true;
 			viewer.setFocus(null);
 			root.classList.remove('is-touring');
@@ -413,14 +425,120 @@ export function mountAnatomy(el, specIn, opts = {}) {
 		const exit = h('button', { type: 'button', class: 'anx-btn anx-btn-sm', 'aria-label': 'Exit tour', html: icon('close'), onclick: () => setStep(-1) });
 		const dots = h('div', { class: 'anx-dots', 'aria-hidden': 'true' }, spec.steps.map((_, k) => h('span', { class: k === i ? 'is-on' : '' })));
 		tourCard.replaceChildren(
-			h('div', { class: 'anx-tour-head' }, [h('span', { class: 'anx-eyebrow', text: `Step ${i + 1} of ${spec.steps.length}` }), exit]),
+			h('div', { class: 'anx-tour-head' }, [h('span', { class: 'anx-eyebrow', text: `Step ${i + 1} of ${spec.steps.length}` }), h('div', { class: 'anx-tour-tools' }, [narration?.button, exit])]),
 			h('h2', { class: 'anx-tour-title', text: s.title }),
 			h('div', { class: 'anx-tour-body' }, [paragraphs(s.body)]),
+			narration?.caption,
 			h('div', { class: 'anx-tour-foot' }, [dots, h('div', { class: 'anx-tour-nav' }, [prev, next])]),
 		);
 		tourCard.hidden = false;
 		renderTourPane();
+		narration?.onStep(i);
 	}
+
+	// ----------------------------------------------------------- narration
+	//
+	// One <audio> element for the whole tour: after the first click the
+	// browser lets it keep playing as the tour advances on its own.
+
+	function createNarration(load) {
+		const audio = new Audio();
+		audio.preload = 'auto';
+		const clips = new Map();
+		let on = false;
+		let current = -1;
+		let token = 0;
+		const button = h('button', { type: 'button', class: 'anx-btn anx-btn-sm anx-listen', 'aria-pressed': 'false', 'aria-label': 'Listen to this step (N)', title: 'Listen (N)', html: icon('soundOff') });
+		const caption = h('div', { class: 'anx-narration', hidden: true, role: 'status' });
+		button.addEventListener('click', () => {
+			enable(!on);
+			if (on && step >= 0) play(step);
+		});
+
+		function clip(i) {
+			if (!clips.has(i)) {
+				const p = Promise.resolve(load(i));
+				p.catch(() => clips.delete(i));
+				clips.set(i, p);
+			}
+			return clips.get(i);
+		}
+
+		function setCaption(kind, text, retry) {
+			caption.hidden = !kind;
+			caption.className = `anx-narration${kind ? ` is-${kind}` : ''}`;
+			const children = [h('span', { class: 'anx-narration-dot', 'aria-hidden': 'true' }), h('span', { class: 'anx-narration-text', text })];
+			if (retry) children.push(h('button', { type: 'button', class: 'anx-linkbtn', text: 'Try again', onclick: retry }));
+			caption.replaceChildren(...children);
+		}
+
+		function enable(next) {
+			on = next;
+			button.setAttribute('aria-pressed', String(on));
+			button.innerHTML = icon(on ? 'sound' : 'soundOff');
+			button.setAttribute('aria-label', on ? 'Stop narration (N)' : 'Listen to this step (N)');
+			if (!on) {
+				token++;
+				audio.pause();
+				setCaption(null, '');
+			}
+		}
+
+		async function play(i) {
+			const mine = ++token;
+			current = i;
+			audio.pause();
+			setCaption('loading', 'Preparing the narration');
+			try {
+				const out = await clip(i);
+				if (mine !== token || !on) return;
+				setCaption('playing', out.source === 'grok' ? 'Narrated by Grok from this step\'s verified facts' : 'Reading this step aloud');
+				if (out.source === 'grok' && out.text) caption.append(h('p', { class: 'anx-narration-transcript', text: out.text }));
+				audio.src = out.src;
+				await audio.play();
+				if (i + 1 < spec.steps.length) clip(i + 1).catch(() => {});
+			} catch (err) {
+				if (mine !== token || !on) return;
+				const blocked = err?.name === 'NotAllowedError';
+				setCaption('error', blocked ? 'Your browser blocked audio. Press play to hear this step.' : err?.message || 'Narration is unavailable right now. The step text is above.', () => play(i));
+			}
+		}
+
+		audio.addEventListener('ended', () => {
+			if (!on || current !== step) return;
+			if (step + 1 < spec.steps.length) setStep(step + 1);
+			else {
+				enable(false);
+				setCaption('done', 'End of the tour');
+			}
+		});
+
+		return {
+			button,
+			caption,
+			enable,
+			toggle: () => button.click(),
+			onStep(i) {
+				if (on) play(i);
+			},
+			stop() {
+				token++;
+				audio.pause();
+				current = -1;
+			},
+			reset() {
+				clips.clear();
+			},
+			dispose() {
+				token++;
+				audio.pause();
+				audio.removeAttribute('src');
+				audio.load();
+			},
+		};
+	}
+
+	const narration = typeof opts.narrate === 'function' ? createNarration(opts.narrate) : null;
 
 	// ---------------------------------------------------------------- header
 
@@ -445,6 +563,7 @@ export function mountAnatomy(el, specIn, opts = {}) {
 		else if (k === 'l' || k === 'L') labelsBtn.click();
 		else if (k === 'r' || k === 'R') resetBtn.click();
 		else if (k === 'f' || k === 'F') toggleFullscreen();
+		else if ((k === 'n' || k === 'N') && narration && step >= 0) narration.toggle();
 		else return;
 		e.preventDefault();
 	}
@@ -457,6 +576,7 @@ export function mountAnatomy(el, specIn, opts = {}) {
 	function update(next, { progressive = false } = {}) {
 		const normalized = next?.version && Array.isArray(next.parts) && next.view ? next : normalizeSpec(next, { strict: !progressive }).spec;
 		spec = normalized;
+		narration?.reset();
 		const res = viewer.load(spec, { progressive });
 		if (!progressive) {
 			if (spec.view.explode > 0 && explodeTarget === 0) animateExplode(spec.view.explode);
@@ -487,6 +607,7 @@ export function mountAnatomy(el, specIn, opts = {}) {
 		dispose() {
 			cancelAnimationFrame(explodeRaf);
 			clearTimeout(flashTimer);
+			narration?.dispose();
 			document.removeEventListener('fullscreenchange', onFs);
 			viewer.dispose();
 			root.remove();

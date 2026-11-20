@@ -13,8 +13,14 @@
  *       Saves a spec an agent wrote itself (the anatomy skill, MCP) and
  *       returns its permalink. No model call. → { design, warnings }
  *
+ *   POST /api/anatomy { action:'narrate', id, step }
+ *       Speaks one tour step. Featured designs (verified facts) are narrated
+ *       by Grok when GROK_API_KEY is set; every other case reads the authored
+ *       step text. → { narration: { text, source:'grok'|'authored', model,
+ *       voice, audioUrl, audio, cached } }. Cached per design and step.
+ *
  *   GET  /api/anatomy?id=<uuid>               → { design }
- *   GET  /api/anatomy?list=recent[&q=][&limit=] → { designs }, newest first
+ *   GET  /api/anatomy?list=recent[&q=][&limit=] → { designs, featured }, newest first
  *
  * No mocks: when no model answers, the caller gets a designed 503, never a
  * canned machine.
@@ -26,6 +32,8 @@ import { getSessionUser } from './_lib/auth.js';
 import { AnatomyWriterError } from './_lib/anatomy/writer.js';
 import { anatomyStoreEnabled, bumpViews, listDesigns } from './_lib/anatomy/store.js';
 import { AnatomyError, MAX_SPEC_BYTES, cleanPrompt, generateDesign, loadDesign, publishDesign } from './_lib/anatomy/service.js';
+import { featuredList, isFeaturedId } from './_lib/anatomy/featured/index.js';
+import { narrateStep } from './_lib/anatomy/narrate.js';
 
 const KEEPALIVE_MS = 15_000;
 // Model text arrives a few tokens at a time; coalescing it keeps the event
@@ -43,7 +51,8 @@ export default wrap(async (req, res) => {
 	}
 	if (body.action === 'generate') return handleGenerate(req, res, body);
 	if (body.action === 'publish') return handlePublish(req, res, body);
-	return json(res, 400, { error: 'unknown_action', message: 'action must be "generate" or "publish".' });
+	if (body.action === 'narrate') return handleNarrate(req, res, body);
+	return json(res, 400, { error: 'unknown_action', message: 'action must be "generate", "publish" or "narrate".' });
 });
 
 async function handleGet(req, res) {
@@ -54,7 +63,7 @@ async function handleGet(req, res) {
 	if (id) {
 		try {
 			const design = await loadDesign(id);
-			bumpViews(id);
+			if (!design.featured) bumpViews(id);
 			return json(res, 200, { design }, { 'cache-control': 'public, max-age=15, s-maxage=60' });
 		} catch (err) {
 			return sendError(res, err, null);
@@ -62,14 +71,14 @@ async function handleGet(req, res) {
 	}
 
 	if (list !== null) {
-		const designs = await listDesigns({
-			limit: Number(url.searchParams.get('limit')) || 24,
-			q: url.searchParams.get('q') || undefined,
-		});
+		const q = url.searchParams.get('q') || undefined;
+		const designs = await listDesigns({ limit: Number(url.searchParams.get('limit')) || 24, q });
+		const needle = q ? q.toLowerCase() : null;
+		const featured = featuredList().filter((d) => !needle || `${d.title} ${d.subtitle}`.toLowerCase().includes(needle));
 		return json(
 			res,
 			200,
-			{ designs, storage: anatomyStoreEnabled() },
+			{ designs, featured, storage: anatomyStoreEnabled() },
 			{ 'cache-control': 'public, max-age=20, s-maxage=60' },
 		);
 	}
@@ -177,6 +186,25 @@ async function handlePublish(req, res, body) {
 		const payload = await publishDesign({ spec: body.spec, prompt: body.prompt, user });
 		return json(res, 201, payload);
 	} catch (err) {
+		return sendError(res, err, null);
+	}
+}
+
+async function handleNarrate(req, res, body) {
+	try {
+		const design = await loadDesign(body.id);
+		const narration = await narrateStep({
+			design,
+			step: body.step,
+			verified: isFeaturedId(design.id),
+			onMiss: async () => {
+				const rl = await limits.anatomyNarrateIp(clientIp(req));
+				if (!rl.success) throw Object.assign(new AnatomyError('rate_limited', 'Narration limit reached. The tour text is still on screen; try again in a few minutes.', 429), { rl });
+			},
+		});
+		return json(res, 200, { narration }, { 'cache-control': 'no-store' });
+	} catch (err) {
+		if (err?.rl) return rateLimited(res, err.rl, err.message);
 		return sendError(res, err, null);
 	}
 }

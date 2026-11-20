@@ -1321,6 +1321,11 @@ export const limits = {
 		}).limit('global'),
 	anatomyPublishIp: (ip) =>
 		getLimiter('anatomy:publish:ip', { limit: 60, window: '10 m', critical: true }).limit(ip),
+	// Tour narration: only a cache miss reaches this (a Grok call on featured
+	// designs plus one free Edge TTS clip); cached steps never count. A full
+	// tour is at most 14 steps, so 40 per 10 minutes covers a few tours.
+	anatomyNarrateIp: (ip) =>
+		getLimiter('anatomy:narrate:ip', { limit: 40, window: '10 m', critical: true }).limit(ip),
 	// Portal (api/portal): fetches a caller-supplied website once and builds a
 	// walkable world from it. The spend is other people's bandwidth rather than
 	// ours, which is exactly why it is capped: a build is one origin request plus

@@ -9,6 +9,7 @@ import { scanPartialSpec } from '../../../src/anatomy/stream.js';
 import { OUTPUT_RULES, SPEC_GUIDE } from './guide.js';
 import { streamSpec } from './writer.js';
 import { anatomyStoreEnabled, getDesign, newDesignId, saveDesign } from './store.js';
+import { featuredDesign } from './featured/index.js';
 
 const SITE = process.env.PUBLIC_BASE_URL || 'https://three.ws';
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -178,6 +179,9 @@ export async function publishDesign({ spec: raw, prompt = null, user = null }) {
 
 export async function loadDesign(id) {
 	if (!UUID_RE.test(String(id || ''))) throw new AnatomyError('invalid_id', 'Malformed design id.', 400);
+	// Featured designs live in the repo and load without the database.
+	const featured = featuredDesign(id);
+	if (featured) return publicDesign(featured);
 	const design = await getDesign(String(id));
 	if (!design) throw new AnatomyError('not_found', 'No machine with that id.', 404);
 	return publicDesign(design);
