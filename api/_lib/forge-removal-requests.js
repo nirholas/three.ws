@@ -21,6 +21,14 @@ import { isUuid } from './validate.js';
 export const REMOVAL_REASONS = ['my_content', 'copyright', 'likeness', 'harmful', 'other'];
 export const REMOVAL_STATUSES = ['open', 'removed', 'dismissed'];
 
+// Reasons that count toward auto-hiding a public model, and how many DISTINCT
+// reporters it takes. Hidden means unlisted and held for an admin (never deleted
+// and never private), so a coordinated pile-on can pull a model from the public
+// gallery for review but cannot erase it. The same shape as the IRL pin reports
+// (api/irl/report.js).
+export const HIDE_REASONS = ['harmful', 'likeness'];
+export const REPORT_HIDE_THRESHOLD = 3;
+
 const REASON_TITLES = {
 	my_content: 'I made it and want it removed',
 	copyright: 'It copies my character, artwork or brand',
@@ -98,7 +106,31 @@ export async function fileRemovalRequest({ creationId, reason, details = null, c
 		.filter(Boolean)
 		.join('\n');
 	await alert('Forge removal request', detail, { signature: `forge_removal:${row.id}`, severity: 'warn' });
-	return { request: row };
+	const hidden = HIDE_REASONS.includes(reason) ? await hideIfReportedEnough(creationId, alert) : false;
+	return { request: row, hidden };
+}
+
+async function hideIfReportedEnough(creationId, alert) {
+	const counted = await sql`
+		select count(distinct reporter_key)::int as n from forge_removal_requests
+		where creation_id = ${creationId} and status = 'open' and reason = any(${HIDE_REASONS})
+	`;
+	if ((Number(counted[0]?.n) || 0) < REPORT_HIDE_THRESHOLD) return false;
+	const hidden = await sql`
+		update forge_creations
+		set visibility = 'unlisted', safety_status = 'held', publish_requested_at = null,
+			safety_checked_at = now(), updated_at = now()
+		where id = ${creationId} and coalesce(visibility, 'public') = 'public'
+			and safety_status is distinct from 'blocked'
+		returning id
+	`;
+	if (!hidden.length) return false;
+	await alert(
+		'Forge model hidden by reports',
+		`${REPORT_HIDE_THRESHOLD}+ distinct reporters flagged https://three.ws/m/${creationId}. It is unlisted and held for review at /api/admin/content-safety (approve) or /api/admin/forge-removals (remove).`,
+		{ signature: `forge_removal:hidden:${creationId}`, severity: 'warn' },
+	);
+	return true;
 }
 
 /** Requests for the admin queue, newest first, with what is left of each model. */

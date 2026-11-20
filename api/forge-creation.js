@@ -128,6 +128,19 @@ export default wrap(async (req, res) => {
 			if (out.outcome === 'not_found') {
 				return json(res, 404, { error: 'not_found', message: 'Only the creator of this model can change who sees it.' });
 			}
+			if (out.outcome === 'pending') {
+				return json(res, 202, {
+					visibility: 'unlisted',
+					pending: true,
+					message: 'Your model is being checked before it goes public. It stays link-shareable meanwhile and will be listed automatically once the check passes.',
+				});
+			}
+			if (out.outcome === 'blocked') {
+				return json(res, 403, {
+					error: 'blocked_by_safety_review',
+					message: 'This model did not pass our content review, so it cannot be public or shared by link. If you think this is a mistake, tell us at https://three.ws/support and include the model link.',
+				});
+			}
 			return json(res, 503, { error: 'update_failed', message: 'Could not change visibility right now. Nothing changed; try again shortly.' });
 		}
 		const owner = await isCreationOwner({ id, ...creds });

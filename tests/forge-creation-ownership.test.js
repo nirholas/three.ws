@@ -343,7 +343,11 @@ describe('visibility at birth', () => {
 				path: 'image',
 			}),
 		);
-		expect(insertedVisibility()).toBe('public');
+		// Public waits for the content-safety screen: born unlisted, the request
+		// remembered as pending so the sweep publishes it once it clears.
+		expect(insertedVisibility()).toBe('unlisted');
+		const insert = sqlMock.mock.calls.find(([s]) => s.join(' ').includes('insert into forge_creations'));
+		expect(insert.slice(1)).toContain('pending');
 		sqlMock.mockClear();
 		await runWithCreationContext({ visibility: 'private' }, () =>
 			createCreation({ clientKey: 'client-key', prompt: 'a fox', path: 'text' }),

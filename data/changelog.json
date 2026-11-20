@@ -3,6 +3,23 @@
 	"entries": [
 		{
 			"date": "2026-11-20",
+			"title": "Public models are safety-checked before they are listed",
+			"summary": "Before a model appears in the public gallery, feeds, search or sitemaps, its prompt and preview render are screened. Clean models publish automatically; if the screen cannot answer, the model stays unlisted and is retried, then reviewed by a person. Unsafe models are kept private. Three reports for harmful content or someone's likeness also take a model out of public view for review. Nothing you generate is refused, and your own link keeps working.",
+			"tags": [
+				"security",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"title": "New 3D models start unlisted until you publish them",
+			"summary": "A model made from a text prompt used to go straight into the public gallery, feeds, search and sitemaps. Every new model you make now starts unlisted: your link works and you can share it, but it stays out of the public showcase until you choose to make it public on the model page. Uploads from your own photo already worked this way.",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-20",
 			"title": "TripoSG photo-to-3D stops failing at the background cutout",
 			"summary": "TripoSG cuts the subject out of your photo with our background-removal service before building the mesh. That service finished the cutout after answering the request, and Cloud Run gave it almost no CPU between requests, so a 20-second cutout dragged past the two minutes TripoSG waits. Its model was also downloaded on first use, and two cutouts at once could run it out of memory. The service now keeps its CPU, ships the model in its image, and has twice the memory, so photo-to-3D on TripoSG completes again. The segmentation service had the same CPU gap and is fixed too.",
 			"tags": [

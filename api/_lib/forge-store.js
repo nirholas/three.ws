@@ -43,6 +43,7 @@ import { enqueueCreationDescription, describedBlock } from './creation-descripti
 import { announceIndexNow } from './indexnow-queue.js';
 import { isIndexableCreation } from './seo-resources.js';
 import { verifyManageToken } from './forge-manage-token.js';
+import { gatePublish } from './content-safety-store.js';
 
 // Stable, non-secret salt so a leaked DB row can't be trivially reversed to the
 // raw browser-local id. The id is anonymous to begin with; this is hygiene, not
@@ -273,15 +274,21 @@ export async function createCreation({
 	// because they exist to populate the showcase. Issue #639: an uploaded
 	// original character went straight into the public gallery without its
 	// maker meaning to publish it.
-	const birthVisibility =
+	const requestedVisibility =
 		validCreationVisibility(visibility) ?? ctx?.visibility ?? (isInternal ? null : 'unlisted');
+	// A model asked to be public at birth is born unlisted with the request
+	// remembered: the content-safety sweep promotes it once its prompt and preview
+	// clear the screen (api/_lib/content-safety.js). Platform seeds are exempt.
+	const publishOnClear = requestedVisibility === 'public' && !isInternal;
+	const birthVisibility = publishOnClear ? 'unlisted' : requestedVisibility;
 	try {
 		await sql`
 			insert into forge_creations
 				(id, client_key, ip_hash, prompt, aspect, preview_image_url,
 				 replicate_job_id, text_to_image_model, views_requested, views_used,
 				 multiview, backend, tier, path, status, outcome, model_category, user_id,
-				 source_image_keys, destination, internal, source_image_urls, source, visibility)
+				 source_image_keys, destination, internal, source_image_urls, source, visibility,
+				 publish_requested_at, safety_status)
 			values
 				(${id}, ${clientKey}, ${ipHash ?? null}, ${prompt}, ${aspect ?? null},
 				 ${previewImageUrl ?? null}, ${replicateJobId ?? null},
@@ -289,7 +296,8 @@ export async function createCreation({
 				 ${typeof multiview === 'boolean' ? multiview : null}, ${backend ?? null},
 				 ${tier ?? null}, ${path ?? null}, 'generating', 'generated', ${category}, ${userId ?? null},
 				 ${sourceKeys ? JSON.stringify(sourceKeys) : null}, ${nextDestination}, ${isInternal},
-				 ${sourceUrls ? JSON.stringify(sourceUrls) : null}, ${ctx?.source ?? null}, ${birthVisibility})
+				 ${sourceUrls ? JSON.stringify(sourceUrls) : null}, ${ctx?.source ?? null}, ${birthVisibility},
+				 ${publishOnClear ? new Date().toISOString() : null}, ${publishOnClear ? 'pending' : null})
 		`;
 		// Funnel start — counts attempts so the health rollup can show how many
 		// generations began vs. completed. Best-effort; never blocks the insert.
@@ -332,7 +340,11 @@ export async function registerReconstructionCreation({
 	previewImageUrl = null,
 }) {
 	if (!forgeStoreEnabled() || !userId || !avatarId || !jobId || !glbUrl) return null;
-	const vis = ['public', 'unlisted', 'private'].includes(visibility) ? visibility : 'private';
+	const wantedVis = ['public', 'unlisted', 'private'].includes(visibility) ? visibility : 'private';
+	// Public waits for the content-safety screen like every other publish: born
+	// unlisted with the request remembered, promoted by the sweep once cleared.
+	const publishOnClear = wantedVis === 'public';
+	const vis = publishOnClear ? 'unlisted' : wantedVis;
 	const promptLine = String(prompt || 'Selfie avatar').slice(0, 500);
 	try {
 		const existing = await sql`
@@ -344,12 +356,13 @@ export async function registerReconstructionCreation({
 			insert into forge_creations
 				(id, client_key, prompt, preview_image_url, replicate_job_id,
 				 glb_key, glb_url, size_bytes, backend, path, status, outcome,
-				 model_category, user_id, visibility, avatar_id)
+				 model_category, user_id, visibility, avatar_id, publish_requested_at, safety_status)
 			values
 				(${id}, ${hashClient(`user:${userId}`)}, ${promptLine}, ${previewImageUrl},
 				 ${jobId}, ${glbKey ?? null}, ${glbUrl}, ${Number.isFinite(sizeBytes) ? sizeBytes : null},
 				 ${provider ?? null}, 'reconstruct', 'done', 'generated', 'avatar',
-				 ${userId}, ${vis}, ${avatarId})
+				 ${userId}, ${vis}, ${avatarId},
+				 ${publishOnClear ? new Date().toISOString() : null}, ${publishOnClear ? 'pending' : null})
 		`;
 		await recordGenerationEvent({ phase: 'done', backend: provider ?? 'unknown', path: 'reconstruct', source: 'reconstruct' });
 		return id;
@@ -1268,8 +1281,11 @@ export async function deleteCreation({ id, clientKey = null, userId = null, mana
 // of every list; 'private' takes the page down for everyone but the owner's
 // own stores. IndexNow hears about the change either way so a search engine
 // drops (or picks up) the page promptly.
+// Going public passes the content-safety screen first (content-safety-store.js):
+// 'pending' means it is waiting on the screen and will go public by itself once
+// cleared; 'blocked' means the screen refused it.
 // Returns { outcome: 'updated', visibility } | { outcome: 'not_found' |
-// 'invalid' | 'error' | 'unavailable' }.
+// 'invalid' | 'error' | 'unavailable' | 'pending' | 'blocked' }.
 export async function setCreationVisibility({ id, clientKey = null, userId = null, manageToken = null, moderator = false, visibility }) {
 	const next = validCreationVisibility(visibility);
 	if (!next) return { outcome: 'invalid' };
@@ -1278,9 +1294,29 @@ export async function setCreationVisibility({ id, clientKey = null, userId = nul
 	if (!cred) return { outcome: 'not_found' };
 	if (!forgeStoreEnabled()) return { outcome: 'unavailable' };
 	try {
+		// Going public is the one change the content-safety screen gates (a
+		// moderator grant is an admin override and skips it). Ownership is proven
+		// first so a stranger cannot spend screening calls on someone else's model.
+		if (next === 'public' && !moderator) {
+			const owned = await isCreationOwner({ id, clientKey, userId, manageToken });
+			if (!owned) return { outcome: 'not_found' };
+			const gate = await gatePublish(id);
+			if (!gate.allow) return { outcome: gate.outcome };
+		} else if (next === 'unlisted' && !moderator) {
+			// A blocked model stays down: it cannot be re-shared by link either.
+			const blocked = await sql`
+				select 1 from forge_creations
+				where id = ${id} and safety_status = 'blocked'
+					and (${cred.grant}
+						or (${cred.ck}::text is not null and client_key = ${cred.ck})
+						or (${cred.uid}::uuid is not null and user_id = ${cred.uid}::uuid))
+			`;
+			if (blocked.length) return { outcome: 'blocked' };
+		}
 		const rows = await sql`
 			update forge_creations
-			set visibility = ${next}, updated_at = now()
+			set visibility = ${next}, updated_at = now(),
+				publish_requested_at = null
 			where id = ${id} and status = 'done'
 				and (${cred.grant}
 					or (${cred.ck}::text is not null and client_key = ${cred.ck})
