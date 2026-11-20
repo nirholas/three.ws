@@ -1,6 +1,6 @@
 # grok-startups 08: an xAI credit usage ledger with burn-rate and expiry alerts
 
-Status 2026-11-20: code, tests and docs done. Owner steps remain: apply the production migration, set the XAI_CREDIT_* env vars, create an xAI management key, approve push and deploy. See _context/grok-startups-PROGRESS.md.
+Status 2026-11-20 (re-verified): code, tests and docs done; production migration applied; all 7 runtime api.x.ai call sites record usage. Owner steps remain: set the XAI_CREDIT_* env vars, create an xAI management key, approve push and deploy. See _context/grok-startups-PROGRESS.md.
 
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `grok-startups-` order, so it can run in parallel with all of them. Dev port: 3278.
 

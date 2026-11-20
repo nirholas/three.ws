@@ -11,3 +11,9 @@ Fifteen independent orders filed the day three.ws was admitted to Grok for Start
 Built: xai_usage table, xai-pricing, xai-usage recorder, xai-credit-health (healthz advisory), `npm run grok:usage` (--prod-env, --reconcile), docs/ops/xai-credits.md.
 Measured: 5 runtime api.x.ai call sites instrumented (llm.js, llm-tool-chain.js, chat.js, widgets/[id]/[action].js, x-search.js). 7-day spend: 0 recorded (ledger has no production rows until the migration is applied and the code deployed).
 Owner steps remaining: apply migration 20261120150000_xai_usage.sql to production, set the XAI_CREDIT_* env vars on Cloud Run, create an xAI management key for --reconcile, approve push and deploy.
+
+## 08 xai credit usage ledger: re-verification (2026-11-20)
+
+Applied 20261120150000_xai_usage.sql to production (with the two other pending additive migrations, 20261120203000_share_funnel_x_surfaces.sql and 20261120205747_mcp_probe_results.sql); `npm run db:status` shows it applied and `npm run grok:usage -- --prod-env` reads the live table.
+Measured: 7 runtime api.x.ai call sites instrumented (the 5 above plus xai-image.js and xai-video.js from sibling orders, both already calling recordXaiUsage). 7-day production spend: $0.00 (recording code not yet deployed). scripts/xai-mcp-e2e.mjs is a manual smoke test with no DB and stays unrecorded; --reconcile drift covers it.
+Owner steps remaining: set the XAI_CREDIT_* env vars on Cloud Run, create an xAI management key for --reconcile, approve push and deploy.
