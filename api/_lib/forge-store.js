@@ -1385,7 +1385,10 @@ export async function isCreationOwner({ id, clientKey = null, userId = null, man
 // share flow: a recipient who didn't forge the model still gets to view it.
 // Only returns finished, durably-stored rows — an in-flight or failed creation
 // has no public artifact to show. Returns null when missing or store-disabled.
-export async function getPublicCreation({ id, voterKey = null }) {
+// `includePrivate` also returns a private row; only pass it once the caller is
+// proven to be the owner, so the maker can still open the page to publish or
+// delete it.
+export async function getPublicCreation({ id, voterKey = null, includePrivate = false }) {
 	if (!forgeStoreEnabled() || !id) return null;
 	try {
 		const rows = await sql`
@@ -1422,7 +1425,7 @@ export async function getPublicCreation({ id, voterKey = null }) {
 			-- has graded yet, and the page has a state for that.
 			left join sim_readiness_grades g on g.creation_id = fc.id
 			where fc.id = ${id} and fc.status = 'done' and fc.glb_url is not null
-				and (fc.visibility is null or fc.visibility in ('public', 'unlisted'))
+				and (${includePrivate} or fc.visibility is null or fc.visibility in ('public', 'unlisted'))
 			limit 1
 		`;
 		const r = rows[0];

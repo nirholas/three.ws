@@ -138,6 +138,33 @@ describe('GET /api/forge-creation owner flag', () => {
 		expect(owner).toHaveBeenCalledWith({ id: ID, clientKey: null, userId: null, manageToken: 'fm1.abc.def' });
 	});
 
+	// Making a model private must not lock its maker out: they still need the
+	// page to make it public again or delete it.
+	it('serves a private model to its owner, uncached, so they can manage it', async () => {
+		publicCreation.mockImplementation(async ({ includePrivate }) =>
+			includePrivate ? { id: ID, glb_url: 'https://three.ws/cdn/x.glb', visibility: 'private' } : null,
+		);
+		owner.mockResolvedValue(true);
+		const got = await call('GET', { headers: { 'x-forge-client': 'cid-1' } });
+		expect(got.status).toBe(200);
+		expect(got.body.creation.visibility).toBe('private');
+		expect(got.body.creation.is_owner).toBe(true);
+		expect(got.headers['cache-control']).toBe('private, no-store');
+	});
+
+	it('still answers 404 for a private model to anyone but its owner', async () => {
+		publicCreation.mockImplementation(async ({ includePrivate }) =>
+			includePrivate ? { id: ID, glb_url: 'https://three.ws/cdn/x.glb', visibility: 'private' } : null,
+		);
+		owner.mockResolvedValue(false);
+		const got = await call('GET', { headers: { 'x-forge-client': 'someone-else' } });
+		expect(got.status).toBe(404);
+		expect(got.body.creation).toBeNull();
+		const anon = await call('GET');
+		expect(anon.status).toBe(404);
+		expect(publicCreation).not.toHaveBeenCalledWith(expect.objectContaining({ includePrivate: true }));
+	});
+
 	it('never treats the anonymous public read as an owner, and skips the ownership query', async () => {
 		publicCreation.mockResolvedValue({ id: ID, glb_url: 'https://three.ws/cdn/x.glb' });
 		const got = await call('GET');

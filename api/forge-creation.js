@@ -171,18 +171,29 @@ export default wrap(async (req, res) => {
 	const clientHeader = Array.isArray(rawClient) ? rawClient[0] : rawClient;
 	const voterKey = clientHeader ? hashClient(clientHeader) : null;
 
-	const creation = await getPublicCreation({ id, voterKey });
-	if (!creation) {
-		return json(res, 404, { enabled: true, creation: null });
-	}
-
 	// Whether to show the owner's tag, visibility and delete controls. Only
 	// resolved when the caller carries an identity at all, so the anonymous
 	// public read stays one query.
 	const creds = await ownerCredentials(req, res, { lazySession: true });
-	const isOwner = creds.clientKey || creds.userId || creds.manageToken ? await isCreationOwner({ id, ...creds }) : false;
+	const hasCreds = Boolean(creds.clientKey || creds.userId || creds.manageToken);
+
+	let creation = await getPublicCreation({ id, voterKey });
+	let isOwner = creation && hasCreds ? await isCreationOwner({ id, ...creds }) : false;
+	// A private model is invisible to everyone but its maker, who still needs
+	// the page to publish it again or delete it. Ownership is proven before the
+	// private row is read, and that answer is never cached.
+	let ownerOnly = false;
+	if (!creation && hasCreds && (await isCreationOwner({ id, ...creds }))) {
+		creation = await getPublicCreation({ id, voterKey, includePrivate: true });
+		isOwner = Boolean(creation);
+		ownerOnly = isOwner;
+	}
+	if (!creation) {
+		return json(res, 404, { enabled: true, creation: null });
+	}
 	creation.can_edit_tags = isOwner;
 	creation.is_owner = isOwner;
+	const headers = ownerOnly || creation.visibility === 'private' ? { 'cache-control': 'private, no-store' } : undefined;
 
 	if (url.searchParams.get('view') === '1') {
 		// Deliberately not awaited past the increment failing soft: an uncounted
