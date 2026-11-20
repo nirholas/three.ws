@@ -3,10 +3,10 @@
 // forever, only the request timeout would stop it. These stop at the cap and
 // cancel the stream.
 
-// Read at most `maxBytes` and return them as UTF-8 text. The rest of the body is
+// Read at most `maxBytes` and return them as one Buffer. The rest of the body is
 // discarded (stream cancelled). `truncated` is true when bytes were left unread.
-export async function readTextCapped(res, maxBytes) {
-	if (!res.body) return { text: '', truncated: false };
+export async function readBytesCapped(res, maxBytes) {
+	if (!res.body) return { bytes: Buffer.alloc(0), truncated: false };
 	const reader = res.body.getReader();
 	const chunks = [];
 	let total = 0;
@@ -32,5 +32,12 @@ export async function readTextCapped(res, maxBytes) {
 	} finally {
 		await reader.cancel().catch(() => {});
 	}
-	return { text: Buffer.concat(chunks).toString('utf8'), truncated };
+	return { bytes: Buffer.concat(chunks), truncated };
+}
+
+// Read at most `maxBytes` and return them as UTF-8 text. The rest of the body is
+// discarded (stream cancelled). `truncated` is true when bytes were left unread.
+export async function readTextCapped(res, maxBytes) {
+	const { bytes, truncated } = await readBytesCapped(res, maxBytes);
+	return { text: bytes.toString('utf8'), truncated };
 }
