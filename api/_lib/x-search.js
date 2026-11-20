@@ -28,6 +28,7 @@
 import { fetchUpstream } from './upstream-fetch.js';
 import { cacheGet, cacheSet } from './cache.js';
 import { GROK_DEFAULT_MODEL } from './chat-models.js';
+import { recordXaiUsage } from './xai-usage.js';
 
 const TOKEN_URL = 'https://api.twitter.com/oauth2/token';
 const SEARCH_URL = 'https://api.twitter.com/2/tweets/search/recent';
@@ -418,7 +419,7 @@ export function buildXaiSearchRequest(mint, { sinceIso = null, maxResults = 25, 
 	};
 }
 
-async function searchViaXai(mint, { sinceIso, maxResults, env, fetchImpl, now }) {
+async function searchViaXai(mint, { sinceIso, maxResults, env, fetchImpl, now, recordUsage = recordXaiUsage }) {
 	const key = xaiKey(env);
 	if (!key) throw new XSearchUnavailable('not_configured', 'xAI X search is not configured');
 	const cap = xaiDailyCap(env);
@@ -434,7 +435,9 @@ async function searchViaXai(mint, { sinceIso, maxResults, env, fetchImpl, now })
 	if (res.status === 429) throw new XSearchUnavailable('rate_limited', 'xAI X search rate limit reached');
 	if (res.status === 401 || res.status === 403) throw new XSearchUnavailable('auth_failed', `xAI rejected the API key (HTTP ${res.status})`);
 	if (!res.ok) throw new XSearchUnavailable('upstream_error', `xAI X search returned HTTP ${res.status}`);
-	return parseXaiSearchResponse(await res.json(), { mint });
+	const body = await res.json();
+	recordUsage({ lane: 'other', model: request.model, response: body, meta: { tool: 'x_search' } });
+	return parseXaiSearchResponse(body, { mint });
 }
 
 /**
@@ -447,7 +450,7 @@ async function searchViaXai(mint, { sinceIso, maxResults, env, fetchImpl, now })
  * @returns {Promise<{ posts: Array, rung: 'bearer'|'xai', latency_ms: number }>}
  */
 export async function searchMintPostsDetailed(mint, opts = {}) {
-	const { sinceIso = null, maxResults = 25, env = process.env, fetchImpl = fetchUpstream, now = Date.now() } = opts;
+	const { sinceIso = null, maxResults = 25, env = process.env, fetchImpl = fetchUpstream, now = Date.now(), recordUsage } = opts;
 	const day = utcDay(now);
 	let started = Date.now();
 	try {
@@ -460,7 +463,7 @@ export async function searchMintPostsDetailed(mint, opts = {}) {
 		if (!(err instanceof XSearchUnavailable) || !xaiKey(env)) throw err;
 		started = Date.now();
 		try {
-			const posts = await searchViaXai(mint, { sinceIso, maxResults, env, fetchImpl, now });
+			const posts = await searchViaXai(mint, { sinceIso, maxResults, env, fetchImpl, now, recordUsage });
 			const latency_ms = Date.now() - started;
 			logServed('xai', latency_ms, { posts: posts.length, bearer_failure: err.reason });
 			return { posts, rung: 'xai', latency_ms };

@@ -46,6 +46,7 @@
 import { env } from './env.js';
 import { recordEvent } from './usage.js';
 import { costMicroUsd } from './llm-pricing.js';
+import { recordXaiUsage, isHostXaiKey } from './xai-usage.js';
 import { OPENROUTER_ATTRIBUTION_HEADERS } from './openrouter-attribution.js';
 import { sql } from './db.js';
 import { phiConfig, phiProvider, phiRoutesTask, PHI_STALL_COOLDOWN_MS } from './phi-lane.js';
@@ -1182,7 +1183,7 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 		if (!text) {
 			// 200 but no usable content — fail over, keeping the result as the
 			// last-resort return value if nothing better comes along.
-			if (!lastEmpty) lastEmpty = { text: '', provider: p.name, model: p.model, usage, raw: data };
+			if (!lastEmpty) lastEmpty = { text: '', provider: p.name, model: p.model, key: p.key, usage, raw: data };
 			lastErr = Object.assign(new Error(`${p.name} returned an empty completion`), { status: 502, code: 'empty_completion' });
 			attempts.push({ provider: p.name, ms: Date.now() - startedAt, error: 'empty completion' });
 			continue;
@@ -1198,7 +1199,7 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 		COOLDOWNS.delete(rungKey(p));
 		const phiMiss = p.name !== 'phi' && attempts.find((a) => a.provider === 'phi');
 		if (phiMiss) console.warn(`[llm] phi lane fell back to ${p.name}: ${phiMiss.error || phiMiss.skipped}`);
-		recordLlmSpend(p, usage, Date.now() - startedAt, track);
+		recordLlmSpend(p, usage, Date.now() - startedAt, track, data);
 		return {
 			text,
 			provider: p.name,
@@ -1210,7 +1211,7 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 	// Nothing produced usable text. Prefer an empty-but-valid 200 over throwing;
 	// only throw when no provider even returned a parseable success.
 	if (lastEmpty) {
-		recordLlmSpend({ name: lastEmpty.provider, model: lastEmpty.model }, lastEmpty.usage, 0, track);
+		recordLlmSpend({ name: lastEmpty.provider, model: lastEmpty.model, key: lastEmpty.key }, lastEmpty.usage, 0, track, lastEmpty.raw);
 		return lastEmpty;
 	}
 	if (attempts.length) {
@@ -1227,7 +1228,10 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 // An UNKNOWN cost (null) is recorded as null and logged, never coerced to 0: a
 // spending lane that reports $0 is indistinguishable from a free one on the
 // dashboard, which is exactly how the OpenRouter credit burn stayed invisible.
-function recordLlmSpend(provider, usage, latencyMs, track) {
+function recordLlmSpend(provider, usage, latencyMs, track, raw = null) {
+	if (provider.name === 'grok' && isHostXaiKey(provider.key)) {
+		recordXaiUsage({ lane: 'chat', model: provider.model, response: raw, accountId: track?.userId ?? null, meta: { tool: track?.tool ?? null } });
+	}
 	const input = usage?.input ?? 0;
 	const output = usage?.output ?? 0;
 	// Prompt-cache tokens are reported separately from `input` (which is the

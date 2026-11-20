@@ -29,6 +29,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.j
 import { cors, json, method, readJson, wrap, error, rateLimited } from './_lib/http.js';
 import { parse } from './_lib/validate.js';
 import { recordEvent } from './_lib/usage.js';
+import { recordXaiUsage } from './_lib/xai-usage.js';
 import { trackAgentOwnerVisit } from './_lib/retention.js';
 import { OPENROUTER_ATTRIBUTION_HEADERS } from './_lib/openrouter-attribution.js';
 import { costMicroUsd } from './_lib/llm-pricing.js';
@@ -1383,6 +1384,15 @@ export default wrap(async (req, res) => {
 	if (chatCost === null) {
 		console.warn(`[chat:${meterProvider}] unpriced spending lane ${meterProvider}/${route.model}, recording cost as unknown; add it to llm-pricing.js`);
 	}
+	if (route.name === 'grok' && route.usingHostKey) {
+		recordXaiUsage({
+			lane: 'chat',
+			model: route.model,
+			usage: result.rawUsage ?? { prompt_tokens: result.inputTokens, completion_tokens: result.outputTokens },
+			accountId: auth?.userId ?? null,
+			meta: { surface: 'chat' },
+		});
+	}
 	recordEvent({
 		userId: auth?.userId ?? null,
 		apiKeyId: auth?.apiKeyId,
@@ -2273,6 +2283,7 @@ async function streamOpenAI(upstream, sendSSE, { signal } = {}) {
 	const toolBuf = {};
 	let inputTokens = 0;
 	let outputTokens = 0;
+	let rawUsage = null;
 
 	try {
 		while (true) {
@@ -2307,13 +2318,14 @@ async function streamOpenAI(upstream, sendSSE, { signal } = {}) {
 					}
 				}
 				if (evt.usage) {
+					rawUsage = evt.usage;
 					inputTokens = evt.usage.prompt_tokens ?? inputTokens;
 					outputTokens = evt.usage.completion_tokens ?? outputTokens;
 				}
 			}
 		}
 	} catch (err) {
-		return { error: err, reply, actions, toolCalls, inputTokens, outputTokens };
+		return { error: err, reply, actions, toolCalls, inputTokens, outputTokens, rawUsage };
 	}
 
 	for (const slot of Object.values(toolBuf)) {
@@ -2323,7 +2335,7 @@ async function streamOpenAI(upstream, sendSSE, { signal } = {}) {
 		if (action) actions.push(action);
 	}
 
-	return { reply, actions, toolCalls, inputTokens, outputTokens };
+	return { reply, actions, toolCalls, inputTokens, outputTokens, rawUsage };
 }
 
 /**

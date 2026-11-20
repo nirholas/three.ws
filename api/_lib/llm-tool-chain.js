@@ -10,6 +10,7 @@
 // handles them all.
 
 import { env } from './env.js';
+import { recordXaiUsage, isHostXaiKey } from './xai-usage.js';
 import { DEFAULT_FREE_MODEL, MODEL_CATALOG, resolveModelId } from './chat-models.js';
 import { OPENROUTER_ATTRIBUTION_HEADERS } from './openrouter-attribution.js';
 import {
@@ -172,6 +173,7 @@ export async function streamRound(provider, { messages, tools, onContent, temper
 	let content = '';
 	const toolCalls = []; // index → { id, name, args }
 	let usage = null;
+	let rawUsage = null;
 	for (;;) {
 		const { value, done } = await reader.read();
 		if (done) break;
@@ -186,7 +188,10 @@ export async function streamRound(provider, { messages, tools, onContent, temper
 			let evt;
 			try { evt = JSON.parse(payload); } catch { continue; }
 			const u = evt.usage || evt.x_groq?.usage;
-			if (u && typeof u === 'object') usage = readUsage(u);
+			if (u && typeof u === 'object') {
+				usage = readUsage(u);
+				rawUsage = u;
+			}
 			const delta = evt.choices?.[0]?.delta;
 			if (!delta) continue;
 			if (delta.content) { content += delta.content; emit?.(delta.content); }
@@ -200,6 +205,9 @@ export async function streamRound(provider, { messages, tools, onContent, temper
 				}
 			}
 		}
+	}
+	if (baseLane(provider.name) === 'grok' && isHostXaiKey(provider.key) && rawUsage) {
+		recordXaiUsage({ lane: 'chat', model: provider.model, usage: rawUsage, meta: { surface: 'tool-chain' } });
 	}
 	const round = { content, toolCalls: toolCalls.filter(Boolean), usage };
 	if (!toolNames) return round;

@@ -618,6 +618,32 @@ export const env = {
 		return opt('GROK_API_KEY') || opt('XAI_API_KEY');
 	},
 
+	// xAI startups credit grant (see docs/ops/xai-credits.md). Values live on the
+	// Cloud Run service only, never in git. XAI_CREDIT_GRANT_USD is the total
+	// grant, XAI_CREDIT_ISSUED_AT the ISO date the first tranche landed (expiry is
+	// six months later), XAI_CREDIT_SECOND_TRANCHE_AT the optional date the 80%
+	// tranche was released, XAI_DAILY_SPEND_CAP_USD the 24 hour alert ceiling.
+	get XAI_CREDIT_GRANT_USD() {
+		return opt('XAI_CREDIT_GRANT_USD');
+	},
+	get XAI_CREDIT_ISSUED_AT() {
+		return opt('XAI_CREDIT_ISSUED_AT');
+	},
+	get XAI_CREDIT_SECOND_TRANCHE_AT() {
+		return opt('XAI_CREDIT_SECOND_TRANCHE_AT');
+	},
+	get XAI_DAILY_SPEND_CAP_USD() {
+		return opt('XAI_DAILY_SPEND_CAP_USD');
+	},
+	// xAI management key + team id for `npm run grok:usage -- --reconcile`
+	// (management-api.x.ai billing). Operator CLI only; the server never reads them.
+	get XAI_MANAGEMENT_KEY() {
+		return opt('XAI_MANAGEMENT_KEY');
+	},
+	get XAI_TEAM_ID() {
+		return opt('XAI_TEAM_ID');
+	},
+
 	// Cerebras API key (cloud.cerebras.ai) — free-tier OpenAI-compatible Llama
 	// 3.3 70B inference, extremely fast. Optional rung in the shared LLM chain
 	// (api/_lib/llm.js); when unset the chain simply skips it.

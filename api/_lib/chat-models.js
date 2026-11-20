@@ -64,6 +64,8 @@ import { isFreeModelId } from './openrouter-free.js';
 //   reasoningEfforts accepted `reasoning_effort` values ([] when not settable)
 //   price            [input, output] USD per 1M tokens below the 200k
 //                    long-context threshold (metered by llm-pricing.js)
+//   cachedInputPrice USD per 1M cached prompt tokens below the 200k threshold
+//                    (metered by xai-pricing.js; billed 2x at or above 200k)
 //   openrouterModel  the OpenRouter mirror id, or null when there is none
 //   chatCompletions  false when the model only works through the Responses API
 //   menu             offered in model menus; a live model left out of menus
@@ -71,6 +73,13 @@ import { isFreeModelId } from './openrouter-free.js';
 
 export const XAI_API_BASE = 'https://api.x.ai/v1';
 export const XAI_CHAT_COMPLETIONS_URL = `${XAI_API_BASE}/chat/completions`;
+
+// Grok Imagine image generation (POST /v1/images/generations). Image 2.0 is the
+// current model and the redirect target of the retired grok-imagine-image-quality
+// slug (docs.x.ai/developers/migration/imagine-image-quality-nov-2). Read by
+// api/_lib/xai-image.js, the forge reference-image lane's xAI provider.
+export const XAI_IMAGE_GENERATIONS_URL = `${XAI_API_BASE}/images/generations`;
+export const XAI_IMAGINE_IMAGE_MODEL = 'grok-imagine-image-2.0';
 
 const EFFORTS_FLAGSHIP = Object.freeze(['low', 'medium', 'high', 'xhigh']);
 
@@ -86,6 +95,7 @@ export const GROK_MODELS = Object.freeze([
 		reasoning: true,
 		reasoningEfforts: EFFORTS_FLAGSHIP,
 		price: [2, 6],
+		cachedInputPrice: 0.5,
 		openrouterModel: 'x-ai/grok-4.7',
 		chatCompletions: true,
 		menu: true,
@@ -101,6 +111,7 @@ export const GROK_MODELS = Object.freeze([
 		reasoning: true,
 		reasoningEfforts: EFFORTS_FLAGSHIP,
 		price: [2, 6],
+		cachedInputPrice: 0.5,
 		openrouterModel: 'x-ai/grok-4.6',
 		chatCompletions: true,
 		menu: false,
@@ -117,6 +128,7 @@ export const GROK_MODELS = Object.freeze([
 		reasoning: true,
 		reasoningEfforts: EFFORTS_FLAGSHIP,
 		price: [2, 6],
+		cachedInputPrice: 0.3,
 		openrouterModel: 'x-ai/grok-4.5',
 		chatCompletions: true,
 		menu: false,
@@ -133,6 +145,7 @@ export const GROK_MODELS = Object.freeze([
 		reasoning: true,
 		reasoningEfforts: Object.freeze(['none', 'low', 'medium', 'high', 'xhigh']),
 		price: [1.25, 2.5],
+		cachedInputPrice: 0.2,
 		openrouterModel: 'x-ai/grok-4.3',
 		chatCompletions: true,
 		menu: true,
@@ -148,6 +161,7 @@ export const GROK_MODELS = Object.freeze([
 		reasoning: false,
 		reasoningEfforts: Object.freeze([]),
 		price: [1.25, 2.5],
+		cachedInputPrice: 0.2,
 		openrouterModel: null,
 		chatCompletions: true,
 		menu: true,
@@ -163,6 +177,7 @@ export const GROK_MODELS = Object.freeze([
 		reasoning: true,
 		reasoningEfforts: Object.freeze([]),
 		price: [1.25, 2.5],
+		cachedInputPrice: 0.2,
 		openrouterModel: 'x-ai/grok-4.20',
 		chatCompletions: true,
 		menu: false,
@@ -179,6 +194,7 @@ export const GROK_MODELS = Object.freeze([
 		reasoning: true,
 		reasoningEfforts: Object.freeze([]),
 		price: [1, 2],
+		cachedInputPrice: 0.2,
 		openrouterModel: 'x-ai/grok-build-0.1',
 		chatCompletions: true,
 		menu: true,
@@ -197,6 +213,7 @@ export const GROK_MODELS = Object.freeze([
 		reasoning: true,
 		reasoningEfforts: Object.freeze([]),
 		price: [1.25, 2.5],
+		cachedInputPrice: 0.2,
 		openrouterModel: null,
 		chatCompletions: false,
 		menu: false,
@@ -244,6 +261,22 @@ export const GROK_RETIRED_ALIASES = Object.freeze({
 export const GROK_RETIRED_PRICES = Object.freeze({
 	'grok-4.1-fast': Object.freeze([0.2, 0.5]),
 });
+
+/**
+ * xAI image, video and voice models and their list prices, read from
+ * https://docs.x.ai/developers/models on 2026-11-20. `unit` says what `price`
+ * is per: an image, a second of video, a minute of speech-to-speech. Metered
+ * by xai-pricing.js into the xai_usage ledger.
+ */
+export const XAI_MEDIA_MODELS = Object.freeze([
+	{ id: 'grok-imagine-image', kind: 'image', unit: 'image', price: 0.02 },
+	{ id: 'grok-imagine-image-2.0', kind: 'image', unit: 'image', price: 0.04 },
+	{ id: 'grok-imagine-video', kind: 'video', unit: 'second', price: 0.05 },
+	{ id: 'grok-imagine-video-1.5', kind: 'video', unit: 'second', price: 0.08 },
+	{ id: 'grok-imagine-video-1.5-lite', kind: 'video', unit: 'second', price: 0.02 },
+	{ id: 'grok-voice-3.0', kind: 'voice', unit: 'minute', price: 0.08 },
+	{ id: 'grok-voice-2.0', kind: 'voice', unit: 'minute', price: 0.08 },
+].map((m) => Object.freeze(m)));
 
 /** Default Grok for a caller who brought their own xAI key: the flagship. */
 export const GROK_DEFAULT_MODEL = 'grok-4.7';

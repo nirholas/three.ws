@@ -17,6 +17,7 @@ import { csvCell } from '../../_lib/csv.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { captureException } from '../../_lib/sentry.js';
 import { isDemoWidgetId, getDemoWidget } from '../_demo-fixtures.js';
+import { recordXaiUsage, isHostXaiKey } from '../../_lib/xai-usage.js';
 import { decorate } from '../index.js';
 import { PROVIDER_MODEL_DEFAULTS, DEFAULT_PROVIDER_ORDER, MODEL_CATALOG, ANON_PROVIDER_LIST, anonModelAllowed, PER_CALL_TIMEOUT_MS, modelRejectsSampling, modelThinksByDefault } from '../../_lib/chat-models.js';
 import { redactPii } from '../../_lib/pii.js';
@@ -628,6 +629,9 @@ async function callOpenAICompatible({
 		throw Object.assign(new Error(`${route.name} upstream ${upstream.status}`), { status: upstream.status });
 	}
 	const data = await upstream.json();
+	if (route.name === 'grok' && isHostXaiKey(route.apiKey)) {
+		recordXaiUsage({ lane: 'chat', model: route.model, response: data, meta: { surface: 'widget-chat' } });
+	}
 	return normalizeOpenAI(data, allowedSkills);
 }
 

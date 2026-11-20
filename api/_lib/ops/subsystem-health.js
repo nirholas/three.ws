@@ -48,6 +48,7 @@ import { gatherObjectStorageHealth } from './object-storage-health.js';
 import { gatherIndexLagHealth } from './index-lag.js';
 import { gatherHomeHealth } from './home-health.js';
 import { gatherMentionBotHealth } from '../x-mention-health.js';
+import { gatherXaiCreditHealth } from '../xai-credit-health.js';
 import { describeSolvency } from '../sniper-solvency.js';
 import { isWorldRetired, WORLD_RETIRED_DETAIL, WORLD_RETIRED_ON } from '../world-retirement.js';
 import { treasuryWalletOrNull, rewardsWalletOrNull } from '../token/config.js';
@@ -919,6 +920,9 @@ export async function gatherSubsystemHealth({ probeDb = true } = {}) {
 		// X @-mention reply bot. Reads x_mention_events only (webhook + any future
 		// poller both write through it), so it shares the probeDb gate.
 		probeDb ? gatherMentionBotHealth() : Promise.resolve({ name: 'x_mention_bot', label: 'X mention bot', status: 'unknown', detail: 'mention bot read skipped' }),
+		// xAI startups credit: burn, expiry and daily cap from the xai_usage ledger.
+		// Advisory: an alert here degrades the roll-up but never takes the platform down.
+		probeDb ? gatherXaiCreditHealth() : Promise.resolve({ name: 'xai_credit', label: 'xAI startups credit', advisory: true, status: 'unknown', detail: 'probe skipped' }),
 		// Advisory: the Agora citizens daemon (devnet toy economy). See checkAgoraEconomy.
 		probeDb ? checkAgoraEconomy() : Promise.resolve({ name: 'agora_economy', label: 'Agora economy (citizens daemon, devnet)', advisory: true, status: 'unknown', detail: 'probe skipped' }),
 	];
