@@ -64,6 +64,8 @@ export function normalizeXaiUsage(u) {
 	};
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** Build the ledger row for one call. PURE. */
 export function buildXaiUsageRow({ lane = 'other', model, response = null, usage = null, units = 0, accountId = null, requestId = null, meta = {} }) {
 	const u = normalizeXaiUsage(usage ?? response?.usage);
@@ -82,8 +84,10 @@ export function buildXaiUsageRow({ lane = 'other', model, response = null, usage
 		units: num(units),
 		cost_usd_micro: u.costMicro ?? fromTable ?? 0,
 		cost_source: u.costMicro === null ? 'price_table' : 'api',
-		account_id: accountId,
-		meta,
+		// account_id is a uuid column: any other caller id rides in meta so the
+		// insert never fails and the row is never dropped over an id format.
+		account_id: UUID_RE.test(String(accountId ?? '')) ? accountId : null,
+		meta: accountId != null && !UUID_RE.test(String(accountId)) ? { ...meta, account: String(accountId) } : meta,
 	};
 }
 

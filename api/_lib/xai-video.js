@@ -22,6 +22,7 @@ import { readBytesCapped, readTextCapped } from './read-capped.js';
 import { fetchSafePublicUrl } from './ssrf-guard.js';
 import { headObject, putObject, cdnUrl } from './r2.js';
 import { recordEvent } from './usage.js';
+import { recordXaiUsage } from './xai-usage.js';
 
 export const XAI_VIDEO_CLIENT_ID = 'xai-video';
 export const HERO_CLIP_KEY_PREFIX = 'hero-clips/';
@@ -332,6 +333,14 @@ export async function storeVideo({ requestId, videoUrl, tier, seconds, metadata 
 		costMicroUsd: clipCostMicroUsd(tier, seconds),
 		userId: usage.userId ?? null,
 		meta: { request_id: requestId, seconds: Number(seconds), ...(usage.meta || {}) },
+	});
+	recordXaiUsage({
+		lane: 'video',
+		model: model.id,
+		units: Number(seconds),
+		requestId,
+		accountId: usage.userId ?? null,
+		meta: { tool: 'hero_clip', ...(usage.meta || {}) },
 	});
 	return { clipUrl: cdnUrl(key), key, bytes: bytes.length, stored: true };
 }

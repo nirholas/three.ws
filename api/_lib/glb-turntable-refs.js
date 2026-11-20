@@ -104,6 +104,38 @@ export async function renderTurntableRefs({
 	return { refs, totalMs, msPerAngle: Math.round(totalMs / refs.length) };
 }
 
+// The clip's first frame is wide, because image-to-video output always takes
+// the aspect ratio of its first frame and a 16:9 clip is what plays inline in a
+// feed. 1280x720 is the largest still xAI takes for video.
+export const FIRST_FRAME_WIDTH = 1280;
+export const FIRST_FRAME_HEIGHT = 720;
+export const FIRST_FRAME_ANGLE = Object.freeze({ azimuth: 0, elevation: LOW_RING_ELEVATION });
+
+/**
+ * Render the front view at 16:9, the frame a hero clip opens on.
+ * @returns {Promise<{png:Buffer, width:number, height:number, ms:number}>}
+ */
+export async function renderFirstFrame({
+	glbUrl,
+	width = FIRST_FRAME_WIDTH,
+	height = FIRST_FRAME_HEIGHT,
+	background = REF_BACKGROUND,
+} = {}) {
+	if (!glbUrl || typeof glbUrl !== 'string') {
+		throw Object.assign(new Error('glbUrl required'), { status: 400, code: 'invalid_args' });
+	}
+	const t0 = Date.now();
+	const png = await renderGlbToPng({
+		glbUrl,
+		width,
+		height,
+		background,
+		yaw: FIRST_FRAME_ANGLE.azimuth,
+		pitch: FIRST_FRAME_ANGLE.elevation,
+	});
+	return { png, width, height, ms: Date.now() - t0 };
+}
+
 /** A PNG buffer as a base64 data URI, the inline form xAI accepts for images. */
 export function pngDataUri(png) {
 	return `data:image/png;base64,${Buffer.from(png).toString('base64')}`;
@@ -113,11 +145,19 @@ export function pngDataUri(png) {
  * The public render URL for one angle, so a page can show the strip without a
  * second copy of the bytes: /api/render/glb is CDN-cached per query string.
  */
-export function refRenderUrl({ glbUrl, azimuth, elevation, size = DEFAULT_REF_SIZE, background = REF_BACKGROUND }) {
+export function refRenderUrl({
+	glbUrl,
+	azimuth,
+	elevation,
+	size = DEFAULT_REF_SIZE,
+	width = size,
+	height = size,
+	background = REF_BACKGROUND,
+}) {
 	const q = new URLSearchParams({
 		glbUrl,
-		width: String(size),
-		height: String(size),
+		width: String(width),
+		height: String(height),
 		background,
 		azimuth: String(azimuth),
 		elevation: String(elevation),
