@@ -10,6 +10,16 @@
 		},
 		{
 			"date": "2026-11-20",
+			"title": "Ask @grok about any model, avatar or machine, straight from its page",
+			"summary": "Every 3D model, avatar and anatomy cutaway now has two X actions in its share menu: Share on X, and Ask @grok about it, which posts the link with one line about the thing and a question for Grok to answer in the replies. The model page's Share button now opens that full menu instead of only copying the link. Posts are fitted to X's real length rule, so a long title or a Japanese or Chinese prompt is trimmed before X can refuse it, and the link is never cut. Every link unfurls as a large card showing the model, avatar or machine itself. On a browser without 3D graphics, an anatomy page now shows a still drawing of the machine instead of an error, and sharing still works.",
+			"tags": [
+				"feature",
+				"fix"
+			],
+			"link": "/anatomy"
+		},
+		{
+			"date": "2026-11-20",
 			"title": "Four Grok Bot task templates you can paste as they stand",
 			"summary": "The Grok page now has four ready task templates for Grok Bot: a home-office scene kit pulled from the free catalog, a weekly game-jam prop pack that only generates what the catalog is missing, a product photo turned into a 3D model and checked from two angles, and a rigged mascot avatar with a pose studio link. Each card has a one-click copy of the exact prompt, the tools it calls, what it returns and how long it took when we ran it against production, from 3 seconds for the catalog kit to about 7.5 minutes for the rigged mascot. The Grok Bot guide gains the same templates, how to share one as a Grok Bot template link, and a step-by-step test path for anyone reviewing the connector: create a free account, then three asks that finished in under a second, about three minutes and about fifteen seconds.",
 			"tags": ["feature", "docs"],

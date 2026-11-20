@@ -7,12 +7,28 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Share to X and Ask @grok</title>
+			<link>https://three.ws/docs/share-to-x</link>
+			<guid isPermaLink="false">2026-11-20:Docs · Share to X and Ask @grok</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The Share on X and Ask @grok actions on every model, avatar and anatomy page: X's weighted length rule, the UTM tags, the click counters and the large image card each page unfurls.</description>
+		</item>
+		<item>
 			<title>Talk to a 3D avatar with Grok voice</title>
 			<link>https://three.ws/voice/grok</link>
 			<guid isPermaLink="false">2026-11-20:Talk to a 3D avatar with Grok voice</guid>
 			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Speech to speech with a lip-synced 3D avatar: pick an avatar, hold to talk or leave the mic open, and watch the measured reply and mouth latency for every turn.</description>
+		</item>
+		<item>
+			<title>Ask @grok about any model, avatar or machine, straight from its page</title>
+			<link>https://three.ws/anatomy</link>
+			<guid isPermaLink="false">2026-11-20:Ask @grok about any model, avatar or machine, straight from its page</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every 3D model, avatar and anatomy cutaway now has two X actions in its share menu: Share on X, and Ask @grok about it, which posts the link with one line about the thing and a question for Grok to answer in the replies. The model page's Share button now opens that full menu instead of only copying the link. Posts are fitted to X's real length rule, so a long title or a Japanese or Chinese prompt is trimmed before X can refuse it, and the link is never cut. Every link unfurls as a large card showing the model, avatar or machine itself. On a browser without 3D graphics, an anatomy page now shows a still drawing of the machine instead of an error, and sharing still works.</description>
 		</item>
 		<item>
 			<title>Every three.ws tool and integration asks for an account before it makes a model</title>
@@ -141,6 +157,14 @@
 			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The Hunyuan3D-2 worker, a backup lane for photo-to-3D, had stopped loading its texture model after a dependency upgrade: newer diffusers refused its bundled paint pipeline, and newer transformers refused its weights on the older torch it ran. It now trusts its own pinned pipeline and runs torch 2.6 on CUDA 12.4, so the lane generates textured models again. Separately, a job that arrived while either Hunyuan worker was still loading used to wait 15 minutes and report a timeout when the load failed; it now fails at once with the real reason, so the forge moves to the next lane straight away.</description>
+		</item>
+		<item>
+			<title>The three.ws plugin for Cursor gets /make-3d, /rig and /embed</title>
+			<link>https://three.ws/docs/mcp</link>
+			<guid isPermaLink="false">2026-11-20:The three.ws plugin for Cursor gets /make-3d, /rig and /embed</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Cursor plugin now has three commands. /make-3d checks the free catalog, generates a textured model, renders it so the agent can see whether it matches, and prints the GLB, a viewer link, the run receipt and paste-ready embed code. /rig turns a humanoid GLB into an animation-ready one, and /embed writes HTML for any website. Signing in from Cursor now always asks for the same four permissions (read and update your 3D models, see your name and email, stay connected) and nothing else, even when Cursor registers without naming them. The plugin ships a five-minute test plan with measured timings, and the privacy policy now spells out what the plugin's server can reach, how long models are kept, and that prompts and models are never used for training or sold.</description>
 		</item>
 		<item>
 			<title>three-ws setup offers sign-in for the Grok and free studio connectors again</title>

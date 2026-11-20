@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-20T22:13:48.352Z",
+	"generated_at": "2026-11-20T22:27:06.755Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -6903,6 +6903,18 @@
 					"title": "Docs · Sharing and link previews",
 					"description": "Share creations and agents to Teams and LinkedIn, the link-preview rules both enforce, and how to refresh a stale LinkedIn card.",
 					"added": "2026-11-16",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/share-to-x",
+					"title": "Docs · Share to X and Ask @grok",
+					"description": "The Share on X and Ask @grok actions on every model, avatar and anatomy page: X's weighted length rule, the UTM tags, the click counters and the large image card each page unfurls.",
+					"added": "2026-11-20",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

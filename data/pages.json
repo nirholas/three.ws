@@ -4754,6 +4754,14 @@
 					"added": "2026-11-16"
 				},
 				{
+					"path": "/docs/share-to-x",
+					"title": "Docs · Share to X and Ask @grok",
+					"description": "The Share on X and Ask @grok actions on every model, avatar and anatomy page: X's weighted length rule, the UTM tags, the click counters and the large image card each page unfurls.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-11-20"
+				},
+				{
 					"path": "/docs/sketchfab",
 					"title": "Docs · Sketchfab Showcase",
 					"description": "How the best community forge models get published to the official three.ws Sketchfab account: what gets picked, AI disclosure, and the backlinks that make referrals measurable.",

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-20T22:13:48.418Z",
+	"generated_at": "2026-11-20T22:27:06.844Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -9,11 +9,32 @@
 		{
 			"date": "2026-11-20",
 			"type": "launch",
+			"title": "Docs · Share to X and Ask @grok",
+			"summary": "The Share on X and Ask @grok actions on every model, avatar and anatomy page: X's weighted length rule, the UTM tags, the click counters and the large image card each page unfurls.",
+			"link": "/docs/share-to-x",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "launch",
 			"title": "Talk to a 3D avatar with Grok voice",
 			"summary": "Speech to speech with a lip-synced 3D avatar: pick an avatar, hold to talk or leave the mic open, and watch the measured reply and mouth latency for every turn.",
 			"link": "/voice/grok",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "Ask @grok about any model, avatar or machine, straight from its page",
+			"summary": "Every 3D model, avatar and anatomy cutaway now has two X actions in its share menu: Share on X, and Ask @grok about it, which posts the link with one line about the thing and a question for Grok to answer in the replies. The model page's Share button now opens that full menu instead of only copying the link. Posts are fitted to X's real length rule, so a long title or a Japanese or Chinese prompt is trimmed before X can refuse it, and the link is never cut. Every link unfurls as a large card showing the model, avatar or machine itself. On a browser without 3D graphics, an anatomy page now shows a still drawing of the machine instead of an error, and sharing still works.",
+			"link": "/anatomy",
+			"tags": [
+				"feature",
+				"fix"
 			]
 		},
 		{
@@ -186,6 +207,18 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "The three.ws plugin for Cursor gets /make-3d, /rig and /embed",
+			"summary": "The Cursor plugin now has three commands. /make-3d checks the free catalog, generates a textured model, renders it so the agent can see whether it matches, and prints the GLB, a viewer link, the run receipt and paste-ready embed code. /rig turns a humanoid GLB into an animation-ready one, and /embed writes HTML for any website. Signing in from Cursor now always asks for the same four permissions (read and update your 3D models, see your name and email, stay connected) and nothing else, even when Cursor registers without naming them. The plugin ships a five-minute test plan with measured timings, and the privacy policy now spells out what the plugin's server can reach, how long models are kept, and that prompts and models are never used for training or sold.",
+			"link": "/docs/mcp",
+			"tags": [
+				"feature",
+				"fix",
+				"docs"
 			]
 		},
 		{

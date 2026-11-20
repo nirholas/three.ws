@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-20T22:13:48.545Z",
+	"generated_at": "2026-11-20T22:27:06.977Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4669,
+	"total": 4672,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-20",
+			"type": "launch",
+			"title": "Docs · Share to X and Ask @grok",
+			"summary": "The Share on X and Ask @grok actions on every model, avatar and anatomy page: X's weighted length rule, the UTM tags, the click counters and the large image card each page unfurls.",
+			"link": "/docs/share-to-x",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-11-20",
 			"type": "launch",
@@ -17,6 +27,17 @@
 			"link": "/voice/grok",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "Ask @grok about any model, avatar or machine, straight from its page",
+			"summary": "Every 3D model, avatar and anatomy cutaway now has two X actions in its share menu: Share on X, and Ask @grok about it, which posts the link with one line about the thing and a question for Grok to answer in the replies. The model page's Share button now opens that full menu instead of only copying the link. Posts are fitted to X's real length rule, so a long title or a Japanese or Chinese prompt is trimmed before X can refuse it, and the link is never cut. Every link unfurls as a large card showing the model, avatar or machine itself. On a browser without 3D graphics, an anatomy page now shows a still drawing of the machine instead of an error, and sharing still works.",
+			"link": "/anatomy",
+			"tags": [
+				"feature",
+				"fix"
 			]
 		},
 		{
@@ -189,6 +210,18 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "update",
+			"title": "The three.ws plugin for Cursor gets /make-3d, /rig and /embed",
+			"summary": "The Cursor plugin now has three commands. /make-3d checks the free catalog, generates a textured model, renders it so the agent can see whether it matches, and prints the GLB, a viewer link, the run receipt and paste-ready embed code. /rig turns a humanoid GLB into an animation-ready one, and /embed writes HTML for any website. Signing in from Cursor now always asks for the same four permissions (read and update your 3D models, see your name and email, stay connected) and nothing else, even when Cursor registers without naming them. The plugin ships a five-minute test plan with measured timings, and the privacy policy now spells out what the plugin's server can reach, how long models are kept, and that prompts and models are never used for training or sold.",
+			"link": "/docs/mcp",
+			"tags": [
+				"feature",
+				"fix",
+				"docs"
 			]
 		},
 		{
@@ -1524,36 +1557,6 @@
 			"title": "Docs · three.ws in PowerPoint",
 			"summary": "Export any three.ws model as a PowerPoint slide with an interactive 3D object, and the three.ws 3D Models add-in: the Office-safe GLB pass, the am3d:model3d slide, the limits PowerPoint imposes and how to sideload the add-in.",
 			"link": "/docs/powerpoint",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "launch",
-			"title": "Docs · three.ws on the Microsoft agent stack",
-			"summary": "Give a Semantic Kernel, Microsoft Agent Framework or Foundry agent free text-to-3D generation, a catalog of ready-made CC0 assets and three.ws agent messaging: the Python and .NET plugins, the MCP studio server, auth, timing and live tests.",
-			"link": "/docs/microsoft-agent-stack",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "launch",
-			"title": "Docs · TRELLIS.2 Lab",
-			"summary": "How the TRELLIS.2 Lab works: every parameter and its default, the presets and where their speeds come from, the compare view and share links, the rerunnable production benchmark, how we run Microsoft Research's model on Cloud Run, and the citation.",
-			"link": "/docs/trellis2-lab",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "launch",
-			"title": "Docs · Trust center",
-			"summary": "How the three.ws trust center, subprocessor list and security.txt are sourced from the code, and the rules for keeping every claim cited.",
-			"link": "/docs/trust",
 			"tags": [
 				"launch"
 			]

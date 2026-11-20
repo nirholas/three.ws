@@ -1,6 +1,6 @@
 # Sharing: Teams, LinkedIn and link previews
 
-Every creation, agent and avatar can be shared to Microsoft Teams and LinkedIn from the share menu, and the page behind the link has to unfurl correctly in both. For embedding an agent on a site, see [share-and-embed.md](share-and-embed.md).
+Every creation, agent and avatar can be shared to Microsoft Teams and LinkedIn from the share menu, and the page behind the link has to unfurl correctly in both. For embedding an agent on a site, see [share-and-embed.md](share-and-embed.md). For Share on X and Ask @grok, see [share-to-x.md](share-to-x.md).
 
 ## Where the buttons are
 

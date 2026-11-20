@@ -3494,6 +3494,12 @@ URL: https://three.ws/docs/sharing
 
 Share creations and agents to Teams and LinkedIn, the link-preview rules both enforce, and how to refresh a stale LinkedIn card.
 
+### Docs · Share to X and Ask @grok
+
+URL: https://three.ws/docs/share-to-x
+
+The Share on X and Ask @grok actions on every model, avatar and anatomy page: X's weighted length rule, the UTM tags, the click counters and the large image card each page unfurls.
+
 ### Docs · Sketchfab Showcase
 
 URL: https://three.ws/docs/sketchfab
