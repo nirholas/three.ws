@@ -138,7 +138,6 @@ function gradeAgentChat(row, output) {
 	const rubric = row.expect?.rubric || {};
 	const checks = {
 		non_empty: text.length > 0,
-		no_dash: !DASH_RE.test(text),
 		no_emoji: !EMOJI_RE.test(text),
 		no_markdown_header: !MARKDOWN_HEADER_RE.test(text),
 		no_robot_speak: !ROBOT_SPEAK_RE.test(text),
@@ -151,7 +150,7 @@ function gradeAgentChat(row, output) {
 	if (rubric.language === 'es') checks.persona_language = looksSpanish(text);
 	if (rubric.lowercase) checks.persona_lowercase = text === text.toLowerCase();
 	if (rubric.max_words) checks.persona_length = wordCount(text) <= rubric.max_words;
-	return verdict(checks, { shipped: text });
+	return verdict(checks, { shipped: text, advisory: { no_dash: !DASH_RE.test(text) } });
 }
 
 // ---------------------------------------------------------------------------
@@ -168,6 +167,9 @@ function gradeXReply(_row, output) {
 // agent_spec: a JSON object with every field inside the bounds the prompt
 // states. `strict_json` (the reply is bare JSON, as the prompt demands) is
 // reported but not required, because production's parseSpec tolerates fences.
+// `advisory.no_dash` (house style bans dash characters in published copy) is
+// reported but not required: neither this prompt nor agent chat's states it,
+// and only the X reply path (whose cleaner rewrites them) handles it in production.
 // ---------------------------------------------------------------------------
 const OTHER_CASHTAG_RE = /\$(?!THREE\b)[A-Z]{2,10}\b/;
 
@@ -198,10 +200,9 @@ function gradeAgentSpec(_row, output) {
 		persona: str(s.persona).length >= 120 && str(s.persona).length <= LIMITS.persona,
 		avatar_starter: STARTER_SET.has(s.avatar_starter),
 		voice: s.voice === 'browser',
-		no_dash: !DASH_RE.test(copy),
 		no_other_ticker: !OTHER_CASHTAG_RE.test(copy),
 	};
-	return verdict(checks, { strictJson: strictJsonObject(output.text), shipped: spec ? JSON.stringify(spec) : String(output.text || '') });
+	return verdict(checks, { strictJson: strictJsonObject(output.text), advisory: { no_dash: !DASH_RE.test(copy) }, shipped: spec ? JSON.stringify(spec) : String(output.text || '') });
 }
 
 export const GRADERS = Object.freeze({

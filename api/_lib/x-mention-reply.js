@@ -28,7 +28,7 @@ export const THREE_CA = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const PERSONA_MAX = 1200;
 const CONTEXT_MAX = 400;
 const MODEL_TIMEOUT_MS = 20_000;
-const MODEL_MAX_TOKENS = 200;
+export const MODEL_MAX_TOKENS = 200;
 const ALLOWED_HOSTS = new Set(['three.ws']);
 
 /** The reply used whenever a model reply cannot be posted. Passes every post-check. */

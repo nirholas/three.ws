@@ -265,7 +265,7 @@ export async function rig(base, glbUrl, { timeoutEnv, auth } = {}) {
 // "A classic wooden rocking chair with gracefully curved" and "a small ceramic
 // teapot with a bamboo handle" to "A small,", which reconstructed as a coffee
 // tamper. Budget for a whole spec instead of a clipped one.
-const DIRECTOR_MAX_TOKENS = 400;
+export const DIRECTOR_MAX_TOKENS = 400;
 const DIRECTOR_TIMEOUT_MS = 20_000;
 
 // Longest brief we forward, and the longest prompt the forge itself accepts
