@@ -3,7 +3,8 @@
 // Generation is auth-free and IP rate-limited, scoped to an anonymous client
 // handle. The default image lane (FLUX to TRELLIS) is free; the geometry lane
 // (Meshy/Tripo) is bring-your-own-key and the key travels as a request header,
-// never in a body or a URL.
+// never in a body or a URL. Uploading a local reference image is the one call
+// that needs a three.ws account: it sends THREE_WS_API_KEY as a bearer.
 //
 // The contract mirrored here is the same one the three.ws Blender add-on and
 // ComfyUI nodes speak (integrations/_pyclient/three_ws_client.py).
@@ -16,7 +17,7 @@ import { pipeline } from 'node:stream/promises';
 import { Readable } from 'node:stream';
 import { randomUUID } from 'node:crypto';
 
-import { FORGE_PROVIDER_KEY, THREE_WS_BASE, USER_AGENT } from '../config.js';
+import { FORGE_PROVIDER_KEY, THREE_WS_API_KEY, THREE_WS_BASE, USER_AGENT } from '../config.js';
 
 const POLL_INTERVAL_MS = 2500;
 const REQUEST_TIMEOUT_MS = 30000;
@@ -33,7 +34,7 @@ function headers(extra) {
 	};
 }
 
-async function forgeRequest(pathname, { method = 'GET', query, body } = {}) {
+async function forgeRequest(pathname, { method = 'GET', query, body, auth } = {}) {
 	const url = new URL(`${THREE_WS_BASE}${pathname}`);
 	for (const [key, value] of Object.entries(query || {})) {
 		if (value === undefined || value === null || value === '') continue;
@@ -46,7 +47,10 @@ async function forgeRequest(pathname, { method = 'GET', query, body } = {}) {
 	try {
 		res = await fetch(url, {
 			method,
-			headers: headers(body !== undefined ? { 'content-type': 'application/json' } : undefined),
+			headers: headers({
+				...(body !== undefined ? { 'content-type': 'application/json' } : {}),
+				...(auth ? { authorization: `Bearer ${auth}` } : {}),
+			}),
 			body: body !== undefined ? JSON.stringify(body) : undefined,
 			signal: controller.signal,
 		});
@@ -113,14 +117,31 @@ export async function uploadReferenceImage(filePath) {
 		throw Object.assign(new Error(`${filePath} is empty.`), { code: 'invalid_size' });
 	}
 
-	const presign = await forgeRequest('/api/forge-upload', {
-		method: 'POST',
-		body: {
-			content_type: contentType,
-			size_bytes: bytes.length,
-			checksum_sha256: createHash('sha256').update(bytes).digest('hex'),
-		},
-	});
+	// Uploading a photo needs a three.ws account, so this one call carries the
+	// API key. A missing or refused key gets an answer that says how to fix it,
+	// plus the keyless way around (a public image URL).
+	let presign;
+	try {
+		presign = await forgeRequest('/api/forge-upload', {
+			method: 'POST',
+			auth: THREE_WS_API_KEY,
+			body: {
+				content_type: contentType,
+				size_bytes: bytes.length,
+				checksum_sha256: createHash('sha256').update(bytes).digest('hex'),
+			},
+		});
+	} catch (err) {
+		if (err?.status !== 401) throw err;
+		throw Object.assign(
+			new Error(
+				THREE_WS_API_KEY
+					? `three.ws refused THREE_WS_API_KEY. Check the key at ${THREE_WS_BASE}/dashboard/api-keys, or pass a public https image as "image_url" instead.`
+					: `Uploading a local image needs a free three.ws account. Create an API key at ${THREE_WS_BASE}/dashboard/api-keys and set THREE_WS_API_KEY in this server's env, or pass a public https image as "image_url" instead.`,
+			),
+			{ code: 'sign_in_required', status: 401 },
+		);
+	}
 	if (!presign.upload_url || !presign.public_url) {
 		throw Object.assign(
 			new Error(

@@ -147,7 +147,8 @@ class ForgeClient(ThreeWSClient):
     """The vendored client with a Kit user agent and opt-in bearer auth."""
 
     def __init__(self, base_url: str, *, api_key: str = "", client_handle: Optional[str] = None, timeout: float = 30.0):
-        super().__init__(base_url, client_handle=client_handle, timeout=timeout)
+        # The base client sends the key on photo uploads, which need an account.
+        super().__init__(base_url, api_key=api_key or "", client_handle=client_handle, timeout=timeout)
         self._api_key = (api_key or "").strip()
 
     def __repr__(self) -> str:

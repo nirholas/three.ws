@@ -25,13 +25,19 @@ diverges.
 | Remesh | `POST /api/forge-remesh` with `{mesh_url, remesh_mode, operation, target_faces, texture_size, output_format}`, polled on `GET /api/forge-remesh?job=<id>` |
 | Publish to an account | `POST /api/avatars/upload` or `/api/avatars/presign`, then `POST /api/avatars`, with a bearer API key carrying `avatars:write` |
 
-Generation is auth-free (IP rate-limited, scoped to an anonymous client handle
-sent as `x-forge-client`). The geometry path (Meshy/Tripo) is BYOK: pass
-`provider_key` and it travels as the `x-forge-provider-key` header.
+Text-to-3D generation is auth-free (IP rate-limited, scoped to an anonymous
+client handle sent as `x-forge-client`). The geometry path (Meshy/Tripo) is
+BYOK: pass `provider_key` and it travels as the `x-forge-provider-key` header.
+
+Uploading a photo for image-to-3D needs a three.ws account. Pass `api_key` (or
+set `THREE_WS_API_KEY` in the host's environment) with a key from
+[three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys); the client
+sends it as a bearer on the upload call only. Without one, `upload_image` raises
+`ThreeWSError` with code `sign_in_required` and a message saying how to get a key.
 
 ## Public API
 
-- `ThreeWSClient(base_url="https://three.ws", *, provider_key=None, client_handle=None, timeout=30.0)`
+- `ThreeWSClient(base_url="https://three.ws", *, provider_key=None, api_key=None, client_handle=None, timeout=30.0)`: `api_key` defaults to `THREE_WS_API_KEY`
   - `generate_text_to_3d(prompt, *, tier, backend, path, aspect_ratio, on_progress, should_cancel, poll_timeout) -> glb_url`
   - `generate_image_to_3d(image_bytes, content_type, *, prompt, tier, backend, path, ...) -> glb_url`
   - `rig(glb_url, *, on_progress, should_cancel, poll_timeout) -> rigged_glb_url`

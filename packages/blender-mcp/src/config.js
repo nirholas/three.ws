@@ -1,9 +1,9 @@
 // Centralized env for the Blender MCP.
 //
-// This server drives a LOCAL Blender install in background mode. It holds no
-// secret and signs nothing: the only knobs are which Blender to run, how long
-// to let a job run, where scratch files go, and which three.ws deployment the
-// forge bridge talks to.
+// This server drives a LOCAL Blender install in background mode. It signs
+// nothing: the knobs are which Blender to run, how long to let a job run, where
+// scratch files go, which three.ws deployment the forge bridge talks to, and the
+// optional keys that bridge forwards (never logged).
 
 import os from 'node:os';
 import path from 'node:path';
@@ -70,5 +70,10 @@ export const FORGE_TIMEOUT_MS = positiveNumber('THREE_WS_FORGE_TIMEOUT_MS', 6000
 // Optional Meshy/Tripo key for the BYOK geometry lane. The default image lane
 // (FLUX to TRELLIS) is free and needs no key.
 export const FORGE_PROVIDER_KEY = env('THREE_WS_FORGE_PROVIDER_KEY');
+
+// three.ws API key (https://three.ws/dashboard/api-keys). Only a reference
+// image upload sends it, because uploading a photo needs an account; text-to-3D
+// and image-to-3D from a public URL stay keyless.
+export const THREE_WS_API_KEY = env('THREE_WS_API_KEY');
 
 export const USER_AGENT = '@three-ws/blender-mcp';

@@ -161,6 +161,7 @@ Failures come back as structured tool errors (`input_not_found`, `format_unsuppo
 | `THREE_WS_BASE` | `https://three.ws` | Deployment backing `blender_forge_import`. |
 | `THREE_WS_FORGE_TIMEOUT_MS` | `600000` | Ceiling for one text-to-3D generation. |
 | `THREE_WS_FORGE_PROVIDER_KEY` | unset | Meshy/Tripo key for the bring-your-own-key geometry lane. The default image lane is free and needs no key. |
+| `THREE_WS_API_KEY` | unset | three.ws API key from [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys). Needed only to upload a local reference image, because photo uploads need an account. Text-to-3D, and image-to-3D from a public `image_url`, work without it. |
 
 ## Security
 

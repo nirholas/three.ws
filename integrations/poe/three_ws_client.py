@@ -20,11 +20,12 @@ Public contract this wraps
 * ``POST /api/avatars/presign``  ``{size_bytes, content_type, checksum_sha256}``  → presigned PUT (large GLBs)
 * ``POST /api/avatars``          ``{name, storage_key, size_bytes, ...}``        → the saved avatar
 
-Generation is auth-free (IP rate-limited, scoped to an anonymous client handle).
-The geometry path (Meshy/Tripo) is BYOK: pass ``provider_key`` and it travels as
-the ``x-forge-provider-key`` header. Publishing a GLB into an account
-(``publish_glb``) is the one authenticated call: it takes an API key from
-three.ws/dashboard/api carrying the ``avatars:write`` scope.
+Text-to-3D generation is auth-free (IP rate-limited, scoped to an anonymous
+client handle). The geometry path (Meshy/Tripo) is BYOK: pass ``provider_key``
+and it travels as the ``x-forge-provider-key`` header. Two calls need a three.ws
+API key from three.ws/dashboard/api-keys: uploading a photo for image-to-3D
+(``upload_image``; pass ``api_key`` or set ``THREE_WS_API_KEY``), and publishing
+a GLB into an account (``publish_glb``, which needs the ``avatars:write`` scope).
 
 This file is vendored byte-for-byte into each plugin package; the canonical copy
 lives at ``integrations/_pyclient/three_ws_client.py`` and a drift test keeps the
@@ -35,6 +36,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import ssl
 import time
 import urllib.error
@@ -136,6 +138,9 @@ class ThreeWSClient:
     ----------
     base_url:       deployment origin (default ``https://three.ws``).
     provider_key:   optional Meshy/Tripo key for the BYOK geometry path.
+    api_key:        three.ws API key, sent only on photo uploads (which need an
+                    account). Defaults to the ``THREE_WS_API_KEY`` environment
+                    variable; pass ``""`` to send none.
     client_handle:  anonymous handle that scopes creations; generated if omitted.
     timeout:        per-request timeout in seconds.
     """
@@ -145,11 +150,15 @@ class ThreeWSClient:
         base_url: str = DEFAULT_BASE_URL,
         *,
         provider_key: Optional[str] = None,
+        api_key: Optional[str] = None,
         client_handle: Optional[str] = None,
         timeout: float = DEFAULT_TIMEOUT,
     ):
         self.base_url = (base_url or DEFAULT_BASE_URL).rstrip("/")
         self.provider_key = (provider_key or "").strip() or None
+        if api_key is None:
+            api_key = os.environ.get("THREE_WS_API_KEY", "")
+        self.api_key = (api_key or "").strip() or None
         self.client_handle = client_handle or uuid.uuid4().hex
         self.timeout = timeout
 
@@ -215,21 +224,42 @@ class ThreeWSClient:
     def upload_image(self, image_bytes: bytes, content_type: str) -> str:
         """Presign + PUT an image, returning its public URL for image→3D.
 
-        Raises ThreeWSError with actionable guidance if storage is not
-        configured on the deployment (the caller may pass a public URL instead).
+        Photo uploads need a three.ws account, so this sends ``api_key`` as a
+        bearer. Without one the server answers ``sign_in_required`` and this
+        raises with how to get a key. Also raises ThreeWSError with actionable
+        guidance if storage is not configured on the deployment (the caller may
+        pass a public URL instead).
         """
         if not image_bytes:
             raise ThreeWSError("Image is empty.", code="invalid_size")
         checksum = hashlib.sha256(image_bytes).hexdigest()
-        presign = self._request(
-            "POST",
-            "/api/forge-upload",
-            body={
-                "content_type": content_type,
-                "size_bytes": len(image_bytes),
-                "checksum_sha256": checksum,
-            },
-        )
+        auth = {"authorization": f"Bearer {self.api_key}"} if self.api_key else None
+        try:
+            presign = self._request(
+                "POST",
+                "/api/forge-upload",
+                body={
+                    "content_type": content_type,
+                    "size_bytes": len(image_bytes),
+                    "checksum_sha256": checksum,
+                },
+                headers=auth,
+            )
+        except ThreeWSError as exc:
+            if exc.status == 401:
+                raise ThreeWSError(
+                    (
+                        "Your three.ws API key was refused. Check it at "
+                        f"{self.base_url}/dashboard/api-keys."
+                        if self.api_key
+                        else "Uploading a photo needs a free three.ws account. Create an API key at "
+                        f"{self.base_url}/dashboard/api-keys and set THREE_WS_API_KEY (or pass api_key). "
+                        "Text-to-3D works without one."
+                    ),
+                    code=exc.code or "sign_in_required",
+                    status=401,
+                ) from exc
+            raise
         return self._put_presigned(presign, image_bytes, content_type, "Image")
 
     def upload_glb(self, glb_bytes: bytes) -> str:

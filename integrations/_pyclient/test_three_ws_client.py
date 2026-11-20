@@ -9,6 +9,7 @@ or directly:  ``python integrations/_pyclient/test_three_ws_client.py``.
 from __future__ import annotations
 
 import json
+import os
 import threading
 import unittest
 import urllib.parse
@@ -75,6 +76,14 @@ class _Handler(BaseHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         body = self._read_body()
         if parsed.path == "/api/forge-upload":
+            # Mirrors api/forge-upload.js: photo uploads need an account.
+            state["upload_auth"] = self.headers.get("authorization")
+            if not (state["upload_auth"] or "").startswith("Bearer "):
+                return self._send(401, {
+                    "error": "sign_in_required",
+                    "message": "Sign in to upload a photo.",
+                    "sign_in_url": "/login",
+                })
             host = f"http://127.0.0.1:{self.server.server_address[1]}"
             return self._send(200, {
                 "storage_key": "forge/uploads/x/y.png",
@@ -87,6 +96,7 @@ class _Handler(BaseHTTPRequestHandler):
         if parsed.path == "/api/forge":
             state["last_submit"] = body
             state["last_provider_key"] = self.headers.get("x-forge-provider-key")
+            state["last_submit_auth"] = self.headers.get("authorization")
             forced = state.get("submit_error")
             if forced:
                 return self._send(200, forced)
@@ -120,7 +130,7 @@ class ForgeClientTest(unittest.TestCase):
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
         # Fast polling for tests.
-        self.client = ThreeWSClient(self.base, client_handle="test-handle")
+        self.client = ThreeWSClient(self.base, client_handle="test-handle", api_key="sk_test_upload")
 
     def tearDown(self):
         self.server.shutdown()
@@ -148,6 +158,36 @@ class ForgeClientTest(unittest.TestCase):
         self.assertEqual(glb, self.server.state["glb_url"])
         self.assertGreater(self.server.state["uploaded_bytes"], 0)
         self.assertEqual(self.server.state["last_submit"]["image_urls"], ["https://cdn.example/forge/uploads/x/y.png"])
+
+    def test_image_upload_sends_the_api_key_as_a_bearer(self):
+        self.client.upload_image(b"\x89PNG fake", "image/png")
+        self.assertEqual(self.server.state["upload_auth"], "Bearer sk_test_upload")
+
+    def test_image_upload_without_a_key_explains_how_to_get_one(self):
+        client = ThreeWSClient(self.base, client_handle="h", api_key="")
+        with self.assertRaises(ThreeWSError) as ctx:
+            client.upload_image(b"\x89PNG fake", "image/png")
+        self.assertEqual(ctx.exception.code, "sign_in_required")
+        self.assertEqual(ctx.exception.status, 401)
+        self.assertIn("THREE_WS_API_KEY", ctx.exception.message)
+        self.assertIn("/dashboard/api-keys", ctx.exception.message)
+        self.assertEqual(self.server.state["uploaded_bytes"], 0)
+
+    def test_api_key_defaults_to_the_environment(self):
+        old = os.environ.get("THREE_WS_API_KEY")
+        os.environ["THREE_WS_API_KEY"] = "sk_from_env"
+        try:
+            ThreeWSClient(self.base, client_handle="h").upload_image(b"\x89PNG fake", "image/png")
+        finally:
+            if old is None:
+                os.environ.pop("THREE_WS_API_KEY", None)
+            else:
+                os.environ["THREE_WS_API_KEY"] = old
+        self.assertEqual(self.server.state["upload_auth"], "Bearer sk_from_env")
+
+    def test_text_to_3d_sends_no_key(self):
+        self.client.generate_text_to_3d("a weathered bronze astrolabe", poll_timeout=10)
+        self.assertIsNone(self.server.state.get("last_submit_auth"))
 
     def test_provider_key_header(self):
         client = ThreeWSClient(self.base, provider_key="secret-key", client_handle="h")

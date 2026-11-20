@@ -50,7 +50,7 @@ All of them speak to the same auth-free endpoints:
 - `POST /api/forge` — text→3D and image→3D
 - `GET /api/forge?job=<id>` — poll
 - `GET /api/forge?catalog` — tier/backend matrix
-- `POST /api/forge-upload` — presigned image upload (image→3D)
+- `POST /api/forge-upload`: presigned image upload (image→3D). Needs a three.ws API key (`THREE_WS_API_KEY`, from three.ws/dashboard/api-keys); every other generation call is keyless
 - `POST /api/scene-glb-upload`: presigned GLB upload, so a local mesh can be rigged or remeshed
 - `POST /api/forge?action=rig` and `POST /api/forge-remesh`: auto-rig and remesh a GLB by URL
 
