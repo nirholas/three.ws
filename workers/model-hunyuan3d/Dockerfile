@@ -44,9 +44,18 @@ RUN pip install -r /app/requirements.txt
 # transformers that demanded a newer torch than the image had and a diffusers
 # whose FLAX imports it broke, the paint pipeline import died at model load). Every runtime dep the
 # package needs is already pinned in requirements.txt.
+# The sed + grep pair: diffusers >= 0.35 refuses a local custom_pipeline
+# directory that ships code unless trust_remote_code=True is passed, and
+# upstream's multiview loader does not pass it, so with diffusers 0.38 the paint
+# pipeline (and with it the whole worker) never loaded. hunyuanpaint is this
+# pinned clone baked into the image, so trusting it is correct. The patch lands
+# before `pip install .` copies hy3dgen into site-packages, and the grep fails
+# the build if upstream's line moves and the patch misses.
 RUN git clone https://github.com/Tencent/Hunyuan3D-2.git /tmp/hy3d \
     && cd /tmp/hy3d \
     && git checkout f8db63096c8282cb27354314d896feba5ba6ff8a \
+    && sed -i 's/custom_pipeline=custom_pipeline_path, torch_dtype=torch.float16)/custom_pipeline=custom_pipeline_path, torch_dtype=torch.float16, trust_remote_code=True)/' hy3dgen/texgen/utils/multiview_utils.py \
+    && grep -q "custom_pipeline=custom_pipeline_path, torch_dtype=torch.float16, trust_remote_code=True)" hy3dgen/texgen/utils/multiview_utils.py \
     && pip install --no-build-isolation --no-deps . \
     && cd hy3dgen/texgen/custom_rasterizer \
     && pip install --no-build-isolation --no-deps . \
