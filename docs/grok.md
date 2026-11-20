@@ -186,6 +186,39 @@ on 50 real inputs per task (`npm run grok:eval-llm`). Each task has its own
 `LLM_ROUTE_<TASK>` flag, off by default; it is set only where that report
 recommends it, and an xAI error always falls through to the existing chain.
 
+<a id="grok-imagine-reference-images"></a>
+### Grok Imagine reference images for text to 3D
+
+Text to 3D on [/forge](/forge) first draws a reference picture, then turns it
+into a mesh. Grok Imagine (`grok-imagine-image-2.0`, called through
+[api/_lib/xai-image.js](../api/_lib/xai-image.js)) can draw that picture.
+It is a lane, not the default: set `FORGE_REF_IMAGE_PROVIDER=xai` on the
+service and the reference step asks Grok Imagine first, with the same
+composition instruction, quality scoring and best-of-2 retry the Vertex lane
+uses. Unset (or `vertex`) keeps today's behavior. Any xAI failure (no key, a
+401, a refusal, a timeout, a rate limit) logs one line such as
+`[forge-reference-image] xai lane skipped (reason=no_key), falling through to the vertex lane`
+and the job continues on the existing lanes, so the flag can never fail a forge
+job. Grok Imagine calls are recorded under usage client id `xai-imagine`.
+
+Whether the flag should ever be on is decided by
+[Grok Imagine as a text-to-3D reference image, measured](evals/grok-imagine-ref-image.md):
+40 prompts across six categories, each run through the real reference step,
+the self-hosted TRELLIS reconstruction and the GLB renderer, scored on
+objective checks (clean background, one centered subject, mesh closure,
+render) and by a blind pairwise judge that is never a Grok model.
+
+```bash
+npm run grok:eval-ref-image -- --prod-env                    # baseline column, all 40
+npm run grok:eval-ref-image -- --prod-env --providers xai    # add the Grok Imagine column
+node scripts/grok-ref-image-live-check.mjs                   # a real forge job with the flag on
+```
+
+The live check boots the real server on port 3274 with the flag on, a
+throwaway database and no Redis, submits a forge job and passes only when the
+job finishes with a GLB and the fall-through line was logged (or, with
+`--expect-xai`, when Grok Imagine served the picture).
+
 ## Grok Build
 
 [Grok Build](https://github.com/xai-org/grok-build) is xAI's coding agent for

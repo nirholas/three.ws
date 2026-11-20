@@ -698,6 +698,7 @@
 		"forge:judge": "node scripts/forge-judge.mjs",
 		"grok:usage": "node scripts/grok-usage.mjs",
 		"grok:mcp-probe": "node scripts/grok-mcp-probe.mjs",
+		"grok:eval-ref-image": "node scripts/grok-eval-ref-image.mjs",
 		"grok:eval-llm": "node scripts/grok-eval-llm.mjs",
 		"stage:sam3d-objects": "node scripts/stage-sam3d-objects.mjs",
 		"rescan:skills": "node --env-file=.env.local scripts/rescan-marketplace-skills.mjs"
