@@ -106,6 +106,12 @@ export function excerptText(text, max) {
 	return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,;:.]+$/, '')}.`;
 }
 
+// <model-viewer> motion attributes: the slow turntable spin, left off for a
+// visitor whose system asks for reduced motion (WCAG 2.3.3).
+export function viewerMotionAttrs(prefersReducedMotion) {
+	return prefersReducedMotion ? '' : 'auto-rotate auto-rotate-delay="1500" rotation-per-second="18deg"';
+}
+
 // Alt text for the model's viewer and poster: what the poster actually shows
 // when it was described, otherwise the prompt's title.
 export function creationAltText(creation, max = 250) {

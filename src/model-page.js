@@ -30,6 +30,7 @@ import {
 	describedMetaDescription,
 	tagSearchHref,
 	modelShareEntity,
+	viewerMotionAttrs,
 } from './model-lib.js';
 import { markNoindex, setCanonical } from './seo-meta.js';
 import { beaconShareEvent } from './shared/share-beacon.js';
@@ -190,7 +191,7 @@ function renderViewer() {
 	host.innerHTML = `
 		<model-viewer src="${esc(viewerSrc(c))}"${poster}
 			alt="${esc(creationAltText(c))}"
-			camera-controls auto-rotate auto-rotate-delay="1500" rotation-per-second="18deg"
+			camera-controls ${viewerMotionAttrs(matchMedia('(prefers-reduced-motion: reduce)').matches)}
 			interaction-prompt="when-focused" shadow-intensity="0.5" exposure="0.95"
 			environment-image="neutral" ar ar-modes="webxr scene-viewer quick-look"></model-viewer>
 		<div class="mp-viewer-actions">
