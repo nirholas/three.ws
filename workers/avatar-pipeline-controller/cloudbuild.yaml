@@ -53,6 +53,8 @@ steps:
       - --port=8080
       # CPU-only — no GPU needed for orchestration.
       - --cpu=2
+      # Work runs after the 202, so CPU must stay allocated between requests.
+      - --no-cpu-throttling
       - --memory=2Gi
       - --min-instances=${_MIN_INSTANCES}
       - --max-instances=${_MAX_INSTANCES}

@@ -50,6 +50,8 @@ steps:
       - --platform=managed
       - --port=8080
       - --cpu=8
+      # Work runs after the 202, so CPU must stay allocated between requests.
+      - --no-cpu-throttling
       - --memory=16Gi
       - --min-instances=${_MIN_INSTANCES}
       - --max-instances=${_MAX_INSTANCES}
