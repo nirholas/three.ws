@@ -31,6 +31,11 @@
  *   GET  /api/diorama?id=<uuid>                          → { diorama }
  *   GET  /api/diorama?list=recent|featured&limit=<n>     → { dioramas:[card] }
  *
+ * Every POST action makes something (a plan, an uploaded photo, a saved world,
+ * a merged GLB, server-side forges), so each needs a signed-in account: an
+ * anonymous caller gets 401 sign_in_required before any LLM call, upload or
+ * forge (api/_lib/creator-account.js).
+ *
  * No mocks: when the LLM chain is unreachable the compose route returns a clean
  * 503 and the page renders a designed retry state — it never fabricates a world.
  */
@@ -40,6 +45,7 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { llmComplete, llmConfigured } from './_lib/llm.js';
 import { saveDiorama, getDiorama, listDioramas, bumpViews, dioramaStoreEnabled } from './_lib/diorama-store.js';
 import { getSessionUser } from './_lib/auth.js';
+import { requireCreator, forwardCreatorAuth } from './_lib/creator-account.js';
 import { GAME_PROMPT_RULES, normalizePlanWithGame } from './_lib/diorama-game.js';
 import {
 	exportDioramaGlb,
@@ -100,16 +106,25 @@ export default wrap(async (req, res) => {
 		return json(res, 400, { error: 'invalid_body', message: 'Send a JSON body.' });
 	}
 
-	if (body.action === 'compose') return handleCompose(req, res, body);
-	if (body.action === 'compose-photo') return handleComposePhoto(req, res, body);
-	if (body.action === 'save') return handleSave(req, res, body);
-	if (body.action === 'export') return handleExport(req, res, body);
-	if (body.action === 'build') return handleBuild(req, res, body);
-	return json(res, 400, {
-		error: 'unknown_action',
-		message: 'action must be "compose", "compose-photo", "save", "export", or "build".',
-	});
+	const route = POST_ACTIONS[body.action];
+	if (!route) {
+		return json(res, 400, {
+			error: 'unknown_action',
+			message: 'action must be "compose", "compose-photo", "save", "export", or "build".',
+		});
+	}
+	if (!(await requireCreator(req, res, { action: route.signIn }))) return;
+	return route.handle(req, res, body);
 });
+
+// Each action with the phrase that completes "Sign in to ..." for an anonymous caller.
+const POST_ACTIONS = {
+	compose: { handle: (...a) => handleCompose(...a), signIn: 'build a diorama' },
+	'compose-photo': { handle: (...a) => handleComposePhoto(...a), signIn: 'build a diorama from a photo' },
+	save: { handle: (...a) => handleSave(...a), signIn: 'save a diorama' },
+	export: { handle: (...a) => handleExport(...a), signIn: 'export a diorama' },
+	build: { handle: (...a) => handleBuild(...a), signIn: 'build a diorama' },
+};
 
 async function handleGet(req, res) {
 	const url = new URL(req.url, 'http://x');
@@ -393,6 +408,7 @@ async function handleBuild(req, res, body) {
 
 	const forged = await forgeDioramaObjects(plan, {
 		clientKey: typeof body.clientKey === 'string' ? body.clientKey.slice(0, 128) : undefined,
+		auth: forwardCreatorAuth(req),
 	});
 	const readyCount = forged.objects.filter((o) => o.status === 'ready').length;
 

@@ -178,9 +178,11 @@ const FORGE_DEADLINE_MS = 180_000;
  * `status:'failed'` so the caller gets the best real world it can build.
  *
  * @param {object} diorama — a normalized, pending diorama plan.
- * @param {{ clientKey?: string }} [opts]
+ * @param {{ clientKey?: string, auth?: Record<string, string> }} [opts] `auth` is
+ *   the caller's own credential (forwardCreatorAuth), sent on every /api/forge
+ *   call so each prop is gated and attributed to the person who built the world.
  */
-export async function forgeDioramaObjects(diorama, { clientKey } = {}) {
+export async function forgeDioramaObjects(diorama, { clientKey, auth } = {}) {
 	const key = clientKey || `diorama-build:${randomUUID()}`;
 	const objects = diorama.objects.map((o) => ({ ...o }));
 	const queue = objects.slice();
@@ -190,7 +192,7 @@ export async function forgeDioramaObjects(diorama, { clientKey } = {}) {
 			const obj = queue.shift();
 			if (!obj) return;
 			try {
-				const glbUrl = await runForge(obj.prompt, key);
+				const glbUrl = await runForge(obj.prompt, key, auth);
 				obj.status = glbUrl ? 'ready' : 'failed';
 				obj.glbUrl = glbUrl || null;
 			} catch (err) {
@@ -207,13 +209,13 @@ export async function forgeDioramaObjects(diorama, { clientKey } = {}) {
 	return { ...diorama, objects };
 }
 
-async function runForge(prompt, clientKey) {
+async function runForge(prompt, clientKey, auth = {}) {
 	// One attempt, bounded: this POST queues a paid generation, so a retry would
 	// forge (and bill) the same prop twice. Forge's own error payload is read
 	// below, so a non-2xx has to arrive as a Response rather than as a throw.
 	const res = await fetchUpstream(`${SITE}/api/forge`, {
 		method: 'POST',
-		headers: { 'content-type': 'application/json', 'x-forge-client': clientKey },
+		headers: { 'content-type': 'application/json', 'x-forge-client': clientKey, ...auth },
 		body: JSON.stringify({ prompt, tier: 'draft', path: 'image' }),
 	}, { name: 'self:forge-submit', timeoutMs: 30_000, attempts: 1, okWhen: () => true });
 	const data = await res.json().catch(() => ({}));
@@ -221,10 +223,10 @@ async function runForge(prompt, clientKey) {
 	if (data.status === 'done' && data.glb_url) return data.glb_url;
 	if (data.status === 'failed') throw new Error(data.error || 'forge failed');
 	if (!data.job_id) throw new Error('forge did not start a job');
-	return pollForge(data.job_id, clientKey);
+	return pollForge(data.job_id, clientKey, auth);
 }
 
-async function pollForge(jobId, clientKey) {
+async function pollForge(jobId, clientKey, auth) {
 	const deadline = Date.now() + FORGE_DEADLINE_MS;
 	while (Date.now() < deadline) {
 		await sleep(POLL_INTERVAL_MS);
@@ -235,7 +237,7 @@ async function pollForge(jobId, clientKey) {
 			// single hung poll held the whole diorama build open past its deadline;
 			// now the loop keeps its own deadline as the only limit.
 			const res = await fetchUpstream(`${SITE}/api/forge?job=${encodeURIComponent(jobId)}`, {
-				headers: { 'x-forge-client': clientKey },
+				headers: { 'x-forge-client': clientKey, ...auth },
 			}, { name: 'self:forge-poll', timeoutMs: 10_000, attempts: 1 });
 			data = await res.json().catch(() => ({}));
 		} catch {

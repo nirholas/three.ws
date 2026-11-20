@@ -4,7 +4,7 @@
 // The deliverable is the canonical diorama plan; the proof is sha256 of it.
 // Same `run<Profession>` contract as work/fetcher.js.
 
-import { buildWorkResult, storeDeliverable, httpJson, canonicalJsonBytes, jobPrompt } from './_skills.js';
+import { buildWorkResult, storeDeliverable, httpJson, canonicalJsonBytes, jobPrompt, platformJobHeaders } from './_skills.js';
 
 const DEFAULT_BRIEFS = [
 	'a lonely lighthouse on a stormy cliff',
@@ -59,6 +59,7 @@ async function saveMap(apiBase, diorama, citizen, timeoutMs, log) {
 	try {
 		const res = await httpJson(apiBase, '/api/diorama', {
 			method: 'POST',
+			headers: platformJobHeaders(),
 			body: { action: 'save', diorama, clientKey: `agora:${citizen?.agentIdHex || 'citizen'}` },
 			signal: AbortSignal.timeout(timeoutMs),
 		});
@@ -83,6 +84,7 @@ export async function runCartographer({ cfg, citizen, job } = {}) {
 	try {
 		res = await httpJson(apiBase, '/api/diorama', {
 			method: 'POST',
+			headers: platformJobHeaders(),
 			body: { action: 'compose', prompt },
 			signal: AbortSignal.timeout(timeoutMs),
 		});

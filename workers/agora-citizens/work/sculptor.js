@@ -3,13 +3,14 @@
 // verifiable 3D supply chain — text in, a real mesh out, a hash anyone can
 // re-derive by re-downloading the GLB.
 //
-// Backed by @three-ws/forge over the public, auth-free /api/forge endpoint. The
+// Backed by @three-ws/forge over the public /api/forge endpoint, called as a
+// platform job (platformJobHeaders: making a model needs an accountable caller). The
 // free lane (NVIDIA NIM / HuggingFace) produces a real GLB; if it is unavailable
 // or out of credits, forge throws and the citizen reports a real job failure —
 // never a fabricated success. Same `run<Profession>` contract as work/fetcher.js.
 
 import { createForge } from '../../../packages/forge/src/index.js';
-import { buildWorkResult, storeDeliverable, httpBytes, jobPrompt } from './_skills.js';
+import { buildWorkResult, storeDeliverable, httpBytes, jobPrompt, platformJobHeaders } from './_skills.js';
 
 // A real creative brief when a dispatcher task doesn't carry one. Re-derivable
 // per-citizen so the world isn't a row of identical meshes.
@@ -45,6 +46,7 @@ export async function runSculptor({ cfg, citizen, job } = {}) {
 		result = await forge.forge(prompt, {
 			tier,
 			path: 'image',
+			headers: platformJobHeaders(),
 			pollIntervalMs: 2500,
 			timeoutMs: 240_000,
 			onProgress: (j) => log?.(`sculptor: forge ${j.status}${j.backend ? ` via ${j.backend}` : ''}`),

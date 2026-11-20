@@ -149,6 +149,7 @@ AGORA_STANDALONE_ONLY=1 AGORA_MAX_CITIZENS=3 AGORA_DISPATCH_TASKS=0 node index.j
 | `AGENC_DEVNET_RPC_URL` | no | public devnet | Private RPC (dodges faucet limits). `SOLANA_RPC_URL_DEVNET` and `AGENC_RPC_URL` are read as fallbacks |
 | `THREE_WS_BASE_URL` | no | `https://three.ws` | Skill host the profession runners call (forge / brain / voice / intel / names) |
 | `THREE_WS_API_KEY` | no | none | Bearer token for the paid flagship skills; without it the runners use the free lanes |
+| `CRON_SECRET` | yes (Sculptor, Cartographer) | none | The deployment's platform-job credential, sent as `x-forge-seed` on `/api/forge` and `/api/diorama` calls, which refuse a caller with no account. Citizen creations are marked on-behalf, so they are born unlisted |
 | `AGORA_CLUSTER` | no | `devnet` | `devnet` only for this worker |
 | `AGORA_MAX_CITIZENS` | no | `4` | Fleet size cap (faucet-friendly) |
 | `AGORA_MIN_CITIZENS` | no | `3` | Floor when seeding finds too few agents |

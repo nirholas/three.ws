@@ -22,6 +22,11 @@
 #                                the engine tops its signers up from (the public
 #                                RPC faucet is closed). Fund its address at
 #                                https://faucet.solana.com; never a mainnet key.
+#   cron-secret                  CRON_SECRET: the platform-job credential the
+#                                Sculptor and Cartographer send as x-forge-seed,
+#                                because /api/forge and /api/diorama refuse a
+#                                caller with no account (the same secret
+#                                three-ws-api reads)
 # AGENC_DEVNET_RPC_URL is optional and not wired: the engine falls back to the
 # public devnet endpoint. To use a private devnet RPC, create the secret once and
 # add it to --update-secrets.
@@ -102,7 +107,7 @@ steps:
       # is brought back to 0.1 SOL, which covers stake, rent, fees and the 0.001
       # SOL task rewards for many ticks without draining the funder.
       - --update-env-vars=AGORA_CLUSTER=devnet,AGORA_MAX_CITIZENS=${_MAX_CITIZENS},AGORA_DISPATCH_TASKS=1,AGORA_TOPUP_THRESHOLD_LAMPORTS=50000000,AGORA_FUNDER_TOPUP_LAMPORTS=50000000,UPSTASH_REDIS_REST_URL=http://10.128.15.228
-      - --update-secrets=DATABASE_URL=DATABASE_URL:latest,UPSTASH_REDIS_REST_TOKEN=upstash-redis-rest-token:latest,AGORA_SIGNER_SEED=agora-signer-seed:latest,AGORA_DEVNET_FUNDER_SECRET=agora-devnet-funder-secret:latest
+      - --update-secrets=DATABASE_URL=DATABASE_URL:latest,UPSTASH_REDIS_REST_TOKEN=upstash-redis-rest-token:latest,AGORA_SIGNER_SEED=agora-signer-seed:latest,AGORA_DEVNET_FUNDER_SECRET=agora-devnet-funder-secret:latest,CRON_SECRET=cron-secret:latest
 
 images:
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA

@@ -151,6 +151,16 @@ function joinUrl(apiBase, path) {
 	return path;
 }
 
+// Making a model or a world on three.ws needs an accountable caller
+// (api/_lib/creator-account.js). This worker answers for its citizens as a
+// platform job: the deployment's CRON_SECRET as x-forge-seed, marked on-behalf
+// so a citizen's creation is born unlisted instead of joining the curated
+// showcase. Sent only on creation calls, never on plain reads.
+export function platformJobHeaders() {
+	const secret = process.env.CRON_SECRET;
+	return secret ? { 'x-forge-seed': secret, 'x-forge-on-behalf': '1' } : {};
+}
+
 export async function httpJson(apiBase, path, { method = 'GET', body, headers, query, signal } = {}) {
 	const url = new URL(joinUrl(apiBase, path));
 	if (query) for (const [k, v] of Object.entries(query)) if (v != null && v !== '') url.searchParams.set(k, String(v));

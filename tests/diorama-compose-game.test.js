@@ -26,7 +26,12 @@ vi.mock('../api/_lib/diorama-store.js', () => ({
 	bumpViews: vi.fn(),
 	dioramaStoreEnabled: () => false,
 }));
-vi.mock('../api/_lib/auth.js', async (importOriginal) => ({ ...(await importOriginal()), getSessionUser: async () => null }));
+// Composing needs an account (api/_lib/creator-account.js); these cases run past that gate.
+vi.mock('../api/_lib/auth.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	getSessionUser: async () => null,
+	getRequestUser: async () => ({ id: 'user-compose' }),
+}));
 
 const { default: handler } = await import('../api/diorama.js');
 
