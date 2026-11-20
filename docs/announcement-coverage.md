@@ -479,7 +479,7 @@ One 2026-07-08 [post](https://x.com/trythreews/status/2074761553346478138) said 
 
 | Package | What it is | Announced | Post |
 |---|---|---|---|
-| `three.ws (root package)` | npm i three.ws: the browser SDK and agent-3d element | Yes | [2026-04-29](https://x.com/trythreews/status/2049476546285740512) |
+| `three.ws (root package)` | the browser SDK and agent-3d element (announced as an npm package; npm is stale at 0.2.0, so load the hosted module at https://three.ws/agent-3d/latest/agent-3d.js instead) | Yes | [2026-04-29](https://x.com/trythreews/status/2049476546285740512) |
 | `@three-ws/sdk` | Cross-chain 3D AI agent SDK (EVM + Solana identity, chat, payments) | No |  |
 | `@three-ws/agent-payments` | Agent-payments engine (value-added fork, reconstructed IDL/PDAs/x402 layer) | Yes | [2026-04-29](https://x.com/trythreews/status/2049567362693963905) |
 | `@three-ws/solana-agent` | Solana agent SDK: keypair + browser wallet, transfers, swaps, x402 | Passing | [2026-04-29](https://x.com/trythreews/status/2049447738434339171) |

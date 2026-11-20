@@ -26,29 +26,16 @@ The `<agent-3d>` custom element is the recommended approach for any page where y
 
 ### Basic setup
 
-Install from npm:
-
-```bash
-npm install three.ws
-```
-
-```js
-import 'three.ws';
-```
-
-Or load via CDN:
+Load the hosted module (there is no npm install for this: the `three.ws` package on npm is a stale 0.2.0 build without the current element):
 
 ```html
 <!-- 1. Load the library (pinned version + SRI) -->
 <script
   type="module"
   src="https://three.ws/agent-3d/1.5.2/agent-3d.js"
-  integrity="sha384-…"
+  integrity="sha384-KdAiFRsdcCbQMu4O5rkoL8hOEYLkmrdpf9ELd7jro+9NTNipWis3oqqFLll7v20Q"
   crossorigin="anonymous"
 ></script>
-
-<!-- or via unpkg -->
-<script type="module" src="https://unpkg.com/three.ws"></script>
 
 <!-- 2. Place the element -->
 <agent-3d

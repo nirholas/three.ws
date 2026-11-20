@@ -193,7 +193,7 @@ A 3D avatar walks onto any website on a transparent, fullscreen canvas floating 
 The fastest embed is the `<agent-3d>` web component: one script, one tag, and a full 3D agent renders on your page.
 
 ```html
-<script type="module" src="https://unpkg.com/three.ws"></script>
+<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 
 <agent-3d
   src="agent://base/42"

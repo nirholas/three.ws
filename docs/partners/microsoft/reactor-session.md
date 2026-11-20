@@ -81,7 +81,7 @@ If the agent answers a generation request with a job and no model, type `Check o
 **Embed snippet** for the 35:00 beat. Replace the `body` value with the character's GLB URL from line 3 (or from the fallback):
 
 ```html
-<script type="module" src="https://unpkg.com/three.ws"></script>
+<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 <agent-3d
   body="https://three.ws/avatars/realistic-female.glb"
   brain="free"
