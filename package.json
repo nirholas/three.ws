@@ -843,7 +843,7 @@
 		"hood402": "0.1.1",
 		"hyparquet": "^1.33.0",
 		"hyparquet-compressors": "^1.1.2",
-		"imapflow": "^2.11.0",
+		"imapflow": "^2.12.1",
 		"jose": "^6.2.17",
 		"lightweight-charts": "^5.3.0",
 		"livekit-client": "^2.22.3",
