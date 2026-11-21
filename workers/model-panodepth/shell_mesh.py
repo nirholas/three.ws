@@ -23,12 +23,13 @@ from typing import Optional
 
 import numpy as np
 
-# Edge test thresholds. Starting values; the README "Tuning" section records what the
-# real fixtures showed.
-# An edge is broken when it is both long relative to the ray spacing at its
-# nearer end (a surface seen near edge-on, or a depth jump) and the two ends
-# differ in distance by more than DEPTH_JUMP. A smooth floor seen at a grazing
-# angle is long but its neighbours differ little, so it survives.
+# Edge test. An edge is broken when it is both long relative to the ray spacing at its
+# nearer end (a surface seen near edge-on, or a depth jump) and the two ends differ in
+# distance by more than DEPTH_JUMP (relative). A smooth floor seen at a grazing angle is
+# long but its neighbours differ little, so it survives. Checked on the five GPU verify
+# photos by rendering the shells from the origin and from 1 m off-centre: foliage,
+# rooflines and vehicle edges open clean disocclusion gaps with no stretched curtains,
+# while floors and walls stay closed (README "Tuning").
 EDGE_RATIO = 8.0
 DEPTH_JUMP = 0.12
 

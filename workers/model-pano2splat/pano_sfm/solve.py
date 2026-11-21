@@ -1,7 +1,10 @@
 """Solve camera poses for the rig dataset with pycolmap 4.2: SIFT, matching, rig-aware global mapping."""
 
+import hashlib
 import os
 import shutil
+import urllib.error
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -62,8 +65,46 @@ def extract_features(db_path: Path, image_dir: Path, mask_dir: Path, rig: list[V
     emit("features", 1.0)
 
 
-def _vocab_tree_path() -> str:
-    return os.environ.get("PANO_SFM_VOCAB_TREE", "")
+VOCAB_TREE_NAME = "vocab_tree_faiss_flickr100K_words256K.bin"
+VOCAB_TREE_SHA256 = "96ca8ec8ea60b1f73465aaf2c401fd3b3ca75cdba2d3c50d6a2f6f760f275ddc"
+VOCAB_TREE_URL = "https://github.com/colmap/colmap/releases/download/3.11.1/" + VOCAB_TREE_NAME
+VOCAB_DOWNLOAD_TIMEOUT_S = 60
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def resolve_vocab_tree(cache_dir: Path | None = None, url: str = VOCAB_TREE_URL) -> Path | None:
+    """Find the loop-detection vocabulary tree without ever letting COLMAP download it.
+
+    COLMAP aborts the whole process when its own download fails, so the file is resolved here: the
+    PANO_SFM_VOCAB_TREE path, then a verified cached copy, then one verified download. None means loop
+    detection must be skipped.
+    """
+    explicit = os.environ.get("PANO_SFM_VOCAB_TREE", "")
+    if explicit:
+        return Path(explicit) if Path(explicit).is_file() else None
+    cache = cache_dir or Path(os.environ.get("PANO_SFM_CACHE", Path.home() / ".cache" / "pano_sfm"))
+    target = cache / VOCAB_TREE_NAME
+    if target.is_file() and _sha256(target) == VOCAB_TREE_SHA256:
+        return target
+    try:
+        cache.mkdir(parents=True, exist_ok=True)
+        part = target.with_suffix(".part")
+        with urllib.request.urlopen(url, timeout=VOCAB_DOWNLOAD_TIMEOUT_S) as resp, open(part, "wb") as out:
+            shutil.copyfileobj(resp, out)
+        if _sha256(part) != VOCAB_TREE_SHA256:
+            part.unlink(missing_ok=True)
+            return None
+        part.replace(target)
+        return target
+    except (OSError, urllib.error.URLError):
+        return None
 
 
 def match(db_path: Path, kind: str, n_images: int, threads: int, use_gpu: bool) -> tuple[str, list[str]]:
@@ -80,18 +121,16 @@ def match(db_path: Path, kind: str, n_images: int, threads: int, use_gpu: bool) 
     used = kind
     if kind == "sequential":
         pairing = pycolmap.SequentialPairingOptions(overlap=SEQUENTIAL_OVERLAP, expand_rig_images=True)
-        pairing.loop_detection = True
-        pairing.loop_detection_period = 8
-        vocab = _vocab_tree_path()
-        if vocab:
+        vocab = resolve_vocab_tree()
+        if vocab is not None:
+            pairing.loop_detection = True
+            pairing.loop_detection_period = 8
             pairing.vocab_tree_path = vocab
-        try:
-            pycolmap.match_sequential(db_path, pairing_options=pairing, matching_options=opts, device=device)
             used = "sequential+loops"
-        except Exception as exc:
-            warnings.append(f"Loop detection was unavailable ({type(exc).__name__}); matched neighbouring frames only.")
+        else:
             pairing.loop_detection = False
-            pycolmap.match_sequential(db_path, pairing_options=pairing, matching_options=opts, device=device)
+            warnings.append("The loop-closure vocabulary tree was unavailable; matched neighbouring frames only.")
+        pycolmap.match_sequential(db_path, pairing_options=pairing, matching_options=opts, device=device)
     elif kind == "exhaustive" and n_images <= EXHAUSTIVE_MAX_IMAGES:
         pycolmap.match_exhaustive(db_path, matching_options=opts, device=device)
     else:

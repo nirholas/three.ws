@@ -746,3 +746,6 @@ docs/pumpfun-team-grok-note.md
 
 # Locally cached MediaPipe segmenter; the worker image downloads its own copy (see its Dockerfile)
 /workers/model-video2motion/.models/*.tflite
+
+# model-panodepth: weights are staged into the build context by cloudbuild.yaml
+workers/model-panodepth/weights/

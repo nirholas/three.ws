@@ -65,6 +65,17 @@ def stage_installed(module: str) -> bool:
     return (pkg / "__main__.py").is_file()
 
 
+def stage_python(module: str) -> str:
+    """Interpreter for a stage. Stages whose pinned dependencies conflict (numpy 1 vs 2, opencv 4
+    vs 5) each get their own venv at STAGE_VENVS_DIR/<module> (built by the Dockerfile); otherwise
+    the service interpreter runs them."""
+    override = os.environ.get("STAGE_PYTHON_" + module.upper())
+    if override:
+        return override
+    candidate = Path(os.environ.get("STAGE_VENVS_DIR", "/opt/stages")) / module / "bin" / "python"
+    return str(candidate) if candidate.is_file() else sys.executable
+
+
 def stage_env() -> dict:
     env = dict(os.environ)
     existing = env.get("PYTHONPATH", "")
@@ -136,7 +147,7 @@ class StageRunner:
                 "stage_missing",
                 f"The {module} stage is not installed in this worker image.",
             )
-        cmd = [sys.executable, "-m", module, *args]
+        cmd = [stage_python(module), "-m", module, *args]
         log.info("stage start: %s", " ".join(cmd))
         with self._lock:
             if self._cancelled:

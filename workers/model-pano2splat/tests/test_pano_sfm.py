@@ -261,3 +261,30 @@ def test_output_dataset_reads_in_pycolmap_and_matches_sfm_json():
         assert (out / "images" / image.name).is_file()
         assert image.name.count("_") == 1 and image.name.endswith(".jpg")
     assert stats["registration_ratio"] >= 0.6
+
+
+def test_vocab_tree_resolves_to_none_when_the_download_cannot_happen(tmp_path, monkeypatch):
+    """COLMAP aborts the process when its own vocab tree download fails (seen on Cloud Run), so we resolve it first."""
+    from pano_sfm import solve
+
+    monkeypatch.delenv("PANO_SFM_VOCAB_TREE", raising=False)
+    assert solve.resolve_vocab_tree(tmp_path, url="http://127.0.0.1:9/none.bin") is None
+
+
+def test_vocab_tree_env_path_wins_and_must_exist(tmp_path, monkeypatch):
+    from pano_sfm import solve
+
+    tree = tmp_path / "tree.bin"
+    tree.write_bytes(b"x")
+    monkeypatch.setenv("PANO_SFM_VOCAB_TREE", str(tree))
+    assert solve.resolve_vocab_tree(tmp_path) == tree
+    monkeypatch.setenv("PANO_SFM_VOCAB_TREE", str(tmp_path / "missing.bin"))
+    assert solve.resolve_vocab_tree(tmp_path) is None
+
+
+def test_vocab_tree_cached_copy_is_checksum_verified(tmp_path, monkeypatch):
+    from pano_sfm import solve
+
+    monkeypatch.delenv("PANO_SFM_VOCAB_TREE", raising=False)
+    (tmp_path / solve.VOCAB_TREE_NAME).write_bytes(b"corrupt")
+    assert solve.resolve_vocab_tree(tmp_path, url="http://127.0.0.1:9/none.bin") is None

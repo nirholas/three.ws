@@ -52,10 +52,28 @@ ENV PATH=/opt/venv/bin:$PATH
 RUN pip install --upgrade pip setuptools wheel \
     && pip install torch==2.8.0 torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cu129
 COPY requirements.txt /build/requirements.txt
+RUN pip install -r /build/requirements.txt
+# Stage packages pin conflicting dependencies (numpy 1 vs 2, opencv 4 vs 5), so each requirements.d
+# file gets its own venv under /opt/stages/<stage>. torch/torchvision come from /opt/venv through a
+# trailing .pth, so there is one copy of the CUDA wheels. stages.stage_python() selects the venv.
 COPY requirements.d/ /build/requirements.d/
-RUN set -e; args="-r /build/requirements.txt"; \
-    for f in $(find /build/requirements.d -name '*.txt' | sort); do args="$args -r $f"; done; \
-    echo "pip install $args"; pip install $args
+RUN set -e; \
+    BASE="$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"; \
+    for f in /build/requirements.d/*.txt; do \
+        n="$(basename "$f" .txt)"; \
+        python3 -m venv "/opt/stages/$n"; \
+        SP="$(/opt/stages/$n/bin/python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"; \
+        echo "$BASE" > "$SP/zz_base_torch.pth"; \
+        /opt/stages/$n/bin/pip install --upgrade pip setuptools wheel scikit-build-core nanobind ninja cmake; \
+        echo "== stage $n"; \
+        PYTHONPATH="$BASE" /opt/stages/$n/bin/pip install --no-build-isolation -r "$f"; \
+    done
+# gsplat has no cp312 prebuilt wheel, so compile its CUDA extension here (nvcc is in this stage).
+RUN set -e; BASE="$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"; \
+    if [ -d /opt/stages/splat_train ]; then \
+        PYTHONPATH="$BASE" /opt/stages/splat_train/bin/pip install --no-build-isolation gsplat==1.5.3; \
+        /opt/stages/splat_train/bin/python -c "import gsplat, torch, numpy; print('gsplat', gsplat.__version__, 'torch', torch.__version__, 'numpy', numpy.__version__)"; \
+    fi
 
 FROM nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION} AS runtime
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -72,9 +90,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends --no-install-su
         libgoogle-glog0v6t64 libglew2.2 libcurl4 libssl3t64 libopenblas0 libomp5 \
         libgmp10 libmpfr6 libsqlite3-0 \
     && rm -rf /var/lib/apt/lists/* \
-    && useradd --create-home --uid 1000 app
+    && useradd --create-home --uid 10001 app
 COPY --from=colmap-build /colmap-install/ /usr/local/
 COPY --from=py-build /opt/venv /opt/venv
+COPY --from=py-build /opt/stages /opt/stages
 RUN ldconfig \
     && missing="$(ldd /usr/local/bin/colmap | grep 'not found' || true)" \
     && if [ -n "$missing" ]; then echo "colmap is missing libraries:\n$missing"; exit 1; fi \
@@ -84,7 +103,8 @@ RUN ldconfig \
 WORKDIR /app
 COPY --chown=app:app . /app
 USER app
-RUN python -c "import main, verify; print('service imports clean')"
+RUN python -c "import main, verify; print('service imports clean')" \
+    && for s in /opt/stages/*; do echo "stage venv $s"; $s/bin/python -c "import numpy, torch; print(numpy.__version__, torch.__version__)"; done
 
 EXPOSE 8080
 # Cloud Run sets $PORT. One uvicorn worker: the task manager is in-process and one

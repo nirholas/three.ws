@@ -83,3 +83,25 @@ def test_glb_structure(tmp_path):
     gltf = json.loads(raw[20 : 20 + jlen])
     assert "KHR_materials_unlit" in gltf["extensionsUsed"]
     assert gltf["samplers"][0]["wrapS"] == 10497
+
+
+def test_cull_on_real_street_depth():
+    """Real MoGe-2 metric distance from the Oulu street photo (Insta360 X5, CC0),
+    produced by the GPU verify job and halved to 960x480. Vegetation and building
+    edges carry real depth jumps; the sky is invalid."""
+    from pathlib import Path
+
+    z = np.load(Path(__file__).parent / "oulu_street_depth.npz")
+    dist = z["distance"].astype(np.float32)
+    valid = z["valid"]
+    shell = shell_mesh.build_shell(dist, valid, max_faces=200_000)
+    assert shell.culled_faces > 100  # the tree and rooflines produce real discontinuities
+    assert shell.culled_faces < 0.1 * len(shell.indices)  # but the scene is not shredded
+    # No surviving triangle bridges a depth jump: every kept edge is short or smooth.
+    pos, idx = shell.positions, shell.indices.reshape(-1, 3)
+    r = np.linalg.norm(pos, axis=1)
+    for a, b in ((0, 1), (1, 2), (2, 0)):
+        ra, rb = r[idx[:, a]], r[idx[:, b]]
+        length = np.linalg.norm(pos[idx[:, a]] - pos[idx[:, b]], axis=1)
+        broken = (np.abs(ra - rb) / np.minimum(ra, rb) > 0.5) & (length > 1.0)
+        assert broken.sum() == 0

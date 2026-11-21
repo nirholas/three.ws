@@ -1,5 +1,7 @@
 # pano_stitch: raw Insta360 .insv/.insp to equirect. torch is optional here (the CUDA image
 # already has it and the warp then runs on the GPU); ffmpeg and ffprobe come from the OS image.
-numpy==2.5.5
-opencv-python-headless==5.1.0.95
-Pillow==13.0.0
+# Pins sit inside the ranges of requirements.d/splat_train.txt (numpy<2, opencv<4.12) so one
+# venv resolves; tests pass on these exact versions on Python 3.12.
+numpy==1.26.4
+opencv-python-headless==4.11.0.86
+Pillow==11.3.0

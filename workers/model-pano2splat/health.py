@@ -51,10 +51,15 @@ def colmap_version() -> Optional[str]:
 
 
 def gsplat_version() -> Optional[str]:
+    code = "import importlib.metadata as m; print(m.version('gsplat'))"
     try:
-        return importlib.metadata.version("gsplat")
-    except importlib.metadata.PackageNotFoundError:
+        out = subprocess.run(
+            [stages.stage_python("splat_train"), "-c", code],
+            capture_output=True, text=True, timeout=30, env=stage_env(),
+        )
+    except (OSError, subprocess.SubprocessError):
         return None
+    return out.stdout.strip() or None if out.returncode == 0 else None
 
 
 def ffmpeg_info() -> dict:
@@ -72,7 +77,7 @@ def stage_status() -> dict:
             status[module] = {"present": False, "imports": False}
             continue
         res = subprocess.run(
-            [sys.executable, "-c", f"import {module}"],
+            [stages.stage_python(module), "-c", f"import {module}"],
             capture_output=True, text=True, timeout=120, env=stage_env(), cwd=str(stages.STAGES_DIR),
         )
         entry = {"present": True, "imports": res.returncode == 0}

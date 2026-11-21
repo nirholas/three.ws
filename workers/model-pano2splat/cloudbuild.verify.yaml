@@ -67,7 +67,7 @@ steps:
       - -c
       - |
         set -euo pipefail
-        gcloud run jobs deploy ${_JOB} \
+        gcloud beta run jobs deploy ${_JOB} \
           --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$BUILD_ID \
           --region=${_JOB_REGION} \
           --service-account=${_RUN_SA} \
@@ -76,7 +76,7 @@ steps:
           --task-timeout=28800s --max-retries=0 \
           --command=python --args=verify.py \
           --set-env-vars=FIXTURE_BUCKET=three-ws-capture-fixtures,RESULT_BUCKET=three-ws-pano-captures,VERIFY_QUALITY=${_QUALITY},VERIFY_ONLY=${_ONLY},VERIFY_RUN_ID=${_RUN_ID}
-        gcloud run jobs execute ${_JOB} --region=${_JOB_REGION} --wait
+        gcloud beta run jobs execute ${_JOB} --region=${_JOB_REGION} --wait
     timeout: 30000s
 
 images:

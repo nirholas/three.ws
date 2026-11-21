@@ -157,7 +157,7 @@ def run_fixture(entry: dict, client, out_prefix: str, quality_default: str) -> d
     finally:
         record["wall_s"] = round(time.monotonic() - t0, 1)
         shutil.rmtree(work, ignore_errors=True)
-    log("fixture done", fixture=fid, status=record["status"], wall_s=record["wall_s"])
+    log("fixture done", fixture=fid, status=record["status"], wall_s=record["wall_s"], error=record.get("error"))
     return record
 
 
