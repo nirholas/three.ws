@@ -6,6 +6,9 @@ import sys
 import types
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+
+# These run inside Blender (they import bpy); run_blender_tests.sh drives them.
+collect_ignore = ["blender_import_test.py", "blender_timer_test.py"]
 PKG_DIR = os.path.join(os.path.dirname(HERE), "three_ws")
 
 if "three_ws" not in sys.modules:

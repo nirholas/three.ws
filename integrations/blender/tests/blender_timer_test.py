@@ -111,10 +111,15 @@ UI.pump = timed_pump
 
 
 def sample_part_threads():
-    """Count upload part threads from a plain thread, independent of the UI loop."""
+    """Count upload part threads, and note the moment a cancelled worker thread exits,
+    from a plain thread independent of the UI loop (a window repaint on llvmpipe can
+    hold the loop for a second, which says nothing about how fast Cancel works)."""
     while STATE["phase"] != "done":
         parts = sum(1 for t in threading.enumerate() if t.name.startswith("threews-part"))
         STATE["max_part_threads"] = max(STATE["max_part_threads"], parts)
+        worker = STATE.get("cancel_thread")
+        if worker is not None and "t_cancel_thread_end" not in STATE and not worker.is_alive():
+            STATE["t_cancel_thread_end"] = time.monotonic()
         time.sleep(0.002)
 
 
@@ -434,6 +439,7 @@ def step():
             return
         STATE["cancel_job"] = running[-1]["id"]
         STATE["t_cancel"] = time.monotonic()
+        STATE["cancel_thread"] = UI._task.thread
         run_op(bpy.ops.threews.capture_cancel)
         enter("cancelling")
         return
@@ -442,7 +448,10 @@ def step():
         if not idle():
             return
         took = time.monotonic() - STATE["t_cancel"]
-        check("Cancel stops the task within a second", took < 1.0, f"{took:.2f}s")
+        stopped = STATE.get("t_cancel_thread_end", time.monotonic()) - STATE["t_cancel"]
+        check("Cancel stops the worker thread within a second", stopped < 1.0, f"{stopped:.2f}s")
+        check("panel is idle again within a second plus the repaint budget",
+              took < 1.0 + stall_budget(), f"{took:.2f}s, budget {1.0 + stall_budget():.2f}s")
         check("Cancel sent DELETE for the job",
               ("DELETE", f"/api/pano-capture?job={STATE['cancel_job']}") in SERVER.log
               and SERVER.jobs[STATE["cancel_job"]]["cancelled"], STATE["cancel_job"])
@@ -477,6 +486,7 @@ def finish():
             "pump_calls": STATE["pump_calls"],
             "pump_max_ms": round(STATE["pump_max_s"] * 1000, 2),
             "scene_fill_max_ms": round(STATE["pump_max_finish_s"] * 1000, 1),
+            "cancel_thread_stop_ms": round((STATE.get("t_cancel_thread_end", 0) - STATE.get("t_cancel", 0)) * 1000, 1),
             "slow_ticks": STATE["slow_ticks"],
             "screenshot": ARGS.screenshot if STATE.get("shot_colors") else "",
             "screenshot_sidebar_colors": STATE.get("shot_colors", 0),
