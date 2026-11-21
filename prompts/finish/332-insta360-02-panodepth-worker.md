@@ -1,5 +1,7 @@
 # insta360 02: the `model-panodepth` worker turns one 360 photo into a metric depth shell (GLB plus PLY)
 
+Status: image proven by job panodepth-verify-967wz (and service path by panodepth-selftest-kw76c), digest sha256:861d00986a5d67cbd00db92fbf041acf3bc893555ae8d0b4cd2812ed1556165e, europe-west4; service creation waits on order 347.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `insta360-` order, so it can run in parallel with all of them. Dev port: 3332 (only if you open a page).
 
 ## Operating clause (binding)

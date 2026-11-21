@@ -123,5 +123,5 @@ gcloud run deploy model-panodepth \
 
 Measured on one NVIDIA L4 in europe-west4 (see the verify numbers in
 [prompts/finish/_context/insta360-PROGRESS.md](../../prompts/finish/_context/insta360-PROGRESS.md)): about 9.5 s model
-load once per instance, 2 s of inference, then the panorama merge (a CPU sparse solve) dominates at 53 to 101 s.
+load once per instance, 2 s of inference, then the panorama merge (a CPU sparse solve) dominates. Final image, 5 real photos on an L4 in europe-west4: 53 to 79 s wall per photo, median 64.6 s (the earlier run on the same hardware measured 64 to 107 s, so budget about 110 s plus a cold start of about 4 min).
 `merge_s` scales with how much of the sphere is valid.

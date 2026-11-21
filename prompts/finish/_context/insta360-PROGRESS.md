@@ -45,3 +45,5 @@ Cross-chat handoff log for orders 331 to 347. Context and contract: [insta360-00
 | ONE R | parser ready, unverified on real footage (trailer fixture parses) |
 | X4, X6, ONE X2, ONE RS | parser ready, unverified on real footage |
 | .insp photo | tested on a synthetic JPEG with a real trailer, unverified on real footage |
+
+2026-11-21: 332 model-panodepth worker (three-ws, session 37ac5ba8). Image europe-west4-docker.pkg.dev/aerial-vehicle-466722-p5/model-panodepth/server@sha256:861d00986a5d67cbd00db92fbf041acf3bc893555ae8d0b4cd2812ed1556165e (build 5f5ef545), region europe-west4, NVIDIA L4. Proof: Cloud Run job panodepth-verify-967wz over 5 real 360 photos, median 64.6 s per photo (53 to 79 s), model load 9.3 s; service path proven by job panodepth-selftest-kw76c (POST /infer 202, task succeeded in 108 s cold, glb/ply/depth signed URLs 200, SSRF 400). gltf-validator 0 errors on all 5 GLBs. Contract extension: `POST /infer` also accepts `max_faces` (default 1.5M). The Cloud Run SERVICE is not created (owner step in 347, README "Deploy").
