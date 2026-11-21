@@ -60,3 +60,5 @@ Record how studio tools are declared (schema, auth, usage tags), how they reach 
 2. Commit with explicit paths and a `type(scope): ...` subject that describes the diff.
 3. CLI publish and registry updates are the owner's: leave this file in `finish/` with a dated status line naming them, unless the CLI is published by the regular deploy (check its README), in which case archive it. Append to [_context/insta360-PROGRESS.md](_context/insta360-PROGRESS.md).
 4. Report: what step 0 measured; files and SHAs; evidence per Definition of done line; the one batched owner message; one-line judgment calls. No trailing questions.
+
+Status 2026-11-21: MCP half done (156250db6, five tools, 22 tests, live on :3345 with real unconfigured evidence). CLI `three-ws capture` and OpenAPI C4 entries are owned by session three-ws-5a. Owner steps for 347: publish the CLI to npm after 5a lands it; update MCP registry listings after deploy; rerun the live proof with worker URLs set.
