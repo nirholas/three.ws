@@ -137,12 +137,20 @@ async function checkRingConfig() {
 		status.ok ? `accepts=${accepts.length} solana=${solanaAccepts.length}` : `HTTP ${status.status}`,
 	);
 
-	const ring = await fetchWithTimeout(`${baseUrl}/api/x402-ring`, { method: 'GET' });
+	// The findings themselves are operator-only (they name missing secrets); with
+	// OPS_SECRET in the environment the endpoint returns them, otherwise the count.
+	const opsHeaders = process.env.OPS_SECRET ? { 'x-ops-secret': process.env.OPS_SECRET } : {};
+	const ring = await fetchWithTimeout(`${baseUrl}/api/x402-ring`, { method: 'GET', headers: opsHeaders });
 	if (!ring.ok || !ring.body || typeof ring.body !== 'object') {
 		return record('ring reports no config warnings', false, `HTTP ${ring.status} from ${baseUrl}/api/x402-ring`);
 	}
 	const warnings = Array.isArray(ring.body.config_warnings) ? ring.body.config_warnings : [];
-	record('ring reports no config warnings', warnings.length === 0, warnings.length ? JSON.stringify(warnings) : null);
+	const warningCount = Number(ring.body.config_warning_count ?? warnings.length);
+	record(
+		'ring reports no config warnings',
+		warningCount === 0,
+		warningCount === 0 ? null : warnings.length ? JSON.stringify(warnings) : `${warningCount} warning(s); rerun with OPS_SECRET set to see them`,
+	);
 	const settlements = ring.body.settlements || {};
 	console.log(`        settlements so far: count=${settlements.count ?? '?'} gross_usdc=${settlements.gross_usdc ?? '?'}`);
 }

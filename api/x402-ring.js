@@ -26,7 +26,8 @@ import { solanaConnection } from './_lib/solana/connection.js';
 import { solPriceUsd } from './_lib/sol-price.js';
 import { loadSeedKeypair, USDC_MINT } from './_lib/x402/pay.js';
 import { SELF_FACILITATOR_ENABLED, SPONSOR_SOL_FLOOR_LAMPORTS } from './_lib/x402/self-facilitator.js';
-import { validateRingConfig, warnIfRingRoutesExternal } from './_lib/x402/ring-config.js';
+import { validateRingConfig, warnIfRingRoutesExternal, ringConfigWarningsView } from './_lib/x402/ring-config.js';
+import { authorizeOps } from './_lib/ops-auth.js';
 import { ringPoolEnabled, ringPoolTargetSize, poolCount, poolFundedCount } from './_lib/x402/pool.js';
 import { priceFor } from './_lib/x402-prices.js';
 import { settleTotals } from './_lib/x402/self-facilitator-totals.js';
@@ -185,6 +186,7 @@ export default wrap(async (req, res) => {
 	// logs it even before the first pipeline tick.
 	warnIfRingRoutesExternal('x402-ring');
 	const configWarnings = validateRingConfig();
+	const operator = (await authorizeOps(req).catch(() => ({ ok: false }))).ok;
 
 	// Payer pool: how many distinct wallets the rotation can actually draw from.
 	// `total` is what was minted; the funded counts are what the claim will hand
@@ -207,7 +209,7 @@ export default wrap(async (req, res) => {
 	return json(res, 200, {
 		ok: true,
 		self_hosted_facilitator: SELF_FACILITATOR_ENABLED,
-		config_warnings: configWarnings,
+		...ringConfigWarningsView(configWarnings, { operator }),
 		internal: true,
 		note: 'Self-cycled internal ring volume — dogfooding, not organic third-party demand.',
 		period: since ? periodKey : 'all',

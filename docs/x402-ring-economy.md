@@ -680,9 +680,11 @@ npm run db:migrate    # applies them (the ring lane needs 2026-07-01-x402-ring-e
 #    sponsor → SOL for fees, e.g. 0.1 SOL (≈ thousands of settlements)
 #    treasury→ nothing; it fills and gets swept back
 
-# 5. Confirm the envelope is correct BEFORE funding — config_warnings must be [].
-curl https://three.ws/api/x402-status  | jq '.ring'
-curl https://three.ws/api/x402-ring    | jq '.config_warnings'
+# 5. Confirm the envelope is correct BEFORE funding: config_warning_count must be 0.
+#    The findings themselves name missing secrets, so only an operator gets them:
+#    pass OPS_SECRET as x-ops-secret (or an admin session that passed MFA).
+curl https://three.ws/api/x402-status  | jq '.ring.config_warning_count'
+curl -H "x-ops-secret: $OPS_SECRET" https://three.ws/api/x402-ring | jq '.config_warnings'
 
 # 6. Prove the whole rail end to end without moving a cent (see below).
 npm run smoke:x402-facilitator
@@ -744,16 +746,21 @@ missing secret, or `X402_PRICE_RING_SETTLE` above the per-run cap — never rout
 volume elsewhere quietly:
 
 - **`/api/x402-status`** returns a `ring` block: `self_facilitator_enabled`, the
-  resolved `self_facilitator_url`, and `config_warnings[]`. The self-hosted
+  resolved `self_facilitator_url`, and `config_warning_count`. The findings
+  themselves (`config_warnings[]`) are returned only to an operator
+  (`authorizeOps`: `x-ops-secret: $OPS_SECRET` or an MFA'd admin session),
+  because they name which signing secrets the deploy is missing. The self-hosted
   facilitator's `/supported` is probed as a distinct `self: true` entry whenever
   the flag is on, even if an external URL wins routing.
-- **`/api/x402-ring`** returns the same `config_warnings[]` alongside the
+- **`/api/x402-ring`** returns the same `config_warning_count` (and, for an
+  operator, `config_warnings[]`) alongside the
   net-position report, and logs one structured warning per boot when settlement
   would route to an external facilitator.
 
 `validateRingConfig()` reports six findings — facilitator disabled, URL external,
 missing treasury secret, missing fee-payer pubkey, price-above-cap, and self-pay
-off. A green ring is `config_warnings: []`.
+off. A green ring is `config_warning_count: 0`. `npm run smoke:x402-facilitator`
+sends `OPS_SECRET` when it is set, so it prints the findings instead of the count.
 
 Everything is **off by default**: without `X402_SELF_FACILITATOR_ENABLED=true` and
 the sponsor secret, the facilitator returns `503` and nothing settles.

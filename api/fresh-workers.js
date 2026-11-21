@@ -56,7 +56,10 @@ export default async function handler(req, res) {
 				fund_tx: r.fund_sig ? explorerTxUrl(r.fund_sig) : null,
 				pay_tx: r.pay_sig ? explorerTxUrl(r.pay_sig) : null,
 				sweep_tx: r.sweep_sig ? explorerTxUrl(r.sweep_sig) : null,
-				error: r.error,
+				// The stored value is `code:message`, and the message can carry an
+				// upstream RPC URL (some providers embed the API key in it). The
+				// public feed gets the failure code only.
+				error: r.error ? String(r.error).split(':')[0].slice(0, 40) : null,
 				created_at: r.created_at,
 				closed_at: r.closed_at,
 			})),

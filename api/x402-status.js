@@ -18,11 +18,13 @@ import {
 	X402_VERSION,
 } from './_lib/x402-spec.js';
 import { sql } from './_lib/db.js';
+import { authorizeOps } from './_lib/ops-auth.js';
 import { hasEvmVerifier } from './_lib/siwx-server.js';
 import {
 	selfFacilitatorEnabled,
 	selfFacilitatorUrl,
 	validateRingConfig,
+	ringConfigWarningsView,
 } from './_lib/x402/ring-config.js';
 import { pendingSettlementStats } from './_lib/x402/pending-settlements.js';
 
@@ -47,7 +49,8 @@ async function probeSiwx() {
 	} catch (err) {
 		return {
 			configured: false,
-			error: err.message,
+			error: 'siwx_tables_unreadable',
+			detail: String(err?.message || err).slice(0, 160),
 			evmVerifierConfigured: hasEvmVerifier(),
 		};
 	}
@@ -62,6 +65,16 @@ export default wrap(async (req, res) => {
 	const siwx = await probeSiwx();
 	const ok = facilitators.every((f) => f.ok);
 
+	// This probe is public (the economy lab links it), so raw driver messages
+	// and the ring config findings, which name the signing secrets missing from
+	// the deploy, go only to the operator. Everyone else gets codes and a count.
+	const operator = (await authorizeOps(req).catch(() => ({ ok: false }))).ok;
+	if (siwx.detail && !operator) {
+		console.warn('[x402-status] siwx probe failed:', siwx.detail);
+		delete siwx.detail;
+	}
+	const configWarnings = validateRingConfig();
+
 	// Ring config truth: the resolution behavior + every known misconfiguration.
 	// When the self-facilitator is on, probeFacilitators() already added a
 	// distinct `self: true` entry for /api/x402-facilitator (even if an external
@@ -70,7 +83,7 @@ export default wrap(async (req, res) => {
 	const ring = {
 		self_facilitator_enabled: selfFacilitatorEnabled(),
 		self_facilitator_url: selfFacilitatorUrl(),
-		config_warnings: validateRingConfig(),
+		...ringConfigWarningsView(configWarnings, { operator }),
 	};
 
 	// Settlements that answered `settlement_pending` (broadcast, outcome not yet
@@ -84,7 +97,9 @@ export default wrap(async (req, res) => {
 	try {
 		settlements = await pendingSettlementStats({ windowHours: 24 });
 	} catch (err) {
-		settlements = { error: String(err?.message || err).slice(0, 160) };
+		const detail = String(err?.message || err).slice(0, 160);
+		if (!operator) console.warn('[x402-status] settlement stats failed:', detail);
+		settlements = operator ? { error: 'settlement_stats_unavailable', detail } : { error: 'settlement_stats_unavailable' };
 	}
 
 	// Surface what we advertise in 402 challenges so operators can confirm at a

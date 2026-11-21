@@ -167,6 +167,17 @@ export function validateRingConfig() {
 	return findings;
 }
 
+// The response shape for validateRingConfig() findings on a PUBLIC endpoint.
+// The findings name which signing secrets are missing from the deploy and how the
+// ring is routed, so only an operator (authorizeOps) gets them; everyone else gets
+// the count, which is enough to tell a green ring (0) from a degraded one.
+export function ringConfigWarningsView(findings, { operator = false } = {}) {
+	const list = Array.isArray(findings) ? findings : [];
+	return operator
+		? { config_warning_count: list.length, config_warnings: list }
+		: { config_warning_count: list.length };
+}
+
 // One structured warning per boot (not per call) when ring settlement would
 // route to an external facilitator. Returns the warning object (for surfacing
 // in API responses) or null when routing is already self-hosted. Callers are
