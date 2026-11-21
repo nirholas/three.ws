@@ -3806,6 +3806,12 @@ URL: https://three.ws/docs/voice-grok
 
 How /voice/grok and the grok-realtime embed attribute talk to a 3D avatar through xAI's speech-to-speech model: the server-side session broker, lip sync delayed to match your speakers, measured reply and mouth latency, the honest fallback without a key, and the LiveKit and Pipecat examples.
 
+### Docs · Hero clips with Grok Imagine Video
+
+URL: https://three.ws/docs/hero-clips
+
+Turn any three.ws model into a short hero clip: the first frame is a real render of the creator's own mesh, six rendered angles guide Grok Imagine Video, presets and tiers, limits, the job API, and the honest no-key state that offers the model's own animated turntable instead of a fake clip.
+
 ### Docs · Grok Bot connector reference
 
 URL: https://three.ws/docs/grok-bot

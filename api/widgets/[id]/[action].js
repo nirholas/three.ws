@@ -3,6 +3,7 @@
 // rewrites) and req.query.action (from [action] filename) automatically.
 // Each handler below is unchanged from its prior single-file form.
 
+import { withGrokConvId } from '../../_lib/xai-conv-id.js';
 import crypto from 'node:crypto';
 
 import { z } from 'zod';
@@ -611,7 +612,7 @@ async function callOpenAICompatible({
 			};
 	const upstream = await fetch(route.cfg.url, {
 		method: 'POST',
-		headers,
+		headers: withGrokConvId(route.cfg.url, headers, 'widget', systemPrompt, messages[0]?.content),
 		body: JSON.stringify(payload),
 		// A hung upstream must not eat the whole function budget — abort and let
 		// the provider chain in handleChat move to the next route.

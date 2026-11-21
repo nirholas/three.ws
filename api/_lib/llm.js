@@ -43,6 +43,7 @@
 // Consolidated from the multi-provider fallback that already lived in
 // api/persona/extract.js and api/persona/preview.js.
 
+import { withGrokConvId } from './xai-conv-id.js';
 import { env } from './env.js';
 import { recordEvent } from './usage.js';
 import { costMicroUsd } from './llm-pricing.js';
@@ -1133,7 +1134,9 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 			// Vertex resolves a fresh (cached) GCP OAuth token per request via an
 			// async getHeaders; every other provider carries static headers. A
 			// token-exchange failure throws here and is caught below → next provider.
-			const headers = p.getHeaders ? await p.getHeaders() : p.headers;
+			// xAI rungs carry x-grok-conv-id keyed on the task and its system
+			// prompt, so repeat calls reuse the server that cached that prefix.
+			const headers = withGrokConvId(p.url, p.getHeaders ? await p.getHeaders() : p.headers, 'task', task, system);
 			upstream = await fetch(p.url, {
 				method: 'POST',
 				headers,

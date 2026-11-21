@@ -17,6 +17,7 @@
  * Routed via vercel.json — see top of file path patterns.
  */
 
+import { withGrokConvId } from '../_lib/xai-conv-id.js';
 import { sql, isDbUnavailableError } from '../_lib/db.js';
 import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.js';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
@@ -1027,7 +1028,7 @@ async function handlePreview(req, res, id) {
 		}
 		try {
 			// Anchor routes mint per-request OAuth headers; keyed routes are static.
-			const headers = route.getHeaders ? await route.getHeaders() : route.headers;
+			const headers = withGrokConvId(route.url, route.getHeaders ? await route.getHeaders() : route.headers, 'preview', systemPrompt, history[0]?.content);
 			upstream = await fetch(route.url, {
 				method: 'POST',
 				headers,

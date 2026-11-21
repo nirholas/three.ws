@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-21T07:42:59.362Z",
+	"generated_at": "2026-11-21T07:52:17.802Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -7532,6 +7532,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/hero-clips",
+					"title": "Docs · Hero clips with Grok Imagine Video",
+					"description": "Turn any three.ws model into a short hero clip: the first frame is a real render of the creator's own mesh, six rendered angles guide Grok Imagine Video, presets and tiers, limits, the job API, and the honest no-key state that offers the model's own animated turntable instead of a fake clip.",
+					"added": "2026-11-21",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
 					"job": null
 				},
 				{

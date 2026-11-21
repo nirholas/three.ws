@@ -98,6 +98,7 @@ import {
 	toVertexBody,
 } from './_lib/vertex-claude.js';
 import { vertexGeminiBudget } from './_lib/vertex-gemini.js';
+import { withGrokConvId } from './_lib/xai-conv-id.js';
 import { z } from 'zod';
 
 // Providers anonymous (unauthenticated) callers may use. Groq and OpenRouter
@@ -822,7 +823,10 @@ export default wrap(async (req, res) => {
 		try {
 			// Most routes carry static headers; watsonx resolves a fresh IAM
 			// bearer token (cached between requests) just before the fetch.
-			const reqHeaders = route.headers || (await route.resolveHeaders());
+			// xAI routes carry x-grok-conv-id keyed on the agent and the opening
+			// user message, so every turn of this conversation lands on the
+			// server holding its cached prefix (api/_lib/xai-conv-id.js).
+			const reqHeaders = withGrokConvId(route.url, route.headers || (await route.resolveHeaders()), 'chat', body.agentId, history[0]?.content);
 			// Per-attempt abort: a single hung provider must not silently consume
 			// the whole TOTAL_BUDGET_MS (and ultimately trip the 60s function
 			// timeout). Cap each attempt at the smaller of the remaining budget or
@@ -1249,6 +1253,7 @@ export default wrap(async (req, res) => {
 
 			const followUp = await runFollowUpPass({
 				route,
+				agentId: body.agentId,
 				systemPrompt,
 				sys,
 				history: workingHistory,
@@ -1550,7 +1555,7 @@ function toolResultText(result) {
  * Returns null on any failure. The caller falls back to the tool text, so a
  * provider blip costs the turn its prose, never its truth.
  */
-async function runFollowUpPass({ route, systemPrompt, sys, history, maxTokens, assistantText, toolCalls, homeResults, toolSet, sendSSE }) {
+async function runFollowUpPass({ route, systemPrompt, sys, history, maxTokens, assistantText, toolCalls, homeResults, toolSet, sendSSE, agentId = null }) {
 	if (route.style === 'orchestrate') return null;
 
 	const byId = new Map(homeResults.map((entry) => [entry.call.id, entry.result]));
@@ -1602,7 +1607,8 @@ async function runFollowUpPass({ route, systemPrompt, sys, history, maxTokens, a
 			];
 
 	try {
-		const headers = route.headers || (await route.resolveHeaders());
+		// Same conv id as the first pass: this request extends the same prefix.
+		const headers = withGrokConvId(route.url, route.headers || (await route.resolveHeaders()), 'chat', agentId, history[0]?.content);
 		const ctrl = new AbortController();
 		const timer = setTimeout(() => ctrl.abort(), PER_CALL_TIMEOUT_MS);
 		let upstream;

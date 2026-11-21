@@ -22,6 +22,7 @@
 // Autopilot engine (sendSol, swap, the gated-spend → claim → finalize custody
 // pattern) so intents move money exactly the way the rest of the wallet does.
 
+import { withGrokConvId } from './xai-conv-id.js';
 import { PublicKey } from '@solana/web3.js';
 import { sql } from './db.js';
 import { runLocked } from './locked-sql.js';
@@ -627,10 +628,13 @@ async function callOpenRouterCompile({ apiKey, system, messages }) {
 async function callGrokCompile({ apiKey, system, messages }) {
 	const resp = await fetchWithTimeout(XAI_CHAT_COMPLETIONS_URL, {
 		method: 'POST',
-		headers: {
-			Authorization: `Bearer ${apiKey}`,
-			'content-type': 'application/json',
-		},
+		headers: withGrokConvId(
+			XAI_CHAT_COMPLETIONS_URL,
+			{ Authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
+			'task',
+			'wallet_intent',
+			system,
+		),
 		body: JSON.stringify({
 			model: GROK_BUDGET_MODEL,
 			...GROK_BUDGET_EXTRA_BODY,

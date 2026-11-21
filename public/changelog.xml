@@ -7,12 +7,28 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Hero clips with Grok Imagine Video</title>
+			<link>https://three.ws/docs/hero-clips</link>
+			<guid isPermaLink="false">2026-11-21:Docs · Hero clips with Grok Imagine Video</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Turn any three.ws model into a short hero clip: the first frame is a real render of the creator's own mesh, six rendered angles guide Grok Imagine Video, presets and tiers, limits, the job API, and the honest no-key state that offers the model's own animated turntable instead of a fake clip.</description>
+		</item>
+		<item>
 			<title>Agents set to Grok Build 0.1 now answer on Grok 4.7</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-21:Agents set to Grok Build 0.1 now answer on Grok 4.7</guid>
 			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>xAI stopped serving Grok Build 0.1 on November 19. The model menus no longer offer it, and any agent, embed or saved setting that picked it now answers on Grok 4.7, the model Grok Build itself runs on, instead of failing. The Grok model check now also reads xAI's release notes, so the next retirement is caught the day it is announced.</description>
+		</item>
+		<item>
+			<title>Grok conversations reuse xAI's prompt cache</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-21:Grok conversations reuse xAI's prompt cache</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Every Grok call three.ws makes now tells xAI which conversation it belongs to, so follow-up turns with the same agent reach the server that already holds that agent's persona and tools in its cache. Cached input costs a quarter of the normal rate and starts the reply sooner. Only a one-way fingerprint of the prompt is sent, never the text. The Grok usage report now shows how much of each lane's input came from the cache.</description>
 		</item>
 		<item>
 			<title>Docs · Grok Voice realtime on a lip-synced avatar</title>

@@ -19,6 +19,7 @@
 // to its canonical mint; any other mint is runtime data the owner supplied
 // (a snipe target), never hardcoded or recommended.
 
+import { withGrokConvId } from '../_lib/xai-conv-id.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, error, readJson, rateLimited } from '../_lib/http.js';
@@ -300,10 +301,13 @@ async function callOpenRouter({ apiKey, system, messages }) {
 async function callGrok({ apiKey, system, messages }) {
 	const resp = await fetchWithTimeout(XAI_CHAT_COMPLETIONS_URL, {
 		method: 'POST',
-		headers: {
-			Authorization: `Bearer ${apiKey}`,
-			'content-type': 'application/json',
-		},
+		headers: withGrokConvId(
+			XAI_CHAT_COMPLETIONS_URL,
+			{ Authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
+			'task',
+			'solana_intent',
+			system,
+		),
 		body: JSON.stringify({
 			model: GROK_BUDGET_MODEL,
 			...GROK_BUDGET_EXTRA_BODY,

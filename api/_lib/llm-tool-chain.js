@@ -9,6 +9,7 @@
 // chat-completions wire format (tools + streamed tool_calls), so one reader
 // handles them all.
 
+import { withGrokConvId } from './xai-conv-id.js';
 import { env } from './env.js';
 import { recordXaiUsage, isHostXaiKey } from './xai-usage.js';
 import { DEFAULT_FREE_MODEL, MODEL_CATALOG, resolveModelId } from './chat-models.js';
@@ -151,7 +152,9 @@ export async function streamRound(provider, { messages, tools, onContent, temper
 	const signal = connect ? AbortSignal.any([AbortSignal.timeout(45_000), connect.signal]) : AbortSignal.timeout(45_000);
 	let resp;
 	try {
-		resp = await fetch(provider.url, { method: 'POST', headers, body: JSON.stringify(body), signal });
+		// xAI rungs: pin the conversation to one server so its prefix cache hits.
+		const sent = withGrokConvId(provider.url, headers, 'chain', messages[0]?.content, messages.find((m) => m.role === 'user')?.content);
+		resp = await fetch(provider.url, { method: 'POST', headers: sent, body: JSON.stringify(body), signal });
 	} catch (err) {
 		if (provider.name === 'phi') console.warn(`[phi] worker unreachable (${connect?.signal.aborted ? `no response in ${provider.connectTimeoutMs}ms` : err.message}), falling back`);
 		throw err;

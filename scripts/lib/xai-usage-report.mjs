@@ -13,12 +13,24 @@ export const WINDOWS = [
 ];
 
 const usd = (micro) => `$${(Number(micro) / 1e6).toFixed(2)}`;
+const pct = (rate) => `${Math.round(rate * 100)}%`;
+
+// Share of prompt tokens xAI served from its prompt cache (cached input bills at
+// a quarter of the fresh rate on grok-4.7). input_tokens already includes the
+// cached ones, so this is a plain ratio. Null when the rows carry no prompt
+// tokens (image, video and voice lanes), where a hit rate means nothing.
+export function cacheHitRate(rows) {
+	const input = rows.reduce((a, r) => a + Number(r.input_tokens || 0), 0);
+	const cached = rows.reduce((a, r) => a + Number(r.cached_tokens || 0), 0);
+	return input > 0 ? { input, cached, rate: cached / input } : null;
+}
 
 /** Spend rows grouped by lane and model since `since`. */
 export async function spendByLaneModel(sql, since) {
 	return sql`
 		select lane, model, count(*)::int as calls, coalesce(sum(cost_usd_micro), 0)::float8 as micro,
-			(count(*) filter (where cost_source = 'price_table'))::int as estimated
+			(count(*) filter (where cost_source = 'price_table'))::int as estimated,
+			coalesce(sum(input_tokens), 0)::float8 as input_tokens, coalesce(sum(cached_tokens), 0)::float8 as cached_tokens
 		from xai_usage where created_at >= ${since.toISOString()}
 		group by lane, model order by micro desc
 	`;
@@ -65,8 +77,12 @@ export function formatReport(r) {
 		if (!w.rows.length) out.push('  no xAI calls recorded');
 		for (const row of w.rows) {
 			const est = row.estimated ? `  (${row.estimated} priced from table)` : '';
-			out.push(`  ${row.lane.padEnd(12)} ${row.model.padEnd(34)} ${String(row.calls).padStart(6)} calls  ${usd(row.micro).padStart(10)}${est}`);
+			const rowHit = cacheHitRate([row]);
+			const cache = rowHit ? `  cache ${pct(rowHit.rate)}` : '';
+			out.push(`  ${row.lane.padEnd(12)} ${row.model.padEnd(34)} ${String(row.calls).padStart(6)} calls  ${usd(row.micro).padStart(10)}${cache}${est}`);
 		}
+		const hit = cacheHitRate(w.rows);
+		if (hit) out.push(`  prompt cache (${w.label}): ${pct(hit.rate)} of ${hit.input} input tokens served from cache`);
 	}
 	out.push(`burn rate (7 day average): ${r.burnPerDayUsd.toFixed(2)} USD/day`);
 	if (!r.credit) {

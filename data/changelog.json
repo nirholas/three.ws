@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-21",
+			"title": "Grok conversations reuse xAI's prompt cache",
+			"summary": "Every Grok call three.ws makes now tells xAI which conversation it belongs to, so follow-up turns with the same agent reach the server that already holds that agent's persona and tools in its cache. Cached input costs a quarter of the normal rate and starts the reply sooner. Only a one-way fingerprint of the prompt is sent, never the text. The Grok usage report now shows how much of each lane's input came from the cache.",
+			"tags": ["improvement", "infra"]
+		},
+		{
+			"date": "2026-11-21",
 			"title": "Agents set to Grok Build 0.1 now answer on Grok 4.7",
 			"summary": "xAI stopped serving Grok Build 0.1 on November 19. The model menus no longer offer it, and any agent, embed or saved setting that picked it now answers on Grok 4.7, the model Grok Build itself runs on, instead of failing. The Grok model check now also reads xAI's release notes, so the next retirement is caught the day it is announced.",
 			"tags": ["fix"]

@@ -27,7 +27,21 @@ npm run grok:usage -- --prod-env   # production DATABASE_URL and XAI_* from the 
 npm run grok:usage -- --reconcile  # also compare 30 day ledger spend to xAI's billing usage
 ```
 
-The report shows spend by lane and model for 24 hours, 7 days and 30 days, remaining credit, burn rate, runway and expiry. `--reconcile` needs `XAI_MANAGEMENT_KEY` and `XAI_TEAM_ID`. Exit codes: 0 ok, 1 warn or reconcile drift, 2 fail.
+The report shows spend by lane and model for 24 hours, 7 days and 30 days, the prompt-cache hit rate (per text row and per window), remaining credit, burn rate, runway and expiry. `--reconcile` needs `XAI_MANAGEMENT_KEY` and `XAI_TEAM_ID`. Exit codes: 0 ok, 1 warn or reconcile drift, 2 fail.
+
+## Prompt caching
+
+xAI caches a prompt prefix automatically and bills cached input at a quarter of the fresh rate ($0.50 vs $2 per 1M tokens on grok-4.7). The cache lives on one inference server, so a conversation only hits it if its follow-up turns reach the same server. Every platform call to `api.x.ai` therefore sends an `x-grok-conv-id` header built by `api/_lib/xai-conv-id.js`: a SHA-256 of the stable prefix (call kind plus agent id or system prompt), never the raw text. Calls that share a prefix land on the same server; different agents and tasks spread across the fleet. The header is only added for the `api.x.ai` host.
+
+| Call site | Prefix the id is derived from |
+|---|---|
+| `api/chat.js` (main loop and follow-up pass) | agent id and first history message |
+| `api/_lib/llm.js` (`llmComplete`) | task name and system prompt |
+| `api/_lib/llm-tool-chain.js` | system message and first user message |
+| `api/_lib/wallet-intents.js`, `api/agents/solana-intent.js` | intent task and system prompt |
+| `api/widgets/[id]/[action].js`, `api/marketplace/[action].js` | system prompt and first message |
+
+To keep hits high, put the stable part (persona, tool list, instructions) first and never edit earlier messages in a conversation. Whether it works shows in `npm run grok:usage` as `cache N%`.
 
 ## Configuration (names only)
 
