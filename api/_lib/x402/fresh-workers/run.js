@@ -109,7 +109,7 @@ async function recordCall(sql, { runId, wallet, job, endpointUrl, result, durati
 				(${runId}, ${'self'}, ${`Fresh: ${job.title}`}, ${endpointUrl},
 				 ${'solana:mainnet'}, ${result.paid ? result.amountAtomic : 0}, ${ASSET}, ${result.txSig || null},
 				 ${JSON.stringify({ status: result.status, paid: result.paid === true, skipped: result.skipped === true })},
-				 ${JSON.stringify({ payer: wallet.pubkey, wallet_id: wallet.id, job_kind: job.kind, slug: job.slug, fresh_wallet: true, ...(sink || {}) })},
+				 ${JSON.stringify({ payer: wallet.pubkey, wallet_id: wallet.id, job_kind: job.kind, slug: job.slug, fresh_wallet: true, ...(sink || {}), ...(result.capture ? { paid_response: { stored: result.capture.stored, where: result.capture.where || null, id: result.capture.id ?? null, sha256: result.capture.sha256 || null } } : {}) })},
 				 ${durationMs || 0}, ${result.success === true}, ${result.errorMsg || null}, ${PIPELINE})`;
 	} catch (err) {
 		log.warn('fresh_call_log_insert_failed', { message: err?.message });
@@ -184,7 +184,7 @@ async function reclaimPass({ sql, conn, cfg, funders, mint, decimals, runId, tim
 			continue;
 		}
 		let keypair;
-		try { keypair = await recoverKeypair(row.encrypted_secret); }
+		try { keypair = await recoverKeypair(row); }
 		catch (err) { await markSweepFailed(sql, row.id, `key_recover_failed:${err?.message}`); out.failed += 1; continue; }
 		if (row.state === 'paid' && row.pay_sig) {
 			await confirmSignature(conn, row.pay_sig, Math.min(PAY_CONFIRM_MS, Math.max(2_000, timeLeft() - SWEEP_RESERVE_MS)));
@@ -346,7 +346,8 @@ export async function run(ctx = {}) {
 		let result;
 		try {
 			result = await Promise.race([
-				payX402({ url, method: w.job.method, body: w.job.body, buyer: w.keypair, conn, blockhash: solana.blockhash, mintInfo, remainingCap: w.job.priceAtomic, selfPay: true, onAccept }),
+				payX402({ url, method: w.job.method, body: w.job.body, buyer: w.keypair, conn, blockhash: solana.blockhash, mintInfo, remainingCap: w.job.priceAtomic, selfPay: true, onAccept,
+					capture: { sql, pipeline: PIPELINE, runId, endpointKey: w.job.slug, walletKind: 'fresh', freshWalletId: w.id } }),
 				new Promise((resolve) => setTimeout(() => resolve({ success: false, paid: false, skipped: false, amountAtomic: 0, txSig: null, status: 0, responseBody: null, errorMsg: 'tick_deadline' }), payBudgetMs)),
 			]);
 		} catch (err) {

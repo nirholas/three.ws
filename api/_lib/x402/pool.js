@@ -29,7 +29,7 @@
 //     settles failed simulation.
 
 import { Keypair } from '@solana/web3.js';
-import { encryptSecret, decryptSecret } from '../secret-box.js';
+import { sealNewWalletKey, recoverWalletKeypair } from './wallet-custody.js';
 import { sql as defaultSql } from '../db.js';
 import { logger } from '../usage.js';
 
@@ -98,6 +98,10 @@ export async function ensurePoolSchema(sql = defaultSql) {
 	await sql`ALTER TABLE x402_ring_pool ADD COLUMN IF NOT EXISTS last_sol_lamports bigint`;
 	await sql`ALTER TABLE x402_ring_pool ADD COLUMN IF NOT EXISTS last_usdc_atomic bigint`;
 	await sql`ALTER TABLE x402_ring_pool ADD COLUMN IF NOT EXISTS balances_checked_at timestamptz`;
+	// Custody (migration 20261121120100): the KMS backup copy of each key and when
+	// the daily audit last proved both copies open. See ./wallet-custody.js.
+	await sql`ALTER TABLE x402_ring_pool ADD COLUMN IF NOT EXISTS backup_secret text`;
+	await sql`ALTER TABLE x402_ring_pool ADD COLUMN IF NOT EXISTS custody_verified_at timestamptz`;
 	_schemaReady = true;
 }
 
@@ -169,16 +173,9 @@ export async function listEnabledPubkeys(sql = defaultSql) {
 /** Recover a single pool keypair by pubkey (used by the funding pipeline to sweep an overfull wallet). */
 export async function recoverPoolKeypair(pubkey, sql = defaultSql) {
 	await ensurePoolSchema(sql);
-	const rows = await sql`SELECT encrypted_secret FROM x402_ring_pool WHERE pubkey = ${pubkey} AND enabled = true LIMIT 1`;
+	const rows = await sql`SELECT pubkey, encrypted_secret, backup_secret FROM x402_ring_pool WHERE pubkey = ${pubkey} AND enabled = true LIMIT 1`;
 	if (!rows[0]?.encrypted_secret) return null;
-	return decodeKeypair(await decryptSecret(rows[0].encrypted_secret));
-}
-
-// Decode a base64-encoded 64-byte secret key into a Keypair.
-function decodeKeypair(secretB64) {
-	const raw = Buffer.from(secretB64, 'base64');
-	if (raw.length !== 64) throw new Error(`pool key decode: expected 64 bytes, got ${raw.length}`);
-	return Keypair.fromSecretKey(Uint8Array.from(raw));
+	return recoverWalletKeypair(rows[0]);
 }
 
 /**
@@ -198,12 +195,14 @@ export async function generatePoolWallets({ count, sql = defaultSql } = {}) {
 	for (let i = 0; i < n; i++) {
 		const kp = Keypair.generate();
 		const pubkey = kp.publicKey.toBase58();
-		const encrypted = await encryptSecret(Buffer.from(kp.secretKey).toString('base64'));
+		// Two sealed copies (env secret-box + Cloud KMS backup), both proven to open
+		// to this pubkey before the row exists. See ./wallet-custody.js.
+		const { encrypted, backup } = await sealNewWalletKey(kp);
 		// Insert the pool row and register membership in ONE round-trip pair. Both are
 		// ON CONFLICT DO NOTHING so a re-run never duplicates or overwrites a wallet.
 		await sql`
-			INSERT INTO x402_ring_pool (pubkey, encrypted_secret)
-			VALUES (${pubkey}, ${encrypted})
+			INSERT INTO x402_ring_pool (pubkey, encrypted_secret, backup_secret)
+			VALUES (${pubkey}, ${encrypted}, ${backup})
 			ON CONFLICT (pubkey) DO NOTHING`;
 		await sql`
 			INSERT INTO x402_ring_wallets (pubkey, label, role, enabled, note)
@@ -267,10 +266,10 @@ export async function claimNextPayer(sql = defaultSql, { minUsdcAtomic = 0 } = {
 			LIMIT 1
 			FOR UPDATE SKIP LOCKED
 		)
-		RETURNING pubkey, encrypted_secret`;
+		RETURNING pubkey, encrypted_secret, backup_secret`;
 	if (!rows[0]) return null;
 	try {
-		const keypair = decodeKeypair(await decryptSecret(rows[0].encrypted_secret));
+		const keypair = await recoverWalletKeypair(rows[0]);
 		return { keypair, pubkey: rows[0].pubkey };
 	} catch (err) {
 		log.warn('ring_pool_claim_decrypt_failed', { pubkey: rows[0].pubkey, message: err?.message });

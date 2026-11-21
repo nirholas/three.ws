@@ -13,16 +13,21 @@
 // A wallet whose sweep does not land stays in x402_fresh_wallets in a
 // reclaimable state; the fresh-workers tick's reclaim pass finishes it.
 // buyerFor returns null when a wallet cannot be minted or funded, and the
-// caller falls back to its shared payer so the ring never stalls.
+// caller falls back to its shared payer so the ring never stalls. Before it
+// mints, it reads both funders: the fee wallet must cover the wallet's SOL, its
+// ATA rent and the funding fee above the facilitator's sponsor floor, and the
+// treasury must hold the call's USDC. A dry funder therefore costs one balance
+// read per call, never an orphaned wallet row.
 
 import { Keypair, PublicKey } from '@solana/web3.js';
 
 import { env } from '../../env.js';
 import { logger } from '../../usage.js';
 import { decodeSeedSecret, USDC_MINT } from '../pay.js';
-import { freshWorkersConfig, walletSolLamports } from './plan.js';
+import { SPONSOR_SOL_FLOOR_LAMPORTS } from '../self-facilitator.js';
+import { freshWorkersConfig, walletSolLamports, fundingRequirement, funderHeadroom } from './plan.js';
 import { mintWallet, markFunded, markFundFailed, markPaid, markPayFailed } from './wallets.js';
-import { fundWallets, rentExemptLamports, confirmSignature } from './chain.js';
+import { fundWallets, rentExemptLamports, confirmSignature, readSolLamports, readUsdc, usdcAtaOf } from './chain.js';
 import { settleWallet } from './run.js';
 
 const log = logger('x402-fresh-per-call');
@@ -73,9 +78,31 @@ export async function createFreshCallPayer({ sql, conn, funders, runId, mintInfo
 		maxPayFeeLamports: cfg.maxPayFeeLamports,
 	});
 	const live = new Map(); // pubkey -> wallet row
-	const stats = { minted: 0, fundFailed: 0, closed: 0, sweepFailed: 0 };
+	const stats = { minted: 0, fundFailed: 0, closed: 0, sweepFailed: 0, noHeadroom: 0 };
+	const treasuryAta = usdcAtaOf(funders.treasury.publicKey, mint);
+
+	// Both funders can pay for one more wallet right now. Unreadable balances
+	// count as no: minting blind is what produced the orphan rows.
+	async function canFund(priceAtomic) {
+		const need = fundingRequirement({ jobs: [priceAtomic], priceOf: (p) => Number(p), solPerWalletLamports: solPerWallet });
+		const [sol, usdc] = await Promise.all([
+			readSolLamports(conn, funders.solFunder.publicKey).catch(() => null),
+			readUsdc(conn, treasuryAta).catch(() => null),
+		]);
+		if (sol == null || usdc == null) return { ok: false, reason: 'balance_unreadable' };
+		const head = funderHeadroom({ balanceLamports: sol, floorLamports: SPONSOR_SOL_FLOOR_LAMPORTS, needLamports: need.solLamports });
+		if (!head.ok) return { ok: false, reason: 'fee_wallet_headroom', shortfall: head.shortfall };
+		if (usdc.atomic < BigInt(need.usdcAtomic)) return { ok: false, reason: 'treasury_usdc', shortfall: Number(BigInt(need.usdcAtomic) - usdc.atomic) };
+		return { ok: true };
+	}
 
 	async function buyerFor(ep, priceAtomic) {
+		const fundable = await canFund(priceAtomic);
+		if (!fundable.ok) {
+			stats.noHeadroom += 1;
+			if (stats.noHeadroom === 1) log.warn('fresh_call_no_headroom', { reason: fundable.reason, shortfall: fundable.shortfall ?? null });
+			return null;
+		}
 		let w;
 		try {
 			w = await mintWallet({

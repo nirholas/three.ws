@@ -637,6 +637,12 @@ function buildWorkerRequest(request) {
 		if (params?.max_seconds !== undefined && params.max_seconds !== null) {
 			body.max_seconds = params.max_seconds;
 		}
+		// 360 footage (worker contract C3): both fields are omitted for ordinary
+		// perspective video so the worker's default path is untouched.
+		if (params?.projection === 'equirect') {
+			body.projection = 'equirect';
+			if (params.subject) body.subject = params.subject;
+		}
 		return {
 			path: '/infer',
 			resultKey: 'result_url',
@@ -946,6 +952,13 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 					if (data.meta_url) result.metaUrl = data.meta_url;
 					if (data.video_url) result.videoUrl = data.video_url;
 					if (data.mask_url) result.maskUrl = data.mask_url;
+					// 360 reframe: the perspective video the worker tracked, the
+					// per-frame look direction, and the tracking telemetry.
+					if (data.reframe_url) result.reframeUrl = data.reframe_url;
+					if (Array.isArray(data.subject_track)) result.subjectTrack = data.subject_track;
+					if (data.track_stats && typeof data.track_stats === 'object') {
+						result.trackStats = data.track_stats;
+					}
 					if (typeof data.frames === 'number') result.frames = data.frames;
 					if (typeof data.fps === 'number') result.fps = data.fps;
 				} else if (mode === 'triposplat') {

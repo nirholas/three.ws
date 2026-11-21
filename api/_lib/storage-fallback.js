@@ -150,6 +150,29 @@ export async function fallbackHead(key) {
 	};
 }
 
+/**
+ * One page of keys under `prefix`, in the S3 lister's shape
+ * ({ objects: [{ key, size, lastModified }], nextToken }). Uses the GCS JSON
+ * API, since the XML endpoint above has no listing for a single prefix page.
+ */
+export async function fallbackList({ prefix, pageToken = null, maxKeys = 1000 }) {
+	const bucket = fallbackBucket();
+	if (!bucket) throw new Error('storage fallback bucket is not configured');
+	const qs = new URLSearchParams({ prefix, maxResults: String(Math.max(1, Math.min(1000, maxKeys))), fields: 'items(name,size,updated),nextPageToken' });
+	if (pageToken) qs.set('pageToken', pageToken);
+	const token = await getGcpAccessToken();
+	const res = await fetch(`${GCS_XML}/storage/v1/b/${encodeURIComponent(bucket)}/o?${qs}`, {
+		headers: { authorization: `Bearer ${token}` },
+		signal: AbortSignal.timeout(TIMEOUT_MS),
+	});
+	if (!res.ok) throw await failure(res, 'list', prefix);
+	const data = await res.json();
+	return {
+		objects: (data.items || []).map((o) => ({ key: o.name, size: Number(o.size || 0), lastModified: o.updated ? new Date(o.updated) : null })),
+		nextToken: data.nextPageToken || null,
+	};
+}
+
 /** Delete an object; absent is success. Returns whether a copy existed. */
 export async function fallbackDelete(key) {
 	const res = await call('DELETE', key);

@@ -10,7 +10,7 @@
 
 import { Keypair, PublicKey } from '@solana/web3.js';
 
-import { encryptSecret, decryptSecret } from '../../secret-box.js';
+import { sealNewWalletKey, recoverWalletKeypair } from '../wallet-custody.js';
 import { sql as defaultSql } from '../../db.js';
 import { usdcAtaOf } from './chain.js';
 
@@ -48,34 +48,34 @@ export async function ensureFreshSchema(sql = defaultSql) {
 		)`;
 	await sql`CREATE INDEX IF NOT EXISTS x402_fresh_wallets_state_updated ON x402_fresh_wallets (state, updated_at)`;
 	await sql`CREATE INDEX IF NOT EXISTS x402_fresh_wallets_created ON x402_fresh_wallets (created_at DESC)`;
+	// Custody (migration 20261121120100): the KMS backup copy of each key and when
+	// the daily audit last proved both copies open. See ../wallet-custody.js.
+	await sql`ALTER TABLE x402_fresh_wallets ADD COLUMN IF NOT EXISTS backup_secret text`;
+	await sql`ALTER TABLE x402_fresh_wallets ADD COLUMN IF NOT EXISTS custody_verified_at timestamptz`;
 	_schemaReady = true;
-}
-
-function decodeKeypair(secretB64) {
-	const raw = Buffer.from(secretB64, 'base64');
-	if (raw.length !== 64) throw new Error(`fresh wallet key decode: expected 64 bytes, got ${raw.length}`);
-	return Keypair.fromSecretKey(Uint8Array.from(raw));
 }
 
 /**
  * Mint one never-used wallet for a job and record it as 'minted'. The secret is
- * encrypted before it is written and the plaintext keypair lives only in the
- * returned object for the tick that uses it.
+ * sealed twice (env secret-box + Cloud KMS backup) and both copies are proven to
+ * open to the pubkey before the row is written; the plaintext keypair lives only
+ * in the returned object for the tick that uses it.
  */
 export async function mintWallet({ sql = defaultSql, job, mint, runId }) {
 	const keypair = Keypair.generate();
 	const pubkey = keypair.publicKey.toBase58();
 	const ata = usdcAtaOf(keypair.publicKey, mint).toBase58();
-	const encrypted = await encryptSecret(Buffer.from(keypair.secretKey).toString('base64'));
+	const { encrypted, backup } = await sealNewWalletKey(keypair);
 	const rows = await sql`
-		INSERT INTO x402_fresh_wallets (pubkey, usdc_ata, encrypted_secret, state, job_kind, job_slug, job_title, run_id)
-		VALUES (${pubkey}, ${ata}, ${encrypted}, 'minted', ${job.kind}, ${job.slug}, ${job.title}, ${runId})
+		INSERT INTO x402_fresh_wallets (pubkey, usdc_ata, encrypted_secret, backup_secret, state, job_kind, job_slug, job_title, run_id)
+		VALUES (${pubkey}, ${ata}, ${encrypted}, ${backup}, 'minted', ${job.kind}, ${job.slug}, ${job.title}, ${runId})
 		RETURNING id`;
 	return { id: rows[0].id, pubkey, ata, keypair, job };
 }
 
-export async function recoverKeypair(encryptedSecret) {
-	return decodeKeypair(await decryptSecret(encryptedSecret));
+/** Recover a wallet row's Keypair: primary copy, else the KMS backup. */
+export async function recoverKeypair(row) {
+	return recoverWalletKeypair(row);
 }
 
 const clip = (s) => (s == null ? null : String(s).slice(0, 400));
@@ -146,7 +146,7 @@ export async function claimReclaimable({ sql = defaultSql, reclaimAfterS, limit 
 			LIMIT ${limit}
 			FOR UPDATE SKIP LOCKED
 		)
-		RETURNING id, pubkey, usdc_ata, encrypted_secret, state, attempts, pay_sig, job_kind, job_slug`;
+		RETURNING id, pubkey, usdc_ata, encrypted_secret, backup_secret, state, attempts, pay_sig, job_kind, job_slug`;
 }
 
 /** USDC the lane has spent so far this UTC day, from the shared call log. */

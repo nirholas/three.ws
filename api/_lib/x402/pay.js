@@ -26,6 +26,7 @@ import { env } from '../env.js';
 import { solanaConnection } from '../solana/connection.js';
 import { mintDecimals, getRecentBlockhash } from '../solana/read-guards.js';
 import { assessFeeAdmission } from './wallet-fee-meter.js';
+import { recordPaidResponse } from './paid-responses.js';
 
 export const USDC_MINT = env.X402_ASSET_MINT_SOLANA;
 export const SOLANA_RPC = env.SOLANA_RPC_URL;
@@ -421,7 +422,15 @@ export async function payX402({
 	// there does not cancel the server: it still settles, so the buyer pays for a
 	// result it already threw away and books the settlement as a fault.
 	paidTimeoutMs = FETCH_TIMEOUT_MS,
+	// Paid-response capture (./paid-responses.js). Every PAID result is stored in
+	// full before payX402 returns, so the data the platform bought is never
+	// thrown away and every purchase has a receipt row keyed by its tx signature.
+	// Pass { pipeline, runId, endpointKey, walletKind, freshWalletId, sql } to
+	// attribute the purchase; omit it and the call is still stored as
+	// 'unattributed'. `false` opts out (only for probes that must never write).
+	capture = {},
 }) {
+	const startedAt = Date.now();
 	// ringFeeConfig applies the sponsor-mode price constraint itself (sponsor sits
 	// exactly at the fee ceiling, so only zero-lamport priority slots are legal),
 	// which leaves the full compute-limit jitter available in both modes.
@@ -607,11 +616,22 @@ export async function payX402({
 		}
 	}
 
-	return {
+	const result = {
 		success: paidRes.ok, paid: paidRes.ok, free: false, skipped: false,
 		amountAtomic, txSig, status: paidRes.status,
 		responseBody: paidRes.body,
 		errorMsg: paidRes.ok ? null : `http_${paidRes.status}`,
 		retriedAfter402,
 	};
+	if (result.paid && capture !== false) {
+		let payerAddress = null;
+		try { payerAddress = buyer?.publicKey?.toBase58?.() || null; } catch { payerAddress = null; }
+		const { sql: captureSql = null, ...context } = capture || {};
+		result.capture = await recordPaidResponse({
+			sql: captureSql, url, method, requestBody: body, result, payer: payerAddress,
+			asset: currentAccept?.asset || null, network: currentAccept?.network || null,
+			durationMs: Date.now() - startedAt, context,
+		});
+	}
+	return result;
 }

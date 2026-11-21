@@ -477,8 +477,10 @@ export default wrapCron(async (req, res) => {
 	let poolFallbacks = 0;
 	const payCtx = {
 		buyer: payer, conn, blockhash, mintInfo,
+		buyerKind: 'seed',
 		...(fresh
 			? {
+				buyerForKind: 'fresh',
 				selfPay: true,
 				buyerFor: async (ep) => {
 					const price = ep === RING_SETTLE_ENDPOINT ? ringSettlePriceAtomic : CHEAP_RESERVATION_ATOMIC;
@@ -492,6 +494,7 @@ export default wrapCron(async (req, res) => {
 			: {}),
 		...(usePool
 			? {
+				buyerForKind: 'pool',
 				buyerFor: async (ep) => {
 					// The claim only hands back a wallet whose recorded balances cover
 					// THIS call, so an unfunded pool falls through to the seed payer

@@ -228,6 +228,10 @@ export async function settleAndRecord({
 	if (typeof ctx.buyerFor === 'function') {
 		try { buyer = (await ctx.buyerFor(ep)) || ctx.buyer; } catch { buyer = ctx.buyer; }
 	}
+	// Which kind of wallet signed: the caller names its shared payer's kind
+	// (ctx.buyerKind) and its rotating resolver's kind (ctx.buyerForKind). Stored
+	// with the paid response so accounting can split fresh, pool and seed spend.
+	const walletKind = buyer === ctx.buyer ? (ctx.buyerKind || 'shared') : (ctx.buyerForKind || 'unknown');
 
 	let result;
 	try {
@@ -241,6 +245,7 @@ export async function settleAndRecord({
 			mintInfo: ctx.mintInfo,
 			remainingCap: remaining,
 			...(ctx.selfPay ? { selfPay: true } : {}),
+			capture: { sql, pipeline, runId, endpointKey: ep.key, walletKind },
 		});
 	} catch (err) {
 		result = { success: false, paid: false, amountAtomic: 0, txSig: null, status: 0, responseBody: null, errorMsg: err?.message || 'fetch_failed' };
@@ -281,6 +286,10 @@ export async function settleAndRecord({
 		// ctx.buyerFor is active, else the shared buyer. Gives the dashboard true
 		// per-call payer attribution across the whole pool.
 		payer_address: (() => { try { return buyer?.publicKey?.toBase58?.() || null; } catch { return null; } })(),
+		wallet_kind: walletKind,
+		// Where the full paid body was stored (x402_paid_responses), so a log row
+		// links straight to the data it paid for.
+		...(result.capture ? { paid_response: { stored: result.capture.stored, where: result.capture.where || null, id: result.capture.id ?? null, sha256: result.capture.sha256 || null } } : {}),
 		liveness: summarizeResponse(result.responseBody),
 		...(metric ? {
 			cumulative_calls: Number(metric.call_count),
