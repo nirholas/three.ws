@@ -6,7 +6,8 @@
 // reference facilitator, which only supports base-sepolia) before a paying
 // client hits a 502.
 
-import { cors, json, method, wrap } from './_lib/http.js';
+import { cors, json, method, rateLimited, wrap } from './_lib/http.js';
+import { limits, clientIp } from './_lib/rate-limit.js';
 import { env } from './_lib/env.js';
 import {
 	EIP2612_EXTENSION_KEY,
@@ -59,6 +60,10 @@ async function probeSiwx() {
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
+
+	// Checked before probeFacilitators(): each call fans out to the network.
+	const rl = await limits.x402StatusIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl, 'too many status checks, retry in a minute');
 
 	const accepts = paymentRequirements();
 	const facilitators = await probeFacilitators();

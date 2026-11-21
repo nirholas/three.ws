@@ -6,13 +6,16 @@
 //     stats) and the ring config findings, which name the signing secrets that
 //     are missing from the deploy.
 // Public callers now get the failure code only; the operator (authorizeOps) still
-// gets the full detail.
+// gets the full detail. /api/x402-status also probes every facilitator over the
+// network on each call, so it is rate limited per IP before that fan-out.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { invoke } from './_helpers/monetization.js';
 
 const RPC_ERR = 'fund_failed:solana rpc 429 @ https://rpc.example/?api-key=SECRETKEY123';
 let opsOk = false;
+let rateOk = true;
+const probeFacilitators = vi.fn(async () => []);
 
 vi.mock('../api/_lib/ops-auth.js', () => ({ authorizeOps: vi.fn(async () => ({ ok: opsOk, actor: opsOk ? 'ops-secret' : '' })) }));
 vi.mock('../api/_lib/db.js', () => ({
@@ -24,8 +27,8 @@ vi.mock('../api/_lib/db.js', () => ({
 	isDbUnavailableError: () => false,
 }));
 vi.mock('../api/_lib/rate-limit.js', () => {
-	const ok = async () => ({ success: true, reset: Date.now() + 1000, limit: 100, remaining: 99 });
-	return { limits: new Proxy({}, { get: () => ok }), clientIp: () => '127.0.0.1' };
+	const check = async () => ({ success: rateOk, reset: Date.now() + 1000, limit: 100, remaining: rateOk ? 99 : 0 });
+	return { limits: new Proxy({}, { get: () => check }), clientIp: () => '127.0.0.1' };
 });
 vi.mock('../api/_lib/cache.js', () => ({ cacheGet: vi.fn(async () => null), cacheSet: vi.fn(async () => {}) }));
 vi.mock('../api/_lib/x402/fresh-workers/wallets.js', () => ({ laneStats: vi.fn(async () => ({})) }));
@@ -38,7 +41,7 @@ vi.mock('../api/_lib/x402-spec.js', () => ({
 	declareEip2612GasSponsoringExtension: () => ({}),
 	declareErc20ApprovalGasSponsoringExtension: () => ({}),
 	paymentRequirements: () => [],
-	probeFacilitators: async () => [],
+	probeFacilitators: (...a) => probeFacilitators(...a),
 	X402_VERSION: 2,
 }));
 vi.mock('../api/_lib/siwx-server.js', () => ({ hasEvmVerifier: () => false }));
@@ -58,6 +61,8 @@ vi.mock('../api/_lib/x402/pending-settlements.js', () => ({
 
 beforeEach(() => {
 	opsOk = false;
+	rateOk = true;
+	probeFacilitators.mockClear();
 });
 
 describe('ringConfigWarningsView (shared by /api/x402-status and /api/x402-ring)', () => {
@@ -95,6 +100,14 @@ describe('/api/x402-status', () => {
 		expect(text).not.toContain('X402_TREASURY_SECRET_BASE58');
 		expect(r.body.ring.config_warning_count).toBe(1);
 		expect(r.body.siwx.configured).toBe(false);
+	});
+
+	it('refuses a flood before it fans out to the facilitators', async () => {
+		rateOk = false;
+		const { default: handler } = await import('../api/x402-status.js');
+		const r = await invoke(handler, { method: 'GET', url: '/api/x402-status' });
+		expect(r.status).toBe(429);
+		expect(probeFacilitators).not.toHaveBeenCalled();
 	});
 
 	it('still gives the operator the full detail', async () => {

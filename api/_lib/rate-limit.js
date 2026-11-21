@@ -1655,6 +1655,11 @@ export const limits = {
 	// still stops a scripted flood. Page-load-critical clusters additionally get
 	// their own dedicated buckets below so one surface can never starve another.
 	publicIp: (ip) => getLimiter('public:ip', { limit: 240, window: '1 m', local: true }).limit(ip),
+	// /api/x402-status (unauthenticated) probes every facilitator's /supported
+	// over the network on each call, so an anonymous loop would turn it into an
+	// outbound request amplifier. Nothing polls it (the economy lab only links
+	// it); 30 a minute per IP is far above a person refreshing it.
+	x402StatusIp: (ip) => getLimiter('x402:status:ip', { limit: 30, window: '1 m' }).limit(ip),
 	// Hire Blink POSTs (api/actions/agent-hire.js): each builds a payment
 	// transaction (a balance read and a blockhash) and may write a pending hire
 	// row, and the confirm callback runs a chain verification. Anonymous wallets
