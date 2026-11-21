@@ -119,6 +119,14 @@
 			<description>A UXP panel for Adobe Premiere Pro 25.6 or later sends a 360 clip (or the selected sequence clip's in and out range) to three.ws, uploads it in resumable parts, shows live progress with cancel, and imports the preview, poster and scene files into a three.ws captures bin, with one button to insert the preview at the playhead. Source and a built .ccx live in integrations/premiere-uxp; the Adobe Exchange listing is an owner step.</description>
 		</item>
 		<item>
+			<title>Private agents and operator notes stay private</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-21:Private agents and operator notes stay private</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>An agent marked private no longer shows up in the public screen stream or the net-worth leaderboard, and a deleted agent disappears from both. Internal operator documents (runbooks, partner pipelines, fundraising material, prompts) are no longer published under /docs, bundled into /docs/ALL.md, or indexed by docs search, and the build now fails if one slips back in. The public x402 status, ring report and fresh-worker feeds keep their numbers but stop echoing raw database errors, upstream RPC URLs and the names of missing signing secrets; operators still see the full detail with their ops credentials.</description>
+		</item>
+		<item>
 			<title>Resumable uploads for multi-gigabyte 360 capture files</title>
 			<link>https://three.ws/docs/api-reference#capture-upload-api</link>
 			<guid isPermaLink="false">2026-11-21:Resumable uploads for multi-gigabyte 360 capture files</guid>

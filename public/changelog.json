@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-21T23:11:13.008Z",
+	"generated_at": "2026-11-21T23:19:40.126Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -150,6 +150,17 @@
 			"tags": [
 				"feature",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "update",
+			"title": "Private agents and operator notes stay private",
+			"summary": "An agent marked private no longer shows up in the public screen stream or the net-worth leaderboard, and a deleted agent disappears from both. Internal operator documents (runbooks, partner pipelines, fundraising material, prompts) are no longer published under /docs, bundled into /docs/ALL.md, or indexed by docs search, and the build now fails if one slips back in. The public x402 status, ring report and fresh-worker feeds keep their numbers but stop echoing raw database errors, upstream RPC URLs and the names of missing signing secrets; operators still see the full detail with their ops credentials.",
+			"link": null,
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{

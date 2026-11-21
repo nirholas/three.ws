@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-21",
+			"title": "Private agents and operator notes stay private",
+			"summary": "An agent marked private no longer shows up in the public screen stream or the net-worth leaderboard, and a deleted agent disappears from both. Internal operator documents (runbooks, partner pipelines, fundraising material, prompts) are no longer published under /docs, bundled into /docs/ALL.md, or indexed by docs search, and the build now fails if one slips back in. The public x402 status, ring report and fresh-worker feeds keep their numbers but stop echoing raw database errors, upstream RPC URLs and the names of missing signing secrets; operators still see the full detail with their ops credentials.",
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-11-21",
 			"title": "Send 360 footage from Blender and get the splat back in your scene",
 			"summary": "The three.ws Blender extension (version 1.1.0) has a new 360 Capture panel. Pick a 360 video, either a 2:1 equirectangular mp4 or the raw .insv file from an Insta360 X3, X4, X5 or X6 camera, and it uploads in resumable parallel parts, becomes a 3D Gaussian splat on three.ws, and lands in your scene selected. A single 360 photo, including a raw .insp, comes back as a depth shell mesh instead. With the KIRI Engine 3DGS Render add-on enabled the splat renders as Gaussians; without it you get a coloured point cloud. Choose a quality preset, trim the clip, pick the up axis, cancel at any point, and reopen past captures from the Your captures list, with the preview video one click away in the sequencer. Blender stays smooth while a job runs, and the panel respects Allow Online Access.",
 			"tags": [

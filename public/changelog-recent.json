@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-21T23:11:13.283Z",
+	"generated_at": "2026-11-21T23:19:40.331Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4699,
+	"total": 4700,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -153,6 +153,17 @@
 			"tags": [
 				"feature",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "update",
+			"title": "Private agents and operator notes stay private",
+			"summary": "An agent marked private no longer shows up in the public screen stream or the net-worth leaderboard, and a deleted agent disappears from both. Internal operator documents (runbooks, partner pipelines, fundraising material, prompts) are no longer published under /docs, bundled into /docs/ALL.md, or indexed by docs search, and the build now fails if one slips back in. The public x402 status, ring report and fresh-worker feeds keep their numbers but stop echoing raw database errors, upstream RPC URLs and the names of missing signing secrets; operators still see the full detail with their ops credentials.",
+			"link": null,
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
@@ -1560,16 +1571,6 @@
 			"link": "/sign-review",
 			"tags": [
 				"launch"
-			]
-		},
-		{
-			"date": "2026-11-12",
-			"type": "update",
-			"title": "A reinvest rule can no longer be confirmed while one of its destinations is missing",
-			"summary": "The confirm screen on /earnings already said when a rule could not be confirmed yet, for example when the platform deposit wallet for model credits was not configured or the agent had no coin on the rule's network, but the confirm button could still turn back on after a preview and the server accepted the click. The server now refuses to activate any rule whose confirmation table marks a destination unavailable, and the confirm button stays disabled until every destination is ready.",
-			"link": "/earnings",
-			"tags": [
-				"fix"
 			]
 		}
 	]
