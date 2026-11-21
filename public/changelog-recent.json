@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-21T22:15:43.087Z",
+	"generated_at": "2026-11-21T22:27:33.166Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4688,
+	"total": 4690,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -84,6 +84,16 @@
 		{
 			"date": "2026-11-21",
 			"type": "update",
+			"title": "Click the person in a 360 clip for motion capture",
+			"summary": "/video-to-motion and /motion-swap now accept a stitched 360 clip from any 360 camera. The page detects the 2:1 frame, opens a sphere preview where you drag to look around and click the person to follow (or let it pick), sends that spot as a yaw and pitch with the capture, and shows what the tracker followed beside the avatar when the worker returns it. Raw .insv files get a clear note to export a 360 MP4 first.",
+			"link": "/video-to-motion",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "update",
 			"title": "Grok conversations reuse xAI's prompt cache",
 			"summary": "Every Grok call three.ws makes now tells xAI which conversation it belongs to, so follow-up turns with the same agent reach the server that already holds that agent's persona and tools in its cache. Cached input costs a quarter of the normal rate and starts the reply sooner. Only a one-way fingerprint of the prompt is sent, never the text. The Grok usage report now shows how much of each lane's input came from the cache.",
 			"link": null,
@@ -122,6 +132,17 @@
 			"link": "/pano-scene",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "update",
+			"title": "Upload 360 footage and start a scene from the terminal",
+			"summary": "The three-ws CLI gains a capture command: three-ws capture 360 <file> uploads a 360 clip, stills set or .insv from any 360 camera in resumable 8 MiB parts and starts the reconstruction, capture scene <photo> turns one 360 photo into a scene, and capture status, list and cancel follow the job. An interrupted upload picks up where it stopped. It signs in with a stored login or THREE_WS_API_KEY. /openapi.json now documents every capture upload, pano-capture and pano-scene route with request and response schemas, the error shape and examples taken from real responses.",
+			"link": "/docs/cli",
+			"tags": [
+				"sdk",
+				"docs"
 			]
 		},
 		{
@@ -1548,26 +1569,6 @@
 			"link": "/markets/news",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-12",
-			"type": "update",
-			"title": "Onchain viewer recognizes the real SPL Memo v1 program",
-			"summary": "The /onchain viewer and the Solana Memo Media MCP listed SPL Memo v1 under an address that is not a valid Solana key, so a v1 memo that an RPC did not tag as spl-memo was skipped. Both now use the real program, Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo, and a test checks that every recognized memo program is a real 32-byte key.",
-			"link": "/onchain",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-12",
-			"type": "update",
-			"title": "Set a per-trade cap and a position limit for your agent's autopilot, and see the live quote before you confirm a trade",
-			"summary": "The autopilot trade scope now has two owner limits beside the daily SOL budget: a cap on the SOL any single buy may spend, and a maximum number of tokens the agent may hold at once ($THREE is never counted). Both are enforced on the server before anything is quoted. Previewing a trade proposal now shows the real quote it would fill at (venue, expected tokens, minimum received after slippage, price impact and value) together with the wallet guard, SOL balance and rug firewall verdicts, without signing or sending anything and without creating a wallet the agent does not have.",
-			"link": "/agents",
-			"tags": [
-				"feature"
 			]
 		}
 	]

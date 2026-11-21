@@ -63,6 +63,14 @@
 			<description>xAI stopped serving Grok Build 0.1 on November 19. The model menus no longer offer it, and any agent, embed or saved setting that picked it now answers on Grok 4.7, the model Grok Build itself runs on, instead of failing. The Grok model check now also reads xAI's release notes, so the next retirement is caught the day it is announced.</description>
 		</item>
 		<item>
+			<title>Click the person in a 360 clip for motion capture</title>
+			<link>https://three.ws/video-to-motion</link>
+			<guid isPermaLink="false">2026-11-21:Click the person in a 360 clip for motion capture</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>/video-to-motion and /motion-swap now accept a stitched 360 clip from any 360 camera. The page detects the 2:1 frame, opens a sphere preview where you drag to look around and click the person to follow (or let it pick), sends that spot as a yaw and pitch with the capture, and shows what the tracker followed beside the avatar when the worker returns it. Raw .insv files get a clear note to export a 360 MP4 first.</description>
+		</item>
+		<item>
 			<title>Grok conversations reuse xAI's prompt cache</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-21:Grok conversations reuse xAI's prompt cache</guid>
@@ -93,6 +101,14 @@
 			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The new /pano-scene page turns one 360 photo, or a raw .insp file, into a 3D shell in real metres. Drop it, watch the real stages (stitch, depth, mesh), then look around, step off-centre and use your phone's gyroscope inside it, or download the GLB and PLY. Works with Insta360 X3, X4, X5 and X6 photos, and any 360 camera.</description>
+		</item>
+		<item>
+			<title>Upload 360 footage and start a scene from the terminal</title>
+			<link>https://three.ws/docs/cli</link>
+			<guid isPermaLink="false">2026-11-21:Upload 360 footage and start a scene from the terminal</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>sdk</category>
+			<description>The three-ws CLI gains a capture command: three-ws capture 360 &lt;file&gt; uploads a 360 clip, stills set or .insv from any 360 camera in resumable 8 MiB parts and starts the reconstruction, capture scene &lt;photo&gt; turns one 360 photo into a scene, and capture status, list and cancel follow the job. An interrupted upload picks up where it stopped. It signs in with a stored login or THREE_WS_API_KEY. /openapi.json now documents every capture upload, pano-capture and pano-scene route with request and response schemas, the error shape and examples taken from real responses.</description>
 		</item>
 		<item>
 			<title>Docs · Grok Voice realtime on a lip-synced avatar</title>
