@@ -1,5 +1,7 @@
 # insta360 09: the `/api/pano-capture` job API with persistence, ownership and capture history
 
+Status 2026-11-21: code, migration (applied to production), cron, tests, live R2 proof and docs are done (see insta360-PROGRESS.md). What remains is the owner's: push, deploy, set `GCP_PANO2SPLAT_URL` once workers/model-pano2splat is live, sync Cloud Scheduler, repoint prod R2.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `insta360-` order, so it can run in parallel with all of them. Dev port: 3339.
 
 ## Operating clause (binding)
