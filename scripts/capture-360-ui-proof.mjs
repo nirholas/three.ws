@@ -134,6 +134,7 @@ if (PHASE === 'upload' || PHASE === 'all') {
 	await page.waitForFunction(() => !/Uploading/.test(document.querySelector('#c3-work-title')?.textContent || ''), null, { timeout: 900000, polling: 200 });
 	log('upload finished, total ms since first click:', Date.now() - tStart, '| since reload:', Date.now() - tReload);
 	let lastStage = '';
+	let outcome = 'timeout';
 	const workerDeadline = Date.now() + WORKER_TIMEOUT_MS;
 	while (Date.now() < workerDeadline) {
 		const s = await page.evaluate(() => ({
@@ -145,24 +146,30 @@ if (PHASE === 'upload' || PHASE === 'all') {
 			lastStage = s.stage;
 			log(`${((Date.now() - tStart) / 1000).toFixed(0)}s stage: ${s.stage}`);
 		}
-		if (s.result) break;
+		if (s.result) {
+			outcome = 'result';
+			break;
+		}
 		if (s.error) {
-			log('job failed on the page:', s.error);
+			outcome = `failed: ${s.error}`;
 			await shot(page, 'job-error');
 			break;
 		}
 		await page.waitForTimeout(5000);
 	}
-	await page.waitForSelector('#c3-result:not([hidden])', { timeout: 1000 });
-	log('result stats:', (await page.textContent('#c3-result-stats')).trim(), '| ms since first click:', Date.now() - tStart);
-	await page.waitForSelector('#c3-result-stage canvas', { timeout: 120000 });
-	log('splat canvas rendered; actions:', (await page.locator('#c3-result-actions a, #c3-result-actions button').allTextContents()).map((s) => s.trim()).join(' | '));
-	await page.waitForTimeout(3000);
-	await shot(page, 'result');
-	await page.reload({ waitUntil: 'domcontentloaded' });
-	await page.waitForSelector('#c3-captures .c3-cap, #c3-captures [data-job]', { timeout: 20000 }).catch(() => {});
-	log('captures list rows:', await page.locator('#c3-captures > *').count());
-	await shot(page, 'captures');
+	log('worker outcome:', outcome, '| s since first click:', ((Date.now() - tStart) / 1000).toFixed(0));
+	if (outcome !== 'result') errors.push(`capture did not finish: ${outcome}`);
+	else {
+		log('result stats:', (await page.textContent('#c3-result-stats')).trim(), '| ms since first click:', Date.now() - tStart);
+		await page.waitForSelector('#c3-result-stage canvas', { timeout: 120000 });
+		log('splat canvas rendered; actions:', (await page.locator('#c3-result-actions a, #c3-result-actions button').allTextContents()).map((s) => s.trim()).join(' | '));
+		await page.waitForTimeout(3000);
+		await shot(page, 'result');
+		await page.reload({ waitUntil: 'domcontentloaded' });
+		await page.waitForSelector('#c3-captures .c3-cap, #c3-captures [data-job]', { timeout: 20000 }).catch(() => {});
+		log('captures list rows:', await page.locator('#c3-captures > *').count());
+		await shot(page, 'captures');
+	}
 	await page.close();
 }
 
