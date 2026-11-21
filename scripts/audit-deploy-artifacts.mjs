@@ -543,7 +543,7 @@ export function findImageNpmCiRejection({ root = ROOT } = {}) {
 		execFileSync(
 			'npx',
 			['-y', `npm@${npmVersion}`, 'ci', '--dry-run', '--ignore-scripts', '--no-audit', '--no-fund'],
-			{ cwd: root, stdio: 'pipe', encoding: 'utf8', timeout: 150_000 },
+			{ cwd: root, stdio: 'pipe', encoding: 'utf8', timeout: 600_000 },
 		);
 		return { npmVersion, problems: [] };
 	} catch (err) {

@@ -9,6 +9,8 @@
 //
 //   node scripts/capture-360-ui-proof.mjs --base http://localhost:3340 --key-file <c3key> \
 //     --dir <folder with metro.mp4 hof.mp4 *_00.insv *_10.insv> --out <screenshot dir> [--phase preview|raw|upload|all]
+//     [--upload hof.mp4 | --upload a_00.insv,a_10.insv]  files in --dir the upload phase sends (default hof.mp4)
+//     [--worker-timeout-s 300]  how long the upload phase waits for the reconstruction result
 
 import { chromium } from 'playwright';
 import { readFileSync, mkdirSync, statSync } from 'node:fs';
@@ -22,6 +24,8 @@ const DIR = arg('dir');
 const OUT = arg('out', '.');
 const PHASE = arg('phase', 'all');
 const WIDTH = Number(arg('width', 1280));
+const UPLOAD = arg('upload', 'hof.mp4').split(',').map((f) => join(DIR, f.trim()));
+const WORKER_TIMEOUT_MS = Number(arg('worker-timeout-s', 300)) * 1000;
 mkdirSync(OUT, { recursive: true });
 
 const log = (...a) => process.stdout.write(a.join(' ') + '\n');
@@ -101,12 +105,11 @@ if (PHASE === 'raw' || PHASE === 'all') {
 
 // ── upload: >=1 GB, reload mid-upload, resume, job, result ─────────────────
 if (PHASE === 'upload' || PHASE === 'all') {
-	const file = join(DIR, 'hof.mp4');
-	const size = statSync(file).size;
-	log('upload file bytes:', size);
+	const size = UPLOAD.reduce((n, f) => n + statSync(f).size, 0);
+	log('upload files:', UPLOAD.map((f) => f.split('/').pop()).join(', '), '| bytes:', size);
 	let page = await open();
 	await page.click('#c3-tab-360');
-	await page.setInputFiles('#c3-file', file);
+	await page.setInputFiles('#c3-file', UPLOAD);
 	await page.waitForSelector('#c3-review:not([hidden])', { timeout: 120000 });
 	log('hof review note:', (await page.textContent('#c3-preview-note')).trim());
 	await page.waitForFunction(() => !document.querySelector('#c3-start').disabled, null, { timeout: 30000 });
@@ -122,7 +125,7 @@ if (PHASE === 'upload' || PHASE === 'all') {
 	await page.waitForSelector('#c3-resume:not([hidden])', { timeout: 15000 });
 	log('resume banner:', (await page.textContent('#c3-resume-msg')).trim());
 	await shot(page, 'upload-resume-banner');
-	await page.setInputFiles('#c3-file', file);
+	await page.setInputFiles('#c3-file', UPLOAD);
 	await page.waitForSelector('#c3-review:not([hidden])', { timeout: 120000 });
 	await page.waitForFunction(() => /Resume/.test(document.querySelector('#c3-start')?.textContent || ''), null, { timeout: 30000 });
 	log('start button after reload:', (await page.textContent('#c3-start')).trim());
@@ -130,8 +133,28 @@ if (PHASE === 'upload' || PHASE === 'all') {
 	await page.waitForSelector('#c3-meter:not([hidden])', { timeout: 60000 });
 	await page.waitForFunction(() => !/Uploading/.test(document.querySelector('#c3-work-title')?.textContent || ''), null, { timeout: 900000, polling: 200 });
 	log('upload finished, total ms since first click:', Date.now() - tStart, '| since reload:', Date.now() - tReload);
-	await page.waitForSelector('#c3-result:not([hidden])', { timeout: 300000 });
-	log('result stats:', (await page.textContent('#c3-result-stats')).trim());
+	let lastStage = '';
+	const workerDeadline = Date.now() + WORKER_TIMEOUT_MS;
+	while (Date.now() < workerDeadline) {
+		const s = await page.evaluate(() => ({
+			result: !document.querySelector('#c3-result').hidden,
+			error: !document.querySelector('#c3-alert')?.hidden && (document.querySelector('#c3-alert')?.textContent || '').replace(/\s+/g, ' ').trim(),
+			stage: `${document.querySelector('#c3-work-title')?.textContent.trim()} | ${document.querySelector('#c3-work-note')?.textContent.trim()}`,
+		}));
+		if (s.stage !== lastStage) {
+			lastStage = s.stage;
+			log(`${((Date.now() - tStart) / 1000).toFixed(0)}s stage: ${s.stage}`);
+		}
+		if (s.result) break;
+		if (s.error) {
+			log('job failed on the page:', s.error);
+			await shot(page, 'job-error');
+			break;
+		}
+		await page.waitForTimeout(5000);
+	}
+	await page.waitForSelector('#c3-result:not([hidden])', { timeout: 1000 });
+	log('result stats:', (await page.textContent('#c3-result-stats')).trim(), '| ms since first click:', Date.now() - tStart);
 	await page.waitForSelector('#c3-result-stage canvas', { timeout: 120000 });
 	log('splat canvas rendered; actions:', (await page.locator('#c3-result-actions a, #c3-result-actions button').allTextContents()).map((s) => s.trim()).join(' | '));
 	await page.waitForTimeout(3000);
