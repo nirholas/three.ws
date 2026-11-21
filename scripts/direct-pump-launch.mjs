@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Direct pump.fun launcher — bypasses the three.ws server entirely.
+// Direct pump.fun launcher, bypasses the three.ws server entirely.
 // Talks straight to @pump-fun/pump-sdk + Solana RPC so we can isolate
 // whether the SDK / RPC / keypair path itself works.
 //
