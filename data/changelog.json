@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-21",
+			"title": "Premiere Pro panel for 360 capture",
+			"summary": "A UXP panel for Adobe Premiere Pro 25.6 or later sends a 360 clip (or the selected sequence clip's in and out range) to three.ws, uploads it in resumable parts, shows live progress with cancel, and imports the preview, poster and scene files into a three.ws captures bin, with one button to insert the preview at the playhead. Source and a built .ccx live in integrations/premiere-uxp; the Adobe Exchange listing is an owner step.",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-11-21",
 			"title": "360 capture tools on the free studio MCP server",
 			"summary": "Agents can now turn 360 footage or a 360 photo into a 3D scene over MCP: pano_capture_start, pano_capture_status, pano_capture_list, pano_scene_create and pano_scene_status on /api/mcp-studio (full and Grok surfaces, signed-in accounts). They call the same lanes as the capture pages, so a job started from an agent shows up in the browser. Start tools take a public https URL; local files go through the three-ws CLI.",
 			"tags": ["feature", "sdk"],

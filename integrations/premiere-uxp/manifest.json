@@ -1,0 +1,39 @@
+{
+  "manifestVersion": 5,
+  "id": "ws.three.capture",
+  "name": "three.ws 360 Capture",
+  "version": "0.1.0",
+  "main": "index.html",
+  "host": { "app": "premierepro", "minVersion": "25.6.0" },
+  "entrypoints": [
+    {
+      "type": "panel",
+      "id": "three-ws-capture",
+      "label": { "default": "three.ws 360 Capture" },
+      "minimumSize": { "width": 280, "height": 320 },
+      "maximumSize": { "width": 2000, "height": 2000 },
+      "preferredDockedSize": { "width": 340, "height": 640 },
+      "preferredFloatingSize": { "width": 380, "height": 700 },
+      "icons": [
+        { "width": 23, "height": 23, "path": "icons/panel-icon.png", "scale": [1, 2], "theme": ["lightest", "light"], "species": ["generic"] },
+        { "width": 23, "height": 23, "path": "icons/panel-icon-dark.png", "scale": [1, 2], "theme": ["darkest", "dark", "medium"], "species": ["generic"] }
+      ]
+    }
+  ],
+  "icons": [
+    { "width": 48, "height": 48, "path": "icons/plugin-icon.png", "scale": [1, 2], "theme": ["all"], "species": ["pluginList"] }
+  ],
+  "requiredPermissions": {
+    "network": {
+      "domains": [
+        "https://three.ws",
+        "https://*.three.ws",
+        "https://*.r2.cloudflarestorage.com",
+        "https://*.r2.dev",
+        "https://storage.googleapis.com"
+      ]
+    },
+    "localFileSystem": "fullAccess",
+    "launchProcess": { "schemes": ["https"], "extensions": [] }
+  }
+}

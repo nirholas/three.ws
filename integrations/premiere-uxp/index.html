@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<link rel="stylesheet" href="styles.css" />
+	<script src="src/panel.js"></script>
+</head>
+<body>
+	<main class="panel" aria-label="three.ws 360 capture">
+		<header class="panel-head">
+			<sp-heading size="S" class="title">three.ws 360 capture</sp-heading>
+			<sp-body size="XS" class="muted">Send 360 footage to three.ws. Get a 3D scene back in your project.</sp-body>
+		</header>
+
+		<div id="banner" class="banner" role="alert" hidden>
+			<sp-body id="banner-text" size="S"></sp-body>
+			<sp-action-button id="banner-dismiss" quiet size="s" aria-label="Dismiss message">Dismiss</sp-action-button>
+		</div>
+
+		<section class="card" aria-labelledby="account-title">
+			<sp-heading id="account-title" size="XS">Account</sp-heading>
+			<div id="key-form" class="stack">
+				<sp-body size="XS" class="muted">Paste a three.ws API key. A free account is enough. The key stays in this panel's secure storage on this computer.</sp-body>
+				<sp-textfield id="key-input" type="password" placeholder="three.ws API key" aria-label="three.ws API key"></sp-textfield>
+				<div class="row">
+					<sp-button id="key-save" variant="cta" size="s">Save key</sp-button>
+					<sp-link id="key-get" href="https://three.ws/dashboard/api" size="s">Get an API key</sp-link>
+				</div>
+			</div>
+			<div id="key-saved" class="row" hidden>
+				<sp-body size="S">API key saved.</sp-body>
+				<sp-action-button id="key-change" quiet size="s">Change key</sp-action-button>
+				<sp-action-button id="key-remove" quiet size="s">Remove</sp-action-button>
+			</div>
+		</section>
+
+		<section class="card" aria-labelledby="send-title">
+			<sp-heading id="send-title" size="XS">Send a 360 clip or photo</sp-heading>
+			<div id="empty" class="empty">
+				<sp-body size="S">Nothing selected yet.</sp-body>
+				<sp-body size="XS" class="muted">Select a clip in the Project panel and press Use selected clip, or choose a file. Works with raw .insv and .insp files from Insta360 cameras, and with stitched 360 videos and photos from any 360 camera.</sp-body>
+			</div>
+			<div id="chosen" class="stack" hidden>
+				<sp-body id="chosen-name" size="S" class="strong"></sp-body>
+				<sp-body id="chosen-detail" size="XS" class="muted"></sp-body>
+				<sp-checkbox id="confirm-360" hidden>This is a stitched 360 file</sp-checkbox>
+				<div id="trim-row" hidden>
+					<sp-checkbox id="use-trim" checked>Use the clip's in and out points</sp-checkbox>
+					<sp-body id="trim-detail" size="XS" class="muted"></sp-body>
+				</div>
+				<div id="quality-row" hidden>
+					<sp-body size="XS" class="muted">Quality</sp-body>
+					<sp-picker id="quality" label="Quality" selectedIndex="1">
+						<sp-menu slot="options">
+							<sp-menu-item>Preview (fastest)</sp-menu-item>
+							<sp-menu-item>Standard</sp-menu-item>
+							<sp-menu-item>High (slowest)</sp-menu-item>
+						</sp-menu>
+					</sp-picker>
+				</div>
+			</div>
+			<div class="row">
+				<sp-action-button id="use-selected" size="s">Use selected clip</sp-action-button>
+				<sp-action-button id="choose-file" size="s">Choose file</sp-action-button>
+			</div>
+			<div class="row">
+				<sp-button id="send" variant="cta" size="s" disabled>Send to three.ws</sp-button>
+				<sp-button id="cancel" variant="secondary" size="s" hidden>Cancel</sp-button>
+			</div>
+		</section>
+
+		<section id="progress-card" class="card" aria-live="polite" hidden>
+			<sp-heading size="XS">Progress</sp-heading>
+			<sp-body id="progress-label" size="S"></sp-body>
+			<sp-progressbar id="progress-bar" value="0" aria-label="Capture progress"></sp-progressbar>
+			<sp-body id="progress-detail" size="XS" class="muted"></sp-body>
+		</section>
+
+		<section id="result-card" class="card" hidden aria-labelledby="result-title">
+			<sp-heading id="result-title" size="XS">Your 3D scene is ready</sp-heading>
+			<sp-body id="result-detail" size="S"></sp-body>
+			<div class="row">
+				<sp-button id="insert-preview" variant="cta" size="s">Insert preview at playhead</sp-button>
+				<sp-action-button id="open-viewer" size="s">Open in three.ws</sp-action-button>
+			</div>
+			<sp-body id="viewer-url" size="XS" class="muted url"></sp-body>
+			<sp-body id="result-folder" size="XS" class="muted url"></sp-body>
+		</section>
+
+		<section class="card" aria-labelledby="mine-title">
+			<div class="row between">
+				<sp-heading id="mine-title" size="XS">Your captures</sp-heading>
+				<sp-action-button id="mine-refresh" quiet size="s">Refresh</sp-action-button>
+			</div>
+			<div id="mine-loading" class="skeleton-list" hidden aria-hidden="true">
+				<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+			</div>
+			<div id="mine-empty" class="empty" hidden>
+				<sp-body size="S">No captures yet.</sp-body>
+				<sp-body size="XS" class="muted">Send a 360 clip above. Finished scenes show up here, ready to import into any project.</sp-body>
+			</div>
+			<div id="mine-error" class="empty" hidden>
+				<sp-body id="mine-error-text" size="S"></sp-body>
+			</div>
+			<ul id="mine-list" class="mine-list"></ul>
+		</section>
+
+		<footer class="foot">
+			<sp-body size="XS" class="muted">Works with footage from Insta360 X3, X4, X5 and X6 cameras and any other 360 camera. Insta360 is a trademark of its owner. three.ws is not affiliated with or endorsed by Insta360.</sp-body>
+		</footer>
+	</main>
+</body>
+</html>

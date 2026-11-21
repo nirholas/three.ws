@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-21T22:05:04.745Z",
+	"generated_at": "2026-11-21T22:15:42.631Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -87,6 +87,17 @@
 			"tags": [
 				"improvement",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "update",
+			"title": "Premiere Pro panel for 360 capture",
+			"summary": "A UXP panel for Adobe Premiere Pro 25.6 or later sends a 360 clip (or the selected sequence clip's in and out range) to three.ws, uploads it in resumable parts, shows live progress with cancel, and imports the preview, poster and scene files into a three.ws captures bin, with one button to insert the preview at the playhead. Source and a built .ccx live in integrations/premiere-uxp; the Adobe Exchange listing is an owner step.",
+			"link": null,
+			"tags": [
+				"feature",
+				"docs"
 			]
 		},
 		{

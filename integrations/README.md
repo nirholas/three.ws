@@ -20,6 +20,7 @@ server and bundle skills rather than calling `/api/forge` directly:
 | Hermes plugin | [`hermes/three-ws/`](hermes/three-ws/) (Agent Plugins v1: `mcp.json` + four skills) | [Hermes Agent](https://github.com/NousResearch/hermes-agent) (Nous Research) |
 | Cursor plugin | [`cursor/three-ws/`](cursor/three-ws/) (Open Plugins: `.cursor-plugin/plugin.json`, `mcp.json`, four skills; mirrored to [nirholas/three-ws-cursor-plugin](https://github.com/nirholas/three-ws-cursor-plugin) for cursor.directory) | [Cursor](https://cursor.com) |
 | Dify tool plugin | [`dify/three_ws/`](dify/three_ws/) (four Python tools over the studio server; packaged with `dify-plugin plugin package`) | [Dify](https://github.com/langgenius/dify) |
+| Premiere Pro panel (UXP) | [`premiere-uxp/`](premiere-uxp/) (manifest v5 panel: 360 clip to 3D scene, resumable upload, results imported into a bin; `.ccx` built by `npm run build` there) | [Adobe Premiere Pro](https://www.adobe.com/products/premiere.html) |
 
 Listing packages for developer-tool stores each carry a README and a `SUBMITTING.md` with the exact registry steps (the submission itself is an owner action). Verify all of them with `npm run check:integrations`:
 

@@ -55,3 +55,5 @@ Read Adobe's current Premiere Pro UXP documentation (developer.adobe.com/premier
 2. Commit with explicit paths and a `type(scope): ...` subject that describes the diff.
 3. In-host verification and submission are the owner's: leave this file in `finish/` with a dated status line naming both. Append to [_context/insta360-PROGRESS.md](_context/insta360-PROGRESS.md).
 4. Report: what step 0 measured; files and SHAs; evidence per Definition of done line; the one batched owner message; one-line judgment calls. No trailing questions.
+
+2026-11-21 status: built and tested in-repo (48 node tests, .ccx sha256 17905594618a376d43bdffdc3cfaa4819e855a8636a641a2dbbc7ebbc2350bcb, live upload/resume/download proof on real R2). Owner: in-Premiere load test (UXP Developer Tool, Add Plugin, Load integrations/premiere-uxp/manifest.json) and Adobe Exchange submission with the screenshots listed in integrations/premiere-uxp/LISTING.md.

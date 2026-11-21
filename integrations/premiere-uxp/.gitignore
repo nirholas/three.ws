@@ -1,0 +1,3 @@
+dist/
+*.ccx
+node_modules/

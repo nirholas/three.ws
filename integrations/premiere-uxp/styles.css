@@ -1,0 +1,154 @@
+:root {
+	--gap: 8px;
+	--radius: 6px;
+}
+
+body {
+	margin: 0;
+	padding: 12px;
+	color: var(--uxp-host-text-color, #dcdcdc);
+	background: var(--uxp-host-background-color, #323232);
+	font-size: var(--uxp-host-font-size, 12px);
+}
+
+.panel {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.panel-head {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap);
+	padding: 10px;
+	border: 1px solid var(--uxp-host-border-color, #5a5a5a);
+	border-radius: var(--radius);
+	background: var(--uxp-host-widget-hover-background-color, transparent);
+}
+
+.stack {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap);
+}
+
+.row {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--gap);
+}
+
+.between {
+	justify-content: space-between;
+}
+
+.muted {
+	opacity: 0.75;
+}
+
+.strong {
+	font-weight: bold;
+}
+
+.url {
+	word-break: break-all;
+}
+
+.empty {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 8px 0;
+}
+
+.banner {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--gap);
+	padding: 8px 10px;
+	border-radius: var(--radius);
+	border: 1px solid #d7373f;
+	background: rgba(215, 55, 63, 0.14);
+}
+
+.banner.info {
+	border-color: #2680eb;
+	background: rgba(38, 128, 235, 0.14);
+}
+
+.mine-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap);
+}
+
+.mine-row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--gap);
+	padding: 6px;
+	border: 1px solid var(--uxp-host-border-color, #5a5a5a);
+	border-radius: var(--radius);
+}
+
+.mine-row:hover {
+	background: var(--uxp-host-widget-hover-background-color, rgba(255, 255, 255, 0.06));
+}
+
+.mine-thumb {
+	width: 64px;
+	height: 32px;
+	border-radius: 3px;
+	object-fit: cover;
+	background: var(--uxp-host-border-color, #5a5a5a);
+	flex-shrink: 0;
+}
+
+.mine-meta {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-width: 0;
+}
+
+.skeleton-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap);
+}
+
+.skeleton {
+	height: 44px;
+	border-radius: var(--radius);
+	background: var(--uxp-host-border-color, #5a5a5a);
+	opacity: 0.35;
+}
+
+sp-link:focus,
+sp-action-button:focus,
+sp-button:focus,
+sp-textfield:focus,
+sp-checkbox:focus,
+sp-picker:focus {
+	outline: 2px solid #2680eb;
+	outline-offset: 1px;
+}
+
+sp-progressbar {
+	width: 100%;
+}
