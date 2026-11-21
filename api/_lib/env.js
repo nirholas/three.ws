@@ -798,6 +798,13 @@ export const env = {
 		return opt('COSMOS_WORKER_KEY');
 	},
 
+	// 360 footage to Gaussian splat worker (workers/model-pano2splat, Cloud Run
+	// L4), behind /api/pano-capture. Bearer is the shared GCP_RECONSTRUCTION_KEY.
+	// Unset means /api/pano-capture answers 503 unconfigured.
+	get GCP_PANO2SPLAT_URL() {
+		return trimSlash(opt('GCP_PANO2SPLAT_URL'));
+	},
+
 	// IBM watsonx.ai (Granite foundation models) — selectable brain in
 	// /api/chat and /api/brain/chat. Requires the API key AND a project (or
 	// space) id; the shared client in _lib/watsonx.js exchanges the key for an

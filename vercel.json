@@ -7674,6 +7674,10 @@
 			"schedule": "*/5 * * * *"
 		},
 		{
+			"path": "/api/cron/pano-captures",
+			"schedule": "*/5 * * * *"
+		},
+		{
 			"path": "/api/cron/indexnow-reconcile",
 			"schedule": "*/10 * * * *"
 		},
