@@ -1,5 +1,7 @@
 # insta360 08: resumable R2 multipart upload API for capture files up to 8 GiB
 
+Status 2026-11-21: code, tests, docs and the live proof are done and committed. Remaining: repoint production R2 credentials (owner step in the 347 message), after which the endpoints work on three.ws.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Independent of every other `insta360-` order, so it can run in parallel with all of them. Dev port: 3338.
 
 ## Operating clause (binding)
