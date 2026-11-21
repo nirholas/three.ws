@@ -1,0 +1,16 @@
+# Builds the throwaway splat_train measurement image from the context measure.sh assembles.
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args: [build, --tag, '${_IMAGE}', .]
+    timeout: 3000s
+
+images:
+  - '${_IMAGE}'
+
+timeout: 3600s
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
