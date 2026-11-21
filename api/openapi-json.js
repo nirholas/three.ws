@@ -17,6 +17,7 @@ import { providerCatalog } from './v1/_providers.js';
 import { PAID_SERVICES } from './_lib/service-catalog/services/index.js';
 import { ROUTE_AUTH_HINTS, authMethodsFor } from './_lib/x402/route-auth-hints.js';
 import { agentsV1Paths, AGENTS_V1_TAGS } from './_lib/agents-v1/openapi.js';
+import { panoPaths, PANO_TAGS, PANO_SCHEMAS } from './_lib/pano-openapi.js';
 
 // Single source of truth for the protocol list on every paid operation. Each
 // entry is one supported payment protocol; per-network payment lanes (Base /
@@ -276,8 +277,10 @@ function buildBaseOpenApiDoc(origin) {
 						'and docs/api-reference.md § Unified API.',
 				},
 				...AGENTS_V1_TAGS,
+				...PANO_TAGS,
 			],
 			components: {
+				schemas: { ...PANO_SCHEMAS },
 				securitySchemes: {
 					bearerAuth: {
 						type: 'http',
@@ -314,6 +317,7 @@ function buildBaseOpenApiDoc(origin) {
 				// operations below so a richer hand-written entry always wins.
 				...catalogPaidPaths(),
 				...agentsV1Paths(),
+				...panoPaths(),
 				'/api/mcp': {
 					post: {
 						operationId: 'mcp_call',
