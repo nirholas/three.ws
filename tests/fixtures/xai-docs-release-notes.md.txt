@@ -1,0 +1,33 @@
+<!-- captured 2026-11-21 from https://docs.x.ai/developers/release-notes.md (November and October sections only) -->
+#### Release Notes
+
+# Release Notes
+
+## November
+
+### grok-build-0.1 end of life
+
+`grok-build-0.1` reached end of life on November 19, 2026 and is no longer served on the API.
+
+### grok-imagine-image-quality retired
+
+Requests to `grok-imagine-image-quality` and `grok-imagine-image-pro` are now served by `grok-imagine-image-2.0-low`: `grok-imagine-image-2.0` with `quality` set to `low`, at a lower per-image price. No request changes are needed. `usage.cost_in_usd_ticks` on each response reflects the lower price, and gRPC responses (xAI SDK) report `grok-imagine-image-2.0-low` as the `model`. See the [migration guide](/developers/migration/imagine-image-quality-nov-2).
+
+## October
+
+### Custom moderation controls
+
+You can now set content guidelines on text API requests. Add a `guidelines` array to a Chat Completions or Responses API request to set how Grok handles content in the `nsfw`, `violence`, and `profanity` categories. Grok follows the guidelines as it writes its response. See [Custom Moderation Controls](/developers/advanced-api-usage/custom-moderation-controls).
+
+### Grok Voice 3.0 is available
+
+`grok-voice-3.0` is now available with Speech to Speech, at the same price as Grok Voice 2.0. `grok-voice-latest` now points to `grok-voice-3.0`, so sessions that use the alias are upgraded automatically. The API is unchanged. To get started, see the [Speech to Speech docs](/developers/model-capabilities/audio/speech-to-speech).
+
+### Grok Voice 2.0 deprecation
+
+`grok-voice-2.0` is deprecated. To upgrade, set `model` to `grok-voice-3.0` or `grok-voice-latest`, at the same price. See [Upgrading from Grok Voice 2.0](/developers/model-capabilities/audio/speech-to-speech#upgrading-from-grok-voice-20).
+
+### grok-voice-transcribe-1.0 end of life
+
+`grok-voice-transcribe-1.0` is deprecated and reaches end of life on October 2, 2026. All requests to that slug are routed to `grok-voice-transcribe-2.0` at the same price, with higher accuracy. See the [Speech to Text docs](/developers/model-capabilities/audio/speech-to-text).
+

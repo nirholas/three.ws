@@ -278,9 +278,10 @@ Everything reads from it:
 | `api/_lib/llm-pricing.js` | every Grok price, including retired slugs for historical rows |
 | `src/avatar-page.js`, `src/nich-agent.js`, `src/editor/manifest-builder.js` | the menu rows |
 
-Current set (xAI docs, 2026-10-08): menus show `grok-4.7` (flagship),
-`grok-4.3` (cheapest, 1M context), `grok-4.20-0309-non-reasoning` (no thinking
-pass) and `grok-build-0.1` (coding). `grok-4.6`, `grok-4.5` and
+Current set (xAI docs, 2026-11-21): menus show `grok-4.7` (flagship, also
+the coding pick), `grok-4.3` (cheapest, 1M context) and
+`grok-4.20-0309-non-reasoning` (no thinking pass). `grok-build-0.1` reached end
+of life on 2026-11-19 and now resolves to `grok-4.7`. `grok-4.6`, `grok-4.5` and
 `grok-4.20-0309-reasoning` are still live and routable when a caller names
 them; menus show their `supersededBy` model instead. `grok-4.20-multi-agent-0309`
 is catalogued but never routed, because xAI serves it through the Responses
@@ -288,7 +289,7 @@ API only.
 
 **Retired ids keep working.** `GROK_RETIRED_ALIASES` maps every retired slug to
 the successor xAI itself redirects it to (`grok-4.1-fast` → `grok-4.3`,
-`grok-code-fast-1` → `grok-build-0.1`, and so on). `resolveModelId()`,
+`grok-build-0.1` and `grok-code-fast-1` → `grok-4.7`, and so on). `resolveModelId()`,
 `routableGrokModelId()` and the `/brain` alias table all run through it, so an
 agent, embed policy, BYOK caller or saved menu pick that stored a retired id
 gets its successor instead of an upstream 404. An id the catalog has not met
@@ -315,7 +316,11 @@ With `GROK_API_KEY` or `XAI_API_KEY` set (environment, `.env` or `.env.local`)
 it reads `GET https://api.x.ai/v1/models` and `/v1/language-models`. Without
 one it reads https://docs.x.ai/developers/models.md and the per-model pages
 under `https://docs.x.ai/developers/models/<id>.md`, and says so in its first
-line. Drift is: a catalogued id xAI no longer lists (retire it into
+line. Either way it also reads https://docs.x.ai/developers/release-notes.md,
+because xAI announces end of life there before the models table drops the row
+(`grok-build-0.1` stopped serving on 2026-11-19 while the table still listed
+it). Drift is: a catalogued id the release notes retired, a catalogued id xAI
+no longer lists (retire it into
 `GROK_RETIRED_ALIASES`), an id xAI now serves only as an alias of another, a
 new xAI text model we have not catalogued, or a changed context window, price,
 image input, function calling or reasoning-effort set. Fix it in

@@ -2,6 +2,12 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-11-21",
+			"title": "Agents set to Grok Build 0.1 now answer on Grok 4.7",
+			"summary": "xAI stopped serving Grok Build 0.1 on November 19. The model menus no longer offer it, and any agent, embed or saved setting that picked it now answers on Grok 4.7, the model Grok Build itself runs on, instead of failing. The Grok model check now also reads xAI's release notes, so the next retirement is caught the day it is announced.",
+			"tags": ["fix"]
+		},
+		{
 			"date": "2026-11-20",
 			"title": "Talk to a 3D avatar with Grok voice, speech to speech",
 			"summary": "A new page at /voice/grok lets you talk to a 3D avatar through Grok Voice, xAI's speech-to-speech model. Your voice goes up and the spoken reply comes back over one connection instead of three separate steps, the avatar's lips move with the reply as you hear it, and you can talk over it to cut in. Every turn shows how long the reply took to start and how quickly the mouth followed. Any three.ws embed can switch its mic button to Grok Voice with one attribute, voice-provider=\"grok-realtime\". The mouth waits for your speakers instead of running ahead of the sound, Bluetooth included. The LiveKit and Pipecat plugins gained Grok Voice examples and fixes so the avatar keeps the first words of a reply and the visitor's own words. Grok Voice needs a free three.ws account, and the page uses the standard voice chain whenever Grok Voice is not available.",

@@ -184,22 +184,6 @@ export const GROK_MODELS = Object.freeze([
 		supersededBy: 'grok-4.3',
 	},
 	{
-		id: 'grok-build-0.1',
-		label: 'Grok Build 0.1',
-		tier: 'coding',
-		description: 'xAI agentic coding and web-dev model, 256K context.',
-		contextWindow: 256_000,
-		tools: true,
-		vision: true,
-		reasoning: true,
-		reasoningEfforts: Object.freeze([]),
-		price: [1, 2],
-		cachedInputPrice: 0.2,
-		openrouterModel: 'x-ai/grok-build-0.1',
-		chatCompletions: true,
-		menu: true,
-	},
-	{
 		// Leader plus sub-agents; xAI serves it through the Responses API only
 		// (Chat Completions is refused), so no chat-completions surface routes it.
 		// Catalogued so the drift check knows it is accounted for.
@@ -250,7 +234,10 @@ export const GROK_RETIRED_ALIASES = Object.freeze({
 	'grok-4-fast-non-reasoning': 'grok-4.3',
 	'grok-4-0709': 'grok-4.3',
 	'grok-3': 'grok-4.3',
-	'grok-code-fast-1': 'grok-build-0.1',
+	// grok-build-0.1 reached end of life on 2026-11-19 (docs.x.ai release
+	// notes); Grok Build itself now runs on grok-4.7, so the coding slugs follow.
+	'grok-build-0.1': 'grok-4.7',
+	'grok-code-fast-1': 'grok-4.7',
 });
 
 /**
@@ -260,6 +247,7 @@ export const GROK_RETIRED_ALIASES = Object.freeze({
  */
 export const GROK_RETIRED_PRICES = Object.freeze({
 	'grok-4.1-fast': Object.freeze([0.2, 0.5]),
+	'grok-build-0.1': Object.freeze([1, 2]),
 });
 
 /**

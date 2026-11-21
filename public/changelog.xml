@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Agents set to Grok Build 0.1 now answer on Grok 4.7</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-21:Agents set to Grok Build 0.1 now answer on Grok 4.7</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>xAI stopped serving Grok Build 0.1 on November 19. The model menus no longer offer it, and any agent, embed or saved setting that picked it now answers on Grok 4.7, the model Grok Build itself runs on, instead of failing. The Grok model check now also reads xAI's release notes, so the next retirement is caught the day it is announced.</description>
+		</item>
+		<item>
+			<title>Docs · Grok Voice realtime on a lip-synced avatar</title>
+			<link>https://three.ws/docs/voice-grok</link>
+			<guid isPermaLink="false">2026-11-20:Docs · Grok Voice realtime on a lip-synced avatar</guid>
+			<pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How /voice/grok and the grok-realtime embed attribute talk to a 3D avatar through xAI's speech-to-speech model: the server-side session broker, lip sync delayed to match your speakers, measured reply and mouth latency, the honest fallback without a key, and the LiveKit and Pipecat examples.</description>
+		</item>
+		<item>
 			<title>Docs · Share to X and Ask @grok</title>
 			<link>https://three.ws/docs/share-to-x</link>
 			<guid isPermaLink="false">2026-11-20:Docs · Share to X and Ask @grok</guid>

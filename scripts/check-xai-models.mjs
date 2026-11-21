@@ -13,6 +13,10 @@
 //         efforts, aliases) plus GET /v1/language-models (which of those are
 //         chat models, and which take image input). Needs GROK_API_KEY or
 //         XAI_API_KEY in the environment, .env or .env.local.
+//   notes https://docs.x.ai/developers/release-notes.md, read on every run (no
+//         key needed). xAI announces end of life there before the models table
+//         drops the row: grok-build-0.1 stopped serving on 2026-11-19 while
+//         the table still listed it. A catalog id retired there is drift.
 //   docs  xAI's public model docs: https://docs.x.ai/developers/models.md for
 //         the id, context and price table, then one page per model under
 //         https://docs.x.ai/developers/models/<id>.md for modalities, function
@@ -33,6 +37,7 @@ import { GROK_MODELS, GROK_RETIRED_ALIASES, XAI_API_BASE } from '../api/_lib/cha
 
 const DOCS_BASE = 'https://docs.x.ai/developers';
 const DOCS_MODELS = `${DOCS_BASE}/models.md`;
+const DOCS_RELEASE_NOTES = `${DOCS_BASE}/release-notes.md`;
 const TIMEOUT_MS = 20_000;
 // xAI prices are integers in USD cents per 100M tokens; ours are USD per 1M.
 const CENTS_PER_100M_TO_USD_PER_1M = 1 / 10_000;
@@ -155,6 +160,32 @@ export function parseDocsModelPage(markdown) {
 	};
 }
 
+// Each release-notes entry is a `### ` heading and its paragraph. An entry
+// retires a slug when its heading says "end of life" or its body says the slug
+// reached end of life or is no longer served. Deprecated-but-served slugs are
+// not retired: their requests still succeed.
+export function parseReleaseNotesEndOfLife(markdown) {
+	const out = [];
+	const seen = new Set();
+	for (const entry of markdown.split(/^### /m).slice(1)) {
+		const [heading, ...rest] = entry.split('\n');
+		const body = rest.join(' ').replace(/\s+/g, ' ').trim();
+		const headingEol = /end of life/i.test(heading);
+		const bodyEol = /(reached|reaches) end of life|no longer served/i.test(body);
+		if (!headingEol && !bodyEol) continue;
+		const ids = [...`${heading} ${body}`.matchAll(/`?(grok-[a-z0-9][a-z0-9.-]*[a-z0-9])`?/gi)].map((m) => m[1]);
+		const subject = ids[0];
+		if (!subject || seen.has(subject)) continue;
+		seen.add(subject);
+		out.push({ id: subject, detail: body.split(/(?<=\.)\s/)[0] });
+	}
+	return out;
+}
+
+async function readEndOfLife() {
+	return parseReleaseNotesEndOfLife(await fetchText(DOCS_RELEASE_NOTES));
+}
+
 async function readDocs() {
 	const table = parseDocsPricingTable(await fetchText(DOCS_MODELS));
 	const models = new Map();
@@ -179,13 +210,22 @@ async function readDocs() {
 
 const sameSet = (a, b) => a.length === b.length && a.every((x) => b.includes(x));
 
-export function compareCatalog(ours, upstream) {
+export function compareCatalog(ours, upstream, endOfLife = []) {
 	const drift = [];
 	const notes = [];
+	const retired = new Map(endOfLife.map((e) => [e.id, e.detail]));
 	const aliasOwner = new Map();
 	for (const m of upstream.values()) for (const a of m.aliases || []) aliasOwner.set(a, m.id);
 
 	for (const m of ours) {
+		if (retired.has(m.id)) {
+			drift.push({
+				id: m.id,
+				kind: 'end-of-life',
+				detail: `xAI release notes: ${retired.get(m.id)} Move it to GROK_RETIRED_ALIASES with its successor`,
+			});
+			continue;
+		}
 		const up = upstream.get(m.id);
 		if (!up) {
 			const owner = aliasOwner.get(m.id);
@@ -221,7 +261,7 @@ export function compareCatalog(ours, upstream) {
 
 	const ourIds = new Set(ours.map((m) => m.id));
 	for (const up of upstream.values()) {
-		if (ourIds.has(up.id)) continue;
+		if (ourIds.has(up.id) || (retired.has(up.id) && !GROK_RETIRED_ALIASES[up.id])) continue;
 		if (GROK_RETIRED_ALIASES[up.id]) {
 			notes.push({ id: up.id, detail: `still listed by xAI, mapped by us to ${GROK_RETIRED_ALIASES[up.id]}` });
 			continue;
@@ -254,12 +294,21 @@ async function main() {
 		return 2;
 	}
 
-	const { drift, notes } = compareCatalog(GROK_MODELS, source.models);
+	let endOfLife = [];
+	try {
+		endOfLife = await readEndOfLife();
+	} catch (err) {
+		console.error(`could not read ${DOCS_RELEASE_NOTES}: ${err.message}`);
+		return 2;
+	}
+
+	const { drift, notes } = compareCatalog(GROK_MODELS, source.models, endOfLife);
 	const report = {
 		source: useApi ? 'api' : 'docs',
 		compared_against: source.label,
 		catalog: GROK_MODELS.map((m) => m.id),
 		upstream: [...source.models.keys()].sort(),
+		end_of_life: endOfLife.map((e) => e.id),
 		drift,
 		notes,
 		ok: drift.length === 0,
@@ -272,6 +321,7 @@ async function main() {
 		console.log(`  compared against: ${source.label}`);
 		console.log(`  ours (${report.catalog.length}):  ${report.catalog.join(', ')}`);
 		console.log(`  xAI  (${report.upstream.length}):  ${report.upstream.join(', ')}`);
+		console.log(`  retired in release notes: ${report.end_of_life.join(', ') || 'none'}`);
 		for (const n of notes) console.log(`  note   ${n.id}: ${n.detail}`);
 		for (const d of drift) console.log(`  DRIFT  ${d.id} [${d.kind}]: ${d.detail}`);
 		console.log(drift.length ? `\n${drift.length} drift item(s). Fix GROK_MODELS in api/_lib/chat-models.js.` : '\nIn sync.');

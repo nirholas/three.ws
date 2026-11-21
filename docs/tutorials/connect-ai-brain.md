@@ -146,9 +146,7 @@ Grok ids come from one list, `GROK_MODELS` in `api/_lib/chat-models.js`, which `
 
 **Grok 4.20 Fast** (`grok-4.20-0309-non-reasoning`) skips the thinking pass entirely, for the quickest first token at the Grok 4.3 price.
 
-**Grok Build 0.1** (`grok-build-0.1`) is xAI's coding model: $1 / $2, 256K context.
-
-`grok-4.6`, `grok-4.5` and `grok-4.20-0309-reasoning` still route when an agent names them. Retired ids keep working too: `grok-4.1-fast` and the other slugs xAI retired on 2026-05-15 resolve to the successor xAI recommends (`grok-4.3`, or `grok-build-0.1` for `grok-code-fast-1`), so an agent that stored one answers on the replacement with no config change.
+`grok-4.6`, `grok-4.5` and `grok-4.20-0309-reasoning` still route when an agent names them. Retired ids keep working too: `grok-4.1-fast` and the other slugs xAI retired on 2026-05-15 resolve to the successor xAI recommends (`grok-4.3`), and the coding slugs `grok-build-0.1` (end of life 2026-11-19) and `grok-code-fast-1` resolve to `grok-4.7`, the model Grok Build itself now runs on, so an agent that stored one answers on the replacement with no config change.
 
 ### Free lanes (no key, no bill)
 

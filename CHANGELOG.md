@@ -4,8 +4,13 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-11-21
+
+- **Agents set to Grok Build 0.1 now answer on Grok 4.7**: xAI stopped serving Grok Build 0.1 on November 19. The model menus no longer offer it, and any agent, embed or saved setting that picked it now answers on Grok 4.7, the model Grok Build itself runs on, instead of failing. The Grok model check now also reads xAI's release notes, so the next retirement is caught the day it is announced. `[fix]`
+
 ## 2026-11-20
 
+- **Docs · Grok Voice realtime on a lip-synced avatar** (`/docs/voice-grok`): How /voice/grok and the grok-realtime embed attribute talk to a 3D avatar through xAI's speech-to-speech model: the server-side session broker, lip sync delayed to match your speakers, measured reply and mouth latency, the honest fallback without a key, and the LiveKit and Pipecat examples.
 - **Docs · Share to X and Ask @grok** (`/docs/share-to-x`): The Share on X and Ask @grok actions on every model, avatar and anatomy page: X's weighted length rule, the UTM tags, the click counters and the large image card each page unfurls.
 - **Talk to a 3D avatar with Grok voice** (`/voice/grok`): Speech to speech with a lip-synced 3D avatar: pick an avatar, hold to talk or leave the mic open, and watch the measured reply and mouth latency for every turn.
 - **Ask @grok about any model, avatar or machine, straight from its page**: Every 3D model, avatar and anatomy cutaway now has two X actions in its share menu: Share on X, and Ask @grok about it, which posts the link with one line about the thing and a question for Grok to answer in the replies. The model page's Share button now opens that full menu instead of only copying the link. Posts are fitted to X's real length rule, so a long title or a Japanese or Chinese prompt is trimmed before X can refuse it, and the link is never cut. Every link unfurls as a large card showing the model, avatar or machine itself. On a browser without 3D graphics, an anatomy page now shows a still drawing of the machine instead of an error, and sharing still works. (`/anatomy`) `[feature, fix]`

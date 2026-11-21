@@ -1,11 +1,31 @@
 {
-	"generated_at": "2026-11-20T22:42:44.987Z",
+	"generated_at": "2026-11-21T07:42:59.394Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-21",
+			"type": "update",
+			"title": "Agents set to Grok Build 0.1 now answer on Grok 4.7",
+			"summary": "xAI stopped serving Grok Build 0.1 on November 19. The model menus no longer offer it, and any agent, embed or saved setting that picked it now answers on Grok 4.7, the model Grok Build itself runs on, instead of failing. The Grok model check now also reads xAI's release notes, so the next retirement is caught the day it is announced.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "launch",
+			"title": "Docs · Grok Voice realtime on a lip-synced avatar",
+			"summary": "How /voice/grok and the grok-realtime embed attribute talk to a 3D avatar through xAI's speech-to-speech model: the server-side session broker, lip sync delayed to match your speakers, measured reply and mouth latency, the honest fallback without a key, and the LiveKit and Pipecat examples.",
+			"link": "/docs/voice-grok",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-11-20",
 			"type": "launch",

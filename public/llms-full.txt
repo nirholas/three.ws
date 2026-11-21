@@ -3800,6 +3800,12 @@ URL: https://three.ws/docs/grok
 
 Connect Grok Bot, Grok connectors and the xAI API to one free remote MCP server that turns text or an image into a textured 3D model, a rigged avatar, or a named 3D persona that lip-syncs its replies. Free with a three.ws account: sign in with OAuth or send an API key.
 
+### Docs · Grok Voice realtime on a lip-synced avatar
+
+URL: https://three.ws/docs/voice-grok
+
+How /voice/grok and the grok-realtime embed attribute talk to a 3D avatar through xAI's speech-to-speech model: the server-side session broker, lip sync delayed to match your speakers, measured reply and mouth latency, the honest fallback without a key, and the LiveKit and Pipecat examples.
+
 ### Docs · Grok Bot connector reference
 
 URL: https://three.ws/docs/grok-bot

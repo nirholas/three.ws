@@ -13,8 +13,9 @@ import {
 	parseDocsPricingTable,
 	parseDocsModelPage,
 	compareCatalog,
+	parseReleaseNotesEndOfLife,
 } from '../scripts/check-xai-models.mjs';
-import { GROK_MODELS } from '../api/_lib/chat-models.js';
+import { GROK_MODELS, GROK_RETIRED_ALIASES } from '../api/_lib/chat-models.js';
 
 const fixture = (name) => readFileSync(join(import.meta.dirname, 'fixtures', name), 'utf8');
 
@@ -39,7 +40,10 @@ function upstreamFromCatalog(models = GROK_MODELS) {
 describe('docs parsing', () => {
 	it('reads every text model, its context and base price from the models page', () => {
 		const rows = parseDocsPricingTable(fixture('xai-docs-models.md.txt'));
-		expect([...rows.keys()].sort()).toEqual(GROK_MODELS.map((m) => m.id).sort());
+		// The table still lists slugs xAI has retired in its release notes; those
+		// live in GROK_RETIRED_ALIASES rather than the catalog.
+		const live = [...rows.keys()].filter((id) => !GROK_RETIRED_ALIASES[id]);
+		expect(live.sort()).toEqual(GROK_MODELS.map((m) => m.id).sort());
 		expect(rows.get('grok-4.3')).toEqual({ id: 'grok-4.3', contextWindow: 1_000_000, price: [1.25, 2.5] });
 		expect(rows.get('grok-build-0.1')).toEqual({ id: 'grok-build-0.1', contextWindow: 256_000, price: [1, 2] });
 		// Image and video models live in their own tables and are not text models.
@@ -120,5 +124,33 @@ describe('compareCatalog', () => {
 		const { drift, notes } = compareCatalog(GROK_MODELS, upstream);
 		expect(drift).toEqual([]);
 		expect(notes.map((n) => n.id)).toEqual(['grok-3']);
+	});
+});
+
+// xai-docs-release-notes.md.txt is the November and October release notes,
+// captured 2026-11-21. xAI announced grok-build-0.1's end of life there on
+// 2026-11-19 while the models table still listed it, so the table alone missed
+// the retirement and the model stayed in our menus as a guaranteed error.
+describe('release-notes end of life', () => {
+	const notes = fixture('xai-docs-release-notes.md.txt');
+
+	it('reads every slug the release notes retire', () => {
+		const eol = parseReleaseNotesEndOfLife(notes);
+		expect(eol.map((e) => e.id).sort()).toEqual(['grok-build-0.1', 'grok-voice-transcribe-1.0']);
+		expect(eol.find((e) => e.id === 'grok-build-0.1').detail).toMatch(/no longer served/);
+	});
+
+	it('flags a catalog model the release notes retired even while the table still lists it', () => {
+		const ours = [...GROK_MODELS, { ...GROK_MODELS[0], id: 'grok-build-0.1' }];
+		const eol = parseReleaseNotesEndOfLife(notes);
+		const kinds = compareCatalog(ours, upstreamFromCatalog(ours), eol).drift.map((d) => `${d.id}:${d.kind}`);
+		expect(kinds).toEqual(['grok-build-0.1:end-of-life']);
+	});
+
+	it('the live catalog carries no retired slug, and the retired coding model maps to Grok 4.7', () => {
+		const retired = new Set(parseReleaseNotesEndOfLife(notes).map((e) => e.id));
+		expect(GROK_MODELS.filter((m) => retired.has(m.id)).map((m) => m.id)).toEqual([]);
+		expect(GROK_RETIRED_ALIASES['grok-build-0.1']).toBe('grok-4.7');
+		expect(GROK_RETIRED_ALIASES['grok-code-fast-1']).toBe('grok-4.7');
 	});
 });

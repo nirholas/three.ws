@@ -1,14 +1,34 @@
 {
-	"generated_at": "2026-11-20T22:42:45.233Z",
+	"generated_at": "2026-11-21T07:42:59.441Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4676,
+	"total": 4678,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-21",
+			"type": "update",
+			"title": "Agents set to Grok Build 0.1 now answer on Grok 4.7",
+			"summary": "xAI stopped serving Grok Build 0.1 on November 19. The model menus no longer offer it, and any agent, embed or saved setting that picked it now answers on Grok 4.7, the model Grok Build itself runs on, instead of failing. The Grok model check now also reads xAI's release notes, so the next retirement is caught the day it is announced.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-20",
+			"type": "launch",
+			"title": "Docs · Grok Voice realtime on a lip-synced avatar",
+			"summary": "How /voice/grok and the grok-realtime embed attribute talk to a 3D avatar through xAI's speech-to-speech model: the server-side session broker, lip sync delayed to match your speakers, measured reply and mouth latency, the honest fallback without a key, and the LiveKit and Pipecat examples.",
+			"link": "/docs/voice-grok",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-11-20",
 			"type": "launch",
@@ -1541,26 +1561,6 @@
 			"title": "Docs · Create a 3D model from a Teams or Copilot chat",
 			"summary": "The Teams app's Create a 3D model action and forge bot command: a real free-lane generation on an Adaptive Card that refreshes for the requester and updates for the whole chat when the model is ready, with Open in 3D, Download GLB and Make a variation.",
 			"link": "/docs/microsoft-teams-forge",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "launch",
-			"title": "Docs · Creation descriptions (Florence-2)",
-			"summary": "How every 3D creation gets a caption, detailed caption and tags from Florence-2: the describe queue, the cron, tag rules, owner tag edits, search, page meta and alt text, the backfill script and measured cost.",
-			"link": "/docs/creation-descriptions",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-11",
-			"type": "launch",
-			"title": "Docs · Enterprise sign-in and SCIM (Microsoft Entra ID)",
-			"summary": "Sign in with Microsoft for work, school and personal accounts, claiming your organisation's Entra tenant so colleagues join your team, and step-by-step SCIM provisioning from Microsoft Entra ID with the supported filters, PATCH shapes and limits.",
-			"link": "/docs/enterprise-sso",
 			"tags": [
 				"launch"
 			]
