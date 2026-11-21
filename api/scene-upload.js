@@ -1,7 +1,7 @@
 /**
  * /api/scene-upload — direct-to-storage upload for Scene Capture source videos.
  *
- *   POST /api/scene-upload  { content_type, size_bytes }
+ *   POST /api/scene-upload  { content_type, size_bytes, filename? }
  *                         → 200 { storage_key, upload_url, public_url, method, headers, expires_in }
  *
  * The browser PUTs the video bytes straight to `upload_url` (a short-lived R2
@@ -29,7 +29,15 @@ const CONTENT_TYPE_EXT = Object.freeze({
 	'video/mp4': 'mp4',
 	'video/quicktime': 'mov',
 	'video/webm': 'webm',
+	// 360 photos for /pano-scene: a stitched equirect JPEG or PNG.
+	'image/jpeg': 'jpg',
+	'image/png': 'png',
 });
+
+// A raw Insta360 .insp is a JPEG-based file browsers label application/octet-stream.
+// Octet-stream is accepted only when the filename says it is one, so the
+// allowlist does not turn into "any binary".
+const INSP_NAME_RE = /\.insp$/i;
 
 // A walkthrough clip is comfortably under this; anything larger is almost
 // certainly the wrong input for a streaming reconstruction.
@@ -67,11 +75,15 @@ export default wrap(async (req, res) => {
 
 	const contentType =
 		typeof body?.content_type === 'string' ? body.content_type.trim().toLowerCase() : '';
-	const ext = Object.hasOwn(CONTENT_TYPE_EXT, contentType) ? CONTENT_TYPE_EXT[contentType] : null;
+	const filename = typeof body?.filename === 'string' ? body.filename.trim() : '';
+	let ext = Object.hasOwn(CONTENT_TYPE_EXT, contentType) ? CONTENT_TYPE_EXT[contentType] : null;
+	if (!ext && contentType === 'application/octet-stream' && INSP_NAME_RE.test(filename)) ext = 'insp';
 	if (!ext) {
 		return json(res, 400, {
 			error: 'invalid_content_type',
-			message: 'content_type must be video/mp4, video/quicktime, or video/webm.',
+			message:
+				'content_type must be video/mp4, video/quicktime, video/webm, image/jpeg, or image/png ' +
+				'(or application/octet-stream with a .insp filename).',
 		});
 	}
 
