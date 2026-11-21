@@ -3,6 +3,22 @@
 	"entries": [
 		{
 			"date": "2026-11-21",
+			"title": "Resumable uploads for multi-gigabyte 360 capture files",
+			"summary": "The new /api/capture-upload endpoints (create, sign, parts, complete, abort) upload 360 videos, photos and raw .insv, .insp and .lrv files up to 8 GiB straight to storage in parallel parts. A dropped connection costs one part, and a resumed upload re-sends only what is missing. Limits are 3 uploads in progress and 32 GiB per account per day. A 2.19 GB file killed mid-upload and resumed came back byte-identical.",
+			"tags": ["feature", "sdk"],
+			"link": "/docs/api-reference#capture-upload-api"
+		},
+		{
+			"date": "2026-11-21",
+			"title": "Step inside your 360 photo",
+			"summary": "The new /pano-scene page turns one 360 photo, or a raw .insp file, into a 3D shell in real metres. Drop it, watch the real stages (stitch, depth, mesh), then look around, step off-centre and use your phone's gyroscope inside it, or download the GLB and PLY. Works with Insta360 X3, X4, X5 and X6 photos, and any 360 camera.",
+			"tags": [
+				"feature"
+			],
+			"link": "/pano-scene"
+		},
+		{
+			"date": "2026-11-21",
 			"title": "A page and tutorial for turning 360 footage into 3D",
 			"summary": "The new /insta360 page explains how to turn a 360 walkaround into a Gaussian splat you can download as PLY or SPZ, step inside one 360 photo, or capture motion from a 360 clip, with a shooting guide and links to each tool. It works with Insta360 X3, X4, X5 and X6 files, and any 360 camera. A step-by-step tutorial covers each route and every error code.",
 			"tags": ["docs", "feature"],

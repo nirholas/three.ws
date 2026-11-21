@@ -15,6 +15,14 @@
 			<description>Turn any three.ws model into a short hero clip: the first frame is a real render of the creator's own mesh, six rendered angles guide Grok Imagine Video, presets and tiers, limits, the job API, and the honest no-key state that offers the model's own animated turntable instead of a fake clip.</description>
 		</item>
 		<item>
+			<title>Step Inside Your 360 Photo</title>
+			<link>https://three.ws/pano-scene</link>
+			<guid isPermaLink="false">2026-11-21:Step Inside Your 360 Photo</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Drop one 360 photo, or a raw .insp file, and stand inside it in 3D. Depth estimation builds a metric shell you can look around, step through and download as GLB or PLY. Works with Insta360 X3, X4, X5 and X6 photos, and any 360 camera.</description>
+		</item>
+		<item>
 			<title>Turn 360 Footage into 3D You Own</title>
 			<link>https://three.ws/insta360</link>
 			<guid isPermaLink="false">2026-11-21:Turn 360 Footage into 3D You Own</guid>
@@ -53,6 +61,22 @@
 			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>Every Grok call three.ws makes now tells xAI which conversation it belongs to, so follow-up turns with the same agent reach the server that already holds that agent's persona and tools in its cache. Cached input costs a quarter of the normal rate and starts the reply sooner. Only a one-way fingerprint of the prompt is sent, never the text. The Grok usage report now shows how much of each lane's input came from the cache.</description>
+		</item>
+		<item>
+			<title>Resumable uploads for multi-gigabyte 360 capture files</title>
+			<link>https://three.ws/docs/api-reference#capture-upload-api</link>
+			<guid isPermaLink="false">2026-11-21:Resumable uploads for multi-gigabyte 360 capture files</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The new /api/capture-upload endpoints (create, sign, parts, complete, abort) upload 360 videos, photos and raw .insv, .insp and .lrv files up to 8 GiB straight to storage in parallel parts. A dropped connection costs one part, and a resumed upload re-sends only what is missing. Limits are 3 uploads in progress and 32 GiB per account per day. A 2.19 GB file killed mid-upload and resumed came back byte-identical.</description>
+		</item>
+		<item>
+			<title>Step inside your 360 photo</title>
+			<link>https://three.ws/pano-scene</link>
+			<guid isPermaLink="false">2026-11-21:Step inside your 360 photo</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The new /pano-scene page turns one 360 photo, or a raw .insp file, into a 3D shell in real metres. Drop it, watch the real stages (stitch, depth, mesh), then look around, step off-centre and use your phone's gyroscope inside it, or download the GLB and PLY. Works with Insta360 X3, X4, X5 and X6 photos, and any 360 camera.</description>
 		</item>
 		<item>
 			<title>Docs · Grok Voice realtime on a lip-synced avatar</title>

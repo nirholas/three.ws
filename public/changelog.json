@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-21T21:54:15.823Z",
+	"generated_at": "2026-11-21T22:01:12.861Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Docs · Hero clips with Grok Imagine Video",
 			"summary": "Turn any three.ws model into a short hero clip: the first frame is a real render of the creator's own mesh, six rendered angles guide Grok Imagine Video, presets and tiers, limits, the job API, and the honest no-key state that offers the model's own animated turntable instead of a fake clip.",
 			"link": "/docs/hero-clips",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "launch",
+			"title": "Step Inside Your 360 Photo",
+			"summary": "Drop one 360 photo, or a raw .insp file, and stand inside it in 3D. Depth estimation builds a metric shell you can look around, step through and download as GLB or PLY. Works with Insta360 X3, X4, X5 and X6 photos, and any 360 camera.",
+			"link": "/pano-scene",
 			"tags": [
 				"launch"
 			]
@@ -66,6 +76,27 @@
 			"tags": [
 				"improvement",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "update",
+			"title": "Resumable uploads for multi-gigabyte 360 capture files",
+			"summary": "The new /api/capture-upload endpoints (create, sign, parts, complete, abort) upload 360 videos, photos and raw .insv, .insp and .lrv files up to 8 GiB straight to storage in parallel parts. A dropped connection costs one part, and a resumed upload re-sends only what is missing. Limits are 3 uploads in progress and 32 GiB per account per day. A 2.19 GB file killed mid-upload and resumed came back byte-identical.",
+			"link": "/docs/api-reference#capture-upload-api",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "update",
+			"title": "Step inside your 360 photo",
+			"summary": "The new /pano-scene page turns one 360 photo, or a raw .insp file, into a 3D shell in real metres. Drop it, watch the real stages (stitch, depth, mesh), then look around, step off-centre and use your phone's gyroscope inside it, or download the GLB and PLY. Works with Insta360 X3, X4, X5 and X6 photos, and any 360 camera.",
+			"link": "/pano-scene",
+			"tags": [
+				"feature"
 			]
 		},
 		{

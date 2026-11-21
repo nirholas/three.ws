@@ -89,9 +89,18 @@ console.log(job.result_url, job.num_points); // coloured .ply + point count
 - **Client-side rendering**: the `.ply` is decoded and displayed in the browser with WebGL; very large clouds are bounded by your device's GPU and memory.
 - Rate limits are per client IP on the shared 3D generation buckets.
 
+## Step inside one 360 photo
+
+A single equirectangular photo does not need a walkaround. [/pano-scene](https://three.ws/pano-scene) takes a 360 JPEG or PNG (exactly twice as wide as tall, up to 120 MB) or a raw `.insp` file, estimates metric depth for every pixel of the sphere, and builds one textured shell around the camera. The page uploads through `/api/scene-upload`, submits `POST /api/pano-scene`, polls `GET /api/pano-scene?job=<id>` and shows the real stage (Upload, Stitch for `.insp`, Depth, Mesh, Done). The result is a GLB and PLY you can download, plus an in-page viewer where you drag to look around, press W A S D or Step to move a short way off-centre (limited by the scene's median depth, since a single photo cannot show what is behind surfaces), and use the phone gyroscope. Signed-out visitors are sent to sign in; if the depth worker is not switched on the page says so before you upload. Tests: `tests/pano-scene-page.test.js` (file rules, stage model, camera maths), `tests/scene-upload-pano.test.js` (image and `.insp` presign).
+
+## Resumable upload for large capture files
+
+`/api/scene-upload` is a single PUT capped at 512 MB. Raw 360 footage (`.insv`, `.insp`, `.lrv`) and stitched 8K video run to several gigabytes, so `/api/capture-upload` uploads them to R2 as an S3 multipart upload: the browser sends parts in parallel straight to storage (nothing passes through the API server), a dropped connection loses one part instead of the whole file, and a resumed upload asks storage which parts already arrived and sends only the rest. Details and request shapes are in the [API reference](./api-reference.md#capture-upload-api). Limits: 8 GiB per file, 3 uploads in progress per account, 32 GiB per account per day; accepted types are `video/mp4`, `video/quicktime`, `image/jpeg`, `image/png`, `image/x-exr`, and `application/octet-stream` for `.insv`, `.insp` and `.lrv` only. Unfinished uploads are aborted after 24 hours and raw files are deleted after 30 days by bucket lifecycle rules on `captures/raw/`. The finished object's `source_url` is a signed https URL valid for 7 days that the reconstruction workers fetch. Tests: `tests/capture-upload.test.js`; live proof: `scripts/capture-upload-live-proof.mjs` (2.19 GB through the four endpoints, process killed after 120 of 262 parts, resumed, SHA-256 identical on download).
+
 ## Related
 
 - [Splat Viewer](./splat.md) renders Gaussian-splat radiance fields, the photoreal cousin of point clouds.
 - [/avatar-engines](https://three.ws/avatar-engines) covers the Geometric Context Transformer and related capture engines.
 - [Forge](./forge.md) and [Image to 3D](./image-to-3d.md) for generating meshes from prompts and photos.
+- [/pano-scene](https://three.ws/pano-scene) turns one 360 photo into a shell you can stand inside.
 - Pages: [/scene](https://three.ws/scene) (Scene Studio), [/create](https://three.ws/create).

@@ -258,7 +258,7 @@ The endpoint allows cross-origin `GET` and `POST` requests and requires no authe
 curl -s https://three.ws/api/mcp-census | jq '.totals.all, .matchesBuild'
 ```
 
-Response fields: `totals` (`all`, `hosted`, `stdio`, each with `servers`, `tools`, `uniqueTools`, `resources`, `templates`, `prompts`), `servers` (one row per server with a `source` of `live` or `build`), `method` (how each number is calculated), `matchesBuild` (false when the build ran on different code than is serving) and `drift` (the per-server differences). Today the build counts <!-- mcp-count:all.tools -->799<!-- /mcp-count --> tools on <!-- mcp-count:all.servers -->56<!-- /mcp-count --> servers. Browse them at [/mcp-tools](https://three.ws/mcp-tools); see [MCP Tools Catalog](mcp-tools.md#how-the-totals-are-calculated) for the method.
+Response fields: `totals` (`all`, `hosted`, `stdio`, each with `servers`, `tools`, `uniqueTools`, `resources`, `templates`, `prompts`), `servers` (one row per server with a `source` of `live` or `build`), `method` (how each number is calculated), `matchesBuild` (false when the build ran on different code than is serving) and `drift` (the per-server differences). Today the build counts <!-- mcp-count:all.tools -->809<!-- /mcp-count --> tools on <!-- mcp-count:all.servers -->56<!-- /mcp-count --> servers. Browse them at [/mcp-tools](https://three.ws/mcp-tools); see [MCP Tools Catalog](mcp-tools.md#how-the-totals-are-calculated) for the method.
 
 ## Asset Catalog API
 
@@ -768,6 +768,26 @@ curl -s 'https://three.ws/api/leaderboard/earnings?window=all&limit=1'
 **Caching:** `public, max-age=60, s-maxage=120, stale-while-revalidate=300`. The underlying snapshot refreshes every 30 minutes.
 
 ---
+
+## Capture Upload API
+
+Resumable multipart upload to object storage for 360 capture files up to 8 GiB. All endpoints are `POST`, JSON in and out, and need an account (`Authorization: Bearer sk_live_...` or a session cookie); signed-out calls get `401 sign_in_required`. Errors are `{ error, message }` with a message a visitor can read; an unconfigured deployment answers `503 unconfigured`.
+
+| Endpoint | Body | Response |
+| --- | --- | --- |
+| `/api/capture-upload/create` | `{ filename, content_type, size_bytes, kind: "pano" }` | `{ upload_id, key, part_size, part_count }` |
+| `/api/capture-upload/sign` | `{ upload_id, key, part_numbers: [1, 2, ...] }` (at most 100) | `{ urls: { "1": "https://..." } }` presigned `UploadPart` URLs, valid 1 hour |
+| `/api/capture-upload/parts` | `{ upload_id, key }` | `{ parts: [{ part_number, etag, size }] }` parts already stored, for resume |
+| `/api/capture-upload/complete` | `{ upload_id, key, parts: [{ part_number, etag }] }` | `{ source_url, size_bytes }`, a signed https URL valid 7 days |
+| `/api/capture-upload/abort` | `{ upload_id, key }` | `{ ok: true }` |
+
+Send each part with `PUT <url>` and the raw bytes (`part_size` per part, the last may be shorter) and keep the `ETag` response header of every part. Content types: `video/mp4`, `video/quicktime`, `image/jpeg`, `image/png`, `image/x-exr`, and `application/octet-stream` only for `.insv`, `.insp`, `.lrv`. Error codes: `invalid_filename`, `invalid_content_type`, `invalid_kind`, `invalid_size`, `invalid_part_numbers`, `invalid_parts`, `forbidden` (key belongs to another account), `upload_not_found`, `size_mismatch` (the object is deleted), `too_many_open_uploads` (429, 3 at a time), `daily_quota_exceeded` (429, 32 GiB per day).
+
+```bash
+curl -s -X POST https://three.ws/api/capture-upload/create \
+  -H "Authorization: Bearer $THREE_WS_API_KEY" -H 'content-type: application/json' \
+  -d '{"filename":"walk.insv","content_type":"application/octet-stream","size_bytes":3221225472,"kind":"pano"}'
+```
 
 ## Suggested Skills API
 

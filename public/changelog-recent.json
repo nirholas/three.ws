@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-21T21:54:15.897Z",
+	"generated_at": "2026-11-21T22:01:13.011Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4683,
+	"total": 4686,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -15,6 +15,16 @@
 			"title": "Docs · Hero clips with Grok Imagine Video",
 			"summary": "Turn any three.ws model into a short hero clip: the first frame is a real render of the creator's own mesh, six rendered angles guide Grok Imagine Video, presets and tiers, limits, the job API, and the honest no-key state that offers the model's own animated turntable instead of a fake clip.",
 			"link": "/docs/hero-clips",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "launch",
+			"title": "Step Inside Your 360 Photo",
+			"summary": "Drop one 360 photo, or a raw .insp file, and stand inside it in 3D. Depth estimation builds a metric shell you can look around, step through and download as GLB or PLY. Works with Insta360 X3, X4, X5 and X6 photos, and any 360 camera.",
+			"link": "/pano-scene",
 			"tags": [
 				"launch"
 			]
@@ -69,6 +79,27 @@
 			"tags": [
 				"improvement",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "update",
+			"title": "Resumable uploads for multi-gigabyte 360 capture files",
+			"summary": "The new /api/capture-upload endpoints (create, sign, parts, complete, abort) upload 360 videos, photos and raw .insv, .insp and .lrv files up to 8 GiB straight to storage in parallel parts. A dropped connection costs one part, and a resumed upload re-sends only what is missing. Limits are 3 uploads in progress and 32 GiB per account per day. A 2.19 GB file killed mid-upload and resumed came back byte-identical.",
+			"link": "/docs/api-reference#capture-upload-api",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "update",
+			"title": "Step inside your 360 photo",
+			"summary": "The new /pano-scene page turns one 360 photo, or a raw .insp file, into a 3D shell in real metres. Drop it, watch the real stages (stitch, depth, mesh), then look around, step off-centre and use your phone's gyroscope inside it, or download the GLB and PLY. Works with Insta360 X3, X4, X5 and X6 photos, and any 360 camera.",
+			"link": "/pano-scene",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1533,36 +1564,6 @@
 			"title": "The agent editor shows its sections again on desktop",
 			"summary": "On a desktop screen the agent editor rendered as an empty strip under its header: the site footer was mounted inside the editor's full-height layout and pushed the persona, brain, autopilot and wallet sections down to zero height. The editor now keeps its full height on desktop, and on phones the header wraps cleanly so the title and wallet chip both stay readable.",
 			"link": "/agents",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-12",
-			"type": "update",
-			"title": "The language picker stays readable on light pages and inside embeds",
-			"summary": "The floating language picker drew pale grey text over a nearly transparent background, so on a light page or inside an embedded agent it was hard to read and failed the WCAG AA contrast check. On pages that do not set their own theme colours it is now a solid dark chip that stays readable on any background. Themed pages look exactly as before.",
-			"link": null,
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-12",
-			"type": "update",
-			"title": "The Robinhood Chain feed shows the last day of launches again on a cold start",
-			"summary": "The Robinhood Chain feed worker came up empty after a restart. The public RPC throttles log queries on about every other call, and the backfill gave up on the first throttled request instead of retrying it. It now retries only the chunk that was throttled and keeps the work already done, so a full day of history (1,703 launches across six venues in a live run) loads in about eleven minutes. Odyssey launches no longer wait for the slower venue scan, older history arriving late no longer pushes newer launches out of the replay buffer, and the worker log now shows backfill progress and every warning instead of failing silently.",
-			"link": null,
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-12",
-			"type": "update",
-			"title": "The Shopify app link and the Build leaderboard open without console errors",
-			"summary": "Opening /apps/shopify outside Shopify admin used to load the embedded app with no store attached, which threw an App Bridge error and left a blank shell. A direct visit now goes to the app's documentation page, while merchants opening it from their Shopify admin get the app exactly as before. Before the first Build round opens, /build/leaderboard now shows its \"No Build round yet\" state from a normal empty response instead of logging a failed request.",
-			"link": "/docs/shopify-app",
 			"tags": [
 				"fix"
 			]
