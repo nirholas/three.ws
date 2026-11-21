@@ -5099,6 +5099,14 @@
 					"added": "2026-11-20"
 				},
 				{
+					"path": "/docs/hero-clips",
+					"title": "Docs · Hero clips with Grok Imagine Video",
+					"description": "Turn any three.ws model into a short hero clip: the first frame is a real render of the creator's own mesh, six rendered angles guide Grok Imagine Video, presets and tiers, limits, the job API, and the honest no-key state that offers the model's own animated turntable instead of a fake clip.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-21"
+				},
+				{
 					"path": "/docs/grok-bot",
 					"title": "Docs · Grok Bot connector reference",
 					"description": "Connect Grok Bot to three.ws as a custom MCP connector: exact fields for each sign-in mode, which server to pick, the links every result carries, jobs and safe retries, free limits and install tokens, why a connector key can never spend, guided prompts, and a fix for every connection failure.",
