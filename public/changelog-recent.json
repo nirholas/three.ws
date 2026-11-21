@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-21T22:40:38.067Z",
+	"generated_at": "2026-11-21T22:43:31.609Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4693,
+	"total": 4694,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -162,6 +162,16 @@
 			"title": "Step inside your 360 photo",
 			"summary": "The new /pano-scene page turns one 360 photo, or a raw .insp file, into a 3D shell in real metres. Drop it, watch the real stages (stitch, depth, mesh), then look around, step off-centre and use your phone's gyroscope inside it, or download the GLB and PLY. Works with Insta360 X3, X4, X5 and X6 photos, and any 360 camera.",
 			"link": "/pano-scene",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "update",
+			"title": "Turn 360 footage into a 3D scene on /capture",
+			"summary": "A new 360 video tab on /capture previews your footage on a sphere right in the browser, lets you trim it, and uploads big files in resumable parts you can pick up after a reload. Then it shows the scene being built step by step and hands you a viewer, a preview clip, and SPZ and PLY downloads. Works with any 360 camera.",
+			"link": "/capture?mode=360",
 			"tags": [
 				"feature"
 			]
@@ -1561,16 +1571,6 @@
 			"tags": [
 				"improvement",
 				"infra"
-			]
-		},
-		{
-			"date": "2026-11-12",
-			"type": "update",
-			"title": "Finished Coin Wars show up in the world ticker and on the chart screen",
-			"summary": "A finished war now adds a row to the activity ticker for everyone in the room, and a win for the community flashes a band on the chart-screen jumbotron. The result is reported once per match even when the portal poll, the return link and the feed all see it, and only this coin's wars are shown.",
-			"link": "/play",
-			"tags": [
-				"improvement"
 			]
 		}
 	]

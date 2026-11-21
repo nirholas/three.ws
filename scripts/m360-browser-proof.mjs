@@ -1,6 +1,8 @@
 // Drives /video-to-motion in a real browser with a real 2:1 clip: proves 360 mode,
 // the click marker and the request body. Usage:
-//   node scripts/m360-browser-proof.mjs <clip.mp4> [--wait-job] [--page=/video-to-motion]
+//   node scripts/m360-browser-proof.mjs <clip.mp4> [--wait-job] [--page=/video-to-motion] [--width=400]
+//     [--pick=x,y] [--fake-worker=pre341|341]   (fake-worker needs M360_CLIP_JSON and M360_REFRAME_MP4)
+// Needs a dev server on :3342 and .auth/audit-state.json (npm run audit:web:login).
 import { chromium } from 'playwright';
 import { readFileSync } from 'node:fs';
 
@@ -10,6 +12,10 @@ const fakeWorker = (process.argv.find((a) => a.startsWith('--fake-worker=')) || 
 const pickAt = (process.argv.find((a) => a.startsWith('--pick=')) || '--pick=0.52,0.55').slice(7).split(',').map(Number);
 const pagePath = (process.argv.find((a) => a.startsWith('--page=')) || '--page=/video-to-motion').slice(7);
 const base = 'http://localhost:3342';
+// Inputs for --fake-worker and where screenshots land (all set by the caller).
+const CLIP_JSON = process.env.M360_CLIP_JSON;
+const REFRAME_MP4 = process.env.M360_REFRAME_MP4;
+const OUT_DIR = process.env.M360_OUT_DIR || '.';
 const state = JSON.parse(readFileSync('.auth/audit-state.json', 'utf8'));
 const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctx = await browser.newContext({ viewport: { width: Number((process.argv.find((a) => a.startsWith('--width=')) || '--width=1280').slice(8)), height: 900 } });
@@ -51,8 +57,8 @@ if (fakeWorker) {
 		if (fakeWorker === '341') done.reframe_url = '/__reframe.mp4';
 		return route.fulfill({ json: done });
 	});
-	await ctx.route('**/__clip.json', (route) => route.fulfill({ contentType: 'application/json', body: readFileSync('/home/user/.cache/m360/clip.json') }));
-	await ctx.route('**/__reframe.mp4', (route) => route.fulfill({ status: 200, contentType: 'video/mp4', body: readFileSync('/home/user/.cache/m360/commons-visby-march-theta-reframe-yaw34.5-pitch-28.1.mp4') }));
+	await ctx.route('**/__clip.json', (route) => route.fulfill({ contentType: 'application/json', body: readFileSync(CLIP_JSON) }));
+	await ctx.route('**/__reframe.mp4', (route) => route.fulfill({ status: 200, contentType: 'video/mp4', body: readFileSync(REFRAME_MP4) }));
 	await ctx.route(/upload\.invalid/, (route) => route.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*' }, body: '' }));
 }
 await page.goto(base + pagePath, { waitUntil: 'domcontentloaded', timeout: 180000 });
@@ -61,20 +67,20 @@ await page.setInputFiles(input, clip);
 await page.waitForSelector('.m360-badge', { timeout: 240000 });
 console.log('badge:', (await page.textContent('.m360-badge')).trim());
 await page.waitForFunction(() => !document.querySelector('.m360-skeleton'), null, { timeout: 240000 }).catch(() => {});
-await page.screenshot({ path: '/home/user/.cache/m360/shot-pick.png' });
+await page.screenshot({ path: `${OUT_DIR}/shot-pick.png` });
 const view = await page.waitForSelector('.m360-view', { timeout: 240000 });
 const box = await view.boundingBox();
 await page.mouse.click(box.x + box.width * pickAt[0], box.y + box.height * pickAt[1]);
 await page.waitForSelector('.m360-marker', { timeout: 10000 });
 console.log('readout:', (await page.textContent('.m360-readout')).trim());
-await page.screenshot({ path: '/home/user/.cache/m360/shot-marker.png' });
+await page.screenshot({ path: `${OUT_DIR}/shot-marker.png` });
 await page.click('text=Track the person I picked');
 await page.waitForTimeout(15000);
 console.log('request bodies:', bodies);
-await page.screenshot({ path: '/home/user/.cache/m360/shot-submitted.png' });
+await page.screenshot({ path: `${OUT_DIR}/shot-submitted.png` });
 if (waitJob) {
 	await page.waitForFunction(() => document.querySelector('#vtm-stage-failed:not([hidden])') || document.querySelector('#vtm-stage-pick .m360-message') || document.querySelector('#vtm-play')?.offsetParent || document.querySelector('.m360-reframe:not([hidden])') || document.querySelector('#ms-result:not([hidden])'), null, { timeout: 600000 }).catch((e) => console.log('wait ended:', e.message));
-	await page.screenshot({ path: '/home/user/.cache/m360/shot-result.png' });
+	await page.screenshot({ path: `${OUT_DIR}/shot-result.png` });
 	console.log('reframe panel visible:', await page.isVisible('.m360-reframe:not([hidden])'));
 }
 console.log('console problems:', problems);
