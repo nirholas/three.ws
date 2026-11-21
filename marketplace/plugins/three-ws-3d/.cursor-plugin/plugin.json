@@ -1,0 +1,26 @@
+{
+  "name": "three-ws-3d",
+  "displayName": "three.ws 3D Forge",
+  "version": "1.0.0",
+  "description": "Free text-to-3D and rigged, animation-ready avatars for your coding agent, through the keyless three.ws Studio MCP server, plus paid mesh, avatar and auto-rig lanes, scene composition and live avatar embeds.",
+  "author": {
+    "name": "three.ws",
+    "url": "https://three.ws"
+  },
+  "homepage": "https://three.ws/forge",
+  "repository": "https://github.com/nirholas/three.ws",
+  "license": "Apache-2.0",
+  "logo": "https://raw.githubusercontent.com/nirholas/three.ws/main/public/brand/three-ws-app-icon-512.png",
+  "keywords": [
+    "3d",
+    "forge",
+    "avatar",
+    "glb",
+    "text-to-3d",
+    "image-to-3d",
+    "rigging",
+    "mcp"
+  ],
+  "skills": "./skills",
+  "mcpServers": "./mcp.json"
+}

@@ -892,6 +892,13 @@
 			"npm": null
 		},
 		{
+			"repo": "grok-3d-starter",
+			"path": "satellites/grok-3d-starter",
+			"direction": "out",
+			"exporter": "growth-satellites",
+			"npm": null
+		},
+		{
 			"repo": "3d-avatar-companion",
 			"path": "walk-sdk",
 			"direction": "out",

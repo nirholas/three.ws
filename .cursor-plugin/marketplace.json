@@ -1,0 +1,15 @@
+{
+  "name": "three-ws",
+  "owner": { "name": "three.ws", "email": "nich@three.ws" },
+  "metadata": {
+    "description": "Official three.ws plugins for Cursor: 3D model and avatar generation, MCP tools, and the agent skill pack.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "three-ws-3d",
+      "source": "marketplace/plugins/three-ws-3d",
+      "description": "Free text-to-3D and rigged, animation-ready avatars through the keyless three.ws Studio MCP server."
+    }
+  ]
+}
