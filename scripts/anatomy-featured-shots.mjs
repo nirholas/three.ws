@@ -50,6 +50,12 @@ const paceScript = `(() => {
 
 async function newPage(options, { paced = true } = {}) {
 	const context = await browser.newContext(options);
+	// Against the Vite dev server, any HTML edit elsewhere in the worktree (a
+	// concurrent agent, a docs build) sends a full-reload over the HMR socket
+	// and navigates the page mid-capture. Answer that socket locally so it
+	// opens but never delivers a reload. A production server has no such socket.
+	const baseHost = new URL(base).host;
+	await context.routeWebSocket((url) => url.host === baseHost && url.searchParams.has('token'), () => {});
 	if (paced) await context.addInitScript(paceScript);
 	const page = await context.newPage();
 	page.setDefaultTimeout(timeout);
