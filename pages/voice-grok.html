@@ -146,6 +146,8 @@
 		.vg-pick:active { transform: scale(0.98); }
 		.vg-pick[aria-pressed="true"] { border-color: var(--accent); color: var(--ink-bright); box-shadow: 0 0 0 1px var(--accent); }
 		.vg-pick img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: var(--surface-1); }
+		.vg-pick-mono { width: 100%; aspect-ratio: 1; display: grid; place-items: center; font: 600 1.5rem/1 var(--font-mono); font-style: normal; color: var(--ink-dim); background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--accent) 22%, var(--surface-1)), var(--surface-1) 70%); transition: color 0.15s ease; }
+		.vg-pick:hover .vg-pick-mono, .vg-pick[aria-pressed="true"] .vg-pick-mono { color: var(--ink-bright); }
 		.vg-pick span { font-size: var(--text-2xs); padding: 5px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 		.vg-pick-skel { aspect-ratio: 1 / 1.25; border-radius: var(--radius-md, 10px); background: linear-gradient(100deg, var(--surface-1) 30%, color-mix(in srgb, var(--ink) 9%, var(--surface-1)) 50%, var(--surface-1) 70%); background-size: 220% 100%; animation: vg-shimmer 1.3s linear infinite; }
 

@@ -143,7 +143,7 @@ function avatarRecord(a) {
 		name: a.name || 'Avatar',
 		model_url: a.model_url,
 		agent_id: a.agent_id || null,
-		thumb: a.thumbnail_url || a.thumb_url || `/api/avatars/${a.id}/thumb`,
+		thumb: a.thumbnail_url || a.thumb_url || null,
 	};
 }
 
@@ -272,17 +272,32 @@ function renderPicker() {
 		b.dataset.id = a.id;
 		b.setAttribute('aria-pressed', 'false');
 		b.setAttribute('aria-label', `Talk to ${a.name}`);
-		const img = document.createElement('img');
-		img.src = a.thumb;
-		img.alt = '';
-		img.loading = 'lazy';
-		img.decoding = 'async';
 		const name = document.createElement('span');
 		name.textContent = a.name;
-		b.append(img, name);
+		b.append(a.thumb ? pickThumb(a) : pickMonogram(a), name);
 		b.addEventListener('click', () => selectAvatar(a.id));
 		el.picker.append(b);
 	}
+}
+
+// Most public avatars have no poster yet; a lettered tile stands in for them
+// (and for a poster that fails to load) instead of a broken image.
+function pickMonogram(a) {
+	const tile = document.createElement('i');
+	tile.className = 'vg-pick-mono';
+	tile.setAttribute('aria-hidden', 'true');
+	tile.textContent = (a.name.trim()[0] || '?').toUpperCase();
+	return tile;
+}
+
+function pickThumb(a) {
+	const img = document.createElement('img');
+	img.alt = '';
+	img.loading = 'lazy';
+	img.decoding = 'async';
+	img.addEventListener('error', () => img.replaceWith(pickMonogram(a)), { once: true });
+	img.src = a.thumb;
+	return img;
 }
 
 async function selectAvatar(id) {
@@ -340,6 +355,18 @@ async function mountAvatar(avatar) {
 		showStageNote(`${avatar.name} has no mouth morphs, jaw bone or head bone, so the voice plays but nothing on the model moves. Pick another avatar for lip sync.`);
 	}
 	syncControls();
+	startIdle(scene, token);
+}
+
+// A GLB without an idle clip of its own would stand in bind pose, arms out.
+// The shared animation library's idle loop (retargeted per bone) keeps it
+// breathing between turns; a rig it cannot drive simply stays as it was.
+async function startIdle(scene, token) {
+	if (scene.playingClip) return;
+	const emotes = scene.getEmoteController();
+	if (!emotes || !(await emotes.loadManifest())) return;
+	if (token !== page.mountToken) return;
+	await scene.playEmote('idle');
 }
 
 function showStageMessage(text) {
