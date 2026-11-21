@@ -55,3 +55,5 @@ Record the request schema, how frames are decoded, which detector and pose model
 2. Commit with explicit paths and a `type(scope): ...` subject that describes the diff.
 3. The service redeploy is the owner's: leave this file in `finish/` with a dated status line ("proven by job <execution>; redeploy waits on 347"). Append to [_context/insta360-PROGRESS.md](_context/insta360-PROGRESS.md) with the measured numbers.
 4. Report: what step 0 measured; files and SHAs; evidence per Definition of done line; the measured numbers; the one batched owner message; one-line judgment calls. No trailing questions.
+
+Status 2026-11-21: proven by Cloud Run Job execution v2m-equirect-proof-48n24 (europe-west4, L4, 3 real 360 clips, measured numbers in _context/insta360-PROGRESS.md); worker, API passthrough and tests committed; redeploy of the worker and API waits on 347.

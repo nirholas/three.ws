@@ -1,7 +1,7 @@
 # model-video2motion
 
 Video of a person to a **retargetable animation clip + body-swap plates**. A
-CPU-only FastAPI worker (no GPU, deploys like the segment/rembg lanes) that
+CPU-only FastAPI worker (no GPU needed, deploys like the segment/rembg lanes) that
 powers the **Motion Swap** page (`/motion-swap`): upload a video of yourself,
 get it back with your avatar performing your motion. The same capture path
 produces the lexical clips behind sign-language playback (`src/sign-speech.js`),
@@ -73,6 +73,55 @@ The platform reaches this worker through the GCP provider's `video2motion`
 mode (`GCP_VIDEO2MOTION_URL`), exposed as `POST /api/motion-swap`
 (+ `GET /api/motion-swap?job=<id>`).
 
+### 360 footage (`projection: "equirect"`)
+
+`POST /infer` also takes `projection` (`"perspective"` default, unchanged
+behaviour, or `"equirect"`) and `subject` (`{yaw_deg: -180..180, pitch_deg:
+-90..90}`, the direction toward the person; optional). With `equirect` the input
+must be a stitched 2:1 equirectangular video (`yaw = (x/W - 0.5) * 360`, `pitch
+= (0.5 - y/H) * 180`, so yaw grows to the right and pitch grows up). The worker
+finds the person on the sphere, renders a 1080p perspective reframe that follows
+them, runs the unchanged pose pipeline on that reframe, and returns the usual
+artifacts plus:
+
+| Field | What it is |
+|---|---|
+| `reframe_url` | `reframe.mp4`, the 1920x1080 perspective video the pose pass ran on (audio kept) |
+| `subject_track` | `[{t, yaw_deg, pitch_deg, fov_deg}]`, one entry per output frame: where the reframe camera looked |
+| `track_stats` | `source_width/height`, `frames`, `lost_frames`, `reacquisitions`, `acquisition` (method, yaw, pitch, body height in degrees), `track_seconds`, `reframe_seconds` |
+
+`meta.json` gains `"projection": "equirect"`. The solved root orientation is
+world-space: camera-space landmarks are rotated back into the 360 camera's frame
+with the track (`equirect.compensate_camera_rotation`), so a person walking a
+circle around the camera does not turn into a person spinning in place.
+
+How it works (`equirect.py`, all pure NumPy plus OpenCV):
+
+1. **Working copy.** The source is decoded once to a 3840-wide copy (override
+   with `EQUIRECT_WORK_WIDTH`) and read twice, tracking then rendering, so a
+   5.7K source never sits in memory.
+2. **Acquire.** With a `subject`, tracking starts there. Without one, six
+   overlapping 100 degree cube-face renders are scanned with MediaPipe pose, boxes
+   within 15 degrees are merged, and the largest upright, moving person wins. A
+   sideways copy of a close subject (two-lens stitch seam) is discounted by torso
+   tilt so it cannot outrank the real person.
+3. **Track.** Each frame detects inside a perspective crop at the predicted
+   direction. A constant-velocity Kalman filter runs on unwrapped angles, so the
+   +/-180 degree seam is not special, then an RTS smoother removes jitter. After
+   more than 10 lost frames the cube-face scan retries every 5 frames and takes
+   the candidate nearest the prediction.
+4. **Frame.** Field of view adapts to the body so it fills about 62% of the
+   frame height, clamped to 50..110 degrees, and is smoothed.
+
+Limits, measured on real footage: the tracker has no appearance model, so when
+the subject leaves the frame for good it follows whoever it re-acquires (a
+stranger, even a mannequin); pass `subject` and a shorter `max_seconds` for such
+clips. Close-ups can fill most of the sphere, which pushes the field of view to
+its 110 degree ceiling. Detection (MediaPipe) is CPU work: a Cloud Run L4 job
+tracked a 12 s, 24 fps, 3840x1920 clip in about 65 s and rendered it in about 57
+s (see `scripts/video2motion-equirect-gpu/` for the harness and the measured table
+in `prompts/finish/_context/insta360-PROGRESS.md`).
+
 ### Environment
 
 | Var | Default | Purpose |
@@ -138,6 +187,15 @@ docker run --rm -v "$PWD/workers/model-video2motion:/src" -w /src \
   -e API_KEY=test -e GCS_BUCKET=test model-video2motion:local \
   sh -c 'pip install -q pytest && python -m pytest test_pose_solver.py test_service.py -q'
 ```
+
+The 360 geometry, filter, tracker and compensation tests (`test_equirect.py`) run
+on synthetic spheres and a recorded real track (`fixtures/equirect_track.json`).
+Two further `test_service.py` cases run `_process` on real footage and skip
+unless you point them at clips: `V2M_PERSPECTIVE_CLIP` (a clip of a person, the
+perspective regression) and `V2M_EQUIRECT_CLIP` (a stitched 2:1 clip). Both need
+the three MediaPipe bundles. `local_equirect.py <equirect.mp4> <out_dir>` runs
+the same equirect code path with no server and no GCS and writes `reframe.mp4`,
+`subject_track.json`, `clip.json` and `stats.json`.
 
 ## Local development
 

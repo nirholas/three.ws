@@ -10,3 +10,5 @@ local_solve.py
 __pycache__/
 *.pyc
 .pytest_cache/
+local_equirect.py
+fixtures/

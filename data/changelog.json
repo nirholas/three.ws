@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-21",
+			"title": "Motion capture from 360 video follows the person for you",
+			"summary": "Send a stitched 360 clip to Video to Motion or Motion Swap and the worker finds the person on the sphere, keeps a perspective camera pointed at them (even across the wrap-around seam), and captures their motion from that view. You get the usual animation plus the reframed video and the camera track it followed, so you can see exactly what was tracked. Optionally pass the direction to the person to skip the search. Regular videos behave exactly as before.",
+			"tags": ["feature"],
+			"link": "/video-to-motion"
+		},
+		{
+			"date": "2026-11-21",
 			"title": "360 captures train into a real Gaussian splat with a flythrough preview",
 			"summary": "The pano2splat worker has a splat_train stage: it trains a splat from the reconstructed camera poses, checks quality on held-out frames, and writes a PLY, a compact SPZ and a 20 second 1080p preview video.",
 			"tags": [

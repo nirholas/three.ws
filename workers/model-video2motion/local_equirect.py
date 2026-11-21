@@ -16,7 +16,8 @@ import time
 
 os.environ.setdefault("API_KEY", "local")
 os.environ.setdefault("GCS_BUCKET", "local")
-os.environ.setdefault("MODELS_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), ".models"))
+_local_models = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".models")
+os.environ.setdefault("MODELS_DIR", _local_models if os.path.isdir(_local_models) else "/models")
 
 import main  # noqa: E402
 import equirect  # noqa: E402

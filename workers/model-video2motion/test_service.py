@@ -341,3 +341,125 @@ def test_solved_landmarks_produce_the_clip_and_plates_process_uploads(tmp_path):
     video = _stream(_ffprobe(mask_path, "-count_frames"), "video")
     assert int(video["nb_read_frames"]) == n
     assert video["avg_frame_rate"] == f"{fps}/1"
+
+
+# ── 360 projection (contract C3) ────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"projection": "cubemap"},
+        {"projection": "equirect", "subject": {"yaw_deg": 181, "pitch_deg": 0}},
+        {"projection": "equirect", "subject": {"yaw_deg": -180.5, "pitch_deg": 0}},
+        {"projection": "equirect", "subject": {"yaw_deg": 0, "pitch_deg": 90.5}},
+        {"projection": "equirect", "subject": {"yaw_deg": 0, "pitch_deg": -91}},
+        {"projection": "equirect", "subject": {"yaw_deg": 0}},
+        {"projection": "equirect", "subject": {"yaw_deg": "left", "pitch_deg": 0}},
+    ],
+)
+def test_infer_rejects_a_bad_projection_or_subject(client, payload):
+    body = {"video_url": "https://example.com/a.mp4", **payload}
+    assert client.post("/infer", json=body, headers=AUTH).status_code == 422
+
+
+def test_infer_forwards_projection_and_subject_and_defaults_to_perspective(client, monkeypatch):
+    calls = []
+
+    async def record(*args):
+        calls.append(args)
+
+    monkeypatch.setattr(main, "_run", record)
+    url = "https://example.com/a.mp4"
+    plain = client.post("/infer", json={"video_url": url}, headers=AUTH)
+    spherical = client.post(
+        "/infer",
+        json={
+            "video_url": url,
+            "projection": "equirect",
+            "subject": {"yaw_deg": -120.5, "pitch_deg": 12},
+        },
+        headers=AUTH,
+    )
+    assert plain.status_code == 202 and spherical.status_code == 202
+    # (task_id, video_url, fps, seconds, projection, subject)
+    assert calls[0][4:] == ("perspective", None)
+    assert calls[1][4:] == ("equirect", (-120.5, 12.0))
+
+
+class _MemoryBucket:
+    """Stands in for the GCS bucket handle: records uploads instead of sending them."""
+
+    def __init__(self):
+        self.objects = {}
+
+    def blob(self, name):
+        bucket = self
+
+        class _Blob:
+            def upload_from_string(self, payload, content_type=None):
+                bucket.objects[name] = payload
+
+            def upload_from_filename(self, path, content_type=None):
+                with open(path, "rb") as f:
+                    bucket.objects[name] = f.read()
+
+        return _Blob()
+
+
+def _real_clip(var):
+    path = os.environ.get(var)
+    if not path or not os.path.exists(path):
+        pytest.skip(f"set {var} to a real clip (see the README, Tests)")
+    return path
+
+
+def _run_process(monkeypatch, clip, projection, subject=None, seconds=3.0):
+    models = _models_dir()
+    if not models:
+        pytest.skip(f"MediaPipe bundles not staged; need {MODEL_BUNDLES} in MODELS_DIR")
+    pytest.importorskip("mediapipe")
+    monkeypatch.setattr(main, "MODELS_DIR", models)
+    bucket = _MemoryBucket()
+    monkeypatch.setattr(main, "_bucket", bucket)
+    with open(clip, "rb") as f:
+        data = f.read()
+    monkeypatch.setattr(main, "fetch_remote_bytes", lambda *a, **k: data)
+    result = main._process(
+        "regress-0001", "https://example.com/clip.mp4", 24, seconds, projection, subject
+    )
+    return result, bucket
+
+
+def test_perspective_path_on_a_real_clip_is_unchanged_by_the_360_work(monkeypatch):
+    """Real footage of a person through the default projection: the artifact set
+    and the metadata are exactly what the worker produced before 360 support."""
+    clip = _real_clip("V2M_PERSPECTIVE_CLIP")
+    result, bucket = _run_process(monkeypatch, clip, "perspective")
+
+    assert set(result) == {"result_url", "meta_url", "video_url", "mask_url", "frames", "fps"}
+    assert result["frames"] >= 40
+    names = {k.rsplit("/", 1)[1] for k in bucket.objects}
+    assert names == {"clip.json", "meta.json", "video.mp4", "mask.mp4"}
+    meta = json.loads(bucket.objects["motion-swap/regress-0001/meta.json"])
+    assert "projection" not in meta
+    clip_doc = json.loads(bucket.objects["motion-swap/regress-0001/clip.json"])
+    assert clip_doc["tracks"], "the solved clip has bone tracks"
+
+
+def test_equirect_path_on_a_real_360_clip_returns_the_reframe_and_the_track(monkeypatch):
+    clip = _real_clip("V2M_EQUIRECT_CLIP")
+    result, bucket = _run_process(monkeypatch, clip, "equirect")
+
+    assert result["reframe_url"].endswith("/reframe.mp4")
+    assert "reframe.mp4" in {k.rsplit("/", 1)[1] for k in bucket.objects}
+    track = result["subject_track"]
+    assert len(track) >= 40
+    for entry in track:
+        assert set(entry) == {"t", "yaw_deg", "pitch_deg", "fov_deg"}
+        assert -180.0 <= entry["yaw_deg"] <= 180.0
+        assert -90.0 <= entry["pitch_deg"] <= 90.0
+        assert 50.0 <= entry["fov_deg"] <= 110.0
+    assert result["track_stats"]["source_width"] >= 2 * result["track_stats"]["source_height"] - 2
+    meta = json.loads(bucket.objects["motion-swap/regress-0001/meta.json"])
+    assert meta["projection"] == "equirect"
