@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-21T23:28:57.975Z",
+	"generated_at": "2026-11-21T23:39:26.024Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4700,
+	"total": 4701,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -164,6 +164,16 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "update",
+			"title": "Raw Insta360 files stitch into level 360 video on our own GPUs",
+			"summary": "The new pano_stitch stage reads the lens calibration and gyro that Insta360 X-series cameras write at the end of every raw .insv and .insp file, so you no longer need an exported file from the camera app. It pairs split X3 files, handles the single-file two-track X5, blends the seam, matches exposure, optionally levels the horizon from the gyro, trims without re-encoding, and writes a 360 video or a photo with the metadata viewers expect. Measured on real X3 and X5 footage: a 5 second X3 clip stitches in 21 seconds on one L4 GPU at 1920 wide and in 49 seconds on 8 CPU cores, and levelling cut the measured tilt of the X3 clip from 3.3 to 1.5 degrees.",
+			"link": null,
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1559,16 +1569,6 @@
 			"title": "Docs: Slack, WhatsApp and voice gateways",
 			"summary": "Connect your agent to Slack, WhatsApp, and voice in the browser or on the phone: setup, signatures, the WhatsApp 24-hour window, and the call safety rules.",
 			"link": "/docs/gateways",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-12",
-			"type": "launch",
-			"title": "Sign Review",
-			"summary": "Where fluent signers review each sign of a new sign language on the live avatar, at half speed or full, either hand, and approve, reject or ask for a change. No sign goes live without the required approvals.",
-			"link": "/sign-review",
 			"tags": [
 				"launch"
 			]

@@ -127,6 +127,14 @@
 			<description>An agent marked private no longer shows up in the public screen stream or the net-worth leaderboard, and a deleted agent disappears from both. Internal operator documents (runbooks, partner pipelines, fundraising material, prompts) are no longer published under /docs, bundled into /docs/ALL.md, or indexed by docs search, and the build now fails if one slips back in. The public x402 status, ring report and fresh-worker feeds keep their numbers but stop echoing raw database errors, upstream RPC URLs and the names of missing signing secrets; operators still see the full detail with their ops credentials.</description>
 		</item>
 		<item>
+			<title>Raw Insta360 files stitch into level 360 video on our own GPUs</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-21:Raw Insta360 files stitch into level 360 video on our own GPUs</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The new pano_stitch stage reads the lens calibration and gyro that Insta360 X-series cameras write at the end of every raw .insv and .insp file, so you no longer need an exported file from the camera app. It pairs split X3 files, handles the single-file two-track X5, blends the seam, matches exposure, optionally levels the horizon from the gyro, trims without re-encoding, and writes a 360 video or a photo with the metadata viewers expect. Measured on real X3 and X5 footage: a 5 second X3 clip stitches in 21 seconds on one L4 GPU at 1920 wide and in 49 seconds on 8 CPU cores, and levelling cut the measured tilt of the X3 clip from 3.3 to 1.5 degrees.</description>
+		</item>
+		<item>
 			<title>Resumable uploads for multi-gigabyte 360 capture files</title>
 			<link>https://three.ws/docs/api-reference#capture-upload-api</link>
 			<guid isPermaLink="false">2026-11-21:Resumable uploads for multi-gigabyte 360 capture files</guid>

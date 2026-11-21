@@ -57,3 +57,5 @@ Clone (read-only, into the scratchpad) `telemetry-parser`, `insta360-stitch` and
 2. Commit with explicit paths and a `type(scope): ...` subject that describes the diff.
 3. All lines pass: `git mv` this file to `prompts/archive/` in its own closing commit and repoint inbound links. If owner footage is the only gap, leave the file with a dated status line. Append to [_context/insta360-PROGRESS.md](_context/insta360-PROGRESS.md) with the supported-models table.
 4. Report: what step 0 measured; files and SHAs; evidence per Definition of done line; the measured numbers; the one batched owner message; one-line judgment calls. No trailing questions.
+
+Status 2026-11-21: built and proven on real X3 and X5 footage (CPU and L4 GPU), tests pass. Left open only for owner footage: a handheld clip with raw IMU for the levelling number, a raw .insp, and X4, X6, ONE X2 samples. See insta360-PROGRESS.md.
