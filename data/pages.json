@@ -1112,6 +1112,14 @@
 					"added": "2026-06-27"
 				},
 				{
+					"path": "/insta360",
+					"title": "Turn 360 Footage into 3D You Own",
+					"description": "Walk around with a 360 camera and get a Gaussian splat you can download as PLY or SPZ. Step inside one 360 photo, use it as your avatar's world, or capture motion. Works with Insta360 X3, X4, X5 and X6 files, and any 360 camera.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-11-21"
+				},
+				{
 					"path": "/motion-swap",
 					"title": "Motion Swap: Replace Yourself in Video with Your Avatar",
 					"description": "Upload a video of yourself and get it back with your 3D avatar performing your motion instead of you. Server-side pose tracking and person masking, browser-side compositing and export: stay off camera without staying off video.",
@@ -5330,6 +5338,14 @@
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-06-12"
+				},
+				{
+					"path": "/tutorials/insta360-to-3d",
+					"title": "Tutorial: Turn 360 Footage into 3D",
+					"description": "How to shoot a 360 walkaround that reconstructs, then turn it into a downloadable Gaussian splat, step inside a single 360 photo, or capture motion, with troubleshooting for every error code. Works with Insta360 X3, X4, X5 and X6 files, and any 360 camera.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-11-21"
 				},
 				{
 					"path": "/tutorials/build-a-3d-asset-pipeline",

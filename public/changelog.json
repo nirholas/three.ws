@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-21T07:52:17.830Z",
+	"generated_at": "2026-11-21T21:54:15.823Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,37 @@
 			"link": "/docs/hero-clips",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "launch",
+			"title": "Turn 360 Footage into 3D You Own",
+			"summary": "Walk around with a 360 camera and get a Gaussian splat you can download as PLY or SPZ. Step inside one 360 photo, use it as your avatar's world, or capture motion. Works with Insta360 X3, X4, X5 and X6 files, and any 360 camera.",
+			"link": "/insta360",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "launch",
+			"title": "Tutorial: Turn 360 Footage into 3D",
+			"summary": "How to shoot a 360 walkaround that reconstructs, then turn it into a downloadable Gaussian splat, step inside a single 360 photo, or capture motion, with troubleshooting for every error code. Works with Insta360 X3, X4, X5 and X6 files, and any 360 camera.",
+			"link": "/tutorials/insta360-to-3d",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "update",
+			"title": "A page and tutorial for turning 360 footage into 3D",
+			"summary": "The new /insta360 page explains how to turn a 360 walkaround into a Gaussian splat you can download as PLY or SPZ, step inside one 360 photo, or capture motion from a 360 clip, with a shooting guide and links to each tool. It works with Insta360 X3, X4, X5 and X6 files, and any 360 camera. A step-by-step tutorial covers each route and every error code.",
+			"link": "/insta360",
+			"tags": [
+				"docs",
+				"feature"
 			]
 		},
 		{

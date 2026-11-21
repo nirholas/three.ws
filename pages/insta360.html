@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot, no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<title>Turn 360 Footage into 3D You Own · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Turn Insta360 and other 360 camera footage into 3D you own: walk around for a Gaussian splat, step inside one 360 photo, light your avatar with your own panorama, and capture motion from 360 video." />
+		<meta name="theme-color" content="#000000" />
+		<link rel="canonical" href="https://three.ws/insta360" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Turn 360 Footage into 3D You Own · three.ws" />
+		<meta property="og:description" content="Works with Insta360 X3, X4, X5 and X6 files, and any 360 camera. Get PLY, SPZ and GLB files you keep, plus a shooting guide that makes captures work." />
+		<meta property="og:url" content="https://three.ws/insta360" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Turn+360+Footage+into+3D+You+Own&amp;d=Turn+Insta360+and+other+360+camera+footage+into+3D+you+own%3A+walk+around+for+a+Gaussian+splat%2C+step+inside+one+360+photo%2C+light+your+avatar+with+your+own&amp;p=%2Finsta360" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Turn 360 Footage into 3D You Own · three.ws" />
+		<meta name="twitter:description" content="Works with Insta360 X3, X4, X5 and X6 files, and any 360 camera. PLY, SPZ and GLB files you keep." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Turn+360+Footage+into+3D+You+Own&amp;d=Turn+Insta360+and+other+360+camera+footage+into+3D+you+own%3A+walk+around+for+a+Gaussian+splat%2C+step+inside+one+360+photo%2C+light+your+avatar+with+your+own&amp;p=%2Finsta360" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/src/insta360.css" />
+
+		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Turn 360 Footage into 3D You Own","description":"Turn Insta360 and other 360 camera footage into 3D you own: walk around for a Gaussian splat, step inside one 360 photo, light your avatar with your own panorama, and capture motion from 360 video.","url":"https://three.ws/insta360","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&t=Turn+360+Footage+into+3D+You+Own&d=Turn+Insta360+and+other+360+camera+footage+into+3D+you+own%3A+walk+around+for+a+Gaussian+splat%2C+step+inside+one+360+photo%2C+light+your+avatar+with+your+own&p=%2Finsta360"},{"@type":"HowTo","name":"How to shoot 360 footage that reconstructs into 3D","description":"Nine habits that turn a 360 walkaround into a clean Gaussian splat scene, for Insta360 X3, X4, X5 and X6 cameras and any other 360 camera.","totalTime":"PT3M","tool":[{"@type":"HowToTool","name":"A 360 camera"},{"@type":"HowToTool","name":"A selfie stick or monopod"}],"step":[{"@type":"HowToStep","position":1,"name":"Walk slowly","text":"Move at a slow, even pace so neighbouring frames overlap and nothing smears."},{"@type":"HowToStep","position":2,"name":"Hold the camera above your head","text":"Raise the camera on a stick above head height so you take up less of the frame and the view clears furniture."},{"@type":"HowToStep","position":3,"name":"Loop back to the start","text":"Finish where you began so the path closes and the scene lines up end to end."},{"@type":"HowToStep","position":4,"name":"Record 30 seconds to 3 minutes","text":"Shorter clips see too little; longer clips take longer to process without adding much."},{"@type":"HowToStep","position":5,"name":"Avoid mirrors, glass and crowds","text":"Reflections, see-through surfaces and moving people confuse the reconstruction."},{"@type":"HowToStep","position":6,"name":"Shoot in soft, even light","text":"Overcast daylight or diffuse indoor light beats hard sun and deep shadow."},{"@type":"HowToStep","position":7,"name":"Lock exposure","text":"Lock exposure in the camera app so brightness does not change as you turn."},{"@type":"HowToStep","position":8,"name":"Use the highest resolution","text":"Record at the camera's highest resolution; more pixels per view means a sharper scene."},{"@type":"HowToStep","position":9,"name":"Upload the raw .insv","text":"Keep the original .insv file from the camera; it carries the lens calibration and motion data."}]}]}</script>
+	</head>
+	<body>
+		<div class="i360-page">
+			<div id="nav-container"></div>
+			<script type="module" src="/nav.js"></script>
+
+			<main class="i360-wrap" id="main">
+				<section class="i360-hero" aria-labelledby="i360-title">
+					<div>
+						<p class="i360-chip"><span class="i360-chip-dot" aria-hidden="true"></span> 360 cameras</p>
+						<h1 id="i360-title">Turn 360 footage into 3D you own</h1>
+						<p class="i360-subtitle">Works with Insta360 X3, X4, X5 and X6 files, and any 360 camera.</p>
+						<p class="i360-lead">
+							Walk through a place and get a Gaussian splat scene. Step inside a single 360 photo. Light your avatar with
+							the world you shot. Turn a 360 clip of yourself into an animation. You keep the files, and each scene can
+							become a place on three.ws.
+						</p>
+						<div class="i360-ctas">
+							<a class="i360-btn i360-btn--primary" href="#lanes">See what you can make</a>
+							<a class="i360-btn" href="/tutorials/insta360-to-3d">Read the tutorial</a>
+						</div>
+						<p class="i360-status-note">
+							The 360 lanes are rolling out one by one. Each section below says what is live, and the file checker works
+							today.
+						</p>
+					</div>
+
+					<div class="i360-check" id="i360-check">
+						<div class="i360-check-head">
+							<h2>Check your file</h2>
+							<p class="i360-check-private">Read on your device. Nothing is uploaded.</p>
+						</div>
+
+						<div id="i360-check-empty">
+							<button class="i360-drop" id="i360-check-drop" type="button" aria-describedby="i360-check-hint">
+								<span class="i360-drop-glyph" aria-hidden="true">
+									<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><ellipse cx="12" cy="12" rx="4" ry="9" /><path d="M3 12h18" /></svg>
+								</span>
+								<span class="i360-drop-title">Drop a file or choose one</span>
+								<span class="i360-drop-sub" id="i360-check-hint">A raw .insv or .insp, a stitched 360 MP4 or JPEG, or an EXR panorama. We tell you which lane fits and what to fix before you shoot again.</span>
+							</button>
+						</div>
+
+						<div class="i360-busy" id="i360-check-busy" hidden aria-hidden="true">
+							<div class="i360-skel"></div>
+							<div class="i360-skel"></div>
+							<div class="i360-skel"></div>
+							<div class="i360-skel"></div>
+						</div>
+
+						<div id="i360-check-result" hidden></div>
+						<div class="i360-check-foot">
+							<button class="i360-btn" id="i360-check-again" type="button" hidden>Check another file</button>
+						</div>
+						<p class="i360-sr-only" id="i360-check-status" role="status" aria-live="polite"></p>
+						<input id="i360-check-input" type="file" hidden accept=".insv,.insp,.lrv,.dng,.exr,video/*,image/*" aria-label="File to check" />
+					</div>
+				</section>
+
+				<section class="i360-section" id="lanes" aria-labelledby="i360-lanes-title">
+					<div class="i360-section-head">
+						<h2 id="i360-lanes-title">One camera, six ways into 3D</h2>
+						<p>Every lane takes the file your camera already wrote. Raw files are stitched for you; stitched exports from any 360 camera go straight in.</p>
+					</div>
+
+					<div class="i360-lanes">
+						<article class="i360-lane" id="splat" data-lane="splat">
+							<div class="i360-lane-top">
+								<span class="i360-lane-io">360 video → splat</span>
+								<span class="i360-badge" data-lane-status="rolling-out">Rolling out</span>
+							</div>
+							<h3>Walk around, get a splat</h3>
+							<p>Film a 30 second to 3 minute loop through a room, a street or a garden. Get back a photoreal Gaussian splat you can fly through, plus an MP4 flythrough to share.</p>
+							<ol class="i360-how">
+								<li>Upload the raw .insv or a stitched 360 MP4 in the 360 mode of Scene Capture.</li>
+								<li>Each frame is split into overlapping views and the camera path is solved.</li>
+								<li>A splat is trained on a GPU and opens in the splat viewer, ready to download.</li>
+							</ol>
+							<div class="i360-lane-links">
+								<a class="i360-link" href="/capture">Open Scene Capture →</a>
+								<a class="i360-link" href="/splat">Splat viewer →</a>
+							</div>
+						</article>
+
+						<article class="i360-lane" id="pano-scene" data-lane="panoScene">
+							<div class="i360-lane-top">
+								<span class="i360-lane-io">360 photo → depth scene</span>
+								<span class="i360-badge" data-lane-status="rolling-out">Rolling out</span>
+							</div>
+							<h3>Step inside one photo</h3>
+							<p>One 360 photo becomes a metric depth shell you can stand inside and look around, exported as a GLB mesh and a PLY point cloud.</p>
+							<ol class="i360-how">
+								<li>Upload a raw .insp or a stitched 360 JPEG.</li>
+								<li>Depth is estimated across the whole sphere, in metres.</li>
+								<li>The shell opens around you, with seams closed at the wrap.</li>
+							</ol>
+							<div class="i360-lane-links">
+								<a class="i360-link" href="/pano-scene">Open Pano Scene →</a>
+							</div>
+						</article>
+
+						<article class="i360-lane" id="environment" data-lane="environment">
+							<div class="i360-lane-top">
+								<span class="i360-lane-io">360 photo → lighting</span>
+								<span class="i360-badge" data-lane-status="rolling-out">Rolling out</span>
+							</div>
+							<h3>Your 360 photo as your avatar's world</h3>
+							<p>Use your own panorama as the backdrop and the light source for any avatar or model, so it sits in the place you shot, lit the way that place was lit.</p>
+							<ol class="i360-how">
+								<li>Open a model in the viewer or the splat viewer.</li>
+								<li>Pick your 360 photo in the environment control.</li>
+								<li>Reflections and lighting come from your panorama.</li>
+							</ol>
+							<div class="i360-lane-links">
+								<a class="i360-link" href="/app">Open the viewer →</a>
+								<a class="i360-link" href="/splat">Splat viewer →</a>
+							</div>
+						</article>
+
+						<article class="i360-lane" id="motion" data-lane="motion">
+							<div class="i360-lane-top">
+								<span class="i360-lane-io">360 video → animation</span>
+								<span class="i360-badge" data-lane-status="rolling-out">Rolling out</span>
+							</div>
+							<h3>360 motion capture</h3>
+							<p>A 360 camera films you from every side at once, so you never leave the frame. Turn the clip into an animation file for any rigged avatar.</p>
+							<ol class="i360-how">
+								<li>Upload a stitched 360 clip in the 360 mode of Video to Motion.</li>
+								<li>You are tracked across the sphere and reframed into a normal view.</li>
+								<li>Download GLB, BVH or FBX, or play it on your own avatar.</li>
+							</ol>
+							<div class="i360-lane-links">
+								<a class="i360-link" href="/video-to-motion">Open Video to Motion →</a>
+								<a class="i360-link" href="/motion-swap">Motion Swap →</a>
+							</div>
+						</article>
+
+						<article class="i360-lane" id="editors">
+							<div class="i360-lane-top">
+								<span class="i360-lane-io">Blender · Premiere Pro</span>
+								<span class="i360-badge">Coming soon</span>
+							</div>
+							<h3>In your editor</h3>
+							<p>Send a 360 clip to three.ws from the tools you already edit in, and bring the splat or mesh back into your scene.</p>
+							<ol class="i360-how">
+								<li><strong>Blender:</strong> the three.ws extension is in review on Blender Extensions. Install it from source today; the 360 capture panel is being added.</li>
+								<li><strong>Premiere Pro:</strong> a panel that sends a timeline clip to the splat lane is in progress.</li>
+							</ol>
+							<div class="i360-lane-links">
+								<a class="i360-link" href="https://github.com/nirholas/three.ws/tree/main/integrations/blender#install-from-source">Blender install steps →</a>
+								<a class="i360-link" href="https://github.com/nirholas/three.ws/tree/main/integrations/premiere-uxp">Premiere panel →</a>
+							</div>
+						</article>
+
+						<article class="i360-lane" id="agents">
+							<div class="i360-lane-top">
+								<span class="i360-lane-io">MCP · CLI · API</span>
+								<span class="i360-badge">Rolling out</span>
+							</div>
+							<h3>For agents and scripts</h3>
+							<p>The same lanes are tools on the three.ws MCP server and commands in the three-ws CLI, so an agent or a batch script can turn a folder of 360 footage into scenes.</p>
+							<ol class="i360-how">
+								<li>Connect the MCP server to Claude, ChatGPT, Cursor or any MCP client.</li>
+								<li>Or install the CLI and point it at a file.</li>
+								<li>Results come back as links to the PLY, SPZ and viewer.</li>
+							</ol>
+							<div class="i360-lane-links">
+								<a class="i360-link" href="/docs/mcp">MCP docs →</a>
+								<a class="i360-link" href="/docs/cli">CLI docs →</a>
+							</div>
+						</article>
+					</div>
+				</section>
+
+				<section class="i360-section" id="what-you-get" aria-labelledby="i360-get-title">
+					<div class="i360-section-head">
+						<h2 id="i360-get-title">What you get</h2>
+						<p>Real files in open formats, not a scene locked inside one app.</p>
+					</div>
+					<div class="i360-get">
+						<div class="i360-get-item">
+							<h3>Files you keep</h3>
+							<p>Download every result and open it anywhere.</p>
+							<div class="i360-formats"><span class="i360-format">PLY</span><span class="i360-format">SPZ</span><span class="i360-format">GLB</span><span class="i360-format">MP4</span></div>
+						</div>
+						<div class="i360-get-item">
+							<h3>No monthly scene cap</h3>
+							<p>There is no per-app limit on how many scenes you make in a month.</p>
+						</div>
+						<div class="i360-get-item">
+							<h3>Older models and other brands</h3>
+							<p>Raw files from Insta360 X3 to X6, and a stitched 360 export from any camera.</p>
+						</div>
+						<div class="i360-get-item">
+							<h3>A place, not just a file</h3>
+							<p>Open a scene in the splat viewer, light an avatar with it, or build it into a world on three.ws.</p>
+						</div>
+					</div>
+					<p class="i360-aside">
+						Insta360's own app builds scenes on the phone with its Spatial Capture feature. three.ws is a second path for the
+						same footage: it runs in the browser, hands you the files, and accepts footage from any 360 camera.
+					</p>
+				</section>
+
+				<section class="i360-section" id="shooting-guide" aria-labelledby="i360-guide-title">
+					<div class="i360-section-head">
+						<h2 id="i360-guide-title">Shoot so it works</h2>
+						<p>Reconstruction is only as good as the footage. These nine habits make the difference between a clean scene and a smeared one.</p>
+					</div>
+					<ol class="i360-guide">
+						<li><strong>Walk slowly</strong><span>A slow, even pace keeps neighbouring frames overlapping and sharp.</span></li>
+						<li><strong>Camera above your head</strong><span>On a stick above head height you take up less of the frame and the view clears furniture.</span></li>
+						<li><strong>Loop back to the start</strong><span>Finish where you began so the path closes and the scene lines up end to end.</span></li>
+						<li><strong>30 seconds to 3 minutes</strong><span>Shorter sees too little; longer takes more time without adding much.</span></li>
+						<li><strong>No mirrors, glass or crowds</strong><span>Reflections, see-through surfaces and moving people confuse the solve.</span></li>
+						<li><strong>Soft, even light</strong><span>Overcast daylight or diffuse indoor light beats hard sun and deep shadow.</span></li>
+						<li><strong>Lock exposure</strong><span>Lock it in the camera app so brightness does not shift as you turn.</span></li>
+						<li><strong>Highest resolution</strong><span>More pixels per view means a sharper scene. Record at the top setting.</span></li>
+						<li><strong>Keep the raw .insv</strong><span>The original file carries the lens calibration and motion data. Upload it, not a re-encode.</span></li>
+					</ol>
+					<p class="i360-guide-foot"><a class="i360-link" href="/tutorials/insta360-to-3d">Full tutorial, with troubleshooting →</a></p>
+				</section>
+
+				<section class="i360-section" id="cameras" aria-labelledby="i360-cameras-title">
+					<div class="i360-section-head">
+						<h2 id="i360-cameras-title">Cameras</h2>
+						<p>"Should work" means the format is supported by design but that camera's real footage has not yet been run end to end. Rows move to "Verified" as each one is.</p>
+					</div>
+					<div class="i360-table-wrap">
+						<table class="i360-table">
+							<thead>
+								<tr><th scope="col">Camera</th><th scope="col">Stitched 360 export (MP4, JPG)</th><th scope="col">Raw files (.insv, .insp)</th></tr>
+							</thead>
+							<tbody>
+								<tr><th scope="row">Insta360 X6</th><td>Should work, not yet verified</td><td>Should work, not yet verified</td></tr>
+								<tr><th scope="row">Insta360 X5</th><td>Should work, not yet verified</td><td>Should work, not yet verified</td></tr>
+								<tr><th scope="row">Insta360 X4</th><td>Should work, not yet verified</td><td>Should work, not yet verified</td></tr>
+								<tr><th scope="row">Insta360 X3</th><td>Should work, not yet verified</td><td>Should work, not yet verified (two files per clip: add both)</td></tr>
+								<tr><th scope="row">Older Insta360 360 models</th><td>Should work, not yet verified</td><td>Not yet verified: export a stitched file to be safe</td></tr>
+								<tr><th scope="row">Any other 360 camera</th><td>Should work, not yet verified</td><td>Use the stitched export</td></tr>
+								<tr><th scope="row">Action cams (flat video)</th><td colspan="2">Regular video: use <a href="/capture">Scene Capture</a> and <a href="/video-to-motion">Video to Motion</a> as they are</td></tr>
+							</tbody>
+						</table>
+					</div>
+				</section>
+
+				<p class="i360-legal">
+					Insta360 is a trademark of its owner, used here only to say which cameras' files this page works with. three.ws
+					is not affiliated with, sponsored by or endorsed by Insta360.
+				</p>
+			</main>
+
+			<div id="footer-container"></div>
+			<script src="/footer.js" defer></script>
+		</div>
+
+		<script type="module" src="/src/insta360-landing.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

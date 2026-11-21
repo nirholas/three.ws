@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-21",
+			"title": "A page and tutorial for turning 360 footage into 3D",
+			"summary": "The new /insta360 page explains how to turn a 360 walkaround into a Gaussian splat you can download as PLY or SPZ, step inside one 360 photo, or capture motion from a 360 clip, with a shooting guide and links to each tool. It works with Insta360 X3, X4, X5 and X6 files, and any 360 camera. A step-by-step tutorial covers each route and every error code.",
+			"tags": ["docs", "feature"],
+			"link": "/insta360"
+		},
+		{
+			"date": "2026-11-21",
 			"title": "Grok conversations reuse xAI's prompt cache",
 			"summary": "Every Grok call three.ws makes now tells xAI which conversation it belongs to, so follow-up turns with the same agent reach the server that already holds that agent's persona and tools in its cache. Cached input costs a quarter of the normal rate and starts the reply sooner. Only a one-way fingerprint of the prompt is sent, never the text. The Grok usage report now shows how much of each lane's input came from the cache.",
 			"tags": ["improvement", "infra"]

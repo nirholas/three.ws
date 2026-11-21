@@ -724,6 +724,16 @@
 			previewModel: '/animations/robotexpressive.glb',
 			ctaPrimary: { label: 'Browse the guards', href: '/guards' },
 		},
+		{
+			slug: 'insta360-to-3d',
+			tier: 'middle',
+			title: 'Turn 360 footage into 3D',
+			blurb: 'How to shoot a 360 walkaround that reconstructs, then turn it into a downloadable Gaussian splat, step inside a single 360 photo, or capture motion. Works with Insta360 X3, X4, X5 and X6 files, and any 360 camera.',
+			builds: 'A Gaussian splat of a real place, as PLY and SPZ',
+			time: '15 min',
+			previewModel: '/avatars/mannequin.glb',
+			ctaPrimary: { label: 'Start a capture', href: '/capture' },
+		},
 	];
 
 	const TIER_META = {

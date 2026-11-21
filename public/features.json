@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-21T07:52:17.802Z",
+	"generated_at": "2026-11-21T21:54:15.774Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1540,6 +1540,18 @@
 					"title": "Scene Capture: Video to 3D Point Cloud",
 					"description": "Turn a phone video of any space into an explorable 3D point cloud. Streaming feed-forward reconstruction (LingBot-Map Geometric Context Transformer) fuses the frames into a coloured .ply, rendered live in the browser with WebGL. Or load a point cloud you already have.",
 					"added": "2026-06-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.7,
+					"job": "make"
+				},
+				{
+					"path": "/insta360",
+					"title": "Turn 360 Footage into 3D You Own",
+					"description": "Walk around with a 360 camera and get a Gaussian splat you can download as PLY or SPZ. Step inside one 360 photo, use it as your avatar's world, or capture motion. Works with Insta360 X3, X4, X5 and X6 files, and any 360 camera.",
+					"added": "2026-11-21",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -7976,6 +7988,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.8,
+					"job": null
+				},
+				{
+					"path": "/tutorials/insta360-to-3d",
+					"title": "Tutorial: Turn 360 Footage into 3D",
+					"description": "How to shoot a 360 walkaround that reconstructs, then turn it into a downloadable Gaussian splat, step inside a single 360 photo, or capture motion, with troubleshooting for every error code. Works with Insta360 X3, X4, X5 and X6 files, and any 360 camera.",
+					"added": "2026-11-21",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
 					"job": null
 				},
 				{
