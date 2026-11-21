@@ -150,7 +150,7 @@ afterEach(() => {
 describe('studio creator tools need an account', () => {
 	it('names every tool that creates, rigs, renders or saves something', () => {
 		expect([...CREATOR_TOOL_NAMES].sort()).toEqual(
-			['create_agent_persona', 'forge_avatar', 'forge_free', 'look_at_model', 'mesh_forge', 'refine_model', 'rig_mesh', 'text_to_avatar'].sort(),
+			['create_agent_persona', 'forge_avatar', 'forge_free', 'look_at_model', 'mesh_forge', 'refine_model', 'rig_mesh', 'text_to_avatar', 'pano_capture_start', 'pano_capture_status', 'pano_capture_list', 'pano_scene_create', 'pano_scene_status'].sort(),
 		);
 	});
 
