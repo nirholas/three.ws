@@ -12,6 +12,7 @@ so you can open one, run it, and open the next without consulting anything. Ever
 | `023` to `039` | The `x-grok-` campaign. Runnable, no gate. | 1 |
 | `067` to `092` | The `best3d-` and `partners-` campaigns. Empty since 2026-11-04: every remaining order was built and waits only on an owner deploy or publish, so it moved to `941` to `949`. | 0 |
 | `249` to `286` | The `plan-` campaign's P0 and P1 orders (live defects, then unshipped fixes and half-built features), from the 2026-11-03 sweep of every markdown file in the repo. Runnable; any gated step is named per order. See [the plan- section](#plan--the-planning-corpus-as-work-orders). | 27 |
+| `331` to `347` | The `insta360-` campaign: 360 camera footage to owned 3D (splats, depth shells, motion, plugins). `331` to `346` are independent and safe to run all at once (one dev port each, hot shared files edited last); `347` runs last and holds the single owner message. Context: [finish/_context/insta360-00-CONTEXT.md](finish/_context/insta360-00-CONTEXT.md). | 17 |
 | `401` to `434` | Written by the evolve scout lane ([docs/ops/evolve.md](../docs/ops/evolve.md)), each from a dated measurement. Runnable, no gate. | 5 |
 | `506` to `549` | The `integrate-` campaign: bringing the owner's other GitHub repositories into three.ws. Runnable; gated steps are named per order. | 13 |
 | `605` to `627` | The `beat-` campaign: closing gaps found in the open-source crypto and agent landscape survey. Runnable; on-chain steps are devnet or simulation only. | 12 |
