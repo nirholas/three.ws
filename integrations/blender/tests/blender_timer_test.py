@@ -26,10 +26,12 @@ import os
 import sys
 import threading
 import time
+import subprocess
 import traceback
 
 import addon_utils
 import bpy
+import numpy
 
 argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 ap = argparse.ArgumentParser()
@@ -172,14 +174,16 @@ def run_op(op, **kwargs):
 
 
 def show_panel():
-    ov = view3d_override()
-    space = ov["area"].spaces.active
-    space.show_region_ui = True
-    ui_region = next(r for r in ov["area"].regions if r.type == "UI")
-    try:
-        ui_region.active_panel_category = "three.ws"
-    except (AttributeError, TypeError):
-        pass
+    view3d_override()["area"].spaces.active.show_region_ui = True
+
+
+def select_panel_tab():
+    """Switch the sidebar to the three.ws tab. Blender refuses the write until the
+    sidebar has drawn once (the category list is empty before that), so this runs
+    after the calibration phase has repainted the window."""
+    ui_region = next(r for r in view3d_override()["area"].regions if r.type == "UI")
+    ui_region.active_panel_category = "three.ws"
+    return ui_region.active_panel_category
 
 
 CALIBRATE_S = 1.5
@@ -211,13 +215,47 @@ def stall_budget():
 
 
 def screenshot():
-    if not ARGS.screenshot:
+    """Grab the X display with ffmpeg in the background while the panel is busy.
+
+    ``screen.screenshot`` reads the GL front buffer, which comes back all black
+    under Xvfb with llvmpipe. The X server holds the composed window, so an
+    x11grab of the display is the real picture, and Popen keeps the grab off
+    Blender's main thread. ``finish`` waits for it and checks the sidebar pixels.
+    """
+    if not ARGS.screenshot or not os.environ.get("DISPLAY"):
         return
     os.makedirs(os.path.dirname(ARGS.screenshot), exist_ok=True)
     win = bpy.context.window_manager.windows[0]
-    with bpy.context.temp_override(window=win):
-        bpy.ops.screen.screenshot(filepath=ARGS.screenshot)
-    STATE["own_work_until"] = time.monotonic()
+    ui = next(r for r in view3d_override()["area"].regions if r.type == "UI")
+    STATE["shot_rect"] = (ui.x, ui.y, ui.width, ui.height)
+    STATE["shot_proc"] = subprocess.Popen(
+        ["ffmpeg", "-loglevel", "error", "-y", "-f", "x11grab",
+         "-video_size", f"{win.width}x{win.height}", "-i", os.environ["DISPLAY"],
+         "-frames:v", "1", ARGS.screenshot],
+        stdin=subprocess.DEVNULL)
+
+
+def check_screenshot():
+    """The capture exists and the sidebar region holds a drawn panel, not a flat fill."""
+    proc = STATE.get("shot_proc")
+    if proc is None:
+        check("panel screenshot taken while busy", False, "no X display or no busy frame")
+        return
+    code = proc.wait(timeout=30)
+    if code != 0 or not os.path.isfile(ARGS.screenshot):
+        check("panel screenshot taken while busy", False, f"ffmpeg exit {code}")
+        return
+    img = bpy.data.images.load(ARGS.screenshot, check_existing=False)
+    w, h = img.size
+    px = numpy.empty(w * h * 4, dtype=numpy.float32)
+    img.pixels.foreach_get(px)
+    bpy.data.images.remove(img)
+    x, y, rw, rh = STATE["shot_rect"]
+    region = px.reshape(h, w, 4)[y:y + rh, x:x + rw, :3]
+    levels = len(numpy.unique((region * 255).astype(numpy.uint8).reshape(-1, 3), axis=0))
+    STATE["shot_colors"] = levels
+    check("panel screenshot shows the drawn sidebar", rw > 100 and levels > 16,
+          f"{rw}x{rh} sidebar, {levels} distinct colors")
 
 
 def heartbeat():
@@ -289,6 +327,8 @@ def step():
         return
 
     if phase == "send-video":
+        tab = select_panel_tab()
+        check("the three.ws tab is the active sidebar tab", tab == "three.ws", tab)
         p.filepath = ARGS.video
         p.quality = "preview"
         p.trim_in = 0.5
@@ -411,6 +451,7 @@ def step():
 
 
 def finish():
+    check_screenshot()
     check("main thread never stalled while a task ran",
           STATE["busy_ticks"] > 50 and STATE["max_gap_s"] < stall_budget(),
           f"{STATE['busy_ticks']} busy ticks, longest gap {STATE['max_gap_s'] * 1000:.0f} ms, "
@@ -437,7 +478,8 @@ def finish():
             "pump_max_ms": round(STATE["pump_max_s"] * 1000, 2),
             "scene_fill_max_ms": round(STATE["pump_max_finish_s"] * 1000, 1),
             "slow_ticks": STATE["slow_ticks"],
-            "screenshot": ARGS.screenshot if STATE.get("shot") else "",
+            "screenshot": ARGS.screenshot if STATE.get("shot_colors") else "",
+            "screenshot_sidebar_colors": STATE.get("shot_colors", 0),
             "checks": STATE["checks"],
         }, fh, indent=2)
     STATE["phase"] = "done"
@@ -446,4 +488,7 @@ def finish():
     bpy.app.timers.register(lambda: bpy.ops.wm.quit_blender() and None, first_interval=0.2)
 
 
+# A fresh profile opens the splash over the viewport; the panel screenshot wants the
+# plain window a returning user sees.
+bpy.context.preferences.view.show_splash = False
 bpy.app.timers.register(heartbeat, first_interval=HEARTBEAT_S, persistent=True)

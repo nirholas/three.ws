@@ -142,7 +142,8 @@ function startWorker() {
 		const m = url.pathname.match(/^\/tasks\/([^/]+)$/);
 		if (m) {
 			const task = worker.tasks.get(decodeURIComponent(m[1]));
-			if (!task) return send(404, { detail: 'Not Found' });
+			// The real worker's body for an unknown task (workers/model-pano2splat/main.py).
+			if (!task) return send(404, { error: 'not_found', message: 'No such task on this worker.' });
 			if (req.method === 'DELETE') {
 				task.status = 'cancelled';
 				return send(200, { task_id: m[1], status: 'cancelled' });
@@ -294,6 +295,14 @@ describe('POST /api/pano-capture: create', () => {
 		expect(r2.body.eta_seconds).toBe(900);
 	});
 
+	it('sends a single raw .insp photo to /api/pano-scene instead of the splat worker', async () => {
+		const r = await start({ source_kind: 'insp', source_url: 'https://1.1.1.1/raw/IMG_20261101_000.insp' });
+		expect(r.status).toBe(400);
+		expect(r.body.error).toBe('unsupported_source_kind');
+		expect(r.body.message).toMatch(/\/api\/pano-scene/);
+		expect(workerCalls('POST', '/infer')).toBe(0);
+	});
+
 	it.each([
 		[{ source_url: VIDEO.source_url }, 'invalid_source_kind'],
 		[{ source_kind: 'equirect_video' }, 'missing_source_url'],
@@ -304,12 +313,12 @@ describe('POST /api/pano-capture: create', () => {
 		[{ source_kind: 'equirect_images', source_urls: ['https://1.1.1.1/a.jpg', 'https://1.1.1.1/b.jpg'] }, 'too_few_images'],
 		[{ source_kind: 'equirect_images', source_urls: ['https://1.1.1.1/a.jpg', 'https://1.1.1.1/b.jpg', 'https://10.1.1.1/c.jpg'] }, 'invalid_source_url'],
 		[{ source_kind: 'equirect_images', source_urls: 'https://1.1.1.1/a.jpg' }, 'invalid_source_urls'],
-		[{ source_kind: 'insp', source_urls: ['https://1.1.1.1/a.insp', 'https://1.1.1.1/b.insp'] }, 'too_many_files'],
+		[{ source_kind: 'equirect_video', source_urls: ['https://1.1.1.1/a.mp4', 'https://1.1.1.1/b.mp4'] }, 'too_many_files'],
 		[{ source_kind: 'insv', source_urls: ['https://1.1.1.1/a.insv', 'https://1.1.1.1/b.insv', 'https://1.1.1.1/c.insv'] }, 'too_many_files'],
 		[{ ...VIDEO, quality: 'ultra' }, 'invalid_quality'],
 		[{ ...VIDEO, trim: { start_s: 10, end_s: 4 } }, 'invalid_trim'],
 		[{ ...VIDEO, trim: { start_s: -1 } }, 'invalid_trim'],
-		[{ source_kind: 'insp', source_url: 'https://1.1.1.1/a.insp', trim: { start_s: 1 } }, 'invalid_trim'],
+		[{ source_kind: 'equirect_images', source_urls: ['a', 'b', 'c'].map((n) => `https://1.1.1.1/${n}.jpg`), trim: { start_s: 1 } }, 'invalid_trim'],
 	])('refuses %j with %s and never calls the worker', async (body, code) => {
 		const r = await start(body);
 		expect(r.status).toBe(400);
@@ -418,7 +427,7 @@ describe('ownership', () => {
 
 	it('lists only the caller\'s captures, newest first', async () => {
 		const first = await start(VIDEO);
-		const second = await start({ source_kind: 'insp', source_url: 'https://1.1.1.1/IMG_001.insp' });
+		const second = await start({ source_kind: 'insv', source_url: 'https://1.1.1.1/VID_001.insv' });
 		holder.user = { id: STRANGER, source: 'session' };
 		await start(VIDEO);
 		holder.user = { id: OWNER, source: 'session' };
@@ -429,7 +438,7 @@ describe('ownership', () => {
 		expect(r.body.captures.map((c) => c.job_id)).toEqual([second.body.job_id, first.body.job_id]);
 		expect(r.body.captures[0]).toMatchObject({
 			status: 'queued',
-			source_kind: 'insp',
+			source_kind: 'insv',
 			poster_url: null,
 			viewer_url: null,
 			created_at: expect.any(String),
@@ -484,6 +493,16 @@ describe('worker errors pass through unchanged', () => {
 		expect((await start(VIDEO)).status).toBe(202);
 	});
 
+	it('a full worker queue is a retryable 503 that leaves no failed job behind', async () => {
+		worker.inferReply = { status: 429, body: { error: 'busy', message: 'This worker is at capacity. Try again in a few minutes.' } };
+		const r = await start(VIDEO);
+		expect(r.status).toBe(503);
+		expect(r.body).toMatchObject({ error: 'busy', message: 'This worker is at capacity. Try again in a few minutes.' });
+		expect(Number(r.headers['retry-after'])).toBeGreaterThan(0);
+		expect(r.body.job_id).toBeUndefined();
+		expect(await holder.db.sql`SELECT id FROM pano_captures`).toHaveLength(0);
+	});
+
 	it('a worker outage on submit is a 502 with the worker\'s own words', async () => {
 		worker.inferReply = { status: 503, body: { error: 'gpu_busy', message: 'All GPUs are busy. Retry in a minute.' } };
 		const r = await start(VIDEO);
@@ -514,7 +533,7 @@ describe('worker errors pass through unchanged', () => {
 		await backdatePoll(body.job_id);
 		const r = await poll(body.job_id);
 		expect(r.body.status).toBe('failed');
-		expect(r.body.error.code).toBe('task_lost');
+		expect(r.body.error).toEqual({ code: 'task_lost', message: 'The capture worker restarted and lost this job. Start it again.' });
 	});
 });
 

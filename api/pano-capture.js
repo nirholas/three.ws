@@ -2,7 +2,7 @@
  * /api/pano-capture: 360 footage to a Gaussian splat scene, as a persistent job.
  *
  *   POST   /api/pano-capture
- *     { source_url, source_urls?, source_kind: "equirect_video"|"equirect_images"|"insv"|"insp",
+ *     { source_url, source_urls?, source_kind: "equirect_video"|"equirect_images"|"insv",
  *       trim?: { start_s, end_s }, quality?: "preview"|"standard"|"high" }
  *                                   -> 202 { job_id, status, eta_seconds }
  *   GET    /api/pano-capture?job=<id>  -> { job_id, status, stage, progress, result?, error? }
@@ -69,6 +69,17 @@ const bad = (res, error, message, status = 400) => json(res, status, { error, me
  */
 async function parseSource(res, body) {
 	const sourceKind = body?.source_kind;
+	if (sourceKind === 'insp') {
+		return (
+			bad(
+				res,
+				'unsupported_source_kind',
+				'A single raw .insp photo has no camera movement to build a splat from. Send it to /api/pano-scene ' +
+					'(source_kind "insp") to step inside it as a depth scene, or capture a 360 video or several photos.',
+			),
+			null
+		);
+	}
 	if (!SOURCE_KINDS.includes(sourceKind)) {
 		return bad(res, 'invalid_source_kind', `source_kind must be one of ${SOURCE_KINDS.join(', ')}.`), null;
 	}
@@ -100,7 +111,7 @@ async function parseSource(res, body) {
 			return bad(res, 'too_many_files', 'A raw .insv recording is one file, or two for a split-pair recording.'), null;
 		}
 	} else if (urls.length > 1) {
-		return bad(res, 'too_many_files', `${sourceKind === 'insp' ? 'A raw .insp photo' : 'A 360 video'} is a single file: pass it as source_url.`), null;
+		return bad(res, 'too_many_files', 'A 360 video is a single file: pass it as source_url.'), null;
 	} else {
 		urls = [];
 	}
@@ -179,6 +190,9 @@ async function startJob(req, res) {
 			error: 'too_many_active',
 			message: `You already have ${MAX_ACTIVE_PER_USER} captures processing. Wait for one to finish or cancel it, then start this one.`,
 		});
+	}
+	if (out.retryable) {
+		return json(res, 503, { error: out.error.code, message: out.error.message }, { 'retry-after': '120' });
 	}
 	if (out.error) {
 		// The worker's own code and message, unchanged; its 4xx means the footage

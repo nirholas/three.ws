@@ -21,6 +21,8 @@ import {
 	describeCaptureError,
 	splatUrlFor,
 	timeAgo,
+	resultStatsLine,
+	IMAGE_EXTENSIONS,
 } from '../src/capture-360-core.js';
 
 const f = (name, type = '') => ({ name, type, size: 10 });
@@ -75,8 +77,23 @@ describe('source-kind detection', () => {
 		expect(matchingLensName('walk.insv')).toBeNull();
 		expect(lensInfo('walk.insv')).toBeNull();
 	});
-	it('accepts .insp and warns about .lrv proxies', async () => {
-		expect(await classifyFiles([f('IMG_20260814_132640_00_013.insp')])).toMatchObject({ ok: true, sourceKind: 'insp' });
+	it('sends a lone .insp photo to /pano-scene, since one photo is not a splat source', async () => {
+		const one = await classifyFiles([f('IMG_20260814_132640_00_013.insp')]);
+		expect(one).toMatchObject({ ok: false, code: 'single_photo', redirect: '/pano-scene' });
+		expect(one.message).toMatch(/\.insp/);
+		const many = await classifyFiles([f('IMG_20260814_132640_00_013.insp'), f('IMG_20260814_132700_00_014.insp')]);
+		expect(many).toMatchObject({ ok: false, code: 'mixed_files' });
+		expect(many.message).toMatch(/\.insv/);
+		const e = describeCaptureError('single_photo');
+		expect(e.action).toBe('open_pano_scene');
+		expect(e.title).not.toBe('Something went wrong');
+	});
+	it('accepts only the photo formats the worker decodes (no .exr)', async () => {
+		expect(IMAGE_EXTENSIONS).not.toContain('.exr');
+		const r = await classifyFiles([f('a.exr'), f('b.exr'), f('c.exr')]);
+		expect(r).toMatchObject({ ok: false, code: 'unsupported_file' });
+	});
+	it('warns about .lrv proxies', async () => {
 		const lrv = await classifyFiles([f('LRV_20260814_132640_01_013.lrv')]);
 		expect(lrv).toMatchObject({ ok: true, sourceKind: 'insv' });
 		expect(lrv.warnings[0]).toMatch(/low-resolution/);
@@ -264,7 +281,7 @@ describe('error copy', () => {
 		expect(describeCaptureError('network').message).toMatch(/resumes by itself/);
 	});
 	it('covers every code the API and worker can return with a title, message and action', () => {
-		const codes = ['unconfigured', 'too_few_registered', 'registration_too_low', 'file_too_large', 'source_too_large', 'unauthorized', 'sign_in_required', 'too_many_active', 'too_many_open_uploads', 'daily_quota_exceeded', 'invalid_content_type', 'rate_limited', 'unsupported_input', 'no_calibration', 'corrupt_input', 'no_frames_decoded', 'no_video_stream', 'no_images', 'upload_not_found', 'internal_error', 'stage_failed', 'worker_lost', 'nvenc_error', 'storage_error', 'cancelled', 'network', 'etag_unreadable', 'empty_file', 'aborted'];
+		const codes = ['quality_too_low', 'too_few_frames', 'bad_trim', 'corrupt_calibration', 'corrupt_trailer', 'unsupported_layout', 'bad_pair', 'single_photo', 'unconfigured', 'too_few_registered', 'registration_too_low', 'file_too_large', 'source_too_large', 'unauthorized', 'sign_in_required', 'too_many_active', 'too_many_open_uploads', 'daily_quota_exceeded', 'invalid_content_type', 'rate_limited', 'unsupported_input', 'no_calibration', 'corrupt_input', 'no_frames_decoded', 'no_video_stream', 'no_images', 'upload_not_found', 'internal_error', 'stage_failed', 'worker_lost', 'nvenc_error', 'storage_error', 'cancelled', 'network', 'etag_unreadable', 'empty_file', 'aborted'];
 		for (const c of codes) {
 			const e = describeCaptureError(c);
 			expect(e.title, c).not.toBe('Something went wrong');
@@ -272,6 +289,16 @@ describe('error copy', () => {
 			expect(e.action, c).toBeTruthy();
 			expect(`${e.title} ${e.message}`, c).not.toMatch(/\u2014|\u2013/);
 		}
+	});
+	it('gives each worker failure its own actionable copy', () => {
+		expect(describeCaptureError('quality_too_low').message).toMatch(/slowly|steady/);
+		expect(describeCaptureError('too_few_frames').message).toMatch(/move|photos/i);
+		expect(describeCaptureError('corrupt_trailer').message).toMatch(/card again/);
+		expect(describeCaptureError('unsupported_layout').message).toMatch(/stitched/);
+		expect(describeCaptureError('bad_pair').message).toMatch(/_00_.*_10_/);
+		expect(describeCaptureError('bad_trim').message).toMatch(/trim/i);
+		const own = 'The _00_ and _10_ files carry different recording timestamps, so they are not one recording.';
+		expect(describeCaptureError('bad_pair', { message: own }).message).toBe(own);
 	});
 	it('passes through a visitor-readable server message for unknown codes', () => {
 		expect(describeCaptureError('weird', { message: 'The clip has no video track.' }).message).toBe('The clip has no video track.');
@@ -283,6 +310,12 @@ describe('results and history helpers', () => {
 		expect(splatUrlFor({ viewer_url: '/splat?src=abc' })).toBe('/splat?src=abc');
 		expect(splatUrlFor({ spz_url: 'https://r2/x y.spz' })).toBe('/splat?src=https%3A%2F%2Fr2%2Fx%20y.spz');
 		expect(splatUrlFor({})).toBeNull();
+	});
+	it('reads the worker stats nested by stage', () => {
+		expect(resultStatsLine({ stitch: {}, sfm: { frames_used: 240, registered_images: 236 }, train: { gaussians: 1834211 } })).toBe(`${(1834211).toLocaleString()} Gaussians · 240 frames`);
+		expect(resultStatsLine({ train: { gaussians: 5000 } })).toBe(`${(5000).toLocaleString()} Gaussians`);
+		expect(resultStatsLine({ gaussians: 99, frames: 3 })).toBe('');
+		expect(resultStatsLine(null)).toBe('');
 	});
 	it('formats relative times', () => {
 		const now = Date.parse('2026-11-21T12:00:00Z');

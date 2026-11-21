@@ -15,6 +15,14 @@
 			<description>Turn any three.ws model into a short hero clip: the first frame is a real render of the creator's own mesh, six rendered angles guide Grok Imagine Video, presets and tiers, limits, the job API, and the honest no-key state that offers the model's own animated turntable instead of a fake clip.</description>
 		</item>
 		<item>
+			<title>Docs · Paid data and wallet custody for the x402 loop</title>
+			<link>https://three.ws/docs/x402-paid-data-and-custody</link>
+			<guid isPermaLink="false">2026-11-21:Docs · Paid data and wallet custody for the x402 loop</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the x402 loop keeps the full response of every paid call for accounting and reuse, and how every wallet it creates keeps two sealed key copies, a database that refuses to lose them, and a daily recovery audit.</description>
+		</item>
+		<item>
 			<title>Step Inside Your 360 Photo</title>
 			<link>https://three.ws/pano-scene</link>
 			<guid isPermaLink="false">2026-11-21:Step Inside Your 360 Photo</guid>
@@ -71,6 +79,14 @@
 			<description>/video-to-motion and /motion-swap now accept a stitched 360 clip from any 360 camera. The page detects the 2:1 frame, opens a sphere preview where you drag to look around and click the person to follow (or let it pick), sends that spot as a yaw and pitch with the capture, and shows what the tracker followed beside the avatar when the worker returns it. Raw .insv files get a clear note to export a 360 MP4 first.</description>
 		</item>
 		<item>
+			<title>Every x402 call the platform pays for is kept, and no loop wallet key can be lost</title>
+			<link>https://three.ws/docs/x402-paid-data-and-custody</link>
+			<guid isPermaLink="false">2026-11-21:Every x402 call the platform pays for is kept, and no loop wallet key can be lost</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>The platform's own x402 loop now stores the full response of every paid call with its receipt (transaction, paying wallet, amount, endpoint), deduplicated by content and spooled to object storage if the database is briefly unavailable, so the data bought can be reused and every wallet's spend reconciled. Each wallet the loop creates now keeps two independently sealed copies of its key, one under a Cloud KMS key that cannot be exported, the database refuses to delete or re-key a wallet and archives any replaced key copy, and a daily audit proves every key still opens and alerts if one does not.</description>
+		</item>
+		<item>
 			<title>Grok conversations reuse xAI's prompt cache</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-21:Grok conversations reuse xAI's prompt cache</guid>
@@ -93,6 +109,14 @@
 			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The new /api/capture-upload endpoints (create, sign, parts, complete, abort) upload 360 videos, photos and raw .insv, .insp and .lrv files up to 8 GiB straight to storage in parallel parts. A dropped connection costs one part, and a resumed upload re-sends only what is missing. Limits are 3 uploads in progress and 32 GiB per account per day. A 2.19 GB file killed mid-upload and resumed came back byte-identical.</description>
+		</item>
+		<item>
+			<title>Start a 360 scene from a link when uploads are down</title>
+			<link>https://three.ws/pano-scene</link>
+			<guid isPermaLink="false">2026-11-21:Start a 360 scene from a link when uploads are down</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The /pano-scene page now takes a public https link to a 360 photo or .insp as well as a file. While our file storage is recovering, an upload says so plainly and offers that link box instead of failing on a broken request, and /api/scene-upload answers 503 storage_unavailable with retry-after so other clients can do the same. When the 3D server refuses a photo, you now see its reason instead of a bare status code, and the progress shows the Mesh step while the shell is being built.</description>
 		</item>
 		<item>
 			<title>Step inside your 360 photo</title>

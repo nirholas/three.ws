@@ -6,7 +6,8 @@
 
 export const RAW_EXTENSIONS = ['.insv', '.insp', '.lrv'];
 export const VIDEO_EXTENSIONS = ['.mp4', '.mov', '.m4v'];
-export const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.exr'];
+// The pano2splat worker decodes JPEG and PNG frames for equirect_images.
+export const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png'];
 
 export const QUALITIES = ['preview', 'standard', 'high'];
 export const MIN_TRIM_SECONDS = 2;
@@ -64,7 +65,7 @@ export async function classifyFiles(files, probe = {}) {
 
 	const raw = list.filter((f) => isRawName(f.name));
 	const videos = list.filter((f) => isVideoName(f.name) || (f.type || '').startsWith('video/'));
-	const images = list.filter((f) => isImageName(f.name) || /^image\/(jpeg|png|x-exr)$/.test(f.type || ''));
+	const images = list.filter((f) => isImageName(f.name) || /^image\/(jpeg|png)$/.test(f.type || ''));
 	const known = new Set([...raw, ...videos, ...images]);
 	if (list.some((f) => !known.has(f))) {
 		return fail('unsupported_file', 'That file type is not supported. Use an .insv or .insp file, or a 360 video or photo from any 360 camera.');
@@ -74,12 +75,15 @@ export async function classifyFiles(files, probe = {}) {
 	}
 
 	if (raw.length) {
+		// One .insp is one 360 photo: too little parallax to train a walkable
+		// splat, so the worker refuses it. /pano-scene turns a single photo into
+		// a scene you can stand inside, so that is where it goes.
 		const photos = raw.filter((f) => fileExt(f.name) === '.insp');
+		if (photos.length === 1 && raw.length === 1) {
+			return { ...fail('single_photo', 'A single .insp is one 360 photo. A walkable scene needs a recording (.insv) or at least 3 photos, but this photo can become a scene you stand inside.'), redirect: '/pano-scene' };
+		}
 		if (photos.length) {
-			if (photos.length !== raw.length || photos.length > 1) {
-				return fail('mixed_files', 'Choose a single .insp photo, or a recording made of .insv files.');
-			}
-			return { ok: true, sourceKind: 'insp', main: photos[0], files: photos, warnings: [] };
+			return fail('mixed_files', 'A walkable scene needs a recording made of .insv files. Open .insp photos one at a time in Step inside a 360 photo.');
 		}
 		if (raw.length === 1) {
 			const warnings = [];
@@ -326,6 +330,22 @@ export function describeCaptureError(code, { status = 0, message = '' } = {}) {
 				tone: 'error',
 				action: 'pick_other',
 			};
+		case 'too_few_frames':
+			return { title: 'Not enough usable frames', message: 'We found too few sharp, distinct frames. Keep the camera moving through the space while you record, move slowly enough to avoid blur, or give us at least 20 photos.', tone: 'error', action: 'pick_other' };
+		case 'quality_too_low':
+			return { title: 'The scene did not come out sharp enough', message: 'Training finished but the result missed our quality bar, so nothing was saved. Shoot again slowly, in steady light, with the camera above your head and people out of the shot.', tone: 'error', action: 'pick_other' };
+		case 'bad_trim':
+			return { title: 'The trim leaves nothing to use', message: message || 'Set the trim start before the end, inside the clip, and keep at least 2 seconds of video. Then start the capture again.', tone: 'error', action: 'pick_other' };
+		case 'bad_pair':
+			return { title: 'Those files are not one recording', message: message || 'A split recording is two files from the same shot: the _00_ file and the _10_ file with the same timestamp. Choose both.', tone: 'error', action: 'pick_other' };
+		case 'unsupported_layout':
+			return { title: 'This recording is not in a layout we can stitch', message: 'A raw recording needs both fisheye images side by side. Export a stitched 2:1 360 mp4 from your camera app and upload that instead.', tone: 'error', action: 'pick_other' };
+		case 'corrupt_trailer':
+			return { title: 'The end of this recording is damaged', message: 'The camera data at the end of the file is incomplete, which happens when a copy stops early or the camera lost power mid-shot. Copy it from the card again, or export a stitched 360 mp4 from your camera app.', tone: 'error', action: 'pick_other' };
+		case 'corrupt_calibration':
+			return { title: 'The lens calibration could not be read', message: 'The calibration the camera stores in this recording is damaged. Copy the file from the card again, or export a stitched 360 mp4 from your camera app and upload that.', tone: 'error', action: 'pick_other' };
+		case 'single_photo':
+			return { title: 'One photo opens in Step inside a 360 photo', message: 'A single .insp is one 360 photo. A walkable scene needs a recording (.insv) or at least 3 photos, but this photo can become a scene you stand inside.', tone: 'info', action: 'open_pano_scene' };
 		case 'file_too_large':
 		case 'source_too_large':
 			return { title: 'That file is too large', message: 'Files up to 8 GB can be uploaded. Trim the recording in your camera app, or export a lower-resolution version.', tone: 'error', action: 'pick_other' };
@@ -385,6 +405,19 @@ export function describeCaptureError(code, { status = 0, message = '' } = {}) {
 				action: 'retry',
 			};
 	}
+}
+
+/**
+ * The result summary line from a finished job's stats. The worker reports them
+ * nested by stage ({stitch, sfm, train}); see workers/model-pano2splat/pipeline.py.
+ */
+export function resultStatsLine(stats) {
+	const bits = [];
+	const gaussians = Number(stats?.train?.gaussians);
+	const frames = Number(stats?.sfm?.frames_used);
+	if (gaussians > 0) bits.push(`${gaussians.toLocaleString()} Gaussians`);
+	if (frames > 0) bits.push(`${frames} frames`);
+	return bits.join(' · ');
 }
 
 /** The source URL(s) to link a user to for sharing and to open a result in /splat. */

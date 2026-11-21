@@ -21,7 +21,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { createReadStream, statSync, writeFileSync } from 'node:fs';
+import { closeSync, createReadStream, openSync, readSync, statSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
 
@@ -54,6 +54,17 @@ for (const v of ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN', 'REDIS_UR
 	delete process.env[v];
 }
 
+// The Gaussian count is the PLY's vertex count, read from its header, and is
+// reported nested by stage as workers/model-pano2splat/pipeline.py does.
+function plyVertexCount(file) {
+	const fd = openSync(file, 'r');
+	const head = Buffer.alloc(4096);
+	readSync(fd, head, 0, head.length, 0);
+	closeSync(fd);
+	const m = /element vertex (\d+)/.exec(head.toString('latin1'));
+	return m ? Number(m[1]) : 0;
+}
+
 // ── The C1 stand-in ─────────────────────────────────────────────────────────
 const workerKey = randomBytes(16).toString('hex');
 process.env.GCP_PANO2SPLAT_URL = `http://127.0.0.1:${WORKER_PORT}`;
@@ -79,7 +90,7 @@ const worker = createServer(async (req, res) => {
 		const job = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
 		const name = String(job.source_url || '').split('/').pop();
 		if (name.includes('unreadable')) {
-			return reply(422, { error: { code: 'bad_source', message: 'The footage is not an equirectangular 360 video.' } });
+			return reply(422, { error: { code: 'unsupported_layout', message: 'A single video stream of 1920x1080 is not two fisheyes side by side.' } });
 		}
 		const id = `local-${randomBytes(4).toString('hex')}`;
 		tasks.set(id, name.includes('running') ? 'running' : 'succeeded');
@@ -99,7 +110,7 @@ const worker = createServer(async (req, res) => {
 			status: 'succeeded',
 			stage: 'done',
 			progress: 1,
-			result: { ply_url: `${base}/scene.ply`, spz_url: `${base}/scene.spz`, stats: { gaussians: 0 } },
+			result: { ply_url: `${base}/scene.ply`, spz_url: `${base}/scene.spz`, stats: { train: { gaussians: plyVertexCount(PLY) } } },
 		});
 	}
 	return reply(404, { error: { code: 'not_found', message: 'no such task' } });

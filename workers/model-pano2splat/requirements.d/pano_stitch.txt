@@ -1,0 +1,5 @@
+# pano_stitch: raw Insta360 .insv/.insp to equirect. torch is optional here (the CUDA image
+# already has it and the warp then runs on the GPU); ffmpeg and ffprobe come from the OS image.
+numpy==2.5.5
+opencv-python-headless==5.1.0.95
+Pillow==13.0.0

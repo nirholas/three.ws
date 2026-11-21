@@ -1,0 +1,19 @@
+# Builds the worker image from its own Dockerfile, then the proof layer on top.
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+steps:
+  - id: worker
+    name: gcr.io/cloud-builders/docker
+    args: [build, --tag, '${_IMAGE}-base', --file, worker/Dockerfile, worker]
+  - id: proof
+    name: gcr.io/cloud-builders/docker
+    args: [build, --build-arg, 'BASE=${_IMAGE}-base', --tag, '${_IMAGE}', --file, proof/Dockerfile, proof]
+
+images:
+  - '${_IMAGE}'
+  - '${_IMAGE}-base'
+
+timeout: 3000s
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8

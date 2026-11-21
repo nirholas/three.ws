@@ -328,8 +328,12 @@ describe('three-ws capture', () => {
 
 	it('maps file types to source kinds', () => {
 		expect(classifyFile('x.MP4')).toMatchObject({ content_type: 'video/mp4', capture: 'equirect_video' });
-		expect(classifyFile('x.insp')).toMatchObject({ capture: 'insp', scene: 'insp' });
-		expect(captureKind(['a.jpg', 'b.png', 'c.exr'])).toBe('equirect_images');
+		expect(classifyFile('x.insp')).toMatchObject({ scene: 'insp' });
+		expect(classifyFile('x.exr')).toMatchObject({ content_type: 'image/x-exr', scene: 'equirect_image' });
+		expect(captureKind(['a.jpg', 'b.png', 'c.jpeg'])).toBe('equirect_images');
+		// The splat worker takes jpg/png photo sets and refuses a lone .insp (C1); both are scenes instead.
+		expect(() => captureKind(['IMG_001.insp'])).toThrow(/three-ws capture scene IMG_001\.insp/);
+		expect(() => captureKind(['a.jpg', 'b.jpg', 'c.exr'])).toThrow(/\.exr.*capture scene/);
 		expect(() => captureKind(['a.insv', 'b.insv', 'c.insv'])).toThrow(/split-lens/);
 		expect(() => captureKind(['a.jpg'])).toThrow(/capture scene/);
 	});

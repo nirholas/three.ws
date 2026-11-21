@@ -29,7 +29,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
-import { createReadStream, statSync } from 'node:fs';
+import { closeSync, createReadStream, openSync, readSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { registerHooks } from 'node:module';
 import path from 'node:path';
@@ -79,6 +79,17 @@ async function sha256Stream(body) {
 	return { sha256: h.digest('hex'), bytes };
 }
 
+// The Gaussian count is the PLY's vertex count, read from its header, and is
+// reported nested by stage as workers/model-pano2splat/pipeline.py does.
+function plyVertexCount(file) {
+	const fd = openSync(file, 'r');
+	const head = Buffer.alloc(4096);
+	readSync(fd, head, 0, head.length, 0);
+	closeSync(fd);
+	const m = /element vertex (\d+)/.exec(head.toString('latin1'));
+	return m ? Number(m[1]) : 0;
+}
+
 // A worker that speaks contract C1 and serves the real files as its results.
 function startWorker(key) {
 	const tasks = new Map();
@@ -109,7 +120,7 @@ function startWorker(key) {
 				status: 'succeeded',
 				stage: 'done',
 				progress: 1,
-				result: { ply_url: `${base}/scene.ply`, spz_url: `${base}/scene.spz`, stats: { gaussians: 0 } },
+				result: { ply_url: `${base}/scene.ply`, spz_url: `${base}/scene.spz`, stats: { train: { gaussians: plyVertexCount(PLY) } } },
 			});
 		}
 		return reply(404, { error: { code: 'not_found', message: 'no such task' } });

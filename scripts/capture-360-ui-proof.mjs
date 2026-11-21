@@ -113,7 +113,7 @@ if (PHASE === 'upload' || PHASE === 'all') {
 	const tStart = Date.now();
 	await page.click('#c3-start');
 	await page.waitForSelector('#c3-meter:not([hidden])', { timeout: 60000 });
-	await page.waitForFunction(() => /\d+%/.test(document.querySelector('#c3-meter-text')?.textContent || '') && parseFloat(document.querySelector('#c3-bar-fill').style.width) > 30, null, { timeout: 600000 });
+	await page.waitForFunction(() => /Uploading/.test(document.querySelector('#c3-work-title')?.textContent || '') && parseFloat(document.querySelector('#c3-bar-fill').style.width) > 35, null, { timeout: 600000, polling: 50 });
 	log('before reload:', (await page.textContent('#c3-meter-text')).trim());
 	await shot(page, 'upload-progress');
 	const tReload = Date.now();
@@ -128,7 +128,7 @@ if (PHASE === 'upload' || PHASE === 'all') {
 	log('start button after reload:', (await page.textContent('#c3-start')).trim());
 	await page.click('#c3-start');
 	await page.waitForSelector('#c3-meter:not([hidden])', { timeout: 60000 });
-	await page.waitForFunction(() => document.querySelector('#c3-work-title')?.textContent !== 'Uploading' || document.querySelectorAll('#c3-steps li[aria-current]').length > 0, null, { timeout: 900000 });
+	await page.waitForFunction(() => !/Uploading/.test(document.querySelector('#c3-work-title')?.textContent || ''), null, { timeout: 900000, polling: 200 });
 	log('upload finished, total ms since first click:', Date.now() - tStart, '| since reload:', Date.now() - tReload);
 	await page.waitForSelector('#c3-result:not([hidden])', { timeout: 300000 });
 	log('result stats:', (await page.textContent('#c3-result-stats')).trim());

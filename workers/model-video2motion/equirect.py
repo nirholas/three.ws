@@ -243,6 +243,9 @@ class Person:
     x1: float
     y1: float
     score: float = 1.0
+    # 1.0 when the torso stands upright in the image, 0.0 when it lies sideways
+    # or upside down (see upright_score).
+    upright: float = 1.0
 
     @property
     def centre(self) -> tuple[float, float]:
@@ -254,6 +257,18 @@ class Person:
 
 
 Detector = Callable[[np.ndarray], list]
+
+
+def upright_score(shoulders: tuple[float, float], hips: tuple[float, float]) -> float:
+    """How upright a torso is in the image: cos of its tilt, 0 when inverted.
+
+    `shoulders` and `hips` are the mid-points in image coordinates (y down).
+    """
+    vx, vy = hips[0] - shoulders[0], hips[1] - shoulders[1]
+    norm = math.hypot(vx, vy)
+    if norm < 1e-9:
+        return 1.0
+    return max(0.0, vy / norm)
 
 
 class PoseBoxDetector:
@@ -292,7 +307,16 @@ class PoseBoxDetector:
             xs = np.clip([p[0] for p in pts], 0.0, 1.0) * w
             ys = np.clip([p[1] for p in pts], 0.0, 1.0) * h
             vis = float(np.mean([lm.visibility for lm in pose]))
-            people.append(Person(float(xs.min()), float(ys.min()), float(xs.max()), float(ys.max()), vis))
+            up = 1.0
+            torso = [pose[i] for i in (11, 12, 23, 24)]
+            if all(lm.visibility is not None and lm.visibility >= 0.3 for lm in torso):
+                up = upright_score(
+                    ((torso[0].x + torso[1].x) / 2.0 * w, (torso[0].y + torso[1].y) / 2.0 * h),
+                    ((torso[2].x + torso[3].x) / 2.0 * w, (torso[2].y + torso[3].y) / 2.0 * h),
+                )
+            people.append(
+                Person(float(xs.min()), float(ys.min()), float(xs.max()), float(ys.max()), vis, up)
+            )
         return people
 
 
@@ -302,6 +326,7 @@ class Candidate:
     pitch: float
     height_deg: float
     score: float
+    upright: float = 1.0
 
 
 def person_to_candidate(p: Person, view: tuple[float, float], hfov: float, w: int, h: int) -> Candidate:
@@ -309,7 +334,7 @@ def person_to_candidate(p: Person, view: tuple[float, float], hfov: float, w: in
     yaw, pitch = crop_point_to_angles(cx, cy, w, h, hfov, view[0], view[1])
     f = focal_px(hfov, w)
     height_deg = math.degrees(2.0 * math.atan(p.height / 2.0 / f))
-    return Candidate(yaw, pitch, height_deg, p.score)
+    return Candidate(yaw, pitch, height_deg, p.score, p.upright)
 
 
 def detect_on_cube_faces(
@@ -345,7 +370,9 @@ def pick_prominent(
             motion = min(
                 angular_distance_deg((cand.yaw, cand.pitch), (o.yaw, o.pitch)) for o in later
             )
-        score = cand.height_deg * (1.0 + min(motion / 10.0, 1.0))
+        # A sideways copy of a close subject (two-lens stitch seam) must not
+        # outrank the real upright person, so tilt discounts the score hard.
+        score = cand.height_deg * (1.0 + min(motion / 10.0, 1.0)) * (0.2 + 0.8 * cand.upright)
         if score > best_score:
             best, best_score = cand, score
     return best

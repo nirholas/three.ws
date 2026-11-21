@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-21T22:27:32.882Z",
+	"generated_at": "2026-11-21T22:34:40.669Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Docs · Hero clips with Grok Imagine Video",
 			"summary": "Turn any three.ws model into a short hero clip: the first frame is a real render of the creator's own mesh, six rendered angles guide Grok Imagine Video, presets and tiers, limits, the job API, and the honest no-key state that offers the model's own animated turntable instead of a fake clip.",
 			"link": "/docs/hero-clips",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "launch",
+			"title": "Docs · Paid data and wallet custody for the x402 loop",
+			"summary": "How the x402 loop keeps the full response of every paid call for accounting and reuse, and how every wallet it creates keeps two sealed key copies, a database that refuses to lose them, and a daily recovery audit.",
+			"link": "/docs/x402-paid-data-and-custody",
 			"tags": [
 				"launch"
 			]
@@ -91,6 +101,18 @@
 		{
 			"date": "2026-11-21",
 			"type": "update",
+			"title": "Every x402 call the platform pays for is kept, and no loop wallet key can be lost",
+			"summary": "The platform's own x402 loop now stores the full response of every paid call with its receipt (transaction, paying wallet, amount, endpoint), deduplicated by content and spooled to object storage if the database is briefly unavailable, so the data bought can be reused and every wallet's spend reconciled. Each wallet the loop creates now keeps two independently sealed copies of its key, one under a Cloud KMS key that cannot be exported, the database refuses to delete or re-key a wallet and archives any replaced key copy, and a daily audit proves every key still opens and alerts if one does not.",
+			"link": "/docs/x402-paid-data-and-custody",
+			"tags": [
+				"security",
+				"infra",
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "update",
 			"title": "Grok conversations reuse xAI's prompt cache",
 			"summary": "Every Grok call three.ws makes now tells xAI which conversation it belongs to, so follow-up turns with the same agent reach the server that already holds that agent's persona and tools in its cache. Cached input costs a quarter of the normal rate and starts the reply sooner. Only a one-way fingerprint of the prompt is sent, never the text. The Grok usage report now shows how much of each lane's input came from the cache.",
 			"link": null,
@@ -119,6 +141,16 @@
 			"tags": [
 				"feature",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "update",
+			"title": "Start a 360 scene from a link when uploads are down",
+			"summary": "The /pano-scene page now takes a public https link to a 360 photo or .insp as well as a file. While our file storage is recovering, an upload says so plainly and offers that link box instead of failing on a broken request, and /api/scene-upload answers 503 storage_unavailable with retry-after so other clients can do the same. When the 3D server refuses a photo, you now see its reason instead of a bare status code, and the progress shows the Mesh step while the shell is being built.",
+			"link": "/pano-scene",
+			"tags": [
+				"fix"
 			]
 		},
 		{

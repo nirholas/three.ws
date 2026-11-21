@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-21T22:27:32.741Z",
+	"generated_at": "2026-11-21T22:34:40.241Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -10923,6 +10923,18 @@
 					"title": "Docs · Fresh-wallet workers",
 					"description": "How the platform mints a brand-new Solana wallet for every x402 purchase, what those wallets buy (3D props for the library, datasets for the data desk), how each wallet is emptied and closed so nothing strands, and where to watch it.",
 					"added": "2026-09-22",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/x402-paid-data-and-custody",
+					"title": "Docs · Paid data and wallet custody for the x402 loop",
+					"description": "How the x402 loop keeps the full response of every paid call for accounting and reuse, and how every wallet it creates keeps two sealed key copies, a database that refuses to lose them, and a daily recovery audit.",
+					"added": "2026-11-21",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

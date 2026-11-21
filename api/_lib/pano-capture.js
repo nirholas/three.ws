@@ -20,7 +20,10 @@ import { cdnUrl, deleteObject, isStorageInfrastructureError, objectStorageConfig
 import { fallbackDelete } from './storage-fallback.js';
 
 export const ACTIVE_STATUSES = ['queued', 'running'];
-export const SOURCE_KINDS = ['equirect_video', 'equirect_images', 'insv', 'insp'];
+// What a splat capture can be built from. A single raw .insp photo has no
+// parallax to reconstruct from: C1 refuses it for task "splat", and it becomes a
+// depth scene through /api/pano-scene instead.
+export const SOURCE_KINDS = ['equirect_video', 'equirect_images', 'insv'];
 export const QUALITIES = ['preview', 'standard', 'high'];
 export const MAX_ACTIVE_PER_USER = 2;
 export const POLL_MIN_MS = 5_000;
@@ -220,8 +223,15 @@ export async function createCapture(cfg, userId, src) {
 			err instanceof WorkerError
 				? { code: err.code, message: err.message }
 				: { code: 'worker_unreachable', message: 'The capture worker could not be reached. Try again in a minute.' };
+		const status = err instanceof WorkerError ? err.status : 503;
+		// A full worker queue (C1 429 "busy") refused nothing about the footage:
+		// drop the row so the account has no failed capture it never really started.
+		if (status === 429) {
+			await sql`DELETE FROM pano_captures WHERE id = ${row.id}`;
+			return { error, status, retryable: true };
+		}
 		const failed = await markFailed(row.id, error);
-		return { row: failed || row, error, status: err instanceof WorkerError ? err.status : 503 };
+		return { row: failed || row, error, status };
 	}
 }
 
@@ -271,14 +281,12 @@ export async function syncJob(cfg, row) {
 	} catch (err) {
 		// The worker forgot the task (a restart wipes its in-memory queue): the
 		// job cannot finish, so say so instead of polling a ghost forever.
+		// C1 answers 404 { error: "not_found" } for any task id it does not hold.
 		if (err instanceof WorkerError && err.status === 404) {
 			return (
 				(await markFailed(claimed.id, {
-					code: err.code === 'worker_http_404' ? 'task_lost' : err.code,
-					message:
-						err.code === 'worker_http_404'
-							? 'The capture worker restarted and lost this job. Start it again.'
-							: err.message,
+					code: 'task_lost',
+					message: 'The capture worker restarted and lost this job. Start it again.',
 				})) || reload(claimed.id)
 			);
 		}

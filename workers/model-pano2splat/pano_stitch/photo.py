@@ -63,6 +63,8 @@ def stitch_photo(source, out_dir, max_width, level):
 
     exif = img.getexif()
     exif[0x0112] = 1
+    for ifd in (0x8769, 0x8825):
+        exif.get_ifd(ifd)
     for tag in (0x0100, 0x0101, 0xA002, 0xA003):
         exif.pop(tag, None)
     result = Image.fromarray(out)

@@ -52,9 +52,11 @@ const FILE_TYPES = {
 	'.jpg': { content_type: 'image/jpeg', capture: 'equirect_images', scene: 'equirect_image' },
 	'.jpeg': { content_type: 'image/jpeg', capture: 'equirect_images', scene: 'equirect_image' },
 	'.png': { content_type: 'image/png', capture: 'equirect_images', scene: 'equirect_image' },
-	'.exr': { content_type: 'image/x-exr', capture: 'equirect_images' },
+	// The splat worker decodes jpg/png photo sets only; an EXR panorama and a raw
+	// .insp photo each become a depth scene (three-ws capture scene) instead.
+	'.exr': { content_type: 'image/x-exr', scene: 'equirect_image' },
 	'.insv': { content_type: 'application/octet-stream', capture: 'insv' },
-	'.insp': { content_type: 'application/octet-stream', capture: 'insp', scene: 'insp' },
+	'.insp': { content_type: 'application/octet-stream', scene: 'insp' },
 };
 
 const CAPTURE_FILES = [
@@ -138,12 +140,17 @@ export function classifyFile(file) {
 
 /** The capture source_kind for a set of files, or a usage error for a mix that cannot be one capture. */
 export function captureKind(files) {
+	for (const f of files) {
+		if (!classifyFile(f).capture) {
+			const name = path.basename(f);
+			throw usage(`${name} cannot be a splat capture (it needs a 360 video or several .jpg/.png photos). Step inside it as a depth scene instead: three-ws capture scene ${name}`);
+		}
+	}
 	const kinds = [...new Set(files.map((f) => classifyFile(f).capture))];
 	if (kinds.length > 1) throw usage('Pass one kind of footage per capture: one video, a pair of .insv files, or a set of 360 photos.');
 	const kind = kinds[0];
 	if (kind === 'equirect_video' && files.length > 1) throw usage('Pass one 360 video per capture.');
 	if (kind === 'insv' && files.length > 2) throw usage('Pass one .insv file, or the two files of a split-lens recording.');
-	if (kind === 'insp' && files.length > 1) throw usage('Pass one .insp photo, or stitched 360 photos (.jpg) for a multi-photo capture.');
 	if (kind === 'equirect_images' && files.length < MIN_IMAGES) {
 		throw usage(`A 360 photo capture needs at least ${MIN_IMAGES} photos taken from different spots. For a single photo use: three-ws capture scene <photo>`);
 	}

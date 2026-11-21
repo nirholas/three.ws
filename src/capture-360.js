@@ -24,6 +24,7 @@ import {
 	isTerminal,
 	describeCaptureError,
 	timeAgo,
+	resultStatsLine,
 	SOURCE_KIND_LABELS,
 	STAGE_LABELS,
 	isRawName,
@@ -31,6 +32,7 @@ import {
 import { uploadFile, findResumable, discardUpload, UploadError } from './multipart-upload.js';
 import { PREVIEW_MESSAGES, PreviewError, mountSpherePlayer, mountGyroPreview, sampleThumbnails } from './capture-360-preview.js';
 import { createTrimTimeline } from './capture-360-trim.js';
+import { h } from './capture-360-dom.js';
 
 const API = '/api/pano-capture';
 const PENDING_KEY = 'c3.pending';
@@ -56,18 +58,6 @@ const state = {
 };
 
 // ── small helpers ───────────────────────────────────────────────────────────
-
-function h(tag, attrs = {}, ...kids) {
-	const el = document.createElement(tag);
-	for (const [k, v] of Object.entries(attrs)) {
-		if (v == null || v === false) continue;
-		if (k === 'class') el.className = v;
-		else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
-		else el.setAttribute(k, v === true ? '' : v);
-	}
-	for (const kid of kids.flat()) el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
-	return el;
-}
 
 const show = (el, on = true) => { el.hidden = !on; };
 
@@ -104,7 +94,8 @@ function showError(code, { status = 0, message = '', onRetry, title, action } = 
 		actions.append(h('a', { class: 'pc-btn pc-btn--primary c3-btn-link', href: `/login?next=${next}` }, 'Sign in'));
 	}
 	if (view.action === 'retry' && onRetry) actions.append(h('button', { class: 'pc-btn pc-btn--primary', type: 'button', onclick: () => { clearAlert(); onRetry(); } }, 'Try again'));
-	if (view.action === 'pick_other') actions.append(h('button', { class: 'pc-btn', type: 'button', onclick: () => { clearAlert(); resetToPick(); } }, 'Choose other footage'));
+	if (view.action === 'open_pano_scene') actions.append(h('a', { class: 'pc-btn pc-btn--primary c3-btn-link', href: '/pano-scene' }, 'Step inside this photo'));
+	if (view.action === 'pick_other' || view.action === 'open_pano_scene') actions.append(h('button', { class: 'pc-btn', type: 'button', onclick: () => { clearAlert(); resetToPick(); } }, 'Choose other footage'));
 	actions.append(h('button', { class: 'pc-btn', type: 'button', onclick: clearAlert }, 'Dismiss'));
 	show(box, true);
 	box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -325,8 +316,8 @@ function keptSeconds() {
 function updateEstimate() {
 	const cls = state.cls;
 	if (!cls) return;
-	const raw = cls.sourceKind === 'insv' || cls.sourceKind === 'insp';
-	const photos = cls.sourceKind === 'equirect_images' || cls.sourceKind === 'insp' ? cls.files.length : 0;
+	const raw = cls.sourceKind === 'insv';
+	const photos = cls.sourceKind === 'equirect_images' ? cls.files.length : 0;
 	const dur = keptSeconds() || 60;
 	const est = estimateProcessing({ durationS: dur, quality: state.quality, raw, photos });
 	const known = Boolean(state.trimData) || photos > 0;
@@ -350,7 +341,8 @@ async function handleFiles(files) {
 	if (!list.length) return;
 	const cls = await classifyFiles(list, { video: probeVideo, image: probeImage });
 	if (!cls.ok) {
-		showError(cls.code, { title: 'That footage cannot be used yet', message: cls.message, action: 'pick_other' });
+		if (cls.redirect) showError(cls.code);
+		else showError(cls.code, { title: 'That footage cannot be used yet', message: cls.message, action: 'pick_other' });
 		return;
 	}
 	await showReview(cls);
@@ -644,11 +636,7 @@ async function renderResult(job) {
 	show($('c3-result'), true);
 	show($('c3-captures-wrap'), true);
 	document.title = document.title.replace(/^\d+% \w+ . /, '');
-	const stats = job.stats || {};
-	const bits = [];
-	if (stats.gaussians || stats.splat_count) bits.push(`${(stats.gaussians || stats.splat_count).toLocaleString()} Gaussians`);
-	if (stats.frames) bits.push(`${stats.frames} frames`);
-	$('c3-result-stats').textContent = bits.join(' · ') || 'Orbit it with a drag. Scroll to zoom.';
+	$('c3-result-stats').textContent = resultStatsLine(job.stats) || 'Orbit it with a drag. Scroll to zoom.';
 
 	const actions = $('c3-result-actions');
 	actions.replaceChildren();
@@ -821,6 +809,7 @@ function showResumeBanner() {
 	if (!p || state.uploading) return;
 	$('c3-resume-msg').textContent = `Your upload of ${p.name}${p.count > 1 ? ` and ${p.count - 1} more` : ''} (${formatBytes(p.size)}) did not finish. Choose the same file again and it continues from where it stopped.`;
 	show($('c3-resume'), true);
+	selectTab('360', { push: false });
 }
 
 export function initCapture360() {

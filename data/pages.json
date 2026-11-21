@@ -7136,6 +7136,14 @@
 					"added": "2026-09-22"
 				},
 				{
+					"path": "/docs/x402-paid-data-and-custody",
+					"title": "Docs · Paid data and wallet custody for the x402 loop",
+					"description": "How the x402 loop keeps the full response of every paid call for accounting and reuse, and how every wallet it creates keeps two sealed key copies, a database that refuses to lose them, and a daily recovery audit.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-11-21"
+				},
+				{
 					"path": "/docs/three-microbuy",
 					"title": "Docs · The $THREE micro-buy loop",
 					"description": "Many tiny, real on-chain buys of $THREE per minute, each triggered by and paid through a settled pay-per-call payment. It exists to put continuous, verifiable buy pressure behind the platform's own token.",
