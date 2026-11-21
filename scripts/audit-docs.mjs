@@ -310,6 +310,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['fee-bridge', 'held by the owner until launch is approved (2026-09-17); register in data/pages.json when /fee-bridge ships'],
 	['growth-programs', 'held until the owner arms a program: ops runbook for the disarmed big-win X poster, first-rug softener and early-leader bonus; register in data/pages.json when one goes live'],
 	['avatar-fidelity-program', 'internal: program goals and competitive targets'],
+	['grok-roadmap', 'internal: ranked plan for unused xAI capabilities and the key blocker, written for planning rather than for a reader arriving from search'],
 	['github-trending-patterns', 'internal: growth research comparing three.ws with the GitHub trending repos, written for planning rather than for a reader arriving from search'],
 	['aws-marketplace-listing-kit', 'internal: paste-ready listing copy and portal steps'],
 	['huggingface-audio2face-any-rig', 'internal: Hugging Face community article draft, owner approval required before posting'],
