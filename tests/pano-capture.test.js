@@ -59,6 +59,7 @@ vi.mock('../api/_lib/auth.js', () => ({
 	getRequestUser: vi.fn(async () => holder.user),
 	hasScope: (granted, required) => String(granted || '').split(/\s+/).includes(required),
 }));
+vi.mock('../api/_lib/gcp-auth.js', () => ({ getGcpAccessToken: async () => 'test-token' }));
 vi.mock('../api/_lib/rate-limit.js', () => ({
 	limits: {
 		mcp3dGenerate: vi.fn(async () => ({ success: true })),
@@ -544,7 +545,7 @@ describe('finaliser', () => {
 		});
 		expect(r.body.stats).toMatchObject({ gaussians: 4096 });
 		const stored = await row(body.job_id);
-		expect(stored.result.files.ply).toEqual({ key: prefix + 'scene.ply', bytes: PLY.length, sha256: sha(PLY) });
+		expect(stored.result.files.ply).toEqual({ key: prefix + 'scene.ply', bytes: PLY.length, sha256: sha(PLY), store: 'r2' });
 
 		const list = await api('GET', { query: { mine: '1' } });
 		expect(list.body.captures[0]).toMatchObject({ status: 'succeeded', poster_url: cdn('poster.jpg'), viewer_url: r.body.result.viewer_url });
@@ -625,6 +626,77 @@ describe('finaliser', () => {
 		expect(r.body.status).toBe('succeeded');
 		expect(bucket.state.writes).toBe(4);
 	});
+
+	// Production, 2026-11-21: R2 answers 401 to the platform credential and
+	// STORAGE_FALLBACK_BUCKET is set, so putObject() lands writes in GCS. The
+	// finaliser must do the same, or every finished capture retries forever.
+	it('saves into the GCS fallback bucket while R2 refuses the credential', async () => {
+		const { body } = await start(VIDEO);
+		succeed('task-1');
+		await backdatePoll(body.job_id);
+		const { r2 } = await import('../api/_lib/r2.js');
+		const healthy = r2.send;
+		r2.send = async () => {
+			const err = new Error('Unauthorized');
+			err.name = 'Unauthorized';
+			err.$metadata = { httpStatusCode: 401 };
+			throw err;
+		};
+		const gcs = new Map();
+		const realFetch = globalThis.fetch;
+		vi.stubGlobal('fetch', async (input, init = {}) => {
+			const url = new URL(typeof input === 'string' ? input : input.url);
+			if (url.hostname !== 'storage.googleapis.com') return realFetch(input, init);
+			expect(init.headers.authorization).toBe('Bearer test-token');
+			const gcsKey = decodeURIComponent(url.pathname.split('/').slice(2).join('/'));
+			if (init.method === 'DELETE') return new Response(null, { status: gcs.delete(gcsKey) ? 204 : 404 });
+			const bytes = Buffer.from(await new Response(init.body).arrayBuffer());
+			gcs.set(decodeURIComponent(url.pathname.split('/').slice(2).join('/')), { bytes, type: init.headers['content-type'] });
+			return new Response('', { status: 200 });
+		});
+		process.env.STORAGE_FALLBACK_BUCKET = 'fallback-bucket';
+		try {
+			const r = await poll(body.job_id);
+			expect(r.body.status).toBe('succeeded');
+			const prefix = `captures/pano/${OWNER}/${body.job_id}/`;
+			expect(sha(gcs.get(`${prefix}scene.ply`).bytes)).toBe(sha(PLY));
+			expect(sha(gcs.get(`${prefix}scene.spz`).bytes)).toBe(sha(SPZ));
+			expect(sha(gcs.get(`${prefix}preview.mp4`).bytes)).toBe(sha(MP4));
+			expect(gcs.get(`${prefix}preview.mp4`).type).toBe('video/mp4');
+			const saved = (await row(body.job_id)).result.files;
+			expect(saved.ply).toMatchObject({ bytes: PLY.length, sha256: sha(PLY), store: 'gcs' });
+			expect(bucket.state.writes).toBe(0);
+
+			// Deleting it while R2 still refuses removes the copies from GCS.
+			const gone = await api('DELETE', { query: { job: body.job_id } });
+			expect(gone.body).toEqual({ job_id: body.job_id, deleted: true });
+			expect([...gcs.keys()]).toEqual([]);
+			expect(await row(body.job_id)).toBeUndefined();
+		} finally {
+			r2.send = healthy;
+			vi.stubGlobal('fetch', realFetch);
+			delete process.env.STORAGE_FALLBACK_BUCKET;
+		}
+	});
+
+	it('keeps retrying when R2 refuses and no fallback bucket is configured', async () => {
+		const { body } = await start(VIDEO);
+		succeed('task-1');
+		await backdatePoll(body.job_id);
+		const { r2 } = await import('../api/_lib/r2.js');
+		const healthy = r2.send;
+		r2.send = async () => {
+			const err = new Error('Unauthorized');
+			err.$metadata = { httpStatusCode: 401 };
+			throw err;
+		};
+		try {
+			const r = await poll(body.job_id);
+			expect(r.body).toMatchObject({ status: 'running', stage: 'save' });
+		} finally {
+			r2.send = healthy;
+		}
+	});
 });
 
 describe('DELETE a finished job', () => {
@@ -699,7 +771,7 @@ describe('uploadStream: multipart streaming', () => {
 			for (let i = 0; i < data.length; i += 700_000) yield data.subarray(i, i + 700_000);
 		}
 		const out = await uploadStream({ key: 'captures/pano/test/multipart.bin', stream: chunks(), partBytes: 1024 * 1024 });
-		expect(out).toEqual({ key: 'captures/pano/test/multipart.bin', bytes: data.length, sha256: sha(data) });
+		expect(out).toEqual({ key: 'captures/pano/test/multipart.bin', bytes: data.length, sha256: sha(data), store: 'r2' });
 		expect(sha(bucket.state.objects.get('captures/pano/test/multipart.bin').body)).toBe(sha(data));
 		expect(bucket.state.uploads.size).toBe(0);
 	});

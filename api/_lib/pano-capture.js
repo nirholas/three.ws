@@ -16,7 +16,8 @@ import { sql } from './db.js';
 import { env } from './env.js';
 import { fetchUpstream } from './upstream-fetch.js';
 import { uploadStream } from './r2-stream.js';
-import { cdnUrl, deleteObject, listObjectsPage, objectStorageConfigured } from './r2.js';
+import { cdnUrl, deleteObject, isStorageInfrastructureError, objectStorageConfigured } from './r2.js';
+import { fallbackDelete } from './storage-fallback.js';
 
 export const ACTIVE_STATUSES = ['queued', 'running'];
 export const SOURCE_KINDS = ['equirect_video', 'equirect_images', 'insv', 'insp'];
@@ -433,14 +434,26 @@ export async function finalise(row, cfg = workerConfig()) {
 
 // ── Cancel and delete ───────────────────────────────────────────────────────
 
-async function purgeStoredFiles(userId, jobId) {
-	const prefix = storagePrefix(userId, jobId);
-	let token;
-	do {
-		const page = await listObjectsPage({ prefix, continuationToken: token });
-		for (const obj of page.objects) await deleteObject(obj.key);
-		token = page.nextToken || undefined;
-	} while (token);
+// Every file a capture can store has a fixed name under its prefix, so the
+// purge deletes those keys rather than listing the bucket, which R2 cannot
+// answer while it refuses the credential. A finished job records which store
+// holds each file; a job cancelled mid-save does not, so each key is tried in
+// both, and a key R2 cannot confirm is logged instead of blocking the cancel.
+async function purgeStoredFiles(row, { bestEffort = false } = {}) {
+	const prefix = storagePrefix(row.user_id, row.id);
+	const files = row.result?.files || null;
+	for (const f of RESULT_FILES) {
+		const key = `${prefix}${f.name}`;
+		const saved = files?.[f.field.replace(/_url$/, '')];
+		if (files && !saved) continue;
+		try {
+			if (saved?.store === 'gcs') await fallbackDelete(key);
+			else await deleteObject(key);
+		} catch (err) {
+			if (!bestEffort || !isStorageInfrastructureError(err)) throw err;
+			console.warn(`[pano-capture] purge ${key} left for later: ${err?.message || err}`);
+		}
+	}
 }
 
 /**
@@ -462,10 +475,10 @@ export async function removeJob(cfg, row) {
 			UPDATE pano_captures SET status = 'cancelled', lease_until = NULL, finished_at = now(), updated_at = now()
 			WHERE id = ${row.id} AND status IN ('queued', 'running')`;
 		// A job cancelled mid-save may have copied some files already.
-		if (row.worker_result && objectStorageConfigured()) await purgeStoredFiles(row.user_id, row.id);
+		if (row.worker_result && objectStorageConfigured()) await purgeStoredFiles(row, { bestEffort: true });
 		return { status: 'cancelled' };
 	}
-	if (objectStorageConfigured()) await purgeStoredFiles(row.user_id, row.id);
+	if (objectStorageConfigured()) await purgeStoredFiles(row);
 	await sql`DELETE FROM pano_captures WHERE id = ${row.id} AND user_id = ${row.user_id}`;
 	return { deleted: true };
 }
