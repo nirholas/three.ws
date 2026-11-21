@@ -21,12 +21,19 @@
 // Claims use conditional writes (If-None-Match: * to create, If-Match: <etag>
 // to take over a stale claim), so two polls racing on two instances submit the
 // depth task once and copy the results once.
+//
+// When R2 refuses the credential (an infrastructure fault, as in production
+// since 2026-11-14) and STORAGE_FALLBACK_BUCKET is set, these objects live in
+// the GCS fallback under the same key, with the same guarantees spelled as GCS
+// generations. A fallback etag carries a `gcs:` prefix, so a takeover always
+// goes back to the store whose version it read.
 
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 
 import { env } from './env.js';
-import { r2 } from './r2.js';
+import { isStorageInfrastructureError, r2 } from './r2.js';
+import { fallbackBucket, fallbackGet, fallbackHead, fallbackPutIfGeneration, noteFallback } from './storage-fallback.js';
 
 const TOKEN_PREFIX = 'ps1';
 const SIGNING_DOMAIN = 'three.ws/pano-scene/v1:';
@@ -91,14 +98,38 @@ function statusOf(err) {
 	return err?.$metadata?.httpStatusCode ?? err?.status ?? null;
 }
 
+const GCS_ETAG = 'gcs:';
+
+function isMissing(err) {
+	return err?.name === 'NoSuchKey' || statusOf(err) === 404;
+}
+
+function divertsToFallback(err) {
+	return Boolean(fallbackBucket()) && isStorageInfrastructureError(err);
+}
+
+async function readFallbackJson(key) {
+	const obj = await fallbackGet(key);
+	if (!obj) return null;
+	return { data: JSON.parse(obj.body.toString('utf8')), etag: GCS_ETAG + obj.generation };
+}
+
+async function writeFallbackJson(key, body, ifGenerationMatch) {
+	const generation = await fallbackPutIfGeneration({ key, body, contentType: 'application/json', ifGenerationMatch });
+	return generation ? GCS_ETAG + generation : null;
+}
+
 /** Read a small JSON object: `{ data, etag }`, or null when it does not exist. */
 export async function readJsonObject(key) {
 	let out;
 	try {
 		out = await r2.send(new GetObjectCommand({ Bucket: env.S3_BUCKET, Key: key }));
 	} catch (err) {
-		if (err?.name === 'NoSuchKey' || statusOf(err) === 404) return null;
-		throw err;
+		// Absent from R2 may still mean written to the fallback during an outage.
+		if (isMissing(err)) return fallbackBucket() ? readFallbackJson(key) : null;
+		if (!divertsToFallback(err)) throw err;
+		noteFallback('get', key, err);
+		return readFallbackJson(key);
 	}
 	const chunks = [];
 	for await (const chunk of out.Body) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
@@ -111,12 +142,13 @@ export async function readJsonObject(key) {
  * precondition lost the race.
  */
 export async function writeJsonObject(key, data, { ifNoneMatch = false, ifMatch = null } = {}) {
-	const input = {
-		Bucket: env.S3_BUCKET,
-		Key: key,
-		Body: JSON.stringify(data),
-		ContentType: 'application/json',
-	};
+	const body = JSON.stringify(data);
+	if (typeof ifMatch === 'string' && ifMatch.startsWith(GCS_ETAG)) {
+		return writeFallbackJson(key, body, ifMatch.slice(GCS_ETAG.length));
+	}
+	// A copy the outage left in the fallback still counts as existing.
+	if (ifNoneMatch && fallbackBucket() && (await fallbackHead(key))) return null;
+	const input = { Bucket: env.S3_BUCKET, Key: key, Body: body, ContentType: 'application/json' };
 	if (ifNoneMatch) input.IfNoneMatch = '*';
 	if (ifMatch) input.IfMatch = ifMatch;
 	try {
@@ -125,7 +157,11 @@ export async function writeJsonObject(key, data, { ifNoneMatch = false, ifMatch 
 	} catch (err) {
 		const status = statusOf(err);
 		if (status === 412 || status === 409 || err?.name === 'PreconditionFailed') return null;
-		throw err;
+		// An R2 etag cannot be honoured in another store: surface the fault and
+		// let the next poll re-read.
+		if (ifMatch || !divertsToFallback(err)) throw err;
+		noteFallback('put', key, err);
+		return writeFallbackJson(key, body, ifNoneMatch ? '0' : null);
 	}
 }
 

@@ -79,6 +79,26 @@ export async function fallbackPut({ key, body, contentType, metadata = {} }) {
 	if (!res.ok) throw await failure(res, 'put', key);
 }
 
+/**
+ * Conditional put for compare-and-swap state, GCS's spelling of S3's
+ * If-None-Match / If-Match: `ifGenerationMatch` '0' creates only when the key
+ * is absent, a generation replaces only that version, and null writes
+ * unconditionally. Returns the new generation, or null when the precondition
+ * lost the race.
+ */
+export async function fallbackPutIfGeneration({ key, body, contentType, ifGenerationMatch = null }) {
+	const headers = { 'content-type': contentType || 'application/octet-stream' };
+	if (ifGenerationMatch != null) headers['x-goog-if-generation-match'] = String(ifGenerationMatch);
+	const res = await call('PUT', key, { headers, body });
+	if (res.status === 412) {
+		await res.body?.cancel?.();
+		return null;
+	}
+	if (!res.ok) throw await failure(res, 'put', key);
+	await res.body?.cancel?.();
+	return res.headers.get('x-goog-generation');
+}
+
 /** Server-side copy inside the fallback bucket. Returns false when the source is absent. */
 export async function fallbackCopy({ fromKey, toKey }) {
 	const bucket = fallbackBucket();
@@ -112,6 +132,7 @@ export async function fallbackGet(key, { range } = {}) {
 		contentType: res.headers.get('content-type'),
 		metadata: metadataFrom(res.headers),
 		etag: res.headers.get('etag'),
+		generation: res.headers.get('x-goog-generation'),
 	};
 }
 

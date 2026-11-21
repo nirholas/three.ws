@@ -60,6 +60,7 @@ const bucket = vi.hoisted(() => {
 vi.mock('../api/_lib/r2.js', () => ({
 	r2: { send: (cmd) => bucket.send(cmd) },
 	objectStorageConfigured: () => bucket.storageOn,
+	isStorageInfrastructureError: () => false,
 	cdnUrl: (key) => `https://three.ws/cdn/${key}`,
 	workerReadableUrl: (url) => url,
 	async putObject({ key, body, contentType }) {
@@ -71,6 +72,9 @@ vi.mock('../api/_lib/r2.js', () => ({
 
 process.env.JWT_SECRET ||= 'pano-scene-test-secret-0123456789abcdef';
 process.env.S3_BUCKET ||= 'pano-scene-test-bucket';
+// The in-memory bucket is the only store here; the GCS failover has its own
+// suite (tests/pano-scene-job-fallback.test.js).
+delete process.env.STORAGE_FALLBACK_BUCKET;
 
 const PUBLIC_PHOTO = 'https://93.184.216.34/uploads/room.jpg';
 const PUBLIC_INSP = 'https://93.184.216.34/uploads/IMG_001.insp';
