@@ -225,7 +225,22 @@ if (next.scripts?.test) {
 }
 
 // 8. git
-const git = (...a) => execFileSync('git', ['-c', 'user.name=nirholas', '-c', 'user.email=claudescammer@outlook.com', ...a], { cwd: dest, encoding: 'utf8' });
+// Commit as whoever runs this, using this checkout's git identity, so no
+// personal address is ever written into the script itself.
+const gitIdentity = (key) => {
+	try {
+		return execFileSync('git', ['config', key], { cwd: ROOT, encoding: 'utf8' }).trim();
+	} catch {
+		return '';
+	}
+};
+const authorName = gitIdentity('user.name');
+const authorEmail = gitIdentity('user.email');
+if (!authorName || !authorEmail) {
+	console.error('publish-standalone: set git user.name and user.email in this checkout before publishing.');
+	process.exit(1);
+}
+const git = (...a) => execFileSync('git', ['-c', `user.name=${authorName}`, '-c', `user.email=${authorEmail}`, ...a], { cwd: dest, encoding: 'utf8' });
 git('init', '-q', '-b', 'main');
 git('add', '-A');
 git('commit', '-q', '-m', `feat: standalone ${next.name} with docs site, agent discovery files and community health files\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`);
