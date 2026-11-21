@@ -18,6 +18,7 @@ import { TOOL_CATALOG, TOOLS } from './tools.js';
 import { PERSONA_TOOL_CATALOG, PERSONA_TOOLS } from './persona-tools.js';
 import { CATALOG_TOOL_CATALOG, CATALOG_TOOLS } from './catalog-tools.js';
 import { JOB_TOOL_CATALOG, JOB_TOOLS } from './job-tools.js';
+import { PANO_TOOL_CATALOG, PANO_TOOLS } from './pano-tools.js';
 import { finishCall, gateCall, listForRequest } from '../_mcp/policy.js';
 import { accountToolCatalog, callAccountTool, isAccountTool } from './account-tools.js';
 import { studioOrigin } from './install-token.js';
@@ -136,6 +137,13 @@ const JOB_INSTRUCTIONS = [
 	'reports status, progress and eta_seconds for a pending job, and the model links once it is done.',
 ];
 
+const PANO_INSTRUCTIONS = [
+	'For 360 camera footage: pano_capture_start(source_url, source_kind) turns a 360 video, set of 360 photos or raw',
+	'.insv/.insp files at a public https URL into a Gaussian splat scene (PLY, SPZ, preview video) and returns a job_id;',
+	'pano_capture_status(job_id) collects it. pano_scene_create(image_url, source_kind) turns one 360 photo into a depth',
+	'shell (GLB, PLY) collected with pano_scene_status. Files on disk go through `npx three-ws capture 360 <file>`.',
+];
+
 const PERSONA_INSTRUCTIONS = [
 	'To give the assistant a LIVING body: create_agent_persona(glb_url, name) saves a rigged model as a named,',
 	'persistent persona and returns a persona_id; persona_say(persona_id, text) makes that body lip-sync the reply and',
@@ -216,6 +224,11 @@ const CREATOR_ACTIONS = Object.freeze({
 	refine_model: 'refine a 3D model',
 	look_at_model: 'render views of a 3D model',
 	create_agent_persona: 'save an agent persona',
+	pano_capture_start: 'turn 360 footage into a 3D scene',
+	pano_capture_status: 'read a 360 capture',
+	pano_capture_list: 'list your 360 captures',
+	pano_scene_create: 'turn a 360 photo into a 3D scene',
+	pano_scene_status: 'read a 360 depth shell',
 });
 
 export const CREATOR_TOOL_NAMES = new Set(Object.keys(CREATOR_ACTIONS));
@@ -233,13 +246,13 @@ function withSecuritySchemes(catalog) {
 const SURFACES = {
 	full: {
 		server: 'mcp-studio',
-		catalog: withSecuritySchemes(withConformantMeta([...TOOL_CATALOG, ...JOB_TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG])),
-		tools: { ...TOOLS, ...JOB_TOOLS, ...CATALOG_TOOLS, ...PERSONA_TOOLS },
+		catalog: withSecuritySchemes(withConformantMeta([...TOOL_CATALOG, ...JOB_TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PANO_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG])),
+		tools: { ...TOOLS, ...JOB_TOOLS, ...CATALOG_TOOLS, ...PANO_TOOLS, ...PERSONA_TOOLS },
 		widgets: true,
 		personas: true,
 		prompts: true,
 		jobTool: 'get_job',
-		instructions: [...BASE_INSTRUCTIONS, ...JOB_INSTRUCTIONS, ...CATALOG_INSTRUCTIONS, ...PERSONA_INSTRUCTIONS].join(' '),
+		instructions: [...BASE_INSTRUCTIONS, ...JOB_INSTRUCTIONS, ...CATALOG_INSTRUCTIONS, ...PANO_INSTRUCTIONS, ...PERSONA_INSTRUCTIONS].join(' '),
 		unstreamedCallBudgetMs: STUDIO_UNSTREAMED_CALL_BUDGET_MS,
 	},
 	chatgpt: {
@@ -253,8 +266,8 @@ const SURFACES = {
 	},
 	grok: {
 		server: 'mcp-grok',
-		catalog: withSecuritySchemes(withoutWidgetMeta([...TOOL_CATALOG, ...JOB_TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG])),
-		tools: { ...TOOLS, ...JOB_TOOLS, ...CATALOG_TOOLS, ...PERSONA_TOOLS },
+		catalog: withSecuritySchemes(withoutWidgetMeta([...TOOL_CATALOG, ...JOB_TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PANO_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG])),
+		tools: { ...TOOLS, ...JOB_TOOLS, ...CATALOG_TOOLS, ...PANO_TOOLS, ...PERSONA_TOOLS },
 		widgets: false,
 		personas: true,
 		accounts: true,
@@ -264,6 +277,7 @@ const SURFACES = {
 			...BASE_INSTRUCTIONS,
 			...JOB_INSTRUCTIONS,
 			...CATALOG_INSTRUCTIONS,
+			...PANO_INSTRUCTIONS,
 			...PERSONA_INSTRUCTIONS,
 			...GROK_INSTRUCTIONS,
 		].join(' '),

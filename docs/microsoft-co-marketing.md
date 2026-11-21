@@ -120,7 +120,7 @@ Find the contact through the partner manager or the Copilot Studio community. Do
 >
 > Hi [name],
 >
-> Most MCP demos return text. Ours returns 3D: a maker types "a brass desk lamp with a green glass shade" and gets back a textured GLB with an interactive viewer, then asks for it rigged or turned into an avatar. The server is `https://three.ws/api/mcp-studio`, 16 tools, and the generation and catalog tools need no key.
+> Most MCP demos return text. Ours returns 3D: a maker types "a brass desk lamp with a green glass shade" and gets back a textured GLB with an interactive viewer, then asks for it rigged or turned into an avatar. The server is `https://three.ws/api/mcp-studio`, <!-- mcp-count:mcp-studio.tools -->21<!-- /mcp-count --> tools, and the generation and catalog tools need no key.
 >
 > We have submitted [or: are submitting] it through Apps and Agents for M365 and Copilot. If you run partner showcases, livestreams or samples, we would build a sample end to end for you: a Copilot Studio agent that generates a product mockup from a description. You keep the sample.
 >

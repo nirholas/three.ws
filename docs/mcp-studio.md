@@ -34,9 +34,9 @@ generation quota:
 
 | URL | Serves | Use it for |
 |---|---|---|
-| `https://three.ws/api/mcp-studio` | all sixteen tools (the 3D tools, the asset catalog, docs search, the persona tools), both widgets | any MCP host, including a ChatGPT developer-mode connector |
+| `https://three.ws/api/mcp-studio` | all twenty-one tools (the 3D tools, the asset catalog, docs search, the persona tools, the 360 capture tools), both widgets | any MCP host, including a ChatGPT developer-mode connector |
 | `https://three.ws/api/mcp-chatgpt` | the eight 3D tools and the model viewer | adding three.ws to your own ChatGPT (step-by-step at [three.ws/chatgpt](https://three.ws/chatgpt)), and the ChatGPT plugin directory listing |
-| `https://three.ws/api/mcp-grok` | all sixteen tools, every call answered within 40 s, quota per MCP session; signed in, also the account's agent tools | Grok Bot, Grok connectors and the xAI Responses API ([guide](./grok.md)) |
+| `https://three.ws/api/mcp-grok` | all twenty-one tools, every call answered within 40 s, quota per MCP session; signed in, also the account's agent tools | Grok Bot, Grok connectors and the xAI Responses API ([guide](./grok.md)) |
 
 The ChatGPT surface leaves out the three catalog tools and `search_docs`, which keeps that listing's reviewed tool set unchanged, and the three persona tools, because their widget
 frames the hosted embodiment page, which needs `frameDomains`. OpenAI's app
@@ -150,7 +150,7 @@ launcher, living avatars, link unfurls) is documented end to end in
 
 ## Tools
 
-`tools/list` on the studio door returns exactly **sixteen** tools, and they split seven ways:
+`tools/list` on the studio door returns **twenty-one** tools on the full surface (sixteen on the ChatGPT surface), and they split eight ways:
 
 - **Six generation tools** (`forge_free`, `text_to_avatar`, `mesh_forge`,
   `rig_mesh`, `forge_avatar`, `refine_model`), in the table below. Each takes an
@@ -163,8 +163,11 @@ launcher, living avatars, link unfurls) is documented end to end in
 - **One documentation search** (`search_docs`), in **Documentation search** below.
 - **Three persona/embodiment tools** (`create_agent_persona`,
   `get_agent_persona`, `persona_say`), in the **Embodiment** section further down.
+- **Five 360 capture tools** (`pano_capture_start`, `pano_capture_status`,
+  `pano_capture_list`, `pano_scene_create`, `pano_scene_status`), in
+  [360 capture](#360-capture) below. Full and Grok surfaces only, signed-in callers only.
 
-All sixteen are free of charge. The six generation tools, `look_at_model` and
+All twenty-one are free of charge. The six generation tools, `look_at_model` and
 `create_agent_persona` need a signed-in account (see **Auth** above); the rest
 need no key. `/api/mcp-chatgpt` lists eight of them: the
 six generation tools, `check_job` and `look_at_model`, without `get_job`, the
@@ -605,6 +608,32 @@ to cross-fade between versions.
 The same `refine_model` capability is available on the paid stdio MCP server
 (`3d-agent-local`, $0.25 USDC per call) via the shared lineage core, so iteration
 behaves identically on both tracks.
+
+## 360 capture
+
+Turn 360 footage or one 360 photo into a 3D scene from any MCP client. The tools are
+thin clients of the same REST lanes the `/capture` and `/pano-scene` pages use
+(`/api/pano-capture`, `/api/pano-scene`), called on the same origin as the caller's
+account, so a job started here shows up in the browser and the other way round. They
+need a free three.ws account (OAuth or an API key); an anonymous call answers
+`sign_in_required`. Results are files the account owns: a PLY and an SPZ splat, a
+preview video and a poster for footage, a GLB and a PLY for a photo, plus a viewer link.
+
+| Tool | Input | Returns |
+|---|---|---|
+| `pano_capture_start` | `source_url` or `source_urls` (public https), `source_kind` (`equirect_video`, `equirect_images`, `insv`, `insp`), `trim?` (`start_s`, `end_s`), `quality?` (`preview`, `standard`, `high`) | `job_id` and `status` |
+| `pano_capture_status` | `job_id` | `status`, `stage`, `progress`; PLY, SPZ, preview, poster and `viewer_url` when done; the reason when failed |
+| `pano_capture_list` | `limit?` (default 20, max 100) | the caller's captures, newest first |
+| `pano_scene_create` | `image_url` (public https), `source_kind` (`equirect_image`, `insp`) | `job_id` and `status` |
+| `pano_scene_status` | `job_id` | `status`, `stage`, `progress`; GLB, PLY and `viewer_url` when done |
+
+MCP clients cannot stream multi-gigabyte files, so the start tools take a public URL.
+For a file on disk use the CLI, which uploads it in resumable parts and then starts the
+same job: `npx three-ws capture 360 <file>`. A footage job takes minutes, not seconds
+(roughly 10 to 25 for `preview`, 25 to 60 for `standard`, 60 to 120 for `high`, plus a
+few minutes of GPU start-up), so poll `pano_capture_status` about once a minute. When the
+capture service is not configured on a deployment the lane answers `unconfigured` and
+the tool relays that sentence unchanged.
 
 ## Guided prompts for agents
 

@@ -125,7 +125,9 @@ client's own secret store.
 Ask the client to list tools, or run the curl above. A healthy free server answers with
 its tool set, which currently includes `forge_free`, `text_to_avatar`, `mesh_forge`,
 `rig_mesh`, `forge_avatar`, `refine_model`, `check_job`, `look_at_model`,
-`create_agent_persona`, `get_agent_persona`, and `persona_say`. Call `tools/list` for the
+`create_agent_persona`, `get_agent_persona`, `persona_say`, and the 360 capture tools
+(`pano_capture_start`, `pano_capture_status`, `pano_capture_list`, `pano_scene_create`,
+`pano_scene_status`). Call `tools/list` for the
 live set rather than assuming this list is current.
 
 Then prove the round trip with real work, not a ping:

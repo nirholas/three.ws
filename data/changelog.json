@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-21",
+			"title": "360 capture tools on the free studio MCP server",
+			"summary": "Agents can now turn 360 footage or a 360 photo into a 3D scene over MCP: pano_capture_start, pano_capture_status, pano_capture_list, pano_scene_create and pano_scene_status on /api/mcp-studio (full and Grok surfaces, signed-in accounts). They call the same lanes as the capture pages, so a job started from an agent shows up in the browser. Start tools take a public https URL; local files go through the three-ws CLI.",
+			"tags": ["feature", "sdk"],
+			"link": "/docs/mcp-studio"
+		},
+		{
+			"date": "2026-11-21",
 			"title": "Resumable uploads for multi-gigabyte 360 capture files",
 			"summary": "The new /api/capture-upload endpoints (create, sign, parts, complete, abort) upload 360 videos, photos and raw .insv, .insp and .lrv files up to 8 GiB straight to storage in parallel parts. A dropped connection costs one part, and a resumed upload re-sends only what is missing. Limits are 3 uploads in progress and 32 GiB per account per day. A 2.19 GB file killed mid-upload and resumed came back byte-identical.",
 			"tags": ["feature", "sdk"],

@@ -39,6 +39,14 @@
 			<description>How to shoot a 360 walkaround that reconstructs, then turn it into a downloadable Gaussian splat, step inside a single 360 photo, or capture motion, with troubleshooting for every error code. Works with Insta360 X3, X4, X5 and X6 files, and any 360 camera.</description>
 		</item>
 		<item>
+			<title>360 capture tools on the free studio MCP server</title>
+			<link>https://three.ws/docs/mcp-studio</link>
+			<guid isPermaLink="false">2026-11-21:360 capture tools on the free studio MCP server</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Agents can now turn 360 footage or a 360 photo into a 3D scene over MCP: pano_capture_start, pano_capture_status, pano_capture_list, pano_scene_create and pano_scene_status on /api/mcp-studio (full and Grok surfaces, signed-in accounts). They call the same lanes as the capture pages, so a job started from an agent shows up in the browser. Start tools take a public https URL; local files go through the three-ws CLI.</description>
+		</item>
+		<item>
 			<title>A page and tutorial for turning 360 footage into 3D</title>
 			<link>https://three.ws/insta360</link>
 			<guid isPermaLink="false">2026-11-21:A page and tutorial for turning 360 footage into 3D</guid>

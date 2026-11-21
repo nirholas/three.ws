@@ -85,7 +85,7 @@ The anchor piece. Publish it first on the three.ws blog and on dev.to, then poin
 
 > Most MCP demos return text. This one returns 3D models.
 >
-> three.ws runs a remote MCP server at `https://three.ws/api/mcp-studio` with 16 tools: text to 3D, photo to 3D, auto-rigging, an avatar from a prompt, a search over thousands of CC0 props, characters and motion clips, and model inspection. The generation and catalog tools need no key.
+> three.ws runs a remote MCP server at `https://three.ws/api/mcp-studio` with <!-- mcp-count:mcp-studio.tools -->21<!-- /mcp-count --> tools: text to 3D, photo to 3D, auto-rigging, an avatar from a prompt, a search over thousands of CC0 props, characters and motion clips, and model inspection. The generation and catalog tools need no key.
 >
 > To try it, add it to a Copilot Studio agent as a Model Context Protocol tool, pointing at that URL. Then ask the agent for "a brass desk lamp with a green glass shade". You get back a viewer link, a downloadable GLB, a rendered PNG and paste-ready embed HTML.
 >

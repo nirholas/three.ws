@@ -1291,6 +1291,31 @@
 				"removed": 0,
 				"total": 799
 			}
+		},
+		{
+			"date": "2026-11-21",
+			"added": {
+				"mcp-grok": [
+					"pano_capture_list",
+					"pano_capture_start",
+					"pano_capture_status",
+					"pano_scene_create",
+					"pano_scene_status"
+				],
+				"mcp-studio": [
+					"pano_capture_list",
+					"pano_capture_start",
+					"pano_capture_status",
+					"pano_scene_create",
+					"pano_scene_status"
+				]
+			},
+			"removed": {},
+			"counts": {
+				"added": 10,
+				"removed": 0,
+				"total": 809
+			}
 		}
 	]
 }

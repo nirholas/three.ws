@@ -27,7 +27,9 @@ const CATALOG = ['search_catalog', 'get_catalog_item', 'get_item_source'];
 const JOB = ['get_job'];
 // search_docs answers how-to questions from the documentation index, free.
 const DOCS = ['search_docs'];
-const ALL = [...ALLOWED, ...JOB, ...CATALOG, ...DOCS, ...PERSONA];
+// The 360 capture tools (api/_mcp-studio/pano-tools.js) ride on the full surface too.
+const PANO = ['pano_capture_start', 'pano_capture_status', 'pano_capture_list', 'pano_scene_create', 'pano_scene_status'];
+const ALL = [...ALLOWED, ...JOB, ...CATALOG, ...DOCS, ...PERSONA, ...PANO];
 
 // Anything that would signal a crypto / payment surface. The whole point of the
 // free studio app is that NONE of this appears anywhere in its contract — the
