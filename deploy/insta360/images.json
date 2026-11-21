@@ -1,0 +1,3 @@
+{
+	"$comment": "GPU-verified worker images that npm run ship:insta360 deploys. Each entry is digest-pinned and records the verify run that proved it. Format and update rules: deploy/insta360/README.md."
+}

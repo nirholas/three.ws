@@ -613,6 +613,7 @@
 		"worker:mm": "node workers/agent-mm/index.js",
 		"worker:mm:live": "MM_MODE=live node workers/agent-mm/index.js",
 		"deploy:sniper": "node scripts/deploy-sniper.mjs",
+		"ship:insta360": "node scripts/ship-insta360.mjs",
 		"pump:smoke": "node scripts/pumpfun-lifecycle-smoke.js",
 		"pump:refresh-idls": "node scripts/refresh-pump-idls.mjs",
 		"pump:watch": "node scripts/pump-upstream-watch.mjs",
