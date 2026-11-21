@@ -314,6 +314,7 @@
 		"winget:manifests": "node distributions/winget/scripts/generate-manifests.mjs",
 		"winget:verify": "node scripts/verify-winget-on-gce.mjs",
 		"audit:docs": "node scripts/audit-docs.mjs",
+		"sync:xai-docs": "node scripts/sync-xai-docs.mjs",
 		"audit:platform-fees": "node scripts/reconcile-platform-fees.mjs",
 		"package:engine-stores": "node scripts/package-engine-bridges.mjs",
 		"listings:build": "node scripts/listings.mjs --build",

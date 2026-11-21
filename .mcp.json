@@ -29,6 +29,10 @@
     "atelier": {
       "type": "http",
       "url": "https://app.useatelier.ai/mcp"
+    },
+    "xai-docs": {
+      "type": "http",
+      "url": "https://docs.x.ai/api/mcp"
     }
   }
 }
