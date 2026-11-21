@@ -1,0 +1,13 @@
+# splat_train runtime dependencies (stage package of model-pano2splat).
+# torch 2.4.1+cu124 comes from the base image. Install order matters:
+#   pip install torch==2.4.1 --index-url https://download.pytorch.org/whl/cu124   (if the base lacks it)
+#   pip install gsplat==1.5.3 --extra-index-url https://docs.gsplat.studio/whl/pt24cu124   (prebuilt wheel)
+#   pip install --no-build-isolation -r requirements.d/splat_train.txt
+# spz builds from source: needs git, cmake, ninja, scikit-build-core, nanobind, python dev headers.
+# System packages: ffmpeg with libx264.
+numpy>=1.26,<2
+scipy>=1.11,<2
+opencv-python-headless>=4.8,<4.12
+Pillow>=10
+torchmetrics>=1.4,<2
+spz @ git+https://github.com/nianticlabs/spz.git@v3.0.0
