@@ -14,7 +14,9 @@
 //
 // Returns { data: { network, items: [{ id, address, usd, tier, level, wealth,
 // hasThree }] } } — agents without a wallet (or whose balance read fails) are
-// simply omitted, so the caller degrades to the clean baseline for them.
+// simply omitted, so the caller degrades to the clean baseline for them. Private
+// and deleted agents are omitted too: an owner who unlisted an agent did not
+// consent to its wallet and net worth being looked up by id.
 
 import { sql } from '../_lib/db.js';
 import { cors, json, method, wrap, rateLimited, error } from '../_lib/http.js';
@@ -78,7 +80,7 @@ export default wrap(async (req, res) => {
 		rows = await sql`
 			SELECT id, meta->>'solana_address' AS address
 			FROM agent_identities
-			WHERE id = ANY(${ids}::uuid[]) AND deleted_at IS NULL
+			WHERE id = ANY(${ids}::uuid[]) AND deleted_at IS NULL AND is_public = true
 		`;
 	} catch {
 		return error(res, 500, 'db_error', 'could not resolve agents');

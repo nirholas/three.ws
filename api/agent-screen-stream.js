@@ -26,6 +26,8 @@ import { getRedis } from './_lib/redis.js';
 import { sql } from './_lib/db.js';
 import { reactionsRecentKey, reactionsTotalKey, REACTION_RECENT_CAP } from './_lib/reaction-rules.js';
 import { rowToEntry } from './_lib/agent-activity.js';
+import { getSessionUser } from './_lib/auth.js';
+import { isUuid } from './_lib/validate.js';
 
 export const maxDuration = 300;
 
@@ -82,12 +84,21 @@ export default wrap(async function handleAgentScreenStream(req, res) {
 	// reads the same { error, error_description } shape every other endpoint emits,
 	// with the standard no-store + nosniff headers.
 	if (!agentId) return error(res, 400, 'validation_error', 'agentId is required');
+	if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'agentId must be a uuid');
 
-	// Resolve agent name for the open event
+	// Resolve the agent for the open event. A deleted agent is gone for everyone;
+	// a private agent streams only to its owner. Both answer the same 404 an
+	// unknown id does, so the response never confirms a private agent exists.
 	const [agentRow] = await sql`
-		SELECT name FROM agent_identities WHERE id = ${agentId} LIMIT 1
+		SELECT name, is_public, user_id FROM agent_identities
+		WHERE id = ${agentId} AND deleted_at IS NULL
+		LIMIT 1
 	`.catch(() => []);
 	if (!agentRow) return error(res, 404, 'not_found', 'agent not found');
+	if (agentRow.is_public === false) {
+		const viewer = await getSessionUser(req, res).catch(() => null);
+		if (!viewer || viewer.id !== agentRow.user_id) return error(res, 404, 'not_found', 'agent not found');
+	}
 
 	const r = getRedis();
 
