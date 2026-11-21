@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-21T22:43:31.609Z",
+	"generated_at": "2026-11-21T22:49:14.219Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4694,
+	"total": 4695,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -185,6 +185,16 @@
 			"tags": [
 				"sdk",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "update",
+			"title": "Your 360 scenes keep building after you close the tab",
+			"summary": "A 360 capture is now saved to your account the moment you start it. It keeps processing with the tab closed, the finished scene is copied into our own storage so its links never expire, and every capture shows on My creations under 360 scenes: finished ones open in the splat viewer, unfinished ones reopen their progress view, and failed ones offer Capture again. You can cancel a capture that is still running or delete a finished one with its files, and up to two can process at once. Developers get the same through /api/pano-capture.",
+			"link": "/mine",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1560,17 +1570,6 @@
 			"link": "/docs/custody",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-12",
-			"type": "update",
-			"title": "Fewer Solana RPC calls from the agent index and the creator-claims tools",
-			"summary": "The first full day of per-route RPC accounting showed two callers spending almost a third of our Solana RPC quota. The agent index re-read every agent every 90 minutes even though most have been quiet for weeks; it now re-checks active agents every 20 minutes (more often than before) and quiet ones every four hours, about half the reads. The creator-claims tools on the MCP server now stop at the first transaction a node has not caught up on, read at most 12 new transactions per poll, and share one answer across rapid repeat polls. Fewer wasted calls leaves more quota for payments and the pages people are actually looking at. The status page now judges the agent index by how far it is behind its own schedule.",
-			"link": "/status",
-			"tags": [
-				"improvement",
-				"infra"
 			]
 		}
 	]
