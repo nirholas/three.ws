@@ -350,8 +350,8 @@ What we hold, what we are entitled to and have not claimed, and when each expire
 | Entitled, not claimed | ChatGPT workspace credits | 300,000 ChatGPT and Codex credits | [OpenAI Partner Network (Select Partner)](https://openai.com/index/introducing-openai-partner-network/) | 2026-10-11 | **2027-06-30** | Invitation not yet accepted |
 | Entitled, not claimed | Inception co-brand kit access |  | [NVIDIA Inception](https://www.nvidia.com/en-us/startups/) | 2026-09-14 |  | Access restored; the kit has not been downloaded yet |
 | Entitled, not claimed | My Digital Marketing (co-branded campaigns) |  | [IBM Partner Plus (Build track)](https://ibm.com/partnerplus/isv) |  |  | Never requested |
-| Entitled, not claimed | Grok API, Grok and Grok Build credits |  | [Grok for Startups](https://x.ai/startups) |  |  | 20% of the grant on approval, 80% after onboarding; credits expire 6 months after issue |
 | Received, in use | Google Cloud credits (Web3 tier) | Up to USD 200,000 over 2 years, metered monthly, USD 10,000 initial | [Google for Startups Cloud Program (Web3 tier)](https://startup.google.com/cloud/) | 2026-08-04 | **2028-08-04** | Year 1 covers 100% up to USD 100,000; year 2 covers 20% up to another USD 100,000 |
+| Received, in use | Grok API, Grok and Grok Build credits |  | [Grok for Startups](https://x.ai/startups) | 2026-11-21 |  | First tranche visible in the Grok dashboard billing page on the three.ws team; amount stays in XAI_CREDIT_GRANT_USD on Cloud Run. Dashboard labels this balance as never expiring, while program terms say six months; the ledger assumes six months until xAI confirms |
 
 ## Submissions log
 
@@ -359,6 +359,7 @@ Every application, form, email, and portal action, newest first. Add one with `n
 
 | Date | Program | Company | What happened | Reference |
 |---|---|---|---|---|
+| 2026-11-21 | [Grok for Startups](https://x.ai/startups) | xAI | Team ID issue resolved: credits applied to the three.ws team (Grok dashboard team ID confirmed, nich@ is creator) (now: Member / live) | grok.com/dashboard/billing |
 | 2026-11-20 | [Grok for Startups](https://x.ai/startups) | xAI | Application in review: xAI startups team asked for a grok.com Team ID before admission; owner created the team and replied with the ID (now: Submitted, waiting) |  |
 | 2026-11-20 | [Grok for Startups](https://x.ai/startups) | xAI | Admitted and accepted into Grok for Startups (acceptance email from the xAI startups team) (now: Member / live) |  |
 | 2026-11-20 | [Grok for Startups](https://x.ai/startups) | xAI | Credits on hold: the startups team says the submitted Team ID is invalid or the applying address (nich@) is not a member of that team; owner to resend the Grok dashboard Team ID from a team nich@ belongs to (now: Member / live) | email: Grok for Startups: Action Needed for three.ws (2026-11-20) |

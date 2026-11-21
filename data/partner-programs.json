@@ -4131,7 +4131,7 @@
 			"next": "Complete xAI onboarding to release the remaining 80% of credits, record the expiry with --benefit (never the amount, which stays in the XAI_CREDIT_GRANT_USD env var on Cloud Run), and route the Grok lane through the credited team. Build and co-marketing plan: docs/partners/xai-grok-startups-plan.md (work orders 871 to 886)",
 			"why": "Admitted 2026-11-20 as a bootstrapped applicant. Grok is already one of our model lanes (docs/grok.md, docs/ops/llm-lanes.md) and three.ws ships a Grok connector, so the credits cut that lane cost directly. The program email signs as SpaceXSI, matching the branding seen in coverage.",
 			"source": "https://i10x.ai/news/grok-for-startups-xai-credit-program",
-			"checked": "2026-11-20",
+			"checked": "2026-11-21",
 			"log": [
 				{
 					"date": "2026-11-20",
@@ -4148,13 +4148,20 @@
 					"action": "Credits on hold: the startups team says the submitted Team ID is invalid or the applying address (nich@) is not a member of that team; owner to resend the Grok dashboard Team ID from a team nich@ belongs to",
 					"status": "member",
 					"ref": "email: Grok for Startups: Action Needed for three.ws (2026-11-20)"
+				},
+				{
+					"date": "2026-11-21",
+					"action": "Team ID issue resolved: credits applied to the three.ws team (Grok dashboard team ID confirmed, nich@ is creator)",
+					"status": "member",
+					"ref": "grok.com/dashboard/billing"
 				}
 			],
 			"received": [
 				{
 					"benefit": "Grok API, Grok and Grok Build credits",
-					"state": "claimable",
-					"note": "20% of the grant on approval, 80% after onboarding; credits expire 6 months after issue"
+					"state": "received",
+					"note": "First tranche visible in the Grok dashboard billing page on the three.ws team; amount stays in XAI_CREDIT_GRANT_USD on Cloud Run. Dashboard labels this balance as never expiring, while program terms say six months; the ledger assumes six months until xAI confirms",
+					"received": "2026-11-21"
 				}
 			]
 		},
