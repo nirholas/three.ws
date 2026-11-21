@@ -1,9 +1,9 @@
-schema_version = "1.0.0"
+schema_version = "1.1.0"
 
 id = "three_ws"
-version = "1.0.0"
+version = "1.1.0"
 name = "three.ws Forge"
-tagline = "Generate 3D models from text or images with three.ws Forge"
+tagline = "3D from text or images, and 360 footage to splats"
 maintainer = "three.ws"
 type = "add-on"
 
@@ -21,8 +21,8 @@ copyright = [
 ]
 
 [permissions]
-network = "Send prompts and images to three.ws Forge and download models"
-files = "Read reference images and import the generated GLB file"
+network = "Send prompts and 360 footage to three.ws, get results back"
+files = "Read your images and 360 files, save and import results"
 
 [build]
 paths_exclude_pattern = [

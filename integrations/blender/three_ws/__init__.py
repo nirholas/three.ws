@@ -1,7 +1,8 @@
 """three.ws Forge: Blender extension.
 
 Generate a 3D model from a text prompt or a reference image with three.ws Forge,
-without leaving Blender. The model is reconstructed on three.ws (FLUX→TRELLIS by
+without leaving Blender. The "360 Capture" panel (``capture360_ui``) sends 360
+footage to three.ws and imports the finished splat or depth shell. The model is reconstructed on three.ws (FLUX→TRELLIS by
 default, or the Meshy/Tripo geometry path with your own key), then imported into
 the current scene.
 
@@ -28,6 +29,7 @@ import bpy
 from bpy.props import EnumProperty, PointerProperty, StringProperty
 from bpy.types import AddonPreferences, Operator, Panel, PropertyGroup
 
+from . import capture360_ui
 from .three_ws_client import (
     ASPECT_RATIOS,
     BACKENDS,
@@ -496,9 +498,11 @@ def register():
     for cls in _CLASSES:
         bpy.utils.register_class(cls)
     bpy.types.Scene.three_ws = PointerProperty(type=ThreeWSProps)
+    capture360_ui.register()
 
 
 def unregister():
+    capture360_ui.unregister()
     del bpy.types.Scene.three_ws
     for cls in reversed(_CLASSES):
         bpy.utils.unregister_class(cls)
